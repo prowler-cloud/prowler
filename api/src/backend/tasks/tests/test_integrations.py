@@ -1,13 +1,15 @@
+from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime, timedelta
+from threading import Barrier
 from unittest.mock import MagicMock, patch
 from uuid import uuid4
 
 import pytest
 from api.db_router import READ_REPLICA_ALIAS, MainRouter
 from api.db_utils import rls_transaction
-from api.models import Integration, JiraIssue
+from api.models import Finding, Integration, JiraIssue, Scan, StateChoices
 from api.utils import prowler_integration_connection_test
-from django.db import OperationalError, connection
+from django.db import OperationalError, close_old_connections, connection
 from django.test import override_settings
 from django.test.utils import CaptureQueriesContext
 from django.utils import timezone
@@ -26,7 +28,10 @@ from prowler.providers.common.models import Connection
 from tasks.jobs.integrations import (
     JIRA_CLAIM_LEASE,
     _claim_existing_attempt,
+    _create_initial_claim,
     _finish_owned_failure,
+    _finish_owned_success,
+    _finish_owned_uncertain,
     _load_jira_delivery_page,
     build_jira_finding_url,
     build_jira_issue_labels,
@@ -1919,6 +1924,55 @@ class TestSafeJiraDelivery:
         assert row.issue_status_category == "indeterminate"
         assert row.status_synced_at is not None
 
+    def test_same_uid_in_later_scan_updates_finding_id_without_another_post(
+        self, jira_mock, jira_integration_fixture, findings_fixture
+    ):
+        finding, _ = findings_fixture
+        self._send(jira_integration_fixture, jira_mock, [finding.id])
+        scan = Scan.objects.create(
+            tenant_id=finding.tenant_id,
+            provider=finding.scan.provider,
+            name="Later scan",
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            started_at=timezone.now(),
+            completed_at=timezone.now(),
+        )
+        later_finding = Finding.objects.create(
+            tenant_id=finding.tenant_id,
+            uid=finding.uid,
+            scan=scan,
+            delta=Finding.DeltaChoices.CHANGED,
+            status=finding.status,
+            status_extended=finding.status_extended,
+            impact=finding.impact,
+            impact_extended=finding.impact_extended,
+            severity=finding.severity,
+            raw_result=finding.raw_result,
+            tags=finding.tags,
+            check_id=finding.check_id,
+            check_metadata=finding.check_metadata,
+            first_seen_at=finding.first_seen_at,
+        )
+        later_finding.add_resources(list(finding.resources.all()))
+        jira_mock.send_finding.reset_mock()
+        jira_mock.get_issues_status.side_effect = self._status_results(
+            JiraIssueLookupOutcome.OPEN
+        )
+
+        result = self._send(
+            jira_integration_fixture,
+            jira_mock,
+            [later_finding.id],
+            task_id="later-scan-task",
+        )
+
+        assert result["skipped_count"] == 1
+        jira_mock.send_finding.assert_not_called()
+        assert self._row(jira_integration_fixture, later_finding).finding_id == (
+            later_finding.id
+        )
+
     def test_moved_issue_updates_key_by_immutable_id_and_skips(
         self, jira_mock, jira_integration_fixture, findings_fixture
     ):
@@ -1938,6 +1992,40 @@ class TestSafeJiraDelivery:
         assert row.issue_id == "10001"
         assert row.issue_key == "MOVED-7"
         assert row.issue_url.endswith("/MOVED-7")
+        jira_mock.send_finding.assert_not_called()
+
+    def test_moved_issue_with_mismatched_id_preserves_link(
+        self, jira_mock, jira_integration_fixture, findings_fixture
+    ):
+        finding, _ = findings_fixture
+        self._send(jira_integration_fixture, jira_mock, [finding.id])
+        original = self._row(jira_integration_fixture, finding)
+        jira_mock.send_finding.reset_mock()
+
+        def mismatched_status(references):
+            reference = references[0]
+            return [
+                JiraIssueStatusResult(
+                    reference=reference,
+                    outcome=JiraIssueLookupOutcome.MOVED,
+                    current_issue_id="different-id",
+                    current_issue_key="MOVED-7",
+                    current_issue_url="https://test.atlassian.net/browse/MOVED-7",
+                    status="In Progress",
+                    status_category="indeterminate",
+                )
+            ]
+
+        jira_mock.get_issues_status.side_effect = mismatched_status
+        result = self._send(
+            jira_integration_fixture, jira_mock, [finding.id], task_id="jira-task-2"
+        )
+
+        assert result["skipped_count"] == 1
+        row = self._row(jira_integration_fixture, finding)
+        assert row.issue_id == original.issue_id
+        assert row.issue_key == original.issue_key
+        assert row.issue_url == original.issue_url
         jira_mock.send_finding.assert_not_called()
 
     @pytest.mark.parametrize(
@@ -2009,6 +2097,48 @@ class TestSafeJiraDelivery:
         assert "private-value" not in entry["error_message"]
         assert self._row(jira_integration_fixture, finding).issue_id is None
 
+    def test_invalid_confirmed_success_remains_unlinked(
+        self, jira_mock, jira_integration_fixture, findings_fixture
+    ):
+        finding, _ = findings_fixture
+        invalid_result = JiraCreationResult(
+            outcome=JiraCreationOutcome.CONFIRMED_SUCCESS,
+            issue_id="10001",
+            issue_key="TEST-1",
+            issue_url="https://test.atlassian.net/browse/TEST-1",
+        )
+        object.__setattr__(invalid_result, "issue_id", None)
+        jira_mock.send_finding.side_effect = None
+        jira_mock.send_finding.return_value = invalid_result
+
+        result = self._send(jira_integration_fixture, jira_mock, [finding.id])
+
+        assert result["uncertain_count"] == 1
+        assert result["results"][0]["error_code"] == "invalid_creation_result"
+        row = self._row(jira_integration_fixture, finding)
+        assert row.issue_id is None
+        assert row.attempt_state == JiraIssue.AttemptStateChoices.UNCERTAIN
+
+    def test_unknown_creation_outcome_remains_uncertain(
+        self, jira_mock, jira_integration_fixture, findings_fixture
+    ):
+        finding, _ = findings_fixture
+        invalid_result = JiraCreationResult(
+            outcome=JiraCreationOutcome.RETRYABLE_FAILURE
+        )
+        object.__setattr__(invalid_result, "outcome", "future-outcome")
+        jira_mock.send_finding.side_effect = None
+        jira_mock.send_finding.return_value = invalid_result
+
+        result = self._send(jira_integration_fixture, jira_mock, [finding.id])
+
+        assert result["uncertain_count"] == 1
+        assert result["results"][0]["error_code"] == "invalid_creation_outcome"
+        assert (
+            self._row(jira_integration_fixture, finding).attempt_state
+            == JiraIssue.AttemptStateChoices.UNCERTAIN
+        )
+
     def test_uncertain_result_honors_longer_retry_after(
         self, jira_mock, jira_integration_fixture, findings_fixture
     ):
@@ -2055,6 +2185,71 @@ class TestSafeJiraDelivery:
         assert row.issue_url == original.issue_url
         assert row.attempt_operation == JiraIssue.AttemptOperationChoices.REPLACEMENT
         assert row.delivery_attempt_token != original_marker
+
+    def test_done_issue_is_replaced_after_confirmed_creation(
+        self, jira_mock, jira_integration_fixture, findings_fixture
+    ):
+        finding, _ = findings_fixture
+        self._send(jira_integration_fixture, jira_mock, [finding.id])
+        jira_mock.get_issues_status.side_effect = self._status_results(
+            JiraIssueLookupOutcome.DONE
+        )
+
+        result = self._send(
+            jira_integration_fixture, jira_mock, [finding.id], task_id="jira-task-2"
+        )
+
+        assert result["created_count"] == 1
+        row = self._row(jira_integration_fixture, finding)
+        assert row.issue_id == "10002"
+        assert row.issue_key == "TEST-2"
+        assert row.attempt_operation == JiraIssue.AttemptOperationChoices.REPLACEMENT
+        assert row.attempt_state == JiraIssue.AttemptStateChoices.IDLE
+
+    @pytest.mark.parametrize(
+        ("creation_outcome", "expected_state"),
+        [
+            (
+                JiraCreationOutcome.CONFIRMED_REJECTION,
+                JiraIssue.AttemptStateChoices.TERMINAL_FAILURE,
+            ),
+            (
+                JiraCreationOutcome.RETRYABLE_FAILURE,
+                JiraIssue.AttemptStateChoices.RETRYABLE_FAILURE,
+            ),
+        ],
+    )
+    def test_failed_replacement_preserves_previous_link(
+        self,
+        jira_mock,
+        jira_integration_fixture,
+        findings_fixture,
+        creation_outcome,
+        expected_state,
+    ):
+        finding, _ = findings_fixture
+        self._send(jira_integration_fixture, jira_mock, [finding.id])
+        original = self._row(jira_integration_fixture, finding)
+        jira_mock.get_issues_status.side_effect = self._status_results(
+            JiraIssueLookupOutcome.DONE
+        )
+        jira_mock.send_finding.side_effect = None
+        jira_mock.send_finding.return_value = JiraCreationResult(
+            outcome=creation_outcome,
+            error_code="jira_creation_failed",
+            error_message="Jira rejected the replacement.",
+        )
+
+        result = self._send(
+            jira_integration_fixture, jira_mock, [finding.id], task_id="jira-task-2"
+        )
+
+        assert result["failed_count"] == 1
+        row = self._row(jira_integration_fixture, finding)
+        assert row.issue_id == original.issue_id
+        assert row.issue_key == original.issue_key
+        assert row.issue_url == original.issue_url
+        assert row.attempt_state == expected_state
 
     @pytest.mark.parametrize(
         "lookup_outcome",
@@ -2111,6 +2306,60 @@ class TestSafeJiraDelivery:
             "old_issue_key": original.issue_key,
             "old_issue_url": original.issue_url,
         }
+
+    def test_force_replace_does_not_replace_confirmed_open_issue(
+        self, jira_mock, jira_integration_fixture, findings_fixture
+    ):
+        finding, _ = findings_fixture
+        self._send(jira_integration_fixture, jira_mock, [finding.id])
+        jira_mock.send_finding.reset_mock()
+        jira_mock.get_issues_status.side_effect = self._status_results(
+            JiraIssueLookupOutcome.OPEN
+        )
+
+        result = self._send(
+            jira_integration_fixture,
+            jira_mock,
+            [finding.id],
+            task_id="jira-task-2",
+            force_replace=True,
+            actor_id="operator-1",
+        )
+
+        assert result["skipped_count"] == 1
+        jira_mock.send_finding.assert_not_called()
+
+    def test_separate_jira_integrations_have_independent_ledger_rows(
+        self, jira_mock, jira_integration_fixture, findings_fixture
+    ):
+        finding, _ = findings_fixture
+        other_integration = Integration.objects.create(
+            tenant_id=jira_integration_fixture.tenant_id,
+            enabled=True,
+            connected=True,
+            integration_type=Integration.IntegrationChoices.JIRA,
+            configuration={"domain": "other-site"},
+            credentials={
+                "domain": "other-site",
+                "user_mail": "other@example.com",
+                "api_token": "token",
+            },
+        )
+
+        first = self._send(jira_integration_fixture, jira_mock, [finding.id])
+        second = self._send(
+            other_integration, jira_mock, [finding.id], task_id="other-jira-task"
+        )
+
+        assert first["created_count"] == 1
+        assert second["created_count"] == 1
+        assert (
+            JiraIssue.objects.filter(
+                provider_id=finding.scan.provider_id, finding_uid=finding.uid
+            ).count()
+            == 2
+        )
+        assert jira_mock.send_finding.call_count == 2
 
     def test_retryable_failure_reuses_delivery_marker(
         self, jira_mock, jira_integration_fixture, findings_fixture
@@ -2285,6 +2534,60 @@ class TestSafeJiraDelivery:
         assert row.attempt_state == JiraIssue.AttemptStateChoices.UNCERTAIN
         assert row.next_reconcile_at is not None
 
+    def test_malformed_single_marker_match_remains_uncertain(
+        self, jira_mock, jira_integration_fixture, findings_fixture
+    ):
+        finding, _ = findings_fixture
+        jira_mock.send_finding.side_effect = None
+        jira_mock.send_finding.return_value = JiraCreationResult(
+            outcome=JiraCreationOutcome.UNCERTAIN,
+            error_code="ambiguous_transport_failure",
+            error_message="Jira did not confirm whether it created the issue.",
+        )
+        self._send(jira_integration_fixture, jira_mock, [finding.id])
+        jira_mock.send_finding.reset_mock()
+        jira_mock.search_issues_by_delivery_attempt.return_value = (
+            JiraIssueSearchResult(
+                outcome=JiraIssueSearchOutcome.SUCCESS,
+                matches=(object(),),
+            )
+        )
+
+        result = self._send(
+            jira_integration_fixture, jira_mock, [finding.id], task_id="jira-task-2"
+        )
+
+        assert result["uncertain_count"] == 1
+        assert result["results"][0]["error_code"] == "malformed_marker_match"
+        jira_mock.send_finding.assert_not_called()
+        row = self._row(jira_integration_fixture, finding)
+        assert row.attempt_state == JiraIssue.AttemptStateChoices.UNCERTAIN
+        assert row.next_reconcile_at is not None
+
+    def test_malformed_marker_result_remains_uncertain(
+        self, jira_mock, jira_integration_fixture, findings_fixture
+    ):
+        finding, _ = findings_fixture
+        jira_mock.send_finding.side_effect = None
+        jira_mock.send_finding.return_value = JiraCreationResult(
+            outcome=JiraCreationOutcome.UNCERTAIN
+        )
+        self._send(jira_integration_fixture, jira_mock, [finding.id])
+        malformed_result = JiraIssueSearchResult(outcome=JiraIssueSearchOutcome.SUCCESS)
+        object.__setattr__(malformed_result, "matches", None)
+        jira_mock.search_issues_by_delivery_attempt.return_value = malformed_result
+
+        result = self._send(
+            jira_integration_fixture, jira_mock, [finding.id], task_id="jira-task-2"
+        )
+
+        assert result["uncertain_count"] == 1
+        assert result["results"][0]["error_code"] == "malformed_marker_lookup"
+        assert (
+            self._row(jira_integration_fixture, finding).attempt_state
+            == JiraIssue.AttemptStateChoices.UNCERTAIN
+        )
+
     def test_stale_worker_cannot_finish_a_newer_claim(
         self, jira_integration_fixture, findings_fixture
     ):
@@ -2321,6 +2624,21 @@ class TestSafeJiraDelivery:
             row,
             "stale-worker",
             attempt_state=JiraIssue.AttemptStateChoices.RETRYABLE_FAILURE,
+            error_code="stale",
+            error_message="stale",
+        )
+        assert not _finish_owned_success(
+            tenant_id,
+            row,
+            "stale-worker",
+            issue_id="60001",
+            issue_key="TEST-STALE",
+            issue_url="https://test.atlassian.net/browse/TEST-STALE",
+        )
+        assert not _finish_owned_uncertain(
+            tenant_id,
+            row,
+            "stale-worker",
             error_code="stale",
             error_message="stale",
         )
@@ -2400,6 +2718,111 @@ class TestSafeJiraDelivery:
             )
 
         assert len(two_finding_queries) == len(one_finding_queries)
+
+    def test_status_refresh_respects_delivery_page_boundaries(
+        self, jira_mock, jira_integration_fixture, findings_fixture
+    ):
+        finding1, finding2 = findings_fixture
+        self._send(jira_integration_fixture, jira_mock, [finding1.id, finding2.id])
+        jira_mock.send_finding.reset_mock()
+        jira_mock.get_issues_status.reset_mock()
+        jira_mock.get_issues_status.side_effect = self._status_results(
+            JiraIssueLookupOutcome.OPEN
+        )
+
+        with patch("tasks.jobs.integrations.DJANGO_FINDINGS_BATCH_SIZE", 1):
+            result = self._send(
+                jira_integration_fixture,
+                jira_mock,
+                [finding1.id, finding2.id],
+                task_id="paged-task",
+            )
+
+        assert result["skipped_count"] == 2
+        assert jira_mock.get_issues_status.call_count == 2
+        jira_mock.send_finding.assert_not_called()
+
+    @pytest.mark.django_db(transaction=True)
+    def test_concurrent_initial_claims_allow_one_delivery_owner(
+        self, jira_integration_fixture, findings_fixture
+    ):
+        finding, _ = findings_fixture
+        tenant_id = str(jira_integration_fixture.tenant_id)
+        barrier = Barrier(2)
+
+        def acquire(token):
+            close_old_connections()
+            try:
+                with rls_transaction(tenant_id):
+                    thread_finding = Finding.all_objects.select_related("scan").get(
+                        id=finding.id
+                    )
+                barrier.wait()
+                return _create_initial_claim(
+                    tenant_id,
+                    str(jira_integration_fixture.id),
+                    thread_finding,
+                    "TEST",
+                    "Task",
+                    token,
+                )
+            finally:
+                close_old_connections()
+
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            claims = list(executor.map(acquire, ("worker-1", "worker-2")))
+
+        assert sum(claim is not None for claim in claims) == 1
+        with rls_transaction(tenant_id):
+            assert (
+                JiraIssue.objects.filter(
+                    integration=jira_integration_fixture,
+                    provider_id=finding.scan.provider_id,
+                    finding_uid=finding.uid,
+                ).count()
+                == 1
+            )
+
+    @pytest.mark.django_db(transaction=True)
+    def test_concurrent_replacement_claims_allow_one_delivery_owner(
+        self, jira_mock, jira_integration_fixture, findings_fixture
+    ):
+        finding, _ = findings_fixture
+        self._send(jira_integration_fixture, jira_mock, [finding.id])
+        tenant_id = str(jira_integration_fixture.tenant_id)
+        with rls_transaction(tenant_id):
+            rows = [
+                JiraIssue.objects.get(
+                    integration=jira_integration_fixture,
+                    provider_id=finding.scan.provider_id,
+                    finding_uid=finding.uid,
+                )
+                for _ in range(2)
+            ]
+        barrier = Barrier(2)
+
+        def acquire(arguments):
+            row, token = arguments
+            close_old_connections()
+            try:
+                barrier.wait()
+                return _claim_existing_attempt(
+                    tenant_id,
+                    row,
+                    str(finding.id),
+                    token,
+                    reconcile=False,
+                    new_operation=JiraIssue.AttemptOperationChoices.REPLACEMENT,
+                    project_key="TEST",
+                    issue_type="Task",
+                )
+            finally:
+                close_old_connections()
+
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            claims = list(executor.map(acquire, zip(rows, ("worker-1", "worker-2"))))
+
+        assert sum(claim is not None for claim in claims) == 1
 
     def test_delivery_uses_prefetched_tags(
         self, jira_mock, jira_integration_fixture, findings_fixture

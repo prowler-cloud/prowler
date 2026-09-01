@@ -4,7 +4,7 @@ from datetime import UTC, datetime, timedelta
 from email.utils import parsedate_to_datetime
 from glob import glob
 from urllib.parse import quote
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 from api.db_router import READ_REPLICA_ALIAS, MainRouter
 from api.db_utils import REPLICA_MAX_ATTEMPTS, REPLICA_RETRY_BASE_DELAY, rls_transaction
@@ -22,7 +22,7 @@ from celery.utils.log import get_task_logger
 from config.django.base import DJANGO_FINDINGS_BATCH_SIZE
 from django.conf import settings
 from django.db import IntegrityError, OperationalError
-from django.db.models import Prefetch, Q
+from django.db.models import Case, F, Prefetch, Q, UUIDField, Value, When
 from django.utils import timezone
 from prowler.lib.outputs.asff.asff import ASFF
 from prowler.lib.outputs.compliance.generic.generic import GenericCompliance
@@ -35,6 +35,7 @@ from prowler.lib.outputs.jira.models import (
     JiraCreationResult,
     JiraIssueLookupOutcome,
     JiraIssueReference,
+    JiraIssueSearchMatch,
     JiraIssueSearchOutcome,
     JiraIssueSearchResult,
     JiraIssueStatusResult,
@@ -700,6 +701,41 @@ def _load_jira_delivery_page(
                 ).only(*JIRA_LEDGER_FIELDS)
             )
 
+        latest_findings = {}
+        for finding in findings:
+            identity = (str(finding.scan.provider_id), finding.uid)
+            current = latest_findings.get(identity)
+            if current is None or finding.id > current.id:
+                latest_findings[identity] = finding
+
+        finding_id_updates = []
+        for row in ledger_rows:
+            finding = latest_findings.get((str(row.provider_id), row.finding_uid))
+            if finding is not None and finding.id > row.finding_id:
+                finding_id_updates.append((row, finding.id))
+
+        if finding_id_updates:
+            now = timezone.now()
+            JiraIssue.objects.filter(
+                id__in=[row.id for row, _ in finding_id_updates]
+            ).update(
+                finding_id=Case(
+                    *[
+                        When(
+                            id=row.id,
+                            finding_id__lt=finding_id,
+                            then=Value(finding_id),
+                        )
+                        for row, finding_id in finding_id_updates
+                    ],
+                    default=F("finding_id"),
+                    output_field=UUIDField(),
+                ),
+                updated_at=now,
+            )
+            for row, finding_id in finding_id_updates:
+                row.finding_id = finding_id
+
     return (
         {str(finding.id): finding for finding in findings},
         {(str(row.provider_id), row.finding_uid): row for row in ledger_rows},
@@ -867,8 +903,9 @@ def _claim_existing_attempt(
     else:
         expected_claim = {"claim_token__isnull": True, "claim_expires_at__isnull": True}
 
+    candidate_finding_id = UUID(str(finding_id))
     updates = {
-        "finding_id": finding_id,
+        "finding_id": max(row.finding_id, candidate_finding_id),
         "attempt_state": JiraIssue.AttemptStateChoices.CREATING,
         "claim_token": claim_token,
         "claim_expires_at": now + JIRA_CLAIM_LEASE,
@@ -895,6 +932,7 @@ def _claim_existing_attempt(
     with rls_transaction(tenant_id, using=MainRouter.default_db):
         queryset = JiraIssue.objects.filter(
             id=row.id,
+            finding_id=row.finding_id,
             attempt_state=row.attempt_state,
             delivery_attempt_token=row.delivery_attempt_token,
             **expected_claim,
@@ -1072,7 +1110,9 @@ def _reconcile_claimed_attempt(
             error_code="marker_lookup_exception",
             error_message="Jira could not reconcile the delivery attempt.",
         )
-    if not isinstance(search_result, JiraIssueSearchResult):
+    if not isinstance(search_result, JiraIssueSearchResult) or not isinstance(
+        search_result.matches, tuple
+    ):
         search_result = JiraIssueSearchResult(
             outcome=JiraIssueSearchOutcome.UNKNOWN,
             error_code="malformed_marker_lookup",
@@ -1082,50 +1122,33 @@ def _reconcile_claimed_attempt(
     if search_result.outcome == JiraIssueSearchOutcome.SUCCESS:
         if len(search_result.matches) == 1:
             match = search_result.matches[0]
-            if _finish_owned_success(
-                tenant_id,
-                row,
-                claim_token,
-                issue_id=match.issue_id,
-                issue_key=match.issue_key,
-                issue_url=match.issue_url,
+            if isinstance(match, JiraIssueSearchMatch) and all(
+                isinstance(value, str) and value.strip()
+                for value in (match.issue_id, match.issue_key, match.issue_url)
             ):
-                return _delivery_result(
-                    finding_id=str(row.finding_id),
-                    finding_uid=row.finding_uid,
-                    provider_id=str(row.provider_id),
-                    outcome="created",
-                    row=row,
-                )
-            error_code = "jira_issue_already_linked"
-            error_message = "The reconciled Jira issue could not be linked safely."
-            if _finish_owned_uncertain(
-                tenant_id,
-                row,
-                claim_token,
-                error_code=error_code,
-                error_message=error_message,
-                automatic_retry=False,
-            ):
-                return _delivery_result(
-                    finding_id=str(row.finding_id),
-                    finding_uid=row.finding_uid,
-                    provider_id=str(row.provider_id),
-                    outcome="uncertain",
-                    row=row,
-                    error_code=error_code,
-                    error_message=error_message,
-                )
-            return _delivery_result(
-                finding_id=str(row.finding_id),
-                finding_uid=row.finding_uid,
-                provider_id=str(row.provider_id),
-                outcome="deferred",
-                row=row,
-                error_code="ledger_changed",
-                error_message="The Jira delivery state changed during reconciliation.",
-            )
-        if len(search_result.matches) > 1:
+                if _finish_owned_success(
+                    tenant_id,
+                    row,
+                    claim_token,
+                    issue_id=match.issue_id,
+                    issue_key=match.issue_key,
+                    issue_url=match.issue_url,
+                ):
+                    return _delivery_result(
+                        finding_id=str(row.finding_id),
+                        finding_uid=row.finding_uid,
+                        provider_id=str(row.provider_id),
+                        outcome="created",
+                        row=row,
+                    )
+                error_code = "jira_issue_already_linked"
+                error_message = "The reconciled Jira issue could not be linked safely."
+                automatic_retry = False
+            else:
+                error_code = "malformed_marker_match"
+                error_message = "Jira returned an invalid issue during reconciliation."
+                automatic_retry = True
+        elif len(search_result.matches) > 1:
             error_code = "multiple_marker_matches"
             error_message = "Multiple Jira issues match this delivery attempt."
             automatic_retry = False
@@ -1241,6 +1264,21 @@ def _send_claimed_finding(
             error_message="Jira returned an invalid issue creation result.",
         )
 
+    if creation_result.outcome == JiraCreationOutcome.CONFIRMED_SUCCESS and not all(
+        isinstance(value, str) and value.strip()
+        for value in (
+            creation_result.issue_id,
+            creation_result.issue_key,
+            creation_result.issue_url,
+        )
+    ):
+        creation_result = JiraCreationResult(
+            outcome=JiraCreationOutcome.UNCERTAIN,
+            delivery_marker=str(row.delivery_attempt_token),
+            error_code="invalid_creation_result",
+            error_message="Jira returned an invalid issue creation result.",
+        )
+
     if creation_result.outcome == JiraCreationOutcome.CONFIRMED_SUCCESS:
         linked = _finish_owned_success(
             tenant_id,
@@ -1295,7 +1333,10 @@ def _send_claimed_finding(
             retry_after=creation_result.retry_after,
         )
         outcome = "uncertain"
-    else:
+    elif creation_result.outcome in {
+        JiraCreationOutcome.CONFIRMED_REJECTION,
+        JiraCreationOutcome.RETRYABLE_FAILURE,
+    }:
         attempt_state = (
             JiraIssue.AttemptStateChoices.TERMINAL_FAILURE
             if creation_result.outcome == JiraCreationOutcome.CONFIRMED_REJECTION
@@ -1310,6 +1351,17 @@ def _send_claimed_finding(
             error_message=error_message,
         )
         outcome = "failed"
+    else:
+        error_code = "invalid_creation_outcome"
+        error_message = "Jira returned an invalid issue creation result."
+        updated = _finish_owned_uncertain(
+            tenant_id,
+            row,
+            claim_token,
+            error_code=error_code,
+            error_message=error_message,
+        )
+        outcome = "uncertain"
     if not updated:
         return _deferred_result(finding, row, "ledger_changed")
     return _delivery_result(

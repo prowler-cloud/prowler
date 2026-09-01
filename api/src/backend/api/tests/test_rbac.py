@@ -1703,6 +1703,20 @@ class TestLimitedVisibility:
         # The integration is reachable: the request fails on payload validation, not RBAC
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
+    def test_jira_dispatches_require_manage_integrations(
+        self, authenticated_client_no_permissions_rbac, jira_integration_fixture
+    ):
+        response = authenticated_client_no_permissions_rbac.post(
+            reverse(
+                "integration-jira-dispatches",
+                kwargs={"integration_pk": jira_integration_fixture.id},
+            ),
+            data=json.dumps({}),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
     @pytest.mark.usefixtures("scan_summaries_fixture")
     def test_overviews_providers(
         self,

@@ -13621,9 +13621,54 @@ class TestJiraIssueViewSet:
         linked, other_provider_issue, reservation = jira_issues_fixture
         response = authenticated_client.get(reverse("jiraissue-list"))
         assert response.status_code == status.HTTP_200_OK
+        assert response["Content-Type"].startswith(API_JSON_CONTENT_TYPE)
         expected = sorted(
             (linked, other_provider_issue, reservation),
             key=lambda row: (row.finding_uid, str(row.integration_id), str(row.id)),
+        )
+        assert [item["id"] for item in response.json()["data"]] == [
+            str(row.id) for row in expected
+        ]
+
+    def test_stable_order_uses_integration_and_id_tiebreakers(
+        self, authenticated_client, jira_issues_fixture
+    ):
+        linked, other_provider_issue, _ = jira_issues_fixture
+        other_integration = Integration.objects.create(
+            tenant_id=linked.tenant_id,
+            enabled=True,
+            connected=True,
+            integration_type=Integration.IntegrationChoices.JIRA,
+            configuration={"domain": "ordering-site"},
+            credentials={
+                "domain": "ordering-site",
+                "user_mail": "ordering@example.com",
+                "api_token": "token",
+            },
+        )
+        rows = [
+            JiraIssue.objects.create(
+                tenant_id=linked.tenant_id,
+                integration=integration,
+                provider=provider,
+                finding_uid="same-finding-uid",
+                finding_id=uuid4(),
+            )
+            for integration, provider in (
+                (linked.integration, linked.provider),
+                (linked.integration, other_provider_issue.provider),
+                (other_integration, linked.provider),
+            )
+        ]
+
+        response = authenticated_client.get(
+            reverse("jiraissue-list"),
+            {"filter[finding_uid]": "same-finding-uid"},
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        expected = sorted(
+            rows, key=lambda row: (row.finding_uid, str(row.integration_id), row.id)
         )
         assert [item["id"] for item in response.json()["data"]] == [
             str(row.id) for row in expected
@@ -13635,7 +13680,9 @@ class TestJiraIssueViewSet:
             reverse("jiraissue-detail", kwargs={"pk": linked.id})
         )
         assert response.status_code == status.HTTP_200_OK
+        assert response["Content-Type"].startswith(API_JSON_CONTENT_TYPE)
         data = response.json()["data"]
+        assert data["id"] == str(linked.id)
         assert data["type"] == "jira-issues"
         attributes = data["attributes"]
         assert attributes["finding_uid"] == linked.finding_uid
@@ -13654,7 +13701,9 @@ class TestJiraIssueViewSet:
         assert "claim_expires_at" not in attributes
         assert "delivery_attempt_token" not in attributes
         relationships = data["relationships"]
+        assert relationships["provider"]["data"]["type"] == "providers"
         assert relationships["provider"]["data"]["id"] == str(linked.provider_id)
+        assert relationships["integration"]["data"]["type"] == "integrations"
         assert relationships["integration"]["data"]["id"] == str(linked.integration_id)
 
     def test_retrieve_unlinked_delivery(
@@ -13671,8 +13720,45 @@ class TestJiraIssueViewSet:
         assert attributes["issue_url"] is None
         assert attributes["attempt_state"] == "creating"
         assert attributes["attempt_operation"] == "initial"
+        assert attributes["issue_status"] is None
+        assert attributes["issue_status_category"] is None
+        assert attributes["status_synced_at"] is None
+        assert attributes["attempt_count"] == 0
+        assert attributes["last_attempt_at"] is None
+        assert attributes["last_error_code"] is None
+        assert attributes["last_error_message"] is None
+        assert attributes["next_reconcile_at"] is None
         assert "claim_token" not in attributes
         assert "delivery_attempt_token" not in attributes
+
+    def test_sparse_fields_cannot_expose_private_attempt_tokens(
+        self, authenticated_client, jira_issues_fixture
+    ):
+        *_, reservation = jira_issues_fixture
+        response = authenticated_client.get(
+            reverse("jiraissue-detail", kwargs={"pk": reservation.id}),
+            {
+                "fields[jira-issues]": (
+                    "finding_uid,attempt_state,claim_token,delivery_attempt_token"
+                )
+            },
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json()["data"]["attributes"] == {
+            "finding_uid": reservation.finding_uid,
+            "attempt_state": JiraIssue.AttemptStateChoices.CREATING,
+        }
+
+        response = authenticated_client.get(
+            reverse("jiraissue-detail", kwargs={"pk": reservation.id}),
+            {"fields[jira-issues]": "finding_uid,attempt_state"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json()["data"]["attributes"] == {
+            "finding_uid": reservation.finding_uid,
+            "attempt_state": JiraIssue.AttemptStateChoices.CREATING,
+        }
 
     def test_retrieve_other_tenant_returns_404(
         self, authenticated_client, jira_issues_fixture, tenants_fixture
@@ -13757,6 +13843,10 @@ class TestJiraIssueViewSet:
             reverse("jiraissue-list"), {"filter[invalid]": "x"}
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response["Content-Type"].startswith(API_JSON_CONTENT_TYPE)
+        errors = response.json()["errors"]
+        assert isinstance(errors, list)
+        assert all(isinstance(error["status"], str) for error in errors)
 
     def test_include_provider(self, authenticated_client, jira_issues_fixture):
         response = authenticated_client.get(
@@ -13831,6 +13921,7 @@ class TestJiraIssueViewSet:
         assert response.status_code == status.HTTP_200_OK, response.json()
         assert response["Content-Type"].startswith(API_JSON_CONTENT_TYPE)
         data = response.json()["data"]
+        assert data["id"] == str(reservation.id)
         assert data["type"] == "jira-issues"
         assert data["attributes"]["issue_id"] == "20001"
         assert data["attributes"]["issue_key"] == "TEST-9"
@@ -13989,6 +14080,104 @@ class TestJiraIssueViewSet:
         )
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_resolution_link_requires_issue_identity(
+        self, authenticated_client, jira_issues_fixture
+    ):
+        *_, reservation = jira_issues_fixture
+        with rls_transaction(str(reservation.tenant_id)):
+            JiraIssue.objects.filter(id=reservation.id).update(
+                attempt_state=JiraIssue.AttemptStateChoices.UNCERTAIN,
+                claim_token=None,
+                claim_expires_at=None,
+            )
+        payload = {
+            "data": {
+                "type": "jira-issues",
+                "attributes": {"resolution": "link"},
+            }
+        }
+
+        response = authenticated_client.post(
+            reverse("jiraissue-resolution", kwargs={"pk": reservation.id}),
+            data=json.dumps(payload),
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        errors = response.json()["errors"]
+        assert {error["source"]["pointer"] for error in errors} == {
+            "/data/attributes/issue_id",
+            "/data/attributes/issue_key",
+        }
+        assert all(error["status"] == "400" for error in errors)
+
+    def test_resolution_rejects_idle_row(
+        self, authenticated_client, jira_issues_fixture
+    ):
+        linked, *_ = jira_issues_fixture
+        response = authenticated_client.post(
+            reverse("jiraissue-resolution", kwargs={"pk": linked.id}),
+            data=json.dumps(
+                {
+                    "data": {
+                        "type": "jira-issues",
+                        "attributes": {"resolution": "confirm_not_created"},
+                    }
+                }
+            ),
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+
+        assert response.status_code == status.HTTP_409_CONFLICT
+
+    def test_resolution_other_tenant_returns_404(
+        self, authenticated_client, tenants_fixture, provider_factory
+    ):
+        other_tenant = tenants_fixture[2]
+        other_provider = provider_factory(
+            Provider.ProviderChoices.AWS, tenant=other_tenant
+        )
+        with rls_transaction(str(other_tenant.id)):
+            other_integration = Integration.objects.create(
+                tenant=other_tenant,
+                enabled=True,
+                connected=True,
+                integration_type=Integration.IntegrationChoices.JIRA,
+                configuration={"domain": "other-tenant-site"},
+                credentials={
+                    "domain": "other-tenant-site",
+                    "user_mail": "other@example.com",
+                    "api_token": "token",
+                },
+            )
+            reservation = JiraIssue.objects.create(
+                tenant=other_tenant,
+                integration=other_integration,
+                provider=other_provider,
+                finding_uid="other-tenant-finding",
+                finding_id=uuid4(),
+                attempt_state=JiraIssue.AttemptStateChoices.UNCERTAIN,
+                delivery_attempt_token=uuid4(),
+                attempt_operation=JiraIssue.AttemptOperationChoices.INITIAL,
+                attempt_project_key="TEST",
+                attempt_issue_type="Task",
+            )
+
+        response = authenticated_client.post(
+            reverse("jiraissue-resolution", kwargs={"pk": reservation.id}),
+            data=json.dumps(
+                {
+                    "data": {
+                        "type": "jira-issues",
+                        "attributes": {"resolution": "confirm_not_created"},
+                    }
+                }
+            ),
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
 
 
 @pytest.mark.django_db
