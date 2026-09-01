@@ -22,6 +22,7 @@ class SageMaker(AWSService):
         self.endpoint_configs = {}
         self.sagemaker_model_registries = []
         self.sagemaker_monitoring_schedules = []
+        self.sagemaker_feature_groups = []
 
         # Retrieve resources concurrently
         self.__threading_call__(self._list_notebook_instances)
@@ -32,6 +33,7 @@ class SageMaker(AWSService):
         self.__threading_call__(self._list_domains)
         self.__threading_call__(self._list_model_package_groups)
         self.__threading_call__(self._list_monitoring_schedules)
+        self.__threading_call__(self._list_feature_groups)
 
         # Describe resources concurrently
         self.__threading_call__(self._describe_model, self.sagemaker_models)
@@ -53,6 +55,9 @@ class SageMaker(AWSService):
             self._describe_endpoint_config, list(self.endpoint_configs.values())
         )
         self.__threading_call__(self._describe_domain, self.sagemaker_domains)
+        self.__threading_call__(
+            self._describe_feature_group, self.sagemaker_feature_groups
+        )
 
         # List tags concurrently for each resource collection
         # This replaces the previous sequential sequential execution to improve performance
@@ -70,6 +75,9 @@ class SageMaker(AWSService):
             self._list_tags_for_resource, list(self.endpoint_configs.values())
         )
         self.__threading_call__(self._list_tags_for_resource, self.sagemaker_domains)
+        self.__threading_call__(
+            self._list_tags_for_resource, self.sagemaker_feature_groups
+        )
 
     def _list_notebook_instances(self, regional_client):
         logger.info("SageMaker - listing notebook instances...")
@@ -300,6 +308,49 @@ class SageMaker(AWSService):
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def _list_feature_groups(self, regional_client):
+        logger.info("SageMaker - listing feature groups...")
+        try:
+            list_feature_groups_paginator = regional_client.get_paginator(
+                "list_feature_groups"
+            )
+            for page in list_feature_groups_paginator.paginate():
+                for feature_group in page["FeatureGroupSummaries"]:
+                    if not self.audit_resources or (
+                        is_resource_filtered(
+                            feature_group["FeatureGroupArn"], self.audit_resources
+                        )
+                    ):
+                        self.sagemaker_feature_groups.append(
+                            FeatureGroup(
+                                name=feature_group["FeatureGroupName"],
+                                region=regional_client.region,
+                                arn=feature_group["FeatureGroupArn"],
+                            )
+                        )
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def _describe_feature_group(self, feature_group):
+        logger.info("SageMaker - describing feature groups...")
+        try:
+            regional_client = self.regional_clients[feature_group.region]
+            describe_feature_group = regional_client.describe_feature_group(
+                FeatureGroupName=feature_group.name
+            )
+            offline_store_config = describe_feature_group.get("OfflineStoreConfig")
+            if offline_store_config:
+                feature_group.offline_store_enabled = True
+                feature_group.offline_store_kms_key_id = offline_store_config.get(
+                    "S3StorageConfig", {}
+                ).get("KmsKeyId")
+        except Exception as error:
+            logger.error(
+                f"{feature_group.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
     def _describe_training_job(self, training_job):
@@ -582,6 +633,30 @@ class TrainingJob(BaseModel):
     volume_kms_key_id: str = None
     network_isolation: bool = None
     vpc_config_subnets: list[str] = []
+    tags: Optional[list] = []
+
+
+class FeatureGroup(BaseModel):
+    """Represents a SageMaker Feature Store feature group.
+
+    Attributes:
+        name: Feature group name.
+        region: AWS region where the feature group lives.
+        arn: Feature group ARN.
+        offline_store_enabled: True when the feature group has an offline store
+            configured (``OfflineStoreConfig`` present), populated by
+            `_describe_feature_group`.
+        offline_store_kms_key_id: The KMS key id used to encrypt the offline
+            store S3 data (``OfflineStoreConfig.S3StorageConfig.KmsKeyId``),
+            populated by `_describe_feature_group`.
+        tags: Resource tags, populated by `_list_tags_for_resource`.
+    """
+
+    name: str
+    region: str
+    arn: str
+    offline_store_enabled: bool = False
+    offline_store_kms_key_id: Optional[str] = None
     tags: Optional[list] = []
 
 

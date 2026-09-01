@@ -42,6 +42,11 @@ test_sso_instance_id = "app-test-instance-id"
 test_sso_application_arn = (
     f"arn:aws:sso::{AWS_ACCOUNT_NUMBER}:application/sagemaker/apl-test"
 )
+test_feature_group_name = "test-feature-group"
+test_feature_group_arn = f"arn:aws:sagemaker:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:feature-group/{test_feature_group_name}"
+test_feature_group_kms_key_id = (
+    f"arn:aws:kms:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:key/feature-group-key"
+)
 
 make_api_call = botocore.client.BaseClient._make_api_call
 
@@ -174,6 +179,26 @@ def mock_make_api_call(self, operation_name, kwarg):
             "AuthMode": "SSO",
             "SingleSignOnManagedApplicationInstanceId": test_sso_instance_id,
             "SingleSignOnApplicationArn": test_sso_application_arn,
+        }
+    if operation_name == "ListFeatureGroups":
+        return {
+            "FeatureGroupSummaries": [
+                {
+                    "FeatureGroupName": test_feature_group_name,
+                    "FeatureGroupArn": test_feature_group_arn,
+                },
+            ],
+        }
+    if operation_name == "DescribeFeatureGroup":
+        return {
+            "FeatureGroupName": test_feature_group_name,
+            "FeatureGroupArn": test_feature_group_arn,
+            "OfflineStoreConfig": {
+                "S3StorageConfig": {
+                    "S3Uri": "s3://test-bucket/prefix",
+                    "KmsKeyId": test_feature_group_kms_key_id,
+                }
+            },
         }
 
     return make_api_call(self, operation_name, kwarg)
@@ -351,6 +376,23 @@ class Test_SageMaker_Service:
             == test_sso_application_arn
         )
 
+    # Test SageMaker _list_feature_groups
+    def test_list_feature_groups(self):
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        sagemaker = SageMaker(aws_provider)
+        assert len(sagemaker.sagemaker_feature_groups) == 1
+        assert sagemaker.sagemaker_feature_groups[0].name == test_feature_group_name
+        assert sagemaker.sagemaker_feature_groups[0].arn == test_feature_group_arn
+        assert sagemaker.sagemaker_feature_groups[0].region == AWS_REGION_EU_WEST_1
+
+    # Test SageMaker _describe_feature_group
+    def test_describe_feature_group(self):
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        sagemaker = SageMaker(aws_provider)
+        feature_group = sagemaker.sagemaker_feature_groups[0]
+        assert feature_group.offline_store_enabled is True
+        assert feature_group.offline_store_kms_key_id == test_feature_group_kms_key_id
+
     # Test SageMaker _list_tags_for_resource
     def test_list_tags_for_resource_calls_client(self):
         """Test that _list_tags_for_resource calls the correct AWS client and updates the resource."""
@@ -421,13 +463,13 @@ class Test_SageMaker_Service:
                 sagemaker_service = SageMaker(audit_info)
 
                 # Check that __threading_call__ was called for _list_tags_for_resource
-                # (one for each resource type: models, notebooks, training jobs, processing jobs, endpoint configs, domains)
+                # (one for each resource type: models, notebooks, training jobs, processing jobs, endpoint configs, domains, feature groups)
                 tag_calls = [
                     c
                     for c in mock_threading_call.call_args_list
                     if c[0][0] == sagemaker_service._list_tags_for_resource
                 ]
-                assert len(tag_calls) == 6
+                assert len(tag_calls) == 7
 
     # Test SageMaker list model package groups
     def test_list_model_package_groups(self):
