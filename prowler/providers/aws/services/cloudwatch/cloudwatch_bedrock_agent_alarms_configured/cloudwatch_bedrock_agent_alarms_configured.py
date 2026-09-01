@@ -74,6 +74,14 @@ class cloudwatch_bedrock_agent_alarms_configured(Check):
 
     @staticmethod
     def _covers_agent_metric(reference) -> bool:
+        """Return whether a metric reference covers an Agent rate signal.
+
+        Args:
+            reference: Metric reference collected from an alarm.
+
+        Returns:
+            True for an in-account Agent invocation or throttling metric.
+        """
         if (reference.namespace, reference.name) not in AGENT_METRICS:
             return False
         if (
@@ -88,6 +96,14 @@ class cloudwatch_bedrock_agent_alarms_configured(Check):
         )
 
     def _report_for_region(self, region: str) -> Check_Report_AWS:
+        """Create the report identity for an AWS region.
+
+        Args:
+            region: AWS region being evaluated.
+
+        Returns:
+            Report populated with the check's regional resource identity.
+        """
         report = Check_Report_AWS(metadata=self.metadata(), resource={})
         report.region = region
         report.resource_id = "bedrock-agent-alarms"

@@ -456,6 +456,15 @@ class Logs(AWSService):
 
 
 class MetricReference(BaseModel):
+    """Metric identity referenced by a CloudWatch alarm.
+
+    Attributes:
+        namespace: CloudWatch metric namespace.
+        name: CloudWatch metric name.
+        dimensions: Dimensions attached to the metric.
+        account_id: Optional source account set on a metric query.
+    """
+
     namespace: str
     name: str
     dimensions: dict[str, str] = Field(default_factory=dict)
