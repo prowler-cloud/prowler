@@ -5,8 +5,10 @@ This module provides tools for managing and monitoring Prowler security scans.
 
 from typing import Any, Literal
 
+from fastmcp.exceptions import ToolError
 from pydantic import Field
 
+from prowler_mcp_server.lib.types import NonBlankStr
 from prowler_mcp_server.prowler_app.models.scans import (
     DetailedScan,
     ScanCreationResult,
@@ -127,7 +129,7 @@ class ScansTools(BaseTool):
 
     async def get_scan(
         self,
-        scan_id: str = Field(
+        scan_id: NonBlankStr = Field(
             description="Prowler's internal UUID (v4) for the scan to retrieve, generated when the scan was created (e.g., '123e4567-e89b-12d3-a456-426614174000'). Use `prowler_list_scans` tool to find scan IDs"
         ),
     ) -> dict[str, Any]:
@@ -171,10 +173,10 @@ class ScansTools(BaseTool):
 
     async def trigger_scan(
         self,
-        provider_id: str = Field(
+        provider_id: NonBlankStr = Field(
             description="Prowler's internal UUID (v4) for the provider to scan, generated when the provider was registered in the system (e.g., '4d0e2614-6385-4fa7-bf0b-c2e2f75c6877'). Use `prowler_search_providers` tool to find the provider ID"
         ),
-        name: str | None = Field(
+        name: NonBlankStr | None = Field(
             default=None,
             description="Optional human-friendly name for the scan. Use descriptive names to identify scan purpose or context, e.g., 'Weekly Production Security Audit', 'Pre-Deployment Validation', 'Compliance Check Q4 2025'",
         ),
@@ -191,60 +193,70 @@ class ScansTools(BaseTool):
         3. Use `prowler_get_scan` with the returned scan 'id' to monitor progress
         4. Once completed, use `prowler_search_security_findings` to analyze results
         """
-        try:
-            # Build request data
-            request_data: dict[str, Any] = {
-                "data": {
-                    "type": "scans",
-                    "attributes": {},
-                    "relationships": {
-                        "provider": {
-                            "data": {
-                                "type": "providers",
-                                "id": provider_id,
-                            },
+        # Build request data
+        request_data: dict[str, Any] = {
+            "data": {
+                "type": "scans",
+                "attributes": {},
+                "relationships": {
+                    "provider": {
+                        "data": {
+                            "type": "providers",
+                            "id": provider_id,
                         },
                     },
                 },
-            }
-            if name:
-                request_data["data"]["attributes"]["name"] = name
+            },
+        }
+        if name:
+            request_data["data"]["attributes"]["name"] = name
 
-            # Create scan (returns Task)
-            self.logger.info(f"Creating scan for provider {provider_id}")
-            task_response = await self.api_client.post("/scans", json_data=request_data)
+        # Create scan (returns Task)
+        self.logger.info(f"Creating scan for provider {provider_id}")
+        task_response = await self.api_client.post("/scans", json_data=request_data)
 
-            scan_id = (
-                task_response.get("data", {})
-                .get("attributes", {})
-                .get("task_args", {})
-                .get("scan_id", None)
+        scan_id = (
+            task_response.get("data", {})
+            .get("attributes", {})
+            .get("task_args", {})
+            .get("scan_id", None)
+        )
+
+        if not scan_id:
+            # The scan may well have been queued, so this must not read as
+            # "nothing happened" and invite a duplicate run. No `from` clause:
+            # this names the provider and the tool that checks for the scan,
+            # neither of which the shared classifier can know.
+            raise ToolError(
+                "Prowler accepted the scan but did not return its ID, so it "
+                "cannot be looked up. Use prowler_list_scans for provider "
+                f"{provider_id} to see whether a scan is already running before "
+                "triggering another one."
             )
 
-            if not scan_id:
-                raise Exception("No scan_id returned from scan creation")
-
-            self.logger.info(f"Scan created successfully: {scan_id}")
+        # The scan exists from here on, so a failure to read it back must name
+        # the ID rather than read as "the scan was not created".
+        try:
             scan_response = await self.api_client.get(f"/scans/{scan_id}")
             scan_info = DetailedScan.from_api_response(scan_response["data"])
-
-            return ScanCreationResult(
-                scan=scan_info,
-                status="success",
-                message=f"Scan {scan_id} created successfully. The scan may take some time to complete. Use prowler_get_scan tool with this ID to monitor progress.",
-            ).model_dump()
-
         except Exception as e:
-            self.logger.error(f"Scan creation failed: {e}")
-            return ScanCreationResult(
-                scan=None,
-                status="failed",
-                message=f"Scan creation failed: {str(e)}",
-            ).model_dump()
+            # The failure itself is logged, not relayed: what it says is the
+            # shared classifier's to mask, and what the caller needs is the ID.
+            self.logger.error(f"Scan {scan_id} could not be read back: {e}")
+            raise ToolError(
+                f"Scan {scan_id} was created for provider {provider_id}, but reading "
+                "its state failed. Use prowler_get_scan with that ID to monitor "
+                "it. Do not trigger the scan again."
+            )
+
+        return ScanCreationResult(
+            scan=scan_info,
+            message=f"Scan {scan_id} created successfully. The scan may take some time to complete. Use prowler_get_scan tool with this ID to monitor progress.",
+        ).model_dump()
 
     async def schedule_daily_scan(
         self,
-        provider_id: str = Field(
+        provider_id: NonBlankStr = Field(
             description="Prowler's internal UUID (v4) for the provider to scan, generated when the provider was registered in the system (e.g., '4d0e2614-6385-4fa7-bf0b-c2e2f75c6877'). Use `prowler_search_providers` tool to find the provider ID"
         ),
     ) -> dict[str, Any]:
@@ -280,26 +292,49 @@ class ScansTools(BaseTool):
                 },
             },
         )
-        task_state = (
+
+        # Reaching this line means the schedule exists. Prowler commits the
+        # recurring schedule and its first scan inside the transaction that
+        # serves this request, so an answer at all means it was created; a
+        # provider that already has one is refused with a 409 instead, which
+        # leaves this tool as an error.
+        #
+        # The task in the answer is the FIRST scan run, queued to start a few
+        # seconds later, not the schedule. Its state therefore says nothing
+        # about whether the schedule was created, and reporting it as the
+        # outcome would call a schedule that exists a failure and invite a
+        # retry that can only hit that 409.
+        first_run_state = (
             task_response.get("data", {}).get("attributes", {}).get("state", None)
         )
 
-        if task_state == "available":
-            return_message = "Daily schedule created successfully. The schedule is being set up in the background. Use prowler_list_scans with provider_id filter to view scheduled scans."
-        else:
-            return_message = "Daily schedule creation failed. Please try again later."
+        message = (
+            f"Daily schedule created for provider {provider_id}. Prowler will scan it "
+            "every 24 hours until the provider is deleted. Use prowler_list_scans with "
+            "this provider_id and trigger='scheduled' to view its scheduled scans."
+        )
+
+        if first_run_state in ("failed", "cancelled"):
+            # Worth saying: the schedule stands, but the run that was supposed to
+            # start now will not produce findings, and only a manual scan fills
+            # the gap before tomorrow.
+            message = (
+                f"{message} Note that the first scan, which Prowler starts immediately, "
+                f"ended as '{first_run_state}'. The daily schedule is unaffected, but "
+                "use prowler_trigger_scan if you need results before the next run."
+            )
 
         return ScheduleCreationResult(
-            scheduled=(task_state == "available"),
-            message=return_message,
+            first_run_state=first_run_state,
+            message=message,
         ).model_dump()
 
     async def update_scan(
         self,
-        scan_id: str = Field(
+        scan_id: NonBlankStr = Field(
             description="Prowler's internal UUID (v4) for the scan to update, generated when the scan was created (e.g., '123e4567-e89b-12d3-a456-426614174000'). Use `prowler_list_scans` tool to find the scan ID if you only know the provider or scan name. Returns an error if the scan ID is invalid or not found."
         ),
-        name: str = Field(
+        name: NonBlankStr = Field(
             description="New human-friendly name for the scan (3-100 characters). Use descriptive names to improve organization and tracking, e.g., 'Production Security Audit - Q4 2025', 'Post-Deployment Compliance Check'. IMPORTANT: Only the scan name can be updated - other attributes (state, progress, duration) are read-only and managed by the system."
         ),
     ) -> dict[str, Any]:
