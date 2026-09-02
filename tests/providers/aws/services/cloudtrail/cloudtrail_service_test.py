@@ -1,4 +1,5 @@
 import json
+from types import SimpleNamespace
 from unittest import mock
 
 from boto3 import client
@@ -501,6 +502,91 @@ class Test_normalize_cloudtrail_identity:
 
 
 class Test_get_cloudtrail_threat_detection_identities:
+    def test_unavailable_trail_inventory_returns_incomplete_visibility(self):
+        cloudtrail_client = mock.MagicMock()
+        cloudtrail_client.trails = None
+
+        assert (
+            get_cloudtrail_threat_detection_identities(
+                cloudtrail_client, ["ActionOne"], 60
+            )
+            is None
+        )
+
+    def test_failed_event_lookup_returns_incomplete_visibility(self):
+        cloudtrail_client = mock.MagicMock()
+        cloudtrail_client.region = AWS_REGION_US_EAST_1
+        cloudtrail_client.trails = {
+            "trail": SimpleNamespace(is_multiregion=False, region=AWS_REGION_US_EAST_1)
+        }
+        cloudtrail_client._lookup_events.return_value = None
+
+        assert (
+            get_cloudtrail_threat_detection_identities(
+                cloudtrail_client, ["ActionOne"], 60
+            )
+            is None
+        )
+
+    def test_empty_event_lookup_returns_complete_empty_result(self):
+        cloudtrail_client = mock.MagicMock()
+        cloudtrail_client.region = AWS_REGION_US_EAST_1
+        cloudtrail_client.trails = {
+            "trail": SimpleNamespace(is_multiregion=False, region=AWS_REGION_US_EAST_1)
+        }
+        cloudtrail_client._lookup_events.return_value = []
+
+        assert (
+            get_cloudtrail_threat_detection_identities(
+                cloudtrail_client, ["ActionOne"], 60
+            )
+            == {}
+        )
+
+    def test_multiregion_trail_queries_every_audited_region(self):
+        identity_arn = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:user/Attacker"
+        cloudtrail_client = mock.MagicMock()
+        cloudtrail_client.region = AWS_REGION_US_EAST_1
+        cloudtrail_client.regional_clients = {
+            AWS_REGION_US_EAST_1: mock.MagicMock(),
+            AWS_REGION_EU_WEST_1: mock.MagicMock(),
+        }
+        trail = SimpleNamespace(
+            arn=f"arn:aws:cloudtrail:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:trail/multiregion",
+            is_multiregion=True,
+            region=AWS_REGION_US_EAST_1,
+        )
+        cloudtrail_client.trails = {trail.arn: trail}
+
+        def lookup_events(trail, event_name, minutes, region=None):
+            del trail, event_name, minutes
+            if region != AWS_REGION_EU_WEST_1:
+                return []
+            return [
+                {
+                    "CloudTrailEvent": json.dumps(
+                        {
+                            "userIdentity": {
+                                "type": "IAMUser",
+                                "arn": identity_arn,
+                            }
+                        }
+                    )
+                }
+            ]
+
+        cloudtrail_client._lookup_events.side_effect = lookup_events
+
+        identities = get_cloudtrail_threat_detection_identities(
+            cloudtrail_client, ["ActionOne"], 60
+        )
+
+        assert list(identities) == [identity_arn]
+        assert {
+            call.kwargs["region"]
+            for call in cloudtrail_client._lookup_events.call_args_list
+        } == {AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1}
+
     def test_same_role_sessions_aggregate_by_canonical_role_arn(self):
         role_arn = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:role/platform/admin"
         cloudtrail_client = mock.MagicMock()

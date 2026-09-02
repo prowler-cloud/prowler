@@ -198,10 +198,10 @@ class Cloudtrail(AWSService):
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def _lookup_events(self, trail, event_name, minutes):
+    def _lookup_events(self, trail, event_name, minutes, region=None):
         logger.info("CloudTrail - Lookup Events...")
         try:
-            regional_client = self.regional_clients[trail.region]
+            regional_client = self.regional_clients[region or trail.region]
             response = regional_client.lookup_events(
                 LookupAttributes=[
                     {"AttributeKey": "EventName", "AttributeValue": event_name}
@@ -298,6 +298,8 @@ class Trail(BaseModel):
 
 
 class CloudTrailThreatDetectionResource(BaseModel):
+    """Normalized AWS identity resource for CloudTrail threat-detection findings."""
+
     id: str
     name: str
     arn: str
@@ -338,8 +340,11 @@ def normalize_cloudtrail_identity(
 
 def get_cloudtrail_threat_detection_identities(
     cloudtrail_client: Any, actions: list[str], minutes: int
-) -> dict[str, tuple[CloudTrailThreatDetectionResource, set[str]]]:
+) -> Optional[dict[str, tuple[CloudTrailThreatDetectionResource, set[str]]]]:
     identities = {}
+    if cloudtrail_client.trails is None:
+        return None
+
     multiregion_trail = next(
         (trail for trail in cloudtrail_client.trails.values() if trail.is_multiregion),
         None,
@@ -349,18 +354,32 @@ def get_cloudtrail_threat_detection_identities(
     )
 
     for trail in trails_to_scan:
+        regions = (
+            cloudtrail_client.regional_clients
+            if trail.is_multiregion
+            else [trail.region]
+        )
         for action in actions:
-            for event_log in cloudtrail_client._lookup_events(
-                trail=trail, event_name=action, minutes=minutes
-            ):
-                event = json.loads(event_log["CloudTrailEvent"])
-                resource = normalize_cloudtrail_identity(
-                    event.get("userIdentity", {}), cloudtrail_client.region
-                )
-                if resource:
-                    identities.setdefault(resource.arn, (resource, set()))[1].add(
-                        action
+            for region in regions:
+                lookup_arguments = {
+                    "trail": trail,
+                    "event_name": action,
+                    "minutes": minutes,
+                }
+                if trail.is_multiregion:
+                    lookup_arguments["region"] = region
+                event_logs = cloudtrail_client._lookup_events(**lookup_arguments)
+                if event_logs is None:
+                    return None
+                for event_log in event_logs:
+                    event = json.loads(event_log["CloudTrailEvent"])
+                    resource = normalize_cloudtrail_identity(
+                        event.get("userIdentity", {}), cloudtrail_client.region
                     )
+                    if resource:
+                        identities.setdefault(resource.arn, (resource, set()))[1].add(
+                            action
+                        )
 
     return identities
 

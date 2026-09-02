@@ -63,7 +63,14 @@ default_threat_detection_privilege_escalation_actions = [
 
 
 class cloudtrail_threat_detection_privilege_escalation(Check):
-    def execute(self):
+    """Detect potential privilege-escalation activity recorded by CloudTrail."""
+
+    def execute(self) -> list[Check_Report_AWS]:
+        """Evaluate CloudTrail events for potential privilege-escalation activity.
+
+        Returns:
+            list[Check_Report_AWS]: Reports for detected identities or the account.
+        """
         findings = []
         threshold = cloudtrail_client.audit_config.get(
             "threat_detection_privilege_escalation_threshold", 0.2
@@ -82,6 +89,16 @@ class cloudtrail_threat_detection_privilege_escalation(Check):
             privilege_escalation_actions,
             threat_detection_minutes,
         )
+        if potential_privilege_escalation is None:
+            resource = get_cloudtrail_account_resource(
+                cloudtrail_client.audited_account,
+                cloudtrail_client.audited_account_arn,
+                cloudtrail_client.region,
+            )
+            report = Check_Report_AWS(metadata=self.metadata(), resource=resource)
+            report.status = "MANUAL"
+            report.status_extended = "Cannot evaluate CloudTrail threat detection because CloudTrail trails or events could not be retrieved in at least one audited region. Verify that the scanning credentials are allowed to call cloudtrail:DescribeTrails and cloudtrail:LookupEvents."
+            return [report]
         for resource, actions in potential_privilege_escalation.values():
             identity_threshold = round(
                 len(actions) / len(privilege_escalation_actions), 2
