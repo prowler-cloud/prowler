@@ -310,4 +310,4 @@ How to read it:
 * "created_count": number of Jira issues successfully created.
 * "deferred_count": number of Findings owned by another delivery task. Run the same send action after that task finishes.
 * "failed_count": number of Jira issues that could not be created. If `failed_count > 0` or the issue does not appear in Jira, please contact us so we can assist while detailed logs are not available through the UI.
-* "skipped_count": number of Findings skipped because their Jira issue does not need replacement.
+* "skipped_count": number of Findings not sent because an existing Jira issue does not need replacement, a pending delivery remains unresolved, or an equivalent Finding was already processed in the request.
