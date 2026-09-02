@@ -10,7 +10,14 @@ from prowler.providers.aws.lib.service.service import AWSService
 
 
 class KMS(AWSService):
+    """Retrieve AWS KMS key inventory and supporting metadata."""
+
     def __init__(self, provider):
+        """Initialize the KMS service.
+
+        Args:
+            provider: AWS provider used to create regional KMS clients.
+        """
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
         self.keys = []
@@ -24,6 +31,11 @@ class KMS(AWSService):
             self.__threading_call__(self._list_aliases)
 
     def _list_keys(self, regional_client):
+        """Collect the KMS keys available through a regional client.
+
+        Args:
+            regional_client: Regional KMS client used to list keys.
+        """
         logger.info("KMS - Listing Keys...")
         region_keys = []
         try:
@@ -184,6 +196,8 @@ class KMS(AWSService):
 
 
 class Key(BaseModel):
+    """Represent an AWS KMS key and the metadata required by checks."""
+
     id: str
     arn: str
     state: Optional[str]
