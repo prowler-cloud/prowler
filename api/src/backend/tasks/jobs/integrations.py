@@ -1014,6 +1014,7 @@ def send_findings_to_jira(
     statuses = _refresh_jira_issue_statuses(jira_integration, status_rows)
 
     created_count = 0
+    deferred_count = 0
     failed_count = 0
     skipped_count = 0
     skipped = []
@@ -1031,7 +1032,7 @@ def send_findings_to_jira(
         identity: tuple[str, str],
         previous_issue_id: str | None,
     ) -> None:
-        nonlocal failed_count
+        nonlocal deferred_count, failed_count
         current = _load_jira_issue(
             tenant_id,
             integration_id,
@@ -1051,8 +1052,11 @@ def send_findings_to_jira(
             and current.issue_id is not None
             and (previous_issue_id is None or current.issue_id != previous_issue_id)
         )
-        if delivery_is_still_owned or another_issue_was_linked:
+        if another_issue_was_linked:
             record_skip(finding_id)
+            return
+        if delivery_is_still_owned:
+            deferred_count += 1
             return
 
         failed_count += 1
@@ -1193,6 +1197,7 @@ def send_findings_to_jira(
 
     result = {
         "created_count": created_count,
+        "deferred_count": deferred_count,
         "failed_count": failed_count,
         "skipped_count": skipped_count,
     }

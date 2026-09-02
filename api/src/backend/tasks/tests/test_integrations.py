@@ -23,6 +23,7 @@ from prowler.providers.aws.lib.security_hub.security_hub import SecurityHubConne
 from prowler.providers.common.models import Connection
 from tasks.jobs.integrations import (
     _link_jira_issue,
+    _load_jira_issue,
     _release_jira_delivery_attempt,
     _reserve_jira_issue_replacement,
     _start_jira_delivery_attempt,
@@ -1813,7 +1814,12 @@ class TestJiraIntegration:
             )
 
         # Assertions
-        assert result == {"created_count": 2, "skipped_count": 0, "failed_count": 0}
+        assert result == {
+            "created_count": 2,
+            "deferred_count": 0,
+            "skipped_count": 0,
+            "failed_count": 0,
+        }
 
         # Verify Jira integration was initialized
         mock_initialize_integration.assert_called_once_with(integration)
@@ -1940,6 +1946,7 @@ class TestJiraIntegration:
         # Assertions
         assert result == {
             "created_count": 2,
+            "deferred_count": 0,
             "skipped_count": 0,
             "failed_count": 1,
             "error": "Failed to create Jira issue.",
@@ -2003,6 +2010,7 @@ class TestJiraIntegration:
 
         assert result == {
             "created_count": 0,
+            "deferred_count": 0,
             "skipped_count": 0,
             "failed_count": 1,
             "error": error_message,
@@ -2066,6 +2074,7 @@ class TestJiraIntegration:
 
         assert result == {
             "created_count": 0,
+            "deferred_count": 0,
             "skipped_count": 0,
             "failed_count": 1,
             "error": error_message,
@@ -2126,6 +2135,7 @@ class TestJiraIntegration:
 
         assert result == {
             "created_count": 0,
+            "deferred_count": 0,
             "skipped_count": 0,
             "failed_count": 1,
             "error": "Failed to create Jira issue.",
@@ -2212,7 +2222,12 @@ class TestJiraIntegration:
         )
 
         # Assertions
-        assert result == {"created_count": 1, "skipped_count": 0, "failed_count": 0}
+        assert result == {
+            "created_count": 1,
+            "deferred_count": 0,
+            "skipped_count": 0,
+            "failed_count": 0,
+        }
 
         # Verify send_finding was called with empty resource fields
         call_kwargs = mock_jira_integration.send_finding.call_args.kwargs
@@ -2283,7 +2298,12 @@ class TestJiraIntegration:
         )
 
         # Assertions
-        assert result == {"created_count": 1, "skipped_count": 0, "failed_count": 0}
+        assert result == {
+            "created_count": 1,
+            "deferred_count": 0,
+            "skipped_count": 0,
+            "failed_count": 0,
+        }
 
         # Verify send_finding was called with default/empty values
         call_kwargs = mock_jira_integration.send_finding.call_args.kwargs
@@ -2494,7 +2514,12 @@ class TestJiraIssueDedup:
             jira_integration_fixture, jira_mock, [finding1.id, finding2.id]
         )
 
-        assert result == {"created_count": 2, "skipped_count": 0, "failed_count": 0}
+        assert result == {
+            "created_count": 2,
+            "deferred_count": 0,
+            "skipped_count": 0,
+            "failed_count": 0,
+        }
         assert jira_mock.send_finding.call_count == 2
         row = self._row(jira_integration_fixture, finding1)
         assert row.issue_key == "TEST-1"
@@ -2736,7 +2761,12 @@ class TestJiraIssueDedup:
 
         result = self._send(jira_integration_fixture, jira_mock, [finding.id])
 
-        assert result == {"created_count": 1, "skipped_count": 0, "failed_count": 0}
+        assert result == {
+            "created_count": 1,
+            "deferred_count": 0,
+            "skipped_count": 0,
+            "failed_count": 0,
+        }
         jira_mock.send_finding.assert_called_once()
         assert jira_mock.send_finding.call_args.kwargs[
             "delivery_attempt_marker"
@@ -2782,7 +2812,7 @@ class TestJiraIssueDedup:
         assert result["failed_count"] == 1
         jira_mock.send_finding.assert_not_called()
 
-    def test_lost_initial_reservation_with_current_owner_is_skipped(
+    def test_lost_initial_reservation_released_after_reload_is_deferred(
         self, jira_mock, jira_integration_fixture, findings_fixture
     ):
         finding, _ = findings_fixture
@@ -2800,16 +2830,66 @@ class TestJiraIssueDedup:
                 )
             return None
 
+        def load_then_release(*args):
+            current = _load_jira_issue(*args)
+            assert current is not None
+            with rls_transaction(args[0]):
+                JiraIssue.objects.filter(id=current.id).delete()
+            return current
+
+        with (
+            patch(
+                "tasks.jobs.integrations._reserve_initial_jira_issue",
+                side_effect=reserve_in_another_worker,
+            ),
+            patch(
+                "tasks.jobs.integrations._load_jira_issue",
+                side_effect=load_then_release,
+            ),
+        ):
+            result = self._send(jira_integration_fixture, jira_mock, [finding.id])
+
+        assert result["created_count"] == 0
+        assert result["deferred_count"] == 1
+        assert result["skipped_count"] == 0
+        assert result["failed_count"] == 0
+        jira_mock.send_finding.assert_not_called()
+        with rls_transaction(str(jira_integration_fixture.tenant_id)):
+            assert not JiraIssue.objects.filter(finding_uid=finding.uid).exists()
+
+    def test_lost_replacement_with_current_owner_is_deferred(
+        self, jira_mock, jira_integration_fixture, findings_fixture
+    ):
+        finding, _ = findings_fixture
+        self._send(jira_integration_fixture, jira_mock, [finding.id])
+        original = self._row(jira_integration_fixture, finding)
+        jira_mock.get_issues_status.side_effect = self._status_results(
+            JiraIssueLookupOutcome.DONE
+        )
+        jira_mock.send_finding.reset_mock()
+
+        def reserve_in_another_worker(tenant_id, row, _finding_id):
+            with rls_transaction(tenant_id):
+                JiraIssue.objects.filter(id=row.id).update(
+                    delivery_attempt_token=uuid4(),
+                    delivery_started_at=datetime.now(UTC),
+                )
+            return None
+
         with patch(
-            "tasks.jobs.integrations._reserve_initial_jira_issue",
+            "tasks.jobs.integrations._reserve_jira_issue_replacement",
             side_effect=reserve_in_another_worker,
         ):
             result = self._send(jira_integration_fixture, jira_mock, [finding.id])
 
         assert result["created_count"] == 0
-        assert result["skipped_count"] == 1
+        assert result["deferred_count"] == 1
+        assert result["skipped_count"] == 0
         assert result["failed_count"] == 0
         jira_mock.send_finding.assert_not_called()
+        row = self._row(jira_integration_fixture, finding)
+        assert row.issue_id == original.issue_id
+        assert row.delivery_attempt_token is not None
 
     def test_lost_replacement_released_by_winner_is_failed(
         self, jira_mock, jira_integration_fixture, findings_fixture
