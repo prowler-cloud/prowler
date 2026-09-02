@@ -75,9 +75,9 @@ rss: true
 
   Read more in the [Image provider documentation](https://docs.prowler.com/user-guide/providers/image/getting-started-image#on-premises-registries-and-private-networks).
 
-  ### 🛠️ Prowler MCP — Tool Failures Reported as Errors
+  ### 🛠️ Prowler MCP Server — Tool Failures Reported as Errors
 
-  Prowler App tools now report a failure as an MCP tool execution error (`isError: true`, with the explanation in `content`) instead of a successful result carrying an `{"error": ...}` object, which clients and models read as a success. The Prowler Documentation and Prowler Hub tools follow the same rule: `prowler_docs_search` no longer reports a failed search as zero matches, `prowler_docs_get_document` no longer reports a failed fetch as a missing page, and `prowler_hub_get_check_code` and `prowler_hub_get_check_fixer` now name the provider a check ID actually belongs to instead of reporting it as nonexistent. `prowler_get_compliance_framework_state_details` also rejects a call that passes both `scan_id` and `provider_id` instead of silently ignoring the provider.
+  Prowler Local Server tools now report a failure as an MCP tool execution error (`isError: true`, with the explanation in `content`) instead of a successful result carrying an `{"error": ...}` object, which clients and models read as a success. The Prowler Documentation and Prowler Hub tools follow the same rule: `prowler_docs_search` no longer reports a failed search as zero matches, `prowler_docs_get_document` no longer reports a failed fetch as a missing page, and `prowler_hub_get_check_code` and `prowler_hub_get_check_fixer` now name the provider a check ID actually belongs to instead of reporting it as nonexistent. `prowler_get_compliance_framework_state_details` also rejects a call that passes both `scan_id` and `provider_id` instead of silently ignoring the provider.
 
   Read more in the [Prowler MCP documentation](https://docs.prowler.com/getting-started/products/prowler-mcp).
 
