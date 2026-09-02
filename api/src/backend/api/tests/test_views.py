@@ -5129,6 +5129,40 @@ class TestTaskViewSet:
             "label": "True North",
         }
 
+    def test_tasks_retrieve_sanitizes_jira_result(
+        self, authenticated_client, tasks_fixture
+    ):
+        task, *_ = tasks_fixture
+        task.task_runner_task.task_name = "integration-jira"
+        task.task_runner_task.result = json.dumps(
+            {
+                "created_count": 0,
+                "failed_count": 0,
+                "skipped_count": 1,
+                "skipped": [
+                    {
+                        "finding_id": "00000000-0000-0000-0000-000000000001",
+                        "issue_key": "PRIVATE-1",
+                        "issue_url": "https://private.example/browse/PRIVATE-1",
+                        "issue_status": "In Progress",
+                    }
+                ],
+            }
+        )
+        task.task_runner_task.save(update_fields=["task_name", "result"])
+
+        response = authenticated_client.get(
+            reverse("task-detail", kwargs={"pk": task.id}),
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json()["data"]["attributes"]["result"] == {
+            "created_count": 0,
+            "failed_count": 0,
+            "skipped_count": 1,
+            "skipped": [{"finding_id": "00000000-0000-0000-0000-000000000001"}],
+        }
+
     def test_tasks_retrieve_with_truncated_kwargs_returns_empty_task_args(
         self, authenticated_client, tasks_fixture
     ):
@@ -13586,6 +13620,7 @@ class TestJiraIssueViewSet:
         assert attributes["issue_status_category"] == "new"
         assert attributes["status_synced_at"] is not None
         assert "delivery_attempt_token" not in attributes
+        assert "delivery_started_at" not in attributes
         relationships = data["relationships"]
         assert relationships["provider"]["data"]["id"] == str(linked.provider_id)
         assert relationships["integration"]["data"]["id"] == str(linked.integration_id)

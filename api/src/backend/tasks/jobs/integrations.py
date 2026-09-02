@@ -583,6 +583,22 @@ def _load_existing_jira_issues(
     return existing
 
 
+def _load_jira_issue(
+    tenant_id: str,
+    integration_id: str,
+    provider_id: str,
+    finding_uid: str,
+) -> JiraIssue | None:
+    """Reload one ledger identity after a conditional write loses a race."""
+    with rls_transaction(tenant_id, using=MainRouter.default_db):
+        return JiraIssue.objects.filter(
+            tenant_id=tenant_id,
+            integration_id=integration_id,
+            provider_id=provider_id,
+            finding_uid=finding_uid,
+        ).first()
+
+
 def _refresh_jira_issue_statuses(
     jira_integration: Jira, rows: list[JiraIssue]
 ) -> dict[str, JiraIssueStatusResult]:
@@ -744,7 +760,27 @@ def _reserve_jira_issue_replacement(
         return None
     row.finding_id = finding_id
     row.delivery_attempt_token = delivery_attempt_token
+    row.delivery_started_at = None
     return row
+
+
+def _start_jira_delivery_attempt(
+    tenant_id: str, row: JiraIssue, delivery_attempt_token
+) -> bool:
+    """Mark a reserved delivery as possibly sent; only one worker may do so."""
+    started_at = timezone.now()
+    with rls_transaction(tenant_id, using=MainRouter.default_db):
+        updated = JiraIssue.objects.filter(
+            id=row.id,
+            delivery_attempt_token=delivery_attempt_token,
+            delivery_started_at__isnull=True,
+        ).update(
+            delivery_started_at=started_at,
+            updated_at=started_at,
+        )
+    if updated:
+        row.delivery_started_at = started_at
+    return bool(updated)
 
 
 def _link_jira_issue(
@@ -772,6 +808,7 @@ def _link_jira_issue(
         "issue_status_category": None,
         "status_synced_at": None,
         "delivery_attempt_token": None,
+        "delivery_started_at": None,
         "updated_at": timezone.now(),
     }
     filters = {"id": row.id, "delivery_attempt_token": delivery_attempt_token}
@@ -808,21 +845,18 @@ def _release_jira_delivery_attempt(
             released = bool(
                 queryset.filter(issue_id=row.issue_id).update(
                     delivery_attempt_token=None,
+                    delivery_started_at=None,
                     updated_at=timezone.now(),
                 )
             )
     if released:
         row.delivery_attempt_token = None
+        row.delivery_started_at = None
     return released
 
 
-def _skipped_entry(finding_id: str, row: JiraIssue | None = None) -> dict:
-    return {
-        "finding_id": str(finding_id),
-        "issue_key": row.issue_key if row else None,
-        "issue_url": row.issue_url if row else None,
-        "issue_status": row.issue_status if row else None,
-    }
+def _skipped_entry(finding_id: str) -> dict:
+    return {"finding_id": str(finding_id)}
 
 
 def _recover_pending_jira_issue(
@@ -833,6 +867,8 @@ def _recover_pending_jira_issue(
 ) -> bool:
     """Link exactly one marker match; every other result remains reserved."""
     delivery_attempt_token = row.delivery_attempt_token
+    if delivery_attempt_token is None or row.delivery_started_at is None:
+        return False
     try:
         search_result = jira_integration.search_issues_by_delivery_attempt(
             str(delivery_attempt_token)
@@ -984,11 +1020,43 @@ def send_findings_to_jira(
     error_messages = []
     processed_identities = set()
 
-    def record_skip(finding_id: str, row: JiraIssue | None = None) -> None:
+    def record_skip(finding_id: str) -> None:
         nonlocal skipped_count
         skipped_count += 1
         if len(skipped) < JIRA_SKIPPED_REPORT_LIMIT:
-            skipped.append(_skipped_entry(finding_id, row))
+            skipped.append(_skipped_entry(finding_id))
+
+    def record_lost_attempt(
+        finding_id: str,
+        identity: tuple[str, str],
+        previous_issue_id: str | None,
+    ) -> None:
+        nonlocal failed_count
+        current = _load_jira_issue(
+            tenant_id,
+            integration_id,
+            identity[0],
+            identity[1],
+        )
+        if current is None:
+            existing.pop(identity, None)
+        else:
+            existing[identity] = current
+
+        delivery_is_still_owned = (
+            current is not None and current.delivery_attempt_token is not None
+        )
+        another_issue_was_linked = (
+            current is not None
+            and current.issue_id is not None
+            and (previous_issue_id is None or current.issue_id != previous_issue_id)
+        )
+        if delivery_is_still_owned or another_issue_was_linked:
+            record_skip(finding_id)
+            return
+
+        failed_count += 1
+        error_messages.append(JIRA_GENERIC_SEND_ERROR)
 
     for finding_id in finding_ids:
         finding_id = str(finding_id)
@@ -1005,26 +1073,35 @@ def send_findings_to_jira(
         if row is not None:
             _update_latest_jira_finding_id(tenant_id, row, finding_id)
         if identity in processed_identities:
-            record_skip(finding_id, row)
+            record_skip(finding_id)
             continue
         processed_identities.add(identity)
 
-        if row is not None and row.delivery_attempt_token is not None:
+        resume_reserved_attempt = (
+            row is not None
+            and row.delivery_attempt_token is not None
+            and row.delivery_started_at is None
+        )
+        if (
+            row is not None
+            and row.delivery_attempt_token is not None
+            and not resume_reserved_attempt
+        ):
             if _recover_pending_jira_issue(
                 tenant_id, jira_integration, row, finding_id
             ):
                 created_count += 1
             else:
-                record_skip(finding_id, row)
+                record_skip(finding_id)
             continue
 
-        needs_replacement = False
-        if row is not None and row.is_linked:
+        needs_replacement = bool(resume_reserved_attempt and row.is_linked)
+        if not resume_reserved_attempt and row is not None and row.is_linked:
             status_result = statuses.get(str(row.id))
             if status_result is None or not _apply_jira_issue_status(
                 tenant_id, row, status_result
             ):
-                record_skip(finding_id, row)
+                record_skip(finding_id)
                 continue
             needs_replacement = (
                 status_result.outcome == JiraIssueLookupOutcome.DONE
@@ -1035,10 +1112,10 @@ def send_findings_to_jira(
                 )
             )
             if not needs_replacement:
-                record_skip(finding_id, row)
+                record_skip(finding_id)
                 continue
-        elif row is not None:
-            record_skip(finding_id, row)
+        elif not resume_reserved_attempt and row is not None:
+            record_skip(finding_id)
             continue
 
         try:
@@ -1055,22 +1132,29 @@ def send_findings_to_jira(
             error_messages.append(JIRA_GENERIC_SEND_ERROR)
             continue
 
-        if needs_replacement:
-            row = _reserve_jira_issue_replacement(tenant_id, row, finding_id)
-        else:
-            row = _reserve_initial_jira_issue(
-                tenant_id,
-                integration_id,
-                provider_id,
-                finding_uid,
-                finding_id,
-            )
+        previous_issue_id = row.issue_id if needs_replacement else None
+        if not resume_reserved_attempt:
+            if needs_replacement:
+                row = _reserve_jira_issue_replacement(tenant_id, row, finding_id)
+            else:
+                row = _reserve_initial_jira_issue(
+                    tenant_id,
+                    integration_id,
+                    provider_id,
+                    finding_uid,
+                    finding_id,
+                )
         if row is None:
-            record_skip(finding_id, existing.get(identity))
+            record_lost_attempt(finding_id, identity, previous_issue_id)
             continue
         existing[identity] = row
 
         delivery_attempt_token = row.delivery_attempt_token
+        if delivery_attempt_token is None or not _start_jira_delivery_attempt(
+            tenant_id, row, delivery_attempt_token
+        ):
+            record_lost_attempt(finding_id, identity, previous_issue_id)
+            continue
         creation_result = _send_reserved_jira_finding(
             jira_integration, payload, delivery_attempt_token
         )

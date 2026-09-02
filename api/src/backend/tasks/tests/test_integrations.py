@@ -25,6 +25,7 @@ from tasks.jobs.integrations import (
     _link_jira_issue,
     _release_jira_delivery_attempt,
     _reserve_jira_issue_replacement,
+    _start_jira_delivery_attempt,
     build_jira_finding_url,
     build_jira_issue_labels,
     get_s3_client_from_integration,
@@ -2544,6 +2545,7 @@ class TestJiraIssueDedup:
         result = self._send(jira_integration_fixture, jira_mock, [finding.id])
 
         assert result["skipped_count"] == 1
+        assert result["skipped"] == [{"finding_id": str(finding.id)}]
         jira_mock.send_finding.assert_not_called()
         row = self._row(jira_integration_fixture, finding)
         assert row.issue_status == "In Progress"
@@ -2714,6 +2716,125 @@ class TestJiraIssueDedup:
         row = self._row(jira_integration_fixture, finding)
         assert row.issue_id is None
         assert row.delivery_attempt_token is not None
+        assert row.delivery_started_at is not None
+
+    def test_unstarted_reservation_is_resumed_without_marker_lookup(
+        self, jira_mock, jira_integration_fixture, findings_fixture
+    ):
+        finding, _ = findings_fixture
+        marker = uuid4()
+        with rls_transaction(str(jira_integration_fixture.tenant_id)):
+            JiraIssue.objects.create(
+                tenant_id=jira_integration_fixture.tenant_id,
+                integration=jira_integration_fixture,
+                provider_id=finding.scan.provider_id,
+                finding_uid=finding.uid,
+                finding_id=finding.id,
+                delivery_attempt_token=marker,
+            )
+
+        result = self._send(jira_integration_fixture, jira_mock, [finding.id])
+
+        assert result == {"created_count": 1, "skipped_count": 0, "failed_count": 0}
+        jira_mock.send_finding.assert_called_once()
+        assert jira_mock.send_finding.call_args.kwargs[
+            "delivery_attempt_marker"
+        ] == str(marker)
+        jira_mock.search_issues_by_delivery_attempt.assert_not_called()
+        row = self._row(jira_integration_fixture, finding)
+        assert row.issue_id == "10001"
+        assert row.delivery_attempt_token is None
+        assert row.delivery_started_at is None
+
+    def test_only_one_worker_can_start_reserved_delivery(
+        self, jira_integration_fixture, findings_fixture
+    ):
+        finding, _ = findings_fixture
+        marker = uuid4()
+        with rls_transaction(str(jira_integration_fixture.tenant_id)):
+            row = JiraIssue.objects.create(
+                tenant_id=jira_integration_fixture.tenant_id,
+                integration=jira_integration_fixture,
+                provider_id=finding.scan.provider_id,
+                finding_uid=finding.uid,
+                finding_id=finding.id,
+                delivery_attempt_token=marker,
+            )
+            stale_row = JiraIssue.objects.get(id=row.id)
+
+        tenant_id = str(jira_integration_fixture.tenant_id)
+        assert _start_jira_delivery_attempt(tenant_id, row, marker) is True
+        assert _start_jira_delivery_attempt(tenant_id, stale_row, marker) is False
+
+    def test_lost_initial_reservation_without_current_owner_is_failed(
+        self, jira_mock, jira_integration_fixture, findings_fixture
+    ):
+        finding, _ = findings_fixture
+        with patch(
+            "tasks.jobs.integrations._reserve_initial_jira_issue",
+            return_value=None,
+        ):
+            result = self._send(jira_integration_fixture, jira_mock, [finding.id])
+
+        assert result["created_count"] == 0
+        assert result["skipped_count"] == 0
+        assert result["failed_count"] == 1
+        jira_mock.send_finding.assert_not_called()
+
+    def test_lost_initial_reservation_with_current_owner_is_skipped(
+        self, jira_mock, jira_integration_fixture, findings_fixture
+    ):
+        finding, _ = findings_fixture
+
+        def reserve_in_another_worker(*_args):
+            with rls_transaction(str(jira_integration_fixture.tenant_id)):
+                JiraIssue.objects.create(
+                    tenant_id=jira_integration_fixture.tenant_id,
+                    integration=jira_integration_fixture,
+                    provider_id=finding.scan.provider_id,
+                    finding_uid=finding.uid,
+                    finding_id=finding.id,
+                    delivery_attempt_token=uuid4(),
+                    delivery_started_at=datetime.now(UTC),
+                )
+            return None
+
+        with patch(
+            "tasks.jobs.integrations._reserve_initial_jira_issue",
+            side_effect=reserve_in_another_worker,
+        ):
+            result = self._send(jira_integration_fixture, jira_mock, [finding.id])
+
+        assert result["created_count"] == 0
+        assert result["skipped_count"] == 1
+        assert result["failed_count"] == 0
+        jira_mock.send_finding.assert_not_called()
+
+    def test_lost_replacement_released_by_winner_is_failed(
+        self, jira_mock, jira_integration_fixture, findings_fixture
+    ):
+        finding, _ = findings_fixture
+        self._send(jira_integration_fixture, jira_mock, [finding.id])
+        original = self._row(jira_integration_fixture, finding)
+        jira_mock.get_issues_status.side_effect = self._status_results(
+            JiraIssueLookupOutcome.DONE
+        )
+        jira_mock.send_finding.reset_mock()
+
+        with patch(
+            "tasks.jobs.integrations._reserve_jira_issue_replacement",
+            return_value=None,
+        ):
+            result = self._send(jira_integration_fixture, jira_mock, [finding.id])
+
+        assert result["created_count"] == 0
+        assert result["skipped_count"] == 0
+        assert result["failed_count"] == 1
+        jira_mock.send_finding.assert_not_called()
+        row = self._row(jira_integration_fixture, finding)
+        assert row.issue_id == original.issue_id
+        assert row.delivery_attempt_token is None
+        assert row.delivery_started_at is None
 
     def test_unexpected_send_exception_retains_marker_without_leaking_details(
         self, jira_mock, jira_integration_fixture, findings_fixture
@@ -2798,6 +2919,7 @@ class TestJiraIssueDedup:
             original.issue_url,
         )
         assert row.delivery_attempt_token is not None
+        assert row.delivery_started_at is not None
 
     def test_pending_marker_with_one_match_links_without_another_post(
         self, jira_mock, jira_integration_fixture, findings_fixture

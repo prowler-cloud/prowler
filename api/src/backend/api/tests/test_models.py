@@ -566,6 +566,21 @@ class TestJiraIssueModel:
             )
         assert not issue.is_linked
 
+    def test_delivery_started_at_requires_attempt_token(
+        self, jira_integration_fixture, aws_provider, findings_fixture
+    ):
+        finding = findings_fixture[0]
+        with rls_transaction(str(jira_integration_fixture.tenant_id)):
+            with pytest.raises(IntegrityError), transaction.atomic():
+                JiraIssue.objects.create(
+                    tenant_id=jira_integration_fixture.tenant_id,
+                    integration=jira_integration_fixture,
+                    provider=aws_provider,
+                    finding_uid=finding.uid,
+                    finding_id=finding.id,
+                    delivery_started_at=datetime.now(UTC),
+                )
+
     def test_unique_per_integration_provider_and_finding_uid(
         self, jira_integration_fixture, aws_provider_pair, findings_fixture
     ):

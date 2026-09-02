@@ -3153,6 +3153,7 @@ class JiraIssue(RowLevelSecurityProtectedModel):
     )
     status_synced_at = models.DateTimeField(null=True, blank=True)
     delivery_attempt_token = models.UUIDField(null=True, blank=True)
+    delivery_started_at = models.DateTimeField(null=True, blank=True)
 
     class Meta(RowLevelSecurityProtectedModel.Meta):
         db_table = "jira_issues"
@@ -3166,6 +3167,13 @@ class JiraIssue(RowLevelSecurityProtectedModel):
                 fields=("delivery_attempt_token",),
                 condition=Q(delivery_attempt_token__isnull=False),
                 name="unique_jira_delivery_attempt",
+            ),
+            models.CheckConstraint(
+                condition=(
+                    Q(delivery_started_at__isnull=True)
+                    | Q(delivery_attempt_token__isnull=False)
+                ),
+                name="jira_delivery_started_requires_token",
             ),
             models.CheckConstraint(
                 condition=(

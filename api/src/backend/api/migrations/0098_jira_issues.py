@@ -66,6 +66,10 @@ class Migration(migrations.Migration):
                     models.UUIDField(blank=True, null=True),
                 ),
                 (
+                    "delivery_started_at",
+                    models.DateTimeField(blank=True, null=True),
+                ),
+                (
                     "integration",
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE,
@@ -106,6 +110,17 @@ class Migration(migrations.Migration):
                 condition=models.Q(("delivery_attempt_token__isnull", False)),
                 fields=("delivery_attempt_token",),
                 name="unique_jira_delivery_attempt",
+            ),
+        ),
+        migrations.AddConstraint(
+            model_name="jiraissue",
+            constraint=models.CheckConstraint(
+                condition=models.Q(
+                    ("delivery_started_at__isnull", True),
+                    ("delivery_attempt_token__isnull", False),
+                    _connector="OR",
+                ),
+                name="jira_delivery_started_requires_token",
             ),
         ),
         migrations.AddConstraint(

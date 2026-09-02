@@ -1378,8 +1378,8 @@ def security_hub_integration_task(
     return upload_security_hub_integration(tenant_id, provider_id, scan_id)
 
 
-# acks_late=False: Jira sends are not deduplicated and the task is not auto-recovered,
-# so a crashed send is dropped rather than redelivered (avoids duplicate Jira issues).
+# A Jira POST can remain ambiguous after worker loss, so this manual task stays
+# early-acknowledged and relies on a later explicit send for marker recovery.
 @shared_task(
     base=RLSTask,
     name="integration-jira",
