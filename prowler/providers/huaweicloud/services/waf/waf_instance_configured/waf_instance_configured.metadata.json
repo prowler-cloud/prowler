@@ -1,0 +1,36 @@
+{
+  "Provider": "huaweicloud",
+  "CheckID": "waf_instance_configured",
+  "CheckTitle": "At least one WAF instance is configured",
+  "CheckType": [],
+  "ServiceName": "waf",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "HUAWEICLOUD::WAF::Instance",
+  "ResourceGroup": "network",
+  "Description": "Ensure that at least one Web Application Firewall (WAF) instance is configured to protect web applications from common exploits.",
+  "Risk": "Without any WAF instances configured, web applications are exposed to common attacks such as SQL injection, cross-site scripting (XSS), and other OWASP Top 10 threats.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.huaweicloud.com/intl/en-us/usermanual-waf/waf_01_0001.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Log on to the Huawei Cloud console.\n2. Navigate to Web Application Firewall.\n3. Create a WAF instance (dedicated or cloud).\n4. Add protected websites/domains.\n5. Configure protection policies and rules.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Configure at least one WAF instance to protect web applications and APIs.",
+      "Url": "https://hub.prowler.com/check/waf_instance_configured"
+    }
+  },
+  "Categories": [
+    "threat-detection"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
