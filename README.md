@@ -285,7 +285,7 @@ Some pre-commit hooks require tools installed on your system:
 
 ## Prowler CLI
 ### Pip package
-Prowler CLI is available as a project in [PyPI](https://pypi.org/project/prowler-cloud/). Consequently, it can be installed using pip with Python >=3.10, <3.13:
+Prowler CLI is available as a project in [PyPI](https://pypi.org/project/prowler-cloud/). Consequently, it can be installed using pip with Python >=3.10, <3.15:
 
 ```console
 pip install prowler
@@ -317,7 +317,7 @@ The container images are available here:
 
 ### From GitHub
 
-Python >=3.10, <3.13 is required with [uv](https://docs.astral.sh/uv/):
+Python >=3.10, <3.15 is required with [uv](https://docs.astral.sh/uv/):
 
 ``` console
 git clone https://github.com/prowler-cloud/prowler

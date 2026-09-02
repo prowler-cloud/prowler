@@ -1,3 +1,4 @@
+import os
 from unittest import mock
 
 from boto3 import resource
@@ -23,6 +24,7 @@ def mock_generate_regional_clients(provider, service):
     "prowler.providers.aws.aws_provider.AwsProvider.generate_regional_clients",
     new=mock_generate_regional_clients,
 )
+@patch.dict(os.environ, {"MOTO_EC2_LOAD_DEFAULT_AMIS": "false"})
 class Test_ec2_ebs_snapshots_encrypted:
     @mock_aws
     def test_ec2_default_snapshots(self):
@@ -50,8 +52,7 @@ class Test_ec2_ebs_snapshots_encrypted:
             check = ec2_ebs_snapshots_encrypted()
             result = check.execute()
 
-            # Default snapshots (moto 5.1.11 creates additional default snapshots)
-            assert len(result) == 565
+            assert result == []
 
     @mock_aws
     def test_ec2_unencrypted_snapshot(self):
@@ -84,22 +85,17 @@ class Test_ec2_ebs_snapshots_encrypted:
             check = ec2_ebs_snapshots_encrypted()
             results = check.execute()
 
-            # Default snapshots + 1 created (moto 5.1.11 creates additional default snapshots)
-            assert len(results) == 566
-
-            for snap in results:
-                if snap.resource_id == snapshot.id:
-                    assert snap.region == AWS_REGION_US_EAST_1
-                    assert snap.resource_tags == []
-                    assert snap.status == "FAIL"
-                    assert (
-                        snap.status_extended
-                        == f"EBS Snapshot {snapshot.id} is unencrypted."
-                    )
-                    assert (
-                        snap.resource_arn
-                        == f"arn:{aws_provider.identity.partition}:ec2:{AWS_REGION_US_EAST_1}:{aws_provider.identity.account}:snapshot/{snapshot.id}"
-                    )
+            assert len(results) == 1
+            snap = results[0]
+            assert snap.resource_id == snapshot.id
+            assert snap.region == AWS_REGION_US_EAST_1
+            assert snap.resource_tags == []
+            assert snap.status == "FAIL"
+            assert snap.status_extended == f"EBS Snapshot {snapshot.id} is unencrypted."
+            assert (
+                snap.resource_arn
+                == f"arn:{aws_provider.identity.partition}:ec2:{AWS_REGION_US_EAST_1}:{aws_provider.identity.account}:snapshot/{snapshot.id}"
+            )
 
     @mock_aws
     def test_ec2_encrypted_snapshot(self):
@@ -134,19 +130,14 @@ class Test_ec2_ebs_snapshots_encrypted:
             check = ec2_ebs_snapshots_encrypted()
             results = check.execute()
 
-            # Default snapshots + 1 created (moto 5.1.11 creates additional default snapshots)
-            assert len(results) == 566
-
-            for snap in results:
-                if snap.resource_id == snapshot.id:
-                    assert snap.region == AWS_REGION_US_EAST_1
-                    assert snap.resource_tags == []
-                    assert snap.status == "PASS"
-                    assert (
-                        snap.status_extended
-                        == f"EBS Snapshot {snapshot.id} is encrypted."
-                    )
-                    assert (
-                        snap.resource_arn
-                        == f"arn:{aws_provider.identity.partition}:ec2:{AWS_REGION_US_EAST_1}:{aws_provider.identity.account}:snapshot/{snapshot.id}"
-                    )
+            assert len(results) == 1
+            snap = results[0]
+            assert snap.resource_id == snapshot.id
+            assert snap.region == AWS_REGION_US_EAST_1
+            assert snap.resource_tags == []
+            assert snap.status == "PASS"
+            assert snap.status_extended == f"EBS Snapshot {snapshot.id} is encrypted."
+            assert (
+                snap.resource_arn
+                == f"arn:{aws_provider.identity.partition}:ec2:{AWS_REGION_US_EAST_1}:{aws_provider.identity.account}:snapshot/{snapshot.id}"
+            )
