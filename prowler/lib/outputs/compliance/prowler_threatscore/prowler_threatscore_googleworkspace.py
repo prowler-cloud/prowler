@@ -32,13 +32,10 @@ class ProwlerThreatScoreGoogleWorkspace(ComplianceOutput):
         """
         Transforms a list of findings into Google Workspace Prowler ThreatScore compliance format.
 
-        Parameters:
-            - findings (list): A list of findings.
-            - compliance (Compliance): A compliance model.
-            - compliance_name (str): The name of the compliance model.
-
-        Returns:
-            - None
+        Args:
+            findings: Findings to transform.
+            compliance: Compliance framework definition.
+            compliance_name: Compliance framework name.
         """
         requirement_config_status = build_requirement_config_status(
             compliance.Requirements
