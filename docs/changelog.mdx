@@ -5,7 +5,7 @@ rss: true
 ---
 
 <Update label="v5.41.0" description="September 2, 2026">
-  ### 📥 Scans — Import Findings from the App
+  ### 📥 Scans — Import Findings from the Scans Page
 
   <Note>
   This feature is available exclusively in **Prowler Cloud** and **Prowler Private Cloud** with a [subscription](https://prowler.com/pricing).
@@ -79,7 +79,7 @@ rss: true
 
   ### 🐳 Image Provider — On-Premises Registries
 
-  Scanning registries that live on private networks is now supported end to end. `PROWLER_IMAGE_PROVIDER_ALLOWED_PRIVATE_NETWORKS` takes a comma-separated list of IPs and CIDRs the provider may reach, while every other non-public address, including link-local and loopback, stays blocked by the SSRF guard. Authentication negotiation is also more resilient: the provider falls back to Basic when a registry such as Harbor rejects the negotiated bearer token, and switches to a bearer token when the server answers a Basic or anonymous request with a Bearer challenge. `--registry-insecure` now propagates to Trivy through `TRIVY_INSECURE`, so images behind self-signed certificates can be pulled and scanned, not just enumerated.
+  Scanning registries that live on private networks is now supported end to end. `PROWLER_IMAGE_PROVIDER_ALLOWED_PRIVATE_NETWORKS` takes a comma-separated list of IPs and CIDRs the provider may reach, while every other non-public address, including link-local and loopback, stays blocked by the SSRF guard. Authentication negotiation is also more resilient: the provider falls back to Basic when a registry such as Harbor rejects the negotiated bearer token, and switches to a bearer token when the server answers a Basic or anonymous request with a Bearer challenge. `--registry-insecure` now propagates to Trivy through `TRIVY_INSECURE`, so images behind self-signed certificates can be pulled and scanned, not just enumerated. The flag now disables certificate validation for the image pull too, so keep it for trusted internal registries only.
 
   Registry scans also skip non-image OCI artifacts (Helm charts, cosign signatures, SBOM attestations), no longer abort the whole scan when Trivy fails on a single image, and enumerate repositories in parallel instead of one request at a time.
 
