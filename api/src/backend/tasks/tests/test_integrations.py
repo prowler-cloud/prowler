@@ -1690,6 +1690,7 @@ class TestJiraIntegration:
             _refresh_jira_issue_statuses=MagicMock(return_value={}),
             _reserve_initial_jira_issue=MagicMock(return_value=reservation),
             _reserve_jira_issue_replacement=MagicMock(return_value=reservation),
+            _start_jira_delivery_attempt=MagicMock(return_value=True),
             _link_jira_issue=MagicMock(return_value=True),
             _release_jira_delivery_attempt=MagicMock(return_value=True),
         ):

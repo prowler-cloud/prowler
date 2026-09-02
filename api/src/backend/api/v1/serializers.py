@@ -51,6 +51,7 @@ from api.v1.serializer_utils.integrations import (
     S3ConfigSerializer,
     SecurityHubConfigSerializer,
     replace_integration_providers,
+    sanitize_integration_task_result,
 )
 from api.v1.serializer_utils.lighthouse import (
     BedrockCredentialsSerializer,
@@ -639,19 +640,8 @@ class TaskSerializer(RLSSerializer, TaskBase):
     @extend_schema_field(serializers.JSONField())
     def get_result(self, obj):
         result = self.get_json_field(obj, "result")
-        if (
-            isinstance(result, dict)
-            and obj.task_runner_task
-            and obj.task_runner_task.task_name == "integration-jira"
-        ):
-            skipped = result.get("skipped")
-            if isinstance(skipped, list):
-                result["skipped"] = [
-                    {"finding_id": entry["finding_id"]}
-                    for entry in skipped
-                    if isinstance(entry, dict) and "finding_id" in entry
-                ]
-        return result
+        task_name = obj.task_runner_task.task_name if obj.task_runner_task else None
+        return sanitize_integration_task_result(task_name, result)
 
     @extend_schema_field(serializers.JSONField())
     def get_task_args(self, obj):

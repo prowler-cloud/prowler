@@ -1,5 +1,6 @@
 import os
 import re
+from typing import Any
 
 from api.models import Integration, IntegrationProviderRelationship, Provider
 from api.v1.serializer_utils.base import BaseValidateSerializer
@@ -10,6 +11,24 @@ from rest_framework_json_api import serializers
 ATLASSIAN_SITE_NAME_REGEX = re.compile(
     r"\A[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\Z"
 )
+
+
+def sanitize_integration_task_result(task_name: str | None, result: Any) -> Any:
+    """Remove private integration metadata from task results."""
+    if task_name != "integration-jira" or not isinstance(result, dict):
+        return result
+
+    skipped = result.get("skipped")
+    if not isinstance(skipped, list):
+        return result
+
+    sanitized_result = result.copy()
+    sanitized_result["skipped"] = [
+        {"finding_id": entry["finding_id"]}
+        for entry in skipped
+        if isinstance(entry, dict) and "finding_id" in entry
+    ]
+    return sanitized_result
 
 
 def replace_integration_providers(

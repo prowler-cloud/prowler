@@ -147,7 +147,7 @@ Prowler remembers each confirmed Jira issue created for a Finding, keyed by the 
 * If the linked issue has a Jira status in the **Done** category, Prowler creates a replacement and links the Finding to the new issue after Jira confirms it.
 * If Jira reports that the issue is missing or forbidden, or its status cannot be determined safely, Prowler keeps the existing link and skips the Finding.
 
-The link, and the last status observed in Jira, are available through the API at `GET /api/v1/jira-issues` (filter by `finding_uid`, `finding_uid__in`, `provider_id`, `integration` or `issue_key`). Each Jira integration keeps its own links, so the same Finding can have one issue per integration.
+The link, and the last status observed in Jira, are available through the API at `GET /api/v1/jira-issues` (filter by `finding_uid`, `finding_uid__in`, `provider_id`, `integration`, `issue_key`, `issue_status_category` or `issue_status_category__in`). Each Jira integration keeps its own links, so the same Finding can have one issue per integration.
 
 Prowler uses a private delivery marker to check whether Jira created an issue when a delivery result is uncertain. A reservation that stopped before the delivery attempt began can be resumed safely by a later explicit send. After an attempt starts, Prowler searches Jira by the marker: exactly one matching issue completes the link, while no match, multiple matches, or a lookup error keeps the reservation and prevents an automatic retry. A process failure after the attempt starts but before Jira receives the request can still require manual investigation because Prowler cannot prove whether Jira accepted the request.
 
