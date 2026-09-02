@@ -1,5 +1,4 @@
 from prowler.lib.check.models import Check_Report_AWS
-from prowler.providers.aws.services.kms.kms_client import kms_client
 
 
 def generate_scan_error_reports(
@@ -21,6 +20,8 @@ def generate_scan_error_reports(
         list[Check_Report_AWS]: List of MANUAL report findings for regional scan errors.
     """
     if client is None:
+        from prowler.providers.aws.services.kms.kms_client import kms_client
+
         client = kms_client
     if keys_scan_errors is None:
         keys_scan_errors = getattr(client, "keys_scan_errors", {})

@@ -288,3 +288,65 @@ class Test_KMS_Service:
         target = next(k for k in kms.keys if k.id == key["KeyId"])
         assert target.detail_retrieved is False
         assert target.describe_error == "RuntimeError"
+
+    # Test KMS Describe Key ClientError failure records describe_error code
+    @mock_aws
+    def test_describe_key_client_error_records_describe_error(self):
+        from botocore.exceptions import ClientError
+
+        kms_client = client("kms", region_name=AWS_REGION_US_EAST_1)
+        key = kms_client.create_key(MultiRegion=False)["KeyMetadata"]
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        kms = KMS(aws_provider)
+
+        def _boom(**_):
+            raise ClientError(
+                {
+                    "Error": {
+                        "Code": "AccessDeniedException",
+                        "Message": "not authorized",
+                    }
+                },
+                "DescribeKey",
+            )
+
+        kms.regional_clients[AWS_REGION_US_EAST_1].describe_key = _boom
+        for k in kms.keys:
+            k.detail_retrieved = False
+            k.describe_error = None
+        kms._describe_key()
+
+        target = next(k for k in kms.keys if k.id == key["KeyId"])
+        assert target.detail_retrieved is False
+        assert target.describe_error == "AccessDeniedException"
+
+    # Test KMS Get Key Policy ClientError records policy_fetch_error code
+    @mock_aws
+    def test_get_key_policy_client_error_records_error(self):
+        from botocore.exceptions import ClientError
+
+        kms_client = client("kms", region_name=AWS_REGION_US_EAST_1)
+        key = kms_client.create_key(MultiRegion=False)["KeyMetadata"]
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        kms = KMS(aws_provider)
+
+        def _boom(**_):
+            raise ClientError(
+                {
+                    "Error": {
+                        "Code": "AccessDeniedException",
+                        "Message": "not authorized",
+                    }
+                },
+                "GetKeyPolicy",
+            )
+
+        kms.regional_clients[AWS_REGION_US_EAST_1].get_key_policy = _boom
+        for k in kms.keys:
+            k.policy = None
+            k.policy_fetch_error = None
+        kms._get_key_policy()
+
+        target = next(k for k in kms.keys if k.id == key["KeyId"])
+        assert target.policy is None
+        assert target.policy_fetch_error == "AccessDeniedException"

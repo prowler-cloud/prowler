@@ -459,6 +459,83 @@ class Test_kms_key_enclave_debug_attestation_detected:
         assert len(result) == 1
         assert result[0].status == "MANUAL"
 
+    def test_kms_scan_error(self):
+        cloudtrail_client = mock.MagicMock()
+        cloudtrail_client.trails = {"t": _mock_trail()}
+        cloudtrail_client.regional_clients = {AWS_REGION_US_EAST_1: mock.MagicMock()}
+        cloudtrail_client._lookup_events_page.return_value = ([], False, None)
+
+        kms_client = mock.MagicMock()
+        kms_client.keys = []
+        kms_client.keys_scan_errors = {AWS_REGION_US_EAST_1: "AccessDeniedException"}
+        kms_client.audit_config = {}
+        kms_client.audited_account = AWS_ACCOUNT_NUMBER
+        kms_client.audited_partition = "aws"
+        kms_client.region = AWS_REGION_US_EAST_1
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
+            ),
+            mock.patch(f"{CHECK_MODULE}.kms_client", new=kms_client),
+            mock.patch(f"{CHECK_MODULE}.cloudtrail_client", new=cloudtrail_client),
+        ):
+            from prowler.providers.aws.services.kms.kms_key_enclave_debug_attestation_detected.kms_key_enclave_debug_attestation_detected import (
+                kms_key_enclave_debug_attestation_detected,
+            )
+
+            result = kms_key_enclave_debug_attestation_detected().execute()
+            assert len(result) == 1
+            assert result[0].status == "MANUAL"
+            assert (
+                result[0].status_extended
+                == f"KMS keys could not be listed in region {AWS_REGION_US_EAST_1} (AccessDeniedException); verify manually that enclave-scoped keys do not use debug-mode attestation."
+            )
+            assert result[0].resource_id == "key/unknown"
+
+    def test_kms_key_describe_error(self):
+        key = mock.MagicMock()
+        key.arn = KEY_ARN_A
+        key.id = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+        key.region = AWS_REGION_US_EAST_1
+        key.detail_retrieved = False
+        key.describe_error = "AccessDeniedException"
+
+        cloudtrail_client = mock.MagicMock()
+        cloudtrail_client.trails = {"t": _mock_trail()}
+        cloudtrail_client.regional_clients = {AWS_REGION_US_EAST_1: mock.MagicMock()}
+        cloudtrail_client._lookup_events_page.return_value = ([], False, None)
+
+        kms_client = mock.MagicMock()
+        kms_client.keys = [key]
+        kms_client.keys_scan_errors = {}
+        kms_client.audit_config = {}
+        kms_client.audited_account = AWS_ACCOUNT_NUMBER
+        kms_client.audited_partition = "aws"
+        kms_client.region = AWS_REGION_US_EAST_1
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
+            ),
+            mock.patch(f"{CHECK_MODULE}.kms_client", new=kms_client),
+            mock.patch(f"{CHECK_MODULE}.cloudtrail_client", new=cloudtrail_client),
+        ):
+            from prowler.providers.aws.services.kms.kms_key_enclave_debug_attestation_detected.kms_key_enclave_debug_attestation_detected import (
+                kms_key_enclave_debug_attestation_detected,
+            )
+
+            result = kms_key_enclave_debug_attestation_detected().execute()
+            assert len(result) == 1
+            assert result[0].status == "MANUAL"
+            assert (
+                result[0].status_extended
+                == f"KMS key {key.id} details could not be retrieved (AccessDeniedException); verify manually that enclave-scoped keys do not use debug-mode attestation."
+            )
+            assert result[0].resource_id == key.id
+
     def test_missing_module_id_dropped(self):
         # A recipient without attestationDocumentModuleId (or without "-enc")
         # should be treated as non-enclave and dropped by parse_enclave_kms_event.
