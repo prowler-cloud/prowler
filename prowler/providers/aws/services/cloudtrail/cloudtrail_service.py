@@ -1,5 +1,6 @@
+import json
 from datetime import datetime, timedelta
-from typing import Optional
+from typing import Any, Optional
 
 from botocore.client import ClientError
 from pydantic.v1 import BaseModel
@@ -294,3 +295,84 @@ class Trail(BaseModel):
     data_events: list[Event_Selector] = []
     tags: Optional[list] = []
     has_insight_selectors: str = None
+
+
+class CloudTrailThreatDetectionResource(BaseModel):
+    id: str
+    name: str
+    arn: str
+    region: str
+    identity_type: str
+    source_arn: str
+
+
+def normalize_cloudtrail_identity(
+    user_identity: dict, region: str
+) -> Optional[CloudTrailThreatDetectionResource]:
+    source_arn = user_identity.get("arn")
+    if not source_arn:
+        return None
+
+    identity_type = user_identity.get("type", "Unknown")
+    identity_arn = source_arn
+    if identity_type == "AssumedRole":
+        identity_arn = (
+            user_identity.get("sessionContext", {}).get("sessionIssuer", {}).get("arn")
+            or source_arn
+        )
+
+    resource_component = identity_arn.split(":", 5)[-1]
+    name = resource_component.rsplit("/", 1)[-1]
+    if identity_type == "AssumedRole" and identity_arn == source_arn:
+        name = resource_component.removeprefix("assumed-role/").split("/", 1)[0]
+
+    return CloudTrailThreatDetectionResource(
+        id=resource_component,
+        name=name,
+        arn=identity_arn,
+        region=region,
+        identity_type=identity_type,
+        source_arn=source_arn,
+    )
+
+
+def get_cloudtrail_threat_detection_identities(
+    cloudtrail_client: Any, actions: list[str], minutes: int
+) -> dict[str, tuple[CloudTrailThreatDetectionResource, set[str]]]:
+    identities = {}
+    multiregion_trail = next(
+        (trail for trail in cloudtrail_client.trails.values() if trail.is_multiregion),
+        None,
+    )
+    trails_to_scan = (
+        [multiregion_trail] if multiregion_trail else cloudtrail_client.trails.values()
+    )
+
+    for trail in trails_to_scan:
+        for action in actions:
+            for event_log in cloudtrail_client._lookup_events(
+                trail=trail, event_name=action, minutes=minutes
+            ):
+                event = json.loads(event_log["CloudTrailEvent"])
+                resource = normalize_cloudtrail_identity(
+                    event.get("userIdentity", {}), cloudtrail_client.region
+                )
+                if resource:
+                    identities.setdefault(resource.arn, (resource, set()))[1].add(
+                        action
+                    )
+
+    return identities
+
+
+def get_cloudtrail_account_resource(
+    account_id: str, account_arn: str, region: str
+) -> CloudTrailThreatDetectionResource:
+    return CloudTrailThreatDetectionResource(
+        id=account_id,
+        name=account_id,
+        arn=account_arn,
+        region=region,
+        identity_type="AWSAccount",
+        source_arn=account_arn,
+    )

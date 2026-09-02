@@ -1,7 +1,14 @@
+import json
+from unittest import mock
+
 from boto3 import client
 from moto import mock_aws
 
-from prowler.providers.aws.services.cloudtrail.cloudtrail_service import Cloudtrail
+from prowler.providers.aws.services.cloudtrail.cloudtrail_service import (
+    Cloudtrail,
+    get_cloudtrail_threat_detection_identities,
+    normalize_cloudtrail_identity,
+)
 from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_SOUTH_2,
@@ -343,3 +350,227 @@ class Test_Cloudtrail_Service:
             if trail.name:
                 if trail.name == trail_name_us:
                     assert trail.tags == [{"Key": "test", "Value": tag}]
+
+
+class Test_normalize_cloudtrail_identity:
+    def test_iam_user_with_path(self):
+        identity_arn = (
+            f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:user/engineering/platform/attacker"
+        )
+
+        resource = normalize_cloudtrail_identity(
+            {"type": "IAMUser", "arn": identity_arn}, AWS_REGION_US_EAST_1
+        )
+
+        assert resource.id == "user/engineering/platform/attacker"
+        assert resource.name == "attacker"
+        assert resource.arn == identity_arn
+        assert resource.region == AWS_REGION_US_EAST_1
+        assert resource.identity_type == "IAMUser"
+        assert resource.source_arn == identity_arn
+
+    def test_assumed_role_with_session_issuer(self):
+        source_arn = (
+            f"arn:aws:sts::{AWS_ACCOUNT_NUMBER}:assumed-role/platform/admin/session-one"
+        )
+        role_arn = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:role/platform/admin"
+
+        resource = normalize_cloudtrail_identity(
+            {
+                "type": "AssumedRole",
+                "arn": source_arn,
+                "sessionContext": {"sessionIssuer": {"arn": role_arn}},
+            },
+            AWS_REGION_US_EAST_1,
+        )
+
+        assert resource.id == "role/platform/admin"
+        assert resource.name == "admin"
+        assert resource.arn == role_arn
+        assert resource.identity_type == "AssumedRole"
+        assert resource.source_arn == source_arn
+
+    def test_assumed_role_without_session_issuer(self):
+        source_arn = (
+            f"arn:aws:sts::{AWS_ACCOUNT_NUMBER}:assumed-role/platform-admin/session-one"
+        )
+
+        resource = normalize_cloudtrail_identity(
+            {"type": "AssumedRole", "arn": source_arn}, AWS_REGION_US_EAST_1
+        )
+
+        assert resource.id == "assumed-role/platform-admin/session-one"
+        assert resource.name == "platform-admin"
+        assert resource.arn == source_arn
+        assert resource.source_arn == source_arn
+
+    def test_user_and_role_with_same_leaf_name_are_distinct(self):
+        user = normalize_cloudtrail_identity(
+            {
+                "type": "IAMUser",
+                "arn": f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:user/team/operator",
+            },
+            AWS_REGION_US_EAST_1,
+        )
+        role = normalize_cloudtrail_identity(
+            {
+                "type": "AssumedRole",
+                "arn": f"arn:aws:sts::{AWS_ACCOUNT_NUMBER}:assumed-role/operator/session",
+                "sessionContext": {
+                    "sessionIssuer": {
+                        "arn": f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:role/team/operator"
+                    }
+                },
+            },
+            AWS_REGION_US_EAST_1,
+        )
+
+        assert user.id == "user/team/operator"
+        assert role.id == "role/team/operator"
+
+    def test_roles_with_same_session_name_are_distinct(self):
+        first_role = normalize_cloudtrail_identity(
+            {
+                "type": "AssumedRole",
+                "arn": f"arn:aws:sts::{AWS_ACCOUNT_NUMBER}:assumed-role/first/shared-session",
+                "sessionContext": {
+                    "sessionIssuer": {
+                        "arn": f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:role/first"
+                    }
+                },
+            },
+            AWS_REGION_US_EAST_1,
+        )
+        second_role = normalize_cloudtrail_identity(
+            {
+                "type": "AssumedRole",
+                "arn": f"arn:aws:sts::{AWS_ACCOUNT_NUMBER}:assumed-role/second/shared-session",
+                "sessionContext": {
+                    "sessionIssuer": {
+                        "arn": f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:role/second"
+                    }
+                },
+            },
+            AWS_REGION_US_EAST_1,
+        )
+
+        assert first_role.id == "role/first"
+        assert second_role.id == "role/second"
+
+    def test_federated_user(self):
+        identity_arn = f"arn:aws:sts::{AWS_ACCOUNT_NUMBER}:federated-user/external-user"
+
+        resource = normalize_cloudtrail_identity(
+            {"type": "FederatedUser", "arn": identity_arn},
+            AWS_REGION_US_EAST_1,
+        )
+
+        assert resource.id == "federated-user/external-user"
+        assert resource.name == "external-user"
+        assert resource.arn == identity_arn
+
+    def test_root(self):
+        identity_arn = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
+
+        resource = normalize_cloudtrail_identity(
+            {"type": "Root", "arn": identity_arn}, AWS_REGION_US_EAST_1
+        )
+
+        assert resource.id == "root"
+        assert resource.name == "root"
+        assert resource.arn == identity_arn
+
+    def test_unknown_identity_with_arn(self):
+        identity_arn = (
+            f"arn:aws:custom:us-east-1:{AWS_ACCOUNT_NUMBER}:resource/path/name"
+        )
+
+        resource = normalize_cloudtrail_identity(
+            {"type": "UnknownType", "arn": identity_arn}, AWS_REGION_US_EAST_1
+        )
+
+        assert resource.id == "resource/path/name"
+        assert resource.name == "name"
+        assert resource.arn == identity_arn
+
+    def test_identity_without_arn_is_ignored(self):
+        assert (
+            normalize_cloudtrail_identity({"type": "AWSService"}, AWS_REGION_US_EAST_1)
+            is None
+        )
+
+
+class Test_get_cloudtrail_threat_detection_identities:
+    def test_same_role_sessions_aggregate_by_canonical_role_arn(self):
+        role_arn = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:role/platform/admin"
+        cloudtrail_client = mock.MagicMock()
+        cloudtrail_client.region = AWS_REGION_US_EAST_1
+        cloudtrail_client.trails = {"trail": mock.MagicMock(is_multiregion=False)}
+
+        def lookup_events(trail, event_name, minutes):
+            session_name = "session-one" if event_name == "ActionOne" else "session-two"
+            return [
+                {
+                    "CloudTrailEvent": json.dumps(
+                        {
+                            "userIdentity": {
+                                "type": "AssumedRole",
+                                "arn": f"arn:aws:sts::{AWS_ACCOUNT_NUMBER}:assumed-role/admin/{session_name}",
+                                "sessionContext": {"sessionIssuer": {"arn": role_arn}},
+                            }
+                        }
+                    )
+                }
+            ]
+
+        cloudtrail_client._lookup_events = lookup_events
+
+        identities = get_cloudtrail_threat_detection_identities(
+            cloudtrail_client, ["ActionOne", "ActionTwo"], 60
+        )
+
+        assert list(identities) == [role_arn]
+        resource, actions = identities[role_arn]
+        assert resource.id == "role/platform/admin"
+        assert actions == {"ActionOne", "ActionTwo"}
+
+    def test_different_roles_with_same_session_name_remain_distinct(self):
+        first_role_arn = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:role/first"
+        second_role_arn = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:role/second"
+        cloudtrail_client = mock.MagicMock()
+        cloudtrail_client.region = AWS_REGION_US_EAST_1
+        cloudtrail_client.trails = {"trail": mock.MagicMock(is_multiregion=False)}
+        cloudtrail_client._lookup_events = lambda trail, event_name, minutes: [
+            {
+                "CloudTrailEvent": json.dumps(
+                    {
+                        "userIdentity": {
+                            "type": "AssumedRole",
+                            "arn": f"arn:aws:sts::{AWS_ACCOUNT_NUMBER}:assumed-role/first/shared-session",
+                            "sessionContext": {
+                                "sessionIssuer": {"arn": first_role_arn}
+                            },
+                        }
+                    }
+                )
+            },
+            {
+                "CloudTrailEvent": json.dumps(
+                    {
+                        "userIdentity": {
+                            "type": "AssumedRole",
+                            "arn": f"arn:aws:sts::{AWS_ACCOUNT_NUMBER}:assumed-role/second/shared-session",
+                            "sessionContext": {
+                                "sessionIssuer": {"arn": second_role_arn}
+                            },
+                        }
+                    }
+                )
+            },
+        ]
+
+        identities = get_cloudtrail_threat_detection_identities(
+            cloudtrail_client, ["ActionOne"], 60
+        )
+
+        assert set(identities) == {first_role_arn, second_role_arn}

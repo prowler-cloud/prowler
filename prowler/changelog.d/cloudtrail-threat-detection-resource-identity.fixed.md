@@ -1,0 +1,1 @@
+`cloudtrail_threat_detection_enumeration`, `cloudtrail_threat_detection_privilege_escalation`, and `cloudtrail_threat_detection_llm_jacking` now emit stable principal resource identities with consistent metadata
