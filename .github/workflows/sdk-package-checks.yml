@@ -120,6 +120,8 @@ jobs:
             github.com:443
             api.github.com:443
             release-assets.githubusercontent.com:443
+            results-receiver.actions.githubusercontent.com:443
+            *.blob.core.windows.net:443
             pypi.org:443
             files.pythonhosted.org:443
 
@@ -146,6 +148,15 @@ jobs:
       - name: Check metadata with the release workflow's twine
         run: uvx --from "twine==${TWINE_VERSION}" twine check --strict dist/*
 
+      - name: Upload Prowler wheel for portability checks
+        if: matrix.python-version == '3.14' && matrix.package == 'prowler'
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: prowler-python-3.14-wheel
+          path: dist/prowler-*.whl
+          if-no-files-found: error
+          retention-days: 1
+
       - name: Install the wheel with pip into a clean virtualenv
         # Plain pip, --isolated, from outside the repo: consumers never see [tool.uv]
         # override-dependencies or constraint-dependencies, so neither does this step.
@@ -162,6 +173,85 @@ jobs:
           # Loads every AWS check module from the installed wheel: catches files missing
           # from the package. grep fails the step if the summary line never appears.
           "${RUNNER_TEMP}/consumer/bin/prowler" aws --list-checks | grep 'available checks'
+
+  python-3-14-binary-wheel-portability:
+    needs: install-from-wheel
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 10
+    permissions:
+      actions: read
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        runner:
+          - ubuntu-latest
+          - macos-15-intel
+          - macos-15
+          - windows-latest
+
+    steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
+        with:
+          # Block mode is unavailable on GitHub-hosted macOS and Windows runners.
+          egress-policy: audit
+
+      - name: Set up Python 3.14
+        uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
+        with:
+          python-version: '3.14'
+
+      - name: Download built Prowler wheel
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: prowler-python-3.14-wheel
+          path: dist
+
+      - name: Extract NumPy and pandas requirements from wheel metadata
+        shell: python
+        run: |
+          from email.parser import BytesParser
+          from pathlib import Path
+          import re
+          from zipfile import ZipFile
+
+          wheel = next(Path("dist").glob("prowler-*.whl"))
+          with ZipFile(wheel) as archive:
+              metadata_name = next(
+                  name
+                  for name in archive.namelist()
+                  if name.endswith(".dist-info/METADATA")
+              )
+              metadata = BytesParser().parsebytes(archive.read(metadata_name))
+
+          requirements = [
+              requirement
+              for requirement in metadata.get_all("Requires-Dist", [])
+              if re.match(r"^(numpy|pandas)(?:\W|$)", requirement, re.IGNORECASE)
+          ]
+          requirement_names = {
+              re.match(r"^(numpy|pandas)", requirement, re.IGNORECASE).group(1).lower()
+              for requirement in requirements
+          }
+          if requirement_names != {"numpy", "pandas"}:
+              raise SystemExit(
+                  f"Expected NumPy and pandas requirements, found: {requirements}"
+              )
+
+          Path("binary-wheel-requirements.txt").write_text(
+              "\n".join(requirements) + "\n", encoding="utf-8"
+          )
+          print("Wheel requirements:", *requirements, sep="\n  ")
+
+      # huaweicloudsdkcore hard-pins pymongo 4.15.1, which has no cp314 wheel;
+      # its optional C extensions fall back to a pure-Python build without a compiler.
+      - name: Require binary distributions for marked NumPy and pandas versions
+        run: >-
+          python -m pip download
+          --only-binary=:all:
+          --dest binary-wheels
+          --requirement binary-wheel-requirements.txt
 
   pinned-releases-not-yanked:
     needs: changes
