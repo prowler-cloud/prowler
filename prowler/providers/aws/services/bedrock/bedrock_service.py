@@ -163,13 +163,20 @@ class Bedrock(AWSService):
                         )
         except ClientError as error:
             code = error.response["Error"].get("Code", error.__class__.__name__)
-            # ValidationException means Bedrock is unavailable in the region:
-            # a definite "no models", so it must not become a MANUAL finding.
-            if code != "ValidationException":
+            # ValidationException and UnknownOperationException both mean the Region does not
+            # offer ListCustomModels -- AWS varies the code (and the message casing) by Region
+            # for the same condition. Either way it is a definite "no custom models", so it must
+            # not become a MANUAL finding, and an expected regional rejection is logged as a
+            # warning rather than an error.
+            if code in ("ValidationException", "UnknownOperationException"):
+                logger.warning(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+            else:
                 self.custom_models_scan_errors[regional_client.region] = code
-            logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
+                logger.error(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
         except Exception as error:
             self.custom_models_scan_errors[regional_client.region] = (
                 error.__class__.__name__
