@@ -1,6 +1,3 @@
-# pnpm 11+ workspace config. .npmrc is auth/registry only; everything else lives here.
-# Reference: https://pnpm.io/supply-chain-security
-
 packages: []
 
 # Refuse to install on Node/pnpm outside the `engines` block in package.json.
@@ -32,7 +29,7 @@ overrides:
   "@isaacs/brace-expansion": "5.0.1"
   "fast-xml-parser": "5.8.0"
   "serialize-javascript": "7.0.5"
-  "postcss": "8.5.14"
+  "postcss": "8.5.18"
   "esbuild": "0.28.1"
   "rollup@>=4": "4.59.0"
   # GHSA-fx2h-pf6j-xcff (server.fs.deny bypass on Windows alternate paths, high) +
@@ -121,3 +118,6 @@ trustPolicyExclude:
 
 # Block transitive dependencies from using exotic specifiers (git URLs, tarballs).
 blockExoticSubdeps: true
+minimumReleaseAgeExclude:
+  # Renovate security update: postcss@8.5.18
+  - postcss@8.5.18
