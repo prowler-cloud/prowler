@@ -317,10 +317,10 @@ class ECR(AWSService):
                 ).get("scanType", "BASIC")
                 self.registries[regional_client.region].rules = rules
         except ClientError as error:
-            if (
-                error.response["Error"]["Code"] == "ValidationException"
-                and "GetRegistryScanningConfiguration operation: This feature is disabled"
-                in str(error)
+            if error.response["Error"][
+                "Code"
+            ] == "ValidationException" and "GetRegistryScanningConfiguration operation: This feature is disabled" in str(
+                error
             ):
                 self.registries[regional_client.region].scan_type = "BASIC"
                 self.registries[regional_client.region].rules = []
