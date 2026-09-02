@@ -438,15 +438,16 @@ class Testm365PowerShell:
             )  # number of modules * 3 commands each
             mock_execute_obj.assert_any_call(
                 (
-                    "Install-Module ExchangeOnlineManagement -RequiredVersion 3.9.2 "
+                    "Install-Module -Name 'ExchangeOnlineManagement' "
+                    "-RequiredVersion '3.9.2' "
                     "-Force -AllowClobber -Scope CurrentUser"
                 ),
                 timeout=60,
             )
             mock_execute_obj.assert_any_call(
                 (
-                    'Import-Module "ExchangeOnlineManagement" '
-                    "-RequiredVersion 3.9.2 -Force"
+                    "Import-Module -Name 'ExchangeOnlineManagement' "
+                    "-RequiredVersion '3.9.2' -Force"
                 ),
                 timeout=1,
             )
@@ -455,6 +456,56 @@ class Testm365PowerShell:
                 "Successfully installed module ExchangeOnlineManagement"
             )
             mock_info.assert_any_call("Successfully installed module MicrosoftTeams")
+
+    @patch("subprocess.Popen")
+    def test_initialize_m365_powershell_modules_installs_required_exchange_version(
+        self, mock_popen
+    ):
+        """Install the required Exchange module when only another version exists."""
+        mock_popen.return_value = MagicMock()
+
+        # Given: 3.10.0 satisfies the old name-only query, while the exact
+        # required-version query correctly reports that 3.9.2 is absent.
+        exchange_availability = {
+            "Get-Module -ListAvailable ExchangeOnlineManagement": "3.10.0",
+            (
+                "Get-Module -ListAvailable -FullyQualifiedName "
+                "@{ ModuleName = 'ExchangeOnlineManagement'; "
+                "RequiredVersion = '3.9.2' }"
+            ): None,
+        }
+
+        def mock_execute(command, *_args, **_kwargs):
+            if command in exchange_availability:
+                return exchange_availability[command]
+            if "Get-Module" in command:
+                return "installed"
+            return None
+
+        with patch.object(
+            PowerShellSession, "execute", side_effect=mock_execute
+        ) as mock_execute_obj:
+            from prowler.providers.m365.lib.powershell.m365_powershell import (
+                initialize_m365_powershell_modules,
+            )
+
+            result = initialize_m365_powershell_modules()
+
+        assert result is True
+        mock_execute_obj.assert_any_call(
+            (
+                "Install-Module -Name 'ExchangeOnlineManagement' "
+                "-RequiredVersion '3.9.2' -Force -AllowClobber -Scope CurrentUser"
+            ),
+            timeout=60,
+        )
+        mock_execute_obj.assert_any_call(
+            (
+                "Import-Module -Name 'ExchangeOnlineManagement' "
+                "-RequiredVersion '3.9.2' -Force"
+            ),
+            timeout=1,
+        )
 
     @patch("subprocess.Popen")
     def test_initialize_m365_powershell_modules_failure(self, mock_popen):

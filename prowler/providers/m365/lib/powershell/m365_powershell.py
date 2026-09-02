@@ -1154,19 +1154,26 @@ def initialize_m365_powershell_modules():
     try:
         for module in REQUIRED_MODULES:
             try:
+                required_version = REQUIRED_MODULE_VERSIONS.get(module)
+                version_parameter = (
+                    f" -RequiredVersion '{required_version}'"
+                    if required_version
+                    else ""
+                )
+
                 # Check if module is already installed
-                result = pwsh.execute(f"Get-Module -ListAvailable {module}", timeout=5)
+                availability_command = (
+                    "Get-Module -ListAvailable -FullyQualifiedName "
+                    f"@{{ ModuleName = '{module}'; RequiredVersion = '{required_version}' }}"
+                    if required_version
+                    else f"Get-Module -ListAvailable -Name '{module}'"
+                )
+                result = pwsh.execute(availability_command, timeout=5)
 
                 # Install module if not installed
                 if not result:
-                    required_version = REQUIRED_MODULE_VERSIONS.get(module)
-                    version_parameter = (
-                        f" -RequiredVersion {required_version}"
-                        if required_version
-                        else ""
-                    )
                     install_command = (
-                        f"Install-Module {module}{version_parameter} "
+                        f"Install-Module -Name '{module}'{version_parameter} "
                         "-Force -AllowClobber -Scope CurrentUser"
                     )
                     install_result = pwsh.execute(
@@ -1180,9 +1187,10 @@ def initialize_m365_powershell_modules():
                     else:
                         logger.info(f"Successfully installed module {module}")
 
+                if not result or required_version:
                     # Import module
                     pwsh.execute(
-                        f'Import-Module "{module}"{version_parameter} -Force',
+                        f"Import-Module -Name '{module}'{version_parameter} -Force",
                         timeout=1,
                     )
 
