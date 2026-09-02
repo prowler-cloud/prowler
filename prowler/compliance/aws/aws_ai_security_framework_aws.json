@@ -1138,7 +1138,8 @@
         "eks_cluster_uses_a_supported_version",
         "eks_control_plane_logging_all_types_enabled",
         "eks_cluster_kms_cmk_encryption_in_secrets_enabled",
-        "eks_cluster_deletion_protection_enabled"
+        "eks_cluster_deletion_protection_enabled",
+        "ecr_registry_enhanced_scanning_enabled"
       ]
     },
     {
@@ -1161,7 +1162,8 @@
         "ecs_task_definitions_logging_enabled",
         "ecs_task_definitions_no_environment_secrets",
         "ecs_task_definitions_host_namespace_not_shared",
-        "ecs_cluster_container_insights_enabled"
+        "ecs_cluster_container_insights_enabled",
+        "ecr_registry_enhanced_scanning_enabled"
       ]
     },
     {
