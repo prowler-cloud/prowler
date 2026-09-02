@@ -96,6 +96,37 @@ describe("generateProwlerCertificate", () => {
       writable: true,
     });
   });
+
+  it("emits a leaf cert with BasicConstraints(cA=false) and KeyUsage(digitalSignature)", async () => {
+    // Guardrail: audit tooling and strict CA validators flag self-signed
+    // leaves that omit these extensions. A future edit that drops them
+    // from the `extensions:` array must not slip past review.
+    const {
+      BasicConstraintsExtension,
+      KeyUsageFlags,
+      KeyUsagesExtension,
+      X509Certificate,
+    } = await import("@peculiar/x509");
+
+    const result = await generateProwlerCertificate({ modulusLength: 2048 });
+
+    const publicDer = Uint8Array.from(
+      atob(result.publicCertificateBase64Der),
+      (c) => c.charCodeAt(0),
+    );
+    const cert = new X509Certificate(publicDer);
+
+    const basicConstraints = cert.getExtension(BasicConstraintsExtension);
+    expect(basicConstraints).toBeDefined();
+    expect(basicConstraints!.ca).toBe(false);
+
+    const keyUsages = cert.getExtension(KeyUsagesExtension);
+    expect(keyUsages).toBeDefined();
+    // `usages` is a bitmask — verify the digitalSignature bit is set.
+    expect(keyUsages!.usages & KeyUsageFlags.digitalSignature).toBe(
+      KeyUsageFlags.digitalSignature,
+    );
+  });
 });
 
 describe("downloadPublicCertificateFile", () => {

@@ -7,7 +7,9 @@ import {
   addCredentialsFormSchema,
   addCredentialsRoleFormSchema,
   addProviderFormSchema,
+  CERTIFICATE_CONTENT_MAX_SIZE_ERROR,
   KUBECONFIG_UNSUPPORTED_COMMAND_AUTHENTICATION_ERROR,
+  MAX_CERTIFICATE_CONTENT_LENGTH,
   samlConfigFormSchema,
 } from "./formSchemas";
 
@@ -124,6 +126,54 @@ describe("addCredentialsFormSchema - azure certificate", () => {
 
     // Then
     expect(result.success).toBe(false);
+  });
+
+  it("rejects certificate content that exceeds the base64 length cap", () => {
+    // Guardrail against a future edit dropping the `.max(...)` on the
+    // Azure `certificate_content` field: a payload larger than the API's
+    // `_MAX_CERTIFICATE_CONTENT_LENGTH` must never leave the browser.
+    const schema = addCredentialsFormSchema("azure", "app_certificate");
+    // Padding-safe: 4-char multiple of "A" (all valid base64 chars) longer
+    // than the cap, so only the size check rejects (isValidBase64 passes).
+    const oversized = "A".repeat(MAX_CERTIFICATE_CONTENT_LENGTH + 4);
+
+    const result = schema.safeParse({
+      ...BASE_AZURE_VALUES,
+      [ProviderCredentialFields.CERTIFICATE_CONTENT]: oversized,
+    });
+
+    expect(result.success).toBe(false);
+    if (result.success) return;
+    expect(result.error.issues).toContainEqual(
+      expect.objectContaining({
+        message: CERTIFICATE_CONTENT_MAX_SIZE_ERROR,
+        path: [ProviderCredentialFields.CERTIFICATE_CONTENT],
+      }),
+    );
+  });
+
+  it("accepts a wrapped-line certificate content that fits after stripping whitespace", () => {
+    // openssl and PowerShell wrap base64 output at 64 chars with LF/CRLF.
+    // The API strips whitespace before enforcing the cap; the client does
+    // the same via `.transform(strip)`. A legitimate ~50 KB base64 that
+    // exceeds the cap only because of embedded whitespace must still pass.
+    const schema = addCredentialsFormSchema("azure", "app_certificate");
+    const rawBase64 = "A".repeat(MAX_CERTIFICATE_CONTENT_LENGTH);
+    const wrapped = rawBase64.match(/.{1,64}/g)!.join("\r\n");
+    // Sanity: wrapping made it longer than the cap.
+    expect(wrapped.length).toBeGreaterThan(MAX_CERTIFICATE_CONTENT_LENGTH);
+
+    const result = schema.safeParse({
+      ...BASE_AZURE_VALUES,
+      [ProviderCredentialFields.CERTIFICATE_CONTENT]: wrapped,
+    });
+
+    expect(result.success).toBe(true);
+    if (!result.success) return;
+    // The parsed value is the stripped base64 — matches what the API sees.
+    expect(
+      result.data[ProviderCredentialFields.CERTIFICATE_CONTENT],
+    ).toBe(rawBase64);
   });
 });
 

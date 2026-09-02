@@ -251,9 +251,18 @@ export const addCredentialsFormSchema = (
               [ProviderCredentialFields.CLIENT_SECRET]: z.string().optional(),
               [ProviderCredentialFields.CERTIFICATE_CONTENT]: z
                 .string()
-                .max(
-                  MAX_CERTIFICATE_CONTENT_LENGTH,
-                  CERTIFICATE_CONTENT_MAX_SIZE_ERROR,
+                // The API strips base64 whitespace before enforcing its
+                // 68268-char cap; measure the same value on the client so
+                // a legitimate CRLF-wrapped paste (openssl / PowerShell
+                // default line wrap) is not rejected as "too large".
+                .transform((value) => value.replace(/\s+/g, ""))
+                .pipe(
+                  z
+                    .string()
+                    .max(
+                      MAX_CERTIFICATE_CONTENT_LENGTH,
+                      CERTIFICATE_CONTENT_MAX_SIZE_ERROR,
+                    ),
                 )
                 .optional(),
               [ProviderCredentialFields.TENANT_ID]: z.guid({
@@ -298,9 +307,18 @@ export const addCredentialsFormSchema = (
                       .optional(),
                     [ProviderCredentialFields.CERTIFICATE_CONTENT]: z
                       .string()
-                      .max(
-                        MAX_CERTIFICATE_CONTENT_LENGTH,
-                        CERTIFICATE_CONTENT_MAX_SIZE_ERROR,
+                      // Same whitespace-then-cap contract as Azure — the
+                      // API strips base64 whitespace before enforcing the
+                      // 68268-char cap, so the client measures the same
+                      // stripped value.
+                      .transform((value) => value.replace(/\s+/g, ""))
+                      .pipe(
+                        z
+                          .string()
+                          .max(
+                            MAX_CERTIFICATE_CONTENT_LENGTH,
+                            CERTIFICATE_CONTENT_MAX_SIZE_ERROR,
+                          ),
                       )
                       .optional(),
                     [ProviderCredentialFields.TENANT_ID]: z
