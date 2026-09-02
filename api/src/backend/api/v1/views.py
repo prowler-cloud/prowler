@@ -7004,6 +7004,7 @@ class IntegrationJiraViewSet(BaseRLSViewSet):
 
         project_key = serializer.validated_data["project_key"]
         issue_type = serializer.validated_data["issue_type"]
+        force_retry = serializer.validated_data["force_retry"]
 
         with transaction.atomic():
             task = jira_integration_task.delay(
@@ -7012,6 +7013,7 @@ class IntegrationJiraViewSet(BaseRLSViewSet):
                 project_key=project_key,
                 issue_type=issue_type,
                 finding_ids=finding_ids,
+                force_retry=force_retry,
             )
         prowler_task = Task.objects.get(id=task.id)
         serializer = TaskSerializer(prowler_task)

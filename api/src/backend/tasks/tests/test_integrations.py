@@ -1,4 +1,4 @@
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from unittest.mock import MagicMock, patch
 from uuid import uuid4
 
@@ -9,6 +9,7 @@ from api.models import Integration, JiraIssue
 from api.utils import prowler_integration_connection_test
 from django.db import OperationalError
 from django.test import override_settings
+from django.utils import timezone
 from prowler.lib.outputs.jira.jira import Jira
 from prowler.lib.outputs.jira.models import (
     JiraCreationOutcome,
@@ -26,6 +27,7 @@ from tasks.jobs.integrations import (
     _load_jira_issue,
     _release_jira_delivery_attempt,
     _reserve_jira_issue_replacement,
+    _reset_stale_jira_delivery_attempt,
     _start_jira_delivery_attempt,
     build_jira_finding_url,
     build_jira_issue_labels,
@@ -2443,7 +2445,7 @@ class TestJiraIssueDedup:
         return jira
 
     @staticmethod
-    def _send(integration, jira, finding_ids):
+    def _send(integration, jira, finding_ids, *, force_retry=False):
         with patch(
             "tasks.jobs.integrations.initialize_prowler_integration",
             return_value=jira,
@@ -2454,6 +2456,7 @@ class TestJiraIssueDedup:
                 "TEST",
                 "Task",
                 [str(finding_id) for finding_id in finding_ids],
+                force_retry=force_retry,
             )
 
     @staticmethod
@@ -3079,6 +3082,135 @@ class TestJiraIssueDedup:
             assert row.issue_id is None
             assert row.delivery_attempt_token == marker
         jira_mock.send_finding.assert_not_called()
+
+    def test_force_retry_resends_stale_zero_match_with_same_marker(
+        self, jira_mock, jira_integration_fixture, findings_fixture
+    ):
+        finding, _ = findings_fixture
+        jira_mock.send_finding.side_effect = None
+        jira_mock.send_finding.return_value = JiraCreationResult(
+            outcome=JiraCreationOutcome.UNCERTAIN
+        )
+        self._send(jira_integration_fixture, jira_mock, [finding.id])
+        row = self._row(jira_integration_fixture, finding)
+        marker = row.delivery_attempt_token
+        with rls_transaction(str(jira_integration_fixture.tenant_id)):
+            JiraIssue.objects.filter(id=row.id).update(
+                delivery_started_at=timezone.now() - timedelta(minutes=16)
+            )
+
+        jira_mock.send_finding.reset_mock()
+        jira_mock.send_finding.return_value = JiraCreationResult(
+            outcome=JiraCreationOutcome.CONFIRMED_SUCCESS,
+            issue_id="50001",
+            issue_key="TEST-FORCED",
+            issue_url="https://test.atlassian.net/browse/TEST-FORCED",
+            delivery_marker=str(marker),
+        )
+
+        result = self._send(
+            jira_integration_fixture,
+            jira_mock,
+            [finding.id],
+            force_retry=True,
+        )
+
+        assert result["created_count"] == 1
+        jira_mock.search_issues_by_delivery_attempt.assert_called_once_with(str(marker))
+        jira_mock.send_finding.assert_called_once()
+        assert jira_mock.send_finding.call_args.kwargs[
+            "delivery_attempt_marker"
+        ] == str(marker)
+        row = self._row(jira_integration_fixture, finding)
+        assert row.issue_id == "50001"
+        assert row.delivery_attempt_token is None
+        assert row.delivery_started_at is None
+
+    def test_force_retry_preserves_link_until_stale_replacement_succeeds(
+        self, jira_mock, jira_integration_fixture, findings_fixture
+    ):
+        finding, _ = findings_fixture
+        self._send(jira_integration_fixture, jira_mock, [finding.id])
+        row = self._row(jira_integration_fixture, finding)
+        previous_issue_id = row.issue_id
+        marker = uuid4()
+        with rls_transaction(str(jira_integration_fixture.tenant_id)):
+            JiraIssue.objects.filter(id=row.id).update(
+                delivery_attempt_token=marker,
+                delivery_started_at=timezone.now() - timedelta(minutes=16),
+            )
+
+        result = self._send(
+            jira_integration_fixture,
+            jira_mock,
+            [finding.id],
+            force_retry=True,
+        )
+
+        assert result["created_count"] == 1
+        assert jira_mock.send_finding.call_args.kwargs[
+            "delivery_attempt_marker"
+        ] == str(marker)
+        row = self._row(jira_integration_fixture, finding)
+        assert row.issue_id != previous_issue_id
+        assert row.delivery_attempt_token is None
+
+    def test_force_retry_defers_a_recent_zero_match(
+        self, jira_mock, jira_integration_fixture, findings_fixture
+    ):
+        finding, _ = findings_fixture
+        jira_mock.send_finding.side_effect = None
+        jira_mock.send_finding.return_value = JiraCreationResult(
+            outcome=JiraCreationOutcome.UNCERTAIN
+        )
+        self._send(jira_integration_fixture, jira_mock, [finding.id])
+        row = self._row(jira_integration_fixture, finding)
+        marker = row.delivery_attempt_token
+        started_at = row.delivery_started_at
+        jira_mock.send_finding.reset_mock()
+
+        result = self._send(
+            jira_integration_fixture,
+            jira_mock,
+            [finding.id],
+            force_retry=True,
+        )
+
+        assert result["deferred_count"] == 1
+        assert result["skipped_count"] == 0
+        jira_mock.send_finding.assert_not_called()
+        row = self._row(jira_integration_fixture, finding)
+        assert row.delivery_attempt_token == marker
+        assert row.delivery_started_at == started_at
+
+    def test_stale_worker_cannot_reset_a_newer_delivery_start(
+        self, jira_integration_fixture, findings_fixture
+    ):
+        finding, _ = findings_fixture
+        marker = uuid4()
+        old_started_at = timezone.now() - timedelta(minutes=20)
+        newer_started_at = timezone.now() - timedelta(minutes=16)
+        with rls_transaction(str(jira_integration_fixture.tenant_id)):
+            row = JiraIssue.objects.create(
+                tenant_id=jira_integration_fixture.tenant_id,
+                integration=jira_integration_fixture,
+                provider_id=finding.scan.provider_id,
+                finding_uid=finding.uid,
+                finding_id=finding.id,
+                delivery_attempt_token=marker,
+                delivery_started_at=old_started_at,
+            )
+            JiraIssue.objects.filter(id=row.id).update(
+                delivery_started_at=newer_started_at
+            )
+
+        reset = _reset_stale_jira_delivery_attempt(
+            str(jira_integration_fixture.tenant_id), row, marker
+        )
+
+        assert reset is False
+        row = self._row(jira_integration_fixture, finding)
+        assert row.delivery_started_at == newer_started_at
 
     def test_replacement_reservation_is_conditional(
         self, jira_mock, jira_integration_fixture, findings_fixture

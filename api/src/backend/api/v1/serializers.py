@@ -3221,6 +3221,11 @@ class IntegrationJiraDispatchSerializer(BaseSerializerV1):
 
     project_key = serializers.CharField(required=True)
     issue_type = serializers.CharField(required=True)
+    force_retry = serializers.BooleanField(
+        required=False,
+        default=False,
+        help_text="Retry a stale unresolved delivery after Jira returns zero marker matches. This can create a duplicate issue.",
+    )
 
     class JSONAPIMeta:
         resource_name = "integrations-jira-dispatches"

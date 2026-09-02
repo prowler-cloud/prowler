@@ -150,7 +150,9 @@ Prowler remembers each confirmed Jira issue created for a Finding, keyed by the 
 
 The link, and the last status observed in Jira, are available through the API at `GET /api/v1/jira-issues` (filter by `finding_uid`, `finding_uid__in`, `provider_id`, `integration`, `issue_key`, `issue_status_category` or `issue_status_category__in`). Each Jira integration keeps its own links, so the same Finding can have one issue per integration.
 
-Prowler uses a private delivery marker to check whether Jira created an issue when a delivery result is uncertain. A reservation that stopped before the delivery attempt began can be resumed safely by a later explicit send. After an attempt starts, Prowler searches Jira by the marker: exactly one matching issue completes the link, while no match, multiple matches, or a lookup error keeps the reservation and prevents an automatic retry. A process failure after the attempt starts but before Jira receives the request can still require manual investigation because Prowler cannot prove whether Jira accepted the request.
+Prowler uses a private delivery marker to check whether Jira created an issue when a delivery result is uncertain. A reservation that stopped before the delivery attempt began can be resumed safely by a later explicit send. After an attempt starts, Prowler searches Jira by the marker: exactly one matching issue completes the link, while no match, multiple matches, or a lookup error keeps the reservation and prevents an automatic retry.
+
+An authorized API caller can repeat a dispatch with `force_retry: true` when an attempt has been pending for at least 15 minutes. Prowler retries only when Jira returns zero matches for the saved marker, and it reuses that marker. This action accepts a duplicate-issue risk because an empty Jira search cannot prove that Jira never received the original request. Multiple matches and lookup errors remain blocked for manual investigation.
 
 ## Integration Status
 

@@ -13768,6 +13768,58 @@ class TestJiraIssueViewSet:
 
 @pytest.mark.django_db
 class TestIntegrationViewSet:
+    @pytest.mark.parametrize(
+        ("force_retry_attribute", "expected_force_retry"),
+        (({}, False), ({"force_retry": True}, True)),
+    )
+    @patch("api.v1.views.Task.objects.get")
+    @patch("api.v1.views.jira_integration_task.delay")
+    def test_jira_dispatch_passes_force_retry_to_task(
+        self,
+        mock_jira_task,
+        mock_task_get,
+        force_retry_attribute,
+        expected_force_retry,
+        authenticated_client,
+        jira_integration_fixture,
+        findings_fixture,
+        tasks_fixture,
+    ):
+        finding, _ = findings_fixture
+        prowler_task = tasks_fixture[0]
+        mock_jira_task.return_value.id = prowler_task.id
+        mock_task_get.return_value = prowler_task
+        data = {
+            "data": {
+                "type": "integrations-jira-dispatches",
+                "attributes": {
+                    "project_key": "TEST",
+                    "issue_type": "Task",
+                    **force_retry_attribute,
+                },
+            }
+        }
+
+        response = authenticated_client.post(
+            reverse(
+                "integration-jira-dispatches",
+                kwargs={"integration_pk": jira_integration_fixture.id},
+            )
+            + f"?filter[finding_id]={finding.id}",
+            data=json.dumps(data),
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+
+        assert response.status_code == status.HTTP_202_ACCEPTED
+        mock_jira_task.assert_called_once_with(
+            tenant_id=str(jira_integration_fixture.tenant_id),
+            integration_id=str(jira_integration_fixture.id),
+            project_key="TEST",
+            issue_type="Task",
+            finding_ids=[str(finding.id)],
+            force_retry=expected_force_retry,
+        )
+
     def test_integrations_list(self, authenticated_client, integrations_fixture):
         response = authenticated_client.get(reverse("integration-list"))
         assert response.status_code == status.HTTP_200_OK

@@ -1,6 +1,7 @@
 import os
 import time
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
+from enum import Enum
 from glob import glob
 from urllib.parse import quote
 from uuid import uuid4
@@ -545,6 +546,13 @@ def get_tenant_name(tenant_id: str) -> str:
 JIRA_DEDUP_CHUNK_SIZE = 500
 JIRA_SKIPPED_REPORT_LIMIT = 100
 JIRA_ERROR_REPORT_MAX_LENGTH = 8192
+JIRA_FORCE_RETRY_MIN_AGE = timedelta(minutes=15)
+
+
+class _JiraPendingRecoveryOutcome(Enum):
+    LINKED = "linked"
+    NO_MATCH = "no_match"
+    UNRESOLVED = "unresolved"
 
 
 def _load_finding_refs(finding_ids: list[str]) -> dict[str, tuple[str, str]]:
@@ -864,34 +872,36 @@ def _recover_pending_jira_issue(
     jira_integration: Jira,
     row: JiraIssue,
     finding_id: str,
-) -> bool:
+) -> _JiraPendingRecoveryOutcome:
     """Link exactly one marker match; every other result remains reserved."""
     delivery_attempt_token = row.delivery_attempt_token
     if delivery_attempt_token is None or row.delivery_started_at is None:
-        return False
+        return _JiraPendingRecoveryOutcome.UNRESOLVED
     try:
         search_result = jira_integration.search_issues_by_delivery_attempt(
             str(delivery_attempt_token)
         )
     except Exception:
         logger.exception("Could not search Jira delivery marker for row %s", row.id)
-        return False
-    if (
-        not isinstance(search_result, JiraIssueSearchResult)
-        or search_result.outcome != JiraIssueSearchOutcome.SUCCESS
-        or len(search_result.matches) != 1
-    ):
-        return False
+        return _JiraPendingRecoveryOutcome.UNRESOLVED
+    if not isinstance(search_result, JiraIssueSearchResult):
+        return _JiraPendingRecoveryOutcome.UNRESOLVED
+    if search_result.outcome != JiraIssueSearchOutcome.SUCCESS:
+        return _JiraPendingRecoveryOutcome.UNRESOLVED
+    if not search_result.matches:
+        return _JiraPendingRecoveryOutcome.NO_MATCH
+    if len(search_result.matches) != 1:
+        return _JiraPendingRecoveryOutcome.UNRESOLVED
     match = search_result.matches[0]
     if not isinstance(match, JiraIssueSearchMatch) or not all(
         isinstance(value, str) and value.strip()
         for value in (match.issue_id, match.issue_key, match.issue_url)
     ):
-        return False
+        return _JiraPendingRecoveryOutcome.UNRESOLVED
     project_key, separator, _ = match.issue_key.rpartition("-")
     if not separator or not project_key:
-        return False
-    return _link_jira_issue(
+        return _JiraPendingRecoveryOutcome.UNRESOLVED
+    linked = _link_jira_issue(
         tenant_id,
         row,
         delivery_attempt_token,
@@ -901,6 +911,37 @@ def _recover_pending_jira_issue(
         project_key=project_key,
         finding_id=finding_id,
     )
+    if linked:
+        return _JiraPendingRecoveryOutcome.LINKED
+    return _JiraPendingRecoveryOutcome.UNRESOLVED
+
+
+def _reset_stale_jira_delivery_attempt(
+    tenant_id: str,
+    row: JiraIssue,
+    delivery_attempt_token,
+) -> bool:
+    """Allow an explicit retry only while the same stale attempt is still owned."""
+    delivery_started_at = row.delivery_started_at
+    if delivery_started_at is None:
+        return False
+    retry_cutoff = timezone.now() - JIRA_FORCE_RETRY_MIN_AGE
+    if delivery_started_at > retry_cutoff:
+        return False
+
+    now = timezone.now()
+    with rls_transaction(tenant_id, using=MainRouter.default_db):
+        updated = JiraIssue.objects.filter(
+            id=row.id,
+            delivery_attempt_token=delivery_attempt_token,
+            delivery_started_at=delivery_started_at,
+        ).update(
+            delivery_started_at=None,
+            updated_at=now,
+        )
+    if updated:
+        row.delivery_started_at = None
+    return bool(updated)
 
 
 def _get_jira_send_payload(
@@ -997,6 +1038,7 @@ def send_findings_to_jira(
     project_key: str,
     issue_type: str,
     finding_ids: list[str],
+    force_retry: bool = False,
 ):
     """Deliver findings through the finding-to-Jira ledger."""
     with rls_transaction(tenant_id, using=MainRouter.default_db):
@@ -1091,13 +1133,36 @@ def send_findings_to_jira(
             and row.delivery_attempt_token is not None
             and not resume_reserved_attempt
         ):
-            if _recover_pending_jira_issue(
+            recovery_outcome = _recover_pending_jira_issue(
                 tenant_id, jira_integration, row, finding_id
-            ):
+            )
+            if recovery_outcome == _JiraPendingRecoveryOutcome.LINKED:
                 created_count += 1
+                continue
+            if (
+                force_retry
+                and recovery_outcome == _JiraPendingRecoveryOutcome.NO_MATCH
+                and _reset_stale_jira_delivery_attempt(
+                    tenant_id, row, row.delivery_attempt_token
+                )
+            ):
+                logger.warning(
+                    "Force retrying stale Jira delivery for tenant %s, integration %s, provider %s, finding %s",
+                    tenant_id,
+                    integration_id,
+                    provider_id,
+                    finding_uid,
+                )
+                resume_reserved_attempt = True
             else:
-                record_skip(finding_id)
-            continue
+                if (
+                    force_retry
+                    and recovery_outcome == _JiraPendingRecoveryOutcome.NO_MATCH
+                ):
+                    deferred_count += 1
+                else:
+                    record_skip(finding_id)
+                continue
 
         needs_replacement = bool(resume_reserved_attempt and row.is_linked)
         if not resume_reserved_attempt and row is not None and row.is_linked:
