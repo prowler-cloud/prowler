@@ -1,1 +1,0 @@
-`sagemaker_notebook_instance_without_direct_internet_access_configured` check logic to read the `DirectInternetAccess` setting instead of `RootAccess`, failing a notebook instance with direct internet access enabled even when root access is disabled

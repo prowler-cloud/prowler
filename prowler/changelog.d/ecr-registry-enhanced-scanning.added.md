@@ -1,1 +1,0 @@
-`ecr_registry_enhanced_scanning_enabled` check for AWS provider, verifying that the ECR registry scan type is enhanced (Amazon Inspector, covering programming language packages and continuous rescanning) instead of basic, and reporting MANUAL when the registry scanning configuration cannot be read

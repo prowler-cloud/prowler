@@ -4,6 +4,23 @@ All notable changes to the **Prowler MCP Server** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [0.12.0] (Prowler v5.41.0)
+
+### 🚀 Added
+
+- Prowler App tools now report a failure as an MCP tool execution error (`isError: true`, explanation in `content`) instead of as a successful result carrying an `{"error": ...}` object, which clients and models read as a success [(#12532)](https://github.com/prowler-cloud/prowler/pull/12532)
+
+### 🔄 Changed
+
+- `prowler_get_compliance_framework_state_details` now rejects a call that passes both `scan_id` and `provider_id` instead of silently ignoring the provider, which could report on a scan belonging to a different provider than the one that was asked about [(#12532)](https://github.com/prowler-cloud/prowler/pull/12532)
+
+### 🐞 Fixed
+
+- `prowler_hub_get_check_code` and `prowler_hub_get_check_fixer` now report a check ID that belongs to another provider as such, naming that provider, instead of reporting the ID as one that does not exist [(#12533)](https://github.com/prowler-cloud/prowler/pull/12533)
+- `prowler_docs_search` no longer reports a failed search as zero matches or an unreadable answer as a bad search term, and `prowler_docs_get_document` no longer reports a failed fetch as a missing page [(#12534)](https://github.com/prowler-cloud/prowler/pull/12534)
+
+---
+
 ## [0.11.0] (Prowler v5.40.0)
 
 ### 🚀 Added

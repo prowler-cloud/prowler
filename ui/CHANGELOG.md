@@ -4,6 +4,24 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [1.41.0] (Prowler v5.41.0)
+
+### 🚀 Added
+
+- Finding-report imports from Scans for Cloud and Private Cloud deployments [(#12554)](https://github.com/prowler-cloud/prowler/pull/12554)
+- Slack integration: the connection check leaves its result on the card instead of only in a toast, naming the channel Slack refused or the channels it reached (Prowler Cloud only) [(#12677)](https://github.com/prowler-cloud/prowler/pull/12677)
+
+### 🔄 Changed
+
+- Slack integration: the bot is referred to as `@Prowler Cloud`, identifiers are set as inline code, and the private-channel hint links to its docs (Prowler Cloud only) [(#12677)](https://github.com/prowler-cloud/prowler/pull/12677)
+- Slack integration: a selected private channel carries the same visible `Private` badge as the channel list, replacing the lock icon on the chip (Prowler Cloud only) [(#12677)](https://github.com/prowler-cloud/prowler/pull/12677)
+
+### 🐞 Fixed
+
+- Cached permissions now refresh from `/users/me?include=roles` after access token rotation [(#12640)](https://github.com/prowler-cloud/prowler/pull/12640)
+
+---
+
 ## [1.40.0] (Prowler v5.40.0)
 
 ### 🚀 Added

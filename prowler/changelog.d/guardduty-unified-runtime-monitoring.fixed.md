@@ -1,1 +1,0 @@
-`guardduty_eks_runtime_monitoring_enabled` no longer reports `FAIL` for detectors that use unified Runtime Monitoring; the GuardDuty service now reads the `RUNTIME_MONITORING` feature, which is mutually exclusive with `EKS_RUNTIME_MONITORING` and already covers Amazon EKS

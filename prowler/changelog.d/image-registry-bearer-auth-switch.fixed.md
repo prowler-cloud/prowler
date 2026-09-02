@@ -1,1 +1,0 @@
-Registry catalog listing when the server answers with a Bearer challenge after negotiating Basic (or anonymous) authentication, switching to a bearer token obtained from the challenge instead of failing
