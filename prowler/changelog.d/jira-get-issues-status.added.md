@@ -1,1 +1,0 @@
-`Jira.get_issues_status()` resolves issue references by immutable ID in batches and returns explicit open, done, moved, missing, forbidden or unknown outcomes without treating missing issues as deleted
