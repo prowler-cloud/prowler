@@ -1,6 +1,7 @@
 import json
 from typing import Optional
 
+from botocore.exceptions import ClientError
 from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
@@ -13,6 +14,7 @@ class KMS(AWSService):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
         self.keys = []
+        self.keys_scan_errors = {}
         self.__threading_call__(self._list_keys)
         if self.keys:
             self._describe_key()
@@ -42,7 +44,14 @@ class KMS(AWSService):
                         logger.error(
                             f"{regional_client.region} -- {error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
                         )
+        except ClientError as error:
+            code = error.response["Error"].get("Code", error.__class__.__name__)
+            self.keys_scan_errors[regional_client.region] = code
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
+            )
         except Exception as error:
+            self.keys_scan_errors[regional_client.region] = error.__class__.__name__
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
             )
@@ -60,7 +69,9 @@ class KMS(AWSService):
                     key.spec = response["KeyMetadata"]["CustomerMasterKeySpec"]
                     key.multi_region = response["KeyMetadata"]["MultiRegion"]
                     key.description = response["KeyMetadata"].get("Description", "")
+                    key.detail_retrieved = True
                 except Exception as error:
+                    key.describe_error = error.__class__.__name__
                     logger.error(
                         f"{regional_client.region} -- {error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
                     )
@@ -173,6 +184,8 @@ class Key(BaseModel):
     # error class name). Checks that make security assertions from the policy
     # should emit MANUAL when this is set, not silently skip the key.
     policy_fetch_error: Optional[str] = None
+    describe_error: Optional[str] = None
+    detail_retrieved: bool = False
     spec: Optional[str]
     region: str
     multi_region: Optional[bool]

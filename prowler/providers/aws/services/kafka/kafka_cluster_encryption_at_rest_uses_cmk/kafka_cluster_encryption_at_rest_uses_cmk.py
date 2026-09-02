@@ -26,6 +26,19 @@ class kafka_cluster_encryption_at_rest_uses_cmk(Check):
             ):
                 report.status = "PASS"
                 report.status_extended = f"Kafka cluster '{cluster.name}' has encryption at rest enabled with a CMK."
+            elif cluster.data_volume_kms_key_id and (
+                cluster.region in getattr(kms_client, "keys_scan_errors", {})
+                or any(
+                    cluster.data_volume_kms_key_id == key.arn
+                    and not getattr(key, "detail_retrieved", True)
+                    for key in kms_client.keys
+                )
+            ):
+                error_msg = getattr(kms_client, "keys_scan_errors", {}).get(
+                    cluster.region, "metadata unretrieved"
+                )
+                report.status = "MANUAL"
+                report.status_extended = f"Kafka cluster '{cluster.name}' encryption key '{cluster.data_volume_kms_key_id}' could not be verified in region {cluster.region} ({error_msg}); verify manually that it is a customer-managed KMS key."
 
             findings.append(report)
 

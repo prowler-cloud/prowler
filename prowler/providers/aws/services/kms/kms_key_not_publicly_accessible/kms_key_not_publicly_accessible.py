@@ -6,6 +6,20 @@ from prowler.providers.aws.services.kms.kms_client import kms_client
 class kms_key_not_publicly_accessible(Check):
     def execute(self):
         findings = []
+
+        for region, error in sorted(
+            getattr(kms_client, "keys_scan_errors", {}).items()
+        ):
+            report = Check_Report_AWS(
+                metadata=self.metadata(), resource={"region": region}
+            )
+            report.region = region
+            report.resource_id = "key/unknown"
+            report.resource_arn = f"arn:{kms_client.audited_partition}:kms:{region}:{kms_client.audited_account}:key/unknown"
+            report.status = "MANUAL"
+            report.status_extended = f"KMS keys could not be listed in region {region} ({error}); verify manually that key policies do not allow public access."
+            findings.append(report)
+
         for key in kms_client.keys:
             if (
                 key.manager == "CUSTOMER"

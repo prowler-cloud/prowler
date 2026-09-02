@@ -172,3 +172,42 @@ class Test_kms_cmk_not_deleted_unintentionally:
             )
             assert result[0].resource_id == key["KeyId"]
             assert result[0].resource_arn == key["Arn"]
+
+    @mock_aws
+    def test_kms_cmk_not_deleted_unintentionally_scan_error(self):
+        from prowler.providers.aws.services.kms.kms_service import KMS
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        kms = KMS(aws_provider)
+        kms.keys = []
+        kms.keys_scan_errors = {AWS_REGION_US_EAST_1: "AccessDeniedException"}
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.kms.kms_cmk_not_deleted_unintentionally.kms_cmk_not_deleted_unintentionally.kms_client",
+                new=kms,
+            ),
+        ):
+            from prowler.providers.aws.services.kms.kms_cmk_not_deleted_unintentionally.kms_cmk_not_deleted_unintentionally import (
+                kms_cmk_not_deleted_unintentionally,
+            )
+
+            check = kms_cmk_not_deleted_unintentionally()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "MANUAL"
+            assert (
+                result[0].status_extended
+                == f"KMS keys could not be listed in region {AWS_REGION_US_EAST_1} (AccessDeniedException); verify manually that customer-managed keys are not unintentionally scheduled for deletion."
+            )
+            assert result[0].resource_id == "key/unknown"
+            assert (
+                result[0].resource_arn
+                == f"arn:aws:kms:{AWS_REGION_US_EAST_1}:{aws_provider.identity.account}:key/unknown"
+            )
+            assert result[0].region == AWS_REGION_US_EAST_1

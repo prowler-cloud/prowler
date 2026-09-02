@@ -211,3 +211,80 @@ class Test_KMS_Service:
         target = next(k for k in kms.keys if k.id == key["KeyId"])
         assert target.policy is None
         assert target.policy_fetch_error == "RuntimeError"
+
+    # Test KMS List Keys ClientError surfaces keys_scan_errors
+    @mock_aws
+    def test_list_keys_client_error_records_scan_error(self):
+        from botocore.exceptions import ClientError
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        kms = KMS(aws_provider)
+
+        def _mock_paginate():
+            raise ClientError(
+                {
+                    "Error": {
+                        "Code": "AccessDeniedException",
+                        "Message": "not authorized",
+                    }
+                },
+                "ListKeys",
+            )
+
+        mock_paginator = type(
+            "MockPaginator", (), {"paginate": staticmethod(_mock_paginate)}
+        )
+        kms.regional_clients[AWS_REGION_US_EAST_1].get_paginator = (
+            lambda op: mock_paginator()
+        )
+
+        kms.keys = []
+        kms.keys_scan_errors = {}
+        kms._list_keys(kms.regional_clients[AWS_REGION_US_EAST_1])
+
+        assert kms.keys == []
+        assert kms.keys_scan_errors[AWS_REGION_US_EAST_1] == "AccessDeniedException"
+
+    # Test KMS List Keys generic error surfaces keys_scan_errors
+    @mock_aws
+    def test_list_keys_generic_error_records_scan_error(self):
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        kms = KMS(aws_provider)
+
+        def _mock_paginate():
+            raise RuntimeError("simulated list_keys failure")
+
+        mock_paginator = type(
+            "MockPaginator", (), {"paginate": staticmethod(_mock_paginate)}
+        )
+        kms.regional_clients[AWS_REGION_US_EAST_1].get_paginator = (
+            lambda op: mock_paginator()
+        )
+
+        kms.keys = []
+        kms.keys_scan_errors = {}
+        kms._list_keys(kms.regional_clients[AWS_REGION_US_EAST_1])
+
+        assert kms.keys == []
+        assert kms.keys_scan_errors[AWS_REGION_US_EAST_1] == "RuntimeError"
+
+    # Test KMS Describe Key failure records describe_error
+    @mock_aws
+    def test_describe_key_failure_records_error(self):
+        kms_client = client("kms", region_name=AWS_REGION_US_EAST_1)
+        key = kms_client.create_key(MultiRegion=False)["KeyMetadata"]
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        kms = KMS(aws_provider)
+
+        def _boom(**_):
+            raise RuntimeError("simulated describe_key failure")
+
+        kms.regional_clients[AWS_REGION_US_EAST_1].describe_key = _boom
+        for k in kms.keys:
+            k.detail_retrieved = False
+            k.describe_error = None
+        kms._describe_key()
+
+        target = next(k for k in kms.keys if k.id == key["KeyId"])
+        assert target.detail_retrieved is False
+        assert target.describe_error == "RuntimeError"

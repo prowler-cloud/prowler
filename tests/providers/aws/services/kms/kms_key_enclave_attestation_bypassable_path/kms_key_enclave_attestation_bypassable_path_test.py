@@ -519,3 +519,36 @@ class Test_kms_key_enclave_attestation_bypassable_path:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert result[0].resource_id == key["KeyId"]
+
+    @mock_aws
+    def test_kms_keys_scan_error(self):
+        from prowler.providers.aws.services.kms.kms_service import KMS
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        kms_service = KMS(aws_provider)
+        kms_service.keys_scan_errors = {AWS_REGION_US_EAST_1: "AccessDeniedException"}
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(f"{CHECK_MODULE}.kms_client", new=kms_service),
+        ):
+            from prowler.providers.aws.services.kms.kms_key_enclave_attestation_bypassable_path.kms_key_enclave_attestation_bypassable_path import (
+                kms_key_enclave_attestation_bypassable_path,
+            )
+
+            result = kms_key_enclave_attestation_bypassable_path().execute()
+            assert len(result) == 1
+            assert result[0].status == "MANUAL"
+            assert (
+                result[0].status_extended
+                == f"KMS keys could not be listed in region {AWS_REGION_US_EAST_1} (AccessDeniedException); verify manually that every authorization path to an enclave-scoped key requires attestation."
+            )
+            assert result[0].resource_id == "key/unknown"
+            assert (
+                result[0].resource_arn
+                == f"arn:aws:kms:{AWS_REGION_US_EAST_1}:{aws_provider.identity.account}:key/unknown"
+            )
+            assert result[0].region == AWS_REGION_US_EAST_1

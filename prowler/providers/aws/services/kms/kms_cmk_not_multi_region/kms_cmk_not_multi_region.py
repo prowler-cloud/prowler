@@ -10,6 +10,19 @@ class kms_cmk_not_multi_region(Check):
     def execute(self) -> List[Check_Report_AWS]:
         findings = []
 
+        for region, error in sorted(
+            getattr(kms_client, "keys_scan_errors", {}).items()
+        ):
+            report = Check_Report_AWS(
+                metadata=self.metadata(), resource={"region": region}
+            )
+            report.region = region
+            report.resource_id = "key/unknown"
+            report.resource_arn = f"arn:{kms_client.audited_partition}:kms:{region}:{kms_client.audited_account}:key/unknown"
+            report.status = "MANUAL"
+            report.status_extended = f"KMS keys could not be listed in region {region} ({error}); verify manually that customer-managed keys are not configured as multi-region."
+            findings.append(report)
+
         for key in kms_client.keys:
             if key.manager == "CUSTOMER" and key.state == "Enabled":
                 report = Check_Report_AWS(metadata=self.metadata(), resource=key)

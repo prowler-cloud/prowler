@@ -223,3 +223,136 @@ class Test_kafka_cluster_encryption_at_rest_uses_cmk:
             )
             assert result[0].resource_tags == []
             assert result[0].region == AWS_REGION_US_EAST_1
+
+    def test_kafka_cluster_encryption_at_rest_with_kms_scan_error(self):
+        key_arn = f"arn:aws:kms:{AWS_REGION_US_EAST_1}:123456789012:key/a7ca56d5-0768-4b64-a670-339a9fbef81c"
+        kafka_client = MagicMock()
+        kafka_client.clusters = {
+            "arn:aws:kafka:us-east-1:123456789012:cluster/demo-cluster-1/6357e0b2-0e6a-4b86-a0b4-70df934c2e31-5": Cluster(
+                id="6357e0b2-0e6a-4b86-a0b4-70df934c2e31-5",
+                name="demo-cluster-1",
+                arn="arn:aws:kafka:us-east-1:123456789012:cluster/demo-cluster-1/6357e0b2-0e6a-4b86-a0b4-70df934c2e31-5",
+                region=AWS_REGION_US_EAST_1,
+                tags=[],
+                state="ACTIVE",
+                kafka_version="2.2.1",
+                data_volume_kms_key_id=key_arn,
+                encryption_in_transit=EncryptionInTransit(
+                    client_broker="TLS_PLAINTEXT",
+                    in_cluster=True,
+                ),
+                tls_authentication=True,
+                public_access=True,
+                unauthentication_access=False,
+                enhanced_monitoring="DEFAULT",
+            )
+        }
+
+        kms_client = MagicMock()
+        kms_client.keys = []
+        kms_client.keys_scan_errors = {AWS_REGION_US_EAST_1: "AccessDenied"}
+
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
+            ),
+            patch(
+                "prowler.providers.aws.services.kafka.kafka_cluster_encryption_at_rest_uses_cmk.kafka_cluster_encryption_at_rest_uses_cmk.kafka_client",
+                new=kafka_client,
+            ),
+            patch(
+                "prowler.providers.aws.services.kafka.kafka_cluster_encryption_at_rest_uses_cmk.kafka_cluster_encryption_at_rest_uses_cmk.kms_client",
+                new=kms_client,
+            ),
+        ):
+            from prowler.providers.aws.services.kafka.kafka_cluster_encryption_at_rest_uses_cmk.kafka_cluster_encryption_at_rest_uses_cmk import (
+                kafka_cluster_encryption_at_rest_uses_cmk,
+            )
+
+            check = kafka_cluster_encryption_at_rest_uses_cmk()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "MANUAL"
+            assert (
+                result[0].status_extended
+                == f"Kafka cluster 'demo-cluster-1' encryption key '{key_arn}' could not be verified in region {AWS_REGION_US_EAST_1} (AccessDenied); verify manually that it is a customer-managed KMS key."
+            )
+            assert result[0].resource_id == "6357e0b2-0e6a-4b86-a0b4-70df934c2e31-5"
+            assert (
+                result[0].resource_arn
+                == "arn:aws:kafka:us-east-1:123456789012:cluster/demo-cluster-1/6357e0b2-0e6a-4b86-a0b4-70df934c2e31-5"
+            )
+            assert result[0].resource_tags == []
+            assert result[0].region == AWS_REGION_US_EAST_1
+
+    def test_kafka_cluster_encryption_at_rest_with_kms_key_detail_not_retrieved(self):
+        key_arn = f"arn:aws:kms:{AWS_REGION_US_EAST_1}:123456789012:key/a7ca56d5-0768-4b64-a670-339a9fbef81c"
+        kafka_client = MagicMock()
+        kafka_client.clusters = {
+            "arn:aws:kafka:us-east-1:123456789012:cluster/demo-cluster-1/6357e0b2-0e6a-4b86-a0b4-70df934c2e31-5": Cluster(
+                id="6357e0b2-0e6a-4b86-a0b4-70df934c2e31-5",
+                name="demo-cluster-1",
+                arn="arn:aws:kafka:us-east-1:123456789012:cluster/demo-cluster-1/6357e0b2-0e6a-4b86-a0b4-70df934c2e31-5",
+                region=AWS_REGION_US_EAST_1,
+                tags=[],
+                state="ACTIVE",
+                kafka_version="2.2.1",
+                data_volume_kms_key_id=key_arn,
+                encryption_in_transit=EncryptionInTransit(
+                    client_broker="TLS_PLAINTEXT",
+                    in_cluster=True,
+                ),
+                tls_authentication=True,
+                public_access=True,
+                unauthentication_access=False,
+                enhanced_monitoring="DEFAULT",
+            )
+        }
+
+        key = MagicMock()
+        key.arn = key_arn
+        key.region = AWS_REGION_US_EAST_1
+        key.manager = None
+        key.detail_retrieved = False
+        key.describe_error = "AccessDeniedException"
+
+        kms_client = MagicMock()
+        kms_client.keys = [key]
+        kms_client.keys_scan_errors = {}
+
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
+            ),
+            patch(
+                "prowler.providers.aws.services.kafka.kafka_cluster_encryption_at_rest_uses_cmk.kafka_cluster_encryption_at_rest_uses_cmk.kafka_client",
+                new=kafka_client,
+            ),
+            patch(
+                "prowler.providers.aws.services.kafka.kafka_cluster_encryption_at_rest_uses_cmk.kafka_cluster_encryption_at_rest_uses_cmk.kms_client",
+                new=kms_client,
+            ),
+        ):
+            from prowler.providers.aws.services.kafka.kafka_cluster_encryption_at_rest_uses_cmk.kafka_cluster_encryption_at_rest_uses_cmk import (
+                kafka_cluster_encryption_at_rest_uses_cmk,
+            )
+
+            check = kafka_cluster_encryption_at_rest_uses_cmk()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "MANUAL"
+            assert (
+                result[0].status_extended
+                == f"Kafka cluster 'demo-cluster-1' encryption key '{key_arn}' could not be verified in region {AWS_REGION_US_EAST_1} (metadata unretrieved); verify manually that it is a customer-managed KMS key."
+            )
+            assert result[0].resource_id == "6357e0b2-0e6a-4b86-a0b4-70df934c2e31-5"
+            assert (
+                result[0].resource_arn
+                == "arn:aws:kafka:us-east-1:123456789012:cluster/demo-cluster-1/6357e0b2-0e6a-4b86-a0b4-70df934c2e31-5"
+            )
+            assert result[0].resource_tags == []
+            assert result[0].region == AWS_REGION_US_EAST_1

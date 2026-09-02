@@ -47,6 +47,24 @@ class kms_key_enclave_attestation_bypassable_path(Check):
             list[Check_Report_AWS]: one report per enclave KMS key.
         """
         findings = []
+
+        for region, error in sorted(
+            getattr(kms_client, "keys_scan_errors", {}).items()
+        ):
+            report = Check_Report_AWS(
+                metadata=self.metadata(), resource={"region": region}
+            )
+            report.region = region
+            report.resource_id = "key/unknown"
+            report.resource_arn = f"arn:{kms_client.audited_partition}:kms:{region}:{kms_client.audited_account}:key/unknown"
+            report.status = "MANUAL"
+            report.status_extended = (
+                f"KMS keys could not be listed in region {region} ({error}); "
+                f"verify manually that every authorization path to an "
+                f"enclave-scoped key requires attestation."
+            )
+            findings.append(report)
+
         for key in kms_client.keys:
             if (
                 key.manager != "CUSTOMER"
