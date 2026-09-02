@@ -19,6 +19,9 @@ class CloudWatch(AWSService):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
         self.metric_alarms = []
+        # True when DescribeAlarms was denied in at least one audited region,
+        # so the alarm inventory may be incomplete.
+        self.metric_alarms_unavailable = False
         self.__threading_call__(self._describe_alarms)
         if self.metric_alarms:
             self._list_tags_for_resource()
@@ -56,13 +59,16 @@ class CloudWatch(AWSService):
                 logger.error(
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
+                self.metric_alarms_unavailable = True
                 if not self.metric_alarms:
                     self.metric_alarms = None
             else:
+                self.metric_alarms_unavailable = True
                 logger.error(
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         except Exception as error:
+            self.metric_alarms_unavailable = True
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
@@ -92,6 +98,9 @@ class Logs(AWSService):
         # index for cross-service evidence lookups.
         self.all_log_groups = {}
         self.log_groups = {}
+        # True when DescribeLogGroups was denied in at least one audited
+        # region, so the log group inventory may be incomplete.
+        self.log_groups_unavailable = False
         self._log_groups_hydrated = set()
         self.log_group_limit = get_resource_scan_limit(
             self.audit_config, "max_cloudwatch_log_groups"
@@ -103,6 +112,9 @@ class Logs(AWSService):
         self.resource_policies = {}
         self.__threading_call__(self._describe_resource_policies)
         self.metric_filters = []
+        # True when DescribeMetricFilters was denied in at least one audited
+        # region, so the metric filter inventory may be incomplete.
+        self.metric_filters_unavailable = False
         self.__threading_call__(self._describe_metric_filters)
         if self.log_groups:
             if (
@@ -166,6 +178,9 @@ class Logs(AWSService):
                                 arn=arn,
                                 name=filter["filterName"],
                                 metric=filter["metricTransformations"][0]["metricName"],
+                                metric_namespace=filter["metricTransformations"][0].get(
+                                    "metricNamespace"
+                                ),
                                 pattern=filter.get("filterPattern", ""),
                                 log_group=log_group,
                                 region=regional_client.region,
@@ -176,18 +191,32 @@ class Logs(AWSService):
                 logger.error(
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
+                self.metric_filters_unavailable = True
                 if not self.metric_filters:
                     self.metric_filters = None
             else:
+                self.metric_filters_unavailable = True
                 logger.error(
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         except Exception as error:
+            self.metric_filters_unavailable = True
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
     def _describe_log_groups(self, regional_client):
+        """List the log groups in a region into the complete and the analysed indexes.
+
+        A denied DescribeLogGroups sets both indexes to None, but only while nothing has been
+        collected yet: that None is the state checks read as "inventory unknown", and it must stay
+        distinguishable from an account that genuinely has no log groups. Any other failure leaves
+        the indexes as they are, so a partial inventory reads as a smaller one.
+
+        dataProtectionStatus and inheritedProperties are stored as reported. An absent
+        dataProtectionStatus is the API saying the log group has never had a policy, and it is kept
+        as None rather than a status string so a check can tell "never configured" from DISABLED.
+        """
         logger.info("CloudWatch Logs - Describing log groups...")
         try:
             describe_log_groups_paginator = regional_client.get_paginator(
@@ -215,6 +244,12 @@ class Logs(AWSService):
                             never_expire=never_expire,
                             kms_id=kms,
                             creation_time=log_group.get("creationTime"),
+                            data_protection_status=log_group.get(
+                                "dataProtectionStatus"
+                            ),
+                            inherited_properties=log_group.get(
+                                "inheritedProperties", []
+                            ),
                             region=regional_client.region,
                         )
                         self.all_log_groups[log_group_object.arn] = log_group_object
@@ -224,14 +259,17 @@ class Logs(AWSService):
                 logger.error(
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
+                self.log_groups_unavailable = True
                 if not self.log_groups:
                     self.all_log_groups = None
                     self.log_groups = None
             else:
+                self.log_groups_unavailable = True
                 logger.error(
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         except Exception as error:
+            self.log_groups_unavailable = True
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
@@ -337,6 +375,11 @@ class LogGroup(BaseModel):
     never_expire: bool
     kms_id: Optional[str]
     creation_time: Optional[int] = None
+    # None when the log group has never had a data protection policy, otherwise
+    # ACTIVATED, DELETED, ARCHIVED or DISABLED.
+    data_protection_status: Optional[str] = None
+    # Properties inherited from account-level settings, e.g. ACCOUNT_DATA_PROTECTION.
+    inherited_properties: list[str] = []
     region: str
     log_streams: dict[str, list[str]] = (
         {}
@@ -354,6 +397,7 @@ class MetricFilter(BaseModel):
     arn: str
     name: str
     metric: str
+    metric_namespace: Optional[str] = None
     pattern: str
     log_group: Optional[LogGroup] = None
     region: str

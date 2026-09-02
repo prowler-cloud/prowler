@@ -1,0 +1,1 @@
+Registry scans in the Image provider now skip non-image OCI artifacts (Helm charts, cosign signatures, SBOM attestations) and no longer abort the whole scan when Trivy fails on a single discovered image; registry enumeration also runs in parallel instead of one request at a time

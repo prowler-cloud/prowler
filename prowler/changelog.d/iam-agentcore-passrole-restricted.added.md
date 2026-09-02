@@ -1,0 +1,1 @@
+`iam_policy_passrole_to_bedrock_agentcore_restricted` check for AWS provider, flagging customer-managed IAM policies that allow `iam:PassRole` over every role where the passed role can reach Bedrock AgentCore, so any principal holding the policy can run agent code under any role in the account

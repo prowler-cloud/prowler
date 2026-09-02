@@ -28,6 +28,11 @@ class GCPService:
         self.client = self.__generate_client__(
             self.service, api_version, self.credentials
         )
+        # Audited projects where this service's API is definitively DISABLED,
+        # and projects whose API activation state could not be determined;
+        # both are excluded from project_ids.
+        self.api_disabled_project_ids: set = set()
+        self.api_state_unknown_project_ids: set = set()
         # Only project ids that have their API enabled will be scanned
         if provider.skip_api_check:
             self.project_ids = provider.project_ids
@@ -69,10 +74,12 @@ class GCPService:
                 if response.get("state") != "DISABLED":
                     project_ids.append(project_id)
                 else:
+                    self.api_disabled_project_ids.add(project_id)
                     logger.error(
                         f"{self.service} API has not been used in project {project_id} before or it is disabled. Enable it by visiting https://console.developers.google.com/apis/api/{self.service}.googleapis.com/overview?project={project_id} then retry."
                     )
             except Exception as error:
+                self.api_state_unknown_project_ids.add(project_id)
                 logger.error(
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
