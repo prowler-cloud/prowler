@@ -1,12 +1,33 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.iam.lib.policy import is_policy_public
 from prowler.providers.aws.services.kms.kms_client import kms_client
+from prowler.providers.aws.services.kms.lib.inventory import (
+    get_kms_inventory_error_reports,
+    get_kms_key_detail_error_report,
+)
 
 
 class kms_key_not_publicly_accessible(Check):
     def execute(self):
-        findings = []
+        findings = get_kms_inventory_error_reports(self.metadata(), kms_client)
         for key in kms_client.keys:
+            if not key.detail_retrieved:
+                findings.append(get_kms_key_detail_error_report(self.metadata(), key))
+                continue
+            if (
+                key.manager == "CUSTOMER"
+                and key.state == "Enabled"
+                and key.policy is None
+                and key.policy_fetch_error
+            ):
+                report = Check_Report_AWS(metadata=self.metadata(), resource=key)
+                report.status = "MANUAL"
+                report.status_extended = (
+                    f"KMS key {key.id} policy could not be fetched "
+                    f"({key.policy_fetch_error}); public access cannot be verified."
+                )
+                findings.append(report)
+                continue
             if (
                 key.manager == "CUSTOMER"
                 and key.state == "Enabled"
