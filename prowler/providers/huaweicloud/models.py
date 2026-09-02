@@ -306,6 +306,33 @@ class HuaweiCloudSession:
                     .build()
                 )
 
+            elif service == "identitycenter":
+                from huaweicloudsdkidentitycenter.v1 import IdentityCenterClient
+                from huaweicloudsdkidentitycenter.v1.region.identitycenter_region import (
+                    IdentityCenterRegion,
+                )
+
+                client_region = region or self._region
+                try:
+                    service_region = _aligned_region(
+                        IdentityCenterRegion, client_region
+                    )
+                except KeyError:
+                    from huaweicloudsdkcore.region.region import Region
+
+                    endpoint = _align_endpoint_tld(
+                        client_region,
+                        "https://identitycenter.myhuaweicloud.com",
+                    )
+                    service_region = Region(client_region, endpoint)
+                return (
+                    IdentityCenterClient.new_builder()
+                    .with_credentials(self._get_global_credentials(client_region))
+                    .with_http_config(self._http_config())
+                    .with_region(service_region)
+                    .build()
+                )
+
             elif service == "rds":
                 from huaweicloudsdkrds.v3 import RdsClient
                 from huaweicloudsdkrds.v3.region.rds_region import RdsRegion
@@ -446,6 +473,24 @@ class HuaweiCloudSession:
             basic_creds.security_token = creds.security_token
 
         return basic_creds
+
+    def _get_global_credentials(self, region: str = None):
+        """Get Huawei Cloud GlobalCredentials from stored credentials."""
+        from huaweicloudsdkcore.auth.credentials import GlobalCredentials
+
+        creds = self._credentials
+        global_creds = GlobalCredentials(
+            ak=creds.ak,
+            sk=creds.sk,
+            domain_id=creds.domain_id,
+        )
+        iam_endpoint = _iam_endpoint_for_region(region or self._region)
+        if iam_endpoint:
+            global_creds.iam_endpoint = iam_endpoint
+        if creds.security_token:
+            global_creds.security_token = creds.security_token
+
+        return global_creds
 
 
 class HuaweiCloudOutputOptions(ProviderOutputOptions):
