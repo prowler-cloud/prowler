@@ -92,11 +92,6 @@ rss: true
 
   Read more in the [Prowler MCP documentation](https://docs.prowler.com/getting-started/products/prowler-mcp).
 
-  ### 🧩 Prowler App
-
-  - Creating a mute rule now updates only each affected provider's latest completed scan and future scans, so historical reaggregation no longer floods the Celery queues.
-  - Cached permissions refresh from `/users/me?include=roles` after access token rotation, so a role change takes effect without signing out.
-  - Slack integration polish: the connection check leaves its result on the card, naming the channel Slack refused or the channels it reached; a selected private channel carries the same `Private` badge as the channel list; and the bot is referred to as `@Prowler Cloud` throughout.
 
   ### 🙌 External Contributors
 
