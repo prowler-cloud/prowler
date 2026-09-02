@@ -148,6 +148,18 @@ vulnerabilities:
       - "pkg:golang/github.com/go-git/go-git/v5"
     expired_at: 2026-09-15
 
+  # gRPC-Go server-side heap exhaustion from fragmented inbound HTTP/2 DATA frames:
+  # https://github.com/advisories/GHSA-vp52-pcj8-j9qc
+  # Trivy 0.74.0 embeds grpc-go 1.82.1, and current Trivy main still embeds that
+  # version. Prowler invokes Trivy directly with `fs` for IaC scans and `image`
+  # for container scans; neither path starts a gRPC server or reaches the
+  # vulnerable receive path. Remove this suppression with the first Trivy
+  # release embedding grpc-go 1.83.1 or later.
+  - id: CVE-2026-84304
+    purls:
+      - "pkg:golang/google.golang.org/grpc"
+    expired_at: 2026-09-15
+
   - id: CVE-2026-56852
     purls:
       - "pkg:golang/golang.org/x/text"

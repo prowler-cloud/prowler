@@ -17,6 +17,13 @@ ignore:
   - vulnerability: CVE-2026-71556
     package:
       name: github.com/go-git/go-git/v5
+  # Trivy 0.74.0 embeds grpc-go 1.82.1. Prowler invokes Trivy directly through
+  # `fs` and `image` scans; neither path starts a gRPC server or reaches the
+  # vulnerable receive path. Remove this entry by 2026-09-15 or with the first
+  # Trivy release embedding grpc-go 1.83.1 or later.
+  - vulnerability: CVE-2026-84304
+    package:
+      name: google.golang.org/grpc
   - vulnerability: CVE-2026-56852
     package:
       name: golang.org/x/text
