@@ -1,5 +1,7 @@
 from unittest import mock
 
+from moto import mock_aws
+
 from prowler.providers.aws.services.ecr.ecr_service import Registry, Repository
 from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
@@ -12,7 +14,7 @@ repository_arn = (
     f"arn:aws:ecr:eu-west-1:{AWS_ACCOUNT_NUMBER}:repository/{repository_name}"
 )
 
-
+@mock_aws
 class Test_ecr_repository_encrypted_with_cmk:
     def test_no_registries(self):
         """Test when there are no registries."""
