@@ -1,1 +1,1 @@
-`zone_challenge_passage_configured` no longer fails when a Cloudflare zone has no challenge passage TTL configured
+Zones without a challenge passage TTL are reported as non-compliant by `zone_challenge_passage_configured`

@@ -318,6 +318,7 @@ class TestCloudflareValidateCredentials:
             response=MagicMock(status_code=403),
             body=None,
         )
+        mock_client.accounts.list.return_value = iter([])
 
         session = CloudflareSession(
             client=mock_client,
@@ -328,6 +329,7 @@ class TestCloudflareValidateCredentials:
 
         with pytest.raises(CloudflareNoAccountsError):
             CloudflareProvider.validate_credentials(session)
+        mock_client.user.get.assert_called_once()
         mock_client.accounts.list.assert_called_once()
 
     def test_validate_credentials_invalid_api_token(self):
@@ -497,6 +499,7 @@ class TestCloudflareTestConnection:
             response=MagicMock(status_code=403),
             body=None,
         )
+        mock_client.accounts.list.return_value = iter([])
 
         with patch(
             "prowler.providers.cloudflare.cloudflare_provider.CloudflareProvider.setup_session",
@@ -514,6 +517,7 @@ class TestCloudflareTestConnection:
             assert connection.is_connected is False
             assert isinstance(connection.error, CloudflareNoAccountsError)
             assert "No Cloudflare accounts found" in str(connection.error)
+            mock_client.user.get.assert_called_once()
             mock_client.accounts.list.assert_called_once()
 
     def test_test_connection_invalid_api_key(self):
