@@ -55,6 +55,11 @@ class KMS(AWSService):
             )
 
     def _describe_key(self):
+        """Retrieve metadata for each discovered KMS key.
+
+        Records the error code or exception type on keys whose metadata cannot
+        be retrieved so checks can report incomplete evidence.
+        """
         logger.info("KMS - Describing Key...")
         for key in self.keys:
             try:

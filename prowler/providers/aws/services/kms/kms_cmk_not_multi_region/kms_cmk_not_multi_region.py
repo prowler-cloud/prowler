@@ -1,5 +1,3 @@
-from typing import List
-
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.kms.kms_client import kms_client
 from prowler.providers.aws.services.kms.lib.inventory import (
@@ -9,9 +7,15 @@ from prowler.providers.aws.services.kms.lib.inventory import (
 
 
 class kms_cmk_not_multi_region(Check):
-    """kms_cmk_not_multi_region verifies if a KMS key is multi-regional"""
+    """Ensure customer-managed KMS keys are single-region."""
 
-    def execute(self) -> List[Check_Report_AWS]:
+    def execute(self) -> list[Check_Report_AWS]:
+        """Execute the KMS multi-region key check.
+
+        Returns:
+            list[Check_Report_AWS]: Reports for customer-managed keys and any
+            incomplete KMS inventory evidence.
+        """
         findings = get_kms_inventory_error_reports(self.metadata(), kms_client)
 
         for key in kms_client.keys:

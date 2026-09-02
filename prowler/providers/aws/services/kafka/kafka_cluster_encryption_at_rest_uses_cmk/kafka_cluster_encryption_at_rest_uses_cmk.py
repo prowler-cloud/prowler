@@ -4,7 +4,15 @@ from prowler.providers.aws.services.kms.kms_client import kms_client
 
 
 class kafka_cluster_encryption_at_rest_uses_cmk(Check):
-    def execute(self):
+    """Ensure Amazon MSK clusters use a customer-managed KMS key at rest."""
+
+    def execute(self) -> list[Check_Report_AWS]:
+        """Execute the Amazon MSK encryption-at-rest check.
+
+        Returns:
+            list[Check_Report_AWS]: Reports for Amazon MSK clusters, including
+            manual results when KMS evidence is incomplete.
+        """
         findings = []
         kms_scan_errors = getattr(kms_client, "keys_scan_errors", {})
         if not isinstance(kms_scan_errors, dict):

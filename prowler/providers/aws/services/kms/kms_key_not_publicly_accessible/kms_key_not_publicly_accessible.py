@@ -8,7 +8,15 @@ from prowler.providers.aws.services.kms.lib.inventory import (
 
 
 class kms_key_not_publicly_accessible(Check):
-    def execute(self):
+    """Ensure customer-managed KMS keys are not publicly accessible."""
+
+    def execute(self) -> list[Check_Report_AWS]:
+        """Execute the KMS key public-access check.
+
+        Returns:
+            list[Check_Report_AWS]: Reports for customer-managed keys and any
+            incomplete KMS inventory evidence.
+        """
         findings = get_kms_inventory_error_reports(self.metadata(), kms_client)
         for key in kms_client.keys:
             if not key.detail_retrieved:

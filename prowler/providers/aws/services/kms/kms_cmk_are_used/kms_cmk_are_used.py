@@ -7,7 +7,15 @@ from prowler.providers.aws.services.kms.lib.inventory import (
 
 
 class kms_cmk_are_used(Check):
-    def execute(self):
+    """Assess whether customer-managed KMS keys are in use."""
+
+    def execute(self) -> list[Check_Report_AWS]:
+        """Execute the KMS key usage check.
+
+        Returns:
+            list[Check_Report_AWS]: Reports for customer-managed keys and any
+            incomplete KMS inventory evidence.
+        """
         findings = get_kms_inventory_error_reports(self.metadata(), kms_client)
         for key in kms_client.keys:
             if not key.detail_retrieved:
