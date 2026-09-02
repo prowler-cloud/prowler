@@ -5,37 +5,35 @@ rss: true
 ---
 
 <Update label="v5.41.0" description="September 2, 2026">
-  ### 📥 Scans — Import Findings from the Scans Page
+  ### 📥 Scans — Import Findings from the Browser
 
   <Note>
   This feature is available exclusively in **Prowler Cloud** and **Prowler Private Cloud** with a [subscription](https://prowler.com/pricing).
   </Note>
 
-  Findings produced outside the platform, by the Prowler CLI or a CI pipeline, can now be brought into the app without leaving the browser. The Scans page gains an "Import Findings" dialog that takes a Prowler `.ocsf.json` report by drag-and-drop or file picker, hands it to the ingestion API and tracks the job to completion, reporting how many records were processed and how many were invalid. Files that are not an OCSF report, or are empty, are refused before any upload starts, and a rejected upload or a failed status poll can be retried in place. The dialog is available to roles holding the `manage_ingestions` permission.
+  Findings produced outside the platform, by the Prowler CLI or a CI pipeline, can now be brought into the app without leaving the browser. The Scans page gains an "Import Findings" dialog that takes a Prowler `.ocsf.json` report by drag-and-drop or file picker, hands it to the ingestion API and tracks the job to completion, reporting how many records were processed and how many were invalid. Files that are not a `.ocsf.json` report, or are empty, are refused before any upload starts, and a rejected upload or a failed status poll can be retried in place. The dialog is available to roles holding the Manage Ingestions permission.
 
-  ![Import Findings button on the Scans page](/images/changelog/v5.41.0-import-findings-button.png)
+  ![Import Findings button on the Scans page](/images/prowler-app/import-findings/import-findings-button.png)
 
-  ![Import findings dialog with the drag-and-drop area](/images/changelog/v5.41.0-import-findings-dialog.png)
+  ![Import findings dialog with the drag-and-drop area](/images/prowler-app/import-findings/import-findings-dialog.png)
 
-  Read more in the [Import Findings documentation](https://docs.prowler.com/user-guide/tutorials/prowler-import-findings).
+  Read more in the [Import Findings documentation](https://docs.prowler.com/user-guide/tutorials/prowler-import-findings#using-the-prowler-app).
 
   ### 🎫 Jira Integration — Finding Reference in Every Issue
 
   Every Jira issue created from a finding now carries a stable reference back to it. Issues are labeled `prowler`, `prowler-<provider>`, `prowler-<severity>`, `prowler-<check-id>` and `prowler-finding-<finding-uid>`, so they can be filtered, searched with JQL or matched by automation; labels are sanitized to Jira's limits so a long or unusual value never blocks issue creation. The issue also links back to the finding in Prowler, filtered by its UID so the link keeps working after later scans, and names the Prowler organization that sent it. Prowler Cloud always includes the link; Prowler Local Server enables it by setting `DJANGO_UI_BASE_URL` in the API environment.
 
-  Under the hood, the SDK's `Jira.send_finding()` now returns typed outcomes with the issue key, immutable ID and browse URL, and the new `Jira.get_issues_status()` resolves issues by immutable ID in batches, telling open, done, moved, missing and forbidden apart instead of treating every miss as a deletion.
-
   Read more in the [Jira integration documentation](https://docs.prowler.com/user-guide/tutorials/prowler-app-jira-integration).
 
   ### 📚 Compliance — CIS Google Workspace Foundations Benchmark v1.4.0
 
-  Prowler now ships the CIS Google Workspace Foundations Benchmark v1.4.0. Alongside the new framework, the Google Workspace checks mapped to CIS were reworked to evaluate the benchmark's full audit procedure instead of a single condition, so Gmail spoofing actions, 2-Step Verification, password expiration and alert severity left on Google's defaults no longer pass. Three checks also gained accuracy:
+  Prowler now ships the CIS Google Workspace Foundations Benchmark v1.4.0. Alongside the new framework, the Google Workspace checks mapped to CIS were reworked to evaluate the benchmark's full audit procedure instead of a single condition, so Gmail spoofing actions, 2-Step Verification, password expiration and alert severity left on Google's defaults no longer pass. Expect new `FAIL` findings on domains that rely on those defaults. Three accuracy fixes also land:
 
   - `security_2sv_enforced` and `security_2sv_hardware_keys_admins` report `MANUAL` instead of judging domain-wide values that a group or a sub-organizational unit overrides; a domain-wide failure is still reported as such, with the override noted.
   - `rules_*_alert_configured` no longer passes a rule whose delivery to the alert center is disabled.
   - `security_password_policy_strong` no longer fails a domain that never touched the password strength setting, since Google enforces strong passwords by default.
 
-  `security_login_challenges_configured` and `security_2sv_enforced` were unmapped from CIS Google Workspace 4.1.4.1 and CISA SCuBA `GWS.COMMONCONTROLS.1.1`, whose Post-SSO verification and phishing-resistant MFA requirements neither check can prove.
+  `security_login_challenges_configured` was unmapped from CIS Google Workspace requirement 4.1.4.1 (Post-SSO verification) and `security_2sv_enforced` from CISA SCuBA `GWS.COMMONCONTROLS.1.1` (phishing-resistant MFA), because neither check can prove what those requirements ask for.
 
   Read more in the [Compliance documentation](https://docs.prowler.com/user-guide/compliance/tutorials/compliance).
 
@@ -49,19 +47,19 @@ rss: true
   - `iam_policy_no_agentcore_workload_access_token_wildcard` flags customer-managed IAM policies that allow `bedrock-agentcore:GetWorkloadAccessToken`, `GetWorkloadAccessTokenForJWT` or `GetWorkloadAccessTokenForUserId` on resources reaching workload identities other than the caller's own.
   - `cloudwatch_log_group_agentcore_data_protection_policy_enabled` verifies that Bedrock AgentCore log groups mask sensitive data with a CloudWatch Logs data protection policy. The log group prefixes are configurable through `agentcore_log_group_name_prefixes` in `config.yaml`.
 
-  #### GuardDuty
+  #### Amazon GuardDuty
 
   - `guardduty_runtime_monitoring_enabled` flags detectors without unified Runtime Monitoring, the only feature that covers Amazon EC2 instances and Amazon ECS on AWS Fargate tasks in addition to Amazon EKS.
   - `guardduty_ai_protection_enabled` flags detectors without AI Protection, which analyzes CloudTrail data events from Amazon Bedrock, Amazon Bedrock AgentCore and Amazon SageMaker AI. A detector that does not report the feature is `MANUAL` rather than `FAIL`.
 
   `guardduty_eks_runtime_monitoring_enabled` no longer reports `FAIL` for detectors that use unified Runtime Monitoring, which is mutually exclusive with `EKS_RUNTIME_MONITORING` and already covers Amazon EKS.
 
-  #### Containers and Kubernetes
+  #### Amazon ECR and EKS
 
   - `ecr_registry_enhanced_scanning_enabled` verifies that the ECR registry scan type is enhanced (Amazon Inspector, covering programming language packages and continuous rescanning) instead of basic, reporting `MANUAL` when the registry scanning configuration cannot be read.
   - `eks_cluster_vpc_cni_network_policy_enforced` flags EKS clusters whose Amazon VPC CNI managed add-on does not enable Kubernetes network policy enforcement, reporting `MANUAL` where the EKS API cannot show the setting.
 
-  #### IAM, secrets and encryption
+  #### AWS IAM, Elastic Beanstalk and MemoryDB
 
   - `iam_role_service_trust_restricts_source_to_account` flags IAM roles whose trust policy lets an AWS service principal assume the role without confining the request to a specific source account, including trust policies that `iam_role_cross_service_confused_deputy_prevention` does not evaluate.
   - `elasticbeanstalk_environment_no_secrets_in_configuration` scans the option settings of every Elastic Beanstalk environment for hardcoded secrets. Thanks to @haneul-24!
@@ -69,29 +67,19 @@ rss: true
 
   Explore all AWS checks at [Prowler Hub](https://hub.prowler.com/check?provider=aws).
 
-  #### Check Accuracy
-
-  - Checks no longer report `FAIL` when the scanning identity lacks permissions, an API is not enabled or a feature is not licensed. Twenty-eight Microsoft 365, Azure, AWS and GCP checks now emit a single `MANUAL` finding naming what is required, so a permissions gap is no longer indistinguishable from a real misconfiguration.
-  - `ecr_registry_scan_images_on_push_enabled` no longer passes a registry whose scanning rules are all `MANUAL`, nor describes a `CONTINUOUS_SCAN` registry as scanning on push; each rule's `scanFrequency` is now read instead of inferred from the rule's presence.
-  - `sagemaker_notebook_instance_without_direct_internet_access_configured` now reads the `DirectInternetAccess` setting instead of `RootAccess`, failing a notebook instance with direct internet access enabled even when root access is disabled.
-  - CloudWatch log metric filter checks no longer crash with `AttributeError` when the account has a metric filter whose log group was not retrieved.
-  - GitHub repository discovery for unscoped scans now paginates beyond the first 100 accessible repositories instead of silently scanning only the first page. Thanks to @ye11oc4t!
-
   ### 🐳 Image Provider — On-Premises Registries
 
   Scanning registries that live on private networks is now supported end to end. `PROWLER_IMAGE_PROVIDER_ALLOWED_PRIVATE_NETWORKS` takes a comma-separated list of IPs and CIDRs the provider may reach, while every other non-public address, including link-local and loopback, stays blocked by the SSRF guard. Authentication negotiation is also more resilient: the provider falls back to Basic when a registry such as Harbor rejects the negotiated bearer token, and switches to a bearer token when the server answers a Basic or anonymous request with a Bearer challenge. `--registry-insecure` now propagates to Trivy through `TRIVY_INSECURE`, so images behind self-signed certificates can be pulled and scanned, not just enumerated. The flag now disables certificate validation for the image pull too, so keep it for trusted internal registries only.
 
   Registry scans also skip non-image OCI artifacts (Helm charts, cosign signatures, SBOM attestations), no longer abort the whole scan when Trivy fails on a single image, and enumerate repositories in parallel instead of one request at a time.
 
-  Read more in the [Image provider documentation](https://docs.prowler.com/user-guide/providers/image/getting-started-image).
+  Read more in the [Image provider documentation](https://docs.prowler.com/user-guide/providers/image/getting-started-image#on-premises-registries-and-private-networks).
 
+  ### 🛠️ Prowler MCP — Tool Failures Reported as Errors
 
-  ### 🛠️ Prowler MCP Server — Failures Are Failures
-
-  Prowler App tools now report a failure as an MCP tool execution error (`isError: true`, with the explanation in `content`) instead of a successful result carrying an `{"error": ...}` object, which clients and models read as a success. The Prowler Docs and Prowler Hub tools follow the same rule: `prowler_docs_search` no longer reports a failed search as zero matches, `prowler_docs_get_document` no longer reports a failed fetch as a missing page, and `prowler_hub_get_check_code` and `prowler_hub_get_check_fixer` now name the provider a check ID actually belongs to instead of reporting it as nonexistent. `prowler_get_compliance_framework_state_details` also rejects a call that passes both `scan_id` and `provider_id` instead of silently ignoring the provider.
+  Prowler App tools now report a failure as an MCP tool execution error (`isError: true`, with the explanation in `content`) instead of a successful result carrying an `{"error": ...}` object, which clients and models read as a success. The Prowler Documentation and Prowler Hub tools follow the same rule: `prowler_docs_search` no longer reports a failed search as zero matches, `prowler_docs_get_document` no longer reports a failed fetch as a missing page, and `prowler_hub_get_check_code` and `prowler_hub_get_check_fixer` now name the provider a check ID actually belongs to instead of reporting it as nonexistent. `prowler_get_compliance_framework_state_details` also rejects a call that passes both `scan_id` and `provider_id` instead of silently ignoring the provider.
 
   Read more in the [Prowler MCP documentation](https://docs.prowler.com/getting-started/products/prowler-mcp).
-
 
   ### 🙌 External Contributors
 

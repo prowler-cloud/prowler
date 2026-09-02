@@ -1,7 +1,7 @@
 ---
 title: 'Import Findings'
 sidebarTitle: 'Import Findings'
-description: 'Upload OCSF scan results to Prowler Cloud from external sources or the CLI'
+description: 'Upload OCSF scan results to Prowler Cloud from the Prowler App, the CLI or the API'
 ---
 
 import { VersionBadge } from "/snippets/version-badge.mdx"
@@ -9,7 +9,7 @@ import { SubscriptionBanner } from "/snippets/subscription-banner.mdx"
 
 <VersionBadge version="5.19.0" />
 
-Findings Ingestion enables uploading OCSF (Open Cybersecurity Schema Framework) scan results to Prowler Cloud. This feature supports importing findings from Prowler CLI output files that use the [Detection Finding](https://schema.ocsf.io/classes/detection_finding) class.
+Findings Ingestion enables uploading OCSF (Open Cybersecurity Schema Framework) scan results to Prowler Cloud. This feature supports importing findings from Prowler CLI output files that use the [Detection Finding](https://schema.ocsf.io/classes/detection_finding) class. Reports can be imported from the Scans page in the Prowler App, pushed by the CLI with `--push-to-cloud`, or submitted through the API.
 
 <SubscriptionBanner />
 
@@ -132,9 +132,31 @@ Only **Detection Finding** (`class_uid: 2004`) records are accepted. Other OCSF 
 
 ## Required Permissions
 
-The **Manage Ingestions** RBAC permission controls access to the ingestion endpoints. Without this permission, findings cannot be submitted via the API or `--push-to-cloud`.
+The **Manage Ingestions** RBAC permission controls access to the ingestion endpoints. Without this permission, findings cannot be submitted from the Scans page, via the API or with `--push-to-cloud`.
 
 For more information about RBAC permissions, refer to the [Prowler Cloud RBAC documentation](/user-guide/tutorials/prowler-app-rbac).
+
+## Using the Prowler App
+
+<VersionBadge version="5.41.0" />
+
+The Scans page imports a Prowler OCSF report from the browser, with no CLI or API key involved. The import runs as a regular ingestion job, so the [status values](#ingestion-status-values), the [billing impact](#billing-impact) and the [errors endpoint](#get-ingestion-errors) apply as they do for the CLI and the API.
+
+1. Go to **Scans** and click **Import Findings**. The button is shown only to roles with the **Manage Ingestions** permission.
+
+    ![Import Findings button on the Scans page](/images/prowler-app/import-findings/import-findings-button.png)
+
+2. Drag a `.ocsf.json` report onto the drop area, or click **Select File** to pick one. The dialog takes one file per import. A file whose name does not end in `.ocsf.json`, or an empty file, is rejected before the upload starts.
+
+    ![Import findings dialog with the drag-and-drop area](/images/prowler-app/import-findings/import-findings-dialog.png)
+
+3. Click **Start import**. The dialog uploads the report, creates the ingestion job and follows its status until the job finishes. On completion it reports the total number of records, how many were processed and how many were invalid.
+
+Closing the dialog while an import is running does not cancel the job. When the job completes in the background, a notification confirms it and the imported findings appear in Scans.
+
+If the upload is rejected or the job fails, the dialog shows the reason and a **Retry import** button that sends the same file again. A failed job also shows the progress it reported before failing. A different file can be selected instead of retrying. If the status check fails after the upload was accepted, **Retry status** resumes tracking the same job without uploading the file again.
+
+Invalid records are counted in the summary but not listed in the dialog. To see why each one was rejected, [list the ingestion jobs](#list-ingestion-jobs) through the API and query the [errors endpoint](#get-ingestion-errors) for that job.
 
 ## Using the CLI
 
