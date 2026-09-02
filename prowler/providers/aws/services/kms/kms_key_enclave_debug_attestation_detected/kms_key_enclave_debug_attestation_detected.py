@@ -15,6 +15,11 @@ from prowler.providers.aws.services.kms.lib.enclave import (
     resolve_kms_key_resource,
     synthetic_account_kms_resource,
 )
+from prowler.providers.aws.services.kms.lib.inventory import (
+    generate_describe_error_report,
+    generate_scan_error_reports,
+    is_key_detail_unretrieved,
+)
 
 
 class kms_key_enclave_debug_attestation_detected(Check):
@@ -51,6 +56,13 @@ class kms_key_enclave_debug_attestation_detected(Check):
             list[Check_Report_AWS]: one report per KMS key evaluated.
         """
         findings = []
+        findings.extend(
+            generate_scan_error_reports(
+                metadata=self.metadata(),
+                action_text="enclave-scoped keys do not use debug-mode attestation",
+                client=kms_client,
+            )
+        )
 
         lookback_hours = kms_client.audit_config.get(
             ENCLAVE_DEBUG_CONFIG_LOOKBACK_KEY,
@@ -127,36 +139,47 @@ class kms_key_enclave_debug_attestation_detected(Check):
                 break
 
         keys_to_report = set(events_by_key.keys())
-        if target_key_ids:
-            for key in kms_client.keys:
-                if key_id_from_arn(key.arn) in target_key_ids:
-                    keys_to_report.add(key.arn)
+        for key in kms_client.keys:
+            if target_key_ids and key_id_from_arn(key.arn) not in target_key_ids:
+                continue
+            if is_key_detail_unretrieved(key):
+                findings.append(
+                    generate_describe_error_report(
+                        metadata=self.metadata(),
+                        key=key,
+                        action_text="enclave-scoped keys do not use debug-mode attestation",
+                    )
+                )
+                continue
+            if target_key_ids:
+                keys_to_report.add(key.arn)
 
         if not keys_to_report:
-            report = Check_Report_AWS(
-                metadata=self.metadata(),
-                resource=synthetic_account_kms_resource(
-                    kms_client.audited_account, kms_client.region
-                ),
-            )
-            report.status = "MANUAL"
-            base = (
-                f"No KMS-from-enclave attestation events found in the last "
-                f"{lookback_hours}h. Debug-mode status cannot be determined "
-                f"from available data; enclaves that never call KMS in the "
-                f"window are not observable via this check."
-            )
-            if coverage_errors:
-                report.status_extended = (
-                    f"{base} Additionally, CloudTrail lookup failed for "
-                    f"{len(coverage_errors)} region/event pair(s): "
-                    f"{', '.join(coverage_errors[:5])}"
-                    f"{'...' if len(coverage_errors) > 5 else ''}. "
-                    f"Coverage is incomplete."
+            if not findings:
+                report = Check_Report_AWS(
+                    metadata=self.metadata(),
+                    resource=synthetic_account_kms_resource(
+                        kms_client.audited_account, kms_client.region
+                    ),
                 )
-            else:
-                report.status_extended = base
-            findings.append(report)
+                report.status = "MANUAL"
+                base = (
+                    f"No KMS-from-enclave attestation events found in the last "
+                    f"{lookback_hours}h. Debug-mode status cannot be determined "
+                    f"from available data; enclaves that never call KMS in the "
+                    f"window are not observable via this check."
+                )
+                if coverage_errors:
+                    report.status_extended = (
+                        f"{base} Additionally, CloudTrail lookup failed for "
+                        f"{len(coverage_errors)} region/event pair(s): "
+                        f"{', '.join(coverage_errors[:5])}"
+                        f"{'...' if len(coverage_errors) > 5 else ''}. "
+                        f"Coverage is incomplete."
+                    )
+                else:
+                    report.status_extended = base
+                findings.append(report)
             return findings
 
         for key_arn in sorted(keys_to_report):
@@ -240,6 +263,15 @@ class kms_key_enclave_debug_attestation_detected(Check):
             findings.append(report)
             return findings
         for key in candidate_keys:
+            if is_key_detail_unretrieved(key):
+                findings.append(
+                    generate_describe_error_report(
+                        metadata=self.metadata(),
+                        key=key,
+                        action_text="enclave-scoped keys do not use debug-mode attestation",
+                    )
+                )
+                continue
             report = Check_Report_AWS(metadata=self.metadata(), resource=key)
             report.status = "MANUAL"
             report.status_extended = (

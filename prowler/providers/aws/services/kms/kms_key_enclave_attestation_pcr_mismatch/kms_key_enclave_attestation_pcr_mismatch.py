@@ -8,6 +8,11 @@ from prowler.providers.aws.services.kms.lib.enclave import (
     normalize_golden_pcr_config,
     statement_targets_sensitive_actions,
 )
+from prowler.providers.aws.services.kms.lib.inventory import (
+    generate_describe_error_report,
+    generate_scan_error_reports,
+    is_key_detail_unretrieved,
+)
 
 
 class kms_key_enclave_attestation_pcr_mismatch(Check):
@@ -44,29 +49,29 @@ class kms_key_enclave_attestation_pcr_mismatch(Check):
             list[Check_Report_AWS]: One report per selected enclave KMS key.
         """
         findings = []
-
-        for region, error in sorted(
-            getattr(kms_client, "keys_scan_errors", {}).items()
-        ):
-            report = Check_Report_AWS(
-                metadata=self.metadata(), resource={"region": region}
+        findings.extend(
+            generate_scan_error_reports(
+                metadata=self.metadata(),
+                action_text="enclave-scoped key attestation PCRs match golden values",
+                client=kms_client,
             )
-            report.region = region
-            report.resource_id = "key/unknown"
-            report.resource_arn = f"arn:{kms_client.audited_partition}:kms:{region}:{kms_client.audited_account}:key/unknown"
-            report.status = "MANUAL"
-            report.status_extended = (
-                f"KMS keys could not be listed in region {region} ({error}); "
-                f"verify manually that enclave-scoped key attestation PCRs "
-                f"match golden values."
-            )
-            findings.append(report)
+        )
 
         golden = normalize_golden_pcr_config(
             kms_client.audit_config.get(GOLDEN_PCR_CONFIG_KEY)
         )
 
         for key in kms_client.keys:
+            if is_key_detail_unretrieved(key):
+                findings.append(
+                    generate_describe_error_report(
+                        metadata=self.metadata(),
+                        key=key,
+                        action_text="enclave-scoped key attestation PCRs match golden values",
+                    )
+                )
+                continue
+
             if (
                 key.manager != "CUSTOMER"
                 or key.state != "Enabled"

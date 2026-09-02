@@ -131,7 +131,10 @@ class Test_kms_cmk_are_used:
             check = kms_cmk_are_used()
             result = check.execute()
 
-            assert len(result) == expected_no_of_results
+            assert len(result) == no_of_keys_created
+            statuses = [r.status for r in result]
+            assert statuses.count("PASS") == expected_no_of_results
+            assert statuses.count("MANUAL") == 2
 
     @mock_aws
     def test_kms_key_with_deletion(self):
@@ -248,4 +251,50 @@ class Test_kms_cmk_are_used:
                 result[0].resource_arn
                 == f"arn:aws:kms:{AWS_REGION_US_EAST_1}:{aws_provider.identity.account}:key/unknown"
             )
+
+    @mock_aws
+    def test_kms_cmk_are_used_describe_error(self):
+        from prowler.providers.aws.services.kms.kms_service import KMS, Key
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        kms = KMS(aws_provider)
+        key_id = "test-key-id"
+        key_arn = f"arn:aws:kms:{AWS_REGION_US_EAST_1}:123456789012:key/{key_id}"
+        kms.keys = [
+            Key(
+                id=key_id,
+                arn=key_arn,
+                region=AWS_REGION_US_EAST_1,
+                detail_retrieved=False,
+                describe_error="AccessDeniedException",
+            )
+        ]
+        kms.keys_scan_errors = {}
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.kms.kms_cmk_are_used.kms_cmk_are_used.kms_client",
+                new=kms,
+            ),
+        ):
+            from prowler.providers.aws.services.kms.kms_cmk_are_used.kms_cmk_are_used import (
+                kms_cmk_are_used,
+            )
+
+            check = kms_cmk_are_used()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "MANUAL"
+            assert (
+                result[0].status_extended
+                == f"KMS key {key_id} details could not be retrieved (AccessDeniedException); verify manually that customer-managed keys are in use or scheduled for deletion."
+            )
+            assert result[0].resource_id == key_id
+            assert result[0].resource_arn == key_arn
+            assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].region == AWS_REGION_US_EAST_1
