@@ -11,7 +11,7 @@
   "Severity": "high",
   "ResourceType": "AwsEcrRepository",
   "ResourceGroup": "container",
-  "Description": "**Amazon ECR repositories** are encrypted at rest using a **customer-managed KMS key (CMK)** rather than the default AES256 or AWS-managed KMS key.\n\nThe presence of an `encryptionConfiguration.encryptionType` of `KMS` along with a valid customer-managed `kmsKey` on the repository configuration indicates CMK-based encryption is active.",
+  "Description": "**Amazon ECR repositories** are encrypted at rest using a **customer-managed KMS key (CMK)** rather than the default AES256 or AWS-managed KMS key.\n\nA repository qualifies when `encryptionConfiguration.encryptionType` is `KMS` or `KMS_DSSE` and the referenced `kmsKey` is customer-managed, since both KMS modes also accept the AWS-managed `aws/ecr` key.",
   "Risk": "Without a CMK, ECR repositories are encrypted with an AWS-managed key or default AES256, removing **customer control** over rotation, auditing, and revocation.\n\nIf container images contain sensitive code or configuration, loss of key control weakens **confidentiality** and can fail compliance requirements that mandate customer-controlled encryption.",
   "RelatedUrl": "",
   "AdditionalURLs": [
@@ -25,11 +25,12 @@
       "Terraform": "```hcl\nresource \"aws_ecr_repository\" \"<example_resource_name>\" {\n  name = \"<example_resource_name>\"\n\n  encryption_configuration {\n    encryption_type = \"KMS\"\n    kms_key         = \"<cmk-arn>\"\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Encrypt ECR repositories with a customer-managed KMS key to maintain full control over key lifecycle and access.\n- Create a dedicated KMS key for ECR repositories for isolation\n- Enable **automatic key rotation** (`EnableKeyRotation: true`)",
+      "Text": "Encrypt ECR repositories with a customer-managed KMS key to maintain full control over key lifecycle and access. The encryption configuration is fixed at creation, so the key has to be chosen before the repository exists.\n- Create a dedicated KMS key for ECR repositories for isolation\n- Enable **automatic key rotation** (`EnableKeyRotation: true`)",
       "Url": "https://hub.prowler.com/check/ecr_repository_encrypted_with_cmk"
     }
   },
   "Categories": [
+    "container-security",
     "encryption"
   ],
   "DependsOn": [],
