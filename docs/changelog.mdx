@@ -11,7 +11,7 @@ rss: true
   This feature is available exclusively in **Prowler Cloud** and **Prowler Private Cloud** with a [subscription](https://prowler.com/pricing).
   </Note>
 
-  Findings produced outside the platform, by the Prowler CLI or a CI pipeline, can now be brought into the app without leaving the browser. The Scans page gains an Import Findings dialog that takes a Prowler `.ocsf.json` report by drag-and-drop or file picker, hands it to the ingestion API and tracks the job to completion, reporting how many records were processed and how many were invalid. Files that are not an OCSF report, or are empty, are refused before any upload starts, and a rejected upload or a failed status poll can be retried in place. The dialog is available to roles holding the `manage_ingestions` permission.
+  Findings produced outside the platform, by the Prowler CLI or a CI pipeline, can now be brought into the app without leaving the browser. The Scans page gains an "Import Findings" dialog that takes a Prowler `.ocsf.json` report by drag-and-drop or file picker, hands it to the ingestion API and tracks the job to completion, reporting how many records were processed and how many were invalid. Files that are not an OCSF report, or are empty, are refused before any upload starts, and a rejected upload or a failed status poll can be retried in place. The dialog is available to roles holding the `manage_ingestions` permission.
 
   ![Import Findings button on the Scans page](/images/changelog/v5.41.0-import-findings-button.png)
 
