@@ -80,9 +80,10 @@ export function ScansPageShell({
   const launchDisabled = !hasManageScansPermission || !hasConnectedProviders;
   const launchOpen =
     !launchDisabled && (isLaunchScanModalOpen || urlLaunchOpen);
-  // When a scan is already running, the tour highlights its row (anchored in
-  // ScanJobsTable); otherwise it falls back to the Launch Scan button + tabs.
-  const hasInProgressScan = activeScanCount > 0;
+  // ScanJobsTable only mounts the in-progress row anchor on the active tab.
+  // Other tabs use the fallback tour so every target exists in the current DOM.
+  const hasVisibleInProgressScan =
+    activeScanCount > 0 && filters.activeTab === SCAN_JOBS_TAB.ACTIVE;
 
   const getTabLabel = (tab: ScanJobsTab) => {
     const label = SCAN_TAB_LABELS[tab];
@@ -122,7 +123,7 @@ export function ScansPageShell({
           <OnboardingTrigger
             flow={{
               ...viewFirstScanFlow,
-              tour: buildViewFirstScanTour(hasInProgressScan),
+              tour: buildViewFirstScanTour(hasVisibleInProgressScan),
             }}
           />
         </Suspense>
