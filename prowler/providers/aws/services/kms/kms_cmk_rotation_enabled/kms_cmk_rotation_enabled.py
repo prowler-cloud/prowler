@@ -8,7 +8,14 @@ from prowler.providers.aws.services.kms.lib.inventory import (
 
 
 class kms_cmk_rotation_enabled(Check):
-    def execute(self):
+    """Check if KMS Customer Managed Keys (CMKs) have automatic rotation enabled."""
+
+    def execute(self) -> list[Check_Report_AWS]:
+        """Execute the kms_cmk_rotation_enabled check.
+
+        Returns:
+            list[Check_Report_AWS]: List of findings for the check.
+        """
         findings = []
         findings.extend(
             generate_scan_error_reports(

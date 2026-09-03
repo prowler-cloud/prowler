@@ -93,7 +93,8 @@ class kms_key_enclave_debug_attestation_detected(Check):
             list(cloudtrail_client.trails.values()) if cloudtrail_client.trails else []
         )
         if not trails:
-            return self._emit_no_trail_manual(target_key_ids)
+            findings.extend(self._emit_no_trail_manual(target_key_ids))
+            return findings
 
         # LookupEvents is a per-region API even for multi-region trails, so
         # iterate over every audited region. A multi-region trail in us-east-1

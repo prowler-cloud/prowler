@@ -8,7 +8,14 @@ from prowler.providers.aws.services.kms.lib.inventory import (
 
 
 class kms_cmk_are_used(Check):
-    def execute(self):
+    """Check if KMS Customer Managed Keys (CMKs) are being used or scheduled for deletion."""
+
+    def execute(self) -> list[Check_Report_AWS]:
+        """Execute the kms_cmk_are_used check.
+
+        Returns:
+            list[Check_Report_AWS]: List of findings for the check.
+        """
         findings = []
         findings.extend(
             generate_scan_error_reports(

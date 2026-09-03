@@ -536,6 +536,42 @@ class Test_kms_key_enclave_debug_attestation_detected:
             )
             assert result[0].resource_id == key.id
 
+    def test_kms_scan_error_with_no_trails(self):
+        cloudtrail_client = mock.MagicMock()
+        cloudtrail_client.trails = {}
+        cloudtrail_client.regional_clients = {AWS_REGION_US_EAST_1: mock.MagicMock()}
+
+        kms_client = mock.MagicMock()
+        kms_client.keys = []
+        kms_client.keys_scan_errors = {AWS_REGION_US_EAST_1: "AccessDeniedException"}
+        kms_client.audit_config = {}
+        kms_client.audited_account = AWS_ACCOUNT_NUMBER
+        kms_client.audited_partition = "aws"
+        kms_client.region = AWS_REGION_US_EAST_1
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
+            ),
+            mock.patch(f"{CHECK_MODULE}.kms_client", new=kms_client),
+            mock.patch(f"{CHECK_MODULE}.cloudtrail_client", new=cloudtrail_client),
+        ):
+            from prowler.providers.aws.services.kms.kms_key_enclave_debug_attestation_detected.kms_key_enclave_debug_attestation_detected import (
+                kms_key_enclave_debug_attestation_detected,
+            )
+
+            result = kms_key_enclave_debug_attestation_detected().execute()
+            assert len(result) == 2
+            statuses = [r.status for r in result]
+            assert statuses == ["MANUAL", "MANUAL"]
+            assert (
+                result[0].status_extended
+                == f"KMS keys could not be listed in region {AWS_REGION_US_EAST_1} (AccessDeniedException); verify manually that enclave-scoped keys do not use debug-mode attestation."
+            )
+            assert result[0].resource_id == "key/unknown"
+            assert "No CloudTrail trails" in result[1].status_extended
+
     def test_missing_module_id_dropped(self):
         # A recipient without attestationDocumentModuleId (or without "-enc")
         # should be treated as non-enclave and dropped by parse_enclave_kms_event.

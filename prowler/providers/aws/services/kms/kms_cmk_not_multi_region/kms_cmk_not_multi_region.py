@@ -13,6 +13,11 @@ class kms_cmk_not_multi_region(Check):
     """kms_cmk_not_multi_region verifies if a KMS key is multi-regional"""
 
     def execute(self) -> List[Check_Report_AWS]:
+        """Execute the kms_cmk_not_multi_region check.
+
+        Returns:
+            List[Check_Report_AWS]: List of findings for the check.
+        """
         findings = []
         findings.extend(
             generate_scan_error_reports(

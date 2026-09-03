@@ -8,7 +8,14 @@ from prowler.providers.aws.services.kms.lib.inventory import (
 
 
 class kms_cmk_not_deleted_unintentionally(Check):
-    def execute(self):
+    """Check if KMS Customer Managed Keys (CMKs) are not scheduled for deletion unintentionally."""
+
+    def execute(self) -> list[Check_Report_AWS]:
+        """Execute the kms_cmk_not_deleted_unintentionally check.
+
+        Returns:
+            list[Check_Report_AWS]: List of findings for the check.
+        """
         findings = []
         findings.extend(
             generate_scan_error_reports(

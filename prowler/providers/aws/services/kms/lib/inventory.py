@@ -1,12 +1,17 @@
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
+
 from prowler.lib.check.models import Check_Report_AWS
+
+if TYPE_CHECKING:
+    from prowler.providers.aws.services.kms.kms_service import KMS, Key
 
 
 def generate_scan_error_reports(
-    metadata,
+    metadata: Any,
     action_text: str,
-    client=None,
-    keys_scan_errors: dict | None = None,
-) -> list[Check_Report_AWS]:
+    client: Optional["KMS"] = None,
+    keys_scan_errors: Optional[Dict[str, str]] = None,
+) -> List[Check_Report_AWS]:
     """Generate MANUAL findings for regions where KMS keys could not be listed.
 
     Args:
@@ -17,7 +22,7 @@ def generate_scan_error_reports(
             Defaults to client.keys_scan_errors.
 
     Returns:
-        list[Check_Report_AWS]: List of MANUAL report findings for regional scan errors.
+        List[Check_Report_AWS]: List of MANUAL report findings for regional scan errors.
     """
     if client is None:
         from prowler.providers.aws.services.kms.kms_client import kms_client
@@ -26,7 +31,7 @@ def generate_scan_error_reports(
     if keys_scan_errors is None:
         keys_scan_errors = getattr(client, "keys_scan_errors", {})
 
-    findings = []
+    findings: List[Check_Report_AWS] = []
     for region, error in sorted(keys_scan_errors.items()):
         report = Check_Report_AWS(metadata=metadata, resource={"region": region})
         report.region = region
@@ -45,7 +50,7 @@ def generate_scan_error_reports(
     return findings
 
 
-def is_key_detail_unretrieved(key) -> bool:
+def is_key_detail_unretrieved(key: Any) -> bool:
     """Return True if a KMS key's details could not be retrieved.
 
     Args:
@@ -63,8 +68,8 @@ def is_key_detail_unretrieved(key) -> bool:
 
 
 def generate_describe_error_report(
-    metadata,
-    key,
+    metadata: Any,
+    key: "Key",
     action_text: str,
 ) -> Check_Report_AWS:
     """Generate a MANUAL finding for a key whose details could not be retrieved.
