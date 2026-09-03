@@ -48,7 +48,7 @@ def _run(policies: list, scan_unused_services: bool = True):
     iam_client = mock.MagicMock()
     iam_client.policies = {policy.arn: policy for policy in policies}
     iam_client.region = AWS_REGION_US_EAST_1
-    iam_client.provider.scan_unused_services = scan_unused_services
+    iam_client.provider = mock.MagicMock(scan_unused_services=scan_unused_services)
 
     aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
