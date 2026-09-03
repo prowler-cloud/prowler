@@ -1,0 +1,633 @@
+{
+  "framework": "CISA-SCuBA-AAD",
+  "name": "CISA SCuBA Secure Configuration Baseline - Microsoft Entra ID (AAD) v1.8.0",
+  "provider": "m365",
+  "version": "1.8.0",
+  "description": "CISA Secure Cloud Business Applications (SCuBA) M365 Secure Configuration Baseline for Microsoft Entra ID (Azure AD), as published in the cisagov/ScubaGear v1.8.0 release. Maps the 30 MS.AAD.* baseline policies (TLP:CLEAR) to Prowler m365 Entra checks. Requirements that Prowler cannot yet automate (manual policies and policies without an equivalent check) are included with an empty check list so the framework mirrors the complete baseline.",
+  "icon": "cisa",
+  "attributes_metadata": [
+    {
+      "key": "Section",
+      "label": "Baseline Group",
+      "type": "str",
+      "required": true,
+      "output_formats": {
+        "csv": true,
+        "ocsf": true
+      }
+    },
+    {
+      "key": "Policy",
+      "label": "SCuBA Policy ID",
+      "type": "str",
+      "required": true,
+      "output_formats": {
+        "csv": true,
+        "ocsf": true
+      }
+    },
+    {
+      "key": "Criticality",
+      "label": "Criticality",
+      "type": "str",
+      "required": true,
+      "enum": [
+        "SHALL",
+        "SHALL NOT",
+        "SHOULD",
+        "SHOULD NOT"
+      ],
+      "output_formats": {
+        "csv": true,
+        "ocsf": true
+      }
+    },
+    {
+      "key": "Rationale",
+      "label": "Rationale",
+      "type": "str",
+      "required": false,
+      "output_formats": {
+        "csv": true,
+        "ocsf": true
+      }
+    },
+    {
+      "key": "NISTMapping",
+      "label": "NIST SP 800-53 Rev. 5 Mapping",
+      "type": "str",
+      "required": false,
+      "output_formats": {
+        "csv": true,
+        "ocsf": true
+      }
+    },
+    {
+      "key": "LastModified",
+      "label": "Last Modified",
+      "type": "str",
+      "required": false,
+      "output_formats": {
+        "csv": false,
+        "ocsf": false
+      }
+    }
+  ],
+  "outputs": {
+    "table_config": {
+      "group_by": "Section"
+    },
+    "pdf_config": {
+      "language": "en",
+      "primary_color": "#005288",
+      "secondary_color": "#00BDE3",
+      "bg_color": "#F1F6FB",
+      "group_by_field": "Section",
+      "sections": [
+        "1. Legacy Authentication",
+        "2. Risk Based Policies",
+        "3. Strong Authentication and a Secure Registration Process",
+        "4. Centralized Log Collection",
+        "5. Application Registration and Consent",
+        "6. Passwords",
+        "7. Highly Privileged User Access",
+        "8. Guest User Access"
+      ],
+      "charts": [
+        {
+          "id": "section_compliance",
+          "type": "horizontal_bar",
+          "group_by": "Section",
+          "title": "Compliance Score by Baseline Group",
+          "y_label": "Baseline Group",
+          "x_label": "Compliance %",
+          "value_source": "compliance_percent",
+          "color_mode": "by_value"
+        }
+      ],
+      "filter": {
+        "only_failed": true,
+        "include_manual": false
+      }
+    }
+  },
+  "requirements": [
+    {
+      "id": "MS.AAD.1.1v1",
+      "name": "Legacy authentication SHALL be blocked.",
+      "description": "Legacy authentication SHALL be blocked.",
+      "attributes": {
+        "Section": "1. Legacy Authentication",
+        "Policy": "MS.AAD.1.1v1",
+        "Criticality": "SHALL",
+        "Rationale": "The security risk of allowing legacy authentication protocols is they do not support MFA. Blocking legacy protocols reduces the impact of user credential theft.",
+        "NISTMapping": "CM-7",
+        "LastModified": "June 2023"
+      },
+      "checks": {
+        "m365": [
+          "entra_legacy_authentication_blocked"
+        ]
+      }
+    },
+    {
+      "id": "MS.AAD.2.1v1",
+      "name": "Users detected as high risk SHALL be blocked.",
+      "description": "Users detected as high risk SHALL be blocked.",
+      "attributes": {
+        "Section": "2. Risk Based Policies",
+        "Policy": "MS.AAD.2.1v1",
+        "Criticality": "SHALL",
+        "Rationale": "Blocking high-risk users may prevent compromised accounts from accessing the tenant.",
+        "NISTMapping": "AC-2(12), AC-2(13)",
+        "LastModified": "June 2023"
+      },
+      "checks": {
+        "m365": [
+          "entra_identity_protection_user_risk_enabled"
+        ]
+      }
+    },
+    {
+      "id": "MS.AAD.2.2v1",
+      "name": "A notification SHOULD be sent to the administrator when high-risk users are detected.",
+      "description": "A notification SHOULD be sent to the administrator when high-risk users are detected.",
+      "attributes": {
+        "Section": "2. Risk Based Policies",
+        "Policy": "MS.AAD.2.2v1",
+        "Criticality": "SHOULD",
+        "Rationale": "Notification enables the admin to monitor the event and remediate the risk. This helps the organization proactively respond to cyber intrusions as they occur.",
+        "NISTMapping": "AC-2(12)",
+        "LastModified": "June 2023"
+      },
+      "checks": {
+        "m365": []
+      }
+    },
+    {
+      "id": "MS.AAD.2.3v1",
+      "name": "Sign-ins detected as high risk SHALL be blocked.",
+      "description": "Sign-ins detected as high risk SHALL be blocked.",
+      "attributes": {
+        "Section": "2. Risk Based Policies",
+        "Policy": "MS.AAD.2.3v1",
+        "Criticality": "SHALL",
+        "Rationale": "This prevents compromised accounts from accessing the tenant.",
+        "NISTMapping": "AC-2(12), AC-2(13)",
+        "LastModified": "June 2023"
+      },
+      "checks": {
+        "m365": [
+          "entra_identity_protection_sign_in_risk_enabled"
+        ]
+      }
+    },
+    {
+      "id": "MS.AAD.3.1v1",
+      "name": "Phishing-resistant MFA SHALL be enforced for all users.",
+      "description": "Phishing-resistant MFA SHALL be enforced for all users.",
+      "attributes": {
+        "Section": "3. Strong Authentication and a Secure Registration Process",
+        "Policy": "MS.AAD.3.1v1",
+        "Criticality": "SHALL",
+        "Rationale": "Weaker forms of MFA do not protect against sophisticated phishing attacks. By enforcing methods resistant to phishing, those risks are minimized.",
+        "NISTMapping": "IA-2(1), IA-2(2), IA-5c, IA-5g, IA-2(8)",
+        "LastModified": "June 2023"
+      },
+      "checks": {
+        "m365": []
+      }
+    },
+    {
+      "id": "MS.AAD.3.2v1",
+      "name": "If phishing-resistant MFA has not been enforced, an alternative MFA method SHALL be enforced for all users.",
+      "description": "If phishing-resistant MFA has not been enforced, an alternative MFA method SHALL be enforced for all users.",
+      "attributes": {
+        "Section": "3. Strong Authentication and a Secure Registration Process",
+        "Policy": "MS.AAD.3.2v1",
+        "Criticality": "SHALL",
+        "Rationale": "This is a stopgap security policy to help protect the tenant if phishing-resistant MFA has not been enforced. This policy requires MFA enforcement, thus reducing single-form authentication risk.",
+        "NISTMapping": "IA-2(1), IA-2(2)",
+        "LastModified": "June 2023"
+      },
+      "checks": {
+        "m365": [
+          "entra_users_mfa_enabled"
+        ]
+      }
+    },
+    {
+      "id": "MS.AAD.3.3v2",
+      "name": "If Microsoft Authenticator is enabled, it SHALL be configured to show login context information.",
+      "description": "If Microsoft Authenticator is enabled, it SHALL be configured to show login context information.",
+      "attributes": {
+        "Section": "3. Strong Authentication and a Secure Registration Process",
+        "Policy": "MS.AAD.3.3v2",
+        "Criticality": "SHALL",
+        "Rationale": "This policy helps protect the tenant when Microsoft Authenticator is used by showing user context information, which helps reduce MFA phishing compromises.",
+        "NISTMapping": "IA-2(1), IA-2(2), IA-5c, IA-5g, IA-2(8), IA-2(13)",
+        "LastModified": "March 2025"
+      },
+      "checks": {
+        "m365": [
+          "entra_authentication_method_authenticator_show_context"
+        ]
+      }
+    },
+    {
+      "id": "MS.AAD.3.4v1",
+      "name": "The Authentication Methods Manage Migration feature SHALL be set to Migration Complete.",
+      "description": "The Authentication Methods Manage Migration feature SHALL be set to Migration Complete.",
+      "attributes": {
+        "Section": "3. Strong Authentication and a Secure Registration Process",
+        "Policy": "MS.AAD.3.4v1",
+        "Criticality": "SHALL",
+        "Rationale": "To disable the legacy authentication methods screen for the tenant, configure the Manage Migration feature to Migration Complete. The MFA and Self-Service Password Reset (SSPR) authentication methods are both managed from a central admin page, thereby reducing administrative complexity and potential security misconfigurations.",
+        "NISTMapping": "CM-7",
+        "LastModified": "June 2023"
+      },
+      "checks": {
+        "m365": []
+      }
+    },
+    {
+      "id": "MS.AAD.3.5v1",
+      "name": "The authentication methods SMS, Voice Call, and Email One-Time Passcode (OTP) SHALL be disabled.",
+      "description": "The authentication methods SMS, Voice Call, and Email One-Time Passcode (OTP) SHALL be disabled.",
+      "attributes": {
+        "Section": "3. Strong Authentication and a Secure Registration Process",
+        "Policy": "MS.AAD.3.5v1",
+        "Criticality": "SHALL",
+        "Rationale": "SMS, voice call, and email OTP are the weakest authenticators. This policy forces users to use stronger MFA methods.",
+        "NISTMapping": "CM-7b, IA-5c",
+        "LastModified": "June 2023"
+      },
+      "checks": {
+        "m365": [
+          "entra_authentication_method_sms_voice_disabled",
+          "entra_authentication_method_email_otp_disabled"
+        ]
+      }
+    },
+    {
+      "id": "MS.AAD.3.6v1",
+      "name": "Phishing-resistant MFA SHALL be required for highly privileged roles.",
+      "description": "Phishing-resistant MFA SHALL be required for highly privileged roles.",
+      "attributes": {
+        "Section": "3. Strong Authentication and a Secure Registration Process",
+        "Policy": "MS.AAD.3.6v1",
+        "Criticality": "SHALL",
+        "Rationale": "This is a backup security policy to help protect privileged access to the tenant if the conditional access policy, which requires MFA for all users, is disabled or misconfigured.",
+        "NISTMapping": "IA-2(1), IA-5c, IA-5g, IA-2(8)",
+        "LastModified": "June 2023"
+      },
+      "checks": {
+        "m365": [
+          "entra_admin_users_phishing_resistant_mfa_enabled"
+        ]
+      }
+    },
+    {
+      "id": "MS.AAD.3.7v1",
+      "name": "Managed devices SHOULD be required for authentication.",
+      "description": "Managed devices SHOULD be required for authentication.",
+      "attributes": {
+        "Section": "3. Strong Authentication and a Secure Registration Process",
+        "Policy": "MS.AAD.3.7v1",
+        "Criticality": "SHOULD",
+        "Rationale": "The security risk of an adversary authenticating to the tenant from their own device is reduced by requiring a managed device to authenticate. Managed devices are under the provisioning and control of the agency. [OMB-22-09](https://www.whitehouse.gov/wp-content/uploads/2022/01/M-22-09.pdf) states, \"When authorizing users to access resources, agencies must consider at least one device-level signal alongside identity information about the authenticated user.\"",
+        "NISTMapping": "AC-20b, IA-3",
+        "LastModified": "June 2023"
+      },
+      "checks": {
+        "m365": [
+          "entra_managed_device_required_for_authentication"
+        ]
+      }
+    },
+    {
+      "id": "MS.AAD.3.8v1",
+      "name": "Managed Devices SHOULD be required to register MFA.",
+      "description": "Managed Devices SHOULD be required to register MFA.",
+      "attributes": {
+        "Section": "3. Strong Authentication and a Secure Registration Process",
+        "Policy": "MS.AAD.3.8v1",
+        "Criticality": "SHOULD",
+        "Rationale": "Reduce risk of an adversary using stolen user credentials and then registering their own MFA device to access the tenant by requiring a managed device provisioned and controlled by the agency to perform registration actions. This prevents the adversary from using their own unmanaged device to perform the registration.",
+        "NISTMapping": "AC-20b, IA-3",
+        "LastModified": "June 2023"
+      },
+      "checks": {
+        "m365": [
+          "entra_managed_device_required_for_mfa_registration"
+        ]
+      }
+    },
+    {
+      "id": "MS.AAD.3.9v1",
+      "name": "Device code authentication SHOULD be blocked.",
+      "description": "Device code authentication SHOULD be blocked.",
+      "attributes": {
+        "Section": "3. Strong Authentication and a Secure Registration Process",
+        "Policy": "MS.AAD.3.9v1",
+        "Criticality": "SHOULD",
+        "Rationale": "The device code authentication flow has been abused to compromise user accounts via phishing. Since most organizations using M365 don't need device code authentication, blocking it mitigates the risk.",
+        "NISTMapping": "CM-7",
+        "LastModified": "February 2025"
+      },
+      "checks": {
+        "m365": [
+          "entra_conditional_access_policy_device_code_flow_blocked"
+        ]
+      }
+    },
+    {
+      "id": "MS.AAD.4.1v1",
+      "name": "Security logs SHALL be sent to the agency's security operations center for monitoring.",
+      "description": "Security logs SHALL be sent to the agency's security operations center for monitoring.",
+      "attributes": {
+        "Section": "4. Centralized Log Collection",
+        "Policy": "MS.AAD.4.1v1",
+        "Criticality": "SHALL",
+        "Rationale": "The security risk of not having visibility into cyber attacks is reduced by collecting logs in the agency’s centralized security detection infrastructure. This makes security events available for auditing, query, and incident response.",
+        "NISTMapping": "AU-4",
+        "LastModified": "June 2023"
+      },
+      "checks": {
+        "m365": []
+      }
+    },
+    {
+      "id": "MS.AAD.5.1v1",
+      "name": "Only administrators SHALL be allowed to register applications.",
+      "description": "Only administrators SHALL be allowed to register applications.",
+      "attributes": {
+        "Section": "5. Application Registration and Consent",
+        "Policy": "MS.AAD.5.1v1",
+        "Criticality": "SHALL",
+        "Rationale": "Application access for the tenant presents a heightened security risk compared to interactive user access because applications are typically not subject to critical security protections, such as MFA policies. Reduce risk of unauthorized users installing malicious applications into the tenant by ensuring that only specific privileged users can register applications.",
+        "NISTMapping": "AC-6(10), CM-5",
+        "LastModified": "June 2023"
+      },
+      "checks": {
+        "m365": [
+          "entra_thirdparty_integrated_apps_not_allowed"
+        ]
+      }
+    },
+    {
+      "id": "MS.AAD.5.2v1",
+      "name": "Only administrators SHALL be allowed to consent to applications.",
+      "description": "Only administrators SHALL be allowed to consent to applications.",
+      "attributes": {
+        "Section": "5. Application Registration and Consent",
+        "Policy": "MS.AAD.5.2v1",
+        "Criticality": "SHALL",
+        "Rationale": "Limiting applications consent to only specific privileged users reduces risk of users giving insecure applications access to their data via [consent grant attacks](https://learn.microsoft.com/en-us/microsoft-365/security/office-365-security/detect-and-remediate-illicit-consent-grants?view=o365-worldwide).",
+        "NISTMapping": "AC-6(10), CM-5",
+        "LastModified": "June 2023"
+      },
+      "checks": {
+        "m365": [
+          "entra_policy_restricts_user_consent_for_apps"
+        ]
+      }
+    },
+    {
+      "id": "MS.AAD.5.3v1",
+      "name": "An admin consent workflow SHALL be configured for applications.",
+      "description": "An admin consent workflow SHALL be configured for applications.",
+      "attributes": {
+        "Section": "5. Application Registration and Consent",
+        "Policy": "MS.AAD.5.3v1",
+        "Criticality": "SHALL",
+        "Rationale": "Configuring an admin consent workflow reduces the risk of the previous policy by setting up a process for users to securely request access to applications necessary for business purposes. Administrators have the opportunity to review the permissions requested by new applications and approve or deny access based on a risk assessment.",
+        "NISTMapping": "CM-4",
+        "LastModified": "June 2023"
+      },
+      "checks": {
+        "m365": [
+          "entra_admin_consent_workflow_enabled"
+        ]
+      }
+    },
+    {
+      "id": "MS.AAD.6.1v1",
+      "name": "User passwords SHALL NOT expire.",
+      "description": "User passwords SHALL NOT expire.",
+      "attributes": {
+        "Section": "6. Passwords",
+        "Policy": "MS.AAD.6.1v1",
+        "Criticality": "SHALL",
+        "Rationale": "The National Institute of Standards and Technology (NIST), OMB, and Microsoft have published guidance indicating mandated periodic password changes make user accounts less secure. For example, OMB-22-09 states, \"Password policies must not require use of special characters or regular rotation.\"",
+        "NISTMapping": "IA-5(1)",
+        "LastModified": "June 2023"
+      },
+      "checks": {
+        "m365": []
+      }
+    },
+    {
+      "id": "MS.AAD.7.1v1",
+      "name": "A minimum of two users and a maximum of eight users SHALL be provisioned with the Global Administrator role.",
+      "description": "A minimum of two users and a maximum of eight users SHALL be provisioned with the Global Administrator role.",
+      "attributes": {
+        "Section": "7. Highly Privileged User Access",
+        "Policy": "MS.AAD.7.1v1",
+        "Criticality": "SHALL",
+        "Rationale": "The Global Administrator role provides unfettered access to the tenant. Limiting the number of users with this level of access makes tenant compromise more challenging. Microsoft recommends fewer than five users in the Global Administrator role. However, additional user accounts, up to eight, may be necessary to support emergency access and some operational scenarios.",
+        "NISTMapping": "AC-6(5)",
+        "LastModified": "June 2023"
+      },
+      "checks": {
+        "m365": []
+      }
+    },
+    {
+      "id": "MS.AAD.7.2v1",
+      "name": "Privileged users SHALL be provisioned with finer-grained roles instead of Global Administrator.",
+      "description": "Privileged users SHALL be provisioned with finer-grained roles instead of Global Administrator.",
+      "attributes": {
+        "Section": "7. Highly Privileged User Access",
+        "Policy": "MS.AAD.7.2v1",
+        "Criticality": "SHALL",
+        "Rationale": "Many privileged administrative users do not need unfettered access to the tenant to perform their duties. By assigning them to roles based on least privilege, the risks associated with having their accounts compromised are reduced.",
+        "NISTMapping": "AC-5",
+        "LastModified": "June 2023"
+      },
+      "checks": {
+        "m365": []
+      }
+    },
+    {
+      "id": "MS.AAD.7.3v1",
+      "name": "Privileged users SHALL be provisioned cloud-only accounts separate from an on-premises directory or other federated identity providers.",
+      "description": "Privileged users SHALL be provisioned cloud-only accounts separate from an on-premises directory or other federated identity providers.",
+      "attributes": {
+        "Section": "7. Highly Privileged User Access",
+        "Policy": "MS.AAD.7.3v1",
+        "Criticality": "SHALL",
+        "Rationale": "By provisioning cloud-only Microsoft Entra ID user accounts to privileged users, the risks associated with a compromise of on-premises federation infrastructure are reduced. It is more challenging for the adversary to pivot from the compromised environment to the cloud with privileged access.",
+        "NISTMapping": "AC-6(5)",
+        "LastModified": "June 2023"
+      },
+      "checks": {
+        "m365": [
+          "entra_admin_users_cloud_only"
+        ]
+      }
+    },
+    {
+      "id": "MS.AAD.7.4v1",
+      "name": "Permanent active role assignments SHALL NOT be allowed for highly privileged roles.",
+      "description": "Permanent active role assignments SHALL NOT be allowed for highly privileged roles.",
+      "attributes": {
+        "Section": "7. Highly Privileged User Access",
+        "Policy": "MS.AAD.7.4v1",
+        "Criticality": "SHALL",
+        "Rationale": "Instead of giving users permanent assignments to privileged roles, provisioning access just in time lessens exposure if those accounts become compromised. In Microsoft Entra ID PIM or an alternative PAM system, just in time access can be provisioned by assigning users to roles as eligible instead of perpetually active.",
+        "NISTMapping": "AC-2",
+        "LastModified": "June 2023"
+      },
+      "checks": {
+        "m365": []
+      }
+    },
+    {
+      "id": "MS.AAD.7.5v1",
+      "name": "Provisioning users to highly privileged roles SHALL NOT occur outside of a PAM system.",
+      "description": "Provisioning users to highly privileged roles SHALL NOT occur outside of a PAM system.",
+      "attributes": {
+        "Section": "7. Highly Privileged User Access",
+        "Policy": "MS.AAD.7.5v1",
+        "Criticality": "SHALL",
+        "Rationale": "Provisioning users to privileged roles within a PAM system enables enforcement of numerous privileged access policies and monitoring. If privileged users are assigned directly to roles in the M365 admin center or via PowerShell outside of the context of a PAM system, a significant set of critical security capabilities are bypassed.",
+        "NISTMapping": "AC-2",
+        "LastModified": "June 2023"
+      },
+      "checks": {
+        "m365": []
+      }
+    },
+    {
+      "id": "MS.AAD.7.6v1",
+      "name": "Activation of the Global Administrator role SHALL require approval.",
+      "description": "Activation of the Global Administrator role SHALL require approval.",
+      "attributes": {
+        "Section": "7. Highly Privileged User Access",
+        "Policy": "MS.AAD.7.6v1",
+        "Criticality": "SHALL",
+        "Rationale": "Requiring approval for a user to activate Global Administrator, which provides unfettered access, makes it more challenging for an attacker to compromise the tenant with stolen credentials, and it provides visibility of activities indicating a compromise is taking place.",
+        "NISTMapping": "AC-6(1)",
+        "LastModified": "June 2023"
+      },
+      "checks": {
+        "m365": [
+          "entra_pim_global_administrator_approval_required"
+        ]
+      }
+    },
+    {
+      "id": "MS.AAD.7.7v1",
+      "name": "Eligible and active highly privileged role assignments SHALL trigger an alert.",
+      "description": "Eligible and active highly privileged role assignments SHALL trigger an alert.",
+      "attributes": {
+        "Section": "7. Highly Privileged User Access",
+        "Policy": "MS.AAD.7.7v1",
+        "Criticality": "SHALL",
+        "Rationale": "Closely monitor assignment of the highest privileged roles for signs of compromise. Send assignment alerts to enable the security monitoring team to detect compromise attempts.",
+        "NISTMapping": "AC-2(1)",
+        "LastModified": "June 2023"
+      },
+      "checks": {
+        "m365": []
+      }
+    },
+    {
+      "id": "MS.AAD.7.8v1",
+      "name": "User activation of the Global Administrator role SHALL trigger an alert.",
+      "description": "User activation of the Global Administrator role SHALL trigger an alert.",
+      "attributes": {
+        "Section": "7. Highly Privileged User Access",
+        "Policy": "MS.AAD.7.8v1",
+        "Criticality": "SHALL",
+        "Rationale": "Closely monitor activation of the Global Administrator role for signs of compromise. Send activation alerts to enable the security monitoring team to detect compromise attempts.",
+        "NISTMapping": "AC-6(9)",
+        "LastModified": "June 2023"
+      },
+      "checks": {
+        "m365": []
+      }
+    },
+    {
+      "id": "MS.AAD.7.9v1",
+      "name": "User activation of other highly privileged roles SHOULD trigger an alert.",
+      "description": "User activation of other highly privileged roles SHOULD trigger an alert.",
+      "attributes": {
+        "Section": "7. Highly Privileged User Access",
+        "Policy": "MS.AAD.7.9v1",
+        "Criticality": "SHOULD",
+        "Rationale": "Closely monitor activation of high-risk roles for signs of compromise. Send activation alerts to enable the security monitoring team to detect compromise attempts. In some environments, activating privileged roles can generate a significant number of alerts.",
+        "NISTMapping": "AC-6(9)",
+        "LastModified": "June 2023"
+      },
+      "checks": {
+        "m365": []
+      }
+    },
+    {
+      "id": "MS.AAD.8.1v1",
+      "name": "Guest users SHOULD have limited or restricted access to Microsoft Entra ID directory objects.",
+      "description": "Guest users SHOULD have limited or restricted access to Microsoft Entra ID directory objects.",
+      "attributes": {
+        "Section": "8. Guest User Access",
+        "Policy": "MS.AAD.8.1v1",
+        "Criticality": "SHOULD",
+        "Rationale": "Limiting the amount of object information available to guest users in the tenant, reduces malicious reconnaissance exposure if a guest account is compromised or created by an adversary.",
+        "NISTMapping": "AC-6",
+        "LastModified": "June 2023"
+      },
+      "checks": {
+        "m365": [
+          "entra_policy_guest_users_access_restrictions"
+        ]
+      }
+    },
+    {
+      "id": "MS.AAD.8.2v1",
+      "name": "Only users with the Guest Inviter role SHOULD be able to invite guest users.",
+      "description": "Only users with the Guest Inviter role SHOULD be able to invite guest users.",
+      "attributes": {
+        "Section": "8. Guest User Access",
+        "Policy": "MS.AAD.8.2v1",
+        "Criticality": "SHOULD",
+        "Rationale": "By only allowing an authorized group of individuals to invite external users to create accounts in the tenant, an agency can enforce a guest user account approval process, reducing the risk of unauthorized account creation.",
+        "NISTMapping": "AC-6(10)",
+        "LastModified": "June 2023"
+      },
+      "checks": {
+        "m365": [
+          "entra_policy_guest_invite_only_for_admin_roles"
+        ]
+      }
+    },
+    {
+      "id": "MS.AAD.8.3v1",
+      "name": "Guest invites SHOULD only be allowed to specific external domains that have been authorized by the agency for legitimate business purposes.",
+      "description": "Guest invites SHOULD only be allowed to specific external domains that have been authorized by the agency for legitimate business purposes.",
+      "attributes": {
+        "Section": "8. Guest User Access",
+        "Policy": "MS.AAD.8.3v1",
+        "Criticality": "SHOULD",
+        "Rationale": "Limiting which domains can be invited to create guest accounts in the tenant helps reduce the risk of users from unauthorized external organizations getting access.",
+        "NISTMapping": "AC-3",
+        "LastModified": "June 2023"
+      },
+      "checks": {
+        "m365": [
+          "entra_policy_guest_invitations_restricted_to_allowed_domains"
+        ]
+      }
+    }
+  ]
+}
