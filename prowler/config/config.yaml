@@ -838,6 +838,9 @@ e2enetworks:
 
 # Fly.io Configuration
 fly:
+  # Maximum number of retries for Machines API requests (default is 3)
+  # Set to 0 to disable retries
+  max_retries: 3
   # fly.app_no_public_ip_address
   # Apps that are expected to serve public traffic and may hold a public IP
   # address. Every other app is expected to be private-only.

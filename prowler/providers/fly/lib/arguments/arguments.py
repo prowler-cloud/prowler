@@ -1,3 +1,6 @@
+from argparse import Namespace
+
+
 def init_parser(self):
     """Init the Fly.io provider CLI parser."""
     fly_parser = self.subparsers.add_parser(
@@ -27,3 +30,31 @@ def init_parser(self):
         metavar="APP",
         help="Filter the scan to specific Fly.io app names.",
     )
+
+
+def validate_arguments(arguments: Namespace) -> tuple[bool, str]:
+    """Validate the Fly.io provider arguments.
+
+    ``--app`` uses ``nargs="*"``, so argparse accepts the flag with no value
+    and yields an empty list. That is rejected here with a usage error instead
+    of silently scanning every app, and blank names are dropped.
+
+    Args:
+        arguments: The parsed CLI arguments.
+
+    Returns:
+        tuple[bool, str]: Whether the arguments are valid and the error message.
+    """
+    apps = getattr(arguments, "app", None)
+    if apps is None:
+        return (True, "")
+
+    names = [name.strip() for name in apps if isinstance(name, str) and name.strip()]
+    if not names:
+        return (
+            False,
+            "--app/--apps requires at least one Fly.io app name, or omit the flag to scan every app in the organization",
+        )
+
+    arguments.app = names
+    return (True, "")

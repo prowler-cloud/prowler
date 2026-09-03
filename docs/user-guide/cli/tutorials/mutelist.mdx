@@ -368,3 +368,35 @@ def handler(event, context):
   al = { "Mutelist": { "Accounts": { "*": { "Checks": checks } } } }
   return al
 ```
+
+## Fly.io Mutelist
+
+For the Fly.io provider the Mutelist fields map to the following values:
+
+| Field | Fly.io value |
+|-------|--------------|
+| `Accounts` | The organization slug, for example `example-org`. Use `*` for every organization. |
+| `Regions` | The Fly.io region code of the resource (for example `fra`, `ams`). App-level findings, such as `app_no_public_ip_address` and `app_uses_dedicated_private_network`, are reported in the `global` region. |
+| `Resources` | The resource ID: the app ID, the machine ID or the volume ID. The resource name is matched instead when the finding has no ID. |
+| `Tags` | Fly.io resources do not expose tags, so tag rules never match a Fly.io finding. |
+
+```yaml
+Mutelist:
+  Accounts:
+    "example-org":
+      Checks:
+        "app_no_public_ip_address":
+          Regions:
+            - "*"
+          Resources:
+            - "app_edge001"
+          Description: "Mute the public IP check for the edge app that must serve internet traffic"
+        "machine_no_public_non_http_ports":
+          Regions:
+            - "fra"
+          Resources:
+            - "148e21eb1de389"
+          Description: "Mute the published port check for one machine in the fra region"
+```
+
+A complete example is shipped as [`fly_mutelist_example.yaml`](https://github.com/prowler-cloud/prowler/blob/master/prowler/config/fly_mutelist_example.yaml).

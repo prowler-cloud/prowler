@@ -24,17 +24,25 @@ class app_uses_dedicated_private_network(Check):
         for app in app_client.apps.values():
             report = CheckReportFly(metadata=self.metadata(), resource=app)
 
-            if app.network and app.network != SHARED_NETWORK:
-                report.status = "PASS"
+            if not app.network or not app.network.strip():
+                # The Machines API did not return the network: unknown, not shared.
+                report.status = "MANUAL"
                 report.status_extended = (
-                    f"App {app.name} runs on the dedicated private network "
-                    f"{app.network}."
+                    f"App {app.name} network assignment could not be determined "
+                    f"because the Fly.io API did not return its network; verify it "
+                    f"manually with 'fly apps list' or the Machines API."
                 )
-            else:
+            elif app.network == SHARED_NETWORK:
                 report.status = "FAIL"
                 report.status_extended = (
                     f"App {app.name} runs on the shared organization network "
                     f"'{SHARED_NETWORK}' and can reach every other app on it over 6PN."
+                )
+            else:
+                report.status = "PASS"
+                report.status_extended = (
+                    f"App {app.name} runs on the dedicated private network "
+                    f"{app.network}."
                 )
 
             findings.append(report)

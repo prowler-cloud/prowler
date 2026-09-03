@@ -4,7 +4,7 @@ title: "Fly.io Authentication in Prowler"
 
 import { VersionBadge } from "/snippets/version-badge.mdx"
 
-<VersionBadge version="5.41.0" />
+<VersionBadge version="5.42.0" />
 
 Prowler for Fly.io authenticates against the Fly.io Machines API and GraphQL API with a **Fly.io access token**. Set the token as an environment variable to avoid exposing it in shell history or process listings. Every request Prowler sends is a read operation, so an organization-scoped read-only token is enough to run the whole scan.
 
@@ -13,7 +13,7 @@ Prowler for Fly.io authenticates against the Fly.io Machines API and GraphQL API
 | Credential | Environment Variable | Description |
 |------------|----------------------|-------------|
 | Access Token | `FLY_API_TOKEN` | Token authorizing read access to the organization |
-| Organization | `FLY_ORG` | Optional slug of the organization to scan |
+| Organization | `FLY_ORG` | Optional slug or ID of the organization to scan |
 
 <Warning>
 Do not use a personal account token. An account token can read and modify every organization the account belongs to, which is far more access than a scan needs.
@@ -50,11 +50,9 @@ Then run Prowler:
 prowler fly
 ```
 
-When `FLY_ORG` is not set and `--organization` is not passed, Prowler scans the only organization the token can read. A token that can read several organizations requires the slug, so the scope of the scan is always explicit.
-
 ---
 
-## Verifying Authentication
+## Organization Selection
 
 Prowler resolves the organization before the first check runs and prints the audited organization in the credentials box at the start of the scan:
 
@@ -62,7 +60,30 @@ Prowler resolves the organization before the first check runs and prints the aud
 prowler fly --organization <organization-slug>
 ```
 
-A token that cannot read the requested organization stops the scan with an authentication error, and an expired or malformed token stops it with a credentials error, in both cases before any resource is read.
+The organization is selected as follows:
+
+| Situation | Behavior |
+|-----------|-----------|
+| `--organization` or `FLY_ORG` is set | That organization is scanned. If the token cannot read it, the scan stops with `FlyInvalidOrganizationError`. |
+| Neither is set and the token reads exactly one organization | That organization is scanned. |
+| Neither is set and the token reads several organizations | The scan stops with `FlyInvalidOrganizationError` listing the readable organizations, so the scan scope is always explicit. |
+| Neither is set and the token reads no organization | The scan stops with `FlyInvalidOrganizationError`. |
+
+---
+
+## Troubleshooting
+
+The errors below are raised while the credentials are validated and the organization is resolved, before any resource is read.
+
+| Error | Cause | Fix |
+|-------|-------|-----|
+| `FlyCredentialsError` | No token was provided. | Set `FLY_API_TOKEN`. |
+| `FlyAuthenticationError` | The Fly.io API rejected the token (HTTP 401) or the token lacks read access to the organization or resource (HTTP 403). | Verify the token has not expired or been revoked and that it is scoped to the organization being scanned. |
+| `FlyInvalidOrganizationError` | The requested organization is not readable with the token, several organizations are readable and none was selected, or none is readable. | Pass `--organization` (or set `FLY_ORG`) with a slug the token can read. |
+| `FlyRateLimitError` | The Fly.io API rate limited the organization lookup or the credential check (HTTP 429). These pre-scan requests are not retried. | Wait for the `Retry-After` window and run the scan again. |
+| `FlyIdentityError` | The organization lookup failed for another reason, such as a GraphQL error in the response. | Check the error message and the Fly.io status page, then retry. |
+
+During the scan, errors are logged and the affected organization or app is skipped instead of stopping the scan: an HTTP 401 or 403 on a resource is logged as an error (`FlyAuthenticationError`) and the resource is excluded from the results; a rate limit that persists after the configured retries (`FlyRateLimitError`) or any other failed request (`FlyAPIError`) is logged as an error; an HTTP 404 is logged as a warning. Run Prowler with `--log-level ERROR` (or `WARNING`) to see these messages.
 
 ---
 

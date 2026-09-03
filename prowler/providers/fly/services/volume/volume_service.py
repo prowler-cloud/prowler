@@ -39,18 +39,18 @@ class Volume(FlyService):
                     continue
 
                 for volume in volumes:
-                    volume_id = volume.get("id", "")
+                    volume_id = volume.get("id") or ""
                     self.volumes[f"{app_name}/{volume_id}"] = FlyVolume(
                         id=volume_id,
-                        name=volume.get("name", volume_id),
+                        name=volume.get("name") or volume_id,
                         app_name=app_name,
                         org_slug=org_slug,
-                        region=volume.get("region", "") or "global",
-                        state=volume.get("state", "") or "",
-                        size_gb=volume.get("size_gb", 0) or 0,
+                        region=volume.get("region") or "global",
+                        state=volume.get("state") or "",
+                        size_gb=volume.get("size_gb") or 0,
                         encrypted=bool(volume.get("encrypted")),
                         auto_backup_enabled=bool(volume.get("auto_backup_enabled")),
-                        snapshot_retention=volume.get("snapshot_retention", 0) or 0,
+                        snapshot_retention=volume.get("snapshot_retention") or 0,
                         attached_machine_id=volume.get("attached_machine_id"),
                     )
             except Exception as error:

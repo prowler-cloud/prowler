@@ -8,7 +8,7 @@ class volume_encrypted_at_rest(Check):
     """Check if a Fly.io volume is encrypted at rest.
 
     Fly.io volumes carry the persistent state of an app, including databases and
-    uploaded evidence, and can be created unencrypted.
+    user-uploaded files, and can be created unencrypted.
     """
 
     def execute(self) -> List[CheckReportFly]:

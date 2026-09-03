@@ -9,7 +9,7 @@
   "Severity": "medium",
   "ResourceType": "FlyMachine",
   "ResourceGroup": "compute",
-  "Description": "**Fly.io machines** are assessed for **image provenance**. The image reference stored in the machine configuration is compared against the immutable `@sha256:` digest form. Only a digest reference guarantees that the artifact running today is the artifact that was built, scanned and reviewed.",
+  "Description": "**Fly.io machines** are assessed for **image provenance**. The image reference stored in the machine configuration (`config.image`) is compared against the immutable `@sha256:` digest form. Only a digest reference guarantees that the artifact running today is the artifact that was built, scanned and reviewed. A machine whose configuration carries no image reference is reported as MANUAL.",
   "Risk": "A machine configured with a mutable tag such as `latest` pulls whatever the registry currently serves for that tag. An attacker who can publish to the registry, or a maintainer who republishes a tag, changes the running code without any change to the deployment configuration, and incident responders cannot reconstruct which artifact was running.",
   "RelatedUrl": "",
   "AdditionalURLs": [
@@ -34,5 +34,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": ""
+  "Notes": "The Machines API `image_ref.digest` is the digest of the image Fly.io pulled and is populated for mutable tags too, so it is included in the finding to help pin the image but is not treated as evidence of pinning."
 }

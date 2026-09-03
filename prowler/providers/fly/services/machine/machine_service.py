@@ -5,6 +5,9 @@ from pydantic import BaseModel, Field
 from prowler.lib.logger import logger
 from prowler.providers.fly.lib.service.service import FlyService
 
+MIN_PORT = 1
+MAX_PORT = 65535
+
 
 class FlyMachineMount(BaseModel):
     """A volume mounted into a Fly.io machine."""
@@ -17,11 +20,39 @@ class FlyMachineMount(BaseModel):
 
 
 class FlyMachinePort(BaseModel):
-    """A port published by a Fly.io machine service to the public edge."""
+    """A port, or inclusive port range, published by a Fly.io machine service.
+
+    The Machines API publishes either a single ``port`` or a ``start_port`` /
+    ``end_port`` range on the Fly.io edge; both forms are kept as returned.
+    """
 
     port: Optional[int] = None
+    start_port: Optional[int] = None
+    end_port: Optional[int] = None
     handlers: list[str] = Field(default_factory=list)
     force_https: bool = False
+
+    def published_ports(self) -> set[int]:
+        """Expand the entry into the set of edge ports it publishes.
+
+        ``start_port`` and ``end_port`` are inclusive (official configuration
+        reference). The Machines API does not document a one-sided range; it
+        is read the way the Fly.io client library does (``fly-go``
+        ``MachinePort.ContainsPort``), with the missing bound defaulting to
+        the edge of the valid port space, which reports the larger exposure.
+
+        Returns:
+            set[int]: Every edge port published by this entry.
+        """
+        ports = set()
+        if self.port is not None:
+            ports.add(self.port)
+        if self.start_port is not None or self.end_port is not None:
+            start = self.start_port if self.start_port is not None else MIN_PORT
+            end = self.end_port if self.end_port is not None else MAX_PORT
+            start, end = sorted((start, end))
+            ports.update(range(max(start, MIN_PORT), min(end, MAX_PORT) + 1))
+        return ports
 
 
 class FlyMachineService(BaseModel):
@@ -48,7 +79,8 @@ class FlyMachine(BaseModel):
     env: dict[str, str] = Field(default_factory=dict)
     services: list[FlyMachineService] = Field(default_factory=list)
     mounts: list[FlyMachineMount] = Field(default_factory=list)
-    app_secret_names: list[str] = Field(default_factory=list)
+    # None when the app's secret names could not be read (not the same as none set)
+    app_secret_names: Optional[list[str]] = None
 
 
 class Machine(FlyService):
@@ -72,30 +104,32 @@ class Machine(FlyService):
                 for machine in machines:
                     config = machine.get("config", {}) or {}
                     image_ref = machine.get("image_ref", {}) or {}
-                    machine_id = machine.get("id", "")
+                    machine_id = machine.get("id") or ""
 
                     self.machines[f"{app_name}/{machine_id}"] = FlyMachine(
                         id=machine_id,
-                        name=machine.get("name", machine_id),
+                        name=machine.get("name") or machine_id,
                         app_name=app_name,
                         org_slug=org_slug,
-                        region=machine.get("region", "") or "global",
-                        state=machine.get("state", ""),
-                        image=config.get("image", ""),
+                        region=machine.get("region") or "global",
+                        state=machine.get("state") or "",
+                        image=config.get("image") or "",
                         image_digest=image_ref.get("digest", "") or "",
                         image_registry=image_ref.get("registry", "") or "",
                         image_repository=image_ref.get("repository", "") or "",
                         env={
-                            key: str(value)
+                            key: "" if value is None else str(value)
                             for key, value in (config.get("env") or {}).items()
                         },
                         services=[
                             FlyMachineService(
-                                protocol=service.get("protocol", "") or "",
+                                protocol=service.get("protocol") or "",
                                 internal_port=service.get("internal_port"),
                                 ports=[
                                     FlyMachinePort(
                                         port=port.get("port"),
+                                        start_port=port.get("start_port"),
+                                        end_port=port.get("end_port"),
                                         handlers=port.get("handlers") or [],
                                         force_https=bool(port.get("force_https")),
                                     )
@@ -106,10 +140,10 @@ class Machine(FlyService):
                         ],
                         mounts=[
                             FlyMachineMount(
-                                volume=mount.get("volume", ""),
-                                name=mount.get("name", "") or "",
-                                path=mount.get("path", "") or "",
-                                size_gb=mount.get("size_gb", 0) or 0,
+                                volume=mount.get("volume") or "",
+                                name=mount.get("name") or "",
+                                path=mount.get("path") or "",
+                                size_gb=mount.get("size_gb") or 0,
                                 encrypted=bool(mount.get("encrypted")),
                             )
                             for mount in (config.get("mounts") or [])
@@ -122,18 +156,24 @@ class Machine(FlyService):
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
-    def _list_app_secret_names(self, app_name: str) -> list[str]:
+    def _list_app_secret_names(self, app_name: str) -> Optional[list[str]]:
         """Read the names of the Fly secrets set on an app.
 
-        Only secret names and digests are returned by the Fly.io API; values are
-        never retrievable, so nothing sensitive is read by the scan.
+        Only secret names and digests are requested from the Fly.io API (the
+        ``show_secrets`` option is never sent), so nothing sensitive is read by
+        the scan.
+
+        Returns:
+            Optional[list[str]]: The secret names, or ``None`` when the listing
+            failed or was not accessible, so a gap is not mistaken for "no
+            secrets".
         """
         try:
             response = self._get(f"/apps/{app_name}/secrets")
-            if not response:
-                return []
+            if response is None:
+                return None
             return [
-                secret.get("name", "")
+                secret.get("name") or ""
                 for secret in response.get("secrets", []) or []
                 if secret.get("name")
             ]
@@ -142,4 +182,4 @@ class Machine(FlyService):
                 f"{self.service} - Error listing secrets for app {app_name}: "
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-            return []
+            return None

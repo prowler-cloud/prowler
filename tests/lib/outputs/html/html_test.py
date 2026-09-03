@@ -826,6 +826,15 @@ def _setup_linode_xss(provider, payload):
     provider.identity.account_id = payload
 
 
+def _setup_fly_xss(provider, payload):
+    organization = MagicMock()
+    organization.slug = payload
+    organization.name = payload
+    organization.id = payload
+    provider.identity.organization = organization
+    provider.filter_apps = {payload}
+
+
 def _setup_huaweicloud_xss(provider, payload):
     provider.identity.account_id = payload
     provider.identity.account_name = payload
@@ -861,6 +870,7 @@ PROVIDER_XSS_SETUPS = [
     ("scaleway", _setup_scaleway_xss),
     ("linode", _setup_linode_xss),
     ("huaweicloud", _setup_huaweicloud_xss),
+    ("fly", _setup_fly_xss),
 ]
 
 
@@ -1330,6 +1340,41 @@ class TestHTML:
         assert (
             not extra
         ), f"PROVIDER_XSS_SETUPS entries with no matching HTML method: {sorted(extra)}"
+
+    def test_fly_get_assessment_summary_lists_organization_and_apps(self):
+        from prowler.providers.fly.models import FlyIdentityInfo, FlyOrganization
+
+        provider = MagicMock()
+        provider.type = "fly"
+        organization = FlyOrganization(
+            id="org_test123", slug="test-org", name="Test Org"
+        )
+        provider.identity = FlyIdentityInfo(
+            organization=organization, organizations=[organization]
+        )
+        provider.filter_apps = {"worker", "api"}
+
+        summary = HTML([generate_finding_output()]).get_assessment_summary(provider)
+
+        assert "Fly.io Assessment Summary" in summary
+        assert "<b>Organization:</b> test-org" in summary
+        assert "<b>Organization Name:</b> Test Org" in summary
+        assert "<b>Organization ID:</b> org_test123" in summary
+        assert "<b>Apps:</b> api, worker" in summary
+        assert "<b>Authentication:</b> API Token" in summary
+
+    def test_fly_get_assessment_summary_without_filter_or_organization(self):
+        from prowler.providers.fly.models import FlyIdentityInfo
+
+        provider = MagicMock()
+        provider.type = "fly"
+        provider.identity = FlyIdentityInfo()
+        provider.filter_apps = None
+
+        summary = HTML([generate_finding_output()]).get_assessment_summary(provider)
+
+        assert "<b>Organization:</b> -" in summary
+        assert "<b>Apps:</b> All apps" in summary
 
     def test_github_app_get_assessment_summary_escapes_app_identity(self):
         """The GitHub App branch (elif hasattr app_id) must escape app_name/app_id/installations,

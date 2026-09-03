@@ -98,7 +98,11 @@ class FlyProvider(Provider):
                 mutelist_path = get_default_mute_file_path(self.type)
             self._mutelist = FlyMutelist(mutelist_path=mutelist_path)
 
-        self._filter_apps = set(apps) if apps else None
+        self._filter_apps = {
+            name.strip()
+            for name in apps or []
+            if isinstance(name, str) and name.strip()
+        } or None
 
         Provider.set_global_provider(self)
 
@@ -197,8 +201,12 @@ class FlyProvider(Provider):
             FlyIdentityInfo: The identity information.
 
         Raises:
-            FlyInvalidOrganizationError: If the requested organization is not readable.
-            FlyIdentityError: If identity setup fails.
+            FlyInvalidOrganizationError: If the requested organization is not
+                readable, if the token reads no organization at all, or if it
+                reads several organizations and none was selected.
+            FlyAuthenticationError: If the token is rejected by the API.
+            FlyRateLimitError: If the API rate limits the organization lookup.
+            FlyIdentityError: If identity setup fails for any other reason.
         """
         try:
             organizations = FlyProvider._get_organizations(session)
@@ -214,18 +222,34 @@ class FlyProvider(Provider):
                     message=f"Organization '{session.org_slug}' not found or not accessible with this token.",
                 )
 
+            if not organizations:
+                raise FlyInvalidOrganizationError(
+                    file=os.path.basename(__file__),
+                    message="The Fly.io token cannot read any organization. Verify the token is scoped to the organization to scan.",
+                )
+
             if len(organizations) == 1:
                 # An org-scoped token only ever resolves to its own organization
                 return FlyIdentityInfo(
                     organization=organizations[0], organizations=organizations
                 )
 
-            logger.info(
-                f"Auto-discovered {len(organizations)} organization(s): "
-                f"{', '.join(org.slug for org in organizations)}"
+            # Several organizations are visible and none was selected: the scan
+            # scope must be explicit, as documented, instead of guessed.
+            slugs = ", ".join(sorted(org.slug for org in organizations))
+            raise FlyInvalidOrganizationError(
+                file=os.path.basename(__file__),
+                message=(
+                    f"The Fly.io token can read {len(organizations)} organizations "
+                    f"({slugs}). Select one with --organization or the FLY_ORG "
+                    "environment variable."
+                ),
             )
-            return FlyIdentityInfo(organizations=organizations)
-        except FlyInvalidOrganizationError:
+        except (
+            FlyInvalidOrganizationError,
+            FlyAuthenticationError,
+            FlyRateLimitError,
+        ):
             raise
         except Exception as error:
             logger.critical(
@@ -238,12 +262,28 @@ class FlyProvider(Provider):
 
     @staticmethod
     def _get_organizations(session: FlySession) -> list[FlyOrganization]:
-        """Read every organization the token is allowed to see."""
+        """Read every organization the token is allowed to see.
+
+        Raises:
+            FlyAuthenticationError: If the token is rejected (401/403).
+            FlyRateLimitError: If the GraphQL API rate limits the request.
+            FlyIdentityError: If the GraphQL response carries errors.
+        """
         response = session.http_session.post(
             session.graphql_url,
             json={"query": ORGANIZATIONS_QUERY},
             timeout=30,
         )
+
+        if response.status_code in (401, 403):
+            raise FlyAuthenticationError(
+                file=os.path.basename(__file__),
+                message="Invalid, expired or insufficiently scoped Fly.io token.",
+            )
+
+        if response.status_code == 429:
+            raise FlyRateLimitError(file=os.path.basename(__file__))
+
         response.raise_for_status()
         payload = response.json()
 
@@ -268,17 +308,28 @@ class FlyProvider(Provider):
     def validate_credentials(session: FlySession) -> None:
         """Validate Fly.io credentials against the Machines API.
 
+        The Machines API requires an organization slug to list apps, so the
+        organization is resolved first with the same rules as the scan: the
+        selected slug or ID must be readable, otherwise a single readable
+        organization is used, and any other case requires an explicit
+        selection.
+
         Args:
             session: The Fly.io session to validate.
 
         Raises:
             FlyAuthenticationError: If authentication fails.
             FlyRateLimitError: If rate limited.
+            FlyInvalidOrganizationError: If no organization can be selected.
+            FlyIdentityError: If the organization lookup fails.
         """
         try:
-            params = {"org_slug": session.org_slug} if session.org_slug else {}
+            org_slug = FlyProvider.setup_identity(session).organization.slug
+
             response = session.http_session.get(
-                f"{session.machines_base_url}/apps", params=params, timeout=30
+                f"{session.machines_base_url}/apps",
+                params={"org_slug": org_slug},
+                timeout=30,
             )
 
             if response.status_code in (401, 403):
@@ -292,7 +343,12 @@ class FlyProvider(Provider):
 
             response.raise_for_status()
 
-        except (FlyAuthenticationError, FlyRateLimitError):
+        except (
+            FlyAuthenticationError,
+            FlyRateLimitError,
+            FlyInvalidOrganizationError,
+            FlyIdentityError,
+        ):
             raise
         except requests.exceptions.RequestException as error:
             raise FlyAuthenticationError(
@@ -356,6 +412,8 @@ class FlyProvider(Provider):
             FlySessionError,
             FlyAuthenticationError,
             FlyRateLimitError,
+            FlyInvalidOrganizationError,
+            FlyIdentityError,
         ) as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

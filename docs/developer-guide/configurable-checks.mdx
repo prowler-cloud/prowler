@@ -219,6 +219,13 @@ Only fields with a numeric range, a fixed value set, or a length cap are listed.
 | `max_owner_percentage` | `1..50` % | guidance recommends ≤25% |
 | `max_owners` | `1..1000` | absolute cap, overrides percentage for large teams |
 
+### Fly.io
+
+| Key | Allowed range | Notes |
+|---|---|---|
+| `allowed_public_ports` | each port `1..65535` | port 0 is reserved |
+| `max_retries` | `0..10` | 0 disables retries |
+
 These bounds live in the provider schemas under `prowler/config/schema/`; each field's `Field(ge=..., le=...)` (or `field_validator`) is the source of truth and the descriptions there carry the full rationale.
 
 This approach ensures that checks are easily configurable, making Prowler highly adaptable to different environments and requirements.

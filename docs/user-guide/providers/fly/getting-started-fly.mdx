@@ -4,7 +4,7 @@ title: 'Getting Started With Fly.io on Prowler'
 
 import { VersionBadge } from "/snippets/version-badge.mdx"
 
-<VersionBadge version="5.41.0" />
+<VersionBadge version="5.42.0" />
 
 Prowler for Fly.io scans a Fly.io organization for security misconfigurations across apps, machines, and volumes, covering internet exposure, private networking, secrets handling, image provenance, and encryption at rest.
 
@@ -31,7 +31,7 @@ export FLY_ORG="your-organization-slug"
 prowler fly
 ```
 
-The organization can also be selected with `--organization` (alias `--org`). When neither the flag nor `FLY_ORG` is set, Prowler scans the only organization the token can read, and stops with an error when the token can read several.
+The organization can also be selected with `--organization` (alias `--org`). When neither the flag nor `FLY_ORG` is set, Prowler scans the only organization the token can read, and stops with an error when the token can read several or none.
 
 ### Run Specific Checks
 
@@ -47,7 +47,7 @@ prowler fly --services machine
 
 ### Scan Specific Apps
 
-Use `--app` (alias `--apps`) to limit the scan to one or more apps of the organization. When the flag is omitted, every app of the organization is scanned.
+Use `--app` (alias `--apps`) to limit the scan to one or more apps of the organization. When the flag is omitted, every app of the organization is scanned. The flag requires at least one app name.
 
 ```bash
 prowler fly --app api-gateway worker-pool
@@ -59,7 +59,7 @@ Prowler for Fly.io currently supports the following services:
 
 | Service | Description |
 |---------|-------------|
-| `app` | Apps with their allocated public IP addresses and private 6PN network assignment |
+| `app` | Apps with their allocated public IP addresses and their private IPv6 network (6PN) assignment |
 | `machine` | Machines with their image reference, published services, and plain configuration |
 | `volume` | Volumes with their encryption state |
 
@@ -67,27 +67,52 @@ Prowler for Fly.io currently supports the following services:
 
 | Check | Severity | Description |
 |-------|----------|-------------|
-| `app_no_public_ip_address` | high | App holds no public IPv4 or IPv6 address and is only reachable over the private network |
+| `app_no_public_ip_address` | high | App holds no public IPv4 or IPv6 address (dedicated or shared) and is only reachable over the private network |
 | `app_uses_dedicated_private_network` | medium | App runs on a dedicated 6PN network instead of the shared organization network |
-| `machine_image_pinned_to_digest` | medium | Machine runs an image pinned to an immutable digest instead of a mutable tag |
+| `machine_image_pinned_to_digest` | medium | Machine configuration references its image by an immutable `@sha256:` digest instead of a mutable tag |
 | `machine_no_plaintext_secrets_in_env` | high | Machine keeps secret-like values in Fly secrets instead of its plain configuration |
-| `machine_no_public_non_http_ports` | high | Machine publishes only HTTP and HTTPS ports to the internet |
+| `machine_no_public_non_http_ports` | high | Machine publishes only HTTP and HTTPS ports (single ports and port ranges) to the internet |
 | `volume_encrypted_at_rest` | high | Volume is encrypted at rest |
+
+### Findings Reported as MANUAL
+
+A check never reports PASS from a gap in the data. A finding is reported as `MANUAL`, with the command to verify it by hand, when:
+
+- the public IP lookup for an app failed (`app_no_public_ip_address`);
+- the Machines API did not return the `network` of an app (`app_uses_dedicated_private_network`);
+- a machine configuration carries no image reference (`machine_image_pinned_to_digest`).
 
 ## Configuration
 
-Several checks read optional values from the `fly` section of the Prowler configuration file, so an environment can describe its intended posture instead of muting findings:
+Several checks read optional values from the `fly` section of the Prowler configuration file, so an environment can describe its intended posture instead of muting findings. The values below are the defaults shipped in Prowler's configuration file:
 
 ```yaml
 fly:
+  # Maximum number of retries for Machines API requests (default is 3)
+  # Set to 0 to disable retries
+  max_retries: 3
+  # fly.app_no_public_ip_address
   # Apps that are expected to serve public traffic and may hold a public IP address
-  public_apps: ["api-gateway"]
-  # Edge ports a machine service may publish
+  public_apps: []
+  # fly.machine_no_public_non_http_ports
+  # Edge ports a machine service may publish (1-65535). Defaults to HTTP/HTTPS only
   allowed_public_ports: [80, 443]
+  # fly.machine_no_plaintext_secrets_in_env
   # Substrings that mark a machine env variable name as secret-like
-  secret_env_name_patterns: ["PASSWORD", "SECRET", "TOKEN", "API_KEY"]
+  secret_env_name_patterns:
+    [
+      "PASSWORD",
+      "SECRET",
+      "TOKEN",
+      "API_KEY",
+      "PRIVATE_KEY",
+      "CREDENTIAL",
+      "PASSPHRASE",
+    ]
 ```
 
 ```bash
 prowler fly --config-file ./prowler-config.yaml
 ```
+
+See the [configuration file](/user-guide/cli/tutorials/configuration_file) reference for the full description of every key, and the [Mutelist](/user-guide/cli/tutorials/mutelist) guide to mute findings by organization, region and resource.

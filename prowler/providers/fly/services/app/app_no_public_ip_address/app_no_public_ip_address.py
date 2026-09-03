@@ -1,6 +1,7 @@
 from typing import List
 
 from prowler.lib.check.models import Check, CheckReportFly
+from prowler.providers.fly.lib.service.service import config_value
 from prowler.providers.fly.services.app.app_client import app_client
 
 
@@ -19,12 +20,21 @@ class app_no_public_ip_address(Check):
             List[CheckReportFly]: A report per in-scope app.
         """
         findings = []
-        public_apps = app_client.audit_config.get("public_apps", [])
+        public_apps = config_value(app_client.audit_config, "public_apps", [])
 
         for app in app_client.apps.values():
             report = CheckReportFly(metadata=self.metadata(), resource=app)
 
-            if not app.public_ips:
+            if app.public_ips is None:
+                # The IP lookup failed or did not return the app: never claim
+                # compliance from a gap.
+                report.status = "MANUAL"
+                report.status_extended = (
+                    f"App {app.name} public IP allocation could not be determined "
+                    f"because the Fly.io IP address lookup did not return it; "
+                    f"verify it manually with 'fly ips list -a {app.name}'."
+                )
+            elif not app.public_ips:
                 report.status = "PASS"
                 report.status_extended = (
                     f"App {app.name} has no public IP address allocated and is only "

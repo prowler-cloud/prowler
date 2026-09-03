@@ -9,7 +9,7 @@
   "Severity": "high",
   "ResourceType": "FlyVolume",
   "ResourceGroup": "storage",
-  "Description": "**Fly.io volumes** are assessed for **encryption at rest**. Volumes hold the persistent state of an app, such as database data directories, object storage buckets and uploaded evidence, and can be created with encryption disabled.",
+  "Description": "**Fly.io volumes** are assessed for **encryption at rest**. Volumes hold the persistent state of an app, such as database data directories, object storage buckets and user uploads, and can be created with encryption disabled.",
   "Risk": "An unencrypted volume stores tenant data in clear text on the host. Anyone able to read the underlying block device, including through a host-level compromise or a mishandled decommission, recovers the full contents of the database or object store, which also breaks the encryption-at-rest commitments made under SOC 2, ISO 27001 and GDPR.",
   "RelatedUrl": "",
   "AdditionalURLs": [

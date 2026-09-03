@@ -17,7 +17,7 @@ prowler_command = "prowler"
 
 # capsys
 # https://docs.pytest.org/en/7.1.x/how-to/capture-stdout-stderr.html
-prowler_default_usage_error = "usage: prowler [-h] [--version] {aws,azure,gcp,kubernetes,m365,github,googleworkspace,okta,nhn,mongodbatlas,oraclecloud,alibabacloud,cloudflare,openstack,scaleway,stackit,vercel,linode,huaweicloud,e2enetworks,dashboard,iac,image,llm} ..."
+prowler_default_usage_error = "usage: prowler [-h] [--version] {aws,azure,gcp,kubernetes,m365,github,googleworkspace,okta,nhn,mongodbatlas,oraclecloud,alibabacloud,cloudflare,openstack,scaleway,stackit,vercel,linode,huaweicloud,e2enetworks,fly,dashboard,iac,image,llm} ..."
 
 
 def mock_get_available_providers():
@@ -41,6 +41,7 @@ def mock_get_available_providers():
         "stackit",
         "linode",
         "e2enetworks",
+        "fly",
     ]
 
 
@@ -57,6 +58,11 @@ class Test_Parser:
 
         # Init parser
         self.parser = ProwlerArgumentParser()
+
+    def teardown_method(self):
+        # Stop the patch so it does not leak into tests that run afterwards in
+        # the same process (e.g. the aggregated scan config schema tests).
+        self.patch_get_available_providers.stop()
 
     def test_default_parser_no_arguments_aws(self):
         provider = "aws"
@@ -1282,6 +1288,31 @@ class Test_Parser:
         assert (
             capsys.readouterr().err
             == f"{prowler_default_usage_error}\nprowler: error: unrecognized arguments: --subscription-ids\n"
+        )
+
+    def test_fly_parser_app_filter(self):
+        command = [prowler_command, "fly", "--app", "api", "worker"]
+        parsed = self.parser.parse(command)
+        assert parsed.provider == "fly"
+        assert parsed.app == ["api", "worker"]
+        assert parsed.organization is None
+
+    def test_fly_parser_organization_alias(self):
+        command = [prowler_command, "fly", "--org", "example-org"]
+        parsed = self.parser.parse(command)
+        assert parsed.provider == "fly"
+        assert parsed.organization == "example-org"
+        assert parsed.app is None
+
+    def test_fly_parser_app_without_values(self, capsys):
+        command = [prowler_command, "fly", "--app"]
+        with pytest.raises(SystemExit) as wrapped_exit:
+            _ = self.parser.parse(command)
+        assert wrapped_exit.type == SystemExit
+        assert wrapped_exit.value.code == 2
+        assert (
+            capsys.readouterr().err
+            == f"{prowler_default_usage_error}\nprowler: error: fly: --app/--apps requires at least one Fly.io app name, or omit the flag to scan every app in the organization\n"
         )
 
     def test_parser_non_aws_with_json_asff_output(self, capsys):
