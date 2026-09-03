@@ -125,11 +125,12 @@ class Test_compute_instance_encryption_with_csek_enabled:
                 result[0].status_extended,
             )
             assert (
-                "CSEK can no longer be applied to Compute Engine resources since July 20, 2026"
+                "CSEK can no longer be applied to Compute Engine resources since July 20, 2026, "
+                "so this finding is not remediable; Google recommends CMEK instead."
                 in result[0].status_extended
             )
             assert (
-                "This check will be deprecated on July 20, 2027"
+                "This check will be deprecated on July 20, 2027, when CSEK is removed from Compute Engine."
                 in result[0].status_extended
             )
             assert result[0].resource_id == instance.id
@@ -182,11 +183,12 @@ class Test_compute_instance_encryption_with_csek_enabled:
                 result[0].status_extended,
             )
             assert (
-                "CSEK can no longer be applied to Compute Engine resources since July 20, 2026"
+                "CSEK can no longer be applied to Compute Engine resources since July 20, 2026, "
+                "so this finding is not remediable; Google recommends CMEK instead."
                 in result[0].status_extended
             )
             assert (
-                "This check will be deprecated on July 20, 2027"
+                "This check will be deprecated on July 20, 2027, when CSEK is removed from Compute Engine."
                 in result[0].status_extended
             )
             assert result[0].resource_id == instance.id
