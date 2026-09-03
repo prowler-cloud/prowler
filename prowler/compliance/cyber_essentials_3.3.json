@@ -132,7 +132,8 @@
           "network_ssh_internet_access_restricted",
           "network_udp_internet_access_restricted",
           "network_http_internet_access_restricted"
-        ]
+        ],
+        "m365": []
       }
     },
     {
@@ -147,7 +148,8 @@
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
-        "azure": []
+        "azure": [],
+        "m365": []
       }
     },
     {
@@ -168,6 +170,10 @@
           "keyvault_access_only_through_private_endpoints",
           "network_rdp_internet_access_restricted",
           "network_ssh_internet_access_restricted"
+        ],
+        "m365": [
+          "entra_conditional_access_policy_require_mfa_for_management_api",
+          "entra_conditional_access_policy_untrusted_locations_blocked"
         ]
       }
     },
@@ -189,7 +195,8 @@
           "network_udp_internet_access_restricted",
           "network_http_internet_access_restricted",
           "storage_account_public_network_access_disabled"
-        ]
+        ],
+        "m365": []
       }
     },
     {
@@ -204,7 +211,8 @@
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
-        "azure": []
+        "azure": [],
+        "m365": []
       }
     },
     {
@@ -219,7 +227,8 @@
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
-        "azure": []
+        "azure": [],
+        "m365": []
       }
     },
     {
@@ -234,7 +243,8 @@
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
-        "azure": []
+        "azure": [],
+        "m365": []
       }
     },
     {
@@ -252,7 +262,8 @@
         "azure": [
           "entra_policy_guest_users_access_restrictions",
           "entra_policy_guest_invite_only_for_admin_roles"
-        ]
+        ],
+        "m365": []
       }
     },
     {
@@ -269,6 +280,10 @@
       "checks": {
         "azure": [
           "entra_security_defaults_enabled"
+        ],
+        "m365": [
+          "entra_password_protection_custom_banned_list_enforced",
+          "entra_password_protection_on_premises_enforced"
         ]
       }
     },
@@ -284,7 +299,8 @@
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
-        "azure": []
+        "azure": [],
+        "m365": []
       }
     },
     {
@@ -299,7 +315,8 @@
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
-        "azure": []
+        "azure": [],
+        "m365": []
       }
     },
     {
@@ -320,6 +337,13 @@
           "storage_account_public_network_access_disabled",
           "storage_ensure_minimum_tls_version_12",
           "keyvault_rbac_enabled"
+        ],
+        "m365": [
+          "entra_legacy_authentication_blocked",
+          "exchange_organization_modern_authentication_enabled",
+          "sharepoint_modern_authentication_required",
+          "teams_meeting_anonymous_user_join_disabled",
+          "teams_meeting_chat_anonymous_users_disabled"
         ]
       }
     },
@@ -335,7 +359,8 @@
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
-        "azure": []
+        "azure": [],
+        "m365": []
       }
     },
     {
@@ -350,7 +375,8 @@
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
-        "azure": []
+        "azure": [],
+        "m365": []
       }
     },
     {
@@ -365,7 +391,8 @@
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
-        "azure": []
+        "azure": [],
+        "m365": []
       }
     },
     {
@@ -380,7 +407,8 @@
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
-        "azure": []
+        "azure": [],
+        "m365": []
       }
     },
     {
@@ -398,7 +426,8 @@
         "azure": [
           "defender_ensure_system_updates_are_applied",
           "defender_auto_provisioning_vulnerabilty_assessments_machines_on"
-        ]
+        ],
+        "m365": []
       }
     },
     {
@@ -413,7 +442,8 @@
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
-        "azure": []
+        "azure": [],
+        "m365": []
       }
     },
     {
@@ -431,7 +461,8 @@
         "azure": [
           "entra_security_defaults_enabled",
           "storage_default_to_entra_authorization_enabled"
-        ]
+        ],
+        "m365": []
       }
     },
     {
@@ -446,7 +477,8 @@
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
-        "azure": []
+        "azure": [],
+        "m365": []
       }
     },
     {
@@ -467,6 +499,11 @@
           "entra_conditional_access_policy_require_mfa_for_admin_portals",
           "entra_conditional_access_policy_require_mfa_for_management_api",
           "entra_user_with_vm_access_has_mfa"
+        ],
+        "m365": [
+          "entra_users_mfa_enabled",
+          "entra_conditional_access_policy_mfa_enforced_for_guest_users",
+          "entra_conditional_access_policy_require_mfa_for_management_api"
         ]
       }
     },
@@ -486,7 +523,8 @@
           "entra_global_admin_in_less_than_five_users",
           "iam_role_user_access_admin_restricted",
           "iam_subscription_roles_owner_custom_not_created"
-        ]
+        ],
+        "m365": []
       }
     },
     {
@@ -504,7 +542,8 @@
         "azure": [
           "entra_global_admin_in_less_than_five_users",
           "iam_role_user_access_admin_restricted"
-        ]
+        ],
+        "m365": []
       }
     },
     {
@@ -522,6 +561,11 @@
         "azure": [
           "entra_security_defaults_enabled",
           "entra_privileged_user_has_mfa"
+        ],
+        "m365": [
+          "entra_users_mfa_enabled",
+          "entra_password_protection_lockout_threshold_limited",
+          "entra_password_protection_lockout_duration_configured"
         ]
       }
     },
@@ -541,6 +585,12 @@
           "entra_security_defaults_enabled",
           "entra_privileged_user_has_mfa",
           "entra_non_privileged_user_has_mfa"
+        ],
+        "m365": [
+          "entra_users_mfa_enabled",
+          "entra_password_protection_custom_banned_list_enforced",
+          "entra_password_protection_on_premises_enforced",
+          "admincenter_settings_password_never_expire"
         ]
       }
     },
@@ -560,6 +610,12 @@
           "defender_assessments_vm_endpoint_protection_installed",
           "defender_ensure_wdatp_is_enabled",
           "defender_ensure_defender_for_server_is_on"
+        ],
+        "m365": [
+          "defender_malware_policy_common_attachments_filter_enabled",
+          "defender_safe_attachments_policy_enabled",
+          "defender_atp_safe_attachments_and_docs_configured",
+          "defender_zap_for_teams_enabled"
         ]
       }
     },
@@ -579,6 +635,14 @@
           "defender_ensure_wdatp_is_enabled",
           "defender_ensure_defender_for_server_is_on",
           "defender_ensure_defender_for_storage_is_on"
+        ],
+        "m365": [
+          "defender_strict_preset_security_policy_enabled",
+          "defender_malware_policy_comprehensive_attachments_filter_applied",
+          "defender_safe_attachments_policy_enabled",
+          "defender_atp_safe_attachments_and_docs_configured",
+          "defender_zap_for_teams_enabled",
+          "defender_safelinks_policy_enabled"
         ]
       }
     },
@@ -594,7 +658,8 @@
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
-        "azure": []
+        "azure": [],
+        "m365": []
       }
     }
   ]
