@@ -17,26 +17,18 @@
         }
       ],
       "Checks": [
-        "monitor_activity_log_alert_cmk_delete",
-        "monitor_activity_log_alert_create_policy_assignment",
-        "monitor_activity_log_alert_create_update_delete_network_sg",
-        "monitor_activity_log_alert_create_update_delete_network_sg_rule",
-        "monitor_activity_log_alert_create_update_delete_sql_server_fw_rule",
-        "monitor_activity_log_alert_create_update_nsg",
-        "monitor_activity_log_alert_create_update_public_ip_address",
-        "monitor_activity_log_alert_create_update_security_solution",
-        "monitor_activity_log_alert_delete_nsg",
-        "monitor_activity_log_alert_delete_policy_assignment",
-        "monitor_activity_log_alert_delete_public_ip_address",
-        "monitor_activity_log_alert_delete_security_solution",
-        "monitor_log_profile_all_categories",
-        "monitor_log_profile_all_regions",
-        "vm_agent_installed",
-        "vm_antimalware_solution_installed",
-        "vm_endpoint_protection_installed",
-        "vm_guest_configuration_installed",
-        "vm_guest_configuration_with_no_managed_identity",
-        "vm_guest_configuration_with_user_identity"
+        "monitor_alert_create_policy_assignment",
+        "monitor_alert_create_update_sqlserver_fr",
+        "monitor_alert_delete_sqlserver_fr",
+        "monitor_alert_create_update_nsg",
+        "monitor_alert_create_update_public_ip_address_rule",
+        "monitor_alert_create_update_security_solution",
+        "monitor_alert_delete_nsg",
+        "monitor_alert_delete_policy_assignment",
+        "monitor_alert_delete_public_ip_address_rule",
+        "monitor_alert_delete_security_solution",
+        "monitor_diagnostic_setting_with_appropriate_categories",
+        "defender_assessments_vm_endpoint_protection_installed"
       ]
     },
     {
@@ -64,17 +56,11 @@
         "keyvault_access_only_through_private_endpoints",
         "keyvault_private_endpoints",
         "network_bastion_host_exists",
-        "network_flow_logs_enabled",
-        "network_security_group_not_empty",
-        "network_sg_ssh_access_restricted",
-        "network_sg_rdp_access_restricted",
-        "network_sg_open_all_ports_to_any_source",
+        "network_flow_log_captured_sent",
+        "network_ssh_internet_access_restricted",
+        "network_rdp_internet_access_restricted",
         "network_watcher_enabled",
-        "postgresql_flexible_server_public_network_access_disabled",
-        "sqlserver_public_network_access_disabled",
-        "storage_default_network_access_rule_set_to_deny",
-        "vm_availability_zones_enabled",
-        "vm_availability_set_deployed"
+        "storage_default_network_access_rule_is_denied"
       ]
     },
     {
@@ -111,8 +97,7 @@
         "app_function_identity_is_configured",
         "app_function_identity_without_admin_privileges",
         "app_ensure_auth_is_set_up",
-        "app_register_with_identity",
-        "vm_managed_identity_enabled"
+        "app_register_with_identity"
       ]
     },
     {
@@ -167,24 +152,16 @@
         "defender_auto_provisioning_log_analytics_agent_vms_on",
         "defender_auto_provisioning_vulnerabilty_assessments_machines_on",
         "keyvault_logging_enabled",
-        "monitor_activity_log_retention_policy_set",
-        "monitor_diagnostic_logs_categories",
-        "monitor_diagnostic_setting_deployed_for_all_resources",
-        "monitor_diagnostic_settings_captures_proper_categories",
-        "monitor_log_profile_all_categories",
-        "monitor_log_profile_all_regions",
-        "monitor_log_profile_captures_all_activities",
-        "monitor_log_profile_retention_policy_at_least_365",
-        "network_flow_logs_enabled",
-        "network_flow_log_retention_policy_at_least_90",
+        "monitor_diagnostic_setting_with_appropriate_categories",
+        "monitor_diagnostic_settings_exists",
+        "network_flow_log_captured_sent",
+        "network_flow_log_more_than_90_days",
         "network_watcher_enabled",
-        "postgresql_flexible_server_audit_logs_enabled",
-        "postgresql_flexible_server_log_checkpoints_enabled",
-        "postgresql_flexible_server_log_connections_enabled",
-        "postgresql_flexible_server_log_disconnections_enabled",
-        "sqlserver_auditing_on",
-        "sqlserver_auditing_retention_90_days",
-        "storage_storage_account_logging_queue_read_write_delete_enabled"
+        "postgresql_flexible_server_log_checkpoints_on",
+        "postgresql_flexible_server_log_connections_on",
+        "postgresql_flexible_server_log_disconnections_on",
+        "sqlserver_auditing_enabled",
+        "sqlserver_auditing_retention_90_days"
       ]
     },
     {
@@ -199,21 +176,13 @@
         }
       ],
       "Checks": [
-        "policy_ensure_asc_for_aks_is_enabled",
-        "policy_ensure_asc_for_app_services_is_enabled",
-        "policy_ensure_asc_for_azure_sql_is_enabled",
-        "policy_ensure_asc_for_key_vault_is_enabled",
-        "policy_ensure_asc_for_servers_is_enabled",
-        "policy_ensure_asc_for_sql_servers_is_enabled",
-        "policy_ensure_asc_for_storage_is_enabled",
-        "policy_ensure_allowed_extensions_are_installed",
-        "policy_ensure_allowed_locations_is_enabled",
-        "policy_ensure_allowed_resource_types_is_enabled",
-        "policy_ensure_audit_diagnostic_log_enabled_for_all_services",
-        "policy_ensure_not_allowed_resource_types_is_enabled",
-        "vm_guest_configuration_installed",
-        "vm_guest_configuration_with_no_managed_identity",
-        "vm_guest_configuration_with_user_identity"
+        "defender_ensure_defender_for_containers_is_on",
+        "defender_ensure_defender_for_app_services_is_on",
+        "defender_ensure_defender_for_azure_sql_databases_is_on",
+        "defender_ensure_defender_for_keyvault_is_on",
+        "defender_ensure_defender_for_server_is_on",
+        "defender_ensure_defender_for_sql_servers_is_on",
+        "defender_ensure_defender_for_storage_is_on"
       ]
     },
     {
@@ -229,18 +198,10 @@
       ],
       "Checks": [
         "mysql_flexible_server_geo_redundant_backup_enabled",
-        "mysql_flexible_server_retain_backup_35_days",
         "postgresql_flexible_server_geo_redundant_backup_enabled",
-        "postgresql_flexible_server_backup_retention_period_35_days",
-        "recovery_services_vault_uses_private_link",
-        "recovery_services_vault_uses_private_link_for_backup",
-        "sqlserver_database_long_term_geo_redundant_backup",
-        "sqlserver_database_retention_policy_exceeds_90_days",
-        "storage_default_storage_account_encrypted_with_cmk_not_stored_in_storage_account",
         "storage_geo_redundant_enabled",
         "storage_infrastructure_encryption_is_enabled",
-        "storage_soft_delete_containers_enabled",
-        "storage_soft_delete_enabled",
+        "storage_ensure_soft_delete_is_enabled",
         "vm_backup_enabled",
         "vm_sufficient_daily_backup_retention_period"
       ]
@@ -266,26 +227,18 @@
         "keyvault_key_expiration_set_in_non_rbac",
         "keyvault_key_rotation_enabled",
         "keyvault_non_rbac_secret_expiration_set",
-        "mysql_flexible_server_encrypted_at_rest_using_cmk",
-        "mysql_flexible_server_encrypted_in_transit",
-        "mysql_flexible_server_minimum_tls_version_tls12",
-        "postgresql_flexible_server_encrypted_at_rest_using_cmk",
-        "postgresql_flexible_server_encrypted_in_transit",
-        "postgresql_flexible_server_minimum_tls_version_tls12",
-        "sqlserver_advanced_data_security_enabled",
-        "sqlserver_database_encryption_with_cmk",
-        "sqlserver_database_tde_encryption_enabled",
-        "sqlserver_minimum_tls_version_12",
-        "storage_secure_transfer_required_enabled",
-        "storage_default_storage_account_encrypted_with_cmk",
+        "mysql_flexible_server_ssl_connection_enabled",
+        "mysql_flexible_server_minimum_tls_version_12",
+        "postgresql_flexible_server_enforce_ssl_enabled",
+        "defender_ensure_defender_for_sql_servers_is_on",
+        "sqlserver_tde_encrypted_with_cmk",
+        "sqlserver_tde_encryption_enabled",
+        "sqlserver_recommended_minimal_tls_version",
+        "storage_secure_transfer_required_is_enabled",
+        "storage_ensure_encryption_with_customer_managed_keys",
         "storage_infrastructure_encryption_is_enabled",
-        "storage_storage_account_encrypted_with_cmk",
-        "storage_storage_account_minimum_tls_version_tls12",
-        "vm_encrypted_at_host",
-        "vm_data_disks_encrypted_with_cmk",
-        "vm_managed_disks_encrypted_with_cmk",
-        "vm_os_disk_are_encrypted_with_cmk",
-        "vm_temporary_disks_and_cache_encrypted"
+        "storage_ensure_minimum_tls_version_12",
+        "vm_ensure_attached_disks_encrypted_with_cmk"
       ]
     },
     {
@@ -307,11 +260,7 @@
         "defender_container_images_resolved_vulnerabilities",
         "defender_container_images_scan_enabled",
         "defender_ensure_system_updates_are_applied",
-        "vm_agent_installed",
-        "vm_antimalware_solution_installed",
-        "vm_endpoint_protection_installed",
-        "vm_os_update_system_updates",
-        "vm_security_patch_assessment"
+        "defender_assessments_vm_endpoint_protection_installed"
       ]
     },
     {
@@ -332,8 +281,7 @@
         "entra_user_with_vm_access_has_mfa",
         "iam_custom_role_has_permissions_to_administer_resource_locks",
         "iam_role_user_access_admin_restricted",
-        "app_function_identity_is_configured",
-        "vm_managed_identity_enabled"
+        "app_function_identity_is_configured"
       ]
     },
     {
@@ -348,10 +296,8 @@
         }
       ],
       "Checks": [
-        "monitor_log_profile_all_categories",
-        "monitor_log_profile_all_regions",
-        "monitor_log_profile_captures_all_activities",
-        "monitor_diagnostic_setting_deployed_for_all_resources",
+        "monitor_diagnostic_setting_with_appropriate_categories",
+        "monitor_diagnostic_settings_exists",
         "network_watcher_enabled"
       ]
     }

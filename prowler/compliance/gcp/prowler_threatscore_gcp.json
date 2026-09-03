@@ -63,7 +63,7 @@
       "Id": "1.2.1",
       "Description": "Ensure That There Are Only GCP-Managed Service Account Keys for Each Service Account",
       "Checks": [
-        "iam_sa_no_user_managed_keysiam_sa_no_user_managed_keys"
+        "iam_sa_no_user_managed_keys"
       ],
       "Attributes": [
         {
