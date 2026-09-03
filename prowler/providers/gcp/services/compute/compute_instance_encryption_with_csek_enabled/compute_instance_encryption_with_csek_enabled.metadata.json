@@ -12,6 +12,7 @@
   "Risk": "Without **CSEK**, encryption depends on provider-managed keys, reducing control over key lifecycle and access. This weakens confidentiality, impedes separation of duties, and can delay key revocation, increasing exposure to unauthorized data access and regulatory gaps.",
   "RelatedUrl": "",
   "AdditionalURLs": [
+    "https://docs.cloud.google.com/compute/docs/deprecations/csek-deprecation-in-compute-engine",
     "https://cloud.google.com/storage/docs/encryption/using-customer-supplied-keys",
     "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/gcp/ComputeEngine/enable-encryption-with-csek.html"
   ],
@@ -32,5 +33,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": ""
+  "Notes": "CSEK is being retired: since July 20, 2026 it can no longer be applied to Compute Engine resources, and it will be removed entirely on July 20, 2027, when this check will be deprecated. Instances already encrypted with CSEK still report PASS, but a FAIL is not remediable; Google points to CMEK (Cloud KMS) as the replacement, which this check does not evaluate."
 }

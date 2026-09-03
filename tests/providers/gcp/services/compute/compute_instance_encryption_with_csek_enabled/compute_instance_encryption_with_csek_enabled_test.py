@@ -72,7 +72,7 @@ class Test_compute_instance_encryption_with_csek_enabled:
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert search(
-                f"The VM Instance {instance.name} has every disk encrypted.",
+                f"The VM Instance {instance.name} has every disk encrypted with CSEK.",
                 result[0].status_extended,
             )
             assert result[0].resource_id == instance.id
@@ -121,8 +121,16 @@ class Test_compute_instance_encryption_with_csek_enabled:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert search(
-                f"The VM Instance {instance.name} has the following unencrypted disks: '{', '.join([i[0] for i in instance.disks_encryption if not i[1]])}'",
+                f"The VM Instance {instance.name} has the following disks not encrypted with CSEK: '{', '.join([i[0] for i in instance.disks_encryption if not i[1]])}'",
                 result[0].status_extended,
+            )
+            assert (
+                "CSEK can no longer be applied to Compute Engine resources since July 20, 2026"
+                in result[0].status_extended
+            )
+            assert (
+                "This check will be deprecated on July 20, 2027"
+                in result[0].status_extended
             )
             assert result[0].resource_id == instance.id
             assert result[0].location == "us-central1"
@@ -170,8 +178,16 @@ class Test_compute_instance_encryption_with_csek_enabled:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert search(
-                f"The VM Instance {instance.name} has the following unencrypted disks: '{', '.join([i[0] for i in instance.disks_encryption if not i[1]])}'",
+                f"The VM Instance {instance.name} has the following disks not encrypted with CSEK: '{', '.join([i[0] for i in instance.disks_encryption if not i[1]])}'",
                 result[0].status_extended,
+            )
+            assert (
+                "CSEK can no longer be applied to Compute Engine resources since July 20, 2026"
+                in result[0].status_extended
+            )
+            assert (
+                "This check will be deprecated on July 20, 2027"
+                in result[0].status_extended
             )
             assert result[0].resource_id == instance.id
             assert result[0].location == "us-central1"
