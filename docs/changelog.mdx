@@ -4,6 +4,95 @@ description: "New features and improvements in each Prowler release"
 rss: true
 ---
 
+<Update label="v5.41.0" description="September 2, 2026">
+  ### 📥 Scans — Import Findings from the Browser
+
+  <Note>
+  This feature is available exclusively in **Prowler Cloud** and **Prowler Private Cloud** with a [subscription](https://prowler.com/pricing).
+  </Note>
+
+  Findings produced outside the platform, by the Prowler CLI or a CI pipeline, can now be brought into the app without leaving the browser. The Scans page gains an "Import Findings" dialog that takes a Prowler `.ocsf.json` report by drag-and-drop or file picker, hands it to the ingestion API and tracks the job to completion, reporting how many records were processed and how many were invalid. Files that are not a `.ocsf.json` report, or are empty, are refused before any upload starts, and a rejected upload or a failed status poll can be retried in place. The dialog is available to roles holding the Manage Ingestions permission.
+
+  ![Import Findings button on the Scans page](/images/prowler-app/import-findings/import-findings-button.png)
+
+  ![Import findings dialog with the drag-and-drop area](/images/prowler-app/import-findings/import-findings-dialog.png)
+
+  Read more in the [Import Findings documentation](https://docs.prowler.com/user-guide/tutorials/prowler-import-findings#using-the-ui).
+
+  ### 🎫 Jira Integration — Finding Reference in Every Issue
+
+  Every Jira issue created from a finding now carries a stable reference back to it. Issues are labeled `prowler`, `prowler-<provider>`, `prowler-<severity>`, `prowler-<check-id>` and `prowler-finding-<finding-uid>`, so they can be filtered, searched with JQL or matched by automation; labels are sanitized to Jira's limits so a long or unusual value never blocks issue creation. The issue also links back to the finding in Prowler, filtered by its UID so the link keeps working after later scans, and names the Prowler organization that sent it. Prowler Cloud always includes the link; Prowler Local Server enables it by setting `DJANGO_UI_BASE_URL` in the API environment.
+
+  Read more in the [Jira integration documentation](https://docs.prowler.com/user-guide/tutorials/prowler-app-jira-integration).
+
+  ### 📚 Compliance — CIS Google Workspace Foundations Benchmark v1.4.0
+
+  Prowler now ships the CIS Google Workspace Foundations Benchmark v1.4.0. Alongside the new framework, the Google Workspace checks mapped to CIS were reworked to evaluate the benchmark's full audit procedure instead of a single condition, so Gmail spoofing actions, 2-Step Verification, password expiration and alert severity left on Google's defaults no longer pass. Expect new `FAIL` findings on domains that rely on those defaults. Three accuracy fixes also land:
+
+  - `security_2sv_enforced` and `security_2sv_hardware_keys_admins` report `MANUAL` instead of judging domain-wide values that a group or a sub-organizational unit overrides; a domain-wide failure is still reported as such, with the override noted.
+  - `rules_*_alert_configured` no longer passes a rule whose delivery to the alert center is disabled.
+  - `security_password_policy_strong` no longer fails a domain that never touched the password strength setting, since Google enforces strong passwords by default.
+
+  `security_login_challenges_configured` was unmapped from CIS Google Workspace requirement 4.1.4.1 (Post-SSO verification) and `security_2sv_enforced` from CISA SCuBA `GWS.COMMONCONTROLS.1.1` (phishing-resistant MFA), because neither check can prove what those requirements ask for.
+
+  Read more in the [Compliance documentation](https://docs.prowler.com/user-guide/compliance/tutorials/compliance).
+
+  ### 🔍 Checks
+
+  Ten new AWS checks land in this release, eight of them contributed by @tamg-aws. Thank you!
+
+  #### Amazon Bedrock AgentCore
+
+  - `iam_policy_passrole_to_bedrock_agentcore_restricted` flags customer-managed IAM policies that allow `iam:PassRole` over every role where the passed role can reach Bedrock AgentCore, so any principal holding the policy could run agent code under any role in the account.
+  - `iam_policy_no_agentcore_workload_access_token_wildcard` flags customer-managed IAM policies that allow `bedrock-agentcore:GetWorkloadAccessToken`, `GetWorkloadAccessTokenForJWT` or `GetWorkloadAccessTokenForUserId` on resources reaching workload identities other than the caller's own.
+  - `cloudwatch_log_group_agentcore_data_protection_policy_enabled` verifies that Bedrock AgentCore log groups mask sensitive data with a CloudWatch Logs data protection policy. The log group prefixes are configurable through `agentcore_log_group_name_prefixes` in `config.yaml`.
+
+  #### Amazon GuardDuty
+
+  - `guardduty_runtime_monitoring_enabled` flags detectors without unified Runtime Monitoring, the only feature that covers Amazon EC2 instances and Amazon ECS on AWS Fargate tasks in addition to Amazon EKS.
+  - `guardduty_ai_protection_enabled` flags detectors without AI Protection, which analyzes CloudTrail data events from Amazon Bedrock, Amazon Bedrock AgentCore and Amazon SageMaker AI. A detector that does not report the feature is `MANUAL` rather than `FAIL`.
+
+  `guardduty_eks_runtime_monitoring_enabled` no longer reports `FAIL` for detectors that use unified Runtime Monitoring, which is mutually exclusive with `EKS_RUNTIME_MONITORING` and already covers Amazon EKS.
+
+  #### Amazon ECR and EKS
+
+  - `ecr_registry_enhanced_scanning_enabled` verifies that the ECR registry scan type is enhanced (Amazon Inspector, covering programming language packages and continuous rescanning) instead of basic, reporting `MANUAL` when the registry scanning configuration cannot be read.
+  - `eks_cluster_vpc_cni_network_policy_enforced` flags EKS clusters whose Amazon VPC CNI managed add-on does not enable Kubernetes network policy enforcement, reporting `MANUAL` where the EKS API cannot show the setting.
+
+  #### AWS IAM, Elastic Beanstalk and MemoryDB
+
+  - `iam_role_service_trust_restricts_source_to_account` flags IAM roles whose trust policy lets an AWS service principal assume the role without confining the request to a specific source account, including trust policies that `iam_role_cross_service_confused_deputy_prevention` does not evaluate.
+  - `elasticbeanstalk_environment_no_secrets_in_configuration` scans the option settings of every Elastic Beanstalk environment for hardcoded secrets. Thanks to @haneul-24!
+  - `memorydb_cluster_in_transit_encryption_enabled` verifies that MemoryDB clusters have in-transit encryption (TLS) enabled. Thanks to @UTKARSH698!
+
+  Explore all AWS checks at [Prowler Hub](https://hub.prowler.com/check?provider=aws).
+
+  ### 🐳 Image Provider — On-Premises Registries
+
+  Scanning registries that live on private networks is now supported end to end. `PROWLER_IMAGE_PROVIDER_ALLOWED_PRIVATE_NETWORKS` takes a comma-separated list of IPs and CIDRs the provider may reach, while every other non-public address, including link-local and loopback, stays blocked by the SSRF guard. Authentication negotiation is also more resilient: the provider falls back to Basic when a registry such as Harbor rejects the negotiated bearer token, and switches to a bearer token when the server answers a Basic or anonymous request with a Bearer challenge. `--registry-insecure` now propagates to Trivy through `TRIVY_INSECURE`, so images behind self-signed certificates can be pulled and scanned, not just enumerated. The flag now disables certificate validation for the image pull too, so keep it for trusted internal registries only.
+
+  Registry scans also skip non-image OCI artifacts (Helm charts, cosign signatures, SBOM attestations), no longer abort the whole scan when Trivy fails on a single image, and enumerate repositories in parallel instead of one request at a time.
+
+  Read more in the [Image provider documentation](https://docs.prowler.com/user-guide/providers/image/getting-started-image#on-premises-registries-and-private-networks).
+
+  ### 🛠️ Prowler MCP Server — Tool Failures Reported as Errors
+
+  Prowler Local Server tools now report a failure as an MCP tool execution error (`isError: true`, with the explanation in `content`) instead of a successful result carrying an `{"error": ...}` object, which clients and models read as a success. The Prowler Documentation and Prowler Hub tools follow the same rule: `prowler_docs_search` no longer reports a failed search as zero matches, `prowler_docs_get_document` no longer reports a failed fetch as a missing page, and `prowler_hub_get_check_code` and `prowler_hub_get_check_fixer` now name the provider a check ID actually belongs to instead of reporting it as nonexistent. `prowler_get_compliance_framework_state_details` also rejects a call that passes both `scan_id` and `provider_id` instead of silently ignoring the provider.
+
+  Read more in the [Prowler MCP documentation](https://docs.prowler.com/getting-started/products/prowler-mcp).
+
+  ### 🙌 External Contributors
+
+  Thank you to our community contributors for this release!
+
+  - @tamg-aws: GuardDuty unified Runtime Monitoring and AI Protection checks ([#12564](https://github.com/prowler-cloud/prowler/pull/12564)), EKS VPC CNI network policy check ([#12661](https://github.com/prowler-cloud/prowler/pull/12661)), ECR enhanced scanning check ([#12660](https://github.com/prowler-cloud/prowler/pull/12660)), Bedrock AgentCore IAM and service trust checks ([#12664](https://github.com/prowler-cloud/prowler/pull/12664)), AgentCore log group data protection check ([#12662](https://github.com/prowler-cloud/prowler/pull/12662)), and fixes to ECR scan frequency ([#12560](https://github.com/prowler-cloud/prowler/pull/12560)), CloudWatch metric filters ([#12561](https://github.com/prowler-cloud/prowler/pull/12561)) and SageMaker direct internet access ([#12659](https://github.com/prowler-cloud/prowler/pull/12659))
+  - @haneul-24: AWS `elasticbeanstalk_environment_no_secrets_in_configuration` check ([#12378](https://github.com/prowler-cloud/prowler/pull/12378))
+  - @UTKARSH698: AWS `memorydb_cluster_in_transit_encryption_enabled` check ([#12246](https://github.com/prowler-cloud/prowler/pull/12246))
+  - @ye11oc4t: GitHub repository discovery pagination for unscoped scans ([#12460](https://github.com/prowler-cloud/prowler/pull/12460))
+
+  See the [full release notes on GitHub](https://github.com/prowler-cloud/prowler/releases/tag/5.41.0) for the complete list of changes.
+</Update>
+
 <Update label="v5.40.0" description="August 28, 2026">
   ### 💬 Slack Integration — Alert Channel Destinations
 

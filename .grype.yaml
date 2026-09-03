@@ -17,6 +17,16 @@ ignore:
   - vulnerability: CVE-2026-71556
     package:
       name: github.com/go-git/go-git/v5
+  # CVE-2026-84304 is the same temporary exception documented in .trivyignore.yaml:
+  # Trivy 0.74.0 still embeds grpc 1.82.1, while the 1.83.1 fix is not in any release.
+  # Prowler only runs `trivy image` / `trivy fs`, never client/server mode, so no gRPC
+  # endpoint exists in the image. Pinned to the embedded version so the rule stops
+  # matching on its own once Trivy bumps grpc. Remove with the Trivy exception by 2026-10-15.
+  # https://github.com/aquasecurity/trivy/pull/11176
+  - vulnerability: CVE-2026-84304
+    package:
+      name: google.golang.org/grpc
+      version: v1.82.1
   - vulnerability: CVE-2026-56852
     package:
       name: golang.org/x/text

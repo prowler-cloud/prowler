@@ -8,16 +8,20 @@ import { isCloud } from "@/lib/shared/env";
 const RuntimeFeedbackSurvey = lazy(() => import("./runtime-feedback-survey"));
 
 export function FeedbackSurvey() {
-  const { posthogEnabled, posthogKey, posthogHost } = useRuntimeConfig();
+  const { posthogEnabled, posthogKey, posthogIngestionHost, posthogUiHost } =
+    useRuntimeConfig();
 
-  if (!isCloud() || !posthogEnabled || !posthogKey || !posthogHost) return null;
+  if (!isCloud() || !posthogEnabled || !posthogKey || !posthogIngestionHost) {
+    return null;
+  }
 
   return (
     <Suspense fallback={null}>
       <RuntimeFeedbackSurvey
-        key={`${posthogKey}:${posthogHost}`}
+        key={`${posthogKey}:${posthogIngestionHost}:${posthogUiHost}`}
         posthogKey={posthogKey}
-        posthogHost={posthogHost}
+        posthogIngestionHost={posthogIngestionHost}
+        posthogUiHost={posthogUiHost}
       />
     </Suspense>
   );

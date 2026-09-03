@@ -64,6 +64,7 @@ declare global {
       /** @deprecated use UI_POSTHOG_HOST */
       POSTHOG_HOST?: string;
       UI_POSTHOG_HOST?: string;
+      UI_POSTHOG_UI_HOST?: string;
       // TODO Reserved runtime public config (registered now; no UI consumer yet)
       REO_DEV_CLIENT_ID?: string;
 
