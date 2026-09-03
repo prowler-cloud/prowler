@@ -7,6 +7,14 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext as _
 
+# Re-exported so the SDK stays the single source of truth for bundle parsing:
+# it covers PKCS#12 UnsupportedAlgorithm, encrypted PEM keys (TypeError), the
+# full private-key PEM label set, and leaf-first normalization for
+# azure-identity's thumbprint. A local copy silently drifted before.
+from prowler.providers.azure.lib.certificate import (  # noqa: F401
+    validate_certificate_bundle,
+)
+
 LIGHTHOUSE_OPENAI_COMPATIBLE_ALLOWED_SCHEMES = frozenset({"https"})
 LIGHTHOUSE_NAT64_WELL_KNOWN_PREFIX = ipaddress.IPv6Network("64:ff9b::/96")
 LIGHTHOUSE_BLOCKED_METADATA_HOSTS = frozenset(

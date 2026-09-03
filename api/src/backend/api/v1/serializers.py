@@ -1,4 +1,5 @@
 import base64
+import binascii
 import json
 import logging
 from datetime import UTC, datetime, timedelta
@@ -60,7 +61,10 @@ from api.v1.serializer_utils.lighthouse import (
 )
 from api.v1.serializer_utils.processors import ProcessorConfigField
 from api.v1.serializer_utils.providers import ProviderSecretField
-from api.validators import validate_lighthouse_openai_compatible_base_url
+from api.validators import (
+    validate_certificate_bundle,
+    validate_lighthouse_openai_compatible_base_url,
+)
 from config.custom_logging import BackendLogger
 from django.conf import settings
 from django.contrib.auth import authenticate
@@ -1785,10 +1789,77 @@ class AwsProviderSecret(serializers.Serializer):
         resource_name = "provider-secrets"
 
 
+# Base64 cap that matches the SDK's 50 KiB `_MAX_CERTIFICATE_BUNDLE_BYTES`
+# limit on the decoded bundle. Rejects oversized payloads at the request
+# layer so DRF never allocates the doubled memory that base64 decoding plus
+# PKCS#12/PEM parsing would need for a multi-MB blob.
+# `((51200 + 2) // 3) * 4` = 68268 base64 chars for a bundle exactly at the
+# SDK cap. Keep the two constants aligned if either side moves.
+_MAX_CERTIFICATE_CONTENT_LENGTH = 68268
+
+
 class AzureProviderSecret(serializers.Serializer):
     client_id = serializers.CharField()
-    client_secret = serializers.CharField()
+    client_secret = serializers.CharField(required=False)
     tenant_id = serializers.CharField()
+    # The size cap is enforced in `validate_certificate_content` with the
+    # typed `azure-certificate-content` code, not via `max_length=`. DRF's
+    # built-in max-length check runs before per-field validators and emits
+    # `code="max_length"`, which JSON:API clients keyed to the typed
+    # certificate error code cannot recognize as a certificate failure.
+    certificate_content = serializers.CharField(required=False)
+
+    def validate(self, attrs):
+        if attrs.get("client_secret") and attrs.get("certificate_content"):
+            raise serializers.ValidationError(
+                "You cannot provide both client_secret and certificate_content.",
+                code="azure-credential-mutex",
+            )
+        if not attrs.get("client_secret") and not attrs.get("certificate_content"):
+            raise serializers.ValidationError(
+                "You must provide either client_secret or certificate_content.",
+                code="azure-credential-required",
+            )
+        return super().validate(attrs)
+
+    def validate_certificate_content(self, certificate_content):
+        """Validate the Azure certificate and matching private-key bundle."""
+        if certificate_content:
+            # Tolerate whitespace inside the base64 payload: exports from
+            # Windows terminals (CRLF) or wrapped copy-paste survive without
+            # tripping `base64.b64decode(validate=True)`, and the reader is
+            # base64 anyway — internal whitespace carries no information.
+            certificate_content = "".join(certificate_content.split())
+            if len(certificate_content) > _MAX_CERTIFICATE_CONTENT_LENGTH:
+                # Reject oversized payloads with the typed certificate code
+                # so JSON:API clients recognize this as a certificate-content
+                # failure rather than a generic length violation.
+                raise serializers.ValidationError(
+                    "Certificate content exceeds the maximum size.",
+                    code="azure-certificate-content",
+                )
+            try:
+                certificate_data = base64.b64decode(certificate_content, validate=True)
+                validate_certificate_bundle(certificate_data)
+            # `binascii.Error` (bad base64), `TypeError` (encrypted PEM key)
+            # and `ValueError` (mismatched cert/key, oversized bundle,
+            # malformed bytes) are the failure modes `validate_certificate_bundle`
+            # and `base64.b64decode` surface. Anything else is a real bug
+            # and should propagate.
+            except (binascii.Error, TypeError, ValueError) as e:
+                logger.error(
+                    f"{e.__class__.__name__}[{e.__traceback__.tb_lineno}]: {e}"
+                )
+                # Field validators are invoked per-field; DRF already knows
+                # this error belongs to `certificate_content` and will nest
+                # the message under that key. Raising a dict here would
+                # double-nest the JSON:API pointer as
+                # `/certificate_content/certificate_content`.
+                raise serializers.ValidationError(
+                    "Certificate content must be valid base64 containing an X.509 certificate and its matching private key.",
+                    code="azure-certificate-content",
+                ) from e
+        return certificate_content
 
     class Meta:
         resource_name = "provider-secrets"
@@ -2092,8 +2163,24 @@ class ProviderSecretCreateSerializer(
         validated_secret = self.validate_secret_based_on_provider(
             provider.provider, secret_type, secret
         )
+        # OCI persists the full validated dict on purpose (its serializer
+        # already performs the sanitization it wants). For Azure, only the
+        # `certificate_content` field must be replaced with the normalized
+        # (whitespace-stripped) value; the rest of the dict is left as the
+        # caller submitted it so opaque credentials elsewhere in the payload
+        # keep whatever whitespace they carried. Every other provider stays
+        # on the outer JSONField's raw dict — DRF's `CharField.trim_whitespace`
+        # would otherwise silently mutate opaque tokens/passwords.
         if provider.provider == Provider.ProviderChoices.ORACLECLOUD.value:
             validated_attrs["secret"] = validated_secret
+        elif (
+            provider.provider == Provider.ProviderChoices.AZURE.value
+            and validated_secret.get("certificate_content")
+        ):
+            validated_attrs["secret"] = {
+                **secret,
+                "certificate_content": validated_secret["certificate_content"],
+            }
         return validated_attrs
 
 
@@ -2128,8 +2215,21 @@ class ProviderSecretUpdateSerializer(BaseWriteProviderSecretSerializer):
         validated_secret = self.validate_secret_based_on_provider(
             provider.provider, secret_type, secret
         )
+        # Same targeted persistence as `ProviderSecretCreateSerializer.validate`:
+        # OCI keeps its full validated dict, Azure replaces only
+        # `certificate_content`, and every other provider stays on the raw
+        # submitted dict so opaque credentials do not get their whitespace
+        # silently trimmed.
         if provider.provider == Provider.ProviderChoices.ORACLECLOUD.value:
             validated_attrs["secret"] = validated_secret
+        elif (
+            provider.provider == Provider.ProviderChoices.AZURE.value
+            and validated_secret.get("certificate_content")
+        ):
+            validated_attrs["secret"] = {
+                **secret,
+                "certificate_content": validated_secret["certificate_content"],
+            }
         return validated_attrs
 
 
