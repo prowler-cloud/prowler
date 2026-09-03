@@ -7,7 +7,9 @@ import {
   addCredentialsFormSchema,
   addCredentialsRoleFormSchema,
   addProviderFormSchema,
+  CERTIFICATE_CONTENT_MAX_SIZE_ERROR,
   KUBECONFIG_UNSUPPORTED_COMMAND_AUTHENTICATION_ERROR,
+  MAX_CERTIFICATE_CONTENT_LENGTH,
   samlConfigFormSchema,
 } from "./formSchemas";
 
@@ -51,6 +53,127 @@ describe("addCredentialsRoleFormSchema", () => {
         path: [ProviderCredentialFields.AWS_SECRET_ACCESS_KEY],
       }),
     );
+  });
+});
+
+describe("addCredentialsFormSchema - azure certificate", () => {
+  const BASE_AZURE_VALUES = {
+    [ProviderCredentialFields.PROVIDER_ID]: "provider-azure-1",
+    [ProviderCredentialFields.PROVIDER_TYPE]: "azure",
+    [ProviderCredentialFields.TENANT_ID]:
+      "12345678-1234-1234-1234-123456789012",
+    [ProviderCredentialFields.CLIENT_ID]:
+      "87654321-4321-4321-4321-210987654321",
+    [ProviderCredentialFields.CERTIFICATE_CONTENT]: "Y2VydGlmaWNhdGU=",
+  } as const;
+
+  it("rejects malformed tenant and client UUIDs", () => {
+    // Given
+    const schema = addCredentialsFormSchema("azure", "app_certificate");
+
+    // When
+    const result = schema.safeParse({
+      ...BASE_AZURE_VALUES,
+      [ProviderCredentialFields.TENANT_ID]: "not-a-uuid",
+      [ProviderCredentialFields.CLIENT_ID]: "also-not-a-uuid",
+    });
+
+    // Then
+    expect(result.success).toBe(false);
+    if (result.success) return;
+    expect(result.error.issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          path: [ProviderCredentialFields.TENANT_ID],
+        }),
+        expect.objectContaining({
+          path: [ProviderCredentialFields.CLIENT_ID],
+        }),
+      ]),
+    );
+  });
+
+  it("rejects malformed base64 certificate content", () => {
+    // Given
+    const schema = addCredentialsFormSchema("azure", "app_certificate");
+
+    // When
+    const result = schema.safeParse({
+      ...BASE_AZURE_VALUES,
+      [ProviderCredentialFields.CERTIFICATE_CONTENT]: "not!base64",
+    });
+
+    // Then
+    expect(result.success).toBe(false);
+    if (result.success) return;
+    expect(result.error.issues).toContainEqual(
+      expect.objectContaining({
+        message: "Certificate and Private Key Bundle must be valid base64",
+        path: [ProviderCredentialFields.CERTIFICATE_CONTENT],
+      }),
+    );
+  });
+
+  it("rejects simultaneous client-secret and certificate credentials", () => {
+    // Given
+    const schema = addCredentialsFormSchema("azure", "app_certificate");
+
+    // When
+    const result = schema.safeParse({
+      ...BASE_AZURE_VALUES,
+      [ProviderCredentialFields.CLIENT_SECRET]: "fake-client-secret",
+    });
+
+    // Then
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects certificate content that exceeds the base64 length cap", () => {
+    // Guardrail against a future edit dropping the `.max(...)` on the
+    // Azure `certificate_content` field: a payload larger than the API's
+    // `_MAX_CERTIFICATE_CONTENT_LENGTH` must never leave the browser.
+    const schema = addCredentialsFormSchema("azure", "app_certificate");
+    // Padding-safe: 4-char multiple of "A" (all valid base64 chars) longer
+    // than the cap, so only the size check rejects (isValidBase64 passes).
+    const oversized = "A".repeat(MAX_CERTIFICATE_CONTENT_LENGTH + 4);
+
+    const result = schema.safeParse({
+      ...BASE_AZURE_VALUES,
+      [ProviderCredentialFields.CERTIFICATE_CONTENT]: oversized,
+    });
+
+    expect(result.success).toBe(false);
+    if (result.success) return;
+    expect(result.error.issues).toContainEqual(
+      expect.objectContaining({
+        message: CERTIFICATE_CONTENT_MAX_SIZE_ERROR,
+        path: [ProviderCredentialFields.CERTIFICATE_CONTENT],
+      }),
+    );
+  });
+
+  it("accepts a wrapped-line certificate content that fits after stripping whitespace", () => {
+    // openssl and PowerShell wrap base64 output at 64 chars with LF/CRLF.
+    // The API strips whitespace before enforcing the cap; the client does
+    // the same via `.transform(strip)`. A legitimate ~50 KB base64 that
+    // exceeds the cap only because of embedded whitespace must still pass.
+    const schema = addCredentialsFormSchema("azure", "app_certificate");
+    const rawBase64 = "A".repeat(MAX_CERTIFICATE_CONTENT_LENGTH);
+    const wrapped = rawBase64.match(/.{1,64}/g)!.join("\r\n");
+    // Sanity: wrapping made it longer than the cap.
+    expect(wrapped.length).toBeGreaterThan(MAX_CERTIFICATE_CONTENT_LENGTH);
+
+    const result = schema.safeParse({
+      ...BASE_AZURE_VALUES,
+      [ProviderCredentialFields.CERTIFICATE_CONTENT]: wrapped,
+    });
+
+    expect(result.success).toBe(true);
+    if (!result.success) return;
+    // The parsed value is the stripped base64 — matches what the API sees.
+    expect(
+      result.data[ProviderCredentialFields.CERTIFICATE_CONTENT],
+    ).toBe(rawBase64);
   });
 });
 

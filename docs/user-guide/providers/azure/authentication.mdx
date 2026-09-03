@@ -1,16 +1,20 @@
 ---
-title: 'Azure Authentication in Prowler'
+title: "Azure Authentication in Prowler"
 ---
+
+import AzureProwlerScanTemplate from "/snippets/azure-prowler-scan-template.mdx";
 
 Prowler for Azure supports multiple authentication types. Authentication methods vary between Prowler Cloud and Prowler CLI:
 
 **Prowler Cloud:**
 
-- [**Service Principal Application**](#service-principal-application-authentication-recommended)
+- [**Certificate Authentication**](#certificate-authentication) (**Recommended**)
+- [**Service Principal Application**](#service-principal-application-authentication-recommended) with a client secret
 
 **Prowler CLI:**
 
-- [**Service Principal Application**](#service-principal-application-authentication-recommended) (**Recommended**)
+- [**Certificate Authentication**](#certificate-authentication) (**Recommended**)
+- [**Service Principal Application**](#service-principal-application-authentication-recommended) with a client secret
 - [**AZ CLI credentials**](#az-cli-authentication)
 - [**Interactive browser authentication**](#browser-authentication)
 - [**Managed Identity Authentication**](#managed-identity-authentication)
@@ -58,6 +62,7 @@ Replace `Directory.Read.All` with `Domain.Read.All` for more restrictive permiss
 
         ![Grant Admin Consent](/images/providers/grant-admin-consent.png)
         ![Granted Admin Consent](/images/providers/granted-admin-consent.png)
+
   </Tab>
   <Tab title="Azure CLI">
     1. To grant permissions to a Service Principal, execute the following command in a terminal:
@@ -65,6 +70,7 @@ Replace `Directory.Read.All` with `Domain.Read.All` for more restrictive permiss
         ```console
         az ad app permission add --id {appId} --api 00000003-0000-0000-c000-000000000000 --api-permissions 7ab1d382-f21e-4acd-a863-ba3e13f7da61=Role 246dd0d5-5bd0-4def-940b-0421030a5b68=Role b0afded3-3588-46d8-8b3d-9842eff778da=Role
         ```
+
   </Tab>
 </Tabs>
 ### Subscription Scope Permissions
@@ -74,8 +80,8 @@ These permissions are required to perform security checks against Azure resource
 - `Reader` – Grants read-only access to Azure resources.
 - `ProwlerRole` – A custom role with minimal permissions needed for some specific checks, defined in the [prowler-azure-custom-role](https://github.com/prowler-cloud/prowler/blob/master/permissions/prowler-azure-custom-role.json).
 
-
 #### Assigning "Reader" Role at the Subscription Level
+
 By default, Prowler scans all accessible subscriptions. If you need to audit specific subscriptions, you must assign the necessary role `Reader` for each one. For streamlined and less repetitive role assignments in multi-subscription environments, refer to the [following section](/user-guide/providers/azure/subscriptions#recommendation-for-managing-multiple-subscriptions).
 
 <Tabs>
@@ -94,6 +100,7 @@ By default, Prowler scans all accessible subscriptions. If you need to audit spe
     6. Click "Review + assign" to finalize and apply the role assignment.
 
     ![Adding the Reader Role to a Subscription](/images/providers/add-reader-role.png)
+
   </Tab>
   <Tab title="Azure CLI">
     1. Open a terminal and execute the following command to assign the `Reader` role to the identity that is going to be assumed by Prowler:
@@ -101,6 +108,7 @@ By default, Prowler scans all accessible subscriptions. If you need to audit spe
         ```console
         az role assignment create --role "Reader" --assignee <user, group, or service principal> --scope /subscriptions/<subscription-id>
         ```
+
   </Tab>
 </Tabs>
 #### Assigning "ProwlerRole" Permissions at the Subscription Level
@@ -140,6 +148,7 @@ The checks requiring this `ProwlerRole` can be found in this [section](/user-gui
         The `assignableScopes` field in the JSON custom role file must be updated to reflect the correct subscription or management group. Use one of the following formats: `/subscriptions/<subscription-id>` or `/providers/Microsoft.Management/managementGroups/<management-group-id>`.
 
     </Note>
+
   </Tab>
   <Tab title="Azure CLI">
     1. To create a new custom role, open a terminal and execute the following command:
@@ -159,38 +168,39 @@ The checks requiring this `ProwlerRole` can be found in this [section](/user-gui
                     }'
     ```
 
-2. If the command is executed successfully, the output is going to be similar to the following:
+2.  If the command is executed successfully, the output is going to be similar to the following:
 
-    ```json
-    {
-        "assignableScopes": [
-            "/subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
-        ],
-        "createdBy": null,
-        "createdOn": "YYYY-MM-DDTHH:MM:SS.SSSSSS+00:00",
-        "description": "Role used for checks that require read-only access to Azure resources and are not covered by the Reader role.",
-        "id": "/subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX/providers/Microsoft.Authorization/roleDefinitions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
-        "name": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
-        "permissions": [
+            ```json
             {
-                "actions": [
-                    "Microsoft.Web/sites/host/listkeys/action",
-                    "Microsoft.Web/sites/config/list/Action"
+                "assignableScopes": [
+                    "/subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
                 ],
-                "condition": null,
-                "conditionVersion": null,
-                "dataActions": [],
-                "notActions": [],
-                "notDataActions": []
+                "createdBy": null,
+                "createdOn": "YYYY-MM-DDTHH:MM:SS.SSSSSS+00:00",
+                "description": "Role used for checks that require read-only access to Azure resources and are not covered by the Reader role.",
+                "id": "/subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX/providers/Microsoft.Authorization/roleDefinitions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
+                "name": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
+                "permissions": [
+                    {
+                        "actions": [
+                            "Microsoft.Web/sites/host/listkeys/action",
+                            "Microsoft.Web/sites/config/list/Action"
+                        ],
+                        "condition": null,
+                        "conditionVersion": null,
+                        "dataActions": [],
+                        "notActions": [],
+                        "notDataActions": []
+                    }
+                ],
+                "roleName": "ProwlerRole",
+                "roleType": "CustomRole",
+                "type": "Microsoft.Authorization/roleDefinitions",
+                "updatedBy": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
+                "updatedOn": "YYYY-MM-DDTHH:MM:SS.SSSSSS+00:00"
             }
-        ],
-        "roleName": "ProwlerRole",
-        "roleType": "CustomRole",
-        "type": "Microsoft.Authorization/roleDefinitions",
-        "updatedBy": "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX",
-        "updatedOn": "YYYY-MM-DDTHH:MM:SS.SSSSSS+00:00"
-    }
-    ```
+            ```
+
   </Tab>
 </Tabs>
 
@@ -214,13 +224,149 @@ The following security checks require the `ProwlerRole` permissions for executio
 - `app_function_ftps_deployment_disabled`
 - `app_function_latest_runtime_version`
 
----
+## Certificate Authentication
 
-## Service Principal Application Authentication (Recommended)
+Certificate authentication is the recommended way to run Prowler against Azure because Microsoft Entra ID stores only the public certificate, so no shared client secret needs to be rotated. Upload the public certificate to the App Registration and provide Prowler with the matching private bundle.
 
-This method is required for Prowler Cloud and recommended for Prowler CLI.
+### Prerequisites
+
+Certificate authentication touches two separate permission systems: **Microsoft Entra ID** (identity) and **Azure RBAC** (subscription). Both are required.
+
+#### Microsoft Entra ID roles per setup step
+
+| Setup step                                                                                                                    | Minimum role required                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| ----------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **1. Register a new App Registration**                                                                                        | Any member user, _by default_. Member users can register applications through the built-in default user permissions. If the tenant disabled this by setting _Users can register applications_ to **No** (under **Microsoft Entra ID** > **Users** > **User settings**), the user needs one of: `Application Administrator`, `Cloud Application Administrator`, or `Global Administrator`.                                                                                                                                                                                                     |
+| **2. Upload the certificate to the App Registration**                                                                         | The App Registration's owner (the user who created it, added automatically) — or `Application Administrator`, `Cloud Application Administrator`, or `Global Administrator`.                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| **3. Add Microsoft Graph _application_ permissions (request)** — `AuditLog.Read.All`, `Directory.Read.All`, `Policy.Read.All` | The App Registration's owner — or `Application Administrator`, `Cloud Application Administrator`, or `Global Administrator`. Requesting a permission and granting consent are separate operations; see step 4 for the consent role.                                                                                                                                                                                                                                                                                                                                                           |
+| **4. Grant tenant-wide admin consent for those permissions** ⚠️                                                               | **`Global Administrator`** or **`Privileged Role Administrator`** _only_. `Application Administrator`, `Cloud Application Administrator`, and `AI Administrator` **cannot** consent to _Microsoft Graph_ application permissions — they can consent to application permissions for other APIs, but not Microsoft Graph app roles, per [Microsoft's admin consent documentation](https://learn.microsoft.com/en-us/entra/identity/enterprise-apps/grant-admin-consent#prerequisites) and [Microsoft Graph permissions overview](https://learn.microsoft.com/en-us/graph/permissions-overview). |
+| **5. Read the Service Principal Object ID from Enterprise applications**                                                      | Any signed-in user (read-only, granted by default user permissions).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+
+The Service Principal Object ID lives on **Microsoft Entra ID** > **Enterprise applications** > _the application_ > **Overview**. This value is different from the Object ID that appears under **App registrations** for the same application; both objects share the same Application (client) ID but each has its own Object ID.
+
+#### Azure RBAC role for the subscription template
+
+The Deploy to Azure template creates one custom role definition and two role assignments (`Reader` and the custom `ProwlerRole`) at subscription scope. The account that runs the deployment needs one of:
+
+- **`Owner`** on the target subscription. Simplest and most common. `Owner` grants both `Microsoft.Authorization/roleDefinitions/write` and `Microsoft.Authorization/roleAssignments/write`.
+- Alternatively, **`Contributor` combined with `User Access Administrator`** on the target subscription. `Contributor` alone is not enough because it explicitly cannot create role assignments (see [Azure built-in roles](https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles)); `User Access Administrator` fills the gap for role definitions and role assignments.
+
+<Note>
+  **Global Administrator does not automatically have Azure RBAC.** Per
+  [Microsoft's Elevate access
+  documentation](https://learn.microsoft.com/en-us/azure/role-based-access-control/elevate-access-global-admin):
+  "As a Global Administrator in Microsoft Entra ID, you might not have access to
+  all subscriptions and management groups in your tenant." To grant a Global
+  Administrator temporary access, open **Microsoft Entra ID** > **Properties**
+  and set **Access management for Azure resources** to **Yes**. This assigns
+  `User Access Administrator` at root scope (`/`), which covers step 6. Disable
+  the toggle after the setup is done — the assignment persists per-user until
+  revoked.
+</Note>
+
+#### Shortest single-user path
+
+The simplest way for one user to complete the whole flow is **`Global Administrator`** in Microsoft Entra ID (covers steps 1-4 by inclusion) combined with the Elevate access toggle above (covers step 6). Deploying with a least-privilege split (for example, an `Application Administrator` for step 1-3, a `Privileged Role Administrator` for step 4, and an `Owner` for step 6) is also supported.
+
+### Generating the Certificate
+
+Generate the key pair locally. Upload only the public certificate to Microsoft Entra ID and keep the private key secure.
+
+**macOS / Linux (OpenSSL):**
+
+```console
+openssl req -x509 -newkey rsa:4096 -keyout prowler.key -out prowler.crt \
+    -days 365 -nodes -subj "/CN=Prowler"
+
+# Base64 of the public certificate, if a base64 representation is needed
+openssl x509 -in prowler.crt -outform DER | base64 | tr -d '\n'
+
+# Base64 of a PEM bundle containing the certificate AND the private key —
+# paste into Prowler as "Certificate Content". A key-only file fails.
+cat prowler.crt prowler.key > prowler-bundle.pem
+base64 < prowler-bundle.pem | tr -d '\n'
+```
+
+**Windows (PowerShell):**
+
+```powershell
+$cert = New-SelfSignedCertificate -Subject "CN=Prowler" `
+    -CertStoreLocation "Cert:\CurrentUser\My" `
+    -KeyExportPolicy Exportable -KeySpec Signature `
+    -KeyLength 4096 -HashAlgorithm SHA256
+
+Export-Certificate -Cert $cert -FilePath prowler.cer
+
+# Export an unencrypted PKCS#12/PFX bundle for Prowler. Keep this value secret.
+$pfxBytes = $cert.Export('Pfx', '')
+[Convert]::ToBase64String($pfxBytes)
+```
+
+### Deploying Subscription Permissions
+
+The Prowler Azure Resource Manager (ARM) template creates the subscription permissions required by Prowler for an existing Service Principal. The template does not create an App Registration, create a Service Principal, upload a certificate, or grant Microsoft Graph permissions.
+
+To deploy the template:
+
+1. Copy the Service Principal Object ID from **Enterprise applications**.
+2. Click [**Deploy to Azure**](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fdocs.prowler.com%2Fassets%2Ftemplates%2Fazure%2Fprowler-scan.json).
+3. Select the target subscription, enter the Service Principal Object ID, and review the optional deployment label and custom role name.
+4. Create the deployment.
+
+The deployment creates:
+
+- The subscription-scoped `ProwlerRole` custom role definition.
+- A `Reader` role assignment for the existing Service Principal.
+- A `ProwlerRole` role assignment for the existing Service Principal.
+
+The deployment outputs the tenant ID, subscription ID, and `ProwlerRole` definition ID. Return to Prowler with the App Registration's Application (client) ID and the certificate bundle after the deployment succeeds.
+
+<Note>
+  Azure Portal loads the public ARM JSON from
+  `https://docs.prowler.com/assets/templates/azure/prowler-scan.json`. For a
+  sovereign cloud or a deployment that cannot retrieve this public URL, download
+  the [ARM JSON template](/assets/templates/azure/prowler-scan.json) and deploy
+  it with the Azure CLI or Azure PowerShell.
+</Note>
+
+### ARM JSON Template
+
+The following JSON is generated from the same canonical template that Azure Portal retrieves from Prowler documentation:
+
+<AzureProwlerScanTemplate />
+
+### Prowler Cloud
+
+Paste the following into the Certificate Authentication form of the Azure add-provider wizard:
+
+- **Tenant ID** — copy the Directory (tenant) ID from the App Registration overview.
+- **Client ID** — copy the Application (client) ID from the App Registration overview.
+- **Certificate Content** — provide the base64-encoded **PEM bundle** (certificate + private key) or an unencrypted PKCS#12/PFX export. Prowler needs both parts to sign the token request and does not accept password-protected PKCS#12/PFX input.
+
+### Prowler CLI
+
+Set the certificate environment variables and run Prowler with `--certificate-auth`:
+
+```console
+export AZURE_CLIENT_ID="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+export AZURE_TENANT_ID="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+export AZURE_CERTIFICATE_CONTENT="<base64-encoded certificate and private key bundle>"
+
+prowler azure --certificate-auth
+```
+
+Alternatively, provide a PEM file or an unencrypted PKCS#12/PFX file that contains both the certificate and matching private key. Password-protected PKCS#12/PFX input is not supported:
+
+```console
+prowler azure --certificate-auth --certificate-path /path/to/prowler-bundle.pem
+```
+
+## Service Principal Application Authentication
+
+This client-secret flow is the supported fallback when [Certificate Authentication](#certificate-authentication) is not an option or when an organization policy forbids certificate-based Service Principals. New Prowler Cloud onboardings should prefer certificate authentication.
 
 ### Creating the Service Principal
+
 For more information, see [Creating Prowler Service Principal](/user-guide/providers/azure/create-prowler-service-principal).
 
 ### Environment Variables (CLI)
@@ -237,7 +383,7 @@ Execution with the `--sp-env-auth` flag fails if these variables are not set or 
 
 ## AZ CLI Authentication
 
-*Available only for Prowler CLI*
+_Available only for Prowler CLI_
 
 Use stored Azure CLI credentials:
 
@@ -247,7 +393,7 @@ prowler azure --az-cli-auth
 
 ## Managed Identity Authentication
 
-*Available only for Prowler CLI*
+_Available only for Prowler CLI_
 
 Authenticate via Azure Managed Identity when running Prowler on Azure resources (VMs, Container Instances, Azure Functions, etc.):
 
@@ -263,7 +409,13 @@ Before using Managed Identity authentication, the following steps are required:
 2. **Assign the required permissions** to the Managed Identity on the target subscription(s) to scan
 
 <Warning>
-A common misconception is that enabling a Managed Identity on a resource automatically grants it permissions. **This is not the case.** Without explicit role assignments, Prowler will be unable to scan subscriptions and will return authorization errors, resulting in incomplete security assessments. The Managed Identity itself is a service principal that must be explicitly granted Reader and ProwlerRole permissions on each subscription to scan.
+  A common misconception is that enabling a Managed Identity on a resource
+  automatically grants it permissions. **This is not the case.** Without
+  explicit role assignments, Prowler will be unable to scan subscriptions and
+  will return authorization errors, resulting in incomplete security
+  assessments. The Managed Identity itself is a service principal that must be
+  explicitly granted Reader and ProwlerRole permissions on each subscription to
+  scan.
 </Warning>
 
 ### Step-by-Step Setup Guide
@@ -287,6 +439,7 @@ A common misconception is that enabling a Managed Identity on a resource automat
     # Get the principal ID
     az vm identity show --name <vm-name> --resource-group <resource-group> --query principalId -o tsv
     ```
+
   </Tab>
   <Tab title="Azure Container Instance">
     **Via Azure CLI:**
@@ -301,6 +454,7 @@ A common misconception is that enabling a Managed Identity on a resource automat
     # Get the principal ID
     az container show --resource-group <resource-group> --name <container-name> --query identity.principalId -o tsv
     ```
+
   </Tab>
 </Tabs>
 
@@ -322,6 +476,7 @@ The Managed Identity needs the **Reader** role on each subscription to scan. Thi
     <Note>
     When scanning a subscription different from where the VM is located, ensure the role is assigned on the **target subscription**, not the VM's subscription.
     </Note>
+
   </Tab>
   <Tab title="Azure CLI">
     ```console
@@ -335,6 +490,7 @@ The Managed Identity needs the **Reader** role on each subscription to scan. Thi
       --assignee-principal-type ServicePrincipal \
       --scope /subscriptions/<target-subscription-id>
     ```
+
   </Tab>
 </Tabs>
 
@@ -370,6 +526,7 @@ The ProwlerRole is a custom role required for specific security checks. First, c
       --assignee-principal-type ServicePrincipal \
       --scope /subscriptions/<target-subscription-id>
     ```
+
   </Tab>
   <Tab title="Azure Portal">
     Follow the same process as creating the ProwlerRole in the [Assigning ProwlerRole Permissions](/user-guide/providers/azure/authentication#assigning-prowlerrole-permissions-at-the-subscription-level) section, then assign it to the Managed Identity using the same steps as the Reader role assignment.
@@ -381,7 +538,9 @@ The ProwlerRole is a custom role required for specific security checks. First, c
 For Entra ID (Azure AD) checks, the Managed Identity needs Microsoft Graph API permissions: `Directory.Read.All`, `Policy.Read.All`, and `AuditLog.Read.All`.
 
 <Note>
-Assigning Microsoft Graph API permissions to a Managed Identity requires Azure CLI or PowerShell - it cannot be done through the Azure Portal's standard role assignment interface.
+  Assigning Microsoft Graph API permissions to a Managed Identity requires Azure
+  CLI or PowerShell - it cannot be done through the Azure Portal's standard role
+  assignment interface.
 </Note>
 
 ```console
@@ -417,7 +576,8 @@ prowler azure --managed-identity-auth --subscription-ids <subscription-id>
 ```
 
 <Note>
-Wait a few minutes after assigning roles for Azure to propagate permissions. Role assignments are not always immediately effective.
+  Wait a few minutes after assigning roles for Azure to propagate permissions.
+  Role assignments are not always immediately effective.
 </Note>
 
 ### Troubleshooting
@@ -427,6 +587,7 @@ Wait a few minutes after assigning roles for Azure to propagate permissions. Rol
 **Cause:** The Managed Identity does not have the Reader role assigned on any subscription.
 
 **Solution:**
+
 - Verify the Managed Identity has the Reader role assigned on at least one subscription.
 - Wait a few minutes after role assignment for Azure to propagate permissions.
 - Verify role assignments:
@@ -439,6 +600,7 @@ Wait a few minutes after assigning roles for Azure to propagate permissions. Rol
 **Cause:** The Managed Identity lacks the Reader role on the target subscription.
 
 **Solution:**
+
 - Ensure the Reader role is assigned to the **Managed Identity's principal ID**, not the VM resource.
 - Verify the role is assigned on the **target subscription** to scan, not just the VM's resource group.
 - Check role assignments:
@@ -451,6 +613,7 @@ Wait a few minutes after assigning roles for Azure to propagate permissions. Rol
 **Cause:** Managed Identity is not enabled on the resource, or Prowler is running outside of Azure.
 
 **Solution:**
+
 - Verify Managed Identity is enabled on the Azure resource.
 - Ensure Prowler is running from within the Azure resource (not a local machine).
 - Check Managed Identity status:
@@ -463,12 +626,13 @@ Wait a few minutes after assigning roles for Azure to propagate permissions. Rol
 **Cause:** The Managed Identity lacks Microsoft Graph API permissions.
 
 **Solution:**
+
 - Assign the required Graph API permissions as shown in Step 4.
 - These permissions are optional for basic resource scanning but required for Entra ID security checks.
 
 ## Browser Authentication
 
-*Available only for Prowler CLI*
+_Available only for Prowler CLI_
 
 Authenticate using the default browser:
 

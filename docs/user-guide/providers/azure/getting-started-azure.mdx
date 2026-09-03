@@ -1,12 +1,19 @@
 ---
-title: 'Getting Started With Azure on Prowler'
+title: "Getting Started With Azure on Prowler"
 ---
 
 ## Prowler Cloud
 
-<iframe width="560" height="380" src="https://www.youtube-nocookie.com/embed/v1as8vTFlMg" title="Prowler Cloud Onboarding Azure" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen="1"></iframe>
+<iframe
+  width="560"
+  height="380"
+  src="https://www.youtube-nocookie.com/embed/v1as8vTFlMg"
+  title="Prowler Cloud Onboarding Azure"
+  frameborder="0"
+  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+  allowfullscreen="1"
+></iframe>
 > Walkthrough video onboarding an Azure Subscription using Service Principal.
-
 
 <Note>
 **Government Cloud Support**
@@ -27,8 +34,8 @@ For detailed instructions on how to create the Service Principal and configure p
 1. Go to the [Azure Portal](https://portal.azure.com/#home) and search for `Subscriptions`
 2. Locate and copy your Subscription ID
 
-    ![Search Subscription](/images/providers/search-subscriptions.png)
-    ![Subscriptions Page](/images/providers/get-subscription-id.png)
+   ![Search Subscription](/images/providers/search-subscriptions.png)
+   ![Subscriptions Page](/images/providers/get-subscription-id.png)
 
 ---
 
@@ -37,44 +44,46 @@ For detailed instructions on how to create the Service Principal and configure p
 1. Navigate to [Prowler Cloud](https://cloud.prowler.com/) or launch [Prowler Local Server](/user-guide/tutorials/prowler-app)
 2. Navigate to `Configuration` > `Providers`
 
-    ![Providers Page](/images/prowler-app/cloud-providers-page.png)
+   ![Providers Page](/images/prowler-app/cloud-providers-page.png)
 
 3. Click `Add Provider`
 
-    ![Add a Provider](/images/prowler-app/add-cloud-provider.png)
+   ![Add a Provider](/images/prowler-app/add-cloud-provider.png)
 
 4. Select `Microsoft Azure`
 
-    ![Select Microsoft Azure](/images/providers/select-azure-prowler-cloud.png)
+   ![Select Microsoft Azure](/images/providers/select-azure-prowler-cloud.png)
 
 5. Add the Subscription ID and an optional alias, then click `Next`
 
-    ![Add Subscription ID](/images/providers/add-subscription-id.png)
+   ![Add Subscription ID](/images/providers/add-subscription-id.png)
 
 ### Step 3: Add Credentials to Prowler Cloud
 
-For Azure, Prowler Cloud uses a service principal application to authenticate. For more information about the process of creating and adding permissions to a service principal refer to this [section](/user-guide/providers/azure/authentication). When you finish creating and adding the [Entra](/user-guide/providers/azure/create-prowler-service-principal#assigning-proper-permissions) and [Subscription](/user-guide/providers/azure/subscriptions) scope permissions to the service principal, enter the `Tenant ID`, `Client ID` and `Client Secret` of the service principal application.
+Azure supports two authentication methods in the add-provider wizard. Prowler Cloud shows a credential-type selector where you can pick the one that fits.
 
+#### Certificate Authentication (Recommended)
 
-1. Go to your App Registration overview and copy the `Client ID` and `Tenant ID`
+Certificate authentication uses a Microsoft Entra ID App Registration with an X.509 certificate. Complete the App Registration, certificate upload, Microsoft Graph permissions, and subscription permissions by following [Azure Certificate Authentication](/user-guide/providers/azure/authentication#certificate-authentication).
 
-    ![App Overview](/images/providers/app-overview.png)
+1. In the Azure wizard, select **Certificate Authentication (Recommended)**.
+2. Paste the Directory (tenant) ID and Application (client) ID from the App Registration.
+3. Paste the base64-encoded certificate and private key bundle. To create a new key pair, click **Generate certificate**, upload the downloaded `prowler-cert.cer` file to the App Registration, and keep the generated bundle in the form.
+4. Click **Next**, then **Launch Scan**.
 
-2. Go to Prowler Cloud and paste:
+#### Service Principal with Client Secret
 
-    - `Client ID`
-    - `Tenant ID`
-    - `Client Secret` from [earlier](/user-guide/providers/azure/authentication#service-principal-application-authentication-recommended)
+Client-secret authentication remains available when certificate authentication is not suitable.
 
-    ![Prowler Cloud Azure Credentials](/images/providers/add-credentials-azure-prowler-cloud.png)
+1. Follow [Creating Prowler Service Principal](/user-guide/providers/azure/create-prowler-service-principal) to create the App Registration, assign the [Entra](/user-guide/providers/azure/create-prowler-service-principal#assigning-proper-permissions) and [Subscription](/user-guide/providers/azure/subscriptions) scope permissions, and issue a client secret.
+2. In the Azure wizard, select **Service Principal with Client Secret**.
+3. Paste `Tenant ID`, `Client ID`, and `Client Secret`.
 
-3. Click `Next`
+   ![Prowler Cloud Azure Credentials](/images/providers/add-credentials-azure-prowler-cloud.png)
 
-    ![Next Detail](/images/providers/click-next-azure.png)
+4. Click `Next`, then **Launch Scan**.
 
-4. Click "Launch Scan"
-
-    ![Launch Scan Azure](/images/providers/launch-scan.png)
+   ![Launch Scan Azure](/images/providers/launch-scan.png)
 
 ---
 
@@ -86,7 +95,7 @@ To authenticate with Azure, Prowler CLI supports multiple authentication methods
 
 For detailed authentication setup instructions, see [Authentication](/user-guide/providers/azure/authentication).
 
-**Service Principal (Recommended)**
+**Service Principal with Client Secret**
 
 Set up environment variables:
 
