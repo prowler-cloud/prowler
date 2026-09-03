@@ -470,6 +470,13 @@
                 ]
               },
               {
+                "group": "Snowflake",
+                "pages": [
+                  "user-guide/providers/snowflake/getting-started-snowflake",
+                  "user-guide/providers/snowflake/authentication"
+                ]
+              },
+              {
                 "group": "StackIT",
                 "pages": [
                   "user-guide/providers/stackit/getting-started-stackit",

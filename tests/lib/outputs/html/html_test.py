@@ -826,6 +826,14 @@ def _setup_linode_xss(provider, payload):
     provider.identity.account_id = payload
 
 
+def _setup_snowflake_xss(provider, payload):
+    provider.identity.account = payload
+    provider.identity.account_locator = payload
+    provider.identity.region = payload
+    provider.identity.user = payload
+    provider.identity.role = payload
+
+
 def _setup_huaweicloud_xss(provider, payload):
     provider.identity.account_id = payload
     provider.identity.account_name = payload
@@ -861,6 +869,7 @@ PROVIDER_XSS_SETUPS = [
     ("scaleway", _setup_scaleway_xss),
     ("linode", _setup_linode_xss),
     ("huaweicloud", _setup_huaweicloud_xss),
+    ("snowflake", _setup_snowflake_xss),
 ]
 
 
@@ -1324,12 +1333,12 @@ class TestHTML:
 
         missing = discovered - covered
         extra = covered - discovered
-        assert (
-            not missing
-        ), f"providers without XSS coverage in PROVIDER_XSS_SETUPS: {sorted(missing)}"
-        assert (
-            not extra
-        ), f"PROVIDER_XSS_SETUPS entries with no matching HTML method: {sorted(extra)}"
+        assert not missing, (
+            f"providers without XSS coverage in PROVIDER_XSS_SETUPS: {sorted(missing)}"
+        )
+        assert not extra, (
+            f"PROVIDER_XSS_SETUPS entries with no matching HTML method: {sorted(extra)}"
+        )
 
     def test_github_app_get_assessment_summary_escapes_app_identity(self):
         """The GitHub App branch (elif hasattr app_id) must escape app_name/app_id/installations,
