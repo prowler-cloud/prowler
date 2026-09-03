@@ -14,7 +14,7 @@ POLICY_ARN = "arn:aws:network-firewall:us-east-1:123456789012:firewall-policy/my
 
 class Test_networkfirewall_deletion_protection:
     def test_no_networkfirewall(self):
-        networkfirewall_client = mock.MagicMock
+        networkfirewall_client = mock.MagicMock()
         networkfirewall_client.provider = set_mocked_aws_provider(
             [AWS_REGION_US_EAST_1]
         )
@@ -42,7 +42,7 @@ class Test_networkfirewall_deletion_protection:
                 assert len(result) == 0
 
     def test_networkfirewall_deletion_protection_disabled(self):
-        networkfirewall_client = mock.MagicMock
+        networkfirewall_client = mock.MagicMock()
         networkfirewall_client.provider = set_mocked_aws_provider(
             [AWS_REGION_US_EAST_1]
         )
@@ -89,7 +89,7 @@ class Test_networkfirewall_deletion_protection:
                 assert result[0].resource_arn == FIREWALL_ARN
 
     def test_networkfirewall_deletion_protection_enabled(self):
-        networkfirewall_client = mock.MagicMock
+        networkfirewall_client = mock.MagicMock()
         networkfirewall_client.provider = set_mocked_aws_provider(
             [AWS_REGION_US_EAST_1]
         )
