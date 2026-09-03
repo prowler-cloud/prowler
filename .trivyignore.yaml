@@ -113,6 +113,18 @@ vulnerabilities:
     purls:
       - "pkg:npm/fast-uri"
     expired_at: 2027-01-31
+  - id: CVE-2026-75899
+    purls:
+      - "pkg:npm/fast-uri"
+    expired_at: 2027-01-31
+  - id: CVE-2026-75975
+    purls:
+      - "pkg:npm/fast-uri"
+    expired_at: 2027-01-31
+  - id: CVE-2026-76172
+    purls:
+      - "pkg:npm/fast-uri"
+    expired_at: 2027-01-31
   - id: CVE-2026-69192
     purls:
       - "pkg:npm/ip-address"
