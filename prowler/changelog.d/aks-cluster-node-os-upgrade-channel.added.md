@@ -1,0 +1,1 @@
+`aks_cluster_node_os_upgrade_channel_enabled` check for Azure provider, verifying that AKS clusters use an AKS-managed node OS auto-upgrade channel (`SecurityPatch` or `NodeImage`) so node operating system security updates are applied
