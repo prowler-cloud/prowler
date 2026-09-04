@@ -643,8 +643,6 @@
         "ec2_client_vpn_endpoint_connection_logging_enabled",
         "ecs_task_definitions_logging_enabled",
         "elasticbeanstalk_environment_cloudwatch_logging_enabled",
-        "elb_logging_enabled",
-        "elbv2_logging_enabled",
         "glue_etl_jobs_logging_enabled",
         "mq_broker_logging_enabled",
         "networkfirewall_logging_enabled",
