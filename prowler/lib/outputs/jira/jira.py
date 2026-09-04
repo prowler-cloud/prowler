@@ -6,6 +6,7 @@ from collections.abc import Mapping
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from datetime import datetime, timedelta
+from threading import Lock
 from typing import Dict, List, Optional
 
 import requests
@@ -417,6 +418,7 @@ class Jira:
         api_token: str = None,
         domain: str = None,
     ):
+        self._token_lock = Lock()
         self._redirect_uri = redirect_uri
         self._client_id = client_id
         self._client_secret = client_secret
@@ -1018,11 +1020,15 @@ class Jira:
             if self._using_basic_auth:
                 return self._access_token
 
-            if self.auth_expiration and datetime.now() < datetime.fromisoformat(
-                self.auth_expiration
-            ):
+            if self._access_token_is_valid():
                 return self._access_token
-            else:
+
+            # Atlassian rotates refresh tokens, so two concurrent refreshes with
+            # the same one would invalidate each other. Re-check under the lock
+            # in case another thread refreshed while we waited for it.
+            with self._token_lock:
+                if self._access_token_is_valid():
+                    return self._access_token
                 return self.refresh_access_token()
         except JiraRefreshTokenError as refresh_error:
             raise refresh_error
@@ -1034,6 +1040,11 @@ class Jira:
                 message="Failed to get the access token",
                 file=os.path.basename(__file__),
             )
+
+    def _access_token_is_valid(self) -> bool:
+        return bool(self.auth_expiration) and datetime.now() < datetime.fromisoformat(
+            self.auth_expiration
+        )
 
     def refresh_access_token(self) -> str:
         """Refresh the access token
@@ -1126,9 +1137,6 @@ class Jira:
                 api_token=api_token,
                 domain=domain,
             )
-            # get_projects() already forces a fresh access token (refreshing it if
-            # needed) before we return here, so the concurrent calls below all reuse
-            # the same still-valid token instead of racing to refresh it themselves.
             projects = jira.get_projects()
 
             issue_types = {}
@@ -1331,9 +1339,7 @@ class Jira:
         except JiraRefreshTokenResponseError as response_error:
             raise response_error
         except JiraNoProjectsError as no_projects_error:
-            # Expected per-project condition, already handled as non-fatal by the
-            # test_connection() caller — warn instead of error.
-            logger.warning(f"Failed to get available issue types: {no_projects_error}")
+            # Already logged where it was raised; expected per-project condition.
             raise JiraGetAvailableIssueTypesError(
                 message="Failed to get available issue types",
                 file=os.path.basename(__file__),

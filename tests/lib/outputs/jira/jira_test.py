@@ -1,9 +1,11 @@
 import base64
 import hashlib
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import FrozenInstanceError
 from datetime import datetime, timedelta
 from logging import ERROR, WARNING
 from threading import Barrier
+from time import sleep
 from types import SimpleNamespace
 from typing import List, Optional
 from unittest.mock import MagicMock, PropertyMock, patch
@@ -454,6 +456,36 @@ class TestJiraIntegration:
 
         assert access_token == "new_access_token"
         mock_refresh_access_token.assert_called_once()
+
+    def test_get_access_token_concurrent_refresh_happens_once(self):
+        self.jira_integration.auth_expiration = (
+            datetime.now() - timedelta(seconds=1)
+        ).isoformat()
+        refresh_calls = []
+        # All 5 pass the expiry check together, so without a lock every one of
+        # them would refresh.
+        barrier = Barrier(5, timeout=5)
+
+        def fake_refresh():
+            refresh_calls.append(1)
+            # Keep the token expired while the other threads check it.
+            sleep(0.2)
+            self.jira_integration._access_token = "refreshed_token"
+            self.jira_integration.auth_expiration = (
+                datetime.now() + timedelta(hours=1)
+            ).isoformat()
+            return "refreshed_token"
+
+        def get_token(_):
+            barrier.wait()
+            return self.jira_integration.get_access_token()
+
+        with patch.object(Jira, "refresh_access_token", side_effect=fake_refresh):
+            with ThreadPoolExecutor(max_workers=5) as executor:
+                tokens = list(executor.map(get_token, range(5)))
+
+        assert tokens == ["refreshed_token"] * 5
+        assert len(refresh_calls) == 1
 
     @freeze_time(TEST_DATETIME)
     @patch("prowler.lib.outputs.jira.jira.requests.post")

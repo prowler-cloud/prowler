@@ -291,8 +291,8 @@ type PollConnectionResult =
 const pollTaskUntilComplete = async (
   taskId: string,
 ): Promise<PollConnectionResult> => {
-  // 60 attempts * 3s keeps this under the backend task's own 120s hard time
-  // limit, so we never give up before the backend itself would have. The
+  // 60 attempts * 3s (~180s) outlasts the backend task's 120s hard time limit,
+  // so the task always settles (success or failure) before we give up. The
   // Jira connection check in particular can take well over the previous 57s
   // window on accounts with many projects.
   const settled = await pollTaskUntilSettled<ConnectionTaskResult>(taskId, {
