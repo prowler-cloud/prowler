@@ -27,6 +27,19 @@ ignore:
     package:
       name: google.golang.org/grpc
       version: v1.82.1
+  # CVE-2026-56855 / CVE-2026-78662 are the same temporary exception documented in
+  # .trivyignore.yaml: Trivy 0.74.0 still embeds golang.org/x/crypto v0.55.0, while the
+  # 0.56.0 fix (published 2026-09-02) hasn't reached any Trivy release, or even Trivy
+  # main, yet. Pinned to the embedded version so the rule stops matching on its own once
+  # Trivy bumps it. Remove with the Trivy exception by 2026-10-15.
+  - vulnerability: CVE-2026-56855
+    package:
+      name: golang.org/x/crypto
+      version: v0.55.0
+  - vulnerability: CVE-2026-78662
+    package:
+      name: golang.org/x/crypto
+      version: v0.55.0
   - vulnerability: CVE-2026-56852
     package:
       name: golang.org/x/text
