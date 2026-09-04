@@ -176,6 +176,27 @@ vulnerabilities:
       - "pkg:golang/google.golang.org/grpc"
     expired_at: 2026-10-15
 
+  # CVE-2026-56855 and CVE-2026-78662 are DoS deadlocks in x/crypto/ssh: a malicious peer
+  # can flood or misuse channel messages (RFC 4254) to block the whole connection.
+  # Fixed in golang.org/x/crypto v0.56.0 (published 2026-09-02). Trivy 0.74.0, the latest
+  # published release and the version the images ship, still pins v0.55.0, and Trivy main
+  # has not bumped it either:
+  # https://github.com/aquasecurity/trivy/blob/v0.74.0/go.mod
+  # x/crypto/ssh is pulled in transitively through go-git's ssh transport, the same
+  # dependency chain as the CVE-2026-71556 entry above. Prowler invokes Trivy only with
+  # `fs` on an existing local path or with `image`; it never asks Trivy to clone over SSH
+  # or to run `trivy server`, so no SSH connection -- as client or server -- ever exists in
+  # the image and the affected code path is not reachable. Remove this temporary
+  # suppression as soon as a fixed Trivy release is available.
+  - id: CVE-2026-56855
+    purls:
+      - "pkg:golang/golang.org/x/crypto@v0.55.0"
+    expired_at: 2026-10-15
+  - id: CVE-2026-78662
+    purls:
+      - "pkg:golang/golang.org/x/crypto@v0.55.0"
+    expired_at: 2026-10-15
+
   - id: CVE-2026-56852
     purls:
       - "pkg:golang/golang.org/x/text"
