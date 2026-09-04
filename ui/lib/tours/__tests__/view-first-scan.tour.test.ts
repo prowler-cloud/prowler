@@ -72,6 +72,19 @@ describe("buildViewFirstScanTour with a running scan", () => {
     expect(tour.version).toBe(viewFirstScanTour.version);
   });
 
+  it("falls back to the stable tabs anchor if the running row disappears", () => {
+    // Given
+    const runningScanStep = tour.steps.find(
+      (step) => step.target === "in-progress",
+    );
+
+    // When
+    const fallbackTarget = runningScanStep?.fallbackTarget;
+
+    // Then
+    expect(fallbackTarget).toBe("tabs");
+  });
+
   it("never targets an element outside the allowed anchor set", () => {
     for (const target of definedTargets(tour)) {
       expect(ALLOWED_TARGETS).toContain(target);

@@ -9,8 +9,11 @@ This module provides tools for managing where Prowler sends its results, includi
 import json
 from typing import Any
 
+from fastmcp.exceptions import ToolError
 from pydantic import Field
 
+from prowler_mcp_server.lib.errors import CredentialError, InvalidArgument
+from prowler_mcp_server.lib.types import NonBlankStr
 from prowler_mcp_server.prowler_app.models.integrations import (
     DetailedIntegration,
     IntegrationConnectionStatus,
@@ -126,7 +129,7 @@ class IntegrationsTools(BaseTool):
 
     async def get_integration(
         self,
-        integration_id: str = Field(
+        integration_id: NonBlankStr = Field(
             description="UUID of the integration to retrieve. Must be a valid UUID format (e.g., '019ac0d6-90d5-73e9-9acf-c22e256f1bac'). Use prowler_list_integrations to find it."
         ),
     ) -> dict[str, Any]:
@@ -157,7 +160,7 @@ class IntegrationsTools(BaseTool):
 
     async def create_amazon_s3_integration(
         self,
-        bucket_name: str = Field(
+        bucket_name: NonBlankStr = Field(
             description="Name of the S3 bucket where Prowler will upload the scan outputs (CSV, HTML, OCSF JSON and compliance reports)."
         ),
         output_directory: str = Field(
@@ -168,15 +171,15 @@ class IntegrationsTools(BaseTool):
             default=[],
             description="Prowler UUIDs of the providers whose scan outputs are exported to this bucket. Use prowler_search_providers to find them. Leave empty to attach no provider yet.",
         ),
-        role_arn: str | None = Field(
+        role_arn: NonBlankStr | None = Field(
             default=None,
             description="ARN of the IAM role Prowler assumes to write to the bucket (e.g. 'arn:aws:iam::123456789012:role/ProwlerS3Integration'). Recommended over static keys.",
         ),
-        external_id: str | None = Field(
+        external_id: NonBlankStr | None = Field(
             default=None,
             description="External ID required by the trust policy of the assumed role. In Prowler Cloud this is the tenant ID.",
         ),
-        role_session_name: str | None = Field(
+        role_session_name: NonBlankStr | None = Field(
             default=None,
             description="Identifier for the role session, useful to track it in AWS logs. Only letters, digits and the characters =,.@_- are allowed.",
         ),
@@ -184,15 +187,15 @@ class IntegrationsTools(BaseTool):
             default=3600,
             description="Duration of the assumed role session in seconds. Must be between 900 and 43200. Defaults to 3600 when omitted.",
         ),
-        aws_access_key_id: str | None = Field(
+        aws_access_key_id: NonBlankStr | None = Field(
             default=None,
             description="AWS access key ID. Only needed when the Prowler deployment has no ambient AWS credentials.",
         ),
-        aws_secret_access_key: str | None = Field(
+        aws_secret_access_key: NonBlankStr | None = Field(
             default=None,
             description="AWS secret access key. Required when 'aws_access_key_id' is provided.",
         ),
-        aws_session_token: str | None = Field(
+        aws_session_token: NonBlankStr | None = Field(
             default=None,
             description="AWS session token, only for temporary credentials.",
         ),
@@ -244,34 +247,30 @@ class IntegrationsTools(BaseTool):
         """
         self.logger.info(f"Creating Amazon S3 integration for bucket {bucket_name}...")
 
-        try:
-            credentials = self._build_aws_credentials(
-                role_arn=role_arn,
-                external_id=external_id,
-                role_session_name=role_session_name,
-                session_duration=session_duration,
-                aws_access_key_id=aws_access_key_id,
-                aws_secret_access_key=aws_secret_access_key,
-                aws_session_token=aws_session_token,
-            )
+        credentials = self._build_aws_credentials(
+            role_arn=role_arn,
+            external_id=external_id,
+            role_session_name=role_session_name,
+            session_duration=session_duration,
+            aws_access_key_id=aws_access_key_id,
+            aws_secret_access_key=aws_secret_access_key,
+            aws_session_token=aws_session_token,
+        )
 
-            return await self._create_integration(
-                integration_type="amazon_s3",
-                configuration={
-                    "bucket_name": bucket_name,
-                    "output_directory": output_directory,
-                },
-                credentials=credentials,
-                provider_ids=provider_ids,
-                enabled=enabled,
-            )
-        except Exception as e:
-            self.logger.error(f"Amazon S3 integration creation failed: {e}")
-            return {"error": str(e), "status": "failed"}
+        return await self._create_integration(
+            integration_type="amazon_s3",
+            configuration={
+                "bucket_name": bucket_name,
+                "output_directory": output_directory,
+            },
+            credentials=credentials,
+            provider_ids=provider_ids,
+            enabled=enabled,
+        )
 
     async def create_aws_security_hub_integration(
         self,
-        provider_id: str = Field(
+        provider_id: NonBlankStr = Field(
             description="Prowler UUID of the AWS provider whose findings are sent to Security Hub. It must be an AWS provider, and it can only have one Security Hub integration. Use prowler_search_providers with provider_type=['aws'] to find it."
         ),
         send_only_fails: bool = Field(
@@ -282,15 +281,15 @@ class IntegrationsTools(BaseTool):
             default=False,
             description="When true, findings that are no longer present in the latest scan are archived in Security Hub.",
         ),
-        role_arn: str | None = Field(
+        role_arn: NonBlankStr | None = Field(
             default=None,
             description="ARN of a dedicated IAM role Prowler assumes to write to Security Hub. Leave every credential parameter empty to reuse the credentials already stored for the provider, which is the recommended setup.",
         ),
-        external_id: str | None = Field(
+        external_id: NonBlankStr | None = Field(
             default=None,
             description="External ID required by the trust policy of the assumed role.",
         ),
-        role_session_name: str | None = Field(
+        role_session_name: NonBlankStr | None = Field(
             default=None,
             description="Identifier for the role session, useful to track it in AWS logs. Only letters, digits and the characters =,.@_- are allowed.",
         ),
@@ -298,14 +297,14 @@ class IntegrationsTools(BaseTool):
             default=None,
             description="Duration of the assumed role session in seconds. Must be between 900 and 43200. Defaults to 3600 when omitted.",
         ),
-        aws_access_key_id: str | None = Field(
+        aws_access_key_id: NonBlankStr | None = Field(
             default=None, description="AWS access key ID for dedicated credentials."
         ),
-        aws_secret_access_key: str | None = Field(
+        aws_secret_access_key: NonBlankStr | None = Field(
             default=None,
             description="AWS secret access key. Required when 'aws_access_key_id' is provided.",
         ),
-        aws_session_token: str | None = Field(
+        aws_session_token: NonBlankStr | None = Field(
             default=None,
             description="AWS session token, only for temporary credentials.",
         ),
@@ -344,40 +343,36 @@ class IntegrationsTools(BaseTool):
             f"Creating AWS Security Hub integration for provider {provider_id}..."
         )
 
-        try:
-            credentials = self._build_aws_credentials(
-                role_arn=role_arn,
-                external_id=external_id,
-                role_session_name=role_session_name,
-                session_duration=session_duration,
-                aws_access_key_id=aws_access_key_id,
-                aws_secret_access_key=aws_secret_access_key,
-                aws_session_token=aws_session_token,
-            )
+        credentials = self._build_aws_credentials(
+            role_arn=role_arn,
+            external_id=external_id,
+            role_session_name=role_session_name,
+            session_duration=session_duration,
+            aws_access_key_id=aws_access_key_id,
+            aws_secret_access_key=aws_secret_access_key,
+            aws_session_token=aws_session_token,
+        )
 
-            return await self._create_integration(
-                integration_type="aws_security_hub",
-                configuration={
-                    "send_only_fails": send_only_fails,
-                    "archive_previous_findings": archive_previous_findings,
-                },
-                credentials=credentials,
-                provider_ids=[provider_id],
-                enabled=enabled,
-            )
-        except Exception as e:
-            self.logger.error(f"AWS Security Hub integration creation failed: {e}")
-            return {"error": str(e), "status": "failed"}
+        return await self._create_integration(
+            integration_type="aws_security_hub",
+            configuration={
+                "send_only_fails": send_only_fails,
+                "archive_previous_findings": archive_previous_findings,
+            },
+            credentials=credentials,
+            provider_ids=[provider_id],
+            enabled=enabled,
+        )
 
     async def create_jira_integration(
         self,
-        domain: str = Field(
+        domain: NonBlankStr = Field(
             description="Atlassian site name, without the '.atlassian.net' suffix. For the site 'https://acme.atlassian.net' the value is 'acme'. Full URLs are accepted and normalized automatically."
         ),
-        user_mail: str = Field(
+        user_mail: NonBlankStr = Field(
             description="Email address of the Atlassian account that owns the API token."
         ),
-        api_token: str = Field(
+        api_token: NonBlankStr = Field(
             description="Atlassian API token, created from the account settings. It needs the 'read:jira-user', 'read:jira-work' and 'write:jira-work' scopes."
         ),
         enabled: bool = Field(
@@ -416,31 +411,25 @@ class IntegrationsTools(BaseTool):
         3. Use prowler_get_jira_issue_types with that project key to pick an issue type
         4. Use prowler_send_findings_to_jira to create the work items
         """
-        try:
-            normalized_domain = self._normalize_atlassian_domain(domain)
-            self.logger.info(
-                f"Creating Jira integration for domain {normalized_domain}..."
-            )
+        normalized_domain = self._normalize_atlassian_domain(domain)
+        self.logger.info(f"Creating Jira integration for domain {normalized_domain}...")
 
-            return await self._create_integration(
-                integration_type="jira",
-                # Jira rejects any configuration in the payload, the API generates it
-                configuration={},
-                credentials={
-                    "domain": normalized_domain,
-                    "user_mail": user_mail,
-                    "api_token": api_token,
-                },
-                provider_ids=[],
-                enabled=enabled,
-            )
-        except Exception as e:
-            self.logger.error(f"Jira integration creation failed: {e}")
-            return {"error": str(e), "status": "failed"}
+        return await self._create_integration(
+            integration_type="jira",
+            # Jira rejects any configuration in the payload, the API generates it
+            configuration={},
+            credentials={
+                "domain": normalized_domain,
+                "user_mail": user_mail,
+                "api_token": api_token,
+            },
+            provider_ids=[],
+            enabled=enabled,
+        )
 
     async def update_integration(
         self,
-        integration_id: str = Field(
+        integration_id: NonBlankStr = Field(
             description="UUID of the integration to update. Use prowler_list_integrations to find it."
         ),
         enabled: bool | None = Field(
@@ -494,96 +483,86 @@ class IntegrationsTools(BaseTool):
         """
         self.logger.info(f"Updating integration {integration_id}...")
 
-        try:
-            current = DetailedIntegration.from_api_response(
-                await self._get_integration_raw(integration_id)
-            )
-            integration_type = current.integration_type
+        current = DetailedIntegration.from_api_response(
+            await self._get_integration_raw(integration_id)
+        )
+        integration_type = current.integration_type
 
-            if provider_ids is not None:
-                if integration_type == "jira":
-                    raise ValueError(
-                        "Jira integrations are tenant-wide and cannot be attached to providers."
-                    )
-                if integration_type == "aws_security_hub" and len(provider_ids) != 1:
-                    raise ValueError(
-                        "AWS Security Hub integrations must stay attached to exactly one AWS "
-                        f"provider, got {len(provider_ids)}. Pass a single provider ID, or use "
-                        "prowler_delete_integration to stop sending findings to Security Hub."
-                    )
-
-            attributes: dict[str, Any] = {}
-            if enabled is not None:
-                attributes["enabled"] = enabled
-
-            if credentials is not None:
-                attributes["credentials"] = self._validate_credentials(
-                    integration_type, self._as_dict(credentials, "credentials")
+        if provider_ids is not None:
+            if integration_type == "jira":
+                raise InvalidArgument(
+                    "Jira integrations are tenant-wide and cannot be attached to providers."
+                )
+            if integration_type == "aws_security_hub" and len(provider_ids) != 1:
+                raise InvalidArgument(
+                    "AWS Security Hub integrations must stay attached to exactly one AWS "
+                    f"provider, got {len(provider_ids)}. Pass a single provider ID, or use "
+                    "prowler_delete_integration to stop sending findings to Security Hub."
                 )
 
-            if configuration is not None:
-                if integration_type == "jira":
-                    raise ValueError(
-                        "Jira integrations do not accept a configuration: it is generated by Prowler. "
-                        "Update the credentials instead, or run prowler_test_integration_connection to "
-                        "refresh the available projects and issue types."
-                    )
-                merged = dict(current.configuration)
-                merged.update(self._as_dict(configuration, "configuration"))
-                # Server-owned, the API repopulates it from the connection check
-                merged.pop("regions", None)
-                merged.pop("enabled_regions", None)
-                attributes["configuration"] = merged
+        attributes: dict[str, Any] = {}
+        if enabled is not None:
+            attributes["enabled"] = enabled
 
-            if not attributes and provider_ids is None:
-                self.logger.info("No changes provided, returning the current state")
-                return current.model_dump()
+        if credentials is not None:
+            attributes["credentials"] = self._validate_credentials(
+                integration_type, self._as_dict(credentials, "credentials")
+            )
 
-            update_body: dict[str, Any] = {
-                "data": {
-                    "type": "integrations",
-                    "id": integration_id,
-                    "attributes": attributes,
-                }
+        if configuration is not None:
+            if integration_type == "jira":
+                raise InvalidArgument(
+                    "Jira integrations do not accept a configuration: it is generated by Prowler. "
+                    "Update the credentials instead, or run prowler_test_integration_connection to "
+                    "refresh the available projects and issue types."
+                )
+            merged = dict(current.configuration)
+            merged.update(self._as_dict(configuration, "configuration"))
+            # Server-owned, the API repopulates it from the connection check
+            merged.pop("regions", None)
+            merged.pop("enabled_regions", None)
+            attributes["configuration"] = merged
+
+        if not attributes and provider_ids is None:
+            self.logger.info("No changes provided, returning the current state")
+            return current.model_dump()
+
+        update_body: dict[str, Any] = {
+            "data": {
+                "type": "integrations",
+                "id": integration_id,
+                "attributes": attributes,
             }
-            if provider_ids is not None:
-                update_body["data"]["relationships"] = _providers_relationship(
-                    provider_ids
-                )
+        }
+        if provider_ids is not None:
+            update_body["data"]["relationships"] = _providers_relationship(provider_ids)
 
-            await self.api_client.patch(
-                f"/integrations/{integration_id}", json_data=update_body
-            )
+        await self.api_client.patch(
+            f"/integrations/{integration_id}", json_data=update_body
+        )
 
-            # A different provider means different effective credentials and different
-            # discovered configuration, so the stored connection state is stale too
-            providers_changed = provider_ids is not None and set(provider_ids) != set(
-                current.provider_ids
-            )
-            recheck_connection = (
-                credentials is not None
-                or configuration is not None
-                or providers_changed
-            )
-            connection_status = (
-                await self._test_connection(integration_id)
-                if recheck_connection
-                else None
-            )
+        # A different provider means different effective credentials and different
+        # discovered configuration, so the stored connection state is stale too
+        providers_changed = provider_ids is not None and set(provider_ids) != set(
+            current.provider_ids
+        )
+        recheck_connection = (
+            credentials is not None or configuration is not None or providers_changed
+        )
+        connection_status = (
+            await self._test_connection(integration_id) if recheck_connection else None
+        )
 
-            updated = await self._get_integration_raw(integration_id)
-            if connection_status is not None:
-                return IntegrationConnectionStatus.create(
-                    updated, connection_status
-                ).model_dump()
-            return DetailedIntegration.from_api_response(updated).model_dump()
-        except Exception as e:
-            self.logger.error(f"Integration update failed: {e}")
-            return {"error": str(e), "status": "failed"}
+        updated = await self._get_integration_raw(integration_id)
+        if connection_status is not None:
+            return IntegrationConnectionStatus.create(
+                updated, connection_status
+            ).model_dump()
+        return DetailedIntegration.from_api_response(updated).model_dump()
 
     async def delete_integration(
         self,
-        integration_id: str = Field(
+        integration_id: NonBlankStr = Field(
             description="UUID of the integration to permanently remove. Use prowler_list_integrations to find it."
         ),
     ) -> dict[str, Any]:
@@ -606,22 +585,15 @@ class IntegrationsTools(BaseTool):
         """
         self.logger.info(f"Deleting integration {integration_id}...")
 
-        try:
-            await self.api_client.delete(f"/integrations/{integration_id}")
-            return {
-                "deleted": True,
-                "message": f"Integration {integration_id} deleted successfully",
-            }
-        except Exception as e:
-            self.logger.error(f"Integration deletion failed: {e}")
-            return {
-                "deleted": False,
-                "message": f"Integration {integration_id} deletion failed: {str(e)}",
-            }
+        await self.api_client.delete(f"/integrations/{integration_id}")
+        # No `deleted` flag: an integration that was not deleted leaves this tool
+        # as an error, so the flag could only ever be True and a reader branching
+        # on it would be looking for a shape that does not exist.
+        return {"message": f"Integration {integration_id} deleted successfully"}
 
     async def test_integration_connection(
         self,
-        integration_id: str = Field(
+        integration_id: NonBlankStr = Field(
             description="UUID of the integration to check. Use prowler_list_integrations to find it."
         ),
     ) -> dict[str, Any]:
@@ -654,10 +626,10 @@ class IntegrationsTools(BaseTool):
 
     async def get_jira_issue_types(
         self,
-        integration_id: str = Field(
+        integration_id: NonBlankStr = Field(
             description="UUID of the Jira integration. Use prowler_list_integrations with integration_type=['jira'] to find it."
         ),
-        project_key: str = Field(
+        project_key: NonBlankStr = Field(
             description="Key of the Jira project to read the issue types from (e.g. 'PROJ'). It must be one of the keys in the 'projects' mapping of the integration configuration."
         ),
     ) -> dict[str, Any]:
@@ -692,13 +664,13 @@ class IntegrationsTools(BaseTool):
 
     async def send_findings_to_jira(
         self,
-        integration_id: str = Field(
+        integration_id: NonBlankStr = Field(
             description="UUID of the Jira integration to send the findings through. It must be enabled."
         ),
-        project_key: str = Field(
+        project_key: NonBlankStr = Field(
             description="Key of the Jira project the work items are created in (e.g. 'PROJ'). It must be one of the keys in the 'projects' mapping of the integration configuration."
         ),
-        issue_type: str = Field(
+        issue_type: NonBlankStr = Field(
             description="Jira issue type for the created work items (e.g. 'Task', 'Bug', 'Story'). It must be one of the values returned by prowler_get_jira_issue_types for this project."
         ),
         finding_ids: list[str] = Field(
@@ -783,20 +755,26 @@ class IntegrationsTools(BaseTool):
                 return self._jira_dispatch_unknown(
                     task_id=None,
                     error=(
-                        f"the request that starts the dispatch failed on the server: {e} "
+                        "the request that starts the dispatch failed on Prowler's side. "
                         "It may have been queued anyway."
                     ),
                 )
 
             self.logger.error(f"Jira dispatch was rejected by Prowler: {e}")
             return self._jira_dispatch_rejected(str(e))
+        except CredentialError:
+            # Authentication happens before the request goes out, so nothing was
+            # queued. It is raised rather than reported as a dispatch outcome:
+            # there is no partial state to describe, and the shared classifier
+            # says what has to be fixed, which no retry of this call can.
+            raise
         except Exception as e:
             # No answer came back, so the request may still have been accepted
             self.logger.error(f"Jira dispatch could not be started: {e}")
             return self._jira_dispatch_unknown(
                 task_id=None,
                 error=(
-                    f"the request that starts the dispatch got no answer: {e} "
+                    "the request that starts the dispatch got no answer. "
                     "It may have been accepted anyway."
                 ),
             )
@@ -866,7 +844,7 @@ class IntegrationsTools(BaseTool):
         normalized = normalized.removesuffix(".atlassian.net")
 
         if not normalized:
-            raise ValueError(
+            raise InvalidArgument(
                 f"Invalid Jira domain: {domain}. Provide the Atlassian site name, for example "
                 "'acme' for the site 'https://acme.atlassian.net'."
             )
@@ -890,7 +868,7 @@ class IntegrationsTools(BaseTool):
             if not isinstance(credentials.get(key), str) or not credentials[key].strip()
         ]
         if missing:
-            raise ValueError(
+            raise InvalidArgument(
                 "Jira credentials are replaced as a whole, so 'domain', 'user_mail' and "
                 f"'api_token' are all required. Missing or empty: {', '.join(missing)}. "
                 "Sending an incomplete object would destroy the stored credentials and break "
@@ -908,29 +886,33 @@ class IntegrationsTools(BaseTool):
             try:
                 value = json.loads(value)
             except json.JSONDecodeError as e:
-                raise ValueError(f"Invalid JSON for {param_name}: {e}")
+                raise InvalidArgument(f"Invalid JSON for {param_name}: {e}") from e
 
         if not isinstance(value, dict):
-            raise ValueError(f"{param_name} must be a JSON object.")
+            raise InvalidArgument(f"{param_name} must be a JSON object.")
         return value
 
     async def _get_integration_raw(self, integration_id: str) -> dict[str, Any]:
         """Fetch the raw JSON:API resource of an integration.
 
         Raises:
-            ValueError: If the payload does not contain a usable integration resource
+            ToolError: If the payload does not contain a usable integration resource.
+                Raised without a ``from`` clause because these messages name the
+                integration and the tool that lists valid IDs, and the two cases
+                are reported differently: a missing resource is the caller's
+                mistake, a resource without attributes is the API's.
         """
         response = await self.api_client.get(f"/integrations/{integration_id}")
         integration = response.get("data")
 
         if not isinstance(integration, dict) or not integration.get("id"):
-            raise ValueError(
+            raise ToolError(
                 f"Integration {integration_id} was not found. Use prowler_list_integrations "
                 "to get a valid integration ID."
             )
 
         if not isinstance(integration.get("attributes"), dict):
-            raise ValueError(
+            raise ToolError(
                 f"Prowler returned integration {integration_id} without its attributes, so "
                 "its state cannot be read."
             )
@@ -970,7 +952,9 @@ class IntegrationsTools(BaseTool):
         integration_id = api_response.get("data", {}).get("id")
 
         if not integration_id:
-            raise ValueError(
+            # The integration may well exist, so this must not read as "nothing
+            # happened" and invite a duplicate.
+            raise ToolError(
                 "Prowler accepted the integration creation but did not return its ID, so the "
                 "connection could not be checked. Use prowler_list_integrations to see whether "
                 "the integration exists before creating it again."
@@ -981,11 +965,17 @@ class IntegrationsTools(BaseTool):
         try:
             integration = await self._get_integration_raw(integration_id)
         except Exception as e:
-            # The integration exists, so surface its ID instead of a plain read failure
-            raise ValueError(
-                f"Integration {integration_id} was created, but reading its state failed: {e} "
+            # The integration exists, so surface its ID instead of a plain read
+            # failure. No `from` clause: a cause would let the shared classifier
+            # replace this with a sentence that does not mention the ID. The
+            # failure text stays in the log, where the classifier would keep it.
+            self.logger.error(
+                f"Integration {integration_id} could not be read back: {e}"
+            )
+            raise ToolError(
+                f"Integration {integration_id} was created, but reading its state failed. "
                 "Use prowler_get_integration with that ID to check it."
-            ) from e
+            )
 
         return IntegrationConnectionStatus.create(
             integration, connection_status
@@ -1030,7 +1020,7 @@ class IntegrationsTools(BaseTool):
             return {
                 "connected": None,
                 "error": (
-                    f"The connection check could not be completed: {e} This says nothing "
+                    "The connection check could not be completed. This says nothing "
                     "about the stored credentials, run prowler_test_integration_connection "
                     "to check them again."
                 ),

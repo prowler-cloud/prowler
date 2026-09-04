@@ -46,7 +46,7 @@ export const SLACK_RATE_LIMITED_MESSAGE =
  * out, or `links.next` left the API's origin.
  */
 export const SLACK_PARTIAL_CHANNEL_LIST_MESSAGE =
-  "This workspace has more channels than Prowler reads in one go, so this list is not all of them. A channel missing from it is not necessarily one @Prowler has to be invited to.";
+  "This workspace has more channels than Prowler reads in one go, so this list is not all of them. A channel missing from it is not necessarily one @Prowler Cloud has to be invited to.";
 
 /**
  * For a `2xx` the UI could not read. Not phrased as a failure: the install
@@ -69,7 +69,7 @@ export const SLACK_ERROR_MESSAGES = {
   [SLACK_ERROR_CODE.CHANNEL_NOT_FOUND]:
     "That channel no longer exists in the workspace. Choose another one.",
   [SLACK_ERROR_CODE.NOT_IN_CHANNEL]:
-    "Prowler is not in that channel. Invite @Prowler to it in Slack, or choose a channel it can already post to.",
+    "Prowler is not in that channel. Invite @Prowler Cloud to it in Slack, or choose a channel it can already post to.",
   [SLACK_ERROR_CODE.NO_PERMISSION]:
     "Slack did not allow Prowler to post there. Choose another channel, or ask a workspace admin to allow it.",
   [SLACK_ERROR_CODE.TOKEN_REVOKED]: `Prowler's access to Slack was revoked. ${RECONNECT}`,

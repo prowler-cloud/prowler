@@ -1,5 +1,6 @@
 """Test fixtures for Google Workspace provider tests"""
 
+from typing import Optional
 from unittest.mock import MagicMock
 
 from prowler.providers.googleworkspace.models import (
@@ -81,17 +82,19 @@ ROLE_GROUPS_ADMIN = {
 
 
 def set_mocked_googleworkspace_provider(
-    identity: GoogleWorkspaceIdentityInfo = GoogleWorkspaceIdentityInfo(
+    identity: Optional[GoogleWorkspaceIdentityInfo] = None,
+):
+    provider = MagicMock()
+    provider.type = "googleworkspace"
+    # Built per call: as a default argument every test would share one instance,
+    # and a test mutating it would leak into the rest of the session.
+    provider.identity = identity or GoogleWorkspaceIdentityInfo(
         domain=DOMAIN,
         customer_id=CUSTOMER_ID,
         delegated_user=DELEGATED_USER,
         root_org_unit_id=ROOT_ORG_UNIT_ID,
         profile="default",
-    ),
-):
-    provider = MagicMock()
-    provider.type = "googleworkspace"
-    provider.identity = identity
+    )
     provider.domain_resource = build_googleworkspace_domain_resource()
     return provider
 

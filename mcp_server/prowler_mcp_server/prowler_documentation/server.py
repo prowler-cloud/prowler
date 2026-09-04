@@ -1,20 +1,24 @@
 from typing import Any
 
 from fastmcp import FastMCP
+from fastmcp.exceptions import ToolError
 from pydantic import Field
 
+from prowler_mcp_server.lib.types import NonBlankStr
 from prowler_mcp_server.prowler_documentation.search_engine import (
     ProwlerDocsSearchEngine,
 )
 
 # Initialize FastMCP server
-docs_mcp_server = FastMCP("prowler-docs")
+docs_mcp_server = FastMCP("prowler-docs", mask_error_details=True)
 prowler_docs_search_engine = ProwlerDocsSearchEngine()
 
 
 @docs_mcp_server.tool()
 def search(
-    term: str = Field(description="The term to search for in the documentation"),
+    term: NonBlankStr = Field(
+        description="The term to search for in the documentation"
+    ),
     page_size: int = Field(
         5,
         description="Number of top results to return. It must be between 1 and 20.",
@@ -39,7 +43,7 @@ def search(
 
 @docs_mcp_server.tool()
 def get_document(
-    doc_path: str = Field(
+    doc_path: NonBlankStr = Field(
         description="Path to the documentation file to retrieve. It is the same as the 'path' field of the search results. Use `prowler_docs_search` to find the path first."
     ),
 ) -> dict[str, str]:
@@ -53,6 +57,10 @@ def get_document(
     """
     content: str | None = prowler_docs_search_engine.get_document(doc_path)
     if content is None:
-        return {"error": f"Document '{doc_path}' not found."}
-    else:
-        return {"content": content}
+        # No `from`: this names the path asked for and the tool that produces a
+        # valid one, neither of which the shared classifier can know.
+        raise ToolError(
+            f"The Prowler documentation has no page at '{doc_path}'. Use "
+            "prowler_docs_search and pass the 'path' field of a result verbatim."
+        )
+    return {"content": content}

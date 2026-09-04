@@ -36,7 +36,7 @@ If **Require IP Access List for the Atlas Administration API** is enabled in the
 
 <VersionBadge version="5.15.0" />
 
-### Step 1: Add the provider
+### Step 1: Add the Provider
 
 1. Navigate to **Providers** and click **Add Provider**.
    ![Add provider list](./img/add-provider-list.png)
@@ -45,13 +45,13 @@ If **Require IP Access List for the Atlas Administration API** is enabled in the
    ![Add organization ID](./img/add-org-id.png)
 4. (Optional) Add a friendly alias to identify this organization in dashboards.
 
-### Step 2: Provide API credentials
+### Step 2: Provide API Credentials
 
 1. Click **Next** to open the credentials form.
 2. Paste the **Atlas Public Key** and **Atlas Private Key** generated in the Atlas console.
    ![Add credentials](./img/add-credentials.png)
 
-### Step 3: Test the connection and start scanning
+### Step 3: Test the Connection and Start Scanning
 
 1. Click **Test connection** to ensure Prowler Cloud can reach the Atlas API.
 2. Save the credentials. The provider will appear in the list with its current connection status.
@@ -66,11 +66,11 @@ If **Require IP Access List for the Atlas Administration API** is enabled in the
 
 You can also run MongoDB Atlas assessments directly from the CLI. Both command-line flags and environment variables are supported.
 
-### Step 1: Select an authentication method
+### Step 1: Select an Authentication Method
 
 Choose one of the following authentication methods:
 
-#### Command-line arguments
+#### Command-Line Arguments
 
 ```bash
 prowler mongodbatlas \
@@ -78,7 +78,7 @@ prowler mongodbatlas \
   --atlas-private-key <private_key>
 ```
 
-#### Environment variables
+#### Environment Variables
 
 ```bash
 export ATLAS_PUBLIC_KEY=<public_key>
@@ -86,9 +86,9 @@ export ATLAS_PRIVATE_KEY=<private_key>
 prowler mongodbatlas
 ```
 
-### Step 2: Run the first scan
+### Step 2: Run the First Scan
 
-#### Scan all projects and clusters
+#### Scan All Projects and Clusters
 
 ```bash
 prowler mongodbatlas
@@ -96,7 +96,7 @@ prowler mongodbatlas
 
 This command enumerates all projects accessible to the API key and scans every cluster.
 
-#### Scan a specific project
+#### Scan a Specific Project
 
 Add the `--atlas-project-id` flag when you only want to assess one project:
 
@@ -104,7 +104,7 @@ Add the `--atlas-project-id` flag when you only want to assess one project:
 prowler mongodbatlas --atlas-project-id <project-id>
 ```
 
-### Additional tips
+### Additional Tips
 
 - Combine flags (for example, `--checks` or `--services`) just like with other providers.
 - Use `--output-modes` to export findings in JSON, CSV, ASFF, etc.

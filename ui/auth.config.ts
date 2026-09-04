@@ -11,6 +11,7 @@ import { z } from "zod";
 
 import { getToken, getUserByMe } from "./actions/auth";
 import { apiBaseUrl } from "./lib";
+import { UserMeError } from "./lib/auth-errors";
 import {
   SLACK_CALLBACK_PATH,
   SLACK_EXPIRED_CALLBACK_URL,
@@ -55,6 +56,7 @@ const DEFAULT_PERMISSIONS: RolePermissionAttributes = {
   manage_account: false,
   manage_providers: false,
   manage_scans: false,
+  manage_ingestions: false,
   manage_integrations: false,
   manage_billing: false,
   manage_alerts: false,
@@ -63,6 +65,9 @@ const DEFAULT_PERMISSIONS: RolePermissionAttributes = {
 };
 
 const TENANT_SWITCH_ERROR = "TenantSwitchError";
+
+const NON_RETRYABLE_USER_ME_STATUSES = new Set([401, 403, 404]);
+const USER_REFRESH_TIMEOUT_MS = 5_000;
 
 type TokenUserInput = Partial<TokenUser> & { company?: string };
 
@@ -91,7 +96,7 @@ const toTokenUser = (user?: TokenUserInput): TokenUser =>
     email: user?.email ?? undefined,
     companyName: user?.companyName ?? user?.company,
     dateJoined: user?.dateJoined,
-    permissions: user?.permissions ?? { ...DEFAULT_PERMISSIONS },
+    permissions: { ...DEFAULT_PERMISSIONS, ...user?.permissions },
   }) as TokenUser;
 
 type UserMeResponse = Awaited<ReturnType<typeof getUserByMe>>;
@@ -205,6 +210,31 @@ const refreshAccessToken = async (token: AuthToken): Promise<AuthToken> => {
       };
 
       applyDecodedClaims(nextToken, newAccessToken, "refreshed access token");
+
+      try {
+        const userMeResponse = await getUserByMe(
+          newAccessToken,
+          AbortSignal.timeout(USER_REFRESH_TIMEOUT_MS),
+        );
+        nextToken.user = tokenUserFromApi(userMeResponse);
+      } catch (error) {
+        if (
+          error instanceof UserMeError &&
+          error.status !== undefined &&
+          NON_RETRYABLE_USER_ME_STATUSES.has(error.status)
+        ) {
+          return {
+            ...nextToken,
+            accessToken: undefined,
+            refreshToken: undefined,
+            user: undefined,
+            error: "RefreshAccessTokenError",
+          };
+        }
+
+        // eslint-disable-next-line no-console
+        console.warn("Unable to refresh user after access token refresh");
+      }
 
       return nextToken;
     } catch (error) {

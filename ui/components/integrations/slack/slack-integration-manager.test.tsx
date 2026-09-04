@@ -17,8 +17,8 @@ vi.mock("@/actions/integrations/slack", () => ({
   setSlackAuthorizedChannels: vi.fn(),
 }));
 
-vi.mock("@/actions/integrations/integrations", () => ({
-  testIntegrationConnection: vi.fn(),
+vi.mock("@/lib/integrations/test-connection-helper", () => ({
+  executeIntegrationConnectionTest: vi.fn(),
 }));
 
 /**

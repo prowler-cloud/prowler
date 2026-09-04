@@ -143,7 +143,7 @@ maintainers = [{name = "Prowler Engineering", email = "engineering@prowler.com"}
 name = "prowler"
 readme = "README.md"
 requires-python = ">=3.10,<3.14"
-version = "5.41.0"
+version = "5.42.0"
 
 [project.scripts]
 prowler = "prowler.__main__:prowler"

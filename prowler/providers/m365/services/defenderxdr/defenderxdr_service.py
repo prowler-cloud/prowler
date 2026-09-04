@@ -116,7 +116,13 @@ class DefenderXDR(M365Service):
                 request_body
             )
 
-            if not response or not response.results:
+            if response is None:
+                # A null response object is not a successful empty query:
+                # the data could not be retrieved.
+                logger.error("DefenderXDR - Advanced Hunting returned a null response.")
+                return None, False
+
+            if not response.results:
                 return [], False
 
             results = [
@@ -200,9 +206,18 @@ ExposureGraphEdges
     TargetCategories = TargetNodeCategories
 """
 
-        results, _ = await self._run_hunting_query(query)
+        results, table_not_found = await self._run_hunting_query(query)
 
         if results is None:
+            return None
+
+        if table_not_found:
+            # Security Exposure Management tables are not available in this
+            # tenant: the check cannot be evaluated (not a legitimate empty result).
+            logger.warning(
+                "DefenderXDR - Security Exposure Management tables are not "
+                "available in this tenant; results cannot be evaluated."
+            )
             return None
 
         return [self._parse_exposed_credential(row) for row in results if row]
@@ -253,9 +268,18 @@ ExposureGraphNodes
 | sort by Classification asc
 """
 
-        results, _ = await self._run_hunting_query(query)
+        results, table_not_found = await self._run_hunting_query(query)
 
         if results is None:
+            return None
+
+        if table_not_found:
+            # Security Exposure Management tables are not available in this
+            # tenant: the check cannot be evaluated (not a legitimate empty result).
+            logger.warning(
+                "DefenderXDR - Security Exposure Management tables are not "
+                "available in this tenant; results cannot be evaluated."
+            )
             return None
 
         pending_approvals = []

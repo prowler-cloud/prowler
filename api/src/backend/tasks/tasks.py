@@ -73,7 +73,10 @@ from tasks.jobs.lighthouse_providers import (
     check_lighthouse_provider_connection,
     refresh_lighthouse_provider_models,
 )
-from tasks.jobs.muting import mute_historical_findings
+from tasks.jobs.muting import (
+    mute_findings_in_latest_scans,
+    reconcile_scan_mute_rules,
+)
 from tasks.jobs.orphan_recovery import reconcile_orphans
 from tasks.jobs.report import (
     STALE_TMP_OUTPUT_MAX_AGE_HOURS,
@@ -526,6 +529,7 @@ def perform_scan_task(
             provider_id=provider_id,
             checks_to_execute=checks_to_execute,
         )
+        reconcile_scan_mute_rules(tenant_id, scan_id)
         _perform_scan_complete_tasks(tenant_id, scan_id, provider_id)
         return result
     finally:
@@ -635,6 +639,7 @@ def perform_scheduled_scan_task(self, tenant_id: str, provider_id: str):
             scan_id=str(scan_instance.id),
             provider_id=provider_id,
         )
+        reconcile_scan_mute_rules(tenant_id, str(scan_instance.id))
         _perform_scan_complete_tasks(tenant_id, str(scan_instance.id), provider_id)
         return result
     finally:
@@ -1188,85 +1193,48 @@ def aggregate_finding_group_summaries_task(tenant_id: str, scan_id: str):
     return aggregate_finding_group_summaries(tenant_id=tenant_id, scan_id=scan_id)
 
 
-@shared_task(
-    base=RLSTask, name="reaggregate-all-finding-group-summaries", queue="overview"
-)
-@set_tenant(keep_tenant=True)
-def reaggregate_all_finding_group_summaries_task(tenant_id: str):
-    """Reaggregate every pre-aggregated summary table for this tenant.
+def _dispatch_scan_summary_reaggregation(tenant_id: str, scan_ids: list[str]) -> None:
+    if not scan_ids:
+        return
 
-    Mirrors the unbounded scope of `mute_historical_findings_task`: that task
-    rewrites every Finding row whose UID matches a mute rule, with no time
-    limit. To keep the pre-aggregated tables consistent with that update,
-    this task re-runs the same per-scan aggregation pipeline that scan
-    completion runs on the latest completed scan of every (provider, day)
-    pair, rebuilding the tables that power the read endpoints:
-
-      - `ScanSummary` and `DailySeveritySummary` -> `/overviews/findings`,
-        `/overviews/findings-severity`, `/overviews/services`.
-      - `FindingGroupDailySummary` -> `/finding-groups` and
-        `/finding-groups/latest`.
-      - `ScanGroupSummary` -> `/overviews/resource-groups` (resource
-        inventory).
-      - `ScanCategorySummary` -> `/overviews/categories`.
-      - `AttackSurfaceOverview` -> `/overviews/attack-surfaces`.
-
-    Per-scan pipelines are dispatched in parallel via a Celery group so
-    wallclock scales with the worker pool.
-    """
-    completed_scans = list(
-        Scan.objects.filter(
-            tenant_id=tenant_id,
-            state=StateChoices.COMPLETED,
-            completed_at__isnull=False,
-        )
-        .order_by("-completed_at")
-        .values("id", "completed_at", "provider_id")
+    logger.info(
+        "Reaggregating overview/finding summaries for %d latest scans",
+        len(scan_ids),
     )
-
-    # Keep the latest scan per (provider, day) pair so the daily summary row
-    # the aggregator writes is the most recent snapshot of that day for that
-    # provider. Iterating from most recent to oldest means the first scan we
-    # see for a given key wins.
-    latest_scans: dict[tuple, str] = {}
-    for scan in completed_scans:
-        key = (scan["provider_id"], scan["completed_at"].date())
-        if key not in latest_scans:
-            latest_scans[key] = str(scan["id"])
-
-    scan_ids = list(latest_scans.values())
-    if scan_ids:
-        logger.info(
-            "Reaggregating overview/finding summaries for %d scans (provider x day)",
-            len(scan_ids),
-        )
-        # DailySeveritySummary reads from ScanSummary, so ScanSummary must be
-        # recomputed first; the other aggregators read Finding directly and
-        # can run in parallel with the severity step.
-        group(
-            chain(
-                perform_scan_summary_task.si(tenant_id=tenant_id, scan_id=scan_id),
-                group(
-                    aggregate_daily_severity_task.si(
-                        tenant_id=tenant_id, scan_id=scan_id
-                    ),
-                    aggregate_finding_group_summaries_task.si(
-                        tenant_id=tenant_id, scan_id=scan_id
-                    ),
-                    aggregate_scan_resource_group_summaries_task.si(
-                        tenant_id=tenant_id, scan_id=scan_id
-                    ),
-                    aggregate_scan_category_summaries_task.si(
-                        tenant_id=tenant_id, scan_id=scan_id
-                    ),
-                    aggregate_attack_surface_task.si(
-                        tenant_id=tenant_id, scan_id=scan_id
-                    ),
+    group(
+        chain(
+            perform_scan_summary_task.si(tenant_id=tenant_id, scan_id=scan_id),
+            group(
+                aggregate_daily_severity_task.si(tenant_id=tenant_id, scan_id=scan_id),
+                aggregate_finding_group_summaries_task.si(
+                    tenant_id=tenant_id, scan_id=scan_id
                 ),
-            )
-            for scan_id in scan_ids
-        ).apply_async()
-    return {"scans_reaggregated": len(scan_ids)}
+                aggregate_scan_resource_group_summaries_task.si(
+                    tenant_id=tenant_id, scan_id=scan_id
+                ),
+                aggregate_scan_category_summaries_task.si(
+                    tenant_id=tenant_id, scan_id=scan_id
+                ),
+                aggregate_attack_surface_task.si(tenant_id=tenant_id, scan_id=scan_id),
+            ),
+        )
+        for scan_id in scan_ids
+    ).apply_async()
+
+
+@shared_task(base=RLSTask, name="findings-mute-latest-scans", queue="overview")
+@set_tenant(keep_tenant=True)
+def mute_findings_in_latest_scans_task(
+    tenant_id: str, mute_rule_id: str, provider_ids: list[str]
+):
+    """Apply a mute rule to current scans and rebuild only changed summaries."""
+    result = mute_findings_in_latest_scans(
+        tenant_id=tenant_id,
+        mute_rule_id=mute_rule_id,
+        provider_ids=provider_ids,
+    )
+    _dispatch_scan_summary_reaggregation(tenant_id, result["scan_ids"])
+    return result
 
 
 @shared_task(base=RLSTask, name="lighthouse-connection-check")
@@ -1467,25 +1435,3 @@ def generate_compliance_reports_task(tenant_id: str, scan_id: str, provider_id: 
         generate_csa=True,
         generate_cis=True,
     )
-
-
-@shared_task(name="findings-mute-historical")
-def mute_historical_findings_task(tenant_id: str, mute_rule_id: str):
-    """
-    Background task to mute all historical findings matching a mute rule.
-
-    This task processes findings in batches to avoid memory issues with large datasets.
-    It updates the Finding.muted, Finding.muted_at, and Finding.muted_reason fields
-    for all findings whose UID is in the mute rule's finding_uids list.
-
-    Args:
-        tenant_id (str): The tenant ID for RLS context.
-        mute_rule_id (str): The primary key of the MuteRule to apply.
-
-    Returns:
-        dict: A dictionary containing:
-            - 'findings_muted' (int): Total number of findings muted.
-            - 'rule_id' (str): The mute rule ID.
-            - 'status' (str): Final status ('completed').
-    """
-    return mute_historical_findings(tenant_id, mute_rule_id)

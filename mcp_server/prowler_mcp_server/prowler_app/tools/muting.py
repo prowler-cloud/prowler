@@ -8,8 +8,11 @@ This module provides tools for managing finding muting in Prowler, including:
 import json
 from typing import Any
 
+from fastmcp.exceptions import ToolError
 from pydantic import Field
 
+from prowler_mcp_server.lib.errors import InvalidArgument
+from prowler_mcp_server.lib.types import NonBlankStr
 from prowler_mcp_server.prowler_app.models.muting import (
     DetailedMuteRule,
     MutelistResponse,
@@ -28,10 +31,31 @@ class MutingTools(BaseTool):
 
     # ===== MUTELIST TOOLS =====
 
+    async def _get_mutelist_raw(self) -> dict[str, Any] | None:
+        """Return the tenant's mutelist, or None when it has none.
+
+        Returns:
+            The mutelist configuration, or None when the tenant has none
+        """
+        params = {
+            "filter[processor_type]": "mutelist",
+            "fields[processors]": "processor_type,configuration,inserted_at,updated_at",
+        }
+
+        clean_params = self.api_client.build_filter_params(params)
+        api_response = await self.api_client.get("/processors", params=clean_params)
+
+        data = api_response.get("data", [])
+        if not data:
+            return None
+
+        # Only one mutelist can exist per tenant
+        return MutelistResponse.from_api_response(data[0]).model_dump()
+
     async def get_mutelist(self) -> dict[str, Any]:
         """Retrieve the current mutelist configuration for the tenant.
 
-        IMPORTANT: Only one mutelist can exist per tenant. Returns an error message if no mutelist exists.
+        IMPORTANT: Only one mutelist can exist per tenant. Fails with a message saying so if no mutelist exists.
         For detailed information about mutelist structure and configuration, search Prowler documentation
         using prowler_docs_search tool available in this MCP Server.
 
@@ -47,26 +71,15 @@ class MutingTools(BaseTool):
         """
         self.logger.info("Retrieving mutelist configuration...")
 
-        # Query processors filtered by type=mutelist
-        params = {
-            "filter[processor_type]": "mutelist",
-            "fields[processors]": "processor_type,configuration,inserted_at,updated_at",
-        }
-
-        clean_params = self.api_client.build_filter_params(params)
-        api_response = await self.api_client.get("/processors", params=clean_params)
-
-        data = api_response.get("data", [])
-
-        if len(data) == 0:
-            return {
-                "error": "No mutelist found",
-                "message": "No mutelist configuration exists for this tenant. Use prowler_set_mutelist to create one.",
-            }
-
-        # Return the first (and only) mutelist
-        mutelist = MutelistResponse.from_api_response(data[0])
-        return mutelist.model_dump()
+        mutelist = await self._get_mutelist_raw()
+        if mutelist is None:
+            # No `from`: this names the tool that creates one, which the shared
+            # classifier cannot know.
+            raise ToolError(
+                "No mutelist configuration exists for this tenant. Use "
+                "prowler_set_mutelist to create one."
+            )
+        return mutelist
 
     async def set_mutelist(
         self,
@@ -128,9 +141,9 @@ Structure:
             configuration = json.loads(configuration)
 
         # Check if mutelist already exists
-        existing_mutelist = await self.get_mutelist()
+        existing_mutelist = await self._get_mutelist_raw()
 
-        if "error" in existing_mutelist:
+        if existing_mutelist is None:
             # Create new mutelist
             self.logger.info("Creating new mutelist...")
             create_body = {
@@ -183,21 +196,22 @@ Structure:
         self.logger.info("Deleting mutelist configuration...")
 
         # Get existing mutelist
-        existing_mutelist = await self.get_mutelist()
+        existing_mutelist = await self._get_mutelist_raw()
 
-        if "error" in existing_mutelist:
-            return {
-                "success": False,
-                "message": "No mutelist found to delete",
-            }
+        if existing_mutelist is None:
+            raise ToolError(
+                "There is no mutelist configuration to delete. Use "
+                "prowler_get_mutelist to confirm the current state."
+            )
 
         # Delete the mutelist
         mutelist_id = existing_mutelist["id"]
         await self.api_client.delete(f"/processors/{mutelist_id}")
 
+        # No success flag: a deletion that did not happen leaves this tool as an
+        # error, so there is no second shape for one to distinguish.
         return {
-            "success": True,
-            "message": "Mutelist deleted successfully",
+            "message": "Mutelist deleted successfully. Findings it had muted stay muted."
         }
 
     # ===== MUTE RULES TOOLS =====
@@ -268,7 +282,7 @@ Structure:
                 elif enabled.lower() == "false":
                     params["filter[enabled]"] = False
                 else:
-                    raise ValueError(
+                    raise InvalidArgument(
                         f"Invalid enabled value: {enabled}. Valid values are True, False, 'true', 'false' or None."
                     )
         if search:
@@ -282,7 +296,7 @@ Structure:
 
     async def get_mute_rule(
         self,
-        rule_id: str = Field(
+        rule_id: NonBlankStr = Field(
             description="UUID of the mute rule to retrieve. Must be a valid UUID format (e.g., '019ac0d6-90d5-73e9-9acf-c22e256f1bac')."
         ),
     ) -> dict[str, Any]:
@@ -316,10 +330,10 @@ Structure:
 
     async def create_mute_rule(
         self,
-        name: str = Field(
+        name: NonBlankStr = Field(
             description="Name for the mute rule. Should be descriptive and meaningful (e.g., 'Dev S3 Public Access', 'Test Environment IMDSv1')."
         ),
-        reason: str = Field(
+        reason: NonBlankStr = Field(
             description="Reason for muting these findings. Document why this security issue is acceptable or intentional (e.g., 'Development environment with controlled access', 'Legacy application requires IMDSv1')."
         ),
         finding_ids: list[str] = Field(
@@ -367,14 +381,14 @@ Structure:
 
     async def update_mute_rule(
         self,
-        rule_id: str = Field(
+        rule_id: NonBlankStr = Field(
             description="UUID of the mute rule to update. Must be a valid UUID format."
         ),
-        name: str | None = Field(
+        name: NonBlankStr | None = Field(
             default=None,
             description="New name for the rule. If not specified, name remains unchanged.",
         ),
-        reason: str | None = Field(
+        reason: NonBlankStr | None = Field(
             default=None,
             description="New reason for the rule. If not specified, reason remains unchanged.",
         ),
@@ -435,7 +449,7 @@ Structure:
 
     async def delete_mute_rule(
         self,
-        rule_id: str = Field(
+        rule_id: NonBlankStr = Field(
             description="UUID of the mute rule to delete. Must be a valid UUID format."
         ),
     ) -> dict[str, Any]:
@@ -457,15 +471,18 @@ Structure:
         """
         self.logger.info(f"Deleting mute rule {rule_id}...")
 
-        result = await self.api_client.delete(f"/mute-rules/{rule_id}")
+        # A deletion that did not happen answers with an error status, which
+        # leaves this tool as an error. Reaching this line means Prowler accepted
+        # it, whether it answered 204 with no body or 200 with the deleted
+        # resource, so there is no second outcome to report: the previous
+        # "Failed to delete mute rule" fired on the shape of the answer rather
+        # than on anything having gone wrong, and said nothing a caller could act
+        # on.
+        await self.api_client.delete(f"/mute-rules/{rule_id}")
 
-        if result.get("success"):
-            return {
-                "success": True,
-                "message": "Mute rule deleted successfully",
-            }
-        else:
-            return {
-                "success": False,
-                "message": "Failed to delete mute rule",
-            }
+        return {
+            "message": (
+                f"Mute rule {rule_id} deleted successfully. The findings it muted stay "
+                "muted."
+            )
+        }

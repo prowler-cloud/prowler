@@ -4,6 +4,49 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [5.41.0] (Prowler v5.41.0)
+
+### 🚀 Added
+
+- `memorydb_cluster_in_transit_encryption_enabled` check for AWS provider, verifying MemoryDB clusters have in-transit encryption (TLS) enabled [(#12246)](https://github.com/prowler-cloud/prowler/pull/12246)
+- `elasticbeanstalk_environment_no_secrets_in_configuration` check for AWS provider, scanning the option settings of every Elastic Beanstalk environment for hardcoded secrets [(#12378)](https://github.com/prowler-cloud/prowler/pull/12378)
+- CIS Google Workspace Foundations Benchmark v1.4.0 compliance framework [(#12513)](https://github.com/prowler-cloud/prowler/pull/12513)
+- `Jira.send_finding()` returns typed creation outcomes with the issue key, immutable ID and browse URL, and supports length-safe finding and delivery-attempt labels plus marker lookup for uncertain deliveries [(#12539)](https://github.com/prowler-cloud/prowler/pull/12539)
+- `Jira.get_issues_status()` resolves issue references by immutable ID in batches and returns explicit open, done, moved, missing, forbidden or unknown outcomes without treating missing issues as deleted [(#12539)](https://github.com/prowler-cloud/prowler/pull/12539)
+- `guardduty_ai_protection_enabled` check for AWS provider, flagging GuardDuty detectors without AI Protection, which analyzes AWS CloudTrail data events from Amazon Bedrock, Amazon Bedrock AgentCore and Amazon SageMaker AI; a detector that does not report the feature is `MANUAL` rather than `FAIL` [(#12564)](https://github.com/prowler-cloud/prowler/pull/12564)
+- `guardduty_runtime_monitoring_enabled` check for AWS provider, flagging GuardDuty detectors without unified Runtime Monitoring, the only feature that covers Amazon EC2 instances and Amazon ECS on AWS Fargate tasks in addition to Amazon EKS [(#12564)](https://github.com/prowler-cloud/prowler/pull/12564)
+- `ecr_registry_enhanced_scanning_enabled` check for AWS provider, verifying that the ECR registry scan type is enhanced (Amazon Inspector, covering programming language packages and continuous rescanning) instead of basic, and reporting MANUAL when the registry scanning configuration cannot be read [(#12660)](https://github.com/prowler-cloud/prowler/pull/12660)
+- `eks_cluster_vpc_cni_network_policy_enforced` check for AWS provider, flagging EKS clusters whose Amazon VPC CNI managed add-on does not enable Kubernetes network policy enforcement, and reporting MANUAL where the EKS API cannot show the setting [(#12661)](https://github.com/prowler-cloud/prowler/pull/12661)
+- `cloudwatch_log_group_agentcore_data_protection_policy_enabled` check for AWS provider, verifying that Bedrock AgentCore log groups mask sensitive data with a CloudWatch Logs data protection policy [(#12662)](https://github.com/prowler-cloud/prowler/pull/12662)
+- `iam_policy_no_agentcore_workload_access_token_wildcard` check for AWS provider, flagging customer-managed IAM policies that allow `bedrock-agentcore:GetWorkloadAccessToken`, `GetWorkloadAccessTokenForJWT` or `GetWorkloadAccessTokenForUserId` on resources reaching workload identities other than the caller's own, which AWS documents as the only binding on the unverified user ID the token is issued for [(#12664)](https://github.com/prowler-cloud/prowler/pull/12664)
+- `iam_policy_passrole_to_bedrock_agentcore_restricted` check for AWS provider, flagging customer-managed IAM policies that allow `iam:PassRole` over every role where the passed role can reach Bedrock AgentCore, so any principal holding the policy can run agent code under any role in the account [(#12664)](https://github.com/prowler-cloud/prowler/pull/12664)
+- `iam_role_service_trust_restricts_source_to_account` check for AWS provider, flagging IAM roles whose trust policy lets an AWS service principal assume the role without confining the request to a specific source account, including trust policies that `iam_role_cross_service_confused_deputy_prevention` does not evaluate [(#12664)](https://github.com/prowler-cloud/prowler/pull/12664)
+- `PROWLER_IMAGE_PROVIDER_ALLOWED_PRIVATE_NETWORKS` environment variable so the image provider can reach container registries on allowlisted private networks, keeping every other non-public address blocked [(#12678)](https://github.com/prowler-cloud/prowler/pull/12678)
+- `PROWLER_AWS_PARTITION` environment variable to select the AWS partition used for STS credential validation and scan bootstrap, with a clear error when the account belongs to a different partition [(#12680)](https://github.com/prowler-cloud/prowler/pull/12680)
+
+### 🔄 Changed
+
+- Google Workspace checks mapped to CIS evaluate the full audit procedure instead of a single condition, so Gmail spoofing actions, 2-Step Verification, password expiration and alert severity left on Google's defaults no longer pass [(#12513)](https://github.com/prowler-cloud/prowler/pull/12513)
+- `security_login_challenges_configured` and `security_2sv_enforced` unmapped from CIS Google Workspace 4.1.4.1 and CISA SCuBA 0.6 `GWS.COMMONCONTROLS.1.1`, whose Post-SSO verification and phishing-resistant MFA requirements neither check can prove [(#12513)](https://github.com/prowler-cloud/prowler/pull/12513)
+
+### 🐞 Fixed
+
+- GitHub repository discovery for unscoped scans now paginates beyond the first 100 accessible repositories instead of silently scanning only the first page [(#12460)](https://github.com/prowler-cloud/prowler/pull/12460)
+- `rules_*_alert_configured` checks no longer pass a rule whose delivery to the alert center is disabled, the setting behind the benchmark's "Ensure that Alerts is set to On" [(#12513)](https://github.com/prowler-cloud/prowler/pull/12513)
+- `security_password_policy_strong` no longer fails a domain that never touched the password strength setting: Google enforces strong passwords by default, so an unset value is the secure default and not a missing configuration [(#12513)](https://github.com/prowler-cloud/prowler/pull/12513)
+- `security_2sv_enforced` and `security_2sv_hardware_keys_admins` report MANUAL instead of judging domain-wide values that a group or a sub-organizational unit overrides, or that were dropped because the root organizational unit could not be resolved; a domain-wide failure is still reported as such, with the override noted [(#12513)](https://github.com/prowler-cloud/prowler/pull/12513)
+- `ecr_registry_scan_images_on_push_enabled` no longer passes a registry whose scanning rules are all `MANUAL`, nor describes a `CONTINUOUS_SCAN` registry as scanning on push; each rule's `scanFrequency` is now read instead of inferred from a rule's presence [(#12560)](https://github.com/prowler-cloud/prowler/pull/12560)
+- CloudWatch log metric filter checks no longer crash with `AttributeError` when the account has a metric filter whose log group was not retrieved [(#12561)](https://github.com/prowler-cloud/prowler/pull/12561)
+- `guardduty_eks_runtime_monitoring_enabled` no longer reports `FAIL` for detectors that use unified Runtime Monitoring; the GuardDuty service now reads the `RUNTIME_MONITORING` feature, which is mutually exclusive with `EKS_RUNTIME_MONITORING` and already covers Amazon EKS [(#12564)](https://github.com/prowler-cloud/prowler/pull/12564)
+- Checks no longer report `FAIL` when the scanning identity lacks permissions, an API is not enabled or a feature is not licensed; they now emit a single `MANUAL` finding naming what is required, across 28 M365, Azure, AWS and GCP checks [(#12645)](https://github.com/prowler-cloud/prowler/pull/12645)
+- `sagemaker_notebook_instance_without_direct_internet_access_configured` check logic to read the `DirectInternetAccess` setting instead of `RootAccess`, failing a notebook instance with direct internet access enabled even when root access is disabled [(#12659)](https://github.com/prowler-cloud/prowler/pull/12659)
+- Basic authentication fallback in the image provider when a registry rejects the negotiated bearer token, so registries like Harbor that guard catalog listing behind Basic can be enumerated [(#12678)](https://github.com/prowler-cloud/prowler/pull/12678)
+- Registry catalog listing when the server answers with a Bearer challenge after negotiating Basic (or anonymous) authentication, switching to a bearer token obtained from the challenge instead of failing [(#12678)](https://github.com/prowler-cloud/prowler/pull/12678)
+- `--registry-insecure` now propagates to Trivy via `TRIVY_INSECURE`, so images in registries with self-signed certificates can be pulled and scanned, not just enumerated [(#12678)](https://github.com/prowler-cloud/prowler/pull/12678)
+- Registry scans in the Image provider now skip non-image OCI artifacts (Helm charts, cosign signatures, SBOM attestations) and no longer abort the whole scan when Trivy fails on a single discovered image; registry enumeration also runs in parallel instead of one request at a time [(#12695)](https://github.com/prowler-cloud/prowler/pull/12695)
+
+---
+
 ## [5.40.0] (Prowler v5.40.0)
 
 ### 🚀 Added

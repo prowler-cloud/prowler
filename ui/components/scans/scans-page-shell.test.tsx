@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import type { OnboardingFlow } from "@/lib/onboarding";
 import { useScansStore } from "@/store";
 import { ProviderProps } from "@/types";
 
@@ -115,6 +116,18 @@ vi.mock("@/components/onboarding", () => ({
   PageReady: () => <div data-testid="page-ready" />,
 }));
 
+interface OnboardingTriggerProps {
+  flow: OnboardingFlow;
+}
+
+const getTriggeredTourTargets = () => {
+  const triggerProps = onboardingTriggerSpy.mock.calls.at(-1)?.[0] as
+    | OnboardingTriggerProps
+    | undefined;
+
+  return triggerProps?.flow.tour.steps.map((step) => step.target);
+};
+
 const providers: ProviderProps[] = [
   {
     id: "provider-1",
@@ -178,24 +191,6 @@ describe("ScansPageShell", () => {
     useScansStore.getState().closeLaunchScanModal();
   });
 
-  it("does not render an imported findings tab", () => {
-    vi.stubEnv("UI_CLOUD_ENABLED", "false");
-
-    render(
-      <ScansPageShell providers={providers} hasManageScansPermission>
-        <div>Scans table</div>
-      </ScansPageShell>,
-    );
-
-    expect(
-      screen.queryByRole("tab", { name: /imported findings/i }),
-    ).not.toBeInTheDocument();
-    expect(
-      screen.queryByRole("button", { name: /import findings/i }),
-    ).not.toBeInTheDocument();
-    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-  });
-
   it("uses the shared scan filter bar for scan filters", () => {
     vi.stubEnv("UI_CLOUD_ENABLED", "false");
 
@@ -243,6 +238,72 @@ describe("ScansPageShell", () => {
     );
 
     expect(screen.getByRole("combobox", { name: /all types/i })).toBeVisible();
+  });
+
+  it.each(["Cloud", "Private Cloud"])(
+    "shows Import Findings in %s with Manage Ingestions",
+    () => {
+      // Given
+      vi.stubEnv("UI_CLOUD_ENABLED", "true");
+
+      // When
+      render(
+        <ScansPageShell
+          providers={providers}
+          hasManageScansPermission
+          hasManageIngestionsPermission
+        >
+          <div>Scans table</div>
+        </ScansPageShell>,
+      );
+
+      // Then
+      expect(
+        screen.getByRole("button", { name: /import findings/i }),
+      ).toBeVisible();
+    },
+  );
+
+  it("hides Import Findings without Manage Ingestions", () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
+
+    // When
+    render(
+      <ScansPageShell
+        providers={providers}
+        hasManageScansPermission
+        hasManageIngestionsPermission={false}
+      >
+        <div>Scans table</div>
+      </ScansPageShell>,
+    );
+
+    // Then
+    expect(
+      screen.queryByRole("button", { name: /import findings/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("hides Import Findings in OSS and Local Server", () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
+
+    // When
+    render(
+      <ScansPageShell
+        providers={providers}
+        hasManageScansPermission
+        hasManageIngestionsPermission
+      >
+        <div>Scans table</div>
+      </ScansPageShell>,
+    );
+
+    // Then
+    expect(
+      screen.queryByRole("button", { name: /import findings/i }),
+    ).not.toBeInTheDocument();
   });
 
   it("shows the CLI import banner in Cloud", () => {
@@ -544,6 +605,50 @@ describe("ScansPageShell", () => {
     );
 
     expect(screen.getByTestId("onboarding-trigger")).toBeInTheDocument();
+  });
+
+  it("uses only mounted tour targets when an active scan exists on the completed tab", () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
+    searchParamsValue.current = "tab=completed";
+
+    // When
+    render(
+      <ScansPageShell
+        providers={providers}
+        hasManageScansPermission
+        activeScanCount={1}
+      >
+        <div>Scans table</div>
+      </ScansPageShell>,
+    );
+
+    // Then
+    expect(getTriggeredTourTargets()).toEqual([undefined, "launch", "tabs"]);
+  });
+
+  it("targets the running scan when its row is mounted on the in progress tab", () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
+    searchParamsValue.current = "tab=active";
+
+    // When
+    render(
+      <ScansPageShell
+        providers={providers}
+        hasManageScansPermission
+        activeScanCount={1}
+      >
+        <div>Scans table</div>
+      </ScansPageShell>,
+    );
+
+    // Then
+    expect(getTriggeredTourTargets()).toEqual([
+      undefined,
+      "in-progress",
+      "launch",
+    ]);
   });
 
   it("suppresses the view-first-scan tour when no provider is connected, since Launch Scan is disabled", () => {
