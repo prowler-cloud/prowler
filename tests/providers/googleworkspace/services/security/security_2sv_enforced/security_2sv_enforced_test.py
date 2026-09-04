@@ -224,8 +224,8 @@ class TestSecurity2svEnforced:
         assert "trust their device" in findings[0].status_extended
         assert "also overridden" in findings[0].status_extended
 
-    def test_manual_when_every_failing_setting_is_overridden(self):
-        """The overriding value is not exposed, so the failure is unconfirmed"""
+    def test_fail_when_every_failing_setting_is_overridden(self):
+        """The all-users requirement still fails for users outside the override"""
         findings = run_check(
             **{
                 **COMPLIANT,
@@ -235,11 +235,9 @@ class TestSecurity2svEnforced:
         )
 
         assert len(findings) == 1
-        assert findings[0].status == "MANUAL"
+        assert findings[0].status == "FAIL"
         assert "trust their device" in findings[0].status_extended
-        assert "every failing setting is also overridden" in (
-            findings[0].status_extended
-        )
+        assert "also overridden" in findings[0].status_extended
 
     def test_fail_when_only_some_failing_settings_are_overridden(self):
         """A failure no override reaches is still proven for the whole domain"""

@@ -8,7 +8,6 @@ from prowler.providers.googleworkspace.services.security.lib.durations import (
     parse_duration_seconds,
 )
 from prowler.providers.googleworkspace.services.security.lib.scope import (
-    failures_shadowed_by_overrides,
     override_caveat,
     unevaluable_reason,
 )
@@ -145,23 +144,9 @@ class security_2sv_enforced(Check):
                     )
                 )
 
-            failing_settings = frozenset(setting for setting, _ in issues)
             reasons = "; ".join(text for _, text in issues)
 
-            if issues and failures_shadowed_by_overrides(policies, failing_settings):
-                # The audited scope (e.g. the admin group of 4.1.1.1) may get
-                # the overriding value, which the Policy API does not expose,
-                # so the domain-wide failure cannot be confirmed for it.
-                report.status = "MANUAL"
-                report.status_extended = (
-                    f"2-Step Verification is not enforced as required in the "
-                    f"domain-wide policy of {domain}: {reasons}. However, every "
-                    f"failing setting is also overridden for at least one group "
-                    f"or organizational unit, so the audited scope may be "
-                    f"configured correctly. Review those overrides in the Admin "
-                    f"console."
-                )
-            elif issues:
+            if issues:
                 report.status = "FAIL"
                 report.status_extended = (
                     f"2-Step Verification is not enforced as required in domain "
