@@ -46,7 +46,14 @@ runs:
       env:
         GITHUB_TOKEN: ${{ github.token }}
       run: |
-        if ! grep -q "prowler-cloud/prowler" uv.lock; then
+        if grep -q "prowler-cloud/prowler" uv.lock; then
+          :
+        else
+          status=$?
+          if [ "$status" -ne 1 ]; then
+            echo "::error::grep failed reading uv.lock (exit code $status)."
+            exit "$status"
+          fi
           echo "No prowler-cloud/prowler entry in uv.lock, nothing to update."
           exit 0
         fi
@@ -70,7 +77,14 @@ runs:
       env:
         GITHUB_TOKEN: ${{ github.token }}
       run: |
-        if ! grep -q "prowler-cloud/prowler" uv.lock; then
+        if grep -q "prowler-cloud/prowler" uv.lock; then
+          :
+        else
+          status=$?
+          if [ "$status" -ne 1 ]; then
+            echo "::error::grep failed reading uv.lock (exit code $status)."
+            exit "$status"
+          fi
           echo "No prowler-cloud/prowler entry in uv.lock, nothing to update."
           exit 0
         fi
