@@ -125,6 +125,14 @@ class Organizations(AWSService):
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+        # A per-policy helper (_describe_policy / _list_targets_for_policy) can
+        # fail without raising here, leaving a partial inventory built from
+        # empty content or targets. Discard it so Organization.policies never
+        # exposes incomplete records; consumers see None, matching the
+        # list-failure path above.
+        if self.policies_unavailable:
+            return None
+
         return policies
 
     def _describe_policy(self, policy_id) -> dict:
