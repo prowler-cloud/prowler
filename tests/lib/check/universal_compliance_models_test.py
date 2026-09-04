@@ -1,6 +1,7 @@
 import json
 import os
 import tempfile
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -908,13 +909,102 @@ class TestCyberEssentialsFramework:
         )
         return os.path.normpath(base)
 
-    def test_loads_and_supports_azure(self):
+    def test_loads_and_supports_aws_and_azure(self):
         fw = load_compliance_framework_universal(self._path())
         assert fw is not None
         assert fw.framework == "Cyber-Essentials"
         assert fw.version == "3.3"
-        assert fw.get_providers() == ["azure"]
+        assert fw.get_providers() == ["aws", "azure"]
+        assert all("aws" in requirement.checks for requirement in fw.requirements)
+        assert fw.supports_provider("aws")
         assert fw.supports_provider("azure")
+
+    def test_aws_check_mappings_reference_registered_checks(self):
+        fw = load_compliance_framework_universal(self._path())
+        expected_mappings = {
+            "CE-FW-01": [
+                "ec2_instance_port_rdp_exposed_to_internet",
+                "ec2_instance_port_ssh_exposed_to_internet",
+                "ec2_networkacl_allow_ingress_any_port",
+                "ec2_securitygroup_allow_ingress_from_internet_to_all_ports",
+                "ec2_securitygroup_allow_ingress_from_internet_to_any_port",
+                "ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports",
+                "networkfirewall_in_all_vpc",
+            ],
+            "CE-FW-02": [],
+            "CE-FW-03": [
+                "ec2_instance_port_rdp_exposed_to_internet",
+                "ec2_instance_port_ssh_exposed_to_internet",
+            ],
+            "CE-FW-04": [
+                "ec2_networkacl_allow_ingress_any_port",
+                "ec2_securitygroup_allow_ingress_from_internet_to_all_ports",
+                "ec2_securitygroup_default_restrict_traffic",
+            ],
+            "CE-FW-05": [],
+            "CE-FW-06": [],
+            "CE-FW-07": [],
+            "CE-SC-01": [],
+            "CE-SC-02": [],
+            "CE-SC-03": [],
+            "CE-SC-04": [],
+            "CE-SC-05": [
+                "apigateway_restapi_authorizers_enabled",
+                "apigateway_restapi_public_with_authorizer",
+                "apigatewayv2_api_authorizers_enabled",
+                "cognito_identity_pool_guest_access_disabled",
+                "kafka_cluster_unrestricted_access_disabled",
+                "s3_account_level_public_access_blocks",
+                "s3_bucket_public_access",
+            ],
+            "CE-SC-06": [],
+            "CE-SUM-01": [],
+            "CE-SUM-02": [],
+            "CE-SUM-03": [],
+            "CE-SUM-04": ["ssm_managed_compliant_patching"],
+            "CE-UAC-01": [],
+            "CE-UAC-02": [],
+            "CE-UAC-03": [],
+            "CE-UAC-04": [
+                "cognito_user_pool_mfa_enabled",
+                "directoryservice_supported_mfa_radius_enabled",
+                "iam_administrator_access_with_mfa",
+                "iam_root_mfa_enabled",
+                "iam_user_mfa_enabled_console_access",
+            ],
+            "CE-UAC-05": [],
+            "CE-UAC-06": [],
+            "CE-UAC-07": [
+                "cognito_user_pool_mfa_enabled",
+                "directoryservice_supported_mfa_radius_enabled",
+                "iam_administrator_access_with_mfa",
+                "iam_root_mfa_enabled",
+                "iam_user_mfa_enabled_console_access",
+            ],
+            "CE-UAC-08": [
+                "cognito_user_pool_password_policy_minimum_length_14",
+                "iam_password_policy_minimum_length_14",
+            ],
+            "CE-MP-01": ["guardduty_ec2_malware_protection_enabled"],
+            "CE-MP-02": [],
+            "CE-MP-03": [],
+        }
+        actual_mappings = {
+            requirement.id: requirement.checks["aws"] for requirement in fw.requirements
+        }
+        assert actual_mappings == expected_mappings
+
+        repository_root = Path(self._path()).parents[2]
+        registered_checks = {
+            json.loads(metadata_path.read_text())["CheckID"]
+            for metadata_path in (
+                repository_root / "prowler" / "providers" / "aws" / "services"
+            ).rglob("*.metadata.json")
+        }
+        referenced_checks = {
+            check_id for check_ids in actual_mappings.values() for check_id in check_ids
+        }
+        assert referenced_checks <= registered_checks
 
     def test_covers_all_five_themes(self):
         fw = load_compliance_framework_universal(self._path())
@@ -941,8 +1031,8 @@ class TestCyberEssentialsFramework:
                 "partial",
                 "non-applicable",
             }
-            # Requirements with no checks must not claim to be Automated.
-            if not req.checks.get("azure"):
+            # Requirements with no checks for any provider must not claim to be Automated.
+            if not any(req.checks.values()):
                 assert req.attributes["AssessmentStatus"] == "Manual"
 
 
