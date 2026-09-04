@@ -2,25 +2,19 @@
 
 import { revalidatePath } from "next/cache";
 
-import { pollTaskUntilSettled } from "@/actions/task/poll";
 import { apiBaseUrl, getAuthHeaders, parseStringify } from "@/lib";
 import { handleApiError, handleApiResponse } from "@/lib/server-actions-helper";
-import { IntegrationType } from "@/types/integrations";
-import type { TaskState } from "@/types/tasks";
+import type {
+  IntegrationConnectionTestResponse,
+  IntegrationType,
+} from "@/types/integrations";
 
-type TaskStartResponse = {
-  data: { id: string; type: "tasks" };
-};
-
-type TestConnectionResponse = {
-  success: boolean;
-  message?: string;
-  taskId?: string;
-  data?: TaskStartResponse;
-  error?: string;
-  /** The id of the channel a channel-level failure named, when it named one. */
-  failedChannelId?: string | null;
-};
+const INTEGRATION_CONNECTION_PATHS = [
+  "/integrations/amazon-s3",
+  "/integrations/aws-security-hub",
+  "/integrations/jira",
+  "/integrations/slack",
+] as const;
 
 export const getIntegrations = async (searchParams?: URLSearchParams) => {
   const headers = await getAuthHeaders({ contentType: false });
@@ -266,63 +260,9 @@ export const deleteIntegration = async (
   }
 };
 
-type ConnectionTaskResult = {
-  connected?: boolean;
-  error?: string | null;
-  // The failing channel's id, or null when the failure names no channel.
-  channel?: string | null;
-};
-
-type PollConnectionResult =
-  | {
-      success: true;
-      message: string;
-      taskState: TaskState;
-      result: ConnectionTaskResult | undefined;
-    }
-  | {
-      success: false;
-      message: string;
-      taskState?: TaskState;
-      result?: ConnectionTaskResult;
-    }
-  | { error: string };
-
-const pollTaskUntilComplete = async (
-  taskId: string,
-): Promise<PollConnectionResult> => {
-  // 60 attempts * 3s (~180s) outlasts the backend task's 120s hard time limit,
-  // so the task always settles (success or failure) before we give up. The
-  // Jira connection check in particular can take well over the previous 57s
-  // window on accounts with many projects.
-  const settled = await pollTaskUntilSettled<ConnectionTaskResult>(taskId, {
-    maxAttempts: 60,
-    delayMs: 3000,
-  });
-
-  if (!settled.ok) {
-    return { error: settled.error };
-  }
-
-  const taskState = settled.state;
-  const result = settled.result;
-
-  const isSuccessful =
-    taskState === "completed" &&
-    result?.connected === true &&
-    result?.error === null;
-
-  const message = isSuccessful
-    ? "Connection test completed successfully."
-    : result?.error || "Connection test failed.";
-
-  return { success: isSuccessful, message, taskState, result };
-};
-
 export const testIntegrationConnection = async (
   id: string,
-  waitForCompletion = true,
-): Promise<TestConnectionResponse> => {
+): Promise<IntegrationConnectionTestResponse> => {
   const headers = await getAuthHeaders({ contentType: true });
   const url = new URL(`${apiBaseUrl}/integrations/${id}/connection`);
 
@@ -334,43 +274,13 @@ export const testIntegrationConnection = async (
       const taskId = data?.data?.id;
 
       if (taskId) {
-        // If waitForCompletion is false, return immediately with task started status
-        if (!waitForCompletion) {
-          return {
-            success: true,
-            message:
-              "Connection test started. It may take some time to complete.",
-            taskId,
-            data: parseStringify(data),
-          };
-        }
-
-        // Poll the task until completion
-        const pollResult = await pollTaskUntilComplete(taskId);
-
-        revalidatePath("/integrations/amazon-s3");
-        revalidatePath("/integrations/aws-security-hub");
-        revalidatePath("/integrations/jira");
-        revalidatePath("/integrations/slack");
-
-        if ("error" in pollResult) {
-          return { success: false, error: pollResult.error };
-        }
-
-        if (pollResult.success) {
-          return {
-            success: true,
-            message:
-              pollResult.message || "Connection test completed successfully!",
-            data: parseStringify(data),
-          };
-        } else {
-          return {
-            success: false,
-            error: pollResult.message || "Connection test failed.",
-            failedChannelId: pollResult.result?.channel ?? null,
-          };
-        }
+        return {
+          success: true,
+          message:
+            "Connection test started. It may take some time to complete.",
+          taskId,
+          data: parseStringify(data),
+        };
       } else {
         return {
           success: false,
@@ -390,35 +300,8 @@ export const testIntegrationConnection = async (
   }
 };
 
-export const pollConnectionTestStatus = async (
-  taskId: string,
-): Promise<TestConnectionResponse> => {
-  try {
-    const pollResult = await pollTaskUntilComplete(taskId);
-
-    revalidatePath("/integrations/amazon-s3");
-    revalidatePath("/integrations/aws-security-hub");
-    revalidatePath("/integrations/jira");
-    revalidatePath("/integrations/slack");
-
-    if ("error" in pollResult) {
-      return { success: false, error: pollResult.error };
-    }
-
-    if (pollResult.success) {
-      return {
-        success: true,
-        message:
-          pollResult.message || "Connection test completed successfully!",
-      };
-    } else {
-      return {
-        success: false,
-        error: pollResult.message || "Connection test failed.",
-        failedChannelId: pollResult.result?.channel ?? null,
-      };
-    }
-  } catch (_error) {
-    return { success: false, error: "Failed to check connection test status." };
+export const revalidateIntegrationConnectionPages = async (): Promise<void> => {
+  for (const path of INTEGRATION_CONNECTION_PATHS) {
+    revalidatePath(path);
   }
 };

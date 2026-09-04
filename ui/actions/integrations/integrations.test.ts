@@ -1,12 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { fetchMock, pollTaskUntilSettledMock } = vi.hoisted(() => ({
+const { fetchMock, revalidatePathMock } = vi.hoisted(() => ({
   fetchMock: vi.fn(),
-  pollTaskUntilSettledMock: vi.fn(),
+  revalidatePathMock: vi.fn(),
 }));
 
 vi.mock("next/cache", () => ({
-  revalidatePath: vi.fn(),
+  revalidatePath: revalidatePathMock,
 }));
 
 vi.mock("@/lib", () => ({
@@ -20,11 +20,10 @@ vi.mock("@/lib/server-actions-helper", () => ({
   handleApiResponse: vi.fn(),
 }));
 
-vi.mock("@/actions/task/poll", () => ({
-  pollTaskUntilSettled: pollTaskUntilSettledMock,
-}));
-
-import { testIntegrationConnection } from "./integrations";
+import {
+  revalidateIntegrationConnectionPages,
+  testIntegrationConnection,
+} from "./integrations";
 
 describe("testIntegrationConnection", () => {
   beforeEach(() => {
@@ -37,36 +36,29 @@ describe("testIntegrationConnection", () => {
     );
   });
 
-  it("polls the connection task for up to 60 attempts, 3s apart", async () => {
-    // Given
-    pollTaskUntilSettledMock.mockResolvedValue({
-      ok: true,
-      state: "completed",
-      result: { connected: true, error: null },
-    });
-
+  it("returns the task immediately for shared background tracking", async () => {
     // When
     const response = await testIntegrationConnection("jira-1");
 
     // Then
-    expect(pollTaskUntilSettledMock).toHaveBeenCalledWith("task-1", {
-      maxAttempts: 60,
-      delayMs: 3000,
+    expect(response).toEqual({
+      success: true,
+      message: "Connection test started. It may take some time to complete.",
+      taskId: "task-1",
+      data: { data: { id: "task-1", type: "tasks" } },
     });
-    expect(response.success).toBe(true);
   });
 
-  it("surfaces a poll timeout as a failed connection test", async () => {
-    // Given
-    pollTaskUntilSettledMock.mockResolvedValue({
-      ok: false,
-      error: "Task timeout",
-    });
-
+  it("revalidates every integration page through one shared action", async () => {
     // When
-    const response = await testIntegrationConnection("jira-1");
+    await revalidateIntegrationConnectionPages();
 
     // Then
-    expect(response).toEqual({ success: false, error: "Task timeout" });
+    expect(revalidatePathMock.mock.calls).toEqual([
+      ["/integrations/amazon-s3"],
+      ["/integrations/aws-security-hub"],
+      ["/integrations/jira"],
+      ["/integrations/slack"],
+    ]);
   });
 });
