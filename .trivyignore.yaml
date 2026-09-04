@@ -113,6 +113,18 @@ vulnerabilities:
     purls:
       - "pkg:npm/fast-uri"
     expired_at: 2027-01-31
+  - id: CVE-2026-75899
+    purls:
+      - "pkg:npm/fast-uri"
+    expired_at: 2027-01-31
+  - id: CVE-2026-75975
+    purls:
+      - "pkg:npm/fast-uri"
+    expired_at: 2027-01-31
+  - id: CVE-2026-76172
+    purls:
+      - "pkg:npm/fast-uri"
+    expired_at: 2027-01-31
   - id: CVE-2026-69192
     purls:
       - "pkg:npm/ip-address"
@@ -147,6 +159,22 @@ vulnerabilities:
     purls:
       - "pkg:golang/github.com/go-git/go-git/v5"
     expired_at: 2026-09-15
+
+  # CVE-2026-84304 is a DoS in grpc-go <= 1.83.0: a peer fragments a gRPC stream into
+  # millions of tiny HTTP/2 DATA frames until the receiver runs out of heap. Fixed in
+  # 1.83.1 (published 2026-09-01). Trivy 0.74.0, the latest published release and the
+  # version the images ship, pins 1.82.1 as an indirect dependency:
+  # https://github.com/aquasecurity/trivy/blob/v0.74.0/go.mod
+  # Upstream bump still open: https://github.com/aquasecurity/trivy/pull/11176
+  # Trivy only speaks gRPC in client/server mode (`trivy server`, `--server`). Prowler
+  # invokes it exclusively as `trivy image` and `trivy fs` on a local path, so no gRPC
+  # listener or connection ever exists in the image and the affected path is not
+  # reachable. Remove this temporary suppression as soon as a Trivy release pins
+  # grpc >= 1.83.1.
+  - id: CVE-2026-84304
+    purls:
+      - "pkg:golang/google.golang.org/grpc"
+    expired_at: 2026-10-15
 
   - id: CVE-2026-56852
     purls:
