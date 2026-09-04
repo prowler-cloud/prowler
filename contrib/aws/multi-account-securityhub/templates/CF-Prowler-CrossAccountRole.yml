@@ -64,7 +64,6 @@ Resources:
                   - appstream:Describe*
                   - appstream:List*
                   - backup:List*
-                  - cloudtrail:GetInsightSelectors
                   - codeartifact:List*
                   - codebuild:BatchGet*
                   - cognito-idp:GetUserPoolMfaConfig
@@ -73,27 +72,16 @@ Resources:
                   - ds:Describe*
                   - ds:Get*
                   - ds:List*
-                  - dynamodb:GetResourcePolicy
-                  - ec2:GetEbsEncryptionByDefault
-                  - ec2:GetSnapshotBlockPublicAccessState
-                  - ec2:GetInstanceMetadataDefaults
                   - ecr:Describe*
-                  - ecr:GetRegistryScanningConfiguration
-                  - elasticfilesystem:DescribeBackupPolicy
                   - glue:GetConnections
-                  - glue:GetSecurityConfiguration*
                   - glue:SearchTables
                   - lambda:GetFunction*
                   - logs:FilterLogEvents
                   - lightsail:GetRelationalDatabases
                   - macie2:GetMacieSession
-                  - s3:GetAccountPublicAccessBlock
-                  - shield:DescribeProtection
-                  - shield:GetSubscriptionState
                   - ssm:GetDocument
                   - ssm-incidents:List*
                   - support:Describe*
-                  - tag:GetTagKeys
                   - wellarchitected:List*
 
               - Sid: AllowProwlerSecurityHub
@@ -101,7 +89,6 @@ Resources:
                 Resource: "*"
                 Action:
                   - securityhub:BatchImportFindings
-                  - securityhub:GetFindings
     Metadata:
       cfn_nag:
         rules_to_suppress:
