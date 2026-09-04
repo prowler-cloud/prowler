@@ -9,6 +9,17 @@ class organizations_opt_out_ai_services_policy(Check):
         findings = []
 
         if organizations_client.organization:
+            if organizations_client.policies_unavailable:
+                report = Check_Report_AWS(
+                    metadata=self.metadata(),
+                    resource=organizations_client.organization,
+                )
+                report.region = organizations_client.region
+                report.status = "MANUAL"
+                report.status_extended = "Cannot evaluate the AI services opt-out policy: AWS Organizations policies could not be listed. Verify that the scanning identity is allowed to call organizations:ListPolicies, organizations:DescribePolicy and organizations:ListTargetsForPolicy."
+                findings.append(report)
+                return findings
+
             if (
                 organizations_client.organization.policies is not None
             ):  # Access Denied to list_policies

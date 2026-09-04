@@ -22,6 +22,7 @@ class Organizations(AWSService):
         super().__init__(__class__.__name__, provider)
         self.organization = None
         self.policies = {}
+        self.policies_unavailable = False
         self.delegated_administrators = []
         self._describe_organization()
 
@@ -106,8 +107,9 @@ class Organizations(AWSService):
                         )
 
         except ClientError as error:
+            policies = None
+            self.policies_unavailable = True
             if error.response["Error"]["Code"] == "AccessDeniedException":
-                policies = None
                 logger.warning(
                     f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
@@ -117,6 +119,8 @@ class Organizations(AWSService):
                 )
 
         except Exception as error:
+            policies = None
+            self.policies_unavailable = True
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )

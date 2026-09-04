@@ -11,6 +11,7 @@ class Test_organizations_tags_policies_enabled_and_attached:
     def test_organization_no_organization(self):
         organizations_client = mock.MagicMock
         organizations_client.region = AWS_REGION_EU_WEST_1
+        organizations_client.policies_unavailable = False
         organizations_client.audited_partition = "aws"
         organizations_client.audited_account = "0123456789012"
         organizations_client.organization = Organization(
@@ -54,6 +55,7 @@ class Test_organizations_tags_policies_enabled_and_attached:
     def test_organization_with_AI_optout_no_policies(self):
         organizations_client = mock.MagicMock
         organizations_client.region = AWS_REGION_EU_WEST_1
+        organizations_client.policies_unavailable = False
         organizations_client.audited_partition = "aws"
         organizations_client.audited_account = "0123456789012"
         organizations_client.organization = Organization(
@@ -99,10 +101,11 @@ class Test_organizations_tags_policies_enabled_and_attached:
     def test_organization_with_AI_optout_policy_complete(self):
         organizations_client = mock.MagicMock
         organizations_client.region = AWS_REGION_EU_WEST_1
+        organizations_client.policies_unavailable = False
         organizations_client.audited_partition = "aws"
         organizations_client.audited_account = "0123456789012"
-        organizations_client.get_unknown_arn = (
-            lambda x: f"arn:aws:organizations:{x}:0123456789012:unknown"
+        organizations_client.get_unknown_arn = lambda x: (
+            f"arn:aws:organizations:{x}:0123456789012:unknown"
         )
         organizations_client.organization = Organization(
             id="o-1234567890",
@@ -175,6 +178,7 @@ class Test_organizations_tags_policies_enabled_and_attached:
     def test_organization_with_AI_optout_policy_no_content(self):
         organizations_client = mock.MagicMock
         organizations_client.region = AWS_REGION_EU_WEST_1
+        organizations_client.policies_unavailable = False
         organizations_client.audited_partition = "aws"
         organizations_client.audited_account = "0123456789012"
         organizations_client.organization = Organization(
@@ -231,6 +235,7 @@ class Test_organizations_tags_policies_enabled_and_attached:
     def test_organization_with_AI_optout_policy_no_disallow(self):
         organizations_client = mock.MagicMock
         organizations_client.region = AWS_REGION_EU_WEST_1
+        organizations_client.policies_unavailable = False
         organizations_client.audited_partition = "aws"
         organizations_client.audited_account = "0123456789012"
         organizations_client.organization = Organization(
@@ -291,6 +296,7 @@ class Test_organizations_tags_policies_enabled_and_attached:
     def test_organization_with_AI_optout_policy_no_opt_out(self):
         organizations_client = mock.MagicMock
         organizations_client.region = AWS_REGION_EU_WEST_1
+        organizations_client.policies_unavailable = False
         organizations_client.audited_partition = "aws"
         organizations_client.audited_account = "0123456789012"
         organizations_client.organization = Organization(
@@ -351,5 +357,45 @@ class Test_organizations_tags_policies_enabled_and_attached:
                 assert (
                     result[0].resource_arn
                     == "arn:aws:organizations::1234567890:organization/o-1234567890"
+                )
+                assert result[0].region == AWS_REGION_EU_WEST_1
+
+    def test_organization_policies_unavailable(self):
+        organizations_client = mock.MagicMock
+        organizations_client.region = AWS_REGION_EU_WEST_1
+        organizations_client.policies_unavailable = True
+        organizations_client.audited_partition = "aws"
+        organizations_client.audited_account = "0123456789012"
+        organizations_client.organization = Organization(
+            id="o-1234567890",
+            arn="arn:aws:organizations::1234567890:organization/o-1234567890",
+            status="ACTIVE",
+            master_id="1234567890",
+            policies=None,
+            delegated_administrators=None,
+        )
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ):
+            with mock.patch(
+                "prowler.providers.aws.services.organizations.organizations_opt_out_ai_services_policy.organizations_opt_out_ai_services_policy.organizations_client",
+                new=organizations_client,
+            ):
+                from prowler.providers.aws.services.organizations.organizations_opt_out_ai_services_policy.organizations_opt_out_ai_services_policy import (
+                    organizations_opt_out_ai_services_policy,
+                )
+
+                check = organizations_opt_out_ai_services_policy()
+                result = check.execute()
+
+                assert len(result) == 1
+                assert result[0].status == "MANUAL"
+                assert (
+                    "Cannot evaluate the AI services opt-out policy"
+                    in result[0].status_extended
                 )
                 assert result[0].region == AWS_REGION_EU_WEST_1
