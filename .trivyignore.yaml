@@ -190,11 +190,11 @@ vulnerabilities:
   # suppression as soon as a fixed Trivy release is available.
   - id: CVE-2026-56855
     purls:
-      - "pkg:golang/golang.org/x/crypto"
+      - "pkg:golang/golang.org/x/crypto@v0.55.0"
     expired_at: 2026-10-15
   - id: CVE-2026-78662
     purls:
-      - "pkg:golang/golang.org/x/crypto"
+      - "pkg:golang/golang.org/x/crypto@v0.55.0"
     expired_at: 2026-10-15
 
   - id: CVE-2026-56852
