@@ -2,6 +2,8 @@ import base64
 import hashlib
 from dataclasses import FrozenInstanceError
 from datetime import datetime, timedelta
+from logging import ERROR, WARNING
+from threading import Barrier
 from types import SimpleNamespace
 from typing import List, Optional
 from unittest.mock import MagicMock, PropertyMock, patch
@@ -751,6 +753,77 @@ class TestJiraIntegration:
 
     @patch.object(Jira, "get_auth", return_value=None)
     @patch.object(
+        Jira,
+        "get_projects",
+        return_value={"PROJ1": "Project One", "PROJ2": "Project Two"},
+    )
+    def test_test_connection_partial_issue_types_failure(
+        self, mock_get_projects, mock_get_auth, caplog
+    ):
+        # To disable vulture
+        mock_get_projects = mock_get_projects
+        mock_get_auth = mock_get_auth
+        caplog.set_level(WARNING)
+
+        def fake_issue_types(project_key):
+            if project_key == "PROJ2":
+                raise JiraGetAvailableIssueTypesError("no create permission")
+            return ["Task"]
+
+        with patch.object(
+            Jira, "get_available_issue_types", side_effect=fake_issue_types
+        ):
+            connection = Jira.test_connection(
+                redirect_uri=self.redirect_uri,
+                client_id=self.client_id,
+                client_secret=self.client_secret,
+            )
+
+        assert connection.is_connected
+        assert connection.error is None
+        assert connection.issue_types == {"PROJ1": ["Task"]}
+        assert any(
+            record.levelno == WARNING
+            and "Failed to get issue types for project PROJ2" in record.message
+            for record in caplog.records
+        )
+        assert not any(record.levelno >= ERROR for record in caplog.records)
+
+    @patch.object(Jira, "get_auth", return_value=None)
+    @patch.object(
+        Jira,
+        "get_projects",
+        return_value={f"PROJ{i}": f"Project {i}" for i in range(5)},
+    )
+    def test_test_connection_fetches_issue_types_concurrently(
+        self, mock_get_projects, mock_get_auth
+    ):
+        # To disable vulture
+        mock_get_projects = mock_get_projects
+        mock_get_auth = mock_get_auth
+
+        # Every call blocks until all 5 arrive; a sequential fetch would time out
+        # at the barrier and surface as a per-project failure instead of a result.
+        barrier = Barrier(5, timeout=5)
+
+        def fake_issue_types(project_key):
+            barrier.wait()
+            return [project_key]
+
+        with patch.object(
+            Jira, "get_available_issue_types", side_effect=fake_issue_types
+        ):
+            connection = Jira.test_connection(
+                redirect_uri=self.redirect_uri,
+                client_id=self.client_id,
+                client_secret=self.client_secret,
+            )
+
+        assert connection.is_connected
+        assert connection.issue_types == {f"PROJ{i}": [f"PROJ{i}"] for i in range(5)}
+
+    @patch.object(Jira, "get_auth", return_value=None)
+    @patch.object(
         Jira, "get_projects", side_effect=JiraNoProjectsError("No projects found")
     )
     def test_test_connection_no_projects_found(self, mock_get_projects, mock_get_auth):
@@ -997,6 +1070,34 @@ class TestJiraIntegration:
 
         with pytest.raises(JiraGetAvailableIssueTypesError):
             self.jira_integration.get_available_issue_types(project_key="TEST")
+
+    @patch.object(Jira, "get_access_token", return_value="valid_access_token")
+    @patch.object(
+        Jira, "cloud_id", new_callable=PropertyMock, return_value="test_cloud_id"
+    )
+    @patch("prowler.lib.outputs.jira.jira.requests.get")
+    def test_get_available_issue_types_no_projects_logs_warning_not_error(
+        self, mock_get, mock_cloud_id, mock_get_access_token, caplog
+    ):
+        # To disable vulture
+        mock_cloud_id = mock_cloud_id
+        mock_get_access_token = mock_get_access_token
+        caplog.set_level(WARNING)
+
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {"projects": []}
+        mock_get.return_value = mock_response
+
+        with pytest.raises(JiraGetAvailableIssueTypesError):
+            self.jira_integration.get_available_issue_types(project_key="TEST")
+
+        assert any(
+            record.levelno == WARNING
+            and "No issue types found for project TEST" in record.message
+            for record in caplog.records
+        )
+        assert not any(record.levelno >= ERROR for record in caplog.records)
 
     @patch.object(Jira, "get_access_token", return_value="valid_access_token")
     @patch.object(
