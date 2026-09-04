@@ -3,6 +3,7 @@ import hashlib
 import os
 import re
 from collections.abc import Mapping
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional
@@ -1125,18 +1126,27 @@ class Jira:
                 api_token=api_token,
                 domain=domain,
             )
+            # get_projects() already forces a fresh access token (refreshing it if
+            # needed) before we return here, so the concurrent calls below all reuse
+            # the same still-valid token instead of racing to refresh it themselves.
             projects = jira.get_projects()
 
             issue_types = {}
-            for project_key in projects:
-                try:
-                    issue_types[project_key] = jira.get_available_issue_types(
-                        project_key
-                    )
-                except Exception as e:
-                    logger.warning(
-                        f"Failed to get issue types for project {project_key}: {e}"
-                    )
+            with ThreadPoolExecutor(max_workers=10) as executor:
+                future_to_project = {
+                    executor.submit(
+                        jira.get_available_issue_types, project_key
+                    ): project_key
+                    for project_key in projects
+                }
+                for future in as_completed(future_to_project):
+                    project_key = future_to_project[future]
+                    try:
+                        issue_types[project_key] = future.result()
+                    except Exception as e:
+                        logger.warning(
+                            f"Failed to get issue types for project {project_key}: {e}"
+                        )
 
             return JiraConnection(
                 is_connected=True, projects=projects, issue_types=issue_types
@@ -1296,7 +1306,11 @@ class Jira:
 
             if response.status_code == 200:
                 if len(response.json()["projects"]) == 0:
-                    logger.error("No projects found")
+                    # Expected per-project condition (e.g. the integration user lacks
+                    # "create issue" rights on this specific project) — the caller in
+                    # test_connection() already treats this as non-fatal, so this isn't
+                    # an error worth alerting on.
+                    logger.warning(f"No issue types found for project {project_key}")
                     raise JiraNoProjectsError(
                         message="No projects found in Jira",
                         file=os.path.basename(__file__),
@@ -1316,6 +1330,15 @@ class Jira:
             raise refresh_error
         except JiraRefreshTokenResponseError as response_error:
             raise response_error
+        except JiraNoProjectsError as no_projects_error:
+            # Expected per-project condition, already handled as non-fatal by the
+            # test_connection() caller — warn instead of error.
+            logger.warning(f"Failed to get available issue types: {no_projects_error}")
+            raise JiraGetAvailableIssueTypesError(
+                message="Failed to get available issue types",
+                file=os.path.basename(__file__),
+                original_exception=no_projects_error,
+            )
         except Exception as e:
             logger.error(f"Failed to get available issue types: {e}")
             raise JiraGetAvailableIssueTypesError(
