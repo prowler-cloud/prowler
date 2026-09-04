@@ -1,11 +1,26 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.kms.kms_client import kms_client
+from prowler.providers.aws.services.kms.lib.inventory import (
+    get_kms_inventory_error_reports,
+    get_kms_key_detail_error_report,
+)
 
 
 class kms_cmk_are_used(Check):
-    def execute(self):
-        findings = []
+    """Assess whether customer-managed KMS keys are in use."""
+
+    def execute(self) -> list[Check_Report_AWS]:
+        """Execute the KMS key usage check.
+
+        Returns:
+            list[Check_Report_AWS]: Reports for customer-managed keys and any
+            incomplete KMS inventory evidence.
+        """
+        findings = get_kms_inventory_error_reports(self.metadata(), kms_client)
         for key in kms_client.keys:
+            if not key.detail_retrieved:
+                findings.append(get_kms_key_detail_error_report(self.metadata(), key))
+                continue
             # Only check CMKs keys
             if key.manager == "CUSTOMER":
                 report = Check_Report_AWS(metadata=self.metadata(), resource=key)
