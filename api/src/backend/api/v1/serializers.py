@@ -14,6 +14,7 @@ from api.models import (
     IntegrationProviderRelationship,
     Invitation,
     InvitationRoleRelationship,
+    JiraIssue,
     LighthouseConfiguration,
     LighthouseProviderConfiguration,
     LighthouseProviderModels,
@@ -50,6 +51,7 @@ from api.v1.serializer_utils.integrations import (
     S3ConfigSerializer,
     SecurityHubConfigSerializer,
     replace_integration_providers,
+    sanitize_integration_task_result,
 )
 from api.v1.serializer_utils.lighthouse import (
     BedrockCredentialsSerializer,
@@ -637,7 +639,9 @@ class TaskSerializer(RLSSerializer, TaskBase):
 
     @extend_schema_field(serializers.JSONField())
     def get_result(self, obj):
-        return self.get_json_field(obj, "result")
+        result = self.get_json_field(obj, "result")
+        task_name = obj.task_runner_task.task_name if obj.task_runner_task else None
+        return sanitize_integration_task_result(task_name, result)
 
     @extend_schema_field(serializers.JSONField())
     def get_task_args(self, obj):
@@ -3217,6 +3221,11 @@ class IntegrationJiraDispatchSerializer(BaseSerializerV1):
 
     project_key = serializers.CharField(required=True)
     issue_type = serializers.CharField(required=True)
+    force_retry = serializers.BooleanField(
+        required=False,
+        default=False,
+        help_text="Retry a stale unresolved delivery after Jira returns zero marker matches. This can create a duplicate issue.",
+    )
 
     class JSONAPIMeta:
         resource_name = "integrations-jira-dispatches"
@@ -4147,6 +4156,41 @@ class LighthouseProviderModelsUpdateSerializer(BaseWriteSerializer):
 
 
 # Mute Rules
+
+
+class JiraIssueSerializer(RLSSerializer):
+    """
+    Read-only view of a Jira issue linked to a finding by a Jira integration.
+
+    Rows are keyed on the finding ``uid`` so the same finding maps to the same
+    issue across scans. ``issue_status`` is the last status Prowler observed in
+    Jira (refreshed whenever a dispatch touches the finding), not a live value.
+    """
+
+    class Meta:
+        model = JiraIssue
+        fields = [
+            "id",
+            "inserted_at",
+            "updated_at",
+            "finding_uid",
+            "finding_id",
+            "issue_key",
+            "issue_id",
+            "issue_url",
+            "project_key",
+            "issue_status",
+            "issue_status_category",
+            "status_synced_at",
+            "integration",
+            "provider",
+            "url",
+        ]
+        read_only_fields = fields
+
+    included_serializers = {
+        "provider": "api.v1.serializers.ProviderIncludeSerializer",
+    }
 
 
 class MuteRuleSerializer(RLSSerializer):

@@ -136,6 +136,24 @@ Every Jira issue created from a single Finding carries a stable reference back t
 
 Prowler Cloud always includes the Finding URL. In Prowler Local Server, set `DJANGO_UI_BASE_URL` in the API environment (for example, `https://prowler.example.com`) to enable it. When the variable is empty, the issue is created without the link.
 
+### Sending a Finding That Already Has a Jira Issue
+
+<VersionBadge version="5.42.0" />
+
+Prowler remembers each confirmed Jira issue created for a Finding, keyed by the Finding UID, so sending the same Finding again does not create a duplicate issue:
+
+* If the linked issue is still open in Jira, the Finding is skipped. The task result reports `skipped_count` and the skipped Finding IDs; use `GET /api/v1/jira-issues` to read confirmed Jira references.
+* If the linked issue moved to a new Jira key, Prowler verifies its issue ID, refreshes the saved key and URL, and skips the Finding while the issue remains open.
+* If the linked issue has a Jira status in the **Done** category, Prowler creates a replacement and links the Finding to the new issue after Jira confirms it.
+* If Jira reports that the issue is missing or forbidden, or its status cannot be determined safely, Prowler keeps the existing link and skips the Finding.
+* If another task already owns the delivery, Prowler reports the Finding as deferred instead of treating it as already ticketed. Run the same send action after the active task finishes.
+
+The link, and the last status observed in Jira, are available through the API at `GET /api/v1/jira-issues` (filter by `finding_uid`, `finding_uid__in`, `provider_id`, `integration`, `issue_key`, `issue_status_category` or `issue_status_category__in`). Each Jira integration keeps its own links, so the same Finding can have one issue per integration.
+
+Prowler uses a private delivery marker to check whether Jira created an issue when a delivery result is uncertain. A reservation that stopped before the delivery attempt began can be resumed safely by a later explicit send. After an attempt starts, Prowler searches Jira by the marker: exactly one matching issue completes the link, while no match, multiple matches, or a lookup error keeps the reservation and prevents an automatic retry.
+
+An authorized API caller can repeat a dispatch with `force_retry: true` when an attempt has been pending for at least 15 minutes. Prowler retries only when Jira returns zero matches for the saved marker, and it reuses that marker. This action accepts a duplicate-issue risk because an empty Jira search cannot prove that Jira never received the original request. Multiple matches and lookup errors remain blocked for manual investigation.
+
 ## Integration Status
 
 Monitor and manage your Jira integrations through the management interface:
@@ -237,7 +255,9 @@ If you don't have `jq` installed, run the command without `| jq`.
         "state": "completed",
         "result": {
           "created_count": 0,
-          "failed_count": 1
+          "deferred_count": 0,
+          "failed_count": 1,
+          "skipped_count": 0
         },
         "task_args": {
           "integration_id": "a476c2c0-0a00-4720-bfb9-286e9eb5c7bd",
@@ -260,7 +280,9 @@ If you don't have `jq` installed, run the command without `| jq`.
         "state": "completed",
         "result": {
           "created_count": 1,
-          "failed_count": 0
+          "deferred_count": 0,
+          "failed_count": 0,
+          "skipped_count": 0
         },
         "task_args": {
           "integration_id": "a476c2c0-0a00-4720-bfb9-286e9eb5c7bd",
@@ -288,4 +310,6 @@ If you don't have `jq` installed, run the command without `| jq`.
 How to read it:
 
 * "created_count": number of Jira issues successfully created.
+* "deferred_count": number of Findings owned by another delivery task. Run the same send action after that task finishes.
 * "failed_count": number of Jira issues that could not be created. If `failed_count > 0` or the issue does not appear in Jira, please contact us so we can assist while detailed logs are not available through the UI.
+* "skipped_count": number of Findings not sent because an existing Jira issue does not need replacement, a pending delivery remains unresolved, or an equivalent Finding was already processed in the request.

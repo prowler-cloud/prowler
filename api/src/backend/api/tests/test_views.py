@@ -34,6 +34,7 @@ from api.models import (
     Integration,
     Invitation,
     InvitationRoleRelationship,
+    JiraIssue,
     LighthouseProviderConfiguration,
     LighthouseProviderModels,
     LighthouseTenantConfiguration,
@@ -5126,6 +5127,40 @@ class TestTaskViewSet:
             "enabled": True,
             "scan_id": None,
             "label": "True North",
+        }
+
+    def test_tasks_retrieve_sanitizes_jira_result(
+        self, authenticated_client, tasks_fixture
+    ):
+        task, *_ = tasks_fixture
+        task.task_runner_task.task_name = "integration-jira"
+        task.task_runner_task.result = json.dumps(
+            {
+                "created_count": 0,
+                "failed_count": 0,
+                "skipped_count": 1,
+                "skipped": [
+                    {
+                        "finding_id": "00000000-0000-0000-0000-000000000001",
+                        "issue_key": "PRIVATE-1",
+                        "issue_url": "https://private.example/browse/PRIVATE-1",
+                        "issue_status": "In Progress",
+                    }
+                ],
+            }
+        )
+        task.task_runner_task.save(update_fields=["task_name", "result"])
+
+        response = authenticated_client.get(
+            reverse("task-detail", kwargs={"pk": task.id}),
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json()["data"]["attributes"]["result"] == {
+            "created_count": 0,
+            "failed_count": 0,
+            "skipped_count": 1,
+            "skipped": [{"finding_id": "00000000-0000-0000-0000-000000000001"}],
         }
 
     def test_tasks_retrieve_with_truncated_kwargs_returns_empty_task_args(
@@ -13558,7 +13593,233 @@ class TestScheduleViewSet:
 
 
 @pytest.mark.django_db
+class TestJiraIssueViewSet:
+    def test_list_hides_reservations(self, authenticated_client, jira_issues_fixture):
+        linked, other_provider_issue, reservation = jira_issues_fixture
+        response = authenticated_client.get(reverse("jiraissue-list"))
+        assert response.status_code == status.HTTP_200_OK
+        ids = {item["id"] for item in response.json()["data"]}
+        assert ids == {str(linked.id), str(other_provider_issue.id)}
+        assert str(reservation.id) not in ids
+
+    def test_retrieve(self, authenticated_client, jira_issues_fixture):
+        linked, *_ = jira_issues_fixture
+        response = authenticated_client.get(
+            reverse("jiraissue-detail", kwargs={"pk": linked.id})
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert data["type"] == "jira-issues"
+        attributes = data["attributes"]
+        assert attributes["finding_uid"] == linked.finding_uid
+        assert attributes["finding_id"] == str(linked.finding_id)
+        assert attributes["issue_key"] == "TEST-1"
+        assert attributes["issue_url"] == "https://test.atlassian.net/browse/TEST-1"
+        assert attributes["project_key"] == "TEST"
+        assert attributes["issue_status"] == "To Do"
+        assert attributes["issue_status_category"] == "new"
+        assert attributes["status_synced_at"] is not None
+        assert "delivery_attempt_token" not in attributes
+        assert "delivery_started_at" not in attributes
+        relationships = data["relationships"]
+        assert relationships["provider"]["data"]["id"] == str(linked.provider_id)
+        assert relationships["integration"]["data"]["id"] == str(linked.integration_id)
+
+    def test_retrieve_reservation_returns_404(
+        self, authenticated_client, jira_issues_fixture
+    ):
+        *_, reservation = jira_issues_fixture
+        response = authenticated_client.get(
+            reverse("jiraissue-detail", kwargs={"pk": reservation.id})
+        )
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_other_tenant_issue_is_hidden(
+        self, authenticated_client, jira_issues_fixture, tenants_fixture
+    ):
+        linked, *_ = jira_issues_fixture
+        other_tenant = tenants_fixture[2]
+        with rls_transaction(str(other_tenant.id)):
+            other_provider = Provider.objects.create(
+                tenant_id=other_tenant.id,
+                provider=Provider.ProviderChoices.AWS,
+                uid="999999999999",
+                alias="other-tenant-provider",
+            )
+            other_integration = Integration.objects.create(
+                tenant_id=other_tenant.id,
+                enabled=True,
+                connected=True,
+                integration_type=Integration.IntegrationChoices.JIRA,
+                configuration={"projects": {"OTHER": "Other project"}},
+                credentials={
+                    "domain": "other-tenant",
+                    "user_mail": "other-tenant@example.com",
+                    "api_token": "fake-token",
+                },
+            )
+            other_issue = JiraIssue.objects.create(
+                tenant_id=other_tenant.id,
+                integration=other_integration,
+                provider=other_provider,
+                finding_uid="other-tenant-finding",
+                finding_id=datetime_to_uuid7(datetime.now(UTC)),
+                issue_id="20001",
+                issue_key="OTHER-1",
+                issue_url="https://other-tenant.atlassian.net/browse/OTHER-1",
+                project_key="OTHER",
+            )
+
+        response = authenticated_client.get(reverse("jiraissue-list"))
+        assert response.status_code == status.HTTP_200_OK
+        ids = {item["id"] for item in response.json()["data"]}
+        assert str(linked.id) in ids
+        assert str(other_issue.id) not in ids
+
+        response = authenticated_client.get(
+            reverse("jiraissue-detail", kwargs={"pk": other_issue.id})
+        )
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    @pytest.mark.parametrize(
+        "filter_name, filter_value, expected_keys",
+        [
+            ("finding_uid", "test_finding_uid_1", {"TEST-1"}),
+            (
+                "finding_uid__in",
+                "test_finding_uid_1,test_finding_uid_other_provider",
+                {"TEST-1", "TEST-2"},
+            ),
+            ("finding_uid__in", "does-not-exist", set()),
+            ("issue_key", "TEST-2", {"TEST-2"}),
+            ("issue_status_category", "done", {"TEST-2"}),
+            ("issue_status_category__in", "new,indeterminate", {"TEST-1"}),
+            ("project_key", "TEST", {"TEST-1", "TEST-2"}),
+            ("search", "TEST-1", {"TEST-1"}),
+        ],
+    )
+    def test_filters(
+        self,
+        authenticated_client,
+        jira_issues_fixture,
+        filter_name,
+        filter_value,
+        expected_keys,
+    ):
+        response = authenticated_client.get(
+            reverse("jiraissue-list"), {f"filter[{filter_name}]": filter_value}
+        )
+        assert response.status_code == status.HTTP_200_OK
+        keys = {item["attributes"]["issue_key"] for item in response.json()["data"]}
+        assert keys == expected_keys
+
+    def test_filter_by_provider(self, authenticated_client, jira_issues_fixture):
+        linked, other_provider_issue, _ = jira_issues_fixture
+        response = authenticated_client.get(
+            reverse("jiraissue-list"),
+            {"filter[provider_id]": str(other_provider_issue.provider_id)},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert [item["id"] for item in response.json()["data"]] == [
+            str(other_provider_issue.id)
+        ]
+
+    def test_filter_by_integration_and_finding_id(
+        self, authenticated_client, jira_issues_fixture
+    ):
+        linked, *_ = jira_issues_fixture
+        response = authenticated_client.get(
+            reverse("jiraissue-list"),
+            {
+                "filter[integration]": str(linked.integration_id),
+                "filter[finding_id]": str(linked.finding_id),
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert [item["id"] for item in response.json()["data"]] == [str(linked.id)]
+
+    def test_invalid_filter(self, authenticated_client, jira_issues_fixture):
+        response = authenticated_client.get(
+            reverse("jiraissue-list"), {"filter[invalid]": "x"}
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_include_provider(self, authenticated_client, jira_issues_fixture):
+        response = authenticated_client.get(
+            reverse("jiraissue-list"), {"include": "provider"}
+        )
+        assert response.status_code == status.HTTP_200_OK
+        included_types = {item["type"] for item in response.json()["included"]}
+        assert included_types == {"providers"}
+
+    def test_read_only(self, authenticated_client, jira_issues_fixture):
+        linked, *_ = jira_issues_fixture
+        response = authenticated_client.post(
+            reverse("jiraissue-list"),
+            data=json.dumps({"data": {"type": "jira-issues", "attributes": {}}}),
+            content_type="application/vnd.api+json",
+        )
+        assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
+        response = authenticated_client.delete(
+            reverse("jiraissue-detail", kwargs={"pk": linked.id})
+        )
+        assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
+
+
+@pytest.mark.django_db
 class TestIntegrationViewSet:
+    @pytest.mark.parametrize(
+        ("force_retry_attribute", "expected_force_retry"),
+        (({}, False), ({"force_retry": True}, True)),
+    )
+    @patch("api.v1.views.Task.objects.get")
+    @patch("api.v1.views.jira_integration_task.delay")
+    def test_jira_dispatch_passes_force_retry_to_task(
+        self,
+        mock_jira_task,
+        mock_task_get,
+        force_retry_attribute,
+        expected_force_retry,
+        authenticated_client,
+        jira_integration_fixture,
+        findings_fixture,
+        tasks_fixture,
+    ):
+        finding, _ = findings_fixture
+        prowler_task = tasks_fixture[0]
+        mock_jira_task.return_value.id = prowler_task.id
+        mock_task_get.return_value = prowler_task
+        data = {
+            "data": {
+                "type": "integrations-jira-dispatches",
+                "attributes": {
+                    "project_key": "TEST",
+                    "issue_type": "Task",
+                    **force_retry_attribute,
+                },
+            }
+        }
+
+        response = authenticated_client.post(
+            reverse(
+                "integration-jira-dispatches",
+                kwargs={"integration_pk": jira_integration_fixture.id},
+            )
+            + f"?filter[finding_id]={finding.id}",
+            data=json.dumps(data),
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+
+        assert response.status_code == status.HTTP_202_ACCEPTED
+        mock_jira_task.assert_called_once_with(
+            tenant_id=str(jira_integration_fixture.tenant_id),
+            integration_id=str(jira_integration_fixture.id),
+            project_key="TEST",
+            issue_type="Task",
+            finding_ids=[str(finding.id)],
+            force_retry=expected_force_retry,
+        )
+
     def test_integrations_list(self, authenticated_client, integrations_fixture):
         response = authenticated_client.get(reverse("integration-list"))
         assert response.status_code == status.HTTP_200_OK

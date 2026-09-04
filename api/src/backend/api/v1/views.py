@@ -54,6 +54,7 @@ from api.filters import (
     IntegrationFilter,
     IntegrationJiraFindingsFilter,
     InvitationFilter,
+    JiraIssueFilter,
     LatestFindingFilter,
     LatestFindingGroupFilter,
     LatestFindingGroupSummaryFilter,
@@ -89,6 +90,7 @@ from api.models import (
     Integration,
     Invitation,
     InvitationRoleRelationship,
+    JiraIssue,
     LighthouseConfiguration,
     LighthouseProviderConfiguration,
     LighthouseProviderModels,
@@ -179,6 +181,7 @@ from api.v1.serializers import (
     InvitationCreateSerializer,
     InvitationSerializer,
     InvitationUpdateSerializer,
+    JiraIssueSerializer,
     LighthouseConfigCreateSerializer,
     LighthouseConfigSerializer,
     LighthouseConfigUpdateSerializer,
@@ -7001,6 +7004,7 @@ class IntegrationJiraViewSet(BaseRLSViewSet):
 
         project_key = serializer.validated_data["project_key"]
         issue_type = serializer.validated_data["issue_type"]
+        force_retry = serializer.validated_data["force_retry"]
 
         with transaction.atomic():
             task = jira_integration_task.delay(
@@ -7009,6 +7013,7 @@ class IntegrationJiraViewSet(BaseRLSViewSet):
                 project_key=project_key,
                 issue_type=issue_type,
                 finding_ids=finding_ids,
+                force_retry=force_retry,
             )
         prowler_task = Task.objects.get(id=task.id)
         serializer = TaskSerializer(prowler_task)
@@ -7484,6 +7489,56 @@ class TenantApiKeyViewSet(BaseRLSViewSet):
 
         serializer = self.get_serializer(instance)
         return Response(data=serializer.data, status=status.HTTP_200_OK)
+
+
+# Jira issues
+@extend_schema_view(
+    list=extend_schema(
+        tags=["Integration"],
+        summary="List Jira issues linked to findings",
+        description=(
+            "Retrieve the Jira issues created from findings through Jira integrations. "
+            "Each entry links a finding UID to the latest Jira issue created for it, "
+            "with the last status observed in Jira. Use `filter[finding_uid__in]` "
+            "and `filter[provider_id]` to check whether specific findings already "
+            "have a ticket."
+        ),
+    ),
+    retrieve=extend_schema(
+        tags=["Integration"],
+        summary="Retrieve a Jira issue link",
+        description="Fetch the Jira issue linked to a finding by the link ID.",
+    ),
+)
+class JiraIssueViewSet(BaseRLSViewSet):
+    queryset = JiraIssue.objects.all()
+    serializer_class = JiraIssueSerializer
+    filterset_class = JiraIssueFilter
+    http_method_names = ["get"]
+    search_fields = ["finding_uid", "issue_key"]
+    ordering = ["-inserted_at"]
+    ordering_fields = [
+        "inserted_at",
+        "updated_at",
+        "issue_key",
+        "project_key",
+        "issue_status",
+        "status_synced_at",
+    ]
+    # RBAC required permissions (implicit -> MANAGE_PROVIDERS enables unlimited
+    # visibility or check visibility via provider group, like findings)
+    required_permissions = []
+
+    def get_queryset(self):
+        if getattr(self, "swagger_fake_view", False):
+            return JiraIssue.objects.none()
+        # Pending reservations have no confirmed Jira issue and are private.
+        queryset = JiraIssue.objects.filter(
+            tenant_id=self.request.tenant_id, issue_id__isnull=False
+        )
+        if not self.user_role.unlimited_visibility:
+            queryset = queryset.filter(provider__in=get_providers(self.user_role))
+        return queryset.select_related("provider", "integration")
 
 
 # MuteRules

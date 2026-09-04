@@ -3113,3 +3113,112 @@ class TenantComplianceSummary(RowLevelSecurityProtectedModel):
                 statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
             ),
         ]
+
+
+class JiraIssue(RowLevelSecurityProtectedModel):
+    """Current Jira issue linked to one finding and Jira integration.
+
+    One row per (integration, provider, finding uid). Keyed on the finding ``uid``
+    rather than the per-scan finding id so the link survives rescans. The current
+    link stays populated while a replacement attempt is in progress.
+    """
+
+    class StatusCategoryChoices(models.TextChoices):
+        NEW = "new", _("New")
+        INDETERMINATE = "indeterminate", _("In progress")
+        DONE = "done", _("Done")
+
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
+    updated_at = models.DateTimeField(auto_now=True, editable=False)
+    integration = models.ForeignKey(
+        Integration, on_delete=models.CASCADE, related_name="jira_issues"
+    )
+    provider = models.ForeignKey(
+        Provider, on_delete=models.CASCADE, related_name="jira_issues"
+    )
+    finding_uid = models.CharField(max_length=300)
+    # Findings are partitioned and rotate per scan, so this is not a foreign key.
+    finding_id = models.UUIDField()
+    issue_id = models.CharField(max_length=64, null=True, blank=True)
+    issue_key = models.CharField(max_length=64, null=True, blank=True)
+    issue_url = models.URLField(max_length=2048, null=True, blank=True)
+    project_key = models.CharField(max_length=64, null=True, blank=True)
+    issue_status = models.CharField(max_length=64, null=True, blank=True)
+    issue_status_category = models.CharField(
+        max_length=16,
+        choices=StatusCategoryChoices.choices,
+        null=True,
+        blank=True,
+    )
+    status_synced_at = models.DateTimeField(null=True, blank=True)
+    delivery_attempt_token = models.UUIDField(null=True, blank=True)
+    delivery_started_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta(RowLevelSecurityProtectedModel.Meta):
+        db_table = "jira_issues"
+
+        constraints = [
+            models.UniqueConstraint(
+                fields=("tenant_id", "integration_id", "provider_id", "finding_uid"),
+                name="unique_jira_issue_per_finding",
+            ),
+            models.UniqueConstraint(
+                fields=("delivery_attempt_token",),
+                condition=Q(delivery_attempt_token__isnull=False),
+                name="unique_jira_delivery_attempt",
+            ),
+            models.CheckConstraint(
+                condition=(
+                    Q(delivery_started_at__isnull=True)
+                    | Q(delivery_attempt_token__isnull=False)
+                ),
+                name="jira_delivery_started_requires_token",
+            ),
+            models.CheckConstraint(
+                condition=(
+                    Q(
+                        issue_id__isnull=True,
+                        issue_key__isnull=True,
+                        issue_url__isnull=True,
+                        project_key__isnull=True,
+                    )
+                    | (
+                        Q(
+                            issue_id__isnull=False,
+                            issue_key__isnull=False,
+                            issue_url__isnull=False,
+                            project_key__isnull=False,
+                        )
+                        & ~Q(issue_id="")
+                        & ~Q(issue_key="")
+                        & ~Q(issue_url="")
+                        & ~Q(project_key="")
+                    )
+                ),
+                name="jira_issue_link_all_or_none",
+            ),
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s",
+                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
+            ),
+        ]
+        indexes = [
+            models.Index(
+                fields=["tenant_id", "provider_id", "finding_uid", "integration_id"],
+                name="ji_tenant_prov_uid_int_idx",
+            ),
+        ]
+
+    class JSONAPIMeta:
+        resource_name = "jira-issues"
+
+    @property
+    def is_linked(self) -> bool:
+        """Whether the row points at a confirmed Jira issue (not a reservation)."""
+        return self.issue_id is not None
+
+    @property
+    def is_done(self) -> bool:
+        return self.issue_status_category == self.StatusCategoryChoices.DONE
