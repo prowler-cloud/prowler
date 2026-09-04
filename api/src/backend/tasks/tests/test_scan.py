@@ -9,6 +9,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from api.db_router import MainRouter
+from api.db_utils import rls_transaction
 from api.exceptions import ProviderConnectionError, ProviderDeletedException
 from api.models import (
     Finding,
@@ -2794,10 +2795,14 @@ class TestCreateComplianceRequirements:
 
         assert count_after_first > 0
         assert count_after_second == count_after_first
-        row_ids = ComplianceRequirementOverview.objects.filter(
-            scan_id=scan_id
-        ).values_list("id", flat=True)
-        assert {row_id.version for row_id in row_ids} == {7}
+        with rls_transaction(tenant_id):
+            row_versions = {
+                row_id.version
+                for row_id in ComplianceRequirementOverview.objects.filter(
+                    scan_id=scan_id
+                ).values_list("id", flat=True)
+            }
+        assert row_versions == {7}
 
     def test_create_compliance_requirements_threatscore_counts_from_template(
         self,
@@ -2845,34 +2850,40 @@ class TestCreateComplianceRequirements:
 
             create_compliance_requirements(tenant_id, scan_id)
 
-        active_findings = Finding.all_objects.filter(
-            scan_id=scan_id,
-            muted=False,
-            status__in=["PASS", "FAIL"],
-            check_id="test_check_id",
-        )
-        assert active_findings.exists()
-        counted = sum(
-            len(finding.resource_regions or []) for finding in active_findings
-        )
+        with rls_transaction(tenant_id):
+            counted = sum(
+                len(finding.resource_regions or [])
+                for finding in Finding.all_objects.filter(
+                    scan_id=scan_id,
+                    muted=False,
+                    status__in=["PASS", "FAIL"],
+                    check_id="test_check_id",
+                )
+            )
+            rows = list(
+                ComplianceRequirementOverview.objects.filter(
+                    scan_id=scan_id
+                ).values_list("compliance_id", "requirement_id", "total_findings")
+            )
         assert counted > 0
-
-        rows = ComplianceRequirementOverview.objects.filter(scan_id=scan_id)
-        threatscore_rows = rows.filter(compliance_id="prowler_threatscore_aws")
         assert (
             sum(
-                row.total_findings
-                for row in threatscore_rows.filter(requirement_id="1.1.1")
+                total
+                for compliance_id, requirement_id, total in rows
+                if (compliance_id, requirement_id)
+                == ("prowler_threatscore_aws", "1.1.1")
             )
             == counted
         )
         assert all(
-            row.total_findings == 0
-            for row in threatscore_rows.filter(requirement_id="1.1.2")
+            total == 0
+            for compliance_id, requirement_id, total in rows
+            if (compliance_id, requirement_id) == ("prowler_threatscore_aws", "1.1.2")
         )
         assert all(
-            row.total_findings == 0
-            for row in rows.filter(compliance_id="other_framework")
+            total == 0
+            for compliance_id, _, total in rows
+            if compliance_id == "other_framework"
         )
 
     def test_create_compliance_requirements_rows_across_regions_and_frameworks(
@@ -2923,17 +2934,20 @@ class TestCreateComplianceRequirements:
             result = create_compliance_requirements(tenant_id, scan_id)
 
         assert result["requirements_created"] == 6
-        rows = set(
-            ComplianceRequirementOverview.objects.filter(scan_id=scan_id).values_list(
-                "compliance_id",
-                "requirement_id",
-                "region",
-                "requirement_status",
-                "passed_checks",
-                "failed_checks",
-                "total_checks",
+        with rls_transaction(tenant_id):
+            rows = set(
+                ComplianceRequirementOverview.objects.filter(
+                    scan_id=scan_id
+                ).values_list(
+                    "compliance_id",
+                    "requirement_id",
+                    "region",
+                    "requirement_status",
+                    "passed_checks",
+                    "failed_checks",
+                    "total_checks",
+                )
             )
-        )
         assert rows == {
             ("fw_one", "r1", "us-east-1", "FAIL", 0, 1, 1),
             ("fw_one", "r1", "eu-west-1", "PASS", 1, 0, 1),
