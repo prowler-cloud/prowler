@@ -478,8 +478,13 @@ class Test_KeyVault_get_key_vaults:
 
 
 class Test_KeyVault_get_keys:
-    def test_get_keys_uses_arm_rotation_policy(self):
-        arm_key = ArmKey(
+    def test_get_keys_fetches_arm_key_details_for_rotation_policy(self):
+        listed_key = ArmKey(attributes=ArmKeyAttributes(enabled=True))
+        listed_key.id = "/subscriptions/subscription/resourceGroups/resource-group/providers/Microsoft.KeyVault/vaults/vault/keys/key"
+        listed_key.name = "key"
+        listed_key.location = "westeurope"
+
+        detailed_key = ArmKey(
             attributes=ArmKeyAttributes(enabled=True),
             rotation_policy=RotationPolicy(
                 lifetime_actions=[
@@ -488,12 +493,10 @@ class Test_KeyVault_get_keys:
                 ]
             ),
         )
-        arm_key.id = "/subscriptions/subscription/resourceGroups/resource-group/providers/Microsoft.KeyVault/vaults/vault/keys/key"
-        arm_key.name = "key"
-        arm_key.location = "westeurope"
 
         mock_client = MagicMock()
-        mock_client.keys.list.return_value = [arm_key]
+        mock_client.keys.list.return_value = [listed_key]
+        mock_client.keys.get.return_value = detailed_key
 
         with (
             patch(
@@ -533,16 +536,23 @@ class Test_KeyVault_get_keys:
         assert [
             action.action for action in keys[0].rotation_policy.lifetime_actions
         ] == ["Rotate", "Notify"]
+        mock_client.keys.get.assert_called_once_with(
+            RESOURCE_GROUP,
+            "vault",
+            "key",
+        )
         data_plane_key_client.assert_not_called()
 
     def test_get_keys_preserves_missing_arm_rotation_policy(self):
-        arm_key = ArmKey(attributes=ArmKeyAttributes(enabled=True))
-        arm_key.id = "/subscriptions/subscription/resourceGroups/resource-group/providers/Microsoft.KeyVault/vaults/vault/keys/key"
-        arm_key.name = "key"
-        arm_key.location = "westeurope"
+        listed_key = ArmKey(attributes=ArmKeyAttributes(enabled=True))
+        listed_key.id = "/subscriptions/subscription/resourceGroups/resource-group/providers/Microsoft.KeyVault/vaults/vault/keys/key"
+        listed_key.name = "key"
+        listed_key.location = "westeurope"
+        detailed_key = ArmKey(attributes=ArmKeyAttributes(enabled=True))
 
         mock_client = MagicMock()
-        mock_client.keys.list.return_value = [arm_key]
+        mock_client.keys.list.return_value = [listed_key]
+        mock_client.keys.get.return_value = detailed_key
 
         with (
             patch(
@@ -578,4 +588,54 @@ class Test_KeyVault_get_keys:
 
         assert len(keys) == 1
         assert keys[0].rotation_policy is None
+        mock_client.keys.get.assert_called_once_with(
+            RESOURCE_GROUP,
+            "vault",
+            "key",
+        )
         data_plane_key_client.assert_not_called()
+
+    def test_get_keys_skips_key_when_arm_details_cannot_be_collected(self):
+        listed_key = ArmKey(attributes=ArmKeyAttributes(enabled=True))
+        listed_key.id = "/subscriptions/subscription/resourceGroups/resource-group/providers/Microsoft.KeyVault/vaults/vault/keys/key"
+        listed_key.name = "key"
+        listed_key.location = "westeurope"
+
+        mock_client = MagicMock()
+        mock_client.keys.list.return_value = [listed_key]
+        mock_client.keys.get.side_effect = Exception("details unavailable")
+
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            patch(
+                "prowler.providers.azure.services.monitor.monitor_service.Monitor",
+                new=MagicMock(),
+            ),
+            patch(
+                "prowler.providers.azure.services.keyvault.keyvault_service.KeyVault._get_key_vaults",
+                return_value={},
+            ),
+        ):
+            from prowler.providers.azure.services.keyvault.keyvault_service import (
+                KeyVault,
+            )
+
+            keyvault = KeyVault(set_mocked_azure_provider())
+
+        keyvault.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+
+        keys = keyvault._get_keys(
+            AZURE_SUBSCRIPTION_ID,
+            RESOURCE_GROUP,
+            "vault",
+        )
+
+        assert keys == []
+        mock_client.keys.get.assert_called_once_with(
+            RESOURCE_GROUP,
+            "vault",
+            "key",
+        )

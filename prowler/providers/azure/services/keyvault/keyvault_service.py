@@ -18,13 +18,15 @@ class KeyVault(AzureService):
         self.key_vaults = self._get_key_vaults()
 
     def _get_key_vaults(self):
-        """
-        Get all KeyVaults with parallel processing.
+        """Get all Key Vaults with parallel processing.
 
         Optimizations:
         1. Uses list_by_subscription() for full Vault objects
         2. Processes vaults in parallel using __threading_call__
         3. Each vault's keys/secrets/monitor fetched in parallel
+
+        Returns:
+            A mapping of subscription IDs to their collected Key Vaults.
         """
         logger.info("KeyVault - Getting key_vaults...")
         key_vaults = {}
@@ -145,6 +147,18 @@ class KeyVault(AzureService):
             return None
 
     def _get_keys(self, subscription, resource_group, keyvault_name):
+        """Collect a Key Vault's keys and their ARM rotation policies.
+
+        Args:
+            subscription: Azure subscription ID containing the Key Vault.
+            resource_group: Resource group containing the Key Vault.
+            keyvault_name: Name of the Key Vault whose keys are collected.
+
+        Returns:
+            The keys whose ARM detail responses were collected successfully.
+            A key is skipped when its detail request fails so an unavailable
+            rotation policy is not reported as a disabled rotation policy.
+        """
         logger.info(f"KeyVault - Getting keys for {keyvault_name}...")
         keys = []
 
@@ -152,6 +166,18 @@ class KeyVault(AzureService):
             client = self.clients[subscription]
             keys_list = client.keys.list(resource_group, keyvault_name)
             for key in keys_list:
+                try:
+                    key_details = client.keys.get(
+                        resource_group,
+                        keyvault_name,
+                        key.name,
+                    )
+                except Exception as error:
+                    logger.error(
+                        f"Key {key.name} in KeyVault {keyvault_name} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
+                    continue
+
                 key_obj = Key(
                     id=getattr(key, "id", ""),
                     name=getattr(key, "name", ""),
@@ -164,7 +190,7 @@ class KeyVault(AzureService):
                         expires=getattr(key.attributes, "expires", 0),
                     ),
                     rotation_policy=self._transform_rotation_policy(
-                        getattr(key, "rotation_policy", None)
+                        getattr(key_details, "rotation_policy", None)
                     ),
                 )
                 keys.append(key_obj)
@@ -178,7 +204,14 @@ class KeyVault(AzureService):
 
     @staticmethod
     def _transform_rotation_policy(policy) -> Optional["KeyRotationPolicy"]:
-        """Transform an ARM key rotation policy into Prowler's model."""
+        """Transform an ARM key rotation policy into Prowler's model.
+
+        Args:
+            policy: Azure Resource Manager key rotation policy, if present.
+
+        Returns:
+            The normalized Prowler rotation policy, or None when absent.
+        """
         if not policy:
             return None
 
