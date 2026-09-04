@@ -72,6 +72,9 @@ from prowler.lib.outputs.compliance.prowler_threatscore.prowler_threatscore_azur
 from prowler.lib.outputs.compliance.prowler_threatscore.prowler_threatscore_gcp import (
     ProwlerThreatScoreGCP,
 )
+from prowler.lib.outputs.compliance.prowler_threatscore.prowler_threatscore_googleworkspace import (
+    ProwlerThreatScoreGoogleWorkspace,
+)
 from prowler.lib.outputs.compliance.prowler_threatscore.prowler_threatscore_kubernetes import (
     ProwlerThreatScoreKubernetes,
 )
@@ -138,6 +141,10 @@ COMPLIANCE_CLASS_MAP = {
     "googleworkspace": [
         (lambda name: name.startswith("cis_"), GoogleWorkspaceCIS),
         (lambda name: name.startswith("cisa_scuba_"), GoogleWorkspaceCISASCuBA),
+        (
+            lambda name: name == "prowler_threatscore_googleworkspace",
+            ProwlerThreatScoreGoogleWorkspace,
+        ),
     ],
     "iac": [
         # IaC provider doesn't have specific compliance frameworks yet
