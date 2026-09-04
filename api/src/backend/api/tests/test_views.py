@@ -82,7 +82,7 @@ from django.db import close_old_connections, connection, connections
 from django.db.models import Count
 from django.db.models.signals import pre_delete
 from django.http import JsonResponse
-from django.test import RequestFactory
+from django.test import RequestFactory, override_settings
 from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 from django_celery_results.models import TaskResult
@@ -4539,6 +4539,52 @@ class TestScanViewSet:
         response = authenticated_client.get(url)
         assert response.status_code == status.HTTP_302_FOUND
         assert response["Location"] == presigned_url
+
+    @override_settings(
+        DJANGO_OUTPUT_S3_AWS_PUBLIC_ENDPOINT_URL="https://storage.example.com",
+        DJANGO_OUTPUT_S3_AWS_ACCESS_KEY_ID="access-key",
+        DJANGO_OUTPUT_S3_AWS_SECRET_ACCESS_KEY="secret-key",
+        DJANGO_OUTPUT_S3_AWS_SESSION_TOKEN="",
+        DJANGO_OUTPUT_S3_AWS_DEFAULT_REGION="eu-west-1",
+    )
+    def test_report_s3_redirects_to_the_public_storage_host(
+        self, authenticated_client, scans_fixture, monkeypatch
+    ):
+        """The object is looked up internally but the redirect the browser follows is public."""
+        scan = scans_fixture[0]
+        bucket = "test-bucket"
+        key = "report.zip"
+        scan.output_location = f"s3://{bucket}/{key}"
+        scan.state = StateChoices.COMPLETED
+        scan.save()
+
+        monkeypatch.setattr(
+            "api.v1.views.env",
+            type("env", (), {"str": lambda self, *_args, **_kwargs: bucket})(),
+        )
+
+        head_calls = []
+
+        class InternalS3Client:
+            def head_object(self, Bucket, Key):
+                head_calls.append((Bucket, Key))
+                return {}
+
+            def generate_presigned_url(self, *_args, **_kwargs):
+                raise AssertionError("the internal client must not sign the redirect")
+
+        monkeypatch.setattr("api.v1.views.get_s3_client", lambda: InternalS3Client())
+
+        url = reverse("scan-report", kwargs={"pk": scan.id})
+        response = authenticated_client.get(url)
+
+        assert response.status_code == status.HTTP_302_FOUND
+        assert head_calls == [(bucket, key)]
+
+        location = urlparse(response["Location"])
+        assert location.netloc == "storage.example.com"
+        assert location.path == f"/{bucket}/{key}"
+        assert "X-Amz-Signature" in parse_qs(location.query)
 
     def test_report_s3_success_no_local_files(
         self, authenticated_client, scans_fixture, monkeypatch
