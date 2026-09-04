@@ -1,3 +1,4 @@
+from typing import Type, Optional
 from colorama import Fore, Style
 from tabulate import tabulate
 

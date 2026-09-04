@@ -17,7 +17,17 @@ def get_kisa_ismsp_table(
     output_filename: str,
     output_directory: str,
     compliance_overview: bool,
-):
+) -> None:
+    """Generate KISA-ISMS-P compliance summary table.
+
+    Args:
+        findings (list): List of findings.
+        bulk_checks_metadata (dict): Compliance metadata.
+        compliance_framework (str): Framework identifier.
+        output_filename (str): Name of output file.
+        output_directory (str): Destination directory.
+        compliance_overview (bool): Whether to display compliance overview.
+    """
     sections = {}
     section_seen = {}
     sections_status = {}
