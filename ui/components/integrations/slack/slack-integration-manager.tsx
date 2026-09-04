@@ -4,7 +4,6 @@ import { format, isValid, parseISO } from "date-fns";
 import { TestTube, Unplug } from "lucide-react";
 import { type ReactNode, useEffect, useState } from "react";
 
-import { testIntegrationConnection } from "@/actions/integrations/integrations";
 import {
   disconnectSlackIntegration,
   getSlackAuthorizeUrl,
@@ -37,6 +36,7 @@ import {
   slackErrorMessage,
 } from "@/lib/integrations/slack-errors";
 import type { SlackTokenErrorCode } from "@/lib/integrations/slack-errors";
+import { executeIntegrationConnectionTest } from "@/lib/integrations/test-connection-helper";
 import type {
   IntegrationProps,
   SlackAuthorizedChannel,
@@ -492,7 +492,7 @@ export const SlackIntegrationManager = ({
 
     setIsTesting(true);
     try {
-      const result = await testIntegrationConnection(id);
+      const result = await executeIntegrationConnectionTest(id);
 
       if (result.success) {
         provedCredentialAlive();

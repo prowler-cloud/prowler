@@ -2,7 +2,7 @@ export {
   createIntegration,
   deleteIntegration,
   getIntegrations,
-  pollConnectionTestStatus,
+  revalidateIntegrationConnectionPages,
   testIntegrationConnection,
   updateIntegration,
 } from "./integrations";
