@@ -1,1 +1,1 @@
-AWS Organizations policy checks now report `MANUAL` instead of a confident `PASS`/`FAIL` when the policy inventory could not be fully listed
+Incomplete AWS Organizations policy inventories reported as `MANUAL` instead of `PASS`/`FAIL`

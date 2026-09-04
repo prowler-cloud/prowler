@@ -142,6 +142,7 @@ class Organizations(AWSService):
 
             return policy_content
         except Exception as error:
+            self.policies_unavailable = True
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
@@ -160,6 +161,7 @@ class Organizations(AWSService):
             return targets_for_policy
 
         except Exception as error:
+            self.policies_unavailable = True
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )

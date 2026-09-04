@@ -174,7 +174,7 @@ class Test_organizations_tags_policies_enabled_and_attached:
                 assert result[0].region == AWS_REGION_EU_WEST_1
 
     def test_organization_policies_unavailable(self):
-        organizations_client = mock.MagicMock
+        organizations_client = mock.MagicMock()
         organizations_client.region = AWS_REGION_EU_WEST_1
         organizations_client.policies_unavailable = True
         organizations_client.audited_partition = "aws"
@@ -208,4 +208,7 @@ class Test_organizations_tags_policies_enabled_and_attached:
                 assert len(result) == 1
                 assert result[0].status == "MANUAL"
                 assert "Cannot evaluate tag policies" in result[0].status_extended
+                assert "organizations:ListPolicies" in result[0].status_extended
+                assert "organizations:DescribePolicy" in result[0].status_extended
+                assert "organizations:ListTargetsForPolicy" in result[0].status_extended
                 assert result[0].region == AWS_REGION_EU_WEST_1
