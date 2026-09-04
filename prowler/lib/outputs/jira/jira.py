@@ -1042,6 +1042,7 @@ class Jira:
             )
 
     def _access_token_is_valid(self) -> bool:
+        """Return whether the current OAuth access token has not expired."""
         return bool(self.auth_expiration) and datetime.now() < datetime.fromisoformat(
             self.auth_expiration
         )
@@ -1318,7 +1319,6 @@ class Jira:
                     # "create issue" rights on this specific project) — the caller in
                     # test_connection() already treats this as non-fatal, so this isn't
                     # an error worth alerting on.
-                    logger.warning(f"No issue types found for project {project_key}")
                     raise JiraNoProjectsError(
                         message="No projects found in Jira",
                         file=os.path.basename(__file__),
@@ -1339,7 +1339,7 @@ class Jira:
         except JiraRefreshTokenResponseError as response_error:
             raise response_error
         except JiraNoProjectsError as no_projects_error:
-            # Already logged where it was raised; expected per-project condition.
+            # Expected per-project condition; the caller decides whether to log it.
             raise JiraGetAvailableIssueTypesError(
                 message="Failed to get available issue types",
                 file=os.path.basename(__file__),

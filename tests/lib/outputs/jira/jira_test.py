@@ -1108,7 +1108,7 @@ class TestJiraIntegration:
         Jira, "cloud_id", new_callable=PropertyMock, return_value="test_cloud_id"
     )
     @patch("prowler.lib.outputs.jira.jira.requests.get")
-    def test_get_available_issue_types_no_projects_logs_warning_not_error(
+    def test_get_available_issue_types_no_projects_does_not_log(
         self, mock_get, mock_cloud_id, mock_get_access_token, caplog
     ):
         # To disable vulture
@@ -1124,11 +1124,53 @@ class TestJiraIntegration:
         with pytest.raises(JiraGetAvailableIssueTypesError):
             self.jira_integration.get_available_issue_types(project_key="TEST")
 
-        assert any(
-            record.levelno == WARNING
-            and "No issue types found for project TEST" in record.message
-            for record in caplog.records
+        assert not any(record.levelno >= WARNING for record in caplog.records)
+
+    @patch.object(Jira, "get_auth", return_value=None)
+    @patch.object(
+        Jira,
+        "get_projects",
+        return_value={"TEST": "Test Project"},
+    )
+    @patch.object(Jira, "get_access_token", return_value="valid_access_token")
+    @patch.object(
+        Jira, "cloud_id", new_callable=PropertyMock, return_value="test_cloud_id"
+    )
+    @patch("prowler.lib.outputs.jira.jira.requests.get")
+    def test_test_connection_empty_issue_types_logs_one_warning(
+        self,
+        mock_get,
+        mock_cloud_id,
+        mock_get_access_token,
+        mock_get_projects,
+        mock_get_auth,
+        caplog,
+    ):
+        # To disable vulture
+        mock_cloud_id = mock_cloud_id
+        mock_get_access_token = mock_get_access_token
+        mock_get_projects = mock_get_projects
+        mock_get_auth = mock_get_auth
+        caplog.set_level(WARNING)
+
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {"projects": []}
+        mock_get.return_value = mock_response
+
+        connection = Jira.test_connection(
+            redirect_uri=self.redirect_uri,
+            client_id=self.client_id,
+            client_secret=self.client_secret,
         )
+
+        warnings = [
+            record
+            for record in caplog.records
+            if record.levelno == WARNING and "project TEST" in record.message
+        ]
+        assert connection.is_connected
+        assert len(warnings) == 1
         assert not any(record.levelno >= ERROR for record in caplog.records)
 
     @patch.object(Jira, "get_access_token", return_value="valid_access_token")
