@@ -1,7 +1,11 @@
 import base64
 import hashlib
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import FrozenInstanceError
 from datetime import datetime, timedelta
+from logging import ERROR, WARNING
+from threading import Barrier
+from time import sleep
 from types import SimpleNamespace
 from typing import List, Optional
 from unittest.mock import MagicMock, PropertyMock, patch
@@ -453,6 +457,36 @@ class TestJiraIntegration:
         assert access_token == "new_access_token"
         mock_refresh_access_token.assert_called_once()
 
+    def test_get_access_token_concurrent_refresh_happens_once(self):
+        self.jira_integration.auth_expiration = (
+            datetime.now() - timedelta(seconds=1)
+        ).isoformat()
+        refresh_calls = []
+        # All 5 pass the expiry check together, so without a lock every one of
+        # them would refresh.
+        barrier = Barrier(5, timeout=5)
+
+        def fake_refresh():
+            refresh_calls.append(1)
+            # Keep the token expired while the other threads check it.
+            sleep(0.2)
+            self.jira_integration._access_token = "refreshed_token"
+            self.jira_integration.auth_expiration = (
+                datetime.now() + timedelta(hours=1)
+            ).isoformat()
+            return "refreshed_token"
+
+        def get_token(_):
+            barrier.wait()
+            return self.jira_integration.get_access_token()
+
+        with patch.object(Jira, "refresh_access_token", side_effect=fake_refresh):
+            with ThreadPoolExecutor(max_workers=5) as executor:
+                tokens = list(executor.map(get_token, range(5)))
+
+        assert tokens == ["refreshed_token"] * 5
+        assert len(refresh_calls) == 1
+
     @freeze_time(TEST_DATETIME)
     @patch("prowler.lib.outputs.jira.jira.requests.post")
     @patch.object(Jira, "get_cloud_id", return_value="test_cloud_id")
@@ -751,6 +785,77 @@ class TestJiraIntegration:
 
     @patch.object(Jira, "get_auth", return_value=None)
     @patch.object(
+        Jira,
+        "get_projects",
+        return_value={"PROJ1": "Project One", "PROJ2": "Project Two"},
+    )
+    def test_test_connection_partial_issue_types_failure(
+        self, mock_get_projects, mock_get_auth, caplog
+    ):
+        # To disable vulture
+        mock_get_projects = mock_get_projects
+        mock_get_auth = mock_get_auth
+        caplog.set_level(WARNING)
+
+        def fake_issue_types(project_key):
+            if project_key == "PROJ2":
+                raise JiraGetAvailableIssueTypesError("no create permission")
+            return ["Task"]
+
+        with patch.object(
+            Jira, "get_available_issue_types", side_effect=fake_issue_types
+        ):
+            connection = Jira.test_connection(
+                redirect_uri=self.redirect_uri,
+                client_id=self.client_id,
+                client_secret=self.client_secret,
+            )
+
+        assert connection.is_connected
+        assert connection.error is None
+        assert connection.issue_types == {"PROJ1": ["Task"]}
+        assert any(
+            record.levelno == WARNING
+            and "Failed to get issue types for project PROJ2" in record.message
+            for record in caplog.records
+        )
+        assert not any(record.levelno >= ERROR for record in caplog.records)
+
+    @patch.object(Jira, "get_auth", return_value=None)
+    @patch.object(
+        Jira,
+        "get_projects",
+        return_value={f"PROJ{i}": f"Project {i}" for i in range(5)},
+    )
+    def test_test_connection_fetches_issue_types_concurrently(
+        self, mock_get_projects, mock_get_auth
+    ):
+        # To disable vulture
+        mock_get_projects = mock_get_projects
+        mock_get_auth = mock_get_auth
+
+        # Every call blocks until all 5 arrive; a sequential fetch would time out
+        # at the barrier and surface as a per-project failure instead of a result.
+        barrier = Barrier(5, timeout=5)
+
+        def fake_issue_types(project_key):
+            barrier.wait()
+            return [project_key]
+
+        with patch.object(
+            Jira, "get_available_issue_types", side_effect=fake_issue_types
+        ):
+            connection = Jira.test_connection(
+                redirect_uri=self.redirect_uri,
+                client_id=self.client_id,
+                client_secret=self.client_secret,
+            )
+
+        assert connection.is_connected
+        assert connection.issue_types == {f"PROJ{i}": [f"PROJ{i}"] for i in range(5)}
+
+    @patch.object(Jira, "get_auth", return_value=None)
+    @patch.object(
         Jira, "get_projects", side_effect=JiraNoProjectsError("No projects found")
     )
     def test_test_connection_no_projects_found(self, mock_get_projects, mock_get_auth):
@@ -997,6 +1102,76 @@ class TestJiraIntegration:
 
         with pytest.raises(JiraGetAvailableIssueTypesError):
             self.jira_integration.get_available_issue_types(project_key="TEST")
+
+    @patch.object(Jira, "get_access_token", return_value="valid_access_token")
+    @patch.object(
+        Jira, "cloud_id", new_callable=PropertyMock, return_value="test_cloud_id"
+    )
+    @patch("prowler.lib.outputs.jira.jira.requests.get")
+    def test_get_available_issue_types_no_projects_does_not_log(
+        self, mock_get, mock_cloud_id, mock_get_access_token, caplog
+    ):
+        # To disable vulture
+        mock_cloud_id = mock_cloud_id
+        mock_get_access_token = mock_get_access_token
+        caplog.set_level(WARNING)
+
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {"projects": []}
+        mock_get.return_value = mock_response
+
+        with pytest.raises(JiraGetAvailableIssueTypesError):
+            self.jira_integration.get_available_issue_types(project_key="TEST")
+
+        assert not any(record.levelno >= WARNING for record in caplog.records)
+
+    @patch.object(Jira, "get_auth", return_value=None)
+    @patch.object(
+        Jira,
+        "get_projects",
+        return_value={"TEST": "Test Project"},
+    )
+    @patch.object(Jira, "get_access_token", return_value="valid_access_token")
+    @patch.object(
+        Jira, "cloud_id", new_callable=PropertyMock, return_value="test_cloud_id"
+    )
+    @patch("prowler.lib.outputs.jira.jira.requests.get")
+    def test_test_connection_empty_issue_types_logs_one_warning(
+        self,
+        mock_get,
+        mock_cloud_id,
+        mock_get_access_token,
+        mock_get_projects,
+        mock_get_auth,
+        caplog,
+    ):
+        # To disable vulture
+        mock_cloud_id = mock_cloud_id
+        mock_get_access_token = mock_get_access_token
+        mock_get_projects = mock_get_projects
+        mock_get_auth = mock_get_auth
+        caplog.set_level(WARNING)
+
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {"projects": []}
+        mock_get.return_value = mock_response
+
+        connection = Jira.test_connection(
+            redirect_uri=self.redirect_uri,
+            client_id=self.client_id,
+            client_secret=self.client_secret,
+        )
+
+        warnings = [
+            record
+            for record in caplog.records
+            if record.levelno == WARNING and "project TEST" in record.message
+        ]
+        assert connection.is_connected
+        assert len(warnings) == 1
+        assert not any(record.levelno >= ERROR for record in caplog.records)
 
     @patch.object(Jira, "get_access_token", return_value="valid_access_token")
     @patch.object(
