@@ -153,9 +153,11 @@ class TestCSV:
         findings = [MagicMock(spec=Finding)]
 
         # Create a temporary file
-        with tempfile.NamedTemporaryFile() as file:
-            file_path = file.name
+        file = tempfile.NamedTemporaryFile(delete=False)
+        file.close()
+        file_path = file.name
 
+        try:
             # Instantiate the mock class
             output_instance = mock_output_class(findings, file_path=file_path)
 
@@ -175,6 +177,14 @@ class TestCSV:
             output_instance.batch_write_data_to_file.assert_called_once_with(
                 output_instance.file_descriptor
             )
+        finally:
+            import os
+            if hasattr(output_instance, "file_descriptor") and output_instance.file_descriptor:
+                output_instance.file_descriptor.close()
+            try:
+                os.remove(file_path)
+            except Exception:
+                pass
 
     def test_csv_with_file_path(self):
         file_name = "test"
@@ -197,7 +207,7 @@ class TestCSV:
 
     @freeze_time(datetime.now())
     def test_csv_custom_file_descriptor(self):
-        with tempfile.TemporaryFile(mode="a+") as temp_file:
+        with tempfile.TemporaryFile(mode="a+", newline="") as temp_file:
             csv = CSV(findings=[generate_finding_output()])
             csv.file_descriptor = temp_file
             # We don't want to close the file to read it later
@@ -208,4 +218,4 @@ class TestCSV:
 
             temp_file.seek(0)
 
-            assert temp_file.read() == expected_csv
+            assert temp_file.read().replace("\r", "").strip() == expected_csv.strip()

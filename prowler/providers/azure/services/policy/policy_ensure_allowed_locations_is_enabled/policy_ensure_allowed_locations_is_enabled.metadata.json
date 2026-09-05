@@ -1,0 +1,32 @@
+{
+    "Provider": "azure",
+    "CheckID": "policy_ensure_allowed_locations_is_enabled",
+    "CheckTitle": "Allowed Locations policy is enabled",
+    "CheckType": [],
+    "ServiceName": "policy",
+    "SubServiceName": "",
+    "ResourceIdTemplate": "",
+    "Severity": "high",
+    "ResourceType": "microsoft.resources/subscriptions",
+    "ResourceGroup": "governance",
+    "Description": "Verify that Azure Policy restricts resource creation to allowed regions.",
+    "Risk": "Resources deployed in unapproved regions may violate data sovereignty laws.",
+    "RelatedUrl": "",
+    "AdditionalURLs": [],
+    "Remediation": {
+        "Code": {
+            "CLI": "az policy assignment create --name 'allowed-locations' --policy e56962a6-4747-49cd-b67b-bf8b01975c4c --scope '/subscriptions/<subscription-id>' --params '{\"listOfAllowedLocations\": {\"value\": [\"<location-name>\"]}}'",
+            "NativeIaC": "",
+            "Other": "",
+            "Terraform": ""
+        },
+        "Recommendation": {
+            "Text": "Review and implement the recommended configuration for Policy Ensure Allowed Locations Is Enabled.",
+            "Url": "https://hub.prowler.com/check/policy_ensure_allowed_locations_is_enabled"
+        }
+    },
+    "Categories": [],
+    "DependsOn": [],
+    "RelatedTo": [],
+    "Notes": ""
+}

@@ -17,7 +17,7 @@ _CIS_6_0 = _REPO_ROOT / "prowler" / "compliance" / "aws" / "cis_6.0_aws.json"
 
 
 def _load_cis_60() -> Compliance:
-    return Compliance(**json.load(open(_CIS_6_0)))
+    return Compliance(**json.load(open(_CIS_6_0, encoding="utf-8")))
 
 
 def _finding(check_id: str, status: str):

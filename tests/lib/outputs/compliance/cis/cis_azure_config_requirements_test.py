@@ -21,7 +21,7 @@ _CHECK = "storage_smb_channel_encryption_with_secure_algorithm"
 
 
 def _load():
-    return Compliance(**json.load(open(_CIS_5_0_AZURE)))
+    return Compliance(**json.load(open(_CIS_5_0_AZURE, encoding="utf-8")))
 
 
 def _finding(check_id, status):
