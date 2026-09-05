@@ -1,15 +1,8 @@
 from unittest import mock
 from unittest.mock import MagicMock, patch
 
-from azure.mgmt.keyvault.v2023_07_01.models import (
-    Action,
-)
 from azure.mgmt.keyvault.v2023_07_01.models import Key as ArmKey
 from azure.mgmt.keyvault.v2023_07_01.models import KeyAttributes as ArmKeyAttributes
-from azure.mgmt.keyvault.v2023_07_01.models import (
-    LifetimeAction,
-    RotationPolicy,
-)
 
 from tests.providers.azure.azure_fixtures import (
     AZURE_SUBSCRIPTION_ID,
@@ -484,14 +477,18 @@ class Test_KeyVault_get_keys:
         listed_key.name = "key"
         listed_key.location = "westeurope"
 
-        detailed_key = ArmKey(
-            attributes=ArmKeyAttributes(enabled=True),
-            rotation_policy=RotationPolicy(
-                lifetime_actions=[
-                    LifetimeAction(action=Action(type="rotate")),
-                    LifetimeAction(action=Action(type="notify")),
-                ]
-            ),
+        detailed_key = ArmKey.deserialize(
+            {
+                "properties": {
+                    "attributes": {"enabled": True},
+                    "rotationPolicy": {
+                        "lifetimeActions": [
+                            {"action": {"type": "rotate"}},
+                            {"action": {"type": "notify"}},
+                        ]
+                    },
+                }
+            }
         )
 
         mock_client = MagicMock()
@@ -595,15 +592,31 @@ class Test_KeyVault_get_keys:
         )
         data_plane_key_client.assert_not_called()
 
-    def test_get_keys_skips_key_when_arm_details_cannot_be_collected(self):
+    def test_get_keys_preserves_expiration_checks_when_arm_details_fail(self):
         listed_key = ArmKey(attributes=ArmKeyAttributes(enabled=True))
         listed_key.id = "/subscriptions/subscription/resourceGroups/resource-group/providers/Microsoft.KeyVault/vaults/vault/keys/key"
         listed_key.name = "key"
         listed_key.location = "westeurope"
 
         mock_client = MagicMock()
-        mock_client.keys.list.return_value = [listed_key]
-        mock_client.keys.get.side_effect = Exception("details unavailable")
+        healthy_key = ArmKey(attributes=ArmKeyAttributes(enabled=True))
+        healthy_key.id = listed_key.id + "-healthy"
+        healthy_key.name = "healthy-key"
+        healthy_key.location = listed_key.location
+        another_unreadable_key = ArmKey(attributes=ArmKeyAttributes(enabled=True))
+        another_unreadable_key.id = listed_key.id + "-unreadable"
+        another_unreadable_key.name = "another-unreadable-key"
+        another_unreadable_key.location = listed_key.location
+        mock_client.keys.list.return_value = [
+            listed_key,
+            healthy_key,
+            another_unreadable_key,
+        ]
+        mock_client.keys.get.side_effect = [
+            Exception("details unavailable"),
+            ArmKey(attributes=ArmKeyAttributes(enabled=True)),
+            Exception("details unavailable"),
+        ]
 
         with (
             patch(
@@ -621,6 +634,8 @@ class Test_KeyVault_get_keys:
         ):
             from prowler.providers.azure.services.keyvault.keyvault_service import (
                 KeyVault,
+                KeyVaultInfo,
+                VaultProperties,
             )
 
             keyvault = KeyVault(set_mocked_azure_provider())
@@ -633,9 +648,79 @@ class Test_KeyVault_get_keys:
             "vault",
         )
 
-        assert keys == []
-        mock_client.keys.get.assert_called_once_with(
-            RESOURCE_GROUP,
-            "vault",
-            "key",
+        assert len(keys) == 3
+        assert keys[0].id == listed_key.id
+        assert keys[0].enabled is True
+        assert keys[0].attributes.expires is None
+        assert keys[0].rotation_policy is None
+        assert keys[0].rotation_policy_accessible is False
+        assert keys[1].rotation_policy_accessible is True
+        assert keys[2].rotation_policy_accessible is False
+        mock_client.keys.get.assert_has_calls(
+            [
+                mock.call(RESOURCE_GROUP, "vault", "key"),
+                mock.call(RESOURCE_GROUP, "vault", "healthy-key"),
+                mock.call(RESOURCE_GROUP, "vault", "another-unreadable-key"),
+            ]
         )
+
+        keyvault.subscriptions = {AZURE_SUBSCRIPTION_ID: "subscription"}
+        keyvault.key_vaults = {
+            AZURE_SUBSCRIPTION_ID: [
+                KeyVaultInfo(
+                    id="vault-id",
+                    name="vault",
+                    location="westeurope",
+                    resource_group=RESOURCE_GROUP,
+                    properties=VaultProperties(
+                        tenant_id="tenant",
+                        enable_rbac_authorization=False,
+                        private_endpoint_connections=[],
+                        enable_soft_delete=True,
+                        enable_purge_protection=True,
+                    ),
+                    keys=keys,
+                )
+            ]
+        }
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            patch(
+                "prowler.providers.azure.services.keyvault.keyvault_key_expiration_set_in_non_rbac.keyvault_key_expiration_set_in_non_rbac.keyvault_client",
+                new=keyvault,
+            ),
+            patch(
+                "prowler.providers.azure.services.keyvault.keyvault_key_rotation_enabled.keyvault_key_rotation_enabled.keyvault_client",
+                new=keyvault,
+            ),
+        ):
+            from prowler.providers.azure.services.keyvault.keyvault_key_expiration_set_in_non_rbac.keyvault_key_expiration_set_in_non_rbac import (
+                keyvault_key_expiration_set_in_non_rbac,
+            )
+            from prowler.providers.azure.services.keyvault.keyvault_key_rotation_enabled.keyvault_key_rotation_enabled import (
+                keyvault_key_rotation_enabled,
+            )
+
+            expiration_findings = keyvault_key_expiration_set_in_non_rbac().execute()
+            assert [
+                (finding.resource_id, finding.status) for finding in expiration_findings
+            ] == [
+                (listed_key.id, "FAIL"),
+                (healthy_key.id, "FAIL"),
+                (another_unreadable_key.id, "FAIL"),
+            ]
+            rotation_findings = keyvault_key_rotation_enabled().execute()
+            assert [
+                (finding.resource_id, finding.status) for finding in rotation_findings
+            ] == [
+                (healthy_key.id, "FAIL"),
+                (f"/subscriptions/{AZURE_SUBSCRIPTION_ID}", "MANUAL"),
+            ]
+            assert rotation_findings[1].subscription == AZURE_SUBSCRIPTION_ID
+            assert (
+                "Microsoft.KeyVault/vaults/keys/read"
+                in rotation_findings[1].status_extended
+            )

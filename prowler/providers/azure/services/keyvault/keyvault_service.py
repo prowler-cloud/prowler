@@ -155,9 +155,9 @@ class KeyVault(AzureService):
             keyvault_name: Name of the Key Vault whose keys are collected.
 
         Returns:
-            The keys whose ARM detail responses were collected successfully.
-            A key is skipped when its detail request fails so an unavailable
-            rotation policy is not reported as a disabled rotation policy.
+            The listed keys, including their rotation policies when available.
+            Detail request failures are logged and marked on the key so other
+            checks can still evaluate the list-derived attributes.
         """
         logger.info(f"KeyVault - Getting keys for {keyvault_name}...")
         keys = []
@@ -166,6 +166,8 @@ class KeyVault(AzureService):
             client = self.clients[subscription]
             keys_list = client.keys.list(resource_group, keyvault_name)
             for key in keys_list:
+                key_details = None
+                rotation_policy_accessible = True
                 try:
                     key_details = client.keys.get(
                         resource_group,
@@ -176,7 +178,7 @@ class KeyVault(AzureService):
                     logger.error(
                         f"Key {key.name} in KeyVault {keyvault_name} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
-                    continue
+                    rotation_policy_accessible = False
 
                 key_obj = Key(
                     id=getattr(key, "id", ""),
@@ -192,6 +194,7 @@ class KeyVault(AzureService):
                     rotation_policy=self._transform_rotation_policy(
                         getattr(key_details, "rotation_policy", None)
                     ),
+                    rotation_policy_accessible=rotation_policy_accessible,
                 )
                 keys.append(key_obj)
 
@@ -309,6 +312,7 @@ class Key:
     location: str
     attributes: KeyAttributes
     rotation_policy: Optional[KeyRotationPolicy] = None
+    rotation_policy_accessible: bool = True
 
 
 @dataclass
