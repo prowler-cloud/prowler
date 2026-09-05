@@ -144,6 +144,7 @@ from prowler.providers.cloudflare.models import CloudflareOutputOptions
 from prowler.providers.common.provider import Provider
 from prowler.providers.common.quick_inventory import run_provider_quick_inventory
 from prowler.providers.e2enetworks.models import E2eNetworksOutputOptions
+from prowler.providers.fly.models import FlyOutputOptions
 from prowler.providers.gcp.models import GCPOutputOptions
 from prowler.providers.github.models import GithubOutputOptions
 from prowler.providers.googleworkspace.models import GoogleWorkspaceOutputOptions
@@ -501,6 +502,10 @@ def prowler():
         )
     elif provider == "openstack":
         output_options = OpenStackOutputOptions(
+            args, bulk_checks_metadata, global_provider.identity
+        )
+    elif provider == "fly":
+        output_options = FlyOutputOptions(
             args, bulk_checks_metadata, global_provider.identity
         )
     elif provider == "vercel":

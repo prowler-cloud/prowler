@@ -786,6 +786,12 @@ def execute(
                 is_finding_muted_args["project_id"] = (
                     global_provider.identity.project_id
                 )
+            elif global_provider.type == "fly":
+                is_finding_muted_args["org_slug"] = (
+                    global_provider.identity.organization.slug
+                    if global_provider.identity.organization
+                    else ""
+                )
             elif global_provider.type == "vercel":
                 team = getattr(global_provider.identity, "team", None)
                 is_finding_muted_args["team_id"] = (

@@ -1,0 +1,38 @@
+{
+  "Provider": "fly",
+  "CheckID": "app_uses_dedicated_private_network",
+  "CheckTitle": "Fly.io app runs on a dedicated private network",
+  "CheckType": [],
+  "ServiceName": "app",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "FlyApp",
+  "ResourceGroup": "network",
+  "Description": "**Fly.io apps** are assessed for the **6PN private network** they are attached to. Every app created without an explicit network joins the organization's shared `default` network, where all apps resolve and reach each other over IPv6. Assigning a per-app network confines that lateral reachability to a single application or tenant.",
+  "Risk": "On the shared network, a compromised app can reach the private ports of every other app in the organization, including databases and object storage that intentionally have no public IP. Without per-tenant networks, one tenant's workload can attempt to connect to another tenant's backing services.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://fly.io/docs/networking/private-networking/",
+    "https://fly.io/docs/machines/flyctl/fly-apps-create/",
+    "https://fly.io/docs/networking/custom-private-network/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "fly apps create <app> --network <dedicated-network>",
+      "NativeIaC": "",
+      "Other": "1. Create the app with a dedicated network: 'fly apps create <app> --network <network>'\n2. For existing apps, create a replacement app on its own network and migrate the machines and volumes to it\n3. Verify with the Machines API that the app's 'network' field is no longer 'default'",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Give each application, and each tenant of a multi-tenant deployment, its own Fly.io private network so that 6PN reachability does not span trust boundaries.",
+      "Url": "https://hub.prowler.com/check/app_uses_dedicated_private_network"
+    }
+  },
+  "Categories": [
+    "trust-boundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
