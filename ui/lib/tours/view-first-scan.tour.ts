@@ -33,9 +33,8 @@ const INTRO_STEP = {
 /**
  * Builds the tour for the scans page. When a scan is already running we anchor the
  * In Progress row first (and mention the other tabs in copy); otherwise we fall back
- * to highlighting Launch Scan and the tabs. Gating on `hasInProgressScan` keeps the
- * tour from anchoring to a missing row — the same guard pattern the findings tour
- * uses for an empty table.
+ * to highlighting Launch Scan and the tabs. The volatile row step itself falls back
+ * to the stable tabs anchor if the scan completes while the tour is open.
  */
 export function buildViewFirstScanTour(
   hasInProgressScan: boolean,
@@ -49,6 +48,7 @@ export function buildViewFirstScanTour(
         INTRO_STEP,
         {
           target: "in-progress",
+          fallbackTarget: "tabs",
           side: TOUR_STEP_SIDES.BOTTOM,
           align: TOUR_STEP_ALIGNMENTS.START,
           title: "Your scan is running",

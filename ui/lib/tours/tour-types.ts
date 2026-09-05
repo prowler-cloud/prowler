@@ -45,6 +45,9 @@ export interface TourCompletionRecord {
 // Modal step omits `target`; anchored step provides the `data-tour-id` value (no brackets).
 export interface TourStep<TTarget extends string = string> {
   target?: TTarget;
+  // Optional stable anchor used when a volatile primary target disappears before
+  // driver.js resolves the step (for example, a running scan row that completes).
+  fallbackTarget?: TTarget;
   title?: string;
   description?: string;
   side?: TourStepSide;

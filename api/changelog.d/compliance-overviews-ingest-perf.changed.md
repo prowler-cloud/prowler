@@ -1,0 +1,1 @@
+Speed up compliance overview ingestion by reading ThreatScore mappings from the compliance template instead of each finding, generating time-ordered `uuid7` row ids and grouping inserted rows by framework and requirement

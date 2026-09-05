@@ -1,1 +1,0 @@
-`prowler_docs_search` returns results again: it calls the search endpoint docs.prowler.com moved to, since the one it used no longer exists, and each result now names the page's title, the section it matched and a URL anchored at that section

@@ -62,6 +62,7 @@ describe("lib/env gated integration validation", () => {
     "POSTHOG_KEY",
     "UI_POSTHOG_HOST",
     "POSTHOG_HOST",
+    "UI_POSTHOG_UI_HOST",
     "CLOUD_BILLING_ENABLED",
   ] as const;
 
@@ -189,6 +190,7 @@ describe("lib/env billing and Stripe boot warnings", () => {
     "POSTHOG_KEY",
     "UI_POSTHOG_HOST",
     "POSTHOG_HOST",
+    "UI_POSTHOG_UI_HOST",
     "UI_CLOUD_STRIPE_PUBLISHABLE_KEY",
     "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY",
     "UI_CLOUD_STRIPE_PUBLISHABLE_KEY_V2",

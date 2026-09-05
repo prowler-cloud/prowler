@@ -12,6 +12,7 @@ class Test_entra_users_mfa_capable:
         entra_client = mock.MagicMock
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
+        entra_client.users_error = None
         entra_client.user_registration_details_error = None
 
         with (
@@ -55,6 +56,7 @@ class Test_entra_users_mfa_capable:
         entra_client = mock.MagicMock
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
+        entra_client.users_error = None
         entra_client.user_registration_details_error = None
 
         with (
@@ -98,6 +100,7 @@ class Test_entra_users_mfa_capable:
         entra_client = mock.MagicMock
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
+        entra_client.users_error = None
         entra_client.user_registration_details_error = None
 
         with (
@@ -157,6 +160,7 @@ class Test_entra_users_mfa_capable:
         entra_client = mock.MagicMock
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
+        entra_client.users_error = None
         entra_client.user_registration_details_error = None
 
         with (
@@ -196,6 +200,7 @@ class Test_entra_users_mfa_capable:
         entra_client = mock.MagicMock
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
+        entra_client.users_error = None
         entra_client.user_registration_details_error = None
 
         with (
@@ -254,6 +259,7 @@ class Test_entra_users_mfa_capable:
         entra_client = mock.MagicMock
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
+        entra_client.users_error = None
         entra_client.user_registration_details_error = None
 
         with (
@@ -293,6 +299,7 @@ class Test_entra_users_mfa_capable:
         entra_client = mock.MagicMock
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
+        entra_client.users_error = None
         entra_client.user_registration_details_error = None
 
         with (
@@ -332,6 +339,7 @@ class Test_entra_users_mfa_capable:
         entra_client = mock.MagicMock
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
+        entra_client.users_error = None
         entra_client.user_registration_details_error = None
 
         with (
@@ -372,6 +380,7 @@ class Test_entra_users_mfa_capable:
         entra_client = mock.MagicMock
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
+        entra_client.users_error = None
         entra_client.user_registration_details_error = None
 
         with (
@@ -414,6 +423,7 @@ class Test_entra_users_mfa_capable:
         entra_client = mock.MagicMock
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
+        entra_client.users_error = None
         entra_client.user_registration_details_error = None
 
         with (
@@ -459,6 +469,7 @@ class Test_entra_users_mfa_capable:
         entra_client = mock.MagicMock
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
+        entra_client.users_error = None
         entra_client.user_registration_details_error = None
 
         with (
@@ -519,6 +530,7 @@ class Test_entra_users_mfa_capable:
         entra_client = mock.MagicMock
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
+        entra_client.users_error = None
         entra_client.user_registration_details_error = None
 
         with (
@@ -559,10 +571,11 @@ class Test_entra_users_mfa_capable:
             assert result[0].resource_id == user_id
 
     def test_user_registration_details_permission_error(self):
-        """Test FAIL when there's a permission error reading user registration details."""
+        """Test a single tenant-level MANUAL when user registration details cannot be read."""
         entra_client = mock.MagicMock
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
+        entra_client.users_error = None
         entra_client.user_registration_details_error = "Insufficient privileges to read user registration details. Required permission: AuditLog.Read.All"
 
         with (
@@ -595,26 +608,27 @@ class Test_entra_users_mfa_capable:
             result = check.execute()
 
             assert len(result) == 1
-            assert result[0].status == "FAIL"
+            assert result[0].status == "MANUAL"
             assert (
-                "Cannot verify MFA capability for user Test User"
+                "Cannot verify MFA capability for member users"
                 in result[0].status_extended
             )
             assert "AuditLog.Read.All" in result[0].status_extended
-            assert result[0].resource == entra_client.users[user_id]
-            assert result[0].resource_name == "Test User"
-            assert result[0].resource_id == user_id
+            assert result[0].resource_name == "Entra Users"
+            assert result[0].resource_id == "users"
 
-    def test_user_registration_details_permission_error_skips_guest_and_disabled(self):
-        """CIS-scope skip (Guest, disabled) still applies on the permission-error path.
+    def test_user_registration_details_permission_error_with_mixed_users(self):
+        """The permission-error path emits a single tenant-level MANUAL finding.
 
-        With ``user_registration_details_error`` set, only enabled member users
-        should receive a per-user "Cannot verify MFA capability" FAIL — guests
-        and disabled members are filtered out before the error branch runs.
+        With ``user_registration_details_error`` set, no per-user findings are
+        produced (a missing permission is not a per-user security issue): a
+        single MANUAL finding is emitted regardless of the guest/member/disabled
+        mix of users in the tenant.
         """
         entra_client = mock.MagicMock
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
+        entra_client.users_error = None
         entra_client.user_registration_details_error = "Insufficient privileges to read user registration details. Required permission: AuditLog.Read.All"
 
         with (
@@ -667,15 +681,44 @@ class Test_entra_users_mfa_capable:
             check = entra_users_mfa_capable()
             result = check.execute()
 
-            # Only the enabled member should be reported — Guest and
-            # disabled member are skipped before the error branch.
+            # A single tenant-level MANUAL finding is emitted regardless of
+            # how many users exist; no per-user findings are produced.
             assert len(result) == 1
-            assert result[0].status == "FAIL"
+            assert result[0].status == "MANUAL"
             assert (
-                "Cannot verify MFA capability for user Enabled Member"
+                "Cannot verify MFA capability for member users"
                 in result[0].status_extended
             )
             assert "AuditLog.Read.All" in result[0].status_extended
-            assert result[0].resource == entra_client.users[member_id]
-            assert result[0].resource_name == "Enabled Member"
-            assert result[0].resource_id == member_id
+            assert result[0].resource_name == "Entra Users"
+            assert result[0].resource_id == "users"
+
+    def test_users_error_reports_single_manual(self):
+        """Users could not be retrieved from Graph -> one tenant-level MANUAL."""
+        entra_client = mock.MagicMock
+        entra_client.audited_tenant = "audited_tenant"
+        entra_client.audited_domain = DOMAIN
+        entra_client.user_registration_details_error = None
+        entra_client.users_error = "Insufficient privileges to read users and directory roles. Required permissions: User.Read.All, Directory.Read.All or RoleManagement.Read.Directory"
+        entra_client.users = {}
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_m365_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.m365.services.entra.entra_users_mfa_capable.entra_users_mfa_capable.entra_client",
+                new=entra_client,
+            ),
+        ):
+            from prowler.providers.m365.services.entra.entra_users_mfa_capable.entra_users_mfa_capable import (
+                entra_users_mfa_capable,
+            )
+
+            result = entra_users_mfa_capable().execute()
+
+            assert len(result) == 1
+            assert result[0].status == "MANUAL"
+            assert "Directory.Read.All" in result[0].status_extended
+            assert result[0].resource_name == "Entra Users"

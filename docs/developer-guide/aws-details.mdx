@@ -57,7 +57,7 @@ The AWS provider implementation follows the general [Provider structure](/develo
 The generic service pattern is described in [service page](/developer-guide/services#service-structure-and-initialisation). You can find all the right now implemented services in the following locations:
 
 - Directly in the code, in location [`prowler/providers/aws/services/`](https://github.com/prowler-cloud/prowler/tree/master/prowler/providers/aws/services)
-- In the [Prowler Hub](https://hub.prowler.com/). For a more human-readable view.
+- In the [Prowler Hub](https://hub.prowler.com/) for a more human-readable view.
 
 The best reference to understand how to implement a new service is following the [service implementation documentation](/developer-guide/services#adding-a-new-service) and taking other services already implemented as reference. In next subsection you can find a list of common patterns that are used across all AWS services.
 
@@ -131,7 +131,7 @@ def _get_email_identities(self, identity):
 The AWS checks pattern is described in [checks page](/developer-guide/checks). You can find all the right now implemented checks:
 
 - Directly in the code, within each service folder, each check has its own folder named after the name of the check. (e.g. [`prowler/providers/aws/services/s3/s3_bucket_acl_prohibited/`](https://github.com/prowler-cloud/prowler/tree/master/prowler/providers/aws/services/s3/s3_bucket_acl_prohibited))
-- In the [Prowler Hub](https://hub.prowler.com/). For a more human-readable view.
+- In the [Prowler Hub](https://hub.prowler.com/) for a more human-readable view.
 
 The best reference to understand how to implement a new check is following the [check creation documentation](/developer-guide/checks#creating-a-check) and taking other similar checks as reference.
 

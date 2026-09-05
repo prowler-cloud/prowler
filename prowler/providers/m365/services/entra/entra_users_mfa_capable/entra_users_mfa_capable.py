@@ -17,8 +17,9 @@ class entra_users_mfa_capable(Check):
     evaluation.
 
     - PASS: The member user is MFA capable.
-    - FAIL: The member user is not MFA capable, or MFA capability cannot be
-      verified due to insufficient permissions to read user registration details.
+    - FAIL: The member user is not MFA capable.
+    - MANUAL: Users or their registration details could not be read
+      (insufficient permissions), so MFA capability cannot be verified.
     """
 
     def execute(self) -> List[CheckReportM365]:
@@ -36,6 +37,23 @@ class entra_users_mfa_capable(Check):
             List[CheckReportM365]: A list with one report per evaluated user.
         """
         findings = []
+
+        data_error = (
+            entra_client.users_error or entra_client.user_registration_details_error
+        )
+        if data_error:
+            report = CheckReportM365(
+                metadata=self.metadata(),
+                resource={},
+                resource_name="Entra Users",
+                resource_id="users",
+            )
+            report.status = "MANUAL"
+            report.status_extended = (
+                f"Cannot verify MFA capability for member users: {data_error}."
+            )
+            findings.append(report)
+            return findings
 
         for user in entra_client.users.values():
             if user.user_type == "Guest" or not user.account_enabled:
@@ -57,13 +75,7 @@ class entra_users_mfa_capable(Check):
                 resource_id=user.id,
             )
 
-            if entra_client.user_registration_details_error:
-                report.status = "FAIL"
-                report.status_extended = (
-                    f"Cannot verify MFA capability for user {user.name}: "
-                    f"{entra_client.user_registration_details_error}."
-                )
-            elif not user.is_mfa_capable:
+            if not user.is_mfa_capable:
                 report.status = "FAIL"
                 report.status_extended = f"User {user.name} is not MFA capable."
             else:

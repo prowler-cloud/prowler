@@ -1,1 +1,0 @@
-IaC provider now raises typed `IacBaseException` errors (repository clone, Trivy missing, scan and output processing failures) instead of calling `sys.exit(1)`; the CLI still stops with the logged message, and API scans fail as regular task errors instead of a `SystemExit` escaping the worker

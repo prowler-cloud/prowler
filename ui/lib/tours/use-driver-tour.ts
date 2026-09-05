@@ -172,11 +172,16 @@ export function adaptStep<TTarget extends string>(
 
   if (step.target) {
     const selector = toSelector(`${tourId}-${step.target}`);
+    const fallbackSelector = step.fallbackTarget
+      ? toSelector(`${tourId}-${step.fallbackTarget}`)
+      : undefined;
     driveStep.element = () => {
       if (typeof document === "undefined") {
         throw new Error("Tour element resolved without a DOM");
       }
-      const found = document.querySelector(selector);
+      const found =
+        document.querySelector(selector) ??
+        (fallbackSelector ? document.querySelector(fallbackSelector) : null);
       if (!found) {
         throw new Error(
           `Tour "${tourId}" references missing selector: ${selector}`,

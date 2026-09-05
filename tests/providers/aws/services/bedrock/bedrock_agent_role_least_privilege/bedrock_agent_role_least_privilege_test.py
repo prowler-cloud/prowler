@@ -265,11 +265,11 @@ class Test_bedrock_agent_role_least_privilege:
 
     @mock_aws(config={"iam": {"load_aws_managed_policies": True}})
     def test_agent_role_not_resolvable(self):
-        """role_arn returned by GetAgent doesn't match any IAM role -> FAIL."""
+        """role_arn returned by GetAgent doesn't match any IAM role -> MANUAL."""
         result = _run_check(
             role_arn_for_get_agent=f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:role/does-not-exist"
         )
 
         assert len(result) == 1
-        assert result[0].status == "FAIL"
+        assert result[0].status == "MANUAL"
         assert "could not be resolved" in result[0].status_extended

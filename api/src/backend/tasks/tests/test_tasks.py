@@ -1,6 +1,6 @@
 import uuid
 from contextlib import contextmanager
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
 from unittest.mock import MagicMock, patch
 
 import httpx
@@ -33,10 +33,10 @@ from tasks.tasks import (
     check_integrations_task,
     check_lighthouse_provider_connection_task,
     generate_outputs_task,
+    mute_findings_in_latest_scans_task,
     perform_attack_paths_scan_task,
     perform_scan_task,
     perform_scheduled_scan_task,
-    reaggregate_all_finding_group_summaries_task,
     refresh_lighthouse_provider_models_task,
     s3_integration_task,
     security_hub_integration_task,
@@ -2959,6 +2959,7 @@ class TestPerformScheduledScanTask:
         with (
             patch("tasks.tasks.perform_prowler_scan", side_effect=_complete_scan),
             patch("tasks.tasks._perform_scan_complete_tasks"),
+            patch("tasks.tasks.reconcile_scan_mute_rules") as mock_reconcile,
             self._override_task_request(perform_scheduled_scan_task, id=task_id),
         ):
             perform_scheduled_scan_task.run(
@@ -2982,6 +2983,13 @@ class TestPerformScheduledScanTask:
             ).count()
             == 1
         )
+        completed_scan = Scan.objects.get(
+            tenant_id=tenant.id,
+            provider=provider,
+            trigger=Scan.TriggerChoices.SCHEDULED,
+            state=StateChoices.COMPLETED,
+        )
+        mock_reconcile.assert_called_once_with(str(tenant.id), str(completed_scan.id))
         assert (
             Scan.objects.filter(
                 tenant_id=tenant.id,
@@ -3176,7 +3184,10 @@ class TestPerformScanTask:
             task=queued_task,
         )
 
+        events = []
+
         def _complete_scan(tenant_id, scan_id, provider_id, checks_to_execute=None):
+            events.append("scan")
             scan_instance = Scan.objects.get(id=scan_id)
             scan_instance.state = StateChoices.COMPLETED
             scan_instance.save()
@@ -3184,7 +3195,14 @@ class TestPerformScanTask:
 
         with (
             patch("tasks.tasks.perform_prowler_scan", side_effect=_complete_scan),
-            patch("tasks.tasks._perform_scan_complete_tasks"),
+            patch(
+                "tasks.tasks.reconcile_scan_mute_rules",
+                side_effect=lambda *_args: events.append("reconcile"),
+            ),
+            patch(
+                "tasks.tasks._perform_scan_complete_tasks",
+                side_effect=lambda *_args: events.append("summaries"),
+            ),
             patch("tasks.tasks.perform_scan_task.apply_async") as mock_apply_async,
         ):
             with django_capture_on_commit_callbacks(execute=True):
@@ -3196,6 +3214,7 @@ class TestPerformScanTask:
 
         queued_task_result.refresh_from_db()
         assert result == {"status": "ok"}
+        assert events == ["scan", "reconcile", "summaries"]
         assert queued_task_result.status == states.PENDING
         mock_apply_async.assert_called_once_with(
             kwargs={
@@ -3241,10 +3260,7 @@ class TestPerformScanTask:
 
 
 @pytest.mark.django_db
-class TestReaggregateAllFindingGroupSummaries:
-    def setup_method(self):
-        self.tenant_id = str(uuid.uuid4())
-
+class TestMuteFindingsInLatestScansTask:
     @patch("tasks.tasks.chain")
     @patch("tasks.tasks.group")
     @patch("tasks.tasks.aggregate_attack_surface_task")
@@ -3253,10 +3269,10 @@ class TestReaggregateAllFindingGroupSummaries:
     @patch("tasks.tasks.aggregate_finding_group_summaries_task")
     @patch("tasks.tasks.aggregate_daily_severity_task")
     @patch("tasks.tasks.perform_scan_summary_task")
-    @patch("tasks.tasks.Scan.objects.filter")
-    def test_dispatches_subtasks_for_each_provider_per_day(
+    @patch("tasks.tasks.mute_findings_in_latest_scans")
+    def test_reaggregates_only_changed_scans(
         self,
-        mock_scan_filter,
+        mock_mute_findings,
         mock_scan_summary_task,
         mock_daily_severity_task,
         mock_finding_group_task,
@@ -3265,119 +3281,36 @@ class TestReaggregateAllFindingGroupSummaries:
         mock_attack_surface_task,
         mock_group,
         mock_chain,
+        tenants_fixture,
     ):
-        provider_id_1 = uuid.uuid4()
-        provider_id_2 = uuid.uuid4()
-        scan_id_today_p1 = uuid.uuid4()
-        scan_id_yesterday_p1 = uuid.uuid4()
-        scan_id_today_p2 = uuid.uuid4()
-        today = datetime.now(tz=UTC)
-        yesterday = today - timedelta(days=1)
-
-        mock_outer_group_result = MagicMock()
-        # The first `group()` call wraps the inner parallel step; subsequent
-        # calls wrap the outer per-scan generator.
-        mock_group.side_effect = lambda *args, **kwargs: (
-            list(args[0]) if args and hasattr(args[0], "__iter__") else None,
-            mock_outer_group_result,
-        )[1]
-
-        mock_scan_filter.return_value.order_by.return_value.values.return_value = [
-            {
-                "id": scan_id_today_p1,
-                "completed_at": today,
-                "provider_id": provider_id_1,
-            },
-            {
-                "id": scan_id_today_p2,
-                "completed_at": today,
-                "provider_id": provider_id_2,
-            },
-            {
-                "id": scan_id_yesterday_p1,
-                "completed_at": yesterday,
-                "provider_id": provider_id_1,
-            },
-        ]
-
-        result = reaggregate_all_finding_group_summaries_task(tenant_id=self.tenant_id)
-
-        assert result == {"scans_reaggregated": 3}
-        expected_scan_ids = {
-            str(scan_id_today_p1),
-            str(scan_id_today_p2),
-            str(scan_id_yesterday_p1),
+        tenant_id = str(tenants_fixture[0].id)
+        mute_rule_id = str(uuid.uuid4())
+        provider_ids = [str(uuid.uuid4()), str(uuid.uuid4())]
+        scan_ids = [str(uuid.uuid4()), str(uuid.uuid4())]
+        result = {
+            "findings_muted": 2,
+            "rule_id": mute_rule_id,
+            "scan_ids": scan_ids,
         }
-        for task_mock in (
-            mock_scan_summary_task,
-            mock_daily_severity_task,
-            mock_finding_group_task,
-            mock_resource_group_task,
-            mock_category_task,
-            mock_attack_surface_task,
-        ):
-            assert task_mock.si.call_count == 3
-            dispatched = {
-                call.kwargs["scan_id"] for call in task_mock.si.call_args_list
-            }
-            assert dispatched == expected_scan_ids
-            for call in task_mock.si.call_args_list:
-                assert call.kwargs["tenant_id"] == self.tenant_id
-        assert mock_chain.call_count == 3
-        mock_outer_group_result.apply_async.assert_called_once()
-
-    @patch("tasks.tasks.chain")
-    @patch("tasks.tasks.group")
-    @patch("tasks.tasks.aggregate_attack_surface_task")
-    @patch("tasks.tasks.aggregate_scan_category_summaries_task")
-    @patch("tasks.tasks.aggregate_scan_resource_group_summaries_task")
-    @patch("tasks.tasks.aggregate_finding_group_summaries_task")
-    @patch("tasks.tasks.aggregate_daily_severity_task")
-    @patch("tasks.tasks.perform_scan_summary_task")
-    @patch("tasks.tasks.Scan.objects.filter")
-    def test_dedupes_scans_to_latest_per_provider_per_day(
-        self,
-        mock_scan_filter,
-        mock_scan_summary_task,
-        mock_daily_severity_task,
-        mock_finding_group_task,
-        mock_resource_group_task,
-        mock_category_task,
-        mock_attack_surface_task,
-        mock_group,
-        mock_chain,
-    ):
-        """When several scans run on the same day for the same provider, only
-        the latest one is dispatched (matching the daily summary unique key)."""
-        provider_id = uuid.uuid4()
-        latest_scan_today = uuid.uuid4()
-        earlier_scan_today = uuid.uuid4()
-        today_late = datetime.now(tz=UTC)
-        today_early = today_late - timedelta(hours=4)
-
+        mock_mute_findings.return_value = result
         mock_outer_group_result = MagicMock()
         mock_group.side_effect = lambda *args, **kwargs: (
             list(args[0]) if args and hasattr(args[0], "__iter__") else None,
             mock_outer_group_result,
         )[1]
 
-        # Returned ordered by `-completed_at`, so the most recent comes first.
-        mock_scan_filter.return_value.order_by.return_value.values.return_value = [
-            {
-                "id": latest_scan_today,
-                "completed_at": today_late,
-                "provider_id": provider_id,
-            },
-            {
-                "id": earlier_scan_today,
-                "completed_at": today_early,
-                "provider_id": provider_id,
-            },
-        ]
+        task_result = mute_findings_in_latest_scans_task(
+            tenant_id=tenant_id,
+            mute_rule_id=mute_rule_id,
+            provider_ids=provider_ids,
+        )
 
-        result = reaggregate_all_finding_group_summaries_task(tenant_id=self.tenant_id)
-
-        assert result == {"scans_reaggregated": 1}
+        assert task_result == result
+        mock_mute_findings.assert_called_once_with(
+            tenant_id=tenant_id,
+            mute_rule_id=mute_rule_id,
+            provider_ids=provider_ids,
+        )
         for task_mock in (
             mock_scan_summary_task,
             mock_daily_severity_task,
@@ -3386,23 +3319,35 @@ class TestReaggregateAllFindingGroupSummaries:
             mock_category_task,
             mock_attack_surface_task,
         ):
-            task_mock.si.assert_called_once_with(
-                tenant_id=self.tenant_id, scan_id=str(latest_scan_today)
-            )
-        mock_chain.assert_called_once()
+            assert task_mock.si.call_count == 2
+            assert {
+                call.kwargs["scan_id"] for call in task_mock.si.call_args_list
+            } == set(scan_ids)
+        assert mock_chain.call_count == 2
         mock_outer_group_result.apply_async.assert_called_once()
 
     @patch("tasks.tasks.chain")
     @patch("tasks.tasks.group")
-    @patch("tasks.tasks.Scan.objects.filter")
-    def test_no_completed_scans_skips_dispatch(
-        self, mock_scan_filter, mock_group, mock_chain
+    @patch("tasks.tasks.mute_findings_in_latest_scans")
+    def test_skips_reaggregation_when_no_scan_changed(
+        self, mock_mute_findings, mock_group, mock_chain, tenants_fixture
     ):
-        mock_scan_filter.return_value.order_by.return_value.values.return_value = []
+        tenant_id = str(tenants_fixture[0].id)
+        mute_rule_id = str(uuid.uuid4())
+        result = {
+            "findings_muted": 0,
+            "rule_id": mute_rule_id,
+            "scan_ids": [],
+        }
+        mock_mute_findings.return_value = result
 
-        result = reaggregate_all_finding_group_summaries_task(tenant_id=self.tenant_id)
+        task_result = mute_findings_in_latest_scans_task(
+            tenant_id=tenant_id,
+            mute_rule_id=mute_rule_id,
+            provider_ids=[],
+        )
 
-        assert result == {"scans_reaggregated": 0}
+        assert task_result == result
         mock_group.assert_not_called()
         mock_chain.assert_not_called()
 

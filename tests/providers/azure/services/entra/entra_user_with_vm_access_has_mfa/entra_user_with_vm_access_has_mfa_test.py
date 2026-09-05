@@ -7,6 +7,7 @@ from tests.providers.azure.azure_fixtures import (
     AZURE_SUBSCRIPTION_ID,
     AZURE_SUBSCRIPTION_NAME,
     DOMAIN,
+    TENANT_IDS,
     set_mocked_azure_provider,
 )
 
@@ -18,11 +19,16 @@ class Test_iam_assignment_priviledge_access_vm_has_mfa:
         iam_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         entra_client = mock.MagicMock
         entra_client.resource_groups = {}
+        entra_client.users_retrieval_errors = {}
         entra_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
                 return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.entra.entra_user_with_vm_access_has_mfa.entra_user_with_vm_access_has_mfa.entra_client",
+                new=entra_client,
             ),
             mock.patch(
                 "prowler.providers.azure.services.entra.entra_user_with_vm_access_has_mfa.entra_user_with_vm_access_has_mfa.iam_client",
@@ -47,6 +53,7 @@ class Test_iam_assignment_priviledge_access_vm_has_mfa:
         role_assigment_id = str(uuid4())
         entra_client = mock.MagicMock
         entra_client.resource_groups = {}
+        entra_client.users_retrieval_errors = {}
         entra_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         user_id = str(uuid4())
 
@@ -120,6 +127,7 @@ class Test_iam_assignment_priviledge_access_vm_has_mfa:
         role_assigment_id = str(uuid4())
         entra_client = mock.MagicMock
         entra_client.resource_groups = {}
+        entra_client.users_retrieval_errors = {}
         entra_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         user_id = str(uuid4())
 
@@ -193,6 +201,7 @@ class Test_iam_assignment_priviledge_access_vm_has_mfa:
         role_assigment_id = str(uuid4())
         entra_client = mock.MagicMock
         entra_client.resource_groups = {}
+        entra_client.users_retrieval_errors = {}
         entra_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         user_id = str(uuid4())
 
@@ -249,6 +258,7 @@ class Test_iam_assignment_priviledge_access_vm_has_mfa:
         role_assigment_id = str(uuid4())
         entra_client = mock.MagicMock
         entra_client.resource_groups = {}
+        entra_client.users_retrieval_errors = {}
         entra_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         user_id = str(uuid4())
 
@@ -306,3 +316,44 @@ class Test_iam_assignment_priviledge_access_vm_has_mfa:
                 check = entra_user_with_vm_access_has_mfa()
                 result = check.execute()
                 assert len(result) == 0
+
+    def test_entra_users_retrieval_error_reports_single_manual(self):
+        """Graph could not return the tenant's users -> one tenant-level MANUAL."""
+        iam_client = mock.MagicMock
+        iam_client.resource_groups = {}
+        iam_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
+        entra_client = mock.MagicMock
+        entra_client.resource_groups = {}
+        entra_client.users_retrieval_errors = {DOMAIN: "ODataError HTTP 503"}
+        entra_client.tenant_ids = [TENANT_IDS[0]]
+        entra_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.entra.entra_user_with_vm_access_has_mfa.entra_user_with_vm_access_has_mfa.entra_client",
+                new=entra_client,
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.entra.entra_user_with_vm_access_has_mfa.entra_user_with_vm_access_has_mfa.iam_client",
+                new=iam_client,
+            ),
+        ):
+            from prowler.providers.azure.services.entra.entra_user_with_vm_access_has_mfa.entra_user_with_vm_access_has_mfa import (
+                entra_user_with_vm_access_has_mfa,
+            )
+
+            iam_client.role_assignments = {}
+            entra_client.users = {DOMAIN: {}}
+
+            result = entra_user_with_vm_access_has_mfa().execute()
+
+            assert len(result) == 1
+            assert result[0].status == "MANUAL"
+            assert "did not return the tenant's users" in result[0].status_extended
+            assert "503" in result[0].status_extended
+            assert result[0].subscription == f"Tenant: {DOMAIN}"
+            assert result[0].resource_id == TENANT_IDS[0]

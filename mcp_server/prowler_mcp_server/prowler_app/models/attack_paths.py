@@ -354,6 +354,14 @@ class AttackPathQueryResult(MinimalSerializerMixin, BaseModel):
     relationships: list[AttackPathsGraphRelationship] = Field(
         default_factory=list, description="Relationships connecting the nodes"
     )
+    # A graph with nothing in it serializes to `{}`, since the mixin drops empty
+    # lists. That reads as an answer that went missing rather than as the finding
+    # it is -- the query ran and this account has no such attack path -- so the
+    # empty case carries a sentence saying so.
+    message: str | None = Field(
+        default=None,
+        description="Present only when the query matched nothing, to say the query ran and found no attack path rather than leaving an empty result to interpret",
+    )
 
     @classmethod
     def from_api_response(
@@ -368,7 +376,15 @@ class AttackPathQueryResult(MinimalSerializerMixin, BaseModel):
         Returns:
             AttackPathQueryResult with parsed data and summary
         """
-        attributes = response.get("data", {}).get("attributes")
+        data = response.get("data")
+        attributes = data.get("attributes") if data is not None else None
+        # Prowler spells a graph with nothing in it either as empty lists or as
+        # a null `attributes`. Both say the same thing -- the query ran and
+        # matched nothing -- so the null reads as the empty graph it stands for
+        # instead of crashing the parse.
+        if attributes is None:
+            attributes = {}
+
         nodes_data = attributes.get("nodes", [])
         relationships_data = attributes.get("relationships", [])
 
