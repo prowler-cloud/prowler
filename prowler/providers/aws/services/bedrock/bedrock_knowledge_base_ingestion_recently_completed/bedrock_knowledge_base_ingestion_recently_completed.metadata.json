@@ -1,0 +1,39 @@
+{
+  "Provider": "aws",
+  "CheckID": "bedrock_knowledge_base_ingestion_recently_completed",
+  "CheckTitle": "Bedrock knowledge base data source has recently completed an ingestion job",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "bedrock",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:bedrock:region:account-id:knowledge-base/knowledge-base-id/data-source/data-source-id",
+  "Severity": "medium",
+  "ResourceType": "Other",
+  "ResourceGroup": "ai_ml",
+  "Description": "This check ensures that each Amazon Bedrock knowledge base data source has a successfully completed (COMPLETE) ingestion job within a configurable time window (bedrock_knowledge_base_ingestion_max_age_in_days, default 7 days). A data source with no successful ingestion job, or whose latest one is older than the threshold, is flagged.",
+  "Risk": "If a knowledge base data source has not completed a recent ingestion job, the knowledge base serves stale or incomplete data to retrieval-augmented generation (RAG) applications. This can silently degrade answer quality, hide newly added or corrected source documents, and mask ingestion pipeline failures, leading to incorrect or outdated model responses.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/bedrock/latest/userguide/kb-data-source-sync-ingest.html",
+    "https://docs.aws.amazon.com/bedrock/latest/APIReference/API_agent_ListIngestionJobs.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aws bedrock-agent start-ingestion-job --knowledge-base-id <knowledge_base_id> --data-source-id <data_source_id>",
+      "NativeIaC": "",
+      "Other": "1. In the AWS Console, go to Amazon Bedrock > Knowledge bases and select the knowledge base.\n2. In the Data source section, select the data source and choose 'Sync' to start an ingestion job.\n3. Wait for the ingestion job status to become 'COMPLETE'.\n4. To keep data fresh automatically, schedule regular syncs (for example, with an EventBridge rule invoking a Lambda that calls StartIngestionJob) and monitor ingestion job outcomes.",
+      "Terraform": "```hcl\n# Terraform: schedule regular ingestion of a Bedrock knowledge base data source.\n# There is no Terraform resource that runs an ingestion job directly; trigger it on a\n# schedule with EventBridge + Lambda calling bedrock-agent StartIngestionJob.\nresource \"aws_cloudwatch_event_rule\" \"<example_resource_name>\" {\n  name                = \"bedrock-kb-sync\"\n  schedule_expression = \"rate(1 day)\"\n}\n\nresource \"aws_cloudwatch_event_target\" \"<example_resource_name>\" {\n  rule = aws_cloudwatch_event_rule.<example_resource_name>.name\n  arn  = aws_lambda_function.<example_lambda_name>.arn\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Run knowledge base data source ingestion jobs on a regular schedule so the knowledge base reflects the current source documents, monitor ingestion job outcomes, and alert on failed or missing jobs. Tune the freshness window with the bedrock_knowledge_base_ingestion_max_age_in_days configuration value to match your data update cadence.",
+      "Url": "https://hub.prowler.com/check/bedrock_knowledge_base_ingestion_recently_completed"
+    }
+  },
+  "Categories": [
+    "gen-ai"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
