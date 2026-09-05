@@ -1,0 +1,1 @@
+`bedrock_custom_model_encrypted_with_cmk` no longer reports MANUAL for Regions where Bedrock does not offer `ListCustomModels`: the `UnknownOperationException` those Regions return is now treated like the `ValidationException` others return for the same condition, and both are logged as a warning instead of an error

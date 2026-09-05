@@ -491,3 +491,74 @@ class TestBedrockPromptPagination:
 
         assert bedrock_agent_service.prompts == {}
         assert bedrock_agent_service.prompt_scanned_regions == set()
+
+
+def mock_make_api_call_list_custom_models_error(code):
+    """Build a _make_api_call mock that rejects ListCustomModels with the given error code."""
+
+    def _mock(self, operation_name, kwarg):
+        if operation_name == "ListCustomModels":
+            raise botocore.exceptions.ClientError(
+                {"Error": {"Code": code, "Message": "Unknown Operation"}},
+                operation_name,
+            )
+        return mock_make_api_call(self, operation_name, kwarg)
+
+    return _mock
+
+
+class Test_Bedrock_ListCustomModels_Errors:
+    """A Region without ListCustomModels is a definite "no custom models", not a scan error.
+
+    AWS spells the same regional rejection two ways -- ValidationException in some Regions and
+    UnknownOperationException in others -- so both must stay out of custom_models_scan_errors,
+    or bedrock_custom_model_encrypted_with_cmk reports MANUAL for Regions where custom models
+    cannot exist. Both are logged as a warning, not an error, because the rejection is expected.
+    """
+
+    @pytest.mark.parametrize(
+        "code", ["ValidationException", "UnknownOperationException"]
+    )
+    @mock_aws
+    def test_unsupported_region_is_not_a_scan_error(self, code):
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        with (
+            mock.patch(
+                "botocore.client.BaseClient._make_api_call",
+                new=mock_make_api_call_list_custom_models_error(code),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.bedrock.bedrock_service.logger"
+            ) as mock_logger,
+        ):
+            bedrock = Bedrock(aws_provider)
+
+        assert bedrock.custom_models_scan_errors == {}
+        assert bedrock.custom_models == {}
+        warned = [str(c) for c in mock_logger.warning.call_args_list]
+        assert any("ListCustomModels" in w for w in warned)
+        errored = [str(c) for c in mock_logger.error.call_args_list]
+        assert not any("ListCustomModels" in e for e in errored)
+
+    @mock_aws
+    def test_denied_region_is_still_a_scan_error(self):
+        """A genuine read failure must keep recording, so the CMK check still reports MANUAL."""
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        with (
+            mock.patch(
+                "botocore.client.BaseClient._make_api_call",
+                new=mock_make_api_call_list_custom_models_error(
+                    "AccessDeniedException"
+                ),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.bedrock.bedrock_service.logger"
+            ) as mock_logger,
+        ):
+            bedrock = Bedrock(aws_provider)
+
+        assert bedrock.custom_models_scan_errors == {
+            AWS_REGION_US_EAST_1: "AccessDeniedException"
+        }
+        errored = [str(c) for c in mock_logger.error.call_args_list]
+        assert any("ListCustomModels" in e for e in errored)
