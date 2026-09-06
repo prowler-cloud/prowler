@@ -2211,6 +2211,12 @@ OAuthAppInfo
         managed identities, so any entry in ``passwordCredentials`` is reported
         by the related check.
 
+        The ``federatedIdentityCredentials`` collection is a navigation property
+        on the application object, so it is fetched per application through the
+        dedicated endpoint (mirroring how owners are resolved elsewhere in this
+        service). A failure to read one application's collection is logged and
+        left empty rather than aborting the whole inventory.
+
         Returns:
             Dict[str, AppRegistration]: Application registrations keyed by the
                 application object ID.
@@ -2256,6 +2262,24 @@ OAuthAppInfo
                         if public_client_obj
                         else []
                     )
+                    federated_identity_credentials = []
+                    try:
+                        fic_response = await self.client.applications.by_application_id(
+                            object_id
+                        ).federated_identity_credentials.get()
+                        for fic in getattr(fic_response, "value", []) or []:
+                            federated_identity_credentials.append(
+                                FederatedIdentityCredential(
+                                    name=getattr(fic, "name", "") or "",
+                                    issuer=getattr(fic, "issuer", "") or "",
+                                    subject=getattr(fic, "subject", "") or "",
+                                    audiences=list(getattr(fic, "audiences", []) or []),
+                                )
+                            )
+                    except Exception as error:
+                        logger.error(
+                            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
 
                     app_registrations[object_id] = AppRegistration(
                         id=object_id,
@@ -2265,6 +2289,7 @@ OAuthAppInfo
                         web_redirect_uris=web_redirect_uris,
                         spa_redirect_uris=spa_redirect_uris,
                         public_client_redirect_uris=public_client_redirect_uris,
+                        federated_identity_credentials=federated_identity_credentials,
                     )
 
                 next_link = getattr(app_response, "odata_next_link", None)
@@ -3071,6 +3096,27 @@ class ServicePrincipal(BaseModel):
     app_owner_ids: List[str] = []
 
 
+class FederatedIdentityCredential(BaseModel):
+    """Model representing a federated identity credential on an app registration.
+
+    A federated identity credential establishes a trust relationship between an
+    external OpenID Connect issuer/subject pair and the application, letting that
+    external workload obtain Entra tokens without any stored secret. It has no
+    expiry, so it falls outside the expiry- and unused-secret-shaped checks.
+
+    Attributes:
+        name: The credential's unique name within the application.
+        issuer: The OIDC issuer URL of the external identity provider.
+        subject: The subject identifier the incoming external token must match.
+        audiences: The audience values accepted for the external token.
+    """
+
+    name: str = ""
+    issuer: str = ""
+    subject: str = ""
+    audiences: List[str] = []
+
+
 class AppRegistration(BaseModel):
     """Model representing a Microsoft Entra ID application registration.
 
@@ -3084,6 +3130,8 @@ class AppRegistration(BaseModel):
         spa_redirect_uris: Redirect URIs configured for the SPA platform.
         public_client_redirect_uris: Redirect URIs configured for the
             public client (mobile/desktop) platform.
+        federated_identity_credentials: List of federated identity credentials
+            (workload identity federation trusts) configured on the application.
     """
 
     id: str
@@ -3093,6 +3141,7 @@ class AppRegistration(BaseModel):
     web_redirect_uris: List[str] = []
     spa_redirect_uris: List[str] = []
     public_client_redirect_uris: List[str] = []
+    federated_identity_credentials: List[FederatedIdentityCredential] = []
 
 
 class CrossTenantTarget(BaseModel):
