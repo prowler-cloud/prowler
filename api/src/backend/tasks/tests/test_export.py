@@ -60,8 +60,10 @@ class TestOutputs:
 
         def create_client(service_name, **kwargs):
             # Build a real boto3 client so signing runs for real, only faking the
-            # network call used to validate the credentials.
-            real_client = boto3.client(service_name, **kwargs)
+            # network call used to validate the credentials. Use boto3.Session()
+            # rather than boto3.client() directly, since the latter is patched
+            # above and would recurse into this same side effect.
+            real_client = boto3.Session().client(service_name, **kwargs)
             real_client.list_buckets = MagicMock()
             return real_client
 
@@ -79,13 +81,34 @@ class TestOutputs:
 
     @patch("tasks.jobs.export.boto3.client")
     @patch("tasks.jobs.export.settings")
-    def test_get_s3_client_fallback(self, mock_settings, mock_boto_client):
-        mock_boto_client.side_effect = [
-            ClientError({"Error": {"Code": "403"}}, "ListBuckets"),
-            MagicMock(),
-        ]
+    def test_get_s3_client_fallback(self, mock_settings, mock_boto_client, monkeypatch):
+        # The fallback branch relies on boto3's default credential chain (e.g. an
+        # IAM role), so provide env credentials for the real client to sign with.
+        monkeypatch.setenv("AWS_ACCESS_KEY_ID", "fallback-access-key")
+        monkeypatch.setenv("AWS_SECRET_ACCESS_KEY", "fallback-secret-key")
+        monkeypatch.setenv("AWS_DEFAULT_REGION", "us-east-1")
+
+        calls = {"count": 0}
+
+        def create_client(service_name, **kwargs):
+            calls["count"] += 1
+            if calls["count"] == 1:
+                raise ClientError({"Error": {"Code": "403"}}, "ListBuckets")
+            real_client = boto3.Session().client(service_name, **kwargs)
+            real_client.list_buckets = MagicMock()
+            return real_client
+
+        mock_boto_client.side_effect = create_client
+
         client = get_s3_client()
-        assert client is not None
+        url = client.generate_presigned_url(
+            "get_object",
+            Params={"Bucket": "test-bucket", "Key": "report.zip"},
+            ExpiresIn=300,
+        )
+
+        # The credential-less fallback path must also pin SigV4.
+        assert "X-Amz-Algorithm=AWS4-HMAC-SHA256" in url
 
     @patch("tasks.jobs.export.get_s3_client")
     @patch("tasks.jobs.export.base")
