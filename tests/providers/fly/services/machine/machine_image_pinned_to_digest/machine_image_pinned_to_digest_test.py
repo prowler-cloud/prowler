@@ -171,3 +171,16 @@ class Test_machine_image_pinned_to_digest:
         result = _run(machine_client)
         assert len(result) == 1
         assert result[0].status == "FAIL"
+
+    def test_uppercase_digest_suffix_fails(self):
+        machine_client = mock.MagicMock()
+        machine_client.machines = {
+            MACHINE_ID: _machine(
+                "registry.fly.io/app@sha256:"
+                + "ABCDEF0123456789" * 4
+            )
+        }
+
+        result = _run(machine_client)
+        assert len(result) == 1
+        assert result[0].status == "FAIL"

@@ -44,7 +44,7 @@ class machine_image_pinned_to_digest(Check):
                     f"immutable build artifact; verify it manually with 'fly machine status "
                     f"{machine.id} -a {machine.app_name}'.{resolved}"
                 )
-            elif DIGEST_PATTERN.search(image.lower()):
+            elif DIGEST_PATTERN.search(image):
                 report.status = "PASS"
                 report.status_extended = (
                     f"Machine {machine.name} in app {machine.app_name} runs the "
