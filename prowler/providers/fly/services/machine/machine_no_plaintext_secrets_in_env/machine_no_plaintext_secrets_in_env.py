@@ -1,5 +1,5 @@
 import re
-from typing import Iterable, List
+from typing import Iterable
 from urllib.parse import unquote, urlsplit
 
 from prowler.lib.check.models import Check, CheckReportFly
@@ -180,7 +180,10 @@ def carries_credential_parameter(component: str, patterns: Iterable[str]) -> boo
             return True
         if looks_like_secret(value):
             return True
-        nested = urlsplit(value)
+        try:
+            nested = urlsplit(value)
+        except ValueError:
+            return True
         if nested.netloc and (nested.username or nested.password):
             return True
         if nested.scheme in ("http", "https") and nested.netloc:
@@ -260,11 +263,11 @@ class machine_no_plaintext_secrets_in_env(Check):
     and only injected into the running machine.
     """
 
-    def execute(self) -> List[CheckReportFly]:
+    def execute(self) -> list[CheckReportFly]:
         """Execute the Fly.io machine secrets handling check.
 
         Returns:
-            List[CheckReportFly]: A report per in-scope machine.
+            list[CheckReportFly]: A report per in-scope machine.
         """
         findings = []
         patterns = [

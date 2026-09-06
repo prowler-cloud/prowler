@@ -1,5 +1,3 @@
-from typing import List
-
 from prowler.lib.check.models import Check, CheckReportFly
 from prowler.providers.fly.services.app.app_client import app_client
 from prowler.providers.fly.services.app.app_service import SHARED_NETWORK
@@ -13,11 +11,11 @@ class app_uses_dedicated_private_network(Check):
     reachability inside a single tenant.
     """
 
-    def execute(self) -> List[CheckReportFly]:
+    def execute(self) -> list[CheckReportFly]:
         """Execute the Fly.io private networking check.
 
         Returns:
-            List[CheckReportFly]: A report per in-scope app.
+            list[CheckReportFly]: A report per in-scope app.
         """
         findings = []
 

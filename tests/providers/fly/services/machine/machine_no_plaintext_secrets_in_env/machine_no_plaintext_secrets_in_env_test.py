@@ -34,7 +34,7 @@ def _machine(env: dict, secret_names: list = None) -> FlyMachine:
 
 class Test_machine_no_plaintext_secrets_in_env:
     def test_no_machines(self):
-        machine_client = mock.MagicMock
+        machine_client = mock.MagicMock()
         machine_client.machines = {}
         machine_client.audit_config = {}
 
@@ -54,7 +54,7 @@ class Test_machine_no_plaintext_secrets_in_env:
             assert len(result) == 0
 
     def test_machine_without_plaintext_secrets(self):
-        machine_client = mock.MagicMock
+        machine_client = mock.MagicMock()
         machine_client.machines = {
             MACHINE_ID: _machine(
                 {"PRIMARY_REGION": REGION, "LOG_LEVEL": "info"},
@@ -84,7 +84,7 @@ class Test_machine_no_plaintext_secrets_in_env:
             )
 
     def test_machine_with_plaintext_secrets(self):
-        machine_client = mock.MagicMock
+        machine_client = mock.MagicMock()
         machine_client.machines = {
             MACHINE_ID: _machine(
                 {"POSTGRES_PASSWORD": "hunter2", "API_KEY": "abc", "LOG_LEVEL": "info"}
@@ -113,7 +113,7 @@ class Test_machine_no_plaintext_secrets_in_env:
             )
 
     def test_endpoint_url_is_not_a_plaintext_secret(self):
-        machine_client = mock.MagicMock
+        machine_client = mock.MagicMock()
         machine_client.machines = {
             MACHINE_ID: _machine(
                 {
@@ -141,7 +141,7 @@ class Test_machine_no_plaintext_secrets_in_env:
             assert result[0].status == "PASS"
 
     def test_url_carrying_a_credential_is_a_plaintext_secret(self):
-        machine_client = mock.MagicMock
+        machine_client = mock.MagicMock()
         machine_client.machines = {
             MACHINE_ID: _machine(
                 {
@@ -173,7 +173,7 @@ class Test_machine_no_plaintext_secrets_in_env:
             )
 
     def test_configured_patterns_are_honoured(self):
-        machine_client = mock.MagicMock
+        machine_client = mock.MagicMock()
         machine_client.machines = {
             MACHINE_ID: _machine({"POSTGRES_PASSWORD": "hunter2", "SEED": "1234"})
         }
@@ -198,7 +198,7 @@ class Test_machine_no_plaintext_secrets_in_env:
             assert "POSTGRES_PASSWORD" not in result[0].status_extended
 
     def test_url_with_embedded_path_credential_is_a_plaintext_secret(self):
-        machine_client = mock.MagicMock
+        machine_client = mock.MagicMock()
         machine_client.machines = {
             MACHINE_ID: _machine(
                 {
@@ -230,7 +230,7 @@ class Test_machine_no_plaintext_secrets_in_env:
             )
 
     def test_url_with_unlisted_credential_parameter_is_a_plaintext_secret(self):
-        machine_client = mock.MagicMock
+        machine_client = mock.MagicMock()
         machine_client.machines = {
             MACHINE_ID: _machine(
                 {
@@ -263,7 +263,7 @@ class Test_machine_no_plaintext_secrets_in_env:
             )
 
     def test_unknown_secret_names_are_reported_as_unknown(self):
-        machine_client = mock.MagicMock
+        machine_client = mock.MagicMock()
         machine_client.machines = {
             MACHINE_ID: _machine({"LOG_LEVEL": "info"}, secret_names=None)
         }
@@ -289,7 +289,7 @@ class Test_machine_no_plaintext_secrets_in_env:
             )
 
     def test_no_secrets_set_are_counted(self):
-        machine_client = mock.MagicMock
+        machine_client = mock.MagicMock()
         machine_client.machines = {
             MACHINE_ID: _machine({"LOG_LEVEL": "info"}, secret_names=[])
         }
@@ -313,7 +313,7 @@ class Test_machine_no_plaintext_secrets_in_env:
             assert result[0].status_extended.endswith("(0 Fly secret(s) injected).")
 
     def test_null_patterns_config_uses_defaults(self):
-        machine_client = mock.MagicMock
+        machine_client = mock.MagicMock()
         machine_client.machines = {
             MACHINE_ID: _machine({"POSTGRES_PASSWORD": "hunter2"})
         }
@@ -419,3 +419,28 @@ class Test_is_credential_free_url:
 
         assert self.is_credential_free_url(url) is True
         assert self.is_credential_free_url(url, ["SEED"]) is False
+
+
+class Test_carries_credential_parameter:
+    @pytest.fixture(autouse=True)
+    def _load(self):
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_fly_provider(),
+        ):
+            from prowler.providers.fly.services.machine.machine_no_plaintext_secrets_in_env.machine_no_plaintext_secrets_in_env import (
+                DEFAULT_SECRET_NAME_PATTERNS,
+                carries_credential_parameter,
+            )
+
+        self.default_secret_name_patterns = DEFAULT_SECRET_NAME_PATTERNS
+        self.carries_credential_parameter = carries_credential_parameter
+
+    def test_malformed_nested_url_is_a_credential(self):
+        assert (
+            self.carries_credential_parameter(
+                "next=http://[bad",
+                self.default_secret_name_patterns,
+            )
+            is True
+        )

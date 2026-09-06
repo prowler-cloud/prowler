@@ -34,14 +34,14 @@ def _run(app_client):
 
 class Test_app_no_public_ip_address:
     def test_no_apps(self):
-        app_client = mock.MagicMock
+        app_client = mock.MagicMock()
         app_client.apps = {}
         app_client.audit_config = {}
 
         assert len(_run(app_client)) == 0
 
     def test_app_without_public_ip(self):
-        app_client = mock.MagicMock
+        app_client = mock.MagicMock()
         app_client.apps = {
             APP_NAME: FlyApp(id=APP_ID, name=APP_NAME, org_slug=ORG_SLUG, public_ips=[])
         }
@@ -61,7 +61,7 @@ class Test_app_no_public_ip_address:
         assert result[0].region == "global"
 
     def test_app_with_unknown_public_ip_allocation_is_manual(self):
-        app_client = mock.MagicMock
+        app_client = mock.MagicMock()
         app_client.apps = {
             APP_NAME: FlyApp(id=APP_ID, name=APP_NAME, org_slug=ORG_SLUG)
         }
@@ -77,7 +77,7 @@ class Test_app_no_public_ip_address:
         )
 
     def test_app_with_public_ip(self):
-        app_client = mock.MagicMock
+        app_client = mock.MagicMock()
         app_client.apps = {
             APP_NAME: FlyApp(
                 id=APP_ID, name=APP_NAME, org_slug=ORG_SLUG, public_ips=[PUBLIC_IP]
@@ -94,7 +94,7 @@ class Test_app_no_public_ip_address:
         )
 
     def test_approved_public_app(self):
-        app_client = mock.MagicMock
+        app_client = mock.MagicMock()
         app_client.apps = {
             APP_NAME: FlyApp(
                 id=APP_ID, name=APP_NAME, org_slug=ORG_SLUG, public_ips=[PUBLIC_IP]
@@ -111,7 +111,7 @@ class Test_app_no_public_ip_address:
         )
 
     def test_null_public_apps_config_uses_default(self):
-        app_client = mock.MagicMock
+        app_client = mock.MagicMock()
         app_client.apps = {
             APP_NAME: FlyApp(
                 id=APP_ID, name=APP_NAME, org_slug=ORG_SLUG, public_ips=[PUBLIC_IP]

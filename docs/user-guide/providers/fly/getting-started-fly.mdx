@@ -1,5 +1,5 @@
 ---
-title: 'Getting Started With Fly.io on Prowler'
+title: 'Getting Started with Fly.io on Prowler'
 ---
 
 import { VersionBadge } from "/snippets/version-badge.mdx"
@@ -23,10 +23,11 @@ Set up authentication for Fly.io with the [Fly.io Authentication](/user-guide/pr
 
 ### Run Prowler for Fly.io
 
-Once authenticated, export the credentials as environment variables and run Prowler for Fly.io. Environment variables keep secrets out of shell history and process listings:
+Once authenticated, export the credentials as environment variables and run Prowler for Fly.io. Use hidden input so the token value is never written to shell history:
 
 ```bash
-export FLY_API_TOKEN="your-fly-access-token"
+read -rs FLY_API_TOKEN
+export FLY_API_TOKEN
 export FLY_ORG="your-organization-slug"
 prowler fly
 ```

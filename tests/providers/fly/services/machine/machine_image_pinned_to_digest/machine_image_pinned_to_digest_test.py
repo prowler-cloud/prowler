@@ -49,13 +49,13 @@ def _run(machine_client):
 
 class Test_machine_image_pinned_to_digest:
     def test_no_machines(self):
-        machine_client = mock.MagicMock
+        machine_client = mock.MagicMock()
         machine_client.machines = {}
 
         assert len(_run(machine_client)) == 0
 
     def test_digest_pinned_image(self):
-        machine_client = mock.MagicMock
+        machine_client = mock.MagicMock()
         machine_client.machines = {MACHINE_ID: _machine(DIGEST_IMAGE, DIGEST)}
 
         result = _run(machine_client)
@@ -69,7 +69,7 @@ class Test_machine_image_pinned_to_digest:
         assert result[0].region == REGION
 
     def test_tag_and_digest_reference_is_pinned(self):
-        machine_client = mock.MagicMock
+        machine_client = mock.MagicMock()
         machine_client.machines = {
             MACHINE_ID: _machine(f"registry.fly.io/test-app:v1@{DIGEST}", DIGEST)
         }
@@ -79,7 +79,7 @@ class Test_machine_image_pinned_to_digest:
         assert result[0].status == "PASS"
 
     def test_mutable_tag_image(self):
-        machine_client = mock.MagicMock
+        machine_client = mock.MagicMock()
         machine_client.machines = {MACHINE_ID: _machine(TAG_IMAGE)}
 
         result = _run(machine_client)
@@ -93,7 +93,7 @@ class Test_machine_image_pinned_to_digest:
 
     def test_mutable_tag_with_resolved_digest_still_fails(self):
         # image_ref.digest is the digest Fly.io pulled for the tag; it is not a pin.
-        machine_client = mock.MagicMock
+        machine_client = mock.MagicMock()
         machine_client.machines = {MACHINE_ID: _machine(TAG_IMAGE, DIGEST)}
 
         result = _run(machine_client)
@@ -107,7 +107,7 @@ class Test_machine_image_pinned_to_digest:
         )
 
     def test_bare_repository_reference_fails(self):
-        machine_client = mock.MagicMock
+        machine_client = mock.MagicMock()
         machine_client.machines = {
             MACHINE_ID: _machine("flyio/fastify-functions", DIGEST)
         }
@@ -117,7 +117,7 @@ class Test_machine_image_pinned_to_digest:
         assert result[0].status == "FAIL"
 
     def test_missing_image_reference_is_manual(self):
-        machine_client = mock.MagicMock
+        machine_client = mock.MagicMock()
         machine_client.machines = {MACHINE_ID: _machine("")}
 
         result = _run(machine_client)
@@ -130,7 +130,7 @@ class Test_machine_image_pinned_to_digest:
         )
 
     def test_missing_image_reference_with_resolved_digest_is_manual(self):
-        machine_client = mock.MagicMock
+        machine_client = mock.MagicMock()
         machine_client.machines = {MACHINE_ID: _machine("", DIGEST)}
 
         result = _run(machine_client)

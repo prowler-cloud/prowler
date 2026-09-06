@@ -1,5 +1,3 @@
-from typing import List
-
 from prowler.lib.check.models import Check, CheckReportFly
 from prowler.providers.fly.lib.service.service import config_value
 from prowler.providers.fly.services.machine.machine_client import machine_client
@@ -38,11 +36,11 @@ class machine_no_public_non_http_ports(Check):
     so every port of the range is evaluated.
     """
 
-    def execute(self) -> List[CheckReportFly]:
+    def execute(self) -> list[CheckReportFly]:
         """Execute the Fly.io machine published port check.
 
         Returns:
-            List[CheckReportFly]: A report per in-scope machine.
+            list[CheckReportFly]: A report per in-scope machine.
         """
         findings = []
         allowed_ports = set(

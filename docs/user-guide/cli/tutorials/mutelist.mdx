@@ -2,6 +2,8 @@
 title: 'Mutelisting'
 ---
 
+import { VersionBadge } from "/snippets/version-badge.mdx"
+
 **Muting Findings for Intentional Configurations**
 
 In some cases, certain AWS resources may be intentionally configured in a way that deviates from security best practices but serves a valid use case. Examples include:
@@ -370,6 +372,8 @@ def handler(event, context):
 ```
 
 ## Fly.io Mutelist
+
+<VersionBadge version="5.42.0" />
 
 For the Fly.io provider the Mutelist fields map to the following values:
 

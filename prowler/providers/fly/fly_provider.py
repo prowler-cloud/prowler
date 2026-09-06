@@ -75,7 +75,7 @@ class FlyProvider(Provider):
     ):
         logger.info("Instantiating Fly provider...")
 
-        if config_content:
+        if config_content is not None:
             self._audit_config = config_content
         else:
             if not config_path:

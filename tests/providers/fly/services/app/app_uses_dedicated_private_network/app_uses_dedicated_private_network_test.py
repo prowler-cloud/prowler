@@ -31,13 +31,13 @@ def _run(app_client):
 
 class Test_app_uses_dedicated_private_network:
     def test_no_apps(self):
-        app_client = mock.MagicMock
+        app_client = mock.MagicMock()
         app_client.apps = {}
 
         assert len(_run(app_client)) == 0
 
     def test_dedicated_network(self):
-        app_client = mock.MagicMock
+        app_client = mock.MagicMock()
         app_client.apps = {
             APP_NAME: FlyApp(
                 id=APP_ID, name=APP_NAME, org_slug=ORG_SLUG, network="tenant-a"
@@ -53,7 +53,7 @@ class Test_app_uses_dedicated_private_network:
         assert result[0].resource_id == APP_ID
 
     def test_shared_network(self):
-        app_client = mock.MagicMock
+        app_client = mock.MagicMock()
         app_client.apps = {
             APP_NAME: FlyApp(
                 id=APP_ID, name=APP_NAME, org_slug=ORG_SLUG, network=SHARED_NETWORK
@@ -69,7 +69,7 @@ class Test_app_uses_dedicated_private_network:
         )
 
     def test_unknown_network_is_manual(self):
-        app_client = mock.MagicMock
+        app_client = mock.MagicMock()
         app_client.apps = {
             APP_NAME: FlyApp(id=APP_ID, name=APP_NAME, org_slug=ORG_SLUG)
         }
@@ -84,7 +84,7 @@ class Test_app_uses_dedicated_private_network:
         )
 
     def test_empty_network_is_manual(self):
-        app_client = mock.MagicMock
+        app_client = mock.MagicMock()
         app_client.apps = {
             APP_NAME: FlyApp(id=APP_ID, name=APP_NAME, org_slug=ORG_SLUG, network=" ")
         }

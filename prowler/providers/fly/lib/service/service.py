@@ -3,6 +3,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
+from typing import TypeVar
 
 import requests
 
@@ -12,6 +13,8 @@ from prowler.providers.fly.exceptions.exceptions import (
     FlyAuthenticationError,
     FlyRateLimitError,
 )
+
+T = TypeVar("T")
 
 MAX_WORKERS = 10
 DEFAULT_MAX_RETRIES = 3
@@ -24,7 +27,7 @@ MAX_TOTAL_RETRY_WAIT_SECONDS = 600
 MAX_RETRIES_LIMIT = 10
 
 
-def config_value(audit_config, key: str, default):
+def config_value(audit_config: object, key: str, default: T) -> T:
     """Read a provider configuration key null-safely.
 
     A missing configuration, a missing key and an explicit ``null`` value all
@@ -46,7 +49,9 @@ def config_value(audit_config, key: str, default):
 
 
 def parse_retry_after(
-    value, default: int = DEFAULT_RETRY_AFTER_SECONDS, now: datetime = None
+    value: object,
+    default: int = DEFAULT_RETRY_AFTER_SECONDS,
+    now: datetime | None = None,
 ) -> int:
     """Parse a ``Retry-After`` header into a number of seconds to wait.
 

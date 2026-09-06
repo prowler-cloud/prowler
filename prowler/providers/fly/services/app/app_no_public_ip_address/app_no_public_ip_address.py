@@ -1,5 +1,3 @@
-from typing import List
-
 from prowler.lib.check.models import Check, CheckReportFly
 from prowler.providers.fly.lib.service.service import config_value
 from prowler.providers.fly.services.app.app_client import app_client
@@ -13,11 +11,11 @@ class app_no_public_ip_address(Check):
     databases, object storage and other backing services.
     """
 
-    def execute(self) -> List[CheckReportFly]:
+    def execute(self) -> list[CheckReportFly]:
         """Execute the Fly.io app public IP exposure check.
 
         Returns:
-            List[CheckReportFly]: A report per in-scope app.
+            list[CheckReportFly]: A report per in-scope app.
         """
         findings = []
         public_apps = config_value(app_client.audit_config, "public_apps", [])

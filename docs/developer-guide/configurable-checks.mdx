@@ -2,6 +2,8 @@
 title: 'Configurable Checks in Prowler'
 ---
 
+import { VersionBadge } from "/snippets/version-badge.mdx"
+
 Prowler empowers users to extend and adapt cloud security coverage by making checks configurable through the use of the `audit_config` object. This approach enables customization of checks to meet specific requirements through a configuration file.
 
 ## Understanding the `audit_config` Object
@@ -220,6 +222,8 @@ Only fields with a numeric range, a fixed value set, or a length cap are listed.
 | `max_owners` | `1..1000` | absolute cap, overrides percentage for large teams |
 
 ### Fly.io
+
+<VersionBadge version="5.42.0" />
 
 | Key | Allowed range | Notes |
 |---|---|---|

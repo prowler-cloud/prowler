@@ -1,5 +1,3 @@
-from typing import List
-
 from prowler.lib.check.models import Check, CheckReportFly
 from prowler.providers.fly.services.machine.machine_client import machine_client
 
@@ -17,11 +15,11 @@ class machine_image_pinned_to_digest(Check):
     reported to help pin the image, never taken as evidence of pinning.
     """
 
-    def execute(self) -> List[CheckReportFly]:
+    def execute(self) -> list[CheckReportFly]:
         """Execute the Fly.io machine image provenance check.
 
         Returns:
-            List[CheckReportFly]: A report per in-scope machine.
+            list[CheckReportFly]: A report per in-scope machine.
         """
         findings = []
 

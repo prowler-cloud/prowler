@@ -31,7 +31,7 @@ def _volume(encrypted: bool) -> FlyVolume:
 
 class Test_volume_encrypted_at_rest:
     def test_no_volumes(self):
-        volume_client = mock.MagicMock
+        volume_client = mock.MagicMock()
         volume_client.volumes = {}
 
         with (
@@ -50,7 +50,7 @@ class Test_volume_encrypted_at_rest:
             assert len(result) == 0
 
     def test_encrypted_volume(self):
-        volume_client = mock.MagicMock
+        volume_client = mock.MagicMock()
         volume_client.volumes = {VOLUME_ID: _volume(True)}
 
         with (
@@ -76,7 +76,7 @@ class Test_volume_encrypted_at_rest:
             assert result[0].region == REGION
 
     def test_unencrypted_volume(self):
-        volume_client = mock.MagicMock
+        volume_client = mock.MagicMock()
         volume_client.volumes = {VOLUME_ID: _volume(False)}
 
         with (

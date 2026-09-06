@@ -1,5 +1,3 @@
-from typing import List
-
 from prowler.lib.check.models import Check, CheckReportFly
 from prowler.providers.fly.services.volume.volume_client import volume_client
 
@@ -11,11 +9,11 @@ class volume_encrypted_at_rest(Check):
     user-uploaded files, and can be created unencrypted.
     """
 
-    def execute(self) -> List[CheckReportFly]:
+    def execute(self) -> list[CheckReportFly]:
         """Execute the Fly.io volume encryption check.
 
         Returns:
-            List[CheckReportFly]: A report per in-scope volume.
+            list[CheckReportFly]: A report per in-scope volume.
         """
         findings = []
 

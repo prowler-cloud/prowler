@@ -70,14 +70,14 @@ class Test_format_ports:
 
 class Test_machine_no_public_non_http_ports:
     def test_no_machines(self):
-        machine_client = mock.MagicMock
+        machine_client = mock.MagicMock()
         machine_client.machines = {}
         machine_client.audit_config = {}
 
         assert len(_run(machine_client)) == 0
 
     def test_machine_without_published_ports(self):
-        machine_client = mock.MagicMock
+        machine_client = mock.MagicMock()
         machine_client.machines = {MACHINE_ID: _machine([])}
         machine_client.audit_config = {}
 
@@ -92,7 +92,7 @@ class Test_machine_no_public_non_http_ports:
         assert result[0].region == REGION
 
     def test_machine_with_http_ports_only(self):
-        machine_client = mock.MagicMock
+        machine_client = mock.MagicMock()
         machine_client.machines = {
             MACHINE_ID: _machine(
                 [
@@ -114,7 +114,7 @@ class Test_machine_no_public_non_http_ports:
         )
 
     def test_machine_with_database_port(self):
-        machine_client = mock.MagicMock
+        machine_client = mock.MagicMock()
         machine_client.machines = {
             MACHINE_ID: _machine([_service(FlyMachinePort(port=5432))])
         }
@@ -129,7 +129,7 @@ class Test_machine_no_public_non_http_ports:
         )
 
     def test_machine_with_port_range(self):
-        machine_client = mock.MagicMock
+        machine_client = mock.MagicMock()
         machine_client.machines = {
             MACHINE_ID: _machine(
                 [_service(FlyMachinePort(start_port=8000, end_port=8010))]
@@ -146,7 +146,7 @@ class Test_machine_no_public_non_http_ports:
         )
 
     def test_machine_with_range_and_single_ports(self):
-        machine_client = mock.MagicMock
+        machine_client = mock.MagicMock()
         machine_client.machines = {
             MACHINE_ID: _machine(
                 [
@@ -169,7 +169,7 @@ class Test_machine_no_public_non_http_ports:
         )
 
     def test_range_inside_the_allow_list_passes(self):
-        machine_client = mock.MagicMock
+        machine_client = mock.MagicMock()
         machine_client.machines = {
             MACHINE_ID: _machine([_service(FlyMachinePort(start_port=80, end_port=80))])
         }
@@ -180,7 +180,7 @@ class Test_machine_no_public_non_http_ports:
         assert result[0].status == "PASS"
 
     def test_range_spilling_over_the_allow_list_fails(self):
-        machine_client = mock.MagicMock
+        machine_client = mock.MagicMock()
         machine_client.machines = {
             MACHINE_ID: _machine([_service(FlyMachinePort(start_port=80, end_port=81))])
         }
@@ -194,7 +194,7 @@ class Test_machine_no_public_non_http_ports:
         )
 
     def test_custom_allowed_ports(self):
-        machine_client = mock.MagicMock
+        machine_client = mock.MagicMock()
         machine_client.machines = {
             MACHINE_ID: _machine([_service(FlyMachinePort(port=5432))])
         }
@@ -206,7 +206,7 @@ class Test_machine_no_public_non_http_ports:
         assert result[0].status_extended.endswith("beyond 80, 443, 5432.")
 
     def test_null_allowed_ports_config_uses_default(self):
-        machine_client = mock.MagicMock
+        machine_client = mock.MagicMock()
         machine_client.machines = {
             MACHINE_ID: _machine([_service(FlyMachinePort(port=443))])
         }
@@ -217,7 +217,7 @@ class Test_machine_no_public_non_http_ports:
         assert result[0].status == "PASS"
 
     def test_empty_allowed_ports_config_flags_every_port(self):
-        machine_client = mock.MagicMock
+        machine_client = mock.MagicMock()
         machine_client.machines = {
             MACHINE_ID: _machine([_service(FlyMachinePort(port=443))])
         }
