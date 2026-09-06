@@ -27,13 +27,14 @@ def format_ports(ports: set[int]) -> str:
 
 
 class machine_no_public_non_http_ports(Check):
-    """Check if a Fly.io machine publishes ports beyond HTTP and HTTPS.
+    """Check if a Fly.io machine publishes only correctly configured edge ports.
 
     Machine services with a ``ports`` entry are published on the Fly.io edge.
     Anything other than the HTTP/HTTPS edge ports puts a raw protocol, such as
     PostgreSQL or an S3 API, on the public internet whenever the app holds a
-    public IP address. Port ranges (``start_port`` / ``end_port``) are expanded
-    so every port of the range is evaluated.
+    public IP address. HTTP and HTTPS ports must also declare their required
+    edge handlers. Port ranges (``start_port`` / ``end_port``) are expanded so
+    every port of the range is evaluated.
     """
 
     def execute(self) -> list[CheckReportFly]:
@@ -55,12 +56,24 @@ class machine_no_public_non_http_ports(Check):
             report = CheckReportFly(metadata=self.metadata(), resource=machine)
 
             published = set()
+            disallowed = set()
+            misconfigured = set()
             for service in machine.services:
                 for port in service.ports:
-                    published.update(port.published_ports())
-            disallowed = published - allowed_ports
+                    handlers = {handler.lower() for handler in port.handlers}
+                    for published_port in port.published_ports():
+                        published.add(published_port)
+                        if published_port not in allowed_ports:
+                            disallowed.add(published_port)
+                        elif published_port == 80 and "http" not in handlers:
+                            misconfigured.add(published_port)
+                        elif published_port == 443 and not {
+                            "tls",
+                            "http",
+                        } <= handlers:
+                            misconfigured.add(published_port)
 
-            if not disallowed:
+            if not disallowed and not misconfigured:
                 report.status = "PASS"
                 report.status_extended = (
                     f"Machine {machine.name} in app {machine.app_name} publishes no "
@@ -71,10 +84,19 @@ class machine_no_public_non_http_ports(Check):
                 )
             else:
                 report.status = "FAIL"
-                report.status_extended = (
-                    f"Machine {machine.name} in app {machine.app_name} publishes "
-                    f"port(s) {format_ports(disallowed)} to the Fly.io edge."
-                )
+                messages = []
+                if disallowed:
+                    messages.append(
+                        f"Machine {machine.name} in app {machine.app_name} publishes "
+                        f"port(s) {format_ports(disallowed)} to the Fly.io edge."
+                    )
+                if misconfigured:
+                    messages.append(
+                        f"Machine {machine.name} in app {machine.app_name} publishes "
+                        f"port(s) {format_ports(misconfigured)} without the required "
+                        "HTTP/TLS handlers, forwarding raw TCP to the Fly.io edge."
+                    )
+                report.status_extended = " ".join(messages)
 
             findings.append(report)
 

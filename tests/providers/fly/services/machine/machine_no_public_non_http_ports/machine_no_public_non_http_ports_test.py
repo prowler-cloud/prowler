@@ -113,6 +113,79 @@ class Test_machine_no_public_non_http_ports:
             f"beyond 80, 443."
         )
 
+    def test_http_port_without_handler_fails(self):
+        machine_client = mock.MagicMock()
+        machine_client.machines = {
+            MACHINE_ID: _machine([_service(FlyMachinePort(port=80))])
+        }
+        machine_client.audit_config = {}
+
+        result = _run(machine_client)
+        assert len(result) == 1
+        assert result[0].status == "FAIL"
+        assert result[0].status_extended.endswith(
+            "publishes port(s) 80 without the required HTTP/TLS handlers, "
+            "forwarding raw TCP to the Fly.io edge."
+        )
+
+    def test_https_port_without_handlers_fails(self):
+        machine_client = mock.MagicMock()
+        machine_client.machines = {
+            MACHINE_ID: _machine([_service(FlyMachinePort(port=443))])
+        }
+        machine_client.audit_config = {}
+
+        result = _run(machine_client)
+        assert len(result) == 1
+        assert result[0].status == "FAIL"
+        assert result[0].status_extended.endswith(
+            "publishes port(s) 443 without the required HTTP/TLS handlers, "
+            "forwarding raw TCP to the Fly.io edge."
+        )
+
+    def test_https_port_with_only_tls_handler_fails(self):
+        machine_client = mock.MagicMock()
+        machine_client.machines = {
+            MACHINE_ID: _machine(
+                [_service(FlyMachinePort(port=443, handlers=["tls"]))]
+            )
+        }
+        machine_client.audit_config = {}
+
+        result = _run(machine_client)
+        assert len(result) == 1
+        assert result[0].status == "FAIL"
+        assert result[0].status_extended.endswith(
+            "publishes port(s) 443 without the required HTTP/TLS handlers, "
+            "forwarding raw TCP to the Fly.io edge."
+        )
+
+    def test_http_port_with_handler_passes(self):
+        machine_client = mock.MagicMock()
+        machine_client.machines = {
+            MACHINE_ID: _machine(
+                [_service(FlyMachinePort(port=80, handlers=["http"]))]
+            )
+        }
+        machine_client.audit_config = {}
+
+        result = _run(machine_client)
+        assert len(result) == 1
+        assert result[0].status == "PASS"
+
+    def test_https_port_with_handlers_passes(self):
+        machine_client = mock.MagicMock()
+        machine_client.machines = {
+            MACHINE_ID: _machine(
+                [_service(FlyMachinePort(port=443, handlers=["tls", "http"]))]
+            )
+        }
+        machine_client.audit_config = {}
+
+        result = _run(machine_client)
+        assert len(result) == 1
+        assert result[0].status == "PASS"
+
     def test_machine_with_database_port(self):
         machine_client = mock.MagicMock()
         machine_client.machines = {
@@ -171,7 +244,15 @@ class Test_machine_no_public_non_http_ports:
     def test_range_inside_the_allow_list_passes(self):
         machine_client = mock.MagicMock()
         machine_client.machines = {
-            MACHINE_ID: _machine([_service(FlyMachinePort(start_port=80, end_port=80))])
+            MACHINE_ID: _machine(
+                [
+                    _service(
+                        FlyMachinePort(
+                            start_port=80, end_port=80, handlers=["http"]
+                        )
+                    )
+                ]
+            )
         }
         machine_client.audit_config = {}
 
@@ -182,7 +263,15 @@ class Test_machine_no_public_non_http_ports:
     def test_range_spilling_over_the_allow_list_fails(self):
         machine_client = mock.MagicMock()
         machine_client.machines = {
-            MACHINE_ID: _machine([_service(FlyMachinePort(start_port=80, end_port=81))])
+            MACHINE_ID: _machine(
+                [
+                    _service(
+                        FlyMachinePort(
+                            start_port=80, end_port=81, handlers=["http"]
+                        )
+                    )
+                ]
+            )
         }
         machine_client.audit_config = {}
 
@@ -208,7 +297,9 @@ class Test_machine_no_public_non_http_ports:
     def test_null_allowed_ports_config_uses_default(self):
         machine_client = mock.MagicMock()
         machine_client.machines = {
-            MACHINE_ID: _machine([_service(FlyMachinePort(port=443))])
+            MACHINE_ID: _machine(
+                [_service(FlyMachinePort(port=443, handlers=["tls", "http"]))]
+            )
         }
         machine_client.audit_config = {"allowed_public_ports": None}
 

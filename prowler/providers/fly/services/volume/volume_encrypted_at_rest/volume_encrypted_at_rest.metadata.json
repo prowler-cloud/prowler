@@ -19,7 +19,7 @@
   ],
   "Remediation": {
     "Code": {
-      "CLI": "fly volumes create <name> -a <app> -r <region> -s <size>",
+      "CLI": "",
       "NativeIaC": "",
       "Other": "1. Create a replacement encrypted volume (encryption is the default for 'fly volumes create')\n2. Copy the data from the unencrypted volume into the encrypted one\n3. Create a replacement machine mounting the encrypted volume (a volume cannot be attached to an existing machine) and verify the workload\n4. Destroy the unencrypted volume once the restore has been verified",
       "Terraform": ""

@@ -116,27 +116,58 @@ class Test_machine_image_pinned_to_digest:
         assert len(result) == 1
         assert result[0].status == "FAIL"
 
-    def test_missing_image_reference_is_manual(self):
+    def test_missing_image_reference_fails(self):
         machine_client = mock.MagicMock()
         machine_client.machines = {MACHINE_ID: _machine("")}
 
         result = _run(machine_client)
         assert len(result) == 1
-        assert result[0].status == "MANUAL"
+        assert result[0].status == "FAIL"
         assert result[0].status_extended == (
             f"Machine {MACHINE_NAME} in app {APP_NAME} has no image reference in "
-            f"its configuration, so image pinning could not be determined; verify "
-            f"it manually with 'fly machine status {MACHINE_ID} -a {APP_NAME}'."
+            f"its configuration, so it cannot be tied to an immutable build "
+            f"artifact; verify it manually with 'fly machine status {MACHINE_ID} "
+            f"-a {APP_NAME}'."
         )
 
-    def test_missing_image_reference_with_resolved_digest_is_manual(self):
+    def test_missing_image_reference_with_resolved_digest_fails(self):
         machine_client = mock.MagicMock()
         machine_client.machines = {MACHINE_ID: _machine("", DIGEST)}
 
         result = _run(machine_client)
         assert len(result) == 1
-        assert result[0].status == "MANUAL"
+        assert result[0].status == "FAIL"
         assert result[0].status_extended.endswith(
             f"Fly.io reports the running image digest {DIGEST}, which can be used "
             f"to pin the image."
         )
+
+    def test_repository_named_sha256_is_not_a_digest_reference(self):
+        machine_client = mock.MagicMock()
+        machine_client.machines = {
+            MACHINE_ID: _machine("registry.fly.io/sha256:latest")
+        }
+
+        result = _run(machine_client)
+        assert len(result) == 1
+        assert result[0].status == "FAIL"
+
+    def test_digest_with_short_hex_suffix_fails(self):
+        machine_client = mock.MagicMock()
+        machine_client.machines = {
+            MACHINE_ID: _machine("registry.fly.io/test-app@sha256:" + "a" * 63)
+        }
+
+        result = _run(machine_client)
+        assert len(result) == 1
+        assert result[0].status == "FAIL"
+
+    def test_digest_with_extra_characters_fails(self):
+        machine_client = mock.MagicMock()
+        machine_client.machines = {
+            MACHINE_ID: _machine("registry.fly.io/test-app@" + DIGEST + "-extra")
+        }
+
+        result = _run(machine_client)
+        assert len(result) == 1
+        assert result[0].status == "FAIL"

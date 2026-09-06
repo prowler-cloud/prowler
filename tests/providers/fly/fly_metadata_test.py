@@ -72,5 +72,8 @@ class TestFlyMetadata:
         fly_metadata = CheckMetadata.get_bulk(provider="fly")
 
         for metadata in fly_metadata.values():
-            assert metadata.Remediation.Code.CLI.startswith("fly ")
+            if metadata.CheckID == "volume_encrypted_at_rest":
+                assert metadata.Remediation.Code.CLI == ""
+            else:
+                assert metadata.Remediation.Code.CLI.startswith("fly ")
             assert metadata.Remediation.Code.Other

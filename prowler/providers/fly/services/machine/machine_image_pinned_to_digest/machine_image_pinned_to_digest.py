@@ -1,7 +1,9 @@
+import re
+
 from prowler.lib.check.models import Check, CheckReportFly
 from prowler.providers.fly.services.machine.machine_client import machine_client
 
-DIGEST_MARKER = "@sha256:"
+DIGEST_PATTERN = re.compile(r"@sha256:[0-9a-f]{64}$")
 
 
 class machine_image_pinned_to_digest(Check):
@@ -34,15 +36,15 @@ class machine_image_pinned_to_digest(Check):
             )
 
             if not image:
-                # The configured reference is unknown: never claim pinning from a gap.
-                report.status = "MANUAL"
+                # The configured image reference is absent, so pinning cannot be verified.
+                report.status = "FAIL"
                 report.status_extended = (
                     f"Machine {machine.name} in app {machine.app_name} has no image "
-                    f"reference in its configuration, so image pinning could not be "
-                    f"determined; verify it manually with 'fly machine status "
+                    f"reference in its configuration, so it cannot be tied to an "
+                    f"immutable build artifact; verify it manually with 'fly machine status "
                     f"{machine.id} -a {machine.app_name}'.{resolved}"
                 )
-            elif DIGEST_MARKER in image.lower():
+            elif DIGEST_PATTERN.search(image.lower()):
                 report.status = "PASS"
                 report.status_extended = (
                     f"Machine {machine.name} in app {machine.app_name} runs the "
