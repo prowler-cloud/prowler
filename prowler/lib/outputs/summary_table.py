@@ -124,6 +124,11 @@ def display_summary_table(
         elif provider.type == "scaleway":
             entity_type = "Organization"
             audited_entities = provider.identity.organization_id
+        elif provider.type == "snowflake":
+            entity_type = "Account"
+            audited_entities = (
+                provider.identity.account_locator or provider.identity.account
+            )
         elif provider.type == "linode":
             entity_type = "Account"
             audited_entities = (

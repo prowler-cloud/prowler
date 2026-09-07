@@ -666,6 +666,21 @@ class Provider(ABC):
                         mutelist_path=arguments.mutelist_file,
                         fixer_config=fixer_config,
                     )
+                elif arguments.provider == "snowflake":
+                    # The private key and its passphrase are read from the
+                    # SNOWFLAKE_PRIVATE_KEY* env vars by the provider itself; only
+                    # non-secret context is accepted as a CLI flag, so the key never
+                    # reaches shell history or the process list.
+                    provider_class(
+                        account=getattr(arguments, "account", None),
+                        user=getattr(arguments, "user", None),
+                        private_key_path=getattr(arguments, "private_key_path", None),
+                        role=getattr(arguments, "role", None),
+                        warehouse=getattr(arguments, "warehouse", None),
+                        config_path=arguments.config_file,
+                        mutelist_path=arguments.mutelist_file,
+                        fixer_config=fixer_config,
+                    )
                 elif arguments.provider == "linode":
                     # Credentials are read from the LINODE_TOKEN env var by the
                     # provider itself; there are no credential CLI flags to
