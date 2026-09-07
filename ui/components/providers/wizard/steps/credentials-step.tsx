@@ -14,6 +14,7 @@ import {
 } from "../../workflow/forms";
 import { SelectViaAlibabaCloud } from "../../workflow/forms/select-credentials-type/alibabacloud";
 import { SelectViaAWS } from "../../workflow/forms/select-credentials-type/aws";
+import { SelectViaAzure } from "../../workflow/forms/select-credentials-type/azure";
 import { SelectViaCloudflare } from "../../workflow/forms/select-credentials-type/cloudflare";
 import {
   AddViaServiceAccountForm,
@@ -126,6 +127,14 @@ export function CredentialsStep({
     if (providerType === "aws") {
       return (
         <SelectViaAWS
+          initialVia={via || undefined}
+          onViaChange={handleViaChange}
+        />
+      );
+    }
+    if (providerType === "azure") {
+      return (
+        <SelectViaAzure
           initialVia={via || undefined}
           onViaChange={handleViaChange}
         />

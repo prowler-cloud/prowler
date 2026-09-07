@@ -125,6 +125,13 @@ export default defineConfig(() => {
         "vitest-browser-react",
         "msw/browser",
 
+        // Azure certificate generator (PROWLER-2378). Vite would otherwise
+        // discover these two on first import inside a component test, which
+        // triggers a mid-run "optimized dependencies changed. reloading" and
+        // races with Playwright's route handlers.
+        "@peculiar/x509",
+        "reflect-metadata",
+
         // React runtime (pre-bundle so a cold run doesn't re-optimize and
         // reload mid-test — see the on-demand-reload note above).
         "react-dom/client",
@@ -206,7 +213,6 @@ export default defineConfig(() => {
         "@uiw/react-codemirror",
         "@sentry/nextjs",
         "@extractus/feed-extractor",
-        "@stripe/stripe-js",
       ],
     },
   };

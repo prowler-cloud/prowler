@@ -78,6 +78,14 @@ export const buildAzureSecret = (formData: FormData) => {
       formData,
       ProviderCredentialFields.TENANT_ID,
     ),
+    // Certificate auth (PROWLER-2378). The backend `AzureProviderSecret`
+    // serializer accepts either `client_secret` or `certificate_content`
+    // and rejects both-empty, so we always forward the field — the empty
+    // one gets stripped by `filterEmptyValues` below.
+    [ProviderCredentialFields.CERTIFICATE_CONTENT]: getFormValue(
+      formData,
+      ProviderCredentialFields.CERTIFICATE_CONTENT,
+    ),
   };
   return filterEmptyValues(secret);
 };

@@ -349,12 +349,13 @@ test.describe("Add Provider", () => {
     const subscriptionId = process.env.E2E_AZURE_SUBSCRIPTION_ID ?? "";
     const clientId = process.env.E2E_AZURE_CLIENT_ID ?? "";
     const clientSecret = process.env.E2E_AZURE_SECRET_ID ?? "";
+    const certificateContent = process.env.E2E_AZURE_CERTIFICATE_CONTENT ?? "";
     const tenantId = process.env.E2E_AZURE_TENANT_ID ?? "";
 
     // Setup before each test
     test.beforeEach(async ({ page }) => {
       test.skip(
-        !subscriptionId || !clientId || !clientSecret || !tenantId,
+        !subscriptionId || !clientId || !tenantId,
         "Azure E2E env vars are not set",
       );
       providersPage = new ProvidersPage(page);
@@ -377,6 +378,8 @@ test.describe("Add Provider", () => {
         ],
       },
       async ({ page }) => {
+        test.skip(!clientSecret, "E2E_AZURE_SECRET_ID is not set");
+
         // Prepare test data for AZURE provider
         const azureProviderData: AZUREProviderData = {
           subscriptionId: subscriptionId,
@@ -406,11 +409,61 @@ test.describe("Add Provider", () => {
         await providersPage.fillAZUREProviderDetails(azureProviderData);
         await providersPage.clickNext();
 
+        // Azure now shows a credential-type selector (PROWLER-2378) — pick
+        // the client-secret path before landing on the credentials form.
+        await providersPage.selectAzureCredentialsType(azureCredentials.type);
+
         // Fill static credentials details
         await providersPage.fillAZURECredentials(azureCredentials);
         await providersPage.clickNext();
 
         // Confirm the provider connection without launching a scan
+        await providersPage.completeProviderConnectionWithoutLaunchingScan(
+          subscriptionId,
+        );
+      },
+    );
+
+    test(
+      "should add a new Azure provider with certificate credentials",
+      {
+        tag: [
+          "@critical",
+          "@e2e",
+          "@providers",
+          "@azure",
+          "@serial",
+          "@PROVIDER-E2E-020",
+        ],
+      },
+      async ({ page }) => {
+        test.skip(
+          !certificateContent,
+          "E2E_AZURE_CERTIFICATE_CONTENT is not set",
+        );
+
+        const azureProviderData: AZUREProviderData = {
+          subscriptionId,
+          alias: "Test E2E Azure Account - Certificate",
+        };
+        const azureCredentials: AZUREProviderCredential = {
+          type: AZURE_CREDENTIAL_OPTIONS.AZURE_CERTIFICATE_CREDENTIALS,
+          clientId,
+          certificateContent,
+          tenantId,
+        };
+
+        await providersPage.goto();
+        await providersPage.verifyPageLoaded();
+        await providersPage.clickAddProvider();
+        await providersPage.verifyConnectAccountPageLoaded();
+        await providersPage.selectAZUREProvider();
+        await providersPage.fillAZUREProviderDetails(azureProviderData);
+        await providersPage.clickNext();
+        await providersPage.selectAzureCredentialsType(azureCredentials.type);
+        await providersPage.verifyAzureCertificateCredentialsPageLoaded();
+        await providersPage.fillAzureCertificateCredentials(azureCredentials);
+        await providersPage.clickNext();
         await providersPage.completeProviderConnectionWithoutLaunchingScan(
           subscriptionId,
         );

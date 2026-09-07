@@ -17,6 +17,10 @@ vi.mock("../../workflow/forms/select-credentials-type/aws", () => ({
   SelectViaAWS: () => <div>select-via-aws</div>,
 }));
 
+vi.mock("../../workflow/forms/select-credentials-type/azure", () => ({
+  SelectViaAzure: () => <div>select-via-azure</div>,
+}));
+
 vi.mock("../../workflow/forms/select-credentials-type/alibabacloud", () => ({
   SelectViaAlibabaCloud: () => <div>select-via-alibabacloud</div>,
 }));

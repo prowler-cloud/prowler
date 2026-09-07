@@ -174,6 +174,51 @@
 
 ---
 
+## Test Case: `PROVIDER-E2E-020` - Add Azure Provider with Certificate Credentials
+
+**Priority:** `critical`
+
+**Tags:**
+
+- type → @e2e, @serial
+- feature → @providers
+- provider → @azure
+
+**Description/Objective:** Validates the complete flow of adding an Azure provider with an existing App Registration certificate bundle.
+
+**Preconditions:**
+
+- Admin user authentication required
+- Environment variables configured: E2E_AZURE_SUBSCRIPTION_ID, E2E_AZURE_CLIENT_ID, E2E_AZURE_TENANT_ID, E2E_AZURE_CERTIFICATE_CONTENT
+- The public certificate matching the bundle is uploaded to the App Registration
+- Reader and ProwlerRole are assigned on the target subscription
+
+### Flow Steps
+
+1. Navigate to the Providers page and open the add-provider wizard
+2. Select Azure and enter the subscription details
+3. Select Certificate Authentication
+4. Verify the six-step onboarding guide, Deploy to Azure link, manual template link, and certificate generation are available
+5. Enter the Tenant ID, Client ID, and base64-encoded certificate bundle
+6. Confirm the provider connection without launching a scan
+7. Verify the provider appears in the Providers table
+
+### Expected Result
+
+- Azure provider connects with certificate credentials
+- Provider appears in the Providers table with the expected subscription ID
+
+### Key Verification Points
+
+- The certificate authentication form displays all six onboarding steps
+- Deploy to Azure loads the ARM template from the Mintlify documentation asset
+- Open template links directly to the Mintlify-hosted ARM JSON
+- Certificate generation remains available in the authentication form
+- The certificate and private key bundle is submitted through the certificate field
+- Provider connection succeeds without a client secret
+
+---
+
 ## Test Case: `PROVIDER-E2E-004` - Add M365 Provider with Static Credentials
 
 **Priority:** `critical`

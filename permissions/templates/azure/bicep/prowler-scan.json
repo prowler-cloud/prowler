@@ -1,0 +1,100 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.46.1.21595",
+      "templateHash": "16146816613430830317"
+    }
+  },
+  "parameters": {
+    "servicePrincipalObjectId": {
+      "type": "string",
+      "metadata": {
+        "description": "Object ID of the Service Principal for the App Registration Prowler will use. Find it in Azure Portal → Microsoft Entra ID → Enterprise applications → your app → Overview → Object ID. This is NOT the same as the App Registration's Object ID; the Service Principal has its own separate Object ID."
+      }
+    },
+    "deploymentLabel": {
+      "type": "string",
+      "defaultValue": "Prowler",
+      "metadata": {
+        "description": "Cosmetic label included in the custom role description. Free text; keep the default unless you need to distinguish multiple Prowler deployments."
+      }
+    },
+    "customRoleName": {
+      "type": "string",
+      "defaultValue": "ProwlerRole",
+      "metadata": {
+        "description": "Name of the extra role Prowler creates. Keep the default unless your org already uses this name."
+      }
+    }
+  },
+  "variables": {
+    "customRoleDefinitionName": "[guid(subscription().id, parameters('customRoleName'))]",
+    "readerRoleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'acdd72a7-3385-48ef-bd42-f606fba81ae7')]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Authorization/roleDefinitions",
+      "apiVersion": "2022-05-01-preview",
+      "name": "[variables('customRoleDefinitionName')]",
+      "properties": {
+        "roleName": "[parameters('customRoleName')]",
+        "description": "[format('Role used by {0} for Prowler checks that require Azure actions beyond the built-in Reader role.', parameters('deploymentLabel'))]",
+        "type": "CustomRole",
+        "assignableScopes": [
+          "[subscription().id]"
+        ],
+        "permissions": [
+          {
+            "actions": [
+              "Microsoft.Web/sites/host/listkeys/action",
+              "Microsoft.Web/sites/config/list/Action"
+            ],
+            "notActions": [],
+            "dataActions": [],
+            "notDataActions": []
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "name": "[guid(subscription().id, parameters('servicePrincipalObjectId'), variables('readerRoleDefinitionId'))]",
+      "properties": {
+        "principalId": "[parameters('servicePrincipalObjectId')]",
+        "principalType": "ServicePrincipal",
+        "roleDefinitionId": "[variables('readerRoleDefinitionId')]"
+      }
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "name": "[guid(subscription().id, parameters('servicePrincipalObjectId'), subscriptionResourceId('Microsoft.Authorization/roleDefinitions', variables('customRoleDefinitionName')))]",
+      "properties": {
+        "principalId": "[parameters('servicePrincipalObjectId')]",
+        "principalType": "ServicePrincipal",
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', variables('customRoleDefinitionName'))]"
+      },
+      "dependsOn": [
+        "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', variables('customRoleDefinitionName'))]"
+      ]
+    }
+  ],
+  "outputs": {
+    "tenantId": {
+      "type": "string",
+      "value": "[subscription().tenantId]"
+    },
+    "subscriptionId": {
+      "type": "string",
+      "value": "[subscription().subscriptionId]"
+    },
+    "prowlerRoleDefinitionId": {
+      "type": "string",
+      "value": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', variables('customRoleDefinitionName'))]"
+    }
+  }
+}

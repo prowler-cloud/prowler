@@ -219,12 +219,27 @@ export type AWSCredentialsRole = {
   [ProviderCredentialFields.CREDENTIALS_TYPE]?: AWSCredentialsType;
 };
 
-export type AzureCredentials = {
+export type AzureClientSecretCredentials = {
   [ProviderCredentialFields.CLIENT_ID]: string;
   [ProviderCredentialFields.CLIENT_SECRET]: string;
   [ProviderCredentialFields.TENANT_ID]: string;
   [ProviderCredentialFields.PROVIDER_ID]: string;
 };
+
+export type AzureCertificateCredentials = {
+  [ProviderCredentialFields.CLIENT_ID]: string;
+  [ProviderCredentialFields.CERTIFICATE_CONTENT]: string;
+  [ProviderCredentialFields.TENANT_ID]: string;
+  [ProviderCredentialFields.PROVIDER_ID]: string;
+};
+
+// `AzureCredentials` used to be the client-secret-only shape. It now spans
+// both service-principal auth methods so callers that render either form can
+// keep the same react-hook-form Control<>. The two forms share `client_id`
+// and `tenant_id`, so consumers touching only those fields need no changes.
+export type AzureCredentials =
+  | AzureClientSecretCredentials
+  | AzureCertificateCredentials;
 
 export type M365ClientSecretCredentials = {
   [ProviderCredentialFields.CLIENT_ID]: string;

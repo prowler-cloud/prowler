@@ -55,8 +55,10 @@ export const useCredentialsForm = ({
     if (providerType === "gcp" && effectiveVia === "service-account") {
       return addCredentialsServiceAccountFormSchema(providerType);
     }
-    // For GitHub, M365, and Cloudflare, we need to pass the via parameter to determine which fields are required
+    // For Azure, GitHub, M365, and Cloudflare, we need to pass the via
+    // parameter to determine which fields are required
     if (
+      providerType === "azure" ||
       providerType === "github" ||
       providerType === "m365" ||
       providerType === "cloudflare"
@@ -111,6 +113,19 @@ export const useCredentialsForm = ({
           [ProviderCredentialFields.AWS_SESSION_TOKEN]: "",
         };
       case "azure":
+        // Azure now mirrors the M365 flow: the user picks the auth method
+        // in the selector step, which sets `via`, and we only seed the
+        // fields that method actually shows. Missing fields would still be
+        // registered by the schema as optional, but seeding them here keeps
+        // the react-hook-form store in sync with the visible form.
+        if (effectiveVia === "app_certificate") {
+          return {
+            ...baseDefaults,
+            [ProviderCredentialFields.CLIENT_ID]: "",
+            [ProviderCredentialFields.CERTIFICATE_CONTENT]: "",
+            [ProviderCredentialFields.TENANT_ID]: "",
+          };
+        }
         return {
           ...baseDefaults,
           [ProviderCredentialFields.CLIENT_ID]: "",

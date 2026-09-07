@@ -7,11 +7,38 @@ import { MAX_SAML_ADDITIONAL_EMAIL_DOMAINS } from "@/types/saml";
 
 import { PROVIDER_TYPES, ProviderType } from "./providers";
 
+// Matches the API's `_MAX_CERTIFICATE_CONTENT_LENGTH` in
+// `api/src/backend/api/v1/serializers.py`, i.e. base64 of the SDK's 50 KiB
+// `_MAX_CERTIFICATE_BUNDLE_BYTES` cap. Reject oversized certificate
+// content client-side so the user sees the error inline before a
+// round-trip that the API would 400 with the same message.
+export const MAX_CERTIFICATE_CONTENT_LENGTH = 68268;
+
+export const CERTIFICATE_CONTENT_MAX_SIZE_ERROR =
+  "Certificate content exceeds the maximum size.";
+
 export const KUBECONFIG_UNSUPPORTED_COMMAND_AUTHENTICATION_ERROR =
   "Kubernetes kubeconfig command-based authentication is not supported in Prowler Cloud for security reasons.";
 
 const isRecord = (value: unknown): value is Record<string, unknown> => {
   return typeof value === "object" && value !== null && !Array.isArray(value);
+};
+
+const isValidBase64 = (value: string): boolean => {
+  if (
+    !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(
+      value,
+    )
+  ) {
+    return false;
+  }
+
+  try {
+    atob(value);
+    return true;
+  } catch {
+    return false;
+  }
 };
 
 export const kubeconfigContainsUnsupportedCommandAuthentication = (
@@ -212,15 +239,35 @@ export const addCredentialsFormSchema = (
           }
         : providerType === "azure"
           ? {
-              [ProviderCredentialFields.CLIENT_ID]: z
+              // Client secret vs. certificate is a per-form choice driven by
+              // `via`; the field-level presence check runs inside the
+              // credential-type form (see azure-*-credentials-form.tsx). The
+              // schema keeps both optional so switching methods without a
+              // page reload does not trigger a stale "required" error on the
+              // field that is not shown.
+              [ProviderCredentialFields.CLIENT_ID]: z.guid({
+                error: "Client ID must be a valid GUID",
+              }),
+              [ProviderCredentialFields.CLIENT_SECRET]: z.string().optional(),
+              [ProviderCredentialFields.CERTIFICATE_CONTENT]: z
                 .string()
-                .min(1, "Client ID is required"),
-              [ProviderCredentialFields.CLIENT_SECRET]: z
-                .string()
-                .min(1, "Client Secret is required"),
-              [ProviderCredentialFields.TENANT_ID]: z
-                .string()
-                .min(1, "Tenant ID is required"),
+                // The API strips base64 whitespace before enforcing its
+                // 68268-char cap; measure the same value on the client so
+                // a legitimate CRLF-wrapped paste (openssl / PowerShell
+                // default line wrap) is not rejected as "too large".
+                .transform((value) => value.replace(/\s+/g, ""))
+                .pipe(
+                  z
+                    .string()
+                    .max(
+                      MAX_CERTIFICATE_CONTENT_LENGTH,
+                      CERTIFICATE_CONTENT_MAX_SIZE_ERROR,
+                    ),
+                )
+                .optional(),
+              [ProviderCredentialFields.TENANT_ID]: z.guid({
+                error: "Tenant ID must be a valid GUID",
+              }),
             }
           : providerType === "gcp"
             ? {
@@ -260,6 +307,19 @@ export const addCredentialsFormSchema = (
                       .optional(),
                     [ProviderCredentialFields.CERTIFICATE_CONTENT]: z
                       .string()
+                      // Same whitespace-then-cap contract as Azure — the
+                      // API strips base64 whitespace before enforcing the
+                      // 68268-char cap, so the client measures the same
+                      // stripped value.
+                      .transform((value) => value.replace(/\s+/g, ""))
+                      .pipe(
+                        z
+                          .string()
+                          .max(
+                            MAX_CERTIFICATE_CONTENT_LENGTH,
+                            CERTIFICATE_CONTENT_MAX_SIZE_ERROR,
+                          ),
+                      )
                       .optional(),
                     [ProviderCredentialFields.TENANT_ID]: z
                       .string()
@@ -443,6 +503,52 @@ export const addCredentialsFormSchema = (
                                       : {}),
     })
     .superRefine((data: Record<string, string | undefined>, ctx) => {
+      if (providerType === "azure") {
+        // Azure schema keeps both `client_secret` and `certificate_content`
+        // optional at field level (the credential-type selector picks which
+        // form is shown). The visible field for the chosen `via` is what
+        // the user must fill — enforce it here so the client catches empty
+        // submissions before hitting the API, mirroring M365. Error copy is
+        // aligned with the visible field label rather than the technical
+        // `certificate_content` field name.
+        const clientSecret = data[ProviderCredentialFields.CLIENT_SECRET];
+        const certificateContent =
+          data[ProviderCredentialFields.CERTIFICATE_CONTENT];
+        if (clientSecret?.trim() && certificateContent?.trim()) {
+          ctx.addIssue({
+            code: "custom",
+            message:
+              "Use either a Client Secret or Certificate and Private Key Bundle, not both",
+            path: [ProviderCredentialFields.CERTIFICATE_CONTENT],
+          });
+        }
+
+        if (via === "app_client_secret") {
+          if (!clientSecret || clientSecret.trim() === "") {
+            ctx.addIssue({
+              code: "custom",
+              message: "Client Secret is required",
+              path: [ProviderCredentialFields.CLIENT_SECRET],
+            });
+          }
+        } else if (via === "app_certificate") {
+          if (!certificateContent || certificateContent.trim() === "") {
+            ctx.addIssue({
+              code: "custom",
+              message: "Certificate and Private Key Bundle is required",
+              path: [ProviderCredentialFields.CERTIFICATE_CONTENT],
+            });
+          } else if (!isValidBase64(certificateContent)) {
+            ctx.addIssue({
+              code: "custom",
+              message:
+                "Certificate and Private Key Bundle must be valid base64",
+              path: [ProviderCredentialFields.CERTIFICATE_CONTENT],
+            });
+          }
+        }
+      }
+
       if (providerType === "m365") {
         // Validate based on the via parameter
         if (via === "app_client_secret") {

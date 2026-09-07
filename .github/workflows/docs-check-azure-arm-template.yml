@@ -1,0 +1,70 @@
+name: 'Docs: Azure ARM Template'
+
+on:
+  push:
+    branches:
+      - 'master'
+      - 'v5.*'
+    paths:
+      - '.github/workflows/docs-check-azure-arm-template.yml'
+      - 'docs/assets/templates/azure/prowler-scan.json'
+      - 'docs/snippets/azure-prowler-scan-template.mdx'
+      - 'permissions/templates/azure/bicep/Makefile'
+      - 'permissions/templates/azure/bicep/prowler-scan.bicep'
+      - 'permissions/templates/azure/bicep/prowler-scan.json'
+      - 'permissions/templates/azure/bicep/sync_docs_template.py'
+      - 'permissions/templates/azure/bicep/sync_docs_template_test.py'
+  pull_request:
+    branches:
+      - 'master'
+      - 'v5.*'
+    paths:
+      - '.github/workflows/docs-check-azure-arm-template.yml'
+      - 'docs/assets/templates/azure/prowler-scan.json'
+      - 'docs/snippets/azure-prowler-scan-template.mdx'
+      - 'permissions/templates/azure/bicep/Makefile'
+      - 'permissions/templates/azure/bicep/prowler-scan.bicep'
+      - 'permissions/templates/azure/bicep/prowler-scan.json'
+      - 'permissions/templates/azure/bicep/sync_docs_template.py'
+      - 'permissions/templates/azure/bicep/sync_docs_template_test.py'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  azure-arm-template:
+    if: github.repository == 'prowler-cloud/prowler'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
+        with:
+          egress-policy: block
+          allowed-endpoints: >
+            api.github.com:443
+            downloads.bicep.azure.com:443
+            github.com:443
+            release-assets.githubusercontent.com:443
+
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Setup Bicep
+        uses: anthony-c-martin/setup-bicep@faf8170f496c10a2ea75977d2e77024131331404 # v1
+        with:
+          version: 0.46.1
+
+      - name: Test Azure ARM documentation synchronization
+        run: python3 -m unittest permissions/templates/azure/bicep/sync_docs_template_test.py
+
+      - name: Check Azure ARM template synchronization
+        run: make --directory permissions/templates/azure/bicep check
