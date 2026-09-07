@@ -161,7 +161,7 @@ Prowler for Vercel includes security checks across the following services:
 | **Security** | Web Application Firewall (WAF), rate limiting, IP blocking, and managed rulesets |
 | **Team** | SSO enforcement, directory sync, member access, and invitation hygiene |
 
-## Checks With Explicit Plan-Based Behavior
+## Checks with Explicit Plan-Based Behavior
 
 Prowler currently includes 26 Vercel checks. The 11 checks below have explicit billing-plan handling in the provider metadata or check logic. When the scanned scope reports a billing plan, Prowler adds plan-aware context to findings for these checks. If the API does not expose the required configuration, Prowler may return `MANUAL` and require verification in the Vercel dashboard.
 

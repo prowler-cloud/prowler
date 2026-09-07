@@ -16,21 +16,21 @@ Prowler supports multiple Alibaba Cloud authentication flows. If more than one i
 Do not use the AccessKey pair of the main Alibaba Cloud account for Prowler. Use a RAM user, a RAM role, or another temporary credential flow instead.
 </Warning>
 
-## Choose The Right Method
+## Choose the Right Method
 
 | Where Prowler runs | What you need to create | Recommended method |
 | --- | --- | --- |
-| Local workstation | RAM user + AccessKey pair | [RAM User And AccessKey](#ram-user-and-accesskey) |
+| Local workstation | RAM user + AccessKey pair | [RAM User and AccessKey](#ram-user-and-accesskey) |
 | CI runner outside Alibaba Cloud | RAM user + AccessKey pair, optionally a target RAM role | [RAM Role Assumption](#ram-role-assumption-recommended) |
 | ECS instance | ECS RAM role attached to the instance | [ECS RAM Role](#ecs-ram-role) |
 | ACK / Kubernetes | OIDC IdP + RAM role + OIDC token file | [OIDC Role Authentication](#oidc-role-authentication) |
 | Internal credential broker | An HTTP endpoint that returns STS credentials | [Credentials URI](#credentials-uri) |
 
-## RAM User And AccessKey
+## RAM User and AccessKey
 
 This is the simplest setup for a workstation or a basic CI runner.
 
-### Create The RAM User
+### Create the RAM User
 
 1. Open the [RAM console](https://ram.console.alibabacloud.com/).
 2. Go to `Identities` > `Users`.
@@ -51,7 +51,7 @@ Alibaba Cloud walkthroughs with current console screenshots:
 - [Create an AccessKey pair](https://www.alibabacloud.com/help/en/ram/user-guide/create-an-accesskey-pair)
 - [Grant permissions to a RAM user](https://www.alibabacloud.com/help/en/ram/user-guide/grant-permissions-to-the-ram-user)
 
-### Use The AccessKey With Prowler
+### Use the AccessKey with Prowler
 
 ```bash
 export ALIBABA_CLOUD_ACCESS_KEY_ID="your-access-key-id"
@@ -62,7 +62,7 @@ prowler alibabacloud
 
 Prowler also accepts `ALIYUN_ACCESS_KEY_ID` and `ALIYUN_ACCESS_KEY_SECRET` for compatibility, but `ALIBABA_CLOUD_*` is the preferred naming.
 
-### Use The Default Credential Chain
+### Use the Default Credential Chain
 
 If you prefer not to export credentials in every shell, you can store them with the Alibaba Cloud CLI and let Prowler reuse the default credential chain from `~/.aliyun/config.json`.
 
@@ -87,17 +87,17 @@ This flow has two parts:
 1. A source identity that can call `sts:AssumeRole`.
 2. A target RAM role that has the scan permissions.
 
-### Create The Source Identity
+### Create the Source Identity
 
-Create a RAM user with an AccessKey pair by following the steps in [RAM User And AccessKey](#ram-user-and-accesskey), or reuse an existing automation identity.
+Create a RAM user with an AccessKey pair by following the steps in [RAM User and AccessKey](#ram-user-and-accesskey), or reuse an existing automation identity.
 
-### Create The Target Role
+### Create the Target Role
 
 1. Open the [RAM console](https://ram.console.alibabacloud.com/).
 2. Go to `Identities` > `Roles`.
 3. Click `Create Role`.
 4. Set `Principal Type` to `Cloud Account`.
-5. Choose:
+5. Select:
    - `Current Account` if the RAM user and the role are in the same account.
    - `Other Account` if the RAM user belongs to a different Alibaba Cloud account.
 6. Give the role a name such as `ProwlerAuditRole`.
@@ -111,7 +111,7 @@ Helpful references:
 - [Create a RAM role for a trusted Alibaba Cloud account](https://www.alibabacloud.com/help/en/ram/user-guide/create-a-ram-role-for-a-trusted-alibaba-cloud-account)
 - [Assume a RAM role](https://www.alibabacloud.com/help/doc-detail/116820.html)
 
-### Allow The Source Identity To Assume The Role
+### Allow the Source Identity to Assume the Role
 
 The source RAM user must be able to call `sts:AssumeRole`.
 
@@ -164,7 +164,7 @@ Prowler does not mint standalone STS sessions for you. If you use this method, y
 
 Use this when Prowler runs on an ECS instance and you do not want to store any AccessKeys on disk.
 
-### Create And Attach The Role
+### Create and Attach the Role
 
 1. Open the [RAM console](https://ram.console.alibabacloud.com/).
 2. Go to `Identities` > `Roles`.
@@ -196,7 +196,7 @@ prowler alibabacloud
 
 Use this when Prowler runs in ACK or another Kubernetes environment that provides an OIDC token file.
 
-### Create The OIDC Identity Provider
+### Create the OIDC Identity Provider
 
 1. Open the [RAM console](https://ram.console.alibabacloud.com/).
 2. Go to `Integrations` > `SSO`.
@@ -214,13 +214,13 @@ Alibaba Cloud guides:
 - [Manage an OIDC IdP](https://www.alibabacloud.com/help/en/ram/manage-an-oidc-idp)
 - [Overview of role-based OIDC SSO](https://www.alibabacloud.com/help/en/ram/overview-of-oidc-based-sso)
 
-### Create The RAM Role Trusted By That IdP
+### Create the RAM Role Trusted by That IdP
 
 Create a RAM role whose trusted entity is the OIDC IdP, then attach the scan permissions to that role.
 
 If you are running in ACK with RRSA, this is typically the role bound to the service account that runs Prowler.
 
-### Provide The OIDC Variables To Prowler
+### Provide the OIDC Variables to Prowler
 
 Prowler currently expects:
 
@@ -284,7 +284,7 @@ The exact minimum policy depends on the checks and services you enable.
 
 If you are using the RAM console's `Grant Permission` screen, search for the **system policy names** below. Alibaba Cloud often uses product policy names that differ from the service name shown in Prowler.
 
-### System Policies In The RAM Console
+### System Policies in the RAM Console
 
 | Prowler use case | Policy name in RAM console | Notes |
 | --- | --- | --- |
