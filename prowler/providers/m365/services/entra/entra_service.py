@@ -2215,7 +2215,10 @@ OAuthAppInfo
         on the application object, so it is fetched per application through the
         dedicated endpoint (mirroring how owners are resolved elsewhere in this
         service). A failure to read one application's collection is logged and
-        left empty rather than aborting the whole inventory.
+        recorded on that application's ``federated_identity_credentials_error``
+        (rather than aborting the whole inventory), so checks can tell a
+        retrieval error apart from a genuinely empty collection instead of
+        treating the failure as "no credentials".
 
         Returns:
             Dict[str, AppRegistration]: Application registrations keyed by the
@@ -2263,6 +2266,7 @@ OAuthAppInfo
                         else []
                     )
                     federated_identity_credentials = []
+                    federated_identity_credentials_error = None
                     try:
                         fic_response = await self.client.applications.by_application_id(
                             object_id
@@ -2277,6 +2281,10 @@ OAuthAppInfo
                                 )
                             )
                     except Exception as error:
+                        federated_identity_credentials_error = (
+                            "Unable to retrieve federated identity credentials from "
+                            f"Microsoft Graph ({error.__class__.__name__})"
+                        )
                         logger.error(
                             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                         )
@@ -2290,6 +2298,7 @@ OAuthAppInfo
                         spa_redirect_uris=spa_redirect_uris,
                         public_client_redirect_uris=public_client_redirect_uris,
                         federated_identity_credentials=federated_identity_credentials,
+                        federated_identity_credentials_error=federated_identity_credentials_error,
                     )
 
                 next_link = getattr(app_response, "odata_next_link", None)
@@ -3132,6 +3141,11 @@ class AppRegistration(BaseModel):
             public client (mobile/desktop) platform.
         federated_identity_credentials: List of federated identity credentials
             (workload identity federation trusts) configured on the application.
+        federated_identity_credentials_error: Error message when the federated
+            identity credentials could not be retrieved, or ``None`` when the
+            list above is authoritative. An empty list means "known empty"; a
+            non-``None`` value means "unknown" and checks must not treat it as
+            the absence of credentials.
     """
 
     id: str
@@ -3142,6 +3156,7 @@ class AppRegistration(BaseModel):
     spa_redirect_uris: List[str] = []
     public_client_redirect_uris: List[str] = []
     federated_identity_credentials: List[FederatedIdentityCredential] = []
+    federated_identity_credentials_error: Optional[str] = None
 
 
 class CrossTenantTarget(BaseModel):

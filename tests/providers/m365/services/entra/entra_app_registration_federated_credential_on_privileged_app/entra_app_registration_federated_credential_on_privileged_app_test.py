@@ -342,3 +342,109 @@ class Test_entra_app_registration_federated_credential_on_privileged_app:
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert "no privileged (Tier 0) directory role" in result[0].status_extended
+
+    def test_privileged_app_with_credentials_retrieval_error(self):
+        """A privileged app whose FICs could not be read: expected MANUAL.
+
+        A retrieval error leaves ``federated_identity_credentials`` empty, which
+        must not be read as "no credentials" and reported PASS for a Tier 0 app.
+        """
+        object_id = str(uuid4())
+        app_id = str(uuid4())
+        app_name = "Unreadable Privileged App"
+        entra_client = mock.MagicMock
+        entra_client.audited_tenant = "audited_tenant"
+        entra_client.audited_domain = DOMAIN
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_m365_provider(),
+            ),
+            mock.patch(CHECK_PATH, new=entra_client),
+        ):
+            from prowler.providers.m365.services.entra.entra_app_registration_federated_credential_on_privileged_app.entra_app_registration_federated_credential_on_privileged_app import (
+                entra_app_registration_federated_credential_on_privileged_app,
+            )
+
+            entra_client.app_registrations = {
+                object_id: AppRegistration(
+                    id=object_id,
+                    app_id=app_id,
+                    name=app_name,
+                    federated_identity_credentials=[],
+                    federated_identity_credentials_error=(
+                        "Unable to retrieve federated identity credentials from "
+                        "Microsoft Graph (ODataError)"
+                    ),
+                )
+            }
+            entra_client.service_principals = {
+                "sp-1": ServicePrincipal(
+                    id="sp-1",
+                    name=app_name,
+                    app_id=app_id,
+                    directory_role_template_ids=[TIER0_ROLE_ID],
+                )
+            }
+
+            check = entra_app_registration_federated_credential_on_privileged_app()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "MANUAL"
+            assert "could not be retrieved" in result[0].status_extended
+            assert "Control Plane (Tier 0)" in result[0].status_extended
+            assert result[0].resource_name == app_name
+            assert result[0].resource_id == object_id
+
+    def test_non_privileged_app_with_credentials_retrieval_error(self):
+        """A non-privileged app whose FICs could not be read: expected PASS.
+
+        The retrieval error is immaterial when the app holds no Tier 0 role, so
+        it must not escalate to MANUAL.
+        """
+        object_id = str(uuid4())
+        app_id = str(uuid4())
+        app_name = "Unreadable Non Privileged App"
+        entra_client = mock.MagicMock
+        entra_client.audited_tenant = "audited_tenant"
+        entra_client.audited_domain = DOMAIN
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_m365_provider(),
+            ),
+            mock.patch(CHECK_PATH, new=entra_client),
+        ):
+            from prowler.providers.m365.services.entra.entra_app_registration_federated_credential_on_privileged_app.entra_app_registration_federated_credential_on_privileged_app import (
+                entra_app_registration_federated_credential_on_privileged_app,
+            )
+
+            entra_client.app_registrations = {
+                object_id: AppRegistration(
+                    id=object_id,
+                    app_id=app_id,
+                    name=app_name,
+                    federated_identity_credentials=[],
+                    federated_identity_credentials_error=(
+                        "Unable to retrieve federated identity credentials from "
+                        "Microsoft Graph (ODataError)"
+                    ),
+                )
+            }
+            entra_client.service_principals = {
+                "sp-1": ServicePrincipal(
+                    id="sp-1",
+                    name=app_name,
+                    app_id=app_id,
+                    directory_role_template_ids=[],
+                )
+            }
+
+            check = entra_app_registration_federated_credential_on_privileged_app()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "PASS"

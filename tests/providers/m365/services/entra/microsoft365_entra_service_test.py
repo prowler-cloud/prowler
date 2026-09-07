@@ -1443,6 +1443,11 @@ class Test_Entra_Service:
 
         app = result["app-object"]
         assert app.federated_identity_credentials == []
+        assert app.federated_identity_credentials_error is not None
+        assert (
+            "Unable to retrieve federated identity credentials"
+            in app.federated_identity_credentials_error
+        )
 
     def test__get_exchange_mailbox_permission_service_principals(self):
         """Service principals with Exchange Graph application roles are returned."""

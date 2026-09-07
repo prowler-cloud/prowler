@@ -27,9 +27,27 @@ class entra_app_registration_federated_credential_on_privileged_app(Check):
       while holding no privileged (Tier 0) directory role.
     - FAIL: The application has at least one federated identity credential and a
       permanent assignment to at least one Control Plane (Tier 0) directory role.
+    - MANUAL: The application holds a Control Plane (Tier 0) directory role but
+      its federated identity credentials could not be retrieved, so their
+      presence cannot be verified and PASS cannot be asserted.
     """
 
     def execute(self) -> list[CheckReportM365]:
+        """Evaluate federated identity credentials on privileged app registrations.
+
+        Builds a map of application (client) IDs to the permanent Control Plane
+        (Tier 0) directory roles their service principals hold, then inspects
+        every application registration for federated identity credentials. An
+        application is reported ``FAIL`` when it combines at least one federated
+        identity credential with a permanent Tier 0 role assignment, and ``PASS``
+        otherwise. When a privileged application's federated identity credentials
+        could not be retrieved (``federated_identity_credentials_error`` is set),
+        the application is reported ``MANUAL`` instead of ``PASS`` so a retrieval
+        failure is never mistaken for the absence of credentials.
+
+        Returns:
+            list[CheckReportM365]: One report per application registration.
+        """
         findings = []
 
         # Map each application (client) ID to the permanent Tier 0 (Control
@@ -60,7 +78,20 @@ class entra_app_registration_federated_credential_on_privileged_app(Check):
             federated_credentials = app.federated_identity_credentials
             tier0_roles = tier0_roles_by_app_id.get(app.app_id, [])
 
-            if federated_credentials and tier0_roles:
+            if tier0_roles and app.federated_identity_credentials_error:
+                # The application is privileged, but the Graph call for its
+                # federated identity credentials failed. Treating the empty list
+                # as "no credentials" here would hide a Tier 0 credential and
+                # report PASS, so surface it as MANUAL instead.
+                report.status = "MANUAL"
+                report.status_extended = (
+                    f"App registration {app.name} holds a permanent assignment to "
+                    f"{len(tier0_roles)} Control Plane (Tier 0) directory role(s), "
+                    f"but its federated identity credentials could not be "
+                    f"retrieved, so their presence cannot be verified: "
+                    f"{app.federated_identity_credentials_error}."
+                )
+            elif federated_credentials and tier0_roles:
                 report.status = "FAIL"
                 num_credentials = len(federated_credentials)
                 credential_details = [
