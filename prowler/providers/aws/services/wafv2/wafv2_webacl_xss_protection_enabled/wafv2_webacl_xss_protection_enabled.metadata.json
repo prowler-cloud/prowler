@@ -1,0 +1,40 @@
+{
+  "Provider": "aws",
+  "CheckID": "wafv2_webacl_xss_protection_enabled",
+  "CheckTitle": "AWS WAFv2 Web ACL has cross-site scripting (XSS) protection enabled",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices"
+  ],
+  "ServiceName": "wafv2",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:wafv2:region:account-id:webacl/name/id",
+  "Severity": "high",
+  "ResourceType": "AwsWafv2WebAcl",
+  "ResourceGroup": "security",
+  "Description": "This check ensures that AWS WAFv2 Web ACLs provide cross-site scripting (XSS) protection, either through the AWSManagedRulesCommonRuleSet managed rule group (which contains the CrossSiteScripting_* rules) enabled and not excluded wholesale, or through a custom rule with an XssMatchStatement that blocks or challenges matching requests.",
+  "Risk": "Without XSS protection, attackers can inject malicious scripts into requests that reach the application, leading to session hijacking, credential theft, defacement, and execution of arbitrary code in victims' browsers.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/waf/latest/developerguide/aws-managed-rule-groups-baseline.html",
+    "https://docs.aws.amazon.com/waf/latest/developerguide/waf-rule-statement-type-xss-match.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aws wafv2 update-web-acl --name <web_acl_name> --scope REGIONAL --id <web_acl_id> --lock-token <lock_token> --default-action Allow={} --visibility-config SampledRequestsEnabled=true,CloudWatchMetricsEnabled=true,MetricName=<metric_name> --rules '[{\"Name\":\"AWS-CommonRuleSet\",\"Priority\":1,\"Statement\":{\"ManagedRuleGroupStatement\":{\"VendorName\":\"AWS\",\"Name\":\"AWSManagedRulesCommonRuleSet\"}},\"OverrideAction\":{\"None\":{}},\"VisibilityConfig\":{\"SampledRequestsEnabled\":true,\"CloudWatchMetricsEnabled\":true,\"MetricName\":\"AWS-CommonRuleSet\"}}]'",
+      "NativeIaC": "```yaml\n# CloudFormation: enable XSS protection via the AWS Core rule set on a WAFv2 Web ACL\nResources:\n  <example_resource_name>:\n    Type: AWS::WAFv2::WebACL\n    Properties:\n      Name: <example_resource_name>\n      Scope: REGIONAL\n      DefaultAction:\n        Allow: {}\n      VisibilityConfig:\n        SampledRequestsEnabled: true\n        CloudWatchMetricsEnabled: true\n        MetricName: <metric_name>\n      Rules:\n        - Name: AWS-CommonRuleSet\n          Priority: 1\n          OverrideAction:\n            None: {}  # Blocking mode; do not override the group to Count\n          Statement:\n            ManagedRuleGroupStatement:\n              VendorName: AWS\n              Name: AWSManagedRulesCommonRuleSet\n          VisibilityConfig:\n            SampledRequestsEnabled: true\n            CloudWatchMetricsEnabled: true\n            MetricName: AWS-CommonRuleSet\n```",
+      "Other": "1. In the AWS Console, go to AWS WAF & Shield > Web ACLs and select the Web ACL.\n2. On the Rules tab, choose Add rules > Add managed rule groups > AWS managed rule groups and enable 'Core rule set' (AWSManagedRulesCommonRuleSet), which includes the CrossSiteScripting_* rules; ensure it is in Block mode (not Count).\n3. Alternatively, add a custom rule with an XSS match statement (Inspect: the request component; Match type: XSS) and set its action to Block, then Save.",
+      "Terraform": "```hcl\n# Terraform: enable XSS protection via the AWS Core rule set on a WAFv2 Web ACL\nresource \"aws_wafv2_web_acl\" \"<example_resource_name>\" {\n  name  = \"<example_resource_name>\"\n  scope = \"REGIONAL\"\n\n  default_action { allow {} }\n\n  visibility_config {\n    cloudwatch_metrics_enabled = true\n    metric_name                = \"<metric_name>\"\n    sampled_requests_enabled   = true\n  }\n\n  rule {\n    name     = \"AWS-CommonRuleSet\"\n    priority = 1\n    override_action { none {} }  # Blocking mode\n    statement {\n      managed_rule_group_statement {\n        vendor_name = \"AWS\"\n        name        = \"AWSManagedRulesCommonRuleSet\"\n      }\n    }\n    visibility_config {\n      cloudwatch_metrics_enabled = true\n      metric_name                = \"AWS-CommonRuleSet\"\n      sampled_requests_enabled   = true\n    }\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Enable the AWSManagedRulesCommonRuleSet managed rule group in blocking mode (its CrossSiteScripting_* rules provide XSS protection) and/or add custom XssMatchStatement rules that inspect all relevant request components (body, query string, URI, headers, cookies) and block matching requests. Avoid overriding these rules to Count.",
+      "Url": "https://hub.prowler.com/check/wafv2_webacl_xss_protection_enabled"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
