@@ -77,20 +77,26 @@ class defender_antispam_outbound_policy_forwarding_disabled(Check):
                             default_policy_well_configured = True
                             findings.append(report)
                     else:
+                        outbound_spam_rule = defender_client.outbound_spam_rules.get(
+                            policy.name
+                        )
+                        if not outbound_spam_rule:
+                            continue
+
                         if not self._is_forwarding_disabled(policy):
                             included_resources = []
 
-                            if defender_client.outbound_spam_rules[policy.name].users:
+                            if outbound_spam_rule.users:
                                 included_resources.append(
-                                    f"users: {', '.join(defender_client.outbound_spam_rules[policy.name].users)}"
+                                    f"users: {', '.join(outbound_spam_rule.users)}"
                                 )
-                            if defender_client.outbound_spam_rules[policy.name].groups:
+                            if outbound_spam_rule.groups:
                                 included_resources.append(
-                                    f"groups: {', '.join(defender_client.outbound_spam_rules[policy.name].groups)}"
+                                    f"groups: {', '.join(outbound_spam_rule.groups)}"
                                 )
-                            if defender_client.outbound_spam_rules[policy.name].domains:
+                            if outbound_spam_rule.domains:
                                 included_resources.append(
-                                    f"domains: {', '.join(defender_client.outbound_spam_rules[policy.name].domains)}"
+                                    f"domains: {', '.join(outbound_spam_rule.domains)}"
                                 )
 
                             included_resources_str = "; ".join(included_resources)
@@ -100,7 +106,7 @@ class defender_antispam_outbound_policy_forwarding_disabled(Check):
                                 report.status = "FAIL"
                                 report.status_extended = (
                                     f"Custom Outbound Spam policy {policy_name} allows mail forwarding and includes {included_resources_str}, "
-                                    f"with priority {defender_client.outbound_spam_rules[policy.name].priority} (0 is the highest). "
+                                    f"with priority {outbound_spam_rule.priority} (0 is the highest). "
                                     "However, the default policy disables mail forwarding, so entities not included by this custom policy could be correctly protected."
                                 )
                                 findings.append(report)
@@ -109,24 +115,24 @@ class defender_antispam_outbound_policy_forwarding_disabled(Check):
                                 report.status = "FAIL"
                                 report.status_extended = (
                                     f"Custom Outbound Spam policy {policy_name} allows mail forwarding and includes {included_resources_str}, "
-                                    f"with priority {defender_client.outbound_spam_rules[policy.name].priority} (0 is the highest). "
+                                    f"with priority {outbound_spam_rule.priority} (0 is the highest). "
                                     "Also, the default policy allows mail forwarding, so entities not included by this custom policy could not be correctly protected."
                                 )
                                 findings.append(report)
                         else:
                             included_resources = []
 
-                            if defender_client.outbound_spam_rules[policy.name].users:
+                            if outbound_spam_rule.users:
                                 included_resources.append(
-                                    f"users: {', '.join(defender_client.outbound_spam_rules[policy.name].users)}"
+                                    f"users: {', '.join(outbound_spam_rule.users)}"
                                 )
-                            if defender_client.outbound_spam_rules[policy.name].groups:
+                            if outbound_spam_rule.groups:
                                 included_resources.append(
-                                    f"groups: {', '.join(defender_client.outbound_spam_rules[policy.name].groups)}"
+                                    f"groups: {', '.join(outbound_spam_rule.groups)}"
                                 )
-                            if defender_client.outbound_spam_rules[policy.name].domains:
+                            if outbound_spam_rule.domains:
                                 included_resources.append(
-                                    f"domains: {', '.join(defender_client.outbound_spam_rules[policy.name].domains)}"
+                                    f"domains: {', '.join(outbound_spam_rule.domains)}"
                                 )
 
                             included_resources_str = "; ".join(included_resources)
@@ -136,7 +142,7 @@ class defender_antispam_outbound_policy_forwarding_disabled(Check):
                                 report.status = "PASS"
                                 report.status_extended = (
                                     f"Custom Outbound Spam policy {policy_name} disables mail forwarding and includes {included_resources_str}, "
-                                    f"with priority {defender_client.outbound_spam_rules[policy.name].priority} (0 is the highest). "
+                                    f"with priority {outbound_spam_rule.priority} (0 is the highest). "
                                     "Also, the default policy disables mail forwarding, so entities not included by this custom policy could still be correctly protected."
                                 )
                                 findings.append(report)
@@ -145,7 +151,7 @@ class defender_antispam_outbound_policy_forwarding_disabled(Check):
                                 report.status = "PASS"
                                 report.status_extended = (
                                     f"Custom Outbound Spam policy {policy_name} disables mail forwarding and includes {included_resources_str}, "
-                                    f"with priority {defender_client.outbound_spam_rules[policy.name].priority} (0 is the highest). "
+                                    f"with priority {outbound_spam_rule.priority} (0 is the highest). "
                                     "However, the default policy allows mail forwarding, so entities not included by this custom policy could not be correctly protected."
                                 )
                                 findings.append(report)
@@ -162,8 +168,9 @@ class defender_antispam_outbound_policy_forwarding_disabled(Check):
         Returns:
             bool: True if mail forwarding is disabled, False otherwise.
         """
-        return (
-            policy.default
-            or defender_client.outbound_spam_rules[policy.name].state.lower()
-            == "enabled"
-        ) and policy.auto_forwarding_mode == "Off"
+        if not policy.default:
+            outbound_spam_rule = defender_client.outbound_spam_rules.get(policy.name)
+            if not outbound_spam_rule or outbound_spam_rule.state.lower() != "enabled":
+                return False
+
+        return policy.auto_forwarding_mode == "Off"

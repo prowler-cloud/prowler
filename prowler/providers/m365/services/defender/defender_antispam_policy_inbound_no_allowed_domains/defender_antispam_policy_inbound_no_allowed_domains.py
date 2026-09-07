@@ -77,32 +77,30 @@ class defender_antispam_policy_inbound_no_allowed_domains(Check):
                             default_policy_well_configured = True
                             findings.append(report)
                     else:
+                        inbound_spam_rule = defender_client.inbound_spam_rules.get(
+                            policy.identity
+                        )
+                        if not inbound_spam_rule:
+                            continue
+
                         if not self._has_no_allowed_domains(policy):
                             included_resources = []
 
-                            if defender_client.inbound_spam_rules[
-                                policy.identity
-                            ].users:
+                            if inbound_spam_rule.users:
                                 included_resources.append(
-                                    f"users: {', '.join(defender_client.inbound_spam_rules[policy.identity].users)}"
+                                    f"users: {', '.join(inbound_spam_rule.users)}"
                                 )
-                            if defender_client.inbound_spam_rules[
-                                policy.identity
-                            ].groups:
+                            if inbound_spam_rule.groups:
                                 included_resources.append(
-                                    f"groups: {', '.join(defender_client.inbound_spam_rules[policy.identity].groups)}"
+                                    f"groups: {', '.join(inbound_spam_rule.groups)}"
                                 )
-                            if defender_client.inbound_spam_rules[
-                                policy.identity
-                            ].domains:
+                            if inbound_spam_rule.domains:
                                 included_resources.append(
-                                    f"domains: {', '.join(defender_client.inbound_spam_rules[policy.identity].domains)}"
+                                    f"domains: {', '.join(inbound_spam_rule.domains)}"
                                 )
 
                             included_resources_str = "; ".join(included_resources)
-                            priority = defender_client.inbound_spam_rules[
-                                policy.identity
-                            ].priority
+                            priority = inbound_spam_rule.priority
 
                             if default_policy_well_configured:
                                 # Case 3: Default policy has no allowed domains but custom one does
@@ -124,29 +122,21 @@ class defender_antispam_policy_inbound_no_allowed_domains(Check):
                         else:
                             included_resources = []
 
-                            if defender_client.inbound_spam_rules[
-                                policy.identity
-                            ].users:
+                            if inbound_spam_rule.users:
                                 included_resources.append(
-                                    f"users: {', '.join(defender_client.inbound_spam_rules[policy.identity].users)}"
+                                    f"users: {', '.join(inbound_spam_rule.users)}"
                                 )
-                            if defender_client.inbound_spam_rules[
-                                policy.identity
-                            ].groups:
+                            if inbound_spam_rule.groups:
                                 included_resources.append(
-                                    f"groups: {', '.join(defender_client.inbound_spam_rules[policy.identity].groups)}"
+                                    f"groups: {', '.join(inbound_spam_rule.groups)}"
                                 )
-                            if defender_client.inbound_spam_rules[
-                                policy.identity
-                            ].domains:
+                            if inbound_spam_rule.domains:
                                 included_resources.append(
-                                    f"domains: {', '.join(defender_client.inbound_spam_rules[policy.identity].domains)}"
+                                    f"domains: {', '.join(inbound_spam_rule.domains)}"
                                 )
 
                             included_resources_str = "; ".join(included_resources)
-                            priority = defender_client.inbound_spam_rules[
-                                policy.identity
-                            ].priority
+                            priority = inbound_spam_rule.priority
 
                             if default_policy_well_configured:
                                 # Case 2: Both default and custom policies do not contain allowed domains
@@ -178,8 +168,9 @@ class defender_antispam_policy_inbound_no_allowed_domains(Check):
         Returns:
             bool: True if the policy has no allowed domains, False otherwise.
         """
-        return (
-            policy.default
-            or defender_client.inbound_spam_rules[policy.identity].state.lower()
-            == "enabled"
-        ) and not policy.allowed_sender_domains
+        if not policy.default:
+            inbound_spam_rule = defender_client.inbound_spam_rules.get(policy.identity)
+            if not inbound_spam_rule or inbound_spam_rule.state.lower() != "enabled":
+                return False
+
+        return not policy.allowed_sender_domains
