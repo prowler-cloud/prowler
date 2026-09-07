@@ -13,7 +13,10 @@ from prowler.providers.m365.m365_provider import M365Provider
 class SharePoint(M365Service):
     def __init__(self, provider: M365Provider):
         super().__init__(provider)
+        self.tenant_settings = None
         if self.powershell:
+            if self.powershell.connect_sharepoint_online(provider.region_config.name):
+                self.tenant_settings = self.powershell.get_sharepoint_tenant_config()
             self.powershell.close()
 
         created_loop = False
@@ -63,6 +66,11 @@ class SharePoint(M365Service):
                 legacyAuth=global_settings.is_legacy_auth_protocols_enabled,
                 resharingEnabled=global_settings.is_resharing_by_external_users_enabled,
                 allowedDomainGuidsForSyncApp=global_settings.allowed_domain_guids_for_sync_app,
+                defaultLinkPermission=(
+                    self.tenant_settings.get("DefaultLinkPermission")
+                    if self.tenant_settings
+                    else None
+                ),
             )
 
         except ODataError as error:
@@ -86,3 +94,4 @@ class SharePointSettings(BaseModel):
     resharingEnabled: bool
     legacyAuth: bool
     allowedDomainGuidsForSyncApp: List[uuid.UUID]
+    defaultLinkPermission: Optional[str] = None
