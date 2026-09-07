@@ -404,6 +404,8 @@ class Provider(ABC):
                         sp_env_auth=arguments.sp_env_auth,
                         browser_auth=arguments.browser_auth,
                         managed_identity_auth=arguments.managed_identity_auth,
+                        certificate_auth=arguments.certificate_auth,
+                        certificate_path=arguments.certificate_path,
                         tenant_id=arguments.tenant_id,
                         region=arguments.azure_region,
                         subscription_ids=arguments.subscription_id,

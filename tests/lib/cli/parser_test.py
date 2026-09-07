@@ -12,6 +12,7 @@ from prowler.providers.aws.lib.arguments.arguments import (
     validate_role_session_name,
 )
 from prowler.providers.azure.lib.arguments.arguments import validate_azure_region
+from prowler.providers.common.provider import Provider
 
 prowler_command = "prowler"
 
@@ -153,6 +154,53 @@ class Test_Parser:
         assert not parsed.browser_auth
         assert not parsed.managed_identity_auth
         assert not parsed.shodan
+
+    def test_azure_certificate_auth_arguments(self):
+        certificate_path = "/secure/path/prowler-cert.pem"
+
+        parsed = self.parser.parse(
+            [
+                prowler_command,
+                "azure",
+                "--certificate-auth",
+                "--certificate-path",
+                certificate_path,
+            ]
+        )
+
+        assert parsed.certificate_auth
+        assert parsed.certificate_path == certificate_path
+
+    def test_azure_certificate_auth_arguments_are_forwarded(self):
+        certificate_path = "/secure/path/prowler-cert.pem"
+        parsed = self.parser.parse(
+            [
+                prowler_command,
+                "azure",
+                "--certificate-auth",
+                "--certificate-path",
+                certificate_path,
+            ]
+        )
+        captured = {}
+
+        class AzureProviderStub:
+            def __init__(self, **kwargs):
+                captured.update(kwargs)
+
+        with (
+            patch.object(Provider, "_global", None),
+            patch.object(Provider, "get_class", return_value=AzureProviderStub),
+            patch.object(Provider, "is_builtin", return_value=True),
+            patch(
+                "prowler.providers.common.provider.load_and_validate_config_file",
+                return_value={},
+            ),
+        ):
+            Provider.init_global_provider(parsed)
+
+        assert captured["certificate_auth"] is True
+        assert captured["certificate_path"] == certificate_path
 
     def test_default_parser_no_arguments_gcp(self):
         provider = "gcp"
