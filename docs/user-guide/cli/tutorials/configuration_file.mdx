@@ -4,7 +4,7 @@ title: "Configuration File"
 
 import { VersionBadge } from "/snippets/version-badge.mdx"
 
-Several Prowler's checks have user configurable variables that can be modified in a common **configuration file**. This file can be found in the following [path](https://github.com/prowler-cloud/prowler/blob/master/prowler/config/config.yaml):
+Several Prowler checks have user configurable variables that can be modified in a common **configuration file**. This file can be found in the following [path](https://github.com/prowler-cloud/prowler/blob/master/prowler/config/config.yaml):
 
 ```
 prowler/config/config.yaml
@@ -351,7 +351,7 @@ This is the new Prowler configuration file format. The old one without provider 
 # AWS Configuration
 aws:
   # AWS Global Configuration
-  # aws.mute_non_default_regions --> Set to True to muted failed findings in non-default regions for AccessAnalyzer, GuardDuty, SecurityHub, DRS and Config
+  # aws.mute_non_default_regions --> Set to True to mute failed findings in non-default regions for AccessAnalyzer, GuardDuty, SecurityHub, DRS and Config
   mute_non_default_regions: False
 
   # AWS Resource Scan Limit Configuration
