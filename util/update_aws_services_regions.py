@@ -278,7 +278,10 @@ def add_iso_partitions_regions(regions_by_service: dict) -> None:
 
 def write_regions_by_service(regions_by_service: dict) -> None:
     """Write the AWS regions matrix to the file read by the AWS provider."""
-    parsed_matrix_regions_aws = f"{os.path.dirname(os.path.realpath(__name__))}/prowler/providers/aws/aws_regions_by_service.json"
+    repository_root = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+    parsed_matrix_regions_aws = (
+        f"{repository_root}/prowler/providers/aws/aws_regions_by_service.json"
+    )
     logging.info(f"Writing {parsed_matrix_regions_aws}")
     with open(parsed_matrix_regions_aws, "w") as outfile:
         json.dump(regions_by_service, outfile, indent=2, sort_keys=True)

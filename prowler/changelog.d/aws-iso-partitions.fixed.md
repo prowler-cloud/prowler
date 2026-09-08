@@ -1,1 +1,1 @@
-`get_global_region()` now returns a real region for the ISO partitions (`us-iso-east-1`, `us-isob-east-1`, `eu-isoe-west-1`, `us-isof-east-1`) instead of the `aws-iso-global` pseudo endpoint, which also collapsed the four ISO partitions into one
+`AwsProvider.get_global_region()` now returns a real region for each ISO partition instead of the `aws-iso-global` pseudo endpoint, which collapsed the four partitions into one answer
