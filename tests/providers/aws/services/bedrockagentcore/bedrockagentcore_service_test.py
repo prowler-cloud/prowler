@@ -55,9 +55,7 @@ def mock_make_api_call(self, operation_name, kwarg):
             },
         }
     elif operation_name == "ListTagsForResource":
-        return {
-            "tags": {"Environment": "Dev", "Owner": "Security"}
-        }
+        return {"tags": {"Environment": "Dev", "Owner": "Security"}}
     return make_api_call(self, operation_name, kwarg)
 
 
@@ -100,12 +98,14 @@ class Test_BedrockAgentCore_Service:
             runtime.authorizer_configuration.custom_jwt_authorizer.discovery_url
             == DISCOVERY_URL
         )
-        assert runtime.authorizer_configuration.custom_jwt_authorizer.allowed_audiences == [
-            "my-audience"
-        ]
-        assert runtime.authorizer_configuration.custom_jwt_authorizer.allowed_clients == [
-            "client-1"
-        ]
+        assert (
+            runtime.authorizer_configuration.custom_jwt_authorizer.allowed_audiences
+            == ["my-audience"]
+        )
+        assert (
+            runtime.authorizer_configuration.custom_jwt_authorizer.allowed_clients
+            == ["client-1"]
+        )
         assert runtime.tags == {"Environment": "Dev", "Owner": "Security"}
 
     @mock_aws
@@ -113,30 +113,51 @@ class Test_BedrockAgentCore_Service:
         def mock_error_api_call(self, operation_name, kwarg):
             if operation_name == "ListAgentRuntimes":
                 raise ClientError(
-                    {"Error": {"Code": "AccessDeniedException", "Message": "Access Denied"}},
+                    {
+                        "Error": {
+                            "Code": "AccessDeniedException",
+                            "Message": "Access Denied",
+                        }
+                    },
                     operation_name,
                 )
             return make_api_call(self, operation_name, kwarg)
 
-        with mock.patch("botocore.client.BaseClient._make_api_call", new=mock_error_api_call):
-            aws_provider = set_mocked_aws_provider(audited_regions=[AWS_REGION_US_EAST_1])
+        with mock.patch(
+            "botocore.client.BaseClient._make_api_call", new=mock_error_api_call
+        ):
+            aws_provider = set_mocked_aws_provider(
+                audited_regions=[AWS_REGION_US_EAST_1]
+            )
             bedrockagentcore = BedrockAgentCore(aws_provider)
             assert len(bedrockagentcore.agent_runtimes) == 0
             assert "us-east-1" in bedrockagentcore.agent_runtimes_scan_errors
-            assert bedrockagentcore.agent_runtimes_scan_errors["us-east-1"] == "AccessDeniedException"
+            assert (
+                bedrockagentcore.agent_runtimes_scan_errors["us-east-1"]
+                == "AccessDeniedException"
+            )
 
     @mock_aws
     def test_list_agent_runtimes_unsupported_region(self):
         def mock_unsupported_api_call(self, operation_name, kwarg):
             if operation_name == "ListAgentRuntimes":
                 raise ClientError(
-                    {"Error": {"Code": "ValidationException", "Message": "Service not supported"}},
+                    {
+                        "Error": {
+                            "Code": "ValidationException",
+                            "Message": "Service not supported",
+                        }
+                    },
                     operation_name,
                 )
             return make_api_call(self, operation_name, kwarg)
 
-        with mock.patch("botocore.client.BaseClient._make_api_call", new=mock_unsupported_api_call):
-            aws_provider = set_mocked_aws_provider(audited_regions=[AWS_REGION_US_EAST_1])
+        with mock.patch(
+            "botocore.client.BaseClient._make_api_call", new=mock_unsupported_api_call
+        ):
+            aws_provider = set_mocked_aws_provider(
+                audited_regions=[AWS_REGION_US_EAST_1]
+            )
             bedrockagentcore = BedrockAgentCore(aws_provider)
             assert len(bedrockagentcore.agent_runtimes) == 0
             assert "us-east-1" not in bedrockagentcore.agent_runtimes_scan_errors

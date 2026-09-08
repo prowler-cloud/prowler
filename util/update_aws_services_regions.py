@@ -96,9 +96,9 @@ regions_by_service["services"]["wellarchitected"] = regions_by_service["services
 regions_by_service["services"]["sesv2"] = regions_by_service["services"]["ses"]
 # bedrock-agentcore-control --> bedrock-agentcore
 if "bedrock-agentcore" in regions_by_service["services"]:
-    regions_by_service["services"]["bedrock-agentcore-control"] = (
-        regions_by_service["services"]["bedrock-agentcore"]
-    )
+    regions_by_service["services"]["bedrock-agentcore-control"] = regions_by_service[
+        "services"
+    ]["bedrock-agentcore"]
 
 # Write to file
 parsed_matrix_regions_aws = f"{os.path.dirname(os.path.realpath(__name__))}/prowler/providers/aws/aws_regions_by_service.json"
