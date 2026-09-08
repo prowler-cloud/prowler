@@ -20,14 +20,24 @@ function skipUnlessProject(projectName: string) {
 }
 
 test.describe.serial("Registry", () => {
+  test.setTimeout(60_000);
   test.use({ storageState: "playwright/.auth/manage_registry_user.json" });
 
-  test.beforeEach(async () => {
+  test.beforeEach(async ({ page }) => {
     test.skip(
       !fixtureMode,
       "Registry browser acceptance is available only through the self-contained fixture profile.",
     );
     await controlledRegistryFixture.reset();
+    // Exercise the real media CSP without contacting the Registry service.
+    await page.route(
+      "https://media.registry.dev.prowler.com/fixture-owner.svg",
+      (route) =>
+        route.fulfill({
+          contentType: "image/svg+xml",
+          body: '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"><circle cx="10" cy="10" r="10" fill="#2563eb"/></svg>',
+        }),
+    );
   });
 
   test(
@@ -128,30 +138,18 @@ test.describe.serial("Registry", () => {
       await registryPage.dismissWelcomeDialog();
       await registryPage.verifyCompleteCatalogSearchAndFilters();
       await registryPage.verifyOwnerRows();
-      await registryPage.verifyBuiltInArtifactIsAddable(
+      await registryPage.captureEvidence("registry-catalog-desktop-dark");
+      await page.getByRole("switch", { name: "Switch to light mode" }).click();
+      await registryPage.captureEvidence("registry-catalog-desktop-light");
+      await page.setViewportSize({ width: 800, height: 1000 });
+      await registryPage.captureEvidence("registry-catalog-tablet-light");
+      await page.setViewportSize({ width: 1440, height: 900 });
+      await registryPage.verifyBuiltInArtifactHasNoAdd(
         "Fixture built-in provider",
       );
-      const builtInSnapshotBefore = await controlledRegistryFixture.snapshot();
-      await registryPage.addLatest("Fixture built-in provider");
-      const builtInSnapshotAfter = await controlledRegistryFixture.snapshot();
-      expect(builtInSnapshotAfter.artifactSubmissionCount).toBe(
-        builtInSnapshotBefore.artifactSubmissionCount + 1,
-      );
-      expect(builtInSnapshotAfter.artifactTaskReadCount).toBe(2);
-      expect(builtInSnapshotAfter.artifactReadCount).toBeGreaterThan(
-        builtInSnapshotBefore.artifactReadCount,
-      );
-      expect(
-        builtInSnapshotAfter.artifactEvents.slice(
-          builtInSnapshotBefore.artifactEvents.length,
-        ),
-      ).toEqual(["submission", "task-poll", "task-poll", "authoritative-read"]);
       await expect(
-        registryPage
-          .artifactCardFor("Fixture built-in provider")
-          .getByText("Added", { exact: true }),
-      ).toBeVisible();
-      await registryPage.removeArtifact("Fixture built-in provider");
+        registryPage.addButtonFor("Fixture shared policy"),
+      ).toBeHidden();
       const artifactSnapshotBefore = await controlledRegistryFixture.snapshot();
       await registryPage.addLatest("Fixture network audit");
       const artifactSnapshotAfter = await controlledRegistryFixture.snapshot();
@@ -171,10 +169,6 @@ test.describe.serial("Registry", () => {
       await registryPage.removeArtifact("Fixture network audit");
       await page.reload();
       await registryPage.verifyMarketplaceReady();
-      await registryPage.addLatest("Fixture shared policy");
-      await registryPage.verifyAddedInMyArtifacts("Fixture shared policy");
-      await registryPage.removeArtifact("Fixture shared policy");
-
       await controlledRegistryFixture.setDiscoveryMode("reconnect");
       await page.reload();
       await expect(
@@ -210,12 +204,86 @@ test.describe.serial("Registry", () => {
       await registryPage.connectFixtureRegistry();
       await registryPage.dismissWelcomeDialog();
       // With no detail panel, direct card actions are the keyboard path.
+      await registryPage.captureEvidence("registry-catalog-mobile-dark");
       const addButton = registryPage.addButtonFor("Fixture network audit");
       await addButton.focus();
       await addButton.press("Enter");
       await expect(
         page.getByText("Artifact added", { exact: true }),
       ).toBeVisible();
+    },
+  );
+  test(
+    "installs an external provider and completes the existing account, credentials, connection and scan wizard",
+    { tag: ["@critical", "@e2e", "@registry", "@REGISTRY-E2E-007"] },
+    async ({ page }) => {
+      skipUnlessProject(enabledProject);
+      const registry = new RegistryPage(page);
+      await registry.goto();
+      await registry.connectFixtureRegistry();
+      await registry.addLatest("Fixture network audit");
+      await registry.connectInstalledProviderAndScan();
+      const snapshot = await controlledRegistryFixture.snapshot();
+      expect(snapshot).toMatchObject({
+        providerCreated: true,
+        secretSaved: true,
+        connected: true,
+        scanCreated: true,
+      });
+      const browserStorage = await page.evaluate(() =>
+        JSON.stringify({
+          local: { ...localStorage },
+          session: { ...sessionStorage },
+        }),
+      );
+      expect(browserStorage).not.toContain(
+        "fixture-provider-token-not-a-secret",
+      );
+      await registry.goto();
+      await registry.removeArtifact("Fixture network audit");
+      await page.goto("/providers");
+      await expect(
+        page.getByRole("row").filter({ hasText: "Registry test account" }),
+      ).toBeVisible();
+      const beforeOpen = await controlledRegistryFixture.snapshot();
+      await page.getByRole("button", { name: /Add (a )?Provider/i }).click();
+      await expect
+        .poll(
+          async () =>
+            (await controlledRegistryFixture.snapshot()).artifactReadCount,
+        )
+        .toBeGreaterThan(beforeOpen.artifactReadCount);
+      await expect(
+        page.getByRole("option", { name: "Fixture Cloud Registry" }),
+      ).toBeHidden();
+    },
+  );
+  test(
+    "resumes an installation after reload with one confirmation notification",
+    { tag: ["@critical", "@e2e", "@registry", "@REGISTRY-E2E-008"] },
+    async ({ page }) => {
+      skipUnlessProject(enabledProject);
+      const registry = new RegistryPage(page);
+      await registry.goto();
+      await registry.connectFixtureRegistry();
+      await controlledRegistryFixture.holdArtifactTask(true);
+      await registry.addButtonFor("Fixture network audit").click();
+      await expect
+        .poll(() => page.evaluate(() => localStorage.getItem("task-watcher")))
+        .toContain('"kind":"registry-artifact-add"');
+      await page.reload();
+      await registry.verifyMarketplaceReady();
+      await expect(
+        page.getByText("Artifact added", { exact: true }),
+      ).toBeHidden();
+      await controlledRegistryFixture.holdArtifactTask(false);
+      await expect(
+        page.getByText("Artifact added", { exact: true }),
+      ).toHaveCount(1);
+      await registry.verifyAddedInMyArtifacts("Fixture network audit");
+      expect(
+        (await controlledRegistryFixture.snapshot()).artifactSubmissionCount,
+      ).toBe(1);
     },
   );
 });

@@ -147,6 +147,8 @@ export default defineConfig(() => {
 
         // App component lib
         "@iconify/react",
+        "react-day-picker",
+        "posthog-js",
 
         // Radix
         "@radix-ui/react-alert-dialog",

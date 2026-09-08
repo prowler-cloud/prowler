@@ -1,0 +1,1 @@
+Registry marketplace and external provider onboarding for Private Cloud, with permission-based access independent of billing, confirmed artifact installation, schema-driven credentials, connection checks, and scan launch

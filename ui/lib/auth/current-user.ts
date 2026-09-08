@@ -62,7 +62,14 @@ export async function fetchCurrentUser(
   }
 
   if (!response.ok) {
-    const message = response.status === 401 ? "Invalid or expired token" : response.status === 403 ? "Access denied" : response.status === 404 ? "User not found" : "Unable to load user";
+    const message =
+      response.status === 401
+        ? "Invalid or expired token"
+        : response.status === 403
+          ? "Access denied"
+          : response.status === 404
+            ? "User not found"
+            : "Unable to load user";
     throw new UserMeError(message, response.status);
   }
 

@@ -8,6 +8,8 @@ const { withSentryConfig } = require("@sentry/nextjs");
 // HTTP Security Headers
 const nextConfig = {
   poweredByHeader: false,
+  // Server Function arguments include write-only credentials.
+  logging: { serverFunctions: false },
   // Dev-only. Lets the dev server accept HMR/asset requests from a tunnel
   // hostname (ngrok/cloudflared), needed when testing the local UI through a
   // public tunnel or from an external device.

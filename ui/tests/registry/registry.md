@@ -32,7 +32,7 @@
 
 **Preconditions:** The fixture revokes current authority after the browser receives a manager session.
 
-**Expected Result:** Focus and visibility refresh remove navigation; stale browser state cannot open `/registry`.
+**Expected Result:** The next page request refreshes navigation from current authority; stale browser state cannot open `/registry` or mutate artifacts.
 
 ## Test Case: `REGISTRY-E2E-004` - Write-Only Credential Validation
 
@@ -46,7 +46,7 @@
 **Priority:** `critical`
 **Tags:** @e2e, @registry
 
-**Expected Result:** Multi-page fixture catalog search/filter/multi-provider behavior, card owner rows (logo and initial fallback), and a discoverable provider-capable Built in artifact that exposes Add. Its Add submits a `202` task, polls it to completion, confirms membership through an authoritative artifact read, then renders Built in + Added with synchronous Remove. Ordinary Add and Remove regressions plus documented reconnect/unavailable/generic recovery states use the real UI and server-action paths.
+**Expected Result:** The complete paginated catalog supports search, combined provider and capability filters, URL state, and owner logos with fallback. Built-ins display Built in without Add. Checks/compliance-only artifacts remain visible without Add. An external provider artifact installs through a 202 task and an authoritative membership read before Added appears. Removal preserves provider accounts. Reconnect, unavailable, and generic failures have actionable empty states.
 
 ## Test Case: `REGISTRY-E2E-006` - Pixel 5 Reduced-Motion Browsing
 
@@ -54,3 +54,21 @@
 **Tags:** @e2e, @registry
 
 **Expected Result:** Pixel 5 browsing honors reduced motion, and the card Add action stays fully keyboard-operable with an authoritative confirmation toast.
+
+## Test Case: `REGISTRY-E2E-007` - Registry Provider Onboarding and First Scan
+
+**Priority:** `critical`
+**Tags:** @e2e, @registry
+
+**Preconditions:** Private Cloud fixture profile with billing disabled, `manage_registry`, `manage_providers`, and `manage_scans`.
+
+**Expected Result:** Installing the external provider makes Fixture Cloud available with a Registry badge in the existing Add Provider selector. The wizard accepts UID/alias, renders the backend credential schema, saves the synthetic secret, requires explicit connection success, and launches a scan visible in Scans. No credential values are stored in localStorage or sessionStorage. This synthetic acceptance covers the UI/HTTP contract; real Registry and provider credentials are still required for live validation.
+
+After the scan, removing the artifact preserves the account in Providers and removes the dynamic type from the next Add Provider selector.
+
+## Test Case: `REGISTRY-E2E-008` - Installation Across Reload
+
+**Priority:** `critical`
+**Tags:** @e2e, @registry
+
+**Expected Result:** A pending installation survives a hard reload. After the controlled task is released, an authoritative membership read updates My artifacts and emits one success notification. The browser submits the installation only once.

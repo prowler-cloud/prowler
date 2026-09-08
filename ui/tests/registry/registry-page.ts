@@ -1,8 +1,17 @@
-import { expect, type Locator, type Page } from "@playwright/test";
+import { expect, type Locator, type Page, test } from "@playwright/test";
 
 import { BasePage } from "../base-page";
 
 export class RegistryPage extends BasePage {
+  async captureEvidence(name: string): Promise<void> {
+    const path = test.info().outputPath(`${name}.png`);
+    await this.page.screenshot({
+      path,
+      fullPage: true,
+      animations: "disabled",
+    });
+    await test.info().attach(name, { path, contentType: "image/png" });
+  }
   readonly connectButton: Locator;
   readonly connectDialog: Locator;
   readonly exploreTab: Locator;
@@ -28,6 +37,7 @@ export class RegistryPage extends BasePage {
 
   async goto(): Promise<void> {
     await super.goto("/registry");
+    await this.dismissWelcomeDialog();
   }
 
   artifactCardFor(name: string): Locator {
@@ -45,6 +55,7 @@ export class RegistryPage extends BasePage {
   }
 
   async verifyDirectRouteDenied(): Promise<void> {
+    await this.dismissWelcomeDialog();
     await expect(this.page).not.toHaveURL(/\/registry(?:\?|$)/);
     await expect(
       this.page.getByRole("heading", { name: "Profile" }),
@@ -52,6 +63,7 @@ export class RegistryPage extends BasePage {
   }
 
   async verifyRegistryNavigationVisible(): Promise<void> {
+    await this.dismissWelcomeDialog();
     await expect(this.registryLink).toBeVisible();
   }
 
@@ -104,23 +116,26 @@ export class RegistryPage extends BasePage {
 
     await this.page
       .getByRole("combobox", { name: "Filter by provider" })
-      .click();
-    await this.page.getByRole("option", { name: "AWS" }).click();
+      .press("Enter");
+    await this.page.getByRole("option", { name: "AWS", exact: true }).click();
+    await expect(this.page).toHaveURL(/filter%5Bprovider%5D=aws/);
+    await this.page.keyboard.press("Escape");
     await expect(sharedPolicyCard).toBeVisible();
 
     // The multi-provider artifact stays reachable through every provider it serves.
     await this.page
       .getByRole("combobox", { name: "Filter by provider" })
+      .press("Enter");
+    await this.page
+      .getByRole("option", { name: "Google Cloud", exact: true })
       .click();
-    await this.page.getByRole("option", { name: "Google Cloud" }).click();
+    await this.page.keyboard.press("Escape");
     await expect(sharedPolicyCard).toBeVisible();
     await expect(networkAuditCard).toBeHidden();
 
     await this.page
-      .getByRole("combobox", { name: "Filter by provider" })
+      .getByRole("button", { name: "Clear filters", exact: true })
       .click();
-    await this.page.getByRole("option", { name: "All providers" }).click();
-    await this.searchInput.clear();
     await expect(networkAuditCard).toBeVisible();
   }
 
@@ -128,17 +143,19 @@ export class RegistryPage extends BasePage {
     // Logo-backed owner renders its image; the logo-less owner falls back to
     // an initial avatar, so only its name is asserted.
     await expect(this.page.getByText("Prowler Fixtures")).toBeVisible();
-    await expect(this.page.locator('img[src*="owner-logo.png"]')).toBeVisible();
+    await expect(
+      this.page.locator('img[src$="/fixture-owner.svg"]'),
+    ).toBeVisible();
     await expect(this.page.getByText("Community Fixtures")).toBeVisible();
   }
 
-  async verifyBuiltInArtifactIsAddable(name: string): Promise<void> {
+  async verifyBuiltInArtifactHasNoAdd(name: string): Promise<void> {
     const card = this.artifactCardFor(name);
 
     await expect(card.getByRole("status", { name: "Built in" })).toBeVisible();
     await expect(
       card.getByRole("button", { name: `Add ${name}` }),
-    ).toBeVisible();
+    ).toBeHidden();
   }
 
   async addLatest(name: string): Promise<void> {
@@ -165,8 +182,19 @@ export class RegistryPage extends BasePage {
   }
 
   async dismissWelcomeDialog(): Promise<void> {
-    const dismissButton = this.page.getByRole("button", { name: "Got it" });
-    if (await dismissButton.isVisible()) await dismissButton.click();
+    for (const name of ["Got it", "Skip for now"]) {
+      const dismiss = this.page.getByRole("button", { name, exact: true });
+      if (
+        await dismiss
+          .waitFor({ state: "visible", timeout: 1500 })
+          .then(() => true)
+          .catch(() => false)
+      )
+        await dismiss.click({ timeout: 2000 }).catch(async () => {
+          // A route transition can unmount the welcome popover while it animates.
+          await expect(dismiss).toBeHidden();
+        });
+    }
   }
 
   async verifyKeyIsNotDisclosed(
@@ -182,5 +210,57 @@ export class RegistryPage extends BasePage {
       ...Object.values(sessionStorage),
     ]);
     expect(storedValues).not.toContain(key);
+  }
+  async connectInstalledProviderAndScan(): Promise<void> {
+    await this.page.goto("/providers");
+    await this.dismissWelcomeDialog();
+    await this.page.getByRole("button", { name: /Add (a )?Provider/i }).click();
+    await expect(
+      this.page.getByRole("option", { name: "Fixture Cloud Registry" }),
+    ).toBeVisible();
+    await this.page
+      .getByRole("option", { name: "Fixture Cloud Registry" })
+      .scrollIntoViewIfNeeded();
+    await this.captureEvidence("registry-provider-selector");
+    await this.page
+      .getByRole("option", { name: "Fixture Cloud Registry" })
+      .click();
+    await this.page
+      .getByLabel("Provider UID", { exact: true })
+      .fill("fixture-account");
+    await this.page
+      .getByLabel("Provider alias (optional)")
+      .fill("Registry test account");
+    await this.page.getByRole("button", { name: "Next", exact: true }).click();
+    const token = this.page.getByLabel("API token", { exact: false });
+    await expect(token).toBeVisible();
+    await this.captureEvidence("registry-provider-credentials");
+    await token.fill("fixture-provider-token-not-a-secret");
+    await this.page
+      .getByRole("button", { name: "Authenticate", exact: true })
+      .click();
+    await this.page
+      .getByRole("button", { name: "Check connection", exact: true })
+      .click();
+    await this.page
+      .getByRole("radio", { name: "Run now", exact: true })
+      .click();
+    await this.page
+      .getByRole("button", { name: "Launch scan", exact: true })
+      .click();
+    await expect(
+      this.page.getByText("Scan launched", { exact: true }),
+    ).toBeVisible();
+    await this.page.goto("/scans?tab=completed");
+    await expect(
+      this.page.getByText("Fixture Registry scan", { exact: true }),
+    ).toBeVisible();
+    await expect(
+      this.page
+        .getByRole("row")
+        .filter({ hasText: "Fixture Registry scan" })
+        .getByText("Registry test account", { exact: true }),
+    ).toBeVisible();
+    await this.captureEvidence("registry-provider-scan-completed");
   }
 }

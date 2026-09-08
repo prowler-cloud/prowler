@@ -8,12 +8,12 @@ import {
   isGatedIntegrationEnabled,
   readGatedEnv,
 } from "@/lib/integrations";
-import { REGISTRY_ACCESS } from "@/lib/registry/access";
-import { evaluateRegistryAccess } from "@/lib/registry/access.server";
 import {
   SLACK_CALLBACK_PATH,
   SLACK_EXPIRED_CALLBACK_URL,
 } from "@/lib/integrations/slack-connect-status";
+import { REGISTRY_ACCESS } from "@/lib/registry/access";
+import { evaluateRegistryAccess } from "@/lib/registry/access.server";
 import { readEnv } from "@/lib/runtime-env";
 import { isCloud } from "@/lib/shared/env";
 import { copyAttributionParams } from "@/lib/utm";

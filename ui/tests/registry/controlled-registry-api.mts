@@ -20,7 +20,20 @@ const fixtureAccessToken = [
 type CredentialState = "active" | "onboarding" | "pending";
 type DiscoveryMode = "error" | "ready" | "reconnect" | "unavailable";
 
+const fixtureProviderId = "d4e71fb8-c657-4c1b-a6ea-92fe611b3431";
+const fixtureSecretId = "e9d17da5-04d7-447b-a59d-8726794a6d55";
+const fixtureScanId = "9b82e67d-513b-4c41-b981-9e559f920f40";
+const fixtureConnectionTaskId = "2118a6a8-7795-4d70-822a-7256c837fd30";
+
 interface FixtureState {
+  holdArtifactTask: boolean;
+  providerCreated: boolean;
+  providerUid: string;
+  providerAlias: string;
+  secretSaved: boolean;
+  connected: boolean;
+  scanCreated: boolean;
+  connectionReadCount: number;
   artifactEvents: string[];
   artifactReadCount: number;
   artifactSubmissionCount: number;
@@ -37,6 +50,14 @@ interface FixtureState {
 }
 
 const initialState = (): FixtureState => ({
+  holdArtifactTask: false,
+  providerCreated: false,
+  providerUid: "",
+  providerAlias: "",
+  secretSaved: false,
+  connected: false,
+  scanCreated: false,
+  connectionReadCount: 0,
   artifactEvents: [],
   artifactReadCount: 0,
   artifactSubmissionCount: 0,
@@ -57,15 +78,18 @@ const catalogPages = [
     catalogArtifact("fixture-network-audit", {
       description: "Synthetic Registry fixture network audit",
       has_checks: true,
+      has_provider: true,
+      is_builtin: false,
       is_official: true,
       is_verified: true,
       latest_version: "1.2.3",
       name: "Fixture network audit",
-      owner_logo_url: `http://127.0.0.1:${port}/__fixture__/registry/owner-logo.png`,
+      owner_logo_url:
+        "https://media.registry.dev.prowler.com/fixture-owner.svg",
       owner_name: "Prowler Fixtures",
       owner_slug: "prowler-fixtures",
       owner_type: "organization",
-      providers: ["aws"],
+      providers: ["fixturecloud"],
     }),
     catalogArtifact("fixture-built-in-provider", {
       description: "Synthetic Registry fixture built-in provider",
@@ -114,30 +138,11 @@ const server = createServer(async (request, response) => {
 
 server.listen(port, "127.0.0.1");
 
-// 1x1 transparent PNG so owner logo rendering is exercised with a real image.
-const ownerLogoPng = Buffer.from(
-  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
-  "base64",
-);
-
 async function handleFixtureControl(
   request: IncomingMessage,
   response: ServerResponse,
   pathname: string,
 ) {
-  if (pathname === "/__fixture__/registry/owner-logo.png") {
-    if (request.method !== "GET") {
-      sendJson(response, 405, { errors: [{ code: "method_not_allowed" }] });
-      return;
-    }
-    response.writeHead(200, {
-      "Cache-Control": "no-store",
-      "Content-Type": "image/png",
-    });
-    response.end(ownerLogoPng);
-    return;
-  }
-
   if (
     request.method !== "POST" &&
     pathname !== "/__fixture__/registry/snapshot"
@@ -154,6 +159,13 @@ async function handleFixtureControl(
 
   if (pathname === "/__fixture__/registry/revoke-current-authority") {
     state.hasCurrentAuthority = false;
+    sendJson(response, 200, { ok: true });
+    return;
+  }
+
+  if (pathname === "/__fixture__/registry/artifact-task-hold") {
+    const body = await readJson(request);
+    state.holdArtifactTask = readStringField(body, "hold") === "true";
     sendJson(response, 200, { ok: true });
     return;
   }
@@ -179,6 +191,10 @@ async function handleFixtureControl(
       credentialAccepted: state.credentialAccepted,
       credentialReadCount: state.credentialReadCount,
       taskReadCount: state.taskReadCount,
+      providerCreated: state.providerCreated,
+      secretSaved: state.secretSaved,
+      connected: state.connected,
+      scanCreated: state.scanCreated,
     });
     return;
   }
@@ -216,6 +232,154 @@ async function handleApiRequest(
 
   if (method === "GET" && pathname === "/api/v1/provider-groups") {
     sendJson(response, 200, { data: [] });
+    return;
+  }
+
+  if (
+    method === "GET" &&
+    [
+      "/api/v1/organizations",
+      "/api/v1/scan-configurations",
+      "/api/v1/schedules",
+    ].includes(pathname)
+  ) {
+    sendJson(response, 200, collectionDocument([]));
+    return;
+  }
+  if (method === "GET" && pathname === "/api/v1/providers") {
+    sendJson(
+      response,
+      200,
+      collectionDocument(state.providerCreated ? [providerResource()] : []),
+    );
+    return;
+  }
+  if (method === "POST" && pathname === "/api/v1/providers") {
+    const body = await readJson(request);
+    if (
+      !state.tenantArtifacts.has("fixture-network-audit") ||
+      state.providerCreated ||
+      readNestedString(body, ["data", "attributes", "provider"]) !==
+        "fixturecloud"
+    ) {
+      sendJson(response, 400, {
+        errors: [{ detail: "Provider is unavailable or already exists." }],
+      });
+      return;
+    }
+    state.providerCreated = true;
+    state.providerUid =
+      readNestedString(body, ["data", "attributes", "uid"]) || "";
+    state.providerAlias =
+      readNestedString(body, ["data", "attributes", "alias"]) || "";
+    sendJson(response, 201, { data: providerResource() });
+    return;
+  }
+  if (
+    method === "GET" &&
+    pathname === `/api/v1/providers/${fixtureProviderId}`
+  ) {
+    sendJson(response, 200, { data: providerResource() });
+    return;
+  }
+  if (
+    method === "GET" &&
+    pathname === "/api/v1/provider-schemas/fixturecloud"
+  ) {
+    sendJson(response, 200, {
+      data: {
+        id: "fixturecloud",
+        type: "provider-schemas",
+        attributes: {
+          secret_types: {
+            api_key: {
+              type: "object",
+              properties: {
+                token: {
+                  type: "string",
+                  title: "API token",
+                  format: "password",
+                  writeOnly: true,
+                },
+              },
+              required: ["token"],
+            },
+          },
+        },
+      },
+    });
+    return;
+  }
+  if (
+    (method === "POST" && pathname === "/api/v1/providers/secrets") ||
+    (method === "PATCH" &&
+      pathname === `/api/v1/providers/secrets/${fixtureSecretId}`)
+  ) {
+    const body = await readJson(request);
+    state.secretSaved =
+      readNestedString(body, ["data", "attributes", "secret", "token"]) ===
+        "fixture-provider-token-not-a-secret" &&
+      readNestedString(body, ["data", "attributes", "secret_type"]) ===
+        "api_key";
+    sendJson(
+      response,
+      state.secretSaved ? 201 : 400,
+      state.secretSaved
+        ? { data: { id: fixtureSecretId, type: "provider-secrets" } }
+        : { errors: [{ detail: "Invalid test credentials" }] },
+    );
+    return;
+  }
+  if (
+    method === "POST" &&
+    pathname === `/api/v1/providers/${fixtureProviderId}/connection`
+  ) {
+    state.connectionReadCount = 0;
+    sendJson(response, 202, {
+      data: { id: fixtureConnectionTaskId, type: "tasks" },
+    });
+    return;
+  }
+  if (
+    method === "GET" &&
+    pathname === `/api/v1/tasks/${fixtureConnectionTaskId}`
+  ) {
+    state.connectionReadCount += 1;
+    const complete = state.connectionReadCount >= 2;
+    state.connected = complete && state.secretSaved;
+    sendJson(response, 200, {
+      data: {
+        id: fixtureConnectionTaskId,
+        type: "tasks",
+        attributes: {
+          state: complete ? "completed" : "executing",
+          result: complete ? { connected: state.connected, error: null } : null,
+        },
+      },
+    });
+    return;
+  }
+  if (method === "POST" && pathname === "/api/v1/scans") {
+    if (!state.connected) {
+      sendJson(response, 400, {
+        errors: [{ detail: "Connect the provider first" }],
+      });
+      return;
+    }
+    state.scanCreated = true;
+    sendJson(response, 201, { data: scanResource() });
+    return;
+  }
+  if (method === "GET" && pathname === "/api/v1/scans") {
+    const states = url.searchParams.get("filter[state__in]");
+    const data =
+      state.scanCreated && (!states || states.includes("completed"))
+        ? [scanResource()]
+        : [];
+    sendJson(response, 200, {
+      ...collectionDocument(data),
+      included: state.providerCreated ? [providerResource()] : [],
+    });
     return;
   }
 
@@ -257,7 +421,10 @@ async function handleApiRequest(
     if (complete) state.credentialState = "active";
     sendJson(response, 200, {
       data: {
-        attributes: { state: complete ? "completed" : "executing" },
+        attributes: {
+          state: complete ? "completed" : "executing",
+          ...(complete ? { result: { stored: true, error: null } } : {}),
+        },
         id: taskId,
         type: "tasks",
       },
@@ -316,7 +483,8 @@ async function handleApiRequest(
 
     state.artifactEvents.push("task-poll");
     state.artifactTaskReadCount += 1;
-    const complete = state.artifactTaskReadCount >= 2;
+    const complete =
+      state.artifactTaskReadCount >= 2 && !state.holdArtifactTask;
     if (complete) {
       state.tenantArtifacts.set(
         state.artifactTaskNormalizedName,
@@ -379,7 +547,15 @@ function bodyOrEmpty(body: unknown) {
 
 function sendDiscoveryResponse(response: ServerResponse) {
   if (state.discoveryMode === "ready") {
-    sendJson(response, 200, { data: [] });
+    sendJson(response, 200, {
+      data: [
+        {
+          id: "fixturecloud",
+          type: "registry-providers",
+          attributes: { name: "Fixture Cloud", logo_url: null },
+        },
+      ],
+    });
     return;
   }
 
@@ -422,7 +598,13 @@ function currentUserDocument() {
     },
     included: [
       {
-        attributes: { manage_registry: state.hasCurrentAuthority },
+        attributes: {
+          manage_registry: state.hasCurrentAuthority,
+          manage_providers: true,
+          manage_scans: true,
+          unlimited_visibility: true,
+          manage_billing: false,
+        },
         id: "fixture-registry-role",
         type: "roles",
       },
@@ -508,4 +690,65 @@ function sendJson(
     ...headers,
   });
   response.end(payload === undefined ? undefined : JSON.stringify(payload));
+}
+
+function collectionDocument(data: unknown[]) {
+  return {
+    data,
+    meta: { pagination: { page: 1, pages: 1, count: data.length } },
+  };
+}
+function providerResource() {
+  return {
+    id: fixtureProviderId,
+    type: "providers",
+    attributes: {
+      provider: "fixturecloud",
+      uid: state.providerUid,
+      alias: state.providerAlias,
+      is_dynamic: true,
+      status: "completed",
+      available: true,
+      resources: state.scanCreated ? 1 : 0,
+      connection: {
+        connected: state.connected,
+        last_checked_at: state.connected ? "2026-01-01T00:00:00Z" : null,
+      },
+      scanner_args: {},
+      inserted_at: "2026-01-01T00:00:00Z",
+      updated_at: "2026-01-01T00:00:00Z",
+    },
+    relationships: {
+      secret: {
+        data: state.secretSaved
+          ? { id: fixtureSecretId, type: "provider-secrets" }
+          : null,
+      },
+      provider_groups: { data: [], meta: { count: 0 } },
+    },
+  };
+}
+function scanResource() {
+  return {
+    id: fixtureScanId,
+    type: "scans",
+    attributes: {
+      name: "Fixture Registry scan",
+      state: "completed",
+      trigger: "manual",
+      progress: 100,
+      unique_resource_count: 1,
+      duration: 1,
+      scanner_args: {},
+      started_at: "2026-01-01T00:00:00Z",
+      inserted_at: "2026-01-01T00:00:00Z",
+      completed_at: "2026-01-01T00:00:01Z",
+      scheduled_at: null,
+      next_scan_at: null,
+    },
+    relationships: {
+      provider: { data: { id: fixtureProviderId, type: "providers" } },
+      task: { data: null },
+    },
+  };
 }

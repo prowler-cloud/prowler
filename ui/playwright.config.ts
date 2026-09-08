@@ -32,6 +32,7 @@ const registryFixtureUiServer = (
     UI_API_BASE_URL: registryFixtureApiUrl,
     UI_CLOUD_ENABLED: String(cloudEnabled),
     UI_REGISTRY_ENABLED: String(registryEnabled),
+    CLOUD_BILLING_ENABLED: "false",
   },
   reuseExistingServer: false,
   timeout: 120 * 1000,

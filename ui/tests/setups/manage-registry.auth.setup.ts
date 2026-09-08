@@ -1,5 +1,6 @@
 import { test as authManageRegistrySetup } from "@playwright/test";
 
+import { RegistryPage } from "../registry/registry-page";
 import { SignInPage } from "../sign-in-base/sign-in-base-page";
 
 const manageRegistryUserFile = "playwright/.auth/manage_registry_user.json";
@@ -19,9 +20,11 @@ authManageRegistrySetup(
     );
 
     const signInPage = new SignInPage(page);
-    await signInPage.authenticateAndSaveState(
-      fixtureCredentials,
-      manageRegistryUserFile,
-    );
+    await signInPage.goto();
+    await signInPage.login(fixtureCredentials);
+    await page.waitForURL("/");
+    await new RegistryPage(page).dismissWelcomeDialog();
+    await signInPage.verifySuccessfulLogin();
+    await page.context().storageState({ path: manageRegistryUserFile });
   },
 );
