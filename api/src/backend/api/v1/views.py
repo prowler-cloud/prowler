@@ -244,7 +244,6 @@ from api.v1.serializers import (
     UserUpdateSerializer,
 )
 from botocore.exceptions import ClientError, NoCredentialsError, ParamValidationError
-from celery import chain
 from celery.result import AsyncResult
 from config.custom_logging import BackendLogger
 from config.env import env
@@ -342,8 +341,7 @@ from tasks.tasks import (
     enqueue_scan_execution_on_commit,
     get_active_provider_scan,
     jira_integration_task,
-    mute_historical_findings_task,
-    reaggregate_all_finding_group_summaries_task,
+    mute_findings_in_latest_scans_task,
     refresh_lighthouse_provider_models_task,
 )
 
@@ -7551,35 +7549,28 @@ class MuteRuleViewSet(BaseRLSViewSet):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        # Create the mute rule
+        tenant_id = str(request.tenant_id)
+        finding_ids = serializer.validated_data["finding_ids"]
+        provider_ids = list(
+            dict.fromkeys(
+                Finding.all_objects.filter(
+                    id__in=finding_ids, tenant_id=tenant_id
+                ).values_list("scan__provider_id", flat=True)
+            )
+        )
+
         mute_rule = serializer.save()
 
-        tenant_id = str(request.tenant_id)
-        finding_ids = request.data.get("finding_ids", [])
-
-        # Immediately mute the selected findings
-        Finding.all_objects.filter(
-            id__in=finding_ids, tenant_id=tenant_id, muted=False
-        ).update(
-            muted=True,
-            muted_at=mute_rule.inserted_at,
-            muted_reason=mute_rule.reason,
-        )
-
-        # Launch background task for historical muting + reaggregation
         transaction.on_commit(
-            lambda: chain(
-                mute_historical_findings_task.si(
-                    tenant_id=tenant_id,
-                    mute_rule_id=str(mute_rule.id),
-                ),
-                reaggregate_all_finding_group_summaries_task.si(
-                    tenant_id=tenant_id,
-                ),
-            ).apply_async()
+            lambda: mute_findings_in_latest_scans_task.apply_async(
+                kwargs={
+                    "tenant_id": tenant_id,
+                    "mute_rule_id": str(mute_rule.id),
+                    "provider_ids": [str(provider_id) for provider_id in provider_ids],
+                }
+            )
         )
 
-        # Return the created mute rule
         serializer = self.get_serializer(mute_rule)
         return Response(
             data=serializer.data,

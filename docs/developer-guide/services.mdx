@@ -537,7 +537,7 @@ This architecture allows Prowler to efficiently scan AWS accounts with resources
 
 ## Best Practices
 
-- When available in the provider, use threading or parallelization utilities for all methods that can be parallelized by to maximize performance and reduce scan time.
+- When available in the provider, use threading or parallelization utilities for all methods that can be parallelized to maximize performance and reduce scan time.
 - Define a Pydantic `BaseModel` for every resource you manage, and use these models for all resource data handling.
 - Log every major step (start, success, error) in resource discovery and attribute collection for traceability and debugging; include as much context as possible.
 - Catch and log all exceptions, providing detailed context (region, subscription, resource, error type, line number) to aid troubleshooting.

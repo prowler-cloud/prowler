@@ -140,7 +140,7 @@ describe("LighthouseV2ConfigPage", () => {
       name: /OpenAI-compatible/i,
     });
     expect(
-      within(compatibleProvider).getByText("Not tested"),
+      within(compatibleProvider).getByText("Not connected"),
     ).toBeInTheDocument();
   });
 

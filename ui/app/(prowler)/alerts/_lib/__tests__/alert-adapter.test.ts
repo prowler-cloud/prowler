@@ -23,10 +23,10 @@ const condition: AlertCondition = {
 const baseValues = {
   name: "  Critical findings  ",
   description: "  Notify security  ",
-  method: "email",
   frequency: ALERT_TRIGGER_KINDS.DAILY,
   condition,
   recipientEmails: [" Security@Example.COM ", "ops@example.com"],
+  slackChannels: [" C0123AB ", "C0123AB", ""],
   enabled: true,
 } satisfies AlertFormValues;
 
@@ -65,6 +65,7 @@ describe("simple alert adapter", () => {
       trigger: ALERT_TRIGGER_KINDS.DAILY,
       condition,
       recipientEmails: ["security@example.com", "ops@example.com"],
+      slackChannels: ["C0123AB"],
     });
     expect(payload.condition).toBe(condition);
     expect(payload).not.toHaveProperty("method");
@@ -78,10 +79,10 @@ describe("simple alert adapter", () => {
     expect(defaults).toEqual({
       name: "Existing alert",
       description: "Existing description",
-      method: "email",
       frequency: ALERT_TRIGGER_KINDS.BOTH,
       condition,
       recipientEmails: ["alerts@example.com"],
+      slackChannels: [],
       enabled: false,
     });
   });

@@ -43,11 +43,12 @@ export async function getRuntimePublicConfig(): Promise<RuntimePublicConfig> {
       "UI_POSTHOG_KEY",
       "POSTHOG_KEY",
     ),
-    posthogHost: readGatedEnv(
+    posthogIngestionHost: readGatedEnv(
       "UI_POSTHOG_ENABLED",
       "UI_POSTHOG_HOST",
       "POSTHOG_HOST",
     ),
+    posthogUiHost: readGatedEnv("UI_POSTHOG_ENABLED", "UI_POSTHOG_UI_HOST"),
     reoDevClientId: readEnv("REO_DEV_CLIENT_ID"),
     cloudEnabled: readBoolEnv("UI_CLOUD_ENABLED"),
     // Install-level selector "legacy" | "metronome" | "false"; the client only

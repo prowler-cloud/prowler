@@ -10,13 +10,17 @@ import {
 } from "@/app/(prowler)/compliance/_lib/cross-provider-pdf";
 import { jiraDispatchTaskHandler } from "@/components/findings/jira-dispatch-task-handler";
 import { registryCredentialTaskHandler } from "@/components/registry/registry-credential-task-handler";
+import { integrationConnectionTaskHandler } from "@/components/integrations/integration-connection-task-handler";
 import { useMountEffect } from "@/hooks/use-mount-effect";
 import { REGISTRY_CREDENTIAL_TASK_KIND } from "@/lib/registry-credential-task";
 import {
   registerTaskKindHandler,
   resumePendingTasks,
 } from "@/store/task-watcher/store";
-import { JIRA_DISPATCH_TASK_KIND } from "@/types/integrations";
+import {
+  INTEGRATION_CONNECTION_TASK_KIND,
+  JIRA_DISPATCH_TASK_KIND,
+} from "@/types/integrations";
 
 // Kind registrations happen at module scope, before any task can settle in
 // this tab. Adding a new watched task kind (integration tests, scan exports,
@@ -27,6 +31,10 @@ registerTaskKindHandler(JIRA_DISPATCH_TASK_KIND, jiraDispatchTaskHandler);
 registerTaskKindHandler(
   REGISTRY_CREDENTIAL_TASK_KIND,
   registryCredentialTaskHandler,
+);
+registerTaskKindHandler(
+  INTEGRATION_CONNECTION_TASK_KIND,
+  integrationConnectionTaskHandler,
 );
 
 /**

@@ -1,0 +1,38 @@
+{
+  "Provider": "m365",
+  "CheckID": "defender_domain_dmarc_records_published",
+  "CheckTitle": "Exchange Online domain has a DMARC record published with an enforcement policy",
+  "CheckType": [],
+  "ServiceName": "defender",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "collaboration",
+  "Description": "**Microsoft 365 Exchange Online domains** should publish a **DMARC** DNS TXT record at `_dmarc.<domain>` with an enforcement policy (`p=quarantine` or `p=reject`). This evaluates each accepted domain to confirm the published record and that it does not rely solely on the monitoring-only `p=none` policy.",
+  "Risk": "Without a **DMARC** record, or with one set to `p=none`, receiving mail systems cannot act on messages that fail **SPF**/**DKIM** alignment, enabling **domain spoofing** and **BEC phishing**.\n\nAttackers can impersonate the domain to deliver phishing or malware, and the domain owner loses enforcement over unauthorized senders, impacting **confidentiality** and **integrity**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.rfc-editor.org/rfc/rfc7489",
+    "https://learn.microsoft.com/en-us/microsoft-365/security/office-365-security/email-authentication-dmarc-configure?view=o365-worldwide"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Publish a DMARC TXT record at _dmarc.<domain> such as: v=DMARC1; p=quarantine; rua=mailto:dmarcreports@<domain>. 2. Prefer p=reject once monitoring confirms legitimate mail is aligned. 3. Avoid leaving the policy at p=none, which only monitors and does not enforce.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "- Publish a DMARC record for every accepted domain with an enforcement policy (`p=quarantine` or `p=reject`)\n- Combine with **SPF** and **DKIM** so messages can be evaluated for alignment\n- Start with `p=quarantine` while monitoring `rua`/`ruf` reports, then move to `p=reject`\n- Review DMARC aggregate reports regularly to catch legitimate senders before enforcing",
+      "Url": "https://hub.prowler.com/check/defender_domain_dmarc_records_published"
+    }
+  },
+  "Categories": [
+    "email-security",
+    "e3"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

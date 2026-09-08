@@ -29,6 +29,22 @@ FROM python:3.13.14-alpine3.23@sha256:9fdbf2e3e82628351513560b121e2ee6ce31cac212
 
 LABEL maintainer="https://github.com/prowler-cloud"
 
+# High CVEs fixed in Alpine 3.23 but not yet in the pinned base image:
+#   sqlite-libs 3.53.4-r0  CVE-2026-11822, CVE-2026-11824  (image ships 3.51.2-r0)
+#   libcrypto3/libssl3 3.5.8-r0  CVE-2026-14456            (image ships 3.5.7-r0)
+# The base image pins python 3.13.14, which has not been rebuilt since those
+# packages were published, so the upgrade is taken here rather than by moving
+# the pin -- the newest published python:3.13-alpine3.23 carries the same
+# vulnerable versions. libcrypto3 and libssl3 are both built from openssl and
+# are flagged separately, so both are named.
+# `>=` rather than `=`: Alpine keeps only the newest build of a package in a
+# branch's index, so an exact pin breaks this build the day one of these is
+# superseded. Drop an entry once the base image ships that version or later.
+RUN apk add --no-cache --upgrade \
+    "sqlite-libs>=3.53.4-r0" \
+    "libcrypto3>=3.5.8-r0" \
+    "libssl3>=3.5.8-r0"
+
 # Create non-root user for security
 # Using specific UID/GID for consistency across environments
 RUN addgroup -g 1001 prowler && \

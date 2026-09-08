@@ -32,13 +32,6 @@ export const ProvidersTabContent = async ({
 }: {
   searchParams: SearchParamsProps;
 }) => {
-  // The React Compiler (`reactCompiler: true`) otherwise instruments this as a
-  // client component and injects `useMemoCache`, which needs a React dispatcher.
-  // An async server component renders once per request, so there is nothing to
-  // memoize — and the injected hook makes it uncallable outside a render, which
-  // is exactly how the browser-mode tests mount it.
-  "use no memo";
-
   const isCloudEnvironment = isCloud();
   const [providersView, scanConfigsState] = await Promise.all([
     loadProvidersAccountsViewData({

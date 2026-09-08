@@ -55,7 +55,8 @@ describe("getRuntimeConfigClient", () => {
       JSON.stringify({
         posthogEnabled: true,
         posthogKey: "phc_key",
-        posthogHost: "https://eu.i.posthog.com",
+        posthogIngestionHost: "https://eu.i.posthog.com",
+        posthogUiHost: "https://eu.posthog.com",
       }),
     );
     const { getRuntimeConfigClient } = await import(
@@ -68,6 +69,8 @@ describe("getRuntimeConfigClient", () => {
     // Then
     expect(config.posthogEnabled).toBe(true);
     expect(config.posthogKey).toBe("phc_key");
+    expect(config.posthogIngestionHost).toBe("https://eu.i.posthog.com");
+    expect(config.posthogUiHost).toBe("https://eu.posthog.com");
   });
 
   it("falls back to an all-null config when the island is absent", async () => {
@@ -139,8 +142,9 @@ describe("getRuntimeConfigClient", () => {
         "cloudEnabled",
         "googleTagManagerId",
         "posthogEnabled",
-        "posthogHost",
+        "posthogIngestionHost",
         "posthogKey",
+        "posthogUiHost",
         "reoDevClientId",
         "sentryDsn",
         "sentryEnvironment",

@@ -24,6 +24,7 @@ const GATED_ENV_VARS = [
   "POSTHOG_KEY",
   "UI_POSTHOG_HOST",
   "POSTHOG_HOST",
+  "UI_POSTHOG_UI_HOST",
 ] as const;
 
 beforeEach(() => {
@@ -274,6 +275,20 @@ describe("isGatedIntegrationEnabled", () => {
 });
 
 describe("warnGatedIntegrationsMisconfig", () => {
+  it("warns when the optional PostHog app host is set while disabled", () => {
+    // Given
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    vi.stubEnv("UI_POSTHOG_UI_HOST", "https://eu.posthog.com");
+
+    // When
+    warnGatedIntegrationsMisconfig();
+
+    // Then
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining("UI_POSTHOG_UI_HOST"),
+    );
+  });
+
   it("warns when a config value is set but its enable flag is not 'true'", () => {
     // Given
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});

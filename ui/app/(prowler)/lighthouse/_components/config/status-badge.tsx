@@ -28,7 +28,7 @@ export function StatusBadge({ status }: { status: ConnectionStatus }) {
   return (
     <Badge variant="outline">
       <CircleDashed />
-      Not tested
+      Not connected
     </Badge>
   );
 }

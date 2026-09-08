@@ -889,7 +889,6 @@
         "dns_dnssec_disabled",
         "dns_rsasha1_in_use_to_key_sign_in_dnssec",
         "dns_rsasha1_in_use_to_zone_sign_in_dnssec",
-        "bigquery_dataset_cmk_encryption",
         "bigquery_table_cmk_encryption",
         "compute_instance_encryption_with_csek_enabled",
         "dataproc_encrypted_with_cmks_disabled"

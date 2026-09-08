@@ -8,6 +8,8 @@ from threading import Lock
 from typing import Optional
 
 import requests
+from alibabacloud_tea_openapi import models as open_api_models
+from alibabacloud_tea_util import models as util_models
 from defusedxml import ElementTree
 from pydantic.v1 import BaseModel
 
@@ -38,6 +40,8 @@ class OSS(AlibabaCloudService):
         self.__threading_call__(self._get_bucket_acl, self.buckets.values())
         self.__threading_call__(self._get_bucket_policy, self.buckets.values())
         self.__threading_call__(self._get_bucket_logging, self.buckets.values())
+        self.__threading_call__(self._get_bucket_encryption, self.buckets.values())
+        self.__threading_call__(self._get_bucket_versioning, self.buckets.values())
 
     def _list_buckets(self, regional_client=None):
         region = "unknown"
@@ -131,58 +135,59 @@ class OSS(AlibabaCloudService):
             )
             return
 
+    def _get_bucket_subresource(self, bucket, action: str, subresource: str) -> dict:
+        """Call a bucket sub-resource API (GET /?<subresource>) and return its parsed body.
+
+        The generated OSS SDK methods return empty response models for these
+        APIs: the OSS gateway keeps the XML root element when it deserializes
+        the body, while the generated response models expect its children at the
+        top level. Calling the shared ``execute`` path directly and unwrapping the
+        root element preserves the actual configuration.
+
+        Args:
+            bucket: Bucket to query.
+            action: OSS API action name (e.g. ``GetBucketEncryption``).
+            subresource: Sub-resource query string (e.g. ``encryption``).
+
+        Returns:
+            dict: Content of the XML root element, or an empty dict when the
+            response carries no configuration.
+
+        Raises:
+            Exception: Any error raised by the OSS SDK, including ``TeaException``
+            with the OSS error code for 4xx/5xx responses.
+        """
+        oss_client = self.session.client("oss", bucket.region)
+        params = open_api_models.Params(
+            action=action,
+            version="2019-05-17",
+            protocol="HTTPS",
+            pathname=f"/?{subresource}",
+            method="GET",
+            auth_type="AK",
+            style="ROA",
+            req_body_type="xml",
+            body_type="xml",
+        )
+        request = open_api_models.OpenApiRequest(
+            host_map={"bucket": bucket.name}, headers={}
+        )
+        response = oss_client.execute(params, request, util_models.RuntimeOptions())
+        body = response.get("body") if isinstance(response, dict) else None
+        if not isinstance(body, dict):
+            return {}
+        if len(body) == 1:
+            root_content = next(iter(body.values()))
+            return root_content if isinstance(root_content, dict) else {}
+        return body
+
     def _get_bucket_acl(self, bucket):
-        """Get bucket ACL."""
+        """Get bucket ACL (private, public-read or public-read-write)."""
         logger.info(f"OSS - Getting ACL for bucket {bucket.name}...")
         try:
-            # Get OSS client for the bucket's region
-            # OSS bucket operations use regional endpoint: oss-{region}.aliyuncs.com
-            oss_client = self.session.client("oss", bucket.region)
-
-            # Get bucket ACL
-            response = oss_client.get_bucket_acl(bucket.name)
-
-            if response and response.body:
-                # ACL can be retrieved from the response
-                # The ACL value is typically in the response body
-                acl_value = getattr(response.body, "acl", None)
-                if acl_value:
-                    # ACL values: private, public-read, public-read-write
-                    bucket.acl = acl_value
-                else:
-                    # Try to get from access_control_list if available
-                    acl_list = getattr(response.body, "access_control_list", None)
-                    if acl_list:
-                        grant = getattr(acl_list, "grant", None)
-                        if grant:
-                            # Check grants to determine ACL type
-                            if isinstance(grant, list):
-                                # Check if any grant has public access
-                                for g in grant:
-                                    permission = getattr(g, "permission", "")
-                                    if permission in ["READ", "FULL_CONTROL"]:
-                                        if permission == "READ":
-                                            bucket.acl = "public-read"
-                                        else:
-                                            bucket.acl = "public-read-write"
-                                        break
-                                else:
-                                    bucket.acl = "private"
-                            else:
-                                permission = getattr(grant, "permission", "")
-                                if permission == "READ":
-                                    bucket.acl = "public-read"
-                                elif permission == "FULL_CONTROL":
-                                    bucket.acl = "public-read-write"
-                                else:
-                                    bucket.acl = "private"
-                        else:
-                            bucket.acl = "private"
-                    else:
-                        bucket.acl = "private"
-            else:
-                bucket.acl = "private"
-
+            acl_policy = self._get_bucket_subresource(bucket, "GetBucketAcl", "acl")
+            grant = (acl_policy.get("AccessControlList") or {}).get("Grant")
+            bucket.acl = str(grant) if grant else "private"
         except Exception as error:
             logger.error(
                 f"{bucket.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -219,67 +224,66 @@ class OSS(AlibabaCloudService):
                 bucket.policy = {}
 
     def _get_bucket_logging(self, bucket):
-        """Get bucket logging configuration using OSS SDK."""
+        """Get bucket logging configuration."""
         logger.info(f"OSS - Getting logging configuration for bucket {bucket.name}...")
         try:
-            oss_client = self.session.client("oss", bucket.region)
-
-            response = oss_client.get_bucket_logging(bucket.name)
-
-            if response and response.body:
-                logging_enabled = None
-                if hasattr(response.body, "logging_enabled"):
-                    logging_enabled = response.body.logging_enabled
-                elif hasattr(response.body, "loggingenabled"):
-                    logging_enabled = response.body.loggingenabled
-                elif hasattr(response.body, "bucket_logging"):
-                    logging_enabled = response.body.bucket_logging
-
-                if logging_enabled:
-                    target_bucket = None
-                    target_prefix = None
-
-                    for attr_name in [
-                        "target_bucket",
-                        "targetBucket",
-                        "target_bucket_name",
-                        "targetBucketName",
-                    ]:
-                        if hasattr(logging_enabled, attr_name):
-                            target_bucket = getattr(logging_enabled, attr_name)
-                            break
-
-                    for attr_name in [
-                        "target_prefix",
-                        "targetPrefix",
-                        "target_prefix_name",
-                        "targetPrefixName",
-                    ]:
-                        if hasattr(logging_enabled, attr_name):
-                            target_prefix = getattr(logging_enabled, attr_name)
-                            break
-
-                    if target_bucket:
-                        bucket.logging_enabled = True
-                        bucket.logging_target_bucket = (
-                            str(target_bucket) if target_bucket else ""
-                        )
-                        bucket.logging_target_prefix = (
-                            str(target_prefix) if target_prefix else ""
-                        )
-                    else:
-                        bucket.logging_enabled = False
-                        bucket.logging_target_bucket = ""
-                        bucket.logging_target_prefix = ""
-                else:
-                    bucket.logging_enabled = False
-                    bucket.logging_target_bucket = ""
-                    bucket.logging_target_prefix = ""
+            logging_status = self._get_bucket_subresource(
+                bucket, "GetBucketLogging", "logging"
+            )
+            logging_enabled = logging_status.get("LoggingEnabled") or {}
+            target_bucket = logging_enabled.get("TargetBucket")
+            if target_bucket:
+                bucket.logging_enabled = True
+                bucket.logging_target_bucket = str(target_bucket)
+                bucket.logging_target_prefix = str(
+                    logging_enabled.get("TargetPrefix") or ""
+                )
             else:
                 bucket.logging_enabled = False
                 bucket.logging_target_bucket = ""
                 bucket.logging_target_prefix = ""
+        except Exception as error:
+            logger.error(
+                f"{bucket.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
 
+    def _get_bucket_encryption(self, bucket):
+        """Get bucket default server-side encryption configuration."""
+        logger.info(
+            f"OSS - Getting encryption configuration for bucket {bucket.name}..."
+        )
+        try:
+            encryption_rule = self._get_bucket_subresource(
+                bucket, "GetBucketEncryption", "encryption"
+            )
+            default_rule = (
+                encryption_rule.get("ApplyServerSideEncryptionByDefault") or {}
+            )
+            bucket.encryption_algorithm = str(default_rule.get("SSEAlgorithm") or "")
+            bucket.encryption_kms_key_id = str(default_rule.get("KMSMasterKeyID") or "")
+            bucket.encryption_kms_data_algorithm = str(
+                default_rule.get("KMSDataEncryption") or ""
+            )
+        except Exception as error:
+            # No encryption rule configured means default encryption is disabled
+            error_code = getattr(error, "code", "")
+            if error_code == "NoSuchServerSideEncryptionRule":
+                bucket.encryption_algorithm = ""
+                bucket.encryption_kms_key_id = ""
+                bucket.encryption_kms_data_algorithm = ""
+            else:
+                logger.error(
+                    f"{bucket.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+
+    def _get_bucket_versioning(self, bucket):
+        """Get bucket versioning status (Enabled, Suspended or unset)."""
+        logger.info(f"OSS - Getting versioning status for bucket {bucket.name}...")
+        try:
+            versioning_configuration = self._get_bucket_subresource(
+                bucket, "GetBucketVersioning", "versioning"
+            )
+            bucket.versioning_status = str(versioning_configuration.get("Status") or "")
         except Exception as error:
             logger.error(
                 f"{bucket.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -330,4 +334,8 @@ class Bucket(BaseModel):
     logging_enabled: bool = False
     logging_target_bucket: str = ""
     logging_target_prefix: str = ""
+    encryption_algorithm: str = ""  # "", AES256, KMS
+    encryption_kms_key_id: str = ""
+    encryption_kms_data_algorithm: str = ""  # "", AES256, SM4 (only with KMS)
+    versioning_status: str = ""  # "", Enabled, Suspended
     creation_date: Optional[datetime] = None

@@ -8,6 +8,7 @@ from typing import Any, Literal
 
 from pydantic import Field
 
+from prowler_mcp_server.lib.types import NonBlankStr
 from prowler_mcp_server.prowler_app.models.findings import (
     DetailedFinding,
     FindingsListResponse,
@@ -180,7 +181,7 @@ class FindingsTools(BaseTool):
 
     async def get_finding_details(
         self,
-        finding_id: str = Field(
+        finding_id: NonBlankStr = Field(
             description="UUID of the finding to retrieve (must be a valid UUID format, e.g., '019ac0d6-90d5-73e9-9acf-c22e256f1bac'). Returns an error if the finding ID is invalid or not found."
         ),
     ) -> dict[str, Any]:

@@ -1,5 +1,9 @@
+import asyncio
 from typing import List, Optional
 
+import dns.asyncresolver
+import dns.exception
+import dns.resolver
 from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
@@ -91,6 +95,38 @@ class Defender(M365Service):
                 )
                 self.email_tenant_settings = self._get_email_tenant_settings()
             self.powershell.close()
+
+        self.tenant_domain = provider.identity.tenant_domain
+        self.domain_dmarc_configurations = {}
+        # Set when the Graph domain list could not be retrieved, so an empty
+        # result can be told apart from a tenant that genuinely has no domains.
+        self.domain_discovery_failed = False
+
+        created_loop = False
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            created_loop = True
+
+        if loop.is_closed():
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            created_loop = True
+
+        if loop.is_running():
+            raise RuntimeError(
+                "Cannot initialize Defender service while event loop is running"
+            )
+
+        self.domain_dmarc_configurations = loop.run_until_complete(
+            self._get_domain_dmarc_configurations()
+        )
+
+        if created_loop:
+            asyncio.set_event_loop(None)
+            loop.close()
 
     def _parse_protection_policy_rules(self, rules_data):
         """Parse preset security policy rules into PresetSecurityPolicyRule models."""
@@ -732,6 +768,102 @@ class Defender(M365Service):
             )
         return teams_protection_policy
 
+    async def _get_domain_dmarc_configurations(self):
+        """
+        Get the DMARC DNS configuration for each accepted Exchange Online domain.
+
+        Retrieves the list of verified domains from Microsoft Graph and, for each
+        one, performs a DNS TXT lookup at ``_dmarc.<domain>`` to capture the
+        published DMARC record, if any.
+
+        Returns:
+            dict[str, DomainDmarcConfiguration]: DMARC configuration keyed by domain name.
+        """
+        logger.info("M365 - Getting Defender domain DMARC configurations...")
+        domain_dmarc_configurations = {}
+        try:
+            verified_domain_ids = []
+            domains_list = await self.client.domains.get()
+
+            while domains_list:
+                for domain in getattr(domains_list, "value", []) or []:
+                    if not domain or not getattr(domain, "is_verified", False):
+                        continue
+                    verified_domain_ids.append(domain.id)
+
+                next_link = getattr(domains_list, "odata_next_link", None)
+                if not next_link:
+                    break
+                domains_list = await self.client.domains.with_url(next_link).get()
+
+            dmarc_records = await asyncio.gather(
+                *(
+                    self._get_dmarc_txt_record(domain_id)
+                    for domain_id in verified_domain_ids
+                )
+            )
+            for domain_id, (dmarc_record, lookup_failed) in zip(
+                verified_domain_ids, dmarc_records
+            ):
+                domain_dmarc_configurations[domain_id] = DomainDmarcConfiguration(
+                    domain=domain_id,
+                    dmarc_record=dmarc_record,
+                    lookup_failed=lookup_failed,
+                )
+        except Exception as error:
+            # The domain list could not be retrieved, so DMARC status is unknown
+            # for the whole tenant rather than confirmed absent.
+            self.domain_discovery_failed = True
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return domain_dmarc_configurations
+
+    @staticmethod
+    async def _get_dmarc_txt_record(domain: str) -> tuple[Optional[str], bool]:
+        """
+        Resolve the DMARC DNS TXT record published at ``_dmarc.<domain>``.
+
+        Args:
+            domain: The domain name to look up the DMARC record for.
+
+        Returns:
+            tuple[Optional[str], bool]: A ``(record, lookup_failed)`` pair.
+                ``record`` is the raw content of the first ``v=DMARC1`` TXT
+                record found, or ``None`` when the domain publishes no DMARC
+                record or the lookup could not be completed. ``lookup_failed``
+                is ``True`` only when the DNS lookup could not be completed
+                (timeout / no reachable nameserver), distinguishing an
+                unverifiable result from a confirmed absence.
+        """
+        try:
+            answers = await dns.asyncresolver.resolve(f"_dmarc.{domain}", "TXT")
+            for answer in answers:
+                record = "".join(
+                    part.decode() if isinstance(part, bytes) else part
+                    for part in answer.strings
+                )
+                # RFC 7489: a DMARC record's first tag must be exactly "v=DMARC1"
+                # ("v=DMARC10" and other TXT records at the name are not DMARC).
+                name, _, value = record.split(";")[0].partition("=")
+                if name.strip().lower() == "v" and value.strip().lower() == "dmarc1":
+                    return record, False
+        except (dns.resolver.NXDOMAIN, dns.resolver.NoAnswer):
+            # The domain resolves but publishes no DMARC record: a confirmed absence.
+            return None, False
+        except (dns.resolver.NoNameservers, dns.exception.Timeout) as error:
+            # The lookup could not be completed, so the DMARC status is unknown.
+            logger.warning(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            return None, True
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            return None, True
+        return None, False
+
 
 class MalwarePolicy(BaseModel):
     enable_file_filter: bool
@@ -923,6 +1055,23 @@ class TeamsProtectionPolicy(BaseModel):
 
     identity: str
     zap_enabled: bool
+
+
+class DomainDmarcConfiguration(BaseModel):
+    """Model for a domain's published DMARC DNS TXT record.
+
+    Attributes:
+        domain: The domain name the DMARC record was looked up for.
+        dmarc_record: The raw ``_dmarc.<domain>`` TXT record content, or
+            ``None`` if no DMARC record was found.
+        lookup_failed: ``True`` when the DNS lookup could not be completed
+            (timeout / no reachable nameserver), so the DMARC status is unknown
+            rather than a confirmed absence.
+    """
+
+    domain: str
+    dmarc_record: Optional[str] = None
+    lookup_failed: bool = False
 
 
 class PresetSecurityPolicyRule(BaseModel):

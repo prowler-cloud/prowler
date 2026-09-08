@@ -10,6 +10,10 @@ import {
 } from "@/lib/integrations";
 import { REGISTRY_ACCESS } from "@/lib/registry/access";
 import { evaluateRegistryAccess } from "@/lib/registry/access.server";
+import {
+  SLACK_CALLBACK_PATH,
+  SLACK_EXPIRED_CALLBACK_URL,
+} from "@/lib/integrations/slack-connect-status";
 import { readEnv } from "@/lib/runtime-env";
 import { isCloud } from "@/lib/shared/env";
 import { copyAttributionParams } from "@/lib/utm";
@@ -39,11 +43,13 @@ const withSecurityHeaders = (response: NextResponse): NextResponse => {
         "UI_POSTHOG_KEY",
         "POSTHOG_KEY",
       ),
-      posthogHost: readGatedEnv(
+      posthogIngestionHost: readGatedEnv(
         "UI_POSTHOG_ENABLED",
         "UI_POSTHOG_HOST",
         "POSTHOG_HOST",
       ),
+      posthogUiHost: readGatedEnv("UI_POSTHOG_ENABLED", "UI_POSTHOG_UI_HOST"),
+      posthogToolbarEnabled: process.env.NODE_ENV === "development",
     }),
   );
   return response;
@@ -65,15 +71,29 @@ export default auth(async (req: NextAuthRequest) => {
   if (sessionError && !isPublicRoute(pathname)) {
     const signInUrl = new URL("/sign-in", req.url);
     signInUrl.searchParams.set("error", sessionError);
-    signInUrl.searchParams.set("callbackUrl", pathname + req.nextUrl.search);
-    copyAttributionParams(req.nextUrl.searchParams, signInUrl.searchParams);
+    signInUrl.searchParams.set(
+      "callbackUrl",
+      pathname === SLACK_CALLBACK_PATH
+        ? SLACK_EXPIRED_CALLBACK_URL
+        : pathname + req.nextUrl.search,
+    );
+    if (pathname !== SLACK_CALLBACK_PATH) {
+      copyAttributionParams(req.nextUrl.searchParams, signInUrl.searchParams);
+    }
     return redirect(signInUrl);
   }
 
   if (!user && !isPublicRoute(pathname)) {
     const signInUrl = new URL("/sign-in", req.url);
-    signInUrl.searchParams.set("callbackUrl", pathname + req.nextUrl.search);
-    copyAttributionParams(req.nextUrl.searchParams, signInUrl.searchParams);
+    signInUrl.searchParams.set(
+      "callbackUrl",
+      pathname === SLACK_CALLBACK_PATH
+        ? SLACK_EXPIRED_CALLBACK_URL
+        : pathname + req.nextUrl.search,
+    );
+    if (pathname !== SLACK_CALLBACK_PATH) {
+      copyAttributionParams(req.nextUrl.searchParams, signInUrl.searchParams);
+    }
     return redirect(signInUrl);
   }
 

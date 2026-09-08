@@ -4,6 +4,41 @@ All notable changes to the **Prowler MCP Server** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [0.12.0] (Prowler v5.41.0)
+
+### 🚀 Added
+
+- Prowler App tools now report a failure as an MCP tool execution error (`isError: true`, explanation in `content`) instead of as a successful result carrying an `{"error": ...}` object, which clients and models read as a success [(#12532)](https://github.com/prowler-cloud/prowler/pull/12532)
+
+### 🔄 Changed
+
+- `prowler_get_compliance_framework_state_details` now rejects a call that passes both `scan_id` and `provider_id` instead of silently ignoring the provider, which could report on a scan belonging to a different provider than the one that was asked about [(#12532)](https://github.com/prowler-cloud/prowler/pull/12532)
+
+### 🐞 Fixed
+
+- `prowler_hub_get_check_code` and `prowler_hub_get_check_fixer` now report a check ID that belongs to another provider as such, naming that provider, instead of reporting the ID as one that does not exist [(#12533)](https://github.com/prowler-cloud/prowler/pull/12533)
+- `prowler_docs_search` no longer reports a failed search as zero matches or an unreadable answer as a bad search term, and `prowler_docs_get_document` no longer reports a failed fetch as a missing page [(#12534)](https://github.com/prowler-cloud/prowler/pull/12534)
+
+---
+
+## [0.11.0] (Prowler v5.40.0)
+
+### 🚀 Added
+
+- Failures shared by every tool - a rejected credential, a missing permission, a rate limit, an outage, an unreachable API, a bad argument - are now explained with a message that says what went wrong and what to do about it [(#12531)](https://github.com/prowler-cloud/prowler/pull/12531)
+
+### 🐞 Fixed
+
+- `prowler_docs_search` returns results again: it calls the search endpoint docs.prowler.com moved to, since the one it used no longer exists, and each result now names the page's title, the section it matched and a URL anchored at that section [(#12578)](https://github.com/prowler-cloud/prowler/pull/12578)
+
+### 🔐 Security
+
+- Stop relaying upstream response bodies to agents: a failed request now reaches the caller as a sentence this server wrote, with the full body kept to the logs, so a gateway error page or a debug traceback can no longer be replayed into a model's context [(#12531)](https://github.com/prowler-cloud/prowler/pull/12531)
+- `sqlite-libs` upgraded to 3.53.4-r0 in the container image, patching CVE-2026-11822 and CVE-2026-11824 [(#12537)](https://github.com/prowler-cloud/prowler/pull/12537)
+- `libcrypto3` and `libssl3` upgraded to 3.5.8-r0 in the container image, patching CVE-2026-14456 [(#12547)](https://github.com/prowler-cloud/prowler/pull/12547)
+
+---
+
 ## [0.10.0] (Prowler v5.38.0)
 
 ### 🚀 Added

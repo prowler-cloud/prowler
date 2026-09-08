@@ -112,13 +112,13 @@ vi.mock("../alert-form-modal", () => ({
       const result = await onSubmit({
         name: "Updated alert",
         description: "",
-        method: "email",
         frequency: ALERT_TRIGGER_KINDS.AFTER_SCAN,
         condition: {
           op: ALERT_AGGREGATE_OPS.ANY,
           filter: { severity: ["critical"] },
         },
         recipientEmails: [],
+        slackChannels: [],
         enabled: true,
       });
       setError(result.ok ? null : (result.error ?? null));

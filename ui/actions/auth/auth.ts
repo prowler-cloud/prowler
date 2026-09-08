@@ -141,8 +141,8 @@ export const getToken = async (formData: SignInFormData) => {
   }
 };
 
-export const getUserByMe = async (accessToken: string) => {
-  const currentUser = await fetchCurrentUser(accessToken);
+export const getUserByMe = async (accessToken: string, signal?: AbortSignal) => {
+  const currentUser = await fetchCurrentUser(accessToken, { signal });
 
   return {
     name: currentUser.name,

@@ -120,10 +120,6 @@ vi.mock("../_components/cross-provider-detail", () => ({
   CrossProviderDetail: () => null,
 }));
 
-vi.mock("../_lib/cross-provider-frameworks", () => ({
-  resolveCrossProviderFramework: vi.fn(),
-}));
-
 vi.mock("../_lib/search-params-key", () => ({
   buildSearchParamsKey: vi.fn(() => "search-params"),
 }));

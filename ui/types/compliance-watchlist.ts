@@ -51,6 +51,11 @@ export interface ComplianceCatalog {
   meta: ComplianceCatalogMeta;
 }
 
+export interface ComplianceCatalogLoad extends ComplianceCatalog {
+  /** No answer was obtained — not the same as a legitimately empty catalog. */
+  unavailable: boolean;
+}
+
 export interface FindingComplianceFramework {
   id: string;
   complianceId: string;

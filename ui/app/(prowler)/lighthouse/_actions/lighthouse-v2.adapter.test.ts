@@ -122,6 +122,27 @@ describe("lighthouse-v2.adapter", () => {
       });
     });
 
+    it("should not expose removed feedback state on mapped messages", () => {
+      // Given
+      const resource: Parameters<typeof mapLighthouseV2Message>[0] = {
+        id: "message-1",
+        type: "lighthouse-messages",
+        attributes: {
+          role: "user",
+          model: null,
+          token_usage: null,
+          inserted_at: "2026-06-24T10:01:00Z",
+          parts: [],
+        },
+      };
+
+      // When
+      const message = mapLighthouseV2Message(resource);
+
+      // Then
+      expect(message).not.toHaveProperty("feedback");
+    });
+
     it("should give id-less parts stable fallback keys instead of empty strings", () => {
       // Given
       const resource: Parameters<typeof mapLighthouseV2Message>[0] = {

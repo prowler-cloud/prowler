@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { apiBaseUrl } from "@/lib";
+import { UserMeError } from "@/lib/auth-errors";
 import { PERMISSION_KEY, type RolePermissionAttributes } from "@/types/users";
 
 const currentUserDocumentSchema = z.object({
@@ -57,10 +58,13 @@ export async function fetchCurrentUser(
       },
     });
   } catch {
-    throw new Error("Unable to fetch current user");
+    throw new UserMeError("Unable to load user");
   }
 
-  if (!response.ok) throw new Error("Unable to fetch current user");
+  if (!response.ok) {
+    const message = response.status === 401 ? "Invalid or expired token" : response.status === 403 ? "Access denied" : response.status === 404 ? "User not found" : "Unable to load user";
+    throw new UserMeError(message, response.status);
+  }
 
   const parsed = currentUserDocumentSchema.safeParse(
     await response.json().catch(() => undefined),

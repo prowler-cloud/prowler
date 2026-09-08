@@ -36,12 +36,9 @@ vi.mock("@/actions/compliance-watchlist", () => ({
 
 // The watchlist context reads the session through next-auth, which cannot be
 // imported in this environment; the watchlist behaviour has its own tests.
+// It also carries the catalog this section reads its exclusions from.
 vi.mock("../_lib/watchlist-context", () => ({
-  loadComplianceWatchlistContext: vi.fn(async () => ({
-    entries: [],
-    eligibleProviderTypes: [],
-    canManage: false,
-  })),
+  loadComplianceWatchlistContext: vi.fn(),
 }));
 
 vi.mock("@/components/icons/providers-badge/provider-type-icon", () => ({
@@ -115,6 +112,18 @@ describe("CrossAccountOverviewSection", () => {
     vi.mocked(getAllProviders).mockReset();
     vi.mocked(getScans).mockReset();
     vi.mocked(getCompliancesOverview).mockReset();
+    vi.mocked(loadComplianceWatchlistContext).mockResolvedValue({
+      entries: [
+        makeComplianceCatalogEntry({
+          complianceId: "csa_ccm_4.0",
+          providerType: "*",
+          framework: "CSA-CCM",
+        }),
+      ],
+      eligibleProviderTypes: [],
+      canManage: false,
+      unavailable: false,
+    });
   });
 
   it("renders nothing when no provider type has two or more accounts", async () => {
@@ -324,11 +333,13 @@ describe("CrossAccountOverviewSection watchlist", () => {
   const withWatchlist = (
     entries: ReturnType<typeof catalogEntry>[],
     canManage = true,
+    unavailable = false,
   ) =>
     vi.mocked(loadComplianceWatchlistContext).mockResolvedValue({
       entries,
       eligibleProviderTypes: ["aws"],
       canManage,
+      unavailable,
     });
 
   it("keeps the provider-type grouping when the filter is on", async () => {
@@ -363,6 +374,14 @@ describe("CrossAccountOverviewSection watchlist", () => {
       screen.getByText(/no single-provider framework is pinned/i),
     ).toBeInTheDocument();
     expect(screen.queryByTestId("cross-account-card")).not.toBeInTheDocument();
+  });
+
+  it("renders nothing when the catalog could not be read", async () => {
+    withWatchlist([], true, true);
+
+    const { container } = await renderSection();
+
+    expect(container).toBeEmptyDOMElement();
   });
 
   it("ignores the filter without a catalog, so OSS never blanks out", async () => {

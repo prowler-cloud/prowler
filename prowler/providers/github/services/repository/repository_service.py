@@ -10,6 +10,8 @@ from prowler.lib.logger import logger
 from prowler.providers.github.lib.service.service import GithubService
 from prowler.providers.github.models import GithubAppIdentityInfo
 
+GITHUB_GRAPHQL_TIMEOUT = (10, 60)
+
 
 class Repository(GithubService):
     def __init__(self, provider):
@@ -65,41 +67,105 @@ class Repository(GithubService):
             "Content-Type": "application/json",
         }
         query = """
-        {
+        query ($cursor: String) {
           viewer {
-            repositories(first: 100, affiliations: [OWNER, ORGANIZATION_MEMBER]) {
+            repositories(
+              first: 100
+              after: $cursor
+              affiliations: [OWNER, ORGANIZATION_MEMBER]
+            ) {
               nodes {
                 nameWithOwner
+              }
+              pageInfo {
+                hasNextPage
+                endCursor
               }
             }
           }
         }
         """
 
+        repositories = []
+        cursor = None
+        seen_cursors = set()
+
         try:
-            response = requests.post(
-                graphql_url, json={"query": query}, headers=headers
-            )
-            response.raise_for_status()
-            data = response.json()
+            while True:
+                response = requests.post(
+                    graphql_url,
+                    json={"query": query, "variables": {"cursor": cursor}},
+                    headers=headers,
+                    timeout=GITHUB_GRAPHQL_TIMEOUT,
+                )
+                response.raise_for_status()
+                data = response.json()
 
-            if "errors" in data:
-                logger.error(f"Error in GraphQL query: {data['errors']}")
-                return []
+                errors = data.get("errors") if isinstance(data, dict) else None
+                repository_connection = (
+                    ((data.get("data") or {}).get("viewer") or {}).get("repositories")
+                    if isinstance(data, dict)
+                    else None
+                )
+                if not isinstance(repository_connection, dict):
+                    logger.error(
+                        f"Error in GraphQL query: {errors or 'invalid response'}"
+                    )
+                    return repositories
+                if errors:
+                    # GitHub returns partial responses: repositories the token
+                    # cannot access (e.g. behind organization SAML enforcement)
+                    # come back as null nodes together with an "errors" entry,
+                    # while the rest of the page is valid.
+                    logger.warning(
+                        f"GitHub GraphQL returned errors while discovering repositories, "
+                        f"some repositories may be skipped: {errors}"
+                    )
 
-            repo_nodes = (
-                data.get("data", {})
-                .get("viewer", {})
-                .get("repositories", {})
-                .get("nodes", [])
-            )
-            return [repo["nameWithOwner"] for repo in repo_nodes]
+                repo_nodes = repository_connection.get("nodes")
+                page_info = repository_connection.get("pageInfo")
+                if (
+                    not isinstance(repo_nodes, list)
+                    or not isinstance(page_info, dict)
+                    or not isinstance(page_info.get("hasNextPage"), bool)
+                ):
+                    logger.error(
+                        "GitHub GraphQL returned an invalid repositories page; "
+                        "repository discovery may be incomplete."
+                    )
+                    return repositories
 
-        except requests.exceptions.RequestException as error:
+                for repo_node in repo_nodes:
+                    if not repo_node:
+                        logger.warning(
+                            "Skipping a repository the token cannot access during discovery."
+                        )
+                        continue
+                    repositories.append(repo_node["nameWithOwner"])
+
+                if not page_info["hasNextPage"]:
+                    return repositories
+
+                cursor = page_info.get("endCursor")
+                if not cursor or cursor in seen_cursors:
+                    logger.error(
+                        "GitHub GraphQL pagination returned an invalid cursor; "
+                        "repository discovery may be incomplete."
+                    )
+                    return repositories
+                seen_cursors.add(cursor)
+
+        except (
+            requests.exceptions.RequestException,
+            ValueError,
+            KeyError,
+            TypeError,
+            AttributeError,
+        ) as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-            return []
+            return repositories
 
     def _default_branch_matches_rule_pattern(
         self, pattern: str, default_branch: str
@@ -398,6 +464,10 @@ class Repository(GithubService):
                             try:
                                 repo = client.get_repo(repo_name)
                                 self._process_repository(repo, repos)
+                            except github.RateLimitExceededException:
+                                # Rate limits are transient and must not leave the
+                                # scan running with an incomplete repository set
+                                raise
                             except Exception as error:
                                 self._handle_github_api_error(
                                     error, "accessing repository", repo_name
@@ -414,6 +484,10 @@ class Repository(GithubService):
                                 )
                                 for repo in repos_list:
                                     self._process_repository(repo, repos)
+                            except github.RateLimitExceededException:
+                                # Rate limits are transient and must not leave the
+                                # scan running with an incomplete repository set
+                                raise
                             except Exception as error:
                                 self._handle_github_api_error(
                                     error, "processing organization", org_name
@@ -433,6 +507,10 @@ class Repository(GithubService):
                                 )
                                 for repo in repos_list:
                                     self._process_repository(repo, repos)
+                            except github.RateLimitExceededException:
+                                # Rate limits are transient and must not leave the
+                                # scan running with an incomplete repository set
+                                raise
                             except Exception as error:
                                 self._handle_github_api_error(
                                     error, "processing organization", org_name
@@ -455,6 +533,10 @@ class Repository(GithubService):
                                 f"Processing repository found via GraphQL: {repo.full_name}"
                             )
                             self._process_repository(repo, repos)
+                        except github.RateLimitExceededException:
+                            # Rate limits are transient and must not leave the
+                            # scan running with an incomplete repository set
+                            raise
                         except Exception as error:
                             if hasattr(self, "_handle_github_api_error"):
                                 self._handle_github_api_error(
@@ -721,6 +803,9 @@ class Repository(GithubService):
                 immutable_releases_enabled=self._get_repository_immutable_releases_status(
                     repo
                 ),
+                default_workflow_permissions=self._get_default_workflow_permissions(
+                    repo
+                ),
                 default_branch=Branch(
                     name=default_branch,
                     protected=branch_protection,
@@ -758,6 +843,8 @@ class Repository(GithubService):
                 dependabot_alerts_enabled=dependabot_alerts_enabled,
                 delete_branch_on_merge=delete_branch_on_merge,
             )
+        except github.RateLimitExceededException:
+            raise  # Re-raise rate limit errors so the listing flow can handle them
         except Exception as error:
             logger.error(
                 f"{repo.full_name}: {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -811,6 +898,66 @@ class Repository(GithubService):
             )
         return None
 
+    def _get_default_workflow_permissions(self, repo) -> Optional[str]:
+        """Retrieve the default GITHUB_TOKEN permissions granted to workflows in the repository.
+
+        The API returns a response in the format:
+        {
+            "default_workflow_permissions": "read",
+            "can_approve_pull_request_reviews": false
+        }
+
+        Args:
+            repo: The PyGithub repository instance to query.
+
+        Returns:
+            Optional[str]: "read" or "write", and None when the setting cannot be determined.
+
+        Raises:
+            github.RateLimitExceededException: When API rate limits are exceeded
+        """
+        try:
+            _, response = repo._requester.requestJsonAndCheck(  # type: ignore[attr-defined]
+                "GET",
+                f"/repos/{repo.full_name}/actions/permissions/workflow",
+                headers={
+                    "Accept": "application/vnd.github+json",
+                    "X-GitHub-Api-Version": "2022-11-28",
+                },
+            )
+            if isinstance(response, dict):
+                permissions = response.get("default_workflow_permissions")
+                if permissions in ("read", "write"):
+                    return permissions
+            return None
+        except github.RateLimitExceededException as error:
+            self._handle_github_api_error(
+                error,
+                "fetching default workflow permissions",
+                repo.full_name,
+                reraise_rate_limit=True,
+            )
+        except github.GithubException as error:
+            status_code = getattr(error, "status", None)
+            if status_code == 404:
+                logger.info(
+                    f"{repo.full_name}: Actions workflow permissions endpoint not available for this repository."
+                )
+                return None
+            if status_code == 403:
+                logger.warning(
+                    f"{repo.full_name}: insufficient permissions to query Actions workflow permissions."
+                )
+                return None
+            self._handle_github_api_error(
+                error, "fetching default workflow permissions", repo.full_name
+            )
+        except Exception as error:
+            logger.error(
+                f"{repo.full_name}: {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return None
+
 
 class Branch(BaseModel):
     """Model for Github Branch"""
@@ -851,6 +998,7 @@ class Repo(BaseModel):
     owner: str
     full_name: str
     immutable_releases_enabled: Optional[bool] = None
+    default_workflow_permissions: Optional[str] = None
     default_branch: Branch
     private: bool
     archived: bool

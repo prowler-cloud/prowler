@@ -21,6 +21,14 @@ ARG POWERSHELL_SHA256_ARM64=2503b71da3e83635592b092df59a0aca4c3606b4d9b068217bb0
 ARG ZIZMOR_SHA256_AMD64=a8000f3c683319a523d3b20df0e75457ba591f049cfcbfa98966631b56733c03
 ARG ZIZMOR_SHA256_ARM64=d66e37ef8a375fb07939c630ebf9709a6e0f20242bdc3faf672a7ed97e0b768d
 
+# High CVEs fixed in Debian trixie-security but not yet in the pinned base image:
+#   openssl/libssl3t64/openssl-provider-legacy 3.5.7-1~deb13u2  CVE-2026-14456,
+#   -14457, -18798, -54874, -63072, -63073, -63074, -63075, -63076, -75803
+#   (image ships 3.5.6-1~deb13u2)
+# Taken as a targeted --only-upgrade rather than by moving the digest: the newest
+# published python:3.12-slim-trixie carries the same vulnerable version. The three
+# packages are all built from openssl and are flagged separately, so all are named.
+# Drop them once the base image ships 3.5.7-1~deb13u2 or later.
 # hadolint ignore=DL3008
 RUN apt-get update && apt-get install -y --no-install-recommends \
     wget \
@@ -36,7 +44,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libtool \
     libxslt1-dev \
     python3-dev \
-    && apt-get install -y --no-install-recommends --only-upgrade util-linux \
+    && apt-get install -y --no-install-recommends --only-upgrade \
+       util-linux libssl3t64 openssl openssl-provider-legacy \
     && rm -rf /var/lib/apt/lists/*
 
 # Install PowerShell

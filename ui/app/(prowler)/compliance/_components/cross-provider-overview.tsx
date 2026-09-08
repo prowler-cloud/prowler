@@ -18,12 +18,12 @@ import {
 } from "@/lib/lighthouse/context/constants";
 import { buildComplianceContext } from "@/lib/lighthouse/context/contributions";
 import { SearchParamsProps } from "@/types";
-import type { KnownProviderType } from "@/types/providers";
+import { isKnownProviderType } from "@/types/providers";
 
 import { getCrossProviderComplianceOverview } from "../_actions/cross-provider";
 import { computeProviderBreakdown } from "../_lib/cross-provider-adapter";
+import { loadCrossProviderFrameworks } from "../_lib/cross-provider-catalog";
 import {
-  CROSS_PROVIDER_FRAMEWORKS,
   type CrossProviderFrameworkEntry,
   parseCrossProviderFilters,
 } from "../_lib/cross-provider-frameworks";
@@ -51,15 +51,18 @@ const emptySummary = (
   requirementsFailed: 0,
   requirementsManual: 0,
   totalRequirements: 0,
-  providerBreakdown: entry.compatibleProviders.map((provider) => ({
-    provider,
-    pass: 0,
-    fail: 0,
-    manual: 0,
-    total: 0,
-    score: 0,
-    unscanned: true,
-  })),
+  // Chips need an icon and a label, which only known types have.
+  providerBreakdown: entry.providerTypes
+    .filter(isKnownProviderType)
+    .map((provider) => ({
+      provider,
+      pass: 0,
+      fail: 0,
+      manual: 0,
+      total: 0,
+      score: 0,
+      unscanned: true,
+    })),
 });
 
 export const CrossProviderOverview = async ({
@@ -69,22 +72,31 @@ export const CrossProviderOverview = async ({
 }) => {
   const filters = parseCrossProviderFilters(searchParams);
 
-  const [responses, providersData, providerGroupsData, watchlist] =
+  // The roll-ups can only fan out once we know which frameworks exist.
+  const [catalog, providersData, providerGroupsData, watchlist] =
     await Promise.all([
-      Promise.all(
-        CROSS_PROVIDER_FRAMEWORKS.map((entry) =>
-          getCrossProviderComplianceOverview({
-            complianceId: entry.complianceId,
-            filters,
-          }).then((result) => ({ entry, result })),
-        ),
-      ),
+      loadCrossProviderFrameworks(),
       getAllProviders(),
       getAllProviderGroups(),
       // No provider type narrowing: a universal framework spans many types and
       // its pinned state depends on all of them.
       loadComplianceWatchlistContext(),
     ]);
+
+  // The empty state would claim there is no data. We just don't know.
+  if (catalog.unavailable) {
+    return <CrossProviderErrorAlert />;
+  }
+  const frameworks = catalog.frameworks;
+
+  const responses = await Promise.all(
+    frameworks.map((entry) =>
+      getCrossProviderComplianceOverview({
+        complianceId: entry.complianceId,
+        filters,
+      }).then((result) => ({ entry, result })),
+    ),
+  );
 
   // Action errors (402 usage limit, 403) gate the whole feature, not one
   // framework, so any of them replaces the tab instead of degrading it.
@@ -137,17 +149,18 @@ export const CrossProviderOverview = async ({
       };
     });
 
-  const compatibleTypes = Array.from(
-    new Set<KnownProviderType>(
-      CROSS_PROVIDER_FRAMEWORKS.flatMap((entry) => entry.compatibleProviders),
-    ),
+  const coveredTypes = Array.from(
+    new Set(frameworks.flatMap((entry) => entry.providerTypes)),
   ).sort();
+  // Externally registered types have no icon or label; their accounts still
+  // reach the account select below.
+  const selectableTypes = coveredTypes.filter(isKnownProviderType);
 
   const providerAccounts: CrossProviderAccountOption[] = (
     providersData?.data || []
   )
     .filter((provider) =>
-      compatibleTypes.some((type) => type === provider.attributes.provider),
+      coveredTypes.some((type) => type === provider.attributes.provider),
     )
     .map((provider) => ({
       id: provider.id,
@@ -168,9 +181,8 @@ export const CrossProviderOverview = async ({
     watchlist: resolveUniversalWatchlistState({
       complianceId: summary.complianceId,
       compatibleProviders:
-        CROSS_PROVIDER_FRAMEWORKS.find(
-          (entry) => entry.complianceId === summary.complianceId,
-        )?.compatibleProviders ?? [],
+        frameworks.find((entry) => entry.complianceId === summary.complianceId)
+          ?.providerTypes ?? [],
       eligibleProviderTypes: watchlist.eligibleProviderTypes,
       catalogIndex,
     }),
@@ -197,7 +209,7 @@ export const CrossProviderOverview = async ({
           />
         ))}
       <CrossProviderFilters
-        providerTypes={compatibleTypes}
+        providerTypes={selectableTypes}
         providerAccounts={providerAccounts}
         providerGroups={providerGroups}
       />
@@ -237,7 +249,6 @@ export const CrossProviderOverview = async ({
           <CrossProviderFrameworkGrid
             cards={cards}
             canManageWatchlist={watchlist.canManage}
-            watchlistEnabled={watchlist.entries.length > 0}
           />
         </SectionContent>
       </Section>
