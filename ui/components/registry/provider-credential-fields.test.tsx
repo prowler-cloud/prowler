@@ -6,13 +6,36 @@ import type { RegistryCredentialSchema } from "@/lib/registry/provider-credentia
 
 import { RegistryCredentialFields } from "./provider-credential-fields";
 
-// prettier-ignore
-const schema: RegistryCredentialSchema = { fields: [{ name: "api_key", label: "API Key", description: "Issued from the console.", kind: "password", required: true }, { name: "scheme", label: "Scheme", kind: "select", options: ["bearer", "basic"], required: false }, { name: "notes", label: "Notes", kind: "textarea", required: false }] };
+const schema: RegistryCredentialSchema = {
+  fields: [
+    {
+      name: "api_key",
+      label: "API Key",
+      description: "Issued from the console.",
+      kind: "password",
+      required: true,
+    },
+    {
+      name: "scheme",
+      label: "Scheme",
+      kind: "select",
+      options: ["bearer", "basic"],
+      required: false,
+    },
+    { name: "notes", label: "Notes", kind: "textarea", required: false },
+  ],
+};
 
 beforeAll(() => {
-  // prettier-ignore
-  for (const name of ["hasPointerCapture", "releasePointerCapture", "scrollIntoView"]) {
-    Object.defineProperty(HTMLElement.prototype, name, { configurable: true, value: () => false });
+  for (const name of [
+    "hasPointerCapture",
+    "releasePointerCapture",
+    "scrollIntoView",
+  ]) {
+    Object.defineProperty(HTMLElement.prototype, name, {
+      configurable: true,
+      value: () => false,
+    });
   }
 });
 
@@ -21,8 +44,15 @@ describe("RegistryCredentialFields", () => {
     // Given
     const user = userEvent.setup();
     const onChange = vi.fn();
-    // prettier-ignore
-    render(<RegistryCredentialFields errors={{ api_key: "A key is required." }} onChange={onChange} schema={schema} values={{ api_key: "", scheme: "bearer", notes: "" }} />);
+
+    render(
+      <RegistryCredentialFields
+        errors={{ api_key: "A key is required." }}
+        onChange={onChange}
+        schema={schema}
+        values={{ api_key: "", scheme: "bearer", notes: "" }}
+      />,
+    );
 
     // When
     await user.type(screen.getByLabelText(/API Key/), "x");
@@ -35,8 +65,11 @@ describe("RegistryCredentialFields", () => {
     const error = screen.getByRole("alert");
     expect(apiKey).toHaveAttribute("type", "password");
     expect(apiKey).toHaveAttribute("autocomplete", "new-password");
-    // prettier-ignore
-    expect(apiKey).toHaveAttribute("aria-describedby", `${description.id} ${error.id}`);
+
+    expect(apiKey).toHaveAttribute(
+      "aria-describedby",
+      `${description.id} ${error.id}`,
+    );
     expect(apiKey.id).toMatch(/-0-control$/);
     expect(apiKey).toHaveAttribute("aria-invalid", "true");
     expect(apiKey).toBeRequired();
@@ -49,15 +82,54 @@ describe("RegistryCredentialFields", () => {
 
   it("uses unique index-based IDs for hostile field names and instances", () => {
     // Given
-    // prettier-ignore
-    const hostileSchema: RegistryCredentialSchema = { fields: [{ name: "x-description", label: "First", kind: "text", required: false }, { name: "registry-credential-x", label: "Second", description: "Second description.", kind: "text", required: false }] };
-    // prettier-ignore
-    const { container } = render(<><RegistryCredentialFields errors={{}} onChange={vi.fn()} schema={hostileSchema} values={{}} /><RegistryCredentialFields errors={{}} onChange={vi.fn()} schema={schema} values={{}} /><RegistryCredentialFields errors={{}} onChange={vi.fn()} schema={schema} values={{}} /></>);
+
+    const hostileSchema: RegistryCredentialSchema = {
+      fields: [
+        {
+          name: "x-description",
+          label: "First",
+          kind: "text",
+          required: false,
+        },
+        {
+          name: "registry-credential-x",
+          label: "Second",
+          description: "Second description.",
+          kind: "text",
+          required: false,
+        },
+      ],
+    };
+
+    const { container } = render(
+      <>
+        <RegistryCredentialFields
+          errors={{}}
+          onChange={vi.fn()}
+          schema={hostileSchema}
+          values={{}}
+        />
+        <RegistryCredentialFields
+          errors={{}}
+          onChange={vi.fn()}
+          schema={schema}
+          values={{}}
+        />
+        <RegistryCredentialFields
+          errors={{}}
+          onChange={vi.fn()}
+          schema={schema}
+          values={{}}
+        />
+      </>,
+    );
 
     // When / Then
     expect(screen.getByLabelText("First").id).toMatch(/-0-control$/);
-    // prettier-ignore
-    expect(screen.getByText("Second description.").id).toMatch(/-1-description$/);
+
+    expect(screen.getByText("Second description.").id).toMatch(
+      /-1-description$/,
+    );
     const ids = Array.from(container.querySelectorAll("[id]"), ({ id }) => id);
     expect(new Set(ids).size).toBe(ids.length);
   });

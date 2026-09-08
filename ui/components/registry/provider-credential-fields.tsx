@@ -14,8 +14,12 @@ import {
 import { Textarea } from "@/components/shadcn/textarea/textarea";
 import type { RegistryCredentialSchema } from "@/lib/registry/provider-credential-schema";
 
-// prettier-ignore
-interface RegistryCredentialFieldsProps { readonly errors: Readonly<Record<string, string | undefined>>; readonly onChange: (name: string, value: string) => void; readonly schema: RegistryCredentialSchema; readonly values: Readonly<Record<string, string | undefined>>; }
+interface RegistryCredentialFieldsProps {
+  readonly errors: Readonly<Record<string, string | undefined>>;
+  readonly onChange: (name: string, value: string) => void;
+  readonly schema: RegistryCredentialSchema;
+  readonly values: Readonly<Record<string, string | undefined>>;
+}
 
 export function RegistryCredentialFields({
   errors,
@@ -43,8 +47,10 @@ export function RegistryCredentialFields({
           "aria-describedby": describedBy,
           "aria-invalid": invalid,
           id,
-          // prettier-ignore
-          onChange: (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => onChange(field.name, event.target.value),
+
+          onChange: (
+            event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+          ) => onChange(field.name, event.target.value),
           required: field.required,
           spellCheck: false,
           value: typeof value === "string" ? value : "",
@@ -82,15 +88,21 @@ export function RegistryCredentialFields({
               <Textarea autoComplete="off" {...textControlProps} />
             ) : (
               <Input
-                // prettier-ignore
-                autoComplete={field.kind === "password" ? "new-password" : "off"}
+                autoComplete={
+                  field.kind === "password" ? "new-password" : "off"
+                }
                 type={field.kind === "password" ? "password" : "text"}
                 {...textControlProps}
               />
             )}
-            {field.description &&
-              // prettier-ignore
-              <p className="text-text-neutral-secondary text-sm" id={descriptionId}>{field.description}</p>}
+            {field.description && (
+              <p
+                className="text-text-neutral-secondary text-sm"
+                id={descriptionId}
+              >
+                {field.description}
+              </p>
+            )}
             {error && (
               <FieldError id={errorId} role="alert">
                 {error}

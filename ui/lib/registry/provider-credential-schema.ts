@@ -21,6 +21,7 @@ export interface RegistryCredentialField {
   readonly kind: FieldKind;
   readonly options?: readonly string[];
   readonly required: boolean;
+  readonly defaultValue?: string;
 }
 
 export interface RegistryCredentialSchema {
@@ -154,6 +155,7 @@ export function parseRegistryCredentialSchema(
         kind: FIELD_KIND.SELECT,
         options,
         required: requiredNames.has(name),
+        ...(typeof defaultValue === "string" ? { defaultValue } : {}),
       });
       continue;
     }
@@ -174,6 +176,7 @@ export function parseRegistryCredentialSchema(
           ? FIELD_KIND.TEXTAREA
           : FIELD_KIND.TEXT,
       required: requiredNames.has(name),
+      ...(typeof defaultValue === "string" ? { defaultValue } : {}),
     });
   }
   return { fields };

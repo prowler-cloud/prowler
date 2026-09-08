@@ -1,3 +1,17 @@
+vi.mock("@/actions/providers/registry-provider", () => ({
+  addRegistryProvider: vi.fn(),
+}));
+vi.mock("@/actions/registry/registry", () => ({
+  getInstalledRegistryProviderOptions: vi
+    .fn()
+    .mockResolvedValue({ status: "access_denied" }),
+}));
+vi.mock("@/actions/providers/provider-schemas", () => ({
+  getProviderSchemas: vi.fn(),
+}));
+vi.mock("@/actions/providers/dynamic-provider-credentials", () => ({
+  saveDynamicProviderCredentials: vi.fn(),
+}));
 import { Row } from "@tanstack/react-table";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -327,7 +341,7 @@ describe("DataTableRowActions", () => {
     expect(screen.queryByText("Update Credentials")).not.toBeInTheDocument();
   });
 
-  it("allows rename/delete and operational actions for a dynamic provider but hides credential management", async () => {
+  it("allows credential editing and operational actions for a dynamic provider", async () => {
     // Given a dynamic provider outside the configurable set, with the advanced
     // schedule capability enabled (so Edit Scan Schedule can show).
     const user = userEvent.setup();
@@ -354,9 +368,9 @@ describe("DataTableRowActions", () => {
     expect(screen.getByText("Test Connection")).toBeInTheDocument();
     expect(screen.getByText("View Scan Jobs")).toBeInTheDocument();
     expect(screen.getByText("Edit Scan Schedule")).toBeInTheDocument();
-    // ...but credential management is hidden (no bespoke wizard for dynamic types)
+    // Existing dynamic accounts use the same wizard with schema-based credentials.
     expect(screen.queryByText("Add Credentials")).not.toBeInTheDocument();
-    expect(screen.queryByText("Update Credentials")).not.toBeInTheDocument();
+    expect(screen.getByText("Update Credentials")).toBeInTheDocument();
   });
 
   it("navigates to the provider-filtered scan jobs from View Scan Jobs", async () => {

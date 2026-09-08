@@ -212,14 +212,15 @@ export async function testProviderConnection(
     };
   }
 
-  // Read from the task the poller already fetched. A completed task with no
-  // readable `connected` counts as connected, as in the batched poller.
+  // Task completion alone does not confirm that the credentials connected.
   const result = taskResult.task?.data?.attributes?.result;
-  const connected =
-    typeof result?.connected === "boolean" ? result.connected : true;
+  const connected = result?.connected === true;
 
   return {
     connected,
-    error: connected ? null : result?.error || "Unknown error",
+    error: connected
+      ? null
+      : result?.error ||
+        "Connection was not confirmed. Test the connection again.",
   };
 }
