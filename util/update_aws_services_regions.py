@@ -51,6 +51,15 @@ for page in get_parameters_by_path_paginator.paginate(
 logging.info("Updating subservices and the services not present in the original matrix")
 # macie2 --> macie
 regions_by_service["services"]["macie2"] = regions_by_service["services"]["macie"]
+# bedrock-agentcore-control --> bedrock-agentcore
+# The AgentCore CONTROL plane (ListAgentRuntimes, ListGateways, ListMemories,
+# GetTokenVault, ...) is a distinct boto3 service name that SSM does not return, so
+# without this alias the generated matrix loses the key on the next weekly refresh and
+# every AgentCore check silently returns zero findings. Availability is identical to the
+# data plane, so alias rather than hardcode a second region list that can drift.
+regions_by_service["services"]["bedrock-agentcore-control"] = regions_by_service[
+    "services"
+]["bedrock-agentcore"]
 # bedrock-agent is not in SSM, and has different availability than bedrock
 # See: https://docs.aws.amazon.com/bedrock/latest/userguide/agents-supported.html
 regions_by_service["services"]["bedrock-agent"] = {

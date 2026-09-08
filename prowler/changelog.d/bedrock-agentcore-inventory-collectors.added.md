@@ -1,0 +1,1 @@
+AgentCore inventory collection for the AWS provider, covering gateways, gateway targets, agent runtimes, memory resources, browsers, code interpreters and the token vault, plus CloudWatch Logs vended-log delivery lookups. No new checks in this change; it is the collector the AgentCore checks read from
