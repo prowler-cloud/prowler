@@ -109,6 +109,9 @@ class AKS(AzureService):
                                             cluster, "disable_local_accounts", False
                                         )
                                     ),
+                                    kubernetes_version=getattr(
+                                        cluster, "kubernetes_version", None
+                                    ),
                                 )
                             }
                         )
@@ -140,3 +143,4 @@ class Cluster:
     defender_enabled: bool = False
     azure_monitor_enabled: bool = False
     local_accounts_disabled: bool = False
+    kubernetes_version: Optional[str] = None

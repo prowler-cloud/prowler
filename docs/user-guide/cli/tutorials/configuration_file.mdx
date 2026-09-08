@@ -208,6 +208,7 @@ The following list includes all the Azure checks with configurable variables tha
 
 | Check Name                                               | Value                                           | Type            | Default                                                    |
 |----------------------------------------------------------|-------------------------------------------------|-----------------|------------------------------------------------------------|
+| `aks_cluster_uses_a_supported_version`                   | `aks_cluster_oldest_version_supported`          | String          | `"1.34"`                                                   |
 | `apim_threat_detection_llm_jacking`                      | `apim_threat_detection_llm_jacking_actions`     | List of Strings | See `config.yaml`                                          |
 | `apim_threat_detection_llm_jacking`                      | `apim_threat_detection_llm_jacking_minutes`     | Integer         | `1440`                                                     |
 | `apim_threat_detection_llm_jacking`                      | `apim_threat_detection_llm_jacking_threshold`   | Float           | `0.1`                                                      |
@@ -706,6 +707,14 @@ azure:
   # azure.network_public_ip_shodan
   # TODO: create common config
   shodan_api_key: null
+
+  # Azure Kubernetes Service
+  # azure.aks_cluster_uses_a_supported_version
+  # AKS clusters must run this Kubernetes minor version or higher. AKS gives
+  # community support to the latest generally available (GA) minor version and
+  # the two before it. Lower this value if your clusters are enrolled in
+  # long-term support.
+  aks_cluster_oldest_version_supported: "1.34"
 
   # Azure App Service
   # azure.app_ensure_php_version_is_latest
