@@ -4,6 +4,7 @@ from datetime import datetime
 from typing import Any, Optional
 from urllib.parse import urlparse
 
+from certifi import where
 from pydantic.v1 import BaseModel, validator
 
 from prowler.lib.logger import logger
@@ -83,6 +84,13 @@ def _aligned_region(region_cls, region_id: str):
     from huaweicloudsdkcore.region.region import Region
 
     return Region(region_id, aligned)
+
+
+def _obs_endpoint_for_region(region: str) -> str:
+    """Return the OBS data-plane endpoint for a Huawei Cloud region."""
+    iam_host = _endpoint_host(_iam_endpoint_for_region(region))
+    tld = "eu" if iam_host.endswith(".myhuaweicloud.eu") else "com"
+    return f"https://obs.{region}.myhuaweicloud.{tld}"
 
 
 class HuaweiCloudBaseModel(BaseModel):
@@ -264,6 +272,19 @@ class HuaweiCloudSession:
                     .with_http_config(self._http_config())
                     .with_region(ObsRegion.value_of(client_region))
                     .build()
+                )
+
+            elif service == "obs_data":
+                from obs import ObsClient
+
+                client_region = region or self._region
+                return ObsClient(
+                    access_key_id=self._credentials.ak,
+                    secret_access_key=self._credentials.sk,
+                    security_token=self._credentials.security_token,
+                    server=_obs_endpoint_for_region(client_region),
+                    region=client_region,
+                    ssl_verify=where(),
                 )
 
             elif service == "ecs":
