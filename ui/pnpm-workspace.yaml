@@ -21,18 +21,20 @@ overrides:
   # sharp 0.33.x/0.34.x carry GHSA-f88m-g3jw-g9cj; next pulls 0.34.5 transitively.
   "sharp": "0.35.3"
   "lodash-es": "4.18.1"
-  # GHSA-88fw-hqm2-52qc (CORS reflects any Origin with credentials) + 4 moderate
-  # advisories (serve-static path traversal, Lambda Set-Cookie merge, body-limit
-  # bypass, Lambda@Edge repeated-header loss), all fixed in 4.12.25, plus
-  # CVE-2026-59896 (hono/jsx SSR context leak across concurrent requests; in NVD
-  # but not yet in the npm audit feed), fixed in 4.12.27. Not 4.12.29: it is
-  # still inside StepSecurity's 7-day npm cooldown gate.
-  "hono": "4.12.28"
-  "@hono/node-server": "1.19.14"
+  # GHSA-88fw-hqm2-52qc (CORS reflects any Origin with credentials), CVE-2026-59896
+  # (hono/jsx SSR context leak) and the 4.12.34 batch: CORS ReDoS via
+  # Access-Control-Request-Headers, `memo()` SSR output retained across requests,
+  # Language middleware algorithmic DoS, Proxy Helper keeping `Connection` headers.
+  # Node adapter 1.19.17 fixes serve-static path traversal via `%5C` on Windows
+  # (1.19.15 was published without provenance and trips `trustPolicy: no-downgrade`).
+  "hono": "4.12.34"
+  "@hono/node-server": "1.19.17"
   "@isaacs/brace-expansion": "5.0.1"
   "fast-xml-parser": "5.8.0"
   "serialize-javascript": "7.0.5"
-  "postcss": "8.5.14"
+  # GHSA-6g55-p6wh-862q (sourceMappingURL path traversal reads arbitrary .map files)
+  # and its incomplete-fix follow-up when `from` is unset, both closed in 8.5.23.
+  "postcss": "8.5.23"
   "esbuild": "0.28.1"
   "rollup@>=4": "4.59.0"
   # GHSA-fx2h-pf6j-xcff (server.fs.deny bypass on Windows alternate paths, high) +
@@ -52,10 +54,11 @@ overrides:
   # fixed in 7.29.1. An override instead of `pnpm update` so the rest of the
   # babel/browserslist subtree keeps its existing lockfile resolutions.
   "@babel/core": "7.29.7"
-  # Ephemeral cooldown pins: the @babel/helper-compilation-targets refresh pulls
-  # browserslist-ecosystem releases newer than StepSecurity's 7-day npm cooldown.
-  # Safe to drop after 2026-07-20.
-  "browserslist": "4.28.2"
+  # browserslist 4.28.7 fixes unbounded query-result cache growth (OOM) and an
+  # uncaught crash / prototype write from untrusted browserslist-stats.json.
+  # caniuse-lite and baseline-browser-mapping stay pinned so the babel subtree
+  # does not float past StepSecurity's 7-day npm cooldown gate.
+  "browserslist": "4.28.7"
   "caniuse-lite": "1.0.30001792"
   "baseline-browser-mapping": "2.10.29"
   "minimatch@<4": "3.1.4"
@@ -63,7 +66,9 @@ overrides:
   "minimatch@>=10": "10.2.3"
   "ajv@<7": "6.14.0"
   "ajv@>=8": "8.18.0"
-  "qs": "6.15.2"
+  # 6.16.0 fixes the bracket-key comma array-limit bypass and DoS via an
+  # attacker-controlled isBuffer.
+  "qs": "6.16.0"
   # 8.2.2 dropped provenance attestation; 8.3.1+ restored it. Pinned to skip 8.2.2
   # under `trustPolicy: no-downgrade`.
   "express-rate-limit": "8.5.1"
@@ -73,9 +78,38 @@ overrides:
   # but the override unifies the tree on a patched version.
   "uuid": "11.1.1"
   # GHSA-vxr8-fq34-vvx9 (+ several related XSS sanitization bypasses): DOMPurify < 3.4.9,
-  # pulled in transitively via streamdown > mermaid (which wants ^3.3.1). Bumped to 3.4.11
-  # for GHSA-cmwh-pvxp-8882 (permanent ALLOWED_ATTR pollution via setConfig()).
-  "dompurify": "3.4.11"
+  # pulled in transitively via streamdown > mermaid and posthog-js. 3.4.11 closed
+  # GHSA-cmwh-pvxp-8882 (permanent ALLOWED_ATTR pollution via setConfig()); 3.4.13
+  # also closes the CUSTOM_ELEMENT_HANDLING afterSanitizeElements bypass and the
+  # IN_PLACE hook removal that left a detached subtree executable.
+  "dompurify": "3.4.13"
+
+  # Advisories flagged by `pnpm audit` on 2026-09-08. Every pin below is the
+  # oldest patched release and was published more than 7 days before that date,
+  # so it clears StepSecurity's npm cooldown gate.
+  # brace-expansion: three DoS advisories (exponential `{}` expansion, unbounded
+  # expansion length OOM, unbounded intermediate arrays bypassing the
+  # CVE-2026-14257 mitigation). 1.x via eslint > minimatch, 5.x via @sentry > glob.
+  "brace-expansion@<2": "1.1.18"
+  "brace-expansion@>=5": "5.0.9"
+  # fast-uri (via ajv): host confusion through backslash authority delimiters,
+  # failed IDN canonicalization and percent-encoded scheme normalization, plus SSRF
+  # via malformed IPv6 normalization and repeated hostname percent-decoding.
+  "fast-uri": "3.1.6"
+  # ip-address (via express-rate-limit): SSRF / trust-boundary bypasses from
+  # leading-zero octets, CIDR suffixes and IPv4-mapped / NAT64 misclassification.
+  "ip-address": "10.3.1"
+  # mermaid (via streamdown): prototype pollution in config APIs and Architecture
+  # diagrams, CSS injection into sibling elements, XY Chart infinite loop and
+  # radar diagram DoS.
+  "mermaid": "11.16.1"
+  # body-parser (via express): invalid `limit` silently disabled size enforcement.
+  "body-parser": "2.3.0"
+  # @humanfs/node (via eslint): recursive copy followed symlinks outside the tree.
+  "@humanfs/node": "0.16.8"
+  # js-yaml: quadratic CPU in `!!omap` resolution (CVE-2026-59870 not backported
+  # to 4.3.0). Direct dep is already 4.3.1; the override lifts eslint's copy too.
+  "js-yaml": "4.3.1"
 
 # --- Level 1: Minimum Release Age ---
 # Packages must be published for at least 1 day before they can be installed.
