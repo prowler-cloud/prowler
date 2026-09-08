@@ -1,0 +1,43 @@
+{
+  "Provider": "aws",
+  "CheckID": "bedrockagentcore_payments_process_payment_role_separation",
+  "CheckTitle": "IAM role does not both open and execute Bedrock AgentCore payments",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "TTPs/Privilege Escalation"
+  ],
+  "ServiceName": "bedrockagentcore",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "critical",
+  "ResourceType": "AwsIamRole",
+  "ResourceGroup": "IAM",
+  "Description": "**Bedrock AgentCore payments** split a transaction into `CreatePaymentSession`, which establishes the reviewable terms, and `ProcessPayment`, which executes it. This check verifies no single IAM role is allowed both actions **on the same payment manager**, aggregating the role's policies and resolving wildcards in any position, `NotAction`, and per-resource `Deny`.",
+  "Risk": "The agent that opens a **payment session** should not be the principal that executes the payment.\n\nWhen one role holds both, a **prompt injection** or a stolen credential completes an unreviewed transaction end to end: it sets its own amount and payee, then charges it, with no second principal in the path to reject the terms. Money movement is not reversible by an IAM change afterward.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/payments.html",
+    "https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html#grant-least-privilege"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aws iam put-role-policy --role-name example-agent-role --policy-name example-session-only-policy --policy-document '{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Action\":[\"bedrock-agentcore:CreatePaymentSession\"],\"Resource\":\"arn:aws:bedrock-agentcore:us-east-1:123456789012:payment-manager/example\"},{\"Effect\":\"Deny\",\"Action\":[\"bedrock-agentcore:ProcessPayment\"],\"Resource\":\"*\"}]}'",
+      "NativeIaC": "```yaml\nResources:\n  example_resource:\n    Type: AWS::IAM::Role\n    Properties:\n      RoleName: example_resource\n      Policies:\n        - PolicyName: example-session-only-policy\n          PolicyDocument:\n            Version: '2012-10-17'\n            Statement:\n              - Effect: Allow\n                Action:\n                  - bedrock-agentcore:CreatePaymentSession  # Critical: ProcessPayment belongs to a separate role\n                Resource: arn:aws:bedrock-agentcore:us-east-1:123456789012:payment-manager/example\n```",
+      "Other": "1. Open the AWS Console and go to IAM > Roles\n2. Select the role flagged by the check\n3. Decide which half of the payment flow this role performs\n4. Remove the other action from every inline and attached policy, replacing any bedrock-agentcore:* or Process* wildcard with the specific actions the role needs\n5. Create a second role for the remaining half, assumable only by the reviewing component\n6. Save both roles",
+      "Terraform": "```hcl\nresource \"aws_iam_role_policy\" \"example_resource\" {\n  name = \"example-session-only-policy\"\n  role = aws_iam_role.example_agent_role.id\n  policy = jsonencode({\n    Version = \"2012-10-17\"\n    Statement = [{\n      Effect   = \"Allow\"\n      Action   = [\"bedrock-agentcore:CreatePaymentSession\"] # Critical: ProcessPayment belongs to a separate role\n      Resource = \"arn:aws:bedrock-agentcore:us-east-1:123456789012:payment-manager/example\"\n    }]\n  })\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Split `CreatePaymentSession` and `ProcessPayment` across two IAM roles so the principal that proposes a transaction cannot execute it. Avoid `bedrock-agentcore:*` and prefix wildcards on payment roles, and add an explicit `Deny` on the action the role must never perform.",
+      "Url": "https://hub.prowler.com/check/bedrockagentcore_payments_process_payment_role_separation"
+    }
+  },
+  "Categories": [
+    "gen-ai",
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "bedrockagentcore_full_access_policy_attached"
+  ],
+  "Notes": "Reports one finding per IAM role that grants either payment action, resolving attached and inline policy documents from the IAM inventory. A role granting neither action is skipped rather than reported as PASS, UNLESS one of its policy documents could not be resolved, in which case it returns MANUAL: the grant that would bring it into scope is exactly what could not be read. A role granting one action whose remaining document could not be resolved likewise returns MANUAL rather than PASS. Action matching goes through the shared get_effective_actions helper, called on a synthetic single-Allow probe, so wildcards in any position, an Action of * or *:*, and NotAction are all expanded to concrete action names and matching is case-insensitive; because the probe is always an Allow, that helper never subtracts a Deny and every Deny decision is made by this check. Deny is applied PER RESOURCE rather than per action: a role's statements are aggregated first, then a Deny removes an Allow only where the Deny's Resource patterns provably cover the whole of the Allow's, so a Deny scoped to one payment manager no longer cancels an Allow covering another. FAIL requires the two actions' surviving resource sets to share at least one resource, which is tested as pattern INTERSECTION rather than as one pattern covering the other: payment-manager/prod-* and payment-manager/*-checkout name no common pattern text but both name payment-manager/prod-checkout. Resource patterns follow IAM's own wildcard semantics, in which only * and ? are metacharacters and every other character is literal and case-sensitive. Three suppressions are deliberately not applied, because subtracting a Deny that may not apply would hide a real violation: a Deny carrying a Condition, a Deny carrying NotResource, and a Deny whose coverage of an Allow cannot be proven."
+}
