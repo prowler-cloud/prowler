@@ -52,7 +52,10 @@ describe("executeRegistryCredentialValidation", () => {
       taskId: "task-1",
       priorConfigured: false,
     });
-    trackAndPollTaskMock.mockResolvedValue({ status: "ready" });
+    trackAndPollTaskMock.mockResolvedValue({
+      status: "ready",
+      result: { stored: true, error: null },
+    });
     refreshRegistryCredentialMock.mockResolvedValue({
       status: "status",
       credential: activeCredential,
@@ -76,7 +79,7 @@ describe("executeRegistryCredentialValidation", () => {
       taskId: "task-1",
       kind: REGISTRY_CREDENTIAL_TASK_KIND,
       meta: {},
-      notifyHandler: false,
+      notifyHandler: true,
     });
     // The key must never reach the persisted watcher record.
     expect(JSON.stringify(trackAndPollTaskMock.mock.calls)).not.toContain(key);
@@ -286,5 +289,19 @@ describe("executeRegistryCredentialValidation", () => {
     expect(trackAndPollTaskMock).toHaveBeenCalledWith(
       expect.objectContaining({ notifyHandler: true }),
     );
+  });
+  it("does not report a rejected replacement as connected when the prior key remains active", async () => {
+    submitRegistryCredentialMock.mockResolvedValue({
+      status: "submitted",
+      taskId: "task",
+      priorConfigured: true,
+    });
+    trackAndPollTaskMock.mockResolvedValue({
+      status: "ready",
+      result: { stored: false, error: "Invalid key" },
+    });
+    expect(await executeRegistryCredentialValidation("replacement")).toEqual({
+      status: "replacement_failed",
+    });
   });
 });

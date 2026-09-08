@@ -21,6 +21,7 @@ import {
   addRegistryArtifact,
   disconnectRegistryCredential,
   getRegistryBootstrap,
+  getInstalledRegistryProviderOptions,
   refreshRegistryCollections,
   removeRegistryArtifact,
   refreshRegistryCredential,
@@ -102,6 +103,7 @@ describe("Registry guarded reads", () => {
     evaluateAccessMock.mockResolvedValue({ status: "ineligible" });
     const actions = [
       getRegistryBootstrap,
+      getInstalledRegistryProviderOptions,
       refreshRegistryCredential,
       refreshRegistryCollections,
       () => submitRegistryCredential("registry-test-key"),
@@ -112,14 +114,8 @@ describe("Registry guarded reads", () => {
     const results = await Promise.all(actions.map((action) => action()));
 
     // Then
-    expect(results).toEqual([
-      { status: "access_denied" },
-      { status: "access_denied" },
-      { status: "access_denied" },
-      { status: "access_denied" },
-      { status: "access_denied" },
-    ]);
-    expect(evaluateAccessMock).toHaveBeenCalledTimes(5);
+    expect(results).toEqual(actions.map(() => ({ status: "access_denied" })));
+    expect(evaluateAccessMock).toHaveBeenCalledTimes(actions.length);
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
@@ -552,6 +548,62 @@ describe("Registry guarded reads", () => {
     expect(disconnected).toEqual({ status: "access_denied" });
     expect(fetchMock).toHaveBeenCalledTimes(3);
   });
+});
+
+const installCatalogMock = vi.fn();
+describe("Registry artifact mutations", () => {
+  beforeEach(() => {
+    installCatalogMock.mockImplementation(() =>
+      jsonResponse({
+        data: [
+          {
+            type: "registry-available-artifacts",
+            id: "later-guard",
+            attributes: {
+              has_provider: true,
+              is_builtin: false,
+              providers: ["acme"],
+            },
+          },
+        ],
+        meta: { pagination: { page: 1, pages: 1, count: 1 } },
+      }),
+    );
+    vi.stubGlobal("fetch", (url: string, options?: RequestInit) =>
+      url.includes("/available-artifacts")
+        ? installCatalogMock(url, options)
+        : fetchMock(url, options),
+    );
+  });
+
+  it.each([
+    { has_provider: true, is_builtin: true },
+    { has_provider: false, is_builtin: false },
+  ])(
+    "refuses ineligible catalog entries before POST: %j",
+    async (attributes) => {
+      // Given
+      installCatalogMock.mockImplementation(() =>
+        jsonResponse({
+          data: [
+            {
+              type: "registry-available-artifacts",
+              id: "later-guard",
+              attributes,
+            },
+          ],
+          meta: { pagination: { page: 1, pages: 1, count: 1 } },
+        }),
+      );
+      // When
+      const result = await addRegistryArtifact({
+        normalizedName: "later-guard",
+      });
+      // Then
+      expect(result).toMatchObject({ status: "refused" });
+      expect(fetchMock).not.toHaveBeenCalled();
+    },
+  );
 
   it("returns an accepted Add task without reading My artifacts", async () => {
     // Given

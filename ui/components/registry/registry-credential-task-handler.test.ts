@@ -21,6 +21,7 @@ const buildTask = (overrides: Partial<WatchedTask> = {}): WatchedTask => ({
   status: "ready",
   startedAt: Date.now(),
   meta: {},
+  result: { stored: true, error: null },
   ...overrides,
 });
 
@@ -107,5 +108,26 @@ describe("registryCredentialTaskHandler", () => {
       description: 'Task ended in state "failed".',
     });
     expect(refreshRegistryCredentialMock).not.toHaveBeenCalled();
+  });
+  it("does not announce a rejected replacement as connected", async () => {
+    const refresh = vi.fn();
+    window.addEventListener("registry-credential-changed", refresh);
+    refreshRegistryCredentialMock.mockResolvedValue({
+      status: "status",
+      credential: {
+        configured: true,
+        isValid: true,
+        scopes: [],
+        validationPending: false,
+      },
+    });
+    await registryCredentialTaskHandler.onReady(
+      buildTask({ result: { stored: false, error: "Invalid key" } }),
+    );
+    expect(toastMock).toHaveBeenCalledWith(
+      expect.objectContaining({ variant: "destructive" }),
+    );
+    expect(refresh).toHaveBeenCalledOnce();
+    window.removeEventListener("registry-credential-changed", refresh);
   });
 });

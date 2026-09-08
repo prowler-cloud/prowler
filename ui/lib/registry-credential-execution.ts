@@ -3,7 +3,9 @@ import {
   submitRegistryCredential,
 } from "@/actions/registry/registry";
 import {
+  getRegistryCredentialFailureMessage,
   isActiveRegistryCredential,
+  isRegistryCredentialTaskSuccessful,
   REGISTRY_CREDENTIAL_TASK_KIND,
 } from "@/lib/registry-credential-task";
 import {
@@ -52,6 +54,7 @@ export type RegistryCredentialValidationOutcome =
   | {
       status: typeof REGISTRY_CREDENTIAL_ACTION.INVALID;
       credential: RegistryCredentialStatus;
+      message?: string;
     }
   | { status: typeof REGISTRY_CREDENTIAL_ACTION.REPLACEMENT_FAILED }
   | { status: typeof REGISTRY_FAILURE.ACCESS_DENIED }
@@ -61,8 +64,8 @@ export type RegistryCredentialValidationOutcome =
  * Submits a Registry API key, watches its validation task through the house
  * task watcher, then classifies the settled outcome from the authoritative
  * credential re-read. Mirrors `executeJiraDispatchBatches`: the awaiting
- * caller owns UI feedback by default (`notifyHandler: false`), while resumed
- * tasks notify `registryCredentialTaskHandler`.
+ * caller owns inline UI feedback, while the shared handler sends one
+ * notification whether the user stays, navigates away, or reloads.
  */
 export async function executeRegistryCredentialValidation(
   key: string,
@@ -98,7 +101,7 @@ export async function executeRegistryCredentialValidation(
         taskId: submitted.taskId,
         kind: REGISTRY_CREDENTIAL_TASK_KIND,
         meta: {},
-        notifyHandler: options.notifyHandler ?? false,
+        notifyHandler: options.notifyHandler ?? true,
       }),
       deadline.promise,
     ]);
@@ -126,7 +129,10 @@ export async function executeRegistryCredentialValidation(
   // just submitted, so the authoritative read outranks a missed settlement.
   if (
     isActiveRegistryCredential(credential) &&
-    (tracked.status === TASK_WATCHER_STATUS.READY || !submitted.priorConfigured)
+    ((tracked.status === TASK_WATCHER_STATUS.READY &&
+      isRegistryCredentialTaskSuccessful(tracked.result)) ||
+      (tracked.status !== TASK_WATCHER_STATUS.READY &&
+        !submitted.priorConfigured))
   ) {
     return { status: REGISTRY_CREDENTIAL_ACTION.CONNECTED, credential };
   }
@@ -141,5 +147,10 @@ export async function executeRegistryCredentialValidation(
   if (submitted.priorConfigured) {
     return { status: REGISTRY_CREDENTIAL_ACTION.REPLACEMENT_FAILED };
   }
-  return { status: REGISTRY_CREDENTIAL_ACTION.INVALID, credential };
+  const message = getRegistryCredentialFailureMessage(tracked.result);
+  return {
+    status: REGISTRY_CREDENTIAL_ACTION.INVALID,
+    credential,
+    ...(message ? { message } : {}),
+  };
 }

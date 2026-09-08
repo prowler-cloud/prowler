@@ -336,6 +336,9 @@ function adaptCatalogArtifact(
     providers: unique(
       a.providers?.map((provider) => provider.toLowerCase()) ?? [],
     ),
+    ...(a.has_provider === true && a.providers?.[0]
+      ? { providerSlug: a.providers[0].toLowerCase() }
+      : {}),
     owners: flatOwner(a),
     isVerified: a.is_verified ?? false,
     isOfficial: a.is_official ?? false,

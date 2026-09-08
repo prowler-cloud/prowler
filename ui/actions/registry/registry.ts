@@ -1,9 +1,16 @@
 "use server";
 
+import { z } from "zod";
+
 import { auth } from "@/auth.config";
 import { apiBaseUrl } from "@/lib";
 import { REGISTRY_ACCESS } from "@/lib/registry/access";
 import { evaluateRegistryAccess } from "@/lib/registry/access.server";
+import { isRegistryArtifactInstallable } from "@/lib/registry/artifacts";
+import {
+  buildRegistryProviderOptions,
+  type RegistryProviderOption,
+} from "@/lib/registry/provider-options";
 import {
   REGISTRY_ARTIFACT_ACTION,
   REGISTRY_BOOTSTRAP_STATE,
@@ -139,9 +146,69 @@ async function readRegistryProviders(
     credential,
   );
   if (!(result instanceof Response)) return result;
-  return isRegistryCollection(await result.json().catch(() => undefined))
-    ? { status: "ready" as const }
+  const payload = await result.json().catch(() => undefined);
+  const metadata = z
+    .object({
+      data: z.array(
+        z.object({
+          id: z.string(),
+          attributes: z
+            .object({
+              name: z.string().optional(),
+              logo_url: z.string().nullable().optional(),
+            })
+            .optional(),
+        }),
+      ),
+    })
+    .safeParse(payload);
+  return isRegistryCollection(payload)
+    ? {
+        status: "ready" as const,
+        providers: metadata.success
+          ? metadata.data.data.map((provider) => ({
+              type: provider.id,
+              label: provider.attributes?.name || provider.id,
+              ...(provider.attributes?.logo_url
+                ? { logoUrl: provider.attributes.logo_url }
+                : {}),
+            }))
+          : [],
+      }
     : { status: REGISTRY_FAILURE.ERROR };
+}
+
+export async function getInstalledRegistryProviderOptions(): Promise<
+  | { status: "ready"; options: RegistryProviderOption[] }
+  | { status: "access_denied" | "error" }
+> {
+  const access = await getRegistryAccess();
+  if (!access) return { status: "access_denied" };
+  const [catalog, installed, providers] = await Promise.all([
+    readCompleteRegistryCatalog(access, null),
+    readRegistryTenantArtifacts(access),
+    readRegistryProviders(access, null),
+  ]);
+  if (
+    [catalog.status, installed.status, providers.status].some(
+      (status) => status === REGISTRY_FAILURE.ACCESS_DENIED,
+    )
+  )
+    return { status: "access_denied" };
+  if (
+    catalog.status !== REGISTRY_CATALOG.COMPLETE ||
+    installed.status !== "ready" ||
+    providers.status !== "ready"
+  )
+    return { status: "error" };
+  return {
+    status: "ready",
+    options: buildRegistryProviderOptions(
+      catalog.artifacts,
+      installed.tenantArtifacts,
+      providers.providers,
+    ),
+  };
 }
 
 async function readCompleteRegistryCatalog(
@@ -292,6 +359,26 @@ export async function addRegistryArtifact({
 }: RegistryAddArtifactInput): Promise<RegistryMutationResult> {
   const access = await getRegistryAccess();
   if (!access) return { status: REGISTRY_FAILURE.ACCESS_DENIED } as const;
+  if (
+    typeof normalizedName !== "string" ||
+    !normalizedName.trim() ||
+    (versionSpec !== undefined && typeof versionSpec !== "string")
+  )
+    return { status: REGISTRY_FAILURE.ERROR };
+  const catalog = await readCompleteRegistryCatalog(access, null);
+  if (catalog.status !== REGISTRY_CATALOG.COMPLETE) {
+    return catalog.status === REGISTRY_CATALOG.INCOMPLETE
+      ? { status: REGISTRY_FAILURE.ERROR }
+      : catalog;
+  }
+  const artifact = catalog.artifacts.find(
+    (entry) => entry.normalizedName === normalizedName,
+  );
+  if (!artifact || !isRegistryArtifactInstallable(artifact))
+    return {
+      status: "refused",
+      message: "Only external provider artifacts can be added.",
+    };
   const selectedVersion = versionSpec?.trim() || "latest";
 
   let response: Response;

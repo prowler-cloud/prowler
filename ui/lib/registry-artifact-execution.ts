@@ -4,6 +4,7 @@ import {
   addRegistryArtifact,
   confirmRegistryArtifactAddition,
 } from "@/actions/registry/registry";
+import { notifyRegistryArtifactOutcome } from "@/lib/registry-artifact-notifications";
 import {
   TASK_WATCHER_STATUS,
   trackAndPollTask,
@@ -23,7 +24,7 @@ const artifactTaskResultSchema = z
   .object({ installed: z.boolean(), error: z.string().nullable() })
   .strict();
 
-export async function executeRegistryArtifactAddition(
+async function runRegistryArtifactAddition(
   input: RegistryAddArtifactInput,
 ): Promise<RegistryMutationResult> {
   let submitted;
@@ -41,7 +42,7 @@ export async function executeRegistryArtifactAddition(
     tracked = await trackAndPollTask<RegistryArtifactTaskResult>({
       taskId: submitted.taskId,
       kind: REGISTRY_ARTIFACT_TASK_KIND,
-      meta: {},
+      meta: { normalizedName: input.normalizedName },
       notifyHandler: false,
     });
   } catch {
@@ -51,7 +52,14 @@ export async function executeRegistryArtifactAddition(
     return { status: REGISTRY_FAILURE.UNAVAILABLE };
   }
 
-  const result = artifactTaskResultSchema.safeParse(tracked.result);
+  return confirmRegistryArtifactTask(input.normalizedName, tracked.result);
+}
+
+export async function confirmRegistryArtifactTask(
+  normalizedName: string,
+  taskResult: unknown,
+): Promise<RegistryMutationResult> {
+  const result = artifactTaskResultSchema.safeParse(taskResult);
   if (
     !result.success ||
     (result.data.installed && result.data.error !== null)
@@ -67,8 +75,25 @@ export async function executeRegistryArtifactAddition(
   }
 
   try {
-    return await confirmRegistryArtifactAddition(input.normalizedName);
+    return await confirmRegistryArtifactAddition(normalizedName);
   } catch {
     return { status: REGISTRY_FAILURE.ERROR };
   }
+}
+
+const installations = new Map<string, Promise<RegistryMutationResult>>();
+
+export function executeRegistryArtifactAddition(
+  input: RegistryAddArtifactInput,
+): Promise<RegistryMutationResult> {
+  const pending = installations.get(input.normalizedName);
+  if (pending) return pending;
+  const execution = runRegistryArtifactAddition(input)
+    .then((result) => {
+      notifyRegistryArtifactOutcome(result);
+      return result;
+    })
+    .finally(() => installations.delete(input.normalizedName));
+  installations.set(input.normalizedName, execution);
+  return execution;
 }

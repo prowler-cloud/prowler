@@ -92,6 +92,8 @@ export interface RegistryCatalogArtifact {
   description?: string;
   latestVersion?: string;
   providers: string[];
+  /** Provider declared by a provider artifact; distinct from its target filters. */
+  providerSlug?: string;
   isVerified: boolean;
   isOfficial: boolean;
   isBuiltin: boolean;
