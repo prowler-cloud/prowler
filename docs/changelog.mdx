@@ -245,7 +245,7 @@ rss: true
   This feature is available exclusively in **Prowler Cloud** and **Prowler Private Cloud** with a [subscription](https://prowler.com/pricing).
   </Note>
 
-  Azure subscriptions no longer onboard one at a time. Choose "Add Multiple Subscriptions With Azure Management Group" in the add-provider wizard, enter the Microsoft Entra tenant ID, and authenticate once with a single tenant-wide service principal: Prowler discovers the entire management-group hierarchy under the tenant root, lets you select the subscriptions to onboard, and creates their providers with the management-group structure preserved. Azure now matches the one-step onboarding that AWS Organizations and GCP organizations already have.
+  Azure subscriptions no longer onboard one at a time. Select "Add Multiple Subscriptions With Azure Management Group" in the add-provider wizard, enter the Microsoft Entra tenant ID, and authenticate once with a single tenant-wide service principal: Prowler discovers the entire management-group hierarchy under the tenant root, lets you select the subscriptions to onboard, and creates their providers with the management-group structure preserved. Azure now matches the one-step onboarding that AWS Organizations and GCP organizations already have.
 
   ![Azure onboarding method selector with the Management Group option](/images/changelog/v5.39.0-azure-mg-selector.png)
 
@@ -450,7 +450,7 @@ rss: true
 
   Read more in the [Prowler MCP tools reference](/getting-started/basic-usage/prowler-mcp-tools#prowler-cloud-tools).
 
-  ### 🧭 Compliance — Grouped by provider of the same type
+  ### 🧭 Compliance — Grouped by Provider of the Same Type
 
   <Note>
   This feature is available exclusively in **Prowler Cloud** and **Prowler Private Cloud** with a [subscription](https://prowler.com/pricing).
@@ -658,7 +658,7 @@ rss: true
 
   Read more in the [Lighthouse AI capabilities](/getting-started/products/prowler-cloud-lighthouse#capabilities).
 
-  ### ☁️ One-step AWS Organizations onboarding
+  ### ☁️ One-Step AWS Organizations Onboarding
 
   <Note>
   This feature is available exclusively in **Prowler Cloud** and **Prowler Private Cloud** with a [subscription](https://prowler.com/pricing).
@@ -672,7 +672,7 @@ rss: true
 
   Read more in the [AWS Organizations documentation](/user-guide/tutorials/prowler-cloud-aws-organizations).
 
-  ### 🎯 Scan configurations: exclude checks and services
+  ### 🎯 Scan Configurations: Exclude Checks and Services
 
   <Note>
   This feature is available exclusively in **Prowler Cloud** and **Prowler Private Cloud** with a [subscription](https://prowler.com/pricing).
@@ -682,7 +682,7 @@ rss: true
 
   Read more in the [Scan Configuration documentation](/user-guide/tutorials/prowler-app-scan-configuration#limiting-the-scan-scope).
 
-  ### 🧭 Redesigned sidebar navigation
+  ### 🧭 Redesigned Sidebar Navigation
 
   The sidebar was redesigned around how you actually work: grouped sections for security, settings, and help, a Home/Chat switch at the top, collapsible configuration entries, clearer active states, and a responsive mobile overlay.
 
@@ -710,7 +710,7 @@ rss: true
 </Update>
 
 <Update label="v5.34.0" description="July 15, 2026">
-  ### 🏷️ New product names
+  ### 🏷️ New Product Names
 
   The Prowler family has grown, and the names now say what each product is. Same products, clearer names:
 
@@ -974,7 +974,7 @@ rss: true
     -H 'Accept: application/vnd.api+json'
   ```
 
-  ### 🕸️ Attack Paths — Neptune as a persistent sink
+  ### 🕸️ Attack Paths — Neptune as a Persistent Sink
 
   Attack Paths can now persist its graph in **AWS Neptune** in addition to Neo4j, selectable via `ATTACK_PATHS_SINK_DATABASE=neptune` (default `neo4j`). Cartography's per-scan ingest database stays on Neo4j. The scan task preflights the ingest database and the configured sink before ingestion, and provider graph cleanup now deletes relationships in directed batches before deleting nodes.
 

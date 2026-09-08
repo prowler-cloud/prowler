@@ -270,7 +270,7 @@ Chat reads `claude_desktop_config.json` and reaches the Prowler MCP Server throu
 | Skill not invoked when expected | The prompt didn't match any skill's description | Name the task explicitly. For compliance triage, mention the framework plus "compliance" or "compliant". |
 | "Framework not supported" | Prowler Hub does not list the framework for that provider | Open an issue or PR at [github.com/prowler-cloud/prowler](https://github.com/prowler-cloud/prowler). |
 
-### Authentication Fails With 401
+### Authentication Fails with 401
 
 - Confirm the header value includes the `Bearer ` prefix.
 - Check that `PROWLER_API_KEY` was set when you ran `claude mcp add` — the shell expands it at that moment and stores the resulting literal value. If the variable was empty, the stored header reads `Bearer ` with nothing after it. Verify with `claude mcp get prowler`.
