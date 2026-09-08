@@ -38,7 +38,7 @@ If AWS Security Hub is already enabled, you can proceed to the [next section](#e
 
 If the Prowler integration is already enabled in AWS Security Hub, you can proceed to the [next section](#sending-findings-to-aws-security-hub) and begin sending findings.
 
-Once **AWS Security Hub** is activated, **Prowler** must be enabled as partner integration to allow security findings to be sent to it.
+Once **AWS Security Hub** is activated, **Prowler** must be enabled as a partner integration to allow security findings to be sent to it.
 
 1. Enabling AWS Security Hub via Console
 Open the **AWS Security Hub** console: https://console.aws.amazon.com/securityhub/.
@@ -51,7 +51,7 @@ Open the **AWS Security Hub** console: https://console.aws.amazon.com/securityhu
 
 5. A new modal will appear to confirm that the integration with **Prowler** is being enabled. ![](/images/providers/enable-partner-integration-3.png)
 
-6. Click “**Accept Findings**”, to authorize **AWS Security Hub** to receive findings from Prowler. ![](/images/providers/enable-partner-integration-4.png)
+6. Click “**Accept Findings**” to authorize **AWS Security Hub** to receive findings from Prowler. ![](/images/providers/enable-partner-integration-4.png)
 
 ### Using AWS CLI
 
@@ -71,7 +71,7 @@ This command requires the `securityhub:EnableSecurityHub` permission. Ensure you
 </Note>
 **Step 2: Enable Prowler Integration**
 
-Once **AWS Security Hub** is activated, **Prowler** must be enabled as partner integration to allow security findings to be sent to it. Run the following AWS CLI commands:
+Once **AWS Security Hub** is activated, **Prowler** must be enabled as a partner integration to allow security findings to be sent to it. Run the following AWS CLI commands:
 
 ```shell
 aws securityhub enable-import-findings-for-product --region eu-west-1 --product-arn arn:aws:securityhub:<region>::product/prowler/prowler
@@ -151,7 +151,7 @@ prowler --security-hub --status FAIL
 
 **Configuring Findings Output**
 
-Instead of using `--status FAIL`, the `--send-sh-only-fails` argument to store all findings in Prowler outputs while sending only FAIL findings to AWS Security:
+Instead of using `--status FAIL`, use the `--send-sh-only-fails` argument to store all findings in Prowler outputs while sending only FAIL findings to AWS Security Hub:
 
 ```sh
 prowler --security-hub --send-sh-only-fails

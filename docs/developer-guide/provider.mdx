@@ -17,7 +17,7 @@ A provider is any platform or service that offers resources, data, or functional
 For providers supported by Prowler, refer to [Prowler Hub](https://hub.prowler.com/).
 
 <Warning>
-    There are some custom providers added by the community, like [NHN Cloud](https://www.nhncloud.com/), that are not maintained by the Prowler team, but can be used in the Prowler CLI. The main purpose of this documentation is to guide you through creating a new provider and integrating it not only in the CLI, but also in the API and UI. Non official providers can be checked directly at the [Prowler GitHub repository](https://github.com/prowler-cloud/prowler/tree/master/prowler/providers).
+    There are some custom providers added by the community, like [NHN Cloud](https://www.nhncloud.com/), that are not maintained by the Prowler team, but can be used in the Prowler CLI. The main purpose of this documentation is to guide you through creating a new provider and integrating it not only in the CLI, but also in the API and UI. Non-official providers can be checked directly at the [Prowler GitHub repository](https://github.com/prowler-cloud/prowler/tree/master/prowler/providers).
 </Warning>
 ---
 
@@ -105,8 +105,8 @@ Once you have decided the provider you want or need to add to Prowler, the next 
 #### Implementation Complexity
 
 - **SDK Providers**: Low complexity. You have mature examples like AWS, Azure, GCP, Kubernetes, etc. that you can leverage to implement your provider.
-- **API Providers**: Medium complexity. You need to implement the authentication and session management, and the API calls to the provider. You now have NHN and MongoDB Atlas as example to follow.
-- **Tool/Wrapper Providers**: High complexity. You need to implement the argument/output mapping to the provider and handle problems that the tool/wrapper may have. You now have IAC and the PowerShell wrapper as example to follow.
+- **API Providers**: Medium complexity. You need to implement the authentication and session management, and the API calls to the provider. You now have NHN and MongoDB Atlas as examples to follow.
+- **Tool/Wrapper Providers**: High complexity. You need to implement the argument/output mapping to the provider and handle problems that the tool/wrapper may have. You now have IAC and the PowerShell wrapper as examples to follow.
 - **Hybrid Providers**: High complexity. You need to "customize" your provider, mixing the other types of providers to achieve the desired result. You have M365 (msgraph SDK + PowerShell wrapper) and GitHub (PyGithub SDK + graphql API requests) as examples.
 
 ### Determining Regional vs Non-Regional Architecture
@@ -1756,7 +1756,7 @@ Argument validation ensures that the API provider receives valid configuration p
 
 **File:** `prowler/providers/<provider_name>/lib/arguments/arguments.py`
 
-Arguments depends on the provider and not the type, so the pattern for this step is the same as the [SDK providers](#step-4-implement-arguments).
+Arguments depend on the provider and not the type, so the pattern for this step is the same as the [SDK providers](#step-4-implement-arguments).
 
 #### Step 5: Implement Mutelist
 
@@ -2397,7 +2397,7 @@ class ToolProvider(Provider):
             # Build the tool command
             tool_command = [
                 "your_tool_command",
-                # Add your tool-specific arguments here, this are just examples
+                # Add your tool-specific arguments here, these are just examples
                 "-d",
                 directory,
                 "-o",

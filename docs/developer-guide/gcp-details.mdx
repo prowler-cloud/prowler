@@ -102,7 +102,7 @@ The generic service pattern is described in [service page](/developer-guide/serv
 - Directly in the code, in location [`prowler/providers/gcp/services/`](https://github.com/prowler-cloud/prowler/tree/master/prowler/providers/gcp/services)
 - In the [Prowler Hub](https://hub.prowler.com/) for a more human-readable view.
 
-The best reference to understand how to implement a new service is following the [service implementation documentation](/developer-guide/services#adding-a-new-service) and taking other services already implemented as reference. In next subsection you can find a list of common patterns that are used across all GCP services.
+The best reference to understand how to implement a new service is following the [service implementation documentation](/developer-guide/services#adding-a-new-service) and taking other services already implemented as reference. In the next subsection you can find a list of common patterns that are used across all GCP services.
 
 ### GCP Service Common Patterns
 
@@ -161,7 +161,7 @@ When you instantiate `Check_Report_GCP`, you must provide the check metadata and
     - Defaults to "global" if none are available.
 
 All these attributes can be overridden by passing the corresponding argument to the constructor. If the resource object does not contain the required attributes, you must set them manually.
-Other attributes are inherited from the `Check_Report` class, from those you **always** have to set the `status` and `status_extended` attributes in the check logic.
+Other attributes are inherited from the `Check_Report` class, from which you **always** have to set the `status` and `status_extended` attributes in the check logic.
 
 #### Example Usage
 
