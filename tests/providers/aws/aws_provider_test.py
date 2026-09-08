@@ -1181,6 +1181,29 @@ aws:
             == AWS_REGION_EU_WEST_1
         )
 
+    def test_bootstrap_region_candidates_honour_configured_partition(self, monkeypatch):
+        monkeypatch.setenv("PROWLER_AWS_PARTITION", AWS_GOV_CLOUD_PARTITION)
+
+        assert AwsProvider.get_bootstrap_region_candidates(None) == (
+            "us-gov-east-1",
+            "us-gov-west-1",
+        )
+
+    def test_bootstrap_region_candidates_default_without_partition(self, monkeypatch):
+        monkeypatch.delenv("PROWLER_AWS_PARTITION", raising=False)
+
+        assert (
+            AwsProvider.get_bootstrap_region_candidates(None)[0] == AWS_REGION_US_EAST_1
+        )
+
+    def test_bootstrap_region_candidates_session_region_wins(self, monkeypatch):
+        monkeypatch.setenv("PROWLER_AWS_PARTITION", AWS_GOV_CLOUD_PARTITION)
+
+        assert AwsProvider.get_bootstrap_region_candidates("cn-north-1") == (
+            "cn-north-1",
+            "cn-northwest-1",
+        )
+
     @mock_aws
     def test_aws_gov_get_global_region(self):
         aws_provider = AwsProvider()

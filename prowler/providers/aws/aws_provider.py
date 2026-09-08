@@ -26,6 +26,7 @@ from prowler.lib.utils.utils import open_file, parse_json_file, print_boxes
 from prowler.providers.aws.config import (
     AWS_REGION_US_EAST_1,
     AWS_STS_GLOBAL_ENDPOINT_REGION,
+    PARTITION_BOOTSTRAP_REGIONS,
     ROLE_SESSION_NAME,
     get_default_session_config,
 )
@@ -567,6 +568,12 @@ class AwsProvider(Provider):
                 return ("eusc-de-east-1",)
             if session_region.startswith("us-iso"):
                 return (session_region,)
+
+        # The deployment already declares its partition; without this the fallback below
+        # sends the first call to the commercial partition whatever the credentials are.
+        env_partition = os.environ.get("PROWLER_AWS_PARTITION", "").strip()
+        if env_partition in PARTITION_BOOTSTRAP_REGIONS:
+            return PARTITION_BOOTSTRAP_REGIONS[env_partition]
 
         return (AWS_STS_GLOBAL_ENDPOINT_REGION, "us-east-2", "us-west-2", "eu-west-1")
 

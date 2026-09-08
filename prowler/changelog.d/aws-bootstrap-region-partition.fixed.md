@@ -1,0 +1,1 @@
+`PROWLER_AWS_PARTITION` is now honoured when picking the region for the first STS call, so a GovCloud, China or European Sovereign Cloud deployment that provides no explicit region no longer bootstraps against the commercial partition and fails with `InvalidClientTokenId`
