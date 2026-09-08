@@ -54,7 +54,6 @@ AWS_REGION_CN_NORTH_1 = "cn-north-1"
 AWS_REGION_GOV_CLOUD_US_EAST_1 = "us-gov-east-1"
 
 # Iso Regions
-AWS_REGION_ISO_GLOBAL = "aws-iso-global"
 AWS_REGION_ISO_EAST_1 = "us-iso-east-1"
 AWS_REGION_ISO_WEST_1 = "us-iso-west-1"
 AWS_REGION_ISO_B_EAST_1 = "us-isob-east-1"
