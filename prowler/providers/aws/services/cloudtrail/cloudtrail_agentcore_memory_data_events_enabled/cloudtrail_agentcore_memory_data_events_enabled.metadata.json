@@ -1,0 +1,44 @@
+{
+  "Provider": "aws",
+  "CheckID": "cloudtrail_agentcore_memory_data_events_enabled",
+  "CheckTitle": "CloudTrail logs Amazon Bedrock AgentCore Memory data events",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "cloudtrail",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "AwsCloudTrailTrail",
+  "ResourceGroup": "monitoring",
+  "Description": "**At least one actively logging CloudTrail trail** selects **`AWS::BedrockAgentCore::Memory` data events** through an advanced event selector.\n\nMemory data events record the per-event and per-record operations of the AgentCore Memory data plane. They are **not logged by default**, and a basic event selector cannot select them.",
+  "Risk": "**Management events** show only that a memory exists, not who read or wrote which one.\n\nSo a cross-tenant read through a wrong `actorId` or namespace, and **memory poisoning** that steers later agent turns, both leave no audit trail and cannot be scoped after the fact.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/awscloudtrail/latest/userguide/logging-data-events-with-cloudtrail.html",
+    "https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/enabling-cloudtrail-data-event-logging.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "```yaml\n# CloudFormation: log AgentCore Memory data events on an actively logging trail\nResources:\n  ExampleTrail:\n    Type: AWS::CloudTrail::Trail\n    Properties:\n      TrailName: <example_resource_name>\n      S3BucketName: <example_resource_name>\n      IsLogging: true\n      AdvancedEventSelectors:\n        - Name: Management events\n          FieldSelectors:\n            - Field: eventCategory\n              Equals:\n                - Management\n        - Name: AgentCore Memory data events\n          FieldSelectors:\n            - Field: eventCategory\n              Equals:\n                - Data\n            - Field: resources.type          # CRITICAL: target the Memory data plane\n              Equals:\n                - AWS::BedrockAgentCore::Memory\n```",
+      "Other": "1. In the AWS Console, open CloudTrail and select a trail that is actively logging\n2. Record the trail's CURRENT selectors first, both management and data events. Applying advanced event selectors REPLACES every selector on the trail, including basic data event selectors for S3, Lambda or DynamoDB, so anything not carried into the new configuration stops being logged\n3. Edit the trail's Data events and add the Bedrock-AgentCore Memory data event type\n4. Re-create every selector you recorded in step 2 alongside it, so the saved configuration is the complete intended state rather than only the AgentCore addition\n5. Leave the log selector template on Log all events; an eventName, readOnly or resources.ARN filter narrows coverage and this check reports it as undetermined\n6. Save changes and confirm the trail remains in logging state, then re-check that the selectors you carried over are still present",
+      "Terraform": "```hcl\n# Terraform: log AgentCore Memory data events on an actively logging trail\nresource \"aws_cloudtrail\" \"example_resource\" {\n  name           = \"example_resource\"\n  s3_bucket_name = \"example_resource\"\n\n  advanced_event_selector {\n    name = \"Management events\"\n    field_selector {\n      field  = \"eventCategory\"\n      equals = [\"Management\"]\n    }\n  }\n\n  advanced_event_selector {\n    name = \"AgentCore Memory data events\"\n    field_selector {\n      field  = \"eventCategory\"\n      equals = [\"Data\"]\n    }\n    field_selector {\n      field  = \"resources.type\"              # CRITICAL: target the Memory data plane\n      equals = [\"AWS::BedrockAgentCore::Memory\"]\n    }\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Add an **advanced event selector** with `eventCategory` `Data` and `resources.type` `AWS::BedrockAgentCore::Memory` to a trail that is actively logging, then set a retention period that matches your investigation window. Per-record data events on a busy agent are **billed per event**, so size the trail before enabling it broadly.\n\nCloudTrail covers the **synchronous** Memory API calls only: the asynchronous extraction and consolidation work is not narrated there, so pair this control with the memory's `APPLICATION_LOGS` delivery for that half of the audit trail. On a CloudWatch Logs destination that is the **default** log group `/aws/vendedlogs/bedrock-agentcore/memory/APPLICATION_LOGS/{memory_id}`; a memory can instead deliver `APPLICATION_LOGS` to an Amazon S3 bucket or an Amazon Data Firehose stream, so read the destination configured on the memory rather than assuming the CloudWatch default.",
+      "Url": "https://hub.prowler.com/check/cloudtrail_agentcore_memory_data_events_enabled"
+    }
+  },
+  "Categories": [
+    "logging",
+    "forensics-ready",
+    "gen-ai"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "cloudtrail_agentcore_data_events_enabled",
+    "cloudtrail_bedrock_logging_enabled"
+  ],
+  "Notes": "A selector that also filters on eventName, readOnly, resources.ARN or any other field is reported MANUAL rather than PASS, because the trail configuration cannot show how much of the Memory data plane is left unlogged; scoping by resources.ARN is a documented way to control cost, so a MANUAL result here is a prompt to confirm the scope covers every memory rather than a finding on its own. CloudTrail records the synchronous Memory API calls; extraction and consolidation jobs appear only in the memory application log group."
+}
