@@ -1,4 +1,4 @@
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from itertools import islice
 
 import pytest
@@ -88,6 +88,17 @@ class TestToCreate:
         moment = datetime(2026, 5, 17, 9, 30, tzinfo=UTC)
 
         assert uuid7_range_bound(moment) == uuid7_range_bound(moment)
+
+    def test_bound_holds_its_millisecond_far_into_the_future(self):
+        # A float second stops resolving milliseconds in 2249, so
+        # int(dt.timestamp() * 1000) rounds the last microsecond of a millisecond
+        # up into the next one and the bound excludes the ids it exists to cover.
+        moment = datetime(2262, 5, 17, 9, 30, 0, 999, tzinfo=UTC)
+        epoch = datetime(1970, 1, 1, tzinfo=UTC)
+
+        bound = uuid7_range_bound(moment)
+
+        assert bound.int >> 80 == (moment - epoch) // timedelta(milliseconds=1)
 
     def test_bound_is_the_lowest_uuid7_of_its_millisecond(self):
         moment = datetime(2026, 5, 17, 9, 30, tzinfo=UTC)
