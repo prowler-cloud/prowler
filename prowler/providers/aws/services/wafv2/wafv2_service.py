@@ -25,10 +25,65 @@ class WAFv2(AWSService):
         self.__threading_call__(self._get_logging_configuration, self.web_acls.values())
         self.__threading_call__(self._list_tags, self.web_acls.values())
 
+    def _paginate_web_acls(self, client, scope):
+        """Yield every Web ACL summary in the given scope, following NextMarker to the last page.
+
+        ListWebACLs returns at most 100 Web ACLs per call and sets NextMarker while more remain,
+        so a single call silently drops every Web ACL past the first page. The rationale for the
+        hand-rolled loop and its two guards is in the comment below.
+        """
+        # ListWebACLs returns at most 100 Web ACLs per call and WAFv2 ships no botocore
+        # paginator (verified at pin 1.40.61), so hand-rolling is required. The documented
+        # contract (ListWebACLs API reference) states NextMarker appears only when more
+        # objects remain, so the loop follows the marker. The seen-set guard protects
+        # against a marker that never clears; the iteration cap (1000 pages = 100K Web ACLs
+        # max at the 100-per-page limit) can only fire on a misbehaving API, since the
+        # default WebACLs-per-region quota is far below that threshold.
+        next_marker = None
+        seen_markers = set()
+        max_iterations = 1000
+        iterations = 0
+
+        repeated_marker = False
+
+        while iterations < max_iterations:
+            iterations += 1
+            kwargs = {"Scope": scope}
+            if next_marker:
+                if next_marker in seen_markers:
+                    repeated_marker = True
+                    logger.error(
+                        f"WAFv2 - ListWebACLs pagination loop detected at marker {next_marker} for scope {scope}"
+                    )
+                    break
+                seen_markers.add(next_marker)
+                kwargs["NextMarker"] = next_marker
+
+            response = client.list_web_acls(**kwargs)
+            web_acls = response.get("WebACLs", [])
+            yield from web_acls
+
+            next_marker = response.get("NextMarker")
+            if not next_marker:
+                break
+
+        # Which exit happened has to be tracked, not inferred from the counter. A repeated marker seen
+        # on the 1000th entry increments iterations to the cap before breaking, and leaves next_marker
+        # truthy, so the count-and-marker test below fired too and the log named the page cap as the
+        # cause of a stop the loop guard had actually caused -- two contradictory errors for one exit,
+        # after 999 calls rather than 1000. The counter cannot distinguish the two exits because both
+        # reach it with the same values; only the flag can.
+        if not repeated_marker and iterations >= max_iterations and next_marker:
+            logger.error(
+                f"WAFv2 - ListWebACLs pagination hit the {max_iterations}-page cap for scope {scope}; "
+                "results may be truncated"
+            )
+
     def _list_web_acls_global(self):
+        """List CLOUDFRONT-scoped Web ACLs and populate the web_acls dictionary."""
         logger.info("WAFv2 - Listing Global Web ACLs...")
         try:
-            for wafv2 in self.client.list_web_acls(Scope="CLOUDFRONT")["WebACLs"]:
+            for wafv2 in self._paginate_web_acls(self.client, "CLOUDFRONT"):
                 if not self.audit_resources or (
                     is_resource_filtered(wafv2["ARN"], self.audit_resources)
                 ):
@@ -48,9 +103,10 @@ class WAFv2(AWSService):
             )
 
     def _list_web_acls_regional(self, regional_client):
+        """List REGIONAL-scoped Web ACLs for the given region and populate the web_acls dictionary."""
         logger.info("WAFv2 - Listing Regional Web ACLs...")
         try:
-            for wafv2 in regional_client.list_web_acls(Scope="REGIONAL")["WebACLs"]:
+            for wafv2 in self._paginate_web_acls(regional_client, "REGIONAL"):
                 if not self.audit_resources or (
                     is_resource_filtered(wafv2["ARN"], self.audit_resources)
                 ):
