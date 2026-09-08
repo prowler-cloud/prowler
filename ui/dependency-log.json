@@ -442,10 +442,10 @@
   {
     "section": "dependencies",
     "name": "js-yaml",
-    "from": "4.1.1",
-    "to": "4.3.0",
+    "from": "4.3.0",
+    "to": "4.3.1",
     "strategy": "installed",
-    "generatedAt": "2026-07-16T15:29:57.887Z"
+    "generatedAt": "2026-09-08T07:45:48.316Z"
   },
   {
     "section": "dependencies",
@@ -491,9 +491,9 @@
     "section": "dependencies",
     "name": "nanoid",
     "from": "5.1.6",
-    "to": "5.1.6",
+    "to": "5.1.16",
     "strategy": "installed",
-    "generatedAt": "2025-12-10T11:34:11.122Z"
+    "generatedAt": "2026-09-08T07:45:48.316Z"
   },
   {
     "section": "dependencies",
@@ -930,10 +930,10 @@
   {
     "section": "devDependencies",
     "name": "postcss",
-    "from": "8.4.38",
-    "to": "8.5.14",
+    "from": "8.5.14",
+    "to": "8.5.23",
     "strategy": "installed",
-    "generatedAt": "2026-05-14T10:09:04.901Z"
+    "generatedAt": "2026-09-08T07:45:48.316Z"
   },
   {
     "section": "devDependencies",
