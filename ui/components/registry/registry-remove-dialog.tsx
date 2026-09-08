@@ -24,7 +24,7 @@ export function RegistryRemoveDialog({
 
   return (
     <Modal
-      description={`Remove ${artifactName ?? "this artifact"} from My artifacts.`}
+      description={`Remove ${artifactName ?? "this artifact"} from My artifacts. Existing provider accounts will remain, but their connections and scans may stop working until the artifact is installed again.`}
       onOpenAutoFocus={(event) => {
         event.preventDefault();
         cancelButtonRef.current?.focus();

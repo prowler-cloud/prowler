@@ -7,6 +7,28 @@ import type { RegistryBootstrapState } from "@/types/registry";
 
 import { RegistryExplorer } from "./registry-explorer";
 
+vi.mock("next/navigation", async () => {
+  const { useSyncExternalStore } = await import("react");
+  const router = { replace: vi.fn(), push: vi.fn(), refresh: vi.fn() };
+  const subscribe = (callback: () => void) => {
+    window.addEventListener("popstate", callback);
+    return () => window.removeEventListener("popstate", callback);
+  };
+  return {
+    useRouter: () => router,
+    usePathname: () => "/registry",
+    useSearchParams: () =>
+      new URLSearchParams(
+        useSyncExternalStore(
+          subscribe,
+          () => window.location.search,
+          () => "",
+        ),
+      ),
+  };
+});
+const originalReplaceState = window.history.replaceState.bind(window.history);
+
 const {
   disconnectRegistryCredentialMock,
   executeRegistryArtifactAdditionMock,
@@ -27,6 +49,7 @@ const {
 
 vi.mock("@/actions/registry/registry", () => ({
   disconnectRegistryCredential: disconnectRegistryCredentialMock,
+  getRegistryBootstrap: vi.fn(),
   refreshRegistryCollections: refreshRegistryCollectionsMock,
   refreshRegistryCredential: refreshRegistryCredentialMock,
   removeRegistryArtifact: removeRegistryArtifactMock,
@@ -43,6 +66,8 @@ vi.mock("@/lib/registry-artifact-execution", () => ({
 vi.mock("@/store/task-watcher/store", () => ({
   TASK_WATCHER_STATUS: { PENDING: "pending", READY: "ready", ERROR: "error" },
   trackAndPollTask: trackAndPollTaskMock,
+  useTaskWatcherStore: (selector: (state: { tasks: {} }) => unknown) =>
+    selector({ tasks: {} }),
 }));
 
 // The integration setup mocks `next/navigation` with a module-level router,
@@ -123,7 +148,7 @@ const readyState: RegistryBootstrapState = {
         isOfficial: false,
         isBuiltin: false,
         isMeta: false,
-        hasProvider: false,
+        hasProvider: true,
         hasChecks: true,
         hasCompliance: true,
         versionCount: 1,
@@ -176,6 +201,13 @@ function cardFor(name: string) {
 
 describe("RegistryExplorer", () => {
   beforeEach(() => {
+    originalReplaceState(null, "", "/registry");
+    vi.spyOn(window.history, "replaceState").mockImplementation(
+      (data, unused, url) => {
+        originalReplaceState(data, unused, url);
+        window.dispatchEvent(new PopStateEvent("popstate"));
+      },
+    );
     disconnectRegistryCredentialMock.mockReset();
     executeRegistryArtifactAdditionMock.mockReset();
     refreshRegistryCollectionsMock.mockReset();
@@ -183,7 +215,10 @@ describe("RegistryExplorer", () => {
     removeRegistryArtifactMock.mockReset();
     submitRegistryCredentialMock.mockReset();
     trackAndPollTaskMock.mockReset();
-    trackAndPollTaskMock.mockResolvedValue({ status: "ready" });
+    trackAndPollTaskMock.mockResolvedValue({
+      status: "ready",
+      result: { stored: true, error: null },
+    });
     vi.mocked(registryRouter.replace).mockClear();
   });
 
@@ -704,9 +739,6 @@ describe("RegistryExplorer", () => {
       .element(screen.getByRole("tab", { name: /Explore/ }))
       .toBeVisible();
     await expect
-      .poll(() => document.body.textContent)
-      .toContain("Registry connected");
-    await expect
       .element(screen.getByLabelText("Registry key"))
       .not.toBeInTheDocument();
   });
@@ -898,52 +930,33 @@ describe("RegistryExplorer", () => {
       ).toBeNull();
     });
 
-    it("adds non-member built-ins through the standard Add flow", async () => {
-      // Given
-      executeRegistryArtifactAdditionMock.mockResolvedValue({
-        status: "confirmed",
-        tenantArtifacts: [
-          { normalizedName: "built-in-guard", versionSpec: "latest" },
-        ],
-      });
-      const builtInState: RegistryBootstrapState = {
+    it.each([
+      { isBuiltin: true, hasProvider: true },
+      { isBuiltin: false, hasProvider: false },
+    ])("keeps ineligible artifacts visible without Add: %j", async (flags) => {
+      const state: RegistryBootstrapState = {
         ...readyState,
         catalog: {
           ...readyState.catalog,
           artifacts: [
             {
               ...readyState.catalog.artifacts[2],
-              normalizedName: "built-in-guard",
-              name: "Built in guard",
-              isBuiltin: true,
+              normalizedName: "ineligible",
+              name: "Ineligible artifact",
+              ...flags,
             },
           ],
         },
         tenantArtifacts: [],
       };
-      const screen = await render(
-        <RegistryExplorer initialState={builtInState} />,
-      );
-      const addButton = screen.getByRole("button", {
-        name: "Add Built in guard",
-      });
-
-      // When
-      await addButton.click();
-
-      // Then
+      const screen = await render(<RegistryExplorer initialState={state} />);
+      expect(document.body.textContent).toContain("Ineligible artifact");
       await expect
-        .poll(() => executeRegistryArtifactAdditionMock.mock.calls)
-        .toEqual([[{ normalizedName: "built-in-guard" }]]);
-      await expect
-        .poll(() => document.body.textContent)
-        .toContain("Artifact added");
-      await expect
-        .element(screen.getByRole("status", { name: "Built in" }))
-        .toBeVisible();
-      await expect
-        .element(screen.getByRole("button", { name: "Remove Built in guard" }))
-        .toBeVisible();
+        .element(
+          screen.getByRole("button", { name: "Add Ineligible artifact" }),
+        )
+        .not.toBeInTheDocument();
+      expect(executeRegistryArtifactAdditionMock).not.toHaveBeenCalled();
     });
 
     it("keeps an authoritative built-in membership removable", async () => {
@@ -1008,6 +1021,7 @@ describe("RegistryExplorer", () => {
       // When
       await screen.getByRole("tab", { name: /Explore/ }).click();
 
+      await userEvent.keyboard("{Escape}");
       // Then
       await expect
         .poll(() => document.body.textContent)
@@ -1042,11 +1056,6 @@ describe("RegistryExplorer", () => {
       // When
       await screen.getByLabelText("Filter by provider").click();
 
-      // Then: options stay selectable by their plain accessible names
-      await expect
-        .element(screen.getByRole("option", { name: "All providers" }))
-        .toBeVisible();
-
       // When
       await screen.getByRole("option", { name: "Azure", exact: true }).click();
 
@@ -1059,43 +1068,24 @@ describe("RegistryExplorer", () => {
         .not.toContain("Cloud guard");
     });
 
-    it("filters complete results by capability chips with pressed state", async () => {
-      // Given
+    it("combines capability choices and restores the URL with Clear All", async () => {
       const screen = await render(
         <RegistryExplorer initialState={readyState} />,
       );
-      const allChip = screen.getByRole("button", { name: "All", exact: true });
-      const providersChip = screen.getByRole("button", {
-        name: "Providers",
-        exact: true,
-      });
-
-      // Then
-      await expect.element(allChip).toHaveAttribute("aria-pressed", "true");
-
-      // When
-      await providersChip.click();
-
-      // Then
-      await expect
-        .element(providersChip)
-        .toHaveAttribute("aria-pressed", "true");
-      await expect.element(allChip).toHaveAttribute("aria-pressed", "false");
+      await screen.getByLabelText("Filter by capability").click();
+      await screen
+        .getByRole("option", { name: "Compliance", exact: true })
+        .click();
+      await userEvent.keyboard("{Escape}");
       await expect
         .poll(() => document.body.textContent)
-        .toContain("Cloud guard");
-      await expect
-        .poll(() => document.body.textContent)
-        .not.toContain("Later guard");
-
-      // When
-      await allChip.click();
-
-      // Then
-      await expect.element(allChip).toHaveAttribute("aria-pressed", "true");
-      await expect
-        .poll(() => document.body.textContent)
-        .toContain("Later guard");
+        .not.toContain("AWS guard");
+      expect(
+        new URLSearchParams(window.location.search).get("filter[capability]"),
+      ).toBe("compliance");
+      await screen.getByRole("button", { name: /Clear/ }).click();
+      await expect.poll(() => document.body.textContent).toContain("AWS guard");
+      expect(window.location.search).toBe("");
     });
 
     it("sorts by downloads with name order as the default", async () => {
@@ -1496,9 +1486,6 @@ describe("RegistryExplorer", () => {
     await expect
       .poll(() => executeRegistryArtifactAdditionMock.mock.calls)
       .toEqual([[{ normalizedName: "cloud-guard" }]]);
-    await expect
-      .poll(() => document.body.textContent)
-      .toContain("Artifact added");
     // The confirmed membership now offers Remove instead of Add on the card.
     await expect
       .element(screen.getByRole("button", { name: "Remove Cloud guard" }))

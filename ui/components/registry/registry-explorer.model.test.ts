@@ -4,45 +4,122 @@ import type { RegistryCatalogArtifact } from "@/types/registry";
 
 import { buildRegistryMarketplaceModel } from "./registry-explorer.model";
 
-// prettier-ignore
-const artifact = (normalizedName: string, overrides: Partial<RegistryCatalogArtifact> = {}): RegistryCatalogArtifact => ({ normalizedName, name: normalizedName, providers: [], isVerified: false, isOfficial: false, isBuiltin: false, isMeta: false, hasProvider: false, hasChecks: false, hasCompliance: false, versionCount: 0, totalDownloads: 0, owners: [], ...overrides });
+const artifact = (
+  normalizedName: string,
+  overrides: Partial<RegistryCatalogArtifact> = {},
+): RegistryCatalogArtifact => ({
+  normalizedName,
+  name: normalizedName,
+  providers: [],
+  isVerified: false,
+  isOfficial: false,
+  isBuiltin: false,
+  isMeta: false,
+  hasProvider: false,
+  hasChecks: false,
+  hasCompliance: false,
+  versionCount: 0,
+  totalDownloads: 0,
+  owners: [],
+  ...overrides,
+});
 
 describe("Registry marketplace model", () => {
   it("keeps the full catalog visible with tenant membership merged in", () => {
     // Given
-    // prettier-ignore
-    const catalog = { status: "complete" as const, artifacts: [artifact("zeta", { providers: ["azure"], hasProvider: true }), artifact("core", { providers: ["aws"], isOfficial: true }), artifact("global", { name: "Global insight", description: "Security checks", providers: ["aws", "gcp"], hasChecks: true, isOfficial: true })] };
-    // prettier-ignore
-    const mine = [{ normalizedName: "core", versionSpec: "latest" }, { normalizedName: "manual", versionSpec: "1.2.3" }];
+
+    const catalog = {
+      status: "complete" as const,
+      artifacts: [
+        artifact("zeta", { providers: ["azure"], hasProvider: true }),
+        artifact("core", { providers: ["aws"], isOfficial: true }),
+        artifact("global", {
+          name: "Global insight",
+          description: "Security checks",
+          providers: ["aws", "gcp"],
+          hasChecks: true,
+          isOfficial: true,
+        }),
+      ],
+    };
+
+    const mine = [
+      { normalizedName: "core", versionSpec: "latest" },
+      { normalizedName: "manual", versionSpec: "1.2.3" },
+    ];
 
     // When
     const model = buildRegistryMarketplaceModel(catalog, mine, {}, "name");
 
     // Then
-    // prettier-ignore
-    expect(model).toMatchObject({ isComplete: true, canExplore: true, providers: ["aws", "azure", "gcp"], metrics: { providers: 3, availableArtifacts: 2, myArtifacts: 2, officialArtifacts: 2 } });
+
+    expect(model).toMatchObject({
+      isComplete: true,
+      canExplore: true,
+      providers: ["aws", "azure", "gcp"],
+      metrics: {
+        providers: 3,
+        availableArtifacts: 1,
+        myArtifacts: 2,
+        officialArtifacts: 2,
+      },
+    });
     if (!model.isComplete) throw new Error("expected complete model");
-    // prettier-ignore
-    expect(model.artifacts.map(({ normalizedName, isAdded, addedVersionSpec }) => ({ normalizedName, isAdded, addedVersionSpec }))).toEqual([
+
+    expect(
+      model.artifacts.map(({ normalizedName, isAdded, addedVersionSpec }) => ({
+        normalizedName,
+        isAdded,
+        addedVersionSpec,
+      })),
+    ).toEqual([
       { normalizedName: "core", isAdded: true, addedVersionSpec: "latest" },
       { normalizedName: "global", isAdded: false, addedVersionSpec: undefined },
       { normalizedName: "zeta", isAdded: false, addedVersionSpec: undefined },
     ]);
-    // prettier-ignore
+
     expect(model.myArtifacts).toEqual([
-      { normalizedName: "core", versionSpec: "latest", catalogArtifact: expect.objectContaining({ normalizedName: "core", isAdded: true }) },
-      { normalizedName: "manual", versionSpec: "1.2.3", catalogArtifact: undefined },
+      {
+        normalizedName: "core",
+        versionSpec: "latest",
+        catalogArtifact: expect.objectContaining({
+          normalizedName: "core",
+          isAdded: true,
+        }),
+      },
+      {
+        normalizedName: "manual",
+        versionSpec: "1.2.3",
+        catalogArtifact: undefined,
+      },
     ]);
   });
 
   it("applies search, provider, and capability filters together", () => {
     // Given
-    // prettier-ignore
-    const catalog = { status: "complete" as const, artifacts: [artifact("core", { providers: ["aws"] }), artifact("global", { name: "Global insight", description: "Security checks", providers: ["aws", "gcp"], hasChecks: true }), artifact("zeta", { providers: ["azure"], hasProvider: true })] };
+
+    const catalog = {
+      status: "complete" as const,
+      artifacts: [
+        artifact("core", { providers: ["aws"] }),
+        artifact("global", {
+          name: "Global insight",
+          description: "Security checks",
+          providers: ["aws", "gcp"],
+          hasChecks: true,
+        }),
+        artifact("zeta", { providers: ["azure"], hasProvider: true }),
+      ],
+    };
 
     // When
-    // prettier-ignore
-    const model = buildRegistryMarketplaceModel(catalog, [], { search: "security", provider: "aws", capabilities: ["checks"] }, "name");
+
+    const model = buildRegistryMarketplaceModel(
+      catalog,
+      [],
+      { search: "security", provider: "aws", capabilities: ["checks"] },
+      "name",
+    );
 
     // Then
     if (!model.isComplete) throw new Error("expected complete model");
@@ -51,10 +128,43 @@ describe("Registry marketplace model", () => {
     );
   });
 
+  it("unions providers and capabilities within each filter", () => {
+    // Given
+    const catalog = {
+      status: "complete" as const,
+      artifacts: [
+        artifact("aws-checks", { providers: ["aws"], hasChecks: true }),
+        artifact("gcp-provider", { providers: ["gcp"], hasProvider: true }),
+        artifact("azure-checks", { providers: ["azure"], hasChecks: true }),
+      ],
+    };
+    // When
+    const model = buildRegistryMarketplaceModel(
+      catalog,
+      [],
+      { providers: ["aws", "gcp"], capabilities: ["checks", "provider"] },
+      "name",
+    );
+    // Then
+    expect(model).toMatchObject({
+      artifacts: [
+        expect.objectContaining({ normalizedName: "aws-checks" }),
+        expect.objectContaining({ normalizedName: "gcp-provider" }),
+      ],
+    });
+  });
+
   it("sorts by downloads descending with name as the tiebreak", () => {
     // Given
-    // prettier-ignore
-    const catalog = { status: "complete" as const, artifacts: [artifact("alpha", { totalDownloads: 5 }), artifact("delta", { totalDownloads: 9 }), artifact("beta", { totalDownloads: 5 })] };
+
+    const catalog = {
+      status: "complete" as const,
+      artifacts: [
+        artifact("alpha", { totalDownloads: 5 }),
+        artifact("delta", { totalDownloads: 9 }),
+        artifact("beta", { totalDownloads: 5 }),
+      ],
+    };
 
     // When
     const model = buildRegistryMarketplaceModel(catalog, [], {}, "downloads");
@@ -66,7 +176,7 @@ describe("Registry marketplace model", () => {
     );
   });
 
-  it("counts non-member built-ins as available to add", () => {
+  it("keeps built-ins discoverable without counting them as installable", () => {
     // Given
     const catalog = {
       status: "complete" as const,
@@ -96,7 +206,7 @@ describe("Registry marketplace model", () => {
         isBuiltin: true,
       }),
     ]);
-    expect(model.metrics.availableArtifacts).toBe(1);
+    expect(model.metrics.availableArtifacts).toBe(0);
     expect(model.myArtifacts).toEqual([]);
   });
 
@@ -151,8 +261,12 @@ describe("Registry marketplace model", () => {
 
   it("keeps incomplete catalogs out of complete-only controls and selectors", () => {
     // Given
-    // prettier-ignore
-    const catalog = { status: "incomplete" as const, reason: "page_failed" as const, collectedCount: 3 };
+
+    const catalog = {
+      status: "incomplete" as const,
+      reason: "page_failed" as const,
+      collectedCount: 3,
+    };
 
     // When
     const model = buildRegistryMarketplaceModel(
@@ -163,7 +277,17 @@ describe("Registry marketplace model", () => {
     );
 
     // Then
-    // prettier-ignore
-    expect(model).toEqual({ isComplete: false, canExplore: false, canRetry: true, controls: { search: false, filters: false, hierarchy: false, metrics: false } });
+
+    expect(model).toEqual({
+      isComplete: false,
+      canExplore: false,
+      canRetry: true,
+      controls: {
+        search: false,
+        filters: false,
+        hierarchy: false,
+        metrics: false,
+      },
+    });
   });
 });

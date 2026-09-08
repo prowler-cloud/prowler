@@ -1,14 +1,16 @@
 "use client";
 
 import { Check } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 import {
   disconnectRegistryCredential,
+  getRegistryBootstrap,
   refreshRegistryCollections,
   removeRegistryArtifact,
 } from "@/actions/registry/registry";
+import { Alert, AlertDescription } from "@/components/shadcn/alert";
 import { Badge } from "@/components/shadcn/badge/badge";
 import { Button } from "@/components/shadcn/button/button";
 import {
@@ -18,8 +20,10 @@ import {
   TabsTrigger,
 } from "@/components/shadcn/tabs/tabs";
 import { toast } from "@/components/shadcn/toast/use-toast";
+import { isRegistryArtifactInstallable } from "@/lib/registry/artifacts";
 import { executeRegistryArtifactAddition } from "@/lib/registry-artifact-execution";
 import { executeRegistryCredentialValidation } from "@/lib/registry-credential-execution";
+import { useTaskWatcherStore } from "@/store/task-watcher/store";
 import {
   REGISTRY_BOOTSTRAP_STATE,
   REGISTRY_CATALOG,
@@ -40,6 +44,8 @@ import { RegistryCredentialBanner } from "./registry-credential-banner";
 import {
   buildRegistryMarketplaceModel,
   REGISTRY_MARKETPLACE_SORT,
+  REGISTRY_CATALOG_CAPABILITY,
+  type RegistryCatalogCapability,
   type RegistryExplorerFilters,
   type RegistryMarketplaceArtifact,
   type RegistryMarketplaceSort,
@@ -48,7 +54,7 @@ import { RegistryRemoveDialog } from "./registry-remove-dialog";
 import { RegistryToolbar } from "./registry-toolbar";
 
 const PAGE_SUBTITLE =
-  "Discover and install checks, compliance frameworks, and providers for your workspace.";
+  "Explore checks, compliance frameworks, and providers. Add external provider artifacts to connect new providers to your workspace.";
 
 const REGISTRY_TAB = { EXPLORE: "explore", MINE: "mine" } as const;
 type RegistryTab = (typeof REGISTRY_TAB)[keyof typeof REGISTRY_TAB];
@@ -101,14 +107,74 @@ export function RegistryExplorer({ initialState }: RegistryExplorerProps) {
   // Profile once, and the navigation unmounts this component with its state.
   const router = useRouter();
   const [state, setState] = useState(initialState);
-  const [filters, setFilters] = useState<RegistryExplorerFilters>({});
-  const [sort, setSort] = useState<RegistryMarketplaceSort>(
-    REGISTRY_MARKETPLACE_SORT.NAME,
-  );
-  const [activeTab, setActiveTab] = useState<RegistryTab>(REGISTRY_TAB.EXPLORE);
+  const searchParams = useSearchParams();
+  const filters: RegistryExplorerFilters = {
+    search: searchParams.get("filter[search]") ?? undefined,
+    providers:
+      searchParams.get("filter[provider]")?.split(",").filter(Boolean) ?? [],
+    capabilities: (
+      searchParams.get("filter[capability]")?.split(",") ?? []
+    ).filter((value): value is RegistryCatalogCapability =>
+      Object.values(REGISTRY_CATALOG_CAPABILITY).includes(
+        value as RegistryCatalogCapability,
+      ),
+    ),
+  };
+  const sort =
+    searchParams.get("sort") === REGISTRY_MARKETPLACE_SORT.DOWNLOADS
+      ? REGISTRY_MARKETPLACE_SORT.DOWNLOADS
+      : REGISTRY_MARKETPLACE_SORT.NAME;
+  const activeTab =
+    searchParams.get("tab") === REGISTRY_TAB.MINE
+      ? REGISTRY_TAB.MINE
+      : REGISTRY_TAB.EXPLORE;
+  function updateView(values: Record<string, string | undefined>) {
+    const next = new URLSearchParams(searchParams.toString());
+    Object.entries(values).forEach(([key, value]) =>
+      value ? next.set(key, value) : next.delete(key),
+    );
+    window.history.replaceState(
+      null,
+      "",
+      `/registry${next.size ? `?${next}` : ""}`,
+    );
+  }
+  const setFilters = (next: RegistryExplorerFilters) =>
+    updateView({
+      "filter[search]": next.search,
+      "filter[provider]": next.providers?.join(","),
+      "filter[capability]": next.capabilities?.join(","),
+    });
+  const setSort = (next: RegistryMarketplaceSort) =>
+    updateView({
+      sort: next === REGISTRY_MARKETPLACE_SORT.NAME ? undefined : next,
+    });
+  const setActiveTab = (next: RegistryTab) =>
+    updateView({ tab: next === REGISTRY_TAB.EXPLORE ? undefined : next });
   const [pendingOperation, setPendingOperation] =
     useState<RegistryPendingOperation | null>(null);
-  const [pendingAddName, setPendingAddName] = useState<string>();
+  const [localPendingAddName, setPendingAddName] = useState<string>();
+  const watchedTasks = useTaskWatcherStore((store) => store.tasks);
+  const pendingAddName =
+    localPendingAddName ||
+    Object.values(watchedTasks).find(
+      (task) =>
+        task.kind === "registry-artifact-add" && task.status === "pending",
+    )?.meta.normalizedName;
+  useEffect(() => {
+    const refresh = (event: Event) => {
+      if (!(event instanceof CustomEvent) || !Array.isArray(event.detail))
+        return;
+      setState((current) =>
+        current.status === "ready"
+          ? { ...current, tenantArtifacts: event.detail }
+          : current,
+      );
+    };
+    window.addEventListener("registry-artifacts-changed", refresh);
+    return () =>
+      window.removeEventListener("registry-artifacts-changed", refresh);
+  }, [router]);
   const [accessDialogMode, setAccessDialogMode] =
     useState<RegistryAccessDialogMode>();
   const [removeTarget, setRemoveTarget] = useState<string>();
@@ -125,7 +191,24 @@ export function RegistryExplorer({ initialState }: RegistryExplorerProps) {
     [],
   );
 
+  useEffect(() => {
+    const refresh = async () => {
+      const bootstrap = await getRegistryBootstrap().catch(() => null);
+      if (bootstrap?.status === "ready") setState(bootstrap.state);
+      if (bootstrap?.status === "access_denied") router.replace("/profile");
+    };
+    window.addEventListener("registry-credential-changed", refresh);
+    return () =>
+      window.removeEventListener("registry-credential-changed", refresh);
+  }, [router]);
+
   async function handleAdd(artifact: RegistryMarketplaceArtifact) {
+    if (
+      !isRegistryArtifactInstallable(artifact) ||
+      artifact.isAdded ||
+      pendingAddName
+    )
+      return;
     const { normalizedName } = artifact;
     const generation = operationGeneration.current;
     setOperationMessage(undefined);
@@ -146,7 +229,6 @@ export function RegistryExplorer({ initialState }: RegistryExplorerProps) {
         ? { ...current, tenantArtifacts: result.tenantArtifacts }
         : current,
     );
-    toast({ title: "Artifact added" });
   }
 
   async function handleCredentialSubmit(key: string) {
@@ -177,7 +259,6 @@ export function RegistryExplorer({ initialState }: RegistryExplorerProps) {
             catalog: collections.catalog,
             tenantArtifacts: collections.tenantArtifacts,
           });
-          toast({ title: "Registry connected" });
           return;
         }
         setOperationMessage(
@@ -209,7 +290,8 @@ export function RegistryExplorer({ initialState }: RegistryExplorerProps) {
         setOperationMessage(
           result.status === REGISTRY_CREDENTIAL_ACTION.PENDING
             ? "Registry key validation is taking longer than expected. Try again."
-            : "This Registry key is invalid. Check it and try again.",
+            : (result.message ??
+                "This Registry key is invalid. Check it and try again."),
         );
         return;
       }
@@ -277,6 +359,11 @@ export function RegistryExplorer({ initialState }: RegistryExplorerProps) {
         : current,
     );
     toast({ title: "Artifact removed" });
+    window.dispatchEvent(
+      new CustomEvent("registry-artifacts-changed", {
+        detail: result.tenantArtifacts,
+      }),
+    );
   }
 
   function openRemoveDialog(
@@ -321,7 +408,9 @@ export function RegistryExplorer({ initialState }: RegistryExplorerProps) {
       <div className="space-y-6">
         <p className="text-text-neutral-secondary text-sm">{PAGE_SUBTITLE}</p>
         {!accessDialogMode && operationMessage && (
-          <p role="alert">{operationMessage}</p>
+          <Alert variant="error">
+            <AlertDescription>{operationMessage}</AlertDescription>
+          </Alert>
         )}
         <RegistryCredentialBanner
           connectButtonRef={connectButtonRef}
@@ -396,7 +485,9 @@ export function RegistryExplorer({ initialState }: RegistryExplorerProps) {
         </div>
       </div>
       {!accessDialogMode && operationMessage && (
-        <p role="alert">{operationMessage}</p>
+        <Alert variant="error">
+          <AlertDescription>{operationMessage}</AlertDescription>
+        </Alert>
       )}
       <Tabs
         onValueChange={(value) => setActiveTab(value as RegistryTab)}
@@ -441,6 +532,21 @@ export function RegistryExplorer({ initialState }: RegistryExplorerProps) {
                 ? "No Registry artifacts are available."
                 : "No artifacts match the current filters."
             }
+            emptyDescription={
+              state.catalog.artifacts.length === 0
+                ? "Published artifacts will appear here when the Registry catalog is available."
+                : undefined
+            }
+            emptyActionLabel={
+              state.catalog.artifacts.length === 0
+                ? "Refresh catalog"
+                : undefined
+            }
+            onReset={
+              state.catalog.artifacts.length > 0
+                ? () => setFilters({})
+                : () => window.location.reload()
+            }
             isEmpty={model.artifacts.length === 0}
           >
             {model.artifacts.map((artifact) => (
@@ -460,7 +566,10 @@ export function RegistryExplorer({ initialState }: RegistryExplorerProps) {
         <TabsContent className="space-y-4 pt-4" value={REGISTRY_TAB.MINE}>
           <RegistryArtifactGrid
             emptyMessage="No artifacts in this workspace yet."
+            emptyDescription="Explore the catalog to add an external provider to this workspace."
+            emptyActionLabel="Explore artifacts"
             isEmpty={model.myArtifacts.length === 0}
+            onReset={() => setActiveTab(REGISTRY_TAB.EXPLORE)}
           >
             {model.myArtifacts.map((myArtifact) => (
               <li key={myArtifact.normalizedName}>

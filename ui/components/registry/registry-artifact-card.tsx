@@ -13,6 +13,7 @@ import { ProviderTypeIcon } from "@/components/icons/providers-badge/provider-ty
 import { Badge } from "@/components/shadcn/badge/badge";
 import { Button } from "@/components/shadcn/button/button";
 import { Card } from "@/components/shadcn/card/card";
+import { isRegistryArtifactInstallable } from "@/lib/registry/artifacts";
 import { getProviderDisplayName, isKnownProviderType } from "@/types/providers";
 import type { RegistryArtifactOwner } from "@/types/registry";
 
@@ -240,7 +241,7 @@ export function RegistryArtifactCard({
                   Remove
                 </Button>
               </>
-            ) : (
+            ) : isRegistryArtifactInstallable(artifact) ? (
               <Button
                 aria-label={`Add ${displayName}`}
                 disabled={isAddPending}
@@ -250,7 +251,7 @@ export function RegistryArtifactCard({
               >
                 {isAddPending ? "Adding…" : "Add"}
               </Button>
-            )}
+            ) : null}
           </span>
         </div>
       </div>

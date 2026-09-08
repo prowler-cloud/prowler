@@ -1,6 +1,17 @@
+"use client";
+
+import { ClearFiltersButton } from "@/components/filters/clear-filters-button";
 import { ProviderTypeIcon } from "@/components/icons/providers-badge/provider-type-icon";
-import { Button } from "@/components/shadcn/button/button";
 import { SearchInput } from "@/components/shadcn/search-input/search-input";
+import {
+  MultiSelect,
+  MultiSelectContent,
+  MultiSelectItem,
+  MultiSelectSelectAll,
+  MultiSelectSeparator,
+  MultiSelectTrigger,
+  MultiSelectValue,
+} from "@/components/shadcn/select/multiselect";
 import {
   Select,
   SelectContent,
@@ -28,22 +39,6 @@ interface RegistryToolbarProps {
   sort: RegistryMarketplaceSort;
 }
 
-const capabilityChips = [
-  {
-    capability: REGISTRY_CATALOG_CAPABILITY.CHECKS,
-    label: REGISTRY_CAPABILITY_LABELS.checks,
-  },
-  {
-    capability: REGISTRY_CATALOG_CAPABILITY.COMPLIANCE,
-    label: REGISTRY_CAPABILITY_LABELS.compliance,
-  },
-  {
-    // The provider chip filters by provider capability but is labeled in the plural.
-    capability: REGISTRY_CATALOG_CAPABILITY.PROVIDER,
-    label: `${REGISTRY_CAPABILITY_LABELS.provider}s`,
-  },
-] as const;
-
 export function RegistryToolbar({
   filters,
   onFiltersChange,
@@ -52,63 +47,84 @@ export function RegistryToolbar({
   resultsCount,
   sort,
 }: RegistryToolbarProps) {
-  const selectedCapabilities = filters.capabilities ?? [];
-
-  const toggleCapability = (capability: RegistryCatalogCapability) =>
-    onFiltersChange({
-      ...filters,
-      capabilities: selectedCapabilities.includes(capability)
-        ? selectedCapabilities.filter((value) => value !== capability)
-        : [...selectedCapabilities, capability],
-    });
-
+  const activeCount =
+    Number(Boolean(filters.providers?.length)) +
+    Number(Boolean(filters.capabilities?.length)) +
+    Number(Boolean(filters.search));
   return (
-    <div className="flex flex-wrap items-center gap-3">
+    <div className="flex flex-wrap items-center gap-4">
       <div className="w-full sm:w-64">
         <SearchInput
           aria-label="Search artifacts"
+          placeholder="Search artifacts..."
+          value={filters.search ?? ""}
           onChange={(event) =>
             onFiltersChange({ ...filters, search: event.target.value })
           }
           onClear={() => onFiltersChange({ ...filters, search: undefined })}
-          placeholder="Search artifacts"
-          value={filters.search ?? ""}
         />
+      </div>
+      <div className="w-full sm:w-56">
+        <MultiSelect
+          values={filters.providers ?? []}
+          onValuesChange={(values) =>
+            onFiltersChange({ ...filters, providers: values })
+          }
+        >
+          <MultiSelectTrigger aria-label="Filter by provider">
+            <MultiSelectValue placeholder="All providers" />
+          </MultiSelectTrigger>
+          <MultiSelectContent
+            search={{
+              placeholder: "Search providers...",
+              emptyMessage: "No providers found.",
+            }}
+          >
+            <MultiSelectSelectAll>Select All</MultiSelectSelectAll>
+            <MultiSelectSeparator />
+            {providers.map((provider) => (
+              <MultiSelectItem
+                key={provider}
+                value={provider}
+                badgeLabel={getProviderDisplayName(provider)}
+              >
+                <ProviderTypeIcon size={20} type={provider} />
+                {getProviderDisplayName(provider)}
+              </MultiSelectItem>
+            ))}
+          </MultiSelectContent>
+        </MultiSelect>
+      </div>
+      <div className="w-full sm:w-52">
+        <MultiSelect
+          values={filters.capabilities ?? []}
+          onValuesChange={(values) =>
+            onFiltersChange({
+              ...filters,
+              capabilities: values as RegistryCatalogCapability[],
+            })
+          }
+        >
+          <MultiSelectTrigger aria-label="Filter by capability">
+            <MultiSelectValue placeholder="All capabilities" />
+          </MultiSelectTrigger>
+          <MultiSelectContent>
+            {Object.values(REGISTRY_CATALOG_CAPABILITY).map((capability) => (
+              <MultiSelectItem key={capability} value={capability}>
+                {REGISTRY_CAPABILITY_LABELS[capability]}
+              </MultiSelectItem>
+            ))}
+          </MultiSelectContent>
+        </MultiSelect>
       </div>
       <div className="w-full sm:w-48">
         <Select
-          onValueChange={(provider) =>
-            onFiltersChange({
-              ...filters,
-              provider: provider === "all" ? undefined : provider,
-            })
-          }
-          value={filters.provider ?? "all"}
-        >
-          <SelectTrigger aria-label="Filter by provider" size="sm">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All providers</SelectItem>
-            {providers.map((provider) => (
-              <SelectItem key={provider} value={provider}>
-                <span aria-hidden="true">
-                  <ProviderTypeIcon size={24} type={provider} />
-                </span>
-                <span>{getProviderDisplayName(provider)}</span>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-      <div className="w-full sm:w-44">
-        <Select
+          value={sort}
           onValueChange={(value) =>
             onSortChange(value as RegistryMarketplaceSort)
           }
-          value={sort}
         >
-          <SelectTrigger aria-label="Sort artifacts" size="sm">
+          <SelectTrigger aria-label="Sort artifacts">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -121,34 +137,18 @@ export function RegistryToolbar({
           </SelectContent>
         </Select>
       </div>
-      <div className="flex flex-wrap items-center gap-2">
-        <Button
-          aria-pressed={selectedCapabilities.length === 0}
-          onClick={() => onFiltersChange({ ...filters, capabilities: [] })}
-          size="sm"
-          type="button"
-          variant={selectedCapabilities.length === 0 ? "secondary" : "outline"}
-        >
-          All
-        </Button>
-        {capabilityChips.map(({ capability, label }) => (
-          <Button
-            aria-pressed={selectedCapabilities.includes(capability)}
-            key={capability}
-            onClick={() => toggleCapability(capability)}
-            size="sm"
-            type="button"
-            variant={
-              selectedCapabilities.includes(capability)
-                ? "secondary"
-                : "outline"
-            }
-          >
-            {label}
-          </Button>
-        ))}
-      </div>
-      <p className="text-text-neutral-secondary ml-auto text-sm">
+      <ClearFiltersButton
+        ariaLabel="Clear filters"
+        showCount
+        pendingCount={activeCount}
+        onClear={() => {
+          onFiltersChange({});
+        }}
+      />
+      <p
+        aria-live="polite"
+        className="text-text-neutral-secondary ml-auto text-sm"
+      >
         {resultsCount} artifact{resultsCount === 1 ? "" : "s"}
       </p>
     </div>
