@@ -18,8 +18,10 @@ overrides:
   "@react-aria/visually-hidden>react": "19.2.7"
   "@react-aria/interactions>react": "19.2.7"
   "lodash": "4.18.1"
-  # sharp 0.33.x/0.34.x carry GHSA-f88m-g3jw-g9cj; next pulls 0.34.5 transitively.
-  "sharp": "0.35.3"
+  # Next.js 16.3.3 requests sharp ^0.35.3; resolve 0.35.4 to fix
+  # GHSA-rgj7-g3m4-5g8c (libheif). This override controls resolution;
+  # keep it aligned with the direct dependency in package.json.
+  "sharp": "0.35.4"
   "lodash-es": "4.18.1"
   # GHSA-88fw-hqm2-52qc (CORS reflects any Origin with credentials), CVE-2026-59896
   # (hono/jsx SSR context leak) and the 4.12.34 batch: CORS ReDoS via
