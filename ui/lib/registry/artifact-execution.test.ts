@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { executeRegistryArtifactAddition } from "./registry-artifact-execution";
+import { executeRegistryArtifactAddition } from "./artifact-execution";
 
 const {
   addRegistryArtifactMock,

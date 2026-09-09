@@ -7,9 +7,13 @@ import {
   Package,
   ShieldCheck,
 } from "lucide-react";
-import { useState } from "react";
 
 import { ProviderTypeIcon } from "@/components/icons/providers-badge/provider-type-icon";
+import {
+  Avatar,
+  AvatarImage,
+  AvatarFallback,
+} from "@/components/shadcn/avatar/avatar";
 import { Badge } from "@/components/shadcn/badge/badge";
 import { Button } from "@/components/shadcn/button/button";
 import { Card } from "@/components/shadcn/card/card";
@@ -24,7 +28,7 @@ import {
 
 interface RegistryArtifactCardProps {
   artifact: RegistryMarketplaceArtifact;
-  isAddPending: boolean;
+  pendingAddName?: string;
   onAdd: () => void;
   onRemove: (trigger: HTMLButtonElement | null) => void;
 }
@@ -91,37 +95,6 @@ function RegistryProviderCluster({ providers }: RegistryProviderClusterProps) {
   );
 }
 
-interface RegistryOwnerAvatarProps {
-  owner: RegistryArtifactOwner;
-}
-
-function RegistryOwnerAvatar({ owner }: RegistryOwnerAvatarProps) {
-  // Owner logos come from short-lived signed URLs that can expire, so a
-  // failed load falls back to the initial-letter avatar.
-  const [logoFailed, setLogoFailed] = useState(false);
-
-  if (owner.logoUrl && !logoFailed) {
-    return (
-      <img
-        alt=""
-        aria-hidden
-        className="size-5 shrink-0 rounded-full object-cover"
-        onError={() => setLogoFailed(true)}
-        src={owner.logoUrl}
-      />
-    );
-  }
-
-  return (
-    <span
-      aria-hidden
-      className="bg-bg-neutral-tertiary text-text-neutral-secondary flex size-5 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold uppercase"
-    >
-      {owner.name.charAt(0)}
-    </span>
-  );
-}
-
 interface RegistryOwnerRowProps {
   isOfficial: boolean;
   isVerified: boolean;
@@ -139,7 +112,10 @@ function RegistryOwnerRow({
     <div className="flex flex-wrap items-center gap-2">
       {owner && (
         <span className="flex min-w-0 items-center gap-2">
-          <RegistryOwnerAvatar owner={owner} />
+          <Avatar aria-hidden className="size-5">
+            <AvatarImage alt="" src={owner.logoUrl} />
+            <AvatarFallback>{owner.name.charAt(0)}</AvatarFallback>
+          </Avatar>
           <span className="text-text-neutral-secondary truncate text-xs">
             {owner.name}
           </span>
@@ -163,7 +139,7 @@ function RegistryOwnerRow({
 
 export function RegistryArtifactCard({
   artifact,
-  isAddPending,
+  pendingAddName,
   onAdd,
   onRemove,
 }: RegistryArtifactCardProps) {
@@ -244,12 +220,12 @@ export function RegistryArtifactCard({
             ) : isRegistryArtifactInstallable(artifact) ? (
               <Button
                 aria-label={`Add ${displayName}`}
-                disabled={isAddPending}
+                disabled={Boolean(pendingAddName)}
                 onClick={onAdd}
                 size="sm"
                 type="button"
               >
-                {isAddPending ? "Adding…" : "Add"}
+                {pendingAddName === artifact.normalizedName ? "Adding…" : "Add"}
               </Button>
             ) : null}
           </span>

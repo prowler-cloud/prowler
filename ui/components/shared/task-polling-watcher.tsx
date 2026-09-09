@@ -13,8 +13,8 @@ import { integrationConnectionTaskHandler } from "@/components/integrations/inte
 import { registryArtifactTaskHandler } from "@/components/registry/registry-artifact-task-handler";
 import { registryCredentialTaskHandler } from "@/components/registry/registry-credential-task-handler";
 import { useMountEffect } from "@/hooks/use-mount-effect";
-import { REGISTRY_ARTIFACT_TASK_KIND } from "@/lib/registry-artifact-execution";
-import { REGISTRY_CREDENTIAL_TASK_KIND } from "@/lib/registry-credential-task";
+import { REGISTRY_ARTIFACT_TASK_KIND } from "@/lib/registry/artifact-execution";
+import { REGISTRY_CREDENTIAL_TASK_KIND } from "@/lib/registry/credential-task";
 import {
   registerTaskKindHandler,
   resumePendingTasks,
