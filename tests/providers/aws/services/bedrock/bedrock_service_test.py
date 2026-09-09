@@ -347,9 +347,8 @@ class TestBedrockAgentPagination:
             assert expected_arn in bedrock_agent_service.agents
             # With no --resource-arn, the complete inventory and the reported set
             # hold the very same objects.
-            assert (
-                bedrock_agent_service.all_agents[expected_arn]
-                is (bedrock_agent_service.agents[expected_arn])
+            assert bedrock_agent_service.all_agents[expected_arn] is (
+                bedrock_agent_service.agents[expected_arn]
             )
 
         # Verify paginator was used
