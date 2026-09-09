@@ -32,6 +32,8 @@ LABEL maintainer="https://github.com/prowler-cloud"
 # High CVEs fixed in Alpine 3.23 but not yet in the pinned base image:
 #   sqlite-libs 3.53.4-r0  CVE-2026-11822, CVE-2026-11824  (image ships 3.51.2-r0)
 #   libcrypto3/libssl3 3.5.8-r0  CVE-2026-14456            (image ships 3.5.7-r0)
+#   libuuid 2.41.6-r1  CVE-2026-53612, -53613, -53614, -76642, -78408, -78410
+#     (image ships 2.41.4-r0; -78408 is the one that needs -r1 rather than -r0)
 # The base image pins python 3.13.14, which has not been rebuilt since those
 # packages were published, so the upgrade is taken here rather than by moving
 # the pin -- the newest published python:3.13-alpine3.23 carries the same
@@ -43,7 +45,8 @@ LABEL maintainer="https://github.com/prowler-cloud"
 RUN apk add --no-cache --upgrade \
     "sqlite-libs>=3.53.4-r0" \
     "libcrypto3>=3.5.8-r0" \
-    "libssl3>=3.5.8-r0"
+    "libssl3>=3.5.8-r0" \
+    "libuuid>=2.41.6-r1"
 
 # Create non-root user for security
 # Using specific UID/GID for consistency across environments
