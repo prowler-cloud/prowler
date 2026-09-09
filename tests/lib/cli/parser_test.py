@@ -1152,6 +1152,11 @@ class Test_Parser:
         parsed = self.parser.parse(command)
         assert parsed.aws_retries_max_attempts == int(max_retries)
 
+    def test_aws_parser_retries_max_attempts_zero(self):
+        command = [prowler_command, "--aws-retries-max-attempts", "0"]
+        parsed = self.parser.parse(command)
+        assert parsed.aws_retries_max_attempts == 0
+
     def test_aws_parser_timeouts_default_to_none(self):
         parsed = self.parser.parse([prowler_command])
         assert parsed.aws_connect_timeout is None

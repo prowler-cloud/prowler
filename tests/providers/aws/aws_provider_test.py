@@ -2508,6 +2508,21 @@ aws:
         assert session_config.connect_timeout == BOTO3_CONNECT_TIMEOUT
         assert session_config.read_timeout == BOTO3_READ_TIMEOUT
 
+    def test_set_session_config_0_max_attempts_disables_retries(self):
+        session_config = AwsProvider.set_session_config(0)
+
+        assert session_config.retries == {"max_attempts": 0, "mode": "standard"}
+
+    @mock_aws
+    def test_aws_provider_0_max_attempts_reaches_clients(self):
+        aws_provider = AwsProvider(retries_max_attempts=0)
+        client = aws_provider.session.current_session.client(
+            "ec2", region_name=AWS_REGION_US_EAST_1
+        )
+
+        # botocore rewrites max_attempts into total_max_attempts (retries + 1)
+        assert client.meta.config.retries["total_max_attempts"] == 1
+
     def test_set_session_config_timeouts(self):
         session_config = AwsProvider.set_session_config(
             None, connect_timeout=2, read_timeout=15

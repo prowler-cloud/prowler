@@ -156,7 +156,7 @@ def init_parser(self):
         nargs="?",
         default=None,
         type=int,
-        help="Set the maximum attemps for the Boto3 standard retrier config (Default: 3)",
+        help="Set the maximum retries for the Boto3 standard retrier config, 0 disables retries (Default: 3)",
     )
     boto3_config_subparser.add_argument(
         "--aws-connect-timeout",

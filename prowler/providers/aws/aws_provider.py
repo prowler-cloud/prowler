@@ -1182,7 +1182,7 @@ class AwsProvider(Provider):
         """
         default_session_config = get_default_session_config()
         overrides = {}
-        if retries_max_attempts:
+        if retries_max_attempts is not None:
             overrides["retries"] = {
                 "max_attempts": retries_max_attempts,
                 "mode": "standard",
