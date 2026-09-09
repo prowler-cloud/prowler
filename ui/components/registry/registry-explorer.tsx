@@ -1,6 +1,6 @@
 "use client";
 
-import { Check } from "lucide-react";
+import { Settings } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useEffectEvent, useRef, useState } from "react";
 
@@ -462,25 +462,7 @@ export function RegistryExplorer({
   return (
     <div className="space-y-6">
       <h1 className="sr-only">Registry marketplace</h1>
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <p className="text-text-neutral-secondary text-sm">{PAGE_SUBTITLE}</p>
-        <div className="flex items-center gap-3">
-          <Badge variant="success">
-            <Check aria-hidden />
-            API key connected
-          </Badge>
-          <Button
-            onClick={() =>
-              setAccessDialogMode(REGISTRY_ACCESS_DIALOG_MODE.MANAGE)
-            }
-            ref={manageButtonRef}
-            type="button"
-            variant="outline"
-          >
-            Manage access
-          </Button>
-        </div>
-      </div>
+      <p className="text-text-neutral-secondary text-sm">{PAGE_SUBTITLE}</p>
       {!accessDialogMode && operationMessage && (
         <Alert variant="error">
           <AlertDescription>{operationMessage}</AlertDescription>
@@ -490,7 +472,7 @@ export function RegistryExplorer({
         onValueChange={(value) => setActiveTab(value as RegistryTab)}
         value={activeTab}
       >
-        <div className="border-border-neutral-secondary border-b">
+        <div className="border-border-neutral-secondary flex items-center justify-between gap-4 border-b">
           <TabsList>
             <TabsTrigger
               adornment={
@@ -513,6 +495,19 @@ export function RegistryExplorer({
               My artifacts
             </TabsTrigger>
           </TabsList>
+          <Button
+            aria-label="Manage access"
+            title="Manage access"
+            onClick={() =>
+              setAccessDialogMode(REGISTRY_ACCESS_DIALOG_MODE.MANAGE)
+            }
+            ref={manageButtonRef}
+            size="icon"
+            type="button"
+            variant="ghost"
+          >
+            <Settings aria-hidden />
+          </Button>
         </div>
         <TabsContent className="space-y-4 pt-4" value={REGISTRY_TAB.EXPLORE}>
           <RegistryToolbar
