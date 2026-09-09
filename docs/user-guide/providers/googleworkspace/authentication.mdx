@@ -8,6 +8,8 @@ import { VersionBadge } from "/snippets/version-badge.mdx"
 
 Prowler for Google Workspace uses a **Service Account with Domain-Wide Delegation** to authenticate to the Google Workspace Admin SDK and the Cloud Identity Policy API. This allows Prowler to read directory data and domain-level application policies on behalf of a super administrator without requiring an interactive login.
 
+The Service Account can authenticate with a downloaded **JSON key**, or **keyless** by [impersonating the Service Account](#keyless-authentication-with-service-account-impersonation) through Application Default Credentials. The Domain-Wide Delegation setup is the same in both cases.
+
 ## Required Open Authorization (OAuth) Scopes
 
 Prowler requests the following read-only OAuth 2.0 scopes:
@@ -77,13 +79,17 @@ The Service Account does not need any GCP IAM roles. Its access to Google Worksp
 This JSON key grants access to your Google Workspace organization. Never commit it to version control, share it in plain text, or store it in an insecure location.
 </Warning>
 
+<Note>
+Skip this step to authenticate without a key — see [Keyless Authentication with Service Account Impersonation](#keyless-authentication-with-service-account-impersonation).
+</Note>
+
 ### Step 5: Configure Domain-Wide Delegation in Google Workspace
 
 1. Navigate to the [Google Workspace Admin Console](https://admin.google.com)
 2. Navigate to **Security → Access and data control → API controls**
 3. Click **Manage Domain Wide Delegation**
 4. Click **Add new**
-5. Enter the **Client ID** of the Service Account (found in the JSON key as `client_id`, or on the Service Account details page)
+5. Enter the **Client ID** of the Service Account (found in the JSON key as `client_id`, on the Service Account details page as **Unique ID**, or with `gcloud iam service-accounts describe <service-account-email> --format='value(uniqueId)'`)
 6. In the **OAuth scopes** field, enter the following scopes as a comma-separated list:
 
 ```
@@ -115,17 +121,65 @@ export GOOGLEWORKSPACE_DELEGATED_USER="admin@yourdomain.com"
 prowler googleworkspace
 ```
 
+## Keyless Authentication with Service Account Impersonation
+
+If Service Account keys are not allowed in your organization (for example under the `iam.disableServiceAccountKeyCreation` organization policy), Prowler can impersonate the Service Account through **Application Default Credentials (ADC)** instead of loading a JSON key. The Service Account still needs Domain-Wide Delegation exactly as described in Steps 1–3 and 5 above; only Step 4 is skipped.
+
+How it works: the ADC identity asks the IAM Service Account Credentials API to sign the Domain-Wide Delegation assertion on behalf of the Service Account (`iam.serviceAccounts.signJwt`), and Prowler exchanges that assertion for an access token of the delegated user. No private key is created, downloaded, or stored.
+
+### Prerequisites
+
+- **Application Default Credentials** where Prowler runs: `gcloud auth application-default login` on a workstation, Workload Identity Federation (for example `google-github-actions/auth`) in CI, or the metadata server on Google Cloud compute.
+- The identity behind ADC holds **`roles/iam.serviceAccountTokenCreator`** (`iam.serviceAccounts.signJwt`) on the Service Account. When ADC already *is* the Service Account (Workload Identity Federation impersonating it, or a workload running as it), the Service Account signs its own assertion, so grant the role to the Service Account on itself. Verify the grant before the first scan with `gcloud iam service-accounts get-iam-policy <service-account-email>`.
+- The **IAM Service Account Credentials API** (`iamcredentials.googleapis.com`) is enabled in the project that hosts the Service Account, in addition to the APIs from Step 2.
+
+### Run Prowler
+
+```console
+export GOOGLEWORKSPACE_IMPERSONATE_SERVICE_ACCOUNT="prowler-googleworkspace-reader@your-project.iam.gserviceaccount.com"
+export GOOGLEWORKSPACE_DELEGATED_USER="admin@yourdomain.com"
+prowler googleworkspace
+```
+
+The `--impersonate-service-account` flag is equivalent to the environment variable:
+
+```console
+export GOOGLEWORKSPACE_DELEGATED_USER="admin@yourdomain.com"
+prowler googleworkspace --impersonate-service-account prowler-googleworkspace-reader@your-project.iam.gserviceaccount.com
+```
+
+<Note>
+If `GOOGLEWORKSPACE_CREDENTIALS_FILE` or `GOOGLEWORKSPACE_CREDENTIALS_CONTENT` is also set, the key is used and impersonation is ignored.
+</Note>
+
+### Example: GitHub Actions with Workload Identity Federation
+
+```yaml
+permissions:
+  id-token: write
+steps:
+  - uses: google-github-actions/auth@v3
+    with:
+      workload_identity_provider: projects/123456789012/locations/global/workloadIdentityPools/github/providers/github
+      service_account: prowler-googleworkspace-reader@your-project.iam.gserviceaccount.com
+  - run: prowler googleworkspace --impersonate-service-account prowler-googleworkspace-reader@your-project.iam.gserviceaccount.com
+    env:
+      GOOGLEWORKSPACE_DELEGATED_USER: admin@yourdomain.com
+```
+
 ## How Prowler Resolves Credentials
 
 Prowler resolves credentials in the following order:
 
 1. `GOOGLEWORKSPACE_CREDENTIALS_FILE` environment variable
 2. `GOOGLEWORKSPACE_CREDENTIALS_CONTENT` environment variable
+3. `GOOGLEWORKSPACE_IMPERSONATE_SERVICE_ACCOUNT` environment variable or the `--impersonate-service-account` flag (keyless, through Application Default Credentials)
 
 The delegated user must be provided via the `GOOGLEWORKSPACE_DELEGATED_USER` environment variable.
 
 ## Best Practices
 
+- **Prefer keyless impersonation** — Where Application Default Credentials are available, [Service Account impersonation](#keyless-authentication-with-service-account-impersonation) avoids a long-lived key entirely
 - **Use environment variables** — Never hardcode credentials in scripts or commands
 - **Use a dedicated Service Account** — Create one specifically for Prowler, separate from other integrations
 - **Use read-only scopes** — Prowler only requires the read-only scopes listed above
@@ -150,7 +204,11 @@ export GOOGLEWORKSPACE_DELEGATED_USER="admin@yourdomain.com"
 
 ### `GoogleWorkspaceNoCredentialsError`
 
-No credentials were found. Ensure either `GOOGLEWORKSPACE_CREDENTIALS_FILE` or `GOOGLEWORKSPACE_CREDENTIALS_CONTENT` is set.
+No credentials were found. Ensure either `GOOGLEWORKSPACE_CREDENTIALS_FILE` or `GOOGLEWORKSPACE_CREDENTIALS_CONTENT` is set, or `GOOGLEWORKSPACE_IMPERSONATE_SERVICE_ACCOUNT` (or `--impersonate-service-account`) for keyless authentication.
+
+### `GoogleWorkspaceADCError`
+
+`GOOGLEWORKSPACE_IMPERSONATE_SERVICE_ACCOUNT` is set but no Application Default Credentials were found. Run `gcloud auth application-default login`, point `GOOGLE_APPLICATION_CREDENTIALS` at a credential configuration file, or run Prowler where ADC is provided (Workload Identity Federation in CI, or a Google Cloud compute identity).
 
 ### `GoogleWorkspaceInvalidCredentialsError`
 
@@ -167,6 +225,7 @@ The Service Account cannot impersonate the delegated user. This usually means Do
 - The Service Account Client ID is correctly entered in the Admin Console
 - All required OAuth scopes are included
 - The delegated user is a super administrator
+- When impersonating the Service Account through Application Default Credentials: the ADC identity holds `roles/iam.serviceAccountTokenCreator` on it (a `403` mentioning `iam.serviceAccounts.signJwt` means it does not), and the IAM Service Account Credentials API is enabled in the project that hosts the Service Account
 
 ### Permission Denied on Admin SDK Calls
 

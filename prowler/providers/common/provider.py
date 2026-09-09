@@ -512,6 +512,7 @@ class Provider(ABC):
                     )
                 elif arguments.provider == "googleworkspace":
                     provider_class(
+                        impersonate_service_account=arguments.impersonate_service_account,
                         config_path=arguments.config_file,
                         mutelist_path=arguments.mutelist_file,
                         fixer_config=fixer_config,
