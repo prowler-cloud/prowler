@@ -28,11 +28,12 @@ ignore:
       name: google.golang.org/grpc
       version: v1.82.1
   # CVE-2026-84445 is the same temporary exception documented in .trivyignore.yaml:
-  # Trivy 0.74.0 still embeds grpc 1.82.1, while the 1.82.2 / 1.83.2 fix is not in
-  # any Trivy release. Prowler only runs `trivy image` / `trivy fs`, never
-  # client/server mode, so no gRPC/xDS endpoint exists in the image. Pinned to the
-  # embedded version so the rule stops matching on its own once Trivy bumps grpc.
-  # Remove with the Trivy exception by 2026-10-15.
+  # Trivy 0.74.0 still embeds grpc 1.82.1, while the 1.82.2 / 1.83.2 fix is not in any
+  # release. The panic needs a gRPC server built with `xds.NewGRPCServer()`; Prowler only
+  # runs `trivy image` / `trivy fs`, so the image serves no gRPC at all. Pinned to the
+  # embedded version so the rule stops matching on its own once Trivy bumps grpc. Remove
+  # with the Trivy exception by 2026-10-15.
+  # https://github.com/advisories/GHSA-2v4p-qf9q-27wj
   - vulnerability: CVE-2026-84445
     package:
       name: google.golang.org/grpc

@@ -176,13 +176,20 @@ vulnerabilities:
       - "pkg:golang/google.golang.org/grpc"
     expired_at: 2026-10-15
 
-  # CVE-2026-84445 is a DoS in grpc-go xDS servers: a request missing both
-  # :authority and Host panics the xDS routing interceptor. Fixed in 1.82.2 and
-  # 1.83.2 (published 2026-08-25). Trivy 0.74.0 still pins 1.82.1:
+  # CVE-2026-84445 is a DoS in grpc-go servers built with `xds.NewGRPCServer()`: a request
+  # carrying neither `:authority` nor `Host` reaches the xDS routing interceptor, which
+  # indexes an empty slice of authorities and panics. The per-RPC goroutine does not
+  # recover, so the whole server process dies. Fixed in 1.82.2 and 1.83.2 (published
+  # 2026-09-08). Trivy 0.74.0, the latest published release and the version the images
+  # ship, pins 1.82.1 as an indirect dependency:
   # https://github.com/aquasecurity/trivy/blob/v0.74.0/go.mod
-  # Same reachability argument as CVE-2026-84304: Prowler never runs
-  # `trivy server`, so no gRPC/xDS listener exists in the image. Remove with
-  # that exception as soon as a Trivy release pins grpc >= 1.82.2.
+  # Trivy main already carries 1.83.2, but no published release includes it yet.
+  # The reachability argument is the one made for CVE-2026-84304 above, only narrower:
+  # this panic needs an xDS-managed gRPC server. Prowler invokes Trivy exclusively as
+  # `trivy image` and `trivy fs` on a local path, never `trivy server`, so the image runs
+  # no gRPC server at all, xDS or otherwise. Remove this temporary suppression as soon as
+  # a Trivy release pins grpc >= 1.83.2.
+  # https://github.com/advisories/GHSA-2v4p-qf9q-27wj
   - id: CVE-2026-84445
     purls:
       - "pkg:golang/google.golang.org/grpc@v1.82.1"
