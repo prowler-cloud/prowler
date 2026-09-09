@@ -11,8 +11,8 @@
   "Severity": "high",
   "ResourceType": "Other",
   "ResourceGroup": "ai_ml",
-  "Description": "**Bedrock AgentCore runtimes** should be configured with a **custom JWT authorizer** to propagate end-user identities to downstream tool services, ensuring tool calls are authorized by the originating user and not solely by the agent execution role.",
-  "Risk": "Without a **custom JWT authorizer**, the runtime cannot capture or propagate end-user identities. All downstream actions and tool invocations are executed under the **agent execution role**, resulting in confused-deputy risks, lack of granular per-user audit trails, and potential unauthorized access to downstream data.",
+  "Description": "**Bedrock AgentCore runtimes** should be configured with a **custom JWT authorizer** and allow the **Authorization header** to propagate end-user identities to downstream tool services, ensuring tool calls are authorized by the originating user and not solely by the agent execution role.",
+  "Risk": "Without a **custom JWT authorizer** and **Authorization header propagation**, the runtime cannot capture or forward end-user identities to downstream tools. All downstream actions and tool invocations are executed under the **agent execution role**, resulting in confused-deputy risks, lack of granular per-user audit trails, and potential unauthorized access to downstream data.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/runtime-oauth.html",
@@ -20,13 +20,13 @@
   ],
   "Remediation": {
     "Code": {
-      "CLI": "aws bedrock-agentcore-control update-agent-runtime --agent-runtime-id <runtime_id> --authorizer-configuration '{\"customJWTAuthorizer\":{\"discoveryUrl\":\"<discovery_url>\",\"allowedAudience\":[\"<audience>\"],\"allowedClients\":[\"<client_id>\"]}}'",
+      "CLI": "aws bedrock-agentcore-control update-agent-runtime --agent-runtime-id <runtime_id> --role-arn <role_arn> --network-configuration '{\"networkMode\":\"PUBLIC\"}' --agent-runtime-artifact '{\"containerConfiguration\":{\"containerUri\":\"<container_uri>\"}}' --authorizer-configuration '{\"customJWTAuthorizer\":{\"discoveryUrl\":\"<discovery_url>\",\"allowedAudience\":[\"<audience>\"],\"allowedClients\":[\"<client_id>\"]}}' --request-header-configuration '{\"requestHeaderAllowlist\":[\"Authorization\"]}'",
       "NativeIaC": "",
-      "Other": "1. Open the AWS Console and navigate to Amazon Bedrock AgentCore\n2. Select **Agent Runtimes** and select the target runtime\n3. Under **Authorizer configuration**, enable **Custom JWT Authorizer**\n4. Provide the OIDC Discovery URL, allowed audiences, and allowed clients\n5. Save changes to ensure end-user identity propagation is enabled",
+      "Other": "1. Open the AWS Console and navigate to Amazon Bedrock AgentCore\n2. Select **Agent Runtimes** and select the target runtime\n3. Under **Authorizer configuration**, enable **Custom JWT Authorizer** and specify OIDC discovery URL, allowed audience, and allowed clients\n4. Under **Request header configuration**, add `Authorization` to the **Request header allowlist**\n5. Save changes to ensure end-user identity propagation is enabled",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Configure a **custom JWT authorizer** on every Bedrock AgentCore runtime to validate incoming end-user tokens and forward identity context to downstream tool integrations.",
+      "Text": "Configure a **custom JWT authorizer** on every Bedrock AgentCore runtime and include `Authorization` in the request header allowlist to validate incoming end-user tokens and forward identity context to downstream tool integrations.",
       "Url": "https://hub.prowler.com/check/bedrockagentcore_runtime_jwt_identity_propagation_configured"
     }
   },

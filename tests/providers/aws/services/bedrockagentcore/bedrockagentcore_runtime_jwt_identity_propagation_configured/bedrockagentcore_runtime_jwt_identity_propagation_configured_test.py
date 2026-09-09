@@ -21,7 +21,7 @@ DISCOVERY_URL = "https://auth.example.com/.well-known/openid-configuration"
 _UNUSED_OPERATIONS = ("ListTagsForResource",)
 
 
-def _agent_runtime_mock(custom_jwt=None, fail_get=False):
+def _agent_runtime_mock(custom_jwt=None, request_header_allowlist=None, fail_get=False):
     def _mock(self, operation_name, kwarg):
         if operation_name in _UNUSED_OPERATIONS:
             return {"tags": {}}
@@ -57,20 +57,55 @@ def _agent_runtime_mock(custom_jwt=None, fail_get=False):
                 }
             else:
                 response["authorizerConfiguration"] = {}
+
+            if request_header_allowlist is not None:
+                response["requestHeaderConfiguration"] = {
+                    "requestHeaderAllowlist": request_header_allowlist
+                }
+            else:
+                response["requestHeaderConfiguration"] = {}
             return response
         return make_api_call(self, operation_name, kwarg)
 
     return _mock
 
 
-_mock_with_jwt = _agent_runtime_mock(
+_mock_pass = _agent_runtime_mock(
     custom_jwt={
         "discoveryUrl": DISCOVERY_URL,
         "allowedAudience": ["aud1"],
         "allowedClients": ["client1"],
-    }
+    },
+    request_header_allowlist=["Authorization"],
 )
-_mock_without_jwt = _agent_runtime_mock(custom_jwt=None)
+_mock_pass_case_insensitive = _agent_runtime_mock(
+    custom_jwt={
+        "discoveryUrl": DISCOVERY_URL,
+        "allowedAudience": ["aud1"],
+        "allowedClients": ["client1"],
+    },
+    request_header_allowlist=["authorization"],
+)
+_mock_without_jwt = _agent_runtime_mock(
+    custom_jwt=None,
+    request_header_allowlist=["Authorization"],
+)
+_mock_without_header_allowlist = _agent_runtime_mock(
+    custom_jwt={
+        "discoveryUrl": DISCOVERY_URL,
+        "allowedAudience": ["aud1"],
+        "allowedClients": ["client1"],
+    },
+    request_header_allowlist=["X-Custom-Header"],
+)
+_mock_empty_headers = _agent_runtime_mock(
+    custom_jwt={
+        "discoveryUrl": DISCOVERY_URL,
+        "allowedAudience": ["aud1"],
+        "allowedClients": ["client1"],
+    },
+    request_header_allowlist=None,
+)
 _mock_unreadable = _agent_runtime_mock(fail_get=True)
 
 
@@ -146,9 +181,9 @@ class Test_bedrockagentcore_runtime_jwt_identity_propagation_configured:
     def test_region_not_supported(self):
         assert self._run() == []
 
-    @mock.patch("botocore.client.BaseClient._make_api_call", new=_mock_with_jwt)
+    @mock.patch("botocore.client.BaseClient._make_api_call", new=_mock_pass)
     @mock_aws
-    def test_jwt_authorizer_configured_passes(self):
+    def test_jwt_authorizer_and_allowlist_passes(self):
         result = self._run()
         assert len(result) == 1
         assert result[0].status == "PASS"
@@ -157,7 +192,23 @@ class Test_bedrockagentcore_runtime_jwt_identity_propagation_configured:
         assert result[0].region == AWS_REGION_US_EAST_1
         assert (
             result[0].status_extended
-            == f"Bedrock AgentCore runtime {RUNTIME_NAME} is configured with a custom JWT authorizer for end-user identity propagation in region {AWS_REGION_US_EAST_1}."
+            == f"Bedrock AgentCore runtime {RUNTIME_NAME} is configured with a custom JWT authorizer and downstream identity propagation in region {AWS_REGION_US_EAST_1}."
+        )
+
+    @mock.patch(
+        "botocore.client.BaseClient._make_api_call", new=_mock_pass_case_insensitive
+    )
+    @mock_aws
+    def test_jwt_authorizer_and_allowlist_case_insensitive_passes(self):
+        result = self._run()
+        assert len(result) == 1
+        assert result[0].status == "PASS"
+        assert result[0].resource_id == RUNTIME_ID
+        assert result[0].resource_arn == RUNTIME_ARN
+        assert result[0].region == AWS_REGION_US_EAST_1
+        assert (
+            result[0].status_extended
+            == f"Bedrock AgentCore runtime {RUNTIME_NAME} is configured with a custom JWT authorizer and downstream identity propagation in region {AWS_REGION_US_EAST_1}."
         )
 
     @mock.patch("botocore.client.BaseClient._make_api_call", new=_mock_without_jwt)
@@ -171,7 +222,37 @@ class Test_bedrockagentcore_runtime_jwt_identity_propagation_configured:
         assert result[0].region == AWS_REGION_US_EAST_1
         assert (
             result[0].status_extended
-            == f"Bedrock AgentCore runtime {RUNTIME_NAME} does not have a custom JWT authorizer configured and relies solely on the execution role in region {AWS_REGION_US_EAST_1}."
+            == f"Bedrock AgentCore runtime {RUNTIME_NAME} does not have a custom JWT authorizer and downstream identity propagation configured and relies solely on the execution role in region {AWS_REGION_US_EAST_1}."
+        )
+
+    @mock.patch(
+        "botocore.client.BaseClient._make_api_call", new=_mock_without_header_allowlist
+    )
+    @mock_aws
+    def test_header_allowlist_missing_authorization_fails(self):
+        result = self._run()
+        assert len(result) == 1
+        assert result[0].status == "FAIL"
+        assert result[0].resource_id == RUNTIME_ID
+        assert result[0].resource_arn == RUNTIME_ARN
+        assert result[0].region == AWS_REGION_US_EAST_1
+        assert (
+            result[0].status_extended
+            == f"Bedrock AgentCore runtime {RUNTIME_NAME} does not have a custom JWT authorizer and downstream identity propagation configured and relies solely on the execution role in region {AWS_REGION_US_EAST_1}."
+        )
+
+    @mock.patch("botocore.client.BaseClient._make_api_call", new=_mock_empty_headers)
+    @mock_aws
+    def test_header_configuration_missing_fails(self):
+        result = self._run()
+        assert len(result) == 1
+        assert result[0].status == "FAIL"
+        assert result[0].resource_id == RUNTIME_ID
+        assert result[0].resource_arn == RUNTIME_ARN
+        assert result[0].region == AWS_REGION_US_EAST_1
+        assert (
+            result[0].status_extended
+            == f"Bedrock AgentCore runtime {RUNTIME_NAME} does not have a custom JWT authorizer and downstream identity propagation configured and relies solely on the execution role in region {AWS_REGION_US_EAST_1}."
         )
 
     @mock.patch("botocore.client.BaseClient._make_api_call", new=_mock_unreadable)
@@ -185,7 +266,7 @@ class Test_bedrockagentcore_runtime_jwt_identity_propagation_configured:
         assert result[0].region == AWS_REGION_US_EAST_1
         assert (
             result[0].status_extended
-            == f"Bedrock AgentCore runtime {RUNTIME_NAME} authorizer configuration could not be retrieved in region {AWS_REGION_US_EAST_1}; verify manually that it is configured with a custom JWT authorizer."
+            == f"Bedrock AgentCore runtime {RUNTIME_NAME} configuration could not be retrieved in region {AWS_REGION_US_EAST_1}; verify manually that it is configured with a custom JWT authorizer and downstream identity propagation."
         )
 
     @mock.patch("botocore.client.BaseClient._make_api_call", new=_mock_list_denied)
@@ -202,5 +283,5 @@ class Test_bedrockagentcore_runtime_jwt_identity_propagation_configured:
         assert result[0].region == AWS_REGION_US_EAST_1
         assert (
             result[0].status_extended
-            == f"Bedrock AgentCore runtimes could not be listed in region {AWS_REGION_US_EAST_1} (AccessDeniedException); verify manually that every runtime is configured with a custom JWT authorizer."
+            == f"Bedrock AgentCore runtimes could not be listed in region {AWS_REGION_US_EAST_1} (AccessDeniedException); verify manually that every runtime is configured with a custom JWT authorizer and downstream identity propagation."
         )

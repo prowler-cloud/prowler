@@ -53,6 +53,7 @@ def mock_make_api_call(self, operation_name, kwarg):
                     "allowedClients": ["client-1"],
                 }
             },
+            "requestHeaderConfiguration": {"requestHeaderAllowlist": ["Authorization"]},
         }
     elif operation_name == "ListTagsForResource":
         return {"tags": {"Environment": "Dev", "Owner": "Security"}}
@@ -106,6 +107,10 @@ class Test_BedrockAgentCore_Service:
             runtime.authorizer_configuration.custom_jwt_authorizer.allowed_clients
             == ["client-1"]
         )
+        assert runtime.request_header_configuration is not None
+        assert runtime.request_header_configuration.request_header_allowlist == [
+            "Authorization"
+        ]
         assert runtime.tags == {"Environment": "Dev", "Owner": "Security"}
 
     @mock_aws
