@@ -50,6 +50,11 @@ def _make_provider(**kwargs):
     return ImageProvider(**defaults)
 
 
+@pytest.fixture(autouse=True)
+def _no_configured_cache_dir(monkeypatch):
+    monkeypatch.delenv("TRIVY_CACHE_DIR", raising=False)
+
+
 class TestImageProvider:
     def test_image_provider(self):
         """Test default initialization."""

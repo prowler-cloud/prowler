@@ -115,9 +115,7 @@ class ImageProvider(Provider):
         self._session = None
         self._identity = "prowler"
         self._listing_only = False
-        # A deployment that cannot reach the vulnerability database on demand has
-        # to be able to point at one it already holds, and one that can reach it
-        # should not re-download it for every image scanned.
+        # A supplied cache dir is never deleted: it may hold a DB we cannot refetch
         configured_cache_dir = os.environ.get("TRIVY_CACHE_DIR", "").strip()
         if configured_cache_dir:
             self._trivy_cache_dir = configured_cache_dir
