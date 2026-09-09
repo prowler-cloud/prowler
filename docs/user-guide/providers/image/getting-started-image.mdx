@@ -96,6 +96,25 @@ Install Trivy using one of the following methods:
 
 For additional installation methods, see the [Trivy installation guide](https://trivy.dev/latest/getting-started/installation/).
 
+### Vulnerability Database Cache
+
+Trivy keeps its vulnerability database in a cache directory. By default Prowler gives it a temporary one and removes it when the scan ends, so the database is downloaded again for every scan.
+
+Set `TRIVY_CACHE_DIR` to a directory that persists and the database is downloaded once and reused:
+
+```bash
+export TRIVY_CACHE_DIR="$HOME/.cache/trivy"
+prowler image --image <image>
+```
+
+Prowler leaves a directory you supply exactly as it found it, and never deletes it.
+
+<Note>
+This is required on hosts with no internet access. Trivy cannot fetch the database there, so it has to be supplied: populate the directory on a machine that does have access, copy it across, and point `TRIVY_CACHE_DIR` at it.
+
+The database ages. A scan run against an old one reports only the vulnerabilities known when it was built, and nothing in the output says so, so keep track of when it was last refreshed.
+</Note>
+
 
 ### Supported Scanners
 
