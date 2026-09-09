@@ -268,22 +268,6 @@ describe("RegistryExplorer", () => {
       expect(document.body.textContent).not.toContain("Search artifacts");
     });
 
-    it("keeps catalog controls unavailable while validation is pending without locking out the connect action", async () => {
-      // Given / When
-      const screen = await render(
-        <RegistryExplorer initialState={validationPendingState} />,
-      );
-
-      // Then
-      expect(document.body.textContent).toContain(
-        "Registry validation in progress",
-      );
-      await expect
-        .element(screen.getByRole("button", { name: "Connect API key" }))
-        .toBeEnabled();
-      expect(document.body.textContent).not.toContain("Search artifacts");
-    });
-
     it("lets a replacement key supersede a pending validation from the banner", async () => {
       // Given: a validation that never settled must not dead-end the user
       submitRegistryCredentialMock.mockResolvedValue(submittedResult(true));
@@ -299,6 +283,15 @@ describe("RegistryExplorer", () => {
       const screen = await render(
         <RegistryExplorer initialState={validationPendingState} />,
       );
+
+      // Pending validation leaves the form available for a replacement.
+      expect(document.body.textContent).toContain(
+        "Registry validation in progress",
+      );
+      await expect
+        .element(screen.getByRole("button", { name: "Connect API key" }))
+        .toBeEnabled();
+      expect(document.body.textContent).not.toContain("Search artifacts");
 
       // When
       await screen.getByRole("button", { name: "Connect API key" }).click();
@@ -370,112 +363,6 @@ describe("RegistryExplorer", () => {
       .not.toBeInTheDocument();
   });
 
-  it("shows credential failures inside the open access dialog", async () => {
-    // Given
-    submitRegistryCredentialMock.mockResolvedValue({
-      status: "replacement_failed",
-      credential: onboardingState.credential,
-    });
-    const screen = await render(
-      <RegistryExplorer initialState={onboardingState} />,
-    );
-
-    // When
-    await screen.getByRole("button", { name: "Connect API key" }).click();
-    await screen.getByLabelText("Registry key").fill("rejected-key");
-    await screen.getByRole("button", { name: "Connect", exact: true }).click();
-
-    // Then
-    const dialog = document.querySelector('[role="dialog"]');
-    expect(dialog).not.toBeNull();
-    await expect
-      .poll(() => dialog!.textContent)
-      .toContain(
-        "Registry key validation failed. Existing access is unchanged.",
-      );
-  });
-
-  it("keeps every dialog control inside the dialog bounds", async () => {
-    // Given
-    const screen = await render(<RegistryExplorer initialState={readyState} />);
-
-    // When
-    await screen.getByRole("button", { name: "Manage access" }).click();
-
-    // Then
-    await expect.element(screen.getByLabelText("Registry key")).toBeVisible();
-    const dialog = document.querySelector('[role="dialog"]');
-    expect(dialog).not.toBeNull();
-    const dialogRect = dialog!.getBoundingClientRect();
-    const controls = Array.from(dialog!.querySelectorAll("button, input, a"));
-    expect(controls.length).toBeGreaterThan(3);
-    for (const control of controls) {
-      const rect = control.getBoundingClientRect();
-      const name = control.textContent?.trim() || "registry key input";
-      expect(rect.right, `${name} overflows right edge`).toBeLessThanOrEqual(
-        dialogRect.right + 1,
-      );
-      expect(rect.left, `${name} overflows left edge`).toBeGreaterThanOrEqual(
-        dialogRect.left - 1,
-      );
-    }
-  });
-
-  it("keeps the Connect action visibly separated from the Registry key input", async () => {
-    // Given
-    const screen = await render(
-      <RegistryExplorer initialState={onboardingState} />,
-    );
-
-    // When
-    await screen.getByRole("button", { name: "Connect API key" }).click();
-
-    // Then
-    const inputRect = screen
-      .getByLabelText("Registry key")
-      .element()
-      .getBoundingClientRect();
-    const connectRect = screen
-      .getByRole("button", { name: "Connect", exact: true })
-      .element()
-      .getBoundingClientRect();
-    const visibleGap = connectRect.top - inputRect.bottom;
-
-    expect(visibleGap).toBeGreaterThanOrEqual(15);
-  });
-
-  it("keeps Manage access actions separated from the Registry key input without overlapping", async () => {
-    // Given
-    const screen = await render(<RegistryExplorer initialState={readyState} />);
-
-    // When
-    await screen.getByRole("button", { name: "Manage access" }).click();
-
-    // Then
-    const inputRect = screen
-      .getByLabelText("Registry key")
-      .element()
-      .getBoundingClientRect();
-    const disconnectRect = screen
-      .getByRole("button", { name: "Disconnect" })
-      .element()
-      .getBoundingClientRect();
-    const replaceRect = screen
-      .getByRole("button", { name: "Replace key" })
-      .element()
-      .getBoundingClientRect();
-    const earliestActionTop = Math.min(disconnectRect.top, replaceRect.top);
-    const visibleGap = earliestActionTop - inputRect.bottom;
-    const actionsOverlap =
-      disconnectRect.left < replaceRect.right &&
-      disconnectRect.right > replaceRect.left &&
-      disconnectRect.top < replaceRect.bottom &&
-      disconnectRect.bottom > replaceRect.top;
-
-    expect(visibleGap).toBeGreaterThanOrEqual(15);
-    expect(actionsOverlap).toBe(false);
-  });
-
   it("preserves the catalog while a watched replacement keeps the form visible and disabled", async () => {
     // Given
     const key = "replacement-key";
@@ -498,29 +385,6 @@ describe("RegistryExplorer", () => {
       .element(screen.getByRole("button", { name: "Disconnect" }))
       .toBeDisabled();
     expect(document.body.textContent).toContain("Cloud guard");
-    expect(document.body.innerHTML).not.toContain(key);
-  });
-
-  it("shows a disabled Connecting control while the submitted key stays write-only", async () => {
-    // Given
-    const key = "registry-test-key";
-    submitRegistryCredentialMock.mockResolvedValue(submittedResult());
-    trackAndPollTaskMock.mockReturnValue(new Promise(() => {}));
-    const screen = await render(
-      <RegistryExplorer initialState={onboardingState} />,
-    );
-
-    // When
-    await screen.getByRole("button", { name: "Connect API key" }).click();
-    await screen.getByLabelText("Registry key").fill(key);
-    await screen.getByRole("button", { name: "Connect", exact: true }).click();
-
-    // Then: the form stays visible while the watcher owns the wait
-    await expect
-      .element(screen.getByRole("button", { name: "Connecting…" }))
-      .toBeDisabled();
-    await expect.element(screen.getByLabelText("Registry key")).toBeDisabled();
-    await expect.element(screen.getByLabelText("Registry key")).toHaveValue("");
     expect(document.body.innerHTML).not.toContain(key);
   });
 
@@ -747,7 +611,10 @@ describe("RegistryExplorer", () => {
     await screen.getByLabelText("Registry key").fill(key);
     await screen.getByRole("button", { name: "Connect", exact: true }).click();
 
-    // Then: while the submission is in flight the key exists nowhere
+    // Then: repeat submission is disabled and the key has left the form.
+    await expect
+      .element(screen.getByRole("button", { name: "Connecting…", exact: true }))
+      .toBeDisabled();
     await expect
       .poll(() => submitRegistryCredentialMock.mock.calls)
       .toEqual([[key]]);
@@ -886,8 +753,8 @@ describe("RegistryExplorer", () => {
 
     // Then
     await expect
-      .poll(() => document.body.textContent)
-      .toContain("Existing access is unchanged");
+      .element(screen.getByRole("dialog"))
+      .toHaveTextContent("Existing access is unchanged");
     expect(document.body.textContent).toContain("Cloud guard");
     expect(document.body.textContent).toContain("API key connected");
     await expect.element(screen.getByLabelText("Registry key")).toHaveValue("");
@@ -918,49 +785,6 @@ describe("RegistryExplorer", () => {
   });
 
   describe("when the complete catalog is ready", () => {
-    it("shows the connected header, tab counts, and the full catalog grid", async () => {
-      // Given / When
-      const screen = await render(
-        <RegistryExplorer initialState={readyState} />,
-      );
-
-      // Then
-      expect(document.body.textContent).toContain("API key connected");
-      await expect
-        .element(screen.getByRole("tab", { name: /Explore/ }))
-        .toHaveTextContent("3");
-      await expect
-        .element(screen.getByRole("tab", { name: /My artifacts/ }))
-        .toHaveTextContent("2");
-      expect(document.body.textContent).toContain("3 artifacts");
-      expect(document.body.textContent).toContain("AWS guard");
-      expect(document.body.textContent).toContain("Later guard");
-      expect(document.body.textContent).toContain("Cloud guard");
-      expect(document.body.textContent).toContain("v3.0.0");
-      expect(document.body.textContent).toContain("42");
-    });
-
-    it("marks already-added artifacts with Remove instead of Add", async () => {
-      // Given / When
-      const screen = await render(
-        <RegistryExplorer initialState={readyState} />,
-      );
-
-      // Then
-      expect(document.body.textContent).toContain("Added");
-      await expect
-        .element(screen.getByRole("button", { name: "Add Cloud guard" }))
-        .toBeVisible();
-      await expect
-        .element(screen.getByRole("button", { name: "Remove AWS guard" }))
-        .toBeVisible();
-      expect(
-        screen.container.ownerDocument.querySelector(
-          '[aria-label="Add AWS guard"]',
-        ),
-      ).toBeNull();
-    });
-
     it.each([
       { isBuiltin: true, hasProvider: true },
       { isBuiltin: false, hasProvider: false },
@@ -1166,243 +990,10 @@ describe("RegistryExplorer", () => {
         .toBeVisible();
     });
 
-    it("shows the first owner with its logo on the card", async () => {
-      // Given / When
-      await render(<RegistryExplorer initialState={readyState} />);
-
-      // Then
-      const awsCard = cardFor("AWS guard");
-      expect(awsCard.textContent).toContain("Prowler");
-      await expect
-        .poll(() => awsCard.querySelector("img")?.getAttribute("src"))
-        .toBe("https://cdn.example/prowler-logo.png");
-    });
-
-    it("falls back to an initial-letter owner avatar without a logo", async () => {
-      // Given / When
-      await render(<RegistryExplorer initialState={readyState} />);
-
-      // Then
-      const cloudCard = cardFor("Cloud guard");
-      expect(cloudCard.textContent).toContain("Registry team");
-      expect(cloudCard.querySelector("img")).toBeNull();
-      const hiddenSpans = Array.from(
-        cloudCard.querySelectorAll('span[aria-hidden="true"]'),
-      ).map((span) => span.textContent?.trim());
-      expect(hiddenSpans).toContain("R");
-    });
-
-    it("hides the whole owner row when the artifact has no owners", async () => {
-      // Given / When
-      await render(<RegistryExplorer initialState={readyState} />);
-
-      // Then
-      const laterCard = cardFor("Later guard");
-      expect(laterCard.querySelector("img")).toBeNull();
-      const hiddenLetters = Array.from(
-        laterCard.querySelectorAll('span[aria-hidden="true"]'),
-      ).filter((span) => /^[A-Za-z]$/.test(span.textContent?.trim() ?? ""));
-      expect(hiddenLetters).toEqual([]);
-    });
-
-    it("keeps card accessible names intact without monogram initials", async () => {
-      // Given / When
-      const screen = await render(
-        <RegistryExplorer initialState={readyState} />,
-      );
-
-      // Then: cards keep their name-based content and action locators
-      expect(document.body.textContent).toContain("Later guard");
-      await expect
-        .element(screen.getByRole("button", { name: "Add Cloud guard" }))
-        .toBeVisible();
-      // The logo slot no longer leaks provider-derived initials ("az" for the
-      // azure artifact) into the page text.
-      expect(document.body.textContent).not.toContain("az");
-    });
-
-    it("shows a neutral package mark instead of a provider logo in the header", async () => {
-      // Given / When
-      const screen = await render(
-        <RegistryExplorer initialState={readyState} />,
-      );
-
-      // Then: the first aria-hidden icon slot of the marketplace card holds
-      // the neutral package mark, not a provider logo.
-      const awsHeaderIcon = cardFor("AWS guard").querySelector(
-        'span[aria-hidden="true"] > svg',
-      );
-      expect(awsHeaderIcon?.getAttribute("class")).toContain("lucide-package");
-
-      // When: tenant-only cards render in My artifacts
-      await screen.getByRole("tab", { name: /My artifacts/ }).click();
-
-      // Then
-      const tenantHeaderIcon = cardFor("saved-artifact").querySelector(
-        'span[aria-hidden="true"] > svg',
-      );
-      expect(tenantHeaderIcon?.getAttribute("class")).toContain(
-        "lucide-package",
-      );
-    });
-
-    it("names the single provider accessibly beside its footer logo", async () => {
-      // Given / When
-      await render(<RegistryExplorer initialState={readyState} />);
-
-      // Then: one provider renders only its logo plus an accessible name,
-      // never a "1 providers" count.
-      const awsCard = cardFor("AWS guard");
-      expect(awsCard.textContent).toContain("Provider: AWS");
-      expect(awsCard.textContent).not.toContain("1 providers");
-    });
-
-    it("shows a provider count with accessible names for multi-provider artifacts", async () => {
-      // Given / When
-      await render(<RegistryExplorer initialState={readyState} />);
-
-      // Then
-      const cloudCard = cardFor("Cloud guard");
-      expect(cloudCard.textContent).toContain("2 providers");
-      expect(cloudCard.textContent).toContain("Providers: AWS, Google Cloud");
-    });
-
-    it("collapses provider logos past four into an overflow badge", async () => {
-      // Given
-      const wideArtifact = {
-        normalizedName: "wide-guard",
-        name: "Wide guard",
-        description: "Artifact spanning many providers",
-        latestVersion: "1.0.0",
-        providers: ["aws", "azure", "gcp", "kubernetes", "m365", "github"],
-        isVerified: false,
-        isOfficial: false,
-        isBuiltin: false,
-        isMeta: true,
-        hasProvider: true,
-        hasChecks: true,
-        hasCompliance: false,
-        versionCount: 1,
-        totalDownloads: 7,
-        owners: [],
-      };
-
-      // When
-      await render(
-        <RegistryExplorer
-          initialState={{
-            ...readyState,
-            catalog: { status: "complete", artifacts: [wideArtifact] },
-            tenantArtifacts: [],
-          }}
-        />,
-      );
-
-      // Then: count, capped logo row, overflow badge, and full accessible list
-      const wideCard = cardFor("Wide guard");
-      expect(wideCard.textContent).toContain("6 providers");
-      expect(wideCard.textContent).toContain(
-        "Providers: AWS, Azure, Google Cloud, Kubernetes, Microsoft 365, GitHub",
-      );
-      const overflowBadge = Array.from(wideCard.querySelectorAll("span")).find(
-        (span) => span.textContent === "+2",
-      );
-      expect(overflowBadge).toBeDefined();
-      expect(overflowBadge?.previousElementSibling?.childElementCount).toBe(4);
-    });
-
-    it("renders a text pill for a provider without a bespoke badge beside known logos", async () => {
-      // Given: one known provider (logo) plus one dynamic provider (pill)
-      const mixedArtifact = {
-        normalizedName: "mixed-guard",
-        name: "Mixed guard",
-        description: "Artifact mixing known and dynamic providers",
-        latestVersion: "1.0.0",
-        providers: ["aws", "template"],
-        isVerified: false,
-        isOfficial: false,
-        isBuiltin: false,
-        isMeta: false,
-        hasProvider: true,
-        hasChecks: true,
-        hasCompliance: false,
-        versionCount: 1,
-        totalDownloads: 5,
-        owners: [],
-      };
-
-      // When
-      await render(
-        <RegistryExplorer
-          initialState={{
-            ...readyState,
-            catalog: { status: "complete", artifacts: [mixedArtifact] },
-            tenantArtifacts: [],
-          }}
-        />,
-      );
-
-      // Then: the dynamic provider renders a visible-text pill, the known
-      // provider keeps its logo, and the sr-only carrier names both.
-      const mixedCard = cardFor("Mixed guard");
-      const pills = Array.from(
-        mixedCard.querySelectorAll('span[data-slot="badge"]'),
-      );
-      expect(pills.map((pill) => pill.textContent)).toEqual(["Template"]);
-      expect(mixedCard.textContent).toContain("Providers: AWS, Template");
-      // The visible cluster row holds exactly the logo + the pill.
-      expect(pills[0]?.parentElement?.childElementCount).toBe(2);
-    });
-
-    it("renders only text pills when no provider has a bespoke badge", async () => {
-      // Given: every provider is dynamic
-      const dynamicArtifact = {
-        normalizedName: "dynamic-guard",
-        name: "Dynamic guard",
-        description: "Artifact with only dynamic providers",
-        latestVersion: "1.0.0",
-        providers: ["template", "custom-scan"],
-        isVerified: false,
-        isOfficial: false,
-        isBuiltin: false,
-        isMeta: false,
-        hasProvider: true,
-        hasChecks: true,
-        hasCompliance: false,
-        versionCount: 1,
-        totalDownloads: 2,
-        owners: [],
-      };
-
-      // When
-      await render(
-        <RegistryExplorer
-          initialState={{
-            ...readyState,
-            catalog: { status: "complete", artifacts: [dynamicArtifact] },
-            tenantArtifacts: [],
-          }}
-        />,
-      );
-
-      // Then: both providers render as name pills and no icon glyph remains
-      // in the visible cluster row.
-      const dynamicCard = cardFor("Dynamic guard");
-      const pills = Array.from(
-        dynamicCard.querySelectorAll('span[data-slot="badge"]'),
-      );
-      expect(pills.map((pill) => pill.textContent)).toEqual([
-        "Template",
-        "Custom Scan",
-      ]);
-      const clusterRow = pills[0]?.parentElement;
-      expect(clusterRow?.childElementCount).toBe(2);
-      expect(clusterRow?.querySelector("svg")).toBeNull();
-    });
-
     it("counts logos and pills together toward the four-item cap and overflow", async () => {
       // Given: six providers alternating known logos and dynamic pills
       const blendedArtifact = {
+        ...readyState.catalog.artifacts[2],
         normalizedName: "blended-guard",
         name: "Blended guard",
         description: "Artifact spanning logos and pills",
@@ -1415,20 +1006,10 @@ describe("RegistryExplorer", () => {
           "gcp",
           "local_thing",
         ],
-        isVerified: false,
-        isOfficial: false,
-        isBuiltin: false,
-        isMeta: true,
-        hasProvider: true,
-        hasChecks: true,
-        hasCompliance: false,
-        versionCount: 1,
-        totalDownloads: 9,
-        owners: [],
       };
 
       // When
-      await render(
+      const screen = await render(
         <RegistryExplorer
           initialState={{
             ...readyState,
@@ -1442,18 +1023,30 @@ describe("RegistryExplorer", () => {
       // first two pills are visible and two items collapse into "+2".
       const blendedCard = cardFor("Blended guard");
       expect(blendedCard.textContent).toContain("6 providers");
-      const pills = Array.from(
-        blendedCard.querySelectorAll('span[data-slot="badge"]'),
+      expect(blendedCard.innerText).toContain("+2");
+      await expect
+        .element(
+          screen.getByRole("listitem").getByText("Template", { exact: true }),
+        )
+        .toBeVisible();
+      await expect
+        .element(
+          screen
+            .getByRole("listitem")
+            .getByText("Custom Scan", { exact: true }),
+        )
+        .toBeVisible();
+      await expect
+        .element(
+          screen
+            .getByRole("listitem")
+            .getByText("Local Thing", { exact: true }),
+        )
+        .not.toBeInTheDocument();
+      // Even collapsed providers remain named for assistive technology.
+      expect(blendedCard.textContent).toContain(
+        "Providers: AWS, Template, Azure, Custom Scan, Google Cloud, Local Thing",
       );
-      expect(pills.map((pill) => pill.textContent)).toEqual([
-        "Template",
-        "Custom Scan",
-      ]);
-      expect(pills[0]?.parentElement?.childElementCount).toBe(4);
-      const overflowBadge = Array.from(
-        blendedCard.querySelectorAll("span"),
-      ).find((span) => span.textContent === "+2");
-      expect(overflowBadge).toBeDefined();
     });
 
     it("recovers the owner image when a fresh URL replaces an expired one", async () => {

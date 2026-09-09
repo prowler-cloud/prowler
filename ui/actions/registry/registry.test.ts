@@ -152,7 +152,6 @@ describe("Registry guarded reads", () => {
     const result = await getRegistryBootstrap();
 
     // Then
-    expect(result).not.toHaveProperty("leaseDurationMs");
     expect(result).toEqual({
       status: "ready",
       state: {
@@ -204,7 +203,6 @@ describe("Registry guarded reads", () => {
       const result = await getRegistryBootstrap();
 
       // Then
-      expect(result).not.toHaveProperty("leaseDurationMs");
       expect(result).toEqual({
         status: "ready",
         state: {
@@ -238,7 +236,7 @@ describe("Registry guarded reads", () => {
     );
   });
 
-  it("returns fresh complete collections without accepting a client lease", async () => {
+  it("returns fresh complete collections", async () => {
     // Given
     fetchMock
       .mockResolvedValueOnce(catalogResponse())

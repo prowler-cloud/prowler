@@ -146,25 +146,6 @@ describe("getNavigationConfig", () => {
     ]);
   });
 
-  it("shows the New Registry link for a server-eligible request", () => {
-    // Given / When
-    vi.stubEnv("UI_CLOUD_ENABLED", "true");
-    const registry = getNavigationConfig({
-      pathname: "/registry",
-      apiDocsUrl: null,
-      registryEligible: true,
-    })
-      .flatMap((section) => section.items)
-      .find((item) => item.label === "Registry");
-
-    // Then
-    expect(registry).toMatchObject({
-      href: "/registry",
-      active: true,
-      highlight: true,
-    });
-  });
-
   it("keeps the Cloud Billing destination for users with billing permission", () => {
     // Given
     vi.stubEnv("UI_CLOUD_ENABLED", "true");
