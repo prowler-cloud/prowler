@@ -115,10 +115,17 @@ class ImageProvider(Provider):
         self._session = None
         self._identity = "prowler"
         self._listing_only = False
-        self._trivy_cache_dir_obj = tempfile.TemporaryDirectory(
-            prefix="prowler-trivy-cache-"
-        )
-        self._trivy_cache_dir = self._trivy_cache_dir_obj.name
+        # A deployment that cannot reach the vulnerability database on demand has
+        # to be able to point at one it already holds, and one that can reach it
+        # should not re-download it for every image scanned.
+        configured_cache_dir = os.environ.get("TRIVY_CACHE_DIR", "").strip()
+        if configured_cache_dir:
+            self._trivy_cache_dir = configured_cache_dir
+        else:
+            self._trivy_cache_dir_obj = tempfile.TemporaryDirectory(
+                prefix="prowler-trivy-cache-"
+            )
+            self._trivy_cache_dir = self._trivy_cache_dir_obj.name
 
         # Registry authentication (follows IaC pattern: explicit params, env vars internal)
         self.registry_username = registry_username or os.environ.get(
