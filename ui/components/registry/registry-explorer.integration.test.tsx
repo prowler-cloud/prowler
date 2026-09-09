@@ -264,7 +264,6 @@ describe("RegistryExplorer", () => {
         "preserved tenant artifact",
       );
       expect(document.body.textContent).toContain("Explore Prowler Registry");
-      expect(document.body.textContent).not.toContain("API key connected");
       expect(document.body.textContent).not.toContain("Search artifacts");
     });
 
@@ -305,8 +304,8 @@ describe("RegistryExplorer", () => {
         .poll(() => submitRegistryCredentialMock.mock.calls)
         .toEqual([["replacement-key"]]);
       await expect
-        .poll(() => document.body.textContent)
-        .toContain("API key connected");
+        .element(screen.getByRole("button", { name: "Manage access" }))
+        .toBeVisible();
     });
   });
 
@@ -369,6 +368,12 @@ describe("RegistryExplorer", () => {
     submitRegistryCredentialMock.mockResolvedValue(submittedResult(true));
     trackAndPollTaskMock.mockReturnValue(new Promise(() => {}));
     const screen = await render(<RegistryExplorer initialState={readyState} />);
+
+    // Access stays available by its accessible name, without a text label.
+    expect(document.body.textContent).not.toContain("API key connected");
+    expect(
+      document.querySelector('button[aria-label="Manage access"]')?.textContent,
+    ).toBe("");
 
     // When
     await screen.getByRole("button", { name: "Manage access" }).click();
@@ -629,9 +634,6 @@ describe("RegistryExplorer", () => {
 
     // Then: the explorer lands in ready state and announces the connection
     await expect
-      .poll(() => document.body.textContent)
-      .toContain("API key connected");
-    await expect
       .element(screen.getByRole("tab", { name: /Explore/ }))
       .toBeVisible();
     await expect
@@ -756,7 +758,6 @@ describe("RegistryExplorer", () => {
       .element(screen.getByRole("dialog"))
       .toHaveTextContent("Existing access is unchanged");
     expect(document.body.textContent).toContain("Cloud guard");
-    expect(document.body.textContent).toContain("API key connected");
     await expect.element(screen.getByLabelText("Registry key")).toHaveValue("");
     expect(document.body.innerHTML).not.toContain(key);
   });
@@ -781,7 +782,6 @@ describe("RegistryExplorer", () => {
     expect(document.body.textContent).toContain(
       "Your 2 preserved tenant artifacts will remain available in My artifacts.",
     );
-    expect(document.body.textContent).not.toContain("API key connected");
   });
 
   describe("when the complete catalog is ready", () => {
@@ -862,6 +862,13 @@ describe("RegistryExplorer", () => {
       const screen = await render(
         <RegistryExplorer initialState={readyState} />,
       );
+
+      await expect
+        .element(screen.getByRole("img", { name: "Prowler", exact: true }))
+        .toBeVisible();
+      await expect
+        .element(screen.getByText("Prowler", { exact: true }))
+        .not.toBeInTheDocument();
 
       // When
       await screen.getByRole("tab", { name: /My artifacts/ }).click();
@@ -1055,7 +1062,7 @@ describe("RegistryExplorer", () => {
         isAdded: false,
         owners: [
           {
-            name: "Prowler",
+            name: "Registry team",
             type: "organization",
             logoUrl: "https://cdn.example/expired.png",
           },
@@ -1069,7 +1076,7 @@ describe("RegistryExplorer", () => {
         />,
       );
       await expect
-        .element(screen.getByText("P", { exact: true }))
+        .element(screen.getByText("R", { exact: true }))
         .toBeVisible();
       await screen.rerender(
         <RegistryArtifactCard
@@ -1093,7 +1100,7 @@ describe("RegistryExplorer", () => {
           ),
         )
         .not.toBeNull();
-      expect(document.body.textContent).toContain("Prowler");
+      expect(document.body.textContent).toContain("Registry team");
     });
   });
 
@@ -1316,7 +1323,6 @@ describe("RegistryExplorer", () => {
       );
       expect(document.body.textContent).toContain("Retry");
       expect(document.body.textContent).not.toContain("Search artifacts");
-      expect(document.body.textContent).not.toContain("API key connected");
     });
 
     it("labels documented unavailability as stale and leaves generic errors generic", async () => {

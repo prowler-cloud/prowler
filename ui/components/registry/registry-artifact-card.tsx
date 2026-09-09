@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 
 import { ProviderTypeIcon } from "@/components/icons/providers-badge/provider-type-icon";
+import { ProwlerShort } from "@/components/icons/prowler/ProwlerIcons";
 import {
   Avatar,
   AvatarImage,
@@ -110,17 +111,20 @@ function RegistryOwnerRow({
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      {owner && (
-        <span className="flex min-w-0 items-center gap-2">
-          <Avatar aria-hidden className="size-5">
-            <AvatarImage alt="" src={owner.logoUrl} />
-            <AvatarFallback>{owner.name.charAt(0)}</AvatarFallback>
-          </Avatar>
-          <span className="text-text-neutral-secondary truncate text-xs">
-            {owner.name}
+      {owner &&
+        (owner.name.trim().toLowerCase() === "prowler" ? (
+          <ProwlerShort aria-label="Prowler" role="img" size={20} />
+        ) : (
+          <span className="flex min-w-0 items-center gap-2">
+            <Avatar aria-hidden className="size-5">
+              <AvatarImage alt="" src={owner.logoUrl} />
+              <AvatarFallback>{owner.name.charAt(0)}</AvatarFallback>
+            </Avatar>
+            <span className="text-text-neutral-secondary truncate text-xs">
+              {owner.name}
+            </span>
           </span>
-        </span>
-      )}
+        ))}
       {isOfficial && (
         <Badge variant="tag">
           <ShieldCheck aria-hidden />
