@@ -20,7 +20,7 @@
   ],
   "Remediation": {
     "Code": {
-      "CLI": "aws bedrock-agentcore-control update-agent-runtime --agent-runtime-id <runtime_id> --role-arn <role_arn> --network-configuration '{\"networkMode\":\"PUBLIC\"}' --agent-runtime-artifact '{\"containerConfiguration\":{\"containerUri\":\"<container_uri>\"}}' --authorizer-configuration '{\"customJWTAuthorizer\":{\"discoveryUrl\":\"<discovery_url>\",\"allowedAudience\":[\"<audience>\"],\"allowedClients\":[\"<client_id>\"]}}' --request-header-configuration '{\"requestHeaderAllowlist\":[\"Authorization\"]}'",
+      "CLI": "",
       "NativeIaC": "",
       "Other": "1. Open the AWS Console and navigate to Amazon Bedrock AgentCore\n2. Select **Agent Runtimes** and select the target runtime\n3. Under **Authorizer configuration**, enable **Custom JWT Authorizer** and specify OIDC discovery URL, allowed audience, and allowed clients\n4. Under **Request header configuration**, add `Authorization` to the **Request header allowlist**\n5. Save changes to ensure end-user identity propagation is enabled",
       "Terraform": ""
