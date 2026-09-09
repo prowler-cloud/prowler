@@ -10,14 +10,6 @@ describe("StoreInitializer", () => {
     useUIStore.setState({ hasProviders: false, registryEligible: false });
   });
 
-  it("seeds the server-derived Registry eligibility into the UI store", () => {
-    // Given / When
-    render(<StoreInitializer values={{ registryEligible: true }} />);
-
-    // Then
-    expect(useUIStore.getState().registryEligible).toBe(true);
-  });
-
   it("keeps Registry hidden when the server sends no eligibility decision", () => {
     // Given / When
     render(<StoreInitializer values={{ hasProviders: true }} />);
@@ -36,6 +28,7 @@ describe("StoreInitializer", () => {
     );
 
     // Then
+    expect(useUIStore.getState().registryEligible).toBe(true);
     const persisted = JSON.parse(localStorage.getItem("ui-store") ?? "{}");
     expect(persisted.state?.hasProviders).toBe(true);
     expect(persisted.state).not.toHaveProperty("registryEligible");

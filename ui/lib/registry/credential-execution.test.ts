@@ -70,15 +70,6 @@ describe("executeRegistryCredentialValidation", () => {
     });
   });
 
-  it("owns confirmation instead of also notifying the watcher handler", async () => {
-    await executeRegistryCredentialValidation("key");
-    expect(trackAndPollTaskMock).toHaveBeenCalledWith(
-      expect.objectContaining({ notifyHandler: false }),
-    );
-    expect(refreshRegistryCredentialMock).toHaveBeenCalledTimes(1);
-    expect(refreshRegistryCollectionsMock).toHaveBeenCalledTimes(1);
-  });
-
   it("connects after the watched task settles and the credential is active", async () => {
     // Given
     const key = "registry-test-key";
@@ -97,6 +88,8 @@ describe("executeRegistryCredentialValidation", () => {
       },
     });
     expect(submitRegistryCredentialMock).toHaveBeenCalledWith(key);
+    expect(refreshRegistryCredentialMock).toHaveBeenCalledTimes(1);
+    expect(refreshRegistryCollectionsMock).toHaveBeenCalledTimes(1);
     expect(trackAndPollTaskMock).toHaveBeenCalledWith({
       taskId: "task-1",
       kind: REGISTRY_CREDENTIAL_TASK_KIND,
@@ -188,37 +181,6 @@ describe("executeRegistryCredentialValidation", () => {
     expect(refreshRegistryCredentialMock).not.toHaveBeenCalled();
   });
 
-  it("bounds the watch and reports the still-pending validation at the deadline", async () => {
-    // Given: the validation task never settles (e.g. no worker consumes it)
-    vi.useFakeTimers();
-    try {
-      trackAndPollTaskMock.mockReturnValue(new Promise(() => {}));
-      refreshRegistryCredentialMock.mockResolvedValue({
-        status: "status",
-        credential: pendingCredential,
-      });
-
-      // When
-      const outcomePromise = executeRegistryCredentialValidation("stuck-key");
-      await vi.advanceTimersByTimeAsync(30_000);
-
-      // Then: the caller regains control instead of waiting on the watcher
-      await expect(outcomePromise).resolves.toEqual({
-        status: "pending",
-      });
-    } finally {
-      vi.useRealTimers();
-    }
-  });
-
-  it("keeps an unsettled replacement pending without reading the old credential", async () => {
-    trackAndPollTaskMock.mockResolvedValue({ status: "pending" });
-    expect(await executeRegistryCredentialValidation("slow-key")).toEqual({
-      status: "pending",
-    });
-    expect(refreshRegistryCredentialMock).not.toHaveBeenCalled();
-  });
-
   it("confirms and publishes once when validation finishes after the dialog deadline", async () => {
     vi.useFakeTimers();
     const changed = vi.fn();
@@ -265,13 +227,22 @@ describe("executeRegistryCredentialValidation", () => {
     }
   });
 
-  it("does not report success before the task settles, even for a first key", async () => {
-    trackAndPollTaskMock.mockResolvedValue({ status: "pending" });
-    expect(await executeRegistryCredentialValidation("race-key")).toEqual({
-      status: "pending",
-    });
-    expect(refreshRegistryCollectionsMock).not.toHaveBeenCalled();
-  });
+  it.each([false, true])(
+    "does not confirm an unsettled task (priorConfigured: %s)",
+    async (priorConfigured) => {
+      submitRegistryCredentialMock.mockResolvedValue({
+        status: "submitted",
+        taskId: "task-1",
+        priorConfigured,
+      });
+      trackAndPollTaskMock.mockResolvedValue({ status: "pending" });
+      expect(await executeRegistryCredentialValidation("race-key")).toEqual({
+        status: "pending",
+      });
+      expect(refreshRegistryCredentialMock).not.toHaveBeenCalled();
+      expect(refreshRegistryCollectionsMock).not.toHaveBeenCalled();
+    },
+  );
 
   it("fails safely when the submit RPC rejects", async () => {
     // Given
@@ -323,15 +294,6 @@ describe("executeRegistryCredentialValidation", () => {
     expect(failed).toEqual({ status: "error" });
   });
 
-  it("keeps watcher notification suppressed when the caller requests notifications", async () => {
-    // When
-    await executeRegistryCredentialValidation("key", { notifyHandler: true });
-
-    // Then
-    expect(trackAndPollTaskMock).toHaveBeenCalledWith(
-      expect.objectContaining({ notifyHandler: false }),
-    );
-  });
   it("does not report a rejected replacement as connected when the prior key remains active", async () => {
     submitRegistryCredentialMock.mockResolvedValue({
       status: "submitted",

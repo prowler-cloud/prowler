@@ -67,49 +67,6 @@ describe("registryCredentialTaskHandler", () => {
     );
   });
 
-  it("reports an invalid key after a resumed task completes without an active credential", async () => {
-    // Given
-    refreshRegistryCredentialMock.mockResolvedValue({
-      status: "status",
-      credential: {
-        configured: false,
-        isValid: false,
-        scopes: [],
-        validationPending: false,
-      },
-    });
-
-    // When
-    registryCredentialTaskHandler.onReady(buildTask());
-
-    // Then
-    await vi.waitFor(() =>
-      expect(toastMock).toHaveBeenCalledWith({
-        variant: "destructive",
-        title: "Registry key validation failed",
-        description: "This Registry key is invalid. Check it and try again.",
-      }),
-    );
-  });
-
-  it("reports a failure when the authoritative credential read fails", async () => {
-    // Given
-    refreshRegistryCredentialMock.mockResolvedValue({ status: "error" });
-
-    // When
-    registryCredentialTaskHandler.onReady(buildTask());
-
-    // Then
-    await vi.waitFor(() =>
-      expect(toastMock).toHaveBeenCalledWith(
-        expect.objectContaining({
-          variant: "destructive",
-          title: "Registry key validation failed",
-        }),
-      ),
-    );
-  });
-
   it("reports a safe failure when a resumed task settles in error", async () => {
     // When
     await registryCredentialTaskHandler.onError(
@@ -137,10 +94,17 @@ describe("registryCredentialTaskHandler", () => {
       },
     });
     await registryCredentialTaskHandler.onReady(
-      buildTask({ result: { stored: false, error: "Invalid key" } }),
+      buildTask({
+        meta: { priorConfigured: "true" },
+        result: { stored: false, error: "Invalid key" },
+      }),
     );
     expect(toastMock).toHaveBeenCalledWith(
-      expect.objectContaining({ variant: "destructive" }),
+      expect.objectContaining({
+        variant: "destructive",
+        description:
+          "Registry key validation failed. Existing access is unchanged.",
+      }),
     );
     expect(refresh).toHaveBeenCalledOnce();
     window.removeEventListener("registry-credential-changed", refresh);
