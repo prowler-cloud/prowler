@@ -91,6 +91,16 @@ By default, `prowler` will scan all AWS regions.
 </Note>
 See more details about AWS Authentication in the [Authentication Section](/user-guide/providers/aws/authentication) section.
 
+- **AWS Retrier and Timeout Configuration**
+
+    Tune the Boto3 standard retrier and the endpoint timeouts when AWS throttles the scan or when some endpoints are unreachable from the network Prowler runs in:
+
+    ```console
+    prowler aws --aws-retries-max-attempts 5 --aws-connect-timeout 5 --aws-read-timeout 30
+    ```
+
+    See the [Boto3 configuration](/user-guide/providers/aws/boto3-configuration) page for defaults and environment variables.
+
 ## Azure
 
 Azure requires specifying the auth method:

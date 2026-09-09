@@ -1152,6 +1152,30 @@ class Test_Parser:
         parsed = self.parser.parse(command)
         assert parsed.aws_retries_max_attempts == int(max_retries)
 
+    def test_aws_parser_timeouts_default_to_none(self):
+        parsed = self.parser.parse([prowler_command])
+        assert parsed.aws_connect_timeout is None
+        assert parsed.aws_read_timeout is None
+
+    @pytest.mark.parametrize(
+        "argument, attribute",
+        [
+            ("--aws-connect-timeout", "aws_connect_timeout"),
+            ("--aws-read-timeout", "aws_read_timeout"),
+        ],
+    )
+    def test_aws_parser_timeouts(self, argument, attribute):
+        timeout = "5"
+        command = [prowler_command, argument, timeout]
+        parsed = self.parser.parse(command)
+        assert getattr(parsed, attribute) == int(timeout)
+
+    @pytest.mark.parametrize("value", ["0", "-1", "abc"])
+    def test_aws_parser_connect_timeout_rejects_non_positive(self, value):
+        command = [prowler_command, "--aws-connect-timeout", value]
+        with pytest.raises(SystemExit):
+            self.parser.parse(command)
+
     def test_aws_parser_scan_unused_services(self):
         argument = "--scan-unused-services"
         command = [prowler_command, argument]

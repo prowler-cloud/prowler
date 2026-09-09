@@ -19,19 +19,24 @@ from tzlocal import get_localzone
 from prowler.providers.aws.aws_provider import AwsProvider, get_aws_region_for_sts
 from prowler.providers.aws.config import (
     AWS_STS_GLOBAL_ENDPOINT_REGION,
+    BOTO3_CONNECT_TIMEOUT,
+    BOTO3_READ_TIMEOUT,
     BOTO3_USER_AGENT_EXTRA,
     ROLE_SESSION_NAME,
+    get_boto3_timeout_from_env,
     get_default_session_config,
 )
 from prowler.providers.aws.exceptions.exceptions import (
     AWSArgumentTypeValidationError,
     AWSIAMRoleARNInvalidResourceTypeError,
+    AWSInvalidBoto3TimeoutError,
     AWSInvalidPartitionError,
     AWSInvalidProviderIdError,
     AWSNoCredentialsError,
 )
 from prowler.providers.aws.lib.arn.models import ARN
 from prowler.providers.aws.lib.mutelist.mutelist import AWSMutelist
+from prowler.providers.aws.lib.session.aws_set_up_session import AwsSetUpSession
 from prowler.providers.aws.models import (
     AWSAssumeRoleInfo,
     AWSCallerIdentity,
@@ -2490,6 +2495,8 @@ aws:
 
         assert session_config.user_agent_extra == BOTO3_USER_AGENT_EXTRA
         assert session_config.retries == {"max_attempts": 3, "mode": "standard"}
+        assert session_config.connect_timeout == BOTO3_CONNECT_TIMEOUT
+        assert session_config.read_timeout == BOTO3_READ_TIMEOUT
 
     @mock_aws
     def test_set_session_config_10_max_attempts(self):
@@ -2498,12 +2505,78 @@ aws:
 
         assert session_config.user_agent_extra == BOTO3_USER_AGENT_EXTRA
         assert session_config.retries == {"max_attempts": 10, "mode": "standard"}
+        assert session_config.connect_timeout == BOTO3_CONNECT_TIMEOUT
+        assert session_config.read_timeout == BOTO3_READ_TIMEOUT
+
+    def test_set_session_config_timeouts(self):
+        session_config = AwsProvider.set_session_config(
+            None, connect_timeout=2, read_timeout=15
+        )
+
+        assert session_config.retries == {"max_attempts": 3, "mode": "standard"}
+        assert session_config.connect_timeout == 2
+        assert session_config.read_timeout == 15
+
+    @mock_aws
+    def test_aws_provider_timeouts_reach_session_config(self):
+        aws_provider = AwsProvider(connect_timeout=2, read_timeout=15)
+
+        assert aws_provider.session.session_config.connect_timeout == 2
+        assert aws_provider.session.session_config.read_timeout == 15
+
+    @mock_aws
+    def test_aws_set_up_session_forwards_timeouts(self):
+        aws_session = AwsSetUpSession(
+            aws_access_key_id="testing",
+            aws_secret_access_key="testing",
+            connect_timeout=2,
+            read_timeout=15,
+        )
+
+        assert aws_session._session.session_config.connect_timeout == 2
+        assert aws_session._session.session_config.read_timeout == 15
 
     def test_get_default_session_config(self):
         config = get_default_session_config()
 
         assert config.user_agent_extra == BOTO3_USER_AGENT_EXTRA
         assert config.retries == {"max_attempts": 3, "mode": "standard"}
+        assert config.connect_timeout == BOTO3_CONNECT_TIMEOUT
+        assert config.read_timeout == BOTO3_READ_TIMEOUT
+
+    def test_get_default_session_config_timeouts_from_env(self):
+        with mock.patch.dict(
+            os.environ,
+            {
+                "PROWLER_AWS_BOTO3_CONNECT_TIMEOUT": "3",
+                "PROWLER_AWS_BOTO3_READ_TIMEOUT": "20",
+            },
+        ):
+            config = get_default_session_config()
+
+        assert config.connect_timeout == 3
+        assert config.read_timeout == 20
+
+    def test_set_session_config_argument_overrides_env_timeouts(self):
+        with mock.patch.dict(os.environ, {"PROWLER_AWS_BOTO3_CONNECT_TIMEOUT": "3"}):
+            config = AwsProvider.set_session_config(None, connect_timeout=7)
+
+        assert config.connect_timeout == 7
+
+    @pytest.mark.parametrize("raw", ["0", "-5", "ten", "1.5"])
+    def test_get_boto3_timeout_from_env_rejects_non_positive_integers(self, raw):
+        with mock.patch.dict(os.environ, {"PROWLER_AWS_BOTO3_CONNECT_TIMEOUT": raw}):
+            with raises(
+                AWSInvalidBoto3TimeoutError, match="PROWLER_AWS_BOTO3_CONNECT_TIMEOUT"
+            ):
+                get_boto3_timeout_from_env("PROWLER_AWS_BOTO3_CONNECT_TIMEOUT", 10)
+
+    def test_get_boto3_timeout_from_env_blank_falls_back_to_default(self):
+        with mock.patch.dict(os.environ, {"PROWLER_AWS_BOTO3_CONNECT_TIMEOUT": "  "}):
+            assert (
+                get_boto3_timeout_from_env("PROWLER_AWS_BOTO3_CONNECT_TIMEOUT", 10)
+                == 10
+            )
 
     @mock_aws
     @patch(

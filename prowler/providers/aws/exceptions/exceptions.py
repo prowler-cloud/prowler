@@ -78,6 +78,10 @@ class AWSBaseException(ProwlerException):
             "message": "The provided AWS partition is invalid",
             "remediation": "Check the provided AWS partition and ensure it is valid.",
         },
+        (1918, "AWSInvalidBoto3TimeoutError"): {
+            "message": "The Boto3 timeout configured through the environment is invalid",
+            "remediation": "Set PROWLER_AWS_BOTO3_CONNECT_TIMEOUT and PROWLER_AWS_BOTO3_READ_TIMEOUT to a positive integer number of seconds.",
+        },
     }
 
     def __init__(self, code, file=None, original_exception=None, message=None):
@@ -230,4 +234,11 @@ class AWSInvalidPartitionError(AWSBaseException):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             1917, file=file, original_exception=original_exception, message=message
+        )
+
+
+class AWSInvalidBoto3TimeoutError(AWSBaseException):
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            1918, file=file, original_exception=original_exception, message=message
         )
