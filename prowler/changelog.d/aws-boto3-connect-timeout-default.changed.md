@@ -1,1 +1,1 @@
-AWS provider default Boto3 connect timeout lowered from 60 to 10 seconds, so scans in restricted-egress networks (VPC endpoints for a subset of services, GovCloud, private deployments) no longer spend 3 minutes per region on every service whose endpoint is unreachable
+AWS provider default Boto3 connect timeout lowered from 60 to 10 seconds, so scans in restricted-egress networks (VPC endpoints for a subset of services, GovCloud, private deployments) no longer spend 4 minutes per region on every service whose endpoint is unreachable

@@ -2,9 +2,13 @@
 title: "Boto3 Retrier and Timeout Configuration in Prowler"
 ---
 
+import { VersionBadge } from "/snippets/version-badge.mdx"
+
 Prowler's AWS Provider leverages Boto3's [Standard](https://boto3.amazonaws.com/v1/documentation/api/latest/guide/retries.html) retry mode to automatically retry client calls to AWS services when encountering errors or exceptions.
 
 ## Timeout Configuration
+
+<VersionBadge version="5.41.1" />
 
 Every AWS API call is bounded by two timeouts:
 
@@ -21,7 +25,7 @@ export PROWLER_AWS_BOTO3_READ_TIMEOUT=30
 CLI flags take precedence over the environment variables. Prowler sets both timeouts explicitly, so `AWS_DEFAULTS_MODE` and a `connect_timeout` in `~/.aws/config` are ignored; use the flag or the environment variable instead.
 
 <Note>
-Boto3 defaults both timeouts to 60 seconds. In networks with restricted egress (for example VPC endpoints for a subset of services, GovCloud or private deployments), every AWS service without a reachable endpoint used to cost up to 3 attempts × 60 seconds (Boto3 counts the first call as an attempt) for each region. Prowler lowers the connect timeout to 10 seconds so unreachable endpoints fail fast; lower it further together with `--aws-retries-max-attempts 1` if a scan still spends most of its time waiting on unreachable services.
+Boto3 defaults both timeouts to 60 seconds. In networks with restricted egress (for example VPC endpoints for a subset of services, GovCloud or private deployments), every AWS service without a reachable endpoint used to cost up to 4 attempts × 60 seconds (the first call plus the 3 retries) for each region. Prowler lowers the connect timeout to 10 seconds so unreachable endpoints fail fast; lower it further together with `--aws-retries-max-attempts 1` if a scan still spends most of its time waiting on unreachable services.
 
 </Note>
 

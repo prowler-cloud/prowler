@@ -2,6 +2,8 @@
 title: 'Basic Usage'
 ---
 
+import { VersionBadge } from "/snippets/version-badge.mdx"
+
 ## Running Prowler
 
 Running Prowler requires specifying the provider (e.g. `aws`, `gcp`, `azure`, `kubernetes`, `m365`, `github`, `iac` or `mongodbatlas`):
@@ -92,6 +94,8 @@ By default, `prowler` will scan all AWS regions.
 See more details about AWS Authentication in the [Authentication Section](/user-guide/providers/aws/authentication) section.
 
 - **AWS Retrier and Timeout Configuration**
+
+    <VersionBadge version="5.41.1" />
 
     Tune the Boto3 standard retrier and the endpoint timeouts when AWS throttles the scan or when some endpoints are unreachable from the network Prowler runs in:
 

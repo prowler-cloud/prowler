@@ -238,6 +238,8 @@ class AWSInvalidPartitionError(AWSBaseException):
 
 
 class AWSInvalidBoto3TimeoutError(AWSBaseException):
+    """Boto3 timeout configured through the environment is not a positive integer."""
+
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             1918, file=file, original_exception=original_exception, message=message
