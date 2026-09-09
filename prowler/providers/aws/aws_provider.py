@@ -576,7 +576,7 @@ class AwsProvider(Provider):
     ) -> str:
         excluded_regions = set(excluded_regions or ())
         session_region = session.region_name
-        env_partition_regions = get_env_partition_regions()
+        env_partition_regions = get_env_partition_regions(session_region)
         if session_region and session_region not in excluded_regions:
             if not env_partition_regions or session_region in env_partition_regions:
                 return session_region
@@ -680,7 +680,7 @@ class AwsProvider(Provider):
                 session = Session(**session_arguments)
                 session._session.set_default_client_config(session_config)
                 sts_region = (
-                    get_env_partition_bootstrap_region()
+                    get_env_partition_bootstrap_region(session.region_name)
                     or session.region_name
                     or AWS_STS_GLOBAL_ENDPOINT_REGION
                 )
@@ -1427,12 +1427,6 @@ class AwsProvider(Provider):
             Connection(is_connected=True, Error=None))
         """
         try:
-            if aws_region is None:
-                aws_region = (
-                    get_env_partition_bootstrap_region()
-                    or AWS_STS_GLOBAL_ENDPOINT_REGION
-                )
-
             session = AwsProvider.setup_session(
                 mfa=mfa_enabled,
                 profile=profile,
@@ -1440,6 +1434,12 @@ class AwsProvider(Provider):
                 aws_secret_access_key=aws_secret_access_key,
                 aws_session_token=aws_session_token,
             )
+
+            if aws_region is None:
+                aws_region = (
+                    get_env_partition_bootstrap_region(session.region_name)
+                    or AWS_STS_GLOBAL_ENDPOINT_REGION
+                )
 
             if role_arn:
                 session_duration = validate_session_duration(session_duration)
@@ -1766,15 +1766,17 @@ def get_botocore_partition_regions() -> dict:
     return partition_regions
 
 
-def get_env_partition_regions() -> Optional[list]:
+def get_env_partition_regions(
+    session_region: Optional[str] = None,
+) -> Optional[list]:
     """
     Get the bootstrap region candidates for the partition set in the
     PROWLER_AWS_PARTITION environment variable.
 
-    The region configured for the session leads the list when it belongs to the
-    partition, so that a deployment which only reaches its own region is not
-    sent to the partition's global STS endpoint. A configured region outside
-    the partition is ignored.
+    Args:
+        session_region (Optional[str]): The region of the AWS session. It leads
+            the candidates when it belongs to the partition and is ignored
+            otherwise.
 
     Returns:
         Optional[list]: The regions of the configured partition, preferred
@@ -1795,18 +1797,23 @@ def get_env_partition_regions() -> Optional[list]:
             message=f"Invalid partition: {raw_partition} set in PROWLER_AWS_PARTITION. Valid partitions: {', '.join(sorted(partition_regions))}"
         )
 
-    # The partition's own preference is the region of its global STS endpoint,
-    # which a deployment with regional endpoints may have no route to.
-    configured_region = BotocoreSession().get_config_variable("region")
-    if configured_region in regions:
-        regions = [configured_region] + [r for r in regions if r != configured_region]
+    # A deployment reached only through its own region's endpoints has no route
+    # to the partition's global STS region, so the session region goes first
+    if session_region in regions:
+        regions = [session_region] + [r for r in regions if r != session_region]
     return regions
 
 
-def get_env_partition_bootstrap_region() -> Optional[str]:
+def get_env_partition_bootstrap_region(
+    session_region: Optional[str] = None,
+) -> Optional[str]:
     """
     Get the STS bootstrap region for the partition set in the
     PROWLER_AWS_PARTITION environment variable.
+
+    Args:
+        session_region (Optional[str]): The region of the AWS session, preferred
+            when it belongs to the partition.
 
     Returns:
         Optional[str]: The preferred bootstrap region of the configured
@@ -1815,7 +1822,7 @@ def get_env_partition_bootstrap_region() -> Optional[str]:
     Raises:
         AWSInvalidPartitionError: If the value is not a partition known to botocore.
     """
-    regions = get_env_partition_regions()
+    regions = get_env_partition_regions(session_region)
     return regions[0] if regions else None
 
 
@@ -1851,7 +1858,7 @@ def get_aws_region_for_sts(
             if region not in excluded_regions:
                 return region
 
-    env_partition_regions = get_env_partition_regions()
+    env_partition_regions = get_env_partition_regions(session_region)
     if env_partition_regions:
         # The configured partition constrains the whole fallback chain: prefer
         # a non-excluded region, but never leave the partition
