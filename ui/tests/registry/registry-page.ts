@@ -212,7 +212,8 @@ export class RegistryPage extends BasePage {
     expect(storedValues).not.toContain(key);
   }
   async connectInstalledProviderAndScan(): Promise<void> {
-    await this.page.goto("/providers");
+    await this.page.getByRole("link", { name: "Go to Providers" }).click();
+    await expect(this.page).toHaveURL(/\/providers$/);
     await this.dismissWelcomeDialog();
     await this.page.getByRole("button", { name: /Add (a )?Provider/i }).click();
     await expect(

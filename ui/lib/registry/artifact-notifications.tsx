@@ -1,4 +1,6 @@
-import { toast } from "@/components/shadcn/toast";
+import Link from "next/link";
+
+import { toast, ToastAction } from "@/components/shadcn/toast";
 import type { RegistryMutationResult } from "@/types/registry";
 
 export function notifyRegistryArtifactOutcome(
@@ -7,7 +9,11 @@ export function notifyRegistryArtifactOutcome(
   if (result.status === "confirmed") {
     toast({
       title: "Artifact added",
-      description: "The provider is available in Providers → Add Provider.",
+      action: (
+        <ToastAction altText="Go to Providers" asChild>
+          <Link href="/providers">Go to Providers</Link>
+        </ToastAction>
+      ),
     });
     window.dispatchEvent(
       new CustomEvent("registry-artifacts-changed", {
