@@ -1,0 +1,1 @@
+When `PROWLER_AWS_PARTITION` is set, the configured region now leads the partition's bootstrap candidates instead of being ignored in favour of the region of the partition's global STS endpoint, so a deployment that reaches AWS only through the endpoints of its own region no longer hangs on an unreachable one

@@ -16,7 +16,11 @@ from moto import mock_aws
 from pytest import raises
 from tzlocal import get_localzone
 
-from prowler.providers.aws.aws_provider import AwsProvider, get_aws_region_for_sts
+from prowler.providers.aws.aws_provider import (
+    AwsProvider,
+    get_aws_region_for_sts,
+    get_env_partition_bootstrap_region,
+)
 from prowler.providers.aws.config import (
     AWS_STS_GLOBAL_ENDPOINT_REGION,
     BOTO3_USER_AGENT_EXTRA,
@@ -1181,28 +1185,55 @@ aws:
             == AWS_REGION_EU_WEST_1
         )
 
-    def test_bootstrap_region_candidates_honour_configured_partition(self, monkeypatch):
+    def test_env_partition_bootstrap_region_prefers_configured_region(
+        self, monkeypatch
+    ):
         monkeypatch.setenv("PROWLER_AWS_PARTITION", AWS_GOV_CLOUD_PARTITION)
+        monkeypatch.setenv("AWS_DEFAULT_REGION", "us-gov-west-1")
 
-        assert AwsProvider.get_bootstrap_region_candidates(None) == (
-            "us-gov-east-1",
-            "us-gov-west-1",
-        )
+        assert get_env_partition_bootstrap_region() == "us-gov-west-1"
 
-    def test_bootstrap_region_candidates_default_without_partition(self, monkeypatch):
+    def test_env_partition_bootstrap_region_ignores_region_outside_partition(
+        self, monkeypatch
+    ):
+        monkeypatch.setenv("PROWLER_AWS_PARTITION", AWS_GOV_CLOUD_PARTITION)
+        monkeypatch.setenv("AWS_DEFAULT_REGION", AWS_REGION_EU_WEST_1)
+
+        assert get_env_partition_bootstrap_region() == "us-gov-east-1"
+
+    def test_env_partition_bootstrap_region_without_configured_region(
+        self, monkeypatch
+    ):
+        monkeypatch.setenv("PROWLER_AWS_PARTITION", AWS_GOV_CLOUD_PARTITION)
+        monkeypatch.delenv("AWS_DEFAULT_REGION", raising=False)
+        monkeypatch.delenv("AWS_REGION", raising=False)
+
+        assert get_env_partition_bootstrap_region() == "us-gov-east-1"
+
+    def test_env_partition_bootstrap_region_without_partition(self, monkeypatch):
         monkeypatch.delenv("PROWLER_AWS_PARTITION", raising=False)
 
-        assert (
-            AwsProvider.get_bootstrap_region_candidates(None)[0] == AWS_REGION_US_EAST_1
-        )
+        assert get_env_partition_bootstrap_region() is None
 
-    def test_bootstrap_region_candidates_session_region_wins(self, monkeypatch):
+    def test_aws_region_for_sts_prefers_configured_region_in_partition(
+        self, monkeypatch
+    ):
         monkeypatch.setenv("PROWLER_AWS_PARTITION", AWS_GOV_CLOUD_PARTITION)
+        monkeypatch.setenv("AWS_DEFAULT_REGION", "us-gov-west-1")
 
-        assert AwsProvider.get_bootstrap_region_candidates("cn-north-1") == (
-            "cn-north-1",
-            "cn-northwest-1",
-        )
+        assert get_aws_region_for_sts(None, set()) == "us-gov-west-1"
+
+    def test_get_profile_region_ignores_region_outside_partition(self, monkeypatch):
+        monkeypatch.setenv("PROWLER_AWS_PARTITION", AWS_GOV_CLOUD_PARTITION)
+        aws_session = session.Session(region_name=AWS_REGION_US_EAST_1)
+
+        assert AwsProvider.get_profile_region(aws_session) == "us-gov-east-1"
+
+    def test_get_profile_region_keeps_region_inside_partition(self, monkeypatch):
+        monkeypatch.setenv("PROWLER_AWS_PARTITION", AWS_GOV_CLOUD_PARTITION)
+        aws_session = session.Session(region_name="us-gov-west-1")
+
+        assert AwsProvider.get_profile_region(aws_session) == "us-gov-west-1"
 
     @mock_aws
     def test_aws_gov_get_global_region(self):

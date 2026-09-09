@@ -26,7 +26,6 @@ from prowler.lib.utils.utils import open_file, parse_json_file, print_boxes
 from prowler.providers.aws.config import (
     AWS_REGION_US_EAST_1,
     AWS_STS_GLOBAL_ENDPOINT_REGION,
-    PARTITION_BOOTSTRAP_REGIONS,
     ROLE_SESSION_NAME,
     get_default_session_config,
 )
@@ -569,12 +568,6 @@ class AwsProvider(Provider):
             if session_region.startswith("us-iso"):
                 return (session_region,)
 
-        # The deployment already declares its partition; without this the fallback below
-        # sends the first call to the commercial partition whatever the credentials are.
-        env_partition = os.environ.get("PROWLER_AWS_PARTITION", "").strip()
-        if env_partition in PARTITION_BOOTSTRAP_REGIONS:
-            return PARTITION_BOOTSTRAP_REGIONS[env_partition]
-
         return (AWS_STS_GLOBAL_ENDPOINT_REGION, "us-east-2", "us-west-2", "eu-west-1")
 
     @staticmethod
@@ -583,8 +576,15 @@ class AwsProvider(Provider):
     ) -> str:
         excluded_regions = set(excluded_regions or ())
         session_region = session.region_name
+        env_partition_regions = get_env_partition_regions()
         if session_region and session_region not in excluded_regions:
-            return session_region
+            if not env_partition_regions or session_region in env_partition_regions:
+                return session_region
+        if env_partition_regions:
+            for region in env_partition_regions:
+                if region not in excluded_regions:
+                    return region
+            return env_partition_regions[0]
 
         for region in AwsProvider.get_bootstrap_region_candidates(session_region):
             if region not in excluded_regions:
@@ -1771,6 +1771,11 @@ def get_env_partition_regions() -> Optional[list]:
     Get the bootstrap region candidates for the partition set in the
     PROWLER_AWS_PARTITION environment variable.
 
+    The region configured for the session leads the list when it belongs to the
+    partition, so that a deployment which only reaches its own region is not
+    sent to the partition's global STS endpoint. A configured region outside
+    the partition is ignored.
+
     Returns:
         Optional[list]: The regions of the configured partition, preferred
             bootstrap region first, or None when the environment variable is
@@ -1789,6 +1794,12 @@ def get_env_partition_regions() -> Optional[list]:
         raise AWSInvalidPartitionError(
             message=f"Invalid partition: {raw_partition} set in PROWLER_AWS_PARTITION. Valid partitions: {', '.join(sorted(partition_regions))}"
         )
+
+    # The partition's own preference is the region of its global STS endpoint,
+    # which a deployment with regional endpoints may have no route to.
+    configured_region = BotocoreSession().get_config_variable("region")
+    if configured_region in regions:
+        regions = [configured_region] + [r for r in regions if r != configured_region]
     return regions
 
 
