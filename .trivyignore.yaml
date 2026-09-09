@@ -185,7 +185,7 @@ vulnerabilities:
   # that exception as soon as a Trivy release pins grpc >= 1.82.2.
   - id: CVE-2026-84445
     purls:
-      - "pkg:golang/google.golang.org/grpc"
+      - "pkg:golang/google.golang.org/grpc@v1.82.1"
     expired_at: 2026-10-15
 
   # CVE-2026-56855 and CVE-2026-78662 are DoS deadlocks in x/crypto/ssh: a malicious peer
