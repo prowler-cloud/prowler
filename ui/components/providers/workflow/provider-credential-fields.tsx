@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from "@/components/shadcn/select/select";
 import { Textarea } from "@/components/shadcn/textarea/textarea";
-import type { RegistryCredentialSchema } from "@/lib/registry/provider-credential-schema";
+import type { RegistryCredentialSchema } from "@/lib/provider-credentials/provider-credential-schema";
 
 interface RegistryCredentialFieldsProps {
   readonly errors: Readonly<Record<string, string | undefined>>;

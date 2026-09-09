@@ -4,7 +4,7 @@ import {
   addRegistryArtifact,
   confirmRegistryArtifactAddition,
 } from "@/actions/registry/registry";
-import { notifyRegistryArtifactOutcome } from "@/lib/registry-artifact-notifications";
+import { notifyRegistryArtifactOutcome } from "@/lib/registry/artifact-notifications";
 import {
   TASK_WATCHER_STATUS,
   trackAndPollTask,

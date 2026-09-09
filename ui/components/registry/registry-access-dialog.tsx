@@ -9,6 +9,7 @@ import { Modal } from "@/components/shadcn/modal/modal";
 
 interface RegistryAccessDialogCommonProps {
   errorMessage?: string;
+  registryKeyUrl?: string;
   onOpenChange: (open: boolean) => void;
   onSubmit: (key: string) => Promise<void>;
   open: boolean;
@@ -32,6 +33,7 @@ type RegistryAccessDialogProps =
 
 export function RegistryAccessDialog({
   errorMessage,
+  registryKeyUrl,
   mode,
   onDisconnect,
   onOpenChange,
@@ -110,15 +112,22 @@ export function RegistryAccessDialog({
               {errorMessage}
             </p>
           )}
-          <Button asChild className="self-start" size="link-sm" variant="link">
-            <a
-              href="https://registry.prowler.com"
-              rel="noopener noreferrer"
-              target="_blank"
+          {registryKeyUrl && (
+            <Button
+              asChild
+              className="self-start"
+              size="link-sm"
+              variant="link"
             >
-              Where do I find my key?
-            </a>
-          </Button>
+              <a
+                href={registryKeyUrl}
+                rel="noopener noreferrer"
+                target="_blank"
+              >
+                Where do I find my key?
+              </a>
+            </Button>
+          )}
         </div>
         <DialogFooter
           className={mode === "manage" ? "sm:justify-between" : undefined}

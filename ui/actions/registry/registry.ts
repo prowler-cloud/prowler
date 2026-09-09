@@ -7,6 +7,7 @@ import { apiBaseUrl } from "@/lib";
 import { REGISTRY_ACCESS } from "@/lib/registry/access";
 import { evaluateRegistryAccess } from "@/lib/registry/access.server";
 import { isRegistryArtifactInstallable } from "@/lib/registry/artifacts";
+import { isActiveRegistryCredential } from "@/lib/registry/credential-task";
 import {
   buildRegistryProviderOptions,
   type RegistryProviderOption,
@@ -235,9 +236,6 @@ async function readCompleteRegistryCatalog(
   }
 }
 
-const hasActiveRegistryCredential = (credential: RegistryCredentialStatus) =>
-  credential.configured && credential.isValid && !credential.validationPending;
-
 async function confirmRegistryMutation(
   accessToken: string,
   normalizedName: string,
@@ -295,7 +293,7 @@ export async function getRegistryBootstrap(): Promise<RegistryBootstrapResult> {
 
   const { credential } = credentialRead;
   const { tenantArtifacts } = tenantArtifactsRead;
-  if (!hasActiveRegistryCredential(credential)) {
+  if (!isActiveRegistryCredential(credential)) {
     return bootstrapReady({
       status: credential.validationPending
         ? REGISTRY_BOOTSTRAP_STATE.VALIDATION_PENDING
@@ -305,8 +303,6 @@ export async function getRegistryBootstrap(): Promise<RegistryBootstrapResult> {
     });
   }
 
-  const providers = await readRegistryProviders(access, credential);
-  if (providers.status !== "ready") return bootstrapFailure(providers);
   const catalog = await readCompleteRegistryCatalog(access, credential);
   if (catalog.status === REGISTRY_FAILURE.ACCESS_DENIED) {
     return { status: REGISTRY_FAILURE.ACCESS_DENIED };
@@ -339,8 +335,6 @@ export async function refreshRegistryCollections(): Promise<RegistryCollectionsR
   const access = await getRegistryAccess();
   if (!access) return { status: REGISTRY_FAILURE.ACCESS_DENIED };
 
-  const providers = await readRegistryProviders(access, null);
-  if (providers.status !== "ready") return providers;
   const catalog = await readCompleteRegistryCatalog(access, null);
   if (catalog.status !== REGISTRY_CATALOG.COMPLETE) return catalog;
   const tenantArtifactsRead = await readRegistryTenantArtifacts(access);

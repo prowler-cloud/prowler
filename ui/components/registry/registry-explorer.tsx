@@ -2,12 +2,10 @@
 
 import { Check } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useEffectEvent, useRef, useState } from "react";
 
 import {
   disconnectRegistryCredential,
-  getRegistryBootstrap,
-  refreshRegistryCollections,
   removeRegistryArtifact,
 } from "@/actions/registry/registry";
 import { Alert, AlertDescription } from "@/components/shadcn/alert";
@@ -20,13 +18,17 @@ import {
   TabsTrigger,
 } from "@/components/shadcn/tabs/tabs";
 import { toast } from "@/components/shadcn/toast/use-toast";
+import { executeRegistryArtifactAddition } from "@/lib/registry/artifact-execution";
 import { isRegistryArtifactInstallable } from "@/lib/registry/artifacts";
-import { executeRegistryArtifactAddition } from "@/lib/registry-artifact-execution";
-import { executeRegistryCredentialValidation } from "@/lib/registry-credential-execution";
+import { executeRegistryCredentialValidation } from "@/lib/registry/credential-execution";
+import {
+  REGISTRY_CREDENTIAL_CHANGED,
+  credentialOutcomeMessage,
+  type RegistryCredentialValidationOutcome,
+} from "@/lib/registry/credential-result";
 import { useTaskWatcherStore } from "@/store/task-watcher/store";
 import {
   REGISTRY_BOOTSTRAP_STATE,
-  REGISTRY_CATALOG,
   REGISTRY_CREDENTIAL_ACTION,
   REGISTRY_FAILURE,
   REGISTRY_MUTATION,
@@ -100,9 +102,13 @@ function mutationFailureMessage(result: RegistryMutationResult) {
 
 interface RegistryExplorerProps {
   initialState: RegistryBootstrapState;
+  registryKeyUrl?: string;
 }
 
-export function RegistryExplorer({ initialState }: RegistryExplorerProps) {
+export function RegistryExplorer({
+  initialState,
+  registryKeyUrl,
+}: RegistryExplorerProps) {
   // The API is the sole access authority: a denied action result routes to
   // Profile once, and the navigation unmounts this component with its state.
   const router = useRouter();
@@ -183,6 +189,7 @@ export function RegistryExplorer({ initialState }: RegistryExplorerProps) {
   const manageButtonRef = useRef<HTMLButtonElement>(null);
   const removeTriggerRef = useRef<HTMLButtonElement | null>(null);
   const operationGeneration = useRef(0);
+  const awaitingCredential = useRef(false);
 
   useEffect(
     () => () => {
@@ -191,16 +198,57 @@ export function RegistryExplorer({ initialState }: RegistryExplorerProps) {
     [],
   );
 
+  const consumeCredentialOutcome = useEffectEvent(
+    (result: RegistryCredentialValidationOutcome) => {
+      if (!awaitingCredential.current) applyCredentialOutcome(result);
+    },
+  );
   useEffect(() => {
-    const refresh = async () => {
-      const bootstrap = await getRegistryBootstrap().catch(() => null);
-      if (bootstrap?.status === "ready") setState(bootstrap.state);
-      if (bootstrap?.status === "access_denied") router.replace("/profile");
+    const consume = (event: Event) => {
+      if (event instanceof CustomEvent) consumeCredentialOutcome(event.detail);
     };
-    window.addEventListener("registry-credential-changed", refresh);
+    window.addEventListener(REGISTRY_CREDENTIAL_CHANGED, consume);
     return () =>
-      window.removeEventListener("registry-credential-changed", refresh);
-  }, [router]);
+      window.removeEventListener(REGISTRY_CREDENTIAL_CHANGED, consume);
+  }, []);
+
+  function applyCredentialOutcome(result: RegistryCredentialValidationOutcome) {
+    if (result.status === REGISTRY_FAILURE.ACCESS_DENIED) {
+      router.replace("/profile");
+      return;
+    }
+    setPendingOperation(null);
+    if (result.status === REGISTRY_CREDENTIAL_ACTION.CONNECTED) {
+      setAccessDialogMode(undefined);
+      setOperationMessage(undefined);
+      setState({
+        status: REGISTRY_BOOTSTRAP_STATE.READY,
+        credential: result.credential,
+        catalog: result.collections.catalog,
+        tenantArtifacts: result.collections.tenantArtifacts,
+      });
+      return;
+    }
+    if (
+      result.status === REGISTRY_CREDENTIAL_ACTION.PENDING ||
+      result.status === REGISTRY_CREDENTIAL_ACTION.INVALID
+    ) {
+      setState((current) =>
+        current.status === REGISTRY_BOOTSTRAP_STATE.ONBOARDING ||
+        current.status === REGISTRY_BOOTSTRAP_STATE.VALIDATION_PENDING
+          ? {
+              status:
+                result.status === REGISTRY_CREDENTIAL_ACTION.PENDING
+                  ? REGISTRY_BOOTSTRAP_STATE.VALIDATION_PENDING
+                  : REGISTRY_BOOTSTRAP_STATE.ONBOARDING,
+              credential: result.credential ?? current.credential,
+              tenantArtifacts: current.tenantArtifacts,
+            }
+          : current,
+      );
+    }
+    setOperationMessage(credentialOutcomeMessage(result));
+  }
 
   async function handleAdd(artifact: RegistryMarketplaceArtifact) {
     if (
@@ -235,81 +283,11 @@ export function RegistryExplorer({ initialState }: RegistryExplorerProps) {
     const generation = operationGeneration.current;
     setOperationMessage(undefined);
     setPendingOperation(REGISTRY_PENDING_OPERATION.CREDENTIAL);
-    try {
-      // The dialog stays mounted with a disabled Connecting… form while the
-      // house task watcher tracks the validation task to settlement.
-      const result = await executeRegistryCredentialValidation(key);
-      if (generation !== operationGeneration.current) return;
-      if (result.status === REGISTRY_FAILURE.ACCESS_DENIED) {
-        return router.replace("/profile");
-      }
-
-      if (result.status === REGISTRY_CREDENTIAL_ACTION.CONNECTED) {
-        const collections = await refreshRegistryCollections();
-        if (generation !== operationGeneration.current) return;
-        if (collections.status === REGISTRY_FAILURE.ACCESS_DENIED) {
-          return router.replace("/profile");
-        }
-        setPendingOperation(null);
-        if (collections.status === REGISTRY_CATALOG.COMPLETE) {
-          setAccessDialogMode(undefined);
-          setState({
-            status: REGISTRY_BOOTSTRAP_STATE.READY,
-            credential: result.credential,
-            catalog: collections.catalog,
-            tenantArtifacts: collections.tenantArtifacts,
-          });
-          return;
-        }
-        setOperationMessage(
-          "Registry collections could not be loaded. Try again.",
-        );
-        return;
-      }
-
-      setPendingOperation(null);
-      if (
-        result.status === REGISTRY_CREDENTIAL_ACTION.PENDING ||
-        result.status === REGISTRY_CREDENTIAL_ACTION.INVALID
-      ) {
-        // Keep the dialog open for an inline retry; the underlying banner
-        // still tracks the authoritative credential state.
-        setState((current) =>
-          current.status === REGISTRY_BOOTSTRAP_STATE.ONBOARDING ||
-          current.status === REGISTRY_BOOTSTRAP_STATE.VALIDATION_PENDING
-            ? {
-                status:
-                  result.status === REGISTRY_CREDENTIAL_ACTION.PENDING
-                    ? REGISTRY_BOOTSTRAP_STATE.VALIDATION_PENDING
-                    : REGISTRY_BOOTSTRAP_STATE.ONBOARDING,
-                credential: result.credential,
-                tenantArtifacts: current.tenantArtifacts,
-              }
-            : current,
-        );
-        setOperationMessage(
-          result.status === REGISTRY_CREDENTIAL_ACTION.PENDING
-            ? "Registry key validation is taking longer than expected. Try again."
-            : (result.message ??
-                "This Registry key is invalid. Check it and try again."),
-        );
-        return;
-      }
-
-      setOperationMessage(
-        result.status === REGISTRY_CREDENTIAL_ACTION.REPLACEMENT_FAILED
-          ? "Registry key validation failed. Existing access is unchanged."
-          : "Registry key validation could not be completed. Try again.",
-      );
-    } catch {
-      // A rejected server-action RPC must never strand the dialog in the
-      // disabled Connecting… state: recover into a retry-capable form.
-      if (generation !== operationGeneration.current) return;
-      setPendingOperation(null);
-      setOperationMessage(
-        "Registry key validation could not be completed. Try again.",
-      );
-    }
+    awaitingCredential.current = true;
+    const result = await executeRegistryCredentialValidation(key);
+    awaitingCredential.current = false;
+    if (generation !== operationGeneration.current) return;
+    applyCredentialOutcome(result);
   }
 
   async function handleDisconnect() {
@@ -375,6 +353,7 @@ export function RegistryExplorer({ initialState }: RegistryExplorerProps) {
   }
 
   const accessDialogProps = {
+    registryKeyUrl,
     errorMessage: operationMessage,
     onOpenChange: (open: boolean) => {
       if (!open && pendingOperation !== REGISTRY_PENDING_OPERATION.CREDENTIAL) {
@@ -446,7 +425,25 @@ export function RegistryExplorer({ initialState }: RegistryExplorerProps) {
       ],
     } as const;
     const [title, message] = messages[state.status];
-    return <RetryState title={title}>{message}</RetryState>;
+    return (
+      <>
+        <RetryState title={title}>{message}</RetryState>
+        {state.status === REGISTRY_BOOTSTRAP_STATE.RECONNECT && (
+          <div className="flex justify-center">
+            <Button
+              onClick={() =>
+                setAccessDialogMode(REGISTRY_ACCESS_DIALOG_MODE.MANAGE)
+              }
+              ref={manageButtonRef}
+              type="button"
+            >
+              Replace key
+            </Button>
+          </div>
+        )}
+        {accessDialog}
+      </>
+    );
   }
 
   const model = buildRegistryMarketplaceModel(
@@ -553,7 +550,7 @@ export function RegistryExplorer({ initialState }: RegistryExplorerProps) {
               <li key={artifact.normalizedName}>
                 <RegistryArtifactCard
                   artifact={artifact}
-                  isAddPending={pendingAddName === artifact.normalizedName}
+                  pendingAddName={pendingAddName}
                   onAdd={() => handleAdd(artifact)}
                   onRemove={(trigger) =>
                     openRemoveDialog(artifact.normalizedName, trigger)
@@ -576,7 +573,7 @@ export function RegistryExplorer({ initialState }: RegistryExplorerProps) {
                 {myArtifact.catalogArtifact ? (
                   <RegistryArtifactCard
                     artifact={myArtifact.catalogArtifact}
-                    isAddPending={pendingAddName === myArtifact.normalizedName}
+                    pendingAddName={pendingAddName}
                     onAdd={() => handleAdd(myArtifact.catalogArtifact!)}
                     onRemove={(trigger) =>
                       openRemoveDialog(myArtifact.normalizedName, trigger)

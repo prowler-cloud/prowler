@@ -4,13 +4,23 @@ import type { WatchedTask } from "@/store/task-watcher/store";
 
 import { registryCredentialTaskHandler } from "./registry-credential-task-handler";
 
-const { refreshRegistryCredentialMock, toastMock } = vi.hoisted(() => ({
+const {
+  refreshRegistryCollectionsMock,
+  refreshRegistryCredentialMock,
+  toastMock,
+} = vi.hoisted(() => ({
+  refreshRegistryCollectionsMock: vi.fn(),
   refreshRegistryCredentialMock: vi.fn(),
   toastMock: vi.fn(),
 }));
 
 vi.mock("@/actions/registry/registry", () => ({
+  refreshRegistryCollections: refreshRegistryCollectionsMock,
   refreshRegistryCredential: refreshRegistryCredentialMock,
+}));
+
+vi.mock("@/store/task-watcher/store", () => ({
+  TASK_WATCHER_STATUS: { PENDING: "pending", READY: "ready", ERROR: "error" },
 }));
 
 vi.mock("@/components/shadcn/toast", () => ({ toast: toastMock }));
@@ -28,6 +38,12 @@ const buildTask = (overrides: Partial<WatchedTask> = {}): WatchedTask => ({
 describe("registryCredentialTaskHandler", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    refreshRegistryCollectionsMock.mockResolvedValue({
+      status: "complete",
+      catalog: { status: "complete", artifacts: [] },
+      tenantArtifacts: [],
+    });
+    refreshRegistryCredentialMock.mockResolvedValue({ status: "error" });
   });
 
   it("announces the connected Registry after a resumed task completes validly", async () => {
@@ -71,8 +87,7 @@ describe("registryCredentialTaskHandler", () => {
       expect(toastMock).toHaveBeenCalledWith({
         variant: "destructive",
         title: "Registry key validation failed",
-        description:
-          "The submitted Registry key could not be validated. Connect a new key from the Registry page.",
+        description: "This Registry key is invalid. Check it and try again.",
       }),
     );
   });
@@ -95,9 +110,9 @@ describe("registryCredentialTaskHandler", () => {
     );
   });
 
-  it("reports the watcher error when a resumed task settles in error", () => {
+  it("reports a safe failure when a resumed task settles in error", async () => {
     // When
-    registryCredentialTaskHandler.onError(
+    await registryCredentialTaskHandler.onError(
       buildTask({ status: "error", error: 'Task ended in state "failed".' }),
     );
 
@@ -105,9 +120,9 @@ describe("registryCredentialTaskHandler", () => {
     expect(toastMock).toHaveBeenCalledWith({
       variant: "destructive",
       title: "Registry key validation failed",
-      description: 'Task ended in state "failed".',
+      description: "Registry key validation could not be completed. Try again.",
     });
-    expect(refreshRegistryCredentialMock).not.toHaveBeenCalled();
+    expect(refreshRegistryCredentialMock).toHaveBeenCalledTimes(1);
   });
   it("does not announce a rejected replacement as connected", async () => {
     const refresh = vi.fn();

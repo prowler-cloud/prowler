@@ -76,7 +76,6 @@ const tenantArtifactsResponse = () =>
       },
     ],
   });
-const providersResponse = () => jsonResponse({ data: [] });
 const catalogResponse = () =>
   jsonResponse({
     data: [
@@ -142,12 +141,11 @@ describe("Registry guarded reads", () => {
     },
   );
 
-  it("bootstraps in credential, tenant-artifact, providers, then complete-catalog order", async () => {
+  it("bootstraps in credential, tenant-artifact, then complete-catalog order", async () => {
     // Given
     fetchMock
       .mockResolvedValueOnce(credentialResponse())
       .mockResolvedValueOnce(tenantArtifactsResponse())
-      .mockResolvedValueOnce(providersResponse())
       .mockResolvedValueOnce(catalogResponse());
 
     // When
@@ -178,7 +176,6 @@ describe("Registry guarded reads", () => {
     expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([
       "https://api.test/api/v1/registry/credential",
       "https://api.test/api/v1/registry/artifacts",
-      "https://api.test/api/v1/registry/providers",
       "https://api.test/api/v1/registry/available-artifacts?page%5Bnumber%5D=1&page%5Bsize%5D=100",
     ]);
     fetchMock.mock.calls.forEach(([, options]) => {
@@ -244,7 +241,6 @@ describe("Registry guarded reads", () => {
   it("returns fresh complete collections without accepting a client lease", async () => {
     // Given
     fetchMock
-      .mockResolvedValueOnce(providersResponse())
       .mockResolvedValueOnce(catalogResponse())
       .mockResolvedValueOnce(tenantArtifactsResponse());
 

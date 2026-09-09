@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeAll, describe, expect, it, vi } from "vitest";
 
-import type { RegistryCredentialSchema } from "@/lib/registry/provider-credential-schema";
+import type { RegistryCredentialSchema } from "@/lib/provider-credentials/provider-credential-schema";
 
 import { RegistryCredentialFields } from "./provider-credential-fields";
 

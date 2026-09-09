@@ -14,6 +14,7 @@ import {
 } from "@/lib/integrations/slack-connect-status";
 import { REGISTRY_ACCESS } from "@/lib/registry/access";
 import { evaluateRegistryAccess } from "@/lib/registry/access.server";
+import { getRegistryPresentation } from "@/lib/registry/presentation";
 import { readEnv } from "@/lib/runtime-env";
 import { isCloud } from "@/lib/shared/env";
 import { copyAttributionParams } from "@/lib/utm";
@@ -37,6 +38,10 @@ const withSecurityHeaders = (response: NextResponse): NextResponse => {
     "Content-Security-Policy",
     getCspHeader({
       cloudEnabled: isCloud(),
+      registryImageOrigins: getRegistryPresentation(
+        readEnv("UI_REGISTRY_URL"),
+        readEnv("UI_REGISTRY_MEDIA_URL"),
+      ).imageOrigins,
       posthogEnabled: isGatedIntegrationEnabled(GATED_INTEGRATIONS.posthog),
       posthogKey: readGatedEnv(
         "UI_POSTHOG_ENABLED",

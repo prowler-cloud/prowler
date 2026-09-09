@@ -55,27 +55,19 @@ describe("Registry marketplace model", () => {
 
     expect(model).toMatchObject({
       isComplete: true,
-      canExplore: true,
       providers: ["aws", "azure", "gcp"],
-      metrics: {
-        providers: 3,
-        availableArtifacts: 1,
-        myArtifacts: 2,
-        officialArtifacts: 2,
-      },
     });
     if (!model.isComplete) throw new Error("expected complete model");
 
     expect(
-      model.artifacts.map(({ normalizedName, isAdded, addedVersionSpec }) => ({
+      model.artifacts.map(({ normalizedName, isAdded }) => ({
         normalizedName,
         isAdded,
-        addedVersionSpec,
       })),
     ).toEqual([
-      { normalizedName: "core", isAdded: true, addedVersionSpec: "latest" },
-      { normalizedName: "global", isAdded: false, addedVersionSpec: undefined },
-      { normalizedName: "zeta", isAdded: false, addedVersionSpec: undefined },
+      { normalizedName: "core", isAdded: true },
+      { normalizedName: "global", isAdded: false },
+      { normalizedName: "zeta", isAdded: false },
     ]);
 
     expect(model.myArtifacts).toEqual([
@@ -117,7 +109,7 @@ describe("Registry marketplace model", () => {
     const model = buildRegistryMarketplaceModel(
       catalog,
       [],
-      { search: "security", provider: "aws", capabilities: ["checks"] },
+      { search: "security", providers: ["aws"], capabilities: ["checks"] },
       "name",
     );
 
@@ -193,7 +185,7 @@ describe("Registry marketplace model", () => {
     const model = buildRegistryMarketplaceModel(
       catalog,
       [],
-      { search: "built", provider: "aws", capabilities: ["provider"] },
+      { search: "built", providers: ["aws"], capabilities: ["provider"] },
       "name",
     );
 
@@ -206,7 +198,6 @@ describe("Registry marketplace model", () => {
         isBuiltin: true,
       }),
     ]);
-    expect(model.metrics.availableArtifacts).toBe(0);
     expect(model.myArtifacts).toEqual([]);
   });
 
@@ -238,7 +229,6 @@ describe("Registry marketplace model", () => {
         normalizedName: "built-in-member",
         isAdded: true,
         isBuiltin: true,
-        addedVersionSpec: "2.0.0",
       }),
     ]);
     expect(model.myArtifacts).toEqual([
@@ -251,12 +241,6 @@ describe("Registry marketplace model", () => {
         }),
       }),
     ]);
-    expect(model.metrics).toEqual({
-      providers: 1,
-      availableArtifacts: 0,
-      myArtifacts: 1,
-      officialArtifacts: 1,
-    });
   });
 
   it("keeps incomplete catalogs out of complete-only controls and selectors", () => {
@@ -280,14 +264,6 @@ describe("Registry marketplace model", () => {
 
     expect(model).toEqual({
       isComplete: false,
-      canExplore: false,
-      canRetry: true,
-      controls: {
-        search: false,
-        filters: false,
-        hierarchy: false,
-        metrics: false,
-      },
     });
   });
 });

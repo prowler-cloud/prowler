@@ -1,10 +1,13 @@
+import { http, HttpResponse } from "msw";
 import { useRouter } from "next/navigation";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { userEvent } from "vitest/browser";
 
+import { worker } from "@/__tests__/msw/worker";
 import { render } from "@/__tests__/render-browser";
 import type { RegistryBootstrapState } from "@/types/registry";
 
+import { RegistryArtifactCard } from "./registry-artifact-card";
 import { RegistryExplorer } from "./registry-explorer";
 
 vi.mock("next/navigation", async () => {
@@ -59,7 +62,7 @@ vi.mock("@/actions/registry/registry", () => ({
 // The credential flow watches its validation task through the house task
 // watcher; integration tests drive settlement through this mock the same way
 // `lib/jira-dispatch-execution.test.ts` does.
-vi.mock("@/lib/registry-artifact-execution", () => ({
+vi.mock("@/lib/registry/artifact-execution", () => ({
   executeRegistryArtifactAddition: executeRegistryArtifactAdditionMock,
 }));
 
@@ -200,7 +203,30 @@ function cardFor(name: string) {
 }
 
 describe("RegistryExplorer", () => {
+  it("offers key replacement when the configured Registry rejects access", async () => {
+    const screen = await render(
+      <RegistryExplorer initialState={{ status: "reconnect" }} />,
+    );
+    await screen.getByRole("button", { name: "Replace key" }).click();
+    await expect.element(screen.getByRole("dialog")).toBeVisible();
+    await expect.element(screen.getByLabelText("Registry key")).toBeEnabled();
+  });
+
   beforeEach(() => {
+    worker.use(
+      http.get(
+        "https://cdn.example/prowler-logo.png",
+        () =>
+          new HttpResponse(
+            '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"><rect width="20" height="20" fill="black"/></svg>',
+            { headers: { "Content-Type": "image/svg+xml" } },
+          ),
+      ),
+      http.get(
+        "https://cdn.example/expired.png",
+        () => new HttpResponse(null, { status: 403 }),
+      ),
+    );
     originalReplaceState(null, "", "/registry");
     vi.spyOn(window.history, "replaceState").mockImplementation(
       (data, unused, url) => {
@@ -316,7 +342,10 @@ describe("RegistryExplorer", () => {
   it("presents the connect dialog with help link and cancel action", async () => {
     // Given
     const screen = await render(
-      <RegistryExplorer initialState={onboardingState} />,
+      <RegistryExplorer
+        initialState={onboardingState}
+        registryKeyUrl="https://registry.private.test/keys"
+      />,
     );
 
     // When
@@ -330,7 +359,7 @@ describe("RegistryExplorer", () => {
       .toBeVisible();
     await expect
       .element(screen.getByRole("link", { name: "Where do I find my key?" }))
-      .toBeVisible();
+      .toHaveAttribute("href", "https://registry.private.test/keys");
 
     // When
     await screen.getByRole("button", { name: "Cancel", exact: true }).click();
@@ -647,7 +676,7 @@ describe("RegistryExplorer", () => {
     expect(dialog).not.toBeNull();
     await expect
       .poll(() => dialog!.querySelector('[role="alert"]')?.textContent)
-      .toContain("Registry key validation could not be completed. Try again.");
+      .toContain("Registry collections could not be loaded. Try again.");
     await expect
       .element(screen.getByRole("button", { name: "Connect", exact: true }))
       .toBeEnabled();
@@ -741,6 +770,8 @@ describe("RegistryExplorer", () => {
     await expect
       .element(screen.getByLabelText("Registry key"))
       .not.toBeInTheDocument();
+    expect(refreshRegistryCredentialMock).toHaveBeenCalledTimes(1);
+    expect(refreshRegistryCollectionsMock).toHaveBeenCalledTimes(1);
   });
 
   describe("when a Registry action loses authorization", () => {
@@ -1142,10 +1173,9 @@ describe("RegistryExplorer", () => {
       // Then
       const awsCard = cardFor("AWS guard");
       expect(awsCard.textContent).toContain("Prowler");
-      const logo = awsCard.querySelector("img");
-      expect(logo?.getAttribute("src")).toBe(
-        "https://cdn.example/prowler-logo.png",
-      );
+      await expect
+        .poll(() => awsCard.querySelector("img")?.getAttribute("src"))
+        .toBe("https://cdn.example/prowler-logo.png");
     });
 
     it("falls back to an initial-letter owner avatar without a logo", async () => {
@@ -1426,25 +1456,51 @@ describe("RegistryExplorer", () => {
       expect(overflowBadge).toBeDefined();
     });
 
-    it("falls back to the initial-letter avatar when the owner logo fails to load", async () => {
-      // Given
-      await render(<RegistryExplorer initialState={readyState} />);
-      const logo = cardFor("AWS guard").querySelector("img");
-      expect(logo).not.toBeNull();
-
-      // When: the short-lived signed URL expires and the image errors out
-      logo?.dispatchEvent(new Event("error"));
-
-      // Then: the logo is replaced by the initial-letter avatar and the
-      // owner name stays visible.
+    it("recovers the owner image when a fresh URL replaces an expired one", async () => {
+      const artifact = {
+        ...readyState.catalog.artifacts[0],
+        isAdded: false,
+        owners: [
+          {
+            name: "Prowler",
+            type: "organization",
+            logoUrl: "https://cdn.example/expired.png",
+          },
+        ],
+      };
+      const screen = await render(
+        <RegistryArtifactCard
+          artifact={artifact}
+          onAdd={() => {}}
+          onRemove={() => {}}
+        />,
+      );
       await expect
-        .poll(() => cardFor("AWS guard").querySelector("img"))
-        .toBeNull();
-      const hiddenSpans = Array.from(
-        cardFor("AWS guard").querySelectorAll('span[aria-hidden="true"]'),
-      ).map((span) => span.textContent?.trim());
-      expect(hiddenSpans).toContain("P");
-      expect(cardFor("AWS guard").textContent).toContain("Prowler");
+        .element(screen.getByText("P", { exact: true }))
+        .toBeVisible();
+      await screen.rerender(
+        <RegistryArtifactCard
+          artifact={{
+            ...artifact,
+            owners: [
+              {
+                ...artifact.owners[0],
+                logoUrl: "https://cdn.example/prowler-logo.png",
+              },
+            ],
+          }}
+          onAdd={() => {}}
+          onRemove={() => {}}
+        />,
+      );
+      await expect
+        .poll(() =>
+          document.querySelector(
+            'img[src="https://cdn.example/prowler-logo.png"]',
+          ),
+        )
+        .not.toBeNull();
+      expect(document.body.textContent).toContain("Prowler");
     });
   });
 
@@ -1538,7 +1594,7 @@ describe("RegistryExplorer", () => {
     expect(registryRouter.replace).not.toHaveBeenCalled();
   });
 
-  it("disables only the pending card while an Add confirmation is pending", async () => {
+  it("disables all Add buttons while an Add confirmation is pending", async () => {
     // Given
     executeRegistryArtifactAdditionMock.mockReturnValue(new Promise(() => {}));
     const screen = await render(<RegistryExplorer initialState={readyState} />);
@@ -1554,7 +1610,7 @@ describe("RegistryExplorer", () => {
     await expect.element(addCloudGuard).toHaveTextContent("Adding…");
     await expect
       .element(screen.getByRole("button", { name: "Add Later guard" }))
-      .toBeEnabled();
+      .toBeDisabled();
     expect(executeRegistryArtifactAdditionMock).toHaveBeenCalledTimes(1);
   });
 

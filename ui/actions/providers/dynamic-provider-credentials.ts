@@ -4,8 +4,8 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { apiBaseUrl, getAuthHeaders } from "@/lib";
-import { parseRegistryCredentialSchema } from "@/lib/registry/provider-credential-schema";
-import { validateCredentialValues } from "@/lib/registry/provider-credential-values";
+import { parseRegistryCredentialSchema } from "@/lib/provider-credentials/provider-credential-schema";
+import { validateCredentialValues } from "@/lib/provider-credentials/provider-credential-values";
 import { isKnownProviderType } from "@/types/providers";
 
 import { getProviderSchemas } from "./provider-schemas";

@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { isActiveRegistryCredential } from "@/lib/registry/credential-task";
 import {
   REGISTRY_CATALOG,
   REGISTRY_CATALOG_INCOMPLETE_REASON,
@@ -173,7 +174,7 @@ export async function classifyRegistryFailure(
   if (
     response.status === 409 &&
     credentialStatus !== null &&
-    !hasActiveRegistryCredential(credentialStatus)
+    !isActiveRegistryCredential(credentialStatus)
   ) {
     return { status: REGISTRY_FAILURE.ONBOARDING };
   }
@@ -191,16 +192,6 @@ export async function classifyRegistryFailure(
 
 function isRegistryDiscoveryEndpoint(endpoint: RegistryEndpoint) {
   return registryDiscoveryEndpoints.has(endpoint);
-}
-
-function hasActiveRegistryCredential(
-  credentialStatus: RegistryCredentialStatus | null,
-) {
-  return Boolean(
-    credentialStatus?.configured &&
-      credentialStatus.isValid &&
-      !credentialStatus.validationPending,
-  );
 }
 
 async function getRegistryErrorCode(response: Response) {

@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { saveDynamicProviderCredentials } from "@/actions/providers/dynamic-provider-credentials";
 import { getProviderSchemas } from "@/actions/providers/provider-schemas";
-import { RegistryCredentialFields } from "@/components/registry/provider-credential-fields";
+import { RegistryCredentialFields } from "@/components/providers/workflow/provider-credential-fields";
 import { Alert, AlertDescription, AlertTitle } from "@/components/shadcn/alert";
 import { Button } from "@/components/shadcn/button/button";
 import { Field, FieldLabel } from "@/components/shadcn/field/field";
@@ -21,11 +21,11 @@ import { useToast } from "@/components/shadcn/toast";
 import {
   parseRegistryCredentialSchema,
   type RegistryCredentialSchema,
-} from "@/lib/registry/provider-credential-schema";
+} from "@/lib/provider-credentials/provider-credential-schema";
 import {
   getCredentialDefaults,
   validateCredentialValues,
-} from "@/lib/registry/provider-credential-values";
+} from "@/lib/provider-credentials/provider-credential-values";
 import { useProviderWizardStore } from "@/store/provider-wizard/store";
 import type { ProviderSchemasResult } from "@/types/provider-schema";
 

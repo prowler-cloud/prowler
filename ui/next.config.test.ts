@@ -45,8 +45,6 @@ const BASELINE_CSP = {
     "'self'",
     "https://www.google-analytics.com",
     "https://www.googletagmanager.com",
-    "https://media.registry.prowler.com",
-    "https://media.registry.dev.prowler.com",
   ],
   "font-src": ["'self'"],
   "style-src": ["'self'", "'unsafe-inline'"],
@@ -209,4 +207,15 @@ describe("PostHog Content Security Policy", () => {
     // Then
     expect(Object.values(csp).flat()).not.toContain(POSTHOG_WILDCARD);
   });
+});
+
+it("allows configured private Registry images in the request CSP", () => {
+  const csp = parseCsp(
+    getCspHeader({
+      ...ENABLED_POSTHOG_CONFIG,
+      registryImageOrigins: ["https://media.private.test"],
+    }),
+  );
+  expect(csp["img-src"]).toContain("https://media.private.test");
+  expect(csp["connect-src"]).not.toContain("https://media.private.test");
 });

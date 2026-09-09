@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { getRegistryCredentialFailureMessage } from "./registry-credential-task";
+import { getRegistryCredentialFailureMessage } from "./credential-task";
 
 describe("Registry credential rejection feedback", () => {
   it("explains a wrong-environment key without reflecting server data", () => {
