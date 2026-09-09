@@ -1,5 +1,7 @@
+import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { Toast, ToastProvider, ToastViewport } from "@/components/shadcn/toast";
 import type { WatchedTask } from "@/store/task-watcher/store";
 
 const { confirmRegistryArtifactAddition, toast } = vi.hoisted(() => ({
@@ -10,7 +12,10 @@ vi.mock("@/actions/registry/registry", () => ({
   addRegistryArtifact: vi.fn(),
   confirmRegistryArtifactAddition,
 }));
-vi.mock("@/components/shadcn/toast", () => ({ toast }));
+vi.mock("@/components/shadcn/toast", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/components/shadcn/toast")>()),
+  toast,
+}));
 vi.mock("@/store/task-watcher/store", () => ({
   trackAndPollTask: vi.fn(),
   TASK_WATCHER_STATUS: { READY: "ready" },
@@ -54,6 +59,16 @@ describe("resumed Registry installations", () => {
     expect(toast).toHaveBeenCalledWith(
       expect.objectContaining({ title: "Artifact added" }),
     );
+    expect(toast.mock.calls[0][0]).not.toHaveProperty("description");
+    render(
+      <ToastProvider>
+        <Toast open>{toast.mock.calls[0][0].action}</Toast>
+        <ToastViewport />
+      </ToastProvider>,
+    );
+    expect(
+      screen.getByRole("link", { name: "Go to Providers" }),
+    ).toHaveAttribute("href", "/providers");
     expect(listener).toHaveBeenCalledOnce();
     expect(listener.mock.calls[0][0].detail).toEqual(tenantArtifacts);
     window.removeEventListener("registry-artifacts-changed", listener);
