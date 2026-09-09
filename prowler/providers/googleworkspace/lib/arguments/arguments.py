@@ -11,7 +11,6 @@ def init_parser(self):
     )
     googleworkspace_auth_subparser.add_argument(
         "--impersonate-service-account",
-        nargs="?",
         metavar="SERVICE_ACCOUNT",
         help="Impersonate a Google Service Account through Application Default Credentials and use it for Domain-Wide Delegation without a Service Account key (same as the GOOGLEWORKSPACE_IMPERSONATE_SERVICE_ACCOUNT environment variable)",
     )

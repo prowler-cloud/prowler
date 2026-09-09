@@ -123,6 +123,8 @@ prowler googleworkspace
 
 ## Keyless Authentication with Service Account Impersonation
 
+<VersionBadge version="5.42.0" />
+
 If Service Account keys are not allowed in your organization (for example under the `iam.disableServiceAccountKeyCreation` organization policy), Prowler can impersonate the Service Account through **Application Default Credentials (ADC)** instead of loading a JSON key. The Service Account still needs Domain-Wide Delegation exactly as described in Steps 1–3 and 5 above; only Step 4 is skipped.
 
 How it works: the ADC identity asks the IAM Service Account Credentials API to sign the Domain-Wide Delegation assertion on behalf of the Service Account (`iam.serviceAccounts.signJwt`), and Prowler exchanges that assertion for an access token of the delegated user. No private key is created, downloaded, or stored.
@@ -152,6 +154,10 @@ prowler googleworkspace --impersonate-service-account prowler-googleworkspace-re
 If `GOOGLEWORKSPACE_CREDENTIALS_FILE` or `GOOGLEWORKSPACE_CREDENTIALS_CONTENT` is also set, the key is used and impersonation is ignored.
 </Note>
 
+<Note>
+google-auth may log `No project ID could be determined` while loading the Application Default Credentials. Prowler loads them without scopes and this provider needs no Google Cloud project, so the warning is harmless.
+</Note>
+
 ### Example: GitHub Actions with Workload Identity Federation
 
 ```yaml
@@ -173,7 +179,10 @@ Prowler resolves credentials in the following order:
 
 1. `GOOGLEWORKSPACE_CREDENTIALS_FILE` environment variable
 2. `GOOGLEWORKSPACE_CREDENTIALS_CONTENT` environment variable
-3. `GOOGLEWORKSPACE_IMPERSONATE_SERVICE_ACCOUNT` environment variable or the `--impersonate-service-account` flag (keyless, through Application Default Credentials)
+3. `--impersonate-service-account` flag (keyless, through Application Default Credentials)
+4. `GOOGLEWORKSPACE_IMPERSONATE_SERVICE_ACCOUNT` environment variable
+
+Service Account key material always takes precedence over keyless impersonation, whichever way each is provided.
 
 The delegated user must be provided via the `GOOGLEWORKSPACE_DELEGATED_USER` environment variable.
 
@@ -218,6 +227,14 @@ The JSON key file is malformed or cannot be parsed. Verify the file was download
 python3 -c "import json; json.load(open('/path/to/key.json'))" && echo "Valid JSON"
 ```
 
+### `GoogleWorkspaceInsufficientScopesError`
+
+Google refused the delegated request with a `403` or `PERMISSION_DENIED`. Verify:
+
+- The Service Account Client ID is authorized in the Admin Console with all required OAuth scopes (Step 5)
+- The delegated user is an active super administrator
+- When impersonating the Service Account through Application Default Credentials: the ADC identity holds `roles/iam.serviceAccountTokenCreator` on it, and the IAM Service Account Credentials API is enabled in the project that hosts the Service Account. A `PERMISSION_DENIED` mentioning `iam.serviceAccounts.signJwt` means the role is missing; one mentioning `iam.serviceAccounts.getAccessToken` means the Workload Identity Federation principal lacks `roles/iam.workloadIdentityUser` on the Service Account
+
 ### `GoogleWorkspaceImpersonationError`
 
 The Service Account cannot impersonate the delegated user. This usually means Domain-Wide Delegation has not been configured, or the OAuth scopes are incorrect. Verify:
@@ -225,7 +242,6 @@ The Service Account cannot impersonate the delegated user. This usually means Do
 - The Service Account Client ID is correctly entered in the Admin Console
 - All required OAuth scopes are included
 - The delegated user is a super administrator
-- When impersonating the Service Account through Application Default Credentials: the ADC identity holds `roles/iam.serviceAccountTokenCreator` on it (a `403` mentioning `iam.serviceAccounts.signJwt` means it does not), and the IAM Service Account Credentials API is enabled in the project that hosts the Service Account
 
 ### Permission Denied on Admin SDK Calls
 
