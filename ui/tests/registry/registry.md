@@ -3,7 +3,7 @@
 **Suite ID:** `REGISTRY-E2E`
 **Feature:** Cloud Registry access, onboarding, and tenant artifact management.
 
-**Fixture boundary:** `pnpm run test:e2e:registry` starts a test-only local API fixture and three real Next.js servers. It uses only synthetic fixture identities, token shapes, and Registry key data. It exercises the browser, NextAuth, proxy, server actions, and Registry UI; it does not prove a proprietary Registry deployment. Live controlled-backend acceptance remains a rollout prerequisite.
+**Fixture boundary:** `pnpm run test:e2e:registry` uses `playwright.registry.config.ts` to start a test-only local API fixture and three real Next.js servers. It uses only synthetic fixture identities, token shapes, and Registry key data. It exercises the browser, NextAuth, proxy, server actions, and Registry UI; it does not prove a proprietary Registry deployment. Live controlled-backend acceptance remains a rollout prerequisite.
 
 ---
 
@@ -53,7 +53,7 @@
 **Priority:** `high`
 **Tags:** @e2e, @registry
 
-**Expected Result:** Pixel 5 browsing honors reduced motion, and the card Add action stays fully keyboard-operable with an authoritative confirmation toast.
+**Expected Result:** Pixel 5 browsing with the reduced-motion preference enabled remains usable, and the card Add action stays fully keyboard-operable with an authoritative confirmation toast.
 
 ## Test Case: `REGISTRY-E2E-007` - Registry Provider Onboarding and First Scan
 
