@@ -2,64 +2,13 @@ import { defineConfig, devices } from "@playwright/test";
 import fs from "fs";
 import path from "path";
 
-const registryFixtureMode =
-  process.env.E2E_REGISTRY_ACCEPTANCE_MODE === "fixture";
+import { getBaseConfig } from "./playwright.base";
+
 const localEnvPath = path.resolve(__dirname, ".env.local");
-if (!registryFixtureMode && fs.existsSync(localEnvPath)) {
-  process.loadEnvFile(localEnvPath);
-}
-
-const registryFixtureApiUrl = "http://127.0.0.1:4300/api/v1";
-const registryFixtureServer = {
-  command:
-    "node --experimental-strip-types tests/registry/controlled-registry-api.mts",
-  reuseExistingServer: false,
-  timeout: 120 * 1000,
-  url: "http://127.0.0.1:4300/health",
-};
-
-const registryFixtureUiServer = (
-  port: number,
-  cloudEnabled: boolean,
-  registryEnabled: boolean,
-) => ({
-  command: `pnpm exec next start --port ${port}`,
-  env: {
-    AUTH_SECRET: "fixture-next-auth-secret-not-a-secret",
-    AUTH_TRUST_HOST: "true",
-    AUTH_URL: `http://127.0.0.1:${port}`,
-    NEXTAUTH_URL: `http://127.0.0.1:${port}`,
-    UI_API_BASE_URL: registryFixtureApiUrl,
-    UI_CLOUD_ENABLED: String(cloudEnabled),
-    UI_REGISTRY_ENABLED: String(registryEnabled),
-    CLOUD_BILLING_ENABLED: "false",
-  },
-  reuseExistingServer: false,
-  timeout: 120 * 1000,
-  url: `http://127.0.0.1:${port}`,
-});
+if (fs.existsSync(localEnvPath)) process.loadEnvFile(localEnvPath);
 
 export default defineConfig({
-  testDir: "./tests",
-  fullyParallel: true,
-  forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
-  workers: registryFixtureMode ? 1 : process.env.CI ? 1 : undefined,
-  reporter: [["list"]],
-  outputDir: "/tmp/playwright-tests",
-  expect: {
-    timeout: 20000,
-  },
-
-  use: {
-    baseURL: process.env.AUTH_URL
-      ? process.env.AUTH_URL
-      : "http://localhost:3000",
-    trace: "off",
-    screenshot: "off",
-    video: "off",
-  },
-
+  ...getBaseConfig(),
   projects: [
     // ===========================================
     // Authentication Setup Projects
@@ -116,21 +65,12 @@ export default defineConfig({
       testMatch: "invite-and-manage-users.auth.setup.ts",
     },
 
-    // Registry manager authentication setup
-    // Creates authenticated state for a user with current MANAGE_REGISTRY access
-    {
-      name: "manage-registry.auth.setup",
-      use: registryFixtureMode
-        ? { baseURL: "http://127.0.0.1:4301" }
-        : undefined,
-      testMatch: "manage-registry.auth.setup.ts",
-    },
-
     // All authentication setups combined
     // Runs all authentication setup files to create all user states
     {
       name: "all.auth.setup",
       testMatch: "**/*.auth.setup.ts",
+      testIgnore: "manage-registry.auth.setup.ts",
     },
 
     // ===========================================
@@ -197,70 +137,24 @@ export default defineConfig({
       testMatch: /navigation\/.*\.spec\.ts/,
       dependencies: ["admin.auth.setup"],
     },
-    // Registry acceptance uses only the self-contained test fixture profile.
-    {
-      name: "registry",
-      use: {
-        ...devices["Desktop Chrome"],
-        baseURL: "http://127.0.0.1:4301",
-      },
-      testMatch: /registry\/.*\.spec\.ts/,
-      dependencies: ["manage-registry.auth.setup"],
-    },
-    {
-      name: "registry-flag-off",
-      use: {
-        ...devices["Desktop Chrome"],
-        baseURL: "http://127.0.0.1:4302",
-      },
-      testMatch: /registry\/.*\.spec\.ts/,
-      dependencies: ["manage-registry.auth.setup"],
-    },
-    {
-      name: "registry-local",
-      use: {
-        ...devices["Desktop Chrome"],
-        baseURL: "http://127.0.0.1:4303",
-      },
-      testMatch: /registry\/.*\.spec\.ts/,
-      dependencies: ["manage-registry.auth.setup"],
-    },
-    {
-      name: "registry-mobile",
-      use: {
-        ...devices["Pixel 5"],
-        baseURL: "http://127.0.0.1:4301",
-      },
-      testMatch: /registry\/.*\.spec\.ts/,
-      dependencies: ["manage-registry.auth.setup"],
-    },
   ],
 
-  webServer: registryFixtureMode
-    ? [
-        registryFixtureServer,
-        registryFixtureUiServer(4301, true, true),
-        registryFixtureUiServer(4302, true, false),
-        registryFixtureUiServer(4303, false, true),
-      ]
-    : {
-        command: process.env.CI ? "pnpm run start" : "pnpm run dev",
-        url: "http://localhost:3000",
-        reuseExistingServer: !process.env.CI,
-        timeout: 120 * 1000,
-        env: {
-          UI_API_BASE_URL:
-            process.env.UI_API_BASE_URL || "http://localhost:8080/api/v1",
-          AUTH_URL: process.env.AUTH_URL || "http://localhost:3000",
-          AUTH_SECRET:
-            process.env.AUTH_SECRET || "fallback-ci-secret-for-testing",
-          AUTH_TRUST_HOST: process.env.AUTH_TRUST_HOST || "true",
-          NEXTAUTH_URL: process.env.NEXTAUTH_URL || "http://localhost:3000",
-          E2E_ADMIN_USER: process.env.E2E_ADMIN_USER || "e2e@prowler.com",
-          E2E_ADMIN_PASSWORD:
-            process.env.E2E_ADMIN_PASSWORD || "Thisisapassword123@",
-          UI_CLOUD_ENABLED: process.env.UI_CLOUD_ENABLED || "false",
-          UI_REGISTRY_ENABLED: process.env.UI_REGISTRY_ENABLED || "false",
-        },
-      },
+  webServer: {
+    command: process.env.CI ? "pnpm run start" : "pnpm run dev",
+    url: "http://localhost:3000",
+    reuseExistingServer: !process.env.CI,
+    timeout: 120 * 1000,
+    env: {
+      UI_API_BASE_URL:
+        process.env.UI_API_BASE_URL || "http://localhost:8080/api/v1",
+      AUTH_URL: process.env.AUTH_URL || "http://localhost:3000",
+      AUTH_SECRET: process.env.AUTH_SECRET || "fallback-ci-secret-for-testing",
+      AUTH_TRUST_HOST: process.env.AUTH_TRUST_HOST || "true",
+      NEXTAUTH_URL: process.env.NEXTAUTH_URL || "http://localhost:3000",
+      E2E_ADMIN_USER: process.env.E2E_ADMIN_USER || "e2e@prowler.com",
+      E2E_ADMIN_PASSWORD:
+        process.env.E2E_ADMIN_PASSWORD || "Thisisapassword123@",
+      UI_CLOUD_ENABLED: process.env.UI_CLOUD_ENABLED || "false",
+    },
+  },
 });
