@@ -1,0 +1,1 @@
+`AwsProvider.get_available_aws_service_regions()` now returns an empty set for an unknown service or partition instead of raising `KeyError`, so a service unavailable in the audited partition is skipped

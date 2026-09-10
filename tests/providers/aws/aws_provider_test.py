@@ -59,6 +59,7 @@ from tests.providers.aws.utils import (
     AWS_EUSC_PARTITION,
     AWS_GOV_CLOUD_ACCOUNT_ARN,
     AWS_GOV_CLOUD_PARTITION,
+    AWS_ISO_B_PARTITION,
     AWS_ISO_PARTITION,
     AWS_REGION_CN_NORTH_1,
     AWS_REGION_CN_NORTHWEST_1,
@@ -67,7 +68,9 @@ from tests.providers.aws.utils import (
     AWS_REGION_EUSC_DE_EAST_1,
     AWS_REGION_GOV_CLOUD_US_EAST_1,
     AWS_REGION_GOV_CLOUD_US_WEST_1,
-    AWS_REGION_ISO_GLOBAL,
+    AWS_REGION_ISO_B_EAST_1,
+    AWS_REGION_ISO_EAST_1,
+    AWS_REGION_ISO_WEST_1,
     AWS_REGION_US_EAST_1,
     AWS_REGION_US_EAST_2,
     EXAMPLE_AMI_ID,
@@ -1193,6 +1196,13 @@ aws:
         )
 
     @mock_aws
+    def test_aws_get_global_region(self):
+        aws_provider = AwsProvider()
+        aws_provider._identity.partition = AWS_COMMERCIAL_PARTITION
+
+        assert aws_provider.get_global_region() == AWS_REGION_US_EAST_1
+
+    @mock_aws
     def test_aws_gov_get_global_region(self):
         aws_provider = AwsProvider()
         aws_provider._identity.partition = AWS_GOV_CLOUD_PARTITION
@@ -1211,7 +1221,21 @@ aws:
         aws_provider = AwsProvider()
         aws_provider._identity.partition = AWS_ISO_PARTITION
 
-        assert aws_provider.get_global_region() == AWS_REGION_ISO_GLOBAL
+        assert aws_provider.get_global_region() == AWS_REGION_ISO_EAST_1
+
+    @mock_aws
+    def test_aws_iso_b_get_global_region(self):
+        aws_provider = AwsProvider()
+        aws_provider._identity.partition = AWS_ISO_B_PARTITION
+
+        assert aws_provider.get_global_region() == AWS_REGION_ISO_B_EAST_1
+
+    @mock_aws
+    def test_get_global_region_for_an_unknown_partition(self):
+        aws_provider = AwsProvider()
+        aws_provider._identity.partition = "aws-unknown"
+
+        assert aws_provider.get_global_region() == AWS_REGION_US_EAST_1
 
     @mock_aws
     def test_aws_eusc_get_global_region(self):
@@ -1298,6 +1322,88 @@ aws:
             assert (
                 len(aws_provider.get_available_aws_service_regions("ec2", "aws")) == 17
             )
+
+    @mock_aws
+    def test_get_available_aws_service_regions_commercial_and_gov_cloud(self):
+        aws_provider = AwsProvider()
+
+        assert AWS_REGION_US_EAST_1 in aws_provider.get_available_aws_service_regions(
+            "ec2", AWS_COMMERCIAL_PARTITION
+        )
+        assert (
+            AWS_REGION_GOV_CLOUD_US_EAST_1
+            in aws_provider.get_available_aws_service_regions(
+                "ec2", AWS_GOV_CLOUD_PARTITION
+            )
+        )
+        # A service recorded as unavailable in the partition yields an empty set
+        assert (
+            aws_provider.get_available_aws_service_regions(
+                "bedrock-agent", AWS_CHINA_PARTITION
+            )
+            == set()
+        )
+
+    @mock_aws
+    def test_get_available_aws_service_regions_iso_partitions(self):
+        aws_provider = AwsProvider()
+
+        assert aws_provider.get_available_aws_service_regions(
+            "ec2", AWS_ISO_PARTITION
+        ) == {
+            AWS_REGION_ISO_EAST_1,
+            AWS_REGION_ISO_WEST_1,
+        }
+        assert aws_provider.get_available_aws_service_regions(
+            "guardduty", AWS_ISO_B_PARTITION
+        ) == {AWS_REGION_ISO_B_EAST_1}
+        # Every service carries every ISO partition, empty when not available
+        assert (
+            aws_provider.get_available_aws_service_regions(
+                "bedrock", AWS_ISO_B_PARTITION
+            )
+            == set()
+        )
+
+    @mock_aws
+    def test_get_available_aws_service_regions_unknown_partition(self):
+        aws_provider = AwsProvider()
+
+        assert (
+            aws_provider.get_available_aws_service_regions("ec2", "aws-unknown")
+            == set()
+        )
+
+    @mock_aws
+    def test_get_available_aws_service_regions_unknown_service(self):
+        aws_provider = AwsProvider()
+
+        assert (
+            aws_provider.get_available_aws_service_regions(
+                "unknown-service", AWS_COMMERCIAL_PARTITION
+            )
+            == set()
+        )
+
+    @mock_aws
+    def test_generate_regional_clients_service_not_in_partition(self):
+        aws_provider = AwsProvider()
+        aws_provider._identity.partition = AWS_ISO_PARTITION
+
+        response = aws_provider.generate_regional_clients("bedrock")
+
+        assert response == {}
+
+    @mock_aws
+    def test_generate_regional_clients_returns_empty_dict_on_error(self):
+        aws_provider = AwsProvider()
+
+        with patch.object(
+            AwsProvider,
+            "get_available_aws_service_regions",
+            side_effect=Exception("boom"),
+        ):
+            assert aws_provider.generate_regional_clients("ec2") == {}
 
     @mock_aws
     def test_get_tagged_resources(self):
@@ -2065,13 +2171,20 @@ aws:
         assert not recovered_regions
 
     def test_get_regions_all_count(self):
-        assert len(AwsProvider.get_regions(partition=None)) == 39
+        # 34 aws + 2 aws-cn + 2 aws-us-gov + 1 aws-eusc + 7 ISO regions
+        assert len(AwsProvider.get_regions(partition=None)) == 46
 
     def test_get_regions_cn_count(self):
         assert len(AwsProvider.get_regions("aws-cn")) == 2
 
     def test_get_regions_aws_count(self):
         assert len(AwsProvider.get_regions(partition="aws")) == 34
+
+    def test_get_regions_iso_count(self):
+        assert AwsProvider.get_regions(AWS_ISO_PARTITION) == {
+            AWS_REGION_ISO_EAST_1,
+            AWS_REGION_ISO_WEST_1,
+        }
 
     def test_get_all_regions(self):
         with patch(

@@ -921,6 +921,9 @@ class AwsProvider(Provider):
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+            # Return an empty dict, as promised by the signature, so the service
+            # is simply not scanned instead of the callers failing later on a None
+            return {}
 
     @staticmethod
     def get_available_aws_service_regions(
@@ -936,9 +939,13 @@ class AwsProvider(Provider):
 
         Returns:
             - A set of strings representing the available regions for the given service and partition.
+              A service or a partition not present in the regions file yields an empty set, the same
+              outcome as a service explicitly recorded as unavailable in the partition.
         """
         data = read_aws_regions_file()
-        json_regions = set(data["services"][service]["regions"][partition])
+        json_regions = set(
+            data["services"].get(service, {}).get("regions", {}).get(partition, [])
+        )
         if audited_regions:
             # Get common regions between input and json
             regions = json_regions.intersection(audited_regions)
@@ -1145,16 +1152,14 @@ class AwsProvider(Provider):
         Example:
             global_region = get_global_region()a
         """
-        global_region = "us-east-1"
-        if self._identity.partition == "aws-cn":
-            global_region = "cn-north-1"
-        elif self._identity.partition == "aws-eusc":
-            global_region = "eusc-de-east-1"
-        elif self._identity.partition == "aws-us-gov":
-            global_region = "us-gov-east-1"
-        elif "aws-iso" in self._identity.partition:
-            global_region = "aws-iso-global"
-        return global_region
+        # The first region of the partition is the one of its global STS endpoint,
+        # which is always a real region, never a pseudo endpoint like "aws-iso-global"
+        partition_regions = get_botocore_partition_regions().get(
+            self._identity.partition
+        )
+        if partition_regions:
+            return partition_regions[0]
+        return "us-east-1"
 
     @staticmethod
     def input_role_mfa_token_and_code() -> AWSMFAInfo:

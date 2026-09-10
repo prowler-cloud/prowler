@@ -44,7 +44,10 @@ jobs:
           cache: 'pip'
 
       - name: Install dependencies
-        run: pip install boto3
+        # Pinned to the versions in pyproject.toml: the ISO partitions region
+        # data comes from the endpoints.json bundled with botocore, so the
+        # botocore version is itself a data source and must be deterministic
+        run: pip install boto3==1.40.61 botocore==1.40.61
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@d979d5b3a71173a29b74b5b88418bfda9437d885 # v6.1.1
