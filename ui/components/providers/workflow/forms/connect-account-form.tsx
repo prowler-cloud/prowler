@@ -218,6 +218,7 @@ export const ConnectAccountForm = ({
     RegistryProviderOption[]
   >([]);
   const [registryError, setRegistryError] = useState(false);
+  const [providerError, setProviderError] = useState<string | null>(null);
   const [discoveryAttempt, setDiscoveryAttempt] = useState(0);
   const submitting = useRef(false);
   const createdAccount = useRef<ConnectAccountSuccessData | null>(null);
@@ -277,6 +278,7 @@ export const ConnectAccountForm = ({
       return;
     }
     submitting.current = true;
+    setProviderError(null);
     const formValues = { ...values };
 
     const formData = new FormData();
@@ -296,10 +298,9 @@ export const ConnectAccountForm = ({
 
           switch (pointer) {
             case "/data/attributes/provider":
-              form.setError("providerType", {
-                type: "server",
-                message: errorMessage,
-              });
+              // Provider selection is hidden here; keep failures visible and
+              // retryable when availability changes without editing the form.
+              setProviderError(errorMessage);
               break;
             case "/data/attributes/uid":
             case "/data/attributes/__all__":
@@ -358,6 +359,7 @@ export const ConnectAccountForm = ({
   };
 
   const handleBackStep = () => {
+    setProviderError(null);
     applyBackStep({
       prevStep,
       method,
@@ -380,6 +382,7 @@ export const ConnectAccountForm = ({
 
   useEffect(() => {
     onBackHandlerChange?.(() => {
+      setProviderError(null);
       applyBackStep({
         prevStep,
         method,
@@ -495,6 +498,12 @@ export const ConnectAccountForm = ({
         {prevStep === 2 && showUidForm && (
           <>
             <ProviderTitleDocs providerType={providerType} />
+            {providerError && (
+              <Alert variant="destructive">
+                <AlertTitle>Unable to create provider</AlertTitle>
+                <AlertDescription>{providerError}</AlertDescription>
+              </Alert>
+            )}
             <WizardInputField
               control={form.control}
               name="providerUid"
