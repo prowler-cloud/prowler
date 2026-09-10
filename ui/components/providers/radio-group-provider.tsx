@@ -85,7 +85,7 @@ export const RadioGroupProvider: FC<RadioGroupProviderProps> = ({
           onValueChange={(value) => setActiveTab(value as ProviderTab)}
         >
           <TabsList aria-label="Provider source">
-            <TabsTrigger value={PROVIDER_TAB.ALL}>All</TabsTrigger>
+            <TabsTrigger value={PROVIDER_TAB.ALL}>All providers</TabsTrigger>
             <TabsTrigger value={PROVIDER_TAB.REGISTRY}>Registry</TabsTrigger>
           </TabsList>
           <div className="relative z-10 shrink-0 py-4">

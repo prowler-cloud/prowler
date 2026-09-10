@@ -216,7 +216,10 @@ export class RegistryPage extends BasePage {
     await expect(this.page).toHaveURL(/\/providers$/);
     await this.dismissWelcomeDialog();
     await this.page.getByRole("button", { name: /Add (a )?Provider/i }).click();
-    const allTab = this.page.getByRole("tab", { name: "All", exact: true });
+    const allTab = this.page.getByRole("tab", {
+      name: "All providers",
+      exact: true,
+    });
     const registryTab = this.page.getByRole("tab", {
       name: "Registry",
       exact: true,

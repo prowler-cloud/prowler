@@ -32,7 +32,7 @@ describe("provider selector", () => {
         registryOptions={[{ type: "acme_slug", label: "Acme Cloud" }]}
       />,
     );
-    expect(screen.getByRole("tab", { name: "All" })).toHaveAttribute(
+    expect(screen.getByRole("tab", { name: "All providers" })).toHaveAttribute(
       "aria-selected",
       "true",
     );
@@ -54,7 +54,7 @@ describe("provider selector", () => {
 
     // When
     await user.click(screen.getByRole("button", { name: "Clear search" }));
-    await user.click(screen.getByRole("tab", { name: "All" }));
+    await user.click(screen.getByRole("tab", { name: "All providers" }));
 
     // Then
     expect(
@@ -72,7 +72,7 @@ describe("provider selector", () => {
 
     // Then
     expect(screen.getByText("No Registry providers available.")).toBeVisible();
-    expect(screen.getByRole("tab", { name: "All" })).toBeEnabled();
+    expect(screen.getByRole("tab", { name: "All providers" })).toBeEnabled();
 
     // When / Then: discovery can refresh the installed options.
     rerender(<Selector />);
@@ -108,7 +108,7 @@ describe("provider selector", () => {
     expect(
       screen.getByText('No providers found matching "amazon"'),
     ).toBeVisible();
-    await user.click(screen.getByRole("tab", { name: "All" }));
+    await user.click(screen.getByRole("tab", { name: "All providers" }));
 
     // Then
     expect(
