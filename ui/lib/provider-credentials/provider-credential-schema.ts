@@ -37,6 +37,16 @@ const FIELD = new Set(
 const FORBIDDEN_NAMES = new Set(["__proto__", "prototype", "constructor"]);
 const FIELD_NAME = /^[A-Za-z][A-Za-z0-9_-]*$/;
 
+// Some installed artifacts expose API keys as plain strings without secret metadata.
+function isApiKeyField(name: string): boolean {
+  const normalizedName = name
+    .replace(/([A-Z]+)([A-Z][a-z])/g, "$1_$2")
+    .replace(/([a-z0-9])([A-Z])/g, "$1_$2")
+    .replace(/-/g, "_")
+    .toLowerCase();
+  return /(?:^|_)api_?key$/.test(normalizedName);
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return (
     typeof value === "object" &&
@@ -174,7 +184,9 @@ export function parseRegistryCredentialSchema(
         ? FIELD_KIND.PASSWORD
         : widget === "textarea"
           ? FIELD_KIND.TEXTAREA
-          : FIELD_KIND.TEXT,
+          : isApiKeyField(name)
+            ? FIELD_KIND.PASSWORD
+            : FIELD_KIND.TEXT,
       required: requiredNames.has(name),
       ...(typeof defaultValue === "string" ? { defaultValue } : {}),
     });

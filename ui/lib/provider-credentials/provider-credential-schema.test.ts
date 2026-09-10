@@ -33,6 +33,47 @@ const schema = {
 };
 
 describe("parseRegistryCredentialSchema", () => {
+  it.each([
+    "api_key",
+    "platform_api_key",
+    "platform-api-key",
+    "apiKey",
+    "platformApiKey",
+    "platformAPIKey",
+    "API_KEY",
+    "apikey",
+  ])("masks the plain API key field %s without schema annotations", (name) => {
+    // Given / When
+    const result = parseRegistryCredentialSchema({
+      type: "object",
+      properties: { [name]: { type: "string" } },
+    });
+
+    // Then
+    expect(result?.fields[0].kind).toBe("password");
+  });
+
+  it("keeps identifiers and explicitly configured widgets unchanged", () => {
+    // Given / When
+    const result = parseRegistryCredentialSchema({
+      type: "object",
+      properties: {
+        api_key_id: { type: "string" },
+        api_key_url: { type: "string" },
+        selected_api_key: { type: "string", enum: ["primary", "secondary"] },
+        multiline_api_key: { type: "string", "x-prowler-widget": "textarea" },
+      },
+    });
+
+    // Then
+    expect(result?.fields.map(({ kind }) => kind)).toEqual([
+      "text",
+      "text",
+      "select",
+      "textarea",
+    ]);
+  });
+
   it("accepts the installed OpenAI schema with its full description", () => {
     // Given / When: the materialized OpenAI 0.1.5 schema contains a long docstring.
     const result = parseRegistryCredentialSchema(openaiSchema);
@@ -44,6 +85,11 @@ describe("parseRegistryCredentialSchema", () => {
       "base_url",
     ]);
     expect(result?.fields[2].defaultValue).toBe("https://api.openai.com/v1");
+    expect(result?.fields.map(({ kind }) => kind)).toEqual([
+      "text",
+      "password",
+      "text",
+    ]);
   });
 
   it("preserves long field descriptions without treating them as input limits", () => {
