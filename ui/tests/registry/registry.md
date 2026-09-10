@@ -46,7 +46,7 @@
 **Priority:** `critical`
 **Tags:** @e2e, @registry
 
-**Expected Result:** The complete paginated catalog supports search, combined provider and capability filters, URL state, and owner logos with fallback. Built-ins display Built in without Add. Checks/compliance-only artifacts remain visible without Add. An external provider artifact installs through a 202 task and an authoritative membership read before Added appears. Removal preserves provider accounts. Reconnect, unavailable, and generic failures have actionable empty states.
+**Expected Result:** The All tab displays the complete paginated catalog and supports search, combined provider and capability filters, URL state, and owner logos with fallback. Built-ins display Built in without Add. Checks/compliance-only artifacts remain visible without Add. An external provider artifact installs through a 202 task and an authoritative membership read before Added appears. Removal preserves provider accounts. Reconnect, unavailable, and generic failures have actionable empty states.
 
 ## Test Case: `REGISTRY-E2E-006` - Pixel 5 Reduced-Motion Browsing
 
@@ -62,7 +62,7 @@
 
 **Preconditions:** Private Cloud fixture profile with billing disabled, `manage_registry`, `manage_providers`, and `manage_scans`.
 
-**Expected Result:** Installing the external provider makes Fixture Cloud available with a Registry badge in the existing Add Provider selector. The wizard accepts UID/alias, renders the backend credential schema, saves the synthetic secret, requires explicit connection success, and launches a scan visible in Scans. No credential values are stored in localStorage or sessionStorage. This synthetic acceptance covers the UI/HTTP contract; real Registry and provider credentials are still required for live validation.
+**Expected Result:** Installing the external provider makes Fixture Cloud available with a Registry badge in the Add Provider selector. All shows native and installed Registry providers; switching to Registry shows only installed providers. The wizard accepts UID/alias, renders masked API token credentials from the backend schema, saves the synthetic secret, requires explicit connection success, and launches a scan visible in Scans. No credential values are stored in localStorage or sessionStorage. This synthetic acceptance covers the UI/HTTP contract; real Registry and provider credentials are still required for live validation.
 
 After the scan, removing the artifact preserves the account in Providers and removes the dynamic type from the next Add Provider selector.
 

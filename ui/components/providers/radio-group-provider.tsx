@@ -14,6 +14,12 @@ import {
   AvatarImage,
 } from "@/components/shadcn/avatar";
 import { FormMessage } from "@/components/shadcn/form";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/shadcn/tabs/tabs";
 import type { RegistryProviderOption } from "@/lib/registry/provider-options";
 import { cn } from "@/lib/utils";
 import type { AddProviderFormValues } from "@/types/formSchemas";
@@ -21,6 +27,9 @@ import type { AddProviderFormValues } from "@/types/formSchemas";
 const PROVIDERS = Object.entries(PROVIDER_TYPE_DATA).map(
   ([value, { label }]) => ({ value, label }),
 );
+
+const PROVIDER_TAB = { ALL: "all", REGISTRY: "registry" } as const;
+type ProviderTab = (typeof PROVIDER_TAB)[keyof typeof PROVIDER_TAB];
 
 interface RadioGroupProviderProps {
   control: Control<AddProviderFormValues>;
@@ -36,6 +45,7 @@ export const RadioGroupProvider: FC<RadioGroupProviderProps> = ({
   registryOptions = [],
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [activeTab, setActiveTab] = useState<ProviderTab>(PROVIDER_TAB.ALL);
 
   const options = [
     ...PROVIDERS.map((provider) => ({
@@ -51,22 +61,34 @@ export const RadioGroupProvider: FC<RadioGroupProviderProps> = ({
       logoUrl: provider.logoUrl,
     })),
   ];
+  const tabProviders =
+    activeTab === PROVIDER_TAB.REGISTRY
+      ? options.filter((provider) => provider.registry)
+      : options;
   const lowerSearch = searchTerm.trim().toLowerCase();
   const filteredProviders = lowerSearch
-    ? options.filter(
+    ? tabProviders.filter(
         (provider) =>
           provider.label.toLowerCase().includes(lowerSearch) ||
           provider.value.toLowerCase().includes(lowerSearch),
       )
-    : options;
+    : tabProviders;
 
   return (
     <Controller
       name="providerType"
       control={control}
       render={({ field }) => (
-        <div className="flex flex-col px-4">
-          <div className="relative z-10 shrink-0 pb-4">
+        <Tabs
+          className="flex flex-col px-4"
+          value={activeTab}
+          onValueChange={(value) => setActiveTab(value as ProviderTab)}
+        >
+          <TabsList aria-label="Provider source">
+            <TabsTrigger value={PROVIDER_TAB.ALL}>All</TabsTrigger>
+            <TabsTrigger value={PROVIDER_TAB.REGISTRY}>Registry</TabsTrigger>
+          </TabsList>
+          <div className="relative z-10 shrink-0 py-4">
             <SearchInput
               aria-label="Search providers"
               placeholder="Search providers..."
@@ -76,7 +98,7 @@ export const RadioGroupProvider: FC<RadioGroupProviderProps> = ({
             />
           </div>
 
-          <div className="relative">
+          <TabsContent value={activeTab}>
             <div
               role="listbox"
               aria-label="Select a provider"
@@ -142,18 +164,22 @@ export const RadioGroupProvider: FC<RadioGroupProviderProps> = ({
                 })
               ) : (
                 <p className="text-text-neutral-tertiary py-4 text-sm">
-                  No providers found matching &quot;{searchTerm}&quot;
+                  {lowerSearch ? (
+                    <>No providers found matching &quot;{searchTerm}&quot;</>
+                  ) : (
+                    "No Registry providers available."
+                  )}
                 </p>
               )}
             </div>
-          </div>
+          </TabsContent>
 
           {errorMessage && (
             <FormMessage className="text-text-error-primary">
               {errorMessage}
             </FormMessage>
           )}
-        </div>
+        </Tabs>
       )}
     />
   );

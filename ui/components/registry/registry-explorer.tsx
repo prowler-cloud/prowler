@@ -482,7 +482,7 @@ export function RegistryExplorer({
               }
               value={REGISTRY_TAB.EXPLORE}
             >
-              Explore
+              All
             </TabsTrigger>
             <TabsTrigger
               adornment={
