@@ -1117,6 +1117,24 @@ describe("RegistryExplorer", () => {
         ),
       ).toEqual(["0", "0", artifact.latestVersion, "0"]);
 
+      // When / Then: built-in artifacts keep their metadata without downloads.
+      await screen.rerender(
+        <RegistryArtifactCard
+          artifact={{ ...artifact, isBuiltin: true, totalDownloads: 0 }}
+          onAdd={() => {}}
+          onRemove={() => {}}
+        />,
+      );
+      await expect
+        .element(metadata.getByText("Downloads", { exact: true }))
+        .not.toBeInTheDocument();
+      expect(
+        Array.from(
+          metadata.element().querySelectorAll("dd"),
+          (value) => value.textContent,
+        ),
+      ).toEqual(["45", "645", artifact.latestVersion]);
+
       // When / Then: older responses have no counts, rather than zero counts.
       await screen.rerender(
         <RegistryArtifactCard
