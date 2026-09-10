@@ -21,6 +21,9 @@ from prowler.providers.aws.services.kms.lib.enclave import (
     synthetic_account_kms_resource,
     unknown_pcrs,
 )
+from prowler.providers.aws.services.kms.lib.inventory import (
+    get_kms_inventory_error_reports,
+)
 
 
 class kms_key_enclave_attestation_unknown_image(Check):
@@ -68,7 +71,7 @@ class kms_key_enclave_attestation_unknown_image(Check):
         Returns:
             list[Check_Report_AWS]: one report per KMS key evaluated.
         """
-        findings = []
+        findings = get_kms_inventory_error_reports(self.metadata(), kms_client)
         cfg = kms_client.audit_config or {}
 
         golden = normalize_golden_pcr_config(cfg.get(GOLDEN_PCR_CONFIG_KEY))

@@ -1,6 +1,7 @@
 import json
 from typing import Optional
 
+from botocore.exceptions import ClientError
 from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
@@ -9,10 +10,18 @@ from prowler.providers.aws.lib.service.service import AWSService
 
 
 class KMS(AWSService):
+    """Retrieve AWS KMS key inventory and supporting metadata."""
+
     def __init__(self, provider):
+        """Initialize the KMS service.
+
+        Args:
+            provider: AWS provider used to create regional KMS clients.
+        """
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
         self.keys = []
+        self.keys_scan_errors = {}
         self.__threading_call__(self._list_keys)
         if self.keys:
             self._describe_key()
@@ -22,52 +31,78 @@ class KMS(AWSService):
             self.__threading_call__(self._list_aliases)
 
     def _list_keys(self, regional_client):
+        """Collect the KMS keys available through a regional client.
+
+        Args:
+            regional_client: Regional KMS client used to list keys.
+        """
         logger.info("KMS - Listing Keys...")
+        region_keys = []
         try:
             list_keys_paginator = regional_client.get_paginator("list_keys")
             for page in list_keys_paginator.paginate():
                 for key in page["Keys"]:
-                    try:
-                        if not self.audit_resources or (
-                            is_resource_filtered(key["KeyArn"], self.audit_resources)
-                        ):
-                            self.keys.append(
-                                Key(
-                                    id=key["KeyId"],
-                                    arn=key["KeyArn"],
-                                    region=regional_client.region,
-                                )
+                    if not self.audit_resources or (
+                        is_resource_filtered(key["KeyArn"], self.audit_resources)
+                    ):
+                        region_keys.append(
+                            Key(
+                                id=key["KeyId"],
+                                arn=key["KeyArn"],
+                                region=regional_client.region,
                             )
-                    except Exception as error:
-                        logger.error(
-                            f"{regional_client.region} -- {error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
                         )
+            self.keys.extend(region_keys)
+        except ClientError as error:
+            self.keys_scan_errors[regional_client.region] = error.response["Error"].get(
+                "Code", error.__class__.__name__
+            )
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
+            )
         except Exception as error:
+            self.keys_scan_errors[regional_client.region] = error.__class__.__name__
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
             )
 
     def _describe_key(self):
+        """Retrieve metadata for each discovered KMS key.
+
+        Records the error code or exception type on keys whose metadata cannot
+        be retrieved so checks can report incomplete evidence.
+        """
         logger.info("KMS - Describing Key...")
-        try:
-            for key in self.keys:
+        for key in self.keys:
+            try:
                 regional_client = self.regional_clients[key.region]
-                try:
-                    response = regional_client.describe_key(KeyId=key.id)
-                    key.state = response["KeyMetadata"]["KeyState"]
-                    key.origin = response["KeyMetadata"]["Origin"]
-                    key.manager = response["KeyMetadata"]["KeyManager"]
-                    key.spec = response["KeyMetadata"]["CustomerMasterKeySpec"]
-                    key.multi_region = response["KeyMetadata"]["MultiRegion"]
-                    key.description = response["KeyMetadata"].get("Description", "")
-                except Exception as error:
-                    logger.error(
-                        f"{regional_client.region} -- {error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
-                    )
-        except Exception as error:
-            logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
-            )
+                metadata = regional_client.describe_key(KeyId=key.id)["KeyMetadata"]
+                state = metadata["KeyState"]
+                origin = metadata["Origin"]
+                manager = metadata["KeyManager"]
+                spec = metadata["CustomerMasterKeySpec"]
+                multi_region = metadata.get("MultiRegion", False)
+                description = metadata.get("Description", "")
+
+                key.state = state
+                key.origin = origin
+                key.manager = manager
+                key.spec = spec
+                key.multi_region = multi_region
+                key.description = description
+                key.detail_retrieved = True
+            except ClientError as error:
+                key.detail_fetch_error = error.response["Error"].get(
+                    "Code", error.__class__.__name__
+                )
+                logger.error(
+                    f"{key.region} -- {error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
+                )
+            except Exception as error:
+                key.detail_fetch_error = error.__class__.__name__
+                logger.error(
+                    f"{key.region} -- {error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
+                )
 
     def _get_key_rotation_status(self):
         logger.info("KMS - Get Key Rotation Status...")
@@ -161,6 +196,8 @@ class KMS(AWSService):
 
 
 class Key(BaseModel):
+    """Represent an AWS KMS key and the metadata required by checks."""
+
     id: str
     arn: str
     state: Optional[str]
@@ -173,6 +210,10 @@ class Key(BaseModel):
     # error class name). Checks that make security assertions from the policy
     # should emit MANUAL when this is set, not silently skip the key.
     policy_fetch_error: Optional[str] = None
+    # False when DescribeKey failed. Checks that require key metadata must
+    # report MANUAL instead of treating absent fields as configuration values.
+    detail_retrieved: bool = False
+    detail_fetch_error: Optional[str] = None
     spec: Optional[str]
     region: str
     multi_region: Optional[bool]
