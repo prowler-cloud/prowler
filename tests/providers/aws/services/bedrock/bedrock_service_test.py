@@ -491,3 +491,247 @@ class TestBedrockPromptPagination:
 
         assert bedrock_agent_service.prompts == {}
         assert bedrock_agent_service.prompt_scanned_regions == set()
+
+
+class TestBedrockFlowCollection:
+    """Test suite for Bedrock Flow inventory used by flow guardrail checks."""
+
+    FLOW_ID = "ABCDEFGHIJ"
+    FLOW_ARN = f"arn:aws:bedrock:us-east-1:123456789012:flow/{FLOW_ID}"
+
+    def _service(self, regional_client):
+        audit_info = MagicMock()
+        audit_info.audited_partition = "aws"
+        audit_info.audited_account = "123456789012"
+        audit_info.audit_resources = None
+
+        bedrock_agent_service = BedrockAgent(audit_info)
+        bedrock_agent_service.regional_clients = {"us-east-1": regional_client}
+        bedrock_agent_service.flows = {}
+        bedrock_agent_service.flows_scan_errors = {}
+        bedrock_agent_service.audited_account = "123456789012"
+        bedrock_agent_service.audited_partition = "aws"
+        return bedrock_agent_service
+
+    def test_list_flows_pagination(self):
+        """Test that list_flows iterates through all pages."""
+        regional_client = MagicMock()
+        regional_client.region = "us-east-1"
+
+        paginator = MagicMock()
+        paginator.paginate.return_value = [
+            {
+                "flowSummaries": [
+                    {
+                        "id": "flowid0001",
+                        "name": "flow-1",
+                        "arn": "arn:aws:bedrock:us-east-1:123456789012:flow/flowid0001",
+                    }
+                ]
+            },
+            {
+                "flowSummaries": [
+                    {
+                        "id": "flowid0002",
+                        "name": "flow-2",
+                        "arn": "arn:aws:bedrock:us-east-1:123456789012:flow/flowid0002",
+                    }
+                ]
+            },
+        ]
+        regional_client.get_paginator.return_value = paginator
+
+        bedrock_agent_service = self._service(regional_client)
+        bedrock_agent_service._list_flows(regional_client)
+
+        assert len(bedrock_agent_service.flows) == 2
+        assert (
+            "arn:aws:bedrock:us-east-1:123456789012:flow/flowid0001"
+            in bedrock_agent_service.flows
+        )
+        assert (
+            "arn:aws:bedrock:us-east-1:123456789012:flow/flowid0002"
+            in bedrock_agent_service.flows
+        )
+        regional_client.get_paginator.assert_called_once_with("list_flows")
+        paginator.paginate.assert_called_once()
+
+    def test_list_flows_filters_audit_resources(self):
+        """Flow collection must honor audit_resources when resource ARNs are scoped."""
+        regional_client = MagicMock()
+        regional_client.region = "us-east-1"
+
+        paginator = MagicMock()
+        paginator.paginate.return_value = [
+            {
+                "flowSummaries": [
+                    {
+                        "id": "flowid0001",
+                        "name": "flow-1",
+                        "arn": "arn:aws:bedrock:us-east-1:123456789012:flow/flowid0001",
+                    },
+                    {
+                        "id": "flowid0002",
+                        "name": "flow-2",
+                        "arn": "arn:aws:bedrock:us-east-1:123456789012:flow/flowid0002",
+                    },
+                ]
+            }
+        ]
+        regional_client.get_paginator.return_value = paginator
+
+        bedrock_agent_service = self._service(regional_client)
+        bedrock_agent_service.audit_resources = [
+            "arn:aws:bedrock:us-east-1:123456789012:flow/flowid0001"
+        ]
+        bedrock_agent_service._list_flows(regional_client)
+
+        assert len(bedrock_agent_service.flows) == 1
+        assert (
+            "arn:aws:bedrock:us-east-1:123456789012:flow/flowid0001"
+            in bedrock_agent_service.flows
+        )
+        assert (
+            "arn:aws:bedrock:us-east-1:123456789012:flow/flowid0002"
+            not in bedrock_agent_service.flows
+        )
+
+    def test_list_flows_access_denied_records_scan_error(self):
+        """AccessDenied on ListFlows must be recorded, not treated as an empty region."""
+        from botocore.exceptions import ClientError
+
+        regional_client = MagicMock()
+        regional_client.region = "us-east-1"
+        paginator = MagicMock()
+        paginator.paginate.side_effect = ClientError(
+            {"Error": {"Code": "AccessDeniedException", "Message": "denied"}},
+            "ListFlows",
+        )
+        regional_client.get_paginator.return_value = paginator
+
+        bedrock_agent_service = self._service(regional_client)
+        bedrock_agent_service._list_flows(regional_client)
+
+        assert bedrock_agent_service.flows == {}
+        assert (
+            bedrock_agent_service.flows_scan_errors["us-east-1"]
+            == "AccessDeniedException"
+        )
+
+    def test_list_flows_validation_exception_is_empty_not_error(self):
+        """ValidationException means Flows are unavailable in the region, not unknown."""
+        from botocore.exceptions import ClientError
+
+        regional_client = MagicMock()
+        regional_client.region = "us-east-1"
+        paginator = MagicMock()
+        paginator.paginate.side_effect = ClientError(
+            {
+                "Error": {
+                    "Code": "ValidationException",
+                    "Message": "Bedrock Flows is not supported in this region.",
+                }
+            },
+            "ListFlows",
+        )
+        regional_client.get_paginator.return_value = paginator
+
+        bedrock_agent_service = self._service(regional_client)
+        bedrock_agent_service._list_flows(regional_client)
+
+        assert bedrock_agent_service.flows == {}
+        assert bedrock_agent_service.flows_scan_errors == {}
+
+    def test_get_flow_stores_prompt_and_knowledge_base_guardrails(self):
+        """GetFlow must retain node-level guardrail identifiers for applicable nodes."""
+        regional_client = MagicMock()
+        regional_client.region = "us-east-1"
+        regional_client.get_flow.return_value = {
+            "id": self.FLOW_ID,
+            "name": "secured-flow",
+            "arn": self.FLOW_ARN,
+            "definition": {
+                "nodes": [
+                    {
+                        "name": "prompt-node",
+                        "type": "Prompt",
+                        "configuration": {
+                            "prompt": {
+                                "guardrailConfiguration": {
+                                    "guardrailIdentifier": "gr-prompt",
+                                    "guardrailVersion": "DRAFT",
+                                }
+                            }
+                        },
+                    },
+                    {
+                        "name": "kb-generate",
+                        "type": "KnowledgeBase",
+                        "configuration": {
+                            "knowledgeBase": {
+                                "knowledgeBaseId": "kb-1",
+                                "modelId": "amazon.titan-text-express-v1",
+                                "guardrailConfiguration": {
+                                    "guardrailIdentifier": "gr-kb",
+                                },
+                            }
+                        },
+                    },
+                    {
+                        "name": "kb-retrieve-only",
+                        "type": "KnowledgeBase",
+                        "configuration": {
+                            "knowledgeBase": {
+                                "knowledgeBaseId": "kb-2",
+                            }
+                        },
+                    },
+                    {"name": "input", "type": "Input", "configuration": {}},
+                ]
+            },
+        }
+
+        from prowler.providers.aws.services.bedrock.bedrock_service import Flow
+
+        flow = Flow(
+            id=self.FLOW_ID,
+            name="secured-flow",
+            arn=self.FLOW_ARN,
+            region="us-east-1",
+        )
+        bedrock_agent_service = self._service(regional_client)
+        bedrock_agent_service.regional_clients = {"us-east-1": regional_client}
+        bedrock_agent_service._get_flow(flow)
+
+        assert flow.definition_available is True
+        applicable = [node for node in flow.nodes if node.applicable]
+        assert {node.name for node in applicable} == {"prompt-node", "kb-generate"}
+        by_name = {node.name: node for node in applicable}
+        assert by_name["prompt-node"].guardrail_id == "gr-prompt"
+        assert by_name["kb-generate"].guardrail_id == "gr-kb"
+
+    def test_get_flow_error_leaves_definition_unavailable(self):
+        """A failed GetFlow must not be treated as an empty (compliant) definition."""
+        from botocore.exceptions import ClientError
+
+        regional_client = MagicMock()
+        regional_client.region = "us-east-1"
+        regional_client.get_flow.side_effect = ClientError(
+            {"Error": {"Code": "AccessDeniedException", "Message": "denied"}},
+            "GetFlow",
+        )
+
+        from prowler.providers.aws.services.bedrock.bedrock_service import Flow
+
+        flow = Flow(
+            id=self.FLOW_ID,
+            name="unreadable-flow",
+            arn=self.FLOW_ARN,
+            region="us-east-1",
+        )
+        bedrock_agent_service = self._service(regional_client)
+        bedrock_agent_service.regional_clients = {"us-east-1": regional_client}
+        bedrock_agent_service._get_flow(flow)
+
+        assert flow.definition_available is False
+        assert flow.nodes == []

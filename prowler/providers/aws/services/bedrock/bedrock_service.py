@@ -258,6 +258,8 @@ class BedrockAgent(AWSService):
         self.data_sources = {}
         self.knowledge_bases_scan_errors = {}
         self.agents_scan_errors = {}
+        self.flows = {}
+        self.flows_scan_errors = {}
         self.prompt_scanned_regions: set = set()
         self.__threading_call__(self._list_agents)
         # Detail collection runs over the COMPLETE inventory: an out-of-scope agent's role still
@@ -266,7 +268,10 @@ class BedrockAgent(AWSService):
         self.__threading_call__(self._get_agent_version_roles, self.all_agents.values())
         self.__threading_call__(self._list_prompts)
         self.__threading_call__(self._get_prompt, self.prompts.values())
+        self.__threading_call__(self._list_flows)
+        self.__threading_call__(self._get_flow, self.flows.values())
         self.__threading_call__(self._list_tags_for_resource, self.agents.values())
+        self.__threading_call__(self._list_tags_for_resource, self.flows.values())
         self.__threading_call__(self._list_knowledge_bases)
         self.__threading_call__(self._list_data_sources, self.knowledge_bases.values())
         self.__threading_call__(self._get_data_source, self.data_sources.values())
@@ -519,6 +524,100 @@ class BedrockAgent(AWSService):
                 f"{knowledge_base.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def _list_flows(self, regional_client):
+        """List Bedrock Flows in a region."""
+        logger.info("Bedrock Agent - Listing Flows...")
+        try:
+            paginator = regional_client.get_paginator("list_flows")
+            for page in paginator.paginate():
+                for flow in page.get("flowSummaries", []):
+                    flow_id = flow.get("id")
+                    if not flow_id:
+                        continue
+                    flow_arn = flow.get("arn") or (
+                        f"arn:{self.audited_partition}:bedrock:{regional_client.region}:{self.audited_account}:flow/{flow_id}"
+                    )
+                    if not self.audit_resources or is_resource_filtered(
+                        flow_arn, self.audit_resources
+                    ):
+                        self.flows[flow_arn] = Flow(
+                            id=flow_id,
+                            name=flow.get("name", ""),
+                            arn=flow_arn,
+                            region=regional_client.region,
+                        )
+        except ClientError as error:
+            code = error.response["Error"].get("Code", error.__class__.__name__)
+            # ValidationException means Bedrock Flows are unavailable in the
+            # region: a definite "none", so it must not become a MANUAL finding.
+            if code != "ValidationException":
+                self.flows_scan_errors[regional_client.region] = code
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        except Exception as error:
+            self.flows_scan_errors[regional_client.region] = error.__class__.__name__
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def _get_flow(self, flow):
+        """Fetch a flow definition and retain node-level guardrail configuration.
+
+        ListFlows summaries do not carry node configuration, so a per-flow
+        GetFlow call is required. A missing definition is unknown, not an empty
+        (compliant) graph.
+        """
+        logger.info("Bedrock Agent - Getting Flow...")
+        try:
+            flow_info = self.regional_clients[flow.region].get_flow(
+                flowIdentifier=flow.id
+            )
+            definition = flow_info.get("definition")
+            if definition is None:
+                return
+            flow.definition_available = True
+            for node in definition.get("nodes", []):
+                parsed = self._flow_node_from_definition(node)
+                if parsed:
+                    flow.nodes.append(parsed)
+        except Exception as error:
+            logger.error(
+                f"{flow.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    @staticmethod
+    def _flow_node_from_definition(node: dict) -> Optional["FlowNode"]:
+        """Return an applicable Prompt or generating KnowledgeBase node, else None.
+
+        Prompt nodes always generate model output. KnowledgeBase nodes can attach
+        a guardrail only when they generate responses (RetrieveAndGenerate, which
+        requires modelId). Retrieve-only KnowledgeBase nodes are not applicable.
+        """
+        node_type = node.get("type", "")
+        node_name = node.get("name", "")
+        config = node.get("configuration") or {}
+        if node_type == "Prompt":
+            guardrail = (config.get("prompt") or {}).get("guardrailConfiguration") or {}
+            return FlowNode(
+                name=node_name,
+                type=node_type,
+                guardrail_id=guardrail.get("guardrailIdentifier") or None,
+                applicable=True,
+            )
+        if node_type == "KnowledgeBase":
+            knowledge_base = config.get("knowledgeBase") or {}
+            guardrail = knowledge_base.get("guardrailConfiguration") or {}
+            guardrail_id = guardrail.get("guardrailIdentifier") or None
+            if knowledge_base.get("modelId") or guardrail_id:
+                return FlowNode(
+                    name=node_name,
+                    type=node_type,
+                    guardrail_id=guardrail_id,
+                    applicable=True,
+                )
+        return None
+
     def _get_data_source(self, data_source):
         """Fetch the KMS key a data source's transient storage is encrypted with."""
         logger.info("Bedrock Agent - Getting Data Source...")
@@ -616,3 +715,26 @@ class KnowledgeBaseDataSource(BaseModel):
     kms_key_arn: Optional[str] = None
     # False when GetDataSource failed: absent key is unknown, not unset.
     detail_retrieved: bool = False
+
+
+class FlowNode(BaseModel):
+    """One applicable node from a Bedrock Flow definition."""
+
+    name: str
+    type: str
+    guardrail_id: Optional[str] = None
+    applicable: bool = False
+
+
+class Flow(BaseModel):
+    """Model representing an Amazon Bedrock Flow."""
+
+    id: str
+    name: str
+    arn: str
+    region: str
+    tags: Optional[list] = []
+    nodes: list[FlowNode] = []
+    # False when GetFlow failed or returned no definition: absent nodes are
+    # unknown, not an empty graph.
+    definition_available: bool = False
