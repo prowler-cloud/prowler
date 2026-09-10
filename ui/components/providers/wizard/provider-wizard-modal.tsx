@@ -1,6 +1,6 @@
 "use client";
 
-import { ExternalLink, Info } from "lucide-react";
+import { ExternalLink, Info, Loader2 } from "lucide-react";
 
 import { AzureOrgSetupForm } from "@/components/providers/organizations/azure-org-setup-form";
 import { GcpOrgSetupForm } from "@/components/providers/organizations/gcp-org-setup-form";
@@ -405,7 +405,11 @@ export function ProviderWizardModal({
                         : "button"
                     }
                     form={resolvedFooterConfig.actionFormId}
-                    disabled={resolvedFooterConfig.actionDisabled}
+                    disabled={
+                      resolvedFooterConfig.actionDisabled ||
+                      resolvedFooterConfig.actionLoading
+                    }
+                    aria-busy={resolvedFooterConfig.actionLoading || undefined}
                     onClick={
                       resolvedFooterConfig.actionType ===
                       WIZARD_FOOTER_ACTION_TYPE.BUTTON
@@ -413,6 +417,9 @@ export function ProviderWizardModal({
                         : undefined
                     }
                   >
+                    {resolvedFooterConfig.actionLoading && (
+                      <Loader2 aria-hidden className="animate-spin" />
+                    )}
                     {resolvedFooterConfig.actionLabel}
                   </Button>
                 )}
