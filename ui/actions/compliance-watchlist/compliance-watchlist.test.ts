@@ -93,6 +93,7 @@ describe("getComplianceCatalog", () => {
         watchlistCount: 0,
         eligibleProviderTypes: [],
       },
+      unavailable: true,
     });
     expect(fetchMock).not.toHaveBeenCalled();
   });
@@ -163,7 +164,7 @@ describe("getComplianceCatalog", () => {
     );
   });
 
-  it("degrades to an empty catalog when the request fails", async () => {
+  it("flags an empty catalog as unavailable when the request fails", async () => {
     fetchMock.mockResolvedValue(jsonResponse({ errors: [] }, 500));
 
     const catalog = await getComplianceCatalog();
@@ -175,7 +176,19 @@ describe("getComplianceCatalog", () => {
         watchlistCount: 0,
         eligibleProviderTypes: [],
       },
+      unavailable: true,
     });
+  });
+
+  it("does not flag a catalog that is legitimately empty", async () => {
+    fetchMock.mockResolvedValue(
+      jsonResponse({ data: [], meta: { pagination: { page: 1, pages: 1 } } }),
+    );
+
+    const catalog = await getComplianceCatalog();
+
+    expect(catalog.entries).toEqual([]);
+    expect(catalog.unavailable).toBe(false);
   });
 
   it("degrades to an empty catalog when fetch throws", async () => {
@@ -186,7 +199,8 @@ describe("getComplianceCatalog", () => {
     expect(catalog.entries).toEqual([]);
   });
 
-  it("keeps the rest of the catalog when a single page fails", async () => {
+  it("flags the catalog as unavailable when a single page fails", async () => {
+    // Given - one of three catalog pages times out
     fetchMock
       .mockResolvedValueOnce(
         jsonResponse(catalogPage("cis_1.4_aws", { page: 1, pages: 3 })),
@@ -196,12 +210,15 @@ describe("getComplianceCatalog", () => {
         jsonResponse(catalogPage("iso27001_aws", { page: 3, pages: 3 })),
       );
 
+    // When - the catalog keeps the pages it could read
     const catalog = await getComplianceCatalog();
 
+    // Then - consumers know the merged result is incomplete
     expect(catalog.entries.map((entry) => entry.complianceId)).toEqual([
       "cis_1.4_aws",
       "iso27001_aws",
     ]);
+    expect(catalog.unavailable).toBe(true);
   });
 
   it("bounds how many pages it requests at once", async () => {

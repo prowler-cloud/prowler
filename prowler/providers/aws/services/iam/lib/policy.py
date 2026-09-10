@@ -21,6 +21,62 @@ def _get_patterns_from_standard_value(value):
     return patterns
 
 
+def iam_pattern_matches(pattern: str, value: str) -> bool:
+    """Whether an IAM wildcard pattern from a policy document names a given value.
+
+    IAM honours exactly two metacharacters, ``*`` for any run of characters and ``?`` for exactly
+    one; every other character is literal, ``[seq]`` character classes included. Matching is
+    case-insensitive, as IAM matches action names.
+
+    Args:
+        pattern: A value taken from a policy document -- an Action's service or operation, a
+            Resource ARN field, a condition value. Surrounding whitespace is stripped, which IAM
+            tolerates.
+        value: The concrete string to test the pattern against.
+
+    Returns:
+        True when IAM would consider the pattern to name that value.
+
+    MATCHED WITH A TWO-POINTER SCAN RATHER THAN A TRANSLATED REGEX, and the scan below is the same
+    one as ``_action_matches`` in ``bedrockagentcore_full_access_policy_attached`` -- taken from it
+    rather than written again, so there is one implementation of this under review and not two.
+    Building ``.*`` for every ``*`` and calling ``re``, which is what this file's callers previously
+    did, backtracks catastrophically on input the ACCOUNT controls: against the 17-character
+    ``bedrock-agentcore``, a pattern of N stars, a literal absent from the value, then N more stars
+    took 0.7 ms at N=6, 62 ms at N=10 and 2287 ms at N=14 -- a 31-character policy value, where a
+    managed policy document allows 6144. Cost rises with the number of quantifiers, which is the
+    account's side of the input, so a short value does not bound it. A hang raises nothing, so the
+    bare ``except Exception`` in ``prowler/lib/check/check.py`` cannot catch it and every finding for
+    the account is discarded in silence. This scan is O(len(pattern) x len(value)) with no
+    backtracking path at all: 0.006 ms on that same 31-character pattern, 0.214 ms at 4003.
+    """
+    # Normalised here rather than inside the scan, so the scan stays identical to the one already
+    # under review. IAM tolerates surrounding whitespace and matches case-insensitively, both of
+    # which the regex form this replaced provided through .strip() and re.IGNORECASE.
+    pattern = pattern.strip().lower()
+    action = value.lower()
+
+    p = a = 0
+    star = resume = -1
+    while a < len(action):
+        if p < len(pattern) and pattern[p] in ("?", action[a]):
+            p += 1
+            a += 1
+        elif p < len(pattern) and pattern[p] == "*":
+            star = p
+            resume = a
+            p += 1
+        elif star >= 0:
+            # Backtrack to the most recent star and let it absorb one more character. Only ever
+            # one star is reconsidered, which is what bounds this at a product rather than a power.
+            resume += 1
+            a = resume
+            p = star + 1
+        else:
+            return False
+    return all(char == "*" for char in pattern[p:])
+
+
 def get_effective_actions(policy: dict) -> set[str]:
     """
     Calculates the set of effectively allowed IAM actions from a policy document.

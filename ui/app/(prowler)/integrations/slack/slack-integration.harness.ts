@@ -15,7 +15,11 @@ import type { SlackFixture } from "@/__tests__/msw/handlers/slack.fixtures";
 import { worker } from "@/__tests__/msw/worker";
 import { render } from "@/__tests__/render-browser";
 import { setSlackAuthorizedChannels } from "@/actions/integrations/slack";
-import { SlackCallback } from "@/components/integrations/slack/slack-callback";
+import {
+  CHECK_STATUS,
+  type CheckStatus,
+} from "@/components/integrations/slack/slack-connection-check-status";
+import { SLACK_CONNECT_PARAMS } from "@/lib/integrations/slack-connect-status";
 
 import { IntegrationsContent } from "../integrations-content";
 
@@ -52,13 +56,6 @@ const REVOCATION_NOTICE = /revocation/i;
 
 /** The alert shown when Slack has stopped accepting the credential. */
 const REVOKED_CREDENTIAL_NOTICE = /no longer accepts Prowler's access/;
-
-interface CallbackParams {
-  code?: string;
-  state?: string;
-  /** Slack's own refusal code, e.g. `access_denied`. */
-  error?: string;
-}
 
 /** What a picker search leaves on offer. */
 interface ChannelSearch {
@@ -129,22 +126,28 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
     await rendered.rerender(await SlackIntegrationContent());
   }
 
-  async mountCallback({ code, state, error }: CallbackParams): Promise<void> {
+  /**
+   * Open the integration page the way the OAuth callback route's redirect
+   * does: with the outcome it wrote in the query string. The route handler
+   * itself cannot run in this lane, so its side of the contract is covered by
+   * `callback/route.test.ts`.
+   */
+  async mountAfterReturnFromSlack(
+    params: Record<string, string>,
+    fragment = "",
+  ): Promise<void> {
     // Unmount first, or two copies of the page answer every query.
     (await this.mounted)?.unmount();
-    const params = new URLSearchParams();
-    if (code) params.set("code", code);
-    if (state) params.set("state", state);
-    if (error) params.set("error", error);
     window.history.replaceState(
       null,
       "",
-      `/integrations/slack/callback?${params.toString()}`,
+      `/integrations/slack?${new URLSearchParams(params).toString()}${fragment}`,
     );
     this.wireHandlers();
 
-    // Held so the `revisit()` that follows a reinstall can take it down first.
-    this.mounted = render(createElement(SlackCallback));
+    const readsBefore = this.channelListCallCount;
+    this.mounted = render(await SlackIntegrationContent());
+    if (this.fixture.install) await this.waitForChannelsRead(readsBefore);
   }
 
   /** Mount the integrations catalogue. No handlers: every card there is static. */
@@ -336,6 +339,69 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
     );
   }
 
+  async connectionSuccessToast(): Promise<string> {
+    return this.waitFor(
+      () => this.toastText(/Connection test successful/),
+      15000,
+      "the connection success toast",
+    );
+  }
+
+  /**
+   * The check's standing state, read from the card's own marker. The status is
+   * the card's alone: the toast reports a check that just ran and then goes,
+   * where this retires on its own once the channels it covered have moved.
+   */
+  async connectionCheckStatus(): Promise<CheckStatus> {
+    const region = await this.waitFor(
+      () => this.q("[data-connection-check-status]"),
+      10000,
+      "the connection check status",
+    );
+    return region.getAttribute("data-connection-check-status") as CheckStatus;
+  }
+
+  /**
+   * What the card says the last check found, or null when it shows no outcome
+   * at all. The element is always mounted — `sr-only` while empty — so an empty
+   * one has to read as "no outcome", not as an outcome that says nothing.
+   */
+  connectionCheckOutcome(): string | null {
+    const outcome = this.q("[data-connection-check-outcome]");
+    return (outcome?.textContent ?? "").replace(/\s+/g, " ").trim() || null;
+  }
+
+  /** The same copy, waited for: the outcome lands a render after the answer. */
+  async connectionCheckOutcomeText(): Promise<string> {
+    return this.waitFor(
+      () => this.connectionCheckOutcome(),
+      15000,
+      "the connection check outcome",
+    );
+  }
+
+  /**
+   * Wait until the card has taken its finding back — no outcome, and resting.
+   * Both, together: a status that says nothing while the line it decorated is
+   * still on screen would be the half-retired state the derivation exists to
+   * make impossible.
+   */
+  async waitForRetiredConnectionCheck(): Promise<void> {
+    await this.waitFor(
+      () => {
+        const status = this.q("[data-connection-check-status]")?.getAttribute(
+          "data-connection-check-status",
+        );
+        return status === CHECK_STATUS.IDLE &&
+          this.connectionCheckOutcome() === null
+          ? true
+          : null;
+      },
+      10000,
+      "the connection check finding to be retired",
+    );
+  }
+
   /**
    * The "last checked" line as rendered, or null when the page shows none —
    * which is what a workspace whose connection was never checked shows.
@@ -343,7 +409,7 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
   lastCheckedLine(): string | null {
     const line = Array.from(
       this.container.querySelectorAll<HTMLElement>("p"),
-    ).find((p) => /^Last checked:/.test((p.textContent ?? "").trim()));
+    ).find((p) => /^Last checked\b/.test((p.textContent ?? "").trim()));
     return line ? (line.textContent ?? "").trim() : null;
   }
 
@@ -351,16 +417,24 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
     return this.countRequests("POST", "/connection");
   }
 
-  /** The outcome of a check under way, started by the button or by a save. */
+  /**
+   * The outcome of a check under way, started by the button or by a save, read
+   * from the card's status.
+   *
+   * Deliberately not read from the copy: the toast titles the page has always
+   * raised are the only text saying "Connection test succeeded/failed", and
+   * they are portaled outside the card — so a reader going by text would settle
+   * on the toast and report an outcome the card never showed. The toasts have
+   * assertions of their own, which is what keeps the two surfaces independent.
+   */
   async connectionOutcome(): Promise<ConnectionOutcome> {
     return this.waitFor(
       () => {
-        if (this.containsText(/Connection test successful/)) {
-          return CONNECTION_OUTCOME.SUCCESS;
-        }
-        if (this.containsText(/Connection test failed/)) {
-          return CONNECTION_OUTCOME.FAILURE;
-        }
+        const status = this.q("[data-connection-check-status]")?.getAttribute(
+          "data-connection-check-status",
+        );
+        if (status === CHECK_STATUS.PASSED) return CONNECTION_OUTCOME.SUCCESS;
+        if (status === CHECK_STATUS.FAILED) return CONNECTION_OUTCOME.FAILURE;
         return null;
       },
       15000,
@@ -376,51 +450,53 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
 
   // --- Returning from Slack -----------------------------------------------
 
-  /**
-   * The one element every non-success outcome renders. Keyed on it rather than
-   * the alert title, which is not the same claim on every outcome.
-   */
-  private backLink(): HTMLAnchorElement | null {
-    return (
-      Array.from(this.container.querySelectorAll("a")).find(
-        (anchor) =>
-          anchor.getAttribute("href") === "/integrations/slack" &&
-          /Back to Slack integration/.test(anchor.textContent ?? ""),
-      ) ?? null
-    );
+  private connectNotice(): HTMLElement | null {
+    return this.q("[data-slack-connect-notice]");
   }
 
-  async completedInstall(): Promise<boolean> {
-    const outcome = await this.waitFor(
-      () => this.containsText(/Connected to /) || this.backLink() !== null,
-      10000,
-      "the callback outcome",
-    );
-    return outcome && this.containsText(/Connected to /);
+  /** Whether the page shows a callback outcome at all. Does not wait. */
+  hasConnectNotice(): boolean {
+    return this.connectNotice() !== null;
   }
 
-  async installFailureReason(): Promise<string> {
-    await this.waitFor(() => this.backLink(), 10000, "the failed callback");
-    const description = await this.waitFor(
-      () => this.q('[data-slot="alert-description"]'),
-      5000,
-      "the failure reason",
-    );
-    return (description.textContent ?? "").trim();
-  }
-
-  async installFailureTitle(): Promise<string> {
-    await this.waitFor(() => this.backLink(), 10000, "the failed callback");
+  async connectNoticeTitle(): Promise<string> {
     const title = await this.waitFor(
-      () => this.q('[data-slot="alert-title"]'),
-      5000,
-      "the failure title",
+      () => this.q('[data-slack-connect-notice] [data-slot="alert-title"]'),
+      10000,
+      "the connect notice title",
     );
     return (title.textContent ?? "").trim();
   }
 
-  offersRetry(): boolean {
-    return this.backLink() !== null || this.offersInstall();
+  async connectNoticeDescription(): Promise<string> {
+    const description = await this.waitFor(
+      () =>
+        this.q('[data-slack-connect-notice] [data-slot="alert-description"]'),
+      10000,
+      "the connect notice description",
+    );
+    return (description.textContent ?? "").trim();
+  }
+
+  /**
+   * The query string once the notice's own URL cleanup has landed. Waits on
+   * the `slack*` params being gone, so an assertion never reads mid-strip.
+   */
+  async strippedQuery(): Promise<string> {
+    const settled = await this.waitFor(
+      () => {
+        const current = window.location.search;
+        // Keyed on the contract's own param names, not a substring: a
+        // preserved param merely mentioning "slack" is not a leftover.
+        const params = new URLSearchParams(current);
+        return SLACK_CONNECT_PARAMS.some((param) => params.has(param))
+          ? null
+          : current || "<none>";
+      },
+      5000,
+      "the slack params to be stripped from the URL",
+    );
+    return settled === "<none>" ? "" : settled;
   }
 
   // --- Choosing a destination channel --------------------------------------
@@ -507,8 +583,8 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
 
   /**
    * Re-read the workspace's channels, the way a user does after inviting
-   * `@Prowler` to one in Slack. Waits for the read to have settled, not for the
-   * click alone.
+   * `@Prowler Cloud` to one in Slack. Waits for the read to have settled, not
+   * for the click alone.
    */
   async refreshChannels(): Promise<void> {
     const readsBefore = this.channelListCallCount;
@@ -782,11 +858,16 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
       "the authorized channel chips",
     );
 
+    // Order-insensitive: where the chip puts its "Private" marker relative to
+    // the name is a presentation choice, not something to assert through.
     return chips.map((chip) => {
       const text = (chip.textContent ?? "").trim();
       return {
-        name: text.replace(/^Private/, "").replace(/^#/, ""),
-        isPrivate: /^Private/.test(text),
+        name: text
+          .replace(/Private/g, "")
+          .replace(/^#/, "")
+          .trim(),
+        isPrivate: /Private/.test(text),
       };
     });
   }
@@ -824,12 +905,25 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
     return this.containsText(/Could not read the workspace/);
   }
 
+  private channelInviteHintParagraph(): HTMLElement | null {
+    return (
+      Array.from(this.container.querySelectorAll<HTMLElement>("p")).find(
+        (element) => /invites? @Prowler Cloud/.test(element.textContent ?? ""),
+      ) ?? null
+    );
+  }
+
   /** The invite copy that says how to make a private channel appear. */
   channelInviteHint(): string | null {
-    const hint = Array.from(
-      this.container.querySelectorAll<HTMLElement>("p"),
-    ).find((element) => /invites? @Prowler/.test(element.textContent ?? ""));
+    const hint = this.channelInviteHintParagraph();
     return hint ? (hint.textContent ?? "").trim() : null;
+  }
+
+  /** Where the invite hint sends a user stuck on a missing private channel. */
+  channelInviteHintDocsUrl(): string | null {
+    const link =
+      this.channelInviteHintParagraph()?.querySelector<HTMLAnchorElement>("a");
+    return link ? link.href : null;
   }
 
   // --- Disconnecting ------------------------------------------------------

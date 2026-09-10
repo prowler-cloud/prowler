@@ -38,6 +38,12 @@ export const SLACK_EXCHANGE_OUTCOME = {
   /** Same workspace re-installed: the existing row keeps its id. */
   REINSTALLED: "reinstalled",
   REFUSED_STATE: "refused-state",
+  /**
+   * The same refusal, but naming `invalid_oauth_state` in `code` — the
+   * contract words it code-less, the deployed API names it; the UI maps both
+   * to `expired`.
+   */
+  REFUSED_STATE_CODED: "refused-state-coded",
   SLACK_REFUSED: "slack-refused",
   /** A `409` named by its `code`: one workspace per tenant. */
   DIFFERENT_WORKSPACE: "different-workspace",
@@ -67,7 +73,7 @@ export interface SlackConnectionFixture {
 export interface SlackChannelFixture {
   id: string;
   name: string;
-  /** Private channels are listed only where `@Prowler` has been invited. */
+  /** Private channels are listed only where `@Prowler Cloud` has been invited. */
   isPrivate: boolean;
 }
 
@@ -326,7 +332,7 @@ export const SLACK_CHANNEL_NOT_FOUND_REFUSAL: SlackRefusalFixture = {
 
 /**
  * The channel is fine, the Prowler app is simply not in it — fixed with
- * `/invite @Prowler`. Identical `detail` to the refusal above, deliberately.
+ * `/invite @Prowler Cloud`. Identical `detail` to the refusal above, deliberately.
  */
 export const SLACK_NOT_IN_CHANNEL_REFUSAL: SlackRefusalFixture = {
   status: 400,

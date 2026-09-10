@@ -1,0 +1,1 @@
+Bootstrap STS calls now use the session region when `PROWLER_AWS_PARTITION` is set and the region belongs to that partition, instead of always going to the partition's global STS region, which a deployment reached only through its own region's VPC endpoints cannot route to

@@ -70,6 +70,20 @@ describe("getComplianceIcon", () => {
       expect(getComplianceIcon("asd_essential_eight_aws")).toBe(essentialLogo);
     });
 
+    it("resolves Cyber Essentials distinctly from ASD Essential Eight", () => {
+      // `essentials` (plural) must win over the `essential` keyword, otherwise
+      // NCSC Cyber Essentials would collapse to the ASD Essential Eight logo.
+      const cyberEssentialsLogo = getComplianceIcon("cyber_essentials_3.3");
+      const asdEssentialEightLogo = getComplianceIcon(
+        "asd_essential_eight_aws",
+      );
+      expect(cyberEssentialsLogo).toBeDefined();
+      expect(cyberEssentialsLogo).not.toBe(asdEssentialEightLogo);
+      expect(getComplianceIcon("NCSC Cyber Essentials")).toBe(
+        cyberEssentialsLogo,
+      );
+    });
+
     it("resolves NIS2 distinctly from NIST", () => {
       const nis2Logo = getComplianceIcon("NIS2");
       const nistLogo = getComplianceIcon("NIST-800-53");

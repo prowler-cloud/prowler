@@ -7,6 +7,7 @@ import CISLogo from "./cis.svg";
 import CISALogo from "./cisa.svg";
 import CMMCLogo from "./cmmc.svg";
 import CSALogo from "./csa.svg";
+import CyberEssentialsLogo from "./cyber-essentials.svg";
 import DORALogo from "./dora.svg";
 import ENSLogo from "./ens.png";
 import FedRAMPLogo from "./fedramp.svg";
@@ -41,6 +42,14 @@ import SOC2Logo from "./soc2.svg";
 // Best Practices, Account Security Onboarding, Foundational Technical Review)
 // fall through to it because they expose no other matching keyword.
 const COMPLIANCE_LOGOS = [
+  // `essentials` (plural) MUST come before `essential` (singular). NCSC Cyber
+  // Essentials ids/names contain `essentials` (e.g. `cyber_essentials_3.3`,
+  // "NCSC Cyber Essentials"), whereas ASD Essential Eight is `essential_eight`
+  // (no trailing `s`). Without this ordering the `essential` keyword below
+  // would shadow Cyber Essentials and resolve it to the ASD Essential Eight
+  // logo. `cyber` alone is avoided because it also matches
+  // `rbi_cyber_security_framework`.
+  ["essentials", CyberEssentialsLogo],
   ["essential", ASDEssentialEightLogo],
   ["cisa", CISALogo],
   ["cis", CISLogo],

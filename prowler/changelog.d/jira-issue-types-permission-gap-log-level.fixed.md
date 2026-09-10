@@ -1,0 +1,1 @@
+Jira connection checks no longer log an error when a single project has no issue types visible to the integration user (typically a missing "create issue" permission on that project), a case the caller already treats as non-fatal

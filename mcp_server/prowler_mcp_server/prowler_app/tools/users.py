@@ -9,6 +9,7 @@ from typing import Any
 
 from pydantic import Field
 
+from prowler_mcp_server.lib.types import NonBlankStr
 from prowler_mcp_server.prowler_app.models.users import (
     DetailedUser,
     UsersListResponse,
@@ -79,7 +80,7 @@ class UsersTools(BaseTool):
 
     async def get_user(
         self,
-        user_id: str = Field(
+        user_id: NonBlankStr = Field(
             description="Prowler's internal UUID (v4) for the user to retrieve. Use `prowler_list_users` to find user IDs if you only know a name or email."
         ),
     ) -> dict[str, Any]:

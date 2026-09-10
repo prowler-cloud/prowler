@@ -9,12 +9,16 @@ import {
   crossProviderPdfHandler,
 } from "@/app/(prowler)/compliance/_lib/cross-provider-pdf";
 import { jiraDispatchTaskHandler } from "@/components/findings/jira-dispatch-task-handler";
+import { integrationConnectionTaskHandler } from "@/components/integrations/integration-connection-task-handler";
 import { useMountEffect } from "@/hooks/use-mount-effect";
 import {
   registerTaskKindHandler,
   resumePendingTasks,
 } from "@/store/task-watcher/store";
-import { JIRA_DISPATCH_TASK_KIND } from "@/types/integrations";
+import {
+  INTEGRATION_CONNECTION_TASK_KIND,
+  JIRA_DISPATCH_TASK_KIND,
+} from "@/types/integrations";
 
 // Kind registrations happen at module scope, before any task can settle in
 // this tab. Adding a new watched task kind (integration tests, scan exports,
@@ -22,6 +26,10 @@ import { JIRA_DISPATCH_TASK_KIND } from "@/types/integrations";
 registerTaskKindHandler(CROSS_PROVIDER_PDF_TASK_KIND, crossProviderPdfHandler);
 registerTaskKindHandler(CROSS_ACCOUNT_PDF_TASK_KIND, crossAccountPdfHandler);
 registerTaskKindHandler(JIRA_DISPATCH_TASK_KIND, jiraDispatchTaskHandler);
+registerTaskKindHandler(
+  INTEGRATION_CONNECTION_TASK_KIND,
+  integrationConnectionTaskHandler,
+);
 
 /**
  * Mounted once in the app layout (next to `Toaster`): resumes polling any

@@ -1,5 +1,8 @@
+import { Suspense } from "react";
+
 import { getIntegrations } from "@/actions/integrations/integrations";
 import { getSlackAuthorizeUrl } from "@/actions/integrations/slack";
+import { SlackConnectNotice } from "@/components/integrations/slack/slack-connect-notice";
 import { SlackIntegrationManager } from "@/components/integrations/slack/slack-integration-manager";
 import { GENERIC_SERVER_ERROR_MESSAGE } from "@/lib/helper";
 import { INTEGRATION_TYPE, type IntegrationProps } from "@/types/integrations";
@@ -41,21 +44,29 @@ export async function SlackIntegrationContent() {
   const authorize = integration ? null : await getSlackAuthorizeUrl();
 
   return (
-    <SlackIntegrationManager
-      integration={integration}
-      authorizeUrl={
-        authorize && "authorizeUrl" in authorize ? authorize.authorizeUrl : null
-      }
-      unavailable={Boolean(authorize && "unavailable" in authorize)}
-      // Rate limited is not unavailable: the install is still on offer, it just
-      // cannot be started yet.
-      rateLimitMessage={
-        authorize && "rateLimited" in authorize ? authorize.message : null
-      }
-      loadError={
-        loadError ??
-        (authorize && "error" in authorize ? authorize.error : null)
-      }
-    />
+    <div className="flex flex-col gap-6">
+      {/* Suspense: the notice reads `useSearchParams`. */}
+      <Suspense fallback={null}>
+        <SlackConnectNotice hasConnectedWorkspace={Boolean(integration)} />
+      </Suspense>
+      <SlackIntegrationManager
+        integration={integration}
+        authorizeUrl={
+          authorize && "authorizeUrl" in authorize
+            ? authorize.authorizeUrl
+            : null
+        }
+        unavailable={Boolean(authorize && "unavailable" in authorize)}
+        // Rate limited is not unavailable: the install is still on offer, it
+        // just cannot be started yet.
+        rateLimitMessage={
+          authorize && "rateLimited" in authorize ? authorize.message : null
+        }
+        loadError={
+          loadError ??
+          (authorize && "error" in authorize ? authorize.error : null)
+        }
+      />
+    </div>
   );
 }

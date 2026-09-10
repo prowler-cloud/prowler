@@ -35,7 +35,6 @@ interface SlackRateLimited {
  */
 interface SlackUnconfirmed {
   unconfirmed: true;
-  message: string;
 }
 
 interface SlackActionError {
@@ -48,6 +47,12 @@ interface SlackActionError {
    * reconnecting rather than by retrying.
    */
   code?: string | null;
+  /**
+   * The refusal's HTTP status, for callers that map a class of refusal the
+   * `code` does not name — the exchange's code-less `400` for a consumed
+   * state/code, which no retry can fix.
+   */
+  status?: number;
 }
 
 interface SlackAuthorizeUrl {
@@ -177,7 +182,11 @@ const failureFrom = async (
     };
   }
 
-  return { error: slackErrorMessage(failure, fallback), code: failure.code };
+  return {
+    error: slackErrorMessage(failure, fallback),
+    code: failure.code,
+    status: failure.status,
+  };
 };
 
 /**
@@ -205,6 +214,7 @@ const refusalFrom = async (
         ? slackRateLimitMessage(failure.retryAfterSeconds)
         : slackErrorMessage(failure, fallback),
     code: failure.code,
+    status: failure.status,
   };
 };
 
@@ -291,7 +301,9 @@ export const exchangeSlackOAuthCode = async (
     revalidatePath("/integrations/slack");
 
     if (!isIntegrationResource(body?.data)) {
-      return { unconfirmed: true, message: SLACK_UNREADABLE_RESULT_MESSAGE };
+      // The discriminant is the whole answer: the notice on the integration
+      // page carries its own unconfirmed copy.
+      return { unconfirmed: true };
     }
 
     return { integration: parseStringify(body.data) as IntegrationProps };

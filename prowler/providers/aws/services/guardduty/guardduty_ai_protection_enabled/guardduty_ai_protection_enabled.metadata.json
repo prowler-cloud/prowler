@@ -1,0 +1,41 @@
+{
+  "Provider": "aws",
+  "CheckID": "guardduty_ai_protection_enabled",
+  "CheckTitle": "GuardDuty detector has AI Protection enabled",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices/Runtime Behavior Analysis",
+    "TTPs/Credential Access",
+    "Effects/Resource Consumption"
+  ],
+  "ServiceName": "guardduty",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "AwsGuardDutyDetector",
+  "ResourceGroup": "security",
+  "Description": "Active **Amazon GuardDuty detectors** are assessed for **AI Protection** being enabled, which analyzes AWS CloudTrail data events from Amazon Bedrock, Amazon Bedrock AgentCore and Amazon SageMaker AI to flag anomalous model invocations, cost harvesting and prompt injection. Detectors that do not report the feature return `MANUAL`, because absence means the Region does not offer it.",
+  "Risk": "Without **AI Protection**, model invocation activity is never baselined, so attackers using **stolen credentials** can invoke foundation models undetected.\n\nThat costs **confidentiality** of prompts and outputs, and **availability** too: expensive prompts harvest inference spend and exhaust quota.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/guardduty/latest/ug/ai-protection.html",
+    "https://docs.aws.amazon.com/guardduty/latest/ug/ai-protection-enable-standalone-account.html",
+    "https://docs.aws.amazon.com/guardduty/latest/ug/findings-ai-protection.html",
+    "https://docs.aws.amazon.com/guardduty/latest/ug/guardduty_regions.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aws guardduty update-detector --detector-id <detector-id> --features Name=AI_PROTECTION,Status=ENABLED",
+      "NativeIaC": "```yaml\nResources:\n  <example_resource_name>:\n    Type: AWS::GuardDuty::Detector\n    Properties:\n      Enable: true\n      Features:\n        - Name: AI_PROTECTION  # Critical: selects the GuardDuty AI Protection plan\n          Status: ENABLED      # Critical: turns AI Protection on\n```",
+      "Other": "1. Open the AWS Console and go to Amazon GuardDuty\n2. In the Region selector, choose a Region that offers AI Protection\n3. In the navigation pane, choose Protection plans\n4. Choose Configure all enablements, then under AI Protection choose Enable\n5. Choose Save all, then Confirm and save\n6. In an organization, do this from the delegated GuardDuty administrator account and auto-enable it for new accounts",
+      "Terraform": "```hcl\nresource \"aws_guardduty_detector_feature\" \"<example_resource_name>\" {\n  detector_id = aws_guardduty_detector.<example_detector_name>.id\n  name        = \"AI_PROTECTION\"  # Critical: GuardDuty AI Protection plan\n  status      = \"ENABLED\"        # Critical: enable the feature\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Enable **GuardDuty AI Protection** in every account and Region hosting AI workloads.\n- Enable it org-wide from the delegated GuardDuty administrator and auto-enable it for new accounts\n- Enforce **Amazon Bedrock Guardrails** for prompt attacks, which AI Protection requires to raise prompt injection findings\n- Route findings to AWS Security Hub and review them on a defined cadence",
+      "Url": "https://hub.prowler.com/check/guardduty_ai_protection_enabled"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

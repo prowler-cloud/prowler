@@ -10,6 +10,12 @@ import { clampSidePanelWidth } from "@/lib/ui-layout";
 
 type SurveyCallback = (surveys: Survey[]) => void;
 
+interface PostHogInitConfig {
+  api_host?: string;
+  loaded?: (client: unknown) => void;
+  ui_host?: string;
+}
+
 const mocks = vi.hoisted(() => ({
   isCloud: vi.fn(),
   useRuntimeConfig: vi.fn(),
@@ -100,13 +106,15 @@ describe("FeedbackSurvey", () => {
     mocks.loaded = false;
     mocks.pathname = "/";
     mocks.isPushViewport = false;
+    vi.stubEnv("NODE_ENV", "development");
     localStorage.clear();
     mocks.isCloud.mockReturnValue(true);
     mocks.useRuntimeConfig.mockReturnValue({
       cloudEnabled: true,
       posthogEnabled: true,
       posthogKey: POSTHOG_KEY,
-      posthogHost: "https://eu.posthog.com",
+      posthogIngestionHost: "https://us.i.posthog.com",
+      posthogUiHost: "https://us.posthog.com",
     });
     provideSurveys([SURVEY_FIXTURE]);
   });
@@ -115,6 +123,7 @@ describe("FeedbackSurvey", () => {
     vi.restoreAllMocks();
     vi.unstubAllEnvs();
     vi.unstubAllGlobals();
+    Reflect.deleteProperty(window, "posthog");
   });
 
   it("renders an accessible icon-only circular feedback trigger", async () => {
@@ -443,13 +452,47 @@ describe("FeedbackSurvey", () => {
     await waitFor(() => expect(mocks.init).toHaveBeenCalledTimes(1));
     expect(mocks.init.mock.calls[0][0]).toBe(POSTHOG_KEY);
     expect(mocks.init.mock.calls[0][1]).toMatchObject({
-      api_host: "https://eu.posthog.com",
-      ui_host: "https://eu.posthog.com",
+      api_host: "https://us.i.posthog.com",
+      ui_host: "https://us.posthog.com",
       autocapture: false,
       capture_pageview: false,
       capture_pageleave: false,
     });
     await waitFor(() => expect(mocks.onSurveysLoaded).toHaveBeenCalled());
+  });
+
+  it("exposes the initialized PostHog client for the development Toolbar", async () => {
+    // Given
+    await renderSurvey();
+    await waitFor(() => expect(mocks.init).toHaveBeenCalledOnce());
+    const config = mocks.init.mock.calls[0]?.[1] as
+      | PostHogInitConfig
+      | undefined;
+    const { default: posthogClient } = await import("posthog-js");
+
+    // When
+    config?.loaded?.(posthogClient);
+
+    // Then
+    expect(config?.loaded).toBeTypeOf("function");
+    expect(Reflect.get(window, "posthog")).toBe(posthogClient);
+  });
+
+  it("keeps the initialized PostHog client off window in production", async () => {
+    // Given
+    vi.stubEnv("NODE_ENV", "production");
+    await renderSurvey();
+    await waitFor(() => expect(mocks.init).toHaveBeenCalledOnce());
+    const config = mocks.init.mock.calls[0]?.[1] as
+      | PostHogInitConfig
+      | undefined;
+    const { default: posthogClient } = await import("posthog-js");
+
+    // When
+    config?.loaded?.(posthogClient);
+
+    // Then
+    expect(Reflect.has(window, "posthog")).toBe(false);
   });
 
   it("consumes the already-initialized Cloud instance without re-initializing", async () => {
@@ -464,6 +507,8 @@ describe("FeedbackSurvey", () => {
     // the trigger renders.
     await waitFor(() => expect(mocks.onSurveysLoaded).toHaveBeenCalled());
     expect(mocks.init).not.toHaveBeenCalled();
+    const { default: posthogClient } = await import("posthog-js");
+    expect(Reflect.get(window, "posthog")).toBe(posthogClient);
     expect(
       await screen.findByRole("button", { name: "Give feedback" }),
     ).toBeVisible();
@@ -476,7 +521,8 @@ describe("FeedbackSurvey", () => {
       cloudEnabled: false,
       posthogEnabled: false,
       posthogKey: null,
-      posthogHost: null,
+      posthogIngestionHost: null,
+      posthogUiHost: null,
     });
 
     // When
@@ -496,7 +542,8 @@ describe("FeedbackSurvey", () => {
       cloudEnabled: true,
       posthogEnabled: false,
       posthogKey: POSTHOG_KEY,
-      posthogHost: "https://eu.posthog.com",
+      posthogIngestionHost: "https://eu.i.posthog.com",
+      posthogUiHost: "https://eu.posthog.com",
     });
 
     // When

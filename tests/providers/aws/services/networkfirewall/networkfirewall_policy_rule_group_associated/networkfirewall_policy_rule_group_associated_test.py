@@ -14,7 +14,7 @@ POLICY_ARN = "arn:aws:network-firewall:us-east-1:123456789012:firewall-policy/my
 
 class Test_networkfirewall_policy_rule_group_associated:
     def test_no_networkfirewall(self):
-        networkfirewall_client = mock.MagicMock
+        networkfirewall_client = mock.MagicMock()
         networkfirewall_client.provider = set_mocked_aws_provider(
             [AWS_REGION_US_EAST_1]
         )
@@ -42,7 +42,7 @@ class Test_networkfirewall_policy_rule_group_associated:
                 assert len(result) == 0
 
     def test_networkfirewall_policy_stateless_rule_group_associated(self):
-        networkfirewall_client = mock.MagicMock
+        networkfirewall_client = mock.MagicMock()
         networkfirewall_client.provider = set_mocked_aws_provider(
             [AWS_REGION_US_EAST_1]
         )
@@ -92,7 +92,7 @@ class Test_networkfirewall_policy_rule_group_associated:
                 assert result[0].resource_arn == FIREWALL_ARN
 
     def test_networkfirewall_policy_stateful_rule_group_associated(self):
-        networkfirewall_client = mock.MagicMock
+        networkfirewall_client = mock.MagicMock()
         networkfirewall_client.provider = set_mocked_aws_provider(
             [AWS_REGION_US_EAST_1]
         )
@@ -142,7 +142,7 @@ class Test_networkfirewall_policy_rule_group_associated:
                 assert result[0].resource_arn == FIREWALL_ARN
 
     def test_networkfirewall_policy_both_rule_groups_associated(self):
-        networkfirewall_client = mock.MagicMock
+        networkfirewall_client = mock.MagicMock()
         networkfirewall_client.provider = set_mocked_aws_provider(
             [AWS_REGION_US_EAST_1]
         )
@@ -196,7 +196,7 @@ class Test_networkfirewall_policy_rule_group_associated:
                 assert result[0].resource_arn == FIREWALL_ARN
 
     def test_networkfirewall_policy_no_rule_groups_associated(self):
-        networkfirewall_client = mock.MagicMock
+        networkfirewall_client = mock.MagicMock()
         networkfirewall_client.provider = set_mocked_aws_provider(
             [AWS_REGION_US_EAST_1]
         )

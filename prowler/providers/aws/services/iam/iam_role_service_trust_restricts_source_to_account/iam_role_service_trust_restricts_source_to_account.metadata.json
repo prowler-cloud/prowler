@@ -1,0 +1,46 @@
+{
+  "Provider": "aws",
+  "CheckID": "iam_role_service_trust_restricts_source_to_account",
+  "CheckTitle": "IAM role trust policy confines AWS service principals to a specific source account",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "TTPs/Privilege Escalation"
+  ],
+  "ServiceName": "iam",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "AwsIamRole",
+  "ResourceGroup": "IAM",
+  "Description": "Trust-policy statements letting an **AWS service principal** call `sts:AssumeRole` confine the request source to one account -- via `aws:SourceAccount`, an account-bearing `aws:SourceArn`, or an organization-scoped source. Scope: statements whose condition binds no account, and trust policies that are not a plain service role. Unconditional service roles go to the related check.",
+  "Risk": "A condition can look protective while binding nothing: a `*IfExists` operator is skipped when the calling service omits the key, a negated operator never matches, and an `aws:SourceArn` that is wildcarded or carries no account field (an S3 bucket ARN) names no account. Any account can then steer the service into assuming the role -- a **cross-service confused deputy** path to its permissions.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/IAM/latest/UserGuide/confused-deputy.html#cross-service-confused-deputy-prevention",
+    "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_condition-keys.html#condition-keys-sourcearn",
+    "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_condition-keys.html#condition-keys-sourceaccount",
+    "https://aws.amazon.com/blogs/security/use-scalable-controls-for-aws-services-accessing-your-resources/",
+    "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_common-scenarios_third-party.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aws iam update-assume-role-policy --role-name <example_resource_name> --policy-document '{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Principal\":{\"Service\":\"<service>.amazonaws.com\"},\"Action\":\"sts:AssumeRole\",\"Condition\":{\"StringEquals\":{\"aws:SourceAccount\":\"<ACCOUNT_ID>\"}}}]}'",
+      "NativeIaC": "```yaml\n# CloudFormation: confine the service-principal trust to this account\nResources:\n  <example_resource_name>:\n    Type: AWS::IAM::Role\n    Properties:\n      AssumeRolePolicyDocument:\n        Version: '2012-10-17'\n        Statement:\n          - Effect: Allow\n            Principal:\n              Service: <service>.amazonaws.com\n            Action: sts:AssumeRole\n            Condition:\n              StringEquals:\n                aws:SourceAccount: !Ref AWS::AccountId  # binds the call to this account\n              ArnLike:\n                # Optional but preferred: bind to the calling resource as well.\n                # An ARN whose account field is empty (an S3 bucket ARN) or wildcarded\n                # does NOT bind the account -- keep aws:SourceAccount in that case.\n                aws:SourceArn: !Sub 'arn:${AWS::Partition}:<service>:${AWS::Region}:${AWS::AccountId}:<resource-type>/<resource-name>'\n```",
+      "Other": "1. In the AWS console, go to IAM > Roles\n2. Open <example_resource_name> and select the Trust relationships tab\n3. Click Edit trust policy\n4. For every statement whose Principal is a Service, add a Condition block that binds the source to an account, using either:\n   - StringEquals: aws:SourceAccount = <ACCOUNT_ID>, or\n   - ArnLike / ArnEquals: aws:SourceArn = an ARN whose account field is <ACCOUNT_ID>\n5. If the aws:SourceArn value has no account field (for example arn:aws:s3:::amzn-s3-demo-bucket), add aws:SourceAccount as well -- the ARN alone cannot bind the account\n6. Do not rely on a *IfExists operator: it is skipped when the calling service omits the key\n7. Save changes and re-run the check",
+      "Terraform": "```hcl\n# Confine the service-principal trust to this account\nresource \"aws_iam_role\" \"<example_resource_name>\" {\n  name = \"<example_resource_name>\"\n\n  assume_role_policy = jsonencode({\n    Version = \"2012-10-17\"\n    Statement = [\n      {\n        Effect    = \"Allow\"\n        Principal = { Service = \"<service>.amazonaws.com\" }\n        Action    = \"sts:AssumeRole\"\n        Condition = {\n          StringEquals = { \"aws:SourceAccount\" = data.aws_caller_identity.current.account_id }\n          # Optional but preferred: bind to the calling resource as well.\n          ArnLike      = { \"aws:SourceArn\" = aws_<service>_<resource>.example.arn }\n        }\n      }\n    ]\n  })\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Bind every service-principal trust statement to an account with `aws:SourceAccount`, or with an `aws:SourceArn` whose account field holds the account ID. AWS documents `aws:SourceArn`, `aws:SourceAccount`, `aws:SourceOrgID` and `aws:SourceOrgPaths` as alternatives, so any one of them satisfies this check -- except an ARN with no account field, which needs `aws:SourceAccount` alongside it.",
+      "Url": "https://hub.prowler.com/check/iam_role_service_trust_restricts_source_to_account"
+    }
+  },
+  "Categories": [
+    "identity-access",
+    "trust-boundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "iam_role_cross_service_confused_deputy_prevention"
+  ],
+  "Notes": "Companion to iam_role_cross_service_confused_deputy_prevention, not a replacement. That check reports a service-principal trust statement carrying no restrictive condition at all, and only on roles it classifies as service roles. This check asserts the clause it leaves open: statements where a condition IS present but confines nothing, and statements no service-role check evaluates. Both can report one role.\n\nA condition confines nothing when it uses a negated operator, an *IfExists or ForAllValues operator with no Null:\"false\" guard on the same key, a wildcarded aws:SourceArn, or an ARN whose account field is empty such as an S3 bucket ARN. A role leaves the other check's population when its trust policy carries a Deny statement, an action outside the assume-role family, or a non-Service principal.\n\nAll four aws:Source* keys count as bindings. sts:ExternalId does not: AWS documents it for third-party access where the third party supplies the value, while a calling service passes source context instead."
+}

@@ -86,6 +86,10 @@ class Entra(M365Service):
         self.tenant_domain = provider.identity.tenant_domain
         self.tenant_id = getattr(provider.identity, "tenant_id", None)
         self.user_registration_details_error: Optional[str] = None
+        # Set when the Microsoft Graph /users request (or its directory role
+        # dependencies) fails, so checks can report that users are unavailable
+        # instead of silently evaluating an empty directory.
+        self.users_error: Optional[str] = None
         self.exchange_mailbox_permission_service_principals_error: Optional[str] = None
         attributes = loop.run_until_complete(
             gather(
@@ -924,7 +928,7 @@ class Entra(M365Service):
         except ODataError as error:
             error_code = getattr(error.error, "code", None) if error.error else None
             if error_code == "Authorization_RequestDenied":
-                error_message = "Insufficient privileges to read directory sync settings. Required permission: OnPremDirectorySynchronization.Read.All or OnPremDirectorySynchronization.ReadWrite.All"
+                error_message = "Insufficient privileges to read directory sync settings. Required permission: OnPremDirectorySynchronization.Read.All or OnPremDirectorySynchronization.ReadWrite.All (Microsoft Graph only supports this as a delegated permission for a Global Administrator; application permissions are not supported)"
                 logger.error(
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error_message}"
                 )
@@ -941,6 +945,19 @@ class Entra(M365Service):
         return directory_sync_settings, error_message
 
     async def _get_users(self):
+        """Retrieve the tenant users with their directory roles and MFA registration.
+
+        Depends on ``GET /users``, ``GET /directoryRoles`` and the members of
+        each role. If any of those Graph calls fails, ``self.users_error`` is
+        set so checks can report that the directory could not be read instead
+        of evaluating an empty user set. Registration details are fetched via
+        ``_get_user_registration_details``, which handles its own failures
+        through ``self.user_registration_details_error``.
+
+        Returns:
+            dict: User id mapped to ``User``. Empty (or partial, on a
+            mid-pagination failure) when ``self.users_error`` is set.
+        """
         logger.info("Entra - Getting users...")
         users = {}
         try:
@@ -1026,7 +1043,17 @@ class Entra(M365Service):
                 if not next_link:
                     break
                 users_response = await self.client.users.with_url(next_link).get()
+        except ODataError as error:
+            error_code = getattr(error.error, "code", None) if error.error else None
+            if error_code == "Authorization_RequestDenied":
+                self.users_error = "Insufficient privileges to read users and directory roles. Required permissions: User.Read.All, Directory.Read.All or RoleManagement.Read.Directory"
+            else:
+                self.users_error = f"Unable to retrieve users from Microsoft Graph ({error_code or error.__class__.__name__})"
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
         except Exception as error:
+            self.users_error = f"Unable to retrieve users from Microsoft Graph ({error.__class__.__name__})"
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
@@ -1124,7 +1151,15 @@ OAuthAppInfo
                 request_body
             )
 
-            if result and result.results:
+            if result is None:
+                # A null response object is not a successful empty query:
+                # the OAuth app inventory could not be retrieved.
+                logger.warning(
+                    "Entra - Advanced Hunting returned a null response for OAuthAppInfo."
+                )
+                return None
+
+            if result.results:
                 for row in result.results:
                     row_data = row.additional_data
                     raw_app_id = row_data.get("OAuthAppId", "")

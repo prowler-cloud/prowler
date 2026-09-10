@@ -132,6 +132,29 @@ describe("auth actions", () => {
     expect(requestUrl.searchParams.get("utm_source")).toBe("blackhat");
   });
 
+  it("should carry manage_ingestions into the session permissions", async () => {
+    // Given
+    mockUserMe({ manage_ingestions: true });
+
+    // When
+    const result = await getUserByMe("access-token");
+
+    // Then
+    expect(result.permissions.manage_ingestions).toBe(true);
+  });
+
+  it("should default manage_ingestions to false when the role omits it", async () => {
+    // Given
+    mockUserMe({ manage_scans: true });
+
+    // When
+    const result = await getUserByMe("access-token");
+
+    // Then
+    expect(result.permissions.manage_ingestions).toBe(false);
+    expect(result.permissions.manage_scans).toBe(true);
+  });
+
   it("should carry manage_lighthouse_ai_configuration into the session permissions", async () => {
     // Given
     mockUserMe({ manage_lighthouse_ai_configuration: true });
@@ -153,5 +176,97 @@ describe("auth actions", () => {
     // Then
     expect(result.permissions.manage_lighthouse_ai_configuration).toBe(false);
     expect(result.permissions.manage_users).toBe(true);
+  });
+
+  it("should forward an abort signal when loading the current user", async () => {
+    // Given
+    mockUserMe({ manage_users: true });
+    const abortController = new AbortController();
+
+    // When
+    await getUserByMe("access-token", abortController.signal);
+
+    // Then
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://api.example.com/api/v1/users/me?include=roles",
+      expect.objectContaining({ signal: abortController.signal }),
+    );
+  });
+
+  it.each([
+    {
+      status: 401,
+      detail: "Rejected by API",
+      message: "Invalid or expired token",
+    },
+    {
+      status: 403,
+      detail: "Database password: super-secret",
+      message: "Access denied",
+    },
+    { status: 404, detail: "Rejected by API", message: "User not found" },
+  ])(
+    "should preserve a $status status when loading the current user fails",
+    async ({ status, detail, message }) => {
+      // Given
+      fetchMock.mockResolvedValue(
+        new Response(JSON.stringify({ errors: [{ detail }] }), { status }),
+      );
+
+      // When
+      const result = getUserByMe("access-token");
+
+      // Then
+      await expect(result).rejects.toMatchObject({ message, status });
+    },
+  );
+
+  it("should preserve a 401 status when the error body is not JSON", async () => {
+    // Given
+    fetchMock.mockResolvedValue(new Response("Unauthorized", { status: 401 }));
+
+    // When
+    const result = getUserByMe("access-token");
+
+    // Then
+    await expect(result).rejects.toMatchObject({
+      message: "Invalid or expired token",
+      status: 401,
+    });
+  });
+
+  it("should preserve a 403 status when the error body is not JSON", async () => {
+    // Given
+    fetchMock.mockResolvedValue(new Response("Forbidden", { status: 403 }));
+
+    // When
+    const result = getUserByMe("access-token");
+
+    // Then
+    await expect(result).rejects.toMatchObject({
+      message: "Access denied",
+      status: 403,
+    });
+  });
+
+  it("should not expose upstream details for unexpected errors", async () => {
+    // Given
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          errors: [{ detail: "Database password: super-secret" }],
+        }),
+        { status: 500 },
+      ),
+    );
+
+    // When
+    const result = getUserByMe("access-token");
+
+    // Then
+    await expect(result).rejects.toMatchObject({
+      message: "Unable to load user",
+      status: 500,
+    });
   });
 });
