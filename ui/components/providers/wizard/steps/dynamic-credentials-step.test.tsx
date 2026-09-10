@@ -2,7 +2,9 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
+import openaiSchema from "@/lib/provider-credentials/fixtures/openai-credential-schema.json";
 import { useProviderWizardStore } from "@/store/provider-wizard/store";
+import type { ProviderSchemasResult } from "@/types/provider-schema";
 
 const { getProviderSchemas, saveDynamicProviderCredentials, toast } =
   vi.hoisted(() => ({
@@ -41,6 +43,7 @@ const props = {
 };
 const schema = {
   type: "object",
+  description: openaiSchema.description,
   properties: {
     token: {
       type: "string",
@@ -84,25 +87,68 @@ describe("dynamic credentials in the provider wizard", () => {
     expect(useProviderWizardStore.getState().secretId).toBe("secret");
     expect(field).toHaveValue("");
   });
-  it.each([
-    {},
-    { api_key: { type: "object", properties: { nested: { type: "object" } } } },
-  ])(
-    "shows actionable errors for absent or unsupported schemas",
-    async (secretTypes) => {
-      getProviderSchemas.mockResolvedValue({
+  it.each<{ result: ProviderSchemasResult; title: string }>([
+    {
+      result: { status: "success", providerType: "acme", secretTypes: {} },
+      title: "Credential form unavailable",
+    },
+    {
+      result: {
         status: "success",
         providerType: "acme",
-        secretTypes,
-      });
+        secretTypes: {
+          api_key: {
+            type: "object",
+            properties: { nested: { type: "object" } },
+          },
+        },
+      },
+      title: "Credential form not supported",
+    },
+    {
+      result: { status: "access_denied" },
+      title: "Access required",
+    },
+    {
+      result: { status: "unavailable" },
+      title: "Provider installation unavailable",
+    },
+  ])(
+    "explains $title without allowing credential submission",
+    async ({ result, title }) => {
+      getProviderSchemas.mockResolvedValue(result);
       render(<DynamicCredentialsStep {...props} />);
       expect(
-        await screen.findByRole("button", { name: "Reload credential schema" }),
+        await screen.findByRole("button", { name: "Try again" }),
       ).toBeVisible();
+      expect(screen.getByRole("alert")).toHaveTextContent(title);
       expect(screen.queryByLabelText(/API token/)).not.toBeInTheDocument();
       expect(saveDynamicProviderCredentials).not.toHaveBeenCalled();
     },
   );
+  it("explains a loading failure and recovers when retried", async () => {
+    // Given
+    getProviderSchemas.mockRejectedValueOnce(new Error("Network unavailable"));
+    const user = userEvent.setup();
+    render(<DynamicCredentialsStep {...props} />);
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Could not load credential form",
+    );
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Check your connection and try again.",
+    );
+    expect(screen.getByRole("link", { name: "Open Registry" })).toHaveAttribute(
+      "href",
+      "/registry",
+    );
+
+    // When
+    await user.click(screen.getByRole("button", { name: "Try again" }));
+
+    // Then
+    expect(await screen.findByLabelText(/API token/)).toBeVisible();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
   it("clears credentials when changing providers", async () => {
     const view = render(<DynamicCredentialsStep {...props} />);
     fireEvent.change(await screen.findByLabelText(/API token/), {
