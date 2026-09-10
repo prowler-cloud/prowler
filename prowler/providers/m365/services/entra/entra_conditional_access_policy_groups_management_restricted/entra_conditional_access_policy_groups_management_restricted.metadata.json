@@ -1,0 +1,39 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_conditional_access_policy_groups_management_restricted",
+  "CheckTitle": "Conditional Access policy groups are management-restricted or role-assignable",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "Microsoft Entra **Conditional Access** policies are evaluated for security groups referenced in `includeGroups` and `excludeGroups`. Referenced groups must be protected by **Restricted Management Administrative Unit** membership or configured as **role-assignable groups**.",
+  "Risk": "Groups referenced by **Conditional Access** policies become privileged identity control points. If their membership can be changed by broad group administrators or applications, an attacker may bypass access controls by adding themselves to an excluded group or removing themselves from an included group, weakening **confidentiality** and **integrity** without modifying the policy.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/graph/api/resources/conditionalaccesspolicy?view=graph-rest-1.0",
+    "https://learn.microsoft.com/en-us/graph/api/resources/group?view=graph-rest-1.0",
+    "https://learn.microsoft.com/en-us/entra/identity/role-based-access-control/admin-units-restricted-management",
+    "https://learn.microsoft.com/en-us/entra/identity/role-based-access-control/groups-concept"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the Microsoft Entra admin center at https://entra.microsoft.com.\n2. Review every group used by enabled or report-only Conditional Access policies under Users > Include and Users > Exclude.\n3. For each group, either place it in a Restricted Management Administrative Unit or recreate/use a role-assignable group where appropriate.\n4. Restrict group ownership and membership management to privileged administrators.\n5. Remove stale or deleted group references from Conditional Access policies.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Protect every security group that scopes **Conditional Access** decisions with **Restricted Management Administrative Units** or **role-assignable group** controls. Regularly audit group membership, owners, and stale Conditional Access references.",
+      "Url": "https://hub.prowler.com/check/entra_conditional_access_policy_groups_management_restricted"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Conditional Access policies require Microsoft Entra ID P1 or P2 licenses. The check relies on Microsoft Graph group properties `isManagementRestricted` and `isAssignableToRole`, which must be requested with `$select`."
+}

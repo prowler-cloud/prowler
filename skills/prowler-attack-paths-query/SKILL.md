@@ -9,7 +9,7 @@ description: >
 license: Apache-2.0
 metadata:
   author: prowler-cloud
-  version: "3.0"
+  version: "3.1"
   scope: [root, api]
   auto_invoke:
     - "Creating Attack Paths queries"
@@ -21,6 +21,8 @@ allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, Task
 ## Overview
 
 Attack Paths queries are read-only openCypher queries over a Cartography-ingested cloud graph that detect privilege escalation chains, network exposure, and other graph-shaped security risks. Queries are written in openCypher Version 9 so they run on both Neo4j and Amazon Neptune sinks.
+
+This skill is the concise, action-oriented reference for building queries. For the complete human-readable reference (graph model, list-typed and JSON-encoded properties, compatibility, and worked examples), see `docs/developer-guide/attack-paths-queries.mdx`.
 
 ---
 
@@ -126,12 +128,16 @@ AWS_{QUERY_NAME} = AttackPathsQueryDefinition(
            OR act.value = '*'
         WITH DISTINCT aws, principal, stmt, path_principal
 
-        // Target resources attached to the same principal (sub-patterns below)
-        MATCH path_target = (aws)--(target_policy:AWSPolicy)--(principal)
-        WHERE target_policy.arn CONTAINS $provider_uid
+        // Pre-aggregate the statement's resource values (see "Avoiding cartesian products")
         MATCH (stmt)-[:HAS_RESOURCE]->(res:AWSPolicyStatementResourceItem)
-        WHERE res.value = '*'
-           OR target_policy.arn CONTAINS res.value
+        WITH aws, principal, path_principal, collect(DISTINCT res.value) AS res_values
+        WITH aws, principal, path_principal, res_values, ('*' IN res_values) AS res_wildcard
+
+        // Target policies attached to the principal, matched once against the resource list
+        MATCH path_target = (aws)--(target_policy:AWSPolicy)--(principal)
+        WITH path_principal, path_target, res_values, res_wildcard, target_policy.arn AS parn
+        WHERE parn CONTAINS $provider_uid
+          AND (res_wildcard OR size([rv IN res_values WHERE parn CONTAINS rv]) > 0)
 
         WITH DISTINCT path_principal, path_target
         WITH collect(path_principal) + collect(path_target) AS paths
@@ -157,6 +163,33 @@ Key points:
 - Collapse duplicate rows after each permission gate with `WITH DISTINCT`, carrying only the variables needed by later clauses.
 - Each `HAS_*` traversal is its own `MATCH` clause with a `WHERE` on the child item node. `WITH DISTINCT path_principal, path_target` precedes `collect(path...)` to dedupe the row multiplication produced by the joins.
 - The `RETURN` shape `paths, dpf, dpfr` is the contract the serializer and visualiser depend on. Do not change it.
+
+---
+
+## Avoiding cartesian products
+
+Matching a target set (`AWSRole`, `AWSUser`, `AWSGroup`) and then filtering each target against a statement's `HAS_RESOURCE` items in a separate, unconnected `MATCH` builds a cartesian product: every target is paired with every resource item before the filter runs. On accounts with many principals this errors or times out. Pre-aggregate the resource values into a list, then match each target once:
+
+```cypher
+// Pre-aggregate the statement's resource values into a list
+MATCH (stmt)-[:HAS_RESOURCE]->(res:AWSPolicyStatementResourceItem)
+WITH aws, path_principal, collect(DISTINCT res.value) AS res_values
+WITH aws, path_principal, res_values, ('*' IN res_values) AS res_wildcard
+
+// Match each target once; bind name/arn to locals so the predicate reads them once
+MATCH path_target = (aws)--(target_role:AWSRole)
+WITH path_principal, path_target, res_values, res_wildcard,
+     target_role.name AS rname, target_role.arn AS rarn
+WHERE res_wildcard
+   OR size([rv IN res_values WHERE rv CONTAINS rname OR rarn CONTAINS rv]) > 0
+```
+
+- Aggregate resources before matching targets; cost becomes `targets + resources`, not `targets × resources`. This is a pure rewrite, the result set is identical.
+- `('*' IN res_values)` short-circuits the wildcard grant so the list scan runs only when needed.
+- Bind `target.name` / `target.arn` to locals so the list comprehension reads them once per target, not once per resource value.
+- `size([...]) > 0` is the Neptune-compatible form of `any()` (see "openCypher compatibility").
+- Two-statement queries aggregate each statement's resources into its own list (`res_values`, `res2_values`) and combine the two `size([...]) > 0` checks with `AND`.
+- Targets already constrained by a relationship (`STS_ASSUMEROLE_ALLOW`, `TRUSTS_AWS_PRINCIPAL`) need no aggregation: the relationship already bounds the set.
 
 ---
 
@@ -195,7 +228,8 @@ When all matching principals can target the same independent resource set, colle
 ```cypher
 WITH aws, collect(DISTINCT path_principal) AS principal_paths
 MATCH path_target = (aws)--(target)
-WITH principal_paths + collect(DISTINCT path_target) AS paths
+WITH principal_paths, collect(DISTINCT path_target) AS target_paths
+WITH principal_paths + target_paths AS paths
 ```
 
 Statements that constrain a target are still checked via `HAS_RESOURCE` traversals (`res`, `res2`). See IAM-015 or EC2-001 in `aws.py`.
@@ -272,17 +306,9 @@ The literal-action list is case-folded with `toLower(act.value)` because IAM aut
 
 ### Example - resource ARN match
 
-Find statements whose resource can target a specific role:
+To find statements whose resource can target a specific role, pre-aggregate the resource values and test the target against the list once (see "Avoiding cartesian products"). Do not pair the target set with the `HAS_RESOURCE` items in a separate `MATCH`; that builds a cartesian product.
 
-```cypher
-MATCH path_target = (aws)--(target_role:AWSRole)
-MATCH (stmt)-[:HAS_RESOURCE]->(res:AWSPolicyStatementResourceItem)
-WHERE res.value = '*'
-   OR res.value CONTAINS target_role.name
-   OR target_role.arn CONTAINS res.value
-```
-
-Three predicates cover the cases: full wildcard (`*`), pattern containing the role name (`arn:aws:iam::*:role/admin*`), and pattern that is a prefix or component of the actual ARN.
+Three predicates cover the resource cases: full wildcard (`*`), a pattern containing the target name (`arn:aws:iam::*:role/admin*`), and a pattern that is a prefix or component of the actual ARN.
 
 ### Catalog of list properties
 
@@ -292,25 +318,7 @@ The provider catalog lives in `api/src/backend/tasks/jobs/attack_paths/provider_
 
 ## Common openCypher patterns
 
-### Match account and principal
-
-```cypher
-MATCH path_principal = (aws:AWSAccount {id: $provider_uid})--(principal:AWSPrincipal)-[:POLICY]->(policy:AWSPolicy)-[:STATEMENT]->(stmt:AWSPolicyStatement {effect: 'Allow'})
-```
-
-The `(aws)--(principal)` hop stays anonymous; the `POLICY` and `STATEMENT` hops are typed.
-
-### Roles trusting a service
-
-```cypher
-MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]-(:AWSPrincipal {arn: 'ec2.amazonaws.com'})
-```
-
-### Roles a principal can assume
-
-```cypher
-MATCH path_target = (aws)--(target_role:AWSRole)-[:STS_ASSUMEROLE_ALLOW]-(principal)
-```
+The account/principal match and the service-trust and assume-role target shapes appear in the template and sub-patterns above. Additional reusable patterns:
 
 ### JSON-encoded properties
 
@@ -419,6 +427,7 @@ Queries must run on both Neo4j and Amazon Neptune. Avoid these constructs:
 | `FOREACH`                               | `WITH` + `UNWIND` + `SET`                                                                                                                   |
 | Regex `=~`                              | `toLower()` + exact match, or `STARTS WITH` / `CONTAINS`                                                                                    |
 | `CALL () { UNION }`                     | Multi-label `OR` in `WHERE` (see pattern above)                                                                                             |
+| Carried value plus aggregate expression | Project the aggregate first: `WITH principal_paths, collect(...) AS target_paths`, then combine lists in the next `WITH`                    |
 | `any(x IN list ...)`                    | `size([x IN list WHERE pred]) > 0`                                                                                                          |
 | `all(x IN list ...)`                    | `size([x IN list WHERE pred]) = size(list)`                                                                                                 |
 | `none(x IN list ...)`                   | `size([x IN list WHERE pred]) = 0`                                                                                                          |

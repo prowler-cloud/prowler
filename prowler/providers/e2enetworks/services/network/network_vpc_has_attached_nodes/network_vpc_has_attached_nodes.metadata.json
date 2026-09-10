@@ -1,0 +1,34 @@
+{
+  "Provider": "e2enetworks",
+  "CheckID": "network_vpc_has_attached_nodes",
+  "CheckTitle": "E2E Networks VPCs have attached nodes",
+  "CheckType": [],
+  "ServiceName": "network",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "network",
+  "Description": "**E2E Networks VPCs** should have at least one node attached, identifying unused network segments that may indicate misconfiguration or forgotten resources.",
+  "Risk": "**VPCs without attached nodes** may indicate unused network segments or misconfiguration that weakens **network segmentation** and increases management overhead.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.e2enetworks.com/api/myaccount/network/vpc/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Attach nodes to VPCs that are in use, or remove empty VPCs that are no longer required.",
+      "Url": "https://hub.prowler.com/check/network_vpc_has_attached_nodes"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

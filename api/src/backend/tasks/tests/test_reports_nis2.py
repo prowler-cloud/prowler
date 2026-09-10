@@ -2,9 +2,11 @@ import io
 from unittest.mock import Mock, patch
 
 import pytest
-from reportlab.platypus import PageBreak, Paragraph, Table
+from reportlab.platypus import Image, PageBreak, Paragraph, Table
 from tasks.jobs.reports import FRAMEWORK_REGISTRY, ComplianceData, RequirementData
+from tasks.jobs.reports import nis2 as nis2_report_module
 from tasks.jobs.reports.nis2 import NIS2ReportGenerator, _extract_section_number
+from tasks.tests.report_test_helpers import patch_chart_helpers
 
 
 # Use string status values directly to avoid Django DB initialization
@@ -27,6 +29,13 @@ def nis2_generator():
     """Create a NIS2ReportGenerator instance for testing."""
     config = FRAMEWORK_REGISTRY["nis2"]
     return NIS2ReportGenerator(config)
+
+
+@pytest.fixture
+def patched_nis2_charts(monkeypatch):
+    return patch_chart_helpers(
+        monkeypatch, nis2_report_module, ("create_horizontal_bar_chart",)
+    )
 
 
 @pytest.fixture
@@ -380,7 +389,7 @@ class TestNIS2ChartsSection:
     """Test suite for NIS2 charts section generation."""
 
     def test_charts_section_has_section_chart_title(
-        self, nis2_generator, basic_nis2_compliance_data
+        self, nis2_generator, basic_nis2_compliance_data, patched_nis2_charts
     ):
         """Test that charts section has section compliance title."""
         basic_nis2_compliance_data.requirements = []
@@ -391,9 +400,14 @@ class TestNIS2ChartsSection:
         paragraphs = [e for e in elements if isinstance(e, Paragraph)]
         content = " ".join(str(p.text) for p in paragraphs)
         assert "Section" in content or "Compliance" in content
+        assert any(isinstance(e, Image) for e in elements)
+        chart_kwargs = patched_nis2_charts["create_horizontal_bar_chart"][0]["kwargs"]
+        assert chart_kwargs["labels"] == []
+        assert chart_kwargs["values"] == []
+        assert chart_kwargs["xlabel"] == "Compliance (%)"
 
     def test_charts_section_has_page_break(
-        self, nis2_generator, basic_nis2_compliance_data
+        self, nis2_generator, basic_nis2_compliance_data, patched_nis2_charts
     ):
         """Test that charts section has page breaks."""
         basic_nis2_compliance_data.requirements = []
@@ -403,12 +417,14 @@ class TestNIS2ChartsSection:
 
         page_breaks = [e for e in elements if isinstance(e, PageBreak)]
         assert len(page_breaks) >= 1
+        assert len(patched_nis2_charts["create_horizontal_bar_chart"]) == 1
 
     def test_charts_section_has_subsection_breakdown(
         self,
         nis2_generator,
         basic_nis2_compliance_data,
         mock_nis2_requirement_attribute_section1,
+        patched_nis2_charts,
     ):
         """Test that charts section includes subsection breakdown table."""
         basic_nis2_compliance_data.requirements = [
@@ -434,6 +450,11 @@ class TestNIS2ChartsSection:
         paragraphs = [e for e in elements if isinstance(e, Paragraph)]
         content = " ".join(str(p.text) for p in paragraphs)
         assert "SubSection" in content or "Breakdown" in content
+        assert any(isinstance(e, Image) for e in elements)
+        chart_kwargs = patched_nis2_charts["create_horizontal_bar_chart"][0]["kwargs"]
+        assert chart_kwargs["labels"] == ["1. Policy on Security"]
+        assert chart_kwargs["values"] == [100.0]
+        assert chart_kwargs["color_func"]
 
 
 # =============================================================================
@@ -449,6 +470,7 @@ class TestNIS2SectionChart:
         nis2_generator,
         basic_nis2_compliance_data,
         mock_nis2_requirement_attribute_section1,
+        patched_nis2_charts,
     ):
         """Test that section chart is created successfully."""
         basic_nis2_compliance_data.requirements = [
@@ -473,12 +495,17 @@ class TestNIS2SectionChart:
 
         assert isinstance(chart_buffer, io.BytesIO)
         assert chart_buffer.getvalue()  # Not empty
+        chart_kwargs = patched_nis2_charts["create_horizontal_bar_chart"][0]["kwargs"]
+        assert chart_kwargs["labels"] == ["1. Policy on Security"]
+        assert chart_kwargs["values"] == [100.0]
+        assert chart_kwargs["xlabel"] == "Compliance (%)"
 
     def test_section_chart_excludes_manual(
         self,
         nis2_generator,
         basic_nis2_compliance_data,
         mock_nis2_requirement_attribute_section1,
+        patched_nis2_charts,
     ):
         """Test that manual requirements are excluded from section chart."""
         basic_nis2_compliance_data.requirements = [
@@ -515,6 +542,9 @@ class TestNIS2SectionChart:
         # Should not raise any errors
         chart_buffer = nis2_generator._create_section_chart(basic_nis2_compliance_data)
         assert isinstance(chart_buffer, io.BytesIO)
+        chart_kwargs = patched_nis2_charts["create_horizontal_bar_chart"][0]["kwargs"]
+        assert chart_kwargs["labels"] == ["1. Policy on Security"]
+        assert chart_kwargs["values"] == [100.0]
 
     def test_section_chart_multiple_sections(
         self,
@@ -523,6 +553,7 @@ class TestNIS2SectionChart:
         mock_nis2_requirement_attribute_section1,
         mock_nis2_requirement_attribute_section2,
         mock_nis2_requirement_attribute_section11,
+        patched_nis2_charts,
     ):
         """Test section chart with multiple sections."""
         basic_nis2_compliance_data.requirements = [
@@ -571,6 +602,13 @@ class TestNIS2SectionChart:
 
         chart_buffer = nis2_generator._create_section_chart(basic_nis2_compliance_data)
         assert isinstance(chart_buffer, io.BytesIO)
+        chart_kwargs = patched_nis2_charts["create_horizontal_bar_chart"][0]["kwargs"]
+        assert chart_kwargs["labels"] == [
+            "1. Policy on Security",
+            "2. Risk Management",
+            "11. Access Control",
+        ]
+        assert chart_kwargs["values"] == [100.0, 0.0, 100.0]
 
 
 # =============================================================================

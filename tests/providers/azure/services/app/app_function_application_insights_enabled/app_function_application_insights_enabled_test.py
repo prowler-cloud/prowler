@@ -87,7 +87,7 @@ class Test_app_function_application_insights_enabled:
                         location="West Europe",
                         kind="functionapp,linux",
                         function_keys={},
-                        enviroment_variables={},
+                        environment_variables={},
                         identity=None,
                         public_access=False,
                         vnet_subnet_id=None,
@@ -138,7 +138,9 @@ class Test_app_function_application_insights_enabled:
                         location="West Europe",
                         kind="functionapp,linux",
                         function_keys={},
-                        enviroment_variables={"APPINSIGHTS_INSTRUMENTATIONKEY": "1234"},
+                        environment_variables={
+                            "APPINSIGHTS_INSTRUMENTATIONKEY": "1234"
+                        },
                         identity=None,
                         public_access=False,
                         vnet_subnet_id=None,
@@ -189,7 +191,9 @@ class Test_app_function_application_insights_enabled:
                         location="West Europe",
                         kind="functionapp,linux",
                         function_keys={},
-                        enviroment_variables={"APPINSIGHTS_INSTRUMENTATIONKEY": "1234"},
+                        environment_variables={
+                            "APPINSIGHTS_INSTRUMENTATIONKEY": "1234"
+                        },
                         identity=None,
                         public_access=False,
                         vnet_subnet_id=None,
@@ -240,7 +244,7 @@ class Test_app_function_application_insights_enabled:
                         location="West Europe",
                         kind="functionapp,linux",
                         function_keys={},
-                        enviroment_variables={},
+                        environment_variables={},
                         identity=None,
                         public_access=False,
                         vnet_subnet_id=None,

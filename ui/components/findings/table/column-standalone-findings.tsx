@@ -3,22 +3,38 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Container } from "lucide-react";
 
-import { DateWithTime, EntityInfo } from "@/components/ui/entities";
+import { DateWithTime, EntityInfo } from "@/components/shadcn/entities";
 import {
   DataTableColumnHeader,
   SeverityBadge,
   StatusFindingBadge,
-} from "@/components/ui/table";
+} from "@/components/shadcn/table";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/shadcn/tooltip";
 import { getRegionFlag } from "@/lib/region-flags";
+import { getOptionalText } from "@/lib/utils";
 import { FindingProps, ProviderType } from "@/types";
+import type {
+  FindingTriageDetailLoadHandler,
+  FindingTriageNoteLoadHandler,
+  FindingTriageUpdateHandler,
+} from "@/types/findings-triage";
 
+import { DataTableRowActions } from "./data-table-row-actions";
 import { FindingDetailDrawer } from "./finding-detail-drawer";
+import { FindingTriageStatusCell } from "./finding-triage-cells";
 import { DeltaValues, NotificationIndicator } from "./notification-indicator";
 import { ProviderIconCell } from "./provider-icon-cell";
 
 interface GetStandaloneFindingColumnsOptions {
   includeUpdatedAt?: boolean;
   openFindingId?: string | null;
+  onTriageUpdateAction?: FindingTriageUpdateHandler;
+  onTriageNoteLoadAction?: FindingTriageNoteLoadHandler;
+  onTriageDetailLoadAction?: FindingTriageDetailLoadHandler;
 }
 
 const getFindingsData = (row: { original: FindingProps }) => {
@@ -43,6 +59,15 @@ const getProviderData = (
   return row.original.relationships?.provider?.attributes?.[field] || "-";
 };
 
+const buildFindingContext = (row: { original: FindingProps }) => ({
+  title: row.original.attributes.check_metadata.checktitle,
+  resource: getOptionalText(getResourceData(row, "name")),
+  provider: getOptionalText(getProviderData(row, "alias")),
+  providerType: getOptionalText(getProviderData(row, "provider")) as
+    | ProviderType
+    | undefined,
+});
+
 function FindingTitleCell({
   finding,
   defaultOpen = false,
@@ -55,11 +80,17 @@ function FindingTitleCell({
       finding={finding}
       defaultOpen={defaultOpen}
       trigger={
-        <div className="max-w-[500px]">
-          <p className="text-text-neutral-primary hover:text-button-tertiary cursor-pointer text-left text-sm break-words whitespace-normal hover:underline">
+        // Single line always: ellipsis beyond the max, full title in the tooltip.
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <p className="text-text-neutral-primary hover:text-button-tertiary max-w-[500px] min-w-[120px] cursor-pointer truncate text-left text-sm hover:underline">
+              {finding.attributes.check_metadata.checktitle}
+            </p>
+          </TooltipTrigger>
+          <TooltipContent side="top" maxWidth="md">
             {finding.attributes.check_metadata.checktitle}
-          </p>
-        </div>
+          </TooltipContent>
+        </Tooltip>
       }
     />
   );
@@ -68,6 +99,9 @@ function FindingTitleCell({
 export function getStandaloneFindingColumns({
   includeUpdatedAt = false,
   openFindingId = null,
+  onTriageUpdateAction,
+  onTriageNoteLoadAction,
+  onTriageDetailLoadAction,
 }: GetStandaloneFindingColumnsOptions = {}): ColumnDef<FindingProps>[] {
   const columns: ColumnDef<FindingProps>[] = [
     {
@@ -129,14 +163,8 @@ export function getStandaloneFindingColumns({
       cell: ({ row }) => {
         const name = getResourceData(row, "name");
         const uid = getResourceData(row, "uid");
-        const entityAlias =
-          typeof name === "string" && name.trim().length > 0 && name !== "-"
-            ? name
-            : undefined;
-        const entityId =
-          typeof uid === "string" && uid.trim().length > 0 && uid !== "-"
-            ? uid
-            : undefined;
+        const entityAlias = getOptionalText(name);
+        const entityId = getOptionalText(uid);
 
         return (
           <div className="max-w-[240px]">
@@ -173,12 +201,37 @@ export function getStandaloneFindingColumns({
       ),
       cell: ({ row }) => {
         const provider = getProviderData(row, "provider");
+        const rawAlias = getProviderData(row, "alias");
+        const rawUid = getProviderData(row, "uid");
+        // getProviderData's union includes the provider's connection object;
+        // only string attribute values are renderable here.
+        const alias = typeof rawAlias === "string" ? rawAlias : "-";
+        const uid = typeof rawUid === "string" ? rawUid : "-";
+        // The icon alone cannot tell accounts of the same type apart — the
+        // cross-provider/cross-account drill-downs merge findings from
+        // several accounts into this one table, so each row carries its
+        // account label (alias when set, uid otherwise).
+        const label = alias !== "-" ? alias : uid;
 
         return (
-          <ProviderIconCell
-            provider={provider as ProviderType}
-            className="size-8"
-          />
+          <div className="flex items-center gap-2">
+            <ProviderIconCell
+              provider={provider as ProviderType}
+              className="size-8 shrink-0"
+            />
+            {label !== "-" && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="text-text-neutral-secondary max-w-[110px] truncate text-xs">
+                    {label}
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {alias !== "-" && uid !== "-" ? `${alias} (${uid})` : label}
+                </TooltipContent>
+              </Tooltip>
+            )}
+          </div>
         );
       },
       enableSorting: false,
@@ -209,7 +262,7 @@ export function getStandaloneFindingColumns({
         const regionFlag =
           typeof region === "string" ? getRegionFlag(region) : "";
         return (
-          <span className="text-text-neutral-primary flex max-w-[140px] items-center gap-1.5 truncate text-sm">
+          <span className="text-text-neutral-primary flex max-w-[140px] min-w-0 items-center gap-1.5 truncate text-sm whitespace-nowrap">
             {regionFlag && (
               <span className="translate-y-px text-base leading-none">
                 {regionFlag}
@@ -241,6 +294,39 @@ export function getStandaloneFindingColumns({
       },
     });
   }
+
+  columns.push(
+    {
+      id: "triage",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Triage" />
+      ),
+      cell: ({ row }) => (
+        <FindingTriageStatusCell
+          triage={row.original.triage}
+          findingContext={buildFindingContext(row)}
+          onTriageUpdateAction={onTriageUpdateAction}
+          onTriageDetailLoadAction={onTriageDetailLoadAction}
+        />
+      ),
+      enableSorting: false,
+    },
+    {
+      id: "actions",
+      size: 56,
+      header: () => <div className="w-10" />,
+      cell: ({ row }) => (
+        <DataTableRowActions
+          row={row}
+          findingContext={buildFindingContext(row)}
+          onTriageUpdateAction={onTriageUpdateAction}
+          onTriageNoteLoadAction={onTriageNoteLoadAction}
+          onTriageDetailLoadAction={onTriageDetailLoadAction}
+        />
+      ),
+      enableSorting: false,
+    },
+  );
 
   return columns;
 }

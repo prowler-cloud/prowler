@@ -3,9 +3,14 @@ import { render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 
-import type { ScanProps } from "@/types";
+import { type ScanProps, SCAN_JOBS_TAB, type ScanJobsTab } from "@/types";
+import {
+  SCAN_SCHEDULE_CAPABILITY,
+  type ScanScheduleCapability,
+} from "@/types/schedules";
 
-vi.mock("@/components/shadcn", () => ({
+vi.mock("@/components/shadcn", async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
   Badge: ({ children }: { children: ReactNode }) => <span>{children}</span>,
   Progress: () => <div />,
   StackedCell: ({
@@ -22,7 +27,7 @@ vi.mock("@/components/shadcn", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/entities", () => ({
+vi.mock("@/components/shadcn/entities", () => ({
   DateWithTime: () => <time />,
   EntityInfo: ({
     entityAlias,
@@ -42,7 +47,7 @@ vi.mock("@/components/ui/entities", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/custom", () => ({
+vi.mock("@/components/shadcn/custom", () => ({
   TableLink: ({
     href,
     isDisabled,
@@ -54,7 +59,7 @@ vi.mock("@/components/ui/custom", () => ({
   }) => (isDisabled ? <span>{label}</span> : <a href={href}>{label}</a>),
 }));
 
-vi.mock("@/components/ui/table", () => ({
+vi.mock("@/components/shadcn/table", () => ({
   DataTableColumnHeader: ({ title }: { title: string }) => <span>{title}</span>,
 }));
 
@@ -63,12 +68,6 @@ vi.mock("./scan-jobs-row-actions", () => ({
     <button type="button">{capability ?? "no-capability"}</button>
   ),
 }));
-
-import { SCAN_JOBS_TAB, type ScanJobsTab } from "@/types";
-import {
-  SCAN_SCHEDULE_CAPABILITY,
-  type ScanScheduleCapability,
-} from "@/types/schedules";
 
 import { getScanJobsColumns } from "./scan-jobs-columns";
 

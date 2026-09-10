@@ -1,9 +1,9 @@
 "use client";
 
-import { Progress } from "@heroui/progress";
-import { Spacer } from "@heroui/spacer";
 import { usePathname } from "next/navigation";
 import React from "react";
+
+import { Progress } from "@/components/shadcn/progress";
 
 import { VerticalSteps } from "./vertical-steps";
 
@@ -36,24 +36,23 @@ export const WorkflowSendInvite = () => {
       <h1 className="mb-2 text-lg font-medium sm:text-xl" id="getting-started">
         Send invitation
       </h1>
-      <p className="sm:text-small text-default-500 mb-3 text-xs sm:mb-5">
+      <p className="text-text-neutral-tertiary mb-3 text-xs sm:mb-5 sm:text-sm">
         Follow the steps to send an invitation to the users.
       </p>
-      <Progress
-        classNames={{
-          base: "px-0.5 mb-3 sm:mb-5",
-          label: "text-xs sm:text-small",
-          value: "text-xs sm:text-small text-default-400",
-          indicator: "bg-button-primary",
-        }}
-        label="Steps"
-        maxValue={steps.length}
-        minValue={0}
-        showValueLabel={true}
-        size="sm"
-        value={currentStep + 1}
-        valueLabel={`${currentStep + 1} of ${steps.length}`}
-      />
+      <div className="mb-3 flex flex-col gap-2 px-0.5 sm:mb-5">
+        <div className="flex items-center justify-between">
+          <span className="text-xs sm:text-sm">Steps</span>
+          <span className="text-text-neutral-tertiary text-xs sm:text-sm">
+            {`${currentStep + 1} of ${steps.length}`}
+          </span>
+        </div>
+        <Progress
+          aria-label="Steps"
+          value={((currentStep + 1) / steps.length) * 100}
+          className="h-1"
+          indicatorClassName="bg-button-primary"
+        />
+      </div>
 
       {/* Desktop: Full vertical steps */}
       <div className="hidden sm:block">
@@ -71,13 +70,13 @@ export const WorkflowSendInvite = () => {
           <div className="font-medium">
             Current: {steps[currentStep]?.title}
           </div>
-          <div className="text-default-300 mt-1 text-xs">
+          <div className="text-text-neutral-tertiary mt-1 text-xs">
             {steps[currentStep]?.description}
           </div>
         </div>
       </div>
 
-      <Spacer y={2} />
+      <div className="h-2" />
     </section>
   );
 };

@@ -26,8 +26,13 @@ PROVIDER_HEADER_MAP = {
     "oraclecloud": ("TenancyId", "account_uid", "Region", "region"),
     "alibabacloud": ("AccountId", "account_uid", "Region", "region"),
     "nhn": ("AccountId", "account_uid", "Region", "region"),
+    "huaweicloud": ("AccountId", "account_uid", "Region", "region"),
+    "e2enetworks": ("ProjectId", "account_uid", "Location", "region"),
 }
 _DEFAULT_HEADERS = ("AccountId", "account_uid", "Region", "region")
+PROVIDER_EXTRA_HEADER_MAP = {
+    "kubernetes": (("Cluster", "account_uid"),),
+}
 
 
 class UniversalComplianceOutput:
@@ -86,11 +91,19 @@ class UniversalComplianceOutput:
             "Provider": (str, ...),
             "Description": (str, ...),
             acct_header: (str, ...),
-            loc_header: (str, ...),
-            "AssessmentDate": (str, ...),
-            "Requirements_Id": (str, ...),
-            "Requirements_Description": (str, ...),
         }
+        for header, _ in PROVIDER_EXTRA_HEADER_MAP.get(
+            (self._provider or "").lower(), ()
+        ):
+            fields[header] = (str, ...)
+        fields.update(
+            {
+                loc_header: (str, ...),
+                "AssessmentDate": (str, ...),
+                "Requirements_Id": (str, ...),
+                "Requirements_Description": (str, ...),
+            }
+        )
 
         # Dynamic attribute columns from metadata
         if framework.attributes_metadata:
@@ -152,13 +165,17 @@ class UniversalComplianceOutput:
             self._acct_header: (
                 getattr(finding, self._acct_field, "") if not is_manual else ""
             ),
-            self._loc_header: (
-                getattr(finding, self._loc_field, "") if not is_manual else ""
-            ),
             "AssessmentDate": str(timestamp),
             "Requirements_Id": requirement.id,
             "Requirements_Description": requirement.description,
         }
+        for header, field in PROVIDER_EXTRA_HEADER_MAP.get(
+            (self._provider or "").lower(), ()
+        ):
+            row[header] = getattr(finding, field, "") if not is_manual else ""
+        row[self._loc_header] = (
+            getattr(finding, self._loc_field, "") if not is_manual else ""
+        )
 
         # Add dynamic attribute columns
         if framework.attributes_metadata:

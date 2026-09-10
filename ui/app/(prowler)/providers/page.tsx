@@ -1,17 +1,17 @@
 import { Suspense } from "react";
 
-import { ProvidersAccountsView } from "@/components/providers";
 import { SkeletonTableProviders } from "@/components/providers/table";
 import { CliImportBanner } from "@/components/scans";
+import { ContentLayout } from "@/components/shadcn/content-layout";
 import { Skeleton } from "@/components/shadcn/skeleton/skeleton";
-import { ContentLayout } from "@/components/ui";
 import { FilterTransitionWrapper } from "@/contexts";
+import { isCloud } from "@/lib/shared/env";
 import { SearchParamsProps } from "@/types";
 
 import { ProviderGroupsContent } from "./provider-groups-content";
 import { ProviderPageTabs } from "./provider-page-tabs";
 import { getProviderTab } from "./provider-page-tabs.shared";
-import { loadProvidersAccountsViewData } from "./providers-page.utils";
+import { ProvidersTabContent } from "./providers-tab-content";
 
 export default async function Providers({
   searchParams,
@@ -20,7 +20,7 @@ export default async function Providers({
 }) {
   const resolvedSearchParams = await searchParams;
   const activeTab = getProviderTab(resolvedSearchParams.tab);
-  const isCloudEnvironment = process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true";
+  const isCloudEnvironment = isCloud();
 
   // Exclude `tab` and `onboarding` from the key: tab switches must not re-suspend,
   // and `onboarding` is ephemeral (stripped via history.replaceState) — keeping it
@@ -100,27 +100,5 @@ const ProviderGroupsFallback = () => {
         <SkeletonTableProviders />
       </div>
     </div>
-  );
-};
-
-const ProvidersTabContent = async ({
-  searchParams,
-}: {
-  searchParams: SearchParamsProps;
-}) => {
-  const providersView = await loadProvidersAccountsViewData({
-    searchParams,
-    isCloud: process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true",
-  });
-
-  return (
-    <ProvidersAccountsView
-      isCloud={process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true"}
-      filters={providersView.filters}
-      providers={providersView.providers}
-      providerGroups={providersView.providerGroups}
-      metadata={providersView.metadata}
-      rows={providersView.rows}
-    />
   );
 };

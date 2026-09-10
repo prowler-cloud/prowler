@@ -15,11 +15,10 @@ class inspector2_is_enabled(Check):
             if inspector.status == "ENABLED":
                 report.status = "PASS"
                 report.status_extended = "Inspector2 is enabled for EC2 instances, ECR container images, Lambda functions and code."
-                funtions_in_region = False
+                functions_in_region = (
+                    inspector.region in awslambda_client.regions_with_functions
+                )
                 ec2_in_region = False
-                for function in awslambda_client.functions.values():
-                    if function.region == inspector.region:
-                        funtions_in_region = True
                 for instance in ec2_client.instances:
                     if instance == inspector.region:
                         ec2_in_region = True
@@ -36,12 +35,12 @@ class inspector2_is_enabled(Check):
                     failed_services.append("ECR")
                 if inspector.lambda_status != "ENABLED" and (
                     inspector2_client.provider.scan_unused_services
-                    or funtions_in_region
+                    or functions_in_region
                 ):
                     failed_services.append("Lambda")
                 if inspector.lambda_code_status != "ENABLED" and (
                     inspector2_client.provider.scan_unused_services
-                    or funtions_in_region
+                    or functions_in_region
                 ):
                     failed_services.append("Lambda Code")
 

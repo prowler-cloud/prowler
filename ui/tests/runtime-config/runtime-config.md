@@ -2,7 +2,9 @@
 
 **Suite ID:** `RUNTIME-CONFIG-E2E`
 **Feature:** Runtime resolution of public client config via an inert JSON data
-island injected into `<head>` (Sentry, GTM, API base/docs URL, reserved keys).
+island injected into `<head>` (Sentry, GTM, API base/docs URL, and reserved keys). Each third-party integration
+resolves to a value only when its `UI_*_ENABLED` flag is `"true"`, so a disabled
+integration is exposed as `null`.
 
 ---
 
@@ -40,7 +42,7 @@ island injected into `<head>` (Sentry, GTM, API base/docs URL, reserved keys).
 
 **Preconditions:**
 
-- UI server running. `UI_SENTRY_DSN` may be set or unset.
+- UI server running. Sentry may be enabled (`UI_SENTRY_ENABLED=true` with `UI_SENTRY_DSN`) or off.
 
 ### Flow Steps
 
@@ -68,7 +70,7 @@ island injected into `<head>` (Sentry, GTM, API base/docs URL, reserved keys).
 
 **Preconditions:**
 
-- UI server running with `UI_SENTRY_DSN` and `UI_GOOGLE_TAG_MANAGER_ID` unset (the Enterprise default; the test skips when either is configured).
+- UI server running with Sentry and Google Tag Manager disabled — their `UI_SENTRY_ENABLED` and `UI_GOOGLE_TAG_MANAGER_ENABLED` flags unset, the Enterprise default — so the island exposes both as `null` (the test skips when either is enabled and configured).
 
 ### Flow Steps
 

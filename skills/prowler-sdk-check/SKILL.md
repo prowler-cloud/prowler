@@ -181,7 +181,25 @@ Examples:
 |--------|-------------|
 | `PASS` | Resource is compliant |
 | `FAIL` | Resource is non-compliant |
-| `MANUAL` | Requires human verification |
+| `MANUAL` | Requires human verification, or the data needed to evaluate the resource could not be retrieved |
+
+### Permission / availability errors are NOT findings
+
+Never set `FAIL` because an API call failed (missing permission or scope, API not enabled, feature not licensed, data unavailable). That is a scan-configuration problem, not a security issue, and it surfaces as a misleading high-severity finding.
+
+- Service: log the error and expose it distinctly from an empty result (`None` instead of `[]`, an `*_error` attribute, or a `*_lookup_failed` set). Only treat real access errors this way; a `404`/not-found usually means "not configured" and IS a legitimate `FAIL`, and a definitively disabled API is a legitimate `FAIL` when the API's activation is itself the audited control (e.g. GCP Access Approval).
+- Check: emit ONE tenant/account/project/subscription-level `MANUAL` finding (not one per resource) whose `status_extended` says the check cannot be evaluated and names the required permission/API/license.
+- Do not touch `report.check_metadata.Severity` to hide it.
+
+```python
+if <service>_client.<data> is None:
+    report = CheckReport<Provider>(metadata=self.metadata(), resource={})
+    report.resource_name = "<Tenant-level resource>"
+    report.resource_id = "<stable-id>"
+    report.status = "MANUAL"
+    report.status_extended = "Cannot evaluate <requirement>: <data> could not be retrieved. Verify that <permission> is granted to the scanning identity."
+    return [report]
+```
 
 ---
 

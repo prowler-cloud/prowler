@@ -1,0 +1,58 @@
+---
+title: "Customizing Your Branding in Prowler for MSPs and MSSPs"
+sidebarTitle: "Branding"
+---
+
+Upload and save your company logo, then preview its intended placement alongside Prowler branding. Branding is managed from **Settings → Branding** and requires a role with **Manage settings**.
+
+## Upload a Logo
+
+Open **Settings → Branding**, click **Upload Logo**, and pick your file. The logo replaces the placeholder in Settings immediately and a confirmation appears.
+
+![Settings Branding tab](/images/prowler-for-msps/settings-branding.png)
+
+### Logo Requirements
+
+| Requirement | Value |
+|---|---|
+| **Formats** | PNG or SVG |
+| **Maximum file size** | 512 KB |
+| **Dimensions** | 200 × 60 pixels — a hard limit for PNG, not checked for SVG |
+
+<Warning>
+Two limits on this screen are looser than what the server accepts:
+
+* The upload dialog accepts files up to 1 MB, but anything above **512 KB** is rejected.
+* The page describes 200 × 60 pixels as a recommended size. For PNG it is a **maximum**: a larger PNG is rejected with *"PNG dimensions must not exceed 200×60 px."* SVG is exempt from the dimension check.
+
+Keep PNG logos within both limits to avoid an upload that appears to start and then fails.
+</Warning>
+
+A wide, horizontal logo with a transparent background renders best. SVG stays crisp at every size, is not subject to the dimension limit, and is the better choice where you have it.
+
+<Note>
+Uploaded SVG files are sanitized on the server. Scripts, external references and other active content are stripped before the file is stored.
+</Note>
+
+## Replace or Remove a Logo
+
+Uploading a new file replaces the saved logo. **Remove Logo** deletes it and returns the Settings preview to the *Your Logo* placeholder.
+
+## Logo Placement Preview
+
+Below the upload controls, **Logo Placement Preview** renders your logo underneath the Prowler wordmark to show the intended placement. With no logo uploaded, the slot shows a *Your Logo* placeholder.
+
+<Note>
+The saved logo is currently displayed only in the upload area and placement preview on this Settings page. It is not applied elsewhere in Partner Portal, Prowler Cloud or customer reports.
+</Note>
+
+## Next Steps
+
+<Columns cols={2}>
+  <Card title="Your Partner Organization" icon="briefcase" href="/user-guide/tutorials/prowler-for-msps-organization">
+    Lifecycle, settings, Partner Code and closing your organization.
+  </Card>
+  <Card title="Managing Your Team" icon="users" href="/user-guide/tutorials/prowler-for-msps-team">
+    Invite team members and assign roles.
+  </Card>
+</Columns>

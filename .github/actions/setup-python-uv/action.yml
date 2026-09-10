@@ -46,7 +46,18 @@ runs:
       env:
         GITHUB_TOKEN: ${{ github.token }}
       run: |
-        LATEST_COMMIT=$(curl -sf \
+        if grep -q "prowler-cloud/prowler" uv.lock; then
+          :
+        else
+          status=$?
+          if [ "$status" -ne 1 ]; then
+            echo "::error::grep failed reading uv.lock (exit code $status)."
+            exit "$status"
+          fi
+          echo "No prowler-cloud/prowler entry in uv.lock, nothing to update."
+          exit 0
+        fi
+        LATEST_COMMIT=$(curl -sf --retry 3 --retry-all-errors --retry-delay 2 --retry-max-time 60 \
           -H "Authorization: Bearer ${GITHUB_TOKEN}" \
           -H "Accept: application/vnd.github+json" \
           "https://api.github.com/repos/prowler-cloud/prowler/commits/master" \
@@ -66,7 +77,18 @@ runs:
       env:
         GITHUB_TOKEN: ${{ github.token }}
       run: |
-        LATEST_COMMIT=$(curl -sf \
+        if grep -q "prowler-cloud/prowler" uv.lock; then
+          :
+        else
+          status=$?
+          if [ "$status" -ne 1 ]; then
+            echo "::error::grep failed reading uv.lock (exit code $status)."
+            exit "$status"
+          fi
+          echo "No prowler-cloud/prowler entry in uv.lock, nothing to update."
+          exit 0
+        fi
+        LATEST_COMMIT=$(curl -sf --retry 3 --retry-all-errors --retry-delay 2 --retry-max-time 60 \
           -H "Authorization: Bearer ${GITHUB_TOKEN}" \
           -H "Accept: application/vnd.github+json" \
           "https://api.github.com/repos/prowler-cloud/prowler/commits/master" \

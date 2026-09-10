@@ -1,4 +1,5 @@
 import { DOCS_URLS } from "@/lib/external-urls";
+import { isCloud } from "@/lib/shared/env";
 import { MetaDataProps } from "@/types";
 import {
   ATTACK_PATH_QUERY_IDS,
@@ -20,6 +21,27 @@ import {
  */
 
 /**
+ * Decide whether a query should appear in the selector.
+ *
+ * Empty-query filtering is a Prowler Cloud feature: outside Cloud
+ * (`isCloud()` is false) the queries API does not precompute result summaries,
+ * so every query is shown, matching current self-hosted behaviour.
+ *
+ * In Cloud, hide only queries the scan precomputed and found empty
+ * (`has_data === false`). Everything else stays visible: parameterized queries
+ * (no summary, run live on demand), queries that errored during precompute
+ * (`has_data` null), and scans that predate the precompute step (no summary at
+ * all). A missing/null summary is therefore never treated as "empty".
+ */
+function shouldShowQuery(query: AttackPathQuery): boolean {
+  if (!isCloud()) {
+    return true;
+  }
+  const summary = query.attributes.result_summary;
+  return !summary || summary.has_data !== false;
+}
+
+/**
  * Adapt attack path queries response with enriched data
  *
  * @param response - Raw API response from attack-paths-scans/{id}/queries endpoint
@@ -36,7 +58,7 @@ export function adaptAttackPathQueriesResponse(
   }
 
   // Enrich query data with computed properties
-  const enrichedData = response.data.map((query) => ({
+  const enrichedData = response.data.filter(shouldShowQuery).map((query) => ({
     ...query,
     // Can add computed properties here, e.g.:
     // parameterCount: query.attributes.parameters.length,

@@ -1,0 +1,40 @@
+{
+  "Provider": "aws",
+  "CheckID": "kms_key_enclave_attestation_not_enforced",
+  "CheckTitle": "KMS enclave key requires kms:RecipientAttestation conditions on sensitive actions",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "kms",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "AwsKmsKey",
+  "ResourceGroup": "security",
+  "Description": "**Customer-managed KMS keys** used with Nitro Enclaves (identified by `prowler:enclave-key=true` tag, `enclave` in description/tags/aliases, or a policy referencing `kms:RecipientAttestation:*`). Every `Allow` on sensitive actions (`kms:Decrypt`, `DeriveSharedSecret`, `GenerateDataKey*`, `GenerateRandom`, `kms:*`, `*`) must require a `kms:RecipientAttestation:*` condition.",
+  "Risk": "Without an attestation condition, any principal with decrypt permission (including a compromised parent instance) can use the key. **Attestation** is the cryptographic mechanism that binds usage to the measured enclave image; its absence removes the trust boundary the enclave was designed to enforce.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/kms/latest/developerguide/policy-conditions.html#conditions-nitro-enclaves",
+    "https://docs.aws.amazon.com/enclaves/latest/user/kms.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aws kms put-key-policy --key-id <key-id> --policy-name default --policy file://enclave-policy.json",
+      "NativeIaC": "```yaml\nResources:\n  example_resource:\n    Type: AWS::KMS::Key\n    Properties:\n      KeyPolicy:\n        Statement:\n          - Effect: Allow\n            Principal:\n              AWS: arn:aws:iam::123456789012:role/enclave-parent\n            Action: kms:Decrypt\n            Resource: \"*\"\n            Condition:\n              StringEqualsIgnoreCase:\n                kms:RecipientAttestation:PCR0: <expected-pcr0>  # critical: bind to enclave measurement\n```",
+      "Other": "1. Enumerate the customer-managed keys used by enclave workloads.\n2. For every Allow statement covering a sensitive KMS action, add a Condition block that references one or more `kms:RecipientAttestation:*` condition keys tied to the enclave measurement.\n3. Reject or scope any statement that cannot be conditioned on attestation.",
+      "Terraform": "```hcl\ndata \"aws_iam_policy_document\" \"example_resource\" {\n  statement {\n    actions = [\"kms:Decrypt\"]\n    resources = [\"*\"]\n    condition {\n      test = \"StringEqualsIgnoreCase\"\n      variable = \"kms:RecipientAttestation:PCR0\"  # critical: bind to enclave measurement\n      values = [var.expected_pcr0]\n    }\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Bind every sensitive grant on enclave-scoped KMS keys to the enclave's measured identity via `kms:RecipientAttestation:*` conditions. This preserves the **trust boundary** the enclave exists to enforce and prevents any non-enclave principal from using the key.",
+      "Url": "https://hub.prowler.com/check/kms_key_enclave_attestation_not_enforced"
+    }
+  },
+  "Categories": [
+    "encryption",
+    "trust-boundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

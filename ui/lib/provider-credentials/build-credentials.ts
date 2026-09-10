@@ -1,5 +1,9 @@
 import { filterEmptyValues, getFormValue } from "@/lib";
 import { ProviderType } from "@/types";
+import {
+  isConfigurableProvider,
+  type KnownProviderType,
+} from "@/types/providers";
 
 import { ProviderCredentialFields } from "./provider-credential-fields";
 
@@ -385,10 +389,6 @@ export const buildOracleCloudSecret = (
     [ProviderCredentialFields.OCI_TENANCY]:
       providerUid ||
       getFormValue(formData, ProviderCredentialFields.OCI_TENANCY),
-    [ProviderCredentialFields.OCI_REGION]: getFormValue(
-      formData,
-      ProviderCredentialFields.OCI_REGION,
-    ),
     [ProviderCredentialFields.OCI_PASS_PHRASE]: getFormValue(
       formData,
       ProviderCredentialFields.OCI_PASS_PHRASE,
@@ -462,7 +462,10 @@ export const buildSecretConfig = (
   const isServiceAccount =
     formData.get(ProviderCredentialFields.SERVICE_ACCOUNT_KEY) !== null;
 
-  const secretBuilders = {
+  const secretBuilders: Record<
+    KnownProviderType,
+    () => { secretType: string; secret: unknown }
+  > = {
     aws: () => ({
       secretType: isRole ? "role" : "static",
       secret: buildAWSSecret(formData, isRole),
@@ -533,10 +536,9 @@ export const buildSecretConfig = (
     }),
   };
 
-  const builder = secretBuilders[providerType];
-  if (!builder) {
+  if (!isConfigurableProvider(providerType)) {
     throw new Error(`Unsupported provider type: ${providerType}`);
   }
 
-  return builder();
+  return secretBuilders[providerType]();
 };

@@ -1,3 +1,4 @@
+import { buildPerScanComplianceHref } from "@/lib/compliance/compliance-tab-url";
 import { addProviderTour } from "@/lib/tours/add-provider.tour";
 import { attackPathsTour } from "@/lib/tours/attack-paths.tour";
 import { exploreFindingsTour } from "@/lib/tours/explore-findings.tour";
@@ -46,7 +47,9 @@ export const onboardingFlows: readonly OnboardingFlow[] = [
     order: 4,
     title: "Check compliance",
     description: "Map your findings to frameworks like CIS.",
-    route: "/compliance",
+    // Land on Single Scan: the framework cards the tour anchors to only
+    // render there, and the bare route now opens Multiple Scans.
+    route: buildPerScanComplianceHref(),
     tour: viewComplianceTour,
     dataRequirementHint: SCAN_DATA_HINT,
   },

@@ -259,16 +259,7 @@
         "iam_rotate_access_key_90_days",
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused",
-        "iam_no_root_access_key",
-        "iam_password_policy_expires_passwords_within_90_days_or_less",
-        "iam_password_policy_reuse_24",
-        "iam_password_policy_minimum_length_14",
-        "iam_password_policy_number",
-        "iam_password_policy_symbol",
-        "iam_password_policy_lowercase",
-        "iam_password_policy_uppercase",
-        "iam_user_mfa_enabled_console_access",
-        "iam_rotate_access_key_90_days"
+        "iam_no_root_access_key"
       ]
     },
     {
@@ -997,11 +988,9 @@
         "emr_cluster_publicly_accesible",
         "glacier_vaults_policy_public_access",
         "awslambda_function_not_publicly_accessible",
-        "awslambda_function_not_publicly_accessible",
         "rds_instance_no_public_access",
         "rds_snapshots_public_access",
         "kms_key_not_publicly_accessible",
-        "opensearch_service_domains_not_publicly_accessible",
         "redshift_cluster_public_access",
         "s3_account_level_public_access_blocks",
         "s3_bucket_public_access",
@@ -1018,7 +1007,6 @@
         "eks_cluster_not_publicly_accessible",
         "elb_internet_facing",
         "elbv2_internet_facing",
-        "s3_account_level_public_access_blocks",
         "sns_topics_not_publicly_accessible",
         "sqs_queues_not_publicly_accessible",
         "ssm_documents_set_as_public",
@@ -1091,11 +1079,10 @@
         }
       ],
       "Checks": [
-        "codebuild_project_artifact_encryption",
-        "codebuild_project_envvar_awscred_check",
+        "codebuild_project_no_secrets_in_variables",
         "codebuild_project_logging_enabled",
         "codebuild_project_older_90_days",
-        "codebuild_project_source_repo_url_check",
+        "codebuild_project_source_repo_url_no_sensitive_credentials",
         "codebuild_project_user_controlled_buildspec"
       ]
     },
@@ -1190,7 +1177,8 @@
       ],
       "Checks": [
         "guardduty_is_enabled",
-        "guardduty_no_high_severity_findings"
+        "guardduty_no_high_severity_findings",
+        "kms_key_enclave_attestation_pcr_mismatch"
       ],
       "ConfigRequirements": [
         {
@@ -1377,7 +1365,6 @@
         "apigateway_restapi_logging_enabled",
         "apigatewayv2_api_access_logging_enabled",
         "appsync_field_level_logging_enabled",
-        "athena_workgroup_logging_enabled",
         "awslambda_function_invoke_api_operations_cloudtrail_logging_enabled",
         "bedrock_model_invocation_logging_enabled",
         "bedrock_model_invocation_logs_encryption_enabled",
@@ -1491,7 +1478,9 @@
         "cloudwatch_log_metric_filter_root_usage",
         "cloudwatch_log_metric_filter_security_group_changes",
         "cloudwatch_log_metric_filter_sign_in_without_mfa",
-        "cloudwatch_log_metric_filter_unauthorized_api_calls"
+        "cloudwatch_log_metric_filter_unauthorized_api_calls",
+        "kms_key_enclave_debug_attestation_detected",
+        "kms_key_enclave_attestation_unknown_image"
       ]
     },
     {
@@ -1628,7 +1617,10 @@
         "ec2_securitygroup_from_launch_wizard",
         "ec2_securitygroup_not_used",
         "ec2_securitygroup_with_many_ingress_egress_rules",
-        "ec2_transitgateway_auto_accept_vpc_attachments"
+        "ec2_confidential_workload_host_imdsv2_not_enforced",
+        "ec2_confidential_workload_host_public_ip",
+        "ec2_confidential_workload_host_unrestricted_ingress",
+        "ec2_confidential_workload_host_vsock_proxy_exposed"
       ]
     },
     {
@@ -1723,7 +1715,9 @@
         "ec2_securitygroup_from_launch_wizard",
         "ec2_securitygroup_not_used",
         "ec2_securitygroup_with_many_ingress_egress_rules",
-        "ec2_transitgateway_auto_accept_vpc_attachments"
+        "ec2_confidential_workload_host_imdsv2_not_enforced",
+        "ec2_confidential_workload_host_public_ip",
+        "ec2_confidential_workload_host_unrestricted_ingress"
       ]
     },
     {
@@ -1818,7 +1812,9 @@
         "ec2_securitygroup_from_launch_wizard",
         "ec2_securitygroup_not_used",
         "ec2_securitygroup_with_many_ingress_egress_rules",
-        "ec2_transitgateway_auto_accept_vpc_attachments"
+        "ec2_confidential_workload_host_imdsv2_not_enforced",
+        "ec2_confidential_workload_host_public_ip",
+        "ec2_confidential_workload_host_unrestricted_ingress"
       ]
     },
     {
@@ -1834,7 +1830,7 @@
         }
       ],
       "Checks": [
-        "vpc_default_security_group_closed",
+        "ec2_securitygroup_default_restrict_traffic",
         "vpc_flow_logs_enabled",
         "securityhub_enabled"
       ],
@@ -1918,13 +1914,13 @@
         "storagegateway_fileshare_encryption_enabled",
         "transfer_server_in_transit_encryption_enabled",
         "workspaces_volume_encryption_enabled",
-        "dynamodb_tables_kms_cmk_encryption_enabled",
-        "eks_cluster_kms_cmk_encryption_in_secrets_enabled",
-        "kafka_cluster_encryption_at_rest_uses_cmk",
         "kms_cmk_are_used",
         "kms_cmk_not_deleted_unintentionally",
         "kms_cmk_not_multi_region",
-        "kms_cmk_rotation_enabled"
+        "kms_cmk_rotation_enabled",
+        "kms_key_enclave_attestation_not_enforced",
+        "kms_key_enclave_attestation_bypassable_path",
+        "kms_key_enclave_attestation_no_deployment_binding"
       ]
     },
     {

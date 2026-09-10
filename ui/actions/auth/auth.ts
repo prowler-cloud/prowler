@@ -4,7 +4,9 @@ import { AuthError } from "next-auth";
 
 import { signIn, signOut } from "@/auth.config";
 import { apiBaseUrl } from "@/lib";
+import { UserMeError } from "@/lib/auth-errors";
 import { addAuthEvent } from "@/lib/sentry-breadcrumbs";
+import type { UtmParams } from "@/lib/utm";
 import type { SignInFormData, SignUpFormData } from "@/types";
 
 export async function authenticate(
@@ -47,11 +49,18 @@ export async function authenticate(
   }
 }
 
-export const createNewUser = async (formData: SignUpFormData) => {
+export const createNewUser = async (
+  formData: SignUpFormData,
+  attribution: UtmParams = {},
+) => {
   const url = new URL(`${apiBaseUrl}/users`);
 
   if (formData.invitationToken) {
     url.searchParams.append("invitation_token", formData.invitationToken);
+  }
+
+  for (const [key, value] of Object.entries(attribution)) {
+    url.searchParams.append(key, value);
   }
 
   const bodyData = {
@@ -132,7 +141,10 @@ export const getToken = async (formData: SignInFormData) => {
   }
 };
 
-export const getUserByMe = async (accessToken: string) => {
+export const getUserByMe = async (
+  accessToken: string,
+  signal?: AbortSignal,
+) => {
   const url = new URL(`${apiBaseUrl}/users/me?include=roles`);
 
   try {
@@ -142,24 +154,22 @@ export const getUserByMe = async (accessToken: string) => {
         Accept: "application/vnd.api+json",
         Authorization: `Bearer ${accessToken}`,
       },
+      signal,
     });
 
-    const parsedResponse = await response.json();
     if (!response.ok) {
-      // Handle different HTTP error codes
-      switch (response.status) {
-        case 401:
-          throw new Error("Invalid or expired token");
-        case 403:
-          throw new Error(parsedResponse.errors?.[0]?.detail);
-        case 404:
-          throw new Error("User not found");
-        default:
-          throw new Error(
-            parsedResponse.errors?.[0]?.detail || "Unknown error",
-          );
-      }
+      const errorMessage =
+        response.status === 401
+          ? "Invalid or expired token"
+          : response.status === 403
+            ? "Access denied"
+            : response.status === 404
+              ? "User not found"
+              : "Unable to load user";
+      throw new UserMeError(errorMessage, response.status);
     }
+
+    const parsedResponse = await response.json();
 
     const userRole = parsedResponse.included?.find(
       (item: any) => item.type === "roles",
@@ -170,9 +180,12 @@ export const getUserByMe = async (accessToken: string) => {
       manage_account: userRole.attributes.manage_account || false,
       manage_providers: userRole.attributes.manage_providers || false,
       manage_scans: userRole.attributes.manage_scans || false,
+      manage_ingestions: userRole.attributes.manage_ingestions || false,
       manage_integrations: userRole.attributes.manage_integrations || false,
       manage_billing: userRole.attributes.manage_billing || false,
       manage_alerts: userRole.attributes.manage_alerts || false,
+      manage_lighthouse_ai_configuration:
+        userRole.attributes.manage_lighthouse_ai_configuration || false,
       unlimited_visibility: userRole.attributes.unlimited_visibility || false,
     };
 
@@ -183,8 +196,14 @@ export const getUserByMe = async (accessToken: string) => {
       dateJoined: parsedResponse.data.attributes.date_joined,
       permissions,
     };
-  } catch (error: any) {
-    throw new Error(error.message || "Network error or server unreachable");
+  } catch (error: unknown) {
+    if (error instanceof UserMeError) throw error;
+
+    throw new UserMeError(
+      error instanceof Error
+        ? error.message
+        : "Network error or server unreachable",
+    );
   }
 };
 

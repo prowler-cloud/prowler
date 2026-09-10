@@ -14,15 +14,41 @@ import {
   type ComplianceReportType,
 } from "@/lib/compliance/compliance-report-types";
 import { runWithConcurrencyLimit } from "@/lib/concurrency";
-import {
-  appendSanitizedProviderTypeFilters,
-  sanitizeProviderTypesCsv,
-} from "@/lib/provider-filters";
+import { appendSanitizedProviderTypeFilters } from "@/lib/provider-filters";
 import { addScanOperation } from "@/lib/sentry-breadcrumbs";
 import { handleApiError, handleApiResponse } from "@/lib/server-actions-helper";
 import { SCAN_STATES } from "@/types/attack-paths";
 
 const ORGANIZATION_SCAN_CONCURRENCY_LIMIT = 5;
+
+interface OrganizationScanResource {
+  id: string;
+  type: string;
+}
+
+interface OrganizationScansSuccessResponse {
+  data: OrganizationScanResource[];
+}
+
+interface OrganizationScansErrorResponse {
+  error: unknown;
+  status?: number;
+}
+
+type OrganizationScansResponse =
+  | OrganizationScansSuccessResponse
+  | OrganizationScansErrorResponse;
+
+const isOrganizationScanResource = (
+  value: unknown,
+): value is OrganizationScanResource =>
+  typeof value === "object" &&
+  value !== null &&
+  "id" in value &&
+  typeof value.id === "string" &&
+  "type" in value &&
+  value.type === "scans";
+
 export const getScans = async ({
   page = 1,
   query = "",
@@ -66,10 +92,6 @@ export const getScansByState = async () => {
   const url = new URL(`${apiBaseUrl}/scans`);
   // Request only the necessary fields to optimize the response
   url.searchParams.append("fields[scans]", "state");
-  url.searchParams.append(
-    "filter[provider_type__in]",
-    sanitizeProviderTypesCsv(),
-  );
   // Only need to know whether at least one completed scan exists; filter server-side
   // and cap to a single row so the answer is correct regardless of total scan count.
   url.searchParams.append("filter[state]", SCAN_STATES.COMPLETED);
@@ -190,9 +212,60 @@ export const scheduleDaily = async (formData: FormData) => {
 };
 
 export const launchOrganizationScans = async (
-  providerIds: string[],
-  scheduleOption: "daily" | "single",
-) => {
+  organizationId: string,
+): Promise<OrganizationScansResponse> => {
+  if (!organizationId) {
+    return { error: "Organization ID is required" };
+  }
+
+  const headers = await getAuthHeaders({ contentType: true });
+  const url = new URL(`${apiBaseUrl}/scans/bulk`);
+
+  try {
+    const response = await fetch(url.toString(), {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        data: {
+          type: "scans-bulk",
+          relationships: {
+            organization: {
+              data: {
+                type: "organizations",
+                id: organizationId,
+              },
+            },
+          },
+        },
+      }),
+    });
+
+    const result = await handleApiResponse(response, "/scans");
+    if (result?.error !== undefined) {
+      return { error: result.error, status: result.status };
+    }
+
+    const scans: unknown = result?.data;
+    if (!Array.isArray(scans) || !scans.every(isOrganizationScanResource)) {
+      return {
+        error: "The bulk scan response did not contain a scan collection.",
+      };
+    }
+
+    addScanOperation("start", undefined, {
+      organization_id: organizationId,
+      bulk: true,
+      scan_count: scans.length,
+      scan_ids: scans.map((scan) => scan.id).join(","),
+    });
+
+    return { data: scans };
+  } catch (error) {
+    return handleApiError(error);
+  }
+};
+
+export const scheduleOrganizationDailyScans = async (providerIds: string[]) => {
   const validProviderIds = providerIds.filter(Boolean);
   if (validProviderIds.length === 0) {
     return {
@@ -210,10 +283,7 @@ export const launchOrganizationScans = async (
         const formData = new FormData();
         formData.set("providerId", providerId);
 
-        const result =
-          scheduleOption === "daily"
-            ? await scheduleDaily(formData)
-            : await scanOnDemand(formData);
+        const result = await scheduleDaily(formData);
 
         return {
           providerId,

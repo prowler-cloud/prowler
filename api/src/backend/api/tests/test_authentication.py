@@ -4,11 +4,17 @@ from unittest.mock import MagicMock, patch
 from uuid import uuid4
 
 import pytest
-from api.authentication import SSEAuthentication, TenantAPIKeyAuthentication
+from api.authentication import (
+    OrphanedAPIKeyError,
+    SSEAuthentication,
+    TenantAPIKeyAuthentication,
+)
 from api.db_router import MainRouter
 from api.models import TenantAPIKey
+from django.db import connections
 from django.db.models.query import QuerySet
 from django.test import RequestFactory
+from django.test.utils import CaptureQueriesContext
 from rest_framework.exceptions import AuthenticationFailed
 
 
@@ -38,13 +44,12 @@ class TestTenantAPIKeyAuthentication:
         request = request_factory.get("/")
 
         # Call the method
-        entity, auth_dict = auth_backend._authenticate_credentials(
-            request, encrypted_key
-        )
+        validated_key = auth_backend._authenticate_credentials(request, encrypted_key)
 
         # Verify that the entity is the user associated with the API key
-        assert entity == api_key.entity
-        assert entity.id == api_key.entity.id
+        assert validated_key.id == api_key.id
+        assert validated_key.entity == api_key.entity
+        assert validated_key.entity.id == api_key.entity.id
 
     def test_authenticate_credentials_restores_manager_on_success(
         self, auth_backend, api_keys_fixture, request_factory
@@ -226,6 +231,120 @@ class TestTenantAPIKeyAuthentication:
         request.META["HTTP_AUTHORIZATION"] = f"Api-Key {raw_key}"
 
         # The revoked key should fail during credential validation
+        with pytest.raises(AuthenticationFailed) as exc_info:
+            auth_backend.authenticate(request)
+
+        assert str(exc_info.value.detail) == "This API Key has been revoked."
+
+    def test_authenticate_credentials_orphaned_api_key(
+        self, auth_backend, api_keys_fixture, request_factory
+    ):
+        """Test credential validation fails when the owning user no longer exists."""
+        api_key = api_keys_fixture[0]
+        _, encrypted_key = api_key._raw_key.split(TenantAPIKey.objects.separator, 1)
+
+        # `entity` is what `on_delete=SET_NULL` leaves behind when the owner is deleted
+        TenantAPIKey.objects.filter(id=api_key.id).update(entity=None)
+
+        request = request_factory.get("/")
+
+        with pytest.raises(OrphanedAPIKeyError):
+            auth_backend._authenticate_credentials(request, encrypted_key)
+
+        # The orphaned key is revoked on use, so it stops showing up as active
+        api_key.refresh_from_db()
+        assert api_key.revoked is True
+
+    def test_authenticate_orphaned_api_key(
+        self, auth_backend, api_keys_fixture, request_factory
+    ):
+        """Test authentication fails with a key whose owning user was deleted.
+
+        Regression test: this used to raise `AttributeError: 'NoneType' object has no
+        attribute 'id'` while building the auth dict, which DRF re-raises as
+        `WrappedAttributeError` and turns into a 500 instead of a 401.
+        """
+        api_key = api_keys_fixture[0]
+        raw_key = api_key._raw_key
+
+        TenantAPIKey.objects.filter(id=api_key.id).update(entity=None)
+
+        request = request_factory.get("/")
+        request.META["HTTP_AUTHORIZATION"] = f"Api-Key {raw_key}"
+
+        with pytest.raises(AuthenticationFailed) as exc_info:
+            auth_backend.authenticate(request)
+
+        assert str(exc_info.value.detail) == "No entity matching this api key."
+
+        # The orphaned key is revoked on use; retries fail the regular revoked check
+        api_key.refresh_from_db()
+        assert api_key.revoked is True
+
+        with pytest.raises(AuthenticationFailed) as exc_info:
+            auth_backend.authenticate(request)
+
+        assert str(exc_info.value.detail) == "This API Key has been revoked."
+
+    def test_authenticate_reads_the_api_key_once_under_a_row_lock(
+        self, auth_backend, api_keys_fixture, request_factory
+    ):
+        """Test the API key is read a single time and the row is locked.
+
+        Validation, the `last_used_at` update and the claims must all come from the
+        same authoritative row: a second, unlocked lookup would reopen the window
+        where a key revoked in between still authenticates.
+        """
+        api_key = api_keys_fixture[0]
+
+        request = request_factory.get("/")
+        request.META["HTTP_AUTHORIZATION"] = f"Api-Key {api_key._raw_key}"
+
+        with CaptureQueriesContext(connections[MainRouter.admin_db]) as captured:
+            auth_backend.authenticate(request)
+
+        api_key_selects = [
+            query["sql"]
+            for query in captured.captured_queries
+            if query["sql"].startswith("SELECT") and '"api_keys"' in query["sql"]
+        ]
+
+        assert len(api_key_selects) == 1
+        assert "FOR UPDATE" in api_key_selects[0]
+
+    def test_authenticate_ignores_revocation_after_the_locked_read(
+        self, auth_backend, api_keys_fixture, request_factory
+    ):
+        """Test the claims describe the row that was validated, not a later state.
+
+        Regression test: the key used to be looked up again to build the auth dict,
+        without rechecking `revoked` or `entity`. A key revoked or orphaned between
+        both reads still authenticated, and the claims came from that stale row. With
+        a single locked read the write below cannot land mid-authentication, and the
+        revocation only takes effect on the next request.
+        """
+        api_key = api_keys_fixture[0]
+        entity_at_validation = api_key.entity
+        original_save = TenantAPIKey.save
+
+        def revoke_and_orphan_before_saving(instance, *args, **kwargs):
+            # Runs after validation, right before the claims are built: the exact
+            # window a concurrent revocation or user deletion used to slip into
+            TenantAPIKey.objects.filter(id=api_key.id).update(revoked=True, entity=None)
+            return original_save(instance, *args, **kwargs)
+
+        request = request_factory.get("/")
+        request.META["HTTP_AUTHORIZATION"] = f"Api-Key {api_key._raw_key}"
+
+        with patch.object(TenantAPIKey, "save", revoke_and_orphan_before_saving):
+            entity, auth_dict = auth_backend.authenticate(request)
+
+        assert entity == entity_at_validation
+        assert auth_dict["sub"] == str(entity_at_validation.id)
+        assert auth_dict["tenant_id"] == str(api_key.tenant_id)
+        assert auth_dict["api_key_prefix"] == api_key.prefix
+
+        # The revoked key is rejected from the next request on
         with pytest.raises(AuthenticationFailed) as exc_info:
             auth_backend.authenticate(request)
 

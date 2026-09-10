@@ -19,9 +19,6 @@ describe("GraphControls", () => {
     });
 
     expect(exportButton).toBeDisabled();
-    expect(
-      screen.queryByRole("button", { name: /^export graph$/i }),
-    ).not.toBeInTheDocument();
   });
 
   it("enables the export button and invokes the callback when onExport is provided", async () => {
@@ -34,10 +31,33 @@ describe("GraphControls", () => {
       name: /^export graph$/i,
     });
 
-    expect(exportButton).toBeEnabled();
-
     await user.click(exportButton);
 
     expect(onExport).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows collapse all only when available and invokes its handler", async () => {
+    // Given
+    const user = userEvent.setup();
+    const onCollapse = vi.fn();
+    const { rerender } = render(
+      <GraphControls {...baseProps} collapseAll={{ can: false, onCollapse }} />,
+    );
+
+    // Then
+    expect(
+      screen.queryByRole("button", { name: /collapse all groups/i }),
+    ).not.toBeInTheDocument();
+
+    // When
+    rerender(
+      <GraphControls {...baseProps} collapseAll={{ can: true, onCollapse }} />,
+    );
+    await user.click(
+      screen.getByRole("button", { name: /collapse all groups/i }),
+    );
+
+    // Then
+    expect(onCollapse).toHaveBeenCalledTimes(1);
   });
 });

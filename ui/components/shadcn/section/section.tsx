@@ -25,7 +25,7 @@ function SectionTitle({ className, ...props }: React.ComponentProps<"h3">) {
     <h3
       data-slot="section-title"
       className={cn(
-        "text-md text-default-foreground leading-9 font-bold",
+        "text-md text-text-neutral-primary leading-9 font-bold",
         className,
       )}
       {...props}
@@ -40,7 +40,7 @@ function SectionDescription({
   return (
     <p
       data-slot="section-description"
-      className={cn("text-default-500 text-sm", className)}
+      className={cn("text-text-neutral-tertiary text-sm", className)}
       {...props}
     />
   );

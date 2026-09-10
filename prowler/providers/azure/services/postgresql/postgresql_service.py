@@ -20,7 +20,12 @@ class PostgreSQL(AzureService):
         for subscription, client in self.clients.items():
             try:
                 flexible_servers.update({subscription: []})
-                flexible_servers_list = client.servers.list()
+                flexible_servers_list = self.list_with_rg_scope(
+                    subscription,
+                    client.servers.list,
+                    client.servers.list_by_resource_group,
+                )
+
                 for postgresql_server in flexible_servers_list:
                     # Isolate each server: a failure collecting one server must
                     # not abort collection of the remaining servers in the
@@ -218,7 +223,7 @@ class PostgreSQL(AzureService):
         client = self.clients[subscription]
         try:
             log_retention_days = client.configurations.get(
-                resouce_group_name, server_name, "log_retention_days"
+                resouce_group_name, server_name, "logfiles.retention_days"
             )
             log_retention_days = log_retention_days.value
         except Exception:

@@ -6,10 +6,10 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 
 import { updateApiKey } from "@/actions/api-keys/api-keys";
+import { useToast } from "@/components/shadcn";
+import { CustomInput } from "@/components/shadcn/custom";
+import { Form, FormButtons } from "@/components/shadcn/form";
 import { Modal } from "@/components/shadcn/modal";
-import { useToast } from "@/components/ui";
-import { CustomInput } from "@/components/ui/custom";
-import { Form, FormButtons } from "@/components/ui/form";
 
 import { EnrichedApiKey } from "./api-keys/types";
 import { isApiKeyNameDuplicate } from "./api-keys/utils";

@@ -26,6 +26,8 @@ class repository_default_branch_protection_enabled(Check):
                 report = CheckReportGithub(metadata=self.metadata(), resource=repo)
                 report.status = "FAIL"
                 report.status_extended = f"Repository {repo.name} does not enforce branch protection on default branch ({repo.default_branch.name})."
+                if repo.default_branch.protected_source == "ruleset_not_active":
+                    report.status_extended = f"Repository {repo.name} has a ruleset configured on default branch ({repo.default_branch.name}), but the ruleset is not active."
 
                 if repo.default_branch.protected:
                     report.status = "PASS"

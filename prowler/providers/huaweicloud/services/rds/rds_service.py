@@ -1,0 +1,90 @@
+from typing import List
+
+from prowler.lib.logger import logger
+from prowler.providers.huaweicloud.lib.service.service import HuaweiCloudService
+from prowler.providers.huaweicloud.models import HuaweiCloudBaseModel
+
+
+class RDS(HuaweiCloudService):
+    """
+    RDS (Relational Database Service) service class for Huawei Cloud.
+
+    This class provides methods to interact with Huawei Cloud RDS service
+    to retrieve database instances and their configuration.
+    """
+
+    def __init__(self, provider):
+        super().__init__(__class__.__name__, provider)
+
+        self.instances: List[RDSInstance] = []
+
+        self.__threading_call__(self._list_instances)
+
+    def _list_instances(self, regional_client):
+        """List all RDS instances across regions."""
+        region = getattr(regional_client, "region", "unknown")
+        logger.info(f"RDS - Listing Instances in {region}...")
+
+        try:
+            from huaweicloudsdkrds.v3 import ListInstancesRequest
+
+            request = ListInstancesRequest()
+            response = self._call_with_retries(regional_client.list_instances, request)
+
+            if response and response.instances:
+                for inst_data in response.instances:
+                    public_ips = getattr(inst_data, "public_ips", None) or []
+                    public_ips = [ip for ip in public_ips if ip and ip.strip()]
+                    public_ip = ", ".join(public_ips)
+
+                    is_public = bool(public_ips)
+
+                    backup_enabled = False
+                    backup_strategy = getattr(inst_data, "backup_strategy", None)
+                    if backup_strategy:
+                        keep_days = getattr(backup_strategy, "keep_days", 0)
+                        if keep_days and keep_days > 0:
+                            backup_enabled = True
+
+                    datastore = getattr(inst_data, "datastore", None)
+                    engine = getattr(datastore, "type", "") if datastore else ""
+                    engine_version = (
+                        getattr(datastore, "version", "") if datastore else ""
+                    )
+
+                    self.instances.append(
+                        RDSInstance(
+                            id=getattr(inst_data, "id", None) or "",
+                            name=getattr(inst_data, "name", None) or "",
+                            status=getattr(inst_data, "status", None) or "",
+                            engine=engine,
+                            engine_version=engine_version,
+                            public_ip=public_ip,
+                            is_public=is_public,
+                            backup_enabled=backup_enabled,
+                            region=region,
+                            disk_encryption_id=getattr(
+                                inst_data, "disk_encryption_id", ""
+                            ),
+                        )
+                    )
+
+        except Exception as error:
+            logger.error(
+                f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+
+class RDSInstance(HuaweiCloudBaseModel):
+    """RDS Instance model."""
+
+    id: str
+    name: str
+    status: str = ""
+    engine: str = ""
+    engine_version: str = ""
+    public_ip: str = ""
+    is_public: bool = False
+    backup_enabled: bool = False
+    region: str = ""
+    disk_encryption_id: str = ""

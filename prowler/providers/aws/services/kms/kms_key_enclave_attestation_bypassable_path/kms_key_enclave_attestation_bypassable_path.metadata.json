@@ -1,0 +1,45 @@
+{
+  "Provider": "aws",
+  "CheckID": "kms_key_enclave_attestation_bypassable_path",
+  "CheckTitle": "KMS enclave key has no authorization path that bypasses attestation",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "kms",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "AwsKmsKey",
+  "ResourceGroup": "security",
+  "Description": "Detects **bypass paths** in enclave KMS key policies: `Allow` statements that grant sensitive KMS actions without a restrictive `kms:RecipientAttestation:*` condition and without a paired `Deny` that neutralizes the gap. Includes the common root-delegation shape (`Principal: root`, `Action: kms:*`) when it is not paired with an attestation Deny.",
+  "Risk": "An attacker with IAM permission on the key can use the bypass path to access material without ever presenting a valid attestation document. Attestation-based access control is only as strong as the weakest authorization path in the key policy.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/kms/latest/developerguide/key-policies.html",
+    "https://docs.aws.amazon.com/kms/latest/developerguide/policy-evaluation.html",
+    "https://docs.aws.amazon.com/kms/latest/developerguide/conditions-nitro-enclaves.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aws kms put-key-policy --key-id <key-id> --policy-name default --policy file://enclave-policy.json",
+      "NativeIaC": "",
+      "Other": "1. Enumerate every Allow statement in the key policy; identify those granting sensitive actions (`kms:Decrypt`, `kms:GenerateDataKey`, etc.) without `kms:RecipientAttestation:*` conditions.\n2. Either add attestation conditions to those Allow statements, or add a Deny statement that fires when attestation is absent, e.g.: `{\"Effect\": \"Deny\", \"Principal\": \"*\", \"Action\": [\"kms:Decrypt\", ...], \"Resource\": \"*\", \"Condition\": {\"Null\": {\"kms:RecipientAttestation:PCR0\": \"true\"}}}`.\n3. Reject the common `AdminNoDataActions` shape when its action list contains `kms:*` — split administrative actions from data-plane actions so the root delegation cannot reach `kms:Decrypt`.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Treat every authorization path as equal: attestation-based access control is only as strong as the weakest Allow in the key policy. Add explicit Deny statements that fire when attestation is absent to close root-delegation gaps.",
+      "Url": "https://hub.prowler.com/check/kms_key_enclave_attestation_bypassable_path"
+    }
+  },
+  "Categories": [
+    "encryption",
+    "identity-access",
+    "trust-boundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "kms_key_enclave_attestation_not_enforced",
+    "kms_key_enclave_debug_attestation_detected"
+  ],
+  "Notes": "Not covered: KMS grants (list_grants is out of scope), account-wide IAM permissions, and Deny statements using NotPrincipal. Pair with kms_key_not_publicly_accessible for cross-account guardrails."
+}

@@ -24,7 +24,7 @@ create_test_user (session)
             │       └─► authenticated_client
             │               └─► (most API tests use this)
             │
-            ├─► providers_fixture
+            ├─► aws_provider
             │       └─► scans_fixture
             │               └─► findings_fixture
             │
@@ -102,11 +102,19 @@ Authentication tests:
 ```python
 @pytest.mark.django_db
 class TestProviderViewSet:
-    def test_list(self, authenticated_client, providers_fixture):
-        # authenticated_client has JWT for tenant[0]
-        # providers_fixture has 9 providers in tenant[0]
+    def test_list(self, authenticated_client, aws_provider):
+        # authenticated_client is a Django test client with JWT for tenant[0]
+        # aws_provider creates one validated AWS provider in tenant[0]
         ...
 ```
+
+Use serializer-generated JWTs or API-key clients for authentication behavior
+tests only: token obtain/refresh, invalid or expired tokens, token-scoped tenant
+switching, API keys, and unauthenticated 401 responses. Regular view tests
+should use `authenticated_client` so they still exercise `request.user`,
+`request.auth["tenant_id"]`, RLS, and RBAC without paying token serializer cost.
+Use `authenticated_client_for_tenant_factory` when a test needs the same cheap
+JWT path for a different user or tenant.
 
 ### RBAC Tests
 

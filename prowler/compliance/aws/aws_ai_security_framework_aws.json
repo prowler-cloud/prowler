@@ -110,7 +110,9 @@
         "eks_cluster_kms_cmk_encryption_in_secrets_enabled",
         "dynamodb_tables_kms_cmk_encryption_enabled",
         "sns_topics_kms_encryption_at_rest_enabled",
-        "sqs_queues_server_side_encryption_enabled"
+        "sqs_queues_server_side_encryption_enabled",
+        "bedrock_custom_model_encrypted_with_cmk",
+        "bedrock_knowledge_base_encrypted_with_cmk"
       ]
     },
     {
@@ -187,10 +189,15 @@
           "Section": "Infrastructure Security",
           "SubSection": "Compute Isolation",
           "Service": "ec2",
-          "Type": "Manual"
+          "Type": "Automated"
         }
       ],
-      "Checks": []
+      "Checks": [
+        "kms_key_enclave_attestation_not_enforced",
+        "kms_key_enclave_attestation_bypassable_path",
+        "kms_key_enclave_attestation_no_deployment_binding",
+        "kms_key_enclave_attestation_pcr_mismatch"
+      ]
     },
     {
       "Id": "AISF-IAM-01",
@@ -234,6 +241,7 @@
         "iam_inline_policy_no_administrative_privileges",
         "iam_policy_allows_privilege_escalation",
         "iam_inline_policy_allows_privilege_escalation",
+        "iam_policy_passrole_to_bedrock_agentcore_restricted",
         "iam_role_administratoraccess_policy",
         "iam_user_administrator_access_policy",
         "iam_group_administrator_access_policy",
@@ -262,6 +270,7 @@
         "iam_user_no_setup_initial_access_key",
         "iam_user_two_active_access_key",
         "iam_user_console_access_unused",
+        "iam_policy_no_agentcore_workload_access_token_wildcard",
         "bedrock_api_key_no_long_term_credentials"
       ]
     },
@@ -298,6 +307,7 @@
       ],
       "Checks": [
         "iam_role_cross_service_confused_deputy_prevention",
+        "iam_role_service_trust_restricts_source_to_account",
         "iam_role_access_not_stale_to_bedrock",
         "iam_user_access_not_stale_to_bedrock",
         "iam_role_cross_account_readonlyaccess_policy"
@@ -477,7 +487,8 @@
         "awslambda_function_no_secrets_in_variables",
         "ecs_task_definitions_no_environment_secrets",
         "ec2_instance_secrets_user_data",
-        "cloudwatch_log_group_no_secrets_in_logs"
+        "cloudwatch_log_group_no_secrets_in_logs",
+        "cloudwatch_log_group_agentcore_data_protection_policy_enabled"
       ]
     },
     {
@@ -633,10 +644,12 @@
           "Section": "AI Application Security",
           "SubSection": "Output Validation",
           "Service": "bedrock",
-          "Type": "Manual"
+          "Type": "Automated"
         }
       ],
-      "Checks": []
+      "Checks": [
+        "bedrock_guardrail_contextual_grounding_filter_enabled"
+      ]
     },
     {
       "Id": "AISF-AI-10",
@@ -647,10 +660,12 @@
           "Section": "AI Application Security",
           "SubSection": "RAG Security",
           "Service": "bedrock",
-          "Type": "Manual"
+          "Type": "Automated"
         }
       ],
-      "Checks": []
+      "Checks": [
+        "bedrock_knowledge_base_encrypted_with_cmk"
+      ]
     },
     {
       "Id": "AISF-AI-11",
@@ -675,10 +690,12 @@
           "Section": "AI Application Security",
           "SubSection": "Agent Governance",
           "Service": "bedrock",
-          "Type": "Manual"
+          "Type": "Automated"
         }
       ],
-      "Checks": []
+      "Checks": [
+        "bedrock_agent_role_not_shared_across_agents"
+      ]
     },
     {
       "Id": "AISF-AGENT-02",
@@ -865,9 +882,11 @@
         "guardduty_s3_protection_enabled",
         "guardduty_eks_audit_log_enabled",
         "guardduty_eks_runtime_monitoring_enabled",
+        "guardduty_runtime_monitoring_enabled",
         "guardduty_lambda_protection_enabled",
         "guardduty_rds_protection_enabled",
-        "guardduty_ec2_malware_protection_enabled"
+        "guardduty_ec2_malware_protection_enabled",
+        "guardduty_ai_protection_enabled"
       ],
       "ConfigRequirements": [
         {
@@ -899,7 +918,9 @@
       "Checks": [
         "cloudtrail_threat_detection_llm_jacking",
         "cloudtrail_threat_detection_privilege_escalation",
-        "cloudtrail_threat_detection_enumeration"
+        "cloudtrail_threat_detection_enumeration",
+        "kms_key_enclave_debug_attestation_detected",
+        "kms_key_enclave_attestation_unknown_image"
       ]
     },
     {
@@ -1113,10 +1134,12 @@
         "eks_cluster_not_publicly_accessible",
         "eks_cluster_private_nodes_enabled",
         "eks_cluster_network_policy_enabled",
+        "eks_cluster_vpc_cni_network_policy_enforced",
         "eks_cluster_uses_a_supported_version",
         "eks_control_plane_logging_all_types_enabled",
         "eks_cluster_kms_cmk_encryption_in_secrets_enabled",
-        "eks_cluster_deletion_protection_enabled"
+        "eks_cluster_deletion_protection_enabled",
+        "ecr_registry_enhanced_scanning_enabled"
       ]
     },
     {
@@ -1139,7 +1162,8 @@
         "ecs_task_definitions_logging_enabled",
         "ecs_task_definitions_no_environment_secrets",
         "ecs_task_definitions_host_namespace_not_shared",
-        "ecs_cluster_container_insights_enabled"
+        "ecs_cluster_container_insights_enabled",
+        "ecr_registry_enhanced_scanning_enabled"
       ]
     },
     {

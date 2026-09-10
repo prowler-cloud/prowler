@@ -3,6 +3,7 @@ export * from "./column-finding-resources";
 export * from "./column-standalone-findings";
 export * from "./data-table-row-actions";
 export * from "./finding-detail-drawer";
+export * from "./finding-triage-cells";
 export * from "./findings-group-drill-down";
 export * from "./findings-group-table";
 export * from "./findings-selection-context";

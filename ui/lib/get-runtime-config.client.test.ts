@@ -45,6 +45,32 @@ describe("getRuntimeConfigClient", () => {
     // Keys not present in the island fall back to null.
     expect(config.googleTagManagerId).toBeNull();
     expect(config.posthogKey).toBeNull();
+    // Booleans fall back to false, not undefined.
+    expect(config.posthogEnabled).toBe(false);
+  });
+
+  it("carries the PostHog enable flag through the island", async () => {
+    // Given
+    writeIsland(
+      JSON.stringify({
+        posthogEnabled: true,
+        posthogKey: "phc_key",
+        posthogIngestionHost: "https://eu.i.posthog.com",
+        posthogUiHost: "https://eu.posthog.com",
+      }),
+    );
+    const { getRuntimeConfigClient } = await import(
+      "./get-runtime-config.client"
+    );
+
+    // When
+    const config = getRuntimeConfigClient();
+
+    // Then
+    expect(config.posthogEnabled).toBe(true);
+    expect(config.posthogKey).toBe("phc_key");
+    expect(config.posthogIngestionHost).toBe("https://eu.i.posthog.com");
+    expect(config.posthogUiHost).toBe("https://eu.posthog.com");
   });
 
   it("falls back to an all-null config when the island is absent", async () => {
@@ -60,6 +86,20 @@ describe("getRuntimeConfigClient", () => {
     expect(config.sentryDsn).toBeNull();
     expect(config.apiBaseUrl).toBeNull();
     expect(config.reoDevClientId).toBeNull();
+  });
+
+  it("reads the cloudEnabled flag from the island", async () => {
+    // Given
+    writeIsland(JSON.stringify({ cloudEnabled: true }));
+    const { getRuntimeConfigClient } = await import(
+      "./get-runtime-config.client"
+    );
+
+    // When
+    const config = getRuntimeConfigClient();
+
+    // Then
+    expect(config.cloudEnabled).toBe(true);
   });
 
   it("falls back to an all-null config when the island is malformed JSON", async () => {
@@ -93,20 +133,30 @@ describe("getRuntimeConfigClient", () => {
     // When
     const config = getRuntimeConfigClient();
 
-    // Then - exactly the eight allowlisted keys, nothing else
+    // Then - exactly the allowlisted keys, nothing else
     expect(Object.keys(config).sort()).toEqual(
       [
         "apiBaseUrl",
         "apiDocsUrl",
+        "cloudBillingEnabled",
+        "cloudEnabled",
         "googleTagManagerId",
-        "posthogHost",
+        "posthogEnabled",
+        "posthogIngestionHost",
         "posthogKey",
+        "posthogUiHost",
         "reoDevClientId",
         "sentryDsn",
         "sentryEnvironment",
+        "stripePublishableKey",
+        "stripePublishableKeyV2",
       ].sort(),
     );
     expect(config.apiBaseUrl).toBe("https://api.example.com/api/v1");
+    // cloudBillingEnabled and cloudEnabled are boolean flags, so they default to
+    // false (not null) when absent from the island.
+    expect(config.cloudBillingEnabled).toBe(false);
+    expect(config.cloudEnabled).toBe(false);
     expect(
       (config as unknown as Record<string, unknown>).notAllowlisted,
     ).toBeUndefined();

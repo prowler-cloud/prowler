@@ -1,4 +1,3 @@
-export * from "./date-with-time";
-export * from "./entity-info";
-export * from "./get-provider-logo";
-export * from "./scan-status";
+// Temporary re-export shim for prowler-cloud overlay imports.
+// Remove after the cloud repo migrates to @/components/shadcn paths.
+export * from "@/components/shadcn/entities";

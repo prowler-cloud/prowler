@@ -32,14 +32,14 @@ Before you begin, make sure you have:
 ### Step 1: Get Your Alibaba Cloud Account ID
 
 1. Log in to the [Alibaba Cloud Console](https://home.console.alibabacloud.com/)
-2. Click on your profile avatar in the top-right corner
+2. Click your profile avatar in the top-right corner
 3. Locate and copy your Account ID
 
 ![Get Account ID](/images/providers/alibaba-account-id.png)
 
 ### Step 2: Access Prowler Cloud
 
-1. Navigate to [Prowler Cloud](https://cloud.prowler.com/) or launch [Prowler App](/user-guide/tutorials/prowler-app)
+1. Navigate to [Prowler Cloud](https://cloud.prowler.com/) or launch [Prowler Local Server](/user-guide/tutorials/prowler-app)
 2. Go to "Configuration" > "Providers"
 
     ![Providers Page](/images/prowler-app/cloud-providers-page.png)
@@ -144,25 +144,25 @@ prowler alibabacloud --ecs-ram-role RoleName
 
 ### Step 2: Run the First Scan
 
-#### Scan all regions
+#### Scan All Regions
 
 ```bash
 prowler alibabacloud
 ```
 
-#### Scan specific regions
+#### Scan Specific Regions
 
 ```bash
 prowler alibabacloud --region cn-hangzhou cn-shanghai
 ```
 
-#### Run specific checks
+#### Run Specific Checks
 
 ```bash
 prowler alibabacloud --checks ram_no_root_access_key ram_user_mfa_enabled_console_access
 ```
 
-#### Run a compliance framework
+#### Run a Compliance Framework
 
 ```bash
 prowler alibabacloud --compliance cis_2.0_alibabacloud

@@ -7,6 +7,7 @@ import { useFormServerErrors } from "@/hooks/use-form-server-errors";
 import { filterEmptyValues } from "@/lib";
 import { PROVIDER_CREDENTIALS_ERROR_MAPPING } from "@/lib/error-mappings";
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
+import { isCloud } from "@/lib/shared/env";
 import {
   addCredentialsFormSchema,
   addCredentialsRoleFormSchema,
@@ -76,7 +77,7 @@ export const useCredentialsForm = ({
 
     // AWS Role credentials
     if (providerType === "aws" && effectiveVia === "role") {
-      const isCloudEnv = process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true";
+      const isCloudEnv = isCloud();
       const defaultCredentialsType = isCloudEnv
         ? "aws-sdk-default"
         : "access-secret-key";
@@ -180,7 +181,6 @@ export const useCredentialsForm = ({
           [ProviderCredentialFields.OCI_FINGERPRINT]: "",
           [ProviderCredentialFields.OCI_KEY_CONTENT]: "",
           [ProviderCredentialFields.OCI_TENANCY]: providerUid || "",
-          [ProviderCredentialFields.OCI_REGION]: "",
           [ProviderCredentialFields.OCI_PASS_PHRASE]: "",
         };
       case "mongodbatlas":

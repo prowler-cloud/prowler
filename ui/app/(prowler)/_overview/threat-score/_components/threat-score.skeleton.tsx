@@ -4,7 +4,7 @@ export function ThreatScoreSkeleton() {
   return (
     <Card
       variant="base"
-      className="flex min-h-[372px] w-full flex-col justify-between lg:max-w-[312px]"
+      className="flex min-h-[372px] w-full min-w-0 flex-col justify-between lg:max-w-[312px]"
     >
       <CardHeader>
         <Skeleton className="h-7 w-36 rounded-xl" />

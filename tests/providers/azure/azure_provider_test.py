@@ -552,6 +552,128 @@ class TestAzureProvider:
         assert regions == expected_regions
 
 
+class TestAzureProviderValidateResourceGroups:
+    @patch(
+        "prowler.providers.azure.azure_provider.AzureProvider.__init__",
+        return_value=None,
+    )
+    def _make_provider(self, _mock_init, subscriptions=None):
+        provider = AzureProvider()
+        provider._identity = MagicMock()
+        provider._identity.subscriptions = subscriptions or {str(uuid4()): "Sub"}
+        provider._session = MagicMock()
+        provider._region_config = MagicMock()
+        return provider
+
+    @patch("prowler.providers.azure.azure_provider.ResourceManagementClient")
+    def test_validate_resource_groups_exact_match(self, mock_rm_client):
+        provider = self._make_provider()
+        sub_name = list(provider._identity.subscriptions.keys())[0]
+
+        mock_rg = MagicMock()
+        mock_rg.name = "mygroup"
+        mock_resource_groups = MagicMock()
+        mock_resource_groups.list.return_value = [mock_rg]
+        mock_rm_client.return_value.resource_groups = mock_resource_groups
+
+        result = provider.validate_resource_groups(["mygroup"])
+
+        assert result[sub_name] == ["mygroup"]
+
+    @patch("prowler.providers.azure.azure_provider.ResourceManagementClient")
+    def test_validate_resource_groups_mixed_case(self, mock_rm_client):
+        provider = self._make_provider()
+        sub_name = list(provider._identity.subscriptions.keys())[0]
+
+        mock_rg = MagicMock()
+        mock_rg.name = "MyGroup"
+        mock_resource_groups = MagicMock()
+        mock_resource_groups.list.return_value = [mock_rg]
+        mock_rm_client.return_value.resource_groups = mock_resource_groups
+
+        result = provider.validate_resource_groups(["mygroup"])
+
+        assert result[sub_name] == ["MyGroup"]
+        mock_resource_groups.list.assert_called_once()
+
+    @patch("prowler.providers.azure.azure_provider.ResourceManagementClient")
+    def test_validate_resource_groups_multiple_rgs(self, mock_rm_client):
+        provider = self._make_provider()
+        sub_name = list(provider._identity.subscriptions.keys())[0]
+
+        rg1, rg2 = MagicMock(), MagicMock()
+        rg1.name = "rg1"
+        rg2.name = "rg2"
+        mock_resource_groups = MagicMock()
+        mock_resource_groups.list.return_value = [rg1, rg2]
+        mock_rm_client.return_value.resource_groups = mock_resource_groups
+
+        result = provider.validate_resource_groups(["rg1", "rg2"])
+
+        assert set(result[sub_name]) == {"rg1", "rg2"}
+
+    @patch("prowler.providers.azure.azure_provider.ResourceManagementClient")
+    def test_validate_resource_groups_not_found(self, mock_rm_client):
+        provider = self._make_provider()
+        sub_name = list(provider._identity.subscriptions.keys())[0]
+
+        mock_rg = MagicMock()
+        mock_rg.name = "existing"
+        mock_resource_groups = MagicMock()
+        mock_resource_groups.list.return_value = [mock_rg]
+        mock_rm_client.return_value.resource_groups = mock_resource_groups
+
+        result = provider.validate_resource_groups(["nonexistent"])
+
+        assert result[sub_name] == []
+
+    def test_validate_resource_groups_empty_input(self):
+        provider = self._make_provider()
+        result = provider.validate_resource_groups([])
+        assert result == {}
+
+    @patch("prowler.providers.azure.azure_provider.ResourceManagementClient")
+    def test_validate_resource_groups_strips_whitespace(self, mock_rm_client):
+        provider = self._make_provider()
+        sub_name = list(provider._identity.subscriptions.keys())[0]
+
+        mock_rg = MagicMock()
+        mock_rg.name = "rg-prod"
+        mock_resource_groups = MagicMock()
+        mock_resource_groups.list.return_value = [mock_rg]
+        mock_rm_client.return_value.resource_groups = mock_resource_groups
+
+        result = provider.validate_resource_groups([" rg-prod "])
+
+        assert result[sub_name] == ["rg-prod"]
+
+    @patch("prowler.providers.azure.azure_provider.ResourceManagementClient")
+    def test_validate_resource_groups_skips_subscription_when_listing_fails(
+        self, mock_rm_client
+    ):
+        accessible_subscription = str(uuid4())
+        failing_subscription = str(uuid4())
+        provider = self._make_provider(
+            subscriptions={
+                accessible_subscription: "Accessible Sub",
+                failing_subscription: "Failing Sub",
+            }
+        )
+
+        mock_rg = MagicMock()
+        mock_rg.name = "rg-prod"
+        accessible_client = MagicMock()
+        accessible_client.resource_groups.list.return_value = [mock_rg]
+        failing_client = MagicMock()
+        failing_client.resource_groups.list.side_effect = Exception("Forbidden")
+        mock_rm_client.side_effect = [accessible_client, failing_client]
+
+        result = provider.validate_resource_groups(["rg-prod"])
+
+        assert result[accessible_subscription] == ["rg-prod"]
+        assert result[failing_subscription] == []
+
+
 class TestAzureProviderSetupIdentitySubscriptions:
     """Regression tests ensuring identity.subscriptions preserves every
     subscription even when multiple Azure subscriptions share the same

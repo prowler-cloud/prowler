@@ -145,6 +145,16 @@ export default defineConfig({
       testMatch: "invitations.spec.ts",
       dependencies: ["admin.auth.setup"],
     },
+    // This project validates the responsive application navigation shell
+    {
+      name: "navigation",
+      use: {
+        ...devices["Pixel 5"],
+        viewport: { width: 390, height: 844 },
+      },
+      testMatch: /navigation\/.*\.spec\.ts/,
+      dependencies: ["admin.auth.setup"],
+    },
   ],
 
   webServer: {

@@ -4,27 +4,31 @@ import { format } from "date-fns";
 import { PlusIcon, Trash2Icon } from "lucide-react";
 import { useState } from "react";
 
-import {
-  deleteIntegration,
-  testIntegrationConnection,
-  updateIntegration,
-} from "@/actions/integrations";
+import { deleteIntegration, updateIntegration } from "@/actions/integrations";
 import { AWSSecurityHubIcon } from "@/components/icons/services/IconServices";
 import {
   IntegrationActionButtons,
   IntegrationCardHeader,
   IntegrationSkeleton,
 } from "@/components/integrations/shared";
-import { Badge, Button } from "@/components/shadcn";
+import {
+  Badge,
+  Button,
+  useToast,
+  Card,
+  CardContent,
+  CardHeader,
+} from "@/components/shadcn";
 import { Modal } from "@/components/shadcn/modal";
-import { useToast } from "@/components/ui";
-import { DataTablePagination } from "@/components/ui/table/data-table-pagination";
-import { triggerTestConnectionWithDelay } from "@/lib/integrations/test-connection-helper";
+import { DataTablePagination } from "@/components/shadcn/table/data-table-pagination";
+import {
+  executeIntegrationConnectionTest,
+  triggerTestConnectionWithDelay,
+} from "@/lib/integrations/test-connection-helper";
 import { MetaDataProps } from "@/types";
 import { IntegrationProps } from "@/types/integrations";
 import { ProviderProps } from "@/types/providers";
 
-import { Card, CardContent, CardHeader } from "../../shadcn";
 import { SecurityHubIntegrationForm } from "./security-hub-integration-form";
 
 interface SecurityHubIntegrationsManagerProps {
@@ -109,7 +113,7 @@ export const SecurityHubIntegrationsManager = ({
   const handleTestConnection = async (id: string) => {
     setIsTesting(id);
     try {
-      const result = await testIntegrationConnection(id);
+      const result = await executeIntegrationConnectionTest(id);
 
       if (result.success) {
         toast({

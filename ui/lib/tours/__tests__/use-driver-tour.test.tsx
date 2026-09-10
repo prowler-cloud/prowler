@@ -1,5 +1,5 @@
 import { render } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { addProviderTour } from "../add-provider.tour";
 import type { TourCompletionRecord } from "../tour-types";
@@ -92,5 +92,66 @@ describe("adaptStep autoAdvance", () => {
     });
 
     expect(driveStep.popover?.showButtons).toBeUndefined();
+  });
+});
+
+describe("adaptStep selector fallback", () => {
+  afterEach(() => {
+    document.body.replaceChildren();
+  });
+
+  it("uses the fallback target when the primary target disappears", () => {
+    // Given
+    const fallbackElement = document.createElement("div");
+    fallbackElement.dataset.tourId = "view-first-scan-tabs";
+    document.body.append(fallbackElement);
+    const driveStep = adaptStep("view-first-scan", {
+      target: "in-progress",
+      fallbackTarget: "tabs",
+      title: "Your scan is running",
+    });
+
+    // When
+    const resolvedElement = (driveStep.element as () => Element)();
+
+    // Then
+    expect(resolvedElement).toBe(fallbackElement);
+  });
+
+  it("keeps the primary target when both targets exist", () => {
+    // Given
+    const primaryElement = document.createElement("div");
+    primaryElement.dataset.tourId = "view-first-scan-in-progress";
+    const fallbackElement = document.createElement("div");
+    fallbackElement.dataset.tourId = "view-first-scan-tabs";
+    document.body.append(primaryElement, fallbackElement);
+    const driveStep = adaptStep("view-first-scan", {
+      target: "in-progress",
+      fallbackTarget: "tabs",
+      title: "Your scan is running",
+    });
+
+    // When
+    const resolvedElement = (driveStep.element as () => Element)();
+
+    // Then
+    expect(resolvedElement).toBe(primaryElement);
+  });
+
+  it("still reports configuration drift when both targets are missing", () => {
+    // Given
+    const driveStep = adaptStep("view-first-scan", {
+      target: "in-progress",
+      fallbackTarget: "tabs",
+      title: "Your scan is running",
+    });
+
+    // When
+    const resolveElement = () => (driveStep.element as () => Element)();
+
+    // Then
+    expect(resolveElement).toThrow(
+      'Tour "view-first-scan" references missing selector: [data-tour-id="view-first-scan-in-progress"]',
+    );
   });
 });

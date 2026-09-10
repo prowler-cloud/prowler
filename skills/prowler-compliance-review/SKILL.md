@@ -27,7 +27,7 @@ allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
 | JSON Valid | `python3 -m json.tool file.json` | No syntax errors |
 | All Checks Exist | Run validation script | 0 missing checks |
 | No Duplicate IDs | Run validation script | 0 duplicate requirement IDs |
-| CHANGELOG Entry | Manual review | Present under correct version |
+| Changelog fragment | Manual review | Fragment present under `prowler/changelog.d/` |
 | Dashboard File | Compare with existing | Follows established pattern |
 | Framework Metadata | Manual review | All required fields populated |
 
@@ -63,8 +63,8 @@ JSON Valid?
         Duplicate Requirement IDs?
         ├── Yes → FAIL: Fix duplicate IDs
         └── No ↓
-            CHANGELOG Entry Present?
-            ├── No → REQUEST CHANGES: Add CHANGELOG entry
+            Changelog Fragment Present?
+            ├── No → REQUEST CHANGES: Add changelog fragment
             └── Yes ↓
                 Dashboard File Follows Pattern?
                 ├── No → REQUEST CHANGES: Fix dashboard pattern
@@ -124,7 +124,7 @@ Compliance frameworks are JSON files in: `prowler/compliance/{provider}/{framewo
 | Empty Checks for Automated | AssessmentStatus is Automated but Checks is empty | Add checks or change to Manual |
 | Wrong file location | Framework not in `prowler/compliance/{provider}/` | Move to correct directory |
 | Missing dashboard file | No corresponding `dashboard/compliance/{framework}.py` | Create dashboard file following pattern |
-| CHANGELOG missing | Not under correct version section | Add entry to prowler/CHANGELOG.md |
+| Changelog fragment missing | No fragment file in the PR diff | Add a fragment under prowler/changelog.d/ |
 
 ---
 

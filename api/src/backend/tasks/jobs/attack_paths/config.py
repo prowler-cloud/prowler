@@ -10,13 +10,10 @@ NormalizedList = _provider_config.NormalizedList
 PROVIDER_CONFIGS = _provider_config.PROVIDER_CONFIGS
 ProviderConfig = _provider_config.ProviderConfig
 
-# Batch size for Neo4j write operations (resource labeling, cleanup)
-BATCH_SIZE = env.int("ATTACK_PATHS_BATCH_SIZE", 1000)
+# Batch size for graph mutation operations (resource labeling and subgraph deletion)
+GRAPH_MUTATION_BATCH_SIZE = env.int("ATTACK_PATHS_GRAPH_MUTATION_BATCH_SIZE", 1000)
 # Batch size for Postgres findings fetch (keyset pagination page size)
 FINDINGS_BATCH_SIZE = env.int("ATTACK_PATHS_FINDINGS_BATCH_SIZE", 1000)
-# Batch size for temp-to-tenant graph sync (nodes and relationships per cursor page)
-SYNC_BATCH_SIZE = env.int("ATTACK_PATHS_SYNC_BATCH_SIZE", 1000)
-
 # Neo4j internal labels (Prowler-specific, not provider-specific)
 # - `Internet`: Singleton node representing external internet access for exposed-resource queries
 # - `ProwlerFinding`: Label for finding nodes created by Prowler and linked to cloud resources

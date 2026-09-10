@@ -1,0 +1,44 @@
+{
+  "Provider": "aws",
+  "CheckID": "kms_key_enclave_debug_attestation_detected",
+  "CheckTitle": "No Nitro Enclave debug-mode attestation observed against this KMS key",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "kms",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "AwsKmsKey",
+  "ResourceGroup": "security",
+  "Description": "Detects **Nitro Enclaves** launched with `--debug-mode` via CloudTrail KMS-from-enclave events. Debug enclaves produce attestations with zeroed image/kernel/application PCRs (PCR0/1/2); the check flags every KMS key that received such a call. Configurable via `enclave_debug_lookback_window_hours` (default 2160h / 90d) and `enclave_debug_max_events` (5000).",
+  "Risk": "Debug mode zeros the image, kernel and application PCRs (PCR0/1/2) in the attestation document, so PCR-bound key policies release material to enclaves whose measurement cannot be trusted. A debug enclave calling this KMS key is functionally equivalent to no enclave at all.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/enclaves/latest/user/cmd-nitro-run-enclave.html",
+    "https://docs.aws.amazon.com/kms/latest/developerguide/ct-nitro-enclave.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "nitro-cli run-enclave --cpu-count <n> --memory <mib> --eif-path <path>",
+      "NativeIaC": "",
+      "Other": "1. Identify the enclave that produced the zeroed-PCR attestation from the CloudTrail event's `attestationDocumentModuleId` (embeds the parent instance-id).\n2. On the flagged host, terminate the debug enclave and relaunch without `--debug-mode`.\n3. Audit the enclave orchestration pipeline for hardcoded `--debug-mode` that leaked into production.\n4. Tighten the KMS key policy to bind non-zero PCR values so future debug enclaves fail closed at the key-policy layer.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Never run production Nitro Enclaves with `--debug-mode`. Enforce non-debug launch flags in the enclave orchestration pipeline and pair with strict PCR bindings on KMS policies so debug enclaves are rejected at the key-policy layer.",
+      "Url": "https://hub.prowler.com/check/kms_key_enclave_debug_attestation_detected"
+    }
+  },
+  "Categories": [
+    "encryption",
+    "logging",
+    "trust-boundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "kms_key_enclave_attestation_not_enforced",
+    "kms_key_enclave_attestation_no_deployment_binding"
+  ],
+  "Notes": "CloudTrail-based detection: enclaves that never call KMS in the window are unobservable and reported MANUAL. Truncated pages / max_events cap also emit MANUAL rather than PASS to avoid a false PASS. Only standard PCR fields (ImageDigest/PCR0, PCR1-4, PCR8) exposed by CloudTrail are inspected; custom PCRs are out of scope."
+}

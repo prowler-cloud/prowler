@@ -1,0 +1,37 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_device_registration_join_restricted",
+  "CheckTitle": "Users allowed to join devices to Microsoft Entra are restricted",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "The tenant device registration policy should restrict who can register devices as **Microsoft Entra joined** to **Selected** users or **None**. Allowing all users to join devices increases the number of devices that establish a trust relationship with the tenant.",
+  "Risk": "When all users can Entra-join devices, an attacker who compromises any account can register a device, potentially satisfying device-based **Conditional Access** controls and expanding their foothold in the tenant.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/entra/identity/devices/device-join-plan"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to the Microsoft Entra admin center at https://entra.microsoft.com/\n2. Go to **Identity** > **Devices** > **Device settings**\n3. Set **Users may join devices to Microsoft Entra** to **Selected** (and choose the allowed users/groups) or **None**\n4. Click **Save**",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Restrict Entra device join to a selected set of users or disable it entirely unless there is a business need for all users to join devices.",
+      "Url": "https://hub.prowler.com/check/entra_device_registration_join_restricted"
+    }
+  },
+  "Categories": [
+    "identity-access",
+    "e3"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

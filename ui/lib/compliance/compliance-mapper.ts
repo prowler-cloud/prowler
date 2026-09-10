@@ -6,7 +6,9 @@ import { C5CustomDetails } from "@/components/compliance/compliance-custom-detai
 import { CCCCustomDetails } from "@/components/compliance/compliance-custom-details/ccc-details";
 import { CISControlsCustomDetails } from "@/components/compliance/compliance-custom-details/cis-controls-details";
 import { CISCustomDetails } from "@/components/compliance/compliance-custom-details/cis-details";
+import { CMMCCustomDetails } from "@/components/compliance/compliance-custom-details/cmmc-details";
 import { CSACustomDetails } from "@/components/compliance/compliance-custom-details/csa-details";
+import { CyberEssentialsCustomDetails } from "@/components/compliance/compliance-custom-details/cyber-essentials-details";
 import { DORACustomDetails } from "@/components/compliance/compliance-custom-details/dora-details";
 import { ENSCustomDetails } from "@/components/compliance/compliance-custom-details/ens-details";
 import { GenericCustomDetails } from "@/components/compliance/compliance-custom-details/generic-details";
@@ -15,7 +17,7 @@ import { KISACustomDetails } from "@/components/compliance/compliance-custom-det
 import { MITRECustomDetails } from "@/components/compliance/compliance-custom-details/mitre-details";
 import { OktaIDaaSStigCustomDetails } from "@/components/compliance/compliance-custom-details/okta-idaas-stig-details";
 import { ThreatCustomDetails } from "@/components/compliance/compliance-custom-details/threat-details";
-import { AccordionItemProps } from "@/components/ui/accordion/Accordion";
+import { AccordionItemProps } from "@/components/shadcn/accordion/Accordion";
 import {
   AttributesData,
   CategoryData,
@@ -49,11 +51,19 @@ import {
   mapComplianceData as mapCISControlsComplianceData,
   toAccordionItems as toCISControlsAccordionItems,
 } from "./cis-controls";
+import {
+  mapComplianceData as mapCMMCComplianceData,
+  toAccordionItems as toCMMCAccordionItems,
+} from "./cmmc";
 import { calculateCategoryHeatmapData, getTopFailedSections } from "./commons";
 import {
   mapComplianceData as mapCSAComplianceData,
   toAccordionItems as toCSAAccordionItems,
 } from "./csa";
+import {
+  mapComplianceData as mapCyberEssentialsComplianceData,
+  toAccordionItems as toCyberEssentialsAccordionItems,
+} from "./cyber-essentials";
 import {
   mapComplianceData as mapDORAComplianceData,
   toAccordionItems as toDORAAccordionItems,
@@ -258,6 +268,33 @@ const getComplianceMappers = (): Record<string, ComplianceMapper> => ({
       calculateCategoryHeatmapData(data),
     getDetailsComponent: (requirement: Requirement) =>
       createElement(DORACustomDetails, { requirement }),
+  },
+  // Cyber Essentials v3.3 — universal framework keyed by the `framework` field
+  // of `prowler/compliance/cyber_essentials_3.3.json` ("Cyber-Essentials").
+  // Groups by Theme (the 5 NCSC control themes) and surfaces Theme /
+  // AssessmentStatus / CloudApplicability / RemediationProcedure / References in
+  // the requirement detail drawer.
+  "Cyber-Essentials": {
+    mapComplianceData: mapCyberEssentialsComplianceData,
+    toAccordionItems: toCyberEssentialsAccordionItems,
+    getTopFailedSections,
+    calculateCategoryHeatmapData: (data: Framework[]) =>
+      calculateCategoryHeatmapData(data),
+    getDetailsComponent: (requirement: Requirement) =>
+      createElement(CyberEssentialsCustomDetails, { requirement }),
+  },
+  // CMMC 2.0 — universal framework keyed by the `framework` field of
+  // `prowler/compliance/cmmc_2.0.json` ("CMMC"). Groups by Domain (14 NIST
+  // 800-171 families) and surfaces Domain / Level / Source Requirement in the
+  // requirement detail drawer.
+  CMMC: {
+    mapComplianceData: mapCMMCComplianceData,
+    toAccordionItems: toCMMCAccordionItems,
+    getTopFailedSections,
+    calculateCategoryHeatmapData: (data: Framework[]) =>
+      calculateCategoryHeatmapData(data),
+    getDetailsComponent: (requirement: Requirement) =>
+      createElement(CMMCCustomDetails, { requirement }),
   },
 });
 

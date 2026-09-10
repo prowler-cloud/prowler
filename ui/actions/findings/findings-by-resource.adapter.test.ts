@@ -22,6 +22,8 @@ vi.mock("next/navigation", () => ({
 // Import after mocks
 // ---------------------------------------------------------------------------
 
+import { FINDING_TRIAGE_STATUS } from "@/types/findings-triage";
+
 import { adaptFindingsByResourceResponse } from "./findings-by-resource.adapter";
 
 // ---------------------------------------------------------------------------
@@ -43,22 +45,6 @@ describe("adaptFindingsByResourceResponse — malformed input", () => {
     expect(result).toEqual([]);
   });
 
-  it("should return [] when apiResponse is undefined", () => {
-    // Given/When
-    const result = adaptFindingsByResourceResponse(undefined);
-
-    // Then
-    expect(result).toEqual([]);
-  });
-
-  it("should return [] when apiResponse has no data property", () => {
-    // Given/When
-    const result = adaptFindingsByResourceResponse({ meta: {} });
-
-    // Then
-    expect(result).toEqual([]);
-  });
-
   it("should return [] when data is not an array", () => {
     // Given/When
     const result = adaptFindingsByResourceResponse({ data: "bad" });
@@ -70,14 +56,6 @@ describe("adaptFindingsByResourceResponse — malformed input", () => {
   it("should return [] when data is an empty array", () => {
     // Given/When
     const result = adaptFindingsByResourceResponse({ data: [], included: [] });
-
-    // Then
-    expect(result).toEqual([]);
-  });
-
-  it("should return [] when data is a number", () => {
-    // Given/When
-    const result = adaptFindingsByResourceResponse({ data: 42 });
 
     // Then
     expect(result).toEqual([]);
@@ -194,8 +172,8 @@ describe("adaptFindingsByResourceResponse — malformed input", () => {
     expect(result[0].resourceMetadata).toBeNull();
   });
 
-  it("should normalize a single finding response into a one-item drawer array", () => {
-    // Given — getFindingById returns a single JSON:API resource object
+  it("should preserve triage summary fields for a single finding response", () => {
+    // Given - getFindingById returns a single finding with provisional triage fields
     const input = {
       data: {
         id: "finding-1",
@@ -204,6 +182,10 @@ describe("adaptFindingsByResourceResponse — malformed input", () => {
           check_id: "s3_check",
           status: "FAIL",
           severity: "critical",
+          triage_id: "triage-1",
+          triage_status: FINDING_TRIAGE_STATUS.UNDER_REVIEW,
+          triage_notes_count: 1,
+          triage_has_note: true,
           check_metadata: {
             checktitle: "S3 Check",
           },
@@ -220,8 +202,16 @@ describe("adaptFindingsByResourceResponse — malformed input", () => {
     const result = adaptFindingsByResourceResponse(input);
 
     // Then
-    expect(result).toHaveLength(1);
-    expect(result[0].id).toBe("finding-1");
-    expect(result[0].checkTitle).toBe("S3 Check");
+    expect(result[0].triage).toEqual(
+      expect.objectContaining({
+        findingId: "finding-1",
+        findingUid: "uid-1",
+        triageId: "triage-1",
+        notesCount: 1,
+        status: FINDING_TRIAGE_STATUS.UNDER_REVIEW,
+        label: "Under Review",
+        hasVisibleNote: true,
+      }),
+    );
   });
 });

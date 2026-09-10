@@ -191,18 +191,18 @@ class ScansListResponse(BaseModel):
 
 
 class ScanCreationResult(MinimalSerializerMixin, BaseModel):
-    """Result of scan creation operation.
+    """Result of a scan creation that succeeded.
 
-    Used by trigger_scan() to communicate the outcome of scan creation.
-    Status indicates whether scan was created successfully or failed.
+    Used by trigger_scan(). A scan that was not created leaves the tool as an
+    error instead of being reported here, so this model only ever describes a
+    scan that exists -- which is why it carries no success flag: a field with
+    one reachable value says nothing, and inviting a reader to branch on it
+    suggests there is a failure shape to look for here. There is not; the
+    failure is the error.
     """
 
-    scan: DetailedScan | None = Field(
-        default=None,
-        description="Detailed scan information if creation succeeded, None otherwise",
-    )
-    status: Literal["success", "failed"] = Field(
-        description="Outcome of scan creation: success (scan created successfully) or failed (error)"
+    scan: DetailedScan = Field(
+        description="Detailed information about the scan that was created"
     )
     message: str = Field(
         description="Human-readable message describing the scan creation result"
@@ -210,13 +210,26 @@ class ScanCreationResult(MinimalSerializerMixin, BaseModel):
 
 
 class ScheduleCreationResult(MinimalSerializerMixin, BaseModel):
-    """Result of async schedule creation operation.
+    """Result of a daily schedule creation that succeeded.
 
-    Used by schedule_daily_scan() to communicate scheduling outcome.
+    Used by schedule_daily_scan(). Prowler commits the schedule inside the
+    request that creates it, so an answer means it exists; a provider that
+    already has one is refused with a 409 and leaves the tool as an error. That
+    leaves nothing for a success flag to distinguish, so there is none.
     """
 
-    scheduled: bool = Field(
-        description="Whether the daily scan schedule was created successfully"
+    first_run_state: (
+        Literal[
+            "available", "scheduled", "executing", "completed", "failed", "cancelled"
+        ]
+        | None
+    ) = Field(
+        default=None,
+        description=(
+            "State of the first scan Prowler starts immediately alongside the schedule. "
+            "This describes that one run, not the recurring schedule, which stands "
+            "regardless of it"
+        ),
     )
     message: str = Field(
         description="Human-readable message describing the scheduling result"

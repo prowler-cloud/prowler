@@ -7,6 +7,7 @@ import {
   ConnectAccountSuccessData,
 } from "@/components/providers/workflow/forms";
 import { useProviderWizardStore } from "@/store/provider-wizard/store";
+import { OrgFlowType } from "@/types/organizations";
 import { PROVIDER_WIZARD_MODE } from "@/types/provider-wizard";
 import { ProviderType } from "@/types/providers";
 
@@ -17,7 +18,7 @@ import {
 
 interface ConnectStepProps {
   onNext: () => void;
-  onSelectOrganizations: () => void;
+  onSelectOrganizations: (orgType: OrgFlowType) => void;
   onFooterChange: (config: WizardFooterConfig) => void;
   onProviderTypeChange: (providerType: ProviderType | null) => void;
 }

@@ -4,7 +4,6 @@ import NextAuth, {
   type DefaultSession,
   type NextAuthConfig,
   type Session,
-  User,
 } from "next-auth";
 import type { JWT } from "next-auth/jwt";
 import Credentials from "next-auth/providers/credentials";
@@ -12,6 +11,11 @@ import { z } from "zod";
 
 import { getToken, getUserByMe } from "./actions/auth";
 import { apiBaseUrl } from "./lib";
+import { UserMeError } from "./lib/auth-errors";
+import {
+  SLACK_CALLBACK_PATH,
+  SLACK_EXPIRED_CALLBACK_URL,
+} from "./lib/integrations/slack-connect-status";
 import type { RolePermissionAttributes } from "./types/users";
 
 interface CustomJwtPayload extends JwtPayload {
@@ -52,13 +56,39 @@ const DEFAULT_PERMISSIONS: RolePermissionAttributes = {
   manage_account: false,
   manage_providers: false,
   manage_scans: false,
+  manage_ingestions: false,
   manage_integrations: false,
   manage_billing: false,
   manage_alerts: false,
+  manage_lighthouse_ai_configuration: false,
   unlimited_visibility: false,
 };
 
+const TENANT_SWITCH_ERROR = "TenantSwitchError";
+
+const NON_RETRYABLE_USER_ME_STATUSES = new Set([401, 403, 404]);
+const USER_REFRESH_TIMEOUT_MS = 5_000;
+
 type TokenUserInput = Partial<TokenUser> & { company?: string };
+
+type JwtCallback = NonNullable<NonNullable<NextAuthConfig["callbacks"]>["jwt"]>;
+type JwtCallbackParams = Parameters<JwtCallback>[0];
+
+interface JwtCallbackCredentials {
+  accessToken?: string;
+  refreshToken?: string;
+}
+
+type AuthJwtUser = JwtCallbackParams["user"] &
+  TokenUserInput &
+  JwtCallbackCredentials;
+
+interface AuthJwtCallbackParams
+  extends Omit<JwtCallbackParams, "session" | "token" | "user"> {
+  session?: Partial<ExtendedSession>;
+  token: AuthToken;
+  user: AuthJwtUser;
+}
 
 const toTokenUser = (user?: TokenUserInput): TokenUser =>
   ({
@@ -66,7 +96,7 @@ const toTokenUser = (user?: TokenUserInput): TokenUser =>
     email: user?.email ?? undefined,
     companyName: user?.companyName ?? user?.company,
     dateJoined: user?.dateJoined,
-    permissions: user?.permissions ?? { ...DEFAULT_PERMISSIONS },
+    permissions: { ...DEFAULT_PERMISSIONS, ...user?.permissions },
   }) as TokenUser;
 
 type UserMeResponse = Awaited<ReturnType<typeof getUserByMe>>;
@@ -180,6 +210,31 @@ const refreshAccessToken = async (token: AuthToken): Promise<AuthToken> => {
       };
 
       applyDecodedClaims(nextToken, newAccessToken, "refreshed access token");
+
+      try {
+        const userMeResponse = await getUserByMe(
+          newAccessToken,
+          AbortSignal.timeout(USER_REFRESH_TIMEOUT_MS),
+        );
+        nextToken.user = tokenUserFromApi(userMeResponse);
+      } catch (error) {
+        if (
+          error instanceof UserMeError &&
+          error.status !== undefined &&
+          NON_RETRYABLE_USER_ME_STATUSES.has(error.status)
+        ) {
+          return {
+            ...nextToken,
+            accessToken: undefined,
+            refreshToken: undefined,
+            user: undefined,
+            error: "RefreshAccessTokenError",
+          };
+        }
+
+        // eslint-disable-next-line no-console
+        console.warn("Unable to refresh user after access token refresh");
+      }
 
       return nextToken;
     } catch (error) {
@@ -296,7 +351,9 @@ export const authConfig = {
         const signInUrl = new URL("/sign-in", nextUrl.origin);
         signInUrl.searchParams.set(
           "callbackUrl",
-          nextUrl.pathname + nextUrl.search,
+          nextUrl.pathname === SLACK_CALLBACK_PATH
+            ? SLACK_EXPIRED_CALLBACK_URL
+            : nextUrl.pathname + nextUrl.search,
         );
         // Include session error if present (e.g., RefreshAccessTokenError)
         if (sessionError) {
@@ -308,37 +365,54 @@ export const authConfig = {
       return true;
     },
 
-    jwt: async ({ token, account, user, trigger, session }) => {
-      const authToken = token as AuthToken;
-
+    jwt: async ({
+      token: authToken,
+      account,
+      user,
+      trigger,
+      session,
+    }: AuthJwtCallbackParams): Promise<AuthToken> => {
       // Handle tenant switch: update tokens from client-side useSession().update()
       if (trigger === "update" && session?.accessToken) {
-        authToken.accessToken = session.accessToken;
-        authToken.refreshToken = session.refreshToken;
-        applyDecodedClaims(authToken, authToken.accessToken, "tenant switch");
-        return authToken;
+        const newAccessToken = session.accessToken;
+
+        try {
+          const userMeResponse = await getUserByMe(newAccessToken);
+          const nextAuthToken: AuthToken = {
+            ...authToken,
+            accessToken: newAccessToken,
+            refreshToken: session.refreshToken,
+            user: tokenUserFromApi(userMeResponse),
+            error: undefined,
+          };
+
+          applyDecodedClaims(nextAuthToken, newAccessToken, "tenant switch");
+
+          return nextAuthToken;
+        } catch (error) {
+          // eslint-disable-next-line no-console
+          console.warn("Error refreshing user after tenant switch:", error);
+          return {
+            ...authToken,
+            error: TENANT_SWITCH_ERROR,
+          };
+        }
       }
 
       applyDecodedClaims(authToken, authToken.accessToken);
 
-      if (account && user) {
-        const signedInUser = user as User &
-          TokenUserInput & {
-            accessToken: string;
-            refreshToken: string;
-          };
-
+      if (account && user?.accessToken && user.refreshToken) {
         const nextAuthToken: AuthToken = {
           ...authToken,
-          accessToken: signedInUser.accessToken,
-          refreshToken: signedInUser.refreshToken,
-          user: toTokenUser(signedInUser),
+          accessToken: user.accessToken,
+          refreshToken: user.refreshToken,
+          user: toTokenUser(user),
           error: undefined,
         };
 
         applyDecodedClaims(
           nextAuthToken,
-          signedInUser.accessToken,
+          user.accessToken,
           "access token on sign-in",
         );
 
@@ -359,7 +433,7 @@ export const authConfig = {
       const authToken = token as AuthToken;
       const nextSession = { ...session } as ExtendedSession;
 
-      if (authToken?.error) {
+      if (authToken.error && authToken.error !== TENANT_SWITCH_ERROR) {
         nextSession.error = authToken.error;
         nextSession.user = undefined;
         nextSession.userId = undefined;
@@ -369,7 +443,8 @@ export const authConfig = {
         return nextSession;
       }
 
-      nextSession.error = undefined;
+      nextSession.error = authToken.error;
+      authToken.error = undefined;
       nextSession.userId = authToken.user_id ?? nextSession.userId;
       nextSession.tenantId = authToken.tenant_id ?? nextSession.tenantId;
       nextSession.accessToken =

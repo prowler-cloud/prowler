@@ -16,14 +16,17 @@ class keyvault_logging_enabled(Check):
                 report.status = "FAIL"
                 report.status_extended = f"Key Vault {keyvault.name} in subscription {subscription_name} ({subscription_id}) does not have a diagnostic setting with audit logging."
                 for diagnostic_setting in keyvault.monitor_diagnostic_settings or []:
-                    has_audit = False
+                    has_audit_category = False
+                    has_audit_group = False
                     has_all_logs = False
                     for log in diagnostic_setting.logs:
+                        if log.category == "AuditEvent" and log.enabled:
+                            has_audit_category = True
                         if log.category_group == "audit" and log.enabled:
-                            has_audit = True
+                            has_audit_group = True
                         if log.category_group == "allLogs" and log.enabled:
                             has_all_logs = True
-                    if has_audit and has_all_logs:
+                    if has_audit_category or (has_audit_group and has_all_logs):
                         report.status = "PASS"
                         report.status_extended = f"Key Vault {keyvault.name} in subscription {subscription_name} ({subscription_id}) has a diagnostic setting with audit logging."
                         break

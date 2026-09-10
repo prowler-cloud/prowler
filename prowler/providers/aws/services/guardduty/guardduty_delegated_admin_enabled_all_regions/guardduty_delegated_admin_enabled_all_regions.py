@@ -32,6 +32,15 @@ class guardduty_delegated_admin_enabled_all_regions(Check):
             # Check if this region has a delegated admin
             has_delegated_admin = detector.region in regions_with_admin
 
+            # The lookup is tracked per region so that a failure in one region does
+            # not mask the result of the others. A failure is only relevant when no
+            # delegated admin was found: if one was, the status is known.
+            admin_lookup_failed = (
+                not has_delegated_admin
+                and detector.region
+                in guardduty_client.organization_admin_lookup_failed_regions
+            )
+
             # Check if detector is enabled
             detector_enabled = detector.enabled_in_account and detector.status
 
@@ -43,7 +52,7 @@ class guardduty_delegated_admin_enabled_all_regions(Check):
 
             # Determine overall status
             issues = []
-            if not has_delegated_admin:
+            if not admin_lookup_failed and not has_delegated_admin:
                 issues.append("no delegated administrator configured")
             if not detector_enabled:
                 issues.append("detector not enabled")
@@ -56,6 +65,22 @@ class guardduty_delegated_admin_enabled_all_regions(Check):
                 report.status_extended = (
                     f"GuardDuty in region {detector.region} has issues: "
                     f"{', '.join(issues)}."
+                )
+                if admin_lookup_failed:
+                    report.status_extended = (
+                        f"{report.status_extended[:-1]}; the delegated administrator "
+                        f"status could not be determined."
+                    )
+            elif admin_lookup_failed:
+                # Not being able to read the delegated administrator is a lack of
+                # visibility, not a misconfiguration: the API is only available to
+                # the management or delegated administrator account.
+                report.status = "MANUAL"
+                report.status_extended = (
+                    f"GuardDuty delegated administrator status in region "
+                    f"{detector.region} could not be determined; run this check "
+                    f"from the organization management or delegated administrator "
+                    f"account."
                 )
             else:
                 report.status = "PASS"

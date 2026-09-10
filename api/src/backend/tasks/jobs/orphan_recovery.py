@@ -18,12 +18,11 @@ This is the shared engine behind both the periodic Beat watchdog and the
 `reconcile_orphan_tasks` management command.
 """
 
-import ast
-import json
 from contextlib import contextmanager
 from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
+from api.celery_utils import decode_celery_field
 from celery import current_app, states
 from celery.utils.log import get_task_logger
 from django.db import connections
@@ -138,45 +137,15 @@ def revoke_task(task_result, terminate: bool = True) -> None:
         logger.exception(f"Failed to revoke task {task_result.task_id}")
 
 
-def _decode_celery_field(value, default):
-    """Decode django-celery-results' stored task_args/task_kwargs to a Python object.
-
-    The backend stores them as a (sometimes double-encoded) repr/JSON string. An
-    empty or missing field returns ``default``; a non-empty value that cannot be
-    decoded raises ``ValueError`` so the caller can avoid re-enqueuing a task with
-    the wrong arguments.
-    """
-    obj = value
-    for _ in range(2):  # values can be double-encoded (a string holding a repr)
-        if not isinstance(obj, str):
-            break
-        text = obj.strip()
-        if not text:
-            return default
-        parsed = None
-        for parser in (ast.literal_eval, json.loads):
-            try:
-                parsed = parser(text)
-                break
-            except (ValueError, SyntaxError, TypeError):
-                continue
-        if parsed is None:
-            raise ValueError(f"undecodable celery field: {text[:120]!r}")
-        obj = parsed
-    return default if obj is None else obj
-
-
 def reconcile_orphans(
     grace_minutes: int = 2,
     max_attempts: int = 3,
     window_hours: int = 6,
     dry_run: bool = False,
 ) -> dict:
-    """Run the full orphan sweep under a single-flight advisory lock.
+    """Run the orphan task sweep under a single-flight advisory lock.
 
-    Recovers any orphaned in-flight task and delegates attack-paths scans that
-    never reached a worker to their existing stale-cleanup. Returns a summary;
-    a no-op (lock not won) is reported too.
+    Returns a recovery summary. A no-op is reported when the lock is not acquired.
     """
     with advisory_lock() as acquired:
         if not acquired:
@@ -199,11 +168,6 @@ def reconcile_orphans(
         else:
             logger.info("Orphan task recovery disabled by feature flag")
             result = {"recovered": [], "failed": [], "skipped": [], "enabled": False}
-
-        if not dry_run:
-            from tasks.jobs.attack_paths.cleanup import cleanup_stale_attack_paths_scans
-
-            result["attack_paths"] = cleanup_stale_attack_paths_scans()
 
         return {"acquired": True, **result}
 
@@ -320,8 +284,10 @@ def _recover_task(task_result, max_attempts: int, window_hours: int) -> str:
         return "failed"
 
     try:
-        args = _decode_celery_field(args_repr, [])
-        kwargs = _decode_celery_field(kwargs_repr, {})
+        args = decode_celery_field(args_repr, [])
+        kwargs = decode_celery_field(kwargs_repr, {})
+        if not isinstance(args, (list, tuple)) or not isinstance(kwargs, dict):
+            raise ValueError("Stored task arguments have invalid types")
     except ValueError:
         logger.error(
             "Orphan %s (%s): could not decode stored args/kwargs, not re-enqueuing",
@@ -331,8 +297,8 @@ def _recover_task(task_result, max_attempts: int, window_hours: int) -> str:
         return "failed"
     new_task_id = str(uuid4())
     task_obj.apply_async(
-        args=list(args) if isinstance(args, (list, tuple)) else [],
-        kwargs=kwargs if isinstance(kwargs, dict) else {},
+        args=list(args),
+        kwargs=kwargs,
         task_id=new_task_id,
     )
     logger.info(

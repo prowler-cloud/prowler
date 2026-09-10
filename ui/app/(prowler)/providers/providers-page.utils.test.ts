@@ -7,7 +7,7 @@ const providersActionsMock = vi.hoisted(() => ({
 
 const organizationsActionsMock = vi.hoisted(() => ({
   listOrganizationsSafe: vi.fn(),
-  listOrganizationUnitsSafe: vi.fn(),
+  listOrganizationNodesSafe: vi.fn(),
 }));
 
 const scansActionsMock = vi.hoisted(() => ({
@@ -32,8 +32,10 @@ vi.mock("@/actions/schedules", () => schedulesActionsMock);
 vi.mock("@/actions/manage-groups/manage-groups", () => manageGroupsActionsMock);
 
 import { SearchParamsProps } from "@/types";
+import { NODE_KIND } from "@/types/organizations";
 import { ProvidersApiResponse } from "@/types/providers";
 import {
+  HIERARCHY_STATUS,
   isProvidersOrganizationRow,
   ProvidersProviderRow,
 } from "@/types/providers-table";
@@ -62,6 +64,7 @@ const providersResponse: ProvidersApiResponse = {
       type: "providers",
       attributes: {
         provider: "aws",
+        is_dynamic: false,
         uid: "111111111111",
         alias: "AWS App Account",
         status: "completed",
@@ -107,6 +110,7 @@ const providersResponse: ProvidersApiResponse = {
       type: "providers",
       attributes: {
         provider: "aws",
+        is_dynamic: false,
         uid: "222222222222",
         alias: "Standalone Account",
         status: "completed",
@@ -212,7 +216,7 @@ describe("buildProvidersTableRows", () => {
     const rows = buildProvidersTableRows({
       providers,
       organizations: [],
-      organizationUnits: [],
+      organizationNodes: [],
       isCloud: false,
     });
 
@@ -234,10 +238,10 @@ describe("buildProvidersTableRows", () => {
                 ? { type: "organizations", id: "org-1" }
                 : null,
           },
-          organization_unit: {
+          organization_node: {
             data:
               provider.id === "provider-1"
-                ? { type: "organizational-units", id: "ou-1" }
+                ? { type: "organization-nodes", id: "ou-1" }
                 : null,
           },
         },
@@ -261,11 +265,12 @@ describe("buildProvidersTableRows", () => {
           relationships: {},
         },
       ],
-      organizationUnits: [
+      organizationNodes: [
         {
           id: "ou-1",
-          type: "organizational-units",
+          type: "organization-nodes",
           attributes: {
+            kind: NODE_KIND.ORGANIZATIONAL_UNIT,
             name: "Security OU",
             external_id: "ou-security",
             parent_external_id: "r-root",
@@ -304,8 +309,8 @@ describe("buildProvidersTableRows", () => {
           organization: {
             data: { type: "organizations", id: "org-1" },
           },
-          organization_unit: {
-            data: { type: "organizational-units", id: "ou-grandchild" },
+          organization_node: {
+            data: { type: "organization-nodes", id: "ou-grandchild" },
           },
         },
       }),
@@ -328,11 +333,12 @@ describe("buildProvidersTableRows", () => {
           relationships: {},
         },
       ],
-      organizationUnits: [
+      organizationNodes: [
         {
           id: "ou-root",
-          type: "organizational-units",
+          type: "organization-nodes",
           attributes: {
+            kind: NODE_KIND.ORGANIZATIONAL_UNIT,
             name: "Production",
             external_id: "ou-prod",
             parent_external_id: "r-root",
@@ -346,8 +352,9 @@ describe("buildProvidersTableRows", () => {
         },
         {
           id: "ou-child",
-          type: "organizational-units",
+          type: "organization-nodes",
           attributes: {
+            kind: NODE_KIND.ORGANIZATIONAL_UNIT,
             name: "EMEA",
             external_id: "ou-emea",
             parent_external_id: "ou-prod",
@@ -361,8 +368,9 @@ describe("buildProvidersTableRows", () => {
         },
         {
           id: "ou-grandchild",
-          type: "organizational-units",
+          type: "organization-nodes",
           attributes: {
+            kind: NODE_KIND.ORGANIZATIONAL_UNIT,
             name: "Security",
             external_id: "ou-security",
             parent_external_id: "ou-emea",
@@ -419,11 +427,12 @@ describe("buildProvidersTableRows", () => {
           relationships: {},
         },
       ],
-      organizationUnits: [
+      organizationNodes: [
         {
           id: "ou-parent",
-          type: "organizational-units",
+          type: "organization-nodes",
           attributes: {
+            kind: NODE_KIND.ORGANIZATIONAL_UNIT,
             name: "Workloads",
             external_id: "ou-workloads",
             parent_external_id: null,
@@ -440,8 +449,9 @@ describe("buildProvidersTableRows", () => {
         },
         {
           id: "ou-child",
-          type: "organizational-units",
+          type: "organization-nodes",
           attributes: {
+            kind: NODE_KIND.ORGANIZATIONAL_UNIT,
             name: "Team A",
             external_id: "ou-team-a",
             parent_external_id: null,
@@ -452,7 +462,7 @@ describe("buildProvidersTableRows", () => {
               data: { type: "organizations", id: "org-1" },
             },
             parent: {
-              data: { type: "organizational-units", id: "ou-parent" },
+              data: { type: "organization-nodes", id: "ou-parent" },
             },
             providers: {
               data: [{ type: "providers", id: "provider-1" }],
@@ -480,8 +490,146 @@ describe("buildProvidersTableRows", () => {
     expect(ouChild.subRows![0].rowType).toBe(PROVIDERS_ROW_TYPE.PROVIDER);
   });
 
+  it("builds each organization's hierarchy from its own parent link shape", () => {
+    // Given — two organizations whose nodes are serialized differently: org-a
+    // carries the canonical `parent` relationship, org-b only the legacy
+    // `parent_external_id` attribute. Deciding the mode across the whole
+    // collection made org-b read every parent as null, so its intermediate node
+    // ended up empty and was filtered away.
+    const providers = [
+      toProviderRow(providersResponse.data[0]),
+      toProviderRow(providersResponse.data[1]),
+    ];
+
+    // When
+    const rows = buildProvidersTableRows({
+      providers,
+      organizations: [
+        {
+          id: "org-a",
+          type: "organizations",
+          attributes: {
+            name: "Canonical Organization",
+            org_type: "aws",
+            external_id: "o-aaaa",
+            metadata: {},
+            root_external_id: "r-a",
+          },
+          relationships: {},
+        },
+        {
+          id: "org-b",
+          type: "organizations",
+          attributes: {
+            name: "Legacy Organization",
+            org_type: "gcp",
+            external_id: "o-bbbb",
+            metadata: {},
+            root_external_id: "r-b",
+          },
+          relationships: {},
+        },
+      ],
+      organizationNodes: [
+        {
+          id: "a-parent",
+          type: "organization-nodes",
+          attributes: {
+            kind: NODE_KIND.ORGANIZATIONAL_UNIT,
+            name: "A Parent",
+            external_id: "ou-a-parent",
+            parent_external_id: null,
+            metadata: {},
+          },
+          relationships: {
+            organization: { data: { type: "organizations", id: "org-a" } },
+            parent: { data: null },
+          },
+        },
+        {
+          id: "a-child",
+          type: "organization-nodes",
+          attributes: {
+            kind: NODE_KIND.ORGANIZATIONAL_UNIT,
+            name: "A Child",
+            external_id: "ou-a-child",
+            parent_external_id: null,
+            metadata: {},
+          },
+          relationships: {
+            organization: { data: { type: "organizations", id: "org-a" } },
+            parent: { data: { type: "organization-nodes", id: "a-parent" } },
+            providers: { data: [{ type: "providers", id: "provider-1" }] },
+          },
+        },
+        {
+          id: "b-parent",
+          type: "organization-nodes",
+          attributes: {
+            kind: NODE_KIND.FOLDER,
+            name: "B Parent",
+            external_id: "folder-b-parent",
+            parent_external_id: "r-b",
+            metadata: {},
+          },
+          relationships: {
+            organization: { data: { type: "organizations", id: "org-b" } },
+          },
+        },
+        {
+          id: "b-child",
+          type: "organization-nodes",
+          attributes: {
+            kind: NODE_KIND.FOLDER,
+            name: "B Child",
+            external_id: "folder-b-child",
+            parent_external_id: "folder-b-parent",
+            metadata: {},
+          },
+          relationships: {
+            organization: { data: { type: "organizations", id: "org-b" } },
+            providers: { data: [{ type: "providers", id: "provider-2" }] },
+          },
+        },
+      ],
+      isCloud: true,
+    });
+
+    // Then — both organizations keep their full two-level chain, and no provider
+    // is stranded at the top level.
+    expect(rows).toHaveLength(2);
+    expect(
+      rows.every((row) => row.rowType === PROVIDERS_ROW_TYPE.ORGANIZATION),
+    ).toBe(true);
+
+    for (const [organizationId, parentName, childName] of [
+      ["org-a", "A Parent", "A Child"],
+      ["org-b", "B Parent", "B Child"],
+    ]) {
+      const orgRow = rows.find((row) => row.id === organizationId)!;
+      expect(orgRow.subRows).toHaveLength(1);
+
+      const parentRow = orgRow.subRows![0];
+      if (!isProvidersOrganizationRow(parentRow)) {
+        throw new Error(`Expected ${parentName} to be an organization row`);
+      }
+      expect(parentRow.name).toBe(parentName);
+      expect(parentRow.subRows).toHaveLength(1);
+
+      const childRow = parentRow.subRows[0];
+      if (!isProvidersOrganizationRow(childRow)) {
+        throw new Error(`Expected ${childName} to be an organization row`);
+      }
+      expect(childRow.name).toBe(childName);
+      expect(childRow.subRows).toHaveLength(1);
+      expect(childRow.subRows[0].rowType).toBe(PROVIDERS_ROW_TYPE.PROVIDER);
+    }
+  });
+
   it("does not duplicate providers that appear in both org relationships and OU assignments", () => {
-    // Given — provider-1 is linked to org-1 AND assigned to ou-1
+    // Given — provider-1 is linked to org-1 AND assigned to ou-1.
+    // Uses the deprecated `organization_unit` alias (rather than the canonical
+    // `organization_node`) to keep coverage of the source's alias fallback.
     const providers = [
       toProviderRow(providersResponse.data[0], {
         relationships: {
@@ -517,11 +665,12 @@ describe("buildProvidersTableRows", () => {
           },
         },
       ],
-      organizationUnits: [
+      organizationNodes: [
         {
           id: "ou-1",
-          type: "organizational-units",
+          type: "organization-nodes",
           attributes: {
+            kind: NODE_KIND.ORGANIZATIONAL_UNIT,
             name: "Security OU",
             external_id: "ou-security",
             parent_external_id: "r-root",
@@ -561,7 +710,7 @@ describe("buildProvidersTableRows", () => {
           organization: {
             data: { type: "organizations", id: "org-1" },
           },
-          organization_unit: {
+          organization_node: {
             data: null,
           },
         },
@@ -589,7 +738,7 @@ describe("buildProvidersTableRows", () => {
           },
         },
       ],
-      organizationUnits: [],
+      organizationNodes: [],
       isCloud: true,
     });
 
@@ -611,7 +760,7 @@ describe("buildProvidersTableRows", () => {
           organization: {
             data: null,
           },
-          organization_unit: {
+          organization_node: {
             data: null,
           },
         },
@@ -639,13 +788,13 @@ describe("buildProvidersTableRows", () => {
                 { type: "providers", id: "provider-2" },
               ],
             },
-            organizational_units: {
+            organization_nodes: {
               data: [],
             },
           },
         },
       ],
-      organizationUnits: [],
+      organizationNodes: [],
       isCloud: true,
     });
 
@@ -663,6 +812,56 @@ describe("buildProvidersTableRows", () => {
       ),
     ).toBe(true);
     expect(orgRow.providerIds).toEqual(["provider-1", "provider-2"]);
+    // Org row carries the per-organization orgType from `attributes.org_type`.
+    expect(orgRow.orgType).toBe("aws");
+  });
+
+  it("groups organizations of a type that has no onboarding flow, keeping their own type", () => {
+    // Display covers every organization type the API reports; only onboarding is
+    // limited to aws|gcp. The row must carry the real type (never coerced to
+    // aws), so its labels and actions can be derived from it.
+    const providers = providersResponse.data.map((provider) =>
+      toProviderRow(provider, {
+        relationships: {
+          ...provider.relationships,
+          organization: { data: { id: "org-az", type: "organizations" } },
+          organization_node: { data: null },
+        },
+      }),
+    );
+
+    // When
+    const rows = buildProvidersTableRows({
+      providers,
+      organizations: [
+        {
+          id: "org-az",
+          type: "organizations",
+          attributes: {
+            name: "Contoso Tenant",
+            org_type: "azure",
+            external_id: "tenant-az",
+            metadata: {},
+            root_external_id: null,
+          },
+          relationships: {
+            providers: { data: [] },
+            organization_nodes: { data: [] },
+          },
+        },
+      ],
+      organizationNodes: [],
+      isCloud: true,
+    });
+
+    // Then
+    expect(rows).toHaveLength(1);
+    const orgRow = rows[0];
+    if (!isProvidersOrganizationRow(orgRow)) {
+      throw new Error("Expected organization row");
+    }
+    expect(orgRow.orgType).toBe("azure");
+    expect(orgRow.subRows).toHaveLength(2);
   });
 
   it("keeps organization relationship provider ids even when providers are not in the visible page", () => {
@@ -699,13 +898,13 @@ describe("buildProvidersTableRows", () => {
                 { type: "providers", id: "provider-not-in-page" },
               ],
             },
-            organizational_units: {
+            organization_nodes: {
               data: [],
             },
           },
         },
       ],
-      organizationUnits: [],
+      organizationNodes: [],
       isCloud: true,
     });
 
@@ -739,7 +938,7 @@ describe("loadProvidersAccountsViewData", () => {
       organizationsActionsMock.listOrganizationsSafe,
     ).not.toHaveBeenCalled();
     expect(
-      organizationsActionsMock.listOrganizationUnitsSafe,
+      organizationsActionsMock.listOrganizationNodesSafe,
     ).not.toHaveBeenCalled();
     expect(viewData.filters.map((filter) => filter.labelCheckboxGroup)).toEqual(
       ["Status"],
@@ -760,10 +959,10 @@ describe("loadProvidersAccountsViewData", () => {
                 ? { type: "organizations", id: "org-1" }
                 : null,
           },
-          organization_unit: {
+          organization_node: {
             data:
               provider.id === "provider-1"
-                ? { type: "organizational-units", id: "ou-1" }
+                ? { type: "organization-nodes", id: "ou-1" }
                 : null,
           },
         },
@@ -786,12 +985,13 @@ describe("loadProvidersAccountsViewData", () => {
         },
       ],
     });
-    organizationsActionsMock.listOrganizationUnitsSafe.mockResolvedValue({
+    organizationsActionsMock.listOrganizationNodesSafe.mockResolvedValue({
       data: [
         {
           id: "ou-1",
-          type: "organizational-units",
+          type: "organization-nodes",
           attributes: {
+            kind: NODE_KIND.ORGANIZATIONAL_UNIT,
             name: "Security OU",
             external_id: "ou-security",
             parent_external_id: "r-root",
@@ -821,7 +1021,7 @@ describe("loadProvidersAccountsViewData", () => {
       organizationsActionsMock.listOrganizationsSafe,
     ).toHaveBeenCalledTimes(1);
     expect(
-      organizationsActionsMock.listOrganizationUnitsSafe,
+      organizationsActionsMock.listOrganizationNodesSafe,
     ).toHaveBeenCalledTimes(1);
     expect(viewData.filters.map((filter) => filter.labelCheckboxGroup)).toEqual(
       ["Status"],
@@ -830,14 +1030,17 @@ describe("loadProvidersAccountsViewData", () => {
   });
 
   it("falls back to empty cloud grouping data when organizations endpoints fail", async () => {
-    // Given
+    // Given — both hierarchy fetches fail (flagged with `error: true`), which is
+    // distinct from a genuinely-empty hierarchy.
     providersActionsMock.getProviders.mockResolvedValue(providersResponse);
     providersActionsMock.getAllProviders.mockResolvedValue(providersResponse);
     organizationsActionsMock.listOrganizationsSafe.mockResolvedValue({
       data: [],
+      error: true,
     });
-    organizationsActionsMock.listOrganizationUnitsSafe.mockResolvedValue({
+    organizationsActionsMock.listOrganizationNodesSafe.mockResolvedValue({
       data: [],
+      error: true,
     });
     scansActionsMock.getScans.mockResolvedValue({ data: [] });
 
@@ -847,7 +1050,7 @@ describe("loadProvidersAccountsViewData", () => {
       isCloud: true,
     });
 
-    // Then
+    // Then — providers render flat and the degraded-view notice is signaled.
     expect(viewData.filters.map((filter) => filter.labelCheckboxGroup)).toEqual(
       ["Status"],
     );
@@ -855,6 +1058,67 @@ describe("loadProvidersAccountsViewData", () => {
     expect(
       viewData.rows.every((row) => row.rowType === PROVIDERS_ROW_TYPE.PROVIDER),
     ).toBe(true);
+    expect(viewData.hierarchyStatus).toBe(HIERARCHY_STATUS.UNAVAILABLE);
+  });
+
+  it("keeps organization grouping when only the organization-nodes fetch fails", async () => {
+    // Given organizations that read fine but a nodes fetch that did not. The
+    // provider carries its `organization` relationship, so the organization row
+    // genuinely has something to group — otherwise the row is dropped for
+    // having no providers and this test would pass either way.
+    providersActionsMock.getProviders.mockResolvedValue({
+      ...providersResponse,
+      data: providersResponse.data.map((provider) => ({
+        ...provider,
+        relationships: {
+          ...provider.relationships,
+          organization: {
+            data:
+              provider.id === "provider-1"
+                ? { type: "organizations", id: "org-1" }
+                : null,
+          },
+        },
+      })),
+    });
+    providersActionsMock.getAllProviders.mockResolvedValue(providersResponse);
+    organizationsActionsMock.listOrganizationsSafe.mockResolvedValue({
+      data: [
+        {
+          id: "org-1",
+          type: "organizations",
+          attributes: {
+            name: "Root Organization",
+            org_type: "aws",
+            external_id: "o-root",
+            metadata: {},
+            root_external_id: "r-root",
+          },
+          relationships: {},
+        },
+      ],
+    });
+    organizationsActionsMock.listOrganizationNodesSafe.mockResolvedValue({
+      data: [],
+      error: true,
+    });
+    scansActionsMock.getScans.mockResolvedValue({ data: [] });
+
+    // When
+    const viewData = await loadProvidersAccountsViewData({
+      searchParams: {} satisfies SearchParamsProps,
+      isCloud: true,
+    });
+
+    // Then the notice is raised, but the organization row survives — it is the
+    // only way to reach Edit Organization Name / Update Credentials / Delete.
+    expect(viewData.hierarchyStatus).toBe(HIERARCHY_STATUS.UNAVAILABLE);
+
+    const organizationRow = viewData.rows.find(
+      (row) => row.rowType === PROVIDERS_ROW_TYPE.ORGANIZATION,
+    );
+    expect(organizationRow).toBeDefined();
+    expect(organizationRow?.name).toBe("Root Organization");
   });
 
   it("surfaces the real cadence (not a hardcoded label) from a configured schedule with no materialized scan yet", async () => {

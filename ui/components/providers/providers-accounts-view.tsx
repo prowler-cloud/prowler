@@ -1,5 +1,6 @@
 "use client";
 
+import { Info } from "lucide-react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 
@@ -14,6 +15,7 @@ import type {
   OrgWizardInitialData,
   ProviderWizardInitialData,
 } from "@/components/providers/wizard/types";
+import { Alert, AlertDescription } from "@/components/shadcn/alert";
 import { getFlowById } from "@/lib/onboarding";
 import {
   ADD_PROVIDER_SEARCH_PARAM,
@@ -29,7 +31,15 @@ import {
 } from "@/lib/tours/use-driver-tour";
 import type { FilterOption, MetaDataProps, ProviderProps } from "@/types";
 import type { ProviderGroup } from "@/types/components";
-import type { ProvidersTableRow } from "@/types/providers-table";
+import {
+  HIERARCHY_STATUS,
+  type HierarchyStatus,
+  type ProvidersTableRow,
+} from "@/types/providers-table";
+import type {
+  ScanConfigurationData,
+  ScanConfigurationListStatus,
+} from "@/types/scan-configurations";
 import type { ScanScheduleCapability } from "@/types/schedules";
 
 const addProviderFlow = getFlowById("add-provider")!;
@@ -56,7 +66,12 @@ interface ProvidersAccountsViewProps {
   rows: ProvidersTableRow[];
   /** Cloud overlay seam for provider-creation scan launch. */
   scanScheduleCapability?: ScanScheduleCapability;
+  /** All scan configurations in the tenant, for the provider row's associate/
+   * disassociate action (Cloud-only). */
+  scanConfigs?: ScanConfigurationData[];
+  scanConfigStatus?: ScanConfigurationListStatus;
   isScanLimitReached?: boolean;
+  hierarchyStatus?: HierarchyStatus;
 }
 
 export function ProvidersAccountsView({
@@ -67,7 +82,10 @@ export function ProvidersAccountsView({
   providerGroups = [],
   rows,
   scanScheduleCapability,
+  scanConfigs,
+  scanConfigStatus,
   isScanLimitReached,
+  hierarchyStatus = HIERARCHY_STATUS.AVAILABLE,
 }: ProvidersAccountsViewProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -141,6 +159,15 @@ export function ProvidersAccountsView({
         />
       ) : (
         <div className="flex flex-col gap-6">
+          {hierarchyStatus === HIERARCHY_STATUS.UNAVAILABLE && (
+            <Alert>
+              <Info />
+              <AlertDescription>
+                Organization grouping is incomplete. Some providers may appear
+                ungrouped.
+              </AlertDescription>
+            </Alert>
+          )}
           <ProvidersFilters
             filters={filters}
             providers={providers}
@@ -157,6 +184,8 @@ export function ProvidersAccountsView({
             metadata={metadata}
             rows={rows}
             scanScheduleCapability={scanScheduleCapability}
+            scanConfigs={scanConfigs}
+            scanConfigStatus={scanConfigStatus}
             onOpenProviderWizard={openProviderWizard}
             onOpenOrganizationWizard={openOrganizationWizard}
           />

@@ -2,6 +2,97 @@
 
 All notable changes to the **Prowler MCP Server** are documented in this file.
 
+<!-- changelog: release notes start -->
+
+## [0.12.0] (Prowler v5.41.0)
+
+### 🚀 Added
+
+- Prowler App tools now report a failure as an MCP tool execution error (`isError: true`, explanation in `content`) instead of as a successful result carrying an `{"error": ...}` object, which clients and models read as a success [(#12532)](https://github.com/prowler-cloud/prowler/pull/12532)
+
+### 🔄 Changed
+
+- `prowler_get_compliance_framework_state_details` now rejects a call that passes both `scan_id` and `provider_id` instead of silently ignoring the provider, which could report on a scan belonging to a different provider than the one that was asked about [(#12532)](https://github.com/prowler-cloud/prowler/pull/12532)
+
+### 🐞 Fixed
+
+- `prowler_hub_get_check_code` and `prowler_hub_get_check_fixer` now report a check ID that belongs to another provider as such, naming that provider, instead of reporting the ID as one that does not exist [(#12533)](https://github.com/prowler-cloud/prowler/pull/12533)
+- `prowler_docs_search` no longer reports a failed search as zero matches or an unreadable answer as a bad search term, and `prowler_docs_get_document` no longer reports a failed fetch as a missing page [(#12534)](https://github.com/prowler-cloud/prowler/pull/12534)
+
+---
+
+## [0.11.0] (Prowler v5.40.0)
+
+### 🚀 Added
+
+- Failures shared by every tool - a rejected credential, a missing permission, a rate limit, an outage, an unreachable API, a bad argument - are now explained with a message that says what went wrong and what to do about it [(#12531)](https://github.com/prowler-cloud/prowler/pull/12531)
+
+### 🐞 Fixed
+
+- `prowler_docs_search` returns results again: it calls the search endpoint docs.prowler.com moved to, since the one it used no longer exists, and each result now names the page's title, the section it matched and a URL anchored at that section [(#12578)](https://github.com/prowler-cloud/prowler/pull/12578)
+
+### 🔐 Security
+
+- Stop relaying upstream response bodies to agents: a failed request now reaches the caller as a sentence this server wrote, with the full body kept to the logs, so a gateway error page or a debug traceback can no longer be replayed into a model's context [(#12531)](https://github.com/prowler-cloud/prowler/pull/12531)
+- `sqlite-libs` upgraded to 3.53.4-r0 in the container image, patching CVE-2026-11822 and CVE-2026-11824 [(#12537)](https://github.com/prowler-cloud/prowler/pull/12537)
+- `libcrypto3` and `libssl3` upgraded to 3.5.8-r0 in the container image, patching CVE-2026-14456 [(#12547)](https://github.com/prowler-cloud/prowler/pull/12547)
+
+---
+
+## [0.10.0] (Prowler v5.38.0)
+
+### 🚀 Added
+
+- Test foundation for the MCP server with shared fixtures, JSON:API builders, mocked HTTP transports and CI coverage reporting [(#12291)](https://github.com/prowler-cloud/prowler/pull/12291)
+- Test coverage for the integrations tools and models, pinning the connection-check choreography and the Jira dispatch retry safety [(#12343)](https://github.com/prowler-cloud/prowler/pull/12343)
+- Container images now ship an SBOM and build provenance as OCI attestations [(#12352)](https://github.com/prowler-cloud/prowler/pull/12352)
+
+### 🔄 Changed
+
+- `prowler_send_findings_to_jira` now reports `safe_to_retry` on every outcome, true only when Prowler knows no Jira work item was created: a dispatch the API refused is retryable, one that failed on the server or got no answer is not [(#12343)](https://github.com/prowler-cloud/prowler/pull/12343)
+- `prowler_list_integrations` no longer requests the `configuration` it discards, now that the API tolerates a sparse fieldset without it [(#12343)](https://github.com/prowler-cloud/prowler/pull/12343)
+
+### 🔐 Security
+
+- Upgrade cryptography to 50.0.0, closing CVE-2026-69247 and CVE-2026-69249 [(#12356)](https://github.com/prowler-cloud/prowler/pull/12356)
+
+---
+
+## [0.9.1] (Prowler v5.37.1)
+
+### 🔐 Security
+
+- Bumped `fastmcp` and pinned `cryptography`, `joserfc`, `mcp` and `python-multipart`, clearing all 7 high-severity CVEs from the MCP image [(#12307)](https://github.com/prowler-cloud/prowler/pull/12307)
+
+---
+
+## [0.9.0] (Prowler v5.37.0)
+
+### 🚀 Added
+
+- Read-only user management tools `prowler_list_users`, `prowler_get_user`, and `prowler_get_current_user` for listing tenant users with their emails and identifying the authenticated user [(#12088)](https://github.com/prowler-cloud/prowler/pull/12088)
+- RBAC role tools `prowler_list_roles`, `prowler_get_role`, `prowler_get_user_roles`, and `prowler_set_user_role` for browsing roles and setting the role a user holds [(#12088)](https://github.com/prowler-cloud/prowler/pull/12088)
+- Integrations tools to manage Amazon S3, AWS Security Hub and Jira integrations, and to send findings to Jira [(#12138)](https://github.com/prowler-cloud/prowler/pull/12138)
+
+### 🔄 Changed
+
+- README now documents the Cloud-only `prowler_cloud_*` tools available on the hosted Prowler MCP (alerts, findings triage, scan scheduling, scan configurations), and corrects the Prowler Hub check count and the scan orchestration capabilities [(#12266)](https://github.com/prowler-cloud/prowler/pull/12266)
+
+### 🐞 Fixed
+
+- Memory leak in HTTP mode caused by streamable-HTTP sessions being retained for the process lifetime when clients never sent `DELETE /mcp`; the server now runs stateless [(#12235)](https://github.com/prowler-cloud/prowler/pull/12235)
+- `prowler_list_integrations` failing with a 500 error on tenants with a Jira integration, caused by the request leaving `configuration` out of the sparse fieldset [(#12259)](https://github.com/prowler-cloud/prowler/pull/12259)
+
+---
+
+## [0.8.0] (Prowler v5.35.0)
+
+### 🔄 Changed
+
+- Core Prowler tool namespace from the `prowler_app_*` prefix to `prowler_*` [(#12017)](https://github.com/prowler-cloud/prowler/pull/12017)
+
+---
+
 ## [0.7.2] (Prowler v5.28.1)
 
 ### 🐞 Fixed

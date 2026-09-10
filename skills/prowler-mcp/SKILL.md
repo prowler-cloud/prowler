@@ -19,7 +19,7 @@ The Prowler MCP Server uses three sub-servers with prefixed namespacing:
 
 | Sub-Server | Prefix | Auth | Purpose |
 |------------|--------|------|---------|
-| Prowler App | `prowler_app_*` | Required | Cloud management tools |
+| Prowler | `prowler_*` | Required | Prowler Cloud, Private Cloud & Local Server management tools |
 | Prowler Hub | `prowler_hub_*` | No | Security checks catalog |
 | Prowler Docs | `prowler_docs_*` | No | Documentation search |
 
@@ -27,7 +27,7 @@ For complete architecture, patterns, and examples, see [docs/developer-guide/mcp
 
 ---
 
-## Critical Rules (Prowler App Only)
+## Critical Rules (Prowler Tools Only)
 
 ### Tool Implementation
 
@@ -56,7 +56,7 @@ Use `@mcp.tool()` decorator directly—no BaseTool or models required.
 
 ---
 
-## Quick Reference: New Prowler App Tool
+## Quick Reference: New Prowler Tool
 
 1. Create tool class in `prowler_app/tools/` extending `BaseTool`
 2. Create models in `prowler_app/models/` using `MinimalSerializerMixin`
@@ -64,18 +64,24 @@ Use `@mcp.tool()` decorator directly—no BaseTool or models required.
 
 ---
 
-## QA Checklist (Prowler App)
+## QA Checklist (Prowler Tools)
 
 - [ ] Tool docstrings describe LLM-relevant behavior
 - [ ] Models use `MinimalSerializerMixin`
 - [ ] API responses transformed to simplified models
-- [ ] Error handling returns `{"error": str, "status": "failed"}`
+- [ ] Failures are **raised**, never returned. A returned error dict is reported
+      as a success. Raise `InvalidArgument` for a bad argument, let
+      `ProwlerAPIError`/`ProwlerAPIUnreachable` propagate, and raise `ToolError`
+      **without a `from` clause** only for a sentence `lib/errors.py` cannot know
+      (a resource name, a precondition, the next tool to call)
 - [ ] Parameters use `Field()` with descriptions
 - [ ] No hardcoded secrets
+- [ ] Tests added under `mcp_server/tests/`
 
 ---
 
 ## Resources
 
-- **Full Guide**: [docs/developer-guide/mcp-server.mdx](../../../docs/developer-guide/mcp-server.mdx)
+- **Full Guide**: [docs/developer-guide/mcp-server.mdx](../../docs/developer-guide/mcp-server.mdx)
 - **Templates**: See [assets/](assets/) for tool and model templates
+- **Testing**: See [prowler-test-mcp](../prowler-test-mcp/SKILL.md) for fixtures and test patterns

@@ -1,5 +1,7 @@
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, call, patch
 
+from prowler.providers.gcp.config import DEFAULT_RETRY_ATTEMPTS
+from prowler.providers.gcp.lib.service.service import GCPService
 from prowler.providers.gcp.services.cloudfunction.cloudfunction_service import (
     CloudFunction,
 )
@@ -147,6 +149,90 @@ class TestCloudFunctionService:
             assert fn.name == "no-vpc-func"
             assert fn.vpc_connector is None
             assert fn.publicly_accessible is False
+
+    def test_get_functions_iam_policy_gen2_uses_distinct_per_request_http(self):
+        """Regression: the gen2 IAM lookup must pass a per-request HTTP client.
+
+        _get_function_iam_policy runs once per function across a thread pool
+        (GCPService.__threading_call__), and httplib2 is not thread-safe. The
+        gen1 branch isolates each thread with its own AuthorizedHttp via
+        __get_AuthorizedHttp_client__; the gen2 branch must do the same. Sharing
+        the single self._run_client transport across threads corrupts the
+        process heap and aborts the scan (SIGABRT/SIGSEGV).
+        """
+        second_function_name = "second-function"
+        second_function_id = f"projects/{GCP_PROJECT_ID}/locations/{_LOCATION_ID}/functions/{second_function_name}"
+        second_run_service = f"projects/{GCP_PROJECT_ID}/locations/{_LOCATION_ID}/services/{second_function_name}"
+        first_http = object()
+        second_http = object()
+
+        first_request = MagicMock()
+        first_request.execute.return_value = {"bindings": []}
+        second_request = MagicMock()
+        second_request.execute.return_value = {"bindings": []}
+        run_client = MagicMock()
+        get_iam_policy = run_client.projects().locations().services().getIamPolicy
+        get_iam_policy.side_effect = [first_request, second_request]
+
+        def run_sequentially(self, callback, iterator):
+            for value in iterator:
+                callback(value)
+
+        def mock_api_client(*args, **kwargs):
+            return _make_cloudfunction_client(
+                functions_list=[
+                    {
+                        "name": _FUNCTION_ID,
+                        "state": "ACTIVE",
+                        "environment": "GEN_2",
+                        "serviceConfig": {"service": _RUN_SERVICE},
+                    },
+                    {
+                        "name": second_function_id,
+                        "state": "ACTIVE",
+                        "environment": "GEN_2",
+                        "serviceConfig": {"service": second_run_service},
+                    },
+                ]
+            )
+
+        with (
+            patch(
+                "prowler.providers.gcp.lib.service.service.GCPService.__is_api_active__",
+                new=mock_is_api_active,
+            ),
+            patch(
+                "prowler.providers.gcp.lib.service.service.GCPService.__generate_client__",
+                new=mock_api_client,
+            ),
+            patch(
+                "prowler.providers.gcp.services.cloudfunction.cloudfunction_service.discovery.build",
+                return_value=run_client,
+            ),
+            patch.object(
+                GCPService,
+                "__get_AuthorizedHttp_client__",
+                side_effect=[first_http, second_http],
+            ),
+            patch.object(
+                GCPService,
+                "__threading_call__",
+                new=run_sequentially,
+            ),
+        ):
+            CloudFunction(set_mocked_gcp_provider(project_ids=[GCP_PROJECT_ID]))
+
+        get_iam_policy.assert_has_calls(
+            [call(resource=_RUN_SERVICE), call(resource=second_run_service)]
+        )
+        first_request.execute.assert_called_once_with(
+            http=first_http,
+            num_retries=DEFAULT_RETRY_ATTEMPTS,
+        )
+        second_request.execute.assert_called_once_with(
+            http=second_http,
+            num_retries=DEFAULT_RETRY_ATTEMPTS,
+        )
 
     def test_get_functions_iam_policy_gen2_all_users(self):
         """Gen2 functions: allUsers binding lives on the Cloud Run service."""

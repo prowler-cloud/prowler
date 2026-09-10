@@ -1,4 +1,6 @@
 import { test } from "@playwright/test";
+
+import { isCloud } from "@/lib/shared/env";
 import {
   ProvidersPage,
   AWSProviderData,
@@ -281,7 +283,7 @@ test.describe("Add Provider", () => {
         // so this test must never run in the OSS CI. Gate explicitly on the
         // Cloud env flag instead of relying on the org env vars being absent.
         test.skip(
-          process.env.NEXT_PUBLIC_IS_CLOUD_ENV !== "true",
+          !isCloud(),
           "AWS Organizations multi-account onboarding is a Cloud-only feature",
         );
 
@@ -1029,12 +1031,11 @@ test.describe("Add Provider", () => {
     const userId = process.env.E2E_OCI_USER_ID ?? "";
     const fingerprint = process.env.E2E_OCI_FINGERPRINT ?? "";
     const keyContent = process.env.E2E_OCI_KEY_CONTENT ?? "";
-    const region = process.env.E2E_OCI_REGION ?? "";
 
     // Setup before each test
     test.beforeEach(async ({ page }) => {
       test.skip(
-        !tenancyId || !userId || !fingerprint || !keyContent || !region,
+        !tenancyId || !userId || !fingerprint || !keyContent,
         "OCI E2E env vars are not set",
       );
       providersPage = new ProvidersPage(page);
@@ -1071,7 +1072,6 @@ test.describe("Add Provider", () => {
           userId: userId,
           fingerprint: fingerprint,
           keyContent: keyContent,
-          region: region,
         };
 
         // Navigate to providers page
@@ -1516,12 +1516,11 @@ test.describe("Update Provider Credentials", () => {
     const userId = process.env.E2E_OCI_USER_ID ?? "";
     const fingerprint = process.env.E2E_OCI_FINGERPRINT ?? "";
     const keyContent = process.env.E2E_OCI_KEY_CONTENT ?? "";
-    const region = process.env.E2E_OCI_REGION ?? "";
 
     // Setup before each test
     test.beforeEach(async ({ page }) => {
       test.skip(
-        !tenancyId || !userId || !fingerprint || !keyContent || !region,
+        !tenancyId || !userId || !fingerprint || !keyContent,
         "OCI E2E env vars are not set",
       );
       providersPage = new ProvidersPage(page);
@@ -1543,7 +1542,6 @@ test.describe("Update Provider Credentials", () => {
           userId: userId,
           fingerprint: fingerprint,
           keyContent: keyContent,
-          region: region,
         };
 
         // Navigate to providers page

@@ -1,0 +1,41 @@
+{
+  "Provider": "aws",
+  "CheckID": "ec2_confidential_workload_host_imdsv2_not_enforced",
+  "CheckTitle": "Confidential-workload host enforces IMDSv2",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "TTPs/Credential Access"
+  ],
+  "ServiceName": "ec2",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "AwsEc2Instance",
+  "ResourceGroup": "compute",
+  "Description": "Instances hosting **Nitro Enclave** workloads (`EnclaveOptions.Enabled=true`) are evaluated for **IMDSv2 enforcement** on the metadata service (`HttpTokens=required`). This check assesses the host environment; it does not audit the enclave itself.",
+  "Risk": "IMDSv1 exposes **temporary IAM credentials** to SSRF and workload-compromise paths on the host, undermining the confidentiality of the identity the enclave workload depends on.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/configuring-IMDS-new-instances.html",
+    "https://docs.aws.amazon.com/enclaves/latest/user/nitro-enclave-concepts.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aws ec2 modify-instance-metadata-options --instance-id <instance-id> --http-tokens required --http-endpoint enabled",
+      "NativeIaC": "```yaml\nResources:\n  example_resource:\n    Type: AWS::EC2::Instance\n    Properties:\n      EnclaveOptions: { Enabled: true }\n      MetadataOptions:\n        HttpTokens: required  # critical: enforce IMDSv2\n```",
+      "Other": "1. Open the EC2 console.\n2. Select the confidential-workload host and choose Actions > Instance settings > Modify instance metadata options.\n3. Set IMDS to Enabled and IMDSv2 to Required.\n4. Save.",
+      "Terraform": "```hcl\nresource \"aws_instance\" \"example_resource\" {\n  enclave_options { enabled = true }\n  metadata_options {\n    http_tokens = \"required\"  # critical: enforce IMDSv2\n    http_endpoint = \"enabled\"\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Apply **defense in depth** on identity surfaces: require **IMDSv2** on every confidential-workload host so credentials cannot be lifted from the metadata service via SSRF or a compromised workload on the host.",
+      "Url": "https://hub.prowler.com/check/ec2_confidential_workload_host_imdsv2_not_enforced"
+    }
+  },
+  "Categories": [
+    "identity-access",
+    "ec2-imdsv1"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

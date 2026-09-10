@@ -1,0 +1,37 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_device_registration_max_devices_per_user_limited",
+  "CheckTitle": "Maximum number of devices per user is limited",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "The tenant device registration policy should limit the maximum number of Microsoft Entra joined or registered devices per user to **10 or less** (**userDeviceQuota**). Once the limit is reached, no additional devices can be added until existing ones are removed.",
+  "Risk": "An unbounded or high per-user device quota lets a compromised account register many devices, increasing the number of trusted endpoints an attacker controls and complicating device lifecycle governance.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/entra/identity/devices/device-join-plan"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to the Microsoft Entra admin center at https://entra.microsoft.com/\n2. Go to **Identity** > **Devices** > **Device settings**\n3. Set **Maximum number of devices per user** to **10** or less\n4. Click **Save**",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Set the maximum number of devices per user to 10 or less to bound the number of trusted endpoints each identity can register.",
+      "Url": "https://hub.prowler.com/check/entra_device_registration_max_devices_per_user_limited"
+    }
+  },
+  "Categories": [
+    "identity-access",
+    "e3"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

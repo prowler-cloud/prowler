@@ -10,7 +10,7 @@ from tests.providers.azure.azure_fixtures import (
 class Test_entra_trusted_named_locations_exists:
     def test_entra_no_tenants(self):
         entra_client = mock.MagicMock
-
+        entra_client.resource_groups = {}
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
@@ -34,7 +34,7 @@ class Test_entra_trusted_named_locations_exists:
 
     def test_entra_tenant_empty(self):
         entra_client = mock.MagicMock
-
+        entra_client.resource_groups = {}
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
@@ -67,7 +67,7 @@ class Test_entra_trusted_named_locations_exists:
 
     def test_entra_named_location_with_ip_ranges(self):
         entra_client = mock.MagicMock
-
+        entra_client.resource_groups = {}
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
@@ -111,7 +111,7 @@ class Test_entra_trusted_named_locations_exists:
 
     def test_entra_named_location_without_ip_ranges(self):
         entra_client = mock.MagicMock
-
+        entra_client.resource_groups = {}
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
@@ -156,7 +156,7 @@ class Test_entra_trusted_named_locations_exists:
 
     def test_entra_new_named_location_with_ip_ranges_not_trusted(self):
         entra_client = mock.MagicMock
-
+        entra_client.resource_groups = {}
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",

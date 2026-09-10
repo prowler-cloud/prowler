@@ -1,7 +1,10 @@
 import { LucideIcon } from "lucide-react";
-import { MouseEvent, SVGProps } from "react";
+import { SVGProps } from "react";
 
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
+
+import type { FindingTriageSummary } from "./findings-triage";
+import type { UserSignInMethod } from "./users";
 
 export type IconSvgProps = SVGProps<SVGSVGElement> & {
   size?: number;
@@ -13,43 +16,6 @@ export type IconProps = {
 };
 
 export type IconComponent = LucideIcon | React.FC<IconSvgProps>;
-
-export type SubmenuProps = {
-  href: string;
-  target?: string;
-  label: string;
-  active?: boolean;
-  icon: IconComponent;
-  disabled?: boolean;
-  highlight?: boolean;
-  cloudOnly?: boolean;
-  onClick?: (event: MouseEvent<HTMLAnchorElement>) => void;
-};
-
-export type MenuProps = {
-  href: string;
-  label: string;
-  active?: boolean;
-  icon: IconComponent;
-  submenus?: SubmenuProps[];
-  defaultOpen?: boolean;
-  target?: string;
-  tooltip?: string;
-  highlight?: boolean;
-};
-
-export type GroupProps = {
-  groupLabel: string;
-  menus: MenuProps[];
-};
-
-export interface CollapseMenuButtonProps {
-  icon: IconComponent;
-  label: string;
-  submenus: SubmenuProps[];
-  defaultOpen: boolean;
-  isOpen: boolean | undefined;
-}
 
 export const NEXT_UI_VARIANTS = {
   SOLID: "solid",
@@ -315,7 +281,6 @@ export type OCICredentials = {
   [ProviderCredentialFields.OCI_FINGERPRINT]: string;
   [ProviderCredentialFields.OCI_KEY_CONTENT]: string;
   [ProviderCredentialFields.OCI_TENANCY]: string;
-  [ProviderCredentialFields.OCI_REGION]: string;
   [ProviderCredentialFields.OCI_PASS_PHRASE]?: string;
   [ProviderCredentialFields.PROVIDER_ID]: string;
 };
@@ -454,6 +419,7 @@ export interface InvitationProps {
         manage_integrations?: boolean;
         manage_scans?: boolean;
         manage_alerts?: boolean;
+        manage_lighthouse_ai_configuration?: boolean;
         permission_state?: PermissionState;
       };
     };
@@ -479,6 +445,7 @@ export interface Role {
     manage_integrations: boolean;
     manage_scans: boolean;
     manage_alerts?: boolean;
+    manage_lighthouse_ai_configuration?: boolean;
     unlimited_visibility: boolean;
     permission_state: PermissionState;
     inserted_at: string;
@@ -577,6 +544,7 @@ export interface UserProps {
     role: {
       name: string;
     };
+    sign_in_methods?: UserSignInMethod[];
   };
   relationships: {
     memberships: {
@@ -612,10 +580,12 @@ export interface FindingsResponse {
 export interface FindingProps {
   type: "findings";
   id: string;
+  triage?: FindingTriageSummary;
   attributes: {
     uid: string;
     delta: FindingDelta;
     status: FindingStatus;
+    raw_status?: FindingStatus;
     status_extended: string;
     severity: Severity;
     check_id: string;

@@ -1,6 +1,5 @@
 "use client";
 
-import { useDisclosure } from "@heroui/use-disclosure";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -12,8 +11,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/shadcn";
-import { CustomLink } from "@/components/ui/custom/custom-link";
-import { DataTable } from "@/components/ui/table";
+import { CustomLink } from "@/components/shadcn/custom/custom-link";
+import { DataTable } from "@/components/shadcn/table";
 import { MetaDataProps } from "@/types";
 
 import { ApiKeySuccessModal } from "./api-key-success-modal";
@@ -38,14 +37,14 @@ export const ApiKeysCardClient = ({
   );
   const [createdApiKey, setCreatedApiKey] = useState<string | null>(null);
 
-  const createModal = useDisclosure();
-  const successModal = useDisclosure();
-  const revokeModal = useDisclosure();
-  const editModal = useDisclosure();
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+  const [isRevokeModalOpen, setIsRevokeModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   const handleCreateSuccess = (apiKey: string) => {
     setCreatedApiKey(apiKey);
-    successModal.onOpen();
+    setIsSuccessModalOpen(true);
     router.refresh();
   };
 
@@ -59,19 +58,19 @@ export const ApiKeysCardClient = ({
 
   const handleRevokeClick = (apiKey: EnrichedApiKey) => {
     setSelectedApiKey(apiKey);
-    revokeModal.onOpen();
+    setIsRevokeModalOpen(true);
   };
 
   const handleEditClick = (apiKey: EnrichedApiKey) => {
     setSelectedApiKey(apiKey);
-    editModal.onOpen();
+    setIsEditModalOpen(true);
   };
 
   const columns = createApiKeyColumns(handleEditClick, handleRevokeClick);
 
   return (
     <>
-      <Card variant="base" padding="none" className="p-4">
+      <Card variant="inner" padding="none" className="gap-4 p-4 md:p-5">
         <CardHeader>
           <div className="flex flex-col gap-2">
             <CardTitle>API Keys</CardTitle>
@@ -83,7 +82,11 @@ export const ApiKeysCardClient = ({
             </p>
           </div>
           <CardAction>
-            <Button variant="default" size="sm" onClick={createModal.onOpen}>
+            <Button
+              variant="default"
+              size="sm"
+              onClick={() => setIsCreateModalOpen(true)}
+            >
               Create API Key
             </Button>
           </CardAction>
@@ -105,29 +108,29 @@ export const ApiKeysCardClient = ({
 
       {/* Modals */}
       <CreateApiKeyModal
-        isOpen={createModal.isOpen}
-        onClose={createModal.onClose}
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
         onSuccess={handleCreateSuccess}
       />
 
       {createdApiKey && (
         <ApiKeySuccessModal
-          isOpen={successModal.isOpen}
-          onClose={successModal.onClose}
+          isOpen={isSuccessModalOpen}
+          onClose={() => setIsSuccessModalOpen(false)}
           apiKey={createdApiKey}
         />
       )}
 
       <RevokeApiKeyModal
-        isOpen={revokeModal.isOpen}
-        onClose={revokeModal.onClose}
+        isOpen={isRevokeModalOpen}
+        onClose={() => setIsRevokeModalOpen(false)}
         apiKey={selectedApiKey}
         onSuccess={handleRevokeSuccess}
       />
 
       <EditApiKeyNameModal
-        isOpen={editModal.isOpen}
-        onClose={editModal.onClose}
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
         apiKey={selectedApiKey}
         onSuccess={handleEditSuccess}
         existingApiKeys={initialApiKeys}

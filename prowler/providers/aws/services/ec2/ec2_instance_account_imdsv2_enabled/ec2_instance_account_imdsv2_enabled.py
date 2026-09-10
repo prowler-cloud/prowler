@@ -14,7 +14,11 @@ class ec2_instance_account_imdsv2_enabled(Check):
                     metadata=self.metadata(),
                     resource=instance_metadata_default,
                 )
-                report.resource_arn = ec2_client.account_arn_template
+                report.resource_arn = (
+                    f"arn:{ec2_client.audited_partition}:ec2:"
+                    f"{instance_metadata_default.region}:"
+                    f"{ec2_client.audited_account}:account"
+                )
                 report.resource_id = ec2_client.audited_account
                 if instance_metadata_default.http_tokens == "required":
                     report.status = "PASS"

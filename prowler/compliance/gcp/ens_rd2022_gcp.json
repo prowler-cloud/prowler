@@ -1692,7 +1692,7 @@
       ]
     },
     {
-      "Id": "mp.com.4.gcp.vpc.1",
+      "Id": "mp.com.4.gcp.vpc.2",
       "Description": "Separación de flujos de información en la red",
       "Attributes": [
         {

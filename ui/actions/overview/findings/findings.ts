@@ -5,8 +5,12 @@ import { redirect } from "next/navigation";
 import { apiBaseUrl, getAuthHeaders } from "@/lib";
 import { appendSanitizedProviderTypeFilters } from "@/lib/provider-filters";
 import { handleApiResponse } from "@/lib/server-actions-helper";
+import type { ApiResult } from "@/types/server-actions";
 
-import { FindingsSeverityOverviewResponse } from "./types";
+import {
+  FindingsSeverityOverviewResponse,
+  FindingsStatusOverviewResponse,
+} from "./types";
 
 export const getFindingsByStatus = async ({
   page = 1,
@@ -18,7 +22,7 @@ export const getFindingsByStatus = async ({
   query?: string;
   sort?: string;
   filters?: Record<string, string | string[] | undefined>;
-} = {}) => {
+} = {}): Promise<ApiResult<FindingsStatusOverviewResponse> | undefined> => {
   const headers = await getAuthHeaders({ contentType: false });
 
   if (isNaN(Number(page)) || page < 1) redirect("/");
@@ -49,7 +53,7 @@ export const getFindingsBySeverity = async ({
   filters = {},
 }: {
   filters?: Record<string, string | string[] | undefined>;
-} = {}): Promise<FindingsSeverityOverviewResponse | undefined> => {
+} = {}): Promise<ApiResult<FindingsSeverityOverviewResponse> | undefined> => {
   const headers = await getAuthHeaders({ contentType: false });
 
   const url = new URL(`${apiBaseUrl}/overviews/findings_severity`);

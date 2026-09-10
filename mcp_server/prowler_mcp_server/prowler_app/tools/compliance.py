@@ -1,4 +1,4 @@
-"""Compliance framework tools for Prowler App MCP Server.
+"""Compliance framework tools for Prowler MCP Server.
 
 This module provides tools for viewing compliance status and requirement details
 across all cloud providers.
@@ -6,8 +6,11 @@ across all cloud providers.
 
 from typing import Any
 
+from fastmcp.exceptions import ToolError
 from pydantic import Field
 
+from prowler_mcp_server.lib.errors import InvalidArgument
+from prowler_mcp_server.lib.types import NonBlankStr
 from prowler_mcp_server.prowler_app.models.compliance import (
     ComplianceFrameworksListResponse,
     ComplianceRequirementAttributesListResponse,
@@ -34,7 +37,7 @@ class ComplianceTools(BaseTool):
             The scan_id of the latest completed scan for the provider.
 
         Raises:
-            ValueError: If no completed scans are found for the provider.
+            ToolError: If no completed scans are found for the provider
         """
         scan_params = {
             "filter[provider]": provider_id,
@@ -48,9 +51,9 @@ class ComplianceTools(BaseTool):
 
         scans_data = scans_response.get("data", [])
         if not scans_data:
-            raise ValueError(
+            raise ToolError(
                 f"No completed scans found for provider {provider_id}. "
-                "Run a scan first using prowler_app_trigger_scan."
+                "Run a scan first using prowler_trigger_scan."
             )
 
         scan_id = scans_data[0]["id"]
@@ -60,11 +63,11 @@ class ComplianceTools(BaseTool):
         self,
         scan_id: str | None = Field(
             default=None,
-            description="UUID of a specific scan to get compliance data for. Required if provider_id is not specified. Use `prowler_app_list_scans` to find scan IDs.",
+            description="UUID of a specific scan to get compliance data for. Required if provider_id is not specified. Use `prowler_list_scans` to find scan IDs.",
         ),
         provider_id: str | None = Field(
             default=None,
-            description="Prowler's internal UUID (v4) for a specific provider. If provided without scan_id, the tool will automatically find the latest completed scan for this provider. Use `prowler_app_search_providers` tool to find provider IDs.",
+            description="Prowler's internal UUID (v4) for a specific provider. If provided without scan_id, the tool will automatically find the latest completed scan for this provider. Use `prowler_search_providers` tool to find provider IDs.",
         ),
     ) -> dict[str, Any]:
         """Get high-level compliance overview across all frameworks for a specific scan.
@@ -90,21 +93,18 @@ class ComplianceTools(BaseTool):
 
         Workflow:
         1. Use this tool to get an overview of all compliance frameworks
-        2. Use prowler_app_get_compliance_framework_state_details with a specific compliance_id to see which requirements failed
+        2. Use prowler_get_compliance_framework_state_details with a specific compliance_id to see which requirements failed
         """
         if not scan_id and not provider_id:
-            return {
-                "error": "Either scan_id or provider_id must be provided. Use prowler_app_search_providers to find provider IDs or prowler_app_list_scans to find scan IDs."
-            }
+            raise InvalidArgument(
+                "Either scan_id or provider_id must be provided. Use prowler_search_providers to find provider IDs or prowler_list_scans to find scan IDs."
+            )
         elif scan_id and provider_id:
-            return {
-                "error": "Provide either scan_id or provider_id, not both. To get compliance data for a specific scan, use scan_id. To get data for the latest scan of a provider, use provider_id."
-            }
+            raise InvalidArgument(
+                "Provide either scan_id or provider_id, not both. To get compliance data for a specific scan, use scan_id. To get data for the latest scan of a provider, use provider_id."
+            )
         elif not scan_id and provider_id:
-            try:
-                scan_id = await self._get_latest_scan_id_for_provider(provider_id)
-            except ValueError as e:
-                return {"error": str(e)}
+            scan_id = await self._get_latest_scan_id_for_provider(provider_id)
 
         params: dict[str, Any] = {"filter[scan_id]": scan_id}
 
@@ -253,23 +253,23 @@ class ComplianceTools(BaseTool):
 
     async def get_compliance_framework_state_details(
         self,
-        compliance_id: str = Field(
-            description="Compliance framework ID to get details for (e.g., 'cis_1.5_aws', 'pci_dss_v4.0_aws'). You can get compliance IDs from prowler_app_get_compliance_overview or consulting Prowler Hub/Prowler Documentation that you can also find in form of tools in this MCP Server",
+        compliance_id: NonBlankStr = Field(
+            description="Compliance framework ID to get details for (e.g., 'cis_1.5_aws', 'pci_dss_v4.0_aws'). You can get compliance IDs from prowler_get_compliance_overview or consulting Prowler Hub/Prowler Documentation that you can also find in form of tools in this MCP Server",
         ),
         scan_id: str | None = Field(
             default=None,
-            description="UUID of a specific scan to get compliance data for. Required if provider_id is not specified.",
+            description="UUID of a specific scan to get compliance data for. Required if provider_id is not specified. Do not pass it together with provider_id.",
         ),
         provider_id: str | None = Field(
             default=None,
-            description="Prowler's internal UUID (v4) for a specific provider. If provided without scan_id, the tool will automatically find the latest completed scan for this provider. Use `prowler_app_search_providers` tool to find provider IDs.",
+            description="Prowler's internal UUID (v4) for a specific provider. The tool will automatically find the latest completed scan for this provider. Use `prowler_search_providers` tool to find provider IDs. Do not pass it together with scan_id.",
         ),
     ) -> dict[str, Any]:
         """Get detailed requirement-level breakdown for a specific compliance framework.
 
         IMPORTANT: This tool returns DETAILED requirement information for a single compliance framework,
         focusing on FAILED requirements and their associated FAILED finding IDs.
-        Use this after prowler_app_get_compliance_overview to drill down into specific frameworks.
+        Use this after prowler_get_compliance_overview to drill down into specific frameworks.
 
         The markdown report includes:
 
@@ -280,34 +280,35 @@ class ComplianceTools(BaseTool):
         2. Failed Requirements Breakdown:
            - Each failed requirement's ID and description
            - Associated failed finding IDs for each failed requirement
-           - Use prowler_app_get_finding_details with these finding IDs for more details and remediation guidance
+           - Use prowler_get_finding_details with these finding IDs for more details and remediation guidance
 
         Default behavior:
-        - Requires either scan_id OR provider_id
-        - With provider_id (no scan_id): Automatically finds the latest completed scan for that provider
+        - Requires exactly one of scan_id OR provider_id; providing both is rejected
+        - With provider_id: Automatically finds the latest completed scan for that provider
         - With scan_id: Uses that specific scan's compliance data
         - Only shows failed requirements with their associated failed finding IDs
 
         Workflow:
-        1. Use prowler_app_get_compliance_overview to identify frameworks with failures
+        1. Use prowler_get_compliance_overview to identify frameworks with failures
         2. Use this tool with the compliance_id to see failed requirements and their finding IDs
-        3. Use prowler_app_get_finding_details with the finding IDs to get remediation guidance
+        3. Use prowler_get_finding_details with the finding IDs to get remediation guidance
         """
-        # Validate that either scan_id or provider_id is provided
+        # Exactly one of the two: taking scan_id and ignoring provider_id would
+        # answer for whatever provider that scan belongs to, which is not
+        # necessarily the one the caller named.
         if not scan_id and not provider_id:
-            return {
-                "error": "Either scan_id or provider_id must be provided. Use prowler_app_search_providers to find provider IDs or prowler_app_list_scans to find scan IDs."
-            }
+            raise InvalidArgument(
+                "Either scan_id or provider_id must be provided. Use prowler_search_providers to find provider IDs or prowler_list_scans to find scan IDs."
+            )
+        elif scan_id and provider_id:
+            raise InvalidArgument(
+                "Provide either scan_id or provider_id, not both. To get compliance data for a specific scan, use scan_id. To get data for the latest scan of a provider, use provider_id."
+            )
 
         # Resolve provider_id to latest scan_id if needed
         resolved_scan_id = scan_id
         if not scan_id and provider_id:
-            try:
-                resolved_scan_id = await self._get_latest_scan_id_for_provider(
-                    provider_id
-                )
-            except ValueError as e:
-                return {"error": str(e)}
+            resolved_scan_id = await self._get_latest_scan_id_for_provider(provider_id)
 
         # Build params for requirements endpoint
         params: dict[str, Any] = {
@@ -395,7 +396,7 @@ class ComplianceTools(BaseTool):
                     report_lines.append("**Failed Finding IDs**: None found")
                 report_lines.append("")
             report_lines.append(
-                "*Use `prowler_app_get_finding_details` with these finding IDs to get remediation guidance.*"
+                "*Use `prowler_get_finding_details` with these finding IDs to get remediation guidance.*"
             )
             report_lines.append("")
 

@@ -6,8 +6,7 @@ import {
   type ViewComplianceTourTarget,
 } from "../view-compliance.tour";
 
-// Only these two carry a `data-tour-id` in the UI; welcome step has no target.
-const ALLOWED_TARGETS = ["frameworks", "search"] as const;
+const ALLOWED_TARGETS = ["tabs", "frameworks", "search"] as const;
 
 const definedTargets = (): ViewComplianceTourTarget[] =>
   viewComplianceTour.steps
@@ -23,14 +22,14 @@ describe("viewComplianceTour shape", () => {
 
   it("declares a positive integer version", () => {
     expect(Number.isInteger(viewComplianceTour.version)).toBe(true);
-    expect(viewComplianceTour.version).toBeGreaterThan(0);
+    expect(viewComplianceTour.version).toBe(2);
   });
 
-  it("anchors exactly the search and frameworks steps, in that order", () => {
+  it("introduces the scan modes before search and frameworks", () => {
     // Search sits above the cards in the DOM; the tour must follow top-to-bottom
     // so the spotlight never jumps back up the page.
     const targets = definedTargets();
-    expect(targets).toEqual(["search", "frameworks"]);
+    expect(targets).toEqual(["tabs", "search", "frameworks"]);
   });
 
   it("never targets an element outside the allowed anchor set", () => {

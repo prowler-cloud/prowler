@@ -10,7 +10,7 @@
   "ResourceType": "NotDefined",
   "ResourceGroup": "IAM",
   "Description": "Microsoft Entra **Conditional Access** is verified to have at least one **enabled** policy that explicitly includes the **Azure DevOps** cloud application. Policies targeting **All** cloud apps do not satisfy this check because the goal is to verify that Azure DevOps has been deliberately considered.",
-  "Risk": "Without an explicit Conditional Access policy for Azure DevOps, organizations may rely on broad policies that do not account for Azure DevOps-specific access patterns such as CLI, IDE plug-ins, PAT-based workflows, source code access, build pipelines, secrets, and service connections.",
+  "Risk": "Without an explicit **Conditional Access** policy for Azure DevOps, organizations may rely on broad policies that do not account for Azure DevOps-specific access patterns such as CLI, IDE plug-ins, PAT-based workflows, source code access, build pipelines, secrets, and service connections.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://learn.microsoft.com/en-us/graph/api/resources/conditionalaccesspolicy?view=graph-rest-1.0",

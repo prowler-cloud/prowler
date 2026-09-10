@@ -4,11 +4,13 @@ import pytest
 from api.models import StatusChoices
 from reportlab.platypus import Image, LongTable, Paragraph, Table
 from tasks.jobs.reports import FRAMEWORK_REGISTRY, ComplianceData, RequirementData
+from tasks.jobs.reports import cis as cis_report_module
 from tasks.jobs.reports.cis import (
     CISReportGenerator,
     _normalize_profile,
     _profile_badge_text,
 )
+from tasks.tests.report_test_helpers import patch_chart_helpers
 
 # =============================================================================
 # Fixtures
@@ -399,18 +401,69 @@ class TestCISExecutiveSummary:
 
 
 class TestCISChartsSection:
-    def test_charts_rendered(self, cis_generator, populated_cis_compliance_data):
-        elements = cis_generator.create_charts_section(populated_cis_compliance_data)
-        # At least 1 image for the pie + 1 for section bar + 1 for stacked
-        images = [e for e in elements if isinstance(e, Image)]
-        assert len(images) >= 1
+    def test_charts_rendered(
+        self, monkeypatch, cis_generator, populated_cis_compliance_data
+    ):
+        chart_calls = patch_chart_helpers(
+            monkeypatch,
+            cis_report_module,
+            (
+                "create_pie_chart",
+                "create_horizontal_bar_chart",
+                "create_stacked_bar_chart",
+            ),
+        )
 
-    def test_charts_no_data_no_crash(self, cis_generator, basic_cis_compliance_data):
+        elements = cis_generator.create_charts_section(populated_cis_compliance_data)
+
+        images = [e for e in elements if isinstance(e, Image)]
+        assert len(images) == 3
+
+        pie_kwargs = chart_calls["create_pie_chart"][0]["kwargs"]
+        assert pie_kwargs["labels"] == ["Pass (2)", "Fail (2)", "Manual (1)"]
+        assert pie_kwargs["values"] == [2, 2, 1]
+        assert pie_kwargs["colors"]
+
+        bar_kwargs = chart_calls["create_horizontal_bar_chart"][0]["kwargs"]
+        assert set(bar_kwargs["labels"]) == {
+            "1 Identity and Access Management",
+            "2 Storage",
+        }
+        assert bar_kwargs["values"] == [50.0, 50.0]
+        assert bar_kwargs["xlabel"] == "Compliance (%)"
+        assert bar_kwargs["color_func"]
+        assert bar_kwargs["label_fontsize"] == 9
+
+        stacked_kwargs = chart_calls["create_stacked_bar_chart"][0]["kwargs"]
+        assert stacked_kwargs["labels"] == ["Level 1", "Level 2"]
+        assert stacked_kwargs["data_series"] == {
+            "Pass": [1, 1],
+            "Fail": [2, 0],
+            "Manual": [0, 1],
+        }
+        assert stacked_kwargs["xlabel"] == "Profile"
+        assert stacked_kwargs["ylabel"] == "Requirements"
+
+    def test_charts_no_data_no_crash(
+        self, monkeypatch, cis_generator, basic_cis_compliance_data
+    ):
+        chart_calls = patch_chart_helpers(
+            monkeypatch,
+            cis_report_module,
+            (
+                "create_pie_chart",
+                "create_horizontal_bar_chart",
+                "create_stacked_bar_chart",
+            ),
+        )
         basic_cis_compliance_data.requirements = []
         basic_cis_compliance_data.attributes_by_requirement_id = {}
         elements = cis_generator.create_charts_section(basic_cis_compliance_data)
-        # Must not raise; may or may not have any Image
+
         assert isinstance(elements, list)
+        assert chart_calls["create_pie_chart"] == []
+        assert chart_calls["create_horizontal_bar_chart"] == []
+        assert chart_calls["create_stacked_bar_chart"] == []
 
 
 # =============================================================================

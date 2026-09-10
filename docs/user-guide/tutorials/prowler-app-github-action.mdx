@@ -28,7 +28,7 @@ Source: [`prowler-cloud/prowler`](https://github.com/prowler-cloud/prowler) · M
 
 ## Usage
 
-### AWS scan
+### AWS Scan
 
 ```yaml
 - uses: prowler-cloud/prowler@5.25
@@ -41,7 +41,7 @@ Source: [`prowler-cloud/prowler`](https://github.com/prowler-cloud/prowler) · M
     AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
 ```
 
-### Push findings to Prowler Cloud
+### Push Findings to Prowler Cloud
 
 Send scan results directly to [Prowler Cloud](/user-guide/tutorials/prowler-import-findings) for centralized visibility, compliance tracking, and team collaboration.
 
@@ -97,7 +97,7 @@ jobs:
 - GitHub Code Scanning is free for public repositories. Private repositories require a [GitHub Code Security](https://docs.github.com/en/get-started/learning-about-github/about-github-advanced-security) license.
 </Warning>
 
-### Combine push-to-cloud with SARIF upload
+### Combine Push-to-Cloud with SARIF Upload
 
 ```yaml
 - uses: prowler-cloud/prowler@5.25
@@ -114,7 +114,7 @@ jobs:
     PROWLER_CLOUD_API_KEY: ${{ secrets.PROWLER_CLOUD_API_KEY }}
 ```
 
-### Scan the current repository with the GitHub provider
+### Scan the Current Repository with the GitHub Provider
 
 ```yaml
 name: Prowler GitHub Scan
@@ -142,7 +142,7 @@ jobs:
 `--repository` scans a single repo. Use `--organization <name>` instead to include org-level checks (MFA, security policies, etc.). See the [GitHub provider authentication](/user-guide/providers/github/authentication) for required token permissions.
 </Info>
 
-### Fail the PR on findings
+### Fail the PR on Findings
 
 By default the action tolerates findings (exit code 3) and succeeds. Set `fail-on-findings: true` to fail the workflow step when Prowler detects findings. Combine with `--severity` to control which severity levels trigger the failure:
 
@@ -258,7 +258,7 @@ Scan results are written to `output/` in the workspace and uploaded as artifacts
 
 When `upload-sarif` is enabled, SARIF results are also uploaded to GitHub Code Scanning and appear on the repository's **Security → Code scanning** tab, filtered by the branch that ran the scan.
 
-### Step summary
+### Step Summary
 
 The action writes a summary to the run page with a per-severity breakdown of failing checks, artifact and Code Scanning links, and (when `push-to-cloud: false`) a pointer to [Prowler Cloud](https://cloud.prowler.com) for continuous monitoring.
 

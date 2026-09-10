@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { isCloud } from "@/lib/shared/env";
 import type { AttackPathGraphData } from "@/types/attack-paths";
 
 import { GraphLegend } from "./graph-legend";
@@ -8,6 +9,15 @@ import { GraphLegend } from "./graph-legend";
 vi.mock("next-themes", () => ({
   useTheme: () => ({ resolvedTheme: "dark" }),
 }));
+
+// Default to OSS (isCloud === false); individual tests flip it to Cloud.
+vi.mock("@/lib/shared/env", () => ({ isCloud: vi.fn(() => false) }));
+
+const mockIsCloud = vi.mocked(isCloud);
+
+afterEach(() => {
+  mockIsCloud.mockReturnValue(false);
+});
 
 const graphData: AttackPathGraphData = {
   nodes: [
@@ -41,6 +51,8 @@ describe("GraphLegend", () => {
     );
 
     // Then
+    // OSS renders the flat graph, which keeps the account/provider hub, so the
+    // legend shows a "Provider roots" section.
     expect(
       screen.getByRole("heading", { name: /provider roots/i }),
     ).toBeInTheDocument();
@@ -83,6 +95,27 @@ describe("GraphLegend", () => {
 
     expect(screen.queryByText(/ctrl/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/scroll to zoom/i)).not.toBeInTheDocument();
+  });
+
+  it("should hide the provider roots section in Cloud", () => {
+    // Given - Cloud, where the view transform removes the account/provider hub
+    mockIsCloud.mockReturnValue(true);
+
+    // When
+    render(
+      <GraphLegend data={graphData} expandedResources={new Set(["bucket"])} />,
+    );
+
+    // Then
+    expect(
+      screen.queryByRole("heading", { name: /provider roots/i }),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText("Provider")).not.toBeInTheDocument();
+    // Other legend sections still render.
+    expect(
+      screen.getByRole("heading", { name: /node types/i }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("S3 Bucket")).toBeInTheDocument();
   });
 
   it("should hide finding legend items when finding nodes are hidden", () => {

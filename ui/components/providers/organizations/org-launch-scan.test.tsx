@@ -1,5 +1,4 @@
 import { act, render, screen, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import type { ComponentProps } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -20,17 +19,20 @@ import { OrgLaunchScan } from "./org-launch-scan";
 const {
   launchOrganizationScansMock,
   pushMock,
+  scheduleOrganizationDailyScansMock,
   toastMock,
   updateSchedulesBulkMock,
 } = vi.hoisted(() => ({
   launchOrganizationScansMock: vi.fn(),
   pushMock: vi.fn(),
+  scheduleOrganizationDailyScansMock: vi.fn(),
   toastMock: vi.fn(),
   updateSchedulesBulkMock: vi.fn(),
 }));
 
 vi.mock("@/actions/scans/scans", () => ({
   launchOrganizationScans: launchOrganizationScansMock,
+  scheduleOrganizationDailyScans: scheduleOrganizationDailyScansMock,
 }));
 
 vi.mock("@/actions/schedules/schedules", () => ({
@@ -43,7 +45,8 @@ vi.mock("next/navigation", () => ({
   }),
 }));
 
-vi.mock("@/components/ui", () => ({
+vi.mock("@/components/shadcn", async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
   ToastAction: ({ children, ...props }: ComponentProps<"button">) => (
     <button {...props}>{children}</button>
   ),
@@ -66,9 +69,16 @@ describe("OrgLaunchScan", () => {
     localStorage.clear();
     launchOrganizationScansMock.mockReset();
     pushMock.mockReset();
+    scheduleOrganizationDailyScansMock.mockReset();
     toastMock.mockReset();
     updateSchedulesBulkMock.mockReset();
     launchOrganizationScansMock.mockResolvedValue({
+      data: [
+        { type: "scans", id: "scan-1" },
+        { type: "scans", id: "scan-2" },
+      ],
+    });
+    scheduleOrganizationDailyScansMock.mockResolvedValue({
       successCount: 2,
       failureCount: 0,
       totalCount: 2,
@@ -76,11 +86,8 @@ describe("OrgLaunchScan", () => {
     });
     updateSchedulesBulkMock.mockResolvedValue({
       data: {
-        type: "schedules-bulk",
-        attributes: {
-          updated: PROVIDER_IDS,
-          failed: [],
-        },
+        updated: PROVIDER_IDS,
+        failed: [],
       },
     });
     useOrgSetupStore.getState().reset();
@@ -128,52 +135,6 @@ describe("OrgLaunchScan", () => {
       expect(
         toastMock.mock.calls[0]?.[0].action.props.children.props.href,
       ).toBe(`/scans?tab=${SCAN_JOBS_TAB.SCHEDULED}`);
-    });
-
-    it("should launch initial scans only for updated providers", async () => {
-      // Given
-      const user = userEvent.setup();
-      const onFooterChange = vi.fn();
-      updateSchedulesBulkMock.mockResolvedValue({
-        data: {
-          type: "schedules-bulk",
-          attributes: {
-            updated: ["provider-2"],
-            failed: [{ id: "provider-1", error: "Denied" }],
-          },
-        },
-      });
-
-      render(
-        <OrgLaunchScan
-          onClose={vi.fn()}
-          onBack={vi.fn()}
-          onFooterChange={onFooterChange}
-          capability={SCAN_SCHEDULE_CAPABILITY.ADVANCED}
-        />,
-      );
-
-      // When
-      await user.click(
-        await screen.findByRole("checkbox", {
-          name: /launch an initial scan now/i,
-        }),
-      );
-      await act(async () => {
-        lastFooterConfig(onFooterChange)?.onAction?.();
-      });
-
-      // Then
-      await waitFor(() =>
-        expect(launchOrganizationScansMock).toHaveBeenCalledTimes(1),
-      );
-      expect(launchOrganizationScansMock).toHaveBeenCalledWith(
-        ["provider-2"],
-        "single",
-      );
-      expect(
-        toastMock.mock.calls[0]?.[0].action.props.children.props.href,
-      ).toBe(`/scans?tab=${SCAN_JOBS_TAB.ACTIVE}`);
     });
 
     it("should disable launch actions while schedule capability is loading", async () => {
@@ -243,92 +204,6 @@ describe("OrgLaunchScan", () => {
       expect(pushMock).not.toHaveBeenCalled();
       expect(onClose).not.toHaveBeenCalled();
     });
-
-    it("should treat a fully-failed bulk response as an error without navigating away", async () => {
-      // Given
-      const onClose = vi.fn();
-      const onFooterChange = vi.fn();
-      updateSchedulesBulkMock.mockResolvedValue({
-        data: {
-          type: "schedules-bulk",
-          attributes: {
-            updated: [],
-            failed: [
-              { id: "provider-1", error: "Denied" },
-              { id: "provider-2", error: "Denied" },
-            ],
-          },
-        },
-      });
-
-      render(
-        <OrgLaunchScan
-          onClose={onClose}
-          onBack={vi.fn()}
-          onFooterChange={onFooterChange}
-          capability={SCAN_SCHEDULE_CAPABILITY.ADVANCED}
-        />,
-      );
-
-      // When
-      await screen.findByText("Scan Schedule");
-      await act(async () => {
-        lastFooterConfig(onFooterChange)?.onAction?.();
-      });
-
-      // Then
-      await waitFor(() =>
-        expect(toastMock).toHaveBeenCalledWith(
-          expect.objectContaining({
-            variant: "destructive",
-            title: "Unable to save scan schedules",
-            description: "The scan schedule could not be saved for 2 accounts.",
-          }),
-        ),
-      );
-      expect(launchOrganizationScansMock).not.toHaveBeenCalled();
-      expect(pushMock).not.toHaveBeenCalled();
-      expect(onClose).not.toHaveBeenCalled();
-    });
-
-    it("should describe partial failures in the success toast", async () => {
-      // Given
-      const onFooterChange = vi.fn();
-      updateSchedulesBulkMock.mockResolvedValue({
-        data: {
-          type: "schedules-bulk",
-          attributes: {
-            updated: ["provider-2"],
-            failed: [{ provider_id: "provider-1", error: "Denied" }],
-          },
-        },
-      });
-
-      render(
-        <OrgLaunchScan
-          onClose={vi.fn()}
-          onBack={vi.fn()}
-          onFooterChange={onFooterChange}
-          capability={SCAN_SCHEDULE_CAPABILITY.ADVANCED}
-        />,
-      );
-
-      // When
-      await screen.findByText("Scan Schedule");
-      await act(async () => {
-        lastFooterConfig(onFooterChange)?.onAction?.();
-      });
-
-      // Then
-      await waitFor(() => expect(toastMock).toHaveBeenCalled());
-      expect(toastMock).toHaveBeenCalledWith(
-        expect.objectContaining({
-          title: "Scan schedules saved",
-          description:
-            "The schedule was saved for 1 account, but 1 account could not be updated.",
-        }),
-      );
-    });
   });
 
   describe("when capability is DAILY_LEGACY", () => {
@@ -355,12 +230,12 @@ describe("OrgLaunchScan", () => {
 
       // Then
       await waitFor(() =>
-        expect(launchOrganizationScansMock).toHaveBeenCalledWith(
+        expect(scheduleOrganizationDailyScansMock).toHaveBeenCalledWith(
           PROVIDER_IDS,
-          "daily",
         ),
       );
       expect(updateSchedulesBulkMock).not.toHaveBeenCalled();
+      expect(launchOrganizationScansMock).not.toHaveBeenCalled();
       expect(
         toastMock.mock.calls[0]?.[0].action.props.children.props.href,
       ).toBe(`/scans?tab=${SCAN_JOBS_TAB.SCHEDULED}`);
@@ -394,12 +269,14 @@ describe("OrgLaunchScan", () => {
 
       // Then
       await waitFor(() =>
-        expect(launchOrganizationScansMock).toHaveBeenCalledWith(
-          PROVIDER_IDS,
-          "single",
-        ),
+        expect(launchOrganizationScansMock).toHaveBeenCalledWith("org-1"),
       );
       expect(updateSchedulesBulkMock).not.toHaveBeenCalled();
+      expect(toastMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          description: "Single scan launched for 2 accounts.",
+        }),
+      );
       expect(
         toastMock.mock.calls[0]?.[0].action.props.children.props.href,
       ).toBe(`/scans?tab=${SCAN_JOBS_TAB.ACTIVE}`);

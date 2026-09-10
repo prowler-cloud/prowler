@@ -9,7 +9,7 @@ from tasks.jobs.deletion import delete_provider, delete_tenant
 
 @pytest.mark.django_db
 class TestDeleteProvider:
-    def test_delete_provider_success(self, providers_fixture):
+    def test_delete_provider_success(self, aws_provider):
         with (
             patch(
                 "tasks.jobs.deletion.graph_database.get_database_name",
@@ -19,7 +19,7 @@ class TestDeleteProvider:
                 "tasks.jobs.deletion.graph_database.drop_subgraph"
             ) as mock_drop_subgraph,
         ):
-            instance = providers_fixture[0]
+            instance = aws_provider
             tenant_id = str(instance.tenant_id)
             result = delete_provider(tenant_id, instance.id)
 
@@ -53,9 +53,9 @@ class TestDeleteProvider:
             mock_drop_subgraph.assert_not_called()
 
     def test_delete_provider_drops_temp_attack_paths_databases(
-        self, providers_fixture, create_attack_paths_scan
+        self, aws_provider, create_attack_paths_scan
     ):
-        instance = providers_fixture[0]
+        instance = aws_provider
         tenant_id = str(instance.tenant_id)
 
         aps1 = create_attack_paths_scan(instance)
@@ -84,9 +84,9 @@ class TestDeleteProvider:
         mock_drop_database.assert_has_calls(expected_tmp_calls, any_order=True)
 
     def test_delete_provider_drops_graph_data_from_all_recorded_sinks(
-        self, providers_fixture, create_attack_paths_scan
+        self, aws_provider, create_attack_paths_scan
     ):
-        instance = providers_fixture[0]
+        instance = aws_provider
         tenant_id = str(instance.tenant_id)
         create_attack_paths_scan(instance, sink_backend="neo4j")
         create_attack_paths_scan(instance, sink_backend="neptune")
@@ -124,9 +124,9 @@ class TestDeleteProvider:
         )
 
     def test_delete_provider_continues_when_temp_db_drop_fails(
-        self, providers_fixture, create_attack_paths_scan
+        self, aws_provider, create_attack_paths_scan
     ):
-        instance = providers_fixture[0]
+        instance = aws_provider
         tenant_id = str(instance.tenant_id)
 
         create_attack_paths_scan(instance)
@@ -151,10 +151,10 @@ class TestDeleteProvider:
 
     def test_delete_provider_recalculates_tenant_compliance_summary(
         self,
-        providers_fixture,
+        aws_provider_pair,
         provider_compliance_scores_fixture,
     ):
-        instance = providers_fixture[0]
+        instance = aws_provider_pair[0]
         tenant_id = instance.tenant_id
 
         TenantComplianceSummary.objects.create(
@@ -199,7 +199,7 @@ class TestDeleteProvider:
 
 @pytest.mark.django_db
 class TestDeleteTenant:
-    def test_delete_tenant_success(self, tenants_fixture, providers_fixture):
+    def test_delete_tenant_success(self, tenants_fixture, aws_provider):
         """
         Test successful deletion of a tenant and its related data.
         """

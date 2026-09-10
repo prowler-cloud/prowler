@@ -14,6 +14,7 @@ class GuardDuty(AWSService):
         super().__init__(__class__.__name__, provider)
         self.detectors = []
         self.organization_admin_accounts = []
+        self.organization_admin_lookup_failed_regions: set = set()
         self.__threading_call__(self._list_detectors)
         self.__threading_call__(self._get_detector, self.detectors)
         self._list_findings()
@@ -62,6 +63,15 @@ class GuardDuty(AWSService):
             )
 
     def _get_detector(self, detector):
+        """Read a detector's status, data sources and features.
+
+        A feature GuardDuty does not return is left as None rather than False, so a
+        Region that does not offer the feature stays distinguishable from one that
+        turned it off.
+
+        Args:
+            detector: Detector object to populate in place.
+        """
         logger.info("GuardDuty - getting detector info...")
         try:
             if detector.id and detector.enabled_in_account:
@@ -107,11 +117,33 @@ class GuardDuty(AWSService):
                         and feat.get("Status", "DISABLED") == "ENABLED"
                     ):
                         detector.lambda_protection = True
-                    elif (
-                        feat.get("Name", "") == "EKS_RUNTIME_MONITORING"
-                        and feat.get("Status", "DISABLED") == "ENABLED"
+                    elif feat.get("Name", "") == "AI_PROTECTION":
+                        # Recorded even when DISABLED, so a Region that offers AI
+                        # Protection and turned it off stays distinguishable from one
+                        # that never reports the feature.
+                        detector.ai_protection = (
+                            feat.get("Status", "DISABLED") == "ENABLED"
+                        )
+                    elif feat.get("Name", "") in (
+                        "EKS_RUNTIME_MONITORING",
+                        "RUNTIME_MONITORING",
                     ):
-                        detector.eks_runtime_monitoring = True
+                        enabled = feat.get("Status", "DISABLED") == "ENABLED"
+                        # Unified Runtime Monitoring (RUNTIME_MONITORING) already
+                        # includes threat detection for Amazon EKS resources and is
+                        # mutually exclusive with EKS_RUNTIME_MONITORING, so either
+                        # feature means the detector has EKS runtime coverage.
+                        if enabled:
+                            detector.eks_runtime_monitoring = True
+                        if feat.get("Name", "") == "RUNTIME_MONITORING":
+                            # Only the unified feature covers Amazon EC2 and Amazon
+                            # ECS on Fargate, so it is tracked separately. Recorded even
+                            # when DISABLED, for the same reason AI_PROTECTION above is:
+                            # a Region that offers the feature and turned it off must
+                            # stay distinguishable from one that never reported it. A
+                            # plain bool cannot express that, and the check would report
+                            # a definite FAIL on a Region that has no unified feature.
+                            detector.runtime_monitoring = enabled
 
         except Exception as error:
             logger.error(
@@ -227,6 +259,9 @@ class GuardDuty(AWSService):
 
         This API is only available to the organization management account or
         a delegated administrator account.
+
+        Args:
+            regional_client: Regional client object.
         """
         logger.info("GuardDuty - listing organization admin accounts...")
         try:
@@ -235,12 +270,30 @@ class GuardDuty(AWSService):
             )
             for page in paginator.paginate():
                 for admin in page.get("AdminAccounts", []):
+                    # GuardDuty returns AdminAccountId/AdminStatus, unlike Security
+                    # Hub's AccountId/Status for the same operation name.
+                    account_id = admin.get("AdminAccountId")
+                    status = admin.get("AdminStatus")
+                    if not account_id or not status:
+                        # An entry we cannot interpret means the delegated admin
+                        # status for this region is unknown, not absent.
+                        if (
+                            regional_client.region
+                            not in self.organization_admin_lookup_failed_regions
+                        ):
+                            logger.warning(
+                                f"{regional_client.region} -- Unexpected admin account entry with keys {sorted(admin)}"
+                            )
+                        self.organization_admin_lookup_failed_regions.add(
+                            regional_client.region
+                        )
+                        continue
                     admin_account = OrganizationAdminAccount(
-                        admin_account_id=admin.get("AdminAccountId"),
-                        admin_status=admin.get("AdminStatus"),
+                        admin_account_id=account_id,
+                        admin_status=status,
                         region=regional_client.region,
                     )
-                    # Avoid duplicates across regions for the same admin account
+                    # Avoid duplicates across pages for the same admin account
                     if not any(
                         existing.admin_account_id == admin_account.admin_account_id
                         and existing.region == admin_account.region
@@ -248,6 +301,7 @@ class GuardDuty(AWSService):
                     ):
                         self.organization_admin_accounts.append(admin_account)
         except ClientError as error:
+            self.organization_admin_lookup_failed_regions.add(regional_client.region)
             if error.response["Error"]["Code"] in (
                 "AccessDeniedException",
                 "BadRequestException",
@@ -260,6 +314,7 @@ class GuardDuty(AWSService):
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         except Exception as error:
+            self.organization_admin_lookup_failed_regions.add(regional_client.region)
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
@@ -321,8 +376,12 @@ class Detector(BaseModel):
     rds_protection: bool = False
     eks_audit_log_protection: bool = False
     eks_runtime_monitoring: bool = False
+    # None when GuardDuty did not return the feature: unknown, not disabled.
+    runtime_monitoring: Optional[bool] = None
     lambda_protection: bool = False
     ec2_malware_protection: bool = False
+    # None when GuardDuty did not return the feature: unknown, not disabled.
+    ai_protection: Optional[bool] = None
     # Organization configuration fields
     organization_auto_enable_members: str = "NONE"  # NEW, ALL, or NONE
     organization_config_available: bool = False

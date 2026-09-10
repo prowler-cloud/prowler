@@ -12,6 +12,7 @@ import type { GraphNode } from "@/types/attack-paths";
 import { resolveNodeColors, resolveNodeVisual } from "../../../_lib";
 import { FINDING_NODE_DIMENSIONS } from "../../../_lib/node-dimensions";
 import { getNodeLabelDisplay } from "../../../_lib/node-label-lines";
+
 import { HiddenHandles } from "./hidden-handles";
 
 interface FindingNodeData {

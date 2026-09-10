@@ -1,0 +1,38 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_conditional_access_policy_block_high_medium_sign_in_risk",
+  "CheckTitle": "Conditional Access policy blocks high and medium sign-in risk",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "At least one enabled Conditional Access policy should target **all users** and **all resources** with the **sign-in risk** condition set to **High** and **Medium** and the grant control set to **Block**. Microsoft Entra ID Protection evaluates sign-in risk in real time; blocking risky sign-ins prevents access from sessions that are likely not performed by the legitimate account owner.",
+  "Risk": "Without a **sign-in risk** based **Conditional Access** policy, sign-ins flagged as high or medium risk (indicative of compromised credentials, anomalous locations, or malicious IPs) are allowed, giving attackers a path to access resources with stolen credentials.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/entra/id-protection/concept-identity-protection-policies",
+    "https://learn.microsoft.com/en-us/entra/identity/conditional-access/concept-conditional-access-conditions#sign-in-risk"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to the Microsoft Entra admin center at https://entra.microsoft.com/\n2. Go to **Protection** > **Conditional Access** > **Policies** > **New policy**\n3. Under **Users**, include **All users** (exclude only documented break-glass accounts)\n4. Under **Target resources**, select **All resources**\n5. Under **Conditions** > **Sign-in risk**, select **High** and **Medium**\n6. Under **Grant**, select **Block access**\n7. Set the policy to **On** and click **Create**",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Create a risk-based Conditional Access policy that blocks high and medium sign-in risk for all users and all resources, excluding only documented break-glass accounts. Microsoft recommends configuring risk-based policies in Conditional Access rather than in the legacy Identity Protection policies.",
+      "Url": "https://hub.prowler.com/check/entra_conditional_access_policy_block_high_medium_sign_in_risk"
+    }
+  },
+  "Categories": [
+    "identity-access",
+    "e5"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

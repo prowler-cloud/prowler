@@ -1,0 +1,36 @@
+{
+  "Provider": "e2enetworks",
+  "CheckID": "node_encryption_enabled",
+  "CheckTitle": "E2E Networks nodes have disk encryption enabled",
+  "CheckType": [],
+  "ServiceName": "node",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "compute",
+  "Description": "**E2E Networks nodes** should have **disk encryption** enabled so data stored on node volumes and snapshots is protected **at rest**.",
+  "Risk": "**Unencrypted nodes** increase the risk of **data exposure** if disks or snapshots are accessed outside normal operating controls.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.e2enetworks.com/api/myaccount/compute/nodes/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable **disk encryption** on nodes to protect data at rest on volumes and snapshots.",
+      "Url": "https://hub.prowler.com/check/node_encryption_enabled"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

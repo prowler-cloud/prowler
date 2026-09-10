@@ -279,6 +279,48 @@ class Test_compute_firewall_ssh_access_from_the_internet_allowed:
             )
             assert result[0].resource_id == firewall.id
 
+    def test_one_non_compliant_rule_with_multiple_ports(self):
+        from prowler.providers.gcp.services.compute.compute_service import Firewall
+
+        firewall = Firewall(
+            name="test",
+            id="1234567890",
+            source_ranges=["0.0.0.0/0"],
+            direction="INGRESS",
+            allowed_rules=[{"IPProtocol": "tcp", "ports": ["80", "22"]}],
+            project_id=GCP_PROJECT_ID,
+        )
+
+        compute_client = mock.MagicMock()
+        compute_client.project_ids = [GCP_PROJECT_ID]
+        compute_client.firewalls = [firewall]
+        compute_client.region = "global"
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.compute.compute_firewall_ssh_access_from_the_internet_allowed.compute_firewall_ssh_access_from_the_internet_allowed.compute_client",
+                new=compute_client,
+            ),
+        ):
+            from prowler.providers.gcp.services.compute.compute_firewall_ssh_access_from_the_internet_allowed.compute_firewall_ssh_access_from_the_internet_allowed import (
+                compute_firewall_ssh_access_from_the_internet_allowed,
+            )
+
+            check = compute_firewall_ssh_access_from_the_internet_allowed()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert search(
+                f"Firewall {firewall.name} does exposes port 22",
+                result[0].status_extended,
+            )
+            assert result[0].resource_id == firewall.id
+
     def test_one_non_compliant_rule_with_port_range(self):
         from prowler.providers.gcp.services.compute.compute_service import Firewall
 

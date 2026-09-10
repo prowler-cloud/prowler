@@ -2,62 +2,70 @@ import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
 import {
-  buildAccountLookup,
+  buildCandidateLookup,
   buildOrgTreeData,
-  getSelectableAccountIds,
+  getSelectableCandidateIds,
 } from "@/actions/organizations/organizations.adapter";
 import {
   ConnectionTestStatus,
-  DiscoveredAccount,
-  DiscoveryResult,
+  DiscoveryStatus,
+  OrgCandidate,
+  OrgFlowType,
+  OrgHierarchy,
+  ORGANIZATION_TYPE,
+  toOrgFlowType,
 } from "@/types/organizations";
 import { TreeDataItem } from "@/types/tree";
 
 interface DerivedDiscoveryState {
   treeData: TreeDataItem[];
-  accountLookup: Map<string, DiscoveredAccount>;
-  selectableAccountIds: string[];
-  selectableAccountIdSet: Set<string>;
+  candidateLookup: Map<string, OrgCandidate>;
+  selectableCandidateIds: string[];
+  selectableCandidateIdSet: Set<string>;
 }
 
 function buildDerivedDiscoveryState(
-  discoveryResult: DiscoveryResult | null,
+  hierarchy: OrgHierarchy | null,
 ): DerivedDiscoveryState {
-  if (!discoveryResult) {
+  if (!hierarchy) {
     return {
       treeData: [],
-      accountLookup: new Map<string, DiscoveredAccount>(),
-      selectableAccountIds: [],
-      selectableAccountIdSet: new Set<string>(),
+      candidateLookup: new Map<string, OrgCandidate>(),
+      selectableCandidateIds: [],
+      selectableCandidateIdSet: new Set<string>(),
     };
   }
 
-  const selectableAccountIds = getSelectableAccountIds(discoveryResult);
+  const selectableCandidateIds = getSelectableCandidateIds(hierarchy);
   return {
-    treeData: buildOrgTreeData(discoveryResult),
-    accountLookup: buildAccountLookup(discoveryResult),
-    selectableAccountIds,
-    selectableAccountIdSet: new Set(selectableAccountIds),
+    treeData: buildOrgTreeData(hierarchy),
+    candidateLookup: buildCandidateLookup(hierarchy),
+    selectableCandidateIds,
+    selectableCandidateIdSet: new Set(selectableCandidateIds),
   };
 }
 
 interface OrgSetupState {
+  // Discriminant.
+  organizationType: OrgFlowType;
+
   // Identity
   organizationId: string | null;
   organizationName: string | null;
   organizationExternalId: string | null;
-  discoveryId: string | null;
 
   // Discovery
-  discoveryResult: DiscoveryResult | null;
+  discoveryId: string | null;
+  discoveryStatus: DiscoveryStatus | null;
+  hierarchy: OrgHierarchy | null;
   treeData: TreeDataItem[];
-  accountLookup: Map<string, DiscoveredAccount>;
-  selectableAccountIds: string[];
-  selectableAccountIdSet: Set<string>;
+  candidateLookup: Map<string, OrgCandidate>;
+  selectableCandidateIds: string[];
+  selectableCandidateIdSet: Set<string>;
 
   // Selection + aliases
-  selectedAccountIds: string[];
-  accountAliases: Record<string, string>;
+  selectedCandidateIds: string[];
+  candidateAliases: Record<string, string>;
 
   // Apply result
   createdProviderIds: string[];
@@ -67,10 +75,14 @@ interface OrgSetupState {
   connectionErrors: Record<string, string>;
 
   // Actions
+  setOrganizationType: (organizationType: OrgFlowType) => void;
   setOrganization: (id: string, name: string, externalId: string) => void;
-  setDiscovery: (id: string, result: DiscoveryResult) => void;
-  setSelectedAccountIds: (ids: string[]) => void;
-  setAccountAlias: (accountId: string, alias: string) => void;
+  // Persists the discovery id + status at trigger time so an interrupted
+  // discovery can be resumed on wizard re-entry (resume read is Phase 2).
+  setDiscoveryTriggered: (discoveryId: string) => void;
+  setDiscovery: (id: string, hierarchy: OrgHierarchy) => void;
+  setSelectedCandidateIds: (ids: string[]) => void;
+  setCandidateAlias: (candidateId: string, alias: string) => void;
   setCreatedProviderIds: (ids: string[]) => void;
   clearValidationState: () => void;
   setConnectionError: (providerId: string, error: string | null) => void;
@@ -82,17 +94,19 @@ interface OrgSetupState {
 }
 
 const initialState = {
+  organizationType: ORGANIZATION_TYPE.AWS as OrgFlowType,
   organizationId: null,
   organizationName: null,
   organizationExternalId: null,
   discoveryId: null,
-  discoveryResult: null,
+  discoveryStatus: null,
+  hierarchy: null,
   treeData: [],
-  accountLookup: new Map<string, DiscoveredAccount>(),
-  selectableAccountIds: [],
-  selectableAccountIdSet: new Set<string>(),
-  selectedAccountIds: [],
-  accountAliases: {},
+  candidateLookup: new Map<string, OrgCandidate>(),
+  selectableCandidateIds: [],
+  selectableCandidateIdSet: new Set<string>(),
+  selectedCandidateIds: [],
+  candidateAliases: {},
   createdProviderIds: [],
   connectionResults: {},
   connectionErrors: {},
@@ -103,6 +117,8 @@ export const useOrgSetupStore = create<OrgSetupState>()(
     (set) => ({
       ...initialState,
 
+      setOrganizationType: (organizationType) => set({ organizationType }),
+
       setOrganization: (id, name, externalId) =>
         set({
           organizationId: id,
@@ -110,29 +126,34 @@ export const useOrgSetupStore = create<OrgSetupState>()(
           organizationExternalId: externalId,
         }),
 
-      setDiscovery: (id, result) =>
+      setDiscoveryTriggered: (discoveryId) =>
+        set({ discoveryId, discoveryStatus: "pending" }),
+
+      setDiscovery: (id, hierarchy) =>
         set((state) => {
-          const derivedState = buildDerivedDiscoveryState(result);
+          const derivedState = buildDerivedDiscoveryState(hierarchy);
           return {
             discoveryId: id,
-            discoveryResult: result,
+            discoveryStatus: "succeeded",
+            hierarchy,
             ...derivedState,
-            selectedAccountIds: state.selectedAccountIds.filter((accountId) =>
-              derivedState.selectableAccountIdSet.has(accountId),
+            selectedCandidateIds: state.selectedCandidateIds.filter(
+              (candidateId) =>
+                derivedState.selectableCandidateIdSet.has(candidateId),
             ),
           };
         }),
 
-      setSelectedAccountIds: (ids) =>
+      setSelectedCandidateIds: (ids) =>
         set((state) => ({
-          selectedAccountIds: ids.filter((accountId) =>
-            state.selectableAccountIdSet.has(accountId),
+          selectedCandidateIds: ids.filter((candidateId) =>
+            state.selectableCandidateIdSet.has(candidateId),
           ),
         })),
 
-      setAccountAlias: (accountId, alias) =>
+      setCandidateAlias: (candidateId, alias) =>
         set((state) => ({
-          accountAliases: { ...state.accountAliases, [accountId]: alias },
+          candidateAliases: { ...state.candidateAliases, [candidateId]: alias },
         })),
 
       setCreatedProviderIds: (ids) => set({ createdProviderIds: ids }),
@@ -171,32 +192,45 @@ export const useOrgSetupStore = create<OrgSetupState>()(
     }),
     {
       name: "org-setup-store",
+      // Deliberately migration-free: a snapshot from the previous version is
+      // discarded, resetting an onboarding session that was in flight when the
+      // release landed. The persisted shape changed (normalized hierarchy,
+      // organization type, discovery-resume fields) and this is per-tab
+      // sessionStorage holding only wizard progress, so re-entering the flow is
+      // cheaper and safer than migrating a shape we removed. Bumped to 2 to also
+      // discard GCP hierarchies normalized by the pre-fix mapper, whose folder ids
+      // came from a field the wire never had and cannot nest.
+      version: 2,
       storage: createJSONStorage(() => sessionStorage),
       merge: (persistedState, currentState) => {
         const mergedState = {
           ...currentState,
           ...(persistedState as Partial<OrgSetupState>),
         };
-        const derivedState = buildDerivedDiscoveryState(
-          mergedState.discoveryResult,
-        );
+        const derivedState = buildDerivedDiscoveryState(mergedState.hierarchy);
 
         return {
           ...mergedState,
           ...derivedState,
-          selectedAccountIds: mergedState.selectedAccountIds.filter(
-            (accountId) => derivedState.selectableAccountIdSet.has(accountId),
+          organizationType:
+            toOrgFlowType(mergedState.organizationType) ??
+            currentState.organizationType,
+          selectedCandidateIds: mergedState.selectedCandidateIds.filter(
+            (candidateId) =>
+              derivedState.selectableCandidateIdSet.has(candidateId),
           ),
         };
       },
       partialize: (state) => ({
+        organizationType: state.organizationType,
         organizationId: state.organizationId,
         organizationName: state.organizationName,
         organizationExternalId: state.organizationExternalId,
         discoveryId: state.discoveryId,
-        discoveryResult: state.discoveryResult,
-        selectedAccountIds: state.selectedAccountIds,
-        accountAliases: state.accountAliases,
+        discoveryStatus: state.discoveryStatus,
+        hierarchy: state.hierarchy,
+        selectedCandidateIds: state.selectedCandidateIds,
+        candidateAliases: state.candidateAliases,
       }),
     },
   ),

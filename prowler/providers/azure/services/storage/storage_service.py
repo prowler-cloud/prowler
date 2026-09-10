@@ -20,8 +20,13 @@ class Storage(AzureService):
         storage_accounts = {}
         for subscription, client in self.clients.items():
             try:
+                storage_accounts_list = self.list_with_rg_scope(
+                    subscription,
+                    client.storage_accounts.list,
+                    client.storage_accounts.list_by_resource_group,
+                )
+
                 storage_accounts.update({subscription: []})
-                storage_accounts_list = client.storage_accounts.list()
                 for storage_account in storage_accounts_list:
                     parts = storage_account.id.split("/")
                     if "resourceGroups" in parts:

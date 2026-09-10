@@ -1,0 +1,13 @@
+{% set category_order = definitions.keys() %}
+{% for section, _ in sections.items() %}
+{% for category in category_order if category in sections[section] %}
+### {{ definitions[category]['name'] }}
+
+{% for text, values in sections[section][category].items() -%}
+- {{ text }}{% if values %} {{ values|join(', ') }}{% endif %}{{ "\n" }}
+{%- endfor %}
+
+{% endfor %}
+{% endfor %}
+---
+{{ "\n" }}

@@ -1,6 +1,6 @@
 import { UseFormReturn } from "react-hook-form";
 
-import { useToast } from "@/components/ui";
+import { useToast } from "@/components/shadcn";
 import { ApiError } from "@/types";
 
 /**

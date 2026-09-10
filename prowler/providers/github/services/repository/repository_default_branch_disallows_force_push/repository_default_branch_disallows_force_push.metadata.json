@@ -9,12 +9,13 @@
   "Severity": "high",
   "ResourceType": "NotDefined",
   "ResourceGroup": "devops",
-  "Description": "**GitHub repository default branch** blocks **force pushes** through branch protection.\n\nEvaluates whether the default branch permits force pushes.",
+  "Description": "**GitHub repository default branch** blocks **force pushes** through branch protection.\n\nEvaluates whether the default branch permits force pushes. This protection can be enforced through classic **branch protection** or repository **rulesets**.",
   "Risk": "Allowing **force pushes on the default branch** erodes **integrity** and **auditability** by enabling history rewrites and deletion of commits. Attackers or insiders can inject unreviewed code, bypass reviews and status checks, and corrupt PRs, risking supply-chain compromise and reduced **availability**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/managing-a-branch-protection-rule",
-    "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches#allow-force-pushes"
+    "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches#allow-force-pushes",
+    "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/about-rulesets"
   ],
   "Remediation": {
     "Code": {

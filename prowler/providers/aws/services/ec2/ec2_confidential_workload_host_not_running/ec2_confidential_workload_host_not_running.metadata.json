@@ -1,0 +1,38 @@
+{
+  "Provider": "aws",
+  "CheckID": "ec2_confidential_workload_host_not_running",
+  "CheckTitle": "Nitro Enclave parent instance is in the running state",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "ec2",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "AwsEc2Instance",
+  "ResourceGroup": "compute",
+  "Description": "**Nitro Enclave** parent instances are evaluated against the EC2 lifecycle: the instance state must not be `stopped`, `shutting-down`, or `terminated`. Enclaves are destroyed when their parent stops, so any consumer depending on enclave availability breaks if the parent moves to a terminal state. Transient states (`pending`, `stopping`) are reported as PASS with a note.",
+  "Risk": "A parent in a terminal state means the enclave no longer exists. Any downstream workload that assumes an active enclave silently loses its **availability** guarantee and may fall back to a less-protected path outside the trust boundary.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-lifecycle.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aws ec2 start-instances --instance-ids <instance-id>",
+      "NativeIaC": "",
+      "Other": "1. Investigate why the parent stopped (manual action, ASG scale-in, spot interruption).\n2. If the outage was intentional, decommission any downstream expectation of enclave availability.\n3. Otherwise, start the instance and relaunch the enclave through `nitro-cli run-enclave` on boot.\n4. Wrap enclave workloads in Auto Scaling Groups with lifecycle hooks that recreate enclaves after any instance replacement.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Treat enclave availability as an **operational contract**: keep parents running (or explicitly retire the downstream dependency), and prefer managed lifecycle patterns (Auto Scaling Groups, lifecycle hooks) that recreate the enclave whenever the parent is replaced.",
+      "Url": "https://hub.prowler.com/check/ec2_confidential_workload_host_not_running"
+    }
+  },
+  "Categories": [
+    "resilience"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

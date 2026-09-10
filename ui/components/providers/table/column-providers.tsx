@@ -1,38 +1,52 @@
 "use client";
 
 import { ColumnDef, Row, RowSelectionState } from "@tanstack/react-table";
-import { Building2, FolderTree } from "lucide-react";
+import { Building2, FolderTree, Terminal } from "lucide-react";
 
 import type {
   OrgWizardInitialData,
   ProviderWizardInitialData,
 } from "@/components/providers/wizard/types";
-import { Badge } from "@/components/shadcn";
+import {
+  Badge,
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/shadcn";
 import { Checkbox } from "@/components/shadcn/checkbox/checkbox";
-import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
-import { DateWithTime, EntityInfo } from "@/components/ui/entities";
-import { DataTableColumnHeader } from "@/components/ui/table";
-import { DataTableExpandAllToggle } from "@/components/ui/table/data-table-expand-all-toggle";
-import { DataTableExpandableCell } from "@/components/ui/table/data-table-expandable-cell";
+import { CodeSnippet } from "@/components/shadcn/code-snippet/code-snippet";
+import { DateWithTime, EntityInfo } from "@/components/shadcn/entities";
+import { DataTableColumnHeader } from "@/components/shadcn/table";
+import { DataTableExpandAllToggle } from "@/components/shadcn/table/data-table-expand-all-toggle";
+import { DataTableExpandableCell } from "@/components/shadcn/table/data-table-expandable-cell";
+import { getNodeLabel } from "@/lib/organizations";
+import { isCloud } from "@/lib/shared/env";
 import {
   isProvidersOrganizationRow,
   PROVIDERS_GROUP_KIND,
+  ProvidersGroupKind,
   ProvidersProviderRow,
   ProvidersTableRow,
 } from "@/types/providers-table";
+import {
+  SCAN_CONFIGURATION_LIST_STATUS,
+  ScanConfigurationData,
+  type ScanConfigurationListStatus,
+} from "@/types/scan-configurations";
 import type {
   ScanScheduleCapability,
   ScanScheduleProvider,
 } from "@/types/schedules";
 
 import { LinkToScans } from "../link-to-scans";
+
 import { DataTableRowActions } from "./data-table-row-actions";
 
 interface GroupNameChipsProps {
   groupNames?: string[];
 }
 
-const OrganizationIcon = ({ groupKind }: { groupKind: string }) => {
+const OrganizationIcon = ({ groupKind }: { groupKind: ProvidersGroupKind }) => {
   const Icon =
     groupKind === PROVIDERS_GROUP_KIND.ORGANIZATION ? Building2 : FolderTree;
 
@@ -43,28 +57,70 @@ const OrganizationIcon = ({ groupKind }: { groupKind: string }) => {
   );
 };
 
-const ProviderStatusCell = ({ connected }: { connected: boolean | null }) => {
+interface ProviderStatusCellProps {
+  connected: boolean | null;
+  isImported: boolean;
+}
+
+const IMPORTED_PROVIDER_TOOLTIP =
+  "This provider has findings imported with the Prowler CLI";
+
+const ImportedIndicator = () => {
+  const indicator = (
+    <Badge
+      variant="info"
+      className="text-sm"
+      aria-label="Imported provider"
+      tabIndex={0}
+    >
+      <Terminal aria-hidden />
+    </Badge>
+  );
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{indicator}</TooltipTrigger>
+      <TooltipContent>{IMPORTED_PROVIDER_TOOLTIP}</TooltipContent>
+    </Tooltip>
+  );
+};
+
+const ProviderStatusCell = ({
+  connected,
+  isImported,
+}: ProviderStatusCellProps) => {
+  let statusBadge;
+
   if (connected === true) {
-    return (
+    statusBadge = (
       <Badge variant="success" className="text-sm">
         Connected
       </Badge>
     );
-  }
-
-  if (connected === false) {
-    return (
+  } else if (connected === false) {
+    statusBadge = (
       <Badge variant="error" className="text-sm">
         Connection failed
       </Badge>
     );
+  } else {
+    statusBadge = (
+      <Badge variant="tag" className="text-text-neutral-secondary text-sm">
+        Not connected
+      </Badge>
+    );
   }
 
-  return (
-    <Badge variant="tag" className="text-text-neutral-secondary text-sm">
-      Not connected
-    </Badge>
-  );
+  if (isImported) {
+    return (
+      <div className="flex items-stretch gap-2">
+        {statusBadge}
+        <ImportedIndicator />
+      </div>
+    );
+  }
+
+  return statusBadge;
 };
 
 function getSelectionLabel(row: Row<ProvidersTableRow>): string | undefined {
@@ -113,6 +169,9 @@ export function getColumnProviders(
   onOpenProviderWizard: (initialData?: ProviderWizardInitialData) => void,
   onOpenOrganizationWizard: (initialData: OrgWizardInitialData) => void,
   scanScheduleCapability?: ScanScheduleCapability,
+  scanConfigs: ScanConfigurationData[] = [],
+  scanConfigStatus: ScanConfigurationListStatus = SCAN_CONFIGURATION_LIST_STATUS.AVAILABLE,
+  scanConfigIdByProviderId: ReadonlyMap<string, string> = new Map(),
 ): ColumnDef<ProvidersTableRow>[] {
   return [
     {
@@ -190,6 +249,11 @@ export function getColumnProviders(
               cloudProvider={provider.attributes.provider}
               entityAlias={provider.attributes.alias}
               entityId={provider.attributes.uid}
+              nameAction={
+                provider.attributes.is_dynamic ? (
+                  <Badge variant="info">Custom</Badge>
+                ) : undefined
+              }
             />
           </DataTableExpandableCell>
         );
@@ -203,12 +267,15 @@ export function getColumnProviders(
       ),
       cell: ({ row }) => {
         if (isProvidersOrganizationRow(row.original)) {
+          // Node label comes from the terminology table: node `kind` decides,
+          // organization type is the fallback — never an ID prefix.
+          const label =
+            row.original.groupKind === PROVIDERS_GROUP_KIND.ORGANIZATION
+              ? "Organization"
+              : getNodeLabel(row.original.orgType, row.original.kind);
+
           return (
-            <span className="text-text-neutral-tertiary text-sm">
-              {row.original.groupKind === PROVIDERS_GROUP_KIND.ORGANIZATION
-                ? "Organization"
-                : "Organizational Unit"}
-            </span>
+            <span className="text-text-neutral-tertiary text-sm">{label}</span>
           );
         }
 
@@ -280,6 +347,9 @@ export function getColumnProviders(
         return (
           <ProviderStatusCell
             connected={row.original.attributes.connection.connected}
+            isImported={
+              isCloud() && Boolean(row.original.attributes.is_imported)
+            }
           />
         );
       },
@@ -315,6 +385,9 @@ export function getColumnProviders(
       ),
       cell: ({ row }) => {
         const hasSelection = Object.values(rowSelection).some(Boolean);
+        const currentScanConfigId = isProvidersOrganizationRow(row.original)
+          ? null
+          : (scanConfigIdByProviderId.get(row.original.id) ?? null);
 
         return (
           <DataTableRowActions
@@ -327,6 +400,9 @@ export function getColumnProviders(
             onClearSelection={onClearSelection}
             onOpenProviderWizard={onOpenProviderWizard}
             onOpenOrganizationWizard={onOpenOrganizationWizard}
+            scanConfigs={scanConfigs}
+            scanConfigStatus={scanConfigStatus}
+            currentScanConfigId={currentScanConfigId}
             capability={scanScheduleCapability}
           />
         );

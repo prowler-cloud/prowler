@@ -1258,7 +1258,8 @@
       "Checks": [
         "ec2_securitygroup_allow_ingress_from_internet_to_all_ports",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
-        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_3389"
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_3389",
+        "ec2_confidential_workload_host_unrestricted_ingress"
       ],
       "Attributes": [
         {
@@ -1281,7 +1282,8 @@
       "Checks": [
         "ec2_securitygroup_allow_ingress_from_internet_to_all_ports",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
-        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_3389"
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_3389",
+        "ec2_confidential_workload_host_unrestricted_ingress"
       ],
       "Attributes": [
         {
@@ -1344,7 +1346,8 @@
       "Id": "5.6",
       "Description": "Ensure that EC2 Metadata Service only allows IMDSv2",
       "Checks": [
-        "ec2_instance_imdsv2_enabled"
+        "ec2_instance_imdsv2_enabled",
+        "ec2_confidential_workload_host_imdsv2_not_enforced"
       ],
       "Attributes": [
         {

@@ -37,7 +37,7 @@ vi.mock("@/components/shadcn/tooltip", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/entities/entity-info", () => ({
+vi.mock("@/components/shadcn/entities/entity-info", () => ({
   EntityInfo: ({
     entityAlias,
     entityId,
@@ -47,11 +47,11 @@ vi.mock("@/components/ui/entities/entity-info", () => ({
   }) => <div>{entityAlias ?? entityId}</div>,
 }));
 
-vi.mock("@/components/ui/entities/date-with-time", () => ({
+vi.mock("@/components/shadcn/entities/date-with-time", () => ({
   DateWithTime: ({ dateTime }: { dateTime: string }) => <span>{dateTime}</span>,
 }));
 
-vi.mock("@/components/ui/table", () => ({
+vi.mock("@/components/shadcn/table", () => ({
   DataTableColumnHeader: ({ title }: { title: string }) => <span>{title}</span>,
   DataTable: ({
     columns,

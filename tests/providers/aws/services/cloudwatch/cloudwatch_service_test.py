@@ -1,9 +1,14 @@
+from unittest.mock import patch
+
+import botocore
 import pytest
 from boto3 import client
+from botocore.exceptions import ClientError
 from moto import mock_aws
 
 from prowler.providers.aws.services.cloudwatch.cloudwatch_service import (
     CloudWatch,
+    LogGroup,
     Logs,
 )
 from prowler.providers.aws.services.cloudwatch.lib.metric_filters import (
@@ -14,6 +19,8 @@ from tests.providers.aws.utils import (
     AWS_REGION_US_EAST_1,
     set_mocked_aws_provider,
 )
+
+make_api_call = botocore.client.BaseClient._make_api_call
 
 
 class Test_CloudWatch_Service:
@@ -166,6 +173,7 @@ class Test_CloudWatch_Service:
         assert logs.metric_filters[0].log_group is None
         assert logs.metric_filters[0].name == "test-filter"
         assert logs.metric_filters[0].metric == "my-metric"
+        assert logs.metric_filters[0].metric_namespace == "my-namespace"
         assert logs.metric_filters[0].pattern == "test-pattern"
         assert logs.metric_filters[0].region == AWS_REGION_US_EAST_1
 
@@ -188,7 +196,9 @@ class Test_CloudWatch_Service:
         arn = f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:log-group:/log-group/test:*"
         logs = Logs(aws_provider)
         assert len(logs.log_groups) == 1
+        assert len(logs.all_log_groups) == 1
         assert arn in logs.log_groups
+        assert arn in logs.all_log_groups
         assert logs.log_groups[arn].name == "/log-group/test"
         assert logs.log_groups[arn].retention_days == 400
         assert logs.log_groups[arn].kms_id == "test_kms_id"
@@ -212,7 +222,9 @@ class Test_CloudWatch_Service:
         arn = f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:log-group:/log-group/test:*"
         logs = Logs(aws_provider)
         assert len(logs.log_groups) == 1
+        assert len(logs.all_log_groups) == 1
         assert arn in logs.log_groups
+        assert arn in logs.all_log_groups
         assert logs.log_groups[arn].name == "/log-group/test"
         assert logs.log_groups[arn].never_expire
         # Since it never expires we don't use the retention_days
@@ -220,6 +232,300 @@ class Test_CloudWatch_Service:
         assert logs.log_groups[arn].kms_id == "test_kms_id"
         assert logs.log_groups[arn].region == AWS_REGION_US_EAST_1
         assert logs.log_groups[arn].tags == [{}]
+
+    @mock_aws
+    def test_describe_log_groups_data_protection_across_pages(self):
+        """Both data protection fields must be collected from every page of DescribeLogGroups.
+
+        moto has no data protection support, so the response is served literally. Both pages carry
+        state a check reads, and each page carries a different one: a collector that stops after the
+        first page under-reports silently instead of failing loudly. The second page also proves
+        inheritedProperties survives the round trip rather than being flattened away.
+        """
+        first_page_arn = f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:log-group:/aws/bedrock-agentcore/runtimes/page-one:*"
+        second_page_arn = f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:log-group:/aws/bedrock-agentcore/runtimes/page-two:*"
+        pages = [
+            {
+                "logGroups": [
+                    {
+                        "arn": first_page_arn,
+                        "logGroupName": "/aws/bedrock-agentcore/runtimes/page-one",
+                        "creationTime": 2,
+                        "dataProtectionStatus": "DISABLED",
+                    }
+                ],
+                "nextToken": "page-two",
+            },
+            {
+                "logGroups": [
+                    {
+                        "arn": second_page_arn,
+                        "logGroupName": "/aws/bedrock-agentcore/runtimes/page-two",
+                        "creationTime": 1,
+                        "dataProtectionStatus": "ACTIVATED",
+                        "inheritedProperties": ["ACCOUNT_DATA_PROTECTION"],
+                    }
+                ]
+            },
+        ]
+
+        def mock_make_api_call(self, operation_name, kwarg):
+            """Serve page two once the paginator follows nextToken, page one otherwise."""
+            if operation_name == "DescribeLogGroups":
+                return pages[1] if kwarg.get("nextToken") else pages[0]
+            return make_api_call(self, operation_name, kwarg)
+
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_US_EAST_1],
+            expected_checks=["cloudwatch_log_group_no_secrets_in_logs"],
+        )
+        with patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call):
+            logs = Logs(aws_provider)
+
+        assert set(logs.log_groups) == {first_page_arn, second_page_arn}
+        assert logs.log_groups[first_page_arn].data_protection_status == "DISABLED"
+        assert logs.log_groups[first_page_arn].inherited_properties == []
+        assert logs.log_groups[second_page_arn].data_protection_status == "ACTIVATED"
+        assert logs.log_groups[second_page_arn].inherited_properties == [
+            "ACCOUNT_DATA_PROTECTION"
+        ]
+
+    @mock_aws
+    def test_describe_log_groups_without_data_protection_fields(self):
+        """A log group reporting neither field must collect as None and an empty list.
+
+        This is the common real response, since DescribeLogGroups omits both members for a log group
+        that has never had a policy. None must not become "DISABLED" and the list must not become
+        None, or a check cannot tell "never configured" from "switched off".
+        """
+        logs_client = client("logs", region_name=AWS_REGION_US_EAST_1)
+        logs_client.create_log_group(logGroupName="/log-group/test")
+
+        aws_provider = set_mocked_aws_provider(
+            expected_checks=["cloudwatch_log_group_no_secrets_in_logs"]
+        )
+        arn = f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:log-group:/log-group/test:*"
+        logs = Logs(aws_provider)
+
+        assert logs.log_groups[arn].data_protection_status is None
+        assert logs.log_groups[arn].inherited_properties == []
+
+    @mock_aws
+    def test_describe_log_groups_access_denied_leaves_inventory_unknown(self):
+        """A denied DescribeLogGroups must leave both indexes None, not empty dicts.
+
+        None is the state checks read as "inventory unknown" and report MANUAL for. Collapsing to an
+        empty dict would be indistinguishable from an account that has no log groups, which every
+        log group check reads as nothing to report.
+        """
+
+        def mock_make_api_call(self, operation_name, kwarg):
+            """Deny DescribeLogGroups; defer every other operation to botocore."""
+            if operation_name == "DescribeLogGroups":
+                raise ClientError(
+                    {
+                        "Error": {
+                            "Code": "AccessDeniedException",
+                            "Message": "not authorized",
+                        }
+                    },
+                    operation_name,
+                )
+            return make_api_call(self, operation_name, kwarg)
+
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_US_EAST_1],
+            expected_checks=["cloudwatch_log_group_no_secrets_in_logs"],
+        )
+        with patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call):
+            logs = Logs(aws_provider)
+
+        assert logs.log_groups is None
+        assert logs.all_log_groups is None
+
+    def test_log_group_limit_exposes_only_selected_resources(self):
+        class FakeLogsClient:
+            def __init__(self):
+                self.filter_calls = []
+
+            def filter_log_events(self, **kwargs):
+                self.filter_calls.append(kwargs["logGroupName"])
+                return {"events": []}
+
+        regional_client = FakeLogsClient()
+        logs = Logs.__new__(Logs)
+        logs.log_group_limit = 1
+        logs._log_groups_hydrated = set()
+        logs.regional_clients = {AWS_REGION_US_EAST_1: regional_client}
+        logs.events_per_log_group_threshold = 1000
+        logs.log_groups = {
+            f"arn:{i}": LogGroup(
+                arn=f"arn:{i}",
+                name=f"log-{i}",
+                retention_days=30,
+                never_expire=False,
+                kms_id=None,
+                creation_time=i,
+                region=AWS_REGION_US_EAST_1,
+            )
+            for i in range(3)
+        }
+        tagged = []
+
+        def list_tags(log_group):
+            tagged.append(log_group.arn)
+
+        logs._list_tags_for_resource = list_tags
+
+        logs._select_log_groups_for_analysis()
+        for log_group in logs.log_groups.values():
+            logs._list_tags_for_resource(log_group)
+            logs._get_log_events(log_group)
+
+        assert list(logs.log_groups) == ["arn:2"]
+        assert tagged == ["arn:2"]
+        assert regional_client.filter_calls == ["log-2"]
+
+    def test_log_group_limit_selects_global_newest_across_regions(self):
+        class FakePaginator:
+            def __init__(self, log_groups):
+                self.log_groups = log_groups
+
+            def paginate(self, **kwargs):
+                assert "PageSize" not in kwargs
+                return [{"logGroups": self.log_groups}]
+
+        class FakeLogsClient:
+            def __init__(self, region, log_groups):
+                self.region = region
+                self.log_groups = log_groups
+
+            def get_paginator(self, name):
+                assert name == "describe_log_groups"
+                return FakePaginator(self.log_groups)
+
+        logs = Logs.__new__(Logs)
+        logs.all_log_groups = {}
+        logs.log_groups = {}
+        logs.log_group_limit = 1
+        logs.audit_resources = []
+
+        logs._describe_log_groups(
+            FakeLogsClient(
+                "eu-west-1",
+                [
+                    {
+                        "arn": "arn:aws:logs:eu-west-1:123456789012:log-group:old:*",
+                        "logGroupName": "old",
+                        "creationTime": 1,
+                    }
+                ],
+            )
+        )
+        logs._describe_log_groups(
+            FakeLogsClient(
+                AWS_REGION_US_EAST_1,
+                [
+                    {
+                        "arn": "arn:aws:logs:us-east-1:123456789012:log-group:new:*",
+                        "logGroupName": "new",
+                        "creationTime": 2,
+                    }
+                ],
+            )
+        )
+        logs._select_log_groups_for_analysis()
+
+        assert [log_group.name for log_group in logs.log_groups.values()] == ["new"]
+        assert [log_group.name for log_group in logs.all_log_groups.values()] == [
+            "old",
+            "new",
+        ]
+
+    def test_metric_filters_use_complete_log_group_index(self):
+        class FakePaginator:
+            def paginate(self):
+                return [
+                    {
+                        "metricFilters": [
+                            {
+                                "filterName": "test-filter",
+                                "filterPattern": "test-pattern",
+                                "logGroupName": "old",
+                                "metricTransformations": [
+                                    {"metricName": "test-metric"}
+                                ],
+                            }
+                        ]
+                    }
+                ]
+
+        class FakeLogsClient:
+            region = AWS_REGION_US_EAST_1
+
+            def get_paginator(self, name):
+                assert name == "describe_metric_filters"
+                return FakePaginator()
+
+        logs = Logs.__new__(Logs)
+        old_log_group = LogGroup(
+            arn="arn:old",
+            name="old",
+            retention_days=30,
+            never_expire=False,
+            kms_id=None,
+            creation_time=1,
+            region=AWS_REGION_US_EAST_1,
+        )
+        logs.audited_partition = "aws"
+        logs.audited_account = AWS_ACCOUNT_NUMBER
+        logs.audit_resources = []
+        logs.metric_filters = []
+        logs.log_groups = {}
+        logs.all_log_groups = {old_log_group.arn: old_log_group}
+        logs._log_groups_hydrated = set()
+        logs._list_tags_for_resource = lambda log_group: None
+
+        logs._describe_metric_filters(FakeLogsClient())
+
+        assert len(logs.metric_filters) == 1
+        assert logs.metric_filters[0].log_group == old_log_group
+
+    def test_log_group_collection_recovers_all_log_groups_after_access_denied(self):
+        class FakePaginator:
+            def paginate(self):
+                return [
+                    {
+                        "logGroups": [
+                            {
+                                "arn": "arn:aws:logs:us-east-1:123456789012:log-group:success:*",
+                                "logGroupName": "success",
+                                "creationTime": 1,
+                            }
+                        ]
+                    }
+                ]
+
+        class FakeLogsClient:
+            region = AWS_REGION_US_EAST_1
+
+            def get_paginator(self, name):
+                assert name == "describe_log_groups"
+                return FakePaginator()
+
+        logs = Logs.__new__(Logs)
+        logs.all_log_groups = None
+        logs.log_groups = None
+        logs.audit_resources = []
+
+        logs._describe_log_groups(FakeLogsClient())
+
+        assert list(logs.all_log_groups) == [
+            "arn:aws:logs:us-east-1:123456789012:log-group:success:*"
+        ]
+        assert list(logs.log_groups) == [
+            "arn:aws:logs:us-east-1:123456789012:log-group:success:*"
+        ]
 
 
 class Test_build_metric_filter_pattern:
@@ -230,3 +536,39 @@ class Test_build_metric_filter_pattern:
                 event_names=["ConsoleLogin"],
                 extra_clauses=[("errorMessage", bad_operator, "Failed authentication")],
             )
+
+    @mock_aws
+    def test_describe_log_groups_access_denied_sets_flag(self):
+        """A denied DescribeLogGroups must raise log_groups_unavailable."""
+        from unittest import mock
+
+        from botocore.client import BaseClient
+        from botocore.exceptions import ClientError
+
+        orig = BaseClient._make_api_call
+
+        def deny_describe_log_groups(self, operation_name, kwarg):
+            if operation_name == "DescribeLogGroups":
+                raise ClientError(
+                    {
+                        "Error": {
+                            "Code": "AccessDeniedException",
+                            "Message": "Access Denied",
+                        }
+                    },
+                    operation_name,
+                )
+            return orig(self, operation_name, kwarg)
+
+        aws_provider = set_mocked_aws_provider(
+            expected_checks=["cloudwatch_log_group_no_secrets_in_logs"]
+        )
+        with mock.patch(
+            "botocore.client.BaseClient._make_api_call",
+            new=deny_describe_log_groups,
+        ):
+            logs = Logs(aws_provider)
+
+        assert logs.log_groups_unavailable is True
+        assert logs.log_groups is None
+        assert logs.all_log_groups is None

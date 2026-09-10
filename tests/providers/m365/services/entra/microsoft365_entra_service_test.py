@@ -1,39 +1,402 @@
 import asyncio
+import importlib
+import json
 from datetime import datetime, timezone
 from types import SimpleNamespace
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, call, patch
+
+import pytest
 
 from prowler.providers.m365.models import M365IdentityInfo
-from prowler.providers.m365.services.entra.entra_service import (
-    AdminConsentPolicy,
-    AdminRoles,
-    ApplicationEnforcedRestrictions,
-    ApplicationsConditions,
-    AppManagementRestrictions,
-    AuthorizationPolicy,
-    AuthPolicyRoles,
-    ConditionalAccessGrantControl,
-    ConditionalAccessPolicy,
-    ConditionalAccessPolicyState,
-    Conditions,
-    CredentialRestriction,
-    DefaultAppManagementPolicy,
-    DefaultUserRolePermissions,
-    Entra,
-    GrantControlOperator,
-    GrantControls,
-    InvitationsFrom,
-    Organization,
-    PersistentBrowser,
-    SessionControls,
-    SignInFrequency,
-    SignInFrequencyInterval,
-    SignInFrequencyType,
-    User,
-    UserAction,
-    UsersConditions,
-)
+from prowler.providers.m365.services.entra import entra_service
 from tests.providers.m365.m365_fixtures import DOMAIN, set_mocked_m365_provider
+
+AdminConsentPolicy = entra_service.AdminConsentPolicy
+AdminRoles = entra_service.AdminRoles
+ApplicationEnforcedRestrictions = entra_service.ApplicationEnforcedRestrictions
+ApplicationsConditions = entra_service.ApplicationsConditions
+AppManagementRestrictions = entra_service.AppManagementRestrictions
+AuthorizationPolicy = entra_service.AuthorizationPolicy
+AuthPolicyRoles = entra_service.AuthPolicyRoles
+ConditionalAccessGrantControl = entra_service.ConditionalAccessGrantControl
+ConditionalAccessPolicy = entra_service.ConditionalAccessPolicy
+ConditionalAccessPolicyState = entra_service.ConditionalAccessPolicyState
+Conditions = entra_service.Conditions
+CredentialRestriction = entra_service.CredentialRestriction
+DefaultAppManagementPolicy = entra_service.DefaultAppManagementPolicy
+DefaultUserRolePermissions = entra_service.DefaultUserRolePermissions
+DeviceRegistrationMembershipType = entra_service.DeviceRegistrationMembershipType
+DeviceRegistrationPolicy = entra_service.DeviceRegistrationPolicy
+Entra = entra_service.Entra
+GrantControlOperator = entra_service.GrantControlOperator
+GrantControls = entra_service.GrantControls
+InvitationsFrom = entra_service.InvitationsFrom
+Organization = entra_service.Organization
+PersistentBrowser = entra_service.PersistentBrowser
+SessionControls = entra_service.SessionControls
+SignInFrequency = entra_service.SignInFrequency
+SignInFrequencyInterval = entra_service.SignInFrequencyInterval
+SignInFrequencyType = entra_service.SignInFrequencyType
+User = entra_service.User
+UserAction = entra_service.UserAction
+UsersConditions = entra_service.UsersConditions
+
+
+def _get_access_review_definitions(definition):
+    service = Entra.__new__(Entra)
+    request_information = MagicMock()
+    service.client = SimpleNamespace(
+        identity_governance=SimpleNamespace(
+            with_url=MagicMock(
+                return_value=SimpleNamespace(
+                    to_get_request_information=MagicMock(
+                        return_value=request_information
+                    )
+                )
+            )
+        ),
+        request_adapter=SimpleNamespace(
+            send_primitive_async=AsyncMock(
+                return_value=json.dumps({"value": [definition]}).encode()
+            )
+        ),
+    )
+    return asyncio.run(service._get_access_review_definitions())
+
+
+class TestAccessReviewDefinitions:
+    @pytest.mark.parametrize(
+        ("settings", "expected"),
+        [
+            ({"defaultDecisionEnabled": True}, True),
+            ({"defaultDecisionEnabled": False}, False),
+            ({}, False),
+        ],
+    )
+    def test_parses_default_decision_enabled(self, settings, expected):
+        definitions = _get_access_review_definitions(
+            {"id": "review-1", "settings": settings}
+        )
+
+        assert definitions[0].default_decision_enabled is expected
+
+    def test_parses_recurrence_and_top_level_reviewers(self):
+        definitions = _get_access_review_definitions(
+            {
+                "id": "review-1",
+                "reviewers": [{"query": "/users/reviewer-1"}],
+                "settings": {
+                    "recurrence": {
+                        "pattern": {"type": "weekly"},
+                        "range": {"type": "noEnd"},
+                    }
+                },
+            }
+        )
+
+        assert definitions[0].recurrence_pattern_type == "weekly"
+        assert definitions[0].recurrence_range_type == "noEnd"
+        assert definitions[0].has_primary_reviewers is True
+
+    def test_uses_reviewers_from_every_configured_stage(self):
+        definitions = _get_access_review_definitions(
+            {
+                "id": "review-1",
+                "reviewers": [],
+                "stageSettings": [
+                    {"reviewers": [{"query": "/users/reviewer-1"}]},
+                    {"reviewers": [{"query": "/users/reviewer-2"}]},
+                ],
+            }
+        )
+
+        assert definitions[0].has_primary_reviewers is True
+
+    @pytest.mark.parametrize(
+        "reviewer_configuration",
+        [
+            {"fallbackReviewers": [{"query": "/users/fallback-1"}]},
+            {
+                "reviewers": [{"query": "/users/top-level-reviewer"}],
+                "stageSettings": [
+                    {"reviewers": [{"query": "/users/stage-reviewer"}]},
+                    {"reviewers": []},
+                ],
+            },
+        ],
+    )
+    def test_fallback_or_incomplete_stage_reviewers_do_not_count(
+        self, reviewer_configuration
+    ):
+        definitions = _get_access_review_definitions(
+            {"id": "review-1", **reviewer_configuration}
+        )
+
+        assert definitions[0].has_primary_reviewers is False
+
+    @pytest.mark.parametrize(
+        "terminal_response",
+        [b"", json.dumps({"value": []}).encode()],
+    )
+    def test_preserves_definitions_when_terminal_page_is_empty(self, terminal_response):
+        service = Entra.__new__(Entra)
+        first_page = json.dumps(
+            {
+                "value": [{"id": "review-1", "displayName": "Guest Review"}],
+                "@odata.nextLink": "next-link",
+            }
+        ).encode()
+        send_mock = AsyncMock(side_effect=[first_page, terminal_response])
+        with_url_mock = MagicMock(
+            side_effect=[
+                SimpleNamespace(
+                    to_get_request_information=MagicMock(return_value="request-1")
+                ),
+                SimpleNamespace(
+                    to_get_request_information=MagicMock(return_value="request-2")
+                ),
+            ]
+        )
+        service.client = SimpleNamespace(
+            identity_governance=SimpleNamespace(with_url=with_url_mock),
+            request_adapter=SimpleNamespace(send_primitive_async=send_mock),
+        )
+
+        definitions = asyncio.run(service._get_access_review_definitions())
+
+        assert [definition.id for definition in definitions] == ["review-1"]
+        assert send_mock.await_count == 2
+        assert with_url_mock.call_args_list[-1] == call("next-link")
+
+    def test_error_returns_no_access_review_definitions(self):
+        service = Entra.__new__(Entra)
+        service.client = SimpleNamespace(
+            identity_governance=SimpleNamespace(
+                with_url=MagicMock(
+                    return_value=SimpleNamespace(
+                        to_get_request_information=MagicMock(return_value="request-1")
+                    )
+                )
+            ),
+            request_adapter=SimpleNamespace(
+                send_primitive_async=AsyncMock(side_effect=RuntimeError("Graph error"))
+            ),
+        )
+
+        assert asyncio.run(service._get_access_review_definitions()) == []
+
+
+class TestPimRoleApprovalSettings:
+    def test_paginates_and_parses_role_approval_settings(self):
+        service = Entra.__new__(Entra)
+        first_page = json.dumps(
+            {
+                "value": [
+                    {"policy": {"rules": []}},
+                    {
+                        "roleDefinitionId": "role-unrelated",
+                        "policy": {"rules": [{"id": "Unrelated_Rule"}]},
+                    },
+                    {
+                        "roleDefinitionId": "role-approval-required",
+                        "policy": {
+                            "rules": [
+                                {
+                                    "id": "Approval_EndUser_Assignment",
+                                    "setting": {
+                                        "isApprovalRequired": True,
+                                        "approvalStages": [
+                                            {"primaryApprovers": []},
+                                            {
+                                                "primaryApprovers": [
+                                                    {"id": "approver-1"}
+                                                ]
+                                            },
+                                        ],
+                                    },
+                                }
+                            ]
+                        },
+                    },
+                ],
+                "@odata.nextLink": "next-link",
+            }
+        ).encode()
+        final_page = json.dumps(
+            {
+                "value": [
+                    {
+                        "roleDefinitionId": "role-approval-disabled",
+                        "policy": {
+                            "rules": [
+                                {
+                                    "id": "Approval_EndUser_Assignment",
+                                    "setting": {
+                                        "isApprovalRequired": False,
+                                        "approvalStages": [{"primaryApprovers": []}],
+                                    },
+                                }
+                            ]
+                        },
+                    }
+                ]
+            }
+        ).encode()
+        send_mock = AsyncMock(side_effect=[first_page, final_page])
+        with_url_mock = MagicMock(
+            side_effect=[
+                SimpleNamespace(
+                    to_get_request_information=MagicMock(return_value="request-1")
+                ),
+                SimpleNamespace(
+                    to_get_request_information=MagicMock(return_value="request-2")
+                ),
+            ]
+        )
+        service.client = SimpleNamespace(
+            policies=SimpleNamespace(with_url=with_url_mock),
+            request_adapter=SimpleNamespace(send_primitive_async=send_mock),
+        )
+
+        settings = asyncio.run(service._get_pim_role_approval_settings())
+
+        assert set(settings) == {
+            "role-unrelated",
+            "role-approval-required",
+            "role-approval-disabled",
+        }
+        assert settings["role-unrelated"].is_approval_required is False
+        assert settings["role-unrelated"].has_approvers is False
+        assert settings["role-approval-required"].is_approval_required is True
+        assert settings["role-approval-required"].has_approvers is True
+        assert settings["role-approval-disabled"].is_approval_required is False
+        assert settings["role-approval-disabled"].has_approvers is False
+        assert send_mock.await_count == 2
+        assert with_url_mock.call_args_list[-1] == call("next-link")
+
+    @pytest.mark.parametrize(
+        "response",
+        [b"", json.dumps({"value": []}).encode()],
+    )
+    def test_stops_on_falsy_or_empty_response(self, response):
+        service = Entra.__new__(Entra)
+        service.client = SimpleNamespace(
+            policies=SimpleNamespace(
+                with_url=MagicMock(
+                    return_value=SimpleNamespace(
+                        to_get_request_information=MagicMock(return_value="request-1")
+                    )
+                )
+            ),
+            request_adapter=SimpleNamespace(
+                send_primitive_async=AsyncMock(return_value=response)
+            ),
+        )
+
+        assert asyncio.run(service._get_pim_role_approval_settings()) == {}
+
+    def test_error_returns_no_role_approval_settings(self):
+        service = Entra.__new__(Entra)
+        service.client = SimpleNamespace(
+            policies=SimpleNamespace(
+                with_url=MagicMock(
+                    return_value=SimpleNamespace(
+                        to_get_request_information=MagicMock(return_value="request-1")
+                    )
+                )
+            ),
+            request_adapter=SimpleNamespace(
+                send_primitive_async=AsyncMock(side_effect=RuntimeError("Graph error"))
+            ),
+        )
+
+        assert asyncio.run(service._get_pim_role_approval_settings()) == {}
+
+
+class TestAuthenticationMethodsPolicySettings:
+    @staticmethod
+    def _service(response=None, error=None):
+        send_mock = AsyncMock(return_value=response, side_effect=error)
+        service = Entra.__new__(Entra)
+        service.client = SimpleNamespace(
+            policies=SimpleNamespace(
+                authentication_methods_policy=SimpleNamespace(
+                    with_url=MagicMock(
+                        return_value=SimpleNamespace(
+                            to_get_request_information=MagicMock(
+                                return_value="request-1"
+                            )
+                        )
+                    )
+                )
+            ),
+            request_adapter=SimpleNamespace(send_primitive_async=send_mock),
+        )
+        return service
+
+    def test_parses_microsoft_authenticator_after_unrelated_configuration(self):
+        response = json.dumps(
+            {
+                "authenticationMethodConfigurations": [
+                    {"id": "Fido2", "state": "enabled"},
+                    {
+                        "id": "MicrosoftAuthenticator",
+                        "state": "enabled",
+                        "featureSettings": {
+                            "displayAppInformationRequiredState": {"state": "enabled"},
+                            "displayLocationInformationRequiredState": {
+                                "state": "disabled"
+                            },
+                        },
+                    },
+                ]
+            }
+        ).encode()
+
+        settings = asyncio.run(
+            self._service(
+                response=response
+            )._get_authentication_methods_policy_settings()
+        )
+
+        assert settings.authenticator_state == "enabled"
+        assert settings.authenticator_display_app_information_state == "enabled"
+        assert settings.authenticator_display_location_information_state == "disabled"
+
+    def test_missing_microsoft_authenticator_returns_unconfigured_model(self):
+        response = json.dumps(
+            {"authenticationMethodConfigurations": [{"id": "Fido2"}]}
+        ).encode()
+
+        settings = asyncio.run(
+            self._service(
+                response=response
+            )._get_authentication_methods_policy_settings()
+        )
+
+        assert settings.authenticator_state is None
+        assert settings.authenticator_display_app_information_state is None
+        assert settings.authenticator_display_location_information_state is None
+
+    def test_falsy_response_returns_none(self):
+        assert (
+            asyncio.run(
+                self._service(
+                    response=b""
+                )._get_authentication_methods_policy_settings()
+            )
+            is None
+        )
+
+    def test_error_returns_none(self):
+        assert (
+            asyncio.run(
+                self._service(
+                    error=RuntimeError("Graph error")
+                )._get_authentication_methods_policy_settings()
+            )
+            is None
+        )
 
 
 async def mock_entra_get_authorization_policy(_):
@@ -196,6 +559,43 @@ async def mock_entra_get_default_app_management_policy(_):
 
 
 class Test_Entra_Service:
+    @staticmethod
+    def _load_b2b_policy(invitation_policy):
+        service = object.__new__(Entra)
+        service.client = MagicMock()
+        service.client.request_adapter.send_primitive_async = AsyncMock(
+            return_value=json.dumps(
+                {
+                    "value": [
+                        {
+                            "definition": [
+                                json.dumps(
+                                    {
+                                        "B2BManagementPolicy": {
+                                            "InvitationsAllowedAndBlockedDomainsPolicy": invitation_policy
+                                        }
+                                    }
+                                )
+                            ]
+                        }
+                    ]
+                }
+            ).encode()
+        )
+        return asyncio.run(service._get_b2b_collaboration_policy())
+
+    def test_get_b2b_policy_empty_allowed_domains_is_restricted(self):
+        policy = self._load_b2b_policy({"AllowedDomains": []})
+
+        assert policy.invitations_restricted_to_allowed_domains is True
+        assert policy.allowed_domains == []
+
+    def test_get_b2b_policy_without_allowed_domains_is_unrestricted(self):
+        policy = self._load_b2b_policy({})
+
+        assert policy.invitations_restricted_to_allowed_domains is False
+        assert policy.allowed_domains == []
+
     def test_get_client(self):
         with patch("prowler.providers.m365.lib.service.service.M365PowerShell"):
             admincenter_client = Entra(
@@ -233,6 +633,25 @@ class Test_Entra_Service:
             entra_client.authorization_policy.guest_user_role_id
             == AuthPolicyRoles.GUEST_USER_ACCESS_RESTRICTED.value
         )
+
+    @pytest.mark.parametrize(
+        "value",
+        ["-00:00:01", "-1.00:00:00", "24:00:00", "00:60:00", "00:00:60"],
+    )
+    def test_parse_timespan_rejects_invalid_component_ranges(self, value):
+        assert Entra._parse_timespan_to_seconds(value) is None
+
+    @pytest.mark.parametrize(
+        ("value", "expected"),
+        [
+            ("00:00:00", 0),
+            ("23:59:59", 86399),
+            ("1.00:00:00", 86400),
+            ("00:00:01.9999999", 1),
+        ],
+    )
+    def test_parse_timespan_accepts_valid_component_boundaries(self, value, expected):
+        assert Entra._parse_timespan_to_seconds(value) == expected
 
     @patch(
         "prowler.providers.m365.services.entra.entra_service.Entra._get_conditional_access_policies",
@@ -697,9 +1116,12 @@ class Test_Entra_Service:
         a descriptive error message naming the missing AuditLog.Read.All permission.
         """
         from msgraph.generated.models.o_data_errors.main_error import MainError
-        from msgraph.generated.models.o_data_errors.o_data_error import ODataError
 
-        odata_error = ODataError()
+        o_data_error = importlib.import_module(
+            "msgraph.generated.models.o_data_errors.o_data_error"
+        )
+
+        odata_error = o_data_error.ODataError()
         odata_error.error = MainError()
         odata_error.error.code = "Authorization_RequestDenied"
 
@@ -722,6 +1144,71 @@ class Test_Entra_Service:
         assert error_message is not None
         assert "AuditLog.Read.All" in error_message
         assert "user registration details" in error_message
+
+    def _mocked_device_registration_entra(self, send_primitive):
+        entra_service = Entra.__new__(Entra)
+        entra_service.client = SimpleNamespace(
+            policies=SimpleNamespace(
+                device_registration_policy=SimpleNamespace(
+                    to_get_request_information=MagicMock(return_value="request-info")
+                )
+            ),
+            request_adapter=SimpleNamespace(send_primitive_async=send_primitive),
+        )
+        return entra_service
+
+    def test__get_device_registration_policy(self):
+        payload = b"""
+        {
+            "id": "deviceRegistrationPolicy",
+            "userDeviceQuota": 50,
+            "azureADJoin": {
+                "allowedToJoin": {
+                    "@odata.type": "#microsoft.graph.allDeviceRegistrationMembership"
+                },
+                "localAdmins": {
+                    "enableGlobalAdmins": true,
+                    "registeringUsers": {
+                        "@odata.type": "#microsoft.graph.enumeratedDeviceRegistrationMembership"
+                    }
+                }
+            },
+            "localAdminPassword": {"isEnabled": false}
+        }
+        """
+        send_primitive = AsyncMock(return_value=payload)
+        entra_service = self._mocked_device_registration_entra(send_primitive)
+
+        policy = asyncio.run(entra_service._get_device_registration_policy())
+
+        assert policy == DeviceRegistrationPolicy(
+            user_device_quota=50,
+            azure_ad_join_allowed_to_join_type=DeviceRegistrationMembershipType.ALL.value,
+            azure_ad_join_global_admins_enabled=True,
+            azure_ad_join_registering_users_type=DeviceRegistrationMembershipType.ENUMERATED.value,
+            local_admin_password_enabled=False,
+        )
+        send_primitive.assert_awaited_once_with("request-info", "bytes", {})
+
+    def test__get_device_registration_policy_missing_fields(self):
+        send_primitive = AsyncMock(return_value=b'{"id": "deviceRegistrationPolicy"}')
+        entra_service = self._mocked_device_registration_entra(send_primitive)
+
+        policy = asyncio.run(entra_service._get_device_registration_policy())
+
+        assert policy == DeviceRegistrationPolicy(
+            user_device_quota=None,
+            azure_ad_join_allowed_to_join_type=None,
+            azure_ad_join_global_admins_enabled=None,
+            azure_ad_join_registering_users_type=None,
+            local_admin_password_enabled=None,
+        )
+
+    def test__get_device_registration_policy_returns_none_on_error(self):
+        send_primitive = AsyncMock(side_effect=Exception("Graph error"))
+        entra_service = self._mocked_device_registration_entra(send_primitive)
+
+        assert asyncio.run(entra_service._get_device_registration_policy()) is None
 
     def test__get_service_principals_filters_third_party_owners(self):
         """Service principals owned by another tenant must not be returned."""
@@ -878,6 +1365,134 @@ class Test_Entra_Service:
         assert merged.password_credentials[0].key_id == "cred-app"
         assert merged.password_credentials[0].display_name == "app-level-secret"
         assert merged.password_credentials[0].is_active()
+
+    def test__get_exchange_mailbox_permission_service_principals(self):
+        """Service principals with Exchange Graph application roles are returned."""
+        graph_sp_id = "graph-sp-id"
+        mail_read_role_id = "11111111-1111-1111-1111-111111111111"
+        user_read_role_id = "22222222-2222-2222-2222-222222222222"
+
+        graph_sp = SimpleNamespace(
+            id=graph_sp_id,
+            display_name="Microsoft Graph",
+            app_id="00000003-0000-0000-c000-000000000000",
+            app_owner_organization_id="f8cdef31-a31e-4b4a-93e4-5f571e91255a",
+            app_roles=[
+                SimpleNamespace(
+                    id=mail_read_role_id,
+                    value="Mail.Read",
+                    allowed_member_types=["Application"],
+                ),
+                SimpleNamespace(
+                    id=user_read_role_id,
+                    value="User.Read.All",
+                    allowed_member_types=["Application"],
+                ),
+            ],
+            account_enabled=True,
+            service_principal_type="Application",
+        )
+        mailbox_app = SimpleNamespace(
+            id="sp-mailbox",
+            display_name="Mailbox App",
+            app_id="app-mailbox",
+            app_owner_organization_id="33333333-3333-3333-3333-333333333333",
+            app_roles=[],
+            account_enabled=True,
+            service_principal_type="Application",
+        )
+        disabled_app = SimpleNamespace(
+            id="sp-disabled",
+            display_name="Disabled App",
+            app_id="app-disabled",
+            app_owner_organization_id="33333333-3333-3333-3333-333333333333",
+            app_roles=[],
+            account_enabled=False,
+            service_principal_type="Application",
+        )
+        first_party_app = SimpleNamespace(
+            id="sp-first-party",
+            display_name="Microsoft App",
+            app_id="app-first-party",
+            app_owner_organization_id="f8cdef31-a31e-4b4a-93e4-5f571e91255a",
+            app_roles=[],
+            account_enabled=True,
+            service_principal_type="Application",
+        )
+
+        app_role_assignments = {
+            "sp-mailbox": SimpleNamespace(
+                value=[
+                    SimpleNamespace(
+                        resource_id=graph_sp_id,
+                        app_role_id=mail_read_role_id,
+                    ),
+                    SimpleNamespace(
+                        resource_id=graph_sp_id,
+                        app_role_id=user_read_role_id,
+                    ),
+                ],
+                odata_next_link=None,
+            )
+        }
+
+        def by_service_principal_id(service_principal_id):
+            return SimpleNamespace(
+                app_role_assignments=SimpleNamespace(
+                    get=AsyncMock(
+                        return_value=app_role_assignments.get(
+                            service_principal_id,
+                            SimpleNamespace(value=[], odata_next_link=None),
+                        )
+                    ),
+                    with_url=MagicMock(),
+                )
+            )
+
+        entra_service = Entra.__new__(Entra)
+        entra_service.client = SimpleNamespace(
+            service_principals=SimpleNamespace(
+                get=AsyncMock(
+                    return_value=SimpleNamespace(
+                        value=[graph_sp, mailbox_app, disabled_app, first_party_app],
+                        odata_next_link=None,
+                    )
+                ),
+                with_url=MagicMock(),
+                by_service_principal_id=MagicMock(side_effect=by_service_principal_id),
+            )
+        )
+
+        result = asyncio.run(
+            entra_service._get_exchange_mailbox_permission_service_principals()
+        )
+
+        assert set(result.keys()) == {"sp-mailbox"}
+        assert result["sp-mailbox"].app_id == "app-mailbox"
+        assert result["sp-mailbox"].exchange_mailbox_permissions == ["Mail.Read"]
+
+    def test__get_exchange_mailbox_permission_service_principals_records_error(self):
+        """
+        Graph collection failures preserve unavailable state separately from empty results.
+        """
+        entra_service = Entra.__new__(Entra)
+        entra_service.client = SimpleNamespace(
+            service_principals=SimpleNamespace(
+                get=AsyncMock(side_effect=RuntimeError("Graph unavailable"))
+            )
+        )
+
+        result = asyncio.run(
+            entra_service._get_exchange_mailbox_permission_service_principals()
+        )
+
+        assert result == {}
+        assert "RuntimeError" in (
+            entra_service.exchange_mailbox_permission_service_principals_error
+        )
+        assert "Graph unavailable" in (
+            entra_service.exchange_mailbox_permission_service_principals_error
+        )
 
     def test__resolve_identifiers_for_type_flags_only_404(self):
         """Only HTTP 404 / Request_ResourceNotFound mark an id as deleted.
@@ -1064,3 +1679,314 @@ class Test_Entra_Service:
         queried_users = {call.args[0] for call in by_user_id.call_args_list}
         assert queried_users == {deleted_user, live_user}
         assert user_builders[deleted_user].get.await_count == 1
+
+    def test__get_named_locations_paginates_through_next_links(self):
+        entra_service = Entra.__new__(Entra)
+
+        page_one = json.dumps(
+            {
+                "value": [
+                    {
+                        "@odata.type": "#microsoft.graph.ipNamedLocation",
+                        "id": "loc-1",
+                        "displayName": "Trusted IPs",
+                        "isTrusted": True,
+                        "ipRanges": [{"cidrAddress": "10.0.0.0/8"}],
+                    }
+                ],
+                "@odata.nextLink": "next-link",
+            }
+        )
+        page_two = json.dumps(
+            {
+                "value": [
+                    {
+                        "@odata.type": "#microsoft.graph.countryNamedLocation",
+                        "id": "loc-2",
+                        "displayName": "Countries",
+                        "isTrusted": False,
+                    }
+                ]
+            }
+        )
+
+        send_mock = AsyncMock(side_effect=[page_one, page_two])
+        next_link_builder = SimpleNamespace(
+            to_get_request_information=MagicMock(return_value="req-info-page-two")
+        )
+        with_url_mock = MagicMock(return_value=next_link_builder)
+        named_locations_builder = SimpleNamespace(
+            to_get_request_information=MagicMock(return_value="req-info-page-one"),
+            with_url=with_url_mock,
+        )
+        entra_service.client = SimpleNamespace(
+            identity=SimpleNamespace(
+                conditional_access=SimpleNamespace(
+                    named_locations=named_locations_builder
+                )
+            ),
+            request_adapter=SimpleNamespace(send_primitive_async=send_mock),
+        )
+
+        named_locations = asyncio.run(entra_service._get_named_locations())
+
+        # Both pages are requested and every entry is accumulated before parsing.
+        assert send_mock.await_count == 2
+        with_url_mock.assert_called_once_with("next-link")
+        assert [loc.id for loc in named_locations] == ["loc-1", "loc-2"]
+        assert named_locations[0].is_ip_location is True
+        assert named_locations[0].ip_ranges_count == 1
+        assert named_locations[1].is_ip_location is False
+        assert named_locations[1].is_trusted is False
+
+    def test__get_named_locations_continues_after_empty_page(self):
+        entra_service = Entra.__new__(Entra)
+        page_one = json.dumps({"value": [], "@odata.nextLink": "next-link"})
+        page_two = json.dumps(
+            {
+                "value": [
+                    {
+                        "@odata.type": "#microsoft.graph.ipNamedLocation",
+                        "id": "loc-2",
+                        "displayName": "Trusted IPs",
+                        "isTrusted": True,
+                        "ipRanges": [{"cidrAddress": "10.0.0.0/8"}],
+                    }
+                ]
+            }
+        )
+        send_mock = AsyncMock(side_effect=[page_one, page_two])
+        next_link_builder = SimpleNamespace(
+            to_get_request_information=MagicMock(return_value="req-info-page-two")
+        )
+        with_url_mock = MagicMock(return_value=next_link_builder)
+        entra_service.client = SimpleNamespace(
+            identity=SimpleNamespace(
+                conditional_access=SimpleNamespace(
+                    named_locations=SimpleNamespace(
+                        to_get_request_information=MagicMock(
+                            return_value="req-info-page-one"
+                        ),
+                        with_url=with_url_mock,
+                    )
+                )
+            ),
+            request_adapter=SimpleNamespace(send_primitive_async=send_mock),
+        )
+
+        named_locations = asyncio.run(entra_service._get_named_locations())
+
+        assert send_mock.await_count == 2
+        with_url_mock.assert_called_once_with("next-link")
+        assert [location.id for location in named_locations] == ["loc-2"]
+
+    def test__get_activity_based_timeout_policies_uses_default_application(self):
+        entra_service = Entra.__new__(Entra)
+        policy = SimpleNamespace(
+            id="policy-1",
+            display_name="Idle timeout",
+            definition=[
+                json.dumps(
+                    {
+                        "ActivityBasedTimeoutPolicy": {
+                            "ApplicationPolicies": [
+                                {
+                                    "ApplicationId": "default",
+                                    "WebSessionIdleTimeout": "05:00:00",
+                                },
+                                {
+                                    "ApplicationId": "00000000-0000-0000-0000-000000000001",
+                                    "WebSessionIdleTimeout": "01:00:00",
+                                },
+                            ]
+                        }
+                    }
+                )
+            ],
+        )
+        entra_service.client = SimpleNamespace(
+            policies=SimpleNamespace(
+                activity_based_timeout_policies=SimpleNamespace(
+                    get=AsyncMock(
+                        return_value=SimpleNamespace(
+                            value=[policy], odata_next_link=None
+                        )
+                    ),
+                    with_url=MagicMock(),
+                )
+            )
+        )
+
+        policies = asyncio.run(entra_service._get_activity_based_timeout_policies())
+
+        assert len(policies) == 1
+        assert policies[0].web_session_idle_timeout_seconds == 5 * 60 * 60
+
+    def test__get_activity_based_timeout_policies_without_default_is_unconfigured(self):
+        entra_service = Entra.__new__(Entra)
+        policy = SimpleNamespace(
+            id="policy-1",
+            display_name="App-specific timeout",
+            definition=[
+                json.dumps(
+                    {
+                        "ActivityBasedTimeoutPolicy": {
+                            "ApplicationPolicies": [
+                                {
+                                    "ApplicationId": "00000000-0000-0000-0000-000000000001",
+                                    "WebSessionIdleTimeout": "01:00:00",
+                                }
+                            ]
+                        }
+                    }
+                )
+            ],
+        )
+        entra_service.client = SimpleNamespace(
+            policies=SimpleNamespace(
+                activity_based_timeout_policies=SimpleNamespace(
+                    get=AsyncMock(
+                        return_value=SimpleNamespace(
+                            value=[policy], odata_next_link=None
+                        )
+                    ),
+                    with_url=MagicMock(),
+                )
+            )
+        )
+
+        policies = asyncio.run(entra_service._get_activity_based_timeout_policies())
+
+        assert len(policies) == 1
+        assert policies[0].web_session_idle_timeout_seconds is None
+
+    def test__get_activity_based_timeout_policies_uses_first_valid_default(self):
+        entra_service = Entra.__new__(Entra)
+
+        def definition(timeout):
+            return json.dumps(
+                {
+                    "ActivityBasedTimeoutPolicy": {
+                        "ApplicationPolicies": [
+                            {
+                                "ApplicationId": "default",
+                                "WebSessionIdleTimeout": timeout,
+                            }
+                        ]
+                    }
+                }
+            )
+
+        policy = SimpleNamespace(
+            id="policy-1",
+            display_name="Idle timeout",
+            definition=[
+                "invalid-json",
+                definition("invalid-timeout"),
+                definition("01:00:00"),
+                definition("02:00:00"),
+            ],
+        )
+        entra_service.client = SimpleNamespace(
+            policies=SimpleNamespace(
+                activity_based_timeout_policies=SimpleNamespace(
+                    get=AsyncMock(
+                        return_value=SimpleNamespace(
+                            value=[policy], odata_next_link=None
+                        )
+                    ),
+                    with_url=MagicMock(),
+                )
+            )
+        )
+
+        policies = asyncio.run(entra_service._get_activity_based_timeout_policies())
+
+        assert len(policies) == 1
+        assert policies[0].web_session_idle_timeout_seconds == 60 * 60
+
+    def test__get_activity_based_timeout_policies_paginates_through_next_links(self):
+        entra_service = Entra.__new__(Entra)
+
+        def policy(policy_id, timeout):
+            return SimpleNamespace(
+                id=policy_id,
+                display_name=policy_id,
+                definition=[
+                    json.dumps(
+                        {
+                            "ActivityBasedTimeoutPolicy": {
+                                "ApplicationPolicies": [
+                                    {
+                                        "ApplicationId": "default",
+                                        "WebSessionIdleTimeout": timeout,
+                                    }
+                                ]
+                            }
+                        }
+                    )
+                ],
+            )
+
+        page_one = SimpleNamespace(
+            value=[policy("policy-1", "01:00:00")],
+            odata_next_link="next-link",
+        )
+        page_two = SimpleNamespace(
+            value=[policy("policy-2", "02:00:00")],
+            odata_next_link=None,
+        )
+        next_page_builder = SimpleNamespace(get=AsyncMock(return_value=page_two))
+        with_url_mock = MagicMock(return_value=next_page_builder)
+        policies_builder = SimpleNamespace(
+            get=AsyncMock(return_value=page_one),
+            with_url=with_url_mock,
+        )
+        entra_service.client = SimpleNamespace(
+            policies=SimpleNamespace(activity_based_timeout_policies=policies_builder)
+        )
+
+        policies = asyncio.run(entra_service._get_activity_based_timeout_policies())
+
+        assert [policy.id for policy in policies] == ["policy-1", "policy-2"]
+        with_url_mock.assert_called_once_with("next-link")
+        next_page_builder.get.assert_awaited_once()
+
+
+class TestGetOAuthApps:
+    @staticmethod
+    def _entra_with_hunting_response(response):
+        service = entra_service.Entra.__new__(entra_service.Entra)
+        post = AsyncMock(return_value=response)
+        service.client = MagicMock()
+        service.client.security.microsoft_graph_security_run_hunting_query.post = post
+        return service
+
+    def test_null_response_returns_none_not_empty(self):
+        """A null hunting response must propagate as None (MANUAL), not {} (PASS)."""
+        service = self._entra_with_hunting_response(None)
+        assert asyncio.run(service._get_oauth_apps()) is None
+
+    def test_empty_results_is_confirmed_empty(self):
+        response = MagicMock()
+        response.results = []
+        service = self._entra_with_hunting_response(response)
+        assert asyncio.run(service._get_oauth_apps()) == {}
+
+
+class TestGetUsersError:
+    def test_users_error_set_on_graph_failure(self):
+        """A failing /users request must set users_error and return no users."""
+        service = entra_service.Entra.__new__(entra_service.Entra)
+        service.users_error = None
+        # SimpleNamespace: check tests assign attributes on the MagicMock
+        # class, which would shadow instance child mocks here.
+        service.client = SimpleNamespace(
+            users=SimpleNamespace(get=AsyncMock(side_effect=Exception("boom")))
+        )
+
+        users = asyncio.run(service._get_users())
+
+        assert users == {}
+        assert service.users_error is not None
+        assert "Unable to retrieve users from Microsoft Graph" in service.users_error

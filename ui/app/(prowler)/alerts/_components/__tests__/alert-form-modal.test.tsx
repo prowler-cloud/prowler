@@ -26,9 +26,24 @@ const alertsActionMocks = vi.hoisted(() => ({
   seedAlertRule: vi.fn(),
 }));
 
+const integrationsActionMocks = vi.hoisted(() => ({
+  getIntegrations: vi.fn(),
+}));
+
+const slackChannelsActionMocks = vi.hoisted(() => ({
+  getAlertSlackChannels: vi.fn(),
+}));
+
 vi.mock(
   "@/app/(prowler)/alerts/_actions/recipients",
   () => recipientsActionMocks,
+);
+
+vi.mock("@/actions/integrations/integrations", () => integrationsActionMocks);
+
+vi.mock(
+  "@/app/(prowler)/alerts/_actions/slack-channels",
+  () => slackChannelsActionMocks,
 );
 
 vi.mock("@/app/(prowler)/alerts/_actions", () => alertsActionMocks);
@@ -40,7 +55,7 @@ vi.mock(
   }),
 );
 
-vi.mock("@/components/ui/entities/entity-info", () => ({
+vi.mock("@/components/shadcn/entities/entity-info", () => ({
   EntityInfo: ({
     entityAlias,
     entityId,
@@ -104,6 +119,7 @@ const mockProviders: ProviderProps[] = [
     type: "providers",
     attributes: {
       provider: "aws",
+      is_dynamic: false,
       uid: "123456789012",
       alias: "Production AWS",
       status: "completed",
@@ -131,6 +147,7 @@ const mockProviders: ProviderProps[] = [
     type: "providers",
     attributes: {
       provider: "gcp",
+      is_dynamic: false,
       uid: "prowler-prod-project",
       alias: "Production GCP",
       status: "completed",
@@ -245,6 +262,16 @@ describe("AlertFormModal", () => {
     recipientsActionMocks.listAlertRecipients.mockReturnValue(
       new Promise(() => {}),
     );
+    integrationsActionMocks.getIntegrations.mockReset();
+    slackChannelsActionMocks.getAlertSlackChannels.mockReset();
+    // Never resolve, like the recipients read above: the field's settled
+    // states are integration-tested, so the unit lane keeps it loading.
+    integrationsActionMocks.getIntegrations.mockReturnValue(
+      new Promise(() => {}),
+    );
+    slackChannelsActionMocks.getAlertSlackChannels.mockReturnValue(
+      new Promise(() => {}),
+    );
     alertsActionMocks.previewAlertCondition.mockReset();
     alertsActionMocks.seedAlertRule.mockReset();
     alertsActionMocks.seedAlertRule.mockResolvedValue({
@@ -277,7 +304,8 @@ describe("AlertFormModal", () => {
     expect(screen.getByLabelText(/^description$/i)).toBeVisible();
     expect(screen.getByLabelText(/^frequency$/i)).toBeVisible();
     expect(screen.getByLabelText(/^recipients$/i)).toBeVisible();
-    expect(screen.getAllByRole("combobox")).toHaveLength(2);
+    // Frequency, Recipients, and the Slack destination channels trigger.
+    expect(screen.getAllByRole("combobox")).toHaveLength(3);
     expect(screen.queryByText("Alert criteria")).not.toBeInTheDocument();
     expect(screen.queryByText(/delivery settings/i)).not.toBeInTheDocument();
     expect(
@@ -443,6 +471,28 @@ describe("AlertFormModal", () => {
     // Then
     const errorMessage = await screen.findByText("Backend validation failed");
     expect(errorMessage).toHaveClass("text-text-error-primary");
+  });
+
+  it("should surface a form error when a field without its own error slot fails validation", async () => {
+    // Given
+    const user = userEvent.setup();
+    const onSubmit = vi
+      .fn()
+      .mockResolvedValue({ ok: true, alertId: "alert-1" });
+    mockRecipientsList();
+    renderCreateModal({ onSubmit });
+
+    // When: paste in one event instead of 2001 keystrokes
+    await user.click(screen.getByLabelText(/^description$/i));
+    await user.paste("x".repeat(2001));
+    await user.click(screen.getByRole("button", { name: /^create$/i }));
+
+    // Then
+    const errorMessage = await screen.findByText(
+      "Fix alert fields before saving.",
+    );
+    expect(errorMessage).toHaveClass("text-text-error-primary");
+    expect(onSubmit).not.toHaveBeenCalled();
   });
 
   it("should reset form defaults when opening a different alert", () => {

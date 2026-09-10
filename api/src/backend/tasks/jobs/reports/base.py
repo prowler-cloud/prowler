@@ -11,7 +11,6 @@ from typing import Any
 from api.db_router import READ_REPLICA_ALIAS
 from api.db_utils import rls_transaction
 from api.models import Provider, StatusChoices
-from api.utils import initialize_prowler_provider
 from celery.utils.log import get_task_logger
 from prowler.lib.check.compliance_models import (
     Compliance,
@@ -52,6 +51,7 @@ from .config import (
     PADDING_SMALL,
     FrameworkConfig,
 )
+from .provider_metadata import build_provider_metadata
 
 logger = get_task_logger(__name__)
 
@@ -178,7 +178,8 @@ class ComplianceData:
         attributes_by_requirement_id: Mapping of requirement IDs to their attributes
         findings_by_check_id: Mapping of check IDs to their findings
         provider_obj: Provider model object
-        prowler_provider: Initialized Prowler provider
+        prowler_provider: Credential-free provider metadata stub (see
+            ``build_provider_metadata``)
     """
 
     tenant_id: str
@@ -439,10 +440,10 @@ class BaseComplianceReportGenerator(ABC):
             provider_obj: Optional pre-fetched Provider object
             requirement_statistics: Optional pre-aggregated statistics
             findings_cache: Optional pre-loaded findings cache
-            prowler_provider: Optional pre-initialized Prowler provider. When
-                generating multiple reports for the same scan the master
-                function initializes this once and passes it in to avoid
-                re-running boto3/Azure-SDK setup per framework.
+            prowler_provider: Optional provider metadata stub (see
+                ``build_provider_metadata``). When generating multiple
+                reports for the same scan the master function builds it
+                once and passes it in.
             **kwargs: Additional framework-specific arguments
         """
         framework = self.config.display_name
@@ -896,9 +897,9 @@ class BaseComplianceReportGenerator(ABC):
             provider_obj: Optional pre-fetched Provider
             requirement_statistics: Optional pre-aggregated statistics
             findings_cache: Optional pre-loaded findings
-            prowler_provider: Optional pre-initialized Prowler provider. When
-                the master function initializes it once and passes it in,
-                we skip the per-report ``initialize_prowler_provider`` call.
+            prowler_provider: Optional provider metadata stub. When the
+                master function builds it once and passes it in, we skip
+                the per-report ``build_provider_metadata`` call.
 
         Returns:
             Aggregated ComplianceData object
@@ -909,7 +910,7 @@ class BaseComplianceReportGenerator(ABC):
                 provider_obj = Provider.objects.get(id=provider_id)
 
             if prowler_provider is None:
-                prowler_provider = initialize_prowler_provider(provider_obj)
+                prowler_provider = build_provider_metadata(provider_obj)
             provider_type = provider_obj.provider
 
             # Load compliance framework — fall back to the universal loader

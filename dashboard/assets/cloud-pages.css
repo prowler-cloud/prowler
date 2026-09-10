@@ -1,0 +1,389 @@
+/*
+ * Prowler Local Dashboard — Cloud upsell chrome & gated pages.
+ * These styles are self-contained (not dependent on the precompiled Tailwind
+ * bundle) so pixel specs from the PRD render reliably without a rebuild.
+ */
+
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+
+:root {
+  --pc-btn: #6ee7b7;
+  --pc-btn-hover: #99f6e4;
+  --pc-btn-press: #34d399;
+  --pc-grad-start: #2ee59b;
+  --pc-grad-end: #62dff0;
+  --pc-text: #020617;
+  --pc-text-2: #27272a;
+  --pc-sidebar-bg: #27272a;
+  --pc-pane-bg: #fdfdfd;
+  --pc-border: #e5e5e5;
+  --pc-teal-accent: #2ee59b;
+  --pc-sidebar-w: 264px;
+  --pc-sidebar-w-collapsed: 82px;
+}
+
+.pc-font {
+  font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto,
+    Helvetica, Arial, sans-serif;
+}
+
+/* ----------------------------------------------------------------- Shell */
+
+.pc-shell {
+  display: flex;
+  height: 100vh;
+  width: 100%;
+  overflow: hidden;
+}
+
+.pc-main {
+  flex: 1 1 auto;
+  height: 100vh;
+  overflow-y: auto;
+  background: var(--pc-pane-bg);
+}
+
+.pc-main-inner {
+  padding: 28px 40px 64px;
+}
+
+/* --------------------------------------------------------------- Sidebar */
+
+.pc-sidebar {
+  flex: 0 0 var(--pc-sidebar-w);
+  width: var(--pc-sidebar-w);
+  background: var(--pc-sidebar-bg);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: 22px 0 16px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.pc-sidebar::-webkit-scrollbar {
+  display: none;
+}
+
+.pc-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 18px;
+  margin-bottom: 22px;
+}
+
+.pc-brand-lockup {
+  width: 190px;
+  height: auto;
+  display: block;
+}
+
+/* Compact mark is only revealed on the collapsed icon rail (see media query). */
+.pc-brand-mark {
+  width: 30px;
+  height: 30px;
+  flex: 0 0 auto;
+  display: none;
+}
+
+.pc-section {
+  color: #8a8a90;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  padding: 0 18px;
+  margin: 18px 0 8px;
+}
+
+.pc-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pc-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  margin: 0 8px;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  border-radius: 8px;
+  border-left: 3px solid transparent;
+  overflow: hidden;
+  transition: background 0.15s ease;
+}
+
+.pc-nav-item:hover {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.pc-nav-item.pc-active {
+  background: rgba(255, 255, 255, 0.09);
+  border-left-color: var(--pc-teal-accent);
+}
+
+.pc-nav-label {
+  flex: 0 1 auto;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Icon rendered as a recolorable mask so one asset serves any color. */
+.pc-ico {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
+  display: inline-block;
+  background-color: currentColor;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+}
+
+.pc-pill {
+  flex: 0 0 auto;
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  background: linear-gradient(
+    112deg,
+    var(--pc-grad-start) 3.5%,
+    var(--pc-grad-end) 98.8%
+  );
+  color: var(--pc-text);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  padding: 3px 8px;
+  border-radius: 9999px;
+  white-space: nowrap;
+}
+
+.pc-footer {
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* -------------------------------------------------------- Gated page body */
+
+.pc-page {
+  max-width: 1120px;
+  margin: 0 auto;
+}
+
+.pc-page-header {
+  border-bottom: 1px solid var(--pc-border);
+  padding-bottom: 18px;
+  margin-bottom: 28px;
+}
+
+.pc-page-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* In the page header the badge sits right next to the title (not pushed to the
+   far right like the sidebar pills) and is uppercased for emphasis. */
+.pc-page-title-row .pc-pill {
+  margin-left: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.pc-page-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--pc-text);
+  margin: 0;
+}
+
+.pc-page-subtitle {
+  font-size: 15px;
+  line-height: 24px;
+  color: #52525b;
+  margin: 8px 0 0;
+}
+
+/* ----------------------------------------------------------- Upgrade card */
+
+.pc-card {
+  position: relative;
+  background: #ffffff;
+  border: 1px solid var(--pc-border);
+  border-radius: 18px;
+  padding: 56px 40px;
+  overflow: hidden;
+}
+
+.pc-card-glow {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 560px;
+  height: 240px;
+  background: radial-gradient(
+    ellipse at top,
+    rgba(46, 229, 155, 0.2),
+    rgba(98, 223, 240, 0.06) 45%,
+    transparent 72%
+  );
+  pointer-events: none;
+}
+
+.pc-card-body {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.pc-feature-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  background: linear-gradient(
+    135deg,
+    rgba(46, 229, 155, 0.16),
+    rgba(98, 223, 240, 0.14)
+  );
+  border: 1px solid rgba(46, 229, 155, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--pc-text);
+  margin-bottom: 22px;
+}
+
+.pc-feature-icon .pc-ico {
+  width: 30px;
+  height: 30px;
+}
+
+.pc-avail {
+  color: #0e9f6e;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.pc-card-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--pc-text);
+  margin: 0 0 14px;
+}
+
+.pc-card-desc {
+  font-size: 15px;
+  line-height: 24px;
+  color: var(--pc-text-2);
+  max-width: 560px;
+  margin: 0 0 26px;
+}
+
+.pc-benefits {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 30px;
+  text-align: left;
+}
+
+.pc-benefit {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 7px 0;
+  font-size: 15px;
+  line-height: 22px;
+  color: var(--pc-text-2);
+}
+
+.pc-benefit-check {
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  color: var(--pc-btn-press);
+}
+
+.pc-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--pc-btn);
+  color: var(--pc-text);
+  font-size: 15px;
+  font-weight: 700;
+  padding: 12px 24px;
+  border-radius: 12px;
+  border: 1px solid var(--pc-btn-press);
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.pc-cta:hover {
+  background: var(--pc-btn-hover);
+  color: var(--pc-text);
+}
+
+.pc-cta:active {
+  background: var(--pc-btn-press);
+}
+
+/* --------------------------------------------------- Responsive collapse */
+
+@media (max-width: 900px) {
+  .pc-sidebar {
+    flex-basis: var(--pc-sidebar-w-collapsed);
+    width: var(--pc-sidebar-w-collapsed);
+  }
+
+  .pc-brand {
+    justify-content: center;
+    padding: 0 8px;
+  }
+
+  .pc-brand-lockup {
+    display: none;
+  }
+
+  .pc-brand-mark {
+    display: block;
+  }
+
+  .pc-section,
+  .pc-nav-label,
+  .pc-pill {
+    display: none;
+  }
+
+  .pc-nav-item {
+    justify-content: center;
+    margin: 0 6px;
+    padding: 10px 0;
+  }
+
+  .pc-main-inner {
+    padding: 20px 18px 48px;
+  }
+}

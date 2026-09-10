@@ -1,5 +1,8 @@
+import { adaptFindingTriageSummariesResponse } from "@/actions/findings/findings-triage.adapter";
+import { getFindingTriageAdapterOptions } from "@/actions/findings/findings-triage.options";
 import { createDict } from "@/lib";
 import type { ProviderType, Severity } from "@/types";
+import type { FindingTriageSummary } from "@/types/findings-triage";
 
 export interface RemediationRecommendation {
   text: string;
@@ -49,6 +52,7 @@ export interface ResourceDrawerFinding {
   mutedReason: string | null;
   firstSeenAt: string | null;
   updatedAt: string | null;
+  triage?: FindingTriageSummary;
   // Resource
   resourceId: string;
   resourceUid: string;
@@ -195,8 +199,12 @@ export function adaptFindingsByResourceResponse(
   const findings = Array.isArray(apiResponse.data)
     ? apiResponse.data
     : [apiResponse.data];
+  const triageSummaries = adaptFindingTriageSummariesResponse(
+    { ...apiResponse, data: findings },
+    getFindingTriageAdapterOptions(),
+  );
 
-  return findings.map((item) => {
+  return findings.map((item, index) => {
     const attrs = item.attributes;
     const meta = (attrs.check_metadata || {}) as Record<string, unknown>;
     const remediationRaw = meta.remediation as
@@ -254,6 +262,7 @@ export function adaptFindingsByResourceResponse(
       mutedReason: attrs.muted_reason || null,
       firstSeenAt: attrs.first_seen_at || null,
       updatedAt: attrs.updated_at || null,
+      triage: triageSummaries[index],
       // Resource
       resourceId: resourceRel?.id || "",
       resourceUid: (resourceAttrs.uid as string | undefined) || "-",

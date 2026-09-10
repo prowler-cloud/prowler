@@ -1,14 +1,38 @@
-import react from "@vitejs/plugin-react";
+import react, { type BabelOptions } from "@vitejs/plugin-react";
 import { playwright } from "@vitest/browser-playwright";
+import fs from "fs";
 import path from "path";
 import type { TestProjectConfiguration } from "vitest/config";
 import { defineConfig } from "vitest/config";
+
+/**
+ * Next runs the React Compiler on the client compilation only — its
+ * `getReactCompilerPlugins` returns nothing when `isServer` — so a Server
+ * Component ships uncompiled. Mirror that: compiled, it calls `useMemoCache`
+ * on the active dispatcher, which a harness invoking the component as a
+ * function has none of, and `react/compiler-runtime` reads the client
+ * internals the `react-server` build does not export anyway.
+ */
+const isServerModule = (id: string): boolean => {
+  const file = id.split("?")[0];
+  if (!file.includes("/app/")) return false;
+  try {
+    return !/^\s*["']use client["']/.test(fs.readFileSync(file, "utf8"));
+  } catch {
+    return false;
+  }
+};
+
+const reactCompilerBabel = (id: string): BabelOptions => ({
+  plugins: isServerModule(id)
+    ? []
+    : [["babel-plugin-react-compiler", { target: "19" }]],
+});
 
 export default defineConfig(() => {
   const apiBaseUrl = process.env.UI_API_BASE_URL ?? "http://localhost/api/v1";
 
   return {
-    plugins: [react()],
     resolve: {
       alias: {
         "@": path.resolve(__dirname, "./"),
@@ -28,16 +52,21 @@ export default defineConfig(() => {
           ".next",
           "tests/**/*",
           "**/*.test.{ts,tsx}",
-          "**/*.browser.test.{ts,tsx}",
+          "**/*.integration.test.{ts,tsx}",
           "vitest.config.ts",
           "vitest.setup.ts",
-          "vitest.browser.setup.ts",
+          "vitest.integration.setup.ts",
           "__tests__/**/*",
         ],
       },
       projects: [
         {
           extends: true,
+          // Unit (jsdom) suite runs without the React Compiler: enabling it
+          // breaks async Server Components (`useMemoCache` on a null
+          // dispatcher) and some form-validation renders. Only the browser
+          // suite below needs it.
+          plugins: [react()],
           test: {
             name: "unit",
             environment: "jsdom",
@@ -47,16 +76,17 @@ export default defineConfig(() => {
               "node_modules",
               ".next",
               "tests/**/*",
-              "**/*.browser.test.{ts,tsx}",
+              "**/*.integration.test.{ts,tsx}",
             ],
           },
         },
         {
           extends: true,
+          plugins: [react({ babel: reactCompilerBabel })],
           test: {
-            name: "browser",
-            setupFiles: ["./vitest.browser.setup.ts"],
-            include: ["**/*.browser.test.{ts,tsx}"],
+            name: "integration",
+            setupFiles: ["./vitest.integration.setup.ts"],
+            include: ["**/*.integration.test.{ts,tsx}"],
             exclude: ["node_modules", ".next", "tests/**/*"],
             browser: {
               enabled: true,
@@ -88,34 +118,34 @@ export default defineConfig(() => {
       // Without this, Vite optimizes them on demand at the first request and
       // reloads the page, killing the test run. Keep this list aligned with
       // imports through the page's render tree.
+      // Kept identical to the prowler-cloud overlay's list so it stops
+      // re-conflicting on sync; an entry with no importer here is deliberate.
       include: [
         // Test stack
         "vitest-browser-react",
         "msw/browser",
 
+        // React runtime (pre-bundle so a cold run doesn't re-optimize and
+        // reload mid-test — see the on-demand-reload note above).
+        "react-dom/client",
+        // What the compiler's output imports. `@vitejs/plugin-react` adds it
+        // itself only when `babel` is a plain object, and ours is a function.
+        "react/compiler-runtime",
+
         // Next runtime
+        "next/headers",
         "next/navigation",
         "next/link",
         "next/image",
         "next/cache",
         "next/server",
+        "next/dynamic",
         "next-auth",
         "next-auth/react",
         "next-auth/providers/credentials",
         "next-themes",
 
         // App component lib
-        "@heroui/react",
-        "@heroui/accordion",
-        "@heroui/breadcrumbs",
-        "@heroui/card",
-        "@heroui/chip",
-        "@heroui/divider",
-        "@heroui/input",
-        "@heroui/switch",
-        "@heroui/theme",
-        "@heroui/tooltip",
-        "@heroui/use-clipboard",
         "@iconify/react",
 
         // Radix
@@ -128,14 +158,17 @@ export default defineConfig(() => {
         "@radix-ui/react-icons",
         "@radix-ui/react-label",
         "@radix-ui/react-popover",
+        "@radix-ui/react-progress",
         "@radix-ui/react-radio-group",
         "@radix-ui/react-scroll-area",
         "@radix-ui/react-select",
         "@radix-ui/react-separator",
+        "@radix-ui/react-switch",
         "@radix-ui/react-tabs",
         "@radix-ui/react-toast",
         "@radix-ui/react-tooltip",
         "@radix-ui/react-slot",
+        "@radix-ui/react-use-controllable-state",
 
         // Graph
         "@xyflow/react",
@@ -147,23 +180,23 @@ export default defineConfig(() => {
         "zod",
         "zustand",
         "zustand/middleware",
+        "zustand/vanilla",
 
         // Styling helpers
         "lucide-react",
         "clsx",
         "tailwind-merge",
         "class-variance-authority",
-        "tailwind-variants",
 
         // App-level deps the page (or its children) pull in
         "@tanstack/react-table",
         "@react-aria/ssr",
         "@react-aria/visually-hidden",
-        "modern-screenshot",
         "framer-motion",
-        "vaul",
         "cmdk",
+        "driver.js",
         "react-markdown",
+        "streamdown",
         "jwt-decode",
         "date-fns",
         "js-yaml",
@@ -173,6 +206,7 @@ export default defineConfig(() => {
         "@uiw/react-codemirror",
         "@sentry/nextjs",
         "@extractus/feed-extractor",
+        "@stripe/stripe-js",
       ],
     },
   };

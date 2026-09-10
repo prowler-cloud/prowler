@@ -14,6 +14,7 @@ from tests.providers.azure.azure_fixtures import (
 class Test_defender_container_images_scan_enabled:
     def test_defender_no_subscriptions(self):
         defender_client = mock.MagicMock
+        defender_client.resource_groups = {}
         defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         defender_client.pricings = {}
 
@@ -37,6 +38,7 @@ class Test_defender_container_images_scan_enabled:
 
     def test_defender_subscription_empty(self):
         defender_client = mock.MagicMock
+        defender_client.resource_groups = {}
         defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         defender_client.pricings = {AZURE_SUBSCRIPTION_ID: {}}
 
@@ -60,6 +62,7 @@ class Test_defender_container_images_scan_enabled:
 
     def test_defender_subscription_no_containers(self):
         defender_client = mock.MagicMock
+        defender_client.resource_groups = {}
         defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         defender_client.pricings = {
             AZURE_SUBSCRIPTION_ID: {
@@ -92,6 +95,7 @@ class Test_defender_container_images_scan_enabled:
 
     def test_defender_subscription_containers_no_extensions(self):
         defender_client = mock.MagicMock
+        defender_client.resource_groups = {}
         defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         defender_client.pricings = {
             AZURE_SUBSCRIPTION_ID: {
@@ -137,6 +141,7 @@ class Test_defender_container_images_scan_enabled:
 
     def test_defender_subscription_containers_container_images_scan_off(self):
         defender_client = mock.MagicMock
+        defender_client.resource_groups = {}
         defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         defender_client.pricings = {
             AZURE_SUBSCRIPTION_ID: {
@@ -182,6 +187,7 @@ class Test_defender_container_images_scan_enabled:
 
     def test_defender_subscription_containers_container_images_scan_on(self):
         defender_client = mock.MagicMock
+        defender_client.resource_groups = {}
         defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         defender_client.pricings = {
             AZURE_SUBSCRIPTION_ID: {

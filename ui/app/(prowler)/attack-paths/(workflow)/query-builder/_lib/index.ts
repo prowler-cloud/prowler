@@ -4,11 +4,14 @@ export {
   getNodeBorderColor,
   getNodeColor,
   GRAPH_ALERT_BORDER_COLOR,
+  GRAPH_COUNT_BADGE_STROKE_COLOR,
   GRAPH_EDGE_COLOR_DARK,
   GRAPH_EDGE_COLOR_LIGHT,
   GRAPH_EDGE_HIGHLIGHT_COLOR,
   GRAPH_NODE_BORDER_COLORS,
   GRAPH_NODE_COLORS,
+  GRAPH_OUTCOME_BORDER_COLOR,
+  GRAPH_OUTCOME_FILL_COLOR,
   GRAPH_SELECTION_COLOR,
   resolveNodeColors,
 } from "./graph-colors";
@@ -18,6 +21,7 @@ export {
   resolveHiddenFindingIds,
 } from "./graph-utils";
 export { layoutWithDagre } from "./layout";
+export { isProwlerFindingLabel, isProwlerFindingNode } from "./node-types";
 export {
   NODE_CATEGORY,
   type NodeCategory,

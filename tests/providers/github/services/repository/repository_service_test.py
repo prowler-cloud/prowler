@@ -1,9 +1,12 @@
 from datetime import datetime, timezone
 from unittest.mock import MagicMock, patch
 
+import pytest
 import requests
 from github import GithubException, RateLimitExceededException
+from pytest import raises
 
+from prowler.providers.github.models import GithubAppIdentityInfo
 from prowler.providers.github.services.repository.repository_service import (
     Branch,
     Repo,
@@ -434,7 +437,7 @@ class Test_Repository_ErrorHandling:
                 assert any("Access denied" in msg for msg in log_messages)
 
     def test_rate_limit_error_handling(self):
-        """Test that rate limit errors are logged appropriately"""
+        """Test that rate limit errors propagate out of _list_repositories"""
         provider = set_mocked_github_provider()
         provider.repositories = ["owner/repo1"]
         provider.organizations = []
@@ -451,20 +454,13 @@ class Test_Repository_ErrorHandling:
             repository_service.clients = [mock_client]
             repository_service.provider = provider
 
-            with patch(
-                "prowler.providers.github.lib.service.service.logger"
-            ) as mock_logger:
-                # Rate limit errors should be caught and logged at the outer level
-                repos = repository_service._list_repositories()
-
-                # Should be empty due to rate limit error
-                assert len(repos) == 0
-                # Should log rate limit error
-                mock_logger.error.assert_called()
-                assert "Rate limit exceeded" in str(mock_logger.error.call_args)
+            # Rate limits are transient: the scan must abort rather than
+            # continue with an incomplete repository set
+            with pytest.raises(RateLimitExceededException):
+                repository_service._list_repositories()
 
 
-class Test_Repository_DismissStaleReviewsRulesets:
+class Test_Repository_BranchProtectionRulesets:
     def setup_method(self):
         self.repository_service = Repository.__new__(Repository)
         self.repository_service.provider = set_mocked_github_provider()
@@ -550,6 +546,27 @@ class Test_Repository_DismissStaleReviewsRulesets:
             ],
         }
 
+    def _build_ruleset(
+        self,
+        *,
+        enforcement,
+        include,
+        rules,
+        bypass_actors=None,
+        ruleset_id=201,
+    ):
+        return {
+            "id": ruleset_id,
+            "name": "Branch protection ruleset",
+            "target": "branch",
+            "source_type": "Repository",
+            "source": "owner1/repo1",
+            "enforcement": enforcement,
+            "bypass_actors": bypass_actors or [],
+            "conditions": {"ref_name": {"include": include, "exclude": []}},
+            "rules": rules,
+        }
+
     def test_process_repository_uses_classic_branch_protection(self):
         repo = self._build_repo(branch_protected=True, dismiss_stale_reviews=True)
         repos = {}
@@ -606,3 +623,736 @@ class Test_Repository_DismissStaleReviewsRulesets:
         assert (
             repos[1].default_branch.dismiss_stale_reviews_source == "ruleset_not_active"
         )
+
+    def test_ruleset_non_fast_forward_disallows_force_push(self):
+        repo = self._build_repo(
+            branch_protected=False,
+            ruleset_details=[
+                self._build_ruleset(
+                    enforcement="active",
+                    include=["~DEFAULT_BRANCH"],
+                    rules=[{"type": "non_fast_forward"}],
+                )
+            ],
+        )
+        repos = {}
+
+        self.repository_service._process_repository(repo, repos)
+
+        assert repos[1].default_branch.allow_force_pushes is False
+        assert repos[1].default_branch.allow_force_pushes_source == "ruleset"
+
+    def test_ruleset_non_fast_forward_inactive_keeps_force_push_allowed(self):
+        repo = self._build_repo(
+            branch_protected=False,
+            ruleset_details=[
+                self._build_ruleset(
+                    enforcement="disabled",
+                    include=["~DEFAULT_BRANCH"],
+                    rules=[{"type": "non_fast_forward"}],
+                )
+            ],
+        )
+        repos = {}
+
+        self.repository_service._process_repository(repo, repos)
+
+        assert repos[1].default_branch.allow_force_pushes is True
+        assert repos[1].default_branch.allow_force_pushes_source == "ruleset_not_active"
+
+    def test_classic_protection_takes_precedence_over_inactive_ruleset(self):
+        # Classic protection already disallows force pushes, so an inactive ruleset
+        # must not downgrade the result.
+        repo = self._build_repo(
+            branch_protected=True,
+            ruleset_details=[
+                self._build_ruleset(
+                    enforcement="disabled",
+                    include=["~DEFAULT_BRANCH"],
+                    rules=[{"type": "non_fast_forward"}],
+                )
+            ],
+        )
+        repos = {}
+
+        self.repository_service._process_repository(repo, repos)
+
+        assert repos[1].default_branch.allow_force_pushes is False
+        assert repos[1].default_branch.allow_force_pushes_source == "classic"
+
+    def test_ruleset_required_signatures_requires_signed_commits(self):
+        repo = self._build_repo(
+            branch_protected=False,
+            ruleset_details=[
+                self._build_ruleset(
+                    enforcement="active",
+                    include=["~DEFAULT_BRANCH"],
+                    rules=[{"type": "required_signatures"}],
+                )
+            ],
+        )
+        repos = {}
+
+        self.repository_service._process_repository(repo, repos)
+
+        assert repos[1].default_branch.require_signed_commits is True
+        assert repos[1].default_branch.require_signed_commits_source == "ruleset"
+
+    def test_ruleset_required_linear_history(self):
+        repo = self._build_repo(
+            branch_protected=False,
+            ruleset_details=[
+                self._build_ruleset(
+                    enforcement="active",
+                    include=["~DEFAULT_BRANCH"],
+                    rules=[{"type": "required_linear_history"}],
+                )
+            ],
+        )
+        repos = {}
+
+        self.repository_service._process_repository(repo, repos)
+
+        assert repos[1].default_branch.required_linear_history is True
+        assert repos[1].default_branch.required_linear_history_source == "ruleset"
+
+    def test_ruleset_required_status_checks(self):
+        repo = self._build_repo(
+            branch_protected=False,
+            ruleset_details=[
+                self._build_ruleset(
+                    enforcement="active",
+                    include=["~DEFAULT_BRANCH"],
+                    rules=[
+                        {
+                            "type": "required_status_checks",
+                            "parameters": {
+                                "required_status_checks": [{"context": "ci/build"}],
+                                "strict_required_status_checks_policy": True,
+                            },
+                        }
+                    ],
+                )
+            ],
+        )
+        repos = {}
+
+        self.repository_service._process_repository(repo, repos)
+
+        assert repos[1].default_branch.status_checks is True
+        assert repos[1].default_branch.status_checks_source == "ruleset"
+
+    def test_ruleset_required_status_checks_without_configured_checks(self):
+        # A required_status_checks rule with an empty list enforces nothing, so it
+        # must not be treated as a passing status-checks requirement.
+        repo = self._build_repo(
+            branch_protected=False,
+            ruleset_details=[
+                self._build_ruleset(
+                    enforcement="active",
+                    include=["~DEFAULT_BRANCH"],
+                    rules=[
+                        {
+                            "type": "required_status_checks",
+                            "parameters": {
+                                "required_status_checks": [],
+                                "strict_required_status_checks_policy": True,
+                            },
+                        }
+                    ],
+                )
+            ],
+        )
+        repos = {}
+
+        self.repository_service._process_repository(repo, repos)
+
+        assert repos[1].default_branch.status_checks is False
+        assert repos[1].default_branch.status_checks_source is None
+
+    def test_ruleset_deletion_disables_branch_deletion(self):
+        repo = self._build_repo(
+            branch_protected=False,
+            ruleset_details=[
+                self._build_ruleset(
+                    enforcement="active",
+                    include=["~DEFAULT_BRANCH"],
+                    rules=[{"type": "deletion"}],
+                )
+            ],
+        )
+        repos = {}
+
+        self.repository_service._process_repository(repo, repos)
+
+        assert repos[1].default_branch.branch_deletion is False
+        assert repos[1].default_branch.branch_deletion_source == "ruleset"
+
+    def test_active_ruleset_marks_default_branch_protected(self):
+        repo = self._build_repo(
+            branch_protected=False,
+            ruleset_details=[
+                self._build_ruleset(
+                    enforcement="active",
+                    include=["~DEFAULT_BRANCH"],
+                    rules=[{"type": "non_fast_forward"}],
+                )
+            ],
+        )
+        repos = {}
+
+        self.repository_service._process_repository(repo, repos)
+
+        assert repos[1].default_branch.protected is True
+        assert repos[1].default_branch.protected_source == "ruleset"
+
+    def test_ruleset_pull_request_parameters_map_to_attributes(self):
+        repo = self._build_repo(
+            branch_protected=False,
+            ruleset_details=[
+                self._build_ruleset(
+                    enforcement="active",
+                    include=["~DEFAULT_BRANCH"],
+                    rules=[
+                        {
+                            "type": "pull_request",
+                            "parameters": {
+                                "dismiss_stale_reviews_on_push": False,
+                                "require_code_owner_review": True,
+                                "require_last_push_approval": False,
+                                "required_approving_review_count": 2,
+                                "required_review_thread_resolution": True,
+                            },
+                        }
+                    ],
+                )
+            ],
+        )
+        repos = {}
+
+        self.repository_service._process_repository(repo, repos)
+
+        branch = repos[1].default_branch
+        assert branch.require_pull_request is True
+        assert branch.require_pull_request_source == "ruleset"
+        assert branch.require_code_owner_reviews is True
+        assert branch.require_code_owner_reviews_source == "ruleset"
+        assert branch.conversation_resolution is True
+        assert branch.conversation_resolution_source == "ruleset"
+        assert branch.approval_count == 2
+        assert branch.approval_count_source == "ruleset"
+
+    def test_inactive_ruleset_approval_count_is_fail_signal(self):
+        repo = self._build_repo(
+            branch_protected=False,
+            ruleset_details=[
+                self._build_ruleset(
+                    enforcement="disabled",
+                    include=["~DEFAULT_BRANCH"],
+                    rules=[
+                        {
+                            "type": "pull_request",
+                            "parameters": {
+                                "required_approving_review_count": 2,
+                            },
+                        }
+                    ],
+                )
+            ],
+        )
+        repos = {}
+
+        self.repository_service._process_repository(repo, repos)
+
+        assert repos[1].default_branch.approval_count == 0
+        assert repos[1].default_branch.approval_count_source == "ruleset_not_active"
+
+    def test_active_ruleset_without_bypass_actors_applies_to_admins(self):
+        repo = self._build_repo(
+            branch_protected=False,
+            ruleset_details=[
+                self._build_ruleset(
+                    enforcement="active",
+                    include=["~DEFAULT_BRANCH"],
+                    rules=[{"type": "non_fast_forward"}],
+                    bypass_actors=[],
+                )
+            ],
+        )
+        repos = {}
+
+        self.repository_service._process_repository(repo, repos)
+
+        assert repos[1].default_branch.enforce_admins is True
+        assert repos[1].default_branch.enforce_admins_source == "ruleset"
+
+    def test_active_ruleset_with_bypass_actors_does_not_apply_to_admins(self):
+        repo = self._build_repo(
+            branch_protected=False,
+            ruleset_details=[
+                self._build_ruleset(
+                    enforcement="active",
+                    include=["~DEFAULT_BRANCH"],
+                    rules=[{"type": "non_fast_forward"}],
+                    bypass_actors=[
+                        {
+                            "actor_id": 1,
+                            "actor_type": "RepositoryRole",
+                            "bypass_mode": "always",
+                        }
+                    ],
+                )
+            ],
+        )
+        repos = {}
+
+        self.repository_service._process_repository(repo, repos)
+
+        # Admins can bypass, so the rulesets do not enforce protection for them.
+        assert repos[1].default_branch.enforce_admins is False
+        assert repos[1].default_branch.enforce_admins_source is None
+
+    def test_inactive_ruleset_with_bypass_actors_is_not_admin_fail_signal(self):
+        # A disabled ruleset that has bypass actors would not apply to admins even if
+        # activated, so it must not raise the enforce-admins ruleset_not_active signal.
+        repo = self._build_repo(
+            branch_protected=False,
+            ruleset_details=[
+                self._build_ruleset(
+                    enforcement="disabled",
+                    include=["~DEFAULT_BRANCH"],
+                    rules=[{"type": "non_fast_forward"}],
+                    bypass_actors=[
+                        {
+                            "actor_id": 1,
+                            "actor_type": "RepositoryRole",
+                            "bypass_mode": "always",
+                        }
+                    ],
+                )
+            ],
+        )
+        repos = {}
+
+        self.repository_service._process_repository(repo, repos)
+
+        assert repos[1].default_branch.enforce_admins is False
+        assert repos[1].default_branch.enforce_admins_source is None
+        # The branch is still reported as protected-but-inactive regardless of bypass.
+        assert repos[1].default_branch.protected_source == "ruleset_not_active"
+
+
+class Test_Repository_Default_Workflow_Permissions:
+    def setup_method(self):
+        """Build a Repository service instance without contacting GitHub."""
+        self.repository_service = Repository.__new__(Repository)
+        self.repository_service.provider = set_mocked_github_provider()
+
+    def _mock_repo(self):
+        """Create a mocked PyGithub repository."""
+        repo = MagicMock()
+        repo.full_name = "account-name/repo1"
+        return repo
+
+    def test_default_workflow_permissions_read(self):
+        """Test that the default workflow permissions value is read from the API response."""
+        repo = self._mock_repo()
+        repo._requester.requestJsonAndCheck.return_value = (
+            {},
+            {"default_workflow_permissions": "read"},
+        )
+
+        assert (
+            self.repository_service._get_default_workflow_permissions(repo) == "read"
+        ), "The repository default GITHUB_TOKEN permissions should be read from the Actions permissions endpoint"
+
+    def test_default_workflow_permissions_missing_field(self):
+        """Test that a response without the permissions field yields no value."""
+        repo = self._mock_repo()
+        repo._requester.requestJsonAndCheck.return_value = ({}, {})
+
+        assert (
+            self.repository_service._get_default_workflow_permissions(repo) is None
+        ), "An unexpected response payload should not be reported as a permissions value"
+
+    def test_default_workflow_permissions_unsupported_value(self):
+        """Test that a value outside read/write is treated as unknown rather than a failure."""
+        repo = self._mock_repo()
+        repo._requester.requestJsonAndCheck.return_value = (
+            {},
+            {"default_workflow_permissions": "none"},
+        )
+
+        assert (
+            self.repository_service._get_default_workflow_permissions(repo) is None
+        ), "An unsupported permissions value should be left unknown instead of reported as write"
+
+    def test_default_workflow_permissions_not_available(self):
+        """Test that repositories without the setting yield no value."""
+        repo = self._mock_repo()
+        repo._requester.requestJsonAndCheck.side_effect = GithubException(
+            404, "Not Found", None
+        )
+
+        assert (
+            self.repository_service._get_default_workflow_permissions(repo) is None
+        ), "A repository without Actions permissions settings should not produce a value"
+
+    def test_default_workflow_permissions_access_denied(self):
+        """Test that a token without repository administration access yields no value."""
+        repo = self._mock_repo()
+        repo._requester.requestJsonAndCheck.side_effect = GithubException(
+            403, "Forbidden", None
+        )
+
+        with patch(
+            "prowler.providers.github.services.repository.repository_service.logger"
+        ) as mock_logger:
+            assert (
+                self.repository_service._get_default_workflow_permissions(repo) is None
+            ), "Insufficient permissions should not produce a value"
+            mock_logger.warning.assert_called()
+
+    def test_default_workflow_permissions_rate_limit(self):
+        """Test that rate limit errors are propagated instead of being reported as unavailable."""
+        repo = self._mock_repo()
+        repo._requester.requestJsonAndCheck.side_effect = RateLimitExceededException(
+            403, "Rate limit exceeded", None
+        )
+
+        with raises(RateLimitExceededException):
+            self.repository_service._get_default_workflow_permissions(repo)
+
+    def test_default_workflow_permissions_unexpected_api_error(self):
+        """Test that an unexpected GitHub API error is logged and yields no value."""
+        repo = self._mock_repo()
+        repo._requester.requestJsonAndCheck.side_effect = GithubException(
+            500, "Internal Server Error", None
+        )
+
+        with patch(
+            "prowler.providers.github.lib.service.service.logger"
+        ) as mock_logger:
+            assert (
+                self.repository_service._get_default_workflow_permissions(repo) is None
+            ), "An unexpected API error should not produce a value"
+            mock_logger.error.assert_called()
+            assert "Internal Server Error" in str(mock_logger.error.call_args)
+
+    def test_default_workflow_permissions_unexpected_error(self):
+        """Test that an unexpected non-GitHub error is logged and yields no value."""
+        repo = self._mock_repo()
+        repo._requester.requestJsonAndCheck.side_effect = Exception("unexpected")
+
+        with patch(
+            "prowler.providers.github.services.repository.repository_service.logger"
+        ) as mock_logger:
+            assert (
+                self.repository_service._get_default_workflow_permissions(repo) is None
+            ), "An unexpected error should not produce a value"
+            mock_logger.error.assert_called()
+
+    def test_process_repository_propagates_rate_limit(self):
+        """Test that a rate limit while reading the setting aborts repository processing."""
+        self.repository_service.clients = []
+        self.repository_service.audit_config = None
+        self.repository_service.fixer_config = None
+
+        repo = MagicMock()
+        repo.id = 1
+        repo.name = "repo1"
+        repo.owner.login = "account-name"
+        repo.full_name = "account-name/repo1"
+        repo.default_branch = "main"
+        repo.private = False
+        repo.archived = False
+        repo.pushed_at = datetime.now(timezone.utc)
+        repo.delete_branch_on_merge = False
+        repo.security_and_analysis = None
+        repo.get_contents.side_effect = [None, None, None, None]
+        repo.get_dependabot_alerts.side_effect = Exception("403 Forbidden")
+        repo._requester.requestJsonAndCheck.side_effect = RateLimitExceededException(
+            403, "Rate limit exceeded", None
+        )
+
+        repos = {}
+        with raises(RateLimitExceededException):
+            self.repository_service._process_repository(repo, repos)
+
+        assert repos == {}, "A rate limited repository should not be partially recorded"
+
+
+class Test_Repository_List_Rate_Limit_Propagation:
+    """Rate limits must abort _list_repositories instead of being swallowed."""
+
+    def _service_with(self, provider, mock_client):
+        with patch.object(Repository, "__init__", lambda *_: None):
+            repository_service = Repository(provider)
+            repository_service.clients = [mock_client]
+            repository_service.provider = provider
+            return repository_service
+
+    def test_direct_repositories_branch_propagates_rate_limit(self):
+        """A rate limit on a directly requested repository aborts the listing."""
+        provider = set_mocked_github_provider()
+        provider.repositories = ["owner/repo1"]
+        provider.organizations = []
+
+        mock_client = MagicMock()
+        mock_client.get_repo.side_effect = RateLimitExceededException(
+            429, "Rate limit exceeded", None
+        )
+
+        repository_service = self._service_with(provider, mock_client)
+
+        with raises(RateLimitExceededException):
+            repository_service._list_repositories()
+
+    def test_organization_branch_propagates_rate_limit(self):
+        """A rate limit while listing an organization's repositories aborts the listing."""
+        provider = set_mocked_github_provider()
+        provider.repositories = []
+        provider.organizations = ["org1"]
+
+        mock_client = MagicMock()
+        with patch.object(
+            Repository,
+            "_get_repositories_from_owner",
+            side_effect=RateLimitExceededException(429, "Rate limit exceeded", None),
+        ):
+            repository_service = self._service_with(provider, mock_client)
+
+            with raises(RateLimitExceededException):
+                repository_service._list_repositories()
+
+    def test_installations_branch_propagates_rate_limit(self):
+        """A rate limit while listing a GitHub App installation's repositories aborts the listing."""
+        provider = set_mocked_github_provider()
+        provider.repositories = []
+        provider.organizations = []
+        provider.identity = GithubAppIdentityInfo(
+            app_id="1", app_name="app", installations=["installed-org"]
+        )
+
+        mock_client = MagicMock()
+        with patch.object(
+            Repository,
+            "_get_repositories_from_owner",
+            side_effect=RateLimitExceededException(429, "Rate limit exceeded", None),
+        ):
+            repository_service = self._service_with(provider, mock_client)
+
+            with raises(RateLimitExceededException):
+                repository_service._list_repositories()
+
+    def test_graphql_branch_propagates_rate_limit(self):
+        """A rate limit on a repository discovered via GraphQL aborts the listing."""
+        provider = set_mocked_github_provider()
+        provider.repositories = []
+        provider.organizations = []
+
+        mock_client = MagicMock()
+        mock_client.get_repo.side_effect = RateLimitExceededException(
+            429, "Rate limit exceeded", None
+        )
+
+        repository_service = self._service_with(provider, mock_client)
+
+        with patch.object(
+            repository_service,
+            "_get_accessible_repos_graphql",
+            return_value=["owner1/repo1"],
+        ):
+            with raises(RateLimitExceededException):
+                repository_service._list_repositories()
+
+
+class Test_Repository_GraphQL_Pagination:
+    """Accessible repository discovery must follow GraphQL pagination."""
+
+    def _repository_service(self):
+        provider = set_mocked_github_provider()
+        provider.repositories = []
+        provider.organizations = []
+        with patch.object(Repository, "__init__", lambda *_: None):
+            repository_service = Repository(provider)
+        repository_service.clients = [MagicMock()]
+        repository_service.provider = provider
+        return repository_service
+
+    @staticmethod
+    def _graphql_response(nodes, has_next_page=False, end_cursor=None, errors=None):
+        response = MagicMock()
+        payload = {
+            "data": {
+                "viewer": {
+                    "repositories": {
+                        "nodes": nodes,
+                        "pageInfo": {
+                            "hasNextPage": has_next_page,
+                            "endCursor": end_cursor,
+                        },
+                    }
+                }
+            }
+        }
+        if errors is not None:
+            payload["errors"] = errors
+        response.json.return_value = payload
+        return response
+
+    def test_graphql_paginates_accessible_repositories(self):
+        repository_service = self._repository_service()
+        first_page_names = [f"owner/repo-{index}" for index in range(100)]
+        second_page_names = ["owner/repo-100"]
+        pages = [
+            self._graphql_response(
+                [{"nameWithOwner": name} for name in first_page_names],
+                has_next_page=True,
+                end_cursor="page-2",
+            ),
+            self._graphql_response(
+                [{"nameWithOwner": name} for name in second_page_names]
+            ),
+        ]
+
+        with patch("requests.post", side_effect=pages) as mock_post:
+            repositories = repository_service._get_accessible_repos_graphql()
+
+        assert repositories == first_page_names + second_page_names
+        assert mock_post.call_count == 2
+        first_request, second_request = mock_post.call_args_list
+        assert "after: $cursor" in first_request.kwargs["json"]["query"]
+        assert first_request.kwargs["json"]["variables"] == {"cursor": None}
+        assert second_request.kwargs["json"]["variables"] == {"cursor": "page-2"}
+        assert first_request.kwargs["timeout"] == (10, 60)
+
+    def test_graphql_keeps_accessible_repositories_on_partial_errors(self):
+        """Per-node errors (e.g. SAML-protected repositories) must not drop the page."""
+        repository_service = self._repository_service()
+        response = self._graphql_response(
+            [{"nameWithOwner": "owner/visible"}, None],
+            errors=[
+                {
+                    "type": "FORBIDDEN",
+                    "path": ["viewer", "repositories", "nodes", 1],
+                    "message": "Resource protected by organization SAML enforcement.",
+                }
+            ],
+        )
+
+        with (
+            patch("requests.post", return_value=response),
+            patch(
+                "prowler.providers.github.services.repository.repository_service.logger"
+            ) as mock_logger,
+        ):
+            repositories = repository_service._get_accessible_repos_graphql()
+
+        assert repositories == ["owner/visible"]
+        assert mock_logger.warning.call_count == 2
+        assert "SAML" in str(mock_logger.warning.call_args_list[0])
+
+    def test_graphql_later_page_failure_keeps_collected_repositories(self):
+        repository_service = self._repository_service()
+        first_page = self._graphql_response(
+            [{"nameWithOwner": "owner/first"}], has_next_page=True, end_cursor="page-2"
+        )
+
+        with (
+            patch(
+                "requests.post",
+                side_effect=[
+                    first_page,
+                    requests.exceptions.Timeout("second page timed out"),
+                ],
+            ) as mock_post,
+            patch(
+                "prowler.providers.github.services.repository.repository_service.logger"
+            ) as mock_logger,
+        ):
+            repositories = repository_service._get_accessible_repos_graphql()
+
+        assert repositories == ["owner/first"]
+        assert mock_post.call_count == 2
+        mock_logger.error.assert_called_once()
+        assert "Timeout" in str(mock_logger.error.call_args)
+
+    def test_graphql_errors_without_data_return_empty_list(self):
+        repository_service = self._repository_service()
+        response = MagicMock()
+        response.json.return_value = {
+            "data": None,
+            "errors": [{"type": "RATE_LIMITED", "message": "API rate limit exceeded"}],
+        }
+
+        with (
+            patch("requests.post", return_value=response),
+            patch(
+                "prowler.providers.github.services.repository.repository_service.logger"
+            ) as mock_logger,
+        ):
+            repositories = repository_service._get_accessible_repos_graphql()
+
+        assert repositories == []
+        assert "RATE_LIMITED" in str(mock_logger.error.call_args)
+
+    def test_graphql_stops_on_repeated_cursor(self):
+        repository_service = self._repository_service()
+        pages = [
+            self._graphql_response(
+                [{"nameWithOwner": "owner/a"}], has_next_page=True, end_cursor="same"
+            ),
+            self._graphql_response(
+                [{"nameWithOwner": "owner/b"}], has_next_page=True, end_cursor="same"
+            ),
+        ]
+
+        with (
+            patch("requests.post", side_effect=pages) as mock_post,
+            patch(
+                "prowler.providers.github.services.repository.repository_service.logger"
+            ) as mock_logger,
+        ):
+            repositories = repository_service._get_accessible_repos_graphql()
+
+        assert repositories == ["owner/a", "owner/b"]
+        assert mock_post.call_count == 2
+        mock_logger.error.assert_called_once()
+
+    @pytest.mark.parametrize(
+        "nodes, page_info",
+        [
+            ("not-a-list", {"hasNextPage": False}),
+            ({}, {"hasNextPage": False}),
+            (None, {"hasNextPage": False}),
+            ([{"nameWithOwner": "owner/b"}], ["invalid"]),
+            ([{"nameWithOwner": "owner/b"}], "invalid"),
+            ([{"nameWithOwner": "owner/b"}], []),
+            ([{"nameWithOwner": "owner/b"}], None),
+            ([{"nameWithOwner": "owner/b"}], {}),
+            ([{"nameWithOwner": "owner/b"}], {"hasNextPage": "false"}),
+        ],
+    )
+    def test_graphql_invalid_page_keeps_collected_repositories(self, nodes, page_info):
+        repository_service = self._repository_service()
+        first_page = self._graphql_response(
+            [{"nameWithOwner": "owner/a"}], has_next_page=True, end_cursor="page-2"
+        )
+        invalid_page = MagicMock()
+        invalid_page.json.return_value = {
+            "data": {
+                "viewer": {"repositories": {"nodes": nodes, "pageInfo": page_info}}
+            }
+        }
+
+        with (
+            patch("requests.post", side_effect=[first_page, invalid_page]),
+            patch(
+                "prowler.providers.github.services.repository.repository_service.logger"
+            ) as mock_logger,
+        ):
+            repositories = repository_service._get_accessible_repos_graphql()
+
+        assert repositories == ["owner/a"]
+        mock_logger.error.assert_called_once()

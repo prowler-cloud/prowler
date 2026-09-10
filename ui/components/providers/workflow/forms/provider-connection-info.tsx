@@ -1,3 +1,4 @@
+import { getProviderLogo } from "@/components/shadcn/entities/get-provider-logo";
 import { ProviderType } from "@/types";
 
 import {
@@ -5,7 +6,6 @@ import {
   ConnectionPending,
   ConnectionTrue,
 } from "../../../icons";
-import { getProviderLogo } from "../../../ui/entities/get-provider-logo";
 
 interface ProviderConnectionInfoProps {
   connected: boolean | null;
@@ -24,19 +24,19 @@ export const ProviderConnectionInfo = ({
     switch (connected) {
       case true:
         return (
-          <div className="rounded-medium border-system-success bg-system-success-lighter flex items-center justify-center border-2 p-1">
-            <ConnectionTrue className="text-system-success" size={24} />
+          <div className="border-bg-pass bg-bg-pass-secondary flex items-center justify-center rounded-xl border-2 p-1">
+            <ConnectionTrue className="text-text-success-primary" size={24} />
           </div>
         );
       case false:
         return (
-          <div className="rounded-medium border-border-error flex items-center justify-center border-2 p-1">
+          <div className="border-border-error flex items-center justify-center rounded-xl border-2 p-1">
             <ConnectionFalse className="text-text-error-primary" size={24} />
           </div>
         );
       case null:
         return (
-          <div className="bg-info-lighter border-info-lighter rounded-medium flex items-center justify-center border p-1">
+          <div className="bg-info-lighter border-info-lighter flex items-center justify-center rounded-xl border p-1">
             <ConnectionPending className="text-info" size={24} />
           </div>
         );

@@ -19,8 +19,8 @@ import {
   Checkbox,
   InfoField,
 } from "@/components/shadcn";
+import { CodeSnippet } from "@/components/shadcn/code-snippet/code-snippet";
 import { Spinner } from "@/components/shadcn/spinner/spinner";
-import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
 import { cn } from "@/lib/utils";
 import { ResourceEventProps } from "@/types";
 

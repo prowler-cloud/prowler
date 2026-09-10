@@ -63,10 +63,15 @@ export function TreeNode({
   };
 
   const handleSelect = () => {
-    onSelectionChange(item.id, item);
+    if (!item.disabled) {
+      onSelectionChange(item.id, item);
+    }
   };
 
-  const handleContentClick = showCheckboxes ? handleSelect : handleToggleExpand;
+  // A disabled node still expands on click: it is the only way to look inside a
+  // container that offers nothing to select.
+  const handleContentClick =
+    showCheckboxes && !item.disabled ? handleSelect : handleToggleExpand;
 
   const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     switch (event.key) {
@@ -95,14 +100,17 @@ export function TreeNode({
       <div
         className={cn(
           "flex items-center gap-2 rounded-md px-2 py-1.5",
-          "hover:bg-prowler-white/5 cursor-pointer",
+          "cursor-pointer hover:bg-white/5",
           "focus-visible:ring-border-input-primary-press focus-visible:ring-2 focus-visible:outline-none",
-          item.disabled && "cursor-not-allowed opacity-50",
+          // No `cursor-not-allowed`: unlike a disabled leaf, the row still expands.
+          item.disabled && "opacity-50",
           item.className,
         )}
         style={{ paddingLeft: getTreeNodePadding(level) }}
         role="treeitem"
-        tabIndex={item.disabled ? -1 : 0}
+        // Focusable even when disabled, or a keyboard user could not expand it;
+        // `aria-disabled` below is what states the row cannot be selected.
+        tabIndex={0}
         aria-expanded={isExpanded}
         aria-selected={isSelected}
         aria-disabled={item.disabled}
@@ -110,7 +118,7 @@ export function TreeNode({
         onKeyDown={handleKeyDown}
       >
         <button
-          className="hover:bg-prowler-white/10 shrink-0 rounded p-0.5"
+          className="shrink-0 rounded p-0.5 hover:bg-white/10"
           aria-label={isExpanded ? "Collapse" : "Expand"}
           onClick={(e) => {
             e.stopPropagation();

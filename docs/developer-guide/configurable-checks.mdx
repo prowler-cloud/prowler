@@ -42,7 +42,7 @@ When adding a new configurable check to Prowler, update the following files:
   ```
 - **Provider Schema:** Add the typed field to the provider's Pydantic schema in `prowler/config/schema/<provider>.py`. This is required: the loader validates user configs against these schemas and the shipped `config.yaml` must round-trip with zero warnings. See [Adding a Parameter to the Provider Schema](#adding-a-parameter-to-the-provider-schema) below.
 - **Test Fixtures:** If tests depend on this configuration, add the variable to `tests/config/fixtures/config.yaml`.
-- **Documentation:** Document the new variable in the list of configurable checks in `docs/tutorials/configuration_file.md`.
+- **Documentation:** Document the new variable in the list of configurable checks in [Configuration File](/user-guide/cli/tutorials/configuration_file) (`docs/user-guide/cli/tutorials/configuration_file.mdx`).
 
 For a complete list of checks that already support configuration, see the [Configuration File Tutorial](/user-guide/cli/tutorials/configuration_file).
 
@@ -133,6 +133,7 @@ Only fields with a numeric range, a fixed value set, or a length cap are listed.
 | `max_unused_sagemaker_access_days` | `7..180` days | |
 | `max_security_group_rules` | `1..1000` | AWS hard limit is 1000 rules per security group |
 | `max_ec2_instance_age_in_days` | `1..1095` days | 3 years |
+| `max_ec2_instance_stopped_days` | `1..1095` days | 3 years |
 | `ec2_high_risk_ports` | each port `1..65535` | port 0 is reserved |
 | `max_idle_disconnect_timeout_in_seconds` | `60..1800` s | NIST AC-12: cap at 30 min |
 | `max_disconnect_timeout_in_seconds` | `60..3600` s | |
@@ -153,7 +154,6 @@ Only fields with a numeric range, a fixed value set, or a length cap are listed.
 | `max_days_secret_unused` | `7..365` days | |
 | `max_days_secret_unrotated` | `1..180` days | NIST IA-5: rotate quarterly; CIS ≤90 |
 | `min_kinesis_stream_retention_hours` | `24..8760` h | 1 day .. 1 year |
-| `detect_secrets_plugins[].limit` | `0.0..10.0` | Shannon entropy threshold |
 | `shodan_api_key` | ≤512 chars | |
 
 ### Azure

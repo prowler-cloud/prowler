@@ -21,8 +21,8 @@ from cartography.config import Config as CartographyConfig
 from celery.utils.log import get_task_logger
 from prowler.config import config as ProwlerConfig
 from tasks.jobs.attack_paths.config import (
-    BATCH_SIZE,
     FINDINGS_BATCH_SIZE,
+    GRAPH_MUTATION_BATCH_SIZE,
     get_node_uid_field,
     get_provider_resource_label,
     get_root_node_label,
@@ -135,7 +135,7 @@ def add_resource_label(
     while labeled_count > 0:
         result = neo4j_session.run(
             query,
-            {"provider_uid": provider_uid, "batch_size": BATCH_SIZE},
+            {"provider_uid": provider_uid, "batch_size": GRAPH_MUTATION_BATCH_SIZE},
         )
         labeled_count = result.single().get("labeled_count", 0)
         total_labeled += labeled_count

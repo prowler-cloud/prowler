@@ -12,6 +12,7 @@ const attributes = {
   manage_integrations: false,
   manage_billing: false,
   manage_alerts: true,
+  manage_lighthouse_ai_configuration: true,
   unlimited_visibility: false,
 } satisfies RolePermissionAttributes;
 
@@ -22,7 +23,7 @@ describe("getRolePermissions", () => {
 
   it("includes Manage Alerts in Prowler Cloud when role attributes provide it", () => {
     // Given
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
 
     // When
     const permissions = getRolePermissions(attributes);
@@ -37,7 +38,7 @@ describe("getRolePermissions", () => {
 
   it("hides Manage Alerts outside Prowler Cloud", () => {
     // Given
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
 
     // When
     const permissions = getRolePermissions(attributes);
@@ -45,6 +46,36 @@ describe("getRolePermissions", () => {
     // Then
     expect(
       permissions.some((permission) => permission.key === "manage_alerts"),
+    ).toBe(false);
+  });
+
+  it("includes Manage Lighthouse AI in Prowler Cloud when role attributes provide it", () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
+
+    // When
+    const permissions = getRolePermissions(attributes);
+
+    // Then
+    expect(permissions).toContainEqual({
+      key: "manage_lighthouse_ai_configuration",
+      label: "Manage Lighthouse AI",
+      enabled: true,
+    });
+  });
+
+  it("hides Manage Lighthouse AI outside Prowler Cloud", () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
+
+    // When
+    const permissions = getRolePermissions(attributes);
+
+    // Then
+    expect(
+      permissions.some(
+        (permission) => permission.key === "manage_lighthouse_ai_configuration",
+      ),
     ).toBe(false);
   });
 });

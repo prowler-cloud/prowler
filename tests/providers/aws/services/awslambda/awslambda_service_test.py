@@ -6,10 +6,17 @@ from re import search
 from unittest.mock import patch
 
 import mock
+import pytest
 from boto3 import client, resource
+from botocore.client import ClientError
 from moto import mock_aws
 
-from prowler.providers.aws.services.awslambda.awslambda_service import AuthType, Lambda
+from prowler.providers.aws.services.awslambda.awslambda_service import (
+    AuthType,
+    Function,
+    Lambda,
+    Layer,
+)
 from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_WEST_1,
@@ -38,7 +45,7 @@ def create_zip_file(code: str = "") -> io.BytesIO:
     return zip_output
 
 
-def mock_request_get(_):
+def mock_request_get(_, **kwargs):
     """Mock requests.get() to get the Lambda Code in Zip Format"""
     mock_resp = mock.MagicMock
     mock_resp.status_code = 200
@@ -84,6 +91,367 @@ class Test_Lambda_Service:
     def test__get_service__(self):
         awslambda = Lambda(set_mocked_aws_provider([AWS_REGION_US_EAST_1]))
         assert awslambda.service == "lambda"
+
+    def test_function_limit_selects_latest_functions_for_analysis(self):
+        awslambda = Lambda.__new__(Lambda)
+        awslambda.functions = {
+            "old": Function(
+                name="old",
+                arn="old",
+                security_groups=[],
+                last_modified="2024-01-01T00:00:00.000+0000",
+                region=AWS_REGION_EU_WEST_1,
+            ),
+            "new": Function(
+                name="new",
+                arn="new",
+                security_groups=[],
+                last_modified="2024-01-02T00:00:00.000+0000",
+                region=AWS_REGION_EU_WEST_1,
+            ),
+        }
+        awslambda.function_limit = 1
+
+        awslambda._select_functions_for_analysis()
+
+        assert list(awslambda.functions) == ["new"]
+
+    def test_function_limit_selects_global_latest_across_regions(self):
+        class FakePaginator:
+            def __init__(self, functions):
+                self.functions = functions
+
+            def paginate(self, **kwargs):
+                assert "PageSize" not in kwargs
+                return [{"Functions": self.functions}]
+
+        class FakeLambdaClient:
+            def __init__(self, region, functions):
+                self.region = region
+                self.functions = functions
+
+            def get_paginator(self, name):
+                assert name == "list_functions"
+                return FakePaginator(self.functions)
+
+        awslambda = Lambda.__new__(Lambda)
+        awslambda.functions = {}
+        awslambda.security_groups_in_use = set()
+        awslambda.regions_with_functions = set()
+        awslambda.function_limit = 1
+        awslambda.audit_resources = []
+        old_client = FakeLambdaClient(
+            AWS_REGION_EU_WEST_1,
+            [
+                {
+                    "FunctionName": "old",
+                    "FunctionArn": "arn:aws:lambda:eu-west-1:123456789012:function:old",
+                    "LastModified": "2024-01-01T00:00:00.000+0000",
+                }
+            ],
+        )
+        new_client = FakeLambdaClient(
+            AWS_REGION_US_EAST_1,
+            [
+                {
+                    "FunctionName": "new",
+                    "FunctionArn": "arn:aws:lambda:us-east-1:123456789012:function:new",
+                    "LastModified": "2024-01-02T00:00:00.000+0000",
+                }
+            ],
+        )
+
+        awslambda._list_functions(old_client)
+        awslambda._list_functions(new_client)
+        awslambda._select_functions_for_analysis()
+
+        assert [function.name for function in awslambda.functions.values()] == ["new"]
+
+    def test_function_limit_keeps_complete_auxiliary_indexes(self):
+        class FakePaginator:
+            def __init__(self, functions):
+                self.functions = functions
+
+            def paginate(self, **kwargs):
+                assert "PageSize" not in kwargs
+                return [{"Functions": self.functions}]
+
+        class FakeLambdaClient:
+            region = AWS_REGION_US_EAST_1
+
+            def get_paginator(self, name):
+                assert name == "list_functions"
+                return FakePaginator(
+                    [
+                        {
+                            "FunctionName": "old",
+                            "FunctionArn": (
+                                f"arn:aws:lambda:{AWS_REGION_US_EAST_1}:"
+                                f"{AWS_ACCOUNT_NUMBER}:function:old"
+                            ),
+                            "LastModified": "2024-01-01T00:00:00.000+0000",
+                            "VpcConfig": {"SecurityGroupIds": ["sg-old"]},
+                        },
+                        {
+                            "FunctionName": "new",
+                            "FunctionArn": (
+                                f"arn:aws:lambda:{AWS_REGION_US_EAST_1}:"
+                                f"{AWS_ACCOUNT_NUMBER}:function:new"
+                            ),
+                            "LastModified": "2024-01-02T00:00:00.000+0000",
+                            "VpcConfig": {"SecurityGroupIds": ["sg-new"]},
+                        },
+                    ]
+                )
+
+        awslambda = Lambda.__new__(Lambda)
+        awslambda.functions = {}
+        awslambda.security_groups_in_use = set()
+        awslambda.regions_with_functions = set()
+        awslambda.function_limit = 1
+        awslambda.audit_resources = []
+
+        awslambda._list_functions(FakeLambdaClient())
+        awslambda._select_functions_for_analysis()
+
+        assert [function.name for function in awslambda.functions.values()] == ["new"]
+        assert awslambda.security_groups_in_use == {"sg-old", "sg-new"}
+        assert awslambda.regions_with_functions == {AWS_REGION_US_EAST_1}
+
+    def test_list_event_source_mappings_uses_selected_functions_as_api_scope(self):
+        class FakePaginator:
+            def __init__(self):
+                self.paginate_calls = []
+
+            def paginate(self, **kwargs):
+                self.paginate_calls.append(kwargs)
+                function_name = kwargs["FunctionName"]
+                return [
+                    {
+                        "EventSourceMappings": [
+                            {
+                                "UUID": f"{function_name}-mapping",
+                                "FunctionArn": (
+                                    f"arn:aws:lambda:{AWS_REGION_US_EAST_1}:"
+                                    f"{AWS_ACCOUNT_NUMBER}:function:{function_name}:1"
+                                ),
+                                "EventSourceArn": "arn:aws:sqs:queue",
+                                "State": "Enabled",
+                                "BatchSize": 10,
+                            }
+                        ]
+                    }
+                ]
+
+        class FakeLambdaClient:
+            region = AWS_REGION_US_EAST_1
+
+            def __init__(self):
+                self.paginator = FakePaginator()
+
+            def get_paginator(self, name):
+                assert name == "list_event_source_mappings"
+                return self.paginator
+
+        selected_arn = (
+            f"arn:aws:lambda:{AWS_REGION_US_EAST_1}:"
+            f"{AWS_ACCOUNT_NUMBER}:function:selected"
+        )
+        other_region_arn = (
+            f"arn:aws:lambda:{AWS_REGION_EU_WEST_1}:"
+            f"{AWS_ACCOUNT_NUMBER}:function:other-region"
+        )
+        awslambda = Lambda.__new__(Lambda)
+        awslambda.function_limit = 1
+        awslambda.functions = {
+            selected_arn: Function(
+                name="selected",
+                arn=selected_arn,
+                security_groups=[],
+                region=AWS_REGION_US_EAST_1,
+            ),
+            other_region_arn: Function(
+                name="other-region",
+                arn=other_region_arn,
+                security_groups=[],
+                region=AWS_REGION_EU_WEST_1,
+            ),
+        }
+        regional_client = FakeLambdaClient()
+
+        awslambda._list_event_source_mappings(regional_client)
+
+        assert regional_client.paginator.paginate_calls == [
+            {"FunctionName": "selected"}
+        ]
+        assert len(awslambda.functions[selected_arn].event_source_mappings) == 1
+        assert (
+            awslambda.functions[selected_arn].event_source_mappings[0].uuid
+            == "selected-mapping"
+        )
+        assert not awslambda.functions[other_region_arn].event_source_mappings
+
+    def test_list_event_source_mappings_keeps_unlimited_regional_api_scope(self):
+        class FakePaginator:
+            def __init__(self):
+                self.paginate_calls = []
+
+            def paginate(self, **kwargs):
+                self.paginate_calls.append(kwargs)
+                return [
+                    {
+                        "EventSourceMappings": [
+                            {
+                                "UUID": "selected-mapping",
+                                "FunctionArn": selected_arn,
+                                "EventSourceArn": "arn:aws:sqs:queue",
+                                "State": "Enabled",
+                            }
+                        ]
+                    }
+                ]
+
+        class FakeLambdaClient:
+            region = AWS_REGION_US_EAST_1
+
+            def __init__(self):
+                self.paginator = FakePaginator()
+
+            def get_paginator(self, name):
+                assert name == "list_event_source_mappings"
+                return self.paginator
+
+        selected_arn = (
+            f"arn:aws:lambda:{AWS_REGION_US_EAST_1}:"
+            f"{AWS_ACCOUNT_NUMBER}:function:selected"
+        )
+        awslambda = Lambda.__new__(Lambda)
+        awslambda.function_limit = None
+        awslambda.functions = {
+            selected_arn: Function(
+                name="selected",
+                arn=selected_arn,
+                security_groups=[],
+                region=AWS_REGION_US_EAST_1,
+            )
+        }
+        regional_client = FakeLambdaClient()
+
+        awslambda._list_event_source_mappings(regional_client)
+
+        assert regional_client.paginator.paginate_calls == [{}]
+        assert len(awslambda.functions[selected_arn].event_source_mappings) == 1
+
+    def test_list_event_source_mappings_continues_after_invalid_parameter_value(self):
+        class FakePaginator:
+            def paginate(self, **kwargs):
+                function_name = kwargs["FunctionName"]
+                if function_name == "deleted":
+                    raise ClientError(
+                        {
+                            "Error": {
+                                "Code": "InvalidParameterValueException",
+                                "Message": "Function no longer exists",
+                            }
+                        },
+                        "ListEventSourceMappings",
+                    )
+                return [
+                    {
+                        "EventSourceMappings": [
+                            {
+                                "UUID": f"{function_name}-mapping",
+                                "FunctionArn": (
+                                    f"arn:aws:lambda:{AWS_REGION_US_EAST_1}:"
+                                    f"{AWS_ACCOUNT_NUMBER}:function:{function_name}"
+                                ),
+                                "EventSourceArn": "arn:aws:sqs:queue",
+                                "State": "Enabled",
+                            }
+                        ]
+                    }
+                ]
+
+        class FakeLambdaClient:
+            region = AWS_REGION_US_EAST_1
+
+            def get_paginator(self, name):
+                assert name == "list_event_source_mappings"
+                return FakePaginator()
+
+        deleted_arn = (
+            f"arn:aws:lambda:{AWS_REGION_US_EAST_1}:"
+            f"{AWS_ACCOUNT_NUMBER}:function:deleted"
+        )
+        remaining_arn = (
+            f"arn:aws:lambda:{AWS_REGION_US_EAST_1}:"
+            f"{AWS_ACCOUNT_NUMBER}:function:remaining"
+        )
+        awslambda = Lambda.__new__(Lambda)
+        awslambda.function_limit = 2
+        awslambda.functions = {
+            deleted_arn: Function(
+                name="deleted",
+                arn=deleted_arn,
+                security_groups=[],
+                region=AWS_REGION_US_EAST_1,
+            ),
+            remaining_arn: Function(
+                name="remaining",
+                arn=remaining_arn,
+                security_groups=[],
+                region=AWS_REGION_US_EAST_1,
+            ),
+        }
+
+        awslambda._list_event_source_mappings(FakeLambdaClient())
+
+        assert not awslambda.functions[deleted_arn].event_source_mappings
+        assert len(awslambda.functions[remaining_arn].event_source_mappings) == 1
+        assert (
+            awslambda.functions[remaining_arn].event_source_mappings[0].uuid
+            == "remaining-mapping"
+        )
+
+    def test_list_event_source_mappings_raises_non_transient_client_error(self):
+        class FakePaginator:
+            def paginate(self, **kwargs):
+                raise ClientError(
+                    {
+                        "Error": {
+                            "Code": "AccessDeniedException",
+                            "Message": "Access denied",
+                        }
+                    },
+                    "ListEventSourceMappings",
+                )
+
+        class FakeLambdaClient:
+            region = AWS_REGION_US_EAST_1
+
+            def get_paginator(self, name):
+                assert name == "list_event_source_mappings"
+                return FakePaginator()
+
+        function_arn = (
+            f"arn:aws:lambda:{AWS_REGION_US_EAST_1}:"
+            f"{AWS_ACCOUNT_NUMBER}:function:selected"
+        )
+        awslambda = Lambda.__new__(Lambda)
+        awslambda.function_limit = 1
+        awslambda.functions = {
+            function_arn: Function(
+                name="selected",
+                arn=function_arn,
+                security_groups=[],
+                region=AWS_REGION_US_EAST_1,
+            )
+        }
+
+        with pytest.raises(ClientError) as error:
+            awslambda._list_event_source_mappings(FakeLambdaClient())
+
+        assert error.value.response["Error"]["Code"] == "AccessDeniedException"
 
     @mock_aws
     def test_list_functions(self):
@@ -253,3 +621,218 @@ class Test_Lambda_Service:
                             f"{tmp_dir_name}/{files_in_zip[0]}", "r"
                         ) as lambda_code_file:
                             assert lambda_code_file.read() == LAMBDA_FUNCTION_CODE
+
+    @mock_aws
+    def test_function_limit_exposes_only_selected_functions(self):
+        lambda_client = client("lambda", region_name=AWS_REGION_US_EAST_1)
+        iam_client = client("iam", region_name=AWS_REGION_US_EAST_1)
+        iam_role = iam_client.create_role(
+            RoleName="test-role",
+            AssumeRolePolicyDocument="{}",
+        )["Role"]["Arn"]
+        for name in ("function-1", "function-2"):
+            lambda_client.create_function(
+                FunctionName=name,
+                Runtime="python3.7",
+                Role=iam_role,
+                Handler="lambda_function.lambda_handler",
+                Code={"ZipFile": create_zip_file().read()},
+                PackageType="ZIP",
+            )
+        awslambda = Lambda(
+            set_mocked_aws_provider(
+                audited_regions=[AWS_REGION_US_EAST_1],
+                audit_config={"max_lambda_functions": 1},
+            )
+        )
+
+        assert len(awslambda.functions) == 1
+
+    @mock_aws
+    def test_get_function_code_fetches_only_selected_functions(self):
+        lambda_client = client("lambda", region_name=AWS_REGION_US_EAST_1)
+        iam_client = client("iam", region_name=AWS_REGION_US_EAST_1)
+        iam_role = iam_client.create_role(
+            RoleName="test-role",
+            AssumeRolePolicyDocument="{}",
+        )["Role"]["Arn"]
+        for name in ("function-1", "function-2"):
+            lambda_client.create_function(
+                FunctionName=name,
+                Runtime="python3.7",
+                Role=iam_role,
+                Handler="lambda_function.lambda_handler",
+                Code={"ZipFile": create_zip_file().read()},
+                PackageType="ZIP",
+            )
+        awslambda = Lambda(
+            set_mocked_aws_provider(
+                audited_regions=[AWS_REGION_US_EAST_1],
+                audit_config={"max_lambda_functions": 1},
+            )
+        )
+        fetched = []
+
+        def fetch_function_code(function_name, _function_region):
+            fetched.append(function_name)
+            return mock.MagicMock()
+
+        awslambda._fetch_function_code = fetch_function_code
+
+        assert len(list(awslambda._get_function_code())) == 1
+        assert len(fetched) == 1
+
+    def test_layer_properties_parsed_from_arn(self):
+        layer = Layer(
+            arn=f"arn:aws:lambda:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:layer:my-layer:3"
+        )
+
+        assert layer.region == AWS_REGION_US_EAST_1
+        assert layer.name == "my-layer"
+        assert layer.version == "3"
+        assert layer.account_id == AWS_ACCOUNT_NUMBER
+
+    def test_collect_layers_deduplicates_across_functions(self):
+        layer_arn = f"arn:aws:lambda:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:layer:shared-layer:1"
+        awslambda = Lambda.__new__(Lambda)
+        awslambda.layers = {}
+        awslambda.functions = {
+            "function-1": Function(
+                name="function-1",
+                arn="function-1",
+                security_groups=[],
+                region=AWS_REGION_US_EAST_1,
+                layers=[Layer(arn=layer_arn)],
+            ),
+            "function-2": Function(
+                name="function-2",
+                arn="function-2",
+                security_groups=[],
+                region=AWS_REGION_US_EAST_1,
+                layers=[Layer(arn=layer_arn)],
+            ),
+        }
+
+        awslambda._collect_layers()
+
+        assert len(awslambda.layers) == 1
+        assert awslambda.layers[layer_arn].arn == layer_arn
+
+    @mock_aws
+    def test_get_layers_code_fetches_each_layer_once(self):
+        iam_client = client("iam", region_name=AWS_REGION_US_EAST_1)
+        iam_role = iam_client.create_role(
+            RoleName="test-role",
+            AssumeRolePolicyDocument="{}",
+        )["Role"]["Arn"]
+        lambda_client = client("lambda", region_name=AWS_REGION_US_EAST_1)
+        layer_code = "shared_secret = 'hunter2'"
+        layer_arn = lambda_client.publish_layer_version(
+            LayerName="shared-layer",
+            Content={"ZipFile": create_zip_file(layer_code).read()},
+            CompatibleRuntimes=["python3.9"],
+        )["LayerVersionArn"]
+        for name in ("function-1", "function-2"):
+            lambda_client.create_function(
+                FunctionName=name,
+                Runtime="python3.9",
+                Role=iam_role,
+                Handler="lambda_function.lambda_handler",
+                Code={"ZipFile": create_zip_file().read()},
+                PackageType="ZIP",
+                Layers=[layer_arn],
+            )
+
+        with mock.patch(
+            "prowler.providers.aws.services.awslambda.awslambda_service.requests.get",
+            new=mock_request_get,
+        ):
+            awslambda = Lambda(
+                set_mocked_aws_provider(audited_regions=[AWS_REGION_US_EAST_1])
+            )
+
+            assert len(awslambda.layers) == 1
+            assert awslambda.layers[layer_arn].name == "shared-layer"
+            assert awslambda.layers[layer_arn].version == "1"
+
+            # moto's get_layer_version_by_arn omits Content.Location, so
+            # delegate to get_layer_version, which moto implements fully.
+            regional_client = awslambda.regional_clients[AWS_REGION_US_EAST_1]
+
+            def get_layer_version_by_arn(Arn):
+                assert Arn == layer_arn
+                return regional_client.get_layer_version(
+                    LayerName="shared-layer", VersionNumber=1
+                )
+
+            with mock.patch.object(
+                regional_client,
+                "get_layer_version_by_arn",
+                side_effect=get_layer_version_by_arn,
+            ):
+                layers_fetched = list(awslambda._get_layers_code())
+            assert len(layers_fetched) == 1
+            fetched_layer, fetched_code = layers_fetched[0]
+            assert fetched_layer.arn == layer_arn
+            assert fetched_code
+
+    @mock_aws
+    def test_get_layers_code_skips_layer_that_cannot_be_fetched(self):
+        awslambda = Lambda(
+            set_mocked_aws_provider(audited_regions=[AWS_REGION_US_EAST_1])
+        )
+        layer_arn = f"arn:aws:lambda:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:layer:missing-layer:1"
+        awslambda.layers = {layer_arn: Layer(arn=layer_arn)}
+        # moto answers GetLayerVersionByArn with an empty stub instead of
+        # raising for an unknown layer, so the failure is forced here.
+        regional_client = mock.MagicMock()
+        regional_client.get_layer_version_by_arn.side_effect = Exception(
+            "ResourceNotFoundException"
+        )
+        awslambda.regional_clients[AWS_REGION_US_EAST_1] = regional_client
+
+        # The lookup raises inside _fetch_layer_code; _get_layers_code must
+        # log it and yield nothing rather than propagating to the check.
+        assert list(awslambda._get_layers_code()) == []
+
+    @mock_aws
+    def test_fetch_layer_code_returns_none_without_location(self):
+        awslambda = Lambda(
+            set_mocked_aws_provider(audited_regions=[AWS_REGION_US_EAST_1])
+        )
+        awslambda.regional_clients[AWS_REGION_US_EAST_1] = mock.MagicMock()
+        awslambda.regional_clients[
+            AWS_REGION_US_EAST_1
+        ].get_layer_version_by_arn.return_value = {"Content": {}}
+
+        layer_arn = f"arn:aws:lambda:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:layer:my-layer:1"
+        assert awslambda._fetch_layer_code(layer_arn, AWS_REGION_US_EAST_1) is None
+
+        # An absent Content must be handled like an empty one rather than
+        # raising on the membership test.
+        awslambda.regional_clients[
+            AWS_REGION_US_EAST_1
+        ].get_layer_version_by_arn.return_value = {"Content": None}
+
+        assert awslambda._fetch_layer_code(layer_arn, AWS_REGION_US_EAST_1) is None
+
+    @mock_aws
+    def test_fetch_layer_code_uses_full_layer_version_arn(self):
+        awslambda = Lambda(
+            set_mocked_aws_provider(audited_regions=[AWS_REGION_US_EAST_1])
+        )
+        regional_client = mock.MagicMock()
+        regional_client.get_layer_version_by_arn.return_value = {"Content": {}}
+        awslambda.regional_clients[AWS_REGION_US_EAST_1] = regional_client
+
+        # A layer owned by another account must be fetched by its full
+        # layer-version ARN, never by the bare layer name.
+        foreign_layer_arn = (
+            f"arn:aws:lambda:{AWS_REGION_US_EAST_1}:999999999999:"
+            "layer:vendor-extension:5"
+        )
+        awslambda._fetch_layer_code(foreign_layer_arn, AWS_REGION_US_EAST_1)
+
+        regional_client.get_layer_version_by_arn.assert_called_once_with(
+            Arn=foreign_layer_arn
+        )

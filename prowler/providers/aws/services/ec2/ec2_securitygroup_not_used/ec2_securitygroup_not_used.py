@@ -1,5 +1,6 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.awslambda.awslambda_client import awslambda_client
+from prowler.providers.aws.services.batch.batch_client import batch_client
 from prowler.providers.aws.services.ec2.ec2_client import ec2_client
 
 
@@ -15,21 +16,37 @@ class ec2_securitygroup_not_used(Check):
                 report.resource_details = security_group.name
                 report.status = "PASS"
                 report.status_extended = f"Security group {security_group.name} ({security_group.id}) it is being used."
-                sg_in_lambda = False
+                sg_in_lambda = (
+                    security_group.id in awslambda_client.security_groups_in_use
+                )
+                # A Batch compute environment scaled down to zero instances
+                # keeps its security groups in configuration without any ENI
+                sg_in_batch = security_group.id in batch_client.security_groups_in_use
                 sg_associated = False
-                for function in awslambda_client.functions.values():
-                    if security_group.id in function.security_groups:
-                        sg_in_lambda = True
                 for sg in ec2_client.security_groups.values():
                     if security_group.id in sg.associated_sgs:
                         sg_associated = True
                 if (
                     len(security_group.network_interfaces) == 0
                     and not sg_in_lambda
+                    and not sg_in_batch
                     and not sg_associated
                 ):
-                    report.status = "FAIL"
-                    report.status_extended = f"Security group {security_group.name} ({security_group.id}) it is not being used."
+                    # Compute environments failing to list leaves their security
+                    # group associations unknown, not absent, so reporting the
+                    # group as unused would be a guess. Not being able to read
+                    # the compute environments is a lack of visibility, not a
+                    # misconfiguration, so report MANUAL rather than asserting a
+                    # status either way.
+                    if (
+                        security_group.region
+                        in batch_client.compute_environment_lookup_failed_regions
+                    ):
+                        report.status = "MANUAL"
+                        report.status_extended = f"Security group {security_group.name} ({security_group.id}) usage could not be verified because AWS Batch compute environments could not be listed in region {security_group.region}; grant batch:DescribeComputeEnvironments and run the check again."
+                    else:
+                        report.status = "FAIL"
+                        report.status_extended = f"Security group {security_group.name} ({security_group.id}) it is not being used."
 
                 findings.append(report)
 

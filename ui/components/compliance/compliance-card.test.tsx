@@ -9,22 +9,12 @@ describe("ComplianceCard", () => {
   const filePath = path.join(currentDir, "compliance-card.tsx");
   const source = readFileSync(filePath, "utf8");
 
-  it("keeps the shadcn Card base variant", () => {
-    expect(source).toContain('variant="base"');
-  });
+  it("keeps the logo canvas light in dark mode", () => {
+    // Given
+    const darkThemeSurface = "bg-bg-neutral-tertiary";
 
-  it("uses a single-column stacked layout", () => {
-    expect(source).toContain("flex-col");
-    expect(source).not.toContain("sm:flex-row");
-  });
-
-  it("uses the shadcn progress component instead of Hero UI", () => {
-    expect(source).toContain('from "@/components/shadcn/progress"');
-    expect(source).not.toContain("@heroui/progress");
-  });
-
-  it("places compact actions in the icon column on larger screens", () => {
-    expect(source).toContain('orientation="column"');
-    expect(source).toContain('buttonWidth="icon"');
+    // When / Then
+    expect(source).toContain("bg-slate-50");
+    expect(source).not.toContain(darkThemeSurface);
   });
 });

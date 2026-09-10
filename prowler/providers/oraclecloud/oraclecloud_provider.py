@@ -1,3 +1,4 @@
+from collections.abc import Iterable
 import os
 import pathlib
 import re
@@ -68,12 +69,13 @@ class OraclecloudProvider(Provider):
     _mutelist: OCIMutelist
     audit_metadata: Audit_Metadata
     _home_region: str = "us-ashburn-1"
+    _bootstrap_region: str = "us-ashburn-1"
 
     def __init__(
         self,
         oci_config_file: str = None,
         profile: str = None,
-        region: set = set(),
+        region: str | Iterable[str] = None,
         compartment_ids: list = None,
         config_path: str = None,
         config_content: dict = None,
@@ -129,10 +131,17 @@ class OraclecloudProvider(Provider):
 
         logger.info("Initializing OCI provider ...")
 
-        # Check if the configuration is scanning a single region
-        single_region = None
-        if region:
-            single_region = list(region)[0] if len(region) == 1 else None
+        # Check if the configuration is scanning exactly one explicit region.
+        explicit_regions = self._normalize_region_input(region)
+        single_region = (
+            next(iter(explicit_regions))
+            if explicit_regions and len(explicit_regions) == 1
+            else None
+        )
+        has_direct_credentials = user and fingerprint and tenancy
+        bootstrap_region = single_region or (
+            self._bootstrap_region if has_direct_credentials else None
+        )
 
         # Setup OCI Session
         logger.info("Setting up OCI session ...")
@@ -145,7 +154,7 @@ class OraclecloudProvider(Provider):
             key_file=key_file,
             key_content=key_content,
             tenancy=tenancy,
-            region=single_region,
+            region=bootstrap_region,
             pass_phrase=pass_phrase,
         )
 
@@ -165,7 +174,13 @@ class OraclecloudProvider(Provider):
         # Determine the tenancy home region from the full subscription list, independent of
         # the --region filter, so tenancy-level APIs (e.g. the Audit configuration) always
         # target the home region instead of a filtered, non-home region.
-        all_subscribed_regions = self.get_regions_to_audit()
+        try:
+            all_subscribed_regions = self.get_regions_to_audit()
+        except OCISetUpSessionError:
+            if single_region and len(self._regions) == 1:
+                all_subscribed_regions = self._regions
+            else:
+                raise
         self._home_region = next(
             (region.key for region in all_subscribed_regions if region.is_home_region),
             self._regions[0].key if self._regions else "us-ashburn-1",
@@ -244,6 +259,22 @@ class OraclecloudProvider(Provider):
         return self._mutelist
 
     @staticmethod
+    def _normalize_region_input(region: str | Iterable[str] = None) -> set[str] | None:
+        """Normalize OCI region input while treating strings as one region.
+
+        Args:
+            region: Region input as a string, iterable of strings, or None.
+
+        Returns:
+            A set of region names, or None when no region is provided.
+        """
+        if isinstance(region, str):
+            return {region} if region else None
+        if region:
+            return set(region)
+        return None
+
+    @staticmethod
     def setup_session(
         oci_config_file: str = None,
         profile: str = None,
@@ -284,7 +315,7 @@ class OraclecloudProvider(Provider):
             signer = None
 
             # If API key credentials are provided directly, create config from them
-            if user and fingerprint and tenancy and region:
+            if user and fingerprint and tenancy:
                 import base64
 
                 logger.info("Using API key credentials from direct parameters")
@@ -294,7 +325,7 @@ class OraclecloudProvider(Provider):
                     "user": user,
                     "fingerprint": fingerprint,
                     "tenancy": tenancy,
-                    "region": region,
+                    "region": region or OraclecloudProvider._bootstrap_region,
                 }
 
                 # Handle private key
@@ -553,7 +584,7 @@ class OraclecloudProvider(Provider):
 
         return True
 
-    def get_regions_to_audit(self, region_set: set = None) -> list:
+    def get_regions_to_audit(self, region_set: str | Iterable[str] = None) -> list:
         """
         get_regions_to_audit returns the list of regions to audit.
 
@@ -564,6 +595,8 @@ class OraclecloudProvider(Provider):
             - list: The list of OCIRegion objects to audit.
         """
         regions = []
+
+        explicit_regions = self._normalize_region_input(region_set)
 
         # Audit all subscribed regions
         try:
@@ -581,11 +614,9 @@ class OraclecloudProvider(Provider):
             ).data
 
             # Check if auditing specific region or all
-            regions_check = (
-                region_set
-                if region_set
-                else [sub.region_name for sub in region_subscriptions]
-            )
+            regions_check = explicit_regions or [
+                sub.region_name for sub in region_subscriptions
+            ]
 
             for region_sub in region_subscriptions:
                 if region_sub.region_name in regions_check:
@@ -600,11 +631,25 @@ class OraclecloudProvider(Provider):
                     )
             logger.info(f"Found {len(regions)} subscribed regions")
         except Exception as error:
+            if not explicit_regions or len(explicit_regions) != 1:
+                logger.critical(
+                    f"OCISetUpSessionError[{error.__traceback__.tb_lineno}]: {error}"
+                )
+                raise OCISetUpSessionError(
+                    original_exception=error,
+                    file=pathlib.Path(__file__).name,
+                    message=(
+                        "Could not retrieve OCI subscribed regions. "
+                        "Configure an explicit region to preserve legacy single-region scans, "
+                        "or fix the credentials/permissions required to list region subscriptions."
+                    ),
+                ) from error
+
+            config_region = next(iter(explicit_regions))
             logger.warning(
-                f"Could not retrieve region subscriptions: {error}. Using configured region."
+                f"Could not retrieve region subscriptions: {error}. "
+                f"Using explicitly configured region {config_region}."
             )
-            # Fallback to configured region
-            config_region = self._session.config.get("region", "us-ashburn-1")
             regions.append(
                 OCIRegion(
                     key=config_region,
@@ -855,17 +900,21 @@ class OraclecloudProvider(Provider):
             session = None
 
             # If API key credentials are provided directly, create config from them
-            if user and fingerprint and tenancy and region:
+            has_direct_credentials = user and fingerprint and tenancy
+            identity_region = region
+            if has_direct_credentials:
                 import base64
 
                 logger.info("Using API key credentials from direct parameters")
+
+                identity_region = region or OraclecloudProvider._bootstrap_region
 
                 # Create config dict from provided credentials
                 config = {
                     "user": user,
                     "fingerprint": fingerprint,
                     "tenancy": tenancy,
-                    "region": region,
+                    "region": identity_region,
                 }
 
                 # Handle private key
@@ -914,7 +963,7 @@ class OraclecloudProvider(Provider):
 
             identity = OraclecloudProvider.set_identity(
                 session=session,
-                region=region,
+                region=identity_region,
             )
 
             # Validate provider_id if provided

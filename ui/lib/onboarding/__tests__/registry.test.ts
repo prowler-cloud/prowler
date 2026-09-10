@@ -79,11 +79,11 @@ describe("onboardingFlows (production registry)", () => {
     expect(flow?.tour.id).toBe("explore-findings");
   });
 
-  it("registers the view-compliance flow at order 4 on the compliance route", () => {
+  it("registers the view-compliance flow at order 4 on the single scan tab", () => {
     const flow = getFlowById("view-compliance", onboardingFlows);
     expect(flow).toBeDefined();
     expect(flow?.order).toBe(4);
-    expect(flow?.route).toBe("/compliance");
+    expect(flow?.route).toBe("/compliance?tab=per-scan");
     expect(flow?.tour.id).toBe("view-compliance");
   });
 

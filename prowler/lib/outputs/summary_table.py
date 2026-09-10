@@ -70,6 +70,9 @@ def display_summary_table(
         elif provider.type == "nhn":
             entity_type = "Tenant Domain"
             audited_entities = provider.identity.tenant_domain
+        elif provider.type == "e2enetworks":
+            entity_type = "Project"
+            audited_entities = str(provider.identity.project_id)
         elif provider.type == "stackit":
             if provider.identity.project_name:
                 entity_type = "Project"
@@ -125,6 +128,11 @@ def display_summary_table(
             entity_type = "Account"
             audited_entities = (
                 provider.identity.username or provider.identity.email or "linode"
+            )
+        elif provider.type == "huaweicloud":
+            entity_type = "Account"
+            audited_entities = (
+                provider.identity.account_id or provider.identity.account_name
             )
         else:
             # Dynamic fallback: any external/custom provider

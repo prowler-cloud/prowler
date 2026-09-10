@@ -1,9 +1,11 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useForm } from "react-hook-form";
-import { beforeAll, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 
 import { getScheduleFormDefaults } from "@/lib/schedules";
+import { useCloudUpgradeStore } from "@/store";
+import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
 import type { ScheduleFormValues } from "@/types/schedules";
 
 import { ScanScheduleFields } from "./scan-schedule-fields";
@@ -58,6 +60,9 @@ function getHelperCopy(text: RegExp) {
 }
 
 describe("ScanScheduleFields", () => {
+  afterEach(() => {
+    useCloudUpgradeStore.getState().closeCloudUpgrade();
+  });
   it("updates the helper copy when the cadence changes to interval", async () => {
     // Given
     const user = userEvent.setup();
@@ -97,8 +102,9 @@ describe("ScanScheduleFields", () => {
     );
   });
 
-  it("shows a single cloud badge beside the Scan Schedule title when advanced controls are locked", () => {
+  it("opens advanced scheduling from the Cloud badge when controls are locked", async () => {
     // Given
+    const user = userEvent.setup();
     render(
       <ScheduleFieldsHarness
         canUseAdvancedSchedule={false}
@@ -107,15 +113,27 @@ describe("ScanScheduleFields", () => {
     );
 
     // Then
-    expect(screen.getAllByText("Available in Prowler Cloud")).toHaveLength(1);
+    expect(screen.getAllByText("Cloud")).toHaveLength(1);
     expect(screen.getByText("Scan Schedule").parentElement).toHaveTextContent(
-      "Available in Prowler Cloud",
+      "Cloud",
     );
     expect(screen.getByText("Scan Time").parentElement).not.toHaveTextContent(
-      "Available in Prowler Cloud",
+      "Cloud",
     );
     expect(screen.getByText("Repeats").parentElement).not.toHaveTextContent(
-      "Available in Prowler Cloud",
+      "Cloud",
+    );
+
+    // When
+    await user.click(
+      screen.getByRole("button", {
+        name: "Explore advanced scheduling in Prowler Cloud",
+      }),
+    );
+
+    // Then
+    expect(useCloudUpgradeStore.getState().activeFeature).toBe(
+      CLOUD_UPGRADE_FEATURE.ADVANCED_SCHEDULING,
     );
   });
 });

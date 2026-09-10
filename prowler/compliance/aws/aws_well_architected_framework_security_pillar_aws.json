@@ -324,7 +324,8 @@
       "Checks": [
         "ec2_instance_imdsv2_enabled",
         "ec2_instance_profile_attached",
-        "cloudwatch_cross_account_sharing_disabled"
+        "cloudwatch_cross_account_sharing_disabled",
+        "ec2_confidential_workload_host_imdsv2_not_enforced"
       ]
     },
     {
@@ -471,11 +472,9 @@
         "emr_cluster_publicly_accesible",
         "glacier_vaults_policy_public_access",
         "awslambda_function_not_publicly_accessible",
-        "awslambda_function_not_publicly_accessible",
         "rds_instance_no_public_access",
         "rds_snapshots_public_access",
         "kms_key_not_publicly_accessible",
-        "opensearch_service_domains_not_publicly_accessible",
         "redshift_cluster_public_access",
         "s3_account_level_public_access_blocks",
         "s3_bucket_public_access",
@@ -492,12 +491,12 @@
         "eks_cluster_not_publicly_accessible",
         "elb_internet_facing",
         "elbv2_internet_facing",
-        "s3_account_level_public_access_blocks",
         "sns_topics_not_publicly_accessible",
         "sqs_queues_not_publicly_accessible",
         "ssm_documents_set_as_public",
         "ec2_securitygroup_allow_wide_open_public_ipv4",
-        "ec2_ami_public"
+        "ec2_ami_public",
+        "ec2_confidential_workload_host_public_ip"
       ]
     },
     {
@@ -551,7 +550,6 @@
         "awslambda_function_invoke_api_operations_cloudtrail_logging_enabled",
         "cloudfront_distributions_logging_enabled",
         "cloudtrail_bedrock_logging_enabled",
-        "cloudtrail_cloudwatch_logging_enabled",
         "cloudtrail_logs_s3_bucket_access_logging_enabled",
         "directoryservice_directory_log_forwarding_enabled",
         "eks_control_plane_logging_all_types_enabled",
@@ -769,7 +767,6 @@
         "ec2_securitygroup_not_used",
         "ec2_securitygroup_with_many_ingress_egress_rules",
         "elbv2_desync_mitigation_mode",
-        "elbv2_desync_mitigation_mode",
         "route53_domains_privacy_protection_enabled",
         "route53_domains_transferlock_enabled",
         "shield_advanced_protection_in_associated_elastic_ips",
@@ -833,7 +830,8 @@
         "ec2_instance_internet_facing_with_instance_profile",
         "opensearch_service_domains_updated_to_the_latest_service_software_version",
         "redshift_cluster_automatic_upgrades",
-        "ssm_managed_compliant_patching"
+        "ssm_managed_compliant_patching",
+        "ec2_confidential_workload_host_imdsv2_not_enforced"
       ]
     },
     {
@@ -1181,6 +1179,7 @@
         "elb_insecure_ssl_ciphers",
         "elb_ssl_listeners",
         "elbv2_insecure_ssl_ciphers",
+        "elbv2_listener_pqc_tls_enabled",
         "cloudfront_distributions_pqc_tls_enabled",
         "apigateway_domain_name_pqc_tls_enabled",
         "transfer_server_pqc_ssh_kex_enabled",

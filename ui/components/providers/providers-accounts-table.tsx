@@ -3,17 +3,28 @@
 import { RowSelectionState } from "@tanstack/react-table";
 import { useState } from "react";
 
+import { LighthouseContextContributor } from "@/components/lighthouse/context-contributor";
 import type {
   OrgWizardInitialData,
   ProviderWizardInitialData,
 } from "@/components/providers/wizard/types";
-import { DataTable } from "@/components/ui/table";
+import { DataTable } from "@/components/shadcn/table";
+import { LIGHTHOUSE_CONTEXT_CONTRIBUTOR_LIMIT } from "@/lib/lighthouse/context/constants";
+import {
+  buildProviderContext,
+  buildProviderSummaryContext,
+} from "@/lib/lighthouse/context/contributions";
 import { MetaDataProps } from "@/types";
 import {
   isProvidersOrganizationRow,
   isProvidersProviderRow,
   ProvidersTableRow,
 } from "@/types/providers-table";
+import {
+  SCAN_CONFIGURATION_LIST_STATUS,
+  ScanConfigurationData,
+  type ScanConfigurationListStatus,
+} from "@/types/scan-configurations";
 import type {
   ScanScheduleCapability,
   ScanScheduleProvider,
@@ -26,6 +37,10 @@ interface ProvidersAccountsTableProps {
   metadata?: MetaDataProps;
   rows: ProvidersTableRow[];
   scanScheduleCapability?: ScanScheduleCapability;
+  /** All scan configurations in the tenant, for the provider row's associate/
+   * disassociate action (Cloud-only). */
+  scanConfigs?: ScanConfigurationData[];
+  scanConfigStatus?: ScanConfigurationListStatus;
   onOpenProviderWizard: (initialData?: ProviderWizardInitialData) => void;
   onOpenOrganizationWizard: (initialData: OrgWizardInitialData) => void;
 }
@@ -154,11 +169,27 @@ export function computeSelectedScheduleProviders(
   return { providerIds, providers };
 }
 
+export function createScanConfigIdByProviderId(
+  scanConfigs: ScanConfigurationData[],
+): Map<string, string> {
+  const lookup = new Map<string, string>();
+
+  for (const config of scanConfigs) {
+    for (const providerId of config.attributes.providers) {
+      lookup.set(providerId, config.id);
+    }
+  }
+
+  return lookup;
+}
+
 function ProvidersAccountsTableContent({
   isCloud,
   metadata,
   rows,
   scanScheduleCapability,
+  scanConfigs,
+  scanConfigStatus = SCAN_CONFIGURATION_LIST_STATUS.AVAILABLE,
   onOpenProviderWizard,
   onOpenOrganizationWizard,
 }: ProvidersAccountsTableProps) {
@@ -170,6 +201,15 @@ function ProvidersAccountsTableContent({
     rowSelection,
   );
   const selectedScheduleProviderIds = selectedScheduleProviders.providerIds;
+  const selectedProviderDetails = new Map(
+    selectedScheduleProviders.providers.map((provider) => [
+      provider.providerId,
+      provider,
+    ]),
+  );
+  const scanConfigIdByProviderId = createScanConfigIdByProviderId(
+    scanConfigs ?? [],
+  );
 
   const clearSelection = () => setRowSelection({});
 
@@ -182,21 +222,49 @@ function ProvidersAccountsTableContent({
     onOpenProviderWizard,
     onOpenOrganizationWizard,
     scanScheduleCapability,
+    scanConfigs ?? [],
+    scanConfigStatus,
+    scanConfigIdByProviderId,
   );
 
   return (
-    <DataTable
-      columns={columns}
-      data={rows}
-      metadata={metadata}
-      getSubRows={(row) => row.subRows}
-      defaultExpanded={isCloud}
-      showSearch
-      enableRowSelection
-      rowSelection={rowSelection}
-      onRowSelectionChange={setRowSelection}
-      enableSubRowSelection
-    />
+    <>
+      {metadata?.pagination.count !== undefined && (
+        <LighthouseContextContributor
+          key={`providers-summary-${metadata.pagination.count}`}
+          contributorId="providers-summary"
+          item={buildProviderSummaryContext(metadata.pagination.count)}
+        />
+      )}
+      {selectedScheduleProviderIds
+        .slice(0, LIGHTHOUSE_CONTEXT_CONTRIBUTOR_LIMIT.AFTER_PAGE_AND_SUMMARY)
+        .map((providerId) => {
+          const provider = selectedProviderDetails.get(providerId);
+          return (
+            <LighthouseContextContributor
+              key={`provider-${providerId}`}
+              contributorId={`provider-${providerId}`}
+              item={buildProviderContext({
+                id: providerId,
+                uid: provider?.providerUid,
+                type: provider?.providerType,
+              })}
+            />
+          );
+        })}
+      <DataTable
+        columns={columns}
+        data={rows}
+        metadata={metadata}
+        getSubRows={(row) => row.subRows}
+        defaultExpanded={isCloud}
+        showSearch
+        enableRowSelection
+        rowSelection={rowSelection}
+        onRowSelectionChange={setRowSelection}
+        enableSubRowSelection
+      />
+    </>
   );
 }
 

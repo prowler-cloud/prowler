@@ -1,4 +1,5 @@
 import json
+import re
 from datetime import datetime, timezone
 from io import StringIO
 from typing import Optional
@@ -16,9 +17,11 @@ from py_ocsf_models.events.findings.detection_finding import (
 )
 from py_ocsf_models.events.findings.finding import ActivityID, FindingInformation
 from py_ocsf_models.objects.account import Account, TypeID
+from py_ocsf_models.objects.analytic import Analytic
 from py_ocsf_models.objects.cloud import Cloud
 from py_ocsf_models.objects.group import Group
 from py_ocsf_models.objects.metadata import Metadata
+from py_ocsf_models.objects.mitre_attack import MITREAttack
 from py_ocsf_models.objects.organization import Organization
 from py_ocsf_models.objects.product import Product
 from py_ocsf_models.objects.remediation import Remediation
@@ -106,6 +109,18 @@ class TestOCSF:
             output_data.type_name
             == f"Detection Finding: {DetectionFindingTypeID.Create.name}"
         )
+        # analytic field describes the Prowler check (rule) that generated the finding
+        assert isinstance(output_data.finding_info.analytic, Analytic)
+        assert output_data.finding_info.analytic.name == findings[0].metadata.CheckTitle
+        assert output_data.finding_info.analytic.uid == findings[0].metadata.CheckID
+        assert output_data.finding_info.analytic.type_id == 1
+        assert output_data.finding_info.analytic.type == "Rule"
+        assert (
+            output_data.finding_info.analytic.category
+            == findings[0].metadata.ServiceName
+        )
+        # no MITRE data in default fixture compliance
+        assert output_data.finding_info.attacks is None
         unmapped = output_data.unmapped
         scan_id = unmapped.pop("scan_id")
         assert UUID(scan_id)  # Valid UUID
@@ -127,6 +142,207 @@ class TestOCSF:
         assert output_data.time == 1619600000
         assert output_data.time_dt == datetime.fromtimestamp(
             1619600000, tz=timezone.utc
+        )
+
+    def test_transform_mitre_attacks_from_multiple_finding_compliance_ids(self):
+        finding = generate_finding_output(
+            provider="aws",
+            compliance={"MITRE-ATTACK": ["T1078", "T1098"]},
+            check_id="iam_user_mfa_enabled_console_access",
+            check_title="IAM users with console access have MFA enabled",
+            service_name="iam",
+        )
+
+        technique_map = {
+            "T1078": {
+                "Name": "Valid Accounts",
+                "TechniqueURL": "https://attack.mitre.org/techniques/T1078/",
+                "Tactics": [
+                    "Defense Evasion",
+                    "Persistence",
+                    "Privilege Escalation",
+                    "Initial Access",
+                ],
+            },
+            "T1098": {
+                "Name": "Account Manipulation",
+                "TechniqueURL": "https://attack.mitre.org/techniques/T1098/",
+                "Tactics": ["Persistence"],
+            },
+        }
+
+        with patch(
+            "prowler.lib.outputs.ocsf.ocsf._load_mitre_technique_map",
+            return_value=technique_map,
+        ):
+            ocsf = OCSF([finding])
+        output_data = ocsf.data[0]
+
+        assert output_data.finding_info.attacks is not None
+        assert len(output_data.finding_info.attacks) == 5
+        attack = output_data.finding_info.attacks[0]
+        assert isinstance(attack, MITREAttack)
+        assert attack.technique.uid == "T1078"
+        assert attack.technique.name == "Valid Accounts"
+        assert attack.technique.src_url == "https://attack.mitre.org/techniques/T1078/"
+        assert attack.tactic is not None
+        assert [attack.tactic.name for attack in output_data.finding_info.attacks] == [
+            "Defense Evasion",
+            "Persistence",
+            "Privilege Escalation",
+            "Initial Access",
+            "Persistence",
+        ]
+        assert [
+            attack.technique.uid for attack in output_data.finding_info.attacks
+        ] == [
+            "T1078",
+            "T1078",
+            "T1078",
+            "T1078",
+            "T1098",
+        ]
+
+    def test_transform_mitre_attacks_ignores_unknown_technique(self):
+        finding = generate_finding_output(
+            provider="aws",
+            compliance={"MITRE-ATTACK": ["T9999", "T1098"]},
+        )
+
+        with patch(
+            "prowler.lib.outputs.ocsf.ocsf._load_mitre_technique_map",
+            return_value={
+                "T1098": {
+                    "Name": "Account Manipulation",
+                    "Tactics": ["Persistence"],
+                }
+            },
+        ):
+            ocsf = OCSF([finding])
+        attacks = ocsf.data[0].finding_info.attacks
+
+        assert attacks is not None
+        assert len(attacks) == 1
+        assert attacks[0].technique.uid == "T1098"
+
+    def test_transform_mitre_attacks_provider_without_catalog(self):
+        finding = generate_finding_output(
+            provider="kubernetes",
+            compliance={"MITRE-ATTACK": ["T1078"]},
+            check_type=[],
+        )
+
+        with patch(
+            "prowler.lib.outputs.ocsf.ocsf._load_mitre_technique_map",
+            return_value={},
+        ):
+            ocsf = OCSF([finding])
+        assert ocsf.data[0].finding_info.attacks is None
+
+    def test_transform_without_mitre_ids_does_not_load_catalog(self):
+        finding = generate_finding_output(provider="kubernetes")
+
+        with patch(
+            "prowler.lib.outputs.ocsf.ocsf._load_mitre_technique_map"
+        ) as mock_load_catalog:
+            ocsf = OCSF([finding])
+
+        assert ocsf.data[0].finding_info.attacks is None
+        mock_load_catalog.assert_not_called()
+
+    def test_load_mitre_technique_map_missing_catalog_is_expected(self):
+        from prowler.lib.outputs.ocsf.ocsf import _load_mitre_technique_map
+
+        _load_mitre_technique_map.cache_clear()
+        try:
+            with (
+                patch("prowler.lib.outputs.ocsf.ocsf.logger.debug") as mock_debug,
+                patch("prowler.lib.outputs.ocsf.ocsf.logger.error") as mock_error,
+            ):
+                assert _load_mitre_technique_map("unsupported") == {}
+
+            mock_debug.assert_called_once_with(
+                "MITRE ATT&CK catalog is not available for provider unsupported"
+            )
+            mock_error.assert_not_called()
+        finally:
+            _load_mitre_technique_map.cache_clear()
+
+    def test_load_mitre_technique_map_existing_catalog(self):
+        from prowler.lib.outputs.ocsf.ocsf import _load_mitre_technique_map
+
+        _load_mitre_technique_map.cache_clear()
+        try:
+            technique_map = _load_mitre_technique_map("aws")
+
+            assert technique_map
+            assert all(
+                technique_id == requirement["Id"]
+                for technique_id, requirement in technique_map.items()
+            )
+        finally:
+            _load_mitre_technique_map.cache_clear()
+
+    def test_load_mitre_technique_map_logs_failure(self):
+        from prowler.lib.outputs.ocsf.ocsf import _load_mitre_technique_map
+
+        mitre_file = MagicMock()
+        mitre_file.is_file.return_value = True
+        mitre_file.open.side_effect = OSError("catalog unavailable")
+        provider_directory = MagicMock()
+        provider_directory.joinpath.return_value = mitre_file
+        compliance_package = MagicMock()
+        compliance_package.joinpath.return_value = provider_directory
+
+        _load_mitre_technique_map.cache_clear()
+        try:
+            with (
+                patch(
+                    "prowler.lib.outputs.ocsf.ocsf.resources.files",
+                    return_value=compliance_package,
+                ),
+                patch("prowler.lib.outputs.ocsf.ocsf.logger.error") as mock_error,
+            ):
+                assert _load_mitre_technique_map("aws") == {}
+
+            message = mock_error.call_args.args[0]
+            assert re.fullmatch(r"OSError\[\d+\]: catalog unavailable", message)
+            compliance_package.joinpath.assert_called_once_with("aws")
+            provider_directory.joinpath.assert_called_once_with("mitre_attack_aws.json")
+        finally:
+            _load_mitre_technique_map.cache_clear()
+
+    def test_transform_mitre_attacks_skips_technique_without_name(self):
+        findings = [
+            generate_finding_output(
+                provider="aws",
+                compliance={"MITRE-ATTACK": ["T1078", "T1098"]},
+            ),
+            generate_finding_output(provider="aws"),
+        ]
+        technique_map = {
+            "T1078": {"Tactics": ["Initial Access"]},
+            "T1098": {
+                "Name": "Account Manipulation",
+                "Tactics": ["Persistence"],
+            },
+        }
+
+        with (
+            patch(
+                "prowler.lib.outputs.ocsf.ocsf._load_mitre_technique_map",
+                return_value=technique_map,
+            ),
+            patch("prowler.lib.outputs.ocsf.ocsf.logger.warning") as mock_warning,
+        ):
+            ocsf = OCSF(findings)
+
+        assert len(ocsf.data) == 2
+        attacks = ocsf.data[0].finding_info.attacks
+        assert attacks is not None
+        assert [attack.technique.uid for attack in attacks] == ["T1098"]
+        mock_warning.assert_called_once_with(
+            "Skipping MITRE ATT&CK technique T1078 for provider aws: missing Name"
         )
 
     def test_scan_id_is_unique_per_provider_and_account(self):
@@ -231,6 +447,13 @@ class TestOCSF:
                 "activity_name": "Create",
                 "activity_id": 1,
                 "finding_info": {
+                    "analytic": {
+                        "name": "service_test_check_id",
+                        "uid": "service_test_check_id",
+                        "type_id": 1,
+                        "type": "Rule",
+                        "category": "service",
+                    },
                     "created_time": int(datetime.now().timestamp()),
                     "created_time_dt": datetime.now().isoformat(),
                     "desc": "check description",

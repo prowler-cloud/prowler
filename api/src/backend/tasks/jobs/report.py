@@ -11,9 +11,9 @@ from uuid import UUID
 from api.db_router import READ_REPLICA_ALIAS, MainRouter
 from api.db_utils import rls_transaction
 from api.models import Provider, Scan, ScanSummary, StateChoices, ThreatScoreSnapshot
-from api.utils import initialize_prowler_provider
 from celery.utils.log import get_task_logger
 from config.django.base import DJANGO_TMP_OUTPUT_DIRECTORY
+from config.settings.sentry import ERROR_CATEGORY_ATTRIBUTE, FILESYSTEM_ERROR_CATEGORY
 from prowler.lib.check.compliance_models import (
     Compliance,
     get_bulk_compliance_frameworks_universal,
@@ -27,6 +27,7 @@ from tasks.jobs.reports import (
     ENSReportGenerator,
     NIS2ReportGenerator,
     ThreatScoreReportGenerator,
+    build_provider_metadata,
 )
 from tasks.jobs.threatscore import compute_threatscore_metrics
 from tasks.jobs.threatscore_utils import (
@@ -841,24 +842,12 @@ def generate_compliance_reports(
         tenant_id, scan_id
     )
 
-    # Initialize the Prowler provider once for the whole report batch. Each
-    # generator used to re-init this in _load_compliance_data, paying the
-    # boto3/Azure-SDK construction cost 5 times per scan. The instance is
-    # only used by FindingOutput.transform_api_finding to enrich findings,
-    # so a single shared instance is correct.
-    logger.info("Initializing prowler_provider once for all reports (scan %s)", scan_id)
-    try:
-        with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
-            prowler_provider = initialize_prowler_provider(provider_obj)
-    except Exception as init_error:
-        # If init fails the generators will fall back to lazy init in
-        # _load_compliance_data; we just log and continue.
-        logger.warning(
-            "Could not pre-initialize prowler_provider for scan %s: %s",
-            scan_id,
-            init_error,
-        )
-        prowler_provider = None
+    # Build a credential-free provider metadata stub once for the whole
+    # report batch. FindingOutput.transform_api_finding only reads static
+    # attributes (type plus a few identity fields), so reports never decrypt
+    # the ProviderSecret nor construct a cloud SDK session — generation keeps
+    # working after credentials are deleted or invalidated (PROWLER-2145).
+    prowler_provider = build_provider_metadata(provider_obj)
 
     # Create shared findings cache up front so the eviction closure below
     # can reference it. Defined BEFORE the closure to avoid the UnboundLocalError
@@ -972,7 +961,15 @@ def generate_compliance_reports(
             first_output_path = next(iter(output_paths.values()))
             out_dir = str(Path(first_output_path).parent.parent)
     except Exception as e:
-        logger.error("Error generating output directory: %s", e)
+        # logger.exception attaches the exception (and its traceback) to the
+        # Sentry event and the filesystem category opts that event into the
+        # errno fingerprint, so ENOSPC, ENOENT and EACCES raised from this same
+        # call site land on separate issues.
+        logger.exception(
+            "Error generating output directory: %s",
+            e,
+            extra={ERROR_CATEGORY_ATTRIBUTE: FILESYSTEM_ERROR_CATEGORY},
+        )
         error_dict = {"error": str(e), "upload": False, "path": ""}
         if generate_threatscore:
             results["threatscore"] = error_dict.copy()

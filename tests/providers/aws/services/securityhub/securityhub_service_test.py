@@ -3,7 +3,12 @@ from unittest.mock import patch
 import botocore
 
 from prowler.providers.aws.services.securityhub.securityhub_service import SecurityHub
-from tests.providers.aws.utils import AWS_REGION_EU_WEST_1, set_mocked_aws_provider
+from tests.providers.aws.utils import (
+    AWS_ACCOUNT_NUMBER,
+    AWS_REGION_EU_WEST_1,
+    mocked_api_response,
+    set_mocked_aws_provider,
+)
 
 # Mocking Access Analyzer Calls
 make_api_call = botocore.client.BaseClient._make_api_call
@@ -41,8 +46,42 @@ def mock_make_api_call(self, operation_name, kwarg):
         return {
             "Tags": {"test_key": "test_value"},
         }
+    if operation_name == "ListOrganizationAdminAccounts":
+        # Security Hub returns AccountId/Status, unlike GuardDuty's
+        # AdminAccountId/AdminStatus for the same operation name.
+        return mocked_api_response(
+            "securityhub",
+            operation_name,
+            {"AdminAccounts": [{"AccountId": AWS_ACCOUNT_NUMBER, "Status": "ENABLED"}]},
+        )
 
     return make_api_call(self, operation_name, kwarg)
+
+
+def mock_make_api_call_admin_account_missing_fields(self, operation_name, kwarg):
+    """Return an admin account entry without the documented fields."""
+    if operation_name == "ListOrganizationAdminAccounts":
+        # Deliberately not validated against the API model: this simulates the
+        # response drifting away from what botocore currently describes.
+        return {"AdminAccounts": [{"SomethingElse": "unexpected"}]}
+
+    return mock_make_api_call(self, operation_name, kwarg)
+
+
+def mock_make_api_call_admin_account_access_denied(self, operation_name, kwarg):
+    """Deny ListOrganizationAdminAccounts, as AWS does outside the management account."""
+    if operation_name == "ListOrganizationAdminAccounts":
+        raise botocore.exceptions.ClientError(
+            {
+                "Error": {
+                    "Code": "AccessDeniedException",
+                    "Message": "User is not authorized to perform: securityhub:ListOrganizationAdminAccounts",
+                }
+            },
+            operation_name,
+        )
+
+    return mock_make_api_call(self, operation_name, kwarg)
 
 
 # Mock generate_regional_clients()
@@ -91,3 +130,46 @@ class Test_SecurityHub_Service:
         securityhub = SecurityHub(set_mocked_aws_provider([AWS_REGION_EU_WEST_1]))
         assert len(securityhub.securityhubs) == 1
         assert securityhub.securityhubs[0].tags == [{"test_key": "test_value"}]
+
+    def test_list_organization_admin_accounts(self):
+        """Security Hub returns AccountId/Status, not GuardDuty's AdminAccountId/AdminStatus."""
+        securityhub = SecurityHub(set_mocked_aws_provider([AWS_REGION_EU_WEST_1]))
+
+        assert securityhub.organization_admin_lookup_failed_regions == set()
+        assert len(securityhub.organization_admin_accounts) == 1
+        assert (
+            securityhub.organization_admin_accounts[0].admin_account_id
+            == AWS_ACCOUNT_NUMBER
+        )
+        assert securityhub.organization_admin_accounts[0].admin_status == "ENABLED"
+        assert securityhub.organization_admin_accounts[0].region == AWS_REGION_EU_WEST_1
+
+    def test_list_organization_admin_accounts_missing_fields(self):
+        """An unparseable entry marks the region as unknown instead of raising."""
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+
+        with patch(
+            "botocore.client.BaseClient._make_api_call",
+            new=mock_make_api_call_admin_account_missing_fields,
+        ):
+            securityhub = SecurityHub(aws_provider)
+
+        assert securityhub.organization_admin_accounts == []
+        assert securityhub.organization_admin_lookup_failed_regions == {
+            AWS_REGION_EU_WEST_1
+        }
+
+    def test_list_organization_admin_accounts_access_denied(self):
+        """A denied lookup only marks its own region as unknown."""
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+
+        with patch(
+            "botocore.client.BaseClient._make_api_call",
+            new=mock_make_api_call_admin_account_access_denied,
+        ):
+            securityhub = SecurityHub(aws_provider)
+
+        assert securityhub.organization_admin_accounts == []
+        assert securityhub.organization_admin_lookup_failed_regions == {
+            AWS_REGION_EU_WEST_1
+        }

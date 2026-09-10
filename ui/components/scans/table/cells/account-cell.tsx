@@ -1,6 +1,6 @@
 "use client";
 
-import { EntityInfo } from "@/components/ui/entities";
+import { EntityInfo } from "@/components/shadcn/entities";
 import type { ProviderType, ScanProps } from "@/types";
 
 export function AccountCell({ scan }: { scan: ScanProps }) {

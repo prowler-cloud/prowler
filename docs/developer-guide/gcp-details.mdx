@@ -102,7 +102,7 @@ The generic service pattern is described in [service page](/developer-guide/serv
 - Directly in the code, in location [`prowler/providers/gcp/services/`](https://github.com/prowler-cloud/prowler/tree/master/prowler/providers/gcp/services)
 - In the [Prowler Hub](https://hub.prowler.com/) for a more human-readable view.
 
-The best reference to understand how to implement a new service is following the [service implementation documentation](/developer-guide/services#adding-a-new-service) and taking other services already implemented as reference. In next subsection you can find a list of common patterns that are used accross all GCP services.
+The best reference to understand how to implement a new service is following the [service implementation documentation](/developer-guide/services#adding-a-new-service) and taking other services already implemented as reference. In next subsection you can find a list of common patterns that are used across all GCP services.
 
 ### GCP Service Common Patterns
 
@@ -113,7 +113,7 @@ The best reference to understand how to implement a new service is following the
 - Only projects with the API enabled are included in the audit scope.
 - Resource discovery and attribute collection can be parallelized using `self.__threading_call__`, typically by region/zone or resource.
 - All GCP resources are represented as Pydantic `BaseModel` classes, providing type safety and structured access to resource attributes.
-- Each GCP API calls are wrapped in try/except blocks, always logging errors.
+- Each GCP API call is wrapped in try/except blocks, always logging errors.
 - **Retry Configuration**: All `request.execute()` calls must include `num_retries=DEFAULT_RETRY_ATTEMPTS` for automatic retry on rate limiting errors (HTTP 429).
 - Tags and additional attributes that cannot be retrieved from the default call should be collected and stored for each resource using dedicated methods and threading.
 
@@ -161,7 +161,7 @@ When you instantiate `Check_Report_GCP`, you must provide the check metadata and
     - Defaults to "global" if none are available.
 
 All these attributes can be overridden by passing the corresponding argument to the constructor. If the resource object does not contain the required attributes, you must set them manually.
-Others attributes are inherited from the `Check_Report` class, from that ones you **always** have to set the `status` and `status_extended` attributes in the check logic.
+Other attributes are inherited from the `Check_Report` class, from those you **always** have to set the `status` and `status_extended` attributes in the check logic.
 
 #### Example Usage
 

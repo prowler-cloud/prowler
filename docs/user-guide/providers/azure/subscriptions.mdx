@@ -17,7 +17,7 @@ prowler azure --az-cli-auth --subscription-ids <subscription ID 1> <subscription
 Prowler allows you to specify one or more subscriptions for scanning (up to N), enabling flexible audit configurations.
 
 <Warning>
-The multi-subscription feature is available only in the CLI. In Prowler App, each scan is limited to a single subscription.
+The multi-subscription feature is available only in the CLI. In Prowler Cloud, each scan is limited to a single subscription.
 
 </Warning>
 ## Assigning Permissions for Subscription Scans
@@ -25,14 +25,4 @@ Check the [Authentication > Subscription Scope Permissions](/user-guide/provider
 
 ## Recommendation for Managing Multiple Subscriptions
 
-Scanning multiple subscriptions requires creating and assigning roles for each, which can be a time-consuming process. To streamline subscription management and auditing, use management groups in Azure. This approach allows Prowler to efficiently organize and audit multiple subscriptions collectively.
-
-1. **Create a Management Group**: Follow the [official guide](https://learn.microsoft.com/en-us/azure/governance/management-groups/create-management-group-portal) to create a new management group.
-
-    ![Create management group](/images/create-management-group.gif)
-
-2. **Assign Roles**: Assign necessary roles to the management group, similar to the [role assignment process](#assigning-permissions-for-subscription-scans).
-
-    Role assignment should be done at the management group level instead of per subscription.
-
-3. **Add Subscriptions**: Add all subscriptions you want to audit to the newly created management group. ![Add Subscription to Management Group](/images/add-sub-to-management-group.gif)
+Scanning multiple subscriptions requires creating and assigning roles for each, which can be a time-consuming process. To streamline subscription management and auditing, use [Azure Management Groups](/user-guide/providers/azure/management-groups) to organize subscriptions and assign permissions collectively.

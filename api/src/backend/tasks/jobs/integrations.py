@@ -1,19 +1,25 @@
 import os
 import time
+from datetime import UTC, datetime
 from glob import glob
+from urllib.parse import quote
 
 from api.db_router import READ_REPLICA_ALIAS, MainRouter
 from api.db_utils import REPLICA_MAX_ATTEMPTS, REPLICA_RETRY_BASE_DELAY, rls_transaction
 from api.models import Finding, Integration, Provider
+from api.rls import Tenant
 from api.utils import initialize_prowler_integration, initialize_prowler_provider
 from celery.utils.log import get_task_logger
 from config.django.base import DJANGO_FINDINGS_BATCH_SIZE
+from django.conf import settings
 from django.db import OperationalError
 from prowler.lib.outputs.asff.asff import ASFF
 from prowler.lib.outputs.compliance.generic.generic import GenericCompliance
 from prowler.lib.outputs.csv.csv import CSV
 from prowler.lib.outputs.finding import Finding as FindingOutput
 from prowler.lib.outputs.html.html import HTML
+from prowler.lib.outputs.jira.exceptions.exceptions import JiraBaseException
+from prowler.lib.outputs.jira.jira import Jira
 from prowler.lib.outputs.ocsf.ocsf import OCSF
 from prowler.providers.aws.aws_provider import AwsProvider
 from prowler.providers.aws.lib.s3.s3 import S3
@@ -25,6 +31,8 @@ from prowler.providers.common.models import Connection
 from tasks.utils import batched
 
 logger = get_task_logger(__name__)
+
+JIRA_GENERIC_SEND_ERROR = "Failed to create Jira issue."
 
 
 def get_s3_client_from_integration(
@@ -211,8 +219,10 @@ def get_security_hub_client_from_integration(
         for region in set(all_security_hub_regions):
             regions_status[region] = region in connection.enabled_regions
 
-        # Save regions information in the integration configuration
+        # Persist the successful connection check and regions information
         with rls_transaction(tenant_id, using=MainRouter.default_db):
+            integration.connected = True
+            integration.connection_last_checked_at = datetime.now(tz=UTC)
             integration.configuration["regions"] = regions_status
             integration.save()
 
@@ -471,6 +481,55 @@ def upload_security_hub_integration(
         return False
 
 
+JIRA_LABEL_PREFIX = "prowler"
+
+
+def build_jira_finding_url(finding_uid: str) -> str:
+    """Build the Prowler UI link for a finding, or "" when no UI base URL is set.
+
+    The link filters by the finding ``uid`` rather than the per-scan record id so
+    it keeps resolving after the finding is seen again in later scans.
+    """
+    base_url = getattr(settings, "UI_BASE_URL", "")
+    if not base_url or not finding_uid:
+        return ""
+    return f"{base_url}/findings?filter[uid]={quote(finding_uid, safe='')}"
+
+
+def build_jira_issue_labels(
+    finding_uid: str, provider: str, severity: str, check_id: str
+) -> list[str]:
+    """Build the deterministic label set written to every Jira issue.
+
+    Labels are prefixed to avoid colliding with customer labels and sanitized so
+    Jira never rejects them; the finding-uid label is what lets a ticket be traced
+    back (or JQL-filtered) to its finding.
+    """
+    raw_labels = [
+        JIRA_LABEL_PREFIX,
+        f"{JIRA_LABEL_PREFIX}-{provider}" if provider else "",
+        f"{JIRA_LABEL_PREFIX}-{severity}" if severity else "",
+        f"{JIRA_LABEL_PREFIX}-{check_id}" if check_id else "",
+        Jira.build_finding_label(finding_uid),
+    ]
+    return Jira.sanitize_labels(raw_labels)
+
+
+def get_tenant_name(tenant_id: str) -> str:
+    """Return the tenant name for the Jira issue "Tenant Info" row, or "" if unknown.
+
+    The name is informational only, so a lookup failure must never block the send.
+    """
+    try:
+        return (
+            Tenant.objects.filter(id=tenant_id).values_list("name", flat=True).first()
+            or ""
+        )
+    except Exception:
+        logger.warning("Could not resolve tenant name for %s", tenant_id)
+        return ""
+
+
 def send_findings_to_jira(
     tenant_id: str,
     integration_id: str,
@@ -481,8 +540,10 @@ def send_findings_to_jira(
     with rls_transaction(tenant_id):
         integration = Integration.objects.get(id=integration_id)
         jira_integration = initialize_prowler_integration(integration)
+        tenant_info = get_tenant_name(tenant_id)
 
     num_tickets_created = 0
+    error_messages = []
     for finding_id in finding_ids:
         with rls_transaction(tenant_id):
             finding_instance = (
@@ -512,35 +573,71 @@ def send_findings_to_jira(
             recommendation = remediation.get("recommendation", {})
             remediation_code = remediation.get("code", {})
 
-            # Send the individual finding to Jira
-            result = jira_integration.send_finding(
-                check_id=finding_instance.check_id,
-                check_title=check_metadata.get("checktitle", ""),
+            provider_type = finding_instance.scan.provider.provider
+            issue_labels = build_jira_issue_labels(
+                finding_uid=finding_instance.uid,
+                provider=provider_type,
                 severity=finding_instance.severity,
-                status=finding_instance.status,
-                status_extended=finding_instance.status_extended or "",
-                provider=finding_instance.scan.provider.provider,
-                region=region,
-                resource_uid=resource_uid,
-                resource_name=resource_name,
-                risk=check_metadata.get("risk", ""),
-                recommendation_text=recommendation.get("text", ""),
-                recommendation_url=recommendation.get("url", ""),
-                remediation_code_native_iac=remediation_code.get("nativeiac", ""),
-                remediation_code_terraform=remediation_code.get("terraform", ""),
-                remediation_code_cli=remediation_code.get("cli", ""),
-                remediation_code_other=remediation_code.get("other", ""),
-                resource_tags=resource_tags,
-                compliance=finding_instance.compliance or {},
-                project_key=project_key,
-                issue_type=issue_type,
+                check_id=finding_instance.check_id,
             )
+            finding_url = build_jira_finding_url(finding_instance.uid)
+
+            try:
+                # Send the individual finding to Jira
+                result = jira_integration.send_finding(
+                    check_id=finding_instance.check_id,
+                    check_title=check_metadata.get("checktitle", ""),
+                    severity=finding_instance.severity,
+                    status=finding_instance.status,
+                    status_extended=finding_instance.status_extended or "",
+                    provider=provider_type,
+                    region=region,
+                    resource_uid=resource_uid,
+                    resource_name=resource_name,
+                    risk=check_metadata.get("risk", ""),
+                    recommendation_text=recommendation.get("text", ""),
+                    recommendation_url=recommendation.get("url", ""),
+                    remediation_code_native_iac=remediation_code.get("nativeiac", ""),
+                    remediation_code_terraform=remediation_code.get("terraform", ""),
+                    remediation_code_cli=remediation_code.get("cli", ""),
+                    remediation_code_other=remediation_code.get("other", ""),
+                    resource_tags=resource_tags,
+                    compliance=finding_instance.compliance or {},
+                    project_key=project_key,
+                    issue_type=issue_type,
+                    issue_labels=issue_labels,
+                    finding_url=finding_url,
+                    tenant_info=tenant_info,
+                )
+            except JiraBaseException as error:
+                error_message = error.message or JIRA_GENERIC_SEND_ERROR
+                logger.exception(
+                    "Failed to send finding %s to Jira: %s", finding_id, error_message
+                )
+                error_messages.append(error_message)
+                continue
+            except Exception:
+                logger.exception("Failed to send finding %s to Jira", finding_id)
+                error_messages.append(JIRA_GENERIC_SEND_ERROR)
+                continue
+
             if result:
                 num_tickets_created += 1
+                logger.info(
+                    "Finding %s sent to Jira as %s",
+                    finding_id,
+                    result.get("key") if isinstance(result, dict) else result,
+                )
             else:
-                logger.error(f"Failed to send finding {finding_id} to Jira")
+                error_message = JIRA_GENERIC_SEND_ERROR
+                logger.error(error_message)
+                error_messages.append(error_message)
 
-    return {
+    result = {
         "created_count": num_tickets_created,
         "failed_count": len(finding_ids) - num_tickets_created,
     }
+    if error_messages:
+        result["error"] = "; ".join(dict.fromkeys(error_messages))
+
+    return result

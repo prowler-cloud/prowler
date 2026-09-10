@@ -6,6 +6,7 @@ import {
   KeyRound,
   Pencil,
   Rocket,
+  SlidersHorizontal,
   Timer,
   Trash2,
 } from "lucide-react";
@@ -14,7 +15,12 @@ import { useState } from "react";
 
 import { updateOrganizationName } from "@/actions/organizations/organizations";
 import { updateProvider } from "@/actions/providers";
+import {
+  revalidateProviders,
+  startProviderConnectionChecks,
+} from "@/actions/providers/providers";
 import { getSchedule } from "@/actions/schedules";
+import { pollConnectionTasks } from "@/components/providers/organizations/org-account-selection.utils";
 import {
   ORG_WIZARD_INTENT,
   OrgWizardInitialData,
@@ -25,19 +31,28 @@ import {
   EditScanScheduleModal,
   type EditScanScheduleState,
 } from "@/components/scans/schedule/edit-scan-schedule-modal";
+import { useToast } from "@/components/shadcn";
 import {
   ActionDropdown,
   ActionDropdownDangerZone,
   ActionDropdownItem,
 } from "@/components/shadcn/dropdown";
 import { Modal } from "@/components/shadcn/modal";
-import { useToast } from "@/components/ui";
-import { runWithConcurrencyLimit } from "@/lib/concurrency";
+import {
+  getNodeLabel,
+  organizationNameFallbackHint,
+} from "@/lib/organizations";
 import { testProviderConnection } from "@/lib/provider-helpers";
 import { getScanScheduleCapability } from "@/lib/schedules";
 import { isCloud } from "@/lib/shared/env";
-import { ORG_SETUP_PHASE, ORG_WIZARD_STEP } from "@/types/organizations";
+import {
+  isOrgFlowType,
+  ORG_SETUP_PHASE,
+  ORG_WIZARD_STEP,
+  OrgFlowType,
+} from "@/types/organizations";
 import { PROVIDER_WIZARD_MODE } from "@/types/provider-wizard";
+import { isConfigurableProvider } from "@/types/providers";
 import {
   isProvidersOrganizationRow,
   PROVIDERS_GROUP_KIND,
@@ -45,6 +60,11 @@ import {
   ProvidersOrganizationRow,
   ProvidersTableRow,
 } from "@/types/providers-table";
+import {
+  SCAN_CONFIGURATION_LIST_STATUS,
+  ScanConfigurationData,
+  type ScanConfigurationListStatus,
+} from "@/types/scan-configurations";
 import {
   SCAN_SCHEDULE_CAPABILITY,
   type ScanScheduleCapability,
@@ -55,6 +75,7 @@ import {
 import { DeleteForm } from "../forms/delete-form";
 import { DeleteOrganizationForm } from "../forms/delete-organization-form";
 import { EditNameForm } from "../forms/edit-name-form";
+import { ManageScanConfigModal } from "../scan-config/manage-scan-config-modal";
 
 interface DataTableRowActionsProps {
   row: Row<ProvidersTableRow>;
@@ -72,6 +93,13 @@ interface DataTableRowActionsProps {
   onClearSelection: () => void;
   onOpenProviderWizard: (initialData?: ProviderWizardInitialData) => void;
   onOpenOrganizationWizard: (initialData: OrgWizardInitialData) => void;
+  /**
+   * All scan configurations in the tenant, used to associate/disassociate this
+   * provider's config from the row menu (Cloud-only feature). Empty in OSS.
+   */
+  scanConfigs?: ScanConfigurationData[];
+  scanConfigStatus?: ScanConfigurationListStatus;
+  currentScanConfigId?: string | null;
   /**
    * Schedule capability override. Absent in OSS (defaults to a Cloud-vs-non-Cloud
    * decision). The prowler-cloud overlay injects a billing-aware capability so
@@ -152,14 +180,25 @@ function OrgGroupDropdownActions({
   const isOrgKind = rowData.groupKind === PROVIDERS_GROUP_KIND.ORGANIZATION;
   const testIds = hasSelection ? testableProviderIds : childTestableIds;
   const testCount = testIds.length;
-  const entityLabel = isOrgKind ? "organization" : "organizational unit";
+  const nodeLabel = getNodeLabel(rowData.orgType, rowData.kind);
+  const entityLabel = isOrgKind ? "organization" : nodeLabel.toLowerCase();
+  // Blank falls back to the identifier, matching what creation does. A row with
+  // no external id has nothing to fall back to, so there the name stays required.
+  const nameFallback = rowData.externalId ?? "";
+  // Credential updates re-enter the organization wizard, so this needs an
+  // organization type with an onboarding flow.
+  const orgFlowType: OrgFlowType | null = isOrgFlowType(rowData.orgType)
+    ? rowData.orgType
+    : null;
 
   const openOrgWizardAt = (
+    organizationType: OrgFlowType,
     targetStep: OrgWizardInitialData["targetStep"],
     targetPhase: OrgWizardInitialData["targetPhase"],
     intent?: OrgWizardInitialData["intent"],
   ) => {
     onOpenOrganizationWizard({
+      organizationType,
       organizationId: rowData.id,
       organizationName: rowData.name,
       externalId: rowData.externalId ?? "",
@@ -181,9 +220,20 @@ function OrgGroupDropdownActions({
             currentValue={rowData.name}
             label="Name"
             successMessage="The organization name was updated successfully."
-            helperText="If left blank, Prowler will use the name stored in AWS."
+            helperText={
+              nameFallback
+                ? organizationNameFallbackHint(rowData.orgType)
+                : undefined
+            }
+            validate={
+              nameFallback
+                ? undefined
+                : (value) => (value.trim() ? null : "Name is required.")
+            }
             setIsOpen={setIsEditNameOpen}
-            onSave={(name) => updateOrganizationName(rowData.id, name)}
+            onSave={(name) =>
+              updateOrganizationName(rowData.id, name.trim() || nameFallback)
+            }
           />
         </Modal>
       )}
@@ -191,12 +241,21 @@ function OrgGroupDropdownActions({
         open={isDeleteOrgOpen}
         onOpenChange={setIsDeleteOrgOpen}
         title="Are you absolutely sure?"
-        description={`This action cannot be undone. This will permanently delete this ${entityLabel} and all associated data.`}
+        description={`This action cannot be undone. This will permanently delete this ${entityLabel}${
+          rowData.providerCount > 0
+            ? ` and cascade to its ${rowData.providerCount} ${
+                rowData.providerCount === 1 ? "provider" : "providers"
+              }`
+            : ""
+        }.`}
       >
         <DeleteOrganizationForm
           id={rowData.id}
           name={rowData.name}
           variant={rowData.groupKind}
+          orgType={rowData.orgType}
+          kind={rowData.kind}
+          providerCount={rowData.providerCount}
           setIsOpen={setIsDeleteOrgOpen}
         />
       </Modal>
@@ -210,17 +269,20 @@ function OrgGroupDropdownActions({
                 label="Edit Organization Name"
                 onSelect={() => setIsEditNameOpen(true)}
               />
-              <ActionDropdownItem
-                icon={<KeyRound />}
-                label="Update Credentials"
-                onSelect={() =>
-                  openOrgWizardAt(
-                    ORG_WIZARD_STEP.SETUP,
-                    ORG_SETUP_PHASE.ACCESS,
-                    ORG_WIZARD_INTENT.EDIT_CREDENTIALS,
-                  )
-                }
-              />
+              {orgFlowType && (
+                <ActionDropdownItem
+                  icon={<KeyRound />}
+                  label="Update Credentials"
+                  onSelect={() =>
+                    openOrgWizardAt(
+                      orgFlowType,
+                      ORG_WIZARD_STEP.SETUP,
+                      ORG_SETUP_PHASE.ACCESS,
+                      ORG_WIZARD_INTENT.EDIT_CREDENTIALS,
+                    )
+                  }
+                />
+              )}
             </>
           )}
           {isOrgKind && canEditSchedule && (
@@ -248,9 +310,7 @@ function OrgGroupDropdownActions({
           <ActionDropdownDangerZone>
             <ActionDropdownItem
               icon={<Trash2 />}
-              label={
-                isOrgKind ? "Delete Organization" : "Delete Organization Unit"
-              }
+              label={isOrgKind ? "Delete Organization" : `Delete ${nodeLabel}`}
               destructive
               onSelect={() => setIsDeleteOrgOpen(true)}
             />
@@ -271,6 +331,9 @@ export function DataTableRowActions({
   onClearSelection,
   onOpenProviderWizard,
   onOpenOrganizationWizard,
+  scanConfigs = [],
+  scanConfigStatus = SCAN_CONFIGURATION_LIST_STATUS.AVAILABLE,
+  currentScanConfigId = null,
   capability,
 }: DataTableRowActionsProps) {
   const canEditSchedule =
@@ -282,6 +345,7 @@ export function DataTableRowActions({
     kind: EDIT_SCAN_SCHEDULE_STATE.LOADING,
   });
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [isScanConfigOpen, setIsScanConfigOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
@@ -290,11 +354,21 @@ export function DataTableRowActions({
   const isOrganizationRow = isProvidersOrganizationRow(rowData);
   const provider = isOrganizationRow ? null : rowData;
   const providerId = provider?.id ?? "";
-  const providerType = provider?.attributes.provider ?? "aws";
+  const providerType = provider?.attributes.provider ?? "";
+  // Only predefined providers can manage credentials from the UI
+  const canManageCredentials = isConfigurableProvider(providerType);
   const providerUid = provider?.attributes.uid ?? "";
   const providerAlias = provider?.attributes.alias ?? null;
   const providerSecretId = provider?.relationships.secret.data?.id ?? null;
   const hasSecret = Boolean(provider?.relationships.secret.data);
+  const isCloudProvider = isCloud() && Boolean(provider);
+  // Dynamic providers have no config.yaml baseline, so a Scan Configuration
+  // can't apply to them — hide the action entirely.
+  const isDynamicProvider = Boolean(provider?.attributes.is_dynamic);
+  const canManageScanConfig =
+    isCloudProvider &&
+    !isDynamicProvider &&
+    scanConfigStatus === SCAN_CONFIGURATION_LIST_STATUS.AVAILABLE;
   const scheduleProvider: ScanScheduleProvider | undefined = provider
     ? {
         providerId,
@@ -317,16 +391,42 @@ export function DataTableRowActions({
     if (ids.length === 0) return;
     setLoading(true);
 
-    const results = await runWithConcurrencyLimit(ids, 10, async (id) => {
-      try {
-        return await testProviderConnection(id);
-      } catch {
-        return { connected: false, error: "Unexpected error" };
-      }
-    });
+    // Dispatched and polled in batches: client-invoked server actions run one at a
+    // time through Next's queue, so a loop here serializes whatever concurrency it
+    // asks for.
+    let succeeded = 0;
+    let failed = 0;
+    const pendingTaskIds: string[] = [];
 
-    const succeeded = results.filter((r) => r.connected).length;
-    const failed = results.length - succeeded;
+    try {
+      const outcomes = await startProviderConnectionChecks(ids);
+
+      for (const id of ids) {
+        const outcome = outcomes[id];
+
+        // No task id means nothing was ever tested, so it cannot count as passing.
+        if (!outcome || outcome.error || !outcome.taskId) {
+          failed += 1;
+          continue;
+        }
+
+        pendingTaskIds.push(outcome.taskId);
+      }
+
+      await pollConnectionTasks(pendingTaskIds, {
+        onSettled: (_taskId, result) => {
+          if (result.success) {
+            succeeded += 1;
+          } else {
+            failed += 1;
+          }
+        },
+      });
+    } catch {
+      failed = ids.length - succeeded;
+    }
+
+    await revalidateProviders();
 
     if (failed === 0) {
       toast({
@@ -337,7 +437,7 @@ export function DataTableRowActions({
       toast({
         variant: "destructive",
         title: "Connection test completed",
-        description: `${succeeded} succeeded, ${failed} failed out of ${results.length} providers.`,
+        description: `${succeeded} succeeded, ${failed} failed out of ${ids.length} providers.`,
       });
     }
 
@@ -548,6 +648,17 @@ export function DataTableRowActions({
         provider={scheduleProvider}
         state={scheduleState}
       />
+      {canManageScanConfig && provider && (
+        <ManageScanConfigModal
+          open={isScanConfigOpen}
+          onOpenChange={setIsScanConfigOpen}
+          providerId={providerId}
+          providerLabel={providerAlias || providerUid}
+          scanConfigs={scanConfigs}
+          currentConfigId={currentScanConfigId}
+          onSaved={() => router.refresh()}
+        />
+      )}
       <div className="relative flex items-center justify-end gap-2">
         <ActionDropdown>
           <ActionDropdownItem
@@ -575,22 +686,41 @@ export function DataTableRowActions({
               onSelect={() => void openScheduleEditor()}
             />
           )}
-          <ActionDropdownItem
-            icon={<KeyRound />}
-            label={hasSecret ? "Update Credentials" : "Add Credentials"}
-            onSelect={() =>
-              onOpenProviderWizard({
-                providerId,
-                providerType,
-                providerUid,
-                providerAlias,
-                secretId: providerSecretId,
-                mode: providerSecretId
-                  ? PROVIDER_WIZARD_MODE.UPDATE
-                  : PROVIDER_WIZARD_MODE.ADD,
-              })
-            }
-          />
+          {canManageScanConfig && (
+            <ActionDropdownItem
+              icon={<SlidersHorizontal />}
+              label="Edit Scan Configuration"
+              onSelect={() => setIsScanConfigOpen(true)}
+            />
+          )}
+          {isCloudProvider &&
+            !isDynamicProvider &&
+            scanConfigStatus === SCAN_CONFIGURATION_LIST_STATUS.UNAVAILABLE && (
+              <ActionDropdownItem
+                icon={<SlidersHorizontal />}
+                label="Scan Configuration unavailable"
+                description="Try again later."
+                disabled
+              />
+            )}
+          {canManageCredentials && (
+            <ActionDropdownItem
+              icon={<KeyRound />}
+              label={hasSecret ? "Update Credentials" : "Add Credentials"}
+              onSelect={() =>
+                onOpenProviderWizard({
+                  providerId,
+                  providerType,
+                  providerUid,
+                  providerAlias,
+                  secretId: providerSecretId,
+                  mode: providerSecretId
+                    ? PROVIDER_WIZARD_MODE.UPDATE
+                    : PROVIDER_WIZARD_MODE.ADD,
+                })
+              }
+            />
+          )}
           <ActionDropdownItem
             icon={<Rocket />}
             label={loading ? "Testing..." : "Test Connection"}

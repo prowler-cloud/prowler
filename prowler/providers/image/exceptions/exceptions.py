@@ -70,6 +70,10 @@ class ImageBaseException(ProwlerException):
             "message": "Invalid regex filter pattern.",
             "remediation": "Check the regex syntax for --image-filter or --tag-filter.",
         },
+        (11019, "ImageInvalidAllowedNetworksError"): {
+            "message": "Malformed private-network allowlist.",
+            "remediation": "PROWLER_IMAGE_PROVIDER_ALLOWED_PRIVATE_NETWORKS must be a comma-separated list of IPs or CIDRs (e.g. 192.168.65.254/32,10.20.0.0/16).",
+        },
     }
 
     def __init__(self, code, file=None, original_exception=None, message=None):
@@ -226,4 +230,13 @@ class ImageInvalidFilterError(ImageBaseException):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             11017, file=file, original_exception=original_exception, message=message
+        )
+
+
+class ImageInvalidAllowedNetworksError(ImageBaseException):
+    """Exception raised when the private-network allowlist is malformed."""
+
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            11019, file=file, original_exception=original_exception, message=message
         )

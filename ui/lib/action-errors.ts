@@ -6,9 +6,14 @@ export const ACTION_ERROR_STATUS = {
 export type ActionErrorStatus =
   (typeof ACTION_ERROR_STATUS)[keyof typeof ACTION_ERROR_STATUS];
 
+// Shown whenever the API returns 402 for an over-limit (trial-expired) tenant.
+// Rendered with a billing link by he `UsageLimitMessage` component, and as
+// plain text in toasts/field errors.
+export const USAGE_LIMIT_MESSAGE =
+  "You have exceeded the usage limit of one provider. You can add more providers and run unlimited scans by adding a subscription.";
+
 export const ACTION_ERROR_MESSAGES = {
-  [ACTION_ERROR_STATUS.PAYMENT_REQUIRED]:
-    "Your subscription doesn't allow this action. Upgrade your plan or contact an administrator.",
+  [ACTION_ERROR_STATUS.PAYMENT_REQUIRED]: USAGE_LIMIT_MESSAGE,
   [ACTION_ERROR_STATUS.FORBIDDEN]:
     "You don't have permission to perform this action. Ask an administrator to update your role.",
 } as const satisfies Record<ActionErrorStatus, string>;

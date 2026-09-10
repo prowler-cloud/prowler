@@ -1,6 +1,15 @@
+import ssl
+from collections.abc import Iterable
+
 import boto3
+import httpcore
+import httpx
 import openai
 from api.models import LighthouseProviderConfiguration, LighthouseProviderModels
+from api.validators import (
+    resolve_lighthouse_openai_compatible_host,
+    validate_lighthouse_openai_compatible_base_url,
+)
 from botocore import UNSIGNED
 from botocore.config import Config
 from botocore.exceptions import BotoCoreError, ClientError
@@ -42,6 +51,90 @@ EXCLUDED_OPENAI_MODEL_SUBSTRINGS = (
     "-tts",  # TTS models (gpt-4o-mini-tts)
     "-instruct",  # Legacy instruct models (gpt-3.5-turbo-instruct, etc.)
 )
+
+OPENAI_COMPATIBLE_AUTHENTICATION_ERROR = "API key is invalid or missing"
+OPENAI_COMPATIBLE_CONNECTION_ERROR = "Provider connection failed"
+
+
+class _OpenAICompatibleProviderError(Exception):
+    """Sanitized OpenAI-compatible provider error safe for task results."""
+
+
+def _sanitize_openai_compatible_error(error: Exception) -> str:
+    status_code = getattr(error, "status_code", None)
+    if status_code is None:
+        response = getattr(error, "response", None)
+        status_code = getattr(response, "status_code", None)
+
+    if status_code == 401:
+        return OPENAI_COMPATIBLE_AUTHENTICATION_ERROR
+    return OPENAI_COMPATIBLE_CONNECTION_ERROR
+
+
+class _LighthouseOpenAICompatibleNetworkBackend(httpcore.SyncBackend):
+    """Validate and pin DNS results immediately before TCP connections."""
+
+    def connect_tcp(
+        self,
+        host: str,
+        port: int,
+        timeout: float | None = None,
+        local_address: str | None = None,
+        socket_options: Iterable[httpcore.SOCKET_OPTION] | None = None,
+    ) -> httpcore.NetworkStream:
+        resolved_addresses = resolve_lighthouse_openai_compatible_host(host, port)
+        last_error: httpcore.ConnectError | httpcore.ConnectTimeout | None = None
+
+        for address in resolved_addresses:
+            try:
+                return super().connect_tcp(
+                    address,
+                    port,
+                    timeout=timeout,
+                    local_address=local_address,
+                    socket_options=socket_options,
+                )
+            except (httpcore.ConnectError, httpcore.ConnectTimeout) as error:
+                last_error = error
+
+        if last_error:
+            raise last_error
+        raise httpcore.ConnectError("No resolved addresses are available")
+
+
+class _LighthouseOpenAICompatibleHTTPTransport(httpx.HTTPTransport):
+    """HTTP transport that connects only to validated public IP addresses."""
+
+    def __init__(self) -> None:
+        self._pool = httpcore.ConnectionPool(
+            ssl_context=ssl.create_default_context(),
+            network_backend=_LighthouseOpenAICompatibleNetworkBackend(),
+        )
+
+
+def _create_openai_compatible_http_client() -> httpx.Client:
+    """Create the restricted HTTP client used for OpenAI-compatible providers."""
+    return httpx.Client(
+        follow_redirects=False,
+        trust_env=False,
+        transport=_LighthouseOpenAICompatibleHTTPTransport(),
+    )
+
+
+def _list_openai_compatible_models(base_url: str, api_key: str):
+    validate_lighthouse_openai_compatible_base_url(base_url)
+    try:
+        with _create_openai_compatible_http_client() as http_client:
+            client = openai.OpenAI(
+                api_key=api_key,
+                base_url=base_url,
+                http_client=http_client,
+            )
+            return client.models.list()
+    except Exception as error:
+        raise _OpenAICompatibleProviderError(
+            _sanitize_openai_compatible_error(error)
+        ) from error
 
 
 def _extract_error_message(e: Exception) -> str:
@@ -114,6 +207,7 @@ def _extract_openai_compatible_params(
         return None
     if not isinstance(base_url, str) or not base_url:
         return None
+    validate_lighthouse_openai_compatible_base_url(base_url, resolve_dns=False)
     return {"base_url": base_url, "api_key": api_key}
 
 
@@ -285,13 +379,7 @@ def check_lighthouse_provider_connection(provider_config_id: str) -> dict:
                     "error": "Base URL or API key is invalid or missing",
                 }
 
-            # Test connection using OpenAI SDK with custom base_url
-            # Note: base_url should include version (e.g., https://openrouter.ai/api/v1)
-            client = openai.OpenAI(
-                api_key=params["api_key"],
-                base_url=params["base_url"],
-            )
-            _ = client.models.list()
+            _ = _list_openai_compatible_models(params["base_url"], params["api_key"])
 
         else:
             return {"connected": False, "error": "Unsupported provider type"}
@@ -361,8 +449,7 @@ def _fetch_openai_compatible_models(base_url: str, api_key: str) -> dict[str, st
 
     Note: base_url should include version (e.g., https://openrouter.ai/api/v1)
     """
-    client = openai.OpenAI(api_key=api_key, base_url=base_url)
-    models = client.models.list()
+    models = _list_openai_compatible_models(base_url, api_key)
 
     available_models: dict[str, str] = {}
     for model in models.data:

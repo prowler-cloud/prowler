@@ -18,7 +18,7 @@ export const WizardRadioCard = ({
     <div
       className={cn(
         "group inline-flex w-full cursor-pointer items-center justify-between gap-4 rounded-lg border-2 p-4",
-        "border-default hover:border-button-primary",
+        "border-border-input-primary hover:border-button-primary",
         "has-[[data-state=checked]]:border-button-primary",
         isInvalid && "border-bg-fail",
       )}

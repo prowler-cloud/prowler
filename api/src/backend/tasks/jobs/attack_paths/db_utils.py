@@ -126,14 +126,17 @@ def starting_attack_paths_scan(
         if locked.state != StateChoices.SCHEDULED:
             return False
 
+        now = datetime.now(tz=UTC)
         locked.state = StateChoices.EXECUTING
-        locked.started_at = datetime.now(tz=UTC)
+        locked.started_at = now
+        locked.updated_at = now
         locked.update_tag = cartography_config.update_tag
-        locked.save(update_fields=["state", "started_at", "update_tag"])
+        locked.save(update_fields=["state", "started_at", "updated_at", "update_tag"])
 
     # Keep the in-memory object the caller is holding in sync.
     attack_paths_scan.state = locked.state
     attack_paths_scan.started_at = locked.started_at
+    attack_paths_scan.updated_at = locked.updated_at
     attack_paths_scan.update_tag = locked.update_tag
     return True
 
@@ -181,7 +184,8 @@ def update_attack_paths_scan_progress(
 ) -> None:
     with rls_transaction(attack_paths_scan.tenant_id):
         attack_paths_scan.progress = progress
-        attack_paths_scan.save(update_fields=["progress"])
+        attack_paths_scan.updated_at = datetime.now(tz=UTC)
+        attack_paths_scan.save(update_fields=["progress", "updated_at"])
 
 
 def set_graph_data_ready(

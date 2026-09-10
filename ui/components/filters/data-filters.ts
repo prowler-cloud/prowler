@@ -1,5 +1,9 @@
 import { CONNECTION_STATUS_MAPPING } from "@/lib/helper-filters";
-import { FILTER_FIELD, FilterOption } from "@/types/filters";
+import {
+  FILTER_FIELD,
+  FILTER_SELECTION_MODE,
+  type FilterOption,
+} from "@/types/filters";
 import {
   PROVIDER_DISPLAY_NAMES,
   PROVIDER_TYPES,
@@ -79,9 +83,10 @@ export const filterFindings = [
     key: FILTER_FIELD.DELTA,
     labelCheckboxGroup: "Delta",
     values: ["new", "changed"],
+    selectionMode: FILTER_SELECTION_MODE.SINGLE,
     index: 2,
   },
-];
+] satisfies FilterOption[];
 
 export const filterUsers = [
   {

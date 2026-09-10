@@ -25,11 +25,22 @@ function FieldLabel({ className, ...props }: React.ComponentProps<"label">) {
   );
 }
 
-function FieldError({ className, ...props }: React.ComponentProps<"p">) {
+function FieldError({
+  className,
+  multiline = false,
+  ...props
+}: React.ComponentProps<"p"> & {
+  /** Preserve newlines for multi-line messages (e.g. server validation lists). */
+  multiline?: boolean;
+}) {
   return (
     <p
       data-slot="field-error"
-      className={cn("text-text-error-primary max-w-full text-xs", className)}
+      className={cn(
+        "text-text-error-primary max-w-full text-xs",
+        multiline && "whitespace-pre-wrap",
+        className,
+      )}
       {...props}
     />
   );

@@ -32,6 +32,7 @@ class Core(KubernetesService):
                     ephemeral_containers = self._build_containers(
                         pod.spec.ephemeral_containers
                     )
+                    volumes = self._build_volumes(pod.spec.volumes)
                     self.pods[pod.metadata.uid] = Pod(
                         name=pod.metadata.name,
                         uid=pod.metadata.uid,
@@ -54,6 +55,7 @@ class Core(KubernetesService):
                         containers=containers,
                         init_containers=init_containers,
                         ephemeral_containers=ephemeral_containers,
+                        volumes=volumes,
                     )
         except Exception as error:
             logger.error(
@@ -100,6 +102,20 @@ class Core(KubernetesService):
                 ),
             )
         return pod_containers
+
+    @staticmethod
+    def _build_volumes(volumes) -> List[dict]:
+        pod_volumes = []
+        for volume in volumes or []:
+            pod_volumes.append(
+                {
+                    "name": volume.name,
+                    "host_path": (
+                        volume.host_path.to_dict() if volume.host_path else None
+                    ),
+                }
+            )
+        return pod_volumes
 
     def _list_config_maps(self):
         try:
@@ -188,6 +204,7 @@ class Pod(BaseModel):
     containers: Optional[dict]
     init_containers: Optional[dict] = None
     ephemeral_containers: Optional[dict] = None
+    volumes: Optional[List[dict]] = None
 
 
 class ConfigMap(BaseModel):

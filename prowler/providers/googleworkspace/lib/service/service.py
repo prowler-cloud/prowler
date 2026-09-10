@@ -6,6 +6,11 @@ from prowler.providers.googleworkspace.googleworkspace_provider import (
     GoogleworkspaceProvider,
 )
 
+# How far a Cloud Identity policy reaches.
+CUSTOMER_SCOPE = "customer"
+OVERRIDE_SCOPE = "override"
+UNKNOWN_SCOPE = "unknown"
+
 
 class GoogleWorkspaceService:
     def __init__(
@@ -42,26 +47,29 @@ class GoogleWorkspaceService:
             )
             return None
 
-    def _is_customer_level_policy(self, policy: dict) -> bool:
-        """Check if a policy applies at the customer (domain-wide) level.
+    def _policy_scope(self, policy: dict) -> str:
+        """Return how far a policy reaches: CUSTOMER_SCOPE, OVERRIDE_SCOPE or UNKNOWN_SCOPE.
 
-        The Cloud Identity Policy API typically scopes all policies to an OU;
-        absence of orgUnit is treated as customer-level as a safety net.
-        The root OU is equivalent to customer-level. This method accepts
-        policies with no orgUnit or policies targeting the root OU,
-        and rejects group-targeted and sub-OU policies.
+        The Cloud Identity Policy API typically scopes every policy to an OU,
+        and the root OU is equivalent to customer-level, so telling them apart
+        needs the root OU id. That id is fetched on a best-effort basis, and
+        without it a root-OU policy is indistinguishable from a sub-OU one:
+        that is UNKNOWN_SCOPE, which callers must not read as either.
         """
-        policy_query = policy.get("policyQuery", {})
+        policy_query = policy.get("policyQuery") or {}
         if policy_query.get("group"):
-            return False
+            return OVERRIDE_SCOPE
         org_unit = policy_query.get("orgUnit")
         if not org_unit:
-            return True
-        # Accept root OU as customer-level
+            return CUSTOMER_SCOPE
         root_id = getattr(self.provider.identity, "root_org_unit_id", None)
-        if root_id and org_unit == f"orgUnits/{root_id}":
-            return True
-        return False
+        if not root_id:
+            return UNKNOWN_SCOPE
+        return CUSTOMER_SCOPE if org_unit == f"orgUnits/{root_id}" else OVERRIDE_SCOPE
+
+    def _is_customer_level_policy(self, policy: dict) -> bool:
+        """Whether a policy applies to the whole domain."""
+        return self._policy_scope(policy) == CUSTOMER_SCOPE
 
     def _handle_api_error(self, error, context: str, resource_name: str = ""):
         """

@@ -22,13 +22,21 @@ const cardVariants = cva("flex flex-col gap-6 rounded-xl border", {
       danger: "border-border-error bg-bg-fail-secondary gap-1 rounded-[12px]",
       success: "border-bg-pass bg-bg-pass-secondary gap-1 rounded-[12px]",
       warning: "border-bg-warning bg-bg-warning-secondary gap-1 rounded-[12px]",
+      // Blue-green animated gradient ring (Lighthouse accent); border-0 —
+      // the ring pseudo draws the edge in place of the real border.
+      lighthouse: "gradient-border-lighthouse bg-bg-neutral-primary border-0",
     },
     padding: {
       default: "",
       sm: "px-3 py-2",
       md: "px-4 py-3",
       lg: "px-5 py-4",
+      xl: "p-8",
       none: "p-0",
+    },
+    interactive: {
+      true: "cursor-pointer transition-shadow hover:shadow-md",
+      false: "",
     },
   },
   compoundVariants: [
@@ -56,6 +64,7 @@ const cardVariants = cva("flex flex-col gap-6 rounded-xl border", {
   defaultVariants: {
     variant: "default",
     padding: "default",
+    interactive: false,
   },
 });
 
@@ -63,11 +72,17 @@ interface CardProps
   extends React.ComponentProps<"div">,
     VariantProps<typeof cardVariants> {}
 
-function Card({ className, variant, padding, ...props }: CardProps) {
+function Card({
+  className,
+  variant,
+  padding,
+  interactive,
+  ...props
+}: CardProps) {
   return (
     <div
       data-slot="card"
-      className={cn(cardVariants({ variant, padding }), className)}
+      className={cn(cardVariants({ variant, padding, interactive }), className)}
       {...props}
     />
   );
@@ -78,7 +93,7 @@ function CardHeader({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="card-header"
       className={cn(
-        "@container/card-header mb-6 grid auto-rows-min grid-rows-[auto_auto] items-start has-data-[slot=card-action]:grid-cols-[1fr_auto] [.border-b]:pb-6",
+        "@container/card-header grid auto-rows-min grid-rows-[auto_auto] items-start has-data-[slot=card-action]:grid-cols-[1fr_auto] [.border-b]:pb-6",
         className,
       )}
       {...props}

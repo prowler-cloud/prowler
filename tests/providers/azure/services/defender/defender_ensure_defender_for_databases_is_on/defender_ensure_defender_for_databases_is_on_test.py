@@ -13,6 +13,7 @@ from tests.providers.azure.azure_fixtures import (
 class Test_defender_ensure_defender_for_databases_is_on:
     def test_defender_no_databases(self):
         defender_client = mock.MagicMock
+        defender_client.resource_groups = {}
         defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         defender_client.pricings = {}
 
@@ -37,6 +38,7 @@ class Test_defender_ensure_defender_for_databases_is_on:
     def test_defender_databases_sql_servers(self):
         resource_id = str(uuid4())
         defender_client = mock.MagicMock
+        defender_client.resource_groups = {}
         defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         defender_client.pricings = {
             AZURE_SUBSCRIPTION_ID: {
@@ -70,6 +72,7 @@ class Test_defender_ensure_defender_for_databases_is_on:
     def test_defender_databases_sql_server_virtual_machines(self):
         resource_id = str(uuid4())
         defender_client = mock.MagicMock
+        defender_client.resource_groups = {}
         defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         defender_client.pricings = {
             AZURE_SUBSCRIPTION_ID: {
@@ -103,6 +106,7 @@ class Test_defender_ensure_defender_for_databases_is_on:
     def test_defender_databases_open_source_relation_databases(self):
         resource_id = str(uuid4())
         defender_client = mock.MagicMock
+        defender_client.resource_groups = {}
         defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         defender_client.pricings = {
             AZURE_SUBSCRIPTION_ID: {
@@ -136,6 +140,7 @@ class Test_defender_ensure_defender_for_databases_is_on:
     def test_defender_databases_cosmosdbs(self):
         resource_id = str(uuid4())
         defender_client = mock.MagicMock
+        defender_client.resource_groups = {}
         defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         defender_client.pricings = {
             AZURE_SUBSCRIPTION_ID: {
@@ -169,6 +174,7 @@ class Test_defender_ensure_defender_for_databases_is_on:
     def test_defender_databases_all_standard(self):
         resource_id = str(uuid4())
         defender_client = mock.MagicMock
+        defender_client.resource_groups = {}
         defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         defender_client.pricings = {
             AZURE_SUBSCRIPTION_ID: {
@@ -228,6 +234,7 @@ class Test_defender_ensure_defender_for_databases_is_on:
     def test_defender_databases_cosmosdb_not_standard(self):
         resource_id = str(uuid4())
         defender_client = mock.MagicMock
+        defender_client.resource_groups = {}
         defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         defender_client.pricings = {
             AZURE_SUBSCRIPTION_ID: {

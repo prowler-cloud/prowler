@@ -8,6 +8,11 @@ import {
 import { ChevronLeft } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 
+import {
+  loadFindingTriageDetail,
+  loadLatestFindingTriageNote,
+  updateFindingTriage,
+} from "@/actions/findings";
 import { LoadingState } from "@/components/shadcn/spinner/loading-state";
 import {
   Table,
@@ -16,8 +21,9 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { SeverityBadge, StatusFindingBadge } from "@/components/ui/table";
+  SeverityBadge,
+  StatusFindingBadge,
+} from "@/components/shadcn/table";
 import { useFindingGroupResourceState } from "@/hooks/use-finding-group-resource-state";
 import { cn, hasHistoricalFindingFilter } from "@/lib";
 import {
@@ -25,9 +31,13 @@ import {
   getFindingGroupImpactedCounts,
   isFindingGroupMuted,
 } from "@/lib/findings-groups";
+import { buildJiraActionLabel } from "@/lib/jira-dispatch-action";
+import { createJiraDispatchPayload } from "@/lib/jira-dispatch-selection";
 import { FindingGroupRow } from "@/types";
+import { JIRA_DISPATCH_TARGET } from "@/types/integrations";
 
-import { FloatingMuteButton } from "../floating-mute-button";
+import { FloatingSelectionActions } from "../floating-selection-actions";
+
 import { getColumnFindingResources } from "./column-finding-resources";
 import { FindingsSelectionContext } from "./findings-selection-context";
 import { ImpactedResourcesCell } from "./impacted-resources-cell";
@@ -67,12 +77,14 @@ export function FindingsGroupDrillDown({
     handleDrawerMuteComplete,
     selectedFindingIds,
     selectableRowCount,
+    getRowId,
     getRowCanSelect,
     clearSelection,
     isSelected,
     handleMuteComplete,
     handleRowSelectionChange,
     resolveSelectedFindingIds,
+    updateTriageOptimistically,
   } = useFindingGroupResourceState({
     group,
     filters,
@@ -82,12 +94,18 @@ export function FindingsGroupDrillDown({
   const columns = getColumnFindingResources({
     rowSelection,
     selectableRowCount,
+    findingTitle: group.checkTitle,
+    onTriageUpdateAction: (input) =>
+      updateTriageOptimistically(input, updateFindingTriage),
+    onTriageNoteLoadAction: loadLatestFindingTriageNote,
+    onTriageDetailLoadAction: loadFindingTriageDetail,
   });
 
   const table = useReactTable({
     data: resources,
     columns,
     enableRowSelection: getRowCanSelect,
+    getRowId,
     getCoreRowModel: getCoreRowModel(),
     onRowSelectionChange: handleRowSelectionChange,
     manualPagination: true,
@@ -102,6 +120,13 @@ export function FindingsGroupDrillDown({
   const impactedCounts = getFindingGroupImpactedCounts(group);
 
   const rows = table.getRowModel().rows;
+  const jiraPayload = createJiraDispatchPayload({
+    targetIds: selectedFindingIds,
+    targetType: JIRA_DISPATCH_TARGET.FINDING_ID,
+    findingTitle: group.checkTitle,
+    selectedResourceCount: selectedFindingIds.length,
+    isFindingGroupSelection: true,
+  });
 
   return (
     <FindingsSelectionContext.Provider
@@ -220,15 +245,22 @@ export function FindingsGroupDrillDown({
         </div>
       </div>
 
-      {selectedFindingIds.length > 0 && (
-        <FloatingMuteButton
+      {selectedFindingIds.length > 0 && jiraPayload && (
+        <FloatingSelectionActions
           selectedCount={selectedFindingIds.length}
           selectedFindingIds={selectedFindingIds}
+          muteLabel={`Mute ${selectedFindingIds.length} ${
+            selectedFindingIds.length === 1 ? "Finding" : "Findings"
+          }`}
           onBeforeOpen={async () => {
             return resolveSelectedFindingIds(selectedFindingIds);
           }}
           onComplete={handleMuteComplete}
-          isBulkOperation
+          isBulkOperation={selectedFindingIds.length > 1}
+          jiraPayload={jiraPayload}
+          jiraLabel={buildJiraActionLabel({
+            findingCount: selectedFindingIds.length,
+          })}
         />
       )}
 
@@ -249,6 +281,7 @@ export function FindingsGroupDrillDown({
         onNavigatePrev={drawer.navigatePrev}
         onNavigateNext={drawer.navigateNext}
         onMuteComplete={handleDrawerMuteComplete}
+        onTriageUpdate={drawer.patchTriageUpdate}
       />
     </FindingsSelectionContext.Provider>
   );

@@ -1,0 +1,1 @@
+`nanoid` to 5.1.16, `js-yaml` to 4.3.1 and `postcss` to 8.5.23, plus transitive `hono`, `@hono/node-server`, `browserslist`, `qs`, `dompurify`, `brace-expansion`, `fast-uri`, `ip-address`, `mermaid`, `body-parser` and `@humanfs/node` to patched versions, resolving 40 npm audit advisories (21 high, 15 moderate, 4 low)

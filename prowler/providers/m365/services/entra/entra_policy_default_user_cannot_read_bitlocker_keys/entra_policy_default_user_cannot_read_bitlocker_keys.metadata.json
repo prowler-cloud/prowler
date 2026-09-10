@@ -1,0 +1,38 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_policy_default_user_cannot_read_bitlocker_keys",
+  "CheckTitle": "Non-admin users cannot read BitLocker keys for their owned devices",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "Microsoft Entra tenant's authorization policy should restrict **non-admin users** from reading (self-recovering) **BitLocker recovery keys** for devices they own. Restricting self-service recovery reduces the risk of an attacker who has compromised a user account from also recovering the disk-encryption key of that user's device.",
+  "Risk": "If a user can retrieve the **BitLocker recovery key** for their own device, an attacker who compromises the account can decrypt the device's disk, exposing data at rest. Recovery-key access should be limited to administrators and controlled recovery workflows.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/entra/identity/devices/device-management-azure-portal"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to the Microsoft Entra admin center at https://entra.microsoft.com/\n2. Go to **Identity** > **Devices** > **All devices** > **Device settings**\n3. Set **Users can recover BitLocker key(s) for their owned devices** to **No**\n4. Click **Save**",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Disable self-service BitLocker recovery-key access for non-admin users so that recovery keys can only be retrieved by administrators through a controlled process.",
+      "Url": "https://hub.prowler.com/check/entra_policy_default_user_cannot_read_bitlocker_keys"
+    }
+  },
+  "Categories": [
+    "identity-access",
+    "encryption",
+    "e3"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

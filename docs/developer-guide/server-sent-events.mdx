@@ -12,7 +12,7 @@ This guide explains how to add a **Server-Sent Events (SSE)** endpoint to the Pr
 The platform ships the SSE **infrastructure** (`api.sse`) and wiring. No feature endpoint streams over SSE out of the box — this guide shows how to build one on top of the shared base.
 </Info>
 
-## When to use SSE
+## When to Use SSE
 
 | Need | Use |
 |------|-----|
@@ -22,7 +22,7 @@ The platform ships the SSE **infrastructure** (`api.sse`) and wiring. No feature
 
 SSE is the right tool when the **client only consumes**: scan progress, long-running job checkpoints, streamed LLM tokens, cross-client resource-sync notifications. It rides on plain HTTP, reconnects automatically in the browser via the native [`EventSource`](https://developer.mozilla.org/en-US/docs/Web/API/EventSource) API, and needs no extra protocol.
 
-## How it works
+## How It Works
 
 SSE is wired through [`django-eventstream`](https://github.com/fanout/django_eventstream) and a small platform layer in `api/src/backend/api/sse/`:
 
@@ -34,11 +34,11 @@ SSE is wired through [`django-eventstream`](https://github.com/fanout/django_eve
 | `make_channel_name` / `tenant_id_from_channel` | `api/sse/utils.py` | Single source of truth for the channel-name format, so publishers and the channel manager agree byte-for-byte. |
 | Settings | `config/settings/eventstream.py` | Valkey Pub/Sub backend (dedicated DB), channel manager, allowed headers. |
 
-### Transport: the server runs on ASGI
+### Transport: The Server Runs on ASGI
 
 SSE connections are long-lived. Holding one open per synchronous worker would exhaust the worker pool, so the API runs under Gunicorn's native **`asgi` worker** (`config.asgi:application`). Streams are parked on the event loop while ordinary CRUD endpoints keep their synchronous execution (Django runs sync views in a thread-sensitive executor under ASGI). This is configured in `config/guniconf.py` and used by both the dev and production entrypoints — no separate server process is needed.
 
-### The data flow
+### The Data Flow
 
 ```
 publisher (Celery task / view)             subscriber (browser, CLI)
@@ -53,7 +53,7 @@ publisher (Celery task / view)             subscriber (browser, CLI)
 
 A publisher anywhere in the system (most often a Celery task) calls `send_event(channel, event_type, payload)`. `django-eventstream` fans it out over Valkey Pub/Sub to every connection subscribed to that channel.
 
-## Adding an SSE endpoint to your feature
+## Adding an SSE Endpoint to Your Feature
 
 The example below streams progress for a long-running **scan**. Adapt the resource, prefix, and event names to your feature.
 
@@ -161,7 +161,7 @@ publish_end(channel, scan_id=str(scan.id))
 
 </Steps>
 
-## Event naming convention
+## Event Naming Convention
 
 Every event uses an event type of the form **`<resource>.<verb>`** (lowercased, dot-separated). The verb comes from this platform-wide vocabulary — if you need a verb that is not listed, document the addition in this guide so the catalog stays discoverable.
 
@@ -197,7 +197,7 @@ curl -N -H "Authorization: Bearer $JWT" \
   https://<host>/api/v1/scans/$SCAN_ID/event-stream
 ```
 
-## Tenant isolation & security model
+## Tenant Isolation & Security Model
 
 Authorization is enforced at two layers:
 
@@ -206,7 +206,7 @@ Authorization is enforced at two layers:
 
 Because the tenant id lives inside the channel name, this gate works for any feature without the platform knowing anything about it.
 
-## Reconnect & state recovery
+## Reconnect & State Recovery
 
 The platform deliberately ships **without server-side replay** (`is_channel_reliable` returns `False`). When a client reconnects, it does **not** receive missed events. Instead:
 
@@ -215,7 +215,7 @@ The platform deliberately ships **without server-side replay** (`is_channel_reli
 
 Design your event payloads accordingly: deltas are ephemeral and concatenated in-flight; the durable truth always lives behind a REST resource.
 
-## Local development
+## Local Development
 
 - The dev and production entrypoints both launch Gunicorn with the `asgi` worker (`config.asgi:application`). In dev, `DJANGO_DEBUG=True` enables hot reload; `preload_app` is automatically disabled under debug so edited code is picked up.
 - SSE uses a **dedicated Valkey database** (`EVENTSTREAM_VALKEY_DB`, default `2`) kept separate from the Celery broker so a noisy broker cannot crowd out streaming traffic. It reuses the same `VALKEY_*` connection settings as the rest of the platform.

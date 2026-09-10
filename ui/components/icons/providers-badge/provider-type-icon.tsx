@@ -9,7 +9,13 @@ import {
   TooltipTrigger,
 } from "@/components/shadcn";
 import { cn } from "@/lib/utils";
-import type { ProviderType } from "@/types/providers";
+import {
+  isKnownProviderType,
+  type KnownProviderType,
+  type ProviderType,
+} from "@/types/providers";
+
+import { GenericProviderBadge } from "./generic-provider-badge";
 
 type IconProps = { width: number; height: number };
 
@@ -106,7 +112,7 @@ const OktaProviderBadge = lazy(() =>
  * selectors so both stay in sync on labels, icons, and sizing.
  */
 export const PROVIDER_TYPE_DATA: Record<
-  ProviderType,
+  KnownProviderType,
   { label: string; icon: ComponentType<IconProps> }
 > = {
   aws: { label: "Amazon Web Services", icon: AWSProviderBadge },
@@ -139,21 +145,21 @@ interface ProviderTypeIconProps {
 }
 
 /**
- * Renders a single provider-type badge with a sized placeholder fallback.
+ * Renders a single provider-type badge.
  *
- * Falls back to the placeholder for provider types missing from
- * `PROVIDER_TYPE_DATA` (e.g. a brand-new provider the API knows but this UI
- * build does not). The `type` is statically typed as `ProviderType`, so this
- * only guards the runtime case — see #9991, which fixed the same crash class.
+ * Providers outside the known set — a dynamic SDK plug-in — render the neutral
+ * generic glyph instead of a bespoke brand badge. The widened `ProviderType`
+ * forces this fallback branch to be handled at compile time.
  */
 export const ProviderTypeIcon = ({
   type,
   size = 18,
 }: ProviderTypeIconProps) => {
-  const data = PROVIDER_TYPE_DATA[type];
-  if (!data) return <IconPlaceholder width={size} height={size} />;
+  if (!isKnownProviderType(type)) {
+    return <GenericProviderBadge size={size} />;
+  }
 
-  const Icon = data.icon;
+  const Icon = PROVIDER_TYPE_DATA[type].icon;
   return (
     <Suspense fallback={<IconPlaceholder width={size} height={size} />}>
       <Icon width={size} height={size} />

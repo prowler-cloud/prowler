@@ -1,0 +1,36 @@
+{
+  "Provider": "e2enetworks",
+  "CheckID": "database_cluster_public_ip_not_assigned",
+  "CheckTitle": "E2E Networks database cluster master nodes do not expose a public IP",
+  "CheckType": [],
+  "ServiceName": "database",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "database",
+  "Description": "The **master node** of each **E2E Networks database cluster** should be reachable only over private networking and must not have a public IP address assigned.",
+  "Risk": "A **public database endpoint** is directly reachable from the internet, expanding the attack surface and increasing the risk of unauthorized access, brute-force attempts, and data exposure.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.e2enetworks.com/api/myaccount/database/rds/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Remove the **public IP** from the master node of database clusters and access them through private networking such as a VPC.",
+      "Url": "https://hub.prowler.com/check/database_cluster_public_ip_not_assigned"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

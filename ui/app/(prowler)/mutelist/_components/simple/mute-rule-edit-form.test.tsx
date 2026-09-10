@@ -11,13 +11,7 @@ vi.mock("@/actions/mute-rules", () => ({
   updateMuteRule: updateMuteRuleMock,
 }));
 
-vi.mock("@/components/ui", () => ({
-  useToast: () => ({
-    toast: toastMock,
-  }),
-}));
-
-vi.mock("@/components/ui/form", () => ({
+vi.mock("@/components/shadcn/form", () => ({
   FormButtons: ({
     onCancel,
     submitText = "Save",
@@ -38,7 +32,9 @@ vi.mock("@/components/ui/form", () => ({
   ),
 }));
 
-vi.mock("@/components/shadcn", () => ({
+vi.mock("@/components/shadcn", async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  useToast: () => ({ toast: toastMock }),
   Input: ({
     defaultValue,
     ...props
@@ -53,7 +49,7 @@ vi.mock("@/components/shadcn", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/form/Label", () => ({
+vi.mock("@/components/shadcn/form/Label", () => ({
   Label: ({
     children,
     ...props

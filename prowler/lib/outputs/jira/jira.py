@@ -1,7 +1,12 @@
 import base64
+import hashlib
 import os
+import re
+from collections.abc import Mapping
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from datetime import datetime, timedelta
+from threading import Lock
 from typing import Dict, List, Optional
 
 import requests
@@ -35,7 +40,21 @@ from prowler.lib.outputs.jira.exceptions.exceptions import (
     JiraSendFindingsResponseError,
     JiraTestConnectionError,
 )
+from prowler.lib.outputs.jira.models import (
+    JiraCreationOutcome,
+    JiraCreationResult,
+    JiraIssueLookupOutcome,
+    JiraIssueReference,
+    JiraIssueSearchMatch,
+    JiraIssueSearchOutcome,
+    JiraIssueSearchResult,
+    JiraIssueStatusResult,
+)
 from prowler.providers.common.models import Connection
+
+ATLASSIAN_SITE_NAME_REGEX = re.compile(
+    r"\A[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\Z"
+)
 
 
 @dataclass
@@ -49,6 +68,39 @@ class JiraConnection(Connection):
 
     projects: dict = None
     issue_types: dict = None
+
+
+def _format_jira_issue_creation_error(response_json: object, status_code: int) -> str:
+    """Build a safe Jira issue creation error message from structured fields.
+
+    Args:
+        response_json: Parsed Jira response body.
+        status_code: HTTP status code returned by Jira.
+
+    Returns:
+        Safe issue creation error message for user-facing propagation.
+    """
+    message_parts = []
+
+    if not isinstance(response_json, dict):
+        return f"Failed to create Jira issue: Jira returned status code {status_code}."
+
+    errors = response_json.get("errors")
+    if isinstance(errors, dict):
+        message_parts.extend(
+            f"'{field}': '{message}'" for field, message in errors.items() if message
+        )
+
+    error_messages = response_json.get("errorMessages")
+    if isinstance(error_messages, list):
+        message_parts.extend(str(message) for message in error_messages if message)
+    elif isinstance(error_messages, str) and error_messages:
+        message_parts.append(error_messages)
+
+    if message_parts:
+        return f"Failed to create Jira issue: {'; '.join(message_parts)}"
+
+    return f"Failed to create Jira issue: Jira returned status code {status_code}."
 
 
 class MarkdownToADFConverter:
@@ -165,7 +217,9 @@ class MarkdownToADFConverter:
             if token_type == "text":
                 result.extend(self._text_to_nodes(token.content, marks_stack))
             elif token_type == "code_inline":
-                marks = self._clone_marks(marks_stack)
+                marks = self._clone_marks(
+                    [mark for mark in marks_stack if mark["type"] == "link"]
+                )
                 marks.append({"type": "code"})
                 result.append(self._create_text_node(token.content, marks))
             elif token_type in {"softbreak", "hardbreak"}:
@@ -328,6 +382,7 @@ class Jira:
     _refresh_token: str = None
     _expiration_date: int = None
     _cloud_id: str = None
+    _site_url: str = None
     _scopes: list[str] = None
     AUTH_URL = "https://auth.atlassian.com/authorize"
     PARAMS_TEMPLATE = {
@@ -342,6 +397,12 @@ class Jira:
     TOKEN_URL = "https://auth.atlassian.com/oauth/token"
     API_TOKEN_URL = "https://api.atlassian.com/oauth/token/accessible-resources"
     REQUEST_TIMEOUT = 90
+    ISSUE_STATUS_BATCH_SIZE = 100
+    LABEL_MAX_LENGTH = 255
+    FINDING_LABEL_PREFIX = "prowler-finding"
+    DELIVERY_ATTEMPT_LABEL_PREFIX = "prowler-attempt"
+    ISSUE_KEY_REGEX = re.compile(r"^[A-Z][A-Z0-9_]*-[0-9]+$")
+    ISSUE_ID_REGEX = re.compile(r"^[0-9]+$")
     HEADER_TEMPLATE = {
         "Content-Type": "application/json",
         "X-Force-Accept-Language": "true",
@@ -357,6 +418,7 @@ class Jira:
         api_token: str = None,
         domain: str = None,
     ):
+        self._token_lock = Lock()
         self._redirect_uri = redirect_uri
         self._client_id = client_id
         self._client_secret = client_secret
@@ -364,6 +426,7 @@ class Jira:
         self._api_token = api_token
         self._domain = domain
         self._scopes = ["read:jira-user", "read:jira-work", "write:jira-work"]
+        self._validated_destinations: set[tuple[str, str]] = set()
         # If the client mail, API token and site name are present, use basic auth
         if user_mail and api_token and domain:
             self._using_basic_auth = True
@@ -378,6 +441,268 @@ class Jira:
             raise JiraInvalidParameterError(
                 message=init_error, file=os.path.basename(__file__)
             )
+
+    @staticmethod
+    def _sanitize_summary(summary: str) -> str:
+        """Normalize and truncate a Jira issue summary.
+
+        Args:
+            summary: Raw summary text.
+
+        Returns:
+            The summary collapsed to one line and limited to Jira's 255-character
+            summary maximum.
+        """
+        return " ".join(summary.split())[:255]
+
+    @property
+    def site_url(self) -> Optional[str]:
+        """Base URL of the Jira site, used to build issue browse links.
+
+        Basic auth derives it from the configured site name; OAuth captures it
+        from the accessible-resources response when resolving the cloud id.
+        """
+        if self._using_basic_auth and self._domain:
+            return f"https://{self._domain}.atlassian.net"
+        return self._site_url
+
+    def get_issue_url(self, issue_key: str) -> Optional[str]:
+        """Build the browse URL for an issue key, or None if the site is unknown."""
+        site_url = self.site_url
+        if not site_url or not issue_key:
+            return None
+        return f"{site_url.rstrip('/')}/browse/{issue_key}"
+
+    @staticmethod
+    def sanitize_label(label: Optional[str]) -> str:
+        """Make a value safe to use as a Jira label.
+
+        Jira rejects labels containing whitespace and longer than 255
+        characters. The transformation is deterministic so the same input always
+        yields the same label: whitespace runs become a single underscore,
+        control characters are dropped and the result is truncated.
+
+        Args:
+            label: Raw label text.
+
+        Returns:
+            The sanitized label, or an empty string if nothing usable remains.
+        """
+        if not label:
+            return ""
+        cleaned = "".join(ch for ch in str(label) if ch.isprintable() or ch.isspace())
+        collapsed = re.sub(r"_+", "_", "_".join(cleaned.split()))
+        return collapsed.strip("_")[: Jira.LABEL_MAX_LENGTH]
+
+    @classmethod
+    def sanitize_labels(cls, labels: Optional[list[str]]) -> list[str]:
+        """Sanitize a list of labels, dropping empties and duplicates (order kept)."""
+        result: list[str] = []
+        for label in labels or []:
+            sanitized = cls.sanitize_label(label)
+            if sanitized and sanitized not in result:
+                result.append(sanitized)
+        return result
+
+    @classmethod
+    def _build_prefixed_label(cls, prefix: str, raw_value: Optional[str]) -> str:
+        """Build a deterministic Jira label with collision-safe truncation."""
+        if not raw_value:
+            return ""
+        raw_value = str(raw_value)
+        readable_value = cls.sanitize_label(raw_value)
+        if not readable_value:
+            return ""
+        complete_label = f"{prefix}-{readable_value}"
+        if len(complete_label) <= cls.LABEL_MAX_LENGTH:
+            return complete_label
+
+        digest = hashlib.sha256(raw_value.encode("utf-8")).hexdigest()
+        readable_length = cls.LABEL_MAX_LENGTH - len(prefix) - len(digest) - 2
+        readable_prefix = readable_value[:readable_length].rstrip("_")
+        return f"{prefix}-{readable_prefix}-{digest}"
+
+    @classmethod
+    def build_finding_label(cls, finding_uid: Optional[str]) -> str:
+        """Build the stable label used to identify a Prowler finding."""
+        return cls._build_prefixed_label(cls.FINDING_LABEL_PREFIX, finding_uid)
+
+    @classmethod
+    def build_delivery_attempt_label(cls, marker: Optional[str]) -> str:
+        """Build the stable label used to reconcile a delivery attempt."""
+        return cls._build_prefixed_label(cls.DELIVERY_ATTEMPT_LABEL_PREFIX, marker)
+
+    @staticmethod
+    def _retry_after(response: requests.Response) -> Optional[str]:
+        """Return Jira's Retry-After header without parsing or normalizing it."""
+        headers = getattr(response, "headers", None)
+        if not isinstance(headers, Mapping):
+            return None
+        retry_after = headers.get("Retry-After")
+        return str(retry_after) if retry_after is not None else None
+
+    @staticmethod
+    def _response_json(response: requests.Response) -> object:
+        """Decode a Jira response, returning None for invalid JSON."""
+        try:
+            return response.json()
+        except (ValueError, requests.exceptions.JSONDecodeError):
+            return None
+
+    def _issue_identity(
+        self, issue: object
+    ) -> tuple[Optional[str], Optional[str], Optional[str]]:
+        """Return individually validated Jira issue identity fields."""
+        issue = issue if isinstance(issue, dict) else {}
+        issue_id = issue.get("id")
+        issue_key = issue.get("key")
+        if not isinstance(issue_id, str) or not self.ISSUE_ID_REGEX.fullmatch(issue_id):
+            issue_id = None
+        if not isinstance(issue_key, str) or not self.ISSUE_KEY_REGEX.fullmatch(
+            issue_key
+        ):
+            issue_key = None
+        return issue_id, issue_key, self.get_issue_url(issue_key) if issue_key else None
+
+    def _classify_creation_response(
+        self,
+        response: requests.Response,
+        delivery_marker: Optional[str] = None,
+    ) -> JiraCreationResult:
+        """Classify Jira's create-issue response without inferring delivery."""
+        status_code = response.status_code
+        retry_after = self._retry_after(response)
+        response_json = self._response_json(response)
+        response_details = {
+            "delivery_marker": delivery_marker,
+            "http_status": status_code,
+            "retry_after": retry_after,
+        }
+
+        if status_code == 201:
+            if not isinstance(response_json, dict):
+                return JiraCreationResult(
+                    outcome=JiraCreationOutcome.UNCERTAIN,
+                    error_code="malformed_success_response",
+                    error_message="Jira returned an invalid successful creation response.",
+                    **response_details,
+                )
+
+            issue_id, issue_key, issue_url = self._issue_identity(response_json)
+            if not issue_key or not issue_id or not issue_url:
+                missing_fields = [
+                    field
+                    for field, value in zip(
+                        ("key", "id", "url"), (issue_key, issue_id, issue_url)
+                    )
+                    if not value
+                ]
+                return JiraCreationResult(
+                    outcome=JiraCreationOutcome.UNCERTAIN,
+                    issue_key=issue_key,
+                    issue_id=issue_id,
+                    issue_url=issue_url,
+                    error_code="incomplete_success_response",
+                    error_message=(
+                        "Jira confirmed creation without a usable "
+                        f"{', '.join(missing_fields)}."
+                    ),
+                    **response_details,
+                )
+            return JiraCreationResult(
+                outcome=JiraCreationOutcome.CONFIRMED_SUCCESS,
+                issue_key=issue_key,
+                issue_id=issue_id,
+                issue_url=issue_url,
+                **response_details,
+            )
+
+        error_message = _format_jira_issue_creation_error(response_json, status_code)
+        if status_code == 429:
+            outcome = JiraCreationOutcome.RETRYABLE_FAILURE
+            error_code = "rate_limited"
+        elif status_code == 408:
+            outcome = JiraCreationOutcome.UNCERTAIN
+            error_code = "jira_http_408"
+        elif 400 <= status_code < 500:
+            outcome = JiraCreationOutcome.CONFIRMED_REJECTION
+            error_code = f"jira_http_{status_code}"
+        else:
+            outcome = JiraCreationOutcome.UNCERTAIN
+            error_code = f"jira_http_{status_code}"
+        return JiraCreationResult(
+            outcome=outcome,
+            error_code=error_code,
+            error_message=error_message,
+            **response_details,
+        )
+
+    @staticmethod
+    def _creation_transport_result(
+        exception: requests.exceptions.RequestException,
+        delivery_marker: Optional[str],
+    ) -> JiraCreationResult:
+        """Classify create-issue transport failures by delivery certainty."""
+        if isinstance(exception, requests.exceptions.ConnectTimeout):
+            outcome = JiraCreationOutcome.RETRYABLE_FAILURE
+            error_code = "connect_timeout"
+            error_message = "Jira could not be reached before the request was sent."
+        else:
+            outcome = JiraCreationOutcome.UNCERTAIN
+            error_code = "ambiguous_transport_failure"
+            error_message = "Jira did not confirm whether it created the issue."
+        return JiraCreationResult(
+            outcome=outcome,
+            delivery_marker=delivery_marker,
+            error_code=error_code,
+            error_message=error_message,
+        )
+
+    @staticmethod
+    def _destination_validation_result(
+        error: Exception,
+        delivery_marker: Optional[str],
+    ) -> JiraCreationResult:
+        """Classify a catalog failure that happened before issue creation."""
+        errors = (error, getattr(error, "original_exception", None))
+        no_projects = any(isinstance(item, JiraNoProjectsError) for item in errors)
+        http_status = next(
+            (item.http_status for item in errors if hasattr(item, "http_status")), None
+        )
+        retry_after = next(
+            (item.retry_after for item in errors if hasattr(item, "retry_after")), None
+        )
+
+        if no_projects:
+            outcome = JiraCreationOutcome.CONFIRMED_REJECTION
+            error_code = "invalid_project"
+            error_message = "The Jira project key is invalid."
+        elif http_status is not None and 400 <= http_status < 500:
+            if http_status in (408, 429):
+                outcome = JiraCreationOutcome.RETRYABLE_FAILURE
+                error_code = "destination_temporarily_unavailable"
+            else:
+                outcome = JiraCreationOutcome.CONFIRMED_REJECTION
+                error_code = (
+                    "invalid_credentials"
+                    if http_status in (401, 403)
+                    else "destination_rejected"
+                )
+            error_message = "The Jira destination could not be validated."
+        else:
+            outcome = JiraCreationOutcome.RETRYABLE_FAILURE
+            error_code = "destination_validation_failed"
+            error_message = (
+                "The Jira destination could not be validated before sending."
+            )
+        return JiraCreationResult(
+            outcome=outcome,
+            delivery_marker=delivery_marker,
+            http_status=http_status,
+            retry_after=retry_after,
+            error_code=error_code,
+            error_message=error_message,
+        )
 
     @staticmethod
     def _build_code_block_content(code_value: str) -> Optional[Dict]:
@@ -632,11 +957,14 @@ class Jira:
         """
         try:
             if self._using_basic_auth:
+                if not domain or not ATLASSIAN_SITE_NAME_REGEX.fullmatch(domain):
+                    raise ValueError("Invalid Jira site name.")
                 headers = self.get_headers(access_token)
                 response = requests.get(
                     f"https://{domain}.atlassian.net/_edge/tenant_info",
                     headers=headers,
                     timeout=self.REQUEST_TIMEOUT,
+                    allow_redirects=False,
                 )
                 response = response.json()
                 return response.get("cloudId")
@@ -651,6 +979,7 @@ class Jira:
             if response.status_code == 200:
                 resources = response.json()
                 if len(resources) > 0:
+                    self._site_url = resources[0].get("url")
                     return resources[0].get("id")
                 else:
                     error_message = (
@@ -691,11 +1020,15 @@ class Jira:
             if self._using_basic_auth:
                 return self._access_token
 
-            if self.auth_expiration and datetime.now() < datetime.fromisoformat(
-                self.auth_expiration
-            ):
+            if self._access_token_is_valid():
                 return self._access_token
-            else:
+
+            # Atlassian rotates refresh tokens, so two concurrent refreshes with
+            # the same one would invalidate each other. Re-check under the lock
+            # in case another thread refreshed while we waited for it.
+            with self._token_lock:
+                if self._access_token_is_valid():
+                    return self._access_token
                 return self.refresh_access_token()
         except JiraRefreshTokenError as refresh_error:
             raise refresh_error
@@ -707,6 +1040,12 @@ class Jira:
                 message="Failed to get the access token",
                 file=os.path.basename(__file__),
             )
+
+    def _access_token_is_valid(self) -> bool:
+        """Return whether the current OAuth access token has not expired."""
+        return bool(self.auth_expiration) and datetime.now() < datetime.fromisoformat(
+            self.auth_expiration
+        )
 
     def refresh_access_token(self) -> str:
         """Refresh the access token
@@ -802,15 +1141,21 @@ class Jira:
             projects = jira.get_projects()
 
             issue_types = {}
-            for project_key in projects:
-                try:
-                    issue_types[project_key] = jira.get_available_issue_types(
-                        project_key
-                    )
-                except Exception as e:
-                    logger.warning(
-                        f"Failed to get issue types for project {project_key}: {e}"
-                    )
+            with ThreadPoolExecutor(max_workers=10) as executor:
+                future_to_project = {
+                    executor.submit(
+                        jira.get_available_issue_types, project_key
+                    ): project_key
+                    for project_key in projects
+                }
+                for future in as_completed(future_to_project):
+                    project_key = future_to_project[future]
+                    try:
+                        issue_types[project_key] = future.result()
+                    except Exception as e:
+                        logger.warning(
+                            f"Failed to get issue types for project {project_key}: {e}"
+                        )
 
             return JiraConnection(
                 is_connected=True, projects=projects, issue_types=issue_types
@@ -883,7 +1228,10 @@ class Jira:
             access_token = self.get_access_token()
 
             if not access_token:
-                return ValueError("Failed to get access token")
+                raise JiraNoTokenError(
+                    message="No token was found",
+                    file=os.path.basename(__file__),
+                )
 
             headers = self.get_headers(access_token)
 
@@ -909,10 +1257,13 @@ class Jira:
                 logger.error(
                     f"Failed to get projects: {response.status_code} - {response.text}"
                 )
-                raise JiraGetProjectsResponseError(
+                response_error = JiraGetProjectsResponseError(
                     message="Failed to get projects from Jira",
                     file=os.path.basename(__file__),
                 )
+                response_error.http_status = response.status_code
+                response_error.retry_after = self._retry_after(response)
+                raise response_error
         except JiraNoProjectsError as no_projects_error:
             raise no_projects_error
         except JiraRefreshTokenError as refresh_error:
@@ -924,6 +1275,7 @@ class Jira:
             raise JiraGetProjectsError(
                 message="Failed to get projects from Jira",
                 file=os.path.basename(__file__),
+                original_exception=e,
             )
 
     def get_available_issue_types(self, project_key: str = None) -> list[str]:
@@ -948,7 +1300,7 @@ class Jira:
             access_token = self.get_access_token()
 
             if not access_token:
-                return JiraNoTokenError(
+                raise JiraNoTokenError(
                     message="No token was found",
                     file=os.path.basename(__file__),
                 )
@@ -963,7 +1315,10 @@ class Jira:
 
             if response.status_code == 200:
                 if len(response.json()["projects"]) == 0:
-                    logger.error("No projects found")
+                    # Expected per-project condition (e.g. the integration user lacks
+                    # "create issue" rights on this specific project) — the caller in
+                    # test_connection() already treats this as non-fatal, so this isn't
+                    # an error worth alerting on.
                     raise JiraNoProjectsError(
                         message="No projects found in Jira",
                         file=os.path.basename(__file__),
@@ -973,18 +1328,29 @@ class Jira:
             else:
                 response_error = f"Failed to get available issue types: {response.status_code} - {response.text}"
                 logger.error(response_error)
-                raise JiraGetAvailableIssueTypesResponseError(
+                response_error = JiraGetAvailableIssueTypesResponseError(
                     message=response_error, file=os.path.basename(__file__)
                 )
+                response_error.http_status = response.status_code
+                response_error.retry_after = self._retry_after(response)
+                raise response_error
         except JiraRefreshTokenError as refresh_error:
             raise refresh_error
         except JiraRefreshTokenResponseError as response_error:
             raise response_error
+        except JiraNoProjectsError as no_projects_error:
+            # Expected per-project condition; the caller decides whether to log it.
+            raise JiraGetAvailableIssueTypesError(
+                message="Failed to get available issue types",
+                file=os.path.basename(__file__),
+                original_exception=no_projects_error,
+            )
         except Exception as e:
             logger.error(f"Failed to get available issue types: {e}")
             raise JiraGetAvailableIssueTypesError(
                 message="Failed to get available issue types",
                 file=os.path.basename(__file__),
+                original_exception=e,
             )
 
     def get_metadata(self) -> dict:
@@ -1114,6 +1480,101 @@ class Jira:
             return "#0000FF"
         return "#000000"  # Default black color for unknown severities
 
+    @staticmethod
+    def _adf_colored_strong_marks(color_mark_type: str, color: str) -> list[dict]:
+        """Build ADF marks for bold text with a Jira color mark.
+
+        Args:
+            color_mark_type: Jira ADF color mark type, such as textColor or
+                backgroundColor.
+            color: Hex color value for the mark.
+
+        Returns:
+            ADF marks for strong colored text.
+        """
+        return [
+            {"type": "strong"},
+            {"type": color_mark_type, "attrs": {"color": color}},
+        ]
+
+    def _adf_severity_marks(
+        self, severity: str = "", severity_color: str | None = None
+    ) -> list[dict]:
+        """Build ADF marks for severity text.
+
+        Args:
+            severity: Finding severity used to derive a color when severity_color
+                is not provided.
+            severity_color: Optional explicit severity color.
+
+        Returns:
+            ADF marks for highlighted severity text.
+        """
+        color = severity_color or self.get_severity_color(str(severity).lower())
+        return self._adf_colored_strong_marks("backgroundColor", color)
+
+    def _adf_status_marks(
+        self, status: str = "", status_color: str | None = None
+    ) -> list[dict]:
+        """Build ADF marks for status text.
+
+        Args:
+            status: Finding status used to derive a color when status_color is
+                not provided.
+            status_color: Optional explicit status color.
+
+        Returns:
+            ADF marks for colored status text.
+        """
+        color = status_color or self.get_color_from_status(str(status).upper())
+        return self._adf_colored_strong_marks("textColor", color)
+
+    @staticmethod
+    def _adf_text_node(text: str, marks: list[dict] | None = None) -> dict:
+        """Build an ADF text node.
+
+        Args:
+            text: Text content for the node.
+            marks: Optional ADF marks to apply to the text.
+
+        Returns:
+            ADF text node with optional marks.
+        """
+        node = {"type": "text", "text": text}
+        if marks:
+            node["marks"] = marks
+        return node
+
+    def _adf_severity_text_node(
+        self, severity: str = "", severity_color: str | None = None
+    ) -> dict:
+        """Build an ADF text node for severity.
+
+        Args:
+            severity: Severity text to render.
+            severity_color: Optional explicit severity color.
+
+        Returns:
+            ADF text node with severity marks.
+        """
+        return self._adf_text_node(
+            severity, self._adf_severity_marks(severity, severity_color)
+        )
+
+    def _adf_status_text_node(
+        self, status: str = "", status_color: str | None = None
+    ) -> dict:
+        """Build an ADF text node for status.
+
+        Args:
+            status: Status text to render.
+            status_color: Optional explicit status color.
+
+        Returns:
+            ADF text node with status marks.
+        """
+        return self._adf_text_node(status, self._adf_status_marks(status, status_color))
+
     def get_adf_description(
         self,
         check_id: str = "",
@@ -1139,7 +1600,6 @@ class Jira:
         finding_url: str = "",
         tenant_info: str = "",
     ) -> dict:
-
         # ADF forbids empty text nodes, so Jira rejects them with 400 INVALID_INPUT.
         def _safe(value: str) -> str:
             return value if (value and value.strip()) else "-"
@@ -1252,19 +1712,9 @@ class Jira:
                             {
                                 "type": "paragraph",
                                 "content": [
-                                    {
-                                        "type": "text",
-                                        "text": severity,
-                                        "marks": [
-                                            {"type": "strong"},
-                                            {
-                                                "type": "backgroundColor",
-                                                "attrs": {
-                                                    "color": severity_color,
-                                                },
-                                            },
-                                        ],
-                                    }
+                                    self._adf_severity_text_node(
+                                        severity, severity_color
+                                    )
                                 ],
                             }
                         ],
@@ -1297,17 +1747,7 @@ class Jira:
                             {
                                 "type": "paragraph",
                                 "content": [
-                                    {
-                                        "type": "text",
-                                        "text": status,
-                                        "marks": [
-                                            {"type": "strong"},
-                                            {
-                                                "type": "textColor",
-                                                "attrs": {"color": status_color},
-                                            },
-                                        ],
-                                    }
+                                    self._adf_status_text_node(status, status_color)
                                 ],
                             }
                         ],
@@ -1831,12 +2271,616 @@ class Jira:
             ],
         }
 
+    def get_grouped_adf_description(
+        self,
+        check_id: str = "",
+        check_title: str = "",
+        check_description: str = "",
+        severity: str = "",
+        status: str = "",
+        provider: str = "",
+        service: str = "",
+        affected_failing_resources: int = 0,
+        last_seen: str = "",
+        failing_for: str = "",
+        grouped_resources: list[dict] | None = None,
+        resources_total: int = 0,
+        resources_shown: int = 0,
+        finding_group_url: str = "",
+        finding_group_link_text: str = "",
+        risk: str = "",
+        recommendation_text: str = "",
+        recommendation_url: str = "",
+    ) -> dict:
+        """Build a Jira ADF description for a grouped finding issue.
+
+        Args:
+            check_id: Finding check ID.
+            check_title: Finding check title.
+            check_description: Finding check description.
+            severity: Finding group severity.
+            status: Finding group status.
+            provider: Cloud provider name.
+            service: Provider service name.
+            affected_failing_resources: Number of failing resources in the group.
+            last_seen: Last time the finding group was seen.
+            failing_for: Duration the finding group has been failing.
+            grouped_resources: Resource rows to include in the grouped issue.
+            resources_total: Total number of resources in the group.
+            resources_shown: Number of resources rendered in this Jira issue.
+            finding_group_url: Optional URL for the full finding group.
+            finding_group_link_text: Optional link text for finding_group_url.
+            risk: Risk description for the check.
+            recommendation_text: Remediation recommendation text.
+            recommendation_url: Optional remediation recommendation URL.
+
+        Returns:
+            Jira ADF document describing the finding group.
+        """
+
+        def _safe(value) -> str:
+            return str(value) if value not in (None, "") else "-"
+
+        def _text(value, marks: list[dict] | None = None) -> dict:
+            node = {"type": "text", "text": _safe(value)}
+            if marks:
+                node["marks"] = marks
+            return node
+
+        def _paragraph(value, marks: list[dict] | None = None) -> dict:
+            return {"type": "paragraph", "content": [_text(value, marks)]}
+
+        def _cell(value, marks: list[dict] | None = None) -> dict:
+            return {"type": "tableCell", "content": [_paragraph(value, marks)]}
+
+        def _content_cell(content: list[dict]) -> dict:
+            return {"type": "tableCell", "content": content}
+
+        def _append_link(content: list[dict], url: str) -> list[dict]:
+            if not url:
+                return content
+
+            link_node = {
+                "type": "text",
+                "text": url,
+                "marks": [{"type": "link", "attrs": {"href": url}}],
+            }
+            if content and content[-1].get("type") == "paragraph":
+                paragraph_content = content[-1].setdefault("content", [])
+                if paragraph_content:
+                    last_inline = paragraph_content[-1]
+                    if last_inline.get("type") != "text" or not last_inline.get(
+                        "text", ""
+                    ).endswith(" "):
+                        paragraph_content.append({"type": "text", "text": " "})
+                paragraph_content.append(link_node)
+            else:
+                content.append({"type": "paragraph", "content": [link_node]})
+            return content
+
+        def _row(cells: list[dict]) -> dict:
+            return {"type": "tableRow", "content": cells}
+
+        strong = [{"type": "strong"}]
+        code = [{"type": "code"}]
+        severity_marks = self._adf_severity_marks(severity)
+        status_marks = self._adf_status_marks(status)
+        recommendation_content = _append_link(
+            self._markdown_converter.convert(_safe(recommendation_text)),
+            recommendation_url,
+        )
+        main_rows = [
+            _row([_cell("Check Id", strong), _cell(check_id, code)]),
+            _row([_cell("Check Title", strong), _cell(check_title)]),
+            _row([_cell("Severity", strong), _cell(severity, severity_marks)]),
+            _row([_cell("Status", strong), _cell(status, status_marks)]),
+            _row([_cell("Provider", strong), _cell(provider, code)]),
+            _row([_cell("Service", strong), _cell(service, code)]),
+            _row(
+                [
+                    _cell("Affected Failing Resources", strong),
+                    _cell(affected_failing_resources, strong),
+                ]
+            ),
+            _row([_cell("Last Seen", strong), _cell(last_seen)]),
+            _row([_cell("Failing For", strong), _cell(failing_for)]),
+            _row(
+                [
+                    _cell("Risk", strong),
+                    _content_cell(self._markdown_converter.convert(_safe(risk))),
+                ]
+            ),
+            _row(
+                [
+                    _cell("Recommendation", strong),
+                    _content_cell(recommendation_content),
+                ]
+            ),
+        ]
+
+        resource_rows = [
+            _row(
+                [
+                    _cell("Resource", strong),
+                    _cell("Resource UID", strong),
+                    _cell("Provider", strong),
+                    _cell("Service", strong),
+                    _cell("Account / Tenant", strong),
+                    _cell("Status", strong),
+                    _cell("Severity", strong),
+                    _cell("Region", strong),
+                    _cell("Last Seen", strong),
+                    _cell("Failing For", strong),
+                    _cell("Triage", strong),
+                ]
+            )
+        ]
+        for resource in grouped_resources or []:
+            resource_status = resource.get("status")
+            resource_severity = str(resource.get("severity", "")).upper()
+            resource_status_marks = self._adf_status_marks(resource_status)
+            resource_severity_marks = self._adf_severity_marks(resource_severity)
+            resource_rows.append(
+                _row(
+                    [
+                        _cell(resource.get("resource_name"), code),
+                        _cell(resource.get("resource_uid"), code),
+                        _cell(resource.get("provider"), code),
+                        _cell(resource.get("service"), code),
+                        _cell(resource.get("provider_account"), code),
+                        _cell(resource_status, resource_status_marks),
+                        _cell(resource_severity, resource_severity_marks),
+                        _cell(resource.get("region"), code),
+                        _cell(resource.get("last_seen")),
+                        _cell(resource.get("failing_for")),
+                        _cell(resource.get("triage")),
+                    ]
+                )
+            )
+
+        content = [
+            _paragraph("Prowler has discovered the following Finding Group:"),
+            {"type": "table", "attrs": {"layout": "full-width"}, "content": main_rows},
+        ]
+
+        content.extend(
+            [
+                {
+                    "type": "heading",
+                    "attrs": {"level": 2},
+                    "content": [_text("Affected failing resources")],
+                },
+                {
+                    "type": "table",
+                    "attrs": {"layout": "full-width"},
+                    "content": resource_rows,
+                },
+            ]
+        )
+
+        if resources_total > resources_shown:
+            remaining_content = [
+                _text(f"Showing {resources_shown} of {resources_total} Findings.")
+            ]
+            if finding_group_url and finding_group_link_text:
+                remaining_content = [
+                    _text(
+                        f"Showing {resources_shown} of {resources_total} Findings "
+                        "in this Jira issue. "
+                    ),
+                    _text(
+                        finding_group_link_text,
+                        [
+                            {
+                                "type": "link",
+                                "attrs": {"href": finding_group_url},
+                            }
+                        ],
+                    ),
+                ]
+            content.append(
+                {
+                    "type": "paragraph",
+                    "content": remaining_content,
+                }
+            )
+        elif finding_group_url and finding_group_link_text:
+            content.append(
+                {
+                    "type": "paragraph",
+                    "content": [
+                        _text(
+                            finding_group_link_text,
+                            [
+                                {
+                                    "type": "link",
+                                    "attrs": {"href": finding_group_url},
+                                }
+                            ],
+                        ),
+                    ],
+                }
+            )
+
+        return {"type": "doc", "version": 1, "content": content}
+
+    @staticmethod
+    def _unknown_issue_status(
+        reference: JiraIssueReference,
+        *,
+        http_status: Optional[int] = None,
+        retry_after: Optional[str] = None,
+        error_code: str = "unknown",
+        error_message: str = "Jira could not confirm the issue status.",
+    ) -> JiraIssueStatusResult:
+        """Build a safe unknown status without implying deletion."""
+        return JiraIssueStatusResult(
+            reference=reference,
+            outcome=JiraIssueLookupOutcome.UNKNOWN,
+            http_status=http_status,
+            retry_after=retry_after,
+            error_code=error_code,
+            error_message=error_message,
+        )
+
+    def _set_unknown_issue_statuses(
+        self,
+        results: dict[JiraIssueReference, JiraIssueStatusResult],
+        references: list[JiraIssueReference],
+        **details,
+    ) -> None:
+        """Assign the same unknown observation to a group of references."""
+        for reference in references:
+            results[reference] = self._unknown_issue_status(reference, **details)
+
+    def _resolved_issue_status(
+        self,
+        reference: JiraIssueReference,
+        issue: dict,
+        retry_after: Optional[str],
+    ) -> JiraIssueStatusResult:
+        """Classify one issue returned by Jira's bulk fetch endpoint."""
+        malformed = {
+            "http_status": 200,
+            "retry_after": retry_after,
+            "error_code": "malformed_issue",
+            "error_message": "Jira returned malformed issue data.",
+        }
+        issue_id = str(issue.get("id"))
+        issue_key = issue.get("key")
+        if not isinstance(issue_key, str) or not self.ISSUE_KEY_REGEX.fullmatch(
+            issue_key
+        ):
+            return self._unknown_issue_status(reference, **malformed)
+
+        fields = issue.get("fields")
+        status = fields.get("status") if isinstance(fields, dict) else None
+        category = status.get("statusCategory") if isinstance(status, dict) else None
+        category_key = category.get("key") if isinstance(category, dict) else None
+        status_name = status.get("name") if isinstance(status, dict) else None
+        if issue_key != reference.issue_key:
+            outcome = JiraIssueLookupOutcome.MOVED
+        else:
+            outcome = {
+                "new": JiraIssueLookupOutcome.OPEN,
+                "indeterminate": JiraIssueLookupOutcome.OPEN,
+                "done": JiraIssueLookupOutcome.DONE,
+            }.get(category_key)
+            if not outcome or not isinstance(status_name, str):
+                return self._unknown_issue_status(reference, **malformed)
+
+        return JiraIssueStatusResult(
+            reference=reference,
+            outcome=outcome,
+            current_issue_id=issue_id,
+            current_issue_key=issue_key,
+            current_issue_url=self.get_issue_url(issue_key),
+            status=status_name if isinstance(status_name, str) else None,
+            status_category=category_key if isinstance(category_key, str) else None,
+            http_status=200,
+            retry_after=retry_after,
+        )
+
+    def get_issues_status(
+        self, issue_references: list[JiraIssueReference]
+    ) -> list[JiraIssueStatusResult]:
+        """Resolve unique Jira references by ID without inferring deletion."""
+        references = list(dict.fromkeys(issue_references or []))
+        if not references:
+            return []
+
+        results: dict[JiraIssueReference, JiraIssueStatusResult] = {}
+        valid_references: list[JiraIssueReference] = []
+        for reference in references:
+            if (
+                not reference.issue_id
+                or not isinstance(reference.issue_id, str)
+                or not self.ISSUE_ID_REGEX.fullmatch(reference.issue_id)
+                or not isinstance(reference.issue_key, str)
+                or not self.ISSUE_KEY_REGEX.fullmatch(reference.issue_key)
+            ):
+                results[reference] = self._unknown_issue_status(
+                    reference,
+                    error_code="invalid_reference",
+                    error_message="The stored Jira issue reference is invalid.",
+                )
+            else:
+                valid_references.append(reference)
+
+        if valid_references:
+            try:
+                access_token = self.get_access_token()
+            except (
+                JiraRefreshTokenError,
+                JiraRefreshTokenResponseError,
+                JiraGetAccessTokenError,
+            ):
+                access_token = None
+            if not access_token:
+                self._set_unknown_issue_statuses(
+                    results,
+                    valid_references,
+                    error_code="authentication_failed",
+                    error_message="Jira authentication failed during status lookup.",
+                )
+                return [results[reference] for reference in references]
+
+            headers = self.get_headers(access_token, content_type_json=True)
+            for start in range(0, len(valid_references), self.ISSUE_STATUS_BATCH_SIZE):
+                batch = valid_references[start : start + self.ISSUE_STATUS_BATCH_SIZE]
+                try:
+                    response = requests.post(
+                        f"https://api.atlassian.com/ex/jira/{self.cloud_id}/rest/api/3/issue/bulkfetch",
+                        json={
+                            "issueIdsOrKeys": [
+                                reference.issue_id for reference in batch
+                            ],
+                            "fields": ["status"],
+                        },
+                        headers=headers,
+                        timeout=self.REQUEST_TIMEOUT,
+                    )
+                except requests.exceptions.RequestException:
+                    self._set_unknown_issue_statuses(
+                        results,
+                        batch,
+                        error_code="transport_failure",
+                        error_message="Jira status lookup failed in transit.",
+                    )
+                    continue
+
+                retry_after = self._retry_after(response)
+                if response.status_code != 200:
+                    self._set_unknown_issue_statuses(
+                        results,
+                        batch,
+                        http_status=response.status_code,
+                        retry_after=retry_after,
+                        error_code=f"jira_http_{response.status_code}",
+                    )
+                    continue
+
+                response_json = self._response_json(response)
+                if not isinstance(response_json, dict) or not isinstance(
+                    response_json.get("issues", []), list
+                ):
+                    self._set_unknown_issue_statuses(
+                        results,
+                        batch,
+                        http_status=200,
+                        retry_after=retry_after,
+                        error_code="malformed_response",
+                        error_message="Jira returned a malformed status response.",
+                    )
+                    continue
+
+                references_by_id: dict[str, list[JiraIssueReference]] = {}
+                for reference in batch:
+                    references_by_id.setdefault(reference.issue_id, []).append(
+                        reference
+                    )
+
+                for issue in response_json.get("issues", []):
+                    if not isinstance(issue, dict):
+                        continue
+                    current_issue_id = issue.get("id")
+                    matching_references = references_by_id.get(
+                        str(current_issue_id), []
+                    )
+                    if not matching_references:
+                        continue
+                    for reference in matching_references:
+                        results[reference] = self._resolved_issue_status(
+                            reference, issue, retry_after
+                        )
+
+                issue_errors = response_json.get("issueErrors", [])
+                if isinstance(issue_errors, list):
+                    for issue_error in issue_errors:
+                        if not isinstance(issue_error, dict):
+                            continue
+                        error_reference = issue_error.get(
+                            "issueIdOrKey",
+                            issue_error.get("issueId", issue_error.get("id")),
+                        )
+                        matching_references = references_by_id.get(
+                            str(error_reference), []
+                        )
+                        error_status = issue_error.get(
+                            "statusCode",
+                            issue_error.get("status", issue_error.get("errorCode")),
+                        )
+                        try:
+                            error_status = int(error_status)
+                        except (TypeError, ValueError):
+                            error_status = None
+                        outcome = {
+                            403: JiraIssueLookupOutcome.FORBIDDEN,
+                            404: JiraIssueLookupOutcome.MISSING,
+                        }.get(error_status)
+                        if outcome:
+                            for reference in matching_references:
+                                results[reference] = JiraIssueStatusResult(
+                                    reference=reference,
+                                    outcome=outcome,
+                                    http_status=error_status,
+                                    retry_after=retry_after,
+                                    error_code=f"jira_http_{error_status}",
+                                    error_message="Jira could not return the issue.",
+                                )
+
+                for reference in batch:
+                    if reference not in results:
+                        results[reference] = self._unknown_issue_status(
+                            reference,
+                            http_status=200,
+                            retry_after=retry_after,
+                            error_code="omitted_issue",
+                            error_message="Jira omitted the issue from its response.",
+                        )
+
+        return [results[reference] for reference in references]
+
+    @staticmethod
+    def _escape_jql_string(value: str) -> str:
+        """Escape a string used inside a quoted JQL value."""
+        return value.replace("\\", "\\\\").replace('"', '\\"')
+
+    def search_issues_by_delivery_attempt(
+        self, delivery_attempt_marker: Optional[str]
+    ) -> JiraIssueSearchResult:
+        """Search Jira by a caller-owned delivery marker."""
+        matches: list[JiraIssueSearchMatch] = []
+
+        def result(
+            outcome: JiraIssueSearchOutcome,
+            *,
+            error_code: Optional[str] = None,
+            error_message: Optional[str] = None,
+            response: Optional[requests.Response] = None,
+        ) -> JiraIssueSearchResult:
+            return JiraIssueSearchResult(
+                outcome=outcome,
+                matches=tuple(matches),
+                http_status=getattr(response, "status_code", None),
+                retry_after=(
+                    self._retry_after(response) if response is not None else None
+                ),
+                error_code=error_code,
+                error_message=error_message,
+            )
+
+        attempt_label = self.build_delivery_attempt_label(delivery_attempt_marker)
+        if not attempt_label:
+            return result(
+                JiraIssueSearchOutcome.UNKNOWN,
+                error_code="invalid_delivery_marker",
+                error_message="The Jira delivery marker is empty.",
+            )
+        try:
+            access_token = self.get_access_token()
+        except (
+            JiraRefreshTokenError,
+            JiraRefreshTokenResponseError,
+            JiraGetAccessTokenError,
+        ):
+            access_token = None
+        if not access_token:
+            return result(
+                JiraIssueSearchOutcome.UNKNOWN,
+                error_code="authentication_failed",
+                error_message="Jira authentication failed during marker lookup.",
+            )
+
+        headers = self.get_headers(access_token, content_type_json=True)
+        payload = {
+            "jql": f'labels = "{self._escape_jql_string(attempt_label)}"',
+            "fields": ["key"],
+            "maxResults": 100,
+        }
+        seen_matches: set[tuple[str, str]] = set()
+        seen_page_tokens: set[str] = set()
+        while True:
+            try:
+                response = requests.post(
+                    f"https://api.atlassian.com/ex/jira/{self.cloud_id}/rest/api/3/search/jql",
+                    json=payload,
+                    headers=headers,
+                    timeout=self.REQUEST_TIMEOUT,
+                )
+            except requests.exceptions.RequestException:
+                return result(
+                    JiraIssueSearchOutcome.RETRYABLE_FAILURE,
+                    error_code="transport_failure",
+                    error_message="Jira marker lookup failed in transit.",
+                )
+
+            if response.status_code != 200:
+                retryable = response.status_code == 429 or response.status_code >= 500
+                return result(
+                    (
+                        JiraIssueSearchOutcome.RETRYABLE_FAILURE
+                        if retryable
+                        else JiraIssueSearchOutcome.UNKNOWN
+                    ),
+                    error_code=f"jira_http_{response.status_code}",
+                    error_message="Jira marker lookup failed.",
+                    response=response,
+                )
+
+            response_json = self._response_json(response)
+            if not isinstance(response_json, dict) or not isinstance(
+                response_json.get("issues"), list
+            ):
+                return result(
+                    JiraIssueSearchOutcome.UNKNOWN,
+                    error_code="malformed_response",
+                    error_message="Jira returned a malformed marker lookup response.",
+                    response=response,
+                )
+
+            for issue in response_json["issues"]:
+                issue_id, issue_key, issue_url = self._issue_identity(issue)
+                if not issue_id or not issue_key or not issue_url:
+                    return result(
+                        JiraIssueSearchOutcome.UNKNOWN,
+                        error_code="malformed_issue",
+                        error_message="Jira returned malformed marker lookup data.",
+                        response=response,
+                    )
+                identity = (issue_id, issue_key)
+                if identity not in seen_matches:
+                    seen_matches.add(identity)
+                    matches.append(
+                        JiraIssueSearchMatch(
+                            issue_id=issue_id,
+                            issue_key=issue_key,
+                            issue_url=issue_url,
+                        )
+                    )
+
+            next_page_token = response_json.get("nextPageToken")
+            if not next_page_token:
+                return result(JiraIssueSearchOutcome.SUCCESS, response=response)
+            if (
+                not isinstance(next_page_token, str)
+                or next_page_token in seen_page_tokens
+            ):
+                return result(
+                    JiraIssueSearchOutcome.UNKNOWN,
+                    error_code="pagination_stalled",
+                    error_message="Jira marker lookup pagination did not complete.",
+                    response=response,
+                )
+            seen_page_tokens.add(next_page_token)
+            payload["nextPageToken"] = next_page_token
+
     def send_findings(
         self,
         findings: list[Finding] = None,
         project_key: str = None,
         issue_type: str = None,
-        issue_labels: list[str] = None,
+        issue_labels: Optional[list[str]] = None,
         finding_url: str = None,
         tenant_info: str = None,
     ):
@@ -1924,7 +2968,7 @@ class Jira:
                     summary_parts.append(finding.resource_uid)
 
                 summary = " - ".join(summary_parts[1:])
-                summary = f"{summary_parts[0]} {summary}"[:255]
+                summary = self._sanitize_summary(f"{summary_parts[0]} {summary}")
 
                 payload = {
                     "fields": {
@@ -1936,6 +2980,7 @@ class Jira:
                         "customfield_10088": {"value": "Core"},
                     }
                 }
+                issue_labels = self.sanitize_labels(issue_labels)
                 if issue_labels:
                     payload["fields"]["labels"] = issue_labels
 
@@ -1946,25 +2991,25 @@ class Jira:
                     timeout=self.REQUEST_TIMEOUT,
                 )
 
-                if response.status_code != 201:
-                    try:
-                        response_json = response.json()
-                    except (ValueError, requests.exceptions.JSONDecodeError):
-                        response_error = f"Failed to send finding: {response.status_code} - {response.text}"
-                        logger.error(response_error)
-                        raise JiraSendFindingsResponseError(
-                            message=response_error, file=os.path.basename(__file__)
-                        )
+                creation_result = self._classify_creation_response(response)
+                if not creation_result.is_confirmed_success:
+                    response_json = self._response_json(response) or {}
 
                     # Check if the error is due to required custom fields
-                    if response.status_code == 400 and "errors" in response_json:
+                    if (
+                        response.status_code == 400
+                        and isinstance(response_json, dict)
+                        and "errors" in response_json
+                    ):
                         errors = response_json.get("errors", {})
                         # Look for custom field errors (fields starting with "customfield_")
-                        custom_field_errors = {
-                            k: v
-                            for k, v in errors.items()
-                            if k.startswith("customfield_")
-                        }
+                        custom_field_errors = {}
+                        if isinstance(errors, dict):
+                            custom_field_errors = {
+                                k: v
+                                for k, v in errors.items()
+                                if k.startswith("customfield_")
+                            }
                         if custom_field_errors:
                             custom_fields_formatted = ", ".join(
                                 [
@@ -1977,19 +3022,19 @@ class Jira:
                                 file=os.path.basename(__file__),
                             )
 
-                    response_error = f"Failed to send finding: {response.status_code} - {response_json}"
+                    response_error = (
+                        creation_result.error_message
+                        or "Jira did not confirm issue creation."
+                    )
                     logger.error(response_error)
                     raise JiraSendFindingsResponseError(
                         message=response_error, file=os.path.basename(__file__)
                     )
                 else:
-                    try:
-                        response_json = response.json()
-                        logger.info(f"Finding sent successfully: {response_json}")
-                    except (ValueError, requests.exceptions.JSONDecodeError):
-                        logger.info(
-                            f"Finding sent successfully: Status {response.status_code}"
-                        )
+                    logger.info(
+                        "Finding sent successfully: %s",
+                        creation_result.issue_key,
+                    )
         except JiraRequiredCustomFieldsError as custom_fields_error:
             raise custom_fields_error
         except JiraRefreshTokenError as refresh_error:
@@ -2007,11 +3052,13 @@ class Jira:
         self,
         check_id: str = "",
         check_title: str = "",
+        check_description: str = "",
         severity: str = "",
         status: str = "",
         status_extended: str = "",
         provider: str = "",
         region: str = "",
+        service: str = "",
         resource_uid: str = "",
         resource_name: str = "",
         risk: str = "",
@@ -2025,21 +3072,32 @@ class Jira:
         compliance: dict = "",
         project_key: str = "",
         issue_type: str = "",
-        issue_labels: list[str] = "",
+        issue_labels: Optional[list[str]] = None,
+        delivery_attempt_marker: Optional[str] = None,
         finding_url: str = "",
         tenant_info: str = "",
-    ) -> bool:
+        affected_failing_resources: int = 0,
+        grouped_resources: list[dict] | None = None,
+        resources_total: int = 0,
+        resources_shown: int = 0,
+        last_seen: str = "",
+        failing_for: str = "",
+        finding_group_url: str = "",
+        finding_group_link_text: str = "",
+    ) -> JiraCreationResult:
         """
         Send the finding to Jira
 
         Args:
             - check_id: The check ID
             - check_title: The check title
+            - check_description: The check description
             - severity: The severity
             - status: The status
             - status_extended: The status extended
             - provider: The provider
             - region: The region
+            - service: The service
             - resource_uid: The resource UID
             - resource_name: The resource name
             - risk: The risk
@@ -2054,84 +3112,122 @@ class Jira:
             - project_key: The project key
             - issue_type: The issue type
             - issue_labels: The issue labels
+            - delivery_attempt_marker: Caller-owned marker used to reconcile an
+              ambiguous delivery attempt
             - finding_url: The finding URL
             - tenant_info: The tenant info
-
-        Raises:
-            - JiraRefreshTokenError: Failed to refresh the access token
-            - JiraRefreshTokenResponseError: Failed to refresh the access token, response code did not match 200
-            - JiraCreateIssueError: Failed to create an issue in Jira
-            - JiraSendFindingsResponseError: Failed to send the finding to Jira
-            - JiraRequiredCustomFieldsError: Jira project requires custom fields that are not supported
+            - affected_failing_resources: The number of affected failing resources
+            - grouped_resources: The grouped resources to render, or None for a
+              single finding issue
+            - resources_total: The total resources in the finding group
+            - resources_shown: The resources shown in the Jira issue
+            - last_seen: The last time the finding group was seen
+            - failing_for: The duration the finding group has been failing
+            - finding_group_url: The finding group URL
+            - finding_group_link_text: The link text for the finding group URL
 
         Returns:
-            - True if the finding was sent successfully
-            - False if the finding was not sent successfully
+            - A typed creation result. Only ``confirmed_success`` proves that
+              Jira created the issue.
         """
         try:
             access_token = self.get_access_token()
 
             if not access_token:
-                raise JiraNoTokenError(
-                    message="No token was found",
-                    file=os.path.basename(__file__),
+                return JiraCreationResult(
+                    outcome=JiraCreationOutcome.CONFIRMED_REJECTION,
+                    delivery_marker=delivery_attempt_marker,
+                    error_code="missing_credentials",
+                    error_message="Jira credentials are unavailable.",
                 )
 
-            projects = self.get_projects()
+            destination = (project_key, issue_type)
+            if destination not in self._validated_destinations:
+                projects = self.get_projects()
+                if project_key not in projects:
+                    logger.error("The project key is invalid")
+                    return JiraCreationResult(
+                        outcome=JiraCreationOutcome.CONFIRMED_REJECTION,
+                        delivery_marker=delivery_attempt_marker,
+                        error_code="invalid_project",
+                        error_message="The Jira project key is invalid.",
+                    )
 
-            if project_key not in projects:
-                logger.error("The project key is invalid")
-                raise JiraInvalidProjectKeyError(
-                    message="The project key is invalid",
-                    file=os.path.basename(__file__),
-                )
-
-            available_issue_types = self.get_available_issue_types(project_key)
-
-            if issue_type not in available_issue_types:
-                logger.error("The issue type is invalid")
-                raise JiraInvalidIssueTypeError(
-                    message="The issue type is invalid", file=os.path.basename(__file__)
-                )
+                available_issue_types = self.get_available_issue_types(project_key)
+                if issue_type not in available_issue_types:
+                    logger.error("The issue type is invalid")
+                    return JiraCreationResult(
+                        outcome=JiraCreationOutcome.CONFIRMED_REJECTION,
+                        delivery_marker=delivery_attempt_marker,
+                        error_code="invalid_issue_type",
+                        error_message="The Jira issue type is invalid.",
+                    )
+                self._validated_destinations.add(destination)
 
             headers = self.get_headers(access_token, content_type_json=True)
 
             status_color = self.get_color_from_status(status)
             severity_color = self.get_severity_color(severity.lower())
-            adf_description = self.get_adf_description(
-                check_id=check_id,
-                check_title=check_title,
-                severity=severity.upper(),
-                severity_color=severity_color,
-                status=status,
-                status_color=status_color,
-                status_extended=status_extended,
-                provider=provider,
-                region=region,
-                resource_uid=resource_uid,
-                resource_name=resource_name,
-                risk=risk,
-                recommendation_text=recommendation_text,
-                recommendation_url=recommendation_url,
-                remediation_code_native_iac=remediation_code_native_iac,
-                remediation_code_terraform=remediation_code_terraform,
-                remediation_code_cli=remediation_code_cli,
-                remediation_code_other=remediation_code_other,
-                resource_tags=resource_tags,
-                compliance=compliance,
-                finding_url=finding_url,
-                tenant_info=tenant_info,
-            )
+            if grouped_resources is not None:
+                adf_description = self.get_grouped_adf_description(
+                    check_id=check_id,
+                    check_title=check_title,
+                    check_description=check_description,
+                    severity=severity.upper(),
+                    status=status,
+                    provider=provider,
+                    service=service,
+                    affected_failing_resources=affected_failing_resources,
+                    last_seen=last_seen,
+                    failing_for=failing_for,
+                    grouped_resources=grouped_resources,
+                    resources_total=resources_total,
+                    resources_shown=resources_shown,
+                    finding_group_url=finding_group_url,
+                    finding_group_link_text=finding_group_link_text,
+                    risk=risk,
+                    recommendation_text=recommendation_text,
+                    recommendation_url=recommendation_url,
+                )
+            else:
+                adf_description = self.get_adf_description(
+                    check_id=check_id,
+                    check_title=check_title,
+                    severity=severity.upper(),
+                    severity_color=severity_color,
+                    status=status,
+                    status_color=status_color,
+                    status_extended=status_extended,
+                    provider=provider,
+                    region=region,
+                    resource_uid=resource_uid,
+                    resource_name=resource_name,
+                    risk=risk,
+                    recommendation_text=recommendation_text,
+                    recommendation_url=recommendation_url,
+                    remediation_code_native_iac=remediation_code_native_iac,
+                    remediation_code_terraform=remediation_code_terraform,
+                    remediation_code_cli=remediation_code_cli,
+                    remediation_code_other=remediation_code_other,
+                    resource_tags=resource_tags,
+                    compliance=compliance,
+                    finding_url=finding_url,
+                    tenant_info=tenant_info,
+                )
 
             summary_parts = ["[Prowler]"]
             if severity:
                 summary_parts.append(severity.upper())
             if check_id:
                 summary_parts.append(check_id)
-            if resource_uid:
+            if grouped_resources is not None:
+                summary_parts.append(
+                    f"{affected_failing_resources} affected failing resources"
+                )
+            elif resource_uid:
                 summary_parts.append(resource_uid)
             summary = " - ".join(summary_parts[1:])
-            summary = f"{summary_parts[0]} {summary}"[:255]
+            summary = self._sanitize_summary(f"{summary_parts[0]} {summary}")
 
             payload = {
                 "fields": {
@@ -2141,63 +3237,40 @@ class Jira:
                     "issuetype": {"name": issue_type},
                 }
             }
+            issue_labels = list(issue_labels or [])
+            attempt_label = self.build_delivery_attempt_label(delivery_attempt_marker)
+            if attempt_label:
+                issue_labels.append(attempt_label)
+            issue_labels = self.sanitize_labels(issue_labels)
             if issue_labels:
                 payload["fields"]["labels"] = issue_labels
 
-            response = requests.post(
-                f"https://api.atlassian.com/ex/jira/{self.cloud_id}/rest/api/3/issue",
-                json=payload,
-                headers=headers,
-                timeout=self.REQUEST_TIMEOUT,
-            )
-
-            if response.status_code != 201:
-                try:
-                    response_json = response.json()
-                except (ValueError, requests.exceptions.JSONDecodeError):
-                    response_error = f"Failed to send finding: {response.status_code} - {response.text}"
-                    logger.error(response_error)
-                    return False
-
-                # Check if the error is due to required custom fields
-                if response.status_code == 400 and "errors" in response_json:
-                    errors = response_json.get("errors", {})
-                    # Look for custom field errors (fields starting with "customfield_")
-                    custom_field_errors = {
-                        k: v for k, v in errors.items() if k.startswith("customfield_")
-                    }
-                    if custom_field_errors:
-                        custom_fields_formatted = ", ".join(
-                            [f"'{k}': '{v}'" for k, v in custom_field_errors.items()]
-                        )
-                        logger.error(
-                            f"Jira project requires custom fields that are not supported: {custom_fields_formatted}"
-                        )
-                        return False
-
-                response_error = (
-                    f"Failed to send finding: {response.status_code} - {response_json}"
+            try:
+                response = requests.post(
+                    f"https://api.atlassian.com/ex/jira/{self.cloud_id}/rest/api/3/issue",
+                    json=payload,
+                    headers=headers,
+                    timeout=self.REQUEST_TIMEOUT,
                 )
-                logger.error(response_error)
-                return False
-            else:
-                try:
-                    response_json = response.json()
-                    logger.info(f"Finding sent successfully: {response_json}")
-                except (ValueError, requests.exceptions.JSONDecodeError):
-                    logger.info(
-                        f"Finding sent successfully: Status {response.status_code}"
-                    )
-                return True
-        except JiraRequiredCustomFieldsError as custom_fields_error:
-            logger.error(f"Custom fields error: {custom_fields_error}")
-            return False
-        except JiraRefreshTokenError as refresh_error:
-            logger.error(f"Token refresh error: {refresh_error}")
-            return False
-        except JiraRefreshTokenResponseError as response_error:
-            logger.error(f"Token response error: {response_error}")
-            return False
-        except Exception as e:
-            logger.error(f"Failed to send finding: {e}")
-            return False
+            except requests.exceptions.RequestException as error:
+                return self._creation_transport_result(error, delivery_attempt_marker)
+            return self._classify_creation_response(response, delivery_attempt_marker)
+        except (
+            JiraRefreshTokenError,
+            JiraRefreshTokenResponseError,
+            JiraGetAccessTokenError,
+        ):
+            return JiraCreationResult(
+                outcome=JiraCreationOutcome.RETRYABLE_FAILURE,
+                delivery_marker=delivery_attempt_marker,
+                error_code="authentication_failed_before_send",
+                error_message="Jira authentication failed before sending.",
+            )
+        except (
+            JiraNoProjectsError,
+            JiraGetProjectsError,
+            JiraGetProjectsResponseError,
+            JiraGetAvailableIssueTypesError,
+            JiraGetAvailableIssueTypesResponseError,
+        ) as error:
+            return self._destination_validation_result(error, delivery_attempt_marker)

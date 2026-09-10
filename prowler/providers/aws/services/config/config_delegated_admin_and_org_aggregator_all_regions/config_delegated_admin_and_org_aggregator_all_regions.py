@@ -71,12 +71,7 @@ class config_delegated_admin_and_org_aggregator_all_regions(Check):
                 covers_all = aggregator.all_aws_regions
 
                 issues = []
-                if delegated_admin_unknown:
-                    issues.append(
-                        "delegated administrator status for config.amazonaws.com "
-                        "could not be determined"
-                    )
-                elif not has_delegated_admin:
+                if not delegated_admin_unknown and not has_delegated_admin:
                     issues.append(
                         "no delegated administrator registered for config.amazonaws.com"
                     )
@@ -94,6 +89,25 @@ class config_delegated_admin_and_org_aggregator_all_regions(Check):
                     report.status_extended = (
                         f"AWS Config aggregator {aggregator.name} in region "
                         f"{region} has issues: {', '.join(issues)}."
+                    )
+                    if delegated_admin_unknown:
+                        report.status_extended = (
+                            f"{report.status_extended[:-1]}; the delegated "
+                            f"administrator status for config.amazonaws.com could "
+                            f"not be determined."
+                        )
+                elif delegated_admin_unknown:
+                    # Not being able to read the delegated administrator is a lack
+                    # of visibility, not a misconfiguration: the Organizations API
+                    # is only available to the management or delegated
+                    # administrator account.
+                    report.status = "MANUAL"
+                    report.status_extended = (
+                        f"AWS Config aggregator {aggregator.name} in region {region} "
+                        f"is an organization aggregator covering all AWS regions, but "
+                        f"the delegated administrator status for config.amazonaws.com "
+                        f"could not be determined; run this check from the "
+                        f"organization management or delegated administrator account."
                     )
                 else:
                     report.status = "PASS"

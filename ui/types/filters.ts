@@ -11,10 +11,19 @@ export type FilterEntity =
   | ProviderConnectionStatus
   | GroupFilterEntity;
 
+export const FILTER_SELECTION_MODE = {
+  SINGLE: "single",
+  MULTIPLE: "multiple",
+} as const;
+
+export type FilterSelectionMode =
+  (typeof FILTER_SELECTION_MODE)[keyof typeof FILTER_SELECTION_MODE];
+
 export interface FilterOption {
   key: string;
   labelCheckboxGroup: string;
   values: string[];
+  selectionMode?: FilterSelectionMode;
   width?: "default" | "wide";
   valueLabelMapping?: Array<{ [uid: string]: FilterEntity }>;
   labelFormatter?: (value: string) => string;

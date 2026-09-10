@@ -1,5 +1,7 @@
+from allauth.account.models import EmailAddress
+from allauth.core.exceptions import ImmediateHttpResponse
 from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
-from api.db_router import MainRouter
+from api.db_router import MainRouter, write_db_alias
 from api.db_utils import rls_transaction
 from api.models import (
     Membership,
@@ -9,10 +11,38 @@ from api.models import (
     User,
     UserRoleRelationship,
 )
+from api.utils import accept_invitation_for_user
+from django.core.exceptions import ValidationError
 from django.db import transaction
+from django.http import HttpResponseForbidden
 
 
 class ProwlerSocialAccountAdapter(DefaultSocialAccountAdapter):
+    @staticmethod
+    def _get_social_account_name(extra_data: dict, email: str) -> str:
+        name_field = User._meta.get_field("name")
+        for value in (
+            extra_data.get("name"),
+            extra_data.get("login"),
+            extra_data.get("username"),
+            email,
+        ):
+            if not isinstance(value, str):
+                continue
+
+            candidate = value.strip()[: name_field.max_length].rstrip()
+            if not candidate:
+                continue
+
+            try:
+                name_field.run_validators(candidate)
+            except ValidationError:
+                continue
+
+            return candidate
+
+        raise ValueError("Social account does not provide a valid user identity.")
+
     @staticmethod
     def get_user_by_email(email: str):
         try:
@@ -20,9 +50,30 @@ class ProwlerSocialAccountAdapter(DefaultSocialAccountAdapter):
         except User.DoesNotExist:
             return None
 
+    @staticmethod
+    def _get_invitation_token(request):
+        for source_name in ("data", "POST"):
+            data = getattr(request, source_name, None) or {}
+            if not hasattr(data, "get"):
+                continue
+            invitation_token = data.get("invitation_token")
+            if invitation_token:
+                return invitation_token
+
+        wrapped_request = getattr(request, "_request", None)
+        if wrapped_request and wrapped_request is not request:
+            return ProwlerSocialAccountAdapter._get_invitation_token(wrapped_request)
+
+        return None
+
     def pre_social_login(self, request, sociallogin):
-        # Link existing accounts with the same email address
-        email = sociallogin.account.extra_data.get("email")
+        # The provider account is already bound, so no email-based linking is needed.
+        if sociallogin.account.pk:
+            return
+
+        # Prefer the normalized email populated by allauth. GitHub can return the
+        # primary email separately from the profile stored in extra_data.
+        email = sociallogin.user.email or sociallogin.account.extra_data.get("email")
         if sociallogin.provider.id == "saml":
             # For SAML, the asserted NameID email cannot be trusted on its own:
             # any tenant can claim any email domain in its SAML configuration. To
@@ -63,6 +114,17 @@ class ProwlerSocialAccountAdapter(DefaultSocialAccountAdapter):
         if email:
             existing_user = self.get_user_by_email(email)
             if existing_user:
+                email_is_verified = EmailAddress.objects.filter(
+                    user=existing_user,
+                    email__iexact=email,
+                    verified=True,
+                ).exists()
+                provider_verified_email = any(
+                    address.verified and address.email.casefold() == email.casefold()
+                    for address in sociallogin.email_addresses
+                )
+                if not email_is_verified or not provider_verified_email:
+                    raise ImmediateHttpResponse(HttpResponseForbidden())
                 sociallogin.connect(request, existing_user)
 
     def save_user(self, request, sociallogin, form=None):
@@ -71,41 +133,50 @@ class ProwlerSocialAccountAdapter(DefaultSocialAccountAdapter):
         and is about to be saved to the DB for the first time.
         """
         with transaction.atomic(using=MainRouter.admin_db):
-            user = super().save_user(request, sociallogin, form)
+            # Allauth saves the user without an explicit alias. Route that save
+            # through admin so every signup record shares this transaction.
+            with write_db_alias(MainRouter.admin_db):
+                user = super().save_user(request, sociallogin, form)
             provider = sociallogin.provider.id
             extra = sociallogin.account.extra_data
 
             if provider != "saml":
                 # Handle other providers (e.g., GitHub, Google)
+                user.name = self._get_social_account_name(extra, user.email)
                 user.save(using=MainRouter.admin_db)
-                social_account_name = extra.get("name")
-                if social_account_name:
-                    user.name = social_account_name
-                    user.save(using=MainRouter.admin_db)
 
-                tenant = Tenant.objects.using(MainRouter.admin_db).create(
-                    name=f"{user.email.split('@')[0]} default tenant"
-                )
-                with rls_transaction(str(tenant.id)):
-                    Membership.objects.using(MainRouter.admin_db).create(
-                        user=user, tenant=tenant, role=Membership.RoleChoices.OWNER
-                    )
-                    role = Role.objects.using(MainRouter.admin_db).create(
-                        name="admin",
-                        tenant_id=tenant.id,
-                        manage_users=True,
-                        manage_account=True,
-                        manage_billing=True,
-                        manage_providers=True,
-                        manage_integrations=True,
-                        manage_scans=True,
-                        unlimited_visibility=True,
-                    )
-                    UserRoleRelationship.objects.using(MainRouter.admin_db).create(
+                invitation_token = self._get_invitation_token(request)
+                if invitation_token:
+                    invitation, _ = accept_invitation_for_user(
                         user=user,
-                        role=role,
-                        tenant_id=tenant.id,
+                        invitation_token=invitation_token,
                     )
+                    request.prowler_invitation_token = invitation_token
+                    request.prowler_invitation_tenant_id = str(invitation.tenant_id)
+                else:
+                    tenant = Tenant.objects.using(MainRouter.admin_db).create(
+                        name=f"{user.email.split('@')[0]} default tenant"
+                    )
+                    with rls_transaction(str(tenant.id)):
+                        Membership.objects.using(MainRouter.admin_db).create(
+                            user=user, tenant=tenant, role=Membership.RoleChoices.OWNER
+                        )
+                        role = Role.objects.using(MainRouter.admin_db).create(
+                            name="admin",
+                            tenant_id=tenant.id,
+                            manage_users=True,
+                            manage_account=True,
+                            manage_billing=True,
+                            manage_providers=True,
+                            manage_integrations=True,
+                            manage_scans=True,
+                            unlimited_visibility=True,
+                        )
+                        UserRoleRelationship.objects.using(MainRouter.admin_db).create(
+                            user=user,
+                            role=role,
+                            tenant_id=tenant.id,
+                        )
             else:
                 request.session["saml_user_created"] = str(user.id)
 

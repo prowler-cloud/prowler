@@ -26,7 +26,7 @@ vi.mock("@/actions/schedules", () => ({
   updateSchedulesBulk: updateSchedulesBulkMock,
 }));
 
-vi.mock("@/components/ui/toast", () => ({
+vi.mock("@/components/shadcn/toast", () => ({
   toast: toastMock,
 }));
 
@@ -40,7 +40,7 @@ vi.mock("@/components/icons/providers-badge/provider-type-icon", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/entities", () => ({
+vi.mock("@/components/shadcn/entities", () => ({
   EntityInfo: ({
     badge,
     cloudProvider,
@@ -262,6 +262,40 @@ describe("EditScanScheduleModal remove flow", () => {
         description: "The scan schedule was updated for 2 providers.",
       }),
     );
+  });
+
+  it("reports a bulk save no provider accepted instead of claiming success", async () => {
+    // Given — a 200 whose per-provider lists say nothing was committed.
+    const user = userEvent.setup();
+    updateSchedulesBulkMock.mockResolvedValue({
+      data: {
+        updated: [],
+        failed: [
+          { id: "p1", error: "Denied" },
+          { id: "p2", error: "Denied" },
+        ],
+      },
+    });
+
+    render(
+      <EditScanScheduleModal
+        open
+        onOpenChange={vi.fn()}
+        providers={organizationProviders}
+        targetName="My AWS Organization"
+        targetId="o-abc123def4"
+        state={{ kind: EDIT_SCAN_SCHEDULE_STATE.LOADED, schedule }}
+      />,
+    );
+
+    // When
+    await user.click(screen.getByRole("button", { name: "Save" }));
+
+    // Then — the reason surfaces in the form and the modal stays open.
+    expect(
+      await screen.findByText("The scan schedule could not be saved: Denied."),
+    ).toBeInTheDocument();
+    expect(toastMock).not.toHaveBeenCalled();
   });
 
   it("uses explicit provider ids for organization bulk schedules", async () => {

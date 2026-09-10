@@ -16,7 +16,8 @@ class entra_break_glass_account_fido2_security_key_registered(Check):
 
     - PASS: The break glass account has a FIDO2 security key (fido2SecurityKey) registered.
     - MANUAL: The account has a device-bound passkey but it cannot be confirmed as FIDO2,
-              or no break glass accounts could be identified.
+              no break glass accounts could be identified, or the users / user
+              registration details could not be read (insufficient permissions).
     - FAIL: The break glass account does not have a FIDO2 security key registered.
     """
 
@@ -61,6 +62,18 @@ class entra_break_glass_account_fido2_security_key_registered(Check):
             if count == total_policy_count
         ]
 
+        if entra_client.users_error:
+            report = CheckReportM365(
+                metadata=self.metadata(),
+                resource={},
+                resource_name="Break Glass Accounts",
+                resource_id="breakGlassAccounts",
+            )
+            report.status = "MANUAL"
+            report.status_extended = f"Cannot verify FIDO2 security key registration for break glass accounts: {entra_client.users_error}."
+            findings.append(report)
+            return findings
+
         if not break_glass_user_ids:
             report = CheckReportM365(
                 metadata=self.metadata(),
@@ -70,6 +83,21 @@ class entra_break_glass_account_fido2_security_key_registered(Check):
             )
             report.status = "MANUAL"
             report.status_extended = "No break glass accounts identified. No users are excluded from all enabled Conditional Access policies."
+            findings.append(report)
+            return findings
+
+        if entra_client.user_registration_details_error:
+            report = CheckReportM365(
+                metadata=self.metadata(),
+                resource={},
+                resource_name="Break Glass Accounts",
+                resource_id="breakGlassAccounts",
+            )
+            report.status = "MANUAL"
+            report.status_extended = (
+                "Cannot verify FIDO2 security key registration for break glass "
+                f"accounts: {entra_client.user_registration_details_error}."
+            )
             findings.append(report)
             return findings
 
@@ -84,15 +112,6 @@ class entra_break_glass_account_fido2_security_key_registered(Check):
                 resource_name=user.name,
                 resource_id=user.id,
             )
-
-            if entra_client.user_registration_details_error:
-                report.status = "FAIL"
-                report.status_extended = (
-                    f"Cannot verify FIDO2 security key registration for break glass account {user.name}: "
-                    f"{entra_client.user_registration_details_error}."
-                )
-                findings.append(report)
-                continue
 
             auth_methods = set(user.authentication_methods)
             has_fido2 = "fido2SecurityKey" in auth_methods

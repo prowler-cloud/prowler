@@ -7,6 +7,7 @@ import {
 import { SearchParamsProps } from "@/types";
 
 import { pickFilterParams } from "../../_lib/filter-params";
+
 import { RiskRadarViewClient } from "./risk-radar-view-client";
 
 export async function RiskRadarViewSSR({

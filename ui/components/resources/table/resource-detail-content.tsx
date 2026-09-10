@@ -4,7 +4,12 @@ import { Row, RowSelectionState } from "@tanstack/react-table";
 import { Container, CornerDownRight, Link } from "lucide-react";
 import { useState } from "react";
 
-import { FloatingMuteButton } from "@/components/findings/floating-mute-button";
+import {
+  loadFindingTriageDetail,
+  loadLatestFindingTriageNote,
+  updateFindingTriage,
+} from "@/actions/findings";
+import { FloatingSelectionActions } from "@/components/findings/floating-selection-actions";
 import { FindingDetailDrawer } from "@/components/findings/table";
 import {
   Tabs,
@@ -14,27 +19,28 @@ import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
+  BreadcrumbNavigation,
+  CustomBreadcrumbItem,
 } from "@/components/shadcn";
+import { DateWithTime } from "@/components/shadcn/entities/date-with-time";
+import { EntityInfo } from "@/components/shadcn/entities/entity-info";
 import {
   InfoField,
   InfoTooltip,
 } from "@/components/shadcn/info-field/info-field";
 import { LoadingState } from "@/components/shadcn/spinner/loading-state";
+import { DataTable } from "@/components/shadcn/table";
 import { EventsTimeline } from "@/components/shared/events-timeline/events-timeline";
 import { ExternalResourceLink } from "@/components/shared/external-resource-link";
 import { ResourceMetadataPanel } from "@/components/shared/resource-metadata-panel";
-import { BreadcrumbNavigation, CustomBreadcrumbItem } from "@/components/ui";
-import { DateWithTime } from "@/components/ui/entities/date-with-time";
-import { EntityInfo } from "@/components/ui/entities/entity-info";
-import { DataTable } from "@/components/ui/table";
 import { getGroupLabel } from "@/lib/categories";
+import { shouldRefreshAfterTriageUpdate } from "@/lib/finding-triage";
 import { getRegionFlag } from "@/lib/region-flags";
 import { ProviderType, ResourceProps } from "@/types";
+import type { UpdateFindingTriageInput } from "@/types/findings-triage";
+import type { ResourceFinding } from "@/types/resources";
 
-import {
-  getResourceFindingsColumns,
-  ResourceFinding,
-} from "./resource-findings-columns";
+import { getResourceFindingsColumns } from "./resource-findings-columns";
 import { useFindingDetails } from "./use-finding-details";
 import { useResourceDrawerBootstrap } from "./use-resource-drawer-bootstrap";
 
@@ -100,6 +106,7 @@ export const ResourceDetailContent = ({
     hasInitiallyLoaded,
     providerOrg,
     resourceTags,
+    patchTriageUpdate,
   } = useResourceDrawerBootstrap({
     resourceId,
     resourceUid: attributes.uid,
@@ -140,6 +147,18 @@ export const ResourceDetailContent = ({
     if (ids.length > 0) setFindingsReloadNonce((v) => v + 1);
   };
 
+  const handleTriageUpdate = async (input: UpdateFindingTriageInput) => {
+    const result = await updateFindingTriage(input);
+
+    if (shouldRefreshAfterTriageUpdate(input)) {
+      setFindingsReloadNonce((value) => value + 1);
+      return result;
+    }
+
+    patchTriageUpdate(input);
+    return result;
+  };
+
   const failedFindings = findingsData;
 
   const selectableRowCount = failedFindings.filter(
@@ -161,6 +180,9 @@ export const ResourceDetailContent = ({
     selectableRowCount,
     navigateToFinding,
     handleMuteComplete,
+    handleTriageUpdate,
+    loadLatestFindingTriageNote,
+    loadFindingTriageDetail,
   );
 
   const findingTitle =
@@ -385,9 +407,12 @@ export const ResourceDetailContent = ({
                     isLoading={findingsLoading}
                   />
                   {selectedFindingIds.length > 0 && (
-                    <FloatingMuteButton
+                    <FloatingSelectionActions
                       selectedCount={selectedFindingIds.length}
                       selectedFindingIds={selectedFindingIds}
+                      muteLabel={`Mute ${selectedFindingIds.length} ${
+                        selectedFindingIds.length === 1 ? "Finding" : "Findings"
+                      }`}
                       onComplete={handleMuteComplete}
                     />
                   )}

@@ -40,6 +40,7 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 | Renaming or removing a data-tour-id attribute value               | `prowler-tour`      |
 | Restructuring routes or layouts covered by a tour                 | `prowler-tour`      |
 | Review changelog format and conventions                           | `prowler-changelog` |
+| Reviewing Prowler UI components                                   | `prowler-ui`        |
 | Testing hooks or utilities                                        | `vitest`            |
 | Update CHANGELOG.md in any component                              | `prowler-changelog` |
 | Using Zustand stores                                              | `zustand-5`         |
@@ -96,8 +97,8 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 ### Component Placement
 
 ```text
-New/Existing UI? → shadcn/ui + Tailwind (NEVER HeroUI for new code)
-Used 1 feature? → features/{feature}/components | Used 2+? → components/{domain}/
+New UI primitive? → components/shadcn/ (shadcn/ui + Tailwind)
+Used by 1 domain? → components/{domain}/ | Used by 2+ domains? → components/shared/
 Needs state/hooks? → "use client" | Server component? → No directive
 ```
 
@@ -193,7 +194,7 @@ test("action works", { tag: ["@critical", "@feature"] }, async ({ page }) => {
 Next.js 16.2.3 | React 19.2.5 | Tailwind 4.1.18 | shadcn/ui
 Zod 4.1.11 | React Hook Form 7.62.0 | Zustand 5.0.8 | NextAuth 5.0.0-beta.30 | Recharts 2.15.4
 
-> **Note**: HeroUI exists in `components/ui/` as legacy code. Do NOT add new components there.
+> **Note**: `components/ui/` only holds temporary re-export shims for the prowler-cloud overlay. Do NOT add new components there.
 
 ---
 
@@ -204,7 +205,7 @@ ui/
 ├── app/(auth)/          # Auth pages
 ├── app/(prowler)/       # Main app: compliance, findings, providers, scans
 ├── components/shadcn/   # shadcn/ui components (USE THIS)
-├── components/ui/       # HeroUI (LEGACY - do not add here)
+├── components/ui/       # Cloud-overlay re-export shims (do not add here)
 ├── actions/             # Server actions
 ├── types/               # Shared types
 ├── hooks/               # Shared hooks

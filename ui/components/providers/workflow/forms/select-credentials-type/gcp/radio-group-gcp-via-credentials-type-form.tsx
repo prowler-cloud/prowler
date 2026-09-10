@@ -3,8 +3,8 @@
 import { Control, Controller } from "react-hook-form";
 
 import { WizardRadioCard } from "@/components/providers/workflow/forms/fields";
+import { FormMessage } from "@/components/shadcn/form";
 import { RadioGroup } from "@/components/shadcn/radio-group/radio-group";
-import { FormMessage } from "@/components/ui/form";
 
 type RadioGroupGCPViaCredentialsFormProps = {
   control: Control<any>;
@@ -33,13 +33,13 @@ export const RadioGroupGCPViaCredentialsTypeForm = ({
               onChange?.(value);
             }}
           >
-            <span className="text-default-500 text-sm">
+            <span className="text-text-neutral-tertiary text-sm">
               Using Service Account
             </span>
             <WizardRadioCard value="service-account" isInvalid={isInvalid}>
               Connect via Service Account Key
             </WizardRadioCard>
-            <span className="text-default-500 text-sm">
+            <span className="text-text-neutral-tertiary text-sm">
               Using Application Default Credentials
             </span>
             <WizardRadioCard value="credentials" isInvalid={isInvalid}>

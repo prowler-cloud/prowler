@@ -2,9 +2,11 @@ import io
 from unittest.mock import Mock
 
 import pytest
-from reportlab.platypus import PageBreak, Paragraph, Table
+from reportlab.platypus import Image, PageBreak, Paragraph, Table
 from tasks.jobs.reports import FRAMEWORK_REGISTRY, ComplianceData, RequirementData
+from tasks.jobs.reports import csa as csa_report_module
 from tasks.jobs.reports.csa import CSAReportGenerator
+from tasks.tests.report_test_helpers import patch_chart_helpers
 
 
 # Use string status values directly to avoid Django DB initialization
@@ -27,6 +29,13 @@ def csa_generator():
     """Create a CSAReportGenerator instance for testing."""
     config = FRAMEWORK_REGISTRY["csa_ccm"]
     return CSAReportGenerator(config)
+
+
+@pytest.fixture
+def patched_csa_charts(monkeypatch):
+    return patch_chart_helpers(
+        monkeypatch, csa_report_module, ("create_horizontal_bar_chart",)
+    )
 
 
 @pytest.fixture
@@ -320,7 +329,7 @@ class TestCSAChartsSection:
     """Test suite for CSA charts section generation."""
 
     def test_charts_section_has_section_chart_title(
-        self, csa_generator, basic_csa_compliance_data
+        self, csa_generator, basic_csa_compliance_data, patched_csa_charts
     ):
         """Test that charts section has section compliance title."""
         basic_csa_compliance_data.requirements = []
@@ -331,9 +340,14 @@ class TestCSAChartsSection:
         paragraphs = [e for e in elements if isinstance(e, Paragraph)]
         content = " ".join(str(p.text) for p in paragraphs)
         assert "Section" in content or "Compliance" in content
+        assert any(isinstance(e, Image) for e in elements)
+        chart_kwargs = patched_csa_charts["create_horizontal_bar_chart"][0]["kwargs"]
+        assert chart_kwargs["labels"] == []
+        assert chart_kwargs["values"] == []
+        assert chart_kwargs["xlabel"] == "Compliance (%)"
 
     def test_charts_section_has_page_break(
-        self, csa_generator, basic_csa_compliance_data
+        self, csa_generator, basic_csa_compliance_data, patched_csa_charts
     ):
         """Test that charts section has page breaks."""
         basic_csa_compliance_data.requirements = []
@@ -343,12 +357,14 @@ class TestCSAChartsSection:
 
         page_breaks = [e for e in elements if isinstance(e, PageBreak)]
         assert len(page_breaks) >= 1
+        assert len(patched_csa_charts["create_horizontal_bar_chart"]) == 1
 
     def test_charts_section_has_section_breakdown(
         self,
         csa_generator,
         basic_csa_compliance_data,
         mock_csa_requirement_attribute_iam,
+        patched_csa_charts,
     ):
         """Test that charts section includes section breakdown table."""
         basic_csa_compliance_data.requirements = [
@@ -372,6 +388,11 @@ class TestCSAChartsSection:
         paragraphs = [e for e in elements if isinstance(e, Paragraph)]
         content = " ".join(str(p.text) for p in paragraphs)
         assert "Section" in content or "Breakdown" in content
+        assert any(isinstance(e, Image) for e in elements)
+        chart_kwargs = patched_csa_charts["create_horizontal_bar_chart"][0]["kwargs"]
+        assert chart_kwargs["labels"] == ["Identity & Access Management"]
+        assert chart_kwargs["values"] == [100.0]
+        assert chart_kwargs["color_func"]
 
 
 # =============================================================================
@@ -387,6 +408,7 @@ class TestCSASectionChart:
         csa_generator,
         basic_csa_compliance_data,
         mock_csa_requirement_attribute_iam,
+        patched_csa_charts,
     ):
         """Test that section chart is created successfully."""
         basic_csa_compliance_data.requirements = [
@@ -409,12 +431,17 @@ class TestCSASectionChart:
 
         assert isinstance(chart_buffer, io.BytesIO)
         assert chart_buffer.getvalue()  # Not empty
+        chart_kwargs = patched_csa_charts["create_horizontal_bar_chart"][0]["kwargs"]
+        assert chart_kwargs["labels"] == ["Identity & Access Management"]
+        assert chart_kwargs["values"] == [100.0]
+        assert chart_kwargs["xlabel"] == "Compliance (%)"
 
     def test_section_chart_excludes_manual(
         self,
         csa_generator,
         basic_csa_compliance_data,
         mock_csa_requirement_attribute_iam,
+        patched_csa_charts,
     ):
         """Test that manual requirements are excluded from section chart."""
         basic_csa_compliance_data.requirements = [
@@ -447,6 +474,9 @@ class TestCSASectionChart:
         # Should not raise any errors
         chart_buffer = csa_generator._create_section_chart(basic_csa_compliance_data)
         assert isinstance(chart_buffer, io.BytesIO)
+        chart_kwargs = patched_csa_charts["create_horizontal_bar_chart"][0]["kwargs"]
+        assert chart_kwargs["labels"] == ["Identity & Access Management"]
+        assert chart_kwargs["values"] == [100.0]
 
     def test_section_chart_multiple_sections(
         self,
@@ -455,6 +485,7 @@ class TestCSASectionChart:
         mock_csa_requirement_attribute_iam,
         mock_csa_requirement_attribute_logging,
         mock_csa_requirement_attribute_crypto,
+        patched_csa_charts,
     ):
         """Test section chart with multiple sections."""
         basic_csa_compliance_data.requirements = [
@@ -501,6 +532,13 @@ class TestCSASectionChart:
 
         chart_buffer = csa_generator._create_section_chart(basic_csa_compliance_data)
         assert isinstance(chart_buffer, io.BytesIO)
+        chart_kwargs = patched_csa_charts["create_horizontal_bar_chart"][0]["kwargs"]
+        assert chart_kwargs["labels"] == [
+            "Cryptography & Encryption",
+            "Identity & Access Management",
+            "Logging and Monitoring",
+        ]
+        assert chart_kwargs["values"] == [100.0, 100.0, 0.0]
 
 
 # =============================================================================

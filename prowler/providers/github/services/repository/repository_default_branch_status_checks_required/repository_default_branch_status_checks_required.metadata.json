@@ -9,13 +9,14 @@
   "Severity": "high",
   "ResourceType": "NotDefined",
   "ResourceGroup": "devops",
-  "Description": "**GitHub repository default branch** uses **required status checks**, indicating whether merges are gated by successful check results on pull requests",
+  "Description": "**GitHub repository default branch** uses **required status checks**, indicating whether merges are gated by successful check results on pull requests. This protection can be enforced through classic **branch protection** or repository **rulesets**.",
   "Risk": "Without required checks, unvetted commits can be merged, degrading code **integrity** and **availability**. Skipped or failing validations may introduce vulnerable dependencies, break builds, or allow malicious code, enabling supply-chain compromise and rapid propagation to production.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/managing-a-branch-protection-rule",
     "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches#require-status-checks-before-merging",
-    "https://docs.gearset.com/en/articles/2437757-managing-status-check-rules-in-github"
+    "https://docs.gearset.com/en/articles/2437757-managing-status-check-rules-in-github",
+    "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/about-rulesets"
   ],
   "Remediation": {
     "Code": {

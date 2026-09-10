@@ -30,6 +30,11 @@ class repository_default_branch_requires_codeowners_review(Check):
                 else:
                     report.status = "FAIL"
                     report.status_extended = f"Repository {repo.name} does not require code owner approval for changes to owned code."
+                    if (
+                        repo.default_branch.require_code_owner_reviews_source
+                        == "ruleset_not_active"
+                    ):
+                        report.status_extended = f"Repository {repo.name} has code owner approval configured in a ruleset, but the ruleset is not active."
 
                 findings.append(report)
 

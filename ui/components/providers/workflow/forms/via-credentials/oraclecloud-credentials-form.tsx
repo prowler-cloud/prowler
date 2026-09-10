@@ -15,10 +15,10 @@ export const OracleCloudCredentialsForm = ({
   return (
     <>
       <div className="flex flex-col">
-        <div className="text-md text-default-foreground leading-9 font-bold">
+        <div className="text-md text-text-neutral-primary leading-9 font-bold">
           Connect via API Key
         </div>
-        <div className="text-default-500 text-sm">
+        <div className="text-text-neutral-tertiary text-sm">
           Please provide your Oracle Cloud Infrastructure API key credentials.
         </div>
       </div>
@@ -48,16 +48,6 @@ export const OracleCloudCredentialsForm = ({
         variant="bordered"
         isRequired
       />
-      <WizardInputField
-        control={control}
-        name={ProviderCredentialFields.OCI_REGION}
-        type="text"
-        label="Region"
-        labelPlacement="inside"
-        placeholder="e.g. us-ashburn-1"
-        variant="bordered"
-        isRequired
-      />
       <WizardTextareaField
         control={control}
         name={ProviderCredentialFields.OCI_KEY_CONTENT}
@@ -78,7 +68,7 @@ export const OracleCloudCredentialsForm = ({
         variant="bordered"
         isRequired={false}
       />
-      <div className="text-default-400 text-xs">
+      <div className="text-text-neutral-tertiary text-xs">
         Paste the raw content of your OCI private key file (PEM format). The key
         will be automatically encoded for secure transmission.
       </div>

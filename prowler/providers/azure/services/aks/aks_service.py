@@ -19,8 +19,12 @@ class AKS(AzureService):
 
         for subscription_id, client in self.clients.items():
             try:
-                clusters_list = client.managed_clusters.list()
                 clusters.update({subscription_id: {}})
+                clusters_list = self.list_with_rg_scope(
+                    subscription_id,
+                    client.managed_clusters.list,
+                    client.managed_clusters.list_by_resource_group,
+                )
 
                 for cluster in clusters_list:
                     if getattr(cluster, "kubernetes_version", None):

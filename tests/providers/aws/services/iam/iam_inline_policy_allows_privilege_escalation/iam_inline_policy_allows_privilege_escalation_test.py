@@ -1239,6 +1239,7 @@ class Test_iam_inline_policy_allows_privilege_escalation:
                     "Action": [
                         "iam:PassRole",
                         "bedrock-agentcore:CreateCodeInterpreter",
+                        "bedrock-agentcore:StartCodeInterpreterSession",
                         "bedrock-agentcore:InvokeCodeInterpreter",
                     ],
                     "Resource": "*",
@@ -1285,6 +1286,10 @@ class Test_iam_inline_policy_allows_privilege_escalation:
             assert search("iam:PassRole", result[0].status_extended)
             assert search(
                 "bedrock-agentcore:CreateCodeInterpreter", result[0].status_extended
+            )
+            assert search(
+                "bedrock-agentcore:StartCodeInterpreterSession",
+                result[0].status_extended,
             )
             assert search(
                 "bedrock-agentcore:InvokeCodeInterpreter", result[0].status_extended

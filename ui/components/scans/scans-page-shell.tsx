@@ -17,6 +17,7 @@ import {
   LAUNCH_SCAN_SEARCH_PARAM,
   LAUNCH_SCAN_SEARCH_VALUE,
 } from "@/lib/scans-navigation";
+import { isCloud } from "@/lib/shared/env";
 import { buildViewFirstScanTour } from "@/lib/tours/view-first-scan.tour";
 import { useScansStore } from "@/store";
 import { SCAN_JOBS_TAB, SCAN_TAB_LABELS, type ScanJobsTab } from "@/types";
@@ -27,14 +28,17 @@ import type { ScanScheduleCapability } from "@/types/schedules";
 const viewFirstScanFlow = getFlowById("view-first-scan")!;
 
 import { CliImportBanner } from "./cli-import-banner";
+import { ImportFindingsModal } from "./import-findings-modal";
 import { LaunchScanModal } from "./launch-scan-modal";
 import { ScansFilterBar } from "./scans-filter-bar";
+import { ScansProvidersEmptyState } from "./scans-providers-empty-state";
 import { useScansFilters } from "./use-scans-filters";
 
 interface ScansPageShellProps {
   providers: ProviderProps[];
   providerGroups?: ProviderGroup[];
   hasManageScansPermission: boolean;
+  hasManageIngestionsPermission?: boolean;
   activeScanCount?: number;
   children: ReactNode;
   /** Cloud overlay seam for the launch-scan modal. */
@@ -46,6 +50,7 @@ export function ScansPageShell({
   providers,
   providerGroups = [],
   hasManageScansPermission,
+  hasManageIngestionsPermission = false,
   activeScanCount = 0,
   children,
   scanScheduleCapability,
@@ -67,12 +72,18 @@ export function ScansPageShell({
   const hasConnectedProviders = providers.some(
     (provider) => provider.attributes.connection.connected === true,
   );
-  const isCloudEnvironment = process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true";
+  const thereAreNoProviders = providers.length === 0;
+  // Non-blocking onboarding hint: shown when scans can't be launched (no provider, or
+  // none connected). The table still renders below, so imported scans stay visible.
+  const showProvidersHint = thereAreNoProviders || !hasConnectedProviders;
+  const isCloudEnvironment = isCloud();
   const launchDisabled = !hasManageScansPermission || !hasConnectedProviders;
-  const launchOpen = isLaunchScanModalOpen || urlLaunchOpen;
-  // When a scan is already running, the tour highlights its row (anchored in
-  // ScanJobsTable); otherwise it falls back to the Launch Scan button + tabs.
-  const hasInProgressScan = activeScanCount > 0;
+  const launchOpen =
+    !launchDisabled && (isLaunchScanModalOpen || urlLaunchOpen);
+  // ScanJobsTable only mounts the in-progress row anchor on the active tab.
+  // Other tabs use the fallback tour so every target exists in the current DOM.
+  const hasVisibleInProgressScan =
+    activeScanCount > 0 && filters.activeTab === SCAN_JOBS_TAB.ACTIVE;
 
   const getTabLabel = (tab: ScanJobsTab) => {
     const label = SCAN_TAB_LABELS[tab];
@@ -101,17 +112,27 @@ export function ScansPageShell({
 
   return (
     <div className="flex flex-col gap-[18px]">
+      {/* Gate on the full launch condition: the tour anchors on Launch Scan, which is
+          disabled without a connected provider AND manage_scans — starting it would
+          point at an unusable button. Every start path (?onboarding= URL, active
+          sequence, navbar replay) funnels through this trigger, so gating here covers
+          them all. */}
       {/* Suspense required: OnboardingTrigger reads useSearchParams */}
-      <Suspense fallback={null}>
-        <OnboardingTrigger
-          flow={{
-            ...viewFirstScanFlow,
-            tour: buildViewFirstScanTour(hasInProgressScan),
-          }}
-        />
-      </Suspense>
+      {!launchDisabled && (
+        <Suspense fallback={null}>
+          <OnboardingTrigger
+            flow={{
+              ...viewFirstScanFlow,
+              tour: buildViewFirstScanTour(hasVisibleInProgressScan),
+            }}
+          />
+        </Suspense>
+      )}
       {/* Signals the navbar that this route's data has loaded (enables the replay icon). */}
       <PageReady />
+      {showProvidersHint && (
+        <ScansProvidersEmptyState thereIsNoProviders={thereAreNoProviders} />
+      )}
       <div
         role="group"
         aria-label="Scan filters and actions"
@@ -138,6 +159,9 @@ export function ScansPageShell({
         >
           Launch Scan
         </Button>
+        {isCloudEnvironment && hasManageIngestionsPermission && (
+          <ImportFindingsModal />
+        )}
       </div>
 
       {isCloudEnvironment && <CliImportBanner />}

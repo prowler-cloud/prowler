@@ -1,3 +1,27 @@
+import type { FindingDelta, FindingStatus, Severity } from "./components";
+import type { FindingTriageSummary } from "./findings-triage";
+
+export interface ResourceFindingCheckMetadata {
+  checktitle?: string;
+}
+
+export interface ResourceFindingAttributes {
+  status: FindingStatus;
+  severity: Severity;
+  muted?: boolean;
+  muted_reason?: string;
+  delta?: Exclude<FindingDelta, null>;
+  updated_at?: string;
+  check_metadata?: ResourceFindingCheckMetadata;
+}
+
+export interface ResourceFinding {
+  type: "findings";
+  id: string;
+  triage?: FindingTriageSummary;
+  attributes: ResourceFindingAttributes;
+}
+
 export interface ResourceProps {
   type: "resources";
   id: string;

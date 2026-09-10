@@ -667,7 +667,7 @@
 **Preconditions:**
 
 - Admin user authentication required (admin.auth.setup setup)
-- Environment variables configured: E2E_OCI_TENANCY_ID, E2E_OCI_USER_ID, E2E_OCI_FINGERPRINT, E2E_OCI_KEY_CONTENT, E2E_OCI_REGION
+- Environment variables configured: E2E_OCI_TENANCY_ID, E2E_OCI_USER_ID, E2E_OCI_FINGERPRINT, E2E_OCI_KEY_CONTENT
 - Remove any existing provider with the same Tenancy ID before starting the test
 - This test must be run serially and never in parallel with other tests, as it requires the Tenancy ID not to be already registered beforehand.
 
@@ -678,7 +678,7 @@
 3. Select OCI provider type
 4. Fill provider details (tenancy ID and alias)
 5. Verify OCI credentials page is loaded
-6. Fill OCI credentials (user ID, fingerprint, key content, region)
+6. Fill OCI credentials (user ID, fingerprint, key content)
 7. Confirm provider connection without launching a scan
 8. Verify return to Providers page
 9. Verify provider exists in Providers table
@@ -696,7 +696,7 @@
 - Connect account page displays OCI option
 - Provider details form accepts tenancy ID and alias
 - OCI credentials page loads
-- Credentials form accepts all required fields (user ID, fingerprint, key content, region)
+- Credentials form accepts all required fields (user ID, fingerprint, key content)
 - Launch step appears
 - Successful return to Providers page after closing the launch step
 - Provider exists in Providers table (verified by tenancy ID)
@@ -726,7 +726,7 @@
 **Preconditions:**
 
 - Admin user authentication required (admin.auth.setup setup)
-- Environment variables configured: E2E_OCI_TENANCY_ID, E2E_OCI_USER_ID, E2E_OCI_FINGERPRINT, E2E_OCI_KEY_CONTENT, E2E_OCI_REGION
+- Environment variables configured: E2E_OCI_TENANCY_ID, E2E_OCI_USER_ID, E2E_OCI_FINGERPRINT, E2E_OCI_KEY_CONTENT
 - An OCI provider with the specified Tenancy ID must already exist (run PROVIDER-E2E-012 first)
 - This test must be run serially and never in parallel with other tests
 
@@ -738,7 +738,7 @@
 4. Click "Update Credentials" option
 5. Verify update credentials page is loaded
 6. Verify OCI credentials form fields are visible (confirms providerUid is loaded)
-7. Fill OCI credentials (user ID, fingerprint, key content, region)
+7. Fill OCI credentials (user ID, fingerprint, key content)
 8. Click Next to submit
 9. Verify successful navigation to test connection page
 
@@ -756,7 +756,7 @@
 - OCI provider row is visible in providers table
 - Row actions dropdown opens and displays "Update Credentials" option
 - Update credentials page URL contains correct parameters
-- OCI credentials form displays all fields (tenancy ID, user ID, fingerprint, key content, region)
+- OCI credentials form displays all required fields (tenancy ID, user ID, fingerprint, key content)
 - Form submission succeeds (no silent failures due to missing provider UID)
 - Successful redirect to test connection page
 

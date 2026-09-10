@@ -61,9 +61,9 @@ dependencies = [
   "cartography (==0.138.1)",
   "gevent (==25.9.1)",
   "werkzeug (==3.1.7)",
-  "sqlparse (==0.5.5)",
+  "sqlparse (==0.6.0)",
   "fonttools (==4.62.1)",
-  "uvicorn-worker (==0.4.0)",
+  "uvicorn-worker (==0.4.0)"
 ]
 description = "Prowler's API (Django/DRF)"
 license = "Apache-2.0"
@@ -71,7 +71,7 @@ name = "prowler-api"
 package-mode = false
 # Needed for the SDK compatibility
 requires-python = ">=3.11,<3.13"
-version = "1.33.0"
+version = "1.43.0"
 
 # Shared ruff baseline (kept in sync with mcp_server/pyproject.toml).
 # target-version tracks this project's lowest supported Python.
@@ -92,6 +92,7 @@ extend-select = [
 
 [tool.uv]
 # Transitive pins matching master to avoid silent drift; bump deliberately.
+# workos is api-only; pyopenssl matches master (PROWLER-2310).
 constraint-dependencies = [
   "about-time==4.2.1",
   "adal==1.2.7",
@@ -99,7 +100,7 @@ constraint-dependencies = [
   "aiobotocore==2.25.1",
   "aiofiles==24.1.0",
   "aiohappyeyeballs==2.6.1",
-  "aiohttp==3.14.0",
+  "aiohttp==3.14.3",
   "aioitertools==0.13.0",
   "aiosignal==1.4.0",
   "alibabacloud-actiontrail20200706==2.4.1",
@@ -128,7 +129,7 @@ constraint-dependencies = [
   "alibabacloud-sls20201230==5.9.0",
   "alibabacloud-sts20150401==1.1.6",
   "alibabacloud-tea==0.4.3",
-  "alibabacloud-tea-openapi==0.4.4",
+  "alibabacloud-tea-openapi==0.4.6",
   "alibabacloud-tea-util==0.3.14",
   "alibabacloud-tea-xml==0.0.3",
   "alibabacloud-vpc20160428==6.13.0",
@@ -210,15 +211,14 @@ constraint-dependencies = [
   "coverage==7.5.4",
   "cron-descriptor==1.4.5",
   "crowdstrike-falconpy==1.6.0",
-  "cryptography==46.0.7",
+  "cryptography==50.0.0",
   "cycler==0.12.1",
-  "darabonba-core==1.0.5",
+  "darabonba-core==1.0.8",
   "dash==3.1.1",
   "dash-bootstrap-components==2.0.3",
   "debugpy==1.8.20",
   "decorator==5.2.1",
   "defusedxml==0.7.1",
-  "detect-secrets==1.5.0",
   "dill==0.4.1",
   "distro==1.9.0",
   "dj-rest-auth==7.0.1",
@@ -278,7 +278,7 @@ constraint-dependencies = [
   "h2==4.3.0",
   "hpack==4.1.0",
   "httpcore==1.0.9",
-  "httplib2==0.31.2",
+  "httplib2==0.32.0",
   "httpx==0.28.1",
   "humanfriendly==10.0",
   "hyperframe==6.1.0",
@@ -301,6 +301,7 @@ constraint-dependencies = [
   "jsonschema==4.23.0",
   "jsonschema-specifications==2025.9.1",
   "keystoneauth1==5.13.0",
+  "kingfisher-bin==1.104.0",
   "kiwisolver==1.4.9",
   "knack==0.11.0",
   "kombu==5.6.2",
@@ -314,13 +315,13 @@ constraint-dependencies = [
   "matplotlib==3.10.8",
   "mccabe==0.7.0",
   "mdurl==0.1.2",
-  "microsoft-kiota-abstractions==1.9.9",
-  "microsoft-kiota-authentication-azure==1.9.9",
-  "microsoft-kiota-http==1.9.9",
-  "microsoft-kiota-serialization-form==1.9.9",
-  "microsoft-kiota-serialization-json==1.9.9",
-  "microsoft-kiota-serialization-multipart==1.9.9",
-  "microsoft-kiota-serialization-text==1.9.9",
+  "microsoft-kiota-abstractions==1.9.10",
+  "microsoft-kiota-authentication-azure==1.9.10",
+  "microsoft-kiota-http==1.9.10",
+  "microsoft-kiota-serialization-form==1.9.10",
+  "microsoft-kiota-serialization-json==1.9.10",
+  "microsoft-kiota-serialization-multipart==1.9.10",
+  "microsoft-kiota-serialization-text==1.9.10",
   "microsoft-security-utilities-secret-masker==1.0.0b4",
   "msal==1.35.0b1",
   "msal-extensions==1.2.0",
@@ -337,7 +338,7 @@ constraint-dependencies = [
   "nltk==3.9.4",
   "numpy==2.2.6",
   "oauthlib==3.3.1",
-  "oci==2.169.0",
+  "oci==2.184.1",
   "openai==1.109.1",
   "openstacksdk==4.2.0",
   "opentelemetry-api==1.39.1",
@@ -349,7 +350,7 @@ constraint-dependencies = [
   "pagerduty==6.1.0",
   "pandas==2.2.3",
   "pbr==7.0.3",
-  "pillow==12.2.0",
+  "pillow==12.3.0",
   "pkginfo==1.12.1.2",
   "platformdirs==4.5.1",
   "plotly==6.5.2",
@@ -365,8 +366,8 @@ constraint-dependencies = [
   "psycopg2-binary==2.9.9",
   "py-deviceid==0.1.1",
   "py-iam-expand==0.3.0",
-  "py-ocsf-models==0.8.1",
-  "pyasn1==0.6.3",
+  "py-ocsf-models==0.10.0",
+  "pyasn1==0.6.4",
   "pyasn1-modules==0.4.2",
   "pycodestyle==2.14.0",
   "pycparser==3.0",
@@ -378,7 +379,7 @@ constraint-dependencies = [
   "pylint==3.2.5",
   "pymsalruntime==0.18.1",
   "pynacl==1.6.2",
-  "pyopenssl==26.0.0",
+  "pyopenssl==26.4.0",
   "pyparsing==3.3.2",
   "pyreadline3==3.5.4",
   "pysocks==1.7.1",
@@ -422,7 +423,7 @@ constraint-dependencies = [
   "six==1.17.0",
   "slack-sdk==3.39.0",
   "sniffio==1.3.1",
-  "sqlparse==0.5.5",
+  "sqlparse==0.6.0",
   "statsd==4.0.1",
   "std-uritemplate==2.0.8",
   "stevedore==5.6.0",
@@ -447,7 +448,7 @@ constraint-dependencies = [
   "wcwidth==0.5.3",
   "websocket-client==1.9.0",
   "werkzeug==3.1.7",
-  "workos==6.0.8",
+  "workos==8.3.0",
   "wrapt==1.17.3",
   "xlsxwriter==3.2.9",
   "xmlsec==1.3.17",
@@ -456,7 +457,7 @@ constraint-dependencies = [
   "zipp==3.23.0",
   "zope-event==6.1",
   "zope-interface==8.2",
-  "zstd==1.5.7.3"
+  "zstd==1.5.7.2"
 ]
 # prowler@master needs okta==3.4.2, but cartography 0.138.1 requires okta<1.0.0.
 # Attack Paths does not ingest Okta today, so override the Cartography
@@ -466,10 +467,13 @@ constraint-dependencies = [
 # 0.138.1 requires azure-mgmt-containerservice>=41.0.0. Attack Paths does not
 # ingest Azure today, so override the Cartography dependency to the Prowler pin.
 #
-# prowler@master hard-pins microsoft-kiota-abstractions==1.9.2 in [project.dependencies].
-# The microsoft-kiota-http security bump to 1.9.9 (GHSA-7j59-v9qr-6fq9) requires
-# microsoft-kiota-abstractions>=1.9.9, which a constraint cannot satisfy against the
-# SDK's hard pin; override it to the patched, kiota-aligned version.
+# prowler@master hard-pins the microsoft-kiota packages in [project.dependencies].
+# microsoft-kiota-serialization-json 1.9.10 fixes get_collection_of_enum_values
+# returning [] for flags enums serialized as CSV strings (microsoft/kiota-python#515),
+# which broke the Entra Conditional Access guest-user checks; the kiota packages
+# release in lockstep and 1.9.10 requires microsoft-kiota-abstractions>=1.9.10, which
+# a constraint cannot satisfy against the SDK's hard pins, so override the whole set
+# to 1.9.10 until the SDK bump propagates to the pinned master rev.
 #
 # prowler@master hard-pins dulwich==0.23.0 and pyjwt==2.12.1 in [project.dependencies].
 # dulwich 1.2.5 patches GHSA-897w-fcg9-f6xj (arbitrary file write) and pyjwt 2.13.0
@@ -480,8 +484,21 @@ constraint-dependencies = [
 # that request pyjwt[crypto] and leave cryptography (needed for RS256) only transitive.
 override-dependencies = [
   "okta==3.4.2",
+  # prowler requires cryptography==50.0.0. Two api-only dependencies still cap it below
+  # 49 and cannot move yet: msal, pinned exactly by azure-cli-core (2.83.0 -> 1.35.0b1,
+  # 2.89.1 -> 1.36.0, both <49; cartography needs azure-cli-core), and workos 8.3.0
+  # (~=48.0; workos 10.1.1+ needs ~=50.0 and is a separate SDK upgrade). This api is
+  # deployed from this lock with `uv sync --locked`, so the override applies to what runs.
+  # Remove when azure-cli-core pins msal>=1.37.0 and workos is on 10.x.
+  "cryptography==50.0.0",
   "azure-mgmt-containerservice==34.1.0",
-  "microsoft-kiota-abstractions==1.9.9",
+  "microsoft-kiota-abstractions==1.9.10",
+  "microsoft-kiota-authentication-azure==1.9.10",
+  "microsoft-kiota-http==1.9.10",
+  "microsoft-kiota-serialization-form==1.9.10",
+  "microsoft-kiota-serialization-json==1.9.10",
+  "microsoft-kiota-serialization-multipart==1.9.10",
+  "microsoft-kiota-serialization-text==1.9.10",
   "dulwich==1.2.5",
   "pyjwt[crypto]==2.13.0"
 ]

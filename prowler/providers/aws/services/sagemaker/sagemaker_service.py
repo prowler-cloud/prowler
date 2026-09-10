@@ -1,3 +1,4 @@
+import base64
 from typing import Optional
 
 from botocore.client import ClientError
@@ -36,6 +37,11 @@ class SageMaker(AWSService):
         self.__threading_call__(self._describe_model, self.sagemaker_models)
         self.__threading_call__(
             self._describe_notebook_instance, self.sagemaker_notebook_instances
+        )
+        # Runs after _describe_notebook_instance so lifecycle_config_name is set.
+        self.__threading_call__(
+            self._describe_notebook_instance_lifecycle_config,
+            self.sagemaker_notebook_instances,
         )
         self.__threading_call__(
             self._describe_training_job, self.sagemaker_training_jobs
@@ -198,6 +204,39 @@ class SageMaker(AWSService):
             )
 
     def _describe_notebook_instance(self, notebook_instance):
+        """Read one notebook instance's settings into the inventory.
+
+        Args:
+            notebook_instance: The NotebookInstance to populate, identified by
+                name and region.
+
+        DirectInternetAccess and RootAccess are unrelated settings, and this
+        method previously guarded on the presence of the first while reading
+        the value of the second. Three consequences followed, all of them here
+        rather than in the check that consumes this:
+
+        - An instance with DirectInternetAccess Enabled and RootAccess Disabled
+          was recorded as having no direct internet access, and reported PASS.
+        - An instance with DirectInternetAccess Disabled and RootAccess Enabled
+          was recorded as having it, and reported FAIL.
+        - With RootAccess absent, subscripting it raised KeyError. The
+          enclosing ``except Exception`` swallowed that, so the assignments
+          below it never ran and ``kms_key_id`` and ``lifecycle_config_name``
+          were left None for an instance that has them -- degrading checks that
+          read those fields and never touch this one.
+
+        The third is reachable rather than theoretical:
+        DescribeNotebookInstanceOutput declares 23 members and carries no
+        ``required`` key at all at the pinned botocore, so both fields are
+        optional and a response with one and not the other is legal.
+
+        DirectInternetAccess is therefore assigned in BOTH states. Setting only
+        the True case would leave None meaning either Disabled or never-read,
+        and the check has to tell those apart: it reports MANUAL for never-read
+        rather than defaulting to PASS, which would assert compliance from an
+        absent answer. Collapsing the two states here would take that
+        distinction away from it.
+        """
         logger.info("SageMaker - describing notebook instances...")
         try:
             regional_client = self.regional_clients[notebook_instance.region]
@@ -217,17 +256,69 @@ class SageMaker(AWSService):
                 notebook_instance.root_access = True
             if "SubnetId" in describe_notebook_instance:
                 notebook_instance.subnet_id = describe_notebook_instance["SubnetId"]
-            if (
-                "DirectInternetAccess" in describe_notebook_instance
-                and describe_notebook_instance["RootAccess"] == "Enabled"
-            ):
-                notebook_instance.direct_internet_access = True
+            if "DirectInternetAccess" in describe_notebook_instance:
+                # Assign both states, not just the enabled one. Left as None, "Disabled"
+                # and "the field was never read" are the same value, and the check
+                # defaults to PASS -- so an unreadable notebook instance reported clean.
+                notebook_instance.direct_internet_access = (
+                    describe_notebook_instance["DirectInternetAccess"] == "Enabled"
+                )
             if "KmsKeyId" in describe_notebook_instance:
                 notebook_instance.kms_key_id = describe_notebook_instance["KmsKeyId"]
+            if "NotebookInstanceLifecycleConfigName" in describe_notebook_instance:
+                notebook_instance.lifecycle_config_name = describe_notebook_instance[
+                    "NotebookInstanceLifecycleConfigName"
+                ]
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+
+    def _describe_notebook_instance_lifecycle_config(self, notebook_instance):
+        """Fetch and decode a notebook instance's lifecycle scripts.
+
+        Reads the ``OnCreate`` and ``OnStart`` scripts from
+        ``DescribeNotebookInstanceLifecycleConfig`` and stores the base64-decoded
+        content on ``notebook_instance.lifecycle_scripts`` keyed by
+        ``"<hook>[<index>]"``. Instances without a lifecycle configuration are
+        skipped. Any describe or decode failure sets
+        ``notebook_instance.lifecycle_scan_failed`` to True so the consuming
+        check can report ``MANUAL`` instead of a false ``PASS``.
+
+        Args:
+            notebook_instance: NotebookInstance model to enrich in-place.
+        """
+        if not notebook_instance.lifecycle_config_name:
+            return
+        logger.info("SageMaker - describing notebook instance lifecycle config...")
+        try:
+            regional_client = self.regional_clients[notebook_instance.region]
+            lifecycle_config = regional_client.describe_notebook_instance_lifecycle_config(
+                NotebookInstanceLifecycleConfigName=notebook_instance.lifecycle_config_name
+            )
+        except Exception as error:
+            notebook_instance.lifecycle_scan_failed = True
+            logger.error(
+                f"{notebook_instance.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            return
+
+        scripts = {}
+        for hook_name in ("OnCreate", "OnStart"):
+            for script_index, script in enumerate(lifecycle_config.get(hook_name, [])):
+                content_b64 = script.get("Content")
+                if not content_b64:
+                    continue
+                try:
+                    scripts[f"{hook_name}[{script_index}]"] = base64.b64decode(
+                        content_b64
+                    ).decode("utf-8", errors="ignore")
+                except Exception as error:
+                    notebook_instance.lifecycle_scan_failed = True
+                    logger.error(
+                        f"{notebook_instance.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
+        notebook_instance.lifecycle_scripts = scripts
 
     def _describe_model(self, model):
         logger.info("SageMaker - describing models...")
@@ -443,6 +534,8 @@ class SageMaker(AWSService):
                     )
                 )
             endpoint_config.production_variants = production_variants
+            if "KmsKeyId" in describe_endpoint_config:
+                endpoint_config.kms_key_id = describe_endpoint_config["KmsKeyId"]
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -495,8 +588,16 @@ class NotebookInstance(BaseModel):
     arn: str
     root_access: bool = None
     subnet_id: str = None
-    direct_internet_access: bool = None
+    # None when DescribeNotebookInstance did not report the field: unknown, not disabled.
+    direct_internet_access: Optional[bool] = None
     kms_key_id: str = None
+    lifecycle_config_name: str = None
+    # Decoded lifecycle scripts keyed by "<hook>[<index>]" (e.g. "OnStart[0]"),
+    # populated by _describe_notebook_instance_lifecycle_config.
+    lifecycle_scripts: dict = {}
+    # True if the lifecycle configuration could not be fully described/decoded,
+    # so the secrets check reports MANUAL instead of a false PASS.
+    lifecycle_scan_failed: bool = False
     tags: Optional[list] = []
 
 
@@ -560,6 +661,7 @@ class EndpointConfig(BaseModel):
     region: str
     arn: str
     production_variants: list[ProductionVariant] = []
+    kms_key_id: Optional[str] = None
     tags: Optional[list] = []
 
 

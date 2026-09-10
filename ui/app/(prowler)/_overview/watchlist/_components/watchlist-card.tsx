@@ -52,6 +52,22 @@ export interface WatchlistItem {
   value: string | number;
 }
 
+/**
+ * How tall the card is before its content is taken into account.
+ *
+ * `fixed` reserves room for a full seven-row list, which is right for a card
+ * whose list is always full — a top-N ranking. `fit` sizes to the content, for
+ * a list whose length the user controls: reserving seven rows for a watchlist
+ * with two entries leaves half a card of void.
+ */
+export const WATCHLIST_CARD_HEIGHT = {
+  FIXED: "fixed",
+  FIT: "fit",
+} as const;
+
+export type WatchlistCardHeight =
+  (typeof WATCHLIST_CARD_HEIGHT)[keyof typeof WATCHLIST_CARD_HEIGHT];
+
 export interface WatchlistCardProps
   extends React.HTMLAttributes<HTMLDivElement> {
   title: string;
@@ -70,6 +86,7 @@ export interface WatchlistCardProps
    * When false (default), uses score-based coloring (0-30 red, 31-60 yellow, 61-100 green).
    */
   useFailureColoring?: boolean;
+  height?: WatchlistCardHeight;
 }
 
 export const WatchlistCard = ({
@@ -81,13 +98,17 @@ export const WatchlistCard = ({
   emptyState,
   onItemClick,
   useFailureColoring = false,
+  height = WATCHLIST_CARD_HEIGHT.FIXED,
 }: WatchlistCardProps) => {
   const isEmpty = items.length === 0;
 
   return (
     <Card
       variant="base"
-      className="flex min-h-[405px] w-full flex-col overflow-hidden"
+      className={cn(
+        "flex w-full flex-col overflow-hidden",
+        height === WATCHLIST_CARD_HEIGHT.FIXED && "min-h-[405px]",
+      )}
     >
       <div className="flex items-center justify-between">
         <CardTitle>{title}</CardTitle>

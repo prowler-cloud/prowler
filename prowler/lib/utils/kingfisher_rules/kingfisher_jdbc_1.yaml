@@ -1,0 +1,97 @@
+# Override of Kingfisher's built-in `kingfisher.jdbc.1`. Loading this file with
+# `--rules-path` replaces the built-in rule of the same id (see
+# `_build_kingfisher_command` in prowler/lib/utils/utils.py).
+#
+# The built-in pattern matches a bare `jdbc:<scheme>:` prefix plus any 10
+# non-space characters, so every JDBC connection string is reported as an
+# embedded credential even when it carries none. The defect is upstream
+# (https://github.com/mongodb/kingfisher), still present in 1.110.0.
+#
+# Because this replaces the built-in rule rather than extending it, every field
+# below other than `pattern` and `examples` is a verbatim copy of the built-in
+# rule: dropping one would silently disable it. `validation` in particular is
+# what makes `--scan-secrets-validate` confirm a JDBC credential is live, and
+# `pattern_requirements` is what discards placeholder values.
+#
+# Drop this file when a `kingfisher-bin` bump makes the credential-free cases in
+# `Test_detect_secrets_scan_batch_jdbc` pass without it.
+rules:
+  - name: JDBC connection string with embedded credentials
+    id: kingfisher.jdbc.1
+    # Only this and `examples` diverge from the built-in rule. The `{1,32}`
+    # scheme quantifier (upstream uses `{2,32}`) also lets two-character schemes
+    # such as `jdbc:h2:` match.
+    #
+    # `#` is escaped even inside character classes: under `(?x)` a bare one
+    # opens a comment there too, and Kingfisher then fails to compile the rule
+    # and aborts the whole scan.
+    pattern: |
+      (?xi)
+      (
+        (?:
+          # Credential forms that any JDBC subprotocol can carry.
+          jdbc:
+          [a-z][a-z0-9+.-]{1,32}
+          (?:[:][a-z0-9+.-]{1,32})*
+          :
+          (?:
+              # URL userinfo, anchored to the `//` that opens the authority.
+              # Both halves also exclude `?&;#` so neither can reach into the
+              # query string or the property list looking for an `@`.
+              // [^\s"'<>/@:?&;\#]{1,64} : [^\s"'<>/@?&;\#]{1,64} @
+              # Password as a query parameter or a `;`-delimited property. Only
+              # this one keeps a leading `.*?`, because its match starts at the
+              # delimiter before the keyword, anywhere in the string.
+            | [^\s"'<>,(){}\[\]]{0,384}?
+              [?&;] [ \t]* (?:password|passwd|pwd|secret) [ \t]* = [ \t]* [^\s"'<>&;]{1,128}
+          )
+          # Oracle TNS userinfo, `jdbc:oracle:<drivertype>:user/password@db`.
+          # Spelled out as its own top-level alternative rather than as a third
+          # branch above, because `user/password@` is a credential only after an
+          # Oracle prefix: every other subprotocol reads `a/b@c` as part of a
+          # path or a host, so sharing the branch reported credential-free
+          # strings such as `jdbc:derby:team/ops@corp.internal`.
+        | jdbc:oracle:
+          [a-z0-9+.-]{1,32}
+          :
+          [^\s"'<>/@:?&;\#]{1,64} / [^\s"'<>/@?&;\#]{1,64} @
+          # MySQL Connector/J host-list credentials. Keep both forms anchored
+          # to the MySQL prefix so this syntax cannot affect other drivers.
+        | jdbc:mysql://
+          (?:
+              \(
+              [ \t]* host [ \t]* = [ \t]* [^,()\s"'<>/]{1,128}
+              [ \t]* , [ \t]* user [ \t]* = [ \t]* [^,()\s"'<>/]{1,64}
+              [ \t]* , [ \t]* password [ \t]* = [ \t]* [^,()\s"'<>/]{1,128}
+              [ \t]* \)
+            | address [ \t]* =
+              [ \t]* \( [ \t]* host [ \t]* = [ \t]* [^()\s"'<>/]{1,128} [ \t]* \)
+              [ \t]* \( [ \t]* user [ \t]* = [ \t]* [^()\s"'<>/]{1,64} [ \t]* \)
+              [ \t]* \( [ \t]* password [ \t]* = [ \t]* [^()\s"'<>/]{1,128} [ \t]* \)
+          )
+        )
+        [^\s"'<>,(){}\[\]]{0,192}
+      )
+    pattern_requirements:
+      min_special_chars: 2
+      special_chars: ";=/?@&"
+      ignore_if_contains:
+        - "****"
+        - "xxxx"
+        - "example"
+    min_entropy: 3.3
+    confidence: medium
+    validation:
+      type: Jdbc
+    tls_mode: lax
+    # Enforced at load time: Kingfisher rejects the rule if one does not match.
+    examples:
+      - "jdbc:mysql://admin:s3cr3t@prod.internal:3306/inventory"  # trufflehog:ignore
+      - "jdbc:postgresql://db.example.com:5432/app?user=admin&password=s3cr3t"  # trufflehog:ignore
+      - "jdbc:sqlserver://sql.example.org:1433;databaseName=inventory;user=sa;password=s3cr3t!"  # trufflehog:ignore
+      - "jdbc:oracle:thin:scott/tiger@ora.example.net:1521:ORCLPDB1"  # trufflehog:ignore
+      - "jdbc:h2:file:./data/store;CIPHER=AES;PASSWORD=filepwd"  # trufflehog:ignore
+    references:
+      - https://docs.oracle.com/javase/8/docs/api/java/sql/DriverManager.html
+      - https://jdbc.postgresql.org/documentation/use/
+      - https://github.com/pgjdbc/pgjdbc/blob/3a699d57d957ca0c2b86e619d001a8763a130027/docs/content/documentation/use.md

@@ -31,7 +31,8 @@ Use this skill whenever you are:
 
 - PR template: `.github/pull_request_template.md`
 - PR title validation: `.github/workflows/conventional-commit.yml`
-- Changelog gate: `.github/workflows/pr-check-changelog.yml`
+- Changelog gate: `.github/workflows/pr-check-changelog.yml` (requires a fragment under `<component>/changelog.d/`)
+- Changelog compile (release time): `.github/workflows/compile-changelogs.yml`
 - Conflict markers check: `.github/workflows/pr-conflict-checker.yml`
 - Secret scanning: `.github/workflows/find-secrets.yml`
 - Auto labels: `.github/workflows/labeler.yml` and `.github/labeler.yml`
@@ -42,7 +43,7 @@ Use this skill whenever you are:
 1. Identify which workflow/job is failing (name + file under `.github/workflows/`).
 2. Check path filters: is the workflow supposed to run for your changed files?
 3. If it's a title check: verify PR title matches Conventional Commits.
-4. If it's changelog: verify the right `CHANGELOG.md` is updated OR apply `no-changelog` label.
+4. If it's changelog: verify a valid fragment exists under the right `<component>/changelog.d/` OR apply `no-changelog` label.
 5. If it's conflict checker: remove `<<<<<<<`, `=======`, `>>>>>>>` markers.
 6. If it's secrets (TruffleHog): see section below.
 

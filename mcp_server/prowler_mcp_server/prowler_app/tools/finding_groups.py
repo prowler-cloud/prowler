@@ -1,4 +1,4 @@
-"""Finding Groups tools for Prowler App MCP Server.
+"""Finding Groups tools for Prowler MCP Server.
 
 This module provides read-only tools for finding group triage and drill-downs.
 """
@@ -6,8 +6,10 @@ This module provides read-only tools for finding group triage and drill-downs.
 from typing import Any, Literal
 from urllib.parse import quote
 
+from fastmcp.exceptions import ToolError
 from pydantic import Field
 
+from prowler_mcp_server.lib.types import NonBlankStr
 from prowler_mcp_server.prowler_app.models.finding_groups import (
     DetailedFindingGroup,
     FindingGroupResourcesListResponse,
@@ -233,53 +235,49 @@ class FindingGroupsTools(BaseTool):
         `date_to`, this uses `/finding-groups` with a maximum 2-day date window.
 
         Use this tool to find noisy or high-impact checks, then call
-        prowler_app_get_finding_group_details for complete counters or
-        prowler_app_list_finding_group_resources to drill into affected resources.
+        prowler_get_finding_group_details for complete counters or
+        prowler_list_finding_group_resources to drill into affected resources.
         """
-        try:
-            self.api_client.validate_page_size(page_size)
-            date_range, params = self._base_date_params(date_from, date_to)
-            endpoint = self._group_endpoint(date_range)
+        self.api_client.validate_page_size(page_size)
+        date_range, params = self._base_date_params(date_from, date_to)
+        endpoint = self._group_endpoint(date_range)
 
-            self._apply_common_filters(
-                params,
-                provider,
-                provider_type,
-                provider_uid,
-                provider_alias,
-                region,
-                service,
-                resource_type,
-                resource_name,
-                resource_uid,
-                resource_group,
-                category,
-                check_id,
-                check_title,
-                severity,
-                status,
-                muted,
-                delta,
-            )
+        self._apply_common_filters(
+            params,
+            provider,
+            provider_type,
+            provider_uid,
+            provider_alias,
+            region,
+            service,
+            resource_type,
+            resource_name,
+            resource_uid,
+            resource_group,
+            category,
+            check_id,
+            check_title,
+            severity,
+            status,
+            muted,
+            delta,
+        )
 
-            params["filter[include_muted]"] = self._bool_value(include_muted)
-            params["page[size]"] = page_size
-            params["page[number]"] = page_number
-            params["fields[finding-groups]"] = GROUP_LIST_FIELDS
-            if sort:
-                params["sort"] = sort
+        params["filter[include_muted]"] = self._bool_value(include_muted)
+        params["page[size]"] = page_size
+        params["page[number]"] = page_number
+        params["fields[finding-groups]"] = GROUP_LIST_FIELDS
+        if sort:
+            params["sort"] = sort
 
-            clean_params = self.api_client.build_filter_params(params)
-            api_response = await self.api_client.get(endpoint, params=clean_params)
-            response = FindingGroupsListResponse.from_api_response(api_response)
-            return response.model_dump()
-        except Exception as e:
-            self.logger.error(f"Error listing finding groups: {e}")
-            return {"error": str(e), "status": "failed"}
+        clean_params = self.api_client.build_filter_params(params)
+        api_response = await self.api_client.get(endpoint, params=clean_params)
+        response = FindingGroupsListResponse.from_api_response(api_response)
+        return response.model_dump()
 
     async def get_finding_group_details(
         self,
-        check_id: str = Field(
+        check_id: NonBlankStr = Field(
             description="Public check ID that identifies the finding group. This is not a UUID."
         ),
         date_from: str | None = Field(
@@ -297,39 +295,37 @@ class FindingGroupsTools(BaseTool):
         or historical data when dates are provided. Fully muted groups are
         included by default so accepted risk does not look like a missing group.
         """
-        try:
-            date_range, params = self._base_date_params(date_from, date_to)
-            endpoint = self._group_endpoint(date_range)
+        date_range, params = self._base_date_params(date_from, date_to)
+        endpoint = self._group_endpoint(date_range)
 
-            params.update(
-                {
-                    "filter[check_id]": check_id,
-                    "filter[include_muted]": True,
-                    "page[size]": 1,
-                    "page[number]": 1,
-                    "fields[finding-groups]": GROUP_DETAIL_FIELDS,
-                }
+        params.update(
+            {
+                "filter[check_id]": check_id,
+                "filter[include_muted]": True,
+                "page[size]": 1,
+                "page[number]": 1,
+                "fields[finding-groups]": GROUP_DETAIL_FIELDS,
+            }
+        )
+
+        clean_params = self.api_client.build_filter_params(params)
+        api_response = await self.api_client.get(endpoint, params=clean_params)
+        data = api_response.get("data", [])
+
+        if not data:
+            # No `from`: this names the check and the tool that lists valid ones,
+            # neither of which the shared classifier can know.
+            raise ToolError(
+                f"No finding group exists for check '{check_id}' in this scan. Use "
+                "prowler_list_finding_groups to see the checks that have findings."
             )
 
-            clean_params = self.api_client.build_filter_params(params)
-            api_response = await self.api_client.get(endpoint, params=clean_params)
-            data = api_response.get("data", [])
-
-            if not data:
-                return {
-                    "error": f"Finding group '{check_id}' not found.",
-                    "status": "not_found",
-                }
-
-            group = DetailedFindingGroup.from_api_response(data[0])
-            return group.model_dump()
-        except Exception as e:
-            self.logger.error(f"Error getting finding group details: {e}")
-            return {"error": str(e), "status": "failed"}
+        group = DetailedFindingGroup.from_api_response(data[0])
+        return group.model_dump()
 
     async def list_finding_group_resources(
         self,
-        check_id: str = Field(
+        check_id: NonBlankStr = Field(
             description="Public check ID that identifies the finding group. This is not a UUID."
         ),
         provider: list[str] = Field(
@@ -423,48 +419,44 @@ class FindingGroupsTools(BaseTool):
         Default behavior returns FAIL, unmuted resources so the result is
         actionable. Set `include_muted=True` to include accepted/suppressed
         resources too. Each row includes nested resource and provider data plus
-        `finding_id`. Use `prowler_app_get_finding_details(finding_id)` to
+        `finding_id`. Use `prowler_get_finding_details(finding_id)` to
         retrieve complete remediation guidance for a specific resource finding.
         """
-        try:
-            self.api_client.validate_page_size(page_size)
-            date_range, params = self._base_date_params(date_from, date_to)
-            endpoint = self._resource_endpoint(check_id, date_range)
+        self.api_client.validate_page_size(page_size)
+        date_range, params = self._base_date_params(date_from, date_to)
+        endpoint = self._resource_endpoint(check_id, date_range)
 
-            if muted is None and not self._bool_value(include_muted):
-                muted = False
+        if muted is None and not self._bool_value(include_muted):
+            muted = False
 
-            self._apply_common_filters(
-                params,
-                provider,
-                provider_type,
-                provider_uid,
-                provider_alias,
-                region,
-                service,
-                resource_type,
-                resource_name,
-                resource_uid,
-                resource_group,
-                category,
-                [],
-                None,
-                severity,
-                status,
-                muted,
-                delta,
-            )
+        self._apply_common_filters(
+            params,
+            provider,
+            provider_type,
+            provider_uid,
+            provider_alias,
+            region,
+            service,
+            resource_type,
+            resource_name,
+            resource_uid,
+            resource_group,
+            category,
+            [],
+            None,
+            severity,
+            status,
+            muted,
+            delta,
+        )
 
-            params["page[size]"] = page_size
-            params["page[number]"] = page_number
-            params["fields[finding-group-resources]"] = RESOURCE_FIELDS
-            if sort:
-                params["sort"] = sort
+        params["page[size]"] = page_size
+        params["page[number]"] = page_number
+        params["fields[finding-group-resources]"] = RESOURCE_FIELDS
+        if sort:
+            params["sort"] = sort
 
-            clean_params = self.api_client.build_filter_params(params)
-            api_response = await self.api_client.get(endpoint, params=clean_params)
-            response = FindingGroupResourcesListResponse.from_api_response(api_response)
-            return response.model_dump()
-        except Exception as e:
-            self.logger.error(f"Error listing finding group resources: {e}")
-            return {"error": str(e), "status": "failed"}
+        clean_params = self.api_client.build_filter_params(params)
+        api_response = await self.api_client.get(endpoint, params=clean_params)
+        response = FindingGroupResourcesListResponse.from_api_response(api_response)
+        return response.model_dump()

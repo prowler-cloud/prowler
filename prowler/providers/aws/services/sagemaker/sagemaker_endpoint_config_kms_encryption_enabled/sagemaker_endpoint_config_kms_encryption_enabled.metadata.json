@@ -1,0 +1,46 @@
+{
+  "Provider": "aws",
+  "CheckID": "sagemaker_endpoint_config_kms_encryption_enabled",
+  "CheckTitle": "SageMaker endpoint configuration is encrypted with a KMS key",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Effects/Data Exposure"
+  ],
+  "ServiceName": "sagemaker",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Other",
+  "ResourceGroup": "ai_ml",
+  "Description": "**Amazon SageMaker endpoint configurations** are assessed for **at-rest encryption** using an AWS KMS key. The finding reflects whether a `KmsKeyId` is configured on the endpoint configuration so inference data volumes and related storage use KMS encryption.",
+  "Risk": "Without **at-rest encryption** using a KMS key on endpoint configurations, model artifacts and inference-related data may be exposed through storage access or compromised hosts, reducing **confidentiality** and limiting **key rotation** and **revocation** controls.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/sagemaker/latest/dg/key-management.html",
+    "https://docs.aws.amazon.com/sagemaker/latest/APIReference/API_CreateEndpointConfig.html",
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/sagemaker-controls.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aws sagemaker create-endpoint-config --endpoint-config-name <endpoint-config-name> --production-variants VariantName=AllTraffic,ModelName=<model-name>,InitialInstanceCount=1,InstanceType=ml.m5.large --kms-key-id <kms-key-id>",
+      "NativeIaC": "```yaml\n# CloudFormation: SageMaker EndpointConfig with KMS encryption\nResources:\n  <example_resource_name>:\n    Type: AWS::SageMaker::EndpointConfig\n    Properties:\n      ProductionVariants:\n        - VariantName: AllTraffic\n          ModelName: <example_resource_name>\n          InitialInstanceCount: 1\n          InstanceType: ml.m5.large\n      KmsKeyId: <example_resource_id>  # Critical: encrypts endpoint data at rest with KMS\n```",
+      "Other": "1. Open Amazon SageMaker > Inference > Endpoint configurations\n2. Create a new endpoint configuration (endpoint configs are immutable)\n3. Configure production variants as required\n4. Under Encryption, select a KMS key\n5. Create the configuration and update any endpoints to use the new encrypted configuration\n6. Delete the old unencrypted endpoint configuration when safe",
+      "Terraform": "```hcl\n# SageMaker endpoint configuration with KMS encryption\nresource \"aws_sagemaker_endpoint_configuration\" \"<example_resource_name>\" {\n  name        = \"<example_resource_name>\"\n  kms_key_arn = \"<example_resource_arn>\" # Critical: enables at-rest encryption with KMS\n\n  production_variants {\n    variant_name           = \"AllTraffic\"\n    model_name             = \"<example_resource_name>\"\n    instance_type          = \"ml.m5.large\"\n    initial_instance_count = 1\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Always set `KmsKeyId` on SageMaker endpoint configurations. Prefer a **customer-managed KMS key** with least-privilege key policies, enable **rotation**, and ensure endpoints are updated to use the encrypted configuration.",
+      "Url": "https://hub.prowler.com/check/sagemaker_endpoint_config_kms_encryption_enabled"
+    }
+  },
+  "Categories": [
+    "encryption",
+    "gen-ai"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "sagemaker_notebook_instance_encryption_enabled",
+    "sagemaker_training_jobs_volume_and_output_encryption_enabled"
+  ],
+  "Notes": ""
+}

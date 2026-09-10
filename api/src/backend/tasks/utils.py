@@ -103,6 +103,7 @@ def _get_or_create_scheduled_scan(
             trigger=Scan.TriggerChoices.SCHEDULED,
             state__in=(StateChoices.SCHEDULED, StateChoices.AVAILABLE),
             scheduler_task_id=scheduler_task_id,
+            task__isnull=True,
         ).order_by("scheduled_at", "inserted_at")
     )
 

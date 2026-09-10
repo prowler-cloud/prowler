@@ -1,0 +1,1 @@
+Integration connection test polling now waits up to ~3 minutes instead of ~57 seconds before giving up, so it no longer reports a false failure on slower checks (e.g. Jira accounts with many projects) that were still going to succeed
