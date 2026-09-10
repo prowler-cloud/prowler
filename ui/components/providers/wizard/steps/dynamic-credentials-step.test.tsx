@@ -1,4 +1,10 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -86,6 +92,45 @@ describe("dynamic credentials in the provider wizard", () => {
     });
     expect(useProviderWizardStore.getState().secretId).toBe("secret");
     expect(field).toHaveValue("");
+  });
+  it("masks the OpenAI API key and submits the original credential values", async () => {
+    // Given
+    const user = userEvent.setup();
+    getProviderSchemas.mockResolvedValue({
+      status: "success",
+      providerType: "openai",
+      secretTypes: { api_key: openaiSchema },
+    });
+    render(<DynamicCredentialsStep {...props} providerType="openai" />);
+    const apiKey = await screen.findByLabelText(/Platform Api Key/);
+    const organization = screen.getByLabelText(/Organization Id/);
+    const baseUrl = screen.getByLabelText(/Base Url/);
+
+    // When
+    await user.type(organization, "org-fixture");
+    await user.type(apiKey, "fixture-key-not-a-secret");
+
+    // Then
+    expect(apiKey).toHaveAttribute("type", "password");
+    expect(apiKey).toHaveAttribute("autocomplete", "new-password");
+    expect(organization).toHaveAttribute("type", "text");
+    expect(baseUrl).toHaveAttribute("type", "text");
+    expect(
+      screen.queryByRole("button", { name: /show|reveal/i }),
+    ).not.toBeInTheDocument();
+
+    // When / Then: this form submits from the wizard's external footer.
+    act(() => apiKey.closest("form")!.requestSubmit());
+    await waitFor(() => expect(props.onNext).toHaveBeenCalledOnce());
+    expect(saveDynamicProviderCredentials).toHaveBeenCalledWith({
+      providerId: "account",
+      secretType: "api_key",
+      secret: {
+        organization_id: "org-fixture",
+        platform_api_key: "fixture-key-not-a-secret",
+        base_url: "https://api.openai.com/v1",
+      },
+    });
   });
   it.each<{ result: ProviderSchemasResult; title: string }>([
     {
