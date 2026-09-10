@@ -1,4 +1,4 @@
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from boto3 import client
 from moto import mock_aws
@@ -181,6 +181,59 @@ class Test_codebuild_project_uses_allowed_github_organizations:
                 "which is not in the allowed organizations" in result[0].status_extended
             )
             assert result[0].region == AWS_REGION_EU_WEST_1
+
+    @mock_aws
+    def test_project_github_with_unlisted_roles(self):
+        # iam:ListRoles denied leaves iam_client.roles as None.
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        codebuild_client = client("codebuild", region_name=AWS_REGION_EU_WEST_1)
+        codebuild_client.create_project(
+            name="test-project-github-unlisted-roles",
+            source={
+                "type": "GITHUB",
+                "location": "https://github.com/allowed-org/repo",
+            },
+            artifacts={"type": "NO_ARTIFACTS"},
+            environment={
+                "type": "LINUX_CONTAINER",
+                "image": "aws/codebuild/standard:4.0",
+                "computeType": "BUILD_GENERAL1_SMALL",
+                "environmentVariables": [],
+            },
+            serviceRole=f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:role/codebuild-test-role",
+        )
+
+        from prowler.providers.aws.services.codebuild.codebuild_service import Codebuild
+
+        iam_client = MagicMock()
+        iam_client.roles = None
+
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            patch(
+                "prowler.providers.aws.services.codebuild.codebuild_project_uses_allowed_github_organizations.codebuild_project_uses_allowed_github_organizations.codebuild_client",
+                new=Codebuild(aws_provider),
+            ),
+            patch(
+                "prowler.providers.aws.services.codebuild.codebuild_project_uses_allowed_github_organizations.codebuild_project_uses_allowed_github_organizations.iam_client",
+                new=iam_client,
+            ),
+            patch(
+                "prowler.providers.aws.services.codebuild.codebuild_project_uses_allowed_github_organizations.codebuild_project_uses_allowed_github_organizations.codebuild_client.audit_config",
+                {"codebuild_github_allowed_organizations": ["allowed-org"]},
+            ),
+        ):
+            from prowler.providers.aws.services.codebuild.codebuild_project_uses_allowed_github_organizations.codebuild_project_uses_allowed_github_organizations import (
+                codebuild_project_uses_allowed_github_organizations,
+            )
+
+            assert (
+                len(codebuild_project_uses_allowed_github_organizations().execute())
+                == 0
+            )
 
     @mock_aws
     def test_project_github_no_codebuild_trusted_principal(self):

@@ -1,0 +1,1 @@
+`rolesanywhere_profile_restricts_session_permissions`, `iam_role_service_trust_restricts_source_to_account` and `codebuild_project_uses_allowed_github_organizations` crashing with `TypeError` when `iam:ListRoles` is denied
