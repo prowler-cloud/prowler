@@ -44,6 +44,8 @@ PROWLER_FINDING_NODE_DATA = {
 
 
 def test_attack_path_scan_reads_core_fields():
+    """id/state/progress come from attributes; provider_id is lifted out of the
+    `provider` relationship linkage."""
     scan = AttackPathScan.from_api_response(
         jsonapi_resource(
             "attack-path-scans",
@@ -70,11 +72,14 @@ def test_attack_path_scan_missing_provider_relationship_raises_validation_error(
 
 
 def test_attack_path_scans_list_response_raises_on_missing_pagination():
+    """This list response requires `meta.pagination` and raises a ValueError when
+    it is absent, unlike the sibling list models that default silently."""
     with pytest.raises(ValueError, match="Missing pagination metadata"):
         AttackPathScansListResponse.from_api_response({"data": []})
 
 
 def test_attack_path_scans_list_response_parses_pagination():
+    """page/pages/count are read straight from `meta.pagination`."""
     response = jsonapi_collection(
         [
             jsonapi_resource(
@@ -98,6 +103,8 @@ def test_attack_path_scans_list_response_parses_pagination():
 
 
 def test_attack_path_cartography_schema_reads_required_fields():
+    """provider/version/URLs come from a wrapped `{data: {...}}` document;
+    `schema_content` is left None for a separate fetch step to fill."""
     schema = AttackPathCartographySchema.from_api_response(
         jsonapi_document(
             jsonapi_resource(
@@ -129,6 +136,7 @@ def test_attack_path_cartography_schema_missing_data_key_raises():
 
 
 def test_attack_path_query_parameter_reads_fields():
+    """A query parameter is parsed from a flat dict (no JSON:API wrapper)."""
     param = AttackPathQueryParameter.from_api_response(
         {
             "name": "region",
@@ -147,6 +155,7 @@ def test_attack_path_query_parameter_reads_fields():
 
 
 def test_attack_path_query_parameter_defaults_data_type():
+    """`data_type` falls back to "string" when the API omits it."""
     param = AttackPathQueryParameter.from_api_response(
         {"name": "region", "label": "Region"}
     )
@@ -155,6 +164,8 @@ def test_attack_path_query_parameter_defaults_data_type():
 
 
 def test_attack_path_query_parses_nested_parameters():
+    """Each entry in the `parameters` attribute is recursively parsed into an
+    AttackPathQueryParameter."""
     query = AttackPathQuery.from_api_response(
         jsonapi_resource(
             "attack-paths-query",
@@ -178,6 +189,7 @@ def test_attack_path_query_parses_nested_parameters():
 
 
 def test_attack_path_query_tolerates_missing_parameters():
+    """A query with no `parameters` attribute yields an empty list, not an error."""
     query = AttackPathQuery.from_api_response(
         jsonapi_resource(
             "attack-paths-query",
@@ -229,6 +241,7 @@ def test_attack_path_graph_node_without_prowler_finding_label_drops_severity():
 
 
 def test_attack_path_graph_relationship_requires_all_fields():
+    """A graph edge is parsed from a flat dict of id/label/source/target."""
     rel = AttackPathsGraphRelationship.from_api_response(
         {
             "id": "rel1",
@@ -285,6 +298,7 @@ def test_attack_path_query_result_with_missing_data_key_is_normalized():
 
 
 def test_attack_path_query_result_with_populated_graph():
+    """nodes and relationships arrays are each parsed into their typed models."""
     response = jsonapi_document(
         jsonapi_resource(
             "attack-paths-result",

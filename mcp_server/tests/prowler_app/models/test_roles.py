@@ -30,6 +30,7 @@ ROLE_ATTRIBUTES = {
 
 
 def test_simplified_role_reads_core_fields():
+    """id/name and the `permission_state` summary come straight from attributes."""
     role = SimplifiedRole.from_api_response(
         jsonapi_resource("roles", "r1", ROLE_ATTRIBUTES)
     )
@@ -71,6 +72,8 @@ def test_detailed_role_includes_a_non_bool_truthy_manage_value():
 
 
 def test_detailed_role_reads_unlimited_visibility_and_relationships():
+    """unlimited_visibility comes from attributes; provider_group_ids/user_ids are
+    flattened from their relationship linkages."""
     resource = jsonapi_resource(
         "roles",
         "r1",
@@ -100,6 +103,8 @@ def test_detailed_role_relationship_ids_are_none_when_absent():
 
 
 def test_detailed_role_relationship_ids_are_empty_list_when_present_but_empty():
+    """A present-but-empty `provider_groups` relationship yields [], not None --
+    the distinction `extract_relationship_ids` preserves."""
     resource = jsonapi_resource(
         "roles",
         "r1",
@@ -125,6 +130,8 @@ def test_detailed_role_serialization_keeps_false_unlimited_visibility():
 
 
 def test_detailed_role_serialization_keeps_empty_permissions_list():
+    """An empty `permissions` list survives serialization ("grants nothing" is a
+    fact), unlike the mixin's default which would drop an empty list."""
     role = DetailedRole.from_api_response(
         jsonapi_resource("roles", "r1", {"name": "Read Only"})
     )
@@ -150,6 +157,7 @@ def test_detailed_role_serialization_drops_none_relationship_ids():
 
 
 def test_roles_list_response_carries_pagination_metadata():
+    """page/pages/count are read from `meta.pagination` when present."""
     response = jsonapi_document(
         data=[jsonapi_resource("roles", "r1", ROLE_ATTRIBUTES)],
         meta={"pagination": {"page": 1, "pages": 3, "count": 25}},
@@ -173,6 +181,8 @@ def test_roles_list_response_defaults_pages_to_zero_when_meta_is_missing():
 
 
 def test_user_roles_result_build_derives_the_count():
+    """The `build` factory sets total_num_roles from len(roles) so it cannot
+    drift from the list it describes."""
     role = DetailedRole.from_api_response(
         jsonapi_resource("roles", "r1", ROLE_ATTRIBUTES)
     )

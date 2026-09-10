@@ -22,6 +22,7 @@ MUTE_RULE_ATTRIBUTES = {
 
 
 def test_mutelist_response_reads_configuration():
+    """The raw mutelist `configuration` object is carried through verbatim."""
     mutelist = MutelistResponse.from_api_response(
         jsonapi_resource(
             "mutelists",
@@ -35,6 +36,7 @@ def test_mutelist_response_reads_configuration():
 
 
 def test_mutelist_response_defaults_configuration_to_an_empty_dict():
+    """A mutelist with no `configuration` attribute yields an empty dict."""
     mutelist = MutelistResponse.from_api_response(
         jsonapi_resource("mutelists", "m1", {})
     )
@@ -43,6 +45,7 @@ def test_mutelist_response_defaults_configuration_to_an_empty_dict():
 
 
 def test_simplified_mute_rule_derives_finding_count_from_finding_uids():
+    """finding_count is len(finding_uids), never read from the API directly."""
     rule = SimplifiedMuteRule.from_api_response(
         jsonapi_resource("mute-rules", "r1", MUTE_RULE_ATTRIBUTES)
     )
@@ -51,6 +54,7 @@ def test_simplified_mute_rule_derives_finding_count_from_finding_uids():
 
 
 def test_simplified_mute_rule_finding_count_is_zero_when_no_findings_are_muted():
+    """No `finding_uids` attribute derives a count of 0, not an error."""
     rule = SimplifiedMuteRule.from_api_response(
         jsonapi_resource(
             "mute-rules",
@@ -63,6 +67,8 @@ def test_simplified_mute_rule_finding_count_is_zero_when_no_findings_are_muted()
 
 
 def test_detailed_mute_rule_reads_the_finding_uids_and_creator():
+    """The full finding_uids list is kept, and user_creator_id is lifted from the
+    `created_by` relationship linkage."""
     resource = jsonapi_resource(
         "mute-rules",
         "r1",
@@ -79,6 +85,7 @@ def test_detailed_mute_rule_reads_the_finding_uids_and_creator():
 
 
 def test_detailed_mute_rule_creator_is_none_when_relationship_is_absent():
+    """No `created_by` relationship at all leaves user_creator_id as None."""
     rule = DetailedMuteRule.from_api_response(
         jsonapi_resource("mute-rules", "r1", MUTE_RULE_ATTRIBUTES)
     )
@@ -103,6 +110,7 @@ def test_detailed_mute_rule_creator_is_none_when_relationship_data_is_null():
 
 
 def test_mute_rules_list_response_carries_pagination_metadata():
+    """page/pages/count are read from `meta.pagination` when present."""
     response = jsonapi_document(
         data=[jsonapi_resource("mute-rules", "r1", MUTE_RULE_ATTRIBUTES)],
         meta={"pagination": {"page": 2, "pages": 5, "count": 42}},

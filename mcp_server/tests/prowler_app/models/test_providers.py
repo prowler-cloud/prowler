@@ -31,6 +31,8 @@ PROVIDER_ATTRIBUTES = {
 
 
 def test_simplified_provider_reads_core_fields():
+    """uid/alias/provider come from attributes; `connected` is lifted out of the
+    nested `connection` block."""
     provider = SimplifiedProvider.from_api_response(
         jsonapi_resource("providers", "p1", PROVIDER_ATTRIBUTES)
     )
@@ -53,6 +55,7 @@ def test_simplified_provider_always_sets_secret_type_to_none():
 
 
 def test_simplified_provider_connected_is_none_without_a_connection_block():
+    """No `connection` attribute leaves `connected` as None (unknown)."""
     provider = SimplifiedProvider.from_api_response(
         jsonapi_resource("providers", "p1", {"uid": "123", "provider": "aws"})
     )
@@ -78,6 +81,8 @@ def test_simplified_provider_serialization_always_includes_connected_and_secret_
 
 
 def test_detailed_provider_adds_temporal_fields():
+    """inserted_at/updated_at come from attributes; last_checked_at is lifted out
+    of the nested `connection` block."""
     resource = jsonapi_resource(
         "providers",
         "p1",
@@ -100,6 +105,7 @@ def test_detailed_provider_adds_temporal_fields():
 
 
 def test_detailed_provider_parses_provider_group_ids():
+    """The `provider_groups` relationship linkage is flattened to a list of ids."""
     resource = jsonapi_resource(
         "providers",
         "p1",
@@ -115,6 +121,7 @@ def test_detailed_provider_parses_provider_group_ids():
 
 
 def test_detailed_provider_group_ids_is_none_when_relationship_is_absent():
+    """No `provider_groups` relationship leaves provider_group_ids as None."""
     provider = DetailedProvider.from_api_response(
         jsonapi_resource("providers", "p1", PROVIDER_ATTRIBUTES)
     )
@@ -140,6 +147,7 @@ def test_detailed_provider_group_ids_is_none_when_relationship_is_present_but_em
 
 
 def test_providers_list_response_reads_pagination():
+    """page/pages/count are read from `meta.pagination`."""
     response = jsonapi_document(
         data=[jsonapi_resource("providers", "p1", PROVIDER_ATTRIBUTES)],
         meta={"pagination": {"page": 1, "pages": 1, "count": 1}},
@@ -159,6 +167,7 @@ def test_providers_list_response_raises_on_missing_meta():
 
 
 def test_providers_list_response_raises_on_missing_pagination():
+    """`meta` present but without `pagination` still raises KeyError (bracket access)."""
     with pytest.raises(KeyError):
         ProvidersListResponse.from_api_response({"data": [], "meta": {}})
 
@@ -175,6 +184,7 @@ def test_provider_deletion_result_is_constructed_directly():
 
 
 def test_provider_connection_status_maps_true_to_connected():
+    """A truthy `connected` flag maps to the "connected" state string."""
     status = ProviderConnectionStatus.create(
         provider_data=jsonapi_resource("providers", "p1", PROVIDER_ATTRIBUTES),
         connection_status={"connected": True},
@@ -185,6 +195,7 @@ def test_provider_connection_status_maps_true_to_connected():
 
 
 def test_provider_connection_status_maps_false_to_failed():
+    """`connected: False` (not None) maps to "failed" and keeps the error text."""
     status = ProviderConnectionStatus.create(
         provider_data=jsonapi_resource("providers", "p1", PROVIDER_ATTRIBUTES),
         connection_status={"connected": False, "error": "Access denied"},
@@ -195,6 +206,7 @@ def test_provider_connection_status_maps_false_to_failed():
 
 
 def test_provider_connection_status_maps_missing_connected_to_not_tested():
+    """An absent `connected` key maps to "not_tested"."""
     status = ProviderConnectionStatus.create(
         provider_data=jsonapi_resource("providers", "p1", PROVIDER_ATTRIBUTES),
         connection_status={},
@@ -204,6 +216,7 @@ def test_provider_connection_status_maps_missing_connected_to_not_tested():
 
 
 def test_provider_connection_status_maps_explicit_none_to_not_tested():
+    """An explicit `connected: None` also maps to "not_tested", same as absent."""
     status = ProviderConnectionStatus.create(
         provider_data=jsonapi_resource("providers", "p1", PROVIDER_ATTRIBUTES),
         connection_status={"connected": None},

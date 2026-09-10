@@ -35,6 +35,8 @@ SCAN_ATTRIBUTES = {
 
 
 def test_simplified_scan_reads_core_fields():
+    """trigger/state come from attributes; provider_id is lifted out of the
+    `provider` relationship linkage."""
     scan = SimplifiedScan.from_api_response(
         jsonapi_resource(
             "scans",
@@ -60,6 +62,7 @@ def test_simplified_scan_missing_provider_relationship_raises_validation_error()
 
 
 def test_detailed_scan_reads_operational_fields():
+    """progress/duration/unique_resource_count are read from attributes."""
     resource = jsonapi_resource(
         "scans",
         "s1",
@@ -117,6 +120,7 @@ def test_detailed_scan_silently_drops_computed_task_and_processor_ids():
 
 
 def test_scans_list_response_carries_pagination_metadata():
+    """page/pages/count are read from `meta.pagination` when present."""
     response = jsonapi_collection(
         [
             jsonapi_resource(
@@ -139,6 +143,8 @@ def test_scans_list_response_carries_pagination_metadata():
 
 
 def test_scans_list_response_defaults_pagination_when_meta_is_missing():
+    """No `meta` at all defaults count/pages to 0 and page to 1 (unlike muting's
+    list response, which defaults pages to 1)."""
     result = ScansListResponse.from_api_response({"data": []})
 
     assert result.total_num_scans == 0
@@ -147,6 +153,7 @@ def test_scans_list_response_defaults_pagination_when_meta_is_missing():
 
 
 def test_scan_creation_result_is_constructed_directly_with_no_status_flag():
+    """Built directly by the tool layer; carries no success/status flag by design."""
     scan = DetailedScan.from_api_response(
         jsonapi_resource(
             "scans",
@@ -163,6 +170,7 @@ def test_scan_creation_result_is_constructed_directly_with_no_status_flag():
 
 
 def test_schedule_creation_result_first_run_state_can_be_omitted():
+    """first_run_state is optional; when None it is dropped from the dump."""
     result = ScheduleCreationResult(message="Schedule created successfully")
 
     assert result.first_run_state is None

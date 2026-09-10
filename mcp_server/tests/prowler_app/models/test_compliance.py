@@ -47,6 +47,7 @@ def test_requirement_attribute_reads_the_double_nested_check_ids():
 
 
 def test_requirement_attribute_id_prefers_the_nested_attributes_id():
+    """`id` is taken from `attributes.id` when present, ahead of the JSON:API id."""
     attribute = ComplianceRequirementAttribute.from_api_response(
         jsonapi_resource("compliance-requirement-attributes", "req1", {"id": "1.1"})
     )
@@ -64,6 +65,7 @@ def test_requirement_attribute_id_falls_back_to_the_resource_id():
 
 
 def test_requirement_attribute_tolerates_missing_check_ids():
+    """No nested `attributes.attributes.check_ids` yields an empty list."""
     attribute = ComplianceRequirementAttribute.from_api_response(
         jsonapi_resource("compliance-requirement-attributes", "req1", {"id": "1.1"})
     )
@@ -72,6 +74,7 @@ def test_requirement_attribute_tolerates_missing_check_ids():
 
 
 def test_requirement_attributes_list_response_counts_from_the_parsed_list():
+    """total_count is len() of the parsed list, not read from API pagination meta."""
     response = jsonapi_document(
         data=[
             jsonapi_resource("compliance-requirement-attributes", "r1", {"id": "1.1"}),
@@ -86,6 +89,7 @@ def test_requirement_attributes_list_response_counts_from_the_parsed_list():
 
 
 def test_framework_summary_reads_the_counters():
+    """framework/version and the requirement counters come straight from attributes."""
     summary = ComplianceFrameworkSummary.from_api_response(
         jsonapi_resource("compliance-overviews", "fw1", FRAMEWORK_ATTRIBUTES)
     )
@@ -112,6 +116,7 @@ def test_framework_summary_id_falls_back_to_the_resource_id():
 
 
 def test_framework_summary_computes_pass_and_fail_percentages():
+    """pass/fail percentages are computed properties over the counters."""
     summary = ComplianceFrameworkSummary.from_api_response(
         jsonapi_resource("compliance-overviews", "fw1", FRAMEWORK_ATTRIBUTES)
     )
@@ -121,6 +126,7 @@ def test_framework_summary_computes_pass_and_fail_percentages():
 
 
 def test_framework_summary_rounds_percentages_to_one_decimal():
+    """1/3 of the requirements renders as 33.3, not 33.33333."""
     summary = ComplianceFrameworkSummary.from_api_response(
         jsonapi_resource(
             "compliance-overviews",
@@ -140,6 +146,7 @@ def test_framework_summary_rounds_percentages_to_one_decimal():
 
 
 def test_framework_summary_percentages_are_zero_when_there_are_no_requirements():
+    """The division-by-zero guard returns 0.0 rather than raising."""
     summary = ComplianceFrameworkSummary.from_api_response(
         jsonapi_resource(
             "compliance-overviews", "fw1", {"framework": "CIS", "version": "1.5"}
@@ -168,6 +175,7 @@ def test_framework_summary_serialization_always_includes_the_computed_percentage
 
 
 def test_requirement_defaults_status_to_manual_when_missing():
+    """A requirement with no `status` attribute is treated as MANUAL."""
     requirement = ComplianceRequirement.from_api_response(
         jsonapi_resource(
             "compliance-requirements", "r1", {"description": "Ensure MFA is enabled"}
@@ -178,6 +186,7 @@ def test_requirement_defaults_status_to_manual_when_missing():
 
 
 def test_requirement_reads_an_explicit_status():
+    """An explicit `status` attribute is passed through unchanged."""
     requirement = ComplianceRequirement.from_api_response(
         jsonapi_resource(
             "compliance-requirements",
@@ -190,6 +199,7 @@ def test_requirement_reads_an_explicit_status():
 
 
 def test_frameworks_list_response_counts_from_the_parsed_list():
+    """total_count is len() of the parsed frameworks list."""
     response = jsonapi_document(
         data=[jsonapi_resource("compliance-overviews", "fw1", FRAMEWORK_ATTRIBUTES)]
     )
