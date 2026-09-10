@@ -1,0 +1,1 @@
+`bedrockagentcore_runtime_jwt_identity_propagation_configured` check to verify Bedrock AgentCore end-user identity propagation
