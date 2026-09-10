@@ -1056,6 +1056,94 @@ describe("RegistryExplorer", () => {
       );
     });
 
+    it("groups artifact metadata, preserves zero counts, and hides missing values", async () => {
+      // Given
+      const artifact = {
+        ...readyState.catalog.artifacts[0],
+        isAdded: false,
+        checkCount: 645,
+        complianceCount: 45,
+      };
+      const screen = await render(
+        <RegistryArtifactCard
+          artifact={artifact}
+          onAdd={() => {}}
+          onRemove={() => {}}
+        />,
+      );
+
+      // Then: counts, version, and downloads share one labelled metadata block.
+      const metadata = screen.getByRole("group", { name: "Artifact metadata" });
+      await expect.element(metadata).toBeVisible();
+      for (const label of ["Compliance", "Checks", "Version", "Downloads"]) {
+        await expect
+          .element(metadata.getByText(label, { exact: true }))
+          .toBeVisible();
+      }
+      await expect
+        .element(metadata.getByText("45", { exact: true }))
+        .toBeVisible();
+      await expect
+        .element(metadata.getByText("645", { exact: true }))
+        .toBeVisible();
+      await expect
+        .element(metadata.getByText(artifact.latestVersion!, { exact: true }))
+        .toBeVisible();
+      await expect
+        .element(metadata.getByText("12", { exact: true }))
+        .toBeVisible();
+      await expect
+        .element(screen.getByText("45 Compliance", { exact: true }))
+        .not.toBeInTheDocument();
+
+      // When / Then: zero is a known count for every metric.
+      await screen.rerender(
+        <RegistryArtifactCard
+          artifact={{
+            ...artifact,
+            checkCount: 0,
+            complianceCount: 0,
+            totalDownloads: 0,
+          }}
+          onAdd={() => {}}
+          onRemove={() => {}}
+        />,
+      );
+      expect(metadata.element().querySelectorAll("dd")).toHaveLength(4);
+      expect(
+        Array.from(
+          metadata.element().querySelectorAll("dd"),
+          (value) => value.textContent,
+        ),
+      ).toEqual(["0", "0", artifact.latestVersion, "0"]);
+
+      // When / Then: older responses have no counts, rather than zero counts.
+      await screen.rerender(
+        <RegistryArtifactCard
+          artifact={{
+            ...artifact,
+            checkCount: undefined,
+            complianceCount: undefined,
+            latestVersion: undefined,
+          }}
+          onAdd={() => {}}
+          onRemove={() => {}}
+        />,
+      );
+      await expect
+        .element(metadata.getByText("Compliance", { exact: true }))
+        .not.toBeInTheDocument();
+      await expect
+        .element(metadata.getByText("Checks", { exact: true }))
+        .not.toBeInTheDocument();
+      await expect
+        .element(metadata.getByText("Version", { exact: true }))
+        .not.toBeInTheDocument();
+      await expect
+        .element(metadata.getByText("Downloads", { exact: true }))
+        .toBeVisible();
+    });
+
     it("recovers the owner image when a fresh URL replaces an expired one", async () => {
       const artifact = {
         ...readyState.catalog.artifacts[0],

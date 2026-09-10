@@ -3,9 +3,12 @@
 import {
   BadgeCheck,
   Check,
+  ClipboardCheck,
   Download,
+  ListChecks,
   Package,
   ShieldCheck,
+  Tag,
 } from "lucide-react";
 
 import { ProviderTypeIcon } from "@/components/icons/providers-badge/provider-type-icon";
@@ -19,6 +22,7 @@ import { Badge } from "@/components/shadcn/badge/badge";
 import { Button } from "@/components/shadcn/button/button";
 import { Card } from "@/components/shadcn/card/card";
 import { isRegistryArtifactInstallable } from "@/lib/registry/artifacts";
+import { cn } from "@/lib/utils";
 import { getProviderDisplayName, isKnownProviderType } from "@/types/providers";
 import type { RegistryArtifactOwner } from "@/types/registry";
 
@@ -141,6 +145,74 @@ function RegistryOwnerRow({
   );
 }
 
+interface RegistryArtifactMetadataProps {
+  complianceCount?: number;
+  checkCount?: number;
+  version?: string;
+  downloads?: number;
+}
+
+function RegistryArtifactMetadata({
+  complianceCount,
+  checkCount,
+  version,
+  downloads,
+}: RegistryArtifactMetadataProps) {
+  const items = [
+    {
+      label: REGISTRY_CAPABILITY_LABELS.compliance,
+      value: complianceCount,
+      icon: ClipboardCheck,
+    },
+    {
+      label: REGISTRY_CAPABILITY_LABELS.checks,
+      value: checkCount,
+      icon: ListChecks,
+    },
+    { label: "Version", value: version, icon: Tag },
+    { label: "Downloads", value: downloads, icon: Download },
+  ].filter(({ value }) => value !== undefined && value !== "");
+
+  if (items.length === 0) return null;
+
+  return (
+    <div className="@container">
+      <dl
+        role="group"
+        aria-label="Artifact metadata"
+        className={cn(
+          "border-border-neutral-tertiary grid grid-cols-1 gap-x-4 gap-y-3 border-t pt-3",
+          items.length > 1 && "grid-cols-2",
+          items.length === 3 && "@sm:grid-cols-3",
+          items.length === 4 && "@sm:grid-cols-4",
+        )}
+      >
+        {items.map(({ label, value, icon: Icon }) => (
+          <div key={label} className="min-w-0 space-y-1">
+            <dt className="text-text-neutral-secondary flex items-center gap-1.5 text-xs">
+              <Icon
+                aria-hidden
+                className="text-text-neutral-tertiary size-3.5 shrink-0"
+              />
+              {label}
+            </dt>
+            <dd
+              className={cn(
+                "text-text-neutral-primary text-sm leading-5 font-medium wrap-anywhere tabular-nums",
+                label === "Version" && "font-mono",
+              )}
+            >
+              {typeof value === "number"
+                ? value.toLocaleString("en-US")
+                : value}
+            </dd>
+          </div>
+        ))}
+      </dl>
+    </div>
+  );
+}
+
 export function RegistryArtifactCard({
   artifact,
   pendingAddName,
@@ -188,18 +260,15 @@ export function RegistryArtifactCard({
           isVerified={artifact.isVerified}
           owner={artifact.owners[0]}
         />
-        <div className="flex items-center gap-3">
-          {artifact.latestVersion && (
-            <span className="text-text-neutral-secondary font-mono text-xs">
-              v{artifact.latestVersion}
-            </span>
-          )}
-          <span className="text-text-neutral-secondary flex items-center gap-1 text-xs">
-            <Download aria-hidden className="size-3.5" />
-            {artifact.totalDownloads}
-          </span>
+        <RegistryArtifactMetadata
+          complianceCount={artifact.complianceCount}
+          checkCount={artifact.checkCount}
+          version={artifact.latestVersion}
+          downloads={artifact.totalDownloads}
+        />
+        <div className="flex flex-wrap items-center gap-3">
           <RegistryProviderCluster providers={artifact.providers} />
-          <span className="ml-auto flex items-center gap-2">
+          <span className="ml-auto flex flex-wrap items-center justify-end gap-2">
             {artifact.isBuiltin && (
               <Badge aria-label="Built in" role="status" variant="tag">
                 Built in
@@ -265,17 +334,15 @@ export function RegistryTenantArtifactCard({
           <p className="text-text-neutral-primary truncate text-sm font-semibold">
             {normalizedName}
           </p>
-          <p className="text-text-neutral-secondary truncate text-xs">
-            Version {versionSpec}
-          </p>
         </div>
       </div>
       <p className="text-text-neutral-secondary text-sm">
         Installed in this workspace. Catalog metadata is not available for this
         artifact.
       </p>
-      <div className="mt-auto flex items-center">
-        <span className="ml-auto">
+      <div className="mt-auto space-y-3">
+        <RegistryArtifactMetadata version={versionSpec} />
+        <div className="flex justify-end">
           <Button
             aria-label={`Remove ${normalizedName}`}
             onClick={(event) => onRemove(event.currentTarget)}
@@ -285,7 +352,7 @@ export function RegistryTenantArtifactCard({
           >
             Remove
           </Button>
-        </span>
+        </div>
       </div>
     </Card>
   );

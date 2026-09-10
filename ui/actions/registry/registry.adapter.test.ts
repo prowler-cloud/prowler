@@ -412,6 +412,48 @@ describe("Registry adapter", () => {
     });
   });
 
+  it("preserves artifact counts, including zero, without inventing missing counts", async () => {
+    // Given
+    const resources = [
+      { id: "aws", attributes: { check_count: 645, compliance_count: 45 } },
+      { id: "openai", attributes: { check_count: 2, compliance_count: 0 } },
+      { id: "missing", attributes: {} },
+      {
+        id: "unknown",
+        attributes: { check_count: null, compliance_count: null },
+      },
+      { id: "aws", attributes: { check_count: 645 } },
+    ].map((resource) => ({
+      type: "registry-available-artifacts",
+      ...resource,
+    }));
+
+    // When
+    const result = await collectCompleteRegistryCatalog(async () => ({
+      data: resources,
+      meta: { pagination: { page: 1, pages: 1, count: resources.length } },
+    }));
+
+    // Then
+    expect(result).toMatchObject({
+      status: "complete",
+      artifacts: [
+        { normalizedName: "aws", checkCount: 645, complianceCount: 45 },
+        {
+          normalizedName: "missing",
+          checkCount: undefined,
+          complianceCount: undefined,
+        },
+        { normalizedName: "openai", checkCount: 2, complianceCount: 0 },
+        {
+          normalizedName: "unknown",
+          checkCount: undefined,
+          complianceCount: undefined,
+        },
+      ],
+    });
+  });
+
   it("traverses, merges, and degrades unsafe catalog data", async () => {
     // Given
 
