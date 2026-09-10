@@ -634,7 +634,7 @@ describe("RegistryExplorer", () => {
 
     // Then: the explorer lands in ready state and announces the connection
     await expect
-      .element(screen.getByRole("tab", { name: /Explore/ }))
+      .element(screen.getByRole("tab", { name: /All/ }))
       .toBeVisible();
     await expect
       .element(screen.getByLabelText("Registry key"))
@@ -881,7 +881,7 @@ describe("RegistryExplorer", () => {
       expect(document.body.textContent).not.toContain("Later guard");
 
       // When
-      await screen.getByRole("tab", { name: /Explore/ }).click();
+      await screen.getByRole("tab", { name: /All/ }).click();
 
       await userEvent.keyboard("{Escape}");
       // Then

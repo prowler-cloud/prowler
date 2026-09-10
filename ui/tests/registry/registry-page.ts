@@ -28,7 +28,7 @@ export class RegistryPage extends BasePage {
     this.connectDialog = page.getByRole("dialog", {
       name: "Connect Registry",
     });
-    this.exploreTab = page.getByRole("tab", { name: /Explore/ });
+    this.exploreTab = page.getByRole("tab", { name: /All/ });
     this.myArtifactsTab = page.getByRole("tab", { name: /My artifacts/ });
     this.registryKeyInput = page.getByLabel("Registry key");
     this.registryLink = page.getByRole("link", { name: "Registry" });
@@ -216,6 +216,19 @@ export class RegistryPage extends BasePage {
     await expect(this.page).toHaveURL(/\/providers$/);
     await this.dismissWelcomeDialog();
     await this.page.getByRole("button", { name: /Add (a )?Provider/i }).click();
+    const allTab = this.page.getByRole("tab", { name: "All", exact: true });
+    const registryTab = this.page.getByRole("tab", {
+      name: "Registry",
+      exact: true,
+    });
+    const nativeProvider = this.page.getByRole("option", {
+      name: "Amazon Web Services",
+      exact: true,
+    });
+    await expect(allTab).toHaveAttribute("aria-selected", "true");
+    await expect(nativeProvider).toBeVisible();
+    await registryTab.click();
+    await expect(nativeProvider).toBeHidden();
     await expect(
       this.page.getByRole("option", { name: "Fixture Cloud Registry" }),
     ).toBeVisible();
@@ -235,6 +248,7 @@ export class RegistryPage extends BasePage {
     await this.page.getByRole("button", { name: "Next", exact: true }).click();
     const token = this.page.getByLabel("API token", { exact: false });
     await expect(token).toBeVisible();
+    await expect(token).toHaveAttribute("type", "password");
     await this.captureEvidence("registry-provider-credentials");
     await token.fill("fixture-provider-token-not-a-secret");
     await this.page
