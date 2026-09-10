@@ -126,6 +126,8 @@ class AwsProvider(Provider):
         aws_access_key_id: str = None,
         aws_secret_access_key: str = None,
         aws_session_token: Optional[str] = None,
+        connect_timeout: Optional[int] = None,
+        read_timeout: Optional[int] = None,
     ):
         """
         Initializes the AWS provider.
@@ -155,6 +157,8 @@ class AwsProvider(Provider):
             - aws_access_key_id: The AWS access key ID.
             - aws_secret_access_key: The AWS secret access key.
             - aws_session_token: The AWS session token, optional.
+            - connect_timeout: Seconds to wait to establish a connection to an AWS endpoint.
+            - read_timeout: Seconds to wait for a response from an AWS endpoint.
 
         Raises:
             - ArgumentTypeError: If the input MFA ARN is invalid.
@@ -229,7 +233,9 @@ class AwsProvider(Provider):
 
         # TODO: Use AwsSetUpSession ?????
         # Configure the initial AWS Session using the local credentials: profile or environment variables
-        session_config = self.set_session_config(retries_max_attempts)
+        session_config = self.set_session_config(
+            retries_max_attempts, connect_timeout, read_timeout
+        )
         aws_session = self.setup_session(
             mfa=mfa,
             profile=profile,
@@ -1165,26 +1171,35 @@ class AwsProvider(Provider):
         return AWSMFAInfo(arn=mfa_ARN, totp=mfa_TOTP)
 
     @staticmethod
-    def set_session_config(retries_max_attempts: int) -> Config:
+    def set_session_config(
+        retries_max_attempts: int,
+        connect_timeout: Optional[int] = None,
+        read_timeout: Optional[int] = None,
+    ) -> Config:
         """
-        set_session_config returns a botocore Config object with the Prowler user agent and the default retrier configuration if nothing is passed as argument
+        set_session_config returns a botocore Config object with the Prowler user agent and the default retrier and timeout configuration if nothing is passed as argument
 
         Args:
             - retries_max_attempts: The maximum number of retries for the standard retrier config
+            - connect_timeout: Seconds to wait to establish a connection to an AWS endpoint
+            - read_timeout: Seconds to wait for a response from an AWS endpoint
 
         Returns:
             - Config: The botocore Config object
         """
         default_session_config = get_default_session_config()
-        if retries_max_attempts:
-            default_session_config = default_session_config.merge(
-                Config(
-                    retries={
-                        "max_attempts": retries_max_attempts,
-                        "mode": "standard",
-                    },
-                )
-            )
+        overrides = {}
+        if retries_max_attempts is not None:
+            overrides["retries"] = {
+                "max_attempts": retries_max_attempts,
+                "mode": "standard",
+            }
+        if connect_timeout:
+            overrides["connect_timeout"] = connect_timeout
+        if read_timeout:
+            overrides["read_timeout"] = read_timeout
+        if overrides:
+            default_session_config = default_session_config.merge(Config(**overrides))
 
         return default_session_config
 

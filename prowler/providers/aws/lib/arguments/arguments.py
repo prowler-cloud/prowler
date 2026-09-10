@@ -156,7 +156,21 @@ def init_parser(self):
         nargs="?",
         default=None,
         type=int,
-        help="Set the maximum attemps for the Boto3 standard retrier config (Default: 3)",
+        help="Set the maximum retries for the Boto3 standard retrier config, 0 disables retries (Default: 3)",
+    )
+    boto3_config_subparser.add_argument(
+        "--aws-connect-timeout",
+        nargs="?",
+        default=None,
+        type=validate_timeout,
+        help="Seconds to wait to establish a connection (TCP, proxy tunnel and TLS) to an AWS endpoint before retrying (Default: 10)",
+    )
+    boto3_config_subparser.add_argument(
+        "--aws-read-timeout",
+        nargs="?",
+        default=None,
+        type=validate_timeout,
+        help="Seconds to wait for a response from an AWS endpoint before retrying (Default: 60)",
     )
 
     # Scan Unused Services
@@ -188,6 +202,13 @@ def validate_session_duration(session_duration: int) -> int:
         )
     else:
         return duration
+
+
+def validate_timeout(value: str) -> int:
+    """validate_timeout validates that the input is a whole number of seconds greater than zero"""
+    if not value.isdecimal() or int(value) == 0:
+        raise ArgumentTypeError(f"{value} is not a positive integer")
+    return int(value)
 
 
 def validate_role_session_name(session_name) -> str:
