@@ -52,6 +52,7 @@ AWS_REGION_CN_NORTH_1 = "cn-north-1"
 
 # Gov Cloud Regions
 AWS_REGION_GOV_CLOUD_US_EAST_1 = "us-gov-east-1"
+AWS_REGION_GOV_CLOUD_US_WEST_1 = "us-gov-west-1"
 
 # Iso Regions
 AWS_REGION_ISO_EAST_1 = "us-iso-east-1"
