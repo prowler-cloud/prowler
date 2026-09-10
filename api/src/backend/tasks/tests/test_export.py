@@ -345,3 +345,21 @@ class TestS3PresignClient:
         query = parse_qs(urlparse(_presign(get_s3_presign_client())).query)
 
         assert query["X-Amz-Security-Token"] == ["session-token"]
+
+    @override_settings(
+        **{
+            **PRESIGN_SETTINGS,
+            "DJANGO_OUTPUT_S3_AWS_ACCESS_KEY_ID": "",
+            "DJANGO_OUTPUT_S3_AWS_SECRET_ACCESS_KEY": "",
+        },
+        DJANGO_OUTPUT_S3_AWS_PUBLIC_ENDPOINT_URL="https://storage.example.com",
+    )
+    def test_blank_static_credentials_defer_to_the_provider_chain(self, monkeypatch):
+        """Empty keys would otherwise be signed as-is, yielding a blank credential scope."""
+        monkeypatch.setenv("AWS_ACCESS_KEY_ID", "chain-key")
+        monkeypatch.setenv("AWS_SECRET_ACCESS_KEY", "chain-secret")
+        monkeypatch.delenv("AWS_SESSION_TOKEN", raising=False)
+
+        query = parse_qs(urlparse(_presign(get_s3_presign_client())).query)
+
+        assert query["X-Amz-Credential"][0].startswith("chain-key/")

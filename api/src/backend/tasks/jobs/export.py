@@ -245,13 +245,24 @@ def get_s3_presign_client():
     if not public_endpoint:
         return None
 
+    # Blank keys are signed as-is (empty credential scope) instead of deferring to the
+    # provider chain, so static credentials are only passed when they are set.
+    credentials = {}
+    if (
+        settings.DJANGO_OUTPUT_S3_AWS_ACCESS_KEY_ID
+        and settings.DJANGO_OUTPUT_S3_AWS_SECRET_ACCESS_KEY
+    ):
+        credentials = {
+            "aws_access_key_id": settings.DJANGO_OUTPUT_S3_AWS_ACCESS_KEY_ID,
+            "aws_secret_access_key": settings.DJANGO_OUTPUT_S3_AWS_SECRET_ACCESS_KEY,
+            # An empty string is a token as far as botocore is concerned: it appends an
+            # empty X-Amz-Security-Token that storage counts when it recomputes the signature.
+            "aws_session_token": settings.DJANGO_OUTPUT_S3_AWS_SESSION_TOKEN or None,
+        }
+
     return boto3.client(
         "s3",
-        aws_access_key_id=settings.DJANGO_OUTPUT_S3_AWS_ACCESS_KEY_ID,
-        aws_secret_access_key=settings.DJANGO_OUTPUT_S3_AWS_SECRET_ACCESS_KEY,
-        # An empty string is a token as far as botocore is concerned: it appends an empty
-        # X-Amz-Security-Token that storage counts when it recomputes the signature.
-        aws_session_token=settings.DJANGO_OUTPUT_S3_AWS_SESSION_TOKEN or None,
+        **credentials,
         # SigV4 puts the region in the credential scope, and MinIO answers to us-east-1
         # unless it was told otherwise, so an empty region would sign an unusable URL.
         region_name=settings.DJANGO_OUTPUT_S3_AWS_DEFAULT_REGION or "us-east-1",
