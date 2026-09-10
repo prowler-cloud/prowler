@@ -48,6 +48,11 @@ def _sanitize_resource_data(resource_details, resource_metadata) -> dict:
     """
 
     def _make_serializable(obj):
+        """Recursively normalize objects by converting Pydantic models to dicts.
+
+        Non-serializable objects are left unchanged and resolved later by
+        ``json.dumps(..., default=str)``.
+        """
         if hasattr(obj, "model_dump") and callable(obj.model_dump):
             return _make_serializable(obj.model_dump())
         if hasattr(obj, "dict") and callable(obj.dict):
@@ -102,6 +107,7 @@ def _build_requirement_attrs(requirement, framework):
     )
 
     def _to_snake_case_dict(entry: dict) -> dict:
+        """Convert dict keys to snake_case, filtering by allowed keys."""
         return {
             _to_snake_case(key): value
             for key, value in entry.items()
@@ -138,6 +144,7 @@ class OCSFComplianceOutput:
         from_cli: bool = True,
         provider: str = None,
     ) -> None:
+        """Initialize OCSF compliance output."""
         self._data = []
         self._file_descriptor = None
         self.file_path = file_path
@@ -156,7 +163,8 @@ class OCSFComplianceOutput:
                 self._create_file_descriptor(file_path)
 
     @property
-    def data(self):
+    def data(self) -> List[ComplianceFinding]:
+        """Get transformed OCSF compliance findings."""
         return self._data
 
     def _transform(
@@ -256,6 +264,7 @@ class OCSFComplianceOutput:
         compliance_name: str,
         config_status: tuple = (True, ""),
     ) -> ComplianceFinding:
+        """Build an OCSF ComplianceFinding for a finding + requirement pair."""
         try:
             effective_status, message = apply_config_status(
                 finding.status, finding.status_extended, config_status
@@ -384,6 +393,7 @@ class OCSFComplianceOutput:
         requirement,
         compliance_name: str,
     ) -> ComplianceFinding:
+        """Build an OCSF ComplianceFinding for a manual requirement."""
         try:
             from prowler.config.config import timestamp as config_timestamp
 
@@ -432,6 +442,7 @@ class OCSFComplianceOutput:
             return None
 
     def _create_file_descriptor(self, file_path: str) -> None:
+        """Open file descriptor for OCSF JSON output writing."""
         try:
             self._file_descriptor = open_file(file_path, "a")
         except Exception as error:

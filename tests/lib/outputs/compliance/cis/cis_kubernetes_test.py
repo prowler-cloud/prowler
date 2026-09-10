@@ -169,8 +169,8 @@ class TestKubernetesCIS:
 
     @freeze_time("2025-01-01 00:00:00")
     @mock.patch(
-        "prowler.lib.outputs.compliance.cis.cis_kubernetes.timestamp",
-        "2025-01-01 00:00:00",
+        "prowler.lib.outputs.compliance.compliance_output.timestamp",
+        datetime(2025, 1, 1, 0, 0, 0),
     )
     def test_batch_write_data_to_file(self):
         mock_file = StringIO()

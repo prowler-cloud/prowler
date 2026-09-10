@@ -146,7 +146,7 @@ class TestAWSCIS:
 
     @freeze_time("2025-01-01 00:00:00")
     @mock.patch(
-        "prowler.lib.outputs.compliance.cis.cis_aws.timestamp", "2025-01-01 00:00:00"
+        "prowler.lib.outputs.compliance.compliance_output.timestamp", "2025-01-01 00:00:00"
     )
     def test_batch_write_data_to_file(self):
         mock_file = StringIO()

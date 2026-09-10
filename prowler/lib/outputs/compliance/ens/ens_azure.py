@@ -1,120 +1,39 @@
+from typing import Optional, Type
 from prowler.config.config import timestamp
-from prowler.lib.check.compliance_config_eval import (
-    apply_config_status,
-    build_requirement_config_status,
-)
 from prowler.lib.check.compliance_models import Compliance
-from prowler.lib.outputs.compliance.compliance_output import ComplianceOutput
+from prowler.lib.outputs.compliance.compliance_output import ComplianceOutputBase
 from prowler.lib.outputs.compliance.ens.models import AzureENSModel
 from prowler.lib.outputs.finding import Finding
 
 
-class AzureENS(ComplianceOutput):
-    """
-    This class represents the Azure ENS compliance output.
+class AzureENS(ComplianceOutputBase):
+    """This class represents the Azure ENS compliance output."""
 
-    Attributes:
-        - _data (list): A list to store transformed data from findings.
-        - _file_descriptor (TextIOWrapper): A file descriptor to write data to a file.
-
-    Methods:
-        - transform: Transforms findings into Azure ENS compliance format.
-    """
-
-    def transform(
-        self,
-        findings: list[Finding],
-        compliance: Compliance,
-        compliance_name: str,
-    ) -> None:
-        """
-        Transforms a list of findings into AWS ENS compliance format.
-
-        Parameters:
-            - findings (list): A list of findings.
-            - compliance (Compliance): A compliance model.
-            - compliance_name (str): The name of the compliance model.
+    @property
+    def model(self) -> Type[AzureENSModel]:
+        """Returns the specific AzureENSModel.
 
         Returns:
-            - None
+            Type[AzureENSModel]: The model class for compliance serialization.
         """
-        requirement_config_status = build_requirement_config_status(
-            compliance.Requirements
-        )
+        return AzureENSModel
 
-        for finding in findings:
-            for requirement in compliance.Requirements:
-                # Source of truth: framework JSON, not finding.compliance snapshot (avoids CSV/UI count drift).
-                if finding.check_id in requirement.Checks:
-                    row_status, row_status_extended = apply_config_status(
-                        finding.status,
-                        finding.status_extended,
-                        requirement_config_status.get(requirement.Id),
-                    )
-                    for attribute in requirement.Attributes:
-                        compliance_row = AzureENSModel(
-                            Provider=finding.provider,
-                            Description=compliance.Description,
-                            SubscriptionId=finding.account_name,
-                            Location=finding.region,
-                            AssessmentDate=str(timestamp),
-                            Requirements_Id=requirement.Id,
-                            Requirements_Description=requirement.Description,
-                            Requirements_Attributes_IdGrupoControl=attribute.IdGrupoControl,
-                            Requirements_Attributes_Marco=attribute.Marco,
-                            Requirements_Attributes_Categoria=attribute.Categoria,
-                            Requirements_Attributes_DescripcionControl=attribute.DescripcionControl,
-                            Requirements_Attributes_Nivel=attribute.Nivel,
-                            Requirements_Attributes_Tipo=attribute.Tipo,
-                            Requirements_Attributes_Dimensiones=",".join(
-                                attribute.Dimensiones
-                            ),
-                            Requirements_Attributes_ModoEjecucion=attribute.ModoEjecucion,
-                            Requirements_Attributes_Dependencias=",".join(
-                                attribute.Dependencias
-                            ),
-                            Status=row_status,
-                            StatusExtended=row_status_extended,
-                            ResourceId=finding.resource_uid,
-                            ResourceName=finding.resource_name,
-                            CheckId=finding.check_id,
-                            Muted=finding.muted,
-                            Framework=compliance.Framework,
-                            Name=compliance.Name,
-                        )
-                        self._data.append(compliance_row)
-        # Add manual requirements to the compliance output
-        for requirement in compliance.Requirements:
-            if not requirement.Checks:
-                for attribute in requirement.Attributes:
-                    compliance_row = AzureENSModel(
-                        Provider=compliance.Provider.lower(),
-                        Description=compliance.Description,
-                        SubscriptionId="",
-                        Location="",
-                        AssessmentDate=str(timestamp),
-                        Requirements_Id=requirement.Id,
-                        Requirements_Description=requirement.Description,
-                        Requirements_Attributes_IdGrupoControl=attribute.IdGrupoControl,
-                        Requirements_Attributes_Marco=attribute.Marco,
-                        Requirements_Attributes_Categoria=attribute.Categoria,
-                        Requirements_Attributes_DescripcionControl=attribute.DescripcionControl,
-                        Requirements_Attributes_Nivel=attribute.Nivel,
-                        Requirements_Attributes_Tipo=attribute.Tipo,
-                        Requirements_Attributes_Dimensiones=",".join(
-                            attribute.Dimensiones
-                        ),
-                        Requirements_Attributes_ModoEjecucion=attribute.ModoEjecucion,
-                        Requirements_Attributes_Dependencias=",".join(
-                            attribute.Dependencias
-                        ),
-                        Status="MANUAL",
-                        StatusExtended="Manual check",
-                        ResourceId="manual_check",
-                        ResourceName="Manual check",
-                        CheckId="manual",
-                        Muted=False,
-                        Framework=compliance.Framework,
-                        Name=compliance.Name,
-                    )
-                    self._data.append(compliance_row)
+    def provider_identity_fields(self, finding: Optional[Finding]) -> dict[str, str]:
+        """Returns the provider specific fields for the compliance output.
+
+        Args:
+            finding (Optional[Finding]): The finding to extract identity fields from, or None.
+
+        Returns:
+            dict[str, str]: A dictionary containing provider identity fields.
+        """
+        if finding is None:
+            return {
+                "SubscriptionId": "",
+                "Location": "",
+            }
+        return {
+            "SubscriptionId": finding.account_name or "",
+            "Location": finding.region or "",
+        }
+

@@ -1,3 +1,4 @@
+from typing import Type, Optional
 import sys
 
 from prowler.lib.logger import logger
@@ -72,6 +73,7 @@ def process_universal_compliance_frameworks(
     }
 
     def _flush(writer, framework, label, is_new):
+        """Flush buffered compliance records to output storage."""
         if not is_new:
             writer._transform(finding_outputs, framework, label, include_manual=False)
         writer.close_file = is_last
