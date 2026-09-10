@@ -164,6 +164,42 @@ describe("provider wizard account creation", () => {
     ).toMatchObject({ providerType: "acme", providerUid: "acme-account" });
   });
 
+  it("shows provider conflicts in the account step and allows retrying", async () => {
+    // Given
+    const detail =
+      "The artifact 'acme' is not installed on this deployment yet. Install it again and retry.";
+    addRegistryProvider
+      .mockResolvedValueOnce({
+        errors: [
+          {
+            status: "409",
+            detail,
+            source: { pointer: "/data/attributes/provider" },
+          },
+        ],
+      })
+      .mockResolvedValueOnce(createdAccount);
+    const user = await enterAccountDetails();
+
+    // When
+    await user.click(screen.getByRole("button", { name: "Next" }));
+
+    // Then
+    expect(await screen.findByRole("alert")).toHaveTextContent(detail);
+    expect(screen.getByRole("textbox", { name: "Provider UID" })).toHaveValue(
+      "acme-account",
+    );
+    const next = screen.getByRole("button", { name: "Next" });
+    await waitFor(() => expect(next).toBeEnabled());
+    expect(screen.getByRole("button", { name: "Back" })).toBeEnabled();
+
+    // When / Then: the provider becomes available and the same account retries.
+    await user.click(next);
+    expect(await screen.findByText("Credential details")).toBeVisible();
+    expect(screen.queryByText(detail)).not.toBeInTheDocument();
+    expect(addRegistryProvider).toHaveBeenCalledTimes(2);
+  });
+
   it("keeps native providers available during a Registry discovery error and retries", async () => {
     // Given
     getInstalledRegistryProviderOptions.mockRejectedValueOnce(
