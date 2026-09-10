@@ -280,7 +280,7 @@ export function RegistryArtifactCard({
           complianceCount={artifact.complianceCount}
           checkCount={artifact.checkCount}
           version={artifact.latestVersion}
-          downloads={artifact.totalDownloads}
+          downloads={artifact.isBuiltin ? undefined : artifact.totalDownloads}
         />
         <div className="flex flex-wrap items-center gap-3">
           <RegistryProviderCluster providers={artifact.providers} />
