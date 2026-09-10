@@ -232,6 +232,8 @@ const catalogAttributesSchema = z.object({
   has_provider: z.boolean().optional(),
   has_checks: z.boolean().optional(),
   has_compliance: z.boolean().optional(),
+  check_count: safeInteger.nullish(),
+  compliance_count: safeInteger.nullish(),
   version_count: safeInteger.optional(),
   total_downloads: safeInteger.optional(),
 });
@@ -338,6 +340,8 @@ function adaptCatalogArtifact(
     hasProvider: a.has_provider ?? false,
     hasChecks: a.has_checks ?? false,
     hasCompliance: a.has_compliance ?? false,
+    checkCount: a.check_count ?? undefined,
+    complianceCount: a.compliance_count ?? undefined,
     versionCount: a.version_count ?? 0,
     totalDownloads: a.total_downloads ?? 0,
   };
@@ -368,6 +372,8 @@ function mergeArtifacts(
     hasProvider: left.hasProvider || right.hasProvider,
     hasChecks: left.hasChecks || right.hasChecks,
     hasCompliance: left.hasCompliance || right.hasCompliance,
+    checkCount: mergeCount(left.checkCount, right.checkCount),
+    complianceCount: mergeCount(left.complianceCount, right.complianceCount),
     versionCount: Math.max(left.versionCount, right.versionCount),
     totalDownloads: Math.max(left.totalDownloads, right.totalDownloads),
   };
@@ -388,6 +394,11 @@ function text(value: string | undefined) {
 }
 function mergeText(left: string | undefined, right: string | undefined) {
   return left && right && left !== right ? null : (left ?? right);
+}
+function mergeCount(left: number | undefined, right: number | undefined) {
+  if (left === undefined) return right;
+  if (right === undefined) return left;
+  return Math.max(left, right);
 }
 function unique(values: string[]) {
   return Array.from(new Set(values)).sort(compare);

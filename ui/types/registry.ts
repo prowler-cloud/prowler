@@ -101,6 +101,8 @@ export interface RegistryCatalogArtifact {
   hasProvider: boolean;
   hasChecks: boolean;
   hasCompliance: boolean;
+  checkCount?: number;
+  complianceCount?: number;
   versionCount: number;
   totalDownloads: number;
   owners: RegistryArtifactOwner[];
