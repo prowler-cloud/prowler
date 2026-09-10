@@ -1,12 +1,12 @@
 "use client";
 
+import { RotateCcw } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
 import { saveDynamicProviderCredentials } from "@/actions/providers/dynamic-provider-credentials";
 import { getProviderSchemas } from "@/actions/providers/provider-schemas";
 import { RegistryCredentialFields } from "@/components/providers/workflow/provider-credential-fields";
-import { Alert, AlertDescription, AlertTitle } from "@/components/shadcn/alert";
 import { Button } from "@/components/shadcn/button/button";
 import { Field, FieldLabel } from "@/components/shadcn/field/field";
 import {
@@ -18,6 +18,7 @@ import {
 } from "@/components/shadcn/select/select";
 import { Skeleton } from "@/components/shadcn/skeleton/skeleton";
 import { useToast } from "@/components/shadcn/toast";
+import { StatusAlert } from "@/components/shared/status-alert";
 import {
   parseRegistryCredentialSchema,
   type RegistryCredentialSchema,
@@ -40,6 +41,41 @@ interface DynamicCredentialsStepProps {
   onNext: () => void;
   onBack: () => void;
   onFooterChange: (config: WizardFooterConfig) => void;
+}
+
+function credentialFormError(status: ProviderSchemasResult["status"]) {
+  switch (status) {
+    case "access_denied":
+      return {
+        title: "Access required",
+        description:
+          "Your session may have expired or you may not have permission. Sign in again or contact your administrator.",
+      };
+    case "unavailable":
+      return {
+        title: "Provider installation unavailable",
+        description:
+          "Install this provider's artifact again in Registry, then try again.",
+      };
+    case "not_found":
+      return {
+        title: "Credential form unavailable",
+        description:
+          "This provider does not provide a credential form. Contact its publisher or your administrator.",
+      };
+    case "success":
+    case "malformed":
+      return {
+        title: "Credential form not supported",
+        description:
+          "We could not display this provider's credential form. Contact its publisher or your administrator.",
+      };
+    default:
+      return {
+        title: "Could not load credential form",
+        description: "Check your connection and try again.",
+      };
+  }
 }
 
 function DynamicCredentialForm({
@@ -152,10 +188,9 @@ function DynamicCredentialForm({
     >
       <fieldset disabled={saving} className="flex flex-col gap-4">
         {errors._form && (
-          <Alert variant="error">
-            <AlertTitle>Credentials could not be saved</AlertTitle>
-            <AlertDescription>{errors._form}</AlertDescription>
-          </Alert>
+          <StatusAlert variant="error" title="Credentials could not be saved">
+            {errors._form}
+          </StatusAlert>
         )}
         <RegistryCredentialFields
           schema={schema}
@@ -224,6 +259,12 @@ function DynamicCredentialsContent(props: DynamicCredentialsStepProps) {
       </div>
     );
 
+  const error = credentialFormError(
+    schemas.status === "success" && methods.length === 0
+      ? "not_found"
+      : schemas.status,
+  );
+
   return (
     <div className="flex flex-col gap-6">
       {methods.length > 1 && (
@@ -258,28 +299,24 @@ function DynamicCredentialsContent(props: DynamicCredentialsStepProps) {
           onLoadingChange={setSaving}
         />
       ) : (
-        <Alert variant="error">
-          <AlertTitle>Credential schema unavailable</AlertTitle>
-          <AlertDescription>
-            <p>
-              This provider does not describe a supported credential form. Check
-              that its artifact is installed and up to date, or contact its
-              publisher.
-            </p>
-            <div className="flex flex-wrap gap-3">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setAttempt((value) => value + 1)}
-              >
-                Reload credential schema
-              </Button>
-              <Button variant="link" asChild>
-                <Link href="/registry">Open Registry</Link>
-              </Button>
-            </div>
-          </AlertDescription>
-        </Alert>
+        <div className="space-y-4">
+          <StatusAlert variant="error" title={error.title}>
+            {error.description}
+          </StatusAlert>
+          <div className="flex flex-wrap gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setAttempt((value) => value + 1)}
+            >
+              <RotateCcw aria-hidden />
+              Try again
+            </Button>
+            <Button variant="link" asChild>
+              <Link href="/registry">Open Registry</Link>
+            </Button>
+          </div>
+        </div>
       )}
     </div>
   );
