@@ -72,7 +72,7 @@ export function parseRegistryCredentialSchema(
   }
   if (
     (value.title !== undefined && !isText(value.title)) ||
-    (value.description !== undefined && !isText(value.description))
+    (value.description !== undefined && typeof value.description !== "string")
   ) {
     return null;
   }
@@ -125,7 +125,7 @@ export function parseRegistryCredentialSchema(
     const password = format === "password" && property.writeOnly === true;
     if (
       !isText(label) ||
-      (description !== undefined && !isText(description)) ||
+      (description !== undefined && typeof description !== "string") ||
       ((format !== undefined || property.writeOnly !== undefined) &&
         !password) ||
       (widget !== undefined && widget !== "textarea") ||

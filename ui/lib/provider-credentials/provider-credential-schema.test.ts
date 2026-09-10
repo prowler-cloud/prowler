@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import openaiSchema from "./fixtures/openai-credential-schema.json";
 import {
   parseRegistryCredentialSchema,
   REGISTRY_CREDENTIAL_SCHEMA_LIMITS,
@@ -32,6 +33,34 @@ const schema = {
 };
 
 describe("parseRegistryCredentialSchema", () => {
+  it("accepts the installed OpenAI schema with its full description", () => {
+    // Given / When: the materialized OpenAI 0.1.5 schema contains a long docstring.
+    const result = parseRegistryCredentialSchema(openaiSchema);
+
+    // Then
+    expect(result?.fields.map(({ name }) => name)).toEqual([
+      "organization_id",
+      "platform_api_key",
+      "base_url",
+    ]);
+    expect(result?.fields[2].defaultValue).toBe("https://api.openai.com/v1");
+  });
+
+  it("preserves long field descriptions without treating them as input limits", () => {
+    // Given
+    const description = openaiSchema.description;
+
+    // When
+    const result = parseRegistryCredentialSchema({
+      ...schema,
+      properties: { token: { type: "string", description } },
+      required: ["token"],
+    });
+
+    // Then
+    expect(result?.fields[0].description).toBe(description);
+  });
+
   it("accepts the observed flat credential schema and preserves property order", () => {
     // Given
     const result = parseRegistryCredentialSchema(schema);
@@ -105,6 +134,11 @@ describe("parseRegistryCredentialSchema", () => {
 
     const cases = [
       { ...schema, required: ["missing"] },
+      { ...schema, description: { invalid: "not text" } },
+      {
+        ...schema,
+        properties: { api_key: { type: "string", description: 123 } },
+      },
       JSON.parse(
         '{"type":"object","properties":{"__proto__":{"type":"string"}}}',
       ),
@@ -126,6 +160,8 @@ describe("parseRegistryCredentialSchema", () => {
     // When / Then
 
     expect(cases.map(parseRegistryCredentialSchema)).toEqual([
+      null,
+      null,
       null,
       null,
       null,
