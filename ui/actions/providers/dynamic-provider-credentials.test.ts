@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import openaiSchema from "@/lib/provider-credentials/fixtures/openai-credential-schema.json";
 const { fetchMock, getProviderSchemas, getAuthHeaders, revalidatePath } =
   vi.hoisted(() => ({
     fetchMock: vi.fn(),
@@ -42,6 +43,7 @@ describe("dynamic provider credential actions", () => {
       secretTypes: {
         api_key: {
           type: "object",
+          description: openaiSchema.description,
           properties: {
             token: { type: "string", format: "password", writeOnly: true },
           },
