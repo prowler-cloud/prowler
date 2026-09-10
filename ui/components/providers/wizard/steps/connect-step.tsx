@@ -63,6 +63,7 @@ export function ConnectStep({
       onBack: () => backHandlerRef.current?.(),
       showAction: uiState.showAction,
       actionLabel: uiState.actionLabel,
+      actionLoading: uiState.isLoading,
       actionDisabled: uiState.actionDisabled || uiState.isLoading,
       actionType: WIZARD_FOOTER_ACTION_TYPE.SUBMIT,
       actionFormId: formId,

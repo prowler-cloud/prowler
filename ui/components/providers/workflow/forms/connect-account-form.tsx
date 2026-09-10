@@ -405,7 +405,7 @@ export const ConnectAccountForm = ({
     onUiStateChange?.({
       showBack: prevStep === 2,
       showAction: prevStep === 2 && showUidForm,
-      actionLabel: "Next",
+      actionLabel: isLoading ? "Creating provider..." : "Next",
       actionDisabled: !canSubmit || isLoading,
       isLoading,
     });
@@ -537,13 +537,14 @@ export const ConnectAccountForm = ({
                 variant="default"
                 size="lg"
                 disabled={isLoading}
+                aria-busy={isLoading || undefined}
               >
                 {isLoading ? (
-                  <Loader2 className="animate-spin" />
+                  <Loader2 aria-hidden className="animate-spin" />
                 ) : (
                   <ChevronRightIcon size={24} />
                 )}
-                {isLoading ? "Loading" : "Next"}
+                {isLoading ? "Creating provider..." : "Next"}
               </Button>
             )}
           </div>
