@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { page } from "vitest/browser";
+import { page, userEvent } from "vitest/browser";
 
 import { render } from "@/__tests__/render-browser";
 
@@ -35,6 +35,40 @@ describe("Registry card metadata layout", () => {
   afterEach(async () => {
     localStorage.removeItem("theme");
     await page.viewport(1280, 800);
+  });
+
+  it("identifies each provider logo on hover and keyboard focus", async () => {
+    // Given
+    const screen = await render(
+      <RegistryArtifactCard
+        artifact={{ ...artifact, providers: ["aws", "gcp", "template"] }}
+        onAdd={vi.fn()}
+        onRemove={vi.fn()}
+      />,
+    );
+
+    // When / Then: each visible provider uses its own display name.
+    for (const name of ["AWS", "Google Cloud", "Template"]) {
+      const logo = screen.getByRole("img", { name, exact: true });
+      await logo.hover();
+      await expect.element(screen.getByRole("tooltip")).toHaveTextContent(name);
+      await userEvent.keyboard("{Escape}");
+      await expect.element(screen.getByRole("tooltip")).not.toBeInTheDocument();
+    }
+
+    // When / Then: keyboard users can discover the same names.
+    await userEvent.tab();
+    await expect
+      .element(screen.getByRole("img", { name: "AWS", exact: true }))
+      .toHaveFocus();
+    await expect.element(screen.getByRole("tooltip")).toHaveTextContent("AWS");
+    await userEvent.tab();
+    await expect
+      .element(screen.getByRole("img", { name: "Google Cloud", exact: true }))
+      .toHaveFocus();
+    await expect
+      .element(screen.getByRole("tooltip"))
+      .toHaveTextContent("Google Cloud");
   });
 
   it.each([

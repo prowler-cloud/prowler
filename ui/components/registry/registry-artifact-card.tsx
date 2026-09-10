@@ -21,6 +21,11 @@ import {
 import { Badge } from "@/components/shadcn/badge/badge";
 import { Button } from "@/components/shadcn/button/button";
 import { Card } from "@/components/shadcn/card/card";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/shadcn/tooltip";
 import { isRegistryArtifactInstallable } from "@/lib/registry/artifacts";
 import { cn } from "@/lib/utils";
 import { getProviderDisplayName, isKnownProviderType } from "@/types/providers";
@@ -77,19 +82,30 @@ function RegistryProviderCluster({ providers }: RegistryProviderClusterProps) {
           {providers.length} providers
         </span>
       )}
-      <span aria-hidden className="flex items-center gap-1">
-        {visibleProviders.map((provider) =>
-          isKnownProviderType(provider) ? (
-            <ProviderTypeIcon key={provider} size={16} type={provider} />
-          ) : (
-            // Providers without a bespoke badge render their display name as
-            // a tiny text pill (registry.dev "template" tag reference) instead
-            // of the anonymous generic glyph.
-            <Badge key={provider} size="sm" variant="tag">
+      <span className="flex items-center gap-1">
+        {visibleProviders.map((provider) => (
+          <Tooltip key={provider} delayDuration={150}>
+            <TooltipTrigger asChild>
+              <span
+                role="img"
+                aria-label={getProviderDisplayName(provider)}
+                tabIndex={0}
+                className="focus-visible:outline-button-primary inline-flex shrink-0 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2"
+              >
+                {isKnownProviderType(provider) ? (
+                  <ProviderTypeIcon size={16} type={provider} />
+                ) : (
+                  <Badge size="sm" variant="tag">
+                    {getProviderDisplayName(provider)}
+                  </Badge>
+                )}
+              </span>
+            </TooltipTrigger>
+            <TooltipContent side="top">
               {getProviderDisplayName(provider)}
-            </Badge>
-          ),
-        )}
+            </TooltipContent>
+          </Tooltip>
+        ))}
       </span>
       {overflowCount > 0 && (
         <span aria-hidden className="text-text-neutral-secondary text-xs">
