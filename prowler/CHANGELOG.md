@@ -4,6 +4,33 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [5.42.0] (Prowler v5.42.0)
+
+### 🚀 Added
+
+- AWS ISO partitions (`aws-iso`, `aws-iso-b`, `aws-iso-e` and `aws-iso-f`) to the AWS service region matrix, generated from the endpoints data bundled with botocore [(#12759)](https://github.com/prowler-cloud/prowler/pull/12759)
+- `--aws-connect-timeout` and `--aws-read-timeout` CLI flags, plus `PROWLER_AWS_BOTO3_CONNECT_TIMEOUT` and `PROWLER_AWS_BOTO3_READ_TIMEOUT` environment variables, to bound how long each AWS API call waits for an endpoint [(#12774)](https://github.com/prowler-cloud/prowler/pull/12774)
+
+### 🔄 Changed
+
+- AWS provider default Boto3 connect timeout lowered from 60 to 10 seconds, so scans in restricted-egress networks (VPC endpoints for a subset of services, GovCloud, private deployments) no longer spend 4 minutes per region on every service whose endpoint is unreachable [(#12774)](https://github.com/prowler-cloud/prowler/pull/12774)
+
+### 🐞 Fixed
+
+- Duplicate requirement ids, checks listed twice in a requirement and references to non-existent checks across compliance frameworks, now guarded by a catalog integrity test [(#12717)](https://github.com/prowler-cloud/prowler/pull/12717)
+- Duplicate requirement `3.2.1` in ProwlerThreatScore for Azure (SQL auditing retention is now `3.2.4`) and doubled check id in requirement `1.2.1` of ProwlerThreatScore for GCP [(#12717)](https://github.com/prowler-cloud/prowler/pull/12717)
+- Jira connection checks no longer log an error when a single project has no issue types visible to the integration user (typically a missing "create issue" permission on that project), a case the caller already treats as non-fatal [(#12742)](https://github.com/prowler-cloud/prowler/pull/12742)
+- `Jira.test_connection()` now fetches each project's issue types concurrently instead of one request at a time, so accounts with many Jira projects no longer take tens of seconds (unbounded, scaling with the project count) to verify the connection [(#12742)](https://github.com/prowler-cloud/prowler/pull/12742)
+- `AwsProvider.get_available_aws_service_regions()` now returns an empty set for an unknown service or partition instead of raising `KeyError`, so a service unavailable in the audited partition is skipped [(#12759)](https://github.com/prowler-cloud/prowler/pull/12759)
+- `AwsProvider.generate_regional_clients()` now returns an empty dict instead of `None` when the regional clients cannot be built, a failure that surfaced later as `AttributeError: 'NoneType' object has no attribute 'values'` [(#12759)](https://github.com/prowler-cloud/prowler/pull/12759)
+- `AwsProvider.get_global_region()` now returns a real region for each ISO partition instead of the `aws-iso-global` pseudo endpoint, which collapsed the four partitions into one answer [(#12759)](https://github.com/prowler-cloud/prowler/pull/12759)
+- Bootstrap STS calls now use the session region when `PROWLER_AWS_PARTITION` is set and the region belongs to that partition, instead of always going to the partition's global STS region, which a deployment reached only through its own region's VPC endpoints cannot route to [(#12764)](https://github.com/prowler-cloud/prowler/pull/12764)
+- The Image provider now uses the directory named by `TRIVY_CACHE_DIR` when one is set, instead of a fresh temporary directory it deletes afterwards, so a deployment can supply a vulnerability database it already holds and one with network access stops re-downloading the database for every image it scans [(#12773)](https://github.com/prowler-cloud/prowler/pull/12773)
+- `--aws-retries-max-attempts 0` now disables Boto3 retries instead of being silently ignored in favour of the default of 3 [(#12774)](https://github.com/prowler-cloud/prowler/pull/12774)
+- `rolesanywhere_profile_restricts_session_permissions`, `iam_role_service_trust_restricts_source_to_account` and `codebuild_project_uses_allowed_github_organizations` crashing with `TypeError` when `iam:ListRoles` is denied [(#12785)](https://github.com/prowler-cloud/prowler/pull/12785)
+
+---
+
 ## [5.41.0] (Prowler v5.41.0)
 
 ### 🚀 Added

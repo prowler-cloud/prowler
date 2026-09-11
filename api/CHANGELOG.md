@@ -4,6 +4,14 @@ All notable changes to the **Prowler API** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [1.43.0] (Prowler v5.42.0)
+
+### 🔄 Changed
+
+- Speed up compliance overview ingestion by reading ThreatScore mappings from the compliance template instead of each finding, generating time-ordered `uuid7` row ids and grouping inserted rows by framework and requirement [(#12738)](https://github.com/prowler-cloud/prowler/pull/12738)
+
+---
+
 ## [1.42.0] (Prowler v5.41.0)
 
 ### 🚀 Added
