@@ -377,7 +377,7 @@ class iam_role_service_trust_restricts_source_to_account(Check):
         status. The sibling token-wildcard check carries the same note, for the same reason.
         """
         findings = []
-        for role in iam_client.roles:
+        for role in iam_client.roles or []:
             # Service-linked roles are excluded: their trust relationship is managed by
             # the service and cannot be edited, so a finding would not be actionable.
             if "aws-service-role" in role.arn:
