@@ -110,6 +110,13 @@ export GOOGLEWORKSPACE_CREDENTIALS_CONTENT='{"type": "service_account", ...}'
 export GOOGLEWORKSPACE_DELEGATED_USER="admin@yourdomain.com"
 ```
 
+Or skip the key entirely and impersonate the Service Account through Application Default Credentials (see [Keyless Authentication](/user-guide/providers/googleworkspace/authentication#keyless-authentication-with-service-account-impersonation)):
+
+```console
+export GOOGLEWORKSPACE_IMPERSONATE_SERVICE_ACCOUNT="prowler-googleworkspace-reader@your-project.iam.gserviceaccount.com"
+export GOOGLEWORKSPACE_DELEGATED_USER="admin@yourdomain.com"
+```
+
 ### Step 2: Run the First Scan
 
 Run a baseline scan after credentials are configured:

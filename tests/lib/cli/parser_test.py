@@ -1383,6 +1383,27 @@ class Test_Parser:
         assert parsed.provider == "gcp"
         assert parsed.impersonate_service_account == service_account
 
+    def test_parser_googleworkspace_impersonate_service_account(self):
+        argument = "--impersonate-service-account"
+        service_account = "prowler-reader@test-project.iam.gserviceaccount.com"
+        command = [prowler_command, "googleworkspace", argument, service_account]
+        parsed = self.parser.parse(command)
+        assert parsed.provider == "googleworkspace"
+        assert parsed.impersonate_service_account == service_account
+
+    def test_parser_googleworkspace_impersonate_service_account_default(self):
+        command = [prowler_command, "googleworkspace"]
+        parsed = self.parser.parse(command)
+        assert parsed.provider == "googleworkspace"
+        assert parsed.impersonate_service_account is None
+
+    def test_parser_googleworkspace_impersonate_service_account_requires_value(self):
+        command = [prowler_command, "googleworkspace", "--impersonate-service-account"]
+        with pytest.raises(SystemExit) as wrapped_exit:
+            _ = self.parser.parse(command)
+        assert wrapped_exit.type == SystemExit
+        assert wrapped_exit.value.code == 2
+
     def test_parser_gcp_retries_max_attempts(self):
         argument = "--gcp-retries-max-attempts"
         max_retries = "10"
