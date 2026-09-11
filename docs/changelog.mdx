@@ -4,6 +4,62 @@ description: "New features and improvements in each Prowler release"
 rss: true
 ---
 
+<Update label="v5.42.0" description="September 11, 2026">
+  ### ☁️ AWS — ISO Partitions
+
+  Prowler now resolves regions and services for the AWS ISO partitions (`aws-iso`, `aws-iso-b`, `aws-iso-e` and `aws-iso-f`) the same way it does for the commercial, China, European Sovereign Cloud and GovCloud partitions. The region matrix is filled from the endpoint metadata bundled with botocore, which needs no credentials or network access, so it covers partitions that are air-gapped from the internet. Scanning them no longer requires a hand-edited `aws_regions_by_service.json`: ISO regions such as `us-isob-east-1` are accepted by `--region` and `--excluded-region`, a service unavailable in the audited partition is skipped instead of failing with `KeyError`, and the global region of each ISO partition is a real region rather than the `aws-iso-global` pseudo endpoint. ISO support is covered by tests but has not yet been validated against a live ISO account.
+
+  Deployments that declare `PROWLER_AWS_PARTITION` also keep their bootstrap STS calls in the configured region when it belongs to that partition. An install in `us-gov-west-1` that reaches AWS only through its own VPC endpoints is no longer sent to `us-gov-east-1`, where the connection check and the scan used to time out.
+
+  Read more in the [AWS Regions and Partitions documentation](https://docs.prowler.com/user-guide/providers/aws/regions-and-partitions).
+
+  ### ⏱️ AWS — Configurable Timeouts for Restricted Networks
+
+  Scans from networks with restricted egress (VPC endpoints for only some services, GovCloud or private deployments) could take hours: Boto3 waits 60 seconds to connect by default and retries connection errors, so every service without a reachable endpoint cost up to four 60-second attempts in every region. Prowler now lowers the default connect timeout to 10 seconds, keeps the read timeout at 60 seconds, and exposes both through `--aws-connect-timeout` and `--aws-read-timeout`, or through the `PROWLER_AWS_BOTO3_CONNECT_TIMEOUT` and `PROWLER_AWS_BOTO3_READ_TIMEOUT` environment variables for deployments without a CLI. `--aws-retries-max-attempts 0` now disables retries instead of silently falling back to three, leaving a single attempt per call.
+
+  Read more in the [Boto3 configuration documentation](https://docs.prowler.com/user-guide/providers/aws/boto3-configuration).
+
+  ### 🐳 Image Provider — Reusable Vulnerability Database
+
+  The Image provider now honors `TRIVY_CACHE_DIR`. When the variable names a directory, Trivy keeps its vulnerability database there and Prowler leaves the directory in place after the scan, so the database is downloaded once instead of on every scan. Hosts without internet access can now scan images by pointing `TRIVY_CACHE_DIR` at a pre-populated database and setting `TRIVY_SKIP_DB_UPDATE=true`. Without the variable, the temporary cache is created and removed as before.
+
+  Read more in the [Image provider documentation](https://docs.prowler.com/user-guide/providers/image/getting-started-image#vulnerability-database-cache).
+
+  ### 🎫 Jira Integration — Faster Connection Test
+
+  Testing a Jira integration no longer reports a false failure on accounts with many projects. The connection test fetched the issue types of every project one request at a time, which could outlast the wait in the UI even when the check was about to succeed. Issue types are now fetched concurrently, a project whose issue types the integration user cannot see is no longer logged as an error, and the Integrations page keeps following the connection test instead of giving up after about a minute.
+
+  Read more in the [Jira integration documentation](https://docs.prowler.com/user-guide/tutorials/prowler-app-jira-integration).
+
+  ### 📚 Compliance — Catalog Integrity Fixes
+
+  A new integrity test runs over every compliance framework, asserting unique requirement IDs, no check listed twice within a requirement, and that every referenced check exists for its provider. The fixes it drove span 42 frameworks across AWS, Azure, GCP, GitHub, Kubernetes and Microsoft 365:
+
+  - **Duplicate requirement IDs:** identical copies are removed, and distinct requirements that shared an ID get their own, such as `1.10` in CIS AWS 5.0 and `rc_rp_1` for RC.RP-1 in NIST CSF 1.1. In Prowler ThreatScore for Azure, SQL auditing retention moves from `3.2.1` to `3.2.4`, and requirement `1.2.1` of Prowler ThreatScore for GCP now points to `iam_sa_no_user_managed_keys`.
+  - **Stale check references:** checks that no longer exist are replaced with their current name when there is a direct equivalent, or removed so the requirement reports as manual. Most of these were in the FedRAMP 20x KSI frameworks.
+
+  Renamed requirement IDs appear as new requirements for scans run after the upgrade.
+
+  The compliance overview task that runs after every scan is also faster: ThreatScore mappings are read once from the compliance template instead of from every finding, and rows are inserted with time-ordered `uuid7` IDs grouped by framework and requirement.
+
+  Read more in the [Compliance documentation](https://docs.prowler.com/user-guide/compliance/tutorials/compliance).
+
+  ### 🔍 Checks
+
+  `rolesanywhere_profile_restricts_session_permissions`, `iam_role_service_trust_restricts_source_to_account` and `codebuild_project_uses_allowed_github_organizations` no longer crash with `TypeError` when the scanning role is denied `iam:ListRoles`, which dropped every finding of those checks for the account. Without the role inventory, an enabled IAM Roles Anywhere profile without session scoping reports `MANUAL`, and CodeBuild projects whose service role cannot be resolved are skipped.
+
+  Explore all AWS checks at [Prowler Hub](https://hub.prowler.com/check?provider=aws).
+
+  ### 🔐 Security Updates
+
+  - `next` upgraded to 16.3.3 in the UI, patching unauthenticated remote code execution through AVIF image optimization ([GHSA-2xp9-vwfh-vxw4](https://github.com/advisories/GHSA-2xp9-vwfh-vxw4)) and on Windows-hosted servers ([GHSA-p293-qw3h-jr36](https://github.com/advisories/GHSA-p293-qw3h-jr36)).
+  - `sharp` upgraded to 0.35.4 in the UI, patching libheif image-decoding vulnerabilities ([GHSA-rgj7-g3m4-5g8c](https://github.com/advisories/GHSA-rgj7-g3m4-5g8c)).
+  - `nanoid`, `js-yaml` and `postcss`, plus eleven transitive UI dependencies, upgraded to patched versions, resolving 40 npm audit advisories (21 high, 15 moderate, 4 low).
+  - `libuuid` upgraded to 2.41.6-r1 in the MCP Server image, patching CVE-2026-53612, CVE-2026-53613, CVE-2026-53614, CVE-2026-76642, CVE-2026-78408 and CVE-2026-78410.
+
+  See the [full release notes on GitHub](https://github.com/prowler-cloud/prowler/releases/tag/5.42.0) for the complete list of changes.
+</Update>
+
 <Update label="v5.41.0" description="September 2, 2026">
   ### 📥 Scans — Import Findings from the Browser
 
