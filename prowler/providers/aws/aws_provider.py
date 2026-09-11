@@ -8,7 +8,13 @@ from typing import Optional
 from boto3.session import Session
 from botocore.config import Config
 from botocore.credentials import RefreshableCredentials
-from botocore.exceptions import ClientError, NoCredentialsError, ProfileNotFound
+from botocore.exceptions import (
+    ClientError,
+    ConnectTimeoutError,
+    EndpointConnectionError,
+    NoCredentialsError,
+    ProfileNotFound,
+)
 from botocore.session import Session as BotocoreSession
 from colorama import Fore, Style
 from pytz import utc
@@ -1333,54 +1339,79 @@ class AwsProvider(Provider):
     ) -> AWSCallerIdentity:
         """
         Validates the AWS credentials using the provided session and AWS region.
+
+        When the region cannot be reached, the remaining regions of the partition
+        declared in PROWLER_AWS_PARTITION are tried before giving up. A credential
+        error is returned from the first region instead, since it would be the same
+        everywhere.
+
         Args:
             session (Session): The AWS session object.
             aws_region (str): The AWS region to validate the credentials.
         Returns:
-            AWSCallerIdentity: An object containing the caller identity information.
+            AWSCallerIdentity: An object containing the caller identity information,
+                including the region that answered.
         Raises:
             Exception: If an error occurs during the validation process.
         """
-        try:
-            sts_client = AwsProvider.create_sts_session(session, aws_region)
-            caller_identity = sts_client.get_caller_identity()
-            # Include the region where the caller_identity has validated the credentials
-            return AWSCallerIdentity(
-                user_id=caller_identity.get("UserId"),
-                account=caller_identity.get("Account"),
-                arn=ARN(caller_identity.get("Arn")),
-                region=aws_region,
-            )
-        except ClientError as client_error:
-            logger.error(
-                f"{client_error.__class__.__name__}[{client_error.__traceback__.tb_lineno}]: {client_error}"
-            )
-            if client_error.response["Error"]["Code"] == "InvalidClientTokenId":
-                raise AWSAccessKeyIDInvalidError(
-                    original_exception=client_error,
-                    file=pathlib.Path(__file__).name,
-                )
-            elif client_error.response["Error"]["Code"] == "SignatureDoesNotMatch":
-                raise AWSSecretAccessKeyInvalidError(
-                    original_exception=client_error,
-                    file=pathlib.Path(__file__).name,
-                )
-            elif client_error.response["Error"]["Code"] == "ExpiredToken":
-                raise AWSSessionTokenExpiredError(
-                    original_exception=client_error,
-                    file=pathlib.Path(__file__).name,
-                )
-            else:
-                raise AWSClientError(
-                    original_exception=client_error,
-                    file=pathlib.Path(__file__).name,
-                )
+        candidate_regions = get_partition_bootstrap_candidates(
+            aws_region, session.region_name
+        )
+        unreachable_error = None
 
-        except Exception as error:
-            logger.critical(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
-            raise error
+        for candidate_region in candidate_regions:
+            try:
+                sts_client = AwsProvider.create_sts_session(session, candidate_region)
+                caller_identity = sts_client.get_caller_identity()
+                # Include the region where the caller_identity has validated the credentials
+                return AWSCallerIdentity(
+                    user_id=caller_identity.get("UserId"),
+                    account=caller_identity.get("Account"),
+                    arn=ARN(caller_identity.get("Arn")),
+                    region=candidate_region,
+                )
+            # The credentials are not at fault, so the next region is worth trying
+            except (EndpointConnectionError, ConnectTimeoutError) as unreachable:
+                logger.warning(
+                    f"{unreachable.__class__.__name__}[{unreachable.__traceback__.tb_lineno}]: {unreachable}"
+                )
+                unreachable_error = unreachable
+                continue
+            except ClientError as client_error:
+                logger.error(
+                    f"{client_error.__class__.__name__}[{client_error.__traceback__.tb_lineno}]: {client_error}"
+                )
+                if client_error.response["Error"]["Code"] == "InvalidClientTokenId":
+                    raise AWSAccessKeyIDInvalidError(
+                        original_exception=client_error,
+                        file=pathlib.Path(__file__).name,
+                    )
+                elif client_error.response["Error"]["Code"] == "SignatureDoesNotMatch":
+                    raise AWSSecretAccessKeyInvalidError(
+                        original_exception=client_error,
+                        file=pathlib.Path(__file__).name,
+                    )
+                elif client_error.response["Error"]["Code"] == "ExpiredToken":
+                    raise AWSSessionTokenExpiredError(
+                        original_exception=client_error,
+                        file=pathlib.Path(__file__).name,
+                    )
+                else:
+                    raise AWSClientError(
+                        original_exception=client_error,
+                        file=pathlib.Path(__file__).name,
+                    )
+
+            except Exception as error:
+                logger.critical(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+                raise error
+
+        logger.critical(
+            f"{unreachable_error.__class__.__name__}[{unreachable_error.__traceback__.tb_lineno}]: {unreachable_error}"
+        )
+        raise unreachable_error
 
     @staticmethod
     def test_connection(
@@ -1844,6 +1875,39 @@ def get_env_partition_bootstrap_region(
     """
     regions = get_env_partition_regions(session_region)
     return regions[0] if regions else None
+
+
+# An unreachable endpoint costs a connection timeout, so a partition with many
+# regions is not walked in full
+MAX_STS_BOOTSTRAP_ATTEMPTS = 3
+
+
+def get_partition_bootstrap_candidates(
+    aws_region: str,
+    session_region: Optional[str] = None,
+) -> list:
+    """
+    Get the STS bootstrap regions to try, in order, starting with the chosen one.
+
+    A deployment reached only through its own region's endpoints has no route to
+    the rest of its partition, and which region that is cannot be known from the
+    environment alone: a container may carry a region belonging to no partition
+    it scans. Offering the remaining regions of the declared partition lets the
+    bootstrap succeed without anything having to declare the right one.
+
+    Args:
+        aws_region (str): The region already chosen for the bootstrap call.
+        session_region (Optional[str]): The region of the AWS session.
+
+    Returns:
+        list: The regions to try, preferred first, capped at
+            MAX_STS_BOOTSTRAP_ATTEMPTS.
+    """
+    candidates = [aws_region]
+    for region in get_env_partition_regions(session_region) or []:
+        if region not in candidates:
+            candidates.append(region)
+    return candidates[:MAX_STS_BOOTSTRAP_ATTEMPTS]
 
 
 # TODO: This can be moved to another class since it doesn't need self
