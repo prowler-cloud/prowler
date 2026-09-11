@@ -39,6 +39,8 @@ It matters most where nothing else says. Resolving an identity means calling STS
 
 A region configured for the session still wins when it belongs to the declared partition, so a deployment in `us-gov-west-1` is not sent to `us-gov-east-1`. A region belonging to a different partition is ignored, since a partition that has been declared explicitly is the more deliberate statement of the two.
 
+When no configured region says which one to prefer, the first region of the partition is tried and the rest follow if it cannot be reached. A network that routes to only one region of its partition therefore works without having to declare which one that is. Only a connection failure moves on to the next region: a credential error is reported from the first, since it would be the same everywhere.
+
 <Note>
 Set it wherever the scan runs. For deployments that scan from containers, that means the environment of the containers doing the scanning, not only the one accepting the request.
 </Note>
