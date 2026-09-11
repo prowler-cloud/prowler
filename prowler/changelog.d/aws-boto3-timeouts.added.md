@@ -1,1 +1,0 @@
-`--aws-connect-timeout` and `--aws-read-timeout` CLI flags, plus `PROWLER_AWS_BOTO3_CONNECT_TIMEOUT` and `PROWLER_AWS_BOTO3_READ_TIMEOUT` environment variables, to bound how long each AWS API call waits for an endpoint

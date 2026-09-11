@@ -1,1 +1,0 @@
-The Image provider now uses the directory named by `TRIVY_CACHE_DIR` when one is set, instead of a fresh temporary directory it deletes afterwards, so a deployment can supply a vulnerability database it already holds and one with network access stops re-downloading the database for every image it scans

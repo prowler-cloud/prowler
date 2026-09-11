@@ -1,1 +1,0 @@
-`AwsProvider.generate_regional_clients()` now returns an empty dict instead of `None` when the regional clients cannot be built, a failure that surfaced later as `AttributeError: 'NoneType' object has no attribute 'values'`
