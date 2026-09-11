@@ -1704,6 +1704,52 @@ aws:
 
         assert attempted_regions == [AWS_REGION_GOV_CLOUD_US_EAST_1]
 
+    def test_assume_role_falls_back_to_the_next_partition_region(self, monkeypatch):
+        monkeypatch.setenv("PROWLER_AWS_PARTITION", AWS_GOV_CLOUD_PARTITION)
+        current_session = session.Session(region_name=AWS_REGION_US_EAST_1)
+        attempted_regions = []
+
+        def create_sts_session(session, aws_region):
+            attempted_regions.append(aws_region)
+            if aws_region == AWS_REGION_GOV_CLOUD_US_EAST_1:
+                raise botocore.exceptions.EndpointConnectionError(
+                    endpoint_url=f"https://sts.{aws_region}.amazonaws.com"
+                )
+            sts_client = mock.MagicMock()
+            sts_client.assume_role.return_value = {
+                "Credentials": {
+                    "AccessKeyId": "AKIAIOSFODNN7EXAMPLE",
+                    "SecretAccessKey": "secret",
+                    "SessionToken": "token",
+                    "Expiration": datetime.now() + timedelta(seconds=3600),
+                }
+            }
+            return sts_client
+
+        assumed_role_info = AWSAssumeRoleInfo(
+            role_arn=ARN(
+                arn=f"arn:{AWS_GOV_CLOUD_PARTITION}:iam::{AWS_ACCOUNT_NUMBER}:role/test-role"
+            ),
+            session_duration=3600,
+            external_id=None,
+            mfa_enabled=False,
+            role_session_name=ROLE_SESSION_NAME,
+            sts_region=AWS_REGION_GOV_CLOUD_US_EAST_1,
+        )
+
+        with patch(
+            "prowler.providers.aws.aws_provider.AwsProvider.create_sts_session",
+            new=create_sts_session,
+        ):
+            credentials = AwsProvider.assume_role(current_session, assumed_role_info)
+
+        assert attempted_regions == [
+            AWS_REGION_GOV_CLOUD_US_EAST_1,
+            AWS_REGION_GOV_CLOUD_US_WEST_1,
+        ]
+        assert isinstance(credentials, AWSCredentials)
+        assert credentials.aws_access_key_id == "AKIAIOSFODNN7EXAMPLE"
+
     @mock_aws
     def test_test_connection_with_env_credentials(self, monkeypatch):
         # Create a mock IAM user
