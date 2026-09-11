@@ -185,6 +185,14 @@ modules:
       - tests/providers/vercel/**
     e2e: []
 
+  - name: sdk-fly
+    match:
+      - prowler/providers/fly/**
+      - prowler/compliance/fly/**
+    tests:
+      - tests/providers/fly/**
+    e2e: []
+
   # ============================================
   # SDK - Lib modules
   # ============================================

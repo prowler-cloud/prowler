@@ -290,6 +290,27 @@ The following list includes all the Vercel checks with configurable variables th
 | `team_member_role_least_privilege`             | `max_owners`                      | Integer         | `3`                                                                      |
 | `team_no_stale_invitations`                    | `stale_invitation_threshold_days` | Integer         | `30`                                                                     |
 
+## Fly.io
+
+### Configurable Checks
+The following list includes all the Fly.io checks with configurable variables that can be changed in the configuration YAML file:
+
+| Check Name                            | Value                      | Type             | Default                                                                                   |
+|---------------------------------------|----------------------------|------------------|-------------------------------------------------------------------------------------------|
+| `app_no_public_ip_address`            | `public_apps`              | List of Strings  | `[]`                                                                                      |
+| `machine_no_public_non_http_ports`    | `allowed_public_ports`     | List of Integers | `[80, 443]`                                                                               |
+| `machine_no_plaintext_secrets_in_env` | `secret_env_name_patterns` | List of Strings  | `["PASSWORD", "SECRET", "TOKEN", "API_KEY", "PRIVATE_KEY", "CREDENTIAL", "PASSPHRASE"]` |
+
+### Provider Settings
+
+| Value         | Type    | Default | Description                                                                                    |
+|---------------|---------|---------|------------------------------------------------------------------------------------------------|
+| `max_retries` | Integer | `3`     | Retries for Machines API requests that are rate limited (HTTP 429, honoring `Retry-After`) or fail at the connection level (timeouts, connection errors); HTTP 5xx responses are not retried. Range `0..10`; `0` disables retries. |
+
+<Note>
+Each entry of `allowed_public_ports` must be a port between `1` and `65535`; an invalid list is ignored and the default is used. A key set to `null` also falls back to its default, while an explicit empty list (for example `allowed_public_ports: []`) is applied as configured.
+</Note>
+
 ## Okta
 
 ### Configurable Checks
@@ -876,6 +897,31 @@ vercel:
     - "_PASSWORD"
     - "_API_KEY"
     - "_PRIVATE_KEY"
+
+# Fly.io Configuration
+fly:
+  # Maximum number of retries for Machines API requests (default is 3)
+  # Set to 0 to disable retries
+  max_retries: 3
+  # fly.app_no_public_ip_address
+  # Apps that are expected to serve public traffic and may hold a public IP
+  # address. Every other app is expected to be private-only.
+  public_apps: []
+  # fly.machine_no_public_non_http_ports
+  # Edge ports a machine service may publish. Defaults to HTTP/HTTPS only.
+  allowed_public_ports: [80, 443]
+  # fly.machine_no_plaintext_secrets_in_env
+  # Substrings that mark a machine env variable name as secret-like.
+  secret_env_name_patterns:
+    [
+      "PASSWORD",
+      "SECRET",
+      "TOKEN",
+      "API_KEY",
+      "PRIVATE_KEY",
+      "CREDENTIAL",
+      "PASSPHRASE",
+    ]
 
 
 ```

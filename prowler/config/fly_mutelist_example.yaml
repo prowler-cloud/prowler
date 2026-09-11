@@ -1,0 +1,39 @@
+### Account, Check and/or Region can be * to apply for all the cases.
+### Account == <Fly.io organization slug>
+### Region == <Fly.io region code> for machines and volumes (for example "fra"), "global" for apps
+### Resource == <Fly.io resource ID> (app ID, machine ID or volume ID); the resource name is used when no ID is available
+### Resources are lists that can have either Regex or Keywords.
+### Fly.io resources do not expose tags, so Tags rules never match a Fly.io finding.
+### For each check you can except Accounts, Regions and/or Resources.
+###########################  MUTELIST EXAMPLE  ###########################
+Mutelist:
+  Accounts:
+    "example-org":
+      Checks:
+        "app_no_public_ip_address":
+          Regions:
+            - "*"
+          Resources:
+            - "app_edge001"
+          Description: "Mute the public IP check for the edge app that must serve internet traffic"
+        "machine_no_public_non_http_ports":
+          Regions:
+            - "fra"
+          Resources:
+            - "148e21eb1de389"
+          Description: "Mute the published port check for one machine in the fra region"
+        "volume_*":
+          Regions:
+            - "*"
+          Resources:
+            - "vol_9vwz8m2kd4y0e5qp"
+          Description: "Mute all volume checks for one scratch volume, matched by its volume ID"
+
+    "*":
+      Checks:
+        "machine_image_pinned_to_digest":
+          Regions:
+            - "*"
+          Resources:
+            - "148e21eb1de3.*"
+          Description: "Mute the image digest check for a machine family across all organizations"

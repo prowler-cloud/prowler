@@ -1661,6 +1661,85 @@ class TestFinding:
         assert finding_output.resource_uid == "test_resource_id"
         assert finding_output.region == "Delhi"
 
+    def _build_fly_check_output(self):
+        check_output = MagicMock()
+        check_output.resource_id = "148e21eb1de389"
+        check_output.resource_name = "test-machine"
+        check_output.resource_details = ""
+        check_output.resource_tags = []
+        check_output.region = "fra"
+        check_output.status = Status.FAIL
+        check_output.status_extended = "Machine publishes port 5432 to the Fly.io edge."
+        check_output.muted = False
+        check_output.check_metadata = mock_check_metadata(provider="fly")
+        check_output.resource = {}
+        check_output.compliance = {}
+        return check_output
+
+    @patch(
+        "prowler.lib.outputs.finding.get_check_compliance",
+        new=mock_get_check_compliance,
+    )
+    def test_generate_output_fly(self):
+        from prowler.providers.fly.models import FlyIdentityInfo, FlyOrganization
+
+        provider = MagicMock()
+        provider.type = "fly"
+        organization = FlyOrganization(
+            id="org_test123", slug="test-org", name="Test Org"
+        )
+        provider.identity = FlyIdentityInfo(
+            organization=organization, organizations=[organization]
+        )
+
+        output_options = MagicMock()
+        output_options.unix_timestamp = False
+
+        finding_output = Finding.generate_output(
+            provider, self._build_fly_check_output(), output_options
+        )
+
+        assert isinstance(finding_output, Finding)
+        assert finding_output.provider == "fly"
+        assert finding_output.auth_method == "api_token"
+        assert finding_output.account_uid == "org_test123"
+        assert finding_output.account_name == "test-org"
+        assert finding_output.resource_name == "test-machine"
+        assert finding_output.resource_uid == "148e21eb1de389"
+        assert finding_output.region == "fra"
+        assert finding_output.status == Status.FAIL
+        assert finding_output.muted is False
+
+    @patch(
+        "prowler.lib.outputs.finding.get_check_compliance",
+        new=mock_get_check_compliance,
+    )
+    def test_generate_output_fly_app_level_finding_is_global(self):
+        from prowler.providers.fly.models import FlyIdentityInfo, FlyOrganization
+
+        provider = MagicMock()
+        provider.type = "fly"
+        organization = FlyOrganization(
+            id="org_test123", slug="test-org", name="Test Org"
+        )
+        provider.identity = FlyIdentityInfo(
+            organization=organization, organizations=[organization]
+        )
+
+        check_output = self._build_fly_check_output()
+        check_output.resource_id = "app_test456"
+        check_output.resource_name = "test-app"
+        check_output.region = "global"
+        check_output.status = Status.MANUAL
+        output_options = MagicMock()
+        output_options.unix_timestamp = True
+
+        finding_output = Finding.generate_output(provider, check_output, output_options)
+
+        assert finding_output.resource_uid == "app_test456"
+        assert finding_output.region == "global"
+        assert finding_output.status == Status.MANUAL
+
     def test_transform_api_finding_stackit(self):
         provider = MagicMock()
         provider.type = "stackit"

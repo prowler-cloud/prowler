@@ -1,0 +1,38 @@
+{
+  "Provider": "fly",
+  "CheckID": "machine_no_public_non_http_ports",
+  "CheckTitle": "Fly.io machine publishes only HTTP and HTTPS edge ports",
+  "CheckType": [],
+  "ServiceName": "machine",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "FlyMachine",
+  "ResourceGroup": "network",
+  "Description": "**Fly.io machines** are assessed for the **edge ports** they publish. Every `ports` entry of a machine service is mapped by the Fly.io proxy to the app's public IP addresses. Only the HTTP and HTTPS ports are expected; the allow-list is configurable through the `allowed_public_ports` key. Backing services should expose their port over the private network only, by declaring no service ports at all.",
+  "Risk": "Publishing raw protocol ports such as 5432 (PostgreSQL), 8333 (S3-compatible storage), 9222 (Chrome remote debugging) or a metrics port exposes them to internet-wide scanning as soon as the app has a public IP. These endpoints are typically protected only by a static credential, or by nothing at all, because they were designed for private networks.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://fly.io/docs/networking/services/",
+    "https://fly.io/docs/reference/configuration/#the-services-sections",
+    "https://fly.io/docs/networking/private-networking/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "fly machine update <machine-id> -a <app> --file-local /dev/null",
+      "NativeIaC": "",
+      "Other": "1. Remove the 'ports' entry from the machine service so the port stays private\n2. Reach the service over the private network at <app>.internal:<internal_port>\n3. If the port must stay public, terminate it behind the HTTPS handler on port 443 with authentication in front of it\n4. Verify with the Machines API that config.services publishes no unexpected port",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Publish only HTTP/HTTPS at the Fly.io edge and keep database, object storage, debugging and metrics ports reachable over 6PN private networking only.",
+      "Url": "https://hub.prowler.com/check/machine_no_public_non_http_ports"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
