@@ -378,6 +378,83 @@ class Test_kms_key_enclave_attestation_unknown_image:
             v == len(SENSITIVE_ENCLAVE_KMS_EVENTS) for v in calls_per_region.values()
         )
 
+    def test_kms_scan_error(self):
+        cloudtrail_client = mock.MagicMock()
+        cloudtrail_client.trails = {"t": _mock_trail()}
+        cloudtrail_client.regional_clients = {AWS_REGION_US_EAST_1: mock.MagicMock()}
+        cloudtrail_client._lookup_events_page.return_value = ([], False, None)
+
+        kms_client = mock.MagicMock()
+        kms_client.keys = []
+        kms_client.keys_scan_errors = {AWS_REGION_US_EAST_1: "AccessDeniedException"}
+        kms_client.audit_config = {"enclave_golden_pcr_values": {"PCR0": [GOLDEN_PCR0]}}
+        kms_client.audited_account = AWS_ACCOUNT_NUMBER
+        kms_client.audited_partition = "aws"
+        kms_client.region = AWS_REGION_US_EAST_1
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
+            ),
+            mock.patch(f"{CHECK_MODULE}.kms_client", new=kms_client),
+            mock.patch(f"{CHECK_MODULE}.cloudtrail_client", new=cloudtrail_client),
+        ):
+            from prowler.providers.aws.services.kms.kms_key_enclave_attestation_unknown_image.kms_key_enclave_attestation_unknown_image import (
+                kms_key_enclave_attestation_unknown_image,
+            )
+
+            result = kms_key_enclave_attestation_unknown_image().execute()
+            assert len(result) == 1
+            assert result[0].status == "MANUAL"
+            assert (
+                result[0].status_extended
+                == f"KMS keys could not be listed in region {AWS_REGION_US_EAST_1} (AccessDeniedException); verify manually that enclave-scoped key attestation unknown-image events can be verified."
+            )
+            assert result[0].resource_id == "key/unknown"
+
+    def test_kms_key_describe_error(self):
+        key = mock.MagicMock()
+        key.arn = KEY_ARN_A
+        key.id = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+        key.region = AWS_REGION_US_EAST_1
+        key.detail_retrieved = False
+        key.describe_error = "AccessDeniedException"
+
+        cloudtrail_client = mock.MagicMock()
+        cloudtrail_client.trails = {"t": _mock_trail()}
+        cloudtrail_client.regional_clients = {AWS_REGION_US_EAST_1: mock.MagicMock()}
+        cloudtrail_client._lookup_events_page.return_value = ([], False, None)
+
+        kms_client = mock.MagicMock()
+        kms_client.keys = [key]
+        kms_client.keys_scan_errors = {}
+        kms_client.audit_config = {"enclave_golden_pcr_values": {"PCR0": [GOLDEN_PCR0]}}
+        kms_client.audited_account = AWS_ACCOUNT_NUMBER
+        kms_client.audited_partition = "aws"
+        kms_client.region = AWS_REGION_US_EAST_1
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
+            ),
+            mock.patch(f"{CHECK_MODULE}.kms_client", new=kms_client),
+            mock.patch(f"{CHECK_MODULE}.cloudtrail_client", new=cloudtrail_client),
+        ):
+            from prowler.providers.aws.services.kms.kms_key_enclave_attestation_unknown_image.kms_key_enclave_attestation_unknown_image import (
+                kms_key_enclave_attestation_unknown_image,
+            )
+
+            result = kms_key_enclave_attestation_unknown_image().execute()
+            assert len(result) == 1
+            assert result[0].status == "MANUAL"
+            assert (
+                result[0].status_extended
+                == f"KMS key {key.id} details could not be retrieved (AccessDeniedException); verify manually that enclave-scoped key attestation unknown-image events can be verified."
+            )
+            assert result[0].resource_id == key.id
+
     def test_lookup_error_reported_as_incomplete_coverage(self):
         result = _run(
             events_by_event_name={},
