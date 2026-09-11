@@ -1,3 +1,6 @@
+vi.mock("@/lib/registry/access.server", () => ({
+  evaluateRegistryAccess: vi.fn(),
+}));
 import type { NextAuthRequest } from "next-auth";
 import { describe, expect, it, vi } from "vitest";
 

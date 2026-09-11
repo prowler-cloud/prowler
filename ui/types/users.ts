@@ -92,6 +92,7 @@ export const PERMISSION_KEY = {
   MANAGE_BILLING: "manage_billing",
   MANAGE_ALERTS: "manage_alerts",
   MANAGE_LIGHTHOUSE_AI_CONFIGURATION: "manage_lighthouse_ai_configuration",
+  MANAGE_REGISTRY: "manage_registry",
   UNLIMITED_VISIBILITY: "unlimited_visibility",
 } as const;
 
@@ -112,6 +113,7 @@ export type TenantMembershipRole =
   (typeof TENANT_MEMBERSHIP_ROLE)[keyof typeof TENANT_MEMBERSHIP_ROLE];
 
 export interface RoleDetailAttributes {
+  manage_registry?: boolean;
   name: string;
   manage_users: boolean;
   manage_account: boolean;

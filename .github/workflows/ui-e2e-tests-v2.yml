@@ -10,12 +10,12 @@ on:
       - master
       - "v5.*"
     paths:
-      - '.github/workflows/ui-e2e-tests-v2.yml'
-      - '.github/test-impact.yml'
-      - 'ui/**'
-      - 'api/**'  # API changes can affect UI E2E
-      - '!ui/CHANGELOG.md'
-      - '!api/CHANGELOG.md'
+      - ".github/workflows/ui-e2e-tests-v2.yml"
+      - ".github/test-impact.yml"
+      - "ui/**"
+      - "api/**" # API changes can affect UI E2E
+      - "!ui/CHANGELOG.md"
+      - "!api/CHANGELOG.md"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -40,11 +40,11 @@ jobs:
       (needs.impact-analysis.outputs.has-ui-e2e == 'true' || needs.impact-analysis.outputs.run-all == 'true')
     runs-on: ubuntu-latest
     env:
-      AUTH_SECRET: 'fallback-ci-secret-for-testing'
+      AUTH_SECRET: "fallback-ci-secret-for-testing"
       AUTH_TRUST_HOST: true
-      NEXTAUTH_URL: 'http://localhost:3000'
-      AUTH_URL: 'http://localhost:3000'
-      UI_API_BASE_URL: 'http://localhost:8080/api/v1'
+      NEXTAUTH_URL: "http://localhost:3000"
+      AUTH_URL: "http://localhost:3000"
+      UI_API_BASE_URL: "http://localhost:8080/api/v1"
       E2E_ADMIN_USER: ${{ secrets.E2E_ADMIN_USER }}
       E2E_ADMIN_PASSWORD: ${{ secrets.E2E_ADMIN_PASSWORD }}
       E2E_AWS_PROVIDER_ACCOUNT_ID: ${{ secrets.E2E_AWS_PROVIDER_ACCOUNT_ID }}
@@ -60,7 +60,7 @@ jobs:
       E2E_M365_SECRET_ID: ${{ secrets.E2E_M365_SECRET_ID }}
       E2E_M365_TENANT_ID: ${{ secrets.E2E_M365_TENANT_ID }}
       E2E_M365_CERTIFICATE_CONTENT: ${{ secrets.E2E_M365_CERTIFICATE_CONTENT }}
-      E2E_KUBERNETES_CONTEXT: 'kind-kind'
+      E2E_KUBERNETES_CONTEXT: "kind-kind"
       E2E_KUBERNETES_KUBECONFIG_PATH: /home/runner/.kube/config
       E2E_GCP_BASE64_SERVICE_ACCOUNT_KEY: ${{ secrets.E2E_GCP_BASE64_SERVICE_ACCOUNT_KEY }}
       E2E_GCP_PROJECT_ID: ${{ secrets.E2E_GCP_PROJECT_ID }}
@@ -292,7 +292,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
         with:
-          node-version-file: 'ui/.nvmrc'
+          node-version-file: "ui/.nvmrc"
 
       - name: Setup pnpm
         uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
@@ -340,55 +340,56 @@ jobs:
       - name: Run E2E tests
         working-directory: ./ui
         run: |
+          REGISTRY_FIXTURE_SELECTED=false
+          if [[ "${RUN_ALL_TESTS}" == "true" ]] ||
+            [[ " ${E2E_TEST_PATHS} " == *" ui/tests/registry/"* ]]; then
+            REGISTRY_FIXTURE_SELECTED=true
+          fi
+
           if [[ "${RUN_ALL_TESTS}" == "true" ]]; then
-            echo "Running ALL E2E tests..."
+            echo "Running all standard E2E tests..."
             pnpm run test:e2e
           else
-            echo "Running targeted E2E tests: ${E2E_TEST_PATHS}"
-            # Convert glob patterns to playwright test paths
-            # e.g., "ui/tests/providers/**" -> "tests/providers"
+            echo "Running targeted standard E2E tests: ${E2E_TEST_PATHS}"
             TEST_PATHS="${E2E_TEST_PATHS}"
-            # Remove ui/ prefix and convert ** to empty (playwright handles recursion)
             TEST_PATHS=$(echo "$TEST_PATHS" | sed 's|ui/||g' | sed 's|\*\*||g' | tr ' ' '\n' | sort -u)
-            # Drop auth setup helpers (not runnable test suites)
-            TEST_PATHS=$(echo "$TEST_PATHS" | grep -v '^tests/setups/')
-            # Safety net: if bare "tests/" appears (from broad patterns like ui/tests/**),
-            # expand to specific subdirs to avoid Playwright discovering setup files
+            TEST_PATHS=$(echo "$TEST_PATHS" | grep -vE '^tests/(setups|registry)/' || true)
+
             if echo "$TEST_PATHS" | grep -qx 'tests/'; then
-              echo "Expanding bare 'tests/' to specific subdirs (excluding setups)..."
               SPECIFIC_DIRS=""
               for dir in tests/*/; do
-                [[ "$dir" == "tests/setups/" ]] && continue
+                [[ "$dir" == "tests/setups/" || "$dir" == "tests/registry/" ]] && continue
                 SPECIFIC_DIRS="${SPECIFIC_DIRS}${dir}"$'\n'
               done
-              # Replace "tests/" with specific dirs, keep other paths
-              TEST_PATHS=$(echo "$TEST_PATHS" | grep -vx 'tests/')
+              TEST_PATHS=$(echo "$TEST_PATHS" | grep -vx 'tests/' || true)
               TEST_PATHS="${TEST_PATHS}"$'\n'"${SPECIFIC_DIRS}"
               TEST_PATHS=$(echo "$TEST_PATHS" | grep -v '^$' | sort -u)
             fi
-            if [[ -z "$TEST_PATHS" ]]; then
-              echo "No runnable E2E test paths after filtering setups"
-              exit 0
-            fi
-            # Filter out directories that don't contain any test files
+
             VALID_PATHS=""
-            while IFS= read -r p; do
-              [[ -z "$p" ]] && continue
-              if find "$p" -name '*.spec.ts' -o -name '*.test.ts' 2>/dev/null | head -1 | grep -q .; then
-                VALID_PATHS="${VALID_PATHS}${p}"$'\n'
+            while IFS= read -r path; do
+              [[ -z "$path" ]] && continue
+              if find "$path" -name '*.spec.ts' -o -name '*.test.ts' 2>/dev/null | head -1 | grep -q .; then
+                VALID_PATHS="${VALID_PATHS}${path}"$'\n'
               else
-                echo "Skipping empty test directory: $p"
+                echo "Skipping empty test directory: $path"
               fi
             done <<< "$TEST_PATHS"
             VALID_PATHS=$(echo "$VALID_PATHS" | grep -v '^$' || true)
-            if [[ -z "$VALID_PATHS" ]]; then
-              echo "No test files found in any resolved paths — skipping E2E"
-              exit 0
+
+            if [[ -n "$VALID_PATHS" ]]; then
+              TEST_PATHS=$(echo "$VALID_PATHS" | tr '\n' ' ')
+              echo "Resolved standard test paths: $TEST_PATHS"
+              read -ra test_paths <<< "$TEST_PATHS"
+              pnpm exec playwright test "${test_paths[@]}"
+            else
+              echo "No standard E2E test paths selected."
             fi
-            TEST_PATHS=$(echo "$VALID_PATHS" | tr '\n' ' ')
-            echo "Resolved test paths: $TEST_PATHS"
-            read -ra test_paths <<< "$TEST_PATHS"
-            pnpm exec playwright test "${test_paths[@]}"
+          fi
+
+          if [[ "$REGISTRY_FIXTURE_SELECTED" == "true" ]]; then
+            echo "Running self-contained Registry fixture acceptance."
+            pnpm run test:e2e:registry
           fi
 
       - name: Upload test reports

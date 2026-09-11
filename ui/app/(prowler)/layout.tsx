@@ -6,6 +6,7 @@ import { ReactNode, Suspense } from "react";
 
 import { getProviders } from "@/actions/providers";
 import { getScansByState } from "@/actions/scans/scans";
+import { auth } from "@/auth.config";
 import MainLayout from "@/components/layout/main-layout/main-layout";
 import {
   OnboardingCheckpointWatcher,
@@ -20,6 +21,8 @@ import { GlobalSidePanel } from "@/components/side-panel";
 import { FeedbackSurvey } from "@/components/survey/feedback-survey";
 import { fontMono, fontSans } from "@/config/fonts";
 import { siteConfig } from "@/config/site";
+import { REGISTRY_ACCESS } from "@/lib/registry/access";
+import { evaluateRegistryAccess } from "@/lib/registry/access.server";
 import { isCloud } from "@/lib/shared/env";
 import { cn } from "@/lib/utils";
 import { StoreInitializer } from "@/store/ui/store-initializer";
@@ -56,6 +59,13 @@ export default async function RootLayout({
   // Skip Cloud-only onboarding fetches and orchestrators in OSS.
   const cloudEnabled = isCloud();
 
+  // One-time server-side Registry gate per request: only an ELIGIBLE answer
+  // shows the sidebar entry; UNKNOWN and INELIGIBLE both hide it. Started
+  // here so it resolves in parallel with the Cloud onboarding fetches.
+  const registryAccessPromise = auth().then((session) =>
+    evaluateRegistryAccess(session?.accessToken),
+  );
+
   // Fail-open: unknown scan state is treated as "has data" so the banner never blocks
   // progression on a fetch error.
   let hasCompletedScan = true;
@@ -78,6 +88,9 @@ export default async function RootLayout({
       : undefined;
   }
 
+  const registryEligible =
+    (await registryAccessPromise).status === REGISTRY_ACCESS.ELIGIBLE;
+
   return (
     <html suppressHydrationWarning lang="en">
       <head>
@@ -98,7 +111,9 @@ export default async function RootLayout({
             <NavigationProgress />
           </Suspense>
           {/* Store uses boolean; gate receives tri-state to fail open on fetch errors. */}
-          <StoreInitializer values={{ hasProviders: hasProviders ?? false }} />
+          <StoreInitializer
+            values={{ hasProviders: hasProviders ?? false, registryEligible }}
+          />
           {cloudEnabled && (
             <>
               <OnboardingGate hasProviders={hasProviders} />

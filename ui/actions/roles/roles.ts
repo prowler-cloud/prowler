@@ -116,6 +116,8 @@ export const addRole = async (formData: FormData) => {
       formData.get("manage_alerts") === "true";
     payload.data.attributes.manage_lighthouse_ai_configuration =
       formData.get("manage_lighthouse_ai_configuration") === "true";
+    payload.data.attributes.manage_registry =
+      formData.get("manage_registry") === "true";
   }
 
   // Add provider groups relationships only if there are items
@@ -175,6 +177,8 @@ export const updateRole = async (formData: FormData, roleId: string) => {
       formData.get("manage_alerts") === "true";
     payload.data.attributes.manage_lighthouse_ai_configuration =
       formData.get("manage_lighthouse_ai_configuration") === "true";
+    payload.data.attributes.manage_registry =
+      formData.get("manage_registry") === "true";
   }
 
   // Add provider groups relationships only if there are items

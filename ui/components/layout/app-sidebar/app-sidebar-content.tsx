@@ -8,6 +8,7 @@ import { ProwlerBrand } from "@/components/icons";
 import { useAuth } from "@/hooks";
 import { useRuntimeConfig } from "@/hooks/use-runtime-config";
 import { isCloud } from "@/lib/shared/env";
+import { useUIStore } from "@/store/ui/store";
 
 import { useAppSidebarMode } from "./app-sidebar-mode-store";
 import { AppSidebarModeToggle } from "./app-sidebar-mode-toggle";
@@ -24,6 +25,8 @@ interface AppSidebarContentProps {
 export function AppSidebarContent({ onSelect }: AppSidebarContentProps) {
   const pathname = usePathname();
   const { permissions } = useAuth();
+  // One-time server decision per request, seeded by the root layout.
+  const registryEligible = useUIStore((state) => state.registryEligible);
   const { apiDocsUrl, cloudBillingEnabled } = useRuntimeConfig();
   const mode = useAppSidebarMode((state) => state.mode);
   const isCloudEnvironment = isCloud();
@@ -31,6 +34,7 @@ export function AppSidebarContent({ onSelect }: AppSidebarContentProps) {
     pathname,
     apiDocsUrl,
     cloudBillingEnabled,
+    registryEligible,
     permissions,
   });
   const showChat = isCloudEnvironment && mode === APP_SIDEBAR_MODE.CHAT;

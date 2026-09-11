@@ -3,20 +3,24 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ChevronLeftIcon, ChevronRightIcon, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { Dispatch, SetStateAction, useEffect, useState } from "react";
+import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
 import { useForm, UseFormReturn } from "react-hook-form";
-import { z } from "zod";
 
 import { addProvider } from "@/actions/providers/providers";
+import { addRegistryProvider } from "@/actions/providers/registry-provider";
+import { getInstalledRegistryProviderOptions } from "@/actions/registry/registry";
 import { AwsMethodSelector } from "@/components/providers/organizations/aws-method-selector";
 import { AzureMethodSelector } from "@/components/providers/organizations/azure-method-selector";
 import { GcpMethodSelector } from "@/components/providers/organizations/gcp-method-selector";
 import { WizardInputField } from "@/components/providers/workflow/forms/fields";
 import { ProviderTitleDocs } from "@/components/providers/workflow/provider-title-docs";
 import { Button, useToast } from "@/components/shadcn";
+import { Alert, AlertDescription, AlertTitle } from "@/components/shadcn/alert";
 import { Form } from "@/components/shadcn/form";
+import type { RegistryProviderOption } from "@/lib/registry/provider-options";
 import {
-  addProviderFormSchema,
+  createAddProviderFormSchema,
+  AddProviderFormValues,
   ApiError,
   KnownProviderType,
   ProviderType,
@@ -26,10 +30,11 @@ import {
   OrgFlowType,
   toOrgFlowType,
 } from "@/types/organizations";
+import { isKnownProviderType } from "@/types/providers";
 
 import { RadioGroupProvider } from "../../radio-group-provider";
 
-export type FormValues = z.infer<typeof addProviderFormSchema>;
+export type FormValues = AddProviderFormValues;
 
 export interface ConnectAccountSuccessData {
   id: string;
@@ -209,7 +214,41 @@ export const ConnectAccountForm = ({
   const [method, setMethod] = useState<"single" | null>(null);
   const router = useRouter();
 
-  const formSchema = addProviderFormSchema;
+  const [registryOptions, setRegistryOptions] = useState<
+    RegistryProviderOption[]
+  >([]);
+  const [registryError, setRegistryError] = useState(false);
+  const [providerError, setProviderError] = useState<string | null>(null);
+  const [discoveryAttempt, setDiscoveryAttempt] = useState(0);
+  const submitting = useRef(false);
+  const createdAccount = useRef<ConnectAccountSuccessData | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    const load = async () => {
+      try {
+        const result = await getInstalledRegistryProviderOptions();
+        if (!active) return;
+        setRegistryOptions(result.status === "ready" ? result.options : []);
+        setRegistryError(result.status === "error");
+      } catch {
+        if (active) {
+          setRegistryOptions([]);
+          setRegistryError(true);
+        }
+      }
+    };
+    void load();
+    window.addEventListener("registry-artifacts-changed", load);
+    return () => {
+      active = false;
+      window.removeEventListener("registry-artifacts-changed", load);
+    };
+  }, [discoveryAttempt]);
+
+  const formSchema = createAddProviderFormSchema(
+    registryOptions.map((option) => option.type),
+  );
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -229,6 +268,17 @@ export const ConnectAccountForm = ({
   const isLoading = form.formState.isSubmitting;
 
   const onSubmitClient = async (values: FormValues) => {
+    if (submitting.current) return;
+    if (
+      createdAccount.current?.providerType === values.providerType &&
+      createdAccount.current.uid === values.providerUid &&
+      onSuccess
+    ) {
+      onSuccess(createdAccount.current);
+      return;
+    }
+    submitting.current = true;
+    setProviderError(null);
     const formValues = { ...values };
 
     const formData = new FormData();
@@ -237,7 +287,9 @@ export const ConnectAccountForm = ({
     );
 
     try {
-      const data = await addProvider(formData);
+      const data = await (isKnownProviderType(values.providerType)
+        ? addProvider(formData)
+        : addRegistryProvider(formData));
 
       if (data?.errors && data.errors.length > 0) {
         data.errors.forEach((error: ApiError) => {
@@ -246,10 +298,9 @@ export const ConnectAccountForm = ({
 
           switch (pointer) {
             case "/data/attributes/provider":
-              form.setError("providerType", {
-                type: "server",
-                message: errorMessage,
-              });
+              // Provider selection is hidden here; keep failures visible and
+              // retryable when availability changes without editing the form.
+              setProviderError(errorMessage);
               break;
             case "/data/attributes/uid":
             case "/data/attributes/__all__":
@@ -280,12 +331,13 @@ export const ConnectAccountForm = ({
         } = data.data;
 
         if (onSuccess) {
-          onSuccess({
+          createdAccount.current = {
             id,
             providerType: createdProviderType,
             uid: uid || values.providerUid,
             alias: alias ?? values.providerAlias ?? null,
-          });
+          };
+          onSuccess(createdAccount.current);
           return;
         }
 
@@ -301,10 +353,13 @@ export const ConnectAccountForm = ({
             ? error.message
             : "Something went wrong. Please try again.",
       });
+    } finally {
+      submitting.current = false;
     }
   };
 
   const handleBackStep = () => {
+    setProviderError(null);
     applyBackStep({
       prevStep,
       method,
@@ -327,6 +382,7 @@ export const ConnectAccountForm = ({
 
   useEffect(() => {
     onBackHandlerChange?.(() => {
+      setProviderError(null);
       applyBackStep({
         prevStep,
         method,
@@ -352,7 +408,7 @@ export const ConnectAccountForm = ({
     onUiStateChange?.({
       showBack: prevStep === 2,
       showAction: prevStep === 2 && showUidForm,
-      actionLabel: "Next",
+      actionLabel: isLoading ? "Creating provider..." : "Next",
       actionDisabled: !canSubmit || isLoading,
       isLoading,
     });
@@ -375,7 +431,26 @@ export const ConnectAccountForm = ({
         {/* Step 1: Provider selection */}
         {prevStep === 1 && (
           <div data-tour-id="add-provider-provider-type">
+            {registryError && (
+              <Alert variant="warning">
+                <AlertTitle>Registry providers could not be loaded</AlertTitle>
+                <AlertDescription>
+                  Built-in providers are available. Check the Registry
+                  connection and try again.
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() =>
+                      setDiscoveryAttempt((attempt) => attempt + 1)
+                    }
+                  >
+                    Retry Registry providers
+                  </Button>
+                </AlertDescription>
+              </Alert>
+            )}
             <RadioGroupProvider
+              registryOptions={registryOptions}
               control={form.control}
               isInvalid={!!form.formState.errors.providerType}
               errorMessage={form.formState.errors.providerType?.message}
@@ -423,6 +498,12 @@ export const ConnectAccountForm = ({
         {prevStep === 2 && showUidForm && (
           <>
             <ProviderTitleDocs providerType={providerType} />
+            {providerError && (
+              <Alert variant="destructive">
+                <AlertTitle>Unable to create provider</AlertTitle>
+                <AlertDescription>{providerError}</AlertDescription>
+              </Alert>
+            )}
             <WizardInputField
               control={form.control}
               name="providerUid"
@@ -465,13 +546,14 @@ export const ConnectAccountForm = ({
                 variant="default"
                 size="lg"
                 disabled={isLoading}
+                aria-busy={isLoading || undefined}
               >
                 {isLoading ? (
-                  <Loader2 className="animate-spin" />
+                  <Loader2 aria-hidden className="animate-spin" />
                 ) : (
                   <ChevronRightIcon size={24} />
                 )}
-                {isLoading ? "Loading" : "Next"}
+                {isLoading ? "Creating provider..." : "Next"}
               </Button>
             )}
           </div>

@@ -52,7 +52,6 @@ import {
   OrgFlowType,
 } from "@/types/organizations";
 import { PROVIDER_WIZARD_MODE } from "@/types/provider-wizard";
-import { isConfigurableProvider } from "@/types/providers";
 import {
   isProvidersOrganizationRow,
   PROVIDERS_GROUP_KIND,
@@ -355,8 +354,7 @@ export function DataTableRowActions({
   const provider = isOrganizationRow ? null : rowData;
   const providerId = provider?.id ?? "";
   const providerType = provider?.attributes.provider ?? "";
-  // Only predefined providers can manage credentials from the UI
-  const canManageCredentials = isConfigurableProvider(providerType);
+  const canManageCredentials = Boolean(providerType);
   const providerUid = provider?.attributes.uid ?? "";
   const providerAlias = provider?.attributes.alias ?? null;
   const providerSecretId = provider?.relationships.secret.data?.id ?? null;

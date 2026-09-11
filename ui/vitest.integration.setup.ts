@@ -12,6 +12,10 @@ import { resetToasts } from "@/components/shadcn/toast/use-toast";
 
 import { worker } from "./__tests__/msw/worker";
 
+// The browser harness executes Server Actions directly; Next.js enforces this
+// marker at build time in the actual application.
+vi.mock("server-only", () => ({}));
+
 // Server Actions ("use server") are bundled by Vite as plain async functions
 // — the directive is a Next.js compiler concept, not part of Vite. When the
 // page invokes one, it runs in the browser and reaches `auth()` from

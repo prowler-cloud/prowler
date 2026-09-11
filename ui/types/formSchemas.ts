@@ -5,7 +5,7 @@ import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-cr
 import { validateMutelistYaml, validateYaml } from "@/lib/yaml";
 import { MAX_SAML_ADDITIONAL_EMAIL_DOMAINS } from "@/types/saml";
 
-import { PROVIDER_TYPES, ProviderType } from "./providers";
+import { isKnownProviderType, PROVIDER_TYPES, ProviderType } from "./providers";
 
 export const KUBECONFIG_UNSUPPORTED_COMMAND_AUTHENTICATION_ERROR =
   "Kubernetes kubeconfig command-based authentication is not supported in Prowler Cloud for security reasons.";
@@ -56,6 +56,7 @@ export const roleFormSchema = z.object({
   manage_scans: z.boolean().default(false),
   manage_alerts: z.boolean().default(false),
   manage_lighthouse_ai_configuration: z.boolean().default(false),
+  manage_registry: z.boolean().default(false),
   unlimited_visibility: z.boolean().default(false),
   groups: z.array(z.string()).optional(),
 });
@@ -191,6 +192,27 @@ export const addProviderFormSchema = z
       }),
     ]),
   );
+
+export const createAddProviderFormSchema = (
+  installedTypes: readonly string[],
+) =>
+  z.union([
+    addProviderFormSchema,
+    z.object({
+      providerType: z
+        .string()
+        .refine(
+          (type) => !isKnownProviderType(type) && installedTypes.includes(type),
+          "Select an installed Registry provider",
+        ),
+      providerUid: z.string().trim().min(1, "Provider UID is required"),
+      providerAlias: z.string(),
+    }),
+  ]);
+
+export type AddProviderFormValues = z.infer<
+  ReturnType<typeof createAddProviderFormSchema>
+>;
 
 export const addCredentialsFormSchema = (
   providerType: ProviderType,

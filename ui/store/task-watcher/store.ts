@@ -117,12 +117,26 @@ export const useTaskWatcherStore = create<TaskWatcherState>()(
 const activePolls = new Map<string, Promise<TaskTrackingResult<unknown>>>();
 const suppressedHandlers = new Set<string>();
 
+// Navigation aborts outstanding Server Action requests. That is not a backend
+// task failure: keep its persisted identity for the next document to resume.
+let pageSuspended = false;
+if (typeof window !== "undefined") {
+  window.addEventListener("pagehide", () => {
+    pageSuspended = true;
+  });
+  window.addEventListener("pageshow", (event) => {
+    pageSuspended = false;
+    if (event.persisted) void resumePendingTasks();
+  });
+}
+
 const settleTask = (
   taskId: string,
   status: TaskWatcherStatus,
   error?: string,
   result?: unknown,
 ): TaskTrackingResult => {
+  if (pageSuspended) return { status: TASK_WATCHER_STATUS.PENDING };
   const store = useTaskWatcherStore.getState();
   const currentTask = store.tasks[taskId];
   if (!currentTask || currentTask.status !== TASK_WATCHER_STATUS.PENDING) {
