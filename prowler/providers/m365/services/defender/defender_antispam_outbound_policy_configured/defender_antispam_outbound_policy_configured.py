@@ -74,20 +74,26 @@ class defender_antispam_outbound_policy_configured(Check):
                             default_policy_well_configured = True
                             findings.append(report)
                     else:
+                        outbound_spam_rule = defender_client.outbound_spam_rules.get(
+                            policy.name
+                        )
+                        if not outbound_spam_rule:
+                            continue
+
                         if not self._is_policy_properly_configured(policy):
                             included_resources = []
 
-                            if defender_client.outbound_spam_rules[policy.name].users:
+                            if outbound_spam_rule.users:
                                 included_resources.append(
-                                    f"users: {', '.join(defender_client.outbound_spam_rules[policy.name].users)}"
+                                    f"users: {', '.join(outbound_spam_rule.users)}"
                                 )
-                            if defender_client.outbound_spam_rules[policy.name].groups:
+                            if outbound_spam_rule.groups:
                                 included_resources.append(
-                                    f"groups: {', '.join(defender_client.outbound_spam_rules[policy.name].groups)}"
+                                    f"groups: {', '.join(outbound_spam_rule.groups)}"
                                 )
-                            if defender_client.outbound_spam_rules[policy.name].domains:
+                            if outbound_spam_rule.domains:
                                 included_resources.append(
-                                    f"domains: {', '.join(defender_client.outbound_spam_rules[policy.name].domains)}"
+                                    f"domains: {', '.join(outbound_spam_rule.domains)}"
                                 )
 
                             included_resources_str = "; ".join(included_resources)
@@ -97,7 +103,7 @@ class defender_antispam_outbound_policy_configured(Check):
                                 report.status = "FAIL"
                                 report.status_extended = (
                                     f"Custom Outbound Spam policy {policy_name} is not properly configured and includes {included_resources_str}, "
-                                    f"with priority {defender_client.outbound_spam_rules[policy.name].priority} (0 is the highest). "
+                                    f"with priority {outbound_spam_rule.priority} (0 is the highest). "
                                     "However, the default policy is properly configured, so entities not included by this custom policy could be correctly protected."
                                 )
                                 findings.append(report)
@@ -106,24 +112,24 @@ class defender_antispam_outbound_policy_configured(Check):
                                 report.status = "FAIL"
                                 report.status_extended = (
                                     f"Custom Outbound Spam policy {policy_name} is not properly configured and includes {included_resources_str}, "
-                                    f"with priority {defender_client.outbound_spam_rules[policy.name].priority} (0 is the highest). "
+                                    f"with priority {outbound_spam_rule.priority} (0 is the highest). "
                                     "Also, the default policy is not properly configured, so entities not included by this custom policy could not be correctly protected."
                                 )
                                 findings.append(report)
                         else:
                             included_resources = []
 
-                            if defender_client.outbound_spam_rules[policy.name].users:
+                            if outbound_spam_rule.users:
                                 included_resources.append(
-                                    f"users: {', '.join(defender_client.outbound_spam_rules[policy.name].users)}"
+                                    f"users: {', '.join(outbound_spam_rule.users)}"
                                 )
-                            if defender_client.outbound_spam_rules[policy.name].groups:
+                            if outbound_spam_rule.groups:
                                 included_resources.append(
-                                    f"groups: {', '.join(defender_client.outbound_spam_rules[policy.name].groups)}"
+                                    f"groups: {', '.join(outbound_spam_rule.groups)}"
                                 )
-                            if defender_client.outbound_spam_rules[policy.name].domains:
+                            if outbound_spam_rule.domains:
                                 included_resources.append(
-                                    f"domains: {', '.join(defender_client.outbound_spam_rules[policy.name].domains)}"
+                                    f"domains: {', '.join(outbound_spam_rule.domains)}"
                                 )
 
                             included_resources_str = "; ".join(included_resources)
@@ -133,7 +139,7 @@ class defender_antispam_outbound_policy_configured(Check):
                                 report.status = "PASS"
                                 report.status_extended = (
                                     f"Custom Outbound Spam policy {policy_name} is properly configured and includes {included_resources_str}, "
-                                    f"with priority {defender_client.outbound_spam_rules[policy.name].priority} (0 is the highest). "
+                                    f"with priority {outbound_spam_rule.priority} (0 is the highest). "
                                     "Also, the default policy is properly configured, so entities not included by this custom policy could still be correctly protected."
                                 )
                                 findings.append(report)
@@ -142,7 +148,7 @@ class defender_antispam_outbound_policy_configured(Check):
                                 report.status = "PASS"
                                 report.status_extended = (
                                     f"Custom Outbound Spam policy {policy_name} is properly configured and includes {included_resources_str}, "
-                                    f"with priority {defender_client.outbound_spam_rules[policy.name].priority} (0 is the highest). "
+                                    f"with priority {outbound_spam_rule.priority} (0 is the highest). "
                                     "However, the default policy is not properly configured, so entities not included by this custom policy could not be correctly protected."
                                 )
                                 findings.append(report)
@@ -159,13 +165,13 @@ class defender_antispam_outbound_policy_configured(Check):
         Returns:
             bool: True if the policy is properly configured, False otherwise.
         """
+        if not policy.default:
+            outbound_spam_rule = defender_client.outbound_spam_rules.get(policy.name)
+            if not outbound_spam_rule or outbound_spam_rule.state.lower() != "enabled":
+                return False
+
         return (
-            (
-                policy.default
-                or defender_client.outbound_spam_rules[policy.name].state.lower()
-                == "enabled"
-            )
-            and policy.notify_limit_exceeded
+            policy.notify_limit_exceeded
             and policy.notify_sender_blocked
             and policy.notify_limit_exceeded_addresses
             and policy.notify_sender_blocked_addresses
