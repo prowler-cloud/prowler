@@ -109,8 +109,12 @@ class OscalFinding:
                 "target-id": self.target_id,
                 "status": target_status,
             },
-            "related-observations": [ro.to_dict() for ro in self.related_observations],
         }
+        # related-observations has minItems: 1 when present — omit if empty.
+        if self.related_observations:
+            res["related-observations"] = [
+                ro.to_dict() for ro in self.related_observations
+            ]
         if self.props:
             res["props"] = [p.to_dict() for p in self.props]
         if self.remarks:

@@ -2,25 +2,23 @@ import io
 import json
 import sys
 import unittest
-from datetime import datetime, timezone
+import uuid
 from pathlib import Path
-from types import SimpleNamespace
 
 import jsonschema
 import jsonschema._keywords
 import regex
 
-# Add prowler path to sys.path
 _prowler_root = Path(__file__).resolve().parent.parent.parent.parent
 if str(_prowler_root) not in sys.path:
     sys.path.insert(0, str(_prowler_root))
 
 from prowler.lib.outputs.oscal.oscal import OSCAL
+from tests.lib.outputs.fixtures.fixtures import generate_finding_output
 
 # jsonschema's `pattern` keyword calls re.search() directly; the official
 # OSCAL schema uses \p{L}/\p{N} Unicode property escapes (valid ECMA-262
-# regex, per the JSON Schema spec's default dialect) that Python's stdlib
-# `re` module does not support. `regex` is a compatible drop-in that does.
+# regex) that Python's stdlib `re` does not support. `regex` does.
 jsonschema._keywords.re = regex
 
 _SCHEMA_PATH = (
@@ -33,50 +31,51 @@ _OSCAL_AR_SCHEMA = json.loads(_SCHEMA_PATH.read_text(encoding="utf-8"))
 
 class TestOscalOutput(unittest.TestCase):
     def setUp(self):
-        self.meta_pass = SimpleNamespace(
-            Provider="aws",
-            CheckID="s3_bucket_default_encryption",
-            CheckTitle="S3 Buckets have default encryption enabled",
-            Severity=SimpleNamespace(value="high"),
-            Remediation=SimpleNamespace(
-                Recommendation=SimpleNamespace(
-                    Text="Enable default encryption.",
-                )
-            ),
-        )
-
-        self.finding_pass = SimpleNamespace(
-            auth_method="role",
-            timestamp=datetime.now(timezone.utc),
-            account_uid="123456789012",
-            metadata=self.meta_pass,
-            uid="prowler-aws-s3_bucket_default_encryption-123456789012-us-east-1-mybucket-pass",
-            status=SimpleNamespace(value="PASS"),
+        self.finding_pass = generate_finding_output(
+            status="PASS",
             status_extended="Bucket mybucket has default encryption enabled.",
-            muted=False,
+            service_name="s3",
+            check_id="s3_bucket_default_encryption",
+            check_title="S3 Buckets have default encryption enabled",
             resource_uid="arn:aws:s3:::mybucket",
             resource_name="mybucket",
-            resource_details="AES256",
             region="us-east-1",
             compliance={"NIST-800-53-R5": ["SC-13", "SC-28"]},
-            prowler_version="4.0.0",
-        )
-
-        self.finding_fail = SimpleNamespace(
-            auth_method="role",
-            timestamp=datetime.now(timezone.utc),
-            account_uid="123456789012",
-            metadata=self.meta_pass,
-            uid="prowler-aws-s3_bucket_default_encryption-123456789012-us-east-1-mybucket-fail",
-            status=SimpleNamespace(value="FAIL"),
-            status_extended="Bucket mybucket does not have default encryption enabled.",
+            remediation_recommendation_text="Enable default encryption.",
             muted=False,
+        )
+        # Distinct uid so observation/finding UUIDs differ from PASS
+        self.finding_fail = generate_finding_output(
+            status="FAIL",
+            status_extended="Bucket mybucket2 does not have default encryption enabled.",
+            service_name="s3",
+            check_id="s3_bucket_default_encryption",
+            check_title="S3 Buckets have default encryption enabled",
             resource_uid="arn:aws:s3:::mybucket2",
             resource_name="mybucket2",
-            resource_details="None",
             region="us-east-1",
             compliance={"NIST-800-53-R5": ["SC-13", "SC-28"]},
-            prowler_version="4.0.0",
+            remediation_recommendation_text="Enable default encryption.",
+            muted=False,
+        )
+        self.finding_fail = self.finding_fail.copy(
+            update={"uid": "test-unique-finding-fail"}
+        )
+
+        self.finding_fail_muted = generate_finding_output(
+            status="FAIL",
+            status_extended="Muted failure for suppressed bucket.",
+            service_name="s3",
+            check_id="s3_bucket_default_encryption",
+            check_title="S3 Buckets have default encryption enabled",
+            resource_uid="arn:aws:s3:::mybucket-muted",
+            resource_name="mybucket-muted",
+            region="us-east-1",
+            compliance={"NIST-800-53-R5": ["SC-13"]},
+            muted=True,
+        )
+        self.finding_fail_muted = self.finding_fail_muted.copy(
+            update={"uid": "test-unique-finding-muted"}
         )
 
     def test_oscal_transformation(self):
@@ -88,20 +87,31 @@ class TestOscalOutput(unittest.TestCase):
         self.assertEqual(len(results), 1)
 
         res = results[0]
-        # Both PASS and FAIL become observations
         self.assertEqual(len(res.observations), 2)
-        # Only FAIL becomes an OSCAL finding
         self.assertEqual(len(res.findings), 1)
 
         fail_finding = res.findings[0]
         self.assertIn("Non-compliant check", fail_finding.title)
         self.assertEqual(len(fail_finding.related_observations), 1)
 
-        # Check NIST controls
         control_props = [p for p in fail_finding.props if p.name == "control-id"]
         control_vals = {p.value for p in control_props}
         self.assertIn("SC-13", control_vals)
         self.assertIn("SC-28", control_vals)
+
+    def test_muted_fail_is_observation_only(self):
+        exporter = OSCAL(findings=[self.finding_fail_muted])
+        res = exporter.data[0].assessment_results.results[0]
+        self.assertEqual(len(res.observations), 1)
+        self.assertEqual(len(res.findings), 0)
+        muted_prop = next(p for p in res.observations[0].props if p.name == "muted")
+        self.assertEqual(muted_prop.value, "true")
+
+    def test_result_uuid_unique_per_export(self):
+        a = OSCAL(findings=[self.finding_pass]).data[0].assessment_results.results[0]
+        b = OSCAL(findings=[self.finding_pass]).data[0].assessment_results.results[0]
+        self.assertNotEqual(a.result_uuid, b.result_uuid)
+        uuid.UUID(a.result_uuid)  # raises if not a valid UUID
 
     def test_oscal_batch_write(self):
         exporter = OSCAL(findings=[self.finding_fail])
@@ -121,13 +131,6 @@ class TestOscalOutput(unittest.TestCase):
             "urn:prowler:assessment-plan:default",
         )
 
-    # ---- Schema validation: json.loads() only confirms syntactically valid
-    # JSON, not that it's a schema-valid OSCAL document (a document can pass
-    # json.loads() while violating required fields, using wrong property
-    # names, or including properties the schema forbids). These tests
-    # validate the actual serialized output against the pinned, official
-    # NIST OSCAL 1.2.3 assessment-results schema (fixtures/).
-
     def test_oscal_output_validates_against_official_schema_with_fail_finding(self):
         exporter = OSCAL(findings=[self.finding_pass, self.finding_fail])
         doc = exporter.data[0].to_dict()
@@ -143,10 +146,7 @@ class TestOscalOutput(unittest.TestCase):
         )
 
     def test_oscal_output_validates_against_official_schema_pass_only(self):
-        """A PASS-only run produces zero OscalFindings; `findings` and
-        `observations` both have schema minItems: 1, so the arrays must be
-        omitted entirely rather than emitted empty -- this specifically
-        exercises that path."""
+        """PASS-only run must omit empty `findings` (schema minItems: 1)."""
         exporter = OSCAL(findings=[self.finding_pass])
         doc = exporter.data[0].to_dict()
 
@@ -171,9 +171,7 @@ class TestOscalOutput(unittest.TestCase):
             finding["uuid"],
             exporter.data[0].assessment_results.results[0].findings[0].finding_uuid,
         )
-        self.assertNotIn(
-            "collected", finding
-        )  # not a valid `finding` property in OSCAL
+        self.assertNotIn("collected", finding)
         self.assertEqual(finding["target"]["target-id"], "s3_bucket_default_encryption")
         self.assertEqual(finding["target"]["type"], "objective-id")
         self.assertEqual(
