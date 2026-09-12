@@ -1366,6 +1366,89 @@ class Test_Entra_Service:
         assert merged.password_credentials[0].display_name == "app-level-secret"
         assert merged.password_credentials[0].is_active()
 
+    def test__get_app_registrations_reads_federated_identity_credentials(self):
+        """Federated identity credentials are read per application object."""
+        application = SimpleNamespace(
+            id="app-object",
+            app_id="app-client-id",
+            display_name="Deploy App",
+            password_credentials=[],
+        )
+        applications_response = SimpleNamespace(
+            value=[application], odata_next_link=None
+        )
+
+        fic = SimpleNamespace(
+            name="github-actions",
+            issuer="https://token.actions.githubusercontent.com",
+            subject="repo:acme/deploy:ref:refs/heads/main",
+            audiences=["api://AzureADTokenExchange"],
+        )
+        fic_response = SimpleNamespace(value=[fic])
+        federated_builder = SimpleNamespace(get=AsyncMock(return_value=fic_response))
+        item_builder = SimpleNamespace(federated_identity_credentials=federated_builder)
+
+        applications_builder = SimpleNamespace(
+            get=AsyncMock(return_value=applications_response),
+            with_url=MagicMock(),
+            by_application_id=MagicMock(return_value=item_builder),
+        )
+
+        entra_service_instance = Entra.__new__(Entra)
+        entra_service_instance.client = SimpleNamespace(
+            applications=applications_builder,
+        )
+
+        result = asyncio.run(entra_service_instance._get_app_registrations())
+
+        applications_builder.by_application_id.assert_called_once_with("app-object")
+        app = result["app-object"]
+        assert app.app_id == "app-client-id"
+        assert len(app.federated_identity_credentials) == 1
+        credential = app.federated_identity_credentials[0]
+        assert credential.name == "github-actions"
+        assert credential.issuer == "https://token.actions.githubusercontent.com"
+        assert credential.subject == "repo:acme/deploy:ref:refs/heads/main"
+        assert credential.audiences == ["api://AzureADTokenExchange"]
+
+    def test__get_app_registrations_handles_federated_credentials_error(self):
+        """A failure reading one application's federated credentials is isolated."""
+        application = SimpleNamespace(
+            id="app-object",
+            app_id="app-client-id",
+            display_name="Deploy App",
+            password_credentials=[],
+        )
+        applications_response = SimpleNamespace(
+            value=[application], odata_next_link=None
+        )
+
+        federated_builder = SimpleNamespace(
+            get=AsyncMock(side_effect=Exception("Graph error"))
+        )
+        item_builder = SimpleNamespace(federated_identity_credentials=federated_builder)
+
+        applications_builder = SimpleNamespace(
+            get=AsyncMock(return_value=applications_response),
+            with_url=MagicMock(),
+            by_application_id=MagicMock(return_value=item_builder),
+        )
+
+        entra_service_instance = Entra.__new__(Entra)
+        entra_service_instance.client = SimpleNamespace(
+            applications=applications_builder,
+        )
+
+        result = asyncio.run(entra_service_instance._get_app_registrations())
+
+        app = result["app-object"]
+        assert app.federated_identity_credentials == []
+        assert app.federated_identity_credentials_error is not None
+        assert (
+            "Unable to retrieve federated identity credentials"
+            in app.federated_identity_credentials_error
+        )
+
     def test__get_exchange_mailbox_permission_service_principals(self):
         """Service principals with Exchange Graph application roles are returned."""
         graph_sp_id = "graph-sp-id"
