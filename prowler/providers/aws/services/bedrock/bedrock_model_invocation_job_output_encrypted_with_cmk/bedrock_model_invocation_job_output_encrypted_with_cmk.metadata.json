@@ -1,0 +1,41 @@
+{
+  "Provider": "aws",
+  "CheckID": "bedrock_model_invocation_job_output_encrypted_with_cmk",
+  "CheckTitle": "Bedrock model invocation job output is encrypted with a customer-managed KMS key",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/AWS Security Best Practices/Data Encryption"
+  ],
+  "ServiceName": "bedrock",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Other",
+  "ResourceGroup": "ai_ml",
+  "Description": "Ensure that the S3 output of Amazon Bedrock model invocation jobs is configured to use a customer-managed KMS key.",
+  "Risk": "Model invocation job outputs may contain sensitive or confidential data. Without customer-managed KMS key encryption, organizations have less control over the encryption key protecting these S3 outputs.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/bedrock/latest/APIReference/API_GetModelInvocationJob.html",
+    "https://docs.aws.amazon.com/bedrock/latest/APIReference/API_ModelInvocationJobS3OutputDataConfig.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "Configure the Bedrock model invocation job output S3 configuration to use a customer-managed AWS KMS key.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Configure the S3 output of the Bedrock model invocation job to use a customer-managed KMS key.",
+      "Url": "https://hub.prowler.com/check/bedrock_model_invocation_job_output_encrypted_with_cmk"
+    }
+  },
+  "Categories": [
+    "gen-ai",
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "The check passes when s3EncryptionKeyId is present in the model invocation job S3 output configuration. If the required job details cannot be retrieved, the finding is reported as MANUAL."
+}
