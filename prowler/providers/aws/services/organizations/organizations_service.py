@@ -15,6 +15,14 @@ AVAILABLE_ORGANIZATIONS_POLICIES = [
     "AISERVICES_OPT_OUT_POLICY",
 ]
 
+# The code AWS Organizations returns when the audited account is not allowed to make the
+# call. It is the only collection failure explained by which account the scan runs from,
+# so it is the only one a caller can answer with account-specific advice. Every other
+# code -- a throttle, a validation error, a transport failure -- leaves the same sentinel
+# but needs a different answer, so callers compare against this rather than treating the
+# sentinel alone as an access denial.
+ORGANIZATIONS_ACCESS_DENIED_ERROR_CODE = "AccessDeniedException"
+
 
 class Organizations(AWSService):
     def __init__(self, provider):
@@ -23,9 +31,16 @@ class Organizations(AWSService):
         self.organization = None
         self.policies = {}
         self.delegated_administrators = []
+        self.delegated_administrators_error_code = None
         self._describe_organization()
 
     def _describe_organization(self):
+        """Describe the organization the audited account belongs to and its delegations.
+
+        Sets `self.organization` to None when the account is not part of an organization,
+        and leaves the trusted access and per-administrator delegation attributes at the
+        sentinel their collectors returned when they could not be read.
+        """
         logger.info("Organizations - Describe Organization...")
 
         try:
@@ -38,6 +53,18 @@ class Organizations(AWSService):
                 organization_delegated_administrator = (
                     self._list_delegated_administrators()
                 )
+                organization_enabled_service_principals = (
+                    self._list_aws_service_access_for_organization()
+                )
+                organization_delegated_service_principals = {}
+                for delegated_administrator in (
+                    organization_delegated_administrator or []
+                ):
+                    organization_delegated_service_principals[
+                        delegated_administrator.id
+                    ] = self._list_delegated_services_for_account(
+                        delegated_administrator.id
+                    )
             except ClientError as error:
                 if (
                     error.response["Error"]["Code"]
@@ -64,6 +91,9 @@ class Organizations(AWSService):
                         master_id=organization_master_id,
                         policies=organization_policies,
                         delegated_administrators=organization_delegated_administrator,
+                        delegated_administrators_error_code=self.delegated_administrators_error_code,
+                        enabled_service_principals=organization_enabled_service_principals,
+                        delegated_service_principals=organization_delegated_service_principals,
                     )
                 else:
                     self.organization = Organization(
@@ -162,6 +192,16 @@ class Organizations(AWSService):
             return []
 
     def _list_delegated_administrators(self):
+        """List the member accounts registered as delegated administrators.
+
+        Returns:
+            The delegated administrators of the organization, or None when the list could
+            not be read. None is a distinct answer from the empty list, which means the
+            organization has no delegated administrator at all. The code of the failure
+            that produced the sentinel is left in `self.delegated_administrators_error_code`
+            so that a caller can tell an access denial from a throttle, a validation
+            error or a transport failure, all of which the sentinel alone conflates.
+        """
         logger.info("Organizations - List Delegated Administrators...")
 
         try:
@@ -182,15 +222,127 @@ class Organizations(AWSService):
                     )
 
         except ClientError as error:
-            if error.response["Error"]["Code"] == "AccessDeniedException":
-                self.delegated_administrators = None
+            # Any ClientError leaves the administrators unknown, not empty. Setting the
+            # sentinel only for AccessDeniedException let a throttle or a service error
+            # return the empty list, which reads as an organization that has none.
+            self.delegated_administrators = None
+            error_code = error.response["Error"]["Code"]
+            self.delegated_administrators_error_code = error_code
+            if error_code == ORGANIZATIONS_ACCESS_DENIED_ERROR_CODE:
+                logger.warning(
+                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+            else:
+                logger.error(
+                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
 
         except Exception as error:
+            # A failure that never reached the service carries no AWS error code, so the
+            # exception class is recorded in its place: it is what distinguishes this
+            # failure from an access denial, which is all a caller needs from it.
+            self.delegated_administrators = None
+            self.delegated_administrators_error_code = error.__class__.__name__
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
         return self.delegated_administrators
+
+    def _list_aws_service_access_for_organization(self):
+        """List the service principals that have trusted access enabled organization-wide.
+
+        Returns:
+            The enabled service principals, or None when the trusted access configuration
+            could not be read. None is a distinct answer from the empty list, which means
+            no service is integrated with the organization at all.
+        """
+        logger.info("Organizations - List AWS Service Access For Organization...")
+
+        # None means the trusted access configuration could not be read, which is
+        # not the same as an organization with no service integrated at all. The
+        # service principal is read by key so that a response no longer carrying it
+        # raises into the sentinel instead of yielding a list of None.
+        enabled_service_principals = []
+        try:
+            list_aws_service_access_paginator = self.client.get_paginator(
+                "list_aws_service_access_for_organization"
+            )
+            for page in list_aws_service_access_paginator.paginate():
+                for enabled_service_principal in page["EnabledServicePrincipals"]:
+                    enabled_service_principals.append(
+                        enabled_service_principal["ServicePrincipal"]
+                    )
+
+        except ClientError as error:
+            enabled_service_principals = None
+            if error.response["Error"]["Code"] == "AccessDeniedException":
+                logger.warning(
+                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+            else:
+                logger.error(
+                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+
+        except Exception as error:
+            enabled_service_principals = None
+            logger.error(
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+        return enabled_service_principals
+
+    def _list_delegated_services_for_account(self, account_id):
+        """List the service principals one delegated administrator administers.
+
+        Args:
+            account_id: The delegated administrator account to read the delegations of.
+
+        Returns:
+            The service principals delegated to the account, or None when they could not
+            be read. None is a distinct answer from the empty list, which means the
+            account administers no service.
+        """
+        logger.info(
+            "Organizations - List Delegated Services For Account: %s ...", account_id
+        )
+
+        # None means the delegations of this account could not be read, which is not
+        # the same as an account that administers no service. The service principal is
+        # read by key so that a response no longer carrying it raises into the sentinel
+        # instead of yielding a list of None.
+        delegated_service_principals = []
+        try:
+            list_delegated_services_paginator = self.client.get_paginator(
+                "list_delegated_services_for_account"
+            )
+            for page in list_delegated_services_paginator.paginate(
+                AccountId=account_id
+            ):
+                for delegated_service in page["DelegatedServices"]:
+                    delegated_service_principals.append(
+                        delegated_service["ServicePrincipal"]
+                    )
+
+        except ClientError as error:
+            delegated_service_principals = None
+            if error.response["Error"]["Code"] == "AccessDeniedException":
+                logger.warning(
+                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+            else:
+                logger.error(
+                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+
+        except Exception as error:
+            delegated_service_principals = None
+            logger.error(
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+        return delegated_service_principals
 
 
 class Policy(BaseModel):
@@ -218,3 +370,6 @@ class Organization(BaseModel):
     master_id: str
     policies: Optional[dict[str, list[Policy]]] = {}
     delegated_administrators: list[DelegatedAdministrator] = None
+    delegated_administrators_error_code: Optional[str] = None
+    enabled_service_principals: Optional[list[str]] = None
+    delegated_service_principals: Optional[dict[str, Optional[list[str]]]] = None
