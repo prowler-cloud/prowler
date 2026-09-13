@@ -6,10 +6,11 @@ class sagemaker_processing_job_volume_encrypted_with_cmk(Check):
     """Ensure SageMaker processing job volumes use a customer-managed KMS key.
 
     Processing jobs write intermediate data to an attached ML storage volume.
-    When ``ProcessingResources.ClusterConfig.VolumeKmsKeyId`` is unset the
-    volume falls back to an AWS-managed key, which cannot carry a custom key
-    policy and whose rotation, access and lifecycle are outside the account
-    owner's control.
+    When ``ProcessingResources.ClusterConfig.VolumeKmsKeyId`` is unset,
+    SageMaker encrypts the volume with a transient key and discards it after
+    encryption (not an AWS-managed KMS key). That transient key cannot carry
+    a custom key policy, so rotation, access and lifecycle remain outside the
+    account owner's control.
 
     - PASS: ``VolumeKmsKeyId`` is present on the processing job.
     - FAIL: ``VolumeKmsKeyId`` is absent after a successful describe.
