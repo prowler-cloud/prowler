@@ -1,0 +1,1 @@
+`sagemaker_processing_job_volume_encrypted_with_cmk` checks that every SageMaker processing job encrypts its ML storage volume with a customer-managed KMS key (`ProcessingResources.ClusterConfig.VolumeKmsKeyId`), and reports MANUAL when the job details cannot be described

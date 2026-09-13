@@ -1,0 +1,45 @@
+{
+  "Provider": "aws",
+  "CheckID": "sagemaker_transform_job_volume_encrypted_with_cmk",
+  "CheckTitle": "SageMaker transform job volumes use customer-managed KMS keys",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Effects/Data Exposure"
+  ],
+  "ServiceName": "sagemaker",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Other",
+  "ResourceGroup": "ai_ml",
+  "Description": "**Amazon SageMaker transform jobs** are assessed for **at-rest encryption** of their attached ML storage volumes using a **customer-managed KMS key**. The finding reflects whether `TransformResources.VolumeKmsKeyId` is set on the job.",
+  "Risk": "A transform job without `VolumeKmsKeyId` falls back to an **AWS managed key**, which cannot carry a custom key policy and whose **rotation**, **access** and **lifecycle** are outside the account owner's control. Intermediate inference data on the volume then cannot be independently revoked, and grants to that data cannot be audited or restricted through a key policy.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/sagemaker/latest/dg/key-management.html",
+    "https://docs.aws.amazon.com/sagemaker/latest/APIReference/API_DescribeTransformJob.html",
+    "https://docs.aws.amazon.com/sagemaker/latest/APIReference/API_TransformResources.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aws sagemaker create-transform-job --transform-job-name <job_name> --model-name <model_name> --transform-input 'DataSource={S3DataSource={S3DataType=S3Prefix,S3Uri=s3://<bucket>/input}},ContentType=text/csv' --transform-output 'S3OutputPath=s3://<bucket>/output' --transform-resources 'InstanceType=ml.m5.xlarge,InstanceCount=1,VolumeKmsKeyId=<kms_key_id>'",
+      "NativeIaC": "```yaml\n# CloudFormation: SageMaker TransformJob with volume CMEK\nResources:\n  <example_resource_name>:\n    Type: AWS::SageMaker::TransformJob\n    Properties:\n      TransformJobName: <example_resource_name>\n      ModelName: <example_model_name>\n      TransformInput:\n        DataSource:\n          S3DataSource:\n            S3DataType: S3Prefix\n            S3Uri: s3://<example_bucket>/input\n      TransformOutput:\n        S3OutputPath: s3://<example_bucket>/output\n      TransformResources:\n        InstanceType: ml.m5.xlarge\n        InstanceCount: 1\n        VolumeKmsKeyId: <example_kms_key_arn>  # Critical: encrypts the transform EBS volume with a customer-managed key\n```",
+      "Other": "1. In the AWS console, go to SageMaker > Inference > Batch transform jobs\n2. Create a new transform job (existing jobs cannot change VolumeKmsKeyId)\n3. Under Resource configuration, set Volume encryption key to your customer-managed KMS key\n4. Complete required fields and create the job\n5. Verify DescribeTransformJob shows TransformResources.VolumeKmsKeyId",
+      "Terraform": "```hcl\n# SageMaker Transform Job with volume CMEK\n# Set TransformResources.VolumeKmsKeyId via the AWS CLI/SDK or CloudFormation:\n# VolumeKmsKeyId = \"<example_kms_key_arn>\"\n```"
+    },
+    "Recommendation": {
+      "Text": "Set `VolumeKmsKeyId` on every SageMaker transform job using a **customer-managed KMS key** with a least-privilege key policy and **rotation** enabled. Existing jobs cannot change the key; recreate non-compliant jobs.",
+      "Url": "https://hub.prowler.com/check/sagemaker_transform_job_volume_encrypted_with_cmk"
+    }
+  },
+  "Categories": [
+    "encryption",
+    "gen-ai"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "sagemaker_training_jobs_volume_and_output_encryption_enabled",
+    "sagemaker_processing_job_volume_encrypted_with_cmk"
+  ],
+  "Notes": "Reports MANUAL when DescribeTransformJob fails so an unread job is never treated as compliant. VolumeKmsKeyId lives under TransformResources."
+}
