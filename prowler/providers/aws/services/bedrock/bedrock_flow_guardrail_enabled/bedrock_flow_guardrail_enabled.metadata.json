@@ -1,0 +1,44 @@
+{
+  "Provider": "aws",
+  "CheckID": "bedrock_flow_guardrail_enabled",
+  "CheckTitle": "Amazon Bedrock Flow applies a guardrail to applicable prompt nodes",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices/Runtime Behavior Analysis",
+    "Effects/Data Exposure"
+  ],
+  "ServiceName": "bedrock",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:bedrock:region:account-id:flow/flow-id",
+  "Severity": "high",
+  "ResourceType": "Other",
+  "ResourceGroup": "ai_ml",
+  "Description": "**Bedrock Flows** should apply a **guardrail** to every applicable prompt path. Prompt nodes always generate model output; Knowledge Base nodes that use RetrieveAndGenerate also generate responses and can attach a guardrail. Retrieve-only Knowledge Base nodes cannot.",
+  "Risk": "Without **guardrails** on a flow's prompt path, intermediate and final model steps may expose **PII** or internal data (confidentiality), accept **prompt injections** that manipulate downstream nodes (integrity), and produce unsafe or out-of-scope content that bypasses the controls applied to agents or standalone invocations.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/bedrock/latest/userguide/flows-guardrails.html",
+    "https://docs.aws.amazon.com/bedrock/latest/userguide/guardrails.html",
+    "https://docs.aws.amazon.com/bedrock/latest/APIReference/API_agent_GetFlow.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aws bedrock-agent update-flow --flow-identifier <flow_id> --name <flow_name> --execution-role-arn <role_arn> --definition file://flow-definition-with-guardrails.json",
+      "NativeIaC": "```yaml\nResources:\n  ExampleFlow:\n    Type: AWS::Bedrock::Flow\n    Properties:\n      Name: <example_resource_name>\n      ExecutionRoleArn: <example_resource_id>\n      Definition:\n        Nodes:\n          - Name: prompt-node\n            Type: Prompt\n            Configuration:\n              Prompt:\n                GuardrailConfiguration:  # CRITICAL: screens this prompt node\n                  GuardrailIdentifier: <example_resource_id>\n                  GuardrailVersion: DRAFT\n```",
+      "Other": "1. Open the Amazon Bedrock console and go to Flows\n2. Open the flow and select each Prompt node (and each Knowledge Base node that generates responses)\n3. In the node configuration, choose a guardrail and version\n4. Save the flow and prepare it so the DRAFT version includes the change\n5. Confirm GetFlow shows guardrailConfiguration.guardrailIdentifier on those nodes",
+      "Terraform": "```hcl\nresource \"awscc_bedrock_flow\" \"example\" {\n  name               = \"<example_resource_name>\"\n  execution_role_arn = \"<example_resource_id>\"\n\n  definition = {\n    nodes = [{\n      name = \"prompt-node\"\n      type = \"Prompt\"\n      configuration = {\n        prompt = {\n          # CRITICAL: screens this prompt node\n          guardrail_configuration = {\n            guardrail_identifier = \"<example_resource_id>\"\n            guardrail_version    = \"DRAFT\"\n          }\n        }\n      }\n    }]\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Attach a **guardrail** to every Prompt node and every Knowledge Base node that generates responses in a Bedrock Flow. Enable content filters, denied topics, and sensitive-information masking that match the flow's use case, then prepare the flow so the published definition includes the guardrail.",
+      "Url": "https://hub.prowler.com/check/bedrock_flow_guardrail_enabled"
+    }
+  },
+  "Categories": [
+    "gen-ai"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "bedrock_agent_guardrail_enabled",
+    "bedrock_guardrails_configured"
+  ],
+  "Notes": "Reports one finding per flow. Node configuration is read from GetFlow because ListFlows summaries do not carry it. A flow whose definition could not be retrieved returns MANUAL rather than PASS. ListFlows AccessDenied is a region-level MANUAL finding; ValidationException (unsupported region) is treated as empty inventory."
+}
