@@ -22,7 +22,7 @@
   ],
   "Remediation": {
     "Code": {
-      "CLI": "aws sagemaker create-transform-job --transform-job-name <job_name> --model-name <model_name> --transform-input 'DataSource={S3DataSource={S3DataType=S3Prefix,S3Uri=s3://<bucket>/input}},ContentType=text/csv' --transform-output 'S3OutputPath=s3://<bucket>/output' --transform-resources 'InstanceType=ml.m5.xlarge,InstanceCount=1,VolumeKmsKeyId=<kms_key_id>'",
+      "CLI": "",
       "NativeIaC": "```yaml\n# CloudFormation: SageMaker TransformJob with volume CMEK\nResources:\n  <example_resource_name>:\n    Type: AWS::SageMaker::TransformJob\n    Properties:\n      TransformJobName: <example_resource_name>\n      ModelName: <example_model_name>\n      TransformInput:\n        DataSource:\n          S3DataSource:\n            S3DataType: S3Prefix\n            S3Uri: s3://<example_bucket>/input\n      TransformOutput:\n        S3OutputPath: s3://<example_bucket>/output\n      TransformResources:\n        InstanceType: ml.m5.xlarge\n        InstanceCount: 1\n        VolumeKmsKeyId: <example_kms_key_arn>  # Critical: encrypts the transform EBS volume with a customer-managed key\n```",
       "Other": "1. In the AWS console, go to SageMaker > Inference > Batch transform jobs\n2. Create a new transform job (existing jobs cannot change VolumeKmsKeyId)\n3. Under Resource configuration, set Volume encryption key to your customer-managed KMS key\n4. Complete required fields and create the job\n5. Verify DescribeTransformJob shows TransformResources.VolumeKmsKeyId",
       "Terraform": "```hcl\n# SageMaker Transform Job with volume CMEK\n# Set TransformResources.VolumeKmsKeyId via the AWS CLI/SDK or CloudFormation:\n# VolumeKmsKeyId = \"<example_kms_key_arn>\"\n```"
