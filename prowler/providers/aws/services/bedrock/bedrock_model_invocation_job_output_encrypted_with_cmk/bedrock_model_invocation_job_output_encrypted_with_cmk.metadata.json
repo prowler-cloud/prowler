@@ -21,9 +21,9 @@
   ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "aws bedrock create-model-invocation-job --job-name <JOB_NAME> --role-arn <ROLE_ARN> --model-id <MODEL_ID> --input-data-config 's3InputDataConfig={s3InputFormat=JSONL,s3Uri=<S3_INPUT_URI>}' --output-data-config 's3OutputDataConfig={s3Uri=<S3_OUTPUT_URI>,s3EncryptionKeyId=<KMS_KEY_ID>}'",
       "NativeIaC": "",
-      "Other": "Configure the Bedrock model invocation job output S3 configuration to use a customer-managed AWS KMS key.",
+      "Other": "Configure the Bedrock model invocation job output S3 configuration to use a customer-managed AWS KMS key. The s3EncryptionKeyId setting cannot be updated on an existing model invocation job, so existing jobs must be recreated with the customer-managed KMS key configured.",
       "Terraform": ""
     },
     "Recommendation": {
