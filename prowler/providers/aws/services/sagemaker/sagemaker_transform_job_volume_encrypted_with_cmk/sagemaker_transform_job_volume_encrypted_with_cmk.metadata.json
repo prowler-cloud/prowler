@@ -13,7 +13,7 @@
   "ResourceType": "Other",
   "ResourceGroup": "ai_ml",
   "Description": "**Amazon SageMaker transform jobs** are assessed for **at-rest encryption** of their attached ML storage volumes using a **customer-managed KMS key**. The finding reflects whether `TransformResources.VolumeKmsKeyId` is set on the job.",
-  "Risk": "A transform job without `VolumeKmsKeyId` falls back to an **AWS managed key**, which cannot carry a custom key policy and whose **rotation**, **access** and **lifecycle** are outside the account owner's control. Intermediate inference data on the volume then cannot be independently revoked, and grants to that data cannot be audited or restricted through a key policy.",
+  "Risk": "When `VolumeKmsKeyId` is omitted, SageMaker encrypts the batch transform job ML storage volume with a **transient key** and discards it immediately after encryption, not an AWS managed KMS key. That transient key cannot carry a custom key policy, so **rotation**, **access**, and **lifecycle** remain outside the account owner's control. Intermediate inference data on the volume then cannot be independently revoked, and grants to that data cannot be audited or restricted through a key policy. Configure `VolumeKmsKeyId` when customer-managed key policy and audit controls are required.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/sagemaker/latest/dg/key-management.html",
