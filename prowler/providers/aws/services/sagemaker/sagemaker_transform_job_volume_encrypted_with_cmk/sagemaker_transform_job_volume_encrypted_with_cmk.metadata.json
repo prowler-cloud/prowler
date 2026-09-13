@@ -41,5 +41,5 @@
     "sagemaker_training_jobs_volume_and_output_encryption_enabled",
     "sagemaker_processing_job_volume_encrypted_with_cmk"
   ],
-  "Notes": "Reports MANUAL when DescribeTransformJob fails so an unread job is never treated as compliant. VolumeKmsKeyId lives under TransformResources."
+  "Notes": "Reports MANUAL when DescribeTransformJob fails so an unread job is never treated as compliant, and when ListTransformJobs fails for a region so a failed inventory is not mistaken for empty. VolumeKmsKeyId lives under TransformResources."
 }

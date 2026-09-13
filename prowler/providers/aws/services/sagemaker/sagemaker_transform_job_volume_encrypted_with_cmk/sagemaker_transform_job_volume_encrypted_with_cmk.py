@@ -13,17 +13,36 @@ class sagemaker_transform_job_volume_encrypted_with_cmk(Check):
 
     - PASS: ``VolumeKmsKeyId`` is present on the transform job.
     - FAIL: ``VolumeKmsKeyId`` is absent after a successful describe.
-    - MANUAL: ``DescribeTransformJob`` failed, so encryption cannot be
-      determined either way.
+    - MANUAL: ``DescribeTransformJob`` failed, or ``ListTransformJobs`` failed
+      for a region, so encryption cannot be determined either way.
     """
 
     def execute(self) -> list[Check_Report_AWS]:
         """Execute the SageMaker transform job volume CMK encryption check.
 
         Returns:
-            One report per transform job in the inventory.
+            One report per transform job in the inventory, plus one MANUAL
+            report per region where ``ListTransformJobs`` failed.
         """
         findings = []
+
+        # Distinguishes a failed ListTransformJobs call from a genuinely empty
+        # inventory: failed regions must not silently produce zero findings.
+        for region in sorted(sagemaker_client.transform_jobs_list_failed_regions):
+            report = Check_Report_AWS(metadata=self.metadata(), resource={})
+            report.region = region
+            report.resource_id = "sagemaker-transform-jobs"
+            report.resource_arn = (
+                f"arn:{sagemaker_client.audited_partition}:sagemaker:{region}:"
+                f"{sagemaker_client.audited_account}:transform-job"
+            )
+            report.status = "MANUAL"
+            report.status_extended = (
+                f"SageMaker transform job inventory could not be listed in "
+                f"region {region}; volume encryption cannot be verified."
+            )
+            findings.append(report)
+
         for transform_job in sagemaker_client.sagemaker_transform_jobs:
             report = Check_Report_AWS(
                 metadata=self.metadata(), resource=transform_job

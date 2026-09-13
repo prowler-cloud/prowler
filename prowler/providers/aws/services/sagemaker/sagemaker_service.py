@@ -19,6 +19,8 @@ class SageMaker(AWSService):
         self.sagemaker_processing_jobs = []
         self.processing_jobs_scanned_regions = set()
         self.sagemaker_transform_jobs = []
+        self.transform_jobs_scanned_regions = set()
+        self.transform_jobs_list_failed_regions = set()
         self.sagemaker_domains = []
         self.endpoint_configs = {}
         self.sagemaker_model_registries = []
@@ -455,6 +457,13 @@ class SageMaker(AWSService):
     def _list_transform_jobs(self, regional_client):
         """List SageMaker transform jobs in a region.
 
+        Populates ``self.sagemaker_transform_jobs`` with `TransformJob`
+        entries and adds ``regional_client.region`` to
+        ``self.transform_jobs_scanned_regions`` once pagination succeeds.
+        Regions where ``ListTransformJobs`` fails are recorded in
+        ``self.transform_jobs_list_failed_regions`` so checks can emit MANUAL
+        instead of treating a failed inventory as empty.
+
         Args:
             regional_client: Regional SageMaker boto3 client.
         """
@@ -477,7 +486,9 @@ class SageMaker(AWSService):
                                 arn=transform_job["TransformJobArn"],
                             )
                         )
+            self.transform_jobs_scanned_regions.add(regional_client.region)
         except Exception as error:
+            self.transform_jobs_list_failed_regions.add(regional_client.region)
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
