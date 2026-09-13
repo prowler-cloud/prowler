@@ -530,6 +530,7 @@ class Test_SageMaker_Service:
         assert sagemaker.sagemaker_processing_jobs[0].arn == test_processing_job_arn
         assert sagemaker.sagemaker_processing_jobs[0].region == AWS_REGION_EU_WEST_1
         assert AWS_REGION_EU_WEST_1 in sagemaker.processing_jobs_scanned_regions
+        assert AWS_REGION_EU_WEST_1 not in sagemaker.processing_jobs_list_failed_regions
 
     # Test SageMaker describe processing jobs
     def test_describe_processing_jobs(self):
@@ -670,6 +671,28 @@ class Test_SageMaker_Service:
             assert sagemaker.sagemaker_transform_jobs == []
             assert AWS_REGION_EU_WEST_1 not in sagemaker.transform_jobs_scanned_regions
             assert AWS_REGION_EU_WEST_1 in sagemaker.transform_jobs_list_failed_regions
+
+    def test_list_processing_jobs_access_denied(self):
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+
+        def mock_access_denied(self, operation_name, kwarg):
+            if operation_name == "ListProcessingJobs":
+                raise botocore.exceptions.ClientError(
+                    {
+                        "Error": {
+                            "Code": "AccessDeniedException",
+                            "Message": "User is not authorized to perform sagemaker:ListProcessingJobs",
+                        }
+                    },
+                    "ListProcessingJobs",
+                )
+            return mock_make_api_call(self, operation_name, kwarg)
+
+        with patch("botocore.client.BaseClient._make_api_call", new=mock_access_denied):
+            sagemaker = SageMaker(aws_provider)
+            assert sagemaker.sagemaker_processing_jobs == []
+            assert AWS_REGION_EU_WEST_1 not in sagemaker.processing_jobs_scanned_regions
+            assert AWS_REGION_EU_WEST_1 in sagemaker.processing_jobs_list_failed_regions
 
     # Test SageMaker list model package groups
     def test_list_model_package_groups(self):

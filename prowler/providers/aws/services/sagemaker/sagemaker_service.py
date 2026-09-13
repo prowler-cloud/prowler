@@ -18,6 +18,7 @@ class SageMaker(AWSService):
         self.sagemaker_training_jobs = []
         self.sagemaker_processing_jobs = []
         self.processing_jobs_scanned_regions = set()
+        self.processing_jobs_list_failed_regions = set()
         self.sagemaker_transform_jobs = []
         self.transform_jobs_scanned_regions = set()
         self.transform_jobs_list_failed_regions = set()
@@ -158,9 +159,10 @@ class SageMaker(AWSService):
 
         Populates ``self.sagemaker_processing_jobs`` with `ProcessingJob`
         entries and adds ``regional_client.region`` to
-        ``self.processing_jobs_scanned_regions`` once pagination succeeds, so
-        regions where ``ListProcessingJobs`` fails are skipped by checks that
-        consume that set.
+        ``self.processing_jobs_scanned_regions`` once pagination succeeds.
+        Regions where ``ListProcessingJobs`` fails are recorded in
+        ``self.processing_jobs_list_failed_regions`` so checks can emit MANUAL
+        instead of treating a failed inventory as empty.
 
         Args:
             regional_client: Regional SageMaker boto3 client.
@@ -186,6 +188,7 @@ class SageMaker(AWSService):
                         )
             self.processing_jobs_scanned_regions.add(regional_client.region)
         except Exception as error:
+            self.processing_jobs_list_failed_regions.add(regional_client.region)
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )

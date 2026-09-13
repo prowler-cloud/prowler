@@ -54,6 +54,7 @@ class Test_sagemaker_processing_job_volume_encrypted_with_cmk:
     def test_no_processing_jobs(self):
         sagemaker_client = mock.MagicMock
         sagemaker_client.sagemaker_processing_jobs = []
+        sagemaker_client.processing_jobs_list_failed_regions = set()
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
@@ -71,6 +72,37 @@ class Test_sagemaker_processing_job_volume_encrypted_with_cmk:
             result = sagemaker_processing_job_volume_encrypted_with_cmk().execute()
             assert len(result) == 0
 
+    def test_list_processing_jobs_failed_region(self):
+        sagemaker_client = mock.MagicMock
+        sagemaker_client.sagemaker_processing_jobs = []
+        sagemaker_client.processing_jobs_list_failed_regions = {AWS_REGION_EU_WEST_1}
+        sagemaker_client.audited_partition = "aws"
+        sagemaker_client.audited_account = AWS_ACCOUNT_NUMBER
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(f"{CHECK_PATH}.sagemaker_client", sagemaker_client),
+        ):
+            from prowler.providers.aws.services.sagemaker.sagemaker_processing_job_volume_encrypted_with_cmk.sagemaker_processing_job_volume_encrypted_with_cmk import (
+                sagemaker_processing_job_volume_encrypted_with_cmk,
+            )
+
+            result = sagemaker_processing_job_volume_encrypted_with_cmk().execute()
+            assert len(result) == 1
+            assert result[0].status == "MANUAL"
+            assert (
+                result[0].status_extended
+                == f"SageMaker processing job inventory could not be listed in "
+                f"region {AWS_REGION_EU_WEST_1}; volume encryption cannot be verified."
+            )
+            assert result[0].resource_id == "sagemaker-processing-jobs"
+            assert result[0].region == AWS_REGION_EU_WEST_1
+
     def test_processing_job_encrypted_with_cmk(self):
         sagemaker_client = mock.MagicMock
         sagemaker_client.sagemaker_processing_jobs = [
@@ -81,6 +113,7 @@ class Test_sagemaker_processing_job_volume_encrypted_with_cmk:
                 volume_kms_key_id=test_kms_key_id,
             )
         ]
+        sagemaker_client.processing_jobs_list_failed_regions = set()
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
@@ -116,6 +149,7 @@ class Test_sagemaker_processing_job_volume_encrypted_with_cmk:
                 region=AWS_REGION_EU_WEST_1,
             )
         ]
+        sagemaker_client.processing_jobs_list_failed_regions = set()
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
@@ -151,6 +185,7 @@ class Test_sagemaker_processing_job_volume_encrypted_with_cmk:
                 detail_fetch_error="AccessDeniedException",
             )
         ]
+        sagemaker_client.processing_jobs_list_failed_regions = set()
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
