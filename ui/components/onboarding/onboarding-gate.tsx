@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { getOrderedFlows, shouldStartOnboarding } from "@/lib/onboarding";
@@ -20,6 +20,10 @@ interface OnboardingGateProps {
 // via useSyncExternalStore — server renders nothing, no hydration mismatch.
 export function OnboardingGate({ hasProviders }: OnboardingGateProps) {
   const router = useRouter();
+  const pathname = usePathname();
+  // Billing must stay usable before onboarding; leaving it keeps the gate eligible.
+  const isBillingRoute =
+    pathname === "/billing" || pathname?.startsWith("/billing/");
 
   // Gate forces only the first flow (`add-provider`); remaining flows come via checkpoint/replay.
   const flow = getOrderedFlows()[0] ?? null;
@@ -32,6 +36,7 @@ export function OnboardingGate({ hasProviders }: OnboardingGateProps) {
 
   const activeFlow =
     flow &&
+    !isBillingRoute &&
     !resolvedThisSession &&
     shouldStartOnboarding({ hasProviders, completionRecord })
       ? flow
