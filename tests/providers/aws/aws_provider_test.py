@@ -1618,7 +1618,7 @@ aws:
         self, monkeypatch
     ):
         monkeypatch.setenv("PROWLER_AWS_PARTITION", AWS_GOV_CLOUD_PARTITION)
-        # The region a Private Cloud container carries belongs to no partition it scans
+        # A container may carry a region that belongs to no partition it scans
         current_session = session.Session(region_name=AWS_REGION_US_EAST_1)
         attempted_regions = []
 
@@ -1749,6 +1749,75 @@ aws:
         ]
         assert isinstance(credentials, AWSCredentials)
         assert credentials.aws_access_key_id == "AKIAIOSFODNN7EXAMPLE"
+
+    @mock_aws
+    def test_aws_provider_assumes_the_role_where_validation_got_an_answer(
+        self, monkeypatch
+    ):
+        monkeypatch.setenv("PROWLER_AWS_PARTITION", AWS_GOV_CLOUD_PARTITION)
+        # Out of the partition, so the first candidate is botocore's, not this one
+        monkeypatch.setenv("AWS_DEFAULT_REGION", AWS_REGION_US_EAST_1)
+        role_arn = (
+            f"arn:{AWS_GOV_CLOUD_PARTITION}:iam::{AWS_ACCOUNT_NUMBER}:role/test-role"
+        )
+        answered = AWSCallerIdentity(
+            user_id="test-user-id",
+            account=AWS_ACCOUNT_NUMBER,
+            arn=ARN(AWS_GOV_CLOUD_ACCOUNT_ARN),
+            region=AWS_REGION_GOV_CLOUD_US_WEST_1,
+        )
+
+        with patch(
+            "prowler.providers.aws.aws_provider.AwsProvider.validate_credentials",
+            return_value=answered,
+        ):
+            aws_provider = AwsProvider(role_arn=role_arn, session_duration=900)
+
+        assert (
+            aws_provider._assumed_role_configuration.info.sts_region
+            == AWS_REGION_GOV_CLOUD_US_WEST_1
+        )
+
+    @mock_aws
+    def test_aws_provider_assumes_the_organizations_role_where_validation_got_an_answer(
+        self, monkeypatch
+    ):
+        monkeypatch.setenv("PROWLER_AWS_PARTITION", AWS_GOV_CLOUD_PARTITION)
+        monkeypatch.setenv("AWS_DEFAULT_REGION", AWS_REGION_US_EAST_1)
+        organizations_role_arn = f"arn:{AWS_GOV_CLOUD_PARTITION}:iam::{AWS_ACCOUNT_NUMBER}:role/organizations-role"
+        answered = AWSCallerIdentity(
+            user_id="test-user-id",
+            account=AWS_ACCOUNT_NUMBER,
+            arn=ARN(AWS_GOV_CLOUD_ACCOUNT_ARN),
+            region=AWS_REGION_GOV_CLOUD_US_WEST_1,
+        )
+        sts_regions = []
+
+        class RoleAssumed(Exception):
+            pass
+
+        # Stops at the assumption: the region it was handed is all this checks
+        def assume_role(session, assumed_role_info):
+            sts_regions.append(assumed_role_info.sts_region)
+            raise RoleAssumed
+
+        with (
+            patch(
+                "prowler.providers.aws.aws_provider.AwsProvider.validate_credentials",
+                return_value=answered,
+            ),
+            patch(
+                "prowler.providers.aws.aws_provider.AwsProvider.assume_role",
+                side_effect=assume_role,
+            ),
+        ):
+            with raises(RoleAssumed):
+                AwsProvider(
+                    organizations_role_arn=organizations_role_arn,
+                    session_duration=900,
+                )
+
+        assert sts_regions == [AWS_REGION_GOV_CLOUD_US_WEST_1]
 
     @mock_aws
     def test_test_connection_with_env_credentials(self, monkeypatch):

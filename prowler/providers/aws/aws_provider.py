@@ -270,6 +270,8 @@ class AwsProvider(Provider):
             session=self.session.current_session,
             aws_region=sts_region,
         )
+        # Later STS calls go where validation got an answer, not where it timed out
+        sts_region = caller_identity.region
 
         logger.info("Credentials validated")
         ########
@@ -1362,22 +1364,21 @@ class AwsProvider(Provider):
             Exception: Whatever the operation raises, or the last connection error
                 when no region could be reached.
         """
-        unreachable_error = None
-
-        for candidate_region in get_partition_bootstrap_candidates(
+        candidate_regions = get_partition_bootstrap_candidates(
             aws_region, session.region_name
-        ):
+        )
+
+        for attempt, candidate_region in enumerate(candidate_regions, start=1):
             try:
                 sts_client = AwsProvider.create_sts_session(session, candidate_region)
                 return candidate_region, operation(sts_client)
             # The credentials are not at fault, so the next region is worth trying
             except (EndpointConnectionError, ConnectTimeoutError) as unreachable:
+                if attempt == len(candidate_regions):
+                    raise
                 logger.warning(
                     f"{unreachable.__class__.__name__}[{unreachable.__traceback__.tb_lineno}]: {unreachable}"
                 )
-                unreachable_error = unreachable
-
-        raise unreachable_error
 
     @staticmethod
     def validate_credentials(
