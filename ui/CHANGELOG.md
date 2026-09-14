@@ -4,6 +4,26 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [1.42.0] (Prowler v5.42.0)
+
+### 🚀 Added
+
+- PostHog Toolbar support in development with separate ingestion and app hosts [(#12582)](https://github.com/prowler-cloud/prowler/pull/12582)
+
+### 🐞 Fixed
+
+- Scan Jobs onboarding tour no longer targets an unmounted In Progress row from other tabs [(#12705)](https://github.com/prowler-cloud/prowler/pull/12705)
+- Integration connection test polling now waits up to ~3 minutes instead of ~57 seconds before giving up, so it no longer reports a false failure on slower checks (e.g. Jira accounts with many projects) that were still going to succeed [(#12742)](https://github.com/prowler-cloud/prowler/pull/12742)
+- Scans page filter widths and action button styling, with Launch Scan and Import Findings grouped beside the tabs and sized consistently with Configure Mutelist [(#12781)](https://github.com/prowler-cloud/prowler/pull/12781)
+
+### 🔐 Security
+
+- `nanoid` to 5.1.16, `js-yaml` to 4.3.1 and `postcss` to 8.5.23, plus transitive `hono`, `@hono/node-server`, `browserslist`, `qs`, `dompurify`, `brace-expansion`, `fast-uri`, `ip-address`, `mermaid`, `body-parser` and `@humanfs/node` to patched versions, resolving 40 npm audit advisories (21 high, 15 moderate, 4 low) [(#12758)](https://github.com/prowler-cloud/prowler/pull/12758)
+- `next` to 16.3.3, patching an unauthenticated remote code execution in the Image Optimization API when AVIF files are used (GHSA-2xp9-vwfh-vxw4) [(#12778)](https://github.com/prowler-cloud/prowler/pull/12778)
+- `sharp` to 0.35.4, patching two libheif vulnerabilities reachable through image decoding (GHSA-rgj7-g3m4-5g8c) [(#12778)](https://github.com/prowler-cloud/prowler/pull/12778)
+
+---
+
 ## [1.41.0] (Prowler v5.41.0)
 
 ### 🚀 Added

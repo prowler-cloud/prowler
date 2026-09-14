@@ -27,10 +27,10 @@ export class ScansPage extends BasePage {
     // The sidebar exposes its own icon-button labeled "Launch Scan"
     // (aria-label, wrapped in a Tooltip), so scoping by accessible name
     // alone hits a strict-mode duplicate. Scope to the page-shell's
-    // filters-and-actions group, which only contains the visible-text
+    // tabs-and-actions group, which only contains the visible-text
     // Launch Scan button.
     this.launchScanButton = page
-      .getByRole("group", { name: /scan filters and actions/i })
+      .getByRole("group", { name: /scan tabs/i })
       .getByRole("button", { name: /^Launch Scan$/i });
     this.launchScanDialog = page.getByRole("dialog");
     // The modal renders the providers picker as the shared MultiSelect-based
