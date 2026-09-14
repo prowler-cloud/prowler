@@ -21,7 +21,7 @@ When scanning the China (`aws-cn`), European Sovereign Cloud (`aws-eusc`) or Gov
 
 - Specify the regions to audit within that partition using the `-f/--region` flag.
 
-- Declare the partition with the `PROWLER_AWS_PARTITION` environment variable, set to `aws`, `aws-cn`, `aws-eusc` or `aws-us-gov`.
+- Declare the partition with the `PROWLER_AWS_PARTITION` environment variable, set to `aws`, `aws-cn`, `aws-eusc`, `aws-us-gov`, `aws-iso`, `aws-iso-b`, `aws-iso-e` or `aws-iso-f`.
 
 <Note>
 Refer to: https://boto3.amazonaws.com/v1/documentation/api/latest/guide/credentials.html#configuring-credentials for more information about the AWS credential configuration.
@@ -163,36 +163,45 @@ With this configuration, all partition regions will be scanned without needing t
 </Note>
 ### AWS ISO (US \& Europe)
 
-The AWS ISO partitions—commonly referred to as "secret partitions"—are air-gapped from the Internet, and Prowler does not have a built-in way to scan them. To audit an AWS ISO partition, manually update [aws\_regions\_by\_service.json](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/aws/aws_regions_by_service.json) to include the partition, region, and services. For example:
+The AWS ISO partitions, commonly referred to as "secret partitions", are air-gapped from the Internet. Their regions, and the services available in each of them, ship with the AWS SDK, so Prowler resolves them like any other partition and no manual edit of [aws\_regions\_by\_service.json](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/aws/aws_regions_by_service.json) is required.
 
-```json
-"iam": {
-    "regions": {
-    "aws": [
-        "eu-west-1",
-        "us-east-1",
-    ],
-    "aws-cn": [
-        "cn-north-1",
-        "cn-northwest-1"
-    ],
-    "aws-eusc": [
-        "eusc-de-east-1"
-    ],
-    "aws-us-gov": [
-        "us-gov-east-1",
-        "us-gov-west-1"
-    ],
-    "aws-iso": [
-        "aws-iso-global",
-        "us-iso-east-1",
-        "us-iso-west-1"
-    ],
-    "aws-iso-b": [
-        "aws-iso-b-global",
-        "us-isob-east-1"
-    ],
-    "aws-iso-e": [],
-    }
-},
-```
+<Warning>
+Support for the ISO partitions has not been exercised against a live ISO account. The regions and per-service availability come from the endpoint metadata bundled with the AWS SDK, and the behaviour is covered by tests, but scanning inside these partitions is still pending validation in a real environment. Report anything that does not work as described here.
+
+</Warning>
+
+To scan an account in an AWS ISO partition (`aws-iso`, `aws-iso-b`, `aws-iso-e` or `aws-iso-f`):
+
+- By using the `-f/--region` flag:
+
+    ```
+    prowler aws --region us-isob-east-1
+    ```
+
+- By using the region configured in your AWS profile at `~/.aws/credentials` or `~/.aws/config`:
+
+    ```
+    [default]
+    aws_access_key_id = XXXXXXXXXXXXXXXXXXX
+    aws_secret_access_key = XXXXXXXXXXXXXXXXXXX
+    region = us-isob-east-1
+    ```
+
+<Note>
+With this configuration, all partition regions will be scanned without needing the `-f/--region` flag
+
+</Note>
+
+The regions of each ISO partition are:
+
+| Partition | Regions |
+| --- | --- |
+| `aws-iso` | `us-iso-east-1`, `us-iso-west-1` |
+| `aws-iso-b` | `us-isob-east-1`, `us-isob-west-1` |
+| `aws-iso-e` | `eu-isoe-west-1` |
+| `aws-iso-f` | `us-isof-east-1`, `us-isof-south-1` |
+
+<Note>
+These partitions offer far fewer services than the commercial one. A service that is not available in the audited partition is skipped rather than reported as failing.
+
+</Note>
