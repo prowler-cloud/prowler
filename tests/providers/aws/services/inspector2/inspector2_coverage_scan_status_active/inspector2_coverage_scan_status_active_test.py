@@ -67,6 +67,9 @@ def execute_check(inspectors):
 
 
 class Test_inspector2_coverage_scan_status_active:
+    def test_no_resources(self):
+        assert execute_check([]) == []
+
     def test_inspector_disabled(self):
         assert execute_check([build_inspector(status="DISABLED", coverage=[])]) == []
 

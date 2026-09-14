@@ -67,6 +67,9 @@ def execute_check(inspectors, audit_config=None):
 
 
 class Test_inspector2_active_findings_within_max_age:
+    def test_no_resources(self):
+        assert execute_check([]) == []
+
     def test_inspector_disabled(self):
         assert execute_check([build_inspector(findings=[], status="DISABLED")]) == []
 
@@ -108,6 +111,12 @@ class Test_inspector2_active_findings_within_max_age:
             result[0].status_extended
             == f"Inspector2 has 2 active findings in region {AWS_REGION_EU_WEST_1} first observed more than 192 days ago, the oldest 400 days ago."
         )
+
+    def test_finding_just_over_max_age(self):
+        result = execute_check([build_inspector(findings=[build_finding(192)])])
+
+        assert len(result) == 1
+        assert result[0].status == "FAIL"
 
     def test_custom_max_age(self):
         result = execute_check(

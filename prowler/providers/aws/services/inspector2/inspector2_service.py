@@ -75,6 +75,7 @@ class Inspector2(AWSService):
             )
 
     def _list_findings(self, inspector):
+        """Store the active findings of the audited account for an enabled Region."""
         logger.info("Inspector2 - Listing active findings details...")
         try:
             paginator = self.regional_clients[inspector.region].get_paginator(
@@ -114,6 +115,7 @@ class Inspector2(AWSService):
             )
 
     def _list_coverage(self, inspector):
+        """Store the resources Inspector2 covers in an enabled Region, respecting audit resources."""
         logger.info("Inspector2 - Listing coverage...")
         try:
             paginator = self.regional_clients[inspector.region].get_paginator(
@@ -176,6 +178,7 @@ class Inspector2(AWSService):
         return list(lookups.items())
 
     def _search_vulnerability(self, lookup):
+        """Record the CISA KEV data of a CVE, flagging the lookup as failed on error."""
         vulnerability_id, region = lookup
         logger.info(f"Inspector2 - Searching vulnerability {vulnerability_id}...")
         try:
@@ -200,6 +203,8 @@ class Inspector2(AWSService):
 
 
 class Finding(BaseModel):
+    """Active Inspector2 finding."""
+
     arn: str
     type: str
     severity: str
@@ -209,6 +214,8 @@ class Finding(BaseModel):
 
 
 class CoveredResource(BaseModel):
+    """Resource tracked by Inspector2 coverage."""
+
     id: str
     arn: str
     region: str
@@ -220,6 +227,8 @@ class CoveredResource(BaseModel):
 
 
 class KnownExploitedVulnerability(BaseModel):
+    """CISA Known Exploited Vulnerability data of a CVE."""
+
     id: str
     date_added: Optional[datetime]
     date_due: Optional[datetime]

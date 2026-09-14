@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.inspector2.inspector2_client import (
@@ -16,10 +16,12 @@ class inspector2_coverage_recently_scanned(Check):
     """Ensure Inspector2 scanned every actively covered resource within the configured days."""
 
     def execute(self) -> list[Check_Report_AWS]:
+        """Report whether each actively covered resource was scanned within the allowed days."""
         findings = []
         max_days = inspector2_client.audit_config.get(
             "inspector2_max_days_since_last_scan", 3
         )
+        max_elapsed = timedelta(days=max_days)
         now = datetime.now(timezone.utc)
         for inspector in inspector2_client.inspectors:
             if inspector.status != "ENABLED":
@@ -45,13 +47,11 @@ class inspector2_coverage_recently_scanned(Check):
                 if resource.last_scanned_at is None:
                     report.status = "FAIL"
                     report.status_extended = f"{resource.resource_type} {resource.id} has no recorded Inspector2 scan."
+                elif now - resource.last_scanned_at > max_elapsed:
+                    report.status = "FAIL"
+                    report.status_extended = f"{resource.resource_type} {resource.id} was last scanned by Inspector2 more than {max_days} days ago."
                 else:
-                    days = (now - resource.last_scanned_at).days
-                    if days > max_days:
-                        report.status = "FAIL"
-                        report.status_extended = f"{resource.resource_type} {resource.id} was last scanned by Inspector2 {days} days ago, exceeding the {max_days} days allowed."
-                    else:
-                        report.status = "PASS"
-                        report.status_extended = f"{resource.resource_type} {resource.id} was last scanned by Inspector2 {days} days ago, within the {max_days} days allowed."
+                    report.status = "PASS"
+                    report.status_extended = f"{resource.resource_type} {resource.id} was last scanned by Inspector2 within the last {max_days} days."
                 findings.append(report)
         return findings

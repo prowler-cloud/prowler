@@ -6,6 +6,7 @@ class transfer_server_fips_security_policy_enabled(Check):
     """Ensure every AWS Transfer Family server uses a FIPS security policy."""
 
     def execute(self) -> list[Check_Report_AWS]:
+        """Report whether each Transfer Family server uses a FIPS security policy."""
         findings = []
         unretrieved_servers = []
         for server in transfer_client.servers.values():

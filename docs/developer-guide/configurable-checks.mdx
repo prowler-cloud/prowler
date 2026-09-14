@@ -155,7 +155,7 @@ Only fields with a numeric range, a fixed value set, or a length cap are listed.
 | `max_days_secret_unrotated` | `1..180` days | NIST IA-5: rotate quarterly; CIS ≤90 |
 | `min_kinesis_stream_retention_hours` | `24..8760` h | 1 day .. 1 year |
 | `inspector2_max_days_since_last_scan` | `1..90` days | |
-| `inspector2_active_finding_max_age_days` | `1..365` days | FedRAMP 20x accepts vulnerabilities after 192 days |
+| `inspector2_active_finding_max_age_days` | `1..365` days | Default `192` matches the FedRAMP 20x rule that marks vulnerabilities still open after 192 days as accepted |
 | `shodan_api_key` | ≤512 chars | |
 
 ### Azure

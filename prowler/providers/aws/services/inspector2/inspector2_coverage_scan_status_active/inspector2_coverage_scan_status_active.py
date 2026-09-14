@@ -17,6 +17,7 @@ class inspector2_coverage_scan_status_active(Check):
     """Ensure Inspector2 is actively scanning every covered resource."""
 
     def execute(self) -> list[Check_Report_AWS]:
+        """Report whether Inspector2 is actively scanning each covered resource."""
         findings = []
         for inspector in inspector2_client.inspectors:
             if inspector.status != "ENABLED":

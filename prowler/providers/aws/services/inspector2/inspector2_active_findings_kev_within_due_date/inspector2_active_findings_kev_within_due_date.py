@@ -13,6 +13,7 @@ class inspector2_active_findings_kev_within_due_date(Check):
     """Ensure active Inspector2 findings for CISA KEVs are not past their CISA due date."""
 
     def execute(self) -> list[Check_Report_AWS]:
+        """Report, per Region, whether any CISA KEV finding is past its remediation due date."""
         findings = []
         now = datetime.now(timezone.utc)
         known_exploited = inspector2_client.known_exploited_vulnerabilities

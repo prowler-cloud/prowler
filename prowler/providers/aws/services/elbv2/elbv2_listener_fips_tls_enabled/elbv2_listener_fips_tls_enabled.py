@@ -6,6 +6,7 @@ class elbv2_listener_fips_tls_enabled(Check):
     """Ensure every ELBv2 HTTPS or TLS listener uses a FIPS TLS security policy."""
 
     def execute(self) -> list[Check_Report_AWS]:
+        """Report whether each load balancer terminates HTTPS/TLS with a FIPS policy."""
         findings = []
         for lb in elbv2_client.loadbalancersv2.values():
             if lb.listener_discovery_failed:

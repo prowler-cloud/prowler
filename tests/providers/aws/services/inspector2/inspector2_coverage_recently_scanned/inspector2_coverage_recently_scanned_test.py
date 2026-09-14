@@ -74,6 +74,9 @@ def execute_check(inspectors, audit_config=None):
 
 
 class Test_inspector2_coverage_recently_scanned:
+    def test_no_resources(self):
+        assert execute_check([]) == []
+
     def test_inspector_disabled(self):
         assert execute_check([build_inspector(status="DISABLED", coverage=[])]) == []
 
@@ -84,7 +87,7 @@ class Test_inspector2_coverage_recently_scanned:
         assert result[0].status == "PASS"
         assert (
             result[0].status_extended
-            == f"AWS_EC2_INSTANCE {INSTANCE_ID} was last scanned by Inspector2 1 days ago, within the 3 days allowed."
+            == f"AWS_EC2_INSTANCE {INSTANCE_ID} was last scanned by Inspector2 within the last 3 days."
         )
         assert result[0].resource_id == INSTANCE_ID
         assert result[0].resource_arn == INSTANCE_ARN
@@ -97,8 +100,14 @@ class Test_inspector2_coverage_recently_scanned:
         assert result[0].status == "FAIL"
         assert (
             result[0].status_extended
-            == f"AWS_EC2_INSTANCE {INSTANCE_ID} was last scanned by Inspector2 10 days ago, exceeding the 3 days allowed."
+            == f"AWS_EC2_INSTANCE {INSTANCE_ID} was last scanned by Inspector2 more than 3 days ago."
         )
+
+    def test_resource_scanned_just_over_max_days(self):
+        result = execute_check([build_inspector(coverage=[build_instance(3)])])
+
+        assert len(result) == 1
+        assert result[0].status == "FAIL"
 
     def test_custom_max_days(self):
         result = execute_check(
