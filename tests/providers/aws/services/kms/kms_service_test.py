@@ -1,18 +1,21 @@
 import json
+from unittest import mock
 
+import pytest
 from boto3 import client
+from botocore.exceptions import ClientError
 from moto import mock_aws
 
 from prowler.providers.aws.services.kms.kms_service import KMS
 from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
+    AWS_REGION_EU_WEST_1,
     AWS_REGION_US_EAST_1,
     set_mocked_aws_provider,
 )
 
 
 class Test_KMS_Service:
-
     # Test KMS Service
     @mock_aws
     def test_service(self):
@@ -60,6 +63,7 @@ class Test_KMS_Service:
         assert len(kms.keys) == 2
         assert kms.keys[0].arn == key1["Arn"]
         assert kms.keys[1].arn == key2["Arn"]
+        assert kms.keys_scan_errors == {}
 
     # Test KMS Describe Keys
     @mock_aws
@@ -85,6 +89,165 @@ class Test_KMS_Service:
         assert kms.keys[0].tags == [
             {"TagKey": "test", "TagValue": "test"},
         ]
+        assert kms.keys[0].detail_retrieved is True
+        assert kms.keys[0].detail_fetch_error is None
+
+    @pytest.mark.parametrize(
+        "error_code", ["AccessDeniedException", "ThrottlingException"]
+    )
+    @mock_aws
+    def test_list_keys_client_error_records_region_and_discards_partial_results(
+        self, error_code
+    ):
+        regional_client = client("kms", region_name=AWS_REGION_US_EAST_1)
+        regional_client.__dict__["region"] = AWS_REGION_US_EAST_1
+
+        class PartialPaginator:
+            def paginate(self):
+                yield {
+                    "Keys": [
+                        {
+                            "KeyId": "partial-key",
+                            "KeyArn": f"arn:aws:kms:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:key/partial-key",
+                        }
+                    ]
+                }
+                raise ClientError(
+                    {
+                        "Error": {
+                            "Code": error_code,
+                            "Message": "not authorized",
+                        }
+                    },
+                    "ListKeys",
+                )
+
+        regional_client.get_paginator = lambda _: PartialPaginator()
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+
+        with mock.patch(
+            "prowler.providers.aws.aws_provider.AwsProvider.generate_regional_clients",
+            return_value={AWS_REGION_US_EAST_1: regional_client},
+        ):
+            kms = KMS(aws_provider)
+
+        assert kms.keys == []
+        assert kms.keys_scan_errors == {AWS_REGION_US_EAST_1: error_code}
+
+    @mock_aws
+    def test_list_keys_error_preserves_successful_regions(self):
+        east_client = client("kms", region_name=AWS_REGION_US_EAST_1)
+        east_client.__dict__["region"] = AWS_REGION_US_EAST_1
+        east_key = east_client.create_key(MultiRegion=False)["KeyMetadata"]
+        west_client = client("kms", region_name=AWS_REGION_EU_WEST_1)
+        west_client.__dict__["region"] = AWS_REGION_EU_WEST_1
+        original_get_paginator = west_client.get_paginator
+
+        def get_west_paginator(operation_name):
+            if operation_name == "list_keys":
+                raise ClientError(
+                    {
+                        "Error": {
+                            "Code": "AccessDeniedException",
+                            "Message": "not authorized",
+                        }
+                    },
+                    "ListKeys",
+                )
+            return original_get_paginator(operation_name)
+
+        west_client.get_paginator = get_west_paginator
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
+        )
+
+        with mock.patch(
+            "prowler.providers.aws.aws_provider.AwsProvider.generate_regional_clients",
+            return_value={
+                AWS_REGION_US_EAST_1: east_client,
+                AWS_REGION_EU_WEST_1: west_client,
+            },
+        ):
+            kms = KMS(aws_provider)
+
+        assert [key.id for key in kms.keys] == [east_key["KeyId"]]
+        assert kms.keys[0].detail_retrieved is True
+        assert kms.keys_scan_errors == {AWS_REGION_EU_WEST_1: "AccessDeniedException"}
+
+    @mock_aws
+    def test_list_keys_generic_error_records_error_class(self):
+        regional_client = client("kms", region_name=AWS_REGION_US_EAST_1)
+        regional_client.__dict__["region"] = AWS_REGION_US_EAST_1
+
+        def raise_runtime_error(_):
+            raise RuntimeError("temporary failure")
+
+        regional_client.get_paginator = raise_runtime_error
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+
+        with mock.patch(
+            "prowler.providers.aws.aws_provider.AwsProvider.generate_regional_clients",
+            return_value={AWS_REGION_US_EAST_1: regional_client},
+        ):
+            kms = KMS(aws_provider)
+
+        assert kms.keys == []
+        assert kms.keys_scan_errors == {AWS_REGION_US_EAST_1: "RuntimeError"}
+
+    @mock_aws
+    def test_describe_key_error_records_incomplete_detail(self):
+        regional_client = client("kms", region_name=AWS_REGION_US_EAST_1)
+        regional_client.__dict__["region"] = AWS_REGION_US_EAST_1
+        key = regional_client.create_key()["KeyMetadata"]
+
+        def raise_access_denied(**_):
+            raise ClientError(
+                {
+                    "Error": {
+                        "Code": "AccessDeniedException",
+                        "Message": "not authorized",
+                    }
+                },
+                "DescribeKey",
+            )
+
+        regional_client.describe_key = raise_access_denied
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+
+        with mock.patch(
+            "prowler.providers.aws.aws_provider.AwsProvider.generate_regional_clients",
+            return_value={AWS_REGION_US_EAST_1: regional_client},
+        ):
+            kms = KMS(aws_provider)
+
+        assert len(kms.keys) == 1
+        assert kms.keys[0].id == key["KeyId"]
+        assert kms.keys[0].detail_retrieved is False
+        assert kms.keys[0].detail_fetch_error == "AccessDeniedException"
+        assert kms.keys[0].manager is None
+
+    @mock_aws
+    def test_describe_key_generic_error_records_error_class(self):
+        regional_client = client("kms", region_name=AWS_REGION_US_EAST_1)
+        regional_client.__dict__["region"] = AWS_REGION_US_EAST_1
+        key = regional_client.create_key()["KeyMetadata"]
+
+        def raise_runtime_error(**_):
+            raise RuntimeError("temporary failure")
+
+        regional_client.describe_key = raise_runtime_error
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+
+        with mock.patch(
+            "prowler.providers.aws.aws_provider.AwsProvider.generate_regional_clients",
+            return_value={AWS_REGION_US_EAST_1: regional_client},
+        ):
+            kms = KMS(aws_provider)
+
+        assert len(kms.keys) == 1
+        assert kms.keys[0].id == key["KeyId"]
+        assert kms.keys[0].detail_retrieved is False
+        assert kms.keys[0].detail_fetch_error == "RuntimeError"
 
     # Test KMS Get rotation status
     @mock_aws
