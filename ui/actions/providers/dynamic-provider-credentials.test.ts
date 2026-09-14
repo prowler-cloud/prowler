@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import openaiSchema from "@/lib/provider-credentials/fixtures/openai-credential-schema.json";
+import templateSchema from "@/lib/provider-credentials/fixtures/template-credential-schema.json";
 const { fetchMock, getProviderSchemas, getAuthHeaders, revalidatePath } =
   vi.hoisted(() => ({
     fetchMock: vi.fn(),
@@ -83,6 +84,57 @@ describe("dynamic provider credential actions", () => {
       fetchMock.mock.calls[1][0].endsWith("/providers/secrets/existing"),
     ).toBe(true);
     expect(fetchMock.mock.calls[1][1].method).toBe("PATCH");
+  });
+  it("validates and sends Template credentials with their JSON types", async () => {
+    // Given
+    const templateAccount = account();
+    templateAccount.data.attributes.provider = "template";
+    getProviderSchemas.mockResolvedValue({
+      status: "success",
+      providerType: "template",
+      secretTypes: { static: templateSchema },
+    });
+    fetchMock
+      .mockResolvedValueOnce(response(templateAccount))
+      .mockResolvedValueOnce(response({ data: { id: "saved" } }, 201));
+    const secret = {
+      api_url: "https://api.example.test",
+      api_key: "fixture-key-not-a-secret",
+      verify_tls: false,
+      timeout_seconds: 60,
+    };
+
+    // When / Then
+    expect(
+      await saveDynamicProviderCredentials({
+        ...input,
+        secretType: "static",
+        secret,
+      }),
+    ).toEqual({
+      status: "saved",
+      secretId: "saved",
+    });
+    expect(JSON.parse(fetchMock.mock.calls[1][1].body).data.attributes).toEqual(
+      {
+        secret_type: "static",
+        secret,
+      },
+    );
+
+    // Server-side validation also rejects requests that bypass the form.
+    fetchMock.mockReset().mockResolvedValueOnce(response(templateAccount));
+    expect(
+      await saveDynamicProviderCredentials({
+        ...input,
+        secretType: "static",
+        secret: { ...secret, timeout_seconds: 301 },
+      }),
+    ).toMatchObject({
+      status: "invalid",
+      errors: { timeout_seconds: expect.any(String) },
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
   it.each([
     { ...input, secretType: "invented" },

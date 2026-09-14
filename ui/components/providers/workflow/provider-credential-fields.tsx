@@ -2,6 +2,7 @@
 
 import { type ChangeEvent, useId } from "react";
 
+import { Checkbox } from "@/components/shadcn/checkbox/checkbox";
 import { Field, FieldError, FieldLabel } from "@/components/shadcn/field/field";
 import { Input } from "@/components/shadcn/input/input";
 import {
@@ -12,13 +13,18 @@ import {
   SelectValue,
 } from "@/components/shadcn/select/select";
 import { Textarea } from "@/components/shadcn/textarea/textarea";
-import type { RegistryCredentialSchema } from "@/lib/provider-credentials/provider-credential-schema";
+import type {
+  RegistryCredentialSchema,
+  RegistryCredentialValue,
+} from "@/lib/provider-credentials/provider-credential-schema";
 
 interface RegistryCredentialFieldsProps {
   readonly errors: Readonly<Record<string, string | undefined>>;
-  readonly onChange: (name: string, value: string) => void;
+  readonly onChange: (name: string, value: RegistryCredentialValue) => void;
   readonly schema: RegistryCredentialSchema;
-  readonly values: Readonly<Record<string, string | undefined>>;
+  readonly values: Readonly<
+    Record<string, RegistryCredentialValue | undefined>
+  >;
 }
 
 export function RegistryCredentialFields({
@@ -52,17 +58,38 @@ export function RegistryCredentialFields({
             event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
           ) => onChange(field.name, event.target.value),
           required: field.required,
+          placeholder: field.placeholder,
           spellCheck: false,
-          value: typeof value === "string" ? value : "",
+          value:
+            typeof value === "string" || typeof value === "number" ? value : "",
         };
 
         return (
           <Field key={field.name}>
-            <FieldLabel htmlFor={id}>
-              {field.label}
-              {field.required && <span aria-hidden="true"> *</span>}
-            </FieldLabel>
-            {field.kind === "select" ? (
+            {field.kind === "checkbox" ? (
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  aria-describedby={describedBy}
+                  aria-invalid={invalid}
+                  aria-required={field.required}
+                  checked={value === true}
+                  id={id}
+                  onCheckedChange={(checked) =>
+                    onChange(field.name, checked === true)
+                  }
+                />
+                <FieldLabel htmlFor={id}>
+                  {field.label}
+                  {field.required && <span aria-hidden="true"> *</span>}
+                </FieldLabel>
+              </div>
+            ) : (
+              <FieldLabel htmlFor={id}>
+                {field.label}
+                {field.required && <span aria-hidden="true"> *</span>}
+              </FieldLabel>
+            )}
+            {field.kind === "checkbox" ? null : field.kind === "select" ? (
               <Select
                 onValueChange={(nextValue) => onChange(field.name, nextValue)}
                 value={typeof value === "string" ? value : ""}
@@ -91,7 +118,16 @@ export function RegistryCredentialFields({
                 autoComplete={
                   field.kind === "password" ? "new-password" : "off"
                 }
-                type={field.kind === "password" ? "password" : "text"}
+                type={
+                  field.kind === "integer"
+                    ? "number"
+                    : field.kind === "password"
+                      ? "password"
+                      : "text"
+                }
+                min={field.minimum}
+                max={field.maximum}
+                step={field.kind === "integer" ? 1 : undefined}
                 {...textControlProps}
               />
             )}

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import openaiSchema from "./fixtures/openai-credential-schema.json";
+import templateSchema from "./fixtures/template-credential-schema.json";
 import {
   parseRegistryCredentialSchema,
   REGISTRY_CREDENTIAL_SCHEMA_LIMITS,
@@ -33,6 +34,30 @@ const schema = {
 };
 
 describe("parseRegistryCredentialSchema", () => {
+  it("accepts the installed Template 0.2.5 schema with typed fields and examples", () => {
+    // Given / When
+    const result = parseRegistryCredentialSchema(templateSchema);
+
+    // Then
+    expect(result?.fields.map(({ name, kind }) => [name, kind])).toEqual([
+      ["api_url", "text"],
+      ["api_key", "password"],
+      ["ca_bundle", "textarea"],
+      ["verify_tls", "checkbox"],
+      ["timeout_seconds", "integer"],
+      ["auth_scheme", "select"],
+    ]);
+    expect(result?.fields[0]).toMatchObject({
+      placeholder: "https://api.acme.com",
+      required: true,
+    });
+    expect(result?.fields[3].defaultValue).toBe(true);
+    expect(result?.fields[4]).toMatchObject({
+      defaultValue: 30,
+      minimum: 1,
+      maximum: 300,
+    });
+  });
   it.each([
     "api_key",
     "platform_api_key",
@@ -139,7 +164,6 @@ describe("parseRegistryCredentialSchema", () => {
   it.each([
     ["nested objects", { type: "object", properties: {} }],
     ["arrays", { type: "array" }],
-    ["booleans", { type: "boolean" }],
     ["nullable unions", { type: ["string", "null"] }],
     ["unsupported formats", { type: "string", format: "email" }],
     ["passwords without writeOnly", { type: "string", format: "password" }],
@@ -152,6 +176,31 @@ describe("parseRegistryCredentialSchema", () => {
       }),
     ).toBeNull();
   });
+
+  it.each([
+    { type: "boolean", default: "true" },
+    { type: "boolean", enum: [true] },
+    { type: "integer", default: "30" },
+    { type: "integer", default: 1.5 },
+    { type: "integer", minimum: 1, default: 0 },
+    { type: "integer", maximum: 300, default: 301 },
+    { type: "integer", minimum: 10, maximum: 1 },
+    { type: "integer", minimum: "1" },
+    { type: "integer", maximum: Infinity },
+    { type: "integer", multipleOf: 5 },
+    { type: "string", examples: "not-an-array" },
+    { type: "string", examples: [{ value: "unexpected" }] },
+  ])(
+    "rejects malformed annotations or unsupported constraints: %j",
+    (property) => {
+      expect(
+        parseRegistryCredentialSchema({
+          type: "object",
+          properties: { field: property },
+        }),
+      ).toBeNull();
+    },
+  );
 
   it.each([
     [

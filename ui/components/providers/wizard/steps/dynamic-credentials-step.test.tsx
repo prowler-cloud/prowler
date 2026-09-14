@@ -9,6 +9,7 @@ import userEvent from "@testing-library/user-event";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 import openaiSchema from "@/lib/provider-credentials/fixtures/openai-credential-schema.json";
+import templateSchema from "@/lib/provider-credentials/fixtures/template-credential-schema.json";
 import { useProviderWizardStore } from "@/store/provider-wizard/store";
 import type { ProviderSchemasResult } from "@/types/provider-schema";
 
@@ -129,6 +130,56 @@ describe("dynamic credentials in the provider wizard", () => {
         organization_id: "org-fixture",
         platform_api_key: "fixture-key-not-a-secret",
         base_url: "https://api.openai.com/v1",
+      },
+    });
+  });
+  it("renders and submits the installed Template credential form with typed values", async () => {
+    // Given
+    const user = userEvent.setup();
+    getProviderSchemas.mockResolvedValue({
+      status: "success",
+      providerType: "template",
+      secretTypes: { static: templateSchema },
+    });
+    render(<DynamicCredentialsStep {...props} providerType="template" />);
+    const apiUrl = await screen.findByLabelText(/API URL/);
+    const apiKey = screen.getByLabelText(/API Key/);
+    const verifyTls = screen.getByRole("checkbox", { name: "Verify TLS" });
+    const timeout = screen.getByRole("spinbutton", { name: "Timeout" });
+
+    // Then
+    expect(apiUrl).toHaveAttribute("placeholder", "https://api.acme.com");
+    expect(apiKey).toHaveAttribute("type", "password");
+    expect(screen.getByLabelText("CA Bundle").tagName).toBe("TEXTAREA");
+    expect(verifyTls).toBeChecked();
+    expect(timeout).toHaveValue(30);
+    expect(timeout).toHaveAttribute("min", "1");
+    expect(timeout).toHaveAttribute("max", "300");
+    expect(timeout).toHaveAttribute("step", "1");
+    expect(
+      screen.getByRole("combobox", { name: "Authentication Scheme" }),
+    ).toHaveTextContent("bearer");
+    expect(apiUrl).toHaveValue("");
+
+    // When: false must remain a boolean and numeric input must become a number.
+    await user.type(apiUrl, "https://api.example.test");
+    await user.type(apiKey, "fixture-key-not-a-secret");
+    await user.click(verifyTls);
+    await user.clear(timeout);
+    await user.type(timeout, "60");
+    act(() => apiKey.closest("form")!.requestSubmit());
+
+    // Then
+    await waitFor(() => expect(props.onNext).toHaveBeenCalledOnce());
+    expect(saveDynamicProviderCredentials).toHaveBeenCalledWith({
+      providerId: "account",
+      secretType: "static",
+      secret: {
+        api_url: "https://api.example.test",
+        api_key: "fixture-key-not-a-secret",
+        verify_tls: false,
+        timeout_seconds: 60,
+        auth_scheme: "bearer",
       },
     });
   });

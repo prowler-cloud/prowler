@@ -3,6 +3,8 @@ const FIELD_KIND = {
   PASSWORD: "password",
   SELECT: "select",
   TEXTAREA: "textarea",
+  CHECKBOX: "checkbox",
+  INTEGER: "integer",
 } as const;
 
 export const REGISTRY_CREDENTIAL_SCHEMA_LIMITS = {
@@ -13,6 +15,7 @@ export const REGISTRY_CREDENTIAL_SCHEMA_LIMITS = {
 } as const;
 
 type FieldKind = (typeof FIELD_KIND)[keyof typeof FIELD_KIND];
+export type RegistryCredentialValue = string | boolean | number;
 
 export interface RegistryCredentialField {
   readonly name: string;
@@ -21,7 +24,10 @@ export interface RegistryCredentialField {
   readonly kind: FieldKind;
   readonly options?: readonly string[];
   readonly required: boolean;
-  readonly defaultValue?: string;
+  readonly defaultValue?: RegistryCredentialValue;
+  readonly placeholder?: string;
+  readonly minimum?: number;
+  readonly maximum?: number;
 }
 
 export interface RegistryCredentialSchema {
@@ -30,9 +36,13 @@ export interface RegistryCredentialSchema {
 
 const ROOT = new Set("type title description properties required".split(" "));
 const FIELD = new Set(
-  "title description type format writeOnly enum default x-prowler-widget".split(
+  "title description type format writeOnly enum default examples x-prowler-widget".split(
     " ",
   ),
+);
+const BOOLEAN_FIELD = new Set("title description type default".split(" "));
+const INTEGER_FIELD = new Set(
+  "title description type default minimum maximum".split(" "),
 );
 const FORBIDDEN_NAMES = new Set(["__proto__", "prototype", "constructor"]);
 const FIELD_NAME = /^[A-Za-z][A-Za-z0-9_-]*$/;
@@ -119,27 +129,83 @@ export function parseRegistryCredentialSchema(
       FORBIDDEN_NAMES.has(name) ||
       !FIELD_NAME.test(name) ||
       name.length > REGISTRY_CREDENTIAL_SCHEMA_LIMITS.MAX_NAME_LENGTH ||
-      !isRecord(property) ||
-      !hasOnly(property, FIELD) ||
-      property.type !== "string"
+      !isRecord(property)
     ) {
       return null;
     }
 
     const label = property.title ?? name;
     const description = property.description;
-    const format = property.format;
-    const widget = property["x-prowler-widget"];
-    const defaultValue = property.default;
-    const options = property.enum;
-    const password = format === "password" && property.writeOnly === true;
     if (
       !isText(label) ||
-      (description !== undefined && typeof description !== "string") ||
+      (description !== undefined && typeof description !== "string")
+    ) {
+      return null;
+    }
+    const baseField = {
+      name,
+      label,
+      ...(description ? { description } : {}),
+      required: requiredNames.has(name),
+    };
+    const defaultValue = property.default;
+    if (property.type === "boolean") {
+      if (
+        !hasOnly(property, BOOLEAN_FIELD) ||
+        (defaultValue !== undefined && typeof defaultValue !== "boolean")
+      ) {
+        return null;
+      }
+      fields.push({
+        ...baseField,
+        kind: FIELD_KIND.CHECKBOX,
+        ...(typeof defaultValue === "boolean" ? { defaultValue } : {}),
+      });
+      continue;
+    }
+    if (property.type === "integer") {
+      const { minimum, maximum } = property;
+      if (
+        !hasOnly(property, INTEGER_FIELD) ||
+        (minimum !== undefined && !Number.isSafeInteger(minimum)) ||
+        (maximum !== undefined && !Number.isSafeInteger(maximum)) ||
+        (typeof minimum === "number" &&
+          typeof maximum === "number" &&
+          minimum > maximum) ||
+        (defaultValue !== undefined &&
+          (typeof defaultValue !== "number" ||
+            !Number.isSafeInteger(defaultValue) ||
+            (typeof minimum === "number" && defaultValue < minimum) ||
+            (typeof maximum === "number" && defaultValue > maximum)))
+      ) {
+        return null;
+      }
+      fields.push({
+        ...baseField,
+        kind: FIELD_KIND.INTEGER,
+        ...(typeof minimum === "number" ? { minimum } : {}),
+        ...(typeof maximum === "number" ? { maximum } : {}),
+        ...(typeof defaultValue === "number" ? { defaultValue } : {}),
+      });
+      continue;
+    }
+    if (property.type !== "string" || !hasOnly(property, FIELD)) return null;
+
+    const format = property.format;
+    const widget = property["x-prowler-widget"];
+    const options = property.enum;
+    const examples = property.examples;
+    const password = format === "password" && property.writeOnly === true;
+    if (
       ((format !== undefined || property.writeOnly !== undefined) &&
         !password) ||
       (widget !== undefined && widget !== "textarea") ||
-      (defaultValue !== undefined && !isText(defaultValue, true))
+      (defaultValue !== undefined && !isText(defaultValue, true)) ||
+      (examples !== undefined &&
+        (!Array.isArray(examples) ||
+          examples.length >
+            REGISTRY_CREDENTIAL_SCHEMA_LIMITS.MAX_ENUM_OPTIONS ||
+          !examples.every((example) => isText(example, true))))
     ) {
       return null;
     }
@@ -159,12 +225,9 @@ export function parseRegistryCredentialSchema(
         return null;
       }
       fields.push({
-        name,
-        label,
-        ...(description ? { description } : {}),
+        ...baseField,
         kind: FIELD_KIND.SELECT,
         options,
-        required: requiredNames.has(name),
         ...(typeof defaultValue === "string" ? { defaultValue } : {}),
       });
       continue;
@@ -177,9 +240,7 @@ export function parseRegistryCredentialSchema(
       return null;
     }
     fields.push({
-      name,
-      label,
-      ...(description ? { description } : {}),
+      ...baseField,
       kind: password
         ? FIELD_KIND.PASSWORD
         : widget === "textarea"
@@ -187,7 +248,9 @@ export function parseRegistryCredentialSchema(
           : isApiKeyField(name)
             ? FIELD_KIND.PASSWORD
             : FIELD_KIND.TEXT,
-      required: requiredNames.has(name),
+      ...(Array.isArray(examples) && typeof examples[0] === "string"
+        ? { placeholder: examples[0] }
+        : {}),
       ...(typeof defaultValue === "string" ? { defaultValue } : {}),
     });
   }
