@@ -132,6 +132,15 @@
           "network_ssh_internet_access_restricted",
           "network_udp_internet_access_restricted",
           "network_http_internet_access_restricted"
+        ],
+        "aws": [
+          "ec2_instance_port_rdp_exposed_to_internet",
+          "ec2_instance_port_ssh_exposed_to_internet",
+          "ec2_networkacl_allow_ingress_any_port",
+          "ec2_securitygroup_allow_ingress_from_internet_to_all_ports",
+          "ec2_securitygroup_allow_ingress_from_internet_to_any_port",
+          "ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports",
+          "networkfirewall_in_all_vpc"
         ]
       }
     },
@@ -147,7 +156,8 @@
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
-        "azure": []
+        "azure": [],
+        "aws": []
       }
     },
     {
@@ -168,6 +178,10 @@
           "keyvault_access_only_through_private_endpoints",
           "network_rdp_internet_access_restricted",
           "network_ssh_internet_access_restricted"
+        ],
+        "aws": [
+          "ec2_instance_port_rdp_exposed_to_internet",
+          "ec2_instance_port_ssh_exposed_to_internet"
         ]
       }
     },
@@ -189,6 +203,11 @@
           "network_udp_internet_access_restricted",
           "network_http_internet_access_restricted",
           "storage_account_public_network_access_disabled"
+        ],
+        "aws": [
+          "ec2_networkacl_allow_ingress_any_port",
+          "ec2_securitygroup_allow_ingress_from_internet_to_all_ports",
+          "ec2_securitygroup_default_restrict_traffic"
         ]
       }
     },
@@ -204,7 +223,8 @@
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
-        "azure": []
+        "azure": [],
+        "aws": []
       }
     },
     {
@@ -219,7 +239,8 @@
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
-        "azure": []
+        "azure": [],
+        "aws": []
       }
     },
     {
@@ -234,7 +255,8 @@
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
-        "azure": []
+        "azure": [],
+        "aws": []
       }
     },
     {
@@ -252,7 +274,8 @@
         "azure": [
           "entra_policy_guest_users_access_restrictions",
           "entra_policy_guest_invite_only_for_admin_roles"
-        ]
+        ],
+        "aws": []
       }
     },
     {
@@ -269,7 +292,8 @@
       "checks": {
         "azure": [
           "entra_security_defaults_enabled"
-        ]
+        ],
+        "aws": []
       }
     },
     {
@@ -284,7 +308,8 @@
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
-        "azure": []
+        "azure": [],
+        "aws": []
       }
     },
     {
@@ -299,7 +324,8 @@
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
-        "azure": []
+        "azure": [],
+        "aws": []
       }
     },
     {
@@ -320,6 +346,15 @@
           "storage_account_public_network_access_disabled",
           "storage_ensure_minimum_tls_version_12",
           "keyvault_rbac_enabled"
+        ],
+        "aws": [
+          "apigateway_restapi_authorizers_enabled",
+          "apigateway_restapi_public_with_authorizer",
+          "apigatewayv2_api_authorizers_enabled",
+          "cognito_identity_pool_guest_access_disabled",
+          "kafka_cluster_unrestricted_access_disabled",
+          "s3_account_level_public_access_blocks",
+          "s3_bucket_public_access"
         ]
       }
     },
@@ -335,7 +370,8 @@
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
-        "azure": []
+        "azure": [],
+        "aws": []
       }
     },
     {
@@ -350,7 +386,8 @@
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
-        "azure": []
+        "azure": [],
+        "aws": []
       }
     },
     {
@@ -365,7 +402,8 @@
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
-        "azure": []
+        "azure": [],
+        "aws": []
       }
     },
     {
@@ -380,7 +418,8 @@
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
-        "azure": []
+        "azure": [],
+        "aws": []
       }
     },
     {
@@ -398,6 +437,9 @@
         "azure": [
           "defender_ensure_system_updates_are_applied",
           "defender_auto_provisioning_vulnerabilty_assessments_machines_on"
+        ],
+        "aws": [
+          "ssm_managed_compliant_patching"
         ]
       }
     },
@@ -413,7 +455,8 @@
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
-        "azure": []
+        "azure": [],
+        "aws": []
       }
     },
     {
@@ -431,7 +474,8 @@
         "azure": [
           "entra_security_defaults_enabled",
           "storage_default_to_entra_authorization_enabled"
-        ]
+        ],
+        "aws": []
       }
     },
     {
@@ -446,7 +490,8 @@
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
-        "azure": []
+        "azure": [],
+        "aws": []
       }
     },
     {
@@ -467,6 +512,13 @@
           "entra_conditional_access_policy_require_mfa_for_admin_portals",
           "entra_conditional_access_policy_require_mfa_for_management_api",
           "entra_user_with_vm_access_has_mfa"
+        ],
+        "aws": [
+          "cognito_user_pool_mfa_enabled",
+          "directoryservice_supported_mfa_radius_enabled",
+          "iam_administrator_access_with_mfa",
+          "iam_root_mfa_enabled",
+          "iam_user_mfa_enabled_console_access"
         ]
       }
     },
@@ -486,7 +538,8 @@
           "entra_global_admin_in_less_than_five_users",
           "iam_role_user_access_admin_restricted",
           "iam_subscription_roles_owner_custom_not_created"
-        ]
+        ],
+        "aws": []
       }
     },
     {
@@ -504,7 +557,8 @@
         "azure": [
           "entra_global_admin_in_less_than_five_users",
           "iam_role_user_access_admin_restricted"
-        ]
+        ],
+        "aws": []
       }
     },
     {
@@ -522,6 +576,13 @@
         "azure": [
           "entra_security_defaults_enabled",
           "entra_privileged_user_has_mfa"
+        ],
+        "aws": [
+          "cognito_user_pool_mfa_enabled",
+          "directoryservice_supported_mfa_radius_enabled",
+          "iam_administrator_access_with_mfa",
+          "iam_root_mfa_enabled",
+          "iam_user_mfa_enabled_console_access"
         ]
       }
     },
@@ -541,6 +602,10 @@
           "entra_security_defaults_enabled",
           "entra_privileged_user_has_mfa",
           "entra_non_privileged_user_has_mfa"
+        ],
+        "aws": [
+          "cognito_user_pool_password_policy_minimum_length_14",
+          "iam_password_policy_minimum_length_14"
         ]
       }
     },
@@ -560,6 +625,9 @@
           "defender_assessments_vm_endpoint_protection_installed",
           "defender_ensure_wdatp_is_enabled",
           "defender_ensure_defender_for_server_is_on"
+        ],
+        "aws": [
+          "guardduty_ec2_malware_protection_enabled"
         ]
       }
     },
@@ -579,7 +647,8 @@
           "defender_ensure_wdatp_is_enabled",
           "defender_ensure_defender_for_server_is_on",
           "defender_ensure_defender_for_storage_is_on"
-        ]
+        ],
+        "aws": []
       }
     },
     {
@@ -594,7 +663,8 @@
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
-        "azure": []
+        "azure": [],
+        "aws": []
       }
     }
   ]
