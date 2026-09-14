@@ -221,7 +221,7 @@ def get_s3_client():
             "s3",
             aws_access_key_id=settings.DJANGO_OUTPUT_S3_AWS_ACCESS_KEY_ID,
             aws_secret_access_key=settings.DJANGO_OUTPUT_S3_AWS_SECRET_ACCESS_KEY,
-            aws_session_token=settings.DJANGO_OUTPUT_S3_AWS_SESSION_TOKEN,
+            aws_session_token=settings.DJANGO_OUTPUT_S3_AWS_SESSION_TOKEN or None,
             region_name=settings.DJANGO_OUTPUT_S3_AWS_DEFAULT_REGION,
         )
         s3_client.list_buckets()
