@@ -4,6 +4,14 @@ All notable changes to the **Prowler MCP Server** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [0.12.1] (Prowler v5.42.0)
+
+### 🔐 Security
+
+- `libuuid` upgraded to 2.41.6-r1 in the container image, patching CVE-2026-53612, CVE-2026-53613, CVE-2026-53614, CVE-2026-76642, CVE-2026-78408 and CVE-2026-78410 [(#12780)](https://github.com/prowler-cloud/prowler/pull/12780)
+
+---
+
 ## [0.12.0] (Prowler v5.41.0)
 
 ### 🚀 Added

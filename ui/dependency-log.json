@@ -442,10 +442,10 @@
   {
     "section": "dependencies",
     "name": "js-yaml",
-    "from": "4.1.1",
-    "to": "4.3.0",
+    "from": "4.3.0",
+    "to": "4.3.1",
     "strategy": "installed",
-    "generatedAt": "2026-07-16T15:29:57.887Z"
+    "generatedAt": "2026-09-08T07:45:48.316Z"
   },
   {
     "section": "dependencies",
@@ -491,17 +491,17 @@
     "section": "dependencies",
     "name": "nanoid",
     "from": "5.1.6",
-    "to": "5.1.6",
+    "to": "5.1.16",
     "strategy": "installed",
-    "generatedAt": "2025-12-10T11:34:11.122Z"
+    "generatedAt": "2026-09-08T07:45:48.316Z"
   },
   {
     "section": "dependencies",
     "name": "next",
-    "from": "16.2.9",
-    "to": "16.2.11",
+    "from": "16.2.11",
+    "to": "16.3.3",
     "strategy": "installed",
-    "generatedAt": "2026-07-24T08:32:45.227Z"
+    "generatedAt": "2026-09-09T12:23:05.642Z"
   },
   {
     "section": "dependencies",
@@ -594,10 +594,10 @@
   {
     "section": "dependencies",
     "name": "sharp",
-    "from": "0.33.5",
-    "to": "0.35.3",
+    "from": "0.35.3",
+    "to": "0.35.4",
     "strategy": "installed",
-    "generatedAt": "2026-08-11T11:35:35.609Z"
+    "generatedAt": "2026-09-09T12:39:08.649Z"
   },
   {
     "section": "dependencies",
@@ -930,10 +930,10 @@
   {
     "section": "devDependencies",
     "name": "postcss",
-    "from": "8.4.38",
-    "to": "8.5.14",
+    "from": "8.5.14",
+    "to": "8.5.23",
     "strategy": "installed",
-    "generatedAt": "2026-05-14T10:09:04.901Z"
+    "generatedAt": "2026-09-08T07:45:48.316Z"
   },
   {
     "section": "devDependencies",

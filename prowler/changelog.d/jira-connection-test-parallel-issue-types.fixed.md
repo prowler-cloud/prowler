@@ -1,1 +1,0 @@
-`Jira.test_connection()` now fetches each project's issue types concurrently instead of one request at a time, so accounts with many Jira projects no longer take tens of seconds (unbounded, scaling with the project count) to verify the connection

@@ -103,12 +103,6 @@ class TestSecretsManagerHasRestrictiveResourcePolicy:
         with mock_aws():
             aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
-            from prowler.providers.aws.services.secretsmanager.secretsmanager_has_restrictive_resource_policy.secretsmanager_has_restrictive_resource_policy import (
-                secretsmanager_client,
-            )
-
-            secretsmanager_client.secrets.clear()
-
             with (
                 mock.patch(
                     "prowler.providers.common.provider.Provider.get_global_provider",
