@@ -116,7 +116,7 @@ A host with no internet access needs a pre-populated vulnerability database in a
 
 Trivy tries to refresh the database when it considers it stale, and that download fails without network access. Set `TRIVY_SKIP_DB_UPDATE=true` (and `TRIVY_SKIP_JAVA_DB_UPDATE=true` if Java scanning is enabled) so it uses the supplied database as is.
 
-The database ages. A scan run against an old one reports only the vulnerabilities known when it was built, and nothing in the output says so, so keep track of when it was last refreshed.
+The database ages. A scan run against an old one reports only the vulnerabilities known when it was built, and nothing in the output says so. Keep track of when the database was last refreshed.
 </Note>
 
 
