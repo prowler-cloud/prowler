@@ -8,7 +8,7 @@ By default, Prowler will audit all the subscriptions that it is able to list in 
 
 ## Azure Provider Classes Architecture
 
-The Azure provider implementation follows the general [Provider structure](/developer-guide/provider). This section focuses on the Azure-specific implementation, highlighting how the generic provider concepts are realized for Azure in Prowler. For a full overview of the provider pattern, base classes, and extension guidelines, see [Provider documentation](/developer-guide/provider). In next subsection you can find a list of the main classes of the Azure provider.
+The Azure provider implementation follows the general [Provider structure](/developer-guide/provider). This section focuses on the Azure-specific implementation, highlighting how the generic provider concepts are realized for Azure in Prowler. For a full overview of the provider pattern, base classes, and extension guidelines, see [Provider documentation](/developer-guide/provider). In the next subsection you can find a list of the main classes of the Azure provider.
 
 ### `AzureProvider` (Main Class)
 
@@ -57,13 +57,13 @@ The generic service pattern is described in [service page](/developer-guide/serv
 - Directly in the code, in location [`prowler/providers/azure/services/`](https://github.com/prowler-cloud/prowler/tree/master/prowler/providers/azure/services)
 - In the [Prowler Hub](https://hub.prowler.com/) for a more human-readable view.
 
-The best reference to understand how to implement a new service is following the [service implementation documentation](/developer-guide/services#adding-a-new-service) and taking other services already implemented as reference. In next subsection you can find a list of common patterns that are used across all Azure services.
+The best reference to understand how to implement a new service is following the [service implementation documentation](/developer-guide/services#adding-a-new-service) and taking other services already implemented as reference. In the next subsection you can find a list of common patterns that are used across all Azure services.
 
 ### Azure Service Common Patterns
 
 - Services communicate with Azure using the Azure Python SDK, mainly using the Azure Management Client (except for the Microsoft Entra ID service, that is using the Microsoft Graph API), you can find the documentation with all the management services [here](https://learn.microsoft.com/en-us/python/api/overview/azure/?view=azure-python).
 - Every Azure service class inherits from `AzureService`, ensuring access to session, identity, configuration, and client utilities.
-- The constructor (`__init__`) always calls `super().__init__` with the service Azure Management Client and Prowler provider object (e.g `super().__init__(WebSiteManagementClient, provider)`).
+- The constructor (`__init__`) always calls `super().__init__` with the service Azure Management Client and Prowler provider object (e.g. `super().__init__(WebSiteManagementClient, provider)`).
 - Resource containers **must** be initialized in the constructor, and they should be dictionaries, with the key being the subscription ID, the value being a dictionary with the resource ID as key and the resource object as value.
 - All Azure resources are represented as Pydantic `BaseModel` classes, providing type safety and structured access to resource attributes. Some are represented as dataclasses due to legacy reasons, but new resources should be represented as Pydantic `BaseModel` classes.
 - Azure SDK functions are wrapped in try/except blocks, with specific handling for errors, always logging errors. It is a best practice to create a custom function for every Azure SDK call, in that way we can handle the errors in a more specific way.
