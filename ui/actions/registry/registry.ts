@@ -14,6 +14,7 @@ import {
 } from "@/lib/registry/provider-options";
 import {
   REGISTRY_ARTIFACT_ACTION,
+  REGISTRY_ARTIFACT_REMOVAL,
   REGISTRY_BOOTSTRAP_STATE,
   REGISTRY_CATALOG,
   REGISTRY_CREDENTIAL_ACTION,
@@ -22,6 +23,7 @@ import {
   REGISTRY_FAILURE,
   REGISTRY_SUBMISSION,
   type RegistryAddArtifactInput,
+  type RegistryArtifactRemovalResult,
   type RegistryBootstrapResult,
   type RegistryBootstrapState,
   type RegistryCollectionsResult,
@@ -428,7 +430,7 @@ export async function confirmRegistryArtifactAddition(
 
 export async function removeRegistryArtifact(
   normalizedName: string,
-): Promise<RegistryMutationResult> {
+): Promise<RegistryArtifactRemovalResult> {
   const access = await getRegistryAccess();
   if (!access) return { status: REGISTRY_FAILURE.ACCESS_DENIED };
 
@@ -450,6 +452,9 @@ export async function removeRegistryArtifact(
   }
   if (response.status === 401 || response.status === 403) {
     return { status: REGISTRY_FAILURE.ACCESS_DENIED };
+  }
+  if (response.status === 409) {
+    return { status: REGISTRY_ARTIFACT_REMOVAL.IN_USE };
   }
   if (!response.ok) return { status: REGISTRY_FAILURE.ERROR };
 

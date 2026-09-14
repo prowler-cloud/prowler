@@ -28,12 +28,15 @@ import {
 } from "@/lib/registry/credential-result";
 import { useTaskWatcherStore } from "@/store/task-watcher/store";
 import {
+  REGISTRY_ARTIFACT_REMOVAL,
   REGISTRY_BOOTSTRAP_STATE,
   REGISTRY_CREDENTIAL_ACTION,
   REGISTRY_FAILURE,
   REGISTRY_MUTATION,
+  type RegistryArtifactRemovalResult,
   type RegistryBootstrapState,
   type RegistryMutationResult,
+  type RegistryRemoveDialogError,
 } from "@/types/registry";
 
 import { RegistryAccessDialog } from "./registry-access-dialog";
@@ -184,6 +187,7 @@ export function RegistryExplorer({
   const [accessDialogMode, setAccessDialogMode] =
     useState<RegistryAccessDialogMode>();
   const [removeTarget, setRemoveTarget] = useState<string>();
+  const [removeError, setRemoveError] = useState<RegistryRemoveDialogError>();
   const [operationMessage, setOperationMessage] = useState<string>();
   const connectButtonRef = useRef<HTMLButtonElement>(null);
   const manageButtonRef = useRef<HTMLButtonElement>(null);
@@ -316,17 +320,31 @@ export function RegistryExplorer({
   }
 
   async function handleRemove(normalizedName: string) {
+    if (pendingOperation === REGISTRY_PENDING_OPERATION.REMOVE) return;
     const generation = operationGeneration.current;
     setOperationMessage(undefined);
+    setRemoveError(undefined);
     setPendingOperation(REGISTRY_PENDING_OPERATION.REMOVE);
-    const result = await removeRegistryArtifact(normalizedName);
+    let result: RegistryArtifactRemovalResult;
+    try {
+      result = await removeRegistryArtifact(normalizedName);
+    } catch {
+      result = { status: REGISTRY_FAILURE.ERROR };
+    }
     if (generation !== operationGeneration.current) return;
+    setPendingOperation(null);
     if (result.status === REGISTRY_FAILURE.ACCESS_DENIED)
       return router.replace("/profile");
 
-    setPendingOperation(null);
+    if (result.status === REGISTRY_ARTIFACT_REMOVAL.IN_USE) {
+      setRemoveError(result);
+      return;
+    }
     if (result.status !== REGISTRY_MUTATION.CONFIRMED) {
-      setOperationMessage(mutationFailureMessage(result));
+      setRemoveError({
+        status: REGISTRY_FAILURE.ERROR,
+        message: mutationFailureMessage(result),
+      });
       return;
     }
 
@@ -349,6 +367,7 @@ export function RegistryExplorer({
     trigger: HTMLButtonElement | null,
   ) {
     removeTriggerRef.current = trigger;
+    setRemoveError(undefined);
     setRemoveTarget(normalizedName);
   }
 
@@ -591,12 +610,16 @@ export function RegistryExplorer({
       {accessDialog}
       <RegistryRemoveDialog
         artifactName={removeTarget}
+        error={removeError}
         isPending={pendingOperation === REGISTRY_PENDING_OPERATION.REMOVE}
         onConfirm={() => removeTarget && handleRemove(removeTarget)}
         onOpenChange={(open) => {
-          if (!open && pendingOperation !== REGISTRY_PENDING_OPERATION.REMOVE)
+          if (!open && pendingOperation !== REGISTRY_PENDING_OPERATION.REMOVE) {
+            setRemoveError(undefined);
             setRemoveTarget(undefined);
+          }
         }}
+        onViewProviders={() => router.push("/providers")}
         open={removeTarget !== undefined}
         returnFocusRef={removeTriggerRef}
       />

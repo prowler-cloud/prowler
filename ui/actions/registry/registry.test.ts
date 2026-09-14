@@ -758,6 +758,47 @@ describe("Registry artifact mutations", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
+  it("reports an in-use artifact when Remove returns 409 without refreshing membership", async () => {
+    // Given
+    fetchMock.mockResolvedValueOnce(new Response(null, { status: 409 }));
+
+    // When
+    const result = await removeRegistryArtifact("aws-guard");
+
+    // Then
+    expect(result).toEqual({ status: "in_use" });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([
+    [401, "access_denied"],
+    [403, "access_denied"],
+    [400, "error"],
+    [500, "error"],
+  ])("preserves the Remove failure for HTTP %s", async (status, expected) => {
+    // Given
+    fetchMock.mockResolvedValueOnce(new Response(null, { status }));
+
+    // When
+    const result = await removeRegistryArtifact("aws-guard");
+
+    // Then
+    expect(result).toEqual({ status: expected });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("reports a Remove network failure without refreshing membership", async () => {
+    // Given
+    fetchMock.mockRejectedValueOnce(new TypeError("Failed to fetch"));
+
+    // When
+    const result = await removeRegistryArtifact("aws-guard");
+
+    // Then
+    expect(result).toEqual({ status: "error" });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
   it("encodes the deletion identity and confirms Remove after an absent refresh", async () => {
     // Given
     fetchMock

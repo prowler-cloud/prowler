@@ -216,6 +216,18 @@ export type RegistryMutationResult =
   | RegistryArtifactSubmitResult
   | RegistryFailureResult;
 
+export const REGISTRY_ARTIFACT_REMOVAL = {
+  IN_USE: "in_use",
+} as const;
+
+export type RegistryArtifactRemovalResult =
+  | RegistryMutationResult
+  | { status: typeof REGISTRY_ARTIFACT_REMOVAL.IN_USE };
+
+export type RegistryRemoveDialogError =
+  | { status: typeof REGISTRY_ARTIFACT_REMOVAL.IN_USE }
+  | { status: typeof REGISTRY_FAILURE.ERROR; message: string };
+
 export const REGISTRY_BOOTSTRAP_STATE = {
   ONBOARDING: "onboarding",
   VALIDATION_PENDING: "validation_pending",

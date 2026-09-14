@@ -5,7 +5,10 @@ import { userEvent } from "vitest/browser";
 
 import { worker } from "@/__tests__/msw/worker";
 import { render } from "@/__tests__/render-browser";
-import type { RegistryBootstrapState } from "@/types/registry";
+import type {
+  RegistryArtifactRemovalResult,
+  RegistryBootstrapState,
+} from "@/types/registry";
 
 import { RegistryArtifactCard } from "./registry-artifact-card";
 import { RegistryExplorer } from "./registry-explorer";
@@ -1399,6 +1402,196 @@ describe("RegistryExplorer", () => {
     expect(removeRegistryArtifactMock).toHaveBeenCalledTimes(1);
   });
 
+  it("shows an in-use Remove error only inside the dialog with recovery actions", async () => {
+    // Given
+    let resolveRemoval!: (result: RegistryArtifactRemovalResult) => void;
+    removeRegistryArtifactMock.mockReturnValue(
+      new Promise<RegistryArtifactRemovalResult>((resolve) => {
+        resolveRemoval = resolve;
+      }),
+    );
+    const screen = await render(<RegistryExplorer initialState={readyState} />);
+    await screen.getByRole("tab", { name: /My artifacts/ }).click();
+    await screen.getByRole("button", { name: "Remove AWS guard" }).click();
+
+    // When
+    await screen.getByRole("button", { name: "Confirm Remove" }).click();
+    await expect
+      .element(screen.getByRole("button", { name: "Removing artifact" }))
+      .toBeDisabled();
+    resolveRemoval({ status: "in_use" });
+
+    // Then
+    const dialog = screen.getByRole("dialog", { name: "Remove artifact" });
+    await expect
+      .element(dialog.getByRole("alert"))
+      .toHaveTextContent("Artifact in use");
+    await expect
+      .element(dialog.getByRole("alert"))
+      .toHaveTextContent(
+        "This artifact cannot be removed because one or more providers use it. Review the associated providers before trying again.",
+      );
+    expect(document.querySelectorAll('[role="alert"]')).toHaveLength(1);
+    await expect
+      .element(dialog.getByRole("button", { name: "Confirm Remove" }))
+      .not.toBeInTheDocument();
+    await expect
+      .element(dialog.getByRole("button", { name: "View providers" }))
+      .toBeVisible();
+    await expect
+      .poll(() => dialog.element().contains(document.activeElement))
+      .toBe(true);
+    expect(cardFor("AWS guard").textContent).toContain("Remove");
+    expect(document.body.textContent).not.toContain("Artifact removed");
+    expect(document.body.textContent).not.toContain(
+      "Existing provider accounts will remain",
+    );
+  });
+
+  it("clears the in-use Remove error on close and restores focus before reopening", async () => {
+    // Given
+    removeRegistryArtifactMock.mockResolvedValue({ status: "in_use" });
+    const screen = await render(<RegistryExplorer initialState={readyState} />);
+    await screen.getByRole("tab", { name: /My artifacts/ }).click();
+    const removeButton = screen.getByRole("button", {
+      name: "Remove AWS guard",
+    });
+    await removeButton.click();
+    await screen.getByRole("button", { name: "Confirm Remove" }).click();
+    const dialog = screen.getByRole("dialog", { name: "Remove artifact" });
+    await expect.element(dialog.getByRole("alert")).toBeVisible();
+
+    // When: use the footer Close action, not the modal's icon button
+    await dialog
+      .getByRole("button", { name: "Close", exact: true })
+      .first()
+      .click();
+
+    // Then
+    await expect.element(dialog).not.toBeInTheDocument();
+    await expect.element(removeButton).toHaveFocus();
+    expect(document.querySelectorAll('[role="alert"]')).toHaveLength(0);
+
+    // When
+    await removeButton.click();
+
+    // Then
+    await expect.element(dialog.getByRole("alert")).not.toBeInTheDocument();
+    await expect
+      .element(dialog.getByRole("button", { name: "Confirm Remove" }))
+      .toBeEnabled();
+
+    // When
+    await dialog.getByRole("button", { name: "Cancel" }).click();
+    await screen.getByRole("button", { name: "Remove saved-artifact" }).click();
+
+    // Then
+    await expect.element(dialog.getByRole("alert")).not.toBeInTheDocument();
+    await expect
+      .element(dialog.getByRole("button", { name: "Confirm Remove" }))
+      .toBeEnabled();
+  });
+
+  it("opens Providers from an in-use Remove error without another deletion", async () => {
+    // Given
+    removeRegistryArtifactMock.mockResolvedValue({ status: "in_use" });
+    const screen = await render(<RegistryExplorer initialState={readyState} />);
+    await screen.getByRole("tab", { name: /My artifacts/ }).click();
+    await screen.getByRole("button", { name: "Remove AWS guard" }).click();
+    await screen.getByRole("button", { name: "Confirm Remove" }).click();
+
+    // When
+    await screen.getByRole("button", { name: "View providers" }).click();
+
+    // Then
+    expect(registryRouter.push).toHaveBeenCalledWith("/providers");
+    expect(removeRegistryArtifactMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("recovers inside the Remove dialog when the server action rejects", async () => {
+    // Given
+    removeRegistryArtifactMock.mockRejectedValueOnce(
+      new Error("Failed to fetch"),
+    );
+    const screen = await render(<RegistryExplorer initialState={readyState} />);
+    await screen.getByRole("tab", { name: /My artifacts/ }).click();
+    await screen.getByRole("button", { name: "Remove AWS guard" }).click();
+
+    // When
+    await screen.getByRole("button", { name: "Confirm Remove" }).click();
+
+    // Then
+    const dialog = screen.getByRole("dialog", { name: "Remove artifact" });
+    await expect
+      .element(dialog.getByRole("alert"))
+      .toHaveTextContent(
+        "The Registry operation could not be completed. Try again.",
+      );
+    await expect
+      .element(dialog.getByRole("button", { name: "Confirm Remove" }))
+      .toBeEnabled();
+    await expect
+      .element(dialog.getByRole("button", { name: "Cancel" }))
+      .toBeEnabled();
+    expect(document.querySelectorAll('[role="alert"]')).toHaveLength(1);
+    expect(document.body.textContent).not.toContain("Artifact removed");
+  });
+
+  it("clears a Remove error while retrying and commits only after confirmation", async () => {
+    // Given
+    let resolveRemoval!: (result: RegistryArtifactRemovalResult) => void;
+    removeRegistryArtifactMock
+      .mockResolvedValueOnce({ status: "error" })
+      .mockReturnValueOnce(
+        new Promise<RegistryArtifactRemovalResult>((resolve) => {
+          resolveRemoval = resolve;
+        }),
+      );
+    const screen = await render(<RegistryExplorer initialState={readyState} />);
+    await screen.getByRole("tab", { name: /My artifacts/ }).click();
+    await screen.getByRole("button", { name: "Remove AWS guard" }).click();
+    await screen.getByRole("button", { name: "Confirm Remove" }).click();
+    const dialog = screen.getByRole("dialog", { name: "Remove artifact" });
+    await expect.element(dialog.getByRole("alert")).toBeVisible();
+    expect(document.querySelectorAll('[role="alert"]')).toHaveLength(1);
+
+    // When
+    await dialog.getByRole("button", { name: "Confirm Remove" }).click();
+
+    // Then
+    await expect.element(dialog.getByRole("alert")).not.toBeInTheDocument();
+    await expect
+      .element(dialog.getByRole("button", { name: "Removing artifact" }))
+      .toBeDisabled();
+    expect(cardFor("AWS guard").textContent).toContain("Remove");
+    expect(document.body.textContent).not.toContain("Artifact removed");
+    expect(removeRegistryArtifactMock).toHaveBeenCalledTimes(2);
+
+    // When
+    await userEvent.keyboard("{Escape}");
+
+    // Then
+    await expect.element(dialog).toBeVisible();
+
+    // When
+    resolveRemoval({
+      status: "confirmed",
+      tenantArtifacts: [
+        { normalizedName: "saved-artifact", versionSpec: "1.0.0" },
+      ],
+    });
+
+    // Then
+    await expect.element(dialog).not.toBeInTheDocument();
+    await expect
+      .element(screen.getByRole("button", { name: "Remove AWS guard" }))
+      .not.toBeInTheDocument();
+    await expect
+      .poll(() => document.body.textContent)
+      .toContain("Artifact removed");
+    expect(document.querySelectorAll('[role="alert"]')).toHaveLength(0);
+  });
+
   it("keeps My artifacts visible when a Remove refresh cannot confirm absence", async () => {
     // Given
     removeRegistryArtifactMock.mockResolvedValue({ status: "refresh_failed" });
@@ -1410,9 +1603,11 @@ describe("RegistryExplorer", () => {
     await screen.getByRole("button", { name: "Confirm Remove" }).click();
 
     // Then
+    const dialog = screen.getByRole("dialog", { name: "Remove artifact" });
     await expect
-      .poll(() => document.body.textContent)
-      .toContain("Registry membership could not be confirmed");
+      .element(dialog.getByRole("alert"))
+      .toHaveTextContent("Registry membership could not be confirmed");
+    expect(document.querySelectorAll('[role="alert"]')).toHaveLength(1);
     await expect
       .element(screen.getByRole("button", { name: "Confirm Remove" }))
       .toBeVisible();
