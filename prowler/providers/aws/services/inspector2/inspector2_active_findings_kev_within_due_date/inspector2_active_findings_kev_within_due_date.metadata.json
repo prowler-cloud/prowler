@@ -1,0 +1,42 @@
+{
+  "Provider": "aws",
+  "CheckID": "inspector2_active_findings_kev_within_due_date",
+  "CheckTitle": "Inspector2 has no active findings for CISA Known Exploited Vulnerabilities past their remediation due date",
+  "CheckType": [
+    "Software and Configuration Checks/Vulnerabilities/CVE",
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "inspector2",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "critical",
+  "ResourceType": "Other",
+  "ResourceGroup": "security",
+  "Description": "**Amazon Inspector** active findings for **CISA Known Exploited Vulnerabilities** are compared with the remediation due date (`dateDue`) that CISA assigns to each entry of the KEV catalog. Findings that are still active after that date are reported.\n\nThe result is reported per Region where Inspector is enabled.",
+  "Risk": "CISA due dates reflect **active exploitation**. Missing them keeps exploited vulnerabilities open beyond the window CISA sets for federal agencies and shows that vulnerability response is not keeping pace with real threats.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.cisa.gov/known-exploited-vulnerabilities-catalog",
+    "https://docs.aws.amazon.com/inspector/v2/APIReference/API_SearchVulnerabilities.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. In the AWS Console, open Amazon Inspector > Findings\n2. Filter by Vulnerability ID for each overdue CVE reported by this check\n3. Patch or upgrade the affected packages, rebuild container images or update Lambda runtimes\n4. If a fix is not available, apply the mitigations listed in the CISA catalog entry\n5. Confirm the findings move to Closed",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Track every KEV finding against its **CISA due date** and remediate before it passes. When no fix exists yet, apply the vendor or CISA mitigations and document the residual risk.",
+      "Url": "https://hub.prowler.com/check/inspector2_active_findings_kev_within_due_date"
+    }
+  },
+  "Categories": [
+    "vulnerabilities"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "inspector2_active_findings_no_known_exploited_vulnerabilities"
+  ],
+  "Notes": ""
+}

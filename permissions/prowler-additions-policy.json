@@ -38,6 +38,7 @@
         "glue:GetSecurityConfiguration*",
         "glue:SearchTables",
         "glue:GetMLTransforms",
+        "inspector2:SearchVulnerabilities",
         "lambda:GetFunction*",
         "lambda:GetLayerVersion",
         "logs:FilterLogEvents",
