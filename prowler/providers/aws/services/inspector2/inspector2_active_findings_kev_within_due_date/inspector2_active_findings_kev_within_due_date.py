@@ -54,7 +54,7 @@ class inspector2_active_findings_kev_within_due_date(Check):
                 report.status_extended = (
                     "Inspector2 could not verify the CISA Known Exploited Vulnerabilities status of "
                     f"{summarize_vulnerabilities(unverified_ids)} in region {inspector.region}; "
-                    "verify the inspector2:SearchVulnerabilities permission."
+                    "verify the inspector2:BatchGetFindingDetails permission."
                 )
             else:
                 report.status = "PASS"

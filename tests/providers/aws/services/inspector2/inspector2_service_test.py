@@ -4,10 +4,15 @@ from unittest.mock import patch
 import botocore
 from botocore.exceptions import ClientError
 
-from prowler.providers.aws.services.inspector2.inspector2_service import Inspector2
+from prowler.providers.aws.services.inspector2.inspector2_service import (
+    Finding,
+    Inspector,
+    Inspector2,
+)
 from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_WEST_1,
+    AWS_REGION_US_EAST_1,
     set_mocked_aws_provider,
 )
 
@@ -95,29 +100,48 @@ def mock_make_api_call(self, operation_name, kwargs):
                 }
             ]
         }
-    if operation_name == "SearchVulnerabilities":
+    if operation_name == "BatchGetFindingDetails":
         return {
-            "vulnerabilities": [
+            "findingDetails": [
                 {
-                    "id": VULNERABILITY_ID,
+                    "findingArn": FINDING_ARN,
                     "cisaData": {
                         "dateAdded": KEV_DATE_ADDED,
                         "dateDue": KEV_DATE_DUE,
                     },
                 }
-            ]
+            ],
+            "errors": [],
         }
 
     return make_api_call(self, operation_name, kwargs)
 
 
-def mock_make_api_call_search_denied(self, operation_name, kwargs):
-    if operation_name == "SearchVulnerabilities":
+def mock_make_api_call_finding_details_denied(self, operation_name, kwargs):
+    if operation_name == "BatchGetFindingDetails":
         raise ClientError(
             {"Error": {"Code": "AccessDeniedException", "Message": "denied"}},
             operation_name,
         )
     return mock_make_api_call(self, operation_name, kwargs)
+
+
+def mock_finding_details_error(error_code):
+    def _mock(self, operation_name, kwargs):
+        if operation_name == "BatchGetFindingDetails":
+            return {
+                "findingDetails": [],
+                "errors": [
+                    {
+                        "findingArn": FINDING_ARN,
+                        "errorCode": error_code,
+                        "errorMessage": "error",
+                    }
+                ],
+            }
+        return mock_make_api_call(self, operation_name, kwargs)
+
+    return _mock
 
 
 def mock_make_api_call_list_denied(self, operation_name, kwargs):
@@ -135,6 +159,29 @@ def mock_generate_regional_clients(provider, service):
     )
     regional_client.region = AWS_REGION_EU_WEST_1
     return {AWS_REGION_EU_WEST_1: regional_client}
+
+
+def build_inspector(region, vulnerability_ids):
+    return Inspector(
+        id="Inspector2",
+        arn=f"arn:aws:inspector2:{region}:{AWS_ACCOUNT_NUMBER}:inspector2",
+        region=region,
+        status="ENABLED",
+        ec2_status="ENABLED",
+        ecr_status="ENABLED",
+        lambda_status="ENABLED",
+        lambda_code_status="ENABLED",
+        findings=[
+            Finding(
+                arn=f"arn:aws:inspector2:{region}:{AWS_ACCOUNT_NUMBER}:finding/{index}",
+                type="PACKAGE_VULNERABILITY",
+                severity="HIGH",
+                first_observed_at=FIRST_OBSERVED_AT,
+                vulnerability_id=vulnerability_id,
+            )
+            for index, vulnerability_id in enumerate(vulnerability_ids)
+        ],
+    )
 
 
 # Patch every AWS call using Boto3 and generate_regional_clients to have 1 client
@@ -219,7 +266,7 @@ class Test_Inspector2_Service:
         inspector2 = Inspector2(aws_provider)
         assert inspector2.inspectors[0].coverage == []
 
-    def test_search_vulnerabilities(self):
+    def test_batch_get_finding_details(self):
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         inspector2 = Inspector2(aws_provider)
         known_exploited = inspector2.known_exploited_vulnerabilities[VULNERABILITY_ID]
@@ -228,10 +275,30 @@ class Test_Inspector2_Service:
         assert known_exploited.date_due == KEV_DATE_DUE
         assert inspector2.vulnerability_lookup_failed == set()
 
-    def test_search_vulnerabilities_denied(self):
+    def test_batch_get_finding_details_denied(self):
         with patch(
             "botocore.client.BaseClient._make_api_call",
-            new=mock_make_api_call_search_denied,
+            new=mock_make_api_call_finding_details_denied,
+        ):
+            aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+            inspector2 = Inspector2(aws_provider)
+        assert inspector2.known_exploited_vulnerabilities == {}
+        assert inspector2.vulnerability_lookup_failed == {VULNERABILITY_ID}
+
+    def test_finding_details_not_found_is_not_a_lookup_failure(self):
+        with patch(
+            "botocore.client.BaseClient._make_api_call",
+            new=mock_finding_details_error("FINDING_DETAILS_NOT_FOUND"),
+        ):
+            aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+            inspector2 = Inspector2(aws_provider)
+        assert inspector2.known_exploited_vulnerabilities == {}
+        assert inspector2.vulnerability_lookup_failed == set()
+
+    def test_finding_details_error_is_a_lookup_failure(self):
+        with patch(
+            "botocore.client.BaseClient._make_api_call",
+            new=mock_finding_details_error("INTERNAL_ERROR"),
         ):
             aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
             inspector2 = Inspector2(aws_provider)
@@ -248,3 +315,20 @@ class Test_Inspector2_Service:
         assert inspector2.inspectors[0].findings is None
         assert inspector2.inspectors[0].coverage is None
         assert inspector2.known_exploited_vulnerabilities == {}
+
+    def test_finding_detail_batches_use_one_finding_per_cve(self):
+        vulnerability_ids = [f"CVE-2024-{number:04d}" for number in range(25)]
+        batches = Inspector2._get_finding_detail_batches(
+            [
+                build_inspector(
+                    AWS_REGION_EU_WEST_1,
+                    vulnerability_ids + vulnerability_ids[:5] + ["GHSA-xxxx-yyyy-zzzz"],
+                ),
+                build_inspector(AWS_REGION_US_EAST_1, vulnerability_ids[:3]),
+            ]
+        )
+        assert [region for region, _ in batches] == [AWS_REGION_EU_WEST_1] * 3
+        assert [len(findings) for _, findings in batches] == [10, 10, 5]
+        assert sorted(cve for _, findings in batches for _, cve in findings) == sorted(
+            vulnerability_ids
+        )

@@ -17,7 +17,7 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://www.cisa.gov/known-exploited-vulnerabilities-catalog",
-    "https://docs.aws.amazon.com/inspector/v2/APIReference/API_SearchVulnerabilities.html"
+    "https://docs.aws.amazon.com/inspector/v2/APIReference/API_BatchGetFindingDetails.html"
   ],
   "Remediation": {
     "Code": {

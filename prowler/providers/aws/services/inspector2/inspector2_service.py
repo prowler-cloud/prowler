@@ -7,6 +7,8 @@ from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
+FINDING_DETAILS_BATCH_SIZE = 10
+
 
 class Inspector2(AWSService):
     def __init__(self, provider):
@@ -23,8 +25,8 @@ class Inspector2(AWSService):
         self.__threading_call__(self._list_findings, enabled_inspectors)
         self.__threading_call__(self._list_coverage, enabled_inspectors)
         self.__threading_call__(
-            self._search_vulnerability,
-            self._get_vulnerability_lookups(enabled_inspectors),
+            self._batch_get_finding_details,
+            self._get_finding_detail_batches(enabled_inspectors),
         )
 
     def _batch_get_account_status(self, regional_client):
@@ -166,28 +168,41 @@ class Inspector2(AWSService):
         return resource_id
 
     @staticmethod
-    def _get_vulnerability_lookups(inspectors):
-        """Map each CVE with an active finding to one Region where it can be looked up."""
-        lookups = {}
+    def _get_finding_detail_batches(inspectors):
+        """Group one active finding per CVE into finding details batches per Region."""
+        representatives = {}
         for inspector in inspectors:
             for finding in inspector.findings or []:
                 if finding.vulnerability_id and finding.vulnerability_id.startswith(
                     "CVE-"
                 ):
-                    lookups.setdefault(finding.vulnerability_id, inspector.region)
-        return list(lookups.items())
-
-    def _search_vulnerability(self, lookup):
-        """Record the CISA KEV data of a CVE, flagging the lookup as failed on error."""
-        vulnerability_id, region = lookup
-        logger.info(f"Inspector2 - Searching vulnerability {vulnerability_id}...")
-        try:
-            response = self.regional_clients[region].search_vulnerabilities(
-                filterCriteria={"vulnerabilityIds": [vulnerability_id]}
+                    representatives.setdefault(
+                        finding.vulnerability_id, (inspector.region, finding.arn)
+                    )
+        findings_by_region = {}
+        for vulnerability_id, (region, finding_arn) in representatives.items():
+            findings_by_region.setdefault(region, []).append(
+                (finding_arn, vulnerability_id)
             )
-            for vulnerability in response.get("vulnerabilities", []):
-                cisa_data = vulnerability.get("cisaData")
-                if cisa_data:
+        return [
+            (region, findings[index : index + FINDING_DETAILS_BATCH_SIZE])
+            for region, findings in findings_by_region.items()
+            for index in range(0, len(findings), FINDING_DETAILS_BATCH_SIZE)
+        ]
+
+    def _batch_get_finding_details(self, batch):
+        """Record the CISA KEV data of the CVEs in a batch, flagging failed lookups."""
+        region, findings = batch
+        vulnerability_ids = dict(findings)
+        logger.info("Inspector2 - Getting finding details...")
+        try:
+            response = self.regional_clients[region].batch_get_finding_details(
+                findingArns=list(vulnerability_ids)
+            )
+            for detail in response.get("findingDetails", []):
+                vulnerability_id = vulnerability_ids.get(detail.get("findingArn"))
+                cisa_data = detail.get("cisaData")
+                if vulnerability_id and cisa_data:
                     self.known_exploited_vulnerabilities[vulnerability_id] = (
                         KnownExploitedVulnerability(
                             id=vulnerability_id,
@@ -195,8 +210,18 @@ class Inspector2(AWSService):
                             date_due=cisa_data.get("dateDue"),
                         )
                     )
+            for detail_error in response.get("errors", []):
+                # Inspector has no intelligence for the CVE, so it cannot be a KEV
+                if detail_error.get("errorCode") == "FINDING_DETAILS_NOT_FOUND":
+                    continue
+                vulnerability_id = vulnerability_ids.get(detail_error.get("findingArn"))
+                if vulnerability_id:
+                    self.vulnerability_lookup_failed.add(vulnerability_id)
+                    logger.error(
+                        f"{region} -- {detail_error.get('errorCode')} getting finding details for {vulnerability_id}: {detail_error.get('errorMessage')}"
+                    )
         except Exception as error:
-            self.vulnerability_lookup_failed.add(vulnerability_id)
+            self.vulnerability_lookup_failed.update(vulnerability_ids.values())
             logger.error(
                 f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
