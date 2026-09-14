@@ -9,9 +9,11 @@ import { OnboardingGate } from "../onboarding-gate";
 
 const pushMock = vi.fn();
 const armMock = vi.fn();
+const pathnameMock = vi.fn();
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: pushMock, replace: vi.fn() }),
+  usePathname: () => pathnameMock(),
 }));
 
 vi.mock("@/store/onboarding-checkpoint", () => ({
@@ -30,10 +32,60 @@ describe("OnboardingGate", () => {
     window.localStorage.clear();
     pushMock.mockClear();
     armMock.mockClear();
+    pathnameMock.mockReturnValue("/");
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
+  });
+
+  it.each(["/billing", "/billing/", "/billing/checkout"])(
+    "defers onboarding on %s without resolving it",
+    (pathname) => {
+      // Given
+      pathnameMock.mockReturnValue(pathname);
+
+      // When
+      render(<OnboardingGate hasProviders={false} />);
+
+      // Then
+      expect(
+        screen.queryByRole("button", { name: /get started/i }),
+      ).not.toBeInTheDocument();
+      expect(localStorageAdapter.get(addProviderTourId)).toBeNull();
+      expect(armMock).not.toHaveBeenCalled();
+      expect(pushMock).not.toHaveBeenCalled();
+    },
+  );
+
+  it("offers onboarding after leaving billing without remounting the gate", async () => {
+    // Given
+    pathnameMock.mockReturnValue("/billing");
+    const { rerender } = render(<OnboardingGate hasProviders={false} />);
+
+    // When
+    pathnameMock.mockReturnValue("/");
+    rerender(<OnboardingGate hasProviders={false} />);
+
+    // Then
+    expect(
+      await screen.findByRole("button", { name: /get started/i }),
+    ).toBeInTheDocument();
+    expect(localStorageAdapter.get(addProviderTourId)).toBeNull();
+    expect(armMock).not.toHaveBeenCalled();
+  });
+
+  it("does not suppress onboarding on a route that only shares the billing prefix", async () => {
+    // Given
+    pathnameMock.mockReturnValue("/billing-settings");
+
+    // When
+    render(<OnboardingGate hasProviders={false} />);
+
+    // Then
+    expect(
+      await screen.findByRole("button", { name: /get started/i }),
+    ).toBeInTheDocument();
   });
 
   describe("when the user has no providers and no completion record", () => {
