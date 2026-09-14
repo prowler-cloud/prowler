@@ -22,20 +22,25 @@ ARG POWERSHELL_SHA256_ARM64=2503b71da3e83635592b092df59a0aca4c3606b4d9b068217bb0
 ARG ZIZMOR_SHA256_AMD64=a8000f3c683319a523d3b20df0e75457ba591f049cfcbfa98966631b56733c03
 ARG ZIZMOR_SHA256_ARM64=d66e37ef8a375fb07939c630ebf9709a6e0f20242bdc3faf672a7ed97e0b768d
 
-# High CVEs fixed in Debian trixie-security but not yet in the pinned base image:
+# High CVEs fixed in Debian trixie but not yet in the pinned base image:
 #   openssl/libssl3t64/openssl-provider-legacy 3.5.7-1~deb13u2  CVE-2026-14456,
 #   -14457, -18798, -54874, -63072, -63073, -63074, -63075, -63076, -75803
-#   (image ships 3.5.6-1~deb13u2)
+#   libsqlite3-0 3.46.1-7+deb13u2  CVE-2026-11822, -11824
+#   gzip 1.13-1+deb13u1  CVE-2026-41992
+#   perl-base 5.40.1-6+deb13u1  CVE-2026-42497, -48962, -57432
+#   libssh2-1t64 1.11.1-1+deb13u2  CVE-2026-58050
+#   libpcre2-8-0 10.46-1~deb13u2  CVE-2026-86145, -89161
 # Taken as a targeted --only-upgrade rather than by moving the digest: the newest
-# published python:3.12-slim-trixie carries the same vulnerable version. The three
-# packages are all built from openssl and are flagged separately, so all are named.
-# Drop them once the base image ships 3.5.7-1~deb13u2 or later.
+# published python:3.12-slim-trixie carries the same vulnerable versions. The three
+# openssl packages are flagged separately, so all are named.
+# Drop each one once the base image ships its fixed version.
 # hadolint ignore=DL3008
 RUN apt-get update && apt-get install -y --no-install-recommends \
     wget libicu76 libunwind8 libssl3 libcurl4 ca-certificates apt-transport-https gnupg \
     build-essential pkg-config libzstd-dev zlib1g-dev \
     && apt-get install -y --no-install-recommends --only-upgrade \
        util-linux libssl3t64 openssl openssl-provider-legacy \
+       libsqlite3-0 gzip perl-base libssh2-1t64 libpcre2-8-0 \
     && rm -rf /var/lib/apt/lists/*
 
 # Install PowerShell
