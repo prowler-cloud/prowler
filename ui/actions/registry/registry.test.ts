@@ -106,6 +106,105 @@ function mockRequestDeadlines() {
   });
 }
 
+describe("installed Registry provider discovery", () => {
+  function mockDiscovery({
+    emptyMetadata = false,
+    failedEndpoint,
+    failureStatus = 500,
+  }: {
+    emptyMetadata?: boolean;
+    failedEndpoint?: string;
+    failureStatus?: number;
+  } = {}) {
+    fetchMock.mockImplementation((url: string) => {
+      const endpoint = new URL(url).pathname.split("/").pop();
+      if (endpoint === failedEndpoint) return jsonResponse({}, failureStatus);
+      if (endpoint === "available-artifacts")
+        return jsonResponse({
+          data: [
+            {
+              type: "registry-artifacts",
+              id: "acme-package",
+              attributes: {
+                name: "Acme package",
+                providers: ["acme"],
+                has_provider: true,
+              },
+            },
+          ],
+          meta: { pagination: { page: 1, pages: 1, count: 1 } },
+        });
+      if (endpoint === "artifacts")
+        return jsonResponse({
+          data: [
+            {
+              type: "registry-artifacts",
+              id: "acme-package",
+              attributes: { version_spec: "latest" },
+            },
+          ],
+        });
+      if (endpoint === "providers")
+        return jsonResponse({
+          data: emptyMetadata
+            ? []
+            : [
+                {
+                  id: "acme",
+                  attributes: {
+                    name: "Acme Cloud",
+                    logo_url: "https://media.registry.test/acme.svg",
+                  },
+                },
+              ],
+        });
+      throw new Error(`Unexpected endpoint: ${endpoint}`);
+    });
+  }
+
+  it("joins catalog declarations, installed membership and provider metadata", async () => {
+    mockDiscovery();
+    expect(await getInstalledRegistryProviderOptions()).toEqual({
+      status: "ready",
+      options: [
+        {
+          type: "acme",
+          label: "Acme Cloud",
+          logoUrl: "https://media.registry.test/acme.svg",
+        },
+      ],
+    });
+  });
+
+  it("uses the declared provider and artifact name when metadata is empty", async () => {
+    mockDiscovery({ emptyMetadata: true });
+    expect(await getInstalledRegistryProviderOptions()).toEqual({
+      status: "ready",
+      options: [{ type: "acme", label: "Acme package" }],
+    });
+  });
+
+  it.each(["available-artifacts", "artifacts", "providers"])(
+    "returns an error when the %s read fails",
+    async (failedEndpoint) => {
+      mockDiscovery({ failedEndpoint });
+      expect(await getInstalledRegistryProviderOptions()).toEqual({
+        status: "error",
+      });
+    },
+  );
+
+  it.each(["available-artifacts", "artifacts", "providers"])(
+    "preserves access denial from the %s read",
+    async (failedEndpoint) => {
+      mockDiscovery({ failedEndpoint, failureStatus: 403 });
+      expect(await getInstalledRegistryProviderOptions()).toEqual({
+        status: "access_denied",
+      });
+    },
+  );
+});
+
 describe("Registry guarded reads", () => {
   it("recovers when a Registry read stalls", async () => {
     // Given: the upstream responds only when its request is aborted.
