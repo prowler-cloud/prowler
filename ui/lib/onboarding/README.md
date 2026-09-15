@@ -17,6 +17,8 @@ coupling**.
 | Ephemeral sequence slice               | `ui/store/onboarding-sequence.ts`                                     |
 | Checkpoint watcher + dialog            | `ui/components/onboarding/onboarding-checkpoint-{watcher,dialog}.tsx` |
 | Mandatory new-user gate                | `ui/components/onboarding/onboarding-gate.tsx`                        |
+| Profile step in front of the gate      | `ui/components/onboarding/onboarding-profile-{gate,modal}.tsx`        |
+| Step outcome events (window)           | `ui/lib/onboarding/onboarding-events.ts`                              |
 | Manual replay list                     | `ui/components/ui/user-nav/user-nav.tsx`                              |
 
 ## How the guided sequence works
@@ -72,3 +74,21 @@ the sequence automatically.
   `target` must resolve to a real `data-tour-id` anchor within its `coversFiles`.
 - `pnpm exec vitest run --project unit` — pure logic (slice, helpers, registry,
   tour shapes). The driver primitive short-circuits in `NODE_ENV==="test"`.
+
+## Profile step
+
+Before the mandatory gate offers the first tour, `OnboardingProfileGate` asks
+a new tenant three closed questions (cloud accounts, team size, role) and
+records the answer, or the skip, through `POST /onboarding-profiles`. The API
+keeps the first answer per tenant, so the layout only reads
+`isOnboardingProfileRecorded()` for tenants without providers and the gate
+fails open on any doubt (`shouldStartOnboardingProfile`). A localStorage marker
+(`prowler.onboarding.profile`) spares the request and the flash on later
+renders; a rejected submission writes no marker so the step returns next login.
+
+Each resolution (`shown`, `submitted` with the answers, `skipped`) is announced
+as a `prowler:onboarding-profile-step` window event
+(`dispatchOnboardingProfileStep`). The step has no listener of its own: a
+deployment that wants to observe it subscribes from outside, so the onboarding
+stays free of tracking dependencies.
+
