@@ -83,6 +83,7 @@ class KeyVault(AzureService):
                     subscription,
                     resource_group,
                     keyvault_name,
+                    getattr(keyvault_properties, "vault_uri", ""),
                     provider,
                 )
                 secrets_future = executor.submit(
@@ -150,7 +151,9 @@ class KeyVault(AzureService):
             )
             return None
 
-    def _get_keys(self, subscription, resource_group, keyvault_name, provider):
+    def _get_keys(
+        self, subscription, resource_group, keyvault_name, vault_uri, provider
+    ):
         logger.info(f"KeyVault - Getting keys for {keyvault_name}...")
         keys = []
         keys_dict = {}
@@ -179,10 +182,15 @@ class KeyVault(AzureService):
                 f"Subscription ID: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+        if not vault_uri:
+            logger.warning(
+                f"KeyVault {keyvault_name} in {subscription} -- has no vault URI, skipping key rotation policies"
+            )
+            return keys
+
         try:
             key_client = KeyClient(
-                vault_url=f"https://{keyvault_name}.vault.azure.net/",
-                # TODO: review the following line
+                vault_url=vault_uri,
                 credential=provider.session,
             )
             properties = list(key_client.list_properties_of_keys())

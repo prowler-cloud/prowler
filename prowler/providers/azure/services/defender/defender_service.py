@@ -21,7 +21,7 @@ class Defender(AzureService):
         self.settings = self._get_settings()
         self.security_contact_configurations = self._get_security_contacts(
             token=provider.session.get_token(
-                "https://management.azure.com/.default"
+                *self.region_config.credential_scopes
             ).token
         )
         self.iot_security_solutions = self._get_iot_security_solutions()
@@ -168,7 +168,7 @@ class Defender(AzureService):
         security_contacts = {}
         for subscription_id, display_name in self.subscriptions.items():
             try:
-                url = f"https://management.azure.com/subscriptions/{subscription_id}/providers/Microsoft.Security/securityContacts?api-version=2023-12-01-preview"
+                url = f"{self.region_config.base_url}/subscriptions/{subscription_id}/providers/Microsoft.Security/securityContacts?api-version=2023-12-01-preview"
                 headers = {
                     "Authorization": f"Bearer {token}",
                     "Content-Type": "application/json",
