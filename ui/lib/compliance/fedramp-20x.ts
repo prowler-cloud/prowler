@@ -1,10 +1,9 @@
-import {
+import type {
   AttributesData,
   FedRAMP20xFRRAttributesMetadata,
   FedRAMP20xKSIAttributesMetadata,
   Framework,
   Requirement,
-  REQUIREMENT_STATUS,
   RequirementsData,
   RequirementStatus,
 } from "@/types/compliance";
@@ -15,17 +14,12 @@ import {
   findOrCreateCategory,
   findOrCreateControl,
   findOrCreateFramework,
+  getStatusCounters,
 } from "./commons";
 
 export { toGroupedAccordionItems as toAccordionItems } from "./grouped-accordion";
 
 type RequirementFields = Record<string, string | undefined>;
-
-const getStatusCounters = (status: RequirementStatus) => ({
-  pass: status === REQUIREMENT_STATUS.PASS ? 1 : 0,
-  fail: status === REQUIREMENT_STATUS.FAIL ? 1 : 0,
-  manual: status === REQUIREMENT_STATUS.MANUAL ? 1 : 0,
-});
 
 const mapByGroup = <TMetadata>(
   attributesData: AttributesData,

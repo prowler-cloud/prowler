@@ -1,9 +1,8 @@
-import {
+import type {
   AttributesData,
   CMMCAttributesMetadata,
   Framework,
   Requirement,
-  REQUIREMENT_STATUS,
   RequirementsData,
   RequirementStatus,
 } from "@/types/compliance";
@@ -14,6 +13,7 @@ import {
   findOrCreateCategory,
   findOrCreateControl,
   findOrCreateFramework,
+  getStatusCounters,
 } from "./commons";
 
 export { toGroupedAccordionItems as toAccordionItems } from "./grouped-accordion";
@@ -36,12 +36,6 @@ export const CMMC_DOMAIN_ORDER: readonly string[] = [
   "System and Communications Protection",
   "System and Information Integrity",
 ];
-
-const getStatusCounters = (status: RequirementStatus) => ({
-  pass: status === REQUIREMENT_STATUS.PASS ? 1 : 0,
-  fail: status === REQUIREMENT_STATUS.FAIL ? 1 : 0,
-  manual: status === REQUIREMENT_STATUS.MANUAL ? 1 : 0,
-});
 
 export const mapComplianceData = (
   attributesData: AttributesData,
