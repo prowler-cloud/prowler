@@ -719,6 +719,15 @@ export class ProvidersPage extends BasePage {
     await singleSubscriptionOption.click();
   }
 
+  async selectGCPSingleProjectMethod(): Promise<void> {
+    const singleProjectOption = this.page.getByRole("radio", {
+      name: "Add A Single GCP Project",
+      exact: true,
+    });
+    await expect(singleProjectOption).toBeVisible({ timeout: 10000 });
+    await singleProjectOption.click();
+  }
+
   async selectAWSOrganizationsMethod(): Promise<void> {
     await this.page
       .getByRole("radio", {
