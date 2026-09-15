@@ -58,6 +58,7 @@ const runtimeConfig: RuntimePublicConfig = {
   reoDevClientId: null,
   cloudEnabled: false,
   cloudBillingEnabled: false,
+  selfRegistrationEnabled: true,
   stripePublishableKey: null,
   stripePublishableKeyV2: null,
 };
