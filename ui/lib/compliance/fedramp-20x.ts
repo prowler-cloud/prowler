@@ -1,8 +1,3 @@
-import { ClientAccordionContent } from "@/components/compliance/compliance-accordion/client-accordion-content";
-import { ComplianceAccordionRequirementTitle } from "@/components/compliance/compliance-accordion/compliance-accordion-requeriment-title";
-import { ComplianceAccordionTitle } from "@/components/compliance/compliance-accordion/compliance-accordion-title";
-import { AccordionItemProps } from "@/components/shadcn/accordion/Accordion";
-import { FindingStatus } from "@/components/shadcn/table/status-finding-badge";
 import {
   AttributesData,
   FedRAMP20xFRRAttributesMetadata,
@@ -22,6 +17,8 @@ import {
   findOrCreateFramework,
 } from "./commons";
 
+export { toGroupedAccordionItems as toAccordionItems } from "./grouped-accordion";
+
 type RequirementFields = Record<string, string | undefined>;
 
 const getStatusCounters = (status: RequirementStatus) => ({
@@ -30,7 +27,7 @@ const getStatusCounters = (status: RequirementStatus) => ({
   manual: status === REQUIREMENT_STATUS.MANUAL ? 1 : 0,
 });
 
-const mapByGroup = <TMetadata,>(
+const mapByGroup = <TMetadata>(
   attributesData: AttributesData,
   requirementsData: RequirementsData,
   getGroup: (attrs: TMetadata) => string,
@@ -117,51 +114,3 @@ export const mapFRRComplianceData = (
       force: attrs.Force,
     }),
   );
-
-export const toAccordionItems = (
-  data: Framework[],
-  scanId: string | undefined,
-): AccordionItemProps[] => {
-  const safeId = scanId || "";
-
-  return data.flatMap((framework) =>
-    framework.categories.map((category) => ({
-      key: `${framework.name}-${category.name}`,
-      title: (
-        <ComplianceAccordionTitle
-          label={category.name}
-          pass={category.pass}
-          fail={category.fail}
-          manual={category.manual}
-          isParentLevel={true}
-        />
-      ),
-      content: "",
-      items: category.controls.flatMap((control) =>
-        control.requirements.map((requirement) => ({
-          key: `${framework.name}-${category.name}-${requirement.name}`,
-          title: (
-            <ComplianceAccordionRequirementTitle
-              type=""
-              name={requirement.name}
-              status={requirement.status as FindingStatus}
-              invalidConfig={requirement.invalid_config}
-            />
-          ),
-          content: (
-            <ClientAccordionContent
-              key={`content-${framework.name}-${category.name}-${requirement.name}`}
-              requirement={requirement}
-              scanId={safeId}
-              framework={framework.name}
-              disableFindings={
-                requirement.check_ids.length === 0 && requirement.manual === 0
-              }
-            />
-          ),
-          items: [],
-        })),
-      ),
-    })),
-  );
-};
