@@ -6,6 +6,7 @@ import boto3
 import config.django.base as base
 from api.db_utils import rls_transaction
 from api.models import Scan
+from botocore.config import Config
 from botocore.exceptions import ClientError, NoCredentialsError, ParamValidationError
 from celery.utils.log import get_task_logger
 from django.conf import settings
@@ -215,6 +216,9 @@ def get_s3_client():
     Raises:
         ClientError, NoCredentialsError, or ParamValidationError if both attempts to create a client fail.
     """
+    # Pinning SigV4 is required: boto3's default query-string signer for S3 falls back to
+    # SigV2, which S3 rejects for objects encrypted with SSE-KMS.
+    s3_config = Config(signature_version="s3v4")
     s3_client = None
     try:
         s3_client = boto3.client(
@@ -223,10 +227,11 @@ def get_s3_client():
             aws_secret_access_key=settings.DJANGO_OUTPUT_S3_AWS_SECRET_ACCESS_KEY,
             aws_session_token=settings.DJANGO_OUTPUT_S3_AWS_SESSION_TOKEN,
             region_name=settings.DJANGO_OUTPUT_S3_AWS_DEFAULT_REGION,
+            config=s3_config,
         )
         s3_client.list_buckets()
     except (ClientError, NoCredentialsError, ParamValidationError, ValueError):
-        s3_client = boto3.client("s3")
+        s3_client = boto3.client("s3", config=s3_config)
         s3_client.list_buckets()
 
     return s3_client
