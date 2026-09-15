@@ -34,34 +34,37 @@ describe("task watcher store", () => {
     registerTaskKindHandler("test-kind", { onReady, onError });
   });
 
-  it("preserves pending work when a reload aborts its RPC and resumes on return", async () => {
-    let rejectPoll!: (error: Error) => void;
-    pollMock.mockImplementationOnce(
-      () =>
-        new Promise((_resolve, reject) => {
-          rejectPoll = reject;
-        }),
-    );
-    const tracking = trackAndPollTask({
-      taskId: "reload-task",
-      kind: "test-kind",
-      meta: {},
-    });
-    await vi.waitFor(() => expect(pollMock).toHaveBeenCalledOnce());
-    window.dispatchEvent(new PageTransitionEvent("pagehide"));
-    rejectPoll(new Error("The document was unloaded"));
-    expect(await tracking).toEqual({ status: TASK_WATCHER_STATUS.PENDING });
-    expect(useTaskWatcherStore.getState().tasks["reload-task"]?.status).toBe(
-      TASK_WATCHER_STATUS.PENDING,
-    );
-    expect(onError).not.toHaveBeenCalled();
+  it.each(["beforeunload", "pagehide"])(
+    "preserves pending work when %s aborts its RPC and resumes on return",
+    async (eventType) => {
+      let rejectPoll!: (error: Error) => void;
+      pollMock.mockImplementationOnce(
+        () =>
+          new Promise((_resolve, reject) => {
+            rejectPoll = reject;
+          }),
+      );
+      const tracking = trackAndPollTask({
+        taskId: "reload-task",
+        kind: "test-kind",
+        meta: {},
+      });
+      await vi.waitFor(() => expect(pollMock).toHaveBeenCalledOnce());
+      window.dispatchEvent(new Event(eventType));
+      rejectPoll(new Error("The document was unloaded"));
+      expect(await tracking).toEqual({ status: TASK_WATCHER_STATUS.PENDING });
+      expect(useTaskWatcherStore.getState().tasks["reload-task"]?.status).toBe(
+        TASK_WATCHER_STATUS.PENDING,
+      );
+      expect(onError).not.toHaveBeenCalled();
 
-    pollMock.mockResolvedValue({ ok: true, state: "completed" });
-    window.dispatchEvent(
-      new PageTransitionEvent("pageshow", { persisted: true }),
-    );
-    await vi.waitFor(() => expect(onReady).toHaveBeenCalledOnce());
-  });
+      pollMock.mockResolvedValue({ ok: true, state: "completed" });
+      window.dispatchEvent(
+        new PageTransitionEvent("pageshow", { persisted: true }),
+      );
+      await vi.waitFor(() => expect(onReady).toHaveBeenCalledOnce());
+    },
+  );
 
   it("tracks a task, polls it to completion and fires onReady once", async () => {
     pollMock.mockResolvedValue({ ok: true, state: "completed" });

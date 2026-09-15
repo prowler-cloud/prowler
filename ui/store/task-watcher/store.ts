@@ -121,6 +121,11 @@ const suppressedHandlers = new Set<string>();
 // task failure: keep its persisted identity for the next document to resume.
 let pageSuspended = false;
 if (typeof window !== "undefined") {
+  // Browsers can abort a Server Action before pagehide is dispatched.
+  // Mark the navigation at its start so that abort cannot discard the task.
+  window.addEventListener("beforeunload", () => {
+    pageSuspended = true;
+  });
   window.addEventListener("pagehide", () => {
     pageSuspended = true;
   });
