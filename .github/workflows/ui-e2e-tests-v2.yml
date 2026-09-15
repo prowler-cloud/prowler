@@ -337,15 +337,10 @@ jobs:
         if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: pnpm run test:e2e:install
 
-      - name: Run E2E tests
+      - name: Run standard E2E tests
+        id: standard-e2e
         working-directory: ./ui
         run: |
-          REGISTRY_FIXTURE_SELECTED=false
-          if [[ "${RUN_ALL_TESTS}" == "true" ]] ||
-            [[ " ${E2E_TEST_PATHS} " == *" ui/tests/registry/"* ]]; then
-            REGISTRY_FIXTURE_SELECTED=true
-          fi
-
           if [[ "${RUN_ALL_TESTS}" == "true" ]]; then
             echo "Running all standard E2E tests..."
             pnpm run test:e2e
@@ -387,10 +382,13 @@ jobs:
             fi
           fi
 
-          if [[ "$REGISTRY_FIXTURE_SELECTED" == "true" ]]; then
-            echo "Running self-contained Registry fixture acceptance."
-            pnpm run test:e2e:registry
-          fi
+      - name: Run Registry fixture E2E tests
+        if: |
+          !cancelled() &&
+          (steps.standard-e2e.outcome == 'success' || steps.standard-e2e.outcome == 'failure') &&
+          (env.RUN_ALL_TESTS == 'true' || contains(format(' {0} ', env.E2E_TEST_PATHS), ' ui/tests/registry/'))
+        working-directory: ./ui
+        run: pnpm run test:e2e:registry
 
       - name: Upload test reports
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
