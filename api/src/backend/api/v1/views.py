@@ -75,6 +75,7 @@ from api.filters import (
     TaskFilter,
     TenantApiKeyFilter,
     TenantFilter,
+    TenantOnboardingProfileFilter,
     ThreatScoreSnapshotFilter,
     UserFilter,
 )
@@ -119,6 +120,7 @@ from api.models import (
     Task,
     TenantAPIKey,
     TenantComplianceSummary,
+    TenantOnboardingProfile,
     ThreatScoreSnapshot,
     User,
     UserRoleRelationship,
@@ -231,6 +233,8 @@ from api.v1.serializers import (
     TenantApiKeyCreateSerializer,
     TenantApiKeySerializer,
     TenantApiKeyUpdateSerializer,
+    TenantOnboardingProfileCreateSerializer,
+    TenantOnboardingProfileSerializer,
     TenantSerializer,
     ThreatScoreSnapshotSerializer,
     TokenRefreshSerializer,
@@ -257,7 +261,7 @@ from django.conf import settings as django_settings
 from django.contrib.postgres.aggregates import ArrayAgg, BoolAnd, StringAgg
 from django.contrib.postgres.search import SearchQuery
 from django.core.exceptions import ValidationError as DjangoValidationError
-from django.db import transaction
+from django.db import IntegrityError, transaction
 from django.db.models import (
     BooleanField,
     Case,
@@ -293,6 +297,7 @@ from django_celery_beat.models import PeriodicTask
 from drf_spectacular.settings import spectacular_settings
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import (
+    OpenApiExample,
     OpenApiParameter,
     OpenApiResponse,
     extend_schema,
@@ -8935,3 +8940,111 @@ class FindingGroupViewSet(JsonApiFilterMixin, BaseRLSViewSet):
         return self._paginated_resource_response(
             request, filtered_queryset, resource_ids, request.tenant_id
         )
+
+
+# Onboarding profile
+@extend_schema_view(
+    list=extend_schema(
+        tags=["Onboarding"],
+        summary="Read the tenant's onboarding profile",
+        description=(
+            "The answers the tenant gave in the onboarding profile step, or "
+            "the record that the step was skipped. At most one entry per "
+            "tenant; an empty list means the step was never completed."
+        ),
+    ),
+    create=extend_schema(
+        tags=["Onboarding"],
+        summary="Record the tenant's onboarding profile",
+        description=(
+            "Store the declared cloud-account count, team size and role, or "
+            "mark the step as skipped. Idempotent: once a profile exists the "
+            "endpoint answers 200 with the stored one and never overwrites "
+            "it, so the first answer, given before the product could bias "
+            "it, is the one that stays."
+        ),
+        request=TenantOnboardingProfileCreateSerializer,
+        responses={
+            200: TenantOnboardingProfileSerializer,
+            201: TenantOnboardingProfileSerializer,
+        },
+        examples=[
+            OpenApiExample(
+                "DeclareProfile",
+                request_only=True,
+                media_type="application/vnd.api+json",
+                value={
+                    "data": {
+                        "type": "onboarding-profiles",
+                        "attributes": {
+                            "declared_cloud_accounts": "11-50",
+                            "declared_team_size": "2-5",
+                            "declared_role": "security",
+                        },
+                    }
+                },
+            ),
+            OpenApiExample(
+                "SkipProfile",
+                request_only=True,
+                media_type="application/vnd.api+json",
+                value={
+                    "data": {
+                        "type": "onboarding-profiles",
+                        "attributes": {"skipped": True},
+                    }
+                },
+            ),
+        ],
+    ),
+    retrieve=extend_schema(exclude=True),
+)
+class TenantOnboardingProfileViewSet(BaseRLSViewSet):
+    """The tenant's declared onboarding profile: one row, written once."""
+
+    queryset = TenantOnboardingProfile.objects.all()
+    serializer_class = TenantOnboardingProfileSerializer
+    filterset_class = TenantOnboardingProfileFilter
+    http_method_names = ["get", "post"]
+    ordering = ["-inserted_at"]
+    ordering_fields = ["inserted_at"]
+    # Any member may answer: the step runs at first login, before roles are
+    # curated, and the answer describes the tenant rather than the user.
+    required_permissions = []
+
+    def set_required_permissions(self):
+        self.required_permissions = []
+
+    def get_queryset(self):
+        return TenantOnboardingProfile.objects.filter(tenant_id=self.request.tenant_id)
+
+    def get_serializer_class(self):
+        if self.action == "create":
+            return TenantOnboardingProfileCreateSerializer
+        return super().get_serializer_class()
+
+    def _stored_response(self, profile, http_status):
+        return Response(
+            TenantOnboardingProfileSerializer(
+                profile, context=self.get_serializer_context()
+            ).data,
+            status=http_status,
+        )
+
+    def create(self, request, *args, **kwargs):
+        existing = self.get_queryset().first()
+        if existing is not None:
+            return self._stored_response(existing, status.HTTP_200_OK)
+
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        try:
+            with transaction.atomic(using=self.db_alias):
+                profile = serializer.save(submitted_by=request.user)
+        except IntegrityError:
+            # Two first-login tabs raced on the unique tenant row; the answer
+            # that landed first is the one that stays.
+            return self._stored_response(
+                self.get_queryset().first(), status.HTTP_200_OK
+            )
+        return self._stored_response(profile, status.HTTP_201_CREATED)
