@@ -14,6 +14,54 @@ TRUSTED_AWS_ACCOUNT_NUMBER = "111122223333"
 NON_TRUSTED_AWS_ACCOUNT_NUMBER = "000011112222"
 
 
+def _execute_check_with_principal_account_condition(
+    principal_accounts, trusted_account_ids, operator="StringEquals"
+):
+    ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
+    vpc = ec2_client.create_vpc(CidrBlock="10.0.0.0/16")["Vpc"]
+    route_table = ec2_client.create_route_table(VpcId=vpc["VpcId"])["RouteTable"]
+    ec2_client.create_vpc_endpoint(
+        VpcId=vpc["VpcId"],
+        ServiceName="com.amazonaws.us-east-1.s3",
+        RouteTableIds=[route_table["RouteTableId"]],
+        VpcEndpointType="Gateway",
+        PolicyDocument=json.dumps(
+            {
+                "Statement": [
+                    {
+                        "Action": "*",
+                        "Effect": "Allow",
+                        "Principal": "*",
+                        "Resource": "*",
+                        "Condition": {
+                            operator: {"aws:PrincipalAccount": principal_accounts}
+                        },
+                    }
+                ]
+            }
+        ),
+    )
+
+    from prowler.providers.aws.services.vpc.vpc_service import VPC
+
+    aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+    aws_provider._audit_config = {"trusted_account_ids": trusted_account_ids}
+
+    with mock.patch(
+        "prowler.providers.common.provider.Provider.get_global_provider",
+        return_value=aws_provider,
+    ):
+        with mock.patch(
+            "prowler.providers.aws.services.vpc.vpc_endpoint_connections_trust_boundaries.vpc_endpoint_connections_trust_boundaries.vpc_client",
+            new=VPC(aws_provider),
+        ):
+            from prowler.providers.aws.services.vpc.vpc_endpoint_connections_trust_boundaries.vpc_endpoint_connections_trust_boundaries import (
+                vpc_endpoint_connections_trust_boundaries,
+            )
+
+            return vpc_endpoint_connections_trust_boundaries().execute()
+
+
 class Test_vpc_endpoint_connections_trust_boundaries:
     @mock_aws
     def test_vpc_no_endpoints(self):
@@ -711,3 +759,64 @@ class Test_vpc_endpoint_connections_trust_boundaries:
                     == vpc_endpoint["VpcEndpoint"]["VpcEndpointId"]
                 )
                 assert result[0].region == AWS_REGION_US_EAST_1
+
+    @mock_aws
+    def test_principal_account_condition_allows_trusted_subset(self):
+        result = _execute_check_with_principal_account_condition(
+            TRUSTED_AWS_ACCOUNT_NUMBER,
+            [TRUSTED_AWS_ACCOUNT_NUMBER, "444455556666"],
+        )
+
+        assert len(result) == 1
+        assert result[0].status == "PASS"
+
+    @mock_aws
+    def test_principal_account_condition_allows_scalar_trusted_account(self):
+        result = _execute_check_with_principal_account_condition(
+            TRUSTED_AWS_ACCOUNT_NUMBER,
+            [TRUSTED_AWS_ACCOUNT_NUMBER],
+        )
+
+        assert len(result) == 1
+        assert result[0].status == "PASS"
+
+    @mock_aws
+    def test_principal_account_condition_allows_multiple_trusted_accounts(self):
+        result = _execute_check_with_principal_account_condition(
+            [TRUSTED_AWS_ACCOUNT_NUMBER, AWS_ACCOUNT_NUMBER],
+            [TRUSTED_AWS_ACCOUNT_NUMBER],
+        )
+
+        assert len(result) == 1
+        assert result[0].status == "PASS"
+
+    @mock_aws
+    def test_principal_account_condition_rejects_mixed_trust_list(self):
+        result = _execute_check_with_principal_account_condition(
+            [TRUSTED_AWS_ACCOUNT_NUMBER, NON_TRUSTED_AWS_ACCOUNT_NUMBER],
+            [TRUSTED_AWS_ACCOUNT_NUMBER],
+        )
+
+        assert len(result) == 1
+        assert result[0].status == "FAIL"
+
+    @mock_aws
+    def test_principal_account_condition_implicitly_trusts_audited_account(self):
+        result = _execute_check_with_principal_account_condition(
+            AWS_ACCOUNT_NUMBER,
+            [],
+        )
+
+        assert len(result) == 1
+        assert result[0].status == "PASS"
+
+    @mock_aws
+    def test_principal_account_string_like_allows_scalar_trusted_account(self):
+        result = _execute_check_with_principal_account_condition(
+            TRUSTED_AWS_ACCOUNT_NUMBER,
+            [TRUSTED_AWS_ACCOUNT_NUMBER],
+            operator="StringLike",
+        )
+
+        assert len(result) == 1
+        assert result[0].status == "PASS"
