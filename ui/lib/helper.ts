@@ -142,7 +142,9 @@ export const downloadScanZip = async (
   scanId: string,
   toast: ReturnType<typeof useToast>["toast"],
 ) => {
-  const reportUrl = `/api/scans/${encodeURIComponent(scanId)}/report`;
+  // Keep this off `/api/…`: reverse proxies (contrib/reverse-proxy/nginx.conf)
+  // send `/api/` to Django, which is mounted at `/api/v1/` and 404s the UI BFF.
+  const reportUrl = `/downloads/scans/${encodeURIComponent(scanId)}/report`;
 
   try {
     const preflightResponse = await fetch(`${reportUrl}?preflight=1`, {
