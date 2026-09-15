@@ -1,4 +1,4 @@
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from random import getrandbits
 
 from dateutil.relativedelta import relativedelta
@@ -30,6 +30,35 @@ def transform_into_uuid7(uuid_obj: UUID) -> UUID:
         return UUID(hex=uuid_obj.hex.upper())
     except ValueError:
         raise ValidationError("Invalid UUIDv7 value.")
+
+
+def uuid7_range_bound(dt: datetime) -> UUID:
+    """
+    Returns the lowest UUIDv7 whose timestamp is the millisecond containing `dt`.
+
+    Partition bounds have to be derived, not generated: two calls for the same
+    instant must give the same literal, and consecutive windows must meet
+    exactly. `datetime_to_uuid7` fills the sequence and node fields with
+    randomness, which is right for an identifier and wrong for a bound -- a
+    bound a millisecond wide with a random tail leaves the values above it in
+    that millisecond outside every partition.
+
+    The millisecond is counted with integer arithmetic rather than through
+    `dt.timestamp() * 1000`: past year 2249 a float second no longer resolves a
+    millisecond, so an instant in the last microsecond of one rounds up into the
+    next, putting the bound a millisecond above the values it exists to include.
+
+    Args:
+        dt: The instant the bound sits at. A naive `dt` is read as local time,
+            the same way `datetime.timestamp()` reads it.
+
+    Returns:
+        UUID: The smallest UUIDv7 in `dt`'s millisecond.
+    """
+    since_epoch = dt.astimezone(UTC) - datetime(1970, 1, 1, tzinfo=UTC)
+    timestamp_ms = (since_epoch // timedelta(milliseconds=1)) & 0xFFFFFFFFFFFF
+    # Version 7 in bits 76-79 and variant "10" in bits 62-63; every other bit zero.
+    return UUID(int=(timestamp_ms << 80) | (0x7 << 76) | (0x2 << 62))
 
 
 def datetime_to_uuid7(dt: datetime) -> UUID:
