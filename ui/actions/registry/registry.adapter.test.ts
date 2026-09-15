@@ -500,6 +500,59 @@ describe("Registry adapter", () => {
     });
   });
 
+  it("preserves the declared provider when merging complementary catalog entries", async () => {
+    // Given
+    const fetchPage = async (page: number) => ({
+      data: [
+        {
+          type: "registry-artifacts",
+          id: "external-package",
+          attributes:
+            page === 1
+              ? { providers: ["aaa"], has_checks: true }
+              : { providers: ["zzz"], has_provider: true },
+        },
+      ],
+      meta: { pagination: { page, pages: 2, count: 2 } },
+    });
+
+    // When
+    const result = await collectCompleteRegistryCatalog(fetchPage);
+
+    // Then
+    expect(result).toMatchObject({
+      status: "complete",
+      artifacts: [
+        { hasProvider: true, providerSlug: "zzz", providers: ["aaa", "zzz"] },
+      ],
+    });
+  });
+
+  it("rejects duplicate catalog entries with conflicting declared providers", async () => {
+    // Given
+    const fetchPage = async (page: number) => ({
+      data: [
+        {
+          type: "registry-artifacts",
+          id: "external-package",
+          attributes: {
+            has_provider: true,
+            providers: [page === 1 ? "aaa" : "zzz"],
+          },
+        },
+      ],
+      meta: { pagination: { page, pages: 2, count: 2 } },
+    });
+
+    // When / Then
+    await expect(
+      collectCompleteRegistryCatalog(fetchPage),
+    ).resolves.toMatchObject({
+      status: "incomplete",
+      reason: "conflicting_duplicate",
+    });
+  });
+
   it("traverses, merges, and degrades unsafe catalog data", async () => {
     // Given
 

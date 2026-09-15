@@ -85,8 +85,8 @@ export async function confirmRegistryArtifactTask(
   if (!result.data.installed) {
     return {
       status: REGISTRY_MUTATION.REFUSED,
-      message:
-        result.data.error?.trim() || "The artifact could not be installed.",
+      // Task errors are backend diagnostics, not user-facing refusal codes.
+      message: "The artifact could not be installed.",
     };
   }
 

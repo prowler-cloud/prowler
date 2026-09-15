@@ -1,7 +1,7 @@
 import "server-only";
 
 import { fetchCurrentUser } from "@/lib/auth/current-user";
-import { readEnv } from "@/lib/runtime-env";
+import { readBoolEnv } from "@/lib/runtime-env";
 
 import {
   isRegistryEligible,
@@ -12,8 +12,7 @@ import {
 const CURRENT_USER_TIMEOUT_MS = 5_000;
 
 const hasEnabledProcessFlags = () =>
-  readEnv("UI_CLOUD_ENABLED") === "true" &&
-  readEnv("UI_REGISTRY_ENABLED") === "true";
+  readBoolEnv("UI_CLOUD_ENABLED") && readBoolEnv("UI_REGISTRY_ENABLED");
 
 export async function evaluateRegistryAccess(
   accessToken?: string | null,

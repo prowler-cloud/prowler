@@ -64,7 +64,14 @@ describe("executeRegistryArtifactAddition", () => {
   });
 
   it.each([
-    ["This version cannot be installed.", "This version cannot be installed."],
+    [
+      "This version cannot be installed.",
+      "The artifact could not be installed.",
+    ],
+    [
+      "Private diagnostic: /srv/registry/customer",
+      "The artifact could not be installed.",
+    ],
     [null, "The artifact could not be installed."],
     ["", "The artifact could not be installed."],
     ["   ", "The artifact could not be installed."],

@@ -353,18 +353,24 @@ function mergeArtifacts(
   left: RegistryCatalogArtifact,
   right: RegistryCatalogArtifact,
 ): RegistryCatalogArtifact | null {
-  const [name, description, latestVersion] = [
+  const [name, description, latestVersion, providerSlug] = [
     mergeText(left.name, right.name),
     mergeText(left.description, right.description),
     mergeText(left.latestVersion, right.latestVersion),
+    mergeText(left.providerSlug, right.providerSlug),
   ];
-  if ([name, description, latestVersion].some((value) => value === null))
+  if (
+    [name, description, latestVersion, providerSlug].some(
+      (value) => value === null,
+    )
+  )
     return null;
   return {
     ...left,
     name: name ?? undefined,
     description: description ?? undefined,
     latestVersion: latestVersion ?? undefined,
+    providerSlug: providerSlug ?? undefined,
     providers: unique([...left.providers, ...right.providers]),
     owners: uniqueOwners([...left.owners, ...right.owners]),
     isVerified: left.isVerified || right.isVerified,

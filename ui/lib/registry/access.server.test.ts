@@ -26,7 +26,6 @@ describe("evaluateRegistryAccess", () => {
   });
 
   it.each([
-    [" true", "true", "access-token", true, REGISTRY_ACCESS.INELIGIBLE, 0],
     [undefined, "true", "access-token", true, REGISTRY_ACCESS.INELIGIBLE, 0],
     ["true", "false", "access-token", true, REGISTRY_ACCESS.INELIGIBLE, 0],
     ["true", "true", "access-token", false, REGISTRY_ACCESS.INELIGIBLE, 1],
@@ -44,6 +43,23 @@ describe("evaluateRegistryAccess", () => {
         status: expected,
       });
       expect(fetchCurrentUserMock).toHaveBeenCalledTimes(calls);
+    },
+  );
+
+  it.each([
+    [" true ", "true"],
+    ["true", " true "],
+    ["\ttrue\n", "\ttrue\n"],
+  ])(
+    "accepts whitespace around enabled flags: %j / %j",
+    async (cloud, flag) => {
+      // Given
+      vi.stubEnv("UI_CLOUD_ENABLED", cloud);
+      vi.stubEnv("UI_REGISTRY_ENABLED", flag);
+      // When / Then
+      await expect(evaluateRegistryAccess("access-token")).resolves.toEqual({
+        status: REGISTRY_ACCESS.ELIGIBLE,
+      });
     },
   );
 

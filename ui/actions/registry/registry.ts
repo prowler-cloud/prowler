@@ -47,6 +47,8 @@ import {
   RegistryCatalogPageError,
 } from "./registry.adapter";
 
+const REGISTRY_REQUEST_TIMEOUT_MS = 15_000;
+
 async function getRegistryAccess(): Promise<string | null> {
   const accessToken = (await auth())?.accessToken;
   const access = await evaluateRegistryAccess(accessToken);
@@ -69,6 +71,7 @@ async function readRegistryResponse(
   try {
     response = await fetch(url.toString(), {
       cache: "no-store",
+      signal: AbortSignal.timeout(REGISTRY_REQUEST_TIMEOUT_MS),
       headers: {
         Accept: "application/vnd.api+json",
         Authorization: `Bearer ${accessToken}`,
@@ -391,6 +394,7 @@ export async function addRegistryArtifact({
     response = await fetch(`${apiBaseUrl}/registry/artifacts`, {
       method: "POST",
       cache: "no-store",
+      signal: AbortSignal.timeout(REGISTRY_REQUEST_TIMEOUT_MS),
       headers: {
         Accept: "application/vnd.api+json",
         "Content-Type": "application/vnd.api+json",
@@ -457,6 +461,7 @@ export async function removeRegistryArtifact(
       {
         method: "DELETE",
         cache: "no-store",
+        signal: AbortSignal.timeout(REGISTRY_REQUEST_TIMEOUT_MS),
         headers: {
           Accept: "application/vnd.api+json",
           Authorization: `Bearer ${access}`,
@@ -493,13 +498,17 @@ export async function submitRegistryCredential(
     response = await fetch(`${apiBaseUrl}/registry/credential`, {
       method: "POST",
       cache: "no-store",
+      signal: AbortSignal.timeout(REGISTRY_REQUEST_TIMEOUT_MS),
       headers: {
         Accept: "application/vnd.api+json",
         "Content-Type": "application/vnd.api+json",
         Authorization: `Bearer ${access}`,
       },
       body: JSON.stringify({
-        data: { type: "registry-credentials", attributes: { api_key: key } },
+        data: {
+          type: "registry-credentials",
+          attributes: { api_key: key.trim() },
+        },
       }),
     });
   } catch {
@@ -537,6 +546,7 @@ export async function disconnectRegistryCredential(): Promise<RegistryCredential
     response = await fetch(`${apiBaseUrl}/registry/credential`, {
       method: "DELETE",
       cache: "no-store",
+      signal: AbortSignal.timeout(REGISTRY_REQUEST_TIMEOUT_MS),
       headers: {
         Accept: "application/vnd.api+json",
         Authorization: `Bearer ${access}`,

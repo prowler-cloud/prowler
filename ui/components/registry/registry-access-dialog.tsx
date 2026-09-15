@@ -61,7 +61,7 @@ export function RegistryAccessDialog({
     if (typeof key !== "string" || key.trim().length === 0) return;
 
     formRef.current?.reset();
-    await onSubmit(key);
+    await onSubmit(key.trim());
   }
 
   return (

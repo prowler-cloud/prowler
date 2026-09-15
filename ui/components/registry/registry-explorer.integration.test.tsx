@@ -1074,7 +1074,7 @@ describe("RegistryExplorer", () => {
     );
   });
 
-  it("resets a write-only key before loading authoritative collections", async () => {
+  it("trims and resets a write-only key before loading authoritative collections", async () => {
     // Given
     const key = "registry-test-key";
     let resolveSubmission: ((result: unknown) => void) | undefined;
@@ -1099,7 +1099,7 @@ describe("RegistryExplorer", () => {
 
     // When
     await screen.getByRole("button", { name: "Connect API key" }).click();
-    await screen.getByLabelText("Registry key").fill(key);
+    await screen.getByLabelText("Registry key").fill(`  ${key}  `);
     await screen.getByRole("button", { name: "Connect", exact: true }).click();
 
     // Then: repeat submission is disabled and the key has left the form.
@@ -1246,6 +1246,45 @@ describe("RegistryExplorer", () => {
     expect(document.body.textContent).toContain("Cloud guard");
     await expect.element(screen.getByLabelText("Registry key")).toHaveValue("");
     expect(document.body.innerHTML).not.toContain(key);
+  });
+
+  it("recovers and retries when disconnecting Registry rejects", async () => {
+    // Given
+    disconnectRegistryCredentialMock.mockRejectedValueOnce(
+      new Error("Disconnect transport failed"),
+    );
+    const screen = await render(<RegistryExplorer initialState={readyState} />);
+    await screen.getByRole("button", { name: "Manage access" }).click();
+
+    // When
+    await screen.getByRole("button", { name: "Disconnect" }).click();
+
+    // Then
+    await expect
+      .element(screen.getByRole("alert"))
+      .toHaveTextContent(
+        "Registry access could not be disconnected. Try again.",
+      );
+    await expect
+      .element(screen.getByRole("button", { name: "Cancel", exact: true }))
+      .toBeEnabled();
+    expect(document.body.textContent).toContain("Cloud guard");
+    expect(document.body.textContent).not.toContain(
+      "Disconnect transport failed",
+    );
+
+    // When: retry succeeds without reopening the dialog.
+    disconnectRegistryCredentialMock.mockResolvedValueOnce({
+      status: "disconnected",
+      credential: onboardingState.credential,
+      tenantArtifacts: readyState.tenantArtifacts,
+    });
+    await screen.getByRole("button", { name: "Disconnect" }).click();
+
+    // Then
+    await expect
+      .element(screen.getByRole("button", { name: "Connect API key" }))
+      .toBeVisible();
   });
 
   it("returns to the credential banner after disconnecting Registry access", async () => {

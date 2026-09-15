@@ -381,7 +381,9 @@ export function RegistryExplorer({
     const generation = operationGeneration.current;
     setOperationMessage(undefined);
     setPendingOperation(REGISTRY_PENDING_OPERATION.CREDENTIAL);
-    const result = await disconnectRegistryCredential();
+    const result = await disconnectRegistryCredential().catch(() => ({
+      status: REGISTRY_FAILURE.ERROR,
+    }));
     if (generation !== operationGeneration.current) return;
     if (result.status === REGISTRY_FAILURE.ACCESS_DENIED)
       return router.replace("/profile");

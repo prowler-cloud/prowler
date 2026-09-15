@@ -97,7 +97,95 @@ beforeEach(() => {
   pollTaskUntilSettledMock.mockReset();
 });
 
+function mockRequestDeadlines() {
+  // Native AbortSignal.timeout uses real timers; drive it with the test clock.
+  vi.spyOn(AbortSignal, "timeout").mockImplementation((milliseconds) => {
+    const controller = new AbortController();
+    setTimeout(() => controller.abort(), milliseconds);
+    return controller.signal;
+  });
+}
+
 describe("Registry guarded reads", () => {
+  it("recovers when a Registry read stalls", async () => {
+    // Given: the upstream responds only when its request is aborted.
+    vi.useFakeTimers();
+    try {
+      mockRequestDeadlines();
+      fetchMock.mockImplementation(
+        (_url, init?: RequestInit) =>
+          new Promise((_resolve, reject) => {
+            init?.signal?.addEventListener("abort", () =>
+              reject(init.signal?.reason),
+            );
+          }),
+      );
+      const settled = vi.fn();
+
+      // When
+      void refreshRegistryCredential().then(settled);
+      await vi.advanceTimersByTimeAsync(30_000);
+
+      // Then
+      expect(settled).toHaveBeenCalledWith({ status: "error" });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it.each([
+    [
+      "credential submission",
+      () => submitRegistryCredential("registry-test-key"),
+    ],
+    ["credential disconnection", disconnectRegistryCredential],
+    [
+      "artifact addition",
+      () => addRegistryArtifact({ normalizedName: "external-package" }),
+    ],
+    ["artifact removal", () => removeRegistryArtifact("external-package")],
+  ])("recovers when %s stalls", async (_name, action) => {
+    // Given: prerequisite reads succeed, but the mutation never responds.
+    vi.useFakeTimers();
+    try {
+      mockRequestDeadlines();
+      fetchMock.mockImplementation((url: string, init?: RequestInit) => {
+        if (init?.method === "POST" || init?.method === "DELETE") {
+          return new Promise((_resolve, reject) => {
+            init.signal?.addEventListener("abort", () =>
+              reject(init.signal?.reason),
+            );
+          });
+        }
+        if (url.includes("available-artifacts")) {
+          return Promise.resolve(
+            jsonResponse({
+              data: [
+                {
+                  type: "registry-artifacts",
+                  id: "external-package",
+                  attributes: { has_provider: true, is_builtin: false },
+                },
+              ],
+              meta: { pagination: { page: 1, pages: 1, count: 1 } },
+            }),
+          );
+        }
+        return Promise.resolve(credentialResponse(noCredential));
+      });
+      const settled = vi.fn();
+
+      // When
+      void action().then(settled);
+      await vi.advanceTimersByTimeAsync(30_000);
+
+      // Then
+      expect(settled).toHaveBeenCalledWith({ status: "error" });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("denies every Registry data action before any Registry endpoint call", async () => {
     // Given
     evaluateAccessMock.mockResolvedValue({ status: "ineligible" });
@@ -368,7 +456,7 @@ describe("Registry guarded reads", () => {
 
   it("returns the accepted validation task immediately without server-side polling", async () => {
     // Given
-    const key = "registry-test-key";
+    const key = "  registry-test-key  ";
     fetchMock
       .mockResolvedValueOnce(credentialResponse(noCredential))
       .mockResolvedValueOnce(
@@ -399,7 +487,7 @@ describe("Registry guarded reads", () => {
         body: JSON.stringify({
           data: {
             type: "registry-credentials",
-            attributes: { api_key: key },
+            attributes: { api_key: key.trim() },
           },
         }),
         cache: "no-store",

@@ -156,6 +156,26 @@ describe("resumed Registry installations", () => {
     },
   );
 
+  it("keeps backend diagnostics out of notifications after reload", async () => {
+    // Given
+    const result = {
+      installed: false,
+      error: "Private diagnostic: /srv/registry/customer",
+    };
+
+    // When
+    await registryArtifactTaskHandler.onReady({ ...task, result });
+
+    // Then
+    expect(toast).toHaveBeenCalledWith(
+      expect.objectContaining({
+        variant: "destructive",
+        description: "The artifact could not be installed.",
+      }),
+    );
+    expect(confirmRegistryArtifactAddition).not.toHaveBeenCalled();
+  });
+
   it("reports a failed confirmation read without announcing availability", async () => {
     confirmRegistryArtifactAddition.mockRejectedValue(new Error("Unavailable"));
     await registryArtifactTaskHandler.onReady(task);
