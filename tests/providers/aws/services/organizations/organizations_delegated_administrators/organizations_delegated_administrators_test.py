@@ -93,6 +93,9 @@ class Test_organizations_delegated_administrators:
         )
         org_id = response["Organization"]["Id"]
         account_id = account["CreateAccountStatus"]["AccountId"]
+        admin_arn = conn.list_delegated_administrators()["DelegatedAdministrators"][0][
+            "Arn"
+        ]
 
         # Set config variable
         aws_provider._audit_config = {
@@ -119,11 +122,11 @@ class Test_organizations_delegated_administrators:
 
                 assert len(result) == 1
                 assert result[0].status == "PASS"
-                assert result[0].resource_id == response["Organization"]["Id"]
-                assert result[0].resource_arn == response["Organization"]["Arn"]
+                assert result[0].resource_id == account_id
+                assert result[0].resource_arn == admin_arn
                 assert (
                     result[0].status_extended
-                    == f"AWS Organization {org_id} has a trusted Delegated Administrator: {account_id}."
+                    == f"AWS Organization {org_id} has a trusted Delegated Administrator: {account_id}, delegated for: config-multiaccountsetup.amazonaws.com."
                 )
                 assert result[0].region == AWS_REGION_EU_WEST_1
 
@@ -146,6 +149,9 @@ class Test_organizations_delegated_administrators:
         )
         org_id = response["Organization"]["Id"]
         account_id = account["CreateAccountStatus"]["AccountId"]
+        admin_arn = conn.list_delegated_administrators()["DelegatedAdministrators"][0][
+            "Arn"
+        ]
 
         # Set config variable
         aws_provider._audit_config = {
@@ -170,10 +176,87 @@ class Test_organizations_delegated_administrators:
 
                 assert len(result) == 1
                 assert result[0].status == "FAIL"
-                assert result[0].resource_id == response["Organization"]["Id"]
-                assert result[0].resource_arn == response["Organization"]["Arn"]
+                assert result[0].resource_id == account_id
+                assert result[0].resource_arn == admin_arn
                 assert (
                     result[0].status_extended
-                    == f"AWS Organization {org_id} has an untrusted Delegated Administrator: {account_id}."
+                    == f"AWS Organization {org_id} has an untrusted Delegated Administrator: {account_id}, delegated for: config-multiaccountsetup.amazonaws.com."
                 )
                 assert result[0].region == AWS_REGION_EU_WEST_1
+
+    @mock_aws
+    def test_organization_multiple_delegated_administrators(self):
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+
+        # Create Organization
+        conn = client("organizations", region_name=AWS_REGION_EU_WEST_1)
+        response = conn.describe_organization()
+        org_id = response["Organization"]["Id"]
+
+        # Create a trusted delegated administrator, registered for two services
+        trusted_account = conn.create_account(
+            Email="trusted@test.com",
+            AccountName="trusted",
+        )
+        trusted_account_id = trusted_account["CreateAccountStatus"]["AccountId"]
+        conn.register_delegated_administrator(
+            AccountId=trusted_account_id,
+            ServicePrincipal="config-multiaccountsetup.amazonaws.com",
+        )
+        conn.register_delegated_administrator(
+            AccountId=trusted_account_id,
+            ServicePrincipal="guardduty.amazonaws.com",
+        )
+
+        # Create an untrusted delegated administrator, registered for one service
+        untrusted_account = conn.create_account(
+            Email="untrusted@test.com",
+            AccountName="untrusted",
+        )
+        untrusted_account_id = untrusted_account["CreateAccountStatus"]["AccountId"]
+        conn.register_delegated_administrator(
+            AccountId=untrusted_account_id,
+            ServicePrincipal="macie.amazonaws.com",
+        )
+
+        # Set config variable - only the first account is trusted
+        aws_provider._audit_config = {
+            "organizations_trusted_delegated_administrators": [trusted_account_id]
+        }
+
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ):
+            with mock.patch(
+                "prowler.providers.aws.services.organizations.organizations_delegated_administrators.organizations_delegated_administrators.organizations_client",
+                new=Organizations(aws_provider),
+            ):
+                # Test Check
+                from prowler.providers.aws.services.organizations.organizations_delegated_administrators.organizations_delegated_administrators import (
+                    organizations_delegated_administrators,
+                )
+
+                check = organizations_delegated_administrators()
+                result = check.execute()
+
+                # Each delegated administrator must be its own finding
+                assert len(result) == 2
+                results_by_id = {r.resource_id: r for r in result}
+
+                trusted_result = results_by_id[trusted_account_id]
+                assert trusted_result.status == "PASS"
+                assert (
+                    trusted_result.status_extended
+                    == f"AWS Organization {org_id} has a trusted Delegated Administrator: "
+                    f"{trusted_account_id}, delegated for: "
+                    "config-multiaccountsetup.amazonaws.com, guardduty.amazonaws.com."
+                )
+
+                untrusted_result = results_by_id[untrusted_account_id]
+                assert untrusted_result.status == "FAIL"
+                assert (
+                    untrusted_result.status_extended
+                    == f"AWS Organization {org_id} has an untrusted Delegated Administrator: "
+                    f"{untrusted_account_id}, delegated for: macie.amazonaws.com."
+                )

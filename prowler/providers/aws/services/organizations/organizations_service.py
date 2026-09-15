@@ -170,14 +170,18 @@ class Organizations(AWSService):
             )
             for page in list_delegated_administrators_paginator.paginate():
                 for delegated_administrator in page["DelegatedAdministrators"]:
+                    admin_id = delegated_administrator.get("Id")
                     self.delegated_administrators.append(
                         DelegatedAdministrator(
                             arn=delegated_administrator.get("Arn"),
-                            id=delegated_administrator.get("Id"),
+                            id=admin_id,
                             name=delegated_administrator.get("Name"),
                             email=delegated_administrator.get("Email"),
                             status=delegated_administrator.get("Status"),
                             joinedmethod=delegated_administrator.get("JoinedMethod"),
+                            delegated_services=self._list_delegated_services_for_account(
+                                admin_id
+                            ),
                         )
                     )
 
@@ -191,6 +195,33 @@ class Organizations(AWSService):
             )
 
         return self.delegated_administrators
+
+    def _list_delegated_services_for_account(self, account_id) -> list:
+        logger.info(
+            "Organizations - List Delegated Services for account: %s ...", account_id
+        )
+        delegated_services = []
+        try:
+            list_delegated_services_paginator = self.client.get_paginator(
+                "list_delegated_services_for_account"
+            )
+            for page in list_delegated_services_paginator.paginate(
+                AccountId=account_id
+            ):
+                for delegated_service in page["DelegatedServices"]:
+                    delegated_services.append(delegated_service.get("ServicePrincipal"))
+
+        except ClientError as error:
+            logger.warning(
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+        except Exception as error:
+            logger.error(
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+        return delegated_services
 
 
 class Policy(BaseModel):
@@ -209,6 +240,7 @@ class DelegatedAdministrator(BaseModel):
     email: str
     status: str
     joinedmethod: str
+    delegated_services: list[str] = []
 
 
 class Organization(BaseModel):
