@@ -222,7 +222,7 @@ class TestCSVFileWrite:
         output.batch_write_data_to_file()
 
         # Verify file was created and has content
-        with open(filepath, "r") as f:
+        with open(filepath, "r", encoding="utf-8") as f:
             content = f.read()
         assert "PROVIDER" in content  # Headers are uppercase
         assert "REQUIREMENTS_ATTRIBUTES_SECTION" in content
@@ -556,7 +556,7 @@ class TestProviderHeaders:
         )
         output.batch_write_data_to_file()
 
-        with open(filepath, "r") as f:
+        with open(filepath, "r", encoding="utf-8") as f:
             content = f.read()
         assert "SUBSCRIPTIONID" in content
         assert "LOCATION" in content
