@@ -15,7 +15,10 @@ NON_TRUSTED_AWS_ACCOUNT_NUMBER = "000011112222"
 
 
 def _execute_check_with_principal_account_condition(
-    principal_accounts, trusted_account_ids, operator="StringEquals"
+    principal_accounts,
+    trusted_account_ids,
+    operator="StringEquals",
+    condition=None,
 ):
     ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
     vpc = ec2_client.create_vpc(CidrBlock="10.0.0.0/16")["Vpc"]
@@ -33,9 +36,8 @@ def _execute_check_with_principal_account_condition(
                         "Effect": "Allow",
                         "Principal": "*",
                         "Resource": "*",
-                        "Condition": {
-                            operator: {"aws:PrincipalAccount": principal_accounts}
-                        },
+                        "Condition": condition
+                        or {operator: {"aws:PrincipalAccount": principal_accounts}},
                     }
                 ]
             }
@@ -816,6 +818,44 @@ class Test_vpc_endpoint_connections_trust_boundaries:
             TRUSTED_AWS_ACCOUNT_NUMBER,
             [TRUSTED_AWS_ACCOUNT_NUMBER],
             operator="StringLike",
+        )
+
+        assert len(result) == 1
+        assert result[0].status == "PASS"
+
+    @mock_aws
+    def test_principal_account_condition_preserves_operator_intersection(self):
+        result = _execute_check_with_principal_account_condition(
+            None,
+            [TRUSTED_AWS_ACCOUNT_NUMBER],
+            condition={
+                "StringEquals": {
+                    "aws:PrincipalAccount": [
+                        TRUSTED_AWS_ACCOUNT_NUMBER,
+                        NON_TRUSTED_AWS_ACCOUNT_NUMBER,
+                    ]
+                },
+                "StringLike": {"aws:PrincipalAccount": TRUSTED_AWS_ACCOUNT_NUMBER},
+            },
+        )
+
+        assert len(result) == 1
+        assert result[0].status == "PASS"
+
+    @mock_aws
+    def test_mixed_principal_accounts_with_other_restrictive_condition(self):
+        result = _execute_check_with_principal_account_condition(
+            None,
+            [TRUSTED_AWS_ACCOUNT_NUMBER],
+            condition={
+                "StringEquals": {
+                    "aws:PrincipalAccount": [
+                        TRUSTED_AWS_ACCOUNT_NUMBER,
+                        NON_TRUSTED_AWS_ACCOUNT_NUMBER,
+                    ],
+                    "aws:SourceAccount": TRUSTED_AWS_ACCOUNT_NUMBER,
+                }
+            },
         )
 
         assert len(result) == 1
