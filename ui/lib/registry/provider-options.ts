@@ -30,7 +30,7 @@ export function buildRegistryProviderOptions(
       !isRegistryArtifactInstallable(artifact)
     )
       continue;
-    const declaredType = artifact.providerSlug ?? artifact.providers[0];
+    const declaredType = artifact.providerSlug;
     for (const type of declaredType ? [declaredType] : []) {
       if (
         isKnownProviderType(type) ||
