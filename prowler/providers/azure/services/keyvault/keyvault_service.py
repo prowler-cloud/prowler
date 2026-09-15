@@ -154,6 +154,19 @@ class KeyVault(AzureService):
     def _get_keys(
         self, subscription, resource_group, keyvault_name, vault_uri, provider
     ):
+        """Get the keys of a Key Vault, enriched with their rotation policies.
+
+        Args:
+            subscription: Subscription ID the vault belongs to.
+            resource_group: Resource group name of the vault.
+            keyvault_name: Vault name, used for the management API and logs.
+            vault_uri: Data-plane URI of the vault as returned by ARM, valid in
+                any Azure cloud. When empty, rotation policies are skipped.
+            provider: Azure provider whose session authenticates the KeyClient.
+
+        Returns:
+            A list of Key objects; rotation_policy is set when it could be read.
+        """
         logger.info(f"KeyVault - Getting keys for {keyvault_name}...")
         keys = []
         keys_dict = {}

@@ -12,7 +12,16 @@ from prowler.providers.azure.lib.service.service import AzureService
 
 
 class Defender(AzureService):
+    """Microsoft Defender for Cloud service: pricings, settings, assessments,
+    security contacts, IoT solutions and JIT policies per subscription."""
+
     def __init__(self, provider: AzureProvider):
+        """Collect the Defender configuration of every audited subscription.
+
+        Args:
+            provider: Azure provider supplying the session, subscriptions and
+                the region config whose endpoints are used for every call.
+        """
         super().__init__(SecurityCenter, provider)
 
         self.pricings = self._get_pricings()
