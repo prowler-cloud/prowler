@@ -19,6 +19,7 @@ coupling**.
 | Mandatory new-user gate                | `ui/components/onboarding/onboarding-gate.tsx`                        |
 | Profile step in front of the gate      | `ui/components/onboarding/onboarding-profile-{gate,modal}.tsx`        |
 | Step outcome events (window)           | `ui/lib/onboarding/onboarding-events.ts`                              |
+| Invite step before the checkpoint      | `ui/components/onboarding/onboarding-invite-{step,dialog}.tsx`        |
 | Manual replay list                     | `ui/components/ui/user-nav/user-nav.tsx`                              |
 
 ## How the guided sequence works
@@ -92,3 +93,16 @@ as a `prowler:onboarding-profile-step` window event
 deployment that wants to observe it subscribes from outside, so the onboarding
 stays free of tracking dependencies.
 
+## Invite step
+
+When `<OnboardingCheckpointWatcher showInviteStep />` is mounted, the first
+time the checkpoint opens (right after the first provider is connected) the
+watcher renders `OnboardingInviteStep` before the checkpoint dialog: the
+members-page `SendInvitationForm`, tagged `source=onboarding` for the API, plus
+a "Skip for now" action. The store stays `open` while the step shows, so the
+checkpoint dialog follows unchanged once it resolves. A localStorage marker
+(`prowler.onboarding.invite`) keeps it to one offer per browser, and the prop
+lets a deployment decide per tenant whether to offer it at all.
+
+Outcomes (`shown`, `submitted`, `skipped`) are announced as the
+`prowler:onboarding-invite-step` window event (`dispatchOnboardingInviteStep`).

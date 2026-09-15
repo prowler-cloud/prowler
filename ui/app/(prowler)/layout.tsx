@@ -115,7 +115,7 @@ export default async function RootLayout({
                 profileRecorded={profileRecorded}
               />
               {/* Single mount point so the watcher survives post-connect navigation. */}
-              <OnboardingCheckpointWatcher />
+              <OnboardingCheckpointWatcher showInviteStep />
               {/* Persistent banner shown only while a guided sequence is active. */}
               <OnboardingSequenceBanner hasCompletedScan={hasCompletedScan} />
             </>
