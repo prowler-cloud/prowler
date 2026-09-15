@@ -1043,6 +1043,51 @@ PROWLER_THREATSCORE_M365 = Compliance(
 # CCC fixtures cover the three providers Prowler ships catalogs for. Each
 # fixture has one auto-evaluated requirement (with Checks) and one manual
 # requirement (Checks=[]) so test suites can exercise both paths.
+PROWLER_THREATSCORE_GOOGLEWORKSPACE = Compliance(
+    Framework="ProwlerThreatScore",
+    Name="Prowler ThreatScore Compliance Framework for Google Workspace",
+    Version="1.0",
+    Provider="GoogleWorkspace",
+    Description="Prowler ThreatScore Compliance Framework for Google Workspace ensures that the Google Workspace tenant is compliant taking into account four main pillars: Identity and Access Management, Attack Surface, Forensic Readiness and Encryption",
+    Requirements=[
+        Compliance_Requirement(
+            Id="1.1.1",
+            Description="The domain-level policy enforces 2-Step Verification (Multi-Factor Authentication) for all users.",
+            Attributes=[
+                Prowler_ThreatScore_Requirement_Attribute(
+                    Title="2-Step Verification is enforced for all users",
+                    Section="1. IAM",
+                    SubSection="1.1 Authentication",
+                    AttributeDescription="The domain-level policy enforces 2-Step Verification (Multi-Factor Authentication) for all users. 2-Step Verification requires users to present a second form of authentication beyond their password, significantly reducing the risk of account compromise.",
+                    AdditionalInformation="Without 2-Step Verification enforcement, users can access their accounts with only a password. If credentials are compromised through phishing, credential stuffing, or data breaches, attackers gain immediate access to the user's account and organizational data without any additional verification.",
+                    LevelOfRisk=5,
+                    Weight=1000,
+                )
+            ],
+            Checks=[
+                "security_2sv_enforced",
+                "service_test_check_id",
+            ],
+        ),
+        Compliance_Requirement(
+            Id="1.1.2",
+            Description="POP and IMAP allow users to access Gmail through legacy or third-party email clients.",
+            Attributes=[
+                Prowler_ThreatScore_Requirement_Attribute(
+                    Title="POP and IMAP access is disabled for all users",
+                    Section="1. IAM",
+                    SubSection="1.1 Authentication",
+                    AttributeDescription="POP and IMAP allow users to access Gmail through legacy or third-party email clients that may not support modern authentication mechanisms such as multifactor authentication. Disabling these protocols forces users to access email through approved clients only.",
+                    AdditionalInformation="With POP and IMAP enabled, users can access email through legacy clients that rely on simple password authentication, bypassing multifactor authentication and other modern security controls. This significantly increases the risk of credential-based account compromise.",
+                    LevelOfRisk=5,
+                    Weight=1000,
+                )
+            ],
+            Checks=[],
+        ),
+    ],
+)
+
 CCC_AWS_FIXTURE = Compliance(
     Framework="CCC",
     Name="Common Cloud Controls Catalog (CCC)",
