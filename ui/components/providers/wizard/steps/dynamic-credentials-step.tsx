@@ -198,7 +198,11 @@ function DynamicCredentialForm({
           errors={errors}
           onChange={(name, value) => {
             setValues((current) => ({ ...current, [name]: value }));
-            setErrors({});
+            setErrors((current) => {
+              const next = { ...current };
+              delete next[name];
+              return next;
+            });
           }}
         />
       </fieldset>

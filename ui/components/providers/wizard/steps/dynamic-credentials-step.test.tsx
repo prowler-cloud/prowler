@@ -312,4 +312,54 @@ describe("dynamic credentials in the provider wizard", () => {
       secret: { token: "retry-secret" },
     });
   });
+  it("keeps other field and form errors visible while editing one credential", async () => {
+    // Given
+    const user = userEvent.setup();
+    getProviderSchemas.mockResolvedValue({
+      status: "success",
+      providerType: "acme",
+      secretTypes: {
+        api_key: {
+          ...schema,
+          properties: {
+            ...schema.properties,
+            project: { type: "string", title: "Project" },
+          },
+          required: ["token", "project"],
+        },
+      },
+    });
+    saveDynamicProviderCredentials.mockResolvedValueOnce({
+      status: "invalid",
+      errors: {
+        token: "Token was rejected",
+        project: "Project is unavailable",
+        _form: "Review the credential fields",
+      },
+    });
+    render(<DynamicCredentialsStep {...props} />);
+    const token = await screen.findByLabelText(/API token/);
+    await user.type(token, "fixture-token");
+    await user.type(screen.getByLabelText(/Project/), "fixture-project");
+    act(() => token.closest("form")!.requestSubmit());
+    expect(await screen.findByText("Token was rejected")).toBeVisible();
+
+    // When
+    await user.type(token, "-edited");
+
+    // Then
+    expect(screen.queryByText("Token was rejected")).not.toBeInTheDocument();
+    expect(screen.getByText("Project is unavailable")).toBeVisible();
+    expect(screen.getByText("Review the credential fields")).toBeVisible();
+
+    // When / Then: submitting again replaces the earlier validation errors.
+    act(() => token.closest("form")!.requestSubmit());
+    await waitFor(() => expect(props.onNext).toHaveBeenCalledOnce());
+    expect(
+      screen.queryByText("Project is unavailable"),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Review the credential fields"),
+    ).not.toBeInTheDocument();
+  });
 });

@@ -189,7 +189,7 @@ describe("provider wizard account creation", () => {
     expect(screen.getByRole("textbox", { name: "Provider UID" })).toHaveValue(
       "acme-account",
     );
-    const next = screen.getByRole("button", { name: "Next" });
+    const next = await screen.findByRole("button", { name: "Next" });
     await waitFor(() => expect(next).toBeEnabled());
     expect(screen.getByRole("button", { name: "Back" })).toBeEnabled();
 

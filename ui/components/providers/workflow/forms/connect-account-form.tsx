@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
 import { useForm, UseFormReturn } from "react-hook-form";
 
-import { addProvider } from "@/actions/providers/providers";
+import { addProvider, updateProvider } from "@/actions/providers/providers";
 import { addRegistryProvider } from "@/actions/providers/registry-provider";
 import { getInstalledRegistryProviderOptions } from "@/actions/registry/registry";
 import { AwsMethodSelector } from "@/components/providers/organizations/aws-method-selector";
@@ -17,6 +17,7 @@ import { ProviderTitleDocs } from "@/components/providers/workflow/provider-titl
 import { Button, useToast } from "@/components/shadcn";
 import { Alert, AlertDescription, AlertTitle } from "@/components/shadcn/alert";
 import { Form } from "@/components/shadcn/form";
+import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
 import type { RegistryProviderOption } from "@/lib/registry/provider-options";
 import {
   createAddProviderFormSchema,
@@ -269,12 +270,17 @@ export const ConnectAccountForm = ({
 
   const onSubmitClient = async (values: FormValues) => {
     if (submitting.current) return;
-    if (
+    const existingAccount =
       createdAccount.current?.providerType === values.providerType &&
-      createdAccount.current.uid === values.providerUid &&
+      createdAccount.current.uid === values.providerUid
+        ? createdAccount.current
+        : null;
+    if (
+      existingAccount &&
+      (existingAccount.alias ?? "") === (values.providerAlias?.trim() ?? "") &&
       onSuccess
     ) {
-      onSuccess(createdAccount.current);
+      onSuccess(existingAccount);
       return;
     }
     submitting.current = true;
@@ -287,9 +293,20 @@ export const ConnectAccountForm = ({
     );
 
     try {
-      const data = await (isKnownProviderType(values.providerType)
-        ? addProvider(formData)
-        : addRegistryProvider(formData));
+      let data;
+      if (existingAccount) {
+        const update = new FormData();
+        update.set(ProviderCredentialFields.PROVIDER_ID, existingAccount.id);
+        update.set(
+          ProviderCredentialFields.PROVIDER_ALIAS,
+          values.providerAlias?.trim() ?? "",
+        );
+        data = await updateProvider(update);
+      } else {
+        data = await (isKnownProviderType(values.providerType)
+          ? addProvider(formData)
+          : addRegistryProvider(formData));
+      }
 
       if (data?.errors && data.errors.length > 0) {
         data.errors.forEach((error: ApiError) => {
