@@ -3,7 +3,7 @@ import pathlib
 from datetime import datetime
 from functools import lru_cache
 from re import fullmatch
-from typing import Optional
+from typing import Any, Callable, Optional
 
 from boto3.session import Session
 from botocore.config import Config
@@ -269,6 +269,7 @@ class AwsProvider(Provider):
         caller_identity = self.validate_credentials(
             session=self.session.current_session,
             aws_region=sts_region,
+            excluded_regions=excluded_regions,
         )
         # Later STS calls go where validation got an answer, not where it timed out
         sts_region = caller_identity.region
@@ -1341,8 +1342,9 @@ class AwsProvider(Provider):
     def sts_call_with_partition_failover(
         session: Session,
         aws_region: str,
-        operation,
-    ):
+        operation: Callable[[Any], Any],
+        excluded_regions: set[str] | None = None,
+    ) -> tuple[str, Any]:
         """
         Run a bootstrap STS call, moving on when a region cannot be reached.
 
@@ -1355,35 +1357,42 @@ class AwsProvider(Provider):
         Args:
             session (Session): The AWS session object.
             aws_region (str): The region to try first.
-            operation (Callable): Receives an STS client and performs the call.
+            operation (Callable[[Any], Any]): Receives an STS client and performs
+                the call.
+            excluded_regions (set[str] | None): Regions excluded from the scan,
+                tried after the rest of the partition.
 
         Returns:
-            tuple: The region that answered and whatever the operation returned.
+            tuple[str, Any]: The region that answered and whatever the operation
+                returned.
 
         Raises:
             Exception: Whatever the operation raises, or the last connection error
                 when no region could be reached.
         """
-        candidate_regions = get_partition_bootstrap_candidates(
-            aws_region, session.region_name
+        *fallback_regions, last_region = get_partition_bootstrap_candidates(
+            aws_region, session.region_name, excluded_regions
         )
 
-        for attempt, candidate_region in enumerate(candidate_regions, start=1):
+        for candidate_region in fallback_regions:
             try:
                 sts_client = AwsProvider.create_sts_session(session, candidate_region)
                 return candidate_region, operation(sts_client)
             # The credentials are not at fault, so the next region is worth trying
             except (EndpointConnectionError, ConnectTimeoutError) as unreachable:
-                if attempt == len(candidate_regions):
-                    raise
                 logger.warning(
                     f"{unreachable.__class__.__name__}[{unreachable.__traceback__.tb_lineno}]: {unreachable}"
                 )
+
+        # Nothing is left to try after the last region, so its error is the answer
+        sts_client = AwsProvider.create_sts_session(session, last_region)
+        return last_region, operation(sts_client)
 
     @staticmethod
     def validate_credentials(
         session: Session,
         aws_region: str,
+        excluded_regions: set[str] | None = None,
     ) -> AWSCallerIdentity:
         """
         Validates the AWS credentials using the provided session and AWS region.
@@ -1396,6 +1405,8 @@ class AwsProvider(Provider):
         Args:
             session (Session): The AWS session object.
             aws_region (str): The AWS region to validate the credentials.
+            excluded_regions (set[str] | None): Regions excluded from the scan,
+                tried after the rest of the partition.
         Returns:
             AWSCallerIdentity: An object containing the caller identity information,
                 including the region that answered.
@@ -1404,7 +1415,10 @@ class AwsProvider(Provider):
         """
         try:
             sts_region, caller_identity = AwsProvider.sts_call_with_partition_failover(
-                session, aws_region, lambda sts_client: sts_client.get_caller_identity()
+                session,
+                aws_region,
+                lambda sts_client: sts_client.get_caller_identity(),
+                excluded_regions,
             )
             # Include the region where the caller_identity has validated the credentials
             return AWSCallerIdentity(
@@ -1916,6 +1930,7 @@ MAX_STS_BOOTSTRAP_ATTEMPTS = 3
 def get_partition_bootstrap_candidates(
     aws_region: str,
     session_region: Optional[str] = None,
+    excluded_regions: set[str] | None = None,
 ) -> list:
     """
     Get the STS bootstrap regions to try, in order, starting with the chosen one.
@@ -1929,13 +1944,22 @@ def get_partition_bootstrap_candidates(
     Args:
         aws_region (str): The region already chosen for the bootstrap call.
         session_region (Optional[str]): The region of the AWS session.
+        excluded_regions (set[str] | None): Regions excluded from the scan. They
+            go after the rest of the partition, so the bootstrap avoids them
+            whenever another region answers and still has them as a last resort.
 
     Returns:
         list: The regions to try, preferred first, capped at
             MAX_STS_BOOTSTRAP_ATTEMPTS.
     """
+    excluded_regions = set(excluded_regions or ())
+    partition_regions = get_env_partition_regions(session_region) or []
+    # sorted() is stable, so the partition order survives on each side of the split
+    ordered_regions = sorted(
+        partition_regions, key=lambda region: region in excluded_regions
+    )
     candidates = [aws_region]
-    for region in get_env_partition_regions(session_region) or []:
+    for region in ordered_regions:
         if region not in candidates:
             candidates.append(region)
     return candidates[:MAX_STS_BOOTSTRAP_ATTEMPTS]
