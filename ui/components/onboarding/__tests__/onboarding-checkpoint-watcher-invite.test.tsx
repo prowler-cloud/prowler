@@ -50,8 +50,9 @@ describe("OnboardingCheckpointWatcher invite step", () => {
     // Given
     const user = userEvent.setup();
     render(<OnboardingCheckpointWatcher showInviteStep />);
+    // The step is loaded on demand, so it arrives a tick after render.
     expect(
-      screen.getByRole("button", { name: "Resolve invite step" }),
+      await screen.findByRole("button", { name: "Resolve invite step" }),
     ).toBeInTheDocument();
     expect(screen.queryByText(CHECKPOINT_TITLE)).not.toBeInTheDocument();
 

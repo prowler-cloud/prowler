@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -15,7 +16,17 @@ import {
 import { useOnboardingSequenceStore } from "@/store/onboarding-sequence";
 
 import { OnboardingCheckpointDialog } from "./onboarding-checkpoint-dialog";
-import { OnboardingInviteStep } from "./onboarding-invite-step";
+
+// Loaded on demand: the step pulls the invitation form and its server
+// actions, which this module (re-exported by the shared barrel) must not
+// carry statically.
+const OnboardingInviteStep = dynamic(
+  () =>
+    import("./onboarding-invite-step").then(
+      (module) => module.OnboardingInviteStep,
+    ),
+  { ssr: false },
+);
 
 interface OnboardingCheckpointWatcherProps {
   // Offer "Invite your team" once, right before the checkpoint dialog. Off by
