@@ -52,11 +52,20 @@ describe("task watcher store", () => {
       await vi.waitFor(() => expect(pollMock).toHaveBeenCalledOnce());
       window.dispatchEvent(new Event(eventType));
       rejectPoll(new Error("The document was unloaded"));
+      if (eventType === "beforeunload") {
+        window.dispatchEvent(new PageTransitionEvent("pagehide"));
+      }
       expect(await tracking).toEqual({ status: TASK_WATCHER_STATUS.PENDING });
       expect(useTaskWatcherStore.getState().tasks["reload-task"]?.status).toBe(
         TASK_WATCHER_STATUS.PENDING,
       );
       expect(onError).not.toHaveBeenCalled();
+
+      if (eventType === "pagehide") {
+        await flush();
+        expect(pollMock).toHaveBeenCalledOnce();
+        expect(onReady).not.toHaveBeenCalled();
+      }
 
       pollMock.mockResolvedValue({ ok: true, state: "completed" });
       window.dispatchEvent(
@@ -65,6 +74,138 @@ describe("task watcher store", () => {
       await vi.waitFor(() => expect(onReady).toHaveBeenCalledOnce());
     },
   );
+
+  it("keeps the caller's promise and notifications when beforeunload does not hide the page", async () => {
+    // Given: a download or cancelled navigation leaves this document alive.
+    let rejectPoll!: (error: Error) => void;
+    pollMock
+      .mockImplementationOnce(
+        () =>
+          new Promise((_resolve, reject) => {
+            rejectPoll = reject;
+          }),
+      )
+      .mockResolvedValue({ ok: true, state: "completed" });
+    const tracking = trackAndPollTask({
+      taskId: "download-task",
+      kind: "test-kind",
+      meta: {},
+      notifyHandler: false,
+    });
+    await vi.waitFor(() => expect(pollMock).toHaveBeenCalledOnce());
+
+    // When: only the RPC is interrupted; the caller remains in this document.
+    window.dispatchEvent(new Event("beforeunload"));
+    rejectPoll(new Error("The navigation interrupted the request"));
+    // Then: the original caller receives the final result and owns notification.
+    expect(await tracking).toEqual({ status: TASK_WATCHER_STATUS.READY });
+    expect(onReady).not.toHaveBeenCalled();
+    expect(onError).not.toHaveBeenCalled();
+    expect(useTaskWatcherStore.getState().tasks["download-task"]?.status).toBe(
+      TASK_WATCHER_STATUS.READY,
+    );
+  });
+
+  it("preserves a navigation abort delivered after the visible page has recovered", async () => {
+    // Given
+    let rejectPoll!: (error: Error) => void;
+    pollMock
+      .mockImplementationOnce(
+        () =>
+          new Promise((_resolve, reject) => {
+            rejectPoll = reject;
+          }),
+      )
+      .mockResolvedValue({ ok: true, state: "completed" });
+    const tracking = trackAndPollTask({
+      taskId: "delayed-abort",
+      kind: "test-kind",
+      meta: {},
+    });
+    await vi.waitFor(() => expect(pollMock).toHaveBeenCalledOnce());
+
+    // When: browser RPC cancellation arrives after the unload event's task.
+    window.dispatchEvent(new Event("beforeunload"));
+    await flush();
+    rejectPoll(new Error("The navigation interrupted the request"));
+
+    // Then: the original caller gets the final result, not a provisional failure.
+    expect(await tracking).toEqual({ status: TASK_WATCHER_STATUS.READY });
+    expect(onReady).toHaveBeenCalledOnce();
+    expect(onError).not.toHaveBeenCalled();
+  });
+
+  it("allows new tasks after a download without discarding existing results", async () => {
+    // Given
+    const existingResult = {
+      taskId: "previous-export",
+      kind: "export",
+      status: TASK_WATCHER_STATUS.READY,
+      meta: {},
+      startedAt: Date.now(),
+      result: { downloadUrl: "/download" },
+    };
+    useTaskWatcherStore.getState().upsertTask(existingResult);
+    pollMock.mockResolvedValue({ ok: true, state: "completed" });
+
+    // When: a download starts but leaves the document in place.
+    window.dispatchEvent(new Event("beforeunload"));
+    await flush();
+    const result = await trackAndPollTask({
+      taskId: "after-download",
+      kind: "test-kind",
+      meta: {},
+    });
+
+    // Then
+    expect(result.status).toBe(TASK_WATCHER_STATUS.READY);
+    expect(onReady).toHaveBeenCalledOnce();
+    expect(useTaskWatcherStore.getState().tasks["previous-export"]).toEqual(
+      existingResult,
+    );
+  });
+
+  it("keeps caller ownership when bfcache restores before its RPC rejects", async () => {
+    // Given
+    let rejectPoll!: (error: Error) => void;
+    pollMock
+      .mockImplementationOnce(
+        () =>
+          new Promise((_resolve, reject) => {
+            rejectPoll = reject;
+          }),
+      )
+      .mockResolvedValue({ ok: true, state: "completed" });
+    const tracking = trackAndPollTask({
+      taskId: "bfcache-task",
+      kind: "test-kind",
+      meta: {},
+      notifyHandler: false,
+    });
+    await vi.waitFor(() => expect(pollMock).toHaveBeenCalledOnce());
+
+    // When: the cached document returns before its interrupted RPC rejects.
+    window.dispatchEvent(
+      new PageTransitionEvent("pagehide", { persisted: true }),
+    );
+    window.dispatchEvent(
+      new PageTransitionEvent("pageshow", { persisted: true }),
+    );
+    rejectPoll(new Error("The cached document interrupted the request"));
+
+    // Then
+    expect(await tracking).toEqual({ status: TASK_WATCHER_STATUS.READY });
+    expect(onReady).not.toHaveBeenCalled();
+    window.dispatchEvent(
+      new PageTransitionEvent("pageshow", { persisted: true }),
+    );
+    await flush();
+    expect(onReady).not.toHaveBeenCalled();
+    expect(onError).not.toHaveBeenCalled();
+    expect(useTaskWatcherStore.getState().tasks["bfcache-task"]?.status).toBe(
+      TASK_WATCHER_STATUS.READY,
+    );
+  });
 
   it("tracks a task, polls it to completion and fires onReady once", async () => {
     pollMock.mockResolvedValue({ ok: true, state: "completed" });
