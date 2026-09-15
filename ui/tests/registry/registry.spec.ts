@@ -320,6 +320,48 @@ test.describe.serial("Registry", () => {
   );
 
   test(
+    "refreshes publications on tab changes, manually and when returning focus",
+    { tag: ["@high", "@e2e", "@registry", "@REGISTRY-E2E-010"] },
+    async ({ page }) => {
+      skipUnlessProject(enabledProject);
+      const registry = new RegistryPage(page);
+      await registry.goto();
+      await registry.connectFixtureRegistry();
+      await registry.searchInput.fill("Fixture");
+      await controlledRegistryFixture.publishArtifact(
+        "Fixture tab publication",
+      );
+      await registry.myArtifactsTab.click();
+      await registry.exploreTab.click();
+      await expect(
+        registry.artifactCardFor("Fixture tab publication"),
+      ).toBeVisible();
+      await controlledRegistryFixture.publishArtifact(
+        "Fixture manual publication",
+      );
+      await registry.refreshButton.click();
+      await expect(
+        registry.artifactCardFor("Fixture manual publication"),
+      ).toBeVisible();
+      const beforeFocus = await controlledRegistryFixture.snapshot();
+      await controlledRegistryFixture.publishArtifact(
+        "Fixture focus publication",
+      );
+      // Synthetic focus dispatch also works in headless browsers, which do not
+      // reliably dispatch window focus when bringing an OS window to the front.
+      await page.evaluate(() => window.dispatchEvent(new Event("focus")));
+      await expect(
+        registry.artifactCardFor("Fixture focus publication"),
+      ).toBeVisible();
+      await registry.verifySearchPreserved("Fixture");
+      expect(
+        (await controlledRegistryFixture.snapshot()).catalogReadCount,
+      ).toBeGreaterThan(beforeFocus.catalogReadCount);
+      await registry.captureEvidence("registry-refreshed-publications");
+    },
+  );
+
+  test(
     "resumes an installation after reload with one confirmation notification",
     { tag: ["@critical", "@e2e", "@registry", "@REGISTRY-E2E-008"] },
     async ({ page }) => {

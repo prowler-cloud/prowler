@@ -1,6 +1,6 @@
 "use client";
 
-import { Settings } from "lucide-react";
+import { RefreshCw, Settings } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useEffectEvent, useRef, useState } from "react";
 
@@ -38,6 +38,7 @@ import {
   type RegistryBootstrapState,
   type RegistryMutationResult,
   type RegistryRemoveDialogError,
+  type RegistryTenantArtifact,
 } from "@/types/registry";
 
 import { RegistryAccessDialog } from "./registry-access-dialog";
@@ -58,6 +59,7 @@ import {
 } from "./registry-explorer.model";
 import { RegistryRemoveDialog } from "./registry-remove-dialog";
 import { RegistryToolbar } from "./registry-toolbar";
+import { useRegistryRefresh } from "./use-registry-refresh";
 
 const PAGE_SUBTITLE =
   "Explore checks, compliance frameworks, and providers. Add external provider artifacts to connect new providers to your workspace.";
@@ -159,8 +161,10 @@ export function RegistryExplorer({
     updateView({
       sort: next === REGISTRY_MARKETPLACE_SORT.NAME ? undefined : next,
     });
-  const setActiveTab = (next: RegistryTab) =>
+  const setActiveTab = (next: RegistryTab) => {
     updateView({ tab: next === REGISTRY_TAB.EXPLORE ? undefined : next });
+    if (next !== activeTab) requestRefresh();
+  };
   const [pendingOperation, setPendingOperation] =
     useState<RegistryPendingOperation | null>(null);
   const [localPendingAddName, setPendingAddName] = useState<string>();
@@ -171,20 +175,69 @@ export function RegistryExplorer({
       (task) =>
         task.kind === "registry-artifact-add" && task.status === "pending",
     )?.meta.normalizedName;
+  const [refreshMessage, setRefreshMessage] = useState<string>();
+  const { isRefreshing, requestRefresh, invalidateRefresh } =
+    useRegistryRefresh({
+      enabled: state.status === REGISTRY_BOOTSTRAP_STATE.READY,
+      mutationPending: Boolean(pendingOperation || pendingAddName),
+      onResult: (result) => {
+        if (result.status === "access_denied") {
+          router.replace("/profile");
+        } else if (result.status === "complete") {
+          setRefreshMessage(undefined);
+          setState((current) =>
+            current.status === "ready"
+              ? {
+                  ...current,
+                  catalog: result.catalog,
+                  tenantArtifacts: result.tenantArtifacts,
+                }
+              : current,
+          );
+        } else if (result.status === "reconnect") {
+          setState({ status: REGISTRY_BOOTSTRAP_STATE.RECONNECT });
+        } else if (result.status === "onboarding") {
+          setState((current) =>
+            current.status === "ready"
+              ? {
+                  status: REGISTRY_BOOTSTRAP_STATE.ONBOARDING,
+                  credential: {
+                    configured: false,
+                    isValid: false,
+                    scopes: [],
+                    validationPending: false,
+                  },
+                  tenantArtifacts: current.tenantArtifacts,
+                }
+              : current,
+          );
+        } else {
+          setRefreshMessage(
+            "Registry could not be refreshed. Showing the last available data. Try again.",
+          );
+        }
+      },
+    });
+  const consumeArtifactsChanged = useEffectEvent(
+    (artifacts: RegistryTenantArtifact[]) => {
+      invalidateRefresh();
+      setState((current) =>
+        current.status === "ready"
+          ? { ...current, tenantArtifacts: artifacts }
+          : current,
+      );
+    },
+  );
   useEffect(() => {
     const refresh = (event: Event) => {
       if (!(event instanceof CustomEvent) || !Array.isArray(event.detail))
         return;
-      setState((current) =>
-        current.status === "ready"
-          ? { ...current, tenantArtifacts: event.detail }
-          : current,
-      );
+      consumeArtifactsChanged(event.detail);
     };
     window.addEventListener("registry-artifacts-changed", refresh);
     return () =>
       window.removeEventListener("registry-artifacts-changed", refresh);
-  }, [router]);
+  }, []);
   const [accessDialogMode, setAccessDialogMode] =
     useState<RegistryAccessDialogMode>();
   const [removeTarget, setRemoveTarget] = useState<string>();
@@ -219,12 +272,20 @@ export function RegistryExplorer({
   }, []);
 
   function applyCredentialOutcome(result: RegistryCredentialValidationOutcome) {
+    // A connected outcome already includes fresh collections. A failed
+    // replacement must still resume any read deferred during that mutation.
+    invalidateRefresh(
+      result.status === REGISTRY_CREDENTIAL_ACTION.CONNECTED
+        ? false
+        : undefined,
+    );
     if (result.status === REGISTRY_FAILURE.ACCESS_DENIED) {
       router.replace("/profile");
       return;
     }
     setPendingOperation(null);
     if (result.status === REGISTRY_CREDENTIAL_ACTION.CONNECTED) {
+      setRefreshMessage(undefined);
       setAccessDialogMode(undefined);
       setOperationMessage(undefined);
       setState({
@@ -266,6 +327,7 @@ export function RegistryExplorer({
     )
       return;
     const { normalizedName } = artifact;
+    invalidateRefresh();
     artifactSubmission.current = true;
     const generation = operationGeneration.current;
     setOperationMessage(undefined);
@@ -303,6 +365,7 @@ export function RegistryExplorer({
   }
 
   async function handleCredentialSubmit(key: string) {
+    invalidateRefresh();
     const generation = operationGeneration.current;
     setOperationMessage(undefined);
     setPendingOperation(REGISTRY_PENDING_OPERATION.CREDENTIAL);
@@ -314,6 +377,7 @@ export function RegistryExplorer({
   }
 
   async function handleDisconnect() {
+    invalidateRefresh();
     const generation = operationGeneration.current;
     setOperationMessage(undefined);
     setPendingOperation(REGISTRY_PENDING_OPERATION.CREDENTIAL);
@@ -344,6 +408,7 @@ export function RegistryExplorer({
       pendingAddName === normalizedName
     )
       return;
+    invalidateRefresh();
     const generation = operationGeneration.current;
     setOperationMessage(undefined);
     setRemoveError(undefined);
@@ -505,6 +570,11 @@ export function RegistryExplorer({
     <div className="space-y-6">
       <h1 className="sr-only">Registry marketplace</h1>
       <p className="text-text-neutral-secondary text-sm">{PAGE_SUBTITLE}</p>
+      {refreshMessage && (
+        <Alert variant="warning">
+          <AlertDescription>{refreshMessage}</AlertDescription>
+        </Alert>
+      )}
       {!accessDialogMode && operationMessage && (
         <Alert variant="error">
           <AlertDescription>{operationMessage}</AlertDescription>
@@ -514,42 +584,60 @@ export function RegistryExplorer({
         onValueChange={(value) => setActiveTab(value as RegistryTab)}
         value={activeTab}
       >
-        <div className="border-border-neutral-secondary flex items-center justify-between gap-4 border-b">
-          <TabsList>
-            <TabsTrigger
-              adornment={
-                <Badge size="sm" variant="tag">
-                  {state.catalog.artifacts.length}
-                </Badge>
+        <div className="border-border-neutral-secondary flex flex-wrap items-center justify-between gap-4 border-b">
+          <div className="min-w-52 flex-1">
+            <TabsList>
+              <TabsTrigger
+                adornment={
+                  <Badge size="sm" variant="tag">
+                    {state.catalog.artifacts.length}
+                  </Badge>
+                }
+                value={REGISTRY_TAB.EXPLORE}
+              >
+                All
+              </TabsTrigger>
+              <TabsTrigger
+                adornment={
+                  <Badge size="sm" variant="tag">
+                    {state.tenantArtifacts.length}
+                  </Badge>
+                }
+                value={REGISTRY_TAB.MINE}
+              >
+                My artifacts
+              </TabsTrigger>
+            </TabsList>
+          </div>
+          <div className="ml-auto flex items-center gap-2">
+            <Button
+              aria-label="Refresh Registry"
+              aria-busy={isRefreshing}
+              disabled={
+                isRefreshing || Boolean(pendingOperation || pendingAddName)
               }
-              value={REGISTRY_TAB.EXPLORE}
+              onClick={requestRefresh}
+              size="sm"
+              type="button"
+              variant="ghost"
             >
-              All
-            </TabsTrigger>
-            <TabsTrigger
-              adornment={
-                <Badge size="sm" variant="tag">
-                  {state.tenantArtifacts.length}
-                </Badge>
+              <RefreshCw aria-hidden />
+              {isRefreshing ? "Refreshing…" : "Refresh"}
+            </Button>
+            <Button
+              aria-label="Manage access"
+              title="Manage access"
+              onClick={() =>
+                setAccessDialogMode(REGISTRY_ACCESS_DIALOG_MODE.MANAGE)
               }
-              value={REGISTRY_TAB.MINE}
+              ref={manageButtonRef}
+              size="icon"
+              type="button"
+              variant="ghost"
             >
-              My artifacts
-            </TabsTrigger>
-          </TabsList>
-          <Button
-            aria-label="Manage access"
-            title="Manage access"
-            onClick={() =>
-              setAccessDialogMode(REGISTRY_ACCESS_DIALOG_MODE.MANAGE)
-            }
-            ref={manageButtonRef}
-            size="icon"
-            type="button"
-            variant="ghost"
-          >
-            <Settings aria-hidden />
-          </Button>
+              <Settings aria-hidden />
+            </Button>
+          </div>
         </div>
         <TabsContent className="space-y-4 pt-4" value={REGISTRY_TAB.EXPLORE}>
           <RegistryToolbar
@@ -579,7 +667,7 @@ export function RegistryExplorer({
             onReset={
               state.catalog.artifacts.length > 0
                 ? () => setFilters({})
-                : () => window.location.reload()
+                : requestRefresh
             }
             isEmpty={model.artifacts.length === 0}
           >

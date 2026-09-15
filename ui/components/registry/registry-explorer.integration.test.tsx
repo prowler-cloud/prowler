@@ -210,6 +210,370 @@ function cardFor(name: string) {
 }
 
 describe("RegistryExplorer", () => {
+  it("refreshes catalog and installed versions when switching tabs", async () => {
+    // Given
+    refreshRegistryCollectionsMock.mockResolvedValue({
+      status: "complete",
+      catalog: readyState.catalog,
+      tenantArtifacts: [
+        {
+          normalizedName: "aws-guard",
+          versionSpec: "latest",
+          resolvedVersion: "1.0.0",
+        },
+      ],
+    });
+    const screen = await render(<RegistryExplorer initialState={readyState} />);
+    // When
+    await screen.getByRole("tab", { name: /My artifacts/ }).click();
+    // Then
+    await expect
+      .element(
+        screen.getByRole("button", { name: "Update AWS guard to 1.2.3" }),
+      )
+      .toBeVisible();
+    expect(refreshRegistryCollectionsMock).toHaveBeenCalled();
+  });
+
+  it("coalesces manual, tab and focus refreshes while preserving filters", async () => {
+    // Given
+    let resolveRefresh!: (value: unknown) => void;
+    refreshRegistryCollectionsMock.mockReturnValue(
+      new Promise((resolve) => {
+        resolveRefresh = resolve;
+      }),
+    );
+    const screen = await render(<RegistryExplorer initialState={readyState} />);
+    await screen.getByLabelText("Search artifacts").fill("AWS");
+    // When: the tab change also requests a refresh, sharing any focus read.
+    await screen.getByRole("tab", { name: /My artifacts/ }).click();
+    window.dispatchEvent(new Event("focus"));
+    await screen.getByRole("tab", { name: /All/ }).click();
+    // Then
+    await expect
+      .element(screen.getByRole("button", { name: "Refresh Registry" }))
+      .toBeDisabled();
+    expect(document.body.textContent).toContain("Refreshing…");
+    expect(refreshRegistryCollectionsMock).toHaveBeenCalledOnce();
+    expect(cardFor("AWS guard")).toBeTruthy();
+    resolveRefresh({
+      status: "complete",
+      catalog: {
+        ...readyState.catalog,
+        artifacts: readyState.catalog.artifacts.map((artifact) => ({
+          ...artifact,
+          latestVersion: "2.0.0",
+        })),
+      },
+      tenantArtifacts: [
+        {
+          normalizedName: "aws-guard",
+          versionSpec: "latest",
+          resolvedVersion: "1.2.3",
+        },
+      ],
+    });
+    await expect
+      .element(
+        screen.getByRole("button", { name: "Update AWS guard to 2.0.0" }),
+      )
+      .toBeVisible();
+    await expect
+      .element(screen.getByLabelText("Search artifacts"))
+      .toHaveValue("AWS");
+    await expect
+      .element(screen.getByRole("button", { name: "Refresh Registry" }))
+      .toBeEnabled();
+    expect(document.body.textContent).not.toContain("Later guard");
+  });
+
+  it("loads a newly published artifact from the Refresh button without navigating", async () => {
+    // Given
+    const screen = await render(<RegistryExplorer initialState={readyState} />);
+    refreshRegistryCollectionsMock.mockResolvedValue({
+      status: "complete",
+      tenantArtifacts: readyState.tenantArtifacts,
+      catalog: {
+        ...readyState.catalog,
+        artifacts: [
+          ...readyState.catalog.artifacts,
+          {
+            ...readyState.catalog.artifacts[0],
+            normalizedName: "new-artifact",
+            name: "New artifact",
+          },
+        ],
+      },
+    });
+    // When
+    await screen.getByRole("button", { name: "Refresh Registry" }).click();
+    // Then
+    await expect
+      .element(screen.getByText("New artifact", { exact: true }))
+      .toBeVisible();
+    expect(window.location.pathname).toBe("/registry");
+    expect(registryRouter.refresh).not.toHaveBeenCalled();
+  });
+
+  it.each(["error", "incomplete"])(
+    "preserves the last complete snapshot after a %s refresh and allows retry",
+    async (status) => {
+      // Given
+      const screen = await render(
+        <RegistryExplorer initialState={readyState} />,
+      );
+      refreshRegistryCollectionsMock.mockResolvedValue({
+        status,
+        reason: "page_failed",
+        collectedCount: 1,
+      });
+      // When
+      await screen.getByRole("button", { name: "Refresh Registry" }).click();
+      // Then
+      await expect
+        .element(screen.getByRole("alert"))
+        .toHaveTextContent("Showing the last available data.");
+      expect(cardFor("AWS guard")).toBeTruthy();
+      expect(cardFor("Later guard")).toBeTruthy();
+      await expect
+        .element(screen.getByRole("button", { name: "Refresh Registry" }))
+        .toBeEnabled();
+      // When / Then
+      refreshRegistryCollectionsMock.mockResolvedValue({
+        status: "complete",
+        catalog: readyState.catalog,
+        tenantArtifacts: [],
+      });
+      await screen.getByRole("button", { name: "Refresh Registry" }).click();
+      await expect
+        .element(screen.getByRole("button", { name: "Add AWS guard" }))
+        .toBeVisible();
+      await expect.element(screen.getByRole("alert")).not.toBeInTheDocument();
+    },
+  );
+
+  it("discards a stale refresh and waits for an update before reading again", async () => {
+    // Given
+    const installed = {
+      normalizedName: "aws-guard",
+      versionSpec: "latest",
+      resolvedVersion: "1.0.0",
+    };
+    let stale!: (value: unknown) => void;
+    let update!: (value: unknown) => void;
+    let fresh!: (value: unknown) => void;
+    refreshRegistryCollectionsMock
+      .mockReturnValueOnce(
+        new Promise((resolve) => {
+          stale = resolve;
+        }),
+      )
+      .mockReturnValueOnce(
+        new Promise((resolve) => {
+          fresh = resolve;
+        }),
+      );
+    executeRegistryArtifactAdditionMock.mockReturnValue(
+      new Promise((resolve) => {
+        update = resolve;
+      }),
+    );
+    const screen = await render(
+      <RegistryExplorer
+        initialState={{ ...readyState, tenantArtifacts: [installed] }}
+      />,
+    );
+    await screen.getByRole("tab", { name: /My artifacts/ }).click();
+    // When
+    await screen
+      .getByRole("button", { name: "Update AWS guard to 1.2.3" })
+      .click();
+    window.dispatchEvent(new Event("focus"));
+    stale({
+      status: "complete",
+      catalog: { status: "complete", artifacts: [] },
+      tenantArtifacts: [],
+    });
+    // Then: old reads cannot erase an in-flight update.
+    await expect
+      .element(
+        screen.getByRole("button", { name: "Update AWS guard to 1.2.3" }),
+      )
+      .toBeDisabled();
+    expect(refreshRegistryCollectionsMock).toHaveBeenCalledOnce();
+    const tenantArtifacts = [{ ...installed, resolvedVersion: "1.2.3" }];
+    update({ status: "confirmed", tenantArtifacts });
+    await expect
+      .element(screen.getByText("Added", { exact: true }))
+      .toBeVisible();
+    await expect
+      .poll(() => refreshRegistryCollectionsMock.mock.calls.length)
+      .toBe(2);
+    fresh({ status: "complete", catalog: readyState.catalog, tenantArtifacts });
+    await expect
+      .element(screen.getByRole("button", { name: "Refresh Registry" }))
+      .toBeEnabled();
+    expect(cardFor("AWS guard").textContent).not.toContain("1.0.0");
+    await expect
+      .element(screen.getByText("Added", { exact: true }))
+      .toBeVisible();
+  });
+
+  it("keeps the list usable when the refresh request rejects", async () => {
+    // Given
+    const screen = await render(<RegistryExplorer initialState={readyState} />);
+    refreshRegistryCollectionsMock.mockRejectedValue(
+      new Error("Network failure"),
+    );
+    // When
+    await screen.getByRole("button", { name: "Refresh Registry" }).click();
+    // Then
+    await expect
+      .element(screen.getByRole("alert"))
+      .toHaveTextContent("Registry could not be refreshed.");
+    await expect
+      .element(screen.getByRole("button", { name: "Refresh Registry" }))
+      .toBeEnabled();
+    expect(cardFor("AWS guard")).toBeTruthy();
+  });
+
+  it.each(["access_denied", "reconnect", "onboarding"])(
+    "honors %s from a collection refresh",
+    async (status) => {
+      // Given
+      const screen = await render(
+        <RegistryExplorer initialState={readyState} />,
+      );
+      refreshRegistryCollectionsMock.mockResolvedValue({ status });
+      // When
+      await screen.getByRole("button", { name: "Refresh Registry" }).click();
+      // Then
+      if (status === "access_denied") {
+        await expectRedirectedToProfile();
+      } else {
+        await expect
+          .element(
+            screen.getByRole("button", {
+              name: status === "reconnect" ? "Replace key" : "Connect API key",
+            }),
+          )
+          .toBeVisible();
+      }
+    },
+  );
+
+  it("retries a deferred refresh after credential replacement fails", async () => {
+    // Given
+    let stale!: (value: unknown) => void;
+    refreshRegistryCollectionsMock
+      .mockReturnValueOnce(
+        new Promise((resolve) => {
+          stale = resolve;
+        }),
+      )
+      .mockResolvedValue({
+        status: "complete",
+        catalog: readyState.catalog,
+        tenantArtifacts: [],
+      });
+    submitRegistryCredentialMock.mockResolvedValue({
+      status: "replacement_failed",
+    });
+    const screen = await render(<RegistryExplorer initialState={readyState} />);
+    await screen.getByRole("tab", { name: /My artifacts/ }).click();
+    // When
+    await screen.getByRole("button", { name: "Manage access" }).click();
+    await screen
+      .getByLabelText("Registry key")
+      .fill("synthetic-replacement-key");
+    await screen.getByRole("button", { name: "Replace key" }).click();
+    await expect.element(screen.getByRole("alert")).toBeVisible();
+    stale({
+      status: "complete",
+      catalog: readyState.catalog,
+      tenantArtifacts: readyState.tenantArtifacts,
+    });
+    // Then
+    await expect
+      .poll(() => refreshRegistryCollectionsMock.mock.calls.length)
+      .toBe(2);
+    await screen.getByRole("button", { name: "Close", exact: true }).click();
+    await expect
+      .element(screen.getByText("No artifacts in this workspace yet."))
+      .toBeVisible();
+  });
+
+  it("does not restore a removed artifact from an earlier refresh", async () => {
+    // Given
+    let stale!: (value: unknown) => void;
+    refreshRegistryCollectionsMock
+      .mockReturnValueOnce(
+        new Promise((resolve) => {
+          stale = resolve;
+        }),
+      )
+      .mockResolvedValue({
+        status: "complete",
+        catalog: readyState.catalog,
+        tenantArtifacts: [],
+      });
+    removeRegistryArtifactMock.mockResolvedValue({
+      status: "confirmed",
+      tenantArtifacts: [],
+    });
+    const screen = await render(<RegistryExplorer initialState={readyState} />);
+    await screen.getByRole("tab", { name: /My artifacts/ }).click();
+    // When
+    await screen.getByRole("button", { name: "Remove AWS guard" }).click();
+    await screen.getByRole("button", { name: "Confirm Remove" }).click();
+    await expect
+      .element(screen.getByText("No artifacts in this workspace yet."))
+      .toBeVisible();
+    stale({
+      status: "complete",
+      catalog: readyState.catalog,
+      tenantArtifacts: readyState.tenantArtifacts,
+    });
+    // Then
+    await expect
+      .element(screen.getByRole("button", { name: "Refresh Registry" }))
+      .toBeEnabled();
+    await expect
+      .element(screen.getByText("No artifacts in this workspace yet."))
+      .toBeVisible();
+    expect(refreshRegistryCollectionsMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("refreshes on returning focus and ignores focus while hidden", async () => {
+    // Given
+    const screen = await render(<RegistryExplorer initialState={readyState} />);
+    const visibility = vi
+      .spyOn(document, "visibilityState", "get")
+      .mockReturnValue("hidden");
+    refreshRegistryCollectionsMock.mockClear();
+    // When / Then
+    window.dispatchEvent(new Event("focus"));
+    expect(refreshRegistryCollectionsMock).not.toHaveBeenCalled();
+    refreshRegistryCollectionsMock.mockResolvedValue({
+      status: "complete",
+      catalog: readyState.catalog,
+      tenantArtifacts: [
+        {
+          normalizedName: "aws-guard",
+          versionSpec: "latest",
+          resolvedVersion: "1.0.0",
+        },
+      ],
+    });
+    visibility.mockReturnValue("visible");
+    window.dispatchEvent(new Event("focus"));
+    await expect
+      .element(
+        screen.getByRole("button", { name: "Update AWS guard to 1.2.3" }),
+      )
+      .toBeVisible();
+  });
+
   it.each([
     [
       { status: "refused", message: "This version has been withdrawn." },
@@ -354,6 +718,11 @@ describe("RegistryExplorer", () => {
     disconnectRegistryCredentialMock.mockReset();
     executeRegistryArtifactAdditionMock.mockReset();
     refreshRegistryCollectionsMock.mockReset();
+    refreshRegistryCollectionsMock.mockResolvedValue({
+      status: "complete",
+      catalog: readyState.catalog,
+      tenantArtifacts: readyState.tenantArtifacts,
+    });
     refreshRegistryCredentialMock.mockReset();
     removeRegistryArtifactMock.mockReset();
     submitRegistryCredentialMock.mockReset();

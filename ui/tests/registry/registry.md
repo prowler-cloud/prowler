@@ -81,3 +81,12 @@ After the scan, removing the artifact preserves the account in Providers and rem
 **Flow:** Install 1.2.3, publish 1.3.0 in the controlled catalog, reject the first update, retry and reload while pending, then offer and install 1.2.3 from My artifacts.
 
 **Expected Result:** Cards show installed and available versions. Rejection preserves 1.2.3 and allows retry. The update submits the exact target, blocks duplicate actions, survives reload and emits one update notification after version confirmation. A lower catalog version also offers Update.
+
+## Test Case: `REGISTRY-E2E-010` - Catalog Refresh
+
+**Priority:** `high`
+**Tags:** @e2e, @registry
+
+**Flow:** Publish a new artifact before each trigger: switching tabs, clicking Refresh, and dispatching window focus.
+
+**Expected Result:** All three publications appear without leaving Registry. Search input and URL filters remain intact; the API receives new catalog reads.

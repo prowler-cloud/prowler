@@ -19,6 +19,7 @@ export class RegistryPage extends BasePage {
   readonly registryKeyInput: Locator;
   readonly registryLink: Locator;
   readonly searchInput: Locator;
+  readonly refreshButton: Locator;
 
   constructor(page: Page) {
     super(page);
@@ -33,6 +34,7 @@ export class RegistryPage extends BasePage {
     this.registryKeyInput = page.getByLabel("Registry key");
     this.registryLink = page.getByRole("link", { name: "Registry" });
     this.searchInput = page.getByLabel("Search artifacts");
+    this.refreshButton = page.getByRole("button", { name: "Refresh Registry" });
   }
 
   async goto(): Promise<void> {
@@ -91,6 +93,13 @@ export class RegistryPage extends BasePage {
     await expect(
       this.page.getByRole("button", { name: "Manage access" }),
     ).toBeVisible();
+  }
+
+  async verifySearchPreserved(search: string): Promise<void> {
+    await expect(this.searchInput).toHaveValue(search);
+    expect(new URL(this.page.url()).searchParams.get("filter[search]")).toBe(
+      search,
+    );
   }
 
   async submitRegistryKey(key: string): Promise<void> {

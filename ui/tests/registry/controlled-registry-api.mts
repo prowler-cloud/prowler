@@ -26,6 +26,8 @@ const fixtureScanId = "9b82e67d-513b-4c41-b981-9e559f920f40";
 const fixtureConnectionTaskId = "2118a6a8-7795-4d70-822a-7256c837fd30";
 
 interface FixtureState {
+  publishedArtifacts: string[];
+  catalogReadCount: number;
   catalogVersion: string;
   artifactTaskError: string | null;
   resolvedVersions: Map<string, string>;
@@ -53,6 +55,8 @@ interface FixtureState {
 }
 
 const initialState = (): FixtureState => ({
+  publishedArtifacts: [],
+  catalogReadCount: 0,
   catalogVersion: "1.2.3",
   artifactTaskError: null,
   resolvedVersions: new Map(),
@@ -183,6 +187,14 @@ async function handleFixtureControl(
     return;
   }
 
+  if (pathname === "/__fixture__/registry/publish-artifact") {
+    const name = readStringField(await readJson(request), "name");
+    if (name && !state.publishedArtifacts.includes(name))
+      state.publishedArtifacts.push(name);
+    sendJson(response, 200, { ok: true });
+    return;
+  }
+
   if (pathname === "/__fixture__/registry/artifact-task-error") {
     const body = await readJson(request);
     state.artifactTaskError = readStringField(body, "error") || null;
@@ -205,6 +217,7 @@ async function handleFixtureControl(
   if (pathname === "/__fixture__/registry/snapshot") {
     sendJson(response, 200, {
       artifactEvents: state.artifactEvents,
+      catalogReadCount: state.catalogReadCount,
       artifactReadCount: state.artifactReadCount,
       artifactSubmissionCount: state.artifactSubmissionCount,
       artifactTaskReadCount: state.artifactTaskReadCount,
@@ -567,6 +580,7 @@ async function handleApiRequest(
   }
 
   if (method === "GET" && pathname === "/api/v1/registry/available-artifacts") {
+    state.catalogReadCount += 1;
     if (state.discoveryMode !== "ready") {
       sendDiscoveryResponse(response);
       return;
@@ -578,18 +592,36 @@ async function handleApiRequest(
       return;
     }
     sendJson(response, 200, {
-      data: data.map((artifact) =>
-        artifact.id === "fixture-network-audit"
-          ? {
-              ...artifact,
-              attributes: {
-                ...artifact.attributes,
-                latest_version: state.catalogVersion,
-              },
-            }
-          : artifact,
-      ),
-      meta: { pagination: { count: 4, page, pages: 2 } },
+      data: [
+        ...data.map((artifact) =>
+          artifact.id === "fixture-network-audit"
+            ? {
+                ...artifact,
+                attributes: {
+                  ...artifact.attributes,
+                  latest_version: state.catalogVersion,
+                },
+              }
+            : artifact,
+        ),
+        ...(page === 1
+          ? state.publishedArtifacts.map((name) =>
+              catalogArtifact(name.toLowerCase().replaceAll(" ", "-"), {
+                name,
+                latest_version: "1.0.0",
+                has_checks: true,
+                providers: ["aws"],
+              }),
+            )
+          : []),
+      ],
+      meta: {
+        pagination: {
+          count: 4 + state.publishedArtifacts.length,
+          page,
+          pages: 2,
+        },
+      },
     });
     return;
   }

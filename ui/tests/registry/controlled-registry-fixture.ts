@@ -3,6 +3,13 @@ const fixtureBaseUrl = "http://127.0.0.1:4300";
 export const FIXTURE_REGISTRY_KEY = "fixture-registry-key-not-a-secret";
 
 export const controlledRegistryFixture = {
+  async publishArtifact(name: string) {
+    await request("/__fixture__/registry/publish-artifact", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name }),
+    });
+  },
   async publishVersion(version: string) {
     await request("/__fixture__/registry/catalog-version", {
       method: "POST",
@@ -45,6 +52,7 @@ export const controlledRegistryFixture = {
 };
 
 interface FixtureSnapshot {
+  catalogReadCount: number;
   artifactTaskVersionSpec?: string;
   installedVersion?: string;
   providerCreated: boolean;
