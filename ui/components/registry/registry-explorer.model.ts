@@ -1,3 +1,4 @@
+import { isRegistryArtifactInstallable } from "@/lib/registry/artifacts";
 import {
   REGISTRY_CATALOG,
   type RegistryCatalogArtifact,
@@ -36,11 +37,11 @@ export type RegistryMarketplaceSort =
 
 export interface RegistryMarketplaceArtifact extends RegistryCatalogArtifact {
   isAdded: boolean;
+  resolvedVersion?: string;
+  updateAvailable: boolean;
 }
 
-export interface RegistryMarketplaceMyArtifact {
-  normalizedName: string;
-  versionSpec: string;
+export interface RegistryMarketplaceMyArtifact extends RegistryTenantArtifact {
   catalogArtifact?: RegistryMarketplaceArtifact;
 }
 
@@ -69,17 +70,30 @@ export function buildRegistryMarketplaceModel(
     return {
       isComplete: false,
     };
-  const installedNames = new Set(
-    myArtifacts.map(({ normalizedName }) => normalizedName),
+  const installedArtifacts = new Map(
+    myArtifacts.map((artifact) => [artifact.normalizedName, artifact]),
   );
   const merged = new Map(
-    catalog.artifacts.map((artifact) => [
-      artifact.normalizedName,
-      {
-        ...artifact,
-        isAdded: installedNames.has(artifact.normalizedName),
-      },
-    ]),
+    catalog.artifacts.map((artifact) => {
+      const installed = installedArtifacts.get(artifact.normalizedName);
+      const resolvedVersion = installed?.resolvedVersion?.trim() || undefined;
+      const latestVersion = artifact.latestVersion?.trim() || undefined;
+      return [
+        artifact.normalizedName,
+        {
+          ...artifact,
+          latestVersion,
+          resolvedVersion,
+          isAdded: Boolean(installed),
+          updateAvailable: Boolean(
+            resolvedVersion &&
+              latestVersion &&
+              resolvedVersion !== latestVersion &&
+              isRegistryArtifactInstallable(artifact),
+          ),
+        },
+      ];
+    }),
   );
   const artifacts = Array.from(merged.values())
     .filter((artifact) => matches(artifact, filters))
@@ -96,9 +110,10 @@ export function buildRegistryMarketplaceModel(
       new Set(catalog.artifacts.flatMap((artifact) => artifact.providers)),
     ).sort(compare),
     myArtifacts: myArtifacts
-      .map(({ normalizedName, versionSpec }) => ({
+      .map(({ normalizedName, versionSpec, resolvedVersion }) => ({
         normalizedName,
         versionSpec,
+        resolvedVersion: resolvedVersion?.trim() || undefined,
         catalogArtifact: merged.get(normalizedName),
       }))
       .sort((left, right) =>

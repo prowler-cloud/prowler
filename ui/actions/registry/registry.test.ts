@@ -19,6 +19,7 @@ vi.mock("@/lib/registry/access.server", () => ({
 
 import {
   addRegistryArtifact,
+  confirmRegistryArtifactAddition,
   disconnectRegistryCredential,
   getRegistryBootstrap,
   getInstalledRegistryProviderOptions,
@@ -815,6 +816,55 @@ describe("Registry artifact mutations", () => {
       "https://api.test/api/v1/registry/artifacts/guard%2Fwith%20space",
       expect.objectContaining({ cache: "no-store", method: "DELETE" }),
     );
+  });
+
+  it.each(["1.0.0", null, undefined])(
+    "does not confirm an update when the installed version is %j",
+    async (resolvedVersion) => {
+      // Given
+      fetchMock.mockResolvedValueOnce(
+        jsonResponse({
+          data: [
+            {
+              type: "registry-artifacts",
+              id: "template",
+              attributes: {
+                version_spec: "latest",
+                resolved_version: resolvedVersion,
+              },
+            },
+          ],
+        }),
+      );
+      // When
+      const result = await confirmRegistryArtifactAddition("template", "1.1.0");
+      // Then
+      expect(result).toEqual({ status: "refresh_failed" });
+    },
+  );
+
+  it("confirms an update only after reading its resolved target version", async () => {
+    // Given
+    fetchMock.mockResolvedValueOnce(
+      jsonResponse({
+        data: [
+          {
+            type: "registry-artifacts",
+            id: "template",
+            attributes: { version_spec: "latest", resolved_version: "1.1.0" },
+          },
+        ],
+      }),
+    );
+    // When / Then
+    expect(
+      await confirmRegistryArtifactAddition("template", "1.1.0"),
+    ).toMatchObject({
+      status: "confirmed",
+      tenantArtifacts: [
+        { normalizedName: "template", resolvedVersion: "1.1.0" },
+      ],
+    });
   });
 
   it.each([

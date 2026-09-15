@@ -72,3 +72,12 @@ After the scan, removing the artifact preserves the account in Providers and rem
 **Tags:** @e2e, @registry
 
 **Expected Result:** A pending installation survives a hard reload. After the controlled task is released, an authoritative membership read updates My artifacts and emits one success notification. The browser submits the installation only once.
+
+## Test Case: `REGISTRY-E2E-009` - Version Updates and Recovery
+
+**Priority:** `critical`
+**Tags:** @e2e, @registry
+
+**Flow:** Install 1.2.3, publish 1.3.0 in the controlled catalog, reject the first update, retry and reload while pending, then offer and install 1.2.3 from My artifacts.
+
+**Expected Result:** Cards show installed and available versions. Rejection preserves 1.2.3 and allows retry. The update submits the exact target, blocks duplicate actions, survives reload and emits one update notification after version confirmation. A lower catalog version also offers Update.

@@ -47,6 +47,24 @@ export interface RegistryAddArtifactInput {
   versionSpec?: string;
 }
 
+export const REGISTRY_INSTALL_OPERATION = {
+  ADD: "add",
+  UPDATE: "update",
+} as const;
+
+export type RegistryInstallOperation =
+  (typeof REGISTRY_INSTALL_OPERATION)[keyof typeof REGISTRY_INSTALL_OPERATION];
+
+export type RegistryArtifactExecutionInput =
+  | (RegistryAddArtifactInput & {
+      operation?: typeof REGISTRY_INSTALL_OPERATION.ADD;
+    })
+  | {
+      normalizedName: string;
+      versionSpec: string;
+      operation: typeof REGISTRY_INSTALL_OPERATION.UPDATE;
+    };
+
 export const REGISTRY_ARTIFACT_ACTION = {
   SUBMITTED: "submitted",
 } as const;
@@ -111,6 +129,7 @@ export interface RegistryCatalogArtifact {
 export interface RegistryTenantArtifact {
   normalizedName: string;
   versionSpec: string;
+  resolvedVersion?: string;
   insertedAt?: string;
   updatedAt?: string;
 }

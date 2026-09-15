@@ -165,6 +165,8 @@ interface RegistryArtifactMetadataProps {
   complianceCount?: number;
   checkCount?: number;
   version?: string;
+  isAdded?: boolean;
+  availableVersion?: string;
   downloads?: number;
 }
 
@@ -172,6 +174,8 @@ function RegistryArtifactMetadata({
   complianceCount,
   checkCount,
   version,
+  isAdded,
+  availableVersion,
   downloads,
 }: RegistryArtifactMetadataProps) {
   const items = [
@@ -185,7 +189,8 @@ function RegistryArtifactMetadata({
       value: checkCount,
       icon: ListChecks,
     },
-    { label: "Version", value: version, icon: Tag },
+    { label: isAdded ? "Installed" : "Version", value: version, icon: Tag },
+    { label: "Available", value: availableVersion, icon: Tag },
     { label: "Downloads", value: downloads, icon: Download },
   ].filter(({ value }) => value !== undefined && value !== "");
 
@@ -201,6 +206,7 @@ function RegistryArtifactMetadata({
           items.length > 1 && "grid-cols-2",
           items.length === 3 && "@sm:grid-cols-3",
           items.length === 4 && "@sm:grid-cols-4",
+          items.length === 5 && "@sm:grid-cols-3",
         )}
       >
         {items.map(({ label, value, icon: Icon }) => (
@@ -215,7 +221,7 @@ function RegistryArtifactMetadata({
             <dd
               className={cn(
                 "text-text-neutral-primary text-sm leading-5 font-medium wrap-anywhere tabular-nums",
-                label === "Version" && "font-mono",
+                Icon === Tag && "font-mono",
               )}
             >
               {typeof value === "number"
@@ -279,7 +285,18 @@ export function RegistryArtifactCard({
         <RegistryArtifactMetadata
           complianceCount={artifact.complianceCount}
           checkCount={artifact.checkCount}
-          version={artifact.latestVersion}
+          version={
+            artifact.isAdded
+              ? artifact.resolvedVersion || "Unknown"
+              : artifact.latestVersion
+          }
+          isAdded={artifact.isAdded}
+          availableVersion={
+            artifact.isAdded &&
+            artifact.latestVersion !== artifact.resolvedVersion
+              ? artifact.latestVersion
+              : undefined
+          }
           downloads={artifact.isBuiltin ? undefined : artifact.totalDownloads}
         />
         <div className="flex flex-wrap items-center gap-3">
@@ -292,12 +309,27 @@ export function RegistryArtifactCard({
             )}
             {artifact.isAdded ? (
               <>
-                <Badge variant="outline">
-                  <Check aria-hidden />
-                  Added
-                </Badge>
+                {artifact.updateAvailable ? (
+                  <Button
+                    aria-label={`Update ${displayName} to ${artifact.latestVersion}`}
+                    disabled={Boolean(pendingAddName)}
+                    onClick={onAdd}
+                    size="sm"
+                    type="button"
+                  >
+                    {pendingAddName === artifact.normalizedName
+                      ? "Updating…"
+                      : "Update"}
+                  </Button>
+                ) : (
+                  <Badge variant="outline">
+                    <Check aria-hidden />
+                    Added
+                  </Badge>
+                )}
                 <Button
                   aria-label={`Remove ${displayName}`}
+                  disabled={pendingAddName === artifact.normalizedName}
                   onClick={(event) => onRemove(event.currentTarget)}
                   size="sm"
                   type="button"
@@ -327,13 +359,13 @@ export function RegistryArtifactCard({
 interface RegistryTenantArtifactCardProps {
   normalizedName: string;
   onRemove: (trigger: HTMLButtonElement | null) => void;
-  versionSpec: string;
+  resolvedVersion?: string;
 }
 
 export function RegistryTenantArtifactCard({
   normalizedName,
   onRemove,
-  versionSpec,
+  resolvedVersion,
 }: RegistryTenantArtifactCardProps) {
   return (
     <Card className="h-full gap-3" padding="md" variant="inner">
@@ -357,7 +389,10 @@ export function RegistryTenantArtifactCard({
         artifact.
       </p>
       <div className="mt-auto space-y-3">
-        <RegistryArtifactMetadata version={versionSpec} />
+        <RegistryArtifactMetadata
+          isAdded
+          version={resolvedVersion || "Unknown"}
+        />
         <div className="flex justify-end">
           <Button
             aria-label={`Remove ${normalizedName}`}

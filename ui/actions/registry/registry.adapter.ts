@@ -64,6 +64,7 @@ const tenantArtifactsSchema = z.object({
       id: z.string().trim().min(1),
       attributes: z.object({
         version_spec: z.string().trim().min(1),
+        resolved_version: z.string().trim().nullish(),
         inserted_at: z.string().optional(),
         updated_at: z.string().optional(),
       }),
@@ -101,6 +102,7 @@ export function adaptRegistryTenantArtifacts(
   return parsed.data.data.map(({ attributes, id }) => ({
     normalizedName: id,
     versionSpec: attributes.version_spec,
+    resolvedVersion: attributes.resolved_version || undefined,
     insertedAt: attributes.inserted_at,
     updatedAt: attributes.updated_at,
   }));

@@ -259,6 +259,67 @@ test.describe.serial("Registry", () => {
     },
   );
   test(
+    "updates and downgrades the installed version, including failure and reload recovery",
+    { tag: ["@critical", "@e2e", "@registry", "@REGISTRY-E2E-009"] },
+    async ({ page }) => {
+      skipUnlessProject(enabledProject);
+      test.setTimeout(90_000);
+      const registry = new RegistryPage(page);
+      const name = "Fixture network audit";
+      await registry.goto();
+      await registry.connectFixtureRegistry();
+      await registry.addLatest(name);
+      await controlledRegistryFixture.publishVersion("1.3.0");
+      await page.reload();
+      await expect(registry.updateButtonFor(name, "1.3.0")).toBeVisible();
+      await expect(registry.artifactCardFor(name)).toContainText("1.2.3");
+      await controlledRegistryFixture.setArtifactTaskError(
+        "This version has been withdrawn.",
+      );
+      await registry.updateButtonFor(name, "1.3.0").click();
+      await expect(
+        page.getByText("Artifact could not be updated", { exact: true }),
+      ).toBeVisible();
+      await expect(registry.updateButtonFor(name, "1.3.0")).toBeEnabled();
+      expect(
+        (await controlledRegistryFixture.snapshot()).installedVersion,
+      ).toBe("1.2.3");
+      await controlledRegistryFixture.setArtifactTaskError(null);
+      await controlledRegistryFixture.holdArtifactTask(true);
+      await registry.updateButtonFor(name, "1.3.0").click();
+      await expect(registry.removeButtonFor(name)).toBeDisabled();
+      await expect
+        .poll(() => page.evaluate(() => localStorage.getItem("task-watcher")))
+        .toContain('"expectedVersion":"1.3.0"');
+      await page.reload();
+      await registry.verifyMarketplaceReady();
+      await expect(registry.updateButtonFor(name, "1.3.0")).toBeDisabled();
+      await controlledRegistryFixture.holdArtifactTask(false);
+      await expect(
+        page.getByText("Artifact updated", { exact: true }),
+      ).toHaveCount(1);
+      await expect(
+        registry.artifactCardFor(name).getByText("Added", { exact: true }),
+      ).toBeVisible();
+      const upgraded = await controlledRegistryFixture.snapshot();
+      expect(upgraded.installedVersion).toBe("1.3.0");
+      expect(upgraded.artifactTaskVersionSpec).toBe("1.3.0");
+      expect(upgraded.artifactSubmissionCount).toBe(3);
+      await controlledRegistryFixture.publishVersion("1.2.3");
+      await page.reload();
+      await registry.myArtifactsTab.click();
+      await registry.updateButtonFor(name, "1.2.3").click();
+      await expect(
+        registry.artifactCardFor(name).getByText("Added", { exact: true }),
+      ).toBeVisible();
+      expect(
+        (await controlledRegistryFixture.snapshot()).installedVersion,
+      ).toBe("1.2.3");
+      await registry.captureEvidence("registry-version-updated");
+    },
+  );
+
+  test(
     "resumes an installation after reload with one confirmation notification",
     { tag: ["@critical", "@e2e", "@registry", "@REGISTRY-E2E-008"] },
     async ({ page }) => {

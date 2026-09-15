@@ -35,6 +35,72 @@ const task: WatchedTask = {
 describe("resumed Registry installations", () => {
   beforeEach(() => vi.clearAllMocks());
 
+  it("resumes an update with its expected version and announces one update", async () => {
+    // Given
+    confirmRegistryArtifactAddition.mockResolvedValue({
+      status: "confirmed",
+      tenantArtifacts: [],
+    });
+    // When
+    await registryArtifactTaskHandler.onReady({
+      ...task,
+      meta: { ...task.meta, operation: "update", expectedVersion: "2.0.0" },
+    });
+    // Then
+    expect(confirmRegistryArtifactAddition).toHaveBeenCalledWith(
+      "acme-provider",
+      "2.0.0",
+    );
+    expect(toast).toHaveBeenCalledOnce();
+    expect(toast).toHaveBeenCalledWith(
+      expect.objectContaining({ title: "Artifact updated" }),
+    );
+  });
+
+  it.each(["refresh_failed", "error"])(
+    "announces an update failure for %s after reload",
+    async (status) => {
+      // Given
+      confirmRegistryArtifactAddition.mockResolvedValue({ status });
+      // When
+      await registryArtifactTaskHandler.onReady({
+        ...task,
+        meta: {
+          ...task.meta,
+          operation: "update",
+          expectedVersion: "2.0.0",
+        },
+      });
+      // Then
+      expect(toast).toHaveBeenCalledOnce();
+      expect(toast).toHaveBeenCalledWith(
+        expect.objectContaining({
+          title: "Artifact could not be updated",
+          variant: "destructive",
+          ...(status === "refresh_failed"
+            ? {
+                description:
+                  "Update could not be confirmed. Refresh Registry before retrying.",
+              }
+            : {}),
+        }),
+      );
+    },
+  );
+
+  it("never confirms an update with missing persisted target metadata", async () => {
+    // Given / When
+    await registryArtifactTaskHandler.onReady({
+      ...task,
+      meta: { ...task.meta, operation: "update" },
+    });
+    // Then
+    expect(confirmRegistryArtifactAddition).not.toHaveBeenCalled();
+    expect(toast).toHaveBeenCalledWith(
+      expect.objectContaining({ title: "Artifact could not be updated" }),
+    );
+  });
+
   it("waits for membership confirmation before one success notification and selector refresh", async () => {
     let confirm!: (value: unknown) => void;
     confirmRegistryArtifactAddition.mockReturnValue(

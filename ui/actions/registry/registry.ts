@@ -242,6 +242,7 @@ async function confirmRegistryMutation(
   accessToken: string,
   normalizedName: string,
   shouldBePresent: boolean,
+  expectedVersion?: string,
 ): Promise<RegistryMutationResult> {
   const tenantArtifacts = await readRegistryTenantArtifacts(accessToken);
   if (tenantArtifacts.status === REGISTRY_FAILURE.ACCESS_DENIED)
@@ -250,7 +251,11 @@ async function confirmRegistryMutation(
     tenantArtifacts.status !== "ready" ||
     tenantArtifacts.tenantArtifacts.some(
       (artifact) => artifact.normalizedName === normalizedName,
-    ) !== shouldBePresent
+    ) !== shouldBePresent ||
+    (expectedVersion !== undefined &&
+      tenantArtifacts.tenantArtifacts.find(
+        (artifact) => artifact.normalizedName === normalizedName,
+      )?.resolvedVersion !== expectedVersion.trim())
   ) {
     return { status: "refresh_failed" };
   }
@@ -422,10 +427,17 @@ export async function addRegistryArtifact({
 
 export async function confirmRegistryArtifactAddition(
   normalizedName: string,
+  expectedVersion?: string,
 ): Promise<RegistryMutationResult> {
   const access = await getRegistryAccess();
   if (!access) return { status: REGISTRY_FAILURE.ACCESS_DENIED };
-  return confirmRegistryMutation(access, normalizedName, true);
+  if (
+    expectedVersion !== undefined &&
+    (typeof expectedVersion !== "string" || !expectedVersion.trim())
+  ) {
+    return { status: REGISTRY_FAILURE.ERROR };
+  }
+  return confirmRegistryMutation(access, normalizedName, true, expectedVersion);
 }
 
 export async function removeRegistryArtifact(

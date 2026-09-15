@@ -12,8 +12,9 @@ import {
 import {
   REGISTRY_ARTIFACT_ACTION,
   REGISTRY_FAILURE,
+  REGISTRY_INSTALL_OPERATION,
   REGISTRY_MUTATION,
-  type RegistryAddArtifactInput,
+  type RegistryArtifactExecutionInput,
   type RegistryArtifactTaskResult,
   type RegistryMutationResult,
 } from "@/types/registry";
@@ -25,8 +26,13 @@ const artifactTaskResultSchema = z
   .strict();
 
 async function runRegistryArtifactAddition(
-  input: RegistryAddArtifactInput,
+  input: RegistryArtifactExecutionInput,
 ): Promise<RegistryMutationResult> {
+  const expectedVersion =
+    input.operation === REGISTRY_INSTALL_OPERATION.UPDATE
+      ? input.versionSpec.trim()
+      : undefined;
+  if (expectedVersion === "") return { status: REGISTRY_FAILURE.ERROR };
   let submitted;
   try {
     submitted = await addRegistryArtifact(input);
@@ -42,7 +48,12 @@ async function runRegistryArtifactAddition(
     tracked = await trackAndPollTask<RegistryArtifactTaskResult>({
       taskId: submitted.taskId,
       kind: REGISTRY_ARTIFACT_TASK_KIND,
-      meta: { normalizedName: input.normalizedName },
+      meta: {
+        normalizedName: input.normalizedName,
+        ...(expectedVersion
+          ? { operation: REGISTRY_INSTALL_OPERATION.UPDATE, expectedVersion }
+          : {}),
+      },
       notifyHandler: false,
     });
   } catch {
@@ -52,12 +63,17 @@ async function runRegistryArtifactAddition(
     return { status: REGISTRY_FAILURE.UNAVAILABLE };
   }
 
-  return confirmRegistryArtifactTask(input.normalizedName, tracked.result);
+  return confirmRegistryArtifactTask(
+    input.normalizedName,
+    tracked.result,
+    expectedVersion,
+  );
 }
 
 export async function confirmRegistryArtifactTask(
   normalizedName: string,
   taskResult: unknown,
+  expectedVersion?: string,
 ): Promise<RegistryMutationResult> {
   const result = artifactTaskResultSchema.safeParse(taskResult);
   if (
@@ -75,22 +91,29 @@ export async function confirmRegistryArtifactTask(
   }
 
   try {
-    return await confirmRegistryArtifactAddition(normalizedName);
+    return await (expectedVersion === undefined
+      ? confirmRegistryArtifactAddition(normalizedName)
+      : confirmRegistryArtifactAddition(normalizedName, expectedVersion));
   } catch {
-    return { status: REGISTRY_FAILURE.ERROR };
+    return {
+      status:
+        expectedVersion === undefined
+          ? REGISTRY_FAILURE.ERROR
+          : REGISTRY_MUTATION.REFRESH_FAILED,
+    };
   }
 }
 
 const installations = new Map<string, Promise<RegistryMutationResult>>();
 
 export function executeRegistryArtifactAddition(
-  input: RegistryAddArtifactInput,
+  input: RegistryArtifactExecutionInput,
 ): Promise<RegistryMutationResult> {
   const pending = installations.get(input.normalizedName);
   if (pending) return pending;
   const execution = runRegistryArtifactAddition(input)
     .then((result) => {
-      notifyRegistryArtifactOutcome(result);
+      notifyRegistryArtifactOutcome(result, input.operation);
       return result;
     })
     .finally(() => installations.delete(input.normalizedName));

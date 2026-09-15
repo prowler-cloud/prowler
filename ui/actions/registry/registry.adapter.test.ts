@@ -8,6 +8,7 @@ import {
 
 import {
   adaptRegistryCredentialStatus,
+  adaptRegistryTenantArtifacts,
   classifyRegistryFailure,
   collectCompleteRegistryCatalog,
   parseRegistryArtifactSubmission,
@@ -40,6 +41,51 @@ const jsonError = (status: number, code: string) =>
   );
 
 describe("Registry adapter", () => {
+  it("reads the resolved installed version separately from the requested spec", () => {
+    // Given / When
+    const artifacts = adaptRegistryTenantArtifacts({
+      data: [
+        {
+          type: "registry-artifacts",
+          id: "template",
+          attributes: {
+            version_spec: "latest",
+            resolved_version: " 1.0.0 ",
+          },
+        },
+      ],
+    });
+    // Then
+    expect(artifacts).toEqual([
+      expect.objectContaining({
+        normalizedName: "template",
+        versionSpec: "latest",
+        resolvedVersion: "1.0.0",
+      }),
+    ]);
+  });
+
+  it.each([undefined, null, "", "   "])(
+    "accepts an unknown resolved version %j",
+    (resolvedVersion) => {
+      // Given / When
+      const artifacts = adaptRegistryTenantArtifacts({
+        data: [
+          {
+            type: "registry-artifacts",
+            id: "template",
+            attributes: {
+              version_spec: "latest",
+              resolved_version: resolvedVersion,
+            },
+          },
+        ],
+      });
+      // Then
+      expect(artifacts).toMatchObject([{ resolvedVersion: undefined }]);
+    },
+  );
+
   it("maps only documented non-secret credential status fields", () => {
     // Given
     const malformedPayload = { data: { attributes: { configured: true } } };

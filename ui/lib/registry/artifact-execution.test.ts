@@ -41,6 +41,28 @@ describe("executeRegistryArtifactAddition", () => {
     });
   });
 
+  it("persists an update target and confirms that version after the task completes", async () => {
+    // Given / When
+    await executeRegistryArtifactAddition({
+      ...artifactInput,
+      operation: "update",
+    });
+    // Then
+    expect(trackAndPollTaskMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        meta: {
+          normalizedName: "prowler-aws",
+          operation: "update",
+          expectedVersion: "2.0.0",
+        },
+      }),
+    );
+    expect(confirmRegistryArtifactAdditionMock).toHaveBeenCalledWith(
+      "prowler-aws",
+      "2.0.0",
+    );
+  });
+
   it.each([
     ["This version cannot be installed.", "This version cannot be installed."],
     [null, "The artifact could not be installed."],
@@ -139,5 +161,19 @@ describe("executeRegistryArtifactAddition", () => {
     ]);
     expect(addRegistryArtifactMock).toHaveBeenCalledOnce();
     expect(confirmRegistryArtifactAdditionMock).toHaveBeenCalledOnce();
+  });
+
+  it("reports an unconfirmed update if the confirmation request throws", async () => {
+    // Given
+    confirmRegistryArtifactAdditionMock.mockRejectedValue(
+      new Error("Network failure"),
+    );
+    // When
+    const result = await executeRegistryArtifactAddition({
+      ...artifactInput,
+      operation: "update",
+    });
+    // Then
+    expect(result).toEqual({ status: "refresh_failed" });
   });
 });

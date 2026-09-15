@@ -32,6 +32,7 @@ import {
   REGISTRY_BOOTSTRAP_STATE,
   REGISTRY_CREDENTIAL_ACTION,
   REGISTRY_FAILURE,
+  REGISTRY_INSTALL_OPERATION,
   REGISTRY_MUTATION,
   type RegistryArtifactRemovalResult,
   type RegistryBootstrapState,
@@ -193,6 +194,7 @@ export function RegistryExplorer({
   const manageButtonRef = useRef<HTMLButtonElement>(null);
   const removeTriggerRef = useRef<HTMLButtonElement | null>(null);
   const operationGeneration = useRef(0);
+  const artifactSubmission = useRef(false);
   const awaitingCredential = useRef(false);
 
   useEffect(
@@ -257,22 +259,39 @@ export function RegistryExplorer({
   async function handleAdd(artifact: RegistryMarketplaceArtifact) {
     if (
       !isRegistryArtifactInstallable(artifact) ||
-      artifact.isAdded ||
-      pendingAddName
+      (artifact.isAdded && !artifact.updateAvailable) ||
+      pendingAddName ||
+      pendingOperation ||
+      artifactSubmission.current
     )
       return;
     const { normalizedName } = artifact;
+    artifactSubmission.current = true;
     const generation = operationGeneration.current;
     setOperationMessage(undefined);
     setPendingAddName(normalizedName);
-    const result = await executeRegistryArtifactAddition({ normalizedName });
+    const result = await executeRegistryArtifactAddition(
+      artifact.updateAvailable && artifact.latestVersion
+        ? {
+            normalizedName,
+            versionSpec: artifact.latestVersion,
+            operation: REGISTRY_INSTALL_OPERATION.UPDATE,
+          }
+        : { normalizedName },
+    );
+    artifactSubmission.current = false;
     if (generation !== operationGeneration.current) return;
     if (result.status === REGISTRY_FAILURE.ACCESS_DENIED)
       return router.replace("/profile");
 
     setPendingAddName(undefined);
     if (result.status !== REGISTRY_MUTATION.CONFIRMED) {
-      setOperationMessage(mutationFailureMessage(result));
+      setOperationMessage(
+        artifact.updateAvailable &&
+          result.status === REGISTRY_MUTATION.REFRESH_FAILED
+          ? "Update could not be confirmed. Refresh Registry before retrying."
+          : mutationFailureMessage(result),
+      );
       return;
     }
 
@@ -320,7 +339,11 @@ export function RegistryExplorer({
   }
 
   async function handleRemove(normalizedName: string) {
-    if (pendingOperation === REGISTRY_PENDING_OPERATION.REMOVE) return;
+    if (
+      pendingOperation === REGISTRY_PENDING_OPERATION.REMOVE ||
+      pendingAddName === normalizedName
+    )
+      return;
     const generation = operationGeneration.current;
     setOperationMessage(undefined);
     setRemoveError(undefined);
@@ -599,7 +622,7 @@ export function RegistryExplorer({
                     onRemove={(trigger) =>
                       openRemoveDialog(myArtifact.normalizedName, trigger)
                     }
-                    versionSpec={myArtifact.versionSpec}
+                    resolvedVersion={myArtifact.resolvedVersion}
                   />
                 )}
               </li>

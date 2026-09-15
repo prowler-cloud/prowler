@@ -29,9 +29,66 @@ const artifact: RegistryMarketplaceArtifact = {
   totalDownloads: 0,
   owners: [{ name: "Prowler", type: "organization" }],
   isAdded: false,
+  updateAvailable: false,
 };
 
 describe("Registry card metadata layout", () => {
+  it("keeps Added when the installed version is unknown", async () => {
+    // Given / When
+    const screen = await render(
+      <RegistryArtifactCard
+        artifact={{ ...artifact, isBuiltin: false, isAdded: true }}
+        onAdd={vi.fn()}
+        onRemove={vi.fn()}
+      />,
+    );
+    // Then
+    await expect
+      .element(screen.getByText("Added", { exact: true }))
+      .toBeVisible();
+    await expect
+      .element(screen.getByText("Unknown", { exact: true }))
+      .toBeVisible();
+    await expect
+      .element(screen.getByRole("button", { name: /Update/ }))
+      .not.toBeInTheDocument();
+  });
+  it("offers Update with installed and available versions instead of Added", async () => {
+    // Given
+    const onAdd = vi.fn();
+    const screen = await render(
+      <RegistryArtifactCard
+        artifact={{
+          ...artifact,
+          isBuiltin: false,
+          isAdded: true,
+          resolvedVersion: "1.0.0",
+          updateAvailable: true,
+        }}
+        onAdd={onAdd}
+        onRemove={vi.fn()}
+      />,
+    );
+    // When
+    await screen
+      .getByRole("button", { name: "Update AWS security to 5.15.0" })
+      .click();
+    // Then
+    expect(onAdd).toHaveBeenCalledOnce();
+    await expect
+      .element(screen.getByText("Added", { exact: true }))
+      .not.toBeInTheDocument();
+    await expect
+      .element(screen.getByText("Installed", { exact: true }))
+      .toBeVisible();
+    await expect
+      .element(screen.getByText("1.0.0", { exact: true }))
+      .toBeVisible();
+    await expect
+      .element(screen.getByText("Available", { exact: true }))
+      .toBeVisible();
+  });
+
   afterEach(async () => {
     localStorage.removeItem("theme");
     await page.viewport(1280, 800);
@@ -103,6 +160,9 @@ describe("Registry card metadata layout", () => {
                   name: "Long metadata",
                   normalizedName: "long-metadata",
                   latestVersion: longVersion,
+                  resolvedVersion: `${longVersion}-previous`,
+                  isAdded: true,
+                  updateAvailable: true,
                   checkCount: Number.MAX_SAFE_INTEGER,
                   complianceCount: 123456789,
                   totalDownloads: 9876543210,
@@ -116,7 +176,7 @@ describe("Registry card metadata layout", () => {
             <li>
               <RegistryTenantArtifactCard
                 normalizedName="Catalog unavailable"
-                versionSpec={longVersion}
+                resolvedVersion={longVersion}
                 onRemove={vi.fn()}
               />
             </li>
@@ -166,7 +226,9 @@ describe("Registry card metadata layout", () => {
       expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(width);
 
       // When / Then: wrapping does not obstruct the card action.
-      await screen.getByRole("button", { name: "Add Long metadata" }).click();
+      await screen
+        .getByRole("button", { name: `Update Long metadata to ${longVersion}` })
+        .click();
       expect(onAdd).toHaveBeenCalledOnce();
       await screen.getByRole("main").screenshot();
     },

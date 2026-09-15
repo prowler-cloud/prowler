@@ -26,6 +26,9 @@ const fixtureScanId = "9b82e67d-513b-4c41-b981-9e559f920f40";
 const fixtureConnectionTaskId = "2118a6a8-7795-4d70-822a-7256c837fd30";
 
 interface FixtureState {
+  catalogVersion: string;
+  artifactTaskError: string | null;
+  resolvedVersions: Map<string, string>;
   holdArtifactTask: boolean;
   providerCreated: boolean;
   providerUid: string;
@@ -50,6 +53,9 @@ interface FixtureState {
 }
 
 const initialState = (): FixtureState => ({
+  catalogVersion: "1.2.3",
+  artifactTaskError: null,
+  resolvedVersions: new Map(),
   holdArtifactTask: false,
   providerCreated: false,
   providerUid: "",
@@ -170,6 +176,20 @@ async function handleFixtureControl(
     return;
   }
 
+  if (pathname === "/__fixture__/registry/catalog-version") {
+    const body = await readJson(request);
+    state.catalogVersion = readStringField(body, "version") || "1.2.3";
+    sendJson(response, 200, { ok: true });
+    return;
+  }
+
+  if (pathname === "/__fixture__/registry/artifact-task-error") {
+    const body = await readJson(request);
+    state.artifactTaskError = readStringField(body, "error") || null;
+    sendJson(response, 200, { ok: true });
+    return;
+  }
+
   if (pathname === "/__fixture__/registry/discovery-mode") {
     const body = await readJson(request);
     const mode = readStringField(body, "mode");
@@ -188,6 +208,8 @@ async function handleFixtureControl(
       artifactReadCount: state.artifactReadCount,
       artifactSubmissionCount: state.artifactSubmissionCount,
       artifactTaskReadCount: state.artifactTaskReadCount,
+      artifactTaskVersionSpec: state.artifactTaskVersionSpec,
+      installedVersion: state.resolvedVersions.get("fixture-network-audit"),
       credentialAccepted: state.credentialAccepted,
       credentialReadCount: state.credentialReadCount,
       taskReadCount: state.taskReadCount,
@@ -469,13 +491,24 @@ async function handleApiRequest(
     sendJson(
       response,
       202,
-      { data: { id: artifactTaskId, type: "tasks" } },
-      { "Content-Location": `/api/v1/tasks/${artifactTaskId}` },
+      {
+        data: {
+          id: `${artifactTaskId}-${state.artifactSubmissionCount}`,
+          type: "tasks",
+        },
+      },
+      {
+        "Content-Location": `/api/v1/tasks/${artifactTaskId}-${state.artifactSubmissionCount}`,
+      },
     );
     return;
   }
 
-  if (method === "GET" && pathname === `/api/v1/tasks/${artifactTaskId}`) {
+  if (
+    method === "GET" &&
+    pathname ===
+      `/api/v1/tasks/${artifactTaskId}-${state.artifactSubmissionCount}`
+  ) {
     if (!state.artifactTaskNormalizedName || !state.artifactTaskVersionSpec) {
       sendJson(response, 404, { errors: [{ code: "fixture_task_not_found" }] });
       return;
@@ -485,18 +518,30 @@ async function handleApiRequest(
     state.artifactTaskReadCount += 1;
     const complete =
       state.artifactTaskReadCount >= 2 && !state.holdArtifactTask;
-    if (complete) {
+    if (complete && !state.artifactTaskError) {
       state.tenantArtifacts.set(
         state.artifactTaskNormalizedName,
         state.artifactTaskVersionSpec,
+      );
+      state.resolvedVersions.set(
+        state.artifactTaskNormalizedName,
+        state.artifactTaskVersionSpec === "latest"
+          ? state.catalogVersion
+          : state.artifactTaskVersionSpec,
       );
     }
     sendJson(response, 200, {
       data: {
         attributes: complete
-          ? { state: "completed", result: { installed: true, error: null } }
+          ? {
+              state: "completed",
+              result: {
+                installed: !state.artifactTaskError,
+                error: state.artifactTaskError,
+              },
+            }
           : { state: "executing" },
-        id: artifactTaskId,
+        id: `${artifactTaskId}-${state.artifactSubmissionCount}`,
         type: "tasks",
       },
     });
@@ -511,6 +556,7 @@ async function handleApiRequest(
       pathname.slice("/api/v1/registry/artifacts/".length),
     );
     state.tenantArtifacts.delete(normalizedName);
+    state.resolvedVersions.delete(normalizedName);
     sendJson(response, 204);
     return;
   }
@@ -532,7 +578,17 @@ async function handleApiRequest(
       return;
     }
     sendJson(response, 200, {
-      data,
+      data: data.map((artifact) =>
+        artifact.id === "fixture-network-audit"
+          ? {
+              ...artifact,
+              attributes: {
+                ...artifact.attributes,
+                latest_version: state.catalogVersion,
+              },
+            }
+          : artifact,
+      ),
       meta: { pagination: { count: 4, page, pages: 2 } },
     });
     return;
@@ -619,6 +675,7 @@ function tenantArtifactsDocument() {
         inserted_at: "2026-01-01T00:00:00Z",
         updated_at: "2026-01-01T00:00:00Z",
         version_spec: versionSpec,
+        resolved_version: state.resolvedVersions.get(id),
       },
       id,
       type: "registry-artifacts",

@@ -25,6 +25,85 @@ const artifact = (
 });
 
 describe("Registry marketplace model", () => {
+  it("offers the catalog version for an installed artifact with a different resolved version", () => {
+    // Given
+    const catalog = {
+      status: "complete" as const,
+      artifacts: [
+        artifact("template", { latestVersion: " 1.1.0 ", hasProvider: true }),
+      ],
+    };
+    // When
+    const model = buildRegistryMarketplaceModel(
+      catalog,
+      [
+        {
+          normalizedName: "template",
+          versionSpec: "latest",
+          resolvedVersion: " 1.0.0 ",
+        },
+      ],
+      {},
+      "name",
+    );
+    // Then
+    expect(model).toMatchObject({
+      artifacts: [
+        {
+          isAdded: true,
+          resolvedVersion: "1.0.0",
+          latestVersion: "1.1.0",
+          updateAvailable: true,
+        },
+      ],
+      myArtifacts: [{ catalogArtifact: { updateAvailable: true } }],
+    });
+  });
+
+  it.each([
+    { resolvedVersion: "1.0.0", latestVersion: "1.0.0", expected: false },
+    { resolvedVersion: "2.0.0", latestVersion: "1.0.0", expected: true },
+    { resolvedVersion: undefined, latestVersion: "1.0.0", expected: false },
+    { resolvedVersion: " ", latestVersion: "1.0.0", expected: false },
+    { resolvedVersion: "1.0.0", latestVersion: undefined, expected: false },
+    {
+      resolvedVersion: "1.0.0",
+      latestVersion: "1.1.0",
+      isBuiltin: true,
+      expected: false,
+    },
+    {
+      resolvedVersion: "1.0.0",
+      latestVersion: "1.1.0",
+      hasProvider: false,
+      expected: false,
+    },
+  ])(
+    "compares resolved $resolvedVersion against catalog $latestVersion ($expected)",
+    (example) => {
+      // Given / When
+      const model = buildRegistryMarketplaceModel(
+        {
+          status: "complete",
+          artifacts: [artifact("template", { hasProvider: true, ...example })],
+        },
+        [
+          {
+            normalizedName: "template",
+            versionSpec: "latest",
+            resolvedVersion: example.resolvedVersion,
+          },
+        ],
+        {},
+        "name",
+      );
+      // Then
+      expect(model).toMatchObject({
+        artifacts: [{ updateAvailable: example.expected }],
+      });
+    },
+  );
+
   it("keeps the full catalog visible with tenant membership merged in", () => {
     // Given
 

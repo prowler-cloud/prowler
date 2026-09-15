@@ -50,6 +50,12 @@ export class RegistryPage extends BasePage {
     return this.page.getByRole("button", { name: `Add ${name}` });
   }
 
+  updateButtonFor(name: string, version: string): Locator {
+    return this.page.getByRole("button", {
+      name: `Update ${name} to ${version}`,
+    });
+  }
+
   removeButtonFor(name: string): Locator {
     return this.page.getByRole("button", { name: `Remove ${name}` });
   }

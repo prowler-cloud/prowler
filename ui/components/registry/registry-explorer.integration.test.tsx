@@ -182,7 +182,11 @@ const readyState: RegistryBootstrapState = {
   },
   tenantArtifacts: [
     { normalizedName: "aws-guard", versionSpec: "latest" },
-    { normalizedName: "saved-artifact", versionSpec: "1.0.0" },
+    {
+      normalizedName: "saved-artifact",
+      versionSpec: "latest",
+      resolvedVersion: "1.0.0",
+    },
   ],
 };
 
@@ -206,6 +210,116 @@ function cardFor(name: string) {
 }
 
 describe("RegistryExplorer", () => {
+  it.each([
+    [
+      { status: "refused", message: "This version has been withdrawn." },
+      "This version has been withdrawn.",
+    ],
+    [
+      { status: "unavailable" },
+      "The Registry operation could not be completed. Try again.",
+    ],
+    [
+      { status: "refresh_failed" },
+      "Update could not be confirmed. Refresh Registry before retrying.",
+    ],
+  ])(
+    "keeps Update available after %j and allows retry",
+    async (result, message) => {
+      // Given
+      const installed = {
+        normalizedName: "aws-guard",
+        versionSpec: "latest",
+        resolvedVersion: "1.0.0",
+      };
+      executeRegistryArtifactAdditionMock.mockResolvedValue(result);
+      const screen = await render(
+        <RegistryExplorer
+          initialState={{ ...readyState, tenantArtifacts: [installed] }}
+        />,
+      );
+      // When
+      await screen
+        .getByRole("button", { name: "Update AWS guard to 1.2.3" })
+        .click();
+      // Then
+      await expect
+        .element(screen.getByText(message as string, { exact: true }))
+        .toBeVisible();
+      await expect
+        .element(
+          screen.getByRole("button", { name: "Update AWS guard to 1.2.3" }),
+        )
+        .toBeEnabled();
+      expect(cardFor("AWS guard").textContent).toContain("1.0.0");
+      expect(document.body.textContent).not.toContain("Artifact updated");
+      // When / Then: retry can complete normally.
+      executeRegistryArtifactAdditionMock.mockResolvedValue({
+        status: "confirmed",
+        tenantArtifacts: [{ ...installed, resolvedVersion: "1.2.3" }],
+      });
+      await screen
+        .getByRole("button", { name: "Update AWS guard to 1.2.3" })
+        .click();
+      await expect
+        .element(screen.getByText("Added", { exact: true }))
+        .toBeVisible();
+      await expect
+        .element(screen.getByText(message as string, { exact: true }))
+        .not.toBeInTheDocument();
+    },
+  );
+
+  it("updates an installed artifact to the displayed version and returns to Added", async () => {
+    // Given
+    const installed = {
+      normalizedName: "aws-guard",
+      versionSpec: "latest",
+      resolvedVersion: "1.0.0",
+    };
+    let complete!: (value: unknown) => void;
+    executeRegistryArtifactAdditionMock.mockReturnValue(
+      new Promise((resolve) => {
+        complete = resolve;
+      }),
+    );
+    const screen = await render(
+      <RegistryExplorer
+        initialState={{ ...readyState, tenantArtifacts: [installed] }}
+      />,
+    );
+    // When
+    await screen
+      .getByRole("button", { name: "Update AWS guard to 1.2.3" })
+      .click();
+    // Then
+    expect(executeRegistryArtifactAdditionMock).toHaveBeenCalledWith({
+      normalizedName: "aws-guard",
+      versionSpec: "1.2.3",
+      operation: "update",
+    });
+    await expect
+      .element(
+        screen.getByRole("button", { name: "Update AWS guard to 1.2.3" }),
+      )
+      .toBeDisabled();
+    await expect
+      .element(screen.getByRole("button", { name: "Remove AWS guard" }))
+      .toBeDisabled();
+    expect(document.body.textContent).toContain("Updating…");
+    complete({
+      status: "confirmed",
+      tenantArtifacts: [{ ...installed, resolvedVersion: "1.2.3" }],
+    });
+    await expect
+      .element(screen.getByText("Added", { exact: true }))
+      .toBeVisible();
+    await expect
+      .element(screen.getByRole("button", { name: "Remove AWS guard" }))
+      .toBeEnabled();
+    expect(cardFor("AWS guard").textContent).not.toContain("1.0.0");
+  });
+
   it("offers key replacement when the configured Registry rejects access", async () => {
     const screen = await render(
       <RegistryExplorer initialState={{ status: "reconnect" }} />,
@@ -1064,6 +1178,7 @@ describe("RegistryExplorer", () => {
       const artifact = {
         ...readyState.catalog.artifacts[0],
         isAdded: false,
+        updateAvailable: false,
         checkCount: 645,
         complianceCount: 45,
       };
@@ -1169,6 +1284,7 @@ describe("RegistryExplorer", () => {
       const artifact = {
         ...readyState.catalog.artifacts[0],
         isAdded: false,
+        updateAvailable: false,
         owners: [
           {
             name: "Registry team",
