@@ -100,6 +100,7 @@ ENV HOSTNAME="0.0.0.0"
 #   - required: UI_API_BASE_URL, AUTH_URL, AUTH_SECRET (missing ⇒ fail fast at boot)
 #   - optional: UI_API_DOCS_URL
 #   - optional: UI_CLOUD_ENABLED ("true" only in Prowler Cloud deployments)
+#   - optional: UI_SELF_REGISTRATION_ENABLED (Prowler Cloud only; "false" hides sign-up, invited users can still register)
 #   - gated integrations (load only when *_ENABLED="true"; the value is then
 #     required or boot fails). Their legacy names (NEXT_PUBLIC_SENTRY_*,
 #     NEXT_PUBLIC_GOOGLE_TAG_MANAGER_ID, POSTHOG_KEY/HOST) still work:
