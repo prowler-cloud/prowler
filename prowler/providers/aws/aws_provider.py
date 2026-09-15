@@ -14,6 +14,7 @@ from botocore.exceptions import (
     EndpointConnectionError,
     NoCredentialsError,
     ProfileNotFound,
+    ReadTimeoutError,
 )
 from botocore.session import Session as BotocoreSession
 from colorama import Fore, Style
@@ -1379,7 +1380,11 @@ class AwsProvider(Provider):
                 sts_client = AwsProvider.create_sts_session(session, candidate_region)
                 return candidate_region, operation(sts_client)
             # The credentials are not at fault, so the next region is worth trying
-            except (EndpointConnectionError, ConnectTimeoutError) as unreachable:
+            except (
+                EndpointConnectionError,
+                ConnectTimeoutError,
+                ReadTimeoutError,
+            ) as unreachable:
                 logger.warning(
                     f"{unreachable.__class__.__name__}[{unreachable.__traceback__.tb_lineno}]: {unreachable}"
                 )

@@ -1674,6 +1674,42 @@ aws:
         ]
         assert caller_identity.region == AWS_REGION_GOV_CLOUD_US_WEST_1
 
+    def test_validate_credentials_falls_back_when_a_region_does_not_answer(
+        self, monkeypatch
+    ):
+        monkeypatch.setenv("PROWLER_AWS_PARTITION", AWS_GOV_CLOUD_PARTITION)
+        current_session = session.Session(region_name=AWS_REGION_US_EAST_1)
+        attempted_regions = []
+
+        # The connection is accepted but nothing comes back before the read timeout
+        def create_sts_session(session, aws_region):
+            attempted_regions.append(aws_region)
+            if aws_region == AWS_REGION_GOV_CLOUD_US_EAST_1:
+                raise botocore.exceptions.ReadTimeoutError(
+                    endpoint_url=f"https://sts.{aws_region}.amazonaws.com"
+                )
+            sts_client = mock.MagicMock()
+            sts_client.get_caller_identity.return_value = {
+                "UserId": "test-user-id",
+                "Account": AWS_ACCOUNT_NUMBER,
+                "Arn": AWS_GOV_CLOUD_ACCOUNT_ARN,
+            }
+            return sts_client
+
+        with patch(
+            "prowler.providers.aws.aws_provider.AwsProvider.create_sts_session",
+            new=create_sts_session,
+        ):
+            caller_identity = AwsProvider.validate_credentials(
+                session=current_session, aws_region=AWS_REGION_GOV_CLOUD_US_EAST_1
+            )
+
+        assert attempted_regions == [
+            AWS_REGION_GOV_CLOUD_US_EAST_1,
+            AWS_REGION_GOV_CLOUD_US_WEST_1,
+        ]
+        assert caller_identity.region == AWS_REGION_GOV_CLOUD_US_WEST_1
+
     def test_validate_credentials_raises_when_no_partition_region_answers(
         self, monkeypatch
     ):
