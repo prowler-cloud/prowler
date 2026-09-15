@@ -41,6 +41,46 @@ test.describe.serial("Registry", () => {
   });
 
   test(
+    "detects keys embedded in request URLs and browser storage JSON",
+    { tag: ["@critical", "@e2e", "@registry", "@REGISTRY-E2E-011"] },
+    async ({ page }) => {
+      skipUnlessProject(enabledProject);
+      const registryPage = new RegistryPage(page);
+      const key = "synthetic-registry-disclosure-check";
+      await registryPage.goto();
+      await registryPage.verifyOnboarding();
+
+      await expect(
+        registryPage.verifyKeyIsNotDisclosed(key, [
+          `https://registry.test/request?key=${key}&source=test`,
+        ]),
+      ).rejects.toThrow();
+
+      for (const storage of ["localStorage", "sessionStorage"] as const) {
+        await page.evaluate(
+          ({ storage, key }) => {
+            window[storage].setItem(
+              "disclosure-regression",
+              JSON.stringify({ nested: { key } }),
+            );
+          },
+          { storage, key },
+        );
+        try {
+          await expect(
+            registryPage.verifyKeyIsNotDisclosed(key, []),
+          ).rejects.toThrow();
+        } finally {
+          await page.evaluate((storage) => {
+            window[storage].removeItem("disclosure-regression");
+          }, storage);
+        }
+      }
+      await registryPage.verifyKeyIsNotDisclosed(key, []);
+    },
+  );
+
+  test(
     "fails closed in Local and Registry-flag-off process profiles",
     { tag: ["@critical", "@e2e", "@registry", "@REGISTRY-E2E-001"] },
     async ({ page }) => {
@@ -102,6 +142,7 @@ test.describe.serial("Registry", () => {
 
       await registryPage.goto();
       await registryPage.verifyOnboarding();
+      await controlledRegistryFixture.holdCredentialTask(true);
       await registryPage.submitRegistryKey(FIXTURE_REGISTRY_KEY);
       // The form stays visible while the task watcher tracks validation: the
       // submit control flips to a disabled Connecting… state.
@@ -113,6 +154,7 @@ test.describe.serial("Registry", () => {
         FIXTURE_REGISTRY_KEY,
         requestUrls,
       );
+      await controlledRegistryFixture.holdCredentialTask(false);
       await registryPage.verifyMarketplaceReady();
       await expect(
         page.getByText("Registry connected", { exact: true }),
@@ -280,6 +322,12 @@ test.describe.serial("Registry", () => {
       await expect(
         page.getByText("Artifact could not be updated", { exact: true }),
       ).toBeVisible();
+      await expect(page.locator("body")).toContainText(
+        "The artifact could not be installed.",
+      );
+      await expect(page.locator("body")).not.toContainText(
+        "This version has been withdrawn.",
+      );
       await expect(registry.updateButtonFor(name, "1.3.0")).toBeEnabled();
       expect(
         (await controlledRegistryFixture.snapshot()).installedVersion,

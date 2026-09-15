@@ -39,7 +39,9 @@
 **Priority:** `critical`
 **Tags:** @e2e, @registry
 
-**Expected Result:** Synthetic key submission returns a `202` task that the client-side task watcher polls to settlement while the dialog form shows a disabled Connecting… control; the flow settles through an authoritative status read into the connected marketplace with a "Registry connected" toast, and does not disclose the key in the DOM, URL, or browser storage.
+**Flow:** Hold the credential validation task, submit the synthetic key, verify the disabled Connecting… control and key field, check for disclosure, then release the task.
+
+**Expected Result:** The `202` task stays pending until explicitly released. The task watcher then settles through an authoritative status read into the connected marketplace with a "Registry connected" toast. The key does not appear in DOM text, the page URL, request URLs, or browser storage values, including inside JSON or longer strings.
 
 ## Test Case: `REGISTRY-E2E-005` - Complete Catalog, Recovery, and Lifecycle
 
@@ -80,7 +82,16 @@ After the scan, removing the artifact preserves the account in Providers and rem
 
 **Flow:** Install 1.2.3, publish 1.3.0 in the controlled catalog, reject the first update, retry and reload while pending, then offer and install 1.2.3 from My artifacts.
 
-**Expected Result:** Cards show installed and available versions. Rejection preserves 1.2.3 and allows retry. The update submits the exact target, blocks duplicate actions, survives reload and emits one update notification after version confirmation. A lower catalog version also offers Update.
+**Expected Result:** Cards show installed and available versions. Rejection preserves 1.2.3 and allows retry. Its notification shows a generic installation failure without exposing the backend diagnostic. The update submits the exact target, blocks duplicate actions, survives reload and emits one update notification after version confirmation. A lower catalog version also offers Update.
+
+## Test Case: `REGISTRY-E2E-011` - Disclosure Assertion Regression
+
+**Priority:** `critical`
+**Tags:** @e2e, @registry
+
+**Flow:** Embed a synthetic key in a request URL and in nested JSON values in localStorage and sessionStorage, checking each surface independently. Remove each injected storage entry afterward.
+
+**Expected Result:** The disclosure helper rejects every embedded key and passes once all injected values are removed.
 
 ## Test Case: `REGISTRY-E2E-010` - Catalog Refresh
 

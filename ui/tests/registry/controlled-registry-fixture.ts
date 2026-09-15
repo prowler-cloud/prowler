@@ -31,6 +31,13 @@ export const controlledRegistryFixture = {
       body: JSON.stringify({ hold: String(hold) }),
     });
   },
+  async holdCredentialTask(hold: boolean) {
+    await request("/__fixture__/registry/credential-task-hold", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ hold: String(hold) }),
+    });
+  },
   async reset() {
     await request("/__fixture__/registry/reset", { method: "POST" });
   },

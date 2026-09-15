@@ -216,15 +216,23 @@ export class RegistryPage extends BasePage {
     key: string,
     requestUrls: string[],
   ): Promise<void> {
-    await expect(this.page).not.toHaveURL(new RegExp(key, "u"));
+    const literalKey = new RegExp(
+      key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
+      "u",
+    );
+    await expect(this.page).not.toHaveURL(literalKey);
     await expect(this.page.locator("body")).not.toContainText(key);
-    expect(requestUrls).not.toContain(key);
+    for (const requestUrl of requestUrls) {
+      expect(requestUrl).not.toContain(key);
+    }
 
     const storedValues = await this.page.evaluate(() => [
       ...Object.values(localStorage),
       ...Object.values(sessionStorage),
     ]);
-    expect(storedValues).not.toContain(key);
+    for (const storedValue of storedValues) {
+      expect(storedValue).not.toContain(key);
+    }
   }
   async connectInstalledProviderAndScan(): Promise<void> {
     await this.page.getByRole("link", { name: "Go to Providers" }).click();

@@ -32,6 +32,7 @@ interface FixtureState {
   artifactTaskError: string | null;
   resolvedVersions: Map<string, string>;
   holdArtifactTask: boolean;
+  holdCredentialTask: boolean;
   providerCreated: boolean;
   providerUid: string;
   providerAlias: string;
@@ -61,6 +62,7 @@ const initialState = (): FixtureState => ({
   artifactTaskError: null,
   resolvedVersions: new Map(),
   holdArtifactTask: false,
+  holdCredentialTask: false,
   providerCreated: false,
   providerUid: "",
   providerAlias: "",
@@ -176,6 +178,13 @@ async function handleFixtureControl(
   if (pathname === "/__fixture__/registry/artifact-task-hold") {
     const body = await readJson(request);
     state.holdArtifactTask = readStringField(body, "hold") === "true";
+    sendJson(response, 200, { ok: true });
+    return;
+  }
+
+  if (pathname === "/__fixture__/registry/credential-task-hold") {
+    const body = await readJson(request);
+    state.holdCredentialTask = readStringField(body, "hold") === "true";
     sendJson(response, 200, { ok: true });
     return;
   }
@@ -452,7 +461,7 @@ async function handleApiRequest(
 
   if (method === "GET" && pathname === `/api/v1/tasks/${taskId}`) {
     state.taskReadCount += 1;
-    const complete = state.taskReadCount >= 2;
+    const complete = state.taskReadCount >= 2 && !state.holdCredentialTask;
     if (complete) state.credentialState = "active";
     sendJson(response, 200, {
       data: {
