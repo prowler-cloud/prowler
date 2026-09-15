@@ -1,6 +1,6 @@
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic.v1 import BaseModel
 
 
 class CCC_AWSModel(BaseModel):
@@ -30,6 +30,8 @@ class CCC_AWSModel(BaseModel):
     ResourceName: str
     CheckId: str
     Muted: bool
+    Framework: str
+    Name: str
 
 
 class CCC_AzureModel(BaseModel):
@@ -59,6 +61,8 @@ class CCC_AzureModel(BaseModel):
     ResourceName: str
     CheckId: str
     Muted: bool
+    Framework: str
+    Name: str
 
 
 class CCC_GCPModel(BaseModel):
@@ -88,3 +92,5 @@ class CCC_GCPModel(BaseModel):
     ResourceName: str
     CheckId: str
     Muted: bool
+    Framework: str
+    Name: str
