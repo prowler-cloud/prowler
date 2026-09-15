@@ -10,9 +10,11 @@ import { getScansByState } from "@/actions/scans/scans";
 import MainLayout from "@/components/layout/main-layout/main-layout";
 import {
   OnboardingCheckpointWatcher,
-  OnboardingProfileGate,
   OnboardingSequenceBanner,
 } from "@/components/onboarding";
+// Imported directly: it pulls the server actions, which the shared barrel
+// stays free of so tests can import the barrel without mocking them.
+import { OnboardingProfileGate } from "@/components/onboarding/onboarding-profile-gate";
 import { RuntimePublicConfig } from "@/components/runtime-config/runtime-public-config";
 import { NavigationProgress } from "@/components/shadcn/navigation-progress";
 import { Toaster } from "@/components/shadcn/toast";
