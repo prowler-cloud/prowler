@@ -97,6 +97,11 @@ provider/stackit:
       - any-glob-to-any-file: "prowler/providers/stackit/**"
       - any-glob-to-any-file: "tests/providers/stackit/**"
 
+provider/fly:
+  - changed-files:
+      - any-glob-to-any-file: "prowler/providers/fly/**"
+      - any-glob-to-any-file: "tests/providers/fly/**"
+
 github_actions:
   - changed-files:
       - any-glob-to-any-file: ".github/workflows/*"
@@ -136,6 +141,8 @@ mutelist:
       - any-glob-to-any-file: "tests/providers/vercel/lib/mutelist/**"
       - any-glob-to-any-file: "prowler/providers/okta/lib/mutelist/**"
       - any-glob-to-any-file: "tests/providers/okta/lib/mutelist/**"
+      - any-glob-to-any-file: "prowler/providers/fly/lib/mutelist/**"
+      - any-glob-to-any-file: "tests/providers/fly/lib/mutelist/**"
 
 integration/s3:
   - changed-files:

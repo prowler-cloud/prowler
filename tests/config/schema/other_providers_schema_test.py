@@ -199,6 +199,46 @@ class Test_Okta_Schema:
         assert _validate("okta", {"okta_requests_per_second": "fast"}) == {}
 
 
+class Test_Fly_Schema:
+    def test_valid_public_ports_round_trip(self):
+        assert _validate("fly", {"allowed_public_ports": [80, 443, 8443]}) == {
+            "allowed_public_ports": [80, 443, 8443]
+        }
+
+    def test_port_zero_is_dropped(self):
+        # Shared port-range validator: port 0 is reserved.
+        assert _validate("fly", {"allowed_public_ports": [80, 0]}) == {}
+
+    def test_out_of_range_port_is_dropped(self):
+        assert _validate("fly", {"allowed_public_ports": [70000]}) == {}
+
+    def test_zero_retries_allowed(self):
+        assert _validate("fly", {"max_retries": 0}) == {"max_retries": 0}
+
+    def test_retries_over_max_dropped(self):
+        assert _validate("fly", {"max_retries": 11}) == {}
+
+    def test_negative_retries_dropped(self):
+        assert _validate("fly", {"max_retries": -1}) == {}
+
+    def test_full_default_config_round_trip(self):
+        raw = {
+            "max_retries": 3,
+            "public_apps": [],
+            "allowed_public_ports": [80, 443],
+            "secret_env_name_patterns": [
+                "PASSWORD",
+                "SECRET",
+                "TOKEN",
+                "API_KEY",
+                "PRIVATE_KEY",
+                "CREDENTIAL",
+                "PASSPHRASE",
+            ],
+        }
+        assert _validate("fly", raw) == raw
+
+
 class Test_Vercel_Schema:
     def test_owner_percentage_in_range(self):
         assert _validate("vercel", {"max_owner_percentage": 20}) == {

@@ -54,6 +54,7 @@ class ProwlerArgumentParser:
             "stackit",
             "linode",
             "huaweicloud",
+            "fly",
         }
         all_providers = set(Provider.get_available_providers())
         new_providers = sorted(all_providers - known_providers)
@@ -76,10 +77,10 @@ class ProwlerArgumentParser:
         self.parser = argparse.ArgumentParser(
             prog="prowler",
             formatter_class=RawTextHelpFormatter,
-            usage=f"prowler [-h] [--version] {{aws,azure,gcp,kubernetes,m365,github,googleworkspace,okta,nhn,mongodbatlas,oraclecloud,alibabacloud,cloudflare,openstack,scaleway,stackit,vercel,linode,huaweicloud,e2enetworks,dashboard,iac,image,llm{extra_providers_csv}}} ...",
+            usage=f"prowler [-h] [--version] {{aws,azure,gcp,kubernetes,m365,github,googleworkspace,okta,nhn,mongodbatlas,oraclecloud,alibabacloud,cloudflare,openstack,scaleway,stackit,vercel,linode,huaweicloud,e2enetworks,fly,dashboard,iac,image,llm{extra_providers_csv}}} ...",
             epilog=f"""
 Available Cloud Providers:
-  {{aws,azure,gcp,kubernetes,m365,github,googleworkspace,okta,iac,llm,image,nhn,mongodbatlas,oraclecloud,alibabacloud,cloudflare,openstack,scaleway,stackit,vercel,linode,huaweicloud,e2enetworks{extra_providers_csv}}}
+  {{aws,azure,gcp,kubernetes,m365,github,googleworkspace,okta,iac,llm,image,nhn,mongodbatlas,oraclecloud,alibabacloud,cloudflare,openstack,scaleway,stackit,vercel,linode,huaweicloud,e2enetworks,fly{extra_providers_csv}}}
     aws                 AWS Provider
     azure               Azure Provider
     gcp                 GCP Provider
@@ -102,7 +103,8 @@ Available Cloud Providers:
     vercel              Vercel Provider
     linode              Linode Provider
     huaweicloud         Huawei Cloud Provider
-    e2enetworks         E2E Networks Provider{extra_providers_text}
+    e2enetworks         E2E Networks Provider
+    fly                 Fly.io Provider{extra_providers_text}
 
 
 Available components:
