@@ -339,8 +339,12 @@ export async function refreshRegistryCredential(): Promise<RegistryCredentialRea
 }
 
 export async function refreshRegistryCollections(): Promise<RegistryCollectionsResult> {
-  const access = await getRegistryAccess();
-  if (!access) return { status: REGISTRY_FAILURE.ACCESS_DENIED };
+  const access = (await auth())?.accessToken;
+  const permission = await evaluateRegistryAccess(access);
+  if (permission.status === REGISTRY_ACCESS.UNKNOWN)
+    return { status: REGISTRY_FAILURE.ERROR };
+  if (permission.status !== REGISTRY_ACCESS.ELIGIBLE || !access?.trim())
+    return { status: REGISTRY_FAILURE.ACCESS_DENIED };
 
   const catalog = await readCompleteRegistryCatalog(access, null);
   if (catalog.status !== REGISTRY_CATALOG.COMPLETE) return catalog;

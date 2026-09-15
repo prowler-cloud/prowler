@@ -120,7 +120,7 @@ describe("Registry guarded reads", () => {
   });
 
   it.each(["unknown", "ineligible"])(
-    "denies Registry reads without calls when access is %s",
+    "does not fetch Registry collections when access is %s",
     async (status) => {
       // Given
       evaluateAccessMock.mockResolvedValue({ status });
@@ -136,7 +136,7 @@ describe("Registry guarded reads", () => {
       expect(results).toEqual([
         { status: "access_denied" },
         { status: "access_denied" },
-        { status: "access_denied" },
+        { status: status === "unknown" ? "error" : "access_denied" },
       ]);
       expect(fetchMock).not.toHaveBeenCalled();
     },
@@ -312,6 +312,15 @@ describe("Registry guarded reads", () => {
 
     // Then
     expect(generic).toEqual({ status: "error" });
+  });
+
+  it("keeps a transient access check failure retryable when refreshing collections", async () => {
+    // Given: the API cannot answer the permission check during a transient outage.
+    evaluateAccessMock.mockResolvedValueOnce({ status: "unknown" });
+
+    // When / Then: preserve the current page instead of treating the outage as revocation.
+    expect(await refreshRegistryCollections()).toEqual({ status: "error" });
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it("maps Registry 401 and 403 to access denial before any recovery classification", async () => {
