@@ -26,15 +26,24 @@ const sendInvitationFormSchema = z.object({
 
 export type FormValues = z.infer<typeof sendInvitationFormSchema>;
 
+interface SendInvitationFormProps {
+  roles: Array<{ id: string; name: string }>;
+  defaultRole?: string;
+  isSelectorDisabled: boolean;
+  // Where the invitation was sent from, forwarded to the API as `?source=`
+  // so the origin can be told apart (e.g. the onboarding invite step).
+  source?: string;
+  // Replaces the default navigation to the invitation details page.
+  onSuccess?: (invitationId: string) => void;
+}
+
 export const SendInvitationForm = ({
   roles = [],
   defaultRole = "admin",
   isSelectorDisabled = false,
-}: {
-  roles: Array<{ id: string; name: string }>;
-  defaultRole?: string;
-  isSelectorDisabled: boolean;
-}) => {
+  source,
+  onSuccess,
+}: SendInvitationFormProps) => {
   const { toast } = useToast();
   const router = useRouter();
 
@@ -52,6 +61,7 @@ export const SendInvitationForm = ({
     const formData = new FormData();
     formData.append("email", values.email);
     formData.append("role", values.roleId);
+    if (source) formData.append("source", source);
 
     try {
       const data = await sendInvite(formData);
@@ -83,6 +93,10 @@ export const SendInvitationForm = ({
         });
       } else {
         const invitationId = data?.data?.id || "";
+        if (onSuccess) {
+          onSuccess(invitationId);
+          return;
+        }
         router.push(`/invitations/check-details/?id=${invitationId}`);
       }
     } catch (_error) {
