@@ -34,10 +34,13 @@ export interface CurrentUser {
 }
 
 const toPermissions = (
-  attributes: Record<string, unknown>,
+  roles: readonly Record<string, unknown>[],
 ): RolePermissionAttributes =>
   Object.fromEntries(
-    Object.values(PERMISSION_KEY).map((key) => [key, attributes[key] === true]),
+    Object.values(PERMISSION_KEY).map((key) => [
+      key,
+      roles.some((attributes) => attributes[key] === true),
+    ]),
   ) as RolePermissionAttributes;
 
 export async function fetchCurrentUser(
@@ -78,20 +81,22 @@ export async function fetchCurrentUser(
   );
   if (!parsed.success) throw new Error("Malformed current user response");
 
-  const [role] = parsed.data.included;
-  if (parsed.data.included.length !== 1 || !role) {
-    throw new Error("Ambiguous current user role");
+  const roles = parsed.data.included.map((role) => role.attributes);
+  if (roles.length === 0) {
+    throw new Error("Missing current user role");
   }
 
-  const attributes = role.attributes;
-  const manageRegistry = attributes.manage_registry;
+  const permissions = toPermissions(roles);
   return {
     name: parsed.data.data.attributes.name,
     email: parsed.data.data.attributes.email,
     company: parsed.data.data.attributes.company_name,
     dateJoined: parsed.data.data.attributes.date_joined,
-    permissions: toPermissions(attributes),
-    manageRegistry:
-      typeof manageRegistry === "boolean" ? manageRegistry : undefined,
+    permissions,
+    manageRegistry: permissions.manage_registry
+      ? true
+      : roles.every((attributes) => attributes.manage_registry === false)
+        ? false
+        : undefined,
   };
 }

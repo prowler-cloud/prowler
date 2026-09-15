@@ -57,15 +57,85 @@ describe("fetchCurrentUser", () => {
     },
   );
 
+  it("combines exact-true permissions from every assigned role", async () => {
+    // Given
+    fetchMock.mockResolvedValue(
+      reply(
+        document([
+          {
+            ...role(false),
+            attributes: {
+              manage_providers: true,
+              manage_scans: false,
+              manage_registry: false,
+              manage_users: "true",
+            },
+          },
+          {
+            ...role(true),
+            id: "role-2",
+            attributes: {
+              manage_providers: false,
+              manage_scans: true,
+              manage_registry: true,
+              manage_users: 1,
+            },
+          },
+        ]),
+      ),
+    );
+
+    // When
+    const result = await fetchCurrentUser("access-token");
+
+    // Then
+    expect(result.permissions).toMatchObject({
+      manage_providers: true,
+      manage_scans: true,
+      manage_registry: true,
+      manage_users: false,
+      manage_account: false,
+    });
+    expect(result.manageRegistry).toBe(true);
+  });
+
+  it.each([
+    { assignments: [true, false], expected: true },
+    { assignments: [true, undefined], expected: true },
+    { assignments: [false, false], expected: false },
+    { assignments: [false, undefined], expected: undefined },
+    { assignments: [false, "true"], expected: undefined },
+  ])(
+    "resolves Registry authority across $assignments",
+    async ({ assignments, expected }) => {
+      // Given
+      fetchMock.mockResolvedValue(
+        reply(
+          document(
+            assignments.map((permission, index) => ({
+              ...role(permission),
+              id: `role-${index}`,
+            })),
+          ),
+        ),
+      );
+
+      // When / Then
+      await expect(fetchCurrentUser("access-token")).resolves.toMatchObject({
+        manageRegistry: expected,
+        permissions: { manage_registry: expected === true },
+      });
+    },
+  );
+
   it.each([
     [document([]), 200],
-    [document([role(true), role(true)]), 200],
     [{ data: { type: "users" } }, 200],
     [document([role(true)]), 401],
     [document([role(true)]), 403],
     [document([role(true)]), 500],
   ])(
-    "rejects absent, ambiguous, malformed, or unsuccessful evidence",
+    "rejects absent, malformed, or unsuccessful evidence",
     async (body, status) => {
       // Given
       fetchMock.mockResolvedValue(reply(body, status));
