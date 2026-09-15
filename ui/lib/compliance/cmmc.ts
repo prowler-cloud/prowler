@@ -1,14 +1,8 @@
-import { ClientAccordionContent } from "@/components/compliance/compliance-accordion/client-accordion-content";
-import { ComplianceAccordionRequirementTitle } from "@/components/compliance/compliance-accordion/compliance-accordion-requeriment-title";
-import { ComplianceAccordionTitle } from "@/components/compliance/compliance-accordion/compliance-accordion-title";
-import { AccordionItemProps } from "@/components/shadcn/accordion/Accordion";
-import { FindingStatus } from "@/components/shadcn/table/status-finding-badge";
-import {
+import type {
   AttributesData,
   CMMCAttributesMetadata,
   Framework,
   Requirement,
-  REQUIREMENT_STATUS,
   RequirementsData,
   RequirementStatus,
 } from "@/types/compliance";
@@ -19,7 +13,10 @@ import {
   findOrCreateCategory,
   findOrCreateControl,
   findOrCreateFramework,
+  getStatusCounters,
 } from "./commons";
+
+export { toGroupedAccordionItems as toAccordionItems } from "./grouped-accordion";
 
 // Canonical NIST SP 800-171 family order for the 14 CMMC domains, so the
 // accordion always reads in the same order regardless of the API response.
@@ -39,12 +36,6 @@ export const CMMC_DOMAIN_ORDER: readonly string[] = [
   "System and Communications Protection",
   "System and Information Integrity",
 ];
-
-const getStatusCounters = (status: RequirementStatus) => ({
-  pass: status === REQUIREMENT_STATUS.PASS ? 1 : 0,
-  fail: status === REQUIREMENT_STATUS.FAIL ? 1 : 0,
-  manual: status === REQUIREMENT_STATUS.MANUAL ? 1 : 0,
-});
 
 export const mapComplianceData = (
   attributesData: AttributesData,
@@ -108,57 +99,4 @@ export const mapComplianceData = (
   calculateFrameworkCounters(frameworks);
 
   return frameworks;
-};
-
-export const toAccordionItems = (
-  data: Framework[],
-  scanId: string | undefined,
-): AccordionItemProps[] => {
-  const safeId = scanId || "";
-
-  return data.flatMap((framework) =>
-    framework.categories.map((category) => ({
-      key: `${framework.name}-${category.name}`,
-      title: (
-        <ComplianceAccordionTitle
-          label={category.name}
-          pass={category.pass}
-          fail={category.fail}
-          manual={category.manual}
-          isParentLevel={true}
-        />
-      ),
-      content: "",
-      // Domain → requirements (flat, no intermediate "control" level).
-      // Keys are derived from the requirement name (which starts with the
-      // unique CMMC id, e.g. "AC.L1-b.1.i") instead of the array index, so
-      // expanded state stays attached to the right requirement even if the
-      // list is reordered or filtered.
-      items: category.controls.flatMap((control) =>
-        control.requirements.map((requirement) => ({
-          key: `${framework.name}-${category.name}-${requirement.name}`,
-          title: (
-            <ComplianceAccordionRequirementTitle
-              type=""
-              name={requirement.name}
-              status={requirement.status as FindingStatus}
-              invalidConfig={requirement.invalid_config}
-            />
-          ),
-          content: (
-            <ClientAccordionContent
-              key={`content-${framework.name}-${category.name}-${requirement.name}`}
-              requirement={requirement}
-              scanId={safeId}
-              framework={framework.name}
-              disableFindings={
-                requirement.check_ids.length === 0 && requirement.manual === 0
-              }
-            />
-          ),
-          items: [],
-        })),
-      ),
-    })),
-  );
 };
