@@ -92,7 +92,21 @@ export const SendInvitationForm = ({
           }
         });
       } else {
-        const invitationId = data?.data?.id || "";
+        const invitationId = data?.data?.id;
+        if (!invitationId) {
+          // A transport failure returns nothing and a rejection can come
+          // back as a bare `error` without an `errors` array; neither
+          // created an invitation, so neither is a success.
+          toast({
+            variant: "destructive",
+            title: "Oops! Something went wrong",
+            description:
+              typeof data?.error === "string"
+                ? data.error
+                : "The invitation could not be sent. Please try again.",
+          });
+          return;
+        }
         if (onSuccess) {
           onSuccess(invitationId);
           return;

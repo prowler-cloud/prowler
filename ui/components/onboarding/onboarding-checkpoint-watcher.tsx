@@ -32,6 +32,9 @@ interface OnboardingCheckpointWatcherProps {
   // Offer "Invite your team" once, right before the checkpoint dialog. Off by
   // default so a deployment opts in (or decides per tenant).
   showInviteStep?: boolean;
+  // Scopes the invite step's local marker: the offer is per tenant, not per
+  // browser. Without it the step is not offered.
+  tenantId?: string | null;
 }
 
 // Sequence begins at the flow after `add-provider` (the gate).
@@ -49,6 +52,7 @@ function markCheckpointHandled(): void {
 // Layout-level watcher: renders the checkpoint dialog when the store `open` flag is set.
 export function OnboardingCheckpointWatcher({
   showInviteStep = false,
+  tenantId = null,
 }: OnboardingCheckpointWatcherProps = {}) {
   const router = useRouter();
   const open = useOnboardingCheckpointStore((state) => state.open);
@@ -82,12 +86,12 @@ export function OnboardingCheckpointWatcher({
     open &&
     showInviteStep &&
     !inviteResolved &&
-    !isOnboardingInviteHandled()
+    !isOnboardingInviteHandled(tenantId)
   ) {
     return (
       <OnboardingInviteStep
         onDone={() => {
-          markOnboardingInviteHandled();
+          markOnboardingInviteHandled(tenantId);
           setInviteResolved(true);
         }}
       />

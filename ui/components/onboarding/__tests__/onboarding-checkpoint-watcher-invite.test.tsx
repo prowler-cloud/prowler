@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { ONBOARDING_INVITE_MARKER } from "@/lib/onboarding/invite-marker";
+import { onboardingInviteMarkerKey } from "@/lib/onboarding/invite-marker";
 
 import { OnboardingCheckpointWatcher } from "../onboarding-checkpoint-watcher";
 
@@ -38,6 +38,10 @@ vi.mock("../onboarding-invite-step", () => ({
   ),
 }));
 
+const TENANT_ID = "3f6c2f1e-7b0a-4d5c-9a21-0c9f4f2a7b10";
+const OTHER_TENANT_ID = "8a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d";
+const MARKER_KEY = onboardingInviteMarkerKey(TENANT_ID) as string;
+
 const CHECKPOINT_TITLE = "Provider added — keep exploring?";
 
 describe("OnboardingCheckpointWatcher invite step", () => {
@@ -49,7 +53,7 @@ describe("OnboardingCheckpointWatcher invite step", () => {
   it("offers the invite step before the checkpoint dialog and keeps the store open", async () => {
     // Given
     const user = userEvent.setup();
-    render(<OnboardingCheckpointWatcher showInviteStep />);
+    render(<OnboardingCheckpointWatcher showInviteStep tenantId={TENANT_ID} />);
     // The step is loaded on demand, so it arrives a tick after render.
     expect(
       await screen.findByRole("button", { name: "Resolve invite step" }),
@@ -63,7 +67,7 @@ describe("OnboardingCheckpointWatcher invite step", () => {
 
     // Then
     expect(await screen.findByText(CHECKPOINT_TITLE)).toBeInTheDocument();
-    expect(window.localStorage.getItem(ONBOARDING_INVITE_MARKER)).toBe("true");
+    expect(window.localStorage.getItem(MARKER_KEY)).toBe("true");
   });
 
   it("is off unless a deployment opts in", () => {
@@ -79,10 +83,10 @@ describe("OnboardingCheckpointWatcher invite step", () => {
 
   it("does not offer the step again once this browser saw it", () => {
     // Given
-    window.localStorage.setItem(ONBOARDING_INVITE_MARKER, "true");
+    window.localStorage.setItem(MARKER_KEY, "true");
 
     // When
-    render(<OnboardingCheckpointWatcher showInviteStep />);
+    render(<OnboardingCheckpointWatcher showInviteStep tenantId={TENANT_ID} />);
 
     // Then
     expect(screen.getByText(CHECKPOINT_TITLE)).toBeInTheDocument();
@@ -93,12 +97,38 @@ describe("OnboardingCheckpointWatcher invite step", () => {
     checkpointOpenState = false;
 
     // When
-    render(<OnboardingCheckpointWatcher showInviteStep />);
+    render(<OnboardingCheckpointWatcher showInviteStep tenantId={TENANT_ID} />);
 
     // Then
     expect(
       screen.queryByRole("button", { name: "Resolve invite step" }),
     ).not.toBeInTheDocument();
     expect(screen.queryByText(CHECKPOINT_TITLE)).not.toBeInTheDocument();
+  });
+
+  it("offers the step again to another tenant of the same browser", async () => {
+    // Given — this browser already saw it for one tenant.
+    window.localStorage.setItem(MARKER_KEY, "true");
+
+    // When
+    render(
+      <OnboardingCheckpointWatcher showInviteStep tenantId={OTHER_TENANT_ID} />,
+    );
+
+    // Then
+    expect(
+      await screen.findByRole("button", { name: "Resolve invite step" }),
+    ).toBeInTheDocument();
+  });
+
+  it("does not offer the step without a usable tenant", () => {
+    // When
+    render(<OnboardingCheckpointWatcher showInviteStep tenantId={null} />);
+
+    // Then
+    expect(screen.getByText(CHECKPOINT_TITLE)).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Resolve invite step" }),
+    ).not.toBeInTheDocument();
   });
 });
