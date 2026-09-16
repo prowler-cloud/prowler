@@ -146,9 +146,7 @@ class Test_machine_no_public_non_http_ports:
     def test_https_port_with_only_tls_handler_fails(self):
         machine_client = mock.MagicMock()
         machine_client.machines = {
-            MACHINE_ID: _machine(
-                [_service(FlyMachinePort(port=443, handlers=["tls"]))]
-            )
+            MACHINE_ID: _machine([_service(FlyMachinePort(port=443, handlers=["tls"]))])
         }
         machine_client.audit_config = {}
 
@@ -163,9 +161,7 @@ class Test_machine_no_public_non_http_ports:
     def test_http_port_with_handler_passes(self):
         machine_client = mock.MagicMock()
         machine_client.machines = {
-            MACHINE_ID: _machine(
-                [_service(FlyMachinePort(port=80, handlers=["http"]))]
-            )
+            MACHINE_ID: _machine([_service(FlyMachinePort(port=80, handlers=["http"]))])
         }
         machine_client.audit_config = {}
 
@@ -247,9 +243,7 @@ class Test_machine_no_public_non_http_ports:
             MACHINE_ID: _machine(
                 [
                     _service(
-                        FlyMachinePort(
-                            start_port=80, end_port=80, handlers=["http"]
-                        )
+                        FlyMachinePort(start_port=80, end_port=80, handlers=["http"])
                     )
                 ]
             )
@@ -266,9 +260,7 @@ class Test_machine_no_public_non_http_ports:
             MACHINE_ID: _machine(
                 [
                     _service(
-                        FlyMachinePort(
-                            start_port=80, end_port=81, handlers=["http"]
-                        )
+                        FlyMachinePort(start_port=80, end_port=81, handlers=["http"])
                     )
                 ]
             )

@@ -292,6 +292,8 @@ The following list includes all the Vercel checks with configurable variables th
 
 ## Fly.io
 
+<VersionBadge version="5.42.0" />
+
 ### Configurable Checks
 The following list includes all the Fly.io checks with configurable variables that can be changed in the configuration YAML file:
 
@@ -305,7 +307,9 @@ The following list includes all the Fly.io checks with configurable variables th
 
 | Value         | Type    | Default | Description                                                                                    |
 |---------------|---------|---------|------------------------------------------------------------------------------------------------|
-| `max_retries` | Integer | `3`     | Retries for Machines API requests that are rate limited (HTTP 429, honoring `Retry-After`) or fail at the connection level (timeouts, connection errors); HTTP 5xx responses are not retried. Range `0..10`; `0` disables retries. |
+| `max_retries` | Integer | `3`     | Retries during a scan for Machines API and GraphQL HTTP 429 responses, honoring `Retry-After`, and for Machines API connection failures. GraphQL connection failures and HTTP 5xx responses are not retried. Range `0..10`; `0` disables retries. |
+
+Rate-limit waits are capped at 300 seconds each and 600 seconds per request in total. Organization discovery and credential validation happen before the scan and are not retried.
 
 <Note>
 Each entry of `allowed_public_ports` must be a port between `1` and `65535`; an invalid list is ignored and the default is used. A key set to `null` also falls back to its default, while an explicit empty list (for example `allowed_public_ports: []`) is applied as configured.

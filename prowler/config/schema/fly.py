@@ -14,7 +14,7 @@ class FlyProviderConfig(ProviderConfigBase):
     Defines optional configuration parameters for Fly.io security checks:
     which apps are allowed to hold a public IP address, which edge ports may be
     published, which environment variable names are treated as secret-like,
-    and the Machines API retry budget.
+    and the Fly.io scan request retry budget.
     """
 
     public_apps: Optional[list[str]] = Field(
@@ -36,6 +36,7 @@ class FlyProviderConfig(ProviderConfigBase):
         ge=0,
         le=10,
         description=(
-            "Max retries for Fly.io Machines API requests. Range: 0..10 (0 disables retries)."
+            "Max retries for rate-limited Machines and GraphQL scan requests, and "
+            "Machines API connection failures. Range: 0..10 (0 disables retries)."
         ),
     )

@@ -314,14 +314,16 @@ class Test_FlyService_graphql:
             "organization": {"slug": ORG_SLUG}
         }
 
-    def test_unauthorized_raises_authentication_error(self):
+    @pytest.mark.parametrize("status_code", [401, 403])
+    def test_unauthorized_raises_authentication_error(self, status_code):
         service = _service()
-        service._http_session.post.return_value = _response(401)
+        service._http_session.post.return_value = _response(status_code)
 
         with pytest.raises(FlyAuthenticationError) as error:
             service._graphql("query { organizations { nodes { slug } } }")
 
-        assert "401" in str(error.value)
+        assert str(status_code) in str(error.value)
+        service._http_session.post.assert_called_once()
 
     def test_graphql_errors_raise_api_error(self):
         service = _service()
@@ -331,3 +333,124 @@ class Test_FlyService_graphql:
 
         with pytest.raises(FlyAPIError):
             service._graphql("query { organizations { nodes { slug } } }")
+
+        service._http_session.post.assert_called_once()
+
+    def test_rate_limit_retries_the_same_query_and_variables(self):
+        """A throttled read must retain its scope, request body, and timeout."""
+        service = _service()
+        query = "query($slug: String!) { organization(slug: $slug) { slug } }"
+        variables = {"slug": ORG_SLUG}
+        data = {"organization": {"slug": ORG_SLUG}}
+        service._http_session.post.side_effect = [
+            _response(429, headers={"Retry-After": "0"}),
+            _response(200, {"data": data}),
+        ]
+
+        with mock.patch(f"{SERVICE_MODULE}.time.sleep") as sleep_mock:
+            assert service._graphql(query, variables) == data
+
+        sleep_mock.assert_called_once_with(0)
+        assert (
+            service._http_session.post.call_args_list
+            == [
+                mock.call(
+                    service._graphql_url,
+                    json={"query": query, "variables": variables},
+                    timeout=30,
+                )
+            ]
+            * 2
+        )
+
+    @pytest.mark.parametrize(
+        "retries, attempts",
+        [(0, 1), (1, 2), (3, 4), (10, 11), (99, 11), (-1, 1), (None, 4)],
+    )
+    def test_rate_limit_exhaustion_obeys_retry_budget(self, retries, attempts):
+        """Bound attempts, including zero retries and unvalidated SDK configuration."""
+        service = _service(audit_config={"max_retries": retries})
+        service._http_session.post.return_value = _response(
+            429, headers={"Retry-After": "0"}
+        )
+
+        with mock.patch(f"{SERVICE_MODULE}.time.sleep") as sleep_mock:
+            with pytest.raises(FlyRateLimitError):
+                service._graphql("query { organizations { nodes { slug } } }")
+
+        assert service._http_session.post.call_count == attempts
+        assert sleep_mock.call_args_list == [mock.call(0)] * (attempts - 1)
+
+    @pytest.mark.parametrize(
+        "retry_after, expected_wait",
+        [
+            (None, DEFAULT_RETRY_AFTER_SECONDS),
+            ("7", 7),
+            ("Thu, 01 Jan 2026 12:00:42 GMT", 42),
+            ("Thu, 01 Jan 2026 11:59:00 GMT", 0),
+            ("99999", 300),
+        ],
+    )
+    def test_rate_limit_honors_bounded_retry_after(self, retry_after, expected_wait):
+        """Use the shared seconds/date parser and its per-wait cap."""
+        service = _service()
+        service._http_session.post.side_effect = [
+            _response(429, headers={"Retry-After": retry_after}),
+            _response(200, {"data": {"ok": True}}),
+        ]
+
+        with (
+            mock.patch(f"{SERVICE_MODULE}.time.sleep") as sleep_mock,
+            mock.patch(f"{SERVICE_MODULE}.datetime") as clock,
+        ):
+            clock.now.return_value = NOW
+            assert service._graphql("query { ok }") == {"ok": True}
+
+        sleep_mock.assert_called_once_with(expected_wait)
+        assert service._http_session.post.call_count == 2
+
+    def test_total_rate_limit_wait_is_bounded(self):
+        """Repeated long Retry-After values cannot stall one query indefinitely."""
+        service = _service(audit_config={"max_retries": 10})
+        service._http_session.post.return_value = _response(
+            429, headers={"Retry-After": "300"}
+        )
+
+        with mock.patch(f"{SERVICE_MODULE}.time.sleep") as sleep_mock:
+            with pytest.raises(FlyRateLimitError) as error:
+                service._graphql("query { organizations { nodes { slug } } }")
+
+        assert sleep_mock.call_args_list == [mock.call(300), mock.call(300)]
+        assert service._http_session.post.call_count == 3
+        assert f"{MAX_TOTAL_RETRY_WAIT_SECONDS}s of waiting" in str(error.value)
+
+    @pytest.mark.parametrize("status_code", [404, 500, 503])
+    def test_other_http_errors_are_not_retried(self, status_code):
+        """GraphQL 404/5xx responses remain API errors, not missing resources."""
+        service = _service()
+        service._http_session.post.return_value = _response(status_code)
+
+        with mock.patch(f"{SERVICE_MODULE}.time.sleep") as sleep_mock:
+            with pytest.raises(FlyAPIError):
+                service._graphql("query { organizations { nodes { slug } } }")
+
+        sleep_mock.assert_not_called()
+        service._http_session.post.assert_called_once()
+
+    @pytest.mark.parametrize(
+        "exception_type",
+        [requests.exceptions.Timeout, requests.exceptions.ConnectionError],
+    )
+    def test_transport_errors_are_not_retried(self, exception_type):
+        """Only GraphQL throttling gains retries; transport failures retain behavior."""
+        service = _service()
+        original = exception_type("Synthetic transport failure")
+        service._http_session.post.side_effect = original
+
+        with mock.patch(f"{SERVICE_MODULE}.time.sleep") as sleep_mock:
+            with pytest.raises(FlyAPIError) as error:
+                service._graphql("query { organizations { nodes { slug } } }")
+
+        assert error.value.original_exception is original
+        sleep_mock.assert_not_called()
+        service._http_session.post.assert_called_once()

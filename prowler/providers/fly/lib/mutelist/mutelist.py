@@ -11,6 +11,15 @@ class FlyMutelist(Mutelist):
         finding: CheckReportFly,
         org_slug: str,
     ) -> bool:
+        """Evaluate a finding against the selected organization's muting rules.
+
+        Args:
+            finding: Fly.io finding with check, resource, region, and tag metadata.
+            org_slug: Organization slug used as the mutelist account key.
+
+        Returns:
+            True when the finding matches an applicable mutelist rule.
+        """
         return self.is_muted(
             org_slug,
             finding.check_metadata.CheckID,

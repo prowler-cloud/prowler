@@ -67,10 +67,14 @@ class machine_no_public_non_http_ports(Check):
                             disallowed.add(published_port)
                         elif published_port == 80 and "http" not in handlers:
                             misconfigured.add(published_port)
-                        elif published_port == 443 and not {
-                            "tls",
-                            "http",
-                        } <= handlers:
+                        elif (
+                            published_port == 443
+                            and not {
+                                "tls",
+                                "http",
+                            }
+                            <= handlers
+                        ):
                             misconfigured.add(published_port)
 
             if not disallowed and not misconfigured:

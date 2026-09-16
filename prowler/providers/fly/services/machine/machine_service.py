@@ -3,6 +3,7 @@ from typing import Optional
 from pydantic import BaseModel, Field
 
 from prowler.lib.logger import logger
+from prowler.providers.fly.fly_provider import FlyProvider
 from prowler.providers.fly.lib.service.service import FlyService
 
 MIN_PORT = 1
@@ -64,7 +65,11 @@ class FlyMachineService(BaseModel):
 
 
 class FlyMachine(BaseModel):
-    """A Fly.io machine and its security-relevant configuration."""
+    """A Fly.io machine and its security-relevant configuration.
+
+    Environment values remain available to checks but are excluded from
+    serialized resources and model representations to prevent disclosure.
+    """
 
     id: str
     name: str
@@ -76,7 +81,7 @@ class FlyMachine(BaseModel):
     image_digest: str = ""
     image_registry: str = ""
     image_repository: str = ""
-    env: dict[str, str] = Field(default_factory=dict)
+    env: dict[str, str] = Field(default_factory=dict, exclude=True, repr=False)
     services: list[FlyMachineService] = Field(default_factory=list)
     mounts: list[FlyMachineMount] = Field(default_factory=list)
     # None when the app's secret names could not be read (not the same as none set)
@@ -86,7 +91,12 @@ class FlyMachine(BaseModel):
 class Machine(FlyService):
     """Retrieve Fly.io machines with their image, network and secret configuration."""
 
-    def __init__(self, provider):
+    def __init__(self, provider: FlyProvider) -> None:
+        """Initialize machine storage and immediately load in-scope configurations.
+
+        Args:
+            provider: Fly.io provider supplying the session, organization, and scope.
+        """
         super().__init__("Machine", provider)
         self.machines: dict[str, FlyMachine] = {}
         self._list_machines()
@@ -160,8 +170,8 @@ class Machine(FlyService):
         """Read the names of the Fly secrets set on an app.
 
         Only secret names and digests are requested from the Fly.io API (the
-        ``show_secrets`` option is never sent), so nothing sensitive is read by
-        the scan.
+        ``show_secrets`` option is never sent), so this lookup does not request
+        plaintext secret values.
 
         Returns:
             Optional[list[str]]: The secret names, or ``None`` when the listing

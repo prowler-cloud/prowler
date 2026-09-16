@@ -77,3 +77,16 @@ class TestFlyMetadata:
             else:
                 assert metadata.Remediation.Code.CLI.startswith("fly ")
             assert metadata.Remediation.Code.Other
+
+    def test_public_port_remediation_removes_a_port_mapping(self):
+        """Port remediation must use flyctl's removal syntax, not file injection."""
+        metadata = CheckMetadata.get_bulk(provider="fly")[
+            "machine_no_public_non_http_ports"
+        ]
+
+        assert metadata.Remediation.Code.CLI == (
+            "fly machine update <machine-id> -a <app> "
+            "--port <external-port>/<protocol>:-"
+        )
+        assert "fly.toml" in metadata.Remediation.Code.Other
+        assert "https://fly.io/docs/flyctl/machine-update/" in metadata.AdditionalURLs

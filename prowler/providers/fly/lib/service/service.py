@@ -135,7 +135,7 @@ class FlyService:
 
     @property
     def max_retries(self) -> int:
-        """Configured retry budget for Machines API requests, kept in 0..10.
+        """Configured retry budget for Fly.io scan requests, kept in 0..10.
 
         The schema already bounds ``max_retries`` for configuration files; a
         configuration passed as content bypasses it, so the value is clamped
@@ -290,7 +290,11 @@ class FlyService:
         raise FlyAPIError(file=__file__, message=f"No response obtained for {path}.")
 
     def _graphql(self, query: str, variables: dict = None) -> dict:
-        """Run a read-only query against the Fly.io GraphQL API.
+        """Run a read-only query with bounded retries for GraphQL rate limits.
+
+        Only HTTP 429 is retried. Retry-After waits share the Machines API's
+        per-wait and cumulative limits; other HTTP and transport errors are
+        reported without retrying.
 
         Args:
             query: The GraphQL query document.
@@ -302,39 +306,67 @@ class FlyService:
         Raises:
             FlyAuthenticationError: If the token is rejected (401) or lacks
                 access (403).
+            FlyRateLimitError: If the retry or cumulative wait budget is exhausted.
             FlyAPIError: If the API or the query fails.
         """
-        try:
-            response = self._http_session.post(
-                self._graphql_url,
-                json={"query": query, "variables": variables or {}},
-                timeout=30,
-            )
-            if response.status_code in (401, 403):
-                raise FlyAuthenticationError(
-                    file=__file__,
-                    message=(
-                        f"Fly.io GraphQL API returned {response.status_code}: the "
-                        "token is invalid, expired or lacks read access to the "
-                        "organization."
-                    ),
+        max_retries = self.max_retries
+        waited = 0
+
+        for attempt in range(max_retries + 1):
+            try:
+                response = self._http_session.post(
+                    self._graphql_url,
+                    json={"query": query, "variables": variables or {}},
+                    timeout=30,
                 )
-            response.raise_for_status()
-            payload = response.json()
-        except requests.exceptions.RequestException as error:
-            raise FlyAPIError(
-                file=__file__,
-                original_exception=error,
-                message=f"Fly.io GraphQL request failed: {error}",
-            )
+                if response.status_code == 429:
+                    retry_after = parse_retry_after(response.headers.get("Retry-After"))
+                    if (
+                        attempt < max_retries
+                        and waited + retry_after <= MAX_TOTAL_RETRY_WAIT_SECONDS
+                    ):
+                        logger.warning(
+                            f"{self.service} - GraphQL rate limited, retrying after "
+                            f"{retry_after}s (attempt {attempt + 1}/{max_retries})"
+                        )
+                        time.sleep(retry_after)
+                        waited += retry_after
+                        continue
+                    raise FlyRateLimitError(
+                        file=__file__,
+                        message=(
+                            f"GraphQL rate limited after {attempt} retries and "
+                            f"{waited}s of waiting."
+                        ),
+                    )
 
-        if payload.get("errors"):
-            raise FlyAPIError(
-                file=__file__,
-                message=f"Fly.io GraphQL error: {payload['errors']}",
-            )
+                if response.status_code in (401, 403):
+                    raise FlyAuthenticationError(
+                        file=__file__,
+                        message=(
+                            f"Fly.io GraphQL API returned {response.status_code}: the "
+                            "token is invalid, expired or lacks read access to the "
+                            "organization."
+                        ),
+                    )
+                response.raise_for_status()
+                payload = response.json()
+            except requests.exceptions.RequestException as error:
+                raise FlyAPIError(
+                    file=__file__,
+                    original_exception=error,
+                    message=f"Fly.io GraphQL request failed: {error}",
+                )
 
-        return payload.get("data", {}) or {}
+            if payload.get("errors"):
+                raise FlyAPIError(
+                    file=__file__,
+                    message=f"Fly.io GraphQL error: {payload['errors']}",
+                )
+
+            return payload.get("data", {}) or {}
+
+        raise FlyAPIError(file=__file__, message="No GraphQL response obtained.")
 
     def __threading_call__(self, call, iterator):
         """Execute a function across multiple items using threading."""

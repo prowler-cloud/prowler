@@ -3,6 +3,7 @@ from typing import Optional
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
+from prowler.providers.fly.fly_provider import FlyProvider
 from prowler.providers.fly.lib.service.service import FlyService
 
 
@@ -25,7 +26,12 @@ class FlyVolume(BaseModel):
 class Volume(FlyService):
     """Retrieve Fly.io volumes with their encryption and backup configuration."""
 
-    def __init__(self, provider):
+    def __init__(self, provider: FlyProvider) -> None:
+        """Initialize self.volumes and immediately load volumes of in-scope apps.
+
+        Args:
+            provider: Fly.io provider supplying the session, organization, and scope.
+        """
         super().__init__("Volume", provider)
         self.volumes: dict[str, FlyVolume] = {}
         self._list_volumes()

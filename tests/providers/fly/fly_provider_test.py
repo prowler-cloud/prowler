@@ -1,17 +1,29 @@
 from unittest.mock import MagicMock, patch
 
 import pytest
+import requests
+import yaml
 
 from prowler.providers.fly.exceptions.exceptions import (
+    FlyAPIError,
     FlyAuthenticationError,
     FlyCredentialsError,
     FlyIdentityError,
+    FlyInvalidArgumentError,
     FlyInvalidOrganizationError,
     FlyRateLimitError,
+    FlySessionError,
 )
 from prowler.providers.fly.fly_provider import FlyProvider
 from prowler.providers.fly.models import FlyIdentityInfo, FlyOrganization, FlySession
-from tests.providers.fly.fly_fixtures import API_TOKEN, ORG_ID, ORG_NAME, ORG_SLUG
+from tests.providers.fly.fly_fixtures import (
+    API_TOKEN,
+    APP_ID,
+    APP_NAME,
+    ORG_ID,
+    ORG_NAME,
+    ORG_SLUG,
+)
 
 ORGANIZATIONS_PAYLOAD = {
     "data": {
@@ -245,17 +257,236 @@ class Test_FlyProvider_app_filter:
             )
 
     def test_blank_app_names_are_dropped(self):
-        provider = self._provider([" api ", "", "   ", "worker"])
+        provider = self._provider([" api ", "", "   ", "worker", None, 7, "api"])
 
         assert provider.filter_apps == {"api", "worker"}
 
-    def test_only_blank_app_names_means_no_filter(self):
-        provider = self._provider(["", "  "])
+    @pytest.mark.parametrize("apps", [[], ["", "  "], [None, 42]])
+    def test_empty_app_selection_is_rejected_before_connecting(self, apps):
+        """An explicit filter must not silently become an organization-wide scan."""
+        with (
+            patch.object(
+                FlyProvider, "setup_session", return_value=_session(org_slug=ORG_SLUG)
+            ) as setup_session,
+            patch(
+                "prowler.providers.fly.fly_provider.Provider.set_global_provider"
+            ) as set_global_provider,
+        ):
+            with pytest.raises(
+                FlyInvalidArgumentError, match="at least one non-empty app name"
+            ) as error:
+                FlyProvider(
+                    apps=apps,
+                    config_content={},
+                    mutelist_content={},
+                )
 
-        assert provider.filter_apps is None
+        assert error.value.code == 22007
+        assert "omit" in error.value.remediation
+        setup_session.assert_not_called()
+        set_global_provider.assert_not_called()
 
     def test_no_apps_means_no_filter(self):
         provider = self._provider(None)
 
         assert provider.filter_apps is None
         assert provider.identity.organization.slug == ORG_SLUG
+
+
+class Test_FlyProvider_mutelist:
+    @pytest.mark.parametrize("explicit_path", [False, True])
+    @pytest.mark.parametrize(
+        "inline_content",
+        [
+            None,
+            {},
+            {
+                "Accounts": {
+                    ORG_SLUG: {
+                        "Checks": {
+                            "app_no_public_ip_address": {
+                                "Regions": ["global"],
+                                "Resources": ["inline-app-id"],
+                            }
+                        }
+                    }
+                }
+            },
+        ],
+    )
+    def test_inline_content_takes_precedence(
+        self, tmp_path, explicit_path, inline_content
+    ):
+        """Only omitted inline content may load a default or explicit mutelist file."""
+        file_content = {
+            "Accounts": {
+                ORG_SLUG: {
+                    "Checks": {
+                        "app_no_public_ip_address": {
+                            "Regions": ["global"],
+                            "Resources": [APP_ID],
+                        }
+                    }
+                }
+            }
+        }
+        mutelist_file = tmp_path / "fly-mutelist.yaml"
+        mutelist_file.write_text(yaml.safe_dump({"Mutelist": file_content}))
+        with (
+            patch.object(FlyProvider, "setup_session", return_value=_session()),
+            patch(
+                "prowler.providers.fly.fly_provider.get_default_mute_file_path",
+                return_value=str(mutelist_file),
+            ) as default_path,
+        ):
+            provider = FlyProvider(
+                config_content={},
+                mutelist_path=str(mutelist_file) if explicit_path else None,
+                mutelist_content=inline_content,
+            )
+
+        expected_content = file_content if inline_content is None else inline_content
+        assert provider.mutelist.mutelist == expected_content
+        assert provider.mutelist.mutelist_file_path == (
+            str(mutelist_file) if inline_content is None else None
+        )
+        if inline_content is None and not explicit_path:
+            default_path.assert_called_once_with("fly")
+        else:
+            default_path.assert_not_called()
+
+        finding = MagicMock()
+        finding.check_metadata.CheckID = "app_no_public_ip_address"
+        finding.region = "global"
+        finding.resource_id = APP_ID
+        finding.resource_name = APP_NAME
+        finding.resource_tags = []
+        assert provider.mutelist.is_finding_muted(finding, ORG_SLUG) is (
+            inline_content is None
+        )
+        finding.resource_id = "inline-app-id"
+        assert provider.mutelist.is_finding_muted(finding, ORG_SLUG) is bool(
+            inline_content
+        )
+
+
+class Test_FlyProvider_errors:
+    @pytest.mark.parametrize(
+        "status_code, expected_error",
+        [
+            (401, FlyAuthenticationError),
+            (403, FlyAuthenticationError),
+            (429, FlyRateLimitError),
+            (404, FlyAPIError),
+            (500, FlyAPIError),
+            (503, FlyAPIError),
+        ],
+    )
+    @pytest.mark.parametrize("boundary", ["validate", "raise", "return"])
+    def test_http_error_classification(self, status_code, expected_error, boundary):
+        """Real HTTP status handling must survive the connection-test wrapper."""
+        session = _session(org_slug=ORG_SLUG)
+        response = requests.Response()
+        response.status_code = status_code
+        response.url = f"{session.machines_base_url}/apps"
+        session.http_session.get.return_value = response
+
+        with patch.object(FlyProvider, "setup_session", return_value=session):
+            if boundary == "return":
+                connection = FlyProvider.test_connection(raise_on_exception=False)
+                assert connection.is_connected is False
+                error = connection.error
+            else:
+                with pytest.raises(expected_error) as raised:
+                    if boundary == "validate":
+                        FlyProvider.validate_credentials(session)
+                    else:
+                        FlyProvider.test_connection()
+                error = raised.value
+
+        assert isinstance(error, expected_error)
+        if expected_error is FlyAPIError:
+            assert isinstance(error.original_exception, requests.exceptions.HTTPError)
+            assert error.original_exception.response is response
+        session.http_session.get.assert_called_once()
+
+    @pytest.mark.parametrize(
+        "exception_type",
+        [requests.exceptions.Timeout, requests.exceptions.ConnectionError],
+    )
+    @pytest.mark.parametrize("boundary", ["validate", "raise", "return"])
+    def test_transport_failure_is_not_authentication_failure(
+        self, exception_type, boundary
+    ):
+        """Network failures must not tell the user to replace a valid token."""
+        session = _session(org_slug=ORG_SLUG)
+        original = exception_type("Synthetic transport failure")
+        session.http_session.get.side_effect = original
+
+        with patch.object(FlyProvider, "setup_session", return_value=session):
+            if boundary == "return":
+                connection = FlyProvider.test_connection(raise_on_exception=False)
+                assert connection.is_connected is False
+                error = connection.error
+            else:
+                with pytest.raises(FlyAPIError) as raised:
+                    if boundary == "validate":
+                        FlyProvider.validate_credentials(session)
+                    else:
+                        FlyProvider.test_connection()
+                error = raised.value
+
+        assert isinstance(error, FlyAPIError)
+        assert error.original_exception is original
+        session.http_session.get.assert_called_once()
+
+    @pytest.mark.parametrize(
+        "exception_type",
+        [
+            FlyCredentialsError,
+            FlySessionError,
+            FlyAuthenticationError,
+            FlyIdentityError,
+            FlyInvalidOrganizationError,
+            FlyRateLimitError,
+            FlyAPIError,
+        ],
+    )
+    @pytest.mark.parametrize("raise_on_exception", [False, True])
+    def test_connection_preserves_provider_exceptions(
+        self, exception_type, raise_on_exception
+    ):
+        """Known provider errors retain their original type and context."""
+        original = exception_type()
+        with (
+            patch.object(FlyProvider, "setup_session", return_value=_session()),
+            patch.object(FlyProvider, "validate_credentials", side_effect=original),
+        ):
+            if raise_on_exception:
+                with pytest.raises(exception_type) as raised:
+                    FlyProvider.test_connection()
+                assert raised.value is original
+            else:
+                connection = FlyProvider.test_connection(raise_on_exception=False)
+                assert connection.is_connected is False
+                assert connection.error is original
+
+    @pytest.mark.parametrize("raise_on_exception", [False, True])
+    def test_connection_unexpected_failure_is_api_error(self, raise_on_exception):
+        """Unexpected failures are reported, not reclassified as a bad token."""
+        original = ValueError("Synthetic unexpected failure")
+        with (
+            patch.object(FlyProvider, "setup_session", return_value=_session()),
+            patch.object(FlyProvider, "validate_credentials", side_effect=original),
+        ):
+            if raise_on_exception:
+                with pytest.raises(FlyAPIError) as raised:
+                    FlyProvider.test_connection()
+                error = raised.value
+            else:
+                connection = FlyProvider.test_connection(raise_on_exception=False)
+                assert connection.is_connected is False
+                error = connection.error
+
+        assert isinstance(error, FlyAPIError)
+        assert error.original_exception is original

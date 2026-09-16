@@ -3,6 +3,7 @@ from typing import Optional
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
+from prowler.providers.fly.fly_provider import FlyProvider
 from prowler.providers.fly.lib.service.service import FlyService
 
 APPS_IP_QUERY = """
@@ -93,7 +94,12 @@ class FlyApp(BaseModel):
 class App(FlyService):
     """Retrieve Fly.io apps with their private network and public IP exposure."""
 
-    def __init__(self, provider):
+    def __init__(self, provider: FlyProvider) -> None:
+        """Initialize app storage and immediately load scoped apps and public IPs.
+
+        Args:
+            provider: Fly.io provider supplying the session, organization, and scope.
+        """
         super().__init__("App", provider)
         self.apps: dict[str, FlyApp] = {}
         self._list_apps()

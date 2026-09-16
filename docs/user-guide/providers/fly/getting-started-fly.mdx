@@ -50,6 +50,8 @@ prowler fly --services machine
 
 Use `--app` (alias `--apps`) to limit the scan to one or more apps of the organization. When the flag is omitted, every app of the organization is scanned. The flag requires at least one app name.
 
+In the SDK, `apps=None` scans all apps in the selected organization. An explicit empty list or a list without any non-blank app names raises `FlyInvalidArgumentError` instead of widening the scan.
+
 ```bash
 prowler fly --app api-gateway worker-pool
 ```
@@ -75,6 +77,8 @@ Prowler for Fly.io currently supports the following services:
 | `machine_no_public_non_http_ports` | high | Machine publishes only HTTP and HTTPS ports (single ports and port ranges) to the internet |
 | `volume_encrypted_at_rest` | high | Volume is encrypted at rest |
 
+Machine environment values remain available in memory for check evaluation but are excluded from serialized resource metadata. The plaintext-secrets check reports matching variable names, not their values.
+
 ### Findings Reported as MANUAL
 
 A check never reports PASS from a gap in the data. A finding is reported as `MANUAL`, with the command to verify it by hand, when:
@@ -89,7 +93,7 @@ Several checks read optional values from the `fly` section of the Prowler config
 
 ```yaml
 fly:
-  # Maximum number of retries for Machines API requests (default is 3)
+  # Retries for rate-limited Machines/GraphQL scan requests and Machines connection failures
   # Set to 0 to disable retries
   max_retries: 3
   # fly.app_no_public_ip_address

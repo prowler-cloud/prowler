@@ -1,5 +1,7 @@
 from unittest import mock
 
+import pytest
+
 from prowler.providers.fly.services.machine.machine_service import FlyMachine
 from tests.providers.fly.fly_fixtures import (
     APP_NAME,
@@ -116,13 +118,14 @@ class Test_machine_image_pinned_to_digest:
         assert len(result) == 1
         assert result[0].status == "FAIL"
 
-    def test_missing_image_reference_fails(self):
+    @pytest.mark.parametrize("image", ["", " \t "])
+    def test_missing_image_reference_reports_manual(self, image):
         machine_client = mock.MagicMock()
-        machine_client.machines = {MACHINE_ID: _machine("")}
+        machine_client.machines = {MACHINE_ID: _machine(image)}
 
         result = _run(machine_client)
         assert len(result) == 1
-        assert result[0].status == "FAIL"
+        assert result[0].status == "MANUAL"
         assert result[0].status_extended == (
             f"Machine {MACHINE_NAME} in app {APP_NAME} has no image reference in "
             f"its configuration, so it cannot be tied to an immutable build "
@@ -130,13 +133,14 @@ class Test_machine_image_pinned_to_digest:
             f"-a {APP_NAME}'."
         )
 
-    def test_missing_image_reference_with_resolved_digest_fails(self):
+    @pytest.mark.parametrize("image", ["", " \t "])
+    def test_missing_image_reference_with_resolved_digest_reports_manual(self, image):
         machine_client = mock.MagicMock()
-        machine_client.machines = {MACHINE_ID: _machine("", DIGEST)}
+        machine_client.machines = {MACHINE_ID: _machine(image, DIGEST)}
 
         result = _run(machine_client)
         assert len(result) == 1
-        assert result[0].status == "FAIL"
+        assert result[0].status == "MANUAL"
         assert result[0].status_extended.endswith(
             f"Fly.io reports the running image digest {DIGEST}, which can be used "
             f"to pin the image."
@@ -175,10 +179,7 @@ class Test_machine_image_pinned_to_digest:
     def test_uppercase_digest_suffix_fails(self):
         machine_client = mock.MagicMock()
         machine_client.machines = {
-            MACHINE_ID: _machine(
-                "registry.fly.io/app@sha256:"
-                + "ABCDEF0123456789" * 4
-            )
+            MACHINE_ID: _machine("registry.fly.io/app@sha256:" + "ABCDEF0123456789" * 4)
         }
 
         result = _run(machine_client)

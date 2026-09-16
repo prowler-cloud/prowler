@@ -15,13 +15,14 @@
   "AdditionalURLs": [
     "https://fly.io/docs/networking/services/",
     "https://fly.io/docs/reference/configuration/#the-services-sections",
-    "https://fly.io/docs/networking/private-networking/"
+    "https://fly.io/docs/networking/private-networking/",
+    "https://fly.io/docs/flyctl/machine-update/"
   ],
   "Remediation": {
     "Code": {
-      "CLI": "fly machine update <machine-id> -a <app> --file-local /dev/null",
+      "CLI": "fly machine update <machine-id> -a <app> --port <external-port>/<protocol>:-",
       "NativeIaC": "",
-      "Other": "1. Remove the 'ports' entry from the machine service so the port stays private\n2. Reach the service over the private network at <app>.internal:<internal_port>\n3. If the port must stay public, terminate it behind the HTTPS handler on port 443 with authentication in front of it\n4. Verify with the Machines API that config.services publishes no unexpected port",
+      "Other": "1. Remove each unexpected published port mapping from the machine service, preserving intended public ports\n2. Apply the same change to fly.toml so a later deploy does not restore the mapping\n3. Reach private services over 6PN at <app>.internal:<internal_port>\n4. If a service must stay public, put it behind an authenticated HTTPS endpoint\n5. Verify with the Machines API that config.services publishes no unexpected port",
       "Terraform": ""
     },
     "Recommendation": {

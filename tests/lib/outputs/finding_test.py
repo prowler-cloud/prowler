@@ -1740,6 +1740,54 @@ class TestFinding:
         assert finding_output.region == "global"
         assert finding_output.status == Status.MANUAL
 
+    @pytest.mark.parametrize("status", [Status.PASS, Status.FAIL])
+    def test_fly_machine_environment_values_are_not_exported(self, status):
+        """Keep machine environment values available to checks, not report readers."""
+        from prowler.lib.check.models import CheckReportFly
+        from prowler.lib.outputs.ocsf.ocsf import OCSF
+        from prowler.providers.fly.services.machine.machine_service import FlyMachine
+        from tests.providers.fly.fly_fixtures import (
+            APP_NAME,
+            MACHINE_ID,
+            MACHINE_NAME,
+            ORG_SLUG,
+            REGION,
+            set_mocked_fly_provider,
+        )
+
+        secret_value = "synthetic-sensitive-value-not-a-real-credential"
+        machine = FlyMachine(
+            id=MACHINE_ID,
+            name=MACHINE_NAME,
+            app_name=APP_NAME,
+            org_slug=ORG_SLUG,
+            region=REGION,
+            env={"PASSWORD": secret_value},
+        )
+        report = CheckReportFly(
+            metadata=mock_check_metadata(provider="fly").json(),
+            resource=machine,
+        )
+        report.status = status
+        report.status_extended = "Machine configuration evaluated."
+        report.compliance = {}
+        finding = Finding.generate_output(
+            set_mocked_fly_provider(),
+            report,
+            SimpleNamespace(unix_timestamp=False),
+        )
+        ocsf = OCSF([finding])
+
+        assert machine.env["PASSWORD"] == secret_value
+        assert len(ocsf.data) == 1
+        assert secret_value not in ocsf.data[0].model_dump_json()
+        assert secret_value not in repr(machine)
+        assert "env" not in report.resource
+        assert "env" not in finding.resource_metadata
+        assert secret_value not in finding.json()
+        assert finding.status == status
+        assert finding.resource_uid == MACHINE_ID
+
     def test_transform_api_finding_stackit(self):
         provider = MagicMock()
         provider.type = "stackit"

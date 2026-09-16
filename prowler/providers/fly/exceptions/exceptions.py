@@ -8,7 +8,7 @@ class FlyBaseException(ProwlerException):
     FLY_ERROR_CODES = {
         (22000, "FlyCredentialsError"): {
             "message": "Fly.io credentials not found or invalid.",
-            "remediation": "Set the FLY_API_TOKEN environment variable with a valid Fly.io token. Create an org-scoped read-only token with `fly tokens create readonly <org>`.",
+            "remediation": "Set the FLY_API_TOKEN environment variable with a valid Fly.io token. Create an org-scoped read-only token with `fly tokens create readonly --org <org>`.",
         },
         (22001, "FlyAuthenticationError"): {
             "message": "Authentication to the Fly.io API failed.",
@@ -34,6 +34,10 @@ class FlyBaseException(ProwlerException):
             "message": "Rate limited by the Fly.io API.",
             "remediation": "Wait for the Retry-After window and run the scan again. See https://fly.io/docs/machines/api/working-with-machines-api/.",
         },
+        (22007, "FlyInvalidArgumentError"): {
+            "message": "Invalid Fly.io provider argument.",
+            "remediation": "Provide at least one non-empty app name, or omit the app filter to scan all apps in the selected organization.",
+        },
     }
 
     def __init__(self, code, file=None, original_exception=None, message=None):
@@ -57,6 +61,8 @@ class FlyBaseException(ProwlerException):
 
 
 class FlyCredentialsError(FlyBaseException):
+    """Fly.io credentials are missing or invalid."""
+
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             22000, file=file, original_exception=original_exception, message=message
@@ -64,6 +70,8 @@ class FlyCredentialsError(FlyBaseException):
 
 
 class FlyAuthenticationError(FlyBaseException):
+    """The Fly.io API rejected the token or its access permissions."""
+
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             22001, file=file, original_exception=original_exception, message=message
@@ -71,6 +79,8 @@ class FlyAuthenticationError(FlyBaseException):
 
 
 class FlySessionError(FlyBaseException):
+    """The Fly.io HTTP session could not be initialized."""
+
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             22002, file=file, original_exception=original_exception, message=message
@@ -78,6 +88,8 @@ class FlySessionError(FlyBaseException):
 
 
 class FlyIdentityError(FlyBaseException):
+    """The Fly.io organization lookup could not be completed."""
+
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             22003, file=file, original_exception=original_exception, message=message
@@ -85,6 +97,8 @@ class FlyIdentityError(FlyBaseException):
 
 
 class FlyInvalidOrganizationError(FlyBaseException):
+    """A single readable Fly.io organization could not be selected."""
+
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             22004, file=file, original_exception=original_exception, message=message
@@ -92,6 +106,8 @@ class FlyInvalidOrganizationError(FlyBaseException):
 
 
 class FlyAPIError(FlyBaseException):
+    """A Fly.io API request failed for a non-authentication reason."""
+
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             22005, file=file, original_exception=original_exception, message=message
@@ -99,7 +115,30 @@ class FlyAPIError(FlyBaseException):
 
 
 class FlyRateLimitError(FlyBaseException):
+    """The Fly.io API rate limit could not be recovered within the retry budget."""
+
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             22006, file=file, original_exception=original_exception, message=message
+        )
+
+
+class FlyInvalidArgumentError(FlyBaseException):
+    """A Fly.io provider argument would produce an invalid scan scope."""
+
+    def __init__(
+        self,
+        file: str | None = None,
+        original_exception: Exception | None = None,
+        message: str | None = None,
+    ) -> None:
+        """Initialize the invalid-argument error with its remediation.
+
+        Args:
+            file: Source file reporting the error.
+            original_exception: Underlying error, when available.
+            message: Optional explanation overriding the default error message.
+        """
+        super().__init__(
+            22007, file=file, original_exception=original_exception, message=message
         )

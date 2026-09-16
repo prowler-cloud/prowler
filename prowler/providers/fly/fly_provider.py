@@ -13,9 +13,11 @@ from prowler.lib.utils.utils import print_boxes
 from prowler.providers.common.models import Audit_Metadata, Connection
 from prowler.providers.common.provider import Provider
 from prowler.providers.fly.exceptions.exceptions import (
+    FlyAPIError,
     FlyAuthenticationError,
     FlyCredentialsError,
     FlyIdentityError,
+    FlyInvalidArgumentError,
     FlyInvalidOrganizationError,
     FlyRateLimitError,
     FlySessionError,
@@ -72,8 +74,40 @@ class FlyProvider(Provider):
         fixer_config: dict = {},
         mutelist_path: str = None,
         mutelist_content: dict = None,
-    ):
+    ) -> None:
+        """Initialize a read-only scan for one Fly.io organization.
+
+        Args:
+            api_token: Access token, falling back to FLY_API_TOKEN.
+            organization: Organization slug or ID, falling back to FLY_ORG.
+            apps: App names to scan; None includes all apps of the selected org.
+            config_path: Configuration file used when inline content is omitted.
+            config_content: Inline configuration, taking precedence even if empty.
+            fixer_config: Fixer configuration retained for the provider interface.
+            mutelist_path: Mutelist file used when inline content is omitted.
+            mutelist_content: Inline mutelist, taking precedence even if empty.
+
+        Raises:
+            FlyInvalidArgumentError: If an explicit app filter has no valid names.
+            FlyInvalidOrganizationError: If a readable organization cannot be selected.
+            FlyCredentialsError: If no token is available.
+            FlyAuthenticationError: If Fly.io rejects the token or its permissions.
+            FlySessionError: If session initialization fails.
+            FlyIdentityError: If organization discovery fails.
+            FlyRateLimitError: If organization discovery is rate limited.
+        """
         logger.info("Instantiating Fly provider...")
+
+        self._filter_apps = None
+        if apps is not None:
+            self._filter_apps = {
+                name.strip() for name in apps if isinstance(name, str) and name.strip()
+            }
+            if not self._filter_apps:
+                raise FlyInvalidArgumentError(
+                    file=os.path.basename(__file__),
+                    message="The app filter must contain at least one non-empty app name.",
+                )
 
         if config_content is not None:
             self._audit_config = config_content
@@ -91,43 +125,43 @@ class FlyProvider(Provider):
 
         self._fixer_config = fixer_config
 
-        if mutelist_content:
+        if mutelist_content is not None:
             self._mutelist = FlyMutelist(mutelist_content=mutelist_content)
         else:
             if not mutelist_path:
                 mutelist_path = get_default_mute_file_path(self.type)
             self._mutelist = FlyMutelist(mutelist_path=mutelist_path)
 
-        self._filter_apps = {
-            name.strip()
-            for name in apps or []
-            if isinstance(name, str) and name.strip()
-        } or None
-
         Provider.set_global_provider(self)
 
     @property
-    def type(self):
+    def type(self) -> str:
+        """Provider identifier used by checks and output formatters."""
         return self._type
 
     @property
-    def session(self):
+    def session(self) -> FlySession:
+        """Authenticated HTTP session and Fly.io API endpoints."""
         return self._session
 
     @property
-    def identity(self):
+    def identity(self) -> FlyIdentityInfo:
+        """Selected organization and the organizations visible to the token."""
         return self._identity
 
     @property
-    def audit_config(self):
+    def audit_config(self) -> dict:
+        """Effective Fly.io check and retry configuration."""
         return self._audit_config
 
     @property
-    def fixer_config(self):
+    def fixer_config(self) -> dict:
+        """Fixer settings retained for the shared provider interface."""
         return self._fixer_config
 
     @property
     def mutelist(self) -> FlyMutelist:
+        """Effective muting rules for Fly.io findings."""
         return self._mutelist
 
     @property
@@ -322,6 +356,8 @@ class FlyProvider(Provider):
             FlyRateLimitError: If rate limited.
             FlyInvalidOrganizationError: If no organization can be selected.
             FlyIdentityError: If the organization lookup fails.
+            FlyAPIError: If the Machines API request fails for a network or
+                non-authentication HTTP error.
         """
         try:
             org_slug = FlyProvider.setup_identity(session).organization.slug
@@ -351,12 +387,13 @@ class FlyProvider(Provider):
         ):
             raise
         except requests.exceptions.RequestException as error:
-            raise FlyAuthenticationError(
+            raise FlyAPIError(
                 file=os.path.basename(__file__),
                 original_exception=error,
             )
 
     def print_credentials(self) -> None:
+        """Display authentication type and scan scope without printing the token."""
         report_title = (
             f"{Style.BRIGHT}Using the Fly.io credentials below:{Style.RESET_ALL}"
         )
@@ -411,6 +448,7 @@ class FlyProvider(Provider):
             FlyCredentialsError,
             FlySessionError,
             FlyAuthenticationError,
+            FlyAPIError,
             FlyRateLimitError,
             FlyInvalidOrganizationError,
             FlyIdentityError,
@@ -426,7 +464,7 @@ class FlyProvider(Provider):
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-            formatted_error = FlyAuthenticationError(
+            formatted_error = FlyAPIError(
                 file=os.path.basename(__file__),
                 original_exception=error,
             )
@@ -435,4 +473,5 @@ class FlyProvider(Provider):
             return Connection(is_connected=False, error=formatted_error)
 
     def validate_arguments(self) -> None:
+        """Keep the shared hook; the CLI parser and constructor validate Fly inputs."""
         return None

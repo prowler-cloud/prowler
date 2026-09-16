@@ -37,7 +37,7 @@ class machine_image_pinned_to_digest(Check):
 
             if not image:
                 # The configured image reference is absent, so pinning cannot be verified.
-                report.status = "FAIL"
+                report.status = "MANUAL"
                 report.status_extended = (
                     f"Machine {machine.name} in app {machine.app_name} has no image "
                     f"reference in its configuration, so it cannot be tied to an "

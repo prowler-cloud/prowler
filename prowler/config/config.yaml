@@ -838,7 +838,7 @@ e2enetworks:
 
 # Fly.io Configuration
 fly:
-  # Maximum number of retries for Machines API requests (default is 3)
+  # Retries for rate-limited Machines/GraphQL scan requests and Machines connection failures
   # Set to 0 to disable retries
   max_retries: 3
   # fly.app_no_public_ip_address

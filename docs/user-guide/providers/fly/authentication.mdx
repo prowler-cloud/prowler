@@ -80,11 +80,14 @@ The errors below are raised while the credentials are validated and the organiza
 |-------|-------|-----|
 | `FlyCredentialsError` | No token was provided. | Set `FLY_API_TOKEN`. |
 | `FlyAuthenticationError` | The Fly.io API rejected the token (HTTP 401) or the token lacks read access to the organization or resource (HTTP 403). | Verify the token has not expired or been revoked and that it is scoped to the organization being scanned. |
+| `FlyAPIError` | The Machines API credential check failed because of a timeout, connection failure, or non-authentication HTTP error. | Check connectivity to `api.machines.dev` and the [Fly.io status page](https://status.flyio.net), then retry. This does not by itself mean the token is invalid. |
 | `FlyInvalidOrganizationError` | The requested organization is not readable with the token, several organizations are readable and none was selected, or none is readable. | Pass `--organization` (or set `FLY_ORG`) with a slug the token can read. |
 | `FlyRateLimitError` | The Fly.io API rate limited the organization lookup or the credential check (HTTP 429). These pre-scan requests are not retried. | Wait for the `Retry-After` window and run the scan again. |
 | `FlyIdentityError` | The organization lookup failed for another reason, such as a GraphQL error in the response. | Check the error message and the Fly.io status page, then retry. |
 
-During the scan, errors are logged and the affected organization or app is skipped instead of stopping the scan: an HTTP 401 or 403 on a resource is logged as an error (`FlyAuthenticationError`) and the resource is excluded from the results; a rate limit that persists after the configured retries (`FlyRateLimitError`) or any other failed request (`FlyAPIError`) is logged as an error; an HTTP 404 is logged as a warning. Run Prowler with `--log-level ERROR` (or `WARNING`) to see these messages.
+During the scan, errors are logged and the affected organization or app is skipped instead of stopping the scan: an HTTP 401 or 403 on a resource is logged as an error (`FlyAuthenticationError`) and the resource is excluded from the results; a rate limit that persists after the configured retries (`FlyRateLimitError`) or any other failed request (`FlyAPIError`) is logged as an error. A Machines API HTTP 404 is logged as a warning; a GraphQL HTTP 404 remains an API error. Run Prowler with `--log-level ERROR` (or `WARNING`) to see these messages.
+
+In-scan Machines and GraphQL requests retry HTTP 429 responses using `max_retries` and the `Retry-After` header, with waits capped at 300 seconds each and 600 seconds per request in total. Machines API connection failures also retry; GraphQL connection failures and HTTP 5xx responses do not. These retries do not apply to the pre-scan requests listed above.
 
 ---
 
