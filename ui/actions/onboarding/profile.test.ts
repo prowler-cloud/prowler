@@ -139,6 +139,34 @@ describe("onboarding profile actions", () => {
     expect(handleApiErrorMock).toHaveBeenCalledTimes(1);
   });
 
+  it.each([
+    ["a submission", () => submitOnboardingProfile(ANSWERS)],
+    ["a skip", () => skipOnboardingProfile()],
+  ])(
+    "reports %s as unstored when the session cannot be read",
+    async (_, run) => {
+      // Given — `auth()` rejects, e.g. a session this deployment cannot decode.
+      getAuthHeadersMock.mockRejectedValue(new Error("session unreadable"));
+
+      // When
+      const result = await run();
+
+      // Then — a result, never a throw: the step stays eligible next login.
+      expect(result).toEqual({ stored: false, error: expect.any(String) });
+      expect(fetchMock).not.toHaveBeenCalled();
+      expect(handleApiErrorMock).toHaveBeenCalledTimes(1);
+    },
+  );
+
+  it("reads an unreadable session as an unknown profile state", async () => {
+    // Given — this runs in the root layout, so a throw would abort its render.
+    getAuthHeadersMock.mockRejectedValue(new Error("session unreadable"));
+
+    // When / Then — `undefined` makes the gate fail open.
+    await expect(isOnboardingProfileRecorded()).resolves.toBeUndefined();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it("refuses answers outside the declared vocabulary", async () => {
     // When / Then — validation happens before any request.
     await expect(

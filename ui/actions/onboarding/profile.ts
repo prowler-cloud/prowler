@@ -51,13 +51,17 @@ const failureMessage = (payload: unknown): string | undefined => {
 const postOnboardingProfile = async (
   attributes: Record<string, unknown>,
 ): Promise<OnboardingProfileResult> => {
-  const headers = await getAuthHeaders({ contentType: true });
   const body = JSON.stringify({
     data: { type: RESOURCE_TYPE, attributes },
   });
 
   let response: Response;
   try {
+    // Inside the boundary: `getAuthHeaders` awaits `auth()`, which rejects on
+    // an undecodable session. The contract above promises a result, not a
+    // throw, so a dead session must read as "not stored" and leave the step
+    // eligible for the next login.
+    const headers = await getAuthHeaders({ contentType: true });
     response = await fetch(`${apiBaseUrl}${ONBOARDING_PROFILES_PATH}`, {
       method: "POST",
       headers,
@@ -86,7 +90,7 @@ const postOnboardingProfile = async (
   }
 };
 
-// Records the three declared buckets. The API keeps the first answer per
+// Records the four declared buckets. The API keeps the first answer per
 // tenant: a repeated submission answers 200 with the stored profile.
 export const submitOnboardingProfile = async (
   answers: OnboardingProfileAnswers,
@@ -104,11 +108,11 @@ export const skipOnboardingProfile =
 export const isOnboardingProfileRecorded = async (): Promise<
   boolean | undefined
 > => {
-  const headers = await getAuthHeaders({ contentType: false });
   const url = new URL(`${apiBaseUrl}${ONBOARDING_PROFILES_PATH}`);
   url.searchParams.set("page[size]", "1");
 
   try {
+    const headers = await getAuthHeaders({ contentType: false });
     const response = await fetch(url.toString(), { headers });
     if (!response.ok) return undefined;
     const payload = await response.json();

@@ -8957,11 +8957,11 @@ class FindingGroupViewSet(JsonApiFilterMixin, BaseRLSViewSet):
         tags=["Onboarding"],
         summary="Record the tenant's onboarding profile",
         description=(
-            "Store the declared cloud-account count, team size and role, or "
-            "mark the step as skipped. Idempotent: once a profile exists the "
-            "endpoint answers 200 with the stored one and never overwrites "
-            "it, so the first answer, given before the product could bias "
-            "it, is the one that stays."
+            "Store the declared cloud-account count, team size, role and "
+            "seniority, or mark the step as skipped. Idempotent: once a "
+            "profile exists the endpoint answers 200 with the stored one and "
+            "never overwrites it, so the first answer, given before the "
+            "product could bias it, is the one that stays."
         ),
         request=TenantOnboardingProfileCreateSerializer,
         responses={
@@ -8980,6 +8980,7 @@ class FindingGroupViewSet(JsonApiFilterMixin, BaseRLSViewSet):
                             "declared_cloud_accounts": "11-50",
                             "declared_team_size": "2-5",
                             "declared_role": "security",
+                            "declared_seniority": "director",
                         },
                     }
                 },
