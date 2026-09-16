@@ -1,4 +1,4 @@
-FROM python:3.12.13-slim-trixie@sha256:57cd7c3a7a273101a6485ba99423ee568157882804b1124b4dd04266317710de AS build
+FROM python:3.14.5-slim-trixie@sha256:c845af9399020c7e562969a13689e929074a10fd057acd1b1fad06a2fb068e97 AS build
 
 LABEL maintainer="https://github.com/prowler-cloud/api"
 
