@@ -135,7 +135,7 @@ export default async function RootLayout({
                 tenantId={tenantId}
               />
               {/* Single mount point so the watcher survives post-connect navigation. */}
-              <OnboardingCheckpointWatcher showInviteStep tenantId={tenantId} />
+              <OnboardingCheckpointWatcher tenantId={tenantId} />
               {/* Persistent banner shown only while a guided sequence is active. */}
               <OnboardingSequenceBanner hasCompletedScan={hasCompletedScan} />
             </>

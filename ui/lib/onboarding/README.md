@@ -99,14 +99,13 @@ stays free of tracking dependencies.
 
 ## Invite step
 
-When `<OnboardingCheckpointWatcher showInviteStep />` is mounted, the first
-time the checkpoint opens (right after the first provider is connected) the
-watcher renders `OnboardingInviteStep` before the checkpoint dialog: the
-members-page `SendInvitationForm`, tagged `source=onboarding` for the API, plus
-a "Skip for now" action. The store stays `open` while the step shows, so the
-checkpoint dialog follows unchanged once it resolves. A per-tenant localStorage
-marker (`prowler.onboarding.invite.<tenantId>`) keeps it to one offer, and the
-prop lets a deployment decide per tenant whether to offer it at all.
+The first time the checkpoint opens (right after the first provider is
+connected), `OnboardingCheckpointWatcher` renders `OnboardingInviteStep` before
+the checkpoint dialog: the members-page `SendInvitationForm`, tagged
+`source=onboarding` for the API, plus a "Skip for now" action. The store stays
+`open` while the step shows, so the checkpoint dialog follows unchanged once it
+resolves. A per-tenant localStorage marker (`prowler.onboarding.invite.<tenantId>`)
+keeps it to one offer; without a usable `tenantId` the step is not offered.
 
 Outcomes (`shown`, `submitted`, `skipped`) are announced as the
 `prowler:onboarding-invite-step` window event (`dispatchOnboardingInviteStep`).

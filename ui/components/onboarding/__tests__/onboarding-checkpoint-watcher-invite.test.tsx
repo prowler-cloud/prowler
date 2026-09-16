@@ -53,7 +53,7 @@ describe("OnboardingCheckpointWatcher invite step", () => {
   it("offers the invite step before the checkpoint dialog and keeps the store open", async () => {
     // Given
     const user = userEvent.setup();
-    render(<OnboardingCheckpointWatcher showInviteStep tenantId={TENANT_ID} />);
+    render(<OnboardingCheckpointWatcher tenantId={TENANT_ID} />);
     // The step is loaded on demand, so it arrives a tick after render.
     expect(
       await screen.findByRole("button", { name: "Resolve invite step" }),
@@ -86,7 +86,7 @@ describe("OnboardingCheckpointWatcher invite step", () => {
     window.localStorage.setItem(MARKER_KEY, "true");
 
     // When
-    render(<OnboardingCheckpointWatcher showInviteStep tenantId={TENANT_ID} />);
+    render(<OnboardingCheckpointWatcher tenantId={TENANT_ID} />);
 
     // Then
     expect(screen.getByText(CHECKPOINT_TITLE)).toBeInTheDocument();
@@ -97,7 +97,7 @@ describe("OnboardingCheckpointWatcher invite step", () => {
     checkpointOpenState = false;
 
     // When
-    render(<OnboardingCheckpointWatcher showInviteStep tenantId={TENANT_ID} />);
+    render(<OnboardingCheckpointWatcher tenantId={TENANT_ID} />);
 
     // Then
     expect(
@@ -111,9 +111,7 @@ describe("OnboardingCheckpointWatcher invite step", () => {
     window.localStorage.setItem(MARKER_KEY, "true");
 
     // When
-    render(
-      <OnboardingCheckpointWatcher showInviteStep tenantId={OTHER_TENANT_ID} />,
-    );
+    render(<OnboardingCheckpointWatcher tenantId={OTHER_TENANT_ID} />);
 
     // Then
     expect(
@@ -123,7 +121,7 @@ describe("OnboardingCheckpointWatcher invite step", () => {
 
   it("does not offer the step without a usable tenant", () => {
     // When
-    render(<OnboardingCheckpointWatcher showInviteStep tenantId={null} />);
+    render(<OnboardingCheckpointWatcher tenantId={null} />);
 
     // Then
     expect(screen.getByText(CHECKPOINT_TITLE)).toBeInTheDocument();
