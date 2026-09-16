@@ -16,40 +16,11 @@ vi.mock("@/lib/helper", () => ({
 
 import { GET } from "./route";
 
-describe("Google OAuth callback route", () => {
+describe("GitHub OAuth callback route", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.stubGlobal("fetch", fetchMock);
     signInMock.mockResolvedValue({});
-  });
-
-  it("should forward callback attribution to the token exchange", async () => {
-    // Given
-    fetchMock.mockResolvedValue(
-      Response.json({
-        data: {
-          attributes: {
-            access: "access-token",
-            refresh: "refresh-token",
-          },
-        },
-      }),
-    );
-    const state = encodeURIComponent(
-      "/?promo_code=black-hat-2026&utm_source=blackhat",
-    );
-    const request = new Request(
-      `https://app.example.com/api/auth/callback/google?code=oauth-code&state=${state}`,
-    );
-
-    // When
-    await GET(request);
-
-    // Then
-    const body = new URLSearchParams(fetchMock.mock.calls[0][1].body);
-    expect(body.get("code")).toBe("oauth-code");
-    expect(body.get("promo_code")).toBe("black-hat-2026");
-    expect(body.get("utm_source")).toBe("blackhat");
   });
 
   it("redirects to sign-in with a specific error when self-registration is disabled", async () => {
@@ -61,13 +32,16 @@ describe("Google OAuth callback route", () => {
       ),
     );
     const request = new Request(
-      "https://app.example.com/api/auth/callback/google?code=oauth-code",
+      "https://app.example.com/api/auth/callback/github?code=oauth-code",
     );
 
     // When
     const response = await GET(request);
 
     // Then
+    expect(fetchMock.mock.calls[0][0]).toBe(
+      "https://api.example.com/api/v1/tokens/github",
+    );
     expect(response.headers.get("location")).toBe(
       "https://app.example.com/sign-in?error=SelfRegistrationDisabled",
     );
@@ -80,7 +54,7 @@ describe("Google OAuth callback route", () => {
       Response.json({ errors: [{ status: "400" }] }, { status: 400 }),
     );
     const request = new Request(
-      "https://app.example.com/api/auth/callback/google?code=oauth-code",
+      "https://app.example.com/api/auth/callback/github?code=oauth-code",
     );
 
     // When
