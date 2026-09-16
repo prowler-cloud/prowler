@@ -1,6 +1,6 @@
 # Registry UI Validation
 
-The consolidated implementation provides Registry installation → Providers → account details → schema-driven credentials → explicit connection confirmation → scan launch. Registry requires `manage_registry` and its feature flags, independently of billing. Provider account creation and scans retain their existing permissions.
+The consolidated implementation provides Registry installation → Providers → account details → schema-driven credentials → explicit connection confirmation → scan launch. Registry management requires `manage_registry` and its feature flags, independently of billing. Discovering already-installed Registry providers and creating their accounts requires `manage_providers`, without `manage_registry`. Scans retain their existing permissions. The Cloud API allows `GET registry/providers` with `manage_providers`; listing `registry/available-artifacts` and `registry/artifacts` accepts either `manage_registry` or `manage_providers`. Registry credential operations and artifact mutations still require `manage_registry`.
 
 ## Automated Evidence
 

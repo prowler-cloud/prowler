@@ -1,6 +1,6 @@
 import "server-only";
 
-import { fetchCurrentUser } from "@/lib/auth/current-user";
+import { fetchCurrentUser, type CurrentUser } from "@/lib/auth/current-user";
 import { readBoolEnv } from "@/lib/runtime-env";
 
 import {
@@ -17,6 +17,22 @@ const hasEnabledProcessFlags = () =>
 export async function evaluateRegistryAccess(
   accessToken?: string | null,
 ): Promise<RegistryAccessResult> {
+  return evaluatePermission(accessToken, (user) => user.manageRegistry);
+}
+
+export async function evaluateRegistryProviderAccess(
+  accessToken?: string | null,
+): Promise<RegistryAccessResult> {
+  return evaluatePermission(
+    accessToken,
+    (user) => user.permissions.manage_providers,
+  );
+}
+
+async function evaluatePermission(
+  accessToken: string | null | undefined,
+  readPermission: (user: CurrentUser) => boolean | undefined,
+): Promise<RegistryAccessResult> {
   if (!hasEnabledProcessFlags() || !accessToken?.trim()) {
     return { status: REGISTRY_ACCESS.INELIGIBLE };
   }
@@ -28,11 +44,12 @@ export async function evaluateRegistryAccess(
     const currentUser = await fetchCurrentUser(accessToken, {
       signal: controller.signal,
     });
-    if (currentUser.manageRegistry === undefined) {
+    const permission = readPermission(currentUser);
+    if (permission === undefined) {
       return { status: REGISTRY_ACCESS.UNKNOWN };
     }
     return {
-      status: isRegistryEligible(true, true, currentUser.manageRegistry)
+      status: isRegistryEligible(true, true, permission)
         ? REGISTRY_ACCESS.ELIGIBLE
         : REGISTRY_ACCESS.INELIGIBLE,
     };

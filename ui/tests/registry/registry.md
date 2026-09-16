@@ -43,6 +43,17 @@
 
 **Expected Result:** The `202` task stays pending until explicitly released. The task watcher then settles through an authoritative status read into the connected marketplace with a "Registry connected" toast. The key does not appear in DOM text, the page URL, request URLs, or browser storage values, including inside JSON or longer strings.
 
+## Test Case: `REGISTRY-E2E-012` - Provider Management Without Registry Management
+
+**Priority:** `critical`
+**Tags:** @e2e, @registry
+
+**Preconditions:** Enabled Cloud fixture server with an external provider artifact installed. The fixture then revokes `manage_registry` while retaining `manage_providers`.
+
+**Flow:** Verify that the Registry route redirects and its navigation entry is hidden. Open Providers, select the installed provider from the Registry tab, and submit its UID and alias.
+
+**Expected Result:** The provider manager can discover the installed provider and create an account. The wizard advances to its API token credential form, and the new account persists in Providers. Registry navigation remains hidden. This synthetic browser acceptance exercises UI permissions and the fixture HTTP contract; it does not replace authorization tests against the real API.
+
 ## Test Case: `REGISTRY-E2E-005` - Complete Catalog, Recovery, and Lifecycle
 
 **Priority:** `critical`

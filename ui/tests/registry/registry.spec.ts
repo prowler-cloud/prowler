@@ -132,6 +132,58 @@ test.describe.serial("Registry", () => {
   );
 
   test(
+    "lets provider managers create an installed Registry provider account without Registry management access",
+    { tag: ["@critical", "@e2e", "@registry", "@REGISTRY-E2E-012"] },
+    async ({ page }) => {
+      skipUnlessProject(enabledProject);
+      const registry = new RegistryPage(page);
+      await registry.goto();
+      await registry.connectFixtureRegistry();
+      await registry.addLatest("Fixture network audit");
+
+      // The synthetic current-user response keeps manage_providers=true while
+      // revoking manage_registry. Live API authorization needs separate coverage.
+      await controlledRegistryFixture.revokeCurrentAuthority();
+      await registry.goto();
+      await registry.verifyDirectRouteDenied();
+      await registry.verifyRegistryNavigationHidden();
+
+      await page.goto("/providers");
+      await registry.dismissWelcomeDialog();
+      await registry.verifyRegistryNavigationHidden();
+      await page.getByRole("button", { name: /Add (a )?Provider/i }).click();
+      await page.getByRole("tab", { name: "Registry", exact: true }).click();
+      const provider = page.getByRole("option", {
+        name: "Fixture Cloud Registry",
+      });
+      await expect(provider).toBeVisible();
+      await provider.click();
+      await page
+        .getByLabel("Provider UID", { exact: true })
+        .fill("fixture-provider-manager-account");
+      await page
+        .getByLabel("Provider alias (optional)")
+        .fill("Provider manager Registry account");
+      await page.getByRole("button", { name: "Next", exact: true }).click();
+      await expect(
+        page.getByLabel("API token", { exact: false }),
+      ).toBeVisible();
+      expect(await controlledRegistryFixture.snapshot()).toMatchObject({
+        providerCreated: true,
+        secretSaved: false,
+      });
+
+      await page.goto("/providers");
+      await expect(
+        page.getByRole("row").filter({
+          hasText: "Provider manager Registry account",
+        }),
+      ).toBeVisible();
+      await registry.verifyRegistryNavigationHidden();
+    },
+  );
+
+  test(
     "keeps an onboarding key write-only while 202 validation settles through an authoritative read",
     { tag: ["@critical", "@e2e", "@registry", "@REGISTRY-E2E-004"] },
     async ({ page }) => {

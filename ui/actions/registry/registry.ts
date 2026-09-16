@@ -5,7 +5,10 @@ import { z } from "zod";
 import { auth } from "@/auth.config";
 import { apiBaseUrl } from "@/lib";
 import { REGISTRY_ACCESS } from "@/lib/registry/access";
-import { evaluateRegistryAccess } from "@/lib/registry/access.server";
+import {
+  evaluateRegistryAccess,
+  evaluateRegistryProviderAccess,
+} from "@/lib/registry/access.server";
 import { isRegistryArtifactInstallable } from "@/lib/registry/artifacts";
 import { isActiveRegistryCredential } from "@/lib/registry/credential-task";
 import {
@@ -188,8 +191,10 @@ export async function getInstalledRegistryProviderOptions(): Promise<
   | { status: "ready"; options: RegistryProviderOption[] }
   | { status: "access_denied" | "error" }
 > {
-  const access = await getRegistryAccess();
-  if (!access) return { status: "access_denied" };
+  const access = (await auth())?.accessToken;
+  const permission = await evaluateRegistryProviderAccess(access);
+  if (!access || permission.status !== REGISTRY_ACCESS.ELIGIBLE)
+    return { status: "access_denied" };
   const [catalog, installed, providers] = await Promise.all([
     readCompleteRegistryCatalog(access, null),
     readRegistryTenantArtifacts(access),

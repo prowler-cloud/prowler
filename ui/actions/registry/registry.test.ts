@@ -1,12 +1,18 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { authMock, evaluateAccessMock, fetchMock, pollTaskUntilSettledMock } =
-  vi.hoisted(() => ({
-    authMock: vi.fn(),
-    evaluateAccessMock: vi.fn(),
-    fetchMock: vi.fn(),
-    pollTaskUntilSettledMock: vi.fn(),
-  }));
+const {
+  authMock,
+  evaluateAccessMock,
+  evaluateProviderAccessMock,
+  fetchMock,
+  pollTaskUntilSettledMock,
+} = vi.hoisted(() => ({
+  authMock: vi.fn(),
+  evaluateAccessMock: vi.fn(),
+  evaluateProviderAccessMock: vi.fn(),
+  fetchMock: vi.fn(),
+  pollTaskUntilSettledMock: vi.fn(),
+}));
 
 vi.mock("@/auth.config", () => ({ auth: authMock }));
 vi.mock("@/lib", () => ({ apiBaseUrl: "https://api.test/api/v1" }));
@@ -15,6 +21,7 @@ vi.mock("@/actions/task/poll", () => ({
 }));
 vi.mock("@/lib/registry/access.server", () => ({
   evaluateRegistryAccess: evaluateAccessMock,
+  evaluateRegistryProviderAccess: evaluateProviderAccessMock,
 }));
 
 import {
@@ -93,6 +100,7 @@ beforeEach(() => {
   vi.stubGlobal("fetch", fetchMock);
   authMock.mockResolvedValue({ accessToken: "access-token" });
   evaluateAccessMock.mockResolvedValue({ status: "eligible" });
+  evaluateProviderAccessMock.mockResolvedValue({ status: "eligible" });
   fetchMock.mockReset();
   pollTaskUntilSettledMock.mockReset();
 });
@@ -175,6 +183,32 @@ describe("installed Registry provider discovery", () => {
       ],
     });
   });
+
+  it("allows installed-provider discovery without Registry management access", async () => {
+    // Given
+    mockDiscovery({ emptyMetadata: true });
+    evaluateAccessMock.mockResolvedValue({ status: "ineligible" });
+    // When / Then
+    expect(await getInstalledRegistryProviderOptions()).toEqual({
+      status: "ready",
+      options: [{ type: "acme", label: "Acme package" }],
+    });
+    expect(evaluateProviderAccessMock).toHaveBeenCalledWith("access-token");
+    expect(evaluateAccessMock).not.toHaveBeenCalled();
+  });
+
+  it.each(["ineligible", "unknown"])(
+    "denies installed-provider discovery when provider access is %s",
+    async (status) => {
+      // Given
+      evaluateProviderAccessMock.mockResolvedValue({ status });
+      // When / Then
+      expect(await getInstalledRegistryProviderOptions()).toEqual({
+        status: "access_denied",
+      });
+      expect(fetchMock).not.toHaveBeenCalled();
+    },
+  );
 
   it("uses the declared provider and artifact name when metadata is empty", async () => {
     mockDiscovery({ emptyMetadata: true });
@@ -285,12 +319,11 @@ describe("Registry guarded reads", () => {
     }
   });
 
-  it("denies every Registry data action before any Registry endpoint call", async () => {
+  it("denies Registry management actions before any Registry endpoint call", async () => {
     // Given
     evaluateAccessMock.mockResolvedValue({ status: "ineligible" });
     const actions = [
       getRegistryBootstrap,
-      getInstalledRegistryProviderOptions,
       refreshRegistryCredential,
       refreshRegistryCollections,
       () => submitRegistryCredential("registry-test-key"),
