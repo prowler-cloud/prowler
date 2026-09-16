@@ -120,7 +120,7 @@ class Test_Organizations_Service:
 
         assert len(organizations.delegated_administrators) == 1
         assert organizations.delegated_administrators[0].id == account_id
-        assert organizations.delegated_administrators[0].delegated_services == []
+        assert organizations.delegated_administrators[0].delegated_services is None
 
     @mock_aws
     def test_list_delegated_services_for_account_unexpected_exception(self):
@@ -141,4 +141,4 @@ class Test_Organizations_Service:
 
         assert len(organizations.delegated_administrators) == 1
         assert organizations.delegated_administrators[0].id == account_id
-        assert organizations.delegated_administrators[0].delegated_services == []
+        assert organizations.delegated_administrators[0].delegated_services is None

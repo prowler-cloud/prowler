@@ -29,19 +29,23 @@ class organizations_delegated_administrators(Check):
                         resource=delegated_administrator,
                     )
                     report.region = organizations_client.region
-                    delegated_services = (
-                        ", ".join(delegated_administrator.delegated_services)
-                        or "no services"
-                    )
+                    if delegated_administrator.delegated_services is None:
+                        services_clause = "delegated services could not be determined"
+                    else:
+                        delegated_services = (
+                            ", ".join(delegated_administrator.delegated_services)
+                            or "no services"
+                        )
+                        services_clause = f"delegated for: {delegated_services}"
                     if (
                         delegated_administrator.id
                         not in organizations_trusted_delegated_administrators
                     ):
                         report.status = "FAIL"
-                        report.status_extended = f"AWS Organization {organizations_client.organization.id} has an untrusted Delegated Administrator: {delegated_administrator.id}, delegated for: {delegated_services}."
+                        report.status_extended = f"AWS Organization {organizations_client.organization.id} has an untrusted Delegated Administrator: {delegated_administrator.id}, {services_clause}."
                     else:
                         report.status = "PASS"
-                        report.status_extended = f"AWS Organization {organizations_client.organization.id} has a trusted Delegated Administrator: {delegated_administrator.id}, delegated for: {delegated_services}."
+                        report.status_extended = f"AWS Organization {organizations_client.organization.id} has a trusted Delegated Administrator: {delegated_administrator.id}, {services_clause}."
                     findings.append(report)
             else:
                 report = Check_Report_AWS(

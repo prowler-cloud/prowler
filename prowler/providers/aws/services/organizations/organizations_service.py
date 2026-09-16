@@ -196,7 +196,19 @@ class Organizations(AWSService):
 
         return self.delegated_administrators
 
-    def _list_delegated_services_for_account(self, account_id) -> list:
+    def _list_delegated_services_for_account(self, account_id) -> Optional[list]:
+        """List the AWS service principals a delegated administrator is registered for.
+
+        Args:
+            account_id: The AWS account ID of the delegated administrator to query.
+
+        Returns:
+            A list of AWS service principal strings the account is a delegated
+            administrator for, an empty list if the account has none, or
+            ``None`` if the services could not be determined, e.g. because the
+            caller lacks the separate `organizations:ListDelegatedServicesForAccount`
+            permission or another error occurred.
+        """
         logger.info(
             "Organizations - List Delegated Services for account: %s ...", account_id
         )
@@ -215,11 +227,13 @@ class Organizations(AWSService):
             logger.warning(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+            return None
 
         except Exception as error:
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+            return None
 
         return delegated_services
 
@@ -240,7 +254,7 @@ class DelegatedAdministrator(BaseModel):
     email: str
     status: str
     joinedmethod: str
-    delegated_services: list[str] = []
+    delegated_services: Optional[list[str]] = None
 
 
 class Organization(BaseModel):
