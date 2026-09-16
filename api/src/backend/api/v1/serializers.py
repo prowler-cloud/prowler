@@ -4532,7 +4532,6 @@ class FindingGroupResourceSerializer(BaseSerializerV1):
 
 DECLARED_PROFILE_FIELDS = (
     "declared_cloud_accounts",
-    "declared_team_size",
     "declared_role",
     "declared_seniority",
 )
@@ -4561,11 +4560,6 @@ class TenantOnboardingProfileCreateSerializer(RLSSerializer, BaseWriteSerializer
 
     declared_cloud_accounts = serializers.ChoiceField(
         choices=TenantOnboardingProfile.CloudAccountsBucket.choices,
-        required=False,
-        allow_null=True,
-    )
-    declared_team_size = serializers.ChoiceField(
-        choices=TenantOnboardingProfile.TeamSizeBucket.choices,
         required=False,
         allow_null=True,
     )

@@ -13,16 +13,6 @@ export const DECLARED_CLOUD_ACCOUNTS = {
 export type DeclaredCloudAccounts =
   (typeof DECLARED_CLOUD_ACCOUNTS)[keyof typeof DECLARED_CLOUD_ACCOUNTS];
 
-export const DECLARED_TEAM_SIZE = {
-  ONE: "1",
-  TWO_TO_FIVE: "2-5",
-  SIX_TO_TWENTY: "6-20",
-  OVER_TWENTY: "21+",
-} as const;
-
-export type DeclaredTeamSize =
-  (typeof DECLARED_TEAM_SIZE)[keyof typeof DECLARED_TEAM_SIZE];
-
 // Discipline, not rank. Management lives in DECLARED_SENIORITY so the two
 // questions stay orthogonal: a security engineer and a CISO both answer
 // "security" here and differ on the ladder below.
@@ -52,7 +42,6 @@ export type DeclaredSeniority =
 
 export interface OnboardingProfileAnswers {
   declared_cloud_accounts: DeclaredCloudAccounts;
-  declared_team_size: DeclaredTeamSize;
   declared_role: DeclaredRole;
   declared_seniority: DeclaredSeniority;
 }

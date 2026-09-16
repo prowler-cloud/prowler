@@ -3119,7 +3119,7 @@ class TenantOnboardingProfile(RowLevelSecurityProtectedModel):
     """What a tenant declared about itself at first login, before the product
     shaped its behaviour.
 
-    One row per tenant. The four buckets are closed choices asked in the
+    One row per tenant. The three buckets are closed choices asked in the
     onboarding profile step; ``skipped`` records that the step was shown and
     dismissed, so a skip is a fact and not the absence of one.
 
@@ -3140,12 +3140,6 @@ class TenantOnboardingProfile(RowLevelSecurityProtectedModel):
         FIFTY_ONE_TO_TWO_HUNDRED = "51-200", _("51-200")
         OVER_TWO_HUNDRED = "200+", _("200+")
 
-    class TeamSizeBucket(models.TextChoices):
-        ONE = "1", _("1")
-        TWO_TO_FIVE = "2-5", _("2-5")
-        SIX_TO_TWENTY = "6-20", _("6-20")
-        OVER_TWENTY = "21+", _("21+")
-
     class Role(models.TextChoices):
         SECURITY = "security", _("Security")
         DEVOPS_PLATFORM = "devops_platform", _("DevOps / Platform")
@@ -3164,9 +3158,6 @@ class TenantOnboardingProfile(RowLevelSecurityProtectedModel):
     inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
     declared_cloud_accounts = models.CharField(
         max_length=16, choices=CloudAccountsBucket.choices, null=True, blank=True
-    )
-    declared_team_size = models.CharField(
-        max_length=16, choices=TeamSizeBucket.choices, null=True, blank=True
     )
     declared_role = models.CharField(
         max_length=32, choices=Role.choices, null=True, blank=True

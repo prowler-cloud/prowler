@@ -8,7 +8,6 @@ import {
   DECLARED_CLOUD_ACCOUNTS,
   DECLARED_ROLE,
   DECLARED_SENIORITY,
-  DECLARED_TEAM_SIZE,
   type OnboardingProfileAnswers,
 } from "@/types/onboarding-profile";
 
@@ -26,9 +25,6 @@ export interface OnboardingProfileResult {
 const onboardingProfileAnswersSchema = z.object({
   declared_cloud_accounts: z.enum(
     Object.values(DECLARED_CLOUD_ACCOUNTS) as [string, ...string[]],
-  ),
-  declared_team_size: z.enum(
-    Object.values(DECLARED_TEAM_SIZE) as [string, ...string[]],
   ),
   declared_role: z.enum(Object.values(DECLARED_ROLE) as [string, ...string[]]),
   declared_seniority: z.enum(
@@ -90,7 +86,7 @@ const postOnboardingProfile = async (
   }
 };
 
-// Records the four declared buckets. The API keeps the first answer per
+// Records the three declared buckets. The API keeps the first answer per
 // tenant: a repeated submission answers 200 with the stored profile.
 export const submitOnboardingProfile = async (
   answers: OnboardingProfileAnswers,

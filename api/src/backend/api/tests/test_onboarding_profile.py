@@ -8,7 +8,6 @@ from rest_framework import status
 
 ANSWERS = {
     "declared_cloud_accounts": "11-50",
-    "declared_team_size": "2-5",
     "declared_role": "security",
     "declared_seniority": "director",
 }
@@ -37,7 +36,6 @@ class TestTenantOnboardingProfileViewSet:
         assert response.status_code == status.HTTP_201_CREATED
         attributes = response.json()["data"]["attributes"]
         assert attributes["declared_cloud_accounts"] == "11-50"
-        assert attributes["declared_team_size"] == "2-5"
         assert attributes["declared_role"] == "security"
         assert attributes["declared_seniority"] == "director"
         assert attributes["skipped"] is False
@@ -80,7 +78,7 @@ class TestTenantOnboardingProfileViewSet:
         "attributes, pointer",
         [
             (
-                {"declared_cloud_accounts": "1", "declared_team_size": "1"},
+                {"declared_cloud_accounts": "1"},
                 "/data/attributes/declared_role",
             ),
             (

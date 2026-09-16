@@ -80,8 +80,8 @@ the sequence automatically.
 ## Profile step
 
 Before the mandatory gate offers the first tour, `OnboardingProfileGate` asks
-a new tenant four closed questions (cloud accounts, team size, area of work
-and position) and
+a new tenant three closed questions (cloud accounts, area of work and
+position) and
 records the answer, or the skip, through `POST /onboarding-profiles`. The API
 keeps the first answer per tenant, so the layout only reads
 `isOnboardingProfileRecorded()` for tenants without providers and the gate

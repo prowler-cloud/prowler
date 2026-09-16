@@ -42,20 +42,6 @@ class Migration(migrations.Migration):
                     ),
                 ),
                 (
-                    "declared_team_size",
-                    models.CharField(
-                        blank=True,
-                        choices=[
-                            ("1", "1"),
-                            ("2-5", "2-5"),
-                            ("6-20", "6-20"),
-                            ("21+", "21+"),
-                        ],
-                        max_length=16,
-                        null=True,
-                    ),
-                ),
-                (
                     "declared_role",
                     models.CharField(
                         blank=True,

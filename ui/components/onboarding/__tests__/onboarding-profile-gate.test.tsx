@@ -37,14 +37,12 @@ const MARKER_KEY = onboardingProfileMarkerKey(TENANT_ID) as string;
 
 const ANSWERS = {
   declared_cloud_accounts: "11-50",
-  declared_team_size: "2-5",
   declared_role: "security",
   declared_seniority: "director",
 } as const;
 
 const answerEverything = async (user: ReturnType<typeof userEvent.setup>) => {
   await user.click(screen.getByRole("radio", { name: "11-50" }));
-  await user.click(screen.getByRole("radio", { name: "2-5" }));
   await user.click(screen.getByRole("radio", { name: "Security" }));
   await user.click(screen.getByRole("radio", { name: "Director / Head of" }));
   await user.click(screen.getByRole("button", { name: "Continue" }));
