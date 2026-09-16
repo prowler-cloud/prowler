@@ -3444,6 +3444,259 @@ current-context: test-context
         provider_secret.refresh_from_db()
         assert "region" not in provider_secret.secret
 
+    @staticmethod
+    def _azure_certificate_bundle_base64():
+        import base64
+        from datetime import UTC, datetime, timedelta
+
+        from cryptography import x509
+        from cryptography.hazmat.primitives import hashes, serialization
+        from cryptography.hazmat.primitives.asymmetric import rsa
+        from cryptography.x509.oid import NameOID
+
+        private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+        subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "Prowler")])
+        certificate = (
+            x509.CertificateBuilder()
+            .subject_name(subject)
+            .issuer_name(subject)
+            .public_key(private_key.public_key())
+            .serial_number(x509.random_serial_number())
+            .not_valid_before(datetime.now(UTC))
+            .not_valid_after(datetime.now(UTC) + timedelta(days=1))
+            .sign(private_key, hashes.SHA256())
+        )
+        bundle = certificate.public_bytes(
+            serialization.Encoding.PEM
+        ) + private_key.private_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PrivateFormat.PKCS8,
+            encryption_algorithm=serialization.NoEncryption(),
+        )
+        return base64.b64encode(bundle).decode("ascii")
+
+    def test_provider_secrets_create_azure_persists_whitespace_stripped_certificate(
+        self,
+        authenticated_client,
+        azure_provider,
+    ):
+        # `AzureProviderSecret.validate_certificate_content` strips whitespace
+        # inside the base64 payload. The outer write path must reassign the
+        # validator's normalized output so the value that reaches Fernet
+        # storage matches what the SDK will later decode.
+        clean_b64 = self._azure_certificate_bundle_base64()
+        wrapped_b64 = (
+            "  "
+            + "\r\n".join(clean_b64[i : i + 64] for i in range(0, len(clean_b64), 64))
+            + "  "
+        )
+
+        data = {
+            "data": {
+                "type": "provider-secrets",
+                "attributes": {
+                    "name": "Azure Cert Secret",
+                    "secret_type": ProviderSecret.TypeChoices.STATIC,
+                    "secret": {
+                        "client_id": "87654321-4321-4321-4321-210987654321",
+                        "tenant_id": "12345678-1234-1234-1234-123456789012",
+                        "certificate_content": wrapped_b64,
+                    },
+                },
+                "relationships": {
+                    "provider": {
+                        "data": {"type": "providers", "id": str(azure_provider.id)}
+                    }
+                },
+            }
+        }
+
+        response = authenticated_client.post(
+            reverse("providersecret-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_201_CREATED, response.content
+        provider_secret = ProviderSecret.objects.get(id=response.json()["data"]["id"])
+        # Persisted value is the whitespace-stripped payload — proves the
+        # per-provider validator's return value is what Fernet encrypted,
+        # not the raw upload.
+        assert provider_secret.secret["certificate_content"] == clean_b64
+
+    def test_provider_secrets_update_azure_persists_whitespace_stripped_certificate(
+        self,
+        authenticated_client,
+        azure_provider,
+    ):
+        create_response = authenticated_client.post(
+            reverse("providersecret-list"),
+            data=json.dumps(
+                {
+                    "data": {
+                        "type": "provider-secrets",
+                        "attributes": {
+                            "name": "Azure Cert Secret",
+                            "secret_type": ProviderSecret.TypeChoices.STATIC,
+                            "secret": {
+                                "client_id": "87654321-4321-4321-4321-210987654321",
+                                "tenant_id": "12345678-1234-1234-1234-123456789012",
+                                "certificate_content": self._azure_certificate_bundle_base64(),
+                            },
+                        },
+                        "relationships": {
+                            "provider": {
+                                "data": {
+                                    "type": "providers",
+                                    "id": str(azure_provider.id),
+                                }
+                            }
+                        },
+                    }
+                }
+            ),
+            content_type="application/vnd.api+json",
+        )
+        assert create_response.status_code == status.HTTP_201_CREATED
+
+        provider_secret = ProviderSecret.objects.get(
+            id=create_response.json()["data"]["id"]
+        )
+
+        clean_b64 = self._azure_certificate_bundle_base64()
+        wrapped_b64 = "\r\n".join(
+            clean_b64[i : i + 64] for i in range(0, len(clean_b64), 64)
+        )
+        response = authenticated_client.patch(
+            reverse("providersecret-detail", kwargs={"pk": provider_secret.id}),
+            data=json.dumps(
+                {
+                    "data": {
+                        "type": "provider-secrets",
+                        "id": str(provider_secret.id),
+                        "attributes": {
+                            "secret": {
+                                "client_id": "87654321-4321-4321-4321-210987654321",
+                                "tenant_id": "12345678-1234-1234-1234-123456789012",
+                                "certificate_content": wrapped_b64,
+                            }
+                        },
+                    }
+                }
+            ),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_200_OK, response.content
+        provider_secret.refresh_from_db()
+        assert provider_secret.secret["certificate_content"] == clean_b64
+
+    def test_provider_secrets_create_m365_preserves_whitespace_in_client_secret(
+        self,
+        authenticated_client,
+        m365_provider,
+    ):
+        # DRF `CharField.trim_whitespace` (the default) would silently strip
+        # surrounding whitespace off opaque credentials if the outer write
+        # path blindly persisted the validated dict. Legitimate M365 client
+        # secrets can contain leading/trailing whitespace, so the raw
+        # submitted value must survive the round-trip unchanged.
+        whitespace_secret = "  M365-Secret-With-Padding  "
+        data = {
+            "data": {
+                "type": "provider-secrets",
+                "attributes": {
+                    "name": "M365 Secret",
+                    "secret_type": ProviderSecret.TypeChoices.STATIC,
+                    "secret": {
+                        "client_id": "87654321-4321-4321-4321-210987654321",
+                        "tenant_id": "12345678-1234-1234-1234-123456789012",
+                        "client_secret": whitespace_secret,
+                    },
+                },
+                "relationships": {
+                    "provider": {
+                        "data": {"type": "providers", "id": str(m365_provider.id)}
+                    }
+                },
+            }
+        }
+
+        response = authenticated_client.post(
+            reverse("providersecret-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_201_CREATED, response.content
+        provider_secret = ProviderSecret.objects.get(id=response.json()["data"]["id"])
+        assert provider_secret.secret["client_secret"] == whitespace_secret
+
+    def test_provider_secrets_update_image_preserves_whitespace_in_registry_password(
+        self,
+        authenticated_client,
+        image_provider,
+    ):
+        # Container-registry passwords can be opaque high-entropy strings
+        # generated by tooling that includes trailing whitespace as part of
+        # the credential. The outer write path must keep the submitted
+        # value verbatim so the registry still accepts it after a PATCH.
+        create_response = authenticated_client.post(
+            reverse("providersecret-list"),
+            data=json.dumps(
+                {
+                    "data": {
+                        "type": "provider-secrets",
+                        "attributes": {
+                            "name": "Registry Secret",
+                            "secret_type": ProviderSecret.TypeChoices.STATIC,
+                            "secret": {
+                                "registry_username": "prowler",
+                                "registry_password": "initial-password",
+                            },
+                        },
+                        "relationships": {
+                            "provider": {
+                                "data": {
+                                    "type": "providers",
+                                    "id": str(image_provider.id),
+                                }
+                            }
+                        },
+                    }
+                }
+            ),
+            content_type="application/vnd.api+json",
+        )
+        assert create_response.status_code == status.HTTP_201_CREATED
+
+        whitespace_password = "  registry-password-with-padding  "
+        provider_secret = ProviderSecret.objects.get(
+            id=create_response.json()["data"]["id"]
+        )
+        response = authenticated_client.patch(
+            reverse("providersecret-detail", kwargs={"pk": provider_secret.id}),
+            data=json.dumps(
+                {
+                    "data": {
+                        "type": "provider-secrets",
+                        "id": str(provider_secret.id),
+                        "attributes": {
+                            "secret": {
+                                "registry_username": "prowler",
+                                "registry_password": whitespace_password,
+                            }
+                        },
+                    }
+                }
+            ),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_200_OK, response.content
+        provider_secret.refresh_from_db()
+        assert provider_secret.secret["registry_password"] == whitespace_password
+
     @pytest.mark.parametrize(
         "attributes, error_code, error_pointer",
         (
