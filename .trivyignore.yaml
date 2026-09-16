@@ -206,3 +206,25 @@ vulnerabilities:
     purls:
       - "pkg:golang/oras.land/oras-go/v2"
     expired_at: 2026-12-31
+
+  # Base image vulnerabilities pending upstream fixes
+  - id: CVE-2026-41992
+    purls:
+      - "pkg:deb/debian/gzip"
+    expired_at: 2026-12-31
+  - id: CVE-2026-86145
+    purls:
+      - "pkg:deb/debian/libpcre2-8-0"
+    expired_at: 2026-12-31
+  - id: CVE-2026-89161
+    purls:
+      - "pkg:deb/debian/libpcre2-8-0"
+    expired_at: 2026-12-31
+  - id: CVE-2026-11822
+    purls:
+      - "pkg:deb/debian/libsqlite3-0"
+    expired_at: 2026-12-31
+  - id: CVE-2026-11824
+    purls:
+      - "pkg:deb/debian/libsqlite3-0"
+    expired_at: 2026-12-31
