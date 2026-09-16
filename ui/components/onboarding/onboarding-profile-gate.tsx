@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { useCallback, useState, useSyncExternalStore } from "react";
+import { useState, useSyncExternalStore } from "react";
 
 import {
   skipOnboardingProfile,
@@ -55,7 +55,7 @@ export function OnboardingProfileGate({
   const handledLocally = useSyncExternalStore(
     subscribeOnboardingProfileMarker,
     // Bound per tenant so switching accounts re-reads the right key.
-    useCallback(() => isOnboardingProfileHandled(tenantId), [tenantId]),
+    () => isOnboardingProfileHandled(tenantId),
     getServerOnboardingProfileHandled,
   );
   // Session flag keeps the modal closed after submit/skip within this mount,
