@@ -384,6 +384,19 @@ class HuaweiCloudSession:
                     .build()
                 )
 
+            elif service == "lts":
+                from huaweicloudsdklts.v2 import LtsClient
+                from huaweicloudsdklts.v2.region.lts_region import LtsRegion
+
+                client_region = region or self._region
+                return (
+                    LtsClient.new_builder()
+                    .with_credentials(self._get_basic_credentials(client_region))
+                    .with_http_config(self._http_config())
+                    .with_region(_aligned_region(LtsRegion, client_region))
+                    .build()
+                )
+
             else:
                 raise HuaweiCloudServiceError(
                     message=f"Huawei Cloud service '{service}' is not supported"

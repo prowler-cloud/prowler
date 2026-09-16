@@ -102,6 +102,7 @@ constraints = [
     { name = "huaweicloudsdkevs", specifier = "==3.1.204" },
     { name = "huaweicloudsdkiam", specifier = "==3.1.204" },
     { name = "huaweicloudsdkkms", specifier = "==3.1.204" },
+    { name = "huaweicloudsdklts", specifier = "==3.1.204" },
     { name = "huaweicloudsdkobs", specifier = "==3.1.204" },
     { name = "huaweicloudsdkrds", specifier = "==3.1.204" },
     { name = "huaweicloudsdkvpc", specifier = "==3.1.204" },
@@ -2391,6 +2392,17 @@ wheels = [
 ]
 
 [[package]]
+name = "huaweicloudsdklts"
+version = "3.1.204"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "huaweicloudsdkcore" },
+]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/24/5e/7068d5aaa156d45b5494f2dd6339ef1f26cbedb230c9b59038b80a30e4b5/huaweicloudsdklts-3.1.204-py3-none-any.whl", hash = "sha256:8e7a2ea16faf83ab2d75cc609b0fac747ea6a271f26dcd4f8e980ab1c07e9b95", size = 582393, upload-time = "2026-07-09T09:03:37.116Z" },
+]
+
+[[package]]
 name = "huaweicloudsdkobs"
 version = "3.1.204"
 source = { registry = "https://pypi.org/simple" }
@@ -3815,6 +3827,7 @@ dependencies = [
     { name = "huaweicloudsdkevs" },
     { name = "huaweicloudsdkiam" },
     { name = "huaweicloudsdkkms" },
+    { name = "huaweicloudsdklts" },
     { name = "huaweicloudsdkobs" },
     { name = "huaweicloudsdkrds" },
     { name = "huaweicloudsdkvpc" },
@@ -3938,6 +3951,7 @@ requires-dist = [
     { name = "huaweicloudsdkevs", specifier = "==3.1.204" },
     { name = "huaweicloudsdkiam", specifier = "==3.1.204" },
     { name = "huaweicloudsdkkms", specifier = "==3.1.204" },
+    { name = "huaweicloudsdklts", specifier = "==3.1.204" },
     { name = "huaweicloudsdkobs", specifier = "==3.1.204" },
     { name = "huaweicloudsdkrds", specifier = "==3.1.204" },
     { name = "huaweicloudsdkvpc", specifier = "==3.1.204" },
