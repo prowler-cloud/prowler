@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import type { OnboardingFlow } from "@/lib/onboarding";
 import { useScansStore } from "@/store";
 import { ProviderProps } from "@/types";
 
@@ -114,6 +115,18 @@ vi.mock("@/components/onboarding", () => ({
   },
   PageReady: () => <div data-testid="page-ready" />,
 }));
+
+interface OnboardingTriggerProps {
+  flow: OnboardingFlow;
+}
+
+const getTriggeredTourTargets = () => {
+  const triggerProps = onboardingTriggerSpy.mock.calls.at(-1)?.[0] as
+    | OnboardingTriggerProps
+    | undefined;
+
+  return triggerProps?.flow.tour.steps.map((step) => step.target);
+};
 
 const providers: ProviderProps[] = [
   {
@@ -323,26 +336,35 @@ describe("ScansPageShell", () => {
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 
-  it("keeps launch scan with filters and mutelist with tabs", () => {
-    vi.stubEnv("UI_CLOUD_ENABLED", "false");
+  it("keeps launch scan, import findings, and mutelist with tabs", () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
 
+    // When
     render(
-      <ScansPageShell providers={providers} hasManageScansPermission>
+      <ScansPageShell
+        providers={providers}
+        hasManageScansPermission
+        hasManageIngestionsPermission
+      >
         <div>Scans table</div>
       </ScansPageShell>,
     );
 
-    expect(
-      screen.getByRole("group", { name: /scan filters and actions/i }),
-    ).toContainElement(screen.getByRole("button", { name: /launch scan/i }));
-    expect(
-      screen.getByRole("group", { name: /scan filters and actions/i }),
-    ).not.toContainElement(
+    // Then
+    const tabs = screen.getByRole("group", { name: /scan tabs/i });
+    expect(tabs).toContainElement(
+      screen.getByRole("button", { name: /launch scan/i }),
+    );
+    expect(tabs).toContainElement(
+      screen.getByRole("button", { name: /import findings/i }),
+    );
+    expect(tabs).toContainElement(
       screen.getByRole("link", { name: /configure mutelist/i }),
     );
-    expect(screen.getByRole("group", { name: /scan tabs/i })).toContainElement(
-      screen.getByRole("link", { name: /configure mutelist/i }),
-    );
+    expect(
+      screen.getByRole("group", { name: /scan filters/i }),
+    ).toContainElement(screen.getByText("Shared scan filters"));
   });
 
   it("shows the active scans count in the in progress tab", () => {
@@ -592,6 +614,50 @@ describe("ScansPageShell", () => {
     );
 
     expect(screen.getByTestId("onboarding-trigger")).toBeInTheDocument();
+  });
+
+  it("uses only mounted tour targets when an active scan exists on the completed tab", () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
+    searchParamsValue.current = "tab=completed";
+
+    // When
+    render(
+      <ScansPageShell
+        providers={providers}
+        hasManageScansPermission
+        activeScanCount={1}
+      >
+        <div>Scans table</div>
+      </ScansPageShell>,
+    );
+
+    // Then
+    expect(getTriggeredTourTargets()).toEqual([undefined, "launch", "tabs"]);
+  });
+
+  it("targets the running scan when its row is mounted on the in progress tab", () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
+    searchParamsValue.current = "tab=active";
+
+    // When
+    render(
+      <ScansPageShell
+        providers={providers}
+        hasManageScansPermission
+        activeScanCount={1}
+      >
+        <div>Scans table</div>
+      </ScansPageShell>,
+    );
+
+    // Then
+    expect(getTriggeredTourTargets()).toEqual([
+      undefined,
+      "in-progress",
+      "launch",
+    ]);
   });
 
   it("suppresses the view-first-scan tour when no provider is connected, since Launch Scan is disabled", () => {

@@ -1,1 +1,0 @@
-`PROWLER_IMAGE_PROVIDER_ALLOWED_PRIVATE_NETWORKS` environment variable so the image provider can reach container registries on allowlisted private networks, keeping every other non-public address blocked

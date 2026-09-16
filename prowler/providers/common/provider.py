@@ -382,6 +382,8 @@ class Provider(ABC):
                     )
                     provider_class(
                         retries_max_attempts=arguments.aws_retries_max_attempts,
+                        connect_timeout=arguments.aws_connect_timeout,
+                        read_timeout=arguments.aws_read_timeout,
                         role_arn=arguments.role,
                         session_duration=arguments.session_duration,
                         external_id=arguments.external_id,

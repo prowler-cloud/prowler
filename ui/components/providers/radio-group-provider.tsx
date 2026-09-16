@@ -2,117 +2,38 @@
 
 import { FC, useState } from "react";
 import { Control, Controller } from "react-hook-form";
-import { z } from "zod";
-
-import { SearchInput } from "@/components/shadcn";
-import { FormMessage } from "@/components/shadcn/form";
-import { cn } from "@/lib/utils";
-import { addProviderFormSchema } from "@/types";
 
 import {
-  AlibabaCloudProviderBadge,
-  AWSProviderBadge,
-  AzureProviderBadge,
-  CloudflareProviderBadge,
-  GCPProviderBadge,
-  GitHubProviderBadge,
-  GoogleWorkspaceProviderBadge,
-  IacProviderBadge,
-  ImageProviderBadge,
-  KS8ProviderBadge,
-  M365ProviderBadge,
-  MongoDBAtlasProviderBadge,
-  OktaProviderBadge,
-  OpenStackProviderBadge,
-  OracleCloudProviderBadge,
-  VercelProviderBadge,
-} from "../icons/providers-badge";
+  ProviderTypeIcon,
+  PROVIDER_TYPE_DATA,
+} from "@/components/icons/providers-badge/provider-type-icon";
+import { Badge, SearchInput } from "@/components/shadcn";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@/components/shadcn/avatar";
+import { FormMessage } from "@/components/shadcn/form";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/shadcn/tabs/tabs";
+import type { RegistryProviderOption } from "@/lib/registry/provider-options";
+import { cn } from "@/lib/utils";
+import type { AddProviderFormValues } from "@/types/formSchemas";
 
-const PROVIDERS = [
-  {
-    value: "aws",
-    label: "Amazon Web Services",
-    badge: AWSProviderBadge,
-  },
-  {
-    value: "gcp",
-    label: "Google Cloud Platform",
-    badge: GCPProviderBadge,
-  },
-  {
-    value: "azure",
-    label: "Microsoft Azure",
-    badge: AzureProviderBadge,
-  },
-  {
-    value: "m365",
-    label: "Microsoft 365",
-    badge: M365ProviderBadge,
-  },
-  {
-    value: "mongodbatlas",
-    label: "MongoDB Atlas",
-    badge: MongoDBAtlasProviderBadge,
-  },
-  {
-    value: "kubernetes",
-    label: "Kubernetes",
-    badge: KS8ProviderBadge,
-  },
-  {
-    value: "github",
-    label: "GitHub",
-    badge: GitHubProviderBadge,
-  },
-  {
-    value: "googleworkspace",
-    label: "Google Workspace",
-    badge: GoogleWorkspaceProviderBadge,
-  },
-  {
-    value: "iac",
-    label: "Infrastructure as Code",
-    badge: IacProviderBadge,
-  },
-  {
-    value: "image",
-    label: "Container Registry",
-    badge: ImageProviderBadge,
-  },
-  {
-    value: "oraclecloud",
-    label: "Oracle Cloud Infrastructure",
-    badge: OracleCloudProviderBadge,
-  },
-  {
-    value: "alibabacloud",
-    label: "Alibaba Cloud",
-    badge: AlibabaCloudProviderBadge,
-  },
-  {
-    value: "cloudflare",
-    label: "Cloudflare",
-    badge: CloudflareProviderBadge,
-  },
-  {
-    value: "openstack",
-    label: "OpenStack",
-    badge: OpenStackProviderBadge,
-  },
-  {
-    value: "vercel",
-    label: "Vercel",
-    badge: VercelProviderBadge,
-  },
-  {
-    value: "okta",
-    label: "Okta",
-    badge: OktaProviderBadge,
-  },
-] as const;
+const PROVIDERS = Object.entries(PROVIDER_TYPE_DATA).map(
+  ([value, { label }]) => ({ value, label }),
+);
+
+const PROVIDER_TAB = { ALL: "all", REGISTRY: "registry" } as const;
+type ProviderTab = (typeof PROVIDER_TAB)[keyof typeof PROVIDER_TAB];
 
 interface RadioGroupProviderProps {
-  control: Control<z.infer<typeof addProviderFormSchema>>;
+  control: Control<AddProviderFormValues>;
+  registryOptions?: RegistryProviderOption[];
   isInvalid: boolean;
   errorMessage?: string;
 }
@@ -121,25 +42,53 @@ export const RadioGroupProvider: FC<RadioGroupProviderProps> = ({
   control,
   isInvalid,
   errorMessage,
+  registryOptions = [],
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [activeTab, setActiveTab] = useState<ProviderTab>(PROVIDER_TAB.ALL);
 
+  const options = [
+    ...PROVIDERS.map((provider) => ({
+      value: provider.value as string,
+      label: provider.label as string,
+      registry: false,
+      logoUrl: undefined as string | undefined,
+    })),
+    ...registryOptions.map((provider) => ({
+      value: provider.type,
+      label: provider.label,
+      registry: true,
+      logoUrl: provider.logoUrl,
+    })),
+  ];
+  const tabProviders =
+    activeTab === PROVIDER_TAB.REGISTRY
+      ? options.filter((provider) => provider.registry)
+      : options;
   const lowerSearch = searchTerm.trim().toLowerCase();
   const filteredProviders = lowerSearch
-    ? PROVIDERS.filter(
+    ? tabProviders.filter(
         (provider) =>
           provider.label.toLowerCase().includes(lowerSearch) ||
           provider.value.toLowerCase().includes(lowerSearch),
       )
-    : PROVIDERS;
+    : tabProviders;
 
   return (
     <Controller
       name="providerType"
       control={control}
       render={({ field }) => (
-        <div className="flex flex-col px-4">
-          <div className="relative z-10 shrink-0 pb-4">
+        <Tabs
+          className="flex flex-col px-4"
+          value={activeTab}
+          onValueChange={(value) => setActiveTab(value as ProviderTab)}
+        >
+          <TabsList aria-label="Provider source">
+            <TabsTrigger value={PROVIDER_TAB.ALL}>All providers</TabsTrigger>
+            <TabsTrigger value={PROVIDER_TAB.REGISTRY}>Registry</TabsTrigger>
+          </TabsList>
+          <div className="relative z-10 shrink-0 py-4">
             <SearchInput
               aria-label="Search providers"
               placeholder="Search providers..."
@@ -149,7 +98,7 @@ export const RadioGroupProvider: FC<RadioGroupProviderProps> = ({
             />
           </div>
 
-          <div className="relative">
+          <TabsContent value={activeTab}>
             <div
               role="listbox"
               aria-label="Select a provider"
@@ -157,7 +106,6 @@ export const RadioGroupProvider: FC<RadioGroupProviderProps> = ({
             >
               {filteredProviders.length > 0 ? (
                 filteredProviders.map((provider) => {
-                  const BadgeComponent = provider.badge;
                   const isSelected = field.value === provider.value;
 
                   return (
@@ -165,6 +113,7 @@ export const RadioGroupProvider: FC<RadioGroupProviderProps> = ({
                       key={provider.value}
                       type="button"
                       role="option"
+                      aria-label={`${provider.label}${provider.registry ? " Registry" : ""}`}
                       aria-selected={isSelected}
                       onClick={() => field.onChange(provider.value)}
                       className={cn(
@@ -183,28 +132,54 @@ export const RadioGroupProvider: FC<RadioGroupProviderProps> = ({
                       </div>
 
                       <div className="flex min-w-0 flex-1 items-center gap-1.5">
-                        <BadgeComponent size={26} />
+                        {provider.registry ? (
+                          <Avatar>
+                            <AvatarImage
+                              src={
+                                provider.logoUrl?.startsWith("https://")
+                                  ? provider.logoUrl
+                                  : undefined
+                              }
+                              alt=""
+                            />
+                            <AvatarFallback>
+                              <ProviderTypeIcon
+                                type={provider.value}
+                                size={26}
+                              />
+                            </AvatarFallback>
+                          </Avatar>
+                        ) : (
+                          <ProviderTypeIcon type={provider.value} size={26} />
+                        )}
                         <span className="text-text-neutral-primary text-sm leading-6">
                           {provider.label}
                         </span>
+                        {provider.registry && (
+                          <Badge variant="tag">Registry</Badge>
+                        )}
                       </div>
                     </button>
                   );
                 })
               ) : (
                 <p className="text-text-neutral-tertiary py-4 text-sm">
-                  No providers found matching &quot;{searchTerm}&quot;
+                  {lowerSearch ? (
+                    <>No providers found matching &quot;{searchTerm}&quot;</>
+                  ) : (
+                    "No Registry providers available."
+                  )}
                 </p>
               )}
             </div>
-          </div>
+          </TabsContent>
 
           {errorMessage && (
             <FormMessage className="text-text-error-primary">
               {errorMessage}
             </FormMessage>
           )}
-        </div>
+        </Tabs>
       )}
     />
   );

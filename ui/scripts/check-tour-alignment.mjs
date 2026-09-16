@@ -1,9 +1,10 @@
 #!/usr/bin/env node
-// Tour alignment check (syntactic). Extracts `data-tour-id` values from every
-// `ui/lib/tours/*.tour.ts` and verifies a matching attribute exists under `ui/`,
-// in either the JSX form (`data-tour-id="..."`) or the object-property form
-// (`"data-tour-id": "..."`) used for dynamically-spread anchors. Two directions:
-//   - Tour → DOM: fails on any tour `target` with no matching attribute.
+// Tour alignment check (syntactic). Extracts primary and fallback `data-tour-id`
+// values from every `ui/lib/tours/*.tour.ts` and verifies a matching attribute
+// exists under `ui/`, in either the JSX form (`data-tour-id="..."`) or the
+// object-property form (`"data-tour-id": "..."`) used for dynamically-spread
+// anchors. Two directions:
+//   - Tour → DOM: fails on any `target` or `fallbackTarget` without an attribute.
 //   - DOM → tour: warns on any `data-tour-id` not referenced by any tour
 //     (does not fail — staged anchors during multi-PR rollouts are OK).
 // Complements the semantic `prowler-tour` skill for CI/local runs without
@@ -41,7 +42,18 @@ async function findTourFiles(dir) {
 }
 
 const TOUR_ID_PATTERN = /\bid\s*:\s*["']([a-z0-9-]+)["']/m;
-const TARGET_PATTERN = /\btarget\s*:\s*["']([a-z0-9-]+)["']/g;
+const TARGET_PATTERN =
+  /\b(?:target|fallbackTarget)\s*:\s*["']([a-z0-9-]+)["']/g;
+
+/**
+ * Extracts every primary and fallback target declared by a tour.
+ *
+ * @param {string} source
+ * @returns {string[]}
+ */
+export function extractTourTargets(source) {
+  return Array.from(source.matchAll(TARGET_PATTERN), (match) => match[1]);
+}
 
 async function parseTour(filePath) {
   const source = await readFile(filePath, "utf8");
@@ -53,10 +65,7 @@ async function parseTour(filePath) {
   }
   const tourId = idMatch[1];
 
-  const targets = [];
-  for (const match of source.matchAll(TARGET_PATTERN)) {
-    targets.push(match[1]);
-  }
+  const targets = extractTourTargets(source);
 
   return {
     file: relative(UI_DIR, filePath),
@@ -155,7 +164,7 @@ async function main() {
   if (tourOrphans.length === 0) {
     const referenced = tours.reduce((sum, t) => sum + t.selectors.length, 0);
     console.log(
-      `✓ Tour alignment OK — ${tours.length} tour(s), ${referenced} anchored step(s).`,
+      `✓ Tour alignment OK — ${tours.length} tour(s), ${referenced} anchor reference(s).`,
     );
     return;
   }
@@ -172,7 +181,10 @@ async function main() {
   process.exit(1);
 }
 
-main().catch((err) => {
-  console.error(err.stack || err.message);
-  process.exit(1);
-});
+const entryPoint = process.argv[1];
+if (entryPoint && resolve(entryPoint) === fileURLToPath(import.meta.url)) {
+  main().catch((err) => {
+    console.error(err.stack || err.message);
+    process.exit(1);
+  });
+}

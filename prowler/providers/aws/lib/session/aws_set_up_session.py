@@ -42,6 +42,8 @@ class AwsSetUpSession:
         aws_session_token: Optional[str] = None,
         retries_max_attempts: int = 3,
         regions: set = set(),
+        connect_timeout: Optional[int] = None,
+        read_timeout: Optional[int] = None,
     ) -> None:
         """
         The constructor for the AwsSetUpSession class.
@@ -58,6 +60,8 @@ class AwsSetUpSession:
         - aws_session_token: The AWS session token, optional.
         - retries_max_attempts: The maximum number of retries for the AWS client.
         - regions: A set of regions to audit.
+        - connect_timeout: Seconds to wait to establish a connection to an AWS endpoint.
+        - read_timeout: Seconds to wait for a response from an AWS endpoint.
 
         Returns:
 
@@ -73,7 +77,9 @@ class AwsSetUpSession:
             aws_access_key_id=aws_access_key_id,
             aws_secret_access_key=aws_secret_access_key,
         )
-        session_config = AwsProvider.set_session_config(retries_max_attempts)
+        session_config = AwsProvider.set_session_config(
+            retries_max_attempts, connect_timeout, read_timeout
+        )
         aws_session = AwsProvider.setup_session(
             mfa=mfa,
             profile=profile,

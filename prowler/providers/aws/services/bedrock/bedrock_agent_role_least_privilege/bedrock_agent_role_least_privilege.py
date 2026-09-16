@@ -24,10 +24,25 @@ class bedrock_agent_role_least_privilege(Check):
 
         Returns:
             A list of ``Check_Report_AWS`` with one entry per agent. The
-            status is ``FAIL`` when any of the criteria above is violated,
-            or when the execution role cannot be resolved in IAM.
+            status is ``FAIL`` when any of the criteria above is violated and
+            ``MANUAL`` when the execution role cannot be resolved in IAM. When
+            the IAM role inventory itself could not be listed, a single
+            account-level ``MANUAL`` report is returned instead.
         """
         findings = []
+
+        if iam_client.roles is None and bedrock_agent_client.agents:
+            # iam:ListRoles was denied: this is an account-wide condition, so
+            # emit one account-level MANUAL instead of one per agent.
+            report = Check_Report_AWS(metadata=self.metadata(), resource={})
+            report.region = iam_client.region
+            report.resource_id = iam_client.audited_account
+            report.resource_arn = iam_client.audited_account_arn
+            report.status = "MANUAL"
+            report.status_extended = "Cannot evaluate Bedrock Agent execution roles: the IAM roles could not be listed. Verify that the scanning credentials are allowed to call iam:ListRoles."
+            findings.append(report)
+            return findings
+
         roles_by_arn = {role.arn: role for role in (iam_client.roles or [])}
 
         for agent in bedrock_agent_client.agents.values():
@@ -39,10 +54,11 @@ class bedrock_agent_role_least_privilege(Check):
 
             role = roles_by_arn.get(agent.role_arn) if agent.role_arn else None
             if role is None:
-                report.status = "FAIL"
+                report.status = "MANUAL"
                 report.status_extended = (
                     f"Bedrock Agent {agent.name} execution role could not be "
-                    f"resolved in IAM and cannot be evaluated for least privilege."
+                    f"resolved in IAM and cannot be evaluated for least privilege; "
+                    f"verify the role manually."
                 )
                 findings.append(report)
                 continue

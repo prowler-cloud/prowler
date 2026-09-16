@@ -54,7 +54,7 @@ def _trail_log_group():
     )
 
 
-def _metric_filter(name, log_group, metric=METRIC_NAME):
+def _metric_filter(name, log_group, metric=METRIC_NAME, namespace="CloudTrailMetrics"):
     """Build a metric filter whose pattern always matches PATTERN.
 
     Args:
@@ -62,30 +62,34 @@ def _metric_filter(name, log_group, metric=METRIC_NAME):
         log_group: the collected LogGroup, or None to model a filter whose log
             group was never retrieved -- the input that used to raise.
         metric: metric name an alarm has to carry for the filter to be compliant.
+        namespace: metric namespace the filter publishes to, or None when the
+            transformation does not expose one.
     """
     return MetricFilter(
         arn=f"arn:aws:logs:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:metric-filter/{name}",
         name=name,
         metric=metric,
+        metric_namespace=namespace,
         pattern=FILTER_PATTERN,
         log_group=log_group,
         region=AWS_REGION,
     )
 
 
-def _alarm(metric=METRIC_NAME):
+def _alarm(metric=METRIC_NAME, namespace="CloudTrailMetrics", region=AWS_REGION):
     """Build an alarm on metric; a non-default name models an unrelated alarm.
 
-    The check pairs alarms to filters by metric name alone, so passing a metric no
-    filter uses is how a filter with no alarm of its own is expressed.
+    The check pairs alarms to filters by metric name and region (and namespace
+    when both sides expose one), so passing a metric no filter uses is how a
+    filter with no alarm of its own is expressed.
     """
     return MetricAlarm(
-        arn=f"arn:aws:cloudwatch:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:alarm:{metric}-alarm",
+        arn=f"arn:aws:cloudwatch:{region}:{AWS_ACCOUNT_NUMBER}:alarm:{metric}-alarm",
         name=f"{metric}-alarm",
         metric=metric,
-        name_space="CloudTrailMetrics",
-        region=AWS_REGION,
-        alarm_actions=[f"arn:aws:sns:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:topic-test"],
+        name_space=namespace,
+        region=region,
+        alarm_actions=[f"arn:aws:sns:{region}:{AWS_ACCOUNT_NUMBER}:topic-test"],
         actions_enabled=True,
     )
 
@@ -147,3 +151,52 @@ class Test_check_cloudwatch_log_metric_filter:
             report.status_extended
             == f"CloudWatch log group {TRAIL_LOG_GROUP_NAME} found with metric filter trail-filter but no alarms associated."
         )
+
+    def test_alarm_in_other_namespace_does_not_pass(self):
+        """A same-named metric in another namespace is a different metric."""
+        report = check_cloudwatch_log_metric_filter(
+            PATTERN,
+            _trails(),
+            [_metric_filter("trail-filter", _trail_log_group())],
+            [_alarm(namespace="OtherNamespace")],
+            METADATA,
+        )
+
+        assert report.status == "FAIL"
+        assert "no alarms associated" in report.status_extended
+
+    def test_alarm_in_other_region_does_not_pass(self):
+        """A same-named metric in another region is a different metric."""
+        report = check_cloudwatch_log_metric_filter(
+            PATTERN,
+            _trails(),
+            [_metric_filter("trail-filter", _trail_log_group())],
+            [_alarm(region="us-east-1")],
+            METADATA,
+        )
+
+        assert report.status == "FAIL"
+
+    def test_alarm_without_namespace_still_matches(self):
+        """Namespace is only compared when both sides expose one."""
+        report = check_cloudwatch_log_metric_filter(
+            PATTERN,
+            _trails(),
+            [_metric_filter("trail-filter", _trail_log_group())],
+            [_alarm(namespace=None)],
+            METADATA,
+        )
+
+        assert report.status == "PASS"
+
+    def test_filter_without_namespace_still_matches(self):
+        """A filter with no namespace accepts an alarm in any namespace."""
+        report = check_cloudwatch_log_metric_filter(
+            PATTERN,
+            _trails(),
+            [_metric_filter("trail-filter", _trail_log_group(), namespace=None)],
+            [_alarm()],
+            METADATA,
+        )
+
+        assert report.status == "PASS"

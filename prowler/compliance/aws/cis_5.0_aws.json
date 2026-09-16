@@ -204,7 +204,7 @@
       ]
     },
     {
-      "Id": "1.1",
+      "Id": "1.10",
       "Description": "Do not create access keys during initial setup for IAM users with a console password",
       "Checks": [
         "iam_user_no_setup_initial_access_key"

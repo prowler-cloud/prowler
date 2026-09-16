@@ -1,1 +1,0 @@
-`security_2sv_enforced` and `security_2sv_hardware_keys_admins` report MANUAL instead of judging domain-wide values that a group or a sub-organizational unit overrides, or that were dropped because the root organizational unit could not be resolved; a domain-wide failure is still reported as such, with the override noted

@@ -225,8 +225,8 @@ class TestOciAdapterAuth:
     def test_authed_request_retries_on_401_with_bearer(self, mock_request):
         adapter = OciRegistryAdapter("reg.io", username="u", password="p")
         adapter._bearer_token = "expired-token"
-        # First request: 401 (expired token)
-        resp_401 = MagicMock(status_code=401)
+        # First request: 401 without a challenge -> blind re-auth fallback
+        resp_401 = MagicMock(status_code=401, headers={})
         # _ensure_auth ping: 401 with bearer challenge
         ping_resp = MagicMock(
             status_code=401,
@@ -905,11 +905,10 @@ class TestBasicAuthFallback:
         mock_request.side_effect = [
             ping,
             token,
-            catalog_401,
-            ping,
-            token,
-            catalog_401,
-            catalog_ok,
+            catalog_401,  # bearer without catalog scope
+            token,  # re-auth straight from the response's Bearer challenge
+            catalog_401,  # scoped bearer retry, same result
+            catalog_ok,  # basic fallback
         ]
 
         adapter = OciRegistryAdapter("reg.io", username="admin", password="secret")
@@ -1125,3 +1124,204 @@ class TestBearerAuthSwitch:
         adapter = OciRegistryAdapter("reg.io", username="admin", password="wrong")
         with pytest.raises(ImageRegistryAuthError, match="bearer token"):
             adapter.list_repositories()
+
+
+class TestOciAdapterIsContainerImage:
+    def _adapter(self):
+        return OciRegistryAdapter("reg.io", token="t")
+
+    @staticmethod
+    def _manifest_resp(content_type, body=None):
+        resp = MagicMock(status_code=200, headers={"Content-Type": content_type})
+        resp.json.return_value = body or {}
+        return resp
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_docker_v2_manifest_is_image(self, mock_request):
+        mock_request.return_value = self._manifest_resp(
+            "application/vnd.docker.distribution.manifest.v2+json"
+        )
+        assert self._adapter().is_container_image("app", "1.0") is True
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_oci_index_is_image(self, mock_request):
+        mock_request.return_value = self._manifest_resp(
+            "application/vnd.oci.image.index.v1+json"
+        )
+        assert self._adapter().is_container_image("app", "1.0") is True
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_oci_manifest_with_image_config_is_image(self, mock_request):
+        mock_request.return_value = self._manifest_resp(
+            "application/vnd.oci.image.manifest.v1+json",
+            {"config": {"mediaType": "application/vnd.oci.image.config.v1+json"}},
+        )
+        assert self._adapter().is_container_image("app", "1.0") is True
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_helm_chart_is_not_image(self, mock_request):
+        mock_request.return_value = self._manifest_resp(
+            "application/vnd.oci.image.manifest.v1+json",
+            {"config": {"mediaType": "application/vnd.cncf.helm.config.v1+json"}},
+        )
+        assert self._adapter().is_container_image("charts/app", "1.0") is False
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_artifact_type_wins_over_config(self, mock_request):
+        mock_request.return_value = self._manifest_resp(
+            "application/vnd.oci.image.manifest.v1+json",
+            {
+                "artifactType": "application/vnd.dev.cosign.artifact.sig.v1+json",
+                "config": {"mediaType": "application/vnd.oci.image.config.v1+json"},
+            },
+        )
+        assert self._adapter().is_container_image("app", "sig") is False
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_unknown_media_type_is_not_image(self, mock_request):
+        mock_request.return_value = self._manifest_resp(
+            "application/vnd.cncf.helm.chart.content.v1.tar+gzip"
+        )
+        assert self._adapter().is_container_image("charts/app", "1.0") is False
+
+    @patch("prowler.providers.image.lib.registry.base.time.sleep")
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_manifest_error_assumes_image(self, mock_request, _mock_sleep):
+        mock_request.side_effect = requests.exceptions.ConnectionError("boom")
+        assert self._adapter().is_container_image("app", "1.0") is True
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_manifest_404_assumes_image(self, mock_request):
+        mock_request.return_value = MagicMock(status_code=404, headers={})
+        assert self._adapter().is_container_image("app", "1.0") is True
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_anonymous_auth_pings_only_once(self, mock_request):
+        mock_request.return_value = MagicMock(status_code=200, headers={})
+        adapter = OciRegistryAdapter("reg.io")
+        adapter._ensure_auth()
+        adapter._ensure_auth(repository="app")
+        adapter._ensure_auth(repository="other")
+        assert mock_request.call_count == 1
+
+
+class TestOciAdapterScopedReauth:
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_401_with_challenge_reauths_with_response_scope(self, mock_request):
+        adapter = OciRegistryAdapter("reg.io", username="u", password="p")
+        adapter._bearer_token = "token-scoped-to-other-repo"
+        resp_401 = MagicMock(
+            status_code=401,
+            headers={
+                "Www-Authenticate": 'Bearer realm="https://auth.reg.io/token",service="registry",scope="repository:myapp:pull"'
+            },
+        )
+        token_resp = MagicMock(status_code=200)
+        token_resp.json.return_value = {"token": "myapp-scoped-token"}
+        resp_200 = MagicMock(status_code=200)
+        mock_request.side_effect = [resp_401, token_resp, resp_200]
+
+        result = adapter._authed_request(
+            "GET", "https://reg.io/v2/myapp/manifests/latest"
+        )
+
+        assert result.status_code == 200
+        assert adapter._bearer_token == "myapp-scoped-token"
+        # Token exchange used the scope from the response challenge, no blind /v2/ ping
+        token_call = mock_request.call_args_list[1]
+        assert token_call.kwargs["params"]["scope"] == "repository:myapp:pull"
+        assert mock_request.call_count == 3
+
+
+class TestOciAdapterPickle:
+    def test_adapter_is_picklable_despite_auth_lock(self):
+        import pickle
+
+        adapter = OciRegistryAdapter("reg.io", username="u", password="p")
+        restored = pickle.loads(pickle.dumps(adapter))
+        assert restored._base_url == "https://reg.io"
+        # The lock is recreated, not carried over
+        assert restored._auth_lock is not adapter._auth_lock
+        restored._ensure_auth  # attribute access must not blow up
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_retry_uses_own_token_despite_concurrent_overwrite(self, mock_request):
+        adapter = OciRegistryAdapter("reg.io", username="u", password="p")
+        adapter._bearer_token = "stale-token"
+        resp_401 = MagicMock(
+            status_code=401,
+            headers={
+                "Www-Authenticate": 'Bearer realm="https://auth.reg.io/token",service="registry",scope="repository:myapp:pull"'
+            },
+        )
+        token_resp = MagicMock(status_code=200)
+        token_resp.json.return_value = {"token": "fresh-token"}
+        resp_200 = MagicMock(status_code=200)
+        mock_request.side_effect = [resp_401, token_resp, resp_200]
+
+        # Another worker replaces the shared token right after this request's
+        # token exchange
+        original = adapter._obtain_bearer_token
+
+        def clobbering(challenge, repository=None):
+            token = original(challenge, repository)
+            adapter._bearer_token = "other-repo-token"
+            return token
+
+        adapter._obtain_bearer_token = clobbering
+
+        result = adapter._authed_request(
+            "GET", "https://reg.io/v2/myapp/manifests/latest"
+        )
+
+        assert result.status_code == 200
+        retry_headers = mock_request.call_args_list[2].kwargs["headers"]
+        assert retry_headers["Authorization"] == "Bearer fresh-token"
+
+
+class TestOciAdapterArtifactIndexAndCaseInsensitivity:
+    def _adapter(self):
+        return OciRegistryAdapter("reg.io", token="t")
+
+    @staticmethod
+    def _manifest_resp(content_type, body=None):
+        resp = MagicMock(status_code=200, headers={"Content-Type": content_type})
+        resp.json.return_value = body or {}
+        return resp
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_artifact_index_is_not_image(self, mock_request):
+        # image-spec v1.1: an index can represent a non-image artifact
+        mock_request.return_value = self._manifest_resp(
+            "application/vnd.oci.image.index.v1+json",
+            {
+                "artifactType": "application/vnd.cncf.helm.config.v1+json",
+                "manifests": [],
+            },
+        )
+        assert self._adapter().is_container_image("charts/app", "1.0") is False
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_multiarch_index_without_artifact_type_is_image(self, mock_request):
+        mock_request.return_value = self._manifest_resp(
+            "application/vnd.oci.image.index.v1+json",
+            {"schemaVersion": 2, "manifests": [{"platform": {"os": "linux"}}]},
+        )
+        assert self._adapter().is_container_image("app", "latest") is True
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_mixed_case_media_type_is_normalized(self, mock_request):
+        # RFC 9110: type/subtype are case-insensitive
+        mock_request.return_value = self._manifest_resp(
+            "Application/vnd.OCI.Image.Manifest.v1+JSON",
+            {"config": {"mediaType": "application/vnd.oci.image.config.v1+json"}},
+        )
+        assert self._adapter().is_container_image("app", "1.0") is True
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_mixed_case_artifact_type_still_rejected(self, mock_request):
+        mock_request.return_value = self._manifest_resp(
+            "application/vnd.oci.image.manifest.v1+json",
+            {"artifactType": "Application/vnd.CNCF.Helm.Config.v1+json"},
+        )
+        assert self._adapter().is_container_image("charts/app", "1.0") is False

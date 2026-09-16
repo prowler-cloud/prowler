@@ -744,8 +744,9 @@ test.describe("Add Provider", () => {
         await providersPage.clickAddProvider();
         await providersPage.verifyConnectAccountPageLoaded();
 
-        // Select M365 provider
+        // Select GCP provider and the single-project onboarding method
         await providersPage.selectGCPProvider();
+        await providersPage.selectGCPSingleProjectMethod();
 
         // Fill provider details
         await providersPage.fillGCPProviderDetails(gcpProviderData);

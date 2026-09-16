@@ -132,6 +132,15 @@ class RegistryAdapter(ABC):
         """Enumerate all tags for a repository."""
         ...
 
+    def is_container_image(self, repository: str, tag: str) -> bool:
+        """Whether repository:tag points to a scannable container image.
+
+        Registries that store arbitrary OCI artifacts (Helm charts, cosign
+        signatures, SBOMs...) override this; by default everything is assumed
+        to be an image.
+        """
+        return True
+
     def _origin_url(self) -> str:
         """The URL whose host the validator compares against when enforce_origin=True.
 

@@ -25,6 +25,9 @@ class defenderxdr_endpoint_privileged_user_exposed_credentials(Check):
     Results:
     - PASS: No exposed credentials found OR MDE enabled but no devices
     - FAIL: Exposed credentials detected OR MDE not enabled (blind spot)
+    - MANUAL: Defender XDR could not be queried (missing permission or
+      Security Exposure Management not available), so the check cannot
+      be evaluated
     """
 
     def execute(self) -> list[CheckReportM365]:
@@ -46,10 +49,12 @@ class defenderxdr_endpoint_privileged_user_exposed_credentials(Check):
                 resource_name="Defender XDR",
                 resource_id="mdeStatus",
             )
-            report.status = "FAIL"
+            report.status = "MANUAL"
             report.status_extended = (
-                "Unable to query Microsoft Defender XDR status. "
-                "Verify that ThreatHunting.Read.All permission is granted."
+                "Cannot evaluate credential exposure for privileged users: "
+                "unable to query Microsoft Defender XDR Advanced Hunting. "
+                "Verify that the ThreatHunting.Read.All permission is granted "
+                "to the scanning application."
             )
             findings.append(report)
             return findings
@@ -99,11 +104,11 @@ class defenderxdr_endpoint_privileged_user_exposed_credentials(Check):
                 resource_name="Defender XDR",
                 resource_id="exposedCredentials",
             )
-            report.status = "FAIL"
+            report.status = "MANUAL"
             report.status_extended = (
-                "Unable to query Security Exposure Management for exposed "
-                "credentials. Verify that Security Exposure Management "
-                "is enabled."
+                "Cannot evaluate credential exposure for privileged users: "
+                "unable to query Security Exposure Management. Verify that "
+                "Security Exposure Management is enabled in the tenant."
             )
             findings.append(report)
             return findings

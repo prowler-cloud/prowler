@@ -1,1 +1,0 @@
-`prowler_hub_get_check_code` and `prowler_hub_get_check_fixer` now report a check ID that belongs to another provider as such, naming that provider, instead of reporting the ID as one that does not exist

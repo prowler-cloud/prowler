@@ -4,11 +4,7 @@ import { format } from "date-fns";
 import { PlusIcon, Trash2Icon } from "lucide-react";
 import { useState } from "react";
 
-import {
-  deleteIntegration,
-  testIntegrationConnection,
-  updateIntegration,
-} from "@/actions/integrations";
+import { deleteIntegration, updateIntegration } from "@/actions/integrations";
 import { JiraIcon } from "@/components/icons/services/IconServices";
 import {
   IntegrationActionButtons,
@@ -24,7 +20,10 @@ import {
 } from "@/components/shadcn";
 import { Modal } from "@/components/shadcn/modal";
 import { DataTablePagination } from "@/components/shadcn/table/data-table-pagination";
-import { triggerTestConnectionWithDelay } from "@/lib/integrations/test-connection-helper";
+import {
+  executeIntegrationConnectionTest,
+  triggerTestConnectionWithDelay,
+} from "@/lib/integrations/test-connection-helper";
 import { MetaDataProps } from "@/types";
 import { IntegrationProps } from "@/types/integrations";
 
@@ -98,7 +97,7 @@ export const JiraIntegrationsManager = ({
   const handleTestConnection = async (id: string) => {
     setIsTesting(id);
     try {
-      const result = await testIntegrationConnection(id);
+      const result = await executeIntegrationConnectionTest(id);
 
       if (result.success) {
         toast({

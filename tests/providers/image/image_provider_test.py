@@ -50,6 +50,11 @@ def _make_provider(**kwargs):
     return ImageProvider(**defaults)
 
 
+@pytest.fixture(autouse=True)
+def _no_configured_cache_dir(monkeypatch):
+    monkeypatch.delenv("TRIVY_CACHE_DIR", raising=False)
+
+
 class TestImageProvider:
     def test_image_provider(self):
         """Test default initialization."""
@@ -999,6 +1004,34 @@ class TestCleanup:
         provider.cleanup()
         provider.cleanup()
 
+    def test_configured_cache_dir_is_used(self, monkeypatch, tmp_path):
+        """A deployment that supplies a cache directory gets that one."""
+        monkeypatch.setenv("TRIVY_CACHE_DIR", str(tmp_path))
+
+        provider = _make_provider()
+
+        assert provider._trivy_cache_dir == str(tmp_path)
+
+    def test_configured_cache_dir_survives_cleanup(self, monkeypatch, tmp_path):
+        """A supplied directory is not the provider's to delete: it holds a
+        database the deployment may have no way to fetch again."""
+        monkeypatch.setenv("TRIVY_CACHE_DIR", str(tmp_path))
+        provider = _make_provider()
+
+        provider.cleanup()
+
+        assert os.path.isdir(str(tmp_path))
+
+    def test_unset_cache_dir_keeps_the_temporary_one(self, monkeypatch):
+        """Without one configured, nothing changes for existing deployments."""
+        monkeypatch.delenv("TRIVY_CACHE_DIR", raising=False)
+
+        provider = _make_provider()
+
+        assert os.path.isdir(provider._trivy_cache_dir)
+        provider.cleanup()
+        assert not os.path.isdir(provider._trivy_cache_dir)
+
     def test_cleanup_removes_trivy_cache_dir(self):
         """Test that cleanup removes the temporary Trivy cache directory."""
         provider = _make_provider()
@@ -1452,3 +1485,43 @@ class TestConnectionPrivateNetworkAllowlist:
             result = ImageProvider.test_connection(image="harbor.internal")
 
         assert result.is_connected is True
+
+
+class TestRegistryScanErrorDegradation:
+    @patch("subprocess.run")
+    def test_registry_discovered_image_scan_error_is_skipped(self, mock_subprocess):
+        provider = _make_provider(images=["reg.io/chart:1.0", "alpine:3.18"])
+        provider._registry_discovered = {"reg.io/chart:1.0"}
+        mock_subprocess.side_effect = [
+            MagicMock(returncode=1, stdout="", stderr="unsupported media type"),
+            MagicMock(returncode=0, stdout=get_sample_trivy_json_output(), stderr=""),
+        ]
+
+        reports = []
+        for batch in provider.run_scan():
+            reports.extend(batch)
+
+        assert len(reports) == 1
+        assert reports[0].check_metadata.CheckID == "CVE-2024-1234"
+
+    @patch("subprocess.run")
+    def test_explicit_image_scan_error_still_raises(self, mock_subprocess):
+        provider = _make_provider(images=["alpine:3.18"])
+        mock_subprocess.return_value = MagicMock(
+            returncode=1, stdout="", stderr="unsupported media type"
+        )
+
+        with pytest.raises(ImageScanError):
+            for _ in provider.run_scan():
+                pass
+
+    @patch("subprocess.run")
+    def test_scan_per_image_degrades_registry_discovered_error(self, mock_subprocess):
+        provider = _make_provider(images=["reg.io/chart:1.0"])
+        provider._registry_discovered = {"reg.io/chart:1.0"}
+        mock_subprocess.return_value = MagicMock(
+            returncode=1, stdout="", stderr="unsupported media type"
+        )
+
+        results = list(provider.scan_per_image())
+        assert results == [("reg.io/chart:1.0", [])]

@@ -1,1 +1,0 @@
-`prowler_get_compliance_framework_state_details` now rejects a call that passes both `scan_id` and `provider_id` instead of silently ignoring the provider, which could report on a scan belonging to a different provider than the one that was asked about

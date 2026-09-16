@@ -472,6 +472,19 @@ class Test_rolesanywhere_profile_restricts_session_permissions:
             assert result[0].status == "MANUAL"
             assert "could not be evaluated" in result[0].status_extended
 
+    def test_unscoped_profile_with_unlisted_roles_is_manual(self):
+        # iam:ListRoles denied leaves iam_client.roles as None.
+        patches = _patched(
+            _build_client({PROFILE_ARN: _profile(role_arns=[ADMIN_ROLE_ARN])})
+        )
+        patches[-1].new.roles = None
+        with _enter(patches):
+            result = _run()
+            assert len(result) == 1
+            assert result[0].status == "MANUAL"
+            assert ADMIN_ROLE_ARN in result[0].status_extended
+            assert "could not be evaluated" in result[0].status_extended
+
     def test_unscoped_profile_without_roles_passes(self):
         with _enter(_patched(_build_client({PROFILE_ARN: _profile(role_arns=[])}))):
             result = _run()

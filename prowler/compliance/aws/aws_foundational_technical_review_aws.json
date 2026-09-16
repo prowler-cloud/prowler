@@ -334,7 +334,6 @@
         "iam_role_cross_service_confused_deputy_prevention",
         "iam_root_hardware_mfa_enabled",
         "iam_root_mfa_enabled",
-        "iam_root_hardware_mfa_enabled",
         "iam_user_hardware_mfa_enabled",
         "iam_user_mfa_enabled_console_access",
         "iam_administrator_access_with_mfa"
