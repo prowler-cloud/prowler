@@ -7,6 +7,7 @@ import { handleApiError, handleApiResponse } from "@/lib/server-actions-helper";
 import {
   DECLARED_CLOUD_ACCOUNTS,
   DECLARED_ROLE,
+  DECLARED_SENIORITY,
   DECLARED_TEAM_SIZE,
   type OnboardingProfileAnswers,
 } from "@/types/onboarding-profile";
@@ -30,6 +31,9 @@ const onboardingProfileAnswersSchema = z.object({
     Object.values(DECLARED_TEAM_SIZE) as [string, ...string[]],
   ),
   declared_role: z.enum(Object.values(DECLARED_ROLE) as [string, ...string[]]),
+  declared_seniority: z.enum(
+    Object.values(DECLARED_SENIORITY) as [string, ...string[]],
+  ),
 });
 
 const GENERIC_FAILURE = "The onboarding profile could not be saved.";

@@ -3119,9 +3119,14 @@ class TenantOnboardingProfile(RowLevelSecurityProtectedModel):
     """What a tenant declared about itself at first login, before the product
     shaped its behaviour.
 
-    One row per tenant. The three buckets are closed choices asked in the
+    One row per tenant. The four buckets are closed choices asked in the
     onboarding profile step; ``skipped`` records that the step was shown and
     dismissed, so a skip is a fact and not the absence of one.
+
+    ``declared_role`` and ``declared_seniority`` are deliberately orthogonal:
+    the first is the discipline the person works in, the second how far up the
+    organisation they sit. Kept apart, "a security engineer" and "the CISO"
+    are two segments rather than one blurred bucket.
 
     Immutable once written: a second submission returns the existing row so the
     first answer, given before any product signal could bias it, is the one
@@ -3145,8 +3150,15 @@ class TenantOnboardingProfile(RowLevelSecurityProtectedModel):
         SECURITY = "security", _("Security")
         DEVOPS_PLATFORM = "devops_platform", _("DevOps / Platform")
         DEVELOPER = "developer", _("Developer")
-        MANAGEMENT = "management", _("Management")
+        COMPLIANCE_GRC = "compliance_grc", _("Compliance / GRC")
         OTHER = "other", _("Other")
+
+    class Seniority(models.TextChoices):
+        PRACTITIONER = "practitioner", _("Practitioner / IC")
+        LEAD = "lead", _("Team lead / Manager")
+        DIRECTOR = "director", _("Director / Head of")
+        EXECUTIVE = "executive", _("VP / C-level")
+        FOUNDER = "founder", _("Founder / Owner")
 
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
@@ -3158,6 +3170,9 @@ class TenantOnboardingProfile(RowLevelSecurityProtectedModel):
     )
     declared_role = models.CharField(
         max_length=32, choices=Role.choices, null=True, blank=True
+    )
+    declared_seniority = models.CharField(
+        max_length=32, choices=Seniority.choices, null=True, blank=True
     )
     skipped = models.BooleanField(default=False)
     submitted_by = models.ForeignKey(

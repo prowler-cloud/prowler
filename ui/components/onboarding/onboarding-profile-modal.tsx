@@ -13,9 +13,12 @@ import {
   DECLARED_CLOUD_ACCOUNTS,
   DECLARED_ROLE,
   DECLARED_ROLE_LABEL,
+  DECLARED_SENIORITY,
+  DECLARED_SENIORITY_LABEL,
   DECLARED_TEAM_SIZE,
   type DeclaredCloudAccounts,
   type DeclaredRole,
+  type DeclaredSeniority,
   type DeclaredTeamSize,
   type OnboardingProfileAnswers,
 } from "@/types/onboarding-profile";
@@ -41,12 +44,14 @@ interface ProfileDraft {
   cloudAccounts: DeclaredCloudAccounts | null;
   teamSize: DeclaredTeamSize | null;
   role: DeclaredRole | null;
+  seniority: DeclaredSeniority | null;
 }
 
 const EMPTY_DRAFT: ProfileDraft = {
   cloudAccounts: null,
   teamSize: null,
   role: null,
+  seniority: null,
 };
 
 function ProfileQuestion<Value extends string>({
@@ -88,7 +93,7 @@ function ProfileQuestion<Value extends string>({
   );
 }
 
-// Three closed questions asked once, at a new tenant's first login, before
+// Four closed questions asked once, at a new tenant's first login, before
 // any product signal could shape the answer. Every path out is recorded by
 // the caller: submit, skip, and close (which counts as a skip).
 export function OnboardingProfileModal({
@@ -101,16 +106,25 @@ export function OnboardingProfileModal({
   const isComplete =
     draft.cloudAccounts !== null &&
     draft.teamSize !== null &&
-    draft.role !== null;
+    draft.role !== null &&
+    draft.seniority !== null;
 
   const handleSubmit = () => {
-    const { cloudAccounts, teamSize, role } = draft;
-    if (cloudAccounts === null || teamSize === null || role === null) return;
+    const { cloudAccounts, teamSize, role, seniority } = draft;
+    if (
+      cloudAccounts === null ||
+      teamSize === null ||
+      role === null ||
+      seniority === null
+    ) {
+      return;
+    }
     if (isSubmitting) return;
     onSubmit({
       declared_cloud_accounts: cloudAccounts,
       declared_team_size: teamSize,
       declared_role: role,
+      declared_seniority: seniority,
     });
   };
 
@@ -118,7 +132,7 @@ export function OnboardingProfileModal({
     <Modal
       open={open}
       title="Tell us about your setup"
-      description="Three quick questions so Prowler Cloud fits how you work. You can skip them."
+      description="Four quick questions so Prowler Cloud fits how you work. You can skip them."
       size="lg"
       // Overlay/Escape/X counts as a skip — the gate persists the marker once.
       onOpenChange={(next) => {
@@ -148,11 +162,22 @@ export function OnboardingProfileModal({
         />
         <ProfileQuestion
           name="declared_role"
-          legend="What is your role?"
+          legend="Which area do you work in?"
           options={Object.values(DECLARED_ROLE)}
           labels={DECLARED_ROLE_LABEL}
           value={draft.role}
           onChange={(role) => setDraft((current) => ({ ...current, role }))}
+          disabled={isSubmitting}
+        />
+        <ProfileQuestion
+          name="declared_seniority"
+          legend="What best describes your position?"
+          options={Object.values(DECLARED_SENIORITY)}
+          labels={DECLARED_SENIORITY_LABEL}
+          value={draft.seniority}
+          onChange={(seniority) =>
+            setDraft((current) => ({ ...current, seniority }))
+          }
           disabled={isSubmitting}
         />
       </div>

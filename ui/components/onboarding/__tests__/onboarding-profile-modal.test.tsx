@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from "vitest";
 import { OnboardingProfileModal } from "../onboarding-profile-modal";
 
 describe("OnboardingProfileModal", () => {
-  it("asks the three closed questions and keeps Continue disabled until all are answered", async () => {
+  it("asks the four closed questions and keeps Continue disabled until all are answered", async () => {
     // Given
     const user = userEvent.setup();
     const onSubmit = vi.fn();
@@ -20,6 +20,9 @@ describe("OnboardingProfileModal", () => {
     await user.click(screen.getByRole("radio", { name: "2-5" }));
     expect(submit).toBeDisabled();
     await user.click(screen.getByRole("radio", { name: "Security" }));
+    // Discipline alone is not enough: the ladder is a separate answer.
+    expect(submit).toBeDisabled();
+    await user.click(screen.getByRole("radio", { name: "Director / Head of" }));
     await user.click(submit);
 
     // Then
@@ -27,6 +30,7 @@ describe("OnboardingProfileModal", () => {
       declared_cloud_accounts: "11-50",
       declared_team_size: "2-5",
       declared_role: "security",
+      declared_seniority: "director",
     });
   });
 

@@ -10,6 +10,7 @@ ANSWERS = {
     "declared_cloud_accounts": "11-50",
     "declared_team_size": "2-5",
     "declared_role": "security",
+    "declared_seniority": "director",
 }
 
 
@@ -38,6 +39,7 @@ class TestTenantOnboardingProfileViewSet:
         assert attributes["declared_cloud_accounts"] == "11-50"
         assert attributes["declared_team_size"] == "2-5"
         assert attributes["declared_role"] == "security"
+        assert attributes["declared_seniority"] == "director"
         assert attributes["skipped"] is False
         profile = TenantOnboardingProfile.objects.get(tenant_id=tenants_fixture[0].id)
         assert profile.submitted_by_id == create_test_user.id
@@ -49,6 +51,7 @@ class TestTenantOnboardingProfileViewSet:
         attributes = response.json()["data"]["attributes"]
         assert attributes["skipped"] is True
         assert attributes["declared_role"] is None
+        assert attributes["declared_seniority"] is None
         assert TenantOnboardingProfile.objects.filter(
             tenant_id=tenants_fixture[0].id, skipped=True
         ).exists()
@@ -56,7 +59,7 @@ class TestTenantOnboardingProfileViewSet:
     def test_second_submission_keeps_the_first_answer(self, authenticated_client):
         first = _submit(authenticated_client, ANSWERS)
         second = _submit(
-            authenticated_client, {**ANSWERS, "declared_role": "management"}
+            authenticated_client, {**ANSWERS, "declared_role": "developer"}
         )
 
         assert first.status_code == status.HTTP_201_CREATED
@@ -80,6 +83,11 @@ class TestTenantOnboardingProfileViewSet:
                 {"declared_cloud_accounts": "1", "declared_team_size": "1"},
                 "/data/attributes/declared_role",
             ),
+            (
+                # Discipline without the ladder is still an incomplete profile.
+                {k: v for k, v in ANSWERS.items() if k != "declared_seniority"},
+                "/data/attributes/declared_seniority",
+            ),
             ({}, "/data/attributes/declared_cloud_accounts"),
             (
                 {"skipped": True, "declared_role": "developer"},
@@ -92,6 +100,19 @@ class TestTenantOnboardingProfileViewSet:
             (
                 {**ANSWERS, "declared_role": "ceo"},
                 "/data/attributes/declared_role",
+            ),
+            (
+                # "management" moved out of the discipline list into the ladder.
+                {**ANSWERS, "declared_role": "management"},
+                "/data/attributes/declared_role",
+            ),
+            (
+                {**ANSWERS, "declared_seniority": "intern"},
+                "/data/attributes/declared_seniority",
+            ),
+            (
+                {"skipped": True, "declared_seniority": "founder"},
+                "/data/attributes/declared_seniority",
             ),
             ({**ANSWERS, "company": "Acme"}, "/data"),
         ],

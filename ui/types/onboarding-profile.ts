@@ -23,26 +23,52 @@ export const DECLARED_TEAM_SIZE = {
 export type DeclaredTeamSize =
   (typeof DECLARED_TEAM_SIZE)[keyof typeof DECLARED_TEAM_SIZE];
 
+// Discipline, not rank. Management lives in DECLARED_SENIORITY so the two
+// questions stay orthogonal: a security engineer and a CISO both answer
+// "security" here and differ on the ladder below.
 export const DECLARED_ROLE = {
   SECURITY: "security",
   DEVOPS_PLATFORM: "devops_platform",
   DEVELOPER: "developer",
-  MANAGEMENT: "management",
+  COMPLIANCE_GRC: "compliance_grc",
   OTHER: "other",
 } as const;
 
 export type DeclaredRole = (typeof DECLARED_ROLE)[keyof typeof DECLARED_ROLE];
 
+// How far up the organisation the answer comes from. Founders get their own
+// bucket: a one-person tenant run by a founder evaluating Prowler is a
+// different prospect from a lone practitioner inside a large company.
+export const DECLARED_SENIORITY = {
+  PRACTITIONER: "practitioner",
+  LEAD: "lead",
+  DIRECTOR: "director",
+  EXECUTIVE: "executive",
+  FOUNDER: "founder",
+} as const;
+
+export type DeclaredSeniority =
+  (typeof DECLARED_SENIORITY)[keyof typeof DECLARED_SENIORITY];
+
 export interface OnboardingProfileAnswers {
   declared_cloud_accounts: DeclaredCloudAccounts;
   declared_team_size: DeclaredTeamSize;
   declared_role: DeclaredRole;
+  declared_seniority: DeclaredSeniority;
 }
 
 export const DECLARED_ROLE_LABEL: Record<DeclaredRole, string> = {
   [DECLARED_ROLE.SECURITY]: "Security",
   [DECLARED_ROLE.DEVOPS_PLATFORM]: "DevOps / Platform",
   [DECLARED_ROLE.DEVELOPER]: "Developer",
-  [DECLARED_ROLE.MANAGEMENT]: "Management",
+  [DECLARED_ROLE.COMPLIANCE_GRC]: "Compliance / GRC",
   [DECLARED_ROLE.OTHER]: "Other",
+};
+
+export const DECLARED_SENIORITY_LABEL: Record<DeclaredSeniority, string> = {
+  [DECLARED_SENIORITY.PRACTITIONER]: "Practitioner / IC",
+  [DECLARED_SENIORITY.LEAD]: "Team lead / Manager",
+  [DECLARED_SENIORITY.DIRECTOR]: "Director / Head of",
+  [DECLARED_SENIORITY.EXECUTIVE]: "VP / C-level",
+  [DECLARED_SENIORITY.FOUNDER]: "Founder / Owner",
 };

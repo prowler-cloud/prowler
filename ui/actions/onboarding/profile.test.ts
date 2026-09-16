@@ -35,6 +35,7 @@ const ANSWERS = {
   declared_cloud_accounts: "11-50",
   declared_team_size: "2-5",
   declared_role: "security",
+  declared_seniority: "director",
 } as const;
 
 describe("onboarding profile actions", () => {

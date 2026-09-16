@@ -4534,6 +4534,7 @@ DECLARED_PROFILE_FIELDS = (
     "declared_cloud_accounts",
     "declared_team_size",
     "declared_role",
+    "declared_seniority",
 )
 
 
@@ -4545,9 +4546,7 @@ class TenantOnboardingProfileSerializer(RLSSerializer):
         fields = [
             "id",
             "inserted_at",
-            "declared_cloud_accounts",
-            "declared_team_size",
-            "declared_role",
+            *DECLARED_PROFILE_FIELDS,
             "skipped",
         ]
         read_only_fields = fields
@@ -4556,8 +4555,8 @@ class TenantOnboardingProfileSerializer(RLSSerializer):
 class TenantOnboardingProfileCreateSerializer(RLSSerializer, BaseWriteSerializer):
     """Record the profile step's outcome.
 
-    Either the three answers are given, or ``skipped`` is true and none is:
-    a skip is recorded as such so "skipped" can be told from "never shown".
+    Either every answer is given, or ``skipped`` is true and none is: a skip
+    is recorded as such so "skipped" can be told from "never shown".
     """
 
     declared_cloud_accounts = serializers.ChoiceField(
@@ -4572,6 +4571,11 @@ class TenantOnboardingProfileCreateSerializer(RLSSerializer, BaseWriteSerializer
     )
     declared_role = serializers.ChoiceField(
         choices=TenantOnboardingProfile.Role.choices,
+        required=False,
+        allow_null=True,
+    )
+    declared_seniority = serializers.ChoiceField(
+        choices=TenantOnboardingProfile.Seniority.choices,
         required=False,
         allow_null=True,
     )
