@@ -1,0 +1,36 @@
+{
+  "Provider": "huaweicloud",
+  "CheckID": "cbr_policy_retention",
+  "CheckTitle": "CBR backup policies have sufficient retention",
+  "CheckType": [],
+  "ServiceName": "cbr",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "HUAWEICLOUD::CBR::Policy",
+  "ResourceGroup": "storage",
+  "Description": "Ensure that CBR backup policies retain backups for at least 7 days.",
+  "Risk": "A backup policy with insufficient retention duration may not provide adequate recovery options in case of data loss or corruption.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.huaweicloud.com/intl/en-us/usermanual-cbr/cbr_03_0065.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Log on to the Huawei Cloud console.\n2. Navigate to Cloud Backup and Recovery.\n3. Select the backup policy.\n4. Update the retention duration to at least 7 days.\n5. Verify that the policy is applied to the appropriate vaults.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Set CBR backup policy retention duration to at least 7 days.",
+      "Url": "https://hub.prowler.com/check/cbr_policy_retention"
+    }
+  },
+  "Categories": [
+    "resilience"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Checks if CBR backup policies have retention_duration_days >= 7."
+}
