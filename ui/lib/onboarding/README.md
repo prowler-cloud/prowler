@@ -2,8 +2,10 @@
 
 The onboarding system runs short, anchored driver.js tours and orchestrates a
 cross-route **guided sequence** after a user connects their first provider.
-Everything lives in client state and localStorage — there is **zero backend
-coupling**.
+The tours and the sequence live entirely in client state and localStorage —
+**no backend coupling**. The profile step described below is the exception:
+it persists the tenant's answer through `POST /onboarding-profiles`, and the
+server answer, not localStorage, decides whether it is still owed.
 
 ## Building blocks
 
@@ -82,13 +84,13 @@ a new tenant three closed questions (cloud accounts, team size, role) and
 records the answer, or the skip, through `POST /onboarding-profiles`. The API
 keeps the first answer per tenant, so the layout only reads
 `isOnboardingProfileRecorded()` for tenants without providers and the gate
-fails open on any doubt (`shouldStartOnboardingProfile`). A localStorage marker
-(`prowler.onboarding.profile`) spares the request and the flash on later
-renders; a rejected submission writes no marker so the step returns next login.
+fails open on any doubt (`shouldStartOnboardingProfile`). A per-tenant localStorage
+marker (`prowler.onboarding.profile.<tenantId>`) spares the flash on later
+renders; a submission or skip the API did not store writes no marker, so the
+step returns next login.
 
 Each resolution (`shown`, `submitted` with the answers, `skipped`) is announced
 as a `prowler:onboarding-profile-step` window event
 (`dispatchOnboardingProfileStep`). The step has no listener of its own: a
 deployment that wants to observe it subscribes from outside, so the onboarding
 stays free of tracking dependencies.
-

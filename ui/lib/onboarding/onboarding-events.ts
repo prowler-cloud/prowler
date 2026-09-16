@@ -16,11 +16,24 @@ export const ONBOARDING_STEP_OUTCOME = {
 export type OnboardingStepOutcome =
   (typeof ONBOARDING_STEP_OUTCOME)[keyof typeof ONBOARDING_STEP_OUTCOME];
 
-export interface OnboardingProfileStepDetail {
-  outcome: OnboardingStepOutcome;
-  // Present only when the outcome is `submitted`.
-  answers?: OnboardingProfileAnswers;
+interface OnboardingProfileStepSubmitted {
+  outcome: typeof ONBOARDING_STEP_OUTCOME.SUBMITTED;
+  // The stored answers, so a listener never has to read them back.
+  answers: OnboardingProfileAnswers;
 }
+
+interface OnboardingProfileStepResolved {
+  outcome:
+    | typeof ONBOARDING_STEP_OUTCOME.SHOWN
+    | typeof ONBOARDING_STEP_OUTCOME.SKIPPED;
+  answers?: never;
+}
+
+// A union rather than an optional field: only a submitted step carries the
+// answers, so a listener that narrows on `outcome` gets them without a check.
+export type OnboardingProfileStepDetail =
+  | OnboardingProfileStepSubmitted
+  | OnboardingProfileStepResolved;
 
 export interface OnboardingInviteStepDetail {
   outcome: OnboardingStepOutcome;

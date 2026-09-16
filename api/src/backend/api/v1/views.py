@@ -9023,6 +9023,12 @@ class TenantOnboardingProfileViewSet(BaseRLSViewSet):
             return TenantOnboardingProfileCreateSerializer
         return super().get_serializer_class()
 
+    def retrieve(self, request, *args, **kwargs):
+        # The resource is a single row per tenant, so the collection is the
+        # only meaningful read. `extend_schema(exclude=True)` hides the detail
+        # route from the docs; this is what actually closes it.
+        raise MethodNotAllowed(method="GET")
+
     def _stored_response(self, profile, http_status):
         return Response(
             TenantOnboardingProfileSerializer(

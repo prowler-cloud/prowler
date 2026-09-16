@@ -7,6 +7,7 @@ import { ReactNode, Suspense } from "react";
 import { isOnboardingProfileRecorded } from "@/actions/onboarding/profile";
 import { getProviders } from "@/actions/providers";
 import { getScansByState } from "@/actions/scans/scans";
+import { auth } from "@/auth.config";
 import MainLayout from "@/components/layout/main-layout/main-layout";
 import {
   OnboardingCheckpointWatcher,
@@ -66,6 +67,9 @@ export default async function RootLayout({
   let hasProviders: boolean | undefined = false;
   // Same tri-state for the onboarding profile step; only new tenants pay the read.
   let profileRecorded: boolean | undefined = true;
+  // Scopes the step's local marker, so answering for one tenant does not
+  // silence it for another.
+  let tenantId: string | null = null;
 
   if (cloudEnabled) {
     const [providersData, scansByState] = await Promise.all([
@@ -82,7 +86,12 @@ export default async function RootLayout({
       ? providersData.data.length > 0
       : undefined;
     if (hasProviders === false) {
-      profileRecorded = await isOnboardingProfileRecorded();
+      const [recorded, session] = await Promise.all([
+        isOnboardingProfileRecorded(),
+        auth(),
+      ]);
+      profileRecorded = recorded;
+      tenantId = session?.tenantId ?? null;
     }
   }
 
@@ -113,6 +122,7 @@ export default async function RootLayout({
               <OnboardingProfileGate
                 hasProviders={hasProviders}
                 profileRecorded={profileRecorded}
+                tenantId={tenantId}
               />
               {/* Single mount point so the watcher survives post-connect navigation. */}
               <OnboardingCheckpointWatcher />

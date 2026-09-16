@@ -6,7 +6,7 @@ import {
   ONBOARDING_PROFILE_STEP_EVENT,
   type OnboardingProfileStepDetail,
 } from "@/lib/onboarding/onboarding-events";
-import { ONBOARDING_PROFILE_MARKER } from "@/lib/onboarding/profile-marker";
+import { onboardingProfileMarkerKey } from "@/lib/onboarding/profile-marker";
 
 import { OnboardingProfileGate } from "../onboarding-profile-gate";
 
@@ -30,6 +30,10 @@ vi.mock("../onboarding-gate", () => ({
     <div data-testid="tour-gate" data-has-providers={String(hasProviders)} />
   ),
 }));
+
+const TENANT_ID = "3f6c2f1e-7b0a-4d5c-9a21-0c9f4f2a7b10";
+const OTHER_TENANT_ID = "8a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d";
+const MARKER_KEY = onboardingProfileMarkerKey(TENANT_ID) as string;
 
 const ANSWERS = {
   declared_cloud_accounts: "11-50",
@@ -55,8 +59,8 @@ describe("OnboardingProfileGate", () => {
     outcomes.length = 0;
     window.addEventListener(ONBOARDING_PROFILE_STEP_EVENT, recordOutcome);
     pathnameMock.mockReturnValue("/");
-    submitMock.mockReset().mockResolvedValue({ data: { id: "profile-1" } });
-    skipMock.mockReset().mockResolvedValue({ data: { id: "profile-1" } });
+    submitMock.mockReset().mockResolvedValue({ stored: true });
+    skipMock.mockReset().mockResolvedValue({ stored: true });
   });
 
   afterEach(() => {
@@ -66,7 +70,11 @@ describe("OnboardingProfileGate", () => {
   it("asks the profile before the tour gate for a provably new tenant", async () => {
     // When
     render(
-      <OnboardingProfileGate hasProviders={false} profileRecorded={false} />,
+      <OnboardingProfileGate
+        hasProviders={false}
+        profileRecorded={false}
+        tenantId={TENANT_ID}
+      />,
     );
 
     // Then
@@ -81,7 +89,11 @@ describe("OnboardingProfileGate", () => {
     // Given
     const user = userEvent.setup();
     render(
-      <OnboardingProfileGate hasProviders={false} profileRecorded={false} />,
+      <OnboardingProfileGate
+        hasProviders={false}
+        profileRecorded={false}
+        tenantId={TENANT_ID}
+      />,
     );
     await screen.findByRole("button", { name: "Continue" });
 
@@ -97,7 +109,7 @@ describe("OnboardingProfileGate", () => {
       { outcome: "shown" },
       { outcome: "submitted", answers: ANSWERS },
     ]);
-    expect(window.localStorage.getItem(ONBOARDING_PROFILE_MARKER)).toBe("true");
+    expect(window.localStorage.getItem(MARKER_KEY)).toBe("true");
     expect(screen.getByTestId("tour-gate")).toHaveAttribute(
       "data-has-providers",
       "false",
@@ -108,7 +120,11 @@ describe("OnboardingProfileGate", () => {
     // Given
     const user = userEvent.setup();
     render(
-      <OnboardingProfileGate hasProviders={false} profileRecorded={false} />,
+      <OnboardingProfileGate
+        hasProviders={false}
+        profileRecorded={false}
+        tenantId={TENANT_ID}
+      />,
     );
     await screen.findByRole("button", { name: "Skip" });
 
@@ -118,16 +134,20 @@ describe("OnboardingProfileGate", () => {
     // Then
     expect(outcomes.at(-1)).toEqual({ outcome: "skipped" });
     expect(skipMock).toHaveBeenCalledTimes(1);
-    expect(window.localStorage.getItem(ONBOARDING_PROFILE_MARKER)).toBe("true");
+    expect(window.localStorage.getItem(MARKER_KEY)).toBe("true");
     expect(screen.getByTestId("tour-gate")).toBeInTheDocument();
   });
 
   it("leaves no marker when the API rejects the answers, so the step returns next login", async () => {
     // Given
     const user = userEvent.setup();
-    submitMock.mockResolvedValue({ errors: [{ detail: "boom" }] });
+    submitMock.mockResolvedValue({ stored: false, error: "boom" });
     render(
-      <OnboardingProfileGate hasProviders={false} profileRecorded={false} />,
+      <OnboardingProfileGate
+        hasProviders={false}
+        profileRecorded={false}
+        tenantId={TENANT_ID}
+      />,
     );
     await screen.findByRole("button", { name: "Continue" });
 
@@ -138,7 +158,7 @@ describe("OnboardingProfileGate", () => {
     await waitFor(() =>
       expect(screen.getByTestId("tour-gate")).toBeInTheDocument(),
     );
-    expect(window.localStorage.getItem(ONBOARDING_PROFILE_MARKER)).toBeNull();
+    expect(window.localStorage.getItem(MARKER_KEY)).toBeNull();
     expect(outcomes).toEqual([{ outcome: "shown" }]);
   });
 
@@ -154,7 +174,7 @@ describe("OnboardingProfileGate", () => {
     ["providers exist", { hasProviders: true, profileRecorded: false }],
   ])("goes straight to the tour gate when %s", async (_, props) => {
     // When
-    render(<OnboardingProfileGate {...props} />);
+    render(<OnboardingProfileGate {...props} tenantId={TENANT_ID} />);
 
     // Then
     expect(screen.getByTestId("tour-gate")).toBeInTheDocument();
@@ -166,11 +186,15 @@ describe("OnboardingProfileGate", () => {
 
   it("does not reopen once this browser handled the step", () => {
     // Given
-    window.localStorage.setItem(ONBOARDING_PROFILE_MARKER, "true");
+    window.localStorage.setItem(MARKER_KEY, "true");
 
     // When
     render(
-      <OnboardingProfileGate hasProviders={false} profileRecorded={false} />,
+      <OnboardingProfileGate
+        hasProviders={false}
+        profileRecorded={false}
+        tenantId={TENANT_ID}
+      />,
     );
 
     // Then
@@ -184,12 +208,60 @@ describe("OnboardingProfileGate", () => {
 
     // When
     render(
-      <OnboardingProfileGate hasProviders={false} profileRecorded={false} />,
+      <OnboardingProfileGate
+        hasProviders={false}
+        profileRecorded={false}
+        tenantId={TENANT_ID}
+      />,
     );
 
     // Then
     expect(screen.getByTestId("tour-gate")).toBeInTheDocument();
-    expect(window.localStorage.getItem(ONBOARDING_PROFILE_MARKER)).toBeNull();
+    expect(window.localStorage.getItem(MARKER_KEY)).toBeNull();
     expect(outcomes).toEqual([]);
+  });
+
+  it("still asks another tenant that the same browser has not answered", async () => {
+    // Given — this browser answered for one tenant.
+    window.localStorage.setItem(MARKER_KEY, "true");
+
+    // When — the user switches to a second, brand-new tenant.
+    render(
+      <OnboardingProfileGate
+        hasProviders={false}
+        profileRecorded={false}
+        tenantId={OTHER_TENANT_ID}
+      />,
+    );
+
+    // Then
+    expect(
+      await screen.findByRole("button", { name: "Continue" }),
+    ).toBeInTheDocument();
+    expect(outcomes).toEqual([{ outcome: "shown" }]);
+  });
+
+  it("leaves no marker and announces nothing when the skip is not stored", async () => {
+    // Given
+    const user = userEvent.setup();
+    skipMock.mockResolvedValue({ stored: false, error: "boom" });
+    render(
+      <OnboardingProfileGate
+        hasProviders={false}
+        profileRecorded={false}
+        tenantId={TENANT_ID}
+      />,
+    );
+    await screen.findByRole("button", { name: "Skip" });
+
+    // When
+    await user.click(screen.getByRole("button", { name: "Skip" }));
+
+    // Then
+    await waitFor(() =>
+      expect(screen.getByTestId("tour-gate")).toBeInTheDocument(),
+    );
+    expect(window.localStorage.getItem(MARKER_KEY)).toBeNull();
+    expect(outcomes).toEqual([{ outcome: "shown" }]);
   });
 });

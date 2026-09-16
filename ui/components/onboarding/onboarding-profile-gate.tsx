@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { useState, useSyncExternalStore } from "react";
+import { useCallback, useState, useSyncExternalStore } from "react";
 
 import {
   skipOnboardingProfile,
@@ -29,6 +29,8 @@ interface OnboardingProfileGateProps {
   hasProviders?: boolean;
   // Whether the API already holds the tenant's profile; `undefined` fails open.
   profileRecorded?: boolean;
+  // Scopes the local marker: the step is per tenant, not per browser.
+  tenantId?: string | null;
 }
 
 const isBillingPath = (pathname: string | null) =>
@@ -47,11 +49,13 @@ function ShownOnce() {
 export function OnboardingProfileGate({
   hasProviders,
   profileRecorded,
+  tenantId = null,
 }: OnboardingProfileGateProps) {
   const pathname = usePathname();
   const handledLocally = useSyncExternalStore(
     subscribeOnboardingProfileMarker,
-    isOnboardingProfileHandled,
+    // Bound per tenant so switching accounts re-reads the right key.
+    useCallback(() => isOnboardingProfileHandled(tenantId), [tenantId]),
     getServerOnboardingProfileHandled,
   );
   // Session flag keeps the modal closed after submit/skip within this mount,
@@ -75,8 +79,9 @@ export function OnboardingProfileGate({
     setIsSubmitting(true);
     try {
       const result = await submitOnboardingProfile(answers);
-      if (result?.errors?.length) {
-        // No marker: the row was not written, so the step returns next login.
+      if (!result.stored) {
+        // Nothing was written, so no marker and no submitted outcome: the
+        // step returns on the next login instead of being lost.
         setResolvedThisSession(true);
         return;
       }
@@ -84,19 +89,29 @@ export function OnboardingProfileGate({
         outcome: ONBOARDING_STEP_OUTCOME.SUBMITTED,
         answers,
       });
-      markOnboardingProfileHandled();
+      markOnboardingProfileHandled(tenantId);
       setResolvedThisSession(true);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleSkip = () => {
-    dispatchOnboardingProfileStep({ outcome: ONBOARDING_STEP_OUTCOME.SKIPPED });
-    // Recorded server-side as a fact; the modal does not wait for it.
-    void skipOnboardingProfile();
-    markOnboardingProfileHandled();
-    setResolvedThisSession(true);
+  const handleSkip = async () => {
+    setIsSubmitting(true);
+    try {
+      // A skip is a stored fact too, so it is only remembered locally once
+      // the row exists.
+      const result = await skipOnboardingProfile();
+      if (result.stored) {
+        dispatchOnboardingProfileStep({
+          outcome: ONBOARDING_STEP_OUTCOME.SKIPPED,
+        });
+        markOnboardingProfileHandled(tenantId);
+      }
+      setResolvedThisSession(true);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (

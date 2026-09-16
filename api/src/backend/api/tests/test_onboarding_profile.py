@@ -141,3 +141,15 @@ class TestTenantOnboardingProfileViewSet:
         response = _submit(authenticated_client_no_permissions_rbac, ANSWERS)
 
         assert response.status_code == status.HTTP_201_CREATED
+
+    def test_detail_route_is_refused(self, authenticated_client):
+        # One row per tenant, so the collection is the only meaningful read;
+        # the detail route must refuse rather than serve a second shape.
+        _submit(authenticated_client, ANSWERS)
+        profile = TenantOnboardingProfile.objects.get()
+
+        response = authenticated_client.get(
+            reverse("onboarding-profile-detail", kwargs={"pk": profile.id})
+        )
+
+        assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
