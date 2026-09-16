@@ -275,7 +275,11 @@
           "entra_policy_guest_users_access_restrictions",
           "entra_policy_guest_invite_only_for_admin_roles"
         ],
-        "aws": []
+        "aws": [
+          "iam_user_accesskey_unused",
+          "iam_user_console_access_unused",
+          "iam_user_no_setup_initial_access_key"
+        ]
       }
     },
     {
@@ -293,7 +297,11 @@
         "azure": [
           "entra_security_defaults_enabled"
         ],
-        "aws": []
+        "aws": [
+          "cognito_user_pool_blocks_compromised_credentials_sign_in_attempts",
+          "cognito_user_pool_password_policy_minimum_length_14",
+          "iam_password_policy_minimum_length_14"
+        ]
       }
     },
     {
@@ -558,7 +566,11 @@
           "entra_global_admin_in_less_than_five_users",
           "iam_role_user_access_admin_restricted"
         ],
-        "aws": []
+        "aws": [
+          "iam_role_access_not_stale_to_bedrock",
+          "iam_user_access_not_stale_to_bedrock",
+          "iam_user_access_not_stale_to_sagemaker"
+        ]
       }
     },
     {
@@ -648,7 +660,9 @@
           "defender_ensure_defender_for_server_is_on",
           "defender_ensure_defender_for_storage_is_on"
         ],
-        "aws": []
+        "aws": [
+          "guardduty_ec2_malware_protection_enabled"
+        ]
       }
     },
     {

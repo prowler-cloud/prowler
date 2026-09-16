@@ -944,8 +944,16 @@ class TestCyberEssentialsFramework:
             "CE-FW-05": [],
             "CE-FW-06": [],
             "CE-FW-07": [],
-            "CE-SC-01": [],
-            "CE-SC-02": [],
+            "CE-SC-01": [
+                "iam_user_accesskey_unused",
+                "iam_user_console_access_unused",
+                "iam_user_no_setup_initial_access_key",
+            ],
+            "CE-SC-02": [
+                "cognito_user_pool_blocks_compromised_credentials_sign_in_attempts",
+                "cognito_user_pool_password_policy_minimum_length_14",
+                "iam_password_policy_minimum_length_14",
+            ],
             "CE-SC-03": [],
             "CE-SC-04": [],
             "CE-SC-05": [
@@ -973,7 +981,11 @@ class TestCyberEssentialsFramework:
                 "iam_user_mfa_enabled_console_access",
             ],
             "CE-UAC-05": [],
-            "CE-UAC-06": [],
+            "CE-UAC-06": [
+                "iam_role_access_not_stale_to_bedrock",
+                "iam_user_access_not_stale_to_bedrock",
+                "iam_user_access_not_stale_to_sagemaker",
+            ],
             "CE-UAC-07": [
                 "cognito_user_pool_mfa_enabled",
                 "directoryservice_supported_mfa_radius_enabled",
@@ -986,7 +998,7 @@ class TestCyberEssentialsFramework:
                 "iam_password_policy_minimum_length_14",
             ],
             "CE-MP-01": ["guardduty_ec2_malware_protection_enabled"],
-            "CE-MP-02": [],
+            "CE-MP-02": ["guardduty_ec2_malware_protection_enabled"],
             "CE-MP-03": [],
         }
         actual_mappings = {
@@ -1031,9 +1043,8 @@ class TestCyberEssentialsFramework:
                 "partial",
                 "non-applicable",
             }
-            # Requirements with no checks for any provider must not claim to be Automated.
-            if not any(req.checks.values()):
-                assert req.attributes["AssessmentStatus"] == "Manual"
+            expected_status = "Automated" if any(req.checks.values()) else "Manual"
+            assert req.attributes["AssessmentStatus"] == expected_status
 
 
 class TestBackwardCompat:
