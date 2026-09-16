@@ -293,14 +293,17 @@ export class RegistryPage extends BasePage {
       this.page.getByText("Scan launched", { exact: true }),
     ).toBeVisible();
     await this.page.goto("/scans?tab=completed");
+    const completedScan = this.page
+      .getByRole("tabpanel", { name: "Completed", exact: true })
+      .getByRole("row")
+      .filter({
+        has: this.page.getByText("Fixture Registry scan", { exact: true }),
+      });
     await expect(
-      this.page.getByText("Fixture Registry scan", { exact: true }),
+      completedScan.getByText("Fixture Registry scan", { exact: true }),
     ).toBeVisible();
     await expect(
-      this.page
-        .getByRole("row")
-        .filter({ hasText: "Fixture Registry scan" })
-        .getByText("Registry test account", { exact: true }),
+      completedScan.getByText("Registry test account", { exact: true }),
     ).toBeVisible();
     await this.captureEvidence("registry-provider-scan-completed");
   }
