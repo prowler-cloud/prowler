@@ -374,12 +374,13 @@
 1. Navigate to providers page
 2. Click "Add Provider" button
 3. Select GCP provider type
-4. Fill provider details (project ID and alias)
-5. Select service account credentials type
-6. Fill GCP service account key credentials
-7. Confirm provider connection without launching a scan
-8. Verify return to Providers page
-9. Verify provider exists in Providers table
+4. Select "Add A Single GCP Project"
+5. Fill provider details (project ID and alias)
+6. Select service account credentials type
+7. Fill GCP service account key credentials
+8. Confirm provider connection without launching a scan
+9. Verify return to Providers page
+10. Verify provider exists in Providers table
 
 ### Expected Result
 
