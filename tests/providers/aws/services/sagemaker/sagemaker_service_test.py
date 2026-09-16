@@ -6,6 +6,7 @@ import botocore
 from prowler.providers.aws.services.sagemaker.sagemaker_service import (
     Model,
     SageMaker,
+    TrainingJob,
 )
 from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
@@ -248,6 +249,63 @@ class Test_SageMaker_Service:
             {"Key": "test", "Value": "test"},
         ]
 
+    # Test SageMaker training job limit keeps only the newest jobs
+    def test_training_job_limit_selects_latest_jobs_for_analysis(self):
+        sagemaker = SageMaker.__new__(SageMaker)
+        sagemaker.sagemaker_training_jobs = [
+            TrainingJob(
+                name="old",
+                region=AWS_REGION_EU_WEST_1,
+                arn="arn:aws:sagemaker:eu-west-1:123456789012:training-job/old",
+                creation_time="2018-06-01T00:00:00.000+0000",
+            ),
+            TrainingJob(
+                name="new",
+                region=AWS_REGION_EU_WEST_1,
+                arn="arn:aws:sagemaker:eu-west-1:123456789012:training-job/new",
+                creation_time="2021-05-01T00:00:00.000+0000",
+            ),
+        ]
+        sagemaker.training_job_limit = 1
+
+        sagemaker._select_training_jobs_for_analysis()
+
+        assert [job.name for job in sagemaker.sagemaker_training_jobs] == ["new"]
+
+    def test_training_job_limit_unset_keeps_all_jobs(self):
+        sagemaker = SageMaker.__new__(SageMaker)
+        sagemaker.sagemaker_training_jobs = [
+            TrainingJob(
+                name="old",
+                region=AWS_REGION_EU_WEST_1,
+                arn="arn:aws:sagemaker:eu-west-1:123456789012:training-job/old",
+                creation_time="2018-06-01T00:00:00.000+0000",
+            ),
+            TrainingJob(
+                name="new",
+                region=AWS_REGION_EU_WEST_1,
+                arn="arn:aws:sagemaker:eu-west-1:123456789012:training-job/new",
+                creation_time="2021-05-01T00:00:00.000+0000",
+            ),
+        ]
+        sagemaker.training_job_limit = None
+
+        sagemaker._select_training_jobs_for_analysis()
+
+        assert {job.name for job in sagemaker.sagemaker_training_jobs} == {
+            "old",
+            "new",
+        }
+
+    def test_training_job_limit_exposes_only_selected_jobs_from_init(self):
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_EU_WEST_1],
+            audit_config={"max_sagemaker_training_jobs": 1},
+        )
+        sagemaker = SageMaker(aws_provider)
+        assert sagemaker.training_job_limit == 1
+        assert len(sagemaker.sagemaker_training_jobs) == 1
+
     # Test SageMaker describe notebook instance
     def test_describe_notebook_instance(self):
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
@@ -439,6 +497,7 @@ class Test_SageMaker_Service:
         audit_info = MagicMock()
         audit_info.audited_partition = "aws"
         audit_info.audited_account = AWS_ACCOUNT_NUMBER
+        audit_info.audit_config = {}
 
         # We mock __threading_call__ to verify it is called with the right arguments
         with patch(
