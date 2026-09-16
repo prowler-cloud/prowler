@@ -240,3 +240,7 @@ class Test_zone_challenge_passage_configured:
             result = check.execute()
             assert len(result) == 1
             assert result[0].status == "FAIL"
+            assert (
+                result[0].status_extended
+                == f"Challenge Passage is not configured for zone {ZONE_NAME}."
+            )
