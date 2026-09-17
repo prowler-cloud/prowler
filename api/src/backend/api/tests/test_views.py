@@ -8784,6 +8784,190 @@ class TestInvitationViewSet:
             user.id
         )
 
+    @staticmethod
+    def _invitation_create_payload(email, role):
+        return json.dumps(
+            {
+                "data": {
+                    "type": "invitations",
+                    "attributes": {"email": email},
+                    "relationships": {
+                        "roles": {"data": [{"type": "roles", "id": str(role.id)}]}
+                    },
+                }
+            }
+        )
+
+    @staticmethod
+    def _create_lapsed_invitation(email, tenant, inviter):
+        return Invitation.objects.create(
+            email=email,
+            state=Invitation.State.PENDING,
+            expires_at=datetime.now(UTC) - timedelta(days=1),
+            inviter=inviter,
+            tenant=tenant,
+        )
+
+    def test_invitations_create_with_lapsed_pending_invitation_for_same_email(
+        self,
+        authenticated_client,
+        create_test_user,
+        tenants_fixture,
+        invitations_fixture,
+        roles_fixture,
+    ):
+        lapsed_invitation, expired_invitation = invitations_fixture
+        lapsed_invitation.expires_at = datetime.now(UTC) - timedelta(days=1)
+        lapsed_invitation.save()
+        other_email_lapsed_invitation = self._create_lapsed_invitation(
+            "other@prowler.com", tenants_fixture[0], create_test_user
+        )
+
+        response = authenticated_client.post(
+            reverse("invitation-list"),
+            data=self._invitation_create_payload(
+                lapsed_invitation.email, roles_fixture[0]
+            ),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_201_CREATED
+        new_invitation = Invitation.objects.get(id=response.json()["data"]["id"])
+        assert new_invitation.email == lapsed_invitation.email
+        assert new_invitation.state == Invitation.State.PENDING
+        lapsed_invitation.refresh_from_db()
+        assert lapsed_invitation.state == Invitation.State.EXPIRED
+        expired_invitation.refresh_from_db()
+        assert expired_invitation.state == Invitation.State.EXPIRED
+        other_email_lapsed_invitation.refresh_from_db()
+        assert other_email_lapsed_invitation.state == Invitation.State.PENDING
+
+    def test_invitations_create_with_active_pending_invitation_for_same_email(
+        self,
+        authenticated_client,
+        create_test_user,
+        tenants_fixture,
+        invitations_fixture,
+        roles_fixture,
+    ):
+        active_invitation, _ = invitations_fixture
+        self._create_lapsed_invitation(
+            active_invitation.email, tenants_fixture[0], create_test_user
+        )
+        invitation_count = Invitation.objects.count()
+
+        response = authenticated_client.post(
+            reverse("invitation-list"),
+            data=self._invitation_create_payload(
+                active_invitation.email, roles_fixture[0]
+            ),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert (
+            response.json()["errors"][0]["source"]["pointer"]
+            == "/data/attributes/email"
+        )
+        assert Invitation.objects.count() == invitation_count
+        active_invitation.refresh_from_db()
+        assert active_invitation.state == Invitation.State.PENDING
+
+    def test_invitations_create_ignores_pending_invitations_from_other_tenants(
+        self, authenticated_client, create_test_user, tenants_fixture, roles_fixture
+    ):
+        email = "cross_tenant@prowler.com"
+        other_tenant = tenants_fixture[1]
+        other_tenant_lapsed_invitation = self._create_lapsed_invitation(
+            email, other_tenant, create_test_user
+        )
+        Invitation.objects.create(
+            email=email, inviter=create_test_user, tenant=other_tenant
+        )
+
+        response = authenticated_client.post(
+            reverse("invitation-list"),
+            data=self._invitation_create_payload(email, roles_fixture[0]),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_201_CREATED
+        other_tenant_lapsed_invitation.refresh_from_db()
+        assert other_tenant_lapsed_invitation.state == Invitation.State.PENDING
+
+    def test_invitations_report_lapsed_pending_invitation_as_expired(
+        self,
+        authenticated_client,
+        create_test_user,
+        tenants_fixture,
+        invitations_fixture,
+    ):
+        active_invitation, expired_invitation = invitations_fixture
+        lapsed_invitation = self._create_lapsed_invitation(
+            "lapsed@prowler.com", tenants_fixture[0], create_test_user
+        )
+
+        list_response = authenticated_client.get(reverse("invitation-list"))
+        retrieve_response = authenticated_client.get(
+            reverse("invitation-detail", kwargs={"pk": lapsed_invitation.id})
+        )
+
+        assert list_response.status_code == status.HTTP_200_OK
+        assert retrieve_response.status_code == status.HTTP_200_OK
+        assert {
+            invitation["id"]: invitation["attributes"]["state"]
+            for invitation in list_response.json()["data"]
+        } == {
+            str(active_invitation.id): Invitation.State.PENDING.value,
+            str(expired_invitation.id): Invitation.State.EXPIRED.value,
+            str(lapsed_invitation.id): Invitation.State.EXPIRED.value,
+        }
+        assert (
+            retrieve_response.json()["data"]["attributes"]["state"]
+            == Invitation.State.EXPIRED.value
+        )
+
+    @pytest.mark.parametrize(
+        "filter_name, filter_value, expected_invitations",
+        [
+            ("state", "pending", {"active"}),
+            ("state", "expired", {"expired", "lapsed"}),
+            ("state", "accepted", set()),
+            ("state__in", "pending", {"active"}),
+            ("state__in", "expired", {"expired", "lapsed"}),
+            ("state__in", "pending,expired", {"active", "expired", "lapsed"}),
+            ("state__in", "accepted,revoked", set()),
+        ],
+    )
+    def test_invitations_filter_state_treats_lapsed_pending_as_expired(
+        self,
+        authenticated_client,
+        create_test_user,
+        tenants_fixture,
+        invitations_fixture,
+        filter_name,
+        filter_value,
+        expected_invitations,
+    ):
+        active_invitation, expired_invitation = invitations_fixture
+        lapsed_invitation = self._create_lapsed_invitation(
+            "lapsed@prowler.com", tenants_fixture[0], create_test_user
+        )
+        invitation_ids = {
+            "active": str(active_invitation.id),
+            "expired": str(expired_invitation.id),
+            "lapsed": str(lapsed_invitation.id),
+        }
+
+        response = authenticated_client.get(
+            reverse("invitation-list"), {f"filter[{filter_name}]": filter_value}
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert {invitation["id"] for invitation in response.json()["data"]} == {
+            invitation_ids[name] for name in expected_invitations
+        }
+
     @pytest.mark.parametrize(
         "email",
         [
@@ -8791,8 +8975,10 @@ class TestInvitationViewSet:
             "invalid_email@",
             # There is a pending invitation with this email
             "testing@prowler.com",
+            "TESTING@prowler.com",
             # User is already a member of the tenant
             TEST_USER,
+            TEST_USER.upper(),
         ],
     )
     def test_invitations_create_invalid_email(
@@ -9046,6 +9232,56 @@ class TestInvitationViewSet:
             response.json()["errors"][0]["detail"]
             == "This invitation cannot be revoked."
         )
+
+    def test_invitations_delete_lapsed_invitation(
+        self, authenticated_client, invitations_fixture
+    ):
+        invitation, *_ = invitations_fixture
+        invitation.expires_at = datetime.now(UTC) - timedelta(days=1)
+        invitation.save()
+
+        response = authenticated_client.delete(
+            reverse("invitation-detail", kwargs={"pk": str(invitation.id)})
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert (
+            response.json()["errors"][0]["detail"]
+            == "This invitation cannot be revoked."
+        )
+        invitation.refresh_from_db()
+        assert invitation.state == Invitation.State.PENDING
+
+    def test_invitations_partial_update_lapsed_invitation(
+        self, authenticated_client, invitations_fixture
+    ):
+        invitation, *_ = invitations_fixture
+        invitation.expires_at = datetime.now(UTC) - timedelta(days=1)
+        invitation.save()
+        data = {
+            "data": {
+                "id": str(invitation.id),
+                "type": "invitations",
+                "attributes": {
+                    "email": invitation.email,
+                    "expires_at": self.TOMORROW_ISO,
+                },
+            }
+        }
+
+        response = authenticated_client.patch(
+            reverse("invitation-detail", kwargs={"pk": str(invitation.id)}),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert (
+            response.json()["errors"][0]["detail"]
+            == "This invitation cannot be updated."
+        )
+        invitation.refresh_from_db()
+        assert invitation.is_lapsed
 
     def test_invitations_accept_invitation_new_user(self, client, invitations_fixture):
         invitation, *_ = invitations_fixture
