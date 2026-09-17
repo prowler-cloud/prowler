@@ -12,6 +12,8 @@ vi.mock("../forms", () => ({
   EditForm: () => <div data-testid="edit-form" />,
 }));
 
+import { InvitationProps } from "@/types";
+
 import { DataTableRowActions } from "./data-table-row-actions";
 
 const createRow = (state: string) =>
@@ -19,8 +21,9 @@ const createRow = (state: string) =>
     original: {
       id: "invitation-1",
       attributes: { email: "jane@example.com", state },
+      relationships: { inviter: { data: { type: "users", id: "user-1" } } },
     },
-  }) as unknown as Row<{ id: string }>;
+  }) as unknown as Row<InvitationProps>;
 
 const openMenu = async (user: ReturnType<typeof userEvent.setup>) => {
   await user.click(screen.getByRole("button", { name: "Open actions menu" }));

@@ -11,27 +11,23 @@ import {
   ActionDropdownItem,
 } from "@/components/shadcn/dropdown";
 import { Modal } from "@/components/shadcn/modal";
+import { InvitationProps } from "@/types";
 
 import { DeleteForm, EditForm } from "../forms";
 
-interface DataTableRowActionsProps<InvitationProps> {
+interface DataTableRowActionsProps {
   row: Row<InvitationProps>;
   roles?: { id: string; name: string }[];
 }
 
-export function DataTableRowActions<InvitationProps>({
-  row,
-  roles,
-}: DataTableRowActionsProps<InvitationProps>) {
+export function DataTableRowActions({ row, roles }: DataTableRowActionsProps) {
   const router = useRouter();
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-  const invitationId = (row.original as { id: string }).id;
-  const invitationEmail = (row.original as any).attributes?.email;
-  const invitationRole = (row.original as any).relationships?.role?.attributes
-    ?.name;
-  const isInvitationPending =
-    (row.original as any).attributes?.state === "pending";
+  const invitationId = row.original.id;
+  const invitationEmail = row.original.attributes.email;
+  const invitationRole = row.original.relationships.role?.attributes?.name;
+  const isInvitationPending = row.original.attributes.state === "pending";
 
   return (
     <>
