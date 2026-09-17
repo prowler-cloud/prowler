@@ -30,7 +30,8 @@ export function DataTableRowActions<InvitationProps>({
   const invitationEmail = (row.original as any).attributes?.email;
   const invitationRole = (row.original as any).relationships?.role?.attributes
     ?.name;
-  const invitationAccepted = (row.original as any).attributes?.state;
+  const isInvitationPending =
+    (row.original as any).attributes?.state === "pending";
 
   return (
     <>
@@ -69,7 +70,7 @@ export function DataTableRowActions<InvitationProps>({
             icon={<Pencil />}
             label="Edit Invitation"
             onSelect={() => setIsEditOpen(true)}
-            disabled={invitationAccepted === "accepted"}
+            disabled={!isInvitationPending}
           />
           <ActionDropdownDangerZone>
             <ActionDropdownItem
@@ -77,7 +78,7 @@ export function DataTableRowActions<InvitationProps>({
               label="Revoke Invitation"
               destructive
               onSelect={() => setIsDeleteOpen(true)}
-              disabled={invitationAccepted === "accepted"}
+              disabled={!isInvitationPending}
             />
           </ActionDropdownDangerZone>
         </ActionDropdown>
