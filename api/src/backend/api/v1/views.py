@@ -4476,7 +4476,7 @@ class InvitationViewSet(BaseRLSViewSet):
 
     def partial_update(self, request, *args, **kwargs):
         instance = self.get_object()
-        if instance.state != Invitation.State.PENDING:
+        if instance.state != Invitation.State.PENDING or instance.is_lapsed:
             raise ValidationError(detail="This invitation cannot be updated.")
         serializer = self.get_serializer(
             instance,
@@ -4490,7 +4490,7 @@ class InvitationViewSet(BaseRLSViewSet):
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
-        if instance.state != Invitation.State.PENDING:
+        if instance.state != Invitation.State.PENDING or instance.is_lapsed:
             raise ValidationError(detail="This invitation cannot be revoked.")
         instance.state = Invitation.State.REVOKED
         instance.save()

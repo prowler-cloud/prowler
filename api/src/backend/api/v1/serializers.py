@@ -2150,6 +2150,12 @@ class InvitationSerializer(RLSSerializer):
         if tenant_id is not None:
             self.fields["roles"].queryset = Role.objects.filter(tenant_id=tenant_id)
 
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if instance.is_lapsed:
+            data["state"] = Invitation.State.EXPIRED.value
+        return data
+
     class Meta:
         model = Invitation
         fields = [
@@ -2176,6 +2182,7 @@ class InvitationBaseWriteSerializer(BaseWriteSerializer):
             self.fields["roles"].queryset = Role.objects.filter(tenant_id=tenant_id)
 
     def validate_email(self, value):
+        value = value.strip().lower()
         user = User.objects.filter(email=value).first()
         tenant_id = self.context["tenant_id"]
         if user and Membership.objects.filter(user=user, tenant=tenant_id).exists():
@@ -2183,9 +2190,13 @@ class InvitationBaseWriteSerializer(BaseWriteSerializer):
                 "The user may already be a member of the tenant or there was an issue with the "
                 "email provided."
             )
-        if Invitation.objects.filter(
-            email=value, state=Invitation.State.PENDING
-        ).exists():
+        pending_invitations = Invitation.objects.filter(
+            tenant_id=tenant_id, email=value, state=Invitation.State.PENDING
+        )
+        pending_invitations.filter(Invitation.lapsed_q()).update(
+            state=Invitation.State.EXPIRED
+        )
+        if pending_invitations.filter(expires_at__gt=datetime.now(UTC)).exists():
             raise ValidationError(
                 "Unable to process your request. Please check the information provided and "
                 "try again."
