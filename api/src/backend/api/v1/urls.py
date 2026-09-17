@@ -39,6 +39,7 @@ from api.v1.views import (
     TenantApiKeyViewSet,
     TenantFinishACSView,
     TenantMembersViewSet,
+    TenantOnboardingProfileViewSet,
     TenantViewSet,
     UserRoleRelationshipView,
     UserViewSet,
@@ -107,6 +108,11 @@ router.register(
     basename="lighthouse-models",
 )
 router.register(r"mute-rules", MuteRuleViewSet, basename="mute-rule")
+router.register(
+    r"onboarding-profiles",
+    TenantOnboardingProfileViewSet,
+    basename="onboarding-profile",
+)
 
 tenants_router = routers.NestedSimpleRouter(router, r"tenants", lookup="tenant")
 tenants_router.register(

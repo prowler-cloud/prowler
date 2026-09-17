@@ -4,15 +4,18 @@ import * as Sentry from "@sentry/nextjs";
 import { Metadata, Viewport } from "next";
 import { ReactNode, Suspense } from "react";
 
+import { isOnboardingProfileRecorded } from "@/actions/onboarding/profile";
 import { getProviders } from "@/actions/providers";
 import { getScansByState } from "@/actions/scans/scans";
 import { auth } from "@/auth.config";
 import MainLayout from "@/components/layout/main-layout/main-layout";
 import {
   OnboardingCheckpointWatcher,
-  OnboardingGate,
   OnboardingSequenceBanner,
 } from "@/components/onboarding";
+// Imported directly: it pulls the server actions, which the shared barrel
+// stays free of so tests can import the barrel without mocking them.
+import { OnboardingProfileGate } from "@/components/onboarding/onboarding-profile-gate";
 import { RuntimePublicConfig } from "@/components/runtime-config/runtime-public-config";
 import { NavigationProgress } from "@/components/shadcn/navigation-progress";
 import { Toaster } from "@/components/shadcn/toast";
@@ -71,6 +74,11 @@ export default async function RootLayout({
   let hasCompletedScan = true;
   // Tri-state: true = has providers, false = zero providers, undefined = fetch failed (gate fails open).
   let hasProviders: boolean | undefined = false;
+  // Same tri-state for the onboarding profile step; only new tenants pay the read.
+  let profileRecorded: boolean | undefined = true;
+  // Scopes the step's local marker, so answering for one tenant does not
+  // silence it for another.
+  let tenantId: string | null = null;
 
   if (cloudEnabled) {
     const [providersData, scansByState] = await Promise.all([
@@ -86,6 +94,14 @@ export default async function RootLayout({
     hasProviders = Array.isArray(providersData?.data)
       ? providersData.data.length > 0
       : undefined;
+    if (hasProviders === false) {
+      const [recorded, session] = await Promise.all([
+        isOnboardingProfileRecorded(),
+        auth(),
+      ]);
+      profileRecorded = recorded;
+      tenantId = session?.tenantId ?? null;
+    }
   }
 
   const registryEligible =
@@ -116,7 +132,12 @@ export default async function RootLayout({
           />
           {cloudEnabled && (
             <>
-              <OnboardingGate hasProviders={hasProviders} />
+              {/* Profile step first, then the tour gate it wraps. */}
+              <OnboardingProfileGate
+                hasProviders={hasProviders}
+                profileRecorded={profileRecorded}
+                tenantId={tenantId}
+              />
               {/* Single mount point so the watcher survives post-connect navigation. */}
               <OnboardingCheckpointWatcher />
               {/* Persistent banner shown only while a guided sequence is active. */}
