@@ -16,6 +16,10 @@ interface OnboardingInviteStepProps {
   onDone: () => void;
 }
 
+// Roles that have not arrived by then count as unavailable, so a request
+// that never answers cannot hold the checkpoint behind an empty step.
+const ROLES_TIMEOUT_MS = 5_000;
+
 // Mounted only while the step is showing: loads the roles once, announces
 // the impression once, and resolves through a sent invitation or a skip.
 export function OnboardingInviteStep({ onDone }: OnboardingInviteStepProps) {
@@ -26,17 +30,23 @@ export function OnboardingInviteStep({ onDone }: OnboardingInviteStepProps) {
   useMountEffect(() => {
     dispatchOnboardingInviteStep({ outcome: ONBOARDING_STEP_OUTCOME.SHOWN });
     let active = true;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    // First answer wins: a late response or a timer after it is ignored.
+    const settle = (loaded: InvitationRoleOption[]) => {
+      if (!active) return;
+      active = false;
+      clearTimeout(timer);
+      setRoles(loaded);
+    };
+    // Without roles the dialog offers only the skip, so the checkpoint is
+    // never blocked: not by a failed read, not by one that never answers.
+    timer = setTimeout(() => settle([]), ROLES_TIMEOUT_MS);
     getOnboardingInviteRoles()
-      .then((loaded) => {
-        if (active) setRoles(loaded);
-      })
-      .catch(() => {
-        // Without roles the dialog offers only the skip, so the checkpoint
-        // is never blocked.
-        if (active) setRoles([]);
-      });
+      .then(settle)
+      .catch(() => settle([]));
     return () => {
       active = false;
+      clearTimeout(timer);
     };
   });
 

@@ -102,7 +102,9 @@ stays free of tracking dependencies.
 The first time the checkpoint opens (right after the first provider is
 connected), `OnboardingCheckpointWatcher` renders `OnboardingInviteStep` before
 the checkpoint dialog: the members-page `SendInvitationForm`, tagged
-`source=onboarding` for the API, plus a "Skip for now" action. The store stays
+`source=onboarding` for the API, plus a "Skip for now" action. If the roles
+cannot be loaded, or have not arrived after five seconds, only the skip is
+offered, so the checkpoint is never blocked. The store stays
 `open` while the step shows, so the checkpoint dialog follows unchanged once it
 resolves. A per-tenant localStorage marker (`prowler.onboarding.invite.<tenantId>`)
 keeps it to one offer; without a usable `tenantId` the step is not offered.

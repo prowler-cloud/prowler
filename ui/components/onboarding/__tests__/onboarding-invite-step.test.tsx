@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -192,5 +192,32 @@ describe("OnboardingInviteStep", () => {
 
     // Then
     expect(onDone).toHaveBeenCalledTimes(1);
+  });
+
+  it("falls back to the skip when the roles never arrive", async () => {
+    // Given — a request that never settles.
+    vi.useFakeTimers();
+    try {
+      getRolesMock.mockReturnValue(new Promise(() => {}));
+      render(<OnboardingInviteStep onDone={vi.fn()} />);
+      expect(screen.queryByText("Invite your team")).not.toBeInTheDocument();
+
+      // When — the step's own deadline passes.
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(5_000);
+      });
+
+      // Then
+      expect(screen.getByText("Invite your team")).toBeInTheDocument();
+      expect(screen.getByText(/Roles could not be loaded/)).toBeInTheDocument();
+      expect(
+        screen.queryByRole("button", { name: /send invitation/i }),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: "Skip for now" }),
+      ).toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
