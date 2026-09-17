@@ -2,10 +2,11 @@
 
 The onboarding system runs short, anchored driver.js tours and orchestrates a
 cross-route **guided sequence** after a user connects their first provider.
-The tours and the sequence live entirely in client state and localStorage —
-**no backend coupling**. The profile step described below is the exception:
-it persists the tenant's answer through `POST /onboarding-profiles`, and the
-server answer, not localStorage, decides whether it is still owed.
+The tours and the guided sequence run on client state (the sequence slice
+is ephemeral and resets on a hard reload); tour completion and the one-time
+markers persist in localStorage. Server input is the tri-state `hasProviders`
+the layout derives from `getProviders()`, plus the invitation the invite step
+posts to the API.
 
 ## Building blocks
 
@@ -19,7 +20,6 @@ server answer, not localStorage, decides whether it is still owed.
 | Ephemeral sequence slice               | `ui/store/onboarding-sequence.ts`                                     |
 | Checkpoint watcher + dialog            | `ui/components/onboarding/onboarding-checkpoint-{watcher,dialog}.tsx` |
 | Mandatory new-user gate                | `ui/components/onboarding/onboarding-gate.tsx`                        |
-| Profile step in front of the gate      | `ui/components/onboarding/onboarding-profile-{gate,modal}.tsx`        |
 | Step outcome events (window)           | `ui/lib/onboarding/onboarding-events.ts`                              |
 | Invite step before the checkpoint      | `ui/components/onboarding/onboarding-invite-{step,dialog}.tsx`        |
 | Manual replay list                     | `ui/components/ui/user-nav/user-nav.tsx`                              |
@@ -77,25 +77,6 @@ the sequence automatically.
   `target` must resolve to a real `data-tour-id` anchor within its `coversFiles`.
 - `pnpm exec vitest run --project unit` — pure logic (slice, helpers, registry,
   tour shapes). The driver primitive short-circuits in `NODE_ENV==="test"`.
-
-## Profile step
-
-Before the mandatory gate offers the first tour, `OnboardingProfileGate` asks
-a new tenant three closed questions (cloud accounts, area of work and
-position) and
-records the answer, or the skip, through `POST /onboarding-profiles`. The API
-keeps the first answer per tenant, so the layout only reads
-`isOnboardingProfileRecorded()` for tenants without providers and the gate
-fails open on any doubt (`shouldStartOnboardingProfile`). A per-tenant localStorage
-marker (`prowler.onboarding.profile.<tenantId>`) spares the flash on later
-renders; a submission or skip the API did not store writes no marker, so the
-step returns next login.
-
-Each resolution (`shown`, `submitted` with the answers, `skipped`) is announced
-as a `prowler:onboarding-profile-step` window event
-(`dispatchOnboardingProfileStep`). The step has no listener of its own: a
-deployment that wants to observe it subscribes from outside, so the onboarding
-stays free of tracking dependencies.
 
 ## Invite step
 

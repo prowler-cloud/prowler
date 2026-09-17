@@ -35,7 +35,6 @@ from api.models import (
     StatusChoices,
     Task,
     TenantAPIKey,
-    TenantOnboardingProfile,
     ThreatScoreSnapshot,
     User,
     UserRoleRelationship,
@@ -4537,76 +4536,3 @@ class FindingGroupResourceSerializer(BaseSerializerV1):
             "uid": obj.get("provider_uid", ""),
             "alias": obj.get("provider_alias", ""),
         }
-
-
-# Onboarding profile
-
-DECLARED_PROFILE_FIELDS = (
-    "declared_cloud_accounts",
-    "declared_role",
-    "declared_seniority",
-)
-
-
-class TenantOnboardingProfileSerializer(RLSSerializer):
-    """Read serializer for the tenant's declared onboarding profile."""
-
-    class Meta:
-        model = TenantOnboardingProfile
-        fields = [
-            "id",
-            "inserted_at",
-            *DECLARED_PROFILE_FIELDS,
-            "skipped",
-        ]
-        read_only_fields = fields
-
-
-class TenantOnboardingProfileCreateSerializer(RLSSerializer, BaseWriteSerializer):
-    """Record the profile step's outcome.
-
-    Either every answer is given, or ``skipped`` is true and none is: a skip
-    is recorded as such so "skipped" can be told from "never shown".
-    """
-
-    declared_cloud_accounts = serializers.ChoiceField(
-        choices=TenantOnboardingProfile.CloudAccountsBucket.choices,
-        required=False,
-        allow_null=True,
-    )
-    declared_role = serializers.ChoiceField(
-        choices=TenantOnboardingProfile.Role.choices,
-        required=False,
-        allow_null=True,
-    )
-    declared_seniority = serializers.ChoiceField(
-        choices=TenantOnboardingProfile.Seniority.choices,
-        required=False,
-        allow_null=True,
-    )
-    skipped = serializers.BooleanField(required=False, default=False)
-
-    class Meta:
-        model = TenantOnboardingProfile
-        fields = ["id", *DECLARED_PROFILE_FIELDS, "skipped"]
-        extra_kwargs = {"id": {"read_only": True}}
-
-    class JSONAPIMeta:
-        resource_name = "onboarding-profiles"
-
-    def validate(self, data):
-        data = super().validate(data)
-        answers = {field: data.get(field) for field in DECLARED_PROFILE_FIELDS}
-        if data.get("skipped"):
-            answered = [field for field, value in answers.items() if value]
-            if answered:
-                raise ValidationError(
-                    {answered[0]: "A skipped profile step carries no answers."}
-                )
-            return data
-        missing = [field for field, value in answers.items() if not value]
-        if missing:
-            raise ValidationError(
-                {missing[0]: "This field is required unless the step was skipped."}
-            )
-        return data
