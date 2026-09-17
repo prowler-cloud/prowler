@@ -320,6 +320,13 @@ ATTACK_PATHS_SCAN_STALE_THRESHOLD_MINUTES = env.int(
     "ATTACK_PATHS_SCAN_STALE_THRESHOLD_MINUTES", 960
 )  # 16h
 
+# Minimum age (of the scan row, or of the scan id itself when the row is gone) before
+# the periodic reaper will drop an orphaned temp Neo4j database. Keeps a scan that is
+# still legitimately in flight from ever losing its staging database mid-run.
+ATTACK_PATHS_TMP_DB_REAP_SAFETY_MARGIN_HOURS = env.int(
+    "ATTACK_PATHS_TMP_DB_REAP_SAFETY_MARGIN_HOURS", 6
+)
+
 # Selects where the persistent attack-paths graph is stored. The scan
 # temporary database is always Neo4j; only the sink is configurable.
 # Valid values: "neo4j" (default, OSS and local dev), "neptune" (hosted).
