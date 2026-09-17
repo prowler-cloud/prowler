@@ -51,6 +51,37 @@ class TestHuaweiCloudProviderSetupSession:
             assert session.get_credentials().ak == ACCESS_KEY
 
 
+class TestHuaweiCloudSessionClient:
+    def test_builds_tms_client_with_global_credentials(self):
+        session = HuaweiCloudSession(
+            HuaweiCloudCredentials(
+                ak=ACCESS_KEY,
+                sk=SECRET_KEY,
+                domain_id="domain-1",
+            ),
+            region="eu-west-101",
+        )
+        client = mock.MagicMock()
+        builder = mock.MagicMock()
+        builder.with_credentials.return_value = builder
+        builder.with_http_config.return_value = builder
+        builder.with_region.return_value = builder
+        builder.build.return_value = client
+
+        with mock.patch(
+            "huaweicloudsdktms.v1.TmsClient.new_builder", return_value=builder
+        ):
+            result = session.client("tms", "eu-west-101")
+
+        assert result is client
+        credentials = builder.with_credentials.call_args.args[0]
+        assert credentials.domain_id == "domain-1"
+        assert credentials.iam_endpoint.endswith(".myhuaweicloud.eu")
+        region = builder.with_region.call_args.args[0]
+        assert region.id == "eu-west-101"
+        assert region.endpoints == ["https://tms.eu-west-101.myhuaweicloud.eu"]
+
+
 class TestHuaweiCloudProviderValidateCredentials:
     def test_resolves_caller_identity_from_iam(self):
         session = HuaweiCloudSession(
