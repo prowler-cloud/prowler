@@ -218,6 +218,10 @@ export const ConnectAccountForm = ({
   const [registryOptions, setRegistryOptions] = useState<
     RegistryProviderOption[]
   >([]);
+  // Only Cloud and Private Cloud deployments with the Registry flag on answer
+  // discovery with "ready" or "error"; Local (OSS) and flag-off deployments
+  // are denied and never show the Registry tab.
+  const [registryAvailable, setRegistryAvailable] = useState(false);
   const [registryError, setRegistryError] = useState(false);
   const [providerError, setProviderError] = useState<string | null>(null);
   const [discoveryAttempt, setDiscoveryAttempt] = useState(0);
@@ -231,10 +235,12 @@ export const ConnectAccountForm = ({
         const result = await getInstalledRegistryProviderOptions();
         if (!active) return;
         setRegistryOptions(result.status === "ready" ? result.options : []);
+        setRegistryAvailable(result.status !== "access_denied");
         setRegistryError(result.status === "error");
       } catch {
         if (active) {
           setRegistryOptions([]);
+          setRegistryAvailable(false);
           setRegistryError(true);
         }
       }
@@ -467,6 +473,7 @@ export const ConnectAccountForm = ({
               </Alert>
             )}
             <RadioGroupProvider
+              registryAvailable={registryAvailable}
               registryOptions={registryOptions}
               control={form.control}
               isInvalid={!!form.formState.errors.providerType}
