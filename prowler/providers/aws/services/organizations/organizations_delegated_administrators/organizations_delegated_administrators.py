@@ -17,32 +17,40 @@ class organizations_delegated_administrators(Check):
         if (
             organizations_client.organization
             and organizations_client.organization.status == "ACTIVE"
+            and organizations_client.organization.delegated_administrators
+            is not None  # Check if Access Denied to list_delegated_administrators
         ):
-            report = Check_Report_AWS(
-                metadata=self.metadata(),
-                resource=organizations_client.organization,
-            )
-            report.region = organizations_client.region
-            if (
-                organizations_client.organization.delegated_administrators is not None
-            ):  # Check if Access Denied to list_delegated_administrators
-                if organizations_client.organization.delegated_administrators:
-                    for (
-                        delegated_administrator
-                    ) in organizations_client.organization.delegated_administrators:
-                        if (
-                            delegated_administrator.id
-                            not in organizations_trusted_delegated_administrators
-                        ):
-                            report.status = "FAIL"
-                            report.status_extended = f"AWS Organization {organizations_client.organization.id} has an untrusted Delegated Administrator: {delegated_administrator.id}."
-                        else:
-                            report.status = "PASS"
-                            report.status_extended = f"AWS Organization {organizations_client.organization.id} has a trusted Delegated Administrator: {delegated_administrator.id}."
-                else:
-                    report.status = "PASS"
-                    report.status_extended = f"AWS Organization {organizations_client.organization.id} has no Delegated Administrators."
-
+            if organizations_client.organization.delegated_administrators:
+                for (
+                    delegated_administrator
+                ) in organizations_client.organization.delegated_administrators:
+                    report = Check_Report_AWS(
+                        metadata=self.metadata(),
+                        resource=delegated_administrator,
+                    )
+                    report.region = organizations_client.region
+                    delegated_services = (
+                        ", ".join(delegated_administrator.delegated_services)
+                        or "no services"
+                    )
+                    if (
+                        delegated_administrator.id
+                        not in organizations_trusted_delegated_administrators
+                    ):
+                        report.status = "FAIL"
+                        report.status_extended = f"AWS Organization {organizations_client.organization.id} has an untrusted Delegated Administrator: {delegated_administrator.id}, delegated for: {delegated_services}."
+                    else:
+                        report.status = "PASS"
+                        report.status_extended = f"AWS Organization {organizations_client.organization.id} has a trusted Delegated Administrator: {delegated_administrator.id}, delegated for: {delegated_services}."
+                    findings.append(report)
+            else:
+                report = Check_Report_AWS(
+                    metadata=self.metadata(),
+                    resource=organizations_client.organization,
+                )
+                report.region = organizations_client.region
+                report.status = "PASS"
+                report.status_extended = f"AWS Organization {organizations_client.organization.id} has no Delegated Administrators."
                 findings.append(report)
 
         return findings
