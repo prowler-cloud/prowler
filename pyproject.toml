@@ -124,6 +124,7 @@ dependencies = [
   "alibabacloud-rds20140815==12.0.0",
   "alibabacloud-sls20201230==5.9.0",
   "scaleway==2.10.3",
+  "esdk-obs-python==3.26.6",
   "huaweicloudsdkcore==3.1.204",
   "huaweicloudsdkcts==3.1.204",
   "huaweicloudsdkecs==3.1.204",
