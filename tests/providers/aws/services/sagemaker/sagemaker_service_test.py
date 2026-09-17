@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from unittest.mock import MagicMock, patch
 from uuid import uuid4
 
@@ -298,13 +299,35 @@ class Test_SageMaker_Service:
         }
 
     def test_training_job_limit_exposes_only_selected_jobs_from_init(self):
+        def two_training_jobs(self, operation_name, kwarg):
+            if operation_name == "ListTrainingJobs":
+                return {
+                    "TrainingJobSummaries": [
+                        {
+                            "TrainingJobName": "old-job",
+                            "TrainingJobArn": f"arn:aws:sagemaker:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:training-job/old-job",
+                            "CreationTime": datetime(2018, 6, 1, tzinfo=timezone.utc),
+                        },
+                        {
+                            "TrainingJobName": "new-job",
+                            "TrainingJobArn": f"arn:aws:sagemaker:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:training-job/new-job",
+                            "CreationTime": datetime(2021, 5, 1, tzinfo=timezone.utc),
+                        },
+                    ]
+                }
+            return mock_make_api_call(self, operation_name, kwarg)
+
         aws_provider = set_mocked_aws_provider(
             [AWS_REGION_EU_WEST_1],
             audit_config={"max_sagemaker_training_jobs": 1},
         )
-        sagemaker = SageMaker(aws_provider)
+
+        with patch("botocore.client.BaseClient._make_api_call", new=two_training_jobs):
+            sagemaker = SageMaker(aws_provider)
+
         assert sagemaker.training_job_limit == 1
         assert len(sagemaker.sagemaker_training_jobs) == 1
+        assert sagemaker.sagemaker_training_jobs[0].name == "new-job"
 
     # Test SageMaker describe notebook instance
     def test_describe_notebook_instance(self):
