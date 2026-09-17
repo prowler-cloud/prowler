@@ -79,6 +79,24 @@ export class RegistryPage extends BasePage {
     await expect(this.registryLink).toBeHidden();
   }
 
+  async verifyProviderSelectorWithoutRegistry(): Promise<void> {
+    await this.page.goto("/providers");
+    await this.dismissWelcomeDialog();
+    await this.page.getByRole("button", { name: /Add (a )?Provider/i }).click();
+    await expect(
+      this.page.getByRole("option", {
+        name: "Amazon Web Services",
+        exact: true,
+      }),
+    ).toBeVisible();
+    await expect(
+      this.page.getByRole("tab", { name: "Registry", exact: true }),
+    ).toBeHidden();
+    await expect(
+      this.page.getByRole("tab", { name: "All providers", exact: true }),
+    ).toBeHidden();
+  }
+
   async verifyOnboarding(): Promise<void> {
     await expect(this.connectButton).toBeVisible();
     await expect(

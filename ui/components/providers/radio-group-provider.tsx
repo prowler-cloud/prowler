@@ -33,6 +33,12 @@ type ProviderTab = (typeof PROVIDER_TAB)[keyof typeof PROVIDER_TAB];
 
 interface RadioGroupProviderProps {
   control: Control<AddProviderFormValues>;
+  /**
+   * Whether this deployment offers Registry providers (Cloud or Private Cloud
+   * with the Registry flag on and a user allowed to manage providers). Off in
+   * Local (OSS) and flag-off deployments, where the source tabs are hidden.
+   */
+  registryAvailable?: boolean;
   registryOptions?: RegistryProviderOption[];
   isInvalid: boolean;
   errorMessage?: string;
@@ -42,10 +48,14 @@ export const RadioGroupProvider: FC<RadioGroupProviderProps> = ({
   control,
   isInvalid,
   errorMessage,
+  registryAvailable = false,
   registryOptions = [],
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [activeTab, setActiveTab] = useState<ProviderTab>(PROVIDER_TAB.ALL);
+  const [selectedTab, setSelectedTab] = useState<ProviderTab>(PROVIDER_TAB.ALL);
+  // Fall back to the full list if Registry access is revoked while the
+  // Registry tab is selected, so the selector never shows an empty tab.
+  const activeTab = registryAvailable ? selectedTab : PROVIDER_TAB.ALL;
 
   const options = [
     ...PROVIDERS.map((provider) => ({
@@ -82,12 +92,14 @@ export const RadioGroupProvider: FC<RadioGroupProviderProps> = ({
         <Tabs
           className="flex flex-col px-4"
           value={activeTab}
-          onValueChange={(value) => setActiveTab(value as ProviderTab)}
+          onValueChange={(value) => setSelectedTab(value as ProviderTab)}
         >
-          <TabsList aria-label="Provider source">
-            <TabsTrigger value={PROVIDER_TAB.ALL}>All providers</TabsTrigger>
-            <TabsTrigger value={PROVIDER_TAB.REGISTRY}>Registry</TabsTrigger>
-          </TabsList>
+          {registryAvailable && (
+            <TabsList aria-label="Provider source">
+              <TabsTrigger value={PROVIDER_TAB.ALL}>All providers</TabsTrigger>
+              <TabsTrigger value={PROVIDER_TAB.REGISTRY}>Registry</TabsTrigger>
+            </TabsList>
+          )}
           <div className="relative z-10 shrink-0 py-4">
             <SearchInput
               aria-label="Search providers"

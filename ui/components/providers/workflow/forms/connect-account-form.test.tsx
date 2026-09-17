@@ -82,3 +82,51 @@ describe("provider account aliases", () => {
     });
   });
 });
+
+describe("Registry provider source tabs", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("hides the Registry tab when discovery denies access (Local or flag off)", async () => {
+    // Given
+    getInstalledRegistryProviderOptions.mockResolvedValue({
+      status: "access_denied",
+    });
+
+    // When
+    render(<ConnectAccountForm onSuccess={vi.fn()} />);
+    await waitFor(() =>
+      expect(getInstalledRegistryProviderOptions).toHaveBeenCalled(),
+    );
+
+    // Then
+    expect(
+      screen.getByRole("option", { name: /Amazon Web Services/ }),
+    ).toBeVisible();
+    expect(
+      screen.queryByRole("tab", { name: "Registry" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("tab", { name: "All providers" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("shows the Registry tab once discovery confirms the deployment offers it", async () => {
+    // Given: Cloud or Private Cloud with Registry enabled and no artifacts yet.
+    getInstalledRegistryProviderOptions.mockResolvedValue({
+      status: "ready",
+      options: [],
+    });
+
+    // When
+    render(<ConnectAccountForm onSuccess={vi.fn()} />);
+
+    // Then
+    expect(await screen.findByRole("tab", { name: "Registry" })).toBeVisible();
+    expect(screen.getByRole("tab", { name: "All providers" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+  });
+});

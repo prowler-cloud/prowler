@@ -212,9 +212,12 @@ describe("provider wizard account creation", () => {
       screen.getByRole("option", { name: /Amazon Web Services/ }),
     ).toBeVisible();
 
+    // Then: an unanswered discovery cannot vouch for Registry availability.
+    expect(
+      screen.queryByRole("tab", { name: "Registry" }),
+    ).not.toBeInTheDocument();
+
     // When
-    await user.click(screen.getByRole("tab", { name: "Registry" }));
-    expect(screen.getByText("No Registry providers available.")).toBeVisible();
     await user.click(
       screen.getByRole("button", { name: "Retry Registry providers" }),
     );
@@ -223,8 +226,25 @@ describe("provider wizard account creation", () => {
     expect(
       await screen.findByRole("option", { name: "Acme Cloud Registry" }),
     ).toBeVisible();
+    expect(screen.getByRole("tab", { name: "Registry" })).toBeVisible();
     expect(
       screen.queryByText("Registry providers could not be loaded"),
     ).not.toBeInTheDocument();
+  });
+
+  it("keeps the Registry tab with a retry when eligible discovery fails", async () => {
+    // Given: Cloud with Registry enabled, but the catalog read failed.
+    getInstalledRegistryProviderOptions.mockResolvedValueOnce({
+      status: "error",
+    });
+    const user = userEvent.setup();
+    render(<ProviderWizardModal open onOpenChange={vi.fn()} />);
+    await screen.findByText("Registry providers could not be loaded");
+
+    // When
+    await user.click(screen.getByRole("tab", { name: "Registry" }));
+
+    // Then
+    expect(screen.getByText("No Registry providers available.")).toBeVisible();
   });
 });
