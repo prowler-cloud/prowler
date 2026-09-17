@@ -103,7 +103,7 @@ class <check_name>(Check):
             # Set required fields and implement check logic
             report.status = "PASS"
             report.status_extended = f"<Description about why the resource is compliant>"
-            # If some of the information needed for the report is not inside the resource, it can be set it manually here.
+            # If some of the information needed for the report is not inside the resource, it can be set manually here.
             # This depends on the provider and the resource that is being audited.
             # report.region = resource.region
             # report.resource_tags = getattr(resource, "tags", [])
@@ -437,7 +437,7 @@ For the complete list of available categories, see [Categories Guidelines](/deve
 
 #### DependsOn
 
-List of check IDs of checks that if are compliant, this check will be a compliant too or it is not going to give any finding.
+List of check IDs of checks that if they are compliant, this check will be compliant too or it is not going to give any finding.
 
 #### RelatedTo
 
