@@ -8,6 +8,8 @@ from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
+VPC_ENDPOINT_SERVICE_NAMES_BATCH_SIZE = 10
+
 
 class VPC(AWSService):
     def __init__(self, provider):
@@ -257,6 +259,8 @@ class VPC(AWSService):
 
     def _describe_vpc_endpoint_services(self, regional_client):
         logger.info("VPC - Describing VPC Endpoint Services...")
+        endpoint_policy_support: dict[str, Optional[bool]] = {}
+        describe_vpc_endpoint_services_paginator = None
         try:
             describe_vpc_endpoint_services_paginator = regional_client.get_paginator(
                 "describe_vpc_endpoint_services"
@@ -264,6 +268,9 @@ class VPC(AWSService):
             for page in describe_vpc_endpoint_services_paginator.paginate():
                 for endpoint in page["ServiceDetails"]:
                     try:
+                        endpoint_policy_support[endpoint["ServiceName"]] = endpoint.get(
+                            "VpcEndpointPolicySupported"
+                        )
                         # Only collect endpoint services owned by the audited account.
                         # The API returns ALL available services in the region,
                         # including Amazon and third-party ones we can't inspect.
@@ -290,6 +297,47 @@ class VPC(AWSService):
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+
+        if describe_vpc_endpoint_services_paginator:
+            # Some AWS-managed services are omitted from unfiltered responses
+            # but are returned when requested explicitly by service name.
+            unresolved_service_names = sorted(
+                {
+                    endpoint.service_name
+                    for endpoint in self.vpc_endpoints
+                    if endpoint.region == regional_client.region
+                    and endpoint_policy_support.get(endpoint.service_name) is None
+                }
+            )
+            for index in range(
+                0,
+                len(unresolved_service_names),
+                VPC_ENDPOINT_SERVICE_NAMES_BATCH_SIZE,
+            ):
+                service_names = unresolved_service_names[
+                    index : index + VPC_ENDPOINT_SERVICE_NAMES_BATCH_SIZE
+                ]
+                try:
+                    for page in describe_vpc_endpoint_services_paginator.paginate(
+                        ServiceNames=service_names
+                    ):
+                        for service_detail in page["ServiceDetails"]:
+                            endpoint_policy_support[service_detail["ServiceName"]] = (
+                                service_detail.get("VpcEndpointPolicySupported")
+                            )
+                except Exception as error:
+                    logger.error(
+                        f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
+
+        for endpoint in self.vpc_endpoints:
+            if (
+                endpoint.region == regional_client.region
+                and endpoint.service_name in endpoint_policy_support
+            ):
+                endpoint.vpc_endpoint_policy_supported = endpoint_policy_support[
+                    endpoint.service_name
+                ]
 
     def _describe_vpc_endpoint_service_permissions(self):
         logger.info("VPC - Describing VPC Endpoint service permissions...")
@@ -516,6 +564,7 @@ class VpcEndpoint(BaseModel):
     owner_id: str
     type: str
     region: str
+    vpc_endpoint_policy_supported: Optional[bool] = None
     tags: Optional[list] = []
 
 

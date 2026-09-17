@@ -54,6 +54,56 @@ def mock_make_api_call_endpoint_services(self, operation_name, kwarg):
     return make_api_call(self, operation_name, kwarg)
 
 
+def mock_make_api_call_endpoint_policy_unsupported(self, operation_name, kwarg):
+    """Return an endpoint service that explicitly does not support policies."""
+    if operation_name == "DescribeVpcEndpointServices":
+        return {
+            "ServiceDetails": [
+                {
+                    "ServiceId": "email-smtp",
+                    "ServiceName": "com.amazonaws.us-east-1.email-smtp",
+                    "ServiceType": [{"ServiceType": "Interface"}],
+                    "Owner": "amazon",
+                    "VpcEndpointPolicySupported": False,
+                }
+            ],
+            "ServiceNames": ["com.amazonaws.us-east-1.email-smtp"],
+        }
+    return make_api_call(self, operation_name, kwarg)
+
+
+def mock_make_api_call_endpoint_policy_unsupported_only_when_targeted(
+    self, operation_name, kwarg
+):
+    """Return policy support only for a service-name-filtered lookup."""
+    if operation_name == "DescribeVpcEndpointServices":
+        if kwarg.get("ServiceNames") == ["com.amazonaws.us-east-1.email-smtp"]:
+            return {
+                "ServiceDetails": [
+                    {
+                        "ServiceId": "email-smtp",
+                        "ServiceName": "com.amazonaws.us-east-1.email-smtp",
+                        "ServiceType": [{"ServiceType": "Interface"}],
+                        "Owner": "amazon",
+                        "VpcEndpointPolicySupported": False,
+                    }
+                ],
+                "ServiceNames": ["com.amazonaws.us-east-1.email-smtp"],
+            }
+        return {"ServiceDetails": [], "ServiceNames": []}
+    return make_api_call(self, operation_name, kwarg)
+
+
+def mock_make_api_call_endpoint_services_unavailable(self, operation_name, kwarg):
+    """Raise an authorization error for endpoint service discovery."""
+    if operation_name == "DescribeVpcEndpointServices":
+        raise ClientError(
+            {"Error": {"Code": "UnauthorizedOperation", "Message": "Unauthorized"}},
+            operation_name,
+        )
+    return make_api_call(self, operation_name, kwarg)
+
+
 def mock_make_api_call_endpoint_services_access_denied(self, operation_name, kwarg):
     """Mock where DescribeVpcEndpointServicePermissions raises AccessDenied."""
     if operation_name == "DescribeVpcEndpointServices":
@@ -462,6 +512,72 @@ class Test_VPC_Service:
             assert vpce.allowed_principals == []
             assert vpce.region == AWS_REGION_US_EAST_1
             assert vpce.tags == []
+
+    @mock_aws
+    @mock.patch(
+        "botocore.client.BaseClient._make_api_call",
+        new=mock_make_api_call_endpoint_policy_unsupported,
+    )
+    def test_describe_vpc_endpoint_policy_support(self):
+        ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
+        vpc_id = ec2_client.create_vpc(CidrBlock="10.0.0.0/16")["Vpc"]["VpcId"]
+        endpoint_id = ec2_client.create_vpc_endpoint(
+            VpcId=vpc_id,
+            ServiceName="com.amazonaws.us-east-1.email-smtp",
+            VpcEndpointType="Interface",
+        )["VpcEndpoint"]["VpcEndpointId"]
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        vpc = VPC(aws_provider)
+
+        endpoint = next(
+            endpoint for endpoint in vpc.vpc_endpoints if endpoint.id == endpoint_id
+        )
+        assert endpoint.vpc_endpoint_policy_supported is False
+
+    @mock_aws
+    @mock.patch(
+        "botocore.client.BaseClient._make_api_call",
+        new=mock_make_api_call_endpoint_policy_unsupported_only_when_targeted,
+    )
+    def test_describe_vpc_endpoint_policy_support_with_targeted_lookup(self):
+        ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
+        vpc_id = ec2_client.create_vpc(CidrBlock="10.0.0.0/16")["Vpc"]["VpcId"]
+        endpoint_id = ec2_client.create_vpc_endpoint(
+            VpcId=vpc_id,
+            ServiceName="com.amazonaws.us-east-1.email-smtp",
+            VpcEndpointType="Interface",
+        )["VpcEndpoint"]["VpcEndpointId"]
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        vpc = VPC(aws_provider)
+
+        endpoint = next(
+            endpoint for endpoint in vpc.vpc_endpoints if endpoint.id == endpoint_id
+        )
+        assert endpoint.vpc_endpoint_policy_supported is False
+
+    @mock_aws
+    @mock.patch(
+        "botocore.client.BaseClient._make_api_call",
+        new=mock_make_api_call_endpoint_services_unavailable,
+    )
+    def test_describe_vpc_endpoint_services_unavailable_preserves_endpoints(self):
+        ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
+        vpc_id = ec2_client.create_vpc(CidrBlock="10.0.0.0/16")["Vpc"]["VpcId"]
+        endpoint_id = ec2_client.create_vpc_endpoint(
+            VpcId=vpc_id,
+            ServiceName="com.amazonaws.us-east-1.s3",
+            VpcEndpointType="Gateway",
+        )["VpcEndpoint"]["VpcEndpointId"]
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        vpc = VPC(aws_provider)
+
+        endpoint = next(
+            endpoint for endpoint in vpc.vpc_endpoints if endpoint.id == endpoint_id
+        )
+        assert endpoint.vpc_endpoint_policy_supported is None
 
     # Test VPC Describe VPC Subnets
     @mock_aws
