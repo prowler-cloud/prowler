@@ -76,8 +76,8 @@ export default async function RootLayout({
   let hasProviders: boolean | undefined = false;
   // Same tri-state for the onboarding profile step; only new tenants pay the read.
   let profileRecorded: boolean | undefined = true;
-  // Scopes the step's local marker, so answering for one tenant does not
-  // silence it for another.
+  // Scopes the onboarding steps' local markers, so resolving them for one
+  // tenant does not silence them for another.
   let tenantId: string | null = null;
 
   if (cloudEnabled) {
@@ -94,13 +94,9 @@ export default async function RootLayout({
     hasProviders = Array.isArray(providersData?.data)
       ? providersData.data.length > 0
       : undefined;
+    tenantId = (await auth())?.tenantId ?? null;
     if (hasProviders === false) {
-      const [recorded, session] = await Promise.all([
-        isOnboardingProfileRecorded(),
-        auth(),
-      ]);
-      profileRecorded = recorded;
-      tenantId = session?.tenantId ?? null;
+      profileRecorded = await isOnboardingProfileRecorded();
     }
   }
 
@@ -139,7 +135,7 @@ export default async function RootLayout({
                 tenantId={tenantId}
               />
               {/* Single mount point so the watcher survives post-connect navigation. */}
-              <OnboardingCheckpointWatcher />
+              <OnboardingCheckpointWatcher tenantId={tenantId} />
               {/* Persistent banner shown only while a guided sequence is active. */}
               <OnboardingSequenceBanner hasCompletedScan={hasCompletedScan} />
             </>
