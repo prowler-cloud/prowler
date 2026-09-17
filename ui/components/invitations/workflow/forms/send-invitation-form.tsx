@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from "@/components/shadcn/select/select";
 import { ApiError } from "@/types";
+import type { InvitationRoleOption } from "@/types/onboarding-invite";
 
 const sendInvitationFormSchema = z.object({
   email: z.email({ error: "Please enter a valid email" }),
@@ -27,7 +28,7 @@ const sendInvitationFormSchema = z.object({
 export type FormValues = z.infer<typeof sendInvitationFormSchema>;
 
 interface SendInvitationFormProps {
-  roles: Array<{ id: string; name: string }>;
+  roles: InvitationRoleOption[];
   defaultRole?: string;
   isSelectorDisabled: boolean;
   // Where the invitation was sent from, forwarded to the API as `?source=`
