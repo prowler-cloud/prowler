@@ -2,9 +2,11 @@
 
 The onboarding system runs short, anchored driver.js tours and orchestrates a
 cross-route **guided sequence** after a user connects their first provider.
-Tour completion and the guided sequence live in client state and
-localStorage; the only server input is the tri-state `hasProviders` the
-layout derives from `getProviders()`.
+The tours and the guided sequence run on client state (the sequence slice
+is ephemeral and resets on a hard reload); tour completion and the one-time
+markers persist in localStorage. Server input is the tri-state `hasProviders`
+the layout derives from `getProviders()`, plus the invitation the invite step
+posts to the API.
 
 ## Building blocks
 
