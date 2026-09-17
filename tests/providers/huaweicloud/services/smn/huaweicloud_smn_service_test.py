@@ -1,16 +1,35 @@
-from types import SimpleNamespace
 from unittest import mock
+
+from huaweicloudsdksmn.v2 import (
+    ListSubscriptionsByTopicResponse,
+    ListSubscriptionsItem,
+    ListTopicsItem,
+    ListTopicsResponse,
+)
 
 from prowler.providers.huaweicloud.services.smn.smn_service import SMN
 
 
-def _topic(number: int):
-    return SimpleNamespace(
+def _topic(number: int) -> ListTopicsItem:
+    return ListTopicsItem(
         topic_urn=f"urn:smn:eu-west-101:account:topic-{number}",
         topic_id=f"topic-{number}",
         name=f"topic-{number}",
         display_name=f"Topic {number}",
         push_policy=0,
+    )
+
+
+def _topics_page(topic_count: int, topics: list) -> ListTopicsResponse:
+    return ListTopicsResponse(topic_count=topic_count, topics=topics)
+
+
+def _subscriptions_page(
+    subscription_count: int, statuses: list
+) -> ListSubscriptionsByTopicResponse:
+    return ListSubscriptionsByTopicResponse(
+        subscription_count=subscription_count,
+        subscriptions=[ListSubscriptionsItem(status=status) for status in statuses],
     )
 
 
@@ -24,16 +43,8 @@ def _service(client):
 class TestHuaweiCloudSMNService:
     def test_unconfirmed_and_canceled_subscriptions_do_not_count(self):
         client = mock.MagicMock()
-        client.list_topics.return_value = SimpleNamespace(
-            topic_count=1, topics=[_topic(1)]
-        )
-        client.list_subscriptions_by_topic.return_value = SimpleNamespace(
-            subscription_count=2,
-            subscriptions=[
-                SimpleNamespace(status=0),
-                SimpleNamespace(status=3),
-            ],
-        )
+        client.list_topics.return_value = _topics_page(1, [_topic(1)])
+        client.list_subscriptions_by_topic.return_value = _subscriptions_page(2, [0, 3])
         service = _service(client)
 
         service._list_topics()
@@ -43,26 +54,14 @@ class TestHuaweiCloudSMNService:
 
     def test_paginates_topics_and_confirmed_subscriptions(self):
         client = mock.MagicMock()
-        first_page_subscriptions = [SimpleNamespace(status=0) for _ in range(100)]
         client.list_topics.side_effect = [
-            SimpleNamespace(topic_count=101, topics=[_topic(1)]),
-            SimpleNamespace(topic_count=101, topics=[_topic(2)]),
+            _topics_page(101, [_topic(1)]),
+            _topics_page(101, [_topic(2)]),
         ]
         client.list_subscriptions_by_topic.side_effect = [
-            SimpleNamespace(
-                subscription_count=101, subscriptions=first_page_subscriptions
-            ),
-            SimpleNamespace(
-                subscription_count=101,
-                subscriptions=[SimpleNamespace(status=1)],
-            ),
-            SimpleNamespace(
-                subscription_count=2,
-                subscriptions=[
-                    SimpleNamespace(status=1),
-                    SimpleNamespace(status=3),
-                ],
-            ),
+            _subscriptions_page(101, [0] * 100),
+            _subscriptions_page(101, [1]),
+            _subscriptions_page(2, [1, 3]),
         ]
         service = _service(client)
 
@@ -91,9 +90,7 @@ class TestHuaweiCloudSMNService:
 
     def test_skips_topic_when_subscription_discovery_fails(self):
         client = mock.MagicMock()
-        client.list_topics.return_value = SimpleNamespace(
-            topic_count=1, topics=[_topic(1)]
-        )
+        client.list_topics.return_value = _topics_page(1, [_topic(1)])
         client.list_subscriptions_by_topic.side_effect = Exception("denied")
         service = _service(client)
 
@@ -110,11 +107,9 @@ class TestHuaweiCloudSMNService:
 
         assert service.topics == []
 
-    def test_real_session_does_not_require_is_mock_attribute(self):
-        provider = mock.MagicMock()
-
+    def test_init_always_lists_topics_from_the_api(self):
         def initialize_service(service, *_args, **_kwargs):
-            service.session = SimpleNamespace()
+            service.session = mock.MagicMock()
 
         with (
             mock.patch.object(SMN, "_list_topics") as list_topics,
@@ -123,6 +118,7 @@ class TestHuaweiCloudSMNService:
                 new=initialize_service,
             ),
         ):
-            SMN(provider)
+            service = SMN(mock.MagicMock())
 
         list_topics.assert_called_once_with()
+        assert service.topics == []

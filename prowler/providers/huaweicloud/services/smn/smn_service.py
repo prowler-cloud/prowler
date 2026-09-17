@@ -20,36 +20,7 @@ class SMN(HuaweiCloudService):
         super().__init__(__class__.__name__, provider)
 
         self.topics: List[SMNTopic] = []
-
-        if getattr(self.session, "is_mock", False):
-            self._load_mock_data()
-            return
-
         self._list_topics()
-
-    def _load_mock_data(self):
-        """Load mock data for testing."""
-        region = "la-south-2"
-        self.topics = [
-            SMNTopic(
-                topic_urn="urn:smn:la-south-2:123456789012:alert-topic",
-                topic_id="topic-001",
-                name="alert-topic",
-                display_name="Alert Topic",
-                push_policy=0,
-                confirmed_subscription_count=2,
-                region=region,
-            ),
-            SMNTopic(
-                topic_urn="urn:smn:la-south-2:123456789012:empty-topic",
-                topic_id="topic-002",
-                name="empty-topic",
-                display_name="Empty Topic",
-                push_policy=0,
-                confirmed_subscription_count=0,
-                region=region,
-            ),
-        ]
 
     def _list_topics(self):
         """List all SMN topics across regions and get their subscription counts."""

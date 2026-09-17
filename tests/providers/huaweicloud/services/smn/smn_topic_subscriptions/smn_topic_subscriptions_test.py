@@ -1,5 +1,6 @@
-from types import SimpleNamespace
 from unittest import mock
+
+from prowler.providers.huaweicloud.services.smn.smn_service import SMNTopic
 
 from tests.providers.huaweicloud.huaweicloud_fixtures import (
     set_mocked_huaweicloud_provider,
@@ -34,7 +35,7 @@ class Test_smn_topic_subscriptions:
     def test_topic_with_subscriptions(self):
         smn_client = mock.MagicMock()
         smn_client.topics = [
-            SimpleNamespace(
+            SMNTopic(
                 topic_urn="urn:smn:la-south-2:123456789012:alert-topic",
                 topic_id="topic-001",
                 name="alert-topic",
@@ -78,7 +79,7 @@ class Test_smn_topic_subscriptions:
     def test_topic_without_subscriptions(self):
         smn_client = mock.MagicMock()
         smn_client.topics = [
-            SimpleNamespace(
+            SMNTopic(
                 topic_urn="urn:smn:la-south-2:123456789012:empty-topic",
                 topic_id="topic-002",
                 name="empty-topic",
@@ -120,7 +121,7 @@ class Test_smn_topic_subscriptions:
     def test_mixed_topics(self):
         smn_client = mock.MagicMock()
         smn_client.topics = [
-            SimpleNamespace(
+            SMNTopic(
                 topic_urn="urn:smn:la-south-2:123456789012:alert-topic",
                 topic_id="topic-001",
                 name="alert-topic",
@@ -129,7 +130,7 @@ class Test_smn_topic_subscriptions:
                 confirmed_subscription_count=3,
                 region="la-south-2",
             ),
-            SimpleNamespace(
+            SMNTopic(
                 topic_urn="urn:smn:la-south-2:123456789012:empty-topic",
                 topic_id="topic-002",
                 name="empty-topic",
