@@ -41,7 +41,6 @@ from api.models import (
     StatusChoices,
     Task,
     TenantAPIKey,
-    TenantOnboardingProfile,
     ThreatScoreSnapshot,
     User,
 )
@@ -1799,12 +1798,6 @@ class LighthouseProviderModelsFilter(FilterSet):
         fields = {
             "model_id": ["exact", "icontains", "in"],
         }
-
-
-class TenantOnboardingProfileFilter(FilterSet):
-    class Meta:
-        model = TenantOnboardingProfile
-        fields = {"skipped": ["exact"]}
 
 
 class MuteRuleFilter(FilterSet):
