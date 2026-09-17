@@ -28,6 +28,7 @@ class TestRDSService:
             id="rds-public",
             name="public-db",
             status="ACTIVE",
+            type="Ha",
             public_ips=["1.2.3.4"],
             backup_strategy=SimpleNamespace(keep_days=7),
             datastore=SimpleNamespace(type="MySQL", version="8.0"),
@@ -37,6 +38,7 @@ class TestRDSService:
             id="rds-private",
             name="private-db",
             status="ACTIVE",
+            type="Single",
             public_ips=[],
             backup_strategy=SimpleNamespace(keep_days=0),
             datastore=SimpleNamespace(type="PostgreSQL", version="14"),
@@ -65,6 +67,7 @@ class TestRDSService:
         # backup_enabled derives from backup_strategy.keep_days
         assert public_db.backup_enabled is True
         assert public_db.disk_encryption_id == "kms-key-1"
+        assert public_db.is_ha is True
 
         private_db = by_id["rds-private"]
         assert private_db.is_public is False
@@ -72,6 +75,7 @@ class TestRDSService:
         assert private_db.backup_enabled is False
         assert private_db.engine == "PostgreSQL"
         assert private_db.disk_encryption_id == ""
+        assert private_db.is_ha is False
 
     def test_list_instances_empty(self):
         regional_client = mock.MagicMock(region=REGION)
