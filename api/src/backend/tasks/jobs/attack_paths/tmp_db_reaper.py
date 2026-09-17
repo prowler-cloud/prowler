@@ -82,6 +82,8 @@ def _is_orphaned(database: str, now: datetime, safety_margin: timedelta) -> bool
         )
         return False
 
+    # Global sweep with no tenant context: admin_db bypasses RLS on purpose, the same
+    # way cleanup_stale_attack_paths_scans finds stale scans across every tenant.
     scan = (
         AttackPathsScan.all_objects.using(MainRouter.admin_db)
         .filter(id=scan_uuid)
