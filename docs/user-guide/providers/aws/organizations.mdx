@@ -83,7 +83,7 @@ When onboarding multiple AWS accounts into Prowler Cloud, it is important to dep
 
 The [Prowler Scan IAM Role CloudFormation template](https://github.com/prowler-cloud/prowler/blob/master/permissions/templates/cloudformation/prowler-scan-role.yml) can deploy the role across your entire AWS Organization on its own—no third-party modules required. When launched in the **Management Account** (or a **Delegated Administrator** account) with `DeployStackSet=true` and `EnableOrganizations=true`, it creates a service-managed CloudFormation StackSet that rolls the ProwlerScan role out to every account under the target Organizational Unit (or the organization root), and keeps new accounts covered automatically through auto-deployment.
 
-To deploy from the CloudFormation console: open **CloudFormation → Create stack → With new resources**, choose **Upload a template file** and select `prowler-scan-role.yml` (or paste its S3 URL), then set the parameters below on the **Specify stack details** step. Leave the **Configure stack options** step at its defaults.
+To deploy from the CloudFormation console: open **CloudFormation → Create stack → With new resources**, select **Upload a template file** and select `prowler-scan-role.yml` (or paste its S3 URL), then set the parameters below on the **Specify stack details** step. Leave the **Configure stack options** step at its defaults.
 
 Deploy a single CloudFormation Stack in the Management Account with the following parameters:
 
