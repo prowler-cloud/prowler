@@ -1,0 +1,1 @@
+The Cloudflare API token links in the provider wizard now request `SSL and Certificates: Read` as well, which Prowler needs to read Universal SSL settings; tokens created from the previous links cannot reach that endpoint, so `zone_universal_ssl_enabled` reported a false `FAIL` on every zone
