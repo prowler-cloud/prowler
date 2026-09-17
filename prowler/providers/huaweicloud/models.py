@@ -384,6 +384,21 @@ class HuaweiCloudSession:
                     .build()
                 )
 
+            elif service == "functiongraph":
+                from huaweicloudsdkfunctiongraph.v2 import FunctionGraphClient
+                from huaweicloudsdkfunctiongraph.v2.region.functiongraph_region import (
+                    FunctionGraphRegion,
+                )
+
+                client_region = region or self._region
+                return (
+                    FunctionGraphClient.new_builder()
+                    .with_credentials(self._get_basic_credentials(client_region))
+                    .with_http_config(self._http_config())
+                    .with_region(_aligned_region(FunctionGraphRegion, client_region))
+                    .build()
+                )
+
             else:
                 raise HuaweiCloudServiceError(
                     message=f"Huawei Cloud service '{service}' is not supported"

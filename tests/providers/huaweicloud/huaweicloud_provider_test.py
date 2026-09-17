@@ -50,6 +50,31 @@ class TestHuaweiCloudProviderSetupSession:
             session = HuaweicloudProvider.setup_session()
             assert session.get_credentials().ak == ACCESS_KEY
 
+    def test_creates_functiongraph_client_for_europe(self):
+        session = HuaweiCloudSession(
+            HuaweiCloudCredentials(ak=ACCESS_KEY, sk=SECRET_KEY)
+        )
+        functiongraph_client = mock.MagicMock()
+        builder = mock.MagicMock()
+        builder.with_credentials.return_value.with_http_config.return_value.with_region.return_value.build.return_value = (
+            functiongraph_client
+        )
+
+        with mock.patch(
+            "huaweicloudsdkfunctiongraph.v2.FunctionGraphClient.new_builder",
+            return_value=builder,
+        ):
+            client = session.client("functiongraph", "eu-west-101")
+
+        assert client is functiongraph_client
+        region = builder.with_credentials.return_value.with_http_config.return_value.with_region.call_args.args[
+            0
+        ]
+        assert region.id == "eu-west-101"
+        assert region.endpoints == [
+            "https://functiongraph.eu-west-101.myhuaweicloud.eu"
+        ]
+
 
 class TestHuaweiCloudProviderValidateCredentials:
     def test_resolves_caller_identity_from_iam(self):
