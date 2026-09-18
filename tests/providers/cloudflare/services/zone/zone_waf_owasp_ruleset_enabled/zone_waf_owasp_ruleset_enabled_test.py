@@ -252,3 +252,36 @@ class Test_zone_waf_owasp_ruleset_enabled:
             assert result[0].status == "PASS"
             assert "Cloudflare OWASP Core Ruleset" in result[0].status_extended
             assert "Custom OWASP Rules" in result[0].status_extended
+
+    def test_zone_unreadable_is_manual(self):
+        zone_client = mock.MagicMock
+        zone_client.zones = {
+            ZONE_ID: CloudflareZone(
+                id=ZONE_ID,
+                name=ZONE_NAME,
+                read_errors={"rulesets": "PermissionDeniedError"},
+            )
+        }
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_cloudflare_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.cloudflare.services.zone.zone_waf_owasp_ruleset_enabled.zone_waf_owasp_ruleset_enabled.zone_client",
+                new=zone_client,
+            ),
+        ):
+            from prowler.providers.cloudflare.services.zone.zone_waf_owasp_ruleset_enabled.zone_waf_owasp_ruleset_enabled import (
+                zone_waf_owasp_ruleset_enabled,
+            )
+
+            check = zone_waf_owasp_ruleset_enabled()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "MANUAL"
+            assert (
+                result[0].status_extended
+                == f"Cannot evaluate the WAF managed rulesets for zone {ZONE_NAME}: the API token is missing the Zone WAF Read permission."
+            )

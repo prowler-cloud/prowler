@@ -109,3 +109,36 @@ class Test_zone_universal_ssl_enabled:
                 result[0].status_extended
                 == f"Universal SSL is not enabled for zone {ZONE_NAME}."
             )
+
+    def test_zone_unreadable_is_manual(self):
+        zone_client = mock.MagicMock
+        zone_client.zones = {
+            ZONE_ID: CloudflareZone(
+                id=ZONE_ID,
+                name=ZONE_NAME,
+                read_errors={"universal_ssl": "PermissionDeniedError"},
+            )
+        }
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_cloudflare_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.cloudflare.services.zone.zone_universal_ssl_enabled.zone_universal_ssl_enabled.zone_client",
+                new=zone_client,
+            ),
+        ):
+            from prowler.providers.cloudflare.services.zone.zone_universal_ssl_enabled.zone_universal_ssl_enabled import (
+                zone_universal_ssl_enabled,
+            )
+
+            check = zone_universal_ssl_enabled()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "MANUAL"
+            assert (
+                result[0].status_extended
+                == f"Cannot evaluate the Universal SSL setting for zone {ZONE_NAME}: the API token is missing the SSL and Certificates Read permission."
+            )

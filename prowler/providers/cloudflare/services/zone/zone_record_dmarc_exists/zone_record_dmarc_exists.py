@@ -1,6 +1,10 @@
 import re
 
 from prowler.lib.check.models import Check, CheckReportCloudflare
+from prowler.providers.cloudflare.lib.read_errors import (
+    DNS_READ,
+    split_unreadable_zones,
+)
 from prowler.providers.cloudflare.services.dns.dns_client import dns_client
 from prowler.providers.cloudflare.services.zone.zone_client import zone_client
 
@@ -29,9 +33,14 @@ class zone_record_dmarc_exists(Check):
             record with enforcement policy exists, or FAIL status if no DMARC
             record is found or it uses monitoring-only policy (p=none).
         """
-        findings = []
-
-        for zone in zone_client.zones.values():
+        findings, zones = split_unreadable_zones(
+            self,
+            zone_client.zones.values(),
+            read_error=lambda zone: dns_client.read_errors.get(zone.id),
+            requirement="the DMARC record",
+            permission=DNS_READ,
+        )
+        for zone in zones:
             report = CheckReportCloudflare(
                 metadata=self.metadata(),
                 resource=zone,

@@ -1,10 +1,33 @@
 from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ValidationError
 
 from prowler.lib.logger import logger
+from prowler.providers.cloudflare.lib.read_errors import (
+    UNEXPECTED_VALUE,
+    record_read_error,
+)
 from prowler.providers.cloudflare.lib.service.service import CloudflareService
 from prowler.providers.cloudflare.models import CloudflareAccount
+
+ZONE_SETTING_IDS = (
+    "always_use_https",
+    "min_tls_version",
+    "ssl",
+    "tls_1_3",
+    "automatic_https_rewrites",
+    "security_header",
+    "waf",
+    "security_level",
+    "browser_check",
+    "challenge_ttl",
+    "ip_geolocation",
+    "email_obfuscation",
+    "server_side_exclude",
+    "hotlink_protection",
+    "development_mode",
+    "always_online",
+)
 
 
 class CloudflareRateLimitRule(BaseModel):
@@ -127,7 +150,7 @@ class Zone(CloudflareService):
     def _get_zone_settings_threaded(self, zone: "CloudflareZone") -> None:
         """Get settings for a single zone (thread-safe)."""
         try:
-            zone.settings = self._get_zone_settings(zone.id)
+            zone.settings = self._get_zone_settings(zone)
         except Exception as error:
             logger.error(
                 f"{zone.id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -139,6 +162,7 @@ class Zone(CloudflareService):
             dnssec = self.client.dns.dnssec.get(zone_id=zone.id)
             zone.dnssec_status = getattr(dnssec, "status", None)
         except Exception as error:
+            record_read_error(zone.read_errors, "dnssec", error)
             logger.error(
                 f"{zone.id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
@@ -151,6 +175,7 @@ class Zone(CloudflareService):
                 universal_ssl, "enabled", False
             )
         except Exception as error:
+            record_read_error(zone.read_errors, "universal_ssl", error)
             logger.error(
                 f"{zone.id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
@@ -188,10 +213,12 @@ class Zone(CloudflareService):
                                 )
                             )
                     except Exception as error:
-                        logger.debug(
+                        record_read_error(zone.read_errors, "rulesets", error)
+                        logger.error(
                             f"{zone.id} ruleset {ruleset_id} -- {error.__class__.__name__}: {error}"
                         )
         except Exception as error:
+            record_read_error(zone.read_errors, "rulesets", error)
             logger.error(
                 f"{zone.id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
@@ -204,6 +231,7 @@ class Zone(CloudflareService):
                 bot_management, "fight_mode", False
             )
         except Exception as error:
+            record_read_error(zone.read_errors, "bot_management", error)
             logger.error(
                 f"{zone.id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
@@ -253,12 +281,14 @@ class Zone(CloudflareService):
                                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                                 )
                     except Exception as error:
+                        record_read_error(zone.read_errors, "rulesets", error)
                         logger.error(
-                            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                            f"{zone.id} ruleset {ruleset_id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                         )
         except Exception as error:
+            record_read_error(zone.read_errors, "rulesets", error)
             logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                f"{zone.id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
     def _get_zone_waf_rulesets(self, zone: "CloudflareZone") -> None:
@@ -285,43 +315,41 @@ class Zone(CloudflareService):
                         f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
         except Exception as error:
+            record_read_error(zone.read_errors, "rulesets", error)
             logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                f"{zone.id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def _get_zone_setting(self, zone_id: str, setting_id: str):
-        """Get a single zone setting by ID."""
+    def _get_zone_setting(self, zone: "CloudflareZone", setting_id: str):
+        """Get a single zone setting by ID, recording why it could not be read."""
         try:
             result = self.client.zones.settings.get(
-                setting_id=setting_id, zone_id=zone_id
+                setting_id=setting_id, zone_id=zone.id
             )
             return getattr(result, "value", None)
-        except Exception:
+        except Exception as error:
+            record_read_error(zone.read_errors, setting_id, error)
+            logger.error(
+                f"{zone.id} setting {setting_id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
             return None
 
-    def _get_zone_settings(self, zone_id: str) -> "CloudflareZoneSettings":
+    def _get_zone_settings(self, zone: "CloudflareZone") -> "CloudflareZoneSettings":
         """Get all settings for a zone."""
         settings = {
-            setting_id: self._get_zone_setting(zone_id, setting_id)
-            for setting_id in [
-                "always_use_https",
-                "min_tls_version",
-                "ssl",
-                "tls_1_3",
-                "automatic_https_rewrites",
-                "security_header",
-                "waf",
-                "security_level",
-                "browser_check",
-                "challenge_ttl",
-                "ip_geolocation",
-                "email_obfuscation",
-                "server_side_exclude",
-                "hotlink_protection",
-                "development_mode",
-                "always_online",
-            ]
+            setting_id: self._get_zone_setting(zone, setting_id)
+            for setting_id in ZONE_SETTING_IDS
         }
+        # A value of an unexpected type must not wipe out every other setting.
+        for setting_id, field_name in ZONE_SETTING_FIELDS.items():
+            try:
+                CloudflareZoneSettings(**{field_name: settings[setting_id]})
+            except ValidationError as error:
+                zone.read_errors[setting_id] = UNEXPECTED_VALUE
+                logger.error(
+                    f"{zone.id} setting {setting_id} -- unexpected value: {error}"
+                )
+                settings[setting_id] = None
 
         return CloudflareZoneSettings(
             always_use_https=settings.get("always_use_https"),
@@ -369,6 +397,25 @@ class Zone(CloudflareService):
             preload=sts_data.get("preload", False),
             nosniff=sts_data.get("nosniff", False),
         )
+
+
+# Settings stored as-is in CloudflareZoneSettings, keyed by Cloudflare setting ID.
+ZONE_SETTING_FIELDS = {
+    "always_use_https": "always_use_https",
+    "ssl": "ssl_encryption_mode",
+    "tls_1_3": "tls_1_3",
+    "automatic_https_rewrites": "automatic_https_rewrites",
+    "waf": "waf",
+    "security_level": "security_level",
+    "browser_check": "browser_check",
+    "challenge_ttl": "challenge_ttl",
+    "ip_geolocation": "ip_geolocation",
+    "email_obfuscation": "email_obfuscation",
+    "server_side_exclude": "server_side_exclude",
+    "hotlink_protection": "hotlink_protection",
+    "development_mode": "development_mode",
+    "always_online": "always_online",
+}
 
 
 class StrictTransportSecurity(BaseModel):
@@ -426,3 +473,5 @@ class CloudflareZone(BaseModel):
     rate_limit_rules: list[CloudflareRateLimitRule] = Field(default_factory=list)
     firewall_rules: list[CloudflareFirewallRule] = Field(default_factory=list)
     waf_rulesets: list[CloudflareWAFRuleset] = Field(default_factory=list)
+    # Reason per Cloudflare setting/resource that could not be read for this zone.
+    read_errors: dict[str, str] = Field(default_factory=dict)

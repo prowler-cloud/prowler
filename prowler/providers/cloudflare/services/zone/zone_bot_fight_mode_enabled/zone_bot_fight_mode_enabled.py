@@ -1,4 +1,8 @@
 from prowler.lib.check.models import Check, CheckReportCloudflare
+from prowler.providers.cloudflare.lib.read_errors import (
+    BOT_MANAGEMENT_READ,
+    split_unreadable_zones,
+)
 from prowler.providers.cloudflare.services.zone.zone_client import zone_client
 
 
@@ -22,8 +26,14 @@ class zone_bot_fight_mode_enabled(Check):
             A list of CheckReportCloudflare objects with PASS status if Bot Fight
             Mode is enabled, or FAIL status if it is disabled for the zone.
         """
-        findings = []
-        for zone in zone_client.zones.values():
+        findings, zones = split_unreadable_zones(
+            self,
+            zone_client.zones.values(),
+            read_error=lambda zone: zone.read_errors.get("bot_management"),
+            requirement="the Bot Fight Mode setting",
+            permission=BOT_MANAGEMENT_READ,
+        )
+        for zone in zones:
             report = CheckReportCloudflare(
                 metadata=self.metadata(),
                 resource=zone,

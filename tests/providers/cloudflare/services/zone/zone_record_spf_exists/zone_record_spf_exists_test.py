@@ -33,6 +33,7 @@ class Test_zone_record_spf_exists:
         zone_client.zones = {}
 
         dns_client = mock.MagicMock
+        dns_client.read_errors = {}
         dns_client.records = []
 
         with (
@@ -70,6 +71,7 @@ class Test_zone_record_spf_exists:
         }
 
         dns_client = mock.MagicMock
+        dns_client.read_errors = {}
         dns_client.records = [
             CloudflareDNSRecord(
                 id="record-1",
@@ -123,6 +125,7 @@ class Test_zone_record_spf_exists:
         }
 
         dns_client = mock.MagicMock
+        dns_client.read_errors = {}
         dns_client.records = [
             CloudflareDNSRecord(
                 id="record-1",
@@ -174,6 +177,7 @@ class Test_zone_record_spf_exists:
         }
 
         dns_client = mock.MagicMock
+        dns_client.read_errors = {}
         dns_client.records = [
             CloudflareDNSRecord(
                 id="record-1",
@@ -225,6 +229,7 @@ class Test_zone_record_spf_exists:
         }
 
         dns_client = mock.MagicMock
+        dns_client.read_errors = {}
         dns_client.records = [
             CloudflareDNSRecord(
                 id="record-1",
@@ -276,6 +281,7 @@ class Test_zone_record_spf_exists:
         }
 
         dns_client = mock.MagicMock
+        dns_client.read_errors = {}
         dns_client.records = [
             CloudflareDNSRecord(
                 id="record-1",
@@ -312,4 +318,39 @@ class Test_zone_record_spf_exists:
             assert (
                 result[0].status_extended
                 == f"No SPF record found for zone {ZONE_NAME}."
+            )
+
+    def test_zone_dns_records_unreadable_is_manual(self):
+        zone_client = mock.MagicMock
+        zone_client.zones = {ZONE_ID: CloudflareZone(id=ZONE_ID, name=ZONE_NAME)}
+
+        dns_client = mock.MagicMock()
+        dns_client.records = []
+        dns_client.read_errors = {ZONE_ID: "PermissionDeniedError"}
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_cloudflare_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.cloudflare.services.zone.zone_record_spf_exists.zone_record_spf_exists.zone_client",
+                new=zone_client,
+            ),
+            mock.patch(
+                "prowler.providers.cloudflare.services.zone.zone_record_spf_exists.zone_record_spf_exists.dns_client",
+                new=dns_client,
+            ),
+        ):
+            from prowler.providers.cloudflare.services.zone.zone_record_spf_exists.zone_record_spf_exists import (
+                zone_record_spf_exists,
+            )
+
+            check = zone_record_spf_exists()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "MANUAL"
+            assert (
+                result[0].status_extended
+                == f"Cannot evaluate the SPF record for zone {ZONE_NAME}: the API token is missing the DNS Read permission."
             )

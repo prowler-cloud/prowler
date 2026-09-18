@@ -1,4 +1,8 @@
 from prowler.lib.check.models import Check, CheckReportCloudflare
+from prowler.providers.cloudflare.lib.read_errors import (
+    ZONE_SETTINGS_READ,
+    split_unreadable_zones,
+)
 from prowler.providers.cloudflare.services.zone.zone_client import zone_client
 
 
@@ -23,8 +27,14 @@ class zone_https_redirect_enabled(Check):
             Always Use HTTPS is enabled ('on'), or FAIL status if the
             setting is disabled for the zone.
         """
-        findings = []
-        for zone in zone_client.zones.values():
+        findings, zones = split_unreadable_zones(
+            self,
+            zone_client.zones.values(),
+            read_error=lambda zone: zone.read_errors.get("always_use_https"),
+            requirement="the Always Use HTTPS setting",
+            permission=ZONE_SETTINGS_READ,
+        )
+        for zone in zones:
             report = CheckReportCloudflare(
                 metadata=self.metadata(),
                 resource=zone,

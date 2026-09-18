@@ -4,6 +4,10 @@ import re
 from cryptography.hazmat.primitives.serialization import load_der_public_key
 
 from prowler.lib.check.models import Check, CheckReportCloudflare
+from prowler.providers.cloudflare.lib.read_errors import (
+    DNS_READ,
+    split_unreadable_zones,
+)
 from prowler.providers.cloudflare.services.dns.dns_client import dns_client
 from prowler.providers.cloudflare.services.zone.zone_client import zone_client
 
@@ -32,9 +36,14 @@ class zone_record_dkim_exists(Check):
             record with valid public key exists, or FAIL status if no DKIM record
             is found or the public key is invalid/missing.
         """
-        findings = []
-
-        for zone in zone_client.zones.values():
+        findings, zones = split_unreadable_zones(
+            self,
+            zone_client.zones.values(),
+            read_error=lambda zone: dns_client.read_errors.get(zone.id),
+            requirement="the DKIM record",
+            permission=DNS_READ,
+        )
+        for zone in zones:
             report = CheckReportCloudflare(
                 metadata=self.metadata(),
                 resource=zone,
