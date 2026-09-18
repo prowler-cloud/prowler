@@ -1,0 +1,42 @@
+{
+  "Provider": "aws",
+  "CheckID": "sqs_queues_secure_transport_enabled",
+  "CheckTitle": "SQS queue policy denies requests over insecure transport",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Effects/Data Exposure"
+  ],
+  "ServiceName": "sqs",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "AwsSqsQueue",
+  "ResourceGroup": "messaging",
+  "Description": "**Amazon SQS queues** are evaluated to ensure their **policies deny requests over insecure transport** (HTTP).\n\nQueues without such policies are identified.",
+  "Risk": "Without a policy denying insecure transport, message bodies can be transmitted over HTTP, increasing the risk of **data exposure** and **man-in-the-middle attacks**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-security-best-practices.html#enforce-encryption-data-in-transit",
+    "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_condition-keys.html#condition-keys-securetransport",
+    "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-configure-create-queue.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aws sqs set-queue-attributes --queue-url <example_queue_url> --attributes Policy='{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Deny\",\"Principal\":\"*\",\"Action\":\"sqs:*\",\"Resource\":\"<example_queue_arn>\",\"Condition\":{\"Bool\":{\"aws:SecureTransport\":\"false\"}}}]}'",
+      "NativeIaC": "```yaml\n# CloudFormation: Deny requests that do not use SSL/TLS\nResources:\n  QueuePolicy:\n    Type: AWS::SQS::QueuePolicy\n    Properties:\n      Queues:\n        - !Ref <example_resource_name>\n      PolicyDocument:\n        Version: \"2012-10-17\"\n        Statement:\n          - Effect: Deny\n            Principal: \"*\"\n            Action: \"sqs:*\"\n            Resource: !GetAtt <example_resource_name>.Arn\n            Condition:\n              Bool:\n                aws:SecureTransport: \"false\"  # Critical: deny requests not using SSL/TLS\n```",
+      "Other": "1. In the AWS Console, go to Amazon SQS > Queues and select <example_resource_name>\n2. Select Edit, then expand Access policy\n3. Add this statement to the queue policy, replacing the queue ARN:\n   ```\n   {\n     \"Effect\": \"Deny\",\n     \"Principal\": \"*\",\n     \"Action\": \"sqs:*\",\n     \"Resource\": \"<example_queue_arn>\",\n     \"Condition\": { \"Bool\": { \"aws:SecureTransport\": \"false\" } }\n   }\n   ```\n4. Save the changes\n",
+      "Terraform": "```hcl\n# Deny requests that do not use SSL/TLS\nresource \"aws_sqs_queue_policy\" \"<example_resource_name>\" {\n  queue_url = aws_sqs_queue.<example_resource_name>.url\n  policy = jsonencode({\n    Version = \"2012-10-17\"\n    Statement = [{\n      Effect    = \"Deny\"\n      Principal = \"*\"\n      Action    = \"sqs:*\"\n      Resource  = aws_sqs_queue.<example_resource_name>.arn\n      Condition = {\n        Bool = {\n          \"aws:SecureTransport\" = \"false\" # Critical: deny requests not using SSL/TLS\n        }\n      }\n    }]\n  })\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Enforce **HTTPS-only** access with a queue policy that denies requests when `aws:SecureTransport=false`. Keep the explicit `Deny` alongside least-privilege `Allow` statements because explicit denies override otherwise-permitted insecure requests. Monitor CloudTrail for denied SQS API calls to identify clients that need to use TLS.",
+      "Url": "https://hub.prowler.com/check/sqs_queues_secure_transport_enabled"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
