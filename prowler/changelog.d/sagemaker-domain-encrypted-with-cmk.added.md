@@ -1,0 +1,1 @@
+`sagemaker_domain_encrypted_with_cmk` checks that every SageMaker Domain encrypts its EFS and EBS volumes with a customer-managed KMS key, and reports MANUAL when the domain details cannot be described
