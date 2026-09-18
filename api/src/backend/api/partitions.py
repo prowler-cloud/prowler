@@ -3,7 +3,7 @@ from datetime import UTC, datetime
 
 from api.models import Finding, ResourceFindingMapping
 from api.rls import RowLevelSecurityConstraint
-from api.uuid_utils import datetime_to_uuid7
+from api.uuid_utils import uuid7_range_bound
 from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
@@ -102,11 +102,13 @@ class PostgresUUIDv7PartitioningStrategy(PostgresRangePartitioningStrategy):
         )
 
         for _ in range(self.count):
-            end_datetime = (
-                current_datetime + self.size.as_delta() - relativedelta(microseconds=1)
-            )
-            start_uuid7 = datetime_to_uuid7(current_datetime)
-            end_uuid7 = datetime_to_uuid7(end_datetime)
+            # The upper bound is the next window's start, not an instant just
+            # before it: PostgreSQL's upper bound is exclusive, so this is what
+            # makes consecutive partitions meet instead of leaving the gap a
+            # sub-millisecond offset produces on a millisecond-resolution key.
+            end_datetime = current_datetime + self.size.as_delta()
+            start_uuid7 = uuid7_range_bound(current_datetime)
+            end_uuid7 = uuid7_range_bound(end_datetime)
 
             yield PostgresUUIDv7RangePartition(
                 from_values=start_uuid7,
@@ -126,8 +128,8 @@ class PostgresUUIDv7PartitioningStrategy(PostgresRangePartitioningStrategy):
 
         while True:
             end_datetime = current_datetime + self.size.as_delta()
-            start_uuid7 = datetime_to_uuid7(current_datetime)
-            end_uuid7 = datetime_to_uuid7(end_datetime)
+            start_uuid7 = uuid7_range_bound(current_datetime)
+            end_uuid7 = uuid7_range_bound(end_datetime)
 
             # dropping table will delete indexes and policies
             yield PostgresUUIDv7RangePartition(
