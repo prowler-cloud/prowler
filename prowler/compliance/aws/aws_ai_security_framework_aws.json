@@ -601,7 +601,9 @@
         }
       ],
       "Checks": [
-        "cloudtrail_threat_detection_llm_jacking"
+        "cloudtrail_threat_detection_llm_jacking",
+        "cloudtrail_agentcore_data_events_enabled",
+        "cloudtrail_agentcore_memory_data_events_enabled"
       ]
     },
     {
