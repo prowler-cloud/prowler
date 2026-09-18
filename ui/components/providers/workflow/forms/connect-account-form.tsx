@@ -257,11 +257,12 @@ export const ConnectAccountForm = ({
           setRegistryAvailable(false);
           setRegistryError(true);
         }
-      } finally {
-        if (active) setIsRetryingDiscovery(false);
       }
     };
-    void load();
+    // Only this effect's own load ends a retry; event reloads must not.
+    void load().then(() => {
+      if (active) setIsRetryingDiscovery(false);
+    });
     window.addEventListener("registry-artifacts-changed", load);
     return () => {
       active = false;

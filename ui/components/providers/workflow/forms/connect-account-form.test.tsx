@@ -199,4 +199,42 @@ describe("Registry provider source tabs", () => {
     );
     expect(retry).not.toHaveAttribute("aria-disabled", "true");
   });
+
+  it("keeps a retry in flight when an artifact change reloads discovery meanwhile", async () => {
+    // Given
+    const user = userEvent.setup();
+    let settleRetry: (result: { status: "error" }) => void = () => {};
+    getInstalledRegistryProviderOptions
+      .mockResolvedValueOnce({ status: "error" })
+      .mockReturnValueOnce(
+        new Promise((resolve) => {
+          settleRetry = resolve;
+        }),
+      )
+      .mockResolvedValueOnce({ status: "error" });
+    render(<ConnectAccountForm onSuccess={vi.fn()} />);
+    const retry = await screen.findByRole("button", {
+      name: "Retry Registry providers",
+    });
+    await user.click(retry);
+
+    // When: an unrelated reload settles before the retry does
+    window.dispatchEvent(new CustomEvent("registry-artifacts-changed"));
+    await waitFor(() =>
+      expect(getInstalledRegistryProviderOptions).toHaveBeenCalledTimes(3),
+    );
+    await user.click(retry);
+
+    // Then: only the retry itself may end the retry
+    expect(retry).toHaveTextContent("Retrying…");
+    expect(getInstalledRegistryProviderOptions).toHaveBeenCalledTimes(3);
+
+    // When
+    settleRetry({ status: "error" });
+
+    // Then
+    await waitFor(() =>
+      expect(retry).toHaveTextContent("Retry Registry providers"),
+    );
+  });
 });
