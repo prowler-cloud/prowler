@@ -14,7 +14,9 @@
 
 **Preconditions:** Local and Cloud-with-Registry-flag-off fixture servers.
 
-**Expected Result:** Registry navigation is absent and the direct route redirects safely in both profiles.
+**Flow:** Verify Registry navigation and direct-route access, then open the Add Provider selector.
+
+**Expected Result:** Registry navigation is absent, the direct route redirects safely, and Add Provider lists built-in providers without Registry source tabs in both profiles.
 
 ## Test Case: `REGISTRY-E2E-002` - Enabled Manager Discovery
 

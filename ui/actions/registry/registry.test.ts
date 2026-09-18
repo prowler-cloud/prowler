@@ -197,15 +197,20 @@ describe("installed Registry provider discovery", () => {
     expect(evaluateAccessMock).not.toHaveBeenCalled();
   });
 
-  it.each(["ineligible", "unknown"])(
-    "denies installed-provider discovery when provider access is %s",
-    async (status) => {
+  it.each([
+    ["ineligible", "access_denied"],
+    ["unknown", "unknown"],
+  ] as const)(
+    "maps installed-provider access %s to %s",
+    async (status, expectedStatus) => {
       // Given
       evaluateProviderAccessMock.mockResolvedValue({ status });
-      // When / Then
-      expect(await getInstalledRegistryProviderOptions()).toEqual({
-        status: "access_denied",
-      });
+
+      // When
+      const result = await getInstalledRegistryProviderOptions();
+
+      // Then
+      expect(result).toEqual({ status: expectedStatus });
       expect(fetchMock).not.toHaveBeenCalled();
     },
   );

@@ -218,9 +218,8 @@ export const ConnectAccountForm = ({
   const [registryOptions, setRegistryOptions] = useState<
     RegistryProviderOption[]
   >([]);
-  // Only Cloud and Private Cloud deployments with the Registry flag on answer
-  // discovery with "ready" or "error"; Local (OSS) and flag-off deployments
-  // are denied and never show the Registry tab.
+  // Only confirmed Cloud and Private Cloud access enables Registry source tabs.
+  // Unknown access stays hidden but remains retryable through the warning.
   const [registryAvailable, setRegistryAvailable] = useState(false);
   const [registryError, setRegistryError] = useState(false);
   const [providerError, setProviderError] = useState<string | null>(null);
@@ -235,8 +234,12 @@ export const ConnectAccountForm = ({
         const result = await getInstalledRegistryProviderOptions();
         if (!active) return;
         setRegistryOptions(result.status === "ready" ? result.options : []);
-        setRegistryAvailable(result.status !== "access_denied");
-        setRegistryError(result.status === "error");
+        setRegistryAvailable(
+          result.status === "ready" || result.status === "error",
+        );
+        setRegistryError(
+          result.status === "error" || result.status === "unknown",
+        );
       } catch {
         if (active) {
           setRegistryOptions([]);

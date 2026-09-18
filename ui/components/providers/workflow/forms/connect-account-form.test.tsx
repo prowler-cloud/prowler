@@ -129,4 +129,38 @@ describe("Registry provider source tabs", () => {
       "true",
     );
   });
+
+  it("keeps Registry hidden and offers a retry when access is unknown", async () => {
+    // Given
+    const user = userEvent.setup();
+    getInstalledRegistryProviderOptions
+      .mockResolvedValueOnce({ status: "unknown" })
+      .mockResolvedValueOnce({ status: "ready", options: [] });
+
+    // When
+    render(<ConnectAccountForm onSuccess={vi.fn()} />);
+
+    // Then
+    expect(
+      await screen.findByText("Registry providers could not be loaded"),
+    ).toBeVisible();
+    expect(
+      screen.queryByRole("tab", { name: "Registry" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Retry Registry providers" }),
+    ).toBeVisible();
+
+    // When
+    await user.click(
+      screen.getByRole("button", { name: "Retry Registry providers" }),
+    );
+
+    // Then
+    expect(await screen.findByRole("tab", { name: "Registry" })).toBeVisible();
+    expect(
+      screen.queryByText("Registry providers could not be loaded"),
+    ).not.toBeInTheDocument();
+    expect(getInstalledRegistryProviderOptions).toHaveBeenCalledTimes(2);
+  });
 });

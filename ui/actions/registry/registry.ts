@@ -189,10 +189,12 @@ async function readRegistryProviders(
 
 export async function getInstalledRegistryProviderOptions(): Promise<
   | { status: "ready"; options: RegistryProviderOption[] }
-  | { status: "access_denied" | "error" }
+  | { status: "access_denied" | "error" | "unknown" }
 > {
   const access = (await auth())?.accessToken;
   const permission = await evaluateRegistryProviderAccess(access);
+  if (permission.status === REGISTRY_ACCESS.UNKNOWN)
+    return { status: "unknown" };
   if (!access || permission.status !== REGISTRY_ACCESS.ELIGIBLE)
     return { status: "access_denied" };
   const [catalog, installed, providers] = await Promise.all([
