@@ -1,8 +1,4 @@
 from prowler.lib.check.models import Check, CheckReportCloudflare
-from prowler.providers.cloudflare.lib.read_errors import (
-    ZONE_SETTINGS_READ,
-    split_unreadable_zones,
-)
 from prowler.providers.cloudflare.services.zone.zone_client import zone_client
 
 
@@ -29,14 +25,8 @@ class zone_ssl_strict(Check):
             SSL mode is 'strict', or FAIL status if using
             less secure modes like 'off', 'flexible', or 'full'.
         """
-        findings, zones = split_unreadable_zones(
-            self,
-            zone_client.zones.values(),
-            read_error=lambda zone: zone.read_errors.get("ssl"),
-            requirement="the SSL/TLS encryption mode",
-            permission=ZONE_SETTINGS_READ,
-        )
-        for zone in zones:
+        findings = []
+        for zone in zone_client.zones.values():
             report = CheckReportCloudflare(
                 metadata=self.metadata(),
                 resource=zone,

@@ -1,8 +1,4 @@
 from prowler.lib.check.models import Check, CheckReportCloudflare
-from prowler.providers.cloudflare.lib.read_errors import (
-    ZONE_WAF_READ,
-    split_unreadable_zones,
-)
 from prowler.providers.cloudflare.services.zone.zone_client import zone_client
 
 
@@ -26,14 +22,9 @@ class zone_waf_owasp_ruleset_enabled(Check):
             A list of CheckReportCloudflare objects with PASS status if OWASP
             rulesets are enabled, or FAIL status if no OWASP protection exists.
         """
-        findings, zones = split_unreadable_zones(
-            self,
-            zone_client.zones.values(),
-            read_error=lambda zone: zone.read_errors.get("rulesets"),
-            requirement="the WAF managed rulesets",
-            permission=ZONE_WAF_READ,
-        )
-        for zone in zones:
+        findings = []
+
+        for zone in zone_client.zones.values():
             report = CheckReportCloudflare(
                 metadata=self.metadata(),
                 resource=zone,

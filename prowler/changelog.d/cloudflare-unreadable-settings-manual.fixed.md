@@ -1,1 +1,0 @@
-Cloudflare checks report MANUAL naming the missing API token permission instead of a false FAIL when a setting, ruleset or DNS record cannot be read, with one account-level finding when every zone of the account is affected

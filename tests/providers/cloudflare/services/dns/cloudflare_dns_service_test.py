@@ -1,17 +1,8 @@
-from types import SimpleNamespace
 from typing import Optional
 
-import httpx
-from cloudflare import PermissionDeniedError
 from pydantic import BaseModel
 
-from prowler.providers.cloudflare.services.dns.dns_service import DNS
-from tests.providers.cloudflare.cloudflare_fixtures import (
-    ACCOUNT_ID,
-    ZONE_ID,
-    ZONE_NAME,
-    set_mocked_cloudflare_provider,
-)
+from tests.providers.cloudflare.cloudflare_fixtures import ZONE_ID, ZONE_NAME
 
 
 class CloudflareDNSRecord(BaseModel):
@@ -126,36 +117,3 @@ class TestDNSService:
 
         assert record.type == "CAA"
         assert "letsencrypt.org" in record.content
-
-
-class TestDNSServiceReadErrors:
-    def _provider(self):
-        provider = set_mocked_cloudflare_provider()
-        provider.session.client.zones.list.return_value = [
-            SimpleNamespace(
-                id=ZONE_ID,
-                name=ZONE_NAME,
-                account=SimpleNamespace(id=ACCOUNT_ID),
-            )
-        ]
-        return provider
-
-    def test_forbidden_record_listing_is_recorded_per_zone(self):
-        provider = self._provider()
-        request = httpx.Request("GET", "https://api.cloudflare.com/client/v4/zones")
-        provider.session.client.dns.records.list.side_effect = PermissionDeniedError(
-            "Authentication error",
-            response=httpx.Response(403, request=request),
-            body=None,
-        )
-
-        dns = DNS(provider)
-
-        assert dns.records == []
-        assert dns.read_errors == {ZONE_ID: "PermissionDeniedError"}
-
-    def test_successful_record_listing_records_no_errors(self):
-        provider = self._provider()
-        provider.session.client.dns.records.list.return_value = []
-
-        assert DNS(provider).read_errors == {}

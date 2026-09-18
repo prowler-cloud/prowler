@@ -1,8 +1,4 @@
 from prowler.lib.check.models import Check, CheckReportCloudflare
-from prowler.providers.cloudflare.lib.read_errors import (
-    SSL_AND_CERTIFICATES_READ,
-    split_unreadable_zones,
-)
 from prowler.providers.cloudflare.services.zone.zone_client import zone_client
 
 
@@ -26,14 +22,8 @@ class zone_universal_ssl_enabled(Check):
             A list of CheckReportCloudflare objects with PASS status if Universal
             SSL is enabled, or FAIL status if it is disabled for the zone.
         """
-        findings, zones = split_unreadable_zones(
-            self,
-            zone_client.zones.values(),
-            read_error=lambda zone: zone.read_errors.get("universal_ssl"),
-            requirement="the Universal SSL setting",
-            permission=SSL_AND_CERTIFICATES_READ,
-        )
-        for zone in zones:
+        findings = []
+        for zone in zone_client.zones.values():
             report = CheckReportCloudflare(
                 metadata=self.metadata(),
                 resource=zone,

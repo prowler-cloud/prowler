@@ -1,8 +1,4 @@
 from prowler.lib.check.models import Check, CheckReportCloudflare
-from prowler.providers.cloudflare.lib.read_errors import (
-    ZONE_SETTINGS_READ,
-    split_unreadable_zones,
-)
 from prowler.providers.cloudflare.services.zone.zone_client import zone_client
 
 
@@ -28,14 +24,9 @@ class zone_security_under_attack_disabled(Check):
             A list of CheckReportCloudflare objects with PASS status if Under
             Attack Mode is disabled, or FAIL status if it is currently enabled.
         """
-        findings, zones = split_unreadable_zones(
-            self,
-            zone_client.zones.values(),
-            read_error=lambda zone: zone.read_errors.get("security_level"),
-            requirement="the Security Level setting",
-            permission=ZONE_SETTINGS_READ,
-        )
-        for zone in zones:
+        findings = []
+
+        for zone in zone_client.zones.values():
             report = CheckReportCloudflare(
                 metadata=self.metadata(),
                 resource=zone,

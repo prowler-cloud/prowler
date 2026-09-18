@@ -1,8 +1,4 @@
 from prowler.lib.check.models import Check, CheckReportCloudflare
-from prowler.providers.cloudflare.lib.read_errors import (
-    ZONE_SETTINGS_READ,
-    split_unreadable_zones,
-)
 from prowler.providers.cloudflare.services.zone.zone_client import zone_client
 
 
@@ -24,17 +20,11 @@ class zone_challenge_passage_configured(Check):
             A list of CheckReportCloudflare objects with PASS status if Challenge
             Passage is between 15 and 45 minutes, or FAIL status otherwise.
         """
+        findings = []
         min_minutes = 15
         max_minutes = 45
 
-        findings, zones = split_unreadable_zones(
-            self,
-            zone_client.zones.values(),
-            read_error=lambda zone: zone.read_errors.get("challenge_ttl"),
-            requirement="the Challenge Passage setting",
-            permission=ZONE_SETTINGS_READ,
-        )
-        for zone in zones:
+        for zone in zone_client.zones.values():
             report = CheckReportCloudflare(
                 metadata=self.metadata(),
                 resource=zone,

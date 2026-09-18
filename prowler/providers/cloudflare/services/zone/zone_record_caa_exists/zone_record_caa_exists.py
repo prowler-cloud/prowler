@@ -1,10 +1,6 @@
 import re
 
 from prowler.lib.check.models import Check, CheckReportCloudflare
-from prowler.providers.cloudflare.lib.read_errors import (
-    DNS_READ,
-    split_unreadable_zones,
-)
 from prowler.providers.cloudflare.services.dns.dns_client import dns_client
 from prowler.providers.cloudflare.services.zone.zone_client import zone_client
 
@@ -33,14 +29,9 @@ class zone_record_caa_exists(Check):
             records with issuance restrictions exist, or FAIL status if no CAA
             records are found or they lack proper issue/issuewild tags.
         """
-        findings, zones = split_unreadable_zones(
-            self,
-            zone_client.zones.values(),
-            read_error=lambda zone: dns_client.read_errors.get(zone.id),
-            requirement="the CAA record",
-            permission=DNS_READ,
-        )
-        for zone in zones:
+        findings = []
+
+        for zone in zone_client.zones.values():
             report = CheckReportCloudflare(
                 metadata=self.metadata(),
                 resource=zone,

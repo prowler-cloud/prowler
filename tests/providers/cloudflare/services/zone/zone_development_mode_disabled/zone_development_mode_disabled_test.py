@@ -138,36 +138,3 @@ class Test_zone_development_mode_disabled:
             assert len(result) == 1
             # None or empty string should be treated as disabled (PASS)
             assert result[0].status == "PASS"
-
-    def test_zone_unreadable_is_manual(self):
-        zone_client = mock.MagicMock
-        zone_client.zones = {
-            ZONE_ID: CloudflareZone(
-                id=ZONE_ID,
-                name=ZONE_NAME,
-                read_errors={"development_mode": "PermissionDeniedError"},
-            )
-        }
-
-        with (
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_cloudflare_provider(),
-            ),
-            mock.patch(
-                "prowler.providers.cloudflare.services.zone.zone_development_mode_disabled.zone_development_mode_disabled.zone_client",
-                new=zone_client,
-            ),
-        ):
-            from prowler.providers.cloudflare.services.zone.zone_development_mode_disabled.zone_development_mode_disabled import (
-                zone_development_mode_disabled,
-            )
-
-            check = zone_development_mode_disabled()
-            result = check.execute()
-            assert len(result) == 1
-            assert result[0].status == "MANUAL"
-            assert (
-                result[0].status_extended
-                == f"Cannot evaluate the Development Mode setting for zone {ZONE_NAME}: the API token is missing the Zone Settings Read permission."
-            )

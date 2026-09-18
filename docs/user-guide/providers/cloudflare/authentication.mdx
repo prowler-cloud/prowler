@@ -30,7 +30,7 @@ Prowler requires read-only access to Cloudflare zones and their settings. The fo
 | `Zone` | `Zone WAF` | `Read` | Required to read WAF custom, rate limiting, and managed rulesets |
 
 <Warning>
-Ensure the API Token has access to all zones targeted for scanning. When a permission is missing, the checks that depend on it report `MANUAL` instead of `PASS` or `FAIL`, and the finding names the permission to grant. If every zone in an account is affected, Prowler reports a single account-level finding per check.
+Ensure the API Token has access to all zones targeted for scanning. Missing permissions may cause some checks to fail or return incomplete results.
 </Warning>
 
 ---
@@ -152,10 +152,6 @@ This error occurs when using API Key authentication without providing the email 
 - Verify the API Token or API Key is correct and not expired.
 - Check that the token has the [required permissions](#required-permissions).
 - Ensure the token has access to the zones targeted for scanning.
-
-### Checks Report "Cannot evaluate" With Status MANUAL
-
-The API Token is missing a permission that the check needs, or the Cloudflare API returned an error. The finding's status extended names the missing permission, for example `the API token is missing the Zone WAF Read permission`. Add that permission to the token (see [Required Permissions](#required-permissions)) and run the scan again. Editing an existing token keeps its value, but the change can take a few seconds to apply.
 
 ### "Both API Token and API Key and Email credentials are set"
 

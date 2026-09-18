@@ -1,8 +1,4 @@
 from prowler.lib.check.models import Check, CheckReportCloudflare
-from prowler.providers.cloudflare.lib.read_errors import (
-    ZONE_SETTINGS_READ,
-    split_unreadable_zones,
-)
 from prowler.providers.cloudflare.services.zone.zone_client import zone_client
 
 
@@ -28,14 +24,9 @@ class zone_min_tls_version_secure(Check):
             minimum TLS version is 1.2 or higher, or FAIL status if older
             TLS versions (1.0, 1.1) are still allowed.
         """
-        findings, zones = split_unreadable_zones(
-            self,
-            zone_client.zones.values(),
-            read_error=lambda zone: zone.read_errors.get("min_tls_version"),
-            requirement="the minimum TLS version",
-            permission=ZONE_SETTINGS_READ,
-        )
-        for zone in zones:
+        findings = []
+
+        for zone in zone_client.zones.values():
             report = CheckReportCloudflare(
                 metadata=self.metadata(),
                 resource=zone,

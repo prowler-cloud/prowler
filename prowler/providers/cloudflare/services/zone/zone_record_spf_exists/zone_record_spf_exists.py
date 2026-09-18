@@ -1,8 +1,4 @@
 from prowler.lib.check.models import Check, CheckReportCloudflare
-from prowler.providers.cloudflare.lib.read_errors import (
-    DNS_READ,
-    split_unreadable_zones,
-)
 from prowler.providers.cloudflare.services.dns.dns_client import dns_client
 from prowler.providers.cloudflare.services.zone.zone_client import zone_client
 
@@ -30,14 +26,9 @@ class zone_record_spf_exists(Check):
             record with strict policy exists, or FAIL status if no SPF record
             is found or it uses a permissive policy.
         """
-        findings, zones = split_unreadable_zones(
-            self,
-            zone_client.zones.values(),
-            read_error=lambda zone: dns_client.read_errors.get(zone.id),
-            requirement="the SPF record",
-            permission=DNS_READ,
-        )
-        for zone in zones:
+        findings = []
+
+        for zone in zone_client.zones.values():
             report = CheckReportCloudflare(
                 metadata=self.metadata(),
                 resource=zone,

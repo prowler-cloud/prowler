@@ -3,7 +3,6 @@ from typing import Optional
 from pydantic import BaseModel
 
 from prowler.lib.logger import logger
-from prowler.providers.cloudflare.lib.read_errors import record_read_error
 from prowler.providers.cloudflare.lib.service.service import CloudflareService
 
 
@@ -13,8 +12,6 @@ class DNS(CloudflareService):
     def __init__(self, provider):
         super().__init__(__class__.__name__, provider)
         self.records: list["CloudflareDNSRecord"] = []
-        # Reason per zone ID whose DNS records could not be listed.
-        self.read_errors: dict[str, str] = {}
         self._list_dns_records()
 
     def _list_dns_records(self) -> None:
@@ -48,7 +45,6 @@ class DNS(CloudflareService):
                             )
                         )
                 except Exception as error:
-                    record_read_error(self.read_errors, zone_id, error)
                     logger.error(
                         f"{zone_id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )

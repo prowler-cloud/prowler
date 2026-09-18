@@ -1,8 +1,4 @@
 from prowler.lib.check.models import Check, CheckReportCloudflare
-from prowler.providers.cloudflare.lib.read_errors import (
-    ZONE_SETTINGS_READ,
-    split_unreadable_zones,
-)
 from prowler.providers.cloudflare.services.zone.zone_client import zone_client
 
 
@@ -29,17 +25,11 @@ class zone_hsts_enabled(Check):
             HSTS requirements are met, or FAIL status if HSTS is disabled,
             missing subdomain inclusion, or has insufficient max-age.
         """
+        findings = []
         # Recommended minimum max-age is 6 months (15768000 seconds)
         recommended_max_age = 15768000
 
-        findings, zones = split_unreadable_zones(
-            self,
-            zone_client.zones.values(),
-            read_error=lambda zone: zone.read_errors.get("security_header"),
-            requirement="the HSTS configuration",
-            permission=ZONE_SETTINGS_READ,
-        )
-        for zone in zones:
+        for zone in zone_client.zones.values():
             report = CheckReportCloudflare(
                 metadata=self.metadata(),
                 resource=zone,
