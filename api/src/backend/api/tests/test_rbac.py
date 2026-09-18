@@ -1591,6 +1591,52 @@ class TestLimitedVisibility:
 
         assert response.status_code == status.HTTP_204_NO_CONTENT
 
+    def test_jira_issues_limited_to_visible_providers(
+        self, authenticated_client_rbac_limited, jira_issues_fixture
+    ):
+        linked, other_provider_issue, _ = jira_issues_fixture
+        response = authenticated_client_rbac_limited.get(reverse("jiraissue-list"))
+        assert response.status_code == status.HTTP_200_OK
+        assert [item["id"] for item in response.json()["data"]] == [str(linked.id)]
+
+        response = authenticated_client_rbac_limited.get(
+            reverse("jiraissue-detail", kwargs={"pk": other_provider_issue.id})
+        )
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_jira_task_result_hides_issue_metadata_for_limited_role(
+        self,
+        authenticated_client_rbac_limited,
+        jira_issues_fixture,
+        tasks_fixture,
+    ):
+        _, hidden_issue, _ = jira_issues_fixture
+        task, *_ = tasks_fixture
+        task.task_runner_task.task_name = "integration-jira"
+        task.task_runner_task.result = json.dumps(
+            {
+                "skipped_count": 1,
+                "skipped": [
+                    {
+                        "finding_id": str(hidden_issue.finding_id),
+                        "issue_key": hidden_issue.issue_key,
+                        "issue_url": hidden_issue.issue_url,
+                        "issue_status": hidden_issue.issue_status,
+                    }
+                ],
+            }
+        )
+        task.task_runner_task.save(update_fields=["task_name", "result"])
+
+        response = authenticated_client_rbac_limited.get(
+            reverse("task-detail", kwargs={"pk": task.id})
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json()["data"]["attributes"]["result"]["skipped"] == [
+            {"finding_id": str(hidden_issue.finding_id)}
+        ]
+
     def test_jira_issue_types_allowed_without_unlimited_visibility(
         self, authenticated_client_rbac_limited, jira_integration_fixture
     ):

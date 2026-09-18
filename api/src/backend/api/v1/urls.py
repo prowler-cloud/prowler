@@ -14,6 +14,7 @@ from api.v1.views import (
     IntegrationViewSet,
     InvitationAcceptViewSet,
     InvitationViewSet,
+    JiraIssueViewSet,
     LighthouseConfigViewSet,
     LighthouseProviderConfigViewSet,
     LighthouseProviderModelsViewSet,
@@ -107,6 +108,7 @@ router.register(
     basename="lighthouse-models",
 )
 router.register(r"mute-rules", MuteRuleViewSet, basename="mute-rule")
+router.register(r"jira-issues", JiraIssueViewSet, basename="jiraissue")
 
 tenants_router = routers.NestedSimpleRouter(router, r"tenants", lookup="tenant")
 tenants_router.register(

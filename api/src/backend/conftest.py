@@ -20,6 +20,7 @@ from api.models import (
     Integration,
     IntegrationProviderRelationship,
     Invitation,
+    JiraIssue,
     LighthouseConfiguration,
     Membership,
     MuteRule,
@@ -1468,6 +1469,52 @@ def jira_integration_fixture(tenants_fixture):
                 "api_token": "token",
             },
         )
+
+
+@pytest.fixture
+def jira_issues_fixture(jira_integration_fixture, aws_provider_pair, findings_fixture):
+    """Two linked issues (one per provider) and one in-flight reservation."""
+    provider, provider2 = aws_provider_pair
+    finding1, finding2 = findings_fixture
+    tenant_id = jira_integration_fixture.tenant_id
+    with rls_transaction(str(tenant_id)):
+        linked = JiraIssue.objects.create(
+            tenant_id=tenant_id,
+            integration=jira_integration_fixture,
+            provider=provider,
+            finding_uid=finding1.uid,
+            finding_id=finding1.id,
+            issue_key="TEST-1",
+            issue_id="10001",
+            issue_url="https://test.atlassian.net/browse/TEST-1",
+            project_key="TEST",
+            issue_status="To Do",
+            issue_status_category=JiraIssue.StatusCategoryChoices.NEW,
+            status_synced_at=datetime.now(UTC),
+        )
+        hidden_provider_issue = JiraIssue.objects.create(
+            tenant_id=tenant_id,
+            integration=jira_integration_fixture,
+            provider=provider2,
+            finding_uid="test_finding_uid_other_provider",
+            finding_id=finding2.id,
+            issue_key="TEST-2",
+            issue_id="10002",
+            issue_url="https://test.atlassian.net/browse/TEST-2",
+            project_key="TEST",
+            issue_status="Done",
+            issue_status_category=JiraIssue.StatusCategoryChoices.DONE,
+            status_synced_at=datetime.now(UTC),
+        )
+        reservation = JiraIssue.objects.create(
+            tenant_id=tenant_id,
+            integration=jira_integration_fixture,
+            provider=provider,
+            finding_uid=finding2.uid,
+            finding_id=finding2.id,
+            delivery_attempt_token=uuid4(),
+        )
+    return linked, hidden_provider_issue, reservation
 
 
 @pytest.fixture
