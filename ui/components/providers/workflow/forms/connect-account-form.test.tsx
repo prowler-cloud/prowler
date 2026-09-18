@@ -163,4 +163,40 @@ describe("Registry provider source tabs", () => {
     ).not.toBeInTheDocument();
     expect(getInstalledRegistryProviderOptions).toHaveBeenCalledTimes(2);
   });
+
+  it("shows a retry in flight, ignores repeat clicks and keeps focus on the button", async () => {
+    // Given
+    const user = userEvent.setup();
+    let settleRetry: (result: { status: "error" }) => void = () => {};
+    getInstalledRegistryProviderOptions
+      .mockResolvedValueOnce({ status: "error" })
+      .mockReturnValueOnce(
+        new Promise((resolve) => {
+          settleRetry = resolve;
+        }),
+      );
+    render(<ConnectAccountForm onSuccess={vi.fn()} />);
+    const retry = await screen.findByRole("button", {
+      name: "Retry Registry providers",
+    });
+
+    // When
+    await user.click(retry);
+    await user.click(retry);
+
+    // Then: the warning stays mounted, so the pressed button is never lost.
+    expect(retry).toHaveTextContent("Retrying…");
+    expect(retry).toHaveAttribute("aria-disabled", "true");
+    expect(retry).toHaveFocus();
+    expect(getInstalledRegistryProviderOptions).toHaveBeenCalledTimes(2);
+
+    // When: the retry fails again
+    settleRetry({ status: "error" });
+
+    // Then
+    await waitFor(() =>
+      expect(retry).toHaveTextContent("Retry Registry providers"),
+    );
+    expect(retry).not.toHaveAttribute("aria-disabled", "true");
+  });
 });

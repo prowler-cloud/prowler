@@ -227,6 +227,8 @@ export const ConnectAccountForm = ({
   const [registryError, setRegistryError] = useState(false);
   const [providerError, setProviderError] = useState<string | null>(null);
   const [discoveryAttempt, setDiscoveryAttempt] = useState(0);
+  // Local state needed: a request in flight cannot be derived from the attempt count.
+  const [isRetryingDiscovery, setIsRetryingDiscovery] = useState(false);
   const submitting = useRef(false);
   const createdAccount = useRef<ConnectAccountSuccessData | null>(null);
 
@@ -255,6 +257,8 @@ export const ConnectAccountForm = ({
           setRegistryAvailable(false);
           setRegistryError(true);
         }
+      } finally {
+        if (active) setIsRetryingDiscovery(false);
       }
     };
     void load();
@@ -472,14 +476,20 @@ export const ConnectAccountForm = ({
                 <AlertDescription>
                   Built-in providers are available. Check the Registry
                   connection and try again.
+                  {/* aria-disabled, not disabled: the pressed button keeps focus. */}
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() =>
-                      setDiscoveryAttempt((attempt) => attempt + 1)
-                    }
+                    aria-disabled={isRetryingDiscovery}
+                    onClick={() => {
+                      if (isRetryingDiscovery) return;
+                      setIsRetryingDiscovery(true);
+                      setDiscoveryAttempt((attempt) => attempt + 1);
+                    }}
                   >
-                    Retry Registry providers
+                    {isRetryingDiscovery
+                      ? "Retrying…"
+                      : "Retry Registry providers"}
                   </Button>
                 </AlertDescription>
               </Alert>
