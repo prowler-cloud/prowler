@@ -503,6 +503,7 @@
             "pages": [
               "developer-guide/introduction",
               "developer-guide/provider",
+              "developer-guide/provider-scaffold",
               "developer-guide/services",
               "developer-guide/checks",
               "developer-guide/secret-scanning-checks",
