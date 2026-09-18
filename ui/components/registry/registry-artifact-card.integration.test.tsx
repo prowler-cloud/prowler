@@ -28,9 +28,92 @@ const artifact: RegistryMarketplaceArtifact = {
   versionCount: 1,
   totalDownloads: 0,
   owners: [{ name: "Prowler", type: "organization" }],
+  isInstallable: false,
+  notInstallableReason: "artifact_ships_with_prowler",
   isAdded: false,
   updateAvailable: false,
+  extendsProviderSlugs: [],
 };
+const checksArtifact: RegistryMarketplaceArtifact = {
+  ...artifact,
+  normalizedName: "acme-aws-checks",
+  name: "Acme AWS checks",
+  isBuiltin: false,
+  hasProvider: false,
+  hasCompliance: false,
+  isInstallable: true,
+  notInstallableReason: undefined,
+};
+
+describe("Registry card install verdict", () => {
+  it("offers Add for checks the API calls installable, though they define no provider", async () => {
+    // Given
+    const onAdd = vi.fn();
+    const screen = await render(
+      <RegistryArtifactCard
+        artifact={checksArtifact}
+        onAdd={onAdd}
+        onRemove={vi.fn()}
+      />,
+    );
+
+    // When
+    await screen.getByRole("button", { name: "Add Acme AWS checks" }).click();
+
+    // Then
+    expect(onAdd).toHaveBeenCalledOnce();
+  });
+
+  it("says why an artifact cannot be installed instead of leaving a dead control", async () => {
+    // Given / When
+    const screen = await render(
+      <RegistryArtifactCard
+        artifact={{
+          ...checksArtifact,
+          isInstallable: false,
+          notInstallableReason: "checks_target_is_not_builtin",
+        }}
+        onAdd={vi.fn()}
+        onRemove={vi.fn()}
+      />,
+    );
+
+    // Then
+    await expect
+      .element(
+        screen.getByText(
+          "Its checks are written for a provider this deployment does not ship.",
+        ),
+      )
+      .toBeVisible();
+    await expect
+      .element(screen.getByRole("button", { name: /Add/ }))
+      .not.toBeInTheDocument();
+  });
+
+  it("names the built-in providers whose scans an installed checks artifact changed", async () => {
+    // Given / When
+    const screen = await render(
+      <RegistryArtifactCard
+        artifact={{
+          ...checksArtifact,
+          isAdded: true,
+          resolvedVersion: "0.2.2",
+          extendsProviderSlugs: ["aws", "gcp"],
+        }}
+        onAdd={vi.fn()}
+        onRemove={vi.fn()}
+      />,
+    );
+
+    // Then
+    await expect
+      .element(
+        screen.getByText("Adds checks to your AWS and Google Cloud scans."),
+      )
+      .toBeVisible();
+  });
+});
 
 describe("Registry card metadata layout", () => {
   it("keeps Added when the installed version is unknown", async () => {
@@ -61,6 +144,7 @@ describe("Registry card metadata layout", () => {
         artifact={{
           ...artifact,
           isBuiltin: false,
+          isInstallable: true,
           isAdded: true,
           resolvedVersion: "1.0.0",
           updateAvailable: true,
@@ -167,6 +251,7 @@ describe("Registry card metadata layout", () => {
                   complianceCount: 123456789,
                   totalDownloads: 9876543210,
                   isBuiltin: false,
+                  isInstallable: true,
                   owners: [],
                 }}
                 onAdd={onAdd}

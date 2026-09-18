@@ -4,8 +4,6 @@ import type {
   RegistryTenantArtifact,
 } from "@/types/registry";
 
-import { isRegistryArtifactInstallable } from "./artifacts";
-
 export interface RegistryProviderOption {
   type: string;
   label: string;
@@ -25,10 +23,8 @@ export function buildRegistryProviderOptions(
   );
   const options = new Map<string, RegistryProviderOption>();
   for (const artifact of catalog) {
-    if (
-      !membership.has(artifact.normalizedName) ||
-      !isRegistryArtifactInstallable(artifact)
-    )
+    // Defining a provider type, not installability: checks artifacts install too.
+    if (!membership.has(artifact.normalizedName) || !artifact.hasProvider)
       continue;
     const declaredType = artifact.providerSlug;
     for (const type of declaredType ? [declaredType] : []) {

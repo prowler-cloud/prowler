@@ -302,7 +302,11 @@ describe("Registry guarded reads", () => {
                 {
                   type: "registry-artifacts",
                   id: "external-package",
-                  attributes: { has_provider: true, is_builtin: false },
+                  attributes: {
+                    has_provider: true,
+                    is_builtin: false,
+                    is_installable: true,
+                  },
                 },
               ],
               meta: { pagination: { page: 1, pages: 1, count: 1 } },
@@ -393,6 +397,7 @@ describe("Registry guarded reads", () => {
           {
             normalizedName: "prowler-aws",
             versionSpec: "latest",
+            extendsProviderSlugs: [],
             insertedAt: "2026-03-20T12:00:00Z",
           },
         ],
@@ -438,6 +443,7 @@ describe("Registry guarded reads", () => {
             {
               normalizedName: "prowler-aws",
               versionSpec: "latest",
+              extendsProviderSlugs: [],
               insertedAt: "2026-03-20T12:00:00Z",
             },
           ],
@@ -482,6 +488,7 @@ describe("Registry guarded reads", () => {
         {
           normalizedName: "prowler-aws",
           versionSpec: "latest",
+          extendsProviderSlugs: [],
           insertedAt: "2026-03-20T12:00:00Z",
         },
       ],
@@ -678,6 +685,7 @@ describe("Registry guarded reads", () => {
         {
           normalizedName: "prowler-aws",
           versionSpec: "latest",
+          extendsProviderSlugs: [],
           insertedAt: "2026-03-20T12:00:00Z",
         },
       ],
@@ -791,6 +799,7 @@ describe("Registry artifact mutations", () => {
             attributes: {
               has_provider: true,
               is_builtin: false,
+              is_installable: true,
               providers: ["acme"],
             },
           },
@@ -806,11 +815,29 @@ describe("Registry artifact mutations", () => {
   });
 
   it.each([
-    { has_provider: true, is_builtin: true },
-    { has_provider: false, is_builtin: false },
+    [
+      {
+        has_checks: true,
+        is_installable: false,
+        not_installable_reason: "checks_target_is_not_builtin",
+      },
+      "Its checks are written for a provider this deployment does not ship.",
+    ],
+    [
+      {
+        has_checks: true,
+        is_installable: false,
+        not_installable_reason: "a_code_from_a_newer_api",
+      },
+      "This artifact cannot be installed in this deployment.",
+    ],
+    [
+      { has_provider: true, is_builtin: false },
+      "This artifact cannot be installed in this deployment.",
+    ],
   ])(
-    "refuses ineligible catalog entries before POST: %j",
-    async (attributes) => {
+    "refuses what the API says cannot be installed before POST: %j",
+    async (attributes, message) => {
       // Given
       installCatalogMock.mockImplementation(() =>
         jsonResponse({
@@ -829,10 +856,43 @@ describe("Registry artifact mutations", () => {
         normalizedName: "later-guard",
       });
       // Then
-      expect(result).toMatchObject({ status: "refused" });
+      expect(result).toEqual({ status: "refused", message });
       expect(fetchMock).not.toHaveBeenCalled();
     },
   );
+
+  it("submits a checks artifact that defines no provider once the API calls it installable", async () => {
+    // Given
+    installCatalogMock.mockImplementation(() =>
+      jsonResponse({
+        data: [
+          {
+            type: "registry-available-artifacts",
+            id: "later-guard",
+            attributes: {
+              has_provider: false,
+              has_checks: true,
+              is_installable: true,
+              providers: ["aws"],
+            },
+          },
+        ],
+        meta: { pagination: { page: 1, pages: 1, count: 1 } },
+      }),
+    );
+    fetchMock.mockResolvedValueOnce(
+      new Response(JSON.stringify({ data: { type: "tasks", id: "task-1" } }), {
+        status: 202,
+        headers: { "Content-Location": "/api/v1/tasks/task-1" },
+      }),
+    );
+
+    // When
+    const result = await addRegistryArtifact({ normalizedName: "later-guard" });
+
+    // Then
+    expect(result).toEqual({ status: "submitted", taskId: "task-1" });
+  });
 
   it("returns an accepted Add task without reading My artifacts", async () => {
     // Given
@@ -993,7 +1053,27 @@ describe("Registry artifact mutations", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
-  it("reports an in-use artifact when Remove returns 409 without refreshing membership", async () => {
+  it.each([
+    ["registry_artifact_in_use", "in_use"],
+    ["registry_artifact_busy", "busy"],
+  ])(
+    "tells a Remove 409 %s apart as %s without refreshing membership",
+    async (code, expected) => {
+      // Given
+      fetchMock.mockResolvedValueOnce(
+        jsonResponse({ errors: [{ code }] }, 409),
+      );
+
+      // When
+      const result = await removeRegistryArtifact("aws-guard");
+
+      // Then
+      expect(result).toEqual({ status: expected });
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    },
+  );
+
+  it("never asks someone to delete providers over a Remove 409 it cannot identify", async () => {
     // Given
     fetchMock.mockResolvedValueOnce(new Response(null, { status: 409 }));
 
@@ -1001,8 +1081,7 @@ describe("Registry artifact mutations", () => {
     const result = await removeRegistryArtifact("aws-guard");
 
     // Then
-    expect(result).toEqual({ status: "in_use" });
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(result).toEqual({ status: "error" });
   });
 
   it.each([

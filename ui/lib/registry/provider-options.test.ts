@@ -17,6 +17,7 @@ const provider: RegistryCatalogArtifact = {
   isMeta: false,
   hasChecks: true,
   hasCompliance: false,
+  isInstallable: true,
   versionCount: 1,
   totalDownloads: 0,
   owners: [],
@@ -105,6 +106,31 @@ describe("installed Registry provider options", () => {
     ]);
     expect(buildRegistryProviderOptions(catalog, [], [])).toEqual([]);
   });
+  it("asks whether an artifact defines a provider type, not whether it installs", () => {
+    // Given: installed checks for AWS, and a provider this deployment now refuses.
+    const catalog = [
+      {
+        ...provider,
+        normalizedName: "aws-checks",
+        hasProvider: false,
+        providerSlug: undefined,
+        providers: ["aws"],
+      },
+      { ...provider, isInstallable: false },
+    ];
+    const installed = catalog.map(({ normalizedName }) => ({
+      normalizedName,
+      versionSpec: "latest",
+    }));
+
+    // When / Then
+    expect(
+      buildRegistryProviderOptions(catalog, installed, []).map(
+        (option) => option.type,
+      ),
+    ).toEqual(["acme"]);
+  });
+
   it("uses the declared provider rather than other providers targeted by the package", () => {
     const catalog = [
       { ...provider, providerSlug: "zeta", providers: ["acme", "zeta"] },

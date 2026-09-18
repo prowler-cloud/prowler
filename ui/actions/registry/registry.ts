@@ -9,21 +9,21 @@ import {
   evaluateRegistryAccess,
   evaluateRegistryProviderAccess,
 } from "@/lib/registry/access.server";
-import { isRegistryArtifactInstallable } from "@/lib/registry/artifacts";
 import { isActiveRegistryCredential } from "@/lib/registry/credential-task";
+import { getRegistryNotInstallableMessage } from "@/lib/registry/installability";
 import {
   buildRegistryProviderOptions,
   type RegistryProviderOption,
 } from "@/lib/registry/provider-options";
 import {
   REGISTRY_ARTIFACT_ACTION,
-  REGISTRY_ARTIFACT_REMOVAL,
   REGISTRY_BOOTSTRAP_STATE,
   REGISTRY_CATALOG,
   REGISTRY_CREDENTIAL_ACTION,
   REGISTRY_CREDENTIAL_READ,
   REGISTRY_ENDPOINT,
   REGISTRY_FAILURE,
+  REGISTRY_MUTATION,
   REGISTRY_SUBMISSION,
   type RegistryAddArtifactInput,
   type RegistryArtifactRemovalResult,
@@ -43,6 +43,7 @@ import {
   adaptRegistryTenantArtifacts,
   classifyRegistryFailure,
   classifyRegistryMutationRefusal,
+  classifyRegistryRemovalConflict,
   collectCompleteRegistryCatalog,
   isRegistryCollection,
   parseRegistryArtifactSubmission,
@@ -389,10 +390,10 @@ export async function addRegistryArtifact({
   const artifact = catalog.artifacts.find(
     (entry) => entry.normalizedName === normalizedName,
   );
-  if (!artifact || !isRegistryArtifactInstallable(artifact))
+  if (!artifact?.isInstallable)
     return {
-      status: "refused",
-      message: "Only external provider artifacts can be added.",
+      status: REGISTRY_MUTATION.REFUSED,
+      message: getRegistryNotInstallableMessage(artifact?.notInstallableReason),
     };
   const selectedVersion = versionSpec?.trim() || "latest";
 
@@ -482,7 +483,11 @@ export async function removeRegistryArtifact(
     return { status: REGISTRY_FAILURE.ACCESS_DENIED };
   }
   if (response.status === 409) {
-    return { status: REGISTRY_ARTIFACT_REMOVAL.IN_USE };
+    return (
+      (await classifyRegistryRemovalConflict(response)) ?? {
+        status: REGISTRY_FAILURE.ERROR,
+      }
+    );
   }
   if (!response.ok) return { status: REGISTRY_FAILURE.ERROR };
 

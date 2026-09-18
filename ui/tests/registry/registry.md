@@ -61,7 +61,7 @@
 **Priority:** `critical`
 **Tags:** @e2e, @registry
 
-**Expected Result:** The All tab displays the complete paginated catalog and supports search, combined provider and capability filters, URL state, and owner logos with fallback. Built-ins display Built in without Add. Checks/compliance-only artifacts remain visible without Add. An external provider artifact installs through a 202 task and an authoritative membership read before Added appears. Removal preserves provider accounts. Reconnect, unavailable, and generic failures have actionable empty states.
+**Expected Result:** The All tab displays the complete paginated catalog and supports search, combined provider and capability filters, URL state, and owner logos with fallback. Built-ins display Built in without Add. Add follows the API's `is_installable` verdict: artifacts it refuses remain visible without Add and state the reason. An external provider artifact installs through a 202 task and an authoritative membership read before Added appears. Removal preserves provider accounts. Reconnect, unavailable, and generic failures have actionable empty states.
 
 ## Test Case: `REGISTRY-E2E-006` - Pixel 5 Reduced-Motion Browsing
 
