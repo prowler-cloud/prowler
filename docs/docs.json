@@ -361,6 +361,13 @@
                 ]
               },
               {
+                "group": "Fly.io",
+                "pages": [
+                  "user-guide/providers/fly/getting-started-fly",
+                  "user-guide/providers/fly/authentication"
+                ]
+              },
+              {
                 "group": "GitHub",
                 "pages": [
                   "user-guide/providers/github/getting-started-github",
