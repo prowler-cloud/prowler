@@ -1,0 +1,40 @@
+{
+  "Provider": "aws",
+  "CheckID": "iam_policy_sensitive_actions_require_mfa_condition",
+  "CheckTitle": "Customer managed IAM policy requires MFA for sensitive, escalation-capable actions",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "TTPs/Privilege Escalation"
+  ],
+  "ServiceName": "iam",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "AwsIamPolicy",
+  "ResourceGroup": "IAM",
+  "Description": "**Customer-managed IAM policies** are evaluated for statements that grant sensitive, escalation-capable actions (`iam:CreateAccessKey`, `iam:AttachUserPolicy`, `iam:PutUserPolicy`, `iam:PassRole`, `sts:AssumeRole`) without a `Condition` block requiring `aws:MultiFactorAuthPresent`.",
+  "Risk": "Requiring MFA on sensitive actions is **distinct** from a principal merely having MFA enabled. A policy can still permit credential creation, policy attachment, or role assumption **without enforcing MFA at the moment that call is made**, a defense-in-depth gap exploitable if long-lived credentials are compromised.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_condition-keys.html#condition-keys-multifactorauthpresent",
+    "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_mfa_configure-api-require.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. In the AWS Console, go to IAM > Policies\n2. Open the customer managed policy showing FAIL\n3. Click Edit policy > JSON\n4. Add a Condition block requiring MFA to each statement granting a sensitive action, for example:\n   \"Condition\": {\"Bool\": {\"aws:MultiFactorAuthPresent\": \"true\"}}\n5. Save changes and re-run the check to confirm it passes",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Add a `Condition` requiring `aws:MultiFactorAuthPresent` to statements granting sensitive, escalation-capable actions, so those actions cannot be exercised from a session established without MFA, even if the credentials are otherwise valid.",
+      "Url": "https://hub.prowler.com/check/iam_policy_sensitive_actions_require_mfa_condition"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "CAF Security Epic: IAM"
+}
