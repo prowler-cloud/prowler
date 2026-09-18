@@ -1,3 +1,4 @@
+from fnmatch import fnmatchcase
 from re import compile
 
 from prowler.lib.check.models import Check, Check_Report_AWS
@@ -5,13 +6,87 @@ from prowler.providers.aws.services.iam.lib.policy import is_condition_block_res
 from prowler.providers.aws.services.vpc.vpc_client import vpc_client
 
 
+def _is_condition_restrictive_for_trusted_accounts(
+    condition_statement: dict, trusted_account_ids: set[str]
+) -> bool:
+    principal_account_groups = []
+    remaining_conditions = {}
+
+    for operator, conditions in condition_statement.items():
+        remaining_operator_conditions = {}
+        for condition_key, condition_value in conditions.items():
+            if (
+                operator in ("StringEquals", "StringLike")
+                and condition_key.lower() == "aws:principalaccount"
+            ):
+                if isinstance(condition_value, str):
+                    values = [condition_value]
+                elif isinstance(condition_value, list) and all(
+                    isinstance(value, str) for value in condition_value
+                ):
+                    values = condition_value
+                else:
+                    values = []
+
+                principal_account_groups.append((operator, values))
+            else:
+                remaining_operator_conditions[condition_key] = condition_value
+
+        if remaining_operator_conditions:
+            remaining_conditions[operator] = remaining_operator_conditions
+
+    principal_account_restrictive = False
+    if principal_account_groups:
+        exact_groups = [
+            set(values)
+            for operator, values in principal_account_groups
+            if operator == "StringEquals"
+        ]
+        if exact_groups:
+            possible_accounts = set.intersection(*exact_groups)
+        else:
+            literal_groups = [
+                set(values)
+                for _, values in principal_account_groups
+                if all(
+                    not any(character in value for character in "*?[")
+                    for value in values
+                )
+            ]
+            possible_accounts = (
+                set.intersection(*literal_groups) if literal_groups else None
+            )
+
+        if possible_accounts is not None:
+            for operator, values in principal_account_groups:
+                if operator == "StringLike":
+                    possible_accounts = {
+                        account_id
+                        for account_id in possible_accounts
+                        if any(fnmatchcase(account_id, pattern) for pattern in values)
+                    }
+
+            principal_account_restrictive = possible_accounts.issubset(
+                trusted_account_ids
+            )
+
+    remaining_conditions_restrictive = remaining_conditions and any(
+        is_condition_block_restrictive(remaining_conditions, account_id)
+        for account_id in trusted_account_ids
+    )
+
+    return bool(principal_account_restrictive or remaining_conditions_restrictive)
+
+
 class vpc_endpoint_connections_trust_boundaries(Check):
     def execute(self):
         findings = []
         # Get trusted account_ids from prowler.config.yaml
-        trusted_account_ids = vpc_client.audit_config.get("trusted_account_ids", [])
+        trusted_account_ids = set(
+            vpc_client.audit_config.get("trusted_account_ids", [])
+        )
         # Always include the same account as trusted
-        trusted_account_ids.append(vpc_client.audited_account)
+        trusted_account_ids.add(vpc_client.audited_account)
         for endpoint in vpc_client.vpc_endpoints:
             # Check VPC endpoint policy and  avoid "com.amazonaws.vpce" endpoints since the policy cannot be modified
             if (
@@ -30,14 +105,11 @@ class vpc_endpoint_connections_trust_boundaries(Check):
                         )
 
                         if "Condition" in statement:
-                            for account_id in trusted_account_ids:
-                                if is_condition_block_restrictive(
-                                    statement["Condition"], account_id
-                                ):
-                                    access_from_trusted_accounts = True
-                                else:
-                                    access_from_trusted_accounts = False
-                                    break
+                            access_from_trusted_accounts = (
+                                _is_condition_restrictive_for_trusted_accounts(
+                                    statement["Condition"], trusted_account_ids
+                                )
+                            )
 
                         if not access_from_trusted_accounts:
                             report.status = "FAIL"
@@ -67,14 +139,12 @@ class vpc_endpoint_connections_trust_boundaries(Check):
                             if principal_arn == "*":
                                 access_from_trusted_accounts = False
                                 if "Condition" in statement:
-                                    for account_id in trusted_account_ids:
-                                        if is_condition_block_restrictive(
-                                            statement["Condition"], account_id
-                                        ):
-                                            access_from_trusted_accounts = True
-                                        else:
-                                            access_from_trusted_accounts = False
-                                            break
+                                    access_from_trusted_accounts = (
+                                        _is_condition_restrictive_for_trusted_accounts(
+                                            statement["Condition"],
+                                            trusted_account_ids,
+                                        )
+                                    )
 
                                 if not access_from_trusted_accounts:
                                     report.status = "FAIL"
@@ -99,14 +169,12 @@ class vpc_endpoint_connections_trust_boundaries(Check):
                                     access_from_trusted_accounts = False
 
                                 if "Condition" in statement:
-                                    for account_id in trusted_account_ids:
-                                        if is_condition_block_restrictive(
-                                            statement["Condition"], account_id
-                                        ):
-                                            access_from_trusted_accounts = True
-                                        else:
-                                            access_from_trusted_accounts = False
-                                            break
+                                    access_from_trusted_accounts = (
+                                        _is_condition_restrictive_for_trusted_accounts(
+                                            statement["Condition"],
+                                            trusted_account_ids,
+                                        )
+                                    )
 
                                 if not access_from_trusted_accounts:
                                     report.status = "FAIL"
