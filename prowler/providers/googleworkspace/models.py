@@ -1,6 +1,6 @@
 from typing import Optional
 
-from google.oauth2.service_account import Credentials
+from google.auth.credentials import Credentials
 from pydantic.v1 import BaseModel
 
 from prowler.config.config import output_file_timestamp
@@ -10,7 +10,12 @@ from prowler.providers.common.models import ProviderOutputOptions
 class GoogleWorkspaceSession(BaseModel):
     """Google Workspace session containing credentials"""
 
+    # The google-auth base type, so both key-based Service Account credentials and
+    # keyless impersonated credentials (ADC + Domain-Wide Delegation) fit here.
     credentials: Credentials
+    # Service Account impersonated through Application Default Credentials when
+    # authenticating keyless; None when a Service Account key was used.
+    impersonated_service_account: Optional[str] = None
 
     class Config:
         arbitrary_types_allowed = True

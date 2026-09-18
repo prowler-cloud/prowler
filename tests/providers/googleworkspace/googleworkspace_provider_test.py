@@ -1,10 +1,14 @@
+import os
 from unittest.mock import MagicMock, patch
 
 import pytest
+from google.auth.exceptions import DefaultCredentialsError, RefreshError
+from google.auth.impersonated_credentials import Credentials as ImpersonatedCredentials
 from google.oauth2.service_account import Credentials
 from googleapiclient.errors import HttpError
 
 from prowler.providers.googleworkspace.exceptions.exceptions import (
+    GoogleWorkspaceADCError,
     GoogleWorkspaceImpersonationError,
     GoogleWorkspaceInsufficientScopesError,
     GoogleWorkspaceInvalidCredentialsError,
@@ -24,6 +28,7 @@ from tests.providers.googleworkspace.googleworkspace_fixtures import (
     CUSTOMER_ID,
     DELEGATED_USER,
     DOMAIN,
+    IMPERSONATED_SERVICE_ACCOUNT,
     ROOT_ORG_UNIT_ID,
     SERVICE_ACCOUNT_CREDENTIALS,
 )
@@ -421,3 +426,364 @@ class TestGoogleWorkspaceProvider:
                     delegated_user=delegated_user,
                     raise_on_exception=True,
                 )
+
+    def test_setup_session_impersonate_service_account(self):
+        """Test keyless authentication through ADC + Service Account impersonation"""
+        mock_source_credentials = MagicMock()
+        mock_impersonated_credentials = MagicMock(spec=ImpersonatedCredentials)
+
+        with (
+            patch(
+                "prowler.providers.googleworkspace.googleworkspace_provider.default",
+                return_value=(mock_source_credentials, None),
+            ) as mock_default,
+            patch(
+                "prowler.providers.googleworkspace.googleworkspace_provider.impersonated_credentials.Credentials",
+                return_value=mock_impersonated_credentials,
+            ) as mock_impersonated_class,
+            patch(
+                "prowler.providers.googleworkspace.googleworkspace_provider.build"
+            ) as mock_build,
+        ):
+            mock_service = MagicMock()
+            mock_build.return_value = mock_service
+            mock_service.users().get().execute.return_value = {
+                "primaryEmail": DELEGATED_USER
+            }
+
+            session, resolved_delegated_user = GoogleworkspaceProvider.setup_session(
+                impersonate_service_account=IMPERSONATED_SERVICE_ACCOUNT,
+                delegated_user=DELEGATED_USER,
+            )
+
+            mock_default.assert_called_once()
+            # The delegated user travels as the JWT subject of the impersonated
+            # credentials, which google-auth signs through the IAM Credentials API.
+            mock_impersonated_class.assert_called_once_with(
+                source_credentials=mock_source_credentials,
+                target_principal=IMPERSONATED_SERVICE_ACCOUNT,
+                target_scopes=GoogleworkspaceProvider.SCOPES,
+                subject=DELEGATED_USER,
+            )
+            assert session.credentials is mock_impersonated_credentials
+            assert session.impersonated_service_account == IMPERSONATED_SERVICE_ACCOUNT
+            assert resolved_delegated_user == DELEGATED_USER
+            mock_build.assert_called_once_with(
+                "admin",
+                "directory_v1",
+                credentials=mock_impersonated_credentials,
+                cache_discovery=False,
+            )
+
+    def test_setup_session_impersonate_service_account_from_env(self):
+        """Test GOOGLEWORKSPACE_IMPERSONATE_SERVICE_ACCOUNT is used when no key is given"""
+        mock_impersonated_credentials = MagicMock(spec=ImpersonatedCredentials)
+
+        with (
+            patch.dict(
+                os.environ,
+                {
+                    "GOOGLEWORKSPACE_CREDENTIALS_FILE": "",
+                    "GOOGLEWORKSPACE_CREDENTIALS_CONTENT": "",
+                    "GOOGLEWORKSPACE_IMPERSONATE_SERVICE_ACCOUNT": IMPERSONATED_SERVICE_ACCOUNT,
+                    "GOOGLEWORKSPACE_DELEGATED_USER": DELEGATED_USER,
+                },
+            ),
+            patch(
+                "prowler.providers.googleworkspace.googleworkspace_provider.default",
+                return_value=(MagicMock(), None),
+            ),
+            patch(
+                "prowler.providers.googleworkspace.googleworkspace_provider.impersonated_credentials.Credentials",
+                return_value=mock_impersonated_credentials,
+            ) as mock_impersonated_class,
+            patch(
+                "prowler.providers.googleworkspace.googleworkspace_provider.build"
+            ) as mock_build,
+        ):
+            mock_build.return_value.users().get().execute.return_value = {}
+
+            session, resolved_delegated_user = GoogleworkspaceProvider.setup_session()
+
+            assert mock_impersonated_class.call_args.kwargs["target_principal"] == (
+                IMPERSONATED_SERVICE_ACCOUNT
+            )
+            assert mock_impersonated_class.call_args.kwargs["subject"] == DELEGATED_USER
+            assert session.impersonated_service_account == IMPERSONATED_SERVICE_ACCOUNT
+            assert resolved_delegated_user == DELEGATED_USER
+
+    def test_setup_session_key_takes_precedence_over_impersonation(self):
+        """Test Service Account key material wins when both a key and impersonation are given"""
+        mock_credentials = MagicMock(spec=Credentials)
+        mock_credentials.with_subject.return_value = MagicMock(spec=Credentials)
+
+        with (
+            patch(
+                "prowler.providers.googleworkspace.googleworkspace_provider.service_account.Credentials.from_service_account_file",
+                return_value=mock_credentials,
+            ),
+            patch(
+                "prowler.providers.googleworkspace.googleworkspace_provider.default"
+            ) as mock_default,
+            patch(
+                "prowler.providers.googleworkspace.googleworkspace_provider.build"
+            ) as mock_build,
+        ):
+            mock_build.return_value.users().get().execute.return_value = {}
+
+            session, _ = GoogleworkspaceProvider.setup_session(
+                credentials_file="/path/to/creds.json",
+                impersonate_service_account=IMPERSONATED_SERVICE_ACCOUNT,
+                delegated_user=DELEGATED_USER,
+            )
+
+            mock_default.assert_not_called()
+            mock_credentials.with_subject.assert_called_once_with(DELEGATED_USER)
+            assert session.impersonated_service_account is None
+
+    def test_setup_session_env_key_takes_precedence_over_impersonation_flag(self):
+        """Test GOOGLEWORKSPACE_CREDENTIALS_FILE wins over the --impersonate-service-account flag"""
+        mock_credentials = MagicMock(spec=Credentials)
+        mock_credentials.with_subject.return_value = MagicMock(spec=Credentials)
+
+        with (
+            patch.dict(
+                os.environ,
+                {
+                    "GOOGLEWORKSPACE_CREDENTIALS_FILE": "/path/to/creds.json",
+                    "GOOGLEWORKSPACE_CREDENTIALS_CONTENT": "",
+                    "GOOGLEWORKSPACE_IMPERSONATE_SERVICE_ACCOUNT": "",
+                },
+            ),
+            patch(
+                "prowler.providers.googleworkspace.googleworkspace_provider.service_account.Credentials.from_service_account_file",
+                return_value=mock_credentials,
+            ) as mock_from_file,
+            patch(
+                "prowler.providers.googleworkspace.googleworkspace_provider.default"
+            ) as mock_default,
+            patch(
+                "prowler.providers.googleworkspace.googleworkspace_provider.build"
+            ) as mock_build,
+        ):
+            mock_build.return_value.users().get().execute.return_value = {}
+
+            session, _ = GoogleworkspaceProvider.setup_session(
+                impersonate_service_account=IMPERSONATED_SERVICE_ACCOUNT,
+                delegated_user=DELEGATED_USER,
+            )
+
+            assert mock_from_file.call_args.args[0] == "/path/to/creds.json"
+            mock_default.assert_not_called()
+            mock_credentials.with_subject.assert_called_once_with(DELEGATED_USER)
+            assert session.impersonated_service_account is None
+
+    def test_setup_session_impersonation_flag_takes_precedence_over_env(self):
+        """Test --impersonate-service-account wins over GOOGLEWORKSPACE_IMPERSONATE_SERVICE_ACCOUNT"""
+        mock_impersonated_credentials = MagicMock(spec=ImpersonatedCredentials)
+
+        with (
+            patch.dict(
+                os.environ,
+                {
+                    "GOOGLEWORKSPACE_CREDENTIALS_FILE": "",
+                    "GOOGLEWORKSPACE_CREDENTIALS_CONTENT": "",
+                    "GOOGLEWORKSPACE_IMPERSONATE_SERVICE_ACCOUNT": "other-reader@test-project-12345.iam.gserviceaccount.com",
+                },
+            ),
+            patch(
+                "prowler.providers.googleworkspace.googleworkspace_provider.default",
+                return_value=(MagicMock(), None),
+            ),
+            patch(
+                "prowler.providers.googleworkspace.googleworkspace_provider.impersonated_credentials.Credentials",
+                return_value=mock_impersonated_credentials,
+            ) as mock_impersonated_class,
+            patch(
+                "prowler.providers.googleworkspace.googleworkspace_provider.build"
+            ) as mock_build,
+        ):
+            mock_build.return_value.users().get().execute.return_value = {}
+
+            session, _ = GoogleworkspaceProvider.setup_session(
+                impersonate_service_account=IMPERSONATED_SERVICE_ACCOUNT,
+                delegated_user=DELEGATED_USER,
+            )
+
+            assert mock_impersonated_class.call_args.kwargs["target_principal"] == (
+                IMPERSONATED_SERVICE_ACCOUNT
+            )
+            assert session.impersonated_service_account == IMPERSONATED_SERVICE_ACCOUNT
+
+    def test_setup_session_impersonation_without_adc(self):
+        """Test GoogleWorkspaceADCError when Application Default Credentials are missing"""
+        with patch(
+            "prowler.providers.googleworkspace.googleworkspace_provider.default",
+            side_effect=DefaultCredentialsError(
+                "Could not automatically determine credentials"
+            ),
+        ):
+            with pytest.raises(GoogleWorkspaceADCError) as exc_info:
+                GoogleworkspaceProvider.setup_session(
+                    impersonate_service_account=IMPERSONATED_SERVICE_ACCOUNT,
+                    delegated_user=DELEGATED_USER,
+                )
+            assert "Application Default Credentials could not be loaded" in str(
+                exc_info.value
+            )
+
+    def test_setup_session_impersonation_invalid_service_account_email(self):
+        """Test a malformed Service Account email is rejected before touching ADC"""
+        with patch(
+            "prowler.providers.googleworkspace.googleworkspace_provider.default"
+        ) as mock_default:
+            with pytest.raises(GoogleWorkspaceInvalidCredentialsError) as exc_info:
+                GoogleworkspaceProvider.setup_session(
+                    impersonate_service_account="not-a-service-account",
+                    delegated_user=DELEGATED_USER,
+                )
+            assert "Invalid Service Account email format" in str(exc_info.value)
+            mock_default.assert_not_called()
+
+    def test_setup_session_impersonation_sign_jwt_denied(self):
+        """Test the 403 hint mentions serviceAccountTokenCreator when impersonating"""
+        mock_impersonated_credentials = MagicMock(spec=ImpersonatedCredentials)
+        http_error = HttpError(
+            resp=MagicMock(status=403), content=b"Forbidden", uri="test"
+        )
+
+        with (
+            patch(
+                "prowler.providers.googleworkspace.googleworkspace_provider.default",
+                return_value=(MagicMock(), None),
+            ),
+            patch(
+                "prowler.providers.googleworkspace.googleworkspace_provider.impersonated_credentials.Credentials",
+                return_value=mock_impersonated_credentials,
+            ),
+            patch(
+                "prowler.providers.googleworkspace.googleworkspace_provider.build"
+            ) as mock_build,
+        ):
+            mock_build.return_value.users().get().execute.side_effect = http_error
+
+            with pytest.raises(GoogleWorkspaceInsufficientScopesError) as exc_info:
+                GoogleworkspaceProvider.setup_session(
+                    impersonate_service_account=IMPERSONATED_SERVICE_ACCOUNT,
+                    delegated_user=DELEGATED_USER,
+                )
+            assert "roles/iam.serviceAccountTokenCreator" in str(exc_info.value)
+            assert IMPERSONATED_SERVICE_ACCOUNT in str(exc_info.value)
+
+    def test_googleworkspace_provider_print_credentials_impersonation(self):
+        """Test print_credentials reports the keyless authentication method"""
+        mock_credentials = MagicMock(spec=ImpersonatedCredentials)
+
+        with (
+            patch(
+                "prowler.providers.googleworkspace.googleworkspace_provider.GoogleworkspaceProvider.setup_session",
+                return_value=(
+                    GoogleWorkspaceSession(
+                        credentials=mock_credentials,
+                        impersonated_service_account=IMPERSONATED_SERVICE_ACCOUNT,
+                    ),
+                    DELEGATED_USER,
+                ),
+            ),
+            patch(
+                "prowler.providers.googleworkspace.googleworkspace_provider.GoogleworkspaceProvider.setup_identity",
+                return_value=GoogleWorkspaceIdentityInfo(
+                    domain=DOMAIN,
+                    customer_id=CUSTOMER_ID,
+                    delegated_user=DELEGATED_USER,
+                    profile="default",
+                ),
+            ),
+            patch(
+                "prowler.providers.googleworkspace.googleworkspace_provider.print_boxes"
+            ) as mock_print_boxes,
+        ):
+            provider = GoogleworkspaceProvider(
+                impersonate_service_account=IMPERSONATED_SERVICE_ACCOUNT,
+                delegated_user=DELEGATED_USER,
+            )
+
+            provider.print_credentials()
+
+            report_lines = mock_print_boxes.call_args[0][0]
+            assert any(
+                "Application Default Credentials" in line
+                and IMPERSONATED_SERVICE_ACCOUNT in line
+                for line in report_lines
+            )
+
+    def test_test_connection_impersonate_service_account(self):
+        """Test test_connection forwards impersonate_service_account to setup_session"""
+        mock_credentials = MagicMock(spec=ImpersonatedCredentials)
+
+        with (
+            patch(
+                "prowler.providers.googleworkspace.googleworkspace_provider.GoogleworkspaceProvider.setup_session",
+                return_value=(
+                    GoogleWorkspaceSession(
+                        credentials=mock_credentials,
+                        impersonated_service_account=IMPERSONATED_SERVICE_ACCOUNT,
+                    ),
+                    DELEGATED_USER,
+                ),
+            ) as mock_setup_session,
+            patch(
+                "prowler.providers.googleworkspace.googleworkspace_provider.GoogleworkspaceProvider.setup_identity",
+                return_value=GoogleWorkspaceIdentityInfo(
+                    domain=DOMAIN,
+                    customer_id=CUSTOMER_ID,
+                    delegated_user=DELEGATED_USER,
+                    profile="default",
+                ),
+            ),
+        ):
+            connection = GoogleworkspaceProvider.test_connection(
+                delegated_user=DELEGATED_USER,
+                impersonate_service_account=IMPERSONATED_SERVICE_ACCOUNT,
+            )
+
+            assert connection.is_connected is True
+            mock_setup_session.assert_called_once_with(
+                credentials_file=None,
+                credentials_content=None,
+                delegated_user=DELEGATED_USER,
+                impersonate_service_account=IMPERSONATED_SERVICE_ACCOUNT,
+            )
+
+    def test_setup_session_impersonation_sign_jwt_permission_denied(self):
+        """Test an IAM Credentials signJwt refusal (RefreshError) maps to the scopes error with the hint"""
+        mock_impersonated_credentials = MagicMock(spec=ImpersonatedCredentials)
+        # Shape raised by google.auth.impersonated_credentials._sign_jwt_request on a
+        # non-200 response: RefreshError(_REFRESH_ERROR, <raw IAM Credentials API body>).
+        sign_jwt_error = RefreshError(
+            "Unable to acquire impersonated credentials",
+            '{"error": {"code": 403, "message": "Permission \'iam.serviceAccounts.signJwt\' '
+            'denied on resource (or it may not exist).", "status": "PERMISSION_DENIED"}}',
+        )
+
+        with (
+            patch(
+                "prowler.providers.googleworkspace.googleworkspace_provider.default",
+                return_value=(MagicMock(), None),
+            ),
+            patch(
+                "prowler.providers.googleworkspace.googleworkspace_provider.impersonated_credentials.Credentials",
+                return_value=mock_impersonated_credentials,
+            ),
+            patch(
+                "prowler.providers.googleworkspace.googleworkspace_provider.build"
+            ) as mock_build,
+        ):
+            mock_build.return_value.users().get().execute.side_effect = sign_jwt_error
+
+            with pytest.raises(GoogleWorkspaceInsufficientScopesError) as exc_info:
+                GoogleworkspaceProvider.setup_session(
+                    impersonate_service_account=IMPERSONATED_SERVICE_ACCOUNT,
+                    delegated_user=DELEGATED_USER,
+                )
+            assert "roles/iam.serviceAccountTokenCreator" in str(exc_info.value)
