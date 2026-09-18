@@ -13,7 +13,8 @@ import { isActiveRegistryCredential } from "@/lib/registry/credential-task";
 import { getRegistryNotInstallableMessage } from "@/lib/registry/installability";
 import {
   buildRegistryProviderOptions,
-  type RegistryProviderOption,
+  REGISTRY_PROVIDER_DISCOVERY,
+  type RegistryProviderDiscoveryResult,
 } from "@/lib/registry/provider-options";
 import {
   REGISTRY_ARTIFACT_ACTION,
@@ -188,16 +189,13 @@ async function readRegistryProviders(
     : { status: REGISTRY_FAILURE.ERROR };
 }
 
-export async function getInstalledRegistryProviderOptions(): Promise<
-  | { status: "ready"; options: RegistryProviderOption[] }
-  | { status: "access_denied" | "error" | "unknown" }
-> {
+export async function getInstalledRegistryProviderOptions(): Promise<RegistryProviderDiscoveryResult> {
   const access = (await auth())?.accessToken;
   const permission = await evaluateRegistryProviderAccess(access);
   if (permission.status === REGISTRY_ACCESS.UNKNOWN)
-    return { status: "unknown" };
+    return { status: REGISTRY_PROVIDER_DISCOVERY.UNKNOWN };
   if (!access || permission.status !== REGISTRY_ACCESS.ELIGIBLE)
-    return { status: "access_denied" };
+    return { status: REGISTRY_PROVIDER_DISCOVERY.ACCESS_DENIED };
   const [catalog, installed, providers] = await Promise.all([
     readCompleteRegistryCatalog(access, null),
     readRegistryTenantArtifacts(access),
@@ -208,15 +206,15 @@ export async function getInstalledRegistryProviderOptions(): Promise<
       (status) => status === REGISTRY_FAILURE.ACCESS_DENIED,
     )
   )
-    return { status: "access_denied" };
+    return { status: REGISTRY_PROVIDER_DISCOVERY.ACCESS_DENIED };
   if (
     catalog.status !== REGISTRY_CATALOG.COMPLETE ||
     installed.status !== "ready" ||
     providers.status !== "ready"
   )
-    return { status: "error" };
+    return { status: REGISTRY_PROVIDER_DISCOVERY.ERROR };
   return {
-    status: "ready",
+    status: REGISTRY_PROVIDER_DISCOVERY.READY,
     options: buildRegistryProviderOptions(
       catalog.artifacts,
       installed.tenantArtifacts,

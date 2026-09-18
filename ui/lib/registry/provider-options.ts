@@ -10,6 +10,23 @@ export interface RegistryProviderOption {
   logoUrl?: string;
 }
 
+export const REGISTRY_PROVIDER_DISCOVERY = {
+  READY: "ready",
+  ACCESS_DENIED: "access_denied",
+  /** Access could not be evaluated: keep Registry hidden but retryable. */
+  UNKNOWN: "unknown",
+  ERROR: "error",
+} as const;
+
+export type RegistryProviderDiscoveryResult =
+  | {
+      status: typeof REGISTRY_PROVIDER_DISCOVERY.READY;
+      options: RegistryProviderOption[];
+    }
+  | { status: typeof REGISTRY_PROVIDER_DISCOVERY.ACCESS_DENIED }
+  | { status: typeof REGISTRY_PROVIDER_DISCOVERY.UNKNOWN }
+  | { status: typeof REGISTRY_PROVIDER_DISCOVERY.ERROR };
+
 export function buildRegistryProviderOptions(
   catalog: RegistryCatalogArtifact[],
   installed: RegistryTenantArtifact[],

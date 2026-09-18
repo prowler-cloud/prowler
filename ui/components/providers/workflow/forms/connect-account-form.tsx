@@ -18,7 +18,10 @@ import { Button, useToast } from "@/components/shadcn";
 import { Alert, AlertDescription, AlertTitle } from "@/components/shadcn/alert";
 import { Form } from "@/components/shadcn/form";
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
-import type { RegistryProviderOption } from "@/lib/registry/provider-options";
+import {
+  REGISTRY_PROVIDER_DISCOVERY,
+  type RegistryProviderOption,
+} from "@/lib/registry/provider-options";
 import {
   createAddProviderFormSchema,
   AddProviderFormValues,
@@ -233,12 +236,18 @@ export const ConnectAccountForm = ({
       try {
         const result = await getInstalledRegistryProviderOptions();
         if (!active) return;
-        setRegistryOptions(result.status === "ready" ? result.options : []);
+        setRegistryOptions(
+          result.status === REGISTRY_PROVIDER_DISCOVERY.READY
+            ? result.options
+            : [],
+        );
         setRegistryAvailable(
-          result.status === "ready" || result.status === "error",
+          result.status === REGISTRY_PROVIDER_DISCOVERY.READY ||
+            result.status === REGISTRY_PROVIDER_DISCOVERY.ERROR,
         );
         setRegistryError(
-          result.status === "error" || result.status === "unknown",
+          result.status === REGISTRY_PROVIDER_DISCOVERY.ERROR ||
+            result.status === REGISTRY_PROVIDER_DISCOVERY.UNKNOWN,
         );
       } catch {
         if (active) {

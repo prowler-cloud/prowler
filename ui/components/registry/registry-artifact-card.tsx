@@ -121,6 +121,22 @@ function RegistryProviderCluster({ providers }: RegistryProviderClusterProps) {
   );
 }
 
+interface RegistryExtendedProvidersProps {
+  slugs: string[];
+}
+
+/** The only thing explaining an install that shows no provider type. */
+function RegistryExtendedProviders({ slugs }: RegistryExtendedProvidersProps) {
+  if (slugs.length === 0) return null;
+
+  return (
+    <p className="text-text-neutral-secondary text-xs">
+      Adds checks to your{" "}
+      {PROVIDER_LIST_FORMAT.format(slugs.map(getProviderDisplayName))} scans.
+    </p>
+  );
+}
+
 interface RegistryOwnerRowProps {
   isOfficial: boolean;
   isVerified: boolean;
@@ -304,16 +320,7 @@ export function RegistryArtifactCard({
           }
           downloads={artifact.isBuiltin ? undefined : artifact.totalDownloads}
         />
-        {artifact.extendsProviderSlugs.length > 0 && (
-          <p className="text-text-neutral-secondary text-xs">
-            {/* The only thing explaining an install with no provider type. */}
-            Adds checks to your{" "}
-            {PROVIDER_LIST_FORMAT.format(
-              artifact.extendsProviderSlugs.map(getProviderDisplayName),
-            )}{" "}
-            scans.
-          </p>
-        )}
+        <RegistryExtendedProviders slugs={artifact.extendsProviderSlugs} />
         {!artifact.isAdded &&
           !artifact.isInstallable &&
           !artifact.isBuiltin && (
@@ -379,12 +386,14 @@ export function RegistryArtifactCard({
 }
 
 interface RegistryTenantArtifactCardProps {
+  extendsProviderSlugs?: string[];
   normalizedName: string;
   onRemove: (trigger: HTMLButtonElement | null) => void;
   resolvedVersion?: string;
 }
 
 export function RegistryTenantArtifactCard({
+  extendsProviderSlugs = [],
   normalizedName,
   onRemove,
   resolvedVersion,
@@ -415,6 +424,7 @@ export function RegistryTenantArtifactCard({
           isAdded
           version={resolvedVersion || "Unknown"}
         />
+        <RegistryExtendedProviders slugs={extendsProviderSlugs} />
         <div className="flex justify-end">
           <Button
             aria-label={`Remove ${normalizedName}`}

@@ -115,6 +115,25 @@ describe("Registry card install verdict", () => {
   });
 });
 
+describe("Registry tenant card", () => {
+  it("still names the extended providers when the catalog no longer lists the artifact", async () => {
+    // Given / When
+    const screen = await render(
+      <RegistryTenantArtifactCard
+        extendsProviderSlugs={["aws"]}
+        normalizedName="retired-aws-checks"
+        onRemove={vi.fn()}
+        resolvedVersion="0.2.2"
+      />,
+    );
+
+    // Then
+    await expect
+      .element(screen.getByText("Adds checks to your AWS scans."))
+      .toBeVisible();
+  });
+});
+
 describe("Registry card metadata layout", () => {
   it("keeps Added when the installed version is unknown", async () => {
     // Given / When

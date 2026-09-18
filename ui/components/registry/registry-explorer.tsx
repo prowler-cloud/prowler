@@ -710,6 +710,7 @@ export function RegistryExplorer({
                   />
                 ) : (
                   <RegistryTenantArtifactCard
+                    extendsProviderSlugs={myArtifact.extendsProviderSlugs}
                     normalizedName={myArtifact.normalizedName}
                     onRemove={(trigger) =>
                       openRemoveDialog(myArtifact.normalizedName, trigger)
