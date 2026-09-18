@@ -1,0 +1,39 @@
+{
+  "Provider": "aws",
+  "CheckID": "ecr_repository_encrypted_with_cmk",
+  "CheckTitle": "Amazon ECR repositories are encrypted with a customer-managed KMS key",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "ecr",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "AwsEcrRepository",
+  "ResourceGroup": "container",
+  "Description": "**Amazon ECR repositories** are encrypted at rest using a **customer-managed KMS key (CMK)** rather than the default AES256 or AWS-managed KMS key.\n\nA repository qualifies when `encryptionConfiguration.encryptionType` is `KMS` or `KMS_DSSE` and the referenced `kmsKey` is customer-managed, since both KMS modes also accept the AWS-managed `aws/ecr` key.",
+  "Risk": "Without a CMK, ECR repositories are encrypted with an AWS-managed key or default AES256, removing **customer control** over rotation, auditing, and revocation.\n\nIf container images contain sensitive code or configuration, loss of key control weakens **confidentiality** and can fail compliance requirements that mandate customer-controlled encryption.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/AmazonECR/latest/userguide/encryption-at-rest.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "```yaml\nResources:\n  <example_resource_name>:\n    Type: AWS::ECR::Repository\n    Properties:\n      EncryptionConfiguration:\n        EncryptionType: KMS\n        KmsKey: <cmk-arn>\n```",
+      "Other": "ECR encryption is immutable after repository creation. To remediate:\n1. Create a new ECR repository with the desired CMK encryption (EncryptionType: KMS, KmsKey: <cmk-arn>)\n2. Migrate all images from the old repository to the new one using docker pull/push or ECR replication\n3. Update all references (CI/CD pipelines, task definitions, etc.) to point to the new repository\n4. Delete the old repository once migration is verified",
+      "Terraform": "```hcl\nresource \"aws_ecr_repository\" \"<example_resource_name>\" {\n  name = \"<example_resource_name>\"\n\n  encryption_configuration {\n    encryption_type = \"KMS\"\n    kms_key         = \"<cmk-arn>\"\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Encrypt ECR repositories with a customer-managed KMS key to maintain full control over key lifecycle and access. The encryption configuration is fixed at creation, so the key has to be chosen before the repository exists.\n- Create a dedicated KMS key for ECR repositories for isolation\n- Enable **automatic key rotation** (`EnableKeyRotation: true`)",
+      "Url": "https://hub.prowler.com/check/ecr_repository_encrypted_with_cmk"
+    }
+  },
+  "Categories": [
+    "container-security",
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
