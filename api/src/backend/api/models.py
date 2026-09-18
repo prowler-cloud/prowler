@@ -732,6 +732,20 @@ class Scan(RowLevelSecurityProtectedModel):
                 include=["id"],
                 name="scans_prov_ins_desc_idx",
             ),
+            # Serves the cross-tenant `scan-cleanup-stale-scans` sweeps, which
+            # run every 15 minutes and would otherwise scan the whole history:
+            # only non-terminal scans are indexed, so it stays tiny.
+            models.Index(
+                fields=["state", "tenant_id", "provider_id"],
+                condition=Q(
+                    state__in=[
+                        StateChoices.EXECUTING,
+                        StateChoices.AVAILABLE,
+                        StateChoices.SCHEDULED,
+                    ]
+                ),
+                name="scans_non_terminal_state_idx",
+            ),
         ]
 
     class JSONAPIMeta:
