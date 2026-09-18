@@ -1,0 +1,46 @@
+{
+  "Provider": "aws",
+  "CheckID": "organizations_security_services_delegated_admin_not_management_account",
+  "CheckTitle": "AWS Organization security services are administered from a delegated administrator account and not from the management account",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices"
+  ],
+  "ServiceName": "organizations",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Other",
+  "ResourceGroup": "governance",
+  "Description": "Every security service that has **trusted access** enabled in the **AWS Organization** is required to have a **delegated administrator** that is not the organization **management account**. Registering a delegated administrator is the only way to move organization-wide administration of a service out of the management account.",
+  "Risk": "Administering **GuardDuty**, **Security Hub**, **Macie**, **Config** or **CloudTrail** from the management account concentrates security monitoring in the one account that **service control policies cannot restrict**. Compromising it both removes the organization guardrails and blinds the detections that would surface the compromise.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_delegate_policies.html",
+    "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_integrate_services_list.html",
+    "https://docs.aws.amazon.com/organizations/latest/userguide/orgs_integrate_delegated_admin.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aws organizations register-delegated-administrator --account-id <SECURITY_TOOLING_ACCOUNT_ID> --service-principal guardduty.amazonaws.com",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the AWS Organizations management account\n2. Open the AWS Organizations console\n3. In the left pane, select **Services**\n4. Select the security service reported by this check\n5. Choose **Register delegated administrator** and enter the security tooling account ID\n6. Repeat for every security service reported by this check",
+      "Terraform": "resource \"aws_organizations_delegated_administrator\" \"security_tooling\" {\n  account_id        = \"<SECURITY_TOOLING_ACCOUNT_ID>\"\n  service_principal = \"guardduty.amazonaws.com\"\n}"
+    },
+    "Recommendation": {
+      "Text": "Register a dedicated **security tooling** member account as the **delegated administrator** for every security service integrated with the organization, and keep the **management account** for organization management only. Security operators then need credentials in the security tooling account rather than in the account that SCPs cannot restrict.",
+      "Url": "https://hub.prowler.com/check/organizations_security_services_delegated_admin_not_management_account"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "organizations_delegated_administrators",
+    "guardduty_delegated_admin_enabled_all_regions",
+    "securityhub_delegated_admin_enabled_all_regions",
+    "config_delegated_admin_and_org_aggregator_all_regions"
+  ],
+  "Notes": "This check requires execution from the organization management account or a delegated administrator account to read the organization trusted access and delegation configuration."
+}
