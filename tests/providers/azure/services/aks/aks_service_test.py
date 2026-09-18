@@ -21,6 +21,7 @@ def mock_aks_get_clusters(_):
                 agent_pool_profiles=[],
                 location="westeurope",
                 rbac_enabled=True,
+                node_os_upgrade_channel="NodeImage",
             )
         }
     }
@@ -68,6 +69,10 @@ class Test_AKS_Service:
             aks.clusters[AZURE_SUBSCRIPTION_ID]["cluster_id-1"].location == "westeurope"
         )
         assert aks.clusters[AZURE_SUBSCRIPTION_ID]["cluster_id-1"].rbac_enabled
+        assert (
+            aks.clusters[AZURE_SUBSCRIPTION_ID]["cluster_id-1"].node_os_upgrade_channel
+            == "NodeImage"
+        )
 
 
 class Test_AKS_get_clusters:
@@ -82,6 +87,7 @@ class Test_AKS_get_clusters:
         mock_cluster.network_profile = None
         mock_cluster.agent_pool_profiles = []
         mock_cluster.enable_rbac = False
+        mock_cluster.auto_upgrade_profile.node_os_upgrade_channel = "SecurityPatch"
 
         mock_client = MagicMock()
         mock_client.managed_clusters.list.return_value = [mock_cluster]
@@ -101,6 +107,10 @@ class Test_AKS_get_clusters:
         mock_client.managed_clusters.list_by_resource_group.assert_not_called()
         assert AZURE_SUBSCRIPTION_ID in result
         assert "cluster_id-1" in result[AZURE_SUBSCRIPTION_ID]
+        assert (
+            result[AZURE_SUBSCRIPTION_ID]["cluster_id-1"].node_os_upgrade_channel
+            == "SecurityPatch"
+        )
 
     def test_get_clusters_with_resource_group(self):
         mock_cluster = MagicMock()
