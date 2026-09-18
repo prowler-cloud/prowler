@@ -9,6 +9,17 @@ from prowler.providers.m365.exceptions.exceptions import M365CertificateCreation
 from prowler.providers.m365.lib.jwt.jwt_decoder import decode_msal_token
 from prowler.providers.m365.models import M365Credentials, M365IdentityInfo
 
+PNP_POWERSHELL_VERSION = "3.4.1"
+SHAREPOINT_REGION_CONFIG = {
+    "M365Global": ("Production", ".onmicrosoft.com", "sharepoint.com"),
+    "M365China": ("China", ".partner.onmschina.cn", "sharepoint.cn"),
+    "M365USGovernment": (
+        "USGovernmentHigh",
+        ".onmicrosoft.us",
+        "sharepoint.us",
+    ),
+}
+
 
 class M365PowerShell(PowerShellSession):
     """
@@ -47,6 +58,7 @@ class M365PowerShell(PowerShellSession):
         """
         super().__init__()
         self.tenant_identity = identity
+        self.pnp_powershell_ready = credentials.pnp_powershell_ready
         self.init_credential(credentials)
 
     @override
@@ -124,6 +136,7 @@ class M365PowerShell(PowerShellSession):
             self.execute(
                 f'$certBytes = [Convert]::FromBase64String("{clean_cert_content}")'
             )
+            self.execute(f'$certificateBase64 = "{clean_cert_content}"')
             error = self.execute(
                 "$certificate = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2(,$certBytes)"
             )
@@ -237,6 +250,70 @@ class M365PowerShell(PowerShellSession):
             logger.error(f"Exchange Online Certificate connection failed: {result}")
             return False
         return True
+
+    def connect_sharepoint_online(self, region: str = "M365Global") -> bool:
+        """
+        Connect to SharePoint Online PowerShell Module.
+
+        Establishes a connection to SharePoint Online using the initialized credentials.
+        """
+        if self.pnp_powershell_ready is False:
+            logger.warning(
+                "SharePoint Online PowerShell enrichment will be skipped because PnP.PowerShell initialization failed."
+            )
+            return False
+
+        if self.execute("Write-Output $certificateBase64") == "":
+            logger.warning(
+                "SharePoint Online PowerShell enrichment requires certificate authentication and will be skipped."
+            )
+            return False
+
+        region_config = SHAREPOINT_REGION_CONFIG.get(region)
+        if not region_config:
+            logger.warning(
+                f"SharePoint Online PowerShell enrichment is not supported for region {region}."
+            )
+            return False
+
+        azure_environment, tenant_suffix, sharepoint_domain = region_config
+        tenant_domain = next(
+            (
+                domain
+                for domain in self.tenant_identity.tenant_domains
+                if re.fullmatch(rf"[A-Za-z0-9-]+{re.escape(tenant_suffix)}", domain)
+            ),
+            None,
+        )
+        if not tenant_domain:
+            logger.warning(
+                "SharePoint Online PowerShell enrichment requires a recognized initial tenant domain and will be skipped."
+            )
+            return False
+
+        tenant_name = tenant_domain.removesuffix(tenant_suffix)
+        admin_url = f"https://{tenant_name}-admin.{sharepoint_domain}"
+        self.execute(f'$tenantDomain = "{tenant_domain}"')
+        self.execute(f'$sharePointAdminUrl = "{admin_url}"')
+
+        try:
+            result = self.execute_connect(
+                "$sharePointConnection = Connect-PnPOnline "
+                "-Url $sharePointAdminUrl -ClientId $clientID -Tenant $tenantDomain "
+                "-CertificateBase64Encoded $certificateBase64 "
+                f"-AzureEnvironment {azure_environment} "
+                "-ReturnConnection -ValidateConnection -ErrorAction Stop; "
+                "Write-Output 'Connected'"
+            )
+            if result.strip() != "Connected":
+                logger.error(
+                    f"SharePoint Online certificate connection failed: {result}"
+                )
+                return False
+            return True
+        except Exception as error:
+            logger.error(f"SharePoint Online certificate connection failed: {error}")
+            return False
 
     def connect_microsoft_teams(self) -> dict:
         """
@@ -381,6 +458,22 @@ class M365PowerShell(PowerShellSession):
         """
         return self.execute(
             "Get-AdminAuditLogConfig | Select-Object UnifiedAuditLogIngestionEnabled | ConvertTo-Json -Depth 10",
+            json_parse=True,
+        )
+
+    def get_sharepoint_tenant_config(self) -> dict:
+        """
+        Get SharePoint Tenant Settings.
+
+        Retrieves selected SharePoint tenant settings using the retained PnP connection.
+
+        Returns:
+            dict: SharePoint tenant configuration settings in JSON format.
+        """
+        return self.execute(
+            "Get-PnPTenant -Connection $sharePointConnection | "
+            "Select-Object DefaultLinkPermission | "
+            "ConvertTo-Json -Compress -EnumsAsStrings",
             json_parse=True,
         )
 
@@ -1132,7 +1225,7 @@ class M365PowerShell(PowerShellSession):
 
 
 # This function is used to install the required M365 PowerShell modules in Docker containers
-def initialize_m365_powershell_modules():
+def initialize_m365_powershell_modules() -> bool:
     """
     Initialize required PowerShell modules.
 
@@ -1143,33 +1236,62 @@ def initialize_m365_powershell_modules():
         bool: True if all modules were successfully initialized, False otherwise
     """
 
-    REQUIRED_MODULES = [
+    required_modules = [
         "ExchangeOnlineManagement",
         "MicrosoftTeams",
         "MSAL.PS",
+        "PnP.PowerShell",
     ]
 
     pwsh = PowerShellSession()
     try:
-        for module in REQUIRED_MODULES:
+        for module in required_modules:
             try:
                 # Check if module is already installed
-                result = pwsh.execute(f"Get-Module -ListAvailable {module}", timeout=5)
+                version_arg = (
+                    f" -RequiredVersion {PNP_POWERSHELL_VERSION}"
+                    if module == "PnP.PowerShell"
+                    else ""
+                )
+                module_query = (
+                    f"Get-Module -ListAvailable {module} | Where-Object "
+                    f"{{ $_.Version -eq [version]'{PNP_POWERSHELL_VERSION}' }}"
+                    if module == "PnP.PowerShell"
+                    else f"Get-Module -ListAvailable {module}"
+                )
+                result = pwsh.execute(
+                    module_query,
+                    timeout=5,
+                )
 
                 # Install module if not installed
                 if not result:
                     install_result = pwsh.execute(
-                        f"Install-Module {module} -Force -AllowClobber -Scope CurrentUser",
+                        f"Install-Module {module}{version_arg} -Force -AllowClobber -Scope CurrentUser",
                         timeout=60,
                     )
                     if install_result:
                         logger.warning(
                             f"Unexpected output while installing module {module}: {install_result}"
                         )
-                    else:
+                    elif module != "PnP.PowerShell":
                         logger.info(f"Successfully installed module {module}")
 
-                    # Import module
+                if module == "PnP.PowerShell":
+                    imported_version = pwsh.execute(
+                        f'Import-Module "{module}"{version_arg} -Force -PassThru | '
+                        "Select-Object -ExpandProperty Version",
+                    )
+                    if str(imported_version).strip() != PNP_POWERSHELL_VERSION:
+                        logger.error(
+                            f"Failed to import module {module} {PNP_POWERSHELL_VERSION}"
+                        )
+                        return False
+                    if not result:
+                        logger.info(
+                            f"Successfully installed module {module} {PNP_POWERSHELL_VERSION}"
+                        )
+                elif not result:
                     pwsh.execute(f'Import-Module "{module}" -Force', timeout=1)
 
             except Exception as error:

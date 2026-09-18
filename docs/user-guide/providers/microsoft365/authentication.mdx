@@ -57,13 +57,14 @@ When using service principal authentication, add these **Application Permissions
 
 - `Exchange.ManageAsApp` from external API `Office 365 Exchange Online`: Required for Exchange PowerShell module app authentication. The `Global Reader` role must also be assigned to the app.
 - `application_access` from external API `Skype and Teams Tenant Admin API`: Required for Teams PowerShell module app authentication.
+- `Sites.FullControl.All` from external API `SharePoint`: Required for PnP.PowerShell certificate authentication and SharePoint tenant-setting enrichment.
 
 <Note>
 `Directory.Read.All` can be replaced with `Domain.Read.All` for more restrictive permissions, but Entra checks related to DirectoryRoles and GetUsers will not run. If using this option, you must also add the `Organization.Read.All` permission to the application registration for authentication.
 
 </Note>
 <Note>
-These permissions enable application-based authentication methods (client secret and certificate). Using certificate-based authentication is the recommended way to run the full M365 provider, including PowerShell checks.
+These permissions enable application-based authentication methods. Certificate-based authentication is required for the PnP.PowerShell SharePoint tenant-setting enrichment and is the recommended way to run the full M365 provider. Client-secret authentication still retrieves Microsoft Graph SharePoint settings, but skips the PnP.PowerShell enrichment.
 
 </Note>
 
@@ -158,7 +159,12 @@ Browser and Azure CLI authentication methods limit scanning capabilities to chec
 
    ![application_access Permission](/images/providers/teams-permission.png)
 
-3. Click "Grant admin consent for `<your-tenant-name>`" to grant admin consent.
+3. **Add SharePoint API:**
+
+   - Search and select "SharePoint" in **APIs my organization uses**.
+   - Select **Application permissions** > `Sites.FullControl.All`, and click "Add permissions".
+
+4. Click "Grant admin consent for `<your-tenant-name>`" to grant admin consent.
 
    ![Grant Admin Consent](/images/providers/grant-external-api-permissions.png)
 
@@ -263,10 +269,10 @@ export AZURE_CLIENT_SECRET="XXXXXXXXX"
 export AZURE_TENANT_ID="XXXXXXXXX"
 ```
 
-If these variables are not set or exported, execution using `--sp-env-auth` will fail. This workflow is helpful for initial validation or temporary access. Plan to transition to certificate-based authentication to remove long-lived secrets and keep full provider coverage in unattended environments.
+If these variables are not set or exported, execution using `--sp-env-auth` will fail. This workflow is helpful for initial validation or temporary access, but SharePoint PowerShell checks are skipped because SharePoint Online app-only authentication requires a certificate. Plan to transition to certificate-based authentication to remove long-lived secrets and keep full provider coverage in unattended environments.
 
 <Note>
-To scan every M365 check, ensure the required permissions are added to the application registration. Refer to the [PowerShell Module Permissions](#grant-powershell-module-permissions-for-app-only-authentication) section for more information.
+To scan every M365 check, use certificate authentication and add the required permissions to the application registration. Refer to the [PowerShell Module Permissions](#grant-powershell-module-permissions-for-app-only-authentication) section for more information.
 
 </Note>
 
@@ -600,3 +606,4 @@ Install-Module -Name "ModuleName" -Scope AllUsers -Force
 - [MSAL.PS](https://www.powershellgallery.com/packages/MSAL.PS/4.32.0): Required for Exchange module via application authentication.
 - [ExchangeOnlineManagement](https://www.powershellgallery.com/packages/ExchangeOnlineManagement/3.6.0) (Minimum version: 3.6.0) Required for checks across Exchange, Defender, and Purview.
 - [MicrosoftTeams](https://www.powershellgallery.com/packages/MicrosoftTeams/6.6.0) (Minimum version: 6.6.0) Required for all Teams checks.
+- [PnP.PowerShell](https://www.powershellgallery.com/packages/PnP.PowerShell/3.4.1) (Required version: 3.4.1) Required for SharePoint tenant-setting enrichment with certificate authentication.
