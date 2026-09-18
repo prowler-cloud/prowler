@@ -946,6 +946,117 @@ class TestCyberEssentialsFramework:
                 assert req.attributes["AssessmentStatus"] == "Manual"
 
 
+class TestCISAScuBAAADFramework:
+    EXPECTED_MSAAD_IDS = {
+        "MS.AAD.1.1v1",
+        "MS.AAD.2.1v1",
+        "MS.AAD.2.2v1",
+        "MS.AAD.2.3v1",
+        "MS.AAD.3.1v1",
+        "MS.AAD.3.2v1",
+        "MS.AAD.3.3v2",
+        "MS.AAD.3.4v1",
+        "MS.AAD.3.5v1",
+        "MS.AAD.3.6v1",
+        "MS.AAD.3.7v1",
+        "MS.AAD.3.8v1",
+        "MS.AAD.3.9v1",
+        "MS.AAD.4.1v1",
+        "MS.AAD.5.1v1",
+        "MS.AAD.5.2v1",
+        "MS.AAD.5.3v1",
+        "MS.AAD.6.1v1",
+        "MS.AAD.7.1v1",
+        "MS.AAD.7.2v1",
+        "MS.AAD.7.3v1",
+        "MS.AAD.7.4v1",
+        "MS.AAD.7.5v1",
+        "MS.AAD.7.6v1",
+        "MS.AAD.7.7v1",
+        "MS.AAD.7.8v1",
+        "MS.AAD.7.9v1",
+        "MS.AAD.8.1v1",
+        "MS.AAD.8.2v1",
+        "MS.AAD.8.3v1",
+    }
+    """Schema and content checks for the CISA SCuBA Microsoft Entra ID (AAD) universal framework."""
+
+    @staticmethod
+    def _path():
+        base = os.path.join(
+            os.path.dirname(__file__),
+            "..",
+            "..",
+            "..",
+            "prowler",
+            "compliance",
+            "cisa_scuba_aad_1.8.0.json",
+        )
+        return os.path.normpath(base)
+
+    def test_loads_and_supports_m365(self):
+        fw = load_compliance_framework_universal(self._path())
+        assert fw is not None
+        assert fw.framework == "CISA-SCuBA-AAD"
+        assert fw.version == "1.8.0"
+        assert fw.get_providers() == ["m365"]
+        assert fw.supports_provider("m365")
+
+    def test_has_all_thirty_msaad_policies(self):
+        fw = load_compliance_framework_universal(self._path())
+        # The ScubaGear v1.8.0 Entra ID baseline defines exactly 30 MS.AAD policies.
+        assert len(fw.requirements) == 30
+        ids = [req.id for req in fw.requirements]
+        assert len(ids) == len(set(ids))
+        assert all(req_id.startswith("MS.AAD.") for req_id in ids)
+        assert set(ids) == self.EXPECTED_MSAAD_IDS
+
+    def test_criticality_values_conform_to_enum(self):
+        fw = load_compliance_framework_universal(self._path())
+        allowed = {"SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT"}
+        for req in fw.requirements:
+            assert req.attributes["Criticality"] in allowed
+            assert req.attributes["Policy"] == req.id
+
+    def test_referenced_checks_exist_in_repo(self):
+        """Every check referenced by the framework must be a real m365 check.
+
+        There is no automatic check-existence validation at load time, so this
+        guards against typos or checks removed from the provider.
+        """
+        fw = load_compliance_framework_universal(self._path())
+        services_dir = os.path.normpath(
+            os.path.join(
+                os.path.dirname(__file__),
+                "..",
+                "..",
+                "..",
+                "prowler",
+                "providers",
+                "m365",
+                "services",
+            )
+        )
+        real_checks = set()
+        for service in os.listdir(services_dir):
+            service_path = os.path.join(services_dir, service)
+            if not os.path.isdir(service_path):
+                continue
+            for entry in os.listdir(service_path):
+                if os.path.isfile(
+                    os.path.join(service_path, entry, f"{entry}.metadata.json")
+                ):
+                    real_checks.add(entry)
+
+        referenced = {
+            check for req in fw.requirements for check in req.checks.get("m365", [])
+        }
+        missing = referenced - real_checks
+        assert (
+            not missing
+        ), f"Framework references non-existent m365 checks: {sorted(missing)}"
+
+
 class TestBackwardCompat:
     """Ensure Compliance.get_bulk still returns Compliance objects."""
 
