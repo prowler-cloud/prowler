@@ -1,0 +1,40 @@
+{
+  "Provider": "aws",
+  "CheckID": "wafv2_webacl_managed_injection_rule_groups_enabled",
+  "CheckTitle": "AWS WAFv2 Web ACL has the AWS managed injection rule groups enabled",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices"
+  ],
+  "ServiceName": "wafv2",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:wafv2:region:account-id:webacl/name/id",
+  "Severity": "high",
+  "ResourceType": "AwsWafv2WebAcl",
+  "ResourceGroup": "security",
+  "Description": "This check ensures that AWS WAFv2 Web ACLs have both the AWSManagedRulesSQLiRuleSet and AWSManagedRulesKnownBadInputsRuleSet AWS managed rule groups enabled and not excluded wholesale, so the Web ACL protects protected resources against SQL injection and other known bad inputs.",
+  "Risk": "Without the SQL injection (AWSManagedRulesSQLiRuleSet) and known bad inputs (AWSManagedRulesKnownBadInputsRuleSet) managed rule groups, web applications behind the Web ACL are exposed to SQLi attacks and requests that exploit known vulnerabilities such as host header and Log4j exploitation, which can lead to data exfiltration, remote code execution, and service compromise.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/waf/latest/developerguide/aws-managed-rule-groups-use-case.html",
+    "https://docs.aws.amazon.com/waf/latest/developerguide/waf-rule-statement-type-managed-rule-group.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aws wafv2 update-web-acl --name <web_acl_name> --scope REGIONAL --id <web_acl_id> --lock-token <lock_token> --default-action Allow={} --visibility-config SampledRequestsEnabled=true,CloudWatchMetricsEnabled=true,MetricName=<metric_name> --rules '[{\"Name\":\"AWS-SQLi\",\"Priority\":1,\"Statement\":{\"ManagedRuleGroupStatement\":{\"VendorName\":\"AWS\",\"Name\":\"AWSManagedRulesSQLiRuleSet\"}},\"OverrideAction\":{\"None\":{}},\"VisibilityConfig\":{\"SampledRequestsEnabled\":true,\"CloudWatchMetricsEnabled\":true,\"MetricName\":\"AWS-SQLi\"}},{\"Name\":\"AWS-KnownBadInputs\",\"Priority\":2,\"Statement\":{\"ManagedRuleGroupStatement\":{\"VendorName\":\"AWS\",\"Name\":\"AWSManagedRulesKnownBadInputsRuleSet\"}},\"OverrideAction\":{\"None\":{}},\"VisibilityConfig\":{\"SampledRequestsEnabled\":true,\"CloudWatchMetricsEnabled\":true,\"MetricName\":\"AWS-KnownBadInputs\"}}]'",
+      "NativeIaC": "```yaml\n# CloudFormation: enable the AWS managed injection rule groups on a WAFv2 Web ACL\nResources:\n  <example_resource_name>:\n    Type: AWS::WAFv2::WebACL\n    Properties:\n      Name: <example_resource_name>\n      Scope: REGIONAL\n      DefaultAction:\n        Allow: {}\n      VisibilityConfig:\n        SampledRequestsEnabled: true\n        CloudWatchMetricsEnabled: true\n        MetricName: <metric_name>\n      Rules:\n        - Name: AWS-SQLi\n          Priority: 1\n          OverrideAction:\n            None: {}  # Do not override the group to Count, otherwise it is excluded wholesale\n          Statement:\n            ManagedRuleGroupStatement:\n              VendorName: AWS\n              Name: AWSManagedRulesSQLiRuleSet\n          VisibilityConfig:\n            SampledRequestsEnabled: true\n            CloudWatchMetricsEnabled: true\n            MetricName: AWS-SQLi\n        - Name: AWS-KnownBadInputs\n          Priority: 2\n          OverrideAction:\n            None: {}\n          Statement:\n            ManagedRuleGroupStatement:\n              VendorName: AWS\n              Name: AWSManagedRulesKnownBadInputsRuleSet\n          VisibilityConfig:\n            SampledRequestsEnabled: true\n            CloudWatchMetricsEnabled: true\n            MetricName: AWS-KnownBadInputs\n```",
+      "Other": "1. In the AWS Console, go to AWS WAF & Shield > Web ACLs and select the Web ACL.\n2. On the Rules tab, choose Add rules > Add managed rule groups > AWS managed rule groups.\n3. Enable 'Core rule set' dependencies as needed, then enable 'SQL database' (AWSManagedRulesSQLiRuleSet) and 'Known bad inputs' (AWSManagedRulesKnownBadInputsRuleSet).\n4. Ensure the group action is not set to Count (Override to count disabled) so the rules block, and Save.",
+      "Terraform": "```hcl\n# Terraform: enable the AWS managed injection rule groups on a WAFv2 Web ACL\nresource \"aws_wafv2_web_acl\" \"<example_resource_name>\" {\n  name  = \"<example_resource_name>\"\n  scope = \"REGIONAL\"\n\n  default_action { allow {} }\n\n  visibility_config {\n    cloudwatch_metrics_enabled = true\n    metric_name                = \"<metric_name>\"\n    sampled_requests_enabled   = true\n  }\n\n  rule {\n    name     = \"AWS-SQLi\"\n    priority = 1\n    override_action { none {} }  # Not 'count {}', which would exclude the group wholesale\n    statement {\n      managed_rule_group_statement {\n        vendor_name = \"AWS\"\n        name        = \"AWSManagedRulesSQLiRuleSet\"\n      }\n    }\n    visibility_config {\n      cloudwatch_metrics_enabled = true\n      metric_name                = \"AWS-SQLi\"\n      sampled_requests_enabled   = true\n    }\n  }\n\n  rule {\n    name     = \"AWS-KnownBadInputs\"\n    priority = 2\n    override_action { none {} }\n    statement {\n      managed_rule_group_statement {\n        vendor_name = \"AWS\"\n        name        = \"AWSManagedRulesKnownBadInputsRuleSet\"\n      }\n    }\n    visibility_config {\n      cloudwatch_metrics_enabled = true\n      metric_name                = \"AWS-KnownBadInputs\"\n      sampled_requests_enabled   = true\n    }\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Attach both the AWSManagedRulesSQLiRuleSet and AWSManagedRulesKnownBadInputsRuleSet AWS managed rule groups to every Web ACL and keep them in blocking mode (do not override the whole group to Count). Review individual rule action overrides so that critical SQLi and known-bad-input rules are not silently set to Count.",
+      "Url": "https://hub.prowler.com/check/wafv2_webacl_managed_injection_rule_groups_enabled"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
