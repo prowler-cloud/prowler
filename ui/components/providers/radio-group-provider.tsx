@@ -88,18 +88,8 @@ export const RadioGroupProvider: FC<RadioGroupProviderProps> = ({
     <Controller
       name="providerType"
       control={control}
-      render={({ field }) => (
-        <Tabs
-          className="flex flex-col px-4"
-          value={activeTab}
-          onValueChange={(value) => setSelectedTab(value as ProviderTab)}
-        >
-          {registryAvailable && (
-            <TabsList aria-label="Provider source">
-              <TabsTrigger value={PROVIDER_TAB.ALL}>All providers</TabsTrigger>
-              <TabsTrigger value={PROVIDER_TAB.REGISTRY}>Registry</TabsTrigger>
-            </TabsList>
-          )}
+      render={({ field }) => {
+        const searchInput = (
           <div className="relative z-10 shrink-0 py-4">
             <SearchInput
               aria-label="Search providers"
@@ -109,90 +99,111 @@ export const RadioGroupProvider: FC<RadioGroupProviderProps> = ({
               onClear={() => setSearchTerm("")}
             />
           </div>
+        );
+        const providerList = (
+          <div
+            role="listbox"
+            aria-label="Select a provider"
+            className="flex flex-col gap-3"
+          >
+            {filteredProviders.length > 0 ? (
+              filteredProviders.map((provider) => {
+                const isSelected = field.value === provider.value;
 
-          <TabsContent value={activeTab}>
-            <div
-              role="listbox"
-              aria-label="Select a provider"
-              className="flex flex-col gap-3"
-            >
-              {filteredProviders.length > 0 ? (
-                filteredProviders.map((provider) => {
-                  const isSelected = field.value === provider.value;
-
-                  return (
-                    <button
-                      key={provider.value}
-                      type="button"
-                      role="option"
-                      aria-label={`${provider.label}${provider.registry ? " Registry" : ""}`}
-                      aria-selected={isSelected}
-                      onClick={() => field.onChange(provider.value)}
-                      className={cn(
-                        "flex min-h-[72px] w-full items-center gap-4 rounded-lg border px-3 py-2.5 text-left transition-colors",
-                        "focus-visible:border-button-primary focus-visible:outline-none",
-                        isSelected
-                          ? "border-button-primary bg-bg-neutral-tertiary"
-                          : "border-border-neutral-primary bg-bg-neutral-tertiary hover:border-button-primary",
-                        isInvalid && "border-bg-fail",
+                return (
+                  <button
+                    key={provider.value}
+                    type="button"
+                    role="option"
+                    aria-label={`${provider.label}${provider.registry ? " Registry" : ""}`}
+                    aria-selected={isSelected}
+                    onClick={() => field.onChange(provider.value)}
+                    className={cn(
+                      "flex min-h-[72px] w-full items-center gap-4 rounded-lg border px-3 py-2.5 text-left transition-colors",
+                      "focus-visible:border-button-primary focus-visible:outline-none",
+                      isSelected
+                        ? "border-button-primary bg-bg-neutral-tertiary"
+                        : "border-border-neutral-primary bg-bg-neutral-tertiary hover:border-button-primary",
+                      isInvalid && "border-bg-fail",
+                    )}
+                  >
+                    <div className="border-border-neutral-primary bg-bg-input-primary flex size-[18px] shrink-0 items-center justify-center rounded-full border shadow-xs">
+                      {isSelected && (
+                        <div className="bg-button-primary size-2.5 rounded-full" />
                       )}
-                    >
-                      <div className="border-border-neutral-primary bg-bg-input-primary flex size-[18px] shrink-0 items-center justify-center rounded-full border shadow-xs">
-                        {isSelected && (
-                          <div className="bg-button-primary size-2.5 rounded-full" />
-                        )}
-                      </div>
+                    </div>
 
-                      <div className="flex min-w-0 flex-1 items-center gap-1.5">
-                        {provider.registry ? (
-                          <Avatar>
-                            <AvatarImage
-                              src={
-                                provider.logoUrl?.startsWith("https://")
-                                  ? provider.logoUrl
-                                  : undefined
-                              }
-                              alt=""
-                            />
-                            <AvatarFallback>
-                              <ProviderTypeIcon
-                                type={provider.value}
-                                size={26}
-                              />
-                            </AvatarFallback>
-                          </Avatar>
-                        ) : (
-                          <ProviderTypeIcon type={provider.value} size={26} />
-                        )}
-                        <span className="text-text-neutral-primary text-sm leading-6">
-                          {provider.label}
-                        </span>
-                        {provider.registry && (
-                          <Badge variant="tag">Registry</Badge>
-                        )}
-                      </div>
-                    </button>
-                  );
-                })
-              ) : (
-                <p className="text-text-neutral-tertiary py-4 text-sm">
-                  {lowerSearch ? (
-                    <>No providers found matching &quot;{searchTerm}&quot;</>
-                  ) : (
-                    "No Registry providers available."
-                  )}
-                </p>
-              )}
+                    <div className="flex min-w-0 flex-1 items-center gap-1.5">
+                      {provider.registry ? (
+                        <Avatar>
+                          <AvatarImage
+                            src={
+                              provider.logoUrl?.startsWith("https://")
+                                ? provider.logoUrl
+                                : undefined
+                            }
+                            alt=""
+                          />
+                          <AvatarFallback>
+                            <ProviderTypeIcon type={provider.value} size={26} />
+                          </AvatarFallback>
+                        </Avatar>
+                      ) : (
+                        <ProviderTypeIcon type={provider.value} size={26} />
+                      )}
+                      <span className="text-text-neutral-primary text-sm leading-6">
+                        {provider.label}
+                      </span>
+                      {provider.registry && (
+                        <Badge variant="tag">Registry</Badge>
+                      )}
+                    </div>
+                  </button>
+                );
+              })
+            ) : (
+              <p className="text-text-neutral-tertiary py-4 text-sm">
+                {lowerSearch ? (
+                  <>No providers found matching &quot;{searchTerm}&quot;</>
+                ) : (
+                  "No Registry providers available."
+                )}
+              </p>
+            )}
+          </div>
+        );
+        const validationMessage = errorMessage && (
+          <FormMessage className="text-text-error-primary">
+            {errorMessage}
+          </FormMessage>
+        );
+
+        if (!registryAvailable) {
+          return (
+            <div className="flex flex-col px-4">
+              {searchInput}
+              <div className="mt-2">{providerList}</div>
+              {validationMessage}
             </div>
-          </TabsContent>
+          );
+        }
 
-          {errorMessage && (
-            <FormMessage className="text-text-error-primary">
-              {errorMessage}
-            </FormMessage>
-          )}
-        </Tabs>
-      )}
+        return (
+          <Tabs
+            className="flex flex-col px-4"
+            value={activeTab}
+            onValueChange={(value) => setSelectedTab(value as ProviderTab)}
+          >
+            <TabsList aria-label="Provider source">
+              <TabsTrigger value={PROVIDER_TAB.ALL}>All providers</TabsTrigger>
+              <TabsTrigger value={PROVIDER_TAB.REGISTRY}>Registry</TabsTrigger>
+            </TabsList>
+            {searchInput}
+            <TabsContent value={activeTab}>{providerList}</TabsContent>
+            {validationMessage}
+          </Tabs>
+        );
+      }}
     />
   );
 };

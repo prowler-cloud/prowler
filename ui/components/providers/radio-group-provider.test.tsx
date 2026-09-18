@@ -141,6 +141,7 @@ describe("provider selector", () => {
 
     // Then: only the built-in providers are offered, without a Registry tab.
     expect(screen.queryByRole("tablist")).not.toBeInTheDocument();
+    expect(screen.queryByRole("tabpanel")).not.toBeInTheDocument();
     expect(
       screen.queryByRole("tab", { name: "Registry" }),
     ).not.toBeInTheDocument();

@@ -18,7 +18,10 @@ import { Button, useToast } from "@/components/shadcn";
 import { Alert, AlertDescription, AlertTitle } from "@/components/shadcn/alert";
 import { Form } from "@/components/shadcn/form";
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
-import type { RegistryProviderOption } from "@/lib/registry/provider-options";
+import {
+  REGISTRY_PROVIDER_DISCOVERY,
+  type RegistryProviderOption,
+} from "@/lib/registry/provider-options";
 import {
   createAddProviderFormSchema,
   AddProviderFormValues,
@@ -218,13 +221,14 @@ export const ConnectAccountForm = ({
   const [registryOptions, setRegistryOptions] = useState<
     RegistryProviderOption[]
   >([]);
-  // Only Cloud and Private Cloud deployments with the Registry flag on answer
-  // discovery with "ready" or "error"; Local (OSS) and flag-off deployments
-  // are denied and never show the Registry tab.
+  // Only confirmed Cloud and Private Cloud access enables Registry source tabs.
+  // Unknown access stays hidden but remains retryable through the warning.
   const [registryAvailable, setRegistryAvailable] = useState(false);
   const [registryError, setRegistryError] = useState(false);
   const [providerError, setProviderError] = useState<string | null>(null);
   const [discoveryAttempt, setDiscoveryAttempt] = useState(0);
+  // Local state needed: a request in flight cannot be derived from the attempt count.
+  const [isRetryingDiscovery, setIsRetryingDiscovery] = useState(false);
   const submitting = useRef(false);
   const createdAccount = useRef<ConnectAccountSuccessData | null>(null);
 
@@ -234,9 +238,19 @@ export const ConnectAccountForm = ({
       try {
         const result = await getInstalledRegistryProviderOptions();
         if (!active) return;
-        setRegistryOptions(result.status === "ready" ? result.options : []);
-        setRegistryAvailable(result.status !== "access_denied");
-        setRegistryError(result.status === "error");
+        setRegistryOptions(
+          result.status === REGISTRY_PROVIDER_DISCOVERY.READY
+            ? result.options
+            : [],
+        );
+        setRegistryAvailable(
+          result.status === REGISTRY_PROVIDER_DISCOVERY.READY ||
+            result.status === REGISTRY_PROVIDER_DISCOVERY.ERROR,
+        );
+        setRegistryError(
+          result.status === REGISTRY_PROVIDER_DISCOVERY.ERROR ||
+            result.status === REGISTRY_PROVIDER_DISCOVERY.UNKNOWN,
+        );
       } catch {
         if (active) {
           setRegistryOptions([]);
@@ -245,7 +259,10 @@ export const ConnectAccountForm = ({
         }
       }
     };
-    void load();
+    // Only this effect's own load ends a retry; event reloads must not.
+    void load().then(() => {
+      if (active) setIsRetryingDiscovery(false);
+    });
     window.addEventListener("registry-artifacts-changed", load);
     return () => {
       active = false;
@@ -460,14 +477,20 @@ export const ConnectAccountForm = ({
                 <AlertDescription>
                   Built-in providers are available. Check the Registry
                   connection and try again.
+                  {/* aria-disabled, not disabled: the pressed button keeps focus. */}
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() =>
-                      setDiscoveryAttempt((attempt) => attempt + 1)
-                    }
+                    aria-disabled={isRetryingDiscovery}
+                    onClick={() => {
+                      if (isRetryingDiscovery) return;
+                      setIsRetryingDiscovery(true);
+                      setDiscoveryAttempt((attempt) => attempt + 1);
+                    }}
                   >
-                    Retry Registry providers
+                    {isRetryingDiscovery
+                      ? "Retrying…"
+                      : "Retry Registry providers"}
                   </Button>
                 </AlertDescription>
               </Alert>

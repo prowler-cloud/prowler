@@ -4,13 +4,28 @@ import type {
   RegistryTenantArtifact,
 } from "@/types/registry";
 
-import { isRegistryArtifactInstallable } from "./artifacts";
-
 export interface RegistryProviderOption {
   type: string;
   label: string;
   logoUrl?: string;
 }
+
+export const REGISTRY_PROVIDER_DISCOVERY = {
+  READY: "ready",
+  ACCESS_DENIED: "access_denied",
+  /** Access could not be evaluated: keep Registry hidden but retryable. */
+  UNKNOWN: "unknown",
+  ERROR: "error",
+} as const;
+
+export type RegistryProviderDiscoveryResult =
+  | {
+      status: typeof REGISTRY_PROVIDER_DISCOVERY.READY;
+      options: RegistryProviderOption[];
+    }
+  | { status: typeof REGISTRY_PROVIDER_DISCOVERY.ACCESS_DENIED }
+  | { status: typeof REGISTRY_PROVIDER_DISCOVERY.UNKNOWN }
+  | { status: typeof REGISTRY_PROVIDER_DISCOVERY.ERROR };
 
 export function buildRegistryProviderOptions(
   catalog: RegistryCatalogArtifact[],
@@ -25,10 +40,8 @@ export function buildRegistryProviderOptions(
   );
   const options = new Map<string, RegistryProviderOption>();
   for (const artifact of catalog) {
-    if (
-      !membership.has(artifact.normalizedName) ||
-      !isRegistryArtifactInstallable(artifact)
-    )
+    // Defining a provider type, not installability: checks artifacts install too.
+    if (!membership.has(artifact.normalizedName) || !artifact.hasProvider)
       continue;
     const declaredType = artifact.providerSlug;
     for (const type of declaredType ? [declaredType] : []) {

@@ -132,6 +132,7 @@ const readyState: RegistryBootstrapState = {
         isBuiltin: false,
         isMeta: false,
         hasProvider: true,
+        isInstallable: true,
         hasChecks: true,
         hasCompliance: false,
         versionCount: 2,
@@ -155,6 +156,7 @@ const readyState: RegistryBootstrapState = {
         isBuiltin: false,
         isMeta: false,
         hasProvider: true,
+        isInstallable: true,
         hasChecks: true,
         hasCompliance: true,
         versionCount: 1,
@@ -172,6 +174,7 @@ const readyState: RegistryBootstrapState = {
         isBuiltin: false,
         isMeta: true,
         hasProvider: true,
+        isInstallable: true,
         hasChecks: true,
         hasCompliance: true,
         versionCount: 4,
@@ -1311,8 +1314,11 @@ describe("RegistryExplorer", () => {
 
   describe("when the complete catalog is ready", () => {
     it.each([
-      { isBuiltin: true, hasProvider: true },
-      { isBuiltin: false, hasProvider: false },
+      { isBuiltin: true, isInstallable: false },
+      {
+        isInstallable: false,
+        notInstallableReason: "artifact_defines_nothing_usable",
+      },
     ])("keeps ineligible artifacts visible without Add: %j", async (flags) => {
       const state: RegistryBootstrapState = {
         ...readyState,
@@ -1587,6 +1593,7 @@ describe("RegistryExplorer", () => {
         ...readyState.catalog.artifacts[0],
         isAdded: false,
         updateAvailable: false,
+        extendsProviderSlugs: [],
         checkCount: 645,
         complianceCount: 45,
       };
@@ -1693,6 +1700,7 @@ describe("RegistryExplorer", () => {
         ...readyState.catalog.artifacts[0],
         isAdded: false,
         updateAvailable: false,
+        extendsProviderSlugs: [],
         owners: [
           {
             name: "Registry team",
@@ -1970,6 +1978,38 @@ describe("RegistryExplorer", () => {
     expect(document.body.textContent).not.toContain(
       "Existing provider accounts will remain",
     );
+  });
+
+  it("treats a running scan as a wait, never as a reason to delete providers", async () => {
+    // Given
+    removeRegistryArtifactMock
+      .mockResolvedValueOnce({ status: "busy" })
+      .mockResolvedValueOnce({
+        status: "confirmed",
+        tenantArtifacts: [],
+      });
+    const screen = await render(<RegistryExplorer initialState={readyState} />);
+    await screen.getByRole("tab", { name: /My artifacts/ }).click();
+    await screen.getByRole("button", { name: "Remove AWS guard" }).click();
+
+    // When
+    await screen.getByRole("button", { name: "Confirm Remove" }).click();
+
+    // Then
+    const dialog = screen.getByRole("dialog", { name: "Remove artifact" });
+    await expect
+      .element(dialog.getByRole("alert"))
+      .toHaveTextContent("A scan is using this artifact");
+    await expect
+      .element(dialog.getByRole("button", { name: "View providers" }))
+      .not.toBeInTheDocument();
+
+    // When: the scan finished, so the same dialog can simply try again.
+    await dialog.getByRole("button", { name: "Confirm Remove" }).click();
+
+    // Then
+    await expect.element(dialog).not.toBeInTheDocument();
+    expect(removeRegistryArtifactMock).toHaveBeenCalledTimes(2);
   });
 
   it("clears the in-use Remove error on close and restores focus before reopening", async () => {
