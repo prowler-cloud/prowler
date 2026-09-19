@@ -165,6 +165,13 @@ def drop_database(database: str) -> None:
         session.run(f"DROP DATABASE `{database}` IF EXISTS DESTROY DATA")
 
 
+def list_databases() -> list[str]:
+    """List every database name on the Neo4j temp-database cluster."""
+    with get_session() as session:
+        result = session.run("SHOW DATABASES")
+        return [record["name"] for record in result]
+
+
 def clear_cache(database: str) -> None:
     """Best-effort cache clear for a Neo4j database."""
     from api.attack_paths.database import GraphDatabaseQueryException

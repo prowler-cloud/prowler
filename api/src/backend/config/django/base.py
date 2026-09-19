@@ -7,6 +7,7 @@ from config.settings.eventstream import *  # noqa
 from config.settings.partitions import *  # noqa
 from config.settings.sentry import *  # noqa
 from config.settings.social_login import *  # noqa
+from django.core.exceptions import ImproperlyConfigured
 
 SECRET_KEY = env("SECRET_KEY", default="secret")
 DEBUG = env.bool("DJANGO_DEBUG", default=False)
@@ -324,6 +325,17 @@ ATTACK_PATHS_SCAN_INACTIVITY_THRESHOLD_MINUTES = env.int(
 ATTACK_PATHS_SCAN_STALE_THRESHOLD_MINUTES = env.int(
     "ATTACK_PATHS_SCAN_STALE_THRESHOLD_MINUTES", 960
 )  # 16h
+
+# Minimum age (of the scan row, or of the scan id itself when the row is gone) before
+# the periodic reaper will drop an orphaned temp Neo4j database. Keeps a scan that is
+# still legitimately in flight from ever losing its staging database mid-run.
+ATTACK_PATHS_TMP_DB_REAP_SAFETY_MARGIN_HOURS = env.int(
+    "ATTACK_PATHS_TMP_DB_REAP_SAFETY_MARGIN_HOURS", 6
+)
+if ATTACK_PATHS_TMP_DB_REAP_SAFETY_MARGIN_HOURS <= 0:
+    raise ImproperlyConfigured(
+        "ATTACK_PATHS_TMP_DB_REAP_SAFETY_MARGIN_HOURS must be a positive number of hours"
+    )
 
 # Selects where the persistent attack-paths graph is stored. The scan
 # temporary database is always Neo4j; only the sink is configurable.
