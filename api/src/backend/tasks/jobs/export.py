@@ -216,6 +216,9 @@ def get_s3_client():
     Raises:
         ClientError, NoCredentialsError, or ParamValidationError if both attempts to create a client fail.
     """
+    # Pinning SigV4 is required: boto3's default query-string signer for S3 falls back to
+    # SigV2, which S3 rejects for objects encrypted with SSE-KMS.
+    s3_config = Config(signature_version="s3v4")
     s3_client = None
     try:
         s3_client = boto3.client(
@@ -226,10 +229,11 @@ def get_s3_client():
             # Storage that has no meaningful region, MinIO among it, is usually configured
             # without one, and botocore rejects an empty region before any request is made.
             region_name=settings.DJANGO_OUTPUT_S3_AWS_DEFAULT_REGION or "us-east-1",
+            config=s3_config,
         )
         s3_client.list_buckets()
     except (ClientError, NoCredentialsError, ParamValidationError, ValueError):
-        s3_client = boto3.client("s3")
+        s3_client = boto3.client("s3", config=s3_config)
         s3_client.list_buckets()
 
     return s3_client
