@@ -1,0 +1,88 @@
+{
+  "Framework": "MITRE-D3FEND",
+  "Name": "MITRE D3FEND compliance framework",
+  "Version": "",
+  "Provider": "Azure",
+  "Description": "MITRE D3FEND is a knowledge graph of defensive countermeasures. This initial Azure mapping adds a small, review-friendly set of Prowler checks that align defensive techniques with concrete cloud hardening, monitoring, authentication, and recovery controls.",
+  "Requirements": [
+    {
+      "Id": "D3-ITF",
+      "Name": "Inbound Traffic Filtering",
+      "Description": "Restricting network traffic originating from untrusted networks destined towards a private host or enclave.",
+      "Attributes": [
+        {
+          "Section": "Harden",
+          "SubSection": "Network Exposure Reduction",
+          "SubGroup": "Inbound Traffic Filtering",
+          "Service": "Azure Network Security",
+          "Type": "Protect",
+          "Comment": "These checks reduce public reachability by disabling public endpoints or public blob access, which is a practical Azure-aligned application of D3-ITF."
+        }
+      ],
+      "Checks": [
+        "aks_clusters_public_access_disabled",
+        "containerregistry_not_publicly_accessible",
+        "keyvault_access_only_through_private_endpoints",
+        "storage_blob_public_access_level_is_disabled"
+      ]
+    },
+    {
+      "Id": "D3-MFA",
+      "Name": "Multi-factor Authentication",
+      "Description": "Requiring proof of two or more pieces of evidence in order to authenticate a user.",
+      "Attributes": [
+        {
+          "Section": "Harden",
+          "SubSection": "Identity Protection",
+          "SubGroup": "Multi-factor Authentication",
+          "Service": "Microsoft Entra ID",
+          "Type": "Protect",
+          "Comment": "These checks validate MFA enrollment for privileged and non-privileged users, directly supporting the D3-MFA defensive technique."
+        }
+      ],
+      "Checks": [
+        "entra_non_privileged_user_has_mfa",
+        "entra_privileged_user_has_mfa"
+      ]
+    },
+    {
+      "Id": "D3-PM",
+      "Name": "Platform Monitoring",
+      "Description": "Monitoring platform components such as operating systems software, hardware devices, or firmware.",
+      "Attributes": [
+        {
+          "Section": "Detect",
+          "SubSection": "Audit and Telemetry",
+          "SubGroup": "Platform Monitoring",
+          "Service": "Azure Monitor",
+          "Type": "Detect",
+          "Comment": "These checks ensure Azure control-plane or application telemetry exists, improving visibility that defenders rely on for D3FEND-style monitoring and analysis."
+        }
+      ],
+      "Checks": [
+        "app_http_logs_enabled",
+        "keyvault_logging_enabled",
+        "monitor_diagnostic_settings_exists"
+      ]
+    },
+    {
+      "Id": "D3-RO",
+      "Name": "Restore Object",
+      "Description": "Restoring an object for an entity to access. This is the broadest class for object restoral.",
+      "Attributes": [
+        {
+          "Section": "Restore",
+          "SubSection": "Backup and Recovery",
+          "SubGroup": "Restore Object",
+          "Service": "Azure Backup",
+          "Type": "Recover",
+          "Comment": "These checks verify backup coverage and retention, which are reasonable cloud control signals for object and workload restoration capabilities."
+        }
+      ],
+      "Checks": [
+        "vm_backup_enabled",
+        "vm_sufficient_daily_backup_retention_period"
+      ]
+    }
+  ]
+}
