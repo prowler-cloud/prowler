@@ -242,6 +242,16 @@ describe("installed Registry provider discovery", () => {
       });
     },
   );
+
+  it.each(["available-artifacts", "artifacts", "providers"])(
+    "hides Registry when the backend has it disabled and %s answers 404",
+    async (failedEndpoint) => {
+      mockDiscovery({ failedEndpoint, failureStatus: 404 });
+      expect(await getInstalledRegistryProviderOptions()).toEqual({
+        status: "access_denied",
+      });
+    },
+  );
 });
 
 describe("Registry guarded reads", () => {

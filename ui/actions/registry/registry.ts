@@ -86,6 +86,9 @@ async function readRegistryResponse(
     return { status: REGISTRY_FAILURE.ERROR };
   }
   if (response.ok) return response;
+  // A backend with Registry disabled answers 404: hide it like a denial.
+  if (response.status === 404)
+    return { status: REGISTRY_FAILURE.ACCESS_DENIED };
 
   return endpoint === REGISTRY_ENDPOINT.PROVIDERS ||
     endpoint === REGISTRY_ENDPOINT.AVAILABLE_ARTIFACTS
