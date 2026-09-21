@@ -53,7 +53,6 @@ export async function getRuntimePublicConfig(): Promise<RuntimePublicConfig> {
     cloudEnabled: readBoolEnv("UI_CLOUD_ENABLED"),
     // Off only when explicitly "false": invited users can still register.
     selfRegistrationEnabled: readOptOutEnv("UI_SELF_REGISTRATION_ENABLED"),
-    awsQuickOnboardingEnabled: readBoolEnv("UI_AWS_QUICK_ONBOARDING_ENABLED"),
     // Install-level selector "legacy" | "metronome" | "false"; the client only
     // needs on/off, so expose a derived boolean (the raw selector is read
     // server-side for V1/V2 routing). Default (unset) is off.

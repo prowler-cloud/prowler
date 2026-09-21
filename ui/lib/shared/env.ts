@@ -35,15 +35,3 @@ export function isSelfRegistrationEnabled(): boolean {
 
   return readOptOutEnv("UI_SELF_REGISTRATION_ENABLED");
 }
-
-/**
- * Whether the experimental 3-step AWS onboarding replaces the single-account
- * path of the provider wizard. `UI_AWS_QUICK_ONBOARDING_ENABLED` (island, then
- * env), off unless "true".
- */
-export function isAwsQuickOnboardingEnabled(): boolean {
-  const islandConfig = readRuntimeConfigIsland();
-  if (islandConfig) return islandConfig.awsQuickOnboardingEnabled;
-
-  return readBoolEnv("UI_AWS_QUICK_ONBOARDING_ENABLED");
-}

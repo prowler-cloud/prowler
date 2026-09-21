@@ -138,7 +138,6 @@ describe("getRuntimeConfigClient", () => {
       [
         "apiBaseUrl",
         "apiDocsUrl",
-        "awsQuickOnboardingEnabled",
         "cloudBillingEnabled",
         "cloudEnabled",
         "googleTagManagerId",

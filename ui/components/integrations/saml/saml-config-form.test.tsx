@@ -59,7 +59,6 @@ const runtimeConfig: RuntimePublicConfig = {
   cloudEnabled: false,
   cloudBillingEnabled: false,
   selfRegistrationEnabled: true,
-  awsQuickOnboardingEnabled: false,
   stripePublishableKey: null,
   stripePublishableKeyV2: null,
 };
