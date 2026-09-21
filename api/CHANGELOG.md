@@ -12,7 +12,7 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ### 🐞 Fixed
 
-- A queued scan could be stuck forever if the scan blocking it never reached its own dispatch step; the next queued scan for a provider is now also dispatched when a scheduled run is queued and when a manual scan is created behind an active one [(#PR_NUMBER)](https://github.com/prowler-cloud/prowler/pull/PR_NUMBER)
+- A queued scan could be stuck forever if the scan blocking it never reached its own dispatch step; the next queued scan for a provider is now also dispatched when a scheduled run is queued and when a manual scan is created behind an active one [(#12849)](https://github.com/prowler-cloud/prowler/pull/12849)
 
 ---
 
