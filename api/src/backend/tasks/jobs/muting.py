@@ -1,7 +1,7 @@
 from collections.abc import Iterable
 
 from api.db_utils import rls_transaction
-from api.models import Finding, MuteRule, Scan, StateChoices
+from api.models import Finding, MuteRule, Scan
 from celery.utils.log import get_task_logger
 
 logger = get_task_logger(__name__)
@@ -39,17 +39,9 @@ def mute_findings_in_latest_scans(
 
     with rls_transaction(tenant_id):
         mute_rule = MuteRule.objects.get(id=mute_rule_id, tenant_id=tenant_id)
-        latest_scans = list(
-            Scan.objects.filter(
-                tenant_id=tenant_id,
-                provider_id__in=provider_ids,
-                state=StateChoices.COMPLETED,
-                completed_at__isnull=False,
-            )
-            .order_by("provider_id", "-completed_at", "-inserted_at", "-id")
-            .distinct("provider_id")
-            .values_list("id", flat=True)
-        )
+        latest_scans = Scan.objects.filter(
+            tenant_id=tenant_id, provider_id__in=provider_ids
+        ).latest_ids_per_provider()
 
         changed_scan_ids = []
         findings_muted = 0
