@@ -1,6 +1,6 @@
 import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { Toaster } from "@/components/shadcn/toast/Toaster";
 import { resetToasts } from "@/components/shadcn/toast/use-toast";
@@ -89,12 +89,18 @@ async function enterAccountDetails() {
 
 describe("provider wizard account creation", () => {
   beforeEach(() => {
+    // Registry discovery only runs in Cloud.
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
     useProviderWizardStore.getState().reset();
     resetToasts();
     getInstalledRegistryProviderOptions.mockResolvedValue({
       status: "ready",
       options: [{ type: "acme", label: "Acme Cloud" }],
     });
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
   });
 
   it("shows progress, blocks repeat clicks, and advances after creation", async () => {
