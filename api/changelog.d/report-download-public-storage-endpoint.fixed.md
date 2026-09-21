@@ -1,0 +1,1 @@
+Report download URLs can be signed against a browser-reachable storage host via `DJANGO_OUTPUT_S3_AWS_PUBLIC_ENDPOINT_URL`, so downloads complete on deployments where storage is only reachable inside the container network
