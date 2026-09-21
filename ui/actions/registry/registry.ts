@@ -47,6 +47,7 @@ import {
   classifyRegistryRemovalConflict,
   collectCompleteRegistryCatalog,
   isRegistryCollection,
+  isRegistryDisabledResponse,
   parseRegistryArtifactSubmission,
   parseRegistryCredentialSubmission,
   RegistryCatalogPageError,
@@ -87,7 +88,7 @@ async function readRegistryResponse(
   }
   if (response.ok) return response;
   // A backend with Registry disabled answers 404: hide it like a denial.
-  if (response.status === 404)
+  if (await isRegistryDisabledResponse(response))
     return { status: REGISTRY_FAILURE.ACCESS_DENIED };
 
   return endpoint === REGISTRY_ENDPOINT.PROVIDERS ||

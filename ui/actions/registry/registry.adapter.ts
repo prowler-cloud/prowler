@@ -24,6 +24,7 @@ const REGISTRY_TASK_PATH_PREFIX = "/api/v1/tasks/";
 const REGISTRY_ERROR_CODE = {
   KEY_REJECTED: "registry_key_rejected",
   UNAVAILABLE: "registry_unavailable",
+  PAGE_NOT_FOUND: "registry_page_not_found",
 } as const;
 // Opposite remedies, so a 409 is never read without its code.
 const REGISTRY_REMOVAL_CONFLICT_CODE = {
@@ -214,6 +215,15 @@ export async function classifyRegistryFailure(
   }
 
   return { status: REGISTRY_FAILURE.ERROR };
+}
+
+// An enabled backend also answers 404 (missing page): tell them apart by code.
+export async function isRegistryDisabledResponse(response: Response) {
+  return (
+    response.status === 404 &&
+    (await getRegistryErrorCode(response)) !==
+      REGISTRY_ERROR_CODE.PAGE_NOT_FOUND
+  );
 }
 
 function isRegistryDiscoveryEndpoint(endpoint: RegistryEndpoint) {
