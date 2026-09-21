@@ -11,6 +11,7 @@ export const PROVIDER_FUNNEL_STEP = {
   PROVIDER_TYPE_SELECTED: "provider_type_selected",
   METHOD_SELECTED: "method_selected",
   ROLE_TEMPLATE_OPENED: "role_template_opened",
+  ACCOUNT_SUBMITTED: "account_submitted",
   WIZARD_CLOSED: "wizard_closed",
 } as const;
 
@@ -80,6 +81,22 @@ export interface RoleTemplateOpenedDetail {
   template: RoleTemplateKind;
 }
 
+export const ACCOUNT_SUBMIT_OUTCOME = {
+  SUCCESS: "success",
+  ERROR: "error",
+} as const;
+
+export type AccountSubmitOutcome =
+  (typeof ACCOUNT_SUBMIT_OUTCOME)[keyof typeof ACCOUNT_SUBMIT_OUTCOME];
+
+// Account and credentials sent together (the one-step AWS form).
+export interface AccountSubmittedDetail {
+  step: typeof PROVIDER_FUNNEL_STEP.ACCOUNT_SUBMITTED;
+  providerType: string;
+  via: string;
+  outcome: AccountSubmitOutcome;
+}
+
 export interface WizardClosedDetail {
   step: typeof PROVIDER_FUNNEL_STEP.WIZARD_CLOSED;
   lastStep: string;
@@ -93,6 +110,7 @@ export type ProviderFunnelDetail =
   | ProviderTypeSelectedDetail
   | MethodSelectedDetail
   | RoleTemplateOpenedDetail
+  | AccountSubmittedDetail
   | WizardClosedDetail;
 
 export function dispatchProviderFunnel(detail: ProviderFunnelDetail): void {

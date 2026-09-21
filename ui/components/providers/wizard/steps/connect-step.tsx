@@ -8,10 +8,11 @@ import {
 } from "@/components/providers/workflow/forms";
 import { useProviderWizardStore } from "@/store/provider-wizard/store";
 import { useUIStore } from "@/store/ui/store";
-import { OrgFlowType } from "@/types/organizations";
+import { ORGANIZATION_TYPE, OrgFlowType } from "@/types/organizations";
 import { PROVIDER_WIZARD_MODE } from "@/types/provider-wizard";
 import { ProviderType } from "@/types/providers";
 
+import { AwsConnectStep } from "./aws/aws-connect-step";
 import {
   WIZARD_FOOTER_ACTION_TYPE,
   WizardFooterConfig,
@@ -19,7 +20,8 @@ import {
 
 interface ConnectStepProps {
   onNext: () => void;
-  onSelectAwsQuick?: () => void;
+  /** AWS registers the account and its credentials in this step, so it skips ahead. */
+  onCredentialsSaved: () => void;
   onSelectOrganizations: (orgType: OrgFlowType) => void;
   onFooterChange: (config: WizardFooterConfig) => void;
   onProviderTypeChange: (providerType: ProviderType | null) => void;
@@ -27,7 +29,7 @@ interface ConnectStepProps {
 
 export function ConnectStep({
   onNext,
-  onSelectAwsQuick,
+  onCredentialsSaved,
   onSelectOrganizations,
   onFooterChange,
   onProviderTypeChange,
@@ -35,6 +37,8 @@ export function ConnectStep({
   const { setProvider, setVia, setSecretId, setMode } =
     useProviderWizardStore();
   const backHandlerRef = useRef<(() => void) | null>(null);
+  // Local state needed: AWS swaps the generic account form for its one-step form.
+  const [isAwsFlow, setIsAwsFlow] = useState(false);
   const [uiState, setUiState] = useState({
     showBack: false,
     showAction: false,
@@ -65,7 +69,10 @@ export function ConnectStep({
       showBack: uiState.showBack,
       backLabel: "Back",
       backDisabled: uiState.isLoading,
-      onBack: () => backHandlerRef.current?.(),
+      // Leaving AWS remounts the generic form on a fresh provider list.
+      onBack: isAwsFlow
+        ? () => setIsAwsFlow(false)
+        : () => backHandlerRef.current?.(),
       showAction: uiState.showAction,
       actionLabel: uiState.actionLabel,
       actionLoading: uiState.isLoading,
@@ -73,16 +80,33 @@ export function ConnectStep({
       actionType: WIZARD_FOOTER_ACTION_TYPE.SUBMIT,
       actionFormId: formId,
     });
-  }, [onFooterChange, uiState]);
+  }, [isAwsFlow, onFooterChange, uiState]);
+
+  const handleProviderTypeChange = (providerType: ProviderType | null) => {
+    onProviderTypeChange(providerType);
+    if (providerType === "aws") setIsAwsFlow(true);
+  };
+
+  if (isAwsFlow) {
+    return (
+      <AwsConnectStep
+        formId={formId}
+        onConnected={onCredentialsSaved}
+        onSelectOrganizations={() =>
+          onSelectOrganizations(ORGANIZATION_TYPE.AWS)
+        }
+        onUiStateChange={setUiState}
+      />
+    );
+  }
 
   return (
     <ConnectAccountForm
       formId={formId}
       hideNavigation
       onSuccess={handleSuccess}
-      onSelectAwsQuick={onSelectAwsQuick}
       onSelectOrganizations={onSelectOrganizations}
-      onProviderTypeChange={onProviderTypeChange}
+      onProviderTypeChange={handleProviderTypeChange}
       onUiStateChange={setUiState}
       onBackHandlerChange={(handler) => {
         backHandlerRef.current = handler;

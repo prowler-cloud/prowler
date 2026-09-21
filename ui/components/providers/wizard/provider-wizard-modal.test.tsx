@@ -13,17 +13,31 @@ import { useUIStore } from "@/store/ui/store";
 
 import { ProviderWizardModal } from "./provider-wizard-modal";
 
-const { addRegistryProvider, getInstalledRegistryProviderOptions } = vi.hoisted(
-  () => ({
-    addRegistryProvider: vi.fn(),
-    getInstalledRegistryProviderOptions: vi.fn(),
-  }),
-);
+const {
+  addCredentialsProvider,
+  addProvider,
+  addRegistryProvider,
+  getInstalledRegistryProviderOptions,
+} = vi.hoisted(() => ({
+  addCredentialsProvider: vi.fn(),
+  addProvider: vi.fn(),
+  addRegistryProvider: vi.fn(),
+  getInstalledRegistryProviderOptions: vi.fn(),
+}));
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ refresh: vi.fn(), push: vi.fn() }),
 }));
-vi.mock("@/actions/providers/providers", () => ({ addProvider: vi.fn() }));
+vi.mock("next-auth/react", () => ({
+  useSession: () => ({
+    data: { tenantId: "tenant-abc" },
+    status: "authenticated",
+  }),
+}));
+vi.mock("@/actions/providers/providers", () => ({
+  addCredentialsProvider,
+  addProvider,
+}));
 vi.mock("@/actions/providers/registry-provider", () => ({
   addRegistryProvider,
 }));
@@ -45,7 +59,7 @@ vi.mock("./steps/credentials-step", () => ({
   CredentialsStep: () => <p>Credential details</p>,
 }));
 vi.mock("./steps/test-connection-step", () => ({
-  TestConnectionStep: () => null,
+  TestConnectionStep: () => <p>Connection test</p>,
 }));
 vi.mock("./steps/launch-step", () => ({ LaunchStep: () => null }));
 vi.mock("../organizations/azure-org-setup-form", () => ({
@@ -241,15 +255,69 @@ describe("provider wizard account creation", () => {
     await user.click(
       screen.getByRole("option", { name: /Amazon Web Services/ }),
     );
-    await screen.findByRole("radio", {
-      name: "Add A Single AWS Cloud Account",
-    });
+    await screen.findByRole("radio", { name: /IAM Role/ });
     window.removeEventListener(PROVIDER_FUNNEL_EVENT, recordFunnelSignal);
 
     // Then
     expect(funnelSignals).toEqual([
       { step: "provider_type_selected", providerType: "aws" },
     ]);
+  });
+
+  describe("when the user picks AWS", () => {
+    const ROLE_ARN = "arn:aws:iam::123456789012:role/ProwlerScan";
+
+    async function pickAws() {
+      const user = userEvent.setup();
+      render(<ProviderWizardModal open onOpenChange={vi.fn()} />);
+      await screen.findByRole("option", { name: "Acme Cloud Registry" });
+      await user.click(
+        screen.getByRole("option", { name: /Amazon Web Services/ }),
+      );
+      await screen.findByRole("textbox", { name: /Role ARN/ });
+      return user;
+    }
+
+    it("connects the account and its credentials in one step, then tests the connection", async () => {
+      // Given
+      addProvider.mockResolvedValue({ data: { id: "provider-1" } });
+      addCredentialsProvider.mockResolvedValue({ data: { id: "secret-1" } });
+      const user = await pickAws();
+
+      // When
+      await user.type(
+        screen.getByRole("textbox", { name: /Role ARN/ }),
+        ROLE_ARN,
+      );
+      const connect = screen.getByRole("button", { name: "Connect account" });
+      await waitFor(() => expect(connect).toBeEnabled());
+      await user.click(connect);
+
+      // Then: the separate credentials step never shows up.
+      expect(await screen.findByText("Connection test")).toBeVisible();
+      expect(screen.queryByText("Credential details")).not.toBeInTheDocument();
+      expect(useProviderWizardStore.getState()).toMatchObject({
+        providerId: "provider-1",
+        secretId: "secret-1",
+        via: "role",
+      });
+    });
+
+    it("goes back to the provider list", async () => {
+      // Given
+      const user = await pickAws();
+
+      // When
+      await user.click(screen.getByRole("button", { name: "Back" }));
+
+      // Then
+      expect(
+        await screen.findByRole("option", { name: /Microsoft Azure/ }),
+      ).toBeVisible();
+      expect(
+        screen.queryByRole("textbox", { name: /Role ARN/ }),
+      ).not.toBeInTheDocument();
+    });
   });
 
   it("keeps native providers available during a Registry discovery error and retries", async () => {
@@ -298,27 +366,5 @@ describe("provider wizard account creation", () => {
 
     // Then
     expect(screen.getByText("No Registry providers available.")).toBeVisible();
-  });
-
-  it("hands off to onSelectAwsQuick when AWS is picked", async () => {
-    const user = userEvent.setup();
-    const onSelectAwsQuick = vi.fn();
-    render(
-      <ProviderWizardModal
-        open
-        onOpenChange={vi.fn()}
-        onSelectAwsQuick={onSelectAwsQuick}
-      />,
-    );
-
-    await screen.findByRole("option", { name: "Acme Cloud Registry" });
-    await user.click(
-      screen.getByRole("option", { name: "Amazon Web Services" }),
-    );
-
-    await waitFor(() => expect(onSelectAwsQuick).toHaveBeenCalledOnce());
-    expect(
-      screen.queryByRole("radio", { name: "Add A Single AWS Cloud Account" }),
-    ).not.toBeInTheDocument();
   });
 });

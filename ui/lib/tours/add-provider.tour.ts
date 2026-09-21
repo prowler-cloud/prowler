@@ -61,7 +61,7 @@ export const addProviderTour = defineTour<AddProviderTourTarget>({
       autoAdvance: true,
       title: "Add your account details",
       description:
-        "Enter your account ID and an optional alias, then continue. From here you'll add credentials, test the connection, and launch your first scan — at your own pace.",
+        "Fill in the connection details for this provider, then continue. From here you'll test the connection and launch your first scan — at your own pace.",
     },
   ],
 });

@@ -9,7 +9,6 @@ import { useForm, UseFormReturn } from "react-hook-form";
 import { addProvider, updateProvider } from "@/actions/providers/providers";
 import { addRegistryProvider } from "@/actions/providers/registry-provider";
 import { getInstalledRegistryProviderOptions } from "@/actions/registry/registry";
-import { AwsMethodSelector } from "@/components/providers/organizations/aws-method-selector";
 import { AzureMethodSelector } from "@/components/providers/organizations/azure-method-selector";
 import { GcpMethodSelector } from "@/components/providers/organizations/gcp-method-selector";
 import { WizardInputField } from "@/components/providers/workflow/forms/fields";
@@ -50,18 +49,17 @@ export interface ConnectAccountSuccessData {
 
 /**
  * Provider types that offer an organization-onboarding method choice: exactly the
- * ones with an onboarding flow, so a new flow type cannot miss the fork.
+ * ones with an onboarding flow, so a new flow type cannot miss the fork. AWS is the
+ * exception: the wizard's own AWS step hosts its single-account/organization switch.
  */
 function providerHasOrgMethod(
   providerType: ProviderType | undefined,
 ): providerType is OrgFlowType {
-  return toOrgFlowType(providerType) !== undefined;
+  return providerType !== "aws" && toOrgFlowType(providerType) !== undefined;
 }
 
 interface ConnectAccountFormProps {
   onSuccess?: (data: ConnectAccountSuccessData) => void;
-  /** When set, picking AWS leaves this form for the quick flow (it owns the method switch). */
-  onSelectAwsQuick?: () => void;
   onSelectOrganizations?: (orgType: OrgFlowType) => void;
   onProviderTypeChange?: (providerType: ProviderType | null) => void;
   formId?: string;
@@ -209,7 +207,6 @@ function applyBackStep({
 
 export const ConnectAccountForm = ({
   onSuccess,
-  onSelectAwsQuick,
   onSelectOrganizations,
   onProviderTypeChange,
   formId,
@@ -416,15 +413,7 @@ export const ConnectAccountForm = ({
     });
   };
 
-  // Ref: the modal recreates the callback every render; only the provider pick should fire it.
-  const onSelectAwsQuickRef = useRef(onSelectAwsQuick);
-  onSelectAwsQuickRef.current = onSelectAwsQuick;
-
   useEffect(() => {
-    if (providerType === "aws" && onSelectAwsQuickRef.current) {
-      onSelectAwsQuickRef.current();
-      return;
-    }
     if (providerType) {
       setPrevStep(2);
     }
@@ -517,18 +506,6 @@ export const ConnectAccountForm = ({
               errorMessage={form.formState.errors.providerType?.message}
             />
           </div>
-        )}
-        {/* Step 2: AWS method selector (before choosing a method) */}
-        {prevStep === 2 && providerType === "aws" && method === null && (
-          <>
-            <ProviderTitleDocs providerType={providerType} />
-            <AwsMethodSelector
-              onSelectSingle={() => setMethod("single")}
-              onSelectOrganizations={() =>
-                onSelectOrganizations?.(ORGANIZATION_TYPE.AWS)
-              }
-            />
-          </>
         )}
         {/* Step 2: Azure method selector (before choosing a method) */}
         {prevStep === 2 && providerType === "azure" && method === null && (
