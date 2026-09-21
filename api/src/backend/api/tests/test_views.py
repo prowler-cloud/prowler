@@ -4063,6 +4063,66 @@ class TestScanViewSet:
         assert queued_scan.task.task_runner_task.status == "QUEUED"
         mock_perform_scan_task.assert_not_called()
 
+    @patch("tasks.tasks.perform_scan_task.apply_async")
+    def test_scans_create_dispatches_orphaned_queued_scan_on_commit(
+        self,
+        mock_perform_scan_task,
+        authenticated_client,
+        aws_provider,
+        tenants_fixture,
+        django_capture_on_commit_callbacks,
+    ):
+        tenant, *_ = tenants_fixture
+        provider = aws_provider
+        task_result = TaskResult.objects.create(
+            task_id=str(uuid4()),
+            task_name="scan-perform",
+            status="QUEUED",
+        )
+        prowler_task = Task.objects.create(
+            id=task_result.task_id,
+            tenant_id=tenant.id,
+            task_runner_task=task_result,
+        )
+        orphaned_scan = Scan.objects.create(
+            name="Orphaned queued scan",
+            provider=provider,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.AVAILABLE,
+            tenant_id=tenant.id,
+            task=prowler_task,
+        )
+
+        with django_capture_on_commit_callbacks(execute=True):
+            response = authenticated_client.post(
+                reverse("scan-list"),
+                data={
+                    "data": {
+                        "type": "scans",
+                        "attributes": {"name": "New Scan"},
+                        "relationships": {
+                            "provider": {
+                                "data": {"type": "providers", "id": str(provider.id)}
+                            }
+                        },
+                    }
+                },
+                content_type=API_JSON_CONTENT_TYPE,
+            )
+
+        assert response.status_code == status.HTTP_202_ACCEPTED
+        assert Scan.objects.count() == 2
+        task_result.refresh_from_db()
+        assert task_result.status == states.PENDING
+        mock_perform_scan_task.assert_called_once_with(
+            kwargs={
+                "tenant_id": str(tenant.id),
+                "scan_id": str(orphaned_scan.id),
+                "provider_id": str(provider.id),
+            },
+            task_id=str(prowler_task.id),
+        )
+
     @pytest.mark.parametrize(
         "scan_json_payload, error_code",
         [

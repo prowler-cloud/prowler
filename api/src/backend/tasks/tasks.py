@@ -622,6 +622,12 @@ def perform_scheduled_scan_task(self, tenant_id: str, provider_id: str):
                 periodic_task_instance=periodic_task_instance,
                 next_scan_datetime=next_scan_datetime,
             )
+            # The active scan may itself be an orphaned queued one: release it.
+            transaction.on_commit(
+                lambda: _dispatch_next_queued_provider_scan_best_effort(
+                    tenant_id, provider_id
+                )
+            )
             return ScanTaskSerializer(instance=queued_scheduled_scan).data
 
         scan_instance = _get_or_create_scheduled_scan(

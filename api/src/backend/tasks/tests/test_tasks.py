@@ -2933,6 +2933,107 @@ class TestPerformScheduledScanTask:
             == 1
         )
 
+    def test_dispatches_orphaned_queued_scan_when_only_queued_scan_active(
+        self, tenants_fixture, aws_provider, django_capture_on_commit_callbacks
+    ):
+        """Dispatch an orphaned QUEUED scan instead of leaving the provider stuck."""
+        tenant = tenants_fixture[0]
+        provider = aws_provider
+        self._create_periodic_task(provider.id, tenant.id)
+        task_id = str(uuid.uuid4())
+        self._create_task_result(tenant.id, task_id)
+
+        orphan_task_result = TaskResult.objects.create(
+            task_id=str(uuid.uuid4()),
+            task_name="scan-perform",
+            status="QUEUED",
+        )
+        orphan_task = Task.objects.create(
+            id=orphan_task_result.task_id,
+            task_runner_task=orphan_task_result,
+            tenant_id=tenant.id,
+        )
+        orphan_scan = Scan.objects.create(
+            tenant_id=tenant.id,
+            provider=provider,
+            name="Orphaned manual scan",
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.AVAILABLE,
+            task=orphan_task,
+        )
+
+        with (
+            patch("tasks.tasks.perform_prowler_scan") as mock_scan,
+            patch("tasks.tasks._perform_scan_complete_tasks") as mock_complete_tasks,
+            patch("tasks.tasks.perform_scan_task.apply_async") as mock_apply_async,
+            self._override_task_request(perform_scheduled_scan_task, id=task_id),
+        ):
+            with django_capture_on_commit_callbacks(execute=True):
+                result = perform_scheduled_scan_task.run(
+                    tenant_id=str(tenant.id), provider_id=str(provider.id)
+                )
+
+        mock_scan.assert_not_called()
+        mock_complete_tasks.assert_not_called()
+        orphan_task_result.refresh_from_db()
+        assert orphan_task_result.status == states.PENDING
+        mock_apply_async.assert_called_once_with(
+            kwargs={
+                "tenant_id": str(tenant.id),
+                "scan_id": str(orphan_scan.id),
+                "provider_id": str(provider.id),
+            },
+            task_id=str(orphan_task.id),
+        )
+        queued_scheduled_scan = Scan.objects.get(
+            tenant_id=tenant.id,
+            provider=provider,
+            trigger=Scan.TriggerChoices.SCHEDULED,
+            state=StateChoices.AVAILABLE,
+        )
+        assert result["id"] == str(queued_scheduled_scan.id)
+
+    def test_does_not_dispatch_when_scheduled_scan_still_executing(
+        self, tenants_fixture, aws_provider, django_capture_on_commit_callbacks
+    ):
+        """Preserve existing behaviour: no dispatch while another scan executes."""
+        tenant = tenants_fixture[0]
+        provider = aws_provider
+        periodic_task = self._create_periodic_task(provider.id, tenant.id)
+        task_id = str(uuid.uuid4())
+        self._create_task_result(tenant.id, task_id)
+
+        Scan.objects.create(
+            tenant_id=tenant.id,
+            provider=provider,
+            name="Daily scheduled scan",
+            trigger=Scan.TriggerChoices.SCHEDULED,
+            state=StateChoices.EXECUTING,
+            scheduler_task_id=periodic_task.id,
+        )
+
+        with (
+            patch("tasks.tasks.perform_prowler_scan") as mock_scan,
+            patch("tasks.tasks._perform_scan_complete_tasks") as mock_complete_tasks,
+            patch("tasks.tasks.perform_scan_task.apply_async") as mock_apply_async,
+            self._override_task_request(perform_scheduled_scan_task, id=task_id),
+        ):
+            with django_capture_on_commit_callbacks(execute=True):
+                perform_scheduled_scan_task.run(
+                    tenant_id=str(tenant.id), provider_id=str(provider.id)
+                )
+
+        mock_scan.assert_not_called()
+        mock_complete_tasks.assert_not_called()
+        mock_apply_async.assert_not_called()
+        queued_scheduled_scan = Scan.objects.get(
+            tenant_id=tenant.id,
+            provider=provider,
+            trigger=Scan.TriggerChoices.SCHEDULED,
+            state=StateChoices.AVAILABLE,
+        )
+        assert queued_scheduled_scan.task.task_runner_task.status == "QUEUED"
+
     def test_creates_next_scheduled_scan_after_completion(
         self, tenants_fixture, aws_provider
     ):

@@ -10,6 +10,10 @@ All notable changes to the **Prowler API** are documented in this file.
 
 - Speed up compliance overview ingestion by reading ThreatScore mappings from the compliance template instead of each finding, generating time-ordered `uuid7` row ids and grouping inserted rows by framework and requirement [(#12738)](https://github.com/prowler-cloud/prowler/pull/12738)
 
+### 🐞 Fixed
+
+- A queued scan could be stuck forever if the scan blocking it never reached its own dispatch step; the next queued scan for a provider is now also dispatched when a scheduled run is queued and when a manual scan is created behind an active one [(#PR_NUMBER)](https://github.com/prowler-cloud/prowler/pull/PR_NUMBER)
+
 ---
 
 ## [1.42.0] (Prowler v5.41.0)
