@@ -1,3 +1,4 @@
+import { isSelfRegistrationEnabled } from "@/lib/shared/env";
 import { MembershipDetailData, TenantDetailData } from "@/types/users";
 
 import { MembershipsCardClient } from "./memberships-card-client";
@@ -19,6 +20,7 @@ export const MembershipsCard = ({
       tenantsMap={tenantsMap}
       hasManageAccount={hasManageAccount}
       sessionTenantId={sessionTenantId}
+      canCreateOrganization={isSelfRegistrationEnabled()}
     />
   );
 };

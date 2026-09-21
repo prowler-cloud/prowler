@@ -1,0 +1,2284 @@
+{
+  "framework": "FedRAMP-20x-KSI",
+  "name": "FedRAMP 20x Key Security Indicators (KSI) 2026",
+  "version": "2026.07.14.01",
+  "description": "FedRAMP 20x Key Security Indicators (KSIs) from the FedRAMP Consolidated Rules for 2026 (release 2026.07.14.01, https://github.com/FedRAMP/rules). KSIs are outcome-oriented indicators that cloud service providers must demonstrate through automation and continuous monitoring; they do not replace the FedRAMP Rules (FRR) program obligations. Class A authorizations mandate a subset of seven KSIs via FRC-CLA-MFR; Classes B and C apply the full catalog within the Minimum Assessment Scope, with five indicators optional on Class B and required on Class C.",
+  "icon": "fedramp",
+  "attributes_metadata": [
+    {
+      "key": "Theme",
+      "label": "Theme",
+      "type": "str",
+      "required": true,
+      "enum": [
+        "KSI-CED: Cybersecurity Education",
+        "KSI-CMT: Change Management",
+        "KSI-CNA: Cloud Native Architecture",
+        "KSI-IAM: Identity and Access Management",
+        "KSI-INR: Incident Response",
+        "KSI-MLA: Monitoring, Logging, and Auditing",
+        "KSI-PIY: Policy and Inventory",
+        "KSI-RPL: Recovery Planning",
+        "KSI-SCR: Supply Chain Risk",
+        "KSI-SVC: Service Configuration"
+      ]
+    },
+    {
+      "key": "NISTControls",
+      "label": "NIST SP 800-53 Controls",
+      "type": "str"
+    },
+    {
+      "key": "ClassApplicability",
+      "label": "Class Applicability",
+      "type": "str",
+      "required": true,
+      "enum": [
+        "Required for Classes B and C",
+        "Optional for Class B, required for Class C"
+      ]
+    }
+  ],
+  "outputs": {
+    "table_config": {
+      "group_by": "Theme"
+    },
+    "pdf_config": {
+      "language": "en",
+      "primary_color": "#1B3A5C",
+      "secondary_color": "#2E6DA4",
+      "bg_color": "#F0F4FA",
+      "group_by_field": "Theme",
+      "sections": [
+        "KSI-CED: Cybersecurity Education",
+        "KSI-CMT: Change Management",
+        "KSI-CNA: Cloud Native Architecture",
+        "KSI-IAM: Identity and Access Management",
+        "KSI-INR: Incident Response",
+        "KSI-MLA: Monitoring, Logging, and Auditing",
+        "KSI-PIY: Policy and Inventory",
+        "KSI-RPL: Recovery Planning",
+        "KSI-SCR: Supply Chain Risk",
+        "KSI-SVC: Service Configuration"
+      ],
+      "section_short_names": {
+        "KSI-CED: Cybersecurity Education": "KSI-CED",
+        "KSI-CMT: Change Management": "KSI-CMT",
+        "KSI-CNA: Cloud Native Architecture": "KSI-CNA",
+        "KSI-IAM: Identity and Access Management": "KSI-IAM",
+        "KSI-INR: Incident Response": "KSI-INR",
+        "KSI-MLA: Monitoring, Logging, and Auditing": "KSI-MLA",
+        "KSI-PIY: Policy and Inventory": "KSI-PIY",
+        "KSI-RPL: Recovery Planning": "KSI-RPL",
+        "KSI-SCR: Supply Chain Risk": "KSI-SCR",
+        "KSI-SVC: Service Configuration": "KSI-SVC"
+      },
+      "charts": [
+        {
+          "id": "theme_compliance",
+          "type": "horizontal_bar",
+          "group_by": "Theme",
+          "title": "Compliance Score by KSI Theme",
+          "y_label": "Theme",
+          "x_label": "Compliance %",
+          "value_source": "compliance_percent",
+          "color_mode": "by_value"
+        }
+      ],
+      "filter": {
+        "only_failed": true,
+        "include_manual": false
+      }
+    }
+  },
+  "requirements": [
+    {
+      "id": "KSI-CED-RAT",
+      "name": "Reviewing All Training",
+      "description": "The effectiveness of relevant cybersecurity education and training is persistently reviewed, including at least general training for all employees, role-specific training for employees in high risk roles, training for development and engineering staff on secure software delivery, and training for staff involved with incident response or disaster recovery.",
+      "attributes": {
+        "Theme": "KSI-CED: Cybersecurity Education",
+        "NISTControls": "CP-3, IR-2, PS-6, AT-2, AT-2.2, AT-2.3, AT-3.5, AT-4, IR-2.3, AT-3, SR-11.1",
+        "ClassApplicability": "Required for Classes B and C"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "KSI-CMT-LMC",
+      "name": "Logging Changes",
+      "description": "Modifications to the cloud service offering are logged and monitored.",
+      "attributes": {
+        "Theme": "KSI-CMT: Change Management",
+        "NISTControls": "AU-2, CM-3, CM-3.2, CM-4.2, CM-6, CM-8.3, MA-2",
+        "ClassApplicability": "Required for Classes B and C"
+      },
+      "checks": {
+        "aws": [
+          "cloudtrail_cloudwatch_logging_enabled",
+          "cloudtrail_multi_region_enabled",
+          "cloudtrail_multi_region_enabled_logging_management_events",
+          "cloudtrail_s3_dataevents_write_enabled",
+          "cloudwatch_changes_to_network_acls_alarm_configured",
+          "cloudwatch_changes_to_network_gateways_alarm_configured",
+          "cloudwatch_changes_to_network_route_tables_alarm_configured",
+          "cloudwatch_changes_to_vpcs_alarm_configured",
+          "cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled",
+          "cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled",
+          "cloudwatch_log_metric_filter_aws_organizations_changes",
+          "cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk",
+          "cloudwatch_log_metric_filter_for_s3_bucket_policy_changes",
+          "cloudwatch_log_metric_filter_policy_changes",
+          "cloudwatch_log_metric_filter_security_group_changes",
+          "config_recorder_all_regions_enabled"
+        ],
+        "azure": [
+          "monitor_alert_create_policy_assignment",
+          "monitor_alert_create_update_nsg",
+          "monitor_alert_create_update_public_ip_address_rule",
+          "monitor_alert_create_update_security_solution",
+          "monitor_alert_create_update_sqlserver_fr",
+          "monitor_alert_delete_nsg",
+          "monitor_alert_delete_policy_assignment",
+          "monitor_alert_delete_public_ip_address_rule",
+          "monitor_alert_delete_security_solution",
+          "monitor_alert_delete_sqlserver_fr",
+          "monitor_diagnostic_setting_with_appropriate_categories",
+          "monitor_diagnostic_settings_exists"
+        ],
+        "gcp": [
+          "iam_audit_logs_enabled",
+          "logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_compute_configuration_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_custom_role_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_sql_instance_configuration_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_vpc_network_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_vpc_network_route_changes_enabled"
+        ],
+        "kubernetes": [
+          "apiserver_audit_log_path_set"
+        ],
+        "m365": [
+          "exchange_organization_mailbox_auditing_enabled",
+          "exchange_user_mailbox_auditing_enabled",
+          "purview_audit_log_search_enabled"
+        ]
+      },
+      "config_requirements": [
+        {
+          "Check": "exchange_user_mailbox_auditing_enabled",
+          "ConfigKey": "audit_log_age",
+          "Operator": "gte",
+          "Value": 90,
+          "Provider": "m365"
+        },
+        {
+          "Check": "config_recorder_all_regions_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false,
+          "Provider": "aws"
+        }
+      ]
+    },
+    {
+      "id": "KSI-CMT-RMV",
+      "name": "Redeploying vs Modifying",
+      "description": "Changes to machine-based information resources are executed through the redeployment of version controlled resources rather than direct modification wherever reasonable.",
+      "attributes": {
+        "Theme": "KSI-CMT: Change Management",
+        "NISTControls": "CM-2, CM-3, CM-5, CM-6, CM-7, CM-8.1, SI-3",
+        "ClassApplicability": "Required for Classes B and C"
+      },
+      "checks": {
+        "aws": [
+          "autoscaling_group_using_ec2_launch_template",
+          "ecs_task_definitions_containers_readonly_access"
+        ],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [
+          "apiserver_always_pull_images_plugin",
+          "core_image_tag_fixed",
+          "core_readonly_root_filesystem_enabled"
+        ],
+        "m365": []
+      }
+    },
+    {
+      "id": "KSI-CMT-RVP",
+      "name": "Reviewing Change Procedures",
+      "description": "The effectiveness of documented change management procedures is persistently reviewed.",
+      "attributes": {
+        "Theme": "KSI-CMT: Change Management",
+        "NISTControls": "CM-3, CM-3.2, CM-3.4, CM-5, CM-7.1, CM-9",
+        "ClassApplicability": "Required for Classes B and C"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "KSI-CMT-VTD",
+      "name": "Validating Throughout Deployment",
+      "description": "Persistent testing and validation of changes throughout deployment is automated.",
+      "attributes": {
+        "Theme": "KSI-CMT: Change Management",
+        "NISTControls": "CM-3, CM-3.2, CM-4.2, SI-2",
+        "ClassApplicability": "Required for Classes B and C"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "KSI-CNA-DFP",
+      "name": "Defining Functionality and Privileges",
+      "description": "The functionality and privileges for infrastructure and services are strictly defined.",
+      "attributes": {
+        "Theme": "KSI-CNA: Cloud Native Architecture",
+        "NISTControls": "CM-2, SI-3",
+        "ClassApplicability": "Required for Classes B and C"
+      },
+      "checks": {
+        "aws": [
+          "ec2_instance_imdsv2_enabled",
+          "ecs_task_definitions_host_namespace_not_shared",
+          "ecs_task_definitions_host_networking_mode_users",
+          "ecs_task_definitions_no_privileged_containers",
+          "organizations_scp_check_deny_regions",
+          "sagemaker_notebook_instance_root_access_disabled"
+        ],
+        "azure": [],
+        "gcp": [
+          "cloudstorage_bucket_uniform_bucket_level_access"
+        ],
+        "kubernetes": [
+          "apiserver_auth_mode_include_node",
+          "apiserver_auth_mode_include_rbac",
+          "apiserver_auth_mode_not_always_allow",
+          "apiserver_namespace_lifecycle_plugin",
+          "apiserver_node_restriction_plugin",
+          "apiserver_security_context_deny_plugin",
+          "apiserver_service_account_plugin"
+        ],
+        "m365": [
+          "entra_admin_portals_access_restriction",
+          "entra_all_apps_conditional_access_coverage",
+          "entra_conditional_access_policy_app_enforced_restrictions",
+          "entra_conditional_access_policy_approved_client_app_required_for_mobile",
+          "entra_conditional_access_policy_device_code_flow_blocked",
+          "entra_managed_device_required_for_authentication"
+        ]
+      }
+    },
+    {
+      "id": "KSI-CNA-EIS",
+      "name": "Enforcing Intended State",
+      "description": "Automated services are used to persistently assess the security of all machine-based information resources and automatically enforce their intended operational state.",
+      "attributes": {
+        "Theme": "KSI-CNA: Cloud Native Architecture",
+        "NISTControls": "CA-2.1, CA-7.1",
+        "ClassApplicability": "Optional for Class B, required for Class C"
+      },
+      "checks": {
+        "aws": [
+          "config_delegated_admin_and_org_aggregator_all_regions",
+          "config_recorder_all_regions_enabled",
+          "securityhub_enabled",
+          "ssm_managed_compliant_patching"
+        ],
+        "azure": [
+          "defender_ensure_defender_cspm_is_on",
+          "policy_ensure_asc_enforcement_enabled"
+        ],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      },
+      "config_requirements": [
+        {
+          "Check": "config_recorder_all_regions_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false,
+          "Provider": "aws"
+        },
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false,
+          "Provider": "aws"
+        },
+        {
+          "Check": "config_delegated_admin_and_org_aggregator_all_regions",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false,
+          "Provider": "aws"
+        }
+      ]
+    },
+    {
+      "id": "KSI-CNA-IBP",
+      "name": "Implementing Best Practices",
+      "description": "The use and configuration of third-party machine-based information resources is persistently compared against the original provider's best practices and guidance.",
+      "attributes": {
+        "Theme": "KSI-CNA: Cloud Native Architecture",
+        "NISTControls": "AC-17.3, CM-2, PL-10",
+        "ClassApplicability": "Required for Classes B and C"
+      },
+      "checks": {
+        "aws": [
+          "awslambda_function_using_supported_runtimes",
+          "ec2_instance_with_outdated_ami",
+          "ecs_service_fargate_latest_platform_version",
+          "eks_cluster_uses_a_supported_version",
+          "kafka_cluster_uses_latest_version",
+          "opensearch_service_domains_updated_to_the_latest_service_software_version",
+          "rds_instance_deprecated_engine_version",
+          "wellarchitected_workload_no_high_or_medium_risks"
+        ],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": [
+          "defender_strict_preset_security_policy_enabled"
+        ]
+      },
+      "config_requirements": [
+        {
+          "Check": "awslambda_function_using_supported_runtimes",
+          "ConfigKey": "obsolete_lambda_runtimes",
+          "Operator": "superset",
+          "Value": [
+            "java8",
+            "go1.x",
+            "provided",
+            "python3.6",
+            "python2.7",
+            "python3.7",
+            "python3.8",
+            "nodejs4.3",
+            "nodejs4.3-edge",
+            "nodejs6.10",
+            "nodejs",
+            "nodejs8.10",
+            "nodejs10.x",
+            "nodejs12.x",
+            "nodejs14.x",
+            "nodejs16.x",
+            "dotnet5.0",
+            "dotnet6",
+            "dotnet7",
+            "dotnetcore1.0",
+            "dotnetcore2.0",
+            "dotnetcore2.1",
+            "dotnetcore3.1",
+            "ruby2.5",
+            "ruby2.7"
+          ],
+          "Provider": "aws"
+        }
+      ]
+    },
+    {
+      "id": "KSI-CNA-MAT",
+      "name": "Minimizing Attack Surface",
+      "description": "Machine-based information resources are persistently reviewed to ensure they have a minimal attack surface and that lateral movement is minimized if compromised.",
+      "attributes": {
+        "Theme": "KSI-CNA: Cloud Native Architecture",
+        "NISTControls": "AC-17.3, AC-18.1, AC-18.3, AC-20.1, CA-9, SC-7.3, SC-7.4, SC-7.5, SC-7.8, SC-8, SC-10, SI-10, SI-11, SI-16",
+        "ClassApplicability": "Required for Classes B and C"
+      },
+      "checks": {
+        "aws": [
+          "apigateway_restapi_public",
+          "appstream_fleet_default_internet_access_disabled",
+          "autoscaling_group_launch_configuration_no_public_ip",
+          "awslambda_function_not_publicly_accessible",
+          "awslambda_function_url_public",
+          "codebuild_project_not_publicly_accessible",
+          "dms_instance_no_public_access",
+          "ec2_instance_internet_facing_with_instance_profile",
+          "ec2_instance_public_ip",
+          "ec2_instance_uses_single_eni",
+          "ec2_launch_template_no_public_ip",
+          "ecs_service_no_assign_public_ip",
+          "ecs_task_set_no_assign_public_ip",
+          "efs_mount_target_not_publicly_accessible",
+          "eks_cluster_not_publicly_accessible",
+          "eks_cluster_private_nodes_enabled",
+          "elasticache_cluster_uses_public_subnet",
+          "elb_internet_facing",
+          "elbv2_internet_facing",
+          "emr_cluster_account_public_block_enabled",
+          "emr_cluster_master_nodes_no_public_ip",
+          "emr_cluster_publicly_accesible",
+          "kafka_cluster_is_public",
+          "lightsail_database_public",
+          "lightsail_instance_public",
+          "mq_broker_not_publicly_accessible",
+          "neptune_cluster_uses_public_subnet",
+          "opensearch_service_domains_not_publicly_accessible",
+          "rds_instance_no_public_access",
+          "redshift_cluster_public_access",
+          "sagemaker_models_network_isolation_enabled",
+          "sagemaker_notebook_instance_without_direct_internet_access_configured",
+          "sagemaker_training_jobs_network_isolation_enabled",
+          "vpc_peering_routing_tables_with_least_privilege",
+          "vpc_subnet_no_public_ip_by_default"
+        ],
+        "azure": [
+          "aisearch_service_not_publicly_accessible",
+          "aks_clusters_created_with_private_nodes",
+          "aks_clusters_public_access_disabled",
+          "app_function_ftps_deployment_disabled",
+          "app_function_not_publicly_accessible",
+          "containerregistry_not_publicly_accessible",
+          "cosmosdb_account_public_network_access_disabled",
+          "databricks_workspace_no_public_ip_enabled",
+          "databricks_workspace_public_network_access_disabled",
+          "postgresql_flexible_server_allow_access_services_disabled",
+          "sqlserver_unrestricted_inbound_access",
+          "storage_account_public_network_access_disabled",
+          "storage_default_network_access_rule_is_denied"
+        ],
+        "gcp": [
+          "cloudfunction_function_not_publicly_accessible",
+          "cloudsql_instance_private_ip_assignment",
+          "cloudsql_instance_public_access",
+          "cloudsql_instance_public_ip",
+          "cloudsql_instance_sqlserver_cross_db_ownership_chaining_flag",
+          "cloudsql_instance_sqlserver_external_scripts_enabled_flag",
+          "cloudsql_instance_sqlserver_remote_access_flag",
+          "compute_instance_block_project_wide_ssh_keys_disabled",
+          "compute_instance_ip_forwarding_is_enabled",
+          "compute_instance_public_ip",
+          "compute_instance_single_network_interface"
+        ],
+        "kubernetes": [
+          "apiserver_anonymous_requests",
+          "apiserver_disable_profiling",
+          "apiserver_no_always_admit_plugin",
+          "controllermanager_disable_profiling",
+          "core_minimize_admission_windows_hostprocess_containers",
+          "core_minimize_allowPrivilegeEscalation_containers",
+          "core_minimize_containers_added_capabilities",
+          "core_minimize_containers_capabilities_assigned",
+          "core_minimize_hostpath_volume_mounts",
+          "core_minimize_net_raw_capability_admission",
+          "core_minimize_privileged_containers",
+          "core_minimize_root_containers_admission",
+          "kubelet_disable_read_only_port",
+          "scheduler_profiling"
+        ],
+        "m365": [
+          "entra_device_registration_laps_enabled",
+          "exchange_roles_assignment_policy_addins_disabled",
+          "sharepoint_onedrive_sync_restricted_unmanaged_devices",
+          "teams_email_sending_to_channel_disabled",
+          "teams_external_file_sharing_restricted",
+          "teams_external_users_cannot_start_conversations",
+          "teams_meeting_anonymous_user_join_disabled",
+          "teams_meeting_anonymous_user_start_disabled",
+          "teams_meeting_chat_anonymous_users_disabled",
+          "teams_meeting_dial_in_lobby_bypass_disabled",
+          "teams_meeting_external_chat_disabled",
+          "teams_meeting_external_control_disabled",
+          "teams_meeting_external_lobby_bypass_disabled",
+          "teams_meeting_presenters_restricted",
+          "teams_meeting_recording_disabled",
+          "teams_unmanaged_communication_disabled"
+        ]
+      }
+    },
+    {
+      "id": "KSI-CNA-OFA",
+      "name": "Optimizing for Availability",
+      "description": "Machine-based information resources are persistently reviewed to ensure they are appropriately optimized for high availability and rapid recovery.",
+      "attributes": {
+        "Theme": "KSI-CNA: Cloud Native Architecture",
+        "ClassApplicability": "Required for Classes B and C"
+      },
+      "checks": {
+        "aws": [
+          "autoscaling_group_capacity_rebalance_enabled",
+          "autoscaling_group_elb_health_check_enabled",
+          "autoscaling_group_multiple_az",
+          "autoscaling_group_multiple_instance_types",
+          "awslambda_function_vpc_multi_az",
+          "cloudfront_distributions_multiple_origin_failover_configured",
+          "directconnect_connection_redundancy",
+          "directconnect_virtual_interface_redundancy",
+          "dms_instance_multi_az_enabled",
+          "documentdb_cluster_multi_az_enabled",
+          "dynamodb_accelerator_cluster_multi_az",
+          "dynamodb_table_autoscaling_enabled",
+          "dynamodb_table_deletion_protection_enabled",
+          "dynamodb_tables_pitr_enabled",
+          "efs_multi_az_enabled",
+          "elasticache_redis_cluster_automatic_failover_enabled",
+          "elasticache_redis_cluster_multi_az_enabled",
+          "elb_cross_zone_load_balancing_enabled",
+          "elb_is_in_multiple_az",
+          "elbv2_cross_zone_load_balancing_enabled",
+          "elbv2_is_in_multiple_az",
+          "eventbridge_global_endpoint_event_replication_enabled",
+          "fsx_windows_file_system_multi_az_enabled",
+          "mq_broker_active_deployment_mode",
+          "mq_broker_cluster_deployment_mode",
+          "neptune_cluster_multi_az",
+          "networkfirewall_multi_az",
+          "opensearch_service_domains_fault_tolerant_data_nodes",
+          "opensearch_service_domains_fault_tolerant_master_nodes",
+          "rds_cluster_multi_az",
+          "rds_instance_multi_az",
+          "redshift_cluster_multi_az_enabled",
+          "sagemaker_endpoint_config_prod_variant_instances",
+          "storagegateway_gateway_fault_tolerant",
+          "vpc_endpoint_multi_az_enabled",
+          "vpc_subnet_different_az",
+          "vpc_vpn_connection_tunnels_up"
+        ],
+        "azure": [
+          "cosmosdb_account_automatic_failover_enabled",
+          "mysql_flexible_server_high_availability_enabled",
+          "postgresql_flexible_server_high_availability_enabled",
+          "vm_backup_enabled",
+          "vm_scaleset_associated_with_load_balancer"
+        ],
+        "gcp": [
+          "cloudsql_instance_high_availability_enabled",
+          "compute_instance_automatic_restart_enabled",
+          "compute_instance_group_autohealing_enabled",
+          "compute_instance_group_load_balancer_attached",
+          "compute_instance_group_multiple_zones",
+          "compute_instance_on_host_maintenance_migrate",
+          "compute_instance_preemptible_vm_disabled"
+        ],
+        "kubernetes": [
+          "core_liveness_probe_configured",
+          "core_readiness_probe_configured"
+        ],
+        "m365": []
+      },
+      "config_requirements": [
+        {
+          "Check": "awslambda_function_vpc_multi_az",
+          "ConfigKey": "lambda_min_azs",
+          "Operator": "gte",
+          "Value": 2,
+          "Provider": "aws"
+        },
+        {
+          "Check": "elb_is_in_multiple_az",
+          "ConfigKey": "elb_min_azs",
+          "Operator": "gte",
+          "Value": 2,
+          "Provider": "aws"
+        },
+        {
+          "Check": "compute_instance_group_multiple_zones",
+          "ConfigKey": "mig_min_zones",
+          "Operator": "gte",
+          "Value": 2,
+          "Provider": "gcp"
+        }
+      ]
+    },
+    {
+      "id": "KSI-CNA-RNT",
+      "name": "Restricting Network Traffic",
+      "description": "Machine-based information resources are persistently reviewed to ensure they are appropriately configured to limit inbound and outbound network traffic.",
+      "attributes": {
+        "Theme": "KSI-CNA: Cloud Native Architecture",
+        "NISTControls": "AC-17.3, CA-9, CM-7.1, SC-7.5, SI-8",
+        "ClassApplicability": "Required for Classes B and C"
+      },
+      "checks": {
+        "aws": [
+          "ec2_networkacl_allow_ingress_any_port",
+          "ec2_networkacl_allow_ingress_tcp_port_22",
+          "ec2_networkacl_allow_ingress_tcp_port_3389",
+          "ec2_securitygroup_allow_ingress_from_internet_to_all_ports",
+          "ec2_securitygroup_allow_ingress_from_internet_to_any_port",
+          "ec2_securitygroup_allow_ingress_from_internet_to_any_port_from_ip",
+          "ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_3389",
+          "ec2_securitygroup_allow_wide_open_public_ipv4",
+          "ec2_securitygroup_default_restrict_traffic"
+        ],
+        "azure": [
+          "network_http_internet_access_restricted",
+          "network_rdp_internet_access_restricted",
+          "network_ssh_internet_access_restricted",
+          "network_udp_internet_access_restricted"
+        ],
+        "gcp": [
+          "compute_firewall_rdp_access_from_the_internet_allowed",
+          "compute_firewall_ssh_access_from_the_internet_allowed",
+          "compute_network_default_in_use"
+        ],
+        "kubernetes": [
+          "apiserver_deny_service_external_ips",
+          "controllermanager_bind_address",
+          "core_minimize_admission_hostport_containers",
+          "core_minimize_hostNetwork_containers",
+          "scheduler_bind_address"
+        ],
+        "m365": []
+      },
+      "config_requirements": [
+        {
+          "Check": "ec2_securitygroup_allow_ingress_from_internet_to_any_port",
+          "ConfigKey": "ec2_allowed_interface_types",
+          "Operator": "subset",
+          "Value": [
+            "api_gateway_managed",
+            "vpc_endpoint"
+          ],
+          "Provider": "aws"
+        },
+        {
+          "Check": "ec2_securitygroup_allow_ingress_from_internet_to_any_port",
+          "ConfigKey": "ec2_allowed_instance_owners",
+          "Operator": "subset",
+          "Value": [
+            "amazon-elb"
+          ],
+          "Provider": "aws"
+        },
+        {
+          "Check": "ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports",
+          "ConfigKey": "ec2_high_risk_ports",
+          "Operator": "superset",
+          "Value": [
+            25,
+            110,
+            135,
+            143,
+            445,
+            3000,
+            4333,
+            5000,
+            5500,
+            8080,
+            8088
+          ],
+          "Provider": "aws"
+        }
+      ]
+    },
+    {
+      "id": "KSI-CNA-RVP",
+      "name": "Reviewing Protections",
+      "description": "The effectiveness of protection against denial of service attacks and other unwanted activity for machine-based information resources is persistently reviewed.",
+      "attributes": {
+        "Theme": "KSI-CNA: Cloud Native Architecture",
+        "NISTControls": "SC-5, SI-8, SI-8.2",
+        "ClassApplicability": "Required for Classes B and C"
+      },
+      "checks": {
+        "aws": [
+          "apigateway_restapi_waf_acl_attached",
+          "cloudfront_distributions_using_waf",
+          "cognito_user_pool_waf_acl_attached",
+          "elb_desync_mitigation_mode",
+          "elbv2_desync_mitigation_mode",
+          "elbv2_waf_acl_attached",
+          "fms_policy_compliant",
+          "shield_advanced_protection_in_associated_elastic_ips",
+          "shield_advanced_protection_in_classic_load_balancers",
+          "shield_advanced_protection_in_cloudfront_distributions",
+          "shield_advanced_protection_in_global_accelerators",
+          "shield_advanced_protection_in_internet_facing_load_balancers",
+          "shield_advanced_protection_in_route53_hosted_zones",
+          "waf_global_rule_with_conditions",
+          "waf_global_rulegroup_not_empty",
+          "waf_global_webacl_with_rules",
+          "waf_regional_rule_with_conditions",
+          "waf_regional_rulegroup_not_empty",
+          "waf_regional_webacl_with_rules",
+          "wafv2_webacl_with_rules"
+        ],
+        "azure": [
+          "network_vnet_ddos_protection_enabled",
+          "postgresql_flexible_server_connection_throttling_on"
+        ],
+        "gcp": [],
+        "kubernetes": [
+          "apiserver_event_rate_limit",
+          "apiserver_request_timeout_set",
+          "core_cpu_limits_set",
+          "core_memory_limits_set",
+          "kubelet_streaming_connection_timeout"
+        ],
+        "m365": []
+      }
+    },
+    {
+      "id": "KSI-CNA-ULN",
+      "name": "Using Logical Networking",
+      "description": "Logical networking and related capabilities are used and persistently reviewed to enforce traffic flow controls.",
+      "attributes": {
+        "Theme": "KSI-CNA: Cloud Native Architecture",
+        "NISTControls": "AC-12, AC-17.3, CA-9, SC-4, SC-7, SC-7.7, SC-8, SC-10",
+        "ClassApplicability": "Required for Classes B and C"
+      },
+      "checks": {
+        "aws": [
+          "eks_cluster_network_policy_enabled",
+          "eks_cluster_vpc_cni_network_policy_enforced",
+          "networkfirewall_in_all_vpc",
+          "networkfirewall_policy_default_action_fragmented_packets",
+          "networkfirewall_policy_default_action_full_packets",
+          "networkfirewall_policy_rule_group_associated",
+          "vpc_endpoint_connections_trust_boundaries",
+          "vpc_endpoint_services_allowed_principals_trust_boundaries",
+          "vpc_subnet_separate_private_public"
+        ],
+        "azure": [
+          "aks_network_policy_enabled",
+          "network_bastion_host_exists",
+          "network_subnet_nsg_associated"
+        ],
+        "gcp": [
+          "cloudfunction_function_inside_vpc",
+          "cloudstorage_uses_vpc_service_controls"
+        ],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "KSI-IAM-AAM",
+      "name": "Automating Account Management",
+      "description": "The lifecycle and privileges of all accounts, roles, and groups are securely managed using automation.",
+      "attributes": {
+        "Theme": "KSI-IAM: Identity and Access Management",
+        "NISTControls": "AC-2.2, AC-2.3, AC-2.13, AC-6.7, IA-4.4, IA-12, IA-12.2, IA-12.3, IA-12.5",
+        "ClassApplicability": "Required for Classes B and C"
+      },
+      "checks": {
+        "aws": [
+          "iam_no_root_access_key",
+          "iam_root_credentials_management_enabled",
+          "iam_user_accesskey_unused",
+          "iam_user_console_access_unused",
+          "iam_user_no_setup_initial_access_key",
+          "organizations_delegated_administrators"
+        ],
+        "azure": [
+          "entra_user_with_recent_sign_in"
+        ],
+        "gcp": [
+          "iam_service_account_unused"
+        ],
+        "kubernetes": [],
+        "m365": [
+          "entra_dynamic_group_for_guests_created"
+        ]
+      },
+      "config_requirements": [
+        {
+          "Check": "iam_user_accesskey_unused",
+          "ConfigKey": "max_unused_access_keys_days",
+          "Operator": "lte",
+          "Value": 45,
+          "Provider": "aws"
+        },
+        {
+          "Check": "iam_user_console_access_unused",
+          "ConfigKey": "max_console_access_days",
+          "Operator": "lte",
+          "Value": 45,
+          "Provider": "aws"
+        },
+        {
+          "Check": "iam_service_account_unused",
+          "ConfigKey": "max_unused_account_days",
+          "Operator": "lte",
+          "Value": 180,
+          "Provider": "gcp"
+        }
+      ]
+    },
+    {
+      "id": "KSI-IAM-APM",
+      "name": "Adopting Passwordless Methods",
+      "description": "Secure passwordless methods are used for user authentication and authorization when feasible, otherwise strong passwords with phishing-resistant MFA is used.",
+      "attributes": {
+        "Theme": "KSI-IAM: Identity and Access Management",
+        "NISTControls": "AC-3, IA-5.1, IA-5.2, IA-5.6, IA-6, AC-2, IA-2, IA-2.1, IA-2.2, IA-2.8, IA-5, IA-8, SC-23",
+        "ClassApplicability": "Required for Classes B and C"
+      },
+      "checks": {
+        "aws": [
+          "cognito_user_pool_password_policy_lowercase",
+          "cognito_user_pool_password_policy_minimum_length_14",
+          "cognito_user_pool_password_policy_number",
+          "cognito_user_pool_password_policy_symbol",
+          "cognito_user_pool_password_policy_uppercase",
+          "iam_password_policy_lowercase",
+          "iam_password_policy_minimum_length_14",
+          "iam_password_policy_number",
+          "iam_password_policy_reuse_24",
+          "iam_password_policy_symbol",
+          "iam_password_policy_uppercase",
+          "iam_root_hardware_mfa_enabled",
+          "iam_user_hardware_mfa_enabled"
+        ],
+        "azure": [
+          "vm_linux_enforce_ssh_authentication"
+        ],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": [
+          "entra_admin_users_phishing_resistant_mfa_enabled",
+          "entra_break_glass_account_fido2_security_key_registered",
+          "entra_password_protection_custom_banned_list_enforced",
+          "entra_password_protection_on_premises_enforced"
+        ]
+      }
+    },
+    {
+      "id": "KSI-IAM-ELP",
+      "name": "Ensuring Least Privilege",
+      "description": "Identity and access management measures are used and persistently reviewed to ensure each user or device can only access the resources they need.",
+      "attributes": {
+        "Theme": "KSI-IAM: Identity and Access Management",
+        "NISTControls": "AC-2.5, AC-2.6, AC-3, AC-4, AC-6, AC-12, AC-14, AC-17, AC-17.1, AC-17.2, AC-17.3, AC-20, AC-20.1, CM-2.7, CM-9, IA-2, IA-3, IA-4, IA-4.4, IA-5.2, IA-5.6, IA-11, PS-2, PS-3, PS-4, PS-5, PS-6, SC-4, SC-20, SC-21, SC-22, SC-23, SC-39, SI-3",
+        "ClassApplicability": "Required for Classes B and C"
+      },
+      "checks": {
+        "aws": [
+          "accessanalyzer_enabled",
+          "accessanalyzer_enabled_without_findings",
+          "bedrock_agent_role_least_privilege",
+          "bedrock_agent_role_not_shared_across_agents",
+          "efs_access_point_enforce_root_directory",
+          "efs_access_point_enforce_user_identity",
+          "iam_role_access_not_stale_to_bedrock",
+          "iam_user_access_not_stale_to_bedrock",
+          "iam_user_access_not_stale_to_sagemaker",
+          "opensearch_service_domains_access_control_enabled"
+        ],
+        "azure": [
+          "aks_cluster_rbac_enabled",
+          "entra_policy_default_users_cannot_create_security_groups",
+          "entra_policy_ensure_default_user_cannot_create_apps",
+          "entra_policy_ensure_default_user_cannot_create_tenants",
+          "entra_policy_guest_invite_only_for_admin_roles",
+          "entra_policy_guest_users_access_restrictions",
+          "entra_policy_restricts_user_consent_for_apps",
+          "entra_policy_user_consent_for_verified_apps",
+          "entra_users_cannot_create_microsoft_365_groups",
+          "keyvault_rbac_enabled"
+        ],
+        "gcp": [
+          "compute_instance_default_service_account_in_use",
+          "compute_instance_default_service_account_in_use_with_full_api_access"
+        ],
+        "kubernetes": [
+          "kubelet_authorization_mode",
+          "rbac_cluster_admin_usage",
+          "rbac_minimize_csr_approval_access",
+          "rbac_minimize_node_proxy_subresource_access",
+          "rbac_minimize_pod_creation_access",
+          "rbac_minimize_pv_creation_access",
+          "rbac_minimize_secret_access",
+          "rbac_minimize_service_account_token_creation",
+          "rbac_minimize_webhook_config_access",
+          "rbac_minimize_wildcard_use_roles"
+        ],
+        "m365": [
+          "admincenter_users_admins_reduced_license_footprint",
+          "admincenter_users_between_two_and_four_global_admins",
+          "entra_access_review_guest_users_configured",
+          "entra_access_review_privileged_roles_configured",
+          "entra_admin_users_cloud_only",
+          "entra_conditional_access_policy_groups_management_restricted",
+          "entra_device_registration_global_admins_not_local_admins",
+          "entra_device_registration_registering_user_not_local_admin",
+          "entra_policy_default_user_cannot_create_m365_groups",
+          "entra_policy_default_user_cannot_create_security_groups",
+          "entra_policy_guest_invite_only_for_admin_roles",
+          "entra_policy_guest_users_access_restrictions"
+        ]
+      },
+      "config_requirements": [
+        {
+          "Check": "iam_user_access_not_stale_to_bedrock",
+          "ConfigKey": "max_unused_bedrock_access_days",
+          "Operator": "lte",
+          "Value": 60,
+          "Provider": "aws"
+        },
+        {
+          "Check": "iam_role_access_not_stale_to_bedrock",
+          "ConfigKey": "max_unused_bedrock_access_days",
+          "Operator": "lte",
+          "Value": 60,
+          "Provider": "aws"
+        },
+        {
+          "Check": "iam_user_access_not_stale_to_sagemaker",
+          "ConfigKey": "max_unused_sagemaker_access_days",
+          "Operator": "lte",
+          "Value": 90,
+          "Provider": "aws"
+        },
+        {
+          "Check": "accessanalyzer_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false,
+          "Provider": "aws"
+        }
+      ]
+    },
+    {
+      "id": "KSI-IAM-JIT",
+      "name": "Authorizing Just-in-Time",
+      "description": "A least-privileged, role and attribute-based, and just-in-time security authorization model is used and persistently reviewed for all user and non-user accounts and services.",
+      "attributes": {
+        "Theme": "KSI-IAM: Identity and Access Management",
+        "NISTControls": "AC-2, AC-2.1, AC-2.2, AC-2.3, AC-2.4, AC-2.6, AC-3, AC-4, AC-5, AC-6, AC-6.1, AC-6.2, AC-6.5, AC-6.7, AC-6.9, AC-6.10, AC-7, AC-20.1, AC-17, AU-9.4, CM-5, CM-7, CM-7.2, CM-7.5, CM-9, IA-4, IA-4.4, IA-7, PS-2, PS-3, PS-4, PS-5, PS-6, PS-9, RA-5.5, SC-2, SC-23, SC-39",
+        "ClassApplicability": "Required for Classes B and C"
+      },
+      "checks": {
+        "aws": [
+          "bedrock_api_key_no_administrative_privileges",
+          "bedrock_full_access_policy_attached",
+          "iam_aws_attached_policy_no_administrative_privileges",
+          "iam_customer_attached_policy_no_administrative_privileges",
+          "iam_customer_unattached_policy_no_administrative_privileges",
+          "iam_group_administrator_access_policy",
+          "iam_inline_policy_allows_privilege_escalation",
+          "iam_inline_policy_no_administrative_privileges",
+          "iam_inline_policy_no_wildcard_marketplace_subscribe",
+          "iam_no_custom_policy_permissive_role_assumption",
+          "iam_policy_allows_privilege_escalation",
+          "iam_policy_attached_only_to_group_or_roles",
+          "iam_policy_cloudshell_admin_not_attached",
+          "iam_policy_no_agentcore_workload_access_token_wildcard",
+          "iam_policy_no_full_access_to_cloudtrail",
+          "iam_policy_no_full_access_to_kms",
+          "iam_policy_no_wildcard_marketplace_subscribe",
+          "iam_policy_passrole_to_bedrock_agentcore_restricted",
+          "iam_role_administratoraccess_policy",
+          "iam_role_cross_service_confused_deputy_prevention",
+          "iam_role_service_trust_restricts_source_to_account",
+          "iam_user_administrator_access_policy",
+          "iam_user_with_temporary_credentials",
+          "rolesanywhere_profile_restricts_session_permissions"
+        ],
+        "azure": [
+          "app_function_identity_without_admin_privileges",
+          "entra_global_admin_in_less_than_five_users",
+          "iam_custom_role_has_permissions_to_administer_resource_locks",
+          "iam_role_user_access_admin_restricted",
+          "iam_subscription_roles_owner_custom_not_created",
+          "vm_jit_access_enabled"
+        ],
+        "gcp": [
+          "iam_no_service_roles_at_project_level",
+          "iam_role_kms_enforce_separation_of_duties",
+          "iam_role_sa_enforce_separation_of_duties",
+          "iam_sa_no_administrative_privileges"
+        ],
+        "kubernetes": [],
+        "m365": [
+          "entra_admin_users_sign_in_frequency_enabled",
+          "entra_intune_enrollment_sign_in_frequency_every_time",
+          "entra_pim_global_administrator_approval_required",
+          "entra_pim_privileged_role_administrator_approval_required",
+          "entra_service_principal_privileged_role_no_owners"
+        ]
+      }
+    },
+    {
+      "id": "KSI-IAM-SNU",
+      "name": "Securing Non-User Authentication",
+      "description": "Appropriately secure authentication methods are used and persistently reviewed for non-user accounts and services.",
+      "attributes": {
+        "Theme": "KSI-IAM: Identity and Access Management",
+        "NISTControls": "AC-2, AC-2.2, AC-4, AC-6.5, IA-3, IA-5.2, RA-5.5",
+        "ClassApplicability": "Required for Classes B and C"
+      },
+      "checks": {
+        "aws": [
+          "apigateway_restapi_authorizers_enabled",
+          "apigatewayv2_api_authorizers_enabled",
+          "appsync_graphql_api_no_api_key_authentication",
+          "bedrock_api_key_no_long_term_credentials",
+          "dms_endpoint_neptune_iam_authorization_enabled",
+          "ec2_instance_profile_attached",
+          "elasticache_redis_replication_group_auth_enabled",
+          "iam_rotate_access_key_90_days",
+          "iam_user_two_active_access_key",
+          "kafka_cluster_unrestricted_access_disabled",
+          "neptune_cluster_iam_authentication_enabled",
+          "rds_cluster_iam_authentication_enabled",
+          "rds_instance_iam_authentication_enabled"
+        ],
+        "azure": [
+          "aks_cluster_local_accounts_disabled",
+          "app_function_identity_is_configured",
+          "app_register_with_identity",
+          "cosmosdb_account_use_aad_and_rbac",
+          "storage_account_key_access_disabled",
+          "storage_default_to_entra_authorization_enabled"
+        ],
+        "gcp": [
+          "apikeys_api_restrictions_configured",
+          "apikeys_key_exists",
+          "apikeys_key_rotated_in_90_days",
+          "iam_sa_no_user_managed_keys",
+          "iam_sa_user_managed_key_rotate_90_days",
+          "iam_sa_user_managed_key_unused",
+          "iam_workload_identity_pool_provider_attribute_condition"
+        ],
+        "kubernetes": [
+          "apiserver_kubelet_cert_auth",
+          "apiserver_kubelet_tls_auth",
+          "apiserver_no_token_auth_file",
+          "apiserver_service_account_key_file_set",
+          "apiserver_service_account_lookup_true",
+          "controllermanager_service_account_credentials",
+          "controllermanager_service_account_private_key_file",
+          "kubelet_client_ca_file_set"
+        ],
+        "m365": [
+          "entra_app_registration_client_secret_unused",
+          "entra_default_app_management_policy_enabled",
+          "entra_service_principal_no_secrets_for_permanent_tier0_roles",
+          "exchange_shared_mailbox_sign_in_disabled"
+        ]
+      },
+      "config_requirements": [
+        {
+          "Check": "iam_sa_user_managed_key_unused",
+          "ConfigKey": "max_unused_account_days",
+          "Operator": "lte",
+          "Value": 180,
+          "Provider": "gcp"
+        }
+      ]
+    },
+    {
+      "id": "KSI-IAM-SUS",
+      "name": "Responding to Suspicious Activity",
+      "description": "Accounts with privileged access are disabled or otherwise secured in response to suspicious activity.",
+      "attributes": {
+        "Theme": "KSI-IAM: Identity and Access Management",
+        "NISTControls": "AC-2, AC-2.1, AC-2.3, AC-2.13, AC-7, PS-4, PS-8",
+        "ClassApplicability": "Required for Classes B and C"
+      },
+      "checks": {
+        "aws": [
+          "cognito_user_pool_advanced_security_enabled",
+          "cognito_user_pool_blocks_compromised_credentials_sign_in_attempts",
+          "cognito_user_pool_blocks_potential_malicious_sign_in_attempts"
+        ],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": [
+          "entra_conditional_access_policy_block_elevated_insider_risk",
+          "entra_conditional_access_policy_block_high_medium_sign_in_risk",
+          "entra_conditional_access_policy_block_o365_elevated_insider_risk",
+          "entra_identity_protection_sign_in_risk_enabled",
+          "entra_identity_protection_user_risk_enabled",
+          "entra_password_protection_lockout_duration_configured",
+          "entra_password_protection_lockout_threshold_limited"
+        ]
+      },
+      "config_requirements": []
+    },
+    {
+      "id": "KSI-INR-AAR",
+      "name": "Generating After Action Reports",
+      "description": "Incident after action reports are generated and lessons learned are persistently incorporated.",
+      "attributes": {
+        "Theme": "KSI-INR: Incident Response",
+        "NISTControls": "IR-3, IR-4, IR-4.1, IR-8",
+        "ClassApplicability": "Required for Classes B and C"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "KSI-INR-RIR",
+      "name": "Reviewing Incident Response Procedures",
+      "description": "The effectiveness of documented incident response procedures is persistently reviewed.",
+      "attributes": {
+        "Theme": "KSI-INR: Incident Response",
+        "NISTControls": "IR-4, IR-4.1, IR-6, IR-6.1, IR-6.3, IR-7, IR-7.1, IR-8, IR-8.1, SI-4.5",
+        "ClassApplicability": "Required for Classes B and C"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      },
+      "config_requirements": []
+    },
+    {
+      "id": "KSI-INR-RPI",
+      "name": "Reviewing Past Incidents",
+      "description": "Past incidents are persistently reviewed for patterns or vulnerabilities that were not previously apparent or identified.",
+      "attributes": {
+        "Theme": "KSI-INR: Incident Response",
+        "NISTControls": "IR-3, IR-4, IR-4.1, IR-5, IR-8",
+        "ClassApplicability": "Required for Classes B and C"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "KSI-MLA-ALA",
+      "name": "Authorizing Log Access",
+      "description": "A least-privileged, role and attribute-based, and just-in-time access authorization model is used and persistently reviewed for access to log data based on organizationally defined data sensitivity.",
+      "attributes": {
+        "Theme": "KSI-MLA: Monitoring, Logging, and Auditing",
+        "NISTControls": "SI-11",
+        "ClassApplicability": "Optional for Class B, required for Class C"
+      },
+      "checks": {
+        "aws": [
+          "cloudtrail_logs_s3_bucket_is_not_publicly_accessible",
+          "cloudwatch_cross_account_sharing_disabled",
+          "cloudwatch_log_group_not_publicly_accessible",
+          "iam_inline_policy_no_full_access_to_cloudtrail"
+        ],
+        "azure": [
+          "monitor_storage_account_with_activity_logs_is_private"
+        ],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "KSI-MLA-EVC",
+      "name": "Evaluating Configurations",
+      "description": "The configuration of machine-based information resources, especially infrastructure as code, is persistently evaluated and tested.",
+      "attributes": {
+        "Theme": "KSI-MLA: Monitoring, Logging, and Auditing",
+        "NISTControls": "CA-7, CM-2, CM-6, SI-7.7",
+        "ClassApplicability": "Required for Classes B and C"
+      },
+      "checks": {
+        "aws": [
+          "config_recorder_all_regions_enabled"
+        ],
+        "azure": [
+          "sqlserver_va_periodic_recurring_scans_enabled",
+          "sqlserver_vulnerability_assessment_enabled"
+        ],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      },
+      "config_requirements": [
+        {
+          "Check": "config_recorder_all_regions_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false,
+          "Provider": "aws"
+        }
+      ]
+    },
+    {
+      "id": "KSI-MLA-LET",
+      "name": "Logging Event Types",
+      "description": "A list of information resources and event types that will be logged, monitored, and audited is maintained and persistently reviewed to ensure these activities occur.",
+      "attributes": {
+        "Theme": "KSI-MLA: Monitoring, Logging, and Auditing",
+        "NISTControls": "AC-2.4, AC-6.9, AC-17.1, AC-20.1, AU-2, AU-7.1, AU-12, SI-4.4, SI-4.5, SI-7.7",
+        "ClassApplicability": "Required for Classes B and C"
+      },
+      "checks": {
+        "aws": [
+          "apigateway_restapi_logging_enabled",
+          "apigatewayv2_api_access_logging_enabled",
+          "appsync_field_level_logging_enabled",
+          "athena_workgroup_logging_enabled",
+          "awslambda_function_invoke_api_operations_cloudtrail_logging_enabled",
+          "bedrock_model_invocation_logging_enabled",
+          "cloudfront_distributions_logging_enabled",
+          "cloudtrail_bedrock_logging_enabled",
+          "cloudtrail_logs_s3_bucket_access_logging_enabled",
+          "cloudtrail_multi_region_enabled_logging_management_events",
+          "cloudtrail_s3_dataevents_read_enabled",
+          "cloudtrail_s3_dataevents_write_enabled",
+          "codebuild_project_logging_enabled",
+          "config_recorder_all_regions_enabled",
+          "datasync_task_logging_enabled",
+          "directoryservice_directory_log_forwarding_enabled",
+          "dms_replication_task_source_logging_enabled",
+          "dms_replication_task_target_logging_enabled",
+          "documentdb_cluster_cloudwatch_log_export",
+          "ec2_client_vpn_endpoint_connection_logging_enabled",
+          "ecs_cluster_container_insights_enabled",
+          "ecs_task_definitions_logging_enabled",
+          "eks_control_plane_logging_all_types_enabled",
+          "elasticbeanstalk_environment_cloudwatch_logging_enabled",
+          "elb_logging_enabled",
+          "elbv2_logging_enabled",
+          "glue_etl_jobs_logging_enabled",
+          "mq_broker_logging_enabled",
+          "neptune_cluster_integration_cloudwatch_logs",
+          "networkfirewall_logging_enabled",
+          "opensearch_service_domains_audit_logging_enabled",
+          "opensearch_service_domains_cloudwatch_logging_enabled",
+          "rds_cluster_integration_cloudwatch_logs",
+          "rds_instance_enhanced_monitoring_enabled",
+          "rds_instance_integration_cloudwatch_logs",
+          "redshift_cluster_audit_logging",
+          "route53_public_hosted_zones_cloudwatch_logging_enabled",
+          "s3_bucket_server_access_logging_enabled",
+          "stepfunctions_statemachine_logging_enabled",
+          "vpc_flow_logs_enabled",
+          "waf_global_webacl_logging_enabled",
+          "waf_regional_webacl_logging_enabled",
+          "wafv2_webacl_logging_enabled"
+        ],
+        "azure": [
+          "aks_cluster_azure_monitor_enabled",
+          "app_function_application_insights_enabled",
+          "app_http_logs_enabled",
+          "appinsights_ensure_is_configured",
+          "defender_auto_provisioning_log_analytics_agent_vms_on",
+          "monitor_diagnostic_setting_with_appropriate_categories",
+          "monitor_diagnostic_settings_exists",
+          "mysql_flexible_server_audit_log_connection_activated",
+          "mysql_flexible_server_audit_log_enabled",
+          "network_flow_log_captured_sent",
+          "network_flow_log_more_than_90_days",
+          "network_watcher_enabled",
+          "postgresql_flexible_server_log_checkpoints_on",
+          "postgresql_flexible_server_log_connections_on",
+          "postgresql_flexible_server_log_disconnections_on",
+          "sqlserver_auditing_enabled",
+          "sqlserver_auditing_retention_90_days"
+        ],
+        "gcp": [
+          "cloudsql_instance_postgres_enable_pgaudit_flag",
+          "cloudsql_instance_postgres_log_connections_flag",
+          "cloudsql_instance_postgres_log_disconnections_flag",
+          "cloudsql_instance_postgres_log_error_verbosity_flag",
+          "cloudsql_instance_postgres_log_min_duration_statement_flag",
+          "cloudsql_instance_postgres_log_min_error_statement_flag",
+          "cloudsql_instance_postgres_log_min_messages_flag",
+          "cloudsql_instance_postgres_log_statement_flag",
+          "cloudsql_instance_sqlserver_trace_flag",
+          "cloudstorage_audit_logs_enabled",
+          "cloudstorage_bucket_logging_enabled",
+          "compute_loadbalancer_logging_enabled",
+          "compute_network_dns_logging_enabled",
+          "compute_subnet_flow_logs_enabled",
+          "iam_audit_logs_enabled",
+          "logging_sink_created"
+        ],
+        "kubernetes": [
+          "apiserver_audit_log_path_set"
+        ],
+        "m365": [
+          "exchange_mailbox_audit_bypass_disabled",
+          "exchange_organization_mailbox_auditing_enabled",
+          "exchange_user_mailbox_auditing_enabled"
+        ]
+      },
+      "config_requirements": [
+        {
+          "Check": "config_recorder_all_regions_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false,
+          "Provider": "aws"
+        },
+        {
+          "Check": "eks_control_plane_logging_all_types_enabled",
+          "ConfigKey": "eks_required_log_types",
+          "Operator": "superset",
+          "Value": [
+            "api",
+            "audit",
+            "authenticator",
+            "controllerManager",
+            "scheduler"
+          ],
+          "Provider": "aws"
+        },
+        {
+          "Check": "exchange_user_mailbox_auditing_enabled",
+          "ConfigKey": "audit_log_age",
+          "Operator": "gte",
+          "Value": 90,
+          "Provider": "m365"
+        }
+      ]
+    },
+    {
+      "id": "KSI-MLA-OSM",
+      "name": "Operating SIEM Capability",
+      "description": "A Security Information and Event Management (SIEM) or similar system(s) is used and persistently reviewed for centralized, tamper-resistant logging of events, activities, and changes.",
+      "attributes": {
+        "Theme": "KSI-MLA: Monitoring, Logging, and Auditing",
+        "NISTControls": "AC-17.1, AC-20.1, AU-2, AU-3, AU-3.1, AU-4, AU-5, AU-6.1, AU-6.3, AU-7, AU-7.1, AU-8, AU-9, AU-11, IR-4.1, SI-4.2, SI-4.4, SI-7.7",
+        "ClassApplicability": "Required for Classes B and C"
+      },
+      "checks": {
+        "aws": [
+          "cloudtrail_bucket_requires_mfa_delete",
+          "cloudtrail_cloudwatch_logging_enabled",
+          "cloudtrail_kms_encryption_enabled",
+          "cloudtrail_log_file_validation_enabled",
+          "cloudtrail_multi_region_enabled",
+          "cloudwatch_log_group_kms_encryption_enabled",
+          "cloudwatch_log_group_retention_policy_specific_days_enabled"
+        ],
+        "azure": [
+          "monitor_diagnostic_settings_exists"
+        ],
+        "gcp": [
+          "cloudstorage_bucket_log_retention_policy_lock",
+          "iam_audit_logs_enabled",
+          "logging_sink_created"
+        ],
+        "kubernetes": [
+          "apiserver_audit_log_maxage_set",
+          "apiserver_audit_log_maxbackup_set",
+          "apiserver_audit_log_maxsize_set",
+          "apiserver_audit_log_path_set"
+        ],
+        "m365": [
+          "purview_audit_log_search_enabled"
+        ]
+      },
+      "config_requirements": [
+        {
+          "Check": "apiserver_audit_log_maxage_set",
+          "ConfigKey": "audit_log_maxage",
+          "Operator": "gte",
+          "Value": 30,
+          "Provider": "kubernetes"
+        },
+        {
+          "Check": "apiserver_audit_log_maxbackup_set",
+          "ConfigKey": "audit_log_maxbackup",
+          "Operator": "gte",
+          "Value": 10,
+          "Provider": "kubernetes"
+        },
+        {
+          "Check": "apiserver_audit_log_maxsize_set",
+          "ConfigKey": "audit_log_maxsize",
+          "Operator": "gte",
+          "Value": 100,
+          "Provider": "kubernetes"
+        },
+        {
+          "Check": "cloudwatch_log_group_retention_policy_specific_days_enabled",
+          "ConfigKey": "log_group_retention_days",
+          "Operator": "gte",
+          "Value": 365,
+          "Provider": "aws"
+        }
+      ]
+    },
+    {
+      "id": "KSI-MLA-RVL",
+      "name": "Reviewing Logs",
+      "description": "Logs are persistently reviewed and audited.",
+      "attributes": {
+        "Theme": "KSI-MLA: Monitoring, Logging, and Auditing",
+        "NISTControls": "AC-2.4, AC-6.9, AU-2, AU-6, AU-6.1, SI-4, SI-4.4",
+        "ClassApplicability": "Required for Classes B and C"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "KSI-PIY-GIV",
+      "name": "Generating Inventories",
+      "description": "Authoritative sources are used to automatically generate real-time inventories of all information resources when needed.",
+      "attributes": {
+        "Theme": "KSI-PIY: Policy and Inventory",
+        "NISTControls": "CM-2.2, CM-7.5, CM-8, CM-8.1, CM-12, CM-12.1, CP-2.8",
+        "ClassApplicability": "Required for Classes B and C"
+      },
+      "checks": {
+        "aws": [
+          "config_delegated_admin_and_org_aggregator_all_regions",
+          "config_recorder_all_regions_enabled",
+          "resourceexplorer2_indexes_found"
+        ],
+        "azure": [],
+        "gcp": [
+          "iam_cloud_asset_inventory_enabled"
+        ],
+        "kubernetes": [],
+        "m365": []
+      },
+      "config_requirements": [
+        {
+          "Check": "config_recorder_all_regions_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false,
+          "Provider": "aws"
+        },
+        {
+          "Check": "config_delegated_admin_and_org_aggregator_all_regions",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false,
+          "Provider": "aws"
+        }
+      ]
+    },
+    {
+      "id": "KSI-PIY-RES",
+      "name": "Reviewing Executive Support",
+      "description": "Executive support for achieving the provider's security goals is persistently reviewed and demonstrated.",
+      "attributes": {
+        "Theme": "KSI-PIY: Policy and Inventory",
+        "ClassApplicability": "Required for Classes B and C"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "KSI-PIY-RIS",
+      "name": "Reviewing Investments in Security",
+      "description": "The effectiveness of the provider's investments in achieving security goals is persistently reviewed.",
+      "attributes": {
+        "Theme": "KSI-PIY: Policy and Inventory",
+        "NISTControls": "AC-5, CA-2, CP-2.1, CP-4.1, IR-3.2, PM-3, SA-2, SA-3, SR-2.1",
+        "ClassApplicability": "Required for Classes B and C"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "KSI-PIY-RSD",
+      "name": "Reviewing Security in the SDLC",
+      "description": "The effectiveness of building security and privacy considerations into the Software Development Lifecycle and aligning with CISA Secure By Design principles is persistently reviewed.",
+      "attributes": {
+        "Theme": "KSI-PIY: Policy and Inventory",
+        "NISTControls": "AC-5, AU-3.3, CM-3.4, PL-8, PM-7, SA-3, SA-8, SC-4, SC-18, SI-10, SI-11, SI-16",
+        "ClassApplicability": "Required for Classes B and C"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "KSI-PIY-RVD",
+      "name": "Reviewing Vulnerability Disclosures",
+      "description": "The effectiveness of the provider's vulnerability disclosure program is persistently reviewed.",
+      "attributes": {
+        "Theme": "KSI-PIY: Policy and Inventory",
+        "NISTControls": "RA-5.11",
+        "ClassApplicability": "Required for Classes B and C"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "KSI-RPL-ABO",
+      "name": "Aligning Backups with Objectives",
+      "description": "The alignment of machine-based information resource backups with defined recovery objectives is persistently reviewed.",
+      "attributes": {
+        "Theme": "KSI-RPL: Recovery Planning",
+        "NISTControls": "CM-2.3, CP-6, CP-9, CP-10, CP-10.2, SI-12",
+        "ClassApplicability": "Required for Classes B and C"
+      },
+      "checks": {
+        "aws": [
+          "dlm_ebs_snapshot_lifecycle_policy_exists",
+          "documentdb_cluster_backup_enabled",
+          "dynamodb_table_protected_by_backup_plan",
+          "dynamodb_tables_pitr_enabled",
+          "ec2_ebs_volume_protected_by_backup_plan",
+          "ec2_ebs_volume_snapshots_exists",
+          "efs_have_backup_enabled",
+          "elasticache_redis_cluster_backup_enabled",
+          "lightsail_instance_automated_snapshots",
+          "neptune_cluster_backup_enabled",
+          "rds_cluster_backtrack_enabled",
+          "rds_cluster_protected_by_backup_plan",
+          "rds_instance_backup_enabled",
+          "rds_instance_protected_by_backup_plan",
+          "redshift_cluster_automated_snapshot",
+          "s3_bucket_cross_region_replication",
+          "s3_bucket_object_versioning"
+        ],
+        "azure": [
+          "cosmosdb_account_backup_policy_continuous",
+          "keyvault_recoverable",
+          "mysql_flexible_server_geo_redundant_backup_enabled",
+          "postgresql_flexible_server_geo_redundant_backup_enabled",
+          "recovery_vault_backup_policy_retention_adequate",
+          "recovery_vault_has_protected_items",
+          "storage_blob_versioning_is_enabled",
+          "storage_ensure_file_shares_soft_delete_is_enabled",
+          "storage_ensure_soft_delete_is_enabled",
+          "storage_geo_redundant_enabled",
+          "vm_backup_enabled",
+          "vm_sufficient_daily_backup_retention_period"
+        ],
+        "gcp": [
+          "cloudsql_instance_automated_backups",
+          "cloudstorage_bucket_soft_delete_enabled",
+          "cloudstorage_bucket_sufficient_retention_period",
+          "cloudstorage_bucket_versioning_enabled"
+        ],
+        "kubernetes": [],
+        "m365": []
+      },
+      "config_requirements": [
+        {
+          "Check": "vm_sufficient_daily_backup_retention_period",
+          "ConfigKey": "vm_backup_min_daily_retention_days",
+          "Operator": "gte",
+          "Value": 7,
+          "Provider": "azure"
+        },
+        {
+          "Check": "documentdb_cluster_backup_enabled",
+          "ConfigKey": "minimum_backup_retention_period",
+          "Operator": "gte",
+          "Value": 7,
+          "Provider": "aws"
+        },
+        {
+          "Check": "neptune_cluster_backup_enabled",
+          "ConfigKey": "minimum_backup_retention_period",
+          "Operator": "gte",
+          "Value": 7,
+          "Provider": "aws"
+        },
+        {
+          "Check": "elasticache_redis_cluster_backup_enabled",
+          "ConfigKey": "minimum_snapshot_retention_period",
+          "Operator": "gte",
+          "Value": 7,
+          "Provider": "aws"
+        }
+      ]
+    },
+    {
+      "id": "KSI-RPL-ARP",
+      "name": "Aligning Recovery Plan",
+      "description": "The alignment of recovery plans with defined recovery objectives is persistently reviewed.",
+      "attributes": {
+        "Theme": "KSI-RPL: Recovery Planning",
+        "NISTControls": "CP-2, CP-2.1, CP-2.3, CP-4.1, CP-6, CP-6.1, CP-6.3, CP-7, CP-7.1, CP-7.2, CP-7.3, CP-8, CP-8.1, CP-8.2, CP-10, CP-10.2",
+        "ClassApplicability": "Required for Classes B and C"
+      },
+      "checks": {
+        "aws": [
+          "backup_plans_exist",
+          "backup_reportplans_exist",
+          "backup_vaults_exist"
+        ],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      },
+      "config_requirements": []
+    },
+    {
+      "id": "KSI-RPL-RRO",
+      "name": "Reviewing Recovery Objectives",
+      "description": "The desired Recovery Time Objectives (RTO) and Recovery Point Objectives (RPO) are defined and persistently reviewed for alignment with the provider's business needs and capabilities.",
+      "attributes": {
+        "Theme": "KSI-RPL: Recovery Planning",
+        "NISTControls": "CP-2.3, CP-10",
+        "ClassApplicability": "Required for Classes B and C"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "KSI-RPL-TRC",
+      "name": "Testing Recovery Capabilities",
+      "description": "The capability to recover from incidents and contingencies aligned with defined recovery objectives is persistently tested.",
+      "attributes": {
+        "Theme": "KSI-RPL: Recovery Planning",
+        "NISTControls": "CP-2.1, CP-2.3, CP-4, CP-4.1, CP-6, CP-6.1, CP-9.1, CP-10, IR-3, IR-3.2",
+        "ClassApplicability": "Required for Classes B and C"
+      },
+      "checks": {
+        "aws": [
+          "drs_job_exist"
+        ],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      },
+      "config_requirements": [
+        {
+          "Check": "drs_job_exist",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false,
+          "Provider": "aws"
+        }
+      ]
+    },
+    {
+      "id": "KSI-SCR-MIT",
+      "name": "Mitigating Supply Chain Risk",
+      "description": "Persistently identify, review, and mitigate potential supply chain risks.",
+      "attributes": {
+        "Theme": "KSI-SCR: Supply Chain Risk",
+        "NISTControls": "AC-20, RA-3.1, SA-9, SA-10, SA-11, SA-15.3, SA-22, SI-7.1, SR-5, SR-6, CA-7.4, SC-18",
+        "ClassApplicability": "Required for Classes B and C"
+      },
+      "checks": {
+        "aws": [
+          "awslambda_function_using_cross_account_layers",
+          "codeartifact_packages_external_public_publishing_disabled",
+          "codebuild_project_user_controlled_buildspec",
+          "codebuild_project_uses_allowed_github_organizations",
+          "ecr_registry_enhanced_scanning_enabled",
+          "ecr_registry_scan_images_on_push_enabled",
+          "ecr_repositories_not_publicly_accessible",
+          "ecr_repositories_scan_vulnerabilities_in_latest_image",
+          "ecr_repositories_tag_immutability",
+          "s3_bucket_shadow_resource_vulnerability"
+        ],
+        "azure": [
+          "defender_container_images_resolved_vulnerabilities",
+          "defender_container_images_scan_enabled"
+        ],
+        "gcp": [
+          "artifacts_container_analysis_enabled",
+          "gcr_container_scanning_enabled"
+        ],
+        "kubernetes": [
+          "apiserver_always_pull_images_plugin"
+        ],
+        "m365": []
+      },
+      "config_requirements": [
+        {
+          "Check": "ecr_repositories_scan_vulnerabilities_in_latest_image",
+          "ConfigKey": "ecr_repository_vulnerability_minimum_severity",
+          "Operator": "in",
+          "Value": [
+            "MEDIUM"
+          ],
+          "Provider": "aws"
+        }
+      ]
+    },
+    {
+      "id": "KSI-SCR-MON",
+      "name": "Monitoring Supply Chain Risk",
+      "description": "Third party software information resources are automatically monitored for upstream vulnerabilities using mechanisms that may include contractual notification requirements or active monitoring services.",
+      "attributes": {
+        "Theme": "KSI-SCR: Supply Chain Risk",
+        "NISTControls": "AC-20, CA-3, IR-6.3, PS-7, RA-5, SA-9, SI-5, SR-5, SR-6, SR-8",
+        "ClassApplicability": "Required for Classes B and C"
+      },
+      "checks": {
+        "aws": [
+          "awslambda_function_using_supported_runtimes",
+          "ecr_registry_enhanced_scanning_enabled",
+          "inspector2_active_findings_exist",
+          "inspector2_is_enabled",
+          "ssm_managed_compliant_patching"
+        ],
+        "azure": [
+          "app_ensure_java_version_is_latest",
+          "app_ensure_php_version_is_latest",
+          "app_ensure_python_version_is_latest",
+          "app_function_latest_runtime_version",
+          "defender_ensure_system_updates_are_applied"
+        ],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      },
+      "config_requirements": [
+        {
+          "Check": "awslambda_function_using_supported_runtimes",
+          "ConfigKey": "obsolete_lambda_runtimes",
+          "Operator": "superset",
+          "Value": [
+            "java8",
+            "go1.x",
+            "provided",
+            "python3.6",
+            "python2.7",
+            "python3.7",
+            "python3.8",
+            "nodejs4.3",
+            "nodejs4.3-edge",
+            "nodejs6.10",
+            "nodejs",
+            "nodejs8.10",
+            "nodejs10.x",
+            "nodejs12.x",
+            "nodejs14.x",
+            "nodejs16.x",
+            "dotnet5.0",
+            "dotnet6",
+            "dotnet7",
+            "dotnetcore1.0",
+            "dotnetcore2.0",
+            "dotnetcore2.1",
+            "dotnetcore3.1",
+            "ruby2.5",
+            "ruby2.7"
+          ],
+          "Provider": "aws"
+        }
+      ]
+    },
+    {
+      "id": "KSI-SVC-ACM",
+      "name": "Automating Configuration Management",
+      "description": "The configuration of machine-based information resources is managed using automation and persistently reviewed for drift.",
+      "attributes": {
+        "Theme": "KSI-SVC: Service Configuration",
+        "NISTControls": "AC-2.4, CM-2, CM-2.2, CM-2.3, CM-6, CM-7.1, PL-9, PL-10, SA-5, SI-5, SR-10",
+        "ClassApplicability": "Required for Classes B and C"
+      },
+      "checks": {
+        "aws": [
+          "config_recorder_all_regions_enabled",
+          "ec2_instance_managed_by_ssm",
+          "ssm_managed_compliant_patching"
+        ],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      },
+      "config_requirements": [
+        {
+          "Check": "config_recorder_all_regions_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false,
+          "Provider": "aws"
+        }
+      ]
+    },
+    {
+      "id": "KSI-SVC-ASM",
+      "name": "Automating Secret Management",
+      "description": "Management, protection, and regular rotation of digital keys, certificates, and other secrets is automated and persistently reviewed.",
+      "attributes": {
+        "Theme": "KSI-SVC: Service Configuration",
+        "NISTControls": "AC-17.2, IA-5.2, IA-5.6, SC-12, SC-17",
+        "ClassApplicability": "Required for Classes B and C"
+      },
+      "checks": {
+        "aws": [
+          "acm_certificates_expiration_check",
+          "amplify_app_no_secrets_in_environment",
+          "apigateway_restapi_no_secrets_in_stage_variables",
+          "awslambda_function_no_secrets_in_code",
+          "awslambda_function_no_secrets_in_variables",
+          "awslambda_layer_no_secrets_in_content",
+          "batch_job_definition_no_secrets",
+          "cloudformation_stack_outputs_find_secrets",
+          "cloudwatch_log_group_no_secrets_in_logs",
+          "codebuild_project_no_secrets_in_variables",
+          "codebuild_project_source_repo_url_no_sensitive_credentials",
+          "codecommit_repository_no_secrets",
+          "datapipeline_pipeline_no_secrets_in_definition",
+          "directoryservice_ldap_certificate_expiration",
+          "ec2_instance_secrets_user_data",
+          "ec2_launch_template_no_secrets",
+          "ecr_repository_image_no_secrets",
+          "ecs_task_definitions_no_environment_secrets",
+          "elasticbeanstalk_environment_no_secrets_in_configuration",
+          "glue_catalog_connection_no_secrets",
+          "glue_etl_jobs_no_secrets_in_arguments",
+          "iam_no_expired_server_certificates_stored",
+          "kms_cmk_rotation_enabled",
+          "kms_key_not_publicly_accessible",
+          "rds_instance_certificate_expiration",
+          "sagemaker_notebook_instance_no_secrets",
+          "secretsmanager_automatic_rotation_enabled",
+          "secretsmanager_has_restrictive_resource_policy",
+          "secretsmanager_not_publicly_accessible",
+          "secretsmanager_secret_rotated_periodically",
+          "secretsmanager_secret_unused",
+          "ssm_document_secrets",
+          "stepfunctions_statemachine_no_secrets_in_definition"
+        ],
+        "azure": [
+          "entra_app_registration_credential_not_expired",
+          "keyvault_key_expiration_set_in_non_rbac",
+          "keyvault_key_rotation_enabled",
+          "keyvault_non_rbac_secret_expiration_set",
+          "keyvault_rbac_key_expiration_set",
+          "keyvault_rbac_secret_expiration_set",
+          "storage_key_rotation_90_days"
+        ],
+        "gcp": [
+          "kms_key_not_publicly_accessible",
+          "kms_key_rotation_enabled",
+          "kms_key_rotation_max_90_days",
+          "secretmanager_secret_not_publicly_accessible",
+          "secretmanager_secret_rotation_enabled"
+        ],
+        "kubernetes": [
+          "apiserver_encryption_provider_config_set",
+          "apiserver_service_account_key_file_set",
+          "controllermanager_rotate_kubelet_server_cert",
+          "controllermanager_service_account_private_key_file",
+          "kubelet_rotate_certificates"
+        ],
+        "m365": [
+          "entra_policy_default_user_cannot_read_bitlocker_keys"
+        ]
+      },
+      "config_requirements": [
+        {
+          "Check": "acm_certificates_expiration_check",
+          "ConfigKey": "days_to_expire_threshold",
+          "Operator": "gte",
+          "Value": 7,
+          "Provider": "aws"
+        },
+        {
+          "Check": "secretsmanager_secret_unused",
+          "ConfigKey": "max_days_secret_unused",
+          "Operator": "lte",
+          "Value": 90,
+          "Provider": "aws"
+        },
+        {
+          "Check": "secretsmanager_secret_rotated_periodically",
+          "ConfigKey": "max_days_secret_unrotated",
+          "Operator": "lte",
+          "Value": 90,
+          "Provider": "aws"
+        }
+      ]
+    },
+    {
+      "id": "KSI-SVC-EIS",
+      "name": "Evaluating and Improving Security",
+      "description": "Information resources are persistently evaluated for opportunities to improve security and those improvements are persistently made.",
+      "attributes": {
+        "Theme": "KSI-SVC: Service Configuration",
+        "NISTControls": "CM-7.1, CM-12.1, MA-2, PL-8, SC-7, SC-39, SI-2.2, SI-4, SR-10",
+        "ClassApplicability": "Required for Classes B and C"
+      },
+      "checks": {
+        "aws": [
+          "trustedadvisor_errors_and_warnings"
+        ],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      },
+      "config_requirements": []
+    },
+    {
+      "id": "KSI-SVC-PRR",
+      "name": "Preventing Residual Risk",
+      "description": "Plans, procedures, and the state of information resources are persistently reviewed after making changes to limit and remove unwanted residual elements that would likely negatively affect the confidentiality, integrity, or availability of federal customer data.",
+      "attributes": {
+        "Theme": "KSI-SVC: Service Configuration",
+        "NISTControls": "SC-4",
+        "ClassApplicability": "Optional for Class B, required for Class C"
+      },
+      "checks": {
+        "aws": [
+          "cloudfront_distributions_s3_origin_non_existent_bucket",
+          "ec2_elastic_ip_unassigned",
+          "lightsail_static_ip_unused",
+          "route53_dangling_ip_subdomain_takeover"
+        ],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "KSI-SVC-RUD",
+      "name": "Removing Unwanted Data",
+      "description": "Unwanted federal customer data is removed promptly when requested by an agency in alignment with customer agreements, including from backups if appropriate; this typically applies when a customer spills information or when a customer seeks to remove information from a service due to a change in usage.",
+      "attributes": {
+        "Theme": "KSI-SVC: Service Configuration",
+        "NISTControls": "SI-12.3, SI-18.4",
+        "ClassApplicability": "Optional for Class B, required for Class C"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": []
+      }
+    },
+    {
+      "id": "KSI-SVC-SIN",
+      "name": "Securing Information",
+      "description": "Information is encrypted or otherwise secured from unwanted access or modification.",
+      "attributes": {
+        "Theme": "KSI-SVC: Service Configuration",
+        "NISTControls": "AC-1, AC-17.2, CP-9.8, SC-8, SC-8.1, SC-13, SC-20, SC-21, SC-22, SC-23, SC-28, SC-28.1",
+        "ClassApplicability": "Required for Classes B and C"
+      },
+      "checks": {
+        "aws": [
+          "apigateway_restapi_cache_encrypted",
+          "athena_workgroup_encryption",
+          "awslambda_function_env_vars_not_encrypted_with_cmk",
+          "backup_recovery_point_encrypted",
+          "backup_vaults_encrypted",
+          "bedrock_custom_model_encrypted_with_cmk",
+          "bedrock_knowledge_base_encrypted_with_cmk",
+          "bedrock_prompt_encrypted_with_cmk",
+          "cloudfront_distributions_field_level_encryption_enabled",
+          "cloudfront_distributions_https_enabled",
+          "cloudfront_distributions_origin_traffic_encrypted",
+          "cloudfront_distributions_s3_origin_access_control",
+          "cloudfront_distributions_using_deprecated_ssl_protocols",
+          "codebuild_report_group_export_encrypted",
+          "dms_endpoint_redis_in_transit_encryption_enabled",
+          "dms_endpoint_ssl_enabled",
+          "documentdb_cluster_public_snapshot",
+          "documentdb_cluster_storage_encrypted",
+          "dynamodb_accelerator_cluster_encryption_enabled",
+          "dynamodb_accelerator_cluster_in_transit_encryption_enabled",
+          "dynamodb_table_cross_account_access",
+          "dynamodb_tables_kms_cmk_encryption_enabled",
+          "ec2_ami_account_block_public_access",
+          "ec2_ami_public",
+          "ec2_ebs_default_encryption",
+          "ec2_ebs_public_snapshot",
+          "ec2_ebs_snapshot_account_block_public_access",
+          "ec2_ebs_snapshots_encrypted",
+          "ec2_ebs_volume_encryption",
+          "efs_encryption_at_rest_enabled",
+          "efs_not_publicly_accessible",
+          "eks_cluster_kms_cmk_encryption_in_secrets_enabled",
+          "elasticache_redis_cluster_in_transit_encryption_enabled",
+          "elasticache_redis_cluster_rest_encryption_enabled",
+          "elb_insecure_ssl_ciphers",
+          "elb_ssl_listeners",
+          "elbv2_insecure_ssl_ciphers",
+          "elbv2_nlb_tls_termination_enabled",
+          "elbv2_ssl_listeners",
+          "eventbridge_bus_cross_account_access",
+          "eventbridge_bus_exposed",
+          "firehose_stream_encrypted_at_rest",
+          "glacier_vaults_policy_public_access",
+          "glue_data_catalogs_metadata_encryption_enabled",
+          "glue_data_catalogs_not_publicly_accessible",
+          "glue_database_connections_ssl_enabled",
+          "glue_development_endpoints_job_bookmark_encryption_enabled",
+          "glue_development_endpoints_s3_encryption_enabled",
+          "glue_etl_jobs_amazon_s3_encryption_enabled",
+          "glue_etl_jobs_job_bookmark_encryption_enabled",
+          "glue_ml_transform_encrypted_at_rest",
+          "kafka_cluster_encryption_at_rest_uses_cmk",
+          "kafka_cluster_in_transit_encryption_enabled",
+          "kafka_connector_in_transit_encryption_enabled",
+          "kinesis_stream_encrypted_at_rest",
+          "memorydb_cluster_in_transit_encryption_enabled",
+          "neptune_cluster_public_snapshot",
+          "neptune_cluster_snapshot_encrypted",
+          "neptune_cluster_storage_encrypted",
+          "opensearch_service_domains_encryption_at_rest_enabled",
+          "opensearch_service_domains_https_communications_enforced",
+          "opensearch_service_domains_node_to_node_encryption_enabled",
+          "rds_cluster_storage_encrypted",
+          "rds_instance_storage_encrypted",
+          "rds_instance_transport_encrypted",
+          "rds_snapshots_encrypted",
+          "rds_snapshots_public_access",
+          "redshift_cluster_encrypted_at_rest",
+          "redshift_cluster_in_transit_encryption_enabled",
+          "s3_access_point_public_access_block",
+          "s3_account_level_public_access_blocks",
+          "s3_bucket_acl_prohibited",
+          "s3_bucket_cross_account_access",
+          "s3_bucket_kms_encryption",
+          "s3_bucket_level_public_access_block",
+          "s3_bucket_no_mfa_delete",
+          "s3_bucket_object_lock",
+          "s3_bucket_object_public",
+          "s3_bucket_policy_public_write_access",
+          "s3_bucket_public_access",
+          "s3_bucket_public_list_acl",
+          "s3_bucket_public_write_acl",
+          "s3_bucket_secure_transport_policy",
+          "s3_multi_region_access_point_public_access_block",
+          "sagemaker_endpoint_config_kms_encryption_enabled",
+          "sagemaker_notebook_instance_encryption_enabled",
+          "sagemaker_training_jobs_intercontainer_encryption_enabled",
+          "sagemaker_training_jobs_volume_and_output_encryption_enabled",
+          "sns_subscription_not_using_http_endpoints",
+          "sns_topics_not_publicly_accessible",
+          "sqs_queues_not_publicly_accessible",
+          "sqs_queues_server_side_encryption_enabled",
+          "ssm_documents_set_as_public",
+          "stepfunctions_statemachine_encrypted_with_cmk",
+          "storagegateway_fileshare_encryption_enabled",
+          "transfer_server_in_transit_encryption_enabled",
+          "workspaces_volume_encryption_enabled"
+        ],
+        "azure": [
+          "app_client_certificates_on",
+          "app_ensure_auth_is_set_up",
+          "app_ensure_http_is_redirected_to_https",
+          "app_ftp_deployment_disabled",
+          "app_function_ensure_http_is_redirected_to_https",
+          "app_minimum_tls_version_12",
+          "cosmosdb_account_minimum_tls_version",
+          "databricks_workspace_cmk_encryption_enabled",
+          "monitor_storage_account_with_activity_logs_cmk_encrypted",
+          "mysql_flexible_server_minimum_tls_version_12",
+          "mysql_flexible_server_ssl_connection_enabled",
+          "postgresql_flexible_server_enforce_ssl_enabled",
+          "sqlserver_recommended_minimal_tls_version",
+          "sqlserver_tde_encrypted_with_cmk",
+          "sqlserver_tde_encryption_enabled",
+          "storage_blob_public_access_level_is_disabled",
+          "storage_ensure_encryption_with_customer_managed_keys",
+          "storage_ensure_minimum_tls_version_12",
+          "storage_infrastructure_encryption_is_enabled",
+          "storage_secure_transfer_required_is_enabled",
+          "storage_smb_channel_encryption_with_secure_algorithm",
+          "vm_ensure_attached_disks_encrypted_with_cmk",
+          "vm_ensure_unattached_disks_encrypted_with_cmk"
+        ],
+        "gcp": [
+          "bigquery_dataset_cmk_encryption",
+          "bigquery_dataset_public_access",
+          "bigquery_table_cmk_encryption",
+          "cloudsql_instance_cmek_encryption_enabled",
+          "cloudsql_instance_ssl_connections",
+          "cloudstorage_bucket_public_access",
+          "compute_image_not_publicly_shared",
+          "compute_instance_confidential_computing_enabled",
+          "compute_instance_encryption_with_csek_enabled",
+          "dataproc_encrypted_with_cmks_disabled"
+        ],
+        "kubernetes": [
+          "apiserver_encryption_provider_config_set",
+          "apiserver_etcd_tls_config",
+          "apiserver_tls_config",
+          "etcd_peer_tls_config",
+          "etcd_tls_encryption",
+          "kubelet_tls_cert_and_key",
+          "rbac_minimize_secret_access"
+        ],
+        "m365": [
+          "exchange_organization_modern_authentication_enabled",
+          "exchange_transport_config_smtp_auth_disabled",
+          "sharepoint_modern_authentication_required"
+        ]
+      },
+      "config_requirements": [
+        {
+          "Check": "sqlserver_recommended_minimal_tls_version",
+          "ConfigKey": "recommended_minimal_tls_versions",
+          "Operator": "subset",
+          "Value": [
+            "1.2",
+            "1.3"
+          ],
+          "Provider": "azure"
+        },
+        {
+          "Check": "storage_smb_channel_encryption_with_secure_algorithm",
+          "ConfigKey": "recommended_smb_channel_encryption_algorithms",
+          "Operator": "subset",
+          "Value": [
+            "AES-256-GCM"
+          ],
+          "Provider": "azure"
+        }
+      ]
+    },
+    {
+      "id": "KSI-SVC-VCM",
+      "name": "Validating Communications",
+      "description": "The authenticity and integrity of communications between machine-based information resources is persistently validated using automation.",
+      "attributes": {
+        "Theme": "KSI-SVC: Service Configuration",
+        "NISTControls": "SC-23, SI-7.1",
+        "ClassApplicability": "Optional for Class B, required for Class C"
+      },
+      "checks": {
+        "aws": [
+          "apigateway_restapi_client_certificate_enabled",
+          "kafka_cluster_mutual_tls_authentication_enabled",
+          "ses_identity_dkim_enabled"
+        ],
+        "azure": [
+          "app_client_certificates_on"
+        ],
+        "gcp": [
+          "dns_dnssec_disabled"
+        ],
+        "kubernetes": [
+          "apiserver_client_ca_file_set",
+          "apiserver_etcd_tls_config",
+          "apiserver_kubelet_cert_auth",
+          "apiserver_kubelet_tls_auth",
+          "etcd_client_cert_auth",
+          "etcd_no_auto_tls",
+          "etcd_no_peer_auto_tls",
+          "etcd_peer_client_cert_auth",
+          "etcd_peer_tls_config",
+          "kubelet_client_ca_file_set"
+        ],
+        "m365": [
+          "defender_domain_dkim_enabled",
+          "defender_domain_dmarc_records_published",
+          "exchange_organization_reject_direct_send_enabled"
+        ]
+      }
+    },
+    {
+      "id": "KSI-SVC-VRI",
+      "name": "Validating Resource Integrity",
+      "description": "Use cryptographic methods to validate the integrity of machine-based information resources.",
+      "attributes": {
+        "Theme": "KSI-SVC: Service Configuration",
+        "NISTControls": "CM-2.2, CM-8.3, SC-13, SC-23, SI-7, SI-7.1, SR-10",
+        "ClassApplicability": "Required for Classes B and C"
+      },
+      "checks": {
+        "aws": [
+          "cloudtrail_log_file_validation_enabled",
+          "kms_key_enclave_attestation_bypassable_path",
+          "kms_key_enclave_attestation_no_deployment_binding",
+          "kms_key_enclave_attestation_not_enforced",
+          "kms_key_enclave_attestation_pcr_mismatch",
+          "kms_key_enclave_attestation_unknown_image",
+          "kms_key_enclave_debug_attestation_detected"
+        ],
+        "azure": [
+          "vm_trusted_launch_enabled"
+        ],
+        "gcp": [
+          "compute_instance_shielded_vm_enabled",
+          "dns_dnssec_disabled",
+          "dns_rsasha1_in_use_to_key_sign_in_dnssec",
+          "dns_rsasha1_in_use_to_zone_sign_in_dnssec"
+        ],
+        "kubernetes": [
+          "apiserver_etcd_cafile_set",
+          "controllermanager_root_ca_file_set",
+          "etcd_client_cert_auth",
+          "etcd_peer_client_cert_auth"
+        ],
+        "m365": []
+      },
+      "config_requirements": [
+        {
+          "Check": "kms_key_enclave_debug_attestation_detected",
+          "ConfigKey": "enclave_debug_lookback_window_hours",
+          "Operator": "gte",
+          "Value": 2160,
+          "Provider": "aws"
+        },
+        {
+          "Check": "kms_key_enclave_debug_attestation_detected",
+          "ConfigKey": "enclave_debug_max_events",
+          "Operator": "gte",
+          "Value": 5000,
+          "Provider": "aws"
+        },
+        {
+          "Check": "kms_key_enclave_attestation_unknown_image",
+          "ConfigKey": "enclave_unknown_image_lookback_window_hours",
+          "Operator": "gte",
+          "Value": 2160,
+          "Provider": "aws"
+        },
+        {
+          "Check": "kms_key_enclave_attestation_unknown_image",
+          "ConfigKey": "enclave_unknown_image_max_events",
+          "Operator": "gte",
+          "Value": 5000,
+          "Provider": "aws"
+        }
+      ]
+    }
+  ]
+}

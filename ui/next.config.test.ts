@@ -208,3 +208,14 @@ describe("PostHog Content Security Policy", () => {
     expect(Object.values(csp).flat()).not.toContain(POSTHOG_WILDCARD);
   });
 });
+
+it("allows configured private Registry images in the request CSP", () => {
+  const csp = parseCsp(
+    getCspHeader({
+      ...ENABLED_POSTHOG_CONFIG,
+      registryImageOrigins: ["https://media.private.test"],
+    }),
+  );
+  expect(csp["img-src"]).toContain("https://media.private.test");
+  expect(csp["connect-src"]).not.toContain("https://media.private.test");
+});

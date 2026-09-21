@@ -22,6 +22,7 @@ export interface WizardFooterConfig {
   onSecondaryAction?: () => void;
   showAction: boolean;
   actionLabel: string;
+  actionLoading?: boolean;
   actionDisabled?: boolean;
   actionType: WizardFooterActionType;
   actionFormId?: string;

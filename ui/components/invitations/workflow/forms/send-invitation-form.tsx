@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from "@/components/shadcn/select/select";
 import { ApiError } from "@/types";
+import type { InvitationRoleOption } from "@/types/onboarding-invite";
 
 const sendInvitationFormSchema = z.object({
   email: z.email({ error: "Please enter a valid email" }),
@@ -26,15 +27,24 @@ const sendInvitationFormSchema = z.object({
 
 export type FormValues = z.infer<typeof sendInvitationFormSchema>;
 
+interface SendInvitationFormProps {
+  roles: InvitationRoleOption[];
+  defaultRole?: string;
+  isSelectorDisabled: boolean;
+  // Where the invitation was sent from, forwarded to the API as `?source=`
+  // so the origin can be told apart (e.g. the onboarding invite step).
+  source?: string;
+  // Replaces the default navigation to the invitation details page.
+  onSuccess?: (invitationId: string) => void;
+}
+
 export const SendInvitationForm = ({
   roles = [],
   defaultRole = "admin",
   isSelectorDisabled = false,
-}: {
-  roles: Array<{ id: string; name: string }>;
-  defaultRole?: string;
-  isSelectorDisabled: boolean;
-}) => {
+  source,
+  onSuccess,
+}: SendInvitationFormProps) => {
   const { toast } = useToast();
   const router = useRouter();
 
@@ -52,6 +62,7 @@ export const SendInvitationForm = ({
     const formData = new FormData();
     formData.append("email", values.email);
     formData.append("role", values.roleId);
+    if (source) formData.append("source", source);
 
     try {
       const data = await sendInvite(formData);
@@ -82,7 +93,25 @@ export const SendInvitationForm = ({
           }
         });
       } else {
-        const invitationId = data?.data?.id || "";
+        const invitationId = data?.data?.id;
+        if (!invitationId) {
+          // A transport failure returns nothing and a rejection can come
+          // back as a bare `error` without an `errors` array; neither
+          // created an invitation, so neither is a success.
+          toast({
+            variant: "destructive",
+            title: "Oops! Something went wrong",
+            description:
+              typeof data?.error === "string"
+                ? data.error
+                : "The invitation could not be sent. Please try again.",
+          });
+          return;
+        }
+        if (onSuccess) {
+          onSuccess(invitationId);
+          return;
+        }
         router.push(`/invitations/check-details/?id=${invitationId}`);
       }
     } catch (_error) {
