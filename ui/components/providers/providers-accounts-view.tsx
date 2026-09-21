@@ -17,10 +17,19 @@ import type {
   ProviderWizardInitialData,
 } from "@/components/providers/wizard/types";
 import { Alert, AlertDescription } from "@/components/shadcn/alert";
+import { useMountEffect } from "@/hooks/use-mount-effect";
 import { getFlowById } from "@/lib/onboarding";
+import {
+  dispatchProviderFunnel,
+  PROVIDER_FUNNEL_STEP,
+  WIZARD_OPEN_SOURCE,
+  type WizardOpenSource,
+} from "@/lib/provider-funnel/provider-funnel-events";
 import {
   ADD_PROVIDER_SEARCH_PARAM,
   ADD_PROVIDER_SEARCH_VALUE,
+  ADD_PROVIDER_SOURCE_PARAM,
+  resolveAddProviderSource,
 } from "@/lib/providers-navigation";
 import { isAwsQuickOnboardingEnabled } from "@/lib/shared/env";
 import {
@@ -110,7 +119,25 @@ export function ProvidersAccountsView({
   >(undefined);
   const [isAwsQuickOpen, setIsAwsQuickOpen] = useState(false);
 
-  const openProviderWizard = (initialData?: ProviderWizardInitialData) => {
+  const signalWizardOpened = (source: WizardOpenSource) =>
+    dispatchProviderFunnel({
+      step: PROVIDER_FUNNEL_STEP.WIZARD_OPENED,
+      source,
+    });
+
+  // A URL-opened wizard never goes through openProviderWizard, so signal it on mount.
+  useMountEffect(() => {
+    if (!shouldOpenProviderWizardFromUrl) return;
+    signalWizardOpened(
+      resolveAddProviderSource(searchParams.get(ADD_PROVIDER_SOURCE_PARAM)),
+    );
+  });
+
+  const openProviderWizard = (
+    source: WizardOpenSource,
+    initialData?: ProviderWizardInitialData,
+  ) => {
+    signalWizardOpened(source);
     setOrgWizardInitialData(undefined);
     setProviderWizardInitialData(initialData);
     setIsProviderWizardOpen(true);
@@ -143,6 +170,7 @@ export function ProvidersAccountsView({
     if (searchParams.has(ADD_PROVIDER_SEARCH_PARAM)) {
       const params = new URLSearchParams(searchParams.toString());
       params.delete(ADD_PROVIDER_SEARCH_PARAM);
+      params.delete(ADD_PROVIDER_SOURCE_PARAM);
       const query = params.toString();
       window.history.replaceState(
         null,
@@ -159,6 +187,12 @@ export function ProvidersAccountsView({
         <OnboardingTrigger
           flow={addProviderFlow}
           configOverrides={ADD_PROVIDER_TOUR_CONFIG}
+          // An already-open wizard (first run) leaves nothing for the earlier steps to ask.
+          startAtTarget={
+            isProviderWizardOpen
+              ? ADD_PROVIDER_TOUR_TARGETS.PROVIDER_TYPE
+              : undefined
+          }
         />
       </Suspense>
       {/* Signals the navbar that this route's data has loaded (enables the replay icon). */}
@@ -167,7 +201,9 @@ export function ProvidersAccountsView({
         <NoProvidersAdded
           action="button"
           containerClassName="min-h-[calc(100dvh-28rem)]"
-          onOpenWizard={() => openProviderWizard()}
+          onOpenWizard={() =>
+            openProviderWizard(WIZARD_OPEN_SOURCE.EMPTY_STATE)
+          }
           ctaTourId="add-provider-trigger"
         />
       ) : (
@@ -188,7 +224,11 @@ export function ProvidersAccountsView({
             actions={
               <>
                 <MutedFindingsConfigButton />
-                <AddProviderButton onOpenWizard={() => openProviderWizard()} />
+                <AddProviderButton
+                  onOpenWizard={() =>
+                    openProviderWizard(WIZARD_OPEN_SOURCE.PAGE_BUTTON)
+                  }
+                />
               </>
             }
           />
@@ -199,7 +239,9 @@ export function ProvidersAccountsView({
             scanScheduleCapability={scanScheduleCapability}
             scanConfigs={scanConfigs}
             scanConfigStatus={scanConfigStatus}
-            onOpenProviderWizard={openProviderWizard}
+            onOpenProviderWizard={(initialData) =>
+              openProviderWizard(WIZARD_OPEN_SOURCE.ROW_ACTION, initialData)
+            }
             onOpenOrganizationWizard={openOrganizationWizard}
           />
         </div>

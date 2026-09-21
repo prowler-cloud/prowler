@@ -102,7 +102,8 @@ export interface UseDriverTourOptions<TTarget extends string = string> {
 }
 
 export interface UseDriverTourResult {
-  start: () => void;
+  /** Optional step `target` to begin from, skipping the steps before it. */
+  start: (startAtTarget?: string) => void;
   stop: () => void;
   /** True if a completion record exists for `(tour.id, tour.version)`. */
   hasCompleted: boolean;
@@ -394,11 +395,29 @@ export function useDriverTour<TTarget extends string>(
   }, [autoOpen, enabled, hasCompleted, tourId, tourVersion]);
 
   return {
-    start: () => {
+    start: (startAtTarget) => {
       const instance = driverRef.current;
       if (!instance) return;
-      activeTourInstance = instance;
-      instance.drive();
+
+      const startIndex = startAtTarget
+        ? tour.steps.findIndex((step) => step.target === startAtTarget)
+        : -1;
+      if (!startAtTarget || startIndex <= 0) {
+        activeTourInstance = instance;
+        instance.drive();
+        return;
+      }
+
+      // The anchor may mount right after the caller (e.g. a modal opening), so wait for it.
+      waitForElement(getTourTargetSelector(tourId, startAtTarget))
+        .then(() => {
+          if (driverRef.current !== instance || instance.isActive()) return;
+          activeTourInstance = instance;
+          instance.drive(startIndex);
+        })
+        .catch(() => {
+          // Anchor never appeared (e.g. the modal was dismissed); skip the tour.
+        });
     },
     stop: () => driverRef.current?.destroy(),
     hasCompleted,

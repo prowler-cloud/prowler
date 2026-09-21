@@ -4,7 +4,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { Toaster } from "@/components/shadcn/toast/Toaster";
 import { resetToasts } from "@/components/shadcn/toast/use-toast";
+import {
+  PROVIDER_FUNNEL_EVENT,
+  type ProviderFunnelDetail,
+} from "@/lib/provider-funnel/provider-funnel-events";
 import { useProviderWizardStore } from "@/store/provider-wizard/store";
+import { useUIStore } from "@/store/ui/store";
 
 import { ProviderWizardModal } from "./provider-wizard-modal";
 
@@ -132,6 +137,20 @@ describe("provider wizard account creation", () => {
     expect(await screen.findByText("Credential details")).toBeVisible();
   });
 
+  it("tells the rest of the app the tenant now has a provider", async () => {
+    // Given
+    useUIStore.setState({ hasProviders: false, hasProvidersResolved: true });
+    addRegistryProvider.mockResolvedValueOnce(createdAccount);
+    const user = await enterAccountDetails();
+
+    // When
+    await user.click(screen.getByRole("button", { name: "Next" }));
+    await screen.findByText("Credential details");
+
+    // Then: the sidebar stops offering Add Provider without waiting for a reload.
+    expect(useUIStore.getState().hasProviders).toBe(true);
+  });
+
   it("restores Next after a failed creation and retries the same account", async () => {
     // Given
     const failure = { errors: [{ detail: "Creation failed. Try again." }] };
@@ -204,6 +223,33 @@ describe("provider wizard account creation", () => {
     expect(await screen.findByText("Credential details")).toBeVisible();
     expect(screen.queryByText(detail)).not.toBeInTheDocument();
     expect(addRegistryProvider).toHaveBeenCalledTimes(2);
+  });
+
+  it("signals the provider type the user picked, once", async () => {
+    // Given
+    const funnelSignals: ProviderFunnelDetail[] = [];
+    const recordFunnelSignal: EventListener = (event) => {
+      funnelSignals.push((event as CustomEvent<ProviderFunnelDetail>).detail);
+    };
+    window.addEventListener(PROVIDER_FUNNEL_EVENT, recordFunnelSignal);
+    const user = userEvent.setup();
+    render(<ProviderWizardModal open onOpenChange={vi.fn()} />);
+
+    await screen.findByRole("option", { name: "Acme Cloud Registry" });
+
+    // When
+    await user.click(
+      screen.getByRole("option", { name: /Amazon Web Services/ }),
+    );
+    await screen.findByRole("radio", {
+      name: "Add A Single AWS Cloud Account",
+    });
+    window.removeEventListener(PROVIDER_FUNNEL_EVENT, recordFunnelSignal);
+
+    // Then
+    expect(funnelSignals).toEqual([
+      { step: "provider_type_selected", providerType: "aws" },
+    ]);
   });
 
   it("keeps native providers available during a Registry discovery error and retries", async () => {

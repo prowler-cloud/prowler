@@ -24,9 +24,9 @@ export class ScansPage extends BasePage {
     super(page);
 
     // Scan provider selection elements
-    // The sidebar exposes its own icon-button labeled "Launch Scan"
-    // (aria-label, wrapped in a Tooltip), so scoping by accessible name
-    // alone hits a strict-mode duplicate. Scope to the page-shell's
+    // The sidebar exposes its own action labeled "Launch Scan" (it reads
+    // "Add Provider" only while the tenant has no providers), so scoping by
+    // accessible name alone hits a strict-mode duplicate. Scope to the page-shell's
     // tabs-and-actions group, which only contains the visible-text
     // Launch Scan button.
     this.launchScanButton = page

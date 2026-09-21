@@ -1,1 +1,0 @@
-Azure Defender security contacts and Key Vault key rotation policies now use the endpoints of the selected cloud (`--azure-region`) instead of the hardcoded `management.azure.com` and `vault.azure.net` hosts, so both work on `AzureUSGovernment` and `AzureChinaCloud`

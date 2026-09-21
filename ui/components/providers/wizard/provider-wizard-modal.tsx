@@ -12,6 +12,10 @@ import { DialogHeader, DialogTitle } from "@/components/shadcn/dialog";
 import { Modal } from "@/components/shadcn/modal";
 import { useScanScheduleCapability } from "@/hooks/use-scan-schedule-capability";
 import { useScrollHint } from "@/hooks/use-scroll-hint";
+import {
+  dispatchProviderFunnel,
+  PROVIDER_FUNNEL_STEP,
+} from "@/lib/provider-funnel/provider-funnel-events";
 import { advanceActiveTour, endActiveTour } from "@/lib/tours/use-driver-tour";
 import {
   ORG_SETUP_PHASE,
@@ -81,6 +85,7 @@ export function ProviderWizardModal({
     organizationType,
     orgCurrentStep,
     orgSetupPhase,
+    providerTypeHint,
     resolvedFooterConfig,
     setCurrentStep,
     setFooterConfig,
@@ -183,6 +188,13 @@ export function ProviderWizardModal({
                         // Picking a type reveals the account-detail inputs. Advance the tour
                         // to its wizard-body step, pinned beside the form. No-op off-onboarding.
                         if (providerType) advanceActiveTour();
+                        // The form re-reports the same type on re-render; signal a pick once.
+                        if (providerType && providerType !== providerTypeHint) {
+                          dispatchProviderFunnel({
+                            step: PROVIDER_FUNNEL_STEP.PROVIDER_TYPE_SELECTED,
+                            providerType,
+                          });
+                        }
                         setProviderTypeHint(providerType);
                       }}
                     />

@@ -3,6 +3,12 @@
 import { IdIcon } from "@/components/icons";
 import { Button } from "@/components/shadcn";
 import { CodeSnippet } from "@/components/shadcn/code-snippet/code-snippet";
+import {
+  dispatchProviderFunnel,
+  PROVIDER_FUNNEL_STEP,
+  ROLE_TEMPLATE_KIND,
+  type RoleTemplateKind,
+} from "@/lib/provider-funnel/provider-funnel-events";
 import { IntegrationType } from "@/types/integrations";
 
 interface CredentialsRoleHelperProps {
@@ -22,6 +28,15 @@ export const CredentialsRoleHelper = ({
 }: CredentialsRoleHelperProps) => {
   const isAmazonS3 = integrationType === "amazon_s3";
 
+  // Integrations reuse this helper; only the add-provider journey is signalled.
+  const signalTemplateOpened = (template: RoleTemplateKind) => {
+    if (integrationType) return;
+    dispatchProviderFunnel({
+      step: PROVIDER_FUNNEL_STEP.ROLE_TEMPLATE_OPENED,
+      template,
+    });
+  };
+
   return (
     <div className="flex flex-col gap-2">
       <div className="flex flex-col gap-4">
@@ -40,6 +55,11 @@ export const CredentialsRoleHelper = ({
             href={templateLinks.cloudformationQuickLink}
             target="_blank"
             rel="noopener noreferrer"
+            onClick={() =>
+              signalTemplateOpened(
+                ROLE_TEMPLATE_KIND.CLOUDFORMATION_QUICK_CREATE,
+              )
+            }
           >
             Use the following AWS CloudFormation Quick Link to create the IAM
             Role
@@ -71,6 +91,9 @@ export const CredentialsRoleHelper = ({
               href={templateLinks.cloudformation}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() =>
+                signalTemplateOpened(ROLE_TEMPLATE_KIND.CLOUDFORMATION_TEMPLATE)
+              }
             >
               CloudFormation {integrationType ? "" : "Template"}
             </a>
@@ -85,6 +108,7 @@ export const CredentialsRoleHelper = ({
               href={templateLinks.terraform}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() => signalTemplateOpened(ROLE_TEMPLATE_KIND.TERRAFORM)}
             >
               Terraform {integrationType ? "" : "Code"}
             </a>

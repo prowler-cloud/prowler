@@ -195,4 +195,66 @@ describe("useDriverTour lifecycle", () => {
     // ...but no completion record was persisted, so the tour can reappear later.
     expect(store.get({ id: tour.id, version: tour.version })).toBeNull();
   });
+
+  describe("when asked to start at an anchored step", () => {
+    const anchoredTour = {
+      id: "anchored-tour",
+      version: 1,
+      coversFiles: [],
+      steps: [
+        { title: "Welcome", description: "Intro" },
+        { target: "late", title: "Late anchor", description: "Inside a modal" },
+      ],
+    } satisfies TourDefinition;
+
+    function AnchoredProbe({
+      onResult,
+    }: {
+      onResult: (result: UseDriverTourResult) => void;
+    }) {
+      onResult(
+        useDriverTour(anchoredTour, { autoOpen: false, store: createStore() }),
+      );
+      return null;
+    }
+
+    afterEach(() => {
+      document.body.innerHTML = "";
+    });
+
+    it("skips the earlier steps once the anchor is in the DOM", async () => {
+      // Given
+      let latestResult: UseDriverTourResult | undefined;
+      render(<AnchoredProbe onResult={(result) => (latestResult = result)} />);
+      const anchor = document.createElement("div");
+      anchor.setAttribute("data-tour-id", "anchored-tour-late");
+      document.body.appendChild(anchor);
+
+      // When
+      await act(async () => {
+        latestResult?.start("late");
+      });
+
+      // Then
+      expect(driverHarness.instances[0].drive).toHaveBeenCalledExactlyOnceWith(
+        1,
+      );
+    });
+
+    it("starts from the first step when the target is not part of the tour", async () => {
+      // Given
+      let latestResult: UseDriverTourResult | undefined;
+      render(<AnchoredProbe onResult={(result) => (latestResult = result)} />);
+
+      // When
+      await act(async () => {
+        latestResult?.start("unknown");
+      });
+
+      // Then
+      expect(
+        driverHarness.instances[0].drive,
+      ).toHaveBeenCalledExactlyOnceWith();
+    });
+  });
 });
