@@ -1,1 +1,0 @@
-`UI_AWS_QUICK_ONBOARDING_ENABLED` experiment flag that hands the AWS pick in the provider wizard off to a two-step modal (role ARN or static keys with an immediate connection test, then name and first scan)
