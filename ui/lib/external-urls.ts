@@ -19,6 +19,10 @@ export const DOCS_URLS = {
   GCP_ORGANIZATIONS:
     "https://docs.prowler.com/user-guide/tutorials/prowler-cloud-gcp-organizations",
   ALERTS: "https://docs.prowler.com/user-guide/tutorials/prowler-app-alerts",
+  SLACK_INTEGRATION:
+    "https://docs.prowler.com/user-guide/tutorials/prowler-app-slack-integration",
+  SLACK_INTEGRATION_PRIVATE_CHANNELS:
+    "https://docs.prowler.com/user-guide/tutorials/prowler-app-slack-integration#why-a-private-channel-is-missing-from-the-channel-list",
   SCAN_CONFIGURATION:
     "https://docs.prowler.com/user-guide/tutorials/prowler-app-scan-configuration",
   ATTACK_PATHS_CUSTOM_QUERIES:
@@ -57,12 +61,13 @@ const CF_QUICKCREATE_BASE_URL =
 // `getAWSCredentialsTemplateLinks` below.
 export const PRECONFIGURED_CREDENTIAL_URLS = {
   // Opens the Cloudflare "Create Custom Token" form under the user profile
-  // pre-filled with the four read-only scopes Prowler needs
-  // (`Account Settings`, `Zone`, `Zone Settings`, `DNS`) and the token name.
+  // pre-filled with the seven read-only scopes Prowler needs (`Account
+  // Settings`, `Zone`, `Zone Settings`, `DNS`, `SSL and Certificates`,
+  // `Bot Management`, `Zone WAF`) and the token name.
   // Kept in sync with the "User API Token" URL published in
   // docs/user-guide/providers/cloudflare/authentication.mdx.
   CLOUDFLARE_API_TOKEN_USER:
-    "https://dash.cloudflare.com/profile/api-tokens?permissionGroupKeys=%5B%7B%22key%22%3A%22account_settings%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22zone%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22zone_settings%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22dns%22%2C%22type%22%3A%22read%22%7D%5D&accountId=%2A&zoneId=all&name=Prowler%20Security%20Scanner",
+    "https://dash.cloudflare.com/profile/api-tokens?permissionGroupKeys=%5B%7B%22key%22%3A%22account_settings%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22zone%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22zone_settings%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22dns%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22ssl_and_certificates%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22bot_management%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22zone_waf%22%2C%22type%22%3A%22read%22%7D%5D&accountId=%2A&zoneId=all&name=Prowler%20Security%20Scanner",
   // Opens the GitHub fine-grained PAT creation form pre-filled with the four
   // read-only permissions Prowler needs to scan a user's own repositories.
   // Kept in sync with the "user repositories" URL published in
@@ -78,7 +83,7 @@ export const PRECONFIGURED_CREDENTIAL_URLS = {
 // avoid ambiguity when the user is signed into multiple accounts. Navigating
 // directly to `/<accountId>/api-tokens/create` does NOT pre-fill the form —
 // Cloudflare only reads the pre-fill params when they arrive via the router.
-// Same four read-only scopes as the user token URL.
+// Same seven read-only scopes as the user token URL.
 export const buildCloudflareAccountOwnedApiTokenUrl = (
   accountId: string,
 ): string => {
@@ -93,6 +98,9 @@ export const buildCloudflareAccountOwnedApiTokenUrl = (
       { key: "zone", type: "read" },
       { key: "zone_settings", type: "read" },
       { key: "dns", type: "read" },
+      { key: "ssl_and_certificates", type: "read" },
+      { key: "bot_management", type: "read" },
+      { key: "zone_waf", type: "read" },
     ]),
   );
   const name = encodeURIComponent("Prowler Security Scanner");

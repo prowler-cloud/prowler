@@ -9,7 +9,7 @@
   "Severity": "medium",
   "ResourceType": "NotDefined",
   "ResourceGroup": "collaboration",
-  "Description": "Verifies that Gmail is configured to take a protective action (such as moving to spam, quarantining, or showing a warning) when groups receive inbound emails that spoof the organization's domain. Google Groups are a high-value target because a single spoofed message can reach many recipients at once.",
+  "Description": "Verifies that Gmail moves out of the inbox, to spam or quarantine, the inbound emails to groups that spoof the organization's domain. An action that only shows a warning is not enough. Google Groups are a high-value target because a single spoofed message can reach many recipients at once.",
   "Risk": "Without protection of groups from domain-spoofing emails, attackers can send **spoofed messages to group mailboxes** that appear to originate from the organization. Since groups distribute to many recipients, a single spoofed email can enable **mass phishing, social engineering, or misinformation** campaigns across the organization.",
   "RelatedUrl": "",
   "AdditionalURLs": [

@@ -3,9 +3,11 @@ title: 'Run scans with the Prowler CLI'
 description: 'Learn the essential Prowler CLI commands to run multi-cloud security scans, list checks and services, and export CSV, JSON-OCSF, and HTML reports.'
 ---
 
+import { VersionBadge } from "/snippets/version-badge.mdx"
+
 ## Running Prowler
 
-Running Prowler requires specifying the provider (e.g `aws`, `gcp`, `azure`, `kubernetes`, `m365`, `github`, `iac` or `mongodbatlas`):
+Running Prowler requires specifying the provider (e.g. `aws`, `gcp`, `azure`, `kubernetes`, `m365`, `github`, `iac` or `mongodbatlas`):
 
 <Note>
 If no provider is specified, AWS is used by default for backward compatibility with Prowler v2.
@@ -91,6 +93,18 @@ By default, `prowler` will scan all AWS regions.
 
 </Note>
 See more details about AWS Authentication in the [Authentication Section](/user-guide/providers/aws/authentication) section.
+
+- **AWS Retrier and Timeout Configuration**
+
+    <VersionBadge version="5.42.0" />
+
+    Tune the Boto3 standard retrier and the endpoint timeouts when AWS throttles the scan or when some endpoints are unreachable from the network Prowler runs in:
+
+    ```console
+    prowler aws --aws-retries-max-attempts 5 --aws-connect-timeout 5 --aws-read-timeout 30
+    ```
+
+    See the [Boto3 configuration](/user-guide/providers/aws/boto3-configuration) page for defaults and environment variables.
 
 ## Azure
 

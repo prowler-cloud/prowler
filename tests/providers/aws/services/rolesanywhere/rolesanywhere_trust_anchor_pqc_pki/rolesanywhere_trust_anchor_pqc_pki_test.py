@@ -185,7 +185,7 @@ class Test_rolesanywhere_trust_anchor_pqc_pki:
 
             result = rolesanywhere_trust_anchor_pqc_pki().execute()
             assert len(result) == 1
-            assert result[0].status == "FAIL"
+            assert result[0].status == "MANUAL"
             assert "could not be inspected" in result[0].status_extended
 
     def test_certificate_bundle_source(self):

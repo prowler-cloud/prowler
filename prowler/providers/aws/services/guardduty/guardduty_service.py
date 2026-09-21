@@ -63,6 +63,15 @@ class GuardDuty(AWSService):
             )
 
     def _get_detector(self, detector):
+        """Read a detector's status, data sources and features.
+
+        A feature GuardDuty does not return is left as None rather than False, so a
+        Region that does not offer the feature stays distinguishable from one that
+        turned it off.
+
+        Args:
+            detector: Detector object to populate in place.
+        """
         logger.info("GuardDuty - getting detector info...")
         try:
             if detector.id and detector.enabled_in_account:
@@ -108,11 +117,33 @@ class GuardDuty(AWSService):
                         and feat.get("Status", "DISABLED") == "ENABLED"
                     ):
                         detector.lambda_protection = True
-                    elif (
-                        feat.get("Name", "") == "EKS_RUNTIME_MONITORING"
-                        and feat.get("Status", "DISABLED") == "ENABLED"
+                    elif feat.get("Name", "") == "AI_PROTECTION":
+                        # Recorded even when DISABLED, so a Region that offers AI
+                        # Protection and turned it off stays distinguishable from one
+                        # that never reports the feature.
+                        detector.ai_protection = (
+                            feat.get("Status", "DISABLED") == "ENABLED"
+                        )
+                    elif feat.get("Name", "") in (
+                        "EKS_RUNTIME_MONITORING",
+                        "RUNTIME_MONITORING",
                     ):
-                        detector.eks_runtime_monitoring = True
+                        enabled = feat.get("Status", "DISABLED") == "ENABLED"
+                        # Unified Runtime Monitoring (RUNTIME_MONITORING) already
+                        # includes threat detection for Amazon EKS resources and is
+                        # mutually exclusive with EKS_RUNTIME_MONITORING, so either
+                        # feature means the detector has EKS runtime coverage.
+                        if enabled:
+                            detector.eks_runtime_monitoring = True
+                        if feat.get("Name", "") == "RUNTIME_MONITORING":
+                            # Only the unified feature covers Amazon EC2 and Amazon
+                            # ECS on Fargate, so it is tracked separately. Recorded even
+                            # when DISABLED, for the same reason AI_PROTECTION above is:
+                            # a Region that offers the feature and turned it off must
+                            # stay distinguishable from one that never reported it. A
+                            # plain bool cannot express that, and the check would report
+                            # a definite FAIL on a Region that has no unified feature.
+                            detector.runtime_monitoring = enabled
 
         except Exception as error:
             logger.error(
@@ -345,8 +376,12 @@ class Detector(BaseModel):
     rds_protection: bool = False
     eks_audit_log_protection: bool = False
     eks_runtime_monitoring: bool = False
+    # None when GuardDuty did not return the feature: unknown, not disabled.
+    runtime_monitoring: Optional[bool] = None
     lambda_protection: bool = False
     ec2_malware_protection: bool = False
+    # None when GuardDuty did not return the feature: unknown, not disabled.
+    ai_protection: Optional[bool] = None
     # Organization configuration fields
     organization_auto_enable_members: str = "NONE"  # NEW, ALL, or NONE
     organization_config_available: bool = False

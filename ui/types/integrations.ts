@@ -12,6 +12,34 @@ export const INTEGRATION_TYPE = {
 export type IntegrationType =
   (typeof INTEGRATION_TYPE)[keyof typeof INTEGRATION_TYPE];
 
+export const INTEGRATION_CONNECTION_TASK_KIND = "integration-connection-test";
+
+export interface IntegrationConnectionTaskResource {
+  id: string;
+  type: "tasks";
+}
+
+export interface IntegrationConnectionTaskDocument {
+  data: IntegrationConnectionTaskResource;
+}
+
+export interface IntegrationConnectionTaskResult {
+  connected?: boolean;
+  error?: string | null;
+  /** The failing channel id, or null when the failure names no channel. */
+  channel?: string | null;
+}
+
+export interface IntegrationConnectionTestResponse {
+  success: boolean;
+  message?: string;
+  taskId?: string;
+  data?: IntegrationConnectionTaskDocument;
+  error?: string;
+  /** The failing channel id, or null when the failure names no channel. */
+  failedChannelId?: string | null;
+}
+
 export const JIRA_DISPATCH_MODE = {
   INDIVIDUAL: "individual",
   GROUPED: "grouped",
@@ -115,7 +143,7 @@ export interface IntegrationProps {
 
 /**
  * A channel Prowler can post to: every active public channel, plus the private
- * ones `@Prowler` was invited to. `is_private` keeps the API's own naming.
+ * ones `@Prowler Cloud` was invited to. `is_private` keeps the API's own naming.
  */
 export interface SlackChannelOption {
   id: string;

@@ -12,16 +12,16 @@ Prowler for Cloudflare scans zones for security misconfigurations, including SSL
 Set up authentication for Cloudflare with the [Cloudflare Authentication](/user-guide/providers/cloudflare/authentication) guide before starting either path:
 
 - Create a Cloudflare User API Token (recommended) or locate the Global API Key
-- Grant the required read-only permissions (`Account Settings:Read`, `Zone:Read`, `Zone Settings:Read`, `DNS:Read`)
+- Grant the required read-only permissions (`Account Settings:Read`, `Zone:Read`, `Zone Settings:Read`, `DNS:Read`, `SSL and Certificates:Read`, `Bot Management:Read`, `Zone WAF:Read`)
 - Identify the Cloudflare Account ID to use as the provider identifier
 
 <Note>
 **Quick Setup:** Use these pre-configured links to create a token with the required permissions already selected:
 
-- [Create User API Token](https://dash.cloudflare.com/profile/api-tokens?permissionGroupKeys=%5B%7B%22key%22%3A%22account_settings%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22zone%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22zone_settings%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22dns%22%2C%22type%22%3A%22read%22%7D%5D&accountId=%2A&zoneId=all&name=Prowler%20Security%20Scanner) — creates a User API Token (recommended).
-- [Create Account-Owned API Token](https://dash.cloudflare.com/?to=/:account/api-tokens&permissionGroupKeys=%5B%7B%22key%22%3A%22account_settings%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22zone%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22zone_settings%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22dns%22%2C%22type%22%3A%22read%22%7D%5D&name=Prowler%20Security%20Scanner) — creates an [account-owned token](https://developers.cloudflare.com/fundamentals/api/how-to/account-owned-token-template/), better suited for automation and CI/CD.
+- [Create User API Token](https://dash.cloudflare.com/profile/api-tokens?permissionGroupKeys=%5B%7B%22key%22%3A%22account_settings%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22zone%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22zone_settings%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22dns%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22ssl_and_certificates%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22bot_management%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22zone_waf%22%2C%22type%22%3A%22read%22%7D%5D&accountId=%2A&zoneId=all&name=Prowler%20Security%20Scanner) — creates a User API Token (recommended).
+- [Create Account-Owned API Token](https://dash.cloudflare.com/?to=/:account/api-tokens&permissionGroupKeys=%5B%7B%22key%22%3A%22account_settings%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22zone%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22zone_settings%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22dns%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22ssl_and_certificates%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22bot_management%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22zone_waf%22%2C%22type%22%3A%22read%22%7D%5D&name=Prowler%20Security%20Scanner) — creates an [account-owned token](https://developers.cloudflare.com/fundamentals/api/how-to/account-owned-token-template/), better suited for automation and CI/CD.
 
-Both links open the Cloudflare Dashboard with the four required read-only scopes (`Account Settings`, `Zone`, `Zone Settings`, `DNS`) and the name `Prowler Security Scanner` prefilled. See [Cloudflare Authentication](/user-guide/providers/cloudflare/authentication#api-token-recommended) for the equivalent manual steps.
+Both links open the Cloudflare Dashboard with the seven required read-only scopes (`Account Settings`, `Zone`, `Zone Settings`, `DNS`, `SSL and Certificates`, `Bot Management`, `Zone WAF`) and the name `Prowler Security Scanner` prefilled. See [Cloudflare Authentication](/user-guide/providers/cloudflare/authentication#api-token-recommended) for the equivalent manual steps.
 </Note>
 
 <CardGroup cols={2}>

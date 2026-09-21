@@ -295,6 +295,11 @@ DJANGO_OUTPUT_S3_AWS_SECRET_ACCESS_KEY = env.str(
 )
 DJANGO_OUTPUT_S3_AWS_SESSION_TOKEN = env.str("DJANGO_OUTPUT_S3_AWS_SESSION_TOKEN", "")
 DJANGO_OUTPUT_S3_AWS_DEFAULT_REGION = env.str("DJANGO_OUTPUT_S3_AWS_DEFAULT_REGION", "")
+# Browser-reachable storage host used to sign download URLs. Empty means sign against the
+# same endpoint the API talks to, which is what Prowler Cloud on S3 does.
+DJANGO_OUTPUT_S3_AWS_PUBLIC_ENDPOINT_URL = env.str(
+    "DJANGO_OUTPUT_S3_AWS_PUBLIC_ENDPOINT_URL", ""
+)
 
 # HTTP Security Headers
 SECURE_CONTENT_TYPE_NOSNIFF = True
@@ -302,6 +307,11 @@ X_FRAME_OPTIONS = "DENY"
 SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
 
 DJANGO_DELETION_BATCH_SIZE = env.int("DJANGO_DELETION_BATCH_SIZE", 5000)
+
+# Public base URL of the Prowler UI (for example https://cloud.prowler.com). Used to
+# build links back to findings in outbound integrations such as Jira. Empty by
+# default, so self-hosted deployments emit no links unless they configure it.
+UI_BASE_URL = env.str("DJANGO_UI_BASE_URL", "").rstrip("/")
 
 # SAML requirement
 CSRF_COOKIE_SECURE = True

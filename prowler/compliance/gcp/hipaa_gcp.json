@@ -18,8 +18,7 @@
       ],
       "Checks": [
         "iam_cloud_asset_inventory_enabled",
-        "securitycenter_security_health_analytics_enabled",
-        "essentialcontacts_security_contacts_configured"
+        "iam_organization_essential_contacts_configured"
       ]
     },
     {
@@ -34,23 +33,20 @@
         }
       ],
       "Checks": [
-        "cloudstorage_bucket_encryption",
         "cloudstorage_bucket_public_access",
-        "cloudstorage_bucket_uniform_access",
-        "cloudsql_instance_automatic_backups_enabled",
-        "cloudsql_instance_encryption_enabled",
+        "cloudstorage_bucket_uniform_bucket_level_access",
+        "cloudsql_instance_automated_backups",
+        "cloudsql_instance_cmek_encryption_enabled",
         "cloudsql_instance_public_access",
         "compute_instance_public_ip",
-        "compute_disk_encryption_enabled",
-        "compute_firewall_rdp_access_from_internet_restricted",
-        "compute_firewall_ssh_access_from_internet_restricted",
-        "compute_network_legacy_network_not_used",
-        "gke_cluster_master_authorized_networks_enabled",
-        "gke_cluster_private_cluster_enabled",
+        "compute_instance_encryption_with_csek_enabled",
+        "compute_firewall_rdp_access_from_the_internet_allowed",
+        "compute_firewall_ssh_access_from_the_internet_allowed",
+        "compute_network_not_legacy",
         "iam_sa_no_administrative_privileges",
         "iam_no_service_roles_at_project_level",
         "bigquery_dataset_public_access",
-        "bigquery_dataset_cmek_encryption",
+        "bigquery_dataset_cmk_encryption",
         "kms_key_rotation_enabled",
         "gemini_api_disabled"
       ]
@@ -148,8 +144,7 @@
         }
       ],
       "Checks": [
-        "securitycenter_security_health_analytics_enabled",
-        "essentialcontacts_security_contacts_configured",
+        "iam_organization_essential_contacts_configured",
         "logging_sink_created"
       ]
     },
@@ -165,9 +160,7 @@
         }
       ],
       "Checks": [
-        "cloudsql_instance_automatic_backups_enabled",
-        "compute_disk_snapshot_encryption_enabled",
-        "gke_cluster_stackdriver_logging_enabled"
+        "cloudsql_instance_automated_backups"
       ]
     },
     {
@@ -182,9 +175,8 @@
         }
       ],
       "Checks": [
-        "cloudsql_instance_automatic_backups_enabled",
-        "cloudstorage_bucket_object_versioning",
-        "compute_disk_snapshot_encryption_enabled"
+        "cloudsql_instance_automated_backups",
+        "cloudstorage_bucket_versioning_enabled"
       ]
     },
     {
@@ -199,9 +191,8 @@
         }
       ],
       "Checks": [
-        "cloudsql_instance_automatic_backups_enabled",
-        "cloudsql_instance_point_in_time_recovery_enabled",
-        "cloudstorage_bucket_object_versioning"
+        "cloudsql_instance_automated_backups",
+        "cloudstorage_bucket_versioning_enabled"
       ]
     },
     {
@@ -247,9 +238,8 @@
       ],
       "Checks": [
         "compute_instance_public_ip",
-        "compute_firewall_rdp_access_from_internet_restricted",
-        "compute_firewall_ssh_access_from_internet_restricted",
-        "gke_cluster_private_cluster_enabled"
+        "compute_firewall_rdp_access_from_the_internet_allowed",
+        "compute_firewall_ssh_access_from_the_internet_allowed"
       ]
     },
     {
@@ -264,9 +254,7 @@
         }
       ],
       "Checks": [
-        "compute_disk_encryption_enabled",
-        "compute_disk_snapshot_encryption_enabled",
-        "cloudstorage_bucket_encryption"
+        "compute_instance_encryption_with_csek_enabled"
       ]
     },
     {
@@ -285,11 +273,10 @@
         "iam_no_service_roles_at_project_level",
         "iam_account_access_approval_enabled",
         "cloudstorage_bucket_public_access",
-        "cloudstorage_bucket_uniform_access",
+        "cloudstorage_bucket_uniform_bucket_level_access",
         "cloudsql_instance_public_access",
         "bigquery_dataset_public_access",
-        "compute_instance_public_ip",
-        "gke_cluster_private_cluster_enabled"
+        "compute_instance_public_ip"
       ]
     },
     {
@@ -320,11 +307,9 @@
         }
       ],
       "Checks": [
-        "cloudstorage_bucket_encryption",
-        "cloudsql_instance_encryption_enabled",
-        "compute_disk_encryption_enabled",
-        "compute_disk_snapshot_encryption_enabled",
-        "bigquery_dataset_cmek_encryption",
+        "cloudsql_instance_cmek_encryption_enabled",
+        "compute_instance_encryption_with_csek_enabled",
+        "bigquery_dataset_cmk_encryption",
         "kms_key_rotation_enabled"
       ]
     },
@@ -348,8 +333,7 @@
         "logging_log_metric_filter_and_alert_for_vpc_network_route_changes_enabled",
         "logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled",
         "logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled",
-        "logging_log_metric_filter_and_alert_for_sql_instance_configuration_changes_enabled",
-        "gke_cluster_stackdriver_logging_enabled"
+        "logging_log_metric_filter_and_alert_for_sql_instance_configuration_changes_enabled"
       ]
     },
     {
@@ -364,9 +348,8 @@
         }
       ],
       "Checks": [
-        "cloudstorage_bucket_object_versioning",
-        "cloudsql_instance_automatic_backups_enabled",
-        "cloudsql_instance_point_in_time_recovery_enabled",
+        "cloudstorage_bucket_versioning_enabled",
+        "cloudsql_instance_automated_backups",
         "kms_key_rotation_enabled"
       ]
     },
@@ -398,11 +381,9 @@
         }
       ],
       "Checks": [
-        "cloudstorage_bucket_encryption",
-        "compute_firewall_rdp_access_from_internet_restricted",
-        "compute_firewall_ssh_access_from_internet_restricted",
-        "cloudsql_instance_ssl_required",
-        "gke_cluster_master_authorized_networks_enabled"
+        "compute_firewall_rdp_access_from_the_internet_allowed",
+        "compute_firewall_ssh_access_from_the_internet_allowed",
+        "cloudsql_instance_ssl_connections"
       ]
     },
     {
@@ -417,8 +398,8 @@
         }
       ],
       "Checks": [
-        "cloudstorage_bucket_object_versioning",
-        "cloudsql_instance_automatic_backups_enabled",
+        "cloudstorage_bucket_versioning_enabled",
+        "cloudsql_instance_automated_backups",
         "logging_sink_created"
       ]
     },
@@ -434,12 +415,11 @@
         }
       ],
       "Checks": [
-        "cloudstorage_bucket_encryption",
-        "cloudsql_instance_encryption_enabled",
-        "compute_disk_encryption_enabled",
-        "bigquery_dataset_cmek_encryption",
+        "cloudsql_instance_cmek_encryption_enabled",
+        "compute_instance_encryption_with_csek_enabled",
+        "bigquery_dataset_cmk_encryption",
         "kms_key_rotation_enabled",
-        "cloudsql_instance_ssl_required"
+        "cloudsql_instance_ssl_connections"
       ]
     }
   ]

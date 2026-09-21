@@ -244,7 +244,6 @@ from api.v1.serializers import (
     UserUpdateSerializer,
 )
 from botocore.exceptions import ClientError, NoCredentialsError, ParamValidationError
-from celery import chain
 from celery.result import AsyncResult
 from config.custom_logging import BackendLogger
 from config.env import env
@@ -327,7 +326,7 @@ from rest_framework_simplejwt.token_blacklist.models import (
 )
 from tasks.beat import schedule_provider_scan
 from tasks.jobs.attack_paths import db_utils as attack_paths_db_utils
-from tasks.jobs.export import get_s3_client
+from tasks.jobs.export import get_s3_client, get_s3_presign_client
 from tasks.tasks import (
     QUEUED_SCAN_TASK_STATE,
     backfill_compliance_summaries_task,
@@ -342,8 +341,7 @@ from tasks.tasks import (
     enqueue_scan_execution_on_commit,
     get_active_provider_scan,
     jira_integration_task,
-    mute_historical_findings_task,
-    reaggregate_all_finding_group_summaries_task,
+    mute_findings_in_latest_scans_task,
     refresh_lighthouse_provider_models_task,
 )
 
@@ -2409,7 +2407,8 @@ class ScanViewSet(ProviderVisibilityMixin, BaseRLSViewSet):
             }
             if content_type:
                 params["ResponseContentType"] = content_type
-            url = client.generate_presigned_url(
+            # The browser follows this URL, so it is signed against the public host.
+            url = (get_s3_presign_client() or client).generate_presigned_url(
                 "get_object",
                 Params=params,
                 ExpiresIn=300,
@@ -4473,7 +4472,7 @@ class InvitationViewSet(BaseRLSViewSet):
 
     def partial_update(self, request, *args, **kwargs):
         instance = self.get_object()
-        if instance.state != Invitation.State.PENDING:
+        if instance.state != Invitation.State.PENDING or instance.is_lapsed:
             raise ValidationError(detail="This invitation cannot be updated.")
         serializer = self.get_serializer(
             instance,
@@ -4487,7 +4486,7 @@ class InvitationViewSet(BaseRLSViewSet):
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
-        if instance.state != Invitation.State.PENDING:
+        if instance.state != Invitation.State.PENDING or instance.is_lapsed:
             raise ValidationError(detail="This invitation cannot be revoked.")
         instance.state = Invitation.State.REVOKED
         instance.save()
@@ -7551,35 +7550,28 @@ class MuteRuleViewSet(BaseRLSViewSet):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        # Create the mute rule
+        tenant_id = str(request.tenant_id)
+        finding_ids = serializer.validated_data["finding_ids"]
+        provider_ids = list(
+            dict.fromkeys(
+                Finding.all_objects.filter(
+                    id__in=finding_ids, tenant_id=tenant_id
+                ).values_list("scan__provider_id", flat=True)
+            )
+        )
+
         mute_rule = serializer.save()
 
-        tenant_id = str(request.tenant_id)
-        finding_ids = request.data.get("finding_ids", [])
-
-        # Immediately mute the selected findings
-        Finding.all_objects.filter(
-            id__in=finding_ids, tenant_id=tenant_id, muted=False
-        ).update(
-            muted=True,
-            muted_at=mute_rule.inserted_at,
-            muted_reason=mute_rule.reason,
-        )
-
-        # Launch background task for historical muting + reaggregation
         transaction.on_commit(
-            lambda: chain(
-                mute_historical_findings_task.si(
-                    tenant_id=tenant_id,
-                    mute_rule_id=str(mute_rule.id),
-                ),
-                reaggregate_all_finding_group_summaries_task.si(
-                    tenant_id=tenant_id,
-                ),
-            ).apply_async()
+            lambda: mute_findings_in_latest_scans_task.apply_async(
+                kwargs={
+                    "tenant_id": tenant_id,
+                    "mute_rule_id": str(mute_rule.id),
+                    "provider_ids": [str(provider_id) for provider_id in provider_ids],
+                }
+            )
         )
 
-        # Return the created mute rule
         serializer = self.get_serializer(mute_rule)
         return Response(
             data=serializer.data,

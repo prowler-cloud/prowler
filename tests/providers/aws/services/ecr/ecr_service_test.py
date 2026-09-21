@@ -6,6 +6,7 @@ from unittest.mock import MagicMock, patch
 import botocore
 import pytest
 from boto3 import client
+from botocore.exceptions import ClientError
 from moto import mock_aws
 
 from prowler.providers.aws.services.ecr.ecr_service import (
@@ -199,6 +200,21 @@ def mock_make_api_call(self, operation_name, kwarg):
         return {"downloadUrl": f"https://layers.example.com/{digest}"}
 
     return make_api_call(self, operation_name, kwarg)
+
+
+def mock_make_api_call_registry_scanning_denied(self, operation_name, kwarg):
+    """Deny GetRegistryScanningConfiguration, serving every other call normally."""
+    if operation_name == "GetRegistryScanningConfiguration":
+        raise ClientError(
+            {
+                "Error": {
+                    "Code": "AccessDeniedException",
+                    "Message": "User is not authorized to perform: ecr:GetRegistryScanningConfiguration",
+                }
+            },
+            operation_name,
+        )
+    return mock_make_api_call(self, operation_name, kwarg)
 
 
 def mock_generate_regional_clients(provider, service):
@@ -436,6 +452,27 @@ class Test_ECR_Service:
                 scan_filters=[{"filter": "*", "filterType": "WILDCARD"}],
             )
         ]
+
+    @mock_aws
+    def test_get_registry_scanning_configuration_not_retrieved(self):
+        """A denied GetRegistryScanningConfiguration leaves the scan type unknown.
+
+        Prowler leaves unretrieved attributes at None, so checks reading
+        ``scan_type`` can tell "not enhanced" apart from "not answered".
+
+        The patch is entered inside the test body rather than as a decorator:
+        stacked patch decorators are merged into one ``patchings`` list, so the
+        class-level ``_make_api_call`` patch would be applied last and win.
+        """
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        with patch(
+            "botocore.client.BaseClient._make_api_call",
+            new=mock_make_api_call_registry_scanning_denied,
+        ):
+            ecr = ECR(aws_provider)
+        assert len(ecr.registries) == 1
+        assert ecr.registries[AWS_REGION_EU_WEST_1].scan_type is None
+        assert ecr.registries[AWS_REGION_EU_WEST_1].rules is None
 
     def test_is_artifact_scannable_docker(self):
         """A Docker image config is scannable."""

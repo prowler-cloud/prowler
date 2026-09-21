@@ -2,6 +2,7 @@ from datetime import datetime
 from unittest.mock import patch
 
 import botocore
+import pytest
 from boto3 import client
 from moto import mock_aws
 
@@ -142,6 +143,142 @@ class Test_GuardDuty_Service:
         assert not guardduty.detectors[0].ec2_malware_protection
         assert guardduty.detectors[0].region == AWS_REGION_EU_WEST_1
         assert guardduty.detectors[0].tags == [{"test": "test"}]
+
+    @mock_aws
+    @pytest.mark.parametrize(
+        "feature_name", ["EKS_RUNTIME_MONITORING", "RUNTIME_MONITORING"]
+    )
+    def test_get_detector_eks_runtime_monitoring(self, feature_name):
+        """Both feature names set eks_runtime_monitoring.
+
+        Unified Runtime Monitoring supersedes EKS Runtime Monitoring and covers EKS.
+        """
+        guardduty_client = client("guardduty", region_name=AWS_REGION_EU_WEST_1)
+        guardduty_client.create_detector(
+            Enable=True,
+            Features=[{"Name": feature_name, "Status": "ENABLED"}],
+        )
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        guardduty = GuardDuty(aws_provider)
+
+        assert len(guardduty.detectors) == 1
+        assert guardduty.detectors[0].eks_runtime_monitoring
+
+    @mock_aws
+    @pytest.mark.parametrize(
+        "feature_name", ["EKS_RUNTIME_MONITORING", "RUNTIME_MONITORING"]
+    )
+    def test_get_detector_eks_runtime_monitoring_disabled(self, feature_name):
+        """Neither feature name sets eks_runtime_monitoring while it is DISABLED."""
+        guardduty_client = client("guardduty", region_name=AWS_REGION_EU_WEST_1)
+        guardduty_client.create_detector(
+            Enable=True,
+            Features=[{"Name": feature_name, "Status": "DISABLED"}],
+        )
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        guardduty = GuardDuty(aws_provider)
+
+        assert len(guardduty.detectors) == 1
+        assert not guardduty.detectors[0].eks_runtime_monitoring
+
+    @mock_aws
+    def test_get_detector_unified_runtime_monitoring_with_disabled_eks_feature(self):
+        """GetDetector returns an entry for both feature names.
+
+        The DISABLED legacy feature must not mask the ENABLED unified one regardless of
+        the order they arrive in.
+        """
+        guardduty_client = client("guardduty", region_name=AWS_REGION_EU_WEST_1)
+        guardduty_client.create_detector(
+            Enable=True,
+            Features=[
+                {"Name": "EKS_RUNTIME_MONITORING", "Status": "DISABLED"},
+                {"Name": "RUNTIME_MONITORING", "Status": "ENABLED"},
+            ],
+        )
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        guardduty = GuardDuty(aws_provider)
+
+        assert len(guardduty.detectors) == 1
+        assert guardduty.detectors[0].eks_runtime_monitoring
+
+    @mock_aws
+    def test_get_detector_runtime_monitoring_is_unified_only(self):
+        """The legacy EKS feature must not set runtime_monitoring.
+
+        Only the unified feature covers Amazon EC2 and Amazon ECS on Fargate.
+        """
+        guardduty_client = client("guardduty", region_name=AWS_REGION_EU_WEST_1)
+        guardduty_client.create_detector(
+            Enable=True,
+            Features=[{"Name": "EKS_RUNTIME_MONITORING", "Status": "ENABLED"}],
+        )
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        guardduty = GuardDuty(aws_provider)
+
+        assert len(guardduty.detectors) == 1
+        assert guardduty.detectors[0].eks_runtime_monitoring
+        assert not guardduty.detectors[0].runtime_monitoring
+
+    @mock_aws
+    @pytest.mark.parametrize("status", ["ENABLED", "DISABLED"])
+    def test_get_detector_runtime_monitoring(self, status):
+        """runtime_monitoring tracks the reported status of the unified feature."""
+        guardduty_client = client("guardduty", region_name=AWS_REGION_EU_WEST_1)
+        guardduty_client.create_detector(
+            Enable=True,
+            Features=[{"Name": "RUNTIME_MONITORING", "Status": status}],
+        )
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        guardduty = GuardDuty(aws_provider)
+
+        assert len(guardduty.detectors) == 1
+        assert guardduty.detectors[0].runtime_monitoring == (status == "ENABLED")
+
+    @mock_aws
+    @pytest.mark.parametrize(
+        "status, expected", [("ENABLED", True), ("DISABLED", False)]
+    )
+    def test_get_detector_ai_protection(self, status, expected):
+        """ai_protection is recorded as a bool for both reported statuses."""
+        guardduty_client = client("guardduty", region_name=AWS_REGION_EU_WEST_1)
+        guardduty_client.create_detector(
+            Enable=True,
+            Features=[{"Name": "AI_PROTECTION", "Status": status}],
+        )
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        guardduty = GuardDuty(aws_provider)
+
+        assert len(guardduty.detectors) == 1
+        assert guardduty.detectors[0].ai_protection is expected
+
+    @mock_aws
+    def test_get_detector_ai_protection_absent_stays_none(self):
+        """An AI_PROTECTION entry GuardDuty never returned must stay None.
+
+        That is what lets a check tell a Region without AI Protection apart from a
+        Region that offers the feature and disabled it.
+        """
+        guardduty_client = client("guardduty", region_name=AWS_REGION_EU_WEST_1)
+        guardduty_client.create_detector(
+            Enable=True,
+            Features=[
+                {"Name": "S3_DATA_EVENTS", "Status": "ENABLED"},
+                {"Name": "AI_ANALYST", "Status": "ENABLED"},
+            ],
+        )
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        guardduty = GuardDuty(aws_provider)
+
+        assert len(guardduty.detectors) == 1
+        assert guardduty.detectors[0].ai_protection is None
 
     @mock_aws
     # Test GuardDuty session

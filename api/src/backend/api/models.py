@@ -1380,6 +1380,15 @@ class Invitation(RowLevelSecurityProtectedModel):
             self.email = self.email.strip().lower()
         super().save(*args, **kwargs)
 
+    @classmethod
+    def lapsed_q(cls):
+        """Pending invitations whose expiry date has already passed."""
+        return Q(state=cls.State.PENDING, expires_at__lte=datetime.now(UTC))
+
+    @property
+    def is_lapsed(self):
+        return self.state == self.State.PENDING and self.expires_at <= datetime.now(UTC)
+
     class Meta(RowLevelSecurityProtectedModel.Meta):
         db_table = "invitations"
 

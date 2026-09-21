@@ -38,6 +38,48 @@ class Test_sagemaker_notebook_instance_without_direct_internet_access_configured
             result = check.execute()
             assert len(result) == 0
 
+    def test_instance_direct_internet_unreported_is_manual(self):
+        """An unreported DirectInternetAccess must not read as disabled.
+
+        The collector only ever assigned True, so "Disabled" and "the field was never
+        read" were both None and the check defaulted to PASS -- reporting an instance it
+        had not read as compliant. Now False means disabled and None means unknown.
+        """
+        sagemaker_client = mock.MagicMock
+        sagemaker_client.sagemaker_notebook_instances = []
+        sagemaker_client.sagemaker_notebook_instances.append(
+            NotebookInstance(
+                name=test_notebook_instance,
+                arn=notebook_instance_arn,
+                region=AWS_REGION_EU_WEST_1,
+                direct_internet_access=None,
+            )
+        )
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.sagemaker.sagemaker_notebook_instance_without_direct_internet_access_configured.sagemaker_notebook_instance_without_direct_internet_access_configured.sagemaker_client",
+                sagemaker_client,
+            ),
+        ):
+            from prowler.providers.aws.services.sagemaker.sagemaker_notebook_instance_without_direct_internet_access_configured.sagemaker_notebook_instance_without_direct_internet_access_configured import (
+                sagemaker_notebook_instance_without_direct_internet_access_configured,
+            )
+
+            check = (
+                sagemaker_notebook_instance_without_direct_internet_access_configured()
+            )
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "MANUAL"
+            assert "did not report DirectInternetAccess" in result[0].status_extended
+
     def test_instance_direct_internet_disabled(self):
         sagemaker_client = mock.MagicMock
         sagemaker_client.sagemaker_notebook_instances = []

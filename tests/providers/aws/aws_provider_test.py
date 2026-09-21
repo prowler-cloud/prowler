@@ -16,22 +16,35 @@ from moto import mock_aws
 from pytest import raises
 from tzlocal import get_localzone
 
-from prowler.providers.aws.aws_provider import AwsProvider, get_aws_region_for_sts
+from prowler.providers.aws.aws_provider import (
+    MAX_STS_BOOTSTRAP_ATTEMPTS,
+    AwsProvider,
+    get_aws_region_for_sts,
+    get_env_partition_bootstrap_region,
+    get_env_partition_regions,
+    get_partition_bootstrap_candidates,
+)
 from prowler.providers.aws.config import (
     AWS_STS_GLOBAL_ENDPOINT_REGION,
+    BOTO3_CONNECT_TIMEOUT,
+    BOTO3_READ_TIMEOUT,
     BOTO3_USER_AGENT_EXTRA,
     ROLE_SESSION_NAME,
+    get_boto3_timeout_from_env,
     get_default_session_config,
 )
 from prowler.providers.aws.exceptions.exceptions import (
+    AWSAccessKeyIDInvalidError,
     AWSArgumentTypeValidationError,
     AWSIAMRoleARNInvalidResourceTypeError,
+    AWSInvalidBoto3TimeoutError,
     AWSInvalidPartitionError,
     AWSInvalidProviderIdError,
     AWSNoCredentialsError,
 )
 from prowler.providers.aws.lib.arn.models import ARN
 from prowler.providers.aws.lib.mutelist.mutelist import AWSMutelist
+from prowler.providers.aws.lib.session.aws_set_up_session import AwsSetUpSession
 from prowler.providers.aws.models import (
     AWSAssumeRoleInfo,
     AWSCallerIdentity,
@@ -49,6 +62,7 @@ from tests.providers.aws.utils import (
     AWS_EUSC_PARTITION,
     AWS_GOV_CLOUD_ACCOUNT_ARN,
     AWS_GOV_CLOUD_PARTITION,
+    AWS_ISO_B_PARTITION,
     AWS_ISO_PARTITION,
     AWS_REGION_CN_NORTH_1,
     AWS_REGION_CN_NORTHWEST_1,
@@ -56,7 +70,10 @@ from tests.providers.aws.utils import (
     AWS_REGION_EU_WEST_1,
     AWS_REGION_EUSC_DE_EAST_1,
     AWS_REGION_GOV_CLOUD_US_EAST_1,
-    AWS_REGION_ISO_GLOBAL,
+    AWS_REGION_GOV_CLOUD_US_WEST_1,
+    AWS_REGION_ISO_B_EAST_1,
+    AWS_REGION_ISO_EAST_1,
+    AWS_REGION_ISO_WEST_1,
     AWS_REGION_US_EAST_1,
     AWS_REGION_US_EAST_2,
     EXAMPLE_AMI_ID,
@@ -1182,6 +1199,13 @@ aws:
         )
 
     @mock_aws
+    def test_aws_get_global_region(self):
+        aws_provider = AwsProvider()
+        aws_provider._identity.partition = AWS_COMMERCIAL_PARTITION
+
+        assert aws_provider.get_global_region() == AWS_REGION_US_EAST_1
+
+    @mock_aws
     def test_aws_gov_get_global_region(self):
         aws_provider = AwsProvider()
         aws_provider._identity.partition = AWS_GOV_CLOUD_PARTITION
@@ -1200,7 +1224,21 @@ aws:
         aws_provider = AwsProvider()
         aws_provider._identity.partition = AWS_ISO_PARTITION
 
-        assert aws_provider.get_global_region() == AWS_REGION_ISO_GLOBAL
+        assert aws_provider.get_global_region() == AWS_REGION_ISO_EAST_1
+
+    @mock_aws
+    def test_aws_iso_b_get_global_region(self):
+        aws_provider = AwsProvider()
+        aws_provider._identity.partition = AWS_ISO_B_PARTITION
+
+        assert aws_provider.get_global_region() == AWS_REGION_ISO_B_EAST_1
+
+    @mock_aws
+    def test_get_global_region_for_an_unknown_partition(self):
+        aws_provider = AwsProvider()
+        aws_provider._identity.partition = "aws-unknown"
+
+        assert aws_provider.get_global_region() == AWS_REGION_US_EAST_1
 
     @mock_aws
     def test_aws_eusc_get_global_region(self):
@@ -1287,6 +1325,88 @@ aws:
             assert (
                 len(aws_provider.get_available_aws_service_regions("ec2", "aws")) == 17
             )
+
+    @mock_aws
+    def test_get_available_aws_service_regions_commercial_and_gov_cloud(self):
+        aws_provider = AwsProvider()
+
+        assert AWS_REGION_US_EAST_1 in aws_provider.get_available_aws_service_regions(
+            "ec2", AWS_COMMERCIAL_PARTITION
+        )
+        assert (
+            AWS_REGION_GOV_CLOUD_US_EAST_1
+            in aws_provider.get_available_aws_service_regions(
+                "ec2", AWS_GOV_CLOUD_PARTITION
+            )
+        )
+        # A service recorded as unavailable in the partition yields an empty set
+        assert (
+            aws_provider.get_available_aws_service_regions(
+                "bedrock-agent", AWS_CHINA_PARTITION
+            )
+            == set()
+        )
+
+    @mock_aws
+    def test_get_available_aws_service_regions_iso_partitions(self):
+        aws_provider = AwsProvider()
+
+        assert aws_provider.get_available_aws_service_regions(
+            "ec2", AWS_ISO_PARTITION
+        ) == {
+            AWS_REGION_ISO_EAST_1,
+            AWS_REGION_ISO_WEST_1,
+        }
+        assert aws_provider.get_available_aws_service_regions(
+            "guardduty", AWS_ISO_B_PARTITION
+        ) == {AWS_REGION_ISO_B_EAST_1}
+        # Every service carries every ISO partition, empty when not available
+        assert (
+            aws_provider.get_available_aws_service_regions(
+                "bedrock", AWS_ISO_B_PARTITION
+            )
+            == set()
+        )
+
+    @mock_aws
+    def test_get_available_aws_service_regions_unknown_partition(self):
+        aws_provider = AwsProvider()
+
+        assert (
+            aws_provider.get_available_aws_service_regions("ec2", "aws-unknown")
+            == set()
+        )
+
+    @mock_aws
+    def test_get_available_aws_service_regions_unknown_service(self):
+        aws_provider = AwsProvider()
+
+        assert (
+            aws_provider.get_available_aws_service_regions(
+                "unknown-service", AWS_COMMERCIAL_PARTITION
+            )
+            == set()
+        )
+
+    @mock_aws
+    def test_generate_regional_clients_service_not_in_partition(self):
+        aws_provider = AwsProvider()
+        aws_provider._identity.partition = AWS_ISO_PARTITION
+
+        response = aws_provider.generate_regional_clients("bedrock")
+
+        assert response == {}
+
+    @mock_aws
+    def test_generate_regional_clients_returns_empty_dict_on_error(self):
+        aws_provider = AwsProvider()
+
+        with patch.object(
+            AwsProvider,
+            "get_available_aws_service_regions",
+            side_effect=Exception("boom"),
+        ):
+            assert aws_provider.generate_regional_clients("ec2") == {}
 
     @mock_aws
     def test_get_tagged_resources(self):
@@ -1465,6 +1585,411 @@ aws:
         assert get_caller_identity.arn.region is None
         assert get_caller_identity.arn.resource == "test-user"
         assert get_caller_identity.arn.resource_type == "user"
+
+    def test_get_partition_bootstrap_candidates_adds_the_rest_of_the_partition(
+        self, monkeypatch
+    ):
+        monkeypatch.setenv("PROWLER_AWS_PARTITION", AWS_GOV_CLOUD_PARTITION)
+
+        assert get_partition_bootstrap_candidates(
+            AWS_REGION_GOV_CLOUD_US_EAST_1, AWS_REGION_US_EAST_1
+        ) == [AWS_REGION_GOV_CLOUD_US_EAST_1, AWS_REGION_GOV_CLOUD_US_WEST_1]
+
+    def test_get_partition_bootstrap_candidates_without_partition_offers_one_region(
+        self, monkeypatch
+    ):
+        monkeypatch.delenv("PROWLER_AWS_PARTITION", raising=False)
+
+        assert get_partition_bootstrap_candidates(AWS_REGION_EU_WEST_1) == [
+            AWS_REGION_EU_WEST_1
+        ]
+
+    def test_get_partition_bootstrap_candidates_is_capped(self, monkeypatch):
+        monkeypatch.setenv("PROWLER_AWS_PARTITION", AWS_COMMERCIAL_PARTITION)
+
+        candidates = get_partition_bootstrap_candidates(
+            AWS_REGION_EU_WEST_1, AWS_REGION_EU_WEST_1
+        )
+
+        assert len(candidates) == MAX_STS_BOOTSTRAP_ATTEMPTS
+        assert candidates[0] == AWS_REGION_EU_WEST_1
+
+    def test_get_partition_bootstrap_candidates_tries_excluded_regions_last(
+        self, monkeypatch
+    ):
+        monkeypatch.setenv("PROWLER_AWS_PARTITION", AWS_COMMERCIAL_PARTITION)
+        partition_regions = get_env_partition_regions(AWS_REGION_EU_WEST_1)
+        excluded_regions = set(partition_regions[1:3])
+
+        candidates = get_partition_bootstrap_candidates(
+            AWS_REGION_EU_WEST_1, AWS_REGION_EU_WEST_1, excluded_regions
+        )
+
+        assert candidates == [AWS_REGION_EU_WEST_1, *partition_regions[3:5]]
+
+    def test_get_partition_bootstrap_candidates_keeps_excluded_regions_as_a_last_resort(
+        self, monkeypatch
+    ):
+        monkeypatch.setenv("PROWLER_AWS_PARTITION", AWS_GOV_CLOUD_PARTITION)
+
+        assert get_partition_bootstrap_candidates(
+            AWS_REGION_GOV_CLOUD_US_EAST_1,
+            AWS_REGION_US_EAST_1,
+            {AWS_REGION_GOV_CLOUD_US_EAST_1, AWS_REGION_GOV_CLOUD_US_WEST_1},
+        ) == [AWS_REGION_GOV_CLOUD_US_EAST_1, AWS_REGION_GOV_CLOUD_US_WEST_1]
+
+    def test_validate_credentials_falls_back_to_the_next_partition_region(
+        self, monkeypatch
+    ):
+        monkeypatch.setenv("PROWLER_AWS_PARTITION", AWS_GOV_CLOUD_PARTITION)
+        # A container may carry a region that belongs to no partition it scans
+        current_session = session.Session(region_name=AWS_REGION_US_EAST_1)
+        attempted_regions = []
+
+        def create_sts_session(session, aws_region):
+            attempted_regions.append(aws_region)
+            if aws_region == AWS_REGION_GOV_CLOUD_US_EAST_1:
+                raise botocore.exceptions.EndpointConnectionError(
+                    endpoint_url=f"https://sts.{aws_region}.amazonaws.com"
+                )
+            sts_client = mock.MagicMock()
+            sts_client.get_caller_identity.return_value = {
+                "UserId": "test-user-id",
+                "Account": AWS_ACCOUNT_NUMBER,
+                "Arn": AWS_GOV_CLOUD_ACCOUNT_ARN,
+            }
+            return sts_client
+
+        with patch(
+            "prowler.providers.aws.aws_provider.AwsProvider.create_sts_session",
+            new=create_sts_session,
+        ):
+            caller_identity = AwsProvider.validate_credentials(
+                session=current_session, aws_region=AWS_REGION_GOV_CLOUD_US_EAST_1
+            )
+
+        assert attempted_regions == [
+            AWS_REGION_GOV_CLOUD_US_EAST_1,
+            AWS_REGION_GOV_CLOUD_US_WEST_1,
+        ]
+        assert caller_identity.region == AWS_REGION_GOV_CLOUD_US_WEST_1
+
+    def test_validate_credentials_falls_back_when_a_region_does_not_answer(
+        self, monkeypatch
+    ):
+        monkeypatch.setenv("PROWLER_AWS_PARTITION", AWS_GOV_CLOUD_PARTITION)
+        current_session = session.Session(region_name=AWS_REGION_US_EAST_1)
+        attempted_regions = []
+
+        # The connection is accepted but nothing comes back before the read timeout
+        def create_sts_session(session, aws_region):
+            attempted_regions.append(aws_region)
+            if aws_region == AWS_REGION_GOV_CLOUD_US_EAST_1:
+                raise botocore.exceptions.ReadTimeoutError(
+                    endpoint_url=f"https://sts.{aws_region}.amazonaws.com"
+                )
+            sts_client = mock.MagicMock()
+            sts_client.get_caller_identity.return_value = {
+                "UserId": "test-user-id",
+                "Account": AWS_ACCOUNT_NUMBER,
+                "Arn": AWS_GOV_CLOUD_ACCOUNT_ARN,
+            }
+            return sts_client
+
+        with patch(
+            "prowler.providers.aws.aws_provider.AwsProvider.create_sts_session",
+            new=create_sts_session,
+        ):
+            caller_identity = AwsProvider.validate_credentials(
+                session=current_session, aws_region=AWS_REGION_GOV_CLOUD_US_EAST_1
+            )
+
+        assert attempted_regions == [
+            AWS_REGION_GOV_CLOUD_US_EAST_1,
+            AWS_REGION_GOV_CLOUD_US_WEST_1,
+        ]
+        assert caller_identity.region == AWS_REGION_GOV_CLOUD_US_WEST_1
+
+    def test_validate_credentials_raises_when_no_partition_region_answers(
+        self, monkeypatch
+    ):
+        monkeypatch.setenv("PROWLER_AWS_PARTITION", AWS_GOV_CLOUD_PARTITION)
+        current_session = session.Session(region_name=AWS_REGION_US_EAST_1)
+        attempted_regions = []
+
+        def create_sts_session(session, aws_region):
+            attempted_regions.append(aws_region)
+            raise botocore.exceptions.EndpointConnectionError(
+                endpoint_url=f"https://sts.{aws_region}.amazonaws.com"
+            )
+
+        with patch(
+            "prowler.providers.aws.aws_provider.AwsProvider.create_sts_session",
+            new=create_sts_session,
+        ):
+            with raises(botocore.exceptions.EndpointConnectionError):
+                AwsProvider.validate_credentials(
+                    session=current_session, aws_region=AWS_REGION_GOV_CLOUD_US_EAST_1
+                )
+
+        assert attempted_regions == [
+            AWS_REGION_GOV_CLOUD_US_EAST_1,
+            AWS_REGION_GOV_CLOUD_US_WEST_1,
+        ]
+
+    def test_validate_credentials_avoids_an_excluded_region_when_failing_over(
+        self, monkeypatch
+    ):
+        monkeypatch.setenv("PROWLER_AWS_PARTITION", AWS_COMMERCIAL_PARTITION)
+        current_session = session.Session(region_name=AWS_REGION_EU_WEST_1)
+        partition_regions = get_env_partition_regions(AWS_REGION_EU_WEST_1)
+        excluded_region, answering_region = partition_regions[1:3]
+        attempted_regions = []
+
+        def create_sts_session(session, aws_region):
+            attempted_regions.append(aws_region)
+            if aws_region == AWS_REGION_EU_WEST_1:
+                raise botocore.exceptions.EndpointConnectionError(
+                    endpoint_url=f"https://sts.{aws_region}.amazonaws.com"
+                )
+            sts_client = mock.MagicMock()
+            sts_client.get_caller_identity.return_value = {
+                "UserId": "test-user-id",
+                "Account": AWS_ACCOUNT_NUMBER,
+                "Arn": AWS_ACCOUNT_ARN,
+            }
+            return sts_client
+
+        with patch(
+            "prowler.providers.aws.aws_provider.AwsProvider.create_sts_session",
+            new=create_sts_session,
+        ):
+            caller_identity = AwsProvider.validate_credentials(
+                session=current_session,
+                aws_region=AWS_REGION_EU_WEST_1,
+                excluded_regions={excluded_region},
+            )
+
+        assert attempted_regions == [AWS_REGION_EU_WEST_1, answering_region]
+        assert caller_identity.region == answering_region
+
+    def test_validate_credentials_does_not_retry_a_credential_error(self, monkeypatch):
+        monkeypatch.setenv("PROWLER_AWS_PARTITION", AWS_GOV_CLOUD_PARTITION)
+        current_session = session.Session(region_name=AWS_REGION_US_EAST_1)
+        attempted_regions = []
+
+        def create_sts_session(session, aws_region):
+            attempted_regions.append(aws_region)
+            sts_client = mock.MagicMock()
+            sts_client.get_caller_identity.side_effect = (
+                botocore.exceptions.ClientError(
+                    {"Error": {"Code": "InvalidClientTokenId", "Message": "invalid"}},
+                    "GetCallerIdentity",
+                )
+            )
+            return sts_client
+
+        with patch(
+            "prowler.providers.aws.aws_provider.AwsProvider.create_sts_session",
+            new=create_sts_session,
+        ):
+            with raises(AWSAccessKeyIDInvalidError):
+                AwsProvider.validate_credentials(
+                    session=current_session, aws_region=AWS_REGION_GOV_CLOUD_US_EAST_1
+                )
+
+        assert attempted_regions == [AWS_REGION_GOV_CLOUD_US_EAST_1]
+
+    def test_assume_role_falls_back_to_the_next_partition_region(self, monkeypatch):
+        monkeypatch.setenv("PROWLER_AWS_PARTITION", AWS_GOV_CLOUD_PARTITION)
+        current_session = session.Session(region_name=AWS_REGION_US_EAST_1)
+        attempted_regions = []
+
+        def create_sts_session(session, aws_region):
+            attempted_regions.append(aws_region)
+            if aws_region == AWS_REGION_GOV_CLOUD_US_EAST_1:
+                raise botocore.exceptions.EndpointConnectionError(
+                    endpoint_url=f"https://sts.{aws_region}.amazonaws.com"
+                )
+            sts_client = mock.MagicMock()
+            sts_client.assume_role.return_value = {
+                "Credentials": {
+                    "AccessKeyId": "AKIAIOSFODNN7EXAMPLE",
+                    "SecretAccessKey": "secret",
+                    "SessionToken": "token",
+                    "Expiration": datetime.now() + timedelta(seconds=3600),
+                }
+            }
+            return sts_client
+
+        assumed_role_info = AWSAssumeRoleInfo(
+            role_arn=ARN(
+                arn=f"arn:{AWS_GOV_CLOUD_PARTITION}:iam::{AWS_ACCOUNT_NUMBER}:role/test-role"
+            ),
+            session_duration=3600,
+            external_id=None,
+            mfa_enabled=False,
+            role_session_name=ROLE_SESSION_NAME,
+            sts_region=AWS_REGION_GOV_CLOUD_US_EAST_1,
+        )
+
+        with patch(
+            "prowler.providers.aws.aws_provider.AwsProvider.create_sts_session",
+            new=create_sts_session,
+        ):
+            credentials = AwsProvider.assume_role(current_session, assumed_role_info)
+
+        assert attempted_regions == [
+            AWS_REGION_GOV_CLOUD_US_EAST_1,
+            AWS_REGION_GOV_CLOUD_US_WEST_1,
+        ]
+        assert isinstance(credentials, AWSCredentials)
+        assert credentials.aws_access_key_id == "AKIAIOSFODNN7EXAMPLE"
+
+    def test_setup_session_mfa_falls_back_to_the_next_partition_region(
+        self, monkeypatch
+    ):
+        monkeypatch.setenv("PROWLER_AWS_PARTITION", AWS_GOV_CLOUD_PARTITION)
+        monkeypatch.setenv("AWS_DEFAULT_REGION", AWS_REGION_US_EAST_1)
+        attempted_regions = []
+
+        def create_sts_session(session, aws_region):
+            attempted_regions.append(aws_region)
+            if aws_region == AWS_REGION_GOV_CLOUD_US_EAST_1:
+                raise botocore.exceptions.EndpointConnectionError(
+                    endpoint_url=f"https://sts.{aws_region}.amazonaws.com"
+                )
+            sts_client = mock.MagicMock()
+            sts_client.get_session_token.return_value = {
+                "Credentials": {
+                    "AccessKeyId": "AKIAIOSFODNN7EXAMPLE",
+                    "SecretAccessKey": "secret",
+                    "SessionToken": "token",
+                }
+            }
+            return sts_client
+
+        with (
+            patch(
+                "prowler.providers.aws.aws_provider.AwsProvider.input_role_mfa_token_and_code",
+                return_value=AWSMFAInfo(
+                    arn=f"arn:{AWS_GOV_CLOUD_PARTITION}:iam::{AWS_ACCOUNT_NUMBER}:mfa/test",
+                    totp="123456",
+                ),
+            ),
+            patch(
+                "prowler.providers.aws.aws_provider.AwsProvider.create_sts_session",
+                new=create_sts_session,
+            ),
+        ):
+            mfa_session = AwsProvider.setup_session(
+                mfa=True,
+                aws_access_key_id="test-access-key",
+                aws_secret_access_key="test-secret-key",
+            )
+
+        assert attempted_regions == [
+            AWS_REGION_GOV_CLOUD_US_EAST_1,
+            AWS_REGION_GOV_CLOUD_US_WEST_1,
+        ]
+        assert mfa_session.get_credentials().access_key == "AKIAIOSFODNN7EXAMPLE"
+        assert mfa_session.get_credentials().token == "token"
+
+    @mock_aws
+    def test_aws_provider_hands_excluded_regions_to_credential_validation(
+        self, monkeypatch
+    ):
+        monkeypatch.setenv("PROWLER_AWS_PARTITION", AWS_GOV_CLOUD_PARTITION)
+        monkeypatch.setenv("AWS_DEFAULT_REGION", AWS_REGION_US_EAST_1)
+        handed = []
+
+        class Validated(Exception):
+            pass
+
+        # Stops at the validation: what it was handed is all this checks
+        def validate_credentials(session, aws_region, excluded_regions=None):
+            handed.append((aws_region, set(excluded_regions or ())))
+            raise Validated
+
+        with patch(
+            "prowler.providers.aws.aws_provider.AwsProvider.validate_credentials",
+            side_effect=validate_credentials,
+        ):
+            with raises(Validated):
+                AwsProvider(excluded_regions={AWS_REGION_GOV_CLOUD_US_EAST_1})
+
+        assert handed == [
+            (AWS_REGION_GOV_CLOUD_US_WEST_1, {AWS_REGION_GOV_CLOUD_US_EAST_1})
+        ]
+
+    @mock_aws
+    def test_aws_provider_assumes_the_role_where_validation_got_an_answer(
+        self, monkeypatch
+    ):
+        monkeypatch.setenv("PROWLER_AWS_PARTITION", AWS_GOV_CLOUD_PARTITION)
+        # Out of the partition, so the first candidate is botocore's, not this one
+        monkeypatch.setenv("AWS_DEFAULT_REGION", AWS_REGION_US_EAST_1)
+        role_arn = (
+            f"arn:{AWS_GOV_CLOUD_PARTITION}:iam::{AWS_ACCOUNT_NUMBER}:role/test-role"
+        )
+        answered = AWSCallerIdentity(
+            user_id="test-user-id",
+            account=AWS_ACCOUNT_NUMBER,
+            arn=ARN(AWS_GOV_CLOUD_ACCOUNT_ARN),
+            region=AWS_REGION_GOV_CLOUD_US_WEST_1,
+        )
+
+        with patch(
+            "prowler.providers.aws.aws_provider.AwsProvider.validate_credentials",
+            return_value=answered,
+        ):
+            aws_provider = AwsProvider(role_arn=role_arn, session_duration=900)
+
+        assert (
+            aws_provider._assumed_role_configuration.info.sts_region
+            == AWS_REGION_GOV_CLOUD_US_WEST_1
+        )
+
+    @mock_aws
+    def test_aws_provider_assumes_the_organizations_role_where_validation_got_an_answer(
+        self, monkeypatch
+    ):
+        monkeypatch.setenv("PROWLER_AWS_PARTITION", AWS_GOV_CLOUD_PARTITION)
+        monkeypatch.setenv("AWS_DEFAULT_REGION", AWS_REGION_US_EAST_1)
+        organizations_role_arn = f"arn:{AWS_GOV_CLOUD_PARTITION}:iam::{AWS_ACCOUNT_NUMBER}:role/organizations-role"
+        answered = AWSCallerIdentity(
+            user_id="test-user-id",
+            account=AWS_ACCOUNT_NUMBER,
+            arn=ARN(AWS_GOV_CLOUD_ACCOUNT_ARN),
+            region=AWS_REGION_GOV_CLOUD_US_WEST_1,
+        )
+        sts_regions = []
+
+        class RoleAssumed(Exception):
+            pass
+
+        # Stops at the assumption: the region it was handed is all this checks
+        def assume_role(session, assumed_role_info):
+            sts_regions.append(assumed_role_info.sts_region)
+            raise RoleAssumed
+
+        with (
+            patch(
+                "prowler.providers.aws.aws_provider.AwsProvider.validate_credentials",
+                return_value=answered,
+            ),
+            patch(
+                "prowler.providers.aws.aws_provider.AwsProvider.assume_role",
+                side_effect=assume_role,
+            ),
+        ):
+            with raises(RoleAssumed):
+                AwsProvider(
+                    organizations_role_arn=organizations_role_arn,
+                    session_duration=900,
+                )
+
+        assert sts_regions == [AWS_REGION_GOV_CLOUD_US_WEST_1]
 
     @mock_aws
     def test_test_connection_with_env_credentials(self, monkeypatch):
@@ -1784,6 +2309,29 @@ aws:
         assert sts_session._endpoint.host == f"https://sts.{aws_region}.amazonaws.eu"
 
     @mock_aws
+    def test_create_sts_session_empty_endpoint_url(self):
+        current_session = session.Session()
+        aws_region = AWS_REGION_US_EAST_1
+        with mock.patch.dict(os.environ, {"AWS_ENDPOINT_URL": ""}):
+            sts_session = AwsProvider.create_sts_session(current_session, aws_region)
+
+        assert sts_session._service_model.service_name == "sts"
+        assert sts_session._client_config.region_name == aws_region
+        assert sts_session._endpoint._endpoint_prefix == "sts"
+        assert sts_session._endpoint.host == f"https://sts.{aws_region}.amazonaws.com"
+
+    @mock_aws
+    def test_create_sts_session_iso(self):
+        current_session = session.Session()
+        aws_region = "us-iso-east-1"
+        sts_session = AwsProvider.create_sts_session(current_session, aws_region)
+
+        assert sts_session._service_model.service_name == "sts"
+        assert sts_session._client_config.region_name == aws_region
+        assert sts_session._endpoint._endpoint_prefix == "sts"
+        assert sts_session._endpoint.host == f"https://sts.{aws_region}.c2s.ic.gov"
+
+    @mock_aws
     @patch(
         "prowler.lib.check.utils.recover_checks_from_provider",
         new=mock_recover_checks_from_aws_provider_elb_service,
@@ -2031,13 +2579,20 @@ aws:
         assert not recovered_regions
 
     def test_get_regions_all_count(self):
-        assert len(AwsProvider.get_regions(partition=None)) == 39
+        # 34 aws + 2 aws-cn + 2 aws-us-gov + 1 aws-eusc + 7 ISO regions
+        assert len(AwsProvider.get_regions(partition=None)) == 46
 
     def test_get_regions_cn_count(self):
         assert len(AwsProvider.get_regions("aws-cn")) == 2
 
     def test_get_regions_aws_count(self):
         assert len(AwsProvider.get_regions(partition="aws")) == 34
+
+    def test_get_regions_iso_count(self):
+        assert AwsProvider.get_regions(AWS_ISO_PARTITION) == {
+            AWS_REGION_ISO_EAST_1,
+            AWS_REGION_ISO_WEST_1,
+        }
 
     def test_get_all_regions(self):
         with patch(
@@ -2219,6 +2774,478 @@ aws:
             == AWS_REGION_US_EAST_1
         )
 
+    def test_get_aws_region_for_sts_env_partition_gov_cloud(self):
+        with mock.patch.dict(
+            os.environ,
+            {"PROWLER_AWS_PARTITION": AWS_GOV_CLOUD_PARTITION},
+            clear=False,
+        ):
+            assert get_aws_region_for_sts(None, None) == AWS_REGION_GOV_CLOUD_US_EAST_1
+
+    def test_get_aws_region_for_sts_env_partition_china(self):
+        with mock.patch.dict(
+            os.environ,
+            {"PROWLER_AWS_PARTITION": AWS_CHINA_PARTITION},
+            clear=False,
+        ):
+            assert get_aws_region_for_sts(None, None) == AWS_REGION_CN_NORTH_1
+
+    def test_get_aws_region_for_sts_env_partition_eusc(self):
+        with mock.patch.dict(
+            os.environ,
+            {"PROWLER_AWS_PARTITION": AWS_EUSC_PARTITION},
+            clear=False,
+        ):
+            assert get_aws_region_for_sts(None, None) == AWS_REGION_EUSC_DE_EAST_1
+
+    def test_get_aws_region_for_sts_env_partition_iso(self):
+        with mock.patch.dict(
+            os.environ,
+            {"PROWLER_AWS_PARTITION": AWS_ISO_PARTITION},
+            clear=False,
+        ):
+            assert get_aws_region_for_sts(None, None) == "us-iso-east-1"
+
+    def test_get_aws_region_for_sts_env_partition_overrides_session_region(self):
+        with mock.patch.dict(
+            os.environ,
+            {"PROWLER_AWS_PARTITION": AWS_GOV_CLOUD_PARTITION},
+            clear=False,
+        ):
+            assert (
+                get_aws_region_for_sts(AWS_REGION_EU_WEST_1, None)
+                == AWS_REGION_GOV_CLOUD_US_EAST_1
+            )
+
+    def test_get_aws_region_for_sts_input_regions_take_precedence_over_env_partition(
+        self,
+    ):
+        with mock.patch.dict(
+            os.environ,
+            {"PROWLER_AWS_PARTITION": AWS_GOV_CLOUD_PARTITION},
+            clear=False,
+        ):
+            assert (
+                get_aws_region_for_sts(None, {AWS_REGION_EU_WEST_1})
+                == AWS_REGION_EU_WEST_1
+            )
+
+    def test_get_aws_region_for_sts_env_partition_invalid_raises(self):
+        with mock.patch.dict(
+            os.environ,
+            {"PROWLER_AWS_PARTITION": "aws-invalid"},
+            clear=False,
+        ):
+            with pytest.raises(AWSInvalidPartitionError):
+                get_aws_region_for_sts(None, None)
+
+    @mock_aws
+    def test_test_connection_uses_env_partition_sts_region(self):
+        with (
+            mock.patch.dict(
+                os.environ,
+                {"PROWLER_AWS_PARTITION": AWS_GOV_CLOUD_PARTITION},
+                clear=False,
+            ),
+            mock.patch.object(
+                AwsProvider,
+                "validate_credentials",
+                return_value=AWSCallerIdentity(
+                    user_id="test-user-id",
+                    account=AWS_ACCOUNT_NUMBER,
+                    arn=ARN(AWS_GOV_CLOUD_ACCOUNT_ARN),
+                    region=AWS_REGION_GOV_CLOUD_US_EAST_1,
+                ),
+            ) as mock_validate_credentials,
+        ):
+            connection = AwsProvider.test_connection(
+                aws_access_key_id="test-access-key",
+                aws_secret_access_key="test-secret-key",
+                raise_on_exception=False,
+            )
+
+            assert connection.is_connected
+            assert (
+                mock_validate_credentials.call_args.args[1]
+                == AWS_REGION_GOV_CLOUD_US_EAST_1
+            )
+
+    @mock_aws
+    def test_test_connection_role_uses_env_partition_sts_region(self):
+        with (
+            mock.patch.dict(
+                os.environ,
+                {"PROWLER_AWS_PARTITION": AWS_GOV_CLOUD_PARTITION},
+                clear=False,
+            ),
+            mock.patch.object(
+                AwsProvider,
+                "assume_role",
+                return_value=AWSCredentials(
+                    aws_access_key_id="assumed-access-key",
+                    aws_secret_access_key="assumed-secret-key",
+                    aws_session_token="assumed-session-token",
+                    expiration=datetime.now(),
+                ),
+            ) as mock_assume_role,
+            mock.patch.object(
+                AwsProvider,
+                "validate_credentials",
+                return_value=AWSCallerIdentity(
+                    user_id="test-user-id",
+                    account=AWS_ACCOUNT_NUMBER,
+                    arn=ARN(AWS_GOV_CLOUD_ACCOUNT_ARN),
+                    region=AWS_REGION_GOV_CLOUD_US_EAST_1,
+                ),
+            ),
+        ):
+            connection = AwsProvider.test_connection(
+                role_arn=f"arn:{AWS_GOV_CLOUD_PARTITION}:iam::{AWS_ACCOUNT_NUMBER}:role/test-role",
+                aws_access_key_id="test-access-key",
+                aws_secret_access_key="test-secret-key",
+                raise_on_exception=False,
+            )
+
+            assert connection.is_connected
+            assumed_role_info = mock_assume_role.call_args.args[1]
+            assert assumed_role_info.sts_region == AWS_REGION_GOV_CLOUD_US_EAST_1
+
+    def test_get_aws_region_for_sts_env_partition_commercial(self):
+        with mock.patch.dict(
+            os.environ,
+            {"PROWLER_AWS_PARTITION": AWS_COMMERCIAL_PARTITION},
+            clear=False,
+        ):
+            assert get_aws_region_for_sts(None, None) == AWS_REGION_US_EAST_1
+
+    def test_get_aws_region_for_sts_env_partition_excluded_region_stays_in_partition(
+        self,
+    ):
+        with mock.patch.dict(
+            os.environ,
+            {"PROWLER_AWS_PARTITION": AWS_GOV_CLOUD_PARTITION},
+            clear=False,
+        ):
+            assert (
+                get_aws_region_for_sts(None, None, {AWS_REGION_GOV_CLOUD_US_EAST_1})
+                == "us-gov-west-1"
+            )
+
+    def test_get_aws_region_for_sts_env_partition_all_regions_excluded_stays_in_partition(
+        self,
+    ):
+        with mock.patch.dict(
+            os.environ,
+            {"PROWLER_AWS_PARTITION": AWS_GOV_CLOUD_PARTITION},
+            clear=False,
+        ):
+            assert (
+                get_aws_region_for_sts(
+                    None, None, {AWS_REGION_GOV_CLOUD_US_EAST_1, "us-gov-west-1"}
+                )
+                == AWS_REGION_GOV_CLOUD_US_EAST_1
+            )
+
+    @mock_aws
+    def test_setup_session_mfa_uses_env_partition_sts_region(self):
+        with (
+            mock.patch.dict(
+                os.environ,
+                {"PROWLER_AWS_PARTITION": AWS_GOV_CLOUD_PARTITION},
+                clear=False,
+            ),
+            mock.patch.object(
+                AwsProvider,
+                "input_role_mfa_token_and_code",
+                return_value=AWSMFAInfo(
+                    arn=f"arn:{AWS_GOV_CLOUD_PARTITION}:iam::{AWS_ACCOUNT_NUMBER}:mfa/test",
+                    totp="123456",
+                ),
+            ),
+            mock.patch.object(
+                AwsProvider,
+                "create_sts_session",
+                side_effect=AwsProvider.create_sts_session,
+            ) as mock_create_sts_session,
+        ):
+            AwsProvider.setup_session(
+                mfa=True,
+                aws_access_key_id="test-access-key",
+                aws_secret_access_key="test-secret-key",
+            )
+
+            assert (
+                mock_create_sts_session.call_args.args[1]
+                == AWS_REGION_GOV_CLOUD_US_EAST_1
+            )
+
+    def test_get_env_partition_regions_leads_with_session_region(self):
+        with mock.patch.dict(
+            os.environ,
+            {"PROWLER_AWS_PARTITION": AWS_GOV_CLOUD_PARTITION},
+            clear=False,
+        ):
+            regions = get_env_partition_regions(AWS_REGION_GOV_CLOUD_US_WEST_1)
+
+            assert regions[0] == AWS_REGION_GOV_CLOUD_US_WEST_1
+            assert set(regions) == set(get_env_partition_regions())
+
+    def test_get_env_partition_regions_ignores_session_region_outside_partition(
+        self,
+    ):
+        with mock.patch.dict(
+            os.environ,
+            {"PROWLER_AWS_PARTITION": AWS_GOV_CLOUD_PARTITION},
+            clear=False,
+        ):
+            regions = get_env_partition_regions(AWS_REGION_EU_WEST_1)
+
+            assert regions[0] == AWS_REGION_GOV_CLOUD_US_EAST_1
+            assert AWS_REGION_EU_WEST_1 not in regions
+
+    def test_get_env_partition_bootstrap_region_prefers_session_region(self):
+        with mock.patch.dict(
+            os.environ,
+            {"PROWLER_AWS_PARTITION": AWS_GOV_CLOUD_PARTITION},
+            clear=False,
+        ):
+            assert (
+                get_env_partition_bootstrap_region(AWS_REGION_GOV_CLOUD_US_WEST_1)
+                == AWS_REGION_GOV_CLOUD_US_WEST_1
+            )
+
+    def test_get_env_partition_bootstrap_region_without_session_region(self):
+        with mock.patch.dict(
+            os.environ,
+            {"PROWLER_AWS_PARTITION": AWS_GOV_CLOUD_PARTITION},
+            clear=False,
+        ):
+            assert (
+                get_env_partition_bootstrap_region() == AWS_REGION_GOV_CLOUD_US_EAST_1
+            )
+
+    def test_get_env_partition_bootstrap_region_without_partition(self):
+        with mock.patch.dict(os.environ, {"PROWLER_AWS_PARTITION": ""}, clear=False):
+            assert (
+                get_env_partition_bootstrap_region(AWS_REGION_GOV_CLOUD_US_WEST_1)
+                is None
+            )
+
+    def test_get_aws_region_for_sts_env_partition_prefers_session_region(self):
+        with mock.patch.dict(
+            os.environ,
+            {"PROWLER_AWS_PARTITION": AWS_GOV_CLOUD_PARTITION},
+            clear=False,
+        ):
+            assert (
+                get_aws_region_for_sts(AWS_REGION_GOV_CLOUD_US_WEST_1, None)
+                == AWS_REGION_GOV_CLOUD_US_WEST_1
+            )
+
+    def test_get_profile_region_env_partition_keeps_session_region_inside_partition(
+        self,
+    ):
+        with mock.patch.dict(
+            os.environ,
+            {"PROWLER_AWS_PARTITION": AWS_GOV_CLOUD_PARTITION},
+            clear=False,
+        ):
+            aws_session = session.Session(region_name=AWS_REGION_GOV_CLOUD_US_WEST_1)
+
+            assert (
+                AwsProvider.get_profile_region(aws_session)
+                == AWS_REGION_GOV_CLOUD_US_WEST_1
+            )
+
+    def test_get_profile_region_env_partition_ignores_session_region_outside_partition(
+        self,
+    ):
+        with mock.patch.dict(
+            os.environ,
+            {"PROWLER_AWS_PARTITION": AWS_GOV_CLOUD_PARTITION},
+            clear=False,
+        ):
+            aws_session = session.Session(region_name=AWS_REGION_US_EAST_1)
+
+            assert (
+                AwsProvider.get_profile_region(aws_session)
+                == AWS_REGION_GOV_CLOUD_US_EAST_1
+            )
+
+    def test_get_profile_region_env_partition_excluded_session_region_stays_in_partition(
+        self,
+    ):
+        with mock.patch.dict(
+            os.environ,
+            {"PROWLER_AWS_PARTITION": AWS_GOV_CLOUD_PARTITION},
+            clear=False,
+        ):
+            aws_session = session.Session(region_name=AWS_REGION_GOV_CLOUD_US_WEST_1)
+
+            assert (
+                AwsProvider.get_profile_region(
+                    aws_session, {AWS_REGION_GOV_CLOUD_US_WEST_1}
+                )
+                == AWS_REGION_GOV_CLOUD_US_EAST_1
+            )
+
+    def test_get_profile_region_env_partition_all_regions_excluded_stays_in_partition(
+        self,
+    ):
+        with mock.patch.dict(
+            os.environ,
+            {"PROWLER_AWS_PARTITION": AWS_GOV_CLOUD_PARTITION},
+            clear=False,
+        ):
+            aws_session = session.Session(region_name=AWS_REGION_GOV_CLOUD_US_WEST_1)
+            gov_cloud_regions = set(get_env_partition_regions())
+
+            assert (
+                AwsProvider.get_profile_region(aws_session, gov_cloud_regions)
+                == AWS_REGION_GOV_CLOUD_US_WEST_1
+            )
+
+    @mock_aws
+    def test_test_connection_env_partition_prefers_session_region(self):
+        with (
+            mock.patch.dict(
+                os.environ,
+                {
+                    "PROWLER_AWS_PARTITION": AWS_GOV_CLOUD_PARTITION,
+                    "AWS_DEFAULT_REGION": AWS_REGION_GOV_CLOUD_US_WEST_1,
+                },
+                clear=False,
+            ),
+            mock.patch.object(
+                AwsProvider,
+                "validate_credentials",
+                return_value=AWSCallerIdentity(
+                    user_id="test-user-id",
+                    account=AWS_ACCOUNT_NUMBER,
+                    arn=ARN(AWS_GOV_CLOUD_ACCOUNT_ARN),
+                    region=AWS_REGION_GOV_CLOUD_US_WEST_1,
+                ),
+            ) as mock_validate_credentials,
+        ):
+            connection = AwsProvider.test_connection(
+                aws_access_key_id="test-access-key",
+                aws_secret_access_key="test-secret-key",
+                raise_on_exception=False,
+            )
+
+            assert connection.is_connected
+            assert (
+                mock_validate_credentials.call_args.args[1]
+                == AWS_REGION_GOV_CLOUD_US_WEST_1
+            )
+
+    @mock_aws
+    def test_test_connection_role_env_partition_prefers_session_region(self):
+        with (
+            mock.patch.dict(
+                os.environ,
+                {
+                    "PROWLER_AWS_PARTITION": AWS_GOV_CLOUD_PARTITION,
+                    "AWS_DEFAULT_REGION": AWS_REGION_GOV_CLOUD_US_WEST_1,
+                },
+                clear=False,
+            ),
+            mock.patch.object(
+                AwsProvider,
+                "assume_role",
+                return_value=AWSCredentials(
+                    aws_access_key_id="assumed-access-key",
+                    aws_secret_access_key="assumed-secret-key",
+                    aws_session_token="assumed-session-token",
+                    expiration=datetime.now(),
+                ),
+            ) as mock_assume_role,
+            mock.patch.object(
+                AwsProvider,
+                "validate_credentials",
+                return_value=AWSCallerIdentity(
+                    user_id="test-user-id",
+                    account=AWS_ACCOUNT_NUMBER,
+                    arn=ARN(AWS_GOV_CLOUD_ACCOUNT_ARN),
+                    region=AWS_REGION_GOV_CLOUD_US_WEST_1,
+                ),
+            ),
+        ):
+            connection = AwsProvider.test_connection(
+                role_arn=f"arn:{AWS_GOV_CLOUD_PARTITION}:iam::{AWS_ACCOUNT_NUMBER}:role/test-role",
+                aws_access_key_id="test-access-key",
+                aws_secret_access_key="test-secret-key",
+                raise_on_exception=False,
+            )
+
+            assert connection.is_connected
+            assumed_role_info = mock_assume_role.call_args.args[1]
+            assert assumed_role_info.sts_region == AWS_REGION_GOV_CLOUD_US_WEST_1
+
+    @mock_aws
+    def test_setup_session_mfa_env_partition_prefers_session_region(self):
+        with (
+            mock.patch.dict(
+                os.environ,
+                {
+                    "PROWLER_AWS_PARTITION": AWS_GOV_CLOUD_PARTITION,
+                    "AWS_DEFAULT_REGION": AWS_REGION_GOV_CLOUD_US_WEST_1,
+                },
+                clear=False,
+            ),
+            mock.patch.object(
+                AwsProvider,
+                "input_role_mfa_token_and_code",
+                return_value=AWSMFAInfo(
+                    arn=f"arn:{AWS_GOV_CLOUD_PARTITION}:iam::{AWS_ACCOUNT_NUMBER}:mfa/test",
+                    totp="123456",
+                ),
+            ),
+            mock.patch.object(
+                AwsProvider,
+                "create_sts_session",
+                side_effect=AwsProvider.create_sts_session,
+            ) as mock_create_sts_session,
+        ):
+            AwsProvider.setup_session(
+                mfa=True,
+                aws_access_key_id="test-access-key",
+                aws_secret_access_key="test-secret-key",
+            )
+
+            assert (
+                mock_create_sts_session.call_args.args[1]
+                == AWS_REGION_GOV_CLOUD_US_WEST_1
+            )
+
+    @mock_aws
+    def test_test_connection_env_partition_mismatch(self):
+        with (
+            mock.patch.dict(
+                os.environ,
+                {"PROWLER_AWS_PARTITION": AWS_GOV_CLOUD_PARTITION},
+                clear=False,
+            ),
+            mock.patch.object(
+                AwsProvider,
+                "validate_credentials",
+                return_value=AWSCallerIdentity(
+                    user_id="test-user-id",
+                    account=AWS_ACCOUNT_NUMBER,
+                    arn=ARN(AWS_ACCOUNT_ARN),
+                    region=AWS_REGION_US_EAST_1,
+                ),
+            ),
+        ):
+            connection = AwsProvider.test_connection(
+                aws_access_key_id="test-access-key",
+                aws_secret_access_key="test-secret-key",
+                raise_on_exception=False,
+            )
+
+            assert not connection.is_connected
+            assert isinstance(connection.error, AWSInvalidPartitionError)
+
     def test_get_profile_region_avoids_excluded_session_region(self):
         mocked_session = mock.Mock(region_name=AWS_REGION_EU_WEST_1)
 
@@ -2234,6 +3261,8 @@ aws:
 
         assert session_config.user_agent_extra == BOTO3_USER_AGENT_EXTRA
         assert session_config.retries == {"max_attempts": 3, "mode": "standard"}
+        assert session_config.connect_timeout == BOTO3_CONNECT_TIMEOUT
+        assert session_config.read_timeout == BOTO3_READ_TIMEOUT
 
     @mock_aws
     def test_set_session_config_10_max_attempts(self):
@@ -2242,12 +3271,93 @@ aws:
 
         assert session_config.user_agent_extra == BOTO3_USER_AGENT_EXTRA
         assert session_config.retries == {"max_attempts": 10, "mode": "standard"}
+        assert session_config.connect_timeout == BOTO3_CONNECT_TIMEOUT
+        assert session_config.read_timeout == BOTO3_READ_TIMEOUT
+
+    def test_set_session_config_0_max_attempts_disables_retries(self):
+        session_config = AwsProvider.set_session_config(0)
+
+        assert session_config.retries == {"max_attempts": 0, "mode": "standard"}
+
+    @mock_aws
+    def test_aws_provider_0_max_attempts_reaches_clients(self):
+        aws_provider = AwsProvider(retries_max_attempts=0)
+        client = aws_provider.session.current_session.client(
+            "ec2", region_name=AWS_REGION_US_EAST_1
+        )
+
+        # botocore rewrites max_attempts into total_max_attempts (retries + 1)
+        assert client.meta.config.retries["total_max_attempts"] == 1
+
+    def test_set_session_config_timeouts(self):
+        session_config = AwsProvider.set_session_config(
+            None, connect_timeout=2, read_timeout=15
+        )
+
+        assert session_config.retries == {"max_attempts": 3, "mode": "standard"}
+        assert session_config.connect_timeout == 2
+        assert session_config.read_timeout == 15
+
+    @mock_aws
+    def test_aws_provider_timeouts_reach_session_config(self):
+        aws_provider = AwsProvider(connect_timeout=2, read_timeout=15)
+
+        assert aws_provider.session.session_config.connect_timeout == 2
+        assert aws_provider.session.session_config.read_timeout == 15
+
+    @mock_aws
+    def test_aws_set_up_session_forwards_timeouts(self):
+        aws_session = AwsSetUpSession(
+            aws_access_key_id="testing",
+            aws_secret_access_key="testing",
+            connect_timeout=2,
+            read_timeout=15,
+        )
+
+        assert aws_session._session.session_config.connect_timeout == 2
+        assert aws_session._session.session_config.read_timeout == 15
 
     def test_get_default_session_config(self):
         config = get_default_session_config()
 
         assert config.user_agent_extra == BOTO3_USER_AGENT_EXTRA
         assert config.retries == {"max_attempts": 3, "mode": "standard"}
+        assert config.connect_timeout == BOTO3_CONNECT_TIMEOUT
+        assert config.read_timeout == BOTO3_READ_TIMEOUT
+
+    def test_get_default_session_config_timeouts_from_env(self):
+        with mock.patch.dict(
+            os.environ,
+            {
+                "PROWLER_AWS_BOTO3_CONNECT_TIMEOUT": "3",
+                "PROWLER_AWS_BOTO3_READ_TIMEOUT": "20",
+            },
+        ):
+            config = get_default_session_config()
+
+        assert config.connect_timeout == 3
+        assert config.read_timeout == 20
+
+    def test_set_session_config_argument_overrides_env_timeouts(self):
+        with mock.patch.dict(os.environ, {"PROWLER_AWS_BOTO3_CONNECT_TIMEOUT": "3"}):
+            config = AwsProvider.set_session_config(None, connect_timeout=7)
+
+        assert config.connect_timeout == 7
+
+    @pytest.mark.parametrize("raw", ["0", "-5", "ten", "1.5"])
+    def test_get_boto3_timeout_from_env_rejects_non_positive_integers(self, raw):
+        with mock.patch.dict(os.environ, {"PROWLER_AWS_BOTO3_CONNECT_TIMEOUT": raw}):
+            with raises(
+                AWSInvalidBoto3TimeoutError, match="PROWLER_AWS_BOTO3_CONNECT_TIMEOUT"
+            ):
+                get_boto3_timeout_from_env("PROWLER_AWS_BOTO3_CONNECT_TIMEOUT", 10)
+
+    def test_get_boto3_timeout_from_env_blank_falls_back_to_default(self):
+        with mock.patch.dict(os.environ, {"PROWLER_AWS_BOTO3_CONNECT_TIMEOUT": "  "}):
+            assert (
+                get_boto3_timeout_from_env("PROWLER_AWS_BOTO3_CONNECT_TIMEOUT", 10)
+                == 10
+            )
 
     @mock_aws
     @patch(

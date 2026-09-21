@@ -1,9 +1,13 @@
-from typing import Optional
+from typing import List, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from prowler.lib.logger import logger
-from prowler.providers.googleworkspace.lib.service.service import GoogleWorkspaceService
+from prowler.providers.googleworkspace.lib.service.service import (
+    CUSTOMER_SCOPE,
+    UNKNOWN_SCOPE,
+    GoogleWorkspaceService,
+)
 
 
 class Security(GoogleWorkspaceService):
@@ -18,6 +22,8 @@ class Security(GoogleWorkspaceService):
         super().__init__(provider)
         self.policies = SecurityPolicies()
         self.policies_fetched = False
+        self._overridden = set()
+        self._observed = set()
         self._fetch_security_policies()
 
     def _fetch_security_policies(self):
@@ -48,6 +54,10 @@ class Security(GoogleWorkspaceService):
                 service, 'setting.type.matches("rule.dlp")', fetch_succeeded
             )
 
+            self.policies.overridden_settings = sorted(self._overridden)
+            self.policies.unobserved_settings = sorted(
+                self._overridden - self._observed
+            )
             self.policies_fetched = fetch_succeeded
 
             if fetch_succeeded:
@@ -79,11 +89,18 @@ class Security(GoogleWorkspaceService):
                     response = request.execute()
 
                     for policy in response.get("policies", []):
-                        if not self._is_customer_level_policy(policy):
-                            continue
-
                         setting = policy.get("setting", {})
                         setting_type = setting.get("type", "").removeprefix("settings/")
+
+                        scope = self._policy_scope(policy)
+                        if scope != CUSTOMER_SCOPE:
+                            if scope == UNKNOWN_SCOPE:
+                                self.policies.unresolved_scope = True
+                            elif setting_type:
+                                self._overridden.add(setting_type)
+                            continue
+
+                        self._observed.add(setting_type)
                         value = setting.get("value", {})
 
                         self._process_setting(setting_type, value)
@@ -238,6 +255,17 @@ class Security(GoogleWorkspaceService):
 
 class SecurityPolicies(BaseModel):
     """Model for domain-level Security policy settings."""
+
+    # Setting types that a group or a sub-OU overrides. Sorted lists rather than
+    # sets: a set reaches the OCSF output as its Python repr, in a different
+    # order on every scan.
+    overridden_settings: List[str] = Field(default_factory=list)
+    # Overridden settings with no domain-wide policy of their own, so the values
+    # below are Prowler's defaults and not something the domain reported.
+    unobserved_settings: List[str] = Field(default_factory=list)
+    # True when a policy's scope could not be determined because the root
+    # organizational unit id is unknown, which blanks the values below.
+    unresolved_scope: bool = False
 
     # security.two_step_verification_enrollment
     two_sv_allow_enrollment: Optional[bool] = None

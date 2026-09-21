@@ -1,7 +1,8 @@
 "use client";
 
-import { Lock, RefreshCw } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 
+import { SlackInlineCode } from "@/components/integrations/slack/slack-inline-code";
 import {
   Alert,
   AlertDescription,
@@ -10,6 +11,7 @@ import {
   Button,
   Label,
 } from "@/components/shadcn";
+import { CustomLink } from "@/components/shadcn/custom/custom-link";
 import {
   MultiSelect,
   MultiSelectContent,
@@ -17,10 +19,23 @@ import {
   MultiSelectTrigger,
   MultiSelectValue,
 } from "@/components/shadcn/select/multiselect";
+import { DOCS_URLS } from "@/lib/external-urls";
 import type { SlackChannelOption } from "@/types/integrations";
 
-const INVITE_HINT =
-  "A private channel only appears here after someone invites @Prowler to it in Slack. Invite it, then refresh.";
+const INVITE_HINT = (
+  <>
+    A private channel only appears here after someone invites{" "}
+    <SlackInlineCode>@Prowler Cloud</SlackInlineCode> to it in Slack. Invite it,
+    then refresh.{" "}
+    <CustomLink
+      href={DOCS_URLS.SLACK_INTEGRATION_PRIVATE_CHANNELS}
+      ariaLabel="Learn more about why a private channel is missing from the channel list"
+      size="xs"
+    >
+      Learn more
+    </CustomLink>
+  </>
+);
 
 interface SlackChannelMultiSelectProps {
   options: SlackChannelOption[];
@@ -38,15 +53,15 @@ interface SlackChannelMultiSelectProps {
   describedBy?: string;
 }
 
+/** Marked exactly as the listing marks it, so the chip is the row it came from. */
 const chipLabel = (option: SlackChannelOption) => (
   <span className="flex min-w-0 items-center gap-1">
-    {option.is_private && (
-      <>
-        <Lock size={12} aria-hidden="true" />
-        <span className="sr-only">Private</span>
-      </>
-    )}
     <span className="truncate">#{option.name}</span>
+    {option.is_private && (
+      <Badge variant="tag" size="sm">
+        Private
+      </Badge>
+    )}
   </span>
 );
 
@@ -104,8 +119,10 @@ export const SlackChannelMultiSelect = ({
           <AlertTitle>No channels available yet</AlertTitle>
           <AlertDescription>
             Prowler cannot see a single channel in this workspace. Create a
-            public channel, or invite @Prowler to a private one in Slack with
-            <span className="font-medium"> /invite @Prowler</span>, then
+            public channel, or invite{" "}
+            <SlackInlineCode>@Prowler Cloud</SlackInlineCode> to a private one
+            in Slack with{" "}
+            <SlackInlineCode>/invite @Prowler Cloud</SlackInlineCode>, then
             refresh.
           </AlertDescription>
         </Alert>

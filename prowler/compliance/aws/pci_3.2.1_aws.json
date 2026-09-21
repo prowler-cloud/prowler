@@ -277,7 +277,7 @@
       "Checks": [
         "ec2_ebs_public_snapshot",
         "rds_instance_no_public_access",
-        "eks_endpoints_not_publicly_accessible",
+        "eks_cluster_not_publicly_accessible",
         "bedrock_vpc_endpoints_configured",
         "vpc_endpoint_for_ec2_enabled",
         "s3_account_level_public_access_blocks",
@@ -474,7 +474,7 @@
         "s3_bucket_cross_region_replication",
         "ec2_ebs_public_snapshot",
         "rds_instance_no_public_access",
-        "eks_endpoints_not_publicly_accessible",
+        "eks_cluster_not_publicly_accessible",
         "vpc_endpoint_for_ec2_enabled",
         "s3_account_level_public_access_blocks",
         "awslambda_function_not_publicly_accessible",
@@ -506,7 +506,7 @@
       "Checks": [
         "ec2_ebs_public_snapshot",
         "rds_instance_no_public_access",
-        "eks_endpoints_not_publicly_accessible",
+        "eks_cluster_not_publicly_accessible",
         "vpc_endpoint_for_ec2_enabled",
         "s3_account_level_public_access_blocks",
         "awslambda_function_not_publicly_accessible",
@@ -742,7 +742,7 @@
         "elbv2_logging_enabled",
         "apigateway_restapi_logging_enabled",
         "cloudtrail_multi_region_enabled",
-        "wafv2_web_acl_logging_enabled",
+        "wafv2_webacl_logging_enabled",
         "cloudtrail_cloudwatch_logging_enabled",
         "s3_bucket_lifecycle_enabled"
       ],
@@ -763,7 +763,7 @@
         "elbv2_logging_enabled",
         "apigateway_restapi_logging_enabled",
         "cloudtrail_multi_region_enabled",
-        "wafv2_web_acl_logging_enabled",
+        "wafv2_webacl_logging_enabled",
         "cloudtrail_cloudwatch_logging_enabled"
       ],
       "Attributes": [
@@ -794,7 +794,7 @@
       "Name": "Render PAN unreadable anywhere it is stored (including on portable digital media, backup media, and in logs) by using approaches like one-way hashes based on strong cryptography, truncation etc",
       "Description": "The following approaches should be used to render PAN unreadable anywhere it is stored: One-way hashes based on strong cryptography, (hash must be of the entire PAN), truncation (hashing cannot be used to replace the truncated segment of PAN), index tokens and pads (pads must be securely stored) and strong cryptography with associated key-management processes and procedures. Note: It is a relatively trivial effort for a malicious individual to reconstruct original PAN data if they have access to both the truncated and hashed version of a PAN. Where hashed and truncated versions of the same PAN are present in an entity's environment, additional controls must be in place to ensure that the hashed and truncated versions cannot be correlated to reconstruct the original PAN. PANs stored in primary storage (databases, or flat files such as text files spreadsheets) as well as non-primary storage (backup, audit logs, exception or troubleshooting logs) must all be protected. One-way hash functions based on strong cryptography can be used to render cardholder data unreadable. Hash functions are appropriate when there is no need to retrieve the original number (one-way hashes are irreversible). It is recommended, but not currently a requirement, that an additional, random input value be added to the cardholder data prior to hashing to reduce the feasibility of an attacker comparing the data against (and deriving the PAN from) tables of pre- computed hash values. The intent of truncation is to permanently remove a segment of PAN data so that only a portion (generally not to exceed the first six and last four digits) of the PAN is stored. An index token is a cryptographic token that replaces the PAN based on a given index for an unpredictable value. A one-time pad is a system in which a randomly generated private key is used only once to encrypt a message that is then decrypted using a matching one-time pad and key. The intent of strong cryptography (as defined in the PCI DSS and PA-DSS Glossary of Terms, Abbreviations, and Acronyms) is that the encryption be based on an industry-tested and accepted algorithm (not a proprietary or `home- grown` algorithm) with strong cryptographic keys. By correlating hashed and truncated versions of a given PAN, a malicious individual may easily derive the original PAN value. Controls that prevent the correlation of this data will help ensure that the original PAN remains unreadable.",
       "Checks": [
-        "dynamodb_table_encryption_enabled",
+        "dynamodb_tables_kms_cmk_encryption_enabled",
         "cloudtrail_kms_encryption_enabled",
         "sagemaker_notebook_instance_encryption_enabled",
         "cloudwatch_log_group_kms_encryption_enabled",
@@ -807,7 +807,6 @@
         "opensearch_service_domains_encryption_at_rest_enabled",
         "sns_topics_kms_encryption_at_rest_enabled",
         "dynamodb_accelerator_cluster_encryption_enabled",
-        "dynamodb_tables_kms_cmk_encryption_enabled",
         "ec2_ebs_volume_encryption",
         "rds_instance_storage_encrypted",
         "redshift_cluster_audit_logging",
@@ -816,7 +815,7 @@
         "elbv2_logging_enabled",
         "apigateway_restapi_logging_enabled",
         "cloudtrail_multi_region_enabled",
-        "wafv2_web_acl_logging_enabled",
+        "wafv2_webacl_logging_enabled",
         "cloudtrail_cloudwatch_logging_enabled"
       ],
       "Attributes": [
@@ -832,7 +831,7 @@
       "Name": "If disk encryption is used (rather than file- or column-level database encryption), logical access must be managed separately and independently of native operating system authentication and access control mechanisms (for example, by not using local user account databases or general network login credentials)",
       "Description": "Decryption keys must not be associated with user accounts. Note: This requirement applies in addition to all other PCI DSS encryption and key- management requirements. PANs stored in primary storage (databases, or flat files such as text files spreadsheets) as well as non-primary storage (backup, audit logs, exception or troubleshooting logs) must all be protected. One-way hash functions based on strong cryptography can be used to render cardholder data unreadable. Hash functions are appropriate when there is no need to retrieve the original number (one-way hashes are irreversible). It is recommended, but not currently a requirement, that an additional, random input value be added to the cardholder data prior to hashing to reduce the feasibility of an attacker comparing the data against (and deriving the PAN from) tables of pre- computed hash values. The intent of truncation is to permanently remove a segment of PAN data so that only a portion (generally not to exceed the first six and last four digits) of the PAN is stored. An index token is a cryptographic token that replaces the PAN based on a given index for an unpredictable value. A one-time pad is a system in which a randomly generated private key is used only once to encrypt a message that is then decrypted using a matching one-time pad and key. The intent of strong cryptography (as defined in the PCI DSS and PA-DSS Glossary of Terms, Abbreviations, and Acronyms) is that the encryption be based on an industry-tested and accepted algorithm (not a proprietary or `home-grown` algorithm) with strong cryptographic keys. By correlating hashed and truncated versions of a given PAN, a malicious individual may easily derive the original PAN value. Controls that prevent the correlation of this data will help ensure that the original PAN remains unreadable.",
       "Checks": [
-        "dynamodb_table_encryption_enabled",
+        "dynamodb_tables_kms_cmk_encryption_enabled",
         "cloudtrail_kms_encryption_enabled",
         "sagemaker_notebook_instance_encryption_enabled",
         "cloudwatch_log_group_kms_encryption_enabled",
@@ -845,7 +844,6 @@
         "opensearch_service_domains_encryption_at_rest_enabled",
         "sns_topics_kms_encryption_at_rest_enabled",
         "dynamodb_accelerator_cluster_encryption_enabled",
-        "dynamodb_tables_kms_cmk_encryption_enabled",
         "ec2_ebs_volume_encryption",
         "rds_instance_storage_encrypted",
         "redshift_cluster_audit_logging"
@@ -863,7 +861,7 @@
       "Name": "If disk encryption is used, inspect the configuration and observe the authentication process to verify that logical access to encrypted file systems is implemented via a mechanism that is separate from the native operating system's authentication mechanism (for example, not using local user account databases or general network login credentials)",
       "Description": "The intent of this requirement is to address the acceptability of disk-level encryption for rendering cardholder data unreadable. Disk-level encryption encrypts the entire disk/partition on a computer and automatically decrypts the information when an authorized user requests it. Many disk- encryption solutions intercept operating system read/write operations and carry out the appropriate cryptographic transformations without any special action by the user other than supplying a password or pass phrase upon system startup or at the beginning of a session. Based on these characteristics of disk-level encryption, to be compliant with this requirement, the method cannot: 1) Use the same user account authenticator as the operating system, or 2) Use a decryption key that is associated with or derived from the system's local user account database or general network login credentials. Full disk encryption helps to protect data in the event of physical loss of a disk and therefore may be appropriate for portable devices that store cardholder data.",
       "Checks": [
-        "dynamodb_table_encryption_enabled",
+        "dynamodb_tables_kms_cmk_encryption_enabled",
         "cloudtrail_kms_encryption_enabled",
         "sagemaker_notebook_instance_encryption_enabled",
         "cloudwatch_log_group_kms_encryption_enabled",
@@ -876,7 +874,6 @@
         "opensearch_service_domains_encryption_at_rest_enabled",
         "sns_topics_kms_encryption_at_rest_enabled",
         "dynamodb_accelerator_cluster_encryption_enabled",
-        "dynamodb_tables_kms_cmk_encryption_enabled",
         "ec2_ebs_volume_encryption",
         "rds_instance_storage_encrypted",
         "redshift_cluster_audit_logging"
@@ -894,7 +891,7 @@
       "Name": "Examine the configurations and observe the processes to verify that cardholder data on removable media is encrypted wherever stored",
       "Description": "Note: If disk encryption is not used to encrypt removable media, the data stored on this media will need to be rendered unreadable through some other method. The intent of this requirement is to address the acceptability of disk-level encryption for rendering cardholder data unreadable. Disk-level encryption encrypts the entire disk/partition on a computer and automatically decrypts the information when an authorized user requests it. Many disk- encryption solutions intercept operating system read/write operations and carry out the appropriate cryptographic transformations without any special action by the user other than supplying a password or pass phrase upon system startup or at the beginning of a session. Based on these characteristics of disk-level encryption, to be compliant with this requirement, the method cannot: 1) Use the same user account authenticator as the operating system, or 2) Use a decryption key that is associated with or derived from the system's local user account database or general network login credentials. Full disk encryption helps to protect data in the event of physical loss of a disk and therefore may be appropriate for portable devices that store cardholder data.",
       "Checks": [
-        "dynamodb_table_encryption_enabled",
+        "dynamodb_tables_kms_cmk_encryption_enabled",
         "cloudtrail_kms_encryption_enabled",
         "sagemaker_notebook_instance_encryption_enabled",
         "cloudwatch_log_group_kms_encryption_enabled",
@@ -907,7 +904,6 @@
         "opensearch_service_domains_encryption_at_rest_enabled",
         "sns_topics_kms_encryption_at_rest_enabled",
         "dynamodb_accelerator_cluster_encryption_enabled",
-        "dynamodb_tables_kms_cmk_encryption_enabled",
         "ec2_ebs_volume_encryption",
         "rds_instance_storage_encrypted",
         "redshift_cluster_audit_logging"
@@ -925,7 +921,7 @@
       "Name": "Examine documentation about the system used to protect the PAN, including the vendor, type of system/process, and the encryption algorithms (if applicable) to verify that the PAN is rendered unreadable using methods like truncation,one-way hashes based on strong cryptography etc",
       "Description": "Verify documentation about the system used to protect the PAN, including the vendor, type of system/process, and the encryption algorithms (if applicable) to verify that the PAN is rendered unreadable using any of the following methods: One-way hashes based on strong cryptography, truncation, index tokens and pads with the pads being securely stored, strong cryptography, with associated key-management processes and procedures. PANs stored in primary storage (databases, or flat files such as text files spreadsheets) as well as non-primary storage (backup, audit logs, exception or troubleshooting logs) must all be protected. One-way hash functions based on strong cryptography can be used to render cardholder data unreadable. Hash functions are appropriate when there is no need to retrieve the original number (one-way hashes are irreversible). It is recommended, but not currently a requirement, that an additional, random input value be added to the cardholder data prior to hashing to reduce the feasibility of an attacker comparing the data against (and deriving the PAN from) tables of pre- computed hash values. The intent of truncation is to permanently remove a segment of PAN data so that only a portion (generally not to exceed the first six and last four digits) of the PAN is stored. An index token is a cryptographic token that replaces the PAN based on a given index for an unpredictable value. A one-time pad is a system in which a randomly generated private key is used only once to encrypt a message that is then decrypted using a matching one-time pad and key. The intent of strong cryptography (as defined in the PCI DSS and PA-DSS Glossary of Terms, Abbreviations, and Acronyms) is that the encryption be based on an industry-tested and accepted algorithm (not a proprietary or `home-grown` algorithm) with strong cryptographic keys. By correlating hashed and truncated versions of a given PAN, a malicious individual may easily derive the original PAN value. Controls that prevent the correlation of this data will help ensure that the original PAN remains unreadable.",
       "Checks": [
-        "dynamodb_table_encryption_enabled",
+        "dynamodb_tables_kms_cmk_encryption_enabled",
         "cloudtrail_kms_encryption_enabled",
         "sagemaker_notebook_instance_encryption_enabled",
         "cloudwatch_log_group_kms_encryption_enabled",
@@ -933,7 +929,6 @@
         "opensearch_service_domains_audit_logging_enabled",
         "eks_cluster_kms_cmk_encryption_in_secrets_enabled",
         "rds_snapshots_encrypted",
-        "dynamodb_tables_kms_cmk_encryption_enabled",
         "s3_bucket_default_encryption",
         "efs_encryption_at_rest_enabled",
         "ec2_ebs_default_encryption",
@@ -957,7 +952,7 @@
       "Name": "Examine several tables or files from a sample of data repositories to verify the PAN is rendered unreadable (that is, not stored in plain-text)",
       "Description": "PANs stored in primary storage (databases, or flat files such as text files spreadsheets) as well as non-primary storage (backup, audit logs, exception or troubleshooting logs) must all be protected. One-way hash functions based on strong cryptography can be used to render cardholder data unreadable. Hash functions are appropriate when there is no need to retrieve the original number (one-way hashes are irreversible). It is recommended, but not currently a requirement, that an additional, random input value be added to the cardholder data prior to hashing to reduce the feasibility of an attacker comparing the data against (and deriving the PAN from) tables of pre- computed hash values. The intent of truncation is to permanently remove a segment of PAN data so that only a portion (generally not to exceed the first six and last four digits) of the PAN is stored. An index token is a cryptographic token that replaces the PAN based on a given index for an unpredictable value. A one-time pad is a system in which a randomly generated private key is used only once to encrypt a message that is then decrypted using a matching one-time pad and key. The intent of strong cryptography (as defined in the PCI DSS and PA-DSS Glossary of Terms, Abbreviations, and Acronyms) is that the encryption be based on an industry-tested and accepted algorithm (not a proprietary or `home- grown` algorithm) with strong cryptographic keys. By correlating hashed and truncated versions of a given PAN, a malicious individual may easily derive the original PAN value. Controls that prevent the correlation of this data will help ensure that the original PAN remains unreadable.",
       "Checks": [
-        "dynamodb_table_encryption_enabled",
+        "dynamodb_tables_kms_cmk_encryption_enabled",
         "cloudtrail_kms_encryption_enabled",
         "sagemaker_notebook_instance_encryption_enabled",
         "cloudwatch_log_group_kms_encryption_enabled",
@@ -965,7 +960,6 @@
         "opensearch_service_domains_audit_logging_enabled",
         "eks_cluster_kms_cmk_encryption_in_secrets_enabled",
         "rds_snapshots_encrypted",
-        "dynamodb_tables_kms_cmk_encryption_enabled",
         "s3_bucket_default_encryption",
         "efs_encryption_at_rest_enabled",
         "ec2_ebs_default_encryption",
@@ -997,7 +991,7 @@
         "apigateway_restapi_logging_enabled",
         "s3_bucket_default_encryption",
         "cloudtrail_multi_region_enabled",
-        "wafv2_web_acl_logging_enabled",
+        "wafv2_webacl_logging_enabled",
         "cloudtrail_cloudwatch_logging_enabled"
       ],
       "Attributes": [
@@ -1084,7 +1078,7 @@
       "Description": "Following should be used to safeguard sensitive cardholder data during transmission over open, public networks: only trusted keys and certificates are accepted, the protocol in use only supports secure versions or configurations and the encryption strength is appropriate for the encryption methodology in use. Examples of open, public networks include but are not limited to the Internet, wireless technologies, including 802.11 and Bluetooth, cellular technologies, for example, Global System for Mobile communications (GSM), Code division multiple access (CDMA), general Packet Radio Service (GPRS) and satellite communications. Sensitive information must be encrypted during transmission over public networks, because it is easy and common for a malicious individual to intercept and/or divert data while in transit. Secure transmission of cardholder data requires using trusted keys/certificates, a secure protocol for transport, and proper encryption strength to encrypt cardholder data. Connection requests from systems that do not support the required encryption strength, and that would result in an insecure connection, should not be accepted. Note that some protocol implementations (such as SSL, SSH v1.0, and early TLS) have known vulnerabilities that an attacker can use to gain control of the affected system. Whichever security protocol is used, ensure it is configured to use only secure versions and configurations to prevent use of an insecure connection—for example, by using only trusted certificates and supporting only strong encryption (not supporting weaker, insecure protocols or methods). Verifying that certificates are trusted (for example, have not expired and are issued from a trusted source) helps ensure the integrity of the secure connection. Generally, the web page URL should begin with `HTTPS` and/or the web browser display a padlock icon somewhere in the window of the browser. Many TLS certificate vendors also provide a highly visible verification seal— sometimes referred to as a “security seal,” `secure site seal,` or “secure trust seal”)—which may provide the ability to click on the seal to reveal information about the website. Refer to industry standards and best practices for information on strong cryptography and secure protocols (e.g., NIST SP 800-52 and SP 800-57, OWASP, etc.) Note: SSL/early TLS is not considered strong cryptography and may not be used as a security control, except by POS POI terminals that are verified as not being susceptible to known exploits and the termination points to which they connect as defined in Appendix A2.",
       "Checks": [
         "acm_certificates_expiration_check",
-        "s3_bucket_enforces_ssl",
+        "s3_bucket_secure_transport_policy",
         "elbv2_ssl_listeners",
         "opensearch_service_domains_node_to_node_encryption_enabled",
         "elb_ssl_listeners",
@@ -1110,7 +1104,7 @@
         "cloudfront_distributions_using_deprecated_ssl_protocols",
         "acm_certificates_expiration_check",
         "cloudfront_distributions_origin_traffic_encrypted",
-        "s3_bucket_enforces_ssl",
+        "s3_bucket_secure_transport_policy",
         "elbv2_ssl_listeners",
         "opensearch_service_domains_node_to_node_encryption_enabled",
         "elb_ssl_listeners"
@@ -1178,7 +1172,7 @@
         "cloudfront_distributions_using_deprecated_ssl_protocols",
         "acm_certificates_expiration_check",
         "cloudfront_distributions_origin_traffic_encrypted",
-        "s3_bucket_enforces_ssl",
+        "s3_bucket_secure_transport_policy",
         "elbv2_ssl_listeners",
         "opensearch_service_domains_node_to_node_encryption_enabled",
         "elb_ssl_listeners"
@@ -1497,7 +1491,7 @@
       "Checks": [
         "ec2_ebs_public_snapshot",
         "rds_instance_no_public_access",
-        "eks_endpoints_not_publicly_accessible",
+        "eks_cluster_not_publicly_accessible",
         "s3_account_level_public_access_blocks",
         "awslambda_function_not_publicly_accessible",
         "emr_cluster_master_nodes_no_public_ip",
@@ -1528,7 +1522,7 @@
       "Checks": [
         "ec2_ebs_public_snapshot",
         "rds_instance_no_public_access",
-        "eks_endpoints_not_publicly_accessible",
+        "eks_cluster_not_publicly_accessible",
         "s3_account_level_public_access_blocks",
         "awslambda_function_not_publicly_accessible",
         "emr_cluster_master_nodes_no_public_ip",
@@ -1637,7 +1631,7 @@
         "iam_password_policy_reuse_24",
         "codebuild_project_no_secrets_in_variables",
         "codebuild_project_source_repo_url_no_sensitive_credentials",
-        "s3_bucket_enforces_ssl",
+        "s3_bucket_secure_transport_policy",
         "elbv2_ssl_listeners",
         "opensearch_service_domains_node_to_node_encryption_enabled",
         "elb_ssl_listeners",
@@ -1652,11 +1646,10 @@
         "eks_cluster_kms_cmk_encryption_in_secrets_enabled",
         "rds_snapshots_encrypted",
         "dynamodb_accelerator_cluster_encryption_enabled",
-        "dynamodb_table_encryption_enabled",
+        "dynamodb_tables_kms_cmk_encryption_enabled",
         "cloudtrail_kms_encryption_enabled",
         "cloudwatch_log_group_kms_encryption_enabled",
         "sns_topics_kms_encryption_at_rest_enabled",
-        "dynamodb_tables_kms_cmk_encryption_enabled",
         "redshift_cluster_audit_logging"
       ],
       "Attributes": [
@@ -1674,7 +1667,7 @@
       "Checks": [
         "codebuild_project_no_secrets_in_variables",
         "codebuild_project_source_repo_url_no_sensitive_credentials",
-        "s3_bucket_enforces_ssl",
+        "s3_bucket_secure_transport_policy",
         "elbv2_ssl_listeners",
         "opensearch_service_domains_node_to_node_encryption_enabled",
         "elb_ssl_listeners",
@@ -1689,11 +1682,10 @@
         "eks_cluster_kms_cmk_encryption_in_secrets_enabled",
         "rds_snapshots_encrypted",
         "dynamodb_accelerator_cluster_encryption_enabled",
-        "dynamodb_table_encryption_enabled",
+        "dynamodb_tables_kms_cmk_encryption_enabled",
         "cloudtrail_kms_encryption_enabled",
         "cloudwatch_log_group_kms_encryption_enabled",
         "sns_topics_kms_encryption_at_rest_enabled",
-        "dynamodb_tables_kms_cmk_encryption_enabled",
         "redshift_cluster_audit_logging"
       ],
       "Attributes": [
@@ -1723,12 +1715,11 @@
         "eks_cluster_kms_cmk_encryption_in_secrets_enabled",
         "rds_snapshots_encrypted",
         "dynamodb_accelerator_cluster_encryption_enabled",
-        "dynamodb_table_encryption_enabled",
+        "dynamodb_tables_kms_cmk_encryption_enabled",
         "cloudtrail_kms_encryption_enabled",
         "cloudwatch_log_group_kms_encryption_enabled",
-        "s3_bucket_enforces_ssl",
+        "s3_bucket_secure_transport_policy",
         "sns_topics_kms_encryption_at_rest_enabled",
-        "dynamodb_tables_kms_cmk_encryption_enabled",
         "redshift_cluster_audit_logging"
       ],
       "Attributes": [
@@ -2118,7 +2109,7 @@
         "cloudwatch_log_group_retention_policy_specific_days_enabled",
         "apigateway_restapi_logging_enabled",
         "cloudtrail_multi_region_enabled",
-        "wafv2_web_acl_logging_enabled",
+        "wafv2_webacl_logging_enabled",
         "cloudtrail_cloudwatch_logging_enabled",
         "vpc_flow_logs_enabled",
         "redshift_cluster_audit_logging"

@@ -21,6 +21,8 @@ class defenderidentity_health_issues_no_open(Check):
     - PASS: The health issue has been resolved (status is not open).
     - FAIL: The health issue is open and requires attention.
     - FAIL: No sensors are deployed (MDI cannot protect the environment).
+    - MANUAL: The Defender for Identity APIs could not be queried (missing
+      permissions), so the check cannot be evaluated.
     """
 
     def execute(self) -> List[CheckReportM365]:
@@ -50,11 +52,12 @@ class defenderidentity_health_issues_no_open(Check):
                 resource_name="Defender for Identity",
                 resource_id="defenderIdentity",
             )
-            report.status = "FAIL"
+            report.status = "MANUAL"
             report.status_extended = (
-                "Defender for Identity APIs are not accessible. "
-                "Ensure the Service Principal has SecurityIdentitiesSensors.Read.All and "
-                "SecurityIdentitiesHealth.Read.All permissions granted."
+                "Cannot evaluate Defender for Identity health issues: the "
+                "Defender for Identity APIs are not accessible. Ensure the "
+                "scanning application has the SecurityIdentitiesSensors.Read.All "
+                "and SecurityIdentitiesHealth.Read.All permissions granted."
             )
             findings.append(report)
             return findings
@@ -67,11 +70,12 @@ class defenderidentity_health_issues_no_open(Check):
                 resource_name="Defender for Identity",
                 resource_id="defenderIdentity",
             )
-            report.status = "FAIL"
+            report.status = "MANUAL"
             report.status_extended = (
-                f"Cannot read health issues from Defender for Identity "
-                f"(found {len(defenderidentity_client.sensors)} sensor(s) deployed). "
-                "Ensure the Service Principal has SecurityIdentitiesHealth.Read.All permission."
+                f"Cannot evaluate Defender for Identity health issues "
+                f"(found {len(defenderidentity_client.sensors)} sensor(s) deployed): "
+                "the health issues API is not accessible. Ensure the scanning "
+                "application has the SecurityIdentitiesHealth.Read.All permission granted."
             )
             findings.append(report)
             return findings
@@ -93,7 +97,9 @@ class defenderidentity_health_issues_no_open(Check):
             findings.append(report)
             return findings
 
-        # If health_issues is empty list - no issues exist, this is compliant
+        # If health_issues is empty list - no issues exist. This is only
+        # compliant when sensor deployment could actually be verified: with
+        # the sensors API failed, an empty issue list cannot be trusted.
         if not defenderidentity_client.health_issues:
             report = CheckReportM365(
                 metadata=self.metadata(),
@@ -101,10 +107,20 @@ class defenderidentity_health_issues_no_open(Check):
                 resource_name="Defender for Identity",
                 resource_id="defenderIdentity",
             )
-            report.status = "PASS"
-            report.status_extended = (
-                "No open health issues found in Defender for Identity."
-            )
+            if sensors_api_failed:
+                report.status = "MANUAL"
+                report.status_extended = (
+                    "Cannot evaluate Defender for Identity health issues: no "
+                    "open health issues were returned but sensor deployment "
+                    "could not be verified (sensors API not accessible). Ensure "
+                    "the scanning application has the "
+                    "SecurityIdentitiesSensors.Read.All permission granted."
+                )
+            else:
+                report.status = "PASS"
+                report.status_extended = (
+                    "No open health issues found in Defender for Identity."
+                )
             findings.append(report)
             return findings
 
