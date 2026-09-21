@@ -271,6 +271,19 @@ describe("installed Registry provider discovery", () => {
       });
     },
   );
+
+  it("keeps Registry visible when the missing-page code is not the first error", async () => {
+    mockDiscovery({
+      failedEndpoint: "available-artifacts",
+      failureStatus: 404,
+      failureBody: {
+        errors: [{ code: "not_found" }, { code: "registry_page_not_found" }],
+      },
+    });
+    expect(await getInstalledRegistryProviderOptions()).toEqual({
+      status: "error",
+    });
+  });
 });
 
 describe("Registry guarded reads", () => {

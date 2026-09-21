@@ -219,25 +219,27 @@ export async function classifyRegistryFailure(
 
 // An enabled backend also answers 404 (missing page): tell them apart by code.
 export async function isRegistryDisabledResponse(response: Response) {
-  return (
-    response.status === 404 &&
-    (await getRegistryErrorCode(response)) !==
-      REGISTRY_ERROR_CODE.PAGE_NOT_FOUND
-  );
+  if (response.status !== 404) return false;
+  const codes = await getRegistryErrorCodes(response);
+  return !codes.includes(REGISTRY_ERROR_CODE.PAGE_NOT_FOUND);
 }
 
 function isRegistryDiscoveryEndpoint(endpoint: RegistryEndpoint) {
   return registryDiscoveryEndpoints.has(endpoint);
 }
 
-async function getRegistryErrorCode(response: Response) {
+async function getRegistryErrorCodes(response: Response) {
   const parsed = errorDocumentSchema.safeParse(
     await response
       .clone()
       .json()
       .catch(() => undefined),
   );
-  return parsed.success ? parsed.data.errors[0]?.code : undefined;
+  return parsed.success ? parsed.data.errors.map(({ code }) => code) : [];
+}
+
+async function getRegistryErrorCode(response: Response) {
+  return (await getRegistryErrorCodes(response))[0];
 }
 
 const REGISTRY_CATALOG_PAGE_SIZE = 100;
