@@ -7,6 +7,7 @@ import {
   ConnectAccountSuccessData,
 } from "@/components/providers/workflow/forms";
 import { useProviderWizardStore } from "@/store/provider-wizard/store";
+import { useUIStore } from "@/store/ui/store";
 import { OrgFlowType } from "@/types/organizations";
 import { PROVIDER_WIZARD_MODE } from "@/types/provider-wizard";
 import { ProviderType } from "@/types/providers";
@@ -52,6 +53,8 @@ export function ConnectStep({
     setVia(null);
     setSecretId(null);
     setMode(PROVIDER_WIZARD_MODE.ADD);
+    // The layout only re-counts providers on a server render; flip the shared flag now.
+    useUIStore.getState().setHasProviders(true);
     onNext();
   };
 
