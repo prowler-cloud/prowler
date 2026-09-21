@@ -146,6 +146,7 @@ describe("getRuntimeConfigClient", () => {
         "posthogKey",
         "posthogUiHost",
         "reoDevClientId",
+        "selfRegistrationEnabled",
         "sentryDsn",
         "sentryEnvironment",
         "stripePublishableKey",
@@ -157,6 +158,8 @@ describe("getRuntimeConfigClient", () => {
     // false (not null) when absent from the island.
     expect(config.cloudBillingEnabled).toBe(false);
     expect(config.cloudEnabled).toBe(false);
+    // Opt-out flag: absent from the island means self-registration stays on.
+    expect(config.selfRegistrationEnabled).toBe(true);
     expect(
       (config as unknown as Record<string, unknown>).notAllowlisted,
     ).toBeUndefined();

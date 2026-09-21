@@ -451,6 +451,17 @@ modules:
     e2e:
       - ui/tests/home/**
 
+  - name: ui-registry
+    match:
+      - ui/actions/registry/**
+      - ui/app/**/registry/**
+      - ui/components/registry/**
+      - ui/lib/registry/**
+      - ui/tests/registry/**
+    tests: []
+    e2e:
+      - ui/tests/registry/**
+
   - name: ui-shadcn
     match:
       - ui/components/shadcn/**

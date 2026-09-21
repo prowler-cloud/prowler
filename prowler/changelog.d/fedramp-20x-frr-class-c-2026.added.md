@@ -1,0 +1,1 @@
+`FedRAMP-20x-FRR-Class-C` universal compliance framework (`fedramp_20x_frr_class_c_2026`) with the 158 provider rules of the FedRAMP 20x Class C ruleset from the FedRAMP Consolidated Rules 2026 for AWS, Azure, GCP, Kubernetes and M365
