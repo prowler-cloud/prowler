@@ -2700,20 +2700,37 @@ def reset_ephemeral_resource_findings_count(tenant_id: str, scan_id: str) -> dic
     # refreshed). Wiping based on the older scan would zero counts the newer
     # scan just set. Skip and let the newer scan's reset task do the work; if
     # this task was delayed in the queue, that's the correct outcome.
-    # `completed_at__isnull=False` is required: Postgres orders NULL first in
-    # DESC, so a sibling COMPLETED scan with a missing completed_at would sort
-    # as "newest" and incorrectly cause us to skip.
+    #
+    # The comparison must be against the newest *full-scope* scan, which is
+    # what this variable has always been named after but did not use to be:
+    # the query filtered nothing about scope, so any newer scan that is not
+    # full-scope (an imported one, for instance) made the full-scope scan
+    # skip its own cleanup and leave ephemeral resources with a stale
+    # failed_findings_count permanently.
+    #
+    # `is_full_scope()` reads `trigger` plus the scoping keys inside
+    # `scanner_args`, which is not expressible as a WHERE clause, so the
+    # candidates are walked newest-first in Python until the first full-scope
+    # one. The walk needs no cap: `scan` is itself a full-scope candidate, so
+    # it stops at `scan` at the latest, after reading only the scans newer than
+    # it. A fixed window would return None once more newer scoped scans had
+    # landed than it inspected, and skip the cleanup exactly like the bug above.
+    #
+    # NULL `completed_at` no longer needs an explicit filter here: the shared
+    # ordering in `ScanQuerySet.LATEST_ORDER_BY` sorts NULLs last
+    # rather than excluding them, which also fixes the case where a provider
+    # whose completed scans all have a NULL `completed_at` resolved to None and
+    # therefore never ran the reset at all.
     with rls_transaction(tenant_id):
-        latest_full_scope_scan_id = (
-            Scan.objects.filter(
-                tenant_id=tenant_id,
-                provider_id=scan.provider_id,
-                state=StateChoices.COMPLETED,
-                completed_at__isnull=False,
-            )
-            .order_by("-completed_at", "-inserted_at")
-            .values_list("id", flat=True)
-            .first()
+        candidates = (
+            Scan.objects.filter(tenant_id=tenant_id, provider_id=scan.provider_id)
+            .latest_first()
+            .only("id", "trigger", "scanner_args")
+            .iterator(chunk_size=100)
+        )
+        latest_full_scope_scan_id = next(
+            (candidate.id for candidate in candidates if candidate.is_full_scope()),
+            None,
         )
     if latest_full_scope_scan_id != scan.id:
         logger.info(

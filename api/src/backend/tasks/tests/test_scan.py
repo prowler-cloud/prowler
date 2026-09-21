@@ -5967,6 +5967,112 @@ class TestResetEphemeralResourceFindingsCount:
         resource2.refresh_from_db()
         assert resource2.failed_findings_count == 5
 
+    def test_runs_when_newer_scan_is_not_full_scope(
+        self, tenants_fixture, scans_fixture, aws_provider, resources_fixture
+    ):
+        """A newer scoped scan must not block the full-scope scan's cleanup.
+
+        The race guard used to pick the newest COMPLETED scan of any scope
+        despite being named after full-scope ones, so a single scoped scan
+        landing after a complete one made the complete scan skip its cleanup
+        and leave ephemeral resources with a stale count permanently.
+        """
+        from datetime import timedelta
+
+        tenant, *_ = tenants_fixture
+        scan1, *_ = scans_fixture
+        resource1, resource2, _ = resources_fixture
+
+        Resource.objects.filter(id=resource2.id).update(failed_findings_count=5)
+        self._make_scan_summary(tenant.id, scan1.id, resource1)
+
+        newer_completed_at = scan1.completed_at + timedelta(minutes=5)
+        Scan.objects.create(
+            name="Newer scoped scan",
+            provider=aws_provider,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant_id=tenant.id,
+            started_at=newer_completed_at,
+            completed_at=newer_completed_at,
+            scanner_args={"checks": ["check1"]},
+        )
+
+        result = reset_ephemeral_resource_findings_count(
+            tenant_id=str(tenant.id), scan_id=str(scan1.id)
+        )
+
+        assert result["status"] == "completed"
+
+        resource2.refresh_from_db()
+        assert resource2.failed_findings_count == 0
+
+    def test_runs_when_many_newer_scans_are_not_full_scope(
+        self, tenants_fixture, scans_fixture, aws_provider, resources_fixture
+    ):
+        """The walk must not give up before it reaches the full-scope scan.
+
+        A fixed look-back window returned None once more newer scoped scans
+        had landed than it inspected, and skipped the cleanup exactly like the
+        original bug did with one.
+        """
+        from datetime import timedelta
+
+        tenant, *_ = tenants_fixture
+        scan1, *_ = scans_fixture
+        resource1, resource2, _ = resources_fixture
+
+        Resource.objects.filter(id=resource2.id).update(failed_findings_count=5)
+        self._make_scan_summary(tenant.id, scan1.id, resource1)
+
+        for minutes in range(1, 41):
+            newer_completed_at = scan1.completed_at + timedelta(minutes=minutes)
+            Scan.objects.create(
+                name=f"Newer scoped scan {minutes}",
+                provider=aws_provider,
+                trigger=Scan.TriggerChoices.MANUAL,
+                state=StateChoices.COMPLETED,
+                tenant_id=tenant.id,
+                started_at=newer_completed_at,
+                completed_at=newer_completed_at,
+                scanner_args={"checks": ["check1"]},
+            )
+
+        result = reset_ephemeral_resource_findings_count(
+            tenant_id=str(tenant.id), scan_id=str(scan1.id)
+        )
+
+        assert result["status"] == "completed"
+
+        resource2.refresh_from_db()
+        assert resource2.failed_findings_count == 0
+
+    def test_runs_when_completed_at_is_null(
+        self, tenants_fixture, scans_fixture, aws_provider, resources_fixture
+    ):
+        """NULL `completed_at` used to make the reset never run at all.
+
+        The old guard filtered `completed_at__isnull=False`, so a provider
+        whose completed scans all had a NULL `completed_at` resolved the
+        "latest" scan to None, which never equals `scan.id`.
+        """
+        tenant, *_ = tenants_fixture
+        scan1, *_ = scans_fixture
+        resource1, resource2, _ = resources_fixture
+
+        Scan.all_objects.filter(id=scan1.id).update(completed_at=None)
+        Resource.objects.filter(id=resource2.id).update(failed_findings_count=5)
+        self._make_scan_summary(tenant.id, scan1.id, resource1)
+
+        result = reset_ephemeral_resource_findings_count(
+            tenant_id=str(tenant.id), scan_id=str(scan1.id)
+        )
+
+        assert result["status"] == "completed"
+
+        resource2.refresh_from_db()
+        assert resource2.failed_findings_count == 0
+
     def test_does_not_touch_other_providers_resources(
         self, tenants_fixture, scans_fixture, aws_provider, resources_fixture
     ):

@@ -3478,12 +3478,8 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
         filtered_queryset = self.filter_queryset(self.get_queryset())
 
         latest_scans = (
-            Scan.all_objects.filter(
-                tenant_id=tenant_id,
-                state=StateChoices.COMPLETED,
-            )
-            .order_by("provider_id", "-inserted_at")
-            .distinct("provider_id")
+            Scan.all_objects.filter(tenant_id=tenant_id)
+            .latest_per_provider()
             .values("provider_id")
         )
 
@@ -3615,11 +3611,9 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
         tenant_id = request.tenant_id
         query_params = request.query_params
 
-        latest_scans_queryset = (
-            Scan.all_objects.filter(tenant_id=tenant_id, state=StateChoices.COMPLETED)
-            .order_by("provider_id", "-inserted_at")
-            .distinct("provider_id")
-        )
+        latest_scans_queryset = Scan.all_objects.filter(
+            tenant_id=tenant_id
+        ).latest_per_provider()
 
         queryset = ResourceScanSummary.objects.filter(
             tenant_id=tenant_id,
@@ -4206,12 +4200,9 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
         tenant_id = request.tenant_id
         filtered_queryset = self.filter_queryset(self.get_queryset())
 
-        latest_scan_ids = list(
-            Scan.all_objects.filter(tenant_id=tenant_id, state=StateChoices.COMPLETED)
-            .order_by("provider_id", "-inserted_at")
-            .distinct("provider_id")
-            .values_list("id", flat=True)
-        )
+        latest_scan_ids = Scan.all_objects.filter(
+            tenant_id=tenant_id
+        ).latest_ids_per_provider()
         filtered_queryset = filtered_queryset.filter(
             tenant_id=tenant_id, scan_id__in=latest_scan_ids
         )
@@ -4234,11 +4225,9 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
         tenant_id = request.tenant_id
         query_params = request.query_params
 
-        latest_scans_queryset = (
-            Scan.all_objects.filter(tenant_id=tenant_id, state=StateChoices.COMPLETED)
-            .order_by("provider_id", "-inserted_at")
-            .distinct("provider_id")
-        )
+        latest_scans_queryset = Scan.all_objects.filter(
+            tenant_id=tenant_id
+        ).latest_per_provider()
         raw_latest_scans_ids = list(
             latest_scans_queryset.values_list("id", "unique_resource_count")
         )
@@ -4979,11 +4968,7 @@ class ComplianceOverviewViewSet(
         if provider_filters:
             scans = scans.filter(**provider_filters)
 
-        return list(
-            scans.order_by("provider_id", "-inserted_at")
-            .distinct("provider_id")
-            .values_list("id", flat=True)
-        )
+        return scans.latest_ids_per_provider()
 
     def _filtered_queryset_for_latest_provider_scans(self, latest_scan_ids=None):
         if latest_scan_ids is None:
@@ -5725,14 +5710,9 @@ class OverviewViewSet(ProviderFilterParamsMixin, BaseRLSViewSet):
             else {}
         )
 
-        latest_scan_ids = (
-            Scan.all_objects.filter(
-                tenant_id=tenant_id, state=StateChoices.COMPLETED, **provider_filter
-            )
-            .order_by("provider_id", "-inserted_at")
-            .distinct("provider_id")
-            .values_list("id", flat=True)
-        )
+        latest_scan_ids = Scan.all_objects.filter(
+            tenant_id=tenant_id, **provider_filter
+        ).latest_ids_per_provider()
 
         return filtered_queryset.filter(
             tenant_id=tenant_id, scan_id__in=latest_scan_ids
@@ -5759,16 +5739,10 @@ class OverviewViewSet(ProviderFilterParamsMixin, BaseRLSViewSet):
 
     def _latest_scan_ids_for_allowed_providers(self, tenant_id, provider_filters=None):
         provider_filter = self._get_provider_filter()
-        queryset = Scan.all_objects.filter(
-            tenant_id=tenant_id, state=StateChoices.COMPLETED, **provider_filter
-        )
+        queryset = Scan.all_objects.filter(tenant_id=tenant_id, **provider_filter)
         if provider_filters:
             queryset = queryset.filter(**provider_filters)
-        return (
-            queryset.order_by("provider_id", "-inserted_at")
-            .distinct("provider_id")
-            .values_list("id", flat=True)
-        )
+        return queryset.latest_ids_per_provider()
 
     @action(detail=False, methods=["get"], url_name="providers")
     def providers(self, request):
@@ -5780,14 +5754,9 @@ class OverviewViewSet(ProviderFilterParamsMixin, BaseRLSViewSet):
             else {}
         )
 
-        latest_scan_ids = (
-            Scan.all_objects.filter(
-                tenant_id=tenant_id, state=StateChoices.COMPLETED, **provider_filter
-            )
-            .order_by("provider_id", "-inserted_at")
-            .distinct("provider_id")
-            .values_list("id", flat=True)
-        )
+        latest_scan_ids = Scan.all_objects.filter(
+            tenant_id=tenant_id, **provider_filter
+        ).latest_ids_per_provider()
 
         findings_aggregated = (
             queryset.filter(scan_id__in=latest_scan_ids)
@@ -7934,18 +7903,13 @@ class FindingGroupViewSet(JsonApiFilterMixin, BaseRLSViewSet):
 
     def _get_latest_findings_per_provider(self, filtered_queryset):
         """Keep only findings from each provider's most recent completed scan."""
-        # Materialize to a literal IN list. Left as a subquery, Postgres can't
-        # estimate the match count and picks a serial nested loop on
-        # resource_finding_mappings when one scan dominates findings
-        latest_scan_ids = list(
-            Scan.objects.filter(
-                tenant_id=self.request.tenant_id,
-                state=StateChoices.COMPLETED,
-            )
-            .order_by("provider_id", "-completed_at", "-inserted_at")
-            .distinct("provider_id")
-            .values_list("id", flat=True)
-        )
+        # `latest_ids_per_provider` materializes to a literal IN list.
+        # Left as a subquery, Postgres can't estimate the match count and picks
+        # a serial nested loop on resource_finding_mappings when one scan
+        # dominates findings
+        latest_scan_ids = Scan.objects.filter(
+            tenant_id=self.request.tenant_id
+        ).latest_ids_per_provider()
         return filtered_queryset.filter(scan_id__in=latest_scan_ids)
 
     def _post_process_aggregation(self, aggregated_data):
@@ -8891,16 +8855,14 @@ class FindingGroupViewSet(JsonApiFilterMixin, BaseRLSViewSet):
         tenant_id = request.tenant_id
         queryset = self._get_finding_queryset()
 
-        # Order by -completed_at (matching the /latest summary path and the
-        # daily summary upsert keyed on midnight(completed_at)) so that
-        # overlapping scans do not make /resources and /latest read from
-        # different scans and report diverging counts.
-        latest_scan_ids = (
-            Scan.objects.filter(tenant_id=tenant_id, state=StateChoices.COMPLETED)
-            .order_by("provider_id", "-completed_at", "-inserted_at")
-            .distinct("provider_id")
-            .values_list("id", flat=True)
-        )
+        # The shared selector orders by -completed_at (matching the /latest
+        # summary path and the daily summary upsert keyed on
+        # midnight(completed_at)) so that overlapping scans do not make
+        # /resources and /latest read from different scans and report
+        # diverging counts.
+        latest_scan_ids = Scan.objects.filter(
+            tenant_id=tenant_id
+        ).latest_ids_per_provider()
 
         normalized_params = self._normalize_jsonapi_params(request.query_params)
         # Remove date filters since we're using latest
