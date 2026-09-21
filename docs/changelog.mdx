@@ -4,7 +4,7 @@ description: "New features and improvements in each Prowler release"
 rss: true
 ---
 
-<Update label="v5.43.0" description="September 18, 2026">
+<Update label="v5.43.0" description="September 21, 2026">
   ### 🏛️ Compliance — FedRAMP 20x Consolidated Rules 2026
 
   The FedRAMP 20x Phase One pilot frameworks (`fedramp_20x_ksi_low_aws`, `fedramp_20x_ksi_low_azure` and `fedramp_20x_ksi_low_gcp`) are replaced by two universal frameworks built from the FedRAMP Consolidated Rules for 2026, each covering AWS, Azure, GCP, Kubernetes and Microsoft 365 from a single definition:
@@ -49,9 +49,14 @@ rss: true
 
   Read more in the [Invitations documentation](https://docs.prowler.com/user-guide/tutorials/prowler-app-rbac#invitations).
 
+  ### 📄 Reports — Downloads on Self-Hosted Storage
+
+  Report downloads no longer depend on the storage host being the same inside and outside the container network. `DJANGO_OUTPUT_S3_AWS_PUBLIC_ENDPOINT_URL` signs the download URL against a browser-reachable host, so a deployment whose object storage answers only on an internal address serves the file instead of a link the browser cannot open. Leaving `DJANGO_OUTPUT_S3_AWS_DEFAULT_REGION` unset, common on S3-compatible storage with no meaningful region, no longer makes the download fail with a server error.
+
   ### 🔍 Checks
 
   - **Huawei Cloud:** new `smn_topic_subscriptions` check reports SMN topics without any subscription.
+  - **Cloudflare:** the API token links in the provider wizard request the SSL and Certificates, Bot Management and Zone WAF read permissions the checks need, so a token created from the wizard no longer produces failures on permissions it was never granted.
   - **Microsoft 365:** five Defender malware, anti-phishing and inbound anti-spam checks no longer fail with `KeyError` on tenants that use the Standard or Strict preset security policies, which dropped every finding of those checks. Preset policies are covered by `defender_strict_preset_security_policy_enabled`.
   - **Google Workspace:** `security_2sv_enforced` reports domain-wide 2-Step Verification failures as `FAIL` even when every failing setting is overridden for a group or organizational unit.
 
@@ -61,6 +66,7 @@ rss: true
 
   - `libsqlite3-0`, `gzip`, `perl-base`, `libssh2-1t64` and `libpcre2-8-0` upgraded in the SDK and API container images, patching high-severity Debian CVEs.
   - PowerShell upgraded to 7.5.11 in the SDK and API container images, bundling .NET runtime 9.0.20 and patching CVE-2026-62901.
+  - `anyio` upgraded to 4.14.2 in the SDK, the API and the MCP Server, patching CVE-2026-63374.
 
   See the [full release notes on GitHub](https://github.com/prowler-cloud/prowler/releases/tag/5.43.0) for the complete list of changes.
 </Update>
