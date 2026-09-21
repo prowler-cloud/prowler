@@ -156,7 +156,8 @@ export const createMuteRule = async (
       let errorMessage = `Failed to create mute rule: ${response.statusText}`;
       const responseContentType = response.headers.get("content-type");
       try {
-        if (responseContentType?.includes("application/json")) {
+        // The API answers with application/vnd.api+json
+        if (responseContentType?.includes("json")) {
           const errorData = await response.json();
           const jsonApiError = (
             errorData as {
