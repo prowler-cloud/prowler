@@ -1,18 +1,23 @@
-import { render, screen, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import { render, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { isFirstRunHandled } from "@/lib/onboarding/first-run-marker";
 import { addProviderTour } from "@/lib/tours/add-provider.tour";
 import { localStorageAdapter } from "@/lib/tours/store/local-storage-adapter";
 
 import { OnboardingGate } from "../onboarding-gate";
 
-const pushMock = vi.fn();
+const replaceMock = vi.fn();
 const armMock = vi.fn();
 const pathnameMock = vi.fn();
+const permissionsMock = vi.fn();
+
+vi.mock("@/hooks/use-auth", () => ({
+  useAuth: () => ({ permissions: permissionsMock() }),
+}));
 
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push: pushMock, replace: vi.fn() }),
+  useRouter: () => ({ push: vi.fn(), replace: replaceMock }),
   usePathname: () => pathnameMock(),
 }));
 
@@ -27,20 +32,28 @@ const addProviderTourId = {
   version: addProviderTour.version,
 };
 
+const CLOUD_FIRST_RUN_HREF =
+  "/providers?addProvider=true&addProviderSource=first_run&onboarding=add-provider";
+const OSS_FIRST_RUN_HREF =
+  "/providers?addProvider=true&addProviderSource=first_run";
+
 describe("OnboardingGate", () => {
   beforeEach(() => {
     window.localStorage.clear();
-    pushMock.mockClear();
+    replaceMock.mockClear();
     armMock.mockClear();
     pathnameMock.mockReturnValue("/");
+    permissionsMock.mockReturnValue({ manage_providers: true });
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
   });
 
   afterEach(() => {
+    vi.unstubAllEnvs();
     vi.restoreAllMocks();
   });
 
   it.each(["/billing", "/billing/", "/billing/checkout"])(
-    "defers onboarding on %s without resolving it",
+    "defers the first run on %s without resolving it",
     (pathname) => {
       // Given
       pathnameMock.mockReturnValue(pathname);
@@ -49,16 +62,13 @@ describe("OnboardingGate", () => {
       render(<OnboardingGate hasProviders={false} />);
 
       // Then
-      expect(
-        screen.queryByRole("button", { name: /get started/i }),
-      ).not.toBeInTheDocument();
-      expect(localStorageAdapter.get(addProviderTourId)).toBeNull();
+      expect(replaceMock).not.toHaveBeenCalled();
       expect(armMock).not.toHaveBeenCalled();
-      expect(pushMock).not.toHaveBeenCalled();
+      expect(isFirstRunHandled()).toBe(false);
     },
   );
 
-  it("offers onboarding after leaving billing without remounting the gate", async () => {
+  it("sends the user to add a provider after leaving billing, without remounting the gate", async () => {
     // Given
     pathnameMock.mockReturnValue("/billing");
     const { rerender } = render(<OnboardingGate hasProviders={false} />);
@@ -68,50 +78,96 @@ describe("OnboardingGate", () => {
     rerender(<OnboardingGate hasProviders={false} />);
 
     // Then
-    expect(
-      await screen.findByRole("button", { name: /get started/i }),
-    ).toBeInTheDocument();
-    expect(localStorageAdapter.get(addProviderTourId)).toBeNull();
-    expect(armMock).not.toHaveBeenCalled();
+    await waitFor(() =>
+      expect(replaceMock).toHaveBeenCalledExactlyOnceWith(CLOUD_FIRST_RUN_HREF),
+    );
   });
 
-  it("does not suppress onboarding on a route that only shares the billing prefix", async () => {
+  it("does not defer on a route that only shares the billing prefix", async () => {
     // Given
-    pathnameMock.mockReturnValue("/billing-settings");
+    pathnameMock.mockReturnValue("/billing-history");
 
     // When
     render(<OnboardingGate hasProviders={false} />);
 
     // Then
-    expect(
-      await screen.findByRole("button", { name: /get started/i }),
-    ).toBeInTheDocument();
+    await waitFor(() => expect(replaceMock).toHaveBeenCalledOnce());
   });
 
-  describe("when the user has no providers and no completion record", () => {
-    it("shows the Welcome modal", async () => {
+  describe("when a Cloud tenant has no providers and never went through the first run", () => {
+    it("opens the add-provider wizard with its tour and arms the checkpoint", async () => {
+      // Given / When
       render(<OnboardingGate hasProviders={false} />);
 
-      expect(
-        await screen.findByRole("button", { name: /get started/i }),
-      ).toBeInTheDocument();
+      // Then
+      await waitFor(() =>
+        expect(replaceMock).toHaveBeenCalledExactlyOnceWith(
+          CLOUD_FIRST_RUN_HREF,
+        ),
+      );
+      expect(armMock).toHaveBeenCalledOnce();
+    });
+
+    it("happens only once per browser", async () => {
+      // Given
+      const { unmount } = render(<OnboardingGate hasProviders={false} />);
+      await waitFor(() => expect(replaceMock).toHaveBeenCalledOnce());
+      unmount();
+      replaceMock.mockClear();
+
+      // When
+      render(<OnboardingGate hasProviders={false} />);
+
+      // Then
+      expect(isFirstRunHandled()).toBe(true);
+      expect(replaceMock).not.toHaveBeenCalled();
     });
   });
 
-  describe("when the user already has providers", () => {
-    it("does not show the Welcome modal", async () => {
-      render(<OnboardingGate hasProviders={true} />);
+  describe("when a self-hosted deployment has no providers", () => {
+    it("opens the add-provider wizard without the Cloud-only tour or checkpoint", async () => {
+      // Given
+      vi.stubEnv("UI_CLOUD_ENABLED", "false");
 
-      await waitFor(() => {
-        expect(
-          screen.queryByRole("button", { name: /get started/i }),
-        ).not.toBeInTheDocument();
-      });
+      // When
+      render(<OnboardingGate hasProviders={false} />);
+
+      // Then
+      await waitFor(() =>
+        expect(replaceMock).toHaveBeenCalledExactlyOnceWith(OSS_FIRST_RUN_HREF),
+      );
+      expect(armMock).not.toHaveBeenCalled();
     });
   });
 
-  describe("when a completion record already exists in this browser", () => {
-    it("does not show the Welcome modal", async () => {
+  describe("when the user cannot add providers", () => {
+    it("leaves the user where they are, since an empty list may just be limited visibility", () => {
+      // Given
+      permissionsMock.mockReturnValue({ manage_providers: false });
+
+      // When
+      render(<OnboardingGate hasProviders={false} />);
+
+      // Then
+      expect(replaceMock).not.toHaveBeenCalled();
+      expect(isFirstRunHandled()).toBe(false);
+    });
+  });
+
+  describe("when the tenant already has providers", () => {
+    it("leaves the user where they are", () => {
+      // Given / When
+      render(<OnboardingGate hasProviders />);
+
+      // Then
+      expect(replaceMock).not.toHaveBeenCalled();
+      expect(isFirstRunHandled()).toBe(false);
+    });
+  });
+
+  describe("when the add-provider tour was already resolved in this browser", () => {
+    it("leaves the user where they are", () => {
+      // Given
       localStorageAdapter.set(addProviderTourId, {
         tourId: addProviderTour.id,
         version: addProviderTour.version,
@@ -119,119 +175,30 @@ describe("OnboardingGate", () => {
         completedAt: new Date().toISOString(),
       });
 
+      // When
       render(<OnboardingGate hasProviders={false} />);
 
-      await waitFor(() => {
-        expect(
-          screen.queryByRole("button", { name: /get started/i }),
-        ).not.toBeInTheDocument();
-      });
+      // Then
+      expect(replaceMock).not.toHaveBeenCalled();
+      expect(armMock).not.toHaveBeenCalled();
     });
   });
 
-  describe("when the gate flow is dismissed but later sequence flows are incomplete", () => {
-    it("does not show the Welcome modal for a later flow", async () => {
-      // Later flows are only reachable via the checkpoint/sequence, never the gate.
-      localStorageAdapter.set(addProviderTourId, {
-        tourId: addProviderTour.id,
-        version: addProviderTour.version,
-        state: "dismissed",
-        completedAt: new Date().toISOString(),
-      });
-
-      render(<OnboardingGate hasProviders={false} />);
-
-      await waitFor(() => {
-        expect(
-          screen.queryByRole("button", { name: /get started/i }),
-        ).not.toBeInTheDocument();
-      });
-    });
-  });
-
-  describe("when hasProviders is undefined (fail-open)", () => {
-    it("does not show the Welcome modal", async () => {
-      // `undefined` mirrors the tri-state layout forwards on a failed provider fetch.
+  describe("when the provider count is unknown (fail-open)", () => {
+    it("leaves the user where they are when the fetch failed", () => {
+      // Given / When
       render(<OnboardingGate hasProviders={undefined} />);
 
-      await waitFor(() => {
-        expect(
-          screen.queryByRole("button", { name: /get started/i }),
-        ).not.toBeInTheDocument();
-      });
+      // Then
+      expect(replaceMock).not.toHaveBeenCalled();
     });
 
-    it("can be mounted with the prop omitted entirely (fail-open)", async () => {
+    it("can be mounted with the prop omitted entirely", () => {
+      // Given / When
       render(<OnboardingGate />);
 
-      await waitFor(() => {
-        expect(
-          screen.queryByRole("button", { name: /get started/i }),
-        ).not.toBeInTheDocument();
-      });
-    });
-  });
-
-  describe("when the user accepts the Welcome modal", () => {
-    it("navigates to the flow route with the onboarding query param and writes no record", async () => {
-      const user = userEvent.setup();
-      render(<OnboardingGate hasProviders={false} />);
-      const getStarted = await screen.findByRole("button", {
-        name: /get started/i,
-      });
-
-      await user.click(getStarted);
-
-      expect(pushMock).toHaveBeenCalledWith(
-        "/providers?onboarding=add-provider",
-      );
-      expect(localStorageAdapter.get(addProviderTourId)).toBeNull();
-    });
-
-    it("arms the onboarding checkpoint", async () => {
-      const user = userEvent.setup();
-      render(<OnboardingGate hasProviders={false} />);
-      const getStarted = await screen.findByRole("button", {
-        name: /get started/i,
-      });
-
-      await user.click(getStarted);
-
-      expect(armMock).toHaveBeenCalledTimes(1);
-    });
-  });
-
-  describe("when the user dismisses the Welcome modal", () => {
-    it("writes a dismissed record and stops showing the modal", async () => {
-      const user = userEvent.setup();
-      render(<OnboardingGate hasProviders={false} />);
-      const skip = await screen.findByRole("button", {
-        name: /skip for now/i,
-      });
-
-      await user.click(skip);
-
-      await waitFor(() => {
-        expect(
-          screen.queryByRole("button", { name: /skip for now/i }),
-        ).not.toBeInTheDocument();
-      });
-      const record = localStorageAdapter.get(addProviderTourId);
-      expect(record).not.toBeNull();
-      expect(record?.state).toBe("dismissed");
-    });
-
-    it("does NOT arm the onboarding checkpoint", async () => {
-      const user = userEvent.setup();
-      render(<OnboardingGate hasProviders={false} />);
-      const skip = await screen.findByRole("button", {
-        name: /skip for now/i,
-      });
-
-      await user.click(skip);
-
-      // Skipping must never arm the checkpoint (user opted out).
-      expect(armMock).not.toHaveBeenCalled();
+      // Then
+      expect(replaceMock).not.toHaveBeenCalled();
     });
   });
 });
