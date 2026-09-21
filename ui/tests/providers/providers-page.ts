@@ -701,13 +701,15 @@ export class ProvidersPage extends BasePage {
     await this.selectProviderRadio(this.githubProviderRadio);
   }
 
-  async selectAWSSingleAccountMethod(): Promise<void> {
-    const singleAccountOption = this.page.getByRole("radio", {
-      name: "Add A Single AWS Cloud Account",
-      exact: true,
-    });
-    await expect(singleAccountOption).toBeVisible({ timeout: 10000 });
-    await singleAccountOption.click();
+  // AWS picks its access method on the same step that registers the account.
+  async selectAwsAccessMethod(type: AWSCredentialType): Promise<void> {
+    const name =
+      type === AWS_CREDENTIAL_OPTIONS.AWS_CREDENTIALS
+        ? "Access keys"
+        : /IAM Role/;
+    const accessMethod = this.wizardModal.getByRole("radio", { name });
+    await expect(accessMethod).toBeVisible({ timeout: 10000 });
+    await accessMethod.click();
   }
 
   async selectAzureSingleSubscriptionMethod(): Promise<void> {
@@ -729,12 +731,7 @@ export class ProvidersPage extends BasePage {
   }
 
   async selectAWSOrganizationsMethod(): Promise<void> {
-    await this.page
-      .getByRole("radio", {
-        name: "Add Multiple Accounts With AWS Organizations",
-        exact: true,
-      })
-      .click();
+    await this.page.getByRole("tab", { name: /Full AWS Organization/ }).click();
   }
 
   async verifyOrganizationsAuthenticationStepLoaded(): Promise<void> {
@@ -774,10 +771,12 @@ export class ProvidersPage extends BasePage {
     await this.page.getByRole("option", { name: optionName }).click();
   }
 
+  // The account id is only typed for access keys; with a role it is read from the ARN.
   async fillAWSProviderDetails(data: AWSProviderData): Promise<void> {
-    await this.selectAWSSingleAccountMethod();
-    await expect(this.accountIdInput).toBeVisible({ timeout: 10000 });
-    await this.accountIdInput.fill(data.accountId);
+    await expect(this.aliasInput).toBeVisible({ timeout: 10000 });
+    if (await this.accountIdInput.isVisible().catch(() => false)) {
+      await this.accountIdInput.fill(data.accountId);
+    }
 
     if (data.alias) {
       await this.aliasInput.fill(data.alias);
@@ -881,6 +880,7 @@ export class ProvidersPage extends BasePage {
     const actionNames = [
       "Go to scans",
       "Authenticate",
+      "Connect account",
       "Next",
       "Save",
       "Check connection",

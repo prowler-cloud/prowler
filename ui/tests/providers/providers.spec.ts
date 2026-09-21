@@ -108,16 +108,11 @@ test.describe("Add Provider", () => {
         // Select AWS provider
         await providersPage.selectAWSProvider();
 
-        // Fill provider details
-        await providersPage.fillAWSProviderDetails(awsProviderData);
-        await providersPage.clickNext();
-
-        await providersPage.verifyCredentialsPageLoaded();
-
-        // Select static credentials type
-        await providersPage.selectCredentialsType(
+        // AWS registers the account and its credentials in a single step
+        await providersPage.selectAwsAccessMethod(
           AWS_CREDENTIAL_OPTIONS.AWS_CREDENTIALS,
         );
+        await providersPage.fillAWSProviderDetails(awsProviderData);
 
         // Fill static credentials
         await providersPage.fillStaticCredentials(staticCredentials);
@@ -175,16 +170,12 @@ test.describe("Add Provider", () => {
         // Select AWS provider
         await providersPage.selectAWSProvider();
 
-        // Fill provider details
-        await providersPage.fillAWSProviderDetails(awsProviderData);
-        await providersPage.clickNext();
-
-        await providersPage.verifyCredentialsPageLoaded();
-
-        // Select role credentials type
-        await providersPage.selectCredentialsType(
+        // AWS registers the account (read from the role ARN) and its
+        // credentials in a single step
+        await providersPage.selectAwsAccessMethod(
           AWS_CREDENTIAL_OPTIONS.AWS_ROLE_ARN,
         );
+        await providersPage.fillAWSProviderDetails(awsProviderData);
 
         // Fill role credentials
         await providersPage.fillRoleCredentials(roleCredentials);
@@ -240,17 +231,14 @@ test.describe("Add Provider", () => {
         // Select AWS provider
         await providersPage.selectAWSProvider();
 
-        // Fill provider details
-        await providersPage.fillAWSProviderDetails(awsProviderData);
-        await providersPage.clickNext();
-
-        // Select role credentials type
-        await providersPage.selectCredentialsType(
+        // AWS registers the account (read from the role ARN) and its
+        // credentials in a single step
+        await providersPage.selectAwsAccessMethod(
           AWS_CREDENTIAL_OPTIONS.AWS_ROLE_ARN,
         );
-        await providersPage.verifyCredentialsPageLoaded();
+        await providersPage.fillAWSProviderDetails(awsProviderData);
 
-        // Select Authentication Method
+        // Select Authentication Method (under Advanced options)
         await providersPage.selectAuthenticationMethod(
           AWS_CREDENTIAL_OPTIONS.AWS_SDK_DEFAULT,
         );

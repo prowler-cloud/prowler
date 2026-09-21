@@ -29,9 +29,9 @@
 1. Navigate to providers page
 2. Click "Add Provider" button
 3. Select AWS provider type
-4. Fill provider details (account ID and alias)
-5. Select "credentials" authentication type
-6. Fill static credentials (access key and secret key)
+4. On the single AWS step, select the "Access keys" access method
+5. Fill provider details (account ID and alias)
+6. Fill static credentials (access key and secret key) and click "Connect account"
 7. Confirm provider connection without launching a scan
 8. Verify return to Providers page
 9. Verify provider exists in Providers table
@@ -85,9 +85,9 @@
 1. Navigate to providers page
 2. Click "Add Provider" button
 3. Select AWS provider type
-4. Fill provider details (account ID and alias)
-5. Select "role" authentication type
-6. Fill role credentials (access key, secret key, and role ARN)
+4. On the single AWS step, keep the "IAM Role" access method
+5. Fill the alias (the account ID is read from the role ARN)
+6. Fill role credentials (access key, secret key, and role ARN) and click "Connect account"
 7. Confirm provider connection without launching a scan
 8. Verify return to Providers page
 9. Verify provider exists in Providers table
@@ -618,10 +618,10 @@
 1. Navigate to providers page
 2. Click "Add Provider" button
 3. Select AWS provider type
-4. Fill provider details (account ID and alias)
-5. Select "role" authentication type
-6. Switch authentication method to "Use AWS SDK default credentials"
-7. Fill role ARN using AWS SDK credential inputs
+4. On the single AWS step, keep the "IAM Role" access method
+5. Fill the alias (the account ID is read from the role ARN)
+6. Under "Advanced options", switch the credentials source to "AWS SDK Default"
+7. Fill the role ARN and click "Connect account"
 8. Confirm provider connection without launching a scan
 9. Verify return to Providers page
 10. Verify provider exists in Providers table

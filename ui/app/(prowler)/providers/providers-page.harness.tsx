@@ -198,7 +198,11 @@ export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
   /** Enter the AWS Organizations onboarding flow from a fresh wizard. */
   async chooseAwsOrganizations(): Promise<void> {
     await this.selectProviderType(/Amazon Web Services/);
-    await this.chooseMethod(/Add Multiple Accounts With AWS Organizations/);
+    // AWS hosts its single-account/organization switch as tabs on its connect step.
+    const tab = await this.waitFor(() =>
+      this.byRoleName("tab", /Full AWS Organization/),
+    );
+    await this.user.click(tab);
     await this.waitForText(/Organization Details/);
   }
 
