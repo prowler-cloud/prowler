@@ -52,6 +52,8 @@ interface ProviderWizardModalProps {
   scanScheduleCapability?: ScanScheduleCapability;
   /** Cloud-only manual scan quota signal. */
   isScanLimitReached?: boolean;
+  /** Experiment seam: when set, picking AWS hands off to the caller instead of continuing here. */
+  onSelectAwsQuick?: () => void;
 }
 
 export function ProviderWizardModal({
@@ -62,6 +64,7 @@ export function ProviderWizardModal({
   refreshOnClose,
   scanScheduleCapability,
   isScanLimitReached,
+  onSelectAwsQuick,
 }: ProviderWizardModalProps) {
   const {
     backToProviderFlow,
@@ -173,6 +176,7 @@ export function ProviderWizardModal({
                         // user continues on their own. No-op off-onboarding.
                         endActiveTour();
                       }}
+                      onSelectAwsQuick={onSelectAwsQuick}
                       onSelectOrganizations={openOrganizationsFlow}
                       onFooterChange={setFooterConfig}
                       onProviderTypeChange={(providerType) => {

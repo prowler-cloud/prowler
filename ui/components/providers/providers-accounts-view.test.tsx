@@ -66,15 +66,47 @@ vi.mock("@/components/providers/wizard", () => ({
   ProviderWizardModal: ({
     open,
     onOpenChange,
+    onSelectAwsQuick,
+    orgInitialData,
   }: {
     open: boolean;
     onOpenChange: (open: boolean) => void;
+    onSelectAwsQuick?: () => void;
+    orgInitialData?: { organizationType: string };
   }) =>
     open ? (
       <div role="dialog">
-        Provider wizard
+        Provider wizard {orgInitialData?.organizationType ?? ""}
         <button type="button" onClick={() => onOpenChange(false)}>
           Close
+        </button>
+        {onSelectAwsQuick && (
+          <button type="button" onClick={onSelectAwsQuick}>
+            Pick AWS
+          </button>
+        )}
+      </div>
+    ) : null,
+}));
+
+vi.mock("@/components/providers/aws-quick/aws-quick-onboarding-modal", () => ({
+  AwsQuickOnboardingModal: ({
+    open,
+    onBack,
+    onSelectOrganizations,
+  }: {
+    open: boolean;
+    onBack: () => void;
+    onSelectOrganizations: () => void;
+  }) =>
+    open ? (
+      <div role="dialog">
+        AWS quick onboarding
+        <button type="button" onClick={onBack}>
+          Back
+        </button>
+        <button type="button" onClick={onSelectOrganizations}>
+          Full organization
         </button>
       </div>
     ) : null,
@@ -133,6 +165,7 @@ const disconnectedProviders: ProviderProps[] = [
 
 describe("ProvidersAccountsView", () => {
   afterEach(() => {
+    vi.unstubAllEnvs();
     vi.restoreAllMocks();
     providersAccountsTableSpy.mockClear();
     searchParamsValue.current = "";
@@ -337,5 +370,57 @@ describe("ProvidersAccountsView", () => {
 
     // Then
     expect(screen.getByRole("dialog")).toHaveTextContent("Provider wizard");
+  });
+
+  it("hands AWS off to the quick onboarding modal when the experiment is on", async () => {
+    // Given
+    vi.stubEnv("UI_AWS_QUICK_ONBOARDING_ENABLED", "true");
+    const user = userEvent.setup();
+    render(
+      <ProvidersAccountsView
+        isCloud={false}
+        filters={filters}
+        metadata={metadata}
+        providers={disconnectedProviders}
+        rows={rows}
+      />,
+    );
+    await user.click(screen.getByRole("button", { name: /add provider/i }));
+
+    // When
+    await user.click(screen.getByRole("button", { name: "Pick AWS" }));
+
+    // Then
+    expect(screen.getByRole("dialog")).toHaveTextContent(
+      "AWS quick onboarding",
+    );
+
+    // When
+    await user.click(screen.getByRole("button", { name: "Full organization" }));
+
+    // Then
+    expect(screen.getByRole("dialog")).toHaveTextContent("Provider wizard aws");
+  });
+
+  it("keeps the AWS pick inside the provider wizard when the experiment is off", async () => {
+    // Given
+    const user = userEvent.setup();
+    render(
+      <ProvidersAccountsView
+        isCloud={false}
+        filters={filters}
+        metadata={metadata}
+        providers={disconnectedProviders}
+        rows={rows}
+      />,
+    );
+
+    // When
+    await user.click(screen.getByRole("button", { name: /add provider/i }));
+
+    // Then
+    expect(
+      screen.queryByRole("button", { name: "Pick AWS" }),
+    ).not.toBeInTheDocument();
   });
 });

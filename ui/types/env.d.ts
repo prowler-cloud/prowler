@@ -31,6 +31,8 @@ declare global {
       // Prowler Cloud deployment flag — runtime read (server env, client island).
       UI_CLOUD_ENABLED?: "true" | "false";
       UI_REGISTRY_ENABLED?: "true" | "false";
+      // Experiment: 3-step AWS onboarding (quick-create role or static keys).
+      UI_AWS_QUICK_ONBOARDING_ENABLED?: "true" | "false";
 
       CLOUD_BILLING_ENABLED?: "legacy" | "metronome" | "false";
 

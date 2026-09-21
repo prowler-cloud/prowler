@@ -6,6 +6,7 @@ import { Suspense, useState } from "react";
 
 import { OnboardingTrigger, PageReady } from "@/components/onboarding";
 import { AddProviderButton } from "@/components/providers/add-provider-button";
+import { AwsQuickOnboardingModal } from "@/components/providers/aws-quick/aws-quick-onboarding-modal";
 import { MutedFindingsConfigButton } from "@/components/providers/muted-findings-config-button";
 import { NoProvidersAdded } from "@/components/providers/no-providers-added";
 import { ProvidersAccountsTable } from "@/components/providers/providers-accounts-table";
@@ -21,6 +22,7 @@ import {
   ADD_PROVIDER_SEARCH_PARAM,
   ADD_PROVIDER_SEARCH_VALUE,
 } from "@/lib/providers-navigation";
+import { isAwsQuickOnboardingEnabled } from "@/lib/shared/env";
 import {
   ADD_PROVIDER_TOUR_TARGETS,
   addProviderTour,
@@ -31,6 +33,11 @@ import {
 } from "@/lib/tours/use-driver-tour";
 import type { FilterOption, MetaDataProps, ProviderProps } from "@/types";
 import type { ProviderGroup } from "@/types/components";
+import {
+  ORG_SETUP_PHASE,
+  ORG_WIZARD_STEP,
+  ORGANIZATION_TYPE,
+} from "@/types/organizations";
 import {
   HIERARCHY_STATUS,
   type HierarchyStatus,
@@ -101,6 +108,7 @@ export function ProvidersAccountsView({
   const [orgWizardInitialData, setOrgWizardInitialData] = useState<
     OrgWizardInitialData | undefined
   >(undefined);
+  const [isAwsQuickOpen, setIsAwsQuickOpen] = useState(false);
 
   const openProviderWizard = (initialData?: ProviderWizardInitialData) => {
     setOrgWizardInitialData(undefined);
@@ -115,6 +123,11 @@ export function ProvidersAccountsView({
     setProviderWizardInitialData(undefined);
     setOrgWizardInitialData(initialData);
     setIsProviderWizardOpen(true);
+  };
+
+  const openAwsQuickOnboarding = () => {
+    handleWizardOpenChange(false);
+    setIsAwsQuickOpen(true);
   };
 
   const handleWizardOpenChange = (open: boolean) => {
@@ -197,6 +210,30 @@ export function ProvidersAccountsView({
         initialData={providerWizardInitialData}
         orgInitialData={orgWizardInitialData}
         refreshOnClose={false}
+        scanScheduleCapability={scanScheduleCapability}
+        isScanLimitReached={isScanLimitReached}
+        onSelectAwsQuick={
+          isAwsQuickOnboardingEnabled() ? openAwsQuickOnboarding : undefined
+        }
+      />
+      <AwsQuickOnboardingModal
+        open={isAwsQuickOpen}
+        onOpenChange={setIsAwsQuickOpen}
+        onBack={() => {
+          setIsAwsQuickOpen(false);
+          openProviderWizard();
+        }}
+        onSelectOrganizations={() => {
+          setIsAwsQuickOpen(false);
+          openOrganizationWizard({
+            organizationType: ORGANIZATION_TYPE.AWS,
+            organizationId: "",
+            organizationName: "",
+            externalId: "",
+            targetStep: ORG_WIZARD_STEP.SETUP,
+            targetPhase: ORG_SETUP_PHASE.DETAILS,
+          });
+        }}
         scanScheduleCapability={scanScheduleCapability}
         isScanLimitReached={isScanLimitReached}
       />

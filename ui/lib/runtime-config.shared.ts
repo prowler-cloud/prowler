@@ -14,6 +14,7 @@ export interface RuntimePublicConfig {
   cloudEnabled: boolean;
   cloudBillingEnabled: boolean;
   selfRegistrationEnabled: boolean;
+  awsQuickOnboardingEnabled: boolean;
   stripePublishableKey: string | null; // reserved
   stripePublishableKeyV2: string | null; // reserved
 }
@@ -35,6 +36,7 @@ export const EMPTY_RUNTIME_PUBLIC_CONFIG: RuntimePublicConfig = {
   cloudEnabled: false,
   cloudBillingEnabled: false,
   selfRegistrationEnabled: true,
+  awsQuickOnboardingEnabled: false,
   stripePublishableKey: null,
   stripePublishableKeyV2: null,
 };
@@ -56,6 +58,7 @@ const pickConfig = (
   cloudEnabled: parsed.cloudEnabled ?? false,
   cloudBillingEnabled: parsed.cloudBillingEnabled ?? false,
   selfRegistrationEnabled: parsed.selfRegistrationEnabled ?? true,
+  awsQuickOnboardingEnabled: parsed.awsQuickOnboardingEnabled ?? false,
   stripePublishableKey: parsed.stripePublishableKey ?? null,
   stripePublishableKeyV2: parsed.stripePublishableKeyV2 ?? null,
 });

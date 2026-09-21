@@ -18,6 +18,7 @@ import {
 
 interface ConnectStepProps {
   onNext: () => void;
+  onSelectAwsQuick?: () => void;
   onSelectOrganizations: (orgType: OrgFlowType) => void;
   onFooterChange: (config: WizardFooterConfig) => void;
   onProviderTypeChange: (providerType: ProviderType | null) => void;
@@ -25,6 +26,7 @@ interface ConnectStepProps {
 
 export function ConnectStep({
   onNext,
+  onSelectAwsQuick,
   onSelectOrganizations,
   onFooterChange,
   onProviderTypeChange,
@@ -75,6 +77,7 @@ export function ConnectStep({
       formId={formId}
       hideNavigation
       onSuccess={handleSuccess}
+      onSelectAwsQuick={onSelectAwsQuick}
       onSelectOrganizations={onSelectOrganizations}
       onProviderTypeChange={onProviderTypeChange}
       onUiStateChange={setUiState}

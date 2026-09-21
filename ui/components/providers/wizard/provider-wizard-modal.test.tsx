@@ -253,4 +253,26 @@ describe("provider wizard account creation", () => {
     // Then
     expect(screen.getByText("No Registry providers available.")).toBeVisible();
   });
+
+  it("hands off to onSelectAwsQuick when AWS is picked", async () => {
+    const user = userEvent.setup();
+    const onSelectAwsQuick = vi.fn();
+    render(
+      <ProviderWizardModal
+        open
+        onOpenChange={vi.fn()}
+        onSelectAwsQuick={onSelectAwsQuick}
+      />,
+    );
+
+    await screen.findByRole("option", { name: "Acme Cloud Registry" });
+    await user.click(
+      screen.getByRole("option", { name: "Amazon Web Services" }),
+    );
+
+    await waitFor(() => expect(onSelectAwsQuick).toHaveBeenCalledOnce());
+    expect(
+      screen.queryByRole("radio", { name: "Add A Single AWS Cloud Account" }),
+    ).not.toBeInTheDocument();
+  });
 });

@@ -60,6 +60,8 @@ function providerHasOrgMethod(
 
 interface ConnectAccountFormProps {
   onSuccess?: (data: ConnectAccountSuccessData) => void;
+  /** When set, picking AWS leaves this form for the quick flow (it owns the method switch). */
+  onSelectAwsQuick?: () => void;
   onSelectOrganizations?: (orgType: OrgFlowType) => void;
   onProviderTypeChange?: (providerType: ProviderType | null) => void;
   formId?: string;
@@ -207,6 +209,7 @@ function applyBackStep({
 
 export const ConnectAccountForm = ({
   onSuccess,
+  onSelectAwsQuick,
   onSelectOrganizations,
   onProviderTypeChange,
   formId,
@@ -413,7 +416,15 @@ export const ConnectAccountForm = ({
     });
   };
 
+  // Ref: the modal recreates the callback every render; only the provider pick should fire it.
+  const onSelectAwsQuickRef = useRef(onSelectAwsQuick);
+  onSelectAwsQuickRef.current = onSelectAwsQuick;
+
   useEffect(() => {
+    if (providerType === "aws" && onSelectAwsQuickRef.current) {
+      onSelectAwsQuickRef.current();
+      return;
+    }
     if (providerType) {
       setPrevStep(2);
     }
