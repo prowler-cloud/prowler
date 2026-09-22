@@ -44,14 +44,6 @@ export const getAttackPathHubUrl = (queryId: string): string =>
 export const PROWLER_CF_TEMPLATE_URL =
   "https://prowler-cloud-public.s3.eu-west-1.amazonaws.com/permissions/templates/aws/cloudformation/prowler-scan-role.yml";
 
-// Single-parameter (ExternalId) variant used by the quick AWS onboarding flow;
-// Prowler Cloud's account and principal are fixed inside the template.
-export const PROWLER_CF_QUICK_TEMPLATE_URL =
-  "https://prowler-cloud-public.s3.eu-west-1.amazonaws.com/permissions/templates/aws/cloudformation/prowler-scan-role-quick.yml";
-
-const PROWLER_CF_QUICK_TEMPLATE_DOCS_URL =
-  "https://github.com/prowler-cloud/prowler/blob/master/permissions/templates/cloudformation/prowler-scan-role-quick.yml";
-
 // Prowler Cloud billing/subscription management page.
 export const BILLING_URL = "https://cloud.prowler.com/billing";
 
@@ -147,14 +139,10 @@ export interface AWSOrgDeploymentQuickLinkParams {
 
 const buildCloudFormationQuickCreateLink = (
   parameters: Record<string, string>,
-  {
-    templateUrl = PROWLER_CF_TEMPLATE_URL,
-    stackName = "Prowler",
-  }: { templateUrl?: string; stackName?: string } = {},
 ): string => {
   const searchParams = new URLSearchParams({
-    templateURL: templateUrl,
-    stackName,
+    templateURL: PROWLER_CF_TEMPLATE_URL,
+    stackName: "Prowler",
     ...parameters,
   });
 
@@ -386,24 +374,6 @@ export const getAWSCredentialsTemplateLinks = (
     cloudformationQuickLink: buildCloudFormationQuickCreateLink(parameters),
   };
 };
-
-// Quick onboarding: the console shows a single ExternalId field, already
-// filled in, so the user only has to acknowledge IAM and create the stack.
-export const getAWSQuickOnboardingTemplateLinks = (
-  externalId: string,
-): {
-  cloudformation: string;
-  terraform: string;
-  cloudformationQuickLink: string;
-} => ({
-  cloudformation: PROWLER_CF_QUICK_TEMPLATE_DOCS_URL,
-  terraform:
-    "https://github.com/prowler-cloud/prowler/tree/master/permissions/templates/terraform",
-  cloudformationQuickLink: buildCloudFormationQuickCreateLink(
-    { param_ExternalId: externalId },
-    { templateUrl: PROWLER_CF_QUICK_TEMPLATE_URL, stackName: "ProwlerScan" },
-  ),
-});
 
 // Builds the CloudFormation quick-create link that onboards an entire AWS
 // Organization in a single stack: it creates the ProwlerScan role in the

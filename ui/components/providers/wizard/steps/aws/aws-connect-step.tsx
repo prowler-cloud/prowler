@@ -31,10 +31,7 @@ import {
 import { Form } from "@/components/shadcn/form";
 import { useFormServerErrors } from "@/hooks/use-form-server-errors";
 import { PROVIDER_CREDENTIALS_ERROR_MAPPING } from "@/lib/error-mappings";
-import {
-  getAWSCredentialsTemplateLinks,
-  getAWSQuickOnboardingTemplateLinks,
-} from "@/lib/external-urls";
+import { getAWSCredentialsTemplateLinks } from "@/lib/external-urls";
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
 import {
   ACCOUNT_SUBMIT_OUTCOME,
@@ -273,9 +270,9 @@ function AwsRoleConnectForm({
     onUiStateChange,
   });
 
-  const templateLinks = isCloudEnv
-    ? getAWSQuickOnboardingTemplateLinks(externalId)
-    : getAWSCredentialsTemplateLinks(externalId);
+  // One template for every build: self-hosted users set the account that assumes
+  // the role, so the AccountId parameter must stay editable in the console.
+  const templateLinks = getAWSCredentialsTemplateLinks(externalId);
   const roleControl = form.control as unknown as Control<AWSCredentialsRole>;
 
   return (

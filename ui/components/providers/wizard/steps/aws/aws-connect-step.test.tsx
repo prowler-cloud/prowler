@@ -113,13 +113,14 @@ describe("AwsConnectStep", () => {
       // Given
       const { onConnected, user } = renderStep();
 
-      // Then: the quick-create link only carries the tenant's external id.
+      // Then: the button opens the shared template; the Cloud build swaps in its
+      // single-parameter one, since only there the deploying account is fixed.
       const quickCreate = screen.getByRole("link", {
         name: /Create the IAM role in AWS/i,
       });
       expect(quickCreate).toHaveAttribute(
         "href",
-        expect.stringContaining("prowler-scan-role-quick.yml"),
+        expect.stringContaining("prowler-scan-role.yml"),
       );
       expect(quickCreate).toHaveAttribute(
         "href",

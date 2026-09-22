@@ -12,8 +12,6 @@ import {
   getAWSOrgDeploymentQuickLink,
   PRECONFIGURED_CREDENTIAL_URLS,
   getProviderHelpText,
-  getAWSQuickOnboardingTemplateLinks,
-  PROWLER_CF_QUICK_TEMPLATE_URL,
   PROWLER_CF_TEMPLATE_URL,
 } from "./external-urls";
 
@@ -67,26 +65,6 @@ describe("getAWSCredentialsTemplateLinks", () => {
     expect(params.get("param_EnableS3Integration")).toBeNull();
     expect(params.get("param_S3IntegrationBucketName")).toBeNull();
     expect(params.get("param_S3IntegrationBucketAccountId")).toBeNull();
-  });
-});
-
-describe("getAWSQuickOnboardingTemplateLinks", () => {
-  it("builds a single-parameter quick-create link against the quick template", () => {
-    // Given
-    const externalId = "tenant&id";
-
-    // When
-    const links = getAWSQuickOnboardingTemplateLinks(externalId);
-    const params = getQuickCreateParams(links.cloudformationQuickLink);
-
-    // Then
-    expect(params.get("templateURL")).toBe(PROWLER_CF_QUICK_TEMPLATE_URL);
-    expect(params.get("stackName")).toBe("ProwlerScan");
-    expect(params.get("param_ExternalId")).toBe(externalId);
-    expect(
-      Array.from(params.keys()).filter((key) => key.startsWith("param_")),
-    ).toEqual(["param_ExternalId"]);
-    expect(links.cloudformation).toContain("prowler-scan-role-quick.yml");
   });
 });
 
