@@ -18,6 +18,7 @@ import {
 import { useMountEffect } from "@/hooks/use-mount-effect";
 import { isLighthouseChatRoute } from "@/lib/lighthouse-routes";
 import { isCloud } from "@/lib/shared/env";
+import { useTourActive } from "@/lib/tours/use-tour-active";
 import { SIDE_PANEL_TAB, useSidePanelStore } from "@/store/side-panel";
 
 // Late enough that the page has settled and the callout reads as a pointer,
@@ -40,6 +41,8 @@ export function SidePanelTrigger() {
     (state) => state.markAiTriggerHintSeen,
   );
   const [hintReady, setHintReady] = useState(false);
+  // A product tour owns the screen; the callout waits until it is over.
+  const isTourActive = useTourActive();
 
   useMountEffect(() => {
     if (useSidePanelStore.getState().hasSeenAiTriggerHint) return;
@@ -55,7 +58,7 @@ export function SidePanelTrigger() {
 
   // Gated on hintReady (client-only) so SSR and hydration render the calm
   // icon; the glow starts with the callout and stops once discovered.
-  const undiscovered = hintReady && !hintSeen;
+  const undiscovered = hintReady && !hintSeen && !isTourActive;
 
   return (
     <DiscoveryCallout open={undiscovered} onDismiss={markHintSeen}>

@@ -29,6 +29,7 @@ describe("SidePanelTrigger discovery callout", () => {
   });
 
   afterEach(() => {
+    document.body.classList.remove("driver-active");
     vi.useRealTimers();
   });
 
@@ -47,6 +48,24 @@ describe("SidePanelTrigger discovery callout", () => {
     expect(
       screen.getByText("Ask Lighthouse AI from any page"),
     ).toBeInTheDocument();
+  });
+
+  it("waits for a running tour to end before surfacing the callout", async () => {
+    // Given: driver.js flags <body> while a tour is driving.
+    document.body.classList.add("driver-active");
+    render(<SidePanelTrigger />);
+    act(() => vi.advanceTimersByTime(HINT_DELAY_MS));
+
+    // Then
+    expect(screen.queryByTestId("side-panel-ai-hint")).not.toBeInTheDocument();
+
+    // When
+    await act(async () => {
+      document.body.classList.remove("driver-active");
+    });
+
+    // Then
+    expect(screen.getByTestId("side-panel-ai-hint")).toBeInTheDocument();
   });
 
   it("never surfaces the callout again once seen", () => {
