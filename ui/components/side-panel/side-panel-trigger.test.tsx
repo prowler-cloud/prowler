@@ -50,22 +50,18 @@ describe("SidePanelTrigger discovery callout", () => {
     ).toBeInTheDocument();
   });
 
-  it("waits for a running tour to end before surfacing the callout", async () => {
-    // Given: driver.js flags <body> while a tour is driving.
+  it("stays usable above a running product tour", () => {
+    // Given: driver.js dims and disables everything outside its spotlight.
     document.body.classList.add("driver-active");
     render(<SidePanelTrigger />);
-    act(() => vi.advanceTimersByTime(HINT_DELAY_MS));
-
-    // Then
-    expect(screen.queryByTestId("side-panel-ai-hint")).not.toBeInTheDocument();
 
     // When
-    await act(async () => {
-      document.body.classList.remove("driver-active");
-    });
+    act(() => vi.advanceTimersByTime(HINT_DELAY_MS));
 
-    // Then
-    expect(screen.getByTestId("side-panel-ai-hint")).toBeInTheDocument();
+    // Then: the callout opts out of that, so it is visible and dismissible.
+    expect(screen.getByTestId("side-panel-ai-hint")).toHaveAttribute(
+      "data-tour-interactive",
+    );
   });
 
   it("never surfaces the callout again once seen", () => {

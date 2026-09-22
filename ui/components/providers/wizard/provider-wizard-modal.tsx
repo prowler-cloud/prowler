@@ -129,12 +129,7 @@ export function ProviderWizardModal({
         </div>
       </DialogHeader>
 
-      {/* Anchors the add-provider tour's final step to the wizard content and
-          footer, keeping the real form controls clickable under the overlay. */}
-      <div
-        data-tour-id="add-provider-wizard-body"
-        className="mt-6 flex min-h-0 flex-1 flex-col overflow-hidden lg:mt-8"
-      >
+      <div className="mt-6 flex min-h-0 flex-1 flex-col overflow-hidden lg:mt-8">
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden lg:flex-row">
           <div className="mb-4 box-border w-full shrink-0 lg:mb-0 lg:w-[328px]">
             {isProviderFlow ? (
@@ -158,7 +153,12 @@ export function ProviderWizardModal({
             className="hidden w-[100px] min-w-0 shrink lg:block"
           />
 
-          <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
+          {/* Anchors the add-provider tour's final step to the form column only, so
+              its popover has room on the left, under the stepper. */}
+          <div
+            data-tour-id="add-provider-wizard-body"
+            className="relative flex min-h-0 flex-1 flex-col overflow-hidden"
+          >
             <div className="relative min-h-0 flex-1 overflow-hidden">
               <div
                 ref={containerRef}
@@ -364,7 +364,8 @@ export function ProviderWizardModal({
         {(resolvedFooterConfig.showBack ||
           resolvedFooterConfig.showSecondaryAction ||
           resolvedFooterConfig.showAction) && (
-          <div className="mt-8 pt-6">
+          // Outside the tour's spotlight, yet the way forward: keep it clickable.
+          <div className="mt-8 pt-6" data-tour-interactive>
             <div className="flex items-center justify-between">
               <div>
                 {resolvedFooterConfig.showBack && (

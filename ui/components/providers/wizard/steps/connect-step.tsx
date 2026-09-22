@@ -6,6 +6,7 @@ import {
   ConnectAccountForm,
   ConnectAccountSuccessData,
 } from "@/components/providers/workflow/forms";
+import { endActiveTour } from "@/lib/tours/use-driver-tour";
 import { useProviderWizardStore } from "@/store/provider-wizard/store";
 import { useUIStore } from "@/store/ui/store";
 import { ORGANIZATION_TYPE, OrgFlowType } from "@/types/organizations";
@@ -68,6 +69,11 @@ export function ConnectStep({
   };
 
   useEffect(() => {
+    // The footer sits outside the tour's spotlight, so once the user can continue
+    // the tour has done its job and gets out of the way. No-op off-onboarding.
+    if (uiState.showAction && !uiState.actionDisabled && !uiState.isLoading) {
+      endActiveTour();
+    }
     onFooterChange({
       showBack: uiState.showBack,
       backLabel: "Back",

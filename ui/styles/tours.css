@@ -10,6 +10,14 @@
   pointer-events: auto;
 }
 
+/* Surfaces that must stay usable while a tour drives (the wizard footer, a
+ * discovery callout). Clickable regardless of the spotlight; a surface that lives
+ * in its own top-level layer (a portal) also rises above the overlay (z 10000). */
+.driver-active [data-tour-interactive],
+.driver-active [data-tour-interactive] * {
+  pointer-events: auto;
+}
+
 @keyframes driver-fade-in {
   0% {
     opacity: 0;

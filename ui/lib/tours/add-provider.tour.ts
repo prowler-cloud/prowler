@@ -53,9 +53,10 @@ export const addProviderTour = defineTour<AddProviderTourTarget>({
     },
     {
       target: "wizard-body",
-      // Pinned to the left of the form column, mirroring the provider-type step.
+      // Left of the form column, in the gap under the stepper and level with the
+      // footer the user continues from, so it never covers the form itself.
       side: TOUR_STEP_SIDES.LEFT,
-      align: TOUR_STEP_ALIGNMENTS.START,
+      align: TOUR_STEP_ALIGNMENTS.END,
       // Final step: stays until the user closes it or advances to credentials, which
       // the wizard ends the tour from. No Next button.
       autoAdvance: true,

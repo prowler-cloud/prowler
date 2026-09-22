@@ -8,6 +8,7 @@ import {
   PROVIDER_FUNNEL_EVENT,
   type ProviderFunnelDetail,
 } from "@/lib/provider-funnel/provider-funnel-events";
+import { endActiveTour } from "@/lib/tours/use-driver-tour";
 import { useProviderWizardStore } from "@/store/provider-wizard/store";
 import { useUIStore } from "@/store/ui/store";
 
@@ -301,6 +302,27 @@ describe("provider wizard account creation", () => {
         secretId: "secret-1",
         via: "role",
       });
+    });
+
+    it("steps the tour aside once the account can be connected", async () => {
+      // Given
+      vi.mocked(endActiveTour).mockClear();
+      const user = await pickAws();
+
+      // When
+      await user.type(
+        screen.getByRole("textbox", { name: /Role ARN/ }),
+        ROLE_ARN,
+      );
+
+      // Then: the footer sits outside the tour's spotlight, so the tour ends
+      // right when the user is ready to press Connect account.
+      await waitFor(() =>
+        expect(
+          screen.getByRole("button", { name: "Connect account" }),
+        ).toBeEnabled(),
+      );
+      expect(endActiveTour).toHaveBeenCalled();
     });
 
     it("goes back to the provider list", async () => {
