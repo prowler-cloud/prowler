@@ -21,7 +21,7 @@ def _has_github_provider(principal: object) -> bool:
     if not isinstance(principal, dict):
         return False
     return any(
-        GITHUB_OIDC_PROVIDER in str(provider)
+        str(provider).endswith(f"/{GITHUB_OIDC_HOST}")
         for provider in _as_list(principal.get("Federated"))
     )
 
@@ -45,7 +45,9 @@ def _subject_values(condition: object) -> tuple[list, bool]:
         for key, value in entries.items():
             if key != GITHUB_SUB_KEY:
                 continue
-            if str(operator).startswith("ForAllValues:") or str(operator).endswith("IfExists"):
+            operator = str(operator)
+            base_operator = operator.removeprefix("ForAnyValue:")
+            if base_operator not in {"StringEquals", "StringLike"}:
                 return [], False
             strict_operator_seen = True
             values.extend(_as_list(value))
@@ -59,11 +61,14 @@ def _subject_is_restricted(values: Iterable) -> bool:
     for value in values:
         if not isinstance(value, str) or not value.startswith("repo:"):
             return False
-        owner_and_repo = value[5:].split(":", 1)[0]
-        if "/" not in owner_and_repo:
+        parts = value[5:].split(":")
+        if len(parts) < 2 or not parts[0] or not parts[1]:
             return False
-        owner = owner_and_repo.split("/", 1)[0]
-        if not owner or "*" in owner or "?" in owner:
+        owner_repo = parts[0].split("/")
+        if len(owner_repo) != 2:
+            return False
+        owner, repository = owner_repo
+        if not owner or not repository or not parts[1] or "*" in owner or "?" in owner:
             return False
     return True
 
