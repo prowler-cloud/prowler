@@ -241,6 +241,26 @@ describe("useDriverTour lifecycle", () => {
       );
     });
 
+    it("stays closed when stopped before the anchor mounts", async () => {
+      // Given
+      let latestResult: UseDriverTourResult | undefined;
+      render(<AnchoredProbe onResult={(result) => (latestResult = result)} />);
+      await act(async () => {
+        latestResult?.start("late");
+      });
+
+      // When
+      await act(async () => {
+        latestResult?.stop();
+        const anchor = document.createElement("div");
+        anchor.setAttribute("data-tour-id", "anchored-tour-late");
+        document.body.appendChild(anchor);
+      });
+
+      // Then
+      expect(driverHarness.instances[0].drive).not.toHaveBeenCalled();
+    });
+
     it("starts from the first step when the target is not part of the tour", async () => {
       // Given
       let latestResult: UseDriverTourResult | undefined;

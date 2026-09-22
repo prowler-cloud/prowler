@@ -260,6 +260,9 @@ export function useDriverTour<TTarget extends string>(
   // tour would be marked resolved forever after a simple theme toggle.
   const teardownRef = useRef(false);
 
+  // Bumped by start() and stop() so a pending anchored start knows it went stale.
+  const startGenerationRef = useRef(0);
+
   const tourId = tour.id;
   const tourVersion = tour.version;
   const existing = store.get({ id: tourId, version: tourVersion });
@@ -398,6 +401,7 @@ export function useDriverTour<TTarget extends string>(
     start: (startAtTarget) => {
       const instance = driverRef.current;
       if (!instance) return;
+      const generation = ++startGenerationRef.current;
 
       const startIndex = startAtTarget
         ? tour.steps.findIndex((step) => step.target === startAtTarget)
@@ -411,6 +415,7 @@ export function useDriverTour<TTarget extends string>(
       // The anchor may mount right after the caller (e.g. a modal opening), so wait for it.
       waitForElement(getTourTargetSelector(tourId, startAtTarget))
         .then(() => {
+          if (startGenerationRef.current !== generation) return;
           if (driverRef.current !== instance || instance.isActive()) return;
           activeTourInstance = instance;
           instance.drive(startIndex);
@@ -419,7 +424,10 @@ export function useDriverTour<TTarget extends string>(
           // Anchor never appeared (e.g. the modal was dismissed); skip the tour.
         });
     },
-    stop: () => driverRef.current?.destroy(),
+    stop: () => {
+      startGenerationRef.current += 1;
+      driverRef.current?.destroy();
+    },
     hasCompleted,
   };
 }
