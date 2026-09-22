@@ -705,7 +705,7 @@ export class ProvidersPage extends BasePage {
   async selectAwsAccessMethod(type: AWSCredentialType): Promise<void> {
     const name =
       type === AWS_CREDENTIAL_OPTIONS.AWS_CREDENTIALS
-        ? "Access keys"
+        ? "Static access keys"
         : /IAM Role/;
     const accessMethod = this.wizardModal.getByRole("radio", { name });
     await expect(accessMethod).toBeVisible({ timeout: 10000 });
@@ -1690,6 +1690,14 @@ export class ProvidersPage extends BasePage {
     const trigger = this.page.locator('[role="combobox"]').filter({
       hasText: /AWS SDK Default|Prowler Cloud will assume|Access & Secret Key/i,
     });
+
+    // Cloud always assumes the role itself, so the wizard offers no selector there.
+    if (!(await trigger.isVisible().catch(() => false))) {
+      if (method === AWS_CREDENTIAL_OPTIONS.AWS_SDK_DEFAULT) return;
+      throw new Error(
+        "The role form has no credentials selector in this deployment",
+      );
+    }
 
     await trigger.click();
 

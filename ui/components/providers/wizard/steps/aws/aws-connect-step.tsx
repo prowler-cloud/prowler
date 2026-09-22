@@ -55,6 +55,7 @@ import {
   AwsOnboardingMethodTabs,
 } from "./aws-onboarding-method-tabs";
 import { parseAwsAccountIdFromRoleArn } from "./aws-role-arn";
+import { AwsRoleQuickDeploy } from "./aws-role-quick-deploy";
 import {
   AWS_UID_ERROR_POINTER,
   connectAwsAccount,
@@ -119,7 +120,7 @@ export function AwsConnectStep({
         </RadioCard>
         <RadioCard
           icon={KeyRound}
-          title="Access keys"
+          title="Static access keys"
           selected={!isRole}
           disabled={isBusy}
           onClick={() => setMethod(AWS_ACCESS_METHOD.CREDENTIALS)}
@@ -282,10 +283,18 @@ function AwsRoleConnectForm({
       <form id={formId} onSubmit={onSubmit} className="flex flex-col gap-6">
         <section className="flex flex-col gap-4">
           <h4 className="text-sm font-semibold">1. Create the IAM role</h4>
-          <CredentialsRoleHelper
-            externalId={externalId}
-            templateLinks={templateLinks}
-          />
+          {isCloudEnv ? (
+            <AwsRoleQuickDeploy
+              externalId={externalId}
+              templateLinks={templateLinks}
+            />
+          ) : (
+            // Self-hosted keeps every template up front: its role needs more than an external id.
+            <CredentialsRoleHelper
+              externalId={externalId}
+              templateLinks={templateLinks}
+            />
+          )}
         </section>
 
         <section className="flex flex-col gap-4">
@@ -328,14 +337,17 @@ function AwsRoleConnectForm({
             </Button>
           </CollapsibleTrigger>
           <CollapsibleContent className="flex flex-col gap-4">
-            <AwsRoleCredentialsSource
-              control={roleControl}
-              setValue={
-                form.setValue as unknown as UseFormSetValue<AWSCredentialsRole>
-              }
-              credentialsType={credentialsType ?? defaultCredentialsType}
-              isCloudEnv={isCloudEnv}
-            />
+            {/* Cloud assumes the role with its own identity; only self-hosted picks the credentials. */}
+            {!isCloudEnv && (
+              <AwsRoleCredentialsSource
+                control={roleControl}
+                setValue={
+                  form.setValue as unknown as UseFormSetValue<AWSCredentialsRole>
+                }
+                credentialsType={credentialsType ?? defaultCredentialsType}
+                isCloudEnv={isCloudEnv}
+              />
+            )}
             <AwsRoleOptionalFields control={roleControl} />
           </CollapsibleContent>
         </Collapsible>

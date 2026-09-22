@@ -115,7 +115,7 @@ describe("AwsConnectStep", () => {
 
       // Then: the quick-create link only carries the tenant's external id.
       const quickCreate = screen.getByRole("link", {
-        name: /CloudFormation Quick Link/i,
+        name: /Create the IAM role in AWS/i,
       });
       expect(quickCreate).toHaveAttribute(
         "href",
@@ -212,7 +212,9 @@ describe("AwsConnectStep", () => {
       const { onConnected, user } = renderStep();
 
       // When
-      await user.click(screen.getByRole("radio", { name: /Access keys/ }));
+      await user.click(
+        screen.getByRole("radio", { name: /Static access keys/ }),
+      );
       await user.type(
         screen.getByRole("textbox", { name: /Account ID/ }),
         "210987654321",
@@ -237,6 +239,55 @@ describe("AwsConnectStep", () => {
         providerType: "aws",
         providerUid: "210987654321",
       });
+    });
+  });
+
+  describe("in Prowler Cloud, role creation", () => {
+    beforeEach(() => {
+      vi.stubEnv("UI_CLOUD_ENABLED", "true");
+    });
+
+    it("leads with the one-click stack and keeps the other templates behind a toggle", async () => {
+      // Given
+      const { user } = renderStep();
+
+      // Then
+      expect(
+        screen.queryByRole("link", { name: /CloudFormation Template/i }),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole("link", { name: /Terraform Code/i }),
+      ).not.toBeInTheDocument();
+
+      // When
+      await user.click(
+        screen.getByRole("button", { name: /Other ways to create the role/i }),
+      );
+
+      // Then
+      expect(
+        screen.getByRole("link", { name: /CloudFormation Template/i }),
+      ).toHaveAttribute("href", expect.stringContaining("prowler-scan-role"));
+      expect(
+        screen.getByRole("link", { name: /Terraform Code/i }),
+      ).toBeVisible();
+    });
+
+    it("never asks which credentials assume the role: Prowler Cloud does", async () => {
+      // Given
+      const { user } = renderStep();
+      await user.click(
+        screen.getByRole("button", { name: /Advanced options/i }),
+      );
+
+      // Then
+      expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
+      expect(
+        screen.queryByPlaceholderText("Enter the AWS Access Key ID"),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.getByPlaceholderText("Enter the role session name"),
+      ).toBeVisible();
     });
   });
 
