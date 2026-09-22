@@ -146,6 +146,7 @@ class Test_S3_Service:
         assert len(s3.buckets) == 1
         assert s3.buckets[bucket_arn].name == bucket_name
         assert s3.buckets[bucket_arn].region == AWS_REGION_US_EAST_1
+        assert s3.buckets[bucket_arn].acl_retrieved is True
         assert s3.buckets[bucket_arn].acl_grantees[0].display_name == "test"
         assert s3.buckets[bucket_arn].acl_grantees[0].ID == "test_ID"
         assert s3.buckets[bucket_arn].acl_grantees[0].type == "Group"
@@ -153,6 +154,29 @@ class Test_S3_Service:
             s3.buckets[bucket_arn].acl_grantees[0].URI
             == "http://acs.amazonaws.com/groups/global/AllUsers"
         )
+
+    # Test S3 Get Bucket ACL / Policy denied
+    @mock_aws
+    def test_get_bucket_acl_and_policy_access_denied(self):
+        s3_client = client("s3")
+        bucket_name = "test-bucket"
+        bucket_arn = f"arn:aws:s3:::{bucket_name}"
+        s3_client.create_bucket(Bucket=bucket_name)
+
+        def deny(self, operation_name, kwarg):
+            if operation_name in ("GetBucketAcl", "GetBucketPolicy"):
+                raise botocore.exceptions.ClientError(
+                    {"Error": {"Code": "AccessDenied", "Message": "Access Denied"}},
+                    operation_name,
+                )
+            return orig(self, operation_name, kwarg)
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        with patch("botocore.client.BaseClient._make_api_call", new=deny):
+            s3 = S3(aws_provider)
+        assert s3.buckets[bucket_arn].acl_retrieved is False
+        assert s3.buckets[bucket_arn].acl_grantees == []
+        assert s3.buckets[bucket_arn].policy is None
 
     # Test S3 Get Bucket Logging
     @mock_aws

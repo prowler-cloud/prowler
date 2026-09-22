@@ -1,6 +1,8 @@
 from unittest import mock
 
 from boto3 import client
+from botocore.client import BaseClient
+from botocore.exceptions import ClientError
 from moto import mock_aws
 
 from tests.providers.aws.utils import (
@@ -8,6 +10,20 @@ from tests.providers.aws.utils import (
     AWS_REGION_US_EAST_1,
     set_mocked_aws_provider,
 )
+
+_orig_make_api_call = BaseClient._make_api_call
+
+
+def _deny(*operations):
+    def mock_make_api_call(self, operation_name, kwarg):
+        if operation_name in operations:
+            raise ClientError(
+                {"Error": {"Code": "AccessDenied", "Message": "Access Denied"}},
+                operation_name,
+            )
+        return _orig_make_api_call(self, operation_name, kwarg)
+
+    return mock_make_api_call
 
 
 class Test_cloudtrail_logs_s3_bucket_is_not_publicly_accessible:
@@ -384,3 +400,55 @@ class Test_cloudtrail_logs_s3_bucket_is_not_publicly_accessible:
             )
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_tags == []
+
+    @mock_aws
+    def test_trail_bucket_acl_access_denied_is_manual(self):
+        """s3:GetBucketAcl denied on a public trail bucket -> MANUAL, not PASS."""
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_US_EAST_1, AWS_REGION_EU_WEST_1]
+        )
+        s3_client = client("s3", region_name=AWS_REGION_US_EAST_1)
+        bucket_name_us = "bucket_test_us"
+        s3_client.create_bucket(Bucket=bucket_name_us)
+        s3_client.put_bucket_acl(Bucket=bucket_name_us, ACL="public-read")
+
+        trail_name_us = "trail_test_us"
+        cloudtrail_client = client("cloudtrail", region_name=AWS_REGION_US_EAST_1)
+        trail_us = cloudtrail_client.create_trail(
+            Name=trail_name_us, S3BucketName=bucket_name_us, IsMultiRegionTrail=False
+        )
+
+        from prowler.providers.aws.services.cloudtrail.cloudtrail_service import (
+            Cloudtrail,
+        )
+        from prowler.providers.aws.services.s3.s3_service import S3
+
+        with (
+            mock.patch(
+                "botocore.client.BaseClient._make_api_call",
+                new=_deny("GetBucketAcl"),
+            ),
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudtrail.cloudtrail_logs_s3_bucket_is_not_publicly_accessible.cloudtrail_logs_s3_bucket_is_not_publicly_accessible.cloudtrail_client",
+                new=Cloudtrail(aws_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.cloudtrail.cloudtrail_logs_s3_bucket_is_not_publicly_accessible.cloudtrail_logs_s3_bucket_is_not_publicly_accessible.s3_client",
+                new=S3(aws_provider),
+            ),
+        ):
+            from prowler.providers.aws.services.cloudtrail.cloudtrail_logs_s3_bucket_is_not_publicly_accessible.cloudtrail_logs_s3_bucket_is_not_publicly_accessible import (
+                cloudtrail_logs_s3_bucket_is_not_publicly_accessible,
+            )
+
+            result = cloudtrail_logs_s3_bucket_is_not_publicly_accessible().execute()
+
+            assert len(result) == 1
+            assert result[0].status == "MANUAL"
+            assert "s3:GetBucketAcl" in result[0].status_extended
+            assert result[0].resource_id == trail_name_us
+            assert result[0].resource_arn == trail_us["TrailARN"]

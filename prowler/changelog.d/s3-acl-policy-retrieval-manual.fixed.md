@@ -1,0 +1,1 @@
+`s3_bucket_public_access`, `s3_bucket_public_list_acl`, `s3_bucket_public_write_acl`, `cloudtrail_logs_s3_bucket_is_not_publicly_accessible` and `s3_bucket_secure_transport_policy` no longer pass a public bucket, or fail it for a missing policy, when its ACL or policy could not be retrieved; they now report `MANUAL` naming the required permission

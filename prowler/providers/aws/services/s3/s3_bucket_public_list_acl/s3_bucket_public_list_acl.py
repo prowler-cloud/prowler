@@ -4,7 +4,20 @@ from prowler.providers.aws.services.s3.s3control_client import s3control_client
 
 
 class s3_bucket_public_list_acl(Check):
-    def execute(self):
+    """Ensure S3 bucket ACLs do not let anyone list the bucket.
+
+    - PASS: Public access is blocked, or the ACL grants no public read access.
+    - FAIL: The ACL grants AllUsers or AuthenticatedUsers read access.
+    - MANUAL: The bucket ACL could not be retrieved (missing permissions).
+    """
+
+    def execute(self) -> list[Check_Report_AWS]:
+        """Evaluate the check.
+
+        Returns:
+            list[Check_Report_AWS]: One report per bucket with a public access block, or one
+            account-level report when public access is blocked for the account.
+        """
         findings = []
         # 1. Check if public buckets are restricted at account level
         if (
@@ -35,6 +48,9 @@ class s3_bucket_public_list_acl(Check):
                         bucket.public_access_block.ignore_public_acls
                         and bucket.public_access_block.restrict_public_buckets
                     ):
+                        if not bucket.acl_retrieved:
+                            report.status = "MANUAL"
+                            report.status_extended = f"Cannot evaluate whether S3 Bucket {bucket.name} is publicly listable: the bucket ACL could not be retrieved. Verify that the scanning credentials are allowed to call s3:GetBucketAcl."
                         # 3. If bucket has no public block, check bucket ACL
                         for grantee in bucket.acl_grantees:
                             if grantee.type in "Group":
