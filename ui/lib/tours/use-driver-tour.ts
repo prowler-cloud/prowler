@@ -388,7 +388,11 @@ export function useDriverTour<TTarget extends string>(
     const instance = driverRef.current;
     if (!instance || instance.isActive()) return;
 
+    // A start()/stop() issued meanwhile takes over: an anchored start must not
+    // be pre-empted by the full tour opening from the top.
+    const generation = startGenerationRef.current;
     const timer = window.setTimeout(() => {
+      if (startGenerationRef.current !== generation) return;
       if (!instance.isActive()) {
         activeTourInstance = instance;
         instance.drive();

@@ -248,6 +248,48 @@ describe("useDriverTour lifecycle", () => {
       expect(instance.drive).toHaveBeenCalledExactlyOnceWith();
     });
 
+    it("takes over from a pending auto-open so the tour starts at the anchor", async () => {
+      // Given: auto-open is armed but the caller asks for the anchored start first.
+      vi.useFakeTimers();
+      let latestResult: UseDriverTourResult | undefined;
+      function AutoOpenAnchoredProbe() {
+        latestResult = useDriverTour(anchoredTour, {
+          autoOpen: true,
+          store: createStore(),
+        });
+        return null;
+      }
+      render(<AutoOpenAnchoredProbe />);
+      act(() => {
+        latestResult?.start("late");
+      });
+
+      // When: the auto-open delay elapses before the anchor exists.
+      act(() => {
+        vi.advanceTimersByTime(50);
+      });
+
+      // Then: nothing opens from the top.
+      const [instance] = driverHarness.instances;
+      expect(instance.drive).not.toHaveBeenCalled();
+
+      // When: the anchor mounts.
+      const anchor = document.createElement("div");
+      anchor.setAttribute("data-tour-id", "anchored-tour-late");
+      document.body.appendChild(anchor);
+      await act(async () => {
+        await vi.runAllTimersAsync();
+      });
+
+      // Then: the tour is driven once, renumbered from the anchor.
+      expect(instance.setSteps).toHaveBeenCalledExactlyOnceWith([
+        expect.objectContaining({
+          popover: expect.objectContaining({ title: "Late anchor" }),
+        }),
+      ]);
+      expect(instance.drive).toHaveBeenCalledExactlyOnceWith();
+    });
+
     it("plays the whole tour again when started from the top afterwards", async () => {
       // Given
       let latestResult: UseDriverTourResult | undefined;
