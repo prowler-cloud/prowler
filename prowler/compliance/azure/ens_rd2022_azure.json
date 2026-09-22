@@ -642,7 +642,7 @@
         }
       ],
       "Checks": [
-        " app_http_logs_enabled"
+        "app_http_logs_enabled"
       ]
     },
     {
@@ -1185,7 +1185,7 @@
       ]
     },
     {
-      "Id": "op.mon.3.az.nw.1",
+      "Id": "op.mon.3.az.nw.2",
       "Description": "Vigilancia",
       "Attributes": [
         {

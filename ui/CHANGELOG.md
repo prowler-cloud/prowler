@@ -4,6 +4,92 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [1.43.0] (Prowler v5.43.0)
+
+### 🚀 Added
+
+- Registry marketplace and external provider onboarding for Private Cloud, with permission-based access independent of billing, confirmed artifact installation, schema-driven credentials, connection checks, and scan launch [(#12494)](https://github.com/prowler-cloud/prowler/pull/12494)
+- AWS Marketplace button variant with outlined styling for light and dark themes [(#12803)](https://github.com/prowler-cloud/prowler/pull/12803)
+- `UI_SELF_REGISTRATION_ENABLED` flag for Prowler Private Cloud deployments; when `"false"`, `/sign-up` only opens with an invitation, the sign-in page drops the "Sign up" link and the profile hides **Create organization** [(#12815)](https://github.com/prowler-cloud/prowler/pull/12815)
+- "Invite your team" step offered once after the first provider is connected, before the onboarding checkpoint, reusing the invitation form tagged with `source=onboarding` [(#12819)](https://github.com/prowler-cloud/prowler/pull/12819)
+
+### 🐞 Fixed
+
+- Automatic onboarding stays hidden on billing pages and remains available after leaving billing [(#12803)](https://github.com/prowler-cloud/prowler/pull/12803)
+- Per-provider breakdown and OCSF download for FedRAMP 20x KSI and Class C FRR in the cross-provider compliance view [(#12810)](https://github.com/prowler-cloud/prowler/pull/12810)
+- Edit and Revoke actions are disabled for expired and revoked invitations [(#12831)](https://github.com/prowler-cloud/prowler/pull/12831)
+- Cloudflare API token links in the provider wizard request the SSL and Certificates, Bot Management and Zone WAF read permissions the scan needs [(#12842)](https://github.com/prowler-cloud/prowler/pull/12842)
+
+---
+
+## [1.42.0] (Prowler v5.42.0)
+
+### 🚀 Added
+
+- PostHog Toolbar support in development with separate ingestion and app hosts [(#12582)](https://github.com/prowler-cloud/prowler/pull/12582)
+
+### 🐞 Fixed
+
+- Scan Jobs onboarding tour no longer targets an unmounted In Progress row from other tabs [(#12705)](https://github.com/prowler-cloud/prowler/pull/12705)
+- Integration connection test polling now waits up to ~3 minutes instead of ~57 seconds before giving up, so it no longer reports a false failure on slower checks (e.g. Jira accounts with many projects) that were still going to succeed [(#12742)](https://github.com/prowler-cloud/prowler/pull/12742)
+- Scans page filter widths and action button styling, with Launch Scan and Import Findings grouped beside the tabs and sized consistently with Configure Mutelist [(#12781)](https://github.com/prowler-cloud/prowler/pull/12781)
+
+### 🔐 Security
+
+- `nanoid` to 5.1.16, `js-yaml` to 4.3.1 and `postcss` to 8.5.23, plus transitive `hono`, `@hono/node-server`, `browserslist`, `qs`, `dompurify`, `brace-expansion`, `fast-uri`, `ip-address`, `mermaid`, `body-parser` and `@humanfs/node` to patched versions, resolving 40 npm audit advisories (21 high, 15 moderate, 4 low) [(#12758)](https://github.com/prowler-cloud/prowler/pull/12758)
+- `next` to 16.3.3, patching an unauthenticated remote code execution in the Image Optimization API when AVIF files are used (GHSA-2xp9-vwfh-vxw4) [(#12778)](https://github.com/prowler-cloud/prowler/pull/12778)
+- `sharp` to 0.35.4, patching two libheif vulnerabilities reachable through image decoding (GHSA-rgj7-g3m4-5g8c) [(#12778)](https://github.com/prowler-cloud/prowler/pull/12778)
+
+---
+
+## [1.41.0] (Prowler v5.41.0)
+
+### 🚀 Added
+
+- Finding-report imports from Scans for Cloud and Private Cloud deployments [(#12554)](https://github.com/prowler-cloud/prowler/pull/12554)
+- Slack integration: the connection check leaves its result on the card instead of only in a toast, naming the channel Slack refused or the channels it reached (Prowler Cloud only) [(#12677)](https://github.com/prowler-cloud/prowler/pull/12677)
+
+### 🔄 Changed
+
+- Slack integration: the bot is referred to as `@Prowler Cloud`, identifiers are set as inline code, and the private-channel hint links to its docs (Prowler Cloud only) [(#12677)](https://github.com/prowler-cloud/prowler/pull/12677)
+- Slack integration: a selected private channel carries the same visible `Private` badge as the channel list, replacing the lock icon on the chip (Prowler Cloud only) [(#12677)](https://github.com/prowler-cloud/prowler/pull/12677)
+
+### 🐞 Fixed
+
+- Cached permissions now refresh from `/users/me?include=roles` after access token rotation [(#12640)](https://github.com/prowler-cloud/prowler/pull/12640)
+
+---
+
+## [1.40.0] (Prowler v5.40.0)
+
+### 🚀 Added
+
+- NCSC Cyber Essentials 3.3 compliance support with its dedicated mapper, details panel, and icon [(#11588)](https://github.com/prowler-cloud/prowler/pull/11588)
+- Thumbs-up and thumbs-down feedback form for Lighthouse assistant answers with optional details [(#12419)](https://github.com/prowler-cloud/prowler/pull/12419)
+- Display the default one-scan free trial and trial expiration in the existing sidebar banner [(#12420)](https://github.com/prowler-cloud/prowler/pull/12420)
+- Slack integration: connect a Slack workspace from the Integrations page (Prowler Cloud only) [(#12435)](https://github.com/prowler-cloud/prowler/pull/12435)
+- Prowler Cloud indicator for providers created via Import Findings alongside every connection status [(#12447)](https://github.com/prowler-cloud/prowler/pull/12447)
+- Slack integration: authorize several destination channels at once — the connection check confirms each authorized channel with a one-time message and names the one Slack refuses [(#12491)](https://github.com/prowler-cloud/prowler/pull/12491)
+- Slack channels confirmed on the Slack integration as alert rule destinations, selectable in the alert modal alongside email recipients [(#12492)](https://github.com/prowler-cloud/prowler/pull/12492)
+- Cancelled-subscription variant in the sidebar trial banner (Prowler Cloud only) [(#12538)](https://github.com/prowler-cloud/prowler/pull/12538)
+
+### 🔄 Changed
+
+- Alerts list Recipients column becomes Destinations, summarizing a rule's email recipients and Slack channels at a glance [(#12493)](https://github.com/prowler-cloud/prowler/pull/12493)
+
+### 🐞 Fixed
+
+- Scan auto-refresh no longer overlaps slow client refreshes and now signals when scan execution settles [(#12455)](https://github.com/prowler-cloud/prowler/pull/12455)
+- The compliance "Across providers" section builds its framework list from the API catalog instead of a hardcoded set of ids, so a universal framework registered by an installed package renders like a shipped one [(#12536)](https://github.com/prowler-cloud/prowler/pull/12536)
+- The compliance "Across providers" section reports a failed catalog request instead of rendering the "no data yet" empty state [(#12536)](https://github.com/prowler-cloud/prowler/pull/12536)
+- Returning from Slack after approving the install now reliably lands on the Slack integration page instead of getting stuck on the callback screen (Prowler Cloud only) [(#12572)](https://github.com/prowler-cloud/prowler/pull/12572)
+
+### 🔐 Security
+
+- `libcrypto3` and `libssl3` upgraded to 3.5.8-r0 in the UI container image, patching seven high OpenSSL CVEs [(#12549)](https://github.com/prowler-cloud/prowler/pull/12549)
+
+---
+
 ## [1.39.0] (Prowler v5.39.0)
 
 ### 🚀 Added

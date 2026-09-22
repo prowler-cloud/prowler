@@ -1,1 +1,0 @@
-Bedrock Agent ARNs are now built from the audited partition instead of a hardcoded `arn:aws:`, so findings in GovCloud and China carry a resolvable ARN and `--resource-arn` scoping matches agents in those partitions.

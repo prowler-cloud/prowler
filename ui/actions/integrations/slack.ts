@@ -35,7 +35,6 @@ interface SlackRateLimited {
  */
 interface SlackUnconfirmed {
   unconfirmed: true;
-  message: string;
 }
 
 interface SlackActionError {
@@ -48,6 +47,12 @@ interface SlackActionError {
    * reconnecting rather than by retrying.
    */
   code?: string | null;
+  /**
+   * The refusal's HTTP status, for callers that map a class of refusal the
+   * `code` does not name — the exchange's code-less `400` for a consumed
+   * state/code, which no retry can fix.
+   */
+  status?: number;
 }
 
 interface SlackAuthorizeUrl {
@@ -177,7 +182,11 @@ const failureFrom = async (
     };
   }
 
-  return { error: slackErrorMessage(failure, fallback), code: failure.code };
+  return {
+    error: slackErrorMessage(failure, fallback),
+    code: failure.code,
+    status: failure.status,
+  };
 };
 
 /**
@@ -205,6 +214,7 @@ const refusalFrom = async (
         ? slackRateLimitMessage(failure.retryAfterSeconds)
         : slackErrorMessage(failure, fallback),
     code: failure.code,
+    status: failure.status,
   };
 };
 
@@ -291,7 +301,9 @@ export const exchangeSlackOAuthCode = async (
     revalidatePath("/integrations/slack");
 
     if (!isIntegrationResource(body?.data)) {
-      return { unconfirmed: true, message: SLACK_UNREADABLE_RESULT_MESSAGE };
+      // The discriminant is the whole answer: the notice on the integration
+      // page carries its own unconfirmed copy.
+      return { unconfirmed: true };
     }
 
     return { integration: parseStringify(body.data) as IntegrationProps };
@@ -330,11 +342,11 @@ const MAX_CHANNEL_PAGES = 20;
  * Every channel Prowler can post to in the connected workspace — the picker's
  * options.
  *
- * The durable primitive, not the channel stored on the integration (design D6):
- * a consumer needing a per-rule channel reads the same endpoint. `links.next`
- * is followed opaquely — the contract does not pin the cursor parameter naming,
- * so the UI never builds one of its own. An early stop that still read
- * something reports through `incomplete`, not as a failure.
+ * The durable primitive, not the channels recorded on the integration
+ * (design D6): a consumer needing a per-rule channel reads the same endpoint.
+ * `links.next` is followed opaquely — the contract does not pin the cursor
+ * parameter naming, so the UI never builds one of its own. An early stop that
+ * still read something reports through `incomplete`, not as a failure.
  */
 export const getSlackChannels = async (
   integrationId: string,
@@ -422,26 +434,27 @@ export const getSlackChannels = async (
   }
 };
 
-interface SlackDefaultChannelSuccess {
+interface SlackAuthorizedChannelsSuccess {
   integration: IntegrationProps;
 }
 
-export type SlackDefaultChannelResult =
-  | SlackDefaultChannelSuccess
+export type SlackAuthorizedChannelsResult =
+  | SlackAuthorizedChannelsSuccess
   | SlackActionError;
 
 /**
- * Record the channel Prowler posts to, on the generic integration endpoint.
+ * Record the set of channels Prowler is authorized to post to, on the generic
+ * integration endpoint. The list replaces the set; an empty one clears it.
  *
  * A Slack action despite the generic `PATCH`: `channel_not_found` and
  * `not_in_channel` carry the same `detail`, so only `code` tells them apart,
- * and the generic action reads `detail` alone. Only `channel_id` travels — the
- * API derives `channel_name` server-side (design D6).
+ * and the generic action reads `detail` alone. Only ids travel — the API
+ * derives each name and its privacy server-side.
  */
-export const setSlackDefaultChannel = async (
+export const setSlackAuthorizedChannels = async (
   integrationId: string,
-  channelId: string,
-): Promise<SlackDefaultChannelResult> => {
+  channelIds: string[],
+): Promise<SlackAuthorizedChannelsResult> => {
   const id = parseIntegrationId(integrationId);
   if (!id) return { error: SLACK_GENERIC_ERROR_MESSAGE };
 
@@ -460,7 +473,14 @@ export const setSlackDefaultChannel = async (
           // serializer refuses whatever it does not accept, so naming the
           // integration's own (immutable) type is answered with a 400,
           // "Invalid fields: {'integration_type'}".
-          attributes: { configuration: { channel_id: channelId } },
+          attributes: {
+            configuration: {
+              // Ids wrapped as objects, never a bare array (contract, PATCH).
+              channels: Array.from(new Set(channelIds), (channelId) => ({
+                id: channelId,
+              })),
+            },
+          },
         },
       }),
     });
@@ -470,18 +490,18 @@ export const setSlackDefaultChannel = async (
       // this `catch`.
       return await refusalFrom(
         response,
-        `Unable to save the destination channel: ${response.statusText}`,
+        `Unable to save the destination channels: ${response.statusText}`,
       );
     }
 
     const body = await response.json().catch(() => null);
 
     // Before the guard and on both paths: the save happened, so a cache still
-    // holding the previous channel would keep showing it.
+    // holding the previous channels would keep showing them.
     revalidatePath("/integrations");
     revalidatePath("/integrations/slack");
 
-    // Guarded as deep as the caller reads: it names the saved channel from
+    // Guarded as deep as the caller reads: it names the saved channels from
     // `attributes.configuration`.
     if (!body?.data?.attributes?.configuration) {
       return { error: SLACK_UNREADABLE_RESULT_MESSAGE };

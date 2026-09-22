@@ -4,6 +4,55 @@ All notable changes to the **Prowler API** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [1.44.0] (Prowler v5.43.0)
+
+### 🐞 Fixed
+
+- Report download URLs can be signed against a browser-reachable storage host via `DJANGO_OUTPUT_S3_AWS_PUBLIC_ENDPOINT_URL`, so downloads complete on deployments where storage is only reachable inside the container network [(#12552)](https://github.com/prowler-cloud/prowler/pull/12552)
+- A scan report download no longer fails with a server error when `DJANGO_OUTPUT_S3_AWS_DEFAULT_REGION` is unset, which is common on storage with no meaningful region [(#12552)](https://github.com/prowler-cloud/prowler/pull/12552)
+- Lapsed pending invitations are reported as expired and no longer block a new invitation for the same email [(#12831)](https://github.com/prowler-cloud/prowler/pull/12831)
+
+### 🔐 Security
+
+- `libsqlite3-0`, `gzip`, `perl-base` and `libpcre2-8-0` upgraded in the API container image, patching high Debian CVEs [(#12804)](https://github.com/prowler-cloud/prowler/pull/12804)
+- PowerShell from 7.5.9 to 7.5.11 in the API container image, bundling .NET runtime 9.0.20 and patching CVE-2026-62901 [(#12811)](https://github.com/prowler-cloud/prowler/pull/12811)
+- Bumped `anyio` to 4.14.2 to resolve CVE-2026-63374 [(#12848)](https://github.com/prowler-cloud/prowler/pull/12848)
+
+---
+
+## [1.43.0] (Prowler v5.42.0)
+
+### 🔄 Changed
+
+- Speed up compliance overview ingestion by reading ThreatScore mappings from the compliance template instead of each finding, generating time-ordered `uuid7` row ids and grouping inserted rows by framework and requirement [(#12738)](https://github.com/prowler-cloud/prowler/pull/12738)
+
+---
+
+## [1.42.0] (Prowler v5.41.0)
+
+### 🚀 Added
+
+- Jira issues created from Prowler Cloud now carry the `prowler`, `prowler-<provider>`, `prowler-<severity>`, `prowler-<check-id>`, and `prowler-finding-<finding-uid>` labels, a link back to the finding when `DJANGO_UI_BASE_URL` is configured, and the tenant name [(#12540)](https://github.com/prowler-cloud/prowler/pull/12540)
+
+### 🐞 Fixed
+
+- `POST /api/v1/mute-rules` now updates only each affected provider's latest completed scan and future scans, preventing historical reaggregation from flooding Celery queues [(#12681)](https://github.com/prowler-cloud/prowler/pull/12681)
+
+---
+
+## [1.41.0] (Prowler v5.40.0)
+
+### 🐞 Fixed
+
+- `FINDINGS_TABLE_PARTITION_MAX_AGE_MONTHS` is now applied in months instead of days, and negative values are rejected [(#12580)](https://github.com/prowler-cloud/prowler/pull/12580)
+
+### 🔐 Security
+
+- `sqlparse` upgraded to 0.6.0, patching CVE-2026-54284, CVE-2026-59893, and CVE-2026-71491 [(#12509)](https://github.com/prowler-cloud/prowler/pull/12509)
+- `openssl`, `libssl3t64` and `openssl-provider-legacy` upgraded to 3.5.7-1~deb13u2 in the API container image, patching ten high OpenSSL CVEs [(#12549)](https://github.com/prowler-cloud/prowler/pull/12549)
+
+---
+
 ## [1.40.1] (Prowler v5.39.1)
 
 ### 🔄 Changed

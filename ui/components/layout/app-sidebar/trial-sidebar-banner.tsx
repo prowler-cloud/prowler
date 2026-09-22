@@ -20,6 +20,7 @@ export const TRIAL_SIDEBAR_BANNER_VARIANT = {
   ACTIVE_SCANS: "active_scans",
   ACTIVE_UNLIMITED: "active_unlimited",
   EXPIRED: "expired",
+  CANCELLED: "cancelled",
 } as const;
 
 interface TrialSidebarBannerBaseProps {
@@ -51,11 +52,17 @@ interface ExpiredTrialSidebarBannerProps extends TrialSidebarBannerBaseProps {
   remaining?: never;
 }
 
+interface CancelledTrialSidebarBannerProps extends TrialSidebarBannerBaseProps {
+  variant: typeof TRIAL_SIDEBAR_BANNER_VARIANT.CANCELLED;
+  remaining?: never;
+}
+
 export type TrialSidebarBannerProps =
   | ActiveDaysTrialSidebarBannerProps
   | ActiveScansTrialSidebarBannerProps
   | ActiveUnlimitedTrialSidebarBannerProps
-  | ExpiredTrialSidebarBannerProps;
+  | ExpiredTrialSidebarBannerProps
+  | CancelledTrialSidebarBannerProps;
 
 const TRIAL_URGENCY = {
   HEALTHY: "healthy",
@@ -115,6 +122,12 @@ const TRIAL_SIDEBAR_BANNER_COPY: Record<
     linkLabel: "Explore plans after your trial expired",
     cardLabel: "Expired trial",
   },
+  [TRIAL_SIDEBAR_BANNER_VARIANT.CANCELLED]: {
+    badge: "Subscription cancelled",
+    body: "Scans are paused and your assessment data remains available. Subscribe again to continue scanning.",
+    linkLabel: "Explore plans after your cancelled subscription",
+    cardLabel: "Cancelled subscription",
+  },
 };
 
 const TRIAL_SIDEBAR_BANNER_METER: Record<
@@ -150,7 +163,10 @@ const TRIAL_URGENCY_STYLES: Record<TrialUrgency, TrialUrgencyStyles> = {
 };
 
 const getTrialUrgency = (props: TrialSidebarBannerProps): TrialUrgency => {
-  if (props.variant === TRIAL_SIDEBAR_BANNER_VARIANT.EXPIRED) {
+  if (
+    props.variant === TRIAL_SIDEBAR_BANNER_VARIANT.EXPIRED ||
+    props.variant === TRIAL_SIDEBAR_BANNER_VARIANT.CANCELLED
+  ) {
     return TRIAL_URGENCY.CRITICAL;
   }
   if (
@@ -181,7 +197,11 @@ const TILT_RANGE_Y = 2;
 const TILT_LIFT = -2;
 
 export const TrialSidebarBanner = (props: TrialSidebarBannerProps) => {
-  const isExpired = props.variant === TRIAL_SIDEBAR_BANNER_VARIANT.EXPIRED;
+  // Expired trial and cancelled subscription share the terminal treatment:
+  // error badge, error icon, "Subscription required" heading.
+  const isTerminal =
+    props.variant === TRIAL_SIDEBAR_BANNER_VARIANT.EXPIRED ||
+    props.variant === TRIAL_SIDEBAR_BANNER_VARIANT.CANCELLED;
   const isScanBased =
     props.variant === TRIAL_SIDEBAR_BANNER_VARIANT.ACTIVE_SCANS;
   // The backend keeps a scan-capped trial `active` once its quota is spent.
@@ -189,7 +209,7 @@ export const TrialSidebarBanner = (props: TrialSidebarBannerProps) => {
   const urgency = getTrialUrgency(props);
   const urgencyStyles = TRIAL_URGENCY_STYLES[urgency];
   const copy = TRIAL_SIDEBAR_BANNER_COPY[props.variant];
-  const heading = isExpired
+  const heading = isTerminal
     ? "Subscription required"
     : props.variant === TRIAL_SIDEBAR_BANNER_VARIANT.ACTIVE_UNLIMITED
       ? "Trial active"
@@ -282,14 +302,16 @@ export const TrialSidebarBanner = (props: TrialSidebarBannerProps) => {
               <Sparkles
                 className={cn(
                   "size-4",
-                  isExpired ? "text-text-error-primary" : "text-button-primary",
+                  isTerminal
+                    ? "text-text-error-primary"
+                    : "text-button-primary",
                 )}
                 aria-hidden="true"
               />
             </span>
             <div className="flex min-w-0 flex-1 flex-col gap-1.5">
               <Badge
-                variant={isExpired || isExhausted ? "error" : "success"}
+                variant={isTerminal || isExhausted ? "error" : "success"}
                 size="sm"
                 className="w-fit"
               >

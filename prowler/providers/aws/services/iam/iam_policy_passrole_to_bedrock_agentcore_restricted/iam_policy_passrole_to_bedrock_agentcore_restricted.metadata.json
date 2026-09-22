@@ -1,0 +1,45 @@
+{
+  "Provider": "aws",
+  "CheckID": "iam_policy_passrole_to_bedrock_agentcore_restricted",
+  "CheckTitle": "Custom IAM policy restricts iam:PassRole to Bedrock AgentCore to specific roles",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "TTPs/Privilege Escalation"
+  ],
+  "ServiceName": "iam",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "AwsIamPolicy",
+  "ResourceGroup": "IAM",
+  "Description": "**Customer-managed IAM policies** are examined for `Allow` statements granting `iam:PassRole` over every role -- `Resource` `*`, or an IAM ARN whose resource field is nothing but wildcards -- where the passed role can reach **Bedrock AgentCore**: the statement pins `iam:PassedToService` to an AgentCore principal, or sets no such condition while the policy allows an AgentCore action.",
+  "Risk": "AgentCore runtimes, gateways, code interpreters, browsers and evaluation configs all run under a role the caller names in the create call.\n\nWith `iam:PassRole` unbounded, any principal holding the policy can hand AgentCore **any role in the account**, an administrator role included, then reach that role's permissions through agent code it controls. The role itself needs no change.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/evaluations-prerequisites.html",
+    "https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/runtime-permissions.html",
+    "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_passrole.html",
+    "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_iam-condition-keys.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aws iam create-policy-version --policy-arn <POLICY_ARN> --policy-document '{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Action\":[\"iam:PassRole\"],\"Resource\":\"arn:aws:iam::<ACCOUNT_ID>:role/<AGENTCORE_EXECUTION_ROLE_PREFIX>*\",\"Condition\":{\"StringEquals\":{\"iam:PassedToService\":\"bedrock-agentcore.amazonaws.com\"}}}]}' --set-as-default",
+      "NativeIaC": "```yaml\n# CloudFormation: name the roles AgentCore may be handed\nResources:\n  <example_resource_name>:\n    Type: AWS::IAM::ManagedPolicy\n    Properties:\n      PolicyDocument:\n        Version: '2012-10-17'\n        Statement:\n          - Effect: Allow\n            Action: iam:PassRole\n            # FIX: replace '*' with the execution roles AgentCore is meant to run as.\n            # A name prefix is enough -- this is the scope AWS's own AgentCore\n            # Evaluations reference policy uses.\n            Resource: !Sub 'arn:${AWS::Partition}:iam::${AWS::AccountId}:role/<example_resource_id>*'\n            Condition:\n              StringEquals:\n                iam:PassedToService: bedrock-agentcore.amazonaws.com\n```",
+      "Other": "1. In the AWS console, open IAM > Policies and select <example_resource_name>\n2. Choose Edit > JSON\n3. Find every statement whose Action includes iam:PassRole (or iam:* / iam:Pass*) with \"Resource\": \"*\" or an IAM ARN such as arn:aws:iam::<ACCOUNT_ID>:role/*\n4. Replace that resource with the AgentCore execution roles the holder should be able to pass -- a role ARN, or a role-name prefix such as arn:aws:iam::<ACCOUNT_ID>:role/AgentCoreEvaluationRole*\n5. Add Condition StringEquals iam:PassedToService = bedrock-agentcore.amazonaws.com so the roles cannot be handed to any other service\n6. Save as a new default version and re-run the check",
+      "Terraform": "```hcl\n# Name the roles AgentCore may be handed\nresource \"aws_iam_policy\" \"<example_resource_name>\" {\n  name   = \"<example_resource_name>\"\n  policy = jsonencode({\n    Version   = \"2012-10-17\"\n    Statement = [{\n      Effect    = \"Allow\"\n      Action    = [\"iam:PassRole\"]\n      # FIX: replace '*' with the execution roles AgentCore is meant to run as\n      Resource  = \"arn:aws:iam::${var.account_id}:role/<example_resource_id>*\"\n      Condition = {\n        StringEquals = { \"iam:PassedToService\" = \"bedrock-agentcore.amazonaws.com\" }\n      }\n    }]\n  })\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Name the roles that may be passed instead of allowing every role. AWS's own AgentCore Evaluations reference policy shows the shape: `iam:PassRole` on `arn:aws:iam::*:role/AgentCoreEvaluationRole*` under `StringEquals iam:PassedToService = bedrock-agentcore.amazonaws.com`. A role-name prefix satisfies this check; `*` and `role/*` do not. Keep the condition as well, so the same roles cannot be handed to another service.",
+      "Url": "https://hub.prowler.com/check/iam_policy_passrole_to_bedrock_agentcore_restricted"
+    }
+  },
+  "Categories": [
+    "identity-access",
+    "gen-ai"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "iam_policy_allows_privilege_escalation"
+  ],
+  "Notes": "Companion to iam_policy_allows_privilege_escalation, which reports a full AgentCore create-and-invoke action set but evaluates Action alone, so it reports that combination whatever the PassRole scope and nothing when part of it is absent. This check asserts what that leaves open, how far the PassRole grant reaches, and needs only one AgentCore action beside it.\n\nScope is the customer-managed population. A statement pinning iam:PassedToService to another service is out of scope, and a bare Action \"*\" counts as neither the grant nor the AgentCore action, so administrator policies are left to the administrative-privileges checks.\n\nA resource names every role when no role name escapes it, which is broader than a field of wildcards alone: role/?* and *role* both qualify, as does an ARN whose star spans the account and resource fields. A bounded set passes, since role/? names single-character roles only and role/AgentCoreEvaluationRole* is the scope AWS's own AgentCore Evaluations reference policy uses."
+}

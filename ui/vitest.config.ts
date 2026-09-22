@@ -73,6 +73,7 @@ export default defineConfig(() => {
             setupFiles: ["./vitest.setup.ts"],
             include: ["**/*.test.{ts,tsx}"],
             exclude: [
+              ".claude/**",
               "node_modules",
               ".next",
               "tests/**/*",
@@ -87,7 +88,7 @@ export default defineConfig(() => {
             name: "integration",
             setupFiles: ["./vitest.integration.setup.ts"],
             include: ["**/*.integration.test.{ts,tsx}"],
-            exclude: ["node_modules", ".next", "tests/**/*"],
+            exclude: [".claude/**", "node_modules", ".next", "tests/**/*"],
             browser: {
               enabled: true,
               // Vitest's browser default viewport is 414×896 (phone-sized),
@@ -147,6 +148,9 @@ export default defineConfig(() => {
 
         // App component lib
         "@iconify/react",
+        "react-day-picker",
+        "posthog-js",
+        "posthog-js/react",
 
         // Radix
         "@radix-ui/react-alert-dialog",

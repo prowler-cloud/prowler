@@ -51,7 +51,6 @@ import { ScanEntity } from "@/types/scans";
 
 import { CrossAccountDetail } from "../_components/cross-account-detail";
 import { CrossProviderDetail } from "../_components/cross-provider-detail";
-import { resolveCrossProviderFramework } from "../_lib/cross-provider-frameworks";
 import { buildSearchParamsKey } from "../_lib/search-params-key";
 
 const getSingleSearchParam = (
@@ -86,20 +85,11 @@ export default async function ComplianceDetail({
       redirect("/compliance");
     }
 
-    const framework = resolveCrossProviderFramework(
-      complianceId,
-      compliancetitle,
-    );
-    if (!framework) {
-      notFound();
-    }
-
-    const crossProviderTitle = framework.title.split("-").join(" ");
     return (
-      <ContentLayout title={`${crossProviderTitle} - ${framework.version}`}>
-        <Suspense
-          key={buildSearchParamsKey(resolvedSearchParams)}
-          fallback={
+      <Suspense
+        key={buildSearchParamsKey(resolvedSearchParams)}
+        fallback={
+          <ContentLayout title="Compliance">
             <div className="flex flex-col gap-8">
               <div className="grid grid-cols-1 gap-6 md:grid-cols-[minmax(280px,400px)_1fr]">
                 <RequirementsStatusCardSkeleton />
@@ -107,16 +97,16 @@ export default async function ComplianceDetail({
               </div>
               <SkeletonAccordion />
             </div>
-          }
-        >
-          <CrossProviderDetail
-            compliancetitle={compliancetitle}
-            complianceId={complianceId}
-            searchParams={resolvedSearchParams}
-            targetSection={section}
-          />
-        </Suspense>
-      </ContentLayout>
+          </ContentLayout>
+        }
+      >
+        <CrossProviderDetail
+          compliancetitle={compliancetitle}
+          complianceId={complianceId}
+          searchParams={resolvedSearchParams}
+          targetSection={section}
+        />
+      </Suspense>
     );
   }
   // Cross-account mode: one regular framework aggregated across every

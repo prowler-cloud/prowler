@@ -5,7 +5,6 @@ import json
 import random
 import re
 import time
-import uuid
 from collections import defaultdict
 from collections.abc import Callable, Iterable
 from datetime import UTC, datetime
@@ -73,6 +72,7 @@ from tasks.jobs.queries import (
     COMPLIANCE_UPSERT_TENANT_SUMMARY_SQL,
 )
 from tasks.utils import CustomEncoder, batched
+from uuid6 import uuid7
 
 logger = get_task_logger(__name__)
 
@@ -1756,31 +1756,26 @@ def aggregate_findings(tenant_id: str, scan_id: str):
 
 
 def _aggregate_findings_by_region(
-    tenant_id: str, scan_id: str, modeled_threatscore_compliance_id: str
+    tenant_id: str,
+    scan_id: str,
+    normalized_threatscore_id: str,
+    threatscore_requirements_by_check: dict[str, list[str]],
 ) -> tuple[dict, dict]:
     """
     Aggregate findings by region using streaming, column-scoped ORM reads.
 
     Reads only the consumed columns as tuples via ``values_list`` and streams
     them with ``.iterator()``, using the denormalized ``resource_regions`` array
-    instead of ``prefetch_related("resources")``. ``resource_regions`` mirrors the
-    regions of a finding's related resources, so it yields the same per-region
-    tally without joining the resource table.
-
-    Args:
-        tenant_id: Tenant UUID
-        scan_id: Scan UUID
-        modeled_threatscore_compliance_id: ID for ThreatScore compliance framework
+    instead of ``prefetch_related("resources")``. ThreatScore requirement ids
+    are resolved per ``check_id`` from ``threatscore_requirements_by_check``.
 
     Returns:
         tuple: (check_status_by_region, findings_count_by_compliance)
             - check_status_by_region: {region: {check_id: status}}
-            - findings_count_by_compliance: {region: {normalized_id: {requirement_id: {total, pass}}}}
+            - findings_count_by_compliance: {region: {normalized_threatscore_id: {requirement_id: {total, pass}}}}
     """
     check_status_by_region: dict = {}
     findings_count_by_compliance: dict = {}
-
-    normalized_id = re.sub(r"[^a-z0-9]", "", modeled_threatscore_compliance_id.lower())
 
     with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
         findings = (
@@ -1790,14 +1785,12 @@ def _aggregate_findings_by_region(
                 muted=False,
                 status__in=["PASS", "FAIL"],
             )
-            .values_list("check_id", "status", "resource_regions", "compliance")
+            .values_list("check_id", "status", "resource_regions")
             .iterator(chunk_size=DJANGO_FINDINGS_BATCH_SIZE)
         )
 
-        for check_id, status, resource_regions, compliance in findings:
-            threatscore_requirements = (compliance or {}).get(
-                modeled_threatscore_compliance_id
-            )
+        for check_id, status, resource_regions in findings:
+            threatscore_requirements = threatscore_requirements_by_check.get(check_id)
 
             for region in resource_regions or ():
                 # Priority: FAIL > any other status
@@ -1809,7 +1802,7 @@ def _aggregate_findings_by_region(
                 if threatscore_requirements:
                     compliance_key = findings_count_by_compliance.setdefault(
                         region, {}
-                    ).setdefault(normalized_id, {})
+                    ).setdefault(normalized_threatscore_id, {})
 
                     for requirement_id in threatscore_requirements:
                         requirement_stats = compliance_key.setdefault(
@@ -1848,15 +1841,28 @@ def create_compliance_requirements(tenant_id: str, scan_id: str):
         compliance_template = PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE[
             provider_instance.provider
         ]
-        modeled_threatscore_compliance_id = "ProwlerThreatScore-1.0"
+        normalized_threatscore_id = _normalized_compliance_key(
+            "ProwlerThreatScore", "1.0"
+        )
 
         requirement_lookup: dict[str, list[tuple[str, str]]] = {}
+        threatscore_requirements_by_check: dict[str, list[str]] = {}
         for compliance_id, compliance in compliance_template.items():
+            is_threatscore = (
+                _normalized_compliance_key(
+                    compliance["framework"], compliance["version"]
+                )
+                == normalized_threatscore_id
+            )
             for requirement_id, requirement in compliance["requirements"].items():
                 for check_id in requirement["checks"].keys():
                     requirement_lookup.setdefault(check_id, []).append(
                         (compliance_id, requirement_id)
                     )
+                    if is_threatscore:
+                        threatscore_requirements_by_check.setdefault(
+                            check_id, []
+                        ).append(requirement_id)
 
         regions = []
         requirements_created = 0
@@ -1869,7 +1875,10 @@ def create_compliance_requirements(tenant_id: str, scan_id: str):
             # Aggregate findings by region using SQL for optimal performance
             check_status_by_region, findings_count_by_compliance = (
                 _aggregate_findings_by_region(
-                    tenant_id, scan_id, modeled_threatscore_compliance_id
+                    tenant_id,
+                    scan_id,
+                    normalized_threatscore_id,
+                    threatscore_requirements_by_check,
                 )
             )
 
@@ -1934,23 +1943,35 @@ def create_compliance_requirements(tenant_id: str, scan_id: str):
             # Yield rows lazily (consumed batch-by-batch by COPY) so peak memory
             # stays bounded; tally requirement_statuses in the same pass. The
             # ORM fallback re-iterates from scratch, so the tally resets first.
+            # Region is the innermost loop so consecutive rows share the leading
+            # columns of the table's secondary indexes.
             def _iter_compliance_requirement_rows():
                 requirement_statuses.clear()
-                for region in regions:
-                    region_stats = region_requirement_stats.get(region, {})
-                    region_findings = findings_count_by_compliance.get(region, {})
-                    for (
-                        compliance_id,
-                        framework,
-                        version,
-                        modeled_compliance_id,
-                        requirements,
-                    ) in compliance_plan:
-                        compliance_stats = region_stats.get(compliance_id, {})
-                        compliance_findings = region_findings.get(
-                            modeled_compliance_id, {}
+                for (
+                    compliance_id,
+                    framework,
+                    version,
+                    modeled_compliance_id,
+                    requirements,
+                ) in compliance_plan:
+                    stats_by_region = [
+                        (
+                            region,
+                            region_requirement_stats.get(region, {}).get(
+                                compliance_id, {}
+                            ),
+                            findings_count_by_compliance.get(region, {}).get(
+                                modeled_compliance_id, {}
+                            ),
                         )
-                        for requirement_id, description, total_checks in requirements:
+                        for region in regions
+                    ]
+                    for requirement_id, description, total_checks in requirements:
+                        for (
+                            region,
+                            compliance_stats,
+                            compliance_findings,
+                        ) in stats_by_region:
                             stats = compliance_stats.get(requirement_id)
                             if stats:
                                 passed_checks = stats["passed_checks"]
@@ -1981,7 +2002,7 @@ def create_compliance_requirements(tenant_id: str, scan_id: str):
                                 requirement_statuses[key]["pass_count"] += 1
 
                             yield {
-                                "id": uuid.uuid4(),
+                                "id": uuid7(),
                                 "tenant_id": tenant_id_str,
                                 "inserted_at": utc_datetime_now,
                                 "compliance_id": compliance_id,
@@ -2679,20 +2700,37 @@ def reset_ephemeral_resource_findings_count(tenant_id: str, scan_id: str) -> dic
     # refreshed). Wiping based on the older scan would zero counts the newer
     # scan just set. Skip and let the newer scan's reset task do the work; if
     # this task was delayed in the queue, that's the correct outcome.
-    # `completed_at__isnull=False` is required: Postgres orders NULL first in
-    # DESC, so a sibling COMPLETED scan with a missing completed_at would sort
-    # as "newest" and incorrectly cause us to skip.
+    #
+    # The comparison must be against the newest *full-scope* scan, which is
+    # what this variable has always been named after but did not use to be:
+    # the query filtered nothing about scope, so any newer scan that is not
+    # full-scope (an imported one, for instance) made the full-scope scan
+    # skip its own cleanup and leave ephemeral resources with a stale
+    # failed_findings_count permanently.
+    #
+    # `is_full_scope()` reads `trigger` plus the scoping keys inside
+    # `scanner_args`, which is not expressible as a WHERE clause, so the
+    # candidates are walked newest-first in Python until the first full-scope
+    # one. The walk needs no cap: `scan` is itself a full-scope candidate, so
+    # it stops at `scan` at the latest, after reading only the scans newer than
+    # it. A fixed window would return None once more newer scoped scans had
+    # landed than it inspected, and skip the cleanup exactly like the bug above.
+    #
+    # NULL `completed_at` no longer needs an explicit filter here: the shared
+    # ordering in `ScanQuerySet.LATEST_ORDER_BY` sorts NULLs last
+    # rather than excluding them, which also fixes the case where a provider
+    # whose completed scans all have a NULL `completed_at` resolved to None and
+    # therefore never ran the reset at all.
     with rls_transaction(tenant_id):
-        latest_full_scope_scan_id = (
-            Scan.objects.filter(
-                tenant_id=tenant_id,
-                provider_id=scan.provider_id,
-                state=StateChoices.COMPLETED,
-                completed_at__isnull=False,
-            )
-            .order_by("-completed_at", "-inserted_at")
-            .values_list("id", flat=True)
-            .first()
+        candidates = (
+            Scan.objects.filter(tenant_id=tenant_id, provider_id=scan.provider_id)
+            .latest_first()
+            .only("id", "trigger", "scanner_args")
+            .iterator(chunk_size=100)
+        )
+        latest_full_scope_scan_id = next(
+            (candidate.id for candidate in candidates if candidate.is_full_scope()),
+            None,
         )
     if latest_full_scope_scan_id != scan.id:
         logger.info(

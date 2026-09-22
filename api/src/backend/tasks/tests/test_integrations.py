@@ -6,15 +6,20 @@ from api.db_router import READ_REPLICA_ALIAS, MainRouter
 from api.models import Integration
 from api.utils import prowler_integration_connection_test
 from django.db import OperationalError
+from django.test import override_settings
 from prowler.lib.outputs.jira.exceptions.exceptions import (
     JiraRefreshTokenError,
     JiraRequiredCustomFieldsError,
 )
+from prowler.lib.outputs.jira.jira import Jira
 from prowler.providers.aws.lib.security_hub.security_hub import SecurityHubConnection
 from prowler.providers.common.models import Connection
 from tasks.jobs.integrations import (
+    build_jira_finding_url,
+    build_jira_issue_labels,
     get_s3_client_from_integration,
     get_security_hub_client_from_integration,
+    get_tenant_name,
     send_findings_to_jira,
     upload_s3_integration,
     upload_security_hub_integration,
@@ -1696,6 +1701,7 @@ class TestJiraIntegration:
 
         finding1 = MagicMock()
         finding1.id = "finding-1"
+        finding1.uid = "prowler-aws-check_001-123456789012-us-east-1-my bucket"
         finding1.check_id = "check_001"
         finding1.severity = "high"
         finding1.status = "FAIL"
@@ -1724,6 +1730,7 @@ class TestJiraIntegration:
 
         finding2 = MagicMock()
         finding2.id = "finding-2"
+        finding2.uid = "prowler-azure-check_002-sub/resource"
         finding2.check_id = "check_002"
         finding2.severity = "medium"
         finding2.status = "PASS"
@@ -1748,9 +1755,13 @@ class TestJiraIntegration:
         ]
 
         # Call the function
-        result = send_findings_to_jira(
-            tenant_id, integration_id, project_key, issue_type, finding_ids
-        )
+        with (
+            override_settings(UI_BASE_URL="https://cloud.example.com"),
+            patch("tasks.jobs.integrations.get_tenant_name", return_value="Acme"),
+        ):
+            result = send_findings_to_jira(
+                tenant_id, integration_id, project_key, issue_type, finding_ids
+            )
 
         # Assertions
         assert result == {"created_count": 2, "failed_count": 0}
@@ -1773,12 +1784,36 @@ class TestJiraIntegration:
         assert first_call.kwargs["provider"] == "aws"
         assert first_call.kwargs["project_key"] == project_key
         assert first_call.kwargs["issue_type"] == issue_type
+        # Finding reference: labels, link back and tenant info
+        assert first_call.kwargs["issue_labels"] == [
+            "prowler",
+            "prowler-aws",
+            "prowler-high",
+            "prowler-check_001",
+            "prowler-finding-prowler-aws-check_001-123456789012-us-east-1-my_bucket",
+        ]
+        assert first_call.kwargs["finding_url"] == (
+            "https://cloud.example.com/findings?filter[uid]="
+            "prowler-aws-check_001-123456789012-us-east-1-my%20bucket"
+        )
+        assert first_call.kwargs["tenant_info"] == "Acme"
 
         # Verify second call
         second_call = mock_jira_integration.send_finding.call_args_list[1]
         assert second_call.kwargs["check_id"] == "check_002"
         assert second_call.kwargs["severity"] == "medium"
         assert second_call.kwargs["status"] == "PASS"
+        assert second_call.kwargs["issue_labels"] == [
+            "prowler",
+            "prowler-azure",
+            "prowler-medium",
+            "prowler-check_002",
+            "prowler-finding-prowler-azure-check_002-sub/resource",
+        ]
+        assert second_call.kwargs["finding_url"] == (
+            "https://cloud.example.com/findings?filter[uid]="
+            "prowler-azure-check_002-sub%2Fresource"
+        )
 
     @patch("tasks.jobs.integrations.rls_transaction")
     @patch("tasks.jobs.integrations.Finding")
@@ -2200,3 +2235,101 @@ class TestJiraIntegration:
         assert call_kwargs["remediation_code_cli"] == ""
         assert call_kwargs["remediation_code_other"] == ""
         assert call_kwargs["compliance"] == {}
+
+
+class TestJiraFindingReference:
+    """Helpers that give Jira issues a stable reference back to the finding."""
+
+    def test_build_jira_issue_labels(self):
+        assert build_jira_issue_labels(
+            finding_uid="prowler-aws-check-123-eu-west-1-hub/unknown",
+            provider="aws",
+            severity="critical",
+            check_id="iam_root_mfa",
+        ) == [
+            "prowler",
+            "prowler-aws",
+            "prowler-critical",
+            "prowler-iam_root_mfa",
+            "prowler-finding-prowler-aws-check-123-eu-west-1-hub/unknown",
+        ]
+
+    def test_build_jira_issue_labels_skips_empty_parts(self):
+        assert build_jira_issue_labels(
+            finding_uid="", provider="", severity="", check_id=""
+        ) == ["prowler"]
+
+    def test_build_jira_issue_labels_sanitizes_metadata(self):
+        assert build_jira_issue_labels(
+            finding_uid=" uid\x00 with spaces ",
+            provider="aws cloud",
+            severity="high severity",
+            check_id="check id",
+        ) == [
+            "prowler",
+            "prowler-aws_cloud",
+            "prowler-high_severity",
+            "prowler-check_id",
+            "prowler-finding-uid_with_spaces",
+        ]
+
+    def test_build_jira_issue_labels_preserves_maximum_length_uid(self):
+        finding_uid = "u" * (Jira.LABEL_MAX_LENGTH - len(Jira.FINDING_LABEL_PREFIX) - 1)
+        finding_label = build_jira_issue_labels(
+            finding_uid=finding_uid,
+            provider="gcp",
+            severity="low",
+            check_id="check",
+        )[-1]
+
+        assert finding_label == f"{Jira.FINDING_LABEL_PREFIX}-{finding_uid}"
+        assert len(finding_label) == Jira.LABEL_MAX_LENGTH
+
+    def test_build_jira_issue_labels_distinguishes_long_uids(self):
+        common_prefix = "u" * 300
+        first_uid = f"{common_prefix}-first"
+        second_uid = f"{common_prefix}-second"
+
+        first_label = build_jira_issue_labels(
+            finding_uid=first_uid,
+            provider="gcp",
+            severity="low",
+            check_id="check",
+        )[-1]
+        second_label = build_jira_issue_labels(
+            finding_uid=second_uid,
+            provider="gcp",
+            severity="low",
+            check_id="check",
+        )[-1]
+
+        assert first_label == Jira.build_finding_label(first_uid)
+        assert second_label == Jira.build_finding_label(second_uid)
+        assert first_label != second_label
+        assert len(first_label) == Jira.LABEL_MAX_LENGTH
+        assert len(second_label) == Jira.LABEL_MAX_LENGTH
+
+    @override_settings(UI_BASE_URL="")
+    def test_build_jira_finding_url_without_base_url(self):
+        assert build_jira_finding_url("prowler-aws-check-1") == ""
+
+    @override_settings(UI_BASE_URL="https://cloud.example.com")
+    def test_build_jira_finding_url_with_base_url(self):
+        assert build_jira_finding_url("prowler-aws-check-1") == (
+            "https://cloud.example.com/findings?filter[uid]=prowler-aws-check-1"
+        )
+        # uid characters that would break the query string are encoded
+        assert build_jira_finding_url("a/b c&d") == (
+            "https://cloud.example.com/findings?filter[uid]=a%2Fb%20c%26d"
+        )
+        assert build_jira_finding_url("") == ""
+
+    @pytest.mark.django_db
+    def test_get_tenant_name(self, tenants_fixture):
+        tenant = tenants_fixture[0]
+        assert get_tenant_name(str(tenant.id)) == tenant.name
+
+    @pytest.mark.django_db
+    def test_get_tenant_name_unknown_or_invalid(self):
+        assert get_tenant_name("00000000-0000-0000-0000-000000000000") == ""
+        assert get_tenant_name("not-a-uuid") == ""

@@ -30,6 +30,7 @@ declare global {
 
       // Prowler Cloud deployment flag — runtime read (server env, client island).
       UI_CLOUD_ENABLED?: "true" | "false";
+      UI_REGISTRY_ENABLED?: "true" | "false";
 
       CLOUD_BILLING_ENABLED?: "legacy" | "metronome" | "false";
 
@@ -64,6 +65,7 @@ declare global {
       /** @deprecated use UI_POSTHOG_HOST */
       POSTHOG_HOST?: string;
       UI_POSTHOG_HOST?: string;
+      UI_POSTHOG_UI_HOST?: string;
       // TODO Reserved runtime public config (registered now; no UI consumer yet)
       REO_DEV_CLIENT_ID?: string;
 
@@ -97,6 +99,7 @@ declare global {
       E2E_UNLIMITED_VISIBILITY_PASSWORD?: string;
       E2E_MANAGE_INTEGRATIONS_USER?: string;
       E2E_MANAGE_INTEGRATIONS_PASSWORD?: string;
+      E2E_REGISTRY_ACCEPTANCE_MODE?: "fixture";
       E2E_MANAGE_ACCOUNT_USER?: string;
       E2E_MANAGE_ACCOUNT_PASSWORD?: string;
       E2E_MANAGE_SCANS_USER?: string;

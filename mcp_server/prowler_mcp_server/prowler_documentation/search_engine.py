@@ -2,17 +2,27 @@ import httpx
 from pydantic import BaseModel, Field
 
 from prowler_mcp_server import __version__
+from prowler_mcp_server.lib.errors import parse_json_response
 
 
 class SearchResult(BaseModel):
     """Search result model."""
 
     path: str = Field(description="Document path")
-    title: str = Field(description="Document title")
-    url: str = Field(description="Documentation URL")
-    highlights: list[str] = Field(
-        description="Highlighted content snippets showing query matches with <mark><b> tags",
+    title: str = Field(description="Title of the page the match is on")
+    section: str = Field(
+        description="Heading of the section the match is in", default=""
+    )
+    breadcrumbs: list[str] = Field(
+        description="Where the page sits in the documentation, from the top-level group down to the page itself",
         default_factory=list,
+    )
+    url: str = Field(
+        description="Documentation URL, anchored at the matching section when it has an anchor"
+    )
+    excerpt: str = Field(
+        description="Text of the matching section, which is a part of the page and not the whole of it",
+        default="",
     )
     score: float = Field(
         description="Relevance score for the search result", default=0.0
@@ -24,12 +34,10 @@ class ProwlerDocsSearchEngine:
 
     def __init__(self):
         """Initialize the search engine."""
-        self.api_base_url = (
-            "https://api.mintlifytrieve.com/api/chunk_group/group_oriented_autocomplete"
-        )
-        self.dataset_id = "0096ba11-3f72-463b-9d95-b788495ac392"
-        self.api_key = "tr-T6JLeTkFXeNbNPyhijtI9XhIncydQQ3O"
-        self.docs_base_url = "https://prowler.mintlify.app"
+        # The endpoint docs.prowler.com itself calls, with the site's Mintlify
+        # project name as the last segment.
+        self.api_base_url = "https://leaves.mintlify.com/api/search/prowler"
+        self.docs_base_url = "https://docs.prowler.com"
 
         # HTTP client for Mintlify API
         self.mintlify_client = httpx.Client(
@@ -38,9 +46,6 @@ class ProwlerDocsSearchEngine:
                 "Content-Type": "application/json",
                 "Accept": "application/json",
                 "User-Agent": f"prowler-mcp-server/{__version__}",
-                "TR-Dataset": self.dataset_id,
-                "Authorization": self.api_key,
-                "X-API-Version": "V2",
             },
         )
 
@@ -54,117 +59,95 @@ class ProwlerDocsSearchEngine:
         )
 
     def search(self, query: str, page_size: int = 5) -> list[SearchResult]:
-        """
-        Search documentation using Mintlify API.
+        """Search documentation using Mintlify API.
 
         Args:
             query: Search query string
-            page_size: Maximum number of results to return
+            page_size: Maximum number of results to return. The API decides how
+                many matches it answers with and takes no size of its own, so
+                this only trims the list it returned.
 
         Returns:
             list of search results
+
+        Raises:
+            httpx.HTTPError: If the search request failed, which is not the same
+                answer as no matches
+            UpstreamInvalidResponse: If the answer is not JSON, which is the
+                documentation site's fault and not the search term's
         """
-        try:
-            # Construct request body
-            payload = {
-                "query": query,
-                "search_type": "fulltext",
-                "extend_results": True,
-                "highlight_options": {
-                    "highlight_window": 10,
-                    "highlight_max_num": 1,
-                    "highlight_max_length": 2,
-                    "highlight_strategy": "exactmatch",
-                    "highlight_delimiters": ["?", ",", ".", "!", "\n"],
-                },
-                "score_threshold": 0.2,
-                "filters": {"must_not": [{"field": "tag_set", "match": ["code"]}]},
-                "page_size": page_size,
-                "group_size": 3,
-            }
+        # Make request to Mintlify API
+        response = self.mintlify_client.post(
+            self.api_base_url,
+            json={"query": query, "filters": {}},
+        )
+        response.raise_for_status()
+        # Not `response.json()`: the decode error it raises is a ValueError, which
+        # the shared classifier reads as a malformed argument and answers by
+        # telling the caller to fix a search term that was never the problem.
+        data = parse_json_response(response)
 
-            # Make request to Mintlify API
-            response = self.mintlify_client.post(
-                self.api_base_url,
-                json=payload,
-            )
-            response.raise_for_status()
-            data = response.json()
+        # Parse results
+        results = []
+        for match in data.get("results", [])[:page_size]:
+            metadata = match.get("metadata", {})
+            breadcrumbs = metadata.get("breadcrumbs", [])
+            doc_path = match.get("page", "")
 
-            # Parse results
-            results = []
-            for result in data.get("results", []):
-                group = result.get("group", {})
-                chunks = result.get("chunks", [])
+            # A match is one section of a page rather than the page: the
+            # heading it was found under is its header, and the page's own
+            # title is the last step of its breadcrumb trail.
+            section = match.get("header", "")
+            title = breadcrumbs[-1] if breadcrumbs else section
 
-                # Get document path and title from group
-                doc_path = group.get("name", "")
-                group_title = group.get("name", "").replace("/", " / ").title()
+            # Sent as "" for the section a page opens with and as null for
+            # the pages that have no anchors at all; both mean the page.
+            anchor = metadata.get("hash")
+            url = f"{self.docs_base_url}/{doc_path}"
+            if anchor:
+                url = f"{url}#{anchor}"
 
-                # If chunks exist, use the first chunk's title from metadata
-                title = group_title
-                if chunks:
-                    first_chunk = chunks[0].get("chunk", {})
-                    metadata = first_chunk.get("metadata", {})
-                    title = metadata.get("title", group_title)
-
-                # Construct full URL to docs
-                full_url = f"{self.docs_base_url}/{doc_path}"
-
-                # Extract highlights and scores from chunks
-                highlights = []
-                max_score = 0.0
-                for chunk_data in chunks:
-                    chunk_highlights = chunk_data.get("highlights", [])
-                    highlights.extend(chunk_highlights)
-                    # Track the highest score among all chunks in this group
-                    chunk_score = chunk_data.get("score", 0.0)
-                    max_score = max(max_score, chunk_score)
-
-                results.append(
-                    SearchResult(
-                        path=doc_path,
-                        title=title,
-                        url=full_url,
-                        highlights=highlights,
-                        score=max_score,
-                    )
+            results.append(
+                SearchResult(
+                    path=doc_path,
+                    title=title,
+                    section=section,
+                    breadcrumbs=breadcrumbs,
+                    url=url,
+                    excerpt=match.get("content", ""),
+                    score=match.get("score", 0.0),
                 )
+            )
 
-            return results
-
-        except Exception as e:
-            # Return empty list on error
-            print(f"Search error: {e}")
-            return []
+        return results
 
     def get_document(self, doc_path: str) -> str | None:
-        """
-        Get full document content from Mintlify documentation.
+        """Get full document content from Mintlify documentation.
 
         Args:
             doc_path: Path to the documentation file (e.g., "getting-started/installation")
 
         Returns:
-            Full markdown content of the documentation, or None if not found
+            Full markdown content of the documentation, or None if there is no
+            page at that path
+
+        Raises:
+            httpx.HTTPError: If the fetch failed for any reason other than a 404
         """
-        try:
-            # Clean up the path
-            doc_path = doc_path.rstrip("/")
+        # Clean up the path
+        doc_path = doc_path.rstrip("/")
 
-            # Add .md extension if not present (Mintlify serves both .md and .mdx)
-            if not doc_path.endswith(".md"):
-                doc_path = f"{doc_path}.md"
+        # Add .md extension if not present (Mintlify serves both .md and .mdx)
+        if not doc_path.endswith(".md"):
+            doc_path = f"{doc_path}.md"
 
-            # Construct Mintlify URL
-            url = f"{self.docs_base_url}/{doc_path}"
+        # Construct Mintlify URL
+        url = f"{self.docs_base_url}/{doc_path}"
 
-            # Fetch the documentation page
-            response = self.docs_client.get(url)
-            response.raise_for_status()
-
-            return response.text
-
-        except Exception as e:
-            print(f"Error fetching document: {e}")
+        # Fetch the documentation page
+        response = self.docs_client.get(url)
+        if response.status_code == 404:
             return None
+        response.raise_for_status()
+
+        return response.text

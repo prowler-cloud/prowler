@@ -82,7 +82,7 @@ from django.db import close_old_connections, connection, connections
 from django.db.models import Count
 from django.db.models.signals import pre_delete
 from django.http import JsonResponse
-from django.test import RequestFactory
+from django.test import RequestFactory, override_settings
 from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 from django_celery_results.models import TaskResult
@@ -4540,6 +4540,52 @@ class TestScanViewSet:
         assert response.status_code == status.HTTP_302_FOUND
         assert response["Location"] == presigned_url
 
+    @override_settings(
+        DJANGO_OUTPUT_S3_AWS_PUBLIC_ENDPOINT_URL="https://storage.example.com",
+        DJANGO_OUTPUT_S3_AWS_ACCESS_KEY_ID="access-key",
+        DJANGO_OUTPUT_S3_AWS_SECRET_ACCESS_KEY="secret-key",
+        DJANGO_OUTPUT_S3_AWS_SESSION_TOKEN="",
+        DJANGO_OUTPUT_S3_AWS_DEFAULT_REGION="eu-west-1",
+    )
+    def test_report_s3_redirects_to_the_public_storage_host(
+        self, authenticated_client, scans_fixture, monkeypatch
+    ):
+        """The object is looked up internally but the redirect the browser follows is public."""
+        scan = scans_fixture[0]
+        bucket = "test-bucket"
+        key = "report.zip"
+        scan.output_location = f"s3://{bucket}/{key}"
+        scan.state = StateChoices.COMPLETED
+        scan.save()
+
+        monkeypatch.setattr(
+            "api.v1.views.env",
+            type("env", (), {"str": lambda self, *_args, **_kwargs: bucket})(),
+        )
+
+        head_calls = []
+
+        class InternalS3Client:
+            def head_object(self, Bucket, Key):
+                head_calls.append((Bucket, Key))
+                return {}
+
+            def generate_presigned_url(self, *_args, **_kwargs):
+                raise AssertionError("the internal client must not sign the redirect")
+
+        monkeypatch.setattr("api.v1.views.get_s3_client", lambda: InternalS3Client())
+
+        url = reverse("scan-report", kwargs={"pk": scan.id})
+        response = authenticated_client.get(url)
+
+        assert response.status_code == status.HTTP_302_FOUND
+        assert head_calls == [(bucket, key)]
+
+        location = urlparse(response["Location"])
+        assert location.netloc == "storage.example.com"
+        assert location.path == f"/{bucket}/{key}"
+        assert "X-Amz-Signature" in parse_qs(location.query)
+
     def test_report_s3_success_no_local_files(
         self, authenticated_client, scans_fixture, monkeypatch
     ):
@@ -8784,6 +8830,190 @@ class TestInvitationViewSet:
             user.id
         )
 
+    @staticmethod
+    def _invitation_create_payload(email, role):
+        return json.dumps(
+            {
+                "data": {
+                    "type": "invitations",
+                    "attributes": {"email": email},
+                    "relationships": {
+                        "roles": {"data": [{"type": "roles", "id": str(role.id)}]}
+                    },
+                }
+            }
+        )
+
+    @staticmethod
+    def _create_lapsed_invitation(email, tenant, inviter):
+        return Invitation.objects.create(
+            email=email,
+            state=Invitation.State.PENDING,
+            expires_at=datetime.now(UTC) - timedelta(days=1),
+            inviter=inviter,
+            tenant=tenant,
+        )
+
+    def test_invitations_create_with_lapsed_pending_invitation_for_same_email(
+        self,
+        authenticated_client,
+        create_test_user,
+        tenants_fixture,
+        invitations_fixture,
+        roles_fixture,
+    ):
+        lapsed_invitation, expired_invitation = invitations_fixture
+        lapsed_invitation.expires_at = datetime.now(UTC) - timedelta(days=1)
+        lapsed_invitation.save()
+        other_email_lapsed_invitation = self._create_lapsed_invitation(
+            "other@prowler.com", tenants_fixture[0], create_test_user
+        )
+
+        response = authenticated_client.post(
+            reverse("invitation-list"),
+            data=self._invitation_create_payload(
+                lapsed_invitation.email, roles_fixture[0]
+            ),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_201_CREATED
+        new_invitation = Invitation.objects.get(id=response.json()["data"]["id"])
+        assert new_invitation.email == lapsed_invitation.email
+        assert new_invitation.state == Invitation.State.PENDING
+        lapsed_invitation.refresh_from_db()
+        assert lapsed_invitation.state == Invitation.State.EXPIRED
+        expired_invitation.refresh_from_db()
+        assert expired_invitation.state == Invitation.State.EXPIRED
+        other_email_lapsed_invitation.refresh_from_db()
+        assert other_email_lapsed_invitation.state == Invitation.State.PENDING
+
+    def test_invitations_create_with_active_pending_invitation_for_same_email(
+        self,
+        authenticated_client,
+        create_test_user,
+        tenants_fixture,
+        invitations_fixture,
+        roles_fixture,
+    ):
+        active_invitation, _ = invitations_fixture
+        self._create_lapsed_invitation(
+            active_invitation.email, tenants_fixture[0], create_test_user
+        )
+        invitation_count = Invitation.objects.count()
+
+        response = authenticated_client.post(
+            reverse("invitation-list"),
+            data=self._invitation_create_payload(
+                active_invitation.email, roles_fixture[0]
+            ),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert (
+            response.json()["errors"][0]["source"]["pointer"]
+            == "/data/attributes/email"
+        )
+        assert Invitation.objects.count() == invitation_count
+        active_invitation.refresh_from_db()
+        assert active_invitation.state == Invitation.State.PENDING
+
+    def test_invitations_create_ignores_pending_invitations_from_other_tenants(
+        self, authenticated_client, create_test_user, tenants_fixture, roles_fixture
+    ):
+        email = "cross_tenant@prowler.com"
+        other_tenant = tenants_fixture[1]
+        other_tenant_lapsed_invitation = self._create_lapsed_invitation(
+            email, other_tenant, create_test_user
+        )
+        Invitation.objects.create(
+            email=email, inviter=create_test_user, tenant=other_tenant
+        )
+
+        response = authenticated_client.post(
+            reverse("invitation-list"),
+            data=self._invitation_create_payload(email, roles_fixture[0]),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_201_CREATED
+        other_tenant_lapsed_invitation.refresh_from_db()
+        assert other_tenant_lapsed_invitation.state == Invitation.State.PENDING
+
+    def test_invitations_report_lapsed_pending_invitation_as_expired(
+        self,
+        authenticated_client,
+        create_test_user,
+        tenants_fixture,
+        invitations_fixture,
+    ):
+        active_invitation, expired_invitation = invitations_fixture
+        lapsed_invitation = self._create_lapsed_invitation(
+            "lapsed@prowler.com", tenants_fixture[0], create_test_user
+        )
+
+        list_response = authenticated_client.get(reverse("invitation-list"))
+        retrieve_response = authenticated_client.get(
+            reverse("invitation-detail", kwargs={"pk": lapsed_invitation.id})
+        )
+
+        assert list_response.status_code == status.HTTP_200_OK
+        assert retrieve_response.status_code == status.HTTP_200_OK
+        assert {
+            invitation["id"]: invitation["attributes"]["state"]
+            for invitation in list_response.json()["data"]
+        } == {
+            str(active_invitation.id): Invitation.State.PENDING.value,
+            str(expired_invitation.id): Invitation.State.EXPIRED.value,
+            str(lapsed_invitation.id): Invitation.State.EXPIRED.value,
+        }
+        assert (
+            retrieve_response.json()["data"]["attributes"]["state"]
+            == Invitation.State.EXPIRED.value
+        )
+
+    @pytest.mark.parametrize(
+        "filter_name, filter_value, expected_invitations",
+        [
+            ("state", "pending", {"active"}),
+            ("state", "expired", {"expired", "lapsed"}),
+            ("state", "accepted", set()),
+            ("state__in", "pending", {"active"}),
+            ("state__in", "expired", {"expired", "lapsed"}),
+            ("state__in", "pending,expired", {"active", "expired", "lapsed"}),
+            ("state__in", "accepted,revoked", set()),
+        ],
+    )
+    def test_invitations_filter_state_treats_lapsed_pending_as_expired(
+        self,
+        authenticated_client,
+        create_test_user,
+        tenants_fixture,
+        invitations_fixture,
+        filter_name,
+        filter_value,
+        expected_invitations,
+    ):
+        active_invitation, expired_invitation = invitations_fixture
+        lapsed_invitation = self._create_lapsed_invitation(
+            "lapsed@prowler.com", tenants_fixture[0], create_test_user
+        )
+        invitation_ids = {
+            "active": str(active_invitation.id),
+            "expired": str(expired_invitation.id),
+            "lapsed": str(lapsed_invitation.id),
+        }
+
+        response = authenticated_client.get(
+            reverse("invitation-list"), {f"filter[{filter_name}]": filter_value}
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert {invitation["id"] for invitation in response.json()["data"]} == {
+            invitation_ids[name] for name in expected_invitations
+        }
+
     @pytest.mark.parametrize(
         "email",
         [
@@ -8791,8 +9021,10 @@ class TestInvitationViewSet:
             "invalid_email@",
             # There is a pending invitation with this email
             "testing@prowler.com",
+            "TESTING@prowler.com",
             # User is already a member of the tenant
             TEST_USER,
+            TEST_USER.upper(),
         ],
     )
     def test_invitations_create_invalid_email(
@@ -9046,6 +9278,56 @@ class TestInvitationViewSet:
             response.json()["errors"][0]["detail"]
             == "This invitation cannot be revoked."
         )
+
+    def test_invitations_delete_lapsed_invitation(
+        self, authenticated_client, invitations_fixture
+    ):
+        invitation, *_ = invitations_fixture
+        invitation.expires_at = datetime.now(UTC) - timedelta(days=1)
+        invitation.save()
+
+        response = authenticated_client.delete(
+            reverse("invitation-detail", kwargs={"pk": str(invitation.id)})
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert (
+            response.json()["errors"][0]["detail"]
+            == "This invitation cannot be revoked."
+        )
+        invitation.refresh_from_db()
+        assert invitation.state == Invitation.State.PENDING
+
+    def test_invitations_partial_update_lapsed_invitation(
+        self, authenticated_client, invitations_fixture
+    ):
+        invitation, *_ = invitations_fixture
+        invitation.expires_at = datetime.now(UTC) - timedelta(days=1)
+        invitation.save()
+        data = {
+            "data": {
+                "id": str(invitation.id),
+                "type": "invitations",
+                "attributes": {
+                    "email": invitation.email,
+                    "expires_at": self.TOMORROW_ISO,
+                },
+            }
+        }
+
+        response = authenticated_client.patch(
+            reverse("invitation-detail", kwargs={"pk": str(invitation.id)}),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert (
+            response.json()["errors"][0]["detail"]
+            == "This invitation cannot be updated."
+        )
+        invitation.refresh_from_db()
+        assert invitation.is_lapsed
 
     def test_invitations_accept_invitation_new_user(self, client, invitations_fixture):
         invitation, *_ = invitations_fixture
@@ -18333,19 +18615,14 @@ class TestMuteRuleViewSet:
         assert len(data) == 2
         assert data[0]["id"] == str(mute_rules_fixture[first_index].id)
 
-    @patch("api.v1.views.chain")
-    @patch("api.v1.views.reaggregate_all_finding_group_summaries_task.si")
-    @patch("api.v1.views.mute_historical_findings_task.si")
+    @patch("api.v1.views.mute_findings_in_latest_scans_task.apply_async")
     @patch("api.v1.views.transaction.on_commit", side_effect=lambda fn: fn())
     def test_mute_rules_create_valid(
         self,
         _mock_on_commit,
-        mock_mute_signature,
-        mock_reaggregate_signature,
-        mock_chain,
+        mock_mute_task,
         authenticated_client,
         findings_fixture,
-        create_test_user,
     ):
         """Test creating a valid mute rule."""
         finding_ids = [str(findings_fixture[0].id)]
@@ -18372,24 +18649,20 @@ class TestMuteRuleViewSet:
         assert response_data["attributes"]["name"] == "New Mute Rule"
         assert response_data["attributes"]["reason"] == "Security exception approved"
 
-        # Verify the finding was immediately muted
-        from api.models import Finding
-
         finding = Finding.objects.get(id=findings_fixture[0].id)
-        assert finding.muted is True
-        assert finding.muted_at is not None
-        assert finding.muted_reason == "Security exception approved"
+        assert finding.muted is False
+        assert finding.muted_at is None
+        assert finding.muted_reason is None
 
-        # Verify background task chain was called: mute → reaggregate all
-        mock_mute_signature.assert_called_once()
-        mock_reaggregate_signature.assert_called_once()
-        mock_chain.assert_called_once_with(
-            mock_mute_signature.return_value,
-            mock_reaggregate_signature.return_value,
+        mock_mute_task.assert_called_once_with(
+            kwargs={
+                "tenant_id": str(finding.tenant_id),
+                "mute_rule_id": response_data["id"],
+                "provider_ids": [str(finding.scan.provider_id)],
+            }
         )
-        mock_chain.return_value.apply_async.assert_called_once()
 
-    @patch("tasks.tasks.mute_historical_findings_task.apply_async")
+    @patch("api.v1.views.mute_findings_in_latest_scans_task.apply_async")
     def test_mute_rules_create_converts_finding_ids_to_uids(
         self,
         mock_task,
@@ -18425,7 +18698,7 @@ class TestMuteRuleViewSet:
         ]
         assert set(mute_rule.finding_uids) == set(expected_uids)
 
-    @patch("tasks.tasks.mute_historical_findings_task.apply_async")
+    @patch("api.v1.views.mute_findings_in_latest_scans_task.apply_async")
     def test_mute_rules_deduplicates_uids(
         self,
         mock_task,
@@ -18492,10 +18765,10 @@ class TestMuteRuleViewSet:
 
         finding1.refresh_from_db()
         finding2.refresh_from_db()
-        assert finding1.muted is True
-        assert finding2.muted is True
+        assert finding1.muted is False
+        assert finding2.muted is False
 
-    @patch("tasks.tasks.mute_historical_findings_task.apply_async")
+    @patch("api.v1.views.mute_findings_in_latest_scans_task.apply_async")
     def test_mute_rules_create_overlap_detection_active(
         self,
         mock_task,
@@ -18528,7 +18801,7 @@ class TestMuteRuleViewSet:
             "already muted" in error_detail.lower() or "overlap" in error_detail.lower()
         )
 
-    @patch("tasks.tasks.mute_historical_findings_task.apply_async")
+    @patch("api.v1.views.mute_findings_in_latest_scans_task.apply_async")
     def test_mute_rules_create_no_overlap_with_inactive(
         self,
         mock_task,
@@ -18584,7 +18857,7 @@ class TestMuteRuleViewSet:
             == "/data/attributes/finding_ids"
         )
 
-    @patch("tasks.tasks.mute_historical_findings_task.apply_async")
+    @patch("api.v1.views.mute_findings_in_latest_scans_task.apply_async")
     def test_mute_rules_create_invalid_finding_ids(
         self, mock_task, authenticated_client
     ):

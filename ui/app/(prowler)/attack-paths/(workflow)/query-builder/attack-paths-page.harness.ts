@@ -12,6 +12,7 @@ import { isProwlerFindingNode } from "./_lib";
 import type { PageFixture } from "./attack-paths-page.fixtures";
 
 export class AttackPathPageHarness extends BrowserHarness<PageFixture> {
+  private static readonly FLOW_SEL = ".react-flow";
   private static readonly NODE_SEL = ".react-flow__node";
   private static readonly EDGE_SEL = ".react-flow__edge";
   private static readonly VIEWPORT_SEL = ".react-flow__viewport";
@@ -243,10 +244,9 @@ export class AttackPathPageHarness extends BrowserHarness<PageFixture> {
   }
 
   /**
-   * Inline `transform` of the React Flow viewport element. This is the
-   * pan/zoom matrix React Flow rewrites on every fit/zoom/pan, so comparing
-   * it before vs. after a user action is enough to assert that the viewport
-   * actually moved (or stayed put).
+   * Inline `transform` of the React Flow viewport element. Compare transforms
+   * only when the scenario guarantees different final camera positions; an
+   * unchanged transform does not prove that a fit operation did not run.
    */
   get viewportTransform(): string {
     return this.viewport?.style.transform ?? "";
@@ -258,6 +258,31 @@ export class AttackPathPageHarness extends BrowserHarness<PageFixture> {
     timeoutMs = 2000,
   ): Promise<void> {
     await this.waitFor(() => this.viewportTransform !== previous, timeoutMs);
+  }
+
+  /** Wait until every requested node is fully contained in the graph canvas. */
+  async waitForNodesInViewport(
+    nodeIds: string[],
+    timeoutMs = 2000,
+  ): Promise<void> {
+    await this.waitFor(() => {
+      const canvas = this.q(AttackPathPageHarness.FLOW_SEL);
+      if (!canvas) return false;
+
+      const canvasRect = canvas.getBoundingClientRect();
+      return nodeIds.every((nodeId) => {
+        const node = this.getNodeById(nodeId);
+        if (!node) return false;
+
+        const nodeRect = node.getBoundingClientRect();
+        return (
+          nodeRect.left >= canvasRect.left &&
+          nodeRect.right <= canvasRect.right &&
+          nodeRect.top >= canvasRect.top &&
+          nodeRect.bottom <= canvasRect.bottom
+        );
+      });
+    }, timeoutMs);
   }
 
   /** Wait until exactly `count` edges are highlighted. */

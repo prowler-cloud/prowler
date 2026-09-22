@@ -114,6 +114,8 @@ jobs:
           egress-policy: block
           allowed-endpoints: >
             auth.docker.io:443
+            dl-cdn.alpinelinux.org:443
+            dualstack.j.sni.global.fastly.net:443
             files.pythonhosted.org:443
             ghcr.io:443
             github.com:443

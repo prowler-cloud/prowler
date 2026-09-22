@@ -345,11 +345,12 @@ async function mutateEmpty(
   path: string,
   init: RequestInit,
   pathToRevalidate: string,
+  includeContentType = false,
 ): Promise<LighthouseV2ActionResult<true>> {
   try {
     const response = await fetch(buildApiUrl(path), {
       ...init,
-      headers: await getAuthHeaders({ contentType: false }),
+      headers: await getAuthHeaders({ contentType: includeContentType }),
     });
     const document = await handleApiResponse(response, pathToRevalidate);
     if (isErrorDocument(document)) {

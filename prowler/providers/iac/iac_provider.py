@@ -24,6 +24,13 @@ from prowler.lib.utils.vulnerability_references import (
 )
 from prowler.providers.common.models import Audit_Metadata, Connection
 from prowler.providers.common.provider import Provider
+from prowler.providers.iac.exceptions.exceptions import (
+    IacBaseException,
+    IacOutputProcessingError,
+    IacRepositoryCloneError,
+    IacScanError,
+    IacTrivyNotFoundError,
+)
 
 
 class IacProvider(Provider):
@@ -270,7 +277,9 @@ class IacProvider(Provider):
             logger.critical(
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
             )
-            sys.exit(1)
+            raise IacOutputProcessingError(
+                file=__file__, original_exception=error
+            ) from error
 
     def _detect_branch_name(self, repo_path: str) -> str:
         """
@@ -376,6 +385,9 @@ class IacProvider(Provider):
             logger.critical(
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
             )
+            raise IacRepositoryCloneError(
+                file=__file__, original_exception=error
+            ) from error
 
     def run(self) -> List[CheckReportIAC]:
         """
@@ -499,7 +511,7 @@ class IacProvider(Provider):
                 logger.critical(
                     f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
                 )
-                sys.exit(1)
+                raise IacScanError(file=__file__, original_exception=error) from error
 
             batch = []
             batch_size = 100
@@ -551,16 +563,20 @@ class IacProvider(Provider):
             if batch:
                 yield batch
 
+        except IacBaseException:
+            raise
         except Exception as error:
             if "No such file or directory: 'trivy'" in str(error):
                 logger.critical(
                     "Trivy binary not found. Please install Trivy from https://trivy.dev/latest/getting-started/installation/ or use your system package manager (e.g., 'brew install trivy' on macOS, 'apt-get install trivy' on Ubuntu)"
                 )
-                sys.exit(1)
+                raise IacTrivyNotFoundError(
+                    file=__file__, original_exception=error
+                ) from error
             logger.critical(
                 f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
             )
-            sys.exit(1)
+            raise IacScanError(file=__file__, original_exception=error) from error
 
     def print_credentials(self):
         if self.scan_repository_url:

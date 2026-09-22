@@ -4,10 +4,7 @@ import Link from "next/link";
 import { SlackIcon } from "@/components/icons/services/IconServices";
 import { Button, Card, CardContent, CardHeader } from "@/components/shadcn";
 import { CustomLink } from "@/components/shadcn/custom/custom-link";
-
-// Placeholder slug: the docs slice writes the page and confirms it.
-const SLACK_DOCS_URL =
-  "https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/prowler-app-slack-integration/";
+import { DOCS_URLS } from "@/lib/external-urls";
 
 export const SlackIntegrationCard = () => {
   return (
@@ -25,7 +22,7 @@ export const SlackIntegrationCard = () => {
                   Send Prowler messages to your Slack workspace.
                 </p>
                 <CustomLink
-                  href={SLACK_DOCS_URL}
+                  href={DOCS_URLS.SLACK_INTEGRATION}
                   aria-label="Learn more about Slack integration"
                   size="xs"
                 >
@@ -46,8 +43,8 @@ export const SlackIntegrationCard = () => {
       </CardHeader>
       <CardContent>
         <p className="text-sm text-gray-600 dark:text-gray-300">
-          Connect a Slack workspace and pick the channel Prowler posts to, so
-          your team gets security updates where it already works.
+          Connect a Slack workspace and authorize the channels Prowler posts to,
+          so your team gets security updates where it already works.
         </p>
       </CardContent>
     </Card>

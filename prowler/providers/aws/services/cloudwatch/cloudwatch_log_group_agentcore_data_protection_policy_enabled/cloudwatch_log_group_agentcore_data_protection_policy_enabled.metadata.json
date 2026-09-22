@@ -1,0 +1,45 @@
+{
+  "Provider": "aws",
+  "CheckID": "cloudwatch_log_group_agentcore_data_protection_policy_enabled",
+  "CheckTitle": "Bedrock AgentCore log groups have a CloudWatch Logs data protection policy activated",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Effects/Data Exposure",
+    "Sensitive Data Identifications/PII"
+  ],
+  "ServiceName": "cloudwatch",
+  "SubServiceName": "logs",
+  "ResourceIdTemplate": "arn:partition:logs:region:account-id:log-group:log-group-name",
+  "Severity": "medium",
+  "ResourceType": "Other",
+  "ResourceGroup": "monitoring",
+  "Description": "Log groups holding **Bedrock AgentCore** agent telemetry have an active CloudWatch Logs **data protection policy**, so sensitive data an agent writes to its own logs is masked at ingestion. A policy attached to the log group or inherited from an account-level policy both satisfy this.",
+  "Risk": "Agents log prompts, tool arguments and retrieved context. Without masking, **PII** and secrets are stored in clear text and readable by every principal holding `logs:GetLogEvents`, widening the audience for regulated data far beyond the agent and defeating filtering applied only at the model boundary.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/mask-sensitive-log-data.html",
+    "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/mask-sensitive-log-data-start.html",
+    "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/mask-sensitive-log-data-start-account.html",
+    "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/protect-sensitive-log-data-types.html",
+    "https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/observability-configure.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aws logs put-data-protection-policy --log-group-identifier <LOG_GROUP_NAME> --policy-document '{\"Name\":\"agentcore-data-protection-policy\",\"Version\":\"2021-06-01\",\"Statement\":[{\"Sid\":\"audit\",\"DataIdentifier\":[\"arn:aws:dataprotection::aws:data-identifier/EmailAddress\"],\"Operation\":{\"Audit\":{\"FindingsDestination\":{}}}},{\"Sid\":\"redact\",\"DataIdentifier\":[\"arn:aws:dataprotection::aws:data-identifier/EmailAddress\"],\"Operation\":{\"Deidentify\":{\"MaskConfig\":{}}}}]}'",
+      "NativeIaC": "```yaml\n# CloudFormation: data protection policy on a log group you manage in the template.\n# AgentCore runtime log groups are created by the service, not by CloudFormation --\n# for those, use the CLI command or an AWS::Logs::AccountPolicy instead.\nResources:\n  AgentCoreLogGroup:\n    Type: AWS::Logs::LogGroup\n    Properties:\n      LogGroupName: \"<example_resource_name>\"\n      DataProtectionPolicy:\n        Name: agentcore-data-protection-policy\n        Version: '2021-06-01'\n        Statement:\n          - Sid: audit  # CRITICAL: required block, finds the sensitive terms\n            DataIdentifier:\n              - arn:aws:dataprotection::aws:data-identifier/EmailAddress\n            Operation:\n              Audit:\n                FindingsDestination: {}\n          - Sid: redact  # CRITICAL: the Deidentify block is what actually masks the data\n            DataIdentifier:\n              - arn:aws:dataprotection::aws:data-identifier/EmailAddress\n            Operation:\n              Deidentify:\n                MaskConfig: {}\n```",
+      "Other": "1. In the AWS console, open CloudWatch > Logs > Log groups\n2. Select the AgentCore log group (/aws/bedrock-agentcore/... or /aws/vendedlogs/bedrock-agentcore/...)\n3. Choose Actions > Create data protection policy\n4. Under Managed data identifiers, select the data types your agent can log, for example Address, EmailAddress and PhoneNumber\n5. (Optional) Choose a destination for the audit findings report\n6. Choose Activate data protection\n7. To cover every log group at once, including service-created ones, open Settings > Data protection instead and create an account-level policy",
+      "Terraform": "```hcl\n# Attaches a data protection policy to an existing AgentCore log group\nresource \"aws_cloudwatch_log_data_protection_policy\" \"<example_resource_name>\" {\n  log_group_name = \"<example_resource_name>\"\n\n  policy_document = jsonencode({\n    Name    = \"agentcore-data-protection-policy\"\n    Version = \"2021-06-01\"\n    Statement = [\n      {\n        Sid            = \"audit\" # CRITICAL: required block, finds the sensitive terms\n        DataIdentifier = [\"arn:aws:dataprotection::aws:data-identifier/EmailAddress\"]\n        Operation = {\n          Audit = {\n            FindingsDestination = {}\n          }\n        }\n      },\n      {\n        Sid            = \"redact\" # CRITICAL: the Deidentify block is what actually masks the data\n        DataIdentifier = [\"arn:aws:dataprotection::aws:data-identifier/EmailAddress\"]\n        Operation = {\n          Deidentify = {\n            MaskConfig = {}\n          }\n        }\n      }\n    ]\n  })\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Attach a data protection policy to every AgentCore log group, choosing the managed data identifiers your agents can plausibly log, or create one account-level policy so service-created log groups are covered as they appear.\n\nMasking is *defense in depth* behind the model-boundary filters: keep restricting `logs:Unmask` so only incident responders can read the original values, and keep the log groups encrypted with a **customer-managed key**.",
+      "Url": "https://hub.prowler.com/check/cloudwatch_log_group_agentcore_data_protection_policy_enabled"
+    }
+  },
+  "Categories": [
+    "gen-ai",
+    "logging"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Scoped to log groups whose name starts with an AgentCore prefix (configurable via `agentcore_log_group_name_prefixes`, whose value REPLACES the defaults rather than adding to them). AgentCore log delivery can be pointed at an arbitrarily named log group; add those prefixes to the configuration so they are assessed. Not covered by default: gateway, built-in tool and identity spans, and runtime spans for agents created before a Region supported the per-agent span destination, are delivered to the shared `aws/spans` log group, which is account-wide rather than AgentCore-specific. Add `aws/spans` to the configuration to assess it."
+}

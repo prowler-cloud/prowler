@@ -1,13 +1,21 @@
 import os
 import pathlib
 from datetime import datetime
+from functools import lru_cache
 from re import fullmatch
-from typing import Optional
+from typing import Any, Callable, Optional
 
 from boto3.session import Session
 from botocore.config import Config
 from botocore.credentials import RefreshableCredentials
-from botocore.exceptions import ClientError, NoCredentialsError, ProfileNotFound
+from botocore.exceptions import (
+    ClientError,
+    ConnectTimeoutError,
+    EndpointConnectionError,
+    NoCredentialsError,
+    ProfileNotFound,
+    ReadTimeoutError,
+)
 from botocore.session import Session as BotocoreSession
 from colorama import Fore, Style
 from pytz import utc
@@ -125,6 +133,8 @@ class AwsProvider(Provider):
         aws_access_key_id: str = None,
         aws_secret_access_key: str = None,
         aws_session_token: Optional[str] = None,
+        connect_timeout: Optional[int] = None,
+        read_timeout: Optional[int] = None,
     ):
         """
         Initializes the AWS provider.
@@ -154,6 +164,8 @@ class AwsProvider(Provider):
             - aws_access_key_id: The AWS access key ID.
             - aws_secret_access_key: The AWS secret access key.
             - aws_session_token: The AWS session token, optional.
+            - connect_timeout: Seconds to wait to establish a connection to an AWS endpoint.
+            - read_timeout: Seconds to wait for a response from an AWS endpoint.
 
         Raises:
             - ArgumentTypeError: If the input MFA ARN is invalid.
@@ -228,7 +240,9 @@ class AwsProvider(Provider):
 
         # TODO: Use AwsSetUpSession ?????
         # Configure the initial AWS Session using the local credentials: profile or environment variables
-        session_config = self.set_session_config(retries_max_attempts)
+        session_config = self.set_session_config(
+            retries_max_attempts, connect_timeout, read_timeout
+        )
         aws_session = self.setup_session(
             mfa=mfa,
             profile=profile,
@@ -256,7 +270,10 @@ class AwsProvider(Provider):
         caller_identity = self.validate_credentials(
             session=self.session.current_session,
             aws_region=sts_region,
+            excluded_regions=excluded_regions,
         )
+        # Later STS calls go where validation got an answer, not where it timed out
+        sts_region = caller_identity.region
 
         logger.info("Credentials validated")
         ########
@@ -575,8 +592,15 @@ class AwsProvider(Provider):
     ) -> str:
         excluded_regions = set(excluded_regions or ())
         session_region = session.region_name
+        env_partition_regions = get_env_partition_regions(session_region)
         if session_region and session_region not in excluded_regions:
-            return session_region
+            if not env_partition_regions or session_region in env_partition_regions:
+                return session_region
+        if env_partition_regions:
+            for region in env_partition_regions:
+                if region not in excluded_regions:
+                    return region
+            return env_partition_regions[0]
 
         for region in AwsProvider.get_bootstrap_region_candidates(session_region):
             if region not in excluded_regions:
@@ -671,8 +695,11 @@ class AwsProvider(Provider):
             if mfa:
                 session = Session(**session_arguments)
                 session._session.set_default_client_config(session_config)
-                sts_client = session.client("sts")
-
+                sts_region = (
+                    get_env_partition_bootstrap_region(session.region_name)
+                    or session.region_name
+                    or AWS_STS_GLOBAL_ENDPOINT_REGION
+                )
                 # TODO: pass values from the input
                 mfa_info = AwsProvider.input_role_mfa_token_and_code()
                 # TODO: validate MFA ARN here
@@ -680,8 +707,12 @@ class AwsProvider(Provider):
                     "SerialNumber": mfa_info.arn,
                     "TokenCode": mfa_info.totp,
                 }
-                session_credentials = sts_client.get_session_token(
-                    **get_session_token_arguments
+                _, session_credentials = AwsProvider.sts_call_with_partition_failover(
+                    session,
+                    sts_region,
+                    lambda sts_client: sts_client.get_session_token(
+                        **get_session_token_arguments
+                    ),
                 )
                 mfa_session = Session(
                     aws_access_key_id=session_credentials["Credentials"]["AccessKeyId"],
@@ -902,6 +933,9 @@ class AwsProvider(Provider):
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+            # Return an empty dict, as promised by the signature, so the service
+            # is simply not scanned instead of the callers failing later on a None
+            return {}
 
     @staticmethod
     def get_available_aws_service_regions(
@@ -917,9 +951,13 @@ class AwsProvider(Provider):
 
         Returns:
             - A set of strings representing the available regions for the given service and partition.
+              A service or a partition not present in the regions file yields an empty set, the same
+              outcome as a service explicitly recorded as unavailable in the partition.
         """
         data = read_aws_regions_file()
-        json_regions = set(data["services"][service]["regions"][partition])
+        json_regions = set(
+            data["services"].get(service, {}).get("regions", {}).get(partition, [])
+        )
         if audited_regions:
             # Get common regions between input and json
             regions = json_regions.intersection(audited_regions)
@@ -1126,16 +1164,14 @@ class AwsProvider(Provider):
         Example:
             global_region = get_global_region()a
         """
-        global_region = "us-east-1"
-        if self._identity.partition == "aws-cn":
-            global_region = "cn-north-1"
-        elif self._identity.partition == "aws-eusc":
-            global_region = "eusc-de-east-1"
-        elif self._identity.partition == "aws-us-gov":
-            global_region = "us-gov-east-1"
-        elif "aws-iso" in self._identity.partition:
-            global_region = "aws-iso-global"
-        return global_region
+        # The first region of the partition is the one of its global STS endpoint,
+        # which is always a real region, never a pseudo endpoint like "aws-iso-global"
+        partition_regions = get_botocore_partition_regions().get(
+            self._identity.partition
+        )
+        if partition_regions:
+            return partition_regions[0]
+        return "us-east-1"
 
     @staticmethod
     def input_role_mfa_token_and_code() -> AWSMFAInfo:
@@ -1152,26 +1188,35 @@ class AwsProvider(Provider):
         return AWSMFAInfo(arn=mfa_ARN, totp=mfa_TOTP)
 
     @staticmethod
-    def set_session_config(retries_max_attempts: int) -> Config:
+    def set_session_config(
+        retries_max_attempts: int,
+        connect_timeout: Optional[int] = None,
+        read_timeout: Optional[int] = None,
+    ) -> Config:
         """
-        set_session_config returns a botocore Config object with the Prowler user agent and the default retrier configuration if nothing is passed as argument
+        set_session_config returns a botocore Config object with the Prowler user agent and the default retrier and timeout configuration if nothing is passed as argument
 
         Args:
             - retries_max_attempts: The maximum number of retries for the standard retrier config
+            - connect_timeout: Seconds to wait to establish a connection to an AWS endpoint
+            - read_timeout: Seconds to wait for a response from an AWS endpoint
 
         Returns:
             - Config: The botocore Config object
         """
         default_session_config = get_default_session_config()
-        if retries_max_attempts:
-            default_session_config = default_session_config.merge(
-                Config(
-                    retries={
-                        "max_attempts": retries_max_attempts,
-                        "mode": "standard",
-                    },
-                )
-            )
+        overrides = {}
+        if retries_max_attempts is not None:
+            overrides["retries"] = {
+                "max_attempts": retries_max_attempts,
+                "mode": "standard",
+            }
+        if connect_timeout:
+            overrides["connect_timeout"] = connect_timeout
+        if read_timeout:
+            overrides["read_timeout"] = read_timeout
+        if overrides:
+            default_session_config = default_session_config.merge(Config(**overrides))
 
         return default_session_config
 
@@ -1211,10 +1256,11 @@ class AwsProvider(Provider):
                 mfa_info = AwsProvider.input_role_mfa_token_and_code()
                 assume_role_arguments["SerialNumber"] = mfa_info.arn
                 assume_role_arguments["TokenCode"] = mfa_info.totp
-            sts_client = AwsProvider.create_sts_session(
-                session, assumed_role_info.sts_region
+            _, assumed_credentials = AwsProvider.sts_call_with_partition_failover(
+                session,
+                assumed_role_info.sts_region,
+                lambda sts_client: sts_client.assume_role(**assume_role_arguments),
             )
-            assumed_credentials = sts_client.assume_role(**assume_role_arguments)
             # Convert the UTC datetime object to your local timezone
             credentials_expiration_local_time = (
                 assumed_credentials["Credentials"]["Expiration"]
@@ -1294,29 +1340,97 @@ class AwsProvider(Provider):
             raise error
 
     @staticmethod
+    def sts_call_with_partition_failover(
+        session: Session,
+        aws_region: str,
+        operation: Callable[[Any], Any],
+        excluded_regions: set[str] | None = None,
+    ) -> tuple[str, Any]:
+        """
+        Run a bootstrap STS call, moving on when a region cannot be reached.
+
+        Bootstrap calls happen before anything is known about the credentials, so
+        the region they go to is a guess whenever none was configured. On a network
+        that routes to only one region of its partition that guess is fatal, and the
+        remaining regions of the partition declared in PROWLER_AWS_PARTITION are the
+        ones worth trying.
+
+        Args:
+            session (Session): The AWS session object.
+            aws_region (str): The region to try first.
+            operation (Callable[[Any], Any]): Receives an STS client and performs
+                the call.
+            excluded_regions (set[str] | None): Regions excluded from the scan,
+                tried after the rest of the partition.
+
+        Returns:
+            tuple[str, Any]: The region that answered and whatever the operation
+                returned.
+
+        Raises:
+            Exception: Whatever the operation raises, or the last connection error
+                when no region could be reached.
+        """
+        *fallback_regions, last_region = get_partition_bootstrap_candidates(
+            aws_region, session.region_name, excluded_regions
+        )
+
+        for candidate_region in fallback_regions:
+            try:
+                sts_client = AwsProvider.create_sts_session(session, candidate_region)
+                return candidate_region, operation(sts_client)
+            # The credentials are not at fault, so the next region is worth trying
+            except (
+                EndpointConnectionError,
+                ConnectTimeoutError,
+                ReadTimeoutError,
+            ) as unreachable:
+                logger.warning(
+                    f"{unreachable.__class__.__name__}[{unreachable.__traceback__.tb_lineno}]: {unreachable}"
+                )
+
+        # Nothing is left to try after the last region, so its error is the answer
+        sts_client = AwsProvider.create_sts_session(session, last_region)
+        return last_region, operation(sts_client)
+
+    @staticmethod
     def validate_credentials(
         session: Session,
         aws_region: str,
+        excluded_regions: set[str] | None = None,
     ) -> AWSCallerIdentity:
         """
         Validates the AWS credentials using the provided session and AWS region.
+
+        When the region cannot be reached, the remaining regions of the partition
+        declared in PROWLER_AWS_PARTITION are tried before giving up. A credential
+        error is returned from the first region instead, since it would be the same
+        everywhere.
+
         Args:
             session (Session): The AWS session object.
             aws_region (str): The AWS region to validate the credentials.
+            excluded_regions (set[str] | None): Regions excluded from the scan,
+                tried after the rest of the partition.
         Returns:
-            AWSCallerIdentity: An object containing the caller identity information.
+            AWSCallerIdentity: An object containing the caller identity information,
+                including the region that answered.
         Raises:
             Exception: If an error occurs during the validation process.
         """
         try:
-            sts_client = AwsProvider.create_sts_session(session, aws_region)
-            caller_identity = sts_client.get_caller_identity()
+            sts_region, caller_identity = AwsProvider.sts_call_with_partition_failover(
+                session,
+                aws_region,
+                lambda sts_client: sts_client.get_caller_identity(),
+                excluded_regions,
+            )
             # Include the region where the caller_identity has validated the credentials
             return AWSCallerIdentity(
                 user_id=caller_identity.get("UserId"),
                 account=caller_identity.get("Account"),
                 arn=ARN(caller_identity.get("Arn")),
-                region=aws_region,
+                region=sts_region,
             )
         except ClientError as client_error:
             logger.error(
@@ -1352,7 +1466,7 @@ class AwsProvider(Provider):
     @staticmethod
     def test_connection(
         profile: str = None,
-        aws_region: str = AWS_STS_GLOBAL_ENDPOINT_REGION,
+        aws_region: str = None,
         role_arn: str = None,
         role_session_name: str = ROLE_SESSION_NAME,
         session_duration: int = 3600,
@@ -1369,7 +1483,9 @@ class AwsProvider(Provider):
 
         Args:
             profile (str): The AWS profile to use for the session.
-            aws_region (str): The AWS region to validate the credentials in.
+            aws_region (str): The AWS region to validate the credentials in. When not
+                provided, it defaults to the bootstrap region of the partition set in
+                the PROWLER_AWS_PARTITION environment variable or, if unset, to us-east-1.
             role_arn (str): The ARN of the IAM role to assume.
             role_session_name (str): The name of the role session.
             session_duration (int): The duration of the assumed role session in seconds.
@@ -1420,6 +1536,12 @@ class AwsProvider(Provider):
                 aws_session_token=aws_session_token,
             )
 
+            if aws_region is None:
+                aws_region = (
+                    get_env_partition_bootstrap_region(session.region_name)
+                    or AWS_STS_GLOBAL_ENDPOINT_REGION
+                )
+
             if role_arn:
                 session_duration = validate_session_duration(session_duration)
                 role_session_name = validate_role_session_name(role_session_name)
@@ -1430,6 +1552,7 @@ class AwsProvider(Provider):
                     external_id=external_id,
                     mfa_enabled=mfa_enabled,
                     role_session_name=role_session_name,
+                    sts_region=aws_region,
                 )
                 assumed_role_credentials = AwsProvider.assume_role(
                     session,
@@ -1450,6 +1573,13 @@ class AwsProvider(Provider):
             # Do an extra validation if the AWS account ID is provided
             if provider_id and caller_identity.account != provider_id:
                 raise AWSInvalidProviderIdError(file=pathlib.Path(__file__).name)
+
+            # Validate that the account belongs to the configured partition, if any
+            env_partition = os.environ.get("PROWLER_AWS_PARTITION", "").strip()
+            if env_partition and caller_identity.arn.partition != env_partition:
+                raise AWSInvalidPartitionError(
+                    message=f"The AWS account is in the {caller_identity.arn.partition} partition, but this deployment is configured for the {env_partition} partition via PROWLER_AWS_PARTITION"
+                )
 
             return Connection(
                 is_connected=True,
@@ -1591,6 +1721,14 @@ class AwsProvider(Provider):
                 raise session_token_expired
             return Connection(error=session_token_expired)
 
+        except AWSInvalidPartitionError as invalid_partition_error:
+            logger.error(
+                f"{invalid_partition_error.__class__.__name__}[{invalid_partition_error.__traceback__.tb_lineno}]: {invalid_partition_error}"
+            )
+            if raise_on_exception:
+                raise invalid_partition_error
+            return Connection(error=invalid_partition_error)
+
         except Exception as error:
             logger.critical(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -1618,14 +1756,9 @@ class AwsProvider(Provider):
             sts_client = create_sts_session(session, 'us-west-2')
         """
         try:
-            if os.environ.get("AWS_ENDPOINT_URL"):
-                sts_endpoint_url = os.environ["AWS_ENDPOINT_URL"]
-            elif aws_region.startswith("cn-"):
-                sts_endpoint_url = f"https://sts.{aws_region}.amazonaws.com.cn"
-            elif aws_region.startswith("eusc-"):
-                sts_endpoint_url = f"https://sts.{aws_region}.amazonaws.eu"
-            else:
-                sts_endpoint_url = f"https://sts.{aws_region}.amazonaws.com"
+            # Botocore resolves the regional STS endpoint for every partition
+            # (China, EUSC, GovCloud, ISO); AWS_ENDPOINT_URL overrides it
+            sts_endpoint_url = os.environ.get("AWS_ENDPOINT_URL") or None
             return session.client("sts", aws_region, endpoint_url=sts_endpoint_url)
         except Exception as error:
             logger.critical(
@@ -1702,6 +1835,141 @@ def read_aws_regions_file() -> dict:
     return data
 
 
+@lru_cache(maxsize=1)
+def get_botocore_partition_regions() -> dict:
+    """
+    Get the AWS partitions and their bootstrap region candidates from the
+    botocore endpoints data.
+
+    The region of the partition's global STS endpoint, when declared, is moved
+    to the front since it is never an opt-in region; the rest are sorted
+    alphabetically.
+
+    Returns:
+        dict: A dictionary mapping each partition name to its list of regions.
+    """
+    endpoints_data = BotocoreSession().get_data("endpoints")
+    partition_regions = {}
+    for partition in endpoints_data["partitions"]:
+        regions = sorted(partition.get("regions", {}))
+        sts_service = partition.get("services", {}).get("sts", {})
+        global_endpoint = sts_service.get("partitionEndpoint")
+        global_region = (
+            sts_service.get("endpoints", {})
+            .get(global_endpoint, {})
+            .get("credentialScope", {})
+            .get("region")
+        )
+        if global_region in regions:
+            regions.remove(global_region)
+            regions.insert(0, global_region)
+        partition_regions[partition["partition"]] = regions
+    return partition_regions
+
+
+def get_env_partition_regions(
+    session_region: Optional[str] = None,
+) -> Optional[list]:
+    """
+    Get the bootstrap region candidates for the partition set in the
+    PROWLER_AWS_PARTITION environment variable.
+
+    Args:
+        session_region (Optional[str]): The region of the AWS session. It leads
+            the candidates when it belongs to the partition and is ignored
+            otherwise.
+
+    Returns:
+        Optional[list]: The regions of the configured partition, preferred
+            bootstrap region first, or None when the environment variable is
+            not set.
+
+    Raises:
+        AWSInvalidPartitionError: If the value is not a partition known to botocore.
+    """
+    raw_partition = os.environ.get("PROWLER_AWS_PARTITION", "").strip()
+    if not raw_partition:
+        return None
+
+    partition_regions = get_botocore_partition_regions()
+    regions = partition_regions.get(raw_partition)
+    if not regions:
+        raise AWSInvalidPartitionError(
+            message=f"Invalid partition: {raw_partition} set in PROWLER_AWS_PARTITION. Valid partitions: {', '.join(sorted(partition_regions))}"
+        )
+
+    # A deployment reached only through its own region's endpoints has no route
+    # to the partition's global STS region, so the session region goes first
+    if session_region in regions:
+        regions = [session_region] + [r for r in regions if r != session_region]
+    return regions
+
+
+def get_env_partition_bootstrap_region(
+    session_region: Optional[str] = None,
+) -> Optional[str]:
+    """
+    Get the STS bootstrap region for the partition set in the
+    PROWLER_AWS_PARTITION environment variable.
+
+    Args:
+        session_region (Optional[str]): The region of the AWS session, preferred
+            when it belongs to the partition.
+
+    Returns:
+        Optional[str]: The preferred bootstrap region of the configured
+            partition, or None when the environment variable is not set.
+
+    Raises:
+        AWSInvalidPartitionError: If the value is not a partition known to botocore.
+    """
+    regions = get_env_partition_regions(session_region)
+    return regions[0] if regions else None
+
+
+# An unreachable endpoint costs a connection timeout, so a partition with many
+# regions is not walked in full
+MAX_STS_BOOTSTRAP_ATTEMPTS = 3
+
+
+def get_partition_bootstrap_candidates(
+    aws_region: str,
+    session_region: Optional[str] = None,
+    excluded_regions: set[str] | None = None,
+) -> list:
+    """
+    Get the STS bootstrap regions to try, in order, starting with the chosen one.
+
+    A deployment reached only through its own region's endpoints has no route to
+    the rest of its partition, and which region that is cannot be known from the
+    environment alone: a container may carry a region belonging to no partition
+    it scans. Offering the remaining regions of the declared partition lets the
+    bootstrap succeed without anything having to declare the right one.
+
+    Args:
+        aws_region (str): The region already chosen for the bootstrap call.
+        session_region (Optional[str]): The region of the AWS session.
+        excluded_regions (set[str] | None): Regions excluded from the scan. They
+            go after the rest of the partition, so the bootstrap avoids them
+            whenever another region answers and still has them as a last resort.
+
+    Returns:
+        list: The regions to try, preferred first, capped at
+            MAX_STS_BOOTSTRAP_ATTEMPTS.
+    """
+    excluded_regions = set(excluded_regions or ())
+    partition_regions = get_env_partition_regions(session_region) or []
+    # sorted() is stable, so the partition order survives on each side of the split
+    ordered_regions = sorted(
+        partition_regions, key=lambda region: region in excluded_regions
+    )
+    candidates = [aws_region]
+    for region in ordered_regions:
+        if region not in candidates:
+            candidates.append(region)
+    return candidates[:MAX_STS_BOOTSTRAP_ATTEMPTS]
+
+
 # TODO: This can be moved to another class since it doesn't need self
 def get_aws_region_for_sts(
     session_region: str,
@@ -1710,6 +1978,10 @@ def get_aws_region_for_sts(
 ) -> str:
     """
     Get the AWS region for the STS Assume Role operation.
+
+    The precedence is: explicit regions, the partition set in the
+    PROWLER_AWS_PARTITION environment variable, the session region and,
+    finally, the bootstrap region candidates.
 
     Args:
         - session_region (str): The region configured in the AWS session.
@@ -1729,6 +2001,15 @@ def get_aws_region_for_sts(
         for region in regions:
             if region not in excluded_regions:
                 return region
+
+    env_partition_regions = get_env_partition_regions(session_region)
+    if env_partition_regions:
+        # The configured partition constrains the whole fallback chain: prefer
+        # a non-excluded region, but never leave the partition
+        for region in env_partition_regions:
+            if region not in excluded_regions:
+                return region
+        return env_partition_regions[0]
 
     if session_region and session_region not in excluded_regions:
         return session_region

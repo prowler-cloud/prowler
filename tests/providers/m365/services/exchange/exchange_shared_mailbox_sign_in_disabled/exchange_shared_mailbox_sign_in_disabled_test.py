@@ -11,6 +11,8 @@ class Test_exchange_shared_mailbox_sign_in_disabled:
         exchange_client.shared_mailboxes = []
 
         entra_client = mock.MagicMock()
+
+        entra_client.users_error = None
         entra_client.users = {}
 
         with (
@@ -80,6 +82,7 @@ class Test_exchange_shared_mailbox_sign_in_disabled:
                 account_enabled=False,
             )
             entra_client = mock.MagicMock()
+            entra_client.users_error = None
             entra_client.users = {
                 "12345678-1234-1234-1234-123456789012": entra_user,
             }
@@ -143,6 +146,7 @@ class Test_exchange_shared_mailbox_sign_in_disabled:
                 account_enabled=True,
             )
             entra_client = mock.MagicMock()
+            entra_client.users_error = None
             entra_client.users = {
                 "87654321-4321-4321-4321-210987654321": entra_user,
             }
@@ -199,6 +203,8 @@ class Test_exchange_shared_mailbox_sign_in_disabled:
             exchange_client.shared_mailboxes = [shared_mailbox]
 
             entra_client = mock.MagicMock()
+
+            entra_client.users_error = None
             entra_client.users = {}
 
             with mock.patch(
@@ -209,10 +215,10 @@ class Test_exchange_shared_mailbox_sign_in_disabled:
                 result = check.execute()
 
                 assert len(result) == 1
-                assert result[0].status == "FAIL"
+                assert result[0].status == "MANUAL"
                 assert (
                     result[0].status_extended
-                    == "Shared mailbox orphan@contoso.com could not be found in Entra ID for verification."
+                    == "Cannot verify sign-in status for shared mailbox orphan@contoso.com: the user could not be resolved in Entra ID."
                 )
                 assert result[0].resource_name == "Orphan Mailbox"
                 assert result[0].resource_id == "00000000-0000-0000-0000-000000000000"
@@ -284,6 +290,8 @@ class Test_exchange_shared_mailbox_sign_in_disabled:
             )
 
             entra_client = mock.MagicMock()
+
+            entra_client.users_error = None
             entra_client.users = {
                 "11111111-1111-1111-1111-111111111111": user_disabled,
                 "22222222-2222-2222-2222-222222222222": user_enabled,
@@ -310,8 +318,62 @@ class Test_exchange_shared_mailbox_sign_in_disabled:
                     == "Shared mailbox insecure@contoso.com has sign-in enabled."
                 )
 
-                assert result[2].status == "FAIL"
+                assert result[2].status == "MANUAL"
                 assert (
                     result[2].status_extended
-                    == "Shared mailbox unknown@contoso.com could not be found in Entra ID for verification."
+                    == "Cannot verify sign-in status for shared mailbox unknown@contoso.com: the user could not be resolved in Entra ID."
                 )
+
+    def test_users_error_reports_single_tenant_manual(self):
+        """Entra users collection failed -> one tenant-level MANUAL, not one per mailbox."""
+        from prowler.providers.m365.services.exchange.exchange_service import (
+            SharedMailbox,
+        )
+
+        exchange_client = mock.MagicMock()
+        exchange_client.audited_tenant = "audited_tenant"
+        exchange_client.audited_domain = DOMAIN
+        exchange_client.shared_mailboxes = [
+            SharedMailbox(
+                name=f"Mailbox {i}",
+                identity=f"mailbox{i}",
+                user_principal_name=f"mailbox{i}@contoso.com",
+                external_directory_object_id=f"00000000-0000-0000-0000-00000000000{i}",
+            )
+            for i in range(2)
+        ]
+
+        entra_client = mock.MagicMock()
+        entra_client.users_error = "Insufficient privileges to read users and directory roles. Required permissions: User.Read.All, Directory.Read.All or RoleManagement.Read.Directory"
+        entra_client.users = {}
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_m365_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
+            ),
+            mock.patch(
+                "prowler.providers.m365.services.exchange.exchange_shared_mailbox_sign_in_disabled.exchange_shared_mailbox_sign_in_disabled.exchange_client",
+                new=exchange_client,
+            ),
+            mock.patch(
+                "prowler.providers.m365.services.exchange.exchange_shared_mailbox_sign_in_disabled.exchange_shared_mailbox_sign_in_disabled.entra_client",
+                new=entra_client,
+            ),
+        ):
+            from prowler.providers.m365.services.exchange.exchange_shared_mailbox_sign_in_disabled.exchange_shared_mailbox_sign_in_disabled import (
+                exchange_shared_mailbox_sign_in_disabled,
+            )
+
+            result = exchange_shared_mailbox_sign_in_disabled().execute()
+
+            assert len(result) == 1
+            assert result[0].status == "MANUAL"
+            assert (
+                "Cannot verify sign-in status for shared mailboxes"
+                in result[0].status_extended
+            )
+            assert result[0].resource_name == "Shared Mailboxes"

@@ -6,6 +6,7 @@ from api.rls import RowLevelSecurityConstraint
 from api.uuid_utils import datetime_to_uuid7
 from dateutil.relativedelta import relativedelta
 from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured
 from psqlextra.partitioning import (
     PostgresPartitioningError,
     PostgresPartitioningManager,
@@ -153,10 +154,17 @@ class PostgresUUIDv7PartitioningStrategy(PostgresRangePartitioningStrategy):
         )
 
 
-def relative_days_or_none(value):
-    if value is None:
+def relative_months_or_none(value):
+    # A negative value would set the cutoff in the future and delete every
+    # partition, so it is rejected rather than silently ignored.
+    if value is not None and value < 0:
+        raise ImproperlyConfigured(
+            "FINDINGS_TABLE_PARTITION_MAX_AGE_MONTHS must not be negative; "
+            "leave it unset or use 0 to keep partitions indefinitely"
+        )
+    if not value:
         return None
-    return relativedelta(days=value)
+    return relativedelta(months=value)
 
 
 #
@@ -173,7 +181,7 @@ manager = PostgresPartitioningManager(
                     months=settings.FINDINGS_TABLE_PARTITION_MONTHS
                 ),
                 count=settings.FINDINGS_TABLE_PARTITION_COUNT,
-                max_age=relative_days_or_none(
+                max_age=relative_months_or_none(
                     settings.FINDINGS_TABLE_PARTITION_MAX_AGE_MONTHS
                 ),
                 name_format="%Y_%b",
@@ -189,7 +197,7 @@ manager = PostgresPartitioningManager(
                     months=settings.FINDINGS_TABLE_PARTITION_MONTHS
                 ),
                 count=settings.FINDINGS_TABLE_PARTITION_COUNT,
-                max_age=relative_days_or_none(
+                max_age=relative_months_or_none(
                     settings.FINDINGS_TABLE_PARTITION_MAX_AGE_MONTHS
                 ),
                 name_format="%Y_%b",

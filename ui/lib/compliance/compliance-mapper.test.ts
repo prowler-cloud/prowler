@@ -47,8 +47,19 @@ vi.mock(
   () => ({ CSACustomDetails: stubFactory("CSAStub") }),
 );
 vi.mock(
+  "@/components/compliance/compliance-custom-details/cyber-essentials-details",
+  () => ({ CyberEssentialsCustomDetails: stubFactory("CyberEssentialsStub") }),
+);
+vi.mock(
   "@/components/compliance/compliance-custom-details/ens-details",
   () => ({ ENSCustomDetails: stubFactory("ENSStub") }),
+);
+vi.mock(
+  "@/components/compliance/compliance-custom-details/fedramp-20x-details",
+  () => ({
+    FedRAMP20xFRRCustomDetails: stubFactory("FedRAMP20xFRRStub"),
+    FedRAMP20xKSICustomDetails: stubFactory("FedRAMP20xKSIStub"),
+  }),
 );
 vi.mock(
   "@/components/compliance/compliance-custom-details/generic-details",
@@ -154,6 +165,9 @@ describe("getComplianceMapper", () => {
       { framework: "CSA-CCM", expected: "CSAStub" },
       { framework: "CMMC", expected: "CMMCStub" },
       { framework: "Okta-IDaaS-STIG", expected: "OktaIDaaSStigStub" },
+      { framework: "Cyber-Essentials", expected: "CyberEssentialsStub" },
+      { framework: "FedRAMP-20x-KSI", expected: "FedRAMP20xKSIStub" },
+      { framework: "FedRAMP-20x-FRR-Class-C", expected: "FedRAMP20xFRRStub" },
     ];
 
     for (const { framework, expected } of wiring) {
@@ -200,6 +214,9 @@ describe("getComplianceMapper", () => {
       "CSA-CCM",
       "CMMC",
       "Okta-IDaaS-STIG",
+      "Cyber-Essentials",
+      "FedRAMP-20x-KSI",
+      "FedRAMP-20x-FRR-Class-C",
     ]) {
       const mapper = getComplianceMapper(framework);
       expect(Object.keys(mapper).sort(), framework).toEqual(expectedKeys);

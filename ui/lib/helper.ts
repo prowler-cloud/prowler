@@ -475,6 +475,11 @@ export const permissionFormFields: PermissionInfo[] = [
     description:
       "Allows configuring Lighthouse AI, including its provider credentials, default model and business context",
   },
+  {
+    field: "manage_registry",
+    label: "Manage Registry",
+    description: "Allows managing tenant Registry credentials and artifacts",
+  },
 
   {
     field: "manage_billing",

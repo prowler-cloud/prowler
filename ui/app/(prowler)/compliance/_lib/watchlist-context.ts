@@ -9,12 +9,15 @@ export interface ComplianceWatchlistContext {
   entries: ComplianceCatalogEntry[];
   eligibleProviderTypes: string[];
   canManage: boolean;
+  /** Could not be read — not the same as legitimately empty. */
+  unavailable: boolean;
 }
 
 export const EMPTY_WATCHLIST_CONTEXT: ComplianceWatchlistContext = {
   entries: [],
   eligibleProviderTypes: [],
   canManage: false,
+  unavailable: false,
 };
 
 // One cached catalog/session lookup feeds every compliance surface in a render.
@@ -34,10 +37,11 @@ const loadContextForKey = cache(
         entries: catalog.entries,
         eligibleProviderTypes: catalog.meta.eligibleProviderTypes,
         canManage: Boolean(session?.user?.permissions?.manage_scans),
+        unavailable: catalog.unavailable,
       };
     } catch (error) {
       console.error("Error loading the compliance watchlist context:", error);
-      return EMPTY_WATCHLIST_CONTEXT;
+      return { ...EMPTY_WATCHLIST_CONTEXT, unavailable: true };
     }
   },
 );

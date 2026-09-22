@@ -39,6 +39,18 @@ class Entra(AzureService):
                 "Cannot initialize Entra service while event loop is running"
             )
 
+        # Tenants (keyed by domain) whose sign-in activity could not be read,
+        # mapped to the reason. Microsoft Graph rejects the whole /users request
+        # with a 403 when the tenant lacks Entra ID P1/P2 or the application
+        # lacks AuditLog.Read.All, so users are re-fetched without
+        # signInActivity and the tenant is recorded here.
+        self.sign_in_activity_errors: dict[str, str] = {}
+        # Tenants (keyed by domain) whose users could not be retrieved at all
+        # (throttling, 5xx, network failures), mapped to the reason. An empty
+        # inventory caused by such an error is not evidence that the tenant
+        # has no users, so the user-based checks report MANUAL instead of
+        # evaluating it.
+        self.users_retrieval_errors: dict[str, str] = {}
         # Get users first alone because it is a dependency for other attributes
         self.users = loop.run_until_complete(self._get_users())
 
@@ -69,24 +81,76 @@ class Entra(AzureService):
             loop.close()
 
     async def _get_users(self):
+        """Retrieve the users of every audited tenant from Microsoft Graph.
+
+        Users are requested with ``signInActivity``. When Graph rejects that
+        request (the tenant lacks Entra ID P1/P2 or the application lacks
+        ``AuditLog.Read.All``), the tenant is recorded in
+        ``self.sign_in_activity_errors`` and the users are fetched again
+        without ``signInActivity`` so the remaining user checks can still run.
+
+        Any other failure to retrieve the users (throttling, 5xx, network),
+        including a failure on a later page of the paginated response, is
+        recorded in ``self.users_retrieval_errors`` so the user-based checks
+        report MANUAL instead of evaluating an empty or partial inventory.
+
+        Returns:
+            dict: Tenant domain mapped to a dict of user id -> ``User``. A
+            tenant whose users could not be retrieved maps to an empty dict
+            and is recorded in ``self.users_retrieval_errors``.
+        """
         logger.info("Entra - Getting users...")
         users = {}
+        base_select = ["id", "displayName", "accountEnabled"]
         try:
-            request_configuration = RequestConfiguration(
-                query_parameters=UsersRequestBuilder.UsersRequestBuilderGetQueryParameters(
-                    select=[
-                        "id",
-                        "displayName",
-                        "accountEnabled",
-                        "signInActivity",
-                    ]
-                )
-            )
             for tenant, client in self.clients.items():
                 users.update({tenant: {}})
-                users_response = await client.users.get(
-                    request_configuration=request_configuration
-                )
+                try:
+                    users_response = await client.users.get(
+                        request_configuration=RequestConfiguration(
+                            query_parameters=UsersRequestBuilder.UsersRequestBuilderGetQueryParameters(
+                                select=base_select + ["signInActivity"]
+                            )
+                        )
+                    )
+                except Exception as error:
+                    status = getattr(error, "response_status_code", None)
+                    reason = self._describe_graph_error(error)
+                    if status != 403:
+                        # Transient or unexpected failure (throttling, 5xx,
+                        # network): do not blame licensing/permissions, but
+                        # record that the tenant's users are unknown so the
+                        # user-based checks report MANUAL instead of
+                        # evaluating an empty inventory.
+                        self.users_retrieval_errors[tenant] = reason
+                        logger.error(
+                            f"{tenant} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
+                        continue
+                    # A 403 means signInActivity is rejected for the whole
+                    # request (no Entra ID P1/P2 or missing AuditLog.Read.All).
+                    # Record it and retry without the property so the other
+                    # user checks still run.
+                    self.sign_in_activity_errors[tenant] = reason
+                    logger.error(
+                        f"{tenant} -- sign-in activity unavailable, retrying without signInActivity: {reason}"
+                    )
+                    try:
+                        users_response = await client.users.get(
+                            request_configuration=RequestConfiguration(
+                                query_parameters=UsersRequestBuilder.UsersRequestBuilderGetQueryParameters(
+                                    select=base_select
+                                )
+                            )
+                        )
+                    except Exception as retry_error:
+                        self.users_retrieval_errors[tenant] = (
+                            self._describe_graph_error(retry_error)
+                        )
+                        logger.error(
+                            f"{tenant} -- {retry_error.__class__.__name__}[{retry_error.__traceback__.tb_lineno}]: {retry_error}"
+                        )
+                        continue
                 registration_details = await self._get_user_registration_details(client)
 
                 try:
@@ -124,8 +188,15 @@ class Entra(AzureService):
                         users_response = await client.users.with_url(next_link).get()
 
                 except Exception as error:
+                    # A failed page (throttling, 5xx, network) leaves the
+                    # inventory incomplete: the users retrieved so far must
+                    # not be treated as the whole tenant, so record the error
+                    # and let the user-based checks report MANUAL.
+                    self.users_retrieval_errors[tenant] = self._describe_graph_error(
+                        error
+                    )
                     logger.error(
-                        f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        f"{tenant} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
         except Exception as error:
             logger.error(
@@ -133,6 +204,21 @@ class Entra(AzureService):
             )
 
         return users
+
+    @staticmethod
+    def _describe_graph_error(error: Exception) -> str:
+        """Return a short, single-line description of a Graph error."""
+        code = None
+        main_error = getattr(error, "error", None)
+        if main_error is not None:
+            code = getattr(main_error, "code", None)
+        status = getattr(error, "response_status_code", None)
+        parts = [error.__class__.__name__]
+        if status:
+            parts.append(f"HTTP {status}")
+        if code:
+            parts.append(str(code))
+        return " ".join(parts)
 
     async def _get_user_registration_details(self, client):
         registration_details = {}

@@ -25,7 +25,7 @@ For providers supported by Prowler, refer to [Prowler Hub](https://hub.prowler.c
 
 Prowler supports several types of providers, each with its own implementation pattern and use case. Understanding these differences is key to designing your provider correctly.
 
-### Classifying your Provider
+### Classifying Your Provider
 
 Before implementing a new provider, you need to determine which type it belongs to. This classification will guide your implementation approach and help you choose the right patterns and libraries.
 
@@ -1090,7 +1090,7 @@ Main registration makes your provider discoverable by Prowler's core system. It'
                 cis.batch_write_data_to_file()
 ```
 
-#### Step 11: Register in the list of providers
+#### Step 11: Register in the List of Providers
 
 **Explanation:**
 This is needed to be able to use the provider in the generic checks. The provider must be registered in the `init_global_provider` method to handle CLI arguments and initialization.
@@ -1966,7 +1966,7 @@ Main registration makes your provider discoverable by Prowler's core system. It'
 
 This step is the same as the [SDK providers](#step-10-register-in-main).
 
-#### Step 11: Register in the list of providers
+#### Step 11: Register in the List of Providers
 
 **Explanation:**
 This is needed to be able to use the provider in the generic checks. The provider must be registered in the `init_global_provider` method to handle CLI arguments and initialization.
@@ -2648,7 +2648,7 @@ Main registration makes your provider discoverable by Prowler's core system. It'
 
 This step is the same as the [SDK providers](#step-10-register-in-main).
 
-#### Step 7: Register in the list of providers
+#### Step 7: Register in the List of Providers
 
 **Explanation:**
 This is needed to be able to use the provider in the generic checks. The provider must be registered in the `init_global_provider` method to handle CLI arguments and initialization.
@@ -2808,7 +2808,7 @@ def validate_your_provider_uid(value):
 **Provider Model:**
 The `Provider` model already exists and supports all provider types. Ensure your provider type is included in the choices.
 
-### 2.2. Add the provider to the Provider Choices
+### 2.2. Add the Provider to the Provider Choices
 
 Update the `return_prowler_provider` function to include your provider. This function is crucial for the API to instantiate the correct provider class.
 
@@ -3209,7 +3209,7 @@ class YourProviderAPITestCase(APITestCase):
         self.assertEqual(response.status_code, 201)
 ```
 
-#### 2.6.1. Add your mocked provider to the tests
+#### 2.6.1. Add Your Mocked Provider to the Tests
 
 If needed, add a named provider fixture or extend the provider factory defaults so tests can request only the provider they need.
 
@@ -3272,7 +3272,7 @@ Your provider will be available through these endpoints:
 - `DELETE /api/v1/providers/{id}/` - Delete provider
 - `POST /api/v1/providers/secrets/` - Add provider credentials
 
-### 2.9. Update the provider if needed
+### 2.9. Update the Provider If Needed
 
 Depending on your provider's authentication requirements, you may need to add new authentication methods that are compatible with the API. This involves updating the provider class to support additional credential types beyond the basic ones.
 

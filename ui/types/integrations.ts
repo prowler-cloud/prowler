@@ -12,6 +12,34 @@ export const INTEGRATION_TYPE = {
 export type IntegrationType =
   (typeof INTEGRATION_TYPE)[keyof typeof INTEGRATION_TYPE];
 
+export const INTEGRATION_CONNECTION_TASK_KIND = "integration-connection-test";
+
+export interface IntegrationConnectionTaskResource {
+  id: string;
+  type: "tasks";
+}
+
+export interface IntegrationConnectionTaskDocument {
+  data: IntegrationConnectionTaskResource;
+}
+
+export interface IntegrationConnectionTaskResult {
+  connected?: boolean;
+  error?: string | null;
+  /** The failing channel id, or null when the failure names no channel. */
+  channel?: string | null;
+}
+
+export interface IntegrationConnectionTestResponse {
+  success: boolean;
+  message?: string;
+  taskId?: string;
+  data?: IntegrationConnectionTaskDocument;
+  error?: string;
+  /** The failing channel id, or null when the failure names no channel. */
+  failedChannelId?: string | null;
+}
+
 export const JIRA_DISPATCH_MODE = {
   INDIVIDUAL: "individual",
   GROUPED: "grouped",
@@ -98,13 +126,13 @@ export interface IntegrationProps {
       domain?: string;
       projects?: { [key: string]: string };
       issue_types?: { [key: string]: string[] };
-      // Slack specific configuration, server-owned. The channel keys are absent
-      // until one is chosen, not present and null: read them with `?? null`.
+      // Slack specific configuration, server-owned. The keys are optional here
+      // because the shape is shared with every integration: read with `?? []`.
       team_id?: string;
       team_name?: string;
       bot_user_id?: string;
-      channel_id?: string;
-      channel_name?: string;
+      channels?: SlackAuthorizedChannel[];
+      verification?: SlackVerification;
       [key: string]: unknown;
     };
     url?: string;
@@ -115,12 +143,30 @@ export interface IntegrationProps {
 
 /**
  * A channel Prowler can post to: every active public channel, plus the private
- * ones `@Prowler` was invited to. `is_private` keeps the API's own naming.
+ * ones `@Prowler Cloud` was invited to. `is_private` keeps the API's own naming.
  */
 export interface SlackChannelOption {
   id: string;
   name: string;
   is_private: boolean;
+}
+
+/**
+ * `confirmation_sent_at` is null until a connection check posts one, and null
+ * again after a same-workspace reinstall (contract, OAuth and reads).
+ */
+export interface SlackAuthorizedChannel extends SlackChannelOption {
+  confirmation_sent_at: string | null;
+}
+
+/**
+ * The contract's `verification` block in full, though nothing reads it yet
+ * (contract, OAuth and reads).
+ */
+export interface SlackVerification {
+  task_id: string | null;
+  started_at: string | null;
+  finished_at: string | null;
 }
 
 // Jira dispatch types
