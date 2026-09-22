@@ -262,6 +262,8 @@ export function useDriverTour<TTarget extends string>(
 
   // Bumped by start() and stop() so a pending anchored start knows it went stale.
   const startGenerationRef = useRef(0);
+  // Every adapted step, so start() can hand driver.js a trimmed or full list.
+  const stepsRef = useRef<DriveStep[]>([]);
 
   const tourId = tour.id;
   const tourVersion = tour.version;
@@ -365,6 +367,7 @@ export function useDriverTour<TTarget extends string>(
     });
 
     driverRef.current = driver(config);
+    stepsRef.current = steps;
 
     return () => {
       const instance = driverRef.current;
@@ -407,6 +410,7 @@ export function useDriverTour<TTarget extends string>(
         ? tour.steps.findIndex((step) => step.target === startAtTarget)
         : -1;
       if (!startAtTarget || startIndex <= 0) {
+        instance.setSteps(stepsRef.current);
         activeTourInstance = instance;
         instance.drive();
         return;
@@ -423,8 +427,11 @@ export function useDriverTour<TTarget extends string>(
         .then(() => {
           if (startGenerationRef.current !== generation) return;
           if (driverRef.current !== instance || instance.isActive()) return;
+          // The skipped steps describe UI the caller already went through, so
+          // the tour is renumbered from the anchor ("Step 1 of 2", not "3 of 4").
+          instance.setSteps(stepsRef.current.slice(startIndex));
           activeTourInstance = instance;
-          instance.drive(startIndex);
+          instance.drive();
         })
         .catch(() => {
           // Anchor never appeared (e.g. the modal was dismissed); skip the tour.

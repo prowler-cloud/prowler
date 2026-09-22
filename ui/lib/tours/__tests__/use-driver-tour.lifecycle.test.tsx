@@ -11,6 +11,7 @@ const driverHarness = vi.hoisted(() => {
     drive: ReturnType<typeof vi.fn>;
     isActive: ReturnType<typeof vi.fn>;
     isLastStep: ReturnType<typeof vi.fn>;
+    setSteps: ReturnType<typeof vi.fn>;
   }> = [];
 
   const driverMock = vi.fn((config: { onDestroyed?: () => void }) => {
@@ -27,6 +28,7 @@ const driverHarness = vi.hoisted(() => {
       isLastStep: vi.fn(() => false),
       moveNext: vi.fn(),
       movePrevious: vi.fn(),
+      setSteps: vi.fn(),
     };
     instances.push(instance);
     return instance;
@@ -222,7 +224,7 @@ describe("useDriverTour lifecycle", () => {
       document.body.innerHTML = "";
     });
 
-    it("skips the earlier steps once the anchor is in the DOM", async () => {
+    it("renumbers the tour from the anchor once it is in the DOM", async () => {
       // Given
       let latestResult: UseDriverTourResult | undefined;
       render(<AnchoredProbe onResult={(result) => (latestResult = result)} />);
@@ -235,10 +237,44 @@ describe("useDriverTour lifecycle", () => {
         latestResult?.start("late");
       });
 
+      // Then: the skipped steps describe UI the user already went through,
+      // so the tour reads "Step 1 of 1", not "Step 2 of 2".
+      const [instance] = driverHarness.instances;
+      expect(instance.setSteps).toHaveBeenCalledExactlyOnceWith([
+        expect.objectContaining({
+          popover: expect.objectContaining({ title: "Late anchor" }),
+        }),
+      ]);
+      expect(instance.drive).toHaveBeenCalledExactlyOnceWith();
+    });
+
+    it("plays the whole tour again when started from the top afterwards", async () => {
+      // Given
+      let latestResult: UseDriverTourResult | undefined;
+      render(<AnchoredProbe onResult={(result) => (latestResult = result)} />);
+      const anchor = document.createElement("div");
+      anchor.setAttribute("data-tour-id", "anchored-tour-late");
+      document.body.appendChild(anchor);
+      await act(async () => {
+        latestResult?.start("late");
+      });
+
+      // When
+      await act(async () => {
+        latestResult?.stop();
+        latestResult?.start();
+      });
+
       // Then
-      expect(driverHarness.instances[0].drive).toHaveBeenCalledExactlyOnceWith(
-        1,
-      );
+      const [instance] = driverHarness.instances;
+      expect(instance.setSteps).toHaveBeenLastCalledWith([
+        expect.objectContaining({
+          popover: expect.objectContaining({ title: "Welcome" }),
+        }),
+        expect.objectContaining({
+          popover: expect.objectContaining({ title: "Late anchor" }),
+        }),
+      ]);
     });
 
     it("starts at the step when only its fallback anchor is in the DOM", async () => {
@@ -270,9 +306,13 @@ describe("useDriverTour lifecycle", () => {
       });
 
       // Then
-      expect(driverHarness.instances[0].drive).toHaveBeenCalledExactlyOnceWith(
-        1,
-      );
+      const [instance] = driverHarness.instances;
+      expect(instance.setSteps).toHaveBeenCalledExactlyOnceWith([
+        expect.objectContaining({
+          popover: expect.objectContaining({ title: "Late anchor" }),
+        }),
+      ]);
+      expect(instance.drive).toHaveBeenCalledExactlyOnceWith();
     });
 
     it("stays closed when stopped before the anchor mounts", async () => {
