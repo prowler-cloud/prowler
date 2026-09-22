@@ -8,10 +8,11 @@ import {
 export const ADD_PROVIDER_TOUR_TARGETS = {
   TRIGGER: "trigger",
   PROVIDER_TYPE: "provider-type",
-  // Wraps the whole wizard modal so the final step's spotlight covers every input
-  // (UID, alias) and the footer — driver.js only keeps the highlighted element and
-  // its descendants interactive, so anchoring here stops the overlay from freezing
-  // those inputs.
+  // Wraps the wizard's form column so the final step's spotlight covers every
+  // input (UID, alias) — driver.js only keeps the highlighted element and its
+  // descendants interactive, so anchoring here stops the overlay from freezing
+  // those inputs. The footer sits outside the anchor and stays clickable through
+  // `data-tour-interactive` (see styles/tours.css).
   WIZARD_BODY: "wizard-body",
 } as const;
 

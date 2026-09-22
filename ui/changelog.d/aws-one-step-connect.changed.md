@@ -1,1 +1,1 @@
-AWS accounts are connected in a single wizard step: the account is read from the role ARN, or typed for access keys, and its credentials are stored with it before the connection test
+AWS accounts are connected in a single wizard step: the account is read from the role ARN, or typed for access keys, the role is assumed with Prowler's own credentials, and the credentials are stored with the account before the connection test
