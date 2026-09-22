@@ -26,6 +26,7 @@ interface AwsRoleTemplateLinks {
 interface AwsRoleQuickDeployProps {
   externalId: string;
   templateLinks: AwsRoleTemplateLinks;
+  isCloudEnv: boolean;
 }
 
 const signalTemplateOpened = (template: RoleTemplateKind) =>
@@ -34,16 +35,18 @@ const signalTemplateOpened = (template: RoleTemplateKind) =>
     template,
   });
 
-/** Prowler Cloud: one button creates the role; the raw templates stay tucked away. */
+/** One button creates the role; the raw templates stay tucked away. */
 export function AwsRoleQuickDeploy({
   externalId,
   templateLinks,
+  isCloudEnv,
 }: AwsRoleQuickDeployProps) {
   return (
     <div className="flex flex-col gap-4">
       <p className="text-text-neutral-secondary text-sm">
-        Open the AWS console to create a read-only IAM role that Prowler Cloud
-        can assume. The stack is already configured for your tenant.
+        {isCloudEnv
+          ? "Open the AWS console to create a read-only IAM role that Prowler Cloud can assume. The stack comes with your External ID filled in."
+          : "Open the AWS console to create a read-only IAM role that Prowler can assume. Fill in the AWS account Prowler runs from; the External ID comes filled in."}
       </p>
 
       <Button size="lg" className="w-fit" asChild>

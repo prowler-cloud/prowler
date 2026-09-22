@@ -9,15 +9,13 @@ import {
   FieldValues,
   Resolver,
   UseFormReturn,
-  UseFormSetValue,
   useForm,
   useWatch,
 } from "react-hook-form";
 
 import { RadioCard } from "@/components/providers/radio-card";
-import { CredentialsRoleHelper } from "@/components/providers/workflow/credentials-role-helper";
 import { WizardInputField } from "@/components/providers/workflow/forms/fields";
-import { AwsRoleCredentialsSource } from "@/components/providers/workflow/forms/select-credentials-type/aws/credentials-type/aws-role-credentials-source";
+import { AwsRoleStaticKeyFields } from "@/components/providers/workflow/forms/select-credentials-type/aws/credentials-type/aws-role-credentials-source";
 import { AwsRoleOptionalFields } from "@/components/providers/workflow/forms/select-credentials-type/aws/credentials-type/aws-role-optional-fields";
 import { AWSStaticCredentialsForm } from "@/components/providers/workflow/forms/select-credentials-type/aws/credentials-type/aws-static-credentials-form";
 import { ProviderTitleDocs } from "@/components/providers/workflow/provider-title-docs";
@@ -225,9 +223,6 @@ function AwsRoleConnectForm({
   const { data: session } = useSession();
   const externalId = session?.tenantId ?? "";
   const isCloudEnv = isCloud();
-  const defaultCredentialsType = isCloudEnv
-    ? ProviderCredentialFields.CREDENTIALS_TYPE_AWS
-    : ProviderCredentialFields.CREDENTIALS_TYPE_ACCESS_SECRET_KEY;
 
   const form = useForm<AwsRoleConnectValues>({
     resolver: zodResolver(
@@ -238,7 +233,8 @@ function AwsRoleConnectForm({
       [ProviderCredentialFields.PROVIDER_ID]: "",
       [ProviderCredentialFields.PROVIDER_TYPE]: "aws",
       [ProviderCredentialFields.PROVIDER_ALIAS]: "",
-      [ProviderCredentialFields.CREDENTIALS_TYPE]: defaultCredentialsType,
+      [ProviderCredentialFields.CREDENTIALS_TYPE]:
+        ProviderCredentialFields.CREDENTIALS_TYPE_AWS,
       [ProviderCredentialFields.ROLE_ARN]: "",
       [ProviderCredentialFields.AWS_ACCESS_KEY_ID]: "",
       [ProviderCredentialFields.AWS_SECRET_ACCESS_KEY]: "",
@@ -252,19 +248,31 @@ function AwsRoleConnectForm({
     control: form.control,
     name: ProviderCredentialFields.ROLE_ARN,
   });
-  const credentialsType = useWatch({
+  const [accessKeyId, secretAccessKey] = useWatch({
     control: form.control,
-    name: ProviderCredentialFields.CREDENTIALS_TYPE,
+    name: [
+      ProviderCredentialFields.AWS_ACCESS_KEY_ID,
+      ProviderCredentialFields.AWS_SECRET_ACCESS_KEY,
+    ],
   });
   const detectedAccountId = parseAwsAccountIdFromRoleArn(roleArn ?? "");
+  // Filled keys assume the role; empty keys leave it to the host's own credentials.
+  const credentialsType =
+    accessKeyId?.trim() && secretAccessKey?.trim()
+      ? ProviderCredentialFields.CREDENTIALS_TYPE_ACCESS_SECRET_KEY
+      : ProviderCredentialFields.CREDENTIALS_TYPE_AWS;
 
   const onSubmit = useAwsConnectSubmit({
     form,
     method: AWS_ACCESS_METHOD.ROLE,
     accountField: ProviderCredentialFields.ROLE_ARN,
     canSubmit: form.formState.isValid && detectedAccountId !== null,
-    // The external id is the tenant's, never user input, so it joins at submit time.
-    extraValues: { [ProviderCredentialFields.EXTERNAL_ID]: externalId },
+    // Neither is typed by the user: the external id is the tenant's and the
+    // credentials type follows from the keys, so both join at submit time.
+    extraValues: {
+      [ProviderCredentialFields.EXTERNAL_ID]: externalId,
+      [ProviderCredentialFields.CREDENTIALS_TYPE]: credentialsType,
+    },
     onConnected,
     onBusyChange,
     onUiStateChange,
@@ -280,18 +288,11 @@ function AwsRoleConnectForm({
       <form id={formId} onSubmit={onSubmit} className="flex flex-col gap-6">
         <section className="flex flex-col gap-4">
           <h4 className="text-sm font-semibold">1. Create the IAM role</h4>
-          {isCloudEnv ? (
-            <AwsRoleQuickDeploy
-              externalId={externalId}
-              templateLinks={templateLinks}
-            />
-          ) : (
-            // Self-hosted keeps every template up front: its role needs more than an external id.
-            <CredentialsRoleHelper
-              externalId={externalId}
-              templateLinks={templateLinks}
-            />
-          )}
+          <AwsRoleQuickDeploy
+            externalId={externalId}
+            templateLinks={templateLinks}
+            isCloudEnv={isCloudEnv}
+          />
         </section>
 
         <section className="flex flex-col gap-4">
@@ -334,16 +335,18 @@ function AwsRoleConnectForm({
             </Button>
           </CollapsibleTrigger>
           <CollapsibleContent className="flex flex-col gap-4">
-            {/* Cloud assumes the role with its own identity; only self-hosted picks the credentials. */}
+            {/* Cloud assumes the role with its own identity; self-hosted needs keys or the host's. */}
             {!isCloudEnv && (
-              <AwsRoleCredentialsSource
-                control={roleControl}
-                setValue={
-                  form.setValue as unknown as UseFormSetValue<AWSCredentialsRole>
-                }
-                credentialsType={credentialsType ?? defaultCredentialsType}
-                isCloudEnv={isCloudEnv}
-              />
+              <div className="flex flex-col gap-4">
+                <p className="text-text-neutral-secondary text-sm">
+                  Prowler assumes the role with these keys. Leave them empty to
+                  use the credentials of the machine running Prowler.
+                </p>
+                <AwsRoleStaticKeyFields
+                  control={roleControl}
+                  isRequired={false}
+                />
+              </div>
             )}
             <AwsRoleOptionalFields control={roleControl} />
           </CollapsibleContent>

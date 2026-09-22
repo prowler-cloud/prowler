@@ -238,11 +238,8 @@ test.describe("Add Provider", () => {
         );
         await providersPage.fillAWSProviderDetails(awsProviderData);
 
-        // Select Authentication Method (under Advanced options)
-        await providersPage.selectAuthenticationMethod(
-          AWS_CREDENTIAL_OPTIONS.AWS_SDK_DEFAULT,
-        );
-
+        // Leaving the keys under Advanced options empty assumes the role with
+        // the credentials of the host running Prowler (AWS SDK default).
         // Fill role credentials
         await providersPage.fillRoleCredentials(roleCredentials);
         await providersPage.clickNext();

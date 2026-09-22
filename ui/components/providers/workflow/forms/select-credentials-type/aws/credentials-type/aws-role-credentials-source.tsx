@@ -19,6 +19,51 @@ interface AwsRoleCredentialsSourceProps {
   isCloudEnv: boolean;
 }
 
+interface AwsRoleStaticKeyFieldsProps {
+  control: Control<AWSCredentialsRole>;
+  /** Optional where empty keys fall back to the host's own credentials. */
+  isRequired?: boolean;
+}
+
+/** The static access keys Prowler assumes the role with. */
+export const AwsRoleStaticKeyFields = ({
+  control,
+  isRequired = true,
+}: AwsRoleStaticKeyFieldsProps) => (
+  <>
+    <WizardInputField
+      control={control}
+      name={ProviderCredentialFields.AWS_ACCESS_KEY_ID}
+      type="password"
+      label="AWS Access Key ID"
+      labelPlacement="inside"
+      placeholder="Enter the AWS Access Key ID"
+      variant="bordered"
+      isRequired={isRequired}
+    />
+    <WizardInputField
+      control={control}
+      name={ProviderCredentialFields.AWS_SECRET_ACCESS_KEY}
+      type="password"
+      label="AWS Secret Access Key"
+      labelPlacement="inside"
+      placeholder="Enter the AWS Secret Access Key"
+      variant="bordered"
+      isRequired={isRequired}
+    />
+    <WizardInputField
+      control={control}
+      name={ProviderCredentialFields.AWS_SESSION_TOKEN}
+      type="password"
+      label="AWS Session Token (optional)"
+      labelPlacement="inside"
+      placeholder="Enter the AWS Session Token"
+      variant="bordered"
+      isRequired={false}
+    />
+  </>
+);
+
 /** Which credentials Prowler uses to assume the role, plus the keys when they are static. */
 export const AwsRoleCredentialsSource = ({
   control,
@@ -68,38 +113,7 @@ export const AwsRoleCredentialsSource = ({
     </div>
 
     {credentialsType === "access-secret-key" && (
-      <>
-        <WizardInputField
-          control={control}
-          name={ProviderCredentialFields.AWS_ACCESS_KEY_ID}
-          type="password"
-          label="AWS Access Key ID"
-          labelPlacement="inside"
-          placeholder="Enter the AWS Access Key ID"
-          variant="bordered"
-          isRequired
-        />
-        <WizardInputField
-          control={control}
-          name={ProviderCredentialFields.AWS_SECRET_ACCESS_KEY}
-          type="password"
-          label="AWS Secret Access Key"
-          labelPlacement="inside"
-          placeholder="Enter the AWS Secret Access Key"
-          variant="bordered"
-          isRequired
-        />
-        <WizardInputField
-          control={control}
-          name={ProviderCredentialFields.AWS_SESSION_TOKEN}
-          type="password"
-          label="AWS Session Token (optional)"
-          labelPlacement="inside"
-          placeholder="Enter the AWS Session Token"
-          variant="bordered"
-          isRequired={false}
-        />
-      </>
+      <AwsRoleStaticKeyFields control={control} />
     )}
   </>
 );

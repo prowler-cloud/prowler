@@ -620,7 +620,7 @@
 3. Select AWS provider type
 4. On the single AWS step, keep the "IAM Role" access method
 5. Fill the alias (the account ID is read from the role ARN)
-6. Under "Advanced options", switch the credentials source to "AWS SDK Default"
+6. Leave the access keys under "Advanced options" empty, so Prowler assumes the role with the host's AWS SDK default credentials
 7. Fill the role ARN and click "Connect account"
 8. Confirm provider connection without launching a scan
 9. Verify return to Providers page
@@ -637,8 +637,8 @@
 
 - Provider page loads correctly
 - Connect account page displays AWS option
-- Credentials form exposes AWS SDK default authentication method
-- Role ARN field accepts provided value when SDK method is selected
+- Advanced options expose optional access keys; leaving them empty selects the AWS SDK default chain
+- Role ARN field accepts the provided value with the keys left empty
 - Launch step appears
 - Successful return to Providers page after closing the launch step
 - Provider exists in Providers table (verified by account ID)

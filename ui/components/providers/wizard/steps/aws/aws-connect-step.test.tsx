@@ -297,30 +297,104 @@ describe("AwsConnectStep", () => {
       vi.stubEnv("UI_CLOUD_ENABLED", "false");
     });
 
-    it("keeps the multi-parameter template and asks for the keys that assume the role", async () => {
-      // Given
-      const { user } = renderStep();
-
-      // Then: the Prowler Cloud-only template never leaks into self-hosted.
-      expect(
-        screen.getByRole("link", { name: /CloudFormation Quick Link/i }),
-      ).toHaveAttribute(
-        "href",
-        expect.stringContaining("prowler-scan-role.yml"),
-      );
-      expect(
-        screen.getByPlaceholderText("Enter the AWS Access Key ID"),
-      ).toBeVisible();
-
-      // When: the ARN alone is not enough without the assuming credentials.
+    const typeArn = async (user: ReturnType<typeof userEvent.setup>) => {
       await user.type(
         screen.getByRole("textbox", { name: /Role ARN/ }),
         ROLE_ARN,
       );
+      await screen.findByText(/Account 123456789012 will be added/);
+    };
+
+    it("offers the same one-click role setup, on the shared template", () => {
+      // Given
+      renderStep();
+
+      // Then: the template keeps the AccountId parameter self-hosted users must edit.
+      expect(
+        screen.getByRole("link", { name: /Create the IAM role in AWS/i }),
+      ).toHaveAttribute(
+        "href",
+        expect.stringContaining("prowler-scan-role.yml"),
+      );
+      expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
+    });
+
+    it("connects with the host credentials when the keys are left empty", async () => {
+      // Given
+      const { onConnected, user } = renderStep();
+      expect(
+        screen.getByPlaceholderText("Enter the AWS Access Key ID"),
+      ).toBeVisible();
+
+      // When
+      await typeArn(user);
+      await waitFor(() => expect(connectButton()).toBeEnabled());
+      await user.click(connectButton());
 
       // Then
-      await screen.findByText(/Account 123456789012 will be added/);
-      expect(connectButton()).toBeDisabled();
+      await waitFor(() => expect(onConnected).toHaveBeenCalledOnce());
+      const secret = Object.fromEntries(
+        (addCredentialsProvider.mock.calls[0][0] as FormData).entries(),
+      );
+      expect(secret).toMatchObject({
+        role_arn: ROLE_ARN,
+        credentials_type: "aws-sdk-default",
+      });
+      expect(secret).not.toHaveProperty("aws_access_key_id");
+    });
+
+    it("assumes the role with static keys when both are filled", async () => {
+      // Given
+      const { onConnected, user } = renderStep();
+
+      // When
+      await typeArn(user);
+      await user.type(
+        screen.getByPlaceholderText("Enter the AWS Access Key ID"),
+        "AKIAEXAMPLE",
+      );
+      await user.type(
+        screen.getByPlaceholderText("Enter the AWS Secret Access Key"),
+        "secret",
+      );
+      await waitFor(() => expect(connectButton()).toBeEnabled());
+      await user.click(connectButton());
+
+      // Then
+      await waitFor(() => expect(onConnected).toHaveBeenCalledOnce());
+      const secret = Object.fromEntries(
+        (addCredentialsProvider.mock.calls[0][0] as FormData).entries(),
+      );
+      expect(secret).toMatchObject({
+        credentials_type: "access-secret-key",
+        aws_access_key_id: "AKIAEXAMPLE",
+        aws_secret_access_key: "secret",
+      });
+    });
+
+    it("holds the connect button until both keys are filled", async () => {
+      // Given
+      const { user } = renderStep();
+      await typeArn(user);
+      await waitFor(() => expect(connectButton()).toBeEnabled());
+
+      // When: half a key pair is neither static keys nor the host's credentials.
+      await user.type(
+        screen.getByPlaceholderText("Enter the AWS Access Key ID"),
+        "AKIAEXAMPLE",
+      );
+
+      // Then
+      await waitFor(() => expect(connectButton()).toBeDisabled());
+
+      // When
+      await user.type(
+        screen.getByPlaceholderText("Enter the AWS Secret Access Key"),
+        "secret",
+      );
+
+      // Then
+      await waitFor(() => expect(connectButton()).toBeEnabled());
     });
   });
 });
