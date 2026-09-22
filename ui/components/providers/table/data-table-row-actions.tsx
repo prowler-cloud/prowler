@@ -42,7 +42,10 @@ import {
   getNodeLabel,
   organizationNameFallbackHint,
 } from "@/lib/organizations";
-import { testProviderConnection } from "@/lib/provider-helpers";
+import {
+  resolveProviderConnectionState,
+  testProviderConnection,
+} from "@/lib/provider-helpers";
 import { getScanScheduleCapability } from "@/lib/schedules";
 import { isCloud } from "@/lib/shared/env";
 import {
@@ -394,7 +397,7 @@ export function DataTableRowActions({
     // asks for.
     let succeeded = 0;
     let failed = 0;
-    const pendingTaskIds: string[] = [];
+    const providerIdByTaskId = new Map<string, string>();
 
     try {
       const outcomes = await startProviderConnectionChecks(ids);
@@ -408,16 +411,24 @@ export function DataTableRowActions({
           continue;
         }
 
-        pendingTaskIds.push(outcome.taskId);
+        providerIdByTaskId.set(outcome.taskId, id);
       }
 
-      await pollConnectionTasks(pendingTaskIds, {
+      await pollConnectionTasks(Array.from(providerIdByTaskId.keys()), {
         onSettled: (_taskId, result) => {
           if (result.success) {
             succeeded += 1;
           } else {
             failed += 1;
           }
+        },
+        resolveExhausted: async (taskId) => {
+          const id = providerIdByTaskId.get(taskId);
+          if (!id) {
+            return null;
+          }
+          const state = await resolveProviderConnectionState(id);
+          return { success: state.connected, error: state.error ?? undefined };
         },
       });
     } catch {

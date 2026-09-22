@@ -4,6 +4,15 @@ import {
 } from "@/types/organizations";
 
 const DEFAULT_POLL_DELAYS_MS = [2000, 3000, 5000] as const;
+export const CONNECTION_CHECK_DEFAULT_DELAYS_MS = DEFAULT_POLL_DELAYS_MS;
+
+/**
+ * `provider-connection-check` has a 120s hard time limit in Celery
+ * (api/src/backend/config/celery.py `task_annotations`). With the delay ladder
+ * above -- 2s, 3s, then 5s repeating -- 32 retries cover roughly 155s,
+ * comfortably past the task's hard limit plus queueing/network slack.
+ */
+export const CONNECTION_CHECK_MAX_RETRIES = 32;
 
 interface BuildCandidateToProviderMapParams {
   selectedCandidateIds: string[];
@@ -27,6 +36,16 @@ interface PollConnectionTasksOptions
   /** Called once per task, the round it reaches a terminal state. */
   onSettled: (taskId: string, result: PollConnectionTaskResult) => void;
   getTasksByIds?: (taskIds: string[]) => Promise<Record<string, unknown>>;
+  /**
+   * Called once per task still pending after `maxRetries` is exhausted, so the
+   * caller can re-read the provider's persisted connection state instead of
+   * reporting a flat timeout -- the backend task may still be running past the
+   * wait, or may have already finished with the UI no longer polling it.
+   * Returning `null` falls back to the timeout message.
+   */
+  resolveExhausted?: (
+    taskId: string,
+  ) => Promise<PollConnectionTaskResult | null>;
 }
 
 export interface PollConnectionTaskResult {
@@ -180,9 +199,10 @@ export async function pollConnectionTasks(
     getTasksByIds,
     sleep = async (ms: number) =>
       new Promise((resolve) => setTimeout(resolve, ms)),
-    maxRetries = 20,
+    maxRetries = CONNECTION_CHECK_MAX_RETRIES,
     delaysMs = [...DEFAULT_POLL_DELAYS_MS],
     signal,
+    resolveExhausted,
   }: PollConnectionTasksOptions,
 ): Promise<void> {
   const pending = new Set(taskIds.filter(Boolean));
@@ -237,6 +257,20 @@ export async function pollConnectionTasks(
     }
 
     await sleepWithAbort(getPollingDelay(attempt, delaysMs), sleep, signal);
+  }
+
+  if (resolveExhausted) {
+    for (const taskId of Array.from(pending)) {
+      if (signal?.aborted) {
+        break;
+      }
+
+      const resolved = await resolveExhausted(taskId);
+      if (resolved) {
+        pending.delete(taskId);
+        onSettled(taskId, resolved);
+      }
+    }
   }
 
   settleRemaining("Connection test timed out.");

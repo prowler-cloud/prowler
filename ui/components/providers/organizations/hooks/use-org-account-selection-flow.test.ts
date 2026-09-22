@@ -22,6 +22,17 @@ const providersActionsMock = vi.hoisted(() => ({
 const tasksActionsMock = vi.hoisted(() => ({
   getTasksByIds: vi.fn(),
 }));
+const providerHelpersMock = vi.hoisted(() => ({
+  resolveProviderConnectionState: vi.fn(),
+}));
+const pollConnectionTasksMock = vi.hoisted(() => vi.fn());
+// Mutable holder for the real `pollConnectionTasks`, captured once the module
+// mock factory below runs, and re-applied in `beforeEach` since
+// `mockReset: true` clears `pollConnectionTasksMock`'s implementation before
+// every test.
+const realPollConnectionTasksHolder = vi.hoisted(
+  () => ({}) as { current?: (...args: unknown[]) => unknown },
+);
 
 vi.mock(
   "@/actions/organizations/organizations",
@@ -29,6 +40,15 @@ vi.mock(
 );
 vi.mock("@/actions/providers/providers", () => providersActionsMock);
 vi.mock("@/actions/task/tasks", () => tasksActionsMock);
+vi.mock("@/lib/provider-helpers", () => providerHelpersMock);
+vi.mock("../org-account-selection.utils", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("../org-account-selection.utils")>();
+  realPollConnectionTasksHolder.current = actual.pollConnectionTasks as (
+    ...args: unknown[]
+  ) => unknown;
+  return { ...actual, pollConnectionTasks: pollConnectionTasksMock };
+});
 
 const ORGANIZATION_UID = "organizations/123456789012";
 const PROJECT_UID = "projects/acme-prod";
@@ -91,9 +111,14 @@ describe("useOrgAccountSelectionFlow", () => {
       ...Object.values(organizationsActionsMock),
       ...Object.values(providersActionsMock),
       ...Object.values(tasksActionsMock),
+      ...Object.values(providerHelpersMock),
     ]) {
       mockFn.mockReset();
     }
+    pollConnectionTasksMock.mockReset();
+    pollConnectionTasksMock.mockImplementation((...args: unknown[]) =>
+      realPollConnectionTasksHolder.current?.(...args),
+    );
 
     organizationsActionsMock.applyDiscovery.mockResolvedValue({
       data: {
@@ -154,6 +179,49 @@ describe("useOrgAccountSelectionFlow", () => {
           CONNECTION_TEST_STATUS.SUCCESS,
         );
       });
+      expect(onNext).toHaveBeenCalledTimes(1);
+    });
+
+    it("resolves a still-pending task from the provider's persisted state once the wait is exhausted", async () => {
+      // Given the batch poll never settles the task before retries run out.
+      seedAppliedSelection();
+      providersActionsMock.startProviderConnectionChecks.mockResolvedValue({
+        [PROVIDER_ID]: { taskId: "task-1" },
+      });
+      providerHelpersMock.resolveProviderConnectionState.mockResolvedValue({
+        connected: true,
+        error: null,
+      });
+      pollConnectionTasksMock.mockImplementation(
+        async (taskIds: string[], { onSettled, resolveExhausted }) => {
+          for (const taskId of taskIds) {
+            const resolved = resolveExhausted
+              ? await resolveExhausted(taskId)
+              : null;
+            onSettled(
+              taskId,
+              resolved ?? {
+                success: false,
+                error: "Connection test timed out.",
+              },
+            );
+          }
+        },
+      );
+      const { onNext, startTesting } = renderFlow();
+
+      // When
+      await startTesting();
+
+      // Then: read from the provider's own record, not reported as a timeout.
+      await waitFor(() => {
+        expect(useOrgSetupStore.getState().connectionResults[PROVIDER_ID]).toBe(
+          CONNECTION_TEST_STATUS.SUCCESS,
+        );
+      });
+      expect(
+        providerHelpersMock.resolveProviderConnectionState,
+      ).toHaveBeenCalledWith(PROVIDER_ID);
       expect(onNext).toHaveBeenCalledTimes(1);
     });
   });

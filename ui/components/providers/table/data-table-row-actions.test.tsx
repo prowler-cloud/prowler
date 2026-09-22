@@ -37,14 +37,26 @@ const {
   checkConnectionProviderMock,
   getScheduleMock,
   getTasksByIdsMock,
+  pollConnectionTasksMock,
   pushMock,
+  realPollConnectionTasksHolder,
+  resolveProviderConnectionStateMock,
   revalidateProvidersMock,
   startProviderConnectionChecksMock,
 } = vi.hoisted(() => ({
   checkConnectionProviderMock: vi.fn(),
   getScheduleMock: vi.fn(),
   getTasksByIdsMock: vi.fn(),
+  pollConnectionTasksMock: vi.fn(),
   pushMock: vi.fn(),
+  // Mutable holder for the real `pollConnectionTasks`, captured once the
+  // module mock factory below runs, and read fresh in `beforeEach` since
+  // `mockReset: true` clears `pollConnectionTasksMock`'s implementation
+  // before every test.
+  realPollConnectionTasksHolder: {} as {
+    current?: (...args: unknown[]) => unknown;
+  },
+  resolveProviderConnectionStateMock: vi.fn(),
   revalidateProvidersMock: vi.fn(),
   startProviderConnectionChecksMock: vi.fn(),
 }));
@@ -128,8 +140,23 @@ vi.mock("@/components/shadcn", async (importOriginal) => ({
 }));
 
 vi.mock("@/lib/provider-helpers", () => ({
+  resolveProviderConnectionState: resolveProviderConnectionStateMock,
   testProviderConnection: vi.fn(),
 }));
+
+vi.mock(
+  "@/components/providers/organizations/org-account-selection.utils",
+  async (importOriginal) => {
+    const actual =
+      await importOriginal<
+        typeof import("@/components/providers/organizations/org-account-selection.utils")
+      >();
+    realPollConnectionTasksHolder.current = actual.pollConnectionTasks as (
+      ...args: unknown[]
+    ) => unknown;
+    return { ...actual, pollConnectionTasks: pollConnectionTasksMock };
+  },
+);
 
 import { DataTableRowActions } from "./data-table-row-actions";
 
@@ -301,6 +328,12 @@ describe("DataTableRowActions", () => {
   });
 
   beforeEach(() => {
+    // `mockReset: true` (vitest.config.ts) clears this before every test, so
+    // the real implementation is the default and tests only override it when
+    // they need to simulate an exhausted poll.
+    pollConnectionTasksMock.mockImplementation((...args: unknown[]) =>
+      realPollConnectionTasksHolder.current?.(...args),
+    );
     getScheduleMock.mockResolvedValue({
       data: {
         type: "schedules",
@@ -778,6 +811,67 @@ describe("DataTableRowActions", () => {
     expect(getTasksByIdsMock).toHaveBeenCalledTimes(1);
     expect(getTasksByIdsMock).toHaveBeenCalledWith(["task-1", "task-2"]);
     expect(checkConnectionProviderMock).not.toHaveBeenCalled();
+  });
+
+  it("falls back to the provider's persisted state for a task still pending once the bulk wait is exhausted", async () => {
+    // Given: the batch poll exhausts its retries for both tasks; the component
+    // must re-read each provider's connection state instead of reporting a
+    // flat timeout.
+    const user = userEvent.setup();
+    const testableProviderIds = ["provider-child-1", "provider-standalone"];
+    startProviderConnectionChecksMock.mockResolvedValue({
+      "provider-child-1": { taskId: "task-1" },
+      "provider-standalone": { taskId: "task-2" },
+    });
+    pollConnectionTasksMock.mockImplementation(
+      async (taskIds: string[], { onSettled, resolveExhausted }) => {
+        for (const taskId of taskIds) {
+          const resolved = resolveExhausted
+            ? await resolveExhausted(taskId)
+            : null;
+          onSettled(
+            taskId,
+            resolved ?? { success: false, error: "Connection test timed out." },
+          );
+        }
+      },
+    );
+    resolveProviderConnectionStateMock.mockImplementation(
+      async (providerId: string) =>
+        providerId === "provider-standalone"
+          ? { connected: true, error: null }
+          : {
+              connected: false,
+              error: "Connection was not confirmed. Test the connection again.",
+            },
+    );
+
+    render(
+      <DataTableRowActions
+        row={createOrgRow()}
+        hasSelection={true}
+        isRowSelected={false}
+        testableProviderIds={testableProviderIds}
+        onClearSelection={vi.fn()}
+        onOpenProviderWizard={vi.fn()}
+        onOpenOrganizationWizard={vi.fn()}
+      />,
+    );
+
+    // When
+    await user.click(screen.getByRole("button"));
+    await user.click(screen.getByText("Test Connections (2)"));
+
+    // Then: each pending task is resolved from the provider's own record.
+    await vi.waitFor(() =>
+      expect(revalidateProvidersMock).toHaveBeenCalledTimes(1),
+    );
+    expect(resolveProviderConnectionStateMock).toHaveBeenCalledWith(
+      "provider-child-1",
+    );
+    expect(resolveProviderConnectionStateMock).toHaveBeenCalledWith(
+      "provider-standalone",
+    );
   });
 
   it("shows selected provider count in Test Connections when OU row has active selection", async () => {

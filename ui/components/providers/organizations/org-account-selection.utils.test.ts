@@ -5,6 +5,8 @@ import { CONNECTION_TEST_STATUS } from "@/types/organizations";
 import {
   buildCandidateToProviderMap,
   canAdvanceToLaunchStep,
+  CONNECTION_CHECK_DEFAULT_DELAYS_MS,
+  CONNECTION_CHECK_MAX_RETRIES,
   getLaunchableProviderIds,
   pollConnectionTasks,
 } from "./org-account-selection.utils";
@@ -169,6 +171,71 @@ describe("pollConnectionTasks", () => {
       getTasksByIds,
       sleep: async () => {},
       maxRetries: 2,
+    });
+
+    // Then
+    expect(settled).toEqual([
+      ["task-a", { success: true }],
+      ["task-b", { success: false, error: "Connection test timed out." }],
+    ]);
+  });
+
+  it("sizes the default wait past the backend's 120s provider-connection-check time limit", () => {
+    // The last delay in the ladder repeats for every retry beyond it, so the
+    // worst-case total wait is (maxRetries - 1) * lastDelay.
+    const lastDelay =
+      CONNECTION_CHECK_DEFAULT_DELAYS_MS[
+        CONNECTION_CHECK_DEFAULT_DELAYS_MS.length - 1
+      ];
+    const worstCaseWaitMs = (CONNECTION_CHECK_MAX_RETRIES - 1) * lastDelay;
+
+    expect(worstCaseWaitMs).toBeGreaterThan(120_000);
+  });
+
+  it("resolves a still-pending task from the caller once the wait is exhausted", async () => {
+    // Given: the batch read never settles "task-b" before retries run out.
+    const getTasksByIds = vi.fn(async () => ({
+      "task-a": completed(true),
+      "task-b": executing,
+    }));
+    const settled: Array<[string, unknown]> = [];
+    const resolveExhausted = vi.fn(async (taskId: string) =>
+      taskId === "task-b" ? { success: true } : null,
+    );
+
+    // When
+    await pollConnectionTasks(["task-a", "task-b"], {
+      onSettled: (taskId, result) => settled.push([taskId, result]),
+      getTasksByIds,
+      sleep: async () => {},
+      maxRetries: 2,
+      resolveExhausted,
+    });
+
+    // Then: the exhausted task is settled from the fallback, not a timeout.
+    expect(resolveExhausted).toHaveBeenCalledWith("task-b");
+    expect(settled).toEqual([
+      ["task-a", { success: true }],
+      ["task-b", { success: true }],
+    ]);
+  });
+
+  it("falls back to the timeout message when the fallback cannot resolve a task", async () => {
+    // Given
+    const getTasksByIds = vi.fn(async () => ({
+      "task-a": completed(true),
+      "task-b": executing,
+    }));
+    const settled: Array<[string, unknown]> = [];
+    const resolveExhausted = vi.fn(async () => null);
+
+    // When
+    await pollConnectionTasks(["task-a", "task-b"], {
+      onSettled: (taskId, result) => settled.push([taskId, result]),
+      getTasksByIds,
+      sleep: async () => {},
+      maxRetries: 2,
+      resolveExhausted,
     });
 
     // Then

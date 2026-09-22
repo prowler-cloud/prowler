@@ -13,6 +13,7 @@ import {
   WIZARD_FOOTER_ACTION_TYPE,
   WizardFooterConfig,
 } from "@/components/providers/wizard/steps/footer-controls";
+import { resolveProviderConnectionState } from "@/lib/provider-helpers";
 import { useOrgSetupStore } from "@/store/organizations/store";
 import {
   CONNECTION_TEST_STATUS,
@@ -357,6 +358,14 @@ export function useOrgAccountSelectionFlow({
           if (providerId) {
             settleProvider(providerId, result);
           }
+        },
+        resolveExhausted: async (taskId) => {
+          const providerId = providerIdByTaskId.get(taskId);
+          if (!providerId) {
+            return null;
+          }
+          const state = await resolveProviderConnectionState(providerId);
+          return { success: state.connected, error: state.error ?? undefined };
         },
       });
     } catch {

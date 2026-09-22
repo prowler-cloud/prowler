@@ -1,4 +1,7 @@
-import { checkConnectionProvider } from "@/actions/providers/providers";
+import {
+  checkConnectionProvider,
+  getProvider,
+} from "@/actions/providers/providers";
 import {
   ProviderEntity,
   ProviderProps,
@@ -6,7 +9,7 @@ import {
   ProviderType,
 } from "@/types/providers";
 
-import { checkTaskStatus } from "./helper";
+import { checkTaskStatus, TASK_STATUS_MAX_RETRIES_ERROR } from "./helper";
 
 export const extractProviderUIDs = (
   providersData: ProvidersApiResponse,
@@ -177,6 +180,54 @@ export interface TestConnectionResult {
 }
 
 /**
+ * The `provider-connection-check` Celery task has a 120s hard time limit
+ * (api/src/backend/config/celery.py `task_annotations`). Poll long enough to
+ * cover a full run plus queueing/network slack, instead of the generic 30s
+ * default, which cuts the wait off well before the backend gives up.
+ */
+export const PROVIDER_CONNECTION_CHECK_TASK_TIME_LIMIT_MS = 120_000;
+const PROVIDER_CONNECTION_CHECK_POLL_BUFFER_MS = 30_000;
+export const PROVIDER_CONNECTION_CHECK_POLL_DELAY_MS = 1_500;
+export const PROVIDER_CONNECTION_CHECK_MAX_RETRIES = Math.ceil(
+  (PROVIDER_CONNECTION_CHECK_TASK_TIME_LIMIT_MS +
+    PROVIDER_CONNECTION_CHECK_POLL_BUFFER_MS) /
+    PROVIDER_CONNECTION_CHECK_POLL_DELAY_MS,
+);
+
+const CONNECTION_NOT_CONFIRMED_MESSAGE =
+  "Connection was not confirmed. Test the connection again.";
+const CONNECTION_STILL_RUNNING_MESSAGE =
+  "The connection test is still running. Refresh in a moment to see the result.";
+
+/**
+ * Re-reads a provider's persisted connection state from the API. Used when a
+ * connection-check wait is exhausted: the backend task may still be running (or
+ * may already have finished after the UI stopped waiting on it), so this reports
+ * whatever the provider record currently says instead of a flat error.
+ */
+export async function resolveProviderConnectionState(
+  providerId: string,
+): Promise<TestConnectionResult> {
+  const formData = new FormData();
+  formData.append("id", providerId);
+
+  const providerResponse = await getProvider(formData);
+  const connection = providerResponse?.data?.attributes?.connection;
+
+  if (connection?.connected === true) {
+    return { connected: true, error: null };
+  }
+
+  if (connection?.connected === false) {
+    return { connected: false, error: CONNECTION_NOT_CONFIRMED_MESSAGE };
+  }
+
+  // `connected` is still null (never checked, or the backend task has not
+  // written a result yet) -- neither a confirmed pass nor fail.
+  return { connected: false, error: CONNECTION_STILL_RUNNING_MESSAGE };
+}
+
+/**
  * Tests a provider's connection end-to-end: submits the task, polls until
  * completion, and returns the real connection result.
  *
@@ -203,9 +254,16 @@ export async function testProviderConnection(
     return { connected: false, error: "No task ID returned" };
   }
 
-  const taskResult = await checkTaskStatus(taskId);
+  const taskResult = await checkTaskStatus(
+    taskId,
+    PROVIDER_CONNECTION_CHECK_MAX_RETRIES,
+    PROVIDER_CONNECTION_CHECK_POLL_DELAY_MS,
+  );
 
   if (!taskResult.completed) {
+    if (taskResult.error === TASK_STATUS_MAX_RETRIES_ERROR) {
+      return resolveProviderConnectionState(providerId);
+    }
     return {
       connected: false,
       error: taskResult.error ?? "Connection test timed out",
@@ -218,9 +276,6 @@ export async function testProviderConnection(
 
   return {
     connected,
-    error: connected
-      ? null
-      : result?.error ||
-        "Connection was not confirmed. Test the connection again.",
+    error: connected ? null : result?.error || CONNECTION_NOT_CONFIRMED_MESSAGE,
   };
 }
