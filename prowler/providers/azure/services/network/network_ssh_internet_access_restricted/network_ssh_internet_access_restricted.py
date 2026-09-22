@@ -1,5 +1,6 @@
 from prowler.lib.check.models import Check, Check_Report_Azure
 from prowler.providers.azure.services.network.network_client import network_client
+from prowler.providers.azure.services.network.network_service import rule_matches_port
 
 
 class network_ssh_internet_access_restricted(Check):
@@ -17,17 +18,7 @@ class network_ssh_internet_access_restricted(Check):
                 report.status = "PASS"
                 report.status_extended = f"Security Group {security_group.name} from subscription {subscription_name} ({subscription}) has SSH internet access restricted."
                 rule_fail_condition = any(
-                    (
-                        rule.destination_port_range == "22"
-                        or (
-                            (
-                                rule.destination_port_range
-                                and "-" in rule.destination_port_range
-                            )
-                            and int(rule.destination_port_range.split("-")[0]) <= 22
-                            and int(rule.destination_port_range.split("-")[1]) >= 22
-                        )
-                    )
+                    rule_matches_port(rule, 22)
                     and rule.protocol in ["TCP", "Tcp", "*"]
                     and rule.source_address_prefix in ["Internet", "*", "0.0.0.0/0"]
                     and rule.access == "Allow"
