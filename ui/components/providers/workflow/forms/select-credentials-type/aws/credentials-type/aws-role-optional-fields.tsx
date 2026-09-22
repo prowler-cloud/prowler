@@ -12,29 +12,26 @@ interface AwsRoleOptionalFieldsProps {
 export const AwsRoleOptionalFields = ({
   control,
 }: AwsRoleOptionalFieldsProps) => (
-  <>
-    <span className="text-text-neutral-tertiary text-xs">Optional fields</span>
-    <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
-      <WizardInputField
-        control={control}
-        name={ProviderCredentialFields.ROLE_SESSION_NAME}
-        type="text"
-        label="Role session name"
-        labelPlacement="inside"
-        placeholder="Enter the role session name"
-        variant="bordered"
-        isRequired={false}
-      />
-      <WizardInputField
-        control={control}
-        name={ProviderCredentialFields.SESSION_DURATION}
-        type="number"
-        label="Session duration (seconds)"
-        labelPlacement="inside"
-        placeholder="Enter the session duration (default: 3600 seconds)"
-        variant="bordered"
-        isRequired={false}
-      />
-    </div>
-  </>
+  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+    <WizardInputField
+      control={control}
+      name={ProviderCredentialFields.ROLE_SESSION_NAME}
+      type="text"
+      label="Role session name"
+      labelPlacement="inside"
+      placeholder="Enter the role session name"
+      variant="bordered"
+      isRequired={false}
+    />
+    <WizardInputField
+      control={control}
+      name={ProviderCredentialFields.SESSION_DURATION}
+      type="number"
+      label="Session duration (seconds)"
+      labelPlacement="inside"
+      placeholder="Enter the session duration (default: 3600 seconds)"
+      variant="bordered"
+      isRequired={false}
+    />
+  </div>
 );
