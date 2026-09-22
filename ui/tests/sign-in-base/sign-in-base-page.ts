@@ -396,6 +396,12 @@ export class SignInPage extends BasePage {
     }
 
     await this.loginAndVerify(credentials);
+    // An empty tenant redirects each fresh browser context to the add-provider
+    // wizard once. Suites expect a plain landing, so mark that first run as done;
+    // sign-up.spec covers the redirect itself with a brand-new tenant.
+    await this.page.evaluate(() => {
+      window.localStorage.setItem("prowler.onboarding.first-run", "true");
+    });
     await this.page.context().storageState({ path: storagePath });
   }
 }

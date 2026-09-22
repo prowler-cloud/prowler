@@ -397,19 +397,21 @@ export class ProvidersPage extends BasePage {
     // "Add Provider" control; with zero providers the page renders the empty
     // state whose CTA is labelled "Open Add Provider modal" (button on
     // /providers, link on /scans). Only one of these is ever in the DOM at once.
-    this.addProviderButton = page
+    // Scoped to <main>: an empty tenant also gets an "Add Provider" CTA in the sidebar.
+    const main = page.getByRole("main");
+    this.addProviderButton = main
       .getByRole("button", {
         name: "Add Provider",
         exact: true,
       })
       .or(
-        page.getByRole("link", {
+        main.getByRole("link", {
           name: "Add Provider",
           exact: true,
         }),
       )
-      .or(page.getByRole("button", { name: "Open Add Provider modal" }))
-      .or(page.getByRole("link", { name: "Open Add Provider modal" }));
+      .or(main.getByRole("button", { name: "Open Add Provider modal" }))
+      .or(main.getByRole("link", { name: "Open Add Provider modal" }));
 
     // Table displaying existing providers
     this.providersTable = page.getByRole("table");
