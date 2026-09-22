@@ -36,7 +36,9 @@ import {
   dispatchProviderFunnel,
   PROVIDER_FUNNEL_STEP,
 } from "@/lib/provider-funnel/provider-funnel-events";
+import { useProviderWizardStore } from "@/store/provider-wizard/store";
 import type { AWSCredentials, AWSCredentialsRole } from "@/types";
+import type { AwsConnectDraft } from "@/types/provider-wizard";
 
 import {
   awsKeysConnectSchema,
@@ -62,6 +64,27 @@ import {
 const ALIAS_ERROR_POINTER = "/data/attributes/alias";
 const UNIQUE_TOGETHER_ERROR_POINTER = "/data/attributes/__all__";
 
+// What the user typed survives the step unmounting (organizations tab, a step
+// back from the connection test) until the wizard closes.
+const readDraft = () => useProviderWizardStore.getState().awsConnectDraft;
+
+const initialMethod = (): AwsAccessMethod =>
+  readDraft()?.method === AWS_ACCESS_METHOD.CREDENTIALS
+    ? AWS_ACCESS_METHOD.CREDENTIALS
+    : AWS_ACCESS_METHOD.ROLE;
+
+function useDraftValues<T extends FieldValues>(
+  form: UseFormReturn<T>,
+  key: keyof Pick<AwsConnectDraft, "roleValues" | "keysValues">,
+) {
+  const values = useWatch({ control: form.control });
+  useEffect(() => {
+    useProviderWizardStore
+      .getState()
+      .setAwsConnectDraft({ [key]: values as AwsConnectDraft[typeof key] });
+  }, [key, values]);
+}
+
 interface AwsConnectStepProps {
   formId: string;
   onConnected: () => void;
@@ -77,11 +100,16 @@ export function AwsConnectStep({
   onUiStateChange,
 }: AwsConnectStepProps) {
   // Local state needed: the access method only matters until the account is connected.
-  const [method, setMethod] = useState<AwsAccessMethod>(AWS_ACCESS_METHOD.ROLE);
+  const [method, setMethod] = useState<AwsAccessMethod>(initialMethod);
   // Local state needed: the active form reports it so the method cannot change mid-submit.
   const [isBusy, setIsBusy] = useState(false);
 
   const isRole = method === AWS_ACCESS_METHOD.ROLE;
+
+  const chooseMethod = (next: AwsAccessMethod) => {
+    setMethod(next);
+    useProviderWizardStore.getState().setAwsConnectDraft({ method: next });
+  };
 
   return (
     <div className="flex flex-col gap-6">
@@ -105,7 +133,7 @@ export function AwsConnectStep({
           title="IAM Role"
           selected={isRole}
           disabled={isBusy}
-          onClick={() => setMethod(AWS_ACCESS_METHOD.ROLE)}
+          onClick={() => chooseMethod(AWS_ACCESS_METHOD.ROLE)}
         >
           <Badge variant="success" size="sm">
             Recommended
@@ -116,7 +144,7 @@ export function AwsConnectStep({
           title="Static access keys"
           selected={!isRole}
           disabled={isBusy}
-          onClick={() => setMethod(AWS_ACCESS_METHOD.CREDENTIALS)}
+          onClick={() => chooseMethod(AWS_ACCESS_METHOD.CREDENTIALS)}
         />
       </div>
 
@@ -240,8 +268,10 @@ function AwsRoleConnectForm({
       [ProviderCredentialFields.AWS_SESSION_TOKEN]: "",
       [ProviderCredentialFields.ROLE_SESSION_NAME]: "",
       [ProviderCredentialFields.SESSION_DURATION]: "3600",
+      ...readDraft()?.roleValues,
     },
   });
+  useDraftValues(form, "roleValues");
 
   const roleArn = useWatch({
     control: form.control,
@@ -344,8 +374,10 @@ function AwsKeysConnectForm({
       [ProviderCredentialFields.AWS_ACCESS_KEY_ID]: "",
       [ProviderCredentialFields.AWS_SECRET_ACCESS_KEY]: "",
       [ProviderCredentialFields.AWS_SESSION_TOKEN]: "",
+      ...readDraft()?.keysValues,
     },
   });
+  useDraftValues(form, "keysValues");
 
   const onSubmit = useAwsConnectSubmit({
     form,

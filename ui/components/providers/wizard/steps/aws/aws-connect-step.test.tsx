@@ -243,6 +243,76 @@ describe("AwsConnectStep", () => {
     });
   });
 
+  describe("when the step is left and reopened within the same wizard", () => {
+    beforeEach(() => {
+      vi.stubEnv("UI_CLOUD_ENABLED", "true");
+    });
+
+    it("keeps what was typed, including the chosen access method", async () => {
+      // Given
+      const onConnected = vi.fn();
+      const onSelectOrganizations = vi.fn();
+      const user = userEvent.setup();
+      const { unmount } = render(
+        <Harness
+          onConnected={onConnected}
+          onSelectOrganizations={onSelectOrganizations}
+        />,
+      );
+      await user.click(
+        screen.getByRole("radio", { name: /Static access keys/ }),
+      );
+      await user.type(
+        screen.getByRole("textbox", { name: /Account ID/ }),
+        "210987654321",
+      );
+      await user.type(
+        screen.getByRole("textbox", { name: /Provider alias/ }),
+        "Staging",
+      );
+
+      // When: the organizations tab or the connection test unmounts the step.
+      unmount();
+      render(
+        <Harness
+          onConnected={onConnected}
+          onSelectOrganizations={onSelectOrganizations}
+        />,
+      );
+
+      // Then
+      expect(
+        screen.getByRole("radio", { name: /Static access keys/ }),
+      ).toHaveAttribute("aria-checked", "true");
+      expect(screen.getByRole("textbox", { name: /Account ID/ })).toHaveValue(
+        "210987654321",
+      );
+      expect(
+        screen.getByRole("textbox", { name: /Provider alias/ }),
+      ).toHaveValue("Staging");
+    });
+
+    it("starts blank again once the wizard is reset", async () => {
+      // Given
+      const user = userEvent.setup();
+      const { unmount } = render(
+        <Harness onConnected={vi.fn()} onSelectOrganizations={vi.fn()} />,
+      );
+      await user.type(
+        screen.getByRole("textbox", { name: /Role ARN/ }),
+        ROLE_ARN,
+      );
+      unmount();
+
+      // When
+      useProviderWizardStore.getState().reset();
+      render(<Harness onConnected={vi.fn()} onSelectOrganizations={vi.fn()} />);
+
+      // Then
+      expect(screen.getByRole("textbox", { name: /Role ARN/ })).toHaveValue("");
+    });
+  });
+
   describe("in Prowler Cloud, role creation", () => {
     beforeEach(() => {
       vi.stubEnv("UI_CLOUD_ENABLED", "true");
