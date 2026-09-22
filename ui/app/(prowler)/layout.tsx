@@ -119,7 +119,7 @@ export default async function RootLayout({
           {/* Tri-state for both: an unknown count leaves the store unresolved and the gate closed. */}
           <StoreInitializer values={{ hasProviders, registryEligible }} />
           {/* Every deployment: an empty tenant lands on the add-provider wizard once. */}
-          <OnboardingGate hasProviders={hasProviders} />
+          <OnboardingGate hasProviders={hasProviders} tenantId={tenantId} />
           {cloudEnabled && (
             <>
               {/* Single mount point so the watcher survives post-connect navigation. */}

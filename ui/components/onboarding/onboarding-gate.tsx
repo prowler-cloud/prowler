@@ -23,11 +23,16 @@ import { useOnboardingCheckpointStore } from "@/store/onboarding-checkpoint";
 interface OnboardingGateProps {
   // `undefined` = fetch failed/ambiguous; fail-open (never force the first run).
   hasProviders?: boolean;
+  // Scopes the first-run marker so one tenant's first run never silences another's.
+  tenantId?: string | null;
 }
 
 // New-tenant gate. Mounted once in the layout: an empty tenant is sent straight to
-// the add-provider wizard, once per browser. Renders nothing.
-export function OnboardingGate({ hasProviders }: OnboardingGateProps) {
+// the add-provider wizard, once per tenant and browser. Renders nothing.
+export function OnboardingGate({
+  hasProviders,
+  tenantId = null,
+}: OnboardingGateProps) {
   const pathname = usePathname();
   const { permissions } = useAuth();
   // Billing must stay usable before onboarding; leaving it keeps the gate eligible.
@@ -51,22 +56,28 @@ export function OnboardingGate({ hasProviders }: OnboardingGateProps) {
 
   if (!shouldRedirect) return null;
 
-  return <FirstRunRedirect flow={flow} />;
+  return <FirstRunRedirect flow={flow} tenantId={tenantId} />;
 }
 
 interface FirstRunRedirectProps {
   flow: OnboardingFlow;
+  tenantId: string | null;
 }
 
-function FirstRunRedirect({ flow }: FirstRunRedirectProps) {
+function FirstRunRedirect({ flow, tenantId }: FirstRunRedirectProps) {
   const router = useRouter();
 
   useMountEffect(() => {
     // Hydration renders with an empty completion snapshot, so decide from storage here.
     const tourId = { id: flow.tour.id, version: flow.tour.version };
-    if (isFirstRunHandled() || localStorageAdapter.get(tourId) !== null) return;
+    if (
+      isFirstRunHandled(tenantId) ||
+      localStorageAdapter.get(tourId) !== null
+    ) {
+      return;
+    }
 
-    markFirstRunHandled();
+    markFirstRunHandled(tenantId);
 
     const addProviderHref = buildAddProviderHref(WIZARD_OPEN_SOURCE.FIRST_RUN);
     if (!isCloud()) {

@@ -32,6 +32,9 @@ const addProviderTourId = {
   version: addProviderTour.version,
 };
 
+const TENANT_A = "11111111-1111-4111-8111-111111111111";
+const TENANT_B = "22222222-2222-4222-8222-222222222222";
+
 const CLOUD_FIRST_RUN_HREF =
   "/providers?addProvider=true&addProviderSource=first_run&onboarding=add-provider";
 const OSS_FIRST_RUN_HREF =
@@ -108,19 +111,38 @@ describe("OnboardingGate", () => {
       expect(armMock).toHaveBeenCalledOnce();
     });
 
-    it("happens only once per browser", async () => {
+    it("happens only once per tenant on this browser", async () => {
       // Given
-      const { unmount } = render(<OnboardingGate hasProviders={false} />);
+      const { unmount } = render(
+        <OnboardingGate hasProviders={false} tenantId={TENANT_A} />,
+      );
       await waitFor(() => expect(replaceMock).toHaveBeenCalledOnce());
       unmount();
       replaceMock.mockClear();
 
       // When
-      render(<OnboardingGate hasProviders={false} />);
+      render(<OnboardingGate hasProviders={false} tenantId={TENANT_A} />);
 
       // Then
-      expect(isFirstRunHandled()).toBe(true);
+      expect(isFirstRunHandled(TENANT_A)).toBe(true);
       expect(replaceMock).not.toHaveBeenCalled();
+    });
+
+    it("still runs for a different empty tenant on the same browser", async () => {
+      // Given
+      const { unmount } = render(
+        <OnboardingGate hasProviders={false} tenantId={TENANT_A} />,
+      );
+      await waitFor(() => expect(replaceMock).toHaveBeenCalledOnce());
+      unmount();
+      replaceMock.mockClear();
+
+      // When
+      render(<OnboardingGate hasProviders={false} tenantId={TENANT_B} />);
+
+      // Then
+      await waitFor(() => expect(replaceMock).toHaveBeenCalledOnce());
+      expect(isFirstRunHandled(TENANT_B)).toBe(true);
     });
   });
 

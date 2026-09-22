@@ -20,7 +20,7 @@ posts to the API.
 | Ephemeral sequence slice               | `ui/store/onboarding-sequence.ts`                                     |
 | Checkpoint watcher + dialog            | `ui/components/onboarding/onboarding-checkpoint-{watcher,dialog}.tsx` |
 | New-tenant gate (first-run redirect)   | `ui/components/onboarding/onboarding-gate.tsx`                        |
-| First-run marker (once per browser)    | `ui/lib/onboarding/first-run-marker.ts`                               |
+| First-run marker (once per tenant)     | `ui/lib/onboarding/first-run-marker.ts`                               |
 | Step outcome events (window)           | `ui/lib/onboarding/onboarding-events.ts`                              |
 | Invite step before the checkpoint      | `ui/components/onboarding/onboarding-invite-{step,dialog}.tsx`        |
 | Manual replay list                     | `ui/components/ui/user-nav/user-nav.tsx`                              |
@@ -29,8 +29,9 @@ posts to the API.
 
 The gate is mounted in every deployment. When the tenant provably has no
 providers (`hasProviders === false`), the user holds `manage_providers` and
-neither the first-run marker (`prowler.onboarding.first-run`) nor an
-add-provider completion record exists, it replaces the route once with
+neither the first-run marker (`prowler.onboarding.first-run.<tenantId>`, so a
+first run in one tenant never silences it for another on the same browser) nor
+an add-provider completion record exists, it replaces the route once with
 `/providers?addProvider=true&addProviderSource=first_run`, so the add-provider
 wizard is already open. Billing routes defer it; an unknown provider count or a
 user without the permission (an empty list may only mean limited visibility)
