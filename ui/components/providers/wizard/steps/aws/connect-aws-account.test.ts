@@ -197,6 +197,24 @@ describe("connectAwsAccount", () => {
       expect(useProviderWizardStore.getState().providerId).toBeNull();
     });
 
+    it("reports an account response without an id instead of stalling", async () => {
+      // Given
+      addProvider.mockResolvedValueOnce({ data: {} });
+
+      // When
+      const result = await connectAwsAccount({
+        method: AWS_ACCESS_METHOD.ROLE,
+        values: roleValues,
+      });
+
+      // Then
+      expect(result).toEqual({
+        ok: false,
+        errors: [{ detail: expect.stringMatching(/try again/i) }],
+      });
+      expect(addCredentialsProvider).not.toHaveBeenCalled();
+    });
+
     it("reports the credentials failure and keeps the account for a retry", async () => {
       // Given
       addCredentialsProvider.mockResolvedValueOnce({

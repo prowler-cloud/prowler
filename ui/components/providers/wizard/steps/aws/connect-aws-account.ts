@@ -62,12 +62,20 @@ interface CreateActionResponse {
   errors?: ApiError[];
 }
 
+const UNCONFIRMED_RESPONSE_MESSAGE =
+  "The API did not confirm the request. Please try again.";
+
 // Actions resolve { errors } on a refusal and { error } on a crash, never throwing.
+// A body with no id is reported too, or the step would stall without feedback.
 const readCreatedId = (response: unknown) => {
   const body = response as CreateActionResponse | undefined;
   if (body?.errors?.length) return { id: null, errors: body.errors };
   if (body?.error) return { id: null, errors: [{ detail: body.error }] };
-  return { id: body?.data?.id as string, errors: null };
+  const id = body?.data?.id;
+  if (typeof id !== "string" || !id) {
+    return { id: null, errors: [{ detail: UNCONFIRMED_RESPONSE_MESSAGE }] };
+  }
+  return { id, errors: null };
 };
 
 const resolveAccountId = ({ method, values }: AwsConnectInput) =>
