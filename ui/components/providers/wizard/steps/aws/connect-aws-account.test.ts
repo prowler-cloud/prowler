@@ -166,6 +166,50 @@ describe("connectAwsAccount", () => {
     });
   });
 
+  describe("when the API fails without field errors", () => {
+    it("reports the account failure instead of throwing", async () => {
+      // Given
+      addProvider.mockResolvedValueOnce({ error: "Server is unavailable." });
+
+      // When
+      const result = await connectAwsAccount({
+        method: AWS_ACCESS_METHOD.ROLE,
+        values: roleValues,
+      });
+
+      // Then
+      expect(result).toEqual({
+        ok: false,
+        errors: [{ detail: "Server is unavailable." }],
+      });
+      expect(addCredentialsProvider).not.toHaveBeenCalled();
+      expect(useProviderWizardStore.getState().providerId).toBeNull();
+    });
+
+    it("reports the credentials failure and keeps the account for a retry", async () => {
+      // Given
+      addCredentialsProvider.mockResolvedValueOnce({
+        error: "Server is unavailable.",
+      });
+
+      // When
+      const result = await connectAwsAccount({
+        method: AWS_ACCESS_METHOD.ROLE,
+        values: roleValues,
+      });
+
+      // Then
+      expect(result).toEqual({
+        ok: false,
+        errors: [{ detail: "Server is unavailable." }],
+      });
+      expect(useProviderWizardStore.getState()).toMatchObject({
+        providerId: "provider-1",
+        secretId: null,
+      });
+    });
+  });
+
   describe("when the credentials are refused after the account was registered", () => {
     it("reuses the registered account on the next attempt instead of creating it twice", async () => {
       // Given

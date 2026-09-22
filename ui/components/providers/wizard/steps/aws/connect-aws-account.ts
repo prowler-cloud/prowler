@@ -50,6 +50,24 @@ const toFormData = (values: Record<string, unknown>) => {
   return formData;
 };
 
+interface CreatedResource {
+  id?: unknown;
+}
+
+interface CreateActionResponse {
+  data?: CreatedResource;
+  error?: string;
+  errors?: ApiError[];
+}
+
+// Actions resolve { errors } on a refusal and { error } on a crash, never throwing.
+const readCreatedId = (response: unknown) => {
+  const body = response as CreateActionResponse | undefined;
+  if (body?.errors?.length) return { id: null, errors: body.errors };
+  if (body?.error) return { id: null, errors: [{ detail: body.error }] };
+  return { id: body?.data?.id as string, errors: null };
+};
+
 const resolveAccountId = ({ method, values }: AwsConnectInput) =>
   method === AWS_ACCESS_METHOD.ROLE
     ? parseAwsAccountIdFromRoleArn(
@@ -64,18 +82,18 @@ const ensureProvider = async (uid: string, alias: string) => {
     return { providerId: store.providerId, errors: null };
   }
 
-  const data = await addProvider(
-    toFormData({
-      [ProviderCredentialFields.PROVIDER_TYPE]: "aws",
-      [ProviderCredentialFields.PROVIDER_UID]: uid,
-      [ProviderCredentialFields.PROVIDER_ALIAS]: alias,
-    }),
+  const created = readCreatedId(
+    await addProvider(
+      toFormData({
+        [ProviderCredentialFields.PROVIDER_TYPE]: "aws",
+        [ProviderCredentialFields.PROVIDER_UID]: uid,
+        [ProviderCredentialFields.PROVIDER_ALIAS]: alias,
+      }),
+    ),
   );
-  if (data?.errors?.length) {
-    return { providerId: null, errors: data.errors as ApiError[] };
-  }
+  if (!created.id) return { providerId: null, errors: created.errors };
 
-  const providerId = data.data.id as string;
+  const providerId = created.id;
   store.setProvider({
     id: providerId,
     type: "aws",
@@ -117,19 +135,19 @@ export async function connectAwsAccount(
       ([key]) => !ACCOUNT_FIELDS.includes(key),
     ),
   );
-  const secret = await addCredentialsProvider(
-    toFormData({
-      ...secretValues,
-      [ProviderCredentialFields.PROVIDER_ID]: provider.providerId,
-      [ProviderCredentialFields.PROVIDER_TYPE]: "aws",
-    }),
+  const secret = readCreatedId(
+    await addCredentialsProvider(
+      toFormData({
+        ...secretValues,
+        [ProviderCredentialFields.PROVIDER_ID]: provider.providerId,
+        [ProviderCredentialFields.PROVIDER_TYPE]: "aws",
+      }),
+    ),
   );
-  if (secret?.errors?.length) {
-    return { ok: false, errors: secret.errors as ApiError[] };
-  }
+  if (!secret.id) return { ok: false, errors: secret.errors ?? [] };
 
   const store = useProviderWizardStore.getState();
-  store.setSecretId(secret.data.id as string);
+  store.setSecretId(secret.id);
   store.setVia(input.method);
   return { ok: true };
 }
