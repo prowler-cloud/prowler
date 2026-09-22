@@ -1,9 +1,8 @@
 from types import SimpleNamespace
 from unittest import mock
 
-from prowler.providers.aws.services.iam.iam_role_github_oidc_trust_subject_restricted.iam_role_github_oidc_trust_subject_restricted import (
-    iam_role_github_oidc_trust_subject_restricted,
-)
+from moto import mock_aws
+from tests.providers.aws.utils import AWS_REGION_US_EAST_1, set_mocked_aws_provider
 
 CHECK_MODULE = (
     "prowler.providers.aws.services.iam."
@@ -34,10 +33,26 @@ def github_statement(condition=None):
     return statement
 
 
+@mock_aws
 def run_check(roles):
+    aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
     iam = SimpleNamespace(roles=roles, region="us-east-1")
-    with mock.patch(f"{CHECK_MODULE}.iam_client", new=iam):
+    with (
+        mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ),
+        mock.patch(f"{CHECK_MODULE}.iam_client", new=iam),
+    ):
+        from prowler.providers.aws.services.iam.iam_role_github_oidc_trust_subject_restricted.iam_role_github_oidc_trust_subject_restricted import (
+            iam_role_github_oidc_trust_subject_restricted,
+        )
+
         return iam_role_github_oidc_trust_subject_restricted().execute()
+
+
+def test_no_resources():
+    assert len(run_check([])) == 0
 
 
 def test_valid_repository_owner_passes():
