@@ -235,10 +235,11 @@ LOGGING = {
         # disable_existing_loggers=True silences any logger that exists at
         # dictConfig time but is not named here. Without these, fatal worker
         # errors (e.g. celery.worker CRITICAL) produce no output.
+        # "celery" must keep propagating: get_task_logger() parents task
+        # loggers under celery.task, so blocking here hides them from root.
         "celery": {
-            "handlers": ["tasks_console"],
             "level": LEVEL,
-            "propagate": False,
+            "propagate": True,
         },
         "celery.worker": {
             "handlers": ["tasks_console"],
@@ -275,9 +276,10 @@ LOGGING = {
             "level": LEVEL,
             "propagate": False,
         },
+        # WARNING keeps task failures but skips one "succeeded" line per task.
         "celery.app.trace": {
             "handlers": ["tasks_console"],
-            "level": LEVEL,
+            "level": "WARNING",
             "propagate": False,
         },
         "celery.beat": {
