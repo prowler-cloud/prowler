@@ -241,6 +241,40 @@ describe("useDriverTour lifecycle", () => {
       );
     });
 
+    it("starts at the step when only its fallback anchor is in the DOM", async () => {
+      // Given
+      const tourWithFallback = {
+        ...anchoredTour,
+        id: "fallback-tour",
+        steps: [
+          anchoredTour.steps[0],
+          { ...anchoredTour.steps[1], fallbackTarget: "stable" },
+        ],
+      } satisfies TourDefinition;
+      let latestResult: UseDriverTourResult | undefined;
+      function FallbackProbe() {
+        latestResult = useDriverTour(tourWithFallback, {
+          autoOpen: false,
+          store: createStore(),
+        });
+        return null;
+      }
+      render(<FallbackProbe />);
+      const anchor = document.createElement("div");
+      anchor.setAttribute("data-tour-id", "fallback-tour-stable");
+      document.body.appendChild(anchor);
+
+      // When
+      await act(async () => {
+        latestResult?.start("late");
+      });
+
+      // Then
+      expect(driverHarness.instances[0].drive).toHaveBeenCalledExactlyOnceWith(
+        1,
+      );
+    });
+
     it("stays closed when stopped before the anchor mounts", async () => {
       // Given
       let latestResult: UseDriverTourResult | undefined;

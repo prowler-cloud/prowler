@@ -413,7 +413,13 @@ export function useDriverTour<TTarget extends string>(
       }
 
       // The anchor may mount right after the caller (e.g. a modal opening), so wait for it.
-      waitForElement(getTourTargetSelector(tourId, startAtTarget))
+      // Either anchor will do, mirroring how adaptStep resolves the step's element.
+      const fallbackTarget = tour.steps[startIndex].fallbackTarget;
+      const anchorSelector = [startAtTarget, fallbackTarget]
+        .filter((target): target is string => target !== undefined)
+        .map((target) => getTourTargetSelector(tourId, target))
+        .join(", ");
+      waitForElement(anchorSelector)
         .then(() => {
           if (startGenerationRef.current !== generation) return;
           if (driverRef.current !== instance || instance.isActive()) return;
