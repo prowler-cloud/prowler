@@ -22,6 +22,7 @@ import {
   REGISTRY_PROVIDER_DISCOVERY,
   type RegistryProviderOption,
 } from "@/lib/registry/provider-options";
+import { isCloud } from "@/lib/shared/env";
 import {
   createAddProviderFormSchema,
   AddProviderFormValues,
@@ -233,6 +234,8 @@ export const ConnectAccountForm = ({
   const createdAccount = useRef<ConnectAccountSuccessData | null>(null);
 
   useEffect(() => {
+    // Registry is Cloud-only: elsewhere never ask, so a failure cannot surface it.
+    if (!isCloud()) return;
     let active = true;
     const load = async () => {
       try {

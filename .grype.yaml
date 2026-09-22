@@ -115,3 +115,14 @@ ignore:
   - vulnerability: CVE-2026-9669
     package:
       name: python
+  # CVE-2026-82049 (tarfile data/tar filter bypass via a hard link to a symlink) has no
+  # fixed CPython release on any branch: the fix is merged on main and 3.13 only, and the
+  # 3.12 backport is still open. Grype records 3.14.0b1 as the fix, so only-fixed does not
+  # drop it, yet python:3.12.14-slim-trixie reports it too. Prowler never extracts tar
+  # archives to disk: the ECR image inspection reads members in memory with extractfile().
+  # Remove once the base image ships a 3.12 release that includes the backport.
+  # https://github.com/python/cpython/issues/157190
+  # https://github.com/python/cpython/pull/157454
+  - vulnerability: CVE-2026-82049
+    package:
+      name: python

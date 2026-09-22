@@ -1,1 +1,0 @@
-`UI_SELF_REGISTRATION_ENABLED` flag for Prowler Private Cloud deployments; when `"false"`, `/sign-up` only opens with an invitation, the sign-in page drops the "Sign up" link and the profile hides **Create organization**
