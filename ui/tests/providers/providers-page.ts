@@ -1125,41 +1125,6 @@ export class ProvidersPage extends BasePage {
 
   async fillRoleCredentials(credentials: AWSProviderCredential): Promise<void> {
     await expect(this.roleArnInput).toBeVisible({ timeout: 10000 });
-    const accessKeyInputInWizard = this.wizardModal.getByPlaceholder(
-      "Enter the AWS Access Key ID",
-    );
-    const secretKeyInputInWizard = this.wizardModal.getByPlaceholder(
-      "Enter the AWS Secret Access Key",
-    );
-    const accessKeyId =
-      credentials.accessKeyId || process.env.E2E_AWS_PROVIDER_ACCESS_KEY;
-    const secretAccessKey =
-      credentials.secretAccessKey || process.env.E2E_AWS_PROVIDER_SECRET_KEY;
-
-    const shouldFillStaticKeys = Boolean(accessKeyId || secretAccessKey);
-    if (shouldFillStaticKeys) {
-      const accessKeyIsVisible = await accessKeyInputInWizard
-        .isVisible()
-        .catch(() => false);
-
-      // In cloud env the default can be SDK mode, so expose Access/Secret explicitly.
-      if (!accessKeyIsVisible) {
-        await this.selectAuthenticationMethod(
-          AWS_CREDENTIAL_OPTIONS.AWS_ROLE_ARN,
-        );
-      }
-    }
-
-    if (accessKeyId) {
-      await expect(accessKeyInputInWizard).toBeVisible({ timeout: 10000 });
-      await accessKeyInputInWizard.fill(accessKeyId);
-      await expect(accessKeyInputInWizard).toHaveValue(accessKeyId);
-    }
-    if (secretAccessKey) {
-      await expect(secretKeyInputInWizard).toBeVisible({ timeout: 10000 });
-      await secretKeyInputInWizard.fill(secretAccessKey);
-      await expect(secretKeyInputInWizard).toHaveValue(secretAccessKey);
-    }
     if (credentials.roleArn) {
       await this.roleArnInput.fill(credentials.roleArn);
     }
@@ -1672,52 +1637,6 @@ export class ProvidersPage extends BasePage {
       return true;
     } catch {
       return false;
-    }
-  }
-
-  async expandAdvancedOptions(): Promise<void> {
-    // Cloud collapses the section by default and its content is not mounted while closed.
-    const toggle = this.wizardModal.getByRole("button", {
-      name: "Advanced options",
-    });
-    if ((await toggle.getAttribute("data-state")) === "closed") {
-      await toggle.click();
-    }
-  }
-
-  async selectAuthenticationMethod(method: AWSCredentialType): Promise<void> {
-    await this.expandAdvancedOptions();
-
-    // Select the authentication method (shadcn Select renders as combobox + listbox)
-    const trigger = this.page.locator('[role="combobox"]').filter({
-      hasText: /AWS SDK Default|Prowler Cloud will assume|Access & Secret Key/i,
-    });
-
-    // Cloud always assumes the role itself, so the wizard offers no selector there.
-    if (!(await trigger.isVisible().catch(() => false))) {
-      if (method === AWS_CREDENTIAL_OPTIONS.AWS_SDK_DEFAULT) return;
-      throw new Error(
-        "The role form has no credentials selector in this deployment",
-      );
-    }
-
-    await trigger.click();
-
-    const listbox = this.page.getByRole("listbox");
-    await expect(listbox).toBeVisible({ timeout: 10000 });
-
-    if (method === AWS_CREDENTIAL_OPTIONS.AWS_ROLE_ARN) {
-      await this.page
-        .getByRole("option", { name: "Access & Secret Key" })
-        .click({ force: true });
-    } else if (method === AWS_CREDENTIAL_OPTIONS.AWS_SDK_DEFAULT) {
-      await this.page
-        .getByRole("option", {
-          name: /AWS SDK Default|Prowler Cloud will assume your IAM role/i,
-        })
-        .click({ force: true });
-    } else {
-      throw new Error(`Invalid authentication method: ${method}`);
     }
   }
 

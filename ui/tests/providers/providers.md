@@ -61,63 +61,6 @@
 
 ---
 
-## Test Case: `PROVIDER-E2E-002` - Add AWS Provider with Assume Role Credentials Access Key and Secret Key
-
-**Priority:** `critical`
-
-**Tags:**
-
-- type → @e2e, @serial
-- feature → @providers
-- provider → @aws
-
-**Description/Objective:** Validates the complete flow of adding a new AWS provider using role-based authentication with Access Key and Secret Key
-
-**Preconditions:**
-
-- Admin user authentication required (admin.auth.setup setup)
-- Environment variables configured: E2E_AWS_PROVIDER_ACCOUNT_ID, E2E_AWS_PROVIDER_ACCESS_KEY, E2E_AWS_PROVIDER_SECRET_KEY, E2E_AWS_PROVIDER_ROLE_ARN
-- Remove any existing provider with the same Account ID before starting the test
-- This test must be run serially and never in parallel with other tests, as it requires the Account ID not to be already registered beforehand.
-
-### Flow Steps
-
-1. Navigate to providers page
-2. Click "Add Provider" button
-3. Select AWS provider type
-4. On the single AWS step, keep the "IAM Role" access method
-5. Fill the alias (the account ID is read from the role ARN)
-6. Fill role credentials (access key, secret key, and role ARN) and click "Connect account"
-7. Confirm provider connection without launching a scan
-8. Verify return to Providers page
-9. Verify provider exists in Providers table
-
-### Expected Result
-
-- AWS provider successfully added with role credentials
-- Provider connection validated without launching a scan
-- User returned to Providers page
-- Provider appears in Providers table with the expected UID
-
-### Key verification points
-
-- Provider page loads correctly
-- Connect account page displays AWS option
-- Role credentials form accepts all required fields
-- Launch step appears
-- Successful return to Providers page after closing the launch step
-- Provider exists in Providers table (verified by account ID)
-- Provider UID matches the expected value
-
-### Notes
-
-- Test uses environment variables for AWS credentials and role ARN
-- Provider cleanup performed before each test to ensure clean state
-- Requires valid AWS account with role assumption permissions
-- Role ARN must be properly configured
-
----
-
 ## Test Case: `PROVIDER-E2E-003` - Add Azure Provider with Static Credentials
 
 **Priority:** `critical`
@@ -620,7 +563,7 @@
 3. Select AWS provider type
 4. On the single AWS step, keep the "IAM Role" access method
 5. Fill the alias (the account ID is read from the role ARN)
-6. Leave the access keys under "Advanced options" empty, so Prowler assumes the role with the host's AWS SDK default credentials
+6. Nothing to choose: the role is assumed with the host's AWS SDK default credentials
 7. Fill the role ARN and click "Connect account"
 8. Confirm provider connection without launching a scan
 9. Verify return to Providers page
@@ -637,8 +580,8 @@
 
 - Provider page loads correctly
 - Connect account page displays AWS option
-- Advanced options expose optional access keys; leaving them empty selects the AWS SDK default chain
-- Role ARN field accepts the provided value with the keys left empty
+- The role form asks for no credentials of its own: the AWS SDK default chain assumes the role
+- Role ARN field accepts the provided value
 - Launch step appears
 - Successful return to Providers page after closing the launch step
 - Provider exists in Providers table (verified by account ID)

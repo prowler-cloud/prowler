@@ -15,7 +15,6 @@ import {
 
 import { RadioCard } from "@/components/providers/radio-card";
 import { WizardInputField } from "@/components/providers/workflow/forms/fields";
-import { AwsRoleStaticKeyFields } from "@/components/providers/workflow/forms/select-credentials-type/aws/credentials-type/aws-role-credentials-source";
 import { AwsRoleOptionalFields } from "@/components/providers/workflow/forms/select-credentials-type/aws/credentials-type/aws-role-optional-fields";
 import { AWSStaticCredentialsForm } from "@/components/providers/workflow/forms/select-credentials-type/aws/credentials-type/aws-static-credentials-form";
 import { ProviderTitleDocs } from "@/components/providers/workflow/provider-title-docs";
@@ -233,6 +232,8 @@ function AwsRoleConnectForm({
       [ProviderCredentialFields.PROVIDER_ID]: "",
       [ProviderCredentialFields.PROVIDER_TYPE]: "aws",
       [ProviderCredentialFields.PROVIDER_ALIAS]: "",
+      // The role is assumed with Prowler's own credentials (Cloud's identity or the
+      // host's AWS SDK chain); static keys are a method of their own, never mixed in.
       [ProviderCredentialFields.CREDENTIALS_TYPE]:
         ProviderCredentialFields.CREDENTIALS_TYPE_AWS,
       [ProviderCredentialFields.ROLE_ARN]: "",
@@ -248,31 +249,15 @@ function AwsRoleConnectForm({
     control: form.control,
     name: ProviderCredentialFields.ROLE_ARN,
   });
-  const [accessKeyId, secretAccessKey] = useWatch({
-    control: form.control,
-    name: [
-      ProviderCredentialFields.AWS_ACCESS_KEY_ID,
-      ProviderCredentialFields.AWS_SECRET_ACCESS_KEY,
-    ],
-  });
   const detectedAccountId = parseAwsAccountIdFromRoleArn(roleArn ?? "");
-  // Filled keys assume the role; empty keys leave it to the host's own credentials.
-  const credentialsType =
-    accessKeyId?.trim() && secretAccessKey?.trim()
-      ? ProviderCredentialFields.CREDENTIALS_TYPE_ACCESS_SECRET_KEY
-      : ProviderCredentialFields.CREDENTIALS_TYPE_AWS;
 
   const onSubmit = useAwsConnectSubmit({
     form,
     method: AWS_ACCESS_METHOD.ROLE,
     accountField: ProviderCredentialFields.ROLE_ARN,
     canSubmit: form.formState.isValid && detectedAccountId !== null,
-    // Neither is typed by the user: the external id is the tenant's and the
-    // credentials type follows from the keys, so both join at submit time.
-    extraValues: {
-      [ProviderCredentialFields.EXTERNAL_ID]: externalId,
-      [ProviderCredentialFields.CREDENTIALS_TYPE]: credentialsType,
-    },
+    // The external id is the tenant's, never user input, so it joins at submit time.
+    extraValues: { [ProviderCredentialFields.EXTERNAL_ID]: externalId },
     onConnected,
     onBusyChange,
     onUiStateChange,
@@ -322,7 +307,7 @@ function AwsRoleConnectForm({
           />
         </section>
 
-        <Collapsible defaultOpen={!isCloudEnv} className="flex flex-col gap-4">
+        <Collapsible className="flex flex-col gap-4">
           <CollapsibleTrigger asChild>
             <Button
               type="button"
@@ -335,19 +320,6 @@ function AwsRoleConnectForm({
             </Button>
           </CollapsibleTrigger>
           <CollapsibleContent className="flex flex-col gap-4">
-            {/* Cloud assumes the role with its own identity; self-hosted needs keys or the host's. */}
-            {!isCloudEnv && (
-              <div className="flex flex-col gap-4">
-                <p className="text-text-neutral-secondary text-sm">
-                  Prowler assumes the role with these keys. Leave them empty to
-                  use the credentials of the machine running Prowler.
-                </p>
-                <AwsRoleStaticKeyFields
-                  control={roleControl}
-                  isRequired={false}
-                />
-              </div>
-            )}
             <AwsRoleOptionalFields control={roleControl} />
           </CollapsibleContent>
         </Collapsible>

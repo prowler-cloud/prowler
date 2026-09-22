@@ -297,17 +297,9 @@ describe("AwsConnectStep", () => {
       vi.stubEnv("UI_CLOUD_ENABLED", "false");
     });
 
-    const typeArn = async (user: ReturnType<typeof userEvent.setup>) => {
-      await user.type(
-        screen.getByRole("textbox", { name: /Role ARN/ }),
-        ROLE_ARN,
-      );
-      await screen.findByText(/Account 123456789012 will be added/);
-    };
-
-    it("offers the same one-click role setup, on the shared template", () => {
+    it("offers the same one-click role setup, on the shared template", async () => {
       // Given
-      renderStep();
+      const { user } = renderStep();
 
       // Then: the template keeps the AccountId parameter self-hosted users must edit.
       expect(
@@ -316,18 +308,32 @@ describe("AwsConnectStep", () => {
         "href",
         expect.stringContaining("prowler-scan-role.yml"),
       );
-      expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
-    });
-
-    it("connects with the host credentials when the keys are left empty", async () => {
-      // Given
-      const { onConnected, user } = renderStep();
-      expect(
-        screen.getByPlaceholderText("Enter the AWS Access Key ID"),
-      ).toBeVisible();
 
       // When
-      await typeArn(user);
+      await user.click(
+        screen.getByRole("button", { name: /Advanced options/i }),
+      );
+
+      // Then: keys belong to the "Static access keys" method, never to the role one.
+      expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
+      expect(
+        screen.queryByPlaceholderText("Enter the AWS Access Key ID"),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.getByPlaceholderText("Enter the role session name"),
+      ).toBeVisible();
+    });
+
+    it("assumes the role with the credentials of the host running Prowler", async () => {
+      // Given
+      const { onConnected, user } = renderStep();
+
+      // When
+      await user.type(
+        screen.getByRole("textbox", { name: /Role ARN/ }),
+        ROLE_ARN,
+      );
+      await screen.findByText(/Account 123456789012 will be added/);
       await waitFor(() => expect(connectButton()).toBeEnabled());
       await user.click(connectButton());
 
@@ -341,60 +347,6 @@ describe("AwsConnectStep", () => {
         credentials_type: "aws-sdk-default",
       });
       expect(secret).not.toHaveProperty("aws_access_key_id");
-    });
-
-    it("assumes the role with static keys when both are filled", async () => {
-      // Given
-      const { onConnected, user } = renderStep();
-
-      // When
-      await typeArn(user);
-      await user.type(
-        screen.getByPlaceholderText("Enter the AWS Access Key ID"),
-        "AKIAEXAMPLE",
-      );
-      await user.type(
-        screen.getByPlaceholderText("Enter the AWS Secret Access Key"),
-        "secret",
-      );
-      await waitFor(() => expect(connectButton()).toBeEnabled());
-      await user.click(connectButton());
-
-      // Then
-      await waitFor(() => expect(onConnected).toHaveBeenCalledOnce());
-      const secret = Object.fromEntries(
-        (addCredentialsProvider.mock.calls[0][0] as FormData).entries(),
-      );
-      expect(secret).toMatchObject({
-        credentials_type: "access-secret-key",
-        aws_access_key_id: "AKIAEXAMPLE",
-        aws_secret_access_key: "secret",
-      });
-    });
-
-    it("holds the connect button until both keys are filled", async () => {
-      // Given
-      const { user } = renderStep();
-      await typeArn(user);
-      await waitFor(() => expect(connectButton()).toBeEnabled());
-
-      // When: half a key pair is neither static keys nor the host's credentials.
-      await user.type(
-        screen.getByPlaceholderText("Enter the AWS Access Key ID"),
-        "AKIAEXAMPLE",
-      );
-
-      // Then
-      await waitFor(() => expect(connectButton()).toBeDisabled());
-
-      // When
-      await user.type(
-        screen.getByPlaceholderText("Enter the AWS Secret Access Key"),
-        "secret",
-      );
-
-      // Then
-      await waitFor(() => expect(connectButton()).toBeEnabled());
     });
   });
 });

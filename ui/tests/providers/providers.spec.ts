@@ -126,69 +126,6 @@ test.describe("Add Provider", () => {
     );
 
     test(
-      "should add a new AWS provider with assume role credentials with Access Key and Secret Key",
-      {
-        tag: [
-          "@critical",
-          "@e2e",
-          "@providers",
-          "@aws",
-          "@serial",
-          "@PROVIDER-E2E-002",
-        ],
-      },
-      async ({ page }) => {
-        // Validate required environment variables
-        if (!roleArn) {
-          throw new Error(
-            "E2E_AWS_PROVIDER_ROLE_ARN environment variable is not set",
-          );
-        }
-
-        // Prepare test data for AWS provider
-        const awsProviderData: AWSProviderData = {
-          accountId: accountId,
-          alias: "Test E2E AWS Account - Credentials",
-        };
-
-        // Prepare role-based credentials
-        const roleCredentials: AWSProviderCredential = {
-          type: AWS_CREDENTIAL_OPTIONS.AWS_ROLE_ARN,
-          accessKeyId: accessKey,
-          secretAccessKey: secretKey,
-          roleArn: roleArn,
-        };
-
-        // Navigate to providers page
-        await providersPage.goto();
-        await providersPage.verifyPageLoaded();
-
-        // Start adding new provider
-        await providersPage.clickAddProvider();
-        await providersPage.verifyConnectAccountPageLoaded();
-
-        // Select AWS provider
-        await providersPage.selectAWSProvider();
-
-        // AWS registers the account (read from the role ARN) and its
-        // credentials in a single step
-        await providersPage.selectAwsAccessMethod(
-          AWS_CREDENTIAL_OPTIONS.AWS_ROLE_ARN,
-        );
-        await providersPage.fillAWSProviderDetails(awsProviderData);
-
-        // Fill role credentials
-        await providersPage.fillRoleCredentials(roleCredentials);
-        await providersPage.clickNext();
-
-        // Confirm the provider connection without launching a scan
-        await providersPage.completeProviderConnectionWithoutLaunchingScan(
-          accountId,
-        );
-      },
-    );
-
-    test(
       "should add a new AWS provider with assume role credentials using AWS SDK",
       {
         tag: [
@@ -238,8 +175,8 @@ test.describe("Add Provider", () => {
         );
         await providersPage.fillAWSProviderDetails(awsProviderData);
 
-        // Leaving the keys under Advanced options empty assumes the role with
-        // the credentials of the host running Prowler (AWS SDK default).
+        // The role is assumed with the credentials of the host running Prowler
+        // (AWS SDK default); the wizard asks for nothing else.
         // Fill role credentials
         await providersPage.fillRoleCredentials(roleCredentials);
         await providersPage.clickNext();
