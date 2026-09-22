@@ -10,6 +10,7 @@ import {
   Resolver,
   UseFormReturn,
   useForm,
+  useFormState,
   useWatch,
 } from "react-hook-form";
 
@@ -180,7 +181,8 @@ interface UseAwsConnectSubmitOptions<T extends FieldValues> {
   method: AwsAccessMethod;
   // The field an account-level API error belongs to for this method.
   accountField: string;
-  canSubmit: boolean;
+  // Beyond form validity: the role form also needs an account read from the ARN.
+  accountResolved?: boolean;
   extraValues?: Record<string, string>;
   onConnected: () => void;
   onBusyChange: (isBusy: boolean) => void;
@@ -191,7 +193,7 @@ function useAwsConnectSubmit<T extends FieldValues>({
   form,
   method,
   accountField,
-  canSubmit,
+  accountResolved = true,
   extraValues,
   onConnected,
   onBusyChange,
@@ -203,7 +205,10 @@ function useAwsConnectSubmit<T extends FieldValues>({
     [UNIQUE_TOGETHER_ERROR_POINTER]: accountField,
     [ALIAS_ERROR_POINTER]: ProviderCredentialFields.PROVIDER_ALIAS,
   });
-  const isSubmitting = form.formState.isSubmitting;
+  // A hook, not `form.formState.isValid` read inline: the React Compiler keys
+  // its memo on the stable `form` object and would freeze a proxy read at false.
+  const { isSubmitting, isValid } = useFormState({ control: form.control });
+  const canSubmit = isValid && accountResolved;
 
   // Same contract ConnectAccountForm uses: the wizard footer lives outside the step.
   // Both callbacks must be stable setters, or this effect would loop.
@@ -283,7 +288,7 @@ function AwsRoleConnectForm({
     form,
     method: AWS_ACCESS_METHOD.ROLE,
     accountField: ProviderCredentialFields.ROLE_ARN,
-    canSubmit: form.formState.isValid && detectedAccountId !== null,
+    accountResolved: detectedAccountId !== null,
     // The external id is the tenant's, never user input, so it joins at submit time.
     extraValues: { [ProviderCredentialFields.EXTERNAL_ID]: externalId },
     onConnected,
@@ -383,7 +388,6 @@ function AwsKeysConnectForm({
     form,
     method: AWS_ACCESS_METHOD.CREDENTIALS,
     accountField: ProviderCredentialFields.PROVIDER_UID,
-    canSubmit: form.formState.isValid,
     onConnected,
     onBusyChange,
     onUiStateChange,

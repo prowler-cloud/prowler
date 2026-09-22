@@ -54,6 +54,17 @@ export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
     return this.countRequests("POST", "/apply");
   }
 
+  /** `POST /providers` alone; the substring match would also count secrets. */
+  get providerCreateCallCount(): number {
+    return (
+      this.countRequests("POST", "/providers") - this.secretCreateCallCount
+    );
+  }
+
+  get secretCreateCallCount(): number {
+    return this.countRequests("POST", "/providers/secrets");
+  }
+
   /**
    * Whether any apply asked the endpoint to include related resources, which it
    * rejects outright — a tripwire, not a preference.
@@ -221,6 +232,40 @@ export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
       undefined,
       "AWS connect step",
     );
+  }
+
+  /** Type the account id and static keys on the AWS one-step connect form. */
+  async fillAwsAccountKeys({
+    accountId,
+    accessKeyId,
+    secretAccessKey,
+  }: {
+    accountId: string;
+    accessKeyId: string;
+    secretAccessKey: string;
+  }): Promise<void> {
+    const accountInput = await this.waitFor(() =>
+      this.inputByName("providerUid"),
+    );
+    await this.user.fill(accountInput, accountId);
+    const keyInput = await this.waitFor(() =>
+      this.inputByName("aws_access_key_id"),
+    );
+    await this.user.fill(keyInput, accessKeyId);
+    const secretInput = await this.waitFor(() =>
+      this.inputByName("aws_secret_access_key"),
+    );
+    await this.user.fill(secretInput, secretAccessKey);
+  }
+
+  /** Submit the AWS one-step form; waits for its action to become enabled. */
+  async connectAccount(): Promise<void> {
+    await this.clickPrimary(/Connect account/);
+  }
+
+  /** Wait until the connection test step is showing with its action ready. */
+  async waitForConnectionTestStep(): Promise<void> {
+    await this.waitForButton(/Check connection/, 10000);
   }
 
   /** Switch back to a single account from the organization flow's tabs. */
