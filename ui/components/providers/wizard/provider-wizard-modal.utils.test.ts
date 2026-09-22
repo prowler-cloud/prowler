@@ -12,7 +12,80 @@ import {
   getOrganizationsStepperOffset,
   getProviderWizardDocsDestination,
   getProviderWizardModalTitle,
+  getProviderWizardStepper,
 } from "./provider-wizard-modal.utils";
+
+describe("getProviderWizardStepper", () => {
+  const labels = (steps: { label: string }[]) => steps.map((s) => s.label);
+
+  it("lists the four generic steps until a provider is picked", () => {
+    const stepper = getProviderWizardStepper({
+      mode: PROVIDER_WIZARD_MODE.ADD,
+      providerType: null,
+      currentStep: PROVIDER_WIZARD_STEP.CONNECT,
+    });
+
+    expect(labels(stepper.steps)).toEqual([
+      "Link a Provider",
+      "Authenticate Credentials",
+      "Validate Connection",
+      "Launch Scan",
+    ]);
+    expect(stepper.stepOffset).toBe(0);
+  });
+
+  it("folds the credentials step into the first one when adding an AWS account", () => {
+    const stepper = getProviderWizardStepper({
+      mode: PROVIDER_WIZARD_MODE.ADD,
+      providerType: "aws",
+      currentStep: PROVIDER_WIZARD_STEP.CONNECT,
+    });
+
+    expect(labels(stepper.steps)).toEqual([
+      "Link a Provider",
+      "Validate Connection",
+      "Launch Scan",
+    ]);
+    expect(stepper.stepOffset).toBe(0);
+  });
+
+  it("keeps the AWS stepper in sync once the wizard skips to the connection test", () => {
+    const stepper = getProviderWizardStepper({
+      mode: PROVIDER_WIZARD_MODE.ADD,
+      providerType: "aws",
+      currentStep: PROVIDER_WIZARD_STEP.TEST,
+    });
+
+    // TEST is index 2 in the wizard but the second row of the AWS stepper.
+    expect(stepper.stepOffset).toBe(-1);
+  });
+
+  it("keeps the first AWS row active if the wizard ever lands on the credentials step", () => {
+    const stepper = getProviderWizardStepper({
+      mode: PROVIDER_WIZARD_MODE.ADD,
+      providerType: "aws",
+      currentStep: PROVIDER_WIZARD_STEP.CREDENTIALS,
+    });
+
+    // CREDENTIALS has no row of its own for AWS: it folds into "Link a Provider".
+    expect(stepper.stepOffset).toBe(-1);
+  });
+
+  it("still shows the credentials step when updating AWS credentials", () => {
+    const stepper = getProviderWizardStepper({
+      mode: PROVIDER_WIZARD_MODE.UPDATE,
+      providerType: "aws",
+      currentStep: PROVIDER_WIZARD_STEP.CREDENTIALS,
+    });
+
+    expect(labels(stepper.steps)).toEqual([
+      "Link a Provider",
+      "Authenticate Credentials",
+      "Validate Connection",
+    ]);
+    expect(stepper.stepOffset).toBe(0);
+  });
+});
 
 describe("getOrganizationsStepperOffset", () => {
   it("keeps step 1 active during organization details", () => {

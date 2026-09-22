@@ -4,21 +4,41 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { Toaster } from "@/components/shadcn/toast/Toaster";
 import { resetToasts } from "@/components/shadcn/toast/use-toast";
+import {
+  PROVIDER_FUNNEL_EVENT,
+  type ProviderFunnelDetail,
+} from "@/lib/provider-funnel/provider-funnel-events";
+import { endActiveTour } from "@/lib/tours/use-driver-tour";
 import { useProviderWizardStore } from "@/store/provider-wizard/store";
+import { useUIStore } from "@/store/ui/store";
 
 import { ProviderWizardModal } from "./provider-wizard-modal";
 
-const { addRegistryProvider, getInstalledRegistryProviderOptions } = vi.hoisted(
-  () => ({
-    addRegistryProvider: vi.fn(),
-    getInstalledRegistryProviderOptions: vi.fn(),
-  }),
-);
+const {
+  addCredentialsProvider,
+  addProvider,
+  addRegistryProvider,
+  getInstalledRegistryProviderOptions,
+} = vi.hoisted(() => ({
+  addCredentialsProvider: vi.fn(),
+  addProvider: vi.fn(),
+  addRegistryProvider: vi.fn(),
+  getInstalledRegistryProviderOptions: vi.fn(),
+}));
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ refresh: vi.fn(), push: vi.fn() }),
 }));
-vi.mock("@/actions/providers/providers", () => ({ addProvider: vi.fn() }));
+vi.mock("next-auth/react", () => ({
+  useSession: () => ({
+    data: { tenantId: "tenant-abc" },
+    status: "authenticated",
+  }),
+}));
+vi.mock("@/actions/providers/providers", () => ({
+  addCredentialsProvider,
+  addProvider,
+}));
 vi.mock("@/actions/providers/registry-provider", () => ({
   addRegistryProvider,
 }));
@@ -40,7 +60,18 @@ vi.mock("./steps/credentials-step", () => ({
   CredentialsStep: () => <p>Credential details</p>,
 }));
 vi.mock("./steps/test-connection-step", () => ({
-  TestConnectionStep: () => null,
+  TestConnectionStep: ({
+    onResetCredentials,
+  }: {
+    onResetCredentials: () => void;
+  }) => (
+    <>
+      <p>Connection test</p>
+      <button type="button" onClick={onResetCredentials}>
+        Reset credentials
+      </button>
+    </>
+  ),
 }));
 vi.mock("./steps/launch-step", () => ({ LaunchStep: () => null }));
 vi.mock("../organizations/azure-org-setup-form", () => ({
@@ -132,6 +163,20 @@ describe("provider wizard account creation", () => {
     expect(await screen.findByText("Credential details")).toBeVisible();
   });
 
+  it("tells the rest of the app the tenant now has a provider", async () => {
+    // Given
+    useUIStore.setState({ hasProviders: false, hasProvidersResolved: true });
+    addRegistryProvider.mockResolvedValueOnce(createdAccount);
+    const user = await enterAccountDetails();
+
+    // When
+    await user.click(screen.getByRole("button", { name: "Next" }));
+    await screen.findByText("Credential details");
+
+    // Then: the sidebar stops offering Add Provider without waiting for a reload.
+    expect(useUIStore.getState().hasProviders).toBe(true);
+  });
+
   it("restores Next after a failed creation and retries the same account", async () => {
     // Given
     const failure = { errors: [{ detail: "Creation failed. Try again." }] };
@@ -204,6 +249,134 @@ describe("provider wizard account creation", () => {
     expect(await screen.findByText("Credential details")).toBeVisible();
     expect(screen.queryByText(detail)).not.toBeInTheDocument();
     expect(addRegistryProvider).toHaveBeenCalledTimes(2);
+  });
+
+  it("signals the provider type the user picked, once", async () => {
+    // Given
+    const funnelSignals: ProviderFunnelDetail[] = [];
+    const recordFunnelSignal: EventListener = (event) => {
+      funnelSignals.push((event as CustomEvent<ProviderFunnelDetail>).detail);
+    };
+    window.addEventListener(PROVIDER_FUNNEL_EVENT, recordFunnelSignal);
+    const user = userEvent.setup();
+    render(<ProviderWizardModal open onOpenChange={vi.fn()} />);
+
+    await screen.findByRole("option", { name: "Acme Cloud Registry" });
+
+    // When
+    await user.click(
+      screen.getByRole("option", { name: /Amazon Web Services/ }),
+    );
+    await screen.findByRole("radio", { name: /IAM Role/ });
+    window.removeEventListener(PROVIDER_FUNNEL_EVENT, recordFunnelSignal);
+
+    // Then
+    expect(funnelSignals).toEqual([
+      { step: "provider_type_selected", providerType: "aws" },
+    ]);
+  });
+
+  describe("when the user picks AWS", () => {
+    const ROLE_ARN = "arn:aws:iam::123456789012:role/ProwlerScan";
+
+    async function pickAws() {
+      const user = userEvent.setup();
+      render(<ProviderWizardModal open onOpenChange={vi.fn()} />);
+      await screen.findByRole("option", { name: "Acme Cloud Registry" });
+      await user.click(
+        screen.getByRole("option", { name: /Amazon Web Services/ }),
+      );
+      await screen.findByRole("textbox", { name: /Role ARN/ });
+      return user;
+    }
+
+    it("connects the account and its credentials in one step, then tests the connection", async () => {
+      // Given
+      addProvider.mockResolvedValue({ data: { id: "provider-1" } });
+      addCredentialsProvider.mockResolvedValue({ data: { id: "secret-1" } });
+      const user = await pickAws();
+
+      // When
+      await user.type(
+        screen.getByRole("textbox", { name: /Role ARN/ }),
+        ROLE_ARN,
+      );
+      const connect = screen.getByRole("button", { name: "Connect account" });
+      await waitFor(() => expect(connect).toBeEnabled());
+      await user.click(connect);
+
+      // Then: the separate credentials step never shows up.
+      expect(await screen.findByText("Connection test")).toBeVisible();
+      expect(screen.queryByText("Credential details")).not.toBeInTheDocument();
+      expect(useProviderWizardStore.getState()).toMatchObject({
+        providerId: "provider-1",
+        secretId: "secret-1",
+        via: "role",
+      });
+    });
+
+    it("returns to the one-step form when the connection test is stepped back from", async () => {
+      // Given
+      addProvider.mockResolvedValue({ data: { id: "provider-1" } });
+      addCredentialsProvider.mockResolvedValue({ data: { id: "secret-1" } });
+      const user = await pickAws();
+      await user.type(
+        screen.getByRole("textbox", { name: /Role ARN/ }),
+        ROLE_ARN,
+      );
+      const connect = screen.getByRole("button", { name: "Connect account" });
+      await waitFor(() => expect(connect).toBeEnabled());
+      await user.click(connect);
+      await screen.findByText("Connection test");
+
+      // When
+      await user.click(
+        screen.getByRole("button", { name: "Reset credentials" }),
+      );
+
+      // Then: AWS never had a separate credentials step, so it lands on its own form.
+      expect(
+        await screen.findByRole("textbox", { name: /Role ARN/ }),
+      ).toBeVisible();
+      expect(screen.queryByText("Credential details")).not.toBeInTheDocument();
+    });
+
+    it("steps the tour aside once the account can be connected", async () => {
+      // Given
+      vi.mocked(endActiveTour).mockClear();
+      const user = await pickAws();
+
+      // When
+      await user.type(
+        screen.getByRole("textbox", { name: /Role ARN/ }),
+        ROLE_ARN,
+      );
+
+      // Then: the footer sits outside the tour's spotlight, so the tour ends
+      // right when the user is ready to press Connect account.
+      await waitFor(() =>
+        expect(
+          screen.getByRole("button", { name: "Connect account" }),
+        ).toBeEnabled(),
+      );
+      expect(endActiveTour).toHaveBeenCalled();
+    });
+
+    it("goes back to the provider list", async () => {
+      // Given
+      const user = await pickAws();
+
+      // When
+      await user.click(screen.getByRole("button", { name: "Back" }));
+
+      // Then
+      expect(
+        await screen.findByRole("option", { name: /Microsoft Azure/ }),
+      ).toBeVisible();
+      expect(
+        screen.queryByRole("textbox", { name: /Role ARN/ }),
+      ).not.toBeInTheDocument();
+    });
   });
 
   it("keeps native providers available during a Registry discovery error and retries", async () => {

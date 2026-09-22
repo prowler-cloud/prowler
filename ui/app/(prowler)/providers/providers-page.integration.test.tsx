@@ -212,6 +212,81 @@ describe("Organization onboarding wizard", () => {
       }, 60000);
     });
 
+    describe("Wizard progress", () => {
+      it("drops the credentials row once AWS is picked, since one step covers both", async () => {
+        const harness = new ProvidersPageHarness(awsOnboardingFixture());
+        await harness.mount();
+        expect(harness.stepperLabels()).toEqual([
+          "Link a Provider",
+          "Authenticate Credentials",
+          "Validate Connection",
+          "Launch Scan",
+        ]);
+
+        await harness.selectProviderType(/Amazon Web Services/);
+        await harness.waitForAwsConnectStep();
+
+        expect(harness.stepperLabels()).toEqual([
+          "Link a Provider",
+          "Validate Connection",
+          "Launch Scan",
+        ]);
+      }, 40000);
+    });
+
+    describe("Single account with access keys", () => {
+      // Runs compiled by the React Compiler, unlike the unit suite: it guards the
+      // form's validity being read as a reactive value, not frozen in a memo.
+      it("enables Connect account once the form is filled and jumps to the connection test", async () => {
+        const harness = new ProvidersPageHarness(awsOnboardingFixture());
+        await harness.mount();
+        await harness.selectProviderType(/Amazon Web Services/);
+        await harness.waitForAwsConnectStep();
+        await harness.chooseMethod(/Static access keys/);
+        await harness.fillAwsAccountKeys({
+          accountId: "210987654321",
+          accessKeyId: "AKIAEXAMPLE",
+          secretAccessKey: "secret-value",
+        });
+
+        await harness.connectAccount();
+
+        await harness.waitForConnectionTestStep();
+        expect(harness.providerCreateCallCount).toBe(1);
+        expect(harness.secretCreateCallCount).toBe(1);
+        const secret = await harness.lastRequestBody<{
+          data: { relationships: { provider: { data: { id: string } } } };
+        }>("POST", "/providers/secrets");
+        expect(secret?.data.relationships.provider.data.id).toBe(
+          "provider-created-1",
+        );
+      }, 40000);
+    });
+
+    describe("Leaving the organization flow", () => {
+      it("keeps the method tabs on Organization Details and switches back to a single account", async () => {
+        const harness = new ProvidersPageHarness(awsOnboardingFixture());
+        await harness.mount();
+        await harness.chooseAwsOrganizations();
+
+        await harness.switchToAwsSingleAccount();
+
+        await harness.waitForAwsConnectStep();
+        expect(harness.hasOrganizationSetupStep()).toBe(false);
+      }, 40000);
+
+      it("returns to the AWS single-account step when going back from Organization Details", async () => {
+        const harness = new ProvidersPageHarness(awsOnboardingFixture());
+        await harness.mount();
+        await harness.chooseAwsOrganizations();
+
+        await harness.goBack();
+
+        await harness.waitForAwsConnectStep();
+        expect(harness.hasOrganizationSetupStep()).toBe(false);
+      }, 40000);
+    });
+
     describe("Account selection", () => {
       it("disables blocked accounts and excludes them from the selectable count", async () => {
         const harness = new ProvidersPageHarness(awsOnboardingFixture());

@@ -8,10 +8,11 @@ import {
 export const ADD_PROVIDER_TOUR_TARGETS = {
   TRIGGER: "trigger",
   PROVIDER_TYPE: "provider-type",
-  // Wraps the whole wizard modal so the final step's spotlight covers every input
-  // (UID, alias) and the footer — driver.js only keeps the highlighted element and
-  // its descendants interactive, so anchoring here stops the overlay from freezing
-  // those inputs.
+  // Wraps the wizard's form column so the final step's spotlight covers every
+  // input (UID, alias) — driver.js only keeps the highlighted element and its
+  // descendants interactive, so anchoring here stops the overlay from freezing
+  // those inputs. The footer sits outside the anchor and stays clickable through
+  // `data-tour-interactive` (see styles/tours.css).
   WIZARD_BODY: "wizard-body",
 } as const;
 
@@ -53,15 +54,16 @@ export const addProviderTour = defineTour<AddProviderTourTarget>({
     },
     {
       target: "wizard-body",
-      // Pinned to the left of the form column, mirroring the provider-type step.
+      // Left of the form column, in the gap under the stepper and level with the
+      // footer the user continues from, so it never covers the form itself.
       side: TOUR_STEP_SIDES.LEFT,
-      align: TOUR_STEP_ALIGNMENTS.START,
+      align: TOUR_STEP_ALIGNMENTS.END,
       // Final step: stays until the user closes it or advances to credentials, which
       // the wizard ends the tour from. No Next button.
       autoAdvance: true,
       title: "Add your account details",
       description:
-        "Enter your account ID and an optional alias, then continue. From here you'll add credentials, test the connection, and launch your first scan — at your own pace.",
+        "Fill in the connection details for this provider, then continue. From here you'll test the connection and launch your first scan — at your own pace.",
     },
   ],
 });

@@ -55,6 +55,22 @@ describe("DiscoveryCallout", () => {
     expect(onDismiss).toHaveBeenCalledTimes(1);
   });
 
+  it("stays open when focus moves elsewhere, e.g. to a product tour", () => {
+    // Given
+    const onDismiss = vi.fn();
+    renderCallout(true, onDismiss);
+    const elsewhere = document.createElement("button");
+    document.body.appendChild(elsewhere);
+
+    // When: driver.js focuses its own popover as a tour starts.
+    fireEvent.focusIn(elsewhere);
+
+    // Then: a passive hint is not dismissed by focus it never held.
+    expect(onDismiss).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: "Got it" })).toBeInTheDocument();
+    elsewhere.remove();
+  });
+
   it("keeps focus free when it opens", () => {
     // Given / When: the callout opens on its own (not user-invoked)
     renderCallout(true, vi.fn());
