@@ -243,6 +243,56 @@ describe("AwsConnectStep", () => {
     });
   });
 
+  describe("with access keys, when the API refuses the account", () => {
+    beforeEach(() => {
+      vi.stubEnv("UI_CLOUD_ENABLED", "true");
+    });
+
+    it("shows the refusal on the Account ID field and stays on the step", async () => {
+      // Given
+      addProvider.mockResolvedValueOnce({
+        errors: [
+          {
+            detail: "Provider with this uid already exists.",
+            source: { pointer: "/data/attributes/uid" },
+          },
+        ],
+      });
+      const { onConnected, user } = renderStep();
+      await user.click(
+        screen.getByRole("radio", { name: /Static access keys/ }),
+      );
+      await user.type(
+        screen.getByRole("textbox", { name: /Account ID/ }),
+        "210987654321",
+      );
+      await user.type(
+        screen.getByPlaceholderText("Enter the AWS Access Key ID"),
+        "AKIAEXAMPLE",
+      );
+      await user.type(
+        screen.getByPlaceholderText("Enter the AWS Secret Access Key"),
+        "secret-value",
+      );
+      await waitFor(() => expect(connectButton()).toBeEnabled());
+
+      // When
+      await user.click(connectButton());
+
+      // Then
+      expect(
+        await screen.findByText("Provider with this uid already exists."),
+      ).toBeVisible();
+      // The field wrapper carries the invalid state for the Account ID input.
+      expect(
+        screen
+          .getByRole("textbox", { name: /Account ID/ })
+          .closest("[aria-invalid]"),
+      ).toHaveAttribute("aria-invalid", "true");
+      expect(onConnected).not.toHaveBeenCalled();
+    });
+  });
+
   describe("when the step is left and reopened within the same wizard", () => {
     beforeEach(() => {
       vi.stubEnv("UI_CLOUD_ENABLED", "true");
