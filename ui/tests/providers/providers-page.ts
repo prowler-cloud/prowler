@@ -1673,9 +1673,20 @@ export class ProvidersPage extends BasePage {
     }
   }
 
-  async selectAuthenticationMethod(method: AWSCredentialType): Promise<void> {
-    // Select the authentication method (shadcn Select renders as combobox + listbox)
+  async expandAdvancedOptions(): Promise<void> {
+    // Cloud collapses the section by default and its content is not mounted while closed.
+    const toggle = this.wizardModal.getByRole("button", {
+      name: "Advanced options",
+    });
+    if ((await toggle.getAttribute("data-state")) === "closed") {
+      await toggle.click();
+    }
+  }
 
+  async selectAuthenticationMethod(method: AWSCredentialType): Promise<void> {
+    await this.expandAdvancedOptions();
+
+    // Select the authentication method (shadcn Select renders as combobox + listbox)
     const trigger = this.page.locator('[role="combobox"]').filter({
       hasText: /AWS SDK Default|Prowler Cloud will assume|Access & Secret Key/i,
     });
