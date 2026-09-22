@@ -307,10 +307,32 @@ describe("addCredentialsFormSchema - oraclecloud", () => {
     [ProviderCredentialFields.OCI_TENANCY]: "ocid1.tenancy.oc1..example",
   } as const;
 
-  it("accepts OCI API key credentials without region", () => {
+  it("rejects OCI API key credentials without a home region", () => {
     const schema = addCredentialsFormSchema("oraclecloud");
 
     const result = schema.safeParse(BASE_OCI_VALUES);
+
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects an unknown OCI home region", () => {
+    const schema = addCredentialsFormSchema("oraclecloud");
+
+    const result = schema.safeParse({
+      ...BASE_OCI_VALUES,
+      [ProviderCredentialFields.OCI_REGION]: "mars-north-1",
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("accepts OCI API key credentials with a home region", () => {
+    const schema = addCredentialsFormSchema("oraclecloud");
+
+    const result = schema.safeParse({
+      ...BASE_OCI_VALUES,
+      [ProviderCredentialFields.OCI_REGION]: "me-abudhabi-1",
+    });
 
     expect(result.success).toBe(true);
   });

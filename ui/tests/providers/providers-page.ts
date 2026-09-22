@@ -224,6 +224,7 @@ export interface OCIProviderCredential {
   userId?: string;
   fingerprint?: string;
   keyContent?: string;
+  homeRegion?: string;
 }
 
 // AlibabaCloud credential options
@@ -365,6 +366,7 @@ export class ProvidersPage extends BasePage {
   readonly ociUserIdInput: Locator;
   readonly ociFingerprintInput: Locator;
   readonly ociKeyContentInput: Locator;
+  readonly ociHomeRegionCombobox: Locator;
 
   // AlibabaCloud provider form elements
   readonly alibabacloudAccountIdInput: Locator;
@@ -507,6 +509,9 @@ export class ProvidersPage extends BasePage {
     });
     this.ociKeyContentInput = page.getByRole("textbox", {
       name: /Private Key Content/i,
+    });
+    this.ociHomeRegionCombobox = page.getByRole("combobox", {
+      name: /Home Region/i,
     });
 
     // AlibabaCloud provider form inputs
@@ -1317,6 +1322,12 @@ export class ProvidersPage extends BasePage {
     if (credentials.keyContent) {
       await this.ociKeyContentInput.fill(credentials.keyContent);
     }
+    if (credentials.homeRegion) {
+      await this.ociHomeRegionCombobox.click();
+      await this.page
+        .getByRole("option", { name: credentials.homeRegion, exact: true })
+        .click();
+    }
   }
 
   async verifyOCICredentialsPageLoaded(): Promise<void> {
@@ -1327,6 +1338,7 @@ export class ProvidersPage extends BasePage {
     await expect(this.ociUserIdInput).toBeVisible();
     await expect(this.ociFingerprintInput).toBeVisible();
     await expect(this.ociKeyContentInput).toBeVisible();
+    await expect(this.ociHomeRegionCombobox).toBeVisible();
   }
 
   async verifyOCIUpdateCredentialsPageLoaded(): Promise<void> {
@@ -1337,6 +1349,7 @@ export class ProvidersPage extends BasePage {
     await expect(this.ociUserIdInput).toBeVisible();
     await expect(this.ociFingerprintInput).toBeVisible();
     await expect(this.ociKeyContentInput).toBeVisible();
+    await expect(this.ociHomeRegionCombobox).toBeVisible();
   }
 
   async selectAlibabaCloudProvider(): Promise<void> {

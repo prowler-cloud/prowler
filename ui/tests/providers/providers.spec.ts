@@ -1032,6 +1032,7 @@ test.describe("Add Provider", () => {
     const userId = process.env.E2E_OCI_USER_ID ?? "";
     const fingerprint = process.env.E2E_OCI_FINGERPRINT ?? "";
     const keyContent = process.env.E2E_OCI_KEY_CONTENT ?? "";
+    const homeRegion = process.env.E2E_OCI_REGION ?? "us-ashburn-1";
 
     // Setup before each test
     test.beforeEach(async ({ page }) => {
@@ -1073,6 +1074,7 @@ test.describe("Add Provider", () => {
           userId: userId,
           fingerprint: fingerprint,
           keyContent: keyContent,
+          homeRegion: homeRegion,
         };
 
         // Navigate to providers page
@@ -1517,6 +1519,7 @@ test.describe("Update Provider Credentials", () => {
     const userId = process.env.E2E_OCI_USER_ID ?? "";
     const fingerprint = process.env.E2E_OCI_FINGERPRINT ?? "";
     const keyContent = process.env.E2E_OCI_KEY_CONTENT ?? "";
+    const homeRegion = process.env.E2E_OCI_REGION ?? "us-ashburn-1";
 
     // Setup before each test
     test.beforeEach(async ({ page }) => {
@@ -1543,6 +1546,7 @@ test.describe("Update Provider Credentials", () => {
           userId: userId,
           fingerprint: fingerprint,
           keyContent: keyContent,
+          homeRegion: homeRegion,
         };
 
         // Navigate to providers page

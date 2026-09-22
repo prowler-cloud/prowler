@@ -301,8 +301,7 @@ from rest_framework_json_api import serializers
                     },
                     "region": {
                         "type": "string",
-                        "deprecated": True,
-                        "description": "Legacy OCI region field accepted for backwards compatibility but ignored; OCI scans all regions.",
+                        "description": "Optional OCI home region (or any region the tenancy is subscribed to) used to validate the credentials. It does not filter the scan, which covers all subscribed regions. Defaults to us-ashburn-1.",
                     },
                 },
                 "required": ["user", "fingerprint", "tenancy"],

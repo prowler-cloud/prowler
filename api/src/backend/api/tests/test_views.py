@@ -3362,7 +3362,7 @@ current-context: test-context
         provider_secret = ProviderSecret.objects.get()
         assert "region" not in provider_secret.secret
 
-    def test_provider_secrets_create_oraclecloud_accepts_and_ignores_region(
+    def test_provider_secrets_create_oraclecloud_stores_region(
         self,
         authenticated_client,
         oraclecloud_provider,
@@ -3371,14 +3371,14 @@ current-context: test-context
             authenticated_client,
             oraclecloud_provider,
             self._oraclecloud_secret(
-                key_content="  test-key-content  ", region=" us-ashburn-1 "
+                key_content="  test-key-content  ", region=" me-abudhabi-1 "
             ),
         )
 
         assert response.status_code == status.HTTP_201_CREATED
         provider_secret = ProviderSecret.objects.get()
         assert provider_secret.secret["key_content"] == "test-key-content"
-        assert "region" not in provider_secret.secret
+        assert provider_secret.secret["region"] == "me-abudhabi-1"
 
     def test_provider_secrets_update_oraclecloud_without_region_stores_no_region(
         self,
@@ -3411,7 +3411,7 @@ current-context: test-context
         provider_secret.refresh_from_db()
         assert "region" not in provider_secret.secret
 
-    def test_provider_secrets_update_oraclecloud_accepts_and_ignores_region(
+    def test_provider_secrets_update_oraclecloud_stores_region(
         self,
         authenticated_client,
         oraclecloud_provider,
@@ -3429,7 +3429,7 @@ current-context: test-context
                 "type": "provider-secrets",
                 "id": str(provider_secret.id),
                 "attributes": {
-                    "secret": self._oraclecloud_secret(region=" us-ashburn-1 ")
+                    "secret": self._oraclecloud_secret(region=" me-abudhabi-1 ")
                 },
             }
         }
@@ -3442,7 +3442,7 @@ current-context: test-context
 
         assert response.status_code == status.HTTP_200_OK
         provider_secret.refresh_from_db()
-        assert "region" not in provider_secret.secret
+        assert provider_secret.secret["region"] == "me-abudhabi-1"
 
     @pytest.mark.parametrize(
         "attributes, error_code, error_pointer",
