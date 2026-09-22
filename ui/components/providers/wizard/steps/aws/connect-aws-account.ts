@@ -1,6 +1,8 @@
 import {
   addCredentialsProvider,
   addProvider,
+  updateCredentialsProvider,
+  updateProvider,
 } from "@/actions/providers/providers";
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
 import { useProviderWizardStore } from "@/store/provider-wizard/store";
@@ -75,11 +77,36 @@ const resolveAccountId = ({ method, values }: AwsConnectInput) =>
       )
     : asText(values[ProviderCredentialFields.PROVIDER_UID]).trim() || null;
 
+// A retry may carry a new alias; the account registered earlier has to follow it.
+const renameProvider = async (providerId: string, alias: string) => {
+  const store = useProviderWizardStore.getState();
+  if ((store.providerAlias ?? "") === alias)
+    return { providerId, errors: null };
+
+  const updated = readCreatedId(
+    await updateProvider(
+      toFormData({
+        [ProviderCredentialFields.PROVIDER_ID]: providerId,
+        [ProviderCredentialFields.PROVIDER_ALIAS]: alias,
+      }),
+    ),
+  );
+  if (!updated.id) return { providerId: null, errors: updated.errors };
+
+  store.setProvider({
+    id: providerId,
+    type: "aws",
+    uid: store.providerUid ?? "",
+    alias: alias || null,
+  });
+  return { providerId, errors: null };
+};
+
 // A retry after a refused secret must not register the same account twice.
 const ensureProvider = async (uid: string, alias: string) => {
   const store = useProviderWizardStore.getState();
   if (store.providerId && store.providerUid === uid) {
-    return { providerId: store.providerId, errors: null };
+    return renameProvider(store.providerId, alias);
   }
 
   const created = readCreatedId(
@@ -135,14 +162,17 @@ export async function connectAwsAccount(
       ([key]) => !ACCOUNT_FIELDS.includes(key),
     ),
   );
+  const secretFormData = toFormData({
+    ...secretValues,
+    [ProviderCredentialFields.PROVIDER_ID]: provider.providerId,
+    [ProviderCredentialFields.PROVIDER_TYPE]: "aws",
+  });
+  // A provider holds one secret: resubmitting a connected account edits it in place.
+  const storedSecretId = useProviderWizardStore.getState().secretId;
   const secret = readCreatedId(
-    await addCredentialsProvider(
-      toFormData({
-        ...secretValues,
-        [ProviderCredentialFields.PROVIDER_ID]: provider.providerId,
-        [ProviderCredentialFields.PROVIDER_TYPE]: "aws",
-      }),
-    ),
+    storedSecretId
+      ? await updateCredentialsProvider(storedSecretId, secretFormData)
+      : await addCredentialsProvider(secretFormData),
   );
   if (!secret.id) return { ok: false, errors: secret.errors ?? [] };
 

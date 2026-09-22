@@ -6,14 +6,23 @@ import { useUIStore } from "@/store/ui/store";
 import { connectAwsAccount } from "./connect-aws-account";
 import { AWS_ACCESS_METHOD } from "./types";
 
-const { addProvider, addCredentialsProvider } = vi.hoisted(() => ({
+const {
+  addProvider,
+  addCredentialsProvider,
+  updateProvider,
+  updateCredentialsProvider,
+} = vi.hoisted(() => ({
   addProvider: vi.fn(),
   addCredentialsProvider: vi.fn(),
+  updateProvider: vi.fn(),
+  updateCredentialsProvider: vi.fn(),
 }));
 
 vi.mock("@/actions/providers/providers", () => ({
   addProvider,
   addCredentialsProvider,
+  updateProvider,
+  updateCredentialsProvider,
 }));
 
 const ROLE_ARN = "arn:aws:iam::123456789012:role/ProwlerScan";
@@ -43,6 +52,8 @@ describe("connectAwsAccount", () => {
     useUIStore.setState({ hasProviders: false, hasProvidersResolved: true });
     addProvider.mockResolvedValue({ data: { id: "provider-1" } });
     addCredentialsProvider.mockResolvedValue({ data: { id: "secret-1" } });
+    updateProvider.mockResolvedValue({ data: { id: "provider-1" } });
+    updateCredentialsProvider.mockResolvedValue({ data: { id: "secret-1" } });
   });
 
   describe("when connecting through an IAM role", () => {
@@ -236,6 +247,76 @@ describe("connectAwsAccount", () => {
       expect(second).toEqual({ ok: true });
       expect(addProvider).toHaveBeenCalledOnce();
       expect(addCredentialsProvider).toHaveBeenCalledTimes(2);
+      expect(updateProvider).not.toHaveBeenCalled();
+    });
+
+    it("renames the registered account when the alias changed before the retry", async () => {
+      // Given
+      addCredentialsProvider.mockResolvedValueOnce({
+        errors: [{ detail: "Invalid role ARN." }],
+      });
+      await connectAwsAccount({
+        method: AWS_ACCESS_METHOD.ROLE,
+        values: roleValues,
+      });
+
+      // When
+      const second = await connectAwsAccount({
+        method: AWS_ACCESS_METHOD.ROLE,
+        values: { ...roleValues, providerAlias: "Production EU" },
+      });
+
+      // Then
+      expect(second).toEqual({ ok: true });
+      expect(addProvider).toHaveBeenCalledOnce();
+      expect(formEntries(0, updateProvider)).toEqual({
+        providerId: "provider-1",
+        providerAlias: "Production EU",
+      });
+      expect(useProviderWizardStore.getState().providerAlias).toBe(
+        "Production EU",
+      );
+    });
+  });
+
+  describe("when the account was already connected in this wizard session", () => {
+    it("updates the stored credentials instead of creating a second secret", async () => {
+      // Given
+      await connectAwsAccount({
+        method: AWS_ACCESS_METHOD.ROLE,
+        values: roleValues,
+      });
+      updateCredentialsProvider.mockResolvedValueOnce({
+        data: { id: "secret-1" },
+      });
+
+      // When
+      const result = await connectAwsAccount({
+        method: AWS_ACCESS_METHOD.ROLE,
+        values: {
+          ...roleValues,
+          role_arn: "arn:aws:iam::123456789012:role/ProwlerScanV2",
+        },
+      });
+
+      // Then
+      expect(result).toEqual({ ok: true });
+      expect(addProvider).toHaveBeenCalledOnce();
+      expect(addCredentialsProvider).toHaveBeenCalledOnce();
+      expect(updateCredentialsProvider).toHaveBeenCalledExactlyOnceWith(
+        "secret-1",
+        expect.any(FormData),
+      );
+      expect(
+        Object.fromEntries(
+          (updateCredentialsProvider.mock.calls[0][1] as FormData).entries(),
+        ),
+      ).toMatchObject({
+        providerId: "provider-1",
+        providerType: "aws",
+        role_arn: "arn:aws:iam::123456789012:role/ProwlerScanV2",
+      });
+      expect(useProviderWizardStore.getState().secretId).toBe("secret-1");
     });
   });
 });
