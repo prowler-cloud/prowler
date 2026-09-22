@@ -27,6 +27,7 @@ import type { ScanScheduleCapability } from "@/types/schedules";
 
 import { useProviderWizardController } from "./hooks/use-provider-wizard-controller";
 import {
+  getCredentialsRetryStep,
   getOrganizationsStepperOffset,
   getProviderWizardDocsDestination,
   getProviderWizardStepper,
@@ -214,7 +215,12 @@ export function ProviderWizardModal({
                     <TestConnectionStep
                       onSuccess={handleTestSuccess}
                       onResetCredentials={() =>
-                        setCurrentStep(PROVIDER_WIZARD_STEP.CREDENTIALS)
+                        setCurrentStep(
+                          getCredentialsRetryStep({
+                            mode,
+                            providerType: providerTypeHint,
+                          }),
+                        )
                       }
                       onFooterChange={setFooterConfig}
                     />

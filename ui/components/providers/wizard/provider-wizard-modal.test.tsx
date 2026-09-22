@@ -60,7 +60,18 @@ vi.mock("./steps/credentials-step", () => ({
   CredentialsStep: () => <p>Credential details</p>,
 }));
 vi.mock("./steps/test-connection-step", () => ({
-  TestConnectionStep: () => <p>Connection test</p>,
+  TestConnectionStep: ({
+    onResetCredentials,
+  }: {
+    onResetCredentials: () => void;
+  }) => (
+    <>
+      <p>Connection test</p>
+      <button type="button" onClick={onResetCredentials}>
+        Reset credentials
+      </button>
+    </>
+  ),
 }));
 vi.mock("./steps/launch-step", () => ({ LaunchStep: () => null }));
 vi.mock("../organizations/azure-org-setup-form", () => ({
@@ -302,6 +313,32 @@ describe("provider wizard account creation", () => {
         secretId: "secret-1",
         via: "role",
       });
+    });
+
+    it("returns to the one-step form when the connection test is stepped back from", async () => {
+      // Given
+      addProvider.mockResolvedValue({ data: { id: "provider-1" } });
+      addCredentialsProvider.mockResolvedValue({ data: { id: "secret-1" } });
+      const user = await pickAws();
+      await user.type(
+        screen.getByRole("textbox", { name: /Role ARN/ }),
+        ROLE_ARN,
+      );
+      const connect = screen.getByRole("button", { name: "Connect account" });
+      await waitFor(() => expect(connect).toBeEnabled());
+      await user.click(connect);
+      await screen.findByText("Connection test");
+
+      // When
+      await user.click(
+        screen.getByRole("button", { name: "Reset credentials" }),
+      );
+
+      // Then: AWS never had a separate credentials step, so it lands on its own form.
+      expect(
+        await screen.findByRole("textbox", { name: /Role ARN/ }),
+      ).toBeVisible();
+      expect(screen.queryByText("Credential details")).not.toBeInTheDocument();
     });
 
     it("steps the tour aside once the account can be connected", async () => {

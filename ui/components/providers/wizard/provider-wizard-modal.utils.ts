@@ -38,11 +38,28 @@ export function getProviderWizardStepper({
     return { steps: UPDATE_MODE_WIZARD_STEPS, stepOffset: 0 };
   }
   if (providerType === "aws") {
-    // CONNECT stays on the first row; TEST and LAUNCH shift up one.
-    const stepOffset = currentStep >= PROVIDER_WIZARD_STEP.TEST ? -1 : 0;
+    // CONNECT stays on the first row; every later step shifts up one, so
+    // CREDENTIALS (no row of its own) folds into the first one too.
+    const stepOffset = currentStep === PROVIDER_WIZARD_STEP.CONNECT ? 0 : -1;
     return { steps: AWS_PROVIDER_WIZARD_STEPS, stepOffset };
   }
   return { steps: PROVIDER_WIZARD_STEPS, stepOffset: 0 };
+}
+
+interface CredentialsRetryStepInput {
+  mode: ProviderWizardMode;
+  providerType: ProviderType | null;
+}
+
+/** Where "Back" from the connection test lands: AWS re-enters its one-step form. */
+export function getCredentialsRetryStep({
+  mode,
+  providerType,
+}: CredentialsRetryStepInput): ProviderWizardStep {
+  if (mode === PROVIDER_WIZARD_MODE.ADD && providerType === "aws") {
+    return PROVIDER_WIZARD_STEP.CONNECT;
+  }
+  return PROVIDER_WIZARD_STEP.CREDENTIALS;
 }
 
 export function getOrganizationsStepperOffset(

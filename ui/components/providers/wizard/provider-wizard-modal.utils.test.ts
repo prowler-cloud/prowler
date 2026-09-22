@@ -60,6 +60,17 @@ describe("getProviderWizardStepper", () => {
     expect(stepper.stepOffset).toBe(-1);
   });
 
+  it("keeps the first AWS row active if the wizard ever lands on the credentials step", () => {
+    const stepper = getProviderWizardStepper({
+      mode: PROVIDER_WIZARD_MODE.ADD,
+      providerType: "aws",
+      currentStep: PROVIDER_WIZARD_STEP.CREDENTIALS,
+    });
+
+    // CREDENTIALS has no row of its own for AWS: it folds into "Link a Provider".
+    expect(stepper.stepOffset).toBe(-1);
+  });
+
   it("still shows the credentials step when updating AWS credentials", () => {
     const stepper = getProviderWizardStepper({
       mode: PROVIDER_WIZARD_MODE.UPDATE,
