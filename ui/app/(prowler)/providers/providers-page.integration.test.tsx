@@ -212,6 +212,30 @@ describe("Organization onboarding wizard", () => {
       }, 60000);
     });
 
+    describe("Leaving the organization flow", () => {
+      it("keeps the method tabs on Organization Details and switches back to a single account", async () => {
+        const harness = new ProvidersPageHarness(awsOnboardingFixture());
+        await harness.mount();
+        await harness.chooseAwsOrganizations();
+
+        await harness.switchToAwsSingleAccount();
+
+        await harness.waitForAwsConnectStep();
+        expect(harness.hasOrganizationSetupStep()).toBe(false);
+      }, 40000);
+
+      it("returns to the AWS single-account step when going back from Organization Details", async () => {
+        const harness = new ProvidersPageHarness(awsOnboardingFixture());
+        await harness.mount();
+        await harness.chooseAwsOrganizations();
+
+        await harness.goBack();
+
+        await harness.waitForAwsConnectStep();
+        expect(harness.hasOrganizationSetupStep()).toBe(false);
+      }, 40000);
+    });
+
     describe("Account selection", () => {
       it("disables blocked accounts and excludes them from the selectable count", async () => {
         const harness = new ProvidersPageHarness(awsOnboardingFixture());

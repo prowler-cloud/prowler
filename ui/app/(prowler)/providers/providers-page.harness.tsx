@@ -206,6 +206,25 @@ export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
     await this.waitForText(/Organization Details/);
   }
 
+  /** Wait until the AWS single-account connect step (with its method tabs) is showing. */
+  async waitForAwsConnectStep(): Promise<void> {
+    await this.waitFor(
+      () => this.byRoleName("tab", /Single AWS Account/),
+      undefined,
+      "AWS connect step",
+    );
+  }
+
+  /** Switch back to a single account from the organization flow's tabs. */
+  async switchToAwsSingleAccount(): Promise<void> {
+    const tab = await this.waitFor(
+      () => this.byRoleName("tab", /Single AWS Account/),
+      undefined,
+      "Single AWS Account tab",
+    );
+    await this.user.click(tab);
+  }
+
   /** Select GCP and open the GCP Organization method card (no advance wait). */
   async chooseGcpOrganizationsMethod(): Promise<void> {
     await this.selectProviderType(/Google Cloud Platform/);

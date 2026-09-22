@@ -170,6 +170,7 @@ export function ProviderWizardModal({
                 className="minimal-scrollbar h-full w-full overflow-y-scroll [scrollbar-gutter:stable] lg:ml-auto lg:max-w-[620px] xl:max-w-[700px]"
               >
                 {isProviderFlow &&
+                      initialProviderType={providerTypeHint}
                   currentStep === PROVIDER_WIZARD_STEP.CONNECT && (
                     <ConnectStep
                       onNext={() => {
@@ -241,6 +242,9 @@ export function ProviderWizardModal({
                   organizationType === ORGANIZATION_TYPE.AWS && (
                     <OrgSetupForm
                       onBack={
+                      onSelectSingleAccount={
+                        isOrgDirectEntry ? undefined : backToProviderFlow
+                      }
                         isOrgDirectEntry ? handleClose : backToProviderFlow
                       }
                       onClose={handleClose}

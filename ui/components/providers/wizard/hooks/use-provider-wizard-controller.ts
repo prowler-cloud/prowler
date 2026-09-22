@@ -294,11 +294,14 @@ export function useProviderWizardController({
   };
 
   const backToProviderFlow = () => {
+    // The AWS organization flow is entered from the AWS connect step's tabs, so
+    // going back lands on that step again instead of the provider picker.
+    const cameFromAwsConnect = organizationType === ORGANIZATION_TYPE.AWS;
     resetOrgWizard();
     setWizardVariant(WIZARD_VARIANT.PROVIDER);
     setCurrentStep(PROVIDER_WIZARD_STEP.CONNECT);
     setFooterConfig(EMPTY_FOOTER_CONFIG);
-    setProviderTypeHint(null);
+    setProviderTypeHint(cameFromAwsConnect ? "aws" : null);
     setOrgSetupPhase(ORG_SETUP_PHASE.DETAILS);
   };
 

@@ -25,6 +25,8 @@ interface ConnectStepProps {
   onSelectOrganizations: (orgType: OrgFlowType) => void;
   onFooterChange: (config: WizardFooterConfig) => void;
   onProviderTypeChange: (providerType: ProviderType | null) => void;
+  /** Provider the user was already working with, e.g. when returning from the AWS organization flow. */
+  initialProviderType?: ProviderType | null;
 }
 
 export function ConnectStep({
@@ -33,12 +35,13 @@ export function ConnectStep({
   onSelectOrganizations,
   onFooterChange,
   onProviderTypeChange,
+  initialProviderType = null,
 }: ConnectStepProps) {
   const { setProvider, setVia, setSecretId, setMode } =
     useProviderWizardStore();
   const backHandlerRef = useRef<(() => void) | null>(null);
   // Local state needed: AWS swaps the generic account form for its one-step form.
-  const [isAwsFlow, setIsAwsFlow] = useState(false);
+  const [isAwsFlow, setIsAwsFlow] = useState(initialProviderType === "aws");
   const [uiState, setUiState] = useState({
     showBack: false,
     showAction: false,

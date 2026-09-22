@@ -330,6 +330,8 @@ describe("useProviderWizardController", () => {
     expect(result.current.wizardVariant).toBe("provider");
     expect(result.current.isProviderFlow).toBe(true);
     expect(result.current.currentStep).toBe(PROVIDER_WIZARD_STEP.CONNECT);
+    // Back lands on the AWS connect step the tabs live on, not the provider picker.
+    expect(result.current.providerTypeHint).toBe("aws");
   });
 
   it("moves to launch step after a successful connection test in add mode", () => {

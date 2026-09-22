@@ -17,7 +17,7 @@ export type AwsOnboardingMethod =
 interface AwsOnboardingMethodTabsProps {
   value: AwsOnboardingMethod;
   onSelectSingle?: () => void;
-  onSelectOrganizations: () => void;
+  onSelectOrganizations?: () => void;
 }
 
 /** Single account vs. whole organization switch at the top of the AWS connect step. */
@@ -38,7 +38,7 @@ export function AwsOnboardingMethodTabs({
       return;
     }
     if (isCloudEnv) {
-      onSelectOrganizations();
+      onSelectOrganizations?.();
       return;
     }
     openCloudUpgrade(CLOUD_UPGRADE_FEATURE.AWS_ORGANIZATIONS);
