@@ -22,16 +22,14 @@ import {
   ORG_WIZARD_STEP,
   ORGANIZATION_TYPE,
 } from "@/types/organizations";
-import {
-  PROVIDER_WIZARD_MODE,
-  PROVIDER_WIZARD_STEP,
-} from "@/types/provider-wizard";
+import { PROVIDER_WIZARD_STEP } from "@/types/provider-wizard";
 import type { ScanScheduleCapability } from "@/types/schedules";
 
 import { useProviderWizardController } from "./hooks/use-provider-wizard-controller";
 import {
   getOrganizationsStepperOffset,
   getProviderWizardDocsDestination,
+  getProviderWizardStepper,
 } from "./provider-wizard-modal.utils";
 import { ConnectStep } from "./steps/connect-step";
 import { CredentialsStep } from "./steps/credentials-step";
@@ -39,12 +37,7 @@ import { WIZARD_FOOTER_ACTION_TYPE } from "./steps/footer-controls";
 import { LaunchStep } from "./steps/launch-step";
 import { TestConnectionStep } from "./steps/test-connection-step";
 import type { OrgWizardInitialData, ProviderWizardInitialData } from "./types";
-import { PROVIDER_WIZARD_STEPS, WizardStepper } from "./wizard-stepper";
-
-const UPDATE_MODE_WIZARD_STEPS = PROVIDER_WIZARD_STEPS.slice(
-  0,
-  PROVIDER_WIZARD_STEP.LAUNCH,
-);
+import { WizardStepper } from "./wizard-stepper";
 
 interface ProviderWizardModalProps {
   open: boolean;
@@ -107,6 +100,11 @@ export function ProviderWizardModal({
     isScheduleCapabilityLoading,
   } = useScanScheduleCapability(scanScheduleCapability);
   const docsDestination = getProviderWizardDocsDestination(docsLink);
+  const providerStepper = getProviderWizardStepper({
+    mode,
+    providerType: providerTypeHint,
+    currentStep,
+  });
 
   return (
     <Modal
@@ -142,11 +140,8 @@ export function ProviderWizardModal({
             {isProviderFlow ? (
               <WizardStepper
                 currentStep={currentStep}
-                steps={
-                  mode === PROVIDER_WIZARD_MODE.UPDATE
-                    ? UPDATE_MODE_WIZARD_STEPS
-                    : undefined
-                }
+                stepOffset={providerStepper.stepOffset}
+                steps={providerStepper.steps}
               />
             ) : (
               <WizardStepper
@@ -170,9 +165,9 @@ export function ProviderWizardModal({
                 className="minimal-scrollbar h-full w-full overflow-y-scroll [scrollbar-gutter:stable] lg:ml-auto lg:max-w-[620px] xl:max-w-[700px]"
               >
                 {isProviderFlow &&
-                      initialProviderType={providerTypeHint}
                   currentStep === PROVIDER_WIZARD_STEP.CONNECT && (
                     <ConnectStep
+                      initialProviderType={providerTypeHint}
                       onNext={() => {
                         setCurrentStep(PROVIDER_WIZARD_STEP.CREDENTIALS);
                         // Reaching credentials is the tour's handoff point: end it so the
@@ -242,10 +237,10 @@ export function ProviderWizardModal({
                   organizationType === ORGANIZATION_TYPE.AWS && (
                     <OrgSetupForm
                       onBack={
+                        isOrgDirectEntry ? handleClose : backToProviderFlow
+                      }
                       onSelectSingleAccount={
                         isOrgDirectEntry ? undefined : backToProviderFlow
-                      }
-                        isOrgDirectEntry ? handleClose : backToProviderFlow
                       }
                       onClose={handleClose}
                       onNext={() => {

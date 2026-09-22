@@ -206,6 +206,14 @@ export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
     await this.waitForText(/Organization Details/);
   }
 
+  /** Labels of the wizard's progress stepper, top to bottom. */
+  stepperLabels(): string[] {
+    return Array.from(
+      document.querySelectorAll('nav[aria-label="Wizard progress"] span'),
+      (node) => node.textContent?.trim() ?? "",
+    );
+  }
+
   /** Wait until the AWS single-account connect step (with its method tabs) is showing. */
   async waitForAwsConnectStep(): Promise<void> {
     await this.waitFor(

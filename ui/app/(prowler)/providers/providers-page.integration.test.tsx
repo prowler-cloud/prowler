@@ -212,6 +212,28 @@ describe("Organization onboarding wizard", () => {
       }, 60000);
     });
 
+    describe("Wizard progress", () => {
+      it("drops the credentials row once AWS is picked, since one step covers both", async () => {
+        const harness = new ProvidersPageHarness(awsOnboardingFixture());
+        await harness.mount();
+        expect(harness.stepperLabels()).toEqual([
+          "Link a Provider",
+          "Authenticate Credentials",
+          "Validate Connection",
+          "Launch Scan",
+        ]);
+
+        await harness.selectProviderType(/Amazon Web Services/);
+        await harness.waitForAwsConnectStep();
+
+        expect(harness.stepperLabels()).toEqual([
+          "Link a Provider",
+          "Validate Connection",
+          "Launch Scan",
+        ]);
+      }, 40000);
+    });
+
     describe("Leaving the organization flow", () => {
       it("keeps the method tabs on Organization Details and switches back to a single account", async () => {
         const harness = new ProvidersPageHarness(awsOnboardingFixture());

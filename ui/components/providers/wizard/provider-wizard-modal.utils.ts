@@ -6,8 +6,44 @@ import {
 } from "@/types/organizations";
 import {
   PROVIDER_WIZARD_MODE,
+  PROVIDER_WIZARD_STEP,
   ProviderWizardMode,
+  ProviderWizardStep,
 } from "@/types/provider-wizard";
+import type { ProviderType } from "@/types/providers";
+
+import {
+  AWS_PROVIDER_WIZARD_STEPS,
+  PROVIDER_WIZARD_STEPS,
+} from "./wizard-stepper";
+
+const UPDATE_MODE_WIZARD_STEPS = PROVIDER_WIZARD_STEPS.slice(
+  0,
+  PROVIDER_WIZARD_STEP.LAUNCH,
+);
+
+interface ProviderWizardStepperInput {
+  mode: ProviderWizardMode;
+  providerType: ProviderType | null;
+  currentStep: ProviderWizardStep;
+}
+
+/** Rows for the provider-flow stepper plus the offset that maps `currentStep` onto them. */
+export function getProviderWizardStepper({
+  mode,
+  providerType,
+  currentStep,
+}: ProviderWizardStepperInput) {
+  if (mode === PROVIDER_WIZARD_MODE.UPDATE) {
+    return { steps: UPDATE_MODE_WIZARD_STEPS, stepOffset: 0 };
+  }
+  if (providerType === "aws") {
+    // CONNECT stays on the first row; TEST and LAUNCH shift up one.
+    const stepOffset = currentStep >= PROVIDER_WIZARD_STEP.TEST ? -1 : 0;
+    return { steps: AWS_PROVIDER_WIZARD_STEPS, stepOffset };
+  }
+  return { steps: PROVIDER_WIZARD_STEPS, stepOffset: 0 };
+}
 
 export function getOrganizationsStepperOffset(
   currentStep: OrgWizardStep,
