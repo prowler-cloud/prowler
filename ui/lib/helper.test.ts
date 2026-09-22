@@ -46,12 +46,12 @@ describe("downloadScanZip", () => {
     await downloadScanZip("scan-123", toast);
 
     expect(fetch).toHaveBeenCalledWith(
-      "/api/scans/scan-123/report?preflight=1",
+      "/downloads/scans/scan-123/report?preflight=1",
       {
         cache: "no-store",
       },
     );
-    expect(anchor.href).toContain("/api/scans/scan-123/report");
+    expect(anchor.href).toContain("/downloads/scans/scan-123/report");
     expect(anchor.download).toBe("scan-scan-123-report.zip");
     expect(clickMock).toHaveBeenCalledTimes(1);
     expect(toast).toHaveBeenCalledWith({
