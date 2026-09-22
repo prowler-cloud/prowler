@@ -5,7 +5,8 @@
 //
 // Scoped per tenant, like the other onboarding markers: going through the first
 // run in one tenant must not silence it for another one on the same browser.
-// Without a usable tenant id the browser-wide key keeps the redirect to once.
+// The bare key is a browser-wide opt-out: written before markers were scoped,
+// by e2e storage state, or when no usable tenant id exists.
 const FIRST_RUN_MARKER_KEY = "prowler.onboarding.first-run";
 
 // Tenant ids are UUIDs; anything else is refused rather than concatenated
@@ -23,7 +24,10 @@ export function firstRunMarkerKey(tenantId?: string | null): string {
 export function isFirstRunHandled(tenantId?: string | null): boolean {
   if (typeof window === "undefined") return true;
   try {
-    return window.localStorage.getItem(firstRunMarkerKey(tenantId)) !== null;
+    return (
+      window.localStorage.getItem(FIRST_RUN_MARKER_KEY) !== null ||
+      window.localStorage.getItem(firstRunMarkerKey(tenantId)) !== null
+    );
   } catch {
     // Unreadable storage must not redirect forever: treat as handled.
     return true;

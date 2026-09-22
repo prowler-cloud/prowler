@@ -30,8 +30,10 @@ posts to the API.
 The gate is mounted in every deployment. When the tenant provably has no
 providers (`hasProviders === false`), the user holds `manage_providers` and
 neither the first-run marker (`prowler.onboarding.first-run.<tenantId>`, so a
-first run in one tenant never silences it for another on the same browser) nor
-an add-provider completion record exists, it replaces the route once with
+first run in one tenant never silences it for another on the same browser; the
+bare `prowler.onboarding.first-run` key is a browser-wide opt-out, which is what
+the e2e storage state sets) nor an add-provider completion record exists, it
+replaces the route once with
 `/providers?addProvider=true&addProviderSource=first_run`, so the add-provider
 wizard is already open. Billing routes defer it; an unknown provider count or a
 user without the permission (an empty list may only mean limited visibility)
