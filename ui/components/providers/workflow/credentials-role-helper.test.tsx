@@ -43,7 +43,10 @@ describe("CredentialsRoleHelper", () => {
 
       // When
       await user.click(
-        screen.getByRole("link", { name: /CloudFormation Quick Link/i }),
+        screen.getByRole("link", { name: /Create the IAM role in AWS/i }),
+      );
+      await user.click(
+        screen.getByRole("button", { name: /Other ways to create the role/i }),
       );
       await user.click(
         screen.getByRole("link", { name: "CloudFormation Template" }),
@@ -76,7 +79,7 @@ describe("CredentialsRoleHelper", () => {
 
       // When
       await user.click(
-        screen.getByRole("link", { name: /CloudFormation Quick Link/i }),
+        screen.getByRole("link", { name: /Create the IAM role in AWS/i }),
       );
 
       // Then

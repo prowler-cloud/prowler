@@ -109,12 +109,12 @@ describe("AwsConnectStep", () => {
       vi.stubEnv("UI_CLOUD_ENABLED", "true");
     });
 
-    it("creates the role from a single-parameter stack and connects with just its ARN", async () => {
+    it("creates the role from the shared stack and connects with just its ARN", async () => {
       // Given
       const { onConnected, user } = renderStep();
 
-      // Then: the button opens the shared template; the Cloud build swaps in its
-      // single-parameter one, since only there the deploying account is fixed.
+      // Then: the button opens the shared template with the External ID filled in;
+      // the AccountId parameter defaults to Prowler Cloud's account there.
       const quickCreate = screen.getByRole("link", {
         name: /Create the IAM role in AWS/i,
       });

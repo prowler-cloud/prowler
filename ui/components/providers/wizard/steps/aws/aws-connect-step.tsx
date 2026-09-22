@@ -14,6 +14,7 @@ import {
 } from "react-hook-form";
 
 import { RadioCard } from "@/components/providers/radio-card";
+import { CredentialsRoleHelper } from "@/components/providers/workflow/credentials-role-helper";
 import { WizardInputField } from "@/components/providers/workflow/forms/fields";
 import { AwsRoleOptionalFields } from "@/components/providers/workflow/forms/select-credentials-type/aws/credentials-type/aws-role-optional-fields";
 import { AWSStaticCredentialsForm } from "@/components/providers/workflow/forms/select-credentials-type/aws/credentials-type/aws-static-credentials-form";
@@ -35,7 +36,6 @@ import {
   dispatchProviderFunnel,
   PROVIDER_FUNNEL_STEP,
 } from "@/lib/provider-funnel/provider-funnel-events";
-import { isCloud } from "@/lib/shared/env";
 import type { AWSCredentials, AWSCredentialsRole } from "@/types";
 
 import {
@@ -49,7 +49,6 @@ import {
   AwsOnboardingMethodTabs,
 } from "./aws-onboarding-method-tabs";
 import { parseAwsAccountIdFromRoleArn } from "./aws-role-arn";
-import { AwsRoleQuickDeploy } from "./aws-role-quick-deploy";
 import {
   AWS_UID_ERROR_POINTER,
   connectAwsAccount,
@@ -221,7 +220,6 @@ function AwsRoleConnectForm({
 }: ConnectFormProps) {
   const { data: session } = useSession();
   const externalId = session?.tenantId ?? "";
-  const isCloudEnv = isCloud();
 
   const form = useForm<AwsRoleConnectValues>({
     resolver: zodResolver(
@@ -273,10 +271,9 @@ function AwsRoleConnectForm({
       <form id={formId} onSubmit={onSubmit} className="flex flex-col gap-6">
         <section className="flex flex-col gap-4">
           <h4 className="text-sm font-semibold">1. Create the IAM role</h4>
-          <AwsRoleQuickDeploy
+          <CredentialsRoleHelper
             externalId={externalId}
             templateLinks={templateLinks}
-            isCloudEnv={isCloudEnv}
           />
         </section>
 
