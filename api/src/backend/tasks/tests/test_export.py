@@ -66,65 +66,13 @@ class TestOutputs:
 
     @patch("tasks.jobs.export.boto3.client")
     @patch("tasks.jobs.export.settings")
-    def test_get_s3_client_generates_sigv4_presigned_url(
-        self, mock_settings, mock_boto_client
-    ):
-        mock_settings.DJANGO_OUTPUT_S3_AWS_ACCESS_KEY_ID = "test-access-key"
-        mock_settings.DJANGO_OUTPUT_S3_AWS_SECRET_ACCESS_KEY = "test-secret-key"
-        mock_settings.DJANGO_OUTPUT_S3_AWS_SESSION_TOKEN = ""
-        mock_settings.DJANGO_OUTPUT_S3_AWS_DEFAULT_REGION = "us-east-1"
-
-        def create_client(service_name, **kwargs):
-            # Build a real boto3 client so signing runs for real, only faking the
-            # network call used to validate the credentials. Use boto3.Session()
-            # rather than boto3.client() directly, since the latter is patched
-            # above and would recurse into this same side effect.
-            real_client = boto3.Session().client(service_name, **kwargs)
-            real_client.list_buckets = MagicMock()
-            return real_client
-
-        mock_boto_client.side_effect = create_client
-
+    def test_get_s3_client_fallback(self, mock_settings, mock_boto_client):
+        mock_boto_client.side_effect = [
+            ClientError({"Error": {"Code": "403"}}, "ListBuckets"),
+            MagicMock(),
+        ]
         client = get_s3_client()
-        url = client.generate_presigned_url(
-            "get_object",
-            Params={"Bucket": "test-bucket", "Key": "report.zip"},
-            ExpiresIn=300,
-        )
-
-        # SSE-KMS objects require SigV4; the default query signer falls back to SigV2.
-        assert "X-Amz-Algorithm=AWS4-HMAC-SHA256" in url
-
-    @patch("tasks.jobs.export.boto3.client")
-    @patch("tasks.jobs.export.settings")
-    def test_get_s3_client_fallback(self, mock_settings, mock_boto_client, monkeypatch):
-        # The fallback branch relies on boto3's default credential chain (e.g. an
-        # IAM role), so provide env credentials for the real client to sign with.
-        monkeypatch.setenv("AWS_ACCESS_KEY_ID", "fallback-access-key")
-        monkeypatch.setenv("AWS_SECRET_ACCESS_KEY", "fallback-secret-key")
-        monkeypatch.setenv("AWS_DEFAULT_REGION", "us-east-1")
-
-        calls = {"count": 0}
-
-        def create_client(service_name, **kwargs):
-            calls["count"] += 1
-            if calls["count"] == 1:
-                raise ClientError({"Error": {"Code": "403"}}, "ListBuckets")
-            real_client = boto3.Session().client(service_name, **kwargs)
-            real_client.list_buckets = MagicMock()
-            return real_client
-
-        mock_boto_client.side_effect = create_client
-
-        client = get_s3_client()
-        url = client.generate_presigned_url(
-            "get_object",
-            Params={"Bucket": "test-bucket", "Key": "report.zip"},
-            ExpiresIn=300,
-        )
-
-        # The credential-less fallback path must also pin SigV4.
-        assert "X-Amz-Algorithm=AWS4-HMAC-SHA256" in url
+        assert client is not None
 
     @patch("tasks.jobs.export.get_s3_client")
     @patch("tasks.jobs.export.base")
@@ -331,9 +279,46 @@ def _presign(client):
 
 
 class TestS3PresignClient:
-    @override_settings(**PRESIGN_SETTINGS, DJANGO_OUTPUT_S3_AWS_PUBLIC_ENDPOINT_URL="")
-    def test_no_public_endpoint_returns_none(self):
+    @override_settings(
+        **{**PRESIGN_SETTINGS, "DJANGO_OUTPUT_S3_AWS_DEFAULT_REGION": ""},
+        DJANGO_OUTPUT_S3_AWS_PUBLIC_ENDPOINT_URL="",
+    )
+    def test_no_public_endpoint_and_no_region_returns_none(self):
+        # Without a region, SigV4 would have to guess one and break other regions.
         assert get_s3_presign_client() is None
+
+    @override_settings(**PRESIGN_SETTINGS, DJANGO_OUTPUT_S3_AWS_PUBLIC_ENDPOINT_URL="")
+    def test_region_without_public_endpoint_signs_sigv4_on_the_regional_host(self):
+        # SSE-KMS objects reject the SigV2 URLs boto3 presigns by default, and the
+        # global host redirects for new buckets, which breaks a SigV4 signature.
+        url = urlparse(_presign(get_s3_presign_client()))
+        query = parse_qs(url.query)
+
+        assert url.netloc == "s3.eu-west-1.amazonaws.com"
+        assert url.path == "/output-bucket/tenant/scan/report.zip"
+        assert query["X-Amz-Algorithm"] == ["AWS4-HMAC-SHA256"]
+        assert "/eu-west-1/s3/aws4_request" in query["X-Amz-Credential"][0]
+
+    @override_settings(
+        **{
+            **PRESIGN_SETTINGS,
+            "DJANGO_OUTPUT_S3_AWS_ACCESS_KEY_ID": "",
+            "DJANGO_OUTPUT_S3_AWS_SECRET_ACCESS_KEY": "",
+        },
+        DJANGO_OUTPUT_S3_AWS_PUBLIC_ENDPOINT_URL="",
+    )
+    def test_region_without_static_keys_signs_with_the_default_chain(self, monkeypatch):
+        # An ECS task role reaches boto3 through the default chain, like the env here.
+        # A fresh default session keeps these keys from being cached for later tests.
+        monkeypatch.setattr(boto3, "DEFAULT_SESSION", None)
+        monkeypatch.setenv("AWS_ACCESS_KEY_ID", "role-access-key")
+        monkeypatch.setenv("AWS_SECRET_ACCESS_KEY", "role-secret-key")
+        monkeypatch.setenv("AWS_DEFAULT_REGION", "us-east-1")
+
+        query = parse_qs(urlparse(_presign(get_s3_presign_client())).query)
+
+        assert query["X-Amz-Credential"][0].startswith("role-access-key/")
+        assert "/eu-west-1/s3/aws4_request" in query["X-Amz-Credential"][0]
 
     @override_settings(
         **PRESIGN_SETTINGS,

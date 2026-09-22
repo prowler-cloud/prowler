@@ -216,9 +216,6 @@ def get_s3_client():
     Raises:
         ClientError, NoCredentialsError, or ParamValidationError if both attempts to create a client fail.
     """
-    # Pinning SigV4 is required: boto3's default query-string signer for S3 falls back to
-    # SigV2, which S3 rejects for objects encrypted with SSE-KMS.
-    s3_config = Config(signature_version="s3v4")
     s3_client = None
     try:
         s3_client = boto3.client(
@@ -229,24 +226,25 @@ def get_s3_client():
             # Storage that has no meaningful region, MinIO among it, is usually configured
             # without one, and botocore rejects an empty region before any request is made.
             region_name=settings.DJANGO_OUTPUT_S3_AWS_DEFAULT_REGION or "us-east-1",
-            config=s3_config,
         )
         s3_client.list_buckets()
     except (ClientError, NoCredentialsError, ParamValidationError, ValueError):
-        s3_client = boto3.client("s3", config=s3_config)
+        s3_client = boto3.client("s3")
         s3_client.list_buckets()
 
     return s3_client
 
 
 def get_s3_presign_client():
-    """Return a client that signs URLs against the public storage host.
+    """Return a client that signs download URLs with SigV4.
 
-    None means no public host is configured and the caller should presign with its own
-    client, which leaves deployments on real S3 with the URL they get today.
+    It is used when a public storage host is configured, or when the bucket's region is:
+    boto3 otherwise presigns S3 URLs with SigV2, which S3 rejects for SSE-KMS objects.
+    None means neither is set and the caller should presign with its own client, which
+    leaves those deployments with the URL they get today.
     """
     public_endpoint = settings.DJANGO_OUTPUT_S3_AWS_PUBLIC_ENDPOINT_URL
-    if not public_endpoint:
+    if not public_endpoint and not settings.DJANGO_OUTPUT_S3_AWS_DEFAULT_REGION:
         return None
 
     # Blank keys are signed as-is (empty credential scope) instead of deferring to the
@@ -270,9 +268,10 @@ def get_s3_presign_client():
         # SigV4 puts the region in the credential scope, and MinIO answers to us-east-1
         # unless it was told otherwise, so an empty region would sign an unusable URL.
         region_name=settings.DJANGO_OUTPUT_S3_AWS_DEFAULT_REGION or "us-east-1",
-        endpoint_url=public_endpoint,
+        endpoint_url=public_endpoint or None,
         # The signature covers the host, so the addressing style has to be pinned rather
-        # than guessed from the endpoint: MinIO serves path-style.
+        # than guessed from the endpoint: MinIO serves path-style, and on AWS it keeps the
+        # regional host instead of the global one, which redirects for new buckets.
         config=Config(signature_version="s3v4", s3={"addressing_style": "path"}),
     )
 

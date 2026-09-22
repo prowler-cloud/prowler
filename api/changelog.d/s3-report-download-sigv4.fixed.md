@@ -1,1 +1,1 @@
-Scan report downloads from an S3 bucket with default SSE-KMS encryption no longer fail with an `InvalidArgument` error, by signing presigned download URLs with AWS Signature Version 4
+Scan report downloads from an S3 bucket with default SSE-KMS encryption no longer fail with an `InvalidArgument` error: when `DJANGO_OUTPUT_S3_AWS_DEFAULT_REGION` is set, presigned download URLs are signed with AWS Signature Version 4 for that region
