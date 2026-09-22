@@ -6,6 +6,7 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 from urllib.parse import parse_qs, urlparse
 
+import boto3
 import pytest
 from botocore.exceptions import ClientError
 from django.test import override_settings
@@ -278,9 +279,46 @@ def _presign(client):
 
 
 class TestS3PresignClient:
-    @override_settings(**PRESIGN_SETTINGS, DJANGO_OUTPUT_S3_AWS_PUBLIC_ENDPOINT_URL="")
-    def test_no_public_endpoint_returns_none(self):
+    @override_settings(
+        **{**PRESIGN_SETTINGS, "DJANGO_OUTPUT_S3_AWS_DEFAULT_REGION": ""},
+        DJANGO_OUTPUT_S3_AWS_PUBLIC_ENDPOINT_URL="",
+    )
+    def test_no_public_endpoint_and_no_region_returns_none(self):
+        # Without a region, SigV4 would have to guess one and break other regions.
         assert get_s3_presign_client() is None
+
+    @override_settings(**PRESIGN_SETTINGS, DJANGO_OUTPUT_S3_AWS_PUBLIC_ENDPOINT_URL="")
+    def test_region_without_public_endpoint_signs_sigv4_on_the_regional_host(self):
+        # SSE-KMS objects reject the SigV2 URLs boto3 presigns by default, and the
+        # global host redirects for new buckets, which breaks a SigV4 signature.
+        url = urlparse(_presign(get_s3_presign_client()))
+        query = parse_qs(url.query)
+
+        assert url.netloc == "s3.eu-west-1.amazonaws.com"
+        assert url.path == "/output-bucket/tenant/scan/report.zip"
+        assert query["X-Amz-Algorithm"] == ["AWS4-HMAC-SHA256"]
+        assert "/eu-west-1/s3/aws4_request" in query["X-Amz-Credential"][0]
+
+    @override_settings(
+        **{
+            **PRESIGN_SETTINGS,
+            "DJANGO_OUTPUT_S3_AWS_ACCESS_KEY_ID": "",
+            "DJANGO_OUTPUT_S3_AWS_SECRET_ACCESS_KEY": "",
+        },
+        DJANGO_OUTPUT_S3_AWS_PUBLIC_ENDPOINT_URL="",
+    )
+    def test_region_without_static_keys_signs_with_the_default_chain(self, monkeypatch):
+        # An ECS task role reaches boto3 through the default chain, like the env here.
+        # A fresh default session keeps these keys from being cached for later tests.
+        monkeypatch.setattr(boto3, "DEFAULT_SESSION", None)
+        monkeypatch.setenv("AWS_ACCESS_KEY_ID", "role-access-key")
+        monkeypatch.setenv("AWS_SECRET_ACCESS_KEY", "role-secret-key")
+        monkeypatch.setenv("AWS_DEFAULT_REGION", "us-east-1")
+
+        query = parse_qs(urlparse(_presign(get_s3_presign_client())).query)
+
+        assert query["X-Amz-Credential"][0].startswith("role-access-key/")
+        assert "/eu-west-1/s3/aws4_request" in query["X-Amz-Credential"][0]
 
     @override_settings(
         **PRESIGN_SETTINGS,
