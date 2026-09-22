@@ -280,7 +280,7 @@ function AwsRoleConnectForm({
   return (
     <Form {...form}>
       <form id={formId} onSubmit={onSubmit} className="flex flex-col gap-6">
-        <section className="flex flex-col gap-3">
+        <section className="flex flex-col gap-4">
           <h4 className="text-sm font-semibold">1. Create the IAM role</h4>
           <CredentialsRoleHelper
             externalId={externalId}
@@ -288,26 +288,28 @@ function AwsRoleConnectForm({
           />
         </section>
 
-        <section className="flex flex-col gap-3">
+        <section className="flex flex-col gap-4">
           <h4 className="text-sm font-semibold">2. Paste the role ARN</h4>
-          <WizardInputField
-            control={form.control}
-            name={ProviderCredentialFields.ROLE_ARN}
-            type="text"
-            label="Role ARN"
-            labelPlacement="inside"
-            placeholder="arn:aws:iam::123456789012:role/ProwlerScan"
-            variant="bordered"
-            isRequired
-            autoCapitalize="none"
-            autoCorrect="off"
-            spellCheck={false}
-          />
-          {detectedAccountId && (
-            <p className="text-text-success-primary text-xs">
-              Account {detectedAccountId} will be added to Prowler.
-            </p>
-          )}
+          <div className="flex flex-col gap-1.5">
+            <WizardInputField
+              control={form.control}
+              name={ProviderCredentialFields.ROLE_ARN}
+              type="text"
+              label="Role ARN"
+              labelPlacement="inside"
+              placeholder="arn:aws:iam::123456789012:role/ProwlerScan"
+              variant="bordered"
+              isRequired
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
+            />
+            {detectedAccountId && (
+              <p className="text-text-success-primary text-xs">
+                Account {detectedAccountId} will be added to Prowler.
+              </p>
+            )}
+          </div>
           <AliasField
             control={form.control as unknown as Control<FieldValues>}
           />

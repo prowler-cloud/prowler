@@ -27,11 +27,10 @@ export const AwsRoleCredentialsSource = ({
   isCloudEnv,
 }: AwsRoleCredentialsSourceProps) => (
   <>
-    <span className="text-text-neutral-tertiary text-xs font-bold">
-      Specify which AWS credentials to use
-    </span>
-
-    <div className="mb-4 flex flex-col gap-1.5">
+    <div className="flex flex-col gap-1.5">
+      <span className="text-text-neutral-tertiary text-xs font-medium">
+        Specify which AWS credentials to use
+      </span>
       <Select
         value={credentialsType}
         onValueChange={(value) => {
