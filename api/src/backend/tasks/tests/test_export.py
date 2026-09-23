@@ -81,7 +81,7 @@ class TestOutputs:
 
     @patch("tasks.jobs.export.boto3.client")
     @override_settings(DJANGO_OUTPUT_S3_AWS_ENDPOINT_URL="http://minio:9000")
-    def test_get_s3_client_fallback_ignores_the_endpoint(self, mock_boto_client):
+    def test_get_s3_client_does_not_fall_back_when_endpoint_set(self, mock_boto_client):
         """A configured endpoint means the explicit client failed talking to it. The fallback
         goes to the default provider chain (e.g. an EC2 instance role) against real AWS, so it
         must not be used: the original error propagates instead."""
