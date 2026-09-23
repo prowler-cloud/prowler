@@ -16,6 +16,7 @@ import { useState } from "react";
 import { updateOrganizationName } from "@/actions/organizations/organizations";
 import { updateProvider } from "@/actions/providers";
 import {
+  getProviderConnectionBaselines,
   revalidateProviders,
   startProviderConnectionChecks,
 } from "@/actions/providers/providers";
@@ -400,12 +401,13 @@ export function DataTableRowActions({
     let failed = 0;
     let pending = 0;
     const providerIdByTaskId = new Map<string, string>();
-    // Taken before dispatch, so it precedes any `last_checked_at` this batch
-    // writes -- guards the fallback against reading each provider's prior
-    // (stale) stored result as this run's outcome.
-    const checkStartedAt = new Date().toISOString();
 
     try {
+      // Read before dispatch, so the fallback below can tell each provider's own
+      // check result apart from whatever (possibly stale) result was already on
+      // record -- by comparing values, not by comparing timestamps against the
+      // browser's clock. See `resolveProviderConnectionState`.
+      const connectionBaselines = await getProviderConnectionBaselines(ids);
       const outcomes = await startProviderConnectionChecks(ids);
 
       for (const id of ids) {
@@ -437,7 +439,7 @@ export function DataTableRowActions({
           }
           const state = await resolveProviderConnectionState(
             id,
-            checkStartedAt,
+            connectionBaselines[id],
           );
           return { status: state.status, error: state.error ?? undefined };
         },

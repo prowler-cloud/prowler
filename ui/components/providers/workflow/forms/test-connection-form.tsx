@@ -10,7 +10,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { deleteCredentials } from "@/actions/providers";
-import { CheckIcon } from "@/components/icons";
+import { CheckIcon, ConnectionPending } from "@/components/icons";
 import { Button } from "@/components/shadcn";
 import { Form } from "@/components/shadcn/form";
 import {
@@ -194,7 +194,13 @@ export const TestConnectionForm = ({
         {connectionStatus?.status === CONNECTION_CHECK_STATUS.PENDING && (
           <div className="bg-bg-warning-secondary border-border-neutral-secondary flex items-start gap-4 rounded-lg border p-4">
             <div className="flex shrink-0 items-center">
-              <Loader2 className="text-text-warning-primary h-5 w-5 animate-spin" />
+              {/* Static, not spinning: nothing is polling any more once the wait
+                  is exhausted, so an animated spinner would misrepresent this as
+                  still in progress. */}
+              <ConnectionPending
+                size={20}
+                className="text-text-warning-primary"
+              />
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-text-warning-primary text-sm break-words">
@@ -268,9 +274,11 @@ export const TestConnectionForm = ({
                 )}
                 {isLoading
                   ? "Checking"
-                  : isUpdated
-                    ? "Check connection"
-                    : "Continue"}
+                  : connectionStatus?.status === CONNECTION_CHECK_STATUS.PENDING
+                    ? "Check again"
+                    : isUpdated
+                      ? "Check connection"
+                      : "Continue"}
               </Button>
             )}
           </div>

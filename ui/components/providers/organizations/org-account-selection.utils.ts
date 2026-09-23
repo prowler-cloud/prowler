@@ -304,7 +304,11 @@ export async function pollConnectionTasks(
 /**
  * Polls a generic async task until it settles. Unlike {@link pollConnectionTasks}
  * it does not interpret a connection result; it is used for organization/node
- * deletion, which the API answers with a `202` + task.
+ * deletion, which the API answers with a `202` + task. Its result is typed with
+ * `ConnectionCheckStatus` only because that is the connection-specific alias of
+ * the generic `TASK_OUTCOME` (`types/tasks.ts`) already in scope here -- the
+ * three outcomes (succeeded / failed / still running) apply to any polled task,
+ * not just a connection check.
  */
 export async function pollTaskCompletion(
   taskId: string,

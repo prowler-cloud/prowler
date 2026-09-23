@@ -209,6 +209,30 @@ const CONNECTION_STILL_RUNNING_MESSAGE =
   "The connection test is still running. Refresh in a moment to see the result.";
 
 /**
+ * Reads a provider's current `connection.last_checked_at`, to be captured
+ * *before* a connection check is dispatched for it. Passed on to
+ * `resolveProviderConnectionState` as the value a later read is compared against
+ * -- see that function for why the comparison is by value, not by clock.
+ *
+ * `undefined` means the read failed (network error, provider not found) and is
+ * distinct from `null` ("no prior check exists"): `resolveProviderConnectionState`
+ * treats an unknown baseline as impossible to clear, never as an implicit change.
+ */
+export async function captureConnectionBaseline(
+  providerId: string,
+): Promise<string | null | undefined> {
+  const formData = new FormData();
+  formData.append("id", providerId);
+
+  const providerResponse = await getProvider(formData);
+  if (!providerResponse?.data) {
+    return undefined;
+  }
+
+  return providerResponse.data.attributes?.connection?.last_checked_at ?? null;
+}
+
+/**
  * Re-reads a provider's persisted connection state from the API. Used when a
  * connection-check wait is exhausted: the backend task may still be running (or
  * may already have finished after the UI stopped waiting on it), so this reports
@@ -217,13 +241,21 @@ const CONNECTION_STILL_RUNNING_MESSAGE =
  * The stored `connection` is the result of the *last check that finished*, not
  * necessarily the one this call is following up on -- e.g. a provider was
  * connected, the user changed its credentials, and the new check is still
- * running past the wait. `checkStartedAt` (an ISO timestamp taken before this
- * check was dispatched) guards against reporting that stale result as current:
- * the stored state is only trusted once `last_checked_at` is later than it.
+ * running past the wait. `baseline` -- the provider's `last_checked_at` captured
+ * (via {@link captureConnectionBaseline}) before this check was dispatched --
+ * guards against reporting that stale result as current: the stored state is
+ * only trusted once `last_checked_at` has changed from it.
+ *
+ * This compares the two values directly rather than comparing timestamps, so it
+ * holds even in deployments whose clocks are not synchronised: `last_checked_at`
+ * is written by the server, but the previous check used a wait deadline taken
+ * from the browser's clock, and a browser clock that drifts from the server's
+ * could make an older result look newer than the check, or a finished check look
+ * like it is still pending.
  */
 export async function resolveProviderConnectionState(
   providerId: string,
-  checkStartedAt: string,
+  baseline: string | null | undefined,
 ): Promise<TestConnectionResult> {
   const formData = new FormData();
   formData.append("id", providerId);
@@ -232,9 +264,10 @@ export async function resolveProviderConnectionState(
   const connection = providerResponse?.data?.attributes?.connection;
   const lastCheckedAt = connection?.last_checked_at;
 
+  // An unknown baseline (the pre-dispatch read failed) can never be cleared --
+  // there is nothing to compare against, so the result cannot be trusted yet.
   const isCurrent =
-    !!lastCheckedAt &&
-    new Date(lastCheckedAt).getTime() > new Date(checkStartedAt).getTime();
+    baseline !== undefined && !!lastCheckedAt && lastCheckedAt !== baseline;
 
   if (!isCurrent) {
     // No persisted result yet, or it predates this check -- the backend task
@@ -274,9 +307,9 @@ export async function resolveProviderConnectionState(
 export async function testProviderConnection(
   providerId: string,
 ): Promise<TestConnectionResult> {
-  // Taken before the check is dispatched, so it is guaranteed to precede
-  // whatever `last_checked_at` this check eventually writes.
-  const checkStartedAt = new Date().toISOString();
+  // Captured before the check is dispatched, so any `last_checked_at` this check
+  // eventually writes is guaranteed to differ from it.
+  const baseline = await captureConnectionBaseline(providerId);
 
   const formData = new FormData();
   formData.append("providerId", providerId);
@@ -306,7 +339,7 @@ export async function testProviderConnection(
 
   if (!taskResult.completed) {
     if (taskResult.error === TASK_STATUS_MAX_RETRIES_ERROR) {
-      return resolveProviderConnectionState(providerId, checkStartedAt);
+      return resolveProviderConnectionState(providerId, baseline);
     }
     return {
       status: CONNECTION_CHECK_STATUS.FAILED,

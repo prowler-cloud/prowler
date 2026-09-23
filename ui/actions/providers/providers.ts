@@ -197,6 +197,58 @@ export const getProviderUidsByIds = async (
   return uidById;
 };
 
+/**
+ * `connection.last_checked_at` for each given provider, keyed by id. Read before
+ * a batch of connection checks is dispatched, so `resolveProviderConnectionState`
+ * can tell a check's own result apart from an older one already on record by
+ * comparing values, never by comparing the browser's clock against the server's
+ * (see that function for why). Batched with `filter[id__in]`, like
+ * `getProviderUidsByIds`; a provider missing from the response -- the batch read
+ * failed, or it was deleted mid-flight -- is left out of the map rather than
+ * defaulted, so callers can tell "no prior check" (`null`) from "unknown".
+ */
+export const getProviderConnectionBaselines = async (
+  providerIds: string[],
+): Promise<Record<string, string | null>> => {
+  const uniqueIds = Array.from(new Set(providerIds.filter(Boolean)));
+  if (uniqueIds.length === 0) {
+    return {};
+  }
+
+  const headers = await getAuthHeaders({ contentType: false });
+  const batches: string[][] = [];
+  for (let start = 0; start < uniqueIds.length; start += PROVIDERS_PAGE_MAX) {
+    batches.push(uniqueIds.slice(start, start + PROVIDERS_PAGE_MAX));
+  }
+
+  const baselineById: Record<string, string | null> = {};
+
+  for (const batch of batches) {
+    const url = new URL(`${apiBaseUrl}/providers`);
+    url.searchParams.set("filter[id__in]", batch.join(","));
+    url.searchParams.set("page[size]", String(PROVIDERS_PAGE_MAX));
+
+    try {
+      const response = await fetch(url.toString(), { headers });
+      const result = (await handleApiResponse(response)) as
+        | ProvidersApiResponse
+        | undefined;
+
+      for (const provider of result?.data ?? []) {
+        if (typeof provider?.id === "string") {
+          baselineById[provider.id] =
+            provider.attributes?.connection?.last_checked_at ?? null;
+        }
+      }
+    } catch {
+      // A failed batch leaves its providers out of the map rather than failing
+      // the rest -- see the "unknown" handling above.
+    }
+  }
+
+  return baselineById;
+};
+
 export const updateProvider = async (formData: FormData) => {
   const headers = await getAuthHeaders({ contentType: true });
   const providerId = formData.get(ProviderCredentialFields.PROVIDER_ID);

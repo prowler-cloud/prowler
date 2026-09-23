@@ -36,6 +36,7 @@ import { SCAN_SCHEDULE_CAPABILITY } from "@/types/schedules";
 
 const {
   checkConnectionProviderMock,
+  getProviderConnectionBaselinesMock,
   getScheduleMock,
   getTasksByIdsMock,
   pollConnectionTasksMock,
@@ -48,6 +49,7 @@ const {
   toastMock,
 } = vi.hoisted(() => ({
   checkConnectionProviderMock: vi.fn(),
+  getProviderConnectionBaselinesMock: vi.fn(),
   getScheduleMock: vi.fn(),
   getTasksByIdsMock: vi.fn(),
   pollConnectionTasksMock: vi.fn(),
@@ -76,6 +78,7 @@ vi.mock("@/actions/organizations/organizations", () => ({
 
 vi.mock("@/actions/providers/providers", () => ({
   checkConnectionProvider: checkConnectionProviderMock,
+  getProviderConnectionBaselines: getProviderConnectionBaselinesMock,
   revalidateProviders: revalidateProvidersMock,
   startProviderConnectionChecks: startProviderConnectionChecksMock,
 }));
@@ -349,6 +352,7 @@ describe("DataTableRowActions", () => {
         },
       },
     });
+    getProviderConnectionBaselinesMock.mockResolvedValue({});
   });
 
   it("renders Add Credentials for provider rows without credentials", async () => {
@@ -828,6 +832,12 @@ describe("DataTableRowActions", () => {
       "provider-child-1": { taskId: "task-1" },
       "provider-standalone": { taskId: "task-2" },
     });
+    // The baseline read before dispatch: one provider has a prior stored check,
+    // the other has never been checked.
+    getProviderConnectionBaselinesMock.mockResolvedValue({
+      "provider-child-1": "2025-01-01T00:00:00Z",
+      "provider-standalone": null,
+    });
     pollConnectionTasksMock.mockImplementation(
       async (taskIds: string[], { onSettled, resolveExhausted }) => {
         for (const taskId of taskIds) {
@@ -870,17 +880,21 @@ describe("DataTableRowActions", () => {
     await user.click(screen.getByRole("button"));
     await user.click(screen.getByText("Test Connections (2)"));
 
-    // Then: each pending task is resolved from the provider's own record.
+    // Then: each pending task is resolved from the provider's own record, using
+    // the baseline captured for that specific provider before dispatch.
     await vi.waitFor(() =>
       expect(revalidateProvidersMock).toHaveBeenCalledTimes(1),
     );
+    expect(getProviderConnectionBaselinesMock).toHaveBeenCalledWith(
+      testableProviderIds,
+    );
     expect(resolveProviderConnectionStateMock).toHaveBeenCalledWith(
       "provider-child-1",
-      expect.any(String),
+      "2025-01-01T00:00:00Z",
     );
     expect(resolveProviderConnectionStateMock).toHaveBeenCalledWith(
       "provider-standalone",
-      expect.any(String),
+      null,
     );
   });
 

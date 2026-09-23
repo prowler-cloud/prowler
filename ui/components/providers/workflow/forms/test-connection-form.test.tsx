@@ -138,9 +138,42 @@ describe("TestConnectionForm", () => {
     // Does not advance either -- the outcome is still unknown.
     expect(onSuccess).not.toHaveBeenCalled();
     expect(pushMock).not.toHaveBeenCalled();
-    // The retry control stays available, exactly like the pre-test state.
+    // The retry control is explicit about what pressing it does now: it is no
+    // longer the first check, so "Continue" would be misleading.
     expect(
-      screen.getByRole("button", { name: /continue/i }),
+      screen.getByRole("button", { name: /check again/i }),
     ).toBeInTheDocument();
+  });
+
+  it("re-runs the check when 'Check again' is pressed on a still-pending result", async () => {
+    // Given: the first attempt came back pending.
+    testProviderConnectionMock.mockResolvedValueOnce({
+      status: CONNECTION_CHECK_STATUS.PENDING,
+      error: "The connection test is still running.",
+    });
+    const user = userEvent.setup();
+
+    render(
+      <TestConnectionForm
+        searchParams={{ type: "aws", id: "provider-1", updated: "false" }}
+        providerData={providerData}
+        onSuccess={vi.fn()}
+      />,
+    );
+    await user.click(screen.getByRole("button", { name: /continue/i }));
+    expect(
+      screen.getByRole("button", { name: /check again/i }),
+    ).toBeInTheDocument();
+
+    // When: pressing "Check again" resolves this time.
+    testProviderConnectionMock.mockResolvedValueOnce({
+      status: CONNECTION_CHECK_STATUS.SUCCESS,
+      error: null,
+    });
+    await user.click(screen.getByRole("button", { name: /check again/i }));
+
+    // Then
+    expect(testProviderConnectionMock).toHaveBeenCalledTimes(2);
+    expect(screen.queryByText(/still running/i)).not.toBeInTheDocument();
   });
 });
