@@ -38,10 +38,13 @@ interface UpgradeModalCta {
   opensInNewTab: boolean;
 }
 
-interface UpgradeModalLayoutProps {
+interface UpgradeModalVariantProps {
   open: boolean;
   onClose: () => void;
   returnFocusElement: HTMLElement | null;
+}
+
+interface UpgradeModalLayoutProps extends UpgradeModalVariantProps {
   title: string;
   description: string;
   badge: string;
@@ -135,12 +138,6 @@ const UpgradeModalLayout = ({
     </div>
   </Modal>
 );
-
-interface UpgradeModalVariantProps {
-  open: boolean;
-  onClose: () => void;
-  returnFocusElement: HTMLElement | null;
-}
 
 interface LocalServerUpgradeModalProps extends UpgradeModalVariantProps {
   feature: CloudUpgradeFeature;

@@ -78,7 +78,7 @@ export default async function ComplianceDetail({
     notFound();
   }
 
-  const subscriptionOnly = await isReportDownloadLocked();
+  const subscriptionOnlyPromise = isReportDownloadLocked();
 
   // Cross-provider mode replaces the per-scan pipeline with the universal
   // roll-up view. Prowler Cloud-only: the OSS API has no such endpoint, so
@@ -88,6 +88,7 @@ export default async function ComplianceDetail({
       redirect("/compliance");
     }
 
+    const subscriptionOnly = await subscriptionOnlyPromise;
     return (
       <Suspense
         key={buildSearchParamsKey(resolvedSearchParams)}
@@ -128,6 +129,7 @@ export default async function ComplianceDetail({
     }
 
     const crossAccountTitle = compliancetitle.split("-").join(" ");
+    const subscriptionOnly = await subscriptionOnlyPromise;
     return (
       <ContentLayout
         title={
@@ -177,18 +179,23 @@ export default async function ComplianceDetail({
   let selectedScan: ScanEntity | null = null;
   const selectedScanId = scanId || null;
 
-  const [metadataInfoData, attributesData, selectedScanResponse] =
-    await Promise.all([
-      getComplianceOverviewMetadataInfo({
-        filters: {
-          "filter[scan_id]": selectedScanId ?? undefined,
-        },
-      }),
-      getComplianceAttributes(complianceId, selectedScanId ?? undefined),
-      selectedScanId
-        ? getScan(selectedScanId, { include: "provider" })
-        : Promise.resolve(null),
-    ]);
+  const [
+    metadataInfoData,
+    attributesData,
+    selectedScanResponse,
+    subscriptionOnly,
+  ] = await Promise.all([
+    getComplianceOverviewMetadataInfo({
+      filters: {
+        "filter[scan_id]": selectedScanId ?? undefined,
+      },
+    }),
+    getComplianceAttributes(complianceId, selectedScanId ?? undefined),
+    selectedScanId
+      ? getScan(selectedScanId, { include: "provider" })
+      : Promise.resolve(null),
+    subscriptionOnlyPromise,
+  ]);
 
   // The compliance catalog is still warming after a deploy/restart. Show the
   // "still loading" state with a Try Again instead of rendering an empty page.
