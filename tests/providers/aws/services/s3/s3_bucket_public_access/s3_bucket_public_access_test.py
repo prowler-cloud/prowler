@@ -1,6 +1,7 @@
 import json
 from unittest import mock
 
+import pytest
 from boto3 import client
 from botocore.client import BaseClient
 from botocore.exceptions import ClientError
@@ -803,9 +804,38 @@ class Test_s3_bucket_public_access:
                     )
                     assert result[0].region == AWS_REGION_US_EAST_1
 
+    @pytest.mark.parametrize(
+        "ignore_public_acls, public_acl, public_policy, denied, status, expected",
+        [
+            # Unread ACL or policy with nothing public in the data read -> MANUAL
+            (False, True, False, "GetBucketAcl", "MANUAL", "s3:GetBucketAcl"),
+            (False, False, True, "GetBucketPolicy", "MANUAL", "s3:GetBucketPolicy"),
+            # Public data that was read still FAILs
+            (
+                False,
+                False,
+                True,
+                "GetBucketAcl",
+                "FAIL",
+                "has public access due to bucket policy.",
+            ),
+            (
+                False,
+                True,
+                False,
+                "GetBucketPolicy",
+                "FAIL",
+                "has public access due to bucket ACL.",
+            ),
+            # IgnorePublicAcls makes an unread ACL irrelevant -> PASS
+            (True, True, False, "GetBucketAcl", "PASS", "is not public."),
+        ],
+    )
     @mock_aws
-    def test_bucket_acl_access_denied_is_manual(self):
-        """s3:GetBucketAcl denied on a public-ACL bucket -> MANUAL, not PASS."""
+    def test_bucket_access_denied(
+        self, ignore_public_acls, public_acl, public_policy, denied, status, expected
+    ):
+        """An ACL or policy read denied with AccessDenied never yields a false PASS."""
         s3_client = client("s3", region_name=AWS_REGION_US_EAST_1)
         bucket_name_us = "bucket_test_us"
         s3_client.create_bucket(Bucket=bucket_name_us)
@@ -823,12 +853,30 @@ class Test_s3_bucket_public_access:
             Bucket=bucket_name_us,
             PublicAccessBlockConfiguration={
                 "BlockPublicAcls": False,
-                "IgnorePublicAcls": False,
+                "IgnorePublicAcls": ignore_public_acls,
                 "BlockPublicPolicy": False,
                 "RestrictPublicBuckets": False,
             },
         )
-        s3_client.put_bucket_acl(Bucket=bucket_name_us, ACL="public-read")
+        if public_acl:
+            s3_client.put_bucket_acl(Bucket=bucket_name_us, ACL="public-read")
+        if public_policy:
+            s3_client.put_bucket_policy(
+                Bucket=bucket_name_us,
+                Policy=json.dumps(
+                    {
+                        "Version": "2012-10-17",
+                        "Statement": [
+                            {
+                                "Effect": "Allow",
+                                "Principal": "*",
+                                "Action": "s3:GetObject",
+                                "Resource": f"arn:aws:s3:::{bucket_name_us}/*",
+                            }
+                        ],
+                    }
+                ),
+            )
         from prowler.providers.aws.services.s3.s3_service import S3, S3Control
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
@@ -836,7 +884,7 @@ class Test_s3_bucket_public_access:
         with (
             mock.patch(
                 "botocore.client.BaseClient._make_api_call",
-                new=_deny("GetBucketAcl"),
+                new=_deny(denied),
             ),
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
@@ -858,353 +906,6 @@ class Test_s3_bucket_public_access:
             result = s3_bucket_public_access().execute()
 
             assert len(result) == 1
-            assert result[0].status == "MANUAL"
-            assert "s3:GetBucketAcl" in result[0].status_extended
-            assert result[0].resource_id == bucket_name_us
-
-    @mock_aws
-    def test_bucket_policy_access_denied_is_manual(self):
-        """s3:GetBucketPolicy denied on a public-policy bucket -> MANUAL, not PASS."""
-        s3_client = client("s3", region_name=AWS_REGION_US_EAST_1)
-        bucket_name_us = "bucket_test_us"
-        s3_client.create_bucket(Bucket=bucket_name_us)
-        s3control_client = client("s3control", region_name=AWS_REGION_US_EAST_1)
-        s3control_client.put_public_access_block(
-            AccountId=AWS_ACCOUNT_NUMBER,
-            PublicAccessBlockConfiguration={
-                "BlockPublicAcls": False,
-                "IgnorePublicAcls": False,
-                "BlockPublicPolicy": False,
-                "RestrictPublicBuckets": False,
-            },
-        )
-        s3_client.put_public_access_block(
-            Bucket=bucket_name_us,
-            PublicAccessBlockConfiguration={
-                "BlockPublicAcls": False,
-                "IgnorePublicAcls": False,
-                "BlockPublicPolicy": False,
-                "RestrictPublicBuckets": False,
-            },
-        )
-        s3_client.put_bucket_policy(
-            Bucket=bucket_name_us,
-            Policy=json.dumps(
-                {
-                    "Version": "2012-10-17",
-                    "Statement": [
-                        {
-                            "Effect": "Allow",
-                            "Principal": "*",
-                            "Action": "s3:GetObject",
-                            "Resource": f"arn:aws:s3:::{bucket_name_us}/*",
-                        }
-                    ],
-                }
-            ),
-        )
-        from prowler.providers.aws.services.s3.s3_service import S3, S3Control
-
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
-
-        with (
-            mock.patch(
-                "botocore.client.BaseClient._make_api_call",
-                new=_deny("GetBucketPolicy"),
-            ),
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.s3.s3_bucket_public_access.s3_bucket_public_access.s3_client",
-                new=S3(aws_provider),
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.s3.s3_bucket_public_access.s3_bucket_public_access.s3control_client",
-                new=S3Control(aws_provider),
-            ),
-        ):
-            from prowler.providers.aws.services.s3.s3_bucket_public_access.s3_bucket_public_access import (
-                s3_bucket_public_access,
-            )
-
-            result = s3_bucket_public_access().execute()
-
-            assert len(result) == 1
-            assert result[0].status == "MANUAL"
-            assert "s3:GetBucketPolicy" in result[0].status_extended
-            assert result[0].resource_id == bucket_name_us
-
-    @mock_aws
-    def test_bucket_acl_access_denied_public_policy_is_fail(self):
-        """A public policy is still a FAIL when only the ACL could not be read."""
-        s3_client = client("s3", region_name=AWS_REGION_US_EAST_1)
-        bucket_name_us = "bucket_test_us"
-        s3_client.create_bucket(Bucket=bucket_name_us)
-        s3control_client = client("s3control", region_name=AWS_REGION_US_EAST_1)
-        s3control_client.put_public_access_block(
-            AccountId=AWS_ACCOUNT_NUMBER,
-            PublicAccessBlockConfiguration={
-                "BlockPublicAcls": False,
-                "IgnorePublicAcls": False,
-                "BlockPublicPolicy": False,
-                "RestrictPublicBuckets": False,
-            },
-        )
-        s3_client.put_public_access_block(
-            Bucket=bucket_name_us,
-            PublicAccessBlockConfiguration={
-                "BlockPublicAcls": False,
-                "IgnorePublicAcls": False,
-                "BlockPublicPolicy": False,
-                "RestrictPublicBuckets": False,
-            },
-        )
-        s3_client.put_bucket_policy(
-            Bucket=bucket_name_us,
-            Policy=json.dumps(
-                {
-                    "Version": "2012-10-17",
-                    "Statement": [
-                        {
-                            "Effect": "Allow",
-                            "Principal": "*",
-                            "Action": "s3:GetObject",
-                            "Resource": f"arn:aws:s3:::{bucket_name_us}/*",
-                        }
-                    ],
-                }
-            ),
-        )
-        from prowler.providers.aws.services.s3.s3_service import S3, S3Control
-
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
-
-        with (
-            mock.patch(
-                "botocore.client.BaseClient._make_api_call",
-                new=_deny("GetBucketAcl"),
-            ),
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.s3.s3_bucket_public_access.s3_bucket_public_access.s3_client",
-                new=S3(aws_provider),
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.s3.s3_bucket_public_access.s3_bucket_public_access.s3control_client",
-                new=S3Control(aws_provider),
-            ),
-        ):
-            from prowler.providers.aws.services.s3.s3_bucket_public_access.s3_bucket_public_access import (
-                s3_bucket_public_access,
-            )
-
-            result = s3_bucket_public_access().execute()
-
-            assert len(result) == 1
-            assert result[0].status == "FAIL"
-            assert (
-                result[0].status_extended
-                == f"S3 Bucket {bucket_name_us} has public access due to bucket policy."
-            )
-
-    @mock_aws
-    def test_bucket_policy_access_denied_public_acl_is_fail(self):
-        """A public ACL is still a FAIL when only the policy could not be read."""
-        s3_client = client("s3", region_name=AWS_REGION_US_EAST_1)
-        bucket_name_us = "bucket_test_us"
-        s3_client.create_bucket(Bucket=bucket_name_us)
-        s3control_client = client("s3control", region_name=AWS_REGION_US_EAST_1)
-        s3control_client.put_public_access_block(
-            AccountId=AWS_ACCOUNT_NUMBER,
-            PublicAccessBlockConfiguration={
-                "BlockPublicAcls": False,
-                "IgnorePublicAcls": False,
-                "BlockPublicPolicy": False,
-                "RestrictPublicBuckets": False,
-            },
-        )
-        s3_client.put_public_access_block(
-            Bucket=bucket_name_us,
-            PublicAccessBlockConfiguration={
-                "BlockPublicAcls": False,
-                "IgnorePublicAcls": False,
-                "BlockPublicPolicy": False,
-                "RestrictPublicBuckets": False,
-            },
-        )
-        s3_client.put_bucket_acl(Bucket=bucket_name_us, ACL="public-read")
-        from prowler.providers.aws.services.s3.s3_service import S3, S3Control
-
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
-
-        with (
-            mock.patch(
-                "botocore.client.BaseClient._make_api_call",
-                new=_deny("GetBucketPolicy"),
-            ),
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.s3.s3_bucket_public_access.s3_bucket_public_access.s3_client",
-                new=S3(aws_provider),
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.s3.s3_bucket_public_access.s3_bucket_public_access.s3control_client",
-                new=S3Control(aws_provider),
-            ),
-        ):
-            from prowler.providers.aws.services.s3.s3_bucket_public_access.s3_bucket_public_access import (
-                s3_bucket_public_access,
-            )
-
-            result = s3_bucket_public_access().execute()
-
-            assert len(result) == 1
-            assert result[0].status == "FAIL"
-            assert (
-                result[0].status_extended
-                == f"S3 Bucket {bucket_name_us} has public access due to bucket ACL."
-            )
-
-    @mock_aws
-    def test_bucket_acl_access_denied_ignore_public_acls_is_pass(self):
-        """s3:GetBucketAcl denied with IgnorePublicAcls on -> PASS, the ACL cannot grant access."""
-        s3_client = client("s3", region_name=AWS_REGION_US_EAST_1)
-        bucket_name_us = "bucket_test_us"
-        s3_client.create_bucket(Bucket=bucket_name_us)
-        s3control_client = client("s3control", region_name=AWS_REGION_US_EAST_1)
-        s3control_client.put_public_access_block(
-            AccountId=AWS_ACCOUNT_NUMBER,
-            PublicAccessBlockConfiguration={
-                "BlockPublicAcls": False,
-                "IgnorePublicAcls": False,
-                "BlockPublicPolicy": False,
-                "RestrictPublicBuckets": False,
-            },
-        )
-        s3_client.put_public_access_block(
-            Bucket=bucket_name_us,
-            PublicAccessBlockConfiguration={
-                "BlockPublicAcls": False,
-                "IgnorePublicAcls": True,
-                "BlockPublicPolicy": False,
-                "RestrictPublicBuckets": False,
-            },
-        )
-        s3_client.put_bucket_acl(Bucket=bucket_name_us, ACL="public-read")
-        from prowler.providers.aws.services.s3.s3_service import S3, S3Control
-
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
-
-        with (
-            mock.patch(
-                "botocore.client.BaseClient._make_api_call",
-                new=_deny("GetBucketAcl"),
-            ),
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.s3.s3_bucket_public_access.s3_bucket_public_access.s3_client",
-                new=S3(aws_provider),
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.s3.s3_bucket_public_access.s3_bucket_public_access.s3control_client",
-                new=S3Control(aws_provider),
-            ),
-        ):
-            from prowler.providers.aws.services.s3.s3_bucket_public_access.s3_bucket_public_access import (
-                s3_bucket_public_access,
-            )
-
-            result = s3_bucket_public_access().execute()
-
-            assert len(result) == 1
-            assert result[0].status == "PASS"
-            assert (
-                result[0].status_extended
-                == f"S3 Bucket {bucket_name_us} is not public."
-            )
-            assert result[0].resource_id == bucket_name_us
-
-    @mock_aws
-    def test_bucket_policy_access_denied_restrict_public_buckets_is_manual(self):
-        """s3:GetBucketPolicy denied with RestrictPublicBuckets on -> MANUAL, a readable public policy FAILs."""
-        s3_client = client("s3", region_name=AWS_REGION_US_EAST_1)
-        bucket_name_us = "bucket_test_us"
-        s3_client.create_bucket(Bucket=bucket_name_us)
-        s3control_client = client("s3control", region_name=AWS_REGION_US_EAST_1)
-        s3control_client.put_public_access_block(
-            AccountId=AWS_ACCOUNT_NUMBER,
-            PublicAccessBlockConfiguration={
-                "BlockPublicAcls": False,
-                "IgnorePublicAcls": False,
-                "BlockPublicPolicy": False,
-                "RestrictPublicBuckets": False,
-            },
-        )
-        s3_client.put_public_access_block(
-            Bucket=bucket_name_us,
-            PublicAccessBlockConfiguration={
-                "BlockPublicAcls": False,
-                "IgnorePublicAcls": False,
-                "BlockPublicPolicy": False,
-                "RestrictPublicBuckets": True,
-            },
-        )
-        s3_client.put_bucket_policy(
-            Bucket=bucket_name_us,
-            Policy=json.dumps(
-                {
-                    "Version": "2012-10-17",
-                    "Statement": [
-                        {
-                            "Effect": "Allow",
-                            "Principal": "*",
-                            "Action": "s3:GetObject",
-                            "Resource": f"arn:aws:s3:::{bucket_name_us}/*",
-                        }
-                    ],
-                }
-            ),
-        )
-        from prowler.providers.aws.services.s3.s3_service import S3, S3Control
-
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
-
-        with (
-            mock.patch(
-                "botocore.client.BaseClient._make_api_call",
-                new=_deny("GetBucketPolicy"),
-            ),
-            mock.patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=aws_provider,
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.s3.s3_bucket_public_access.s3_bucket_public_access.s3_client",
-                new=S3(aws_provider),
-            ),
-            mock.patch(
-                "prowler.providers.aws.services.s3.s3_bucket_public_access.s3_bucket_public_access.s3control_client",
-                new=S3Control(aws_provider),
-            ),
-        ):
-            from prowler.providers.aws.services.s3.s3_bucket_public_access.s3_bucket_public_access import (
-                s3_bucket_public_access,
-            )
-
-            result = s3_bucket_public_access().execute()
-
-            assert len(result) == 1
-            assert result[0].status == "MANUAL"
-            assert "s3:GetBucketPolicy" in result[0].status_extended
+            assert result[0].status == status
+            assert expected in result[0].status_extended
             assert result[0].resource_id == bucket_name_us
