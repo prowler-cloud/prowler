@@ -11,6 +11,8 @@ _orig_make_api_call = BaseClient._make_api_call
 
 
 def _deny(*operations):
+    """Return a _make_api_call replacement that raises AccessDenied on the given operations."""
+
     def mock_make_api_call(self, operation_name, kwarg):
         if operation_name in operations:
             raise ClientError(

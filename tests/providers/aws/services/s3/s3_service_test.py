@@ -120,6 +120,7 @@ class Test_S3_Service:
     # Test S3 Get Bucket ACL
     @mock_aws
     def test_get_bucket_acl(self):
+        """A readable ACL loads its grantees and keeps acl_retrieved True."""
         s3_client = client("s3")
         bucket_name = "test-bucket"
         bucket_arn = f"arn:aws:s3:::{bucket_name}"
@@ -165,6 +166,7 @@ class Test_S3_Service:
         s3_client.create_bucket(Bucket=bucket_name)
 
         def deny(self, operation_name, kwarg):
+            """Raise AccessDenied on GetBucketAcl and GetBucketPolicy."""
             if operation_name in ("GetBucketAcl", "GetBucketPolicy"):
                 raise botocore.exceptions.ClientError(
                     {"Error": {"Code": "AccessDenied", "Message": "Access Denied"}},
