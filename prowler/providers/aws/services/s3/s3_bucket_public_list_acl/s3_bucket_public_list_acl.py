@@ -8,7 +8,8 @@ class s3_bucket_public_list_acl(Check):
 
     - PASS: Public access is blocked, or the ACL grants no public read access.
     - FAIL: The ACL grants AllUsers or AuthenticatedUsers read access.
-    - MANUAL: The bucket ACL could not be retrieved (missing permissions).
+    - MANUAL: The bucket ACL could not be retrieved (missing permissions) and
+      public ACLs are not ignored.
     """
 
     def execute(self) -> list[Check_Report_AWS]:
@@ -48,7 +49,10 @@ class s3_bucket_public_list_acl(Check):
                         bucket.public_access_block.ignore_public_acls
                         and bucket.public_access_block.restrict_public_buckets
                     ):
-                        if not bucket.acl_retrieved:
+                        if (
+                            not bucket.acl_retrieved
+                            and not bucket.public_access_block.ignore_public_acls
+                        ):
                             report.status = "MANUAL"
                             report.status_extended = f"Cannot evaluate whether S3 Bucket {bucket.name} is publicly listable: the bucket ACL could not be retrieved. Verify that the scanning credentials are allowed to call s3:GetBucketAcl."
                         # 3. If bucket has no public block, check bucket ACL

@@ -242,6 +242,14 @@ class S3(AWSService):
                 )
 
     def _get_bucket_acl(self, bucket):
+        """Load the bucket owner and ACL grantees into the bucket.
+
+        Sets bucket.acl_retrieved to False when the ACL cannot be read for a
+        reason other than the bucket no longer existing (e.g. AccessDenied).
+
+        Args:
+            bucket: The Bucket to populate.
+        """
         logger.info("S3 - Get buckets acl...")
         try:
             regional_client = self.regional_clients[bucket.region]

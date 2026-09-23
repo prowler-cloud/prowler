@@ -158,6 +158,7 @@ class Test_S3_Service:
     # Test S3 Get Bucket ACL / Policy denied
     @mock_aws
     def test_get_bucket_acl_and_policy_access_denied(self):
+        """AccessDenied on ACL/policy reads -> acl_retrieved False, policy None."""
         s3_client = client("s3")
         bucket_name = "test-bucket"
         bucket_arn = f"arn:aws:s3:::{bucket_name}"
