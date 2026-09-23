@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -12,12 +12,21 @@ import { useProviderWizardStore } from "@/store/provider-wizard/store";
 import { AwsConnectStep } from "./aws-connect-step";
 import type { AwsConnectUiState } from "./types";
 
-const { addProvider, addCredentialsProvider, openCloudUpgradeMock } =
-  vi.hoisted(() => ({
-    addProvider: vi.fn(),
-    addCredentialsProvider: vi.fn(),
-    openCloudUpgradeMock: vi.fn(),
-  }));
+const {
+  addProvider,
+  addCredentialsProvider,
+  updateProvider,
+  updateCredentialsProvider,
+  testProviderConnection,
+  openCloudUpgradeMock,
+} = vi.hoisted(() => ({
+  addProvider: vi.fn(),
+  addCredentialsProvider: vi.fn(),
+  updateProvider: vi.fn(),
+  updateCredentialsProvider: vi.fn(),
+  testProviderConnection: vi.fn(),
+  openCloudUpgradeMock: vi.fn(),
+}));
 
 vi.mock("next-auth/react", () => ({
   useSession: () => ({
@@ -28,7 +37,11 @@ vi.mock("next-auth/react", () => ({
 vi.mock("@/actions/providers/providers", () => ({
   addProvider,
   addCredentialsProvider,
+  updateProvider,
+  updateCredentialsProvider,
 }));
+// The real module reaches next-auth through lib/helper -> auth.config.
+vi.mock("@/lib/provider-helpers", () => ({ testProviderConnection }));
 vi.mock("@/store", () => ({
   useCloudUpgradeStore: (
     selector: (state: {
@@ -97,6 +110,9 @@ describe("AwsConnectStep", () => {
     useProviderWizardStore.getState().reset();
     addProvider.mockResolvedValue({ data: { id: "provider-1" } });
     addCredentialsProvider.mockResolvedValue({ data: { id: "secret-1" } });
+    updateProvider.mockResolvedValue({ data: { id: "provider-1" } });
+    updateCredentialsProvider.mockResolvedValue({ data: { id: "secret-1" } });
+    testProviderConnection.mockResolvedValue({ connected: true, error: null });
   });
 
   afterEach(() => {
@@ -290,6 +306,207 @@ describe("AwsConnectStep", () => {
           .closest("[aria-invalid]"),
       ).toHaveAttribute("aria-invalid", "true");
       expect(onConnected).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("when the connection is tested", () => {
+    beforeEach(() => {
+      vi.stubEnv("UI_CLOUD_ENABLED", "true");
+    });
+
+    const submitRole = async () => {
+      const step = renderStep();
+      await step.user.type(
+        screen.getByRole("textbox", { name: /Role ARN/ }),
+        ROLE_ARN,
+      );
+      await waitFor(() => expect(connectButton()).toBeEnabled());
+      await step.user.click(connectButton());
+      return step;
+    };
+
+    const submitKeys = async () => {
+      const step = renderStep();
+      await step.user.click(
+        screen.getByRole("radio", { name: /Static access keys/ }),
+      );
+      await step.user.type(
+        screen.getByRole("textbox", { name: /Account ID/ }),
+        "210987654321",
+      );
+      await step.user.type(
+        screen.getByPlaceholderText("Enter the AWS Access Key ID"),
+        "AKIAEXAMPLE",
+      );
+      await step.user.type(
+        screen.getByPlaceholderText("Enter the AWS Secret Access Key"),
+        "secret-value",
+      );
+      await waitFor(() => expect(connectButton()).toBeEnabled());
+      await step.user.click(connectButton());
+      return step;
+    };
+
+    it("reports the test in progress and blocks the action while it runs", async () => {
+      // Given: a test that has not answered yet.
+      let settle!: (result: {
+        connected: boolean;
+        error: string | null;
+      }) => void;
+      testProviderConnection.mockImplementation(
+        () =>
+          new Promise((resolve) => {
+            settle = resolve;
+          }),
+      );
+
+      // When
+      const { onConnected } = await submitRole();
+
+      // Then
+      expect(await screen.findByRole("status")).toHaveTextContent(
+        /up to 30 seconds/i,
+      );
+      expect(
+        screen.getByRole("button", { name: "Testing connection..." }),
+      ).toBeDisabled();
+      expect(onConnected).not.toHaveBeenCalled();
+
+      // When / Then
+      await act(async () => settle({ connected: true, error: null }));
+      await waitFor(() => expect(onConnected).toHaveBeenCalledOnce());
+    });
+
+    it("tests the account that was connected with static keys too", async () => {
+      // When
+      const { onConnected } = await submitKeys();
+
+      // Then
+      await waitFor(() => expect(onConnected).toHaveBeenCalledOnce());
+      expect(testProviderConnection).toHaveBeenCalledWith("provider-1");
+    });
+
+    it("stays on the keys form when the connection is refused", async () => {
+      // Given
+      testProviderConnection.mockResolvedValue({
+        connected: false,
+        error: "The access keys were rejected.",
+      });
+
+      // When
+      const { onConnected } = await submitKeys();
+
+      // Then
+      expect(await screen.findByRole("alert")).toHaveTextContent(
+        "The access keys were rejected.",
+      );
+      expect(onConnected).not.toHaveBeenCalled();
+      expect(screen.getByRole("textbox", { name: /Account ID/ })).toBeVisible();
+    });
+
+    it("tests the registered account before leaving the step", async () => {
+      // When
+      const { onConnected } = await submitRole();
+
+      // Then
+      await waitFor(() => expect(onConnected).toHaveBeenCalledOnce());
+      expect(testProviderConnection).toHaveBeenCalledWith("provider-1");
+    });
+
+    it("stays on the form and offers a retry when the connection is refused", async () => {
+      // Given
+      testProviderConnection.mockResolvedValue({
+        connected: false,
+        error: "The role could not be assumed.",
+      });
+
+      // When
+      const { onConnected } = await submitRole();
+
+      // Then
+      expect(await screen.findByRole("alert")).toHaveTextContent(
+        "The role could not be assumed.",
+      );
+      expect(onConnected).not.toHaveBeenCalled();
+      expect(
+        screen.getByRole("button", { name: "Retry connection" }),
+      ).toBeEnabled();
+    });
+
+    // The helper always supplies a reason today; this guards the alert against a
+    // future contract that does not.
+    it("falls back to a generic reason when the API gives none", async () => {
+      // Given
+      testProviderConnection.mockResolvedValue({
+        connected: false,
+        error: null,
+      });
+
+      // When
+      await submitRole();
+
+      // Then
+      expect(await screen.findByRole("alert")).toHaveTextContent(
+        /could not connect/i,
+      );
+    });
+
+    it("recovers when the connection test itself fails", async () => {
+      // Given: task polling rejects on a 5xx instead of reporting a failure.
+      testProviderConnection.mockRejectedValue(new Error("Server error (500)"));
+
+      // When
+      const { onConnected } = await submitRole();
+
+      // Then
+      expect(await screen.findByRole("alert")).toHaveTextContent(
+        /account is saved/i,
+      );
+      expect(onConnected).not.toHaveBeenCalled();
+      await waitFor(() =>
+        expect(
+          screen.getByRole("button", { name: "Retry connection" }),
+        ).toBeEnabled(),
+      );
+    });
+
+    it("drops the failure as soon as the form is edited again", async () => {
+      // Given
+      testProviderConnection.mockResolvedValue({
+        connected: false,
+        error: "The role could not be assumed.",
+      });
+      const { user } = await submitRole();
+      await screen.findByRole("alert");
+
+      // When
+      await user.type(
+        screen.getByRole("textbox", { name: /Role ARN/ }),
+        "-extra",
+      );
+
+      // Then
+      await waitFor(() =>
+        expect(screen.queryByRole("alert")).not.toBeInTheDocument(),
+      );
+    });
+
+    it("moves on once a retry connects", async () => {
+      // Given
+      testProviderConnection
+        .mockResolvedValueOnce({ connected: false, error: "Denied." })
+        .mockResolvedValueOnce({ connected: true, error: null });
+      const { onConnected, user } = await submitRole();
+
+      // When
+      await user.click(
+        await screen.findByRole("button", { name: "Retry connection" }),
+      );
+
+      // Then
+      await waitFor(() => expect(onConnected).toHaveBeenCalledOnce());
+      // The account is registered once; the retry only rewrites its secret.
+      expect(addProvider).toHaveBeenCalledOnce();
     });
   });
 

@@ -22,10 +22,16 @@ const UPDATE_MODE_WIZARD_STEPS = PROVIDER_WIZARD_STEPS.slice(
   PROVIDER_WIZARD_STEP.LAUNCH,
 );
 
+const AWS_CONNECT_STEPPER_ROW = 0;
+const AWS_LAUNCH_STEPPER_ROW = 1;
+
 interface ProviderWizardStepperInput {
   mode: ProviderWizardMode;
   providerType: ProviderType | null;
   currentStep: ProviderWizardStep;
+  // "Add credentials" on a registered account opens on CREDENTIALS and still walks
+  // the separate steps, so it keeps the generic rows.
+  isDirectCredentialsEntry?: boolean;
 }
 
 /** Rows for the provider-flow stepper plus the offset that maps `currentStep` onto them. */
@@ -33,14 +39,18 @@ export function getProviderWizardStepper({
   mode,
   providerType,
   currentStep,
+  isDirectCredentialsEntry = false,
 }: ProviderWizardStepperInput) {
   if (mode === PROVIDER_WIZARD_MODE.UPDATE) {
     return { steps: UPDATE_MODE_WIZARD_STEPS, stepOffset: 0 };
   }
-  if (providerType === "aws") {
-    // CONNECT stays on the first row; every later step shifts up one, so
-    // CREDENTIALS (no row of its own) folds into the first one too.
-    const stepOffset = currentStep === PROVIDER_WIZARD_STEP.CONNECT ? 0 : -1;
+  if (providerType === "aws" && !isDirectCredentialsEntry) {
+    // Only CONNECT and LAUNCH are reachable here; CREDENTIALS and TEST have no
+    // row of their own, so anything short of LAUNCH folds onto the first row.
+    const stepOffset =
+      currentStep === PROVIDER_WIZARD_STEP.LAUNCH
+        ? AWS_LAUNCH_STEPPER_ROW - PROVIDER_WIZARD_STEP.LAUNCH
+        : AWS_CONNECT_STEPPER_ROW - currentStep;
     return { steps: AWS_PROVIDER_WIZARD_STEPS, stepOffset };
   }
   return { steps: PROVIDER_WIZARD_STEPS, stepOffset: 0 };
@@ -49,17 +59,39 @@ export function getProviderWizardStepper({
 interface CredentialsRetryStepInput {
   mode: ProviderWizardMode;
   providerType: ProviderType | null;
+  isDirectCredentialsEntry?: boolean;
 }
 
 /** Where "Back" from the connection test lands: AWS re-enters its one-step form. */
 export function getCredentialsRetryStep({
   mode,
   providerType,
+  isDirectCredentialsEntry = false,
 }: CredentialsRetryStepInput): ProviderWizardStep {
-  if (mode === PROVIDER_WIZARD_MODE.ADD && providerType === "aws") {
+  if (
+    mode === PROVIDER_WIZARD_MODE.ADD &&
+    providerType === "aws" &&
+    !isDirectCredentialsEntry
+  ) {
     return PROVIDER_WIZARD_STEP.CONNECT;
   }
   return PROVIDER_WIZARD_STEP.CREDENTIALS;
+}
+
+interface LaunchBackStepInput {
+  providerType: ProviderType | null;
+  isDirectCredentialsEntry?: boolean;
+}
+
+/** Where "Back" from the launch step lands: AWS returns to its one-step form. */
+export function getLaunchBackStep({
+  providerType,
+  isDirectCredentialsEntry = false,
+}: LaunchBackStepInput): ProviderWizardStep {
+  if (providerType === "aws" && !isDirectCredentialsEntry) {
+    return PROVIDER_WIZARD_STEP.CONNECT;
+  }
+  return PROVIDER_WIZARD_STEP.TEST;
 }
 
 export function getOrganizationsStepperOffset(

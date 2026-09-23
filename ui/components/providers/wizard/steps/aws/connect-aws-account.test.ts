@@ -65,7 +65,7 @@ describe("connectAwsAccount", () => {
       });
 
       // Then
-      expect(result).toEqual({ ok: true });
+      expect(result).toEqual({ ok: true, providerId: "provider-1" });
       expect(formEntries(0, addProvider)).toEqual({
         providerType: "aws",
         providerUid: "123456789012",
@@ -138,7 +138,7 @@ describe("connectAwsAccount", () => {
       });
 
       // Then
-      expect(result).toEqual({ ok: true });
+      expect(result).toEqual({ ok: true, providerId: "provider-1" });
       expect(formEntries(0, addProvider)).toEqual({
         providerType: "aws",
         providerUid: "210987654321",
@@ -262,7 +262,7 @@ describe("connectAwsAccount", () => {
 
       // Then
       expect(first).toEqual({ ok: false, errors });
-      expect(second).toEqual({ ok: true });
+      expect(second).toEqual({ ok: true, providerId: "provider-1" });
       expect(addProvider).toHaveBeenCalledOnce();
       expect(addCredentialsProvider).toHaveBeenCalledTimes(2);
       expect(updateProvider).not.toHaveBeenCalled();
@@ -285,7 +285,7 @@ describe("connectAwsAccount", () => {
       });
 
       // Then
-      expect(second).toEqual({ ok: true });
+      expect(second).toEqual({ ok: true, providerId: "provider-1" });
       expect(addProvider).toHaveBeenCalledOnce();
       expect(formEntries(0, updateProvider)).toEqual({
         providerId: "provider-1",
@@ -318,7 +318,7 @@ describe("connectAwsAccount", () => {
       });
 
       // Then
-      expect(result).toEqual({ ok: true });
+      expect(result).toEqual({ ok: true, providerId: "provider-1" });
       expect(addProvider).toHaveBeenCalledOnce();
       expect(addCredentialsProvider).toHaveBeenCalledOnce();
       expect(updateCredentialsProvider).toHaveBeenCalledExactlyOnceWith(

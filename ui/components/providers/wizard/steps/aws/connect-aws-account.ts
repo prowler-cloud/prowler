@@ -31,6 +31,7 @@ export interface AwsConnectInput {
 
 interface AwsConnectSuccess {
   ok: true;
+  providerId: string;
 }
 
 interface AwsConnectFailure {
@@ -187,5 +188,5 @@ export async function connectAwsAccount(
   const store = useProviderWizardStore.getState();
   store.setSecretId(secret.id);
   store.setVia(input.method);
-  return { ok: true };
+  return { ok: true, providerId: provider.providerId };
 }

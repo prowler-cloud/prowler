@@ -9,6 +9,8 @@ import {
 import { type KnownProviderType, PROVIDER_TYPES } from "@/types/providers";
 
 import {
+  getCredentialsRetryStep,
+  getLaunchBackStep,
   getOrganizationsStepperOffset,
   getProviderWizardDocsDestination,
   getProviderWizardModalTitle,
@@ -34,41 +36,64 @@ describe("getProviderWizardStepper", () => {
     expect(stepper.stepOffset).toBe(0);
   });
 
-  it("folds the credentials step into the first one when adding an AWS account", () => {
+  it("leaves only two rows when adding an AWS account", () => {
     const stepper = getProviderWizardStepper({
       mode: PROVIDER_WIZARD_MODE.ADD,
       providerType: "aws",
       currentStep: PROVIDER_WIZARD_STEP.CONNECT,
     });
 
-    expect(labels(stepper.steps)).toEqual([
-      "Link a Provider",
-      "Validate Connection",
-      "Launch Scan",
-    ]);
+    expect(labels(stepper.steps)).toEqual(["Link a Provider", "Launch Scan"]);
     expect(stepper.stepOffset).toBe(0);
   });
 
-  it("keeps the AWS stepper in sync once the wizard skips to the connection test", () => {
-    const stepper = getProviderWizardStepper({
-      mode: PROVIDER_WIZARD_MODE.ADD,
-      providerType: "aws",
-      currentStep: PROVIDER_WIZARD_STEP.TEST,
-    });
-
-    // TEST is index 2 in the wizard but the second row of the AWS stepper.
-    expect(stepper.stepOffset).toBe(-1);
-  });
-
-  it("keeps the first AWS row active if the wizard ever lands on the credentials step", () => {
+  it("keeps the first AWS row active if the wizard ever lands on a folded step", () => {
     const stepper = getProviderWizardStepper({
       mode: PROVIDER_WIZARD_MODE.ADD,
       providerType: "aws",
       currentStep: PROVIDER_WIZARD_STEP.CREDENTIALS,
     });
 
-    // CREDENTIALS has no row of its own for AWS: it folds into "Link a Provider".
-    expect(stepper.stepOffset).toBe(-1);
+    expect(stepper.stepOffset).toBe(-PROVIDER_WIZARD_STEP.CREDENTIALS);
+  });
+
+  it("puts the AWS launch step on the second row", () => {
+    const stepper = getProviderWizardStepper({
+      mode: PROVIDER_WIZARD_MODE.ADD,
+      providerType: "aws",
+      currentStep: PROVIDER_WIZARD_STEP.LAUNCH,
+    });
+
+    // LAUNCH is index 3 in the wizard but the second row of the AWS stepper.
+    expect(stepper.stepOffset).toBe(-2);
+  });
+
+  it("keeps the generic rows when adding credentials to a registered AWS account", () => {
+    const stepper = getProviderWizardStepper({
+      mode: PROVIDER_WIZARD_MODE.ADD,
+      providerType: "aws",
+      currentStep: PROVIDER_WIZARD_STEP.CREDENTIALS,
+      isDirectCredentialsEntry: true,
+    });
+
+    expect(labels(stepper.steps)).toEqual([
+      "Link a Provider",
+      "Authenticate Credentials",
+      "Validate Connection",
+      "Launch Scan",
+    ]);
+    expect(stepper.stepOffset).toBe(0);
+  });
+
+  it("keeps the generic rows for a provider that is not AWS", () => {
+    const stepper = getProviderWizardStepper({
+      mode: PROVIDER_WIZARD_MODE.ADD,
+      providerType: "azure",
+      currentStep: PROVIDER_WIZARD_STEP.TEST,
+    });
+
+    expect(stepper.steps).toHaveLength(4);
+    expect(stepper.stepOffset).toBe(0);
   });
 
   it("still shows the credentials step when updating AWS credentials", () => {
@@ -84,6 +109,59 @@ describe("getProviderWizardStepper", () => {
       "Validate Connection",
     ]);
     expect(stepper.stepOffset).toBe(0);
+  });
+});
+
+describe("getCredentialsRetryStep", () => {
+  it("returns an AWS account being added to its one-step form", () => {
+    expect(
+      getCredentialsRetryStep({
+        mode: PROVIDER_WIZARD_MODE.ADD,
+        providerType: "aws",
+      }),
+    ).toBe(PROVIDER_WIZARD_STEP.CONNECT);
+  });
+
+  it("returns to the credentials step when AWS credentials were added from the list", () => {
+    expect(
+      getCredentialsRetryStep({
+        mode: PROVIDER_WIZARD_MODE.ADD,
+        providerType: "aws",
+        isDirectCredentialsEntry: true,
+      }),
+    ).toBe(PROVIDER_WIZARD_STEP.CREDENTIALS);
+  });
+
+  it("returns every other provider to the credentials step", () => {
+    expect(
+      getCredentialsRetryStep({
+        mode: PROVIDER_WIZARD_MODE.ADD,
+        providerType: "azure",
+      }),
+    ).toBe(PROVIDER_WIZARD_STEP.CREDENTIALS);
+  });
+});
+
+describe("getLaunchBackStep", () => {
+  it("returns an AWS account to its one-step form", () => {
+    expect(getLaunchBackStep({ providerType: "aws" })).toBe(
+      PROVIDER_WIZARD_STEP.CONNECT,
+    );
+  });
+
+  it("returns every other provider to the connection test", () => {
+    expect(getLaunchBackStep({ providerType: "azure" })).toBe(
+      PROVIDER_WIZARD_STEP.TEST,
+    );
+  });
+
+  it("returns to the connection test when AWS credentials were added from the list", () => {
+    expect(
+      getLaunchBackStep({
+        providerType: "aws",
+        isDirectCredentialsEntry: true,
+      }),
+    ).toBe(PROVIDER_WIZARD_STEP.TEST);
   });
 });
 

@@ -28,6 +28,7 @@ import type { ScanScheduleCapability } from "@/types/schedules";
 import { useProviderWizardController } from "./hooks/use-provider-wizard-controller";
 import {
   getCredentialsRetryStep,
+  getLaunchBackStep,
   getOrganizationsStepperOffset,
   getProviderWizardDocsDestination,
   getProviderWizardStepper,
@@ -68,6 +69,7 @@ export function ProviderWizardModal({
     handleClose,
     handleDialogOpenChange,
     handleTestSuccess,
+    isDirectCredentialsEntry,
     isOrgDirectEntry,
     isProviderFlow,
     mode,
@@ -105,6 +107,7 @@ export function ProviderWizardModal({
     mode,
     providerType: providerTypeHint,
     currentStep,
+    isDirectCredentialsEntry,
   });
 
   return (
@@ -176,9 +179,10 @@ export function ProviderWizardModal({
                         endActiveTour();
                       }}
                       onCredentialsSaved={() => {
-                        // AWS stored its credentials in the connect step: skip ahead and
-                        // end the tour like any other handoff to the user.
-                        setCurrentStep(PROVIDER_WIZARD_STEP.TEST);
+                        // AWS stored its credentials and tested the connection in this
+                        // step, so it takes the same exit the test step took: an update
+                        // closes the wizard, an add moves on to the launch step.
+                        handleTestSuccess();
                         endActiveTour();
                       }}
                       onSelectOrganizations={openOrganizationsFlow}
@@ -219,6 +223,7 @@ export function ProviderWizardModal({
                           getCredentialsRetryStep({
                             mode,
                             providerType: providerTypeHint,
+                            isDirectCredentialsEntry,
                           }),
                         )
                       }
@@ -229,7 +234,14 @@ export function ProviderWizardModal({
                 {isProviderFlow &&
                   currentStep === PROVIDER_WIZARD_STEP.LAUNCH && (
                     <LaunchStep
-                      onBack={() => setCurrentStep(PROVIDER_WIZARD_STEP.TEST)}
+                      onBack={() =>
+                        setCurrentStep(
+                          getLaunchBackStep({
+                            providerType: providerTypeHint,
+                            isDirectCredentialsEntry,
+                          }),
+                        )
+                      }
                       onClose={handleClose}
                       onFooterChange={setFooterConfig}
                       capability={resolvedScanScheduleCapability}
