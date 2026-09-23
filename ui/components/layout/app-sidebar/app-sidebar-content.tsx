@@ -10,7 +10,7 @@ import { useRuntimeConfig } from "@/hooks/use-runtime-config";
 import { isCloud } from "@/lib/shared/env";
 import { useUIStore } from "@/store/ui/store";
 
-import { useAppSidebarMode } from "./app-sidebar-mode-store";
+import { useHydratedAppSidebarMode } from "./app-sidebar-mode-store";
 import { AppSidebarModeToggle } from "./app-sidebar-mode-toggle";
 import { LaunchScanAction } from "./launch-scan-action";
 import { getNavigationConfig } from "./navigation-config";
@@ -28,7 +28,7 @@ export function AppSidebarContent({ onSelect }: AppSidebarContentProps) {
   // One-time server decision per request, seeded by the root layout.
   const registryEligible = useUIStore((state) => state.registryEligible);
   const { apiDocsUrl, cloudBillingEnabled } = useRuntimeConfig();
-  const mode = useAppSidebarMode((state) => state.mode);
+  const mode = useHydratedAppSidebarMode();
   const isCloudEnvironment = isCloud();
   const sections = getNavigationConfig({
     pathname,
