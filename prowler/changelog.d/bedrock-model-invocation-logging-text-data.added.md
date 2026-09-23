@@ -1,0 +1,1 @@
+`bedrock_model_invocation_logging_text_data_enabled` check for AWS provider, verifying that model invocation logging delivers prompt and response text rather than naming a destination while excluding request and response bodies
