@@ -1,5 +1,6 @@
 from unittest import mock
 
+import pytest
 from boto3 import client
 from botocore.client import BaseClient
 from botocore.exceptions import ClientError
@@ -755,9 +756,10 @@ class Test_s3_bucket_public_list_acl:
             assert "s3:GetBucketAcl" in result[0].status_extended
             assert result[0].resource_id == bucket_name_us
 
+    @pytest.mark.parametrize("ignore_level", ["bucket", "account"])
     @mock_aws
-    def test_bucket_acl_access_denied_ignore_public_acls_is_pass(self):
-        """s3:GetBucketAcl denied with IgnorePublicAcls on -> PASS, the ACL cannot grant access."""
+    def test_bucket_acl_access_denied_ignore_public_acls_is_pass(self, ignore_level):
+        """s3:GetBucketAcl denied with bucket or account IgnorePublicAcls on -> PASS, the ACL cannot grant access."""
         s3_client = client("s3", region_name=AWS_REGION_US_EAST_1)
         bucket_name_us = "bucket_test_us"
         s3_client.create_bucket(Bucket=bucket_name_us)
@@ -766,7 +768,7 @@ class Test_s3_bucket_public_list_acl:
             AccountId=AWS_ACCOUNT_NUMBER,
             PublicAccessBlockConfiguration={
                 "BlockPublicAcls": False,
-                "IgnorePublicAcls": False,
+                "IgnorePublicAcls": ignore_level == "account",
                 "BlockPublicPolicy": False,
                 "RestrictPublicBuckets": False,
             },
@@ -775,7 +777,7 @@ class Test_s3_bucket_public_list_acl:
             Bucket=bucket_name_us,
             PublicAccessBlockConfiguration={
                 "BlockPublicAcls": False,
-                "IgnorePublicAcls": True,
+                "IgnorePublicAcls": ignore_level == "bucket",
                 "BlockPublicPolicy": False,
                 "RestrictPublicBuckets": False,
             },

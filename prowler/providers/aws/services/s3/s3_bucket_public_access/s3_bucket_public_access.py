@@ -10,9 +10,9 @@ class s3_bucket_public_access(Check):
     - PASS: Public access is blocked at account level, or the bucket's public
       access block, ACL and policy grant no public access.
     - FAIL: The bucket ACL or policy grants public access.
-    - MANUAL: The bucket policy, or its ACL while public ACLs are not ignored,
-      could not be retrieved (missing permissions) and the data that was read
-      shows no public access.
+    - MANUAL: The bucket policy, or its ACL while neither the account nor the
+      bucket ignores public ACLs, could not be retrieved (missing permissions)
+      and the data that was read shows no public access.
     """
 
     def execute(self) -> list[Check_Report_AWS]:
@@ -67,14 +67,15 @@ class s3_bucket_public_access(Check):
                             report.status = "FAIL"
                             report.status_extended = f"S3 Bucket {bucket.name} has public access due to bucket policy."
 
-                        # 5. A PASS cannot be asserted if the policy, or an ACL that
-                        # ignore_public_acls does not neutralize, could not be read
+                        # 5. A PASS cannot be asserted if the policy, or an ACL that the
+                        # account or bucket ignore_public_acls does not neutralize, could not be read
                         if report.status == "PASS":
                             missing = []
-                            if (
-                                not bucket.acl_retrieved
-                                and not bucket.public_access_block.ignore_public_acls
-                            ):
+                            acls_ignored = bucket.public_access_block.ignore_public_acls or (
+                                s3control_client.account_public_access_block
+                                and s3control_client.account_public_access_block.ignore_public_acls
+                            )
+                            if not bucket.acl_retrieved and not acls_ignored:
                                 missing.append(("ACL", "s3:GetBucketAcl"))
                             if bucket.policy is None:
                                 missing.append(("policy", "s3:GetBucketPolicy"))

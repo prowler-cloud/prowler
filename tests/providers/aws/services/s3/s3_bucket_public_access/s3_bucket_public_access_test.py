@@ -805,14 +805,14 @@ class Test_s3_bucket_public_access:
                     assert result[0].region == AWS_REGION_US_EAST_1
 
     @pytest.mark.parametrize(
-        "ignore_public_acls, public_acl, public_policy, denied, status, expected",
+        "ignore_level, public_acl, public_policy, denied, status, expected",
         [
             # Unread ACL or policy with nothing public in the data read -> MANUAL
-            (False, True, False, "GetBucketAcl", "MANUAL", "s3:GetBucketAcl"),
-            (False, False, True, "GetBucketPolicy", "MANUAL", "s3:GetBucketPolicy"),
+            (None, True, False, "GetBucketAcl", "MANUAL", "s3:GetBucketAcl"),
+            (None, False, True, "GetBucketPolicy", "MANUAL", "s3:GetBucketPolicy"),
             # Public data that was read still FAILs
             (
-                False,
+                None,
                 False,
                 True,
                 "GetBucketAcl",
@@ -820,20 +820,21 @@ class Test_s3_bucket_public_access:
                 "has public access due to bucket policy.",
             ),
             (
-                False,
+                None,
                 True,
                 False,
                 "GetBucketPolicy",
                 "FAIL",
                 "has public access due to bucket ACL.",
             ),
-            # IgnorePublicAcls makes an unread ACL irrelevant -> PASS
-            (True, True, False, "GetBucketAcl", "PASS", "is not public."),
+            # Bucket or account IgnorePublicAcls makes an unread ACL irrelevant -> PASS
+            ("bucket", True, False, "GetBucketAcl", "PASS", "is not public."),
+            ("account", True, False, "GetBucketAcl", "PASS", "is not public."),
         ],
     )
     @mock_aws
     def test_bucket_access_denied(
-        self, ignore_public_acls, public_acl, public_policy, denied, status, expected
+        self, ignore_level, public_acl, public_policy, denied, status, expected
     ):
         """An ACL or policy read denied with AccessDenied never yields a false PASS."""
         s3_client = client("s3", region_name=AWS_REGION_US_EAST_1)
@@ -844,7 +845,7 @@ class Test_s3_bucket_public_access:
             AccountId=AWS_ACCOUNT_NUMBER,
             PublicAccessBlockConfiguration={
                 "BlockPublicAcls": False,
-                "IgnorePublicAcls": False,
+                "IgnorePublicAcls": ignore_level == "account",
                 "BlockPublicPolicy": False,
                 "RestrictPublicBuckets": False,
             },
@@ -853,7 +854,7 @@ class Test_s3_bucket_public_access:
             Bucket=bucket_name_us,
             PublicAccessBlockConfiguration={
                 "BlockPublicAcls": False,
-                "IgnorePublicAcls": ignore_public_acls,
+                "IgnorePublicAcls": ignore_level == "bucket",
                 "BlockPublicPolicy": False,
                 "RestrictPublicBuckets": False,
             },
