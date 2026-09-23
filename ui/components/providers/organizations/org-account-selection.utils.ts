@@ -2,6 +2,10 @@ import {
   CONNECTION_TEST_STATUS,
   ConnectionTestStatus,
 } from "@/types/organizations";
+import {
+  CONNECTION_CHECK_STATUS,
+  type ConnectionCheckStatus,
+} from "@/types/providers";
 
 const DEFAULT_POLL_DELAYS_MS = [2000, 3000, 5000] as const;
 export const CONNECTION_CHECK_DEFAULT_DELAYS_MS = DEFAULT_POLL_DELAYS_MS;
@@ -49,7 +53,7 @@ interface PollConnectionTasksOptions
 }
 
 export interface PollConnectionTaskResult {
-  success: boolean;
+  status: ConnectionCheckStatus;
   error?: string;
 }
 
@@ -142,7 +146,10 @@ function readConnectionOutcome(
   taskResponse: unknown,
 ): PollConnectionTaskResult | null {
   if (isRecord(taskResponse) && typeof taskResponse.error === "string") {
-    return { success: false, error: taskResponse.error };
+    return {
+      status: CONNECTION_CHECK_STATUS.FAILED,
+      error: taskResponse.error,
+    };
   }
 
   const data =
@@ -157,10 +164,10 @@ function readConnectionOutcome(
     const connected =
       typeof result?.connected === "boolean" ? result.connected : true;
     if (connected) {
-      return { success: true };
+      return { status: CONNECTION_CHECK_STATUS.SUCCESS };
     }
     return {
-      success: false,
+      status: CONNECTION_CHECK_STATUS.FAILED,
       error:
         (typeof result?.error === "string" && result.error) ||
         "Connection failed for this account.",
@@ -169,7 +176,7 @@ function readConnectionOutcome(
 
   if (state === "failed") {
     return {
-      success: false,
+      status: CONNECTION_CHECK_STATUS.FAILED,
       error:
         (typeof result?.error === "string" && result.error) ||
         "Connection test task failed.",
@@ -177,7 +184,10 @@ function readConnectionOutcome(
   }
 
   if (!state || !IN_PROGRESS_TASK_STATES.has(state)) {
-    return { success: false, error: "Unexpected task state." };
+    return {
+      status: CONNECTION_CHECK_STATUS.FAILED,
+      error: "Unexpected task state.",
+    };
   }
 
   return null;
@@ -219,7 +229,7 @@ export async function pollConnectionTasks(
 
   const settleRemaining = (error: string) => {
     for (const taskId of Array.from(pending)) {
-      onSettled(taskId, { success: false, error });
+      onSettled(taskId, { status: CONNECTION_CHECK_STATUS.FAILED, error });
     }
     pending.clear();
   };
@@ -260,12 +270,27 @@ export async function pollConnectionTasks(
   }
 
   if (resolveExhausted) {
+    // Sequential, not `Promise.all`: each call goes through its own
+    // `getProvider` server action, and client-invoked server actions run one
+    // at a time through Next's action queue (see `pollConnectionTasks`'s own
+    // batched read above) -- running them "concurrently" from here would not
+    // shorten the wait, only reorder it.
     for (const taskId of Array.from(pending)) {
       if (signal?.aborted) {
-        break;
+        settleRemaining("Connection test cancelled.");
+        return;
       }
 
       const resolved = await resolveExhausted(taskId);
+
+      // The signal can abort while `resolveExhausted` itself is in flight; its
+      // result must not be accepted after that, or a check the caller has
+      // already moved on from could still report success.
+      if (signal?.aborted) {
+        settleRemaining("Connection test cancelled.");
+        return;
+      }
+
       if (resolved) {
         pending.delete(taskId);
         onSettled(taskId, resolved);
@@ -301,16 +326,25 @@ export async function pollTaskCompletion(
 
   for (let attempt = 0; attempt < maxRetries; attempt += 1) {
     if (signal?.aborted) {
-      return { success: false, error: "Deletion cancelled." };
+      return {
+        status: CONNECTION_CHECK_STATUS.FAILED,
+        error: "Deletion cancelled.",
+      };
     }
 
     const taskResponse = await taskFetcher(taskId);
     if (signal?.aborted) {
-      return { success: false, error: "Deletion cancelled." };
+      return {
+        status: CONNECTION_CHECK_STATUS.FAILED,
+        error: "Deletion cancelled.",
+      };
     }
 
     if (isRecord(taskResponse) && typeof taskResponse.error === "string") {
-      return { success: false, error: taskResponse.error };
+      return {
+        status: CONNECTION_CHECK_STATUS.FAILED,
+        error: taskResponse.error,
+      };
     }
 
     const data =
@@ -323,12 +357,12 @@ export async function pollTaskCompletion(
     const result = isRecord(attributes?.result) ? attributes.result : null;
 
     if (state === "completed") {
-      return { success: true };
+      return { status: CONNECTION_CHECK_STATUS.SUCCESS };
     }
 
     if (state === "failed") {
       return {
-        success: false,
+        status: CONNECTION_CHECK_STATUS.FAILED,
         error:
           (typeof result?.error === "string" && result.error) ||
           "The deletion task failed.",
@@ -337,17 +371,26 @@ export async function pollTaskCompletion(
 
     // A cancelled task is a real terminal state, not an unreadable one.
     if (state === "cancelled") {
-      return { success: false, error: "The deletion was cancelled." };
+      return {
+        status: CONNECTION_CHECK_STATUS.FAILED,
+        error: "The deletion was cancelled.",
+      };
     }
 
     if (!state || !IN_PROGRESS_TASK_STATES.has(state)) {
-      return { success: false, error: "Unexpected task state." };
+      return {
+        status: CONNECTION_CHECK_STATUS.FAILED,
+        error: "Unexpected task state.",
+      };
     }
 
     await sleepWithAbort(getPollingDelay(attempt, delaysMs), sleep, signal);
   }
 
-  return { success: false, error: "Deletion timed out." };
+  return {
+    status: CONNECTION_CHECK_STATUS.FAILED,
+    error: "Deletion timed out.",
+  };
 }
 
 export function getLaunchableProviderIds(

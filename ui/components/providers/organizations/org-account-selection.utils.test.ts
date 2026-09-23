@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { CONNECTION_TEST_STATUS } from "@/types/organizations";
+import { CONNECTION_CHECK_STATUS } from "@/types/providers";
 
 import {
   buildCandidateToProviderMap,
@@ -91,8 +92,14 @@ describe("pollConnectionTasks", () => {
     // Then — the fast one is reported after round 1 and dropped from later reads,
     // while the slow one is still pending.
     expect(settled).toEqual([
-      ["task-fast", { success: true }],
-      ["task-slow", { success: false, error: "Role trust policy mismatch." }],
+      ["task-fast", { status: CONNECTION_CHECK_STATUS.SUCCESS }],
+      [
+        "task-slow",
+        {
+          status: CONNECTION_CHECK_STATUS.FAILED,
+          error: "Role trust policy mismatch.",
+        },
+      ],
     ]);
     expect(rounds).toEqual([
       ["task-fast", "task-slow"],
@@ -152,8 +159,99 @@ describe("pollConnectionTasks", () => {
     // Then — the settled result stands; the pending one is reported cancelled.
     expect(getTasksByIds).toHaveBeenCalledTimes(1);
     expect(settled).toEqual([
-      ["task-a", { success: true }],
-      ["task-b", { success: false, error: "Connection test cancelled." }],
+      ["task-a", { status: CONNECTION_CHECK_STATUS.SUCCESS }],
+      [
+        "task-b",
+        {
+          status: CONNECTION_CHECK_STATUS.FAILED,
+          error: "Connection test cancelled.",
+        },
+      ],
+    ]);
+  });
+
+  it("reports cancellation instead of accepting the resolver's result when abort lands mid-await", async () => {
+    // Given: the wait exhausts with one task still pending, and the caller's
+    // `resolveExhausted` aborts the flow while its own lookup is in flight
+    // (e.g. the wizard unmounted). The abort must win even though the
+    // resolver still returns a result.
+    const abortController = new AbortController();
+    const getTasksByIds = vi.fn(async () => ({
+      "task-a": executing,
+    }));
+    const settled: Array<[string, unknown]> = [];
+    const resolveExhausted = vi.fn(async () => {
+      abortController.abort();
+      return { status: CONNECTION_CHECK_STATUS.SUCCESS };
+    });
+
+    // When
+    await pollConnectionTasks(["task-a"], {
+      onSettled: (taskId, result) => settled.push([taskId, result]),
+      getTasksByIds,
+      sleep: async () => {},
+      maxRetries: 1,
+      signal: abortController.signal,
+      resolveExhausted,
+    });
+
+    // Then: cancelled, not the resolver's (stale) success.
+    expect(resolveExhausted).toHaveBeenCalledWith("task-a");
+    expect(settled).toEqual([
+      [
+        "task-a",
+        {
+          status: CONNECTION_CHECK_STATUS.FAILED,
+          error: "Connection test cancelled.",
+        },
+      ],
+    ]);
+  });
+
+  it("stops resolving further tasks once abort lands between resolveExhausted calls", async () => {
+    // Given: two tasks are still pending at exhaustion; abort fires while the
+    // first is being resolved, so the second must never be looked up.
+    const abortController = new AbortController();
+    const getTasksByIds = vi.fn(async () => ({
+      "task-a": executing,
+      "task-b": executing,
+    }));
+    const settled: Array<[string, unknown]> = [];
+    const resolveExhausted = vi.fn(async (taskId: string) => {
+      if (taskId === "task-a") {
+        abortController.abort();
+      }
+      return { status: CONNECTION_CHECK_STATUS.SUCCESS };
+    });
+
+    // When
+    await pollConnectionTasks(["task-a", "task-b"], {
+      onSettled: (taskId, result) => settled.push([taskId, result]),
+      getTasksByIds,
+      sleep: async () => {},
+      maxRetries: 1,
+      signal: abortController.signal,
+      resolveExhausted,
+    });
+
+    // Then
+    expect(resolveExhausted).toHaveBeenCalledTimes(1);
+    expect(resolveExhausted).toHaveBeenCalledWith("task-a");
+    expect(settled).toEqual([
+      [
+        "task-a",
+        {
+          status: CONNECTION_CHECK_STATUS.FAILED,
+          error: "Connection test cancelled.",
+        },
+      ],
+      [
+        "task-b",
+        {
+          status: CONNECTION_CHECK_STATUS.FAILED,
+          error: "Connection test cancelled.",
+        },
+      ],
     ]);
   });
 
@@ -175,8 +273,14 @@ describe("pollConnectionTasks", () => {
 
     // Then
     expect(settled).toEqual([
-      ["task-a", { success: true }],
-      ["task-b", { success: false, error: "Connection test timed out." }],
+      ["task-a", { status: CONNECTION_CHECK_STATUS.SUCCESS }],
+      [
+        "task-b",
+        {
+          status: CONNECTION_CHECK_STATUS.FAILED,
+          error: "Connection test timed out.",
+        },
+      ],
     ]);
   });
 
@@ -200,7 +304,7 @@ describe("pollConnectionTasks", () => {
     }));
     const settled: Array<[string, unknown]> = [];
     const resolveExhausted = vi.fn(async (taskId: string) =>
-      taskId === "task-b" ? { success: true } : null,
+      taskId === "task-b" ? { status: CONNECTION_CHECK_STATUS.SUCCESS } : null,
     );
 
     // When
@@ -215,8 +319,47 @@ describe("pollConnectionTasks", () => {
     // Then: the exhausted task is settled from the fallback, not a timeout.
     expect(resolveExhausted).toHaveBeenCalledWith("task-b");
     expect(settled).toEqual([
-      ["task-a", { success: true }],
-      ["task-b", { success: true }],
+      ["task-a", { status: CONNECTION_CHECK_STATUS.SUCCESS }],
+      ["task-b", { status: CONNECTION_CHECK_STATUS.SUCCESS }],
+    ]);
+  });
+
+  it("reports a still-running fallback as pending, not as a failure", async () => {
+    // Given: the batch read never settles "task-b", and the caller's fallback
+    // cannot confirm an outcome either (the backend task is still running).
+    const getTasksByIds = vi.fn(async () => ({
+      "task-a": completed(true),
+      "task-b": executing,
+    }));
+    const settled: Array<[string, unknown]> = [];
+    const resolveExhausted = vi.fn(async (taskId: string) =>
+      taskId === "task-b"
+        ? {
+            status: CONNECTION_CHECK_STATUS.PENDING,
+            error: "The connection test is still running.",
+          }
+        : null,
+    );
+
+    // When
+    await pollConnectionTasks(["task-a", "task-b"], {
+      onSettled: (taskId, result) => settled.push([taskId, result]),
+      getTasksByIds,
+      sleep: async () => {},
+      maxRetries: 2,
+      resolveExhausted,
+    });
+
+    // Then: pending, distinct from both success and failure.
+    expect(settled).toEqual([
+      ["task-a", { status: CONNECTION_CHECK_STATUS.SUCCESS }],
+      [
+        "task-b",
+        {
+          status: CONNECTION_CHECK_STATUS.PENDING,
+          error: "The connection test is still running.",
+        },
+      ],
     ]);
   });
 
@@ -240,8 +383,14 @@ describe("pollConnectionTasks", () => {
 
     // Then
     expect(settled).toEqual([
-      ["task-a", { success: true }],
-      ["task-b", { success: false, error: "Connection test timed out." }],
+      ["task-a", { status: CONNECTION_CHECK_STATUS.SUCCESS }],
+      [
+        "task-b",
+        {
+          status: CONNECTION_CHECK_STATUS.FAILED,
+          error: "Connection test timed out.",
+        },
+      ],
     ]);
   });
 
@@ -264,8 +413,11 @@ describe("pollConnectionTasks", () => {
     // Then
     expect(getTasksByIds).toHaveBeenCalledTimes(1);
     expect(settled).toEqual([
-      ["task-a", { success: true }],
-      ["task-b", { success: false, error: "Task not found." }],
+      ["task-a", { status: CONNECTION_CHECK_STATUS.SUCCESS }],
+      [
+        "task-b",
+        { status: CONNECTION_CHECK_STATUS.FAILED, error: "Task not found." },
+      ],
     ]);
   });
 });

@@ -8,6 +8,7 @@ import {
   type GcpOrgHierarchy,
   ORGANIZATION_TYPE,
 } from "@/types/organizations";
+import { CONNECTION_CHECK_STATUS } from "@/types/providers";
 
 import { useOrgAccountSelectionFlow } from "./use-org-account-selection-flow";
 
@@ -189,7 +190,7 @@ describe("useOrgAccountSelectionFlow", () => {
         [PROVIDER_ID]: { taskId: "task-1" },
       });
       providerHelpersMock.resolveProviderConnectionState.mockResolvedValue({
-        connected: true,
+        status: CONNECTION_CHECK_STATUS.SUCCESS,
         error: null,
       });
       pollConnectionTasksMock.mockImplementation(
@@ -201,7 +202,7 @@ describe("useOrgAccountSelectionFlow", () => {
             onSettled(
               taskId,
               resolved ?? {
-                success: false,
+                status: CONNECTION_CHECK_STATUS.FAILED,
                 error: "Connection test timed out.",
               },
             );
@@ -221,8 +222,52 @@ describe("useOrgAccountSelectionFlow", () => {
       });
       expect(
         providerHelpersMock.resolveProviderConnectionState,
-      ).toHaveBeenCalledWith(PROVIDER_ID);
+      ).toHaveBeenCalledWith(PROVIDER_ID, expect.any(String));
       expect(onNext).toHaveBeenCalledTimes(1);
+    });
+
+    it("does not report a still-running fallback as a connection failure", async () => {
+      // Given: the wait exhausts and the provider's own record cannot confirm
+      // an outcome either (the backend check is genuinely still running).
+      seedAppliedSelection();
+      providersActionsMock.startProviderConnectionChecks.mockResolvedValue({
+        [PROVIDER_ID]: { taskId: "task-1" },
+      });
+      providerHelpersMock.resolveProviderConnectionState.mockResolvedValue({
+        status: CONNECTION_CHECK_STATUS.PENDING,
+        error: "The connection test is still running.",
+      });
+      pollConnectionTasksMock.mockImplementation(
+        async (taskIds: string[], { onSettled, resolveExhausted }) => {
+          for (const taskId of taskIds) {
+            const resolved = resolveExhausted
+              ? await resolveExhausted(taskId)
+              : null;
+            onSettled(
+              taskId,
+              resolved ?? {
+                status: CONNECTION_CHECK_STATUS.FAILED,
+                error: "Connection test timed out.",
+              },
+            );
+          }
+        },
+      );
+      const { onNext, startTesting } = renderFlow();
+
+      // When
+      await startTesting();
+
+      // Then: neither a success (does not auto-advance) nor an error.
+      await waitFor(() => {
+        expect(
+          providerHelpersMock.resolveProviderConnectionState,
+        ).toHaveBeenCalled();
+      });
+      expect(useOrgSetupStore.getState().connectionResults[PROVIDER_ID]).toBe(
+        CONNECTION_TEST_STATUS.PENDING,
+      );
+      expect(onNext).not.toHaveBeenCalled();
     });
   });
 });

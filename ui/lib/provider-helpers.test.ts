@@ -17,10 +17,96 @@ vi.mock("./helper", () => ({
 }));
 
 import {
+  CONNECTION_CHECK_STATUS,
   PROVIDER_CONNECTION_CHECK_MAX_RETRIES,
   PROVIDER_CONNECTION_CHECK_POLL_DELAY_MS,
+  resolveProviderConnectionState,
   testProviderConnection,
 } from "./provider-helpers";
+
+describe("resolveProviderConnectionState", () => {
+  const CHECK_STARTED_AT = "2026-01-01T00:00:00.000Z";
+
+  it("trusts a stored connected=true only once it postdates the check", async () => {
+    getProvider.mockResolvedValue({
+      data: {
+        attributes: {
+          connection: {
+            connected: true,
+            last_checked_at: "2026-01-01T00:00:10.000Z",
+          },
+        },
+      },
+    });
+
+    expect(
+      await resolveProviderConnectionState("account", CHECK_STARTED_AT),
+    ).toEqual({ status: CONNECTION_CHECK_STATUS.SUCCESS, error: null });
+  });
+
+  it("treats a stale connected=true as pending, not success", async () => {
+    // Given: a provider was connected from a previous check (e.g. before the
+    // user swapped in bad credentials), and this check is still running.
+    getProvider.mockResolvedValue({
+      data: {
+        attributes: {
+          connection: {
+            connected: true,
+            last_checked_at: "2025-12-31T23:59:59.000Z",
+          },
+        },
+      },
+    });
+
+    const result = await resolveProviderConnectionState(
+      "account",
+      CHECK_STARTED_AT,
+    );
+
+    expect(result.status).toBe(CONNECTION_CHECK_STATUS.PENDING);
+    expect(result.error).toMatch(/still running/i);
+  });
+
+  it("treats a missing last_checked_at as pending even when connected is true", async () => {
+    getProvider.mockResolvedValue({
+      data: {
+        attributes: {
+          connection: { connected: true, last_checked_at: null },
+        },
+      },
+    });
+
+    const result = await resolveProviderConnectionState(
+      "account",
+      CHECK_STARTED_AT,
+    );
+
+    expect(result.status).toBe(CONNECTION_CHECK_STATUS.PENDING);
+  });
+
+  it("reports a current connected=false as a confirmed failure", async () => {
+    getProvider.mockResolvedValue({
+      data: {
+        attributes: {
+          connection: {
+            connected: false,
+            last_checked_at: "2026-01-01T00:00:10.000Z",
+          },
+        },
+      },
+    });
+
+    const result = await resolveProviderConnectionState(
+      "account",
+      CHECK_STARTED_AT,
+    );
+
+    expect(result).toEqual({
+      status: CONNECTION_CHECK_STATUS.FAILED,
+      error: expect.stringMatching(/test the connection again/i),
+    });
+  });
+});
 
 describe("provider connection confirmation", () => {
   beforeEach(() => {
@@ -33,7 +119,9 @@ describe("provider connection confirmation", () => {
         completed: true,
         task: { data: { attributes: { result } } },
       });
-      expect((await testProviderConnection("account")).connected).toBe(false);
+      expect((await testProviderConnection("account")).status).toBe(
+        CONNECTION_CHECK_STATUS.FAILED,
+      );
     },
   );
   it("advances on an explicitly successful connection", async () => {
@@ -42,7 +130,7 @@ describe("provider connection confirmation", () => {
       task: { data: { attributes: { result: { connected: true } } } },
     });
     expect(await testProviderConnection("account")).toEqual({
-      connected: true,
+      status: CONNECTION_CHECK_STATUS.SUCCESS,
       error: null,
     });
   });
@@ -74,33 +162,59 @@ describe("provider connection confirmation", () => {
       });
     });
 
-    it("reports success when the provider is already connected", async () => {
+    it("reports success when the stored state was written after this check began", async () => {
       getProvider.mockResolvedValue({
         data: {
           attributes: {
-            connection: { connected: true, last_checked_at: "now" },
+            connection: {
+              connected: true,
+              last_checked_at: "2999-01-01T00:00:00Z",
+            },
           },
         },
       });
 
       expect(await testProviderConnection("account")).toEqual({
-        connected: true,
+        status: CONNECTION_CHECK_STATUS.SUCCESS,
         error: null,
       });
     });
 
-    it("reports the failure when the provider is confirmed not connected", async () => {
+    it("does not report success from a stale stored result predating this check", async () => {
+      // Given: the provider was connected from a previous check, credentials
+      // just changed, and this check is still running past the wait.
       getProvider.mockResolvedValue({
         data: {
           attributes: {
-            connection: { connected: false, last_checked_at: "now" },
+            connection: {
+              connected: true,
+              last_checked_at: "2000-01-01T00:00:00Z",
+            },
           },
         },
       });
 
       const result = await testProviderConnection("account");
 
-      expect(result.connected).toBe(false);
+      expect(result.status).not.toBe(CONNECTION_CHECK_STATUS.SUCCESS);
+      expect(result.status).toBe(CONNECTION_CHECK_STATUS.PENDING);
+    });
+
+    it("reports the failure when the provider is confirmed not connected by this check", async () => {
+      getProvider.mockResolvedValue({
+        data: {
+          attributes: {
+            connection: {
+              connected: false,
+              last_checked_at: "2999-01-01T00:00:00Z",
+            },
+          },
+        },
+      });
+
+      const result = await testProviderConnection("account");
+
+      expect(result.status).toBe(CONNECTION_CHECK_STATUS.FAILED);
       expect(result.error).toMatch(/test the connection again/i);
     });
 
@@ -115,7 +229,7 @@ describe("provider connection confirmation", () => {
 
       const result = await testProviderConnection("account");
 
-      expect(result.connected).toBe(false);
+      expect(result.status).toBe(CONNECTION_CHECK_STATUS.PENDING);
       expect(result.error).toMatch(/still running|refresh/i);
       expect(result.error?.toLowerCase()).not.toContain("error");
       expect(result.error?.toLowerCase()).not.toContain("failed");
@@ -132,7 +246,7 @@ describe("provider connection confirmation", () => {
 
     expect(getProvider).not.toHaveBeenCalled();
     expect(result).toEqual({
-      connected: false,
+      status: CONNECTION_CHECK_STATUS.FAILED,
       error: "Unexpected task state",
     });
   });

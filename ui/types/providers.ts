@@ -22,6 +22,20 @@ export const PROVIDER_TYPES = [
 /** The closed set of provider types this UI build ships bespoke assets for. */
 export type KnownProviderType = (typeof PROVIDER_TYPES)[number];
 
+/**
+ * Outcome of a provider connection check (or a poll of one): confirmed
+ * connected, confirmed failed, or still running past the wait. Kept import-free
+ * so it can be used by test doubles and UI-only code without pulling in
+ * `lib/provider-helpers.ts`'s server-action dependencies.
+ */
+export const CONNECTION_CHECK_STATUS = {
+  SUCCESS: "success",
+  FAILED: "failed",
+  PENDING: "pending",
+} as const;
+export type ConnectionCheckStatus =
+  (typeof CONNECTION_CHECK_STATUS)[keyof typeof CONNECTION_CHECK_STATUS];
+
 // Autocomplete for predefined + open for dynamic providers
 export type ProviderType = KnownProviderType | (string & {});
 

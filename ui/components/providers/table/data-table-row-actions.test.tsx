@@ -24,6 +24,7 @@ import {
   ORGANIZATION_TYPE,
   type OrganizationType,
 } from "@/types/organizations";
+import { CONNECTION_CHECK_STATUS } from "@/types/providers";
 import {
   PROVIDERS_GROUP_KIND,
   PROVIDERS_ROW_TYPE,
@@ -43,6 +44,8 @@ const {
   resolveProviderConnectionStateMock,
   revalidateProvidersMock,
   startProviderConnectionChecksMock,
+  testProviderConnectionMock,
+  toastMock,
 } = vi.hoisted(() => ({
   checkConnectionProviderMock: vi.fn(),
   getScheduleMock: vi.fn(),
@@ -59,6 +62,8 @@ const {
   resolveProviderConnectionStateMock: vi.fn(),
   revalidateProvidersMock: vi.fn(),
   startProviderConnectionChecksMock: vi.fn(),
+  testProviderConnectionMock: vi.fn(),
+  toastMock: vi.fn(),
 }));
 
 vi.mock("next/navigation", () => ({
@@ -136,12 +141,12 @@ vi.mock("@/components/scans/schedule/edit-scan-schedule-modal", () => ({
 
 vi.mock("@/components/shadcn", async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
-  useToast: () => ({ toast: vi.fn() }),
+  useToast: () => ({ toast: toastMock }),
 }));
 
 vi.mock("@/lib/provider-helpers", () => ({
   resolveProviderConnectionState: resolveProviderConnectionStateMock,
-  testProviderConnection: vi.fn(),
+  testProviderConnection: testProviderConnectionMock,
 }));
 
 vi.mock(
@@ -831,7 +836,10 @@ describe("DataTableRowActions", () => {
             : null;
           onSettled(
             taskId,
-            resolved ?? { success: false, error: "Connection test timed out." },
+            resolved ?? {
+              status: CONNECTION_CHECK_STATUS.FAILED,
+              error: "Connection test timed out.",
+            },
           );
         }
       },
@@ -839,9 +847,9 @@ describe("DataTableRowActions", () => {
     resolveProviderConnectionStateMock.mockImplementation(
       async (providerId: string) =>
         providerId === "provider-standalone"
-          ? { connected: true, error: null }
+          ? { status: CONNECTION_CHECK_STATUS.SUCCESS, error: null }
           : {
-              connected: false,
+              status: CONNECTION_CHECK_STATUS.FAILED,
               error: "Connection was not confirmed. Test the connection again.",
             },
     );
@@ -868,9 +876,102 @@ describe("DataTableRowActions", () => {
     );
     expect(resolveProviderConnectionStateMock).toHaveBeenCalledWith(
       "provider-child-1",
+      expect.any(String),
     );
     expect(resolveProviderConnectionStateMock).toHaveBeenCalledWith(
       "provider-standalone",
+      expect.any(String),
+    );
+  });
+
+  it("shows a neutral toast, not a failure, when a single test is still running past the wait", async () => {
+    // Given: the exhausted single-provider test cannot confirm an outcome yet.
+    const user = userEvent.setup();
+    testProviderConnectionMock.mockResolvedValue({
+      status: CONNECTION_CHECK_STATUS.PENDING,
+      error:
+        "The connection test is still running. Refresh in a moment to see the result.",
+    });
+
+    render(
+      <DataTableRowActions
+        row={createRow(true)}
+        hasSelection={false}
+        isRowSelected={false}
+        testableProviderIds={[]}
+        onClearSelection={vi.fn()}
+        onOpenProviderWizard={vi.fn()}
+        onOpenOrganizationWizard={vi.fn()}
+      />,
+    );
+
+    // When
+    await user.click(screen.getByRole("button"));
+    await user.click(screen.getByText("Test Connection"));
+
+    // Then: no destructive toast for a check that is merely still running.
+    await vi.waitFor(() => expect(toastMock).toHaveBeenCalledTimes(1));
+    expect(toastMock).toHaveBeenCalledWith(
+      expect.not.objectContaining({ variant: "destructive" }),
+    );
+    expect(toastMock.mock.calls[0][0].title).not.toMatch(/failed/i);
+  });
+
+  it("does not count a still-running bulk result as failed", async () => {
+    // Given: one provider settles successfully, the other is still running
+    // once the bulk wait is exhausted.
+    const user = userEvent.setup();
+    const testableProviderIds = ["provider-child-1", "provider-standalone"];
+    startProviderConnectionChecksMock.mockResolvedValue({
+      "provider-child-1": { taskId: "task-1" },
+      "provider-standalone": { taskId: "task-2" },
+    });
+    pollConnectionTasksMock.mockImplementation(
+      async (taskIds: string[], { onSettled, resolveExhausted }) => {
+        for (const taskId of taskIds) {
+          const resolved = resolveExhausted
+            ? await resolveExhausted(taskId)
+            : null;
+          onSettled(
+            taskId,
+            resolved ?? {
+              status: CONNECTION_CHECK_STATUS.FAILED,
+              error: "Connection test timed out.",
+            },
+          );
+        }
+      },
+    );
+    resolveProviderConnectionStateMock.mockImplementation(
+      async (providerId: string) =>
+        providerId === "provider-standalone"
+          ? { status: CONNECTION_CHECK_STATUS.SUCCESS, error: null }
+          : {
+              status: CONNECTION_CHECK_STATUS.PENDING,
+              error: "The connection test is still running.",
+            },
+    );
+
+    render(
+      <DataTableRowActions
+        row={createOrgRow()}
+        hasSelection={true}
+        isRowSelected={false}
+        testableProviderIds={testableProviderIds}
+        onClearSelection={vi.fn()}
+        onOpenProviderWizard={vi.fn()}
+        onOpenOrganizationWizard={vi.fn()}
+      />,
+    );
+
+    // When
+    await user.click(screen.getByRole("button"));
+    await user.click(screen.getByText("Test Connections (2)"));
+
+    // Then: not styled as a failure — no destructive toast.
+    await vi.waitFor(() => expect(toastMock).toHaveBeenCalledTimes(1));
+    expect(toastMock).toHaveBeenCalledWith(
+      expect.not.objectContaining({ variant: "destructive" }),
     );
   });
 

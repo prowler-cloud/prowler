@@ -3,6 +3,8 @@ import {
   getProvider,
 } from "@/actions/providers/providers";
 import {
+  CONNECTION_CHECK_STATUS,
+  type ConnectionCheckStatus,
   ProviderEntity,
   ProviderProps,
   ProvidersApiResponse,
@@ -10,6 +12,13 @@ import {
 } from "@/types/providers";
 
 import { checkTaskStatus, TASK_STATUS_MAX_RETRIES_ERROR } from "./helper";
+
+// Re-exported so callers that only need the status enum (e.g.
+// `org-account-selection.utils.ts` and its tests) can import it from
+// `@/types/providers` directly, without pulling in this module's server-action
+// dependencies.
+export { CONNECTION_CHECK_STATUS };
+export type { ConnectionCheckStatus };
 
 export const extractProviderUIDs = (
   providersData: ProvidersApiResponse,
@@ -175,7 +184,7 @@ export const requiresBackButton = (via?: string | null): boolean => {
 };
 
 export interface TestConnectionResult {
-  connected: boolean;
+  status: ConnectionCheckStatus;
   error: string | null;
 }
 
@@ -204,27 +213,55 @@ const CONNECTION_STILL_RUNNING_MESSAGE =
  * connection-check wait is exhausted: the backend task may still be running (or
  * may already have finished after the UI stopped waiting on it), so this reports
  * whatever the provider record currently says instead of a flat error.
+ *
+ * The stored `connection` is the result of the *last check that finished*, not
+ * necessarily the one this call is following up on -- e.g. a provider was
+ * connected, the user changed its credentials, and the new check is still
+ * running past the wait. `checkStartedAt` (an ISO timestamp taken before this
+ * check was dispatched) guards against reporting that stale result as current:
+ * the stored state is only trusted once `last_checked_at` is later than it.
  */
 export async function resolveProviderConnectionState(
   providerId: string,
+  checkStartedAt: string,
 ): Promise<TestConnectionResult> {
   const formData = new FormData();
   formData.append("id", providerId);
 
   const providerResponse = await getProvider(formData);
   const connection = providerResponse?.data?.attributes?.connection;
+  const lastCheckedAt = connection?.last_checked_at;
+
+  const isCurrent =
+    !!lastCheckedAt &&
+    new Date(lastCheckedAt).getTime() > new Date(checkStartedAt).getTime();
+
+  if (!isCurrent) {
+    // No persisted result yet, or it predates this check -- the backend task
+    // may still be running.
+    return {
+      status: CONNECTION_CHECK_STATUS.PENDING,
+      error: CONNECTION_STILL_RUNNING_MESSAGE,
+    };
+  }
 
   if (connection?.connected === true) {
-    return { connected: true, error: null };
+    return { status: CONNECTION_CHECK_STATUS.SUCCESS, error: null };
   }
 
   if (connection?.connected === false) {
-    return { connected: false, error: CONNECTION_NOT_CONFIRMED_MESSAGE };
+    return {
+      status: CONNECTION_CHECK_STATUS.FAILED,
+      error: CONNECTION_NOT_CONFIRMED_MESSAGE,
+    };
   }
 
-  // `connected` is still null (never checked, or the backend task has not
-  // written a result yet) -- neither a confirmed pass nor fail.
-  return { connected: false, error: CONNECTION_STILL_RUNNING_MESSAGE };
+  // Current per its timestamp, but `connected` is null -- treat the same as
+  // still pending rather than guessing a pass or fail.
+  return {
+    status: CONNECTION_CHECK_STATUS.PENDING,
+    error: CONNECTION_STILL_RUNNING_MESSAGE,
+  };
 }
 
 /**
@@ -237,6 +274,10 @@ export async function resolveProviderConnectionState(
 export async function testProviderConnection(
   providerId: string,
 ): Promise<TestConnectionResult> {
+  // Taken before the check is dispatched, so it is guaranteed to precede
+  // whatever `last_checked_at` this check eventually writes.
+  const checkStartedAt = new Date().toISOString();
+
   const formData = new FormData();
   formData.append("providerId", providerId);
 
@@ -244,14 +285,17 @@ export async function testProviderConnection(
 
   if (data?.errors && data.errors.length > 0) {
     return {
-      connected: false,
+      status: CONNECTION_CHECK_STATUS.FAILED,
       error: data.errors[0]?.detail ?? "Unknown error",
     };
   }
 
   const taskId = data?.data?.id;
   if (!taskId) {
-    return { connected: false, error: "No task ID returned" };
+    return {
+      status: CONNECTION_CHECK_STATUS.FAILED,
+      error: "No task ID returned",
+    };
   }
 
   const taskResult = await checkTaskStatus(
@@ -262,10 +306,10 @@ export async function testProviderConnection(
 
   if (!taskResult.completed) {
     if (taskResult.error === TASK_STATUS_MAX_RETRIES_ERROR) {
-      return resolveProviderConnectionState(providerId);
+      return resolveProviderConnectionState(providerId, checkStartedAt);
     }
     return {
-      connected: false,
+      status: CONNECTION_CHECK_STATUS.FAILED,
       error: taskResult.error ?? "Connection test timed out",
     };
   }
@@ -275,7 +319,9 @@ export async function testProviderConnection(
   const connected = result?.connected === true;
 
   return {
-    connected,
+    status: connected
+      ? CONNECTION_CHECK_STATUS.SUCCESS
+      : CONNECTION_CHECK_STATUS.FAILED,
     error: connected ? null : result?.error || CONNECTION_NOT_CONFIRMED_MESSAGE,
   };
 }

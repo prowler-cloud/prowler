@@ -20,6 +20,7 @@ import {
   ConnectionTestStatus,
   PROVIDER_SECRET_STATE,
 } from "@/types/organizations";
+import { CONNECTION_CHECK_STATUS } from "@/types/providers";
 import { TREE_ITEM_STATUS, TreeDataItem } from "@/types/tree";
 
 import {
@@ -27,6 +28,7 @@ import {
   canAdvanceToLaunchStep,
   getLaunchableProviderIds,
   pollConnectionTasks,
+  type PollConnectionTaskResult,
 } from "../org-account-selection.utils";
 
 import { extractErrorMessage } from "./error-utils";
@@ -297,24 +299,40 @@ export function useOrgAccountSelectionFlow({
 
     const settleProvider = (
       providerId: string,
-      result: { success: boolean; error?: string },
+      result: PollConnectionTaskResult,
     ) => {
       if (!isMountedRef.current || signal.aborted) {
         return;
       }
+
+      // Still running past the wait -- neither a pass nor a fail. Leaves the
+      // account in the same pending/loading state it started in, rather than
+      // reporting a failure the backend never gave.
+      if (result.status === CONNECTION_CHECK_STATUS.PENDING) {
+        setConnectionResult(providerId, CONNECTION_TEST_STATUS.PENDING);
+        setConnectionError(providerId, null);
+        return;
+      }
+
+      const succeeded = result.status === CONNECTION_CHECK_STATUS.SUCCESS;
       setConnectionResult(
         providerId,
-        result.success
+        succeeded
           ? CONNECTION_TEST_STATUS.SUCCESS
           : CONNECTION_TEST_STATUS.ERROR,
       );
       setConnectionError(
         providerId,
-        result.success
+        succeeded
           ? null
           : result.error || "Connection failed for this account.",
       );
     };
+
+    // Taken before dispatch, so it precedes any `last_checked_at` this batch
+    // writes -- guards the fallback against reading each provider's prior
+    // (stale) stored result as this run's outcome.
+    const checkStartedAt = new Date().toISOString();
 
     try {
       // One action dispatches every check and one reads every pending task per
@@ -342,7 +360,7 @@ export function useOrgAccountSelectionFlow({
         // No task id means no check ever ran, so it cannot count as passing.
         if (!outcome.taskId) {
           settleProvider(providerId, {
-            success: false,
+            status: CONNECTION_CHECK_STATUS.FAILED,
             error: "Connection test did not start.",
           });
           continue;
@@ -364,8 +382,11 @@ export function useOrgAccountSelectionFlow({
           if (!providerId) {
             return null;
           }
-          const state = await resolveProviderConnectionState(providerId);
-          return { success: state.connected, error: state.error ?? undefined };
+          const state = await resolveProviderConnectionState(
+            providerId,
+            checkStartedAt,
+          );
+          return { status: state.status, error: state.error ?? undefined };
         },
       });
     } catch {

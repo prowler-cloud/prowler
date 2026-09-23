@@ -55,6 +55,7 @@ import {
   OrgFlowType,
 } from "@/types/organizations";
 import { PROVIDER_WIZARD_MODE } from "@/types/provider-wizard";
+import { CONNECTION_CHECK_STATUS } from "@/types/providers";
 import {
   isProvidersOrganizationRow,
   PROVIDERS_GROUP_KIND,
@@ -397,7 +398,12 @@ export function DataTableRowActions({
     // asks for.
     let succeeded = 0;
     let failed = 0;
+    let pending = 0;
     const providerIdByTaskId = new Map<string, string>();
+    // Taken before dispatch, so it precedes any `last_checked_at` this batch
+    // writes -- guards the fallback against reading each provider's prior
+    // (stale) stored result as this run's outcome.
+    const checkStartedAt = new Date().toISOString();
 
     try {
       const outcomes = await startProviderConnectionChecks(ids);
@@ -416,8 +422,10 @@ export function DataTableRowActions({
 
       await pollConnectionTasks(Array.from(providerIdByTaskId.keys()), {
         onSettled: (_taskId, result) => {
-          if (result.success) {
+          if (result.status === CONNECTION_CHECK_STATUS.SUCCESS) {
             succeeded += 1;
+          } else if (result.status === CONNECTION_CHECK_STATUS.PENDING) {
+            pending += 1;
           } else {
             failed += 1;
           }
@@ -427,26 +435,36 @@ export function DataTableRowActions({
           if (!id) {
             return null;
           }
-          const state = await resolveProviderConnectionState(id);
-          return { success: state.connected, error: state.error ?? undefined };
+          const state = await resolveProviderConnectionState(
+            id,
+            checkStartedAt,
+          );
+          return { status: state.status, error: state.error ?? undefined };
         },
       });
     } catch {
-      failed = ids.length - succeeded;
+      failed = ids.length - succeeded - pending;
     }
 
     await revalidateProviders();
 
-    if (failed === 0) {
+    if (failed === 0 && pending === 0) {
       toast({
         title: "Connection test completed",
         description: `${succeeded} ${succeeded === 1 ? "provider" : "providers"} tested successfully.`,
+      });
+    } else if (failed === 0) {
+      toast({
+        title: "Connection test still running",
+        description: `${succeeded} succeeded, ${pending} still running. Refresh in a moment to see the rest.`,
       });
     } else {
       toast({
         variant: "destructive",
         title: "Connection test completed",
-        description: `${succeeded} succeeded, ${failed} failed out of ${ids.length} providers.`,
+        description: `${succeeded} succeeded, ${failed} failed${
+          pending ? `, ${pending} still running` : ""
+        } out of ${ids.length} providers.`,
       });
     }
 
@@ -465,16 +483,21 @@ export function DataTableRowActions({
       const result = await testProviderConnection(providerId);
       setLoading(false);
 
-      if (!result.connected) {
+      if (result.status === CONNECTION_CHECK_STATUS.SUCCESS) {
+        toast({
+          title: "Connection test completed",
+          description: "Provider tested successfully.",
+        });
+      } else if (result.status === CONNECTION_CHECK_STATUS.PENDING) {
+        toast({
+          title: "Connection test still running",
+          description: result.error ?? "Refresh in a moment to see the result.",
+        });
+      } else {
         toast({
           variant: "destructive",
           title: "Connection test failed",
           description: result.error ?? "Unknown error",
-        });
-      } else {
-        toast({
-          title: "Connection test completed",
-          description: "Provider tested successfully.",
         });
       }
     }
