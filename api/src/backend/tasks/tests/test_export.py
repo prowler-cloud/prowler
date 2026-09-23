@@ -82,25 +82,28 @@ class TestOutputs:
     @patch("tasks.jobs.export.boto3.client")
     @override_settings(DJANGO_OUTPUT_S3_AWS_ENDPOINT_URL="http://minio:9000")
     def test_get_s3_client_fallback_ignores_the_endpoint(self, mock_boto_client):
-        """The fallback client relies on the default provider chain, unaffected by the internal endpoint."""
-        mock_boto_client.side_effect = [
-            ClientError({"Error": {"Code": "403"}}, "ListBuckets"),
-            MagicMock(),
-        ]
-        client = get_s3_client()
+        """A configured endpoint means the explicit client failed talking to it. The fallback
+        goes to the default provider chain (e.g. an EC2 instance role) against real AWS, so it
+        must not be used: the original error propagates instead."""
+        error = ClientError({"Error": {"Code": "403"}}, "ListBuckets")
+        mock_boto_client.side_effect = error
 
-        assert client is not None
-        assert mock_boto_client.call_args_list[1] == call("s3")
+        with pytest.raises(ClientError):
+            get_s3_client()
+
+        mock_boto_client.assert_called_once()
 
     @patch("tasks.jobs.export.boto3.client")
     @patch("tasks.jobs.export.settings")
     def test_get_s3_client_fallback(self, mock_settings, mock_boto_client):
+        mock_settings.DJANGO_OUTPUT_S3_AWS_ENDPOINT_URL = ""
         mock_boto_client.side_effect = [
             ClientError({"Error": {"Code": "403"}}, "ListBuckets"),
             MagicMock(),
         ]
         client = get_s3_client()
         assert client is not None
+        assert mock_boto_client.call_args_list[1] == call("s3")
 
     @patch("tasks.jobs.export.get_s3_client")
     @patch("tasks.jobs.export.base")

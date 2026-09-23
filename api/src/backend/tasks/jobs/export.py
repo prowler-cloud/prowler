@@ -207,15 +207,21 @@ def get_s3_client():
     This function attempts to initialize an S3 client by reading the AWS access key, secret key,
     session token, and region from environment variables. It then validates the client by listing
     available S3 buckets. If an error occurs during this process (for example, due to missing or
-    invalid credentials), it falls back to creating an S3 client without explicitly provided credentials,
-    which may rely on other configuration sources (e.g., IAM roles).
+    invalid credentials), it falls back to creating an S3 client without explicitly provided
+    credentials, which may rely on other configuration sources (e.g., IAM roles).
+
+    That fallback is only safe when no explicit endpoint is configured: with an endpoint set, the
+    explicit client already targets the intended S3-compatible storage, and the fallback client
+    would go to the AWS default provider chain instead, an unrelated real-AWS account reachable
+    from the host. So when an endpoint is configured, the original error propagates instead.
 
     Returns:
         boto3.client: A configured S3 client instance.
 
     Raises:
-        ClientError, NoCredentialsError, or ParamValidationError if both attempts to create a client fail.
+        ClientError, NoCredentialsError, or ParamValidationError if the client cannot be created.
     """
+    endpoint = settings.DJANGO_OUTPUT_S3_AWS_ENDPOINT_URL
     s3_client = None
     try:
         s3_client = boto3.client(
@@ -226,10 +232,12 @@ def get_s3_client():
             # Storage that has no meaningful region, MinIO among it, is usually configured
             # without one, and botocore rejects an empty region before any request is made.
             region_name=settings.DJANGO_OUTPUT_S3_AWS_DEFAULT_REGION or "us-east-1",
-            endpoint_url=settings.DJANGO_OUTPUT_S3_AWS_ENDPOINT_URL or None,
+            endpoint_url=endpoint or None,
         )
         s3_client.list_buckets()
     except (ClientError, NoCredentialsError, ParamValidationError, ValueError):
+        if endpoint:
+            raise
         s3_client = boto3.client("s3")
         s3_client.list_buckets()
 
