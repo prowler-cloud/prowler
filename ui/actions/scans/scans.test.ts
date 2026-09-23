@@ -6,12 +6,14 @@ const {
   getAuthHeadersMock,
   handleApiErrorMock,
   handleApiResponseMock,
+  isReportDownloadLockedMock,
 } = vi.hoisted(() => ({
   addScanOperationMock: vi.fn(),
   fetchMock: vi.fn(),
   getAuthHeadersMock: vi.fn(),
   handleApiErrorMock: vi.fn(),
   handleApiResponseMock: vi.fn(),
+  isReportDownloadLockedMock: vi.fn(),
 }));
 
 vi.mock("@/lib", () => ({
@@ -32,7 +34,16 @@ vi.mock("@/lib/sentry-breadcrumbs", () => ({
   addScanOperation: addScanOperationMock,
 }));
 
+vi.mock("@/lib/report-download-access", () => ({
+  REPORT_DOWNLOAD_LOCKED_ERROR:
+    "Report downloads require an active subscription.",
+  isReportDownloadLocked: isReportDownloadLockedMock,
+}));
+
 import {
+  getComplianceCsv,
+  getComplianceOcsf,
+  getCompliancePdfReport,
   getExportsZip,
   launchOrganizationScans,
   scheduleOrganizationDailyScans,
@@ -156,6 +167,7 @@ describe("getExportsZip", () => {
     vi.clearAllMocks();
     vi.stubGlobal("fetch", fetchMock);
     getAuthHeadersMock.mockResolvedValue({ Authorization: "Bearer token" });
+    isReportDownloadLockedMock.mockResolvedValue(false);
   });
 
   it("returns a generic server error when the report endpoint returns HTML", async () => {
@@ -178,6 +190,40 @@ describe("getExportsZip", () => {
     expect(result).toEqual({
       error:
         "Server is temporarily unavailable. Please try again in a few minutes.",
+    });
+  });
+});
+
+describe("report downloads for subscription-only tenants", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.stubGlobal("fetch", fetchMock);
+    getAuthHeadersMock.mockResolvedValue({ Authorization: "Bearer token" });
+    isReportDownloadLockedMock.mockResolvedValue(true);
+  });
+
+  it.each([
+    { name: "scan ZIP", download: () => getExportsZip("scan-123") },
+    {
+      name: "compliance CSV",
+      download: () => getComplianceCsv("scan-123", "cis_2.0_aws"),
+    },
+    {
+      name: "compliance OCSF",
+      download: () => getComplianceOcsf("scan-123", "dora_aws"),
+    },
+    {
+      name: "compliance PDF",
+      download: () => getCompliancePdfReport("scan-123", "threatscore"),
+    },
+  ])("rejects the $name without calling the API", async ({ download }) => {
+    // When
+    const result = await download();
+
+    // Then
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(result).toEqual({
+      error: "Report downloads require an active subscription.",
     });
   });
 });

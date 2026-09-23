@@ -15,6 +15,10 @@ import {
 } from "@/lib/compliance/compliance-report-types";
 import { runWithConcurrencyLimit } from "@/lib/concurrency";
 import { appendSanitizedProviderTypeFilters } from "@/lib/provider-filters";
+import {
+  isReportDownloadLocked,
+  REPORT_DOWNLOAD_LOCKED_ERROR,
+} from "@/lib/report-download-access";
 import { addScanOperation } from "@/lib/sentry-breadcrumbs";
 import { handleApiError, handleApiResponse } from "@/lib/server-actions-helper";
 import { SCAN_STATES } from "@/types/attack-paths";
@@ -377,6 +381,10 @@ export const updateScan = async (formData: FormData) => {
 };
 
 export const getExportsZip = async (scanId: string) => {
+  if (await isReportDownloadLocked()) {
+    return { error: REPORT_DOWNLOAD_LOCKED_ERROR };
+  }
+
   const headers = await getAuthHeaders({ contentType: false });
 
   const url = new URL(`${apiBaseUrl}/scans/${scanId}/report`);
@@ -457,6 +465,10 @@ const _fetchScanBinary = async (
   filename: string,
   errorLabel: string,
 ): Promise<ScanBinaryResult> => {
+  if (await isReportDownloadLocked()) {
+    return { error: REPORT_DOWNLOAD_LOCKED_ERROR };
+  }
+
   const headers = await getAuthHeaders({ contentType: false });
   const url = new URL(`${apiBaseUrl}/scans/${scanId}/${urlPath}`);
 
