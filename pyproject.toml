@@ -408,6 +408,4 @@ override-dependencies = ["okta==3.4.2"]
 # (e.g. mock_sensitive_args in tests/lib/cli/redact_test.py)
 # - view   : DRF BasePermission.has_object_permission(self, request, view, obj)
 # framework-required signature param in skills/django-drf template assets
-# - schema_editor : Django RunPython(apps, schema_editor) signature param, flagged
-# when the pre-commit hook scans a single migration file
-ignore_names = ["mock_*", "view", "schema_editor"]
+ignore_names = ["mock_*", "view"]
