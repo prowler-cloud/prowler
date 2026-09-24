@@ -103,6 +103,10 @@ describe("TestConnectionForm", () => {
     expect(
       screen.getByRole("button", { name: /reset credentials/i }),
     ).toBeInTheDocument();
+    // Announced to screen readers as soon as it appears, not only on focus.
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Role trust policy mismatch.",
+    );
   });
 
   it("shows a neutral still-running message, not a failure, when the check is still pending", async () => {
@@ -129,6 +133,8 @@ describe("TestConnectionForm", () => {
 
     // Then: the neutral message shows, but nothing reads as a credentials failure.
     expect(screen.getByText(/still running/i)).toBeInTheDocument();
+    // Announced to screen readers, same as the failure banner.
+    expect(screen.getByRole("status")).toHaveTextContent(/still running/i);
     expect(
       screen.queryByText(/issue with your credentials/i),
     ).not.toBeInTheDocument();

@@ -171,11 +171,15 @@ export const TestConnectionForm = ({
 
         {connectionStatus?.status === CONNECTION_CHECK_STATUS.FAILED && (
           <>
-            <div className="border-border-error flex items-start gap-4 rounded-lg border p-4">
+            <div
+              role="status"
+              className="border-border-error flex items-start gap-4 rounded-lg border p-4"
+            >
               <div className="flex shrink-0 items-center">
                 <Icon
                   icon="heroicons:exclamation-circle"
                   className="text-text-error-primary h-5 w-5"
+                  aria-hidden="true"
                 />
               </div>
               <div className="min-w-0 flex-1">
@@ -192,7 +196,10 @@ export const TestConnectionForm = ({
         )}
 
         {connectionStatus?.status === CONNECTION_CHECK_STATUS.PENDING && (
-          <div className="bg-bg-warning-secondary border-border-neutral-secondary flex items-start gap-4 rounded-lg border p-4">
+          <div
+            role="status"
+            className="bg-bg-warning-secondary border-border-neutral-secondary flex items-start gap-4 rounded-lg border p-4"
+          >
             <div className="flex shrink-0 items-center">
               {/* Static, not spinning: nothing is polling any more once the wait
                   is exhausted, so an animated spinner would misrepresent this as
@@ -200,6 +207,7 @@ export const TestConnectionForm = ({
               <ConnectionPending
                 size={20}
                 className="text-text-warning-primary"
+                aria-hidden="true"
               />
             </div>
             <div className="min-w-0 flex-1">
