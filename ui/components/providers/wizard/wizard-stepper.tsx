@@ -46,16 +46,15 @@ const STEPS: StepConfig[] = [
 
 export const PROVIDER_WIZARD_STEPS = STEPS;
 
-// AWS registers the account and its credentials in one step, so the wizard
-// skips straight from CONNECT to TEST; the stepper mirrors that.
+// AWS registers the account, stores its credentials and tests the connection in
+// one step, so the wizard goes straight from CONNECT to LAUNCH.
 export const AWS_PROVIDER_WIZARD_STEPS: StepConfig[] = [
   {
     label: "Link a Provider",
     description:
-      "Enter the account details and the credentials Prowler will use.",
+      "Enter the account details and the credentials Prowler will use, then test the connection.",
     icon: FolderGit2,
   },
-  STEPS[2],
   STEPS[3],
 ];
 

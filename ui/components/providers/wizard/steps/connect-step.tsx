@@ -21,7 +21,7 @@ import {
 
 interface ConnectStepProps {
   onNext: () => void;
-  /** AWS registers the account and its credentials in this step, so it skips ahead. */
+  /** AWS registers, stores and tests the account in this step, so it skips ahead. */
   onCredentialsSaved: () => void;
   onSelectOrganizations: (orgType: OrgFlowType) => void;
   onFooterChange: (config: WizardFooterConfig) => void;

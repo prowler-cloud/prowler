@@ -54,11 +54,13 @@ export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
     return this.countRequests("POST", "/apply");
   }
 
-  /** `POST /providers` alone; the substring match would also count secrets. */
+  /** `POST /providers` alone: secrets and connection checks nest under it. */
   get providerCreateCallCount(): number {
-    return (
-      this.countRequests("POST", "/providers") - this.secretCreateCallCount
-    );
+    return this.requestLog.filter(
+      (request) =>
+        request.method === "POST" &&
+        new URL(request.url).pathname.replace(/\/$/, "").endsWith("/providers"),
+    ).length;
   }
 
   get secretCreateCallCount(): number {
@@ -94,7 +96,7 @@ export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
     ).length;
   }
 
-  private get connectionCallCount(): number {
+  get connectionCallCount(): number {
     return this.countRequests("POST", "/connection");
   }
 
@@ -263,9 +265,9 @@ export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
     await this.clickPrimary(/Connect account/);
   }
 
-  /** Wait until the connection test step is showing with its action ready. */
-  async waitForConnectionTestStep(): Promise<void> {
-    await this.waitForButton(/Check connection/, 10000);
+  /** Wait until the provider wizard reached its launch step. */
+  async waitForProviderLaunchStep(timeoutMs = 20000): Promise<void> {
+    await this.waitForText(/Scan Schedule/, timeoutMs);
   }
 
   /** Switch back to a single account from the organization flow's tabs. */

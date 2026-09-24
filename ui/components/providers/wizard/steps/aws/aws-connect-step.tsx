@@ -1,9 +1,15 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ChevronDownIcon, KeyRound, ShieldCheck } from "lucide-react";
+import {
+  ChevronDownIcon,
+  CircleAlert,
+  KeyRound,
+  Loader2,
+  ShieldCheck,
+} from "lucide-react";
 import { useSession } from "next-auth/react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Control,
   FieldValues,
@@ -29,6 +35,7 @@ import {
 } from "@/components/shadcn/collapsible";
 import { Form } from "@/components/shadcn/form";
 import { useFormServerErrors } from "@/hooks/use-form-server-errors";
+import { useMountEffect } from "@/hooks/use-mount-effect";
 import { PROVIDER_CREDENTIALS_ERROR_MAPPING } from "@/lib/error-mappings";
 import { getAWSCredentialsTemplateLinks } from "@/lib/external-urls";
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
@@ -37,6 +44,7 @@ import {
   dispatchProviderFunnel,
   PROVIDER_FUNNEL_STEP,
 } from "@/lib/provider-funnel/provider-funnel-events";
+import { testProviderConnection } from "@/lib/provider-helpers";
 import { useProviderWizardStore } from "@/store/provider-wizard/store";
 import type { AWSCredentials, AWSCredentialsRole } from "@/types";
 import type { AwsConnectDraft } from "@/types/provider-wizard";
@@ -66,7 +74,7 @@ const ALIAS_ERROR_POINTER = "/data/attributes/alias";
 const UNIQUE_TOGETHER_ERROR_POINTER = "/data/attributes/__all__";
 
 // What the user typed survives the step unmounting (organizations tab, a step
-// back from the connection test) until the wizard closes.
+// back from the launch step) until the wizard closes.
 const readDraft = () => useProviderWizardStore.getState().awsConnectDraft;
 
 const initialMethod = (): AwsAccessMethod =>
@@ -93,7 +101,7 @@ interface AwsConnectStepProps {
   onUiStateChange: (state: AwsConnectUiState) => void;
 }
 
-/** One form to register an AWS account and store its credentials. */
+/** One form to register an AWS account, store its credentials and test the connection. */
 export function AwsConnectStep({
   formId,
   onConnected,
@@ -189,6 +197,28 @@ interface UseAwsConnectSubmitOptions<T extends FieldValues> {
   onUiStateChange: (state: AwsConnectUiState) => void;
 }
 
+const CONNECTION_FAILED_MESSAGE =
+  "Prowler could not connect with these credentials. Review them and try again.";
+
+const CONNECTION_UNREACHABLE_MESSAGE =
+  "The connection test could not be completed. The account is saved, so you can try again.";
+
+/** Footer label for the one-step form: the test and the retry share the submit. */
+const resolveActionLabel = ({
+  isTesting,
+  isSubmitting,
+  hasFailed,
+}: {
+  isTesting: boolean;
+  isSubmitting: boolean;
+  hasFailed: boolean;
+}) => {
+  if (isTesting) return "Testing connection...";
+  if (isSubmitting) return "Connecting account...";
+  return hasFailed ? "Retry connection" : "Connect account";
+};
+
+/** Registers the account, stores its credentials and tests the connection in one submit. */
 function useAwsConnectSubmit<T extends FieldValues>({
   form,
   method,
@@ -205,25 +235,59 @@ function useAwsConnectSubmit<T extends FieldValues>({
     [UNIQUE_TOGETHER_ERROR_POINTER]: accountField,
     [ALIAS_ERROR_POINTER]: ProviderCredentialFields.PROVIDER_ALIAS,
   });
+  // Local state needed: the connection test runs inside the submit, and its
+  // outcome belongs to this step rather than to any form field.
+  const [isTesting, setIsTesting] = useState(false);
+  const [connectionError, setConnectionError] = useState<string | null>(null);
   // A hook, not `form.formState.isValid` read inline: the React Compiler keys
   // its memo on the stable `form` object and would freeze a proxy read at false.
   const { isSubmitting, isValid } = useFormState({ control: form.control });
   const canSubmit = isValid && accountResolved;
+  const isBusy = isSubmitting || isTesting;
+  // Closing the wizard (or switching to organizations) unmounts the step while a
+  // test may still be running; its result must not advance a wizard already reset.
+  const isActiveRef = useRef(true);
+  useMountEffect(() => {
+    isActiveRef.current = true;
+    return () => {
+      isActiveRef.current = false;
+    };
+  });
 
   // Same contract ConnectAccountForm uses: the wizard footer lives outside the step.
   // Both callbacks must be stable setters, or this effect would loop.
   useEffect(() => {
-    onBusyChange(isSubmitting);
+    onBusyChange(isBusy);
     onUiStateChange({
       showBack: true,
       showAction: true,
-      actionLabel: isSubmitting ? "Connecting account..." : "Connect account",
-      actionDisabled: !canSubmit || isSubmitting,
-      isLoading: isSubmitting,
+      actionLabel: resolveActionLabel({
+        isTesting,
+        isSubmitting,
+        hasFailed: connectionError !== null,
+      }),
+      actionDisabled: !canSubmit || isBusy,
+      isLoading: isBusy,
     });
-  }, [canSubmit, isSubmitting, onBusyChange, onUiStateChange]);
+  }, [
+    canSubmit,
+    connectionError,
+    isBusy,
+    isSubmitting,
+    isTesting,
+    onBusyChange,
+    onUiStateChange,
+  ]);
 
-  return form.handleSubmit(async (values) => {
+  // A past failure must not sit above the field the user is already correcting.
+  useEffect(() => {
+    if (connectionError === null) return;
+    const subscription = form.watch(() => setConnectionError(null));
+    return () => subscription.unsubscribe();
+  }, [connectionError, form]);
+
+  const onSubmit = form.handleSubmit(async (values) => {
+    setConnectionError(null);
     const result = await connectAwsAccount({
       method,
       values: { ...values, ...extraValues },
@@ -241,8 +305,77 @@ function useAwsConnectSubmit<T extends FieldValues>({
       handleServerResponse({ errors: result.errors });
       return;
     }
-    onConnected();
+
+    // The account stays registered whatever the test says; resubmitting edits it
+    // in place. Task polling rejects on a 5xx, so the flag has to be cleared in a
+    // finally or the step would stay stuck on "Testing connection...".
+    let connected = false;
+    setIsTesting(true);
+    try {
+      const connection = await testProviderConnection(result.providerId);
+      connected = connection.connected;
+      if (!connected) {
+        setConnectionError(connection.error || CONNECTION_FAILED_MESSAGE);
+      }
+    } catch {
+      setConnectionError(CONNECTION_UNREACHABLE_MESSAGE);
+    } finally {
+      setIsTesting(false);
+    }
+
+    if (connected && isActiveRef.current) onConnected();
   });
+
+  return { onSubmit, isTesting, connectionError };
+}
+
+/** Progress line while the test runs, or the API's reason once it is refused. */
+function ConnectionFeedback({
+  isTesting,
+  error,
+}: {
+  isTesting: boolean;
+  error: string | null;
+}) {
+  const alertRef = useRef<HTMLDivElement>(null);
+
+  // The form scrolls inside the modal and the action button sits outside it, so
+  // an error raised from the footer can land above the fold.
+  useEffect(() => {
+    if (!error) return;
+    // Guarded: jsdom has no scrollIntoView, and a throw here would unmount the step.
+    alertRef.current?.scrollIntoView?.({ block: "start", behavior: "smooth" });
+  }, [error]);
+
+  if (isTesting) {
+    return (
+      <p
+        role="status"
+        className="text-text-neutral-secondary flex items-center gap-2 text-sm"
+      >
+        <Loader2 aria-hidden className="size-4 animate-spin" />
+        Testing the connection. This usually takes a few seconds.
+      </p>
+    );
+  }
+
+  if (!error) return null;
+
+  return (
+    <div
+      ref={alertRef}
+      role="alert"
+      className="border-border-error flex items-start gap-3 rounded-lg border p-4"
+    >
+      <CircleAlert
+        aria-hidden
+        className="text-text-error-primary size-5 shrink-0"
+      />
+      <p className="text-text-error-primary min-w-0 text-sm break-words">
+        {error}
+      </p>
+    </div>
+  );
 }
 
 function AwsRoleConnectForm({
@@ -284,7 +417,7 @@ function AwsRoleConnectForm({
   });
   const detectedAccountId = parseAwsAccountIdFromRoleArn(roleArn ?? "");
 
-  const onSubmit = useAwsConnectSubmit({
+  const { onSubmit, isTesting, connectionError } = useAwsConnectSubmit({
     form,
     method: AWS_ACCESS_METHOD.ROLE,
     accountField: ProviderCredentialFields.ROLE_ARN,
@@ -304,6 +437,8 @@ function AwsRoleConnectForm({
   return (
     <Form {...form}>
       <form id={formId} onSubmit={onSubmit} className="flex flex-col gap-6">
+        <ConnectionFeedback isTesting={isTesting} error={connectionError} />
+
         <section className="flex flex-col gap-4">
           <h4 className="text-sm font-semibold">1. Create the IAM role</h4>
           <CredentialsRoleHelper
@@ -384,7 +519,7 @@ function AwsKeysConnectForm({
   });
   useDraftValues(form, "keysValues");
 
-  const onSubmit = useAwsConnectSubmit({
+  const { onSubmit, isTesting, connectionError } = useAwsConnectSubmit({
     form,
     method: AWS_ACCESS_METHOD.CREDENTIALS,
     accountField: ProviderCredentialFields.PROVIDER_UID,
@@ -396,6 +531,8 @@ function AwsKeysConnectForm({
   return (
     <Form {...form}>
       <form id={formId} onSubmit={onSubmit} className="flex flex-col gap-4">
+        <ConnectionFeedback isTesting={isTesting} error={connectionError} />
+
         <WizardInputField
           control={form.control}
           name={ProviderCredentialFields.PROVIDER_UID}

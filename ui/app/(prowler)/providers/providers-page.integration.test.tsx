@@ -213,7 +213,7 @@ describe("Organization onboarding wizard", () => {
     });
 
     describe("Wizard progress", () => {
-      it("drops the credentials row once AWS is picked, since one step covers both", async () => {
+      it("drops the credentials and test rows once AWS is picked, since one step covers them", async () => {
         const harness = new ProvidersPageHarness(awsOnboardingFixture());
         await harness.mount();
         expect(harness.stepperLabels()).toEqual([
@@ -228,7 +228,6 @@ describe("Organization onboarding wizard", () => {
 
         expect(harness.stepperLabels()).toEqual([
           "Link a Provider",
-          "Validate Connection",
           "Launch Scan",
         ]);
       }, 40000);
@@ -237,7 +236,7 @@ describe("Organization onboarding wizard", () => {
     describe("Single account with access keys", () => {
       // Runs compiled by the React Compiler, unlike the unit suite: it guards the
       // form's validity being read as a reactive value, not frozen in a memo.
-      it("enables Connect account once the form is filled and jumps to the connection test", async () => {
+      it("enables Connect account once the form is filled and jumps to the launch step", async () => {
         const harness = new ProvidersPageHarness(awsOnboardingFixture());
         await harness.mount();
         await harness.selectProviderType(/Amazon Web Services/);
@@ -251,9 +250,12 @@ describe("Organization onboarding wizard", () => {
 
         await harness.connectAccount();
 
-        await harness.waitForConnectionTestStep();
+        await harness.waitForProviderLaunchStep();
         expect(harness.providerCreateCallCount).toBe(1);
         expect(harness.secretCreateCallCount).toBe(1);
+        // Reaching launch above is what proves no separate test step ran; this
+        // pins that the one step really did check the connection.
+        expect(harness.connectionCallCount).toBe(1);
         const secret = await harness.lastRequestBody<{
           data: { relationships: { provider: { data: { id: string } } } };
         }>("POST", "/providers/secrets");

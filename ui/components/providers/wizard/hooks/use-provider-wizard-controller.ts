@@ -215,6 +215,11 @@ export function useProviderWizardController({
   ]);
 
   const isOrgDirectEntry = Boolean(orgInitialData);
+  // Opened on an existing account's credentials, so the one-step AWS flow is not
+  // in play. Same three fields the hydration above requires to start on CREDENTIALS.
+  const isDirectCredentialsEntry = Boolean(
+    initialProviderId && initialProviderType && initialProviderUid,
+  );
 
   const handleClose = () => {
     // Closing the wizard at any point ends the add-provider tour; the checkpoint
@@ -323,6 +328,7 @@ export function useProviderWizardController({
     handleClose,
     handleDialogOpenChange,
     handleTestSuccess,
+    isDirectCredentialsEntry,
     isOrgDirectEntry,
     isProviderFlow,
     mode,
