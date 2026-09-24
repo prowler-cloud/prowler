@@ -130,7 +130,7 @@ def test_scans_list_response_carries_pagination_metadata():
                 relationships={"provider": jsonapi_relationship_one("providers", "p1")},
             )
         ],
-        page=1,
+        page=2,
         pages=2,
         count=15,
     )
@@ -139,6 +139,7 @@ def test_scans_list_response_carries_pagination_metadata():
 
     assert result.total_num_scans == 15
     assert result.total_num_pages == 2
+    assert result.current_page == 2
     assert result.scans[0].id == "s1"
 
 
