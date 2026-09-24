@@ -2,8 +2,11 @@
 
 The onboarding system runs short, anchored driver.js tours and orchestrates a
 cross-route **guided sequence** after a user connects their first provider.
-Everything lives in client state and localStorage — there is **zero backend
-coupling**.
+The tours and the guided sequence run on client state (the sequence slice
+is ephemeral and resets on a hard reload); tour completion and the one-time
+markers persist in localStorage. Server input is the tri-state `hasProviders`
+the layout derives from `getProviders()`, plus the invitation the invite step
+posts to the API.
 
 ## Building blocks
 
@@ -16,8 +19,32 @@ coupling**.
 | Per-route trigger                      | `ui/components/onboarding/onboarding-trigger.tsx`                     |
 | Ephemeral sequence slice               | `ui/store/onboarding-sequence.ts`                                     |
 | Checkpoint watcher + dialog            | `ui/components/onboarding/onboarding-checkpoint-{watcher,dialog}.tsx` |
-| Mandatory new-user gate                | `ui/components/onboarding/onboarding-gate.tsx`                        |
+| New-tenant gate (first-run redirect)   | `ui/components/onboarding/onboarding-gate.tsx`                        |
+| First-run marker (once per tenant)     | `ui/lib/onboarding/first-run-marker.ts`                               |
+| Step outcome events (window)           | `ui/lib/onboarding/onboarding-events.ts`                              |
+| Invite step before the checkpoint      | `ui/components/onboarding/onboarding-invite-{step,dialog}.tsx`        |
 | Manual replay list                     | `ui/components/ui/user-nav/user-nav.tsx`                              |
+
+## First run
+
+The gate is mounted in every deployment. When the tenant provably has no
+providers (`hasProviders === false`), the user holds `manage_providers` and
+neither the first-run marker (`prowler.onboarding.first-run.<tenantId>`, so a
+first run in one tenant never silences it for another on the same browser; the
+bare `prowler.onboarding.first-run` key is a browser-wide opt-out, which is what
+the e2e storage state sets) nor an add-provider completion record exists, it
+replaces the route once with
+`/providers?addProvider=true&addProviderSource=first_run`, so the add-provider
+wizard is already open. Billing routes defer it; an unknown provider count or a
+user without the permission (an empty list may only mean limited visibility)
+never triggers it.
+
+In Cloud the URL also carries `&onboarding=add-provider` and the checkpoint is
+armed. Because the wizard is already open, the providers page passes
+`startAtTarget="provider-type"` to its `<OnboardingTrigger />`, which skips the
+tour's welcome and "open the wizard" steps. A navbar replay with the wizard
+closed still starts from the first step. Self-hosted deployments get the
+redirect only: tours and the checkpoint stay Cloud-only.
 
 ## How the guided sequence works
 
@@ -72,3 +99,18 @@ the sequence automatically.
   `target` must resolve to a real `data-tour-id` anchor within its `coversFiles`.
 - `pnpm exec vitest run --project unit` — pure logic (slice, helpers, registry,
   tour shapes). The driver primitive short-circuits in `NODE_ENV==="test"`.
+
+## Invite step
+
+The first time the checkpoint opens (right after the first provider is
+connected), `OnboardingCheckpointWatcher` renders `OnboardingInviteStep` before
+the checkpoint dialog: the members-page `SendInvitationForm`, tagged
+`source=onboarding` for the API, plus a "Skip for now" action. If the roles
+cannot be loaded, or have not arrived after five seconds, only the skip is
+offered, so the checkpoint is never blocked. The store stays
+`open` while the step shows, so the checkpoint dialog follows unchanged once it
+resolves. A per-tenant localStorage marker (`prowler.onboarding.invite.<tenantId>`)
+keeps it to one offer; without a usable `tenantId` the step is not offered.
+
+Outcomes (`shown`, `submitted`, `skipped`) are announced as the
+`prowler:onboarding-invite-step` window event (`dispatchOnboardingInviteStep`).

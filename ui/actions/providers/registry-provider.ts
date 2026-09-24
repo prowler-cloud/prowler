@@ -2,6 +2,7 @@
 
 import { getInstalledRegistryProviderOptions } from "@/actions/registry/registry";
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
+import { REGISTRY_PROVIDER_DISCOVERY } from "@/lib/registry/provider-options";
 import { createAddProviderFormSchema } from "@/types/formSchemas";
 import { isKnownProviderType } from "@/types/providers";
 
@@ -19,7 +20,8 @@ export async function addRegistryProvider(formData: FormData) {
   };
   try {
     const discovery = await getInstalledRegistryProviderOptions();
-    if (discovery.status !== "ready") return unavailable;
+    if (discovery.status !== REGISTRY_PROVIDER_DISCOVERY.READY)
+      return unavailable;
     const values = createAddProviderFormSchema(
       discovery.options.map((option) => option.type),
     ).safeParse(Object.fromEntries(formData));

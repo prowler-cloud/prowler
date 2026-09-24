@@ -13,11 +13,13 @@ const {
   openCloudUpgradeMock,
   openLaunchScanModalMock,
   pathnameValue,
+  permissionsValue,
   pushMock,
 } = vi.hoisted(() => ({
   openCloudUpgradeMock: vi.fn(),
   openLaunchScanModalMock: vi.fn(),
   pathnameValue: { current: "/findings" },
+  permissionsValue: { current: {} as Record<string, boolean> },
   pushMock: vi.fn(),
 }));
 
@@ -27,7 +29,7 @@ vi.mock("next/navigation", () => ({
 }));
 
 vi.mock("@/hooks", () => ({
-  useAuth: () => ({ permissions: {} }),
+  useAuth: () => ({ permissions: permissionsValue.current }),
 }));
 
 vi.mock("@/hooks/use-runtime-config", () => ({
@@ -54,11 +56,16 @@ vi.mock("@/app/(prowler)/lighthouse/_components/navigation", () => ({
 describe("AppSidebarContent", () => {
   beforeEach(() => {
     pathnameValue.current = "/findings";
+    permissionsValue.current = { manage_providers: true };
     pushMock.mockClear();
     openCloudUpgradeMock.mockClear();
     openLaunchScanModalMock.mockClear();
     useAppSidebarMode.setState({ mode: APP_SIDEBAR_MODE.BROWSE });
-    useUIStore.setState({ registryEligible: false });
+    useUIStore.setState({
+      registryEligible: false,
+      hasProviders: false,
+      hasProvidersResolved: false,
+    });
   });
 
   afterEach(() => {
@@ -161,6 +168,67 @@ describe("AppSidebarContent", () => {
 
     // Then
     expect(pushMock).toHaveBeenCalledWith("/lighthouse");
+  });
+
+  it("offers Add Provider instead of Launch Scan once the tenant is known to have no providers", () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
+    useUIStore.setState({ hasProviders: false, hasProvidersResolved: true });
+
+    // When
+    render(<AppSidebarContent />);
+
+    // Then
+    expect(screen.getByRole("link", { name: "Add Provider" })).toHaveAttribute(
+      "href",
+      "/providers?addProvider=true&addProviderSource=sidebar_cta",
+    );
+    expect(
+      screen.queryByRole("link", { name: "Launch Scan" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("keeps Launch Scan for a user who cannot add providers", () => {
+    // Given: an empty list may only mean limited visibility.
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
+    permissionsValue.current = { manage_providers: false };
+    useUIStore.setState({ hasProviders: false, hasProvidersResolved: true });
+
+    // When
+    render(<AppSidebarContent />);
+
+    // Then
+    expect(screen.getByRole("link", { name: "Launch Scan" })).toBeVisible();
+    expect(
+      screen.queryByRole("link", { name: "Add Provider" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("keeps Launch Scan while the provider count is still unresolved", () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
+    useUIStore.setState({ hasProviders: false, hasProvidersResolved: false });
+
+    // When
+    render(<AppSidebarContent />);
+
+    // Then
+    expect(screen.getByRole("link", { name: "Launch Scan" })).toBeVisible();
+    expect(
+      screen.queryByRole("link", { name: "Add Provider" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("keeps Launch Scan for a tenant that already has providers", () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
+    useUIStore.setState({ hasProviders: true, hasProvidersResolved: true });
+
+    // When
+    render(<AppSidebarContent />);
+
+    // Then
+    expect(screen.getByRole("link", { name: "Launch Scan" })).toBeVisible();
   });
 
   it("opens the current scan modal instead of navigating from the scans route", async () => {

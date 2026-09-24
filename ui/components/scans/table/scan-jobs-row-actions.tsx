@@ -29,6 +29,7 @@ import {
   ActionDropdown,
   ActionDropdownItem,
 } from "@/components/shadcn/dropdown";
+import { useReportDownload } from "@/hooks/use-report-download";
 import { buildPerScanComplianceHref } from "@/lib/compliance/compliance-tab-url";
 import { downloadScanZip } from "@/lib/helper";
 import { getScanScheduleCapability } from "@/lib/schedules";
@@ -54,14 +55,18 @@ interface ScanJobsRowActionsProps {
    * Schedule capability override. Only for Prowler Cloud.
    */
   capability?: ScanScheduleCapability;
+  /** Prowler Cloud tenants without a paid plan cannot download reports. */
+  subscriptionOnly?: boolean;
 }
 
 export function ScanJobsRowActions({
   scan,
   tab,
   capability,
+  subscriptionOnly = false,
 }: ScanJobsRowActionsProps) {
   const router = useRouter();
+  const runReportDownload = useReportDownload(subscriptionOnly);
   const canEditSchedule =
     (capability ?? getScanScheduleCapability(isCloud())) ===
     SCAN_SCHEDULE_CAPABILITY.ADVANCED;
@@ -213,7 +218,9 @@ export function ScanJobsRowActions({
             <ActionDropdownItem
               icon={<Download />}
               label="Download Scan Reports"
-              onSelect={() => downloadScanZip(scan.id, toast)}
+              onSelect={() =>
+                runReportDownload(() => downloadScanZip(scan.id, toast))
+              }
             />
           </>
         )}

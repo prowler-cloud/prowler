@@ -19,7 +19,6 @@ import {
 } from "@/components/shadcn/tabs/tabs";
 import { toast } from "@/components/shadcn/toast/use-toast";
 import { executeRegistryArtifactAddition } from "@/lib/registry/artifact-execution";
-import { isRegistryArtifactInstallable } from "@/lib/registry/artifacts";
 import { executeRegistryCredentialValidation } from "@/lib/registry/credential-execution";
 import {
   REGISTRY_CREDENTIAL_CHANGED,
@@ -62,7 +61,7 @@ import { RegistryToolbar } from "./registry-toolbar";
 import { useRegistryRefresh } from "./use-registry-refresh";
 
 const PAGE_SUBTITLE =
-  "Explore checks, compliance frameworks, and providers. Add external provider artifacts to connect new providers to your workspace.";
+  "Explore checks, compliance frameworks, and providers. Add artifacts to connect new providers or to run more checks on the ones you already scan.";
 
 const REGISTRY_TAB = { EXPLORE: "explore", MINE: "mine" } as const;
 type RegistryTab = (typeof REGISTRY_TAB)[keyof typeof REGISTRY_TAB];
@@ -319,7 +318,7 @@ export function RegistryExplorer({
 
   async function handleAdd(artifact: RegistryMarketplaceArtifact) {
     if (
-      !isRegistryArtifactInstallable(artifact) ||
+      !artifact.isInstallable ||
       (artifact.isAdded && !artifact.updateAvailable) ||
       pendingAddName ||
       pendingOperation ||
@@ -426,7 +425,10 @@ export function RegistryExplorer({
     if (result.status === REGISTRY_FAILURE.ACCESS_DENIED)
       return router.replace("/profile");
 
-    if (result.status === REGISTRY_ARTIFACT_REMOVAL.IN_USE) {
+    if (
+      result.status === REGISTRY_ARTIFACT_REMOVAL.IN_USE ||
+      result.status === REGISTRY_ARTIFACT_REMOVAL.BUSY
+    ) {
       setRemoveError(result);
       return;
     }
@@ -690,7 +692,7 @@ export function RegistryExplorer({
         <TabsContent className="space-y-4 pt-4" value={REGISTRY_TAB.MINE}>
           <RegistryArtifactGrid
             emptyMessage="No artifacts in this workspace yet."
-            emptyDescription="Explore the catalog to add an external provider to this workspace."
+            emptyDescription="Explore the catalog to add providers or checks to this workspace."
             emptyActionLabel="Explore artifacts"
             isEmpty={model.myArtifacts.length === 0}
             onReset={() => setActiveTab(REGISTRY_TAB.EXPLORE)}
@@ -708,6 +710,7 @@ export function RegistryExplorer({
                   />
                 ) : (
                   <RegistryTenantArtifactCard
+                    extendsProviderSlugs={myArtifact.extendsProviderSlugs}
                     normalizedName={myArtifact.normalizedName}
                     onRemove={(trigger) =>
                       openRemoveDialog(myArtifact.normalizedName, trigger)

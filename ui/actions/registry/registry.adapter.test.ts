@@ -65,6 +65,33 @@ describe("Registry adapter", () => {
     ]);
   });
 
+  it("reads the built-in providers an installed artifact adds checks to", () => {
+    // Given / When
+    const artifacts = adaptRegistryTenantArtifacts({
+      data: [
+        {
+          type: "registry-artifacts",
+          id: "local-acme-builtin-checks",
+          attributes: {
+            version_spec: "latest",
+            extends_provider_slugs: ["AWS", "aws", " gcp "],
+          },
+        },
+        {
+          type: "registry-artifacts",
+          id: "older-api",
+          attributes: { version_spec: "latest" },
+        },
+      ],
+    });
+
+    // Then
+    expect(artifacts).toMatchObject([
+      { extendsProviderSlugs: ["aws", "gcp"] },
+      { extendsProviderSlugs: [] },
+    ]);
+  });
+
   it.each([undefined, null, "", "   "])(
     "accepts an unknown resolved version %j",
     (resolvedVersion) => {
@@ -382,6 +409,92 @@ describe("Registry adapter", () => {
         {
           normalizedName: "plain-owner",
           owners: [{ type: "user", name: "Ada", logoUrl: undefined }],
+        },
+      ],
+    });
+  });
+
+  it("reads the deployment's install verdict and refuses installs an older API never confirmed", async () => {
+    // Given
+    const document = {
+      data: [
+        {
+          type: "registry-artifacts",
+          id: "aws-checks",
+          attributes: {
+            has_checks: true,
+            is_installable: true,
+            not_installable_reason: null,
+          },
+        },
+        {
+          type: "registry-artifacts",
+          id: "acme-checks",
+          attributes: {
+            has_checks: true,
+            is_installable: false,
+            not_installable_reason: "checks_target_is_not_builtin",
+          },
+        },
+        {
+          type: "registry-artifacts",
+          id: "older-api",
+          attributes: { has_provider: true },
+        },
+      ],
+      meta: { pagination: { page: 1, pages: 1, count: 3 } },
+    };
+
+    // When
+    const result = await collectCompleteRegistryCatalog(async () => document);
+
+    // Then
+    expect(result).toMatchObject({
+      status: "complete",
+      artifacts: [
+        {
+          normalizedName: "acme-checks",
+          isInstallable: false,
+          notInstallableReason: "checks_target_is_not_builtin",
+        },
+        { normalizedName: "aws-checks", isInstallable: true },
+        { normalizedName: "older-api", isInstallable: false },
+      ],
+    });
+    if (result.status !== "complete") throw new Error("Incomplete fixture");
+    expect(result.artifacts[1]).not.toHaveProperty("notInstallableReason");
+  });
+
+  it("keeps an artifact uninstallable when any catalog page refuses it", async () => {
+    // Given
+    const document = {
+      data: [
+        {
+          type: "registry-artifacts",
+          id: "split",
+          attributes: { is_installable: true },
+        },
+        {
+          type: "registry-artifacts",
+          id: "split",
+          attributes: {
+            is_installable: false,
+            not_installable_reason: "artifact_compliance_not_supported",
+          },
+        },
+      ],
+      meta: { pagination: { page: 1, pages: 1, count: 2 } },
+    };
+
+    // When
+    const result = await collectCompleteRegistryCatalog(async () => document);
+
+    // Then
+    expect(result).toMatchObject({
+      artifacts: [
+        {
+          isInstallable: false,
+          notInstallableReason: "artifact_compliance_not_supported",
         },
       ],
     });

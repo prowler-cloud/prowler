@@ -1,3 +1,4 @@
+import json
 import os
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -42,6 +43,7 @@ from tasks.jobs.attack_paths import (
 )
 from tasks.jobs.attack_paths import db_utils as attack_paths_db_utils
 from tasks.jobs.attack_paths.cleanup import cleanup_stale_attack_paths_scans
+from tasks.jobs.attack_paths.tmp_db_reaper import reap_orphaned_tmp_databases
 from tasks.jobs.backfill import (
     aggregate_scan_category_summaries,
     aggregate_scan_resource_group_summaries,
@@ -163,13 +165,28 @@ def create_scan_task_record(
     task_id: str,
     task_name: str = "scan-perform",
     task_status: str | None = states.PENDING,
+    task_kwargs: dict | None = None,
 ) -> Task:
+    """Pre-create the TaskResult + Task rows for a pre-generated task id.
+
+    Pass ``task_kwargs`` when the response built from this record is serialized
+    before the broker publish. ``task_kwargs`` is otherwise only written by the
+    ``before_task_publish`` signal (``api/signals.py``), and the scan publish is
+    deferred to ``on_commit``, so the 202 would carry an empty ``task_args`` and
+    the caller would have no way to learn the scan id it was just handed a task
+    for. The publish later overwrites the field with the same kwargs as a Python
+    repr; both forms decode to the same dict (``decode_celery_field``).
+    """
     if task_status is None:
         task_status = states.PENDING
 
+    defaults = {"status": task_status, "task_name": task_name}
+    if task_kwargs is not None:
+        defaults["task_kwargs"] = json.dumps(task_kwargs)
+
     task_result, _ = TaskResult.objects.update_or_create(
         task_id=str(task_id),
-        defaults={"status": task_status, "task_name": task_name},
+        defaults=defaults,
     )
     prowler_task, _ = Task.objects.update_or_create(
         id=str(task_id),
@@ -709,6 +726,13 @@ def perform_attack_paths_scan_task(self, tenant_id: str, scan_id: str):
 @shared_task(name="attack-paths-cleanup-stale-scans", queue="attack-paths-scans")
 def cleanup_stale_attack_paths_scans_task():
     return cleanup_stale_attack_paths_scans()
+
+
+@shared_task(
+    name="attack-paths-reap-orphaned-tmp-databases", queue="attack-paths-scans"
+)
+def reap_orphaned_attack_paths_tmp_databases_task():
+    return reap_orphaned_tmp_databases()
 
 
 @shared_task(name="reconcile-orphan-tasks", queue="celery")

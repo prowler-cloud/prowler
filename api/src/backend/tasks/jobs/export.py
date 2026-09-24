@@ -6,6 +6,7 @@ import boto3
 import config.django.base as base
 from api.db_utils import rls_transaction
 from api.models import Scan
+from botocore.config import Config
 from botocore.exceptions import ClientError, NoCredentialsError, ParamValidationError
 from celery.utils.log import get_task_logger
 from django.conf import settings
@@ -206,15 +207,21 @@ def get_s3_client():
     This function attempts to initialize an S3 client by reading the AWS access key, secret key,
     session token, and region from environment variables. It then validates the client by listing
     available S3 buckets. If an error occurs during this process (for example, due to missing or
-    invalid credentials), it falls back to creating an S3 client without explicitly provided credentials,
-    which may rely on other configuration sources (e.g., IAM roles).
+    invalid credentials), it falls back to creating an S3 client without explicitly provided
+    credentials, which may rely on other configuration sources (e.g., IAM roles).
+
+    That fallback is only safe when no explicit endpoint is configured: with an endpoint set, the
+    explicit client already targets the intended S3-compatible storage, and the fallback client
+    would go to the AWS default provider chain instead, an unrelated real-AWS account reachable
+    from the host. So when an endpoint is configured, the original error propagates instead.
 
     Returns:
         boto3.client: A configured S3 client instance.
 
     Raises:
-        ClientError, NoCredentialsError, or ParamValidationError if both attempts to create a client fail.
+        ClientError, NoCredentialsError, or ParamValidationError if the client cannot be created.
     """
+    endpoint = settings.DJANGO_OUTPUT_S3_AWS_ENDPOINT_URL
     s3_client = None
     try:
         s3_client = boto3.client(
@@ -222,14 +229,66 @@ def get_s3_client():
             aws_access_key_id=settings.DJANGO_OUTPUT_S3_AWS_ACCESS_KEY_ID,
             aws_secret_access_key=settings.DJANGO_OUTPUT_S3_AWS_SECRET_ACCESS_KEY,
             aws_session_token=settings.DJANGO_OUTPUT_S3_AWS_SESSION_TOKEN,
-            region_name=settings.DJANGO_OUTPUT_S3_AWS_DEFAULT_REGION,
+            # Storage that has no meaningful region, MinIO among it, is usually configured
+            # without one, and botocore rejects an empty region before any request is made.
+            region_name=settings.DJANGO_OUTPUT_S3_AWS_DEFAULT_REGION or "us-east-1",
+            endpoint_url=endpoint or None,
         )
         s3_client.list_buckets()
     except (ClientError, NoCredentialsError, ParamValidationError, ValueError):
+        if endpoint:
+            raise
         s3_client = boto3.client("s3")
         s3_client.list_buckets()
 
     return s3_client
+
+
+def get_s3_presign_client():
+    """Return a client that signs download URLs with SigV4.
+
+    It is used when a public or internal storage host is configured, or when the bucket's
+    region is: boto3 otherwise presigns S3 URLs with SigV2, which S3 rejects for SSE-KMS
+    objects. None means none of those is set and the caller should presign with its own
+    client, which leaves those deployments with the URL they get today.
+
+    The public endpoint wins when both are set: the internal endpoint may only be reachable
+    from inside the cluster, and a URL signed against it would not open in a browser.
+    """
+    endpoint = (
+        settings.DJANGO_OUTPUT_S3_AWS_PUBLIC_ENDPOINT_URL
+        or settings.DJANGO_OUTPUT_S3_AWS_ENDPOINT_URL
+    )
+    if not endpoint and not settings.DJANGO_OUTPUT_S3_AWS_DEFAULT_REGION:
+        return None
+
+    # Blank keys are signed as-is (empty credential scope) instead of deferring to the
+    # provider chain, so static credentials are only passed when they are set.
+    credentials = {}
+    if (
+        settings.DJANGO_OUTPUT_S3_AWS_ACCESS_KEY_ID
+        and settings.DJANGO_OUTPUT_S3_AWS_SECRET_ACCESS_KEY
+    ):
+        credentials = {
+            "aws_access_key_id": settings.DJANGO_OUTPUT_S3_AWS_ACCESS_KEY_ID,
+            "aws_secret_access_key": settings.DJANGO_OUTPUT_S3_AWS_SECRET_ACCESS_KEY,
+            # An empty string is a token as far as botocore is concerned: it appends an
+            # empty X-Amz-Security-Token that storage counts when it recomputes the signature.
+            "aws_session_token": settings.DJANGO_OUTPUT_S3_AWS_SESSION_TOKEN or None,
+        }
+
+    return boto3.client(
+        "s3",
+        **credentials,
+        # SigV4 puts the region in the credential scope, and MinIO answers to us-east-1
+        # unless it was told otherwise, so an empty region would sign an unusable URL.
+        region_name=settings.DJANGO_OUTPUT_S3_AWS_DEFAULT_REGION or "us-east-1",
+        endpoint_url=endpoint or None,
+        # The signature covers the host, so the addressing style has to be pinned rather
+        # than guessed from the endpoint: MinIO serves path-style, and on AWS it keeps the
+        # regional host instead of the global one, which redirects for new buckets.
+        config=Config(signature_version="s3v4", s3={"addressing_style": "path"}),
+    )
 
 
 def _upload_to_s3(

@@ -1,6 +1,8 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
+import { useStore } from "@/hooks/use-store";
+
 import { APP_SIDEBAR_MODE, type AppSidebarMode } from "./types";
 
 interface PersistedAppSidebarState {
@@ -52,3 +54,15 @@ export const useAppSidebarMode = create<AppSidebarModeStore>()(
     },
   ),
 );
+
+// The persisted mode is only known in the browser: `persist` rehydrates from
+// localStorage before the first client render, while the server always
+// rendered `browse`. Reading the store directly makes a tenant that last used
+// the chat hydrate a different sidebar than the one in the HTML (React #418).
+// This read answers `browse` until mounted, then the persisted value.
+export function useHydratedAppSidebarMode(): AppSidebarMode {
+  return (
+    useStore(useAppSidebarMode, (state) => state.mode) ??
+    APP_SIDEBAR_MODE.BROWSE
+  );
+}

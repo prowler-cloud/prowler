@@ -4,6 +4,34 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [5.43.0] (Prowler v5.43.0)
+
+### 🚀 Added
+
+- `FedRAMP-20x-KSI` universal compliance framework (`fedramp_20x_ksi_2026`) with the 46 Key Security Indicators from the FedRAMP Consolidated Rules 2026 mapped for AWS, Azure, GCP, Kubernetes and M365 [(#11701)](https://github.com/prowler-cloud/prowler/pull/11701)
+- `smn_topic_subscriptions` check for Huawei Cloud provider: SMN topics have at least one subscription configured [(#12186)](https://github.com/prowler-cloud/prowler/pull/12186)
+- `inspector2_coverage_scan_status_active`, `inspector2_coverage_recently_scanned`, `inspector2_active_findings_no_known_exploited_vulnerabilities`, `inspector2_active_findings_kev_within_due_date`, `inspector2_active_findings_within_max_age`, `elbv2_listener_fips_tls_enabled` and `transfer_server_fips_security_policy_enabled` checks for AWS provider, covering FedRAMP 20x Class C vulnerability detection, CISA KEV remediation and FIPS cryptography rules; the KEV checks require `inspector2:BatchGetFindingDetails`, now in the Prowler additions policy [(#12808)](https://github.com/prowler-cloud/prowler/pull/12808)
+- `FedRAMP-20x-FRR-Class-C` universal compliance framework (`fedramp_20x_frr_class_c_2026`) with the 158 provider rules of the FedRAMP 20x Class C ruleset from the FedRAMP Consolidated Rules 2026 for AWS, Azure, GCP, Kubernetes and M365 [(#12808)](https://github.com/prowler-cloud/prowler/pull/12808)
+
+### 🔄 Changed
+
+- FedRAMP 20x Phase One pilot frameworks `fedramp_20x_ksi_low_aws`, `fedramp_20x_ksi_low_azure` and `fedramp_20x_ksi_low_gcp` replaced by `fedramp_20x_ksi_2026` [(#12855)](https://github.com/prowler-cloud/prowler/pull/12855)
+
+### 🐞 Fixed
+
+- `security_2sv_enforced` reports domain-wide 2-Step Verification failures as FAIL even when every failing setting is overridden for a group or organizational unit [(#12700)](https://github.com/prowler-cloud/prowler/pull/12700)
+- Bootstrap STS calls now try up to two more regions of the partition declared in `PROWLER_AWS_PARTITION` when the first one cannot be reached, so a deployment that routes to only one region of its partition no longer fails on an endpoint it has no path to. This covers validating credentials, assuming a role and getting an MFA session token [(#12799)](https://github.com/prowler-cloud/prowler/pull/12799)
+- `KeyError` in M365 Defender malware, anti-phishing and inbound anti-spam checks when the tenant has Standard or Strict preset security policies [(#12809)](https://github.com/prowler-cloud/prowler/pull/12809)
+- Azure Defender security contacts and Key Vault key rotation policies now use the endpoints of the selected cloud (`--azure-region`) instead of the hardcoded `management.azure.com` and `vault.azure.net` hosts, so both work on `AzureUSGovernment` and `AzureChinaCloud` [(#12813)](https://github.com/prowler-cloud/prowler/pull/12813)
+
+### 🔐 Security
+
+- `libsqlite3-0`, `gzip`, `perl-base`, `libssh2-1t64` and `libpcre2-8-0` upgraded in the SDK container image, patching nine high Debian CVEs [(#12804)](https://github.com/prowler-cloud/prowler/pull/12804)
+- PowerShell from 7.5.9 to 7.5.11 in the SDK container image, bundling .NET runtime 9.0.20 and patching CVE-2026-62901 [(#12811)](https://github.com/prowler-cloud/prowler/pull/12811)
+- Bumped `anyio` to 4.14.2 to resolve CVE-2026-63374 [(#12848)](https://github.com/prowler-cloud/prowler/pull/12848)
+
+---
+
 ## [5.42.0] (Prowler v5.42.0)
 
 ### 🚀 Added

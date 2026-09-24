@@ -9,8 +9,10 @@ import type { AddProviderFormValues } from "@/types/formSchemas";
 import { RadioGroupProvider } from "./radio-group-provider";
 
 function Selector({
+  registryAvailable = true,
   registryOptions = [{ type: "acme", label: "Acme Cloud" }],
 }: {
+  registryAvailable?: boolean;
   registryOptions?: RegistryProviderOption[];
 }) {
   const form = useForm<AddProviderFormValues>();
@@ -18,6 +20,7 @@ function Selector({
     <RadioGroupProvider
       control={form.control}
       isInvalid={false}
+      registryAvailable={registryAvailable}
       registryOptions={registryOptions}
     />
   );
@@ -129,6 +132,56 @@ describe("provider selector", () => {
     ).toBeVisible();
     expect(
       screen.getByRole("option", { name: /Amazon Web Services/ }),
+    ).toBeVisible();
+  });
+
+  it("hides the source tabs when Registry is unavailable in the deployment", () => {
+    // Given: Local (OSS) or Registry-flag-off deployments deny discovery.
+    render(<Selector registryAvailable={false} registryOptions={[]} />);
+
+    // Then: only the built-in providers are offered, without a Registry tab.
+    expect(screen.queryByRole("tablist")).not.toBeInTheDocument();
+    expect(screen.queryByRole("tabpanel")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("tab", { name: "Registry" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("option", { name: /Amazon Web Services/ }),
+    ).toBeVisible();
+    expect(
+      screen.queryByText("No Registry providers available."),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("textbox", { name: "Search providers" }),
+    ).toBeVisible();
+  });
+
+  it("falls back to all providers when Registry access is revoked on the Registry tab", async () => {
+    // Given
+    const user = userEvent.setup();
+    const { rerender } = render(<Selector />);
+    await user.click(screen.getByRole("tab", { name: "Registry" }));
+    expect(
+      screen.queryByRole("option", { name: /Amazon Web Services/ }),
+    ).not.toBeInTheDocument();
+
+    // When: a discovery refresh reports the deployment no longer offers Registry.
+    rerender(<Selector registryAvailable={false} registryOptions={[]} />);
+
+    // Then
+    expect(screen.queryByRole("tablist")).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("option", { name: /Amazon Web Services/ }),
+    ).toBeVisible();
+
+    // When / Then: access restored keeps the previous Registry selection.
+    rerender(<Selector />);
+    expect(screen.getByRole("tab", { name: "Registry" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    expect(
+      screen.getByRole("option", { name: /Acme Cloud Registry/ }),
     ).toBeVisible();
   });
 });

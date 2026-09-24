@@ -499,10 +499,13 @@ def backfill_provider_compliance_scores(tenant_id: str) -> dict:
                 provider_id__in=existing_providers
             )
 
+        # `completed_scans` keeps its own `completed_at__isnull=False`: this
+        # task writes a *dated* ProviderComplianceScore row, so unlike the read
+        # paths it genuinely cannot use a scan without a `completed_at`.
         scan_info = list(
-            completed_scans.order_by("provider_id", "-completed_at")
-            .distinct("provider_id")
-            .values("id", "provider_id", "completed_at")
+            completed_scans.latest_per_provider().values(
+                "id", "provider_id", "completed_at"
+            )
         )
 
         if not scan_info:

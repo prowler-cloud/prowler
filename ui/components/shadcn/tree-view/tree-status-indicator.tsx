@@ -5,7 +5,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
-import { TreeItemStatus } from "@/types/tree";
+import { TREE_ITEM_STATUS, TreeItemStatus } from "@/types/tree";
 
 import { TreeStatusIcon } from "./tree-status-icon";
 
@@ -22,7 +22,11 @@ export function TreeStatusIndicator({
     return null;
   }
 
-  if (status === "error" && errorMessage) {
+  if (
+    (status === TREE_ITEM_STATUS.ERROR ||
+      status === TREE_ITEM_STATUS.PENDING) &&
+    errorMessage
+  ) {
     return (
       <Tooltip>
         <TooltipTrigger asChild>

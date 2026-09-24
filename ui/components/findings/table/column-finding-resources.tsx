@@ -6,6 +6,7 @@ import { useContext, useState } from "react";
 
 import { JiraDispatchActionItem } from "@/components/findings/jira-dispatch-action-item";
 import { MuteFindingsModal } from "@/components/findings/mute-findings-modal";
+import { RecheckResourceActionItem } from "@/components/findings/recheck-resource-action-item";
 import { Checkbox } from "@/components/shadcn";
 import {
   ActionDropdown,
@@ -198,6 +199,15 @@ const ResourceRowActions = ({
               findingCount: displayIds.length,
             })}
             payload={jiraPayload}
+          />
+          <RecheckResourceActionItem
+            target={{
+              providerUid: resource.providerUid,
+              providerType: resource.providerType,
+              providerAlias: resource.providerAlias,
+              resourceUid: resource.resourceUid,
+              resourceName: resource.resourceName,
+            }}
           />
           {isCloud() && (
             <LighthouseSkillsSubmenu

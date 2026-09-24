@@ -119,6 +119,10 @@ export interface RegistryCatalogArtifact {
   hasProvider: boolean;
   hasChecks: boolean;
   hasCompliance: boolean;
+  /** The API's verdict for this deployment; never recomputed client-side. */
+  isInstallable: boolean;
+  /** Stable API code; new codes can appear without a UI release. */
+  notInstallableReason?: string;
   checkCount?: number;
   complianceCount?: number;
   versionCount: number;
@@ -130,6 +134,8 @@ export interface RegistryTenantArtifact {
   normalizedName: string;
   versionSpec: string;
   resolvedVersion?: string;
+  /** Built-in providers this install adds checks to without defining them. */
+  extendsProviderSlugs?: string[];
   insertedAt?: string;
   updatedAt?: string;
 }
@@ -236,15 +242,22 @@ export type RegistryMutationResult =
   | RegistryFailureResult;
 
 export const REGISTRY_ARTIFACT_REMOVAL = {
+  /** Providers stand on it: they must be deleted first. */
   IN_USE: "in_use",
+  /** A scan is running its checks: it clears by itself. */
+  BUSY: "busy",
 } as const;
+
+export type RegistryArtifactRemovalConflict =
+  | { status: typeof REGISTRY_ARTIFACT_REMOVAL.IN_USE }
+  | { status: typeof REGISTRY_ARTIFACT_REMOVAL.BUSY };
 
 export type RegistryArtifactRemovalResult =
   | RegistryMutationResult
-  | { status: typeof REGISTRY_ARTIFACT_REMOVAL.IN_USE };
+  | RegistryArtifactRemovalConflict;
 
 export type RegistryRemoveDialogError =
-  | { status: typeof REGISTRY_ARTIFACT_REMOVAL.IN_USE }
+  | RegistryArtifactRemovalConflict
   | { status: typeof REGISTRY_FAILURE.ERROR; message: string };
 
 export const REGISTRY_BOOTSTRAP_STATE = {

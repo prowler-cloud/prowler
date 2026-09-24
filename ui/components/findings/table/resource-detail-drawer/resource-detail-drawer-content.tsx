@@ -27,6 +27,7 @@ import {
 import { JiraDispatchActionItem } from "@/components/findings/jira-dispatch-action-item";
 import { MarkdownContainer } from "@/components/findings/markdown-container";
 import { MuteFindingsModal } from "@/components/findings/mute-findings-modal";
+import { RecheckResourceActionItem } from "@/components/findings/recheck-resource-action-item";
 import { getComplianceIcon } from "@/components/icons";
 import {
   Badge,
@@ -783,6 +784,16 @@ export function ResourceDetailDrawerContent({
                     <JiraDispatchActionItem
                       label={buildJiraActionLabel({ findingCount: 1 })}
                       payload={jiraPayload}
+                    />
+                    <RecheckResourceActionItem
+                      target={{
+                        providerId: f.providerId,
+                        providerUid,
+                        providerType,
+                        providerAlias,
+                        resourceUid,
+                        resourceName,
+                      }}
                     />
                     {externalResourceTarget && (
                       <ActionDropdownItem

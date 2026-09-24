@@ -59,6 +59,10 @@ export default async function RootLayout({
   // Skip Cloud-only onboarding fetches and orchestrators in OSS.
   const cloudEnabled = isCloud();
 
+  // Every deployment needs the provider count: it drives the first-run redirect
+  // and the sidebar's Add Provider action.
+  const providersPromise = getProviders({ page: 1, pageSize: 1 });
+
   // One-time server-side Registry gate per request: only an ELIGIBLE answer
   // shows the sidebar entry; UNKNOWN and INELIGIBLE both hide it. Started
   // here so it resolves in parallel with the Cloud onboarding fetches.
@@ -69,24 +73,26 @@ export default async function RootLayout({
   // Fail-open: unknown scan state is treated as "has data" so the banner never blocks
   // progression on a fetch error.
   let hasCompletedScan = true;
-  // Tri-state: true = has providers, false = zero providers, undefined = fetch failed (gate fails open).
-  let hasProviders: boolean | undefined = false;
+  // Scopes the onboarding steps' local markers, so resolving them for one
+  // tenant does not silence them for another.
+  let tenantId: string | null = null;
 
   if (cloudEnabled) {
-    const [providersData, scansByState] = await Promise.all([
-      getProviders({ page: 1, pageSize: 1 }),
-      getScansByState(),
-    ]);
+    const scansByState = await getScansByState();
     hasCompletedScan = Array.isArray(scansByState?.data)
       ? scansByState.data.some(
           (scan: { attributes?: { state?: string } }) =>
             scan.attributes?.state === SCAN_STATES.COMPLETED,
         )
       : true;
-    hasProviders = Array.isArray(providersData?.data)
-      ? providersData.data.length > 0
-      : undefined;
+    tenantId = (await auth())?.tenantId ?? null;
   }
+
+  const providersData = await providersPromise;
+  // Tri-state: true = has providers, false = zero providers, undefined = fetch failed (gate fails open).
+  const hasProviders: boolean | undefined = Array.isArray(providersData?.data)
+    ? providersData.data.length > 0
+    : undefined;
 
   const registryEligible =
     (await registryAccessPromise).status === REGISTRY_ACCESS.ELIGIBLE;
@@ -110,15 +116,14 @@ export default async function RootLayout({
           <Suspense>
             <NavigationProgress />
           </Suspense>
-          {/* Store uses boolean; gate receives tri-state to fail open on fetch errors. */}
-          <StoreInitializer
-            values={{ hasProviders: hasProviders ?? false, registryEligible }}
-          />
+          {/* Tri-state for both: an unknown count leaves the store unresolved and the gate closed. */}
+          <StoreInitializer values={{ hasProviders, registryEligible }} />
+          {/* Every deployment: an empty tenant lands on the add-provider wizard once. */}
+          <OnboardingGate hasProviders={hasProviders} tenantId={tenantId} />
           {cloudEnabled && (
             <>
-              <OnboardingGate hasProviders={hasProviders} />
               {/* Single mount point so the watcher survives post-connect navigation. */}
-              <OnboardingCheckpointWatcher />
+              <OnboardingCheckpointWatcher tenantId={tenantId} />
               {/* Persistent banner shown only while a guided sequence is active. */}
               <OnboardingSequenceBanner hasCompletedScan={hasCompletedScan} />
             </>

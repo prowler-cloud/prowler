@@ -31,6 +31,8 @@ export function RegistryRemoveDialog({
 }: RegistryRemoveDialogProps) {
   const cancelButtonRef = useRef<HTMLButtonElement>(null);
   const isInUse = error?.status === REGISTRY_ARTIFACT_REMOVAL.IN_USE;
+  // Busy keeps Confirm Remove: waiting is the remedy, not deleting providers.
+  const isBusy = error?.status === REGISTRY_ARTIFACT_REMOVAL.BUSY;
 
   // Disabling the submit button can lose focus; restore it inside the dialog
   // when a failure re-enables the actions or replaces them with recovery actions.
@@ -57,10 +59,13 @@ export function RegistryRemoveDialog({
       {error && (
         <Alert variant="error">
           {isInUse && <AlertTitle>Artifact in use</AlertTitle>}
+          {isBusy && <AlertTitle>A scan is using this artifact</AlertTitle>}
           <AlertDescription>
-            {error.status === REGISTRY_ARTIFACT_REMOVAL.IN_USE
+            {isInUse
               ? "This artifact cannot be removed because one or more providers use it. Review the associated providers before trying again."
-              : error.message}
+              : isBusy
+                ? "A scan is running the checks this artifact adds. It clears by itself when the scan finishes, so try again shortly."
+                : error.message}
           </AlertDescription>
         </Alert>
       )}

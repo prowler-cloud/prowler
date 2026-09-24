@@ -18,6 +18,7 @@ const artifact = (
   hasProvider: false,
   hasChecks: false,
   hasCompliance: false,
+  isInstallable: false,
   versionCount: 0,
   totalDownloads: 0,
   owners: [],
@@ -25,6 +26,46 @@ const artifact = (
 });
 
 describe("Registry marketplace model", () => {
+  it("reports a newer release for an installed checks artifact that defines no provider", () => {
+    // Given
+    const catalog = {
+      status: "complete" as const,
+      artifacts: [
+        artifact("aws-checks", {
+          latestVersion: "0.3.0",
+          hasChecks: true,
+          isInstallable: true,
+        }),
+      ],
+    };
+
+    // When
+    const model = buildRegistryMarketplaceModel(
+      catalog,
+      [
+        {
+          normalizedName: "aws-checks",
+          versionSpec: "latest",
+          resolvedVersion: "0.2.2",
+          extendsProviderSlugs: ["aws"],
+        },
+      ],
+      {},
+      "name",
+    );
+
+    // Then
+    expect(model).toMatchObject({
+      artifacts: [{ updateAvailable: true, extendsProviderSlugs: ["aws"] }],
+      myArtifacts: [
+        {
+          extendsProviderSlugs: ["aws"],
+          catalogArtifact: { extendsProviderSlugs: ["aws"] },
+        },
+      ],
+    });
+  });
+
   it("offers the catalog version for an installed artifact with a different resolved version", () => {
     // Given
     const catalog = {
@@ -66,18 +107,6 @@ describe("Registry marketplace model", () => {
     { resolvedVersion: undefined, latestVersion: "1.0.0", expected: false },
     { resolvedVersion: " ", latestVersion: "1.0.0", expected: false },
     { resolvedVersion: "1.0.0", latestVersion: undefined, expected: false },
-    {
-      resolvedVersion: "1.0.0",
-      latestVersion: "1.1.0",
-      isBuiltin: true,
-      expected: false,
-    },
-    {
-      resolvedVersion: "1.0.0",
-      latestVersion: "1.1.0",
-      hasProvider: false,
-      expected: false,
-    },
   ])(
     "compares resolved $resolvedVersion against catalog $latestVersion ($expected)",
     (example) => {
@@ -153,6 +182,7 @@ describe("Registry marketplace model", () => {
       {
         normalizedName: "core",
         versionSpec: "latest",
+        extendsProviderSlugs: [],
         catalogArtifact: expect.objectContaining({
           normalizedName: "core",
           isAdded: true,
@@ -161,6 +191,7 @@ describe("Registry marketplace model", () => {
       {
         normalizedName: "manual",
         versionSpec: "1.2.3",
+        extendsProviderSlugs: [],
         catalogArtifact: undefined,
       },
     ]);
