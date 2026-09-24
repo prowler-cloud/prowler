@@ -17,7 +17,7 @@ const organizationsActionsMock = vi.hoisted(() => ({
 }));
 const providersActionsMock = vi.hoisted(() => ({
   getProviderConnectionBaselines: vi.fn(),
-  getProviderUidsByIds: vi.fn(),
+  getProviderUidsAndConnectionBaselines: vi.fn(),
   revalidateProviders: vi.fn(),
   startProviderConnectionChecks: vi.fn(),
 }));
@@ -129,9 +129,12 @@ describe("useOrgAccountSelectionFlow", () => {
         relationships: { providers: { data: [{ id: PROVIDER_ID }] } },
       },
     });
-    providersActionsMock.getProviderUidsByIds.mockResolvedValue({
-      [PROVIDER_ID]: PROJECT_UID,
-    });
+    providersActionsMock.getProviderUidsAndConnectionBaselines.mockResolvedValue(
+      {
+        uidById: { [PROVIDER_ID]: PROJECT_UID },
+        baselineById: {},
+      },
+    );
     providersActionsMock.getProviderConnectionBaselines.mockResolvedValue({});
     providersActionsMock.revalidateProviders.mockResolvedValue(undefined);
   });
@@ -193,9 +196,12 @@ describe("useOrgAccountSelectionFlow", () => {
       providersActionsMock.startProviderConnectionChecks.mockResolvedValue({
         [PROVIDER_ID]: { taskId: "task-1" },
       });
-      providersActionsMock.getProviderConnectionBaselines.mockResolvedValue({
-        [PROVIDER_ID]: "2025-01-01T00:00:00Z",
-      });
+      providersActionsMock.getProviderUidsAndConnectionBaselines.mockResolvedValue(
+        {
+          uidById: { [PROVIDER_ID]: PROJECT_UID },
+          baselineById: { [PROVIDER_ID]: "2025-01-01T00:00:00Z" },
+        },
+      );
       providerHelpersMock.resolveProviderConnectionState.mockResolvedValue({
         status: CONNECTION_CHECK_STATUS.SUCCESS,
         error: null,
@@ -229,7 +235,7 @@ describe("useOrgAccountSelectionFlow", () => {
         );
       });
       expect(
-        providersActionsMock.getProviderConnectionBaselines,
+        providersActionsMock.getProviderUidsAndConnectionBaselines,
       ).toHaveBeenCalledWith([PROVIDER_ID]);
       expect(
         providerHelpersMock.resolveProviderConnectionState,
@@ -351,10 +357,15 @@ describe("useOrgAccountSelectionFlow", () => {
           },
         },
       });
-      providersActionsMock.getProviderUidsByIds.mockResolvedValue({
-        [PROVIDER_ID]: PROJECT_UID,
-        [OTHER_PROVIDER_ID]: OTHER_UID,
-      });
+      providersActionsMock.getProviderUidsAndConnectionBaselines.mockResolvedValue(
+        {
+          uidById: {
+            [PROVIDER_ID]: PROJECT_UID,
+            [OTHER_PROVIDER_ID]: OTHER_UID,
+          },
+          baselineById: {},
+        },
+      );
       providersActionsMock.startProviderConnectionChecks.mockResolvedValue({
         [PROVIDER_ID]: { taskId: "task-1" },
         [OTHER_PROVIDER_ID]: { taskId: "task-2" },

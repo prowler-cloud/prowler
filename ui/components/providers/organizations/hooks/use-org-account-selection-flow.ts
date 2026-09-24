@@ -6,7 +6,7 @@ import { applyDiscovery } from "@/actions/organizations/organizations";
 import { buildApplyPayload } from "@/actions/organizations/organizations.adapter";
 import {
   getProviderConnectionBaselines,
-  getProviderUidsByIds,
+  getProviderUidsAndConnectionBaselines,
   revalidateProviders,
   startProviderConnectionChecks,
 } from "@/actions/providers/providers";
@@ -301,7 +301,10 @@ export function useOrgAccountSelectionFlow({
     };
   }, []);
 
-  const testAllConnections = async (providerIds: string[]) => {
+  const testAllConnections = async (
+    providerIds: string[],
+    precomputedBaselines?: Record<string, string | null>,
+  ) => {
     connectionTestAbortControllerRef.current?.abort();
     const abortController = new AbortController();
     connectionTestAbortControllerRef.current = abortController;
@@ -351,9 +354,13 @@ export function useOrgAccountSelectionFlow({
       // Read before dispatch, so the fallback below can tell each provider's own
       // check result apart from whatever (possibly stale) result was already on
       // record -- by comparing values, not by comparing timestamps against the
-      // browser's clock. See `resolveProviderConnectionState`.
+      // browser's clock. See `resolveProviderConnectionState`. The initial apply
+      // already reads this alongside the created providers' uids (see
+      // `handleApplyAndTest`) and passes it in, so a retry is the only path that
+      // fetches it here.
       const connectionBaselines =
-        await getProviderConnectionBaselines(providerIds);
+        precomputedBaselines ??
+        (await getProviderConnectionBaselines(providerIds));
 
       // One action dispatches every check and one reads every pending task per
       // round: Next runs client-invoked server actions one at a time, so a loop
@@ -493,10 +500,21 @@ export function useOrgAccountSelectionFlow({
       ) ?? [];
 
     setCreatedProviderIds(providerIds);
+
+    // One filtered `/providers` read for both: the apply view rejects `include`,
+    // so the created providers' uids are read back separately, and the flow needs
+    // their connection baselines before dispatch anyway (see `testAllConnections`).
+    // Reading them together avoids fetching the same provider ids twice.
+    const { uidById, baselineById } =
+      await getProviderUidsAndConnectionBaselines(providerIds);
+    if (!isMountedRef.current) {
+      return;
+    }
+
     const mapping = await buildCandidateToProviderMap({
       selectedCandidateIds: currentSelectedCandidateIds,
       providerIds,
-      resolveProviderUids: getProviderUidsByIds,
+      resolveProviderUids: async () => uidById,
     });
     if (!isMountedRef.current) {
       return;
@@ -506,7 +524,7 @@ export function useOrgAccountSelectionFlow({
     setIsApplying(false);
     lastAppliedSelectionKeyRef.current = currentSelectionKey;
 
-    await testAllConnections(providerIds);
+    await testAllConnections(providerIds, baselineById);
   };
 
   const handleStartTesting = () => {

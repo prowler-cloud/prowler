@@ -546,7 +546,7 @@ export const applyDiscovery = async (
   );
   // No `include`: the apply view rejects the parameter outright and fails the
   // whole request. The created providers' uids are read afterwards instead, with
-  // `getProviderUidsByIds`.
+  // `getProviderUidsAndConnectionBaselines`.
 
   const attributes = buildApplyAttributes(payload);
 

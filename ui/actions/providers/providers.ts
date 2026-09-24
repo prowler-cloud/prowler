@@ -249,6 +249,65 @@ export const getProviderConnectionBaselines = async (
   return baselineById;
 };
 
+/**
+ * Uid and `connection.last_checked_at` for each given provider, keyed by id, read
+ * with a single batched `filter[id__in]` request. The organization onboarding
+ * apply step needs both right after creating providers: the uid to match each one
+ * back to the candidate it was created for (see `getProviderUidsByIds`), and the
+ * baseline to compare a dispatched check's result against (see
+ * `getProviderConnectionBaselines`). Reading them together avoids fetching the
+ * same set of providers twice.
+ */
+export const getProviderUidsAndConnectionBaselines = async (
+  providerIds: string[],
+): Promise<{
+  uidById: Record<string, string>;
+  baselineById: Record<string, string | null>;
+}> => {
+  const uniqueIds = Array.from(new Set(providerIds.filter(Boolean)));
+  const uidById: Record<string, string> = {};
+  const baselineById: Record<string, string | null> = {};
+  if (uniqueIds.length === 0) {
+    return { uidById, baselineById };
+  }
+
+  const headers = await getAuthHeaders({ contentType: false });
+  const batches: string[][] = [];
+  for (let start = 0; start < uniqueIds.length; start += PROVIDERS_PAGE_MAX) {
+    batches.push(uniqueIds.slice(start, start + PROVIDERS_PAGE_MAX));
+  }
+
+  for (const batch of batches) {
+    const url = new URL(`${apiBaseUrl}/providers`);
+    url.searchParams.set("filter[id__in]", batch.join(","));
+    url.searchParams.set("page[size]", String(PROVIDERS_PAGE_MAX));
+
+    try {
+      const response = await fetch(url.toString(), { headers });
+      const result = (await handleApiResponse(response)) as
+        | ProvidersApiResponse
+        | undefined;
+
+      for (const provider of result?.data ?? []) {
+        if (typeof provider?.id !== "string") {
+          continue;
+        }
+        const uid = provider.attributes?.uid;
+        if (typeof uid === "string") {
+          uidById[provider.id] = uid;
+        }
+        baselineById[provider.id] =
+          provider.attributes?.connection?.last_checked_at ?? null;
+      }
+    } catch {
+      // A failed batch leaves its providers out of both maps rather than failing
+      // the rest -- see the "unknown" handling on `getProviderConnectionBaselines`.
+    }
+  }
+
+  return { uidById, baselineById };
+};
+
 export const updateProvider = async (formData: FormData) => {
   const headers = await getAuthHeaders({ contentType: true });
   const providerId = formData.get(ProviderCredentialFields.PROVIDER_ID);
