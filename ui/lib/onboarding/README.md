@@ -19,10 +19,32 @@ posts to the API.
 | Per-route trigger                      | `ui/components/onboarding/onboarding-trigger.tsx`                     |
 | Ephemeral sequence slice               | `ui/store/onboarding-sequence.ts`                                     |
 | Checkpoint watcher + dialog            | `ui/components/onboarding/onboarding-checkpoint-{watcher,dialog}.tsx` |
-| Mandatory new-user gate                | `ui/components/onboarding/onboarding-gate.tsx`                        |
+| New-tenant gate (first-run redirect)   | `ui/components/onboarding/onboarding-gate.tsx`                        |
+| First-run marker (once per tenant)     | `ui/lib/onboarding/first-run-marker.ts`                               |
 | Step outcome events (window)           | `ui/lib/onboarding/onboarding-events.ts`                              |
 | Invite step before the checkpoint      | `ui/components/onboarding/onboarding-invite-{step,dialog}.tsx`        |
 | Manual replay list                     | `ui/components/ui/user-nav/user-nav.tsx`                              |
+
+## First run
+
+The gate is mounted in every deployment. When the tenant provably has no
+providers (`hasProviders === false`), the user holds `manage_providers` and
+neither the first-run marker (`prowler.onboarding.first-run.<tenantId>`, so a
+first run in one tenant never silences it for another on the same browser; the
+bare `prowler.onboarding.first-run` key is a browser-wide opt-out, which is what
+the e2e storage state sets) nor an add-provider completion record exists, it
+replaces the route once with
+`/providers?addProvider=true&addProviderSource=first_run`, so the add-provider
+wizard is already open. Billing routes defer it; an unknown provider count or a
+user without the permission (an empty list may only mean limited visibility)
+never triggers it.
+
+In Cloud the URL also carries `&onboarding=add-provider` and the checkpoint is
+armed. Because the wizard is already open, the providers page passes
+`startAtTarget="provider-type"` to its `<OnboardingTrigger />`, which skips the
+tour's welcome and "open the wizard" steps. A navbar replay with the wizard
+closed still starts from the first step. Self-hosted deployments get the
+redirect only: tours and the checkpoint stay Cloud-only.
 
 ## How the guided sequence works
 

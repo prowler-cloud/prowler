@@ -4,21 +4,51 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { Toaster } from "@/components/shadcn/toast/Toaster";
 import { resetToasts } from "@/components/shadcn/toast/use-toast";
+import {
+  PROVIDER_FUNNEL_EVENT,
+  type ProviderFunnelDetail,
+} from "@/lib/provider-funnel/provider-funnel-events";
+import { endActiveTour } from "@/lib/tours/use-driver-tour";
 import { useProviderWizardStore } from "@/store/provider-wizard/store";
+import { useUIStore } from "@/store/ui/store";
 
 import { ProviderWizardModal } from "./provider-wizard-modal";
 
-const { addRegistryProvider, getInstalledRegistryProviderOptions } = vi.hoisted(
-  () => ({
-    addRegistryProvider: vi.fn(),
-    getInstalledRegistryProviderOptions: vi.fn(),
-  }),
-);
+const {
+  addCredentialsProvider,
+  addProvider,
+  addRegistryProvider,
+  getInstalledRegistryProviderOptions,
+  testProviderConnection,
+  updateCredentialsProvider,
+  updateProvider,
+} = vi.hoisted(() => ({
+  addCredentialsProvider: vi.fn(),
+  addProvider: vi.fn(),
+  addRegistryProvider: vi.fn(),
+  getInstalledRegistryProviderOptions: vi.fn(),
+  testProviderConnection: vi.fn(),
+  updateCredentialsProvider: vi.fn(),
+  updateProvider: vi.fn(),
+}));
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ refresh: vi.fn(), push: vi.fn() }),
 }));
-vi.mock("@/actions/providers/providers", () => ({ addProvider: vi.fn() }));
+vi.mock("next-auth/react", () => ({
+  useSession: () => ({
+    data: { tenantId: "tenant-abc" },
+    status: "authenticated",
+  }),
+}));
+vi.mock("@/actions/providers/providers", () => ({
+  addCredentialsProvider,
+  addProvider,
+  updateCredentialsProvider,
+  updateProvider,
+}));
+// The real module reaches next-auth through lib/helper -> auth.config.
+vi.mock("@/lib/provider-helpers", () => ({ testProviderConnection }));
 vi.mock("@/actions/providers/registry-provider", () => ({
   addRegistryProvider,
 }));
@@ -37,12 +67,39 @@ vi.mock("@/lib/tours/use-driver-tour", () => ({
   endActiveTour: vi.fn(),
 }));
 vi.mock("./steps/credentials-step", () => ({
-  CredentialsStep: () => <p>Credential details</p>,
+  CredentialsStep: ({ onBack }: { onBack: () => void }) => (
+    <>
+      <p>Credential details</p>
+      <button type="button" onClick={onBack}>
+        Back to provider
+      </button>
+    </>
+  ),
 }));
 vi.mock("./steps/test-connection-step", () => ({
-  TestConnectionStep: () => null,
+  TestConnectionStep: ({
+    onResetCredentials,
+  }: {
+    onResetCredentials: () => void;
+  }) => (
+    <>
+      <p>Connection test</p>
+      <button type="button" onClick={onResetCredentials}>
+        Reset credentials
+      </button>
+    </>
+  ),
 }));
-vi.mock("./steps/launch-step", () => ({ LaunchStep: () => null }));
+vi.mock("./steps/launch-step", () => ({
+  LaunchStep: ({ onBack }: { onBack: () => void }) => (
+    <>
+      <p>Launch scan</p>
+      <button type="button" onClick={onBack}>
+        Back to form
+      </button>
+    </>
+  ),
+}));
 vi.mock("../organizations/azure-org-setup-form", () => ({
   AzureOrgSetupForm: () => null,
 }));
@@ -97,6 +154,9 @@ describe("provider wizard account creation", () => {
       status: "ready",
       options: [{ type: "acme", label: "Acme Cloud" }],
     });
+    testProviderConnection.mockResolvedValue({ connected: true, error: null });
+    updateCredentialsProvider.mockResolvedValue({ data: { id: "secret-1" } });
+    updateProvider.mockResolvedValue({ data: { id: "provider-1" } });
   });
 
   afterEach(() => {
@@ -130,6 +190,20 @@ describe("provider wizard account creation", () => {
     // When / Then
     await act(async () => resolveCreation(createdAccount));
     expect(await screen.findByText("Credential details")).toBeVisible();
+  });
+
+  it("tells the rest of the app the tenant now has a provider", async () => {
+    // Given
+    useUIStore.setState({ hasProviders: false, hasProvidersResolved: true });
+    addRegistryProvider.mockResolvedValueOnce(createdAccount);
+    const user = await enterAccountDetails();
+
+    // When
+    await user.click(screen.getByRole("button", { name: "Next" }));
+    await screen.findByText("Credential details");
+
+    // Then: the sidebar stops offering Add Provider without waiting for a reload.
+    expect(useUIStore.getState().hasProviders).toBe(true);
   });
 
   it("restores Next after a failed creation and retries the same account", async () => {
@@ -204,6 +278,198 @@ describe("provider wizard account creation", () => {
     expect(await screen.findByText("Credential details")).toBeVisible();
     expect(screen.queryByText(detail)).not.toBeInTheDocument();
     expect(addRegistryProvider).toHaveBeenCalledTimes(2);
+  });
+
+  it("signals the provider type the user picked, once", async () => {
+    // Given
+    const funnelSignals: ProviderFunnelDetail[] = [];
+    const recordFunnelSignal: EventListener = (event) => {
+      funnelSignals.push((event as CustomEvent<ProviderFunnelDetail>).detail);
+    };
+    window.addEventListener(PROVIDER_FUNNEL_EVENT, recordFunnelSignal);
+    const user = userEvent.setup();
+    render(<ProviderWizardModal open onOpenChange={vi.fn()} />);
+
+    await screen.findByRole("option", { name: "Acme Cloud Registry" });
+
+    // When
+    await user.click(
+      screen.getByRole("option", { name: /Amazon Web Services/ }),
+    );
+    await screen.findByRole("radio", { name: /IAM Role/ });
+    window.removeEventListener(PROVIDER_FUNNEL_EVENT, recordFunnelSignal);
+
+    // Then
+    expect(funnelSignals).toEqual([
+      { step: "provider_type_selected", providerType: "aws" },
+    ]);
+  });
+
+  describe("when the user picks AWS", () => {
+    const ROLE_ARN = "arn:aws:iam::123456789012:role/ProwlerScan";
+
+    async function pickAws() {
+      const user = userEvent.setup();
+      render(<ProviderWizardModal open onOpenChange={vi.fn()} />);
+      await screen.findByRole("option", { name: "Acme Cloud Registry" });
+      await user.click(
+        screen.getByRole("option", { name: /Amazon Web Services/ }),
+      );
+      await screen.findByRole("textbox", { name: /Role ARN/ });
+      return user;
+    }
+
+    it("connects the account and its credentials in one step, then tests the connection", async () => {
+      // Given
+      addProvider.mockResolvedValue({ data: { id: "provider-1" } });
+      addCredentialsProvider.mockResolvedValue({ data: { id: "secret-1" } });
+      const user = await pickAws();
+
+      // When
+      await user.type(
+        screen.getByRole("textbox", { name: /Role ARN/ }),
+        ROLE_ARN,
+      );
+      const connect = screen.getByRole("button", { name: "Connect account" });
+      await waitFor(() => expect(connect).toBeEnabled());
+      await user.click(connect);
+
+      // Then: neither the credentials step nor the connection test shows up.
+      expect(await screen.findByText("Launch scan")).toBeVisible();
+      expect(screen.queryByText("Credential details")).not.toBeInTheDocument();
+      expect(screen.queryByText("Connection test")).not.toBeInTheDocument();
+      expect(testProviderConnection).toHaveBeenCalledWith("provider-1");
+      expect(useProviderWizardStore.getState()).toMatchObject({
+        providerId: "provider-1",
+        secretId: "secret-1",
+        via: "role",
+      });
+    });
+
+    it("keeps the account on the one-step form when the connection is refused", async () => {
+      // Given
+      addProvider.mockResolvedValue({ data: { id: "provider-1" } });
+      addCredentialsProvider.mockResolvedValue({ data: { id: "secret-1" } });
+      testProviderConnection.mockResolvedValue({
+        connected: false,
+        error: "The role could not be assumed.",
+      });
+      const user = await pickAws();
+
+      // When
+      await user.type(
+        screen.getByRole("textbox", { name: /Role ARN/ }),
+        ROLE_ARN,
+      );
+      const connect = screen.getByRole("button", { name: "Connect account" });
+      await waitFor(() => expect(connect).toBeEnabled());
+      await user.click(connect);
+
+      // Then
+      expect(
+        await screen.findByText("The role could not be assumed."),
+      ).toBeVisible();
+      expect(screen.queryByText("Launch scan")).not.toBeInTheDocument();
+      expect(screen.getByRole("textbox", { name: /Role ARN/ })).toBeVisible();
+    });
+
+    it("closes instead of launching a scan when AWS credentials are updated", async () => {
+      // Given: the row action opens an existing AWS provider's credentials.
+      addProvider.mockResolvedValue({ data: { id: "provider-1" } });
+      addCredentialsProvider.mockResolvedValue({ data: { id: "secret-1" } });
+      const onOpenChange = vi.fn();
+      const user = userEvent.setup();
+      render(
+        <ProviderWizardModal
+          open
+          onOpenChange={onOpenChange}
+          initialData={{
+            providerId: "provider-1",
+            providerType: "aws",
+            providerUid: "123456789012",
+            providerAlias: null,
+            secretId: "secret-1",
+          }}
+        />,
+      );
+
+      // When: Back reaches the AWS one-step form, still in update mode.
+      await user.click(
+        await screen.findByRole("button", { name: "Back to provider" }),
+      );
+      await user.type(
+        await screen.findByRole("textbox", { name: /Role ARN/ }),
+        ROLE_ARN,
+      );
+      const connect = screen.getByRole("button", { name: "Connect account" });
+      await waitFor(() => expect(connect).toBeEnabled());
+      await user.click(connect);
+
+      // Then: an update never offers a scan.
+      await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false));
+      expect(screen.queryByText("Launch scan")).not.toBeInTheDocument();
+    });
+
+    it("returns to the one-step form when the launch step is stepped back from", async () => {
+      // Given
+      addProvider.mockResolvedValue({ data: { id: "provider-1" } });
+      addCredentialsProvider.mockResolvedValue({ data: { id: "secret-1" } });
+      const user = await pickAws();
+      await user.type(
+        screen.getByRole("textbox", { name: /Role ARN/ }),
+        ROLE_ARN,
+      );
+      const connect = screen.getByRole("button", { name: "Connect account" });
+      await waitFor(() => expect(connect).toBeEnabled());
+      await user.click(connect);
+      await screen.findByText("Launch scan");
+
+      // When
+      await user.click(screen.getByRole("button", { name: "Back to form" }));
+
+      // Then: AWS has no separate credentials step, so it lands on its own form.
+      expect(
+        await screen.findByRole("textbox", { name: /Role ARN/ }),
+      ).toBeVisible();
+      expect(screen.queryByText("Credential details")).not.toBeInTheDocument();
+    });
+
+    it("steps the tour aside once the account can be connected", async () => {
+      // Given
+      vi.mocked(endActiveTour).mockClear();
+      const user = await pickAws();
+
+      // When
+      await user.type(
+        screen.getByRole("textbox", { name: /Role ARN/ }),
+        ROLE_ARN,
+      );
+
+      // Then: the footer sits outside the tour's spotlight, so the tour ends
+      // right when the user is ready to press Connect account.
+      await waitFor(() =>
+        expect(
+          screen.getByRole("button", { name: "Connect account" }),
+        ).toBeEnabled(),
+      );
+      expect(endActiveTour).toHaveBeenCalled();
+    });
+
+    it("goes back to the provider list", async () => {
+      // Given
+      const user = await pickAws();
+
+      // When
+      await user.click(screen.getByRole("button", { name: "Back" }));
+
+      // Then
+      expect(
+        await screen.findByRole("option", { name: /Microsoft Azure/ }),
+      ).toBeVisible();
+      expect(
+        screen.queryByRole("textbox", { name: /Role ARN/ }),
+      ).not.toBeInTheDocument();
+    });
   });
 
   it("keeps native providers available during a Registry discovery error and retries", async () => {

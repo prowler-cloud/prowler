@@ -20,6 +20,7 @@ import { Alert, AlertDescription } from "@/components/shadcn/alert";
 import { Card, CardContent } from "@/components/shadcn/card/card";
 import { ContentLayout } from "@/components/shadcn/content-layout";
 import { pickLatestCisPerProvider } from "@/lib/compliance/compliance-report-types";
+import { isReportDownloadLocked } from "@/lib/report-download-access";
 import { isCloud } from "@/lib/shared/env";
 import {
   ExpandedScanData,
@@ -124,16 +125,19 @@ export default async function Compliance({
     );
   }
 
-  const scansData = await getScans({
-    filters: {
-      "filter[state]": "completed",
-    },
-    pageSize: 50,
-    fields: {
-      scans: "name,completed_at,provider",
-    },
-    include: "provider",
-  });
+  const [subscriptionOnly, scansData] = await Promise.all([
+    isReportDownloadLocked(),
+    getScans({
+      filters: {
+        "filter[state]": "completed",
+      },
+      pageSize: 50,
+      fields: {
+        scans: "name,completed_at,provider",
+      },
+      include: "provider",
+    }),
+  ]);
 
   if (!scansData?.data) {
     return (
@@ -256,6 +260,7 @@ export default async function Compliance({
               provider={selectedScan.providerInfo.provider}
               selectedScan={selectedScanData}
               sectionScores={threatScoreData.sectionScores}
+              subscriptionOnly={subscriptionOnly}
             />
           </div>
         )}
@@ -273,6 +278,7 @@ export default async function Compliance({
           scanId={selectedScanId}
           selectedScan={selectedScanData}
           watchlistPromise={watchlistPromise}
+          subscriptionOnly={subscriptionOnly}
         />
       </Suspense>
     </>
@@ -302,11 +308,13 @@ const SSRComplianceGrid = async ({
   scanId,
   selectedScan,
   watchlistPromise,
+  subscriptionOnly,
 }: {
   searchParams: SearchParamsProps;
   scanId: string | null;
   selectedScan?: ScanEntity;
   watchlistPromise: Promise<ComplianceWatchlistContext>;
+  subscriptionOnly: boolean;
 }) => {
   const regionFilter = searchParams["filter[region__in]"]?.toString() || "";
 
@@ -388,6 +396,7 @@ const SSRComplianceGrid = async ({
         catalogEntries={watchlist.entries}
         providerType={providerType}
         canManageWatchlist={watchlist.canManage}
+        subscriptionOnly={subscriptionOnly}
       />
     </ComplianceOverviewPanel>
   );
