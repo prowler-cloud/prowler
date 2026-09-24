@@ -387,8 +387,8 @@ describe("ScanJobsRowActions", () => {
     expect(downloadScanZipMock).toHaveBeenCalledWith("scan-1", toastMock);
   });
 
-  it("offers no report download for a partial scan", async () => {
-    // A partial scan re-checks a few resources and writes no report files.
+  it("offers neither report download nor compliance for a partial scan", async () => {
+    // A partial scan re-checks a few resources: no report files, no compliance.
     const user = userEvent.setup();
     render(
       <ScanJobsRowActions
@@ -407,6 +407,9 @@ describe("ScanJobsRowActions", () => {
 
     expect(
       screen.queryByRole("menuitem", { name: /download scan reports/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("menuitem", { name: /view compliance/i }),
     ).not.toBeInTheDocument();
     // The rest of the completed-scan actions stay available.
     expect(

@@ -19,16 +19,20 @@ const {
   complianceOverviewGridSpy,
   getComplianceOverviewMetadataInfoMock,
   getCompliancesOverviewMock,
+  getScanMock,
   getScansMock,
   getThreatScoreMock,
+  isCloudMock,
   loadComplianceWatchlistContextMock,
 } = vi.hoisted(() => ({
   complianceFiltersSpy: vi.fn(),
   complianceOverviewGridSpy: vi.fn(),
   getComplianceOverviewMetadataInfoMock: vi.fn(),
   getCompliancesOverviewMock: vi.fn(),
+  getScanMock: vi.fn(),
   getScansMock: vi.fn(),
   getThreatScoreMock: vi.fn(),
+  isCloudMock: vi.fn(() => false),
   loadComplianceWatchlistContextMock: vi.fn(),
 }));
 
@@ -43,12 +47,13 @@ vi.mock("@/actions/overview", () => ({
 }));
 
 vi.mock("@/actions/scans", () => ({
+  getScan: getScanMock,
   getScans: getScansMock,
   getScansByState: vi.fn(),
 }));
 
 vi.mock("@/lib/shared/env", () => ({
-  isCloud: () => false,
+  isCloud: isCloudMock,
 }));
 
 vi.mock("./_lib/watchlist-context", () => ({
@@ -153,6 +158,8 @@ describe("Compliance overview page", () => {
 describe("Compliance overview task response", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    isCloudMock.mockReturnValue(false);
+    getScanMock.mockResolvedValue(undefined);
     getScansMock.mockResolvedValue({
       data: [
         {
@@ -241,6 +248,7 @@ describe("Compliance overview task response", () => {
   it("keeps partial scans out of the per-scan selector", async () => {
     // Given - a Cloud partial scan among the completed scans; it computes no
     // compliance, so selecting it would show nothing and its downloads fail
+    isCloudMock.mockReturnValue(true);
     getScansMock.mockResolvedValue({
       data: [
         {
@@ -286,8 +294,65 @@ describe("Compliance overview task response", () => {
     );
     expect(getScansMock).toHaveBeenCalledWith(
       expect.objectContaining({
+        // Filtered at the API too, so a page full of re-checks cannot hide
+        // the full scans behind it.
+        filters: expect.objectContaining({ "filter[is_partial]": "false" }),
         fields: { scans: "name,completed_at,provider,is_partial" },
       }),
+    );
+  });
+
+  it("does not send the Cloud-only partial filter outside Prowler Cloud", async () => {
+    getCompliancesOverviewMock.mockResolvedValue({ data: [] });
+
+    await Compliance({ searchParams: Promise.resolve({ scanId: "scan-1" }) });
+
+    expect(getScansMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        filters: { "filter[state]": "completed" },
+      }),
+    );
+  });
+
+  it("falls back to the first full scan when the URL names a partial scan", async () => {
+    // Given - a stale link to a partial scan, absent from the eligible list
+    getScanMock.mockResolvedValue({
+      data: { id: "scan-partial", attributes: { is_partial: true } },
+    });
+    getCompliancesOverviewMock.mockResolvedValue({ data: [] });
+
+    // When
+    const page = await Compliance({
+      searchParams: Promise.resolve({ scanId: "scan-partial" }),
+    });
+    render(page as ReactElement);
+
+    // Then - the page selects a scan that has compliance instead
+    expect(getScanMock).toHaveBeenCalledWith("scan-partial");
+    expect(complianceFiltersSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ selectedScanId: "scan-1" }),
+    );
+    expect(getCompliancesOverviewMock).toHaveBeenCalledWith(
+      expect.objectContaining({ scanId: "scan-1" }),
+    );
+  });
+
+  it("keeps trusting a URL scan id that is older than the listed page", async () => {
+    // Given - a full scan beyond the first page: not listed, not partial
+    getScanMock.mockResolvedValue({
+      data: { id: "scan-old", attributes: { is_partial: false } },
+    });
+    getCompliancesOverviewMock.mockResolvedValue({ data: [] });
+
+    // When
+    const page = await Compliance({
+      searchParams: Promise.resolve({ scanId: "scan-old" }),
+    });
+    render(page as ReactElement);
+
+    // Then
+    expect(complianceFiltersSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ selectedScanId: "scan-old" }),
     );
   });
 
