@@ -63,7 +63,7 @@ export const addProviderTour = defineTour<AddProviderTourTarget>({
       autoAdvance: true,
       title: "Add your account details",
       description:
-        "Fill in the connection details for this provider, then continue. From here you'll test the connection and launch your first scan — at your own pace.",
+        "Fill in the connection details for this provider, then continue. Prowler checks the connection, then you launch your first scan — at your own pace.",
     },
   ],
 });
