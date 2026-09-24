@@ -42,9 +42,10 @@ import type { ComplianceWatchlistContext } from "./_lib/watchlist-context";
 import { loadComplianceWatchlistContext } from "./_lib/watchlist-context";
 
 /**
- * A scan id from the URL is trusted unless it names a partial scan (reached
- * through a stale link), which has no compliance to show. Ids missing from the
- * listed page are looked up once, so older full scans keep working.
+ * A scan id from the URL is trusted when it is listed, or when a single lookup
+ * returns a scan that is not partial (older full scans keep working). A partial
+ * scan, reached through a stale link, or an id the API cannot find, has no
+ * compliance to show, so the caller falls back to the first eligible scan.
  */
 async function resolveUrlScanId(
   scanIdFromUrl: string | undefined,
@@ -58,8 +59,11 @@ async function resolveUrlScanId(
   const urlScan = (await getScan(scanIdFromUrl)) as
     | { data?: { attributes?: { is_partial?: boolean } } }
     | undefined;
+  const scan = urlScan?.data;
+  if (!scan) return undefined;
 
-  return urlScan?.data?.attributes?.is_partial ? undefined : scanIdFromUrl;
+  // OSS scans carry no is_partial at all, so only an explicit true excludes.
+  return scan.attributes?.is_partial === true ? undefined : scanIdFromUrl;
 }
 
 export default async function Compliance({

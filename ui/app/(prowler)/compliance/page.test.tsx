@@ -337,10 +337,31 @@ describe("Compliance overview task response", () => {
     );
   });
 
+  it("falls back to the first full scan when the URL scan cannot be found", async () => {
+    // Given - a deleted or mistyped id: the lookup returns an error, no data
+    getScanMock.mockResolvedValue({ error: "Not found", status: 404 });
+    getCompliancesOverviewMock.mockResolvedValue({ data: [] });
+
+    // When
+    const page = await Compliance({
+      searchParams: Promise.resolve({ scanId: "scan-missing" }),
+    });
+    render(page as ReactElement);
+
+    // Then - no compliance request goes out for an id that does not exist
+    expect(complianceFiltersSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ selectedScanId: "scan-1" }),
+    );
+    expect(getCompliancesOverviewMock).not.toHaveBeenCalledWith(
+      expect.objectContaining({ scanId: "scan-missing" }),
+    );
+  });
+
   it("keeps trusting a URL scan id that is older than the listed page", async () => {
-    // Given - a full scan beyond the first page: not listed, not partial
+    // Given - a full scan beyond the first page, shaped like an OSS response
+    // that carries no is_partial field at all
     getScanMock.mockResolvedValue({
-      data: { id: "scan-old", attributes: { is_partial: false } },
+      data: { id: "scan-old", attributes: { name: "Old scan" } },
     });
     getCompliancesOverviewMock.mockResolvedValue({ data: [] });
 
