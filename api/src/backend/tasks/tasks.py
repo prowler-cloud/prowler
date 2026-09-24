@@ -43,6 +43,7 @@ from tasks.jobs.attack_paths import (
 )
 from tasks.jobs.attack_paths import db_utils as attack_paths_db_utils
 from tasks.jobs.attack_paths.cleanup import cleanup_stale_attack_paths_scans
+from tasks.jobs.attack_paths.tmp_db_reaper import reap_orphaned_tmp_databases
 from tasks.jobs.backfill import (
     aggregate_scan_category_summaries,
     aggregate_scan_resource_group_summaries,
@@ -725,6 +726,13 @@ def perform_attack_paths_scan_task(self, tenant_id: str, scan_id: str):
 @shared_task(name="attack-paths-cleanup-stale-scans", queue="attack-paths-scans")
 def cleanup_stale_attack_paths_scans_task():
     return cleanup_stale_attack_paths_scans()
+
+
+@shared_task(
+    name="attack-paths-reap-orphaned-tmp-databases", queue="attack-paths-scans"
+)
+def reap_orphaned_attack_paths_tmp_databases_task():
+    return reap_orphaned_tmp_databases()
 
 
 @shared_task(name="reconcile-orphan-tasks", queue="celery")
