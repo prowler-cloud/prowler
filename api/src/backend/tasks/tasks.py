@@ -195,27 +195,20 @@ def create_scan_task_record(
     return prowler_task
 
 
-def scan_task_kwargs(tenant_id: str, scan: Scan) -> dict:
-    """The kwargs ``scan-perform`` is published with.
-
-    Shared with ``create_scan_task_record`` so what is stored on the task record
-    before the publish is what the publish then writes over.
-    """
-    return {
-        "tenant_id": str(tenant_id),
-        "scan_id": str(scan.id),
-        "provider_id": str(scan.provider_id),
-    }
-
-
 def enqueue_scan_execution_on_commit(
     tenant_id: str,
     scan: Scan,
     task_id: str,
 ) -> None:
-    kwargs = scan_task_kwargs(tenant_id, scan)
     transaction.on_commit(
-        lambda: perform_scan_task.apply_async(kwargs=kwargs, task_id=str(task_id))
+        lambda: perform_scan_task.apply_async(
+            kwargs={
+                "tenant_id": str(tenant_id),
+                "scan_id": str(scan.id),
+                "provider_id": str(scan.provider_id),
+            },
+            task_id=str(task_id),
+        )
     )
 
 

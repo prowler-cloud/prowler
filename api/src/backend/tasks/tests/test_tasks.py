@@ -42,7 +42,6 @@ from tasks.tasks import (
     perform_scheduled_scan_task,
     refresh_lighthouse_provider_models_task,
     s3_integration_task,
-    scan_task_kwargs,
     security_hub_integration_task,
 )
 
@@ -3403,6 +3402,14 @@ class TestCreateScanTaskRecord:
             state=StateChoices.AVAILABLE,
         )
 
+    def _publish_kwargs(self, tenant, scan):
+        """What `enqueue_scan_execution_on_commit` publishes for this scan."""
+        return {
+            "tenant_id": str(tenant.id),
+            "scan_id": str(scan.id),
+            "provider_id": str(scan.provider_id),
+        }
+
     def _task_args(self, task):
         """Read the record back the way `TaskSerializer` does."""
         return TaskSerializer(task).data["task_args"]
@@ -3416,7 +3423,7 @@ class TestCreateScanTaskRecord:
         task = create_scan_task_record(
             tenant_id=str(tenant.id),
             task_id=str(uuid.uuid4()),
-            task_kwargs=scan_task_kwargs(str(tenant.id), scan),
+            task_kwargs=self._publish_kwargs(tenant, scan),
         )
 
         assert self._task_args(task) == {
@@ -3439,7 +3446,7 @@ class TestCreateScanTaskRecord:
         tenant = tenants_fixture[0]
         scan = self._scan(tenant, aws_provider)
         task_id = str(uuid.uuid4())
-        kwargs = scan_task_kwargs(str(tenant.id), scan)
+        kwargs = self._publish_kwargs(tenant, scan)
 
         task = create_scan_task_record(
             tenant_id=str(tenant.id), task_id=task_id, task_kwargs=kwargs
