@@ -1,3 +1,4 @@
+import json
 import os
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -163,13 +164,28 @@ def create_scan_task_record(
     task_id: str,
     task_name: str = "scan-perform",
     task_status: str | None = states.PENDING,
+    task_kwargs: dict | None = None,
 ) -> Task:
+    """Pre-create the TaskResult + Task rows for a pre-generated task id.
+
+    Pass ``task_kwargs`` when the response built from this record is serialized
+    before the broker publish. ``task_kwargs`` is otherwise only written by the
+    ``before_task_publish`` signal (``api/signals.py``), and the scan publish is
+    deferred to ``on_commit``, so the 202 would carry an empty ``task_args`` and
+    the caller would have no way to learn the scan id it was just handed a task
+    for. The publish later overwrites the field with the same kwargs as a Python
+    repr; both forms decode to the same dict (``decode_celery_field``).
+    """
     if task_status is None:
         task_status = states.PENDING
 
+    defaults = {"status": task_status, "task_name": task_name}
+    if task_kwargs is not None:
+        defaults["task_kwargs"] = json.dumps(task_kwargs)
+
     task_result, _ = TaskResult.objects.update_or_create(
         task_id=str(task_id),
-        defaults={"status": task_status, "task_name": task_name},
+        defaults=defaults,
     )
     prowler_task, _ = Task.objects.update_or_create(
         id=str(task_id),
@@ -179,20 +195,27 @@ def create_scan_task_record(
     return prowler_task
 
 
+def scan_task_kwargs(tenant_id: str, scan: Scan) -> dict:
+    """The kwargs ``scan-perform`` is published with.
+
+    Shared with ``create_scan_task_record`` so what is stored on the task record
+    before the publish is what the publish then writes over.
+    """
+    return {
+        "tenant_id": str(tenant_id),
+        "scan_id": str(scan.id),
+        "provider_id": str(scan.provider_id),
+    }
+
+
 def enqueue_scan_execution_on_commit(
     tenant_id: str,
     scan: Scan,
     task_id: str,
 ) -> None:
+    kwargs = scan_task_kwargs(tenant_id, scan)
     transaction.on_commit(
-        lambda: perform_scan_task.apply_async(
-            kwargs={
-                "tenant_id": str(tenant_id),
-                "scan_id": str(scan.id),
-                "provider_id": str(scan.provider_id),
-            },
-            task_id=str(task_id),
-        )
+        lambda: perform_scan_task.apply_async(kwargs=kwargs, task_id=str(task_id))
     )
 
 

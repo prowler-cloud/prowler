@@ -343,6 +343,7 @@ from tasks.tasks import (
     jira_integration_task,
     mute_findings_in_latest_scans_task,
     refresh_lighthouse_provider_models_task,
+    scan_task_kwargs,
 )
 
 logger = logging.getLogger(BackendLogger.API)
@@ -2822,6 +2823,9 @@ class ScanViewSet(ProviderVisibilityMixin, BaseRLSViewSet):
                 tenant_id=self.request.tenant_id,
                 task_id=pre_task_id,
                 task_status=(QUEUED_SCAN_TASK_STATE if active_scan else None),
+                # This response is serialized before the on_commit publish, so
+                # without these the caller gets a task id and no scan id.
+                task_kwargs=scan_task_kwargs(self.request.tenant_id, scan),
             )
 
             if not active_scan:

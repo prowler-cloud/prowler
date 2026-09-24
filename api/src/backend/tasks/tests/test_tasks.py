@@ -1,3 +1,4 @@
+import json
 import uuid
 from contextlib import contextmanager
 from datetime import UTC, datetime
@@ -14,6 +15,7 @@ from api.models import (
     StateChoices,
     Task,
 )
+from api.v1.serializers import TaskSerializer
 from botocore.exceptions import ClientError
 from celery import states
 from django_celery_beat.models import IntervalSchedule, PeriodicTask
@@ -32,6 +34,7 @@ from tasks.tasks import (
     _scan_tmp_output_directory,
     check_integrations_task,
     check_lighthouse_provider_connection_task,
+    create_scan_task_record,
     generate_outputs_task,
     mute_findings_in_latest_scans_task,
     perform_attack_paths_scan_task,
@@ -39,6 +42,7 @@ from tasks.tasks import (
     perform_scheduled_scan_task,
     refresh_lighthouse_provider_models_task,
     s3_integration_task,
+    scan_task_kwargs,
     security_hub_integration_task,
 )
 
@@ -3384,3 +3388,68 @@ class TestTaskTimeLimits:
             "lighthouse-provider-connection-check",
         ):
             assert celery_app.tasks[name].time_limit < default
+
+
+@pytest.mark.django_db
+class TestCreateScanTaskRecord:
+    """`task_kwargs` is what a response built before the publish can report."""
+
+    def _scan(self, tenant, provider):
+        return Scan.objects.create(
+            tenant_id=tenant.id,
+            provider=provider,
+            name="Manual scan",
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.AVAILABLE,
+        )
+
+    def _task_args(self, task):
+        """Read the record back the way `TaskSerializer` does."""
+        return TaskSerializer(task).data["task_args"]
+
+    def test_the_stored_kwargs_are_the_ones_the_publish_would_send(
+        self, tenants_fixture, aws_provider
+    ):
+        tenant = tenants_fixture[0]
+        scan = self._scan(tenant, aws_provider)
+
+        task = create_scan_task_record(
+            tenant_id=str(tenant.id),
+            task_id=str(uuid.uuid4()),
+            task_kwargs=scan_task_kwargs(str(tenant.id), scan),
+        )
+
+        assert self._task_args(task) == {
+            "scan_id": str(scan.id),
+            "provider_id": str(aws_provider.id),
+        }
+
+    def test_a_record_created_without_kwargs_reports_none(self, tenants_fixture):
+        task = create_scan_task_record(
+            tenant_id=str(tenants_fixture[0].id),
+            task_id=str(uuid.uuid4()),
+        )
+
+        assert self._task_args(task) == {}
+
+    def test_the_publish_can_overwrite_the_stored_kwargs(
+        self, tenants_fixture, aws_provider
+    ):
+        """django-celery-results stores a Python repr; both must decode alike."""
+        tenant = tenants_fixture[0]
+        scan = self._scan(tenant, aws_provider)
+        task_id = str(uuid.uuid4())
+        kwargs = scan_task_kwargs(str(tenant.id), scan)
+
+        task = create_scan_task_record(
+            tenant_id=str(tenant.id), task_id=task_id, task_kwargs=kwargs
+        )
+        before = self._task_args(task)
+
+        # What `before_task_publish` writes once the task reaches the broker.
+        task_result = TaskResult.objects.get(task_id=task_id)
+        task_result.task_kwargs = json.dumps(repr(kwargs))
+        task_result.save(update_fields=["task_kwargs"])
+        task.refresh_from_db()
+
+        assert self._task_args(task) == before
