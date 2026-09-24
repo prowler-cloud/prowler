@@ -2,6 +2,7 @@ export * from "./cloud-upgrade/store";
 export * from "./compliance/store";
 export * from "./jira-dispatch/store";
 export * from "./organizations/store";
+export * from "./partial-scan/store";
 export * from "./provider-wizard/store";
 export * from "./scans/store";
 export * from "./ui/store";

@@ -9,7 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import { createPortal } from "react-dom";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // ---------------------------------------------------------------------------
 // Hoist mocks for components that pull in next-auth transitively
@@ -406,6 +406,14 @@ vi.mock("@/lib/shared/env", () => ({
   isCloud: mockIsCloud,
 }));
 
+// The re-check menu item reads the session for manage_scans; grant it here.
+vi.mock("@/hooks/use-auth", () => ({
+  useAuth: () => ({
+    permissions: { manage_scans: true },
+    hasPermission: () => true,
+  }),
+}));
+
 vi.mock("@/app/(prowler)/lighthouse/_lib/panel-chat-store", () => ({
   requestPanelChatMessage: mockRequestPanelChatMessage,
   requestPanelSkillLaunch: mockRequestPanelSkillLaunch,
@@ -543,6 +551,7 @@ vi.mock("../../muted", () => ({
 // ---------------------------------------------------------------------------
 
 import type { ResourceDrawerFinding } from "@/actions/findings";
+import { usePartialScanStore } from "@/store/partial-scan/store";
 import { SIDE_PANEL_TAB, useSidePanelStore } from "@/store/side-panel";
 import type { FindingResourceRow } from "@/types";
 import type { FindingComplianceFramework } from "@/types/compliance-watchlist";
@@ -655,6 +664,7 @@ const mockFinding: ResourceDrawerFinding = {
   resourceGroup: "default",
   resourceDetails: null,
   resourceMetadata: null,
+  providerId: "provider-1",
   providerType: "aws",
   providerAlias: "prod",
   providerUid: "123456789",
@@ -2239,5 +2249,49 @@ describe("ResourceDetailDrawerContent — Metadata tab", () => {
     expect(
       screen.queryByText("No metadata available for this resource."),
     ).not.toBeInTheDocument();
+  });
+});
+
+describe("ResourceDetailDrawerContent — re-check resource", () => {
+  beforeEach(() => {
+    usePartialScanStore.getState().closePartialScan();
+  });
+
+  it("should offer a re-check of the current resource with its provider id", async () => {
+    // Given — the drawer finding was fetched with scan.provider, so it knows the id
+    const user = userEvent.setup();
+    mockIsCloud.mockReturnValue(true);
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating={false}
+        checkMeta={mockCheckMeta}
+        currentIndex={0}
+        totalResources={1}
+        currentFinding={mockFinding}
+        otherFindings={[]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    // When
+    await user.click(
+      within(screen.getByRole("menu", { name: "Resource actions" })).getByRole(
+        "button",
+        { name: "Re-check resource" },
+      ),
+    );
+
+    // Then
+    expect(usePartialScanStore.getState().activeTarget).toEqual({
+      providerId: "provider-1",
+      providerUid: "123456789",
+      providerType: "aws",
+      providerAlias: "prod",
+      resourceUid: "arn:aws:s3:::bucket",
+      resourceName: "my-bucket",
+    });
   });
 });
