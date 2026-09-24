@@ -2822,6 +2822,15 @@ class ScanViewSet(ProviderVisibilityMixin, BaseRLSViewSet):
                 tenant_id=self.request.tenant_id,
                 task_id=pre_task_id,
                 task_status=(QUEUED_SCAN_TASK_STATE if active_scan else None),
+                # This response is serialized before the on_commit publish,
+                # so without these the caller gets a task id and no scan id.
+                # Kept in step with what `enqueue_scan_execution_on_commit`
+                # publishes below.
+                task_kwargs={
+                    "tenant_id": str(self.request.tenant_id),
+                    "scan_id": str(scan.id),
+                    "provider_id": str(scan.provider_id),
+                },
             )
 
             if not active_scan:
