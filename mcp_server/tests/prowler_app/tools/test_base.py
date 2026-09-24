@@ -85,6 +85,32 @@ def test_the_shared_properties_are_never_registered_as_tools():
     assert "logger" not in registered_names
 
 
+def test_an_async_member_named_api_client_is_skipped_by_the_explicit_guard():
+    """The inherited properties are filtered out by ``inspect.ismethod`` before
+    the name check runs, so the explicit guard is only reached by a *method*
+    that shadows one of the reserved names. This subclass does exactly that:
+    ``api_client`` is a public coroutine method, which would be registered as a
+    tool were it not for the name guard.
+
+    (``logger`` cannot be shadowed the same way, because ``register_tools``
+    itself calls ``self.logger.debug`` after registering.)
+    """
+
+    class _ShadowingTools(BaseTool):
+        async def api_client(self) -> str:
+            return "shadowed"
+
+        async def public_async_tool(self) -> str:
+            return "public"
+
+    mcp = _FakeMCP()
+    tools = _ShadowingTools()
+
+    tools.register_tools(mcp)
+
+    assert mcp.registered == [tools.public_async_tool]
+
+
 def test_a_tool_class_with_no_public_coroutines_registers_nothing():
     """An edge case: nothing to register must not raise."""
 

@@ -9,6 +9,7 @@ request that was actually made.
 
 import pytest
 from fastmcp import Client
+from fastmcp.exceptions import ToolError
 
 from tests.helpers.jsonapi import jsonapi_collection, jsonapi_document, jsonapi_resource
 
@@ -127,7 +128,9 @@ async def test_get_resource_requires_a_non_blank_id(
     mcp_root_server, mock_api_client, mock_router
 ):
     async with Client(mcp_root_server) as client:
-        with pytest.raises(Exception):
+        with pytest.raises(
+            ToolError, match="resource_id: String should have at least 1 character"
+        ):
             await client.call_tool("prowler_get_resource", {"resource_id": ""})
 
     assert mock_router.paths() == []
@@ -209,7 +212,10 @@ async def test_get_resource_events_rejects_a_lookback_beyond_ninety_days(
     mcp_root_server, mock_api_client, mock_router
 ):
     async with Client(mcp_root_server) as client:
-        with pytest.raises(Exception):
+        with pytest.raises(
+            ToolError,
+            match="lookback_days: Input should be less than or equal to 90",
+        ):
             await client.call_tool(
                 "prowler_get_resource_events",
                 {"resource_id": "res1", "lookback_days": 91},

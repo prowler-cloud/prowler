@@ -145,18 +145,21 @@ async def test_get_finding_group_details_includes_muted_groups_by_default(
     assert result.data["check_id"] == "s3_bucket_public_access"
 
 
-async def test_get_finding_group_details_raises_a_named_error_when_the_check_has_no_group(
+async def test_get_finding_group_details_fails_with_a_named_error_when_the_check_has_no_group(
     mcp_root_server, mock_api_client, mock_router
 ):
+    """Failures are raised, not returned: an error dict would arrive as
+    `isError: false` and read as a success, so the client must see a tool error."""
     mock_router.add("GET", GROUPS_LATEST, json=jsonapi_collection([]))
 
     async with Client(mcp_root_server) as client:
-        with pytest.raises(
-            Exception, match="No finding group exists for check 'unknown_check'"
-        ):
-            await client.call_tool(
-                "prowler_get_finding_group_details", {"check_id": "unknown_check"}
-            )
+        result = await client.call_tool_mcp(
+            "prowler_get_finding_group_details", {"check_id": "unknown_check"}
+        )
+
+    assert result.isError is True
+    assert result.structuredContent is None
+    assert "No finding group exists for check 'unknown_check'" in result.content[0].text
 
 
 async def test_get_finding_group_details_requires_a_non_blank_check_id(
@@ -222,13 +225,14 @@ async def test_list_finding_group_resources_url_escapes_the_check_id(
     mcp_root_server, mock_api_client, mock_router
 ):
     """The source `quote()`s a `/` in the check id to `%2F` so it survives as one
-    path segment rather than splitting the URL; httpx decodes `.url.path` back
-    to a literal `/`, which is exactly what proves the escaping worked -- an
-    unescaped slash would have produced this same decoded path by accident, but
-    a request for `check` with a *literal*, unescaped `/` would 404 against the
-    API's routing rather than reaching this one static path.
+    path segment rather than splitting the URL.
+
+    httpx decodes `.url.path` (and so `mock_router.paths()`), where an escaped
+    and an unescaped slash are indistinguishable, so the escaping itself is
+    asserted on the raw request target.
     """
     decoded_path = "/api/v1/finding-groups/latest/check/with/slash/resources"
+    encoded_path = b"/api/v1/finding-groups/latest/check%2Fwith%2Fslash/resources"
     mock_router.add("GET", decoded_path, json=jsonapi_collection([]))
 
     async with Client(mcp_root_server) as client:
@@ -238,6 +242,8 @@ async def test_list_finding_group_resources_url_escapes_the_check_id(
         )
 
     assert mock_router.paths() == ["GET " + decoded_path]
+    request = mock_router.request_for("GET", decoded_path)
+    assert request.url.raw_path.split(b"?")[0] == encoded_path
 
 
 async def test_list_finding_group_resources_rejects_a_page_size_below_one(

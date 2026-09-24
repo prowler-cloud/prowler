@@ -1,5 +1,7 @@
 """Tests for the cloud resource models."""
 
+import pytest
+
 from prowler_mcp_server.prowler_app.models.resources import (
     DetailedResource,
     ResourceEvent,
@@ -108,11 +110,23 @@ def test_detailed_resource_parses_finding_ids_from_relationship():
     assert resource.finding_ids == ["f1", "f2"]
 
 
-def test_detailed_resource_reports_no_findings_as_none_not_empty_list():
+@pytest.mark.parametrize(
+    "relationships",
+    [
+        pytest.param(None, id="relationship-absent"),
+        pytest.param({"findings": {"data": []}}, id="relationship-empty"),
+    ],
+)
+def test_detailed_resource_reports_no_findings_as_none_not_empty_list(relationships):
     """The source builds `finding_ids` only `if findings_data`, so an empty or
     absent relationship both collapse to `None` rather than `[]`."""
     resource = DetailedResource.from_api_response(
-        jsonapi_resource("resources", "res1", DETAILED_ATTRIBUTES)
+        jsonapi_resource(
+            "resources",
+            "res1",
+            attributes=DETAILED_ATTRIBUTES,
+            relationships=relationships,
+        )
     )
 
     assert resource.finding_ids is None
@@ -177,7 +191,9 @@ def test_resource_event_reads_all_attributes_directly():
     )
 
     assert event.id == "ev1"
+    assert event.event_time == "2025-01-01T00:00:00Z"
     assert event.event_name == "PutBucketPolicy"
+    assert event.event_source == "s3.amazonaws.com"
     assert event.actor == "arn:aws:iam::123456789012:user/alice"
 
 
