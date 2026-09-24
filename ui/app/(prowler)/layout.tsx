@@ -4,18 +4,15 @@ import * as Sentry from "@sentry/nextjs";
 import { Metadata, Viewport } from "next";
 import { ReactNode, Suspense } from "react";
 
-import { isOnboardingProfileRecorded } from "@/actions/onboarding/profile";
 import { getProviders } from "@/actions/providers";
 import { getScansByState } from "@/actions/scans/scans";
 import { auth } from "@/auth.config";
 import MainLayout from "@/components/layout/main-layout/main-layout";
 import {
   OnboardingCheckpointWatcher,
+  OnboardingGate,
   OnboardingSequenceBanner,
 } from "@/components/onboarding";
-// Imported directly: it pulls the server actions, which the shared barrel
-// stays free of so tests can import the barrel without mocking them.
-import { OnboardingProfileGate } from "@/components/onboarding/onboarding-profile-gate";
 import { RuntimePublicConfig } from "@/components/runtime-config/runtime-public-config";
 import { NavigationProgress } from "@/components/shadcn/navigation-progress";
 import { Toaster } from "@/components/shadcn/toast";
@@ -62,6 +59,10 @@ export default async function RootLayout({
   // Skip Cloud-only onboarding fetches and orchestrators in OSS.
   const cloudEnabled = isCloud();
 
+  // Every deployment needs the provider count: it drives the first-run redirect
+  // and the sidebar's Add Provider action.
+  const providersPromise = getProviders({ page: 1, pageSize: 1 });
+
   // One-time server-side Registry gate per request: only an ELIGIBLE answer
   // shows the sidebar entry; UNKNOWN and INELIGIBLE both hide it. Started
   // here so it resolves in parallel with the Cloud onboarding fetches.
@@ -72,37 +73,26 @@ export default async function RootLayout({
   // Fail-open: unknown scan state is treated as "has data" so the banner never blocks
   // progression on a fetch error.
   let hasCompletedScan = true;
-  // Tri-state: true = has providers, false = zero providers, undefined = fetch failed (gate fails open).
-  let hasProviders: boolean | undefined = false;
-  // Same tri-state for the onboarding profile step; only new tenants pay the read.
-  let profileRecorded: boolean | undefined = true;
-  // Scopes the step's local marker, so answering for one tenant does not
-  // silence it for another.
+  // Scopes the onboarding steps' local markers, so resolving them for one
+  // tenant does not silence them for another.
   let tenantId: string | null = null;
 
   if (cloudEnabled) {
-    const [providersData, scansByState] = await Promise.all([
-      getProviders({ page: 1, pageSize: 1 }),
-      getScansByState(),
-    ]);
+    const scansByState = await getScansByState();
     hasCompletedScan = Array.isArray(scansByState?.data)
       ? scansByState.data.some(
           (scan: { attributes?: { state?: string } }) =>
             scan.attributes?.state === SCAN_STATES.COMPLETED,
         )
       : true;
-    hasProviders = Array.isArray(providersData?.data)
-      ? providersData.data.length > 0
-      : undefined;
-    if (hasProviders === false) {
-      const [recorded, session] = await Promise.all([
-        isOnboardingProfileRecorded(),
-        auth(),
-      ]);
-      profileRecorded = recorded;
-      tenantId = session?.tenantId ?? null;
-    }
+    tenantId = (await auth())?.tenantId ?? null;
   }
+
+  const providersData = await providersPromise;
+  // Tri-state: true = has providers, false = zero providers, undefined = fetch failed (gate fails open).
+  const hasProviders: boolean | undefined = Array.isArray(providersData?.data)
+    ? providersData.data.length > 0
+    : undefined;
 
   const registryEligible =
     (await registryAccessPromise).status === REGISTRY_ACCESS.ELIGIBLE;
@@ -126,20 +116,14 @@ export default async function RootLayout({
           <Suspense>
             <NavigationProgress />
           </Suspense>
-          {/* Store uses boolean; gate receives tri-state to fail open on fetch errors. */}
-          <StoreInitializer
-            values={{ hasProviders: hasProviders ?? false, registryEligible }}
-          />
+          {/* Tri-state for both: an unknown count leaves the store unresolved and the gate closed. */}
+          <StoreInitializer values={{ hasProviders, registryEligible }} />
+          {/* Every deployment: an empty tenant lands on the add-provider wizard once. */}
+          <OnboardingGate hasProviders={hasProviders} tenantId={tenantId} />
           {cloudEnabled && (
             <>
-              {/* Profile step first, then the tour gate it wraps. */}
-              <OnboardingProfileGate
-                hasProviders={hasProviders}
-                profileRecorded={profileRecorded}
-                tenantId={tenantId}
-              />
               {/* Single mount point so the watcher survives post-connect navigation. */}
-              <OnboardingCheckpointWatcher />
+              <OnboardingCheckpointWatcher tenantId={tenantId} />
               {/* Persistent banner shown only while a guided sequence is active. */}
               <OnboardingSequenceBanner hasCompletedScan={hasCompletedScan} />
             </>

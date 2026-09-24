@@ -1,4 +1,3 @@
-import { isRegistryArtifactInstallable } from "@/lib/registry/artifacts";
 import {
   REGISTRY_CATALOG,
   type RegistryCatalogArtifact,
@@ -39,6 +38,8 @@ export interface RegistryMarketplaceArtifact extends RegistryCatalogArtifact {
   isAdded: boolean;
   resolvedVersion?: string;
   updateAvailable: boolean;
+  /** Built-in providers the install adds checks to; empty until installed. */
+  extendsProviderSlugs: string[];
 }
 
 export interface RegistryMarketplaceMyArtifact extends RegistryTenantArtifact {
@@ -85,12 +86,13 @@ export function buildRegistryMarketplaceModel(
           latestVersion,
           resolvedVersion,
           isAdded: Boolean(installed),
+          // Versions alone: a checks artifact defines no provider yet updates.
           updateAvailable: Boolean(
             resolvedVersion &&
               latestVersion &&
-              resolvedVersion !== latestVersion &&
-              isRegistryArtifactInstallable(artifact),
+              resolvedVersion !== latestVersion,
           ),
+          extendsProviderSlugs: installed?.extendsProviderSlugs ?? [],
         },
       ];
     }),
@@ -110,11 +112,12 @@ export function buildRegistryMarketplaceModel(
       new Set(catalog.artifacts.flatMap((artifact) => artifact.providers)),
     ).sort(compare),
     myArtifacts: myArtifacts
-      .map(({ normalizedName, versionSpec, resolvedVersion }) => ({
-        normalizedName,
-        versionSpec,
-        resolvedVersion: resolvedVersion?.trim() || undefined,
-        catalogArtifact: merged.get(normalizedName),
+      .map((installed) => ({
+        normalizedName: installed.normalizedName,
+        versionSpec: installed.versionSpec,
+        resolvedVersion: installed.resolvedVersion?.trim() || undefined,
+        extendsProviderSlugs: installed.extendsProviderSlugs ?? [],
+        catalogArtifact: merged.get(installed.normalizedName),
       }))
       .sort((left, right) =>
         compare(left.normalizedName, right.normalizedName),

@@ -75,7 +75,6 @@ from api.filters import (
     TaskFilter,
     TenantApiKeyFilter,
     TenantFilter,
-    TenantOnboardingProfileFilter,
     ThreatScoreSnapshotFilter,
     UserFilter,
 )
@@ -120,7 +119,6 @@ from api.models import (
     Task,
     TenantAPIKey,
     TenantComplianceSummary,
-    TenantOnboardingProfile,
     ThreatScoreSnapshot,
     User,
     UserRoleRelationship,
@@ -233,8 +231,6 @@ from api.v1.serializers import (
     TenantApiKeyCreateSerializer,
     TenantApiKeySerializer,
     TenantApiKeyUpdateSerializer,
-    TenantOnboardingProfileCreateSerializer,
-    TenantOnboardingProfileSerializer,
     TenantSerializer,
     ThreatScoreSnapshotSerializer,
     TokenRefreshSerializer,
@@ -261,7 +257,7 @@ from django.conf import settings as django_settings
 from django.contrib.postgres.aggregates import ArrayAgg, BoolAnd, StringAgg
 from django.contrib.postgres.search import SearchQuery
 from django.core.exceptions import ValidationError as DjangoValidationError
-from django.db import IntegrityError, transaction
+from django.db import transaction
 from django.db.models import (
     BooleanField,
     Case,
@@ -297,7 +293,6 @@ from django_celery_beat.models import PeriodicTask
 from drf_spectacular.settings import spectacular_settings
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import (
-    OpenApiExample,
     OpenApiParameter,
     OpenApiResponse,
     extend_schema,
@@ -331,7 +326,7 @@ from rest_framework_simplejwt.token_blacklist.models import (
 )
 from tasks.beat import schedule_provider_scan
 from tasks.jobs.attack_paths import db_utils as attack_paths_db_utils
-from tasks.jobs.export import get_s3_client
+from tasks.jobs.export import get_s3_client, get_s3_presign_client
 from tasks.tasks import (
     QUEUED_SCAN_TASK_STATE,
     backfill_compliance_summaries_task,
@@ -2412,7 +2407,8 @@ class ScanViewSet(ProviderVisibilityMixin, BaseRLSViewSet):
             }
             if content_type:
                 params["ResponseContentType"] = content_type
-            url = client.generate_presigned_url(
+            # The browser follows this URL, so it is signed against the public host.
+            url = (get_s3_presign_client() or client).generate_presigned_url(
                 "get_object",
                 Params=params,
                 ExpiresIn=300,
@@ -3482,12 +3478,8 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
         filtered_queryset = self.filter_queryset(self.get_queryset())
 
         latest_scans = (
-            Scan.all_objects.filter(
-                tenant_id=tenant_id,
-                state=StateChoices.COMPLETED,
-            )
-            .order_by("provider_id", "-inserted_at")
-            .distinct("provider_id")
+            Scan.all_objects.filter(tenant_id=tenant_id)
+            .latest_per_provider()
             .values("provider_id")
         )
 
@@ -3619,11 +3611,9 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
         tenant_id = request.tenant_id
         query_params = request.query_params
 
-        latest_scans_queryset = (
-            Scan.all_objects.filter(tenant_id=tenant_id, state=StateChoices.COMPLETED)
-            .order_by("provider_id", "-inserted_at")
-            .distinct("provider_id")
-        )
+        latest_scans_queryset = Scan.all_objects.filter(
+            tenant_id=tenant_id
+        ).latest_per_provider()
 
         queryset = ResourceScanSummary.objects.filter(
             tenant_id=tenant_id,
@@ -4210,12 +4200,9 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
         tenant_id = request.tenant_id
         filtered_queryset = self.filter_queryset(self.get_queryset())
 
-        latest_scan_ids = list(
-            Scan.all_objects.filter(tenant_id=tenant_id, state=StateChoices.COMPLETED)
-            .order_by("provider_id", "-inserted_at")
-            .distinct("provider_id")
-            .values_list("id", flat=True)
-        )
+        latest_scan_ids = Scan.all_objects.filter(
+            tenant_id=tenant_id
+        ).latest_ids_per_provider()
         filtered_queryset = filtered_queryset.filter(
             tenant_id=tenant_id, scan_id__in=latest_scan_ids
         )
@@ -4238,11 +4225,9 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
         tenant_id = request.tenant_id
         query_params = request.query_params
 
-        latest_scans_queryset = (
-            Scan.all_objects.filter(tenant_id=tenant_id, state=StateChoices.COMPLETED)
-            .order_by("provider_id", "-inserted_at")
-            .distinct("provider_id")
-        )
+        latest_scans_queryset = Scan.all_objects.filter(
+            tenant_id=tenant_id
+        ).latest_per_provider()
         raw_latest_scans_ids = list(
             latest_scans_queryset.values_list("id", "unique_resource_count")
         )
@@ -4476,7 +4461,7 @@ class InvitationViewSet(BaseRLSViewSet):
 
     def partial_update(self, request, *args, **kwargs):
         instance = self.get_object()
-        if instance.state != Invitation.State.PENDING:
+        if instance.state != Invitation.State.PENDING or instance.is_lapsed:
             raise ValidationError(detail="This invitation cannot be updated.")
         serializer = self.get_serializer(
             instance,
@@ -4490,7 +4475,7 @@ class InvitationViewSet(BaseRLSViewSet):
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
-        if instance.state != Invitation.State.PENDING:
+        if instance.state != Invitation.State.PENDING or instance.is_lapsed:
             raise ValidationError(detail="This invitation cannot be revoked.")
         instance.state = Invitation.State.REVOKED
         instance.save()
@@ -4983,11 +4968,7 @@ class ComplianceOverviewViewSet(
         if provider_filters:
             scans = scans.filter(**provider_filters)
 
-        return list(
-            scans.order_by("provider_id", "-inserted_at")
-            .distinct("provider_id")
-            .values_list("id", flat=True)
-        )
+        return scans.latest_ids_per_provider()
 
     def _filtered_queryset_for_latest_provider_scans(self, latest_scan_ids=None):
         if latest_scan_ids is None:
@@ -5729,14 +5710,9 @@ class OverviewViewSet(ProviderFilterParamsMixin, BaseRLSViewSet):
             else {}
         )
 
-        latest_scan_ids = (
-            Scan.all_objects.filter(
-                tenant_id=tenant_id, state=StateChoices.COMPLETED, **provider_filter
-            )
-            .order_by("provider_id", "-inserted_at")
-            .distinct("provider_id")
-            .values_list("id", flat=True)
-        )
+        latest_scan_ids = Scan.all_objects.filter(
+            tenant_id=tenant_id, **provider_filter
+        ).latest_ids_per_provider()
 
         return filtered_queryset.filter(
             tenant_id=tenant_id, scan_id__in=latest_scan_ids
@@ -5763,16 +5739,10 @@ class OverviewViewSet(ProviderFilterParamsMixin, BaseRLSViewSet):
 
     def _latest_scan_ids_for_allowed_providers(self, tenant_id, provider_filters=None):
         provider_filter = self._get_provider_filter()
-        queryset = Scan.all_objects.filter(
-            tenant_id=tenant_id, state=StateChoices.COMPLETED, **provider_filter
-        )
+        queryset = Scan.all_objects.filter(tenant_id=tenant_id, **provider_filter)
         if provider_filters:
             queryset = queryset.filter(**provider_filters)
-        return (
-            queryset.order_by("provider_id", "-inserted_at")
-            .distinct("provider_id")
-            .values_list("id", flat=True)
-        )
+        return queryset.latest_ids_per_provider()
 
     @action(detail=False, methods=["get"], url_name="providers")
     def providers(self, request):
@@ -5784,14 +5754,9 @@ class OverviewViewSet(ProviderFilterParamsMixin, BaseRLSViewSet):
             else {}
         )
 
-        latest_scan_ids = (
-            Scan.all_objects.filter(
-                tenant_id=tenant_id, state=StateChoices.COMPLETED, **provider_filter
-            )
-            .order_by("provider_id", "-inserted_at")
-            .distinct("provider_id")
-            .values_list("id", flat=True)
-        )
+        latest_scan_ids = Scan.all_objects.filter(
+            tenant_id=tenant_id, **provider_filter
+        ).latest_ids_per_provider()
 
         findings_aggregated = (
             queryset.filter(scan_id__in=latest_scan_ids)
@@ -7938,18 +7903,13 @@ class FindingGroupViewSet(JsonApiFilterMixin, BaseRLSViewSet):
 
     def _get_latest_findings_per_provider(self, filtered_queryset):
         """Keep only findings from each provider's most recent completed scan."""
-        # Materialize to a literal IN list. Left as a subquery, Postgres can't
-        # estimate the match count and picks a serial nested loop on
-        # resource_finding_mappings when one scan dominates findings
-        latest_scan_ids = list(
-            Scan.objects.filter(
-                tenant_id=self.request.tenant_id,
-                state=StateChoices.COMPLETED,
-            )
-            .order_by("provider_id", "-completed_at", "-inserted_at")
-            .distinct("provider_id")
-            .values_list("id", flat=True)
-        )
+        # `latest_ids_per_provider` materializes to a literal IN list.
+        # Left as a subquery, Postgres can't estimate the match count and picks
+        # a serial nested loop on resource_finding_mappings when one scan
+        # dominates findings
+        latest_scan_ids = Scan.objects.filter(
+            tenant_id=self.request.tenant_id
+        ).latest_ids_per_provider()
         return filtered_queryset.filter(scan_id__in=latest_scan_ids)
 
     def _post_process_aggregation(self, aggregated_data):
@@ -8895,16 +8855,14 @@ class FindingGroupViewSet(JsonApiFilterMixin, BaseRLSViewSet):
         tenant_id = request.tenant_id
         queryset = self._get_finding_queryset()
 
-        # Order by -completed_at (matching the /latest summary path and the
-        # daily summary upsert keyed on midnight(completed_at)) so that
-        # overlapping scans do not make /resources and /latest read from
-        # different scans and report diverging counts.
-        latest_scan_ids = (
-            Scan.objects.filter(tenant_id=tenant_id, state=StateChoices.COMPLETED)
-            .order_by("provider_id", "-completed_at", "-inserted_at")
-            .distinct("provider_id")
-            .values_list("id", flat=True)
-        )
+        # The shared selector orders by -completed_at (matching the /latest
+        # summary path and the daily summary upsert keyed on
+        # midnight(completed_at)) so that overlapping scans do not make
+        # /resources and /latest read from different scans and report
+        # diverging counts.
+        latest_scan_ids = Scan.objects.filter(
+            tenant_id=tenant_id
+        ).latest_ids_per_provider()
 
         normalized_params = self._normalize_jsonapi_params(request.query_params)
         # Remove date filters since we're using latest
@@ -8940,117 +8898,3 @@ class FindingGroupViewSet(JsonApiFilterMixin, BaseRLSViewSet):
         return self._paginated_resource_response(
             request, filtered_queryset, resource_ids, request.tenant_id
         )
-
-
-# Onboarding profile
-@extend_schema_view(
-    list=extend_schema(
-        tags=["Onboarding"],
-        summary="Read the tenant's onboarding profile",
-        description=(
-            "The answers the tenant gave in the onboarding profile step, or "
-            "the record that the step was skipped. At most one entry per "
-            "tenant; an empty list means the step was never completed."
-        ),
-    ),
-    create=extend_schema(
-        tags=["Onboarding"],
-        summary="Record the tenant's onboarding profile",
-        description=(
-            "Store the declared cloud-account count, role and seniority, or "
-            "mark the step as skipped. Idempotent: once a "
-            "profile exists the endpoint answers 200 with the stored one and "
-            "never overwrites it, so the first answer, given before the "
-            "product could bias it, is the one that stays."
-        ),
-        request=TenantOnboardingProfileCreateSerializer,
-        responses={
-            200: TenantOnboardingProfileSerializer,
-            201: TenantOnboardingProfileSerializer,
-        },
-        examples=[
-            OpenApiExample(
-                "DeclareProfile",
-                request_only=True,
-                media_type="application/vnd.api+json",
-                value={
-                    "data": {
-                        "type": "onboarding-profiles",
-                        "attributes": {
-                            "declared_cloud_accounts": "11-50",
-                            "declared_role": "security",
-                            "declared_seniority": "director",
-                        },
-                    }
-                },
-            ),
-            OpenApiExample(
-                "SkipProfile",
-                request_only=True,
-                media_type="application/vnd.api+json",
-                value={
-                    "data": {
-                        "type": "onboarding-profiles",
-                        "attributes": {"skipped": True},
-                    }
-                },
-            ),
-        ],
-    ),
-    retrieve=extend_schema(exclude=True),
-)
-class TenantOnboardingProfileViewSet(BaseRLSViewSet):
-    """The tenant's declared onboarding profile: one row, written once."""
-
-    queryset = TenantOnboardingProfile.objects.all()
-    serializer_class = TenantOnboardingProfileSerializer
-    filterset_class = TenantOnboardingProfileFilter
-    http_method_names = ["get", "post"]
-    ordering = ["-inserted_at"]
-    ordering_fields = ["inserted_at"]
-    # Any member may answer: the step runs at first login, before roles are
-    # curated, and the answer describes the tenant rather than the user.
-    required_permissions = []
-
-    def set_required_permissions(self):
-        self.required_permissions = []
-
-    def get_queryset(self):
-        return TenantOnboardingProfile.objects.filter(tenant_id=self.request.tenant_id)
-
-    def get_serializer_class(self):
-        if self.action == "create":
-            return TenantOnboardingProfileCreateSerializer
-        return super().get_serializer_class()
-
-    def retrieve(self, request, *args, **kwargs):
-        # The resource is a single row per tenant, so the collection is the
-        # only meaningful read. `extend_schema(exclude=True)` hides the detail
-        # route from the docs; this is what actually closes it.
-        raise MethodNotAllowed(method="GET")
-
-    def _stored_response(self, profile, http_status):
-        return Response(
-            TenantOnboardingProfileSerializer(
-                profile, context=self.get_serializer_context()
-            ).data,
-            status=http_status,
-        )
-
-    def create(self, request, *args, **kwargs):
-        existing = self.get_queryset().first()
-        if existing is not None:
-            return self._stored_response(existing, status.HTTP_200_OK)
-
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        try:
-            with transaction.atomic(using=self.db_alias):
-                profile = serializer.save(submitted_by=request.user)
-        except IntegrityError:
-            # Two first-login tabs raced on the unique tenant row; the answer
-            # that landed first is the one that stays.
-            return self._stored_response(
-                self.get_queryset().first(), status.HTTP_200_OK
-            )
-        return self._stored_response(profile, status.HTTP_201_CREATED)

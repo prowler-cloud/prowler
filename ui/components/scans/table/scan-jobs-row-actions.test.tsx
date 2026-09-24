@@ -2,7 +2,9 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { useCloudUpgradeStore } from "@/store/cloud-upgrade/store";
 import type { ScanProps } from "@/types";
+import { PAID_PLAN_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
 import { SCAN_SCHEDULE_CAPABILITY } from "@/types/schedules";
 
 import { ScanJobsRowActions } from "./scan-jobs-row-actions";
@@ -122,6 +124,7 @@ describe("ScanJobsRowActions", () => {
   afterEach(() => {
     vi.unstubAllEnvs();
     vi.clearAllMocks();
+    useCloudUpgradeStore.getState().closeCloudUpgrade();
   });
 
   it("opens the Edit modal seeded with the current scan name", async () => {
@@ -382,6 +385,35 @@ describe("ScanJobsRowActions", () => {
 
     // Then
     expect(downloadScanZipMock).toHaveBeenCalledWith("scan-1", toastMock);
+  });
+
+  it("opens the paid plan upgrade instead of downloading subscription-only reports", async () => {
+    // Given
+    const user = userEvent.setup();
+    render(
+      <ScanJobsRowActions
+        scan={makeScan({
+          state: "completed",
+          completed_at: "2026-01-01T10:05:00Z",
+        })}
+        tab="completed"
+        subscriptionOnly
+      />,
+    );
+
+    // When
+    await user.click(
+      screen.getByRole("button", { name: /open actions menu/i }),
+    );
+    await user.click(
+      screen.getByRole("menuitem", { name: /download scan reports/i }),
+    );
+
+    // Then
+    expect(downloadScanZipMock).not.toHaveBeenCalled();
+    expect(useCloudUpgradeStore.getState().activeFeature).toBe(
+      PAID_PLAN_UPGRADE_FEATURE.REPORT_DOWNLOAD,
+    );
   });
 
   it("opens failed scan error details from the actions menu", async () => {

@@ -1,18 +1,24 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import {
+  PROVIDER_FUNNEL_EVENT,
+  type ProviderFunnelDetail,
+} from "@/lib/provider-funnel/provider-funnel-events";
 import type { FilterOption, MetaDataProps, ProviderProps } from "@/types";
 import type { ProvidersTableRow } from "@/types/providers-table";
 import { SCAN_SCHEDULE_CAPABILITY } from "@/types/schedules";
 
 const {
+  onboardingTriggerSpy,
   providersAccountsTableSpy,
   refreshMock,
   replaceMock,
   searchParamsValue,
 } = vi.hoisted(() => ({
+  onboardingTriggerSpy: vi.fn(),
   providersAccountsTableSpy: vi.fn(),
   refreshMock: vi.fn(),
   replaceMock: vi.fn(),
@@ -26,6 +32,14 @@ vi.mock("next/navigation", () => ({
     replace: replaceMock,
   }),
   useSearchParams: () => new URLSearchParams(searchParamsValue.current),
+}));
+
+vi.mock("@/components/onboarding", () => ({
+  OnboardingTrigger: (props: { startAtTarget?: string }) => {
+    onboardingTriggerSpy(props);
+    return null;
+  },
+  PageReady: () => null,
 }));
 
 vi.mock("@/components/providers/table", () => ({
@@ -132,9 +146,21 @@ const disconnectedProviders: ProviderProps[] = [
 ];
 
 describe("ProvidersAccountsView", () => {
+  const funnelSignals: ProviderFunnelDetail[] = [];
+  const recordFunnelSignal: EventListener = (event) => {
+    funnelSignals.push((event as CustomEvent<ProviderFunnelDetail>).detail);
+  };
+
+  beforeEach(() => {
+    funnelSignals.length = 0;
+    window.addEventListener(PROVIDER_FUNNEL_EVENT, recordFunnelSignal);
+  });
+
   afterEach(() => {
+    window.removeEventListener(PROVIDER_FUNNEL_EVENT, recordFunnelSignal);
     vi.restoreAllMocks();
     providersAccountsTableSpy.mockClear();
+    onboardingTriggerSpy.mockClear();
     searchParamsValue.current = "";
     window.history.replaceState({}, "", "/");
   });
@@ -271,6 +297,143 @@ describe("ProvidersAccountsView", () => {
     expect(replaceStateSpy).not.toHaveBeenCalled();
     expect(refreshMock).not.toHaveBeenCalled();
     expect(replaceMock).not.toHaveBeenCalled();
+  });
+
+  it("signals which control opened the wizard", async () => {
+    // Given
+    const user = userEvent.setup();
+    render(
+      <ProvidersAccountsView
+        isCloud={false}
+        filters={filters}
+        metadata={metadata}
+        providers={disconnectedProviders}
+        rows={rows}
+      />,
+    );
+
+    // When
+    await user.click(screen.getByRole("button", { name: "Add Provider" }));
+
+    // Then
+    expect(funnelSignals).toEqual([
+      { step: "wizard_opened", source: "page_button" },
+    ]);
+  });
+
+  it("signals the empty-state CTA as the wizard entry point", async () => {
+    // Given
+    const user = userEvent.setup();
+    render(
+      <ProvidersAccountsView
+        isCloud={false}
+        filters={filters}
+        metadata={metadata}
+        providers={providers}
+        rows={rows}
+      />,
+    );
+
+    // When
+    await user.click(
+      screen.getByRole("button", { name: /open add provider modal/i }),
+    );
+
+    // Then
+    expect(funnelSignals).toEqual([
+      { step: "wizard_opened", source: "empty_state" },
+    ]);
+  });
+
+  it("signals the entry point carried in the URL and cleans it on close", async () => {
+    // Given
+    searchParamsValue.current =
+      "tab=connected&addProvider=true&addProviderSource=sidebar_cta";
+    const replaceStateSpy = vi.spyOn(window.history, "replaceState");
+    const user = userEvent.setup();
+
+    render(
+      <ProvidersAccountsView
+        isCloud={false}
+        filters={filters}
+        metadata={metadata}
+        providers={providers}
+        rows={rows}
+      />,
+    );
+
+    // Then
+    expect(funnelSignals).toEqual([
+      { step: "wizard_opened", source: "sidebar_cta" },
+    ]);
+
+    // When
+    await user.click(screen.getByRole("button", { name: /close/i }));
+
+    // Then
+    expect(replaceStateSpy).toHaveBeenCalledWith(
+      null,
+      "",
+      "/providers?tab=connected",
+    );
+  });
+
+  it("treats an unknown URL entry point as a plain URL open", () => {
+    // Given
+    searchParamsValue.current = "addProvider=true&addProviderSource=made_up";
+
+    // When
+    render(
+      <ProvidersAccountsView
+        isCloud={false}
+        filters={filters}
+        metadata={metadata}
+        providers={providers}
+        rows={rows}
+      />,
+    );
+
+    // Then
+    expect(funnelSignals).toEqual([{ step: "wizard_opened", source: "url" }]);
+  });
+
+  it("starts the tour at the provider-type step when the wizard is already open", () => {
+    // Given
+    searchParamsValue.current = "addProvider=true&onboarding=add-provider";
+
+    // When
+    render(
+      <ProvidersAccountsView
+        isCloud
+        filters={filters}
+        metadata={metadata}
+        providers={providers}
+        rows={rows}
+      />,
+    );
+
+    // Then: the welcome and "open the wizard" steps have nothing left to ask for.
+    expect(onboardingTriggerSpy).toHaveBeenLastCalledWith(
+      expect.objectContaining({ startAtTarget: "provider-type" }),
+    );
+  });
+
+  it("lets the tour start from its first step while the wizard is closed", () => {
+    // Given / When
+    render(
+      <ProvidersAccountsView
+        isCloud
+        filters={filters}
+        metadata={metadata}
+        providers={providers}
+        rows={rows}
+      />,
+    );
+
+    // Then
+    expect(onboardingTriggerSpy).toHaveBeenLastCalledWith(
+      expect.objectContaining({ startAtTarget: undefined }),
+    );
   });
 
   it("keeps filters and table visible when providers are disconnected", () => {

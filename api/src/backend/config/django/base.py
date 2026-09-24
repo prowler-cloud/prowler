@@ -296,6 +296,14 @@ DJANGO_OUTPUT_S3_AWS_SECRET_ACCESS_KEY = env.str(
 )
 DJANGO_OUTPUT_S3_AWS_SESSION_TOKEN = env.str("DJANGO_OUTPUT_S3_AWS_SESSION_TOKEN", "")
 DJANGO_OUTPUT_S3_AWS_DEFAULT_REGION = env.str("DJANGO_OUTPUT_S3_AWS_DEFAULT_REGION", "")
+# Storage endpoint the API and Celery workers use to talk to S3-compatible object storage
+# such as MinIO. Empty means the real AWS S3 endpoint, which is unaffected.
+DJANGO_OUTPUT_S3_AWS_ENDPOINT_URL = env.str("DJANGO_OUTPUT_S3_AWS_ENDPOINT_URL", "")
+# Browser-reachable storage host used to sign download URLs. Empty means sign against the
+# same endpoint the API talks to, which is what Prowler Cloud on S3 does.
+DJANGO_OUTPUT_S3_AWS_PUBLIC_ENDPOINT_URL = env.str(
+    "DJANGO_OUTPUT_S3_AWS_PUBLIC_ENDPOINT_URL", ""
+)
 
 # HTTP Security Headers
 SECURE_CONTENT_TYPE_NOSNIFF = True

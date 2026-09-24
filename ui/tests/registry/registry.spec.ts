@@ -94,6 +94,7 @@ test.describe.serial("Registry", () => {
       await registryPage.verifyRegistryNavigationHidden();
       await registryPage.goto();
       await registryPage.verifyDirectRouteDenied();
+      await registryPage.verifyProviderSelectorWithoutRegistry();
     },
   );
 

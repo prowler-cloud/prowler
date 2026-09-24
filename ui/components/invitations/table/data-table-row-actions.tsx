@@ -11,26 +11,23 @@ import {
   ActionDropdownItem,
 } from "@/components/shadcn/dropdown";
 import { Modal } from "@/components/shadcn/modal";
+import { InvitationProps } from "@/types";
 
 import { DeleteForm, EditForm } from "../forms";
 
-interface DataTableRowActionsProps<InvitationProps> {
+interface DataTableRowActionsProps {
   row: Row<InvitationProps>;
   roles?: { id: string; name: string }[];
 }
 
-export function DataTableRowActions<InvitationProps>({
-  row,
-  roles,
-}: DataTableRowActionsProps<InvitationProps>) {
+export function DataTableRowActions({ row, roles }: DataTableRowActionsProps) {
   const router = useRouter();
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-  const invitationId = (row.original as { id: string }).id;
-  const invitationEmail = (row.original as any).attributes?.email;
-  const invitationRole = (row.original as any).relationships?.role?.attributes
-    ?.name;
-  const invitationAccepted = (row.original as any).attributes?.state;
+  const invitationId = row.original.id;
+  const invitationEmail = row.original.attributes.email;
+  const invitationRole = row.original.relationships.role?.attributes?.name;
+  const isInvitationPending = row.original.attributes.state === "pending";
 
   return (
     <>
@@ -69,7 +66,7 @@ export function DataTableRowActions<InvitationProps>({
             icon={<Pencil />}
             label="Edit Invitation"
             onSelect={() => setIsEditOpen(true)}
-            disabled={invitationAccepted === "accepted"}
+            disabled={!isInvitationPending}
           />
           <ActionDropdownDangerZone>
             <ActionDropdownItem
@@ -77,7 +74,7 @@ export function DataTableRowActions<InvitationProps>({
               label="Revoke Invitation"
               destructive
               onSelect={() => setIsDeleteOpen(true)}
-              disabled={invitationAccepted === "accepted"}
+              disabled={!isInvitationPending}
             />
           </ActionDropdownDangerZone>
         </ActionDropdown>

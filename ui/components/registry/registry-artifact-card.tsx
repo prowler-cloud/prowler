@@ -26,7 +26,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
-import { isRegistryArtifactInstallable } from "@/lib/registry/artifacts";
+import { getRegistryNotInstallableMessage } from "@/lib/registry/installability";
 import { cn } from "@/lib/utils";
 import { getProviderDisplayName, isKnownProviderType } from "@/types/providers";
 import type { RegistryArtifactOwner } from "@/types/registry";
@@ -57,6 +57,11 @@ function capabilitySummary(artifact: RegistryMarketplaceArtifact) {
  * the remainder into a "+N" overflow badge (registry.dev card reference).
  */
 const MAX_PROVIDER_LOGOS = 4;
+
+const PROVIDER_LIST_FORMAT = new Intl.ListFormat("en", {
+  style: "long",
+  type: "conjunction",
+});
 
 interface RegistryProviderClusterProps {
   providers: string[];
@@ -113,6 +118,22 @@ function RegistryProviderCluster({ providers }: RegistryProviderClusterProps) {
         </span>
       )}
     </span>
+  );
+}
+
+interface RegistryExtendedProvidersProps {
+  slugs: string[];
+}
+
+/** The only thing explaining an install that shows no provider type. */
+function RegistryExtendedProviders({ slugs }: RegistryExtendedProvidersProps) {
+  if (slugs.length === 0) return null;
+
+  return (
+    <p className="text-text-neutral-secondary text-xs">
+      Adds checks to your{" "}
+      {PROVIDER_LIST_FORMAT.format(slugs.map(getProviderDisplayName))} scans.
+    </p>
   );
 }
 
@@ -299,6 +320,14 @@ export function RegistryArtifactCard({
           }
           downloads={artifact.isBuiltin ? undefined : artifact.totalDownloads}
         />
+        <RegistryExtendedProviders slugs={artifact.extendsProviderSlugs} />
+        {!artifact.isAdded &&
+          !artifact.isInstallable &&
+          !artifact.isBuiltin && (
+            <p className="text-text-neutral-secondary text-xs">
+              {getRegistryNotInstallableMessage(artifact.notInstallableReason)}
+            </p>
+          )}
         <div className="flex flex-wrap items-center gap-3">
           <RegistryProviderCluster providers={artifact.providers} />
           <span className="ml-auto flex flex-wrap items-center justify-end gap-2">
@@ -309,7 +338,7 @@ export function RegistryArtifactCard({
             )}
             {artifact.isAdded ? (
               <>
-                {artifact.updateAvailable ? (
+                {artifact.updateAvailable && artifact.isInstallable ? (
                   <Button
                     aria-label={`Update ${displayName} to ${artifact.latestVersion}`}
                     disabled={Boolean(pendingAddName)}
@@ -338,7 +367,7 @@ export function RegistryArtifactCard({
                   Remove
                 </Button>
               </>
-            ) : isRegistryArtifactInstallable(artifact) ? (
+            ) : artifact.isInstallable ? (
               <Button
                 aria-label={`Add ${displayName}`}
                 disabled={Boolean(pendingAddName)}
@@ -357,12 +386,14 @@ export function RegistryArtifactCard({
 }
 
 interface RegistryTenantArtifactCardProps {
+  extendsProviderSlugs?: string[];
   normalizedName: string;
   onRemove: (trigger: HTMLButtonElement | null) => void;
   resolvedVersion?: string;
 }
 
 export function RegistryTenantArtifactCard({
+  extendsProviderSlugs = [],
   normalizedName,
   onRemove,
   resolvedVersion,
@@ -393,6 +424,7 @@ export function RegistryTenantArtifactCard({
           isAdded
           version={resolvedVersion || "Unknown"}
         />
+        <RegistryExtendedProviders slugs={extendsProviderSlugs} />
         <div className="flex justify-end">
           <Button
             aria-label={`Remove ${normalizedName}`}

@@ -2,12 +2,14 @@ import { z } from "zod";
 
 import { isActiveRegistryCredential } from "@/lib/registry/credential-task";
 import {
+  REGISTRY_ARTIFACT_REMOVAL,
   REGISTRY_CATALOG,
   REGISTRY_CATALOG_INCOMPLETE_REASON,
   REGISTRY_ENDPOINT,
   REGISTRY_FAILURE,
   REGISTRY_MUTATION,
   REGISTRY_SUBMISSION,
+  type RegistryArtifactRemovalConflict,
   type RegistryCatalogArtifact,
   type RegistryCatalogResult,
   type RegistryCredentialStatus,
@@ -22,6 +24,12 @@ const REGISTRY_TASK_PATH_PREFIX = "/api/v1/tasks/";
 const REGISTRY_ERROR_CODE = {
   KEY_REJECTED: "registry_key_rejected",
   UNAVAILABLE: "registry_unavailable",
+  PAGE_NOT_FOUND: "registry_page_not_found",
+} as const;
+// Opposite remedies, so a 409 is never read without its code.
+const REGISTRY_REMOVAL_CONFLICT_CODE = {
+  IN_USE: "registry_artifact_in_use",
+  BUSY: "registry_artifact_busy",
 } as const;
 const REGISTRY_MUTATION_REFUSAL_COPY = {
   no_installable_version: "No available version can be added.",
@@ -65,6 +73,7 @@ const tenantArtifactsSchema = z.object({
       attributes: z.object({
         version_spec: z.string().trim().min(1),
         resolved_version: z.string().trim().nullish(),
+        extends_provider_slugs: z.array(z.string()).nullish(),
         inserted_at: z.string().optional(),
         updated_at: z.string().optional(),
       }),
@@ -103,6 +112,11 @@ export function adaptRegistryTenantArtifacts(
     normalizedName: id,
     versionSpec: attributes.version_spec,
     resolvedVersion: attributes.resolved_version || undefined,
+    extendsProviderSlugs: unique(
+      (attributes.extends_provider_slugs ?? [])
+        .map((slug) => slug.trim().toLowerCase())
+        .filter(Boolean),
+    ),
     insertedAt: attributes.inserted_at,
     updatedAt: attributes.updated_at,
   }));
@@ -160,6 +174,17 @@ export async function classifyRegistryMutationRefusal(
   return message ? { status: REGISTRY_MUTATION.REFUSED, message } : null;
 }
 
+export async function classifyRegistryRemovalConflict(
+  response: Response,
+): Promise<RegistryArtifactRemovalConflict | null> {
+  const code = await getRegistryErrorCode(response);
+  if (code === REGISTRY_REMOVAL_CONFLICT_CODE.IN_USE)
+    return { status: REGISTRY_ARTIFACT_REMOVAL.IN_USE };
+  if (code === REGISTRY_REMOVAL_CONFLICT_CODE.BUSY)
+    return { status: REGISTRY_ARTIFACT_REMOVAL.BUSY };
+  return null;
+}
+
 export async function classifyRegistryFailure(
   response: Response,
   endpoint: RegistryEndpoint,
@@ -192,18 +217,29 @@ export async function classifyRegistryFailure(
   return { status: REGISTRY_FAILURE.ERROR };
 }
 
+// An enabled backend also answers 404 (missing page): tell them apart by code.
+export async function isRegistryDisabledResponse(response: Response) {
+  if (response.status !== 404) return false;
+  const codes = await getRegistryErrorCodes(response);
+  return !codes.includes(REGISTRY_ERROR_CODE.PAGE_NOT_FOUND);
+}
+
 function isRegistryDiscoveryEndpoint(endpoint: RegistryEndpoint) {
   return registryDiscoveryEndpoints.has(endpoint);
 }
 
-async function getRegistryErrorCode(response: Response) {
+async function getRegistryErrorCodes(response: Response) {
   const parsed = errorDocumentSchema.safeParse(
     await response
       .clone()
       .json()
       .catch(() => undefined),
   );
-  return parsed.success ? parsed.data.errors[0]?.code : undefined;
+  return parsed.success ? parsed.data.errors.map(({ code }) => code) : [];
+}
+
+async function getRegistryErrorCode(response: Response) {
+  return (await getRegistryErrorCodes(response))[0];
 }
 
 const REGISTRY_CATALOG_PAGE_SIZE = 100;
@@ -234,6 +270,8 @@ const catalogAttributesSchema = z.object({
   has_provider: z.boolean().optional(),
   has_checks: z.boolean().optional(),
   has_compliance: z.boolean().optional(),
+  is_installable: z.boolean().optional(),
+  not_installable_reason: z.string().nullish(),
   check_count: safeInteger.nullish(),
   compliance_count: safeInteger.nullish(),
   version_count: safeInteger.optional(),
@@ -323,6 +361,10 @@ function adaptCatalogArtifact(
   const parsed = catalogResourceSchema.safeParse(resource);
   if (!parsed.success) return null;
   const { attributes: a, id } = parsed.data;
+  const notInstallableReason =
+    a.is_installable === true
+      ? undefined
+      : text(a.not_installable_reason ?? undefined);
   return {
     normalizedName: id,
     name: text(a.name),
@@ -342,6 +384,9 @@ function adaptCatalogArtifact(
     hasProvider: a.has_provider ?? false,
     hasChecks: a.has_checks ?? false,
     hasCompliance: a.has_compliance ?? false,
+    // An older API sends no verdict; never offer an install it did not confirm.
+    isInstallable: a.is_installable ?? false,
+    ...(notInstallableReason ? { notInstallableReason } : {}),
     checkCount: a.check_count ?? undefined,
     complianceCount: a.compliance_count ?? undefined,
     versionCount: a.version_count ?? 0,
@@ -380,6 +425,10 @@ function mergeArtifacts(
     hasProvider: left.hasProvider || right.hasProvider,
     hasChecks: left.hasChecks || right.hasChecks,
     hasCompliance: left.hasCompliance || right.hasCompliance,
+    // Any page refusing the install wins, and its reason travels with it.
+    isInstallable: left.isInstallable && right.isInstallable,
+    notInstallableReason:
+      left.notInstallableReason ?? right.notInstallableReason,
     checkCount: mergeCount(left.checkCount, right.checkCount),
     complianceCount: mergeCount(left.complianceCount, right.complianceCount),
     versionCount: Math.max(left.versionCount, right.versionCount),

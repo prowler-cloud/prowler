@@ -617,9 +617,66 @@ class Task(RowLevelSecurityProtectedModel):
         resource_name = "tasks"
 
 
+class ScanQuerySet(models.QuerySet):
+    """Shared selectors for "the latest scan of a provider".
+
+    The queryset must already be scoped by the caller: manager, tenant, RBAC,
+    providers and database alias.
+    """
+
+    # How "which completed scan is the provider's current one" is ordered.
+    LATEST_ORDER_BY = (
+        models.F("completed_at").desc(nulls_last=True),
+        models.F("inserted_at").desc(),
+        models.F("id").desc(),
+    )
+
+    def _eligible_for_latest(self) -> "ScanQuerySet":
+        """Restrict to the scans that may be a provider's latest.
+
+        Returns:
+            ScanQuerySet: The completed scans.
+        """
+        return self.filter(state=StateChoices.COMPLETED)
+
+    def latest_per_provider(self) -> "ScanQuerySet":
+        """Pick each provider's latest scan with `DISTINCT ON (provider_id)`.
+
+        Returns:
+            ScanQuerySet: One scan per provider, the latest one.
+        """
+        return (
+            self._eligible_for_latest()
+            .order_by("provider_id", *self.LATEST_ORDER_BY)
+            .distinct("provider_id")
+        )
+
+    def latest_ids_per_provider(self) -> list[UUID]:
+        """Evaluate `latest_per_provider` and return the scan ids.
+
+        The ids are materialised so callers can pass them as a literal `IN`
+        list; as a subquery Postgres misestimates the row count and picks a
+        slow nested loop.
+
+        Returns:
+            list[UUID]: The id of each provider's latest scan.
+        """
+        return list(self.latest_per_provider().values_list("id", flat=True))
+
+    def latest_first(self) -> "ScanQuerySet":
+        """Order eligible scans newest first, without deduplicating per provider.
+
+        Expects the queryset to be already filtered to a single provider.
+
+        Returns:
+            ScanQuerySet: The eligible scans, latest first.
+        """
+        return self._eligible_for_latest().order_by(*self.LATEST_ORDER_BY)
+
+
 class Scan(RowLevelSecurityProtectedModel):
-    objects = ActiveProviderManager()
-    all_objects = models.Manager()
+    objects = ActiveProviderManager.from_queryset(ScanQuerySet)()
+    all_objects = ScanQuerySet.as_manager()
 
     _SCOPING_SCANNER_ARG_KEYS_CACHE: tuple[str, ...] | None = None
 
@@ -726,6 +783,12 @@ class Scan(RowLevelSecurityProtectedModel):
                 name="scans_prov_state_ins_desc_idx",
             ),
             # TODO This might replace `scans_prov_state_ins_desc_idx` completely. Review usage
+            # Since `ScanQuerySet`, no code path reads a provider's
+            # completed scans by `-inserted_at`. The only query left that
+            # matches this index (and `scans_prov_state_ins_desc_idx` above)
+            # is `GET /scans?filter[provider]=…&filter[state]=completed` with
+            # the default sort. Both are candidates to drop in a follow-up
+            # once production `pg_stat_user_indexes.idx_scan` confirms it.
             models.Index(
                 fields=["tenant_id", "provider_id", "-inserted_at"],
                 condition=Q(state=StateChoices.COMPLETED),
@@ -1379,6 +1442,15 @@ class Invitation(RowLevelSecurityProtectedModel):
         if self.email:
             self.email = self.email.strip().lower()
         super().save(*args, **kwargs)
+
+    @classmethod
+    def lapsed_q(cls):
+        """Pending invitations whose expiry date has already passed."""
+        return Q(state=cls.State.PENDING, expires_at__lte=datetime.now(UTC))
+
+    @property
+    def is_lapsed(self):
+        return self.state == self.State.PENDING and self.expires_at <= datetime.now(UTC)
 
     class Meta(RowLevelSecurityProtectedModel.Meta):
         db_table = "invitations"
@@ -3113,84 +3185,3 @@ class TenantComplianceSummary(RowLevelSecurityProtectedModel):
                 statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
             ),
         ]
-
-
-class TenantOnboardingProfile(RowLevelSecurityProtectedModel):
-    """What a tenant declared about itself at first login, before the product
-    shaped its behaviour.
-
-    One row per tenant. The three buckets are closed choices asked in the
-    onboarding profile step; ``skipped`` records that the step was shown and
-    dismissed, so a skip is a fact and not the absence of one.
-
-    ``declared_role`` and ``declared_seniority`` are deliberately orthogonal:
-    the first is the discipline the person works in, the second how far up the
-    organisation they sit. Kept apart, "a security engineer" and "the CISO"
-    are two segments rather than one blurred bucket.
-
-    Immutable once written: a second submission returns the existing row so the
-    first answer, given before any product signal could bias it, is the one
-    that stays.
-    """
-
-    class CloudAccountsBucket(models.TextChoices):
-        ONE = "1", _("1")
-        TWO_TO_TEN = "2-10", _("2-10")
-        ELEVEN_TO_FIFTY = "11-50", _("11-50")
-        FIFTY_ONE_TO_TWO_HUNDRED = "51-200", _("51-200")
-        OVER_TWO_HUNDRED = "200+", _("200+")
-
-    class Role(models.TextChoices):
-        SECURITY = "security", _("Security")
-        DEVOPS_PLATFORM = "devops_platform", _("DevOps / Platform")
-        DEVELOPER = "developer", _("Developer")
-        COMPLIANCE_GRC = "compliance_grc", _("Compliance / GRC")
-        OTHER = "other", _("Other")
-
-    class Seniority(models.TextChoices):
-        PRACTITIONER = "practitioner", _("Practitioner / IC")
-        LEAD = "lead", _("Team lead / Manager")
-        DIRECTOR = "director", _("Director / Head of")
-        EXECUTIVE = "executive", _("VP / C-level")
-        FOUNDER = "founder", _("Founder / Owner")
-
-    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
-    inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
-    declared_cloud_accounts = models.CharField(
-        max_length=16, choices=CloudAccountsBucket.choices, null=True, blank=True
-    )
-    declared_role = models.CharField(
-        max_length=32, choices=Role.choices, null=True, blank=True
-    )
-    declared_seniority = models.CharField(
-        max_length=32, choices=Seniority.choices, null=True, blank=True
-    )
-    skipped = models.BooleanField(default=False)
-    submitted_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="tenant_onboarding_profiles",
-        related_query_name="tenant_onboarding_profile",
-    )
-
-    class Meta(RowLevelSecurityProtectedModel.Meta):
-        db_table = "tenant_onboarding_profiles"
-        constraints = [
-            models.UniqueConstraint(
-                fields=["tenant_id"],
-                name="unique_tenant_onboarding_profile",
-            ),
-            RowLevelSecurityConstraint(
-                field="tenant_id",
-                name="rls_on_%(class)s",
-                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
-            ),
-        ]
-
-    class JSONAPIMeta:
-        resource_name = "onboarding-profiles"
-
-    def __str__(self) -> str:
-        return f"onboarding-profile:{self.tenant_id}"
