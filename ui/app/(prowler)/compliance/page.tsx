@@ -133,7 +133,8 @@ export default async function Compliance({
       },
       pageSize: 50,
       fields: {
-        scans: "name,completed_at,provider",
+        // is_partial is Cloud-only; the OSS API ignores unknown sparse fields.
+        scans: "name,completed_at,provider,is_partial",
       },
       include: "provider",
     }),
@@ -161,7 +162,10 @@ export default async function Compliance({
     );
   }
 
+  // Partial scans never compute compliance, so they have nothing to show or
+  // download here.
   const expandedScansData: ExpandedScanData[] = scansData.data
+    .filter((scan: ScanProps) => !scan.attributes?.is_partial)
     .filter((scan: ScanProps) => scan.relationships?.provider?.data?.id)
     .map((scan: ScanProps) => {
       const providerId = scan.relationships!.provider!.data!.id;

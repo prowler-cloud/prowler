@@ -83,6 +83,9 @@ export function ScanJobsRowActions({
   const scanState = scan.attributes.state;
   const isCompleted = scanState === "completed";
   const isFailed = scanState === "failed";
+  // Prowler Cloud partial scans re-check a few resources and write no
+  // report files, so there is no ZIP to download.
+  const hasReports = !scan.attributes.is_partial;
   const taskId = scan.relationships.task.data?.id;
   // The findings page bounds the UTC day range with completed_at; without it the
   // range collapses to the start day and can miss later findings.
@@ -215,13 +218,15 @@ export function ScanJobsRowActions({
               label="View Compliance"
               onSelect={openCompliance}
             />
-            <ActionDropdownItem
-              icon={<Download />}
-              label="Download Scan Reports"
-              onSelect={() =>
-                runReportDownload(() => downloadScanZip(scan.id, toast))
-              }
-            />
+            {hasReports && (
+              <ActionDropdownItem
+                icon={<Download />}
+                label="Download Scan Reports"
+                onSelect={() =>
+                  runReportDownload(() => downloadScanZip(scan.id, toast))
+                }
+              />
+            )}
           </>
         )}
         {isFailed && (

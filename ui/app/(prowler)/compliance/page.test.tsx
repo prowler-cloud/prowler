@@ -15,6 +15,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import Compliance from "./page";
 
 const {
+  complianceFiltersSpy,
   complianceOverviewGridSpy,
   getComplianceOverviewMetadataInfoMock,
   getCompliancesOverviewMock,
@@ -22,6 +23,7 @@ const {
   getThreatScoreMock,
   loadComplianceWatchlistContextMock,
 } = vi.hoisted(() => ({
+  complianceFiltersSpy: vi.fn(),
   complianceOverviewGridSpy: vi.fn(),
   getComplianceOverviewMetadataInfoMock: vi.fn(),
   getCompliancesOverviewMock: vi.fn(),
@@ -83,7 +85,10 @@ vi.mock("@/components/compliance", () => ({
 }));
 
 vi.mock("@/components/compliance/compliance-header/compliance-filters", () => ({
-  ComplianceFilters: () => <div>Compliance filters</div>,
+  ComplianceFilters: (props: { scans: Array<{ id: string }> }) => {
+    complianceFiltersSpy(props);
+    return <div>Compliance filters</div>;
+  },
 }));
 
 vi.mock("@/components/compliance/compliance-overview-grid", () => ({
@@ -229,6 +234,59 @@ describe("Compliance overview task response", () => {
     expect(complianceOverviewGridSpy).toHaveBeenCalledWith(
       expect.objectContaining({
         frameworks: [expect.objectContaining({ id: "cis_1.5_aws" })],
+      }),
+    );
+  });
+
+  it("keeps partial scans out of the per-scan selector", async () => {
+    // Given - a Cloud partial scan among the completed scans; it computes no
+    // compliance, so selecting it would show nothing and its downloads fail
+    getScansMock.mockResolvedValue({
+      data: [
+        {
+          id: "scan-1",
+          attributes: {
+            name: "Production scan",
+            completed_at: "2026-08-05T17:00:00Z",
+          },
+          relationships: { provider: { data: { id: "provider-1" } } },
+        },
+        {
+          id: "scan-partial",
+          attributes: {
+            name: "Re-check",
+            completed_at: "2026-08-06T09:00:00Z",
+            is_partial: true,
+          },
+          relationships: { provider: { data: { id: "provider-1" } } },
+        },
+      ],
+      included: [
+        {
+          type: "providers",
+          id: "provider-1",
+          attributes: { provider: "aws", uid: "123456789012", alias: "prod" },
+        },
+      ],
+    });
+    getCompliancesOverviewMock.mockResolvedValue({ data: [] });
+
+    // When
+    const page = await Compliance({
+      searchParams: Promise.resolve({ scanId: "scan-1" }),
+    });
+    render(page as ReactElement);
+
+    // Then - only the full scan reaches the selector, and the API is asked
+    // for the flag that tells them apart
+    expect(complianceFiltersSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        scans: [expect.objectContaining({ id: "scan-1" })],
+      }),
+    );
+    expect(getScansMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        fields: { scans: "name,completed_at,provider,is_partial" },
       }),
     );
   });
