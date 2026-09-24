@@ -36,7 +36,9 @@ export function ScanInfoCell({ scan }: { scan: ScanProps }) {
       {scan.attributes.is_partial && (
         <Tooltip>
           <TooltipTrigger asChild>
-            <Badge variant="tag">Partial</Badge>
+            <Badge variant="tag" tabIndex={0}>
+              Partial
+            </Badge>
           </TooltipTrigger>
           <TooltipContent>
             Re-checked a few resources. Overviews still reflect the latest full

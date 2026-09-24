@@ -11,7 +11,13 @@ import {
 
 vi.mock("@/components/shadcn", async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
-  Badge: ({ children }: { children: ReactNode }) => <span>{children}</span>,
+  Badge: ({
+    children,
+    tabIndex,
+  }: {
+    children: ReactNode;
+    tabIndex?: number;
+  }) => <span tabIndex={tabIndex}>{children}</span>,
   Progress: () => <div />,
   Tooltip: ({ children }: { children: ReactNode }) => <>{children}</>,
   TooltipTrigger: ({ children }: { children: ReactNode }) => <>{children}</>,
@@ -200,7 +206,8 @@ describe("getScanJobsColumns", () => {
     });
 
     expect(screen.getByText("Production scan")).toBeInTheDocument();
-    expect(screen.getByText("Partial")).toBeInTheDocument();
+    // Focusable so keyboard users can reach the tooltip.
+    expect(screen.getByText("Partial")).toHaveAttribute("tabindex", "0");
   });
 
   it("shows no partial label on a full scan", () => {

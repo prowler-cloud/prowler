@@ -28,21 +28,29 @@ vi.mock("@/components/shadcn/toast", () => ({
 }));
 
 vi.mock("@/components/shadcn/modal", () => ({
+  // The close button stands in for Escape and backdrop clicks.
   Modal: ({
     open,
     title,
     children,
+    onOpenChange,
   }: {
     open: boolean;
     title: string;
     children: React.ReactNode;
+    onOpenChange: (open: boolean) => void;
   }) =>
     open ? (
       <div role="dialog" aria-label={title}>
+        <button type="button" onClick={() => onOpenChange(false)}>
+          Dismiss
+        </button>
         {children}
       </div>
     ) : null,
 }));
+
+import { PARTIAL_SCAN_LAUNCH_ERROR } from "@/lib/partial-scans";
 
 import {
   PROVIDER_NOT_FOUND_ERROR,
@@ -162,5 +170,54 @@ describe("RecheckResourceModal", () => {
         screen.getByRole("button", { name: RECHECK_RESOURCE_SUBMIT_LABEL }),
       ).toBeEnabled(),
     );
+  });
+
+  it("treats a response without a scan id as a failed launch", async () => {
+    // An empty 2xx becomes { success: true } and there is no scan to follow.
+    createPartialScanMock.mockResolvedValue({ success: true, status: 202 });
+    const onOpenChange = vi.fn();
+    render(
+      <RecheckResourceModal
+        isOpen
+        onOpenChange={onOpenChange}
+        target={target}
+      />,
+    );
+
+    await submit();
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      PARTIAL_SCAN_LAUNCH_ERROR,
+    );
+    expect(toastMock).not.toHaveBeenCalled();
+    expect(onOpenChange).not.toHaveBeenCalled();
+  });
+
+  it("ignores a dismiss while the request is in flight", async () => {
+    let resolveLaunch!: (value: unknown) => void;
+    createPartialScanMock.mockReturnValue(
+      new Promise((resolve) => {
+        resolveLaunch = resolve;
+      }),
+    );
+    const onOpenChange = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <RecheckResourceModal
+        isOpen
+        onOpenChange={onOpenChange}
+        target={target}
+      />,
+    );
+    await user.click(
+      screen.getByRole("button", { name: RECHECK_RESOURCE_SUBMIT_LABEL }),
+    );
+
+    await user.click(screen.getByRole("button", { name: "Dismiss" }));
+
+    expect(onOpenChange).not.toHaveBeenCalled();
+
+    resolveLaunch({ data: { id: "scan-1" } });
+    await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false));
   });
 });

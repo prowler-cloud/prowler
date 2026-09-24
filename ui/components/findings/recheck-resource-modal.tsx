@@ -78,6 +78,11 @@ export function RecheckResourceModal({
         setError(errorMessage);
         return;
       }
+      // An empty 2xx has no scan to follow, so it is not a launch.
+      if (!result?.data?.id) {
+        setError(PARTIAL_SCAN_LAUNCH_ERROR);
+        return;
+      }
 
       toast({
         title: "Re-check launched",
@@ -100,7 +105,12 @@ export function RecheckResourceModal({
   return (
     <Modal
       open={isOpen}
-      onOpenChange={onOpenChange}
+      // Escape and backdrop must not unmount the modal mid-request, or the
+      // error would land on an unmounted component.
+      onOpenChange={(open) => {
+        if (!open && isPending) return;
+        onOpenChange(open);
+      }}
       title="Re-check this resource"
       description="Run a partial scan on a single resource instead of the whole provider."
       size="lg"
