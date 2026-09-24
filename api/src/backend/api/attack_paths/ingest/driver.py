@@ -167,8 +167,9 @@ def drop_database(database: str) -> None:
 
 def list_databases() -> list[str]:
     """List every database name on the Neo4j temp-database cluster."""
+    # A cluster returns one row per hosting server, so dedupe on name
     with get_session() as session:
-        result = session.run("SHOW DATABASES")
+        result = session.run("SHOW DATABASES YIELD name RETURN DISTINCT name")
         return [record["name"] for record in result]
 
 

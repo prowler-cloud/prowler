@@ -69,8 +69,8 @@ def _is_orphaned(database: str, now: datetime, safety_margin: timedelta) -> bool
     database created moments ago is never touched even without a row to check.
 
     Scan row present: only reapable once it reached a terminal state and has
-    been idle past the safety margin, so a scan still legitimately executing
-    is never touched.
+    been finished for longer than the safety margin, so a scan still
+    legitimately executing is never touched.
     """
     scan_id = database[len(graph_database.TEMP_DB_PREFIX) :]
 
@@ -102,4 +102,6 @@ def _is_orphaned(database: str, now: datetime, safety_margin: timedelta) -> bool
     if scan.state not in TERMINAL_STATES:
         return False
 
-    return now - scan.updated_at >= safety_margin
+    # `mark_scan_finished` does not touch `updated_at`, so prefer `completed_at`
+    finished_at = scan.completed_at or scan.updated_at
+    return now - finished_at >= safety_margin

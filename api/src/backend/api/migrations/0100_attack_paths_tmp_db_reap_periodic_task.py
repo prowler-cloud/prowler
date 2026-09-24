@@ -39,7 +39,7 @@ def delete_periodic_task(apps, schema_editor):
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("api", "0098_tenant_onboarding_profile"),
+        ("api", "0099_delete_tenant_onboarding_profile"),
         ("django_celery_beat", "0019_alter_periodictasks_options"),
     ]
 

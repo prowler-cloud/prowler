@@ -152,6 +152,58 @@ class TestReapOrphanedTmpDatabases:
 
     @patch("tasks.jobs.attack_paths.tmp_db_reaper.graph_database.drop_database")
     @patch("tasks.jobs.attack_paths.tmp_db_reaper.graph_database.list_databases")
+    def test_margin_counts_from_completed_at_not_updated_at(
+        self, mock_list, mock_drop, tenants_fixture, aws_provider
+    ):
+        from tasks.jobs.attack_paths.tmp_db_reaper import reap_orphaned_tmp_databases
+
+        tenant = tenants_fixture[0]
+        old = datetime.now(tz=UTC) - MARGIN - timedelta(hours=1)
+        scan = AttackPathsScan.objects.create(
+            tenant_id=tenant.id,
+            provider=aws_provider,
+            state=StateChoices.COMPLETED,
+        )
+        AttackPathsScan.objects.filter(id=scan.id).update(
+            updated_at=old, completed_at=datetime.now(tz=UTC)
+        )
+
+        database = _tmp_db_name(scan.id)
+        mock_list.return_value = [database]
+
+        result = reap_orphaned_tmp_databases()
+
+        assert result == {"dropped_count": 0, "databases": []}
+        mock_drop.assert_not_called()
+
+    @patch("tasks.jobs.attack_paths.tmp_db_reaper.graph_database.drop_database")
+    @patch("tasks.jobs.attack_paths.tmp_db_reaper.graph_database.list_databases")
+    def test_drops_scan_completed_past_safety_margin(
+        self, mock_list, mock_drop, tenants_fixture, aws_provider
+    ):
+        from tasks.jobs.attack_paths.tmp_db_reaper import reap_orphaned_tmp_databases
+
+        tenant = tenants_fixture[0]
+        old = datetime.now(tz=UTC) - MARGIN - timedelta(hours=1)
+        scan = AttackPathsScan.objects.create(
+            tenant_id=tenant.id,
+            provider=aws_provider,
+            state=StateChoices.FAILED,
+        )
+        AttackPathsScan.objects.filter(id=scan.id).update(
+            updated_at=old, completed_at=old
+        )
+
+        database = _tmp_db_name(scan.id)
+        mock_list.return_value = [database]
+
+        result = reap_orphaned_tmp_databases()
+
+        assert result == {"dropped_count": 1, "databases": [database]}
+        mock_drop.assert_called_once_with(database)
+
+    @patch("tasks.jobs.attack_paths.tmp_db_reaper.graph_database.drop_database")
+    @patch("tasks.jobs.attack_paths.tmp_db_reaper.graph_database.list_databases")
     def test_never_drops_an_executing_scan_regardless_of_age(
         self, mock_list, mock_drop, tenants_fixture, aws_provider
     ):
