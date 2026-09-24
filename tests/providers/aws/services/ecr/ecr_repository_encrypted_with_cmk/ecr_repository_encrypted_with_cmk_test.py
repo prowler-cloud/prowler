@@ -14,6 +14,7 @@ repository_arn = (
     f"arn:aws:ecr:eu-west-1:{AWS_ACCOUNT_NUMBER}:repository/{repository_name}"
 )
 
+
 @mock_aws
 class Test_ecr_repository_encrypted_with_cmk:
     def test_no_registries(self):
