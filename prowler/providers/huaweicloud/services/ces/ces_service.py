@@ -20,29 +20,7 @@ class CES(HuaweiCloudService):
 
         self.alarms: List[CESAlarm] = []
 
-        if self.session.is_mock:
-            self._load_mock_data()
-            return
-
         self._list_alarms()
-
-    def _load_mock_data(self):
-        """Load mock data for testing."""
-        region = "la-south-2"
-        self.alarms = [
-            CESAlarm(
-                alarm_id="alarm-001",
-                alarm_name="cpu-alarm",
-                alarm_enabled=True,
-                region=region,
-            ),
-            CESAlarm(
-                alarm_id="alarm-002",
-                alarm_name="disk-alarm",
-                alarm_enabled=False,
-                region=region,
-            ),
-        ]
 
     def _list_alarms(self):
         """List all CES alarm rules across regions."""
