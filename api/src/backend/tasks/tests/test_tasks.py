@@ -3394,6 +3394,7 @@ class TestCreateScanTaskRecord:
     """`task_kwargs` is what a response built before the publish can report."""
 
     def _scan(self, tenant, provider):
+        """A manual scan, like the one `POST /api/v1/scans` creates."""
         return Scan.objects.create(
             tenant_id=tenant.id,
             provider=provider,
@@ -3417,6 +3418,7 @@ class TestCreateScanTaskRecord:
     def test_the_stored_kwargs_are_the_ones_the_publish_would_send(
         self, tenants_fixture, aws_provider
     ):
+        """The 202 reports what is stored here, so it has to be the dispatch kwargs."""
         tenant = tenants_fixture[0]
         scan = self._scan(tenant, aws_provider)
 
@@ -3432,6 +3434,7 @@ class TestCreateScanTaskRecord:
         }
 
     def test_a_record_created_without_kwargs_reports_none(self, tenants_fixture):
+        """The argument is optional, so the other callers keep their behaviour."""
         task = create_scan_task_record(
             tenant_id=str(tenants_fixture[0].id),
             task_id=str(uuid.uuid4()),
