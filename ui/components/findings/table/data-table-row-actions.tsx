@@ -7,6 +7,7 @@ import { useContext, useState } from "react";
 
 import { JiraDispatchActionItem } from "@/components/findings/jira-dispatch-action-item";
 import { MuteFindingsModal } from "@/components/findings/mute-findings-modal";
+import { RecheckResourceActionItem } from "@/components/findings/recheck-resource-action-item";
 import {
   ActionDropdown,
   ActionDropdownItem,
@@ -53,12 +54,17 @@ export interface FindingRowData {
     resource?: {
       attributes?: {
         name?: string;
+        uid?: string;
       };
     };
     provider?: {
+      // Expanded included providers carry their id at the top level.
+      id?: string;
+      data?: { id?: string };
       attributes?: {
         alias?: string;
         provider?: string;
+        uid?: string;
       };
     };
   };
@@ -246,6 +252,20 @@ export function DataTableRowActions<T extends FindingRowData>({
     router.refresh();
   };
 
+  // Partial scans re-check one resource, so group rows never offer them.
+  const recheckTarget = isGroup
+    ? null
+    : {
+        providerId:
+          finding.relationships?.provider?.id ??
+          finding.relationships?.provider?.data?.id,
+        providerUid: finding.relationships?.provider?.attributes?.uid,
+        providerType: finding.relationships?.provider?.attributes?.provider,
+        providerAlias: finding.relationships?.provider?.attributes?.alias,
+        resourceUid: finding.relationships?.resource?.attributes?.uid,
+        resourceName: finding.relationships?.resource?.attributes?.name,
+      };
+
   const launchSkill = useLighthouseSkillLaunch();
   const launchPrompt = useLighthousePromptLaunch();
   // Skills are finding-level only: group rows carry check ids, not finding
@@ -300,6 +320,7 @@ export function DataTableRowActions<T extends FindingRowData>({
             onSelect={handleMuteClick}
           />
           <JiraDispatchActionItem label={jiraLabel} payload={jiraPayload} />
+          <RecheckResourceActionItem target={recheckTarget} />
           {isCloud() && !isGroup && (
             <LighthouseSkillsSubmenu
               onLaunch={handleLaunchSkill}

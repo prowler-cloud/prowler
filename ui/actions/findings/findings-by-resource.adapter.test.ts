@@ -215,3 +215,72 @@ describe("adaptFindingsByResourceResponse — malformed input", () => {
     );
   });
 });
+
+describe("adaptFindingsByResourceResponse — provider id", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("should carry the provider id resolved through the scan include", () => {
+    // Given — scan.provider include path, as the drawer requests it
+    createDictMock.mockImplementation((type: string) => {
+      if (type === "scans") {
+        return {
+          "scan-1": {
+            id: "scan-1",
+            attributes: {},
+            relationships: { provider: { data: { id: "provider-1" } } },
+          },
+        };
+      }
+      if (type === "providers") {
+        return {
+          "provider-1": {
+            id: "provider-1",
+            attributes: { provider: "aws", alias: "prod", uid: "123" },
+          },
+        };
+      }
+      return {};
+    });
+
+    const input = {
+      data: {
+        id: "finding-1",
+        attributes: {
+          uid: "uid-1",
+          check_id: "s3_check",
+          status: "FAIL",
+          severity: "high",
+          check_metadata: {},
+        },
+        relationships: {
+          resources: { data: [] },
+          scan: { data: { id: "scan-1" } },
+        },
+      },
+      included: [],
+    };
+
+    // When
+    const [finding] = adaptFindingsByResourceResponse(input);
+
+    // Then — the partial-scan request needs the id, not only the uid
+    expect(finding.providerId).toBe("provider-1");
+    expect(finding.providerUid).toBe("123");
+  });
+
+  it("should leave the provider id empty when the scan is not included", () => {
+    createDictMock.mockReturnValue({});
+
+    const [finding] = adaptFindingsByResourceResponse({
+      data: {
+        id: "finding-1",
+        attributes: { uid: "uid-1", check_id: "s3_check", status: "FAIL" },
+        relationships: { resources: { data: [] }, scan: { data: null } },
+      },
+    });
+
+    expect(finding.providerId).toBe("");
+  });
+});
