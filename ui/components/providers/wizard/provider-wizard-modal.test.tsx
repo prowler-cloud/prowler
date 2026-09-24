@@ -11,6 +11,7 @@ import {
 import { endActiveTour } from "@/lib/tours/use-driver-tour";
 import { useProviderWizardStore } from "@/store/provider-wizard/store";
 import { useUIStore } from "@/store/ui/store";
+import { CONNECTION_CHECK_STATUS } from "@/types/providers";
 
 import { ProviderWizardModal } from "./provider-wizard-modal";
 
@@ -154,7 +155,10 @@ describe("provider wizard account creation", () => {
       status: "ready",
       options: [{ type: "acme", label: "Acme Cloud" }],
     });
-    testProviderConnection.mockResolvedValue({ connected: true, error: null });
+    testProviderConnection.mockResolvedValue({
+      status: CONNECTION_CHECK_STATUS.SUCCESS,
+      error: null,
+    });
     updateCredentialsProvider.mockResolvedValue({ data: { id: "secret-1" } });
     updateProvider.mockResolvedValue({ data: { id: "provider-1" } });
   });
@@ -351,7 +355,7 @@ describe("provider wizard account creation", () => {
       addProvider.mockResolvedValue({ data: { id: "provider-1" } });
       addCredentialsProvider.mockResolvedValue({ data: { id: "secret-1" } });
       testProviderConnection.mockResolvedValue({
-        connected: false,
+        status: CONNECTION_CHECK_STATUS.FAILED,
         error: "The role could not be assumed.",
       });
       const user = await pickAws();

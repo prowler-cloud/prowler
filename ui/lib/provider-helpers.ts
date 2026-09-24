@@ -1,12 +1,24 @@
-import { checkConnectionProvider } from "@/actions/providers/providers";
 import {
+  checkConnectionProvider,
+  getProvider,
+} from "@/actions/providers/providers";
+import {
+  CONNECTION_CHECK_STATUS,
+  type ConnectionCheckStatus,
   ProviderEntity,
   ProviderProps,
   ProvidersApiResponse,
   ProviderType,
 } from "@/types/providers";
 
-import { checkTaskStatus } from "./helper";
+import { checkTaskStatus, TASK_STATUS_MAX_RETRIES_ERROR } from "./helper";
+
+// Re-exported so callers that only need the status enum (e.g.
+// `org-account-selection.utils.ts` and its tests) can import it from
+// `@/types/providers` directly, without pulling in this module's server-action
+// dependencies.
+export { CONNECTION_CHECK_STATUS };
+export type { ConnectionCheckStatus };
 
 export const extractProviderUIDs = (
   providersData: ProvidersApiResponse,
@@ -172,8 +184,117 @@ export const requiresBackButton = (via?: string | null): boolean => {
 };
 
 export interface TestConnectionResult {
-  connected: boolean;
+  status: ConnectionCheckStatus;
   error: string | null;
+}
+
+/**
+ * The `provider-connection-check` Celery task has a 120s hard time limit
+ * (api/src/backend/config/celery.py `task_annotations`). Poll long enough to
+ * cover a full run plus queueing/network slack, instead of the generic 30s
+ * default, which cuts the wait off well before the backend gives up.
+ */
+export const PROVIDER_CONNECTION_CHECK_TASK_TIME_LIMIT_MS = 120_000;
+const PROVIDER_CONNECTION_CHECK_POLL_BUFFER_MS = 30_000;
+export const PROVIDER_CONNECTION_CHECK_POLL_DELAY_MS = 1_500;
+export const PROVIDER_CONNECTION_CHECK_MAX_RETRIES = Math.ceil(
+  (PROVIDER_CONNECTION_CHECK_TASK_TIME_LIMIT_MS +
+    PROVIDER_CONNECTION_CHECK_POLL_BUFFER_MS) /
+    PROVIDER_CONNECTION_CHECK_POLL_DELAY_MS,
+);
+
+const CONNECTION_NOT_CONFIRMED_MESSAGE =
+  "Connection was not confirmed. Test the connection again.";
+const CONNECTION_STILL_RUNNING_MESSAGE =
+  "The connection test is still running. Refresh in a moment to see the result.";
+
+/**
+ * Reads a provider's current `connection.last_checked_at`, to be captured
+ * *before* a connection check is dispatched for it. Passed on to
+ * `resolveProviderConnectionState` as the value a later read is compared against
+ * -- see that function for why the comparison is by value, not by clock.
+ *
+ * `undefined` means the read failed (network error, provider not found) and is
+ * distinct from `null` ("no prior check exists"): `resolveProviderConnectionState`
+ * treats an unknown baseline as impossible to clear, never as an implicit change.
+ */
+export async function captureConnectionBaseline(
+  providerId: string,
+): Promise<string | null | undefined> {
+  const formData = new FormData();
+  formData.append("id", providerId);
+
+  const providerResponse = await getProvider(formData);
+  if (!providerResponse?.data) {
+    return undefined;
+  }
+
+  return providerResponse.data.attributes?.connection?.last_checked_at ?? null;
+}
+
+/**
+ * Re-reads a provider's persisted connection state from the API. Used when a
+ * connection-check wait is exhausted: the backend task may still be running (or
+ * may already have finished after the UI stopped waiting on it), so this reports
+ * whatever the provider record currently says instead of a flat error.
+ *
+ * The stored `connection` is the result of the *last check that finished*, not
+ * necessarily the one this call is following up on -- e.g. a provider was
+ * connected, the user changed its credentials, and the new check is still
+ * running past the wait. `baseline` -- the provider's `last_checked_at` captured
+ * (via {@link captureConnectionBaseline}) before this check was dispatched --
+ * guards against reporting that stale result as current: the stored state is
+ * only trusted once `last_checked_at` has changed from it.
+ *
+ * This compares the two values directly rather than comparing timestamps, so it
+ * holds even in deployments whose clocks are not synchronised: `last_checked_at`
+ * is written by the server, but the previous check used a wait deadline taken
+ * from the browser's clock, and a browser clock that drifts from the server's
+ * could make an older result look newer than the check, or a finished check look
+ * like it is still pending.
+ */
+export async function resolveProviderConnectionState(
+  providerId: string,
+  baseline: string | null | undefined,
+): Promise<TestConnectionResult> {
+  const formData = new FormData();
+  formData.append("id", providerId);
+
+  const providerResponse = await getProvider(formData);
+  const connection = providerResponse?.data?.attributes?.connection;
+  const lastCheckedAt = connection?.last_checked_at;
+
+  // An unknown baseline (the pre-dispatch read failed) can never be cleared --
+  // there is nothing to compare against, so the result cannot be trusted yet.
+  const isCurrent =
+    baseline !== undefined && !!lastCheckedAt && lastCheckedAt !== baseline;
+
+  if (!isCurrent) {
+    // No persisted result yet, or it predates this check -- the backend task
+    // may still be running.
+    return {
+      status: CONNECTION_CHECK_STATUS.PENDING,
+      error: CONNECTION_STILL_RUNNING_MESSAGE,
+    };
+  }
+
+  if (connection?.connected === true) {
+    return { status: CONNECTION_CHECK_STATUS.SUCCESS, error: null };
+  }
+
+  if (connection?.connected === false) {
+    return {
+      status: CONNECTION_CHECK_STATUS.FAILED,
+      error: CONNECTION_NOT_CONFIRMED_MESSAGE,
+    };
+  }
+
+  // Current per its timestamp, but `connected` is null -- treat the same as
+  // still pending rather than guessing a pass or fail.
+  return {
+    status: CONNECTION_CHECK_STATUS.PENDING,
+    error: CONNECTION_STILL_RUNNING_MESSAGE,
+  };
 }
 
 /**
@@ -186,6 +307,10 @@ export interface TestConnectionResult {
 export async function testProviderConnection(
   providerId: string,
 ): Promise<TestConnectionResult> {
+  // Captured before the check is dispatched, so any `last_checked_at` this check
+  // eventually writes is guaranteed to differ from it.
+  const baseline = await captureConnectionBaseline(providerId);
+
   const formData = new FormData();
   formData.append("providerId", providerId);
 
@@ -193,21 +318,31 @@ export async function testProviderConnection(
 
   if (data?.errors && data.errors.length > 0) {
     return {
-      connected: false,
+      status: CONNECTION_CHECK_STATUS.FAILED,
       error: data.errors[0]?.detail ?? "Unknown error",
     };
   }
 
   const taskId = data?.data?.id;
   if (!taskId) {
-    return { connected: false, error: "No task ID returned" };
+    return {
+      status: CONNECTION_CHECK_STATUS.FAILED,
+      error: "No task ID returned",
+    };
   }
 
-  const taskResult = await checkTaskStatus(taskId);
+  const taskResult = await checkTaskStatus(
+    taskId,
+    PROVIDER_CONNECTION_CHECK_MAX_RETRIES,
+    PROVIDER_CONNECTION_CHECK_POLL_DELAY_MS,
+  );
 
   if (!taskResult.completed) {
+    if (taskResult.error === TASK_STATUS_MAX_RETRIES_ERROR) {
+      return resolveProviderConnectionState(providerId, baseline);
+    }
     return {
-      connected: false,
+      status: CONNECTION_CHECK_STATUS.FAILED,
       error: taskResult.error ?? "Connection test timed out",
     };
   }
@@ -217,10 +352,9 @@ export async function testProviderConnection(
   const connected = result?.connected === true;
 
   return {
-    connected,
-    error: connected
-      ? null
-      : result?.error ||
-        "Connection was not confirmed. Test the connection again.",
+    status: connected
+      ? CONNECTION_CHECK_STATUS.SUCCESS
+      : CONNECTION_CHECK_STATUS.FAILED,
+    error: connected ? null : result?.error || CONNECTION_NOT_CONFIRMED_MESSAGE,
   };
 }

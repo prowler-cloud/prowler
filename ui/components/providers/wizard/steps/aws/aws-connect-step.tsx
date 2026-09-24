@@ -20,6 +20,7 @@ import {
   useWatch,
 } from "react-hook-form";
 
+import { ConnectionPending } from "@/components/icons";
 import { RadioCard } from "@/components/providers/radio-card";
 import { CredentialsRoleHelper } from "@/components/providers/workflow/credentials-role-helper";
 import { WizardInputField } from "@/components/providers/workflow/forms/fields";
@@ -48,6 +49,7 @@ import { testProviderConnection } from "@/lib/provider-helpers";
 import { useProviderWizardStore } from "@/store/provider-wizard/store";
 import type { AWSCredentials, AWSCredentialsRole } from "@/types";
 import type { AwsConnectDraft } from "@/types/provider-wizard";
+import { CONNECTION_CHECK_STATUS } from "@/types/providers";
 
 import {
   awsKeysConnectSchema,
@@ -203,19 +205,27 @@ const CONNECTION_FAILED_MESSAGE =
 const CONNECTION_UNREACHABLE_MESSAGE =
   "The connection test could not be completed. The account is saved, so you can try again.";
 
+// Fallback only: `testProviderConnection` already carries this same message on
+// `error` for a pending result (see `resolveProviderConnectionState`).
+const CONNECTION_PENDING_MESSAGE =
+  "The connection test is still running. Refresh in a moment to see the result.";
+
 /** Footer label for the one-step form: the test and the retry share the submit. */
 const resolveActionLabel = ({
   isTesting,
   isSubmitting,
   hasFailed,
+  hasPending,
 }: {
   isTesting: boolean;
   isSubmitting: boolean;
   hasFailed: boolean;
+  hasPending: boolean;
 }) => {
   if (isTesting) return "Testing connection...";
   if (isSubmitting) return "Connecting account...";
-  return hasFailed ? "Retry connection" : "Connect account";
+  if (hasFailed) return "Retry connection";
+  return hasPending ? "Check again" : "Connect account";
 };
 
 /** Registers the account, stores its credentials and tests the connection in one submit. */
@@ -239,6 +249,12 @@ function useAwsConnectSubmit<T extends FieldValues>({
   // outcome belongs to this step rather than to any form field.
   const [isTesting, setIsTesting] = useState(false);
   const [connectionError, setConnectionError] = useState<string | null>(null);
+  // Still running past the wait -- neither a pass nor a fail. Kept separate
+  // from `connectionError` so it never renders with the destructive styling a
+  // confirmed failure gets, and never counts as one.
+  const [connectionPending, setConnectionPending] = useState<string | null>(
+    null,
+  );
   // A hook, not `form.formState.isValid` read inline: the React Compiler keys
   // its memo on the stable `form` object and would freeze a proxy read at false.
   const { isSubmitting, isValid } = useFormState({ control: form.control });
@@ -265,6 +281,7 @@ function useAwsConnectSubmit<T extends FieldValues>({
         isTesting,
         isSubmitting,
         hasFailed: connectionError !== null,
+        hasPending: connectionPending !== null,
       }),
       actionDisabled: !canSubmit || isBusy,
       isLoading: isBusy,
@@ -272,6 +289,7 @@ function useAwsConnectSubmit<T extends FieldValues>({
   }, [
     canSubmit,
     connectionError,
+    connectionPending,
     isBusy,
     isSubmitting,
     isTesting,
@@ -279,15 +297,20 @@ function useAwsConnectSubmit<T extends FieldValues>({
     onUiStateChange,
   ]);
 
-  // A past failure must not sit above the field the user is already correcting.
+  // A past failure or a still-pending result must not sit above the field the
+  // user is already correcting.
   useEffect(() => {
-    if (connectionError === null) return;
-    const subscription = form.watch(() => setConnectionError(null));
+    if (connectionError === null && connectionPending === null) return;
+    const subscription = form.watch(() => {
+      setConnectionError(null);
+      setConnectionPending(null);
+    });
     return () => subscription.unsubscribe();
-  }, [connectionError, form]);
+  }, [connectionError, connectionPending, form]);
 
   const onSubmit = form.handleSubmit(async (values) => {
     setConnectionError(null);
+    setConnectionPending(null);
     const result = await connectAwsAccount({
       method,
       values: { ...values, ...extraValues },
@@ -313,9 +336,11 @@ function useAwsConnectSubmit<T extends FieldValues>({
     setIsTesting(true);
     try {
       const connection = await testProviderConnection(result.providerId);
-      connected = connection.connected;
-      if (!connected) {
+      connected = connection.status === CONNECTION_CHECK_STATUS.SUCCESS;
+      if (connection.status === CONNECTION_CHECK_STATUS.FAILED) {
         setConnectionError(connection.error || CONNECTION_FAILED_MESSAGE);
+      } else if (connection.status === CONNECTION_CHECK_STATUS.PENDING) {
+        setConnectionPending(connection.error || CONNECTION_PENDING_MESSAGE);
       }
     } catch {
       setConnectionError(CONNECTION_UNREACHABLE_MESSAGE);
@@ -326,26 +351,31 @@ function useAwsConnectSubmit<T extends FieldValues>({
     if (connected && isActiveRef.current) onConnected();
   });
 
-  return { onSubmit, isTesting, connectionError };
+  return { onSubmit, isTesting, connectionError, connectionPending };
 }
 
-/** Progress line while the test runs, or the API's reason once it is refused. */
+/**
+ * Progress line while the test runs, the neutral message once the wait is
+ * exhausted with no verdict, or the API's reason once it is refused.
+ */
 function ConnectionFeedback({
   isTesting,
   error,
+  pending,
 }: {
   isTesting: boolean;
   error: string | null;
+  pending: string | null;
 }) {
   const alertRef = useRef<HTMLDivElement>(null);
 
   // The form scrolls inside the modal and the action button sits outside it, so
-  // an error raised from the footer can land above the fold.
+  // an error or a pending result raised from the footer can land above the fold.
   useEffect(() => {
-    if (!error) return;
+    if (!error && !pending) return;
     // Guarded: jsdom has no scrollIntoView, and a throw here would unmount the step.
     alertRef.current?.scrollIntoView?.({ block: "start", behavior: "smooth" });
-  }, [error]);
+  }, [error, pending]);
 
   if (isTesting) {
     return (
@@ -356,6 +386,25 @@ function ConnectionFeedback({
         <Loader2 aria-hidden className="size-4 animate-spin" />
         Testing the connection. This usually takes a few seconds.
       </p>
+    );
+  }
+
+  if (pending) {
+    return (
+      <div
+        ref={alertRef}
+        role="status"
+        className="bg-bg-warning-secondary border-border-neutral-secondary flex items-start gap-3 rounded-lg border p-4"
+      >
+        <ConnectionPending
+          size={20}
+          aria-hidden="true"
+          className="text-text-warning-primary shrink-0"
+        />
+        <p className="text-text-warning-primary min-w-0 text-sm break-words">
+          {pending}
+        </p>
+      </div>
     );
   }
 
@@ -417,17 +466,18 @@ function AwsRoleConnectForm({
   });
   const detectedAccountId = parseAwsAccountIdFromRoleArn(roleArn ?? "");
 
-  const { onSubmit, isTesting, connectionError } = useAwsConnectSubmit({
-    form,
-    method: AWS_ACCESS_METHOD.ROLE,
-    accountField: ProviderCredentialFields.ROLE_ARN,
-    accountResolved: detectedAccountId !== null,
-    // The external id is the tenant's, never user input, so it joins at submit time.
-    extraValues: { [ProviderCredentialFields.EXTERNAL_ID]: externalId },
-    onConnected,
-    onBusyChange,
-    onUiStateChange,
-  });
+  const { onSubmit, isTesting, connectionError, connectionPending } =
+    useAwsConnectSubmit({
+      form,
+      method: AWS_ACCESS_METHOD.ROLE,
+      accountField: ProviderCredentialFields.ROLE_ARN,
+      accountResolved: detectedAccountId !== null,
+      // The external id is the tenant's, never user input, so it joins at submit time.
+      extraValues: { [ProviderCredentialFields.EXTERNAL_ID]: externalId },
+      onConnected,
+      onBusyChange,
+      onUiStateChange,
+    });
 
   // One template for every build: self-hosted users set the account that assumes
   // the role, so the AccountId parameter must stay editable in the console.
@@ -437,7 +487,11 @@ function AwsRoleConnectForm({
   return (
     <Form {...form}>
       <form id={formId} onSubmit={onSubmit} className="flex flex-col gap-6">
-        <ConnectionFeedback isTesting={isTesting} error={connectionError} />
+        <ConnectionFeedback
+          isTesting={isTesting}
+          error={connectionError}
+          pending={connectionPending}
+        />
 
         <section className="flex flex-col gap-4">
           <h4 className="text-sm font-semibold">1. Create the IAM role</h4>
@@ -519,19 +573,24 @@ function AwsKeysConnectForm({
   });
   useDraftValues(form, "keysValues");
 
-  const { onSubmit, isTesting, connectionError } = useAwsConnectSubmit({
-    form,
-    method: AWS_ACCESS_METHOD.CREDENTIALS,
-    accountField: ProviderCredentialFields.PROVIDER_UID,
-    onConnected,
-    onBusyChange,
-    onUiStateChange,
-  });
+  const { onSubmit, isTesting, connectionError, connectionPending } =
+    useAwsConnectSubmit({
+      form,
+      method: AWS_ACCESS_METHOD.CREDENTIALS,
+      accountField: ProviderCredentialFields.PROVIDER_UID,
+      onConnected,
+      onBusyChange,
+      onUiStateChange,
+    });
 
   return (
     <Form {...form}>
       <form id={formId} onSubmit={onSubmit} className="flex flex-col gap-4">
-        <ConnectionFeedback isTesting={isTesting} error={connectionError} />
+        <ConnectionFeedback
+          isTesting={isTesting}
+          error={connectionError}
+          pending={connectionPending}
+        />
 
         <WizardInputField
           control={form.control}

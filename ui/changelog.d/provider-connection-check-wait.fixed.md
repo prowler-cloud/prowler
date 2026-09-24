@@ -1,0 +1,1 @@
+Provider connection test no longer reports `Max retries exceeded` for checks that take longer than 30 seconds, such as networks where some AWS endpoints are unreachable; the wait now covers the backend task's full time limit and falls back to the provider's current connection state if it is still exhausted

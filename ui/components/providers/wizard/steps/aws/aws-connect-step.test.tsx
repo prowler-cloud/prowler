@@ -8,6 +8,10 @@ import {
   type ProviderFunnelDetail,
 } from "@/lib/provider-funnel/provider-funnel-events";
 import { useProviderWizardStore } from "@/store/provider-wizard/store";
+import {
+  CONNECTION_CHECK_STATUS,
+  type ConnectionCheckStatus,
+} from "@/types/providers";
 
 import { AwsConnectStep } from "./aws-connect-step";
 import type { AwsConnectUiState } from "./types";
@@ -117,7 +121,10 @@ describe("AwsConnectStep", () => {
     addCredentialsProvider.mockResolvedValue({ data: { id: "secret-1" } });
     updateProvider.mockResolvedValue({ data: { id: "provider-1" } });
     updateCredentialsProvider.mockResolvedValue({ data: { id: "secret-1" } });
-    testProviderConnection.mockResolvedValue({ connected: true, error: null });
+    testProviderConnection.mockResolvedValue({
+      status: CONNECTION_CHECK_STATUS.SUCCESS,
+      error: null,
+    });
   });
 
   afterEach(() => {
@@ -355,7 +362,7 @@ describe("AwsConnectStep", () => {
     it("reports the test in progress and blocks the action while it runs", async () => {
       // Given: a test that has not answered yet.
       let settle!: (result: {
-        connected: boolean;
+        status: ConnectionCheckStatus;
         error: string | null;
       }) => void;
       testProviderConnection.mockImplementation(
@@ -378,14 +385,16 @@ describe("AwsConnectStep", () => {
       expect(onConnected).not.toHaveBeenCalled();
 
       // When / Then
-      await act(async () => settle({ connected: true, error: null }));
+      await act(async () =>
+        settle({ status: CONNECTION_CHECK_STATUS.SUCCESS, error: null }),
+      );
       await waitFor(() => expect(onConnected).toHaveBeenCalledOnce());
     });
 
     it("ignores a result that lands after the step was closed", async () => {
       // Given: the wizard is closed (or switched to organizations) mid-test.
       let settle!: (result: {
-        connected: boolean;
+        status: ConnectionCheckStatus;
         error: string | null;
       }) => void;
       testProviderConnection.mockImplementation(
@@ -399,7 +408,9 @@ describe("AwsConnectStep", () => {
 
       // When
       unmount();
-      await act(async () => settle({ connected: true, error: null }));
+      await act(async () =>
+        settle({ status: CONNECTION_CHECK_STATUS.SUCCESS, error: null }),
+      );
 
       // Then: a reset wizard must not be pushed to the launch step.
       expect(onConnected).not.toHaveBeenCalled();
@@ -417,7 +428,7 @@ describe("AwsConnectStep", () => {
     it("stays on the keys form when the connection is refused", async () => {
       // Given
       testProviderConnection.mockResolvedValue({
-        connected: false,
+        status: CONNECTION_CHECK_STATUS.FAILED,
         error: "The access keys were rejected.",
       });
 
@@ -444,7 +455,7 @@ describe("AwsConnectStep", () => {
     it("stays on the form and offers a retry when the connection is refused", async () => {
       // Given
       testProviderConnection.mockResolvedValue({
-        connected: false,
+        status: CONNECTION_CHECK_STATUS.FAILED,
         error: "The role could not be assumed.",
       });
 
@@ -461,12 +472,35 @@ describe("AwsConnectStep", () => {
       ).toBeEnabled();
     });
 
+    it("shows a neutral message, not a failure, when the check is still pending", async () => {
+      // Given: the wait was exhausted with no confirmed outcome (the backend
+      // check is genuinely still running past the wait).
+      testProviderConnection.mockResolvedValue({
+        status: CONNECTION_CHECK_STATUS.PENDING,
+        error:
+          "The connection test is still running. Refresh in a moment to see the result.",
+      });
+
+      // When
+      const { onConnected } = await submitRole();
+
+      // Then: announced neutrally, not as an alert, and the account stays
+      // registered rather than reporting a failure the backend never gave.
+      expect(await screen.findByRole("status")).toHaveTextContent(
+        /still running/i,
+      );
+      expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+      // Nor does it advance: the outcome is still unknown.
+      expect(onConnected).not.toHaveBeenCalled();
+      expect(screen.getByRole("button", { name: "Check again" })).toBeEnabled();
+    });
+
     // The helper always supplies a reason today; this guards the alert against a
     // future contract that does not.
     it("falls back to a generic reason when the API gives none", async () => {
       // Given
       testProviderConnection.mockResolvedValue({
-        connected: false,
+        status: CONNECTION_CHECK_STATUS.FAILED,
         error: null,
       });
 
@@ -501,7 +535,7 @@ describe("AwsConnectStep", () => {
     it("drops the failure as soon as the form is edited again", async () => {
       // Given
       testProviderConnection.mockResolvedValue({
-        connected: false,
+        status: CONNECTION_CHECK_STATUS.FAILED,
         error: "The role could not be assumed.",
       });
       const { user } = await submitRole();
@@ -522,8 +556,14 @@ describe("AwsConnectStep", () => {
     it("moves on once a retry connects", async () => {
       // Given
       testProviderConnection
-        .mockResolvedValueOnce({ connected: false, error: "Denied." })
-        .mockResolvedValueOnce({ connected: true, error: null });
+        .mockResolvedValueOnce({
+          status: CONNECTION_CHECK_STATUS.FAILED,
+          error: "Denied.",
+        })
+        .mockResolvedValueOnce({
+          status: CONNECTION_CHECK_STATUS.SUCCESS,
+          error: null,
+        });
       const { onConnected, user } = await submitRole();
 
       // When
