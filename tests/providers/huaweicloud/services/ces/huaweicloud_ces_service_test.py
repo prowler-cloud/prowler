@@ -49,7 +49,6 @@ class TestCESService:
             ),
         ]
         provider = set_mocked_huaweicloud_provider(region="eu-west-101")
-        provider.session.is_mock = False
         provider.generate_regional_clients.side_effect = None
         provider.generate_regional_clients.return_value = {"eu-west-101": client}
 
@@ -81,7 +80,6 @@ class TestCESService:
         client = mock.MagicMock()
         client.list_alarm_rules.side_effect = RuntimeError("CES unavailable")
         provider = set_mocked_huaweicloud_provider(region="eu-west-101")
-        provider.session.is_mock = False
         provider.generate_regional_clients.side_effect = None
         provider.generate_regional_clients.return_value = {"eu-west-101": client}
 
