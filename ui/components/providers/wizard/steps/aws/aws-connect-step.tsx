@@ -35,6 +35,7 @@ import {
 } from "@/components/shadcn/collapsible";
 import { Form } from "@/components/shadcn/form";
 import { useFormServerErrors } from "@/hooks/use-form-server-errors";
+import { useMountEffect } from "@/hooks/use-mount-effect";
 import { PROVIDER_CREDENTIALS_ERROR_MAPPING } from "@/lib/error-mappings";
 import { getAWSCredentialsTemplateLinks } from "@/lib/external-urls";
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
@@ -100,7 +101,7 @@ interface AwsConnectStepProps {
   onUiStateChange: (state: AwsConnectUiState) => void;
 }
 
-/** One form to register an AWS account and store its credentials. */
+/** One form to register an AWS account, store its credentials and test the connection. */
 export function AwsConnectStep({
   formId,
   onConnected,
@@ -202,6 +203,7 @@ const CONNECTION_FAILED_MESSAGE =
 const CONNECTION_UNREACHABLE_MESSAGE =
   "The connection test could not be completed. The account is saved, so you can try again.";
 
+/** Footer label for the one-step form: the test and the retry share the submit. */
 const resolveActionLabel = ({
   isTesting,
   isSubmitting,
@@ -216,6 +218,7 @@ const resolveActionLabel = ({
   return hasFailed ? "Retry connection" : "Connect account";
 };
 
+/** Registers the account, stores its credentials and tests the connection in one submit. */
 function useAwsConnectSubmit<T extends FieldValues>({
   form,
   method,
@@ -241,6 +244,15 @@ function useAwsConnectSubmit<T extends FieldValues>({
   const { isSubmitting, isValid } = useFormState({ control: form.control });
   const canSubmit = isValid && accountResolved;
   const isBusy = isSubmitting || isTesting;
+  // Closing the wizard (or switching to organizations) unmounts the step while a
+  // test may still be running; its result must not advance a wizard already reset.
+  const isActiveRef = useRef(true);
+  useMountEffect(() => {
+    isActiveRef.current = true;
+    return () => {
+      isActiveRef.current = false;
+    };
+  });
 
   // Same contract ConnectAccountForm uses: the wizard footer lives outside the step.
   // Both callbacks must be stable setters, or this effect would loop.
@@ -311,12 +323,13 @@ function useAwsConnectSubmit<T extends FieldValues>({
       setIsTesting(false);
     }
 
-    if (connected) onConnected();
+    if (connected && isActiveRef.current) onConnected();
   });
 
   return { onSubmit, isTesting, connectionError };
 }
 
+/** Progress line while the test runs, or the API's reason once it is refused. */
 function ConnectionFeedback({
   isTesting,
   error,
@@ -341,7 +354,7 @@ function ConnectionFeedback({
         className="text-text-neutral-secondary flex items-center gap-2 text-sm"
       >
         <Loader2 aria-hidden className="size-4 animate-spin" />
-        Testing the connection. This can take up to 30 seconds.
+        Testing the connection. This usually takes a few seconds.
       </p>
     );
   }

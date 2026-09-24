@@ -84,13 +84,18 @@ function Harness({
 function renderStep() {
   const onConnected = vi.fn();
   const onSelectOrganizations = vi.fn();
-  render(
+  const { unmount } = render(
     <Harness
       onConnected={onConnected}
       onSelectOrganizations={onSelectOrganizations}
     />,
   );
-  return { onConnected, onSelectOrganizations, user: userEvent.setup() };
+  return {
+    onConnected,
+    onSelectOrganizations,
+    unmount,
+    user: userEvent.setup(),
+  };
 }
 
 const connectButton = () =>
@@ -365,7 +370,7 @@ describe("AwsConnectStep", () => {
 
       // Then
       expect(await screen.findByRole("status")).toHaveTextContent(
-        /up to 30 seconds/i,
+        /testing the connection/i,
       );
       expect(
         screen.getByRole("button", { name: "Testing connection..." }),
@@ -375,6 +380,29 @@ describe("AwsConnectStep", () => {
       // When / Then
       await act(async () => settle({ connected: true, error: null }));
       await waitFor(() => expect(onConnected).toHaveBeenCalledOnce());
+    });
+
+    it("ignores a result that lands after the step was closed", async () => {
+      // Given: the wizard is closed (or switched to organizations) mid-test.
+      let settle!: (result: {
+        connected: boolean;
+        error: string | null;
+      }) => void;
+      testProviderConnection.mockImplementation(
+        () =>
+          new Promise((resolve) => {
+            settle = resolve;
+          }),
+      );
+      const { onConnected, unmount } = await submitRole();
+      await screen.findByRole("status");
+
+      // When
+      unmount();
+      await act(async () => settle({ connected: true, error: null }));
+
+      // Then: a reset wizard must not be pushed to the launch step.
+      expect(onConnected).not.toHaveBeenCalled();
     });
 
     it("tests the account that was connected with static keys too", async () => {
