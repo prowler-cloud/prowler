@@ -3,7 +3,7 @@
 import { RefreshCw } from "lucide-react";
 
 import { ActionDropdownItem } from "@/components/shadcn/dropdown";
-import { usePartialScanHintStore, usePartialScanStore } from "@/store";
+import { usePartialScanStore } from "@/store";
 import type { PartialScanTarget } from "@/types/partial-scans";
 
 import { usePartialScanTarget } from "./use-partial-scan-target";
@@ -20,9 +20,6 @@ export const RecheckResourceActionItem = ({
 }: RecheckResourceActionItemProps) => {
   const resolvedTarget = usePartialScanTarget(target);
   const openPartialScan = usePartialScanStore((state) => state.openPartialScan);
-  const markHintSeen = usePartialScanHintStore(
-    (state) => state.markRecheckHintSeen,
-  );
 
   if (!resolvedTarget) return null;
 
@@ -31,11 +28,7 @@ export const RecheckResourceActionItem = ({
       icon={<RefreshCw className="size-5" />}
       label={RECHECK_RESOURCE_LABEL}
       aria-label={RECHECK_RESOURCE_LABEL}
-      onSelect={() => {
-        // Using the menu counts as discovering the feature: the row icon calms.
-        markHintSeen();
-        openPartialScan(resolvedTarget);
-      }}
+      onSelect={() => openPartialScan(resolvedTarget)}
     />
   );
 };

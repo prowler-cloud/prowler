@@ -29,7 +29,6 @@ vi.mock("@/components/shadcn/dropdown", () => ({
   ),
 }));
 
-import { usePartialScanHintStore } from "@/store/partial-scan/hint-store";
 import { usePartialScanStore } from "@/store/partial-scan/store";
 
 import {
@@ -52,7 +51,6 @@ describe("RecheckResourceActionItem", () => {
     isCloudMock.mockReturnValue(true);
     hasPermissionMock.mockReturnValue(true);
     usePartialScanStore.getState().closePartialScan();
-    usePartialScanHintStore.setState({ hasSeenRecheckHint: false });
   });
 
   it("opens the confirmation with the resource as target", async () => {
@@ -64,8 +62,6 @@ describe("RecheckResourceActionItem", () => {
     );
 
     expect(usePartialScanStore.getState().activeTarget).toEqual(target);
-    // Opening from the menu also calms the row icon.
-    expect(usePartialScanHintStore.getState().hasSeenRecheckHint).toBe(true);
   });
 
   it("is hidden outside Prowler Cloud", () => {

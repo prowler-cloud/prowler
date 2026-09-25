@@ -1,16 +1,15 @@
 "use client";
 
 import { RefreshCw } from "lucide-react";
-import { type MouseEvent, useState } from "react";
+import type { MouseEvent } from "react";
 
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
-import { useMountEffect } from "@/hooks/use-mount-effect";
 import { cn } from "@/lib/utils";
-import { usePartialScanHintStore, usePartialScanStore } from "@/store";
+import { usePartialScanStore } from "@/store";
 import type { PartialScanTarget } from "@/types/partial-scans";
 
 import { RECHECK_RESOURCE_LABEL } from "./recheck-resource-action-item";
@@ -21,32 +20,20 @@ interface RecheckResourceIconButtonProps {
   className?: string;
 }
 
-// Beside "last seen". Until the user has re-checked something once it pulses
-// green, like the navbar bell with unread updates; afterwards it settles into
-// a muted icon that brightens on row hover or focus.
+// Beside "last seen": always green and pulsing, so the re-check is noticed.
+// It is an action, not a notification, so it never settles into a seen state.
 export function RecheckResourceIconButton({
   target,
   className,
 }: RecheckResourceIconButtonProps) {
   const resolvedTarget = usePartialScanTarget(target);
   const openPartialScan = usePartialScanStore((state) => state.openPartialScan);
-  const hintSeen = usePartialScanHintStore((state) => state.hasSeenRecheckHint);
-  const markHintSeen = usePartialScanHintStore(
-    (state) => state.markRecheckHintSeen,
-  );
-  // Client-only gate: SSR and hydration render the calm icon, the persisted
-  // store decides after mount.
-  const [hintReady, setHintReady] = useState(false);
-  useMountEffect(() => setHintReady(true));
 
   if (!resolvedTarget) return null;
-
-  const attention = hintReady && !hintSeen;
 
   const handleClick = (event: MouseEvent<HTMLButtonElement>) => {
     // The row itself opens the detail drawer on click.
     event.stopPropagation();
-    markHintSeen();
     openPartialScan(resolvedTarget);
   };
 
@@ -56,14 +43,11 @@ export function RecheckResourceIconButton({
         <button
           type="button"
           aria-label={RECHECK_RESOURCE_LABEL}
-          data-attention={attention ? "true" : undefined}
           onClick={handleClick}
           className={cn(
-            "inline-flex size-5 shrink-0 items-center justify-center rounded-md transition-colors",
+            "text-button-primary inline-flex size-5 shrink-0 animate-pulse items-center justify-center rounded-md",
+            "hover:[animation-play-state:paused] focus-visible:[animation-play-state:paused]",
             "focus-visible:ring-ring/50 focus-visible:ring-2 focus-visible:outline-none",
-            attention
-              ? "text-button-primary animate-pulse"
-              : "text-text-neutral-tertiary group-hover:text-text-neutral-secondary hover:text-text-neutral-primary focus-visible:text-text-neutral-primary",
             className,
           )}
         >

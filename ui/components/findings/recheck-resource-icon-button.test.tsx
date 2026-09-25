@@ -15,7 +15,6 @@ vi.mock("@/hooks/use-auth", () => ({
   useAuth: () => ({ hasPermission: hasPermissionMock }),
 }));
 
-import { usePartialScanHintStore } from "@/store/partial-scan/hint-store";
 import { usePartialScanStore } from "@/store/partial-scan/store";
 
 import { RECHECK_RESOURCE_LABEL } from "./recheck-resource-action-item";
@@ -35,32 +34,6 @@ describe("RecheckResourceIconButton", () => {
     isCloudMock.mockReturnValue(true);
     hasPermissionMock.mockReturnValue(true);
     usePartialScanStore.getState().closePartialScan();
-    usePartialScanHintStore.setState({ hasSeenRecheckHint: false });
-  });
-
-  it("pulses until a re-check has been opened once, then settles", async () => {
-    // Like the navbar bell: attention while undiscovered, calm afterwards.
-    const user = userEvent.setup();
-    render(<RecheckResourceIconButton target={target} />);
-    const button = screen.getByRole("button", { name: RECHECK_RESOURCE_LABEL });
-
-    expect(button).toHaveAttribute("data-attention", "true");
-    expect(button.className).toContain("animate-pulse");
-
-    await user.click(button);
-
-    expect(usePartialScanHintStore.getState().hasSeenRecheckHint).toBe(true);
-    expect(button).not.toHaveAttribute("data-attention");
-    expect(button.className).not.toContain("animate-pulse");
-  });
-
-  it("stays calm when the hint was already acknowledged", () => {
-    usePartialScanHintStore.setState({ hasSeenRecheckHint: true });
-    render(<RecheckResourceIconButton target={target} />);
-
-    expect(
-      screen.getByRole("button", { name: RECHECK_RESOURCE_LABEL }),
-    ).not.toHaveAttribute("data-attention");
   });
 
   it("opens the confirmation for the resource without triggering the row", async () => {
@@ -79,6 +52,14 @@ describe("RecheckResourceIconButton", () => {
 
     expect(usePartialScanStore.getState().activeTarget).toEqual(target);
     expect(onRowClick).not.toHaveBeenCalled();
+  });
+
+  it("is always green and pulsing", () => {
+    render(<RecheckResourceIconButton target={target} />);
+
+    const button = screen.getByRole("button", { name: RECHECK_RESOURCE_LABEL });
+    expect(button.className).toContain("text-button-primary");
+    expect(button.className).toContain("animate-pulse");
   });
 
   it("is hidden outside Prowler Cloud", () => {
