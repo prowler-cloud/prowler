@@ -22,8 +22,8 @@ interface RecheckResourceIconButtonProps {
 }
 
 // Beside "last seen". Until the user has re-checked something once it pulses
-// green with a ping dot, like the navbar bell with unread updates; afterwards
-// it settles into a muted icon that brightens on row hover or focus.
+// green, like the navbar bell with unread updates; afterwards it settles into
+// a muted icon that brightens on row hover or focus.
 export function RecheckResourceIconButton({
   target,
   className,
@@ -59,7 +59,7 @@ export function RecheckResourceIconButton({
           data-attention={attention ? "true" : undefined}
           onClick={handleClick}
           className={cn(
-            "relative inline-flex size-5 shrink-0 items-center justify-center rounded-md transition-colors",
+            "inline-flex size-5 shrink-0 items-center justify-center rounded-md transition-colors",
             "focus-visible:ring-ring/50 focus-visible:ring-2 focus-visible:outline-none",
             attention
               ? "text-button-primary animate-pulse"
@@ -68,12 +68,6 @@ export function RecheckResourceIconButton({
           )}
         >
           <RefreshCw className="size-3.5" aria-hidden />
-          {attention && (
-            <span className="absolute -top-0.5 -right-0.5 flex h-1.5 w-1.5">
-              <span className="bg-button-primary absolute inline-flex h-full w-full animate-ping rounded-full opacity-75" />
-              <span className="bg-button-primary relative inline-flex h-1.5 w-1.5 rounded-full" />
-            </span>
-          )}
         </button>
       </TooltipTrigger>
       <TooltipContent>{RECHECK_RESOURCE_LABEL}</TooltipContent>
