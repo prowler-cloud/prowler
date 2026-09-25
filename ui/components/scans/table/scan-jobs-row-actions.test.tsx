@@ -387,6 +387,36 @@ describe("ScanJobsRowActions", () => {
     expect(downloadScanZipMock).toHaveBeenCalledWith("scan-1", toastMock);
   });
 
+  it("offers neither report download nor compliance for a partial scan", async () => {
+    // A partial scan re-checks a few resources: no report files, no compliance.
+    const user = userEvent.setup();
+    render(
+      <ScanJobsRowActions
+        scan={makeScan({
+          state: "completed",
+          completed_at: "2026-01-01T10:05:00Z",
+          is_partial: true,
+        })}
+        tab="completed"
+      />,
+    );
+
+    await user.click(
+      screen.getByRole("button", { name: /open actions menu/i }),
+    );
+
+    expect(
+      screen.queryByRole("menuitem", { name: /download scan reports/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("menuitem", { name: /view compliance/i }),
+    ).not.toBeInTheDocument();
+    // The rest of the completed-scan actions stay available.
+    expect(
+      screen.getByRole("menuitem", { name: /view findings/i }),
+    ).toBeInTheDocument();
+  });
+
   it("opens the paid plan upgrade instead of downloading subscription-only reports", async () => {
     // Given
     const user = userEvent.setup();

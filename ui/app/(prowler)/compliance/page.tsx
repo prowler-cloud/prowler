@@ -7,7 +7,7 @@ import {
   getCompliancesOverview,
 } from "@/actions/compliances";
 import { getThreatScore } from "@/actions/overview";
-import { getScans, getScansByState } from "@/actions/scans";
+import { getScan, getScans, getScansByState } from "@/actions/scans";
 import {
   ComplianceSkeletonGrid,
   NoScansAvailable,
@@ -40,6 +40,31 @@ import {
 } from "./_components/multiple-scans-skeleton";
 import type { ComplianceWatchlistContext } from "./_lib/watchlist-context";
 import { loadComplianceWatchlistContext } from "./_lib/watchlist-context";
+
+/**
+ * A scan id from the URL is trusted when it is listed, or when a single lookup
+ * returns a scan that is not partial (older full scans keep working). A partial
+ * scan, reached through a stale link, or an id the API cannot find, has no
+ * compliance to show, so the caller falls back to the first eligible scan.
+ */
+async function resolveUrlScanId(
+  scanIdFromUrl: string | undefined,
+  eligibleScans: ExpandedScanData[],
+): Promise<string | undefined> {
+  if (!scanIdFromUrl) return undefined;
+  if (eligibleScans.some((scan) => scan.id === scanIdFromUrl)) {
+    return scanIdFromUrl;
+  }
+
+  const urlScan = (await getScan(scanIdFromUrl)) as
+    | { data?: { attributes?: { is_partial?: boolean } } }
+    | undefined;
+  const scan = urlScan?.data;
+  if (!scan) return undefined;
+
+  // OSS scans carry no is_partial at all, so only an explicit true excludes.
+  return scan.attributes?.is_partial === true ? undefined : scanIdFromUrl;
+}
 
 export default async function Compliance({
   searchParams,
@@ -130,10 +155,14 @@ export default async function Compliance({
     getScans({
       filters: {
         "filter[state]": "completed",
+        // Partial scans compute no compliance. Exclude them at the API so the
+        // page below never fills up with them; the filter is Cloud-only.
+        ...(isCloud() ? { "filter[is_partial]": "false" } : {}),
       },
       pageSize: 50,
       fields: {
-        scans: "name,completed_at,provider",
+        // is_partial is Cloud-only; the OSS API ignores unknown sparse fields.
+        scans: "name,completed_at,provider,is_partial",
       },
       include: "provider",
     }),
@@ -161,7 +190,10 @@ export default async function Compliance({
     );
   }
 
+  // Belt and braces for an API without the filter: partial scans never
+  // compute compliance, so they have nothing to show or download here.
   const expandedScansData: ExpandedScanData[] = scansData.data
+    .filter((scan: ScanProps) => !scan.attributes?.is_partial)
     .filter((scan: ScanProps) => scan.relationships?.provider?.data?.id)
     .map((scan: ScanProps) => {
       const providerId = scan.relationships!.provider!.data!.id;
@@ -191,7 +223,9 @@ export default async function Compliance({
     ? scanIdParam[0]
     : scanIdParam;
   const selectedScanId: string | null =
-    scanIdFromUrl || expandedScansData[0]?.id || null;
+    (await resolveUrlScanId(scanIdFromUrl, expandedScansData)) ||
+    expandedScansData[0]?.id ||
+    null;
   const onboardingAction = selectedScanId
     ? { flowId: "view-compliance" }
     : {
