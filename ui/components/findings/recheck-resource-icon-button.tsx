@@ -48,7 +48,7 @@ export function RecheckResourceIconButton({
           aria-label={RECHECK_RESOURCE_LABEL}
           onClick={handleClick}
           className={cn(
-            "text-button-primary hover:text-button-primary active:text-button-primary size-5 shrink-0 animate-pulse rounded-md",
+            "text-button-primary hover:text-button-primary active:text-button-primary size-5 shrink-0 rounded-md motion-safe:animate-pulse",
             "hover:[animation-play-state:paused] focus-visible:[animation-play-state:paused]",
             className,
           )}
