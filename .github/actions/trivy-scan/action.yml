@@ -88,7 +88,7 @@ runs:
 
     - name: Upload Trivy results to GitHub Security tab
       if: inputs.upload-sarif == 'true' && github.event_name == 'push'
-      uses: github/codeql-action/upload-sarif@3599b3baa15b485a2e49ef411a7a4bb2452e7f93 # v3.30.5
+      uses: github/codeql-action/upload-sarif@a2983b8bed1923f44751c5c43237f479442827b3 # v3.37.4
       with:
         sarif_file: 'trivy-results.sarif'
         category: 'trivy-container'
