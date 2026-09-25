@@ -89,10 +89,18 @@ export const DataTableFilterCustom = ({
 
   const buildSearchConfig = (filter: FilterOption) => {
     const label = filter.labelCheckboxGroup.toLowerCase();
+    const isLoadingValues = filter.isLoading && filter.values.length === 0;
     return {
       placeholder: `Search ${label}...`,
-      emptyMessage: `No ${label} found.`,
+      emptyMessage: isLoadingValues
+        ? `Loading ${label}...`
+        : `No ${label} found.`,
     };
+  };
+
+  const handleOpenChange = (filter: FilterOption, open: boolean) => {
+    setOpenFilterKey(open ? filter.key : null);
+    if (open) filter.onOpen?.();
   };
 
   // Helper function to get entity from valueLabelMapping
@@ -286,7 +294,7 @@ export const DataTableFilterCustom = ({
           <MultiSelect
             key={filter.key}
             open={openFilterKey === filter.key}
-            onOpenChange={(open) => setOpenFilterKey(open ? filter.key : null)}
+            onOpenChange={(open) => handleOpenChange(filter, open)}
             values={selectedValues}
             onValuesChange={(values) => pushDropdownFilter(filter, values)}
           >

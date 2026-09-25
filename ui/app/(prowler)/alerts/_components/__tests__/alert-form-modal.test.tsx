@@ -48,6 +48,11 @@ vi.mock(
 
 vi.mock("@/app/(prowler)/alerts/_actions", () => alertsActionMocks);
 
+vi.mock("@/actions/finding-groups", () => ({
+  getFindingGroups: vi.fn(),
+  getLatestFindingGroups: vi.fn(),
+}));
+
 vi.mock(
   "@/components/compliance/compliance-header/compliance-scan-info",
   () => ({

@@ -31,12 +31,23 @@ vi.mock("@/components/shadcn/select/multiselect", () => ({
     children,
     values,
     onValuesChange,
+    open,
+    onOpenChange,
   }: {
     children: React.ReactNode;
     values?: string[];
     onValuesChange?: (values: string[]) => void;
+    open?: boolean;
+    onOpenChange?: (open: boolean) => void;
   }) => (
-    <div data-testid="multiselect" data-values={JSON.stringify(values ?? [])}>
+    <div
+      data-testid="multiselect"
+      data-values={JSON.stringify(values ?? [])}
+      data-open={String(Boolean(open))}
+    >
+      <button type="button" onClick={() => onOpenChange?.(!open)}>
+        toggle
+      </button>
       {children}
       {/* expose a select to drive value changes in tests */}
       <select
@@ -76,6 +87,9 @@ vi.mock("@/components/shadcn/select/multiselect", () => ({
       data-width={width ?? "default"}
       data-search-placeholder={
         typeof search === "object" ? search.placeholder : String(search)
+      }
+      data-empty-message={
+        typeof search === "object" ? search.emptyMessage : undefined
       }
     >
       {children}
@@ -373,6 +387,63 @@ describe("DataTableFilterCustom — batch vs instant mode", () => {
       expect(screen.getByTestId("multiselect-content")).toHaveAttribute(
         "data-search-placeholder",
         "Search severity...",
+      );
+    });
+  });
+
+  // ── Lazily loaded options ────────────────────────────────────────────────
+
+  describe("lazy options", () => {
+    const lazyFilter = (overrides: Partial<FilterOption>): FilterOption => ({
+      key: "check_id__in",
+      labelCheckboxGroup: "Finding Group",
+      values: [],
+      ...overrides,
+    });
+
+    it("should call onOpen when the dropdown opens, never on close", async () => {
+      // Given
+      const user = userEvent.setup();
+      const onOpen = vi.fn();
+      render(<DataTableFilterCustom filters={[lazyFilter({ onOpen })]} />);
+
+      // When
+      await user.click(screen.getByRole("button", { name: "toggle" }));
+      await user.click(screen.getByRole("button", { name: "toggle" }));
+
+      // Then
+      expect(onOpen).toHaveBeenCalledTimes(1);
+      expect(screen.getByTestId("multiselect")).toHaveAttribute(
+        "data-open",
+        "false",
+      );
+    });
+
+    it("should show a loading message while the values are still empty", () => {
+      // When
+      render(
+        <DataTableFilterCustom filters={[lazyFilter({ isLoading: true })]} />,
+      );
+
+      // Then
+      expect(screen.getByTestId("multiselect-content")).toHaveAttribute(
+        "data-empty-message",
+        "Loading finding group...",
+      );
+    });
+
+    it("should keep the regular empty message once values are available", () => {
+      // When
+      render(
+        <DataTableFilterCustom
+          filters={[lazyFilter({ isLoading: true, values: ["check-a"] })]}
+        />,
+      );
+
+      // Then
+      expect(screen.getByTestId("multiselect-content")).toHaveAttribute(
+        "data-empty-message",
+        "No finding group found.",
       );
     });
   });

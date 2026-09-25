@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -16,6 +16,10 @@ describe("findings page", () => {
   const currentDir = path.dirname(fileURLToPath(import.meta.url));
   const pagePath = path.join(currentDir, "page.tsx");
   const source = readFileSync(pagePath, "utf8");
+  const filtersSectionSource = readFileSync(
+    path.join(currentDir, "_components", "findings-filters-section.tsx"),
+    "utf8",
+  );
 
   it("only passes sort to fetchFindingGroups when the user has an explicit sort param", () => {
     expect(source).toContain("...(encodedSort && { sort: encodedSort })");
@@ -43,5 +47,31 @@ describe("findings page", () => {
 
   it("applies the shared default muted filter so muted findings are hidden unless the caller opts in", () => {
     expect(source).toContain("applyDefaultMutedFilter");
+  });
+
+  it("renders a route loading state so the sidebar click paints immediately", () => {
+    expect(existsSync(path.join(currentDir, "loading.tsx"))).toBe(true);
+  });
+
+  it("streams the filters behind their own Suspense boundary so the table does not wait for them", () => {
+    expect(source).toContain("FindingsFiltersSkeleton");
+    expect(source).toContain("FindingsFiltersSection");
+    expect(source).not.toContain("getAllProviders");
+    expect(source).not.toContain("getFindingGroupFilterOptions");
+  });
+
+  it("loads the scan date range per selected scan instead of waiting for the scans list", () => {
+    expect(source).toContain("loadScan");
+    expect(source).not.toContain("scans: scansData");
+  });
+
+  it("requests only completed scans with the fields the filters use", () => {
+    expect(source).toContain('"filter[state]": "completed"');
+    expect(source).toMatch(/fields:\s*\{[^}]*scans:/);
+  });
+
+  it("loads the check filter options lazily instead of walking finding groups before render", () => {
+    expect(filtersSectionSource).not.toContain("getFindingGroupFilterOptions");
+    expect(filtersSectionSource).toContain("checkOptionsSource");
   });
 });
