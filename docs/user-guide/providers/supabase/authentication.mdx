@@ -1,0 +1,42 @@
+---
+title: "Supabase Authentication in Prowler"
+---
+
+Prowler for Supabase authenticates to the hosted Supabase Management API using a **Personal Access Token** (PAT). Prowler reads the token exclusively from `SUPABASE_ACCESS_TOKEN`; there is no credential CLI argument, and Prowler does not read Supabase CLI state files.
+
+## Personal Access Token Security
+
+Supabase PATs inherit the privileges of the user account that created them. Use a dedicated least-privilege or read-only organization account where available, set a suitable token expiry, store the token in a secret manager, and rotate it regularly.
+
+<Warning>
+A PAT is not independently scoped to read-only Management API access. Compromise of the token grants the same Management API privileges as its issuing user account.
+</Warning>
+
+## Required Access
+
+The issuing account must be able to call:
+
+- [`GET /v1/organizations`](https://supabase.com/docs/reference/api/v1-list-all-organizations)
+- [`GET /v1/organizations/{slug}/members`](https://supabase.com/docs/reference/api/v1-list-organization-members)
+
+An invalid token returns `401`, insufficient organization permissions return `403`, and rate limiting returns `429`. Prowler treats all three as scan errors rather than compliant results. Supabase applies a standard limit of approximately 120 Management API requests per minute for each user and scope; Prowler uses the response rate-limit reset headers before retrying.
+
+## Configure Authentication
+
+Create a PAT from [Supabase Account Tokens](https://supabase.com/dashboard/account/tokens), then export it:
+
+```bash
+export SUPABASE_ACCESS_TOKEN="your-personal-access-token"
+prowler supabase
+```
+
+For CI/CD, configure `SUPABASE_ACCESS_TOKEN` as a masked secret environment variable. Do not place it in command arguments, repository files, or job logs.
+
+## Out of Scope
+
+This proof of concept does not support:
+
+- OAuth 2.0 Authorization Code with Proof Key for Code Exchange (PKCE)
+- Direct PostgreSQL authentication
+- Self-hosted Supabase deployments
+- Supabase CLI credential or state files

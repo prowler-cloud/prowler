@@ -185,6 +185,13 @@ modules:
       - tests/providers/vercel/**
     e2e: []
 
+  - name: sdk-supabase
+    match:
+      - prowler/providers/supabase/**
+    tests:
+      - tests/providers/supabase/**
+    e2e: []
+
   # ============================================
   # SDK - Lib modules
   # ============================================
