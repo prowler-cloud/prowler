@@ -81,7 +81,7 @@ Boto3's Standard retry mode includes the following mechanisms:
 
 - Nondescriptive Transient Error Codes: The retrier applies retry logic to standard HTTP status codes signaling transient errors: 500, 502, 503, 504.
 
-- Exponential Backoff Strategy: Each retry attempt follows exponential backoff with a base factor of 2, ensuring progressive delay between retries. Maximum backoff time: 20 seconds
+- Exponential Backoff Strategy: Each retry attempt follows exponential backoff with a base factor of 2, ensuring progressive delay between retries. Maximum backoff time: 20 seconds.
 
 ## Validating Retry Attempts
 
@@ -92,4 +92,4 @@ For testing or modifying Prowler's behavior, use the following steps to confirm 
 
 This approach follows the [AWS documentation](https://boto3.amazonaws.com/v1/documentation/api/latest/guide/retries.html#checking-retry-attempts-in-your-client-logs), which states that if a retry is performed, a message starting with "Retry needed" will be prompted.
 
-It is possible to determine the total number of calls made using `grep -i 'Sending http request' debuglogs.txt | wc -l`
+It is possible to determine the total number of calls made using `grep -i 'Sending http request' debuglogs.txt | wc -l`.
