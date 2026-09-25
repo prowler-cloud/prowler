@@ -5,6 +5,7 @@ from uuid import uuid4
 
 import pytest
 from api.authentication import (
+    API_KEY_LAST_USED_AT_THROTTLE_SECONDS,
     OrphanedAPIKeyError,
     SSEAuthentication,
     TenantAPIKeyAuthentication,
@@ -15,6 +16,7 @@ from django.db import connections
 from django.db.models.query import QuerySet
 from django.test import RequestFactory
 from django.test.utils import CaptureQueriesContext
+from freezegun import freeze_time
 from rest_framework.exceptions import AuthenticationFailed
 
 
@@ -286,14 +288,15 @@ class TestTenantAPIKeyAuthentication:
 
         assert str(exc_info.value.detail) == "This API Key has been revoked."
 
-    def test_authenticate_reads_the_api_key_once_under_a_row_lock(
+    def test_authenticate_reads_the_api_key_once_without_a_row_lock(
         self, auth_backend, api_keys_fixture, request_factory
     ):
-        """Test the API key is read a single time and the row is locked.
+        """Test the API key is read a single time and no row is locked.
 
         Validation, the `last_used_at` update and the claims must all come from the
-        same authoritative row: a second, unlocked lookup would reopen the window
-        where a key revoked in between still authenticates.
+        same authoritative row: a second lookup would reopen the window where a key
+        revoked in between still authenticates. `SELECT ... FOR UPDATE` serialized
+        every request for a hot key onto one locked row and is not used any more.
         """
         api_key = api_keys_fixture[0]
 
@@ -310,33 +313,40 @@ class TestTenantAPIKeyAuthentication:
         ]
 
         assert len(api_key_selects) == 1
-        assert "FOR UPDATE" in api_key_selects[0]
+        assert "FOR UPDATE" not in api_key_selects[0]
 
-    def test_authenticate_ignores_revocation_after_the_locked_read(
+    def test_authenticate_ignores_revocation_after_the_single_read(
         self, auth_backend, api_keys_fixture, request_factory
     ):
         """Test the claims describe the row that was validated, not a later state.
 
         Regression test: the key used to be looked up again to build the auth dict,
         without rechecking `revoked` or `entity`. A key revoked or orphaned between
-        both reads still authenticated, and the claims came from that stale row. With
-        a single locked read the write below cannot land mid-authentication, and the
-        revocation only takes effect on the next request.
+        both reads still authenticated, and the claims came from that stale row.
+        There is now only a single read, so this race is closed by construction and
+        the revocation only takes effect on the next request.
         """
         api_key = api_keys_fixture[0]
         entity_at_validation = api_key.entity
-        original_save = TenantAPIKey.save
+        original_authenticate_credentials = (
+            TenantAPIKeyAuthentication._authenticate_credentials
+        )
 
-        def revoke_and_orphan_before_saving(instance, *args, **kwargs):
-            # Runs after validation, right before the claims are built: the exact
-            # window a concurrent revocation or user deletion used to slip into
+        def revoke_and_orphan_after_reading(self, request, key):
+            # Runs right after the single read `authenticate` will use to build the
+            # claims: the exact window a concurrent revocation used to slip into
+            result = original_authenticate_credentials(self, request, key)
             TenantAPIKey.objects.filter(id=api_key.id).update(revoked=True, entity=None)
-            return original_save(instance, *args, **kwargs)
+            return result
 
         request = request_factory.get("/")
         request.META["HTTP_AUTHORIZATION"] = f"Api-Key {api_key._raw_key}"
 
-        with patch.object(TenantAPIKey, "save", revoke_and_orphan_before_saving):
+        with patch.object(
+            TenantAPIKeyAuthentication,
+            "_authenticate_credentials",
+            revoke_and_orphan_after_reading,
+        ):
             entity, auth_dict = auth_backend.authenticate(request)
 
         assert entity == entity_at_validation
@@ -421,24 +431,90 @@ class TestTenantAPIKeyAuthentication:
         if original_last_used:
             assert api_key.last_used_at > original_last_used
 
-    def test_authenticate_saves_to_admin_database(
+    def test_authenticate_updates_last_used_at_on_admin_database(
         self, auth_backend, api_keys_fixture, request_factory
     ):
-        """Test that the API key save operation uses admin database."""
+        """Test that the `last_used_at` update runs against the admin database."""
         api_key = api_keys_fixture[0]
         raw_key = api_key._raw_key
 
         request = request_factory.get("/")
         request.META["HTTP_AUTHORIZATION"] = f"Api-Key {raw_key}"
 
-        # Mock the save method to verify it's called with using='admin'
-        with patch.object(TenantAPIKey, "save") as mock_save:
+        with CaptureQueriesContext(connections[MainRouter.admin_db]) as captured:
             auth_backend.authenticate(request)
 
-            # Verify save was called with using=admin_db
-            mock_save.assert_called_once_with(
-                update_fields=["last_used_at"], using=MainRouter.admin_db
-            )
+        api_key_updates = [
+            query["sql"]
+            for query in captured.captured_queries
+            if query["sql"].startswith("UPDATE") and '"api_keys"' in query["sql"]
+        ]
+
+        assert len(api_key_updates) == 1
+        assert "last_used_at" in api_key_updates[0]
+
+    def test_authenticate_does_not_rewrite_last_used_at_within_throttle_interval(
+        self, auth_backend, api_keys_fixture, request_factory
+    ):
+        """Test that a second authentication within the throttle interval is a no-op write."""
+        api_key = api_keys_fixture[0]
+        raw_key = api_key._raw_key
+
+        request = request_factory.get("/")
+        request.META["HTTP_AUTHORIZATION"] = f"Api-Key {raw_key}"
+
+        # First call sets last_used_at
+        auth_backend.authenticate(request)
+        api_key.refresh_from_db()
+        first_used_at = api_key.last_used_at
+        assert first_used_at is not None
+
+        # Second call, still within the throttle interval, must issue no UPDATE
+        with CaptureQueriesContext(connections[MainRouter.admin_db]) as captured:
+            auth_backend.authenticate(request)
+
+        api_key_updates = [
+            query["sql"]
+            for query in captured.captured_queries
+            if query["sql"].startswith("UPDATE") and '"api_keys"' in query["sql"]
+        ]
+        assert api_key_updates == []
+
+        api_key.refresh_from_db()
+        assert api_key.last_used_at == first_used_at
+
+    def test_authenticate_rewrites_last_used_at_after_throttle_interval(
+        self, auth_backend, api_keys_fixture, request_factory
+    ):
+        """Test that `last_used_at` is refreshed once it is older than the throttle interval."""
+        api_key = api_keys_fixture[0]
+        raw_key = api_key._raw_key
+
+        request = request_factory.get("/")
+        request.META["HTTP_AUTHORIZATION"] = f"Api-Key {raw_key}"
+
+        start = datetime.now(UTC)
+        with freeze_time(start):
+            auth_backend.authenticate(request)
+
+        api_key.refresh_from_db()
+        first_used_at = api_key.last_used_at
+        assert first_used_at is not None
+
+        later = start + timedelta(seconds=API_KEY_LAST_USED_AT_THROTTLE_SECONDS + 1)
+        with freeze_time(later):
+            with CaptureQueriesContext(connections[MainRouter.admin_db]) as captured:
+                auth_backend.authenticate(request)
+
+        api_key_updates = [
+            query["sql"]
+            for query in captured.captured_queries
+            if query["sql"].startswith("UPDATE") and '"api_keys"' in query["sql"]
+        ]
+        assert len(api_key_updates) == 1
+
+        api_key.refresh_from_db()
+        assert api_key.last_used_at > first_used_at
 
     def test_authenticate_returns_correct_auth_dict(
         self, auth_backend, api_keys_fixture, request_factory
