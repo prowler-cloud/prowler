@@ -71,6 +71,7 @@ from django.db import IntegrityError, transaction
 from drf_spectacular.utils import extend_schema_field
 from jwt.exceptions import InvalidKeyError
 from prowler.lib.mutelist.mutelist import Mutelist
+from prowler.providers.oraclecloud.config import OCI_REGIONS
 from rest_framework.reverse import reverse
 from rest_framework.validators import UniqueTogetherValidator
 from rest_framework_json_api import serializers
@@ -1917,9 +1918,16 @@ class IacProviderSecret(serializers.Serializer):
         resource_name = "provider-secrets"
 
 
-class LegacyOCIRegionField(serializers.Field):
+class OCIHomeRegionField(serializers.Field):
+    """Optional OCI home region; blank or non-string legacy values are dropped."""
+
     def to_internal_value(self, data):
-        return data
+        if not isinstance(data, str) or not data.strip():
+            return None
+        region = data.strip()
+        if region not in OCI_REGIONS:
+            raise serializers.ValidationError(f"Invalid OCI region: {region}")
+        return region
 
     def to_representation(self, value):
         return value
@@ -1932,10 +1940,11 @@ class OracleCloudProviderSecret(serializers.Serializer):
     key_content = serializers.CharField(required=False)
     tenancy = serializers.CharField()
     pass_phrase = serializers.CharField(required=False)
-    region = LegacyOCIRegionField(required=False, allow_null=True)
+    region = OCIHomeRegionField(required=False, allow_null=True)
 
     def validate(self, attrs):
-        attrs.pop("region", None)
+        if not attrs.get("region"):
+            attrs.pop("region", None)
 
         if "key_file" not in attrs and "key_content" not in attrs:
             raise serializers.ValidationError(

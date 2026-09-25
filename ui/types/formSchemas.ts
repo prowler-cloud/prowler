@@ -1,6 +1,7 @@
 import yaml from "js-yaml";
 import { z } from "zod";
 
+import { OCI_REGION_VALUES } from "@/lib/provider-credentials/oci-regions";
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
 import { validateMutelistYaml, validateYaml } from "@/lib/yaml";
 import { MAX_SAML_ADDITIONAL_EMAIL_DOMAINS } from "@/types/saml";
@@ -325,6 +326,14 @@ export const addCredentialsFormSchema = (
                           [ProviderCredentialFields.OCI_TENANCY]: z
                             .string()
                             .min(1, "Tenancy OCID is required"),
+                          [ProviderCredentialFields.OCI_REGION]: z
+                            .string()
+                            .refine(
+                              (region) => OCI_REGION_VALUES.includes(region),
+                              {
+                                message: "Home region is required",
+                              },
+                            ),
                           [ProviderCredentialFields.OCI_PASS_PHRASE]: z
                             .union([z.string(), z.literal("")])
                             .optional(),
