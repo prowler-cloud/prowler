@@ -3,10 +3,9 @@
 import { RefreshCw } from "lucide-react";
 
 import { ActionDropdownItem } from "@/components/shadcn/dropdown";
+import { usePartialScanTarget } from "@/hooks/use-partial-scan-target";
 import { usePartialScanStore } from "@/store";
 import type { PartialScanTarget } from "@/types/partial-scans";
-
-import { usePartialScanTarget } from "./use-partial-scan-target";
 
 export const RECHECK_RESOURCE_LABEL = "Re-check resource";
 

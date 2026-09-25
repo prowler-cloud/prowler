@@ -3,17 +3,18 @@
 import { RefreshCw } from "lucide-react";
 import type { MouseEvent } from "react";
 
+import { Button } from "@/components/shadcn/button/button";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
+import { usePartialScanTarget } from "@/hooks/use-partial-scan-target";
 import { cn } from "@/lib/utils";
 import { usePartialScanStore } from "@/store";
 import type { PartialScanTarget } from "@/types/partial-scans";
 
 import { RECHECK_RESOURCE_LABEL } from "./recheck-resource-action-item";
-import { usePartialScanTarget } from "./use-partial-scan-target";
 
 interface RecheckResourceIconButtonProps {
   target: Partial<PartialScanTarget> | null | undefined;
@@ -40,19 +41,20 @@ export function RecheckResourceIconButton({
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <button
+        <Button
           type="button"
+          variant="bare"
+          size="icon"
           aria-label={RECHECK_RESOURCE_LABEL}
           onClick={handleClick}
           className={cn(
-            "text-button-primary inline-flex size-5 shrink-0 animate-pulse items-center justify-center rounded-md",
+            "text-button-primary hover:text-button-primary active:text-button-primary size-5 shrink-0 animate-pulse rounded-md",
             "hover:[animation-play-state:paused] focus-visible:[animation-play-state:paused]",
-            "focus-visible:ring-ring/50 focus-visible:ring-2 focus-visible:outline-none",
             className,
           )}
         >
           <RefreshCw className="size-3.5" aria-hidden />
-        </button>
+        </Button>
       </TooltipTrigger>
       <TooltipContent>{RECHECK_RESOURCE_LABEL}</TooltipContent>
     </Tooltip>
