@@ -1,0 +1,38 @@
+{
+  "Provider": "fly",
+  "CheckID": "app_no_public_ip_address",
+  "CheckTitle": "Fly.io app has no public IP address allocated",
+  "CheckType": [],
+  "ServiceName": "app",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "FlyApp",
+  "ResourceGroup": "network",
+  "Description": "**Fly.io apps** are assessed for allocated **public IP addresses**. An app without a public IPv4 or IPv6 address is only reachable over the organization's private **6PN** network, which is the expected posture for databases, object storage and other backing services. Apps meant to be public can be allow-listed through the `public_apps` configuration key.",
+  "Risk": "A public IP address puts every port published by the app's machines on the internet, where they can be discovered and attacked directly. Backing services such as PostgreSQL or S3-compatible storage that gain a public address bypass the private network boundary the rest of the tenancy model relies on.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://fly.io/docs/networking/private-networking/",
+    "https://fly.io/docs/networking/services/",
+    "https://fly.io/docs/flyctl/ips-release/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "fly ips list -a <app>\nfly ips release <address> -a <app>",
+      "NativeIaC": "",
+      "Other": "1. Confirm the app is not meant to serve public traffic\n2. Run 'fly ips list -a <app>' to enumerate allocated addresses\n3. Release each address with 'fly ips release <address> -a <app>'\n4. Reach the app over its <app>.internal address from inside the organization network",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Allocate public IP addresses only to apps that must serve internet traffic. Keep databases, object storage and internal services private and reach them over 6PN using their .internal address.",
+      "Url": "https://hub.prowler.com/check/app_no_public_ip_address"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

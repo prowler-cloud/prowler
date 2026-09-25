@@ -81,6 +81,7 @@ class Provider(str, Enum):
     IMAGE = "image"
     SCALEWAY = "scaleway"
     VERCEL = "vercel"
+    FLY = "fly"
     OKTA = "okta"
     STACKIT = "stackit"
     LINODE = "linode"

@@ -149,6 +149,7 @@ Every AWS provider scan will enqueue an Attack Paths ingestion job automatically
 | Scaleway [Contact us](https://prowler.com/contact) | 1 | 1 | 1 | 1 | Unofficial | CLI |
 | StackIT [Contact us](https://prowler.com/contact) | 8 | 2 | 1 | 3 | Unofficial | CLI |
 | NHN | 6 | 2 | 2 | 0 | Unofficial | CLI |
+| Fly.io [Contact us](https://prowler.com/contact) | 6 | 3 | 1 | 5 | Unofficial | CLI |
 
 > [!Note]
 > The numbers in the table are updated periodically.
