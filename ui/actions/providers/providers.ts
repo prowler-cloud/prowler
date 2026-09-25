@@ -151,28 +151,28 @@ export const getProvider = async (formData: FormData) => {
 const PROVIDERS_PAGE_MAX = 100;
 
 /**
- * Uids of the given providers, keyed by provider id. A provider's `uid` is the
- * candidate it was created for (AWS account id / GCP project id), so this is what
- * matches an apply's created providers back to the selection. Batched with
- * `filter[id__in]` rather than one `GET /providers/{id}` per id.
+ * Providers matching the given ids, batched with `filter[id__in]` (page size
+ * `PROVIDERS_PAGE_MAX`, the server max, which also bounds the id batch size)
+ * rather than one `GET /providers/{id}` per id. Shared by every action below
+ * that resolves providers by id; a batch that fails to fetch leaves its
+ * providers out of the result rather than failing the rest, and it is on each
+ * caller to say what "missing" means for its own map. Not exported: an
+ * exported function in this `"use server"` module becomes a callable server
+ * action.
  */
-export const getProviderUidsByIds = async (
+const fetchProvidersByIds = async (
   providerIds: string[],
-): Promise<Record<string, string>> => {
+): Promise<ProvidersApiResponse["data"]> => {
   const uniqueIds = Array.from(new Set(providerIds.filter(Boolean)));
   if (uniqueIds.length === 0) {
-    return {};
+    return [];
   }
 
   const headers = await getAuthHeaders({ contentType: false });
-  const batches: string[][] = [];
+  const providers: ProvidersApiResponse["data"] = [];
+
   for (let start = 0; start < uniqueIds.length; start += PROVIDERS_PAGE_MAX) {
-    batches.push(uniqueIds.slice(start, start + PROVIDERS_PAGE_MAX));
-  }
-
-  const uidById: Record<string, string> = {};
-
-  for (const batch of batches) {
+    const batch = uniqueIds.slice(start, start + PROVIDERS_PAGE_MAX);
     const url = new URL(`${apiBaseUrl}/providers`);
     url.searchParams.set("filter[id__in]", batch.join(","));
     url.searchParams.set("page[size]", String(PROVIDERS_PAGE_MAX));
@@ -183,18 +183,91 @@ export const getProviderUidsByIds = async (
         | ProvidersApiResponse
         | undefined;
 
-      for (const provider of result?.data ?? []) {
-        const uid = provider?.attributes?.uid;
-        if (typeof provider?.id === "string" && typeof uid === "string") {
-          uidById[provider.id] = uid;
-        }
-      }
+      providers.push(...(result?.data ?? []));
     } catch {
-      // A failed batch leaves its providers unmapped rather than failing the rest.
+      // A failed batch leaves its providers out of the result rather than
+      // failing the rest.
+    }
+  }
+
+  return providers;
+};
+
+/**
+ * Uids of the given providers, keyed by provider id. A provider's `uid` is the
+ * candidate it was created for (AWS account id / GCP project id), so this is what
+ * matches an apply's created providers back to the selection.
+ */
+export const getProviderUidsByIds = async (
+  providerIds: string[],
+): Promise<Record<string, string>> => {
+  const uidById: Record<string, string> = {};
+
+  for (const provider of await fetchProvidersByIds(providerIds)) {
+    const uid = provider?.attributes?.uid;
+    if (typeof provider?.id === "string" && typeof uid === "string") {
+      uidById[provider.id] = uid;
     }
   }
 
   return uidById;
+};
+
+/**
+ * `connection.last_checked_at` for each given provider, keyed by id. Read before
+ * a batch of connection checks is dispatched, so `resolveProviderConnectionState`
+ * can tell a check's own result apart from an older one already on record by
+ * comparing values, never by comparing the browser's clock against the server's
+ * (see that function for why). A provider missing from the response -- the batch
+ * read failed, or it was deleted mid-flight -- is left out of the map rather than
+ * defaulted, so callers can tell "no prior check" (`null`) from "unknown".
+ */
+export const getProviderConnectionBaselines = async (
+  providerIds: string[],
+): Promise<Record<string, string | null>> => {
+  const baselineById: Record<string, string | null> = {};
+
+  for (const provider of await fetchProvidersByIds(providerIds)) {
+    if (typeof provider?.id === "string") {
+      baselineById[provider.id] =
+        provider.attributes?.connection?.last_checked_at ?? null;
+    }
+  }
+
+  return baselineById;
+};
+
+/**
+ * Uid and `connection.last_checked_at` for each given provider, keyed by id, read
+ * with a single batched `filter[id__in]` request. The organization onboarding
+ * apply step needs both right after creating providers: the uid to match each one
+ * back to the candidate it was created for (see `getProviderUidsByIds`), and the
+ * baseline to compare a dispatched check's result against (see
+ * `getProviderConnectionBaselines`). Reading them together avoids fetching the
+ * same set of providers twice.
+ */
+export const getProviderUidsAndConnectionBaselines = async (
+  providerIds: string[],
+): Promise<{
+  uidById: Record<string, string>;
+  baselineById: Record<string, string | null>;
+}> => {
+  const uidById: Record<string, string> = {};
+  const baselineById: Record<string, string | null> = {};
+
+  for (const provider of await fetchProvidersByIds(providerIds)) {
+    if (typeof provider?.id !== "string") {
+      continue;
+    }
+    const uid = provider.attributes?.uid;
+    if (typeof uid === "string") {
+      uidById[provider.id] = uid;
+    }
+    baselineById[provider.id] =
+      provider.attributes?.connection?.last_checked_at ?? null;
+  }
+
+  return { uidById, baselineById };
 };
 
 export const updateProvider = async (formData: FormData) => {

@@ -6,11 +6,14 @@
  */
 
 /**
- * Status indicator for tree items after loading completes
+ * Status indicator for tree items after loading completes. `PENDING` is for an
+ * item whose outcome never arrived even though nothing is polling it any more --
+ * distinct from `isLoading`, which is for an item actively being polled.
  */
 export const TREE_ITEM_STATUS = {
   SUCCESS: "success",
   ERROR: "error",
+  PENDING: "pending",
 } as const;
 
 export type TreeItemStatus =
@@ -33,7 +36,7 @@ export interface TreeDataItem {
   disabled?: boolean;
   /** Whether the item is in a loading state (shows spinner) */
   isLoading?: boolean;
-  /** Status indicator shown after loading (success/error) */
+  /** Status indicator shown after loading (success/error/pending) */
   status?: TreeItemStatus;
   /** Optional error detail used by status icon tooltip */
   errorMessage?: string;

@@ -15,6 +15,12 @@ vi.mock("@/components/findings/jira-dispatch-modal-host", () => ({
   JiraDispatchModalHost: () => <div data-testid="jira-dispatch-modal-host" />,
 }));
 
+vi.mock("@/components/findings/recheck-resource-modal-host", () => ({
+  RecheckResourceModalHost: () => (
+    <div data-testid="recheck-resource-modal-host" />
+  ),
+}));
+
 describe("MainLayout", () => {
   it("mounts the shared Cloud upgrade modal with page content", () => {
     render(

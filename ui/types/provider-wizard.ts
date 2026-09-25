@@ -24,3 +24,12 @@ export interface ProviderWizardIdentity {
   uid: string | null;
   alias: string | null;
 }
+
+export type AwsConnectDraftValues = Record<string, string>;
+
+/** What the AWS connect step typed so far; in memory only, gone with the wizard. */
+export interface AwsConnectDraft {
+  method: string;
+  roleValues: AwsConnectDraftValues;
+  keysValues: AwsConnectDraftValues;
+}

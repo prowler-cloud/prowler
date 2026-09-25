@@ -302,6 +302,7 @@ export const handlersForOrganizations = (
     organizations.map((o) => o.secretId).filter((id): id is string => !!id),
   );
   let orgSeq = 0;
+  let providerSeq = 0;
   let secretSeq = 0;
   /** Reads per connection task, so `executingPolls` can hold one task running. */
   const connectionTaskReads = new Map<string, number>();
@@ -564,6 +565,37 @@ export const handlersForOrganizations = (
     http.get(`${API}/scan-configurations`, () =>
       HttpResponse.json({ data: [], meta: collectionMeta(0) }),
     ),
+
+    // --- single-account connect (AWS one-step form) -----------------------
+    http.post(`${API}/providers`, async ({ request }) => {
+      const body = (await request.json()) as {
+        data: { attributes: { provider: string; uid: string; alias?: string } };
+      };
+      providerSeq += 1;
+      return HttpResponse.json(
+        {
+          data: {
+            id: `provider-created-${providerSeq}`,
+            type: "providers",
+            attributes: {
+              ...body.data.attributes,
+              connection: { connected: false, last_checked_at: null },
+            },
+          },
+        },
+        { status: 201 },
+      );
+    }),
+
+    http.post(`${API}/providers/secrets`, () => {
+      secretSeq += 1;
+      return HttpResponse.json(
+        {
+          data: { id: `secret-created-${secretSeq}`, type: "provider-secrets" },
+        },
+        { status: 201 },
+      );
+    }),
 
     // --- providers (uid resolution) + connection testing -----------------
     http.get<{ id: string }>(`${API}/providers/:id`, ({ params }) => {

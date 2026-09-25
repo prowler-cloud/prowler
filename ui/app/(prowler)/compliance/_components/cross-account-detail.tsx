@@ -48,6 +48,7 @@ interface CrossAccountDetailProps {
   providerType: KnownProviderType;
   searchParams: Record<string, string | string[] | undefined>;
   targetSection?: string;
+  subscriptionOnly?: boolean;
 }
 
 /**
@@ -63,6 +64,7 @@ export const CrossAccountDetail = async ({
   providerType,
   searchParams,
   targetSection,
+  subscriptionOnly = false,
 }: CrossAccountDetailProps) => {
   const filters = parseCrossAccountFilters(searchParams);
 
@@ -205,6 +207,7 @@ export const CrossAccountDetail = async ({
             providerType={providerType}
             filters={{ ...filters, scanIds: attrs.scan_ids }}
             latestPdf={latestPdf}
+            subscriptionOnly={subscriptionOnly}
           />
         }
         filters={

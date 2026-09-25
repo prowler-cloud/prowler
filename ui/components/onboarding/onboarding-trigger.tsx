@@ -34,6 +34,8 @@ interface OnboardingTriggerProps<TTarget extends string = string> {
   flow: OnboardingFlow; // force-started when the sequence names it or `?onboarding=<id>` matches
   stepHandlers?: { [K in TTarget]?: TourStepHandlers<TTarget> };
   configOverrides?: Partial<Config>;
+  // Step to begin from when the page already did what the earlier steps ask for.
+  startAtTarget?: TTarget;
 }
 
 // Latched per-trigger: `key` mounts a fresh runner on each re-trigger; `mode` drives param-strip logic.
@@ -50,6 +52,7 @@ export function OnboardingTrigger<TTarget extends string = string>({
   flow,
   stepHandlers,
   configOverrides,
+  startAtTarget,
 }: OnboardingTriggerProps<TTarget>) {
   const searchParams = useSearchParams();
   const param = searchParams?.get(ONBOARDING_PARAM) ?? null; // null outside Suspense context
@@ -108,6 +111,7 @@ export function OnboardingTrigger<TTarget extends string = string>({
       queryString={request.queryString}
       stepHandlers={stepHandlers}
       configOverrides={configOverrides}
+      startAtTarget={startAtTarget}
     />
   );
 }
@@ -118,6 +122,7 @@ interface OnboardingTourRunnerProps<TTarget extends string> {
   queryString: string;
   stepHandlers?: { [K in TTarget]?: TourStepHandlers<TTarget> };
   configOverrides?: Partial<Config>;
+  startAtTarget?: TTarget;
 }
 
 function OnboardingTourRunner<TTarget extends string>({
@@ -126,6 +131,7 @@ function OnboardingTourRunner<TTarget extends string>({
   queryString,
   stepHandlers,
   configOverrides,
+  startAtTarget,
 }: OnboardingTourRunnerProps<TTarget>) {
   // onClosed is intentionally inert — the banner owns advance/exit for both modes.
   const { start } = useDriverTour(flow.tour, {
@@ -144,7 +150,7 @@ function OnboardingTourRunner<TTarget extends string>({
     queueMicrotask(() => {
       if (cancelled) return;
 
-      start();
+      start(startAtTarget);
       if (mode === "replay") {
         // Only strip when the param actually started this replay; a same-route
         // in-memory request leaves the URL untouched (no replaceState needed).

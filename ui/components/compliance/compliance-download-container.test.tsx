@@ -27,6 +27,9 @@ vi.mock("@/components/shadcn", async (importOriginal) => ({
   toast: {},
 }));
 
+import { useCloudUpgradeStore } from "@/store/cloud-upgrade/store";
+import { PAID_PLAN_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
+
 import { ComplianceDownloadContainer } from "./compliance-download-container";
 
 describe("ComplianceDownloadContainer", () => {
@@ -36,6 +39,7 @@ describe("ComplianceDownloadContainer", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    useCloudUpgradeStore.getState().closeCloudUpgrade();
   });
 
   it("uses the shared action dropdown for the card actions mode", () => {
@@ -135,6 +139,42 @@ describe("ComplianceDownloadContainer", () => {
       {},
     );
   });
+
+  it.each([
+    { label: /Download CSV report/i, complianceId: "compliance-1" },
+    { label: /Download OCSF report/i, complianceId: "dora_2022_2554" },
+    { label: /Download PDF report/i, complianceId: "compliance-1" },
+  ])(
+    "should open the paid plan upgrade instead of $label for subscription-only tenants",
+    async ({ label, complianceId }) => {
+      // Given
+      const user = userEvent.setup();
+      render(
+        <ComplianceDownloadContainer
+          compact
+          presentation="dropdown"
+          scanId="scan-1"
+          complianceId={complianceId}
+          reportType="threatscore"
+          subscriptionOnly
+        />,
+      );
+
+      // When
+      await user.click(
+        screen.getByRole("button", { name: "Open compliance export actions" }),
+      );
+      await user.click(screen.getByRole("menuitem", { name: label }));
+
+      // Then
+      expect(downloadComplianceCsvMock).not.toHaveBeenCalled();
+      expect(downloadComplianceOcsfMock).not.toHaveBeenCalled();
+      expect(downloadCompliancePdfMock).not.toHaveBeenCalled();
+      expect(useCloudUpgradeStore.getState().activeFeature).toBe(
+        PAID_PLAN_UPGRADE_FEATURE.REPORT_DOWNLOAD,
+      );
+    },
+  );
 
   it("should hide the OCSF action for frameworks without OCSF support", async () => {
     const user = userEvent.setup();
