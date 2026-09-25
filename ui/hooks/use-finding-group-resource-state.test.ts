@@ -20,9 +20,12 @@ vi.mock("@/lib", () => ({
   }),
 }));
 
-vi.mock("@/components/findings/table/resource-detail-drawer", () => ({
-  useResourceDetailDrawer: useResourceDetailDrawerMock,
-}));
+vi.mock(
+  "@/components/findings/table/resource-detail-drawer/use-resource-detail-drawer",
+  () => ({
+    useResourceDetailDrawer: useResourceDetailDrawerMock,
+  }),
+);
 
 import {
   type FindingGroupRow,

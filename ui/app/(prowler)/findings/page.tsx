@@ -5,12 +5,7 @@ import {
   getFindingGroups,
   getLatestFindingGroups,
 } from "@/actions/finding-groups";
-import { getLatestMetadataInfo, getMetadataInfo } from "@/actions/findings";
-import { getAllProviderGroups } from "@/actions/manage-groups/manage-groups";
-import { getAllProviders } from "@/actions/providers";
 import { getScan, getScans } from "@/actions/scans";
-import { SeedFromFindingsButton } from "@/app/(prowler)/alerts/_components";
-import { FindingsFilters } from "@/components/findings/findings-filters";
 import {
   FindingsGroupTable,
   SkeletonTableFindings,
@@ -19,16 +14,16 @@ import { ContentLayout } from "@/components/shadcn/content-layout";
 import { FilterTransitionWrapper } from "@/contexts";
 import {
   applyDefaultMutedFilter,
-  createScanDetailsMapping,
   extractFiltersAndQuery,
   extractSortAndKey,
   hasDateOrScanFilter,
 } from "@/lib";
-import { getFindingGroupFilterOptions } from "@/lib/finding-group-filter-options";
 import { resolveFindingScanDateFilters } from "@/lib/findings-scan-filters";
-import { isCloud } from "@/lib/shared/env";
-import { ScanEntity, ScanProps } from "@/types";
+import { ScanProps } from "@/types";
 import { SearchParamsProps } from "@/types/components";
+
+import { FindingsFiltersSection } from "./_components/findings-filters-section";
+import { FindingsFiltersSkeleton } from "./_components/findings-filters-skeleton";
 
 export default async function Findings({
   searchParams,
@@ -39,66 +34,41 @@ export default async function Findings({
   const { encodedSort } = extractSortAndKey(resolvedSearchParams);
   const { filters, query } = extractFiltersAndQuery(resolvedSearchParams);
 
-  const [providersData, providerGroupsData, scansData] = await Promise.all([
-    getAllProviders(),
-    getAllProviderGroups(),
-    getScans({ pageSize: 50 }),
+  const [scansData, filtersWithScanDates] = await Promise.all([
+    getScans({
+      pageSize: 50,
+      filters: { "filter[state]": "completed" },
+      fields: {
+        scans: "name,state,unique_resource_count,completed_at,provider",
+      },
+    }),
+    resolveFindingScanDateFilters({
+      filters,
+      scans: [],
+      loadScan: async (scanId: string) => {
+        const response = await getScan(scanId);
+        return response?.data;
+      },
+    }),
   ]);
-
-  const filtersWithScanDates = await resolveFindingScanDateFilters({
-    filters,
-    scans: scansData?.data || [],
-    loadScan: async (scanId: string) => {
-      const response = await getScan(scanId);
-      return response?.data;
-    },
-  });
   const resolvedFilters = applyDefaultMutedFilter(filtersWithScanDates);
   const hasHistoricalData = hasDateOrScanFilter(filtersWithScanDates);
-  const metadataInfoData = await (
-    hasHistoricalData ? getMetadataInfo : getLatestMetadataInfo
-  )({
-    query,
-    sort: encodedSort,
-    filters: resolvedFilters,
-  });
 
-  const uniqueRegions = metadataInfoData?.data?.attributes?.regions || [];
-  const uniqueServices = metadataInfoData?.data?.attributes?.services || [];
-  const uniqueResourceTypes =
-    metadataInfoData?.data?.attributes?.resource_types || [];
-  const uniqueCategories = metadataInfoData?.data?.attributes?.categories || [];
-  const uniqueGroups = metadataInfoData?.data?.attributes?.groups || [];
-  const fetchFindingGroupFilterOptions = hasHistoricalData
-    ? getFindingGroups
-    : getLatestFindingGroups;
-  const checkOptions = await getFindingGroupFilterOptions({
-    fetchFindingGroups: fetchFindingGroupFilterOptions,
-    filters: resolvedFilters,
-  });
+  const completedScans: ScanProps[] =
+    scansData?.data?.filter(
+      (scan: ScanProps) =>
+        scan.attributes.state === "completed" &&
+        scan.attributes.unique_resource_count > 1,
+    ) || [];
 
-  const completedScans = scansData?.data?.filter(
-    (scan: ScanProps) =>
-      scan.attributes.state === "completed" &&
-      scan.attributes.unique_resource_count > 1,
-  );
-
-  const completedScanIds =
-    completedScans?.map((scan: ScanProps) => scan.id) || [];
   const onboardingAction =
-    completedScanIds.length > 0
+    completedScans.length > 0
       ? { flowId: "explore-findings" }
       : {
           flowId: "explore-findings",
           fallbackFlowId: "view-first-scan",
           useFallback: true,
         };
-
-  const scanDetails = createScanDetailsMapping(
-    completedScans || [],
-    providersData,
-  ) as { [uid: string]: ScanEntity }[];
-  const alertsEnabled = isCloud();
 
   return (
     <ContentLayout
@@ -108,31 +78,16 @@ export default async function Findings({
     >
       <FilterTransitionWrapper>
         <div className="mb-6">
-          <FindingsFilters
-            providers={providersData?.data || []}
-            providerGroups={providerGroupsData?.data || []}
-            completedScanIds={completedScanIds}
-            scanDetails={scanDetails}
-            uniqueRegions={uniqueRegions}
-            uniqueServices={uniqueServices}
-            uniqueResourceTypes={uniqueResourceTypes}
-            uniqueCategories={uniqueCategories}
-            uniqueGroups={uniqueGroups}
-            checkOptions={checkOptions}
-            trailingControls={
-              <SeedFromFindingsButton
-                filterBag={filters}
-                providers={providersData?.data || []}
-                scans={scanDetails}
-                uniqueRegions={uniqueRegions}
-                uniqueServices={uniqueServices}
-                uniqueResourceTypes={uniqueResourceTypes}
-                uniqueCategories={uniqueCategories}
-                uniqueGroups={uniqueGroups}
-                isCloudEnabled={alertsEnabled}
-              />
-            }
-          />
+          <Suspense fallback={<FindingsFiltersSkeleton />}>
+            <FindingsFiltersSection
+              filters={filters}
+              resolvedFilters={resolvedFilters}
+              hasHistoricalData={hasHistoricalData}
+              query={query}
+              encodedSort={encodedSort}
+              completedScans={completedScans}
+            />
+          </Suspense>
         </div>
         <Suspense fallback={<SkeletonTableFindings />}>
           <SSRDataTable

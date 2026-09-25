@@ -31,6 +31,9 @@ export interface FilterOption {
   showSelectAll?: boolean;
   defaultToSelectAll?: boolean;
   defaultValues?: string[];
+  /** Called whenever the dropdown opens, so callers can load values lazily. */
+  onOpen?: () => void;
+  isLoading?: boolean;
 }
 
 export interface CustomDropdownFilterProps {

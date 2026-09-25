@@ -431,4 +431,26 @@ describe("buildFindingGroupFilterOption", () => {
       }),
     ).toBeNull();
   });
+
+  it("keeps the Finding Group filter visible with lazy loading hooks when nothing is loaded yet", () => {
+    // Given
+    const onOpen = () => undefined;
+
+    // When
+    const filter = buildFindingGroupFilterOption({
+      checkOptions: [],
+      selectedCheckIds: [],
+      selectedCheckIdsIn: [],
+      checkTitles: {},
+      lazy: { onOpen, isLoading: true },
+    });
+
+    // Then
+    expect(filter).toMatchObject({
+      key: "check_id__in",
+      values: [],
+      onOpen,
+      isLoading: true,
+    });
+  });
 });

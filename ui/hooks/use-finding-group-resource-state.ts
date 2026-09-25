@@ -4,7 +4,7 @@ import { OnChangeFn, Row, RowSelectionState } from "@tanstack/react-table";
 import { useRef, useState } from "react";
 
 import { canMuteFindingResource } from "@/components/findings/table/finding-resource-selection";
-import { useResourceDetailDrawer } from "@/components/findings/table/resource-detail-drawer";
+import { useResourceDetailDrawer } from "@/components/findings/table/resource-detail-drawer/use-resource-detail-drawer";
 import { useFindingGroupResources } from "@/hooks/use-finding-group-resources";
 import { applyDefaultMutedFilter } from "@/lib";
 import {

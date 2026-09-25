@@ -7,6 +7,7 @@ import {
 } from "@tanstack/react-table";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronsDown } from "lucide-react";
+import dynamic from "next/dynamic";
 import { useImperativeHandle, useRef, useState } from "react";
 
 import {
@@ -33,7 +34,16 @@ import {
   getFindingGroupEmptyStateMessage,
   getFindingGroupSkeletonCount,
 } from "./inline-resource-container.utils";
-import { ResourceDetailDrawer } from "./resource-detail-drawer";
+
+// Loaded on demand so the drawer's markdown and timeline code stays out of the
+// findings page bundle until a resource is opened.
+const ResourceDetailDrawer = dynamic(
+  () =>
+    import("./resource-detail-drawer/resource-detail-drawer").then(
+      (module) => module.ResourceDetailDrawer,
+    ),
+  { loading: () => null },
+);
 
 export interface InlineResourceContainerHandle {
   /** Soft-refresh resources (re-fetch page 1 without skeletons). */

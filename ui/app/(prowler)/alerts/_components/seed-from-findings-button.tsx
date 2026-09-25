@@ -1,12 +1,12 @@
 "use client";
 
 import { BellPlusIcon } from "lucide-react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { createAlert, seedAlertRule } from "@/app/(prowler)/alerts/_actions";
-import { AlertFormModal } from "@/app/(prowler)/alerts/_components/alert-form-modal";
 import {
   getFindingsFiltersFromAlertCondition,
   toAlertPayload,
@@ -35,6 +35,14 @@ import { useCloudUpgradeStore } from "@/store";
 import type { ScanEntity } from "@/types";
 import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
 import type { ProviderProps } from "@/types/providers";
+
+const AlertFormModal = dynamic(
+  () =>
+    import("@/app/(prowler)/alerts/_components/alert-form-modal").then(
+      (module) => module.AlertFormModal,
+    ),
+  { loading: () => null },
+);
 
 const DISABLED_FILTER_TOOLTIP =
   "Apply at least one Findings filter to create an alert from filters.";
