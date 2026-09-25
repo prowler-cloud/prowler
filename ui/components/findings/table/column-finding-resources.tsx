@@ -7,6 +7,7 @@ import { useContext, useState } from "react";
 import { JiraDispatchActionItem } from "@/components/findings/jira-dispatch-action-item";
 import { MuteFindingsModal } from "@/components/findings/mute-findings-modal";
 import { RecheckResourceActionItem } from "@/components/findings/recheck-resource-action-item";
+import { RecheckResourceIconButton } from "@/components/findings/recheck-resource-icon-button";
 import { Checkbox } from "@/components/shadcn";
 import {
   ActionDropdown,
@@ -71,6 +72,16 @@ const buildResourceFindingItem = (resource: FindingResourceRow) =>
     resourceUid: resource.resourceUid,
     region: resource.region,
   });
+
+// Shared by the ⋮ menu item and the "Last seen" icon so both open the same
+// confirmation for the same resource.
+const buildResourceRecheckTarget = (resource: FindingResourceRow) => ({
+  providerUid: resource.providerUid,
+  providerType: resource.providerType,
+  providerAlias: resource.providerAlias,
+  resourceUid: resource.resourceUid,
+  resourceName: resource.resourceName,
+});
 
 const ResourceRowActions = ({
   row,
@@ -201,13 +212,7 @@ const ResourceRowActions = ({
             payload={jiraPayload}
           />
           <RecheckResourceActionItem
-            target={{
-              providerUid: resource.providerUid,
-              providerType: resource.providerType,
-              providerAlias: resource.providerAlias,
-              resourceUid: resource.resourceUid,
-              resourceName: resource.resourceName,
-            }}
+            target={buildResourceRecheckTarget(resource)}
           />
           {isCloud() && (
             <LighthouseSkillsSubmenu
@@ -394,7 +399,12 @@ export function getColumnFindingResources({
       ),
       cell: ({ row }) => (
         <InfoField label="Last seen" variant="compact">
-          <DateWithTime dateTime={row.original.lastSeenAt} />
+          <span className="flex items-center gap-1.5">
+            <DateWithTime dateTime={row.original.lastSeenAt} />
+            <RecheckResourceIconButton
+              target={buildResourceRecheckTarget(row.original)}
+            />
+          </span>
         </InfoField>
       ),
       enableSorting: false,
