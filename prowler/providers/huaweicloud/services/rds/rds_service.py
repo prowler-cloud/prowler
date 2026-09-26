@@ -59,6 +59,7 @@ class RDS(HuaweiCloudService):
                             status=getattr(inst_data, "status", None) or "",
                             engine=engine,
                             engine_version=engine_version,
+                            enable_ssl=getattr(inst_data, "enable_ssl", False),
                             public_ip=public_ip,
                             is_public=is_public,
                             backup_enabled=backup_enabled,
@@ -83,6 +84,7 @@ class RDSInstance(HuaweiCloudBaseModel):
     status: str = ""
     engine: str = ""
     engine_version: str = ""
+    enable_ssl: bool = False
     public_ip: str = ""
     is_public: bool = False
     backup_enabled: bool = False
