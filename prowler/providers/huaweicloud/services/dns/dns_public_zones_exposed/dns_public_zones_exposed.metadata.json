@@ -1,0 +1,36 @@
+{
+  "Provider": "huaweicloud",
+  "CheckID": "dns_public_zones_exposed",
+  "CheckTitle": "Public DNS zones do not expose internal infrastructure",
+  "CheckType": [],
+  "ServiceName": "dns",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "HUAWEICLOUD::DNS::PublicZone",
+  "ResourceGroup": "network",
+  "Description": "Ensure that public DNS zones do not expose internal infrastructure through DNS records.",
+  "Risk": "Public DNS zones can expose internal infrastructure details such as internal hostnames, IP addresses, and service endpoints. This information can be used by attackers to map the internal network and identify potential attack targets.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.huaweicloud.com/intl/en-us/usermanual-dns/dns_usermanual_0001.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Log on to the Huawei Cloud console.\n2. Navigate to Domain Name Service.\n3. Review public zones and their record sets.\n4. Remove any records that expose internal infrastructure.\n5. Consider using private zones for internal DNS resolution.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Review public DNS zones and remove records that expose internal infrastructure. Use private zones for internal DNS resolution.",
+      "Url": "https://hub.prowler.com/check/dns_public_zones_exposed"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Lists all public DNS zones and flags them for review."
+}
