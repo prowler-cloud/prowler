@@ -6,18 +6,22 @@ title: 'Networking'
 
 Prowler Cloud makes outbound API calls to scan cloud provider accounts and connect to integrations. Allowlist these IPs in firewalls or security groups to restrict access to Prowler Cloud only.
 
-| Region | IP Address |
-|--------|------------|
-| EU (Ireland) | `52.48.254.174` |
+Allowlist only the region hosting the account. Each region egresses from its own IP address.
+
+| Region | IP Address | DNS |
+|--------|------------|-----|
+| EU (Ireland) | `52.48.254.174` | `egress.prowler.com` |
+| US (N. Virginia) | `18.213.69.80` | `egress.us.prowler.com` |
 
 Resolve the egress IP via DNS:
 
 ```bash
-dig egress.prowler.com +short
+dig egress.prowler.com +short      # EU
+dig egress.us.prowler.com +short   # US
 ```
 
 <Note>
-The egress IP address is stable, but it is recommended to periodically verify it remains current by querying `egress.prowler.com`.
+The egress IP addresses are stable, but it is recommended to periodically verify they remain current by querying the DNS names above.
 </Note>
 
 ## Use Cases
