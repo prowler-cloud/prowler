@@ -19,7 +19,7 @@ _REQUIREMENT_ID = "op.exp.1.aws.cfg.1"
 
 
 def _load_ens() -> Compliance:
-    return Compliance(**json.load(open(_ENS)))
+    return Compliance(**json.load(open(_ENS, encoding="utf-8")))
 
 
 def _finding(check_id: str, status: str):
