@@ -4,12 +4,12 @@ from prowler.providers.alibabacloud.services.ecs.lib.security_group_port_check i
     execute_public_port_check,
 )
 
-CHECK_PORTS = (3389,)
-SERVICE_NAME = "Microsoft RDP"
+CHECK_PORTS = (9092,)
+SERVICE_NAME = "Kafka"
 
 
-class ecs_securitygroup_restrict_rdp_internet(Check):
-    """Check if security groups restrict RDP (port 3389) access from the internet."""
+class ecs_securitygroup_restrict_kafka_internet(Check):
+    """Check if security groups restrict Kafka from the internet."""
 
     def execute(self) -> list[CheckReportAlibabaCloud]:
         return execute_public_port_check(self, ecs_client, CHECK_PORTS, SERVICE_NAME)
