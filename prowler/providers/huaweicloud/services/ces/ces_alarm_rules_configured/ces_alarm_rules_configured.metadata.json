@@ -1,0 +1,36 @@
+{
+  "Provider": "huaweicloud",
+  "CheckID": "ces_alarm_rules_configured",
+  "CheckTitle": "CES alarm rules are configured and enabled",
+  "CheckType": [],
+  "ServiceName": "ces",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "HUAWEICLOUD::CES::Alarm",
+  "ResourceGroup": "monitoring",
+  "Description": "Check whether each configured Cloud Eye (CES) alarm rule is enabled. The check returns no findings when the alarm inventory is empty.",
+  "Risk": "Disabled alarm rules do not evaluate their configured metrics or events, which can delay detection and response to availability or security incidents.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.huaweicloud.com/intl/en-us/usermanual-ces/ces_01_0030.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "hcloud CES BatchEnableAlarmRules --cli-region=${region} --body='{\"alarm_ids\":[\"${alarm_id}\"],\"alarm_enabled\":true}'",
+      "NativeIaC": "",
+      "Other": "1. Log on to the Huawei Cloud console.\n2. Navigate to Cloud Eye (CES).\n3. Create alarm rules for the required metrics and events.\n4. Ensure all alarm rules are enabled.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable configured CES alarm rules so their metric or event policies are evaluated.",
+      "Url": "https://hub.prowler.com/check/ces_alarm_rules_configured"
+    }
+  },
+  "Categories": [
+    "logging"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Reports one finding per discovered CES alarm rule using its enabled state."
+}
