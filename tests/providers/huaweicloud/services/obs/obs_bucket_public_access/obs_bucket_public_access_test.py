@@ -96,3 +96,35 @@ class TestObsBucketPublicAccess:
             result = check.execute()
 
             assert len(result) == 0
+
+    def test_unknown_public_access_is_manual(self):
+        obs_client = mock.MagicMock()
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_huaweicloud_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.huaweicloud.services.obs.obs_bucket_public_access.obs_bucket_public_access.obs_client",
+                new=obs_client,
+            ),
+        ):
+            from prowler.providers.huaweicloud.services.obs.obs_bucket_public_access.obs_bucket_public_access import (
+                obs_bucket_public_access,
+            )
+            from prowler.providers.huaweicloud.services.obs.obs_service import Bucket
+
+            obs_client.buckets = [
+                Bucket(name="unknown-bucket", is_public=None, region="la-south-2")
+            ]
+            obs_client.audited_account = "123456789012"
+
+            result = obs_bucket_public_access().execute()
+
+            assert len(result) == 1
+            assert result[0].status == "MANUAL"
+            assert (
+                result[0].status_extended
+                == "OBS bucket unknown-bucket public access status could not be determined."
+            )
