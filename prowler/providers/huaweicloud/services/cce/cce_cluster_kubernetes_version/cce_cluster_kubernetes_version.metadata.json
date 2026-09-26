@@ -1,0 +1,36 @@
+{
+  "Provider": "huaweicloud",
+  "CheckID": "cce_cluster_kubernetes_version",
+  "CheckTitle": "CCE clusters run supported Kubernetes versions",
+  "CheckType": [],
+  "ServiceName": "cce",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "HUAWEICLOUD::CCE::Cluster",
+  "ResourceGroup": "container",
+  "Description": "Ensure that CCE clusters are running Kubernetes versions at or above the minimum recommended version (1.25).",
+  "Risk": "Running outdated Kubernetes versions exposes clusters to known vulnerabilities, missing security patches, and lack of support for modern security features.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.huaweicloud.com/intl/en-us/usermanual-cce/cce_10_0218.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Log on to the Huawei Cloud console.\n2. Navigate to Cloud Container Engine.\n3. Select the cluster.\n4. Upgrade the cluster to Kubernetes version 1.25 or later.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Upgrade CCE clusters to Kubernetes version 1.25 or later.",
+      "Url": "https://hub.prowler.com/check/cce_cluster_kubernetes_version"
+    }
+  },
+  "Categories": [
+    "vulnerabilities"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Checks if CCE clusters are running Kubernetes versions below 1.25."
+}
