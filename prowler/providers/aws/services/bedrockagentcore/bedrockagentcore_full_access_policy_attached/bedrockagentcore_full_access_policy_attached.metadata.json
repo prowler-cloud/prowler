@@ -1,0 +1,43 @@
+{
+  "Provider": "aws",
+  "CheckID": "bedrockagentcore_full_access_policy_attached",
+  "CheckTitle": "IAM role does not grant full access to Bedrock AgentCore",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "TTPs/Privilege Escalation"
+  ],
+  "ServiceName": "bedrockagentcore",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "AwsIamRole",
+  "ResourceGroup": "IAM",
+  "Description": "**IAM roles** are evaluated for full access to Bedrock AgentCore, whether from the AWS-managed `BedrockAgentCoreFullAccess` or `AgentRegistryFullAccess` policy, or from an `Allow` on `Resource: \"*\"` reaching every action in the `bedrock-agentcore` or `agent-registry` namespace, written as `bedrock-agentcore:*`, `*`, `*:*`, or a `NotAction` excluding nothing in the namespace.",
+  "Risk": "**Full AgentCore access** is not only the ability to invoke agents. It includes `UpdateGateway`, `PutResourcePolicy` and the policy-engine calls.\n\nSo one compromised credential can disable a gateway authorizer, flip a policy engine to `LOG_ONLY`, or grant itself cross-account access, and then invoke the agent it just unguarded.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/security-iam.html",
+    "https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html#grant-least-privilege"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aws iam detach-role-policy --role-name example-agentcore-role --policy-arn arn:aws:iam::aws:policy/BedrockAgentCoreFullAccess",
+      "NativeIaC": "```yaml\nResources:\n  example_resource:\n    Type: AWS::IAM::Role\n    Properties:\n      RoleName: example_resource\n      ManagedPolicyArns: []  # Critical: no BedrockAgentCoreFullAccess or AgentRegistryFullAccess\n      Policies:\n        - PolicyName: example-scoped-agentcore-policy\n          PolicyDocument:\n            Version: '2012-10-17'\n            Statement:\n              - Effect: Allow\n                Action:\n                  - bedrock-agentcore:InvokeAgentRuntime  # Critical: enumerate actions instead of bedrock-agentcore:*\n                Resource: arn:aws:bedrock-agentcore:us-east-1:123456789012:runtime/example-runtime-id\n```",
+      "Other": "1. Open the AWS Console and go to IAM > Roles\n2. Select the role flagged by the check\n3. On the Permissions tab, detach BedrockAgentCoreFullAccess or AgentRegistryFullAccess\n4. Open any remaining inline or customer-managed policy and replace bedrock-agentcore:* or agent-registry:* with the specific actions the workload calls\n5. Scope each statement's Resource to specific gateway, runtime, or memory ARNs rather than *\n6. Save the role",
+      "Terraform": "```hcl\nresource \"aws_iam_role_policy\" \"example_resource\" {\n  name = \"example-scoped-agentcore-policy\"\n  role = aws_iam_role.example_agentcore_role.id\n  policy = jsonencode({\n    Version = \"2012-10-17\"\n    Statement = [{\n      Effect   = \"Allow\"\n      Action   = [\"bedrock-agentcore:InvokeAgentRuntime\"] # Critical: enumerate actions instead of bedrock-agentcore:*\n      Resource = \"arn:aws:bedrock-agentcore:us-east-1:123456789012:runtime/example-runtime-id\"\n    }]\n  })\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Replace `BedrockAgentCoreFullAccess` / `AgentRegistryFullAccess` and any `bedrock-agentcore:*` grant with the specific actions a workload calls, scoped to specific resource ARNs. Keep the control-plane actions that reconfigure gateways and policy engines separate from the invoke actions agents need at runtime.",
+      "Url": "https://hub.prowler.com/check/bedrockagentcore_full_access_policy_attached"
+    }
+  },
+  "Categories": [
+    "gen-ai",
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "bedrock_full_access_policy_attached"
+  ],
+  "Notes": "Reports one finding per IAM role that grants any AgentCore action, resolving attached and inline policy documents from the IAM inventory. Roles with no AgentCore grant are skipped rather than reported as PASS. A role whose AgentCore-relevant policy document could not be resolved returns MANUAL rather than PASS, because an unreadable document means the remaining privilege is unknown. Both BedrockAgentCoreFullAccess and AgentRegistryFullAccess are matched by name. AWS did not rename anything: it split the Agent Registry surface into its own agent-registry IAM namespace on 2026-08-06, both managed policies remain attachable, and AWS states the older one will not be updated to carry agent-registry:*. Name matching is load-bearing because check_full_service_access requires a literal * resource while both AWS-managed documents scope to arn:aws:<namespace>:*:*:*, so the name is the only thing that catches them. Action matching is case-insensitive and resolves wildcards in any position, so an Action of *, *:*, or a NotAction that does not exclude the namespace all count as reaching it, with Deny statements subtracted first. The bedrock-agentcore namespace is resolved with the shared check_full_service_access helper; agent-registry is resolved against its documented action list, because the IAM action data behind that helper does not yet carry the newer namespace and expanding an unknown namespace would report every policy as full access."
+}
