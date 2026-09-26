@@ -761,7 +761,7 @@ class Repository(GithubService):
                 ):
                     approval_count_source = "ruleset_not_active"
 
-            secret_scanning_enabled = False
+            secret_scanning_enabled = None
             dependabot_alerts_enabled = False
             try:
                 if (
