@@ -14823,7 +14823,9 @@ paths:
     get:
       operationId: api_v1_tasks_list
       description: Retrieve a list of all tasks with options for filtering by name,
-        state, and other criteria.
+        state, and other criteria. Tasks that reference a provider are only returned
+        when the role can access it; tasks without a provider reference are returned
+        for every role.
       summary: List all tasks
       parameters:
       - in: query
@@ -14922,7 +14924,8 @@ paths:
   /api/v1/tasks/{id}:
     get:
       operationId: api_v1_tasks_retrieve
-      description: Fetch detailed information about a specific task by its ID.
+      description: Fetch detailed information about a specific task by its ID. Tasks
+        tied to a provider outside the visibility of the role are not found.
       summary: Retrieve data from a specific task
       parameters:
       - in: query
@@ -14963,7 +14966,9 @@ paths:
     delete:
       operationId: api_v1_tasks_destroy
       description: Try to revoke a task using its ID. Only tasks that are not yet
-        in progress can be revoked.
+        in progress can be revoked, and the caller needs the same permission as the
+        operation that queued the task (for example MANAGE_SCANS for a scan). Provider
+        deletions cannot be revoked.
       summary: Revoke a task
       parameters:
       - in: path
