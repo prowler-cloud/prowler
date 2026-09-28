@@ -62,7 +62,7 @@ Prowler Lighthouse AI is powerful, but there are limitations:
 - **Continuous improvement**: Please report any issues, as the feature may make mistakes or encounter errors, despite extensive testing.
 - **Access limitations**: Lighthouse AI can only access data the logged-in user can view. If you can't see certain information, Lighthouse AI can't see it either.
 - **NextJS session dependence**: If your Prowler application session expires or logs out, Lighthouse AI will error out. Refresh and log back in to continue.
-- **Response quality**: The response quality depends on the selected LLM provider and model. Choose models with strong tool-calling capabilities for best results. We recommend `gpt-5` model from OpenAI.
+- **Response quality**: The response quality depends on the selected LLM provider and model. Choose models with strong tool-calling capabilities for best results. We recommend the `gpt-5` model from OpenAI.
 
 ## Architecture
 
@@ -82,7 +82,7 @@ If you encounter issues with Prowler Lighthouse AI or have suggestions for impro
 
 ### What Data Is Shared to LLM Providers?
 
-The following API endpoints are accessible to Prowler Lighthouse AI. Data from the following API endpoints could be shared with LLM provider depending on the scope of user's query:
+The following API endpoints are accessible to Prowler Lighthouse AI. Data from the following API endpoints could be shared with the LLM provider depending on the scope of the user's query:
 
 ## FAQs
 
@@ -110,7 +110,7 @@ Lighthouse AI [automatically filters](https://github.com/prowler-cloud/prowler/b
 
 **3. Is my security data shared with LLM providers?**
 
-Minimal data is shared to generate useful responses. Agent can access security findings and remediation details when needed. Provider secrets are protected by design and cannot be read. The LLM provider credentials configured with Lighthouse AI are only accessible to the Next.js server and are never sent to the LLM providers. Resource metadata (names, tags, account/project IDs, etc.) may be shared with the configured LLM provider based on query requirements.
+Minimal data is shared to generate useful responses. The agent can access security findings and remediation details when needed. Provider secrets are protected by design and cannot be read. The LLM provider credentials configured with Lighthouse AI are only accessible to the Next.js server and are never sent to the LLM providers. Resource metadata (names, tags, account/project IDs, etc.) may be shared with the configured LLM provider based on query requirements.
 
 **4. Can the Lighthouse AI change my cloud environment?**
 
