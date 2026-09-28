@@ -17,11 +17,12 @@ class Permissions(Enum):
     UNLIMITED_VISIBILITY = "unlimited_visibility"
 
 
-# Revoking a task needs the permission of the operation that queued it;
-# unmapped names are not revocable.
-TASK_REVOKE_PERMISSIONS: dict[str, list[Permissions]] = {
+# Revoking a task needs the permission of the operation that queued it.
+# None and unmapped names are not revocable; a revoked provider deletion
+# would leave the provider soft-deleted with nothing re-queuing the cleanup.
+TASK_REVOKE_PERMISSIONS: dict[str, list[Permissions] | None] = {
     "provider-connection-check": [Permissions.MANAGE_PROVIDERS],
-    "provider-deletion": [Permissions.MANAGE_PROVIDERS],
+    "provider-deletion": None,
     "integration-connection-check": [Permissions.MANAGE_INTEGRATIONS],
     "integration-s3": [Permissions.MANAGE_INTEGRATIONS],
     "integration-security-hub": [Permissions.MANAGE_INTEGRATIONS],
@@ -126,12 +127,13 @@ def get_tasks(role: Role) -> QuerySet[Task]:
     if role.unlimited_visibility:
         return queryset
 
-    # Task has no provider FK, so match provider ids inside the stored kwargs;
-    # all_objects keeps soft-deleted providers hidden too.
+    # Task has no provider FK, so match provider ids inside the stored kwargs.
+    # all_objects keeps a soft-deleted provider visible to its own groups, so the
+    # role that queued its deletion can still follow the task.
     hidden = Q()
     for provider_id in (
         Provider.all_objects.filter(tenant_id=role.tenant_id)
-        .exclude(id__in=get_providers(role))
+        .exclude(provider_groups__in=role.provider_groups.all())
         .values_list("id", flat=True)
     ):
         hidden |= Q(task_runner_task__task_kwargs__contains=str(provider_id))

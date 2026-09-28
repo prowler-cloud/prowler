@@ -5304,7 +5304,7 @@ class TestTaskViewSet:
         self, mock_async_result, authenticated_client_no_permissions_rbac, tasks_fixture
     ):
         _, pending_task = tasks_fixture
-        self._set_task_name(pending_task, "provider-deletion")
+        self._set_task_name(pending_task, "provider-connection-check")
 
         response = authenticated_client_no_permissions_rbac.delete(
             reverse("task-detail", kwargs={"pk": pending_task.id})
@@ -5316,12 +5316,15 @@ class TestTaskViewSet:
     @pytest.mark.parametrize(
         "task_name, permissions, expected_status",
         [
-            ("provider-deletion", {"manage_providers": True}, status.HTTP_202_ACCEPTED),
-            ("provider-deletion", {"manage_scans": True}, status.HTTP_403_FORBIDDEN),
             (
                 "provider-connection-check",
                 {"manage_providers": True},
                 status.HTTP_202_ACCEPTED,
+            ),
+            (
+                "provider-connection-check",
+                {"manage_scans": True},
+                status.HTTP_403_FORBIDDEN,
             ),
             ("scan-perform", {"manage_scans": True}, status.HTTP_202_ACCEPTED),
             (
@@ -5363,6 +5366,20 @@ class TestTaskViewSet:
             mock_async_result.return_value.revoke.assert_called_once()
         else:
             mock_async_result.return_value.revoke.assert_not_called()
+
+    @patch("api.v1.views.AsyncResult")
+    def test_tasks_revoke_provider_deletion_is_forbidden_even_for_admin(
+        self, mock_async_result, authenticated_client, tasks_fixture
+    ):
+        _, pending_task = tasks_fixture
+        self._set_task_name(pending_task, "provider-deletion")
+
+        response = authenticated_client.delete(
+            reverse("task-detail", kwargs={"pk": pending_task.id})
+        )
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        mock_async_result.return_value.revoke.assert_not_called()
 
     @patch("api.v1.views.AsyncResult")
     def test_tasks_revoke_unmapped_task_is_forbidden(
@@ -5436,6 +5453,53 @@ class TestTaskViewSet:
         assert response.status_code == status.HTTP_404_NOT_FOUND
         mock_async_result.return_value.revoke.assert_not_called()
 
+    @patch("api.v1.views.AsyncResult")
+    def test_tasks_of_soft_deleted_provider_stay_visible_to_its_groups(
+        self,
+        mock_async_result,
+        authenticated_client_for_tenant_factory,
+        tenants_fixture,
+        tasks_fixture,
+        aws_provider_pair,
+    ):
+        tenant, *_ = tenants_fixture
+        provider, _ = aws_provider_pair
+        finished_task, pending_task = tasks_fixture
+        client = self._client_with_role(
+            tenant,
+            authenticated_client_for_tenant_factory,
+            manage_providers=True,
+            unlimited_visibility=False,
+        )
+        provider_group = ProviderGroup.objects.create(
+            name="own-group", tenant_id=tenant.id
+        )
+        ProviderGroupMembership.objects.create(
+            tenant_id=tenant.id, provider_group=provider_group, provider=provider
+        )
+        RoleProviderGroupRelationship.objects.create(
+            tenant_id=tenant.id,
+            role=client.user.roles.first(),
+            provider_group=provider_group,
+        )
+        for task, name in (
+            (finished_task, "provider-deletion"),
+            (pending_task, "provider-connection-check"),
+        ):
+            self._set_task_name(task, name)
+            self._set_task_kwargs(
+                task, {"tenant_id": str(tenant.id), "provider_id": str(provider.id)}
+            )
+        provider.is_deleted = True
+        provider.save()
+
+        response = client.get(reverse("task-detail", kwargs={"pk": finished_task.id}))
+        assert response.status_code == status.HTTP_200_OK
+
+        response = client.delete(reverse("task-detail", kwargs={"pk": pending_task.id}))
+        assert response.status_code == status.HTTP_202_ACCEPTED
+        mock_async_result.return_value.revoke.assert_called_once()
+
     def test_tasks_without_provider_stay_visible_for_limited_roles(
         self, authenticated_client_no_permissions_rbac, tasks_fixture, aws_provider_pair
     ):
@@ -5453,7 +5517,7 @@ class TestTaskViewSet:
         self, authenticated_client_no_permissions_rbac, tasks_fixture
     ):
         finished_task, _ = tasks_fixture
-        self._set_task_name(finished_task, "provider-deletion")
+        self._set_task_name(finished_task, "provider-connection-check")
 
         response = authenticated_client_no_permissions_rbac.delete(
             reverse("task-detail", kwargs={"pk": finished_task.id})

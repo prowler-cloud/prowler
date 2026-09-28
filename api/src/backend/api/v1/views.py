@@ -2882,7 +2882,8 @@ class ScanViewSet(ProviderVisibilityMixin, BaseRLSViewSet):
         description=(
             "Try to revoke a task using its ID. Only tasks that are not yet in progress can be "
             "revoked, and the caller needs the same permission as the operation that queued "
-            "the task (for example MANAGE_PROVIDERS for a provider deletion)."
+            "the task (for example MANAGE_SCANS for a scan). Provider deletions cannot be "
+            "revoked."
         ),
         responses={202: OpenApiResponse(response=TaskSerializer)},
     ),

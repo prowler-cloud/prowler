@@ -152,7 +152,7 @@ Integrations follow the visibility of the providers attached to them: a role can
 
 <VersionBadge version="5.44.0" />
 
-Background tasks, such as provider deletions, connection checks and scans, follow the visibility of the provider they belong to: a role can see a task when it can access its provider. Tasks that are not tied to a provider are tenant-wide and visible to every role. Revoking a pending task requires the same permission as the operation that queued it, for example **Manage Providers** for a provider deletion or **Manage Scans** for a scan.
+Background tasks, such as provider deletions, connection checks and scans, follow the visibility of the provider they belong to: a role can see a task when it can access its provider. Tasks that are not tied to a provider are tenant-wide and visible to every role. Revoking a pending task requires the same permission as the operation that queued it, for example **Manage Scans** for a scan. Provider deletions cannot be revoked.
 
 #### Creating a Provider Group
 

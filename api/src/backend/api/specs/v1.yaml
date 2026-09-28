@@ -14967,8 +14967,8 @@ paths:
       operationId: api_v1_tasks_destroy
       description: Try to revoke a task using its ID. Only tasks that are not yet
         in progress can be revoked, and the caller needs the same permission as the
-        operation that queued the task (for example MANAGE_PROVIDERS for a provider
-        deletion).
+        operation that queued the task (for example MANAGE_SCANS for a scan). Provider
+        deletions cannot be revoked.
       summary: Revoke a task
       parameters:
       - in: path
