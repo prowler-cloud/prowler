@@ -11,7 +11,7 @@ from api.authentication import (
     TenantAPIKeyAuthentication,
 )
 from api.db_router import MainRouter
-from api.models import TenantAPIKey
+from api.models import TenantAPIKey, User
 from django.db import connections
 from django.db.models.query import QuerySet
 from django.test import RequestFactory
@@ -359,6 +359,43 @@ class TestTenantAPIKeyAuthentication:
             auth_backend.authenticate(request)
 
         assert str(exc_info.value.detail) == "This API Key has been revoked."
+
+    def test_authenticate_survives_owner_deleted_after_the_single_read(
+        self, auth_backend, api_keys_fixture, request_factory
+    ):
+        """Test a user deleted right after the read does not turn into a 500.
+
+        Without the row lock a concurrent user deletion can land between the read
+        and building the claims. `entity` is loaded by the same query, so no later
+        lookup can raise `DoesNotExist`.
+        """
+        api_key = api_keys_fixture[0]
+        owner_id = api_key.entity_id
+        original_authenticate_credentials = (
+            TenantAPIKeyAuthentication._authenticate_credentials
+        )
+
+        def delete_owner_after_reading(self, request, key):
+            result = original_authenticate_credentials(self, request, key)
+            User.objects.using(MainRouter.admin_db).filter(id=owner_id).delete()
+            return result
+
+        request = request_factory.get("/")
+        request.META["HTTP_AUTHORIZATION"] = f"Api-Key {api_key._raw_key}"
+
+        with patch.object(
+            TenantAPIKeyAuthentication,
+            "_authenticate_credentials",
+            delete_owner_after_reading,
+        ):
+            entity, auth_dict = auth_backend.authenticate(request)
+
+        assert auth_dict["sub"] == str(owner_id)
+        assert entity.id == owner_id
+
+        # From the next request on, the orphaned key is rejected with a 401
+        with pytest.raises(AuthenticationFailed):
+            auth_backend.authenticate(request)
 
     def test_authenticate_expired_api_key(
         self, auth_backend, create_test_user, tenants_fixture, request_factory

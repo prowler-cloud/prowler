@@ -72,7 +72,13 @@ class TenantAPIKeyAuthentication(BaseAPIKeyAuth):
             raise AuthenticationFailed("API Key has already expired.")
 
         try:
-            api_key = self.model.objects.using(MainRouter.admin_db).get(id=api_key_pk)
+            # Loading `entity` in the same query keeps a user deleted after this read
+            # from turning the later `api_key.entity` access into a 500
+            api_key = (
+                self.model.objects.using(MainRouter.admin_db)
+                .select_related("entity")
+                .get(id=api_key_pk)
+            )
         except ObjectDoesNotExist:
             raise AuthenticationFailed("No entity matching this api key.")
 
