@@ -1,24 +1,35 @@
 import { adaptFindingGroupsResponse } from "@/actions/finding-groups/finding-groups.adapter";
 
 const FINDING_GROUP_FILTER_OPTION_PAGE_SIZE = 100;
+// Options only need a stable page order; the table's composite sort costs an
+// extra aggregation per page on the API.
+const FINDING_GROUP_FILTER_OPTION_SORT = "check_id";
+// Each page can hit the raw findings aggregation, so bound the DB fan-out.
+const FINDING_GROUP_FILTER_OPTION_CONCURRENCY = 4;
 const FINDING_GROUP_OWN_FILTER_KEYS = new Set([
   "filter[check_id]",
   "filter[check_id__in]",
 ]);
 
+type FindingGroupFilters = Record<string, string | string[] | undefined>;
+
 interface FindingGroupFilterFetcherParams {
   page: number;
   pageSize: number;
-  filters: Record<string, string | string[] | undefined>;
+  sort: string;
+  filters: FindingGroupFilters;
 }
 
-type FindingGroupFilterFetcher = (
+export type FindingGroupFilterFetcher = (
   params: FindingGroupFilterFetcherParams,
 ) => Promise<unknown>;
 
-function excludeFindingGroupOwnFilters(
-  filters: Record<string, string | string[] | undefined>,
-) {
+export interface FindingGroupCheckOption {
+  checkId: string;
+  checkTitle: string;
+}
+
+export function excludeFindingGroupOwnFilters(filters: FindingGroupFilters) {
   return Object.fromEntries(
     Object.entries(filters).filter(
       ([key]) => !FINDING_GROUP_OWN_FILTER_KEYS.has(key),
@@ -48,33 +59,86 @@ function getTotalPages(response: unknown, currentPage: number): number {
   return typeof pagination.pages === "number" ? pagination.pages : currentPage;
 }
 
+function toCheckOptions(response: unknown): FindingGroupCheckOption[] {
+  return adaptFindingGroupsResponse(response).map((group) => ({
+    checkId: group.checkId,
+    checkTitle: group.checkTitle,
+  }));
+}
+
+/** Titles for the checks already selected in the URL: one request, none without a selection. */
+export async function getSelectedFindingCheckOptions({
+  fetchFindingGroups,
+  filters,
+  selectedCheckIds,
+}: {
+  fetchFindingGroups: FindingGroupFilterFetcher;
+  filters: FindingGroupFilters;
+  selectedCheckIds: string[];
+}): Promise<FindingGroupCheckOption[]> {
+  const uniqueIds = Array.from(new Set(selectedCheckIds.filter(Boolean)));
+  if (uniqueIds.length === 0) return [];
+
+  const response = await fetchFindingGroups({
+    filters: {
+      ...excludeFindingGroupOwnFilters(filters),
+      "filter[check_id__in]": uniqueIds.join(","),
+    },
+    page: 1,
+    pageSize: FINDING_GROUP_FILTER_OPTION_PAGE_SIZE,
+    sort: FINDING_GROUP_FILTER_OPTION_SORT,
+  });
+
+  return toCheckOptions(response);
+}
+
+/** Every check for the given filters, walking the pages a few at a time. */
 export async function getFindingGroupFilterOptions({
   fetchFindingGroups,
   filters,
 }: {
   fetchFindingGroups: FindingGroupFilterFetcher;
-  filters: Record<string, string | string[] | undefined>;
-}) {
+  filters: FindingGroupFilters;
+}): Promise<FindingGroupCheckOption[]> {
   const optionFilters = excludeFindingGroupOwnFilters(filters);
-  const options = new Map<string, { checkId: string; checkTitle: string }>();
-  let page = 1;
-
-  while (true) {
-    const response = await fetchFindingGroups({
+  const fetchPage = (page: number) =>
+    fetchFindingGroups({
       filters: optionFilters,
       page,
       pageSize: FINDING_GROUP_FILTER_OPTION_PAGE_SIZE,
+      sort: FINDING_GROUP_FILTER_OPTION_SORT,
     });
 
-    for (const group of adaptFindingGroupsResponse(response)) {
-      options.set(group.checkId, {
-        checkId: group.checkId,
-        checkTitle: group.checkTitle,
-      });
+  const firstPage = await fetchPage(1);
+  const totalPages = getTotalPages(firstPage, 1);
+  const pendingPages = Array.from(
+    { length: Math.max(totalPages - 1, 0) },
+    (_, index) => index + 2,
+  );
+  const remainingPages: unknown[] = [];
+  const drainPendingPages = async () => {
+    while (pendingPages.length > 0) {
+      const page = pendingPages.shift() as number;
+      remainingPages[page - 2] = await fetchPage(page);
     }
+  };
+  await Promise.all(
+    Array.from(
+      {
+        length: Math.min(
+          FINDING_GROUP_FILTER_OPTION_CONCURRENCY,
+          pendingPages.length,
+        ),
+      },
+      drainPendingPages,
+    ),
+  );
 
-    if (page >= getTotalPages(response, page)) break;
-    page += 1;
+  const options = new Map<string, FindingGroupCheckOption>();
+  for (const response of [firstPage, ...remainingPages]) {
+    for (const option of toCheckOptions(response)) {
+      options.set(option.checkId, option);
+    }
   }
 
   return Array.from(options.values());
