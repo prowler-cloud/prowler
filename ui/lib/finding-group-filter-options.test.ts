@@ -148,6 +148,41 @@ describe("getFindingGroupFilterOptions", () => {
     );
   });
 
+  it("stops dequeuing pages once one of them rejects", async () => {
+    // Given
+    let rejectPage: (error: Error) => void = () => undefined;
+    const heldPages: Array<() => void> = [];
+    const fetchFindingGroups = vi.fn(({ page }: { page: number }) => {
+      const response = makeResponse(12, [
+        { id: `check-${page}`, title: `Check ${page}` },
+      ]);
+      if (page === 1) return Promise.resolve(response);
+      if (page === 2) {
+        return new Promise((_, reject) => {
+          rejectPage = reject;
+        });
+      }
+      return new Promise((resolve) => {
+        heldPages.push(() => resolve(response));
+      });
+    });
+
+    // When
+    const optionsPromise = getFindingGroupFilterOptions({
+      fetchFindingGroups,
+      filters: {},
+    });
+    await vi.waitFor(() => expect(fetchFindingGroups).toHaveBeenCalledTimes(5));
+    rejectPage(new Error("auth failed"));
+    await expect(optionsPromise).rejects.toThrow("auth failed");
+    // The other workers finish their current page after the failure.
+    heldPages.forEach((release) => release());
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    // Then
+    expect(fetchFindingGroups).toHaveBeenCalledTimes(5);
+  });
+
   it("stops after the first page when the response has no pagination", async () => {
     // Given
     const fetchFindingGroups = vi.fn().mockResolvedValue(undefined);

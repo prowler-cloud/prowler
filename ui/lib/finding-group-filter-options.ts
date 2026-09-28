@@ -116,10 +116,17 @@ export async function getFindingGroupFilterOptions({
     (_, index) => index + 2,
   );
   const remainingPages: unknown[] = [];
+  // One rejection fails the whole walk, so the other workers stop dequeuing.
+  let failed = false;
   const drainPendingPages = async () => {
-    while (pendingPages.length > 0) {
+    while (!failed && pendingPages.length > 0) {
       const page = pendingPages.shift() as number;
-      remainingPages[page - 2] = await fetchPage(page);
+      try {
+        remainingPages[page - 2] = await fetchPage(page);
+      } catch (error) {
+        failed = true;
+        throw error;
+      }
     }
   };
   await Promise.all(
