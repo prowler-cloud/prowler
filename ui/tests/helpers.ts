@@ -107,17 +107,12 @@ export async function addAWSProvider(
   // Select AWS provider
   await providersPage.selectAWSProvider();
 
-  // Fill provider details
-  await providersPage.fillAWSProviderDetails(awsProviderData);
-  await providersPage.clickNext();
-
-  // Verify credentials page is loaded
-  await providersPage.verifyCredentialsPageLoaded();
-
-  // Select static credentials type
-  await providersPage.selectCredentialsType(
+  // AWS registers the account and its credentials in a single step
+  await providersPage.selectAwsAccessMethod(
     AWS_CREDENTIAL_OPTIONS.AWS_CREDENTIALS,
   );
+  await providersPage.fillAWSProviderDetails(awsProviderData);
+
   // Fill static credentials
   await providersPage.fillStaticCredentials(staticCredentials);
   await providersPage.clickNext();
