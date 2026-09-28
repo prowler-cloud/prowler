@@ -3951,6 +3951,43 @@ class TestScanViewSet:
         mock_enqueue_scan_execution.assert_called_once()
         # assert scan.scanner_args == expected_scanner_args
 
+    @patch("api.v1.views.enqueue_scan_execution_on_commit")
+    def test_scans_create_returns_the_scan_id_in_task_args(
+        self,
+        mock_enqueue_scan_execution,
+        authenticated_client,
+        okta_provider,
+    ):
+        """The 202 is a task, so `task_args` is the only place the scan id is.
+
+        It is serialized before the on_commit publish that would otherwise fill
+        the kwargs, so the record has to carry them from the start.
+        """
+        payload = {
+            "data": {
+                "type": "scans",
+                "attributes": {"name": "New Scan"},
+                "relationships": {
+                    "provider": {
+                        "data": {"type": "providers", "id": str(okta_provider.id)}
+                    }
+                },
+            }
+        }
+
+        response = authenticated_client.post(
+            reverse("scan-list"),
+            data=payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+
+        assert response.status_code == status.HTTP_202_ACCEPTED
+        scan = Scan.objects.get()
+        assert response.json()["data"]["attributes"]["task_args"] == {
+            "scan_id": str(scan.id),
+            "provider_id": str(okta_provider.id),
+        }
+
     @patch("tasks.tasks.perform_scan_task.apply_async")
     def test_scans_create_queues_scan_when_provider_has_active_scan(
         self,

@@ -54,6 +54,19 @@ export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
     return this.countRequests("POST", "/apply");
   }
 
+  /** `POST /providers` alone: secrets and connection checks nest under it. */
+  get providerCreateCallCount(): number {
+    return this.requestLog.filter(
+      (request) =>
+        request.method === "POST" &&
+        new URL(request.url).pathname.replace(/\/$/, "").endsWith("/providers"),
+    ).length;
+  }
+
+  get secretCreateCallCount(): number {
+    return this.countRequests("POST", "/providers/secrets");
+  }
+
   /**
    * Whether any apply asked the endpoint to include related resources, which it
    * rejects outright — a tripwire, not a preference.
@@ -83,7 +96,7 @@ export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
     ).length;
   }
 
-  private get connectionCallCount(): number {
+  get connectionCallCount(): number {
     return this.countRequests("POST", "/connection");
   }
 
@@ -198,8 +211,73 @@ export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
   /** Enter the AWS Organizations onboarding flow from a fresh wizard. */
   async chooseAwsOrganizations(): Promise<void> {
     await this.selectProviderType(/Amazon Web Services/);
-    await this.chooseMethod(/Add Multiple Accounts With AWS Organizations/);
+    // AWS hosts its single-account/organization switch as tabs on its connect step.
+    const tab = await this.waitFor(() =>
+      this.byRoleName("tab", /Full AWS Organization/),
+    );
+    await this.user.click(tab);
     await this.waitForText(/Organization Details/);
+  }
+
+  /** Labels of the wizard's progress stepper, top to bottom. */
+  stepperLabels(): string[] {
+    return Array.from(
+      document.querySelectorAll('nav[aria-label="Wizard progress"] span'),
+      (node) => node.textContent?.trim() ?? "",
+    );
+  }
+
+  /** Wait until the AWS single-account connect step (with its method tabs) is showing. */
+  async waitForAwsConnectStep(): Promise<void> {
+    await this.waitFor(
+      () => this.byRoleName("tab", /Single AWS Account/),
+      undefined,
+      "AWS connect step",
+    );
+  }
+
+  /** Type the account id and static keys on the AWS one-step connect form. */
+  async fillAwsAccountKeys({
+    accountId,
+    accessKeyId,
+    secretAccessKey,
+  }: {
+    accountId: string;
+    accessKeyId: string;
+    secretAccessKey: string;
+  }): Promise<void> {
+    const accountInput = await this.waitFor(() =>
+      this.inputByName("providerUid"),
+    );
+    await this.user.fill(accountInput, accountId);
+    const keyInput = await this.waitFor(() =>
+      this.inputByName("aws_access_key_id"),
+    );
+    await this.user.fill(keyInput, accessKeyId);
+    const secretInput = await this.waitFor(() =>
+      this.inputByName("aws_secret_access_key"),
+    );
+    await this.user.fill(secretInput, secretAccessKey);
+  }
+
+  /** Submit the AWS one-step form; waits for its action to become enabled. */
+  async connectAccount(): Promise<void> {
+    await this.clickPrimary(/Connect account/);
+  }
+
+  /** Wait until the provider wizard reached its launch step. */
+  async waitForProviderLaunchStep(timeoutMs = 20000): Promise<void> {
+    await this.waitForText(/Scan Schedule/, timeoutMs);
+  }
+
+  /** Switch back to a single account from the organization flow's tabs. */
+  async switchToAwsSingleAccount(): Promise<void> {
+    const tab = await this.waitFor(
+      () => this.byRoleName("tab", /Single AWS Account/),
+      undefined,
+      "Single AWS Account tab",
+    );
+    await this.user.click(tab);
   }
 
   /** Select GCP and open the GCP Organization method card (no advance wait). */

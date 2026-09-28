@@ -4,6 +4,73 @@ description: "New features and improvements in each Prowler release"
 rss: true
 ---
 
+<Update label="v5.43.0" description="September 21, 2026">
+  ### 🏛️ Compliance — FedRAMP 20x Consolidated Rules 2026
+
+  The FedRAMP 20x Phase One pilot frameworks (`fedramp_20x_ksi_low_aws`, `fedramp_20x_ksi_low_azure` and `fedramp_20x_ksi_low_gcp`) are replaced by two universal frameworks built from the FedRAMP Consolidated Rules for 2026, each covering AWS, Azure, GCP, Kubernetes and Microsoft 365 from a single definition:
+
+  - **FedRAMP 20x KSI** (`fedramp_20x_ksi_2026`): the 46 Key Security Indicators across 10 themes. There is one indicator catalog for every class instead of a separate Low fork; each indicator carries its class applicability and NIST SP 800-53 controls.
+  - **FedRAMP 20x Class C FRR** (`fedramp_20x_frr_class_c_2026`): the 158 FedRAMP Rules of the Class C ruleset that bind cloud service providers. Most are program obligations (reports, notifications, certification package) and stay manual; checks are mapped only where they evidence part of the rule text. Configurable checks carry configuration requirements, so a relaxed `audit_config` cannot turn a requirement green.
+
+  Automation or stored results that reference the pilot framework IDs need to move to `fedramp_20x_ksi_2026`. In Prowler App, both frameworks show the per-provider breakdown in the cross-provider compliance view and can be downloaded as OCSF.
+
+  Read more in the [Compliance documentation](https://docs.prowler.com/user-guide/compliance/tutorials/compliance).
+
+  ### 🔎 AWS — Inspector Coverage, CISA KEV and FIPS Checks
+
+  Seven new AWS checks back the vulnerability detection and cryptography rules of FedRAMP 20x Class C:
+
+  - `inspector2_coverage_scan_status_active` and `inspector2_coverage_recently_scanned` report resources Amazon Inspector is not scanning, or last scanned more than `inspector2_max_days_since_last_scan` days ago (default 3).
+  - `inspector2_active_findings_no_known_exploited_vulnerabilities` and `inspector2_active_findings_kev_within_due_date` report active findings whose CVE is in the CISA Known Exploited Vulnerabilities catalog, and those still open past the CISA due date. The KEV data comes from Inspector itself through `inspector2:BatchGetFindingDetails`, so no external feed is needed.
+  - `inspector2_active_findings_within_max_age` reports active findings first observed more than `inspector2_active_finding_max_age_days` days ago (default 192).
+  - `elbv2_listener_fips_tls_enabled` and `transfer_server_fips_security_policy_enabled` report HTTPS/TLS load balancer listeners and Transfer Family servers without a FIPS security policy.
+
+  `inspector2:BatchGetFindingDetails` is not part of `SecurityAudit`, so it is now included in the Prowler additions policy and the CloudFormation scan role. Without it, the KEV checks report `MANUAL` naming the missing permission instead of a false `FAIL`.
+
+  Explore all AWS checks at [Prowler Hub](https://hub.prowler.com/check?provider=aws).
+
+  ### ☁️ AWS — Partition Bootstrap Failover
+
+  When `PROWLER_AWS_PARTITION` is set, the bootstrap STS calls (validating credentials, assuming a role and getting an MFA session token) now try up to two more regions of the partition if the first one cannot be reached. A GovCloud host whose configured region belongs to another partition was still sent to `us-gov-east-1`, and on a network that routes only to `us-gov-west-1` the connection check and the scan failed on perfectly valid credentials. Only connection errors and timeouts move on to the next region; credential errors are reported from the first one as before. Later STS calls reuse the region that answered, and nothing changes when `PROWLER_AWS_PARTITION` is unset.
+
+  Read more in the [AWS Regions and Partitions documentation](https://docs.prowler.com/user-guide/providers/aws/regions-and-partitions).
+
+  ### 🌐 Azure — Sovereign Cloud Endpoints for Defender and Key Vault
+
+  Defender security contacts and Key Vault key rotation policies now use the endpoints of the cloud selected with `--azure-region` instead of the hardcoded `management.azure.com` and `vault.azure.net` hosts, so both work on `AzureUSGovernment` and `AzureChinaCloud`. Key Vault clients are built from the vault URI that Azure returns for each vault.
+
+  Read more in the [Azure non-default cloud documentation](https://docs.prowler.com/user-guide/providers/azure/use-non-default-cloud).
+
+  ### ✉️ Invitations — Expired Invitations No Longer Block Re-Invites
+
+  A pending invitation past its expiry date is now reported as expired, and inviting the same email again marks it as expired and creates the new invitation instead of returning a generic error. The Invitations table disables Edit and Revoke on expired and revoked invitations, and `filter[state__in]` on the invitations endpoint no longer returns a server error.
+
+  In Prowler Cloud, new organizations are offered an **Invite your team** step once the first provider is connected, and Prowler Private Cloud deployments can set `UI_SELF_REGISTRATION_ENABLED=false` to make sign-up invitation-only.
+
+  Read more in the [Invitations documentation](https://docs.prowler.com/user-guide/tutorials/prowler-app-rbac#invitations).
+
+  ### 📄 Reports — Downloads on Self-Hosted Storage
+
+  Report downloads no longer depend on the storage host being the same inside and outside the container network. `DJANGO_OUTPUT_S3_AWS_PUBLIC_ENDPOINT_URL` signs the download URL against a browser-reachable host, so a deployment whose object storage answers only on an internal address serves the file instead of a link the browser cannot open. Leaving `DJANGO_OUTPUT_S3_AWS_DEFAULT_REGION` unset, common on S3-compatible storage with no meaningful region, no longer makes the download fail with a server error.
+
+  ### 🔍 Checks
+
+  - **Huawei Cloud:** new `smn_topic_subscriptions` check reports SMN topics without any subscription.
+  - **Cloudflare:** the API token links in the provider wizard request the SSL and Certificates, Bot Management and Zone WAF read permissions the checks need, so a token created from the wizard no longer produces failures on permissions it was never granted.
+  - **Microsoft 365:** five Defender malware, anti-phishing and inbound anti-spam checks no longer fail with `KeyError` on tenants that use the Standard or Strict preset security policies, which dropped every finding of those checks. Preset policies are covered by `defender_strict_preset_security_policy_enabled`.
+  - **Google Workspace:** `security_2sv_enforced` reports domain-wide 2-Step Verification failures as `FAIL` even when every failing setting is overridden for a group or organizational unit.
+
+  Explore all checks at [Prowler Hub](https://hub.prowler.com/check).
+
+  ### 🔐 Security Updates
+
+  - `libsqlite3-0`, `gzip`, `perl-base`, `libssh2-1t64` and `libpcre2-8-0` upgraded in the SDK and API container images, patching high-severity Debian CVEs.
+  - PowerShell upgraded to 7.5.11 in the SDK and API container images, bundling .NET runtime 9.0.20 and patching CVE-2026-62901.
+  - `anyio` upgraded to 4.14.2 in the SDK, the API and the MCP Server, patching CVE-2026-63374.
+
+  See the [full release notes on GitHub](https://github.com/prowler-cloud/prowler/releases/tag/5.43.0) for the complete list of changes.
+</Update>
+
 <Update label="v5.42.0" description="September 11, 2026">
   ### ☁️ AWS — ISO Partitions
 

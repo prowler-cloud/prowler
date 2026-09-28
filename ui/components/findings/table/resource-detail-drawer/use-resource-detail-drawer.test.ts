@@ -110,6 +110,7 @@ function makeDrawerFinding(
     resourceGroup: "default",
     resourceDetails: null,
     resourceMetadata: null,
+    providerId: "provider-1",
     providerType: "aws",
     providerAlias: "prod",
     providerUid: "123",

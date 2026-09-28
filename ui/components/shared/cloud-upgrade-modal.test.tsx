@@ -3,12 +3,25 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { useCloudUpgradeStore } from "@/store/cloud-upgrade/store";
-import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
+import {
+  CLOUD_UPGRADE_FEATURE,
+  PAID_PLAN_UPGRADE_FEATURE,
+} from "@/types/cloud-upgrade";
 
 import { CloudUpgradeModal } from "./cloud-upgrade-modal";
 
 const modalTestState = vi.hoisted(() => ({
   keepContentMounted: false,
+}));
+
+const authState = vi.hoisted(() => ({
+  canManageBilling: true,
+}));
+
+vi.mock("@/hooks/use-auth", () => ({
+  useAuth: () => ({
+    permissions: { manage_billing: authState.canManageBilling },
+  }),
 }));
 
 vi.mock("@/components/shadcn/modal", async (importOriginal) => {
@@ -41,6 +54,7 @@ describe("CloudUpgradeModal", () => {
   afterEach(() => {
     cleanup();
     modalTestState.keepContentMounted = false;
+    authState.canManageBilling = true;
     vi.unstubAllEnvs();
     useCloudUpgradeStore.getState().closeCloudUpgrade();
   });
@@ -219,7 +233,7 @@ describe("CloudUpgradeModal", () => {
     },
   );
 
-  it("does not render upgrade UI in Prowler Cloud", () => {
+  it("does not render Local Server upgrades in Prowler Cloud", () => {
     // Given
     vi.stubEnv("UI_CLOUD_ENABLED", "true");
     useCloudUpgradeStore
@@ -231,5 +245,84 @@ describe("CloudUpgradeModal", () => {
 
     // Then
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("does not render paid plan upgrades in Local Server", () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
+    useCloudUpgradeStore
+      .getState()
+      .openCloudUpgrade(PAID_PLAN_UPGRADE_FEATURE.REPORT_DOWNLOAD);
+
+    // When
+    render(<CloudUpgradeModal />);
+
+    // Then
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("renders the report download upgrade in Prowler Cloud", async () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
+    useCloudUpgradeStore
+      .getState()
+      .openCloudUpgrade(PAID_PLAN_UPGRADE_FEATURE.REPORT_DOWNLOAD);
+
+    // When
+    render(<CloudUpgradeModal />);
+
+    // Then
+    expect(
+      await screen.findByRole("dialog", { name: "Download Your Scan Reports" }),
+    ).toBeVisible();
+    expect(screen.getByText("Available on paid plans")).toBeVisible();
+    expect(
+      screen.queryByText("Available in Prowler Cloud"),
+    ).not.toBeInTheDocument();
+    const upgradeLink = screen.getByRole("link", {
+      name: "Upgrade to Download",
+    });
+    expect(upgradeLink).toHaveAttribute(
+      "href",
+      "/billing?feature=report_download",
+    );
+    expect(upgradeLink).not.toHaveAttribute("target");
+    const pricingLink = screen.getByRole("link", {
+      name: "View Plans & Pricing",
+    });
+    expect(pricingLink).toHaveAttribute(
+      "href",
+      "https://prowler.com/pricing?utm_source=prowler-cloud&utm_content=report-download",
+    );
+    expect(pricingLink).toHaveAttribute("target", "_blank");
+    expect(
+      screen.queryByText(/Your Prowler Local Server remains unchanged/),
+    ).not.toBeInTheDocument();
+  });
+
+  it("asks users without billing access to contact an admin", async () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
+    authState.canManageBilling = false;
+    useCloudUpgradeStore
+      .getState()
+      .openCloudUpgrade(PAID_PLAN_UPGRADE_FEATURE.REPORT_DOWNLOAD);
+
+    // When
+    render(<CloudUpgradeModal />);
+
+    // Then
+    expect(
+      await screen.findByRole("dialog", { name: "Download Your Scan Reports" }),
+    ).toBeVisible();
+    expect(
+      screen.queryByRole("link", { name: "Upgrade to Download" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByText("Ask an account admin to upgrade your plan."),
+    ).toBeVisible();
+    expect(
+      screen.getByRole("link", { name: "View Plans & Pricing" }),
+    ).toBeVisible();
   });
 });

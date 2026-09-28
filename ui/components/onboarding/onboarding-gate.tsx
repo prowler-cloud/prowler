@@ -1,26 +1,40 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
 
-import { getOrderedFlows, shouldStartOnboarding } from "@/lib/onboarding";
+import { useAuth } from "@/hooks/use-auth";
+import { useMountEffect } from "@/hooks/use-mount-effect";
+import {
+  getOrderedFlows,
+  type OnboardingFlow,
+  shouldStartOnboarding,
+} from "@/lib/onboarding";
+import {
+  isFirstRunHandled,
+  markFirstRunHandled,
+} from "@/lib/onboarding/first-run-marker";
+import { WIZARD_OPEN_SOURCE } from "@/lib/provider-funnel/provider-funnel-events";
+import { buildAddProviderHref } from "@/lib/providers-navigation";
+import { isCloud } from "@/lib/shared/env";
 import { localStorageAdapter } from "@/lib/tours/store/local-storage-adapter";
-import { TOUR_COMPLETION_STATES } from "@/lib/tours/tour-types";
 import { useTourCompletion } from "@/lib/tours/use-tour-completion";
 import { useOnboardingCheckpointStore } from "@/store/onboarding-checkpoint";
 
-import { OnboardingWelcomeModal } from "./onboarding-welcome-modal";
-
 interface OnboardingGateProps {
-  // `undefined` = fetch failed/ambiguous; fail-open (never force the modal).
+  // `undefined` = fetch failed/ambiguous; fail-open (never force the first run).
   hasProviders?: boolean;
+  // Scopes the first-run marker so one tenant's first run never silences another's.
+  tenantId?: string | null;
 }
 
-// Mandatory new-user gate. Mounted once in the layout; decision derived during render
-// via useSyncExternalStore — server renders nothing, no hydration mismatch.
-export function OnboardingGate({ hasProviders }: OnboardingGateProps) {
-  const router = useRouter();
+// New-tenant gate. Mounted once in the layout: an empty tenant is sent straight to
+// the add-provider wizard, once per tenant and browser. Renders nothing.
+export function OnboardingGate({
+  hasProviders,
+  tenantId = null,
+}: OnboardingGateProps) {
   const pathname = usePathname();
+  const { permissions } = useAuth();
   // Billing must stay usable before onboarding; leaving it keeps the gate eligible.
   const isBillingRoute =
     pathname === "/billing" || pathname?.startsWith("/billing/");
@@ -28,52 +42,53 @@ export function OnboardingGate({ hasProviders }: OnboardingGateProps) {
   // Gate forces only the first flow (`add-provider`); remaining flows come via checkpoint/replay.
   const flow = getOrderedFlows()[0] ?? null;
 
-  // Returns null on server/first render — gate stays closed until resolved client-side.
+  // Returns null on server/first render; the redirect re-reads storage before acting.
   const completionRecord = useTourCompletion(flow?.tour ?? null);
 
-  // Session flag prevents the gate re-opening after accept/dismiss within this mount.
-  const [resolvedThisSession, setResolvedThisSession] = useState(false);
-
-  const activeFlow =
-    flow &&
+  const shouldRedirect =
+    flow !== null &&
     !isBillingRoute &&
-    !resolvedThisSession &&
-    shouldStartOnboarding({ hasProviders, completionRecord })
-      ? flow
-      : null;
+    shouldStartOnboarding({
+      hasProviders,
+      canManageProviders: permissions.manage_providers === true,
+      completionRecord,
+    });
 
-  if (!activeFlow) return null;
+  if (!shouldRedirect) return null;
 
-  const handleAccept = () => {
-    // Arm checkpoint only on explicit accept — skip must never arm it.
+  return <FirstRunRedirect flow={flow} tenantId={tenantId} />;
+}
+
+interface FirstRunRedirectProps {
+  flow: OnboardingFlow;
+  tenantId: string | null;
+}
+
+function FirstRunRedirect({ flow, tenantId }: FirstRunRedirectProps) {
+  const router = useRouter();
+
+  useMountEffect(() => {
+    // Hydration renders with an empty completion snapshot, so decide from storage here.
+    const tourId = { id: flow.tour.id, version: flow.tour.version };
+    if (
+      isFirstRunHandled(tenantId) ||
+      localStorageAdapter.get(tourId) !== null
+    ) {
+      return;
+    }
+
+    markFirstRunHandled(tenantId);
+
+    const addProviderHref = buildAddProviderHref(WIZARD_OPEN_SOURCE.FIRST_RUN);
+    if (!isCloud()) {
+      router.replace(addProviderHref);
+      return;
+    }
+
+    // Tours and the post-connect checkpoint are Cloud-only.
     useOnboardingCheckpointStore.getState().arm();
-    setResolvedThisSession(true);
-    // Routes may already carry a query string, so pick the right separator.
-    const separator = activeFlow.route.includes("?") ? "&" : "?";
-    router.push(`${activeFlow.route}${separator}onboarding=${activeFlow.id}`);
-  };
+    router.replace(`${addProviderHref}&onboarding=${flow.id}`);
+  });
 
-  const handleDismiss = () => {
-    // Persist dismissal so the gate silently skips on future visits.
-    localStorageAdapter.set(
-      { id: activeFlow.tour.id, version: activeFlow.tour.version },
-      {
-        tourId: activeFlow.tour.id,
-        version: activeFlow.tour.version,
-        state: TOUR_COMPLETION_STATES.DISMISSED,
-        completedAt: new Date().toISOString(),
-      },
-    );
-    setResolvedThisSession(true);
-  };
-
-  return (
-    <OnboardingWelcomeModal
-      open
-      flowTitle={activeFlow.title}
-      flowDescription={activeFlow.description}
-      onAccept={handleAccept}
-      onDismiss={handleDismiss}
-    />
-  );
+  return null;
 }

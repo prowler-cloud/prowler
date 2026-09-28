@@ -23,6 +23,7 @@ interface ScanJobsTableProps {
   tab: ScanJobsTab;
   hasFilters?: boolean;
   scanScheduleCapability?: ScanScheduleCapability;
+  subscriptionOnly?: boolean;
 }
 
 const REFRESHING_STATES = ["available", "executing"] as const;
@@ -33,6 +34,7 @@ export function ScanJobsTable({
   tab,
   hasFilters = false,
   scanScheduleCapability,
+  subscriptionOnly,
 }: ScanJobsTableProps) {
   const searchParams = useSearchParams();
   const hasRefreshingScan = data.some((scan) =>
@@ -43,6 +45,7 @@ export function ScanJobsTable({
   const columns = getScanJobsColumns({
     tab,
     capability: scanScheduleCapability,
+    subscriptionOnly,
   });
   const showEmptyState = data.length === 0 && !hasFilters;
   const selectedScanId = searchParams?.get("scanId");

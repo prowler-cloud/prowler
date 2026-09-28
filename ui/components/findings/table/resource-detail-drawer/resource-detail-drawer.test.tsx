@@ -178,6 +178,7 @@ function drawerFinding(
     resourceGroup: "storage",
     resourceDetails: null,
     resourceMetadata: null,
+    providerId: "provider-1",
     providerType: "aws",
     providerAlias: "Production",
     providerUid: "123456789012",
