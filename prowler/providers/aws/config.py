@@ -2,7 +2,10 @@ import os
 
 from botocore.config import Config
 
-from prowler.providers.aws.exceptions.exceptions import AWSInvalidBoto3TimeoutError
+from prowler.providers.aws.exceptions.exceptions import (
+    AWSInvalidBoto3RetriesError,
+    AWSInvalidBoto3TimeoutError,
+)
 
 AWS_STS_GLOBAL_ENDPOINT_REGION = "us-east-1"
 AWS_REGION_US_EAST_1 = "us-east-1"
@@ -27,10 +30,28 @@ def get_boto3_timeout_from_env(name: str, default: int) -> int:
     return int(raw)
 
 
+def get_boto3_retries_from_env(name: str, default: int) -> int:
+    """Non-negative integer retries read from the environment, or default when unset."""
+    raw = os.getenv(name, "").strip()
+    if not raw:
+        return default
+    if not raw.isdecimal():
+        raise AWSInvalidBoto3RetriesError(
+            file=os.path.basename(__file__),
+            message=f"{name} must be a non-negative integer number of retries, got {raw!r}",
+        )
+    return int(raw)
+
+
 def get_default_session_config() -> Config:
     return Config(
         user_agent_extra=BOTO3_USER_AGENT_EXTRA,
-        retries={"max_attempts": BOTO3_RETRIES_MAX_ATTEMPTS, "mode": "standard"},
+        retries={
+            "max_attempts": get_boto3_retries_from_env(
+                "PROWLER_AWS_BOTO3_RETRIES_MAX_ATTEMPTS", BOTO3_RETRIES_MAX_ATTEMPTS
+            ),
+            "mode": "standard",
+        },
         connect_timeout=get_boto3_timeout_from_env(
             "PROWLER_AWS_BOTO3_CONNECT_TIMEOUT", BOTO3_CONNECT_TIMEOUT
         ),

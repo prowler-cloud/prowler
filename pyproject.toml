@@ -144,7 +144,7 @@ maintainers = [{name = "Prowler Engineering", email = "engineering@prowler.com"}
 name = "prowler"
 readme = "README.md"
 requires-python = ">=3.10,<3.14"
-version = "5.43.0"
+version = "5.44.0"
 
 [project.scripts]
 prowler = "prowler.__main__:prowler"
@@ -214,7 +214,7 @@ constraint-dependencies = [
   "aliyun-log-fastpb==0.3.0",
   "annotated-types==0.7.0",
   "antlr4-python3-runtime==4.13.2",
-  "anyio==4.13.0",
+  "anyio==4.14.2",
   "apscheduler==3.11.2",
   "astroid==3.3.11",
   "async-timeout==5.0.1",

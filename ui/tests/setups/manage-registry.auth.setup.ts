@@ -21,6 +21,8 @@ authManageRegistrySetup(
 
     const signInPage = new SignInPage(page);
     await signInPage.goto();
+    // The fixture tenant has no providers: keep the first-run redirect out of the way.
+    await signInPage.skipFirstRunRedirect();
     await signInPage.login(fixtureCredentials);
     await page.waitForURL("/");
     await new RegistryPage(page).dismissWelcomeDialog();

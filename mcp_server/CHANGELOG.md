@@ -4,6 +4,14 @@ All notable changes to the **Prowler MCP Server** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [0.12.2] (Prowler v5.43.0)
+
+### 🔐 Security
+
+- Bumped `anyio` to 4.14.2 to resolve CVE-2026-63374 [(#12848)](https://github.com/prowler-cloud/prowler/pull/12848)
+
+---
+
 ## [0.12.1] (Prowler v5.42.0)
 
 ### 🔐 Security

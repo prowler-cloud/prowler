@@ -71,7 +71,7 @@ name = "prowler-api"
 package-mode = false
 # Needed for the SDK compatibility
 requires-python = ">=3.11,<3.13"
-version = "1.44.0"
+version = "1.45.0"
 
 # Shared ruff baseline (kept in sync with mcp_server/pyproject.toml).
 # target-version tracks this project's lowest supported Python.
@@ -137,7 +137,7 @@ constraint-dependencies = [
   "aliyun-log-fastpb==0.2.0",
   "amqp==5.3.1",
   "annotated-types==0.7.0",
-  "anyio==4.12.1",
+  "anyio==4.14.2",
   "applicationinsights==0.11.10",
   "apscheduler==3.11.2",
   "argcomplete==3.5.3",

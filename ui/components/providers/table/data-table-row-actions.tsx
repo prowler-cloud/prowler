@@ -16,6 +16,7 @@ import { useState } from "react";
 import { updateOrganizationName } from "@/actions/organizations/organizations";
 import { updateProvider } from "@/actions/providers";
 import {
+  getProviderConnectionBaselines,
   revalidateProviders,
   startProviderConnectionChecks,
 } from "@/actions/providers/providers";
@@ -42,7 +43,10 @@ import {
   getNodeLabel,
   organizationNameFallbackHint,
 } from "@/lib/organizations";
-import { testProviderConnection } from "@/lib/provider-helpers";
+import {
+  resolveProviderConnectionState,
+  testProviderConnection,
+} from "@/lib/provider-helpers";
 import { getScanScheduleCapability } from "@/lib/schedules";
 import { isCloud } from "@/lib/shared/env";
 import {
@@ -52,6 +56,7 @@ import {
   OrgFlowType,
 } from "@/types/organizations";
 import { PROVIDER_WIZARD_MODE } from "@/types/provider-wizard";
+import { CONNECTION_CHECK_STATUS } from "@/types/providers";
 import {
   isProvidersOrganizationRow,
   PROVIDERS_GROUP_KIND,
@@ -394,9 +399,15 @@ export function DataTableRowActions({
     // asks for.
     let succeeded = 0;
     let failed = 0;
-    const pendingTaskIds: string[] = [];
+    let pending = 0;
+    const providerIdByTaskId = new Map<string, string>();
 
     try {
+      // Read before dispatch, so the fallback below can tell each provider's own
+      // check result apart from whatever (possibly stale) result was already on
+      // record -- by comparing values, not by comparing timestamps against the
+      // browser's clock. See `resolveProviderConnectionState`.
+      const connectionBaselines = await getProviderConnectionBaselines(ids);
       const outcomes = await startProviderConnectionChecks(ids);
 
       for (const id of ids) {
@@ -408,34 +419,54 @@ export function DataTableRowActions({
           continue;
         }
 
-        pendingTaskIds.push(outcome.taskId);
+        providerIdByTaskId.set(outcome.taskId, id);
       }
 
-      await pollConnectionTasks(pendingTaskIds, {
+      await pollConnectionTasks(Array.from(providerIdByTaskId.keys()), {
         onSettled: (_taskId, result) => {
-          if (result.success) {
+          if (result.status === CONNECTION_CHECK_STATUS.SUCCESS) {
             succeeded += 1;
+          } else if (result.status === CONNECTION_CHECK_STATUS.PENDING) {
+            pending += 1;
           } else {
             failed += 1;
           }
         },
+        resolveExhausted: async (taskId) => {
+          const id = providerIdByTaskId.get(taskId);
+          if (!id) {
+            return null;
+          }
+          const state = await resolveProviderConnectionState(
+            id,
+            connectionBaselines[id],
+          );
+          return { status: state.status, error: state.error ?? undefined };
+        },
       });
     } catch {
-      failed = ids.length - succeeded;
+      failed = ids.length - succeeded - pending;
     }
 
     await revalidateProviders();
 
-    if (failed === 0) {
+    if (failed === 0 && pending === 0) {
       toast({
         title: "Connection test completed",
         description: `${succeeded} ${succeeded === 1 ? "provider" : "providers"} tested successfully.`,
+      });
+    } else if (failed === 0) {
+      toast({
+        title: "Connection test still running",
+        description: `${succeeded} succeeded, ${pending} still running. Refresh in a moment to see the rest.`,
       });
     } else {
       toast({
         variant: "destructive",
         title: "Connection test completed",
-        description: `${succeeded} succeeded, ${failed} failed out of ${ids.length} providers.`,
+        description: `${succeeded} succeeded, ${failed} failed${
+          pending ? `, ${pending} still running` : ""
+        } out of ${ids.length} providers.`,
       });
     }
 
@@ -454,16 +485,21 @@ export function DataTableRowActions({
       const result = await testProviderConnection(providerId);
       setLoading(false);
 
-      if (!result.connected) {
+      if (result.status === CONNECTION_CHECK_STATUS.SUCCESS) {
+        toast({
+          title: "Connection test completed",
+          description: "Provider tested successfully.",
+        });
+      } else if (result.status === CONNECTION_CHECK_STATUS.PENDING) {
+        toast({
+          title: "Connection test still running",
+          description: result.error ?? "Refresh in a moment to see the result.",
+        });
+      } else {
         toast({
           variant: "destructive",
           title: "Connection test failed",
           description: result.error ?? "Unknown error",
-        });
-      } else {
-        toast({
-          title: "Connection test completed",
-          description: "Provider tested successfully.",
         });
       }
     }

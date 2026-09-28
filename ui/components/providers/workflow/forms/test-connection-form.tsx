@@ -10,11 +10,15 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { deleteCredentials } from "@/actions/providers";
-import { CheckIcon } from "@/components/icons";
+import { CheckIcon, ConnectionPending } from "@/components/icons";
 import { Button } from "@/components/shadcn";
 import { Form } from "@/components/shadcn/form";
-import { testProviderConnection } from "@/lib/provider-helpers";
+import {
+  testProviderConnection,
+  type TestConnectionResult,
+} from "@/lib/provider-helpers";
 import { ProviderType, testConnectionFormSchema } from "@/types";
+import { CONNECTION_CHECK_STATUS } from "@/types/providers";
 
 import { ProviderConnectionInfo } from "./provider-connection-info";
 
@@ -69,10 +73,8 @@ export const TestConnectionForm = ({
   const providerId = searchParams.id;
 
   const [apiErrorMessage, setApiErrorMessage] = useState<string | null>(null);
-  const [connectionStatus, setConnectionStatus] = useState<{
-    connected: boolean;
-    error: string | null;
-  } | null>(null);
+  const [connectionStatus, setConnectionStatus] =
+    useState<TestConnectionResult | null>(null);
   const [isResettingCredentials, setIsResettingCredentials] = useState(false);
 
   const formSchema = testConnectionFormSchema;
@@ -103,7 +105,7 @@ export const TestConnectionForm = ({
 
     setConnectionStatus(result);
 
-    if (result.connected) {
+    if (result.status === CONNECTION_CHECK_STATUS.SUCCESS) {
       if (onSuccess) {
         onSuccess();
         return;
@@ -167,13 +169,17 @@ export const TestConnectionForm = ({
           </div>
         )}
 
-        {connectionStatus && !connectionStatus.connected && (
+        {connectionStatus?.status === CONNECTION_CHECK_STATUS.FAILED && (
           <>
-            <div className="border-border-error flex items-start gap-4 rounded-lg border p-4">
+            <div
+              role="status"
+              className="border-border-error flex items-start gap-4 rounded-lg border p-4"
+            >
               <div className="flex shrink-0 items-center">
                 <Icon
                   icon="heroicons:exclamation-circle"
                   className="text-text-error-primary h-5 w-5"
+                  aria-hidden="true"
                 />
               </div>
               <div className="min-w-0 flex-1">
@@ -187,6 +193,30 @@ export const TestConnectionForm = ({
               your credentials and try again.
             </p>
           </>
+        )}
+
+        {connectionStatus?.status === CONNECTION_CHECK_STATUS.PENDING && (
+          <div
+            role="status"
+            className="bg-bg-warning-secondary border-border-neutral-secondary flex items-start gap-4 rounded-lg border p-4"
+          >
+            <div className="flex shrink-0 items-center">
+              {/* Static, not spinning: nothing is polling any more once the wait
+                  is exhausted, so an animated spinner would misrepresent this as
+                  still in progress. */}
+              <ConnectionPending
+                size={20}
+                className="text-text-warning-primary"
+                aria-hidden="true"
+              />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-text-warning-primary text-sm break-words">
+                {connectionStatus.error ||
+                  "The connection test is still running. Refresh in a moment to see the result."}
+              </p>
+            </div>
+          </div>
         )}
 
         <ProviderConnectionInfo
@@ -210,7 +240,7 @@ export const TestConnectionForm = ({
               <Button variant="outline" size="lg" asChild>
                 <Link href="/providers">Back to providers</Link>
               </Button>
-            ) : connectionStatus?.error ? (
+            ) : connectionStatus?.status === CONNECTION_CHECK_STATUS.FAILED ? (
               <Button
                 onClick={
                   isUpdated
@@ -236,7 +266,10 @@ export const TestConnectionForm = ({
             ) : (
               <Button
                 type={
-                  isUpdated && connectionStatus?.connected ? "button" : "submit"
+                  isUpdated &&
+                  connectionStatus?.status === CONNECTION_CHECK_STATUS.SUCCESS
+                    ? "button"
+                    : "submit"
                 }
                 variant="default"
                 size="lg"
@@ -249,9 +282,11 @@ export const TestConnectionForm = ({
                 )}
                 {isLoading
                   ? "Checking"
-                  : isUpdated
-                    ? "Check connection"
-                    : "Continue"}
+                  : connectionStatus?.status === CONNECTION_CHECK_STATUS.PENDING
+                    ? "Check again"
+                    : isUpdated
+                      ? "Check connection"
+                      : "Continue"}
               </Button>
             )}
           </div>

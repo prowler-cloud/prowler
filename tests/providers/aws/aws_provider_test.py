@@ -28,15 +28,19 @@ from prowler.providers.aws.config import (
     AWS_STS_GLOBAL_ENDPOINT_REGION,
     BOTO3_CONNECT_TIMEOUT,
     BOTO3_READ_TIMEOUT,
+    BOTO3_RETRIES_MAX_ATTEMPTS,
     BOTO3_USER_AGENT_EXTRA,
     ROLE_SESSION_NAME,
+    get_boto3_retries_from_env,
     get_boto3_timeout_from_env,
     get_default_session_config,
 )
 from prowler.providers.aws.exceptions.exceptions import (
     AWSAccessKeyIDInvalidError,
     AWSArgumentTypeValidationError,
+    AWSAssumeRoleError,
     AWSIAMRoleARNInvalidResourceTypeError,
+    AWSInvalidBoto3RetriesError,
     AWSInvalidBoto3TimeoutError,
     AWSInvalidPartitionError,
     AWSInvalidProviderIdError,
@@ -1845,6 +1849,143 @@ aws:
         ]
         assert isinstance(credentials, AWSCredentials)
         assert credentials.aws_access_key_id == "AKIAIOSFODNN7EXAMPLE"
+        # Refreshing the credentials later goes straight to the region that answered
+        assert assumed_role_info.sts_region == AWS_REGION_GOV_CLOUD_US_WEST_1
+
+    def test_assume_role_does_not_retry_a_credential_error(self, monkeypatch):
+        monkeypatch.setenv("PROWLER_AWS_PARTITION", AWS_GOV_CLOUD_PARTITION)
+        current_session = session.Session(region_name=AWS_REGION_US_EAST_1)
+        attempted_regions = []
+
+        def create_sts_session(session, aws_region):
+            attempted_regions.append(aws_region)
+            sts_client = mock.MagicMock()
+            sts_client.assume_role.side_effect = botocore.exceptions.ClientError(
+                {"Error": {"Code": "AccessDenied", "Message": "denied"}},
+                "AssumeRole",
+            )
+            return sts_client
+
+        assumed_role_info = AWSAssumeRoleInfo(
+            role_arn=ARN(
+                arn=f"arn:{AWS_GOV_CLOUD_PARTITION}:iam::{AWS_ACCOUNT_NUMBER}:role/test-role"
+            ),
+            session_duration=3600,
+            external_id=None,
+            mfa_enabled=False,
+            role_session_name=ROLE_SESSION_NAME,
+            sts_region=AWS_REGION_GOV_CLOUD_US_EAST_1,
+        )
+
+        with patch(
+            "prowler.providers.aws.aws_provider.AwsProvider.create_sts_session",
+            new=create_sts_session,
+        ):
+            with raises(AWSAssumeRoleError):
+                AwsProvider.assume_role(current_session, assumed_role_info)
+
+        assert attempted_regions == [AWS_REGION_GOV_CLOUD_US_EAST_1]
+        assert assumed_role_info.sts_region == AWS_REGION_GOV_CLOUD_US_EAST_1
+
+    def test_test_connection_role_validates_where_the_role_was_assumed(
+        self, monkeypatch
+    ):
+        monkeypatch.setenv("PROWLER_AWS_PARTITION", AWS_GOV_CLOUD_PARTITION)
+        monkeypatch.delenv("AWS_DEFAULT_REGION", raising=False)
+        attempted_calls = []
+
+        def create_sts_session(session, aws_region):
+            if aws_region == AWS_REGION_GOV_CLOUD_US_EAST_1:
+                attempted_calls.append(aws_region)
+                raise botocore.exceptions.ConnectTimeoutError(
+                    endpoint_url=f"https://sts.{aws_region}.amazonaws.com"
+                )
+            sts_client = mock.MagicMock()
+
+            def assume_role(**_):
+                attempted_calls.append(("AssumeRole", aws_region))
+                return {
+                    "Credentials": {
+                        "AccessKeyId": "AKIAIOSFODNN7EXAMPLE",
+                        "SecretAccessKey": "secret",
+                        "SessionToken": "token",
+                        "Expiration": datetime.now() + timedelta(seconds=3600),
+                    }
+                }
+
+            def get_caller_identity():
+                attempted_calls.append(("GetCallerIdentity", aws_region))
+                return {
+                    "UserId": "test-user-id",
+                    "Account": AWS_ACCOUNT_NUMBER,
+                    "Arn": AWS_GOV_CLOUD_ACCOUNT_ARN,
+                }
+
+            sts_client.assume_role.side_effect = assume_role
+            sts_client.get_caller_identity.side_effect = get_caller_identity
+            return sts_client
+
+        with patch(
+            "prowler.providers.aws.aws_provider.AwsProvider.create_sts_session",
+            new=create_sts_session,
+        ):
+            connection = AwsProvider.test_connection(
+                role_arn=f"arn:{AWS_GOV_CLOUD_PARTITION}:iam::{AWS_ACCOUNT_NUMBER}:role/test-role",
+                aws_access_key_id="test-access-key",
+                aws_secret_access_key="test-secret-key",
+                raise_on_exception=False,
+            )
+
+        assert connection.is_connected
+        # The unreachable region is paid for once, not again for the validation
+        assert attempted_calls == [
+            AWS_REGION_GOV_CLOUD_US_EAST_1,
+            ("AssumeRole", AWS_REGION_GOV_CLOUD_US_WEST_1),
+            ("GetCallerIdentity", AWS_REGION_GOV_CLOUD_US_WEST_1),
+        ]
+
+    @mock_aws
+    def test_aws_set_up_session_assumes_the_role_where_validation_got_an_answer(
+        self, monkeypatch
+    ):
+        monkeypatch.setenv("PROWLER_AWS_PARTITION", AWS_GOV_CLOUD_PARTITION)
+        monkeypatch.setenv("AWS_DEFAULT_REGION", AWS_REGION_US_EAST_1)
+        answered = AWSCallerIdentity(
+            user_id="test-user-id",
+            account=AWS_ACCOUNT_NUMBER,
+            arn=ARN(AWS_GOV_CLOUD_ACCOUNT_ARN),
+            region=AWS_REGION_GOV_CLOUD_US_WEST_1,
+        )
+        sts_regions = []
+
+        class RoleAssumed(Exception):
+            pass
+
+        def assume_role(session, assumed_role_info):
+            sts_regions.append(assumed_role_info.sts_region)
+            raise RoleAssumed
+
+        with (
+            patch(
+                "prowler.providers.aws.aws_provider.AwsProvider.validate_credentials",
+                return_value=answered,
+            ),
+            patch(
+                "prowler.providers.aws.aws_provider.AwsProvider.assume_role",
+                side_effect=assume_role,
+            ),
+        ):
+            with raises(RoleAssumed):
+                AwsSetUpSession(
+                    role_arn=f"arn:{AWS_GOV_CLOUD_PARTITION}:iam::{AWS_ACCOUNT_NUMBER}:role/test-role",
+                    session_duration=900,
+                    external_id="test-external-id",
+                    role_session_name=ROLE_SESSION_NAME,
+                    aws_access_key_id="testing",
+                    aws_secret_access_key="testing",
+                )
+
+        assert sts_regions == [AWS_REGION_GOV_CLOUD_US_WEST_1]
 
     def test_setup_session_mfa_falls_back_to_the_next_partition_region(
         self, monkeypatch
@@ -3351,6 +3492,123 @@ aws:
                 AWSInvalidBoto3TimeoutError, match="PROWLER_AWS_BOTO3_CONNECT_TIMEOUT"
             ):
                 get_boto3_timeout_from_env("PROWLER_AWS_BOTO3_CONNECT_TIMEOUT", 10)
+
+    def test_get_default_session_config_retries_from_env(self):
+        with mock.patch.dict(
+            os.environ, {"PROWLER_AWS_BOTO3_RETRIES_MAX_ATTEMPTS": "1"}
+        ):
+            config = get_default_session_config()
+
+        assert config.retries == {"max_attempts": 1, "mode": "standard"}
+
+    def test_get_default_session_config_retries_from_env_0_disables_retries(self):
+        with mock.patch.dict(
+            os.environ, {"PROWLER_AWS_BOTO3_RETRIES_MAX_ATTEMPTS": "0"}
+        ):
+            config = get_default_session_config()
+
+        assert config.retries == {"max_attempts": 0, "mode": "standard"}
+
+    def test_set_session_config_argument_overrides_env_retries(self):
+        with mock.patch.dict(
+            os.environ, {"PROWLER_AWS_BOTO3_RETRIES_MAX_ATTEMPTS": "1"}
+        ):
+            config = AwsProvider.set_session_config(5)
+
+        assert config.retries == {"max_attempts": 5, "mode": "standard"}
+
+    @mock_aws
+    def test_aws_provider_without_retries_argument_uses_env_retries(self):
+        with mock.patch.dict(
+            os.environ, {"PROWLER_AWS_BOTO3_RETRIES_MAX_ATTEMPTS": "0"}
+        ):
+            aws_provider = AwsProvider()
+        client = aws_provider.session.current_session.client(
+            "ec2", region_name=AWS_REGION_US_EAST_1
+        )
+
+        # botocore rewrites max_attempts into total_max_attempts (retries + 1)
+        assert client.meta.config.retries["total_max_attempts"] == 1
+
+    @mock_aws
+    def test_aws_provider_retries_argument_overrides_env_retries(self):
+        with mock.patch.dict(
+            os.environ, {"PROWLER_AWS_BOTO3_RETRIES_MAX_ATTEMPTS": "0"}
+        ):
+            aws_provider = AwsProvider(retries_max_attempts=7)
+        client = aws_provider.session.current_session.client(
+            "ec2", region_name=AWS_REGION_US_EAST_1
+        )
+
+        assert client.meta.config.retries["total_max_attempts"] == 8
+
+    @mock_aws
+    def test_aws_set_up_session_without_retries_argument_uses_env_retries(self):
+        with mock.patch.dict(
+            os.environ, {"PROWLER_AWS_BOTO3_RETRIES_MAX_ATTEMPTS": "1"}
+        ):
+            aws_session = AwsSetUpSession(
+                aws_access_key_id="testing",
+                aws_secret_access_key="testing",
+            )
+        client = aws_session._session.current_session.client(
+            "ec2", region_name=AWS_REGION_US_EAST_1
+        )
+
+        assert client.meta.config.retries["total_max_attempts"] == 2
+
+    def test_test_connection_session_uses_env_retries(self):
+        with (
+            mock.patch.dict(
+                os.environ, {"PROWLER_AWS_BOTO3_RETRIES_MAX_ATTEMPTS": "0"}
+            ),
+            mock.patch.object(
+                AwsProvider,
+                "validate_credentials",
+                return_value=AWSCallerIdentity(
+                    user_id="test-user-id",
+                    account=AWS_ACCOUNT_NUMBER,
+                    arn=ARN(AWS_ACCOUNT_ARN),
+                    region=AWS_REGION_US_EAST_1,
+                ),
+            ) as mock_validate_credentials,
+        ):
+            connection = AwsProvider.test_connection(
+                aws_access_key_id="test-access-key",
+                aws_secret_access_key="test-secret-key",
+                raise_on_exception=False,
+            )
+
+        assert connection.is_connected
+        validated_session = mock_validate_credentials.call_args.args[0]
+        assert validated_session._session.get_default_client_config().retries == {
+            "max_attempts": 0,
+            "mode": "standard",
+        }
+
+    @pytest.mark.parametrize("raw", ["-1", "three", "1.5"])
+    def test_get_boto3_retries_from_env_rejects_anything_but_non_negative_integers(
+        self, raw
+    ):
+        with mock.patch.dict(
+            os.environ, {"PROWLER_AWS_BOTO3_RETRIES_MAX_ATTEMPTS": raw}
+        ):
+            with raises(
+                AWSInvalidBoto3RetriesError,
+                match="PROWLER_AWS_BOTO3_RETRIES_MAX_ATTEMPTS",
+            ):
+                get_boto3_retries_from_env("PROWLER_AWS_BOTO3_RETRIES_MAX_ATTEMPTS", 3)
+
+    def test_get_boto3_retries_from_env_blank_falls_back_to_default(self):
+        with mock.patch.dict(
+            os.environ, {"PROWLER_AWS_BOTO3_RETRIES_MAX_ATTEMPTS": " "}
+        ):
+            assert (
+                get_boto3_retries_from_env(
+                    "PROWLER_AWS_BOTO3_RETRIES_MAX_ATTEMPTS", BOTO3_RETRIES_MAX_ATTEMPTS
+                )
+                == BOTO3_RETRIES_MAX_ATTEMPTS
+            )
 
     def test_get_boto3_timeout_from_env_blank_falls_back_to_default(self):
         with mock.patch.dict(os.environ, {"PROWLER_AWS_BOTO3_CONNECT_TIMEOUT": "  "}):
