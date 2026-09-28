@@ -17,6 +17,14 @@ export interface FindingCheckFilterOption {
   checkTitle?: string;
 }
 
+export interface FindingGroupLazyOptions {
+  onOpen: () => void;
+  isLoading: boolean;
+}
+
+export const FILTER_CONTROL_COLUMN_CLASS =
+  "min-w-0 flex-none basis-full sm:basis-[calc((100%_-_0.75rem)/2)] lg:basis-[calc((100%_-_1.5rem)/3)] xl:basis-[calc((100%_-_2.25rem)/4)] 2xl:basis-[calc((100%_-_3rem)/5)]";
+
 interface GetFindingsFilterDisplayValueOptions {
   providers?: ProviderProps[];
   scans?: Array<{ [scanId: string]: ScanEntity }>;
@@ -122,11 +130,14 @@ export function buildFindingGroupFilterOption({
   selectedCheckIds,
   selectedCheckIdsIn,
   checkTitles,
+  lazy,
 }: {
   checkOptions: FindingCheckFilterOption[];
   selectedCheckIds: string[];
   selectedCheckIdsIn: string[];
   checkTitles: Record<string, string>;
+  /** Keeps the dropdown visible with no values so they can load on open. */
+  lazy?: FindingGroupLazyOptions;
 }): FilterOption | null {
   const values = uniqueNonEmptyValues([
     ...checkOptions.map((option) => option.checkId),
@@ -134,7 +145,7 @@ export function buildFindingGroupFilterOption({
     ...selectedCheckIdsIn,
   ]);
 
-  if (values.length === 0) {
+  if (values.length === 0 && !lazy) {
     return null;
   }
 
@@ -147,6 +158,7 @@ export function buildFindingGroupFilterOption({
         checkTitles,
       }),
     index: 3,
+    ...(lazy && { onOpen: lazy.onOpen, isLoading: lazy.isLoading }),
   };
 }
 
