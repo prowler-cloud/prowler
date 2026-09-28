@@ -1,4 +1,4 @@
-import { Info } from "lucide-react";
+import { Info, ShieldCheck } from "lucide-react";
 import { Suspense } from "react";
 
 import {
@@ -105,7 +105,7 @@ export default async function Compliance({
     return (
       <ContentLayout
         title="Compliance"
-        icon="lucide:shield-check"
+        icon={<ShieldCheck />}
         onboardingAction={
           hasCompletedScan
             ? { flowId: "view-compliance" }
@@ -172,7 +172,7 @@ export default async function Compliance({
     return (
       <ContentLayout
         title="Compliance"
-        icon="lucide:shield-check"
+        icon={<ShieldCheck />}
         onboardingAction={{
           flowId: "view-compliance",
           fallbackFlowId: "view-first-scan",
@@ -323,7 +323,7 @@ export default async function Compliance({
   return (
     <ContentLayout
       title="Compliance"
-      icon="lucide:shield-check"
+      icon={<ShieldCheck />}
       onboardingAction={onboardingAction}
     >
       <CompliancePageTabs

@@ -1,6 +1,6 @@
 "use client";
 
-import { Icon } from "@iconify/react";
+import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 import { Control, FieldPath, FieldValues } from "react-hook-form";
 
@@ -127,15 +127,18 @@ export const CustomInput = <T extends FieldValues>({
                   inputType === "password" ? "Show password" : "Hide password"
                 }
               >
-                <Icon
-                  className="text-text-neutral-tertiary pointer-events-none text-2xl"
-                  icon={
-                    (password && isPasswordVisible) ||
-                    (confirmPassword && isConfirmPasswordVisible)
-                      ? "solar:eye-closed-linear"
-                      : "solar:eye-bold"
-                  }
-                />
+                {(password && isPasswordVisible) ||
+                (confirmPassword && isConfirmPasswordVisible) ? (
+                  <EyeOff
+                    aria-hidden="true"
+                    className="text-text-neutral-tertiary pointer-events-none size-6"
+                  />
+                ) : (
+                  <Eye
+                    aria-hidden="true"
+                    className="text-text-neutral-tertiary pointer-events-none size-6"
+                  />
+                )}
               </button>
             )}
           </div>

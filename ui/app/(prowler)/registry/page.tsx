@@ -1,3 +1,4 @@
+import { Package } from "lucide-react";
 import { redirect } from "next/navigation";
 
 import { getRegistryBootstrap } from "@/actions/registry/registry";
@@ -13,7 +14,7 @@ export default async function RegistryPage() {
   if (bootstrap.status === REGISTRY_FAILURE.ACCESS_DENIED) redirect("/profile");
 
   return (
-    <ContentLayout title="Registry" icon="lucide:package">
+    <ContentLayout title="Registry" icon={<Package />}>
       <RegistryExplorer
         initialState={bootstrap.state}
         registryUrl={readRegistryPresentation().registryUrl}

@@ -1,3 +1,5 @@
+import { Tag } from "lucide-react";
+
 import { SkeletonTableFindings } from "@/components/findings/table";
 import { ContentLayout } from "@/components/shadcn/content-layout";
 
@@ -7,7 +9,7 @@ export default function FindingsLoading() {
   return (
     <ContentLayout
       title="Findings"
-      icon="lucide:tag"
+      icon={<Tag />}
       onboardingAction={{ flowId: "explore-findings" }}
     >
       <div className="mb-6">

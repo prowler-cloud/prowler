@@ -1,3 +1,4 @@
+import { Warehouse } from "lucide-react";
 import { Suspense } from "react";
 
 import { getAllProviderGroups } from "@/actions/manage-groups/manage-groups";
@@ -80,7 +81,7 @@ export default async function Resources({
   const uniqueGroups = metadataInfoData?.data?.attributes?.groups || [];
 
   return (
-    <ContentLayout title="Resources" icon="lucide:warehouse">
+    <ContentLayout title="Resources" icon={<Warehouse />}>
       <FilterTransitionWrapper>
         <div className="mb-6">
           <ResourcesFilters
