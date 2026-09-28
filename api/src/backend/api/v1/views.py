@@ -125,10 +125,14 @@ from api.models import (
 )
 from api.pagination import ComplianceOverviewPagination
 from api.rbac.permissions import (
+    TASK_REVOKE_PERMISSIONS,
     Permissions,
     get_integrations,
     get_providers,
     get_role,
+    get_tasks,
+    get_user_roles,
+    roles_have_permissions,
 )
 from api.renderers import APIJSONRenderer, PlainTextRenderer
 from api.rls import Tenant
@@ -2858,17 +2862,28 @@ class ScanViewSet(ProviderVisibilityMixin, BaseRLSViewSet):
     list=extend_schema(
         tags=["Task"],
         summary="List all tasks",
-        description="Retrieve a list of all tasks with options for filtering by name, state, and other criteria.",
+        description=(
+            "Retrieve a list of all tasks with options for filtering by name, state, and other "
+            "criteria. Tasks tied to a provider are only returned when the role can access that "
+            "provider; tenant-wide tasks are returned for every role."
+        ),
     ),
     retrieve=extend_schema(
         tags=["Task"],
         summary="Retrieve data from a specific task",
-        description="Fetch detailed information about a specific task by its ID.",
+        description=(
+            "Fetch detailed information about a specific task by its ID. Tasks tied to a provider "
+            "outside the visibility of the role are not found."
+        ),
     ),
     destroy=extend_schema(
         tags=["Task"],
         summary="Revoke a task",
-        description="Try to revoke a task using its ID. Only tasks that are not yet in progress can be revoked.",
+        description=(
+            "Try to revoke a task using its ID. Only tasks that are not yet in progress can be "
+            "revoked, and the caller needs the same permission as the operation that queued "
+            "the task (for example MANAGE_PROVIDERS for a provider deletion)."
+        ),
         responses={202: OpenApiResponse(response=TaskSerializer)},
     ),
 )
@@ -2884,13 +2899,26 @@ class TaskViewSet(BaseRLSViewSet):
     required_permissions = []
 
     def get_queryset(self):
-        return Task.objects.annotate(
-            name=F("task_runner_task__task_name"),
-            state=F("task_runner_task__status"),
-        ).select_related("task_runner_task")
+        return (
+            get_tasks(self.user_role)
+            .annotate(
+                name=F("task_runner_task__task_name"),
+                state=F("task_runner_task__status"),
+            )
+            .select_related("task_runner_task")
+        )
 
     def destroy(self, request, *args, pk=None, **kwargs):
-        task = get_object_or_404(Task, pk=pk)
+        task = self.get_object()
+        required_permissions = TASK_REVOKE_PERMISSIONS.get(
+            task.task_runner_task.task_name
+        )
+        # Same multi-role semantics as HasPermissions.
+        if required_permissions is None or not roles_have_permissions(
+            get_user_roles(request.user, request.tenant_id), required_permissions
+        ):
+            raise PermissionDenied("You do not have permission to revoke this task.")
+
         if task.task_runner_task.status not in ["PENDING", "RECEIVED"]:
             serializer = TaskSerializer(task)
             return Response(
