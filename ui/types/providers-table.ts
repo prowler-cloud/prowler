@@ -1,8 +1,10 @@
 import { MetaDataProps, ProviderGroup } from "./components";
 import { FilterOption } from "./filters";
 import {
+  NodeKind,
+  OrganizationNodeResource,
   OrganizationResource,
-  OrganizationUnitResource,
+  OrganizationType,
 } from "./organizations";
 import { ProviderProps } from "./providers";
 import { ScanScheduleSummary } from "./scans";
@@ -22,6 +24,14 @@ export const PROVIDERS_GROUP_KIND = {
 
 export type ProvidersGroupKind =
   (typeof PROVIDERS_GROUP_KIND)[keyof typeof PROVIDERS_GROUP_KIND];
+
+export const HIERARCHY_STATUS = {
+  AVAILABLE: "available",
+  UNAVAILABLE: "unavailable",
+} as const;
+
+export type HierarchyStatus =
+  (typeof HIERARCHY_STATUS)[keyof typeof HIERARCHY_STATUS];
 
 export const PROVIDERS_PAGE_FILTER = {
   PROVIDER: "provider__in",
@@ -43,6 +53,9 @@ export interface ProviderTableRelationshipRef {
 
 export type ProviderTableRelationships = ProviderProps["relationships"] & {
   organization?: ProviderTableRelationshipRef;
+  // Canonical provider→node relationship, plus deprecated aliases tolerated
+  // during the transition window.
+  organization_node?: ProviderTableRelationshipRef;
   organization_unit?: ProviderTableRelationshipRef;
   organizational_unit?: ProviderTableRelationshipRef;
 };
@@ -64,6 +77,8 @@ export interface ProvidersOrganizationRow {
   id: string;
   rowType: typeof PROVIDERS_ROW_TYPE.ORGANIZATION;
   groupKind: ProvidersGroupKind;
+  orgType: OrganizationType;
+  kind?: NodeKind;
   name: string;
   externalId: string | null;
   parentExternalId: string | null;
@@ -78,7 +93,7 @@ export type ProvidersTableRow = ProvidersOrganizationRow | ProvidersProviderRow;
 export interface ProvidersTableRowsInput {
   isCloud: boolean;
   organizations: OrganizationResource[];
-  organizationUnits: OrganizationUnitResource[];
+  organizationNodes: OrganizationNodeResource[];
   providers: ProvidersProviderRow[];
 }
 
@@ -88,6 +103,8 @@ export interface ProvidersAccountsViewData {
   providers: ProviderProps[];
   providerGroups: ProviderGroup[];
   rows: ProvidersTableRow[];
+  /** `unavailable` when the hierarchy fetch failed (drives the degraded notice). */
+  hierarchyStatus: HierarchyStatus;
 }
 
 export function isProvidersOrganizationRow(

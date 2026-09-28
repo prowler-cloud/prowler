@@ -521,3 +521,86 @@ class Test_defender_antiphishing_policy_configured:
             check = defender_antiphishing_policy_configured()
             result = check.execute()
             assert len(result) == 0
+
+    def test_preset_policy_without_rule_is_skipped(self):
+        defender_client = mock.MagicMock()
+        defender_client.audited_tenant = "audited_tenant"
+        defender_client.audited_domain = DOMAIN
+        defender_client.audit_config = {}
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_m365_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
+            ),
+            mock.patch(
+                "prowler.providers.m365.services.defender.defender_antiphishing_policy_configured.defender_antiphishing_policy_configured.defender_client",
+                new=defender_client,
+            ),
+        ):
+            from prowler.providers.m365.services.defender.defender_antiphishing_policy_configured.defender_antiphishing_policy_configured import (
+                defender_antiphishing_policy_configured,
+            )
+            from prowler.providers.m365.services.defender.defender_service import (
+                AntiphishingPolicy,
+                AntiphishingRule,
+            )
+
+            defender_client.antiphishing_policies = {
+                "Default": AntiphishingPolicy(
+                    name="Default",
+                    spoof_intelligence=True,
+                    spoof_intelligence_action="Quarantine",
+                    dmarc_reject_action="Quarantine",
+                    dmarc_quarantine_action="Quarantine",
+                    safety_tips=True,
+                    unauthenticated_sender_action=True,
+                    show_tag=True,
+                    honor_dmarc_policy=True,
+                    default=True,
+                ),
+                "Standard Preset Security Policy1663355404982": AntiphishingPolicy(
+                    name="Standard Preset Security Policy1663355404982",
+                    spoof_intelligence=True,
+                    spoof_intelligence_action="Quarantine",
+                    dmarc_reject_action="Quarantine",
+                    dmarc_quarantine_action="Quarantine",
+                    safety_tips=True,
+                    unauthenticated_sender_action=True,
+                    show_tag=True,
+                    honor_dmarc_policy=True,
+                    default=False,
+                ),
+                "Custom1": AntiphishingPolicy(
+                    name="Custom1",
+                    spoof_intelligence=True,
+                    spoof_intelligence_action="Quarantine",
+                    dmarc_reject_action="Quarantine",
+                    dmarc_quarantine_action="Quarantine",
+                    safety_tips=True,
+                    unauthenticated_sender_action=True,
+                    show_tag=True,
+                    honor_dmarc_policy=True,
+                    default=False,
+                ),
+            }
+            defender_client.antiphishing_rules = {
+                "Custom1": AntiphishingRule(
+                    state="Enabled",
+                    priority=1,
+                    users=["user1@example.com"],
+                    groups=None,
+                    domains=None,
+                )
+            }
+
+            check = defender_antiphishing_policy_configured()
+            result = check.execute()
+
+            assert len(result) == 2
+            assert "Standard Preset Security Policy1663355404982" not in [
+                finding.resource_id for finding in result
+            ]

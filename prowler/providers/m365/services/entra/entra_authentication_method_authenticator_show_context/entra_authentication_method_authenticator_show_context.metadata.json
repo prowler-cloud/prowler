@@ -1,0 +1,37 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_authentication_method_authenticator_show_context",
+  "CheckTitle": "Microsoft Authenticator shows application name and geographic location",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "The Microsoft Authenticator authentication method should have the **Show application name** (**displayAppInformationRequiredState**) and **Show geographic location** (**displayLocationInformationRequiredState**) feature settings enabled. This adds context to push and passwordless notifications so users can detect and reject fraudulent approval requests.",
+  "Risk": "Without application-name and location context, users approving **MFA** push notifications cannot tell a legitimate sign-in from an attacker-initiated one, making the tenant more vulnerable to MFA fatigue and prompt-bombing attacks.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/entra/identity/authentication/how-to-mfa-additional-context"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to the Microsoft Entra admin center at https://entra.microsoft.com/\n2. Go to **Protection** > **Authentication methods** > **Policies** > **Microsoft Authenticator**\n3. Select **Configure**\n4. Set **Show application name in push and passwordless notifications** to **Enabled**, Target **All users**\n5. Set **Show geographic location in push and passwordless notifications** to **Enabled**, Target **All users**\n6. Click **Save**",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable the application-name and geographic-location context settings for Microsoft Authenticator so users receive additional information to identify and reject fraudulent sign-in approvals.",
+      "Url": "https://hub.prowler.com/check/entra_authentication_method_authenticator_show_context"
+    }
+  },
+  "Categories": [
+    "identity-access",
+    "e3"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

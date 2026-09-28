@@ -1,9 +1,11 @@
+import { BellRing } from "lucide-react";
 import { redirect } from "next/navigation";
 
 import { getLatestMetadataInfo } from "@/actions/findings";
 import { getAllProviders } from "@/actions/providers";
 import { getScans } from "@/actions/scans";
 import { getAlert, listAlerts } from "@/app/(prowler)/alerts/_actions";
+import { AlertsLighthouseContext } from "@/app/(prowler)/alerts/_components/alerts-lighthouse-context";
 import { AlertsManager } from "@/app/(prowler)/alerts/_components/alerts-manager";
 import { ContentLayout } from "@/components/shadcn/content-layout";
 import { createScanDetailsMapping } from "@/lib";
@@ -100,7 +102,13 @@ export default async function AlertsPage({ searchParams }: AlertsPageProps) {
     : undefined;
 
   return (
-    <ContentLayout title="Alerts" icon="lucide:bell-ring">
+    <ContentLayout title="Alerts" icon={<BellRing />}>
+      {!hasError ? (
+        <AlertsLighthouseContext
+          totalCount={apiMeta?.pagination?.count ?? alerts.length}
+          editingAlert={editingAlert}
+        />
+      ) : null}
       <AlertsManager
         alerts={alerts}
         meta={meta}

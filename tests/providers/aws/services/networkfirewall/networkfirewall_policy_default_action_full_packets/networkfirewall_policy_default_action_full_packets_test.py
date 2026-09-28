@@ -14,7 +14,7 @@ POLICY_ARN = "arn:aws:network-firewall:us-east-1:123456789012:firewall-policy/my
 
 class Test_networkfirewall_policy_default_action_full_packets:
     def test_no_networkfirewall(self):
-        networkfirewall_client = mock.MagicMock
+        networkfirewall_client = mock.MagicMock()
         networkfirewall_client.provider = set_mocked_aws_provider(
             [AWS_REGION_US_EAST_1]
         )
@@ -42,7 +42,7 @@ class Test_networkfirewall_policy_default_action_full_packets:
                 assert len(result) == 0
 
     def test_networkfirewall_policy_default_action_drop(self):
-        networkfirewall_client = mock.MagicMock
+        networkfirewall_client = mock.MagicMock()
         networkfirewall_client.provider = set_mocked_aws_provider(
             [AWS_REGION_US_EAST_1]
         )
@@ -90,7 +90,7 @@ class Test_networkfirewall_policy_default_action_full_packets:
                 assert result[0].resource_arn == FIREWALL_ARN
 
     def test_networkfirewall_policy_default_action_forward(self):
-        networkfirewall_client = mock.MagicMock
+        networkfirewall_client = mock.MagicMock()
         networkfirewall_client.provider = set_mocked_aws_provider(
             [AWS_REGION_US_EAST_1]
         )
@@ -139,7 +139,7 @@ class Test_networkfirewall_policy_default_action_full_packets:
                 assert result[0].resource_arn == FIREWALL_ARN
 
     def test_networkfirewall_policy_default_action_pass(self):
-        networkfirewall_client = mock.MagicMock
+        networkfirewall_client = mock.MagicMock()
         networkfirewall_client.provider = set_mocked_aws_provider(
             [AWS_REGION_US_EAST_1]
         )

@@ -6,11 +6,16 @@ Complete reference guide for all tools available in the Prowler MCP Server. Tool
 
 ## Tool Categories Summary
 
-| Category | Tool Count | Authentication Required |
-|----------|------------|------------------------|
-| Prowler Hub | 10 tools | No |
-| Prowler Documentation | 2 tools | No |
-| Prowler Cloud, Private Cloud & Local Server | 39 tools | Yes |
+| Category | Tool Count | Authentication Required | Availability |
+|----------|------------|------------------------|--------------|
+| Prowler Hub | 10 tools | No | Cloud and Local MCP Server |
+| Prowler Documentation | 2 tools | No | Cloud and Local MCP Server |
+| Prowler Cloud, Private Cloud & Local Server | 49 tools | Yes | Cloud and Local MCP Server |
+| Prowler Cloud management | 40 tools | Yes | Cloud MCP Server only |
+
+<Note>
+48 of the 49 Prowler tools are available on both servers. `prowler_schedule_daily_scan` is the exception: it is Local-only, because the Cloud MCP Server supersedes it with the `prowler_cloud_*` [Scan Scheduling](#scan-scheduling) tools. `prowler_send_findings_to_jira` is exposed by both servers but accepts two [extra parameters](#jira-operations) on the Cloud MCP Server.
+</Note>
 
 ## Tool Naming Convention
 
@@ -19,6 +24,11 @@ All tools follow a consistent naming pattern with prefixes:
 - `prowler_hub_*` - Prowler Hub catalog and compliance tools
 - `prowler_docs_*` - Prowler documentation search and retrieval
 - `prowler_*` - Prowler Cloud, Prowler Private Cloud & Prowler Local Server management tools
+- `prowler_cloud_*` - Prowler Cloud-only management tools
+
+<Note>
+`prowler_cloud_*` tools are exposed only by the [Cloud MCP Server](/getting-started/products/prowler-mcp#cloud-vs-local-mcp-server) at `https://mcp.prowler.com/mcp`, because they manage features that exist only in Prowler Cloud. Every other tool is available on both the Cloud and Local MCP Server.
+</Note>
 
 ## Prowler Tools
 
@@ -59,8 +69,12 @@ Tools for managing and monitoring security scans.
 - **`prowler_list_scans`** - List and filter security scans across all providers
 - **`prowler_get_scan`** - Get comprehensive details about a specific scan (progress, duration, resource counts)
 - **`prowler_trigger_scan`** - Trigger a manual security scan for a provider
-- **`prowler_schedule_daily_scan`** - Schedule automated daily scans for continuous monitoring
+- **`prowler_schedule_daily_scan`** - Schedule automated daily scans for continuous monitoring (**Local MCP Server only**)
 - **`prowler_update_scan`** - Update scan name for better organization
+
+<Note>
+`prowler_schedule_daily_scan` is the scheduling tool for a self-hosted deployment, and it only does one thing: a daily scan. The Cloud MCP Server does not expose it — Prowler Cloud replaces it with the richer [Scan Scheduling](#scan-scheduling) tools, which add interval, weekly, and monthly frequencies, per-provider schedule retrieval, and bulk apply across providers.
+</Note>
 
 ### Resources Management
 
@@ -88,6 +102,42 @@ Tools for managing finding muting, including pattern-based bulk muting (mutelist
 - **`prowler_create_mute_rule`** - Create a new mute rule to mute specific findings with documentation and audit trail
 - **`prowler_update_mute_rule`** - Update a mute rule's name, reason, or enabled status
 - **`prowler_delete_mute_rule`** - Delete a mute rule from the system
+
+### Integrations Management
+
+Tools for managing where Prowler sends its results: Amazon S3 buckets, AWS Security Hub, and Jira. Requires the **Manage Integrations** permission.
+
+#### Integration Lifecycle
+
+- **`prowler_list_integrations`** - List the configured integrations with their enabled and connection state, optionally filtered by integration type
+- **`prowler_get_integration`** - Get an integration with its complete, type-specific configuration (bucket and output directory, Security Hub settings and enabled regions, or Jira projects and issue types)
+- **`prowler_update_integration`** - Update credentials, configuration, attached providers, or enabled state. Configuration changes are merged with the current one, and the connection is re-checked automatically whenever credentials, configuration, or attached providers change
+- **`prowler_delete_integration`** - Permanently remove an integration and its stored credentials
+- **`prowler_test_integration_connection`** - Check an integration connection and refresh the configuration Prowler discovers from the remote system (Jira projects, Security Hub regions)
+
+#### Integration Setup
+
+- **`prowler_create_amazon_s3_integration`** - Export scan outputs (CSV, HTML, OCSF JSON, compliance reports) to an S3 bucket, using an IAM role or static credentials
+- **`prowler_create_aws_security_hub_integration`** - Send findings to AWS Security Hub in ASFF format for a single AWS provider, reusing the provider credentials or dedicated ones
+- **`prowler_create_jira_integration`** - Connect an Atlassian Jira site so findings can be turned into work items. Tenant-wide, not attached to any provider
+
+#### Jira Operations
+
+- **`prowler_get_jira_issue_types`** - List the issue types available in a Jira project, fetched live from Jira
+- **`prowler_send_findings_to_jira`** - Create Jira work items from findings, each carrying the check title, severity, status, provider, region, resource, risk, and remediation steps. Select the findings either by ID with `finding_ids`, or — on Prowler Cloud only — by check with `check_ids`, and choose between one work item per finding or one per check with `dispatch_mode`
+
+<Note>
+`check_ids` and `dispatch_mode` are **Prowler Cloud only**:
+
+- **`check_ids`** - Send the failing findings of a check (for example `s3_bucket_public_access`) without listing their IDs. Prowler resolves them server-side, taking only the failed findings of the latest completed scan of every provider. Get the check IDs from `prowler_list_finding_groups`. Exactly one of `finding_ids` or `check_ids` is required — Prowler combines both filters, so sending both would only dispatch their intersection. A Local MCP Server rejects `check_ids` with a client error.
+- **`dispatch_mode`** - `individual` (the default) creates one work item per finding. `grouped` creates one work item per check instead, listing up to 50 affected resources and linking back to the finding group in Prowler Cloud, which keeps a noisy check to a single ticket. Grouped dispatch only covers failed, unmuted findings of the latest completed scan of every provider. A Local MCP Server ignores `dispatch_mode` instead of rejecting it, and creates one work item per finding.
+
+In `grouped` mode the response counters change meaning: `created_count` counts work items (one per check) rather than findings, `failed_count` counts the entries of the new `failed_groups` field, and `failed_groups` details each failure with its reason and the `check_id` whose work item could not be created.
+</Note>
+
+<Warning>
+`prowler_send_findings_to_jira` creates real work items that Prowler cannot delete or update afterwards. Only retry the same dispatch when the previous response returned `safe_to_retry: true`, otherwise the work items already created are duplicated. Combining `check_ids` with the default `individual` mode opens one work item per failing resource, which can be hundreds of them — use `dispatch_mode="grouped"` to keep it to one per check.
+</Warning>
 
 ### Attack Paths Analysis
 
@@ -121,6 +171,95 @@ Tools for browsing RBAC roles and managing the role assigned to a user. A user h
 - **`prowler_get_role`** - Get detailed information about a specific role by ID, including granted capabilities, visibility scope, assigned users, and provider groups
 - **`prowler_get_user_roles`** - List the roles assigned to a specific user, with the capabilities each role grants
 - **`prowler_set_user_role`** - Set the role a user holds, replacing the role they had before (idempotent)
+
+## Prowler Cloud Tools
+
+Manage Prowler Cloud-only features and configuration. **Requires authentication.**
+
+<Note>
+These tools are available **only on the Cloud MCP Server** (`https://mcp.prowler.com/mcp`). A Local MCP Server does not expose them, because the features they manage exist only in Prowler Cloud.
+</Note>
+
+### Organizations
+
+Tools for onboarding a cloud provider organization as a whole — an AWS Organization, an Azure tenant with its management groups, or a GCP organization with its folders. An organization holds org-level credentials, discovers the real account, subscription, or project structure in the cloud, and turns a selection from that discovery into Prowler providers linked into a hierarchy of nodes. Every tool that changes something — creating, updating, deleting, discovering, applying a discovery, or adjusting provider membership — requires the **Manage Providers** permission; listing and reading do not.
+
+<Note>
+Use these tools for the whole organization. To register providers one by one, use the [Provider Management](#provider-management) tools instead; to build arbitrary RBAC buckets of providers, use provider groups.
+</Note>
+
+- **`prowler_cloud_list_organizations`** - Browse the registered organizations with lightweight data (name, type, external id, provider and node counts), filtered by type or cloud-side external id
+- **`prowler_cloud_get_organization`** - Get one organization in full: attributes, linked providers, credentials status, latest discovery, and the OU / management group / folder hierarchy. Set `include_hierarchy` to `false` to skip the tree on large organizations
+- **`prowler_cloud_create_organization`** - Register an organization, optionally storing its org-level credentials in the same call. Idempotent: an organization with the same type and external id is reused and its credentials rotated, reported as `created: false`
+- **`prowler_cloud_update_organization`** - Rename an organization, replace its metadata, and/or create or rotate its org-level credentials. `org_type` and `external_id` are immutable after creation
+- **`prowler_cloud_delete_organization`** - Delete an organization, its entire hierarchy, and every linked provider
+- **`prowler_cloud_discover_organization`** - Enumerate the real cloud structure: AWS accounts and OUs, Azure subscriptions and management groups, or GCP projects and folders. Each item comes back with its registration state so you can choose what to onboard
+- **`prowler_cloud_apply_organization_discovery`** - Turn a discovery selection into Prowler providers and hierarchy nodes
+- **`prowler_cloud_manage_organization_providers`** - Manually `add`, `replace`, or `remove` the providers linked to an organization or to one of its hierarchy nodes. Providers are detached, never deleted
+
+### Scan Configurations
+
+Tools for managing reusable scan configurations — per-provider check and compliance selections — and attaching them to providers. Providers without a configuration attached use the default.
+
+- **`prowler_cloud_list_scan_configurations`** - List and filter the scan configurations defined in the tenant
+- **`prowler_cloud_get_scan_configuration`** - Retrieve a scan configuration including its full configuration body
+- **`prowler_cloud_get_scan_configuration_schema`** - Fetch the JSON Schema describing the keys a valid configuration body may set, optionally filtered to a single provider type
+- **`prowler_cloud_create_scan_configuration`** - Create a scan configuration and optionally attach it to providers
+- **`prowler_cloud_update_scan_configuration`** - Update a configuration's name, body, and/or attached providers
+- **`prowler_cloud_delete_scan_configuration`** - Delete a scan configuration; attached providers revert to the default
+
+### Findings Triage
+
+Tools for recording a review decision on a finding and documenting the reasoning. Triage is keyed on the stable finding UID returned by `prowler_search_security_findings` and `prowler_get_finding_details`.
+
+<Note>
+Triage is distinct from [muting](#muting-management). Use mute rules and the mutelist to **suppress** findings; use triage to **record a decision** and its rationale while the finding stays visible. See the [Findings Triage tutorial](/user-guide/tutorials/prowler-app-findings-triage).
+</Note>
+
+- **`prowler_cloud_list_finding_triages`** - List and filter persisted triage records by status, provider, check, and more
+- **`prowler_cloud_get_finding_triage`** - Retrieve a single finding's triage state by finding UID
+- **`prowler_cloud_set_finding_triage_status`** - Set a finding's triage status (`open`, `under_review`, `remediating`, `risk_accepted`, `false_positive`), optionally attaching a note. The `resolved` and `reopened` statuses are system-managed and cannot be set directly
+- **`prowler_cloud_list_finding_triage_notes`** - List the notes attached to a finding's triage, newest first
+- **`prowler_cloud_create_finding_triage_note`** - Add a new note to a finding's triage
+- **`prowler_cloud_update_finding_triage_note`** - Update the body of an existing note
+- **`prowler_cloud_delete_finding_triage_note`** - Delete a note from a finding's triage
+
+### Scan Scheduling
+
+Tools for configuring recurring scans. One schedule exists per provider, with daily, interval, weekly, or monthly frequency. These replace the Local-only `prowler_schedule_daily_scan`, which can only set up a daily scan. See the [Scan Scheduling tutorial](/user-guide/tutorials/prowler-scan-scheduling).
+
+- **`prowler_cloud_list_scan_schedules`** - List scan schedules, one per visible provider
+- **`prowler_cloud_get_scan_schedule`** - Retrieve a provider's schedule including all per-frequency fields
+- **`prowler_cloud_set_scan_schedule`** - Configure or update a single provider's recurring scan schedule
+- **`prowler_cloud_bulk_set_scan_schedules`** - Apply one schedule to many providers at once
+- **`prowler_cloud_delete_scan_schedule`** - Delete a provider's scan schedule
+
+### Alerts
+
+Tools for notifying recipients when scan results match a rule condition. See the [Alerts tutorial](/user-guide/tutorials/prowler-alerts).
+
+#### Alert Rules
+
+- **`prowler_cloud_list_alert_rules`** - List and filter the custom alert rules defined in the tenant
+- **`prowler_cloud_get_alert_rule`** - Retrieve an alert rule including its condition DSL and recipient emails
+- **`prowler_cloud_create_alert_rule`** - Create a tenant-scoped alert rule
+- **`prowler_cloud_update_alert_rule`** - Update an alert rule; only the fields provided change
+- **`prowler_cloud_delete_alert_rule`** - Delete an alert rule
+- **`prowler_cloud_list_alert_rule_events`** - List the fired-alert history for a single rule, newest first
+- **`prowler_cloud_build_alert_rule_condition`** - Build a condition from a findings filter and dry-run it in one call to preview what would match. Nothing is persisted
+
+#### Alert Recipients
+
+- **`prowler_cloud_list_alert_recipients`** - List alert recipients with their confirmation status
+- **`prowler_cloud_get_alert_recipient`** - Retrieve a single recipient with its confirmation status
+- **`prowler_cloud_create_alert_recipient`** - Register a new recipient email
+- **`prowler_cloud_resend_alert_recipient_confirmation`** - Re-send the confirmation email to a pending or unsubscribed recipient
+- **`prowler_cloud_delete_alert_recipient`** - Delete an alert recipient
+
+#### Alert Events
+
+- **`prowler_cloud_list_alert_events`** - List the fired alert events for the tenant
+- **`prowler_cloud_get_alert_event`** - Retrieve a single alert event including its matched rule and scan
 
 ## Prowler Hub Tools
 
@@ -162,7 +301,8 @@ Search and access official Prowler documentation. **No authentication required.*
 - Use natural language to interact with the tools through your AI assistant
 - Tools can be combined for complex workflows
 - Filter options are available on most list tools
-- Authentication is only required for Prowler tools (Prowler Cloud, Prowler Private Cloud, or Prowler Local Server)
+- Authentication is only required for the `prowler_*` and `prowler_cloud_*` tools; Prowler Hub and Prowler Documentation tools work without a key
+- If a `prowler_cloud_*` tool is missing from your client, you are connected to a Local MCP Server — point it at `https://mcp.prowler.com/mcp` instead
 
 ## Additional Resources
 

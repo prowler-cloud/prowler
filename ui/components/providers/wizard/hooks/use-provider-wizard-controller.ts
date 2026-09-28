@@ -4,6 +4,11 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 import { DOCS_URLS, getProviderHelpText } from "@/lib/external-urls";
+import {
+  dispatchProviderFunnel,
+  PROVIDER_FUNNEL_METHOD,
+  PROVIDER_FUNNEL_STEP,
+} from "@/lib/provider-funnel/provider-funnel-events";
 import { isCloud } from "@/lib/shared/env";
 import { endActiveTour } from "@/lib/tours/use-driver-tour";
 import { useOnboardingCheckpointStore } from "@/store/onboarding-checkpoint";
@@ -12,6 +17,8 @@ import { useProviderWizardStore } from "@/store/provider-wizard/store";
 import {
   ORG_SETUP_PHASE,
   ORG_WIZARD_STEP,
+  ORGANIZATION_TYPE,
+  OrgFlowType,
   OrgSetupPhase,
   OrgWizardStep,
 } from "@/types/organizations";
@@ -35,6 +42,26 @@ const WIZARD_VARIANT = {
 } as const;
 
 type WizardVariant = (typeof WIZARD_VARIANT)[keyof typeof WIZARD_VARIANT];
+
+const ORG_DOCS_URL = {
+  [ORGANIZATION_TYPE.AWS]: DOCS_URLS.AWS_ORGANIZATIONS,
+  [ORGANIZATION_TYPE.AZURE]: DOCS_URLS.AZURE_ORGANIZATIONS,
+  [ORGANIZATION_TYPE.GCP]: DOCS_URLS.GCP_ORGANIZATIONS,
+} as const satisfies Record<OrgFlowType, string>;
+
+// Stable names for the abandonment signal; the numeric step ids are not a contract.
+const PROVIDER_STEP_NAME = {
+  [PROVIDER_WIZARD_STEP.CONNECT]: "connect",
+  [PROVIDER_WIZARD_STEP.CREDENTIALS]: "credentials",
+  [PROVIDER_WIZARD_STEP.TEST]: "test",
+  [PROVIDER_WIZARD_STEP.LAUNCH]: "launch",
+} as const satisfies Record<ProviderWizardStep, string>;
+
+const ORG_STEP_NAME = {
+  [ORG_WIZARD_STEP.SETUP]: "organizations_setup",
+  [ORG_WIZARD_STEP.VALIDATE]: "organizations_validate",
+  [ORG_WIZARD_STEP.LAUNCH]: "organizations_launch",
+} as const satisfies Record<OrgWizardStep, string>;
 
 const EMPTY_FOOTER_CONFIG: WizardFooterConfig = {
   showBack: false,
@@ -99,8 +126,14 @@ export function useProviderWizardController({
     setMode,
     mode,
     providerType,
+    via,
   } = useProviderWizardStore();
-  const { reset: resetOrgWizard, setOrganization } = useOrgSetupStore();
+  const {
+    reset: resetOrgWizard,
+    setOrganization,
+    setOrganizationType,
+    organizationType,
+  } = useOrgSetupStore();
 
   useEffect(() => {
     if (!open) {
@@ -116,6 +149,7 @@ export function useProviderWizardController({
     if (orgInitialData) {
       setWizardVariant(WIZARD_VARIANT.ORGANIZATIONS);
       resetOrgWizard();
+      setOrganizationType(orgInitialData.organizationType);
       setOrganization(
         orgInitialData.organizationId,
         orgInitialData.organizationName,
@@ -174,12 +208,18 @@ export function useProviderWizardController({
     resetProviderWizard,
     setMode,
     setOrganization,
+    setOrganizationType,
     setProvider,
     setSecretId,
     setVia,
   ]);
 
   const isOrgDirectEntry = Boolean(orgInitialData);
+  // Opened on an existing account's credentials, so the one-step AWS flow is not
+  // in play. Same three fields the hydration above requires to start on CREDENTIALS.
+  const isDirectCredentialsEntry = Boolean(
+    initialProviderId && initialProviderType && initialProviderUid,
+  );
 
   const handleClose = () => {
     // Closing the wizard at any point ends the add-provider tour; the checkpoint
@@ -188,6 +228,15 @@ export function useProviderWizardController({
 
     // Read providerId before reset clears it — non-null means a provider was connected.
     const connectedProviderId = useProviderWizardStore.getState().providerId;
+
+    dispatchProviderFunnel({
+      step: PROVIDER_FUNNEL_STEP.WIZARD_CLOSED,
+      lastStep:
+        wizardVariant === WIZARD_VARIANT.PROVIDER
+          ? PROVIDER_STEP_NAME[currentStep]
+          : ORG_STEP_NAME[orgCurrentStep],
+      providerCreated: connectedProviderId !== null,
+    });
 
     resetProviderWizard();
     resetOrgWizard();
@@ -229,11 +278,19 @@ export function useProviderWizardController({
     setCurrentStep(PROVIDER_WIZARD_STEP.LAUNCH);
   };
 
-  const openOrganizationsFlow = () => {
-    // AWS Organizations diverges from the credentials path the tour guides toward; end
+  const openOrganizationsFlow = (
+    orgType: OrgFlowType = ORGANIZATION_TYPE.AWS,
+  ) => {
+    // Organizations diverges from the credentials path the tour guides toward; end
     // it so it doesn't dangle on a step that no longer fits. No-op off-onboarding.
     endActiveTour();
+    dispatchProviderFunnel({
+      step: PROVIDER_FUNNEL_STEP.METHOD_SELECTED,
+      providerType: orgType,
+      method: PROVIDER_FUNNEL_METHOD.ORGANIZATION,
+    });
     resetOrgWizard();
+    setOrganizationType(orgType);
     setWizardVariant(WIZARD_VARIANT.ORGANIZATIONS);
     setOrgCurrentStep(ORG_WIZARD_STEP.SETUP);
     setFooterConfig(EMPTY_FOOTER_CONFIG);
@@ -242,18 +299,25 @@ export function useProviderWizardController({
   };
 
   const backToProviderFlow = () => {
+    // The AWS organization flow is entered from the AWS connect step's tabs, so
+    // going back lands on that step again instead of the provider picker.
+    const cameFromAwsConnect = organizationType === ORGANIZATION_TYPE.AWS;
     resetOrgWizard();
     setWizardVariant(WIZARD_VARIANT.PROVIDER);
     setCurrentStep(PROVIDER_WIZARD_STEP.CONNECT);
     setFooterConfig(EMPTY_FOOTER_CONFIG);
-    setProviderTypeHint(null);
+    setProviderTypeHint(cameFromAwsConnect ? "aws" : null);
     setOrgSetupPhase(ORG_SETUP_PHASE.DETAILS);
   };
 
   const isProviderFlow = wizardVariant === WIZARD_VARIANT.PROVIDER;
   const docsLink = isProviderFlow
-    ? getProviderHelpText(providerTypeHint ?? providerType ?? "").link
-    : DOCS_URLS.AWS_ORGANIZATIONS;
+    ? getProviderHelpText(
+        providerTypeHint ?? providerType ?? "",
+        currentStep,
+        via,
+      ).link
+    : ORG_DOCS_URL[organizationType];
   const resolvedFooterConfig: WizardFooterConfig = footerConfig;
   const modalTitle = getProviderWizardModalTitle(mode);
 
@@ -264,11 +328,13 @@ export function useProviderWizardController({
     handleClose,
     handleDialogOpenChange,
     handleTestSuccess,
+    isDirectCredentialsEntry,
     isOrgDirectEntry,
     isProviderFlow,
     mode,
     modalTitle,
     openOrganizationsFlow,
+    organizationType,
     orgCurrentStep,
     orgSetupPhase,
     providerTypeHint,

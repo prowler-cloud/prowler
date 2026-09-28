@@ -1,11 +1,17 @@
 import os
 import pathlib
+import socket
 
 from alibabacloud_credentials.client import Client as CredClient
 from alibabacloud_credentials.models import Config as CredConfig
 from alibabacloud_sts20150401.client import Client as StsClient
 from alibabacloud_tea_openapi import models as open_api_models
+from alibabacloud_tea_openapi.exceptions import ClientException
 from colorama import Fore, Style
+from darabonba.exceptions import RetryError
+from darabonba.policy.retry import RetryCondition, RetryOptions
+from requests.exceptions import ConnectionError as RequestsConnectionError
+from requests.exceptions import Timeout as RequestsTimeout
 
 from prowler.config.config import (
     default_config_file_path,
@@ -17,9 +23,12 @@ from prowler.lib.utils.utils import print_boxes
 from prowler.providers.alibabacloud.config import (
     ALIBABACLOUD_DEFAULT_REGION,
     ALIBABACLOUD_REGIONS,
+    ALIBABACLOUD_STS_MAX_ATTEMPTS,
+    ALIBABACLOUD_STS_RETRY_DELAY_MS,
     ROLE_SESSION_NAME,
 )
 from prowler.providers.alibabacloud.exceptions.exceptions import (
+    AlibabaCloudConnectionError,
     AlibabaCloudInvalidCredentialsError,
     AlibabaCloudNoCredentialsError,
     AlibabaCloudSetUpSessionError,
@@ -32,6 +41,61 @@ from prowler.providers.alibabacloud.models import (
 )
 from prowler.providers.common.models import Audit_Metadata, Connection
 from prowler.providers.common.provider import Provider
+
+
+def _exception_chain(error: Exception):
+    """Yield structured exceptions wrapped by SDK and Python exception chains."""
+    pending = [error]
+    seen = set()
+
+    while pending:
+        current = pending.pop()
+        if id(current) in seen:
+            continue
+        seen.add(id(current))
+        yield current
+
+        for attribute in ("inner_exception", "__cause__", "__context__"):
+            nested = getattr(current, attribute, None)
+            if isinstance(nested, BaseException):
+                pending.append(nested)
+        pending.extend(arg for arg in current.args if isinstance(arg, BaseException))
+
+
+def _is_connection_error(error: Exception) -> bool:
+    """Return whether an SDK exception chain contains a transport failure."""
+    connection_errors = (
+        ConnectionError,
+        TimeoutError,
+        socket.gaierror,
+        RetryError,
+        RequestsConnectionError,
+        RequestsTimeout,
+    )
+    return any(
+        isinstance(exception, connection_errors)
+        for exception in _exception_chain(error)
+    )
+
+
+def _is_authentication_error(error: Exception) -> bool:
+    """Return whether an SDK exception chain contains an authentication failure."""
+    authentication_code_prefixes = (
+        "InvalidAccessKeyId",
+        "InvalidSecurityToken",
+        "MissingSecurityToken",
+        "SecurityTokenExpired",
+        "SignatureDoesNotMatch",
+    )
+    for exception in _exception_chain(error):
+        if not isinstance(exception, ClientException):
+            continue
+        code = exception.code or ""
+        if exception.status_code == 401 or code == "InvalidCredentials":
+            return True
+        if code.startswith(authentication_code_prefixes):
+            return True
+    return False
 
 
 class AlibabacloudProvider(Provider):
@@ -435,6 +499,7 @@ class AlibabacloudProvider(Provider):
             AlibabaCloudCallerIdentity: An object containing the caller identity information.
 
         Raises:
+            AlibabaCloudConnectionError: If STS cannot be reached after retries.
             AlibabaCloudInvalidCredentialsError: If credentials are invalid.
         """
         try:
@@ -445,6 +510,18 @@ class AlibabacloudProvider(Provider):
             sts_config = open_api_models.Config(
                 access_key_id=cred.access_key_id,
                 access_key_secret=cred.access_key_secret,
+                retry_options=RetryOptions(
+                    retryCondition=[
+                        RetryCondition(
+                            maxAttempts=ALIBABACLOUD_STS_MAX_ATTEMPTS,
+                            exception=["RetryError"],
+                            backoff={
+                                "policy": "Fixed",
+                                "period": ALIBABACLOUD_STS_RETRY_DELAY_MS,
+                            },
+                        )
+                    ]
+                ),
             )
             if cred.security_token:
                 sts_config.security_token = cred.security_token
@@ -477,10 +554,17 @@ class AlibabacloudProvider(Provider):
 
         except Exception as sts_error:
             logger.error(f"Could not get caller identity from STS: {sts_error}. ")
-            raise AlibabaCloudInvalidCredentialsError(
-                file=pathlib.Path(__file__).name,
-                original_exception=sts_error,
-            )
+            if _is_authentication_error(sts_error):
+                raise AlibabaCloudInvalidCredentialsError(
+                    file=pathlib.Path(__file__).name,
+                    original_exception=sts_error,
+                ) from sts_error
+            if _is_connection_error(sts_error):
+                raise AlibabaCloudConnectionError(
+                    file=pathlib.Path(__file__).name,
+                    original_exception=sts_error,
+                ) from sts_error
+            raise
 
     @staticmethod
     def get_profile_region() -> str:
@@ -742,6 +826,7 @@ class AlibabacloudProvider(Provider):
 
         Raises:
             AlibabaCloudSetUpSessionError: If there is an error setting up the session.
+            AlibabaCloudConnectionError: If STS cannot be reached after retries.
             AlibabaCloudInvalidCredentialsError: If there is an authentication error.
             Exception: If there is an unexpected error.
 
@@ -808,6 +893,14 @@ class AlibabacloudProvider(Provider):
             if raise_on_exception:
                 raise auth_error
             return Connection(error=auth_error)
+
+        except AlibabaCloudConnectionError as connection_error:
+            logger.error(
+                f"{connection_error.__class__.__name__}[{connection_error.__traceback__.tb_lineno}]: {connection_error}"
+            )
+            if raise_on_exception:
+                raise connection_error
+            return Connection(error=connection_error)
 
         except Exception as error:
             logger.critical(

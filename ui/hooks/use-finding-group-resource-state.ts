@@ -10,10 +10,15 @@ import { applyDefaultMutedFilter } from "@/lib";
 import {
   applyOptimisticTriageSummaryUpdate,
   getOptimisticTriageMutedReason,
+  isManualPassTriageUpdate,
   shouldMarkFindingMutedForTriageUpdate,
 } from "@/lib/finding-triage";
 import { FindingGroupRow, FindingResourceRow } from "@/types";
-import type { UpdateFindingTriageInput } from "@/types/findings-triage";
+import { FINDING_STATUS } from "@/types/components";
+import type {
+  FindingTriageUpdateResult,
+  UpdateFindingTriageInput,
+} from "@/types/findings-triage";
 
 interface UseFindingGroupResourceStateOptions {
   group: FindingGroupRow;
@@ -33,8 +38,10 @@ interface UseFindingGroupResourceStateReturn {
   totalCount: number | null;
   drawer: ReturnType<typeof useResourceDetailDrawer>;
   handleDrawerMuteComplete: () => void;
+  selectedResources: FindingResourceRow[];
   selectedFindingIds: string[];
   selectableRowCount: number;
+  getRowId: (resource: FindingResourceRow) => string;
   getRowCanSelect: (row: Row<FindingResourceRow>) => boolean;
   clearSelection: () => void;
   isSelected: (id: string) => boolean;
@@ -43,9 +50,26 @@ interface UseFindingGroupResourceStateReturn {
   resolveSelectedFindingIds: (ids: string[]) => Promise<string[]>;
   updateTriageOptimistically: (
     input: UpdateFindingTriageInput,
-    updateAction: (input: UpdateFindingTriageInput) => Promise<void>,
-  ) => Promise<void>;
+    updateAction: (
+      input: UpdateFindingTriageInput,
+    ) => Promise<FindingTriageUpdateResult | void>,
+  ) => Promise<FindingTriageUpdateResult | void>;
 }
+
+function getSelectedResources(
+  resources: FindingResourceRow[],
+  selection: RowSelectionState,
+): FindingResourceRow[] {
+  const selectedFindingIds = new Set(
+    Object.keys(selection).filter((key) => selection[key]),
+  );
+  return resources.filter((resource) =>
+    selectedFindingIds.has(resource.findingId),
+  );
+}
+
+const getFindingResourceRowId = (resource: FindingResourceRow) =>
+  resource.findingId;
 
 export function useFindingGroupResourceState({
   group,
@@ -77,9 +101,11 @@ export function useFindingGroupResourceState({
       const shouldMarkMuted = shouldMarkFindingMutedForTriageUpdate(optimistic);
       const shouldSetTriageMuteReason =
         shouldMarkMuted && optimistic.isMuted !== true;
+      const isManualPass = isManualPassTriageUpdate(optimistic);
 
       return {
         ...resource,
+        status: isManualPass ? FINDING_STATUS.PASS : resource.status,
         isMuted: shouldMarkMuted ? true : resource.isMuted,
         mutedReason: shouldSetTriageMuteReason
           ? getOptimisticTriageMutedReason(optimistic.status!)
@@ -173,10 +199,10 @@ export function useFindingGroupResourceState({
     refresh();
   };
 
-  const selectedFindingIds = Object.keys(rowSelection)
-    .filter((key) => rowSelection[key])
-    .map((idx) => resources[parseInt(idx)]?.findingId)
-    .filter((id): id is string => Boolean(id));
+  const selectedResources = getSelectedResources(resources, rowSelection);
+  const selectedFindingIds = selectedResources.map(
+    (resource) => resource.findingId,
+  );
 
   const selectableRowCount = resources.filter(canMuteFindingResource).length;
 
@@ -208,10 +234,9 @@ export function useFindingGroupResourceState({
     setRowSelection(newSelection);
 
     if (onResourceSelectionChange) {
-      const newFindingIds = Object.keys(newSelection)
-        .filter((key) => newSelection[key])
-        .map((idx) => resources[parseInt(idx)]?.findingId)
-        .filter((id): id is string => Boolean(id));
+      const newFindingIds = getSelectedResources(resources, newSelection).map(
+        (resource) => resource.findingId,
+      );
       onResourceSelectionChange(newFindingIds);
     }
   };
@@ -254,13 +279,16 @@ export function useFindingGroupResourceState({
 
   const updateTriageOptimistically = async (
     input: UpdateFindingTriageInput,
-    updateAction: (input: UpdateFindingTriageInput) => Promise<void>,
+    updateAction: (
+      input: UpdateFindingTriageInput,
+    ) => Promise<FindingTriageUpdateResult | void>,
   ) => {
     const optimisticToken = applyOptimisticTriageUpdate(input);
     try {
-      await updateAction(input);
+      const result = await updateAction(input);
       settleOptimisticTriageUpdate(input.findingId, optimisticToken);
       refresh();
+      return result;
     } catch (error) {
       clearOptimisticTriageUpdate(input.findingId, optimisticToken);
       refresh();
@@ -278,8 +306,10 @@ export function useFindingGroupResourceState({
     totalCount,
     drawer,
     handleDrawerMuteComplete,
+    selectedResources,
     selectedFindingIds,
     selectableRowCount,
+    getRowId: getFindingResourceRowId,
     getRowCanSelect,
     clearSelection,
     isSelected,

@@ -45,7 +45,7 @@ class Test_entra_app_registration_no_unused_privileged_permissions:
             assert result[0].resource_id == "oauthApps"
 
     def test_no_oauth_apps_none(self):
-        """OAuth apps is None (App Governance not enabled): expected FAIL."""
+        """OAuth apps is None (App Governance not enabled): expected MANUAL."""
         entra_client = mock.MagicMock
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
@@ -70,10 +70,10 @@ class Test_entra_app_registration_no_unused_privileged_permissions:
             result = check.execute()
 
             assert len(result) == 1
-            assert result[0].status == "FAIL"
+            assert result[0].status == "MANUAL"
             assert (
                 result[0].status_extended
-                == "OAuth App Governance data is unavailable. Enable App Governance in Microsoft Defender for Cloud Apps and grant ThreatHunting.Read.All to evaluate unused privileged permissions."
+                == "Cannot evaluate unused privileged permissions: OAuth App Governance data is unavailable. Enable App Governance in Microsoft Defender for Cloud Apps and grant the ThreatHunting.Read.All permission to the scanning application."
             )
             assert result[0].resource == {}
             assert result[0].resource_name == "OAuth Applications"

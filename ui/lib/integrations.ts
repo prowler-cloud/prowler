@@ -17,7 +17,7 @@ interface IntegrationEnvVar {
   legacy?: keyof NodeJS.ProcessEnv;
 }
 
-interface GatedIntegration {
+export interface GatedIntegration {
   name: string;
   enableKey: keyof NodeJS.ProcessEnv;
   required: ReadonlyArray<IntegrationEnvVar>;
@@ -54,7 +54,7 @@ export const GATED_INTEGRATIONS: Record<string, GatedIntegration> = {
       { key: "UI_POSTHOG_KEY", legacy: "POSTHOG_KEY" },
       { key: "UI_POSTHOG_HOST", legacy: "POSTHOG_HOST" },
     ],
-    optional: [],
+    optional: [{ key: "UI_POSTHOG_UI_HOST" }],
   },
 } as const satisfies Record<string, GatedIntegration>;
 
@@ -79,6 +79,16 @@ function hasCompleteLegacyConfig(integration: GatedIntegration): boolean {
   return (
     integration.required.length > 0 &&
     integration.required.every(({ legacy }) => legacy && readEnv(legacy))
+  );
+}
+
+// True when an integration is active through either path: the enable flag is
+// "true", or a complete legacy config is present.
+export function isGatedIntegrationEnabled(
+  integration: GatedIntegration,
+): boolean {
+  return (
+    readBoolEnv(integration.enableKey) || hasCompleteLegacyConfig(integration)
   );
 }
 

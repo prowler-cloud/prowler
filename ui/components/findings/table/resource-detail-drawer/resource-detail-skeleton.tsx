@@ -7,34 +7,45 @@ import { Skeleton } from "@/components/shadcn/skeleton/skeleton";
  */
 export function ResourceDetailSkeleton() {
   return (
-    <div className="flex items-start gap-4">
-      <div
-        data-responsive-container
-        className="@container flex min-w-0 flex-1 flex-col gap-4"
-      >
-        {/* Row 1: Provider, Resource, Service, Region */}
-        <div className="grid min-w-0 grid-cols-2 gap-4 @md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,0.55fr)_minmax(0,0.7fr)] @md:gap-x-8">
-          <div className="col-span-2 @md:col-span-1">
-            <EntityInfoSkeleton hasIcon labelWidth="w-12" />
+    <>
+      <div className="flex items-start gap-4" aria-hidden="true">
+        <div
+          data-responsive-container
+          className="@container flex min-w-0 flex-1 flex-col gap-4"
+        >
+          {/* Row 1: Provider, Resource, Service, Region */}
+          <div className="grid min-w-0 grid-cols-2 gap-4 @md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,0.55fr)_minmax(0,0.7fr)] @md:gap-x-8">
+            <div className="col-span-2 @md:col-span-1">
+              <EntityInfoSkeleton hasIcon labelWidth="w-12" />
+            </div>
+            <div className="col-span-2 @md:col-span-1">
+              <EntityInfoSkeleton labelWidth="w-14" />
+            </div>
+            <InfoFieldSkeleton labelWidth="w-12" valueWidth="w-20" />
+            <InfoFieldSkeleton labelWidth="w-12" valueWidth="w-24" />
           </div>
-          <div className="col-span-2 @md:col-span-1">
-            <EntityInfoSkeleton labelWidth="w-14" />
+
+          {/* Row 2: Last detected, First seen, Failing for */}
+          <div className="grid min-w-0 grid-cols-2 gap-4 @md:grid-cols-3 @md:gap-x-8">
+            <InfoFieldSkeleton labelWidth="w-20" valueWidth="w-32" />
+            <InfoFieldSkeleton labelWidth="w-16" valueWidth="w-32" />
+            <InfoFieldSkeleton labelWidth="w-16" valueWidth="w-16" />
           </div>
-          <InfoFieldSkeleton labelWidth="w-12" valueWidth="w-20" />
-          <InfoFieldSkeleton labelWidth="w-12" valueWidth="w-24" />
         </div>
 
-        {/* Row 2: Last detected, First seen, Failing for */}
-        <div className="grid min-w-0 grid-cols-2 gap-4 @md:grid-cols-3 @md:gap-x-8">
-          <InfoFieldSkeleton labelWidth="w-20" valueWidth="w-32" />
-          <InfoFieldSkeleton labelWidth="w-16" valueWidth="w-32" />
-          <InfoFieldSkeleton labelWidth="w-16" valueWidth="w-16" />
-        </div>
+        {/* Actions ⋮ — same footprint as the bordered ActionDropdown trigger */}
+        <Skeleton className="size-8 shrink-0 rounded-md" />
       </div>
 
-      {/* Actions button */}
-      <Skeleton className="size-11 shrink-0 rounded-full" />
-    </div>
+      {/* Status line card (status_extended) below the resource info */}
+      <div
+        className="border-border-neutral-secondary flex flex-col gap-2 rounded-lg border p-4"
+        aria-hidden="true"
+      >
+        <Skeleton className="h-4 w-full rounded" />
+        <Skeleton className="h-4 w-2/3 rounded" />
+      </div>
+    </>
   );
 }
 
@@ -55,7 +66,11 @@ function EntityInfoSkeleton({
             <Skeleton className="size-4 rounded" />
             <Skeleton className="h-5 w-28 rounded" />
           </div>
-          <Skeleton className="h-6 w-24 rounded-full" />
+          {/* "UID:" label + code-snippet pill */}
+          <div className="flex items-center gap-2">
+            <Skeleton className="h-3.5 w-7 rounded" />
+            <Skeleton className="h-6 w-28 rounded-md" />
+          </div>
         </div>
       </div>
     </div>

@@ -9,7 +9,7 @@
   "Severity": "medium",
   "ResourceType": "NotDefined",
   "ResourceGroup": "collaboration",
-  "Description": "Verifies that Gmail is configured to take a protective action (such as moving to spam, quarantining, or showing a warning) when the sender's display name matches an employee's name but the email comes from an external address. This is a common social engineering technique where attackers impersonate colleagues or executives.",
+  "Description": "Verifies that Gmail moves out of the inbox, to spam or quarantine, the emails whose sender display name matches an employee's name but come from an external address. An action that only shows a warning is not enough. This is a common social engineering technique where attackers impersonate colleagues or executives.",
   "Risk": "Without protection against employee name spoofing, users may receive **emails that appear to come from colleagues or executives** but are actually from external attackers. This enables **business email compromise (BEC)**, **wire fraud**, and **social engineering attacks** that exploit trust relationships.",
   "RelatedUrl": "",
   "AdditionalURLs": [

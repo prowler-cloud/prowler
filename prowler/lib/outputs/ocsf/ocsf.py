@@ -1,8 +1,10 @@
 import json
 import os
 from datetime import datetime, timezone
+from functools import lru_cache
+from importlib import resources
 from random import getrandbits
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 from py_ocsf_models.events.base_event import SeverityID, StatusID
 from py_ocsf_models.events.findings.detection_finding import (
@@ -345,36 +347,74 @@ def _build_analytic(finding: Finding) -> Analytic:
     )
 
 
+@lru_cache(maxsize=None)
+def _load_mitre_technique_map(provider: str) -> Dict[str, dict]:
+    """Load and cache MITRE ATT&CK techniques for a provider."""
+    try:
+        mitre_file = (
+            resources.files("prowler.compliance")
+            .joinpath(provider)
+            .joinpath(f"mitre_attack_{provider}.json")
+        )
+        if not mitre_file.is_file():
+            logger.debug(
+                f"MITRE ATT&CK catalog is not available for provider {provider}"
+            )
+            return {}
+
+        with mitre_file.open(encoding="utf-8") as file:
+            data = json.load(file)
+        return {
+            requirement["Id"]: requirement
+            for requirement in data.get("Requirements", [])
+        }
+    except Exception as error:
+        logger.error(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+        )
+        return {}
+
+
 def _build_mitre_attacks(finding: Finding) -> Optional[List[MITREAttack]]:
-    """Build OCSF MITREAttack objects from MITRE-ATTACK metadata.
+    """Build OCSF MITREAttack objects from finding compliance technique IDs.
 
     Args:
-        finding (Finding): Finding with compliance metadata attached to its check metadata.
+        finding (Finding): Finding with MITRE ATT&CK compliance technique IDs.
 
     Returns:
-        Optional[List[MITREAttack]]: MITRE attacks derived from metadata, or None
-            when the finding has no MITRE-ATTACK metadata.
+        Optional[List[MITREAttack]]: MITRE attacks for known provider techniques,
+            or None when none can be built.
     """
+    technique_ids = finding.compliance.get("MITRE-ATTACK", [])
+    if not technique_ids:
+        return None
+
+    technique_map = _load_mitre_technique_map(finding.provider)
     attacks = []
-    for compliance in finding.metadata.Compliance or []:
-        if compliance.Framework.upper() != "MITRE-ATTACK":
+    for technique_id in technique_ids:
+        requirement = technique_map.get(technique_id)
+        if not requirement:
             continue
-
-        for requirement in compliance.Requirements:
-            technique = Technique(
-                uid=requirement.Id,
-                name=requirement.Name,
-                src_url=requirement.TechniqueURL,
+        technique_name = requirement.get("Name")
+        if not technique_name:
+            logger.warning(
+                f"Skipping MITRE ATT&CK technique {technique_id} for provider {finding.provider}: missing Name"
             )
-            for tactic_name in requirement.Tactics:
-                attacks.append(
-                    MITREAttack(
-                        technique=technique,
-                        tactic=Tactic(name=tactic_name),
-                    )
+            continue
+        technique = Technique(
+            uid=technique_id,
+            name=technique_name,
+            src_url=requirement.get("TechniqueURL"),
+        )
+        for tactic_name in requirement.get("Tactics", []):
+            attacks.append(
+                MITREAttack(
+                    technique=technique,
+                    tactic=Tactic(name=tactic_name),
                 )
+            )
 
-    return attacks if attacks else None
+    return attacks or None
 
 
 # NOTE: Copied from api/src/backend/api/uuid_utils.py (datetime_to_uuid7)

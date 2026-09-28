@@ -3,12 +3,13 @@ from unittest.mock import MagicMock, patch
 from uuid import uuid4
 
 import pytest
+from api.celery_utils import decode_celery_field
 from celery import states
+from celery.utils.saferepr import saferepr
 from django.test import override_settings
 from django_celery_results.models import TaskResult
 from tasks.jobs.orphan_recovery import (
     _SKIP_RECOVERY,
-    _decode_celery_field,
     _reconcile_task_results,
     _recovery_attempt_count,
     advisory_lock,
@@ -36,24 +37,77 @@ def _orphan_result(*, name, kwargs, worker, created_minutes_ago, status=states.S
     return tr
 
 
-@pytest.mark.django_db
 class TestDecodeCeleryField:
+    def test_decodes_strict_json(self):
+        assert decode_celery_field('{"enabled": true, "scan_id": null}', {}) == {
+            "enabled": True,
+            "scan_id": None,
+        }
+
     def test_decodes_single_encoded_repr(self):
-        assert _decode_celery_field("{'tenant_id': 'abc'}", {}) == {"tenant_id": "abc"}
+        assert decode_celery_field("{'tenant_id': 'abc'}", {}) == {"tenant_id": "abc"}
 
     def test_decodes_double_encoded(self):
         import json
 
         stored = json.dumps(repr({"tenant_id": "abc", "scan_id": "s1"}))
-        assert _decode_celery_field(stored, {}) == {"tenant_id": "abc", "scan_id": "s1"}
+        assert decode_celery_field(stored, {}) == {
+            "tenant_id": "abc",
+            "scan_id": "s1",
+        }
+
+    def test_python_words_inside_strings_are_preserved(self):
+        stored = repr(
+            {
+                "enabled": True,
+                "scan_id": None,
+                "label": "True North",
+                "note": "None",
+            }
+        )
+
+        assert decode_celery_field(stored, {}) == {
+            "enabled": True,
+            "scan_id": None,
+            "label": "True North",
+            "note": "None",
+        }
 
     def test_empty_returns_default(self):
-        assert _decode_celery_field(None, {}) == {}
-        assert _decode_celery_field("", []) == []
+        assert decode_celery_field(None, {}) == {}
+        assert decode_celery_field("", []) == []
+        assert decode_celery_field("null", {}) == {}
+        assert decode_celery_field("None", []) == []
+
+    def test_empty_validates_default(self):
+        with pytest.raises(ValueError):
+            decode_celery_field("", {"value": ...})
 
     def test_unparseable_raises(self):
         with pytest.raises(ValueError):
-            _decode_celery_field("<<not a literal>>", {})
+            decode_celery_field("<<not a literal>>", {})
+
+    @pytest.mark.parametrize(
+        "value",
+        (
+            "{'value': ...}",
+            "{'value': {1, 2}}",
+            "{'value': b'bytes'}",
+            '{"value": NaN}',
+        ),
+    )
+    def test_non_json_values_raise(self, value):
+        with pytest.raises(ValueError):
+            decode_celery_field(value, {})
+
+    def test_truncated_repr_raises(self):
+        kwargs_repr = saferepr(
+            {"finding_ids": [str(uuid4()) for _ in range(30)]}, maxlen=1024
+        )
+        assert "..." in kwargs_repr
+
+        with pytest.raises(ValueError):
+            decode_celery_field(kwargs_repr, {})
 
 
 @pytest.mark.django_db
@@ -97,6 +151,58 @@ class TestReconcileTaskResults:
         call = mock_task.apply_async.call_args.kwargs
         assert call["kwargs"] == {"tenant_id": str(tenant.id)}
         assert call["task_id"] != tr.task_id  # fresh task id
+
+    def test_truncated_kwargs_are_not_reenqueued(self, tenants_fixture):
+        tenant = tenants_fixture[0]
+        tr = _orphan_result(
+            name="tenant-deletion",
+            kwargs={"tenant_id": str(tenant.id)},
+            worker="dead@gone",
+            created_minutes_ago=60,
+        )
+        tr.task_kwargs = saferepr(
+            {"finding_ids": [str(uuid4()) for _ in range(30)]}, maxlen=1024
+        )
+        assert "..." in tr.task_kwargs
+        tr.save(update_fields=["task_kwargs"])
+        p_alive, p_revoke, p_app, mock_task = self._patches(alive=False)
+
+        with (
+            p_alive,
+            p_revoke,
+            p_app,
+            patch("tasks.jobs.orphan_recovery._recovery_attempt_count", return_value=1),
+        ):
+            result = _reconcile_task_results(
+                grace_minutes=2, max_attempts=3, window_hours=6, dry_run=False
+            )
+
+        assert tr.task_id in result["failed"]
+        mock_task.apply_async.assert_not_called()
+
+    def test_wrong_kwargs_shape_is_not_reenqueued(self, tenants_fixture):
+        tr = _orphan_result(
+            name="tenant-deletion",
+            kwargs={"tenant_id": str(tenants_fixture[0].id)},
+            worker="dead@gone",
+            created_minutes_ago=60,
+        )
+        tr.task_kwargs = "[]"
+        tr.save(update_fields=["task_kwargs"])
+        p_alive, p_revoke, p_app, mock_task = self._patches(alive=False)
+
+        with (
+            p_alive,
+            p_revoke,
+            p_app,
+            patch("tasks.jobs.orphan_recovery._recovery_attempt_count", return_value=1),
+        ):
+            result = _reconcile_task_results(
+                grace_minutes=2, max_attempts=3, window_hours=6, dry_run=False
+            )
+
+        assert tr.task_id in result["failed"]
+        mock_task.apply_async.assert_not_called()
 
     def test_external_integration_task_is_not_reenqueued_by_default(
         self, tenants_fixture

@@ -34,5 +34,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "This check requires Microsoft Defender for Cloud Apps with App Governance enabled and ThreatHunting.Read.All permission. If App Governance data is unavailable, the check fails due to missing visibility."
+  "Notes": "This check requires Microsoft Defender for Cloud Apps with App Governance enabled and ThreatHunting.Read.All permission. If App Governance data is unavailable, the check reports MANUAL because unused permissions cannot be evaluated."
 }

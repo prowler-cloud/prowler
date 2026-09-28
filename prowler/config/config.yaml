@@ -27,6 +27,8 @@ aws:
   max_lambda_functions: null
   # aws.max_ecs_task_definitions --> ecs_task_definitions_* checks
   max_ecs_task_definitions: null
+  # aws.max_batch_job_definitions --> batch_job_definition_* checks
+  max_batch_job_definitions: null
   # aws.max_codeartifact_packages --> codeartifact_packages_* checks
   max_codeartifact_packages: null
   # aws.disallowed_regions --> List of AWS regions to exclude from the scan.
@@ -117,6 +119,14 @@ aws:
   # aws.cloudwatch_log_group_retention_policy_specific_days_enabled --> by default is 365 days
   log_group_retention_days: 365
 
+  # aws.cloudwatch_log_group_agentcore_data_protection_policy_enabled
+  # Log group name prefixes that hold Bedrock AgentCore agent telemetry. This list REPLACES
+  # the defaults rather than adding to them, so keep both entries below when adding your own
+  # or the log groups AgentCore creates itself stop being assessed.
+  agentcore_log_group_name_prefixes:
+    - "/aws/bedrock-agentcore/"
+    - "/aws/vendedlogs/bedrock-agentcore/"
+
   # AWS CloudFormation Configuration
   # cloudformation_stack_cdktoolkit_bootstrap_version --> by default is 21
   recommended_cdk_bootstrap_version: 21
@@ -179,6 +189,14 @@ aws:
   # HIGH
   # MEDIUM
   ecr_repository_vulnerability_minimum_severity: "MEDIUM"
+
+  # AWS Inspector2
+  # aws.inspector2_coverage_recently_scanned
+  # Maximum days since Inspector2 last scanned an actively covered resource
+  inspector2_max_days_since_last_scan: 3
+  # aws.inspector2_active_findings_within_max_age
+  # Maximum days an Inspector2 finding can stay active since it was first observed
+  inspector2_active_finding_max_age_days: 192
 
   # AWS Trusted Advisor
   # aws.trustedadvisor_premium_support_plan_subscribed
@@ -467,9 +485,11 @@ aws:
   secrets_ignore_patterns: []
 
   # aws.awslambda_function_no_secrets_in_code
-  # Glob patterns of file names inside the Lambda deployment package to skip
-  # when scanning for secrets. Useful to suppress known false positives such
-  # as .NET dependency manifests.
+  # aws.codecommit_repository_no_secrets
+  # Glob patterns of file names inside the Lambda deployment package or the
+  # CodeCommit repository to skip when scanning for secrets. Useful to
+  # suppress known false positives such as .NET dependency manifests or
+  # package lock files.
   # Example:
   #   secrets_ignore_files:
   #     - "*.deps.json"

@@ -3,26 +3,42 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ChevronLeftIcon, ChevronRightIcon, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { Dispatch, SetStateAction, useEffect, useState } from "react";
+import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
 import { useForm, UseFormReturn } from "react-hook-form";
-import { z } from "zod";
 
-import { addProvider } from "@/actions/providers/providers";
-import { AwsMethodSelector } from "@/components/providers/organizations/aws-method-selector";
+import { addProvider, updateProvider } from "@/actions/providers/providers";
+import { addRegistryProvider } from "@/actions/providers/registry-provider";
+import { getInstalledRegistryProviderOptions } from "@/actions/registry/registry";
+import { AzureMethodSelector } from "@/components/providers/organizations/azure-method-selector";
+import { GcpMethodSelector } from "@/components/providers/organizations/gcp-method-selector";
 import { WizardInputField } from "@/components/providers/workflow/forms/fields";
 import { ProviderTitleDocs } from "@/components/providers/workflow/provider-title-docs";
 import { Button, useToast } from "@/components/shadcn";
+import { Alert, AlertDescription, AlertTitle } from "@/components/shadcn/alert";
 import { Form } from "@/components/shadcn/form";
+import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
 import {
-  addProviderFormSchema,
+  REGISTRY_PROVIDER_DISCOVERY,
+  type RegistryProviderOption,
+} from "@/lib/registry/provider-options";
+import { isCloud } from "@/lib/shared/env";
+import {
+  createAddProviderFormSchema,
+  AddProviderFormValues,
   ApiError,
   KnownProviderType,
   ProviderType,
 } from "@/types";
+import {
+  ORGANIZATION_TYPE,
+  OrgFlowType,
+  toOrgFlowType,
+} from "@/types/organizations";
+import { isKnownProviderType } from "@/types/providers";
 
 import { RadioGroupProvider } from "../../radio-group-provider";
 
-export type FormValues = z.infer<typeof addProviderFormSchema>;
+export type FormValues = AddProviderFormValues;
 
 export interface ConnectAccountSuccessData {
   id: string;
@@ -31,9 +47,20 @@ export interface ConnectAccountSuccessData {
   alias: string | null;
 }
 
+/**
+ * Provider types that offer an organization-onboarding method choice: exactly the
+ * ones with an onboarding flow, so a new flow type cannot miss the fork. AWS is the
+ * exception: the wizard's own AWS step hosts its single-account/organization switch.
+ */
+function providerHasOrgMethod(
+  providerType: ProviderType | undefined,
+): providerType is OrgFlowType {
+  return providerType !== "aws" && toOrgFlowType(providerType) !== undefined;
+}
+
 interface ConnectAccountFormProps {
   onSuccess?: (data: ConnectAccountSuccessData) => void;
-  onSelectOrganizations?: () => void;
+  onSelectOrganizations?: (orgType: OrgFlowType) => void;
   onProviderTypeChange?: (providerType: ProviderType | null) => void;
   formId?: string;
   hideNavigation?: boolean;
@@ -140,19 +167,27 @@ const getProviderFieldDetails = (providerType?: ProviderType) => {
 
 function applyBackStep({
   prevStep,
-  awsMethod,
+  method,
+  providerType,
   form,
   setPrevStep,
-  setAwsMethod,
+  setMethod,
 }: {
   prevStep: number;
-  awsMethod: "single" | null;
+  method: "single" | null;
+  providerType: ProviderType | undefined;
   form: Pick<UseFormReturn<FormValues>, "setValue" | "clearErrors">;
   setPrevStep: Dispatch<SetStateAction<number>>;
-  setAwsMethod: Dispatch<SetStateAction<"single" | null>>;
+  setMethod: Dispatch<SetStateAction<"single" | null>>;
 }) {
-  if (prevStep === 2 && awsMethod === "single") {
-    setAwsMethod(null);
+  // With a method choice, "Back" from the single account/project form returns to
+  // the method selector rather than the provider picker.
+  if (
+    prevStep === 2 &&
+    method === "single" &&
+    providerHasOrgMethod(providerType)
+  ) {
+    setMethod(null);
     form.setValue("providerUid", "", { shouldValidate: false });
     form.setValue("providerAlias", "", { shouldValidate: false });
     return;
@@ -163,7 +198,7 @@ function applyBackStep({
     form.setValue("providerType", undefined as unknown as KnownProviderType, {
       shouldValidate: false,
     });
-    setAwsMethod(null);
+    setMethod(null);
   }
   form.setValue("providerUid", "", { shouldValidate: false });
   form.setValue("providerAlias", "", { shouldValidate: false });
@@ -181,10 +216,66 @@ export const ConnectAccountForm = ({
 }: ConnectAccountFormProps) => {
   const { toast } = useToast();
   const [prevStep, setPrevStep] = useState(1);
-  const [awsMethod, setAwsMethod] = useState<"single" | null>(null);
+  const [method, setMethod] = useState<"single" | null>(null);
   const router = useRouter();
 
-  const formSchema = addProviderFormSchema;
+  const [registryOptions, setRegistryOptions] = useState<
+    RegistryProviderOption[]
+  >([]);
+  // Only confirmed Cloud and Private Cloud access enables Registry source tabs.
+  // Unknown access stays hidden but remains retryable through the warning.
+  const [registryAvailable, setRegistryAvailable] = useState(false);
+  const [registryError, setRegistryError] = useState(false);
+  const [providerError, setProviderError] = useState<string | null>(null);
+  const [discoveryAttempt, setDiscoveryAttempt] = useState(0);
+  // Local state needed: a request in flight cannot be derived from the attempt count.
+  const [isRetryingDiscovery, setIsRetryingDiscovery] = useState(false);
+  const submitting = useRef(false);
+  const createdAccount = useRef<ConnectAccountSuccessData | null>(null);
+
+  useEffect(() => {
+    // Registry is Cloud-only: elsewhere never ask, so a failure cannot surface it.
+    if (!isCloud()) return;
+    let active = true;
+    const load = async () => {
+      try {
+        const result = await getInstalledRegistryProviderOptions();
+        if (!active) return;
+        setRegistryOptions(
+          result.status === REGISTRY_PROVIDER_DISCOVERY.READY
+            ? result.options
+            : [],
+        );
+        setRegistryAvailable(
+          result.status === REGISTRY_PROVIDER_DISCOVERY.READY ||
+            result.status === REGISTRY_PROVIDER_DISCOVERY.ERROR,
+        );
+        setRegistryError(
+          result.status === REGISTRY_PROVIDER_DISCOVERY.ERROR ||
+            result.status === REGISTRY_PROVIDER_DISCOVERY.UNKNOWN,
+        );
+      } catch {
+        if (active) {
+          setRegistryOptions([]);
+          setRegistryAvailable(false);
+          setRegistryError(true);
+        }
+      }
+    };
+    // Only this effect's own load ends a retry; event reloads must not.
+    void load().then(() => {
+      if (active) setIsRetryingDiscovery(false);
+    });
+    window.addEventListener("registry-artifacts-changed", load);
+    return () => {
+      active = false;
+      window.removeEventListener("registry-artifacts-changed", load);
+    };
+  }, [discoveryAttempt]);
+
+  const formSchema = createAddProviderFormSchema(
+    registryOptions.map((option) => option.type),
+  );
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -204,6 +295,22 @@ export const ConnectAccountForm = ({
   const isLoading = form.formState.isSubmitting;
 
   const onSubmitClient = async (values: FormValues) => {
+    if (submitting.current) return;
+    const existingAccount =
+      createdAccount.current?.providerType === values.providerType &&
+      createdAccount.current.uid === values.providerUid
+        ? createdAccount.current
+        : null;
+    if (
+      existingAccount &&
+      (existingAccount.alias ?? "") === (values.providerAlias?.trim() ?? "") &&
+      onSuccess
+    ) {
+      onSuccess(existingAccount);
+      return;
+    }
+    submitting.current = true;
+    setProviderError(null);
     const formValues = { ...values };
 
     const formData = new FormData();
@@ -212,7 +319,20 @@ export const ConnectAccountForm = ({
     );
 
     try {
-      const data = await addProvider(formData);
+      let data;
+      if (existingAccount) {
+        const update = new FormData();
+        update.set(ProviderCredentialFields.PROVIDER_ID, existingAccount.id);
+        update.set(
+          ProviderCredentialFields.PROVIDER_ALIAS,
+          values.providerAlias?.trim() ?? "",
+        );
+        data = await updateProvider(update);
+      } else {
+        data = await (isKnownProviderType(values.providerType)
+          ? addProvider(formData)
+          : addRegistryProvider(formData));
+      }
 
       if (data?.errors && data.errors.length > 0) {
         data.errors.forEach((error: ApiError) => {
@@ -221,10 +341,9 @@ export const ConnectAccountForm = ({
 
           switch (pointer) {
             case "/data/attributes/provider":
-              form.setError("providerType", {
-                type: "server",
-                message: errorMessage,
-              });
+              // Provider selection is hidden here; keep failures visible and
+              // retryable when availability changes without editing the form.
+              setProviderError(errorMessage);
               break;
             case "/data/attributes/uid":
             case "/data/attributes/__all__":
@@ -255,12 +374,13 @@ export const ConnectAccountForm = ({
         } = data.data;
 
         if (onSuccess) {
-          onSuccess({
+          createdAccount.current = {
             id,
             providerType: createdProviderType,
             uid: uid || values.providerUid,
             alias: alias ?? values.providerAlias ?? null,
-          });
+          };
+          onSuccess(createdAccount.current);
           return;
         }
 
@@ -276,16 +396,20 @@ export const ConnectAccountForm = ({
             ? error.message
             : "Something went wrong. Please try again.",
       });
+    } finally {
+      submitting.current = false;
     }
   };
 
   const handleBackStep = () => {
+    setProviderError(null);
     applyBackStep({
       prevStep,
-      awsMethod,
+      method,
+      providerType,
       form,
       setPrevStep,
-      setAwsMethod,
+      setMethod,
     });
   };
 
@@ -301,38 +425,42 @@ export const ConnectAccountForm = ({
 
   useEffect(() => {
     onBackHandlerChange?.(() => {
+      setProviderError(null);
       applyBackStep({
         prevStep,
-        awsMethod,
+        method,
+        providerType,
         form,
         setPrevStep,
-        setAwsMethod,
+        setMethod,
       });
     });
-  }, [onBackHandlerChange, prevStep, awsMethod, form]);
+  }, [onBackHandlerChange, prevStep, method, providerType, form]);
+
+  // Providers with a method choice reach the UID form only through "single".
+  const showUidForm =
+    !providerHasOrgMethod(providerType) || method === "single";
 
   useEffect(() => {
     const canSubmit =
       prevStep === 2 &&
-      (providerType !== "aws" || awsMethod === "single") &&
+      showUidForm &&
       providerUid.trim().length > 0 &&
       form.formState.isValid;
 
     onUiStateChange?.({
       showBack: prevStep === 2,
-      showAction:
-        prevStep === 2 && (providerType !== "aws" || awsMethod === "single"),
-      actionLabel: "Next",
+      showAction: prevStep === 2 && showUidForm,
+      actionLabel: isLoading ? "Creating provider..." : "Next",
       actionDisabled: !canSubmit || isLoading,
       isLoading,
     });
   }, [
-    awsMethod,
+    showUidForm,
     form.formState.isValid,
     isLoading,
     onUiStateChange,
     prevStep,
-    providerType,
     providerUid,
   ]);
 
@@ -346,52 +474,96 @@ export const ConnectAccountForm = ({
         {/* Step 1: Provider selection */}
         {prevStep === 1 && (
           <div data-tour-id="add-provider-provider-type">
+            {registryError && (
+              <Alert variant="warning">
+                <AlertTitle>Registry providers could not be loaded</AlertTitle>
+                <AlertDescription>
+                  Built-in providers are available. Check the Registry
+                  connection and try again.
+                  {/* aria-disabled, not disabled: the pressed button keeps focus. */}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    aria-disabled={isRetryingDiscovery}
+                    onClick={() => {
+                      if (isRetryingDiscovery) return;
+                      setIsRetryingDiscovery(true);
+                      setDiscoveryAttempt((attempt) => attempt + 1);
+                    }}
+                  >
+                    {isRetryingDiscovery
+                      ? "Retrying…"
+                      : "Retry Registry providers"}
+                  </Button>
+                </AlertDescription>
+              </Alert>
+            )}
             <RadioGroupProvider
+              registryAvailable={registryAvailable}
+              registryOptions={registryOptions}
               control={form.control}
               isInvalid={!!form.formState.errors.providerType}
               errorMessage={form.formState.errors.providerType?.message}
             />
           </div>
         )}
-        {/* Step 2: AWS method selector (only for AWS, before choosing method) */}
-        {prevStep === 2 && providerType === "aws" && awsMethod === null && (
+        {/* Step 2: Azure method selector (before choosing a method) */}
+        {prevStep === 2 && providerType === "azure" && method === null && (
           <>
             <ProviderTitleDocs providerType={providerType} />
-            <AwsMethodSelector
-              onSelectSingle={() => setAwsMethod("single")}
-              onSelectOrganizations={() => {
-                onSelectOrganizations?.();
-              }}
+            <AzureMethodSelector
+              onSelectSingle={() => setMethod("single")}
+              onSelectOrganizations={() =>
+                onSelectOrganizations?.(ORGANIZATION_TYPE.AZURE)
+              }
             />
           </>
         )}
-        {/* Step 2: UID, alias form (non-AWS or AWS single account) */}
-        {prevStep === 2 &&
-          (providerType !== "aws" || awsMethod === "single") && (
-            <>
-              <ProviderTitleDocs providerType={providerType} />
-              <WizardInputField
-                control={form.control}
-                name="providerUid"
-                type="text"
-                label={providerFieldDetails.label}
-                labelPlacement="inside"
-                placeholder={providerFieldDetails.placeholder}
-                variant="bordered"
-                isRequired
-              />
-              <WizardInputField
-                control={form.control}
-                name="providerAlias"
-                type="text"
-                label="Provider alias (optional)"
-                labelPlacement="inside"
-                placeholder="Enter the provider alias"
-                variant="bordered"
-                isRequired={false}
-              />
-            </>
-          )}
+        {/* Step 2: GCP method selector (before choosing a method) */}
+        {prevStep === 2 && providerType === "gcp" && method === null && (
+          <>
+            <ProviderTitleDocs providerType={providerType} />
+            <GcpMethodSelector
+              onSelectSingle={() => setMethod("single")}
+              onSelectOrganizations={() =>
+                onSelectOrganizations?.(ORGANIZATION_TYPE.GCP)
+              }
+            />
+          </>
+        )}
+        {/* Step 2: UID, alias form (providers without a method choice, or the
+            single account/subscription/project method) */}
+        {prevStep === 2 && showUidForm && (
+          <>
+            <ProviderTitleDocs providerType={providerType} />
+            {providerError && (
+              <Alert variant="destructive">
+                <AlertTitle>Unable to create provider</AlertTitle>
+                <AlertDescription>{providerError}</AlertDescription>
+              </Alert>
+            )}
+            <WizardInputField
+              control={form.control}
+              name="providerUid"
+              type="text"
+              label={providerFieldDetails.label}
+              labelPlacement="inside"
+              placeholder={providerFieldDetails.placeholder}
+              variant="bordered"
+              isRequired
+            />
+            <WizardInputField
+              control={form.control}
+              name="providerAlias"
+              type="text"
+              label="Provider alias (optional)"
+              labelPlacement="inside"
+              placeholder="Enter the provider alias"
+              variant="bordered"
+              isRequired={false}
+            />
+          </>
+        )}
         {!hideNavigation && (
           <div className="flex w-full justify-end gap-4">
             {prevStep === 2 && (
@@ -406,22 +578,22 @@ export const ConnectAccountForm = ({
                 Back
               </Button>
             )}
-            {prevStep === 2 &&
-              (providerType !== "aws" || awsMethod === "single") && (
-                <Button
-                  type="submit"
-                  variant="default"
-                  size="lg"
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <Loader2 className="animate-spin" />
-                  ) : (
-                    <ChevronRightIcon size={24} />
-                  )}
-                  {isLoading ? "Loading" : "Next"}
-                </Button>
-              )}
+            {prevStep === 2 && showUidForm && (
+              <Button
+                type="submit"
+                variant="default"
+                size="lg"
+                disabled={isLoading}
+                aria-busy={isLoading || undefined}
+              >
+                {isLoading ? (
+                  <Loader2 aria-hidden className="animate-spin" />
+                ) : (
+                  <ChevronRightIcon size={24} />
+                )}
+                {isLoading ? "Creating provider..." : "Next"}
+              </Button>
+            )}
           </div>
         )}
       </form>

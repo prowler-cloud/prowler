@@ -1,6 +1,10 @@
-import { Icon } from "@iconify/react";
 import type { ReactNode } from "react";
 
+import {
+  GithubIcon,
+  GoogleIcon,
+  GoogleMonoIcon,
+} from "@/components/icons/Icons";
 import {
   Button,
   Tooltip,
@@ -9,14 +13,15 @@ import {
 } from "@/components/shadcn";
 import { CustomLink } from "@/components/shadcn/custom/custom-link";
 import { appendCallbackState } from "@/lib/auth-callback-url";
+import type { IconComponent } from "@/types/components";
 
 type SocialProvider = {
   key: string;
   label: string;
   url?: string;
   isOAuthEnabled?: boolean;
-  enabledIcon: string;
-  disabledIcon: string;
+  enabledIcon: IconComponent;
+  disabledIcon: IconComponent;
   disabledDocs: {
     message: string;
     href: string;
@@ -42,18 +47,15 @@ const SocialButton = ({
     >
       {isDisabled ? (
         <span className="flex items-center justify-center">
-          <Icon
-            icon={
-              provider.isOAuthEnabled
-                ? provider.enabledIcon
-                : provider.disabledIcon
-            }
-            width={24}
-          />
+          {provider.isOAuthEnabled ? (
+            <provider.enabledIcon aria-hidden="true" />
+          ) : (
+            <provider.disabledIcon aria-hidden="true" />
+          )}
         </span>
       ) : (
         <a href={provider.url} className="flex items-center justify-center">
-          <Icon icon={provider.enabledIcon} width={24} />
+          <provider.enabledIcon aria-hidden="true" />
         </a>
       )}
     </Button>
@@ -121,8 +123,8 @@ export const SocialButtons = ({
       label: "Continue with Google",
       url: googleUrl,
       isOAuthEnabled: isGoogleOAuthEnabled,
-      enabledIcon: "flat-color-icons:google",
-      disabledIcon: "simple-icons:google",
+      enabledIcon: GoogleIcon,
+      disabledIcon: GoogleMonoIcon,
       disabledDocs: {
         message: "Social Login with Google is not enabled.",
         href: "https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/prowler-app-social-login/#google-oauth-configuration",
@@ -133,8 +135,8 @@ export const SocialButtons = ({
       label: "Continue with Github",
       url: githubUrl,
       isOAuthEnabled: isGithubOAuthEnabled,
-      enabledIcon: "simple-icons:github",
-      disabledIcon: "simple-icons:github",
+      enabledIcon: GithubIcon,
+      disabledIcon: GithubIcon,
       disabledDocs: {
         message: "Social Login with Github is not enabled.",
         href: "https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/prowler-app-social-login/#github-oauth-configuration",

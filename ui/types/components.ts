@@ -4,6 +4,7 @@ import { SVGProps } from "react";
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
 
 import type { FindingTriageSummary } from "./findings-triage";
+import type { UserSignInMethod } from "./users";
 
 export type IconSvgProps = SVGProps<SVGSVGElement> & {
   size?: number;
@@ -418,6 +419,7 @@ export interface InvitationProps {
         manage_integrations?: boolean;
         manage_scans?: boolean;
         manage_alerts?: boolean;
+        manage_lighthouse_ai_configuration?: boolean;
         permission_state?: PermissionState;
       };
     };
@@ -443,6 +445,7 @@ export interface Role {
     manage_integrations: boolean;
     manage_scans: boolean;
     manage_alerts?: boolean;
+    manage_lighthouse_ai_configuration?: boolean;
     unlimited_visibility: boolean;
     permission_state: PermissionState;
     inserted_at: string;
@@ -541,6 +544,7 @@ export interface UserProps {
     role: {
       name: string;
     };
+    sign_in_methods?: UserSignInMethod[];
   };
   relationships: {
     memberships: {
@@ -581,6 +585,7 @@ export interface FindingProps {
     uid: string;
     delta: FindingDelta;
     status: FindingStatus;
+    raw_status?: FindingStatus;
     status_extended: string;
     severity: Severity;
     check_id: string;

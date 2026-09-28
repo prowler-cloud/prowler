@@ -9,6 +9,7 @@ import { ChevronLeft } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 
 import {
+  loadFindingTriageDetail,
   loadLatestFindingTriageNote,
   updateFindingTriage,
 } from "@/actions/findings";
@@ -76,6 +77,7 @@ export function FindingsGroupDrillDown({
     handleDrawerMuteComplete,
     selectedFindingIds,
     selectableRowCount,
+    getRowId,
     getRowCanSelect,
     clearSelection,
     isSelected,
@@ -96,12 +98,14 @@ export function FindingsGroupDrillDown({
     onTriageUpdateAction: (input) =>
       updateTriageOptimistically(input, updateFindingTriage),
     onTriageNoteLoadAction: loadLatestFindingTriageNote,
+    onTriageDetailLoadAction: loadFindingTriageDetail,
   });
 
   const table = useReactTable({
     data: resources,
     columns,
     enableRowSelection: getRowCanSelect,
+    getRowId,
     getCoreRowModel: getCoreRowModel(),
     onRowSelectionChange: handleRowSelectionChange,
     manualPagination: true,

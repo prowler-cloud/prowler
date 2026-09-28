@@ -96,12 +96,12 @@ function DeltaIndicator({
           onClick={(e) => e.stopPropagation()}
           onMouseEnter={() => setOpen(true)}
           onMouseLeave={() => setOpen(false)}
-          className="flex w-2 shrink-0 cursor-pointer items-center justify-center bg-transparent p-0"
+          className="flex w-2 shrink-0 cursor-pointer items-center justify-center bg-transparent p-0 ring-0 outline-none"
         >
           <div
             className={cn(
               "size-1.5 rounded-full",
-              delta === DeltaValues.NEW ? "bg-bg-data-high" : "bg-bg-data-low",
+              delta === DeltaValues.NEW ? "bg-bg-fail" : "bg-bg-warning",
             )}
           />
         </button>

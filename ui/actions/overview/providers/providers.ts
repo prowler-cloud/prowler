@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { apiBaseUrl, getAuthHeaders } from "@/lib";
 import { appendSanitizedProviderTypeFilters } from "@/lib/provider-filters";
 import { handleApiResponse } from "@/lib/server-actions-helper";
+import type { ApiResult } from "@/types/server-actions";
 
 import { ProvidersOverviewResponse } from "./types";
 
@@ -18,7 +19,7 @@ export const getProvidersOverview = async ({
   query?: string;
   sort?: string;
   filters?: Record<string, string | string[] | undefined>;
-} = {}): Promise<ProvidersOverviewResponse | undefined> => {
+} = {}): Promise<ApiResult<ProvidersOverviewResponse> | undefined> => {
   const headers = await getAuthHeaders({ contentType: false });
 
   if (isNaN(Number(page)) || page < 1) redirect("/providers-overview");

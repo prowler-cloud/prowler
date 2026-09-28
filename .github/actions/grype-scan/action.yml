@@ -1,0 +1,179 @@
+name: 'Container Security Scan with Grype'
+description: 'Scans container images for vulnerabilities using Grype and reports results'
+author: 'Prowler'
+
+inputs:
+  image-name:
+    description: 'Container image name to scan'
+    required: true
+  image-tag:
+    description: 'Container image tag to scan'
+    required: true
+    default: ${{ github.sha }}
+  fail-on-severity:
+    description: 'Fail the build on findings at this severity or above: critical, high, or none'
+    required: false
+    default: 'high'
+  upload-sarif:
+    description: 'Upload results to GitHub Security tab'
+    required: false
+    default: 'true'
+  create-pr-comment:
+    description: 'Create a comment on the PR with scan results'
+    required: false
+    default: 'true'
+  artifact-retention-days:
+    description: 'Days to retain the Grype report artifact'
+    required: false
+    default: '2'
+
+outputs:
+  critical-count:
+    description: 'Number of critical vulnerabilities found'
+    value: ${{ steps.security-check.outputs.critical }}
+  high-count:
+    description: 'Number of high vulnerabilities found'
+    value: ${{ steps.security-check.outputs.high }}
+  total-count:
+    description: 'Total number of vulnerabilities found'
+    value: ${{ steps.security-check.outputs.total }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Run Grype vulnerability scan (JSON)
+      uses: anchore/scan-action@e1165082ffb1fe366ebaf02d8526e7c4989ea9d2 # v7.4.0
+      with:
+        image: ${{ inputs.image-name }}:${{ inputs.image-tag }}
+        output-format: 'json'
+        output-file: 'grype-report.json'
+        fail-build: 'false'
+        by-cve: 'true' # Report CVE ids rather than GHSA, so findings line up with Trivy's
+        only-fixed: 'true' # A finding with no available fix is not actionable, so it must not gate
+        cache-db: 'true'
+        grype-version: 'v0.116.1'
+
+    - name: Run Grype vulnerability scan (SARIF)
+      if: inputs.upload-sarif == 'true' && github.event_name == 'push'
+      uses: anchore/scan-action@e1165082ffb1fe366ebaf02d8526e7c4989ea9d2 # v7.4.0
+      with:
+        image: ${{ inputs.image-name }}:${{ inputs.image-tag }}
+        output-format: 'sarif'
+        output-file: 'grype-results.sarif'
+        fail-build: 'false'
+        severity-cutoff: 'high'
+        by-cve: 'true'
+        only-fixed: 'true' # A finding with no available fix is not actionable, so it must not gate
+        cache-db: 'true'
+        grype-version: 'v0.116.1'
+
+    - name: Upload Grype results to GitHub Security tab
+      if: inputs.upload-sarif == 'true' && github.event_name == 'push'
+      uses: github/codeql-action/upload-sarif@3599b3baa15b485a2e49ef411a7a4bb2452e7f93 # v3.30.5
+      with:
+        sarif_file: 'grype-results.sarif'
+        category: 'grype-container'
+
+    - name: Upload Grype report artifact
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      if: always()
+      with:
+        name: grype-scan-report-${{ inputs.image-name }}-${{ inputs.image-tag }}
+        path: grype-report.json
+        retention-days: ${{ inputs.artifact-retention-days }}
+
+    - name: Generate security summary
+      id: security-check
+      shell: bash
+      run: |
+        CRITICAL=$(jq '[.matches[]? | select(.vulnerability.severity=="Critical")] | length' grype-report.json)
+        HIGH=$(jq '[.matches[]? | select(.vulnerability.severity=="High")] | length' grype-report.json)
+        TOTAL=$(jq '[.matches[]?] | length' grype-report.json)
+
+        echo "critical=$CRITICAL" >> $GITHUB_OUTPUT
+        echo "high=$HIGH" >> $GITHUB_OUTPUT
+        echo "total=$TOTAL" >> $GITHUB_OUTPUT
+
+        echo "### 🔎 Container Security Scan (Grype)" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Image:** \`${INPUTS_IMAGE_NAME}:${INPUTS_IMAGE_TAG}\`" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "- 🔴 Critical: $CRITICAL" >> $GITHUB_STEP_SUMMARY
+        echo "- 🟠 High: $HIGH" >> $GITHUB_STEP_SUMMARY
+        echo "- **Total**: $TOTAL" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "Reported alongside Trivy, not instead of it. Counts differ by design." >> $GITHUB_STEP_SUMMARY
+      env:
+        INPUTS_IMAGE_NAME: ${{ inputs.image-name }}
+        INPUTS_IMAGE_TAG: ${{ inputs.image-tag }}
+
+    # Before the gate, so the comment is there to explain a failure rather than absent because of it
+    - name: Comment scan results on PR
+      if: >-
+        inputs.create-pr-comment == 'true'
+        && github.event_name == 'pull_request'
+        && github.event.pull_request.head.repo.full_name == github.repository
+      uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+      env:
+        IMAGE_NAME: ${{ inputs.image-name }}
+        GITHUB_SHA: ${{ inputs.image-tag }}
+        CUTOFF: ${{ inputs.fail-on-severity }}
+      with:
+        script: |
+          const comment = require('./.github/scripts/grype-pr-comment.js');
+
+          // Unique identifier to find our comment
+          const marker = `<!-- grype-scan-comment:${process.env.IMAGE_NAME} -->`;
+          const body = marker + '\n' + comment;
+
+          const { data: comments } = await github.rest.issues.listComments({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.issue.number,
+          });
+
+          const existingComment = comments.find(c => c.body?.includes(marker));
+
+          if (existingComment) {
+            await github.rest.issues.updateComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: existingComment.id,
+              body: body
+            });
+            console.log('✅ Updated existing Grype scan comment');
+          } else {
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: body
+            });
+            console.log('✅ Created new Grype scan comment');
+          }
+
+    - name: Check for blocking vulnerabilities
+      if: inputs.fail-on-severity != 'none'
+      shell: bash
+      run: |
+        if [ "$CUTOFF" = "critical" ]; then
+          BLOCKING=$CRITICAL
+          SEVERITIES='["Critical"]'
+        else
+          BLOCKING=$((CRITICAL + HIGH))
+          SEVERITIES='["Critical","High"]'
+        fi
+
+        if [ "$BLOCKING" -gt 0 ]; then
+          echo "::error::Found $BLOCKING vulnerabilities at severity ${CUTOFF} or above ($CRITICAL critical, $HIGH high)"
+          echo "::warning::Update the package, or add it to .grype.yaml with a reason if nothing can be done"
+          jq -r --argjson severities "$SEVERITIES" \
+            '.matches[] | select(.vulnerability.severity | IN($severities[]))
+             | "  \(.vulnerability.severity)\t\(.vulnerability.id)\t\(.artifact.name) \(.artifact.version)"' \
+            grype-report.json | sort -u
+          exit 1
+        fi
+      env:
+        CUTOFF: ${{ inputs.fail-on-severity }}
+        CRITICAL: ${{ steps.security-check.outputs.critical }}
+        HIGH: ${{ steps.security-check.outputs.high }}

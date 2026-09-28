@@ -3,11 +3,17 @@
 import { RowSelectionState } from "@tanstack/react-table";
 import { useState } from "react";
 
+import { LighthouseContextContributor } from "@/components/lighthouse/context-contributor";
 import type {
   OrgWizardInitialData,
   ProviderWizardInitialData,
 } from "@/components/providers/wizard/types";
 import { DataTable } from "@/components/shadcn/table";
+import { LIGHTHOUSE_CONTEXT_CONTRIBUTOR_LIMIT } from "@/lib/lighthouse/context/constants";
+import {
+  buildProviderContext,
+  buildProviderSummaryContext,
+} from "@/lib/lighthouse/context/contributions";
 import { MetaDataProps } from "@/types";
 import {
   isProvidersOrganizationRow,
@@ -195,6 +201,12 @@ function ProvidersAccountsTableContent({
     rowSelection,
   );
   const selectedScheduleProviderIds = selectedScheduleProviders.providerIds;
+  const selectedProviderDetails = new Map(
+    selectedScheduleProviders.providers.map((provider) => [
+      provider.providerId,
+      provider,
+    ]),
+  );
   const scanConfigIdByProviderId = createScanConfigIdByProviderId(
     scanConfigs ?? [],
   );
@@ -216,18 +228,43 @@ function ProvidersAccountsTableContent({
   );
 
   return (
-    <DataTable
-      columns={columns}
-      data={rows}
-      metadata={metadata}
-      getSubRows={(row) => row.subRows}
-      defaultExpanded={isCloud}
-      showSearch
-      enableRowSelection
-      rowSelection={rowSelection}
-      onRowSelectionChange={setRowSelection}
-      enableSubRowSelection
-    />
+    <>
+      {metadata?.pagination.count !== undefined && (
+        <LighthouseContextContributor
+          key={`providers-summary-${metadata.pagination.count}`}
+          contributorId="providers-summary"
+          item={buildProviderSummaryContext(metadata.pagination.count)}
+        />
+      )}
+      {selectedScheduleProviderIds
+        .slice(0, LIGHTHOUSE_CONTEXT_CONTRIBUTOR_LIMIT.AFTER_PAGE_AND_SUMMARY)
+        .map((providerId) => {
+          const provider = selectedProviderDetails.get(providerId);
+          return (
+            <LighthouseContextContributor
+              key={`provider-${providerId}`}
+              contributorId={`provider-${providerId}`}
+              item={buildProviderContext({
+                id: providerId,
+                uid: provider?.providerUid,
+                type: provider?.providerType,
+              })}
+            />
+          );
+        })}
+      <DataTable
+        columns={columns}
+        data={rows}
+        metadata={metadata}
+        getSubRows={(row) => row.subRows}
+        defaultExpanded={isCloud}
+        showSearch
+        enableRowSelection
+        rowSelection={rowSelection}
+        onRowSelectionChange={setRowSelection}
+        enableSubRowSelection
+      />
+    </>
   );
 }
 

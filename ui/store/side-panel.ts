@@ -24,6 +24,12 @@ interface SidePanelContextTab {
   onRequestClose: () => void;
 }
 
+interface RegisterContextTabOptions {
+  // false keeps the currently selected tab: a skill launch opens the finding's
+  // detail tab in the background while the AI chat stays in front.
+  select?: boolean;
+}
+
 interface SidePanelState {
   isOpen: boolean;
   selectedTab: SidePanelTabId;
@@ -48,7 +54,10 @@ interface SidePanelState {
   togglePanel: () => void;
   setWidth: (width: number) => void;
   setIsResizing: (isResizing: boolean) => void;
-  registerContextTab: (tab: SidePanelContextTab) => number;
+  registerContextTab: (
+    tab: SidePanelContextTab,
+    options?: RegisterContextTabOptions,
+  ) => number;
   unregisterContextTab: (token: number) => void;
   setContextOutlet: (element: HTMLElement | null) => void;
   markAiTriggerHintSeen: () => void;
@@ -108,7 +117,7 @@ export const useSidePanelStore = create<SidePanelState>()(
       },
       setWidth: (width) => set({ width: clampSidePanelWidth(width) }),
       setIsResizing: (isResizing) => set({ isResizing }),
-      registerContextTab: (tab) => {
+      registerContextTab: (tab, options) => {
         // A new detail view takes over the single context tab: ask the
         // previous owner to close itself so it clears its own selection.
         get().contextTab?.onRequestClose();
@@ -116,7 +125,9 @@ export const useSidePanelStore = create<SidePanelState>()(
         set((state) => ({
           contextTab: tab,
           contextOwnerToken: token,
-          selectedTab: SIDE_PANEL_TAB.CONTEXT,
+          ...(options?.select === false
+            ? {}
+            : { selectedTab: SIDE_PANEL_TAB.CONTEXT }),
           isOpen: true,
           hasBeenOpened: true,
           // Detail content needs drawer-like room; never shrink a wider

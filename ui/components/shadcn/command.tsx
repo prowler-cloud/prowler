@@ -153,8 +153,8 @@ function CommandItem({
       data-slot="command-item"
       className={cn(
         "relative flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-hidden transition-colors select-none",
-        "hover:bg-bg-neutral-tertiary hover:text-text-neutral-primary",
-        "data-[selected=true]:bg-bg-neutral-tertiary data-[selected=true]:text-text-neutral-primary",
+        "hover:bg-border-neutral-secondary hover:text-text-neutral-primary",
+        "data-[selected=true]:bg-border-neutral-secondary data-[selected=true]:text-text-neutral-primary",
         "data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50",
         "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
         "[&_svg:not([class*='text-'])]:text-muted-foreground",

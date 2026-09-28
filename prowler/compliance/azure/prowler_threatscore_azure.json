@@ -745,24 +745,6 @@
     },
     {
       "Id": "3.2.1",
-      "Description": "Ensure that 'Auditing' Retention is 'greater than 90 days'",
-      "Checks": [
-        "sqlserver_auditing_retention_90_days"
-      ],
-      "Attributes": [
-        {
-          "Title": "Auditing' Retention is 'greater than 90 days'",
-          "Section": "3. Logging and Monitoring",
-          "SubSection": "3.2 Retention",
-          "AttributeDescription": "Configure SQL Server Audit Retention to retain logs for more than 90 days to ensure long-term visibility into database activity and security events.",
-          "AdditionalInformation": "Maintaining audit logs for over 90 days helps detect anomalies, security breaches, and unauthorized access. Longer retention periods allow organizations to analyze historical data, support compliance requirements, and strengthen forensic investigations.",
-          "LevelOfRisk": 3,
-          "Weight": 10
-        }
-      ]
-    },
-    {
-      "Id": "3.2.1",
       "Description": "Ensure that Network Watcher flow log retention period is '0 or at least 90 days'",
       "Checks": [
         "network_flow_log_more_than_90_days"
@@ -810,6 +792,24 @@
           "SubSection": "3.2 Retention",
           "AttributeDescription": "Enable Diagnostic Settings to export activity logs for all appropriate resources within a subscription, ensuring long-term visibility into security and operational events.",
           "AdditionalInformation": "By default, logs are retained for only 90 days. Configuring diagnostic settings allows logs to be exported and stored for extended periods, enabling security analysis, compliance monitoring, and forensic investigations within an Azure subscription.",
+          "LevelOfRisk": 3,
+          "Weight": 10
+        }
+      ]
+    },
+    {
+      "Id": "3.2.4",
+      "Description": "Ensure that 'Auditing' Retention is 'greater than 90 days'",
+      "Checks": [
+        "sqlserver_auditing_retention_90_days"
+      ],
+      "Attributes": [
+        {
+          "Title": "Auditing' Retention is 'greater than 90 days'",
+          "Section": "3. Logging and Monitoring",
+          "SubSection": "3.2 Retention",
+          "AttributeDescription": "Configure SQL Server Audit Retention to retain logs for more than 90 days to ensure long-term visibility into database activity and security events.",
+          "AdditionalInformation": "Maintaining audit logs for over 90 days helps detect anomalies, security breaches, and unauthorized access. Longer retention periods allow organizations to analyze historical data, support compliance requirements, and strengthen forensic investigations.",
           "LevelOfRisk": 3,
           "Weight": 10
         }

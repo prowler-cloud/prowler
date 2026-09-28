@@ -41,11 +41,10 @@ Every password in the console — at sign-up, when accepting an invitation, and 
 | **Number** | At least 1 digit |
 | **Special character** | At least 1 special character |
 | **Not common** | Rejected if it appears on the common-password list |
-| **Not similar to your details** | Rejected if too close to your name or email |
 
 ## Sign In
 
-Sign in at [partners.prowler.com](https://partners.prowler.com) with your email and password, then click **Login**. Select **Remember me** to keep the session alive longer between visits.
+Sign in at [partners.prowler.com](https://partners.prowler.com) with your email and password, then click **Login**.
 
 ![Sign In screen](/images/prowler-for-msps/sign-in-form.png)
 
@@ -68,9 +67,9 @@ The confirmation banner appears whether or not the email matches an account, so 
 
 ## Sessions
 
-Access tokens are short-lived — **30 minutes** by default — and refresh automatically while you are active. The refresh window is **24 hours**, extended to **7 days** when you select **Remember me**. Refresh tokens rotate on every refresh and the previous one is revoked.
+Portal sessions currently use a sliding **23-hour** lifetime. Continued use may renew the session window, but you should expect to sign in again after extended inactivity. Selecting **Remember me** does not provide a seven-day Portal session.
 
-If a refresh fails — after long inactivity, a revoked token, or a server restart — you return to the sign-in screen with a `RefreshAccessTokenError` notice. Sign in again to continue.
+If session refresh or validation fails, you are redirected to the sign-in screen. Sign in again to continue.
 
 ## Sign Out
 

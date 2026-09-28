@@ -15,11 +15,45 @@ import {
 } from "@/lib/compliance/compliance-report-types";
 import { runWithConcurrencyLimit } from "@/lib/concurrency";
 import { appendSanitizedProviderTypeFilters } from "@/lib/provider-filters";
+import {
+  isReportDownloadLocked,
+  REPORT_DOWNLOAD_LOCKED_ERROR,
+} from "@/lib/report-download-access";
 import { addScanOperation } from "@/lib/sentry-breadcrumbs";
 import { handleApiError, handleApiResponse } from "@/lib/server-actions-helper";
 import { SCAN_STATES } from "@/types/attack-paths";
+import { PARTIAL_SCAN_MAX_RESOURCES } from "@/types/partial-scans";
 
 const ORGANIZATION_SCAN_CONCURRENCY_LIMIT = 5;
+
+interface OrganizationScanResource {
+  id: string;
+  type: string;
+}
+
+interface OrganizationScansSuccessResponse {
+  data: OrganizationScanResource[];
+}
+
+interface OrganizationScansErrorResponse {
+  error: unknown;
+  status?: number;
+}
+
+type OrganizationScansResponse =
+  | OrganizationScansSuccessResponse
+  | OrganizationScansErrorResponse;
+
+const isOrganizationScanResource = (
+  value: unknown,
+): value is OrganizationScanResource =>
+  typeof value === "object" &&
+  value !== null &&
+  "id" in value &&
+  typeof value.id === "string" &&
+  "type" in value &&
+  value.type === "scans";
+
 export const getScans = async ({
   page = 1,
   query = "",
@@ -153,6 +187,70 @@ export const scanOnDemand = async (formData: FormData) => {
   }
 };
 
+/** Prowler Cloud only: re-check up to PARTIAL_SCAN_MAX_RESOURCES resources of one provider. */
+export const createPartialScan = async ({
+  providerId,
+  resourceUids,
+}: {
+  providerId: string;
+  resourceUids: string[];
+}) => {
+  if (!providerId) {
+    return { error: "Provider ID is required" };
+  }
+  if (
+    resourceUids.length === 0 ||
+    resourceUids.length > PARTIAL_SCAN_MAX_RESOURCES
+  ) {
+    return {
+      error: `Select between 1 and ${PARTIAL_SCAN_MAX_RESOURCES} resources to re-check`,
+    };
+  }
+
+  const headers = await getAuthHeaders({ contentType: true });
+
+  addScanOperation("create", undefined, {
+    provider_id: providerId,
+    partial: true,
+    resource_count: resourceUids.length,
+  });
+
+  const url = new URL(`${apiBaseUrl}/scans`);
+
+  try {
+    const requestBody = {
+      data: {
+        type: "scans",
+        attributes: { resource_uids: resourceUids },
+        relationships: {
+          provider: {
+            data: {
+              type: "providers",
+              id: providerId,
+            },
+          },
+        },
+      },
+    };
+
+    const response = await fetch(url.toString(), {
+      method: "POST",
+      headers,
+      body: JSON.stringify(requestBody),
+    });
+
+    const result = await handleApiResponse(response, "/scans");
+    if (result?.data?.id) {
+      addScanOperation("start", result.data.id);
+      revalidatePath("/scans");
+    }
+    return result;
+  } catch (error) {
+    addScanOperation("create");
+    return handleApiError(error);
+  }
+};
+
 export const scheduleDaily = async (formData: FormData) => {
   const headers = await getAuthHeaders({ contentType: true });
 
@@ -183,9 +281,60 @@ export const scheduleDaily = async (formData: FormData) => {
 };
 
 export const launchOrganizationScans = async (
-  providerIds: string[],
-  scheduleOption: "daily" | "single",
-) => {
+  organizationId: string,
+): Promise<OrganizationScansResponse> => {
+  if (!organizationId) {
+    return { error: "Organization ID is required" };
+  }
+
+  const headers = await getAuthHeaders({ contentType: true });
+  const url = new URL(`${apiBaseUrl}/scans/bulk`);
+
+  try {
+    const response = await fetch(url.toString(), {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        data: {
+          type: "scans-bulk",
+          relationships: {
+            organization: {
+              data: {
+                type: "organizations",
+                id: organizationId,
+              },
+            },
+          },
+        },
+      }),
+    });
+
+    const result = await handleApiResponse(response, "/scans");
+    if (result?.error !== undefined) {
+      return { error: result.error, status: result.status };
+    }
+
+    const scans: unknown = result?.data;
+    if (!Array.isArray(scans) || !scans.every(isOrganizationScanResource)) {
+      return {
+        error: "The bulk scan response did not contain a scan collection.",
+      };
+    }
+
+    addScanOperation("start", undefined, {
+      organization_id: organizationId,
+      bulk: true,
+      scan_count: scans.length,
+      scan_ids: scans.map((scan) => scan.id).join(","),
+    });
+
+    return { data: scans };
+  } catch (error) {
+    return handleApiError(error);
+  }
+};
+
+export const scheduleOrganizationDailyScans = async (providerIds: string[]) => {
   const validProviderIds = providerIds.filter(Boolean);
   if (validProviderIds.length === 0) {
     return {
@@ -203,10 +352,7 @@ export const launchOrganizationScans = async (
         const formData = new FormData();
         formData.set("providerId", providerId);
 
-        const result =
-          scheduleOption === "daily"
-            ? await scheduleDaily(formData)
-            : await scanOnDemand(formData);
+        const result = await scheduleDaily(formData);
 
         return {
           providerId,
@@ -300,6 +446,10 @@ export const updateScan = async (formData: FormData) => {
 };
 
 export const getExportsZip = async (scanId: string) => {
+  if (await isReportDownloadLocked()) {
+    return { error: REPORT_DOWNLOAD_LOCKED_ERROR };
+  }
+
   const headers = await getAuthHeaders({ contentType: false });
 
   const url = new URL(`${apiBaseUrl}/scans/${scanId}/report`);
@@ -380,6 +530,10 @@ const _fetchScanBinary = async (
   filename: string,
   errorLabel: string,
 ): Promise<ScanBinaryResult> => {
+  if (await isReportDownloadLocked()) {
+    return { error: REPORT_DOWNLOAD_LOCKED_ERROR };
+  }
+
   const headers = await getAuthHeaders({ contentType: false });
   const url = new URL(`${apiBaseUrl}/scans/${scanId}/${urlPath}`);
 

@@ -493,9 +493,11 @@ class TestProviderHeaders:
         )
         row_dict = output.data[0].dict()
         assert "Context" in row_dict
+        assert "Cluster" in row_dict
         assert "Namespace" in row_dict
         # Kubernetes Context maps to account_name
         assert row_dict["Context"] == "test-account"
+        assert row_dict["Cluster"] == "123456789012"
         assert row_dict["Namespace"] == "us-east-1"
 
     def test_github_headers(self, tmp_path):
@@ -562,17 +564,17 @@ class TestProviderHeaders:
         assert "ACCOUNTID" not in content
 
     def test_column_order_matches_legacy(self, tmp_path):
-        """Verify that the base column order matches the legacy per-provider models.
+        """Verify that the base column order matches per-provider models.
 
-        Legacy models all define: Provider, Description, <col3>, <col4>, AssessmentDate, ...
-        The universal output must preserve this exact order for backward compatibility.
+        Most models define: Provider, Description, <account>, <location>, AssessmentDate.
+        Kubernetes includes the dedicated Cluster column between Context and Namespace.
         """
         # Expected column order per provider (positions 3 and 4 after Provider, Description)
         legacy_order = {
             "aws": ("AccountId", "Region"),
             "azure": ("SubscriptionId", "Location"),
             "gcp": ("ProjectId", "Location"),
-            "kubernetes": ("Context", "Namespace"),
+            "kubernetes": ("Context", "Cluster", "Namespace"),
             "m365": ("TenantId", "Location"),
             "github": ("Account_Name", "Account_Id"),
             "oraclecloud": ("TenancyId", "Region"),
@@ -580,7 +582,7 @@ class TestProviderHeaders:
             "nhn": ("AccountId", "Region"),
         }
 
-        for provider_name, (expected_col3, expected_col4) in legacy_order.items():
+        for provider_name, expected_columns in legacy_order.items():
             fw = _simple_framework()
             findings = [_make_provider_finding(provider_name)]
             output = UniversalComplianceOutput(
@@ -594,12 +596,12 @@ class TestProviderHeaders:
             assert (
                 keys[1] == "Description"
             ), f"{provider_name}: col 2 should be Description"
-            assert (
-                keys[2] == expected_col3
-            ), f"{provider_name}: col 3 should be {expected_col3}, got {keys[2]}"
-            assert (
-                keys[3] == expected_col4
-            ), f"{provider_name}: col 4 should be {expected_col4}, got {keys[3]}"
-            assert (
-                keys[4] == "AssessmentDate"
-            ), f"{provider_name}: col 5 should be AssessmentDate"
+            for index, expected_column in enumerate(expected_columns, start=2):
+                assert keys[index] == expected_column, (
+                    f"{provider_name}: col {index + 1} should be "
+                    f"{expected_column}, got {keys[index]}"
+                )
+            assert keys[2 + len(expected_columns)] == "AssessmentDate", (
+                f"{provider_name}: col {3 + len(expected_columns)} should be "
+                "AssessmentDate"
+            )

@@ -3,7 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import { apiBaseUrl, getAuthHeaders, getFormValue, wait } from "@/lib";
+import { apiBaseUrl, getAuthHeaders, getFormValue } from "@/lib";
+import { runWithConcurrencyLimit } from "@/lib/concurrency";
 import { buildSecretConfig } from "@/lib/provider-credentials/build-credentials";
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
 import { appendSanitizedProviderInFilters } from "@/lib/provider-filters";
@@ -144,6 +145,129 @@ export const getProvider = async (formData: FormData) => {
   } catch (error) {
     return handleApiError(error);
   }
+};
+
+/** Server max for `page[size]`, which also bounds the id batch size. */
+const PROVIDERS_PAGE_MAX = 100;
+
+/**
+ * Providers matching the given ids, batched with `filter[id__in]` (page size
+ * `PROVIDERS_PAGE_MAX`, the server max, which also bounds the id batch size)
+ * rather than one `GET /providers/{id}` per id. Shared by every action below
+ * that resolves providers by id; a batch that fails to fetch leaves its
+ * providers out of the result rather than failing the rest, and it is on each
+ * caller to say what "missing" means for its own map. Not exported: an
+ * exported function in this `"use server"` module becomes a callable server
+ * action.
+ */
+const fetchProvidersByIds = async (
+  providerIds: string[],
+): Promise<ProvidersApiResponse["data"]> => {
+  const uniqueIds = Array.from(new Set(providerIds.filter(Boolean)));
+  if (uniqueIds.length === 0) {
+    return [];
+  }
+
+  const headers = await getAuthHeaders({ contentType: false });
+  const providers: ProvidersApiResponse["data"] = [];
+
+  for (let start = 0; start < uniqueIds.length; start += PROVIDERS_PAGE_MAX) {
+    const batch = uniqueIds.slice(start, start + PROVIDERS_PAGE_MAX);
+    const url = new URL(`${apiBaseUrl}/providers`);
+    url.searchParams.set("filter[id__in]", batch.join(","));
+    url.searchParams.set("page[size]", String(PROVIDERS_PAGE_MAX));
+
+    try {
+      const response = await fetch(url.toString(), { headers });
+      const result = (await handleApiResponse(response)) as
+        | ProvidersApiResponse
+        | undefined;
+
+      providers.push(...(result?.data ?? []));
+    } catch {
+      // A failed batch leaves its providers out of the result rather than
+      // failing the rest.
+    }
+  }
+
+  return providers;
+};
+
+/**
+ * Uids of the given providers, keyed by provider id. A provider's `uid` is the
+ * candidate it was created for (AWS account id / GCP project id), so this is what
+ * matches an apply's created providers back to the selection.
+ */
+export const getProviderUidsByIds = async (
+  providerIds: string[],
+): Promise<Record<string, string>> => {
+  const uidById: Record<string, string> = {};
+
+  for (const provider of await fetchProvidersByIds(providerIds)) {
+    const uid = provider?.attributes?.uid;
+    if (typeof provider?.id === "string" && typeof uid === "string") {
+      uidById[provider.id] = uid;
+    }
+  }
+
+  return uidById;
+};
+
+/**
+ * `connection.last_checked_at` for each given provider, keyed by id. Read before
+ * a batch of connection checks is dispatched, so `resolveProviderConnectionState`
+ * can tell a check's own result apart from an older one already on record by
+ * comparing values, never by comparing the browser's clock against the server's
+ * (see that function for why). A provider missing from the response -- the batch
+ * read failed, or it was deleted mid-flight -- is left out of the map rather than
+ * defaulted, so callers can tell "no prior check" (`null`) from "unknown".
+ */
+export const getProviderConnectionBaselines = async (
+  providerIds: string[],
+): Promise<Record<string, string | null>> => {
+  const baselineById: Record<string, string | null> = {};
+
+  for (const provider of await fetchProvidersByIds(providerIds)) {
+    if (typeof provider?.id === "string") {
+      baselineById[provider.id] =
+        provider.attributes?.connection?.last_checked_at ?? null;
+    }
+  }
+
+  return baselineById;
+};
+
+/**
+ * Uid and `connection.last_checked_at` for each given provider, keyed by id, read
+ * with a single batched `filter[id__in]` request. The organization onboarding
+ * apply step needs both right after creating providers: the uid to match each one
+ * back to the candidate it was created for (see `getProviderUidsByIds`), and the
+ * baseline to compare a dispatched check's result against (see
+ * `getProviderConnectionBaselines`). Reading them together avoids fetching the
+ * same set of providers twice.
+ */
+export const getProviderUidsAndConnectionBaselines = async (
+  providerIds: string[],
+): Promise<{
+  uidById: Record<string, string>;
+  baselineById: Record<string, string | null>;
+}> => {
+  const uidById: Record<string, string> = {};
+  const baselineById: Record<string, string | null> = {};
+
+  for (const provider of await fetchProvidersByIds(providerIds)) {
+    if (typeof provider?.id !== "string") {
+      continue;
+    }
+    const uid = provider.attributes?.uid;
+    if (typeof uid === "string") {
+      uidById[provider.id] = uid;
+    }
+    baselineById[provider.id] =
+      provider.attributes?.connection?.last_checked_at ?? null;
+  }
+
+  return { uidById, baselineById };
 };
 
 export const updateProvider = async (formData: FormData) => {
@@ -299,19 +423,73 @@ export const updateCredentialsProvider = async (
   }
 };
 
-export const checkConnectionProvider = async (formData: FormData) => {
+export const checkConnectionProvider = async (
+  formData: FormData,
+  { revalidate = true }: { revalidate?: boolean } = {},
+) => {
   const headers = await getAuthHeaders({ contentType: false });
   const providerId = formData.get(ProviderCredentialFields.PROVIDER_ID);
   const url = new URL(`${apiBaseUrl}/providers/${providerId}/connection`);
 
   try {
     const response = await fetch(url.toString(), { method: "POST", headers });
-    await wait(2000);
 
-    return handleApiResponse(response, "/providers");
+    // Batches opt out: revalidating here would re-render the providers page
+    // once per provider.
+    return handleApiResponse(response, revalidate ? "/providers" : undefined);
   } catch (error) {
     return handleApiError(error);
   }
+};
+
+/** Connection checks in flight at once. */
+const CONNECTION_CHECK_CONCURRENCY_LIMIT = 10;
+
+/**
+ * Dispatches a connection check per provider, returning the task testing each
+ * one keyed by provider id. A failed dispatch is reported under `error` and
+ * never cancels the rest of the batch.
+ *
+ * The fan-out belongs here, not in the caller: client-invoked server actions run
+ * one at a time through Next's action queue, so a client-side loop is serialized
+ * whatever concurrency it declares.
+ */
+export const startProviderConnectionChecks = async (
+  providerIds: string[],
+): Promise<Record<string, { taskId?: string; error?: unknown }>> => {
+  const uniqueIds = Array.from(new Set(providerIds.filter(Boolean)));
+  const outcomes: Record<string, { taskId?: string; error?: unknown }> = {};
+
+  await runWithConcurrencyLimit(
+    uniqueIds,
+    CONNECTION_CHECK_CONCURRENCY_LIMIT,
+    async (providerId) => {
+      const formData = new FormData();
+      formData.set(ProviderCredentialFields.PROVIDER_ID, providerId);
+
+      try {
+        const result = await checkConnectionProvider(formData, {
+          revalidate: false,
+        });
+
+        if (result?.error || result?.errors?.length) {
+          outcomes[providerId] = { error: result };
+          return;
+        }
+
+        outcomes[providerId] = { taskId: result?.data?.id };
+      } catch (error) {
+        outcomes[providerId] = { error: handleApiError(error) };
+      }
+    },
+  );
+
+  return outcomes;
+};
+
+/** Called once after a batch of checks, which revalidate nothing themselves. */
+export const revalidateProviders = async () => {
+  revalidatePath("/providers");
 };
 
 export const deleteCredentials = async (secretId: string) => {

@@ -9,6 +9,7 @@ export const AuthForm = ({
   githubAuthUrl,
   isGoogleOAuthEnabled,
   isGithubOAuthEnabled,
+  isSelfRegistrationEnabled = true,
 }: {
   type: string;
   invitationToken?: string | null;
@@ -17,6 +18,7 @@ export const AuthForm = ({
   githubAuthUrl?: string;
   isGoogleOAuthEnabled?: boolean;
   isGithubOAuthEnabled?: boolean;
+  isSelfRegistrationEnabled?: boolean;
 }) => {
   if (type === "sign-in") {
     return (
@@ -25,6 +27,7 @@ export const AuthForm = ({
         githubAuthUrl={githubAuthUrl}
         isGoogleOAuthEnabled={isGoogleOAuthEnabled}
         isGithubOAuthEnabled={isGithubOAuthEnabled}
+        isSelfRegistrationEnabled={isSelfRegistrationEnabled}
       />
     );
   }

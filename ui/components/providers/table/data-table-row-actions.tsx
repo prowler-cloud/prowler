@@ -15,7 +15,13 @@ import { useState } from "react";
 
 import { updateOrganizationName } from "@/actions/organizations/organizations";
 import { updateProvider } from "@/actions/providers";
+import {
+  getProviderConnectionBaselines,
+  revalidateProviders,
+  startProviderConnectionChecks,
+} from "@/actions/providers/providers";
 import { getSchedule } from "@/actions/schedules";
+import { pollConnectionTasks } from "@/components/providers/organizations/org-account-selection.utils";
 import {
   ORG_WIZARD_INTENT,
   OrgWizardInitialData,
@@ -33,13 +39,24 @@ import {
   ActionDropdownItem,
 } from "@/components/shadcn/dropdown";
 import { Modal } from "@/components/shadcn/modal";
-import { runWithConcurrencyLimit } from "@/lib/concurrency";
-import { testProviderConnection } from "@/lib/provider-helpers";
+import {
+  getNodeLabel,
+  organizationNameFallbackHint,
+} from "@/lib/organizations";
+import {
+  resolveProviderConnectionState,
+  testProviderConnection,
+} from "@/lib/provider-helpers";
 import { getScanScheduleCapability } from "@/lib/schedules";
 import { isCloud } from "@/lib/shared/env";
-import { ORG_SETUP_PHASE, ORG_WIZARD_STEP } from "@/types/organizations";
+import {
+  isOrgFlowType,
+  ORG_SETUP_PHASE,
+  ORG_WIZARD_STEP,
+  OrgFlowType,
+} from "@/types/organizations";
 import { PROVIDER_WIZARD_MODE } from "@/types/provider-wizard";
-import { isConfigurableProvider } from "@/types/providers";
+import { CONNECTION_CHECK_STATUS } from "@/types/providers";
 import {
   isProvidersOrganizationRow,
   PROVIDERS_GROUP_KIND,
@@ -167,14 +184,25 @@ function OrgGroupDropdownActions({
   const isOrgKind = rowData.groupKind === PROVIDERS_GROUP_KIND.ORGANIZATION;
   const testIds = hasSelection ? testableProviderIds : childTestableIds;
   const testCount = testIds.length;
-  const entityLabel = isOrgKind ? "organization" : "organizational unit";
+  const nodeLabel = getNodeLabel(rowData.orgType, rowData.kind);
+  const entityLabel = isOrgKind ? "organization" : nodeLabel.toLowerCase();
+  // Blank falls back to the identifier, matching what creation does. A row with
+  // no external id has nothing to fall back to, so there the name stays required.
+  const nameFallback = rowData.externalId ?? "";
+  // Credential updates re-enter the organization wizard, so this needs an
+  // organization type with an onboarding flow.
+  const orgFlowType: OrgFlowType | null = isOrgFlowType(rowData.orgType)
+    ? rowData.orgType
+    : null;
 
   const openOrgWizardAt = (
+    organizationType: OrgFlowType,
     targetStep: OrgWizardInitialData["targetStep"],
     targetPhase: OrgWizardInitialData["targetPhase"],
     intent?: OrgWizardInitialData["intent"],
   ) => {
     onOpenOrganizationWizard({
+      organizationType,
       organizationId: rowData.id,
       organizationName: rowData.name,
       externalId: rowData.externalId ?? "",
@@ -196,9 +224,20 @@ function OrgGroupDropdownActions({
             currentValue={rowData.name}
             label="Name"
             successMessage="The organization name was updated successfully."
-            helperText="If left blank, Prowler will use the name stored in AWS."
+            helperText={
+              nameFallback
+                ? organizationNameFallbackHint(rowData.orgType)
+                : undefined
+            }
+            validate={
+              nameFallback
+                ? undefined
+                : (value) => (value.trim() ? null : "Name is required.")
+            }
             setIsOpen={setIsEditNameOpen}
-            onSave={(name) => updateOrganizationName(rowData.id, name)}
+            onSave={(name) =>
+              updateOrganizationName(rowData.id, name.trim() || nameFallback)
+            }
           />
         </Modal>
       )}
@@ -206,12 +245,21 @@ function OrgGroupDropdownActions({
         open={isDeleteOrgOpen}
         onOpenChange={setIsDeleteOrgOpen}
         title="Are you absolutely sure?"
-        description={`This action cannot be undone. This will permanently delete this ${entityLabel} and all associated data.`}
+        description={`This action cannot be undone. This will permanently delete this ${entityLabel}${
+          rowData.providerCount > 0
+            ? ` and cascade to its ${rowData.providerCount} ${
+                rowData.providerCount === 1 ? "provider" : "providers"
+              }`
+            : ""
+        }.`}
       >
         <DeleteOrganizationForm
           id={rowData.id}
           name={rowData.name}
           variant={rowData.groupKind}
+          orgType={rowData.orgType}
+          kind={rowData.kind}
+          providerCount={rowData.providerCount}
           setIsOpen={setIsDeleteOrgOpen}
         />
       </Modal>
@@ -225,17 +273,20 @@ function OrgGroupDropdownActions({
                 label="Edit Organization Name"
                 onSelect={() => setIsEditNameOpen(true)}
               />
-              <ActionDropdownItem
-                icon={<KeyRound />}
-                label="Update Credentials"
-                onSelect={() =>
-                  openOrgWizardAt(
-                    ORG_WIZARD_STEP.SETUP,
-                    ORG_SETUP_PHASE.ACCESS,
-                    ORG_WIZARD_INTENT.EDIT_CREDENTIALS,
-                  )
-                }
-              />
+              {orgFlowType && (
+                <ActionDropdownItem
+                  icon={<KeyRound />}
+                  label="Update Credentials"
+                  onSelect={() =>
+                    openOrgWizardAt(
+                      orgFlowType,
+                      ORG_WIZARD_STEP.SETUP,
+                      ORG_SETUP_PHASE.ACCESS,
+                      ORG_WIZARD_INTENT.EDIT_CREDENTIALS,
+                    )
+                  }
+                />
+              )}
             </>
           )}
           {isOrgKind && canEditSchedule && (
@@ -263,9 +314,7 @@ function OrgGroupDropdownActions({
           <ActionDropdownDangerZone>
             <ActionDropdownItem
               icon={<Trash2 />}
-              label={
-                isOrgKind ? "Delete Organization" : "Delete Organization Unit"
-              }
+              label={isOrgKind ? "Delete Organization" : `Delete ${nodeLabel}`}
               destructive
               onSelect={() => setIsDeleteOrgOpen(true)}
             />
@@ -310,8 +359,7 @@ export function DataTableRowActions({
   const provider = isOrganizationRow ? null : rowData;
   const providerId = provider?.id ?? "";
   const providerType = provider?.attributes.provider ?? "";
-  // Only predefined providers can manage credentials from the UI
-  const canManageCredentials = isConfigurableProvider(providerType);
+  const canManageCredentials = Boolean(providerType);
   const providerUid = provider?.attributes.uid ?? "";
   const providerAlias = provider?.attributes.alias ?? null;
   const providerSecretId = provider?.relationships.secret.data?.id ?? null;
@@ -346,27 +394,79 @@ export function DataTableRowActions({
     if (ids.length === 0) return;
     setLoading(true);
 
-    const results = await runWithConcurrencyLimit(ids, 10, async (id) => {
-      try {
-        return await testProviderConnection(id);
-      } catch {
-        return { connected: false, error: "Unexpected error" };
+    // Dispatched and polled in batches: client-invoked server actions run one at a
+    // time through Next's queue, so a loop here serializes whatever concurrency it
+    // asks for.
+    let succeeded = 0;
+    let failed = 0;
+    let pending = 0;
+    const providerIdByTaskId = new Map<string, string>();
+
+    try {
+      // Read before dispatch, so the fallback below can tell each provider's own
+      // check result apart from whatever (possibly stale) result was already on
+      // record -- by comparing values, not by comparing timestamps against the
+      // browser's clock. See `resolveProviderConnectionState`.
+      const connectionBaselines = await getProviderConnectionBaselines(ids);
+      const outcomes = await startProviderConnectionChecks(ids);
+
+      for (const id of ids) {
+        const outcome = outcomes[id];
+
+        // No task id means nothing was ever tested, so it cannot count as passing.
+        if (!outcome || outcome.error || !outcome.taskId) {
+          failed += 1;
+          continue;
+        }
+
+        providerIdByTaskId.set(outcome.taskId, id);
       }
-    });
 
-    const succeeded = results.filter((r) => r.connected).length;
-    const failed = results.length - succeeded;
+      await pollConnectionTasks(Array.from(providerIdByTaskId.keys()), {
+        onSettled: (_taskId, result) => {
+          if (result.status === CONNECTION_CHECK_STATUS.SUCCESS) {
+            succeeded += 1;
+          } else if (result.status === CONNECTION_CHECK_STATUS.PENDING) {
+            pending += 1;
+          } else {
+            failed += 1;
+          }
+        },
+        resolveExhausted: async (taskId) => {
+          const id = providerIdByTaskId.get(taskId);
+          if (!id) {
+            return null;
+          }
+          const state = await resolveProviderConnectionState(
+            id,
+            connectionBaselines[id],
+          );
+          return { status: state.status, error: state.error ?? undefined };
+        },
+      });
+    } catch {
+      failed = ids.length - succeeded - pending;
+    }
 
-    if (failed === 0) {
+    await revalidateProviders();
+
+    if (failed === 0 && pending === 0) {
       toast({
         title: "Connection test completed",
         description: `${succeeded} ${succeeded === 1 ? "provider" : "providers"} tested successfully.`,
+      });
+    } else if (failed === 0) {
+      toast({
+        title: "Connection test still running",
+        description: `${succeeded} succeeded, ${pending} still running. Refresh in a moment to see the rest.`,
       });
     } else {
       toast({
         variant: "destructive",
         title: "Connection test completed",
-        description: `${succeeded} succeeded, ${failed} failed out of ${results.length} providers.`,
+        description: `${succeeded} succeeded, ${failed} failed${
+          pending ? `, ${pending} still running` : ""
+        } out of ${ids.length} providers.`,
       });
     }
 
@@ -385,16 +485,21 @@ export function DataTableRowActions({
       const result = await testProviderConnection(providerId);
       setLoading(false);
 
-      if (!result.connected) {
+      if (result.status === CONNECTION_CHECK_STATUS.SUCCESS) {
+        toast({
+          title: "Connection test completed",
+          description: "Provider tested successfully.",
+        });
+      } else if (result.status === CONNECTION_CHECK_STATUS.PENDING) {
+        toast({
+          title: "Connection test still running",
+          description: result.error ?? "Refresh in a moment to see the result.",
+        });
+      } else {
         toast({
           variant: "destructive",
           title: "Connection test failed",
           description: result.error ?? "Unknown error",
-        });
-      } else {
-        toast({
-          title: "Connection test completed",
-          description: "Provider tested successfully.",
         });
       }
     }

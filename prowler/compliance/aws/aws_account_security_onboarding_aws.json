@@ -277,7 +277,6 @@
         }
       ],
       "Checks": [
-        "guardduty_is_enabled",
         "guardduty_is_enabled"
       ],
       "ConfigRequirements": [
@@ -497,7 +496,7 @@
       "Checks": []
     },
     {
-      "Id": "Create Cost Anomaly Detection monitors to alert spending anomalies",
+      "Id": "Create Cost Anomaly Detection monitors to alert spending anomalies (Prod)",
       "Description": "Develop monitoring systems for detecting cost anomalies and generating alerts for irregular spending patterns.",
       "Attributes": [
         {
@@ -510,7 +509,7 @@
       "Checks": []
     },
     {
-      "Id": "Create Cost Anomaly Detection monitors to alert spending anomalies",
+      "Id": "Create Cost Anomaly Detection monitors to alert spending anomalies (QA)",
       "Description": "Establish monitoring systems for cost anomaly detection to promptly notify about unusual spending patterns.",
       "Attributes": [
         {
@@ -618,7 +617,7 @@
       ]
     },
     {
-      "Id": "Export scan results as metrics in centralized collector",
+      "Id": "Export scan results as metrics in centralized collector (EC2)",
       "Description": "Export scan results as metrics to a centralized collector.",
       "Attributes": [
         {
@@ -667,7 +666,7 @@
       ]
     },
     {
-      "Id": "Export scan results as metrics in centralized collector",
+      "Id": "Export scan results as metrics in centralized collector (ECR)",
       "Description": "Generate metric data from scan results and store it in a centralized collector.",
       "Attributes": [
         {
@@ -1189,7 +1188,7 @@
       ]
     },
     {
-      "Id": "Export metrics in centralized collector",
+      "Id": "Export metrics in centralized collector (Shield Advanced)",
       "Description": "Exporting metrics to a centralized collector for data aggregation and analysis.",
       "Attributes": [
         {
@@ -1367,7 +1366,7 @@
       "Checks": []
     },
     {
-      "Id": "Export metrics in centralized collector",
+      "Id": "Export metrics in centralized collector (WAFv2)",
       "Description": "Exporting metrics to a centralized collector for comprehensive data aggregation.",
       "Attributes": [
         {

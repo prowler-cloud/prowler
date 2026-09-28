@@ -15,6 +15,9 @@ class Cloudtrail(AWSService):
         super().__init__(__class__.__name__, provider)
         self.trail_arn_template = f"arn:{self.audited_partition}:cloudtrail:{self.region}:{self.audited_account}:trail"
         self.trails = {}
+        # True when DescribeTrails was denied in at least one audited region,
+        # so the trail inventory may be incomplete.
+        self.trails_unavailable = False
         self.__threading_call__(self._get_trails)
         if self.trails:
             self._get_trail_status()
@@ -79,13 +82,16 @@ class Cloudtrail(AWSService):
                 logger.error(
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
+                self.trails_unavailable = True
                 if not self.trails:
                     self.trails = None
             else:
+                self.trails_unavailable = True
                 logger.error(
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         except Exception as error:
+            self.trails_unavailable = True
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
@@ -206,6 +212,41 @@ class Cloudtrail(AWSService):
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+
+    def _lookup_events_page(self, region, event_name, minutes):
+        """Return ``(events, truncated, error)`` for a single lookup_events page.
+
+        ``LookupEvents`` is a **per-region** API: even for a multi-region trail,
+        events recorded in region X are only retrievable by calling
+        ``LookupEvents`` against region X. This helper is therefore
+        region-scoped; callers iterate over the audited regions themselves.
+
+        - ``events``: list of raw event dicts (empty on no match or on error).
+        - ``truncated``: True when the API returned a ``NextToken`` (coverage
+          in this page is bounded; more events exist in the window).
+        - ``error``: ``None`` on success; a short string when the call raised
+          so callers can report incomplete visibility instead of interpreting
+          an empty response as "no matches" (matches the fail-closed pattern).
+        """
+        logger.info("CloudTrail - Lookup Events (single-page)...")
+        try:
+            regional_client = self.regional_clients[region]
+        except KeyError as error:
+            logger.error(f"CloudTrail - unknown region '{region}': {error}")
+            return [], False, f"unknown region '{region}'"
+        try:
+            response = regional_client.lookup_events(
+                LookupAttributes=[
+                    {"AttributeKey": "EventName", "AttributeValue": event_name}
+                ],
+                StartTime=datetime.now() - timedelta(minutes=minutes),
+            )
+            return response.get("Events") or [], bool(response.get("NextToken")), None
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            return [], False, error.__class__.__name__
 
     def _list_tags_for_resource(self):
         logger.info("CloudTrail - List Tags...")

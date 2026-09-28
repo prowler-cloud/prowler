@@ -22,6 +22,9 @@ interface CompliancePageTabsProps {
   crossProviderEnabled: boolean;
   perScanContent: ReactNode;
   crossProviderContent: ReactNode;
+  /** Watchlist filter + editor. Sits on the tab bar rather than inside a tab
+   *  because both of them read and write the same tenant-wide list. */
+  watchlistControls?: ReactNode;
 }
 
 export const CompliancePageTabs = ({
@@ -29,6 +32,7 @@ export const CompliancePageTabs = ({
   crossProviderEnabled,
   perScanContent,
   crossProviderContent,
+  watchlistControls,
 }: CompliancePageTabsProps) => {
   const router = useRouter();
   const openCloudUpgrade = useCloudUpgradeStore(
@@ -59,22 +63,27 @@ export const CompliancePageTabs = ({
   return (
     <Tabs value={activeTab} onValueChange={handleTabChange}>
       <div className="flex flex-col gap-[18px]">
-        <div data-tour-id="view-compliance-tabs" className="overflow-x-auto">
-          <TabsList>
-            <TabsTrigger
-              value={COMPLIANCE_TAB.CROSS_PROVIDER}
-              adornment={
-                !crossProviderEnabled ? (
-                  <Badge variant="cloud">Cloud</Badge>
-                ) : undefined
-              }
-            >
-              Multiple Scans
-            </TabsTrigger>
-            <TabsTrigger value={COMPLIANCE_TAB.PER_SCAN}>
-              Single Scan
-            </TabsTrigger>
-          </TabsList>
+        {/* Wraps below the tabs on narrow viewports instead of squeezing the
+            triggers, which are the primary navigation of the page. */}
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div data-tour-id="view-compliance-tabs" className="overflow-x-auto">
+            <TabsList>
+              <TabsTrigger
+                value={COMPLIANCE_TAB.CROSS_PROVIDER}
+                adornment={
+                  !crossProviderEnabled ? (
+                    <Badge variant="cloud">Cloud</Badge>
+                  ) : undefined
+                }
+              >
+                Multiple Scans
+              </TabsTrigger>
+              <TabsTrigger value={COMPLIANCE_TAB.PER_SCAN}>
+                Single Scan
+              </TabsTrigger>
+            </TabsList>
+          </div>
+          {watchlistControls}
         </div>
 
         <TabsContent value={COMPLIANCE_TAB.CROSS_PROVIDER}>

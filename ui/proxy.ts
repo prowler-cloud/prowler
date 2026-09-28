@@ -2,8 +2,22 @@ import { NextResponse } from "next/server";
 import type { NextAuthRequest } from "next-auth";
 
 import { auth } from "@/auth.config";
+import { getCspHeader } from "@/lib/csp";
+import {
+  GATED_INTEGRATIONS,
+  isGatedIntegrationEnabled,
+  readGatedEnv,
+} from "@/lib/integrations";
+import {
+  SLACK_CALLBACK_PATH,
+  SLACK_EXPIRED_CALLBACK_URL,
+} from "@/lib/integrations/slack-connect-status";
+import { REGISTRY_ACCESS } from "@/lib/registry/access";
+import { evaluateRegistryAccess } from "@/lib/registry/access.server";
+import { readRegistryPresentation } from "@/lib/registry/presentation";
 import { readEnv } from "@/lib/runtime-env";
 import { isCloud } from "@/lib/shared/env";
+import { copyAttributionParams } from "@/lib/utm";
 
 const publicRoutes = [
   "/sign-in",
@@ -19,8 +33,35 @@ const isPublicRoute = (pathname: string): boolean => {
   return publicRoutes.some((route) => pathname.startsWith(route));
 };
 
+const withSecurityHeaders = (response: NextResponse): NextResponse => {
+  response.headers.set(
+    "Content-Security-Policy",
+    getCspHeader({
+      cloudEnabled: isCloud(),
+      registryImageOrigins: readRegistryPresentation().imageOrigins,
+      posthogEnabled: isGatedIntegrationEnabled(GATED_INTEGRATIONS.posthog),
+      posthogKey: readGatedEnv(
+        "UI_POSTHOG_ENABLED",
+        "UI_POSTHOG_KEY",
+        "POSTHOG_KEY",
+      ),
+      posthogIngestionHost: readGatedEnv(
+        "UI_POSTHOG_ENABLED",
+        "UI_POSTHOG_HOST",
+        "POSTHOG_HOST",
+      ),
+      posthogUiHost: readGatedEnv("UI_POSTHOG_ENABLED", "UI_POSTHOG_UI_HOST"),
+      posthogToolbarEnabled: process.env.NODE_ENV === "development",
+    }),
+  );
+  return response;
+};
+
+const redirect = (url: URL): NextResponse =>
+  withSecurityHeaders(NextResponse.redirect(url));
+
 // NextAuth's auth() wrapper - renamed from middleware to proxy
-export default auth((req: NextAuthRequest) => {
+export default auth(async (req: NextAuthRequest) => {
   const { pathname } = req.nextUrl;
 
   const user = req.auth?.user;
@@ -32,14 +73,30 @@ export default auth((req: NextAuthRequest) => {
   if (sessionError && !isPublicRoute(pathname)) {
     const signInUrl = new URL("/sign-in", req.url);
     signInUrl.searchParams.set("error", sessionError);
-    signInUrl.searchParams.set("callbackUrl", pathname + req.nextUrl.search);
-    return NextResponse.redirect(signInUrl);
+    signInUrl.searchParams.set(
+      "callbackUrl",
+      pathname === SLACK_CALLBACK_PATH
+        ? SLACK_EXPIRED_CALLBACK_URL
+        : pathname + req.nextUrl.search,
+    );
+    if (pathname !== SLACK_CALLBACK_PATH) {
+      copyAttributionParams(req.nextUrl.searchParams, signInUrl.searchParams);
+    }
+    return redirect(signInUrl);
   }
 
   if (!user && !isPublicRoute(pathname)) {
     const signInUrl = new URL("/sign-in", req.url);
-    signInUrl.searchParams.set("callbackUrl", pathname + req.nextUrl.search);
-    return NextResponse.redirect(signInUrl);
+    signInUrl.searchParams.set(
+      "callbackUrl",
+      pathname === SLACK_CALLBACK_PATH
+        ? SLACK_EXPIRED_CALLBACK_URL
+        : pathname + req.nextUrl.search,
+    );
+    if (pathname !== SLACK_CALLBACK_PATH) {
+      copyAttributionParams(req.nextUrl.searchParams, signInUrl.searchParams);
+    }
+    return redirect(signInUrl);
   }
 
   if (
@@ -48,7 +105,15 @@ export default auth((req: NextAuthRequest) => {
       !cloudBillingEnabled ||
       user?.permissions?.manage_billing !== true)
   ) {
-    return NextResponse.redirect(new URL("/profile", req.url));
+    return redirect(new URL("/profile", req.url));
+  }
+
+  if (
+    (pathname === "/registry" || pathname.startsWith("/registry/")) &&
+    (await evaluateRegistryAccess(req.auth?.accessToken)).status !==
+      REGISTRY_ACCESS.ELIGIBLE
+  ) {
+    return redirect(new URL("/profile", req.url));
   }
 
   if (user?.permissions) {
@@ -58,11 +123,11 @@ export default auth((req: NextAuthRequest) => {
       pathname.startsWith("/integrations") &&
       !permissions.manage_integrations
     ) {
-      return NextResponse.redirect(new URL("/profile", req.url));
+      return redirect(new URL("/profile", req.url));
     }
   }
 
-  return NextResponse.next();
+  return withSecurityHeaders(NextResponse.next());
 });
 
 export const config = {

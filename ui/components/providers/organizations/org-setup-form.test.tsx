@@ -48,6 +48,13 @@ vi.mock("./hooks/use-org-setup-submission", () => ({
     apiError: null,
     setApiError: setApiErrorMock,
     submitOrganizationSetup: submitOrganizationSetupMock,
+    replaceSecretWarning: null,
+    confirmSecretReplace: vi.fn(),
+    cancelSecretReplace: vi.fn(),
+    discoveryTimedOut: false,
+    discoveryFailed: false,
+    keepWaitingForDiscovery: vi.fn(),
+    retryDiscovery: vi.fn(),
   }),
 }));
 

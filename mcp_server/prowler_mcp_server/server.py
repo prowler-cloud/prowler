@@ -2,9 +2,17 @@ from fastmcp import FastMCP
 from starlette.responses import JSONResponse
 
 from prowler_mcp_server import __version__
+from prowler_mcp_server.lib.errors import SharedFailureMiddleware
 from prowler_mcp_server.lib.logger import logger
 
-prowler_mcp_server = FastMCP("prowler-mcp-server")
+# `mask_error_details` keeps an unhandled failure from relaying text this server
+# does not control. It is set on every sub-server as well, because it does not
+# reach mounted children -- FastMCP warns about exactly that at mount time.
+prowler_mcp_server = FastMCP("prowler-mcp-server", mask_error_details=True)
+
+# Middleware, unlike masking, does reach mounted children, so the classifier that
+# gives the masked failures a sentence back is wired here once.
+prowler_mcp_server.add_middleware(SharedFailureMiddleware())
 
 
 def setup_main_server():
@@ -61,4 +69,5 @@ async def health_check(_request) -> JSONResponse:
 
 setup_main_server()
 
-app = prowler_mcp_server.http_app()
+# ASGI app for uvicorn deployments; stateless to avoid retaining sessions
+app = prowler_mcp_server.http_app(stateless_http=True)

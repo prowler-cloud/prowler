@@ -1,7 +1,11 @@
 import {
   CLOUD_UPGRADE_FEATURE,
   type CloudUpgradeFeature,
+  PAID_PLAN_UPGRADE_FEATURE,
+  type PaidPlanUpgradeFeature,
+  type UpgradeFeature,
 } from "@/types/cloud-upgrade";
+import { MAX_SAML_ADDITIONAL_EMAIL_DOMAINS } from "@/types/saml";
 
 interface CloudUpgradeContent {
   title: string;
@@ -22,14 +26,17 @@ const CLOUD_UPGRADE_UTM_CONTENT = {
   [CLOUD_UPGRADE_FEATURE.ADVANCED_SCHEDULING]: "advanced-scheduling",
   [CLOUD_UPGRADE_FEATURE.ALERTS]: "alerts",
   [CLOUD_UPGRADE_FEATURE.AWS_ORGANIZATIONS]: "organization",
+  [CLOUD_UPGRADE_FEATURE.AZURE_ORGANIZATIONS]: "azure-organization",
   [CLOUD_UPGRADE_FEATURE.CLI_IMPORT]: "cli-import",
   [CLOUD_UPGRADE_FEATURE.CROSS_PROVIDER_COMPLIANCE]:
     "cross-provider-compliance",
   [CLOUD_UPGRADE_FEATURE.FINDING_TRIAGE]: "findings",
+  [CLOUD_UPGRADE_FEATURE.GCP_ORGANIZATIONS]: "gcp-organization",
   [CLOUD_UPGRADE_FEATURE.JIRA_DISPATCH]: "jira-dispatch",
   [CLOUD_UPGRADE_FEATURE.LIGHTHOUSE_AI]: "lighthouse-ai",
   [CLOUD_UPGRADE_FEATURE.GENERAL]: "general",
   [CLOUD_UPGRADE_FEATURE.SCAN_CONFIGURATION]: "scan-configuration",
+  [CLOUD_UPGRADE_FEATURE.SAML_DOMAINS]: "saml-domains",
 } as const satisfies Record<CloudUpgradeFeature, string>;
 
 export const CLOUD_UPGRADE_CONTENT = {
@@ -65,6 +72,28 @@ export const CLOUD_UPGRADE_CONTENT = {
       "Apply schedules across the selected accounts",
     ],
     primaryCta: "Set Up AWS Organizations in Prowler Cloud",
+  },
+  [CLOUD_UPGRADE_FEATURE.AZURE_ORGANIZATIONS]: {
+    title: "Add Your Entire Azure Management Group",
+    description:
+      "Discover management groups and subscriptions, then manage them from one place.",
+    benefits: [
+      "Discover management groups and subscriptions automatically",
+      "Choose exactly which subscriptions to onboard",
+      "Apply schedules across the selected subscriptions",
+    ],
+    primaryCta: "Set Up Azure Management Groups in Prowler Cloud",
+  },
+  [CLOUD_UPGRADE_FEATURE.GCP_ORGANIZATIONS]: {
+    title: "Add Your Entire GCP Organization",
+    description:
+      "Discover folders and projects, then manage them from one place.",
+    benefits: [
+      "Discover folders and projects automatically",
+      "Choose exactly which projects to onboard",
+      "Apply schedules across the selected projects",
+    ],
+    primaryCta: "Set Up GCP Organizations in Prowler Cloud",
   },
   [CLOUD_UPGRADE_FEATURE.CLI_IMPORT]: {
     title: "Bring CLI Findings into One Cloud View",
@@ -145,6 +174,17 @@ export const CLOUD_UPGRADE_CONTENT = {
     ],
     primaryCta: "Configure Scans in Prowler Cloud",
   },
+  [CLOUD_UPGRADE_FEATURE.SAML_DOMAINS]: {
+    title: "Use One SAML Configuration Across Domains",
+    description:
+      "Let users from multiple verified email domains share one SAML identity provider configuration.",
+    benefits: [
+      "Keep one primary domain and canonical ACS URL",
+      `Authorize up to ${MAX_SAML_ADDITIONAL_EMAIL_DOMAINS} additional email domains`,
+      "Manage every domain from the same SAML configuration",
+    ],
+    primaryCta: "Manage SAML Domains in Prowler Cloud",
+  },
 } as const satisfies Record<CloudUpgradeFeature, CloudUpgradeContent>;
 
 const buildCloudUpgradeUrl = (
@@ -163,3 +203,48 @@ export const getCloudUpgradePrimaryUrl = (feature: CloudUpgradeFeature) =>
 
 export const getCloudUpgradeCompareUrl = (feature: CloudUpgradeFeature) =>
   buildCloudUpgradeUrl(PRICING_URL, feature);
+
+export const isCloudUpgradeFeature = (
+  feature: UpgradeFeature,
+): feature is CloudUpgradeFeature => feature in CLOUD_UPGRADE_CONTENT;
+
+export const PAID_PLAN_UPGRADE_BADGE = "Available on paid plans";
+export const PAID_PLAN_UPGRADE_ADMIN_NOTE =
+  "Ask an account admin to upgrade your plan.";
+
+const CLOUD_UTM_SOURCE = "prowler-cloud";
+
+const PAID_PLAN_UPGRADE_UTM_CONTENT = {
+  [PAID_PLAN_UPGRADE_FEATURE.REPORT_DOWNLOAD]: "report-download",
+} as const satisfies Record<PaidPlanUpgradeFeature, string>;
+
+export const PAID_PLAN_UPGRADE_CONTENT = {
+  [PAID_PLAN_UPGRADE_FEATURE.REPORT_DOWNLOAD]: {
+    title: "Download Your Scan Reports",
+    description: "Report downloads are included in Prowler Cloud paid plans.",
+    benefits: [
+      "Download the full scan output in CSV, JSON-OCSF, and HTML",
+      "Export compliance reports as CSV, OCSF, and PDF",
+      "Share evidence with auditors and your team",
+    ],
+    primaryCta: "Upgrade to Download",
+  },
+} as const satisfies Record<PaidPlanUpgradeFeature, CloudUpgradeContent>;
+
+export const isPaidPlanUpgradeFeature = (
+  feature: UpgradeFeature,
+): feature is PaidPlanUpgradeFeature => feature in PAID_PLAN_UPGRADE_CONTENT;
+
+export const getPaidPlanUpgradeBillingHref = (
+  feature: PaidPlanUpgradeFeature,
+) => `/billing?${new URLSearchParams({ feature })}`;
+
+export const getPaidPlanUpgradeCompareUrl = (
+  feature: PaidPlanUpgradeFeature,
+) => {
+  const url = new URL(PRICING_URL);
+  url.searchParams.set("utm_source", CLOUD_UTM_SOURCE);
+  url.searchParams.set("utm_content", PAID_PLAN_UPGRADE_UTM_CONTENT[feature]);
+
+  return url.toString();
+};

@@ -1,0 +1,40 @@
+{
+  "Provider": "aws",
+  "CheckID": "kms_key_enclave_attestation_pcr_mismatch",
+  "CheckTitle": "KMS enclave key attestation PCRs match customer-supplied golden values",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "kms",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "AwsKmsKey",
+  "ResourceGroup": "security",
+  "Description": "Compares the `kms:RecipientAttestation:PCR<N>` (and equivalent `ImageSha384`) values referenced by an enclave key policy against a customer-provided list of trusted PCR hashes configured under `enclave_golden_pcr_values` in `audit_config`. Detects **image provenance drift**: policies whose attestation conditions still reference PCRs that no longer correspond to a known-good build.",
+  "Risk": "A KMS enclave key policy that still binds attestation but whose PCR values point at an untrusted or unknown enclave image undermines the **integrity** the attestation was supposed to enforce. A poisoned CI/CD pipeline or malicious policy update can preserve KMS access under an image the operator has never audited.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/enclaves/latest/user/set-up-attestation.html",
+    "https://docs.aws.amazon.com/kms/latest/developerguide/conditions-nitro-enclaves.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aws kms put-key-policy --key-id <key-id> --policy-name default --policy file://enclave-policy.json",
+      "NativeIaC": "",
+      "Other": "1. Configure the Prowler `audit_config` with the trusted PCR values produced by your enclave CI/CD pipeline under `enclave_golden_pcr_values` (per PCR bucket), e.g. `enclave_golden_pcr_values: {PCR0: [<trusted-pcr0-hash-from-ci>], PCR8: [<trusted-signing-cert-hash>]}`.\n2. When rotating enclave images, publish the new PCRs to the golden list _before_ the KMS policy is updated so any drift surfaces immediately.\n3. Rotate KMS policies whose PCRs are not in the golden list, or update the golden list to reflect the newly audited image.",
+      "Terraform": "```hcl\ncondition {\n  test = \"StringEqualsIgnoreCase\"\n  variable = \"kms:RecipientAttestation:PCR0\"\n  values = [var.golden_pcr0]\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Treat KMS enclave policies as **provenance contracts**: pin them to PCR hashes produced by an auditable build pipeline and configure Prowler's golden list so drift is caught before it becomes an incident.",
+      "Url": "https://hub.prowler.com/check/kms_key_enclave_attestation_pcr_mismatch"
+    }
+  },
+  "Categories": [
+    "encryption",
+    "trust-boundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Requires `enclave_golden_pcr_values` in `audit_config`. Without it, the check reports MANUAL for every enclave key rather than silently PASSing."
+}

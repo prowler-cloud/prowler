@@ -8,7 +8,6 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
 
 import {
   Select,
@@ -65,11 +64,10 @@ export function DataTablePagination({
   const pageParam = paramPrefix ? `${paramPrefix}Page` : "page";
   const pageSizeParam = paramPrefix ? `${paramPrefix}PageSize` : "pageSize";
 
-  const initialPageSize = isControlled
+  // Derived, not stored, so it survives back/forward and filter resets
+  const selectedPageSize = isControlled
     ? String(controlledPageSize ?? 10)
     : (searchParams.get(pageSizeParam) ?? "10");
-
-  const [selectedPageSize, setSelectedPageSize] = useState(initialPageSize);
 
   if (!metadata) return null;
 
@@ -80,7 +78,16 @@ export function DataTablePagination({
     itemsPerPageOptions,
   } = getPaginationInfo(metadata);
 
-  if (totalPages <= 1) return null;
+  // Gated separately: a large page size collapses the table to one page, and the
+  // selector is the only way back to a smaller one.
+  const smallestPageSize = itemsPerPageOptions.length
+    ? Math.min(...itemsPerPageOptions)
+    : 10;
+  const showPageSizeSelector = totalEntries > smallestPageSize;
+  const showPageNavigation = totalPages > 1;
+
+  // No wrapper when empty: it would add a stray gap to DataTable's flex column
+  if (!showPageSizeSelector && !showPageNavigation) return null;
 
   // For controlled mode, use controlled values; for prefixed, read from URL; otherwise use metadata
   const currentPage = isControlled
@@ -130,216 +137,213 @@ export function DataTablePagination({
 
   return (
     <div className="flex w-full items-center justify-end gap-6 py-1.5">
-      {totalEntries > 10 && (
-        <>
-          {/* Rows per page selector */}
-          <div className="flex items-center gap-3">
-            <span className="text-text-neutral-secondary text-xs font-medium whitespace-nowrap">
-              Rows per page
-            </span>
-            <Select
-              value={selectedPageSize}
-              onValueChange={(value) => {
-                setSelectedPageSize(value);
+      {/* Rows per page selector */}
+      {showPageSizeSelector && (
+        <div className="flex items-center gap-3">
+          <span className="text-text-neutral-secondary text-xs font-medium whitespace-nowrap">
+            Rows per page
+          </span>
+          <Select
+            value={selectedPageSize}
+            onValueChange={(value) => {
+              if (isControlled) {
+                onPageSizeChange?.(parseInt(value, 10));
+                onPageChange(1); // Reset to first page
+                return;
+              }
 
-                if (isControlled) {
-                  onPageSizeChange?.(parseInt(value, 10));
-                  onPageChange(1); // Reset to first page
-                  return;
-                }
+              const params = new URLSearchParams(searchParams);
 
-                const params = new URLSearchParams(searchParams);
+              // Preserve all important parameters
+              const scanId = searchParams.get("scanId");
+              const id = searchParams.get("id");
+              const version = searchParams.get("version");
 
-                // Preserve all important parameters
-                const scanId = searchParams.get("scanId");
-                const id = searchParams.get("id");
-                const version = searchParams.get("version");
+              params.set(pageSizeParam, value);
+              params.set(pageParam, "1");
 
-                params.set(pageSizeParam, value);
-                params.set(pageParam, "1");
+              // Ensure that scanId, id and version are preserved
+              if (scanId) params.set("scanId", scanId);
+              if (id) params.set("id", id);
+              if (version) params.set("version", version);
 
-                // Ensure that scanId, id and version are preserved
-                if (scanId) params.set("scanId", scanId);
-                if (id) params.set("id", id);
-                if (version) params.set("version", version);
-
-                // This pushes the URL without reloading the page
-                if (disableScroll) {
-                  const url = `${pathname}?${params.toString()}`;
-                  router.push(url, { scroll: false });
-                } else {
-                  router.push(`${pathname}?${params.toString()}`);
-                }
-              }}
+              // This pushes the URL without reloading the page
+              if (disableScroll) {
+                const url = `${pathname}?${params.toString()}`;
+                router.push(url, { scroll: false });
+              } else {
+                router.push(`${pathname}?${params.toString()}`);
+              }
+            }}
+          >
+            <SelectTrigger
+              iconSize="sm"
+              className="bg-bg-neutral-tertiary border-border-neutral-tertiary !h-auto !w-auto !min-w-0 !gap-1 !rounded-full !px-[19px] !py-[9px] !text-xs !font-medium backdrop-blur-[46px]"
             >
-              <SelectTrigger
-                iconSize="sm"
-                className="bg-bg-neutral-tertiary border-border-neutral-tertiary !h-auto !w-auto !min-w-0 !gap-1 !rounded-full !px-[19px] !py-[9px] !text-xs !font-medium backdrop-blur-[46px]"
-              >
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent side="top">
-                {itemsPerPageOptions.map((pageSize) => (
-                  <SelectItem
-                    key={pageSize}
-                    value={`${pageSize}`}
-                    className="cursor-pointer"
-                  >
-                    {pageSize}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Page info and navigation */}
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent side="top">
+              {itemsPerPageOptions.map((pageSize) => (
+                <SelectItem
+                  key={pageSize}
+                  value={`${pageSize}`}
+                  className="cursor-pointer"
+                >
+                  {pageSize}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+      {/* Page info and navigation */}
+      {showPageNavigation && (
+        <div className="flex items-center gap-3">
+          <span className="text-text-neutral-secondary hidden text-xs font-medium sm:inline">
+            Page {currentPage} of {totalPages}
+          </span>
           <div className="flex items-center gap-3">
-            <span className="text-text-neutral-secondary hidden text-xs font-medium sm:inline">
-              Page {currentPage} of {totalPages}
-            </span>
-            <div className="flex items-center gap-3">
-              {isControlled ? (
-                <>
-                  <button
-                    type="button"
-                    aria-label="Go to first page"
-                    className={cn(
-                      NAV_BUTTON_STYLES.base,
-                      isFirstPage
-                        ? NAV_BUTTON_STYLES.disabled
-                        : NAV_BUTTON_STYLES.enabled,
-                    )}
-                    disabled={isFirstPage}
-                    onClick={() => handlePageChange(1)}
-                  >
-                    <ChevronFirst className="size-6" aria-hidden="true" />
-                  </button>
-                  <button
-                    type="button"
-                    aria-label="Go to previous page"
-                    className={cn(
-                      NAV_BUTTON_STYLES.base,
-                      isFirstPage
-                        ? NAV_BUTTON_STYLES.disabled
-                        : NAV_BUTTON_STYLES.enabled,
-                    )}
-                    disabled={isFirstPage}
-                    onClick={() => handlePageChange(currentPage - 1)}
-                  >
-                    <ChevronLeft className="size-6" aria-hidden="true" />
-                  </button>
-                  <button
-                    type="button"
-                    aria-label="Go to next page"
-                    className={cn(
-                      NAV_BUTTON_STYLES.base,
-                      isLastPage
-                        ? NAV_BUTTON_STYLES.disabled
-                        : NAV_BUTTON_STYLES.enabled,
-                    )}
-                    disabled={isLastPage}
-                    onClick={() => handlePageChange(currentPage + 1)}
-                  >
-                    <ChevronRight className="size-6" aria-hidden="true" />
-                  </button>
-                  <button
-                    type="button"
-                    aria-label="Go to last page"
-                    className={cn(
-                      NAV_BUTTON_STYLES.base,
-                      isLastPage
-                        ? NAV_BUTTON_STYLES.disabled
-                        : NAV_BUTTON_STYLES.enabled,
-                    )}
-                    disabled={isLastPage}
-                    onClick={() => handlePageChange(totalPages)}
-                  >
-                    <ChevronLast className="size-6" aria-hidden="true" />
-                  </button>
-                </>
-              ) : (
-                <>
-                  <Link
-                    aria-label="Go to first page"
-                    className={cn(
-                      NAV_BUTTON_STYLES.base,
-                      isFirstPage
-                        ? NAV_BUTTON_STYLES.disabled
-                        : NAV_BUTTON_STYLES.enabled,
-                    )}
-                    href={
-                      isFirstPage
-                        ? pathname + "?" + searchParams.toString()
-                        : createPageUrl(1)
-                    }
-                    scroll={!disableScroll}
-                    aria-disabled={isFirstPage}
-                    onClick={(e) => isFirstPage && e.preventDefault()}
-                  >
-                    <ChevronFirst className="size-6" aria-hidden="true" />
-                  </Link>
-                  <Link
-                    aria-label="Go to previous page"
-                    className={cn(
-                      NAV_BUTTON_STYLES.base,
-                      isFirstPage
-                        ? NAV_BUTTON_STYLES.disabled
-                        : NAV_BUTTON_STYLES.enabled,
-                    )}
-                    href={
-                      isFirstPage
-                        ? pathname + "?" + searchParams.toString()
-                        : createPageUrl(currentPage - 1)
-                    }
-                    scroll={!disableScroll}
-                    aria-disabled={isFirstPage}
-                    onClick={(e) => isFirstPage && e.preventDefault()}
-                  >
-                    <ChevronLeft className="size-6" aria-hidden="true" />
-                  </Link>
-                  <Link
-                    aria-label="Go to next page"
-                    className={cn(
-                      NAV_BUTTON_STYLES.base,
-                      isLastPage
-                        ? NAV_BUTTON_STYLES.disabled
-                        : NAV_BUTTON_STYLES.enabled,
-                    )}
-                    href={
-                      isLastPage
-                        ? pathname + "?" + searchParams.toString()
-                        : createPageUrl(currentPage + 1)
-                    }
-                    scroll={!disableScroll}
-                    aria-disabled={isLastPage}
-                    onClick={(e) => isLastPage && e.preventDefault()}
-                  >
-                    <ChevronRight className="size-6" aria-hidden="true" />
-                  </Link>
-                  <Link
-                    aria-label="Go to last page"
-                    className={cn(
-                      NAV_BUTTON_STYLES.base,
-                      isLastPage
-                        ? NAV_BUTTON_STYLES.disabled
-                        : NAV_BUTTON_STYLES.enabled,
-                    )}
-                    href={
-                      isLastPage
-                        ? pathname + "?" + searchParams.toString()
-                        : createPageUrl(totalPages)
-                    }
-                    scroll={!disableScroll}
-                    aria-disabled={isLastPage}
-                    onClick={(e) => isLastPage && e.preventDefault()}
-                  >
-                    <ChevronLast className="size-6" aria-hidden="true" />
-                  </Link>
-                </>
-              )}
-            </div>
+            {isControlled ? (
+              <>
+                <button
+                  type="button"
+                  aria-label="Go to first page"
+                  className={cn(
+                    NAV_BUTTON_STYLES.base,
+                    isFirstPage
+                      ? NAV_BUTTON_STYLES.disabled
+                      : NAV_BUTTON_STYLES.enabled,
+                  )}
+                  disabled={isFirstPage}
+                  onClick={() => handlePageChange(1)}
+                >
+                  <ChevronFirst className="size-6" aria-hidden="true" />
+                </button>
+                <button
+                  type="button"
+                  aria-label="Go to previous page"
+                  className={cn(
+                    NAV_BUTTON_STYLES.base,
+                    isFirstPage
+                      ? NAV_BUTTON_STYLES.disabled
+                      : NAV_BUTTON_STYLES.enabled,
+                  )}
+                  disabled={isFirstPage}
+                  onClick={() => handlePageChange(currentPage - 1)}
+                >
+                  <ChevronLeft className="size-6" aria-hidden="true" />
+                </button>
+                <button
+                  type="button"
+                  aria-label="Go to next page"
+                  className={cn(
+                    NAV_BUTTON_STYLES.base,
+                    isLastPage
+                      ? NAV_BUTTON_STYLES.disabled
+                      : NAV_BUTTON_STYLES.enabled,
+                  )}
+                  disabled={isLastPage}
+                  onClick={() => handlePageChange(currentPage + 1)}
+                >
+                  <ChevronRight className="size-6" aria-hidden="true" />
+                </button>
+                <button
+                  type="button"
+                  aria-label="Go to last page"
+                  className={cn(
+                    NAV_BUTTON_STYLES.base,
+                    isLastPage
+                      ? NAV_BUTTON_STYLES.disabled
+                      : NAV_BUTTON_STYLES.enabled,
+                  )}
+                  disabled={isLastPage}
+                  onClick={() => handlePageChange(totalPages)}
+                >
+                  <ChevronLast className="size-6" aria-hidden="true" />
+                </button>
+              </>
+            ) : (
+              <>
+                <Link
+                  aria-label="Go to first page"
+                  className={cn(
+                    NAV_BUTTON_STYLES.base,
+                    isFirstPage
+                      ? NAV_BUTTON_STYLES.disabled
+                      : NAV_BUTTON_STYLES.enabled,
+                  )}
+                  href={
+                    isFirstPage
+                      ? pathname + "?" + searchParams.toString()
+                      : createPageUrl(1)
+                  }
+                  scroll={!disableScroll}
+                  aria-disabled={isFirstPage}
+                  onClick={(e) => isFirstPage && e.preventDefault()}
+                >
+                  <ChevronFirst className="size-6" aria-hidden="true" />
+                </Link>
+                <Link
+                  aria-label="Go to previous page"
+                  className={cn(
+                    NAV_BUTTON_STYLES.base,
+                    isFirstPage
+                      ? NAV_BUTTON_STYLES.disabled
+                      : NAV_BUTTON_STYLES.enabled,
+                  )}
+                  href={
+                    isFirstPage
+                      ? pathname + "?" + searchParams.toString()
+                      : createPageUrl(currentPage - 1)
+                  }
+                  scroll={!disableScroll}
+                  aria-disabled={isFirstPage}
+                  onClick={(e) => isFirstPage && e.preventDefault()}
+                >
+                  <ChevronLeft className="size-6" aria-hidden="true" />
+                </Link>
+                <Link
+                  aria-label="Go to next page"
+                  className={cn(
+                    NAV_BUTTON_STYLES.base,
+                    isLastPage
+                      ? NAV_BUTTON_STYLES.disabled
+                      : NAV_BUTTON_STYLES.enabled,
+                  )}
+                  href={
+                    isLastPage
+                      ? pathname + "?" + searchParams.toString()
+                      : createPageUrl(currentPage + 1)
+                  }
+                  scroll={!disableScroll}
+                  aria-disabled={isLastPage}
+                  onClick={(e) => isLastPage && e.preventDefault()}
+                >
+                  <ChevronRight className="size-6" aria-hidden="true" />
+                </Link>
+                <Link
+                  aria-label="Go to last page"
+                  className={cn(
+                    NAV_BUTTON_STYLES.base,
+                    isLastPage
+                      ? NAV_BUTTON_STYLES.disabled
+                      : NAV_BUTTON_STYLES.enabled,
+                  )}
+                  href={
+                    isLastPage
+                      ? pathname + "?" + searchParams.toString()
+                      : createPageUrl(totalPages)
+                  }
+                  scroll={!disableScroll}
+                  aria-disabled={isLastPage}
+                  onClick={(e) => isLastPage && e.preventDefault()}
+                >
+                  <ChevronLast className="size-6" aria-hidden="true" />
+                </Link>
+              </>
+            )}
           </div>
-        </>
+        </div>
       )}
     </div>
   );

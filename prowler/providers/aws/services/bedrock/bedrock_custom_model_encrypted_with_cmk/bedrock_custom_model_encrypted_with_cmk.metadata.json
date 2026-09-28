@@ -1,0 +1,43 @@
+{
+  "Provider": "aws",
+  "CheckID": "bedrock_custom_model_encrypted_with_cmk",
+  "CheckTitle": "Bedrock custom model is encrypted with a customer-managed KMS key",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/AWS Security Best Practices/Data Encryption"
+  ],
+  "ServiceName": "bedrock",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "critical",
+  "ResourceType": "Other",
+  "ResourceGroup": "ai_ml",
+  "Description": "**Bedrock custom models** produced by model customization can be encrypted at rest with a customer-managed KMS key rather than resting under an AWS-owned key the organization cannot audit, rotate, or revoke.",
+  "Risk": "A **fine-tuned model** is derived from the training data used to build it and can leak that data through inference.\n\nUnder an **AWS-owned key**, the organization has no key policy to restrict who may decrypt the artifacts, no customer-controlled rotation, no **CloudTrail** record of key usage, and no way to revoke access to the model by disabling a key.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/bedrock/latest/userguide/encryption-custom-job.html",
+    "https://docs.aws.amazon.com/bedrock/latest/APIReference/API_GetCustomModel.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Open the AWS Console and go to Amazon Bedrock\n2. Select **Custom models**, then create a new customization job\n3. Under encryption, choose a customer-managed KMS key instead of the default\n4. Grant the customization service role kms:Decrypt, kms:GenerateDataKey and kms:DescribeKey on that key\n5. Re-run customization, because the key of an existing custom model cannot be changed in place",
+      "Terraform": "```hcl\nresource \"aws_bedrock_custom_model\" \"example_resource\" {\n  custom_model_name     = \"example-custom-model\"\n  job_name              = \"example-customization-job\"\n  base_model_identifier = \"arn:aws:bedrock:us-east-1::foundation-model/amazon.titan-text-express-v1\"\n  role_arn              = \"arn:aws:iam::123456789012:role/example-bedrock-customization-role\"\n  custom_model_kms_key_id = \"arn:aws:kms:us-east-1:123456789012:key/example-key-id\" # Critical: without this the model is encrypted with an AWS owned key\n\n  hyperparameters = {\n    epochCount = \"1\"\n  }\n\n  output_data_config {\n    s3_uri = \"s3://example-bucket/output/\"\n  }\n\n  training_data_config {\n    s3_uri = \"s3://example-bucket/training/\"\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Choose a customer-managed KMS key when creating each model customization job so the resulting custom model rests under a key with an auditable policy and rotation. The key cannot be changed after the model is created, so re-run customization for existing models.",
+      "Url": "https://hub.prowler.com/check/bedrock_custom_model_encrypted_with_cmk"
+    }
+  },
+  "Categories": [
+    "gen-ai",
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "bedrock_prompt_encrypted_with_cmk"
+  ],
+  "Notes": "Reports one finding per custom model, reading modelKmsKeyArn from GetCustomModel because ListCustomModels summaries do not carry it. A model whose detail could not be retrieved returns MANUAL rather than PASS, because an absent key ARN means the answer is unknown, not that no key is set."
+}

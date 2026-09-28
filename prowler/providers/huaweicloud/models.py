@@ -384,6 +384,19 @@ class HuaweiCloudSession:
                     .build()
                 )
 
+            elif service == "smn":
+                from huaweicloudsdksmn.v2 import SmnClient
+                from huaweicloudsdksmn.v2.region.smn_region import SmnRegion
+
+                client_region = region or self._region
+                return (
+                    SmnClient.new_builder()
+                    .with_credentials(self._get_basic_credentials(client_region))
+                    .with_http_config(self._http_config())
+                    .with_region(_aligned_region(SmnRegion, client_region))
+                    .build()
+                )
+
             else:
                 raise HuaweiCloudServiceError(
                     message=f"Huawei Cloud service '{service}' is not supported"

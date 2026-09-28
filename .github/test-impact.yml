@@ -249,6 +249,7 @@ modules:
       - ui/tests/profile/**
       - ui/tests/lighthouse/**
       - ui/tests/home/**
+      - ui/tests/navigation/**
       - ui/tests/attack-paths/**
 
   - name: api-serializers
@@ -275,6 +276,7 @@ modules:
       - ui/tests/profile/**
       - ui/tests/lighthouse/**
       - ui/tests/home/**
+      - ui/tests/navigation/**
       - ui/tests/attack-paths/**
 
   - name: api-filters
@@ -432,6 +434,14 @@ modules:
     e2e:
       - ui/tests/lighthouse/**
 
+  - name: ui-navigation
+    match:
+      - ui/components/layout/**
+      - ui/tests/navigation/**
+    tests: []
+    e2e:
+      - ui/tests/navigation/**
+
   - name: ui-overview
     match:
       - ui/components/overview/**
@@ -440,6 +450,17 @@ modules:
     tests: []
     e2e:
       - ui/tests/home/**
+
+  - name: ui-registry
+    match:
+      - ui/actions/registry/**
+      - ui/app/**/registry/**
+      - ui/components/registry/**
+      - ui/lib/registry/**
+      - ui/tests/registry/**
+    tests: []
+    e2e:
+      - ui/tests/registry/**
 
   - name: ui-shadcn
     match:
@@ -464,6 +485,7 @@ modules:
       - ui/tests/profile/**
       - ui/tests/lighthouse/**
       - ui/tests/home/**
+      - ui/tests/navigation/**
       - ui/tests/attack-paths/**
 
   - name: ui-attack-paths

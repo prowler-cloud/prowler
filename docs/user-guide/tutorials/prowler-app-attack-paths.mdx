@@ -16,26 +16,24 @@ Attack Paths analyzes relationships between cloud resources, permissions, and se
 By mapping these relationships as a graph, Attack Paths reveals risks that individual security checks cannot detect on their own, such as an IAM role that can escalate its own permissions, or a chain of policies that grants unintended access to sensitive resources.
 
 <Note>
-  Attack Paths is currently available for **AWS** providers. Support for
-  additional providers is planned.
+  Attack Paths is currently available for **AWS** providers. Support for additional providers is planned.
 </Note>
 
 ## Prerequisites
 
 The following prerequisites are required for Attack Paths:
 
-- **An AWS provider is configured** with valid credentials in Prowler Cloud. For setup instructions, see [Getting Started with AWS](/user-guide/providers/aws/getting-started-aws).
+- **An AWS provider is configured** with valid credentials. For setup instructions, see [Getting Started with AWS](/user-guide/providers/aws/getting-started-aws).
 - **At least one scan has completed** on the configured AWS provider and produced graph data. Attack Paths scans run automatically alongside regular security scans, no separate configuration is required.
 
 ## How Attack Paths Scans Work
 
-Attack Paths scans are generated automatically when a security scan runs on an AWS provider. Each completed scan produces graph data that maps relationships between IAM principals, policies, trust configurations, and other resources.
+Attack Paths scans are generated automatically when a security scan runs on an AWS provider. When a scan produces graph data, it maps relationships between IAM principals, policies, trust configurations, and other resources. A scan can complete without producing graph data.
 
-Once the scan finishes and graph data is ready, the scan appears in the Attack Paths scan table with a **Completed** status and a check in the **Graph** column. Scans that are still queued or running remain visible, but they cannot be selected until graph data is ready.
+When graph data is ready, the scan appears in the Attack Paths scan table with a check in the **Graph** column and can be selected regardless of its current status. Scans without graph data remain visible but cannot be selected. If a new scan cycle starts after graph data is available, the previous cycle remains available while the new scan runs.
 
 <Note>
-  Since Prowler scans all configured providers every **24 hours** by default,
-  Attack Paths data stays up to date automatically.
+  Prowler Cloud and Prowler Private Cloud scan configured providers every **24 hours** by default, so Attack Paths data stays up to date automatically.
 </Note>
 
 ## Accessing Attack Paths
@@ -66,7 +64,7 @@ The scans table displays all Attack Paths scans with the following columns:
 - **Graph:** Whether Attack Paths graph data is available for the scan.
 - **Duration:** Total scan time.
 
-To select a scan for analysis, click the radio button on any row with a **Completed** status and available graph data.
+To select a scan for analysis, click any row with a check in the **Graph** column. A row can remain selectable while a new scan cycle runs because Attack Paths keeps the graph from the previous completed cycle available.
 
 <img
   src="/images/prowler-app/attack-paths/scan-list-table.png"
@@ -75,8 +73,7 @@ To select a scan for analysis, click the radio button on any row with a **Comple
 />
 
 <Note>
-  Only scans with graph data can be selected. Disabled rows include a tooltip
-  that explains why the graph is not available yet.
+  Only scans with graph data can be selected. Disabled rows include a tooltip that explains why the graph is not available yet.
 </Note>
 
 ## Choosing a Query
@@ -97,9 +94,7 @@ To choose a query, click the dropdown and select from the available options. Eac
 Once selected, a description panel appears below the dropdown with more context about the query.
 
 <Note>
-  In Prowler Cloud and Prowler Private Cloud, the query selector hides queries
-  confirmed empty for the selected scan, so only queries that return data remain
-  visible. See [Active Queries](/user-guide/tutorials/prowler-app-attack-paths-active-queries).
+  In Prowler Cloud and Prowler Private Cloud, the query selector hides built-in queries confirmed empty for the selected scan. Built-in queries without a confirmed empty result and the **Custom openCypher query** remain visible. See [Active Queries](/user-guide/tutorials/prowler-app-attack-paths-active-queries).
 </Note>
 
 ## Configuring Query Parameters
@@ -120,7 +115,7 @@ For example, **Internet-Exposed EC2 with Sensitive S3 Access** uses **Tag key** 
 
 ## Writing Custom openCypher Queries
 
-In addition to the built-in queries, Attack Paths supports custom read-only [openCypher](https://opencypher.org/) queries. Custom queries provide direct access to the underlying graph so security teams can answer ad-hoc questions, prototype detections, or extend coverage beyond the built-in catalogue.
+In addition to the built-in queries, Attack Paths supports custom read-only [openCypher](https://opencypher.org/) queries. Custom queries provide direct access to the underlying graph so security teams can answer ad-hoc questions, prototype detections, or extend coverage beyond the built-in catalog.
 
 To write a custom query, select **Custom openCypher query** from the query dropdown. A code editor with syntax highlighting and line numbers appears, ready to receive the query.
 
@@ -192,11 +187,7 @@ Custom queries traverse the same Cartography graph the built-in queries use. Nod
 For the complete reference, including the graph model, list-typed and JSON-encoded properties, performance guidance, and openCypher compatibility rules, see [Attack Paths Queries](/developer-guide/attack-paths-queries) in the Developer Guide.
 
 <Note>
-  AI assistants connected through Prowler MCP Server can fetch the exact
-  Cartography schema for the active scan via the
-  `prowler_get_attack_paths_cartography_schema` tool. This guarantees that
-  generated queries match the schema version pinned by the running Prowler
-  release.
+  AI assistants connected through Prowler MCP Server can fetch the exact Cartography schema for the active scan via the `prowler_get_attack_paths_cartography_schema` tool. This guarantees that generated queries match the schema version pinned by the running Prowler release.
 </Note>
 
 ## Executing a Query
@@ -221,12 +212,22 @@ If the query returns no results, an informational message appears. Common reason
 
 After a successful execution, the graph visualization renders below the query builder. The graph maps relationships between cloud resources, IAM entities, public exposure, and security findings.
 
+### Grouped Graphs and Query Outcomes
+
+<VersionBadge version="5.39.0" />
+
+Prowler Cloud and Prowler Private Cloud group resources of the same class and graph level into expandable nodes. Built-in query graphs also end with a query outcome, which states the result that the path can lead to.
+
+Prowler Local Server keeps the flat graph view, including the provider root. Custom openCypher queries do not have a catalog outcome, so their graphs do not include an outcome node.
+
 ### Node Types
 
-- **Provider root nodes:** Represent the AWS account or provider root for the selected scan.
-- **Resource nodes:** Represent cloud resources such as IAM roles, policies, EC2 instances, security groups, and S3 buckets.
+- **Grouped resource nodes:** Represent multiple resources of the same class in Prowler Cloud and Prowler Private Cloud. A number in the upper-right corner shows how many resources the node contains. A red outline indicates that one or more resources in the group have findings.
+- **Resource nodes:** Represent individual cloud resources such as IAM roles, policies, EC2 instances, security groups, and S3 buckets. A class with one resource remains an individual node.
 - **Internet nodes:** Represent exposure from the public internet.
 - **Finding nodes:** Represent Prowler findings linked to resources. Finding colors indicate risk level, such as critical, high, medium, or low.
+- **Outcome nodes:** Mark the terminal result of a built-in query in Prowler Cloud and Prowler Private Cloud. The orange node displays outcomes such as **Code execution**, **Privilege escalation**, **Public exposure**, or **Resource inventory**. A dashed ring and the label **Latent outcome** indicate an inventory or another partial outcome.
+- **Provider root nodes:** Represent the AWS account or provider root in the Prowler Local Server flat graph.
 
 ### Edge Types
 
@@ -234,7 +235,7 @@ After a successful execution, the graph visualization renders below the query bu
 - **Finding edges:** Dashed relationships between resources and their associated findings.
 - **Highlighted paths:** Green edges that show the active path when you hover a node or focus a finding.
 
-The standard graph view includes a minimap and a legend below the canvas. The legend shows the provider roots, visible node types, finding risk levels, node states, and edge types present in the current view.
+The standard graph view includes a minimap and a legend below the canvas. The legend shows the visible node types, finding risk levels, node states, and edge types present in the current view. Prowler Local Server also displays the provider root in the legend.
 
 <img
   src="/images/prowler-app/attack-paths/graph-visualization.png"
@@ -244,17 +245,32 @@ The standard graph view includes a minimap and a legend below the canvas. The le
 
 ## Interacting with the Graph
 
-The graph banner describes the main interactions:
+The graph supports these interactions:
 
+- Click a node with a number in the upper-right corner to expand its resource group.
 - Click a finding to focus its connected path.
 - Click a resource with findings to show or hide its related findings.
 - Hover a node to highlight its connected path.
+
+### Expanding Resource Groups
+
+In Prowler Cloud and Prowler Private Cloud, a node with a number in its upper-right corner represents a resource group. The number is the total number of resources in the group.
+
+- Click the group node to display its resources. Multiple groups can remain expanded, and the graph automatically fits the visible nodes to the canvas.
+- Double-click any resource revealed from a group to collapse that group.
+- Click **Collapse all groups** in the graph toolbar to close every expanded group. This control appears only while at least one group is expanded.
+
+<img
+  src="/images/prowler-app/attack-paths/graph-visualization-expanded.png"
+  alt="Attack Paths graph showing an expanded AWS Role group and remaining numbered resource groups"
+  width="700"
+/>
 
 ### Showing Related Findings
 
 Resource nodes with related findings are clickable. Click one of these resources to show its finding nodes. Click the resource again to hide them.
 
-The graph automatically fits the selected resource and its related findings when the findings are shown.
+The selected resource is highlighted in green while its findings are visible. The graph automatically fits the selected resource and its related findings when the findings are shown.
 
 ### Focusing a Finding Path
 
@@ -279,12 +295,12 @@ The toolbar in the top-right corner of the graph provides:
 
 - **Zoom in / Zoom out:** Adjust the zoom level
 - **Fit graph to view:** Reset the view to fit the visible graph
-- **Export graph:** Download the current graph as a PNG file
+- **Collapse all groups:** Close every expanded resource group. This control appears only when a group is expanded
+- **Export graph:** Download the current graph, including its grouped or expanded state and outcome, as a PNG file
 - **Fullscreen:** Open the graph in a full-size modal
 
 <Note>
-  Use **Ctrl + Scroll** (or **Cmd + Scroll** on macOS) to zoom directly within
-  the graph area.
+  Use **Ctrl + Scroll** (or **Cmd + Scroll** on macOS) to zoom directly within the graph area.
 </Note>
 
 ## Viewing Finding Details

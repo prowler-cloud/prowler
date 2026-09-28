@@ -1,3 +1,5 @@
+import logging
+from datetime import timedelta
 from math import isfinite
 from uuid import UUID
 
@@ -5,6 +7,7 @@ from api.db_router import MainRouter
 from api.models import TenantAPIKey, TenantAPIKeyManager
 from cryptography.fernet import InvalidToken
 from django.core.exceptions import ObjectDoesNotExist
+from django.db.models import Q
 from django.utils import timezone
 from drf_simple_apikey.backends import APIKeyAuthentication as BaseAPIKeyAuth
 from drf_simple_apikey.crypto import get_crypto
@@ -13,6 +16,19 @@ from rest_framework.authentication import BaseAuthentication
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.request import Request
 from rest_framework_simplejwt.authentication import JWTAuthentication
+
+logger = logging.getLogger(__name__)
+
+# Writing on every request makes all requests of a busy key contend on one row
+API_KEY_LAST_USED_AT_THROTTLE_SECONDS = 60
+
+
+class OrphanedAPIKeyError(Exception):
+    """Raised when an API key outlived the user that owns it.
+
+    The revocation is written by a plain `update()` before this is raised, so it is
+    already persisted by the time `authenticate` catches it and rejects the request.
+    """
 
 
 class TenantAPIKeyAuthentication(BaseAPIKeyAuth):
@@ -24,10 +40,14 @@ class TenantAPIKeyAuthentication(BaseAPIKeyAuth):
     def _authenticate_credentials(self, request, key):
         """
         Override to use admin connection, bypassing RLS during authentication.
+
+        Returns the validated API key row from a single read. `authenticate` builds
+        the auth claims from that same row instead of looking it up again, so a key
+        revoked or orphaned right after validation can't still authenticate.
         """
         try:
             payload = self.key_crypto.decrypt(key)
-        except ValueError:
+        except (ValueError, InvalidToken):
             raise AuthenticationFailed("Invalid API Key.")
 
         if not isinstance(payload, dict):
@@ -52,12 +72,35 @@ class TenantAPIKeyAuthentication(BaseAPIKeyAuth):
             raise AuthenticationFailed("API Key has already expired.")
 
         try:
-            api_key = self.model.objects.using(MainRouter.admin_db).get(id=api_key_pk)
+            # Loading `entity` in the same query keeps a user deleted after this read
+            # from turning the later `api_key.entity` access into a 500
+            api_key = (
+                self.model.objects.using(MainRouter.admin_db)
+                .select_related("entity")
+                .get(id=api_key_pk)
+            )
         except ObjectDoesNotExist:
             raise AuthenticationFailed("No entity matching this api key.")
 
         if api_key.revoked:
             raise AuthenticationFailed("This API Key has been revoked.")
+
+        # `entity` is nullable and `on_delete=SET_NULL` leaves the key behind when its
+        # owner is deleted, so a key can outlive its user. Reject it here: further down
+        # the authentication would return `None` as the authenticated user, which blows
+        # up while building the auth dict and surfaces as a 500 instead of a 401.
+        # Revoke it as well, so it stops showing up as active and later attempts fail
+        # the `revoked` check above like any other revoked key.
+        if api_key.entity_id is None:
+            self.model.objects.using(MainRouter.admin_db).filter(
+                id=api_key.id, revoked=False
+            ).update(revoked=True)
+            logger.warning(
+                "Revoked orphaned API key: prefix=%s tenant=%s",
+                api_key.prefix,
+                api_key.tenant_id,
+            )
+            raise OrphanedAPIKeyError
 
         client_ip = request.META.get(package_settings.IP_ADDRESS_HEADER)
         if api_key.blacklisted_ips and client_ip in api_key.blacklisted_ips:
@@ -66,7 +109,7 @@ class TenantAPIKeyAuthentication(BaseAPIKeyAuth):
         if api_key.whitelisted_ips and client_ip not in api_key.whitelisted_ips:
             raise AuthenticationFailed("Access restricted to specific IP addresses.")
 
-        return api_key.entity, key
+        return api_key
 
     def authenticate(self, request: Request):
         prefixed_key = self.get_key(request)
@@ -78,35 +121,37 @@ class TenantAPIKeyAuthentication(BaseAPIKeyAuth):
             raise AuthenticationFailed("Invalid API Key.")
 
         try:
-            entity, _ = self._authenticate_credentials(request, key)
-        except InvalidToken:
+            api_key = self._authenticate_credentials(request, key)
+        except OrphanedAPIKeyError:
+            raise AuthenticationFailed("No entity matching this api key.")
+
+        # The prefix used to be checked by the second lookup
+        if api_key.prefix != prefix:
             raise AuthenticationFailed("Invalid API Key.")
 
-        # Get the API key instance to update last_used_at and retrieve tenant info
-        # We need to decrypt again to get the pk (already validated by _authenticate_credentials)
-        payload = self.key_crypto.decrypt(key)
-        api_key_pk = payload["_pk"]
+        self._throttled_touch_last_used_at(api_key)
 
-        # Convert string UUID back to UUID object for lookup
-        if isinstance(api_key_pk, str):
-            api_key_pk = UUID(api_key_pk)
-
-        try:
-            api_key_instance = TenantAPIKey.objects.using(MainRouter.admin_db).get(
-                id=api_key_pk, prefix=prefix
-            )
-        except TenantAPIKey.DoesNotExist:
-            raise AuthenticationFailed("Invalid API Key.")
-
-        # Update last_used_at
-        api_key_instance.last_used_at = timezone.now()
-        api_key_instance.save(update_fields=["last_used_at"], using=MainRouter.admin_db)
-
+        entity = api_key.entity
         return entity, {
-            "tenant_id": str(api_key_instance.tenant_id),
-            "sub": str(api_key_instance.entity.id),
-            "api_key_prefix": prefix,
+            "tenant_id": str(api_key.tenant_id),
+            "sub": str(entity.id),
+            "api_key_prefix": api_key.prefix,
         }
+
+    @staticmethod
+    def _throttled_touch_last_used_at(api_key: TenantAPIKey) -> None:
+        """Write `last_used_at` at most once per throttle interval, without locking the row."""
+        now = timezone.now()
+        stale_before = now - timedelta(seconds=API_KEY_LAST_USED_AT_THROTTLE_SECONDS)
+
+        if api_key.last_used_at is not None and api_key.last_used_at >= stale_before:
+            return
+
+        TenantAPIKey.objects.using(MainRouter.admin_db).filter(
+            id=api_key.id, revoked=False
+        ).filter(
+            Q(last_used_at__isnull=True) | Q(last_used_at__lt=stale_before)
+        ).update(last_used_at=now)
 
 
 class CombinedJWTOrAPIKeyAuthentication(BaseAuthentication):

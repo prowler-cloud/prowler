@@ -10,6 +10,10 @@ import { z } from "zod";
 
 import { updateOrganizationName } from "@/actions/organizations/organizations";
 import { AWSProviderBadge } from "@/components/icons/providers-badge";
+import {
+  AWS_ONBOARDING_METHOD,
+  AwsOnboardingMethodTabs,
+} from "@/components/providers/wizard/steps/aws/aws-onboarding-method-tabs";
 import type { WizardFooterConfig } from "@/components/providers/wizard/steps/footer-controls";
 import { WIZARD_FOOTER_ACTION_TYPE } from "@/components/providers/wizard/steps/footer-controls";
 import type { OrgWizardIntent } from "@/components/providers/wizard/types";
@@ -22,11 +26,14 @@ import { Checkbox } from "@/components/shadcn/checkbox/checkbox";
 import { Form } from "@/components/shadcn/form";
 import { Spinner } from "@/components/shadcn/spinner/spinner";
 import { getAWSOrgDeploymentQuickLink } from "@/lib";
+import { organizationNameFallbackHint } from "@/lib/organizations";
 import { useOrgSetupStore } from "@/store/organizations/store";
 import type { OrgSetupPhase } from "@/types/organizations";
-import { ORG_SETUP_PHASE } from "@/types/organizations";
+import { ORG_SETUP_PHASE, ORGANIZATION_TYPE } from "@/types/organizations";
 
+import { DiscoveryTimeoutNotice } from "./discovery-timeout-notice";
 import { useOrgSetupSubmission } from "./hooks/use-org-setup-submission";
+import { SecretReplaceWarningModal } from "./secret-replace-warning-modal";
 
 const orgSetupSchema = z.object({
   organizationName: z.string().trim().optional(),
@@ -68,6 +75,8 @@ interface OrgSetupFormProps {
   onBack: () => void;
   onClose?: () => void;
   onNext: () => void;
+  /** Keeps the single/organization tabs on screen; absent when the flow was entered directly. */
+  onSelectSingleAccount?: () => void;
   onFooterChange: (config: WizardFooterConfig) => void;
   onPhaseChange: (phase: OrgSetupPhase) => void;
   initialPhase?: OrgSetupPhase;
@@ -79,6 +88,7 @@ export function OrgSetupForm({
   onBack,
   onClose,
   onNext,
+  onSelectSingleAccount,
   onFooterChange,
   onPhaseChange,
   initialPhase = ORG_SETUP_PHASE.DETAILS,
@@ -111,6 +121,7 @@ export function OrgSetupForm({
   const [setupPhase, setSetupPhase] = useState<OrgSetupPhase>(initialPhase);
   const [isSaving, setIsSaving] = useState(false);
   const formId = "org-wizard-setup-form";
+  const formRef = useRef<HTMLFormElement>(null);
 
   const isReadOnlyOrgId = Boolean(initialValues?.awsOrgId);
 
@@ -159,14 +170,36 @@ export function OrgSetupForm({
         })
       : null;
 
-  const { apiError, setApiError, submitOrganizationSetup } =
-    useOrgSetupSubmission({
-      stackSetExternalId,
-      onNext,
-      setFieldError: (field, message) => {
-        setError(field, { message });
-      },
-    });
+  const {
+    apiError,
+    setApiError,
+    submitOrganizationSetup,
+    replaceSecretWarning,
+    confirmSecretReplace,
+    cancelSecretReplace,
+    discoveryTimedOut,
+    discoveryFailed,
+    isSubmissionPending,
+    keepWaitingForDiscovery,
+    retryDiscovery,
+  } = useOrgSetupSubmission({
+    stackSetExternalId,
+    onNext,
+    setFieldError: (field, message) => {
+      switch (field) {
+        case "organizationName":
+        case "awsOrgId":
+          setError(field, { message });
+          return true;
+        default:
+          return false;
+      }
+    },
+  });
+
+  // `isSubmitting` only covers a submit react-hook-form started itself, not the
+  // chain re-entered by confirming a replacement, keeping waiting or retrying.
+  const isBusy = isSubmitting || isSubmissionPending;
 
   useEffect(() => {
     onPhaseChange(setupPhase);
@@ -192,20 +225,20 @@ export function OrgSetupForm({
     onFooterChange({
       showBack: !isEditCredentials,
       backLabel: "Back",
-      backDisabled: isSubmitting,
+      backDisabled: isBusy,
       onBack: () => setSetupPhase(ORG_SETUP_PHASE.DETAILS),
       showAction: true,
       actionLabel: "Authenticate",
-      actionDisabled: isSubmitting || !isValid || !stackSetExternalId,
+      actionDisabled: isBusy || !isValid || !stackSetExternalId,
       actionType: WIZARD_FOOTER_ACTION_TYPE.SUBMIT,
       actionFormId: formId,
     });
   }, [
     formId,
     intent,
+    isBusy,
     isOrgIdValid,
     isSaving,
-    isSubmitting,
     isValid,
     onBack,
     onFooterChange,
@@ -268,20 +301,26 @@ export function OrgSetupForm({
       return;
     }
 
-    void handleSubmit((data) => submitOrganizationSetup(data))(event);
+    void handleSubmit((data) =>
+      submitOrganizationSetup({ ...data, orgType: ORGANIZATION_TYPE.AWS }),
+    )(event);
   };
 
   useEffect(() => {
     if (!apiError) return;
-    document
-      .getElementById(formId)
-      ?.scrollIntoView({ block: "start", behavior: "smooth" });
-  }, [apiError, formId]);
+    formRef.current?.scrollIntoView({ block: "start", behavior: "smooth" });
+  }, [apiError]);
 
   return (
     <Form {...form}>
+      <SecretReplaceWarningModal
+        warning={replaceSecretWarning}
+        onConfirm={confirmSecretReplace}
+        onCancel={cancelSecretReplace}
+      />
       <form
         id={formId}
+        ref={formRef}
         onSubmit={handleFormSubmit}
         className="flex flex-col gap-5"
       >
@@ -293,6 +332,13 @@ export function OrgSetupForm({
                 Amazon Web Services (AWS) / Organization Details
               </h3>
             </div>
+
+            {onSelectSingleAccount && (
+              <AwsOnboardingMethodTabs
+                value={AWS_ONBOARDING_METHOD.ORGANIZATION}
+                onSelectSingle={onSelectSingleAccount}
+              />
+            )}
 
             <p className="text-muted-foreground text-sm">
               Enter the Organization ID for the accounts you want to add to
@@ -312,7 +358,7 @@ export function OrgSetupForm({
           </div>
         )}
 
-        {setupPhase === ORG_SETUP_PHASE.ACCESS && isSubmitting && (
+        {setupPhase === ORG_SETUP_PHASE.ACCESS && isBusy && (
           <div className="flex min-h-[220px] items-center justify-center">
             <div className="flex items-center gap-3 py-2">
               <Spinner className="size-6" />
@@ -328,6 +374,29 @@ export function OrgSetupForm({
             </AlertDescription>
           </Alert>
         )}
+
+        {setupPhase === ORG_SETUP_PHASE.ACCESS &&
+          discoveryTimedOut &&
+          !isBusy && (
+            <DiscoveryTimeoutNotice
+              onKeepWaiting={() => void keepWaitingForDiscovery()}
+              onRetry={() => void retryDiscovery()}
+            />
+          )}
+
+        {setupPhase === ORG_SETUP_PHASE.ACCESS &&
+          discoveryFailed &&
+          !isBusy && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="self-start"
+              onClick={() => void retryDiscovery()}
+            >
+              Retry discovery
+            </Button>
+          )}
 
         {setupPhase === ORG_SETUP_PHASE.DETAILS && (
           <div className="flex flex-col gap-4">
@@ -356,13 +425,12 @@ export function OrgSetupForm({
             />
 
             <p className="text-muted-foreground text-sm">
-              If left blank, Prowler will use the Organization name stored in
-              AWS.
+              {organizationNameFallbackHint(ORGANIZATION_TYPE.AWS)}
             </p>
           </div>
         )}
 
-        {setupPhase === ORG_SETUP_PHASE.ACCESS && !isSubmitting && (
+        {setupPhase === ORG_SETUP_PHASE.ACCESS && !isBusy && (
           <div className="flex flex-col gap-8">
             {/* External ID - shown first for both deployment steps */}
             <div className="flex flex-col gap-4">

@@ -25,6 +25,11 @@ vi.mock("@/store/onboarding-sequence", () => ({
   },
 }));
 
+// The invite step is exercised in its own test; keep this one on the dialog.
+vi.mock("../onboarding-invite-step", () => ({
+  OnboardingInviteStep: () => null,
+}));
+
 vi.mock("@/store/onboarding-checkpoint", () => ({
   CHECKPOINT_MARKER: "prowler.onboarding.checkpoint",
   useOnboardingCheckpointStore: Object.assign(

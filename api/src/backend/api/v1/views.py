@@ -125,10 +125,14 @@ from api.models import (
 )
 from api.pagination import ComplianceOverviewPagination
 from api.rbac.permissions import (
+    TASK_REVOKE_PERMISSIONS,
     Permissions,
     get_integrations,
     get_providers,
     get_role,
+    get_tasks,
+    get_user_roles,
+    roles_have_permissions,
 )
 from api.renderers import APIJSONRenderer, PlainTextRenderer
 from api.rls import Tenant
@@ -146,6 +150,7 @@ from api.v1.mixins import (
     JsonApiFilterMixin,
     PaginateByPkMixin,
     ProviderFilterParamsMixin,
+    ProviderVisibilityMixin,
     TaskManagementMixin,
 )
 from api.v1.serializers import (
@@ -237,12 +242,12 @@ from api.v1.serializers import (
     TokenSocialLoginSerializer,
     TokenSwitchTenantSerializer,
     UserCreateSerializer,
+    UserMeSerializer,
     UserRoleRelationshipSerializer,
     UserSerializer,
     UserUpdateSerializer,
 )
 from botocore.exceptions import ClientError, NoCredentialsError, ParamValidationError
-from celery import chain
 from celery.result import AsyncResult
 from config.custom_logging import BackendLogger
 from config.env import env
@@ -325,7 +330,7 @@ from rest_framework_simplejwt.token_blacklist.models import (
 )
 from tasks.beat import schedule_provider_scan
 from tasks.jobs.attack_paths import db_utils as attack_paths_db_utils
-from tasks.jobs.export import get_s3_client
+from tasks.jobs.export import get_s3_client, get_s3_presign_client
 from tasks.tasks import (
     QUEUED_SCAN_TASK_STATE,
     backfill_compliance_summaries_task,
@@ -340,8 +345,7 @@ from tasks.tasks import (
     enqueue_scan_execution_on_commit,
     get_active_provider_scan,
     jira_integration_task,
-    mute_historical_findings_task,
-    reaggregate_all_finding_group_summaries_task,
+    mute_findings_in_latest_scans_task,
     refresh_lighthouse_provider_models_task,
 )
 
@@ -813,6 +817,21 @@ class TenantFinishACSView(FinishACSView):
             User.objects.using(MainRouter.admin_db).filter(id=saml_user_id).delete()
             request.session.pop("saml_user_created", None)
 
+    @staticmethod
+    def _user_has_tenant_role(user_id, tenant_id):
+        return (
+            UserRoleRelationship.objects.using(MainRouter.admin_db)
+            .filter(user_id=user_id, tenant_id=tenant_id)
+            .exists()
+        )
+
+    @staticmethod
+    def _is_read_only_fallback_role(role):
+        return (
+            not any(getattr(role, permission) for permission in Role.PERMISSION_FIELDS)
+            and role.unlimited_visibility
+        )
+
     def dispatch(self, request, organization_slug):
         try:
             super().dispatch(request, organization_slug)
@@ -878,11 +897,56 @@ class TenantFinishACSView(FinishACSView):
             user.name = "N/A"
         user.save()
 
-        # Only remap roles when the IdP provides a userType attribute.
-        # Without it, the user's current roles are left untouched.
+        # Only remap existing roles when the IdP provides a userType attribute.
+        # Without it, preserve current roles or assign a read-only fallback.
         role_name = (
             extra.get("userType", [""])[0].strip() if extra.get("userType") else ""
         )
+        if not role_name:
+            with rls_transaction(str(tenant.id), using=MainRouter.admin_db):
+                with transaction.atomic(using=MainRouter.admin_db):
+                    # Serialize concurrent ACS callbacks for the same user.
+                    (
+                        User.objects.using(MainRouter.admin_db)
+                        .select_for_update()
+                        .only("id")
+                        .get(pk=user_id)
+                    )
+                    user_has_roles = self._user_has_tenant_role(user_id, tenant.id)
+                    if not user_has_roles:
+                        read_only_defaults = dict.fromkeys(
+                            Role.PERMISSION_FIELDS, False
+                        )
+                        read_only_defaults["unlimited_visibility"] = True
+                        role, role_created = Role.objects.using(
+                            MainRouter.admin_db
+                        ).get_or_create(
+                            name="read_only",
+                            tenant=tenant,
+                            defaults=read_only_defaults,
+                        )
+                        role_is_read_only = self._is_read_only_fallback_role(role)
+                        if not role_created and not role_is_read_only:
+                            suffix = 0
+                            while not role_created and not role_is_read_only:
+                                role, role_created = Role.objects.using(
+                                    MainRouter.admin_db
+                                ).get_or_create(
+                                    name=f"read_only_{suffix}",
+                                    tenant=tenant,
+                                    defaults=read_only_defaults,
+                                )
+                                role_is_read_only = self._is_read_only_fallback_role(
+                                    role
+                                )
+                                suffix += 1
+                        UserRoleRelationship.objects.using(
+                            MainRouter.admin_db
+                        ).get_or_create(
+                            user=user,
+                            role=role,
+                            defaults={"tenant": tenant},
+                        )
         if role_name:
             with transaction.atomic(using=MainRouter.admin_db):
                 role = (
@@ -1052,6 +1116,8 @@ class UserViewSet(BaseUserViewset):
             return UserCreateSerializer
         elif self.action == "partial_update":
             return UserUpdateSerializer
+        elif self.action == "me":
+            return UserMeSerializer
         else:
             return UserSerializer
 
@@ -1069,7 +1135,7 @@ class UserViewSet(BaseUserViewset):
     @action(detail=False, methods=["get"], url_name="me")
     def me(self, request):
         user = self.request.user
-        serializer = UserSerializer(user, context=self.get_serializer_context())
+        serializer = self.get_serializer(user)
         return Response(
             data=serializer.data,
             status=status.HTTP_200_OK,
@@ -1381,7 +1447,7 @@ class TenantViewSet(BaseTenantViewset):
         if not membership or membership.role != Membership.RoleChoices.OWNER:
             raise PermissionDenied("Only owners can delete a tenant.")
 
-        with transaction.atomic():
+        with transaction.atomic(using=MainRouter.admin_db):
             # Collect user IDs from this tenant's memberships before deleting them
             tenant_user_ids = set(
                 Membership.objects.using(MainRouter.admin_db)
@@ -1632,7 +1698,7 @@ class TenantMembersViewSet(BaseTenantViewset):
     ),
     update=extend_schema(exclude=True),
 )
-class ProviderGroupViewSet(BaseRLSViewSet):
+class ProviderGroupViewSet(ProviderVisibilityMixin, BaseRLSViewSet):
     queryset = ProviderGroup.objects.all()
     serializer_class = ProviderGroupSerializer
     filterset_class = ProviderGroupFilter
@@ -1653,14 +1719,13 @@ class ProviderGroupViewSet(BaseRLSViewSet):
             self.required_permissions = [Permissions.MANAGE_PROVIDERS]
 
     def get_queryset(self):
-        user_roles = get_role(self.request.user, self.request.tenant_id)
-        # Check if any of the user's roles have UNLIMITED_VISIBILITY
-        if user_roles.unlimited_visibility:
-            # User has unlimited visibility, return all provider groups
-            return ProviderGroup.objects.prefetch_related("providers", "roles")
-
-        # Collect provider groups associated with the user's roles
-        return user_roles.provider_groups.all().prefetch_related("providers", "roles")
+        if self.user_role.unlimited_visibility:
+            queryset = ProviderGroup.objects.filter(tenant_id=self.request.tenant_id)
+        else:
+            queryset = self.user_role.provider_groups.filter(
+                tenant_id=self.request.tenant_id
+            )
+        return queryset.prefetch_related("providers", "roles")
 
     def get_serializer_class(self):
         if self.action == "create":
@@ -1701,7 +1766,9 @@ class ProviderGroupViewSet(BaseRLSViewSet):
         },
     ),
 )
-class ProviderGroupProvidersRelationshipView(RelationshipView, BaseRLSViewSet):
+class ProviderGroupProvidersRelationshipView(
+    ProviderVisibilityMixin, RelationshipView, BaseRLSViewSet
+):
     queryset = ProviderGroup.objects.all()
     serializer_class = ProviderGroupMembershipSerializer
     resource_name = "providers"
@@ -1711,7 +1778,9 @@ class ProviderGroupProvidersRelationshipView(RelationshipView, BaseRLSViewSet):
     required_permissions = [Permissions.MANAGE_PROVIDERS]
 
     def get_queryset(self):
-        return ProviderGroup.objects.filter(tenant_id=self.request.tenant_id)
+        if self.user_role.unlimited_visibility:
+            return ProviderGroup.objects.filter(tenant_id=self.request.tenant_id)
+        return self.user_role.provider_groups.filter(tenant_id=self.request.tenant_id)
 
     def create(self, request, *args, **kwargs):
         provider_group = self.get_object()
@@ -1733,6 +1802,7 @@ class ProviderGroupProvidersRelationshipView(RelationshipView, BaseRLSViewSet):
             data={"providers": request.data},
             context={
                 "provider_group": provider_group,
+                "provider_queryset": self.get_provider_queryset(),
                 "tenant_id": self.request.tenant_id,
                 "request": request,
             },
@@ -1747,7 +1817,11 @@ class ProviderGroupProvidersRelationshipView(RelationshipView, BaseRLSViewSet):
         serializer = self.get_serializer(
             instance=provider_group,
             data={"providers": request.data},
-            context={"tenant_id": self.request.tenant_id, "request": request},
+            context={
+                "provider_queryset": self.get_provider_queryset(),
+                "tenant_id": self.request.tenant_id,
+                "request": request,
+            },
         )
         serializer.is_valid(raise_exception=True)
         serializer.save()
@@ -1864,7 +1938,7 @@ class ProviderViewSet(DisablePaginationMixin, BaseRLSViewSet):
     )
     @action(detail=True, methods=["post"], url_name="connection")
     def connection(self, request, pk=None):
-        get_object_or_404(Provider, pk=pk)
+        self.get_object()
         with transaction.atomic():
             task = check_provider_connection_task.delay(
                 provider_id=pk, tenant_id=self.request.tenant_id
@@ -1882,7 +1956,7 @@ class ProviderViewSet(DisablePaginationMixin, BaseRLSViewSet):
         )
 
     def destroy(self, request, *args, pk=None, **kwargs):
-        provider = get_object_or_404(Provider, pk=pk)
+        provider = self.get_object()
         provider.is_deleted = True
         provider.save()
         task_name = f"scan-perform-scheduled-{pk}"
@@ -2104,7 +2178,7 @@ class ProviderViewSet(DisablePaginationMixin, BaseRLSViewSet):
 )
 @method_decorator(CACHE_DECORATOR, name="list")
 @method_decorator(CACHE_DECORATOR, name="retrieve")
-class ScanViewSet(BaseRLSViewSet):
+class ScanViewSet(ProviderVisibilityMixin, BaseRLSViewSet):
     queryset = Scan.objects.all()
     serializer_class = ScanSerializer
     http_method_names = ["get", "post", "patch"]
@@ -2133,13 +2207,7 @@ class ScanViewSet(BaseRLSViewSet):
             self.required_permissions = [Permissions.MANAGE_SCANS]
 
     def get_queryset(self):
-        user_roles = get_role(self.request.user, self.request.tenant_id)
-        if user_roles.unlimited_visibility:
-            # User has unlimited visibility, return all scans
-            queryset = Scan.objects.filter(tenant_id=self.request.tenant_id)
-        else:
-            # User lacks permission, filter providers based on provider groups associated with the role
-            queryset = Scan.objects.filter(provider__in=get_providers(user_roles))
+        queryset = Scan.objects.filter(provider__in=self.get_provider_queryset())
         return queryset.select_related("provider", "task")
 
     def get_serializer_class(self):
@@ -2343,7 +2411,8 @@ class ScanViewSet(BaseRLSViewSet):
             }
             if content_type:
                 params["ResponseContentType"] = content_type
-            url = client.generate_presigned_url(
+            # The browser follows this URL, so it is signed against the public host.
+            url = (get_s3_presign_client() or client).generate_presigned_url(
                 "get_object",
                 Params=params,
                 ExpiresIn=300,
@@ -2737,6 +2806,7 @@ class ScanViewSet(BaseRLSViewSet):
                 provider = Provider.objects.select_for_update().get(
                     id=provider.id,
                     tenant_id=self.request.tenant_id,
+                    id__in=self.get_provider_queryset().values("id"),
                 )
                 active_scan = get_active_provider_scan(
                     self.request.tenant_id, provider.id
@@ -2756,6 +2826,15 @@ class ScanViewSet(BaseRLSViewSet):
                 tenant_id=self.request.tenant_id,
                 task_id=pre_task_id,
                 task_status=(QUEUED_SCAN_TASK_STATE if active_scan else None),
+                # This response is serialized before the on_commit publish,
+                # so without these the caller gets a task id and no scan id.
+                # Kept in step with what `enqueue_scan_execution_on_commit`
+                # publishes below.
+                task_kwargs={
+                    "tenant_id": str(self.request.tenant_id),
+                    "scan_id": str(scan.id),
+                    "provider_id": str(scan.provider_id),
+                },
             )
 
             if not active_scan:
@@ -2783,17 +2862,29 @@ class ScanViewSet(BaseRLSViewSet):
     list=extend_schema(
         tags=["Task"],
         summary="List all tasks",
-        description="Retrieve a list of all tasks with options for filtering by name, state, and other criteria.",
+        description=(
+            "Retrieve a list of all tasks with options for filtering by name, state, and other "
+            "criteria. Tasks that reference a provider are only returned when the role can "
+            "access it; tasks without a provider reference are returned for every role."
+        ),
     ),
     retrieve=extend_schema(
         tags=["Task"],
         summary="Retrieve data from a specific task",
-        description="Fetch detailed information about a specific task by its ID.",
+        description=(
+            "Fetch detailed information about a specific task by its ID. Tasks tied to a provider "
+            "outside the visibility of the role are not found."
+        ),
     ),
     destroy=extend_schema(
         tags=["Task"],
         summary="Revoke a task",
-        description="Try to revoke a task using its ID. Only tasks that are not yet in progress can be revoked.",
+        description=(
+            "Try to revoke a task using its ID. Only tasks that are not yet in progress can be "
+            "revoked, and the caller needs the same permission as the operation that queued "
+            "the task (for example MANAGE_SCANS for a scan). Provider deletions cannot be "
+            "revoked."
+        ),
         responses={202: OpenApiResponse(response=TaskSerializer)},
     ),
 )
@@ -2809,13 +2900,26 @@ class TaskViewSet(BaseRLSViewSet):
     required_permissions = []
 
     def get_queryset(self):
-        return Task.objects.annotate(
-            name=F("task_runner_task__task_name"),
-            state=F("task_runner_task__status"),
-        ).select_related("task_runner_task")
+        return (
+            get_tasks(self.user_role)
+            .annotate(
+                name=F("task_runner_task__task_name"),
+                state=F("task_runner_task__status"),
+            )
+            .select_related("task_runner_task")
+        )
 
     def destroy(self, request, *args, pk=None, **kwargs):
-        task = get_object_or_404(Task, pk=pk)
+        task = self.get_object()
+        required_permissions = TASK_REVOKE_PERMISSIONS.get(
+            task.task_runner_task.task_name
+        )
+        # Same multi-role semantics as HasPermissions.
+        if required_permissions is None or not roles_have_permissions(
+            get_user_roles(request.user, request.tenant_id), required_permissions
+        ):
+            raise PermissionDenied("You do not have permission to revoke this task.")
+
         if task.task_runner_task.status not in ["PENDING", "RECEIVED"]:
             serializer = TaskSerializer(task)
             return Response(
@@ -3412,12 +3516,8 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
         filtered_queryset = self.filter_queryset(self.get_queryset())
 
         latest_scans = (
-            Scan.all_objects.filter(
-                tenant_id=tenant_id,
-                state=StateChoices.COMPLETED,
-            )
-            .order_by("provider_id", "-inserted_at")
-            .distinct("provider_id")
+            Scan.all_objects.filter(tenant_id=tenant_id)
+            .latest_per_provider()
             .values("provider_id")
         )
 
@@ -3549,11 +3649,9 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
         tenant_id = request.tenant_id
         query_params = request.query_params
 
-        latest_scans_queryset = (
-            Scan.all_objects.filter(tenant_id=tenant_id, state=StateChoices.COMPLETED)
-            .order_by("provider_id", "-inserted_at")
-            .distinct("provider_id")
-        )
+        latest_scans_queryset = Scan.all_objects.filter(
+            tenant_id=tenant_id
+        ).latest_per_provider()
 
         queryset = ResourceScanSummary.objects.filter(
             tenant_id=tenant_id,
@@ -4140,12 +4238,9 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
         tenant_id = request.tenant_id
         filtered_queryset = self.filter_queryset(self.get_queryset())
 
-        latest_scan_ids = list(
-            Scan.all_objects.filter(tenant_id=tenant_id, state=StateChoices.COMPLETED)
-            .order_by("provider_id", "-inserted_at")
-            .distinct("provider_id")
-            .values_list("id", flat=True)
-        )
+        latest_scan_ids = Scan.all_objects.filter(
+            tenant_id=tenant_id
+        ).latest_ids_per_provider()
         filtered_queryset = filtered_queryset.filter(
             tenant_id=tenant_id, scan_id__in=latest_scan_ids
         )
@@ -4168,11 +4263,9 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
         tenant_id = request.tenant_id
         query_params = request.query_params
 
-        latest_scans_queryset = (
-            Scan.all_objects.filter(tenant_id=tenant_id, state=StateChoices.COMPLETED)
-            .order_by("provider_id", "-inserted_at")
-            .distinct("provider_id")
-        )
+        latest_scans_queryset = Scan.all_objects.filter(
+            tenant_id=tenant_id
+        ).latest_per_provider()
         raw_latest_scans_ids = list(
             latest_scans_queryset.values_list("id", "unique_resource_count")
         )
@@ -4311,7 +4404,7 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
 )
 @method_decorator(CACHE_DECORATOR, name="list")
 @method_decorator(CACHE_DECORATOR, name="retrieve")
-class ProviderSecretViewSet(BaseRLSViewSet):
+class ProviderSecretViewSet(ProviderVisibilityMixin, BaseRLSViewSet):
     queryset = ProviderSecret.objects.all()
     serializer_class = ProviderSecretSerializer
     filterset_class = ProviderSecretFilter
@@ -4327,7 +4420,7 @@ class ProviderSecretViewSet(BaseRLSViewSet):
     required_permissions = [Permissions.MANAGE_PROVIDERS]
 
     def get_queryset(self):
-        return ProviderSecret.objects.filter(tenant_id=self.request.tenant_id)
+        return ProviderSecret.objects.filter(provider__in=self.get_provider_queryset())
 
     def get_serializer_class(self):
         if self.action == "create":
@@ -4406,7 +4499,7 @@ class InvitationViewSet(BaseRLSViewSet):
 
     def partial_update(self, request, *args, **kwargs):
         instance = self.get_object()
-        if instance.state != Invitation.State.PENDING:
+        if instance.state != Invitation.State.PENDING or instance.is_lapsed:
             raise ValidationError(detail="This invitation cannot be updated.")
         serializer = self.get_serializer(
             instance,
@@ -4420,7 +4513,7 @@ class InvitationViewSet(BaseRLSViewSet):
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
-        if instance.state != Invitation.State.PENDING:
+        if instance.state != Invitation.State.PENDING or instance.is_lapsed:
             raise ValidationError(detail="This invitation cannot be revoked.")
         instance.state = Invitation.State.REVOKED
         instance.save()
@@ -4913,11 +5006,7 @@ class ComplianceOverviewViewSet(
         if provider_filters:
             scans = scans.filter(**provider_filters)
 
-        return list(
-            scans.order_by("provider_id", "-inserted_at")
-            .distinct("provider_id")
-            .values_list("id", flat=True)
-        )
+        return scans.latest_ids_per_provider()
 
     def _filtered_queryset_for_latest_provider_scans(self, latest_scan_ids=None):
         if latest_scan_ids is None:
@@ -5659,14 +5748,9 @@ class OverviewViewSet(ProviderFilterParamsMixin, BaseRLSViewSet):
             else {}
         )
 
-        latest_scan_ids = (
-            Scan.all_objects.filter(
-                tenant_id=tenant_id, state=StateChoices.COMPLETED, **provider_filter
-            )
-            .order_by("provider_id", "-inserted_at")
-            .distinct("provider_id")
-            .values_list("id", flat=True)
-        )
+        latest_scan_ids = Scan.all_objects.filter(
+            tenant_id=tenant_id, **provider_filter
+        ).latest_ids_per_provider()
 
         return filtered_queryset.filter(
             tenant_id=tenant_id, scan_id__in=latest_scan_ids
@@ -5693,16 +5777,10 @@ class OverviewViewSet(ProviderFilterParamsMixin, BaseRLSViewSet):
 
     def _latest_scan_ids_for_allowed_providers(self, tenant_id, provider_filters=None):
         provider_filter = self._get_provider_filter()
-        queryset = Scan.all_objects.filter(
-            tenant_id=tenant_id, state=StateChoices.COMPLETED, **provider_filter
-        )
+        queryset = Scan.all_objects.filter(tenant_id=tenant_id, **provider_filter)
         if provider_filters:
             queryset = queryset.filter(**provider_filters)
-        return (
-            queryset.order_by("provider_id", "-inserted_at")
-            .distinct("provider_id")
-            .values_list("id", flat=True)
-        )
+        return queryset.latest_ids_per_provider()
 
     @action(detail=False, methods=["get"], url_name="providers")
     def providers(self, request):
@@ -5714,14 +5792,9 @@ class OverviewViewSet(ProviderFilterParamsMixin, BaseRLSViewSet):
             else {}
         )
 
-        latest_scan_ids = (
-            Scan.all_objects.filter(
-                tenant_id=tenant_id, state=StateChoices.COMPLETED, **provider_filter
-            )
-            .order_by("provider_id", "-inserted_at")
-            .distinct("provider_id")
-            .values_list("id", flat=True)
-        )
+        latest_scan_ids = Scan.all_objects.filter(
+            tenant_id=tenant_id, **provider_filter
+        ).latest_ids_per_provider()
 
         findings_aggregated = (
             queryset.filter(scan_id__in=latest_scan_ids)
@@ -6608,7 +6681,7 @@ class OverviewViewSet(ProviderFilterParamsMixin, BaseRLSViewSet):
         responses={202: OpenApiResponse(response=TaskSerializer)},
     )
 )
-class ScheduleViewSet(BaseRLSViewSet):
+class ScheduleViewSet(ProviderVisibilityMixin, BaseRLSViewSet):
     # TODO: change to Schedule when implemented
     queryset = Task.objects.none()
     http_method_names = ["post"]
@@ -6635,7 +6708,9 @@ class ScheduleViewSet(BaseRLSViewSet):
         serializer.is_valid(raise_exception=True)
         provider_id = serializer.validated_data["provider_id"]
 
-        provider_instance = get_object_or_404(Provider, pk=provider_id)
+        provider_instance = get_object_or_404(
+            self.get_provider_queryset(), pk=provider_id
+        )
         with transaction.atomic():
             task = schedule_provider_scan(provider_instance)
 
@@ -7482,35 +7557,28 @@ class MuteRuleViewSet(BaseRLSViewSet):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        # Create the mute rule
+        tenant_id = str(request.tenant_id)
+        finding_ids = serializer.validated_data["finding_ids"]
+        provider_ids = list(
+            dict.fromkeys(
+                Finding.all_objects.filter(
+                    id__in=finding_ids, tenant_id=tenant_id
+                ).values_list("scan__provider_id", flat=True)
+            )
+        )
+
         mute_rule = serializer.save()
 
-        tenant_id = str(request.tenant_id)
-        finding_ids = request.data.get("finding_ids", [])
-
-        # Immediately mute the selected findings
-        Finding.all_objects.filter(
-            id__in=finding_ids, tenant_id=tenant_id, muted=False
-        ).update(
-            muted=True,
-            muted_at=mute_rule.inserted_at,
-            muted_reason=mute_rule.reason,
-        )
-
-        # Launch background task for historical muting + reaggregation
         transaction.on_commit(
-            lambda: chain(
-                mute_historical_findings_task.si(
-                    tenant_id=tenant_id,
-                    mute_rule_id=str(mute_rule.id),
-                ),
-                reaggregate_all_finding_group_summaries_task.si(
-                    tenant_id=tenant_id,
-                ),
-            ).apply_async()
+            lambda: mute_findings_in_latest_scans_task.apply_async(
+                kwargs={
+                    "tenant_id": tenant_id,
+                    "mute_rule_id": str(mute_rule.id),
+                    "provider_ids": [str(provider_id) for provider_id in provider_ids],
+                }
+            )
         )
 
-        # Return the created mute rule
         serializer = self.get_serializer(mute_rule)
         return Response(
             data=serializer.data,
@@ -7873,18 +7941,13 @@ class FindingGroupViewSet(JsonApiFilterMixin, BaseRLSViewSet):
 
     def _get_latest_findings_per_provider(self, filtered_queryset):
         """Keep only findings from each provider's most recent completed scan."""
-        # Materialize to a literal IN list. Left as a subquery, Postgres can't
-        # estimate the match count and picks a serial nested loop on
-        # resource_finding_mappings when one scan dominates findings
-        latest_scan_ids = list(
-            Scan.objects.filter(
-                tenant_id=self.request.tenant_id,
-                state=StateChoices.COMPLETED,
-            )
-            .order_by("provider_id", "-completed_at", "-inserted_at")
-            .distinct("provider_id")
-            .values_list("id", flat=True)
-        )
+        # `latest_ids_per_provider` materializes to a literal IN list.
+        # Left as a subquery, Postgres can't estimate the match count and picks
+        # a serial nested loop on resource_finding_mappings when one scan
+        # dominates findings
+        latest_scan_ids = Scan.objects.filter(
+            tenant_id=self.request.tenant_id
+        ).latest_ids_per_provider()
         return filtered_queryset.filter(scan_id__in=latest_scan_ids)
 
     def _post_process_aggregation(self, aggregated_data):
@@ -8830,16 +8893,14 @@ class FindingGroupViewSet(JsonApiFilterMixin, BaseRLSViewSet):
         tenant_id = request.tenant_id
         queryset = self._get_finding_queryset()
 
-        # Order by -completed_at (matching the /latest summary path and the
-        # daily summary upsert keyed on midnight(completed_at)) so that
-        # overlapping scans do not make /resources and /latest read from
-        # different scans and report diverging counts.
-        latest_scan_ids = (
-            Scan.objects.filter(tenant_id=tenant_id, state=StateChoices.COMPLETED)
-            .order_by("provider_id", "-completed_at", "-inserted_at")
-            .distinct("provider_id")
-            .values_list("id", flat=True)
-        )
+        # The shared selector orders by -completed_at (matching the /latest
+        # summary path and the daily summary upsert keyed on
+        # midnight(completed_at)) so that overlapping scans do not make
+        # /resources and /latest read from different scans and report
+        # diverging counts.
+        latest_scan_ids = Scan.objects.filter(
+            tenant_id=tenant_id
+        ).latest_ids_per_provider()
 
         normalized_params = self._normalize_jsonapi_params(request.query_params)
         # Remove date filters since we're using latest

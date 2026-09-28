@@ -1,15 +1,15 @@
-import { Icon } from "@iconify/react";
-
 import {
   LIGHTHOUSE_V2_PROVIDER_TYPE,
   type LighthouseV2ProviderType,
 } from "@/app/(prowler)/lighthouse/_types";
+import { AmazonWebServicesIcon, OpenAIIcon } from "@/components/icons/Icons";
+import type { IconComponent } from "@/types/components";
 
 const LIGHTHOUSE_V2_PROVIDER_ICONS = {
-  [LIGHTHOUSE_V2_PROVIDER_TYPE.OPENAI]: "simple-icons:openai",
-  [LIGHTHOUSE_V2_PROVIDER_TYPE.BEDROCK]: "simple-icons:amazonwebservices",
-  [LIGHTHOUSE_V2_PROVIDER_TYPE.OPENAI_COMPATIBLE]: "simple-icons:openai",
-} as const satisfies Record<LighthouseV2ProviderType, string>;
+  [LIGHTHOUSE_V2_PROVIDER_TYPE.OPENAI]: OpenAIIcon,
+  [LIGHTHOUSE_V2_PROVIDER_TYPE.BEDROCK]: AmazonWebServicesIcon,
+  [LIGHTHOUSE_V2_PROVIDER_TYPE.OPENAI_COMPATIBLE]: OpenAIIcon,
+} as const satisfies Record<LighthouseV2ProviderType, IconComponent>;
 
 export function ProviderIcon({
   provider,
@@ -18,11 +18,6 @@ export function ProviderIcon({
   provider: LighthouseV2ProviderType;
   className?: string;
 }) {
-  return (
-    <Icon
-      aria-hidden="true"
-      className={className}
-      icon={LIGHTHOUSE_V2_PROVIDER_ICONS[provider]}
-    />
-  );
+  const Icon = LIGHTHOUSE_V2_PROVIDER_ICONS[provider];
+  return <Icon aria-hidden="true" className={className} />;
 }

@@ -10,11 +10,19 @@ import {
   MultiSelect,
   MultiSelectContent,
   MultiSelectItem,
+  MultiSelectLoading,
   MultiSelectSelectAll,
   MultiSelectSeparator,
   MultiSelectTrigger,
   MultiSelectValue,
 } from "@/components/shadcn/select/multiselect";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/shadcn/select/select";
 import { useUrlFilters } from "@/hooks/use-url-filters";
 import {
   getScanEntityLabel,
@@ -28,7 +36,11 @@ import {
   ProviderEntity,
   ScanEntity,
 } from "@/types";
-import { DATA_TABLE_FILTER_MODE, DataTableFilterMode } from "@/types/filters";
+import {
+  DATA_TABLE_FILTER_MODE,
+  FILTER_SELECTION_MODE,
+  type DataTableFilterMode,
+} from "@/types/filters";
 import { ProviderConnectionStatus } from "@/types/providers";
 
 function isNonEmptyString(value: string | null | undefined): value is string {
@@ -78,10 +90,18 @@ export const DataTableFilterCustom = ({
 
   const buildSearchConfig = (filter: FilterOption) => {
     const label = filter.labelCheckboxGroup.toLowerCase();
+    const isLoadingEmptyList = filter.isLoading && filter.values.length === 0;
     return {
       placeholder: `Search ${label}...`,
-      emptyMessage: `No ${label} found.`,
+      emptyMessage: isLoadingEmptyList
+        ? `Loading ${label}...`
+        : `No ${label} found.`,
     };
+  };
+
+  const handleOpenChange = (filter: FilterOption, open: boolean) => {
+    setOpenFilterKey(open ? filter.key : null);
+    if (open) filter.onOpen?.();
   };
 
   // Helper function to get entity from valueLabelMapping
@@ -234,11 +254,48 @@ export const DataTableFilterCustom = ({
       {sortedFilters().map((filter) => {
         const selectedValues = getSelectedValues(filter);
 
+        if (filter.selectionMode === FILTER_SELECTION_MODE.SINGLE) {
+          const selectedValue = selectedValues[0] ?? "";
+
+          return (
+            <Select
+              key={filter.key}
+              allowDeselect
+              open={openFilterKey === filter.key}
+              onOpenChange={(open) =>
+                setOpenFilterKey(open ? filter.key : null)
+              }
+              value={selectedValue}
+              onValueChange={(value) =>
+                pushDropdownFilter(filter, value ? [value] : [])
+              }
+            >
+              <SelectTrigger aria-label={filter.labelCheckboxGroup}>
+                <SelectValue placeholder={`All ${filter.labelCheckboxGroup}`} />
+              </SelectTrigger>
+              <SelectContent width={filter.width ?? "default"}>
+                {filter.values.map((value) => {
+                  const entity = getEntityForValue(filter, value);
+                  const displayLabel = filter.labelFormatter
+                    ? filter.labelFormatter(value)
+                    : value;
+
+                  return (
+                    <SelectItem key={value} value={value}>
+                      {entity ? renderEntityContent(entity) : displayLabel}
+                    </SelectItem>
+                  );
+                })}
+              </SelectContent>
+            </Select>
+          );
+        }
+
         return (
           <MultiSelect
             key={filter.key}
             open={openFilterKey === filter.key}
-            onOpenChange={(open) => setOpenFilterKey(open ? filter.key : null)}
+            onOpenChange={(open) => handleOpenChange(filter, open)}
             values={selectedValues}
             onValuesChange={(values) => pushDropdownFilter(filter, values)}
           >
@@ -269,6 +326,11 @@ export const DataTableFilterCustom = ({
                   </MultiSelectItem>
                 );
               })}
+              {filter.isLoading && filter.values.length > 0 && (
+                <MultiSelectLoading>
+                  Loading {filter.labelCheckboxGroup.toLowerCase()}...
+                </MultiSelectLoading>
+              )}
             </MultiSelectContent>
           </MultiSelect>
         );

@@ -13,6 +13,7 @@ import {
   ActionDropdownItem,
 } from "@/components/shadcn/dropdown";
 import { Progress } from "@/components/shadcn/progress";
+import { useReportDownload } from "@/hooks/use-report-download";
 import { COMPLIANCE_REPORT_TYPES } from "@/lib/compliance/compliance-report-types";
 import {
   getScoreColor,
@@ -35,6 +36,8 @@ interface ThreatScoreBadgeProps {
   provider: string;
   selectedScan?: ScanEntity;
   sectionScores?: SectionScores;
+  /** Prowler Cloud tenants without a paid plan cannot download reports. */
+  subscriptionOnly?: boolean;
 }
 
 export const ThreatScoreBadge = ({
@@ -42,8 +45,10 @@ export const ThreatScoreBadge = ({
   scanId,
   provider,
   sectionScores,
+  subscriptionOnly = false,
 }: ThreatScoreBadgeProps) => {
   const router = useRouter();
+  const runReportDownload = useReportDownload(subscriptionOnly);
   const searchParams = useSearchParams();
   const [isDownloadingCsv, setIsDownloadingCsv] = useState(false);
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
@@ -83,29 +88,31 @@ export const ThreatScoreBadge = ({
 
   const pillars = getOrderedPillars(sectionScores);
 
-  const handleDownloadCsv = async () => {
-    if (isDownloadingCsv) return;
-    setIsDownloadingCsv(true);
-    try {
-      await downloadComplianceCsv(scanId, complianceId, toast);
-    } finally {
-      setIsDownloadingCsv(false);
-    }
-  };
+  const handleDownloadCsv = () =>
+    runReportDownload(async () => {
+      if (isDownloadingCsv) return;
+      setIsDownloadingCsv(true);
+      try {
+        await downloadComplianceCsv(scanId, complianceId, toast);
+      } finally {
+        setIsDownloadingCsv(false);
+      }
+    });
 
-  const handleDownloadPdf = async () => {
-    if (isDownloadingPdf) return;
-    setIsDownloadingPdf(true);
-    try {
-      await downloadComplianceReportPdf(
-        scanId,
-        COMPLIANCE_REPORT_TYPES.THREATSCORE,
-        toast,
-      );
-    } finally {
-      setIsDownloadingPdf(false);
-    }
-  };
+  const handleDownloadPdf = () =>
+    runReportDownload(async () => {
+      if (isDownloadingPdf) return;
+      setIsDownloadingPdf(true);
+      try {
+        await downloadComplianceReportPdf(
+          scanId,
+          COMPLIANCE_REPORT_TYPES.THREATSCORE,
+          toast,
+        );
+      } finally {
+        setIsDownloadingPdf(false);
+      }
+    });
 
   return (
     <Card variant="base" padding="md" className="relative gap-4">

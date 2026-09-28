@@ -1,3 +1,5 @@
+import type { ApiResult } from "@/types/server-actions";
+
 import { AttackSurfaceOverview, AttackSurfaceOverviewResponse } from "./types";
 
 const ATTACK_SURFACE_IDS = {
@@ -49,7 +51,7 @@ function mapAttackSurfaceItem(item: AttackSurfaceOverview): AttackSurfaceItem {
  * @returns An array of AttackSurfaceItem objects sorted by the predefined order
  */
 export function adaptAttackSurfaceOverview(
-  response: AttackSurfaceOverviewResponse | undefined,
+  response: ApiResult<AttackSurfaceOverviewResponse> | undefined,
 ): AttackSurfaceItem[] {
   if (!response?.data || response.data.length === 0) {
     return [];

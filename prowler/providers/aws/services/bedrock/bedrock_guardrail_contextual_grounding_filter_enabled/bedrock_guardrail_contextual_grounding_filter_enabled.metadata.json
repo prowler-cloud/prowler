@@ -1,0 +1,41 @@
+{
+  "Provider": "aws",
+  "CheckID": "bedrock_guardrail_contextual_grounding_filter_enabled",
+  "CheckTitle": "Bedrock guardrail blocks ungrounded and irrelevant model responses",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "bedrock",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Other",
+  "ResourceGroup": "ai_ml",
+  "Description": "**Bedrock guardrails** can attach a `contextualGroundingPolicy` whose filters score each response for `GROUNDING` (supported by the retrieved source) and `RELEVANCE` (answers the question asked). Both filter types must be enabled, set to `action: BLOCK`, and carry a `threshold` above 0.",
+  "Risk": "Without both filters the model can return confident, unsupported answers that a **RAG application** presents as sourced fact.\n\nThree settings make a configured filter **inert**: `enabled: false` runs no evaluation, so a `BLOCK` action and tuned threshold sit unused; `action: NONE` scores the response and reports it in the trace while still delivering it; a `threshold` of 0 can never be tripped.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/bedrock/latest/userguide/guardrails-contextual-grounding-check.html",
+    "https://docs.aws.amazon.com/bedrock/latest/APIReference/API_GuardrailContextualGroundingFilterConfig.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aws bedrock update-guardrail --guardrail-identifier example-guardrail-id --name example-guardrail --blocked-input-messaging \"Sorry, I cannot answer that.\" --blocked-outputs-messaging \"Sorry, I cannot answer that.\" --contextual-grounding-policy-config '{\"filtersConfig\":[{\"type\":\"GROUNDING\",\"threshold\":0.75,\"action\":\"BLOCK\",\"enabled\":true},{\"type\":\"RELEVANCE\",\"threshold\":0.75,\"action\":\"BLOCK\",\"enabled\":true}]}'",
+      "NativeIaC": "```yaml\nResources:\n  ExampleResource:\n    Type: AWS::Bedrock::Guardrail\n    Properties:\n      Name: example_resource\n      BlockedInputMessaging: Sorry, I cannot answer that.\n      BlockedOutputsMessaging: Sorry, I cannot answer that.\n      ContextualGroundingPolicyConfig:\n        FiltersConfig:\n          - Type: GROUNDING\n            Threshold: 0.75\n            Action: BLOCK  # Critical: NONE only reports, it does not block\n            Enabled: true  # Critical: false runs no evaluation at all\n          - Type: RELEVANCE\n            Threshold: 0.75\n            Action: BLOCK\n            Enabled: true\n```",
+      "Other": "1. Open the AWS Console and go to Amazon Bedrock\n2. Select **Guardrails**, then the guardrail\n3. Edit the contextual grounding check\n4. Enable both the grounding and the relevance filter\n5. Set each threshold above 0 to a value tuned for your corpus\n6. Set each action to Block rather than None\n7. Save and create a new guardrail version",
+      "Terraform": "```hcl\nresource \"awscc_bedrock_guardrail\" \"example_resource\" {\n  name                      = \"example-guardrail\"\n  blocked_input_messaging   = \"Sorry, I cannot answer that.\"\n  blocked_outputs_messaging = \"Sorry, I cannot answer that.\"\n\n  contextual_grounding_policy_config = {\n    filters_config = [\n      {\n        type      = \"GROUNDING\"\n        threshold = 0.75 # Critical: 0 can never be tripped\n        action    = \"BLOCK\"  # Critical: NONE scores without blocking\n        enabled   = true     # Critical: when false the evaluation never runs\n      },\n      {\n        type      = \"RELEVANCE\"\n        threshold = 0.75\n        action    = \"BLOCK\"\n        enabled   = true\n      },\n    ]\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Configure both a GROUNDING and a RELEVANCE contextual grounding filter on every guardrail used by a retrieval-augmented application, set each action to BLOCK, and tune each threshold above 0 against a labelled sample rather than leaving it at the minimum.",
+      "Url": "https://hub.prowler.com/check/bedrock_guardrail_contextual_grounding_filter_enabled"
+    }
+  },
+  "Categories": [
+    "gen-ai"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "bedrock_guardrail_prompt_attack_filter_enabled"
+  ],
+  "Notes": "Reports one finding per guardrail, reading contextualGroundingPolicy.filters from GetGuardrail. A guardrail whose detail could not be retrieved returns MANUAL rather than PASS, because an absent policy means the answer is unknown, not that the control is satisfied. enabled and action are both optional members with no documented default, so a filter that is otherwise compliant but omits either returns MANUAL rather than being read as blocking or not; an explicit enabled: false or a non-BLOCK action is a definite finding and FAILs."
+}

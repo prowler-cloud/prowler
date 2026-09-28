@@ -117,12 +117,71 @@ export const useTaskWatcherStore = create<TaskWatcherState>()(
 const activePolls = new Map<string, Promise<TaskTrackingResult<unknown>>>();
 const suppressedHandlers = new Set<string>();
 
+// Navigation aborts outstanding Server Action requests. That is not a backend
+// task failure: keep its persisted identity for the next document to resume.
+let pageSuspended = false;
+let pageHidden = false;
+let navigationGeneration = 0;
+let pageRecoveryTimer: ReturnType<typeof setTimeout> | undefined;
+const pageRecoveryWaiters = new Set<(visible: boolean) => void>();
+
+const resolvePageRecovery = (visible: boolean) => {
+  pageRecoveryWaiters.forEach((resolve) => resolve(visible));
+  pageRecoveryWaiters.clear();
+};
+
+const resumeVisiblePage = () => {
+  clearTimeout(pageRecoveryTimer);
+  // Downloads and cancelled navigation emit beforeunload without pagehide.
+  // Let pagehide confirm navigation before retrying in the surviving document.
+  pageRecoveryTimer = setTimeout(() => {
+    pageRecoveryTimer = undefined;
+    if (pageHidden) return;
+    pageSuspended = false;
+    resolvePageRecovery(true);
+    void resumePendingTaskPolling();
+  }, 0);
+};
+
+const waitForVisiblePage = (): Promise<boolean> => {
+  if (pageHidden) return Promise.resolve(false);
+  return new Promise((resolve) => {
+    pageRecoveryWaiters.add(resolve);
+    resumeVisiblePage();
+  });
+};
+
+if (typeof window !== "undefined") {
+  // Browsers can abort a Server Action before pagehide is dispatched.
+  // Mark the navigation at its start so that abort cannot discard the task.
+  window.addEventListener("beforeunload", () => {
+    navigationGeneration++;
+    pageSuspended = true;
+    resumeVisiblePage();
+  });
+  window.addEventListener("pagehide", () => {
+    navigationGeneration++;
+    clearTimeout(pageRecoveryTimer);
+    pageHidden = true;
+    pageSuspended = true;
+    resolvePageRecovery(false);
+  });
+  window.addEventListener("pageshow", (event) => {
+    clearTimeout(pageRecoveryTimer);
+    pageHidden = false;
+    pageSuspended = false;
+    resolvePageRecovery(true);
+    if (event.persisted) void resumePendingTaskPolling();
+  });
+}
+
 const settleTask = (
   taskId: string,
   status: TaskWatcherStatus,
   error?: string,
   result?: unknown,
 ): TaskTrackingResult => {
+  if (pageSuspended) return { status: TASK_WATCHER_STATUS.PENDING };
   const store = useTaskWatcherStore.getState();
   const currentTask = store.tasks[taskId];
   if (!currentTask || currentTask.status !== TASK_WATCHER_STATUS.PENDING) {
@@ -224,23 +283,37 @@ const pollUntilDone = <R>(taskId: string): Promise<TaskTrackingResult<R>> => {
         return runPollLoop<R>(taskId);
       };
 
-      if (typeof navigator !== "undefined" && navigator.locks) {
-        return await navigator.locks.request(
-          `task-watcher:${taskId}`,
-          runIfPending,
-        );
-      }
+      for (;;) {
+        const pollNavigationGeneration = navigationGeneration;
+        try {
+          const result =
+            typeof navigator !== "undefined" && navigator.locks
+              ? await navigator.locks.request(
+                  `task-watcher:${taskId}`,
+                  runIfPending,
+                )
+              : await runIfPending();
+          if (result.status !== TASK_WATCHER_STATUS.PENDING) return result;
+        } catch {
+          if (
+            !pageSuspended &&
+            navigationGeneration === pollNavigationGeneration
+          ) {
+            return settleTask(
+              taskId,
+              TASK_WATCHER_STATUS.ERROR,
+              "Tracking the task failed unexpectedly. Try again later.",
+            ) as TaskTrackingResult<R>;
+          }
+        }
 
-      return await runIfPending();
-    } catch {
-      // A thrown poll (e.g. the server-action RPC failing on a network drop)
-      // must still settle the task, or it stays PENDING in the persisted
-      // store and blocks the UI until the staleness ceiling.
-      return settleTask(
-        taskId,
-        TASK_WATCHER_STATUS.ERROR,
-        "Tracking the task failed unexpectedly. Try again later.",
-      ) as TaskTrackingResult<R>;
+        // Downloads and cancelled navigation keep the original caller alive.
+        // Retry within its promise so it retains notification ownership and
+        // receives a terminal result. Only a hidden document hands off to resume.
+        if (!(await waitForVisiblePage())) {
+          return { status: TASK_WATCHER_STATUS.PENDING };
+        }
+      }
     } finally {
       activePolls.delete(taskId);
     }
@@ -295,9 +368,6 @@ export const trackAndPollTask = async <R = unknown>({
 export const resumePendingTasks = async (): Promise<void> => {
   const store = useTaskWatcherStore.getState();
   const persistedTasks = Object.values(store.tasks);
-  const pending = persistedTasks.filter(
-    (task) => task.status === TASK_WATCHER_STATUS.PENDING,
-  );
 
   // Settled entries already surfaced in the previous browser session. The
   // server-rendered feature UI resolves durable results again on reload, so
@@ -306,6 +376,13 @@ export const resumePendingTasks = async (): Promise<void> => {
     .filter((task) => task.status !== TASK_WATCHER_STATUS.PENDING)
     .forEach((task) => store.dismissTask(task.taskId));
 
+  await resumePendingTaskPolling();
+};
+
+async function resumePendingTaskPolling(): Promise<void> {
+  const pending = Object.values(useTaskWatcherStore.getState().tasks).filter(
+    (task) => task.status === TASK_WATCHER_STATUS.PENDING,
+  );
   await Promise.all(
     pending.map((task) => {
       if (Date.now() - task.startedAt > STALE_TASK_MS) {
@@ -319,4 +396,4 @@ export const resumePendingTasks = async (): Promise<void> => {
       return pollUntilDone(task.taskId);
     }),
   );
-};
+}

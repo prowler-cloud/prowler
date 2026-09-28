@@ -1,6 +1,11 @@
 import { Skeleton } from "@/components/shadcn/skeleton/skeleton";
+import { isCloud } from "@/lib/shared/env";
 
-const SkeletonTableRow = () => {
+interface SkeletonTableRowProps {
+  isCloudEnvironment: boolean;
+}
+
+const SkeletonTableRow = ({ isCloudEnvironment }: SkeletonTableRowProps) => {
   return (
     <tr className="border-border-neutral-secondary border-b last:border-b-0">
       {/* Name */}
@@ -15,6 +20,11 @@ const SkeletonTableRow = () => {
       <td className="px-3 py-4">
         <Skeleton className="h-4 w-20 rounded" />
       </td>
+      {isCloudEnvironment && (
+        <td className="px-3 py-4">
+          <Skeleton className="h-5 w-28 rounded-full" />
+        </td>
+      )}
       {/* Company name */}
       <td className="px-3 py-4">
         <Skeleton className="h-4 w-24 rounded" />
@@ -33,6 +43,7 @@ const SkeletonTableRow = () => {
 
 export const SkeletonTableUser = () => {
   const rows = 10;
+  const isCloudEnvironment = isCloud();
 
   return (
     <div className="border-border-neutral-secondary bg-bg-neutral-secondary flex w-full flex-col gap-4 overflow-hidden rounded-[14px] border p-4 shadow-sm">
@@ -60,6 +71,11 @@ export const SkeletonTableUser = () => {
             <th className="px-3 py-3 text-left">
               <Skeleton className="h-4 w-10 rounded" />
             </th>
+            {isCloudEnvironment && (
+              <th className="px-3 py-3 text-left">
+                <Skeleton className="h-4 w-28 rounded" />
+              </th>
+            )}
             {/* Company name */}
             <th className="px-3 py-3 text-left">
               <Skeleton className="h-4 w-28 rounded" />
@@ -74,7 +90,7 @@ export const SkeletonTableUser = () => {
         </thead>
         <tbody>
           {Array.from({ length: rows }).map((_, i) => (
-            <SkeletonTableRow key={i} />
+            <SkeletonTableRow key={i} isCloudEnvironment={isCloudEnvironment} />
           ))}
         </tbody>
       </table>
