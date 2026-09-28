@@ -7,6 +7,7 @@ import { Card } from "@/components/shadcn/card/card";
 interface RegistryCredentialBannerProps {
   connectButtonRef?: Ref<HTMLButtonElement>;
   onConnect: () => void;
+  registryUrl?: string;
   tenantArtifactCount: number;
   validationPending: boolean;
 }
@@ -14,6 +15,7 @@ interface RegistryCredentialBannerProps {
 export function RegistryCredentialBanner({
   connectButtonRef,
   onConnect,
+  registryUrl,
   tenantArtifactCount,
   validationPending,
 }: RegistryCredentialBannerProps) {
@@ -46,16 +48,18 @@ export function RegistryCredentialBanner({
             <Button onClick={onConnect} ref={connectButtonRef} type="button">
               Connect API key
             </Button>
-            <Button asChild variant="outline">
-              <a
-                aria-label="Explore Prowler Registry (opens in a new tab)"
-                href="https://registry.prowler.com"
-                rel="noopener noreferrer"
-                target="_blank"
-              >
-                Explore Prowler Registry
-              </a>
-            </Button>
+            {registryUrl && (
+              <Button asChild variant="outline">
+                <a
+                  aria-label="Explore Prowler Registry (opens in a new tab)"
+                  href={registryUrl}
+                  rel="noopener noreferrer"
+                  target="_blank"
+                >
+                  Explore Prowler Registry
+                </a>
+              </Button>
+            )}
           </div>
         </div>
       </div>
