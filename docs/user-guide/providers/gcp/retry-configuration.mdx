@@ -1,5 +1,6 @@
 ---
-title: "GCP Retry Configuration in Prowler"
+title: 'GCP Retry Configuration in Prowler'
+description: 'Handle Google Cloud rate limiting in Prowler by tuning GCP SDK retry attempts with --gcp-retries-max-attempts and exponential backoff for HTTP 429.'
 ---
 
 Prowler's GCP Provider uses Google Cloud Python SDK's integrated retry mechanism to automatically retry API calls when encountering rate limiting errors (HTTP 429).
