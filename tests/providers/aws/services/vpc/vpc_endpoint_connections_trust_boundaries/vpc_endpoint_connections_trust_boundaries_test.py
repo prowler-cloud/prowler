@@ -19,6 +19,7 @@ def _execute_check_with_principal_account_condition(
     trusted_account_ids,
     operator="StringEquals",
     condition=None,
+    principal="*",
 ):
     ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
     vpc = ec2_client.create_vpc(CidrBlock="10.0.0.0/16")["Vpc"]
@@ -34,7 +35,7 @@ def _execute_check_with_principal_account_condition(
                     {
                         "Action": "*",
                         "Effect": "Allow",
-                        "Principal": "*",
+                        "Principal": principal,
                         "Resource": "*",
                         "Condition": condition
                         or {operator: {"aws:PrincipalAccount": principal_accounts}},
@@ -629,7 +630,7 @@ class Test_vpc_endpoint_connections_trust_boundaries:
                 assert result[0].region == AWS_REGION_US_EAST_1
 
     @mock_aws
-    def test_vpc_endpoint_with_aws_principal_all_but_restricted_condition_with_SourceAccount(
+    def test_vpc_endpoint_with_aws_principal_all_but_source_account_condition(
         self,
     ):
         # Create VPC Mocked Resources
@@ -684,10 +685,10 @@ class Test_vpc_endpoint_connections_trust_boundaries:
                 result = check.execute()
 
                 assert len(result) == 1
-                assert result[0].status == "PASS"
+                assert result[0].status == "FAIL"
                 assert (
                     result[0].status_extended
-                    == f"VPC Endpoint {vpc_endpoint['VpcEndpoint']['VpcEndpointId']} in VPC {vpc['VpcId']} can only be accessed from trusted accounts."
+                    == f"VPC Endpoint {vpc_endpoint['VpcEndpoint']['VpcEndpointId']} in VPC {vpc['VpcId']} can be accessed from non-trusted accounts."
                 )
                 assert (
                     result[0].resource_id
@@ -813,6 +814,78 @@ class Test_vpc_endpoint_connections_trust_boundaries:
         assert result[0].status == "PASS"
 
     @mock_aws
+    def test_principal_arn_condition_allows_trusted_set(self):
+        result = _execute_check_with_principal_account_condition(
+            None,
+            [TRUSTED_AWS_ACCOUNT_NUMBER],
+            condition={
+                "StringEquals": {
+                    "aws:PrincipalArn": [
+                        f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:role/app",
+                        f"arn:aws:iam::{TRUSTED_AWS_ACCOUNT_NUMBER}:role/app",
+                    ]
+                }
+            },
+        )
+
+        assert len(result) == 1
+        assert result[0].status == "PASS"
+
+    @mock_aws
+    def test_principal_arn_rejects_untrusted(self):
+        untrusted_role_arn = "arn:aws:iam::{}:role/app".format(
+            NON_TRUSTED_AWS_ACCOUNT_NUMBER
+        )
+        result = _execute_check_with_principal_account_condition(
+            None,
+            [TRUSTED_AWS_ACCOUNT_NUMBER],
+            condition={
+                "StringEquals": {
+                    "aws:PrincipalArn": [
+                        f"arn:aws:iam::{TRUSTED_AWS_ACCOUNT_NUMBER}:role/app",
+                        untrusted_role_arn,
+                    ]
+                }
+            },
+        )
+
+        assert len(result) == 1
+        assert result[0].status == "FAIL"
+
+    @mock_aws
+    def test_principal_arn_condition_allows_trusted_sts_federated_user(self):
+        result = _execute_check_with_principal_account_condition(
+            None,
+            [TRUSTED_AWS_ACCOUNT_NUMBER],
+            condition={
+                "ArnLike": {
+                    "aws:PrincipalArn": [
+                        f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:role/app*",
+                        f"arn:aws:sts::{TRUSTED_AWS_ACCOUNT_NUMBER}:"
+                        "federated-user/app*",
+                    ]
+                }
+            },
+        )
+
+        assert len(result) == 1
+        assert result[0].status == "PASS"
+
+    @mock_aws
+    def test_principal_arn_equals_wildcard_respects_account_condition(self):
+        result = _execute_check_with_principal_account_condition(
+            None,
+            [],
+            condition={
+                "StringEquals": {"aws:PrincipalAccount": AWS_ACCOUNT_NUMBER},
+                "ArnEquals": {"aws:PrincipalArn": "arn:aws:iam::*:role/app"},
+            },
+        )
+
+        assert len(result) == 1
+        assert result[0].status == "PASS"
+
+    @mock_aws
     def test_principal_account_string_like_allows_scalar_trusted_account(self):
         result = _execute_check_with_principal_account_condition(
             TRUSTED_AWS_ACCOUNT_NUMBER,
@@ -843,7 +916,7 @@ class Test_vpc_endpoint_connections_trust_boundaries:
         assert result[0].status == "PASS"
 
     @mock_aws
-    def test_mixed_principal_accounts_with_other_restrictive_condition(self):
+    def test_mixed_principal_accounts_with_source_account_condition(self):
         result = _execute_check_with_principal_account_condition(
             None,
             [TRUSTED_AWS_ACCOUNT_NUMBER],
@@ -856,6 +929,68 @@ class Test_vpc_endpoint_connections_trust_boundaries:
                     "aws:SourceAccount": TRUSTED_AWS_ACCOUNT_NUMBER,
                 }
             },
+        )
+
+        assert len(result) == 1
+        assert result[0].status == "FAIL"
+
+    @mock_aws
+    def test_wildcard_principal_resource_account_is_not_caller_bound(self):
+        result = _execute_check_with_principal_account_condition(
+            None,
+            [TRUSTED_AWS_ACCOUNT_NUMBER],
+            condition={"StringEquals": {"aws:ResourceAccount": AWS_ACCOUNT_NUMBER}},
+        )
+
+        assert len(result) == 1
+        assert result[0].status == "FAIL"
+
+    @mock_aws
+    def test_untrusted_explicit_principal_resource_account_is_not_caller_bound(self):
+        result = _execute_check_with_principal_account_condition(
+            None,
+            [TRUSTED_AWS_ACCOUNT_NUMBER],
+            condition={"StringEquals": {"aws:ResourceAccount": AWS_ACCOUNT_NUMBER}},
+            principal={"AWS": NON_TRUSTED_AWS_ACCOUNT_NUMBER},
+        )
+
+        assert len(result) == 1
+        assert result[0].status == "FAIL"
+
+    @mock_aws
+    def test_trusted_explicit_principal_does_not_need_caller_condition(self):
+        result = _execute_check_with_principal_account_condition(
+            None,
+            [TRUSTED_AWS_ACCOUNT_NUMBER],
+            condition={"StringEquals": {"aws:ResourceAccount": AWS_ACCOUNT_NUMBER}},
+            principal={"AWS": TRUSTED_AWS_ACCOUNT_NUMBER},
+        )
+
+        assert len(result) == 1
+        assert result[0].status == "PASS"
+
+    @mock_aws
+    def test_explicit_principal_list_reports_trusted_then_untrusted(self):
+        result = _execute_check_with_principal_account_condition(
+            None,
+            [TRUSTED_AWS_ACCOUNT_NUMBER],
+            condition={"StringEquals": {"aws:ResourceAccount": AWS_ACCOUNT_NUMBER}},
+            principal={
+                "AWS": [
+                    TRUSTED_AWS_ACCOUNT_NUMBER,
+                    NON_TRUSTED_AWS_ACCOUNT_NUMBER,
+                ]
+            },
+        )
+
+        assert [report.status for report in result] == ["PASS", "FAIL"]
+
+    @mock_aws
+    def test_explicit_untrusted_principal_excluded_by_account_condition(self):
+        result = _execute_check_with_principal_account_condition(
+            TRUSTED_AWS_ACCOUNT_NUMBER,
+            [TRUSTED_AWS_ACCOUNT_NUMBER],
+            principal={"AWS": NON_TRUSTED_AWS_ACCOUNT_NUMBER},
         )
 
         assert len(result) == 1
