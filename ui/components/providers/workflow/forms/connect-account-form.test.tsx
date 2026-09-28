@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const { addProvider, updateProvider, getInstalledRegistryProviderOptions } =
   vi.hoisted(() => ({
@@ -86,6 +86,32 @@ describe("provider account aliases", () => {
 describe("Registry provider source tabs", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it("never mentions Registry outside Cloud, even when discovery would fail", async () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
+    getInstalledRegistryProviderOptions.mockRejectedValue(new Error("network"));
+
+    // When
+    render(<ConnectAccountForm onSuccess={vi.fn()} />);
+
+    // Then
+    expect(
+      await screen.findByRole("option", { name: /Amazon Web Services/ }),
+    ).toBeVisible();
+    expect(getInstalledRegistryProviderOptions).not.toHaveBeenCalled();
+    expect(
+      screen.queryByText("Registry providers could not be loaded"),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("tab", { name: "Registry" }),
+    ).not.toBeInTheDocument();
   });
 
   it("hides the Registry tab when discovery denies access (Local or flag off)", async () => {

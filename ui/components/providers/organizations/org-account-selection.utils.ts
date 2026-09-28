@@ -2,8 +2,21 @@ import {
   CONNECTION_TEST_STATUS,
   ConnectionTestStatus,
 } from "@/types/organizations";
+import {
+  CONNECTION_CHECK_STATUS,
+  type ConnectionCheckStatus,
+} from "@/types/providers";
 
 const DEFAULT_POLL_DELAYS_MS = [2000, 3000, 5000] as const;
+export const CONNECTION_CHECK_DEFAULT_DELAYS_MS = DEFAULT_POLL_DELAYS_MS;
+
+/**
+ * `provider-connection-check` has a 120s hard time limit in Celery
+ * (api/src/backend/config/celery.py `task_annotations`). With the delay ladder
+ * above -- 2s, 3s, then 5s repeating -- 32 retries cover roughly 155s,
+ * comfortably past the task's hard limit plus queueing/network slack.
+ */
+export const CONNECTION_CHECK_MAX_RETRIES = 32;
 
 interface BuildCandidateToProviderMapParams {
   selectedCandidateIds: string[];
@@ -27,10 +40,20 @@ interface PollConnectionTasksOptions
   /** Called once per task, the round it reaches a terminal state. */
   onSettled: (taskId: string, result: PollConnectionTaskResult) => void;
   getTasksByIds?: (taskIds: string[]) => Promise<Record<string, unknown>>;
+  /**
+   * Called once per task still pending after `maxRetries` is exhausted, so the
+   * caller can re-read the provider's persisted connection state instead of
+   * reporting a flat timeout -- the backend task may still be running past the
+   * wait, or may have already finished with the UI no longer polling it.
+   * Returning `null` falls back to the timeout message.
+   */
+  resolveExhausted?: (
+    taskId: string,
+  ) => Promise<PollConnectionTaskResult | null>;
 }
 
 export interface PollConnectionTaskResult {
-  success: boolean;
+  status: ConnectionCheckStatus;
   error?: string;
 }
 
@@ -123,7 +146,10 @@ function readConnectionOutcome(
   taskResponse: unknown,
 ): PollConnectionTaskResult | null {
   if (isRecord(taskResponse) && typeof taskResponse.error === "string") {
-    return { success: false, error: taskResponse.error };
+    return {
+      status: CONNECTION_CHECK_STATUS.FAILED,
+      error: taskResponse.error,
+    };
   }
 
   const data =
@@ -138,10 +164,10 @@ function readConnectionOutcome(
     const connected =
       typeof result?.connected === "boolean" ? result.connected : true;
     if (connected) {
-      return { success: true };
+      return { status: CONNECTION_CHECK_STATUS.SUCCESS };
     }
     return {
-      success: false,
+      status: CONNECTION_CHECK_STATUS.FAILED,
       error:
         (typeof result?.error === "string" && result.error) ||
         "Connection failed for this account.",
@@ -150,7 +176,7 @@ function readConnectionOutcome(
 
   if (state === "failed") {
     return {
-      success: false,
+      status: CONNECTION_CHECK_STATUS.FAILED,
       error:
         (typeof result?.error === "string" && result.error) ||
         "Connection test task failed.",
@@ -158,7 +184,10 @@ function readConnectionOutcome(
   }
 
   if (!state || !IN_PROGRESS_TASK_STATES.has(state)) {
-    return { success: false, error: "Unexpected task state." };
+    return {
+      status: CONNECTION_CHECK_STATUS.FAILED,
+      error: "Unexpected task state.",
+    };
   }
 
   return null;
@@ -180,9 +209,10 @@ export async function pollConnectionTasks(
     getTasksByIds,
     sleep = async (ms: number) =>
       new Promise((resolve) => setTimeout(resolve, ms)),
-    maxRetries = 20,
+    maxRetries = CONNECTION_CHECK_MAX_RETRIES,
     delaysMs = [...DEFAULT_POLL_DELAYS_MS],
     signal,
+    resolveExhausted,
   }: PollConnectionTasksOptions,
 ): Promise<void> {
   const pending = new Set(taskIds.filter(Boolean));
@@ -199,7 +229,7 @@ export async function pollConnectionTasks(
 
   const settleRemaining = (error: string) => {
     for (const taskId of Array.from(pending)) {
-      onSettled(taskId, { success: false, error });
+      onSettled(taskId, { status: CONNECTION_CHECK_STATUS.FAILED, error });
     }
     pending.clear();
   };
@@ -239,13 +269,46 @@ export async function pollConnectionTasks(
     await sleepWithAbort(getPollingDelay(attempt, delaysMs), sleep, signal);
   }
 
+  if (resolveExhausted) {
+    // Sequential, not `Promise.all`: each call goes through its own
+    // `getProvider` server action, and client-invoked server actions run one
+    // at a time through Next's action queue (see `pollConnectionTasks`'s own
+    // batched read above) -- running them "concurrently" from here would not
+    // shorten the wait, only reorder it.
+    for (const taskId of Array.from(pending)) {
+      if (signal?.aborted) {
+        settleRemaining("Connection test cancelled.");
+        return;
+      }
+
+      const resolved = await resolveExhausted(taskId);
+
+      // The signal can abort while `resolveExhausted` itself is in flight; its
+      // result must not be accepted after that, or a check the caller has
+      // already moved on from could still report success.
+      if (signal?.aborted) {
+        settleRemaining("Connection test cancelled.");
+        return;
+      }
+
+      if (resolved) {
+        pending.delete(taskId);
+        onSettled(taskId, resolved);
+      }
+    }
+  }
+
   settleRemaining("Connection test timed out.");
 }
 
 /**
  * Polls a generic async task until it settles. Unlike {@link pollConnectionTasks}
  * it does not interpret a connection result; it is used for organization/node
- * deletion, which the API answers with a `202` + task.
+ * deletion, which the API answers with a `202` + task. Its result is typed with
+ * `ConnectionCheckStatus` only because that is the connection-specific alias of
+ * the generic `TASK_OUTCOME` (`types/tasks.ts`) already in scope here -- the
+ * three outcomes (succeeded / failed / still running) apply to any polled task,
+ * not just a connection check.
  */
 export async function pollTaskCompletion(
   taskId: string,
@@ -267,16 +330,25 @@ export async function pollTaskCompletion(
 
   for (let attempt = 0; attempt < maxRetries; attempt += 1) {
     if (signal?.aborted) {
-      return { success: false, error: "Deletion cancelled." };
+      return {
+        status: CONNECTION_CHECK_STATUS.FAILED,
+        error: "Deletion cancelled.",
+      };
     }
 
     const taskResponse = await taskFetcher(taskId);
     if (signal?.aborted) {
-      return { success: false, error: "Deletion cancelled." };
+      return {
+        status: CONNECTION_CHECK_STATUS.FAILED,
+        error: "Deletion cancelled.",
+      };
     }
 
     if (isRecord(taskResponse) && typeof taskResponse.error === "string") {
-      return { success: false, error: taskResponse.error };
+      return {
+        status: CONNECTION_CHECK_STATUS.FAILED,
+        error: taskResponse.error,
+      };
     }
 
     const data =
@@ -289,12 +361,12 @@ export async function pollTaskCompletion(
     const result = isRecord(attributes?.result) ? attributes.result : null;
 
     if (state === "completed") {
-      return { success: true };
+      return { status: CONNECTION_CHECK_STATUS.SUCCESS };
     }
 
     if (state === "failed") {
       return {
-        success: false,
+        status: CONNECTION_CHECK_STATUS.FAILED,
         error:
           (typeof result?.error === "string" && result.error) ||
           "The deletion task failed.",
@@ -303,17 +375,26 @@ export async function pollTaskCompletion(
 
     // A cancelled task is a real terminal state, not an unreadable one.
     if (state === "cancelled") {
-      return { success: false, error: "The deletion was cancelled." };
+      return {
+        status: CONNECTION_CHECK_STATUS.FAILED,
+        error: "The deletion was cancelled.",
+      };
     }
 
     if (!state || !IN_PROGRESS_TASK_STATES.has(state)) {
-      return { success: false, error: "Unexpected task state." };
+      return {
+        status: CONNECTION_CHECK_STATUS.FAILED,
+        error: "Unexpected task state.",
+      };
     }
 
     await sleepWithAbort(getPollingDelay(attempt, delaysMs), sleep, signal);
   }
 
-  return { success: false, error: "Deletion timed out." };
+  return {
+    status: CONNECTION_CHECK_STATUS.FAILED,
+    error: "Deletion timed out.",
+  };
 }
 
 export function getLaunchableProviderIds(

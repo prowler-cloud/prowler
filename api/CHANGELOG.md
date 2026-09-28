@@ -4,6 +4,22 @@ All notable changes to the **Prowler API** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [1.44.0] (Prowler v5.43.0)
+
+### 🐞 Fixed
+
+- Report download URLs can be signed against a browser-reachable storage host via `DJANGO_OUTPUT_S3_AWS_PUBLIC_ENDPOINT_URL`, so downloads complete on deployments where storage is only reachable inside the container network [(#12552)](https://github.com/prowler-cloud/prowler/pull/12552)
+- A scan report download no longer fails with a server error when `DJANGO_OUTPUT_S3_AWS_DEFAULT_REGION` is unset, which is common on storage with no meaningful region [(#12552)](https://github.com/prowler-cloud/prowler/pull/12552)
+- Lapsed pending invitations are reported as expired and no longer block a new invitation for the same email [(#12831)](https://github.com/prowler-cloud/prowler/pull/12831)
+
+### 🔐 Security
+
+- `libsqlite3-0`, `gzip`, `perl-base` and `libpcre2-8-0` upgraded in the API container image, patching high Debian CVEs [(#12804)](https://github.com/prowler-cloud/prowler/pull/12804)
+- PowerShell from 7.5.9 to 7.5.11 in the API container image, bundling .NET runtime 9.0.20 and patching CVE-2026-62901 [(#12811)](https://github.com/prowler-cloud/prowler/pull/12811)
+- Bumped `anyio` to 4.14.2 to resolve CVE-2026-63374 [(#12848)](https://github.com/prowler-cloud/prowler/pull/12848)
+
+---
+
 ## [1.43.0] (Prowler v5.42.0)
 
 ### 🔄 Changed

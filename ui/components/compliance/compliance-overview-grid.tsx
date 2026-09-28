@@ -47,6 +47,7 @@ interface ComplianceOverviewGridProps {
   catalogEntries?: ComplianceCatalogEntry[];
   providerType?: string;
   canManageWatchlist?: boolean;
+  subscriptionOnly?: boolean;
 }
 
 export const ComplianceOverviewGrid = ({
@@ -57,6 +58,7 @@ export const ComplianceOverviewGrid = ({
   catalogEntries,
   providerType,
   canManageWatchlist = false,
+  subscriptionOnly = false,
 }: ComplianceOverviewGridProps) => {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -146,6 +148,7 @@ export const ComplianceOverviewGrid = ({
               id={id}
               selectedScan={selectedScan}
               isLatestCisForProvider={latestCisIds?.has(id) ?? false}
+              subscriptionOnly={subscriptionOnly}
               watchlistAction={
                 watchlistEnabled && canManageWatchlist ? (
                   <WatchlistToggle

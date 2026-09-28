@@ -119,14 +119,17 @@ describe("installed Registry provider discovery", () => {
     emptyMetadata = false,
     failedEndpoint,
     failureStatus = 500,
+    failureBody = {},
   }: {
     emptyMetadata?: boolean;
     failedEndpoint?: string;
     failureStatus?: number;
+    failureBody?: unknown;
   } = {}) {
     fetchMock.mockImplementation((url: string) => {
       const endpoint = new URL(url).pathname.split("/").pop();
-      if (endpoint === failedEndpoint) return jsonResponse({}, failureStatus);
+      if (endpoint === failedEndpoint)
+        return jsonResponse(failureBody, failureStatus);
       if (endpoint === "available-artifacts")
         return jsonResponse({
           data: [
@@ -242,6 +245,45 @@ describe("installed Registry provider discovery", () => {
       });
     },
   );
+
+  it.each(["available-artifacts", "artifacts", "providers"])(
+    "hides Registry when the backend has it disabled and %s answers 404",
+    async (failedEndpoint) => {
+      mockDiscovery({ failedEndpoint, failureStatus: 404 });
+      expect(await getInstalledRegistryProviderOptions()).toEqual({
+        status: "access_denied",
+      });
+    },
+  );
+
+  it.each(["available-artifacts", "providers"])(
+    "keeps Registry visible when an enabled backend answers 404 for a missing %s page",
+    async (failedEndpoint) => {
+      mockDiscovery({
+        failedEndpoint,
+        failureStatus: 404,
+        failureBody: {
+          errors: [{ status: "404", code: "registry_page_not_found" }],
+        },
+      });
+      expect(await getInstalledRegistryProviderOptions()).toEqual({
+        status: "error",
+      });
+    },
+  );
+
+  it("keeps Registry visible when the missing-page code is not the first error", async () => {
+    mockDiscovery({
+      failedEndpoint: "available-artifacts",
+      failureStatus: 404,
+      failureBody: {
+        errors: [{ code: "not_found" }, { code: "registry_page_not_found" }],
+      },
+    });
+    expect(await getInstalledRegistryProviderOptions()).toEqual({
+      status: "error",
+    });
+  });
 });
 
 describe("Registry guarded reads", () => {

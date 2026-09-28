@@ -351,6 +351,10 @@ export const isGithubOAuthEnabled =
   !!process.env.SOCIAL_GITHUB_OAUTH_CLIENT_ID &&
   !!process.env.SOCIAL_GITHUB_OAUTH_CLIENT_SECRET;
 
+/** Returned by {@link checkTaskStatus} when `maxRetries` is exhausted, so callers
+ * can tell an exhausted wait apart from a real task failure. */
+export const TASK_STATUS_MAX_RETRIES_ERROR = "Max retries exceeded";
+
 /**
  * Polls a task until it settles. The settled task comes back with the verdict so
  * callers can read its result without fetching the same task again.
@@ -390,7 +394,7 @@ export const checkTaskStatus = async (
     }
   }
 
-  return { completed: false, error: "Max retries exceeded" };
+  return { completed: false, error: TASK_STATUS_MAX_RETRIES_ERROR };
 };
 
 export const wait = (ms: number) =>
