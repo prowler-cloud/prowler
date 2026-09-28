@@ -14823,9 +14823,9 @@ paths:
     get:
       operationId: api_v1_tasks_list
       description: Retrieve a list of all tasks with options for filtering by name,
-        state, and other criteria. Tasks tied to a provider are only returned when
-        the role can access that provider; tenant-wide tasks are returned for every
-        role.
+        state, and other criteria. Tasks that reference a provider are only returned
+        when the role can access it; tasks without a provider reference are returned
+        for every role.
       summary: List all tasks
       parameters:
       - in: query

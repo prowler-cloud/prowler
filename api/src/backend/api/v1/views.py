@@ -2864,8 +2864,8 @@ class ScanViewSet(ProviderVisibilityMixin, BaseRLSViewSet):
         summary="List all tasks",
         description=(
             "Retrieve a list of all tasks with options for filtering by name, state, and other "
-            "criteria. Tasks tied to a provider are only returned when the role can access that "
-            "provider; tenant-wide tasks are returned for every role."
+            "criteria. Tasks that reference a provider are only returned when the role can "
+            "access it; tasks without a provider reference are returned for every role."
         ),
     ),
     retrieve=extend_schema(
