@@ -21,6 +21,8 @@ describe("cloud upgrade content", () => {
       "Keep Every Provider Checked Automatically",
       "Turn Findings into Alerts",
       "Add Your Entire AWS Organization",
+      "Add Your Entire Azure Management Group",
+      "Add Your Entire GCP Organization",
       "Bring CLI Findings into One Cloud View",
       "See Compliance Across Every Provider",
       "Coordinate Finding Remediation",
@@ -28,6 +30,7 @@ describe("cloud upgrade content", () => {
       "Use The Agent Cloud Defender",
       "Scale Prowler Without Operating It",
       "Configure Every Scan Once",
+      "Use One SAML Configuration Across Domains",
     ]);
   });
 
@@ -66,16 +69,19 @@ describe("cloud upgrade URLs", () => {
     [CLOUD_UPGRADE_FEATURE.ADVANCED_SCHEDULING, "advanced-scheduling"],
     [CLOUD_UPGRADE_FEATURE.ALERTS, "alerts"],
     [CLOUD_UPGRADE_FEATURE.AWS_ORGANIZATIONS, "organization"],
+    [CLOUD_UPGRADE_FEATURE.AZURE_ORGANIZATIONS, "azure-organization"],
     [CLOUD_UPGRADE_FEATURE.CLI_IMPORT, "cli-import"],
     [
       CLOUD_UPGRADE_FEATURE.CROSS_PROVIDER_COMPLIANCE,
       "cross-provider-compliance",
     ],
     [CLOUD_UPGRADE_FEATURE.FINDING_TRIAGE, "findings"],
+    [CLOUD_UPGRADE_FEATURE.GCP_ORGANIZATIONS, "gcp-organization"],
     [CLOUD_UPGRADE_FEATURE.JIRA_DISPATCH, "jira-dispatch"],
     [CLOUD_UPGRADE_FEATURE.LIGHTHOUSE_AI, "lighthouse-ai"],
     [CLOUD_UPGRADE_FEATURE.GENERAL, "general"],
     [CLOUD_UPGRADE_FEATURE.SCAN_CONFIGURATION, "scan-configuration"],
+    [CLOUD_UPGRADE_FEATURE.SAML_DOMAINS, "saml-domains"],
   ])("should use the canonical content slug for %s", (feature, contentSlug) => {
     // Given / When
     const url = new URL(getCloudUpgradePrimaryUrl(feature));

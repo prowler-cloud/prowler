@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { readBoolEnv, readEnv } from "./runtime-env";
+import { readBoolEnv, readEnv, readOptOutEnv } from "./runtime-env";
 
 describe("readEnv", () => {
   afterEach(() => {
@@ -118,6 +118,32 @@ describe("readBoolEnv", () => {
 
       // When / Then
       expect(readBoolEnv("UI_SENTRY_ENABLED")).toBe(false);
+    }
+  });
+});
+
+describe("readOptOutEnv", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it("is true when unset", () => {
+    vi.stubEnv("UI_SELF_REGISTRATION_ENABLED", undefined);
+
+    expect(readOptOutEnv("UI_SELF_REGISTRATION_ENABLED")).toBe(true);
+  });
+
+  it('is false for "false" in any case, whitespace trimmed', () => {
+    for (const value of ["false", " False ", "FALSE"]) {
+      vi.stubEnv("UI_SELF_REGISTRATION_ENABLED", value);
+      expect(readOptOutEnv("UI_SELF_REGISTRATION_ENABLED")).toBe(false);
+    }
+  });
+
+  it('stays true for any other value ("true", "0", "no")', () => {
+    for (const value of ["true", "0", "no"]) {
+      vi.stubEnv("UI_SELF_REGISTRATION_ENABLED", value);
+      expect(readOptOutEnv("UI_SELF_REGISTRATION_ENABLED")).toBe(true);
     }
   });
 });

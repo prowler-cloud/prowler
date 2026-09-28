@@ -1,0 +1,37 @@
+{
+  "Provider": "m365",
+  "CheckID": "defender_strict_preset_security_policy_enabled",
+  "CheckTitle": "Strict Preset Security Policy is enabled",
+  "CheckType": [],
+  "ServiceName": "defender",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "security",
+  "Description": "The **Strict Preset Security Policy** applies Microsoft's recommended strict protection settings and should be enabled for both **Exchange Online Protection** (anti-phishing, anti-spam, anti-malware) and **Defender for Office 365** (Safe Attachments, Safe Links). The rules are exposed via Get-EOPProtectionPolicyRule and Get-ATPProtectionPolicyRule.",
+  "Risk": "Without the **Strict Preset Security Policy** enabled, mailboxes rely on weaker default or custom protection settings, increasing exposure to **phishing**, malware, and malicious links and attachments.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/defender-office-365/preset-security-policies"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to Microsoft Defender at https://security.microsoft.com/\n2. Go to **Email & collaboration** > **Policies & rules** > **Threat policies** > **Preset security policies**\n3. Turn on the **Strict protection** preset and assign it to the appropriate users, groups, or domains (including priority accounts)",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable the Strict Preset Security Policy for both Exchange Online Protection and Defender for Office 365 and assign it to your users and priority accounts.",
+      "Url": "https://hub.prowler.com/check/defender_strict_preset_security_policy_enabled"
+    }
+  },
+  "Categories": [
+    "email-security",
+    "e5"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

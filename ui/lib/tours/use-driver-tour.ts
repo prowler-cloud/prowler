@@ -102,7 +102,8 @@ export interface UseDriverTourOptions<TTarget extends string = string> {
 }
 
 export interface UseDriverTourResult {
-  start: () => void;
+  /** Optional step `target` to begin from, skipping the steps before it. */
+  start: (startAtTarget?: string) => void;
   stop: () => void;
   /** True if a completion record exists for `(tour.id, tour.version)`. */
   hasCompleted: boolean;
@@ -172,11 +173,16 @@ export function adaptStep<TTarget extends string>(
 
   if (step.target) {
     const selector = toSelector(`${tourId}-${step.target}`);
+    const fallbackSelector = step.fallbackTarget
+      ? toSelector(`${tourId}-${step.fallbackTarget}`)
+      : undefined;
     driveStep.element = () => {
       if (typeof document === "undefined") {
         throw new Error("Tour element resolved without a DOM");
       }
-      const found = document.querySelector(selector);
+      const found =
+        document.querySelector(selector) ??
+        (fallbackSelector ? document.querySelector(fallbackSelector) : null);
       if (!found) {
         throw new Error(
           `Tour "${tourId}" references missing selector: ${selector}`,
@@ -253,6 +259,11 @@ export function useDriverTour<TTarget extends string>(
   // without this flag onDestroyed would persist the default DISMISSED record and the
   // tour would be marked resolved forever after a simple theme toggle.
   const teardownRef = useRef(false);
+
+  // Bumped by start() and stop() so a pending anchored start knows it went stale.
+  const startGenerationRef = useRef(0);
+  // Every adapted step, so start() can hand driver.js a trimmed or full list.
+  const stepsRef = useRef<DriveStep[]>([]);
 
   const tourId = tour.id;
   const tourVersion = tour.version;
@@ -356,6 +367,7 @@ export function useDriverTour<TTarget extends string>(
     });
 
     driverRef.current = driver(config);
+    stepsRef.current = steps;
 
     return () => {
       const instance = driverRef.current;
@@ -376,7 +388,11 @@ export function useDriverTour<TTarget extends string>(
     const instance = driverRef.current;
     if (!instance || instance.isActive()) return;
 
+    // A start()/stop() issued meanwhile takes over: an anchored start must not
+    // be pre-empted by the full tour opening from the top.
+    const generation = startGenerationRef.current;
     const timer = window.setTimeout(() => {
+      if (startGenerationRef.current !== generation) return;
       if (!instance.isActive()) {
         activeTourInstance = instance;
         instance.drive();
@@ -389,13 +405,46 @@ export function useDriverTour<TTarget extends string>(
   }, [autoOpen, enabled, hasCompleted, tourId, tourVersion]);
 
   return {
-    start: () => {
+    start: (startAtTarget) => {
       const instance = driverRef.current;
       if (!instance) return;
-      activeTourInstance = instance;
-      instance.drive();
+      const generation = ++startGenerationRef.current;
+
+      const startIndex = startAtTarget
+        ? tour.steps.findIndex((step) => step.target === startAtTarget)
+        : -1;
+      if (!startAtTarget || startIndex <= 0) {
+        instance.setSteps(stepsRef.current);
+        activeTourInstance = instance;
+        instance.drive();
+        return;
+      }
+
+      // The anchor may mount right after the caller (e.g. a modal opening), so wait for it.
+      // Either anchor will do, mirroring how adaptStep resolves the step's element.
+      const fallbackTarget = tour.steps[startIndex].fallbackTarget;
+      const anchorSelector = [startAtTarget, fallbackTarget]
+        .filter((target): target is string => target !== undefined)
+        .map((target) => getTourTargetSelector(tourId, target))
+        .join(", ");
+      waitForElement(anchorSelector)
+        .then(() => {
+          if (startGenerationRef.current !== generation) return;
+          if (driverRef.current !== instance || instance.isActive()) return;
+          // The skipped steps describe UI the caller already went through, so
+          // the tour is renumbered from the anchor ("Step 1 of 2", not "3 of 4").
+          instance.setSteps(stepsRef.current.slice(startIndex));
+          activeTourInstance = instance;
+          instance.drive();
+        })
+        .catch(() => {
+          // Anchor never appeared (e.g. the modal was dismissed); skip the tour.
+        });
     },
-    stop: () => driverRef.current?.destroy(),
+    stop: () => {
+      startGenerationRef.current += 1;
+      driverRef.current?.destroy();
+    },
     hasCompleted,
   };
 }

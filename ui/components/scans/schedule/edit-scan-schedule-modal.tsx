@@ -24,14 +24,17 @@ import { getActionErrorMessage, hasActionError } from "@/lib/action-errors";
 import { runWithConcurrencyLimit } from "@/lib/concurrency";
 import {
   buildScheduleUpdatePayload,
+  describeSchedulesBulkFailures,
   getScheduleFormValues,
   isScheduleConfigured,
+  parseSchedulesBulkResult,
   scheduleFormSchema,
 } from "@/lib/schedules";
 import type { ProviderType, ScheduleProps } from "@/types";
 import type {
   ScanScheduleProvider,
   ScheduleFormValues,
+  SchedulesBulkResponse,
 } from "@/types/schedules";
 
 import { ScanScheduleFields } from "./scan-schedule-fields";
@@ -133,6 +136,34 @@ function EditScanScheduleForm({
     if (hasActionError(result)) {
       form.setError("root", { message: getActionErrorMessage(result) });
       return;
+    }
+
+    // A bulk save reports per-provider outcomes, so a 200 does not mean every
+    // provider was updated. Only the single-provider PATCH is flat.
+    const bulkOutcome = isBulk
+      ? parseSchedulesBulkResult(result as SchedulesBulkResponse)
+      : null;
+
+    if (bulkOutcome && !bulkOutcome.isIndeterminate) {
+      const reasons = describeSchedulesBulkFailures(bulkOutcome.failures);
+
+      if (bulkOutcome.updatedProviderIds.length === 0) {
+        form.setError("root", {
+          message: `The scan schedule could not be saved${reasons ? `: ${reasons}.` : "."}`,
+        });
+        return;
+      }
+
+      if (bulkOutcome.failures.length > 0) {
+        toast({
+          title: "Scan schedule partially saved",
+          description: `Updated ${bulkOutcome.updatedProviderIds.length} of ${targetProviderIds.length} providers${reasons ? `: ${reasons}.` : "."}`,
+        });
+        onSaved?.();
+        onClose();
+        router.refresh();
+        return;
+      }
     }
 
     toast({

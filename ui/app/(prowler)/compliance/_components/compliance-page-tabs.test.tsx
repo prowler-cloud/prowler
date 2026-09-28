@@ -69,6 +69,24 @@ describe("CompliancePageTabs", () => {
     ).toStrictEqual(["Multiple Scans", "Single Scan"]);
   });
 
+  it("keeps the watchlist controls on the tab bar, outside either panel", () => {
+    render(
+      <CompliancePageTabs
+        activeTab={COMPLIANCE_TAB.CROSS_PROVIDER}
+        crossProviderEnabled
+        watchlistControls={<div data-testid="watchlist-controls" />}
+        perScanContent={<div>Per scan content</div>}
+        crossProviderContent={<div>Cross provider content</div>}
+      />,
+    );
+
+    // Outside the panels is what makes the filter survive a tab switch: a
+    // control inside `TabsContent` would unmount with its tab.
+    const controls = screen.getByTestId("watchlist-controls");
+    expect(controls).toBeInTheDocument();
+    expect(controls.closest('[role="tabpanel"]')).toBeNull();
+  });
+
   it("navigates with ?tab=per-scan and back to the bare route", async () => {
     const user = userEvent.setup();
     const { rerender } = render(

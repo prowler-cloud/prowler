@@ -3157,8 +3157,6 @@
         "app_http_logs_enabled",
         "defender_auto_provisioning_log_analytics_agent_vms_on",
         "keyvault_logging_enabled",
-        "monitor_storage_account_with_activity_logs_cmk_encrypted",
-        "monitor_storage_account_with_activity_logs_is_private",
         "mysql_flexible_server_audit_log_connection_activated",
         "mysql_flexible_server_audit_log_enabled",
         "network_flow_log_captured_sent",
@@ -5780,13 +5778,11 @@
         "sqlserver_tde_encrypted_with_cmk",
         "sqlserver_tde_encryption_enabled",
         "vm_ensure_unattached_disks_encrypted_with_cmk",
-        "entra_conditional_access_policy_require_mfa_for_management_app",
+        "entra_conditional_access_policy_require_mfa_for_management_api",
         "app_minimum_tls_version_12",
         "mysql_flexible_server_minimum_tls_version_12",
         "sqlserver_recommended_minimal_tls_version",
-        "storage_ensure_minimum_tls_version_12",
-        "sqlserver_tde_encrypted_with_cmk",
-        "sqlserver_tde_encryption_enabled"
+        "storage_ensure_minimum_tls_version_12"
       ],
       "ConfigRequirements": [
         {
@@ -5818,13 +5814,11 @@
         "sqlserver_tde_encrypted_with_cmk",
         "sqlserver_tde_encryption_enabled",
         "vm_ensure_unattached_disks_encrypted_with_cmk",
-        "entra_conditional_access_policy_require_mfa_for_management_app",
+        "entra_conditional_access_policy_require_mfa_for_management_api",
         "app_minimum_tls_version_12",
         "mysql_flexible_server_minimum_tls_version_12",
         "sqlserver_recommended_minimal_tls_version",
-        "storage_ensure_minimum_tls_version_12",
-        "sqlserver_tde_encrypted_with_cmk",
-        "sqlserver_tde_encryption_enabled"
+        "storage_ensure_minimum_tls_version_12"
       ],
       "ConfigRequirements": [
         {
@@ -6577,7 +6571,6 @@
         "sqlserver_tde_encryption_enabled",
         "app_minimum_tls_version_12",
         "mysql_flexible_server_minimum_tls_version_12",
-        "sqlserver_recommended_minimal_tls_version",
         "storage_ensure_minimum_tls_version_12"
       ],
       "ConfigRequirements": [
@@ -7077,7 +7070,6 @@
         "app_http_logs_enabled",
         "defender_auto_provisioning_log_analytics_agent_vms_on",
         "keyvault_logging_enabled",
-        "monitor_storage_account_with_activity_logs_cmk_encrypted",
         "monitor_storage_account_with_activity_logs_is_private",
         "mysql_flexible_server_audit_log_connection_activated",
         "mysql_flexible_server_audit_log_enabled",
@@ -7920,8 +7912,6 @@
         "app_http_logs_enabled",
         "defender_auto_provisioning_log_analytics_agent_vms_on",
         "keyvault_logging_enabled",
-        "monitor_storage_account_with_activity_logs_cmk_encrypted",
-        "monitor_storage_account_with_activity_logs_is_private",
         "mysql_flexible_server_audit_log_connection_activated",
         "mysql_flexible_server_audit_log_enabled",
         "network_flow_log_captured_sent",
@@ -7953,8 +7943,6 @@
         "app_http_logs_enabled",
         "defender_auto_provisioning_log_analytics_agent_vms_on",
         "keyvault_logging_enabled",
-        "monitor_storage_account_with_activity_logs_cmk_encrypted",
-        "monitor_storage_account_with_activity_logs_is_private",
         "mysql_flexible_server_audit_log_connection_activated",
         "mysql_flexible_server_audit_log_enabled",
         "network_flow_log_captured_sent",
@@ -8991,7 +8979,6 @@
         "app_http_logs_enabled",
         "defender_auto_provisioning_log_analytics_agent_vms_on",
         "keyvault_logging_enabled",
-        "monitor_storage_account_with_activity_logs_cmk_encrypted",
         "mysql_flexible_server_audit_log_connection_activated",
         "mysql_flexible_server_audit_log_enabled",
         "network_flow_log_captured_sent",

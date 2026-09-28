@@ -9,6 +9,8 @@ import {
   type ScheduleAttributes,
   type ScheduleFormValues,
   type ScheduleProps,
+  type SchedulesBulkFailure,
+  type SchedulesBulkResponse,
   type ScheduleUpdatePayload,
 } from "@/types/schedules";
 
@@ -144,6 +146,59 @@ export function buildScheduleUpdatePayload(
         ? values.dayOfMonth
         : null,
   };
+}
+
+export interface SchedulesBulkOutcome {
+  updatedProviderIds: string[];
+  failures: SchedulesBulkFailure[];
+  /**
+   * Neither list was present. `/schedules/bulk` commits each provider before it
+   * answers, so this means "saved, shape unreadable" — never "nothing was saved".
+   */
+  isIndeterminate: boolean;
+}
+
+/**
+ * Single reader for the `/schedules/bulk` body. The API returns the lists directly
+ * under `data`; the `data.attributes` form is tolerated only so a future
+ * server-side JSON:API normalization cannot read as an empty result.
+ */
+export function parseSchedulesBulkResult(
+  result: SchedulesBulkResponse,
+): SchedulesBulkOutcome {
+  const lists = result.data ?? {};
+  const rawUpdated = lists.updated ?? lists.attributes?.updated;
+  const rawFailed = lists.failed ?? lists.attributes?.failed;
+
+  const updatedProviderIds = Array.isArray(rawUpdated)
+    ? rawUpdated.filter((id): id is string => typeof id === "string")
+    : [];
+  const failures = Array.isArray(rawFailed)
+    ? rawFailed
+        .filter(
+          (failure): failure is SchedulesBulkFailure =>
+            typeof failure?.id === "string",
+        )
+        .map((failure) => ({ id: failure.id, error: String(failure.error) }))
+    : [];
+
+  return {
+    updatedProviderIds,
+    failures,
+    isIndeterminate: !Array.isArray(rawUpdated) && !Array.isArray(rawFailed),
+  };
+}
+
+/** Deduplicated, capped reason summary for a failure toast or form error. */
+export function describeSchedulesBulkFailures(
+  failures: SchedulesBulkFailure[],
+  limit = 2,
+): string {
+  const reasons = Array.from(
+    new Set(failures.map((failure) => failure.error?.trim()).filter(Boolean)),
+  );
+
+  return reasons.slice(0, limit).join("; ");
 }
 
 interface SchedulesActionResult {

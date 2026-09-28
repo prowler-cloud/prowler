@@ -10,7 +10,6 @@ import {
   isOktaIDaaSStigAttributesMetadata,
   OktaIDaaSStigRequirement,
   Requirement,
-  REQUIREMENT_STATUS,
   RequirementsData,
   RequirementStatus,
 } from "@/types/compliance";
@@ -21,13 +20,8 @@ import {
   findOrCreateCategory,
   findOrCreateControl,
   findOrCreateFramework,
+  getStatusCounters,
 } from "./commons";
-
-const getStatusCounters = (status: RequirementStatus) => ({
-  pass: status === REQUIREMENT_STATUS.PASS ? 1 : 0,
-  fail: status === REQUIREMENT_STATUS.FAIL ? 1 : 0,
-  manual: status === REQUIREMENT_STATUS.MANUAL ? 1 : 0,
-});
 
 export const mapComplianceData = (
   attributesData: AttributesData,

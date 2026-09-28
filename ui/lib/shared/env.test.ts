@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { RUNTIME_CONFIG_SCRIPT_ID } from "@/lib/runtime-config.shared";
 
-import { isCloud } from "./env";
+import { isCloud, isSelfRegistrationEnabled } from "./env";
 
 const writeIsland = (content: Record<string, unknown> | string) => {
   const el = document.createElement("script");
@@ -53,5 +53,45 @@ describe("isCloud", () => {
       writeIsland("{ not valid json");
       expect(isCloud()).toBe(true);
     });
+  });
+});
+
+describe("isSelfRegistrationEnabled", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    document.head.innerHTML = "";
+  });
+
+  it('returns true outside Prowler Cloud even when UI_SELF_REGISTRATION_ENABLED is "false"', () => {
+    vi.stubEnv("UI_SELF_REGISTRATION_ENABLED", "false");
+    expect(isSelfRegistrationEnabled()).toBe(true);
+  });
+
+  it("returns true in Prowler Cloud when UI_SELF_REGISTRATION_ENABLED is unset", () => {
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
+    expect(isSelfRegistrationEnabled()).toBe(true);
+  });
+
+  it('returns false in Prowler Cloud when UI_SELF_REGISTRATION_ENABLED is "false"', () => {
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
+    vi.stubEnv("UI_SELF_REGISTRATION_ENABLED", "false");
+    expect(isSelfRegistrationEnabled()).toBe(false);
+  });
+
+  it("uses the island flags over the env vars", () => {
+    vi.stubEnv("UI_SELF_REGISTRATION_ENABLED", "true");
+    writeIsland({ cloudEnabled: true, selfRegistrationEnabled: false });
+    expect(isSelfRegistrationEnabled()).toBe(false);
+  });
+
+  it("ignores a disabled island flag outside Prowler Cloud", () => {
+    writeIsland({ cloudEnabled: false, selfRegistrationEnabled: false });
+    expect(isSelfRegistrationEnabled()).toBe(true);
+  });
+
+  it("defaults to true when the island omits the flag", () => {
+    vi.stubEnv("UI_SELF_REGISTRATION_ENABLED", "false");
+    writeIsland({ cloudEnabled: true });
+    expect(isSelfRegistrationEnabled()).toBe(true);
   });
 });

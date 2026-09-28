@@ -1,0 +1,58 @@
+---
+title: 'Organizations Across Cloud Providers'
+description: 'Understand organization hierarchies and onboarding across AWS, Google Cloud, and Azure'
+---
+
+Cloud providers use organization-level hierarchies to group accounts, projects, or subscriptions and apply access and governance consistently. Prowler uses these hierarchies to discover cloud targets and help configure multi-account or multi-project scanning.
+
+This guide explains the shared lifecycle and the differences between AWS Organizations, Google Cloud organizations, and Azure Management Groups. Use the provider-specific guides for commands, permissions, and limitations.
+
+## Organization Lifecycle
+
+Organization-level onboarding generally follows these steps:
+
+1. **Identify the hierarchy:** Locate the organization, management account, management group, folder, organizational unit, or equivalent parent node in the cloud provider.
+2. **Grant access:** Assign the provider permissions required to enumerate the hierarchy and read the resources that Prowler scans.
+3. **Discover members:** Use Prowler to retrieve accounts, projects, or subscriptions under the selected hierarchy.
+4. **Select scan targets:** Choose the cloud targets to connect or scan. Discovery does not necessarily make every discovered target a Prowler provider.
+5. **Test access:** Confirm that Prowler can authenticate to each selected target and read its resources.
+6. **Scan and maintain:** Run scans, review findings, and repeat discovery when the provider hierarchy changes.
+
+<Note>
+Organization membership changes are not automatically synchronized in every Prowler workflow. Follow the provider-specific guide to learn when manual rediscovery is required.
+</Note>
+
+## Capability Matrix
+
+| Capability | AWS Organizations | Google Cloud organization | Azure Management Groups |
+| --- | --- | --- | --- |
+| Hierarchy members | AWS accounts grouped in organizational units (OUs) | Projects grouped in folders and nested folders | Subscriptions grouped in management groups |
+| Organization-level discovery | Supported through AWS Organizations APIs | Supported through the Cloud Asset API | Supported through Azure management-group and subscription APIs |
+| Primary scan target | AWS account | Google Cloud project | Azure subscription |
+| Common organization-level permission | IAM role in the management or delegated administrator account | Cloud Asset Viewer or Cloud Asset Owner at the organization node | Appropriate Azure role assignment at the management-group or subscription scope |
+| Provider-specific onboarding | AWS account discovery and optional StackSet role deployment | Project discovery under an organization ID | Subscription discovery under a management group; role assignments inherit to subscriptions |
+| Membership maintenance | Repeat the discovery flow when accounts are added or removed | Re-run organization discovery when projects or folders change | Refresh discovery when subscriptions move between management groups |
+
+## Provider Guides
+
+### AWS Organizations
+
+The [AWS Organizations guide](/user-guide/providers/aws/organizations) covers account details, delegated administration, IAM roles, CloudFormation StackSets, and CLI scanning. For Prowler Cloud onboarding, see [AWS Organizations in Prowler Cloud](/user-guide/tutorials/prowler-cloud-aws-organizations).
+
+### Google Cloud Organization
+
+The [Google Cloud organization guide](/user-guide/providers/gcp/organization) covers scanning projects under an organization ID, organization-level permissions, and Cloud Asset API requirements. For Prowler Cloud onboarding, see [Google Cloud organizations in Prowler Cloud](/user-guide/tutorials/prowler-cloud-gcp-organizations).
+
+### Azure Management Groups
+
+The [Azure Management Groups guide](/user-guide/providers/azure/management-groups) covers hierarchy setup, role assignment, subscription scope, and Azure-specific limitations. For Prowler Cloud onboarding, see [Azure Management Groups in Prowler Cloud](/user-guide/tutorials/prowler-cloud-azure-management-groups).
+
+## Scope Boundaries
+
+The organization concepts in this guide refer only to cloud-provider resource hierarchies:
+
+- **GitHub organizations** group repositories and GitHub resources. They are a separate provider concept and are not part of AWS, Google Cloud, or Azure organization discovery.
+- **MongoDB Atlas organizations** group Atlas projects and teams. They use a separate provider API and authentication model.
+- **Prowler Cloud organizations** are internal tenants that isolate providers, scans, findings, users, and permissions. They are not the same as a cloud-provider organization and do not replace one.
+
+Choose the guide that matches the hierarchy being configured, then use the relevant Prowler Cloud or CLI workflow for the scan targets.

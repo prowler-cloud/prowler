@@ -49,6 +49,8 @@ const makeRoleFormData = () => {
   formData.set("manage_integrations", "false");
   formData.set("manage_scans", "false");
   formData.set("manage_alerts", "true");
+  formData.set("manage_lighthouse_ai_configuration", "true");
+  formData.set("manage_registry", "true");
   formData.set("unlimited_visibility", "false");
   return formData;
 };
@@ -70,6 +72,36 @@ describe("role actions", () => {
 
   afterEach(() => {
     vi.unstubAllEnvs();
+  });
+
+  it("includes manage_registry when creating and updating a role in Prowler Cloud", async () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
+
+    // When
+    await addRole(makeRoleFormData());
+    const createAttributes = lastRequestBody().data.attributes;
+    await updateRole(makeRoleFormData(), "role-1");
+    const updateAttributes = lastRequestBody().data.attributes;
+
+    // Then
+    expect(createAttributes.manage_registry).toBe(true);
+    expect(updateAttributes.manage_registry).toBe(true);
+  });
+
+  it("omits manage_registry when creating and updating a role outside Prowler Cloud", async () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
+
+    // When
+    await addRole(makeRoleFormData());
+    const createAttributes = lastRequestBody().data.attributes;
+    await updateRole(makeRoleFormData(), "role-1");
+    const updateAttributes = lastRequestBody().data.attributes;
+
+    // Then
+    expect(createAttributes).not.toHaveProperty("manage_registry");
+    expect(updateAttributes).not.toHaveProperty("manage_registry");
   });
 
   it("includes manage_alerts when creating a role in Prowler Cloud", async () => {
@@ -105,5 +137,57 @@ describe("role actions", () => {
 
     // Then
     expect(lastRequestBody().data.attributes.manage_alerts).toBe(true);
+  });
+
+  it("includes manage_lighthouse_ai_configuration when creating a role in Prowler Cloud", async () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
+
+    // When
+    await addRole(makeRoleFormData());
+
+    // Then
+    expect(
+      lastRequestBody().data.attributes.manage_lighthouse_ai_configuration,
+    ).toBe(true);
+  });
+
+  it("omits manage_lighthouse_ai_configuration when creating a role outside Prowler Cloud", async () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
+
+    // When
+    await addRole(makeRoleFormData());
+
+    // Then
+    expect(lastRequestBody().data.attributes).not.toHaveProperty(
+      "manage_lighthouse_ai_configuration",
+    );
+  });
+
+  it("includes manage_lighthouse_ai_configuration when updating a role in Prowler Cloud", async () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
+
+    // When
+    await updateRole(makeRoleFormData(), "role-1");
+
+    // Then
+    expect(
+      lastRequestBody().data.attributes.manage_lighthouse_ai_configuration,
+    ).toBe(true);
+  });
+
+  it("omits manage_lighthouse_ai_configuration when updating a role outside Prowler Cloud", async () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
+
+    // When
+    await updateRole(makeRoleFormData(), "role-1");
+
+    // Then
+    expect(lastRequestBody().data.attributes).not.toHaveProperty(
+      "manage_lighthouse_ai_configuration",
+    );
   });
 });

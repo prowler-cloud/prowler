@@ -209,7 +209,7 @@ export const JiraIntegrationForm = ({
 
   const getButtonLabel = () => {
     if (isEditing) {
-      return "Update Credentials";
+      return "Update";
     }
     return "Create Integration";
   };

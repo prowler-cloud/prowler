@@ -1,24 +1,72 @@
+vi.mock("@/actions/providers/registry-provider", () => ({
+  addRegistryProvider: vi.fn(),
+}));
+vi.mock("@/actions/registry/registry", () => ({
+  getInstalledRegistryProviderOptions: vi
+    .fn()
+    .mockResolvedValue({ status: "access_denied" }),
+}));
+vi.mock("@/actions/providers/provider-schemas", () => ({
+  getProviderSchemas: vi.fn(),
+}));
+vi.mock("@/actions/providers/dynamic-provider-credentials", () => ({
+  saveDynamicProviderCredentials: vi.fn(),
+}));
 import { Row } from "@tanstack/react-table";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { ORG_SETUP_PHASE, ORG_WIZARD_STEP } from "@/types/organizations";
+import {
+  NODE_KIND,
+  ORG_SETUP_PHASE,
+  ORG_WIZARD_STEP,
+  ORGANIZATION_TYPE,
+  type OrganizationType,
+} from "@/types/organizations";
+import { CONNECTION_CHECK_STATUS } from "@/types/providers";
 import {
   PROVIDERS_GROUP_KIND,
   PROVIDERS_ROW_TYPE,
+  ProvidersOrganizationRow,
   ProvidersTableRow,
 } from "@/types/providers-table";
 import type { ScanConfigurationData } from "@/types/scan-configurations";
 import { SCAN_SCHEDULE_CAPABILITY } from "@/types/schedules";
 
-const { checkConnectionProviderMock, getScheduleMock, pushMock } = vi.hoisted(
-  () => ({
-    checkConnectionProviderMock: vi.fn(),
-    getScheduleMock: vi.fn(),
-    pushMock: vi.fn(),
-  }),
-);
+const {
+  checkConnectionProviderMock,
+  getProviderConnectionBaselinesMock,
+  getScheduleMock,
+  getTasksByIdsMock,
+  pollConnectionTasksMock,
+  pushMock,
+  realPollConnectionTasksHolder,
+  resolveProviderConnectionStateMock,
+  revalidateProvidersMock,
+  startProviderConnectionChecksMock,
+  testProviderConnectionMock,
+  toastMock,
+} = vi.hoisted(() => ({
+  checkConnectionProviderMock: vi.fn(),
+  getProviderConnectionBaselinesMock: vi.fn(),
+  getScheduleMock: vi.fn(),
+  getTasksByIdsMock: vi.fn(),
+  pollConnectionTasksMock: vi.fn(),
+  pushMock: vi.fn(),
+  // Mutable holder for the real `pollConnectionTasks`, captured once the
+  // module mock factory below runs, and read fresh in `beforeEach` since
+  // `mockReset: true` clears `pollConnectionTasksMock`'s implementation
+  // before every test.
+  realPollConnectionTasksHolder: {} as {
+    current?: (...args: unknown[]) => unknown;
+  },
+  resolveProviderConnectionStateMock: vi.fn(),
+  revalidateProvidersMock: vi.fn(),
+  startProviderConnectionChecksMock: vi.fn(),
+  testProviderConnectionMock: vi.fn(),
+  toastMock: vi.fn(),
+}));
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: pushMock }),
@@ -30,6 +78,13 @@ vi.mock("@/actions/organizations/organizations", () => ({
 
 vi.mock("@/actions/providers/providers", () => ({
   checkConnectionProvider: checkConnectionProviderMock,
+  getProviderConnectionBaselines: getProviderConnectionBaselinesMock,
+  revalidateProviders: revalidateProvidersMock,
+  startProviderConnectionChecks: startProviderConnectionChecksMock,
+}));
+
+vi.mock("@/actions/task/tasks", () => ({
+  getTasksByIds: getTasksByIdsMock,
 }));
 
 vi.mock("@/actions/schedules", () => ({
@@ -89,12 +144,27 @@ vi.mock("@/components/scans/schedule/edit-scan-schedule-modal", () => ({
 
 vi.mock("@/components/shadcn", async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
-  useToast: () => ({ toast: vi.fn() }),
+  useToast: () => ({ toast: toastMock }),
 }));
 
 vi.mock("@/lib/provider-helpers", () => ({
-  testProviderConnection: vi.fn(),
+  resolveProviderConnectionState: resolveProviderConnectionStateMock,
+  testProviderConnection: testProviderConnectionMock,
 }));
+
+vi.mock(
+  "@/components/providers/organizations/org-account-selection.utils",
+  async (importOriginal) => {
+    const actual =
+      await importOriginal<
+        typeof import("@/components/providers/organizations/org-account-selection.utils")
+      >();
+    realPollConnectionTasksHolder.current = actual.pollConnectionTasks as (
+      ...args: unknown[]
+    ) => unknown;
+    return { ...actual, pollConnectionTasks: pollConnectionTasksMock };
+  },
+);
 
 import { DataTableRowActions } from "./data-table-row-actions";
 
@@ -192,6 +262,7 @@ const createOrgRow = () =>
       id: "org-1",
       rowType: PROVIDERS_ROW_TYPE.ORGANIZATION,
       groupKind: PROVIDERS_GROUP_KIND.ORGANIZATION,
+      orgType: ORGANIZATION_TYPE.AWS,
       name: "My AWS Organization",
       externalId: "o-abc123def4",
       parentExternalId: null,
@@ -225,6 +296,8 @@ const createOuRow = () =>
       id: "ou-1",
       rowType: PROVIDERS_ROW_TYPE.ORGANIZATION,
       groupKind: PROVIDERS_GROUP_KIND.ORGANIZATION_UNIT,
+      orgType: ORGANIZATION_TYPE.AWS,
+      kind: NODE_KIND.ORGANIZATIONAL_UNIT,
       name: "Production OU",
       externalId: "ou-abc123",
       parentExternalId: "o-abc123def4",
@@ -263,6 +336,12 @@ describe("DataTableRowActions", () => {
   });
 
   beforeEach(() => {
+    // `mockReset: true` (vitest.config.ts) clears this before every test, so
+    // the real implementation is the default and tests only override it when
+    // they need to simulate an exhausted poll.
+    pollConnectionTasksMock.mockImplementation((...args: unknown[]) =>
+      realPollConnectionTasksHolder.current?.(...args),
+    );
     getScheduleMock.mockResolvedValue({
       data: {
         type: "schedules",
@@ -273,6 +352,7 @@ describe("DataTableRowActions", () => {
         },
       },
     });
+    getProviderConnectionBaselinesMock.mockResolvedValue({});
   });
 
   it("renders Add Credentials for provider rows without credentials", async () => {
@@ -303,7 +383,7 @@ describe("DataTableRowActions", () => {
     expect(screen.queryByText("Update Credentials")).not.toBeInTheDocument();
   });
 
-  it("allows rename/delete and operational actions for a dynamic provider but hides credential management", async () => {
+  it("allows credential editing and operational actions for a dynamic provider", async () => {
     // Given a dynamic provider outside the configurable set, with the advanced
     // schedule capability enabled (so Edit Scan Schedule can show).
     const user = userEvent.setup();
@@ -330,9 +410,9 @@ describe("DataTableRowActions", () => {
     expect(screen.getByText("Test Connection")).toBeInTheDocument();
     expect(screen.getByText("View Scan Jobs")).toBeInTheDocument();
     expect(screen.getByText("Edit Scan Schedule")).toBeInTheDocument();
-    // ...but credential management is hidden (no bespoke wizard for dynamic types)
+    // Existing dynamic accounts use the same wizard with schema-based credentials.
     expect(screen.queryByText("Add Credentials")).not.toBeInTheDocument();
-    expect(screen.queryByText("Update Credentials")).not.toBeInTheDocument();
+    expect(screen.getByText("Update Credentials")).toBeInTheDocument();
   });
 
   it("navigates to the provider-filtered scan jobs from View Scan Jobs", async () => {
@@ -666,7 +746,8 @@ describe("DataTableRowActions", () => {
     await user.click(screen.getByRole("button"));
 
     expect(screen.getByText("Test Connections (1)")).toBeInTheDocument();
-    expect(screen.getByText("Delete Organization Unit")).toBeInTheDocument();
+    // Node action copy follows the node's kind.
+    expect(screen.getByText("Delete Organizational Unit")).toBeInTheDocument();
   });
 
   it("shows selected provider count in Test Connections when org row has active selection", async () => {
@@ -688,6 +769,224 @@ describe("DataTableRowActions", () => {
     // Should show count of selected testable providers (2), not all org children (1)
     expect(screen.getByText("Test Connections (2)")).toBeInTheDocument();
     expect(screen.queryByText("Test Connections (1)")).not.toBeInTheDocument();
+  });
+
+  it("tests every selected provider in one dispatch, not one call each", async () => {
+    // Given — Next's action queue serializes a per-provider loop, so the batch has
+    // to leave in a single action.
+    const user = userEvent.setup();
+    const testableProviderIds = ["provider-child-1", "provider-standalone"];
+    startProviderConnectionChecksMock.mockResolvedValue({
+      "provider-child-1": { taskId: "task-1" },
+      "provider-standalone": { taskId: "task-2" },
+    });
+    getTasksByIdsMock.mockResolvedValue({
+      "task-1": {
+        data: {
+          attributes: { state: "completed", result: { connected: true } },
+        },
+      },
+      "task-2": {
+        data: {
+          attributes: { state: "completed", result: { connected: true } },
+        },
+      },
+    });
+
+    render(
+      <DataTableRowActions
+        row={createOrgRow()}
+        hasSelection={true}
+        isRowSelected={false}
+        testableProviderIds={testableProviderIds}
+        onClearSelection={vi.fn()}
+        onOpenProviderWizard={vi.fn()}
+        onOpenOrganizationWizard={vi.fn()}
+      />,
+    );
+
+    // When
+    await user.click(screen.getByRole("button"));
+    await user.click(screen.getByText("Test Connections (2)"));
+
+    // Then — one dispatch for the batch, one batched read, one revalidation.
+    await vi.waitFor(() =>
+      expect(revalidateProvidersMock).toHaveBeenCalledTimes(1),
+    );
+    expect(startProviderConnectionChecksMock).toHaveBeenCalledTimes(1);
+    expect(startProviderConnectionChecksMock).toHaveBeenCalledWith(
+      testableProviderIds,
+    );
+    expect(getTasksByIdsMock).toHaveBeenCalledTimes(1);
+    expect(getTasksByIdsMock).toHaveBeenCalledWith(["task-1", "task-2"]);
+    expect(checkConnectionProviderMock).not.toHaveBeenCalled();
+  });
+
+  it("falls back to the provider's persisted state for a task still pending once the bulk wait is exhausted", async () => {
+    // Given: the batch poll exhausts its retries for both tasks; the component
+    // must re-read each provider's connection state instead of reporting a
+    // flat timeout.
+    const user = userEvent.setup();
+    const testableProviderIds = ["provider-child-1", "provider-standalone"];
+    startProviderConnectionChecksMock.mockResolvedValue({
+      "provider-child-1": { taskId: "task-1" },
+      "provider-standalone": { taskId: "task-2" },
+    });
+    // The baseline read before dispatch: one provider has a prior stored check,
+    // the other has never been checked.
+    getProviderConnectionBaselinesMock.mockResolvedValue({
+      "provider-child-1": "2025-01-01T00:00:00Z",
+      "provider-standalone": null,
+    });
+    pollConnectionTasksMock.mockImplementation(
+      async (taskIds: string[], { onSettled, resolveExhausted }) => {
+        for (const taskId of taskIds) {
+          const resolved = resolveExhausted
+            ? await resolveExhausted(taskId)
+            : null;
+          onSettled(
+            taskId,
+            resolved ?? {
+              status: CONNECTION_CHECK_STATUS.FAILED,
+              error: "Connection test timed out.",
+            },
+          );
+        }
+      },
+    );
+    resolveProviderConnectionStateMock.mockImplementation(
+      async (providerId: string) =>
+        providerId === "provider-standalone"
+          ? { status: CONNECTION_CHECK_STATUS.SUCCESS, error: null }
+          : {
+              status: CONNECTION_CHECK_STATUS.FAILED,
+              error: "Connection was not confirmed. Test the connection again.",
+            },
+    );
+
+    render(
+      <DataTableRowActions
+        row={createOrgRow()}
+        hasSelection={true}
+        isRowSelected={false}
+        testableProviderIds={testableProviderIds}
+        onClearSelection={vi.fn()}
+        onOpenProviderWizard={vi.fn()}
+        onOpenOrganizationWizard={vi.fn()}
+      />,
+    );
+
+    // When
+    await user.click(screen.getByRole("button"));
+    await user.click(screen.getByText("Test Connections (2)"));
+
+    // Then: each pending task is resolved from the provider's own record, using
+    // the baseline captured for that specific provider before dispatch.
+    await vi.waitFor(() =>
+      expect(revalidateProvidersMock).toHaveBeenCalledTimes(1),
+    );
+    expect(getProviderConnectionBaselinesMock).toHaveBeenCalledWith(
+      testableProviderIds,
+    );
+    expect(resolveProviderConnectionStateMock).toHaveBeenCalledWith(
+      "provider-child-1",
+      "2025-01-01T00:00:00Z",
+    );
+    expect(resolveProviderConnectionStateMock).toHaveBeenCalledWith(
+      "provider-standalone",
+      null,
+    );
+  });
+
+  it("shows a neutral toast, not a failure, when a single test is still running past the wait", async () => {
+    // Given: the exhausted single-provider test cannot confirm an outcome yet.
+    const user = userEvent.setup();
+    testProviderConnectionMock.mockResolvedValue({
+      status: CONNECTION_CHECK_STATUS.PENDING,
+      error:
+        "The connection test is still running. Refresh in a moment to see the result.",
+    });
+
+    render(
+      <DataTableRowActions
+        row={createRow(true)}
+        hasSelection={false}
+        isRowSelected={false}
+        testableProviderIds={[]}
+        onClearSelection={vi.fn()}
+        onOpenProviderWizard={vi.fn()}
+        onOpenOrganizationWizard={vi.fn()}
+      />,
+    );
+
+    // When
+    await user.click(screen.getByRole("button"));
+    await user.click(screen.getByText("Test Connection"));
+
+    // Then: no destructive toast for a check that is merely still running.
+    await vi.waitFor(() => expect(toastMock).toHaveBeenCalledTimes(1));
+    expect(toastMock).toHaveBeenCalledWith(
+      expect.not.objectContaining({ variant: "destructive" }),
+    );
+    expect(toastMock.mock.calls[0][0].title).not.toMatch(/failed/i);
+  });
+
+  it("does not count a still-running bulk result as failed", async () => {
+    // Given: one provider settles successfully, the other is still running
+    // once the bulk wait is exhausted.
+    const user = userEvent.setup();
+    const testableProviderIds = ["provider-child-1", "provider-standalone"];
+    startProviderConnectionChecksMock.mockResolvedValue({
+      "provider-child-1": { taskId: "task-1" },
+      "provider-standalone": { taskId: "task-2" },
+    });
+    pollConnectionTasksMock.mockImplementation(
+      async (taskIds: string[], { onSettled, resolveExhausted }) => {
+        for (const taskId of taskIds) {
+          const resolved = resolveExhausted
+            ? await resolveExhausted(taskId)
+            : null;
+          onSettled(
+            taskId,
+            resolved ?? {
+              status: CONNECTION_CHECK_STATUS.FAILED,
+              error: "Connection test timed out.",
+            },
+          );
+        }
+      },
+    );
+    resolveProviderConnectionStateMock.mockImplementation(
+      async (providerId: string) =>
+        providerId === "provider-standalone"
+          ? { status: CONNECTION_CHECK_STATUS.SUCCESS, error: null }
+          : {
+              status: CONNECTION_CHECK_STATUS.PENDING,
+              error: "The connection test is still running.",
+            },
+    );
+
+    render(
+      <DataTableRowActions
+        row={createOrgRow()}
+        hasSelection={true}
+        isRowSelected={false}
+        testableProviderIds={testableProviderIds}
+        onClearSelection={vi.fn()}
+        onOpenProviderWizard={vi.fn()}
+        onOpenOrganizationWizard={vi.fn()}
+      />,
+    );
+
+    // When
+    await user.click(screen.getByRole("button"));
+    await user.click(screen.getByText("Test Connections (2)"));
+
+    // Then: not styled as a failure — no destructive toast.
+    await vi.waitFor(() => expect(toastMock).toHaveBeenCalledTimes(1));
+    expect(toastMock).toHaveBeenCalledWith(
+      expect.not.objectContaining({ variant: "destructive" }),
+    );
   });
 
   it("shows selected provider count in Test Connections when OU row has active selection", async () => {
@@ -831,6 +1130,7 @@ describe("DataTableRowActions", () => {
 
     // Then
     expect(onOpenOrganizationWizard).toHaveBeenCalledWith({
+      organizationType: ORGANIZATION_TYPE.AWS,
       organizationId: "org-1",
       organizationName: "My AWS Organization",
       externalId: "o-abc123def4",
@@ -838,5 +1138,34 @@ describe("DataTableRowActions", () => {
       targetPhase: ORG_SETUP_PHASE.ACCESS,
       intent: "edit-credentials",
     });
+  });
+
+  it("hides Update Credentials for an organization type without an onboarding flow", async () => {
+    // Given: an organization type the wizard cannot onboard (display-only).
+    // Every `ORGANIZATION_TYPE` is onboardable now, so the value comes from
+    // outside the enum.
+    const user = userEvent.setup();
+    const row = createOrgRow();
+    (row.original as ProvidersOrganizationRow).orgType =
+      "oraclecloud" as OrganizationType;
+
+    render(
+      <DataTableRowActions
+        row={row}
+        hasSelection={false}
+        isRowSelected={false}
+        testableProviderIds={[]}
+        onClearSelection={vi.fn()}
+        onOpenProviderWizard={vi.fn()}
+        onOpenOrganizationWizard={vi.fn()}
+      />,
+    );
+
+    // When
+    await user.click(screen.getByRole("button"));
+
+    // Then: the name edit stays (a plain PATCH), the wizard re-entry is gone.
+    expect(screen.getByText("Edit Organization Name")).toBeInTheDocument();
+    expect(screen.queryByText("Update Credentials")).not.toBeInTheDocument();
   });
 });

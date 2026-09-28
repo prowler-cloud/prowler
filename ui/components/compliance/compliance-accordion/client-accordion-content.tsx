@@ -4,6 +4,7 @@ import { AlertTriangle } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 
 import {
+  loadFindingTriageDetail,
   loadLatestFindingTriageNote,
   updateFindingTriage,
 } from "@/actions/findings";
@@ -81,16 +82,17 @@ export const ClientAccordionContent = ({
   });
 
   const handleTriageUpdate = async (input: UpdateFindingTriageInput) => {
-    await updateFindingTriage(input);
+    const result = await updateFindingTriage(input);
 
     // Mutelist-shortcut statuses mute the finding server-side; refetch so the
     // list honors the muted filter, matching the resource drawer behavior.
     if (shouldRefreshAfterTriageUpdate(input)) {
       reload();
-      return;
+      return result;
     }
 
     patchTriageUpdate(input);
+    return result;
   };
 
   const renderDetails = () => {
@@ -180,6 +182,7 @@ export const ClientAccordionContent = ({
               openFindingId,
               onTriageUpdateAction: handleTriageUpdate,
               onTriageNoteLoadAction: loadLatestFindingTriageNote,
+              onTriageDetailLoadAction: loadFindingTriageDetail,
             })}
             data={expandedFindings}
             metadata={findings?.meta}

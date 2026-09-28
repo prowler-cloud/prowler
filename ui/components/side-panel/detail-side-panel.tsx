@@ -4,7 +4,9 @@ import { type ReactNode, useState } from "react";
 import { createPortal } from "react-dom";
 
 import { useMountEffect } from "@/hooks/use-mount-effect";
+import { useLighthouseContextStore } from "@/store/lighthouse-context/store";
 import { useSidePanelStore } from "@/store/side-panel";
+import type { LighthouseContextItem } from "@/types/lighthouse-context";
 
 interface DetailSidePanelProps {
   open: boolean;
@@ -12,6 +14,11 @@ interface DetailSidePanelProps {
   // Screen-reader heading; the visible tab label is always "Details".
   title: string;
   description?: string;
+  context?: LighthouseContextItem;
+  // false registers the Details tab without selecting it, so an opener that
+  // already selected another tab (e.g. a skill launch into the AI chat)
+  // keeps that tab in front.
+  selectTabOnOpen?: boolean;
   children: ReactNode;
 }
 
@@ -34,6 +41,8 @@ function DetailSidePanelActive({
   onOpenChange,
   title,
   description,
+  context,
+  selectTabOnOpen = true,
   children,
 }: Omit<DetailSidePanelProps, "open">) {
   // Owner token from registration: several detail views can be mounted at
@@ -41,26 +50,69 @@ function DetailSidePanelActive({
   const [token, setToken] = useState<number | null>(null);
 
   useMountEffect(() => {
-    const registered = useSidePanelStore.getState().registerContextTab({
-      label: "Details",
-      // Mount-scoped capture is safe: the component remounts per open cycle
-      // and every consumer's close path ends in stable setters.
-      onRequestClose: () => onOpenChange(false),
-    });
+    const registered = useSidePanelStore.getState().registerContextTab(
+      {
+        label: "Details",
+        // Mount-scoped capture is safe: the component remounts per open cycle
+        // and every consumer's close path ends in stable setters.
+        onRequestClose: () => onOpenChange(false),
+      },
+      { select: selectTabOnOpen },
+    );
+    useLighthouseContextStore
+      .getState()
+      .setFocusedContext(registered, context ?? null);
     setToken(registered);
-    return () => useSidePanelStore.getState().unregisterContextTab(registered);
+    return () => {
+      useLighthouseContextStore.getState().clearFocusedContext(registered);
+      useSidePanelStore.getState().unregisterContextTab(registered);
+    };
   });
 
   const ownerToken = useSidePanelStore((state) => state.contextOwnerToken);
   const outlet = useSidePanelStore((state) => state.contextOutlet);
-  if (!outlet || token === null || token !== ownerToken) return null;
+  const focusedRegistration =
+    context && token !== null ? (
+      <FocusedContextRegistration
+        key={`${token}:${JSON.stringify(context)}`}
+        ownerToken={token}
+        context={context}
+      />
+    ) : null;
 
-  return createPortal(
-    <div className="flex h-full min-h-0 flex-col">
-      <h2 className="sr-only">{title}</h2>
-      {description ? <p className="sr-only">{description}</p> : null}
-      {children}
-    </div>,
-    outlet,
+  if (!outlet || token === null || token !== ownerToken) {
+    return focusedRegistration;
+  }
+
+  return (
+    <>
+      {focusedRegistration}
+      {createPortal(
+        <div className="flex h-full min-h-0 flex-col">
+          <h2 className="sr-only">{title}</h2>
+          {description ? <p className="sr-only">{description}</p> : null}
+          {children}
+        </div>,
+        outlet,
+      )}
+    </>
   );
+}
+
+interface FocusedContextRegistrationProps {
+  ownerToken: number;
+  context: LighthouseContextItem;
+}
+
+function FocusedContextRegistration({
+  ownerToken,
+  context,
+}: FocusedContextRegistrationProps) {
+  useMountEffect(() => {
+    useLighthouseContextStore.getState().setFocusedContext(ownerToken, context);
+    return () =>
+      useLighthouseContextStore.getState().clearFocusedContext(ownerToken);
+  });
+
+  return null;
 }

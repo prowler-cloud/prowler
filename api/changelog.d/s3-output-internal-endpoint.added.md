@@ -1,0 +1,1 @@
+Scan output uploads and downloads can now target S3-compatible object storage such as MinIO directly via `DJANGO_OUTPUT_S3_AWS_ENDPOINT_URL`, instead of relying on process-wide AWS environment variables that also hijacked unrelated AWS API calls

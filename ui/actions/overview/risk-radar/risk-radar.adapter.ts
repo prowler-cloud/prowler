@@ -1,5 +1,6 @@
 import type { RadarDataPoint } from "@/components/graphs/types";
 import { getCategoryLabel } from "@/lib/categories";
+import type { ApiResult } from "@/types/server-actions";
 
 import { CategoryOverview, CategoryOverviewResponse } from "./types";
 
@@ -44,7 +45,7 @@ function mapCategoryToRadarPoint(item: CategoryOverview): RadarDataPoint {
  * @returns An array of RadarDataPoint objects for the radar chart
  */
 export function adaptCategoryOverviewToRadarData(
-  response: CategoryOverviewResponse | undefined,
+  response: ApiResult<CategoryOverviewResponse> | undefined,
 ): RadarDataPoint[] {
   if (!response?.data || response.data.length === 0) {
     return [];

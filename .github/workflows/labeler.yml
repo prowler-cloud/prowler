@@ -85,10 +85,10 @@ jobs:
 
           # Check if author is in the org members list
           if printf '%s\n' "${ORG_MEMBERS[@]}" | grep -q "^${AUTHOR}$"; then
-            echo "is_member=true" >> $GITHUB_OUTPUT
+            echo "is_member=true" >> "$GITHUB_OUTPUT"
             echo "$AUTHOR is an organization member"
           else
-            echo "is_member=false" >> $GITHUB_OUTPUT
+            echo "is_member=false" >> "$GITHUB_OUTPUT"
             echo "$AUTHOR is not an organization member"
           fi
 

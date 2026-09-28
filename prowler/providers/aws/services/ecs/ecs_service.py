@@ -149,8 +149,8 @@ class ECS(AWSService):
                     "TAGS",
                 ],
             )
-            container_definitions = response["taskDefinition"]["containerDefinitions"]
-            for container in container_definitions:
+            container_definitions = []
+            for container in response["taskDefinition"]["containerDefinitions"]:
                 environment = []
                 if "environment" in container:
                     for env_var in container["environment"]:
@@ -159,7 +159,7 @@ class ECS(AWSService):
                                 name=env_var["name"], value=env_var["value"]
                             )
                         )
-                task_definition.container_definitions.append(
+                container_definitions.append(
                     ContainerDefinition(
                         name=container["name"],
                         privileged=container.get("privileged", False),
@@ -176,14 +176,16 @@ class ECS(AWSService):
                         .get("mode", ""),
                     )
                 )
-            task_definition.pid_mode = response["taskDefinition"].get("pidMode", "")
-            task_definition.registered_at = response["taskDefinition"].get(
-                "registeredAt"
-            )
-            task_definition.tags = response.get("tags")
-            task_definition.network_mode = response["taskDefinition"].get(
-                "networkMode", "bridge"
-            )
+            pid_mode = response["taskDefinition"].get("pidMode", "")
+            registered_at = response["taskDefinition"].get("registeredAt")
+            tags = response.get("tags")
+            network_mode = response["taskDefinition"].get("networkMode", "bridge")
+
+            task_definition.container_definitions = container_definitions
+            task_definition.pid_mode = pid_mode
+            task_definition.registered_at = registered_at
+            task_definition.tags = tags
+            task_definition.network_mode = network_mode
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -302,7 +304,7 @@ class TaskDefinition(BaseModel):
     arn: str
     revision: str
     region: str
-    container_definitions: list[ContainerDefinition] = []
+    container_definitions: Optional[list[ContainerDefinition]] = None
     pid_mode: Optional[str]
     registered_at: Optional[datetime] = None
     tags: Optional[list] = []

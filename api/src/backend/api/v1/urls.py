@@ -46,6 +46,7 @@ from api.v1.views import (
 from django.http import JsonResponse
 from django.urls import include, path
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
 from drf_spectacular.views import SpectacularRedocView
 from rest_framework_nested import routers
 
@@ -194,7 +195,7 @@ urlpatterns = [
     ),
     path(
         "accounts/saml/<organization_slug>/acs/",
-        ACSView.as_view(),
+        require_POST(ACSView.as_view()),
         name="saml_acs",
     ),
     path(

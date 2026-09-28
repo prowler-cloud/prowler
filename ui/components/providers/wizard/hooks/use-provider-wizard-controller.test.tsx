@@ -1,9 +1,13 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import {
+  PROVIDER_FUNNEL_EVENT,
+  type ProviderFunnelDetail,
+} from "@/lib/provider-funnel/provider-funnel-events";
 import { useOrgSetupStore } from "@/store/organizations/store";
 import { useProviderWizardStore } from "@/store/provider-wizard/store";
-import { ORG_WIZARD_STEP } from "@/types/organizations";
+import { ORG_WIZARD_STEP, ORGANIZATION_TYPE } from "@/types/organizations";
 import {
   PROVIDER_WIZARD_MODE,
   PROVIDER_WIZARD_STEP,
@@ -40,7 +44,18 @@ vi.mock("next-auth/react", () => ({
 }));
 
 describe("useProviderWizardController", () => {
+  const funnelSignals: ProviderFunnelDetail[] = [];
+  const recordFunnelSignal: EventListener = (event) => {
+    funnelSignals.push((event as CustomEvent<ProviderFunnelDetail>).detail);
+  };
+
+  afterEach(() => {
+    window.removeEventListener(PROVIDER_FUNNEL_EVENT, recordFunnelSignal);
+  });
+
   beforeEach(() => {
+    funnelSignals.length = 0;
+    window.addEventListener(PROVIDER_FUNNEL_EVENT, recordFunnelSignal);
     vi.useRealTimers();
     vi.clearAllMocks();
     requestOpenOnWizardCloseMock.mockClear();
@@ -144,6 +159,70 @@ describe("useProviderWizardController", () => {
     expect(refreshMock).toHaveBeenCalledTimes(1);
   });
 
+  it("signals the step where the wizard was left and that no provider was created", () => {
+    // Given
+    const { result } = renderHook(() =>
+      useProviderWizardController({ open: true, onOpenChange: vi.fn() }),
+    );
+
+    // When
+    act(() => {
+      result.current.handleClose();
+    });
+
+    // Then
+    expect(funnelSignals).toEqual([
+      { step: "wizard_closed", lastStep: "connect", providerCreated: false },
+    ]);
+  });
+
+  it("signals a close after the provider was created, from the step reached", () => {
+    // Given
+    const { result } = renderHook(() =>
+      useProviderWizardController({ open: true, onOpenChange: vi.fn() }),
+    );
+    act(() => {
+      useProviderWizardStore.getState().setProvider({
+        id: "provider-1",
+        type: "aws",
+        uid: "123456789012",
+        alias: null,
+      });
+      result.current.setCurrentStep(PROVIDER_WIZARD_STEP.TEST);
+    });
+
+    // When
+    act(() => {
+      result.current.handleClose();
+    });
+
+    // Then
+    expect(funnelSignals).toEqual([
+      { step: "wizard_closed", lastStep: "test", providerCreated: true },
+    ]);
+  });
+
+  it("signals the organization method when the organizations flow opens", () => {
+    // Given
+    const { result } = renderHook(() =>
+      useProviderWizardController({ open: true, onOpenChange: vi.fn() }),
+    );
+
+    // When
+    act(() => {
+      result.current.openOrganizationsFlow(ORGANIZATION_TYPE.AZURE);
+    });
+
+    // Then
+    expect(funnelSignals).toEqual([
+      {
+        step: "method_selected",
+        providerType: "azure",
+        method: "organization",
+      },
+    ]);
+  });
+
   it("hydrates update mode when initial data is provided", async () => {
     // Given
     const onOpenChange = vi.fn();
@@ -170,8 +249,10 @@ describe("useProviderWizardController", () => {
     });
     expect(result.current.modalTitle).toBe("Update Provider Credentials");
     expect(result.current.isProviderFlow).toBe(true);
+    // Update mode enters at the credentials step, so the docs link scrolls
+    // the getting-started page to the credentials/authentication section.
     expect(result.current.docsLink).toBe(
-      "https://goto.prowler.com/provider-aws",
+      "https://docs.prowler.com/user-guide/providers/aws/getting-started-aws#step-3-set-up-aws-authentication",
     );
 
     const state = useProviderWizardStore.getState();
@@ -181,6 +262,36 @@ describe("useProviderWizardController", () => {
     expect(state.providerAlias).toBe("production");
     expect(state.secretId).toBe("secret-1");
     expect(state.mode).toBe(PROVIDER_WIZARD_MODE.UPDATE);
+  });
+
+  it("updates the credentials docs link when AWS assume role is selected", async () => {
+    const onOpenChange = vi.fn();
+    const { result } = renderHook(() =>
+      useProviderWizardController({
+        open: true,
+        onOpenChange,
+        initialData: {
+          providerId: "provider-1",
+          providerType: "aws",
+          providerUid: "111111111111",
+          providerAlias: "production",
+          secretId: null,
+          mode: PROVIDER_WIZARD_MODE.ADD,
+        },
+      }),
+    );
+
+    await waitFor(() => {
+      expect(result.current.currentStep).toBe(PROVIDER_WIZARD_STEP.CREDENTIALS);
+    });
+
+    act(() => {
+      useProviderWizardStore.getState().setVia("role");
+    });
+
+    expect(result.current.docsLink).toBe(
+      "https://docs.prowler.com/user-guide/providers/aws/getting-started-aws#assume-role-recommended",
+    );
   });
 
   it("switches into and out of organizations flow", () => {
@@ -202,6 +313,10 @@ describe("useProviderWizardController", () => {
     expect(result.current.wizardVariant).toBe("organizations");
     expect(result.current.isProviderFlow).toBe(false);
     expect(result.current.orgCurrentStep).toBe(ORG_WIZARD_STEP.SETUP);
+    // The flow tags the store with the type it was opened for; AWS by default.
+    expect(useOrgSetupStore.getState().organizationType).toBe(
+      ORGANIZATION_TYPE.AWS,
+    );
     expect(result.current.docsLink).toBe(
       "https://docs.prowler.com/user-guide/tutorials/prowler-cloud-aws-organizations",
     );
@@ -215,6 +330,8 @@ describe("useProviderWizardController", () => {
     expect(result.current.wizardVariant).toBe("provider");
     expect(result.current.isProviderFlow).toBe(true);
     expect(result.current.currentStep).toBe(PROVIDER_WIZARD_STEP.CONNECT);
+    // Back lands on the AWS connect step the tabs live on, not the provider picker.
+    expect(result.current.providerTypeHint).toBe("aws");
   });
 
   it("moves to launch step after a successful connection test in add mode", () => {
@@ -314,9 +431,10 @@ describe("useProviderWizardController", () => {
         .getState()
         .setOrganization("org-1", "My Org", "o-abc123def4");
       useOrgSetupStore.getState().setDiscovery("disc-1", {
-        roots: [],
-        organizational_units: [],
-        accounts: [],
+        orgType: ORGANIZATION_TYPE.AWS,
+        organization: { uid: "o-abc123def4", name: "My Org" },
+        nodes: [],
+        candidates: [],
       });
     });
 

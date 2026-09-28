@@ -50,7 +50,7 @@ jobs:
           GITHUB_EVENT_RELEASE_TAG_NAME: ${{ github.event.release.tag_name }}
 
       - name: Login to GHCR
-        run: echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ghcr.io -u ${GITHUB_ACTOR} --password-stdin
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ghcr.io -u "${GITHUB_ACTOR}" --password-stdin
 
       - name: Update chart dependencies
         run: helm dependency update ${{ env.CHART_PATH }}

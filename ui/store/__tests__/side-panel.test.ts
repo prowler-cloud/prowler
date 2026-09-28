@@ -107,6 +107,25 @@ describe("useSidePanelStore", () => {
     expect(state.contextTab?.label).toBe("Details");
   });
 
+  it("registering with select: false keeps the current tab in front", () => {
+    // Given: a skill launch just fronted the AI tab
+    useSidePanelStore.getState().openPanel(SIDE_PANEL_TAB.AI_CHAT);
+
+    // When: the finding drawer registers its Details tab in the background
+    useSidePanelStore
+      .getState()
+      .registerContextTab(
+        { label: "Details", onRequestClose: vi.fn() },
+        { select: false },
+      );
+
+    // Then: the panel hosts the Details tab but the AI tab stays selected
+    const state = useSidePanelStore.getState();
+    expect(state.isOpen).toBe(true);
+    expect(state.selectedTab).toBe(SIDE_PANEL_TAB.AI_CHAT);
+    expect(state.contextTab?.label).toBe("Details");
+  });
+
   it("closing the panel asks the context owner to close its detail view", () => {
     // Given
     const onRequestClose = vi.fn();

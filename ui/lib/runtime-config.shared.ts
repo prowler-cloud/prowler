@@ -6,11 +6,14 @@ export interface RuntimePublicConfig {
   googleTagManagerId: string | null;
   apiBaseUrl: string | null;
   apiDocsUrl: string | null;
-  posthogKey: string | null; // reserved
-  posthogHost: string | null; // reserved
+  posthogEnabled: boolean;
+  posthogKey: string | null;
+  posthogIngestionHost: string | null;
+  posthogUiHost: string | null;
   reoDevClientId: string | null; // reserved
   cloudEnabled: boolean;
   cloudBillingEnabled: boolean;
+  selfRegistrationEnabled: boolean;
   stripePublishableKey: string | null; // reserved
   stripePublishableKeyV2: string | null; // reserved
 }
@@ -24,11 +27,14 @@ export const EMPTY_RUNTIME_PUBLIC_CONFIG: RuntimePublicConfig = {
   googleTagManagerId: null,
   apiBaseUrl: null,
   apiDocsUrl: null,
+  posthogEnabled: false,
   posthogKey: null,
-  posthogHost: null,
+  posthogIngestionHost: null,
+  posthogUiHost: null,
   reoDevClientId: null,
   cloudEnabled: false,
   cloudBillingEnabled: false,
+  selfRegistrationEnabled: true,
   stripePublishableKey: null,
   stripePublishableKeyV2: null,
 };
@@ -42,11 +48,14 @@ const pickConfig = (
   googleTagManagerId: parsed.googleTagManagerId ?? null,
   apiBaseUrl: parsed.apiBaseUrl ?? null,
   apiDocsUrl: parsed.apiDocsUrl ?? null,
+  posthogEnabled: parsed.posthogEnabled ?? false,
   posthogKey: parsed.posthogKey ?? null,
-  posthogHost: parsed.posthogHost ?? null,
+  posthogIngestionHost: parsed.posthogIngestionHost ?? null,
+  posthogUiHost: parsed.posthogUiHost ?? null,
   reoDevClientId: parsed.reoDevClientId ?? null,
   cloudEnabled: parsed.cloudEnabled ?? false,
   cloudBillingEnabled: parsed.cloudBillingEnabled ?? false,
+  selfRegistrationEnabled: parsed.selfRegistrationEnabled ?? true,
   stripePublishableKey: parsed.stripePublishableKey ?? null,
   stripePublishableKeyV2: parsed.stripePublishableKeyV2 ?? null,
 });

@@ -1,7 +1,6 @@
+import { CloudCog } from "lucide-react";
 import { Suspense } from "react";
 
-import { listScanConfigurations } from "@/actions/scan-configurations";
-import { ProvidersAccountsView } from "@/components/providers";
 import { SkeletonTableProviders } from "@/components/providers/table";
 import { CliImportBanner } from "@/components/scans";
 import { ContentLayout } from "@/components/shadcn/content-layout";
@@ -9,15 +8,11 @@ import { Skeleton } from "@/components/shadcn/skeleton/skeleton";
 import { FilterTransitionWrapper } from "@/contexts";
 import { isCloud } from "@/lib/shared/env";
 import { SearchParamsProps } from "@/types";
-import {
-  SCAN_CONFIGURATION_LIST_STATUS,
-  type ScanConfigurationListState,
-} from "@/types/scan-configurations";
 
 import { ProviderGroupsContent } from "./provider-groups-content";
 import { ProviderPageTabs } from "./provider-page-tabs";
 import { getProviderTab } from "./provider-page-tabs.shared";
-import { loadProvidersAccountsViewData } from "./providers-page.utils";
+import { ProvidersTabContent } from "./providers-tab-content";
 
 export default async function Providers({
   searchParams,
@@ -41,7 +36,7 @@ export default async function Providers({
   return (
     <ContentLayout
       title="Providers"
-      icon="lucide:cloud-cog"
+      icon={<CloudCog />}
       onboardingAction={{ flowId: "add-provider" }}
     >
       {isCloudEnvironment && <CliImportBanner className="mb-6" />}
@@ -106,51 +101,5 @@ const ProviderGroupsFallback = () => {
         <SkeletonTableProviders />
       </div>
     </div>
-  );
-};
-
-const loadScanConfigs = async (
-  isCloud: boolean,
-): Promise<ScanConfigurationListState> => {
-  if (!isCloud) {
-    return { status: SCAN_CONFIGURATION_LIST_STATUS.AVAILABLE, data: [] };
-  }
-
-  try {
-    return {
-      status: SCAN_CONFIGURATION_LIST_STATUS.AVAILABLE,
-      data: await listScanConfigurations(),
-    };
-  } catch (error) {
-    console.error("Error loading provider scan configurations:", error);
-    return { status: SCAN_CONFIGURATION_LIST_STATUS.UNAVAILABLE, data: [] };
-  }
-};
-
-const ProvidersTabContent = async ({
-  searchParams,
-}: {
-  searchParams: SearchParamsProps;
-}) => {
-  const isCloudEnvironment = isCloud();
-  const [providersView, scanConfigsState] = await Promise.all([
-    loadProvidersAccountsViewData({
-      searchParams,
-      isCloud: isCloudEnvironment,
-    }),
-    loadScanConfigs(isCloudEnvironment),
-  ]);
-
-  return (
-    <ProvidersAccountsView
-      isCloud={isCloudEnvironment}
-      filters={providersView.filters}
-      providers={providersView.providers}
-      providerGroups={providersView.providerGroups}
-      metadata={providersView.metadata}
-      rows={providersView.rows}
-      scanConfigs={scanConfigsState.data}
-      scanConfigStatus={scanConfigsState.status}
-    />
   );
 };

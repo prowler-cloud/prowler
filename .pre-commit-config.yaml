@@ -47,6 +47,14 @@ repos:
         priority: 20
 
   ## GITHUB ACTIONS
+  - repo: https://github.com/rhysd/actionlint
+    rev: v1.7.12
+    hooks:
+      - id: actionlint
+        # SC2129 only suggests grouping consecutive redirects; not worth restructuring for.
+        args: ['-shellcheck=-e SC2129']
+        priority: 30
+
   - repo: https://github.com/zizmorcore/zizmor-pre-commit
     rev: v1.24.1
     hooks:

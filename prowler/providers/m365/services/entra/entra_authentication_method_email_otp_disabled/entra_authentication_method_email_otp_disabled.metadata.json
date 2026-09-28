@@ -1,0 +1,37 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_authentication_method_email_otp_disabled",
+  "CheckTitle": "Email One-Time Passcode authentication method is disabled in the tenant",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "Microsoft Entra tenant's authentication methods policy should have the **Email OTP** authentication method disabled. Email one-time passcodes depend on the security of the recipient mailbox, which is typically a lower-assurance channel, and should not be used as a primary or fallback multi-factor authentication method for members.",
+  "Risk": "**Email OTP** is vulnerable to mailbox compromise and **phishing**. If an attacker gains access to a user's mailbox, they can intercept one-time passcodes and bypass **MFA**, gaining unauthorized access to the tenant.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/entra/identity/authentication/howto-authentication-email-otp"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to the Microsoft Entra admin center at https://entra.microsoft.com/\n2. Go to **Protection** > **Authentication methods** > **Policies**\n3. Select **Email OTP** and set its status to **Disabled**, then click **Save**\n4. Ensure users have phishing-resistant MFA methods configured (e.g., FIDO2, Microsoft Authenticator)",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Disable the Email OTP authentication method and require phishing-resistant MFA methods such as FIDO2 security keys or Microsoft Authenticator across the tenant.",
+      "Url": "https://hub.prowler.com/check/entra_authentication_method_email_otp_disabled"
+    }
+  },
+  "Categories": [
+    "identity-access",
+    "e3"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

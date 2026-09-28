@@ -11,15 +11,22 @@ import {
 interface GitHubCredentialsFormProps {
   control: Control<any>;
   credentialsType?: string;
+  providerUid?: string;
 }
 
 export const GitHubCredentialsForm = ({
   control,
   credentialsType,
+  providerUid,
 }: GitHubCredentialsFormProps) => {
   switch (credentialsType) {
     case "personal_access_token":
-      return <GitHubPersonalAccessTokenForm control={control} />;
+      return (
+        <GitHubPersonalAccessTokenForm
+          control={control}
+          providerUid={providerUid}
+        />
+      );
     case "oauth_app":
       return <GitHubOAuthAppForm control={control} />;
     case "github_app":

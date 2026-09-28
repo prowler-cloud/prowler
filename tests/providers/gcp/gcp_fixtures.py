@@ -490,6 +490,19 @@ def mock_api_projects_calls(client: MagicMock):
     }
     client.projects().serviceAccounts().list_next.return_value = None
 
+    # Workload Identity Federation pools/providers: return empty pages and stop
+    # pagination so the discovery while-loops in the IAM service terminate.
+    client.projects().locations().workloadIdentityPools().list().execute.return_value = {
+        "workloadIdentityPools": []
+    }
+    client.projects().locations().workloadIdentityPools().list_next.return_value = None
+    client.projects().locations().workloadIdentityPools().providers().list().execute.return_value = {
+        "workloadIdentityPoolProviders": []
+    }
+    client.projects().locations().workloadIdentityPools().providers().list_next.return_value = (
+        None
+    )
+
     def mock_list_service_accounts_keys(name):
         return_value = MagicMock()
         if (

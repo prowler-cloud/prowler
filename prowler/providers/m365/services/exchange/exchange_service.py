@@ -108,6 +108,16 @@ class Exchange(M365Service):
             return None
 
     def _get_organization_config(self):
+        """Retrieve the Exchange Online organization configuration.
+
+        Reads Get-OrganizationConfig via Exchange Online PowerShell. Boolean
+        properties that can come back null (never configured) are normalized to
+        their platform defaults, e.g. RejectDirectSend to False.
+
+        Returns:
+            Optional[Organization]: The parsed organization configuration, or
+            None when unavailable or on error.
+        """
         logger.info("Microsoft365 - Getting Exchange Organization configuration...")
         organization_config = None
         try:
@@ -137,6 +147,12 @@ class Exchange(M365Service):
                     delayed_delicensing_enabled=organization_configuration.get(
                         "DelayedDelicensingEnabled", False
                     ),
+                    # Can be null on tenants where the setting was never
+                    # configured; null keeps the platform default (disabled).
+                    reject_direct_send=organization_configuration.get(
+                        "RejectDirectSend"
+                    )
+                    is True,
                 )
         except Exception as error:
             logger.error(
@@ -241,6 +257,15 @@ class Exchange(M365Service):
         return transport_config
 
     def _get_mailbox_policy(self):
+        """Retrieve the OWA mailbox policies.
+
+        Reads Get-OwaMailboxPolicy via Exchange Online PowerShell. The personal
+        account properties can come back null (never configured) and are
+        normalized to their platform defaults (enabled).
+
+        Returns:
+            List[MailboxPolicy]: The parsed OWA mailbox policies, empty on error.
+        """
         logger.info("Microsoft365 - Getting mailbox policy configuration...")
         mailbox_policies = []
         try:
@@ -256,6 +281,18 @@ class Exchange(M365Service):
                                 additional_storage_enabled=policy.get(
                                     "AdditionalStorageProvidersAvailable", True
                                 ),
+                                # These properties can be null on tenants where the
+                                # setting was never configured; null keeps the
+                                # platform default.
+                                is_default=policy.get("IsDefault") is True,
+                                personal_accounts_enabled=policy.get(
+                                    "PersonalAccountsEnabled"
+                                )
+                                is not False,
+                                personal_account_calendars_enabled=policy.get(
+                                    "PersonalAccountCalendarsEnabled"
+                                )
+                                is not False,
                             )
                         )
         except Exception as error:
@@ -489,6 +526,7 @@ class Organization(BaseModel):
     mailtips_large_audience_threshold: int
     delayed_delicensing_enabled: bool = False
     total_paid_licenses: Optional[int] = None
+    reject_direct_send: bool = False
 
 
 class MailboxAuditConfig(BaseModel):
@@ -516,6 +554,9 @@ class TransportConfig(BaseModel):
 class MailboxPolicy(BaseModel):
     id: str
     additional_storage_enabled: bool
+    is_default: bool = False
+    personal_accounts_enabled: bool = True
+    personal_account_calendars_enabled: bool = True
 
 
 class RoleAssignmentPolicy(BaseModel):

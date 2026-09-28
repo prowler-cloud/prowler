@@ -3,10 +3,13 @@
 import Image, { type StaticImageData } from "next/image";
 import { useState } from "react";
 
-import { buildPerScanComplianceHref } from "@/lib/compliance/compliance-tab-url";
+import {
+  buildMultipleScansComplianceHref,
+  buildPerScanComplianceHref,
+} from "@/lib/compliance/compliance-tab-url";
 
 import { SortToggleButton } from "./sort-toggle-button";
-import { WatchlistCard } from "./watchlist-card";
+import { WATCHLIST_CARD_HEIGHT, WatchlistCard } from "./watchlist-card";
 
 export interface ComplianceData {
   id: string;
@@ -16,13 +19,17 @@ export interface ComplianceData {
   score: number;
 }
 
-// Display 7 items to match the card's min-height (405px) without scrolling
 const ITEMS_TO_DISPLAY = 7;
 
-export const ComplianceWatchlist = ({ items }: { items: ComplianceData[] }) => {
+export const ComplianceWatchlist = ({
+  items,
+  hasWatchlist = true,
+}: {
+  items: ComplianceData[];
+  hasWatchlist?: boolean;
+}) => {
   const [isAsc, setIsAsc] = useState(true);
 
-  // Sort all items and take top 7 based on current sort order
   const sortedItems = [...items]
     .sort((a, b) => (isAsc ? a.score - b.score : b.score - a.score))
     .slice(0, ITEMS_TO_DISPLAY)
@@ -48,8 +55,17 @@ export const ComplianceWatchlist = ({ items }: { items: ComplianceData[] }) => {
     <WatchlistCard
       title="Compliance Watchlist"
       items={sortedItems}
-      ctaLabel="Explore Compliance for Each Scan"
-      ctaHref={buildPerScanComplianceHref()}
+      height={WATCHLIST_CARD_HEIGHT.FIT}
+      ctaLabel={
+        hasWatchlist
+          ? "Explore Compliance for Multiple Scans"
+          : "Explore Compliance for Each Scan"
+      }
+      ctaHref={
+        hasWatchlist
+          ? buildMultipleScansComplianceHref()
+          : buildPerScanComplianceHref()
+      }
       headerAction={
         <SortToggleButton
           isAscending={isAsc}
@@ -58,11 +74,15 @@ export const ComplianceWatchlist = ({ items }: { items: ComplianceData[] }) => {
           descendingLabel="Sort by lowest score"
         />
       }
-      // TODO: Enable full emptyState with description once API endpoint is implemented
-      // Full emptyState: { message: "...", description: "to add compliance frameworks to your watchlist.", linkText: "Compliance Dashboard" }
-      emptyState={{
-        message: "No compliance data available.",
-      }}
+      emptyState={
+        hasWatchlist
+          ? {
+              message: "No frameworks pinned yet.",
+              description: "to add compliance frameworks to your watchlist.",
+              linkText: "Compliance Dashboard",
+            }
+          : { message: "No compliance data available." }
+      }
     />
   );
 };

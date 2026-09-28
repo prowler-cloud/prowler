@@ -24,13 +24,13 @@ export class ScansPage extends BasePage {
     super(page);
 
     // Scan provider selection elements
-    // The sidebar exposes its own icon-button labeled "Launch Scan"
-    // (aria-label, wrapped in a Tooltip), so scoping by accessible name
-    // alone hits a strict-mode duplicate. Scope to the page-shell's
-    // filters-and-actions group, which only contains the visible-text
+    // The sidebar exposes its own action labeled "Launch Scan" (it reads
+    // "Add Provider" only while the tenant has no providers), so scoping by
+    // accessible name alone hits a strict-mode duplicate. Scope to the page-shell's
+    // tabs-and-actions group, which only contains the visible-text
     // Launch Scan button.
     this.launchScanButton = page
-      .getByRole("group", { name: /scan filters and actions/i })
+      .getByRole("group", { name: /scan tabs/i })
       .getByRole("button", { name: /^Launch Scan$/i });
     this.launchScanDialog = page.getByRole("dialog");
     // The modal renders the providers picker as the shared MultiSelect-based
@@ -107,7 +107,11 @@ export class ScansPage extends BasePage {
     await expect(this.launchScanDialog).toBeVisible();
     await this.scanProviderSelect.click();
     await this.scanProviderSearchInput.fill(uid);
-    await this.scanProviderOption.first().click();
+
+    const providerOption = this.scanProviderOption.first();
+    await expect(providerOption).toBeVisible();
+    await expect(providerOption).toHaveAttribute("aria-disabled", "false");
+    await providerOption.click();
   }
 
   async fillScanNote(note: string): Promise<void> {

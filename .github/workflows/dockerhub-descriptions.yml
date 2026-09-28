@@ -1,0 +1,92 @@
+name: 'Tools: Sync Docker Hub Descriptions'
+
+on:
+  push:
+    branches:
+      - 'master'
+    paths:
+      - 'docs/dockerhub/README.md'
+      - '.github/workflows/dockerhub-descriptions.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  OVERVIEW_FILE: docs/dockerhub/README.md
+
+permissions: {}
+
+jobs:
+  prowlercloud:
+    if: github.repository == 'prowler-cloud/prowler' && github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - repository: prowlercloud/prowler
+            short_description: 'Prowler CLI: the Open Cloud Security tool for AWS, Azure, Google Cloud, Kubernetes, M365 and GitHub'
+          - repository: prowlercloud/prowler-api
+            short_description: 'Prowler Local Server - API: the JSON API and Task Runner components of Prowler'
+          - repository: prowlercloud/prowler-ui
+            short_description: 'Prowler Local Server - UI: the web interface to run Prowler scans and explore findings'
+          - repository: prowlercloud/prowler-mcp
+            short_description: 'Prowler MCP: the interface for agents, including IDE plugins and agent integrations'
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
+        with:
+          egress-policy: block
+          allowed-endpoints: >
+            github.com:443
+            hub.docker.com:443
+
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Update Docker Hub description for ${{ matrix.repository }}
+        uses: peter-evans/dockerhub-description@1b9a80c056b620d92cedb9d9b5a223409c68ddfa # v5.0.0
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          repository: ${{ matrix.repository }}
+          short-description: ${{ matrix.short_description }}
+          readme-filepath: ${{ env.OVERVIEW_FILE }}
+
+  toniblyx:
+    if: github.repository == 'prowler-cloud/prowler' && github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
+        with:
+          egress-policy: block
+          allowed-endpoints: >
+            github.com:443
+            hub.docker.com:443
+
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Update Docker Hub description for toniblyx/prowler
+        uses: peter-evans/dockerhub-description@1b9a80c056b620d92cedb9d9b5a223409c68ddfa # v5.0.0
+        with:
+          username: ${{ secrets.TONIBLYX_DOCKERHUB_USERNAME }}
+          password: ${{ secrets.TONIBLYX_DOCKERHUB_PASSWORD }}
+          repository: toniblyx/prowler
+          short-description: 'Prowler CLI (legacy repository, mirrors prowlercloud/prowler)'
+          readme-filepath: ${{ env.OVERVIEW_FILE }}

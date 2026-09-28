@@ -48,6 +48,7 @@ def main():
                 host=args.host,
                 port=args.port,
                 show_banner=False,
+                stateless_http=True,
             )
         else:
             logger.error(f"Invalid transport: {args.transport}")

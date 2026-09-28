@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { ORG_SECRET_TYPE, ORGANIZATION_TYPE } from "@/types/organizations";
+
 const {
   fetchMock,
   getAuthHeadersMock,
@@ -30,11 +32,10 @@ vi.mock("@/lib/server-actions-helper", () => ({
 
 import {
   applyDiscovery,
+  createOrganization,
   getDiscovery,
-  listOrganizations,
+  listOrganizationNodesSafe,
   listOrganizationsSafe,
-  listOrganizationUnits,
-  listOrganizationUnitsSafe,
   triggerDiscovery,
   updateOrganizationSecret,
 } from "./organizations";
@@ -48,14 +49,15 @@ describe("organizations actions", () => {
   });
 
   it("rejects invalid organization secret identifiers", async () => {
-    // Given
-    const formData = new FormData();
-    formData.set("organizationSecretId", "../secret-id");
-    formData.set("roleArn", "arn:aws:iam::123456789012:role/ProwlerOrgRole");
-    formData.set("externalId", "o-abc123def4");
-
     // When
-    const result = await updateOrganizationSecret(formData);
+    const result = await updateOrganizationSecret("../secret-id", {
+      orgType: ORGANIZATION_TYPE.AWS,
+      secretType: ORG_SECRET_TYPE.ROLE,
+      secret: {
+        role_arn: "arn:aws:iam::123456789012:role/ProwlerOrgRole",
+        external_id: "o-abc123def4",
+      },
+    });
 
     // Then
     expect(result).toEqual({ error: "Invalid organization secret ID" });
@@ -83,6 +85,65 @@ describe("organizations actions", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
+  it("rejects an organization type with no onboarding flow instead of coercing it", async () => {
+    // Given a type this build cannot onboard. `oraclecloud` is real — display
+    // supports it, onboarding does not — the exact boundary a blind cast lets
+    // through.
+    const formData = new FormData();
+    formData.set("name", "Tenancy");
+    formData.set("externalId", "ocid1.tenancy.oc1..aaaa1111");
+    formData.set("orgType", "oraclecloud");
+
+    // When
+    const result = await createOrganization(formData);
+
+    // Then it never reaches the API: silently creating an AWS organization
+    // would onboard something the caller never asked for.
+    expect(result).toEqual({ error: "Invalid organization type" });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects an unrecognized organization type value", async () => {
+    // Given a garbage value, and an empty one: present-but-empty is a different
+    // case from absent, and only absent may fall back to AWS.
+    for (const orgType of ["not-a-provider", ""]) {
+      const formData = new FormData();
+      formData.set("name", "Rogue");
+      formData.set("externalId", "o-abc123def4");
+      formData.set("orgType", orgType);
+
+      // When
+      const result = await createOrganization(formData);
+
+      // Then
+      expect(result).toEqual({ error: "Invalid organization type" });
+    }
+
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("defaults to AWS only when the organization type is absent", async () => {
+    // Given a form from before the field existed.
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({ data: { id: "org-1" } }), {
+        status: 201,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+    handleApiResponseMock.mockResolvedValue({ data: { id: "org-1" } });
+
+    const formData = new FormData();
+    formData.set("name", "Legacy");
+    formData.set("externalId", "o-abc123def4");
+
+    // When
+    await createOrganization(formData);
+
+    // Then the absent value — and only the absent value — means AWS.
+    const body = JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body));
+    expect(body.data.attributes.org_type).toBe(ORGANIZATION_TYPE.AWS);
+  });
+
   it("revalidates providers only when apply discovery succeeds", async () => {
     // Given
     fetchMock.mockResolvedValue(
@@ -98,14 +159,12 @@ describe("organizations actions", () => {
     const failedResult = await applyDiscovery(
       "123e4567-e89b-12d3-a456-426614174000",
       "223e4567-e89b-12d3-a456-426614174111",
-      [],
-      [],
+      { orgType: ORGANIZATION_TYPE.AWS, accounts: [], organizationalUnits: [] },
     );
     const successfulResult = await applyDiscovery(
       "123e4567-e89b-12d3-a456-426614174000",
       "223e4567-e89b-12d3-a456-426614174111",
-      [],
-      [],
+      { orgType: ORGANIZATION_TYPE.AWS, accounts: [], organizationalUnits: [] },
     );
 
     // Then
@@ -132,8 +191,7 @@ describe("organizations actions", () => {
     const result = await applyDiscovery(
       "123e4567-e89b-12d3-a456-426614174000",
       "223e4567-e89b-12d3-a456-426614174111",
-      [],
-      [],
+      { orgType: ORGANIZATION_TYPE.AWS, accounts: [], organizationalUnits: [] },
     );
 
     // Then
@@ -142,65 +200,228 @@ describe("organizations actions", () => {
     expect(revalidatePathMock).toHaveBeenCalledWith("/providers");
   });
 
-  it("lists organizations with the expected filters", async () => {
-    // Given
-    handleApiResponseMock.mockResolvedValue({ data: [] });
-
-    // When
-    await listOrganizations();
-
-    // Then
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    expect(fetchMock.mock.calls[0]?.[0]).toBe(
-      "https://api.example.com/api/v1/organizations?filter%5Borg_type%5D=aws",
-    );
-  });
-
-  it("lists organization units from the dedicated endpoint", async () => {
-    // Given
-    handleApiResponseMock.mockResolvedValue({ data: [] });
-
-    // When
-    await listOrganizationUnits();
-
-    // Then
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    expect(fetchMock.mock.calls[0]?.[0]).toBe(
-      "https://api.example.com/api/v1/organizational-units",
-    );
-  });
-
-  it("returns an empty organizations payload when the safe organizations request fails", async () => {
+  it("lists organizations across all types without a hardcoded org_type filter", async () => {
     // Given
     fetchMock.mockResolvedValue(
-      new Response("Internal Server Error", {
-        status: 500,
+      new Response(JSON.stringify({ data: [] }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
       }),
     );
+    handleApiResponseMock.mockResolvedValue({ data: [] });
 
     // When
     const result = await listOrganizationsSafe();
 
     // Then
     expect(result).toEqual({ data: [] });
-    expect(handleApiResponseMock).not.toHaveBeenCalled();
-    expect(handleApiErrorMock).not.toHaveBeenCalled();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls[0]?.[0]).toBe(
+      "https://api.example.com/api/v1/organizations?page%5Bnumber%5D=1&page%5Bsize%5D=100",
+    );
   });
 
-  it("returns an empty organization units payload when the safe request fails", async () => {
+  it("lists organization nodes from the canonical endpoint", async () => {
+    // Given
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({ data: [] }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+    handleApiResponseMock.mockResolvedValue({ data: [] });
+
+    // When
+    const result = await listOrganizationNodesSafe();
+
+    // Then
+    expect(result).toEqual({ data: [] });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls[0]?.[0]).toBe(
+      "https://api.example.com/api/v1/organization-nodes?page%5Bnumber%5D=1&page%5Bsize%5D=100",
+    );
+  });
+
+  it("follows JSON:API pagination so hierarchy groups are never truncated", async () => {
+    // Given a collection spanning three pages.
+    const okResponse = () =>
+      new Response(JSON.stringify({}), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    fetchMock.mockResolvedValue(okResponse());
+    handleApiResponseMock
+      .mockResolvedValueOnce({
+        data: [{ id: "node-1" }],
+        meta: { pagination: { page: 1, pages: 3, count: 3 } },
+      })
+      .mockResolvedValueOnce({
+        data: [{ id: "node-2" }],
+        meta: { pagination: { page: 2, pages: 3, count: 3 } },
+      })
+      .mockResolvedValueOnce({
+        data: [{ id: "node-3" }],
+        meta: { pagination: { page: 3, pages: 3, count: 3 } },
+      });
+
+    // When
+    const result = await listOrganizationNodesSafe();
+
+    // Then every page is requested once and the pages are merged in order.
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(
+      fetchMock.mock.calls.map((call) =>
+        new URL(call[0] as string).searchParams.get("page[number]"),
+      ),
+    ).toEqual(["1", "2", "3"]);
+    expect(result).toEqual({
+      data: [{ id: "node-1" }, { id: "node-2" }, { id: "node-3" }],
+    });
+  });
+
+  it("degrades instead of returning a partial hierarchy when a later page fails", async () => {
+    // Given a first page announcing more pages, then a failure.
+    fetchMock
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({}), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response("Internal Server Error", { status: 500 }),
+      );
+    handleApiResponseMock.mockResolvedValueOnce({
+      data: [{ id: "node-1" }],
+      meta: { pagination: { page: 1, pages: 2, count: 2 } },
+    });
+
+    // When
+    const result = await listOrganizationNodesSafe();
+
+    // Then the half-fetched hierarchy is dropped: the page shows its degraded
+    // notice with a flat provider list instead of partial grouping.
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(result).toEqual({ data: [], error: true });
+  });
+
+  it("flags an empty organizations payload as degraded when the safe request fails", async () => {
+    // Given a 5xx. The mock THROWS because that is what the real helper does
+    // (server-actions-helper captures to Sentry, then rethrows) — resolving
+    // instead would test a path production never takes.
+    fetchMock.mockResolvedValue(
+      new Response("Internal Server Error", {
+        status: 500,
+      }),
+    );
+    handleApiResponseMock.mockRejectedValue(new Error("Server error (500)"));
+
+    // When
+    const result = await listOrganizationsSafe();
+
+    // Then the caller still gets the degraded result, and the failure passed
+    // through the shared reporting point on its way there — so a 5xx behind the
+    // degraded-hierarchy notice is traceable instead of only a boolean.
+    expect(result).toEqual({ data: [], error: true });
+    expect(handleApiResponseMock).toHaveBeenCalledTimes(1);
+    expect(handleApiErrorMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("flags an empty organization nodes payload as degraded when the safe request fails", async () => {
     // Given
     fetchMock.mockResolvedValue(
       new Response("Internal Server Error", {
         status: 500,
       }),
     );
+    handleApiResponseMock.mockRejectedValue(new Error("Server error (500)"));
 
     // When
-    const result = await listOrganizationUnitsSafe();
+    const result = await listOrganizationNodesSafe();
+
+    // Then — same contract as the organizations read above.
+    expect(result).toEqual({ data: [], error: true });
+    expect(handleApiResponseMock).toHaveBeenCalledTimes(1);
+    expect(handleApiErrorMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("reports a rejected request instead of degrading silently", async () => {
+    // A transport failure never reaches `handleApiResponse`, so the catch is the
+    // only place it can be reported.
+    fetchMock.mockRejectedValue(new TypeError("fetch failed"));
+
+    // When
+    const result = await listOrganizationNodesSafe();
 
     // Then
-    expect(result).toEqual({ data: [] });
+    expect(result).toEqual({ data: [], error: true });
     expect(handleApiResponseMock).not.toHaveBeenCalled();
-    expect(handleApiErrorMock).not.toHaveBeenCalled();
+    expect(handleApiErrorMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("degrades instead of escaping when the session lookup throws", async () => {
+    // An escape here would take down the providers page's whole `Promise.all`.
+    getAuthHeadersMock.mockRejectedValue(new Error("No session"));
+
+    // When
+    const result = await listOrganizationsSafe();
+
+    // Then
+    expect(result).toEqual({ data: [], error: true });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("reports guard exhaustion instead of degrading silently past 50 pages", async () => {
+    // Given a collection that always announces more pages than fetched, so the
+    // runaway guard fires (50 × 100 = 5,000 resources). An estate that large
+    // degrading with only a boolean would be indistinguishable from ordinary
+    // fetch failures in Sentry.
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({}), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+    handleApiResponseMock.mockResolvedValue({
+      data: [{ id: "node-1" }],
+      meta: { pagination: { page: 1, pages: 51, count: 5100 } },
+    });
+
+    // When
+    const result = await listOrganizationNodesSafe();
+
+    // Then the hierarchy degrades, and the guard firing is reported as a
+    // concrete error through the shared reporting point on its way there.
+    expect(fetchMock).toHaveBeenCalledTimes(50);
+    expect(result).toEqual({ data: [], error: true });
+    expect(handleApiErrorMock).toHaveBeenCalledTimes(1);
+    expect(handleApiErrorMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: expect.stringContaining("pagination guard"),
+      }),
+    );
+  });
+
+  it("reports a 4xx page through the shared helper before degrading", async () => {
+    // Given a 403. The real helper reports it and RETURNS (only 5xx throws), so
+    // the degraded result must not depend on an exception — and the report must
+    // still happen, which the pre-fix early return skipped.
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({ errors: [{ detail: "Forbidden" }] }), {
+        status: 403,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+    handleApiResponseMock.mockResolvedValue({
+      error: "Forbidden",
+      status: 403,
+    });
+
+    // When
+    const result = await listOrganizationNodesSafe();
+
+    // Then
+    expect(result).toEqual({ data: [], error: true });
+    expect(handleApiResponseMock).toHaveBeenCalledTimes(1);
   });
 });

@@ -3,6 +3,7 @@ export * from "./compliance-accordion/client-accordion-wrapper";
 export * from "./compliance-accordion/compliance-accordion-requeriment-title";
 export * from "./compliance-accordion/compliance-accordion-title";
 export * from "./compliance-card";
+export * from "./compliance-framework-grid";
 export * from "./compliance-charts/chart-skeletons";
 export * from "./compliance-charts/heatmap-chart";
 export * from "./compliance-charts/requirements-status-card";

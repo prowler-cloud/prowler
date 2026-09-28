@@ -1,0 +1,42 @@
+{
+  "Provider": "aws",
+  "CheckID": "bedrock_agent_role_not_shared_across_agents",
+  "CheckTitle": "Bedrock Agent has a dedicated execution role",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "bedrock",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Other",
+  "ResourceGroup": "ai_ml",
+  "Description": "Every **Bedrock Agent** assumes the role in its `agentResourceRoleArn`. That role must belong to exactly one agent, so no agent inherits another's permissions.",
+  "Risk": "A **shared execution role** gives every agent using it the union of all their permissions, so a low-trust agent reaching an untrusted tool holds the rights granted for a high-trust one, turning a single **prompt injection** into access it was never scoped for.\n\nIt also destroys **attribution**: **CloudTrail** records the role session, so an action cannot be traced to one agent.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/bedrock/latest/userguide/agents-permissions.html",
+    "https://docs.aws.amazon.com/bedrock/latest/APIReference/API_agent_UpdateAgent.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "```yaml\nResources:\n  ExampleResource:\n    Type: AWS::Bedrock::Agent\n    Properties:\n      AgentName: example_resource\n      AgentResourceRoleArn: arn:aws:iam::123456789012:role/AmazonBedrockExecutionRoleForAgents_example_resource  # Critical: one role per agent, never shared\n```",
+      "Other": "1. Open the AWS Console and go to Amazon Bedrock\n2. Select **Agents**, then an agent sharing a role\n3. Create a new IAM role trusted by bedrock.amazonaws.com holding only that agent's permissions\n4. Scope its trust policy with aws:SourceArn set to the agent ARN\n5. Edit the agent to use the new role, keeping its other settings, then prepare the agent to cut a version\n6. Open **Aliases** and point every alias at the new version, since an alias left on the old version keeps invoking the shared role\n7. Repeat until each agent has its own role, then remove the unused permissions from the old role",
+      "Terraform": "```hcl\nresource \"aws_bedrockagent_agent\" \"example_resource\" {\n  agent_name                  = \"example_resource\"\n  agent_resource_role_arn     = aws_iam_role.example_resource_agent.arn # Critical: one role per agent, never shared\n  foundation_model            = \"example-model-id\"\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Give each Bedrock Agent its own execution role scoped to that agent's ARN with aws:SourceArn. Repoint the draft with UpdateAgent, passing every field it already has because omitted ones are not preserved, then PrepareAgent and UpdateAgentAlias to move each alias onto the new version: an alias left on the old version keeps invoking the shared role.",
+      "Url": "https://hub.prowler.com/check/bedrock_agent_role_not_shared_across_agents"
+    }
+  },
+  "Categories": [
+    "gen-ai",
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "bedrock_agent_role_least_privilege"
+  ],
+  "Notes": "Reports one finding per AGENT, not per role, so a role shared by three agents produces three findings each naming the other two. Sharing is counted across the whole account inventory, so a partial scan can under-report. An agent whose role ARN could not be retrieved from GetAgent returns MANUAL rather than PASS, because an unknown role can be neither confirmed nor ruled out as shared, and it is also excluded from every other agent's share count."
+}

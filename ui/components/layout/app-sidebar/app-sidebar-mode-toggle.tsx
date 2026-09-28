@@ -1,7 +1,7 @@
 "use client";
 
 import { Home } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 import { LighthouseIcon } from "@/components/icons/Icons";
 import { Badge } from "@/components/shadcn/badge/badge";
@@ -11,10 +11,17 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
+import {
+  isLighthouseChatRoute,
+  LIGHTHOUSE_ROUTE,
+} from "@/lib/lighthouse-routes";
 import { useCloudUpgradeStore } from "@/store";
 import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
 
-import { useAppSidebarMode } from "./app-sidebar-mode-store";
+import {
+  useAppSidebarMode,
+  useHydratedAppSidebarMode,
+} from "./app-sidebar-mode-store";
 import {
   APP_SIDEBAR_MODE,
   type AppSidebarMode,
@@ -44,7 +51,8 @@ export function AppSidebarModeToggle({
   onSelect,
 }: AppSidebarModeToggleProps) {
   const router = useRouter();
-  const mode = useAppSidebarMode((state) => state.mode);
+  const pathname = usePathname();
+  const mode = useHydratedAppSidebarMode();
   const setMode = useAppSidebarMode((state) => state.setMode);
   const openCloudUpgrade = useCloudUpgradeStore(
     (state) => state.openCloudUpgrade,
@@ -64,8 +72,11 @@ export function AppSidebarModeToggle({
     setMode(nextMode);
     onSelect?.();
 
-    if (nextMode === APP_SIDEBAR_MODE.CHAT) {
-      router.push("/lighthouse");
+    if (
+      nextMode === APP_SIDEBAR_MODE.CHAT &&
+      !isLighthouseChatRoute(pathname)
+    ) {
+      router.push(LIGHTHOUSE_ROUTE.CHAT);
     }
   };
 

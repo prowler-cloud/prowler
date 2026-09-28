@@ -8,6 +8,7 @@ from prowler.providers.aws.services.iam.lib.policy import (
     has_codebuild_trusted_principal,
     has_public_principal,
     has_restrictive_source_arn_condition,
+    iam_pattern_matches,
     is_codebuild_using_allowed_github_org,
     is_condition_block_restrictive,
     is_condition_block_restrictive_organization,
@@ -3062,3 +3063,102 @@ class Test_has_restrictive_source_arn_condition:
             },
         }
         assert has_restrictive_source_arn_condition(statement) is True
+
+
+class Test_iam_pattern_matches:
+    """IAM wildcard matching: only * and ? are metacharacters, and it must stay linear."""
+
+    @pytest.mark.parametrize(
+        "pattern,value,expected",
+        [
+            ("bedrock-agentcore", "bedrock-agentcore", True),
+            ("bedrock-*", "bedrock-agentcore", True),
+            ("*-agentcore", "bedrock-agentcore", True),
+            ("*agentcore*", "bedrock-agentcore", True),
+            ("bedrock-agentcor?", "bedrock-agentcore", True),
+            ("bedrock?agentcore", "bedrock-agentcore", True),
+            ("*", "bedrock-agentcore", True),
+            ("**", "bedrock-agentcore", True),
+            ("s3", "bedrock-agentcore", False),
+            ("bedrock", "bedrock-agentcore", False),
+            ("bedrock-agentcore?", "bedrock-agentcore", False),
+            ("", "bedrock-agentcore", False),
+            ("*", "", True),
+            ("", "", True),
+            ("?", "", False),
+            ("  bedrock-*  ", "bedrock-agentcore", True),
+            ("BEDROCK-AGENTCORE", "bedrock-agentcore", True),
+            ("bedrock-agentcore", "BEDROCK-AGENTCORE", True),
+            ("a.c", "abc", False),
+            ("[bs]3", "b3", False),
+            ("[bs]3", "[bs]3", True),
+        ],
+    )
+    def test_semantics(self, pattern, value, expected):
+        """`*` and `?` are the only metacharacters; everything else is literal.
+
+        `a.c` against `abc` must be False or a regex dot has leaked in, and `[bs]3` against `b3`
+        must be False or bracket classes have -- the latter being the false PASS that a `fnmatch`
+        implementation shipped earlier in this campaign, where a Deny of
+        `agent-registry:[Dd]eleteRegistry` denied nothing while appearing to deny everything.
+        """
+        assert iam_pattern_matches(pattern, value) is expected
+
+    def test_adversarial_pattern_stays_fast(self):
+        """A wildcard-dense pattern must not blow up: this is a DoS guard, not a style preference.
+
+        Leading wildcards, a literal that cannot occur in the value, then more wildcards is the
+        shape that forces a backtracking engine to try every distribution of the value's characters
+        across the star groups. Translating to a regex and matching took 2287 ms on exactly this
+        31-character pattern, growing about sevenfold per added wildcard pair, and a hang raises
+        nothing so `check.py`'s bare `except Exception` cannot catch it -- the account's findings are
+        discarded in silence. Policy values reach this from the account and managed policy documents
+        allow 6144 characters.
+
+        The budget is deliberately loose: the linear form measures ~0.006 ms, so a 0.5 s ceiling
+        cannot flake under load while still failing hard on a regex reimplementation.
+        """
+        import time
+
+        pattern = "*" * 14 + "zzz" + "*" * 14
+        assert len(pattern) == 31
+        start = time.perf_counter()
+        assert iam_pattern_matches(pattern, "bedrock-agentcore") is False
+        assert time.perf_counter() - start < 0.5
+
+    @pytest.mark.parametrize(
+        "subject",
+        [
+            "bedrock-agentcore",
+            "iam",
+            "PassRole",
+            "GetWorkloadAccessTokenForUserId",
+            "bedrock-agentcore.amazonaws.com",
+            "workload-identity-directory/default/workload-identity/another-workload",
+        ],
+    )
+    def test_every_call_site_subject_stays_fast(self, subject):
+        """Each subject the iam checks match against must be fast, not just one of them.
+
+        These six are every distinct value passed as the second argument across the eight call sites
+        in the two AgentCore policy checks -- an Action's service and operation field, an ARN's
+        service and resource field, and an iam:PassedToService condition value. Probing once against
+        a single constant would not do: cost rises with the subject's length as well as the pattern's,
+        so the 3-character `iam` is cheap enough to come back clean while the 17- and 70-character
+        subjects were taking seconds.
+        """
+        import time
+
+        pattern = "*" * 14 + "zzz" + "*" * 14
+        start = time.perf_counter()
+        iam_pattern_matches(pattern, subject)
+        assert time.perf_counter() - start < 0.5
+
+    def test_long_pattern_stays_fast(self):
+        """Cost must grow with the product of the lengths, not as a power of them."""
+        import time
+
+        pattern = "*" * 2000 + "zzz" + "*" * 2000
+        start = time.perf_counter()
+        assert iam_pattern_matches(pattern, "bedrock-agentcore.amazonaws.com") is False
+        assert time.perf_counter() - start < 0.5

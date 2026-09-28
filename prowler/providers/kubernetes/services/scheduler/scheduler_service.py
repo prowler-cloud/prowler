@@ -12,15 +12,21 @@ class Scheduler(KubernetesService):
         self.scheduler_pods = self._get_scheduler_pods()
 
     def _get_scheduler_pods(self):
+        """Collect the `kube-scheduler` pods from the `kube-system` namespace.
+
+        Returns:
+            list: Matching pods. Any pods collected before an error are kept, so
+            the checks always receive an iterable instead of `None`.
+        """
+        scheduler_pods = []
         try:
-            scheduler_pods = []
             for pod in self.client.pods.values():
                 if pod.namespace == "kube-system" and pod.name.startswith(
                     "kube-scheduler"
                 ):
                     scheduler_pods.append(pod)
-            return scheduler_pods
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+        return scheduler_pods

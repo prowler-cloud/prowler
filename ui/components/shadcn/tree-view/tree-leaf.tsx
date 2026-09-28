@@ -90,17 +90,20 @@ export function TreeLeaf({
         />
       )}
 
-      {renderItem ? (
-        renderItem({
-          item,
-          level,
-          isLeaf: true,
-          isSelected,
-          hasChildren: false,
-        })
-      ) : (
-        <TreeItemLabel item={item} />
-      )}
+      {/* Same shrink wrapper as TreeNode, or a long id overruns its neighbours. */}
+      <div className="min-w-0 flex-1">
+        {renderItem ? (
+          renderItem({
+            item,
+            level,
+            isLeaf: true,
+            isSelected,
+            hasChildren: false,
+          })
+        ) : (
+          <TreeItemLabel item={item} />
+        )}
+      </div>
     </div>
   );
 }

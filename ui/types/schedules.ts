@@ -97,20 +97,28 @@ export interface SchedulesBulkFailure {
   error: string;
 }
 
-export interface SchedulesBulkAttributes {
+export interface SchedulesBulkLists {
   /** Provider ids whose schedule was committed (already excludes failures). */
   updated?: string[];
   failed?: SchedulesBulkFailure[];
 }
 
-export interface SchedulesBulkData {
-  type: "schedules-bulk";
+/**
+ * `/schedules/bulk` answers with a plain dict that the JSON:API renderer wraps in
+ * `data`, so the lists sit directly on it: no `attributes` level and no `type`,
+ * despite what the endpoint's documented response schema says.
+ */
+export interface SchedulesBulkData extends SchedulesBulkLists {
+  type?: "schedules-bulk";
   id?: string;
-  attributes?: SchedulesBulkAttributes;
+  /** Tolerated only in case the endpoint is ever rendered through its serializer. */
+  attributes?: SchedulesBulkLists;
 }
 
 export interface SchedulesBulkResponse {
   data?: SchedulesBulkData;
+  /** `handleApiResponse` returns `{ success: true }` for an empty or 204 body. */
+  success?: boolean;
   error?: unknown;
   errors?: unknown;
   status?: number;

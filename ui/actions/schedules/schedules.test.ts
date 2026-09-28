@@ -73,13 +73,7 @@ describe("schedule write actions revalidate only on success", () => {
 
   it("posts the JSON:API bulk schedule payload", async () => {
     handleApiResponseMock.mockResolvedValue({
-      data: {
-        type: "schedules-bulk",
-        attributes: {
-          updated: [PROVIDER_ID, SECOND_PROVIDER_ID],
-          failed: [],
-        },
-      },
+      data: { updated: [PROVIDER_ID, SECOND_PROVIDER_ID], failed: [] },
     });
 
     await updateSchedulesBulk([PROVIDER_ID, SECOND_PROVIDER_ID], payload);
@@ -146,11 +140,8 @@ describe("schedule write actions revalidate only on success", () => {
   it("revalidates /scans and /providers after a partial bulk success", async () => {
     handleApiResponseMock.mockResolvedValue({
       data: {
-        type: "schedules-bulk",
-        attributes: {
-          updated: [PROVIDER_ID],
-          failed: [{ provider_id: SECOND_PROVIDER_ID, error: "Denied" }],
-        },
+        updated: [PROVIDER_ID],
+        failed: [{ id: SECOND_PROVIDER_ID, error: "Denied" }],
       },
     });
 
@@ -159,8 +150,8 @@ describe("schedule write actions revalidate only on success", () => {
       payload,
     );
 
-    expect(result.data?.attributes?.updated).toEqual([PROVIDER_ID]);
-    expect(result.data?.attributes?.failed).toHaveLength(1);
+    expect(result.data?.updated).toEqual([PROVIDER_ID]);
+    expect(result.data?.failed).toHaveLength(1);
     expect(revalidatePathMock).toHaveBeenCalledWith("/scans");
     expect(revalidatePathMock).toHaveBeenCalledWith("/providers");
   });

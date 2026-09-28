@@ -1,3 +1,4 @@
+import { ComplianceFrameworkGrid } from "@/components/compliance/compliance-framework-grid";
 import type { AccordionItemProps } from "@/components/shadcn/accordion/Accordion";
 import { Accordion } from "@/components/shadcn/accordion/Accordion";
 import { Card, CardContent } from "@/components/shadcn/card/card";
@@ -97,13 +98,13 @@ export const CrossProviderOverviewSkeleton = () => (
         </SectionDescription>
       </SectionHeader>
       <SectionContent>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+        <ComplianceFrameworkGrid>
           {Array.from({ length: FRAMEWORK_CARD_SKELETON_COUNT }).map(
             (_, index) => (
               <FrameworkCardSkeleton key={index} />
             ),
           )}
-        </div>
+        </ComplianceFrameworkGrid>
       </SectionContent>
     </Section>
   </div>

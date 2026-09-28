@@ -6,6 +6,7 @@ import { Suspense, useRef, useState } from "react";
 
 import { resolveFindingIdsByVisibleGroupResources } from "@/actions/findings/findings-by-resource";
 import { CustomCheckboxMutedFindings } from "@/components/filters/custom-checkbox-muted-findings";
+import { LighthouseContextContributor } from "@/components/lighthouse/context-contributor";
 import { OnboardingTrigger, PageReady } from "@/components/onboarding";
 import { DataTable } from "@/components/shadcn/table";
 import { canDrillDownFindingGroup } from "@/lib/findings-groups";
@@ -14,10 +15,15 @@ import {
   createJiraBatchSelection,
   createJiraTargetSelection,
 } from "@/lib/jira-dispatch-selection";
+import {
+  buildFindingGroupContext,
+  buildFindingSummaryContext,
+} from "@/lib/lighthouse/context/contributions";
 import { getFlowById } from "@/lib/onboarding";
 import { createExploreFindingsTourStepHandlers } from "@/lib/tours/explore-findings.tour";
 import { FindingGroupRow, MetaDataProps } from "@/types";
 import { JIRA_DISPATCH_MODE, JIRA_DISPATCH_TARGET } from "@/types/integrations";
+import { LIGHTHOUSE_CONTEXT_LIMIT } from "@/types/lighthouse-context";
 
 import { FloatingSelectionActions } from "../floating-selection-actions";
 
@@ -31,6 +37,7 @@ import {
 
 const exploreFindingsFlow = getFlowById("explore-findings")!;
 const EMPTY_FINDING_GROUPS: FindingGroupRow[] = [];
+const MAX_FINDING_CONTEXT_SELECTIONS = LIGHTHOUSE_CONTEXT_LIMIT.ITEMS - 2;
 
 function buildSelectionSummary(
   groupCount: number,
@@ -157,6 +164,13 @@ const FindingsGroupTableContent = ({
     .filter((key) => rowSelection[key])
     .map((idx) => safeData[parseInt(idx)])
     .filter(Boolean);
+  const selectedContextGroups = selectedFindings.filter((finding) =>
+    selectedCheckIds.includes(finding.checkId),
+  );
+  const resourceContextLimit = Math.min(
+    activeResourceSelection.length,
+    MAX_FINDING_CONTEXT_SELECTIONS,
+  );
 
   const selectedGroupTitle =
     selectedFindings.length === 1 ? selectedFindings[0]?.checkTitle : undefined;
@@ -335,6 +349,7 @@ const FindingsGroupTableContent = ({
         resourceSearch={resourceSearch}
         columnCount={columns.length}
         onResourceSelectionChange={setResourceSelection}
+        contextSelectionLimit={resourceContextLimit}
       />
     );
   };
@@ -351,6 +366,25 @@ const FindingsGroupTableContent = ({
     >
       {/* Gate the tour on having at least one finding group */}
       <div>
+        {metadata?.pagination.count !== undefined && (
+          <LighthouseContextContributor
+            key={`findings-summary-${metadata.pagination.count}`}
+            contributorId="findings-summary"
+            item={buildFindingSummaryContext(metadata.pagination.count)}
+          />
+        )}
+        {selectedContextGroups
+          .slice(
+            0,
+            Math.max(0, MAX_FINDING_CONTEXT_SELECTIONS - resourceContextLimit),
+          )
+          .map((finding) => (
+            <LighthouseContextContributor
+              key={`finding-group-${finding.id}`}
+              contributorId={`finding-group-${finding.id}`}
+              item={buildFindingGroupContext(finding)}
+            />
+          ))}
         <Suspense fallback={null}>
           {safeData.length > 0 && (
             <OnboardingTrigger

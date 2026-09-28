@@ -4,7 +4,9 @@ import { AuthError } from "next-auth";
 
 import { signIn, signOut } from "@/auth.config";
 import { apiBaseUrl } from "@/lib";
+import { fetchCurrentUser } from "@/lib/auth/current-user";
 import { addAuthEvent } from "@/lib/sentry-breadcrumbs";
+import type { UtmParams } from "@/lib/utm";
 import type { SignInFormData, SignUpFormData } from "@/types";
 
 export async function authenticate(
@@ -47,11 +49,18 @@ export async function authenticate(
   }
 }
 
-export const createNewUser = async (formData: SignUpFormData) => {
+export const createNewUser = async (
+  formData: SignUpFormData,
+  attribution: UtmParams = {},
+) => {
   const url = new URL(`${apiBaseUrl}/users`);
 
   if (formData.invitationToken) {
     url.searchParams.append("invitation_token", formData.invitationToken);
+  }
+
+  for (const [key, value] of Object.entries(attribution)) {
+    url.searchParams.append(key, value);
   }
 
   const bodyData = {
@@ -132,60 +141,19 @@ export const getToken = async (formData: SignInFormData) => {
   }
 };
 
-export const getUserByMe = async (accessToken: string) => {
-  const url = new URL(`${apiBaseUrl}/users/me?include=roles`);
+export const getUserByMe = async (
+  accessToken: string,
+  signal?: AbortSignal,
+) => {
+  const currentUser = await fetchCurrentUser(accessToken, { signal });
 
-  try {
-    const response = await fetch(url.toString(), {
-      method: "GET",
-      headers: {
-        Accept: "application/vnd.api+json",
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
-
-    const parsedResponse = await response.json();
-    if (!response.ok) {
-      // Handle different HTTP error codes
-      switch (response.status) {
-        case 401:
-          throw new Error("Invalid or expired token");
-        case 403:
-          throw new Error(parsedResponse.errors?.[0]?.detail);
-        case 404:
-          throw new Error("User not found");
-        default:
-          throw new Error(
-            parsedResponse.errors?.[0]?.detail || "Unknown error",
-          );
-      }
-    }
-
-    const userRole = parsedResponse.included?.find(
-      (item: any) => item.type === "roles",
-    );
-
-    const permissions = {
-      manage_users: userRole.attributes.manage_users || false,
-      manage_account: userRole.attributes.manage_account || false,
-      manage_providers: userRole.attributes.manage_providers || false,
-      manage_scans: userRole.attributes.manage_scans || false,
-      manage_integrations: userRole.attributes.manage_integrations || false,
-      manage_billing: userRole.attributes.manage_billing || false,
-      manage_alerts: userRole.attributes.manage_alerts || false,
-      unlimited_visibility: userRole.attributes.unlimited_visibility || false,
-    };
-
-    return {
-      name: parsedResponse.data.attributes.name,
-      email: parsedResponse.data.attributes.email,
-      company: parsedResponse.data.attributes.company_name,
-      dateJoined: parsedResponse.data.attributes.date_joined,
-      permissions,
-    };
-  } catch (error: any) {
-    throw new Error(error.message || "Network error or server unreachable");
-  }
+  return {
+    name: currentUser.name,
+    email: currentUser.email,
+    company: currentUser.company,
+    dateJoined: currentUser.dateJoined,
+    permissions: currentUser.permissions,
+  };
 };
 
 export async function logOut() {

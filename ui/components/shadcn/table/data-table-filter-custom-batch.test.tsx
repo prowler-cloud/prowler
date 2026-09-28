@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { FilterOption } from "@/types/filters";
+import type { FilterOption } from "@/types/filters";
 
 // ── next/navigation mock ────────────────────────────────────────────────────
 const mockPush = vi.fn();
@@ -31,12 +31,23 @@ vi.mock("@/components/shadcn/select/multiselect", () => ({
     children,
     values,
     onValuesChange,
+    open,
+    onOpenChange,
   }: {
     children: React.ReactNode;
     values?: string[];
     onValuesChange?: (values: string[]) => void;
+    open?: boolean;
+    onOpenChange?: (open: boolean) => void;
   }) => (
-    <div data-testid="multiselect" data-values={JSON.stringify(values ?? [])}>
+    <div
+      data-testid="multiselect"
+      data-values={JSON.stringify(values ?? [])}
+      data-open={String(Boolean(open))}
+    >
+      <button type="button" onClick={() => onOpenChange?.(!open)}>
+        toggle
+      </button>
       {children}
       {/* expose a select to drive value changes in tests */}
       <select
@@ -77,15 +88,52 @@ vi.mock("@/components/shadcn/select/multiselect", () => ({
       data-search-placeholder={
         typeof search === "object" ? search.placeholder : String(search)
       }
+      data-empty-message={
+        typeof search === "object" ? search.emptyMessage : undefined
+      }
     >
       {children}
     </div>
+  ),
+  MultiSelectLoading: ({ children }: { children: React.ReactNode }) => (
+    <div role="status">{children}</div>
   ),
   MultiSelectSelectAll: ({ children }: { children: React.ReactNode }) => (
     <button type="button">{children}</button>
   ),
   MultiSelectSeparator: () => <hr />,
   MultiSelectItem: ({
+    children,
+    value,
+  }: {
+    children: React.ReactNode;
+    value: string;
+  }) => <option value={value}>{children}</option>,
+}));
+
+vi.mock("@/components/shadcn/select/select", () => ({
+  Select: ({
+    children,
+    value,
+    onValueChange,
+  }: {
+    children: React.ReactNode;
+    value?: string;
+    onValueChange?: (value: string) => void;
+  }) => (
+    <select
+      data-testid="single-select"
+      value={value}
+      onChange={(event) => onValueChange?.(event.target.value)}
+    >
+      <option value="">All</option>
+      {children}
+    </select>
+  ),
+  SelectTrigger: () => null,
+  SelectValue: () => null,
+  SelectContent: ({ children }: { children: React.ReactNode }) => children,
+  SelectItem: ({
     children,
     value,
   }: {
@@ -136,6 +184,13 @@ const scanFilter: FilterOption = {
   values: ["scan-1"],
   width: "wide",
 };
+
+const deltaFilter = {
+  key: "filter[delta]",
+  labelCheckboxGroup: "Delta",
+  values: ["new", "changed"],
+  selectionMode: "single",
+} as const satisfies FilterOption;
 
 describe("DataTableFilterCustom — batch vs instant mode", () => {
   beforeEach(() => {
@@ -270,6 +325,26 @@ describe("DataTableFilterCustom — batch vs instant mode", () => {
       const multiselect = screen.getByTestId("multiselect");
       expect(multiselect).toHaveAttribute("data-values", JSON.stringify([]));
     });
+
+    it("should replace the delta value through a single-select control", async () => {
+      const user = userEvent.setup();
+      const onBatchChange = vi.fn();
+
+      render(
+        <DataTableFilterCustom
+          filters={[deltaFilter]}
+          mode="batch"
+          onBatchChange={onBatchChange}
+          getFilterValue={() => ["new"]}
+        />,
+      );
+
+      expect(screen.queryByTestId("multiselect")).not.toBeInTheDocument();
+
+      await user.selectOptions(screen.getByTestId("single-select"), "changed");
+
+      expect(onBatchChange).toHaveBeenCalledWith("filter[delta]", ["changed"]);
+    });
   });
 
   // ── hideClearButton ──────────────────────────────────────────────────────
@@ -316,6 +391,79 @@ describe("DataTableFilterCustom — batch vs instant mode", () => {
         "data-search-placeholder",
         "Search severity...",
       );
+    });
+  });
+
+  // ── Lazily loaded options ────────────────────────────────────────────────
+
+  describe("lazy options", () => {
+    const lazyFilter = (overrides: Partial<FilterOption>): FilterOption => ({
+      key: "check_id__in",
+      labelCheckboxGroup: "Finding Group",
+      values: [],
+      ...overrides,
+    });
+
+    it("should call onOpen when the dropdown opens, never on close", async () => {
+      // Given
+      const user = userEvent.setup();
+      const onOpen = vi.fn();
+      render(<DataTableFilterCustom filters={[lazyFilter({ onOpen })]} />);
+
+      // When
+      await user.click(screen.getByRole("button", { name: "toggle" }));
+      await user.click(screen.getByRole("button", { name: "toggle" }));
+
+      // Then
+      expect(onOpen).toHaveBeenCalledTimes(1);
+      expect(screen.getByTestId("multiselect")).toHaveAttribute(
+        "data-open",
+        "false",
+      );
+    });
+
+    it("should show a loading message while the list is still empty", () => {
+      // When
+      render(
+        <DataTableFilterCustom filters={[lazyFilter({ isLoading: true })]} />,
+      );
+
+      // Then
+      expect(screen.getByTestId("multiselect-content")).toHaveAttribute(
+        "data-empty-message",
+        "Loading finding group...",
+      );
+      expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    });
+
+    it("should show a loading row under the values already available", () => {
+      // When
+      render(
+        <DataTableFilterCustom
+          filters={[lazyFilter({ isLoading: true, values: ["check-a"] })]}
+        />,
+      );
+
+      // Then
+      expect(screen.getByRole("status")).toHaveTextContent(
+        "Loading finding group...",
+      );
+      expect(screen.getByTestId("multiselect-content")).toHaveAttribute(
+        "data-empty-message",
+        "No finding group found.",
+      );
+    });
+
+    it("should not render a loading row once the values are loaded", () => {
+      // When
+      render(
+        <DataTableFilterCustom
+          filters={[lazyFilter({ isLoading: false, values: ["check-a"] })]}
+        />,
+      );
+
+      // Then
+      expect(screen.queryByRole("status")).not.toBeInTheDocument();
     });
   });
 });

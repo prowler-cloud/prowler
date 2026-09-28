@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+import { Timer } from "lucide-react";
 import { Suspense } from "react";
 
 import { getAllProviderGroups } from "@/actions/manage-groups/manage-groups";
@@ -10,9 +10,7 @@ import {
 } from "@/actions/scans/scans-filters";
 import { getSchedules, getSchedulesPage } from "@/actions/schedules";
 import { auth } from "@/auth.config";
-import { PageReady } from "@/components/onboarding";
 import { ScansPageShell } from "@/components/scans/scans-page-shell";
-import { ScansProvidersEmptyState } from "@/components/scans/scans-providers-empty-state";
 import {
   appendPendingScheduleRowsToPage,
   buildScheduledTabRows,
@@ -25,6 +23,7 @@ import {
 import { SkeletonTableScans } from "@/components/scans/table";
 import { ScanJobsTable } from "@/components/scans/table/scan-jobs-table";
 import { ContentLayout } from "@/components/shadcn/content-layout";
+import { isReportDownloadLocked } from "@/lib/report-download-access";
 import {
   buildProviderScheduleSummary,
   buildSchedulesByProviderId,
@@ -188,73 +187,62 @@ export default async function Scans({
   const providers = providersData?.data ?? [];
   const providerGroups = providerGroupsData?.data ?? [];
 
-  const connectedProviders = providers.filter(
+  const hasConnectedProvider = providers.some(
     (provider: ProviderProps) =>
       provider.attributes.connection.connected === true,
   );
-  const thereIsNoProviders = providers.length === 0;
-  const thereIsNoProvidersConnected =
-    !thereIsNoProviders && connectedProviders.length === 0;
-  const missingScanPrerequisite =
-    thereIsNoProviders || thereIsNoProvidersConnected;
-
-  if (
-    missingScanPrerequisite &&
-    resolvedSearchParams.onboarding === "view-first-scan"
-  ) {
-    redirect("/providers?onboarding=add-provider");
-  }
 
   const hasManageScansPermission = Boolean(
     session?.user?.permissions?.manage_scans,
   );
-  const activeScanCount = missingScanPrerequisite
-    ? 0
-    : await getActiveScanCount(resolvedSearchParams);
-  const onboardingAction = missingScanPrerequisite
-    ? {
-        flowId: "view-first-scan",
-        fallbackFlowId: "add-provider",
-        useFallback: true,
-      }
-    : { flowId: "view-first-scan" };
+  const hasManageIngestionsPermission = Boolean(
+    session?.user?.permissions?.manage_ingestions,
+  );
+  const [activeScanCount, reportDownloadLocked] = await Promise.all([
+    getActiveScanCount(resolvedSearchParams),
+    isReportDownloadLocked(),
+  ]);
+  // Mirrors ScansPageShell's launch gate: it only mounts the view-first-scan trigger
+  // when Launch Scan is usable (manage_scans + a connected provider). Without the
+  // permission nothing can consume the navbar action, so offer none rather than an
+  // enabled button that starts no tour.
+  const onboardingAction = !hasManageScansPermission
+    ? undefined
+    : hasConnectedProvider
+      ? { flowId: "view-first-scan" }
+      : {
+          flowId: "view-first-scan",
+          fallbackFlowId: "add-provider",
+          useFallback: true,
+        };
 
   return (
     <ContentLayout
       title="Scans"
-      icon="lucide:timer"
+      icon={<Timer />}
       onboardingAction={onboardingAction}
     >
-      {missingScanPrerequisite ? (
-        <>
-          {/* The populated branch mounts <PageReady/> inside ScansPageShell to
-              enable the navbar tour icon. The empty branch must mark the route
-              ready too, otherwise the icon (which falls back to the add-provider
-              flow here) stays hidden for users with no connected provider. */}
-          <PageReady />
-          <ScansProvidersEmptyState thereIsNoProviders={thereIsNoProviders} />
-        </>
-      ) : (
-        <ScansPageShell
-          providers={providers}
-          providerGroups={providerGroups}
-          hasManageScansPermission={hasManageScansPermission}
-          activeScanCount={activeScanCount}
-        >
-          <Suspense
-            fallback={
-              <SkeletonTableScans
-                tab={getScanJobsTab(resolvedSearchParams.tab)}
-              />
-            }
-          >
-            <SSRDataTableScans
-              searchParams={resolvedSearchParams}
-              providers={providers}
+      <ScansPageShell
+        providers={providers}
+        providerGroups={providerGroups}
+        hasManageScansPermission={hasManageScansPermission}
+        hasManageIngestionsPermission={hasManageIngestionsPermission}
+        activeScanCount={activeScanCount}
+      >
+        <Suspense
+          fallback={
+            <SkeletonTableScans
+              tab={getScanJobsTab(resolvedSearchParams.tab)}
             />
-          </Suspense>
-        </ScansPageShell>
-      )}
+          }
+        >
+          <SSRDataTableScans
+            searchParams={resolvedSearchParams}
+            providers={providers}
+            subscriptionOnly={reportDownloadLocked}
+          />
+        </Suspense>
+      </ScansPageShell>
     </ContentLayout>
   );
 }
@@ -263,10 +251,12 @@ const SSRDataTableScans = async ({
   searchParams,
   providers,
   scanScheduleCapability,
+  subscriptionOnly,
 }: {
   searchParams: SearchParamsProps;
   providers: ProviderProps[];
   scanScheduleCapability?: ScanScheduleCapability;
+  subscriptionOnly: boolean;
 }) => {
   const tab = getScanJobsTab(searchParams.tab);
 
@@ -312,6 +302,7 @@ const SSRDataTableScans = async ({
         tab={tab}
         hasFilters={hasUserFilters}
         scanScheduleCapability={capability}
+        subscriptionOnly={subscriptionOnly}
       />
     );
   }
@@ -407,6 +398,7 @@ const SSRDataTableScans = async ({
       tab={tab}
       hasFilters={hasUserFilters}
       scanScheduleCapability={scanScheduleCapability}
+      subscriptionOnly={subscriptionOnly}
     />
   );
 };

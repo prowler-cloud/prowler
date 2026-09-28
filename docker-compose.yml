@@ -15,6 +15,7 @@ services:
   api:
     hostname: "prowler-api"
     image: prowlercloud/prowler-api:${PROWLER_API_VERSION:-stable}
+    restart: unless-stopped
     env_file:
       - path: .env
         required: false
@@ -44,6 +45,7 @@ services:
 
   ui:
     image: prowlercloud/prowler-ui:${PROWLER_UI_VERSION:-stable}
+    restart: unless-stopped
     env_file:
       - path: .env
         required: false
@@ -60,7 +62,8 @@ services:
       start_period: 60s
 
   postgres:
-    image: postgres:16.3-alpine3.20@sha256:36ed71227ae36305d26382657c0b96cbaf298427b3f1eaeb10d77a6dea3eec41
+    image: postgres:16-alpine@sha256:57c72fd2a128e416c7fcc499958864df5301e940bca0a56f58fddf30ffc07777
+    restart: unless-stopped
     hostname: "postgres-db"
     volumes:
       - ./_data/postgres:/var/lib/postgresql/data
@@ -80,7 +83,8 @@ services:
       retries: 5
 
   valkey:
-    image: valkey/valkey:7-alpine3.19@sha256:4054fe7fc607b9326ac7c4691ed26e9670d2ff17a9fb28c2577adecf928acbcc
+    image: valkey/valkey:8-alpine@sha256:a038175878d66b9d274fbf8be73c0305e93798b83917647f167e18cef3c71eec
+    restart: unless-stopped
     hostname: "valkey"
     volumes:
       - ./_data/valkey:/data
@@ -96,7 +100,8 @@ services:
       retries: 3
 
   neo4j:
-    image: graphstack/dozerdb:5.26.3.0@sha256:a77526ea3918fdc46d1fff70c4aea7d71d3874a26ecec059179d6775845b1247
+    image: graphstack/dozerdb:5.26.27.0@sha256:9b54d6b3a98a76c00bd23e8e78d8c82081ff168162aebd47b25c234e092cb0a0
+    restart: unless-stopped
     hostname: "neo4j"
     volumes:
       - ./_data/neo4j:/data
@@ -129,6 +134,7 @@ services:
 
   worker:
     image: prowlercloud/prowler-api:${PROWLER_API_VERSION:-stable}
+    restart: unless-stopped
     # Give Celery soft shutdown time to drain/re-queue in-flight tasks on stop.
     stop_grace_period: 120s
     env_file:
@@ -149,6 +155,7 @@ services:
 
   worker-beat:
     image: prowlercloud/prowler-api:${PROWLER_API_VERSION:-stable}
+    restart: unless-stopped
     env_file:
       - path: ./.env
         required: false
@@ -165,6 +172,7 @@ services:
 
   mcp-server:
     image: prowlercloud/prowler-mcp:${PROWLER_MCP_VERSION:-stable}
+    restart: unless-stopped
     environment:
       - PROWLER_MCP_TRANSPORT_MODE=http
     env_file:

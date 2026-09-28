@@ -8,11 +8,11 @@ These JSON templates are used with the `slackapi/slack-github-action` using the 
 
 ### Available Templates
 
-**Container Releases**
+#### Container Releases
 - `container-release-started.json`: Simple one-line notification when container push starts
 - `container-release-completed.json`: Simple one-line notification when container release completes
 
-**Deployments**
+#### Deployments
 - `deployment-started.json`: Deployment start notification with Block Kit formatting
 - `deployment-completed.json`: Deployment completion notification (updates the start message)
 
@@ -416,17 +416,17 @@ For deployments that start with one message and update it with the final status:
 ### Container Release (Simple One-Line)
 
 **Start message:**
-```
+```text
 API container release 4.5.0 push started... View run
 ```
 
 **Completion message (success):**
-```
+```text
 [✓] API container release 4.5.0 push completed successfully! View run
 ```
 
 **Completion message (failure):**
-```
+```text
 [✗] API container release 4.5.0 push failed View run
 ```
 

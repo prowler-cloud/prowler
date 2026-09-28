@@ -34,6 +34,9 @@ test:   ## Test with pytest
 	rm -rf .coverage && \
 	pytest -n auto -vvv -s --cov=./prowler --cov-report=xml tests
 
+test-mcp: ## Test MCP server with pytest (mirrors CI)
+	cd mcp_server && uv run pytest --cov=./prowler_mcp_server --cov-report=term-missing tests
+
 coverage: ## Show Test Coverage
 	coverage run --skip-covered -m pytest -v && \
 	coverage report -m && \

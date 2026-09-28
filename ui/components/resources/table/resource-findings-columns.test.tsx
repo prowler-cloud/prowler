@@ -48,11 +48,9 @@ import {
   FINDING_TRIAGE_STATUS,
   type FindingTriageSummary,
 } from "@/types/findings-triage";
+import type { ResourceFinding } from "@/types/resources";
 
-import {
-  getResourceFindingsColumns,
-  type ResourceFinding,
-} from "./resource-findings-columns";
+import { getResourceFindingsColumns } from "./resource-findings-columns";
 
 function makeTriageSummary(
   overrides?: Partial<FindingTriageSummary>,

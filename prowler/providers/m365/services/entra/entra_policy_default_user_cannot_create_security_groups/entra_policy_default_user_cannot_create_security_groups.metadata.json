@@ -1,0 +1,37 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_policy_default_user_cannot_create_security_groups",
+  "CheckTitle": "Non-admin users cannot create security groups",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "Microsoft Entra tenant's authorization policy should restrict **non-admin users** from creating **security groups**. Security groups can be used to grant access to resources across Microsoft 365, so their creation should be limited to administrators to preserve least privilege and prevent uncontrolled access grants.",
+  "Risk": "When any user can create security groups, they may grant themselves or others access to resources, circumventing governance controls. Uncontrolled group sprawl also complicates access reviews and increases the attack surface for privilege escalation.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/entra/identity/users/groups-self-service-management"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to the Microsoft Entra admin center at https://entra.microsoft.com/\n2. Go to **Identity** > **Groups** > **All groups** > **General**\n3. Under **Security groups**, set **Users can create security groups in Azure portals, API or PowerShell** to **No**\n4. Click **Save**",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Restrict security group creation to administrators by disabling self-service security group creation for non-admin users. Grant group-creation rights only to specific roles or delegated owners as required.",
+      "Url": "https://hub.prowler.com/check/entra_policy_default_user_cannot_create_security_groups"
+    }
+  },
+  "Categories": [
+    "identity-access",
+    "e3"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

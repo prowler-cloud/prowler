@@ -33,7 +33,9 @@
         "inspector2_is_enabled",
         "inspector2_active_findings_exist",
         "awslambda_function_not_publicly_accessible",
-        "ec2_instance_public_ip"
+        "ec2_instance_public_ip",
+        "ec2_confidential_workload_host_public_ip",
+        "ec2_confidential_workload_host_vsock_proxy_exposed"
       ],
       "ConfigRequirements": [
         {
@@ -224,7 +226,9 @@
         "organizations_account_part_of_organizations",
         "organizations_delegated_administrators",
         "organizations_scp_check_deny_regions",
-        "securityhub_enabled"
+        "securityhub_enabled",
+        "kms_key_enclave_attestation_bypassable_path",
+        "kms_key_enclave_attestation_unknown_image"
       ],
       "ConfigRequirements": [
         {
@@ -722,7 +726,8 @@
         "securityhub_enabled",
         "guardduty_is_enabled",
         "inspector2_is_enabled",
-        "inspector2_active_findings_exist"
+        "inspector2_active_findings_exist",
+        "kms_key_enclave_debug_attestation_detected"
       ],
       "ConfigRequirements": [
         {
@@ -1193,7 +1198,9 @@
         "ecs_task_definitions_no_environment_secrets",
         "eks_cluster_kms_cmk_encryption_in_secrets_enabled",
         "ssm_document_secrets",
-        "secretsmanager_automatic_rotation_enabled"
+        "secretsmanager_automatic_rotation_enabled",
+        "ec2_confidential_workload_host_imdsv2_not_enforced",
+        "kms_key_enclave_attestation_not_enforced"
       ],
       "ConfigRequirements": [
         {
@@ -2353,7 +2360,8 @@
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_redis_6379",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_sql_server_1433_1434",
-        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_telnet_23"
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_telnet_23",
+        "ec2_confidential_workload_host_unrestricted_ingress"
       ],
       "ConfigRequirements": [
         {

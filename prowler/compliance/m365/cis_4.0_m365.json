@@ -9,7 +9,7 @@
       "Id": "1.1.1",
       "Description": "Administrative accounts are special privileged accounts that could have varying levels of access to data, users, and settings. Regular user accounts should never be utilized for administrative tasks and care should be taken, in the case of a hybrid environment, to keep Administrative accounts separated from on-prem accounts. Administrative accounts should not have applications assigned so that they have no access to potentially vulnerable services (EX. email, Teams, SharePoint, etc.) and only access to perform tasks as needed for administrative purposes.Ensure administrative accounts are not `On-premises sync enabled`.",
       "Checks": [
-        "entra_admin_account_cloud_only"
+        "entra_admin_users_cloud_only"
       ],
       "Attributes": [
         {
@@ -526,7 +526,9 @@
     {
       "Id": "2.1.10",
       "Description": "DMARC, or Domain-based Message Authentication, Reporting, and Conformance, assists recipient mail systems in determining the appropriate action to take when messages from a domain fail to meet SPF or DKIM authentication criteria.",
-      "Checks": [],
+      "Checks": [
+        "defender_domain_dmarc_records_published"
+      ],
       "Attributes": [
         {
           "Section": "2 Microsoft 365 Defender",
@@ -1355,7 +1357,7 @@
       "Id": "5.2.2.8",
       "Description": "When a Conditional Access policy targets the Microsoft Admin Portals cloud app, the policy is enforced for tokens issued to application IDs of the following Microsoft administrative portals:- Azure portal- Exchange admin center- Microsoft 365 admin center- Microsoft 365 Defender portal- Microsoft Entra admin center- Microsoft Intune admin center- Microsoft Purview compliance portal- Power Platform admin center- SharePoint admin center- Microsoft Teams admin center`Microsoft Admin Portals` should be restricted to specific pre-determined administrative roles.",
       "Checks": [
-        "entra_admin_portals_role_limited_access"
+        "entra_admin_portals_access_restriction"
       ],
       "Attributes": [
         {

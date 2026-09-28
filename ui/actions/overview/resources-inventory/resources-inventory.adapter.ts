@@ -19,6 +19,8 @@ import {
   Webhook,
 } from "lucide-react";
 
+import type { ApiResult } from "@/types/server-actions";
+
 import {
   ResourceGroupOverview,
   ResourceGroupOverviewResponse,
@@ -191,7 +193,7 @@ function formatResourceGroupLabel(id: string): string {
  * @returns An array of ResourceInventoryItem objects sorted by the predefined order
  */
 export function adaptResourceGroupOverview(
-  response: ResourceGroupOverviewResponse | undefined,
+  response: ApiResult<ResourceGroupOverviewResponse> | undefined,
 ): ResourceInventoryItem[] {
   if (!response?.data || response.data.length === 0) {
     return [];

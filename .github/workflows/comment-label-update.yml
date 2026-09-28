@@ -32,7 +32,7 @@ jobs:
           ISSUE_NUMBER: ${{ github.event.issue.number }}
         run: |
           echo "Removing 'status/awaiting-response' label from #$ISSUE_NUMBER"
-          gh api /repos/${{ github.repository }}/issues/$ISSUE_NUMBER/labels/status%2Fawaiting-response \
+          gh api "/repos/${{ github.repository }}/issues/$ISSUE_NUMBER/labels/status%2Fawaiting-response" \
             -X DELETE
 
       - name: Add 'status/waiting-for-revision' label
@@ -41,6 +41,6 @@ jobs:
           ISSUE_NUMBER: ${{ github.event.issue.number }}
         run: |
           echo "Adding 'status/waiting-for-revision' label to #$ISSUE_NUMBER"
-          gh api /repos/${{ github.repository }}/issues/$ISSUE_NUMBER/labels \
+          gh api "/repos/${{ github.repository }}/issues/$ISSUE_NUMBER/labels" \
             -X POST \
             -f labels[]='status/waiting-for-revision'

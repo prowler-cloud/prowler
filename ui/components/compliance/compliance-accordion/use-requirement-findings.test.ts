@@ -301,19 +301,22 @@ describe("useRequirementFindings", () => {
         findingUid: "uid-1",
         triageId: "triage-1",
         notesCount: 0,
-        status: FINDING_TRIAGE_STATUS.REMEDIATING,
+        status: FINDING_TRIAGE_STATUS.RESOLVED,
         previousStatus: FINDING_TRIAGE_STATUS.UNDER_REVIEW,
         isMuted: false,
+        manualPassEvidence: "Verified by the control owner.",
       });
     });
 
     // Then
     expect(result.current.expandedFindings[0]?.triage).toEqual(
       expect.objectContaining({
-        status: FINDING_TRIAGE_STATUS.REMEDIATING,
-        label: "Remediating",
+        status: FINDING_TRIAGE_STATUS.RESOLVED,
+        label: "Resolved",
+        manualPassProvenance: "Manually verified",
       }),
     );
+    expect(result.current.expandedFindings[0]?.attributes.status).toBe("PASS");
   });
 
   it("should ignore stale responses after the query changes", async () => {

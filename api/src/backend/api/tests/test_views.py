@@ -3,9 +3,11 @@ import io
 import json
 import os
 import tempfile
+from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
+from threading import Event, Lock
 from types import SimpleNamespace
 from unittest.mock import ANY, MagicMock, Mock, patch
 from urllib.parse import parse_qs, urlparse
@@ -17,10 +19,12 @@ from allauth.account.models import EmailAddress
 from allauth.socialaccount.models import SocialAccount, SocialApp
 from api.attack_paths import (
     AttackPathsQueryDefinition,
+    AttackPathsQueryOutcome,
     AttackPathsQueryParameterDefinition,
 )
 from api.compliance import get_compliance_frameworks
 from api.db_router import MainRouter
+from api.db_utils import rls_transaction
 from api.models import (
     AttackSurfaceOverview,
     ComplianceOverviewSummary,
@@ -56,6 +60,7 @@ from api.models import (
     User,
     UserRoleRelationship,
 )
+from api.rbac.permissions import TASK_REVOKE_PERMISSIONS
 from api.rls import Tenant
 from api.uuid_utils import datetime_to_uuid7
 from api.v1.views import (
@@ -65,6 +70,7 @@ from api.v1.views import (
 )
 from botocore.exceptions import ClientError, NoCredentialsError
 from celery import states
+from celery.utils.saferepr import saferepr
 from conftest import (
     API_JSON_CONTENT_TYPE,
     TEST_PASSWORD,
@@ -73,10 +79,11 @@ from conftest import (
     today_after_n_days,
 )
 from django.conf import settings
-from django.db import connection
+from django.db import close_old_connections, connection, connections
 from django.db.models import Count
+from django.db.models.signals import pre_delete
 from django.http import JsonResponse
-from django.test import RequestFactory
+from django.test import RequestFactory, override_settings
 from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 from django_celery_results.models import TaskResult
@@ -512,6 +519,50 @@ class TestUserViewSet:
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert error_field in response.json()["errors"][0]["source"]["pointer"]
+
+
+@pytest.mark.requires_test_admin_alias
+@pytest.mark.django_db(transaction=True, databases=["default", "admin"])
+class TestTenantDeletionTransactions:
+    @patch("api.v1.views.delete_tenant_task.apply_async")
+    def test_delete_rolls_back_memberships_when_user_cleanup_fails(
+        self,
+        delete_tenant_mock,
+        authenticated_client,
+        tenants_fixture,
+    ):
+        assert connections["default"] is not connections["admin"]
+
+        _, tenant, _ = tenants_fixture
+        exclusive_user = User.objects.create_user(
+            name="exclusive user",
+            password=TEST_PASSWORD,
+            email="exclusive-user@example.com",
+        )
+        membership = Membership.objects.create(
+            user=exclusive_user,
+            tenant=tenant,
+            role=Membership.RoleChoices.MEMBER,
+        )
+
+        def fail_user_cleanup(*, instance, **kwargs):
+            if instance.pk == exclusive_user.pk:
+                raise RuntimeError("Simulated user cleanup failure.")
+
+        pre_delete.connect(fail_user_cleanup, sender=User)
+        try:
+            with (
+                patch.object(MainRouter, "admin_db", "admin"),
+                pytest.raises(RuntimeError, match=r"Simulated user cleanup failure\."),
+            ):
+                authenticated_client.delete(
+                    reverse("tenant-detail", kwargs={"pk": tenant.id})
+                )
+        finally:
+            pre_delete.disconnect(fail_user_cleanup, sender=User)
+
+        assert Membership.objects.using("admin").filter(pk=membership.pk).exists()
+        delete_tenant_mock.assert_not_called()
 
 
 @pytest.mark.django_db
@@ -3901,6 +3952,43 @@ class TestScanViewSet:
         mock_enqueue_scan_execution.assert_called_once()
         # assert scan.scanner_args == expected_scanner_args
 
+    @patch("api.v1.views.enqueue_scan_execution_on_commit")
+    def test_scans_create_returns_the_scan_id_in_task_args(
+        self,
+        mock_enqueue_scan_execution,
+        authenticated_client,
+        okta_provider,
+    ):
+        """The 202 is a task, so `task_args` is the only place the scan id is.
+
+        It is serialized before the on_commit publish that would otherwise fill
+        the kwargs, so the record has to carry them from the start.
+        """
+        payload = {
+            "data": {
+                "type": "scans",
+                "attributes": {"name": "New Scan"},
+                "relationships": {
+                    "provider": {
+                        "data": {"type": "providers", "id": str(okta_provider.id)}
+                    }
+                },
+            }
+        }
+
+        response = authenticated_client.post(
+            reverse("scan-list"),
+            data=payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+
+        assert response.status_code == status.HTTP_202_ACCEPTED
+        scan = Scan.objects.get()
+        assert response.json()["data"]["attributes"]["task_args"] == {
+            "scan_id": str(scan.id),
+            "provider_id": str(okta_provider.id),
+        }
+
     @patch("tasks.tasks.perform_scan_task.apply_async")
     def test_scans_create_queues_scan_when_provider_has_active_scan(
         self,
@@ -4490,6 +4578,52 @@ class TestScanViewSet:
         assert response.status_code == status.HTTP_302_FOUND
         assert response["Location"] == presigned_url
 
+    @override_settings(
+        DJANGO_OUTPUT_S3_AWS_PUBLIC_ENDPOINT_URL="https://storage.example.com",
+        DJANGO_OUTPUT_S3_AWS_ACCESS_KEY_ID="access-key",
+        DJANGO_OUTPUT_S3_AWS_SECRET_ACCESS_KEY="secret-key",
+        DJANGO_OUTPUT_S3_AWS_SESSION_TOKEN="",
+        DJANGO_OUTPUT_S3_AWS_DEFAULT_REGION="eu-west-1",
+    )
+    def test_report_s3_redirects_to_the_public_storage_host(
+        self, authenticated_client, scans_fixture, monkeypatch
+    ):
+        """The object is looked up internally but the redirect the browser follows is public."""
+        scan = scans_fixture[0]
+        bucket = "test-bucket"
+        key = "report.zip"
+        scan.output_location = f"s3://{bucket}/{key}"
+        scan.state = StateChoices.COMPLETED
+        scan.save()
+
+        monkeypatch.setattr(
+            "api.v1.views.env",
+            type("env", (), {"str": lambda self, *_args, **_kwargs: bucket})(),
+        )
+
+        head_calls = []
+
+        class InternalS3Client:
+            def head_object(self, Bucket, Key):
+                head_calls.append((Bucket, Key))
+                return {}
+
+            def generate_presigned_url(self, *_args, **_kwargs):
+                raise AssertionError("the internal client must not sign the redirect")
+
+        monkeypatch.setattr("api.v1.views.get_s3_client", lambda: InternalS3Client())
+
+        url = reverse("scan-report", kwargs={"pk": scan.id})
+        response = authenticated_client.get(url)
+
+        assert response.status_code == status.HTTP_302_FOUND
+        assert head_calls == [(bucket, key)]
+
+        location = urlparse(response["Location"])
+        assert location.netloc == "storage.example.com"
+        assert location.path == f"/{bucket}/{key}"
+        assert "X-Amz-Signature" in parse_qs(location.query)
+
     def test_report_s3_success_no_local_files(
         self, authenticated_client, scans_fixture, monkeypatch
     ):
@@ -5043,10 +5177,59 @@ class TestTaskViewSet:
             reverse("task-detail", kwargs={"pk": task1.id}),
         )
         assert response.status_code == status.HTTP_200_OK
+        assert response.json()["data"]["attributes"]["task_args"] == {
+            "kwarg1": "value1"
+        }
         assert (
             response.json()["data"]["attributes"]["name"]
             == task1.task_runner_task.task_name
         )
+
+    def test_tasks_retrieve_hides_tenant_id(
+        self, authenticated_client, tasks_fixture, tenants_fixture
+    ):
+        task, *_ = tasks_fixture
+        task.task_runner_task.task_kwargs = json.dumps(
+            repr(
+                {
+                    "tenant_id": str(tenants_fixture[0].id),
+                    "enabled": True,
+                    "scan_id": None,
+                    "label": "True North",
+                }
+            )
+        )
+        task.task_runner_task.save(update_fields=["task_kwargs"])
+
+        response = authenticated_client.get(
+            reverse("task-detail", kwargs={"pk": task.id}),
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json()["data"]["attributes"]["task_args"] == {
+            "enabled": True,
+            "scan_id": None,
+            "label": "True North",
+        }
+
+    def test_tasks_retrieve_with_truncated_kwargs_returns_empty_task_args(
+        self, authenticated_client, tasks_fixture
+    ):
+        task, *_ = tasks_fixture
+        kwargs_repr = saferepr(
+            {"finding_ids": [str(uuid4()) for _ in range(30)]}, maxlen=1024
+        )
+        assert "..." in kwargs_repr
+        task.task_runner_task.task_kwargs = json.dumps(kwargs_repr)
+        task.task_runner_task.save(update_fields=["task_kwargs"])
+
+        response = authenticated_client.get(
+            reverse("task-detail", kwargs={"pk": task.id}),
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.headers["Content-Type"] == API_JSON_CONTENT_TYPE
+        assert response.json()["data"]["attributes"]["task_args"] == {}
 
     def test_tasks_invalid_retrieve(self, authenticated_client):
         response = authenticated_client.get(
@@ -5057,6 +5240,7 @@ class TestTaskViewSet:
     @patch("api.v1.views.AsyncResult", return_value=Mock())
     def test_tasks_revoke(self, mock_async_result, authenticated_client, tasks_fixture):
         _, task2 = tasks_fixture
+        self._set_task_name(task2, "scan-perform")
         response = authenticated_client.delete(
             reverse("task-detail", kwargs={"pk": task2.id})
         )
@@ -5072,11 +5256,310 @@ class TestTaskViewSet:
 
     def test_tasks_revoke_invalid_status(self, authenticated_client, tasks_fixture):
         task1, _ = tasks_fixture
+        self._set_task_name(task1, "scan-perform")
         response = authenticated_client.delete(
             reverse("task-detail", kwargs={"pk": task1.id})
         )
         # Task status is SUCCESS
         assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    @staticmethod
+    def _set_task_name(task, name):
+        task.task_runner_task.task_name = name
+        task.task_runner_task.save(update_fields=["task_name"])
+
+    @staticmethod
+    def _set_task_kwargs(task, kwargs):
+        task.task_runner_task.task_kwargs = json.dumps(repr(kwargs))
+        task.task_runner_task.save(update_fields=["task_kwargs"])
+
+    @staticmethod
+    def _client_with_role(tenant, factory, **permissions):
+        user = User.objects.create_user(
+            name=f"revoker-{uuid4()}",
+            email=f"revoker-{uuid4()}@prowler.com",
+            password=TEST_PASSWORD,
+        )
+        Membership.objects.create(
+            user=user, tenant=tenant, role=Membership.RoleChoices.MEMBER
+        )
+        flags = {
+            "manage_users": False,
+            "manage_account": False,
+            "manage_billing": False,
+            "manage_providers": False,
+            "manage_integrations": False,
+            "manage_scans": False,
+            "unlimited_visibility": True,
+            **permissions,
+        }
+        role = Role.objects.create(
+            name=f"revoker-{uuid4()}", tenant_id=tenant.id, **flags
+        )
+        UserRoleRelationship.objects.create(user=user, role=role, tenant_id=tenant.id)
+        return factory(user, tenant)
+
+    @patch("api.v1.views.AsyncResult")
+    def test_tasks_revoke_without_permission_is_forbidden(
+        self, mock_async_result, authenticated_client_no_permissions_rbac, tasks_fixture
+    ):
+        _, pending_task = tasks_fixture
+        self._set_task_name(pending_task, "provider-connection-check")
+
+        response = authenticated_client_no_permissions_rbac.delete(
+            reverse("task-detail", kwargs={"pk": pending_task.id})
+        )
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        mock_async_result.return_value.revoke.assert_not_called()
+
+    @pytest.mark.parametrize(
+        "task_name, permissions, expected_status",
+        [
+            (
+                "provider-connection-check",
+                {"manage_providers": True},
+                status.HTTP_202_ACCEPTED,
+            ),
+            (
+                "provider-connection-check",
+                {"manage_scans": True},
+                status.HTTP_403_FORBIDDEN,
+            ),
+            ("scan-perform", {"manage_scans": True}, status.HTTP_202_ACCEPTED),
+            (
+                "scan-perform-scheduled",
+                {"manage_providers": True},
+                status.HTTP_403_FORBIDDEN,
+            ),
+            (
+                "integration-jira",
+                {"manage_integrations": True},
+                status.HTTP_202_ACCEPTED,
+            ),
+            ("integration-jira", {"manage_providers": True}, status.HTTP_403_FORBIDDEN),
+            ("lighthouse-connection-check", {}, status.HTTP_202_ACCEPTED),
+        ],
+    )
+    @patch("api.v1.views.AsyncResult")
+    def test_tasks_revoke_requires_originating_operation_permission(
+        self,
+        mock_async_result,
+        authenticated_client_for_tenant_factory,
+        tenants_fixture,
+        tasks_fixture,
+        task_name,
+        permissions,
+        expected_status,
+    ):
+        tenant, *_ = tenants_fixture
+        _, pending_task = tasks_fixture
+        self._set_task_name(pending_task, task_name)
+        client = self._client_with_role(
+            tenant, authenticated_client_for_tenant_factory, **permissions
+        )
+
+        response = client.delete(reverse("task-detail", kwargs={"pk": pending_task.id}))
+
+        assert response.status_code == expected_status
+        if expected_status == status.HTTP_202_ACCEPTED:
+            mock_async_result.return_value.revoke.assert_called_once()
+        else:
+            mock_async_result.return_value.revoke.assert_not_called()
+
+    @patch("api.v1.views.AsyncResult")
+    def test_tasks_revoke_provider_deletion_is_forbidden_even_for_admin(
+        self, mock_async_result, authenticated_client, tasks_fixture
+    ):
+        _, pending_task = tasks_fixture
+        self._set_task_name(pending_task, "provider-deletion")
+
+        response = authenticated_client.delete(
+            reverse("task-detail", kwargs={"pk": pending_task.id})
+        )
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        mock_async_result.return_value.revoke.assert_not_called()
+
+    @patch("api.v1.views.AsyncResult")
+    def test_tasks_revoke_unmapped_task_is_forbidden(
+        self, mock_async_result, authenticated_client, tasks_fixture
+    ):
+        _, pending_task = tasks_fixture
+        assert pending_task.task_runner_task.task_name not in TASK_REVOKE_PERMISSIONS
+
+        response = authenticated_client.delete(
+            reverse("task-detail", kwargs={"pk": pending_task.id})
+        )
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        mock_async_result.return_value.revoke.assert_not_called()
+
+    def test_every_rls_task_has_revoke_permissions(self):
+        from config.celery import RLSTask, celery_app
+
+        rls_task_names = {
+            name for name, task in celery_app.tasks.items() if isinstance(task, RLSTask)
+        }
+        assert rls_task_names
+        assert rls_task_names <= set(TASK_REVOKE_PERMISSIONS)
+
+    @patch("api.v1.views.AsyncResult")
+    def test_tasks_hidden_for_providers_outside_role_visibility(
+        self,
+        mock_async_result,
+        authenticated_client_no_permissions_rbac,
+        tasks_fixture,
+        aws_provider_pair,
+    ):
+        client = authenticated_client_no_permissions_rbac
+        limited_user = client.user
+        tenant = Membership.objects.filter(user=limited_user).first().tenant
+        allowed_provider, denied_provider = aws_provider_pair
+        allowed_task, denied_task = tasks_fixture
+        self._set_task_kwargs(
+            allowed_task,
+            {"tenant_id": str(tenant.id), "provider_id": str(allowed_provider.id)},
+        )
+        self._set_task_name(denied_task, "provider-deletion")
+        self._set_task_kwargs(
+            denied_task,
+            {"tenant_id": str(tenant.id), "provider_id": str(denied_provider.id)},
+        )
+        provider_group = ProviderGroup.objects.create(
+            name="limited-task-group", tenant_id=tenant.id
+        )
+        ProviderGroupMembership.objects.create(
+            tenant_id=tenant.id,
+            provider_group=provider_group,
+            provider=allowed_provider,
+        )
+        RoleProviderGroupRelationship.objects.create(
+            tenant_id=tenant.id,
+            role=limited_user.roles.first(),
+            provider_group=provider_group,
+        )
+
+        response = client.get(reverse("task-list"))
+        assert response.status_code == status.HTTP_200_OK
+        assert [item["id"] for item in response.json()["data"]] == [
+            str(allowed_task.id)
+        ]
+
+        response = client.get(reverse("task-detail", kwargs={"pk": denied_task.id}))
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+        response = client.delete(reverse("task-detail", kwargs={"pk": denied_task.id}))
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+        mock_async_result.return_value.revoke.assert_not_called()
+
+    @patch("api.v1.views.AsyncResult")
+    def test_tasks_of_soft_deleted_provider_stay_visible_to_its_groups(
+        self,
+        mock_async_result,
+        authenticated_client_for_tenant_factory,
+        tenants_fixture,
+        tasks_fixture,
+        aws_provider_pair,
+    ):
+        tenant, *_ = tenants_fixture
+        provider, _ = aws_provider_pair
+        finished_task, pending_task = tasks_fixture
+        client = self._client_with_role(
+            tenant,
+            authenticated_client_for_tenant_factory,
+            manage_providers=True,
+            unlimited_visibility=False,
+        )
+        provider_group = ProviderGroup.objects.create(
+            name="own-group", tenant_id=tenant.id
+        )
+        ProviderGroupMembership.objects.create(
+            tenant_id=tenant.id, provider_group=provider_group, provider=provider
+        )
+        RoleProviderGroupRelationship.objects.create(
+            tenant_id=tenant.id,
+            role=client.user.roles.first(),
+            provider_group=provider_group,
+        )
+        for task, name in (
+            (finished_task, "provider-deletion"),
+            (pending_task, "provider-connection-check"),
+        ):
+            self._set_task_name(task, name)
+            self._set_task_kwargs(
+                task, {"tenant_id": str(tenant.id), "provider_id": str(provider.id)}
+            )
+        provider.is_deleted = True
+        provider.save()
+
+        response = client.get(reverse("task-detail", kwargs={"pk": finished_task.id}))
+        assert response.status_code == status.HTTP_200_OK
+
+        response = client.delete(reverse("task-detail", kwargs={"pk": pending_task.id}))
+        assert response.status_code == status.HTTP_202_ACCEPTED
+        mock_async_result.return_value.revoke.assert_called_once()
+
+    def test_tasks_without_provider_stay_visible_for_limited_roles(
+        self, authenticated_client_no_permissions_rbac, tasks_fixture, aws_provider_pair
+    ):
+        response = authenticated_client_no_permissions_rbac.get(reverse("task-list"))
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == len(tasks_fixture)
+
+    def test_tasks_list_without_role_is_forbidden(
+        self, authenticated_client_rbac_noroles, tasks_fixture
+    ):
+        response = authenticated_client_rbac_noroles.get(reverse("task-list"))
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_tasks_revoke_without_permission_hides_task_status(
+        self, authenticated_client_no_permissions_rbac, tasks_fixture
+    ):
+        finished_task, _ = tasks_fixture
+        self._set_task_name(finished_task, "provider-connection-check")
+
+        response = authenticated_client_no_permissions_rbac.delete(
+            reverse("task-detail", kwargs={"pk": finished_task.id})
+        )
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    @patch("api.v1.views.AsyncResult")
+    def test_tasks_revoke_unauthenticated_returns_401(
+        self, mock_async_result, tasks_fixture
+    ):
+        from rest_framework.test import APIClient
+
+        _, pending_task = tasks_fixture
+        self._set_task_name(pending_task, "scan-perform")
+
+        response = APIClient().delete(
+            reverse("task-detail", kwargs={"pk": pending_task.id})
+        )
+
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+        mock_async_result.return_value.revoke.assert_not_called()
+
+    @patch("api.v1.views.AsyncResult")
+    def test_tasks_revoke_foreign_tenant_task_returns_404(
+        self,
+        mock_async_result,
+        authenticated_client_for_tenant_factory,
+        tenants_fixture,
+        tasks_fixture,
+    ):
+        _, foreign_tenant, *_ = tenants_fixture
+        _, pending_task = tasks_fixture
+        self._set_task_name(pending_task, "scan-perform")
+        client = self._client_with_role(
+            foreign_tenant, authenticated_client_for_tenant_factory, manage_scans=True
+        )
+
+        response = client.delete(reverse("task-detail", kwargs={"pk": pending_task.id}))
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+        mock_async_result.return_value.revoke.assert_not_called()
 
 
 @pytest.mark.django_db
@@ -5334,6 +5817,72 @@ class TestAttackPathsScanViewSet:
         assert payload[0]["id"] == "aws-rds"
         assert payload[0]["attributes"]["name"] == "RDS inventory"
         assert payload[0]["attributes"]["parameters"][0]["name"] == "ip"
+
+    def test_attack_paths_queries_expose_outcome(
+        self,
+        authenticated_client,
+        aws_provider,
+        scans_fixture,
+        create_attack_paths_scan,
+    ):
+        provider = aws_provider
+        attack_paths_scan = create_attack_paths_scan(
+            provider,
+            scan=scans_fixture[0],
+        )
+
+        definitions = [
+            AttackPathsQueryDefinition(
+                id="aws-lambda-passrole",
+                name="Lambda passrole",
+                short_description="Pass a role to a new Lambda function.",
+                description="Pass a role to a new Lambda function and run code as it.",
+                provider=provider.provider,
+                cypher="MATCH (n) RETURN n",
+                outcome=AttackPathsQueryOutcome.CODE_EXECUTION,
+            ),
+            AttackPathsQueryDefinition(
+                id="aws-rds-inventory",
+                name="RDS inventory",
+                short_description="List account RDS assets.",
+                description="List account RDS assets.",
+                provider=provider.provider,
+                cypher="MATCH (n) RETURN n",
+                outcome=AttackPathsQueryOutcome.RESOURCE_INVENTORY,
+            ),
+            AttackPathsQueryDefinition(
+                id="aws-no-outcome",
+                name="No outcome",
+                short_description="A query without an outcome.",
+                description="A query without an outcome.",
+                provider=provider.provider,
+                cypher="MATCH (n) RETURN n",
+            ),
+        ]
+
+        with patch("api.v1.views.get_queries_for_provider", return_value=definitions):
+            response = authenticated_client.get(
+                reverse(
+                    "attack-paths-scans-queries", kwargs={"pk": attack_paths_scan.id}
+                )
+            )
+
+        assert response.status_code == status.HTTP_200_OK
+        outcomes = {
+            item["id"]: item["attributes"]["outcome"]
+            for item in response.json()["data"]
+        }
+        assert outcomes["aws-lambda-passrole"] == {
+            "kind": "code_execution",
+            "label": "Code execution",
+            "partial": False,
+        }
+        assert outcomes["aws-rds-inventory"] == {
+            "kind": "resource_inventory",
+            "label": "Resource inventory",
+            "partial": True,
+        }
+        assert outcomes["aws-no-outcome"] is None
 
     def test_attack_paths_queries_returns_404_when_catalog_missing(
         self,
@@ -8619,6 +9168,190 @@ class TestInvitationViewSet:
             user.id
         )
 
+    @staticmethod
+    def _invitation_create_payload(email, role):
+        return json.dumps(
+            {
+                "data": {
+                    "type": "invitations",
+                    "attributes": {"email": email},
+                    "relationships": {
+                        "roles": {"data": [{"type": "roles", "id": str(role.id)}]}
+                    },
+                }
+            }
+        )
+
+    @staticmethod
+    def _create_lapsed_invitation(email, tenant, inviter):
+        return Invitation.objects.create(
+            email=email,
+            state=Invitation.State.PENDING,
+            expires_at=datetime.now(UTC) - timedelta(days=1),
+            inviter=inviter,
+            tenant=tenant,
+        )
+
+    def test_invitations_create_with_lapsed_pending_invitation_for_same_email(
+        self,
+        authenticated_client,
+        create_test_user,
+        tenants_fixture,
+        invitations_fixture,
+        roles_fixture,
+    ):
+        lapsed_invitation, expired_invitation = invitations_fixture
+        lapsed_invitation.expires_at = datetime.now(UTC) - timedelta(days=1)
+        lapsed_invitation.save()
+        other_email_lapsed_invitation = self._create_lapsed_invitation(
+            "other@prowler.com", tenants_fixture[0], create_test_user
+        )
+
+        response = authenticated_client.post(
+            reverse("invitation-list"),
+            data=self._invitation_create_payload(
+                lapsed_invitation.email, roles_fixture[0]
+            ),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_201_CREATED
+        new_invitation = Invitation.objects.get(id=response.json()["data"]["id"])
+        assert new_invitation.email == lapsed_invitation.email
+        assert new_invitation.state == Invitation.State.PENDING
+        lapsed_invitation.refresh_from_db()
+        assert lapsed_invitation.state == Invitation.State.EXPIRED
+        expired_invitation.refresh_from_db()
+        assert expired_invitation.state == Invitation.State.EXPIRED
+        other_email_lapsed_invitation.refresh_from_db()
+        assert other_email_lapsed_invitation.state == Invitation.State.PENDING
+
+    def test_invitations_create_with_active_pending_invitation_for_same_email(
+        self,
+        authenticated_client,
+        create_test_user,
+        tenants_fixture,
+        invitations_fixture,
+        roles_fixture,
+    ):
+        active_invitation, _ = invitations_fixture
+        self._create_lapsed_invitation(
+            active_invitation.email, tenants_fixture[0], create_test_user
+        )
+        invitation_count = Invitation.objects.count()
+
+        response = authenticated_client.post(
+            reverse("invitation-list"),
+            data=self._invitation_create_payload(
+                active_invitation.email, roles_fixture[0]
+            ),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert (
+            response.json()["errors"][0]["source"]["pointer"]
+            == "/data/attributes/email"
+        )
+        assert Invitation.objects.count() == invitation_count
+        active_invitation.refresh_from_db()
+        assert active_invitation.state == Invitation.State.PENDING
+
+    def test_invitations_create_ignores_pending_invitations_from_other_tenants(
+        self, authenticated_client, create_test_user, tenants_fixture, roles_fixture
+    ):
+        email = "cross_tenant@prowler.com"
+        other_tenant = tenants_fixture[1]
+        other_tenant_lapsed_invitation = self._create_lapsed_invitation(
+            email, other_tenant, create_test_user
+        )
+        Invitation.objects.create(
+            email=email, inviter=create_test_user, tenant=other_tenant
+        )
+
+        response = authenticated_client.post(
+            reverse("invitation-list"),
+            data=self._invitation_create_payload(email, roles_fixture[0]),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_201_CREATED
+        other_tenant_lapsed_invitation.refresh_from_db()
+        assert other_tenant_lapsed_invitation.state == Invitation.State.PENDING
+
+    def test_invitations_report_lapsed_pending_invitation_as_expired(
+        self,
+        authenticated_client,
+        create_test_user,
+        tenants_fixture,
+        invitations_fixture,
+    ):
+        active_invitation, expired_invitation = invitations_fixture
+        lapsed_invitation = self._create_lapsed_invitation(
+            "lapsed@prowler.com", tenants_fixture[0], create_test_user
+        )
+
+        list_response = authenticated_client.get(reverse("invitation-list"))
+        retrieve_response = authenticated_client.get(
+            reverse("invitation-detail", kwargs={"pk": lapsed_invitation.id})
+        )
+
+        assert list_response.status_code == status.HTTP_200_OK
+        assert retrieve_response.status_code == status.HTTP_200_OK
+        assert {
+            invitation["id"]: invitation["attributes"]["state"]
+            for invitation in list_response.json()["data"]
+        } == {
+            str(active_invitation.id): Invitation.State.PENDING.value,
+            str(expired_invitation.id): Invitation.State.EXPIRED.value,
+            str(lapsed_invitation.id): Invitation.State.EXPIRED.value,
+        }
+        assert (
+            retrieve_response.json()["data"]["attributes"]["state"]
+            == Invitation.State.EXPIRED.value
+        )
+
+    @pytest.mark.parametrize(
+        "filter_name, filter_value, expected_invitations",
+        [
+            ("state", "pending", {"active"}),
+            ("state", "expired", {"expired", "lapsed"}),
+            ("state", "accepted", set()),
+            ("state__in", "pending", {"active"}),
+            ("state__in", "expired", {"expired", "lapsed"}),
+            ("state__in", "pending,expired", {"active", "expired", "lapsed"}),
+            ("state__in", "accepted,revoked", set()),
+        ],
+    )
+    def test_invitations_filter_state_treats_lapsed_pending_as_expired(
+        self,
+        authenticated_client,
+        create_test_user,
+        tenants_fixture,
+        invitations_fixture,
+        filter_name,
+        filter_value,
+        expected_invitations,
+    ):
+        active_invitation, expired_invitation = invitations_fixture
+        lapsed_invitation = self._create_lapsed_invitation(
+            "lapsed@prowler.com", tenants_fixture[0], create_test_user
+        )
+        invitation_ids = {
+            "active": str(active_invitation.id),
+            "expired": str(expired_invitation.id),
+            "lapsed": str(lapsed_invitation.id),
+        }
+
+        response = authenticated_client.get(
+            reverse("invitation-list"), {f"filter[{filter_name}]": filter_value}
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert {invitation["id"] for invitation in response.json()["data"]} == {
+            invitation_ids[name] for name in expected_invitations
+        }
+
     @pytest.mark.parametrize(
         "email",
         [
@@ -8626,8 +9359,10 @@ class TestInvitationViewSet:
             "invalid_email@",
             # There is a pending invitation with this email
             "testing@prowler.com",
+            "TESTING@prowler.com",
             # User is already a member of the tenant
             TEST_USER,
+            TEST_USER.upper(),
         ],
     )
     def test_invitations_create_invalid_email(
@@ -8881,6 +9616,56 @@ class TestInvitationViewSet:
             response.json()["errors"][0]["detail"]
             == "This invitation cannot be revoked."
         )
+
+    def test_invitations_delete_lapsed_invitation(
+        self, authenticated_client, invitations_fixture
+    ):
+        invitation, *_ = invitations_fixture
+        invitation.expires_at = datetime.now(UTC) - timedelta(days=1)
+        invitation.save()
+
+        response = authenticated_client.delete(
+            reverse("invitation-detail", kwargs={"pk": str(invitation.id)})
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert (
+            response.json()["errors"][0]["detail"]
+            == "This invitation cannot be revoked."
+        )
+        invitation.refresh_from_db()
+        assert invitation.state == Invitation.State.PENDING
+
+    def test_invitations_partial_update_lapsed_invitation(
+        self, authenticated_client, invitations_fixture
+    ):
+        invitation, *_ = invitations_fixture
+        invitation.expires_at = datetime.now(UTC) - timedelta(days=1)
+        invitation.save()
+        data = {
+            "data": {
+                "id": str(invitation.id),
+                "type": "invitations",
+                "attributes": {
+                    "email": invitation.email,
+                    "expires_at": self.TOMORROW_ISO,
+                },
+            }
+        }
+
+        response = authenticated_client.patch(
+            reverse("invitation-detail", kwargs={"pk": str(invitation.id)}),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert (
+            response.json()["errors"][0]["detail"]
+            == "This invitation cannot be updated."
+        )
+        invitation.refresh_from_db()
+        assert invitation.is_lapsed
 
     def test_invitations_accept_invitation_new_user(self, client, invitations_fixture):
         invitation, *_ = invitations_fixture
@@ -13446,6 +14231,73 @@ class TestIntegrationViewSet:
                 f"Expected type '{expected_type}' not found in included data"
             )
 
+    # Serializing a Jira integration reads `configuration` to add the domain from the
+    # credentials, and a sparse fieldset can leave that field out of the representation
+
+    def test_integrations_list_sparse_fields_without_configuration(
+        self, authenticated_client, jira_integration_fixture
+    ):
+        response = authenticated_client.get(
+            reverse("integration-list"),
+            {"fields[integrations]": "enabled,integration_type"},
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        attributes = response.json()["data"][0]["attributes"]
+        assert sorted(attributes.keys()) == ["enabled", "integration_type"]
+
+    def test_integrations_retrieve_sparse_fields_without_configuration(
+        self, authenticated_client, jira_integration_fixture
+    ):
+        response = authenticated_client.get(
+            reverse("integration-detail", kwargs={"pk": jira_integration_fixture.id}),
+            {"fields[integrations]": "enabled,integration_type"},
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert "configuration" not in response.json()["data"]["attributes"]
+
+    def test_integrations_partial_update_sparse_fields_without_configuration(
+        self, authenticated_client, jira_integration_fixture
+    ):
+        data = {
+            "data": {
+                "type": "integrations",
+                "id": str(jira_integration_fixture.id),
+                "attributes": {"enabled": False},
+            }
+        }
+
+        url = reverse("integration-detail", kwargs={"pk": jira_integration_fixture.id})
+        response = authenticated_client.patch(
+            f"{url}?fields[integrations]=enabled,integration_type",
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert "configuration" not in response.json()["data"]["attributes"]
+        with rls_transaction(str(jira_integration_fixture.tenant_id)):
+            jira_integration_fixture.refresh_from_db()
+        assert jira_integration_fixture.enabled is False
+        # Omitting `configuration` from the fieldset must not rewrite it, and the
+        # serialized `domain` must not leak into the stored value
+        assert jira_integration_fixture.configuration == {
+            "projects": {"TEST": "Test project"}
+        }
+
+    def test_integrations_retrieve_jira_keeps_domain_in_configuration(
+        self, authenticated_client, jira_integration_fixture
+    ):
+        response = authenticated_client.get(
+            reverse("integration-detail", kwargs={"pk": jira_integration_fixture.id})
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        configuration = response.json()["data"]["attributes"]["configuration"]
+        assert configuration["domain"] == "test"
+        assert configuration["projects"] == {"TEST": "Test project"}
+
     @pytest.mark.parametrize(
         "integration_type, configuration, credentials",
         [
@@ -14442,6 +15294,37 @@ class TestSAMLConfigurationViewSet:
 
 
 @pytest.mark.django_db
+class TestSAMLACSView:
+    def test_get_is_not_allowed(self, client, saml_setup):
+        response = client.get(
+            reverse(
+                "saml_acs",
+                kwargs={"organization_slug": saml_setup["domain"]},
+            )
+        )
+
+        assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
+        assert response.headers["Allow"] == "POST"
+        assert "saml-acs-session" not in response.cookies
+
+    def test_post_is_forwarded_to_allauth(self, client, saml_setup):
+        response = client.post(
+            reverse(
+                "saml_acs",
+                kwargs={"organization_slug": saml_setup["domain"]},
+            ),
+            data={"SAMLResponse": "test-saml-response"},
+        )
+
+        assert response.status_code == status.HTTP_302_FOUND
+        assert response.url == reverse(
+            "saml_finish_acs",
+            kwargs={"organization_slug": saml_setup["domain"]},
+        )
+        assert "saml-acs-session" in response.cookies
+
+
+@pytest.mark.django_db
 class TestTenantFinishACSView:
     def test_dispatch_skips_if_user_not_authenticated(self, monkeypatch):
         monkeypatch.setenv("AUTH_URL", "http://localhost")
@@ -14793,19 +15676,94 @@ class TestTenantFinishACSView:
         # Verify no new role was created
         assert Role.objects.using(MainRouter.admin_db).count() == roles_before
 
-    def test_dispatch_assigns_no_role_to_new_user_when_usertype_missing(
+    @pytest.mark.parametrize(
+        (
+            "existing_role_attributes",
+            "existing_suffixes",
+            "expected_role_name",
+            "expected_role_created",
+        ),
+        [
+            (None, (), "read_only", True),
+            ({"unlimited_visibility": True}, (), "read_only", False),
+            (
+                {"manage_users": True, "unlimited_visibility": True},
+                (
+                    ("read_only_0", {"unlimited_visibility": True}),
+                    ("read_only_1", {"unlimited_visibility": True}),
+                ),
+                "read_only_0",
+                False,
+            ),
+            (
+                {"manage_users": True, "unlimited_visibility": True},
+                (
+                    (
+                        "read_only_0",
+                        {"manage_users": True, "unlimited_visibility": True},
+                    ),
+                    ("read_only_1", {"unlimited_visibility": True}),
+                ),
+                "read_only_1",
+                False,
+            ),
+            ({"unlimited_visibility": False}, (), "read_only_0", True),
+        ],
+        ids=[
+            "creates-role",
+            "reuses-safe-role",
+            "reuses-first-safe-suffixed-role",
+            "skips-unsafe-suffixed-role",
+            "avoids-restricted-visibility",
+        ],
+    )
+    def test_dispatch_assigns_read_only_role_when_usertype_missing(
         self,
         create_test_user,
         tenants_fixture,
         saml_setup,
         settings,
         monkeypatch,
+        existing_role_attributes,
+        existing_suffixes,
+        expected_role_name,
+        expected_role_created,
     ):
-        """Test that a user without roles gets none assigned when userType is missing"""
+        """Test safe fallback role assignment when userType is missing"""
         monkeypatch.setenv("SAML_SSO_CALLBACK_URL", "http://localhost/sso-complete")
         user = create_test_user
         tenant = tenants_fixture[0]
-        roles_before = Role.objects.using(MainRouter.admin_db).count()
+        other_tenant = tenants_fixture[1]
+
+        other_tenant_role = Role.objects.using(MainRouter.admin_db).create(
+            name="read_only",
+            tenant=other_tenant,
+            unlimited_visibility=True,
+        )
+        other_tenant_relationship = UserRoleRelationship.objects.using(
+            MainRouter.admin_db
+        ).create(
+            user=user,
+            role=other_tenant_role,
+            tenant=other_tenant,
+        )
+
+        existing_role = None
+        if existing_role_attributes is not None:
+            existing_role = Role.objects.using(MainRouter.admin_db).create(
+                name="read_only",
+                tenant=tenant,
+                **existing_role_attributes,
+            )
+        for role_name, role_attributes in existing_suffixes:
+            Role.objects.using(MainRouter.admin_db).create(
+                name=role_name,
+                tenant=tenant,
+                **role_attributes,
+            )
+        roles_before = (
+            Role.objects.using(MainRouter.admin_db).filter(tenant=tenant).count()
+        )
 
         social_account = SocialAccount(
             user=user,
@@ -14858,12 +15816,44 @@ class TestTenantFinishACSView:
 
         assert response.status_code == 302
 
-        # Verify no role was created or assigned
-        assert Role.objects.using(MainRouter.admin_db).count() == roles_before
-        assert not (
+        # Verify the fallback role was created or reused with read-only access
+        expected_role_count = roles_before + expected_role_created
+        assert (
+            Role.objects.using(MainRouter.admin_db).filter(tenant=tenant).count()
+            == expected_role_count
+        )
+        role = Role.objects.using(MainRouter.admin_db).get(
+            name=expected_role_name, tenant=tenant
+        )
+        if existing_role is not None and expected_role_name == "read_only":
+            assert role == existing_role
+        assert not role.manage_users
+        assert not role.manage_account
+        assert not role.manage_billing
+        assert not role.manage_providers
+        assert not role.manage_integrations
+        assert not role.manage_scans
+        assert role.unlimited_visibility
+        assert (
+            UserRoleRelationship.objects.using(MainRouter.admin_db)
+            .filter(user=user, role=role, tenant_id=tenant.id)
+            .exists()
+        )
+        assert (
+            UserRoleRelationship.objects.using(MainRouter.admin_db)
+            .filter(
+                id=other_tenant_relationship.id,
+                user=user,
+                role=other_tenant_role,
+                tenant_id=other_tenant.id,
+            )
+            .exists()
+        )
+        assert (
             UserRoleRelationship.objects.using(MainRouter.admin_db)
             .filter(user=user, tenant_id=tenant.id)
-            .exists()
+            .count()
+            == 1
         )
 
         # Membership is still created so the user belongs to the tenant
@@ -14871,6 +15861,131 @@ class TestTenantFinishACSView:
             Membership.objects.using(MainRouter.admin_db)
             .filter(user=user, tenant=tenant)
             .exists()
+        )
+
+    @pytest.mark.django_db(transaction=True)
+    def test_dispatch_serializes_concurrent_fallback_role_assignment(
+        self,
+        create_test_user,
+        tenants_fixture,
+        saml_setup,
+        monkeypatch,
+    ):
+        """Test concurrent callbacks assign only one fallback role"""
+        monkeypatch.setenv("SAML_SSO_CALLBACK_URL", "http://localhost/sso-complete")
+        user = create_test_user
+        tenant = tenants_fixture[0]
+
+        Role.objects.using(MainRouter.admin_db).create(
+            name="read_only",
+            tenant=tenant,
+            manage_users=True,
+            unlimited_visibility=True,
+        )
+
+        social_account = SocialAccount(
+            user=user,
+            provider="saml",
+            extra_data={
+                "firstName": ["John"],
+                "lastName": ["Doe"],
+                "organization": ["testing_company"],
+            },
+        )
+        # Without the user lock, both callbacks reach this query before either
+        # creates a fallback. With the lock, the first callback times out here
+        # while the second waits for the transaction to finish.
+        second_role_check_reached = Event()
+        concurrent_role_checks_detected = Event()
+        role_check_count_lock = Lock()
+        role_check_count = 0
+        original_role_check = TenantFinishACSView._user_has_tenant_role
+
+        def synchronize_role_checks(user_id, tenant_id):
+            nonlocal role_check_count
+            with role_check_count_lock:
+                role_check_count += 1
+                is_first_role_check = role_check_count == 1
+                if role_check_count == 2:
+                    second_role_check_reached.set()
+            if is_first_role_check and second_role_check_reached.wait(timeout=1):
+                concurrent_role_checks_detected.set()
+            return original_role_check(user_id, tenant_id)
+
+        def dispatch_callback():
+            close_old_connections()
+            try:
+                thread_user = User.objects.using(MainRouter.admin_db).get(pk=user.pk)
+                request = RequestFactory().get(
+                    reverse(
+                        "saml_finish_acs",
+                        kwargs={"organization_slug": saml_setup["domain"]},
+                    )
+                )
+                request.user = thread_user
+                request.session = {}
+                response = TenantFinishACSView.as_view()(
+                    request, organization_slug=saml_setup["domain"]
+                )
+                return response
+            finally:
+                close_old_connections()
+
+        with (
+            patch(
+                "allauth.socialaccount.providers.saml.views.get_app_or_404"
+            ) as mock_get_app_or_404,
+            patch(
+                "allauth.socialaccount.models.SocialApp.objects.get"
+            ) as mock_socialapp_get,
+            patch(
+                "allauth.socialaccount.models.SocialAccount.objects.get"
+            ) as mock_sa_get,
+            patch("api.models.SAMLDomainIndex.objects.get") as mock_saml_domain_get,
+            patch("api.models.SAMLConfiguration.objects.get") as mock_saml_config_get,
+            patch("api.models.User.objects.get") as mock_user_get,
+            patch.object(
+                TenantFinishACSView,
+                "_user_has_tenant_role",
+                side_effect=synchronize_role_checks,
+            ),
+        ):
+            mock_get_app_or_404.return_value = MagicMock(
+                provider="saml",
+                client_id=saml_setup["domain"],
+                name="Test App",
+                settings={},
+            )
+            mock_sa_get.return_value = social_account
+            mock_socialapp_get.return_value = MagicMock(provider_id="saml")
+            mock_saml_domain_get.return_value = SimpleNamespace(tenant_id=tenant.id)
+            mock_saml_config_get.return_value = SimpleNamespace(
+                email_domain=saml_setup["domain"], tenant=tenant
+            )
+            mock_user_get.side_effect = lambda *_args, **_kwargs: User.objects.using(
+                MainRouter.admin_db
+            ).get(pk=user.pk)
+
+            with ThreadPoolExecutor(max_workers=2) as executor:
+                responses = list(executor.map(lambda _: dispatch_callback(), range(2)))
+
+        assert role_check_count == 2
+        assert not concurrent_role_checks_detected.is_set()
+        for response in responses:
+            assert response.status_code == status.HTTP_302_FOUND
+            parsed_redirect = urlparse(response.url)
+            assert parsed_redirect.path == "/sso-complete"
+            assert set(parse_qs(parsed_redirect.query)) == {"id"}
+        relationships = UserRoleRelationship.objects.using(MainRouter.admin_db).filter(
+            user=user, tenant_id=tenant.id
+        )
+        assert relationships.count() == 1
+        assert relationships.get().role.name == "read_only_0"
+        assert (
+            Role.objects.using(MainRouter.admin_db)
+            .filter(tenant=tenant, name__startswith="read_only_")
+            .count()
+            == 1
         )
 
     def test_dispatch_skips_role_mapping_when_last_manage_account_user_maps_to_new_role(
@@ -15747,6 +16862,23 @@ class TestTenantApiKeyViewSet:
         assert response.status_code == status.HTTP_200_OK
         data = response.json()["data"]
         assert len(data) == len(api_keys_fixture)
+
+    def test_api_keys_list_with_orphaned_key(
+        self, authenticated_client, api_keys_fixture
+    ):
+        """Test listing keys whose owner was deleted: `entity` is serialized as null."""
+        orphaned_key = api_keys_fixture[0]
+        TenantAPIKey.objects.filter(id=orphaned_key.id).update(entity=None)
+
+        response = authenticated_client.get(reverse("api-key-list"))
+
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()["data"]
+        assert len(data) == len(api_keys_fixture)
+        serialized_key = next(
+            item for item in data if item["id"] == str(orphaned_key.id)
+        )
+        assert serialized_key["relationships"]["entity"]["data"] is None
 
     def test_api_keys_list_empty(self, authenticated_client, tenants_fixture):
         """Test listing API keys when none exist returns empty list."""
@@ -17821,19 +18953,14 @@ class TestMuteRuleViewSet:
         assert len(data) == 2
         assert data[0]["id"] == str(mute_rules_fixture[first_index].id)
 
-    @patch("api.v1.views.chain")
-    @patch("api.v1.views.reaggregate_all_finding_group_summaries_task.si")
-    @patch("api.v1.views.mute_historical_findings_task.si")
+    @patch("api.v1.views.mute_findings_in_latest_scans_task.apply_async")
     @patch("api.v1.views.transaction.on_commit", side_effect=lambda fn: fn())
     def test_mute_rules_create_valid(
         self,
         _mock_on_commit,
-        mock_mute_signature,
-        mock_reaggregate_signature,
-        mock_chain,
+        mock_mute_task,
         authenticated_client,
         findings_fixture,
-        create_test_user,
     ):
         """Test creating a valid mute rule."""
         finding_ids = [str(findings_fixture[0].id)]
@@ -17860,24 +18987,20 @@ class TestMuteRuleViewSet:
         assert response_data["attributes"]["name"] == "New Mute Rule"
         assert response_data["attributes"]["reason"] == "Security exception approved"
 
-        # Verify the finding was immediately muted
-        from api.models import Finding
-
         finding = Finding.objects.get(id=findings_fixture[0].id)
-        assert finding.muted is True
-        assert finding.muted_at is not None
-        assert finding.muted_reason == "Security exception approved"
+        assert finding.muted is False
+        assert finding.muted_at is None
+        assert finding.muted_reason is None
 
-        # Verify background task chain was called: mute → reaggregate all
-        mock_mute_signature.assert_called_once()
-        mock_reaggregate_signature.assert_called_once()
-        mock_chain.assert_called_once_with(
-            mock_mute_signature.return_value,
-            mock_reaggregate_signature.return_value,
+        mock_mute_task.assert_called_once_with(
+            kwargs={
+                "tenant_id": str(finding.tenant_id),
+                "mute_rule_id": response_data["id"],
+                "provider_ids": [str(finding.scan.provider_id)],
+            }
         )
-        mock_chain.return_value.apply_async.assert_called_once()
 
-    @patch("tasks.tasks.mute_historical_findings_task.apply_async")
+    @patch("api.v1.views.mute_findings_in_latest_scans_task.apply_async")
     def test_mute_rules_create_converts_finding_ids_to_uids(
         self,
         mock_task,
@@ -17913,7 +19036,7 @@ class TestMuteRuleViewSet:
         ]
         assert set(mute_rule.finding_uids) == set(expected_uids)
 
-    @patch("tasks.tasks.mute_historical_findings_task.apply_async")
+    @patch("api.v1.views.mute_findings_in_latest_scans_task.apply_async")
     def test_mute_rules_deduplicates_uids(
         self,
         mock_task,
@@ -17980,10 +19103,10 @@ class TestMuteRuleViewSet:
 
         finding1.refresh_from_db()
         finding2.refresh_from_db()
-        assert finding1.muted is True
-        assert finding2.muted is True
+        assert finding1.muted is False
+        assert finding2.muted is False
 
-    @patch("tasks.tasks.mute_historical_findings_task.apply_async")
+    @patch("api.v1.views.mute_findings_in_latest_scans_task.apply_async")
     def test_mute_rules_create_overlap_detection_active(
         self,
         mock_task,
@@ -18016,7 +19139,7 @@ class TestMuteRuleViewSet:
             "already muted" in error_detail.lower() or "overlap" in error_detail.lower()
         )
 
-    @patch("tasks.tasks.mute_historical_findings_task.apply_async")
+    @patch("api.v1.views.mute_findings_in_latest_scans_task.apply_async")
     def test_mute_rules_create_no_overlap_with_inactive(
         self,
         mock_task,
@@ -18072,7 +19195,7 @@ class TestMuteRuleViewSet:
             == "/data/attributes/finding_ids"
         )
 
-    @patch("tasks.tasks.mute_historical_findings_task.apply_async")
+    @patch("api.v1.views.mute_findings_in_latest_scans_task.apply_async")
     def test_mute_rules_create_invalid_finding_ids(
         self, mock_task, authenticated_client
     ):

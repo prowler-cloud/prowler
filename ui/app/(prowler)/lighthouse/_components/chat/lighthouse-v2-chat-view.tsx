@@ -1,39 +1,54 @@
 "use client";
 
-import { type ReactNode, type SubmitEvent } from "react";
+import posthogClient from "posthog-js";
+import { type ReactNode, type SubmitEvent, useState } from "react";
 
 import {
   Conversation,
   ConversationContent,
   ConversationScrollButton,
 } from "@/app/(prowler)/lighthouse/_components/ai-elements/conversation";
-import { selectLighthouseChatCanSend } from "@/app/(prowler)/lighthouse/_lib/chat-store";
+import {
+  selectLighthouseChatActiveSkill,
+  selectLighthouseChatCanSend,
+} from "@/app/(prowler)/lighthouse/_lib/chat-store";
 import { LIGHTHOUSE_V2_STREAM_STATUS } from "@/app/(prowler)/lighthouse/_lib/event-reducer";
+import { getSkillRunFromLaunch } from "@/app/(prowler)/lighthouse/_lib/messages";
 import {
   buildLighthouseV2ModelSelectionValue,
   type LighthouseV2ModelSelection,
   parseLighthouseV2ModelSelectionValue,
 } from "@/app/(prowler)/lighthouse/_lib/model-selection";
 import {
+  LIGHTHOUSE_V2_MESSAGE_ROLE,
   LIGHTHOUSE_V2_PROVIDER_TYPE,
   type LighthouseV2Configuration,
   type LighthouseV2ProviderType,
   type LighthouseV2SupportedModel,
   type LighthouseV2SupportedProvider,
 } from "@/app/(prowler)/lighthouse/_types";
+import { LighthouseCurrentContextBadge } from "@/components/lighthouse/context-chip";
 import { Card } from "@/components/shadcn";
 import {
   Combobox,
   type ComboboxGroup,
 } from "@/components/shadcn/combobox/combobox";
 import { Skeleton } from "@/components/shadcn/skeleton/skeleton";
+import { useLighthouseCurrentContext } from "@/hooks/use-lighthouse-context";
+import { useMountEffect } from "@/hooks/use-mount-effect";
 
 import { ProviderIcon } from "../config/provider-icon";
 
 import { ChatComposerPanel } from "./composer";
 import { ChatEmptyState } from "./empty-state";
 import { useLighthouseChatStore } from "./lighthouse-chat-store-provider";
+import {
+  resolveLighthouseFeedbackSurvey,
+  type LighthouseFeedbackSurvey,
+} from "./lighthouse-feedback-survey";
 import { MessageBubble } from "./message-bubble";
+import { SkillComposerPill } from "./skill-composer-pill";
+import { SkillRunProgress } from "./skill-run-progress";
 import { StreamingAssistantMessage } from "./streaming-message";
 
 export const LIGHTHOUSE_CHAT_SURFACE = {
@@ -53,6 +68,8 @@ export function LighthouseV2ChatView({
   surface,
   emptyStateFooter,
 }: LighthouseV2ChatViewProps) {
+  const currentContext = useLighthouseCurrentContext();
+  const feedbackSurvey = useLighthouseOutcomeFeedbackSurvey();
   // Whole-store subscription is intentional: the view renders most of the state and selectLighthouseChatCanSend takes full state.
   const state = useLighthouseChatStore((current) => current);
   const {
@@ -62,13 +79,16 @@ export function LighthouseV2ChatView({
     input,
     feedback,
     isLoadingSession,
-    lastSubmittedText,
+    lastSubmission,
+    failedOutcomeMessageId,
     selectedModelSelection,
     modelPreferenceSaving,
     setInput,
     dismissFeedback,
     selectModel,
     submitMessage,
+    resetToNewChat,
+    retryLastMessage,
   } = state;
   const { modelsByProvider, supportedProviders } = config;
   const connectedConfigurations = config.configurations.filter(
@@ -109,6 +129,11 @@ export function LighthouseV2ChatView({
     : "";
 
   const canSend = selectLighthouseChatCanSend(state);
+  const activeSkill = selectLighthouseChatActiveSkill(state);
+  const supportsAutomaticContext = surface === LIGHTHOUSE_CHAT_SURFACE.PANEL;
+  const messageContext = supportsAutomaticContext
+    ? currentContext.context
+    : undefined;
 
   const handleModelValueChange = (value: string) => {
     const selection = parseLighthouseV2ModelSelectionValue(value);
@@ -118,7 +143,7 @@ export function LighthouseV2ChatView({
 
   const handleSubmit = (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
-    void submitMessage(input);
+    void submitMessage(input, messageContext);
   };
 
   const hasLiveAssistantActivity =
@@ -126,15 +151,28 @@ export function LighthouseV2ChatView({
     Boolean(streamState.assistantText) ||
     streamState.toolCalls.length > 0;
   const hasConversation = messages.length > 0 || hasLiveAssistantActivity;
+  const failedOutcomeFeedbackTarget = failedOutcomeMessageId
+    ? messages.find((message) => message.id === failedOutcomeMessageId)
+    : undefined;
 
   const composerPanelProps = {
     feedback,
+    feedbackTarget: failedOutcomeFeedbackTarget,
+    feedbackSurvey,
     canRetry:
       streamState.status === LIGHTHOUSE_V2_STREAM_STATUS.DISCONNECTED &&
-      lastSubmittedText !== null,
-    onRetry: () =>
-      lastSubmittedText ? void submitMessage(lastSubmittedText) : undefined,
+      lastSubmission !== null,
+    onRetry: () => void retryLastMessage(),
     onDismissFeedback: dismissFeedback,
+    contextControl:
+      supportsAutomaticContext || activeSkill ? (
+        <>
+          {activeSkill && <SkillComposerPill skill={activeSkill} />}
+          {supportsAutomaticContext && (
+            <LighthouseCurrentContextBadge context={currentContext.context} />
+          )}
+        </>
+      ) : undefined,
     canSend,
     input,
     isStreaming: Boolean(streamState.activeTaskId),
@@ -162,7 +200,7 @@ export function LighthouseV2ChatView({
     selectedConfigurationConnected: selectedConfiguration?.connected === true,
     onInputChange: setInput,
     onSubmit: handleSubmit,
-    onSubmitText: submitMessage,
+    onSubmitText: (text: string) => submitMessage(text, messageContext),
   };
 
   const chatBody = isLoadingSession ? (
@@ -175,12 +213,44 @@ export function LighthouseV2ChatView({
             className="mx-auto w-full max-w-4xl gap-5 px-4 pt-8 pb-20 md:px-8"
             scrollClassName="minimal-scrollbar overflow-x-hidden overflow-y-auto"
           >
-            {messages.map((message) => (
-              <MessageBubble key={message.id} message={message} />
-            ))}
-            {hasLiveAssistantActivity && (
-              <StreamingAssistantMessage streamState={streamState} />
-            )}
+            {messages.map((message, index) => {
+              const previousMessage = messages[index - 1];
+              const skillRun = getSkillRunFromLaunch(message, previousMessage);
+              // The assistant owns the controls visually; its adjacent persisted
+              // user turn remains the API task/trace feedback target.
+              const feedbackTarget =
+                message.role === LIGHTHOUSE_V2_MESSAGE_ROLE.ASSISTANT &&
+                previousMessage?.role === LIGHTHOUSE_V2_MESSAGE_ROLE.USER &&
+                !previousMessage.id.startsWith("optimistic-")
+                  ? previousMessage
+                  : undefined;
+              return (
+                <MessageBubble
+                  key={message.id}
+                  message={message}
+                  feedbackTarget={feedbackTarget}
+                  feedbackSurvey={feedbackSurvey}
+                  skillRun={skillRun}
+                  onLaunchSkill={(skill) => {
+                    // The DyR prompts hand follow-up skills off to a separate
+                    // session; only the original launch context (it carries
+                    // the finding) travels along.
+                    resetToNewChat();
+                    void submitMessage(skill.name, skillRun?.context, skill);
+                  }}
+                />
+              );
+            })}
+            {hasLiveAssistantActivity &&
+              (activeSkill ? (
+                <SkillRunProgress
+                  skill={activeSkill}
+                  streamState={streamState}
+                  startedAt={messages.at(-1)?.insertedAt}
+                />
+              ) : (
+                <StreamingAssistantMessage streamState={streamState} />
+              ))}
           </ConversationContent>
           <ConversationScrollButton className="z-20" />
         </Conversation>
@@ -203,6 +273,9 @@ export function LighthouseV2ChatView({
       {...composerPanelProps}
       footer={emptyStateFooter}
       compact={surface === LIGHTHOUSE_CHAT_SURFACE.PANEL}
+      suggestions={
+        supportsAutomaticContext ? currentContext.page.suggestions : undefined
+      }
     />
   );
 
@@ -222,6 +295,18 @@ export function LighthouseV2ChatView({
       {chatBody}
     </div>
   );
+}
+
+function useLighthouseOutcomeFeedbackSurvey(): LighthouseFeedbackSurvey | null {
+  const [survey, setSurvey] = useState<LighthouseFeedbackSurvey | null>(null);
+
+  useMountEffect(() => {
+    return posthogClient.onSurveysLoaded((surveys) => {
+      setSurvey(resolveLighthouseFeedbackSurvey(surveys));
+    });
+  });
+
+  return survey;
 }
 
 function SessionLoadingState() {

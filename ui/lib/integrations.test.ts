@@ -2,6 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   assertGatedIntegrations,
+  GATED_INTEGRATIONS,
+  isGatedIntegrationEnabled,
   readGatedEnv,
   warnGatedIntegrationsMisconfig,
 } from "./integrations";
@@ -22,6 +24,7 @@ const GATED_ENV_VARS = [
   "POSTHOG_KEY",
   "UI_POSTHOG_HOST",
   "POSTHOG_HOST",
+  "UI_POSTHOG_UI_HOST",
 ] as const;
 
 beforeEach(() => {
@@ -213,7 +216,79 @@ describe("assertGatedIntegrations", () => {
   });
 });
 
+describe("isGatedIntegrationEnabled", () => {
+  it("is false when neither the enable flag nor any legacy name is set", () => {
+    // Given no PostHog env at all
+
+    // When / Then
+    expect(isGatedIntegrationEnabled(GATED_INTEGRATIONS.posthog)).toBe(false);
+  });
+
+  it("is true when the enable flag is 'true'", () => {
+    // Given
+    vi.stubEnv("UI_POSTHOG_ENABLED", "true");
+    vi.stubEnv("UI_POSTHOG_KEY", "phc_key");
+    vi.stubEnv("UI_POSTHOG_HOST", "https://eu.i.posthog.com");
+
+    // When / Then
+    expect(isGatedIntegrationEnabled(GATED_INTEGRATIONS.posthog)).toBe(true);
+  });
+
+  it("is true for a complete legacy config without the enable flag", () => {
+    // Given - legacy presence activates without the flag
+    vi.stubEnv("POSTHOG_KEY", "phc_key");
+    vi.stubEnv("POSTHOG_HOST", "https://eu.i.posthog.com");
+
+    // When / Then
+    expect(isGatedIntegrationEnabled(GATED_INTEGRATIONS.posthog)).toBe(true);
+  });
+
+  it("is false for a partial legacy config without the enable flag", () => {
+    // Given - incomplete legacy set (host missing)
+    vi.stubEnv("POSTHOG_KEY", "phc_key");
+
+    // When / Then
+    expect(isGatedIntegrationEnabled(GATED_INTEGRATIONS.posthog)).toBe(false);
+  });
+
+  it("is false when the enable flag is explicitly 'false'", () => {
+    // Given
+    vi.stubEnv("UI_POSTHOG_ENABLED", "false");
+    vi.stubEnv("UI_POSTHOG_KEY", "phc_key");
+
+    // When / Then
+    expect(isGatedIntegrationEnabled(GATED_INTEGRATIONS.posthog)).toBe(false);
+  });
+
+  it("resolves each integration independently", () => {
+    // Given - only Sentry is enabled
+    vi.stubEnv("UI_SENTRY_ENABLED", "true");
+    vi.stubEnv("UI_SENTRY_DSN", "https://dsn.example");
+
+    // When / Then
+    expect(isGatedIntegrationEnabled(GATED_INTEGRATIONS.sentry)).toBe(true);
+    expect(isGatedIntegrationEnabled(GATED_INTEGRATIONS.posthog)).toBe(false);
+    expect(isGatedIntegrationEnabled(GATED_INTEGRATIONS.googleTagManager)).toBe(
+      false,
+    );
+  });
+});
+
 describe("warnGatedIntegrationsMisconfig", () => {
+  it("warns when the optional PostHog app host is set while disabled", () => {
+    // Given
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    vi.stubEnv("UI_POSTHOG_UI_HOST", "https://eu.posthog.com");
+
+    // When
+    warnGatedIntegrationsMisconfig();
+
+    // Then
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining("UI_POSTHOG_UI_HOST"),
+    );
+  });
+
   it("warns when a config value is set but its enable flag is not 'true'", () => {
     // Given
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});

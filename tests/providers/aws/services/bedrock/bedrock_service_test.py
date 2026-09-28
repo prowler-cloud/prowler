@@ -2,6 +2,7 @@ from unittest import mock
 from unittest.mock import MagicMock
 
 import botocore
+import pytest
 from boto3 import client
 from moto import mock_aws
 
@@ -283,11 +284,20 @@ class TestBedrockPagination:
 class TestBedrockAgentPagination:
     """Test suite for Bedrock Agent pagination logic."""
 
-    def test_list_agents_pagination(self):
-        """Test that list_agents iterates through all pages."""
-        # Mock the audit_info
+    @pytest.mark.parametrize("partition", ["aws", "aws-us-gov", "aws-cn"])
+    def test_list_agents_pagination(self, partition):
+        """Test that list_agents iterates through all pages, in every partition.
+
+        The ARN is built from the audited partition, so GovCloud and China must
+        produce aws-us-gov/aws-cn ARNs. A hardcoded `arn:aws:` here yielded an ARN
+        that does not exist in those partitions, and exact --resource-arn matching
+        against it could never succeed.
+        """
+        # Mock the audit_info. AWSService reads the partition off provider.identity,
+        # so setting audited_partition alone leaves a MagicMock in the ARN.
         audit_info = MagicMock()
-        audit_info.audited_partition = "aws"
+        audit_info.identity.partition = partition
+        audit_info.audited_partition = partition
         audit_info.audited_account = "123456789012"
         audit_info.audit_resources = None
 
@@ -322,6 +332,7 @@ class TestBedrockAgentPagination:
         bedrock_agent_service = BedrockAgent(audit_info)
         bedrock_agent_service.regional_clients = {"us-east-1": regional_client}
         bedrock_agent_service.agents = {}  # Clear init side effects
+        bedrock_agent_service.all_agents = {}
         bedrock_agent_service.audited_account = "123456789012"
 
         # Run method
@@ -329,14 +340,16 @@ class TestBedrockAgentPagination:
 
         # Assertions
         assert len(bedrock_agent_service.agents) == 2
-        assert (
-            "arn:aws:bedrock:us-east-1:123456789012:agent/agent-1"
-            in bedrock_agent_service.agents
-        )
-        assert (
-            "arn:aws:bedrock:us-east-1:123456789012:agent/agent-2"
-            in bedrock_agent_service.agents
-        )
+        for agent_id in ("agent-1", "agent-2"):
+            expected_arn = (
+                f"arn:{partition}:bedrock:us-east-1:123456789012:agent/{agent_id}"
+            )
+            assert expected_arn in bedrock_agent_service.agents
+            # With no --resource-arn, the complete inventory and the reported set
+            # hold the very same objects.
+            assert bedrock_agent_service.all_agents[expected_arn] is (
+                bedrock_agent_service.agents[expected_arn]
+            )
 
         # Verify paginator was used
         regional_client.get_paginator.assert_called_once_with("list_agents")

@@ -1,15 +1,19 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const {
+  addScanOperationMock,
   fetchMock,
   getAuthHeadersMock,
   handleApiErrorMock,
   handleApiResponseMock,
+  isReportDownloadLockedMock,
 } = vi.hoisted(() => ({
+  addScanOperationMock: vi.fn(),
   fetchMock: vi.fn(),
   getAuthHeadersMock: vi.fn(),
   handleApiErrorMock: vi.fn(),
   handleApiResponseMock: vi.fn(),
+  isReportDownloadLockedMock: vi.fn(),
 }));
 
 vi.mock("@/lib", () => ({
@@ -21,18 +25,109 @@ vi.mock("@/lib", () => ({
     error instanceof Error ? error.message : String(error),
 }));
 
+vi.mock("next/cache", () => ({
+  revalidatePath: vi.fn(),
+}));
+
 vi.mock("@/lib/server-actions-helper", () => ({
   handleApiError: handleApiErrorMock,
   handleApiResponse: handleApiResponseMock,
 }));
 
 vi.mock("@/lib/sentry-breadcrumbs", () => ({
-  addScanOperation: vi.fn(),
+  addScanOperation: addScanOperationMock,
 }));
 
-import { getExportsZip, launchOrganizationScans } from "./scans";
+vi.mock("@/lib/report-download-access", () => ({
+  REPORT_DOWNLOAD_LOCKED_ERROR:
+    "Report downloads require an active subscription.",
+  isReportDownloadLocked: isReportDownloadLockedMock,
+}));
+
+import {
+  createPartialScan,
+  getComplianceCsv,
+  getComplianceOcsf,
+  getCompliancePdfReport,
+  getExportsZip,
+  launchOrganizationScans,
+  scheduleOrganizationDailyScans,
+} from "./scans";
 
 describe("launchOrganizationScans", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.stubGlobal("fetch", fetchMock);
+    getAuthHeadersMock.mockResolvedValue({ Authorization: "Bearer token" });
+    handleApiResponseMock.mockResolvedValue({ data: [{ id: "scan-1" }] });
+  });
+
+  it("sends one organization bulk scan request", async () => {
+    // Given
+    const scans = [
+      { id: "scan-1", type: "scans" },
+      { id: "scan-2", type: "scans" },
+    ];
+    fetchMock.mockResolvedValue(new Response(null, { status: 202 }));
+    handleApiResponseMock.mockResolvedValue({ data: scans });
+
+    // When
+    const result = await launchOrganizationScans("organization-1");
+
+    // Then
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://api.example.com/api/v1/scans/bulk",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({
+          data: {
+            type: "scans-bulk",
+            relationships: {
+              organization: {
+                data: {
+                  type: "organizations",
+                  id: "organization-1",
+                },
+              },
+            },
+          },
+        }),
+      }),
+    );
+    expect(handleApiResponseMock).toHaveBeenCalledWith(
+      expect.any(Response),
+      "/scans",
+    );
+    expect(result).toEqual({ data: scans });
+    expect(addScanOperationMock).toHaveBeenCalledTimes(1);
+    expect(addScanOperationMock).toHaveBeenCalledWith("start", undefined, {
+      organization_id: "organization-1",
+      bulk: true,
+      scan_count: 2,
+      scan_ids: "scan-1,scan-2",
+    });
+  });
+
+  it("rejects a successful response without a scan collection", async () => {
+    // Given
+    fetchMock.mockResolvedValue(new Response(null, { status: 202 }));
+    handleApiResponseMock.mockResolvedValue({
+      data: { id: "scan-1", type: "scans" },
+    });
+
+    // When
+    const result = await launchOrganizationScans("organization-1");
+
+    // Then
+    expect(result).toEqual({
+      error: "The bulk scan response did not contain a scan collection.",
+    });
+    expect(addScanOperationMock).not.toHaveBeenCalled();
+  });
+});
+
+describe("scheduleOrganizationDailyScans", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.stubGlobal("fetch", fetchMock);
@@ -63,7 +158,7 @@ describe("launchOrganizationScans", () => {
     });
 
     // When
-    const result = await launchOrganizationScans(providerIds, "daily");
+    const result = await scheduleOrganizationDailyScans(providerIds);
 
     // Then
     expect(maxActiveRequests).toBeLessThanOrEqual(5);
@@ -77,6 +172,7 @@ describe("getExportsZip", () => {
     vi.clearAllMocks();
     vi.stubGlobal("fetch", fetchMock);
     getAuthHeadersMock.mockResolvedValue({ Authorization: "Bearer token" });
+    isReportDownloadLockedMock.mockResolvedValue(false);
   });
 
   it("returns a generic server error when the report endpoint returns HTML", async () => {
@@ -99,6 +195,101 @@ describe("getExportsZip", () => {
     expect(result).toEqual({
       error:
         "Server is temporarily unavailable. Please try again in a few minutes.",
+    });
+  });
+});
+
+describe("report downloads for subscription-only tenants", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.stubGlobal("fetch", fetchMock);
+    getAuthHeadersMock.mockResolvedValue({ Authorization: "Bearer token" });
+    isReportDownloadLockedMock.mockResolvedValue(true);
+  });
+
+  it.each([
+    { name: "scan ZIP", download: () => getExportsZip("scan-123") },
+    {
+      name: "compliance CSV",
+      download: () => getComplianceCsv("scan-123", "cis_2.0_aws"),
+    },
+    {
+      name: "compliance OCSF",
+      download: () => getComplianceOcsf("scan-123", "dora_aws"),
+    },
+    {
+      name: "compliance PDF",
+      download: () => getCompliancePdfReport("scan-123", "threatscore"),
+    },
+  ])("rejects the $name without calling the API", async ({ download }) => {
+    // When
+    const result = await download();
+
+    // Then
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(result).toEqual({
+      error: "Report downloads require an active subscription.",
+    });
+  });
+});
+
+describe("createPartialScan", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.stubGlobal("fetch", fetchMock);
+    getAuthHeadersMock.mockResolvedValue({ Authorization: "Bearer token" });
+    fetchMock.mockResolvedValue(new Response(null, { status: 202 }));
+    handleApiResponseMock.mockResolvedValue({ data: { id: "scan-1" } });
+  });
+
+  it("posts the resource uids as a scan of one provider", async () => {
+    // When
+    const result = await createPartialScan({
+      providerId: "provider-1",
+      resourceUids: ["arn:aws:s3:::bucket"],
+    });
+
+    // Then
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://api.example.com/api/v1/scans",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({
+          data: {
+            type: "scans",
+            attributes: { resource_uids: ["arn:aws:s3:::bucket"] },
+            relationships: {
+              provider: { data: { type: "providers", id: "provider-1" } },
+            },
+          },
+        }),
+      }),
+    );
+    expect(handleApiResponseMock).toHaveBeenCalledWith(
+      expect.any(Response),
+      "/scans",
+    );
+    expect(result).toEqual({ data: { id: "scan-1" } });
+    expect(addScanOperationMock).toHaveBeenCalledWith("start", "scan-1");
+  });
+
+  it("refuses more resources than the API accepts without calling it", async () => {
+    // Given — the API caps a partial scan at 10 resources.
+    const resourceUids = Array.from(
+      { length: 11 },
+      (_, index) => `arn:aws:s3:::bucket-${index}`,
+    );
+
+    // When
+    const result = await createPartialScan({
+      providerId: "provider-1",
+      resourceUids,
+    });
+
+    // Then
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(result).toEqual({
+      error: "Select between 1 and 10 resources to re-check",
     });
   });
 });

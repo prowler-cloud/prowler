@@ -1,3 +1,5 @@
+import { extractUtmParams, type UtmParams } from "@/lib/utm";
+
 const DEFAULT_CALLBACK_PATH = "/";
 const INVITATION_TOKEN_PARAM = "invitation_token";
 // Origin used only to resolve relative paths; never part of the returned value.
@@ -61,5 +63,62 @@ export const getInvitationTokenFromCallbackPath = (callbackPath: string) => {
     return url.searchParams.get(INVITATION_TOKEN_PARAM);
   } catch (_error) {
     return null;
+  }
+};
+
+export const appendAttributionToCallbackPath = (
+  callbackPath: string,
+  attribution: UtmParams,
+): string => {
+  const safeCallbackPath = getSafeCallbackPathFromValue(callbackPath);
+  if (Object.keys(attribution).length === 0) {
+    return safeCallbackPath;
+  }
+
+  try {
+    const url = new URL(safeCallbackPath, INTERNAL_ORIGIN);
+    for (const [key, value] of Object.entries(attribution)) {
+      if (!url.searchParams.has(key)) {
+        url.searchParams.set(key, value);
+      }
+    }
+    return `${url.pathname}${url.search}${url.hash}`;
+  } catch (_error) {
+    return safeCallbackPath;
+  }
+};
+
+export const getAttributionParamsFromCallbackPath = (
+  callbackPath: string,
+): UtmParams => {
+  const safeCallbackPath = getSafeCallbackPathFromValue(callbackPath);
+
+  try {
+    const url = new URL(safeCallbackPath, INTERNAL_ORIGIN);
+    return extractUtmParams(url.searchParams);
+  } catch (_error) {
+    return {};
+  }
+};
+
+const SELF_REGISTRATION_DISABLED_CODE = "self_registration_disabled";
+
+// The API answers a social login from a brand-new user with this error code
+// when the deployment only allows invited users.
+export const isSelfRegistrationDisabledResponse = async (
+  response: Response,
+): Promise<boolean> => {
+  if (response.status !== 403) return false;
+  try {
+    const body = (await response.json()) as {
+      errors?: Array<{ code?: string }>;
+    };
+    return (
+      body.errors?.some(
+        (error) => error.code === SELF_REGISTRATION_DISABLED_CODE,
+      ) ?? false
+    );
+  } catch (_error) {
+    return false;
   }
 };

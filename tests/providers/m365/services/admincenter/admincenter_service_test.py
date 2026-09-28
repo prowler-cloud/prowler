@@ -46,6 +46,7 @@ def mock_admincenter_get_organization(_):
         guid="id-1",
         name="Test",
         customer_lockbox_enabled=False,
+        bookings_enabled=False,
     )
 
 
@@ -146,6 +147,7 @@ class Test_AdminCenter_Service:
             assert (
                 admincenter_client.organization_config.customer_lockbox_enabled is False
             )
+            assert admincenter_client.organization_config.bookings_enabled is False
             admincenter_client.powershell.close()
 
     def test_get_sharing_policy(self):
@@ -162,6 +164,70 @@ class Test_AdminCenter_Service:
             assert admincenter_client.sharing_policy.guid == "id-1"
             assert admincenter_client.sharing_policy.name == "Test"
             assert admincenter_client.sharing_policy.enabled is False
+            admincenter_client.powershell.close()
+
+    @patch(
+        "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.get_mailbox_policy",
+        return_value=[
+            {
+                "Id": "OwaMailboxPolicy-Default",
+                "IsDefault": True,
+                "BookingsMailboxCreationEnabled": True,
+            },
+            {
+                "Id": "OwaMailboxPolicy-Custom",
+                "IsDefault": False,
+                "BookingsMailboxCreationEnabled": False,
+            },
+        ],
+    )
+    def test_get_mailbox_policy(self, _mock_get_mailbox_policy):
+        with (
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online",
+                return_value=True,
+            ),
+        ):
+            admincenter_client = AdminCenter(
+                set_mocked_m365_provider(
+                    identity=M365IdentityInfo(tenant_domain=DOMAIN)
+                )
+            )
+            mailbox_policies = admincenter_client.mailbox_policies
+            assert len(mailbox_policies) == 2
+            assert mailbox_policies[0].id == "OwaMailboxPolicy-Default"
+            assert mailbox_policies[0].is_default is True
+            assert mailbox_policies[0].bookings_mailbox_creation_enabled is True
+            assert mailbox_policies[1].id == "OwaMailboxPolicy-Custom"
+            assert mailbox_policies[1].is_default is False
+            assert mailbox_policies[1].bookings_mailbox_creation_enabled is False
+            admincenter_client.powershell.close()
+
+    @patch(
+        "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.get_mailbox_policy",
+        return_value={
+            "Id": "OwaMailboxPolicy-Default",
+            "IsDefault": True,
+            "BookingsMailboxCreationEnabled": False,
+        },
+    )
+    def test_get_mailbox_policy_single_dict(self, _mock_get_mailbox_policy):
+        with (
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online",
+                return_value=True,
+            ),
+        ):
+            admincenter_client = AdminCenter(
+                set_mocked_m365_provider(
+                    identity=M365IdentityInfo(tenant_domain=DOMAIN)
+                )
+            )
+            mailbox_policies = admincenter_client.mailbox_policies
+            assert len(mailbox_policies) == 1
+            assert mailbox_policies[0].id == "OwaMailboxPolicy-Default"
+            assert mailbox_policies[0].is_default is True
+            assert mailbox_policies[0].bookings_mailbox_creation_enabled is False
             admincenter_client.powershell.close()
 
 

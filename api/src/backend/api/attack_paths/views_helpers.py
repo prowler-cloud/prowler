@@ -115,7 +115,26 @@ def execute_query(
         # TODO: drop after Neptune cutover
         # Route reads by the scan row's recorded sink, not by current settings.
         backend = sink_module.get_backend_for_scan(scan)
-        graph = backend.execute_read_query(database_name, definition.cypher, parameters)
+
+        cypher = definition.cypher
+        # Every synced node carries a `_Provider_{uuid}` isolation label (the
+        # sync labels the whole provider subgraph). Injecting it into the
+        # predefined query's node patterns gives the planner a selective label
+        # index to seed from instead of a global label scan (`:AWSRole` across
+        # every tenant), which on Neptune is the difference between a sub-second
+        # plan and a query that times out. The custom-query path relies on this
+        # same injection.
+        #
+        # Restrict it to migrated scans: that catalog runs on the Neptune sink
+        # where the plan blowup happens, while the pre-cutover legacy catalog
+        # runs on the old sink and is dropped after the cutover, so leave it
+        # byte-for-byte unchanged. This only affects the query plan, not
+        # isolation - `_serialize_graph` already label-filters both catalogs.
+        # TODO: drop the is_migrated guard after Neptune cutover
+        if scan.is_migrated:
+            cypher = inject_provider_label(cypher, provider_id)
+
+        graph = backend.execute_read_query(database_name, cypher, parameters)
         return _serialize_graph(graph, provider_id)
 
     except graph_database.WriteQueryNotAllowedException:

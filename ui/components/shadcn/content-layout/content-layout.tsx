@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { type ReactElement } from "react";
 
 import {
   Navbar,
@@ -7,7 +7,7 @@ import {
 
 interface ContentLayoutProps {
   title: string;
-  icon?: string | ReactNode;
+  icon?: ReactElement;
   onboardingAction?: OnboardingActionConfig;
   children: React.ReactNode;
 }
