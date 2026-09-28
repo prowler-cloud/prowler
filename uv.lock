@@ -95,6 +95,7 @@ constraints = [
     { name = "httpcore", specifier = "==1.0.9" },
     { name = "httplib2", specifier = "==0.31.2" },
     { name = "httpx", specifier = "==0.28.1" },
+    { name = "huaweicloudsdkbms", specifier = "==3.1.204" },
     { name = "huaweicloudsdkcore", specifier = "==3.1.204" },
     { name = "huaweicloudsdkcts", specifier = "==3.1.204" },
     { name = "huaweicloudsdkecs", specifier = "==3.1.204" },
@@ -2249,6 +2250,17 @@ http2 = [
 ]
 
 [[package]]
+name = "huaweicloudsdkbms"
+version = "3.1.204"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "huaweicloudsdkcore" },
+]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/db/66/8173283a470445592104218e65a0562ec642ddc49a5d23479db2bbf35e85/huaweicloudsdkbms-3.1.204-py3-none-any.whl", hash = "sha256:48053a62bcee743d63b4faf775a104c1abecc6443817a6c858131642fb37970f", size = 264685, upload-time = "2026-07-09T09:01:15.537Z" },
+]
+
+[[package]]
 name = "huaweicloudsdkcore"
 version = "3.1.204"
 source = { registry = "https://pypi.org/simple" }
@@ -3748,6 +3760,7 @@ dependencies = [
     { name = "google-api-python-client" },
     { name = "google-auth-httplib2" },
     { name = "h2" },
+    { name = "huaweicloudsdkbms" },
     { name = "huaweicloudsdkcore" },
     { name = "huaweicloudsdkcts" },
     { name = "huaweicloudsdkecs" },
@@ -3868,6 +3881,7 @@ requires-dist = [
     { name = "google-api-python-client", specifier = "==2.163.0" },
     { name = "google-auth-httplib2", specifier = "==0.2.0" },
     { name = "h2", specifier = "==4.3.0" },
+    { name = "huaweicloudsdkbms", specifier = "==3.1.204" },
     { name = "huaweicloudsdkcore", specifier = "==3.1.204" },
     { name = "huaweicloudsdkcts", specifier = "==3.1.204" },
     { name = "huaweicloudsdkecs", specifier = "==3.1.204" },

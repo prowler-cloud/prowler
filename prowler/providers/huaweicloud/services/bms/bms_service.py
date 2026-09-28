@@ -20,39 +20,7 @@ class BMS(HuaweiCloudService):
 
         self.servers = {}
 
-        if self.session.is_mock:
-            self._load_mock_data()
-            return
-
         self.__threading_call__(self._list_bare_metal_servers)
-
-    def _load_mock_data(self):
-        """Load mock data for testing."""
-        region = "la-south-2"
-        self.servers["bms-mock-001"] = BareMetalServer(
-            id="bms-mock-001",
-            name="bms-public-server",
-            region=region,
-            status="ACTIVE",
-            public_ip="123.45.67.89",
-            security_groups={"sg-default": "default"},
-        )
-        self.servers["bms-mock-002"] = BareMetalServer(
-            id="bms-mock-002",
-            name="bms-private-server",
-            region=region,
-            status="ACTIVE",
-            public_ip="",
-            security_groups={"sg-custom": "custom-sg"},
-        )
-        self.servers["bms-mock-003"] = BareMetalServer(
-            id="bms-mock-003",
-            name="bms-secure-server",
-            region=region,
-            status="ACTIVE",
-            public_ip="",
-            security_groups={"sg-secure": "web-sg"},
-        )
 
     def _list_bare_metal_servers(self, regional_client):
         """List all BMS instances in the region."""
