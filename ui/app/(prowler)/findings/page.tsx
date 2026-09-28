@@ -1,3 +1,4 @@
+import { Tag } from "lucide-react";
 import { Suspense } from "react";
 
 import {
@@ -75,7 +76,7 @@ export default async function Findings({
   return (
     <ContentLayout
       title="Findings"
-      icon="lucide:tag"
+      icon={<Tag />}
       onboardingAction={onboardingAction}
     >
       <FilterTransitionWrapper>
