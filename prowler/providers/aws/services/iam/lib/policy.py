@@ -801,6 +801,96 @@ def is_condition_block_restrictive(
     return is_condition_valid
 
 
+def is_condition_block_restrictive_for_trusted_accounts(
+    condition_statement: dict, trusted_account_ids: set[str]
+) -> bool:
+    """Check whether the condition limits access to trusted accounts.
+
+    Principal-account values are alternatives within an operator and
+    restrictions from different operators intersect. Other supported account
+    conditions retain the single-account evaluation used by
+    :func:`is_condition_block_restrictive`.
+
+    This set-aware helper is separate from
+    :func:`is_condition_block_restrictive`, whose callers need mixed account
+    lists to remain non-restrictive for a single-account check.
+    """
+    principal_account_groups = []
+    remaining_conditions = {}
+    valid_principal_account_groups = True
+
+    for operator, conditions in condition_statement.items():
+        remaining_operator_conditions = {}
+        for condition_key, condition_value in conditions.items():
+            if (
+                operator in ("StringEquals", "StringLike")
+                and condition_key.lower() == "aws:principalaccount"
+            ):
+                if isinstance(condition_value, str):
+                    values = [condition_value]
+                elif (
+                    isinstance(condition_value, list)
+                    and all(isinstance(value, str) for value in condition_value)
+                    and condition_value
+                ):
+                    values = condition_value
+                else:
+                    values = []
+                    valid_principal_account_groups = False
+
+                principal_account_groups.append((operator, values))
+            else:
+                remaining_operator_conditions[condition_key] = condition_value
+
+        if remaining_operator_conditions:
+            remaining_conditions[operator] = remaining_operator_conditions
+
+    principal_account_restrictive = False
+    if principal_account_groups and valid_principal_account_groups:
+        exact_groups = [
+            set(values)
+            for operator, values in principal_account_groups
+            if operator == "StringEquals"
+        ]
+        if exact_groups:
+            possible_accounts = set.intersection(*exact_groups)
+        else:
+            literal_groups = [
+                set(values)
+                for _, values in principal_account_groups
+                if all(
+                    not any(character in value for character in "*?")
+                    for value in values
+                )
+            ]
+            possible_accounts = (
+                set.intersection(*literal_groups) if literal_groups else None
+            )
+
+        if possible_accounts is not None:
+            for operator, values in principal_account_groups:
+                if operator == "StringLike":
+                    possible_accounts = {
+                        account_id
+                        for account_id in possible_accounts
+                        if any(
+                            iam_pattern_matches(pattern, account_id)
+                            for pattern in values
+                        )
+                    }
+
+            principal_account_restrictive = possible_accounts.issubset(
+                trusted_account_ids
+            )
+
+    remaining_conditions_restrictive = remaining_conditions and any(
+        is_condition_block_restrictive(remaining_conditions, account_id)
+        for account_id in trusted_account_ids
+    )
+
+    return bool(principal_account_restrictive or remaining_conditions_restrictive)
+
+
 def is_condition_block_restrictive_organization(
     condition_statement: dict,
 ):

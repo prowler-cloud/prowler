@@ -11,6 +11,7 @@ from prowler.providers.aws.services.iam.lib.policy import (
     iam_pattern_matches,
     is_codebuild_using_allowed_github_org,
     is_condition_block_restrictive,
+    is_condition_block_restrictive_for_trusted_accounts,
     is_condition_block_restrictive_organization,
     is_condition_block_restrictive_sns_endpoint,
     is_condition_restricting_from_private_ip,
@@ -364,6 +365,79 @@ class Test_Policy:
         }
         assert not is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
+        )
+
+    def test_trusted_account_condition_allows_subset_of_trusted_accounts(self):
+        condition_statement = {
+            "StringEquals": {
+                "aws:PrincipalAccount": TRUSTED_AWS_ACCOUNT_NUMBER_LIST[:2]
+            }
+        }
+
+        assert is_condition_block_restrictive_for_trusted_accounts(
+            condition_statement,
+            set(TRUSTED_AWS_ACCOUNT_NUMBER_LIST),
+        )
+
+    def test_trusted_account_condition_rejects_untrusted_list_member(self):
+        condition_statement = {
+            "StringEquals": {
+                "aws:PrincipalAccount": [
+                    TRUSTED_AWS_ACCOUNT_NUMBER,
+                    NON_TRUSTED_AWS_ACCOUNT_NUMBER,
+                ]
+            }
+        }
+
+        assert not is_condition_block_restrictive_for_trusted_accounts(
+            condition_statement, {TRUSTED_AWS_ACCOUNT_NUMBER}
+        )
+
+    def test_trusted_account_condition_intersects_operators(self):
+        condition_statement = {
+            "StringEquals": {
+                "aws:PrincipalAccount": [
+                    TRUSTED_AWS_ACCOUNT_NUMBER,
+                    NON_TRUSTED_AWS_ACCOUNT_NUMBER,
+                ]
+            },
+            "StringLike": {"aws:PrincipalAccount": TRUSTED_AWS_ACCOUNT_NUMBER},
+        }
+
+        assert is_condition_block_restrictive_for_trusted_accounts(
+            condition_statement, {TRUSTED_AWS_ACCOUNT_NUMBER}
+        )
+
+    def test_trusted_account_condition_intersects_string_like_wildcard(self):
+        condition_statement = {
+            "StringEquals": {"aws:PrincipalAccount": [TRUSTED_AWS_ACCOUNT_NUMBER]},
+            "StringLike": {"aws:PrincipalAccount": "12345678901*"},
+        }
+
+        assert is_condition_block_restrictive_for_trusted_accounts(
+            condition_statement, {TRUSTED_AWS_ACCOUNT_NUMBER}
+        )
+
+    def test_trusted_account_condition_rejects_unbounded_string_like(self):
+        condition_statement = {"StringLike": {"aws:PrincipalAccount": "12345678901*"}}
+
+        assert not is_condition_block_restrictive_for_trusted_accounts(
+            condition_statement, {TRUSTED_AWS_ACCOUNT_NUMBER}
+        )
+
+    def test_trusted_account_condition_uses_other_restrictive_conditions(self):
+        condition_statement = {
+            "StringEquals": {
+                "aws:PrincipalAccount": [
+                    TRUSTED_AWS_ACCOUNT_NUMBER,
+                    NON_TRUSTED_AWS_ACCOUNT_NUMBER,
+                ],
+                "aws:SourceAccount": TRUSTED_AWS_ACCOUNT_NUMBER,
+            }
+        }
+
+        assert is_condition_block_restrictive_for_trusted_accounts(
+            condition_statement, {TRUSTED_AWS_ACCOUNT_NUMBER}
         )
 
     def test_condition_parser_string_equals_aws_PrincipalAccount_list(self):
