@@ -3,12 +3,8 @@
 import { NextResponse } from "next/server";
 
 import { signIn } from "@/auth.config";
-<<<<<<< HEAD
 import { getSafeCallbackPath } from "@/lib/auth-callback-url";
 import { apiBaseUrl, baseUrl } from "@/lib/helper";
-=======
-import { baseUrl } from "@/lib/helper";
->>>>>>> 0fd405c70 (Successfully UAA SAML deployment)
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -22,14 +18,12 @@ export async function GET(req: Request) {
     );
   }
 
-  // Use API_BASE_URL (runtime env var) rather than NEXT_PUBLIC_API_BASE_URL
-  // which is baked into the bundle at build time and may contain the Docker
-  // Compose hostname (prowler-api) instead of the deployed public URL.
-  const apiBaseUrl =
-    process.env.API_BASE_URL || process.env.NEXT_PUBLIC_API_BASE_URL;
+  // Cloud.gov routes UI-to-API traffic over its internal network. Keep the
+  // browser-facing runtime setting as the fallback for other deployments.
+  const serverApiBaseUrl = process.env.API_BASE_URL || apiBaseUrl;
 
   try {
-    const response = await fetch(`${apiBaseUrl}/tokens/saml?id=${id}`, {
+    const response = await fetch(`${serverApiBaseUrl}/tokens/saml?id=${id}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/vnd.api+json",
@@ -62,6 +56,8 @@ export async function GET(req: Request) {
     return NextResponse.redirect(new URL(callbackPath, baseUrl));
   } catch (error) {
     console.error("SAML authentication failed:", error);
-    return NextResponse.redirect(new URL("/sign-in", baseUrl));
+    return NextResponse.redirect(
+      new URL("/sign-in?sso_saml_failed=true", baseUrl),
+    );
   }
 }
