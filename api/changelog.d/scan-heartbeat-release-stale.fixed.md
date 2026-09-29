@@ -1,1 +1,1 @@
-Scans whose worker was killed mid-run (out of memory, container stop) no longer block their provider forever: running scans now send a liveness heartbeat, and a scan without one is marked failed so the next queued scan runs
+Scans whose worker was killed mid-run (out of memory, container stop) no longer block their provider forever: running scans refresh a heartbeat every minute, a scan whose heartbeat is more than 10 minutes old, or that has no heartbeat and started more than 24 hours ago, is marked failed, and the next queued scan for the provider runs
