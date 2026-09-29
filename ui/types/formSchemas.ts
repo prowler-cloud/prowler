@@ -331,7 +331,7 @@ export const addCredentialsFormSchema = (
                             .refine(
                               (region) => OCI_REGION_VALUES.includes(region),
                               {
-                                message: "Home region is required",
+                                error: "Home region is required",
                               },
                             ),
                           [ProviderCredentialFields.OCI_PASS_PHRASE]: z

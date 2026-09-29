@@ -1292,7 +1292,7 @@ export class ProvidersPage extends BasePage {
     if (credentials.homeRegion) {
       await this.ociHomeRegionCombobox.click();
       await this.page
-        .getByRole("option", { name: credentials.homeRegion, exact: true })
+        .locator(`[role="option"][data-value="${credentials.homeRegion}"]`)
         .click();
     }
   }
