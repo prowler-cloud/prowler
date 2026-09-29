@@ -68,7 +68,8 @@ export class ScansPage extends BasePage {
     });
 
     // Main content elements
-    this.scanTable = page.locator("table");
+    // getByRole skips the hidden <table> shells React leaves while streaming rows
+    this.scanTable = page.getByRole("table");
     // The scans view renders each tab with its own empty state, so a <table>
     // is NOT guaranteed (an empty tab shows a NoScansEmptyState card instead).
     // The tabs group is always present once providers exist, so it is the
