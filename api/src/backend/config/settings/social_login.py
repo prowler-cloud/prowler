@@ -37,7 +37,7 @@ CLOUDGOV_UAA_MIDDLEWARE = []
 if CLOUDGOV_UAA_ENABLED:
     # Disable UAA middleware since it's incompatible with Prowler's User model
     UAA_CLIENT_MIDDLEWARE = False
-    
+
     UAA_CLIENT_ID = env("UAA_CLIENT_ID")
     UAA_CLIENT_SECRET = env("UAA_CLIENT_SECRET")
     UAA_AUTH_URL = env(
