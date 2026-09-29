@@ -665,14 +665,6 @@
   },
   {
     "section": "devDependencies",
-    "name": "@iconify/react",
-    "from": "5.2.1",
-    "to": "5.2.1",
-    "strategy": "installed",
-    "generatedAt": "2025-10-22T12:36:37.962Z"
-  },
-  {
-    "section": "devDependencies",
     "name": "@next/eslint-plugin-next",
     "from": "16.2.6",
     "to": "16.2.9",

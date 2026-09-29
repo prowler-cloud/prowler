@@ -2294,4 +2294,37 @@ describe("ResourceDetailDrawerContent — re-check resource", () => {
       resourceName: "my-bucket",
     });
   });
+
+  it("should offer the re-check beside Last detected with the provider id", async () => {
+    const user = userEvent.setup();
+    mockIsCloud.mockReturnValue(true);
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating={false}
+        checkMeta={mockCheckMeta}
+        currentIndex={0}
+        totalResources={1}
+        currentFinding={mockFinding}
+        otherFindings={[]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    const metadataRow = screen.getByTestId(
+      "resource-detail-secondary-metadata-row",
+    );
+    await user.click(
+      within(metadataRow).getByRole("button", { name: "Re-check resource" }),
+    );
+
+    expect(usePartialScanStore.getState().activeTarget).toEqual(
+      expect.objectContaining({
+        providerId: "provider-1",
+        resourceUid: "arn:aws:s3:::bucket",
+      }),
+    );
+  });
 });

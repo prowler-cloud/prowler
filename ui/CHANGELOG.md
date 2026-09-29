@@ -4,6 +4,27 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [1.44.0] (Prowler v5.44.0)
+
+### 🚀 Added
+
+- Sidebar action reads Add Provider while the tenant has no providers [(#12852)](https://github.com/prowler-cloud/prowler/pull/12852)
+
+### 🔄 Changed
+
+- AWS accounts are connected in a single wizard step: the account is read from the role ARN, or typed for access keys, the role is assumed with Prowler's own credentials, and the credentials are stored and tested with the account [(#12852)](https://github.com/prowler-cloud/prowler/pull/12852)
+- New tenants without providers land on the Add Provider wizard on first sign-in instead of a welcome modal [(#12852)](https://github.com/prowler-cloud/prowler/pull/12852)
+- Findings page paints a skeleton at once and streams the table before the filters; the "Finding Group" options load in a single request when the dropdown opens [(#12891)](https://github.com/prowler-cloud/prowler/pull/12891)
+
+### 🐞 Fixed
+
+- Mute rule creation errors show the API error message instead of the raw JSON:API response body [(#12853)](https://github.com/prowler-cloud/prowler/pull/12853)
+- Provider connection test no longer reports `Max retries exceeded` for checks that take longer than 30 seconds, such as networks where some AWS endpoints are unreachable; the wait now covers the backend task's full time limit and falls back to the provider's current connection state if it is still exhausted [(#12869)](https://github.com/prowler-cloud/prowler/pull/12869)
+- Sidebar no longer throws a React hydration error on full page loads for users who last used the chat mode [(#12873)](https://github.com/prowler-cloud/prowler/pull/12873)
+- Icons now ship in the UI bundle instead of being fetched from `api.iconify.design`, so pages render correctly in air-gapped deployments [(#12892)](https://github.com/prowler-cloud/prowler/pull/12892)
+
+---
+
 ## [1.43.0] (Prowler v5.43.0)
 
 ### 🚀 Added

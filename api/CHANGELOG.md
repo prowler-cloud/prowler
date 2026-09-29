@@ -4,6 +4,33 @@ All notable changes to the **Prowler API** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [1.45.0] (Prowler v5.44.0)
+
+### 🚀 Added
+
+- Scan output uploads and downloads can now target S3-compatible object storage such as MinIO directly via `DJANGO_OUTPUT_S3_AWS_ENDPOINT_URL`, instead of relying on process-wide AWS environment variables that also hijacked unrelated AWS API calls [(#12871)](https://github.com/prowler-cloud/prowler/pull/12871)
+
+### 🔄 Changed
+
+- Unify how every endpoint resolves a provider latest completed scan, so overlapping scans no longer make findings, compliance and mute rules read from different scans [(#12858)](https://github.com/prowler-cloud/prowler/pull/12858)
+
+### 🐞 Fixed
+
+- Celery loggers are now declared explicitly in `custom_logging.py` so fatal worker errors are no longer silenced by `disable_existing_loggers=True`. All long-running services in `docker-compose.yml` now have `restart: unless-stopped` so containers recover automatically after unexpected crashes. [(#12465)](https://github.com/prowler-cloud/prowler/pull/12465)
+- Scan report downloads from an S3 bucket with default SSE-KMS encryption no longer fail with an `InvalidArgument` error: when `DJANGO_OUTPUT_S3_AWS_DEFAULT_REGION` is set, presigned download URLs are signed with AWS Signature Version 4 for that region [(#12746)](https://github.com/prowler-cloud/prowler/pull/12746)
+- Adds a periodic sweep that drops orphaned Attack Paths temp Neo4j scan databases left behind when a worker or Neo4j crashes mid-scan, before they accumulate unbounded [(#12832)](https://github.com/prowler-cloud/prowler/pull/12832)
+- Providers whose most recent completed scan has no `completed_at` timestamp are no longer missing from every endpoint that reports a provider's latest scan, which now falls back to scan creation order instead of skipping the provider [(#12858)](https://github.com/prowler-cloud/prowler/pull/12858)
+- Resources no longer keep a stale failed findings count forever when a scoped or imported scan for the same provider completes after a full scan, which used to make the full scan skip its own cleanup [(#12858)](https://github.com/prowler-cloud/prowler/pull/12858)
+- `POST /api/v1/scans` again returns the new scan id in the response `task_args`, which had been empty since the scan broker publish moved to transaction commit [(#12878)](https://github.com/prowler-cloud/prowler/pull/12878)
+- API key authentication no longer locks the key row on every request and now throttles `last_used_at` updates to once per 60 seconds, preventing a hot key from serializing all its requests onto a single locked row [(#12882)](https://github.com/prowler-cloud/prowler/pull/12882)
+- Provider deletion no longer fails when the provider has Attack Paths scans recorded on a sink that is no longer configured, such as Neptune after moving back to Neo4j [(#12894)](https://github.com/prowler-cloud/prowler/pull/12894)
+
+### 🔐 Security
+
+- `DELETE /api/v1/tasks/{id}` requires the permission of the operation that queued the task and rejects provider deletions, and `GET /api/v1/tasks` hides tasks of providers outside the visibility of the role [(#12893)](https://github.com/prowler-cloud/prowler/pull/12893)
+
+---
+
 ## [1.44.0] (Prowler v5.43.0)
 
 ### 🐞 Fixed

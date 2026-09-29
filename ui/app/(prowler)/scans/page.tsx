@@ -1,3 +1,4 @@
+import { Timer } from "lucide-react";
 import { Suspense } from "react";
 
 import { getAllProviderGroups } from "@/actions/manage-groups/manage-groups";
@@ -218,7 +219,7 @@ export default async function Scans({
   return (
     <ContentLayout
       title="Scans"
-      icon="lucide:timer"
+      icon={<Timer />}
       onboardingAction={onboardingAction}
     >
       <ScansPageShell

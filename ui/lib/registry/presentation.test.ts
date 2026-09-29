@@ -1,6 +1,9 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { getRegistryPresentation } from "./presentation";
+import {
+  getRegistryPresentation,
+  readRegistryPresentation,
+} from "./presentation";
 
 describe("Registry presentation configuration", () => {
   const urlWithCredentials = new URL("https://registry.test");
@@ -10,11 +13,11 @@ describe("Registry presentation configuration", () => {
   it("uses the configured Registry and media origins", () => {
     expect(
       getRegistryPresentation(
-        "https://registry.private.test/keys",
+        "https://registry.private.test/",
         "https://assets.private.test/media/",
       ),
     ).toEqual({
-      keyUrl: "https://registry.private.test/keys",
+      registryUrl: "https://registry.private.test/",
       imageOrigins: [
         "https://registry.private.test",
         "https://assets.private.test",
@@ -24,7 +27,7 @@ describe("Registry presentation configuration", () => {
 
   it("does not guess a Registry environment when configuration is missing", () => {
     expect(getRegistryPresentation()).toEqual({
-      keyUrl: undefined,
+      registryUrl: undefined,
       imageOrigins: [],
     });
   });
@@ -36,7 +39,41 @@ describe("Registry presentation configuration", () => {
     "invalid",
   ])("rejects unsafe configuration: %s", (value) => {
     expect(getRegistryPresentation(value, value)).toEqual({
-      keyUrl: undefined,
+      registryUrl: undefined,
+      imageOrigins: [],
+    });
+  });
+});
+
+describe("Registry presentation from the runtime environment", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it("links to the Registry the backend installs from", () => {
+    // Given
+    vi.stubEnv("PROWLER_REGISTRY_INDEX_URL", "https://registry.internal.test");
+    vi.stubEnv("UI_REGISTRY_MEDIA_URL", "https://media.internal.test");
+
+    // When / Then
+    expect(readRegistryPresentation()).toEqual({
+      registryUrl: "https://registry.internal.test/",
+      imageOrigins: [
+        "https://registry.internal.test",
+        "https://media.internal.test",
+      ],
+    });
+  });
+
+  it("ignores the retired UI_REGISTRY_URL variable", () => {
+    // Given
+    vi.stubEnv("PROWLER_REGISTRY_INDEX_URL", "");
+    vi.stubEnv("UI_REGISTRY_MEDIA_URL", "");
+    vi.stubEnv("UI_REGISTRY_URL", "https://registry.prowler.com");
+
+    // When / Then
+    expect(readRegistryPresentation()).toEqual({
+      registryUrl: undefined,
       imageOrigins: [],
     });
   });

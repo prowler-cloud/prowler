@@ -384,6 +384,22 @@ export function MultiSelectContent({
   );
 }
 
+/** Status row shown under the items while more values are still loading. */
+export function MultiSelectLoading({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <div
+      role="status"
+      className="text-bg-button-secondary py-2 text-center text-sm"
+    >
+      {children}
+    </div>
+  );
+}
+
 export function MultiSelectItem({
   value,
   children,
