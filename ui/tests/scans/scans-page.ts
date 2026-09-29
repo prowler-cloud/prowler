@@ -32,7 +32,8 @@ export class ScansPage extends BasePage {
     this.launchScanButton = page
       .getByRole("group", { name: /scan tabs/i })
       .getByRole("button", { name: /^Launch Scan$/i });
-    this.launchScanDialog = page.getByRole("dialog");
+    // By name: in Cloud the Lighthouse callout is also a dialog
+    this.launchScanDialog = page.getByRole("dialog", { name: "Launch A Scan" });
     // The modal renders the providers picker as the shared MultiSelect-based
     // AccountsSelector (used in single-select mode via closeOnSelect). Scoping
     // to the dialog avoids matching the search combobox that appears in the
