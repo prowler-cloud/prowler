@@ -215,36 +215,34 @@ class TestOracleCloudProviderSecret:
         assert serializer.is_valid(), serializer.errors
         assert "region" not in serializer.validated_data
 
-    def test_accepts_and_ignores_region_field(self):
-        secret = self.valid_secret(region="us-phoenix-1")
-        serializer = OracleCloudProviderSecret(data=secret)
-
-        assert serializer.is_valid(), serializer.errors
-
-        assert "region" not in serializer.validated_data
-
-    @pytest.mark.parametrize(
-        "legacy_field, legacy_value",
-        [
-            ("region", None),
-            ("region", ""),
-            ("region", {"name": "us-ashburn-1"}),
-        ],
-    )
-    def test_accepts_and_ignores_any_legacy_region_value(
-        self, legacy_field, legacy_value
-    ):
+    def test_keeps_region_as_home_region(self):
         serializer = OracleCloudProviderSecret(
-            data=self.valid_secret(**{legacy_field: legacy_value})
+            data=self.valid_secret(region=" me-abudhabi-1 ")
         )
 
         assert serializer.is_valid(), serializer.errors
+        assert serializer.validated_data["region"] == "me-abudhabi-1"
 
-        assert legacy_field not in serializer.validated_data
+    def test_rejects_unknown_region(self):
+        serializer = OracleCloudProviderSecret(
+            data=self.valid_secret(region="mars-north-1")
+        )
+
+        assert not serializer.is_valid()
+        assert "region" in serializer.errors
+
+    @pytest.mark.parametrize("legacy_value", [None, "", {"name": "us-ashburn-1"}])
+    def test_drops_blank_or_non_string_region(self, legacy_value):
+        serializer = OracleCloudProviderSecret(
+            data=self.valid_secret(region=legacy_value)
+        )
+
+        assert serializer.is_valid(), serializer.errors
+        assert "region" not in serializer.validated_data
 
 
 class TestProviderSecretFieldSchema:
-    def test_oraclecloud_schema_includes_legacy_region_field(self):
+    def test_oraclecloud_schema_region_is_not_deprecated(self):
         schema = ProviderSecretField._spectacular_annotation["field"]
         oraclecloud_schema = next(
             credential_schema
@@ -253,7 +251,7 @@ class TestProviderSecretFieldSchema:
             == "Oracle Cloud Infrastructure (OCI) API Key Credentials"
         )
 
-        assert oraclecloud_schema["properties"]["region"]["deprecated"] is True
+        assert "deprecated" not in oraclecloud_schema["properties"]["region"]
 
 
 class TestKubernetesProviderSecret:
