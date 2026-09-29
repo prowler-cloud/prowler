@@ -321,6 +321,13 @@ UI_BASE_URL = env.str("DJANGO_UI_BASE_URL", "").rstrip("/")
 CSRF_COOKIE_SECURE = True
 SESSION_COOKIE_SECURE = True
 
+# Scan liveness: a running scan refreshes `Scan.heartbeat_at` every interval; a scan
+# whose heartbeat is older than the stale threshold is considered dead. Rows without a
+# heartbeat (legacy code) fall back to a much longer age threshold.
+SCAN_HEARTBEAT_INTERVAL_SECONDS = env.int("SCAN_HEARTBEAT_INTERVAL_SECONDS", 60)
+SCAN_HEARTBEAT_STALE_MINUTES = env.int("SCAN_HEARTBEAT_STALE_MINUTES", 10)
+SCAN_HEARTBEAT_LEGACY_STALE_HOURS = env.int("SCAN_HEARTBEAT_LEGACY_STALE_HOURS", 24)
+
 # Attack Paths
 ATTACK_PATHS_SCAN_INACTIVITY_THRESHOLD_MINUTES = env.int(
     "ATTACK_PATHS_SCAN_INACTIVITY_THRESHOLD_MINUTES", 30

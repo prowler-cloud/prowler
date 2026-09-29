@@ -71,6 +71,7 @@ from tasks.jobs.queries import (
     COMPLIANCE_UPSERT_PROVIDER_SCORE_SQL,
     COMPLIANCE_UPSERT_TENANT_SUMMARY_SQL,
 )
+from tasks.jobs.scan_heartbeat import scan_heartbeat
 from tasks.utils import CustomEncoder, batched
 from uuid6 import uuid7
 
@@ -1288,6 +1289,17 @@ def perform_prowler_scan(
     provider_id: str,
     checks_to_execute: list[str] | None = None,
 ):
+    """Run a Prowler scan while keeping its liveness heartbeat alive."""
+    with scan_heartbeat(tenant_id, scan_id):
+        return _perform_prowler_scan(tenant_id, scan_id, provider_id, checks_to_execute)
+
+
+def _perform_prowler_scan(
+    tenant_id: str,
+    scan_id: str,
+    provider_id: str,
+    checks_to_execute: list[str] | None = None,
+):
     """
     Run a Prowler scan and persist all generated resources, findings, and summaries.
 
@@ -1324,10 +1336,11 @@ def perform_prowler_scan(
         scan_instance = Scan.objects.get(pk=scan_id)
         scan_instance.state = StateChoices.EXECUTING
         scan_instance.started_at = datetime.now(tz=UTC)
+        scan_instance.heartbeat_at = scan_instance.started_at
         _save_scan_instance(
             scan_instance,
             provider_id,
-            ["state", "started_at", "updated_at"],
+            ["state", "started_at", "heartbeat_at", "updated_at"],
         )
 
     # Find the mutelist processor if it exists
