@@ -5,6 +5,22 @@ rss: true
 ---
 
 <Update label="v5.44.0" description="September 29, 2026">
+  ### 🔁 Findings — Re-check a Resource with a Partial Scan
+
+  <Note>
+  This feature is available exclusively in **Prowler Cloud** and **Prowler Private Cloud** with a [subscription](https://prowler.com/pricing).
+  </Note>
+
+  A resource that has just been fixed can be confirmed from the Findings page without waiting for the next full scan. **Re-check resource** is available in the actions menu of every resource row and in the resource detail drawer, and a hint icon next to **Last seen** opens it directly. It launches a partial scan that runs again only the checks that last reported on that resource; its findings update when the scan completes, and every other resource keeps the results of the latest full scan. Roles need the Manage Scans permission, and a re-check is refused while the provider has a scan running or queued.
+
+  Re-checked resources that now pass drop out of the finding groups list and its drill-down instead of opening a detail panel that still reports `FAIL`. Partial scans do not change overviews or compliance until the next full scan and produce no report files, so the Scans table marks them as **Partial**, offers no report download for them, and the per-scan Compliance selector leaves them out.
+
+  Partial scans can also be launched outside the Findings page:
+
+  - **API:** `POST /api/v1/scans` accepts up to 10 resources in `resource_uids`, and scans expose `is_partial` with a `filter[is_partial]` filter.
+  - **MCP Server:** `prowler_trigger_scan` takes a `resource_uids` argument, and `prowler_list_scans` and `prowler_get_scan` return `is_partial`, with an `is_partial` filter on `prowler_list_scans`.
+  - **Lighthouse AI:** can launch a partial scan to re-check specific resources, such as confirming a remediation.
+
   ### ☁️ AWS — Connect an Account in One Step
 
   The Add Provider wizard connects an AWS account in a single step. The account ID is read from the role ARN (or typed when using static access keys), the role is assumed with Prowler's own credentials, and the account, its credentials and the connection test are handled by one submit. A confirmed connection goes straight to the launch step. A refused connection stays on the form with the reason the API returned, so the fields can be fixed and retried without registering the account twice.
@@ -28,6 +44,16 @@ rss: true
   - Icons ship in the UI bundle instead of being fetched from `api.iconify.design`, so pages render correctly without internet access.
   - Celery worker fatal errors are logged instead of silenced, and every long-running service in `docker-compose.yml` restarts automatically after an unexpected crash.
 
+  ### 🏢 Private Cloud — Persistent Scan Workers and No Stripe Requests
+
+  <Note>
+  This feature is available exclusively in **Prowler Private Cloud** with a [subscription](https://prowler.com/pricing).
+  </Note>
+
+  - `SCAN_EXECUTION_MODE=worker` keeps the scan workers of a Docker Compose deployment running across scans instead of shutting down after each one, and stops enqueuing ECS launch messages that nothing consumed. Every service that runs scan-related tasks (`api`, `worker`, `worker-fast` and `worker-scan`) needs the variable; the default `ecs` keeps the current behavior.
+  - Stripe.js only loads when a publishable key is used, so installs with billing disabled make no requests to `js.stripe.com`.
+  - OCSF ingestion accepts an explicit S3 endpoint, credentials and region, so it can store uploads on MinIO without process-wide AWS credentials.
+
   ### 📊 Consistent Latest Scan Across Endpoints
 
   Every endpoint now resolves a provider's latest completed scan the same way, so overlapping scans no longer make findings, compliance and mute rules read from different scans. Providers whose latest completed scan has no `completed_at` timestamp are no longer missing from those endpoints, and resources no longer keep a stale failed findings count when a scoped or imported scan completes after a full scan.
@@ -38,6 +64,9 @@ rss: true
   - `POST /api/v1/scans` returns the new scan ID in `task_args` again.
   - Provider deletion no longer fails when the provider has Attack Paths scans recorded on a sink that is no longer configured, such as Neptune after moving back to Neo4j.
   - A periodic sweep drops orphaned Attack Paths temporary Neo4j databases left behind when a worker or Neo4j crashes mid-scan.
+  - **Prowler Cloud:** imported findings no longer stay stuck in `pending` when the ingestion worker picks up the job before it is committed, and a failed enqueue marks the ingestion as failed.
+  - **Prowler Cloud:** the Lighthouse AI connection check reports a network failure as one, naming the endpoint it could not reach, instead of hitting a time limit that looked the same as a bad key.
+  - **Prowler Cloud:** the finding groups endpoints no longer query Manual Pass triages once per finding, and skip that overlay for tenants with no active Manual Pass.
   - The Findings page renders a skeleton at once and streams the table before the filters, and the **Finding Group** options load when the dropdown opens.
   - Mute rule creation errors show the API error message instead of the raw response body.
   - The sidebar no longer throws a hydration error on full page loads for users who last used the chat mode.
