@@ -1,0 +1,9 @@
+Mutelist:
+  Accounts:
+    "test-org":
+      Checks:
+        "app_no_public_ip_address":
+          Regions:
+            - "*"
+          Resources:
+            - "app_test456"

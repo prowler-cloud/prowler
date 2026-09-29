@@ -110,6 +110,9 @@ def display_summary_table(
         elif provider.type == "image":
             entity_type = "Image"
             audited_entities = ", ".join(provider.images)
+        elif provider.type == "fly":
+            entity_type = "Fly.io Org"
+            audited_entities = ", ".join(provider.identity.org_slugs)
         elif provider.type == "vercel":
             entity_type = "Team"
             if provider.identity.team:
