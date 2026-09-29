@@ -417,10 +417,14 @@ describe("exploring the graph", () => {
     await graph.waitForViewportChange(initialViewport);
 
     const contextualViewport = await graph.waitForViewportSettled();
+    const visibleNodeIds = graph.renderedNodeIds;
 
     await graph.fit();
 
     await graph.waitForViewportChange(contextualViewport);
+    // The fit must end with the whole visible graph on screen, not just move
+    await graph.waitForViewportSettled();
+    await graph.waitForNodesInViewport(visibleNodeIds);
   });
   test("clicking an expanded resource re-fits the remaining visible graph", async ({
     mountWith,
