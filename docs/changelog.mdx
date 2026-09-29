@@ -4,6 +4,52 @@ description: "New features and improvements in each Prowler release"
 rss: true
 ---
 
+<Update label="v5.44.0" description="September 29, 2026">
+  ### ☁️ AWS — Connect an Account in One Step
+
+  The Add Provider wizard connects an AWS account in a single step. The account ID is read from the role ARN (or typed when using static access keys), the role is assumed with Prowler's own credentials, and the account, its credentials and the connection test are handled by one submit. A confirmed connection goes straight to the launch step. A refused connection stays on the form with the reason the API returned, so the fields can be fixed and retried without registering the account twice.
+
+  New tenants without providers now land on this wizard on their first sign-in instead of a welcome modal, and the sidebar action reads **Add Provider** until the first provider is connected.
+
+  Read more in the [Getting Started with AWS documentation](https://docs.prowler.com/user-guide/providers/aws/getting-started-aws).
+
+  ### 🔌 Connection Tests No Longer Give Up Early
+
+  The provider connection test no longer reports `Max retries exceeded` for checks that take longer than 30 seconds, such as networks where some AWS endpoints are unreachable. The UI now waits for the full time limit of the backend task, and if that is still exhausted it shows the provider's current connection state instead of a failure.
+
+  On the SDK side, STS calls after a role assumption reuse the region that answered, so an unreachable partition region is waited on once instead of twice. The new `PROWLER_AWS_BOTO3_RETRIES_MAX_ATTEMPTS` environment variable sets the Boto3 retries for deployments that build the AWS provider without CLI flags, next to the existing timeout variables; `0` disables retries.
+
+  Read more in the [Boto3 configuration documentation](https://docs.prowler.com/user-guide/providers/aws/boto3-configuration#retries-configuration).
+
+  ### 🗄️ Self-Hosted — S3-Compatible Storage and Air-Gapped Deployments
+
+  - `DJANGO_OUTPUT_S3_AWS_ENDPOINT_URL` points scan output uploads and downloads at S3-compatible object storage such as MinIO. Previously the only way to reach it was exporting process-wide AWS environment variables, which also hijacked unrelated AWS API calls such as role assumption for AWS providers.
+  - Report downloads from a bucket with default SSE-KMS encryption no longer fail with `InvalidArgument`: when `DJANGO_OUTPUT_S3_AWS_DEFAULT_REGION` is set, download URLs are signed with Signature Version 4 for that region.
+  - Icons ship in the UI bundle instead of being fetched from `api.iconify.design`, so pages render correctly without internet access.
+  - Celery worker fatal errors are logged instead of silenced, and every long-running service in `docker-compose.yml` restarts automatically after an unexpected crash.
+
+  ### 📊 Consistent Latest Scan Across Endpoints
+
+  Every endpoint now resolves a provider's latest completed scan the same way, so overlapping scans no longer make findings, compliance and mute rules read from different scans. Providers whose latest completed scan has no `completed_at` timestamp are no longer missing from those endpoints, and resources no longer keep a stale failed findings count when a scoped or imported scan completes after a full scan.
+
+  ### 🛠️ Prowler App Fixes
+
+  - API key authentication no longer locks the key row on every request, so a heavily used key no longer serializes all its requests; `last_used_at` is updated at most once per minute.
+  - `POST /api/v1/scans` returns the new scan ID in `task_args` again.
+  - Provider deletion no longer fails when the provider has Attack Paths scans recorded on a sink that is no longer configured, such as Neptune after moving back to Neo4j.
+  - A periodic sweep drops orphaned Attack Paths temporary Neo4j databases left behind when a worker or Neo4j crashes mid-scan.
+  - The Findings page renders a skeleton at once and streams the table before the filters, and the **Finding Group** options load when the dropdown opens.
+  - Mute rule creation errors show the API error message instead of the raw response body.
+  - The sidebar no longer throws a hydration error on full page loads for users who last used the chat mode.
+
+  ### 🔐 Security Updates
+
+  - `DELETE /api/v1/tasks/{id}` requires the permission of the operation that queued the task and rejects provider deletions, and `GET /api/v1/tasks` hides tasks of providers outside the role's visibility.
+  - The UI E2E workflow receives its AWS credentials through environment variables instead of template expansion.
+
+  See the [full release notes on GitHub](https://github.com/prowler-cloud/prowler/releases/tag/5.44.0) for the complete list of changes.
+</Update>
+
 <Update label="v5.43.0" description="September 21, 2026">
   ### 🏛️ Compliance — FedRAMP 20x Consolidated Rules 2026
 
