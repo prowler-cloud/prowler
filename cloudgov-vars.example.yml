@@ -2,6 +2,7 @@ api_route: prowler-api-gsa-10x-prototyping.app.cloud.gov
 uaa_client_id: replace-with-cf-service-key-client-id
 uaa_client_secret: replace-with-cf-service-key-client-secret
 uaa_approved_domains: gsa.gov
+uaa_email_role_map: '{"read":["approved-user@gsa.gov"]}'
 uaa_login_redirect_url: /
 django_secret_key: replace-with-django-secret-key
 django_secrets_encryption_key: replace-with-fernet-key

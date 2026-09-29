@@ -1891,6 +1891,17 @@ wheels = [
 ]
 
 [[package]]
+name = "cg-django-uaa"
+version = "2.1.9"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "django" },
+    { name = "pyjwt", extra = ["crypto"] },
+    { name = "requests" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/d6/1e/84fa938d4de18f34d7897ec2b45faaf3fd66d4a97aac58a59d09091ee7f5/cg_django_uaa-2.1.9.tar.gz", hash = "sha256:989e729a0252d318d3c8ef1ded66c520cf5f1da97a5debc5b31481de80f022eb", size = 61869, upload-time = "2026-03-27T20:14:42.93Z" }
+
+[[package]]
 name = "charset-normalizer"
 version = "3.4.4"
 source = { registry = "https://pypi.org/simple" }
@@ -4202,7 +4213,7 @@ wheels = [
 
 [package.optional-dependencies]
 broker = [
-    { name = "pymsalruntime", marker = "sys_platform == 'win32'" },
+    { name = "pymsalruntime" },
 ]
 
 [[package]]
@@ -4943,6 +4954,7 @@ source = { virtual = "." }
 dependencies = [
     { name = "cartography" },
     { name = "celery" },
+    { name = "cg-django-uaa" },
     { name = "defusedxml" },
     { name = "dj-rest-auth", extra = ["with-social"] },
     { name = "django" },
@@ -5010,6 +5022,7 @@ dev = [
 requires-dist = [
     { name = "cartography", specifier = "==0.138.1" },
     { name = "celery", specifier = "==5.6.2" },
+    { name = "cg-django-uaa", specifier = "==2.1.9" },
     { name = "defusedxml", specifier = "==0.7.1" },
     { name = "dj-rest-auth", extras = ["with-social", "jwt"], specifier = "==7.0.1" },
     { name = "django", specifier = "==5.1.15" },

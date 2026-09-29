@@ -23,6 +23,16 @@ class TestProwlerUaaBackend:
         assert ProwlerUaaBackend.get_role_name_for_email("other@example.com") is None
         assert not ProwlerUaaBackend.should_create_user_for_email("other@example.com")
 
+    @override_settings(UAA_EMAIL_ROLE_MAP={"admin": "admin@example.com"})
+    def test_get_role_name_rejects_non_list_role_configuration(self):
+        with pytest.raises(ValueError, match="must contain a list"):
+            ProwlerUaaBackend.get_role_name_for_email("admin@example.com")
+
+    @override_settings(UAA_EMAIL_ROLE_MAP={"superuser": ["admin@example.com"]})
+    def test_get_role_name_rejects_unsupported_role_configuration(self):
+        with pytest.raises(ValueError, match="Unsupported role"):
+            ProwlerUaaBackend.get_role_name_for_email("admin@example.com")
+
     @override_settings(UAA_EMAIL_ROLE_MAP={"read": ["person@example.com"]})
     def test_create_user_with_email_bootstraps_explicit_tenant_access(self):
         with patch(
