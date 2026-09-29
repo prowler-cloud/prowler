@@ -44,16 +44,6 @@ rss: true
   - Icons ship in the UI bundle instead of being fetched from `api.iconify.design`, so pages render correctly without internet access.
   - Celery worker fatal errors are logged instead of silenced, and every long-running service in `docker-compose.yml` restarts automatically after an unexpected crash.
 
-  ### 🏢 Private Cloud — Persistent Scan Workers and No Stripe Requests
-
-  <Note>
-  This feature is available exclusively in **Prowler Private Cloud** with a [subscription](https://prowler.com/pricing).
-  </Note>
-
-  - `SCAN_EXECUTION_MODE=worker` keeps the scan workers of a Docker Compose deployment running across scans instead of shutting down after each one, and stops enqueuing ECS launch messages that nothing consumed. Every service that runs scan-related tasks (`api`, `worker`, `worker-fast` and `worker-scan`) needs the variable; the default `ecs` keeps the current behavior.
-  - Stripe.js only loads when a publishable key is used, so installs with billing disabled make no requests to `js.stripe.com`.
-  - OCSF ingestion accepts an explicit S3 endpoint, credentials and region, so it can store uploads on MinIO without process-wide AWS credentials.
-
   ### 📊 Consistent Latest Scan Across Endpoints
 
   Every endpoint now resolves a provider's latest completed scan the same way, so overlapping scans no longer make findings, compliance and mute rules read from different scans. Providers whose latest completed scan has no `completed_at` timestamp are no longer missing from those endpoints, and resources no longer keep a stale failed findings count when a scoped or imported scan completes after a full scan.
