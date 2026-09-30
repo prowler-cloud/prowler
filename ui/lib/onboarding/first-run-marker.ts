@@ -30,12 +30,13 @@ export function firstRunMarkerKey(tenantId?: string | null): string {
   return `${FIRST_RUN_MARKER_KEY}.${tenantId.toLowerCase()}`;
 }
 
-// A stored value is either an attempt count or `HANDLED_VALUE`; anything
-// else (a legacy or hand-written marker) is read as resolved.
+// A stored value is either an attempt count (digits only) or `HANDLED_VALUE`;
+// anything else (a legacy or hand-written marker) is read as resolved.
+const ATTEMPT_COUNT_PATTERN = /^\d+$/;
+
 function readAttempts(value: string | null): number | null {
   if (value === null) return 0;
-  const attempts = Number.parseInt(value, 10);
-  return Number.isNaN(attempts) ? null : attempts;
+  return ATTEMPT_COUNT_PATTERN.test(value) ? Number(value) : null;
 }
 
 export function isFirstRunHandled(tenantId?: string | null): boolean {

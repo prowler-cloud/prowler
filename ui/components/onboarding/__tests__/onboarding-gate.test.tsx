@@ -182,17 +182,20 @@ describe("OnboardingGate", () => {
       expect(replaceMock).not.toHaveBeenCalled();
     });
 
-    it("honours a browser-wide marker written before markers were tenant-scoped", () => {
-      // Given: e2e storage state and pre-existing browsers set the bare key.
-      window.localStorage.setItem("prowler.onboarding.first-run", "true");
+    it.each(["true", "1legacy", "-1"])(
+      "honours a browser-wide marker holding %s, written before markers counted attempts",
+      (value) => {
+        // Given: e2e storage state and pre-existing browsers set the bare key.
+        window.localStorage.setItem("prowler.onboarding.first-run", value);
 
-      // When
-      render(<OnboardingGate hasProviders={false} tenantId={TENANT_A} />);
+        // When
+        render(<OnboardingGate hasProviders={false} tenantId={TENANT_A} />);
 
-      // Then
-      expect(replaceMock).not.toHaveBeenCalled();
-      expect(isFirstRunHandled(TENANT_A)).toBe(true);
-    });
+        // Then
+        expect(replaceMock).not.toHaveBeenCalled();
+        expect(isFirstRunHandled(TENANT_A)).toBe(true);
+      },
+    );
 
     it("still runs for a different empty tenant on the same browser", async () => {
       // Given: tenant A went through its first run on this browser.
