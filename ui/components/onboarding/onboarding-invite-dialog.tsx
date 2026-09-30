@@ -4,6 +4,7 @@ import { SendInvitationForm } from "@/components/invitations/workflow/forms/send
 import { Button } from "@/components/shadcn";
 import { DialogFooter } from "@/components/shadcn/dialog";
 import { Modal } from "@/components/shadcn/modal/modal";
+import { orderRolesAdminFirst } from "@/lib/invitations/order-roles";
 import {
   INVITATION_SOURCE,
   type InvitationRoleOption,
@@ -15,19 +16,6 @@ interface OnboardingInviteDialogProps {
   onSent: (invitationId: string) => void;
   onSkip: () => void;
 }
-
-const DEFAULT_ROLE_NAME = "admin";
-
-// Roles are listed with the admin one first so it is the natural pick for a
-// first teammate; the form itself keeps the selection required.
-const orderRoles = (roles: InvitationRoleOption[]) =>
-  [...roles].sort((a, b) =>
-    a.name.toLowerCase() === DEFAULT_ROLE_NAME
-      ? -1
-      : b.name.toLowerCase() === DEFAULT_ROLE_NAME
-        ? 1
-        : 0,
-  );
 
 // "Invite your team", offered once right after the first provider is
 // connected: permissions on the cloud were just granted and the value of
@@ -55,7 +43,9 @@ export function OnboardingInviteDialog({
       <div className="flex flex-col gap-4">
         {hasRoles ? (
           <SendInvitationForm
-            roles={orderRoles(roles)}
+            // Admin first: the natural pick for a first teammate; the form
+            // itself keeps the selection required.
+            roles={orderRolesAdminFirst(roles)}
             isSelectorDisabled={false}
             source={INVITATION_SOURCE.ONBOARDING}
             onSuccess={onSent}
