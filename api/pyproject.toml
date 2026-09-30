@@ -375,7 +375,7 @@ constraint-dependencies = [
   "pydantic-core==2.41.5",
   "pygithub==2.8.0",
   "pygments==2.20.0",
-  "pyjwt==2.13.0",
+  "pyjwt==2.14.0",
   "pylint==3.2.5",
   "pymsalruntime==0.18.1",
   "pynacl==1.6.2",
@@ -476,8 +476,8 @@ constraint-dependencies = [
 # to 1.9.10 until the SDK bump propagates to the pinned master rev.
 #
 # prowler@master hard-pins dulwich==0.23.0 and pyjwt==2.12.1 in [project.dependencies].
-# dulwich 1.2.5 patches GHSA-897w-fcg9-f6xj (arbitrary file write) and pyjwt 2.13.0
-# patches PYSEC-2026-179 (HMAC/JWK key-confusion); a constraint cannot satisfy these
+# dulwich 1.2.5 patches GHSA-897w-fcg9-f6xj (arbitrary file write) and pyjwt 2.14.0
+# patches GHSA-ffc3-869f-jxw9 (HMAC/PEM key-confusion); a constraint cannot satisfy these
 # against the SDK's hard pins, so override them to the patched versions until the SDK
 # bump propagates to the pinned master rev. pyjwt keeps the [crypto] extra because an
 # override replaces the whole requirement; bare pyjwt would drop it from the consumers
@@ -500,5 +500,5 @@ override-dependencies = [
   "microsoft-kiota-serialization-multipart==1.9.10",
   "microsoft-kiota-serialization-text==1.9.10",
   "dulwich==1.2.5",
-  "pyjwt[crypto]==2.13.0"
+  "pyjwt[crypto]==2.14.0"
 ]
