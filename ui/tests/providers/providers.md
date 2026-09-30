@@ -1075,3 +1075,52 @@
 - Private Key is provided as base64-encoded PEM content and decoded before use (multi-line content)
 - Provider cleanup performed before each test to ensure clean state
 - Requires a valid Okta API Services app with a registered public key (JWK) matching the provided private key
+
+---
+
+## Test Case: `PROVIDER-E2E-020` - Invite a Teammate From the AWS Connect Step
+
+**Priority:** `high`
+
+**Tags:**
+
+- type → @e2e
+- feature → @providers
+- provider → @aws
+
+**Description/Objective:** Validates that a user who cannot connect the AWS account can invite a teammate from the AWS connect step, without leaving the wizard, and gets the invitation link to share.
+
+**Preconditions:**
+
+- Admin user authentication required (admin.auth.setup setup): the option is only offered to users who can invite (`manage_account`)
+- No environment variables required: no provider is created
+
+### Flow Steps
+
+1. Navigate to providers page
+2. Click "Add Provider" button
+3. Select AWS provider type
+4. Select the "I don't have access, invite a teammate" option
+5. Fill the teammate email (the admin role comes preselected)
+6. Click "Send invitation"
+7. Verify the confirmation and the invitation link
+8. Click "Done"
+
+### Expected Result
+
+- The AWS access form is replaced by the invitation form
+- The invitation is created and the confirmation shows the invited email and the accept link
+- "Done" closes the wizard without creating a provider
+
+### Key verification points
+
+- The invite option is visible on the AWS step for the admin user
+- "Send invitation" is enabled once a valid email is typed
+- Confirmation text "Invitation sent to {email}" is visible
+- The accept link contains `/invitation/accept?invitation_token=`
+- The wizard modal is closed after "Done"
+
+### Notes
+
+- Uses a unique email per run so the invitation never collides with a pending one
+- The invitation is left pending; it expires on its own after 7 days
