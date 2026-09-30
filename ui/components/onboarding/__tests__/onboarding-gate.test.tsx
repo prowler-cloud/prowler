@@ -233,6 +233,24 @@ describe("OnboardingGate", () => {
       );
       expect(armMock).not.toHaveBeenCalled();
     });
+
+    it("tries again on the next load when the wizard never opened, with no tenant id available", async () => {
+      // Given: self-hosted layouts mount the gate without a tenant id.
+      vi.stubEnv("UI_CLOUD_ENABLED", "false");
+      const { unmount } = render(<OnboardingGate hasProviders={false} />);
+      await waitFor(() => expect(replaceMock).toHaveBeenCalledOnce());
+      unmount();
+      replaceMock.mockClear();
+
+      // When
+      render(<OnboardingGate hasProviders={false} />);
+
+      // Then
+      await waitFor(() =>
+        expect(replaceMock).toHaveBeenCalledExactlyOnceWith(OSS_FIRST_RUN_HREF),
+      );
+      expect(isFirstRunHandled()).toBe(false);
+    });
   });
 
   describe("when the user cannot add providers", () => {

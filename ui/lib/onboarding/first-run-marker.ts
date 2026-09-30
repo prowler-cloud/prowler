@@ -41,7 +41,12 @@ function readAttempts(value: string | null): number | null {
 export function isFirstRunHandled(tenantId?: string | null): boolean {
   if (typeof window === "undefined") return true;
   try {
-    if (window.localStorage.getItem(FIRST_RUN_MARKER_KEY) !== null) return true;
+    // The bare key opts the whole browser out, unless it merely holds the
+    // attempt count of a deployment that mounts the gate without a tenant id.
+    const bareAttempts = readAttempts(
+      window.localStorage.getItem(FIRST_RUN_MARKER_KEY),
+    );
+    if (bareAttempts === null) return true;
     const attempts = readAttempts(
       window.localStorage.getItem(firstRunMarkerKey(tenantId)),
     );
