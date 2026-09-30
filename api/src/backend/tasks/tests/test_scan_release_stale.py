@@ -1,5 +1,3 @@
-import threading
-import time
 import uuid
 from datetime import UTC, datetime, timedelta
 from unittest.mock import patch
@@ -9,20 +7,26 @@ from api.models import Scan, StateChoices, Task
 from celery import states
 from django_celery_beat.models import IntervalSchedule, PeriodicTask
 from django_celery_results.models import TaskResult
-from tasks.jobs.scan_heartbeat import dead_scan_q, scan_heartbeat
+from tasks.jobs.dead_scans import dead_scan_q
 from tasks.tasks import (
     _release_provider_scan_slot,
     perform_scheduled_scan_task,
     release_stale_scans,
 )
 
-STALE = timedelta(minutes=11)
-FRESH = timedelta(minutes=1)
+PING = "tasks.jobs.dead_scans.ping_workers"
+BACKSTOP_OVER = timedelta(hours=12, minutes=5)
+BACKSTOP_UNDER = timedelta(hours=11, minutes=55)
+DISPATCH_OVER = timedelta(hours=24, minutes=5)
+DISPATCH_UNDER = timedelta(hours=23, minutes=55)
 
 
-def _task(tenant_id, status, task_name="scan-perform", date_created=None):
+def _task(tenant_id, status, worker=None, date_created=None):
     task_result = TaskResult.objects.create(
-        task_id=str(uuid.uuid4()), task_name=task_name, status=status
+        task_id=str(uuid.uuid4()),
+        task_name="scan-perform",
+        status=status,
+        worker=worker,
     )
     if date_created:
         TaskResult.objects.filter(pk=task_result.pk).update(date_created=date_created)
@@ -31,19 +35,25 @@ def _task(tenant_id, status, task_name="scan-perform", date_created=None):
     )
 
 
-def _executing(tenant, provider, heartbeat_age=None, started_age=None, **kwargs):
-    now = datetime.now(UTC)
+def _executing(
+    tenant,
+    provider,
+    task_status=states.FAILURE,
+    worker=None,
+    idle=None,
+    trigger=Scan.TriggerChoices.MANUAL,
+):
     scan = Scan.objects.create(
         tenant_id=tenant.id,
         provider=provider,
         name="Executing scan",
-        trigger=kwargs.pop("trigger", Scan.TriggerChoices.MANUAL),
+        trigger=trigger,
         state=StateChoices.EXECUTING,
-        started_at=now - started_age if started_age else now,
-        heartbeat_at=now - heartbeat_age if heartbeat_age else None,
-        task=_task(tenant.id, states.STARTED),
-        **kwargs,
+        started_at=datetime.now(UTC) - timedelta(hours=1),
+        task=_task(tenant.id, task_status, worker=worker),
     )
+    if idle:
+        Scan.objects.filter(pk=scan.pk).update(updated_at=datetime.now(UTC) - idle)
     return scan
 
 
@@ -58,6 +68,16 @@ def _queued(tenant, provider, trigger=Scan.TriggerChoices.MANUAL):
     )
 
 
+def _dispatched(tenant, provider, task_status, task_age):
+    return Scan.objects.create(
+        tenant_id=tenant.id,
+        provider=provider,
+        trigger=Scan.TriggerChoices.MANUAL,
+        state=StateChoices.AVAILABLE,
+        task=_task(tenant.id, task_status, date_created=datetime.now(UTC) - task_age),
+    )
+
+
 def _dead_ids(tenant_id):
     return set(
         Scan.objects.filter(tenant_id=tenant_id)
@@ -68,75 +88,34 @@ def _dead_ids(tenant_id):
 
 @pytest.mark.django_db
 class TestDeadScanQ:
-    def test_stale_heartbeat_is_dead(self, tenants_fixture, aws_provider):
-        scan = _executing(tenants_fixture[0], aws_provider, heartbeat_age=STALE)
+    @pytest.mark.parametrize("task_status", sorted(states.READY_STATES))
+    def test_executing_with_finished_task_is_dead(
+        self, task_status, tenants_fixture, aws_provider
+    ):
+        scan = _executing(tenants_fixture[0], aws_provider, task_status=task_status)
         assert _dead_ids(tenants_fixture[0].id) == {scan.id}
 
-    def test_live_heartbeat_is_never_dead_even_if_started_long_ago(
-        self, tenants_fixture, aws_provider
-    ):
+    def test_executing_with_running_task_is_alive(self, tenants_fixture, aws_provider):
+        _executing(tenants_fixture[0], aws_provider, task_status=states.STARTED)
+        assert _dead_ids(tenants_fixture[0].id) == set()
+
+    def test_backstop_over_and_under_twelve_hours(self, tenants_fixture, aws_provider):
+        tenant = tenants_fixture[0]
+        over = _executing(
+            tenant, aws_provider, task_status=states.STARTED, idle=BACKSTOP_OVER
+        )
         _executing(
-            tenants_fixture[0],
-            aws_provider,
-            heartbeat_age=FRESH,
-            started_age=timedelta(days=30),
+            tenant, aws_provider, task_status=states.STARTED, idle=BACKSTOP_UNDER
         )
-        assert _dead_ids(tenants_fixture[0].id) == set()
+        assert _dead_ids(tenant.id) == {over.id}
 
-    def test_null_heartbeat_under_legacy_threshold_is_alive(
-        self, tenants_fixture, aws_provider
-    ):
-        _executing(tenants_fixture[0], aws_provider, started_age=timedelta(hours=23))
-        assert _dead_ids(tenants_fixture[0].id) == set()
-
-    def test_null_heartbeat_over_legacy_threshold_is_dead(
-        self, tenants_fixture, aws_provider
-    ):
-        scan = _executing(
-            tenants_fixture[0], aws_provider, started_age=timedelta(hours=25)
-        )
-        assert _dead_ids(tenants_fixture[0].id) == {scan.id}
-
-    def test_null_heartbeat_and_started_at_falls_back_to_inserted_at(
-        self, tenants_fixture, aws_provider
-    ):
-        scan = _executing(tenants_fixture[0], aws_provider)
-        Scan.objects.filter(pk=scan.pk).update(
-            started_at=None, inserted_at=datetime.now(UTC) - timedelta(hours=25)
-        )
-        assert _dead_ids(tenants_fixture[0].id) == {scan.id}
-
-    def test_dispatched_scan_dead_by_heartbeat_or_legacy_task_age(
+    def test_dispatched_never_started_over_and_under_twenty_four_hours(
         self, tenants_fixture, aws_provider
     ):
         tenant = tenants_fixture[0]
-        now = datetime.now(UTC)
-        old_task = Scan.objects.create(
-            tenant_id=tenant.id,
-            provider=aws_provider,
-            trigger=Scan.TriggerChoices.MANUAL,
-            state=StateChoices.AVAILABLE,
-            task=_task(
-                tenant.id, states.PENDING, date_created=now - timedelta(hours=25)
-            ),
-        )
-        new_task = Scan.objects.create(
-            tenant_id=tenant.id,
-            provider=aws_provider,
-            trigger=Scan.TriggerChoices.MANUAL,
-            state=StateChoices.AVAILABLE,
-            task=_task(tenant.id, states.PENDING),
-        )
-        stale_beat = Scan.objects.create(
-            tenant_id=tenant.id,
-            provider=aws_provider,
-            trigger=Scan.TriggerChoices.MANUAL,
-            state=StateChoices.AVAILABLE,
-            heartbeat_at=now - STALE,
-            task=_task(tenant.id, states.STARTED),
-        )
-        assert _dead_ids(tenant.id) == {old_task.id, stale_beat.id}
-        assert new_task.id not in _dead_ids(tenant.id)
+        over = _dispatched(tenant, aws_provider, states.PENDING, DISPATCH_OVER)
+        _dispatched(tenant, aws_provider, states.PENDING, DISPATCH_UNDER)
+        assert _dead_ids(tenant.id) == {over.id}
 
     def test_queued_and_completed_scans_are_not_dead(
         self, tenants_fixture, aws_provider
@@ -148,7 +127,6 @@ class TestDeadScanQ:
             provider=aws_provider,
             trigger=Scan.TriggerChoices.MANUAL,
             state=StateChoices.COMPLETED,
-            heartbeat_at=datetime.now(UTC) - STALE,
         )
         assert _dead_ids(tenant.id) == set()
 
@@ -159,7 +137,10 @@ class TestReleaseProviderScanSlot:
         self, tenants_fixture, aws_provider, django_capture_on_commit_callbacks
     ):
         tenant = tenants_fixture[0]
-        dead = _executing(tenant, aws_provider, heartbeat_age=STALE)
+        dead = _executing(tenant, aws_provider, task_status=states.STARTED)
+        TaskResult.objects.filter(pk=dead.task.task_runner_task.pk).update(
+            status=states.FAILURE
+        )
         queued = _queued(tenant, aws_provider)
 
         with patch("tasks.tasks.perform_scan_task.apply_async") as publish:
@@ -173,22 +154,35 @@ class TestReleaseProviderScanSlot:
         dead.refresh_from_db()
         assert dead.state == StateChoices.FAILED
         assert dead.completed_at is not None
-        assert dead.task.task_runner_task.status == states.FAILURE
         queued.task.task_runner_task.refresh_from_db()
         assert queued.task.task_runner_task.status == states.PENDING
 
     def test_fails_dead_scan_without_queue(self, tenants_fixture, aws_provider):
         tenant = tenants_fixture[0]
-        dead = _executing(tenant, aws_provider, heartbeat_age=STALE)
+        dead = _executing(tenant, aws_provider)
 
         assert _release_provider_scan_slot(str(tenant.id), str(aws_provider.id)) is None
         dead.refresh_from_db()
         assert dead.state == StateChoices.FAILED
 
+    def test_backstop_scan_gets_task_marked_failed(self, tenants_fixture, aws_provider):
+        tenant = tenants_fixture[0]
+        dead = _executing(
+            tenant, aws_provider, task_status=states.STARTED, idle=BACKSTOP_OVER
+        )
+
+        _release_provider_scan_slot(str(tenant.id), str(aws_provider.id))
+
+        dead.refresh_from_db()
+        dead.task.task_runner_task.refresh_from_db()
+        assert dead.state == StateChoices.FAILED
+        assert dead.task.task_runner_task.status == states.FAILURE
+        assert dead.task.task_runner_task.date_done is not None
+
     def test_live_scan_is_kept_and_queue_stays(self, tenants_fixture, aws_provider):
         tenant = tenants_fixture[0]
         live = _executing(
-            tenant, aws_provider, heartbeat_age=FRESH, started_age=timedelta(days=3)
+            tenant, aws_provider, task_status=states.STARTED, idle=BACKSTOP_UNDER
         )
         queued = _queued(tenant, aws_provider)
 
@@ -198,21 +192,19 @@ class TestReleaseProviderScanSlot:
         assert live.state == StateChoices.EXECUTING
         assert queued.task.task_runner_task.status == "QUEUED"
 
-    def test_null_heartbeat_is_reaped_only_past_legacy_threshold(
+    def test_stale_dispatched_scan_is_failed_and_recent_one_kept(
         self, tenants_fixture, aws_provider
     ):
         tenant = tenants_fixture[0]
-        young = _executing(tenant, aws_provider, started_age=timedelta(hours=23))
-        _release_provider_scan_slot(str(tenant.id), str(aws_provider.id))
-        young.refresh_from_db()
-        assert young.state == StateChoices.EXECUTING
+        old = _dispatched(tenant, aws_provider, states.PENDING, DISPATCH_OVER)
+        recent = _dispatched(tenant, aws_provider, states.PENDING, DISPATCH_UNDER)
 
-        Scan.objects.filter(pk=young.pk).update(
-            started_at=datetime.now(UTC) - timedelta(hours=25)
-        )
         _release_provider_scan_slot(str(tenant.id), str(aws_provider.id))
-        young.refresh_from_db()
-        assert young.state == StateChoices.FAILED
+
+        old.refresh_from_db()
+        recent.refresh_from_db()
+        assert old.state == StateChoices.FAILED
+        assert recent.state == StateChoices.AVAILABLE
 
 
 @pytest.mark.django_db
@@ -245,10 +237,12 @@ class TestScheduledScanHealsDeadScan:
                 patch("tasks.tasks.perform_prowler_scan") as scan,
                 patch("tasks.tasks.reconcile_scan_mute_rules"),
                 patch("tasks.tasks._perform_scan_complete_tasks"),
+                patch(PING) as ping,
             ):
                 result = perform_scheduled_scan_task.run(
                     tenant_id=str(tenant.id), provider_id=str(provider.id)
                 )
+            ping.assert_not_called()
             return result, scan
         finally:
             request.id = previous
@@ -258,7 +252,7 @@ class TestScheduledScanHealsDeadScan:
     ):
         tenant = tenants_fixture[0]
         self._periodic_task(aws_provider.id, tenant.id)
-        dead = _executing(tenant, aws_provider, heartbeat_age=STALE)
+        dead = _executing(tenant, aws_provider)
 
         result, scan = self._run(tenant, aws_provider, str(uuid.uuid4()))
 
@@ -272,7 +266,7 @@ class TestScheduledScanHealsDeadScan:
     ):
         tenant = tenants_fixture[0]
         self._periodic_task(aws_provider.id, tenant.id)
-        _executing(tenant, aws_provider, heartbeat_age=STALE)
+        _executing(tenant, aws_provider)
         queued = _queued(tenant, aws_provider, trigger=Scan.TriggerChoices.SCHEDULED)
 
         with patch("tasks.tasks.perform_scan_task.apply_async") as publish:
@@ -299,7 +293,7 @@ class TestScheduledScanHealsDeadScan:
     ):
         tenant = tenants_fixture[0]
         self._periodic_task(aws_provider.id, tenant.id)
-        _executing(tenant, aws_provider, heartbeat_age=STALE)
+        _executing(tenant, aws_provider)
         manual = _queued(tenant, aws_provider)
 
         with patch("tasks.tasks.perform_scan_task.apply_async") as publish:
@@ -317,10 +311,12 @@ class TestScheduledScanHealsDeadScan:
 class TestReleaseStaleScansSweeper:
     def test_fails_dead_scan_without_queue(self, tenants_fixture, aws_provider):
         tenant = tenants_fixture[0]
-        dead = _executing(tenant, aws_provider, heartbeat_age=STALE)
+        dead = _executing(tenant, aws_provider)
 
-        counts = release_stale_scans()
+        with patch(PING) as ping:
+            counts = release_stale_scans()
 
+        ping.assert_not_called()
         dead.refresh_from_db()
         assert dead.state == StateChoices.FAILED
         assert counts["dispatched"] == 0
@@ -330,7 +326,7 @@ class TestReleaseStaleScansSweeper:
         self, tenants_fixture, aws_provider, django_capture_on_commit_callbacks
     ):
         tenant = tenants_fixture[0]
-        dead = _executing(tenant, aws_provider, heartbeat_age=STALE)
+        dead = _executing(tenant, aws_provider)
         queued = _queued(tenant, aws_provider)
 
         with patch("tasks.tasks.perform_scan_task.apply_async") as publish:
@@ -344,19 +340,156 @@ class TestReleaseStaleScansSweeper:
         assert counts["dispatched"] == 1
         publish.assert_called_once()
 
-    def test_live_scan_is_not_reaped(self, tenants_fixture, aws_provider):
-        live = _executing(tenants_fixture[0], aws_provider, heartbeat_age=FRESH)
-        release_stale_scans()
+    def test_unresponsive_worker_scan_is_released_in_the_same_run(
+        self, tenants_fixture, aws_provider, django_capture_on_commit_callbacks
+    ):
+        tenant = tenants_fixture[0]
+        dead = _executing(
+            tenant, aws_provider, task_status=states.STARTED, worker="w-dead@host"
+        )
+        queued = _queued(tenant, aws_provider)
+
+        with (
+            patch(PING, return_value=(set(), {"w-dead@host"})) as ping,
+            patch("tasks.tasks.perform_scan_task.apply_async") as publish,
+        ):
+            with django_capture_on_commit_callbacks(execute=True):
+                counts = release_stale_scans()
+
+        ping.assert_called_once_with({"w-dead@host"})
+        dead.refresh_from_db()
+        dead.task.task_runner_task.refresh_from_db()
+        assert dead.state == StateChoices.FAILED
+        assert dead.task.task_runner_task.status == states.FAILURE
+        assert dead.task.task_runner_task.date_done is not None
+        assert counts["unresponsive_tasks"] == 1
+        assert counts["dispatched"] == 1
+        publish.assert_called_once()
+        queued.task.task_runner_task.refresh_from_db()
+        assert queued.task.task_runner_task.status == states.PENDING
+
+    def test_other_tasks_of_an_unresponsive_worker_are_left_to_orphan_recovery(
+        self, tenants_fixture, aws_provider
+    ):
+        tenant = tenants_fixture[0]
+        _executing(
+            tenant, aws_provider, task_status=states.STARTED, worker="w-dead@host"
+        )
+        summary = TaskResult.objects.create(
+            task_id=str(uuid.uuid4()),
+            task_name="scan-summary",
+            status=states.STARTED,
+            worker="w-dead@host",
+        )
+
+        with patch(PING, return_value=(set(), {"w-dead@host"})):
+            counts = release_stale_scans()
+
+        summary.refresh_from_db()
+        assert summary.status == states.STARTED
+        assert counts["unresponsive_tasks"] == 1
+
+    def test_responsive_worker_scan_is_preserved(self, tenants_fixture, aws_provider):
+        live = _executing(
+            tenants_fixture[0],
+            aws_provider,
+            task_status=states.STARTED,
+            worker="w-live@host",
+        )
+
+        with patch(PING, return_value=({"w-live@host"}, set())):
+            release_stale_scans()
+
         live.refresh_from_db()
+        live.task.task_runner_task.refresh_from_db()
         assert live.state == StateChoices.EXECUTING
+        assert live.task.task_runner_task.status == states.STARTED
+
+    def test_unknown_liveness_is_preserved(self, tenants_fixture, aws_provider):
+        scan = _executing(
+            tenants_fixture[0],
+            aws_provider,
+            task_status=states.STARTED,
+            worker="w-unknown@host",
+        )
+
+        with patch(PING, return_value=(set(), None)):
+            release_stale_scans()
+
+        scan.refresh_from_db()
+        assert scan.state == StateChoices.EXECUTING
+
+    def test_scan_without_worker_is_left_to_the_backstop(
+        self, tenants_fixture, aws_provider
+    ):
+        tenant = tenants_fixture[0]
+        no_worker = _executing(tenant, aws_provider, task_status=states.STARTED)
+
+        with patch(PING) as ping:
+            release_stale_scans()
+
+        ping.assert_not_called()
+        no_worker.refresh_from_db()
+        assert no_worker.state == StateChoices.EXECUTING
+
+        Scan.objects.filter(pk=no_worker.pk).update(
+            updated_at=datetime.now(UTC) - BACKSTOP_OVER
+        )
+        with patch(PING) as ping:
+            release_stale_scans()
+
+        ping.assert_not_called()
+        no_worker.refresh_from_db()
+        assert no_worker.state == StateChoices.FAILED
+
+    def test_ping_failure_does_not_stop_the_release(
+        self, tenants_fixture, aws_provider
+    ):
+        dead = _executing(tenants_fixture[0], aws_provider)
+        alive = _executing(
+            tenants_fixture[0],
+            aws_provider,
+            task_status=states.STARTED,
+            worker="w@host",
+        )
+
+        with patch(PING, side_effect=RuntimeError("broker down")):
+            counts = release_stale_scans()
+
+        dead.refresh_from_db()
+        alive.refresh_from_db()
+        assert dead.state == StateChoices.FAILED
+        assert alive.state == StateChoices.EXECUTING
+        assert counts["unresponsive_tasks"] == 0
+
+    def test_backstop_scan_is_reaped_and_recent_one_kept(
+        self, tenants_fixture, aws_provider
+    ):
+        tenant = tenants_fixture[0]
+        over = _executing(
+            tenant, aws_provider, task_status=states.STARTED, idle=BACKSTOP_OVER
+        )
+        under = _executing(
+            tenant, aws_provider, task_status=states.STARTED, idle=BACKSTOP_UNDER
+        )
+
+        release_stale_scans()
+
+        over.refresh_from_db()
+        under.refresh_from_db()
+        assert over.state == StateChoices.FAILED
+        assert under.state == StateChoices.EXECUTING
 
     def test_handles_two_tenants(self, tenants_fixture, aws_provider, provider_factory):
         tenant_a, tenant_b = tenants_fixture[0], tenants_fixture[1]
         provider_b = provider_factory(tenant=tenant_b)
-        dead_a = _executing(tenant_a, aws_provider, heartbeat_age=STALE)
-        dead_b = _executing(tenant_b, provider_b, heartbeat_age=STALE)
+        dead_a = _executing(tenant_a, aws_provider)
+        dead_b = _executing(
+            tenant_b, provider_b, task_status=states.STARTED, worker="w-b@host"
+        )
 
-        counts = release_stale_scans()
+        with patch(PING, return_value=(set(), {"w-b@host"})):
+            counts = release_stale_scans()
 
         dead_a.refresh_from_db()
         dead_b.refresh_from_db()
@@ -369,8 +502,8 @@ class TestReleaseStaleScansSweeper:
     ):
         tenant_a, tenant_b = tenants_fixture[0], tenants_fixture[1]
         provider_b = provider_factory(tenant=tenant_b)
-        _executing(tenant_a, aws_provider, heartbeat_age=STALE)
-        dead_b = _executing(tenant_b, provider_b, heartbeat_age=STALE)
+        _executing(tenant_a, aws_provider)
+        dead_b = _executing(tenant_b, provider_b)
         real = _release_provider_scan_slot
 
         def flaky(tenant_id, provider_id):
@@ -384,45 +517,3 @@ class TestReleaseStaleScansSweeper:
         dead_b.refresh_from_db()
         assert dead_b.state == StateChoices.FAILED
         assert counts["failed"] == 1
-
-
-@pytest.mark.django_db(transaction=True)
-class TestScanHeartbeat:
-    def test_writes_heartbeat_and_stops_on_exit(self, tenants_fixture, aws_provider):
-        tenant = tenants_fixture[0]
-        scan = _executing(tenant, aws_provider)
-        before = scan.updated_at
-
-        with patch("tasks.jobs.scan_heartbeat.SCAN_HEARTBEAT_INTERVAL_SECONDS", 0.05):
-            with scan_heartbeat(str(tenant.id), str(scan.id)):
-                deadline = time.time() + 5
-                while time.time() < deadline:
-                    scan.refresh_from_db()
-                    if scan.heartbeat_at is not None:
-                        break
-                    time.sleep(0.05)
-
-        scan.refresh_from_db()
-        assert scan.heartbeat_at is not None
-        assert scan.updated_at == before
-        assert not any(
-            t.name.startswith("scan-heartbeat-") for t in threading.enumerate()
-        )
-
-    def test_database_errors_are_swallowed(self, tenants_fixture, aws_provider):
-        tenant = tenants_fixture[0]
-        scan = _executing(tenant, aws_provider)
-
-        with (
-            patch("tasks.jobs.scan_heartbeat.SCAN_HEARTBEAT_INTERVAL_SECONDS", 0.02),
-            patch(
-                "tasks.jobs.scan_heartbeat.rls_transaction",
-                side_effect=RuntimeError("db down"),
-            ) as rls,
-        ):
-            with scan_heartbeat(str(tenant.id), str(scan.id)):
-                time.sleep(0.3)
-                body_ran = True
-
-        assert body_ran
-        assert rls.call_count >= 2

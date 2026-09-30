@@ -39,7 +39,7 @@ def delete_periodic_task(apps, _schema_editor):
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("api", "0101_scan_heartbeat_at"),
+        ("api", "0100_attack_paths_tmp_db_reap_periodic_task"),
         ("django_celery_beat", "0019_alter_periodictasks_options"),
     ]
 

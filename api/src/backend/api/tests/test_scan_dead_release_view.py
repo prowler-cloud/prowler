@@ -29,8 +29,7 @@ def _dead_executing_scan(tenant, provider):
         trigger=Scan.TriggerChoices.MANUAL,
         state=StateChoices.EXECUTING,
         started_at=datetime.now(UTC) - timedelta(hours=2),
-        heartbeat_at=datetime.now(UTC) - timedelta(minutes=30),
-        task=_task(tenant.id, states.STARTED),
+        task=_task(tenant.id, states.FAILURE),
     )
 
 
@@ -63,8 +62,13 @@ class TestScanCreateReleasesDeadScan:
     ):
         dead = _dead_executing_scan(tenants_fixture[0], aws_provider)
 
-        with django_capture_on_commit_callbacks(execute=True):
+        with (
+            patch("tasks.jobs.dead_scans.ping_workers") as ping,
+            django_capture_on_commit_callbacks(execute=True),
+        ):
             response = _post_scan(authenticated_client, aws_provider)
+
+        ping.assert_not_called()
 
         assert response.status_code == status.HTTP_202_ACCEPTED
         dead.refresh_from_db()
@@ -96,8 +100,13 @@ class TestScanCreateReleasesDeadScan:
             task=_task(tenant.id, "QUEUED"),
         )
 
-        with django_capture_on_commit_callbacks(execute=True):
+        with (
+            patch("tasks.jobs.dead_scans.ping_workers") as ping,
+            django_capture_on_commit_callbacks(execute=True),
+        ):
             response = _post_scan(authenticated_client, aws_provider)
+
+        ping.assert_not_called()
 
         assert response.status_code == status.HTTP_202_ACCEPTED
         dead.refresh_from_db()
@@ -119,11 +128,17 @@ class TestScanCreateReleasesDeadScan:
         django_capture_on_commit_callbacks,
     ):
         live = _dead_executing_scan(tenants_fixture[0], aws_provider)
-        live.heartbeat_at = datetime.now(UTC)
-        live.save(update_fields=["heartbeat_at"])
+        TaskResult.objects.filter(pk=live.task.task_runner_task.pk).update(
+            status=states.STARTED
+        )
 
-        with django_capture_on_commit_callbacks(execute=True):
+        with (
+            patch("tasks.jobs.dead_scans.ping_workers") as ping,
+            django_capture_on_commit_callbacks(execute=True),
+        ):
             response = _post_scan(authenticated_client, aws_provider)
+
+        ping.assert_not_called()
 
         assert response.status_code == status.HTTP_202_ACCEPTED
         live.refresh_from_db()

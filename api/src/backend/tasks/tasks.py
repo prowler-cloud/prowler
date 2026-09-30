@@ -59,6 +59,11 @@ from tasks.jobs.connection import (
     check_lighthouse_connection,
     check_provider_connection,
 )
+from tasks.jobs.dead_scans import (
+    DISPATCHED_SCAN_TASK_STATES,
+    dead_scan_q,
+    fail_unresponsive_scan_tasks,
+)
 from tasks.jobs.deletion import delete_provider, delete_tenant
 from tasks.jobs.export import (
     COMPLIANCE_CLASS_MAP,
@@ -96,7 +101,6 @@ from tasks.jobs.scan import (
     reset_ephemeral_resource_findings_count,
     update_provider_compliance_scores,
 )
-from tasks.jobs.scan_heartbeat import DISPATCHED_SCAN_TASK_STATES, dead_scan_q
 from tasks.utils import (
     _get_or_create_scheduled_scan,
     batched,
@@ -335,6 +339,13 @@ def _dispatch_next_queued_provider_scan_best_effort(
 
 def release_stale_scans() -> dict:
     """Run the per-provider healer for every provider with a dead or queued scan."""
+    dispatched = failed = 0
+    try:
+        unresponsive_tasks = fail_unresponsive_scan_tasks()
+    except Exception:
+        unresponsive_tasks = 0
+        logger.exception("Failed to check scan workers for liveness")
+
     now = datetime.now(UTC)
     queued = Q(
         state=StateChoices.AVAILABLE,
@@ -347,8 +358,6 @@ def release_stale_scans() -> dict:
         .values_list("tenant_id", "provider_id")
         .distinct()
     )
-
-    dispatched = failed = 0
     for tenant_id, provider_id in candidates:
         try:
             with rls_transaction(str(tenant_id)):
@@ -367,6 +376,7 @@ def release_stale_scans() -> dict:
             )
     return {
         "providers_checked": len(candidates),
+        "unresponsive_tasks": unresponsive_tasks,
         "dispatched": dispatched,
         "failed": failed,
     }
