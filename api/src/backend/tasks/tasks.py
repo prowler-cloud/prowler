@@ -9,7 +9,7 @@ from api.compliance import (
     get_compliance_frameworks,
     get_prowler_provider_compliance,
 )
-from api.db_router import READ_REPLICA_ALIAS, MainRouter
+from api.db_router import READ_REPLICA_ALIAS
 from api.db_utils import delete_related_daily_task, rls_transaction
 from api.decorators import handle_provider_deletion, set_tenant
 from api.exceptions import ProviderDeletedException
@@ -29,7 +29,6 @@ from celery.utils.log import get_task_logger
 from config.celery import RLSTask
 from config.django.base import DJANGO_FINDINGS_BATCH_SIZE, DJANGO_TMP_OUTPUT_DIRECTORY
 from django.db import transaction
-from django.db.models import Q
 from django_celery_beat.models import PeriodicTask
 from django_celery_results.models import TaskResult
 from prowler.lib.check.compliance_models import Compliance
@@ -58,11 +57,6 @@ from tasks.jobs.connection import (
     check_integration_connection,
     check_lighthouse_connection,
     check_provider_connection,
-)
-from tasks.jobs.dead_scans import (
-    DISPATCHED_SCAN_TASK_STATES,
-    dead_scan_q,
-    fail_unresponsive_scan_tasks,
 )
 from tasks.jobs.deletion import delete_provider, delete_tenant
 from tasks.jobs.export import (
@@ -109,19 +103,18 @@ from tasks.utils import (
 
 logger = get_task_logger(__name__)
 QUEUED_SCAN_TASK_STATE = "QUEUED"
+DISPATCHED_SCAN_TASK_STATES = (states.PENDING, states.STARTED, "PROGRESS")
 
 
 def _get_dispatched_provider_scan(tenant_id: str, provider_id: str):
-    """Return a live scan that has already been dispatched for a provider."""
-    dead = dead_scan_q(datetime.now(UTC))
+    """Return a scan that has already been dispatched for a provider."""
     executing_scan = (
-        Scan.objects.select_for_update(of=("self",))
+        Scan.objects.select_for_update()
         .filter(
             tenant_id=tenant_id,
             provider_id=provider_id,
             state=StateChoices.EXECUTING,
         )
-        .exclude(dead)
         .order_by("-inserted_at")
         .first()
     )
@@ -138,7 +131,6 @@ def _get_dispatched_provider_scan(tenant_id: str, provider_id: str):
             task__isnull=False,
             task__task_runner_task__status__in=DISPATCHED_SCAN_TASK_STATES,
         )
-        .exclude(dead)
         .order_by("-inserted_at")
         .first()
     )
@@ -266,64 +258,28 @@ def _get_or_create_queued_scheduled_scan(
     )
 
 
-def _dispatch_queued_provider_scan_locked(tenant_id: str, provider_id: str):
-    """Dispatch the oldest queued scan; the caller holds the provider lock."""
-    if _get_dispatched_provider_scan(tenant_id, provider_id):
-        return None
-
-    queued_scan = _get_queued_provider_scan(tenant_id, provider_id)
-    if not queued_scan or not queued_scan.task:
-        return None
-
-    task_result = queued_scan.task.task_runner_task
-    task_result.status = states.PENDING
-    task_result.task_name = "scan-perform"
-    task_result.save(update_fields=["status", "task_name"])
-    enqueue_scan_execution_on_commit(
-        tenant_id=tenant_id,
-        scan=queued_scan,
-        task_id=str(queued_scan.task_id),
-    )
-    return queued_scan
-
-
 def _dispatch_next_queued_provider_scan(tenant_id: str, provider_id: str):
     with rls_transaction(tenant_id):
         if not Provider.objects.select_for_update().filter(pk=provider_id).exists():
             return None
 
-        return _dispatch_queued_provider_scan_locked(tenant_id, provider_id)
+        if _get_dispatched_provider_scan(tenant_id, provider_id):
+            return None
 
+        queued_scan = _get_queued_provider_scan(tenant_id, provider_id)
+        if not queued_scan or not queued_scan.task:
+            return None
 
-def _release_provider_scan_slot(tenant_id: str, provider_id: str):
-    """Fail the provider's dead scans and dispatch the next queued one.
-
-    Must run inside a transaction that already holds the provider lock.
-    Returns the dispatched scan, or None.
-    """
-    now = datetime.now(UTC)
-    dead_scans = list(
-        Scan.objects.select_for_update(of=("self",))
-        .select_related("task__task_runner_task")
-        .filter(tenant_id=tenant_id, provider_id=provider_id)
-        .filter(dead_scan_q(now))
-    )
-    for scan in dead_scans:
-        logger.warning(
-            "Scan %s of provider %s has no live worker; marking it failed",
-            scan.id,
-            provider_id,
+        task_result = queued_scan.task.task_runner_task
+        task_result.status = states.PENDING
+        task_result.task_name = "scan-perform"
+        task_result.save(update_fields=["status", "task_name"])
+        enqueue_scan_execution_on_commit(
+            tenant_id=tenant_id,
+            scan=queued_scan,
+            task_id=str(queued_scan.task_id),
         )
-        scan.state = StateChoices.FAILED
-        scan.completed_at = now
-        scan.save(update_fields=["state", "completed_at", "updated_at"])
-        task_result = scan.task.task_runner_task if scan.task else None
-        if task_result and task_result.status not in states.READY_STATES:
-            task_result.status = states.FAILURE
-            task_result.date_done = now
-            task_result.save(update_fields=["status", "date_done"])
-
-    return _dispatch_queued_provider_scan_locked(tenant_id, provider_id)
+        return queued_scan
 
 
 def _dispatch_next_queued_provider_scan_best_effort(
@@ -335,51 +291,6 @@ def _dispatch_next_queued_provider_scan_best_effort(
         logger.exception(
             "Failed to dispatch next queued scan for provider %s", provider_id
         )
-
-
-def release_stale_scans() -> dict:
-    """Run the per-provider healer for every provider with a dead or queued scan."""
-    dispatched = failed = 0
-    try:
-        unresponsive_tasks = fail_unresponsive_scan_tasks()
-    except Exception:
-        unresponsive_tasks = 0
-        logger.exception("Failed to check scan workers for liveness")
-
-    now = datetime.now(UTC)
-    queued = Q(
-        state=StateChoices.AVAILABLE,
-        task__isnull=False,
-        task__task_runner_task__status=QUEUED_SCAN_TASK_STATE,
-    )
-    candidates = list(
-        Scan.all_objects.using(MainRouter.admin_db)
-        .filter(dead_scan_q(now) | queued)
-        .values_list("tenant_id", "provider_id")
-        .distinct()
-    )
-    for tenant_id, provider_id in candidates:
-        try:
-            with rls_transaction(str(tenant_id)):
-                if (
-                    not Provider.objects.select_for_update()
-                    .filter(pk=provider_id)
-                    .exists()
-                ):
-                    continue
-                if _release_provider_scan_slot(str(tenant_id), str(provider_id)):
-                    dispatched += 1
-        except Exception:
-            failed += 1
-            logger.exception(
-                "Failed to release stale scans for provider %s", provider_id
-            )
-    return {
-        "providers_checked": len(candidates),
-        "unresponsive_tasks": unresponsive_tasks,
-        "dispatched": dispatched,
-        "failed": failed,
-    }
 
 
 def _get_or_create_next_scheduled_scan(
@@ -710,17 +621,6 @@ def perform_scheduled_scan_task(self, tenant_id: str, provider_id: str):
             scheduler_task_id=periodic_task_instance.id,
         )
 
-        released_scan = _release_provider_scan_slot(tenant_id, provider_id)
-        if released_scan and released_scan.trigger == Scan.TriggerChoices.SCHEDULED:
-            # The released queued scan is this tick's run.
-            _get_or_create_next_scheduled_scan(
-                tenant_id=tenant_id,
-                provider_id=provider_id,
-                periodic_task_instance=periodic_task_instance,
-                next_scan_datetime=next_scan_datetime,
-            )
-            return ScanTaskSerializer(instance=released_scan).data
-
         active_scan = get_active_provider_scan(tenant_id, provider_id)
         if active_scan:
             logger.warning(
@@ -833,12 +733,6 @@ def cleanup_stale_attack_paths_scans_task():
 )
 def reap_orphaned_attack_paths_tmp_databases_task():
     return reap_orphaned_tmp_databases()
-
-
-@shared_task(name="scan-release-stale", queue="celery")
-def release_stale_scans_task():
-    """Periodic watchdog: fail dead scans and unblock providers nobody requests."""
-    return release_stale_scans()
 
 
 @shared_task(name="reconcile-orphan-tasks", queue="celery")

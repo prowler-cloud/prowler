@@ -321,12 +321,6 @@ UI_BASE_URL = env.str("DJANGO_UI_BASE_URL", "").rstrip("/")
 CSRF_COOKIE_SECURE = True
 SESSION_COOKIE_SECURE = True
 
-# A scan is dead when its task already finished, its worker stopped answering, or it
-# shows no progress (`updated_at`) for the backstop; a dispatched scan that never
-# started is dead after the dispatch age.
-SCAN_STALE_BACKSTOP_HOURS = env.int("SCAN_STALE_BACKSTOP_HOURS", 12)
-SCAN_DISPATCH_STALE_HOURS = env.int("SCAN_DISPATCH_STALE_HOURS", 24)
-
 # Attack Paths
 ATTACK_PATHS_SCAN_INACTIVITY_THRESHOLD_MINUTES = env.int(
     "ATTACK_PATHS_SCAN_INACTIVITY_THRESHOLD_MINUTES", 30

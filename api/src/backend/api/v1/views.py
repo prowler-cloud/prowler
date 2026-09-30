@@ -333,7 +333,6 @@ from tasks.jobs.attack_paths import db_utils as attack_paths_db_utils
 from tasks.jobs.export import get_s3_client, get_s3_presign_client
 from tasks.tasks import (
     QUEUED_SCAN_TASK_STATE,
-    _release_provider_scan_slot,
     backfill_compliance_summaries_task,
     backfill_scan_resource_summaries_task,
     check_integration_connection_task,
@@ -2809,7 +2808,6 @@ class ScanViewSet(ProviderVisibilityMixin, BaseRLSViewSet):
                     tenant_id=self.request.tenant_id,
                     id__in=self.get_provider_queryset().values("id"),
                 )
-                _release_provider_scan_slot(self.request.tenant_id, provider.id)
                 active_scan = get_active_provider_scan(
                     self.request.tenant_id, provider.id
                 )
