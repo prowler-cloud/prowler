@@ -1,7 +1,7 @@
 {
   "Provider": "oraclecloud",
   "CheckID": "network_security_group_ingress_from_internet_to_ssh_port",
-  "CheckTitle": "Network security group restricts ingress from 0.0.0.0/0 to port 22 (SSH)",
+  "CheckTitle": "Network security group restricts ingress from the internet to port 22 (SSH)",
   "CheckType": [],
   "ServiceName": "network",
   "SubServiceName": "",
@@ -9,7 +9,7 @@
   "Severity": "high",
   "ResourceType": "NetworkSecurityGroup",
   "ResourceGroup": "network",
-  "Description": "Network security groups with **ingress** from `0.0.0.0/0` exposing **SSH** are identified. This includes rules that explicitly permit `TCP` `22`, use `all` protocols, or define TCP port ranges that encompass `22`.",
+  "Description": "Network security groups with **ingress** from `0.0.0.0/0` (IPv4) or `::/0` (IPv6) exposing **SSH** are identified. This includes rules that explicitly permit `TCP` `22`, use `all` protocols, or define TCP port ranges that encompass `22`.",
   "Risk": "Public **SSH** access enables Internet-wide probing, **brute force**, and **credential stuffing** that can grant shell access. Compromise allows **lateral movement**, data exfiltration (confidentiality), unauthorized changes or malware (integrity), and service disruption or ransomware-driven lockouts (availability).",
   "RelatedUrl": "",
   "AdditionalURLs": [
@@ -24,7 +24,7 @@
       "Terraform": "```hcl\n# Restrict SSH so it's not from 0.0.0.0/0\nresource \"oci_core_network_security_group_security_rule\" \"<example_resource_name>\" {\n  network_security_group_id = \"<example_resource_id>\"\n  direction                 = \"INGRESS\"\n  protocol                  = \"6\"                         # TCP\n  source                    = \"10.0.0.0/8\"               # CRITICAL: not 0.0.0.0/0; limits SSH to internal range\n\n  tcp_options {\n    destination_port_range {\n      min = 22  # CRITICAL: explicitly defines SSH port\n      max = 22\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Enforce **least privilege**: limit SSH in NSG rules to trusted CIDRs or private networks. Prefer **bastion access** (e.g., OCI Bastion) or **VPN/private connectivity** over direct Internet exposure. Use key-based auth, disable `PasswordAuthentication`, log and monitor access, and segment workloads for **defense in depth**.",
+      "Text": "Enforce **least privilege**: limit SSH in NSG rules to trusted CIDRs or private networks, and never allow `0.0.0.0/0` or `::/0`. Prefer **bastion access** (e.g., OCI Bastion) or **VPN/private connectivity** over direct Internet exposure. Use key-based auth, disable `PasswordAuthentication`, log and monitor access, and segment workloads for **defense in depth**.",
       "Url": "https://hub.prowler.com/check/network_security_group_ingress_from_internet_to_ssh_port"
     }
   },
@@ -33,5 +33,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": ""
+  "Notes": "OCI security lists and network security groups accept both IPv4 and IPv6 rules. An ingress rule with source `::/0` exposes the resource to the whole IPv6 internet exactly like `0.0.0.0/0` does for IPv4, so both are treated as unrestricted here."
 }
