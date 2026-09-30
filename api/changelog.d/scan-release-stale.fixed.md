@@ -1,1 +1,0 @@
-Scans whose worker was killed mid-run no longer block their provider: a scan whose task already failed, whose worker no longer answers, or that shows no progress for 12 hours is marked failed and the next queued scan runs
