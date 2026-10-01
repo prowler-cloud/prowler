@@ -15,6 +15,7 @@ repository_arn = (
 )
 
 
+
 @mock_aws
 class Test_ecr_repository_encrypted_with_cmk:
     def test_no_registries(self):
