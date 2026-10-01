@@ -1,10 +1,12 @@
 import base64
+from datetime import datetime
 from typing import Optional
 
 from botocore.client import ClientError
 from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
+from prowler.lib.resource_limit import get_resource_scan_limit, limit_resources
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
@@ -22,6 +24,9 @@ class SageMaker(AWSService):
         self.endpoint_configs = {}
         self.sagemaker_model_registries = []
         self.sagemaker_monitoring_schedules = []
+        self.training_job_limit = get_resource_scan_limit(
+            self.audit_config, "max_sagemaker_training_jobs"
+        )
 
         # Retrieve resources concurrently
         self.__threading_call__(self._list_notebook_instances)
@@ -32,6 +37,12 @@ class SageMaker(AWSService):
         self.__threading_call__(self._list_domains)
         self.__threading_call__(self._list_model_package_groups)
         self.__threading_call__(self._list_monitoring_schedules)
+
+        # Training jobs have no delete API, so an account's history only
+        # grows. Trim to the newest ones before the per-job describe/list-tags
+        # fan-out below, which otherwise scales with the entire lifetime job
+        # count rather than the number of jobs still worth auditing.
+        self._select_training_jobs_for_analysis()
 
         # Describe resources concurrently
         self.__threading_call__(self._describe_model, self.sagemaker_models)
@@ -136,12 +147,35 @@ class SageMaker(AWSService):
                                 name=training_job["TrainingJobName"],
                                 region=regional_client.region,
                                 arn=training_job["TrainingJobArn"],
+                                creation_time=training_job.get("CreationTime"),
                             )
                         )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+
+    def _select_training_jobs_for_analysis(self):
+        """Trim training jobs to the newest ``training_job_limit`` before describe/tag calls.
+
+        SageMaker has no DeleteTrainingJob API, so an account's training-job
+        history is permanent and can reach hundreds of thousands of entries.
+        Without a limit, every one of them gets a DescribeTrainingJob and a
+        ListTags call, which can hang or OOM the scan regardless of how many
+        jobs are actually still relevant.
+        """
+        self.sagemaker_training_jobs = list(
+            limit_resources(
+                sorted(
+                    self.sagemaker_training_jobs,
+                    key=lambda job: (
+                        job.creation_time.timestamp() if job.creation_time else 0.0
+                    ),
+                    reverse=True,
+                ),
+                self.training_job_limit,
+            )
+        )
 
     def _list_processing_jobs(self, regional_client):
         """List SageMaker processing jobs in a region.
@@ -614,6 +648,9 @@ class TrainingJob(BaseModel):
     name: str
     region: str
     arn: str
+    # From ListTrainingJobs' CreationTime, used to keep only the newest jobs
+    # when max_sagemaker_training_jobs applies.
+    creation_time: Optional[datetime] = None
     container_traffic_encryption: bool = None
     volume_kms_key_id: str = None
     network_isolation: bool = None
