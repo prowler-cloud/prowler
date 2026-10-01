@@ -212,6 +212,7 @@ Resources:
                   - "glue:GetMLTransforms"
                   - "inspector2:BatchGetFindingDetails"
                   - "lambda:GetFunction*"
+                  - "lambda:GetLayerVersion"
                   - "logs:FilterLogEvents"
                   - "lightsail:GetRelationalDatabases"
                   - "macie2:GetMacieSession"
@@ -451,6 +452,8 @@ Resources:
                         Effect: Allow
                         Action:
                           - "account:Get*"
+                          - "amplify:ListApps"
+                          - "amplify:ListBranches"
                           - "appstream:Describe*"
                           - "appstream:List*"
                           - "backup:List*"
@@ -482,6 +485,7 @@ Resources:
                           - "glue:GetMLTransforms"
                           - "inspector2:BatchGetFindingDetails"
                           - "lambda:GetFunction*"
+                          - "lambda:GetLayerVersion"
                           - "logs:FilterLogEvents"
                           - "lightsail:GetRelationalDatabases"
                           - "macie2:GetMacieSession"
