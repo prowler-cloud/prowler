@@ -26,8 +26,7 @@ class network_vnet_ddos_protection_enabled(Check):
                 if vnet.enable_ddos_protection:
                     report.status = "PASS"
                     report.status_extended = (
-                        f"Virtual network '{vnet.name}' has DDoS "
-                        f"protection enabled."
+                        f"Virtual network '{vnet.name}' has DDoS protection enabled."
                     )
                 else:
                     report.status = "FAIL"
