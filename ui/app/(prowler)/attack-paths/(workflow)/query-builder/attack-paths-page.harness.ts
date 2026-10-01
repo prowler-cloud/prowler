@@ -18,6 +18,8 @@ export class AttackPathPageHarness extends BrowserHarness<PageFixture> {
   private static readonly VIEWPORT_SEL = ".react-flow__viewport";
   private static readonly MINIMAP_SEL = ".react-flow__minimap";
   private static readonly BACKGROUND_SEL = ".react-flow__background";
+  // Matches the graph's auto-fit duration; a pause this long means no fit is mid-flight.
+  private static readonly FIT_ANIMATION_MS = 300;
 
   private static isFindingElement(el: Element): boolean {
     return (
@@ -255,17 +257,31 @@ export class AttackPathPageHarness extends BrowserHarness<PageFixture> {
   /** Wait until the React Flow viewport transform changes from `previous`. */
   async waitForViewportChange(
     previous: string,
-    timeoutMs = 2000,
+    timeoutMs?: number,
   ): Promise<void> {
-    await this.waitFor(() => this.viewportTransform !== previous, timeoutMs);
+    await this.waitFor(
+      () => this.viewportTransform !== previous,
+      timeoutMs,
+      "the viewport transform to change",
+    );
+  }
+
+  /** Wait until the viewport stops moving and return its settled transform. */
+  async waitForViewportSettled(): Promise<string> {
+    return this.waitForStable(
+      () => this.viewportTransform,
+      AttackPathPageHarness.FIT_ANIMATION_MS,
+      undefined,
+      "the viewport to settle",
+    );
   }
 
   /** Wait until every requested node is fully contained in the graph canvas. */
   async waitForNodesInViewport(
     nodeIds: string[],
-    timeoutMs = 2000,
+    timeoutMs?: number,
   ): Promise<void> {
-    await this.waitFor(() => {
+    const allInViewport = () => {
       const canvas = this.q(AttackPathPageHarness.FLOW_SEL);
       if (!canvas) return false;
 
@@ -282,7 +298,12 @@ export class AttackPathPageHarness extends BrowserHarness<PageFixture> {
           nodeRect.bottom <= canvasRect.bottom
         );
       });
-    }, timeoutMs);
+    };
+    await this.waitFor(
+      allInViewport,
+      timeoutMs,
+      `nodes ${nodeIds.join(", ")} to be in the viewport`,
+    );
   }
 
   /** Wait until exactly `count` edges are highlighted. */

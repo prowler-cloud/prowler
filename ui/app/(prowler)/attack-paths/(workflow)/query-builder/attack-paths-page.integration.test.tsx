@@ -407,19 +407,24 @@ describe("exploring the graph", () => {
     const graph = await mountWith();
     await graph.executeQuery();
     await graph.waitForGraphStable(3);
-
-    const initialViewport = graph.viewportTransform;
+    // Settle before each capture so the next change can only come from the
+    // action under test, not the tail of the previous fit animation.
+    const initialViewport = await graph.waitForViewportSettled();
 
     await graph.clickFirstResourceNode();
 
     expect(graph.findingNodes.length).toBeGreaterThan(0);
     await graph.waitForViewportChange(initialViewport);
 
-    const contextualViewport = graph.viewportTransform;
+    const contextualViewport = await graph.waitForViewportSettled();
+    const visibleNodeIds = graph.renderedNodeIds;
 
     await graph.fit();
 
     await graph.waitForViewportChange(contextualViewport);
+    // The fit must end with the whole visible graph on screen, not just move
+    await graph.waitForViewportSettled();
+    await graph.waitForNodesInViewport(visibleNodeIds);
   });
   test("clicking an expanded resource re-fits the remaining visible graph", async ({
     mountWith,

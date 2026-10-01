@@ -68,7 +68,7 @@ vulnerabilities:
     expired_at: 2026-11-30
 
   # Declared in the SPDX manifest that ships inside PowerShell's MicrosoftTeams module
-  # (Modules/MicrosoftTeams/7.9.0/_manifest/spdx_2.2/manifest.spdx.json). Trivy reads that
+  # (Modules/MicrosoftTeams/8.0.0/_manifest/spdx_2.2/manifest.spdx.json). Trivy reads that
   # SBOM and reports what it declares, which is not the same as what the image contains:
   # there is no Node runtime and no node_modules anywhere in the image, and the .NET
   # assemblies target net472, a Windows-only framework. Nothing here is reachable, and none
@@ -126,6 +126,10 @@ vulnerabilities:
       - "pkg:npm/fast-uri"
     expired_at: 2027-01-31
   - id: CVE-2026-75931
+    purls:
+      - "pkg:npm/fast-uri"
+    expired_at: 2027-01-31
+  - id: CVE-2026-84292
     purls:
       - "pkg:npm/fast-uri"
     expired_at: 2027-01-31

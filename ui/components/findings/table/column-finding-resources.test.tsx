@@ -321,6 +321,24 @@ function renderResourceActionsCell({
   render(<div>{CellComponent({ row: { original: resource, index: 0 } })}</div>);
 }
 
+function renderLastSeenCell(resource: FindingResourceRow = makeResource()) {
+  const columns = getColumnFindingResources({
+    rowSelection: {},
+    selectableRowCount: 1,
+  });
+  const column = columns.find(
+    (col) => (col as { id?: string }).id === "lastSeen",
+  );
+  if (!column?.cell) {
+    throw new Error("lastSeen column not found");
+  }
+  const CellComponent = column.cell as (props: {
+    row: { original: FindingResourceRow; index: number };
+  }) => ReactNode;
+
+  render(<div>{CellComponent({ row: { original: resource, index: 0 } })}</div>);
+}
+
 describe("column-finding-resources", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -347,6 +365,27 @@ describe("column-finding-resources", () => {
       resourceUid: "arn:aws:s3:::my-bucket",
       resourceName: "my-bucket",
     });
+  });
+
+  it("offers the re-check beside Last seen on Cloud rows", async () => {
+    // The quiet icon next to the timestamp opens the same confirmation as ⋮.
+    const user = userEvent.setup();
+    isCloudMock.mockReturnValue(true);
+    usePartialScanStore.getState().closePartialScan();
+    renderLastSeenCell();
+
+    await user.click(screen.getByRole("button", { name: "Re-check resource" }));
+
+    expect(usePartialScanStore.getState().activeTarget).toEqual(
+      expect.objectContaining({ resourceUid: "arn:aws:s3:::my-bucket" }),
+    );
+  });
+
+  it("keeps Last seen plain outside Prowler Cloud", () => {
+    renderLastSeenCell();
+
+    expect(screen.getByText("2024-01-01T00:00:00Z")).toBeInTheDocument();
+    expect(screen.queryByRole("button")).not.toBeInTheDocument();
   });
 
   it("hides the re-check outside Prowler Cloud", () => {

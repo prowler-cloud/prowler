@@ -89,6 +89,7 @@ class OraclecloudProvider(Provider):
         key_content: str = None,
         tenancy: str = None,
         pass_phrase: str = None,
+        home_region: str = None,
     ):
         """
         Initializes the OCI provider.
@@ -110,6 +111,7 @@ class OraclecloudProvider(Provider):
             - key_content: Content of the private key (base64 encoded).
             - tenancy: The OCID of the tenancy.
             - pass_phrase: The passphrase for the private key, if encrypted.
+            - home_region: Region used to bootstrap identity calls with API key credentials; it does not filter the audited regions.
 
         Raises:
             - OCISetUpSessionError: If an error occurs during the setup process.
@@ -140,7 +142,7 @@ class OraclecloudProvider(Provider):
         )
         has_direct_credentials = user and fingerprint and tenancy
         bootstrap_region = single_region or (
-            self._bootstrap_region if has_direct_credentials else None
+            (home_region or self._bootstrap_region) if has_direct_credentials else None
         )
 
         # Setup OCI Session
