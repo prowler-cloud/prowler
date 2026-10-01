@@ -5,7 +5,23 @@ from prowler.providers.aws.services.s3.s3control_client import s3control_client
 
 
 class s3_bucket_public_access(Check):
-    def execute(self):
+    """Ensure S3 buckets are not publicly accessible through their ACL or policy.
+
+    - PASS: Public access is blocked at account level, or the bucket's public
+      access block, ACL and policy grant no public access.
+    - FAIL: The bucket ACL or policy grants public access.
+    - MANUAL: The bucket policy, or its ACL while neither the account nor the
+      bucket ignores public ACLs, could not be retrieved (missing permissions)
+      and the data that was read shows no public access.
+    """
+
+    def execute(self) -> list[Check_Report_AWS]:
+        """Evaluate the check.
+
+        Returns:
+            list[Check_Report_AWS]: One report per bucket with a public access block, or one
+            account-level report when public access is blocked for the account.
+        """
         findings = []
         # 1. Check if public buckets are restricted at account level
         if (
@@ -50,5 +66,21 @@ class s3_bucket_public_access(Check):
                         ):
                             report.status = "FAIL"
                             report.status_extended = f"S3 Bucket {bucket.name} has public access due to bucket policy."
+
+                        # 5. A PASS cannot be asserted if the policy, or an ACL that the
+                        # account or bucket ignore_public_acls does not neutralize, could not be read
+                        if report.status == "PASS":
+                            missing = []
+                            acls_ignored = bucket.public_access_block.ignore_public_acls or (
+                                s3control_client.account_public_access_block
+                                and s3control_client.account_public_access_block.ignore_public_acls
+                            )
+                            if not bucket.acl_retrieved and not acls_ignored:
+                                missing.append(("ACL", "s3:GetBucketAcl"))
+                            if bucket.policy is None:
+                                missing.append(("policy", "s3:GetBucketPolicy"))
+                            if missing:
+                                report.status = "MANUAL"
+                                report.status_extended = f"Cannot evaluate public access for S3 Bucket {bucket.name}: the bucket {' and '.join(name for name, _ in missing)} could not be retrieved. Verify that the scanning credentials are allowed to call {' and '.join(action for _, action in missing)}."
                     findings.append(report)
         return findings
