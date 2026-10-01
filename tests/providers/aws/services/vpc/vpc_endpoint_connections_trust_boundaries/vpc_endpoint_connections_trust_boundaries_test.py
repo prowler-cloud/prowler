@@ -1,9 +1,12 @@
 import json
+from types import SimpleNamespace
 from unittest import mock
 
 from boto3 import client
 from moto import mock_aws
 
+from prowler.lib.check.models import Check_Report_AWS
+from prowler.providers.aws.services.vpc.vpc_service import VpcEndpoint
 from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_US_EAST_1,
@@ -15,6 +18,75 @@ NON_TRUSTED_AWS_ACCOUNT_NUMBER = "000011112222"
 
 
 class Test_vpc_endpoint_connections_trust_boundaries:
+    def _execute_check_with_policy_support(
+        self, policy_supported: bool | None
+    ) -> list[Check_Report_AWS]:
+        """Execute the check for an endpoint with the given policy capability."""
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        aws_provider._audit_config = {"trusted_account_ids": []}
+        endpoint = VpcEndpoint(
+            arn=f"arn:aws:ec2:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:vpc-endpoint/vpce-1234567890abcdef0",
+            id="vpce-1234567890abcdef0",
+            vpc_id="vpc-1234567890abcdef0",
+            service_name=f"com.amazonaws.{AWS_REGION_US_EAST_1}.email-smtp",
+            state="available",
+            policy_document={
+                "Statement": [
+                    {
+                        "Action": "*",
+                        "Effect": "Allow",
+                        "Principal": "*",
+                        "Resource": "*",
+                    }
+                ]
+            },
+            owner_id=AWS_ACCOUNT_NUMBER,
+            type="Interface",
+            region=AWS_REGION_US_EAST_1,
+            vpc_endpoint_policy_supported=policy_supported,
+        )
+        mocked_vpc_client = SimpleNamespace(
+            audit_config=aws_provider.audit_config,
+            audited_account=AWS_ACCOUNT_NUMBER,
+            vpc_endpoints=[endpoint],
+        )
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.vpc.vpc_endpoint_connections_trust_boundaries.vpc_endpoint_connections_trust_boundaries.vpc_client",
+                new=mocked_vpc_client,
+            ),
+        ):
+            from prowler.providers.aws.services.vpc.vpc_endpoint_connections_trust_boundaries.vpc_endpoint_connections_trust_boundaries import (
+                vpc_endpoint_connections_trust_boundaries,
+            )
+
+            return vpc_endpoint_connections_trust_boundaries().execute()
+
+    @mock_aws
+    def test_vpc_endpoint_policy_supported_is_evaluated(self):
+        result = self._execute_check_with_policy_support(True)
+
+        assert len(result) == 1
+        assert result[0].status == "FAIL"
+
+    @mock_aws
+    def test_vpc_endpoint_policy_unsupported_is_skipped(self):
+        result = self._execute_check_with_policy_support(False)
+
+        assert len(result) == 0
+
+    @mock_aws
+    def test_vpc_endpoint_policy_support_unknown_is_evaluated(self):
+        result = self._execute_check_with_policy_support(None)
+
+        assert len(result) == 1
+        assert result[0].status == "FAIL"
+
     @mock_aws
     def test_vpc_no_endpoints(self):
         from prowler.providers.aws.services.vpc.vpc_service import VPC
