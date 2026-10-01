@@ -18,7 +18,7 @@ overrides:
   "@react-aria/visually-hidden>react": "19.2.7"
   "@react-aria/interactions>react": "19.2.7"
   "lodash": "4.18.1"
-  # Next.js 16.3.3 requests sharp ^0.35.3; resolve 0.35.4 to fix
+  # Next.js 16.3.6 requests sharp ^0.35.4; pinned to fix
   # GHSA-rgj7-g3m4-5g8c (libheif). This override controls resolution;
   # keep it aligned with the direct dependency in package.json.
   "sharp": "0.35.4"
