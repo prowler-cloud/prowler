@@ -25,7 +25,7 @@ const registryFixtureUiServer = (
     UI_API_BASE_URL: registryFixtureApiUrl,
     UI_CLOUD_ENABLED: String(cloudEnabled),
     UI_REGISTRY_ENABLED: String(registryEnabled),
-    UI_REGISTRY_URL: "https://registry.dev.prowler.com",
+    PROWLER_REGISTRY_INDEX_URL: "https://registry.dev.prowler.com",
     UI_REGISTRY_MEDIA_URL: "https://media.registry.dev.prowler.com",
     CLOUD_BILLING_ENABLED: "false",
   },

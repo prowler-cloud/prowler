@@ -1,3 +1,4 @@
+import { Users } from "lucide-react";
 import { Suspense } from "react";
 
 import { getSamlConfig } from "@/actions/integrations/saml";
@@ -26,7 +27,7 @@ export default async function Profile({
   const resolvedSearchParams = await searchParams;
 
   return (
-    <ContentLayout title="User Profile" icon="lucide:users">
+    <ContentLayout title="User Profile" icon={<Users />}>
       <Suspense fallback={<SkeletonUserInfo />}>
         <SSRDataUser searchParams={resolvedSearchParams} />
       </Suspense>

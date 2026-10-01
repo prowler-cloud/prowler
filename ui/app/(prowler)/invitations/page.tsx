@@ -1,3 +1,4 @@
+import { Mail } from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
 
@@ -22,7 +23,7 @@ export default async function Invitations({
   const searchParamsKey = JSON.stringify(resolvedSearchParams || {});
 
   return (
-    <ContentLayout title="Invitations" icon="lucide:mail">
+    <ContentLayout title="Invitations" icon={<Mail />}>
       <div className="flex flex-col gap-6">
         <div className="flex flex-row items-end justify-between">
           <DataTableFilterCustom

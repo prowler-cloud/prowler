@@ -67,7 +67,7 @@ export function getCspHeader({
   return `
   default-src 'self';
   script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://www.googletagmanager.com https://browser.sentry-cdn.com${posthogSource}${toolbarUiSource};
-  connect-src 'self' https://api.iconify.design https://api.simplesvg.com https://api.unisvg.com https://js.stripe.com https://www.googletagmanager.com https://*.sentry.io https://*.ingest.sentry.io${posthogSource}${toolbarUiSource};
+  connect-src 'self' https://js.stripe.com https://www.googletagmanager.com https://*.sentry.io https://*.ingest.sentry.io${posthogSource}${toolbarUiSource};
   img-src 'self' https://www.google-analytics.com https://www.googletagmanager.com${registryImageOrigins.map((origin) => ` ${origin}`).join("")}${posthogSource}${toolbarUiSource};
   font-src 'self'${toolbarPosthogSource};
   style-src 'self' 'unsafe-inline'${toolbarPosthogSource};

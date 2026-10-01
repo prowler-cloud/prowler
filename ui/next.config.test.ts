@@ -33,9 +33,6 @@ const BASELINE_CSP = {
   ],
   "connect-src": [
     "'self'",
-    "https://api.iconify.design",
-    "https://api.simplesvg.com",
-    "https://api.unisvg.com",
     "https://js.stripe.com",
     "https://www.googletagmanager.com",
     "https://*.sentry.io",
