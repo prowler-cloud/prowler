@@ -801,6 +801,139 @@ def is_condition_block_restrictive(
     return is_condition_valid
 
 
+def _get_principal_identity_condition_group(
+    operator: str, condition_key: str, condition_value: str | list[str]
+) -> tuple[
+    bool,
+    tuple[list[str], bool] | None,
+]:
+    """Extract account IDs or ARN patterns from a supported condition."""
+    key = condition_key.lower()
+    # PrincipalAccount is present even for anonymous requests; PrincipalArn is not.
+    principal_account = key == "aws:principalaccount" and operator in (
+        "StringEquals",
+        "StringEqualsIfExists",
+        "StringLike",
+    )
+    principal_arn = key == "aws:principalarn" and operator in (
+        "StringEquals",
+        "StringLike",
+        "ArnEquals",
+        "ArnLike",
+    )
+    if not principal_account and not principal_arn:
+        return False, None
+
+    if isinstance(condition_value, str):
+        values = [condition_value]
+    elif (
+        isinstance(condition_value, list)
+        and condition_value
+        and all(isinstance(value, str) for value in condition_value)
+    ):
+        values = condition_value
+    else:
+        return True, None
+
+    if principal_arn:
+        account_patterns = []
+        for arn in values:
+            arn_parts = arn.split(":", 5)
+            if (
+                len(arn_parts) != 6
+                or arn_parts[0] != "arn"
+                or not arn_parts[1]
+                or arn_parts[2] not in ("iam", "sts")
+                or arn_parts[3]
+                or not arn_parts[4]
+                or not arn_parts[5]
+            ):
+                return True, None
+            account_patterns.append(arn_parts[4])
+        values = account_patterns
+
+    is_pattern = operator in ("StringLike", "ArnLike") or (
+        principal_arn and operator == "ArnEquals"
+    )
+    return True, (values, is_pattern)
+
+
+def _get_possible_principal_accounts(
+    groups: list[tuple[list[str], bool]],
+) -> set[str] | None:
+    """Resolve patterns when at least one group bounds the account set."""
+    bounded_groups = []
+    for values, is_pattern in groups:
+        is_account_id = all(_is_aws_account_id(value) for value in values)
+        if not is_pattern and not is_account_id:
+            return None
+        if is_account_id:
+            bounded_groups.append(set(values))
+
+    if not bounded_groups:
+        return None
+
+    possible_accounts = set.intersection(*bounded_groups)
+    for values, is_pattern in groups:
+        if is_pattern:
+            possible_accounts = {
+                account_id
+                for account_id in possible_accounts
+                if _account_matches_patterns(account_id, values)
+            }
+        else:
+            possible_accounts.intersection_update(values)
+    return possible_accounts
+
+
+def _is_aws_account_id(value: str) -> bool:
+    """Return whether a value is a 12-digit AWS account ID."""
+    return re.fullmatch(r"[0-9]{12}", value) is not None
+
+
+def _account_matches_patterns(account_id: str, patterns: list[str]) -> bool:
+    """Return whether an account ID matches any IAM wildcard pattern."""
+    for pattern in patterns:
+        if iam_pattern_matches(pattern, account_id):
+            return True
+    return False
+
+
+def is_condition_block_restrictive_for_trusted_accounts(
+    condition_statement: dict, trusted_account_ids: set[str]
+) -> bool:
+    """Check whether principal conditions limit callers to trusted accounts.
+
+    Values for one key are alternatives; different keys and operators intersect.
+    Resource, source, and network conditions cannot establish caller identity.
+    The single-account helper retains its behavior for its other callers.
+    """
+    principal_identity_groups = []
+    valid_principal_identity_groups = True
+
+    for operator, conditions in condition_statement.items():
+        for condition_key, condition_value in conditions.items():
+            parsed_condition = _get_principal_identity_condition_group(
+                operator, condition_key, condition_value
+            )
+            is_principal_identity, group = parsed_condition
+            if is_principal_identity:
+                if group is None:
+                    valid_principal_identity_groups = False
+                else:
+                    principal_identity_groups.append(group)
+
+    possible_accounts = None
+    if principal_identity_groups and valid_principal_identity_groups:
+        possible_accounts = _get_possible_principal_accounts(
+            groups=principal_identity_groups
+        )
+
+    return possible_accounts is not None and possible_accounts.issubset(
+        trusted_account_ids
+    )
+
+
 def is_condition_block_restrictive_organization(
     condition_statement: dict,
 ):
