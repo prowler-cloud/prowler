@@ -66,7 +66,13 @@ const fillAndSubmit = async (user: ReturnType<typeof userEvent.setup>) => {
 describe("SendInvitationForm", () => {
   beforeEach(() => {
     pushMock.mockReset();
-    sendInviteMock.mockReset().mockResolvedValue({ data: { id: "inv-1" } });
+    // The API answers with the created record, token included.
+    sendInviteMock.mockReset().mockResolvedValue({
+      data: {
+        id: "inv-1",
+        attributes: { email: "teammate@company.com", token: "abc123DEF45678" },
+      },
+    });
   });
 
   it("navigates to the invitation details by default", async () => {
