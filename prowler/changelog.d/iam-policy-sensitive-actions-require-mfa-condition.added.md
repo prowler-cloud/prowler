@@ -1,0 +1,1 @@
+`iam_policy_sensitive_actions_require_mfa_condition` check for AWS provider, verifying that customer-managed IAM policies do not grant sensitive actions such as `iam:PassRole` and `sts:AssumeRole` without a `Bool` `aws:MultiFactorAuthPresent` condition
