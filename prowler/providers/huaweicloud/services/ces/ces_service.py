@@ -18,6 +18,7 @@ class CES(HuaweiCloudService):
         super().__init__(__class__.__name__, provider)
 
         self.alarms: List[CESAlarm] = []
+        self.regional_failures = {}  # NEW: Track failed regions
 
         self._list_alarms()
 
@@ -51,6 +52,8 @@ class CES(HuaweiCloudService):
                         )
 
             except Exception as error:
+                # NEW: Track the failure for this region
+                self.regional_failures[region] = str(error)
                 logger.error(
                     f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
