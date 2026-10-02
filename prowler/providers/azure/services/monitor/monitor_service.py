@@ -33,7 +33,23 @@ class Monitor(AzureService):
                 )
         return diagnostics_settings
 
-    def diagnostic_settings_with_uri(self, subscription, uri, client):
+    def diagnostic_settings_with_uri(
+        self, subscription, uri, client, raise_errors: bool = False
+    ):
+        """Get the diagnostic settings of one resource.
+
+        Args:
+            subscription: Subscription ID, used for logging.
+            uri: Resource URI to read the diagnostic settings from.
+            client: `MonitorManagementClient` of the subscription.
+            raise_errors: When `True`, API errors are re-raised unlogged so the
+                caller can handle and log them and tell a failure from "no
+                settings configured".
+
+        Returns:
+            The resource's `DiagnosticSetting` items. On error with
+            `raise_errors=False`, the items collected so far (usually `[]`).
+        """
         diagnostics_settings = []
         try:
             settings = client.diagnostic_settings.list(resource_uri=uri)
@@ -60,6 +76,8 @@ class Monitor(AzureService):
                     )
                 )
         except Exception as error:
+            if raise_errors:
+                raise
             logger.error(
                 f"Subscription ID: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )

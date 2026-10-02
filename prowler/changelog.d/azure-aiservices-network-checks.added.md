@@ -1,0 +1,1 @@
+`aiservices_account_uses_private_endpoint`, `aiservices_account_outbound_network_restricted`, `aiservices_account_managed_identity_enabled`, and `aiservices_account_diagnostic_logging_enabled` checks for Azure provider
