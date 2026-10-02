@@ -1,0 +1,38 @@
+{
+  "Provider": "azure",
+  "CheckID": "aiservices_account_encrypted_with_cmk",
+  "CheckTitle": "AI services account is encrypted with a customer-managed key",
+  "CheckType": [],
+  "ServiceName": "aiservices",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "microsoft.cognitiveservices/accounts",
+  "ResourceGroup": "ai_ml",
+  "Description": "**Azure AI services accounts** (including **Azure OpenAI** and **Azure AI Foundry**) encrypt stored data such as fine-tuning files, custom models, and batch inputs. Setting the encryption **key source** to `Microsoft.KeyVault` uses a **customer-managed key** held in Azure Key Vault instead of a Microsoft-managed key.",
+  "Risk": "With Microsoft-managed keys the organization cannot:\n- **Revoke** access to stored AI data by disabling its own key\n- **Rotate** keys on its own schedule or audit key usage in Key Vault\n- **Meet** regulatory requirements that mandate customer-controlled encryption keys",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/ai-services/encryption/cognitive-services-encryption-keys-portal",
+    "https://learn.microsoft.com/en-us/azure/foundry-classic/openai/encrypt-data-at-rest"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "```bicep\n// Encrypt an Azure AI services account with a customer-managed key\nresource account 'Microsoft.CognitiveServices/accounts@2024-10-01' = {\n  name: '<example_resource_name>'\n  location: '<location>'\n  kind: 'OpenAI'\n  sku: { name: 'S0' }\n  identity: { type: 'SystemAssigned' }\n  properties: {\n    customSubDomainName: '<example_resource_name>'\n    encryption: {\n      keySource: 'Microsoft.KeyVault' // CRITICAL: use a customer-managed key\n      keyVaultProperties: {\n        keyName: '<key_name>'\n        keyVaultUri: '<key_vault_uri>'\n      }\n    }\n  }\n}\n```",
+      "Other": "1. Create a key in an Azure Key Vault with soft delete and purge protection enabled\n2. Enable a managed identity on the AI services account and grant it get, wrapKey, and unwrapKey on the key\n3. In the Azure portal, open the AI services account and go to Resource Management > Encryption\n4. Select Customer Managed Keys, choose the key, and click Save",
+      "Terraform": "```hcl\nresource \"azurerm_cognitive_account_customer_managed_key\" \"<example_resource_name>\" {\n  cognitive_account_id = azurerm_cognitive_account.<example_resource_name>.id\n  key_vault_key_id     = azurerm_key_vault_key.<example_resource_name>.id # CRITICAL: use a customer-managed key\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Encrypt AI services accounts that store sensitive data with a **customer-managed key** in Azure Key Vault. Enable **soft delete** and **purge protection** on the vault, grant the account's **managed identity** only the key permissions it needs, and rotate the key on a defined schedule.",
+      "Url": "https://hub.prowler.com/check/aiservices_account_encrypted_with_cmk"
+    }
+  },
+  "Categories": [
+    "encryption",
+    "gen-ai"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
