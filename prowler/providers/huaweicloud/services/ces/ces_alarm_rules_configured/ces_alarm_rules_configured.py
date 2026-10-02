@@ -7,20 +7,53 @@ class ces_alarm_rules_configured(Check):
 
     def execute(self) -> list[CheckReportHuaweiCloud]:
         findings = []
-        if not ces_client.alarms:
-            report = CheckReportHuaweiCloud(
-                metadata=self.metadata(),
-                resource={},
-            )
-            report.region = ces_client.region
-            report.resource_id = ""
-            report.resource_name = "CES Alarms"
-            report.resource_arn = f"huaweicloud:ces:{ces_client.region}:{ces_client.audited_account}:alarms"
-            report.status = "FAIL"
-            report.status_extended = "No CES alarm rules are configured. No alerts will be received for availability or security incidents."
-            findings.append(report)
+        
+        # NEW: No findings if there are no regional clients
+        if not ces_client.regional_clients:
             return findings
 
+        # NEW: Track which regions we've scanned
+        scanned_regions = set(ces_client.regional_clients.keys())
+        
+        # NEW: Group alarms by region to detect regions with no alarms
+        alarms_by_region = {}
+        for alarm in ces_client.alarms:
+            if alarm.region not in alarms_by_region:
+                alarms_by_region[alarm.region] = []
+            alarms_by_region[alarm.region].append(alarm)
+
+        # NEW: Report per-region findings
+        for region in scanned_regions:
+            # Check if retrieval failed for this region
+            if region in ces_client.regional_failures:
+                report = CheckReportHuaweiCloud(
+                    metadata=self.metadata(),
+                    resource={},
+                )
+                report.region = region
+                report.resource_id = ""
+                report.resource_name = "CES Alarms"
+                report.resource_arn = f"huaweicloud:ces:{region}:{ces_client.audited_account}:alarms"
+                report.status = "UNKNOWN"
+                report.status_extended = f"Could not retrieve CES alarm rules: {ces_client.regional_failures[region]}"
+                findings.append(report)
+                continue
+
+            # Check if region has no alarms
+            if region not in alarms_by_region:
+                report = CheckReportHuaweiCloud(
+                    metadata=self.metadata(),
+                    resource={},
+                )
+                report.region = region
+                report.resource_id = ""
+                report.resource_name = "CES Alarms"
+                report.resource_arn = f"huaweicloud:ces:{region}:{ces_client.audited_account}:alarms"
+                report.status = "FAIL"
+                report.status_extended = "No CES alarm rules are configured. No alerts will be received for availability or security incidents."
+                findings.append(report)
+
+        # Report per-alarm findings
         for alarm in ces_client.alarms:
             report = CheckReportHuaweiCloud(
                 metadata=self.metadata(),
