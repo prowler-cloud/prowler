@@ -6,6 +6,11 @@ from prowler.providers.aws.services.kms.lib.enclave import (
     statement_is_covered_by_deny,
     statement_targets_sensitive_actions,
 )
+from prowler.providers.aws.services.kms.lib.inventory import (
+    generate_describe_error_report,
+    generate_scan_error_reports,
+    is_key_detail_unretrieved,
+)
 
 
 class kms_key_enclave_attestation_bypassable_path(Check):
@@ -47,7 +52,25 @@ class kms_key_enclave_attestation_bypassable_path(Check):
             list[Check_Report_AWS]: one report per enclave KMS key.
         """
         findings = []
+        findings.extend(
+            generate_scan_error_reports(
+                metadata=self.metadata(),
+                action_text="every authorization path to an enclave-scoped key requires attestation",
+                client=kms_client,
+            )
+        )
+
         for key in kms_client.keys:
+            if is_key_detail_unretrieved(key):
+                findings.append(
+                    generate_describe_error_report(
+                        metadata=self.metadata(),
+                        key=key,
+                        action_text="every authorization path to an enclave-scoped key requires attestation",
+                    )
+                )
+                continue
+
             if (
                 key.manager != "CUSTOMER"
                 or key.state != "Enabled"
