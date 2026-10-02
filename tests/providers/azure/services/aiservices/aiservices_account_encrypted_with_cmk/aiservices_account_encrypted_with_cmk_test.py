@@ -46,8 +46,9 @@ def run_check(accounts):
 
 
 class Test_aiservices_account_encrypted_with_cmk:
-    def test_no_accounts(self):
-        assert run_check({}) == []
+    def test_no_resources(self):
+        result = run_check({})
+        assert len(result) == 0
 
     def test_microsoft_managed_key(self):
         result = run_check(

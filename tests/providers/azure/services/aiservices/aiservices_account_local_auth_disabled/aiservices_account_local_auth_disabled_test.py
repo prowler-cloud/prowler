@@ -45,8 +45,9 @@ def run_check(accounts):
 
 
 class Test_aiservices_account_local_auth_disabled:
-    def test_no_accounts(self):
-        assert run_check({}) == []
+    def test_no_resources(self):
+        result = run_check({})
+        assert len(result) == 0
 
     def test_local_auth_enabled(self):
         result = run_check({AZURE_SUBSCRIPTION_ID: {ACCOUNT_ID: build_account(False)}})
