@@ -1,0 +1,38 @@
+{
+  "Provider": "azure",
+  "CheckID": "aiservices_account_local_auth_disabled",
+  "CheckTitle": "AI services account has local (API key) authentication disabled",
+  "CheckType": [],
+  "ServiceName": "aiservices",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "microsoft.cognitiveservices/accounts",
+  "ResourceGroup": "ai_ml",
+  "Description": "**Azure AI services accounts** (including **Azure OpenAI** and **Azure AI Foundry**) accept static **API keys** unless `disableLocalAuth` is `true`. With local authentication disabled, every request must use a **Microsoft Entra ID** token.",
+  "Risk": "Static API keys never expire and carry no caller identity:\n- **Confidentiality**: a leaked key grants full data-plane access to models and data\n- **Accountability**: requests cannot be traced to a user or workload\n- **Control**: Conditional Access, RBAC scoping, and token lifetimes do not apply to keys",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/ai-services/disable-local-auth",
+    "https://learn.microsoft.com/en-us/azure/ai-services/authentication"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "az resource update --ids <account_resource_id> --set properties.disableLocalAuth=true",
+      "NativeIaC": "```bicep\n// Require Microsoft Entra ID for an Azure AI services account\nresource account 'Microsoft.CognitiveServices/accounts@2024-10-01' = {\n  name: '<example_resource_name>'\n  location: '<location>'\n  kind: 'OpenAI'\n  sku: { name: 'S0' }\n  properties: {\n    customSubDomainName: '<example_resource_name>'\n    disableLocalAuth: true // CRITICAL: rejects API keys, requires Entra ID tokens\n  }\n}\n```",
+      "Other": "1. Move every client to Microsoft Entra ID authentication (managed identity or service principal with the Cognitive Services User role)\n2. Run the Azure CLI command above, or deploy the Bicep or Terraform example\n3. Confirm that requests sent with an API key now return 401",
+      "Terraform": "```hcl\nresource \"azurerm_cognitive_account\" \"<example_resource_name>\" {\n  name                  = \"<example_resource_name>\"\n  location              = \"<location>\"\n  resource_group_name   = \"<example_resource_name>\"\n  kind                  = \"OpenAI\"\n  sku_name              = \"S0\"\n  custom_subdomain_name = \"<example_resource_name>\"\n\n  local_auth_enabled = false # CRITICAL: rejects API keys, requires Entra ID tokens\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Set `disableLocalAuth` to `true` and authenticate clients with **managed identities** or service principals through **Microsoft Entra ID**. Grant least-privilege roles such as **Cognitive Services OpenAI User** instead of sharing keys.",
+      "Url": "https://hub.prowler.com/check/aiservices_account_local_auth_disabled"
+    }
+  },
+  "Categories": [
+    "identity-access",
+    "gen-ai"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
