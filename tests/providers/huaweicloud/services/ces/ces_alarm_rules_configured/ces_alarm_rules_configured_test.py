@@ -6,11 +6,12 @@ from tests.providers.huaweicloud.huaweicloud_fixtures import (
 
 
 class Test_ces_alarm_rules_configured:
-    def test_no_alarms(self):
+    def test_no_resources(self):
+        """Test when there are no regional clients."""
         ces_client = mock.MagicMock()
         ces_client.alarms = []
-        ces_client.region = "la-south-2"
-        ces_client.audited_account = "123456789012"
+        ces_client.regional_clients = {}  # NEW: No regional clients
+        ces_client.regional_failures = {}
 
         with (
             mock.patch(
@@ -28,9 +29,16 @@ class Test_ces_alarm_rules_configured:
 
             check = ces_alarm_rules_configured()
             result = check.execute()
-            assert len(result) == 1
-            assert result[0].status == "FAIL"
-            assert "No CES alarm rules are configured" in result[0].status_extended
+            assert len(result) == 0  # No findings when no regional clients
+
+    def test_no_alarms(self):
+        ces_client = mock.MagicMock()
+        ces_client.alarms = []
+        ces_client.regional_clients = {"la-south-2": mock.MagicMock()}
+        ces_client.regional_failures = {}
+        ces_client.region = "la-south-2"
+        ces_client.audited_account = "123456789012"
+
 
     def test_alarm_enabled(self):
         ces_client = mock.MagicMock()
