@@ -52,6 +52,12 @@ class RDS(HuaweiCloudService):
                         getattr(datastore, "version", "") if datastore else ""
                     )
 
+                    availability_zones = {
+                        availability_zone
+                        for node in (getattr(inst_data, "nodes", None) or [])
+                        if (availability_zone := getattr(node, "availability_zone", ""))
+                    }
+
                     self.instances.append(
                         RDSInstance(
                             id=getattr(inst_data, "id", None) or "",
@@ -62,6 +68,7 @@ class RDS(HuaweiCloudService):
                             public_ip=public_ip,
                             is_public=is_public,
                             backup_enabled=backup_enabled,
+                            is_multi_az=len(availability_zones) > 1,
                             region=region,
                             disk_encryption_id=getattr(
                                 inst_data, "disk_encryption_id", ""
@@ -86,5 +93,6 @@ class RDSInstance(HuaweiCloudBaseModel):
     public_ip: str = ""
     is_public: bool = False
     backup_enabled: bool = False
+    is_multi_az: bool = False
     region: str = ""
     disk_encryption_id: str = ""
