@@ -68,6 +68,7 @@ jobs:
         with:
           # zizmor: ignore[artipacked]
           persist-credentials: true # Required by tj-actions/changed-files to fetch PR branch
+          fetch-depth: 0 # Fetch all history to allow changed-files to work with PRs
 
       - name: Check for SDK changes
         id: check-changes
