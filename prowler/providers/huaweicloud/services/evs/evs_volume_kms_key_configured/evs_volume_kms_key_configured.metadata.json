@@ -1,0 +1,36 @@
+{
+  "Provider": "huaweicloud",
+  "CheckID": "evs_volume_kms_key_configured",
+  "CheckTitle": "Encrypted EVS volumes have a KMS key ID configured",
+  "CheckType": [],
+  "ServiceName": "evs",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "HUAWEICLOUD::EVS::Volume",
+  "ResourceGroup": "storage",
+  "Description": "Ensure that encrypted EVS volumes have a specific KMS key ID configured rather than relying on default encryption.",
+  "Risk": "Encrypted volumes without a specific KMS key ID may use a default provider key, reducing control over key management, rotation, and access policies.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.huaweicloud.com/intl/en-us/usermanual-evs/evs_01_0018.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Log on to the Huawei Cloud console.\n2. Navigate to Elastic Volume Service.\n3. Select the encrypted volume without a KMS key.\n4. Create a new encrypted volume specifying a KMS key ID.\n5. Replace the old volume with the new volume.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Specify a KMS key ID when enabling encryption for EVS volumes.",
+      "Url": "https://hub.prowler.com/check/evs_volume_kms_key_configured"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
