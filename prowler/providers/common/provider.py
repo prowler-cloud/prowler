@@ -450,6 +450,7 @@ class Provider(ABC):
                         certificate_path=arguments.certificate_path,
                         tenant_id=arguments.tenant_id,
                         init_modules=arguments.init_modules,
+                        oidc_auth=getattr(arguments, "oidc_auth", False),
                         fixer_config=fixer_config,
                     )
                 elif arguments.provider == "nhn":
