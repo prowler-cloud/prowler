@@ -154,6 +154,7 @@ from prowler.providers.image.exceptions.exceptions import ImageBaseException
 from prowler.providers.image.models import ImageOutputOptions
 from prowler.providers.kubernetes.models import KubernetesOutputOptions
 from prowler.providers.linode.models import LinodeOutputOptions
+from prowler.providers.snowflake.models import SnowflakeOutputOptions
 from prowler.providers.llm.models import LLMOutputOptions
 from prowler.providers.m365.models import M365OutputOptions
 from prowler.providers.mongodbatlas.models import MongoDBAtlasOutputOptions
@@ -517,6 +518,10 @@ def prowler():
         )
     elif provider == "scaleway":
         output_options = ScalewayOutputOptions(
+            args, bulk_checks_metadata, global_provider.identity
+        )
+    elif provider == "snowflake":
+        output_options = SnowflakeOutputOptions(
             args, bulk_checks_metadata, global_provider.identity
         )
     elif provider == "linode":

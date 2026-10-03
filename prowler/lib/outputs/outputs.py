@@ -52,6 +52,8 @@ def stdout_report(finding, color, verbose, status, fix, provider=None):
         details = finding.region
     elif finding.check_metadata.Provider == "linode":
         details = finding.region
+    elif finding.check_metadata.Provider == "snowflake":
+        details = finding.region
     else:
         # Dynamic fallback: any external/custom provider
         if provider is None:
