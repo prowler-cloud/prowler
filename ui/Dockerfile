@@ -1,5 +1,5 @@
 # Keep in sync with ui/.nvmrc.
-FROM node:24.18.1-alpine@sha256:f70403e87646dc51b45295f4b8b70cdad0b63d2297c4c9899119b03f7af7a6b3 AS base
+FROM node:24.21.0-alpine@sha256:ebfe2f90462722a7a4de65e91990e97fe0d401c70e0e762c5b53302f905ec1c1 AS base
 
 LABEL maintainer="https://github.com/prowler-cloud"
 
