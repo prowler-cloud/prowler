@@ -3,6 +3,7 @@ from types import SimpleNamespace
 from unittest import mock
 
 import pytest
+from certifi import where
 
 from prowler.providers.huaweicloud.exceptions.exceptions import (
     HuaweiCloudAssumeRoleError,
@@ -49,6 +50,30 @@ class TestHuaweiCloudProviderSetupSession:
         with mock.patch.dict(os.environ, env, clear=True):
             session = HuaweicloudProvider.setup_session()
             assert session.get_credentials().ak == ACCESS_KEY
+
+
+class TestHuaweiCloudSession:
+    def test_creates_obs_data_client_for_european_region(self):
+        session = HuaweiCloudSession(
+            HuaweiCloudCredentials(
+                ak=ACCESS_KEY,
+                sk=SECRET_KEY,
+                security_token="mock-token",
+            )
+        )
+
+        with mock.patch("obs.ObsClient") as obs_client:
+            result = session.client("obs_data", "eu-west-101")
+
+        assert result == obs_client.return_value
+        obs_client.assert_called_once_with(
+            access_key_id=ACCESS_KEY,
+            secret_access_key=SECRET_KEY,
+            security_token="mock-token",
+            server="https://obs.eu-west-101.myhuaweicloud.eu",
+            region="eu-west-101",
+            ssl_verify=where(),
+        )
 
 
 class TestHuaweiCloudProviderValidateCredentials:
