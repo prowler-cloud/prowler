@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "prowler": {
+      "type": "http",
+      "url": "https://mcp.prowler.com/mcp",
+      "bearer_token_env_var": "PROWLER_API_KEY",
+      "headers": {
+        "User-Agent": "codex"
+      }
+    }
+  }
+}
