@@ -102,6 +102,14 @@ class AzureBaseException(ProwlerException):
             "message": "The provided provider_id does not match with the available subscriptions",
             "remediation": "Check the provider_id and ensure it is a valid subscription for the given credentials.",
         },
+        (2024, "AzureNotValidCertificateContentError"): {
+            "message": "The provided certificate content is not valid",
+            "remediation": "Check that the certificate content is a valid base64-encoded PEM or PFX bound to the app registration's keyCredentials.",
+        },
+        (2025, "AzureNotValidCertificatePathError"): {
+            "message": "The provided certificate path is not valid",
+            "remediation": "Check that the certificate file exists, is readable, and matches an entry in the app registration's keyCredentials.",
+        },
     }
 
     def __init__(self, code, file=None, original_exception=None, message=None):
@@ -290,4 +298,18 @@ class AzureInvalidProviderIdError(AzureBaseException):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             2023, file=file, original_exception=original_exception, message=message
+        )
+
+
+class AzureNotValidCertificateContentError(AzureCredentialsError):
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            2024, file=file, original_exception=original_exception, message=message
+        )
+
+
+class AzureNotValidCertificatePathError(AzureCredentialsError):
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            2025, file=file, original_exception=original_exception, message=message
         )
