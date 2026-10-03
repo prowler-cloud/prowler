@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta, timezone
 from unittest import mock
 
+from freezegun import freeze_time
 from moto import mock_aws
 
 from prowler.lib.check.models import Severity
@@ -124,10 +125,45 @@ class Test_bedrock_api_key_no_long_term_credentials:
         assert result[0].status == "PASS"
         assert "has already expired" in result[0].status_extended
 
+    # The expiration instant itself belongs to the expired side: at ExpirationDate the
+    # credential can no longer authenticate. Time is frozen so the key's expiration and the
+    # check's `now` are the same instant rather than microseconds apart, which is the only
+    # way this boundary is reachable.
+    @freeze_time("2026-01-15T12:00:00Z")
     @mock_aws
-    def test_key_without_expiration_date_ignored(self):
+    def test_key_expiring_at_exactly_now_passes(self):
+        """A key whose ExpirationDate is exactly now must PASS as already expired.
+
+        The boundary decides which side a strict comparison puts it on. At the expiration instant
+        the credential can no longer authenticate, so it is not a long-term credential; a `<`
+        rather than `<=` would report it as still live.
+        """
+        credential = _make_credential(_make_user(), expiration_delta_days=0)
+        assert credential.expiration_date == datetime.now(timezone.utc)
+
+        result = _run_check([credential])
+
+        assert len(result) == 1
+        assert result[0].status == "PASS"
+        assert "has already expired" in result[0].status_extended
+
+    @mock_aws
+    def test_key_without_expiration_date_fails_critical(self):
+        """A key with no expiration date is the never-expiring key, not an out-of-scope one.
+
+        IAM's ``ServiceSpecificCredentialMetadata.ExpirationDate`` "is only present for Bedrock
+        API keys ... that were created with an expiration period", so a key created without one
+        reports no ExpirationDate at all. Skipping those produced zero findings for exactly the
+        credential shape this check calls critical.
+        """
         credential = _make_credential(_make_user(), expiration_delta_days=None)
-        assert _run_check([credential]) == []
+        result = _run_check([credential])
+
+        assert len(result) == 1
+        assert result[0].status == "FAIL"
+        assert result[0].check_metadata.Severity == Severity.critical
+        assert "never expires" in result[0].status_extended
+        assert "short-term Bedrock API keys" in result[0].status_extended
 
     @mock_aws
     def test_non_bedrock_service_ignored(self):
