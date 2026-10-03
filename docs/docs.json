@@ -143,6 +143,7 @@
             "group": "Prowler Cloud",
             "pages": [
               "user-guide/tutorials/prowler-app",
+              "user-guide/tutorials/prowler-cloud-feedback",
               {
                 "group": "Authentication & Access",
                 "pages": [
