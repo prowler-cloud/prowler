@@ -111,6 +111,7 @@ class GithubProvider(Provider):
         github_app_key: str = "",
         github_app_key_content: str = "",
         github_app_id: int = 0,
+        github_app_installation_token: str = "",
         # Provider configuration
         config_path: str = None,
         config_content: dict = None,
@@ -133,6 +134,7 @@ class GithubProvider(Provider):
             github_app_key (str): GitHub App key.
             github_app_key_content (str): GitHub App key content.
             github_app_id (int): GitHub App ID.
+            github_app_installation_token (str): GitHub App installation token.
             config_path (str): Path to the audit configuration file.
             config_content (dict): Audit configuration content.
             fixer_config (dict): Fixer configuration content.
@@ -174,6 +176,7 @@ class GithubProvider(Provider):
             github_app_id,
             github_app_key,
             github_app_key_content,
+            github_app_installation_token,
         )
 
         # Set the authentication method
@@ -183,12 +186,16 @@ class GithubProvider(Provider):
             self._auth_method = "OAuth App Token"
         elif github_app_id and (github_app_key or github_app_key_content):
             self._auth_method = "GitHub App Token"
+        elif github_app_installation_token:
+            self._auth_method = "GitHub App Installation Token"
         elif environ.get("GITHUB_PERSONAL_ACCESS_TOKEN", ""):
             self._auth_method = "Environment Variable for Personal Access Token"
         elif environ.get("GITHUB_OAUTH_APP_TOKEN", ""):
             self._auth_method = "Environment Variable for OAuth App Token"
         elif environ.get("GITHUB_APP_ID", "") and environ.get("GITHUB_APP_KEY", ""):
             self._auth_method = "Environment Variables for GitHub App Key and ID"
+        elif environ.get("GITHUB_APP_INSTALLATION_TOKEN", ""):
+            self._auth_method = "Environment Variable for GitHub App Installation Token"
 
         self._identity = GithubProvider.setup_identity(self._session)
 
@@ -329,6 +336,7 @@ class GithubProvider(Provider):
         github_app_id: int = 0,
         github_app_key: str = None,
         github_app_key_content: str = None,
+        github_app_installation_token: str = None,
     ) -> GithubSession:
         """
         Returns the GitHub headers responsible  authenticating API calls.
@@ -339,6 +347,7 @@ class GithubProvider(Provider):
             github_app_id (int): GitHub App ID.
             github_app_key (str): GitHub App key.
             github_app_key_content (str): GitHub App key content.
+            github_app_installation_token (str): GitHub App installation token.
         Returns:
             GithubSession: Authenticated session token for API requests.
         """
@@ -346,6 +355,7 @@ class GithubProvider(Provider):
         session_token = ""
         app_key = ""
         app_id = 0
+        installation = False
 
         try:
             # Ensure that at least one authentication method is selected. Default to environment variable for PAT if none is provided.
@@ -362,6 +372,10 @@ class GithubProvider(Provider):
                         app_key = rsa_key.read()
                 else:
                     app_key = format_rsa_key(github_app_key_content)
+
+            elif github_app_installation_token:
+                session_token = github_app_installation_token
+                installation = True
 
             # Check for incomplete GitHub App credentials (user provided only part of them)
             elif (github_app_key or github_app_key_content) and not github_app_id:
@@ -397,8 +411,15 @@ class GithubProvider(Provider):
                         app_id = environ.get("GITHUB_APP_ID", "")
                         app_key = format_rsa_key(environ.get("GITHUB_APP_KEY", ""))
 
-                        if app_id and app_key:
-                            pass
+                        if not (app_id and app_key):
+                            # APP INSTALLATION TOKEN
+                            logger.info(
+                                "Looking for GITHUB_APP_INSTALLATION_TOKEN environment variable as user has not provided any token...."
+                            )
+                            session_token = environ.get(
+                                "GITHUB_APP_INSTALLATION_TOKEN", ""
+                            )
+                            installation = bool(session_token)
 
             if not session_token and not (app_id and app_key):
                 raise GithubEnvironmentVariableError(
@@ -410,6 +431,7 @@ class GithubProvider(Provider):
                 token=session_token,
                 key=app_key,
                 id=app_id,
+                installation=installation,
             )
 
             return credentials
@@ -435,7 +457,22 @@ class GithubProvider(Provider):
 
         try:
             retry_config = GithubRetry(total=3)
-            if session.token:
+            if session.token and session.installation:
+                # An installation token has no user, so `GET /user` is refused.
+                # The installation is identified by who owns what it can see.
+                try:
+                    owners = GithubProvider._installation_owners(session)
+                except Exception as error:
+                    raise GithubInvalidTokenError(
+                        original_exception=error,
+                    )
+                return GithubAppIdentityInfo(
+                    app_id=environ.get("GITHUB_APP_ID", ""),
+                    app_name="GitHub App installation",
+                    installations=owners,
+                )
+
+            elif session.token:
                 auth = Auth.Token(session.token)
                 g = Github(auth=auth, retry=retry_config)
                 try:
@@ -493,6 +530,39 @@ class GithubProvider(Provider):
                 original_exception=error,
             )
 
+    @staticmethod
+    def _installation_owners(session: GithubSession) -> list[str]:
+        """
+        Returns the accounts that own the repositories a GitHub App installation token can access.
+
+        An installation belongs to one organization or user, so this is normally a single
+        login. It is read from `GET /installation/repositories`, the endpoint GitHub
+        provides for installation tokens, because `GET /user` is refused for them.
+
+        Args:
+            session (GithubSession): A session holding an installation token.
+
+        Returns:
+            list[str]: The owner logins, in the order first seen.
+        """
+        g = Github(auth=Auth.Token(session.token), retry=GithubRetry(total=3))
+        owners = []
+        page = 1
+        while True:
+            _, data = g.requester.requestJsonAndCheck(
+                "GET",
+                "/installation/repositories",
+                parameters={"per_page": 100, "page": page},
+            )
+            repositories = data.get("repositories", [])
+            for repository in repositories:
+                login = repository.get("owner", {}).get("login")
+                if login and login not in owners:
+                    owners.append(login)
+            if len(repositories) < 100:
+                return owners
+            page += 1
+
     def print_credentials(self):
         """
         Prints the GitHub credentials.
@@ -545,7 +615,16 @@ class GithubProvider(Provider):
         try:
             retry_config = GithubRetry(total=3)
 
-            if session.token:
+            if session.token and session.installation:
+                # For a GitHub App installation token: the installation's owner
+                if provider_id in GithubProvider._installation_owners(session):
+                    return
+                raise GithubInvalidProviderIdError(
+                    file=os.path.basename(__file__),
+                    message=f"The provider ID '{provider_id}' is not accessible with the provided GitHub App installation token.",
+                )
+
+            elif session.token:
                 # For Personal Access Token and OAuth App Token
                 auth = Auth.Token(session.token)
                 g = Github(auth=auth, retry=retry_config)
@@ -611,6 +690,7 @@ class GithubProvider(Provider):
         github_app_key: str = "",
         github_app_key_content: str = "",
         github_app_id: int = 0,
+        github_app_installation_token: str = "",
         raise_on_exception: bool = True,
         provider_id: str = None,
     ) -> Connection:
@@ -624,6 +704,7 @@ class GithubProvider(Provider):
             github_app_key (str): GitHub App key.
             github_app_key_content (str): GitHub App key content.
             github_app_id (int): GitHub App ID.
+            github_app_installation_token (str): GitHub App installation token.
             raise_on_exception (bool): Flag indicating whether to raise an exception if the connection fails.
             provider_id (str): The provider ID, in this case it's the GitHub organization/username.
 
@@ -655,6 +736,7 @@ class GithubProvider(Provider):
                 github_app_id=github_app_id,
                 github_app_key=github_app_key,
                 github_app_key_content=github_app_key_content,
+                github_app_installation_token=github_app_installation_token,
             )
 
             # Set up the identity to test the connection
