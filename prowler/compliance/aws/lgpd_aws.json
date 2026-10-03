@@ -1,0 +1,152 @@
+{
+  "Framework": "LGPD",
+  "Name": "Lei Geral de Proteção de Dados (LGPD) - Lei nº 13.709/2018",
+  "Version": "2018",
+  "Provider": "AWS",
+  "Description": "The Lei Geral de Proteção de Dados (LGPD), Law No. 13.709/2018, is Brazil's comprehensive data protection law that governs the processing of personal data of individuals in Brazil. It applies to any organization that processes personal data of Brazilian residents, regardless of where the organization is located. The LGPD establishes rights for data subjects and obligations for data controllers and processors, with enforcement by the Autoridade Nacional de Proteção de Dados (ANPD). Non-compliance can result in fines of up to 2% of revenue in Brazil, capped at R$50 million per violation.",
+  "Requirements": [
+    {
+      "Id": "article_46",
+      "Name": "Article 46 - Security measures for personal data processing",
+      "Description": "Controllers and processors must adopt technical and administrative security measures to protect personal data from unauthorized access, accidental or unlawful destruction, loss, alteration, communication, or any form of improper or unlawful processing. ANPD may establish minimum technical standards to ensure the security requirements of Article 46.",
+      "Attributes": [
+        {
+          "ItemId": "article_46",
+          "Section": "Article 46 - Security measures for personal data processing",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "cloudtrail_multi_region_enabled",
+        "cloudtrail_logs_s3_bucket_is_not_publicly_accessible",
+        "cloudtrail_kms_encryption_enabled",
+        "cloudtrail_log_file_validation_enabled",
+        "cloudtrail_cloudwatch_logging_enabled",
+        "config_recorder_all_regions_enabled",
+        "iam_password_policy_minimum_length_14",
+        "iam_password_policy_lowercase",
+        "iam_password_policy_number",
+        "iam_password_policy_symbol",
+        "iam_password_policy_uppercase",
+        "iam_password_policy_reuse_24",
+        "iam_root_mfa_enabled",
+        "iam_root_hardware_mfa_enabled",
+        "iam_no_root_access_key",
+        "iam_user_mfa_enabled_console_access",
+        "iam_rotate_access_key_90_days",
+        "iam_aws_attached_policy_no_administrative_privileges",
+        "iam_customer_attached_policy_no_administrative_privileges",
+        "iam_inline_policy_no_administrative_privileges",
+        "kms_cmk_rotation_enabled",
+        "s3_bucket_default_encryption",
+        "s3_bucket_public_access",
+        "s3_bucket_versioning_enabled",
+        "rds_instance_storage_encrypted",
+        "rds_snapshots_public_access",
+        "ec2_ebs_volume_encryption",
+        "vpc_flow_logs_enabled",
+        "guardduty_is_enabled",
+        "securityhub_enabled"
+      ]
+    },
+    {
+      "Id": "article_47",
+      "Name": "Article 47 - Agents of processing responsibility",
+      "Description": "Controllers and processors and other agents that, under these law, carry out personal data processing, shall be held liable for the repair of any damage, whether individual or collective, caused by the exercise of such activity. Operators must process personal data according to the instructions provided by controllers. Security measures must be verifiable.",
+      "Attributes": [
+        {
+          "ItemId": "article_47",
+          "Section": "Article 47 - Agents of processing responsibility",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "iam_user_accesskey_unused",
+        "iam_user_console_access_unused",
+        "iam_support_role_created",
+        "iam_account_security_contact_information_is_registered",
+        "cloudtrail_multi_region_enabled",
+        "cloudtrail_logs_s3_bucket_access_logging_enabled",
+        "s3_bucket_server_access_logging_enabled",
+        "vpc_flow_logs_enabled",
+        "cloudwatch_log_metric_filter_root_usage",
+        "cloudwatch_log_metric_filter_unauthorized_api_calls"
+      ]
+    },
+    {
+      "Id": "article_48",
+      "Name": "Article 48 - Security incident notification",
+      "Description": "The controller shall communicate to the national authority and to the data subject the occurrence of a security incident that may create risk or relevant damage to the data subjects. The communication shall be made within a reasonable period, as defined by the national authority, and shall contain at minimum: description of the nature of the affected personal data; information about the data subjects involved; indication of the technical and security measures adopted; the risks related to the incident; and the reasons for the delay, if the communication was not immediate.",
+      "Attributes": [
+        {
+          "ItemId": "article_48",
+          "Section": "Article 48 - Security incident notification",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "guardduty_is_enabled",
+        "securityhub_enabled",
+        "cloudtrail_multi_region_enabled",
+        "cloudtrail_cloudwatch_logging_enabled",
+        "cloudwatch_log_metric_filter_unauthorized_api_calls",
+        "cloudwatch_log_metric_filter_authentication_failures",
+        "cloudwatch_log_metric_filter_root_usage",
+        "cloudwatch_log_metric_filter_security_group_changes",
+        "cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled",
+        "sns_topics_kms_encryption_at_rest_enabled",
+        "config_recorder_all_regions_enabled"
+      ]
+    },
+    {
+      "Id": "article_49",
+      "Name": "Article 49 - Data storage and elimination",
+      "Description": "Systems used for personal data processing or storage must meet security standards that prevent unauthorized access, accidental or unlawful destruction, loss, alteration, or any other form of improper processing. Data must be eliminated after the end of the period provided or the purpose achieved, except for legitimate retention purposes.",
+      "Attributes": [
+        {
+          "ItemId": "article_49",
+          "Section": "Article 49 - Data storage and elimination",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "s3_bucket_default_encryption",
+        "s3_bucket_object_lock",
+        "s3_bucket_versioning_enabled",
+        "rds_instance_storage_encrypted",
+        "rds_instance_backup_enabled",
+        "dynamodb_tables_pitr_enabled",
+        "ec2_ebs_volume_encryption",
+        "ec2_ebs_snapshots_encrypted",
+        "kms_cmk_rotation_enabled",
+        "backup_plans_exist"
+      ]
+    },
+    {
+      "Id": "article_50",
+      "Name": "Article 50 - Good practices and governance",
+      "Description": "Controllers and processors may formulate rules of good practices and governance that set the conditions of organization, operating regimen, procedures including complaints and petitions of holders, security and technical standards, specific obligations for the different parties involved in the processing, remediation actions, and other aspects related to the processing of personal data.",
+      "Attributes": [
+        {
+          "ItemId": "article_50",
+          "Section": "Article 50 - Good practices and governance",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "accessanalyzer_enabled",
+        "iam_aws_attached_policy_no_administrative_privileges",
+        "iam_customer_attached_policy_no_administrative_privileges",
+        "iam_inline_policy_no_administrative_privileges",
+        "iam_root_hardware_mfa_enabled",
+        "iam_root_mfa_enabled",
+        "iam_no_root_access_key",
+        "iam_support_role_created",
+        "config_recorder_all_regions_enabled",
+        "securityhub_enabled",
+        "guardduty_is_enabled",
+        "trustedadvisor_premium_support_plan_subscribed"
+      ]
+    }
+  ]
+}
