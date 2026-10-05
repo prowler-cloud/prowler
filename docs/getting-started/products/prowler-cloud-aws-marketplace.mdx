@@ -2,54 +2,339 @@
 title: "AWS Marketplace"
 ---
 
-This section contains the instructions to subscribe to **Prowler Cloud** through the **AWS Marketplace**.
+This page explains how to subscribe to **Prowler Cloud** through the **AWS Marketplace**, how to activate the subscription in Prowler Cloud, how billing works, and how to fix the errors you may hit on the way.
 
-## How to Subscribe
+## Plans
 
-To get to the **Prowler Cloud** product listing in the AWS Marketplace, and click the `View purchase options` button:
+Prowler Cloud has two listings in the AWS Marketplace. Both give you the same product. They differ in how you commit and how you pay.
 
-1. Use this link to be taken directly to the [Prowler Cloud Marketplace Listing](https://aws.amazon.com/marketplace/pp/prodview-6ochhig5kxpok):
+A **provider** is a cloud account you connect to Prowler Cloud: an AWS account, an Azure subscription, a GCP project, a Kubernetes cluster, and so on.
 
-    ![](/images/aws-marketplace/marketplace-listing.png)
+| | Monthly (pay as you go) | Annual (billed annually) |
+| --- | --- | --- |
+| Listing | [Prowler Cloud $99/provider per month (Pay as You Go)](https://aws.amazon.com/marketplace/pp/prodview-nmbvelz746oyk) | [Prowler Cloud $79/provider per month (Billed Annually)](https://aws.amazon.com/marketplace/pp/prodview-wwehsmzui25ri) |
+| Billing | Monthly, per connected provider | Once, at checkout, for the full 12 months |
+| Commitment | None. Cancel anytime. | You choose the number of providers during checkout on AWS. |
+| Resources beyond the included amount | Billed per resource | Billed per resource, at the annual rate |
+| Providers beyond your commitment | Not applicable | Billed monthly at the pay-as-you-go rate |
 
-2. Then, scroll down to the "Purchase Details" section and click the `Subscribe` button:
+For prices, included resources and per-resource rates, see the [Prowler Cloud pricing page](https://prowler.com/pricing/).
 
-    ![](/images/aws-marketplace/marketplace-subscribe.png)
+## Before you subscribe
 
-## Set Up Your Account
+- **One AWS account pays for the whole organization.** Subscribe from a single AWS account. You then connect as many providers as you need, from any cloud, inside Prowler Cloud. You do not subscribe again for each AWS account you scan.
+- **Decide which Prowler Cloud organization will pay.** Activation links the AWS purchase to the organization you are signed in to. If you belong to several organizations, switch to the right one before you activate. See [Activate the subscription in Prowler Cloud](#activate-the-subscription-in-prowler-cloud).
+- **Annual plan: decide the provider count first.** AWS asks for it during checkout, and AWS charges the full year at that moment. Providers you add beyond that count are billed monthly at the pay-as-you-go rate. AWS does not let you cancel an annual contract yourself from the console. See [Cancel the subscription](#cancel-the-subscription) before you commit.
+- **Cancel any card-billed subscription first.** An organization already billed by credit card cannot switch to AWS Marketplace billing until that subscription is cancelled. This prevents double charges.
 
-After you have subscribed to the **Prowler Cloud** product, you will need to set up your **Prowler Cloud** account:
+## Subscribe on AWS Marketplace
 
-1. Click the `Set up your account` button:
+<Steps>
+  <Step title="Open the listing">
+    Sign in to the AWS account that will pay, open the listing for the plan you want, and click **View purchase options**.
 
-    ![](/images/aws-marketplace/marketplace-message.png)
+    <Tabs>
+      <Tab title="Monthly">
+        Open [Prowler Cloud $99/provider per month (Pay as You Go)](https://aws.amazon.com/marketplace/pp/prodview-nmbvelz746oyk).
 
-2. You will be redirected to **Prowler Cloud Sign In** page. You can sign in with an existing account or sign up with a new account:
+        <Frame>
+          <img src="/images/aws-marketplace/listing-monthly.png" alt="Monthly Prowler Cloud listing on AWS Marketplace with the View purchase options button highlighted" />
+        </Frame>
+      </Tab>
+      <Tab title="Annual">
+        Open [Prowler Cloud $79/provider per month (Billed Annually)](https://aws.amazon.com/marketplace/pp/prodview-wwehsmzui25ri).
 
-    ![](/images/aws-marketplace/marketplace-sign-up.png)
+        <Frame>
+          <img src="/images/aws-marketplace/listing-annual.png" alt="Annual Prowler Cloud listing on AWS Marketplace with the View purchase options button highlighted" />
+        </Frame>
+      </Tab>
+    </Tabs>
+  </Step>
 
-3. Once you have successfully authenticated, you should be automatically redirected to the **Prowler Cloud** [Billing](https://cloud.prowler.com/billing) page where you should now see that your account has the `AWS Marketplace Subscription` badge.
+  <Step title="Review the purchase and subscribe">
+    <Tabs>
+      <Tab title="Monthly">
+        Scroll to **Purchase details** and click **Subscribe**. There is no upfront charge. AWS bills your usage at the end of each month.
 
-    ![](/images/aws-marketplace/marketplace-my-account.png)
+        <Frame>
+          <img src="/images/aws-marketplace/purchase-monthly.png" alt="Purchase details for the monthly listing with the Subscribe button highlighted" />
+        </Frame>
+      </Tab>
+      <Tab title="Annual">
+        Under **Pricing details**, select the **providers** dimension and enter the **Number of units**. One unit is one provider for the 12-month term. Review the **Contract total**, then click **Subscribe** at the bottom of the page. AWS charges the full year now.
 
-If you have any issues signing up, please contact us at support@prowler.com.
+        <Frame>
+          <img src="/images/aws-marketplace/purchase-annual.png" alt="Purchase options for the annual listing showing the contract details, the providers dimension and the Number of units table" />
+        </Frame>
 
+        **Auto-renewal** is on by default. Leave it on to have AWS renew the contract for another 12 months at the end date, or choose **Do not automatically renew this contract**. You can change this from **Manage subscriptions** any time before the renewal date.
+      </Tab>
+    </Tabs>
+  </Step>
 
-## Billing
+  <Step title="Click Set up your account">
+    AWS confirms the purchase and shows a **Set up your account** button. Click it. AWS sends your browser to Prowler Cloud with a one-time setup link.
 
-You will be charged monthly based on resources scanned and monitored depending on usage in **Prowler Cloud**. For more information on billing, please see the [Prowler Cloud Pricing FAQ](https://prowler.com/pricing/).
+    <Frame>
+      <img src="/images/aws-marketplace/set-up-your-account.png" alt="AWS Marketplace purchase confirmation banner with the Set up your account button" />
+    </Frame>
 
-**Note:** Your **Prowler Cloud** bills can be seen at [AWS Billing](https://us-east-1.console.aws.amazon.com/billing/home#/bills).
+    <Note>
+    The setup link is single use and expires quickly: AWS documents roughly one hour, and never more than four. If you close the tab, press back, or need to start over, return to [Manage subscriptions](https://console.aws.amazon.com/marketplace/subscriptions) in the AWS Marketplace console, open **Prowler Cloud**, and click **Set up your account** again to get a fresh link.
+    </Note>
+  </Step>
+</Steps>
 
-## Subscription
+## Activate the subscription in Prowler Cloud
 
-If you subscribe to Prowler Cloud through the AWS Marketplace it is not necessary to subscribe from different AWS accounts to use Prowler Cloud for those accounts.
+Nothing is linked until you confirm it in Prowler Cloud. The purchase is safe on the AWS side while you complete these steps.
 
-In Prowler Cloud you only need to subscribe from one of your AWS accounts through the AWS Marketplace and add multiple provider accounts once you are in the Prowler Cloud console. We will send usage metrics to the AWS Marketplace regardless of the number of accounts you add in our platform, so the AWS Marketplace will bill you based on those usage metrics.
+<Steps>
+  <Step title="Sign in or create your account">
+    Prowler Cloud shows the sign-in page with a banner that reads "To finish setting up your AWS Marketplace subscription, sign in or register if you don't have an account yet."
+
+    <Frame>
+      <img src="/images/aws-marketplace/sign-in-marketplace.png" alt="Prowler Cloud sign-in page with the AWS Marketplace banner" />
+    </Frame>
+
+    If you do not have an account yet, click **Sign up**. The purchase carries over once you sign in with the new account.
+
+    <Frame>
+      <img src="/images/aws-marketplace/sign-up-marketplace.png" alt="Prowler Cloud sign-up page with the AWS Marketplace banner" />
+    </Frame>
+  </Step>
+
+  <Step title="Check the organization and activate">
+    The billing page shows a card titled **Activate your AWS Marketplace subscription**. It names the organization the purchase will be linked to.
+
+    <Frame>
+      <img src="/images/aws-marketplace/activate-confirm.png" alt="Activation card naming the organization, with the Activate subscription button and the Continue to billing without activating link" />
+    </Frame>
+
+    <Warning>
+    Read the organization name before you click. Activation is a billing decision: charges for that organization go to the AWS account you subscribed with. If it is not the organization you want to pay for, switch organizations first, then come back to the billing page.
+    </Warning>
+
+    Click **Activate subscription**. Prowler Cloud links the purchase and activates the subscription. Two short status messages appear while it works: "Linking your AWS Marketplace purchase…" and "Activating your subscription…".
+
+    <Frame>
+      <img src="/images/aws-marketplace/activate-working.png" alt="Activation card showing the Activating your subscription progress message" />
+    </Frame>
+
+    **Continue to billing without activating** discards the setup link and leaves the organization unchanged. Use it only if you landed in the wrong organization. To activate later, get a fresh link from the AWS Marketplace console as described above.
+  </Step>
+
+  <Step title="Confirm the subscription is active">
+    The billing page now states that you subscribed through AWS Marketplace, shows the AWS account that pays, and links to your subscription in the AWS Marketplace console.
+
+    <Frame>
+      <img src="/images/aws-marketplace/billing-subscribed.png" alt="Prowler Cloud billing page for an AWS Marketplace subscription, showing the paying AWS account and the link to the AWS Marketplace console" />
+    </Frame>
+
+    There is no payment method, invoice history, or cancel button on this page. AWS handles all of that.
+  </Step>
+</Steps>
+
+If something goes wrong during activation, see [Activation errors](#activation-errors).
+
+## After activation
+
+- Add providers from the **Providers** page in Prowler Cloud. Every provider you add is covered by the same AWS subscription, whatever cloud it belongs to.
+- All charges come from AWS. Find them under **Amazon Web Services, Inc. - Marketplace** in [AWS Billing](https://console.aws.amazon.com/billing/home#/bills).
+
+<Frame>
+  <img src="/images/aws-marketplace/marketplace-billing.png" alt="AWS Billing page showing the Amazon Web Services, Inc. - Marketplace line" />
+</Frame>
+
+### Monthly
+
+AWS bills you at the end of each month for the providers connected and the resources scanned in Prowler Cloud during that month.
+
+### Annual
+
+AWS charges the full 12-month subscription once, at checkout. The providers covered by your commitment cost nothing more during the year. Your monthly AWS bill only includes usage beyond the commitment: extra providers at the pay-as-you-go rate, and resources beyond the included amount at the annual plan's per-resource rate.
+
+If auto-renewal is on, AWS renews the contract for another 12 months at the end date and charges the new term the same way. Turn it off from **Manage subscriptions** before the renewal date if you do not want that.
+
+## Cancel the subscription
+
+There is no cancel button in Prowler Cloud for AWS Marketplace subscriptions. How you cancel depends on the plan, following the [AWS Marketplace cancellation rules](https://docs.aws.amazon.com/marketplace/latest/buyerguide/cancel-subscription.html).
+
+### Monthly
+
+Cancel from the AWS Marketplace console at any time:
+
+1. Open [Manage subscriptions](https://console.aws.amazon.com/marketplace/subscriptions) and open **Prowler Cloud**.
+2. Under **Active agreements**, select the agreement and click **View details**.
+3. Open the **Actions** menu and choose **Cancel subscription**.
+4. Type `confirm` and choose **Yes, cancel subscription**.
+
+<Frame>
+  <img src="/images/aws-marketplace/aws-manage-subscriptions.png" alt="Prowler Cloud agreement page in the AWS Marketplace console with the Actions menu open on Cancel subscription" />
+</Frame>
+
+Cancelling stops future charges. Usage accrued before the cancellation still appears on your next AWS bill.
+
+### Annual
+
+{/* TODO(cutover): confirm against the production annual listing's offer terms before publishing. AWS's buyer guide says public contracts have no self-service cancel, but the August [DEV] annual test agreements were cancelled from the buyer console. If the real listing allows self-service cancel, replace this subsection with the monthly steps. */}
+
+AWS does not offer self-service cancellation for annual contracts bought through a public listing.
+
+- **Within 48 hours of purchase**, contact AWS Customer Service. AWS can cancel the contract and refund the full amount, but only if you ask for the refund.
+- **After 48 hours**, contact [support@prowler.com](mailto:support@prowler.com). Prowler starts the cancellation request through AWS Marketplace and you approve it in the AWS Marketplace console. A refund is not automatic. Ask for it when you request the cancellation.
+
+See [Refunds and cancellations in AWS Marketplace](https://docs.aws.amazon.com/marketplace/latest/buyerguide/buyer-refunds.html) for the AWS side of the process.
+
+### What happens after cancellation
+
+Once AWS ends the subscription, Prowler Cloud pauses scans for the organization. Providers, findings and scan history stay readable. A **Subscription required** card in the sidebar, labeled **Subscription cancelled**, explains it: "Scans are paused and your assessment data remains available. Subscribe again to continue scanning." The billing page shows the plan selection page.
+
+<Frame>
+  <img src="/images/aws-marketplace/billing-cancelled.png" alt="Prowler Cloud after an AWS Marketplace cancellation, showing the Subscription cancelled card in the sidebar and the plan selection page" />
+</Frame>
+
+To subscribe again from the same AWS account into the same Prowler Cloud organization, subscribe from the listing and activate as before.
+
+<Warning>
+Deleting your Prowler Cloud organization does not cancel the AWS subscription. AWS keeps charging the agreement until you cancel it as described above.
+</Warning>
 
 ## Troubleshooting
 
-### SEPA Payment Method Issues
+### Activation errors
+
+Each error appears on the Prowler Cloud billing page with the title below. Your AWS purchase is never lost by any of them. **Continue to billing** closes the message without activating.
+
+<AccordionGroup>
+  <Accordion title="Your AWS Marketplace link has expired">
+    The one-time setup link from AWS was used or timed out. AWS documents roughly one hour of validity, and never more than four. Submitting the same link twice, for example by pressing back and resending the page, also counts as a reuse.
+
+    Open **Manage subscriptions** in the AWS Marketplace console, open **Prowler Cloud**, and click **Set up your account** to get a fresh link.
+
+    <Frame>
+      <img src="/images/aws-marketplace/error-token-expired.png" alt="Error notice: Your AWS Marketplace link has expired" />
+    </Frame>
+  </Accordion>
+
+  <Accordion title="This AWS Marketplace product is not supported yet">
+    The purchase went through on AWS, but this listing is not enabled for activation in Prowler Cloud. You see this when you subscribed to an earlier Prowler Cloud listing instead of one of the [two current plans](#plans).
+
+    Contact [support@prowler.com](mailto:support@prowler.com) with the AWS account you subscribed with. Click **Try again** once support confirms.
+
+    <Frame>
+      <img src="/images/aws-marketplace/error-product-not-supported.png" alt="Error notice: This AWS Marketplace product is not supported yet" />
+    </Frame>
+  </Accordion>
+
+  <Accordion title="This AWS subscription is already linked">
+    The purchase cannot be linked to the organization you are signed in to. The message shows the reason reported for this purchase:
+
+    - **"This AWS Marketplace subscription is no longer active."** The subscription was cancelled on AWS. Subscribe again from the listing. If you see this seconds after a new purchase, AWS may still be registering it: wait a minute, go back to **Manage subscriptions**, and click **Set up your account** again.
+    - **"This AWS Marketplace purchase is already linked to another Prowler account."** AWS identifies a purchase by AWS account and product, so one AWS account backs one Prowler Cloud organization per plan. Sign in to the organization that already holds it, or subscribe from a different AWS account.
+    - **"This account is already linked to another active AWS Marketplace purchase."** This organization already has an active AWS Marketplace subscription. Cancel that subscription in the AWS Marketplace console before activating a new one.
+
+    If none of these applies, contact [support@prowler.com](mailto:support@prowler.com).
+
+    <Frame>
+      <img src="/images/aws-marketplace/error-agreement-in-use.png" alt="Error notice: This AWS subscription is already linked, with the reason shown below the message" />
+    </Frame>
+  </Accordion>
+
+  <Accordion title="Your purchase is still being linked">
+    Another request is linking the same purchase, usually a second click or a second tab. Wait a moment and click **Try again**.
+
+    <Frame>
+      <img src="/images/aws-marketplace/error-link-in-progress.png" alt="Error notice: Your purchase is still being linked" />
+    </Frame>
+  </Accordion>
+
+  <Accordion title="You already have an active subscription">
+    This organization is billed by credit card. Cancel that subscription first, so you are never charged twice. Then open **Manage subscriptions** in the AWS Marketplace console and click **Set up your account** again.
+
+    <Frame>
+      <img src="/images/aws-marketplace/error-billing-provider-conflict.png" alt="Error notice: You already have an active subscription" />
+    </Frame>
+  </Accordion>
+
+  <Accordion title="This AWS purchase is billed under another organization">
+    AWS Marketplace billing for this AWS account and plan is already set up in a different Prowler Cloud organization. This also happens after you delete the organization that held the subscription and subscribe again from a new one.
+
+    Sign in to the organization that holds the billing and restart the setup from **Manage subscriptions** in the AWS Marketplace console. If that organization no longer exists, contact [support@prowler.com](mailto:support@prowler.com) so they can release the billing link.
+  </Accordion>
+
+  <Accordion title="We could not find your AWS purchase">
+    Prowler Cloud received no purchase to activate. Open **Manage subscriptions** in the AWS Marketplace console and click **Set up your account** to start again.
+
+    <Frame>
+      <img src="/images/aws-marketplace/error-no-agreement.png" alt="Error notice: We could not find your AWS purchase" />
+    </Frame>
+  </Accordion>
+
+  <Accordion title="We could not reach AWS Marketplace">
+    A temporary problem talking to AWS. Click **Try again**. If it keeps failing, contact [support@prowler.com](mailto:support@prowler.com) and include the detail text shown under the message.
+
+    <Frame>
+      <img src="/images/aws-marketplace/error-resolve-failed.png" alt="Error notice: We could not reach AWS Marketplace" />
+    </Frame>
+  </Accordion>
+
+  <Accordion title="We could not activate your subscription">
+    The purchase was linked but the activation did not complete. Click **Try again**. If it keeps failing, contact [support@prowler.com](mailto:support@prowler.com) and include the detail text shown under the message.
+
+    <Frame>
+      <img src="/images/aws-marketplace/error-subscribe-failed.png" alt="Error notice: We could not activate your subscription" />
+    </Frame>
+  </Accordion>
+
+  <Accordion title="Please sign in again">
+    Your Prowler Cloud session expired before the activation finished. Click **Sign in again** and pick up where you left off. The setup link stays valid during its expiry window.
+
+    <Frame>
+      <img src="/images/aws-marketplace/error-unauthorized.png" alt="Error notice: Please sign in again" />
+    </Frame>
+  </Accordion>
+
+  <Accordion title="We could not read your AWS purchase">
+    The setup link arrived damaged. Open **Manage subscriptions** in the AWS Marketplace console and click **Set up your account** to get a fresh one.
+
+    <Frame>
+      <img src="/images/aws-marketplace/error-invalid-input.png" alt="Error notice: We could not read your AWS purchase" />
+    </Frame>
+  </Accordion>
+</AccordionGroup>
+
+### Errors before the sign-in page
+
+If the redirect from AWS itself fails, Prowler Cloud shows a plain page instead of the app. Each page links back to Prowler Cloud billing and to your AWS Marketplace subscriptions.
+
+<AccordionGroup>
+  <Accordion title="We couldn't verify this request">
+    The setup page only accepts the redirect from AWS Marketplace. You reach it by opening the setup URL directly or from a bookmark. Start again from **Set up your account** in the AWS Marketplace console.
+
+    <Frame>
+      <img src="/images/aws-marketplace/fulfillment-error-verify.png" alt="Error page: We couldn't verify this request" />
+    </Frame>
+  </Accordion>
+
+  <Accordion title="We couldn't read your AWS purchase">
+    The redirect arrived without a valid setup token. Start again from **Set up your account** in the AWS Marketplace console.
+
+    <Frame>
+      <img src="/images/aws-marketplace/fulfillment-error-read.png" alt="Error page: We couldn't read your AWS purchase" />
+    </Frame>
+  </Accordion>
+
+  <Accordion title="Something went wrong">
+    Prowler Cloud could not process the redirect. Your purchase is safe. Wait a moment, then start again from **Set up your account** in the AWS Marketplace console. Contact [support@prowler.com](mailto:support@prowler.com) if it happens again.
+
+    <Frame>
+      <img src="/images/aws-marketplace/fulfillment-error-generic.png" alt="Error page: Something went wrong" />
+    </Frame>
+  </Accordion>
+</AccordionGroup>
+
+### SEPA payment method issues
 
 If AWS Marketplace notifies that payment failed due to an issue with the payment method, this typically occurs when a SEPA bank account is set as the default payment method. AWS Marketplace does not support SEPA bank accounts for product subscriptions, even when the account includes valid alternative payment methods. This is because AWS Marketplace invoices are issued by AWS Inc., a US entity. SEPA accounts do not recognize these invoices as valid, causing subscription failures.
 
@@ -73,10 +358,14 @@ The AWS Marketplace team acknowledges this limitation: "We apologize for these a
 
 </Note>
 
-### Credit and Debit Card Storage Restrictions (AISPL Customers in India)
+### Credit and debit card storage restrictions (AISPL customers in India)
 
 AWS Marketplace no longer supports payments using credit or debit cards stored on file for Amazon Internet Services Private Limited (AISPL) customers. This restriction stems from Reserve Bank of India (RBI) regulations regarding payment aggregators, which prohibit the storage of card data. As explained in [this AWS blog post](https://aws.amazon.com/blogs/awsmarketplace/restriction-on-credit-and-debit-card-purchases-for-aispl-customers-using-aws-marketplace/):
 
 > AWS Marketplace can no longer support payments using credit or debit cards stored on file. [The Reserve Bank of India (RBI) has issued a notice regarding regulation of payment aggregators](https://www.rbi.org.in/Scripts/NotificationUser.aspx?Id=11822&Mode=0), which restricts the storage of card data. If you are currently using credit or debit card as your default payment instrument, your ability to use AWS Marketplace products will be restricted. However, you can switch your default payment instrument to Pay By Invoice to avoid disruption or restore your original experience.
 
 To maintain uninterrupted access to AWS Marketplace products, change the default payment instrument from stored card data to Pay By Invoice billing.
+
+## Support
+
+If you get stuck at any step, contact [support@prowler.com](mailto:support@prowler.com) and include the AWS account you subscribed with and the exact error title you see.
