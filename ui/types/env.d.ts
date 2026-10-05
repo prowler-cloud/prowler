@@ -31,6 +31,9 @@ declare global {
       // Prowler Cloud deployment flag — runtime read (server env, client island).
       UI_CLOUD_ENABLED?: "true" | "false";
       UI_REGISTRY_ENABLED?: "true" | "false";
+      // Registry base URL, shared with the backend installer.
+      PROWLER_REGISTRY_INDEX_URL?: string;
+      UI_REGISTRY_MEDIA_URL?: string;
 
       CLOUD_BILLING_ENABLED?: "legacy" | "metronome" | "false";
 
@@ -148,6 +151,7 @@ declare global {
       E2E_OCI_USER_ID?: string;
       E2E_OCI_FINGERPRINT?: string;
       E2E_OCI_KEY_CONTENT?: string;
+      E2E_OCI_REGION?: string;
 
       // E2E Alibaba Cloud
       E2E_ALIBABACLOUD_ACCOUNT_ID?: string;

@@ -1,13 +1,10 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
 import { SaveIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { Controller, useForm } from "react-hook-form";
-import * as z from "zod";
+import { Controller } from "react-hook-form";
 
-import { sendInvite } from "@/actions/invitations/invitation";
-import { Button, useToast } from "@/components/shadcn";
+import { Button } from "@/components/shadcn";
 import { CustomInput } from "@/components/shadcn/custom";
 import { Form } from "@/components/shadcn/form";
 import {
@@ -17,15 +14,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/shadcn/select/select";
-import { ApiError } from "@/types";
 import type { InvitationRoleOption } from "@/types/onboarding-invite";
 
-const sendInvitationFormSchema = z.object({
-  email: z.email({ error: "Please enter a valid email" }),
-  roleId: z.string().min(1, "Role is required"),
-});
-
-export type FormValues = z.infer<typeof sendInvitationFormSchema>;
+import { useSendInvitation } from "./use-send-invitation";
 
 interface SendInvitationFormProps {
   roles: InvitationRoleOption[];
@@ -45,90 +36,23 @@ export const SendInvitationForm = ({
   source,
   onSuccess,
 }: SendInvitationFormProps) => {
-  const { toast } = useToast();
   const router = useRouter();
 
-  const form = useForm<FormValues>({
-    resolver: zodResolver(sendInvitationFormSchema),
-    defaultValues: {
-      email: "",
-      roleId: isSelectorDisabled ? defaultRole : "",
+  const { form, onSubmit, isSubmitting } = useSendInvitation({
+    source,
+    defaultRoleId: isSelectorDisabled ? defaultRole : "",
+    onSuccess: (invitation) => {
+      if (onSuccess) {
+        onSuccess(invitation.id);
+        return;
+      }
+      router.push(`/invitations/check-details/?id=${invitation.id}`);
     },
   });
 
-  const isLoading = form.formState.isSubmitting;
-
-  const onSubmitClient = async (values: FormValues) => {
-    const formData = new FormData();
-    formData.append("email", values.email);
-    formData.append("role", values.roleId);
-    if (source) formData.append("source", source);
-
-    try {
-      const data = await sendInvite(formData);
-
-      if (data?.errors && data.errors.length > 0) {
-        data.errors.forEach((error: ApiError) => {
-          const errorMessage = error.detail;
-          const pointer = error.source?.pointer;
-          switch (pointer) {
-            case "/data/attributes/email":
-              form.setError("email", {
-                type: "server",
-                message: errorMessage,
-              });
-              break;
-            case "/data/relationships/roles":
-              form.setError("roleId", {
-                type: "server",
-                message: errorMessage,
-              });
-              break;
-            default:
-              toast({
-                variant: "destructive",
-                title: "Oops! Something went wrong",
-                description: errorMessage,
-              });
-          }
-        });
-      } else {
-        const invitationId = data?.data?.id;
-        if (!invitationId) {
-          // A transport failure returns nothing and a rejection can come
-          // back as a bare `error` without an `errors` array; neither
-          // created an invitation, so neither is a success.
-          toast({
-            variant: "destructive",
-            title: "Oops! Something went wrong",
-            description:
-              typeof data?.error === "string"
-                ? data.error
-                : "The invitation could not be sent. Please try again.",
-          });
-          return;
-        }
-        if (onSuccess) {
-          onSuccess(invitationId);
-          return;
-        }
-        router.push(`/invitations/check-details/?id=${invitationId}`);
-      }
-    } catch (_error) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "An unexpected error occurred. Please try again.",
-      });
-    }
-  };
-
   return (
     <Form {...form}>
-      <form
-        onSubmit={form.handleSubmit(onSubmitClient)}
-        className="flex flex-col gap-4"
-      >
+      <form onSubmit={onSubmit} className="flex flex-col gap-4">
         {/* Email Field */}
         <CustomInput
           control={form.control}
@@ -182,9 +106,9 @@ export const SendInvitationForm = ({
             className="w-1/2"
             variant="default"
             size="lg"
-            disabled={isLoading}
+            disabled={isSubmitting}
           >
-            {isLoading ? (
+            {isSubmitting ? (
               <>Loading</>
             ) : (
               <>

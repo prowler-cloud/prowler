@@ -2113,7 +2113,9 @@ def aggregate_attack_surface(tenant_id: str, scan_id: str):
             .annotate(
                 total=Count("id"),
                 failed=Count("id", filter=Q(status="FAIL", muted=False)),
-                muted=Count("id", filter=Q(status="FAIL", muted=True)),
+                # Not `muted`: an annotation named after a model field comes
+                # back as `muted_new` from the psqlextra queryset.
+                muted_count=Count("id", filter=Q(status="FAIL", muted=True)),
             )
         )
 
@@ -2124,7 +2126,7 @@ def aggregate_attack_surface(tenant_id: str, scan_id: str):
 
             aggregated_counts[attack_surface_type]["total"] += stats["total"] or 0
             aggregated_counts[attack_surface_type]["failed"] += stats["failed"] or 0
-            aggregated_counts[attack_surface_type]["muted"] += stats["muted"] or 0
+            aggregated_counts[attack_surface_type]["muted"] += stats["muted_count"] or 0
 
     overview_objects = []
     for attack_surface_type, counts in aggregated_counts.items():

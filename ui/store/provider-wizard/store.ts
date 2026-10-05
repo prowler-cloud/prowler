@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
 import {
+  AWS_CONNECT_PANEL,
   AwsConnectDraft,
   PROVIDER_WIZARD_MODE,
   ProviderWizardIdentity,
@@ -39,6 +40,7 @@ const initialState = {
 
 const EMPTY_AWS_CONNECT_DRAFT: AwsConnectDraft = {
   method: "role",
+  panel: AWS_CONNECT_PANEL.ACCESS,
   roleValues: {},
   keysValues: {},
 };

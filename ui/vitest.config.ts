@@ -147,7 +147,6 @@ export default defineConfig(() => {
         "next-themes",
 
         // App component lib
-        "@iconify/react",
         "react-day-picker",
         "posthog-js",
         "posthog-js/react",

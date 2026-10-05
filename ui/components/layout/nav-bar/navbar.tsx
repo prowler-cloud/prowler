@@ -1,4 +1,4 @@
-import { ReactNode, Suspense } from "react";
+import { Suspense, type ReactElement } from "react";
 
 import { FeedsServer } from "@/components/feeds";
 
@@ -12,7 +12,7 @@ export type { OnboardingActionConfig };
 
 interface NavbarProps {
   title: string;
-  icon?: string | ReactNode;
+  icon?: ReactElement;
   onboardingAction?: OnboardingActionConfig;
 }
 

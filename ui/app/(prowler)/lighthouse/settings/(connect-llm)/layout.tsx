@@ -2,7 +2,7 @@
 
 import "@/styles/globals.css";
 
-import { Icon } from "@iconify/react";
+import { Star, Trash2, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { useEffect, useState } from "react";
 
@@ -76,7 +76,7 @@ export default function ConnectLLMLayout({ children }: ConnectLLMLayoutProps) {
 
       <NavigationHeader
         title={isEditMode ? "Configure LLM Provider" : "Connect LLM Provider"}
-        icon="icon-park-outline:close-small"
+        icon={<X />}
         href={LIGHTHOUSE_ROUTE.SETTINGS}
       />
       <div className="h-8" />
@@ -96,7 +96,7 @@ export default function ConnectLLMLayout({ children }: ConnectLLMLayoutProps) {
                     onClick={handleSetDefault}
                     className="w-full sm:w-auto"
                   >
-                    <Icon icon="heroicons:star" className="h-4 w-4" />
+                    <Star aria-hidden="true" className="h-4 w-4" />
                     Set as Default
                   </Button>
                 )}
@@ -108,7 +108,7 @@ export default function ConnectLLMLayout({ children }: ConnectLLMLayoutProps) {
                   onClick={() => setIsDeleteOpen(true)}
                   className="w-full sm:w-auto"
                 >
-                  <Icon icon="heroicons:trash" className="h-4 w-4" />
+                  <Trash2 aria-hidden="true" className="h-4 w-4" />
                   Delete Provider
                 </Button>
               </div>
