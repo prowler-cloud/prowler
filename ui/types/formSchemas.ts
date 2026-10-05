@@ -8,42 +8,72 @@ import { MAX_SAML_ADDITIONAL_EMAIL_DOMAINS } from "@/types/saml";
 
 import { isKnownProviderType, PROVIDER_TYPES, ProviderType } from "./providers";
 
-export const KUBECONFIG_UNSUPPORTED_COMMAND_AUTHENTICATION_ERROR =
-  "Kubernetes kubeconfig command-based authentication is not supported in Prowler Cloud for security reasons.";
+export const KUBECONFIG_NON_INLINE_CREDENTIALS_ERROR =
+  "Only inline Kubernetes credentials are supported. Use token, client-certificate-data, client-key-data, or certificate-authority-data. File-path fields (tokenFile, client-certificate, client-key, certificate-authority), command-based authentication (exec, cmd-path), auth-provider directives, and proxy URLs are not supported.";
 
 const isRecord = (value: unknown): value is Record<string, unknown> => {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 };
 
-export const kubeconfigContainsUnsupportedCommandAuthentication = (
-  value: string,
-): boolean => {
+const KUBECONFIG_ALLOWED_USER_KEYS = new Set([
+  "token",
+  "username",
+  "password",
+  "client-certificate-data",
+  "client-key-data",
+  "as",
+  "as-uid",
+  "as-groups",
+  "as-user-extra",
+]);
+const KUBECONFIG_FORBIDDEN_CLUSTER_KEYS = new Set([
+  "certificate-authority",
+  "proxy-url",
+]);
+
+// Mirrors the API validator: only inline credentials are accepted; file-reference,
+// command, auth-provider and proxy fields are rejected before the kubeconfig is stored.
+export const kubeconfigIsInlineOnlyCredentials = (value: string): boolean => {
+  let parsed: unknown;
   try {
-    const parsed = yaml.load(value);
+    parsed = yaml.load(value);
+  } catch {
+    return true;
+  }
 
-    if (!isRecord(parsed) || !Array.isArray(parsed.users)) {
-      return false;
-    }
+  if (!isRecord(parsed)) {
+    return true;
+  }
 
-    return parsed.users.some((userEntry) => {
+  if (Array.isArray(parsed.users)) {
+    const usersInlineOnly = parsed.users.every((userEntry) => {
       if (!isRecord(userEntry) || !isRecord(userEntry.user)) {
-        return false;
-      }
-
-      if ("exec" in userEntry.user) {
         return true;
       }
-
-      const authProvider = userEntry.user["auth-provider"];
-      if (!isRecord(authProvider) || !isRecord(authProvider.config)) {
-        return false;
-      }
-
-      return "cmd-path" in authProvider.config;
+      return Object.keys(userEntry.user).every((key) =>
+        KUBECONFIG_ALLOWED_USER_KEYS.has(key),
+      );
     });
-  } catch {
-    return false;
+    if (!usersInlineOnly) {
+      return false;
+    }
   }
+
+  if (Array.isArray(parsed.clusters)) {
+    const clustersInlineOnly = parsed.clusters.every((clusterEntry) => {
+      if (!isRecord(clusterEntry) || !isRecord(clusterEntry.cluster)) {
+        return true;
+      }
+      return Object.keys(clusterEntry.cluster).every(
+        (key) => !KUBECONFIG_FORBIDDEN_CLUSTER_KEYS.has(key),
+      );
+    });
+    if (!clustersInlineOnly) {
+      return false;
+    }
+  }
+
+  return true;
 };
 
 // Create and edit share the same shape, so a single schema backs both flows.
@@ -263,13 +293,9 @@ export const addCredentialsFormSchema = (
                     .string()
                     .min(1, "Kubeconfig Content is required")
                     .refine(
-                      (value) =>
-                        !kubeconfigContainsUnsupportedCommandAuthentication(
-                          value,
-                        ),
+                      (value) => kubeconfigIsInlineOnlyCredentials(value),
                       {
-                        error:
-                          KUBECONFIG_UNSUPPORTED_COMMAND_AUTHENTICATION_ERROR,
+                        error: KUBECONFIG_NON_INLINE_CREDENTIALS_ERROR,
                       },
                     ),
                 }

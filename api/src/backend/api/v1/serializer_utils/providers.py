@@ -214,7 +214,8 @@ from rest_framework_json_api import serializers
                     "kubeconfig_content": {
                         "type": "string",
                         "description": "The content of the Kubernetes kubeconfig file, encoded as a string. "
-                        "Kubeconfig command-based authentication is not supported in Prowler Cloud for security reasons.",
+                        "Only inline credentials are supported: token, client-certificate-data, client-key-data, and certificate-authority-data. "
+                        "File-path and auth-provider kubeconfig fields are not supported.",
                     }
                 },
                 "required": ["kubeconfig_content"],

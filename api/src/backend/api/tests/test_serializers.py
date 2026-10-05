@@ -340,6 +340,128 @@ current-context: test-context
         assert not serializer.is_valid()
         assert "kubeconfig_content" in serializer.errors
 
+    @staticmethod
+    def _kubeconfig(user_extra="", cluster_extra=""):
+        return f"""
+apiVersion: v1
+kind: Config
+clusters:
+  - name: test-cluster
+    cluster:
+      server: https://kubernetes.example.test
+{cluster_extra}
+users:
+  - name: test-user
+    user:
+      token: test-token
+{user_extra}
+contexts:
+  - name: test-context
+    context:
+      cluster: test-cluster
+      user: test-user
+current-context: test-context
+"""
+
+    @staticmethod
+    def _assert_rejected_without_echo(kubeconfig_content, leaked_value):
+        serializer = KubernetesProviderSecret(
+            data={"kubeconfig_content": kubeconfig_content}
+        )
+
+        assert not serializer.is_valid()
+        assert "kubeconfig_content" in serializer.errors
+        assert leaked_value not in str(serializer.errors)
+
+    def test_inline_token_with_certificate_authority_data_is_accepted(self):
+        """Fully inline credentials must keep validating."""
+        kubeconfig_content = self._kubeconfig(
+            cluster_extra="      certificate-authority-data: dGVzdA=="
+        )
+
+        serializer = KubernetesProviderSecret(
+            data={"kubeconfig_content": kubeconfig_content}
+        )
+
+        assert serializer.is_valid()
+
+    def test_kubeconfig_with_token_file_is_rejected(self):
+        """Guards arbitrary file read via users[*].user.tokenFile."""
+        self._assert_rejected_without_echo(
+            self._kubeconfig(user_extra="      tokenFile: /etc/passwd"),
+            "/etc/passwd",
+        )
+
+    def test_kubeconfig_with_client_certificate_file_is_rejected(self):
+        """Guards client certificate file read via client-certificate."""
+        self._assert_rejected_without_echo(
+            self._kubeconfig(user_extra="      client-certificate: /etc/passwd"),
+            "/etc/passwd",
+        )
+
+    def test_kubeconfig_with_client_key_file_is_rejected(self):
+        """Guards client key file read via client-key."""
+        self._assert_rejected_without_echo(
+            self._kubeconfig(user_extra="      client-key: /etc/passwd"),
+            "/etc/passwd",
+        )
+
+    def test_kubeconfig_with_certificate_authority_file_is_rejected(self):
+        """Guards CA file read via cluster certificate-authority."""
+        self._assert_rejected_without_echo(
+            self._kubeconfig(cluster_extra="      certificate-authority: /etc/passwd"),
+            "/etc/passwd",
+        )
+
+    def test_kubeconfig_with_cluster_proxy_url_is_rejected(self):
+        """Guards outbound SSRF via cluster proxy-url."""
+        self._assert_rejected_without_echo(
+            self._kubeconfig(cluster_extra="      proxy-url: http://proxy.evil.test"),
+            "proxy.evil.test",
+        )
+
+    @pytest.mark.parametrize("provider_name", ["gcp", "oidc", "azure"])
+    def test_kubeconfig_with_any_auth_provider_is_rejected(self, provider_name):
+        """Guards cloud auth and IdP SSRF via any auth-provider name."""
+        self._assert_rejected_without_echo(
+            self._kubeconfig(
+                user_extra=(
+                    "      auth-provider:\n"
+                    f"        name: {provider_name}\n"
+                    "        config:\n"
+                    "          idp-issuer-url: https://idp.evil.test"
+                )
+            ),
+            "idp.evil.test",
+        )
+
+    def test_kubeconfig_with_unknown_user_key_is_rejected(self):
+        """Guards the default-deny allowlist for unlisted user keys."""
+        self._assert_rejected_without_echo(
+            self._kubeconfig(user_extra="      bogus: /etc/passwd"),
+            "/etc/passwd",
+        )
+
+    def test_kubeconfig_with_non_list_clusters_is_rejected(self):
+        """Guards the type check on a non-list clusters section."""
+        kubeconfig_content = """
+apiVersion: v1
+kind: Config
+clusters:
+  name: /etc/passwd
+"""
+        self._assert_rejected_without_echo(kubeconfig_content, "/etc/passwd")
+
+    def test_kubeconfig_with_non_dict_cluster_entry_is_rejected(self):
+        """Guards the type check on a cluster entry that is not a mapping."""
+        kubeconfig_content = """
+apiVersion: v1
+kind: Config
+clusters:
+  - /etc/passwd
+"""
+        self._assert_rejected_without_echo(kubeconfig_content, "/etc/passwd")
+
     def test_malformed_kubeconfig_is_rejected(self):
         serializer = KubernetesProviderSecret(
             data={"kubeconfig_content": "apiVersion: ["}
