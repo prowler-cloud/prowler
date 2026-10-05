@@ -1,7 +1,15 @@
-import { render, waitFor } from "@testing-library/react";
+import { act, render, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { isFirstRunHandled } from "@/lib/onboarding/first-run-marker";
+import {
+  FIRST_RUN_MAX_ATTEMPTS,
+  isFirstRunHandled,
+} from "@/lib/onboarding/first-run-marker";
+import {
+  dispatchProviderFunnel,
+  PROVIDER_FUNNEL_STEP,
+  WIZARD_OPEN_SOURCE,
+} from "@/lib/provider-funnel/provider-funnel-events";
 import { addProviderTour } from "@/lib/tours/add-provider.tour";
 import { localStorageAdapter } from "@/lib/tours/store/local-storage-adapter";
 
@@ -111,7 +119,7 @@ describe("OnboardingGate", () => {
       expect(armMock).toHaveBeenCalledOnce();
     });
 
-    it("happens only once per tenant on this browser", async () => {
+    it("tries again on the next load when the wizard never opened (the navigation was cut short)", async () => {
       // Given
       const { unmount } = render(
         <OnboardingGate hasProviders={false} tenantId={TENANT_A} />,
@@ -124,28 +132,83 @@ describe("OnboardingGate", () => {
       render(<OnboardingGate hasProviders={false} tenantId={TENANT_A} />);
 
       // Then
-      expect(isFirstRunHandled(TENANT_A)).toBe(true);
-      expect(replaceMock).not.toHaveBeenCalled();
+      await waitFor(() =>
+        expect(replaceMock).toHaveBeenCalledExactlyOnceWith(
+          CLOUD_FIRST_RUN_HREF,
+        ),
+      );
+      expect(isFirstRunHandled(TENANT_A)).toBe(false);
     });
 
-    it("honours a browser-wide marker written before markers were tenant-scoped", () => {
-      // Given: e2e storage state and pre-existing browsers set the bare key.
-      window.localStorage.setItem("prowler.onboarding.first-run", "true");
-
-      // When
-      render(<OnboardingGate hasProviders={false} tenantId={TENANT_A} />);
-
-      // Then
-      expect(replaceMock).not.toHaveBeenCalled();
-      expect(isFirstRunHandled(TENANT_A)).toBe(true);
-    });
-
-    it("still runs for a different empty tenant on the same browser", async () => {
+    it("is resolved once the add-provider wizard opens, so later loads leave the user alone", async () => {
       // Given
       const { unmount } = render(
         <OnboardingGate hasProviders={false} tenantId={TENANT_A} />,
       );
       await waitFor(() => expect(replaceMock).toHaveBeenCalledOnce());
+      act(() => {
+        dispatchProviderFunnel({
+          step: PROVIDER_FUNNEL_STEP.WIZARD_OPENED,
+          source: WIZARD_OPEN_SOURCE.FIRST_RUN,
+        });
+      });
+      unmount();
+      replaceMock.mockClear();
+
+      // When
+      render(<OnboardingGate hasProviders={false} tenantId={TENANT_A} />);
+
+      // Then
+      expect(isFirstRunHandled(TENANT_A)).toBe(true);
+      expect(replaceMock).not.toHaveBeenCalled();
+    });
+
+    it("gives up after a few attempts that never reached the wizard, so no browser is trapped", async () => {
+      // Given: three loads whose navigation never completed.
+      for (let attempt = 0; attempt < FIRST_RUN_MAX_ATTEMPTS; attempt++) {
+        const { unmount } = render(
+          <OnboardingGate hasProviders={false} tenantId={TENANT_A} />,
+        );
+        await waitFor(() => expect(replaceMock).toHaveBeenCalledOnce());
+        unmount();
+        replaceMock.mockClear();
+      }
+
+      // When
+      render(<OnboardingGate hasProviders={false} tenantId={TENANT_A} />);
+
+      // Then
+      expect(isFirstRunHandled(TENANT_A)).toBe(true);
+      expect(replaceMock).not.toHaveBeenCalled();
+    });
+
+    it.each(["true", "1legacy", "-1"])(
+      "honours a browser-wide marker holding %s, written before markers counted attempts",
+      (value) => {
+        // Given: e2e storage state and pre-existing browsers set the bare key.
+        window.localStorage.setItem("prowler.onboarding.first-run", value);
+
+        // When
+        render(<OnboardingGate hasProviders={false} tenantId={TENANT_A} />);
+
+        // Then
+        expect(replaceMock).not.toHaveBeenCalled();
+        expect(isFirstRunHandled(TENANT_A)).toBe(true);
+      },
+    );
+
+    it("still runs for a different empty tenant on the same browser", async () => {
+      // Given: tenant A went through its first run on this browser.
+      const { unmount } = render(
+        <OnboardingGate hasProviders={false} tenantId={TENANT_A} />,
+      );
+      await waitFor(() => expect(replaceMock).toHaveBeenCalledOnce());
+      act(() => {
+        dispatchProviderFunnel({
+          step: PROVIDER_FUNNEL_STEP.WIZARD_OPENED,
+          source: WIZARD_OPEN_SOURCE.FIRST_RUN,
+        });
+      });
       unmount();
       replaceMock.mockClear();
 
@@ -154,7 +217,8 @@ describe("OnboardingGate", () => {
 
       // Then
       await waitFor(() => expect(replaceMock).toHaveBeenCalledOnce());
-      expect(isFirstRunHandled(TENANT_B)).toBe(true);
+      expect(isFirstRunHandled(TENANT_A)).toBe(true);
+      expect(isFirstRunHandled(TENANT_B)).toBe(false);
     });
   });
 
@@ -171,6 +235,24 @@ describe("OnboardingGate", () => {
         expect(replaceMock).toHaveBeenCalledExactlyOnceWith(OSS_FIRST_RUN_HREF),
       );
       expect(armMock).not.toHaveBeenCalled();
+    });
+
+    it("tries again on the next load when the wizard never opened, with no tenant id available", async () => {
+      // Given: self-hosted layouts mount the gate without a tenant id.
+      vi.stubEnv("UI_CLOUD_ENABLED", "false");
+      const { unmount } = render(<OnboardingGate hasProviders={false} />);
+      await waitFor(() => expect(replaceMock).toHaveBeenCalledOnce());
+      unmount();
+      replaceMock.mockClear();
+
+      // When
+      render(<OnboardingGate hasProviders={false} />);
+
+      // Then
+      await waitFor(() =>
+        expect(replaceMock).toHaveBeenCalledExactlyOnceWith(OSS_FIRST_RUN_HREF),
+      );
+      expect(isFirstRunHandled()).toBe(false);
     });
   });
 

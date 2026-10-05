@@ -1,3 +1,4 @@
+import { CloudCog } from "lucide-react";
 import { Suspense } from "react";
 
 import { SkeletonTableProviders } from "@/components/providers/table";
@@ -35,7 +36,7 @@ export default async function Providers({
   return (
     <ContentLayout
       title="Providers"
-      icon="lucide:cloud-cog"
+      icon={<CloudCog />}
       onboardingAction={{ flowId: "add-provider" }}
     >
       {isCloudEnvironment && <CliImportBanner className="mb-6" />}

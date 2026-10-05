@@ -36,12 +36,23 @@ const {
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ refresh: vi.fn(), push: vi.fn() }),
 }));
-vi.mock("next-auth/react", () => ({
-  useSession: () => ({
-    data: { tenantId: "tenant-abc" },
-    status: "authenticated",
-  }),
+const { getInvitationRoles, sendInvite, session } = vi.hoisted(() => ({
+  getInvitationRoles: vi.fn(),
+  sendInvite: vi.fn(),
+  // Mutable: only the permissions differ between cases.
+  session: {
+    data: { tenantId: "tenant-abc" } as {
+      tenantId: string;
+      user?: { permissions: Record<string, boolean> };
+    },
+  },
 }));
+
+vi.mock("next-auth/react", () => ({
+  useSession: () => ({ data: session.data, status: "authenticated" }),
+}));
+vi.mock("@/actions/invitations/roles", () => ({ getInvitationRoles }));
+vi.mock("@/actions/invitations/invitation", () => ({ sendInvite }));
 vi.mock("@/actions/providers/providers", () => ({
   addCredentialsProvider,
   addProvider,
@@ -165,6 +176,7 @@ describe("provider wizard account creation", () => {
 
   afterEach(() => {
     vi.unstubAllEnvs();
+    session.data = { tenantId: "tenant-abc" };
   });
 
   it("shows progress, blocks repeat clicks, and advances after creation", async () => {
@@ -457,6 +469,61 @@ describe("provider wizard account creation", () => {
         ).toBeEnabled(),
       );
       expect(endActiveTour).toHaveBeenCalled();
+    });
+
+    it("closes the wizard once a teammate has been invited to connect the account instead", async () => {
+      // Given: a user who can invite but cannot reach the account.
+      session.data = {
+        tenantId: "tenant-abc",
+        user: { permissions: { manage_account: true } },
+      };
+      getInvitationRoles.mockResolvedValue([
+        { id: "22222222-2222-4222-8222-222222222222", name: "admin" },
+      ]);
+      sendInvite.mockResolvedValue({
+        data: {
+          id: "inv-1",
+          attributes: {
+            email: "teammate@company.com",
+            token: "abc123DEF45678",
+          },
+        },
+      });
+      const funnelSignals: ProviderFunnelDetail[] = [];
+      const recordFunnelSignal: EventListener = (event) => {
+        funnelSignals.push((event as CustomEvent<ProviderFunnelDetail>).detail);
+      };
+      window.addEventListener(PROVIDER_FUNNEL_EVENT, recordFunnelSignal);
+      const onOpenChange = vi.fn();
+      const user = userEvent.setup();
+      render(<ProviderWizardModal open onOpenChange={onOpenChange} />);
+      await screen.findByRole("option", { name: "Acme Cloud Registry" });
+      await user.click(
+        screen.getByRole("option", { name: /Amazon Web Services/ }),
+      );
+
+      // When
+      await user.click(
+        await screen.findByRole("radio", { name: /invite a teammate/i }),
+      );
+      await user.type(
+        await screen.findByRole("textbox", { name: /Teammate email/ }),
+        "teammate@company.com",
+      );
+      const send = screen.getByRole("button", { name: "Send invitation" });
+      await waitFor(() => expect(send).toBeEnabled());
+      await user.click(send);
+      await user.click(await screen.findByRole("button", { name: "Done" }));
+      window.removeEventListener(PROVIDER_FUNNEL_EVENT, recordFunnelSignal);
+
+      // Then: no account was created, so the wizard closes instead of launching.
+      expect(onOpenChange).toHaveBeenCalledWith(false);
+      expect(screen.queryByText("Launch scan")).not.toBeInTheDocument();
+      expect(funnelSignals.at(-1)).toEqual({
+        step: "wizard_closed",
+        lastStep: "connect",
+        providerCreated: false,
+      });
     });
 
     it("goes back to the provider list", async () => {

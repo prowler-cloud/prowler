@@ -4,6 +4,7 @@ import Link from "next/link";
 
 import { CodeSnippet } from "@/components/shadcn/code-snippet/code-snippet";
 import { DateWithTime } from "@/components/shadcn/entities";
+import { buildInvitationAcceptLink } from "@/lib/invitations/accept-link";
 
 import { AddIcon } from "../icons";
 import { Button, Card, CardContent, CardHeader } from "../shadcn";
@@ -54,7 +55,7 @@ export const InvitationDetails = ({ attributes }: InvitationDetailsProps) => {
       ? window.location.origin
       : "http://localhost:3000";
 
-  const invitationLink = `${baseUrl}/invitation/accept?invitation_token=${attributes.token}`;
+  const invitationLink = buildInvitationAcceptLink(attributes.token, baseUrl);
 
   return (
     <div className="flex flex-col gap-x-4 gap-y-8">

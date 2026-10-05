@@ -4,6 +4,22 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [5.44.0] (Prowler v5.44.0)
+
+### 🚀 Added
+
+- `PROWLER_AWS_BOTO3_RETRIES_MAX_ATTEMPTS` environment variable to set the Boto3 retries for deployments without CLI flags [(#12870)](https://github.com/prowler-cloud/prowler/pull/12870)
+
+### 🐞 Fixed
+
+- STS calls after role assumption use the answering region, avoiding a second wait for an unreachable partition region [(#12870)](https://github.com/prowler-cloud/prowler/pull/12870)
+
+### 🔐 Security
+
+- Pass the E2E AWS credentials to the UI E2E workflow through environment variables instead of template expansion [(#12864)](https://github.com/prowler-cloud/prowler/pull/12864)
+
+---
+
 ## [5.43.0] (Prowler v5.43.0)
 
 ### 🚀 Added

@@ -144,7 +144,7 @@ maintainers = [{name = "Prowler Engineering", email = "engineering@prowler.com"}
 name = "prowler"
 readme = "README.md"
 requires-python = ">=3.10,<3.14"
-version = "5.44.0"
+version = "5.45.0"
 
 [project.scripts]
 prowler = "prowler.__main__:prowler"
@@ -349,7 +349,7 @@ constraint-dependencies = [
   "pydash==8.0.6",
   "pyflakes==3.2.0",
   "pygments==2.20.0",
-  "pyjwt==2.13.0",
+  "pyjwt==2.14.0",
   "pylint==3.3.4",
   "pynacl==1.6.2",
   "pyopenssl==26.4.0",

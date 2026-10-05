@@ -1,6 +1,7 @@
 import { test } from "@playwright/test";
 
 import { isCloud } from "@/lib/shared/env";
+import { makeSuffix } from "../helpers";
 import {
   ProvidersPage,
   AWSProviderData,
@@ -259,6 +260,44 @@ test.describe("Add Provider", () => {
         await providersPage.clickNext();
 
         await providersPage.verifyLoadProviderPageAfterNewProvider();
+      },
+    );
+  });
+
+  test.describe("Invite a teammate from the AWS step", () => {
+    let providersPage: ProvidersPage;
+
+    test.beforeEach(async ({ page }) => {
+      providersPage = new ProvidersPage(page);
+    });
+
+    // The admin user can invite (manage_account) and add providers.
+    test.use({ storageState: "playwright/.auth/admin_user.json" });
+
+    test(
+      "should invite a teammate to connect the AWS account instead",
+      {
+        tag: ["@high", "@e2e", "@providers", "@aws", "@PROVIDER-E2E-020"],
+      },
+      async () => {
+        const uniqueEmail = `e2e+aws-${makeSuffix(10)}@prowler.com`;
+
+        // Navigate to providers page
+        await providersPage.goto();
+        await providersPage.verifyPageLoaded();
+
+        // Start adding new provider and pick AWS
+        await providersPage.clickAddProvider();
+        await providersPage.verifyConnectAccountPageLoaded();
+        await providersPage.selectAWSProvider();
+
+        // Hand the account over to a teammate instead of connecting it
+        await providersPage.selectAwsInviteTeammate();
+        await providersPage.sendTeammateInvitation(uniqueEmail);
+
+        // The invitation exists and the link to share is shown; Done closes the wizard
+        await providersPage.verifyTeammateInvitationSent(uniqueEmail);
+        await providersPage.finishTeammateInvitation();
       },
     );
   });
@@ -954,6 +993,7 @@ test.describe("Add Provider", () => {
     const userId = process.env.E2E_OCI_USER_ID ?? "";
     const fingerprint = process.env.E2E_OCI_FINGERPRINT ?? "";
     const keyContent = process.env.E2E_OCI_KEY_CONTENT ?? "";
+    const homeRegion = process.env.E2E_OCI_REGION ?? "us-ashburn-1";
 
     // Setup before each test
     test.beforeEach(async ({ page }) => {
@@ -995,6 +1035,7 @@ test.describe("Add Provider", () => {
           userId: userId,
           fingerprint: fingerprint,
           keyContent: keyContent,
+          homeRegion: homeRegion,
         };
 
         // Navigate to providers page
@@ -1439,6 +1480,7 @@ test.describe("Update Provider Credentials", () => {
     const userId = process.env.E2E_OCI_USER_ID ?? "";
     const fingerprint = process.env.E2E_OCI_FINGERPRINT ?? "";
     const keyContent = process.env.E2E_OCI_KEY_CONTENT ?? "";
+    const homeRegion = process.env.E2E_OCI_REGION ?? "us-ashburn-1";
 
     // Setup before each test
     test.beforeEach(async ({ page }) => {
@@ -1465,6 +1507,7 @@ test.describe("Update Provider Credentials", () => {
           userId: userId,
           fingerprint: fingerprint,
           keyContent: keyContent,
+          homeRegion: homeRegion,
         };
 
         // Navigate to providers page
