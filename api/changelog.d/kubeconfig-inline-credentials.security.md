@@ -1,0 +1,1 @@
+Kubernetes kubeconfig validation accepts only inline credentials, rejecting file-path fields (`tokenFile`, `client-certificate`, `client-key`, `certificate-authority`), command-based authentication (`exec`, `cmd-path`), `auth-provider` directives and proxy URLs
