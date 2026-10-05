@@ -1661,7 +1661,8 @@ class FindingMetadataSerializer(BaseSerializerV1):
 # Provider secrets
 KUBERNETES_KUBECONFIG_NON_INLINE_CREDENTIALS_ERROR = (
     "Only inline Kubernetes credentials are supported. "
-    "Use token, client-certificate-data, client-key-data, or certificate-authority-data. "
+    "For user authentication use token, username/password, or client-certificate-data with client-key-data; "
+    "clusters may use certificate-authority-data. "
     "File-path fields (tokenFile, client-certificate, client-key, certificate-authority), "
     "command-based authentication (exec, cmd-path), auth-provider directives, and proxy URLs are not supported."
 )

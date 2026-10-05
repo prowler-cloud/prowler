@@ -214,7 +214,7 @@ from rest_framework_json_api import serializers
                     "kubeconfig_content": {
                         "type": "string",
                         "description": "The content of the Kubernetes kubeconfig file, encoded as a string. "
-                        "Only inline credentials are supported: token, client-certificate-data, client-key-data, and certificate-authority-data. "
+                        "Only inline credentials are supported: token, username/password, or client-certificate-data with client-key-data for users, and certificate-authority-data for clusters. "
                         "File-path and auth-provider kubeconfig fields are not supported.",
                     }
                 },

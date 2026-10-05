@@ -9,7 +9,7 @@ import { MAX_SAML_ADDITIONAL_EMAIL_DOMAINS } from "@/types/saml";
 import { isKnownProviderType, PROVIDER_TYPES, ProviderType } from "./providers";
 
 export const KUBECONFIG_NON_INLINE_CREDENTIALS_ERROR =
-  "Only inline Kubernetes credentials are supported. Use token, client-certificate-data, client-key-data, or certificate-authority-data. File-path fields (tokenFile, client-certificate, client-key, certificate-authority), command-based authentication (exec, cmd-path), auth-provider directives, and proxy URLs are not supported.";
+  "Only inline Kubernetes credentials are supported. For user authentication use token, username/password, or client-certificate-data with client-key-data; clusters may use certificate-authority-data. File-path fields (tokenFile, client-certificate, client-key, certificate-authority), command-based authentication (exec, cmd-path), auth-provider directives, and proxy URLs are not supported.";
 
 const isRecord = (value: unknown): value is Record<string, unknown> => {
   return typeof value === "object" && value !== null && !Array.isArray(value);
