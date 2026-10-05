@@ -7073,6 +7073,14 @@ class LighthouseConfigViewSet(BaseRLSViewSet):
     serializer_class = LighthouseConfigSerializer
     ordering_fields = ["name", "inserted_at", "updated_at", "is_active"]
     ordering = ["-inserted_at"]
+    required_permissions = [Permissions.MANAGE_ACCOUNT]
+
+    def set_required_permissions(self):
+        """Require MANAGE_ACCOUNT for writes; reads stay open."""
+        if self.request.method in SAFE_METHODS:
+            self.required_permissions = []
+        else:
+            self.required_permissions = [Permissions.MANAGE_ACCOUNT]
 
     def get_queryset(self):
         return LighthouseConfiguration.objects.filter(tenant_id=self.request.tenant_id)
@@ -7147,6 +7155,14 @@ class LighthouseProviderConfigViewSet(BaseRLSViewSet):
     serializer_class = LighthouseProviderConfigSerializer
     http_method_names = ["get", "post", "patch", "delete"]
     filterset_class = LighthouseProviderConfigFilter
+    required_permissions = [Permissions.MANAGE_ACCOUNT]
+
+    def set_required_permissions(self):
+        """Require MANAGE_ACCOUNT for writes; reads stay open."""
+        if self.request.method in SAFE_METHODS:
+            self.required_permissions = []
+        else:
+            self.required_permissions = [Permissions.MANAGE_ACCOUNT]
 
     def get_queryset(self):
         if getattr(self, "swagger_fake_view", False):
@@ -7281,6 +7297,14 @@ class LighthouseTenantConfigViewSet(BaseRLSViewSet):
     queryset = LighthouseTenantConfiguration.objects.all()
     serializer_class = LighthouseTenantConfigSerializer
     http_method_names = ["get", "patch"]
+    required_permissions = [Permissions.MANAGE_ACCOUNT]
+
+    def set_required_permissions(self):
+        """Require MANAGE_ACCOUNT for writes; reads stay open."""
+        if self.request.method in SAFE_METHODS:
+            self.required_permissions = []
+        else:
+            self.required_permissions = [Permissions.MANAGE_ACCOUNT]
 
     def get_queryset(self):
         if getattr(self, "swagger_fake_view", False):
