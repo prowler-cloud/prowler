@@ -9,7 +9,7 @@ import { Modal } from "@/components/shadcn/modal/modal";
 
 interface RegistryAccessDialogCommonProps {
   errorMessage?: string;
-  registryKeyUrl?: string;
+  registryUrl?: string;
   onOpenChange: (open: boolean) => void;
   onSubmit: (key: string) => Promise<void>;
   open: boolean;
@@ -33,7 +33,7 @@ type RegistryAccessDialogProps =
 
 export function RegistryAccessDialog({
   errorMessage,
-  registryKeyUrl,
+  registryUrl,
   mode,
   onDisconnect,
   onOpenChange,
@@ -112,18 +112,14 @@ export function RegistryAccessDialog({
               {errorMessage}
             </p>
           )}
-          {registryKeyUrl && (
+          {registryUrl && (
             <Button
               asChild
               className="self-start"
               size="link-sm"
               variant="link"
             >
-              <a
-                href={registryKeyUrl}
-                rel="noopener noreferrer"
-                target="_blank"
-              >
+              <a href={registryUrl} rel="noopener noreferrer" target="_blank">
                 Where do I find my key?
               </a>
             </Button>

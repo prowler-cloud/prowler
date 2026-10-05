@@ -1,8 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Icon } from "@iconify/react";
-import { Loader2 } from "lucide-react";
+import { CircleAlert, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -176,8 +175,7 @@ export const TestConnectionForm = ({
               className="border-border-error flex items-start gap-4 rounded-lg border p-4"
             >
               <div className="flex shrink-0 items-center">
-                <Icon
-                  icon="heroicons:exclamation-circle"
+                <CircleAlert
                   className="text-text-error-primary h-5 w-5"
                   aria-hidden="true"
                 />

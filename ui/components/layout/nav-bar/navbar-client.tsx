@@ -2,7 +2,7 @@
 
 import { BellRing, Info } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
-import { ReactNode, Suspense } from "react";
+import { ReactNode, Suspense, type ReactElement } from "react";
 
 import { MobileAppSidebar } from "@/components/layout/app-sidebar";
 import {
@@ -31,7 +31,7 @@ export interface OnboardingActionConfig {
 
 interface NavbarClientProps {
   title: string;
-  icon?: string | ReactNode;
+  icon?: ReactElement;
   onboardingAction?: OnboardingActionConfig;
   feedsSlot?: ReactNode;
 }

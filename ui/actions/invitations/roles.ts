@@ -5,11 +5,9 @@ import type { InvitationRoleOption } from "@/types/onboarding-invite";
 
 const ROLES_PAGE_SIZE = 50;
 
-// Roles the onboarding invite step can offer; empty when the read fails so
-// the step can fall back to skipping rather than blocking the checkpoint.
-export const getOnboardingInviteRoles = async (): Promise<
-  InvitationRoleOption[]
-> => {
+// Roles an invitation can grant; empty when the read fails so a caller can
+// fall back (skip, disable) rather than block.
+export const getInvitationRoles = async (): Promise<InvitationRoleOption[]> => {
   const rolesData = await getRoles({ pageSize: ROLES_PAGE_SIZE });
   const roles: unknown = rolesData?.data;
   if (!Array.isArray(roles)) return [];

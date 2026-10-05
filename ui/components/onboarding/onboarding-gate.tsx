@@ -12,8 +12,14 @@ import {
 import {
   isFirstRunHandled,
   markFirstRunHandled,
+  recordFirstRunAttempt,
 } from "@/lib/onboarding/first-run-marker";
-import { WIZARD_OPEN_SOURCE } from "@/lib/provider-funnel/provider-funnel-events";
+import {
+  PROVIDER_FUNNEL_EVENT,
+  PROVIDER_FUNNEL_STEP,
+  type ProviderFunnelDetail,
+  WIZARD_OPEN_SOURCE,
+} from "@/lib/provider-funnel/provider-funnel-events";
 import { buildAddProviderHref } from "@/lib/providers-navigation";
 import { isCloud } from "@/lib/shared/env";
 import { localStorageAdapter } from "@/lib/tours/store/local-storage-adapter";
@@ -28,7 +34,8 @@ interface OnboardingGateProps {
 }
 
 // New-tenant gate. Mounted once in the layout: an empty tenant is sent straight to
-// the add-provider wizard, once per tenant and browser. Renders nothing.
+// the add-provider wizard, retried per load until the wizard opens once for that
+// tenant on this browser (bounded attempts). Renders nothing.
 export function OnboardingGate({
   hasProviders,
   tenantId = null,
@@ -77,17 +84,29 @@ function FirstRunRedirect({ flow, tenantId }: FirstRunRedirectProps) {
       return;
     }
 
-    markFirstRunHandled(tenantId);
+    // The wizard opening resolves the first run, whether this redirect got there
+    // or the user opened it on their own. Until then each load retries, bounded
+    // by the attempt count, so a navigation cut short is not the end of it.
+    const resolveOnWizardOpened = (event: Event) => {
+      const { detail } = event as CustomEvent<ProviderFunnelDetail>;
+      if (detail?.step === PROVIDER_FUNNEL_STEP.WIZARD_OPENED) {
+        markFirstRunHandled(tenantId);
+      }
+    };
+    window.addEventListener(PROVIDER_FUNNEL_EVENT, resolveOnWizardOpened);
+    recordFirstRunAttempt(tenantId);
 
     const addProviderHref = buildAddProviderHref(WIZARD_OPEN_SOURCE.FIRST_RUN);
     if (!isCloud()) {
       router.replace(addProviderHref);
-      return;
+    } else {
+      // Tours and the post-connect checkpoint are Cloud-only.
+      useOnboardingCheckpointStore.getState().arm();
+      router.replace(`${addProviderHref}&onboarding=${flow.id}`);
     }
 
-    // Tours and the post-connect checkpoint are Cloud-only.
-    useOnboardingCheckpointStore.getState().arm();
-    router.replace(`${addProviderHref}&onboarding=${flow.id}`);
+    return () =>
+      window.removeEventListener(PROVIDER_FUNNEL_EVENT, resolveOnWizardOpened);
   });
 
   return null;

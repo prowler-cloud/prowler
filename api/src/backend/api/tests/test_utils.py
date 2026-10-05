@@ -172,7 +172,7 @@ class TestInitializeProwlerProvider:
         )
 
     @patch("api.utils.return_prowler_provider")
-    def test_initialize_oraclecloud_provider_removes_region_string(
+    def test_initialize_oraclecloud_provider_passes_region_as_home_region(
         self, mock_return_prowler_provider
     ):
         provider = MagicMock()
@@ -182,7 +182,7 @@ class TestInitializeProwlerProvider:
             "fingerprint": "00:11:22:33:44:55:66:77",
             "key_content": "fake-base64-key-content",
             "tenancy": "ocid1.tenancy.oc1..fake",
-            "region": "us-ashburn-1",
+            "region": "me-abudhabi-1",
         }
         mock_return_prowler_provider.return_value = MagicMock()
 
@@ -193,6 +193,7 @@ class TestInitializeProwlerProvider:
             fingerprint="00:11:22:33:44:55:66:77",
             key_content="fake-base64-key-content",
             tenancy="ocid1.tenancy.oc1..fake",
+            home_region="me-abudhabi-1",
         )
 
     @patch("api.utils.return_prowler_provider")
@@ -254,11 +255,35 @@ class TestProwlerProviderConnectionTest:
             fingerprint="00:11:22:33:44:55:66:77",
             key_content="fake-base64-key-content",
             tenancy="ocid1.tenancy.oc1..aaaaaaaexample",
-            region=getattr(
-                OraclecloudProvider,
-                "_bootstrap_region",
-                OraclecloudProvider._home_region,
-            ),
+            region=OraclecloudProvider._bootstrap_region,
+            provider_id="ocid1.tenancy.oc1..aaaaaaaexample",
+            raise_on_exception=False,
+        )
+
+    @patch("api.utils.return_prowler_provider")
+    def test_oraclecloud_connection_test_uses_stored_region_for_identity(
+        self, mock_return_prowler_provider
+    ):
+        provider = MagicMock()
+        provider.uid = "ocid1.tenancy.oc1..aaaaaaaexample"
+        provider.provider = Provider.ProviderChoices.ORACLECLOUD.value
+        provider.secret.secret = {
+            "user": "ocid1.user.oc1..aaaaaaaexample",
+            "fingerprint": "00:11:22:33:44:55:66:77",
+            "key_content": "fake-base64-key-content",
+            "tenancy": "ocid1.tenancy.oc1..aaaaaaaexample",
+            "region": "me-abudhabi-1",
+        }
+        mock_return_prowler_provider.return_value = MagicMock()
+
+        prowler_provider_connection_test(provider)
+
+        mock_return_prowler_provider.return_value.test_connection.assert_called_once_with(
+            user="ocid1.user.oc1..aaaaaaaexample",
+            fingerprint="00:11:22:33:44:55:66:77",
+            key_content="fake-base64-key-content",
+            tenancy="ocid1.tenancy.oc1..aaaaaaaexample",
+            region="me-abudhabi-1",
             provider_id="ocid1.tenancy.oc1..aaaaaaaexample",
             raise_on_exception=False,
         )
@@ -434,7 +459,7 @@ class TestGetProwlerProviderKwargs:
         expected_result = {**secret_dict, **expected_extra_kwargs}
         assert result == expected_result
 
-    def test_get_prowler_provider_kwargs_oraclecloud_removes_region(
+    def test_get_prowler_provider_kwargs_oraclecloud_maps_region_to_home_region(
         self,
     ):
         secret_dict = {
@@ -461,6 +486,7 @@ class TestGetProwlerProviderKwargs:
             "key_content": "-----BEGIN PRIVATE KEY-----\nfake\n-----END PRIVATE KEY-----",
             "tenancy": "ocid1.tenancy.oc1..fake",
             "pass_phrase": "fake-passphrase",
+            "home_region": "us-ashburn-1",
         }
 
     def test_get_prowler_provider_kwargs_with_mutelist(self):

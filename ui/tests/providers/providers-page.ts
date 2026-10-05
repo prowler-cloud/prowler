@@ -224,6 +224,7 @@ export interface OCIProviderCredential {
   userId?: string;
   fingerprint?: string;
   keyContent?: string;
+  homeRegion?: string;
 }
 
 // AlibabaCloud credential options
@@ -365,6 +366,7 @@ export class ProvidersPage extends BasePage {
   readonly ociUserIdInput: Locator;
   readonly ociFingerprintInput: Locator;
   readonly ociKeyContentInput: Locator;
+  readonly ociHomeRegionCombobox: Locator;
 
   // AlibabaCloud provider form elements
   readonly alibabacloudAccountIdInput: Locator;
@@ -509,6 +511,9 @@ export class ProvidersPage extends BasePage {
     });
     this.ociKeyContentInput = page.getByRole("textbox", {
       name: /Private Key Content/i,
+    });
+    this.ociHomeRegionCombobox = page.getByRole("combobox", {
+      name: /Home Region/i,
     });
 
     // AlibabaCloud provider form inputs
@@ -701,6 +706,46 @@ export class ProvidersPage extends BasePage {
 
   async selectGitHubProvider(): Promise<void> {
     await this.selectProviderRadio(this.githubProviderRadio);
+  }
+
+  // Offered on the AWS step to a user who can invite but cannot reach the account.
+  async selectAwsInviteTeammate(): Promise<void> {
+    const invite = this.wizardModal.getByRole("radio", {
+      name: /invite a teammate/i,
+    });
+    await expect(invite).toBeVisible({ timeout: 10000 });
+    await invite.click();
+    await expect(
+      this.wizardModal.getByRole("textbox", { name: /Teammate email/i }),
+    ).toBeVisible({ timeout: 10000 });
+  }
+
+  // The admin role comes preselected; only the email is needed.
+  async sendTeammateInvitation(email: string): Promise<void> {
+    await this.wizardModal
+      .getByRole("textbox", { name: /Teammate email/i })
+      .fill(email);
+    const send = this.page.getByRole("button", {
+      name: "Send invitation",
+      exact: true,
+    });
+    await expect(send).toBeEnabled({ timeout: 10000 });
+    await send.click();
+  }
+
+  async verifyTeammateInvitationSent(email: string): Promise<void> {
+    await expect(
+      this.wizardModal.getByText(`Invitation sent to ${email}`),
+    ).toBeVisible({ timeout: 15000 });
+    await expect(
+      this.wizardModal.getByText(/\/invitation\/accept\?invitation_token=/),
+    ).toBeVisible();
+  }
+
+  // "Done" replaces the submit once the invitation exists and closes the wizard.
+  async finishTeammateInvitation(): Promise<void> {
+    await this.page.getByRole("button", { name: "Done", exact: true }).click();
+    await expect(this.wizardModal).not.toBeVisible();
   }
 
   // AWS picks its access method on the same step that registers the account.
@@ -1284,6 +1329,12 @@ export class ProvidersPage extends BasePage {
     if (credentials.keyContent) {
       await this.ociKeyContentInput.fill(credentials.keyContent);
     }
+    if (credentials.homeRegion) {
+      await this.ociHomeRegionCombobox.click();
+      await this.page
+        .locator(`[role="option"][data-value="${credentials.homeRegion}"]`)
+        .click();
+    }
   }
 
   async verifyOCICredentialsPageLoaded(): Promise<void> {
@@ -1294,6 +1345,7 @@ export class ProvidersPage extends BasePage {
     await expect(this.ociUserIdInput).toBeVisible();
     await expect(this.ociFingerprintInput).toBeVisible();
     await expect(this.ociKeyContentInput).toBeVisible();
+    await expect(this.ociHomeRegionCombobox).toBeVisible();
   }
 
   async verifyOCIUpdateCredentialsPageLoaded(): Promise<void> {
@@ -1304,6 +1356,7 @@ export class ProvidersPage extends BasePage {
     await expect(this.ociUserIdInput).toBeVisible();
     await expect(this.ociFingerprintInput).toBeVisible();
     await expect(this.ociKeyContentInput).toBeVisible();
+    await expect(this.ociHomeRegionCombobox).toBeVisible();
   }
 
   async selectAlibabaCloudProvider(): Promise<void> {
