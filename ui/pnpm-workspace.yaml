@@ -107,6 +107,11 @@ overrides:
   "mermaid": "11.16.1"
   # body-parser (via express): invalid `limit` silently disabled size enforcement.
   "body-parser": "2.3.0"
+  # proxy-addr (via @modelcontextprotocol/sdk > express): GHSA-jqcg-44mw-7w3h
+  # (critical), a short IPv4-mapped IPv6 trust subnet trusts every client, so
+  # `req.ip` returns a spoofed X-Forwarded-For. 2.0.8 (2026-09-15) clears the
+  # 7-day cooldown gate.
+  "proxy-addr": "2.0.8"
   # @humanfs/node (via eslint): recursive copy followed symlinks outside the tree.
   "@humanfs/node": "0.16.8"
   # js-yaml: quadratic CPU in `!!omap` resolution (CVE-2026-59870 not backported
