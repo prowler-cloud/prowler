@@ -1682,7 +1682,16 @@ KUBECONFIG_ALLOWED_USER_KEYS = frozenset(
         "as-user-extra",
     }
 )
-KUBECONFIG_FORBIDDEN_CLUSTER_KEYS = frozenset({"certificate-authority", "proxy-url"})
+KUBECONFIG_ALLOWED_CLUSTER_KEYS = frozenset(
+    {
+        "server",
+        "certificate-authority-data",
+        "insecure-skip-tls-verify",
+        "tls-server-name",
+        "disable-compression",
+        "extensions",
+    }
+)
 
 
 def kubeconfig_is_inline_only_credentials(kubeconfig: dict) -> bool:
@@ -1714,7 +1723,7 @@ def kubeconfig_is_inline_only_credentials(kubeconfig: dict) -> bool:
         if not isinstance(cluster, dict):
             raise ValidationError(KUBERNETES_KUBECONFIG_INVALID_ERROR)
 
-        if any(key in KUBECONFIG_FORBIDDEN_CLUSTER_KEYS for key in cluster):
+        if any(key not in KUBECONFIG_ALLOWED_CLUSTER_KEYS for key in cluster):
             return False
 
     return True

@@ -445,6 +445,30 @@ current-context: test-context
             KUBERNETES_KUBECONFIG_NON_INLINE_CREDENTIALS_ERROR,
         )
 
+    def test_kubeconfig_with_unknown_cluster_key_is_rejected(self):
+        self._assert_rejected_without_echo(
+            self._kubeconfig(cluster_extra="      bogus: /etc/passwd"),
+            "/etc/passwd",
+            KUBERNETES_KUBECONFIG_NON_INLINE_CREDENTIALS_ERROR,
+        )
+
+    def test_kubeconfig_with_allowlisted_cluster_keys_is_accepted(self):
+        serializer = KubernetesProviderSecret(
+            data={
+                "kubeconfig_content": self._kubeconfig(
+                    cluster_extra=(
+                        "      certificate-authority-data: dGVzdA==\n"
+                        "      insecure-skip-tls-verify: false\n"
+                        "      tls-server-name: kubernetes.example.test\n"
+                        "      disable-compression: true\n"
+                        "      extensions: []"
+                    )
+                )
+            }
+        )
+
+        assert serializer.is_valid(), serializer.errors
+
     def test_kubeconfig_with_non_list_clusters_is_rejected(self):
         kubeconfig_content = """
 apiVersion: v1

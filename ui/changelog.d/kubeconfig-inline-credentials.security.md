@@ -1,1 +1,1 @@
-Kubernetes kubeconfig form validation accepts only inline credentials, rejecting file-path, command-based, `auth-provider` and proxy URL fields before submission
+Kubernetes kubeconfig form validation accepts only inline credentials and known cluster fields, rejecting file-path, command-based, `auth-provider`, proxy URL and unknown fields before submission

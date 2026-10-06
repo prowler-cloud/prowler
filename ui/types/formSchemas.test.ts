@@ -323,6 +323,16 @@ clusters:
       server: https://example.test
       proxy-url: http://proxy.evil.test`,
     ],
+    [
+      "unknown cluster key",
+      `apiVersion: v1
+kind: Config
+clusters:
+  - name: test-cluster
+    cluster:
+      server: https://example.test
+      bogus: /etc/ssl/ca.pem`,
+    ],
   ])(
     "rejects kubeconfig with %s on kubeconfig_content field",
     (_label, kubeconfigContent) => {

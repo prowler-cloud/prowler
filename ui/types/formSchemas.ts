@@ -26,9 +26,13 @@ const KUBECONFIG_ALLOWED_USER_KEYS = new Set([
   "as-groups",
   "as-user-extra",
 ]);
-const KUBECONFIG_FORBIDDEN_CLUSTER_KEYS = new Set([
-  "certificate-authority",
-  "proxy-url",
+const KUBECONFIG_ALLOWED_CLUSTER_KEYS = new Set([
+  "server",
+  "certificate-authority-data",
+  "insecure-skip-tls-verify",
+  "tls-server-name",
+  "disable-compression",
+  "extensions",
 ]);
 
 // Mirrors the API key checks; structural validation stays in the API.
@@ -63,8 +67,8 @@ export const kubeconfigIsInlineOnlyCredentials = (value: string): boolean => {
       if (!isRecord(clusterEntry) || !isRecord(clusterEntry.cluster)) {
         return true;
       }
-      return Object.keys(clusterEntry.cluster).every(
-        (key) => !KUBECONFIG_FORBIDDEN_CLUSTER_KEYS.has(key),
+      return Object.keys(clusterEntry.cluster).every((key) =>
+        KUBECONFIG_ALLOWED_CLUSTER_KEYS.has(key),
       );
     });
     if (!clustersInlineOnly) {
