@@ -377,27 +377,35 @@ class UserSerializer(BaseModelSerializerV1):
     def _can_view_relationships(self, instance) -> bool:
         """Allow self to view own relationships. Require manage_account to view others."""
         role = self.context.get("role")
+        return self._is_self(instance) or bool(role and role.manage_account)
+
+    def _is_self(self, instance) -> bool:
         request = self.context.get("request")
-        is_self = bool(
+        return bool(
             request
             and getattr(request, "user", None)
             and getattr(instance, "id", None) == request.user.id
         )
-        return is_self or (role and role.manage_account)
+
+    def _active_tenant_id(self):
+        return getattr(self.context.get("request"), "tenant_id", None)
 
     def get_roles(self, instance):
-        return (
-            instance.roles.all()
-            if self._can_view_relationships(instance)
-            else Role.objects.none()
-        )
+        tenant_id = self._active_tenant_id()
+        if not tenant_id or not self._can_view_relationships(instance):
+            return Role.objects.none()
+        return instance.roles.filter(tenant_id=tenant_id)
 
     def get_memberships(self, instance):
-        return (
-            instance.memberships.all()
-            if self._can_view_relationships(instance)
-            else Membership.objects.none()
-        )
+        if not self._can_view_relationships(instance):
+            return Membership.objects.none()
+        # Own memberships span tenants on purpose: the tenant switcher reads them.
+        if self._is_self(instance):
+            return instance.memberships.all()
+        tenant_id = self._active_tenant_id()
+        if not tenant_id:
+            return Membership.objects.none()
+        return instance.memberships.filter(tenant_id=tenant_id)
 
 
 class UserMeSerializer(UserSerializer):
@@ -732,10 +740,16 @@ class MembershipIncludeSerializer(serializers.ModelSerializer):
     included_serializers = {"tenant": "api.v1.serializers.TenantIncludeSerializer"}
 
     def get_tenant(self, instance):
-        try:
-            return Tenant.objects.using(MainRouter.admin_db).get(id=instance.tenant_id)
-        except Tenant.DoesNotExist:
+        """Resolve the tenant only when the requester is a member of it."""
+        request = self.context.get("request")
+        user = getattr(request, "user", None)
+        if user is None:
             return None
+        return (
+            Tenant.objects.using(MainRouter.admin_db)
+            .filter(id=instance.tenant_id, membership__user_id=user.id)
+            .first()
+        )
 
 
 # Provider Groups
