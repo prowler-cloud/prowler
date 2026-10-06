@@ -18,7 +18,7 @@ overrides:
   "@react-aria/visually-hidden>react": "19.2.7"
   "@react-aria/interactions>react": "19.2.7"
   "lodash": "4.18.1"
-  # Next.js 16.3.3 requests sharp ^0.35.3; resolve 0.35.4 to fix
+  # Next.js 16.3.6 requests sharp ^0.35.4; pinned to fix
   # GHSA-rgj7-g3m4-5g8c (libheif). This override controls resolution;
   # keep it aligned with the direct dependency in package.json.
   "sharp": "0.35.4"
@@ -107,6 +107,11 @@ overrides:
   "mermaid": "11.16.1"
   # body-parser (via express): invalid `limit` silently disabled size enforcement.
   "body-parser": "2.3.0"
+  # proxy-addr (via @modelcontextprotocol/sdk > express): GHSA-jqcg-44mw-7w3h
+  # (critical), a short IPv4-mapped IPv6 trust subnet trusts every client, so
+  # `req.ip` returns a spoofed X-Forwarded-For. 2.0.8 (2026-09-15) clears the
+  # 7-day cooldown gate.
+  "proxy-addr": "2.0.8"
   # @humanfs/node (via eslint): recursive copy followed symlinks outside the tree.
   "@humanfs/node": "0.16.8"
   # js-yaml: quadratic CPU in `!!omap` resolution (CVE-2026-59870 not backported
