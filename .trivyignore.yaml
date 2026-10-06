@@ -74,7 +74,9 @@ vulnerabilities:
   # assemblies target net472, a Windows-only framework. Nothing here is reachable, and none
   # of it is a dependency we declare -- only Microsoft can change the module's contents.
 # proxy-addr 2.0.7 (CVE-2026-90711) is one more such declaration: no file named proxy-addr
-# exists in the image, only its purl inside that manifest.
+# exists in the image, only its purl inside that manifest. The UI lock lists proxy-addr 2.0.7
+# through express, but the Next standalone output does not ship it, so the shared entry
+# hides nothing real in the UI image either (checked on prowlercloud/prowler-ui:latest).
   - id: CVE-2020-0606
     purls:
       - "pkg:nuget/Microsoft.WindowsDesktop.App.Ref"
