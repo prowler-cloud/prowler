@@ -398,7 +398,13 @@ constraint-dependencies = [
   "zipp==3.23.1",
   "zstd==1.5.7.2"
 ]
-override-dependencies = ["okta==3.4.2"]
+override-dependencies = [
+  "okta==3.4.2",
+  # huaweicloudsdkcore pins pymongo==4.15.1 exactly (still so in 3.1.216) and only uses
+  # its bson types. The container installs from this lock, so the override reaches the
+  # image; a pip install of the wheel still resolves 4.15.1 through the huawei pin.
+  "pymongo==4.18.2"
+]
 
 [tool.vulture]
 # Suppress known false positives. The CI command only passes --exclude and

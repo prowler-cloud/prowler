@@ -483,6 +483,9 @@ constraint-dependencies = [
 # that request pyjwt[crypto] and leave cryptography (needed for RS256) only transitive.
 override-dependencies = [
   "okta==3.4.2",
+  # huaweicloudsdkcore (via prowler) pins pymongo==4.15.1 exactly; CVE-2026-96748 and
+  # CVE-2026-96749 are fixed in 4.18.2. Only bson types are used, so the override is safe.
+  "pymongo==4.18.2",
   # prowler requires cryptography==50.0.0. Two api-only dependencies still cap it below
   # 49 and cannot move yet: msal, pinned exactly by azure-cli-core (2.83.0 -> 1.35.0b1,
   # 2.89.1 -> 1.36.0, both <49; cartography needs azure-cli-core), and workos 8.3.0

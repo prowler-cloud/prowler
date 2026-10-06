@@ -73,6 +73,8 @@ vulnerabilities:
   # there is no Node runtime and no node_modules anywhere in the image, and the .NET
   # assemblies target net472, a Windows-only framework. Nothing here is reachable, and none
   # of it is a dependency we declare -- only Microsoft can change the module's contents.
+# proxy-addr 2.0.7 (CVE-2026-90711) is one more such declaration: no file named proxy-addr
+# exists in the image, only its purl inside that manifest.
   - id: CVE-2020-0606
     purls:
       - "pkg:nuget/Microsoft.WindowsDesktop.App.Ref"
@@ -164,6 +166,10 @@ vulnerabilities:
   - id: CVE-2026-101909
     purls:
       - "pkg:npm/axios"
+    expired_at: 2027-01-31
+  - id: CVE-2026-90711
+    purls:
+      - "pkg:npm/proxy-addr"
     expired_at: 2027-01-31
 
   # CVE-2026-84304 is a DoS in grpc-go <= 1.83.0: a peer fragments a gRPC stream into
