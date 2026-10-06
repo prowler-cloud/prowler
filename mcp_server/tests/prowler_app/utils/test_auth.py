@@ -1,19 +1,29 @@
 """Tests for Prowler API authentication.
 
-Reference for later branches: ``ProwlerAppAuth`` resolves its ``mode`` and
-``base_url`` in default arguments, which Python evaluates once at module import.
-``monkeypatch.setenv`` therefore has no effect on them -- always pass ``mode=``
-and ``base_url=`` explicitly, as these tests do.
+Reference for later branches: ``ProwlerAppAuth`` resolves its ``mode``,
+``base_url`` and ``jwt_verifying_key`` in default arguments, which Python
+evaluates once at module import. ``monkeypatch.setenv`` therefore has no effect
+on them -- always pass them explicitly, as these tests do.
 """
 
 import base64
 import json
 
+import jwt
 import pytest
 
 from prowler_mcp_server.lib.errors import CredentialError
 from prowler_mcp_server.prowler_app.utils.auth import ProwlerAppAuth
-from tests.helpers.tokens import FAKE_API_KEY, MALFORMED_API_KEY, fake_jwt
+from tests.helpers.tokens import (
+    FAKE_API_KEY,
+    JWT_SIGNING_KEY,
+    JWT_VERIFYING_KEY,
+    MALFORMED_API_KEY,
+    ROGUE_JWT_SIGNING_KEY,
+    fake_jwt,
+    hmac_jwt_keyed_with,
+    unsigned_jwt,
+)
 
 
 async def test_stdio_mode_reads_the_api_key_from_the_environment():
@@ -41,7 +51,7 @@ async def test_http_mode_accepts_a_bearer_api_key(http_request_headers):
     """In HTTP transport the token comes from the request's Authorization header."""
     http_request_headers(authorization=f"Bearer {FAKE_API_KEY}")
 
-    auth = ProwlerAppAuth(mode="http")
+    auth = ProwlerAppAuth(mode="http", jwt_verifying_key=JWT_VERIFYING_KEY)
 
     assert await auth.get_valid_token() == FAKE_API_KEY
 
@@ -62,7 +72,7 @@ async def test_http_mode_accepts_a_lowercase_bearer_scheme(http_request_headers)
     """Authentication scheme names are case-insensitive (RFC 7235)."""
     http_request_headers(authorization=f"bearer {FAKE_API_KEY}")
 
-    auth = ProwlerAppAuth(mode="http")
+    auth = ProwlerAppAuth(mode="http", jwt_verifying_key=JWT_VERIFYING_KEY)
 
     assert await auth.get_valid_token() == FAKE_API_KEY
 
@@ -72,7 +82,7 @@ async def test_http_mode_strips_only_the_scheme_prefix(http_request_headers):
     token = f"{FAKE_API_KEY}_Bearer_suffix"
     http_request_headers(authorization=f"Bearer {token}")
 
-    auth = ProwlerAppAuth(mode="http")
+    auth = ProwlerAppAuth(mode="http", jwt_verifying_key=JWT_VERIFYING_KEY)
 
     assert await auth.get_valid_token() == token
 
@@ -83,10 +93,119 @@ async def test_http_mode_rejects_an_authorization_header_without_a_token(
     """A bare scheme carries no credential to authenticate with."""
     http_request_headers(authorization="Bearer   ")
 
-    auth = ProwlerAppAuth(mode="http")
+    auth = ProwlerAppAuth(mode="http", jwt_verifying_key=JWT_VERIFYING_KEY)
 
     with pytest.raises(CredentialError, match="'Bearer <token>' form"):
         await auth.get_valid_token()
+
+
+# ------------------------------------------------- JWT with a verifying key
+
+
+async def test_http_mode_accepts_a_jwt_signed_by_the_api_key_pair(
+    http_request_headers,
+):
+    """A token signed with the private half of the configured key pair passes."""
+    token = fake_jwt()
+    http_request_headers(authorization=f"Bearer {token}")
+
+    auth = ProwlerAppAuth(mode="http", jwt_verifying_key=JWT_VERIFYING_KEY)
+
+    assert await auth.get_valid_token() == token
+
+
+async def test_http_mode_rejects_a_jwt_with_a_forged_signature(http_request_headers):
+    """A well-formed, unexpired token signed by another key pair is refused."""
+    token = fake_jwt(signing_key=ROGUE_JWT_SIGNING_KEY)
+    http_request_headers(authorization=f"Bearer {token}")
+
+    auth = ProwlerAppAuth(mode="http", jwt_verifying_key=JWT_VERIFYING_KEY)
+
+    with pytest.raises(CredentialError, match="could not be verified"):
+        await auth.get_valid_token()
+
+
+async def test_http_mode_rejects_a_jwt_declaring_the_none_algorithm(
+    http_request_headers,
+):
+    """`alg: none` is not in the pinned algorithm list, so the token is refused."""
+    http_request_headers(authorization=f"Bearer {unsigned_jwt()}")
+
+    auth = ProwlerAppAuth(mode="http", jwt_verifying_key=JWT_VERIFYING_KEY)
+
+    with pytest.raises(CredentialError, match="could not be verified"):
+        await auth.get_valid_token()
+
+
+async def test_http_mode_rejects_an_hmac_jwt_keyed_with_the_public_key(
+    http_request_headers,
+):
+    """An HS256 token signed with the public key as the secret is refused.
+
+    This is the algorithm-confusion attack: the public key is not secret, so a
+    verifier that honoured the token's own `alg` would accept it.
+    """
+    token = hmac_jwt_keyed_with(JWT_VERIFYING_KEY)
+    http_request_headers(authorization=f"Bearer {token}")
+
+    auth = ProwlerAppAuth(mode="http", jwt_verifying_key=JWT_VERIFYING_KEY)
+
+    with pytest.raises(CredentialError, match="could not be verified"):
+        await auth.get_valid_token()
+
+
+async def test_http_mode_rejects_an_expired_jwt_with_a_valid_signature(
+    http_request_headers,
+):
+    """A correctly signed but expired token is refused locally."""
+    http_request_headers(authorization=f"Bearer {fake_jwt(expires_in=-60)}")
+
+    auth = ProwlerAppAuth(mode="http", jwt_verifying_key=JWT_VERIFYING_KEY)
+
+    with pytest.raises(CredentialError, match="The token has expired"):
+        await auth.get_valid_token()
+
+
+async def test_http_mode_rejects_a_signed_jwt_without_an_expiration(
+    http_request_headers,
+):
+    """`exp` is required: a token that never expires is refused even if signed."""
+    token = jwt.encode({"sub": "user"}, JWT_SIGNING_KEY, algorithm="RS256")
+    http_request_headers(authorization=f"Bearer {token}")
+
+    auth = ProwlerAppAuth(mode="http", jwt_verifying_key=JWT_VERIFYING_KEY)
+
+    with pytest.raises(CredentialError, match="could not be verified"):
+        await auth.get_valid_token()
+
+
+async def test_http_mode_accepts_the_verifying_key_with_escaped_newlines(
+    http_request_headers,
+):
+    """The PEM arrives through an env file, where newlines are written as `\\n`."""
+    token = fake_jwt()
+    http_request_headers(authorization=f"Bearer {token}")
+
+    auth = ProwlerAppAuth(
+        mode="http", jwt_verifying_key=JWT_VERIFYING_KEY.replace("\n", "\\n")
+    )
+
+    assert await auth.get_valid_token() == token
+
+
+# ----------------------------------------------- JWT without a verifying key
+
+
+async def test_http_mode_without_a_verifying_key_only_checks_expiration(
+    http_request_headers,
+):
+    """With no key configured the token is forwarded for the API to verify."""
+    token = fake_jwt(signing_key=ROGUE_JWT_SIGNING_KEY)
+    http_request_headers(authorization=f"Bearer {token}")
+
+    auth = ProwlerAppAuth(mode="http", jwt_verifying_key=None)
+
+    assert await auth.get_valid_token() == token
 
 
 async def test_http_mode_rejects_a_jwt_whose_payload_is_not_an_object(
@@ -99,27 +218,27 @@ async def test_http_mode_rejects_a_jwt_whose_payload_is_not_an_object(
     """
     http_request_headers(authorization=f"Bearer {_jwt_with_payload(['exp'])}")
 
-    auth = ProwlerAppAuth(mode="http")
+    auth = ProwlerAppAuth(mode="http", jwt_verifying_key=None)
 
     with pytest.raises(CredentialError, match="not a readable JWT"):
         await auth.get_valid_token()
 
 
 @pytest.mark.parametrize(
-    ("payload", "case"),
+    "payload",
     [
-        ({"sub": "user"}, "missing"),
-        ({"exp": "1700000000"}, "string"),
-        ({"exp": None}, "null"),
+        pytest.param({"sub": "user"}, id="missing"),
+        pytest.param({"exp": "1700000000"}, id="string"),
+        pytest.param({"exp": None}, id="null"),
     ],
 )
 async def test_http_mode_rejects_a_jwt_without_a_numeric_expiration(
-    http_request_headers, payload: dict, case: str
+    http_request_headers, payload: dict
 ):
     """`exp` is a numeric date: comparing anything else raises a `TypeError`."""
     http_request_headers(authorization=f"Bearer {_jwt_with_payload(payload)}")
 
-    auth = ProwlerAppAuth(mode="http")
+    auth = ProwlerAppAuth(mode="http", jwt_verifying_key=None)
 
     with pytest.raises(CredentialError, match="no readable 'exp' expiration claim"):
         await auth.get_valid_token()
@@ -129,7 +248,7 @@ async def test_http_mode_rejects_an_expired_jwt(http_request_headers):
     """An expired JWT is refused locally instead of being forwarded to the API."""
     http_request_headers(authorization=f"Bearer {fake_jwt(expires_in=-60)}")
 
-    auth = ProwlerAppAuth(mode="http")
+    auth = ProwlerAppAuth(mode="http", jwt_verifying_key=None)
 
     with pytest.raises(CredentialError, match="The token has expired"):
         await auth.get_valid_token()
@@ -141,5 +260,5 @@ def test_api_keys_and_jwts_use_different_authorization_schemes():
 
     assert auth.get_headers(FAKE_API_KEY)["Authorization"] == f"Api-Key {FAKE_API_KEY}"
 
-    jwt = fake_jwt()
-    assert auth.get_headers(jwt)["Authorization"] == f"Bearer {jwt}"
+    token = fake_jwt()
+    assert auth.get_headers(token)["Authorization"] == f"Bearer {token}"
