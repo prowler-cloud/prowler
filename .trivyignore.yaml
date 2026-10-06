@@ -141,6 +141,33 @@ vulnerabilities:
     purls:
       - "pkg:npm/ip-address"
     expired_at: 2027-01-31
+  - id: CVE-2026-101898
+    purls:
+      - "pkg:npm/axios"
+    expired_at: 2027-01-31
+  - id: CVE-2026-101901
+    purls:
+      - "pkg:npm/axios"
+    expired_at: 2027-01-31
+  - id: CVE-2026-101903
+    purls:
+      - "pkg:npm/axios"
+    expired_at: 2027-01-31
+  - id: CVE-2026-101905
+    purls:
+      - "pkg:npm/axios"
+    expired_at: 2027-01-31
+  - id: CVE-2026-101906
+    purls:
+      - "pkg:npm/axios"
+    expired_at: 2027-01-31
+  - id: CVE-2026-101907
+    purls:
+      - "pkg:npm/axios"
+    expired_at: 2027-01-31
+  - id: CVE-2026-101909
+    purls:
+      - "pkg:npm/axios"
   - id: CVE-2026-90711
     purls:
       - "pkg:npm/proxy-addr"
