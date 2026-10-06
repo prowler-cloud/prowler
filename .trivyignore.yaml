@@ -73,6 +73,10 @@ vulnerabilities:
   # there is no Node runtime and no node_modules anywhere in the image, and the .NET
   # assemblies target net472, a Windows-only framework. Nothing here is reachable, and none
   # of it is a dependency we declare -- only Microsoft can change the module's contents.
+# proxy-addr 2.0.7 (CVE-2026-90711) is one more such declaration: no file named proxy-addr
+# exists in the image, only its purl inside that manifest. The UI lock lists proxy-addr 2.0.7
+# through express, but the Next standalone output does not ship it, so the shared entry
+# hides nothing real in the UI image either (checked on prowlercloud/prowler-ui:latest).
   - id: CVE-2020-0606
     purls:
       - "pkg:nuget/Microsoft.WindowsDesktop.App.Ref"
@@ -137,6 +141,41 @@ vulnerabilities:
     purls:
       - "pkg:npm/ip-address"
     expired_at: 2027-01-31
+<<<<<<< HEAD
+=======
+  - id: CVE-2026-101898
+    purls:
+      - "pkg:npm/axios"
+    expired_at: 2027-01-31
+  - id: CVE-2026-101901
+    purls:
+      - "pkg:npm/axios"
+    expired_at: 2027-01-31
+  - id: CVE-2026-101903
+    purls:
+      - "pkg:npm/axios"
+    expired_at: 2027-01-31
+  - id: CVE-2026-101905
+    purls:
+      - "pkg:npm/axios"
+    expired_at: 2027-01-31
+  - id: CVE-2026-101906
+    purls:
+      - "pkg:npm/axios"
+    expired_at: 2027-01-31
+  - id: CVE-2026-101907
+    purls:
+      - "pkg:npm/axios"
+    expired_at: 2027-01-31
+  - id: CVE-2026-101909
+    purls:
+      - "pkg:npm/axios"
+    expired_at: 2027-01-31
+  - id: CVE-2026-90711
+    purls:
+      - "pkg:npm/proxy-addr"
+    expired_at: 2027-01-31
+>>>>>>> 7ccdf7c0e (fix(deps): patch pymongo CVEs and ignore proxy-addr (#12955))
 
   # CVE-2026-84304 is a DoS in grpc-go <= 1.83.0: a peer fragments a gRPC stream into
   # millions of tiny HTTP/2 DATA frames until the receiver runs out of heap. Fixed in
