@@ -43,3 +43,18 @@ prowler kubernetes ...
 This will allow Prowler to connect to the cluster even if the proxy uses a self-signed certificate.
 
 These environment variables are supported both when using an external `kubeconfig` and in in-cluster mode.
+
+## Private Cluster Endpoints
+
+By default, Prowler rejects a `kubeconfig` whose `clusters[*].cluster.server` resolves to a non-public address, as an SSRF defense. Clusters reached over a private network are a legitimate setup, so to scan them declare the trusted ranges explicitly:
+
+```console
+export PROWLER_ALLOWED_PRIVATE_NETWORKS="10.20.0.0/16,192.168.65.254/32"
+prowler kubernetes ...
+```
+
+The value is a comma-separated list of IPs and CIDRs. A resolved address inside an allowlisted range is permitted; every other non-public address stays blocked, so link-local (`169.254.169.254`), loopback, and the rest of the internal network remain protected. A kubeconfig declaring several clusters is rejected when any one of them resolves outside the allowlist. Malformed entries are rejected, and a non-empty allowlist is logged as a relaxed security control. When unset, only public addresses are reachable.
+
+The variable is read by the process that runs the scan. In Prowler App that is the worker, not the API, so setting it only on the API container has no effect. The same variable applies to the IaC and OpenStack providers.
+
+The check resolves the cluster hostname locally, before the Kubernetes client connects. If egress is only possible through `HTTPS_PROXY` and the hostname cannot be resolved locally, declare the cluster's address range in `PROWLER_ALLOWED_PRIVATE_NETWORKS` or make the name resolvable to the scanning process.
