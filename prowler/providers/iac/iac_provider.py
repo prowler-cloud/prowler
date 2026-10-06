@@ -17,6 +17,10 @@ from prowler.config.config import (
 )
 from prowler.lib.check.models import CheckReportIAC
 from prowler.lib.logger import logger
+from prowler.lib.network.ssrf import (
+    OutboundURLNotAllowedError,
+    validate_outbound_url,
+)
 from prowler.lib.utils.utils import print_boxes
 from prowler.lib.utils.vulnerability_references import (
     build_finding_reference_url,
@@ -652,6 +656,18 @@ class IacProvider(Provider):
                     is_connected=False, error="Repository URL is required"
                 )
 
+            try:
+                validate_outbound_url(
+                    scan_repository_url,
+                    allowed_schemes=("http", "https", "ssh", "git"),
+                )
+            except OutboundURLNotAllowedError as error:
+                logger.warning(f"Rejected IaC repository URL: {error}")
+                return Connection(
+                    is_connected=False,
+                    error="Repository URL is not an allowed destination.",
+                )
+
             # Try to clone the repository to test the connection
             with tempfile.TemporaryDirectory():
                 try:
@@ -676,7 +692,10 @@ class IacProvider(Provider):
                     return Connection(is_connected=True)
 
                 except Exception as e:
+                    # The raw error may carry the token-bearing URL or the
+                    # remote's response, so it is logged and never returned
                     error_msg = str(e)
+                    logger.error(f"IaC repository connection test failed: {error_msg}")
                     if "authentication" in error_msg.lower() or "401" in error_msg:
                         return Connection(
                             is_connected=False,
@@ -690,13 +709,14 @@ class IacProvider(Provider):
                     else:
                         return Connection(
                             is_connected=False,
-                            error=f"Failed to connect to repository: {error_msg}",
+                            error="Failed to connect to repository.",
                         )
 
         except Exception as error:
             if raise_on_exception:
                 raise
+            logger.error(f"Unexpected error testing IaC repository connection: {error}")
             return Connection(
                 is_connected=False,
-                error=f"Unexpected error testing connection: {str(error)}",
+                error="Unexpected error testing connection.",
             )

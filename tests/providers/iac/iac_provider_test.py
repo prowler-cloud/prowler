@@ -878,3 +878,67 @@ class TestIacProvider:
         # Pass a non-existent directory
         branch_name = provider._detect_branch_name("/non/existent/path")
         assert branch_name == "main"
+
+    def test_test_connection_rejects_loopback_url(self):
+        with patch(
+            "prowler.providers.iac.iac_provider.porcelain.ls_remote"
+        ) as mock_ls_remote:
+            connection = IacProvider.test_connection(
+                scan_repository_url="https://127.0.0.1/user/repo.git"
+            )
+
+        assert connection.is_connected is False
+        assert connection.error == "Repository URL is not an allowed destination."
+        mock_ls_remote.assert_not_called()
+
+    def test_test_connection_rejects_private_range_url(self):
+        with patch(
+            "prowler.providers.iac.iac_provider.porcelain.ls_remote"
+        ) as mock_ls_remote:
+            connection = IacProvider.test_connection(
+                scan_repository_url="https://10.0.0.1/user/repo.git"
+            )
+
+        assert connection.is_connected is False
+        assert connection.error == "Repository URL is not an allowed destination."
+        mock_ls_remote.assert_not_called()
+
+    def test_test_connection_allows_public_url(self):
+        with (
+            patch(
+                "prowler.lib.network.ssrf.socket.getaddrinfo",
+                return_value=[(None, None, None, None, ("140.82.121.4", 0))],
+            ) as mock_getaddrinfo,
+            patch(
+                "prowler.providers.iac.iac_provider.porcelain.ls_remote"
+            ) as mock_ls_remote,
+        ):
+            connection = IacProvider.test_connection(
+                scan_repository_url="https://github.com/user/repo.git"
+            )
+
+        assert connection.is_connected is True
+        mock_getaddrinfo.assert_called_once_with("github.com", None)
+        mock_ls_remote.assert_called_once_with("https://github.com/user/repo.git")
+
+    def test_test_connection_does_not_echo_raw_error(self):
+        with (
+            patch(
+                "prowler.lib.network.ssrf.socket.getaddrinfo",
+                return_value=[(None, None, None, None, ("140.82.121.4", 0))],
+            ),
+            patch(
+                "prowler.providers.iac.iac_provider.porcelain.ls_remote",
+                side_effect=Exception(
+                    "https://x-access-token:SENTINEL_TOKEN@github.com/user/repo.git refused"
+                ),
+            ),
+        ):
+            connection = IacProvider.test_connection(
+                scan_repository_url="https://github.com/user/repo.git",
+                oauth_app_token="SENTINEL_TOKEN",
+            )
+
+        assert connection.is_connected is False
+        assert connection.error == "Failed to connect to repository."
+        assert "SENTINEL_TOKEN" not in connection.error
