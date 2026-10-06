@@ -108,7 +108,8 @@ def test_check_provider_connection_error_detail_not_returned(
     assert result["connected"] is False
     assert result["error"] == PROVIDER_CONNECTION_FAILED_ERROR
     assert "sensitive-detail" not in str(result)
-    assert "sensitive-detail" in caplog.text
+    assert "sensitive-detail" not in caplog.text
+    assert error.__class__.__name__ in caplog.text
     assert mock_provider_instance.connected is False
 
 
