@@ -55,6 +55,8 @@ The Prowler CLI image is also available on AWS Public ECR: [`public.ecr.aws/prow
 ```console
 curl -LO https://raw.githubusercontent.com/prowler-cloud/prowler/refs/heads/master/docker-compose.yml
 curl -LO https://raw.githubusercontent.com/prowler-cloud/prowler/refs/heads/master/.env
+# AUTH_SECRET is not shipped: set it in .env before the first start
+perl -pi -e "s|^AUTH_SECRET=.*|AUTH_SECRET=\"$(openssl rand -base64 32)\"|" .env
 docker compose up -d
 ```
 
