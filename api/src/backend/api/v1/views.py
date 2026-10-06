@@ -351,6 +351,15 @@ from tasks.tasks import (
 
 logger = logging.getLogger(BackendLogger.API)
 
+
+def _scans_visible_to(role, tenant_id):
+    """Tenant scans, narrowed to the role's provider groups unless it has unlimited visibility."""
+    scans = Scan.all_objects.filter(tenant_id=tenant_id)
+    if role.unlimited_visibility:
+        return scans
+    return scans.filter(provider__in=get_providers(role))
+
+
 CACHE_DECORATOR = cache_control(
     max_age=django_settings.CACHE_MAX_AGE,
     stale_while_revalidate=django_settings.CACHE_STALE_WHILE_REVALIDATE,
@@ -3544,8 +3553,15 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
 
         tenant_id = request.tenant_id
         query_params = request.query_params
+        user_roles = get_role(request.user, tenant_id)
 
         queryset = ResourceScanSummary.objects.filter(tenant_id=tenant_id)
+        if not user_roles.unlimited_visibility:
+            queryset = queryset.filter(
+                scan_id__in=_scans_visible_to(user_roles, tenant_id).values_list(
+                    "id", flat=True
+                )
+            )
 
         if scans := query_params.get("filter[scan__in]") or query_params.get(
             "filter[scan]"
@@ -3623,7 +3639,10 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
         all_groups = Resource.objects.filter(
             tenant_id=tenant_id,
             groups__isnull=False,
-        ).values_list("groups", flat=True)
+        )
+        if not user_roles.unlimited_visibility:
+            all_groups = all_groups.filter(provider__in=get_providers(user_roles))
+        all_groups = all_groups.values_list("groups", flat=True)
         groups = sorted(
             {g for groups_list in all_groups if groups_list for g in groups_list}
         )
@@ -3648,9 +3667,10 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
     def metadata_latest(self, request):
         tenant_id = request.tenant_id
         query_params = request.query_params
+        user_roles = get_role(request.user, tenant_id)
 
-        latest_scans_queryset = Scan.all_objects.filter(
-            tenant_id=tenant_id
+        latest_scans_queryset = _scans_visible_to(
+            user_roles, tenant_id
         ).latest_per_provider()
 
         queryset = ResourceScanSummary.objects.filter(
@@ -3691,7 +3711,10 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
         all_groups = Resource.objects.filter(
             tenant_id=tenant_id,
             groups__isnull=False,
-        ).values_list("groups", flat=True)
+        )
+        if not user_roles.unlimited_visibility:
+            all_groups = all_groups.filter(provider__in=get_providers(user_roles))
+        all_groups = all_groups.values_list("groups", flat=True)
         groups = sorted(
             {g for groups_list in all_groups if groups_list for g in groups_list}
         )
@@ -4102,8 +4125,14 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
 
         tenant_id = request.tenant_id
         query_params = request.query_params
+        user_roles = get_role(request.user, tenant_id)
+        visible_scan_ids = _scans_visible_to(user_roles, tenant_id).values_list(
+            "id", flat=True
+        )
 
         queryset = ResourceScanSummary.objects.filter(tenant_id=tenant_id)
+        if not user_roles.unlimited_visibility:
+            queryset = queryset.filter(scan_id__in=visible_scan_ids)
         scan_based_filters = {}
         category_scan_filters = {}  # Filters for ScanCategorySummary
 
@@ -4161,7 +4190,10 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
         if not queryset.exists():
             raw_scans_ids = Scan.objects.filter(
                 tenant_id=tenant_id, **scan_based_filters
-            ).values_list("id", "unique_resource_count")
+            )
+            if not user_roles.unlimited_visibility:
+                raw_scans_ids = raw_scans_ids.filter(id__in=visible_scan_ids)
+            raw_scans_ids = raw_scans_ids.values_list("id", "unique_resource_count")
             scan_ids = [
                 scan_id for scan_id, count in raw_scans_ids if count and count > 0
             ]
@@ -4203,11 +4235,13 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
         )
 
         # Get categories from ScanCategorySummary using same scan filters
+        category_summaries = ScanCategorySummary.objects.filter(
+            tenant_id=tenant_id, **category_scan_filters
+        )
+        if not user_roles.unlimited_visibility:
+            category_summaries = category_summaries.filter(scan_id__in=visible_scan_ids)
         categories = list(
-            ScanCategorySummary.objects.filter(
-                tenant_id=tenant_id, **category_scan_filters
-            )
-            .values_list("category", flat=True)
+            category_summaries.values_list("category", flat=True)
             .distinct()
             .order_by("category")
         )
@@ -4262,9 +4296,10 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
     def metadata_latest(self, request):
         tenant_id = request.tenant_id
         query_params = request.query_params
+        user_roles = get_role(request.user, tenant_id)
 
-        latest_scans_queryset = Scan.all_objects.filter(
-            tenant_id=tenant_id
+        latest_scans_queryset = _scans_visible_to(
+            user_roles, tenant_id
         ).latest_per_provider()
         raw_latest_scans_ids = list(
             latest_scans_queryset.values_list("id", "unique_resource_count")
