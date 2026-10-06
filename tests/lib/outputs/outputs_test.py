@@ -13,6 +13,7 @@ from prowler.lib.outputs.outputs import (
 from prowler.lib.outputs.utils import (
     parse_html_string,
     parse_json_tags,
+    sanitize_csv_value,
     unroll_dict,
     unroll_dict_to_list,
     unroll_list,
@@ -1313,3 +1314,20 @@ class TestReport:
         with mock.patch("builtins.print") as mocked_print:
             report([finding], provider, output_options)
             mocked_print.assert_called()
+
+
+class TestSanitizeCSVValue:
+    @pytest.mark.parametrize("initiator", ["=", "+", "-", "@", "\t", "\r"])
+    def test_leading_formula_initiator_is_prefixed(self, initiator):
+        assert sanitize_csv_value(f"{initiator}cmd") == f"'{initiator}cmd"
+
+    def test_value_containing_equals_is_untouched(self):
+        assert sanitize_csv_value("key=value") == "key=value"
+
+    @pytest.mark.parametrize("number", ["-1", "+1", "-1.5", "-1e3"])
+    def test_signed_number_is_untouched(self, number):
+        assert sanitize_csv_value(number) == number
+
+    @pytest.mark.parametrize("value", [None, True, -1, -1.5, ""])
+    def test_non_string_and_empty_values_are_untouched(self, value):
+        assert sanitize_csv_value(value) == value

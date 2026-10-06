@@ -199,3 +199,16 @@ def parse_html_string(str: str) -> str:
             string += f"\n&#x2022;{elem}\n"
 
     return string
+
+
+def sanitize_csv_value(value):
+    """Prefix a cell with `'` when a spreadsheet would evaluate it as a formula; numbers are left as they are."""
+    if not isinstance(value, str) or not value.startswith(
+        ("=", "+", "-", "@", "\t", "\r")
+    ):
+        return value
+    try:
+        float(value)
+        return value
+    except ValueError:
+        return f"'{value}"
