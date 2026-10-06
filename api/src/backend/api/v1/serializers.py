@@ -1900,7 +1900,7 @@ class MongoDBAtlasProviderSecret(serializers.Serializer):
 
 
 class KubernetesProviderSecret(serializers.Serializer):
-    kubeconfig_content = serializers.CharField()
+    kubeconfig_content = serializers.CharField(trim_whitespace=False)
 
     def validate_kubeconfig_content(self, kubeconfig_content):
         try:

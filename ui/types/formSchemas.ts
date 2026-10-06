@@ -31,8 +31,7 @@ const KUBECONFIG_FORBIDDEN_CLUSTER_KEYS = new Set([
   "proxy-url",
 ]);
 
-// Mirrors the API validator: only inline credentials are accepted; file-reference,
-// command, auth-provider and proxy fields are rejected before the kubeconfig is stored.
+// Mirrors the API key checks; structural validation stays in the API.
 export const kubeconfigIsInlineOnlyCredentials = (value: string): boolean => {
   let parsed: unknown;
   try {

@@ -96,6 +96,8 @@ If you are adding an **EKS**, **GKE**, **AKS** or external cluster, follow these
     kubectl config set-context <CONTEXT_NAME> --user=prowler-sa
     ```
 
+    Prowler validates the entire kubeconfig file and requires it to contain only the ServiceAccount user and its cluster entry with certificate-authority-data; remove any exec entries from EKS, GKE, or AKS or Prowler will reject the file.
+
     Replace `<SA_TOKEN>` with the generated token and `<CONTEXT_NAME>` with your KubeConfig Context Name of your EKS, GKE or AKS cluster.
 
 4. Add the modified `kubeconfig` in Prowler Cloud and test the connection.
