@@ -168,6 +168,7 @@ vulnerabilities:
   - id: CVE-2026-101909
     purls:
       - "pkg:npm/axios"
+    expired_at: 2027-01-31
   - id: CVE-2026-90711
     purls:
       - "pkg:npm/proxy-addr"
