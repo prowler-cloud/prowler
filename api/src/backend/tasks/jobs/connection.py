@@ -10,8 +10,6 @@ from celery.utils.log import get_task_logger
 
 logger = get_task_logger(__name__)
 
-PROVIDER_CONNECTION_FAILED_ERROR = "Connection test failed. Check the provider credentials and the worker logs for details."
-
 
 def check_provider_connection(provider_id: str):
     """
@@ -42,14 +40,7 @@ def check_provider_connection(provider_id: str):
     provider_instance.connection_last_checked_at = datetime.now(tz=UTC)
     provider_instance.save()
 
-    # The exception text can carry remote response data; the SDK logs it at the raise site.
-    connection_error = None
-    if connection_result.error:
-        logger.warning(
-            f"{provider_instance.provider} provider connection test failed: "
-            f"{connection_result.error.__class__.__name__}"
-        )
-        connection_error = PROVIDER_CONNECTION_FAILED_ERROR
+    connection_error = f"{connection_result.error}" if connection_result.error else None
     return {"connected": connection_result.is_connected, "error": connection_error}
 
 
