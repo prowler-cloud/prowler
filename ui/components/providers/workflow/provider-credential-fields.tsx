@@ -38,6 +38,7 @@ export function RegistryCredentialFields({
   return (
     <div className="flex flex-col gap-4">
       {schema.fields.map((field, index) => {
+        if (field.kind === "constant") return null;
         const error = errors[field.name];
         const fieldId = `registry-credential-${instanceId}-${index}`;
         const id = `${fieldId}-control`;
