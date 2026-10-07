@@ -109,6 +109,15 @@ class TestOutboundCheckOptOut:
         with pytest.raises(OutboundURLNotAllowedError):
             validate_outbound_host("169.254.169.254")
 
+    def test_logs_the_skip_so_an_operator_sees_the_disabled_control(self, monkeypatch):
+        monkeypatch.setenv(SKIP_OUTBOUND_CHECK_ENV, "true")
+
+        with mock.patch("prowler.lib.network.ssrf.logger") as logged:
+            validate_outbound_host("169.254.169.254")
+
+        assert logged.warning.call_count == 1
+        assert SKIP_OUTBOUND_CHECK_ENV in logged.warning.call_args.args[0]
+
     def test_the_cli_entrypoint_opts_out(self, monkeypatch):
         """prowler() must set the opt-out before it does anything else."""
         # a throwaway mapping, so the variable prowler() sets cannot leak into
@@ -217,6 +226,14 @@ class TestExtractHost:
     def test_rejects_a_url_without_a_host(self):
         with pytest.raises(OutboundURLNotAllowedError, match="Could not read a host"):
             extract_host("not a url")
+
+    def test_keeps_the_url_out_of_the_rejection_message(self):
+        # the message is logged, and a configured URL can carry credentials
+        with pytest.raises(OutboundURLNotAllowedError) as rejection:
+            extract_host("https://user:s3cr3t@/org/repo.git")
+
+        assert "s3cr3t" not in str(rejection.value)
+        assert "user" not in str(rejection.value)
 
 
 class TestValidateOutboundURL:
