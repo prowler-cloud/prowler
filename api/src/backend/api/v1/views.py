@@ -4128,8 +4128,15 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
         tenant_id = request.tenant_id
         query_params = request.query_params
         user_roles = self.user_role
-        visible_scan_ids = list(
-            _scans_visible_to(user_roles, tenant_id).values_list("id", flat=True)
+        # Only the restricted path uses these, and an unlimited role would load
+        # every tenant scan id for nothing. Materialised rather than kept lazy so
+        # Postgres gets a literal IN list, as `latest_ids_per_provider` documents.
+        visible_scan_ids = (
+            None
+            if user_roles.unlimited_visibility
+            else list(
+                _scans_visible_to(user_roles, tenant_id).values_list("id", flat=True)
+            )
         )
 
         queryset = ResourceScanSummary.objects.filter(tenant_id=tenant_id)
