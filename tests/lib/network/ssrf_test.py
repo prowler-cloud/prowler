@@ -1,4 +1,5 @@
 import ipaddress
+import pathlib
 import socket
 from unittest import mock
 
@@ -6,6 +7,7 @@ import pytest
 
 from prowler.lib.network.ssrf import (
     ALLOWED_PRIVATE_NETWORKS_ENV,
+    SKIP_OUTBOUND_CHECK_ENV,
     OutboundURLNotAllowedError,
     allowed_private_networks,
     extract_host,
@@ -87,6 +89,28 @@ class TestValidateOutboundHost:
         ):
             with pytest.raises(OutboundURLNotAllowedError, match="Could not resolve"):
                 validate_outbound_host("nowhere.invalid")
+
+
+class TestOutboundCheckOptOut:
+    def test_is_enforced_when_the_variable_is_unset(self, monkeypatch):
+        monkeypatch.delenv(SKIP_OUTBOUND_CHECK_ENV, raising=False)
+        with pytest.raises(OutboundURLNotAllowedError):
+            validate_outbound_host("169.254.169.254")
+
+    @pytest.mark.parametrize("raw", ["1", "true", "TRUE", "yes", "on"])
+    def test_is_skipped_when_the_variable_is_truthy(self, monkeypatch, raw):
+        monkeypatch.setenv(SKIP_OUTBOUND_CHECK_ENV, raw)
+        validate_outbound_host("169.254.169.254")
+
+    @pytest.mark.parametrize("raw", ["", "0", "false", "no", "off", "maybe"])
+    def test_is_enforced_for_anything_else(self, monkeypatch, raw):
+        monkeypatch.setenv(SKIP_OUTBOUND_CHECK_ENV, raw)
+        with pytest.raises(OutboundURLNotAllowedError):
+            validate_outbound_host("169.254.169.254")
+
+    def test_the_cli_entrypoint_opts_out(self):
+        source = pathlib.Path("prowler/__main__.py").read_text()
+        assert "os.environ.setdefault(SKIP_OUTBOUND_CHECK_ENV" in source
 
 
 class TestAllowedPrivateNetworks:
