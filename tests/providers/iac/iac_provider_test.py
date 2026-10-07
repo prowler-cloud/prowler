@@ -7,6 +7,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from prowler.lib.check.models import CheckReportIAC
+from prowler.lib.network.ssrf import OutboundURLNotAllowedError
 from prowler.providers.iac.exceptions.exceptions import (
     IacRepositoryCloneError,
     IacScanError,
@@ -902,6 +903,40 @@ class TestIacProvider:
         assert connection.is_connected is False
         assert connection.error == "Repository URL is not an allowed destination."
         mock_ls_remote.assert_not_called()
+
+    def test_clone_repository_rejects_a_non_public_url(self):
+        provider = IacProvider.__new__(IacProvider)
+        with patch("prowler.providers.iac.iac_provider.porcelain.clone") as mock_clone:
+            with pytest.raises(OutboundURLNotAllowedError):
+                provider._clone_repository("https://169.254.169.254/org/repo.git")
+
+        mock_clone.assert_not_called()
+
+    def test_clone_repository_rejects_shared_address_space(self):
+        provider = IacProvider.__new__(IacProvider)
+        with patch("prowler.providers.iac.iac_provider.porcelain.clone") as mock_clone:
+            with pytest.raises(OutboundURLNotAllowedError):
+                provider._clone_repository("https://100.100.100.200/org/repo.git")
+
+        mock_clone.assert_not_called()
+
+    def test_clone_repository_does_not_validate_the_token_bearing_url(self):
+        provider = IacProvider.__new__(IacProvider)
+        with patch(
+            "prowler.lib.network.ssrf.socket.getaddrinfo",
+            return_value=[(None, None, None, None, ("140.82.121.4", 0))],
+        ) as mock_getaddrinfo:
+            with patch("prowler.providers.iac.iac_provider.porcelain.clone"):
+                with patch.object(
+                    IacProvider, "_detect_branch_name", return_value="main"
+                ):
+                    provider._clone_repository(
+                        "https://github.com/org/repo.git",
+                        github_username="user",
+                        personal_access_token="token",
+                    )
+
+        assert mock_getaddrinfo.call_args[0][0] == "github.com"
 
     def test_test_connection_allows_public_url(self):
         with (

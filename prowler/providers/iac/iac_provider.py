@@ -330,6 +330,9 @@ class IacProvider(Provider):
         Returns:
             tuple[str, str]: (temporary_directory, branch_name)
         """
+        validate_outbound_url(
+            repository_url, allowed_schemes=("http", "https", "ssh", "git")
+        )
         try:
             original_url = repository_url
 
