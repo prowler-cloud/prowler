@@ -1,5 +1,5 @@
 import ipaddress
-import pathlib
+import os
 import socket
 from unittest import mock
 
@@ -11,6 +11,7 @@ from prowler.lib.network.ssrf import (
     OutboundURLNotAllowedError,
     allowed_private_networks,
     extract_host,
+    outbound_check_skipped,
     validate_outbound_host,
     validate_outbound_url,
 )
@@ -108,9 +109,29 @@ class TestOutboundCheckOptOut:
         with pytest.raises(OutboundURLNotAllowedError):
             validate_outbound_host("169.254.169.254")
 
-    def test_the_cli_entrypoint_opts_out(self):
-        source = pathlib.Path("prowler/__main__.py").read_text()
-        assert "os.environ.setdefault(SKIP_OUTBOUND_CHECK_ENV" in source
+    def test_the_cli_entrypoint_opts_out(self, monkeypatch):
+        """prowler() must set the opt-out before it does anything else."""
+        # a throwaway mapping, so the variable prowler() sets cannot leak into
+        # the tests that assert the check is enforced
+        monkeypatch.setattr(os, "environ", dict(os.environ))
+        os.environ.pop(SKIP_OUTBOUND_CHECK_ENV, None)
+
+        import prowler.__main__ as prowler_main
+
+        class _Stop(Exception):
+            pass
+
+        def _parser_that_stops():
+            # raised from the first statement after the opt-out, so reaching here
+            # proves the variable was already set
+            raise _Stop
+
+        monkeypatch.setattr(prowler_main, "ProwlerArgumentParser", _parser_that_stops)
+
+        with pytest.raises(_Stop):
+            prowler_main.prowler()
+
+        assert outbound_check_skipped()
 
 
 class TestAllowedPrivateNetworks:
