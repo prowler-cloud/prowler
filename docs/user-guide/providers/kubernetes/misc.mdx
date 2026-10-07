@@ -53,7 +53,7 @@ export PROWLER_ALLOWED_PRIVATE_NETWORKS="10.20.0.0/16,192.168.65.254/32"
 prowler kubernetes ...
 ```
 
-The value is a comma-separated list of IPs and CIDRs. A resolved address inside an allowlisted range is permitted; every other non-public address stays blocked, so link-local (`169.254.169.254`), loopback, and the rest of the internal network remain protected. A kubeconfig declaring several clusters is rejected when any one of them resolves outside the allowlist. Malformed entries are rejected, and a non-empty allowlist is logged as a relaxed security control. When unset, only public addresses are reachable.
+The value is a comma-separated list of IPs and CIDRs. A resolved address inside an allowlisted range is permitted; every other non-public address stays blocked, so link-local (`169.254.169.254`), loopback, and the rest of the internal network remain protected. A kubeconfig declaring several clusters is rejected when any one of them resolves to a non-public address outside the allowlist. Malformed entries are rejected, and a non-empty allowlist is logged as a relaxed security control. When unset, only public addresses are reachable.
 
 The variable is read by the process that runs the scan:
 
