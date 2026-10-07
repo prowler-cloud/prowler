@@ -611,6 +611,28 @@ class TestOutboundCheckOptOut:
         mock_request.assert_not_called()
 
     @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_the_origin_rule_still_applies_when_skipped(
+        self, mock_request, monkeypatch
+    ):
+        """Skipping the address check must not let a registry redirect us elsewhere."""
+        monkeypatch.setenv("PROWLER_SKIP_OUTBOUND_HOST_CHECK", "true")
+        adapter = OciRegistryAdapter(registry_url="https://registry.example.com")
+
+        with pytest.raises(ImageRegistryAuthError, match="unrelated to registry host"):
+            adapter._validate_outbound_url("https://attacker.example.net/token")
+
+        mock_request.assert_not_called()
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_a_same_origin_url_is_allowed_when_skipped(self, mock_request, monkeypatch):
+        monkeypatch.setenv("PROWLER_SKIP_OUTBOUND_HOST_CHECK", "true")
+        adapter = OciRegistryAdapter(registry_url="https://registry.example.com")
+
+        assert adapter._validate_outbound_url(
+            "https://registry.example.com/v2/token"
+        ).startswith("https://registry.example.com/")
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
     def test_the_scheme_check_still_applies_when_skipped(
         self, mock_request, monkeypatch
     ):

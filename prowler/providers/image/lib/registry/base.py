@@ -246,37 +246,38 @@ class RegistryAdapter(ABC):
                 message=f"URL has no host: {canonical_url}",
             )
 
-        if _outbound_check_skipped():
-            return canonical_url
-
-        try:
-            ipaddress.ip_address(host)
-        except ValueError:
+        # Only the address classification is skipped. The origin rule below still
+        # applies: a registry-supplied URL pointing at an unrelated host is a
+        # different problem from deliberately reaching a private network.
+        if not _outbound_check_skipped():
             try:
-                infos = socket.getaddrinfo(host, None)
-            except socket.gaierror:
-                infos = []
-            for *_, sockaddr in infos:
-                resolved_ip = sockaddr[0]
-                if _ip_is_non_public(resolved_ip) and not self._ip_is_allowed(
-                    resolved_ip
-                ):
+                ipaddress.ip_address(host)
+            except ValueError:
+                try:
+                    infos = socket.getaddrinfo(host, None)
+                except socket.gaierror:
+                    infos = []
+                for *_, sockaddr in infos:
+                    resolved_ip = sockaddr[0]
+                    if _ip_is_non_public(resolved_ip) and not self._ip_is_allowed(
+                        resolved_ip
+                    ):
+                        raise ImageRegistryAuthError(
+                            file=__file__,
+                            message=(
+                                f"Host {host!r} resolves to non-public address "
+                                f"{resolved_ip}. {_ALLOWLIST_HINT}"
+                            ),
+                        )
+            else:
+                if _ip_is_non_public(host) and not self._ip_is_allowed(host):
                     raise ImageRegistryAuthError(
                         file=__file__,
                         message=(
-                            f"Host {host!r} resolves to non-public address "
-                            f"{resolved_ip}. {_ALLOWLIST_HINT}"
+                            f"URL targets a non-public address: {host}. "
+                            f"{_ALLOWLIST_HINT}"
                         ),
                     )
-        else:
-            if _ip_is_non_public(host) and not self._ip_is_allowed(host):
-                raise ImageRegistryAuthError(
-                    file=__file__,
-                    message=(
-                        f"URL targets a non-public address: {host}. "
-                        f"{_ALLOWLIST_HINT}"
-                    ),
-                )
 
         if enforce_origin:
             registry_host = urlparse(origin_url or self._origin_url()).hostname or ""
