@@ -8,7 +8,7 @@ import re
 import socket
 import time
 from abc import ABC, abstractmethod
-from urllib.parse import urlparse
+from urllib.parse import urljoin, urlparse
 
 import requests
 import tldextract
@@ -22,6 +22,10 @@ from prowler.providers.image.exceptions.exceptions import (
 )
 
 _MAX_RETRIES = 3
+_MAX_REDIRECTS = 5
+# a registry legitimately redirects: Docker Hub sends blob pulls to a CDN and a
+# renamed repository answers 301, so each hop is validated rather than refused
+_REDIRECT_STATUSES = frozenset({301, 302, 303, 307, 308})
 _BACKOFF_BASE = 1
 _USER_AGENT = f"Prowler/{prowler_version} (registry-adapter)"
 
@@ -298,6 +302,29 @@ class RegistryAdapter(ABC):
 
         return canonical_url
 
+    def _request_following_validated_redirects(
+        self, method: str, url: str, **kwargs
+    ) -> requests.Response:
+        """Issue a request, validating the destination of each redirect it takes.
+
+        ``requests`` follows redirects itself, which would send the request to a
+        host the guard never saw.
+        """
+        for _ in range(_MAX_REDIRECTS + 1):
+            resp = requests.request(method, url, allow_redirects=False, **kwargs)
+            if resp.status_code not in _REDIRECT_STATUSES:
+                return resp
+            location = resp.headers.get("Location")
+            if not location:
+                return resp
+            url = self._validate_outbound_url(
+                urljoin(url, location), enforce_origin=False
+            )
+        raise ImageRegistryNetworkError(
+            file=__file__,
+            message=f"More than {_MAX_REDIRECTS} redirects from {url}.",
+        )
+
     def _request_with_retry(self, method: str, url: str, **kwargs) -> requests.Response:
         context_label = kwargs.pop("context_label", None) or self.registry_url
         # the only chokepoint every outbound URL passes through, including the
@@ -313,7 +340,9 @@ class RegistryAdapter(ABC):
         last_body = None
         for attempt in range(1, _MAX_RETRIES + 1):
             try:
-                resp = requests.request(method, url, **kwargs)
+                resp = self._request_following_validated_redirects(
+                    method, url, **kwargs
+                )
                 if resp.status_code == 429:
                     last_status = 429
                     wait = _BACKOFF_BASE * (2 ** (attempt - 1))

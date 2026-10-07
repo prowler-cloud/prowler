@@ -11,6 +11,7 @@ from prowler.providers.image.exceptions.exceptions import (
     ImageRegistryCatalogError,
     ImageRegistryNetworkError,
 )
+from prowler.providers.image.lib.registry.base import _MAX_REDIRECTS
 from prowler.providers.image.lib.registry.oci_adapter import OciRegistryAdapter
 
 
@@ -1423,3 +1424,64 @@ class TestOciAdapterArtifactIndexAndCaseInsensitivity:
             {"artifactType": "Application/vnd.CNCF.Helm.Config.v1+json"},
         )
         assert self._adapter().is_container_image("charts/app", "1.0") is False
+
+
+def _redirect(location: str):
+    return MagicMock(status_code=302, headers={"Location": location})
+
+
+class TestValidatedRedirects:
+    """A registry may redirect, but the guard must see each destination.
+
+    ``requests`` follows redirects itself, so without this the final host is
+    never validated.
+    """
+
+    def _adapter(self):
+        return OciRegistryAdapter("https://reg.io", token="t")
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_never_lets_requests_follow_on_its_own(self, mock_request):
+        mock_request.return_value = MagicMock(status_code=200, headers={})
+
+        self._adapter()._request_with_retry("GET", "https://reg.io/v2/")
+
+        assert mock_request.call_args.kwargs["allow_redirects"] is False
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_rejects_a_redirect_to_a_non_public_address(self, mock_request):
+        mock_request.return_value = _redirect("http://169.254.169.254/latest/meta-data")
+
+        with pytest.raises(ImageRegistryAuthError, match="non-public"):
+            self._adapter()._request_with_retry("GET", "https://reg.io/v2/")
+
+        assert mock_request.call_count == 1
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_follows_a_redirect_to_a_public_address(self, mock_request):
+        # Docker Hub sends blob pulls to a CDN on an unrelated host
+        final = MagicMock(status_code=200, headers={})
+        mock_request.side_effect = [_redirect("https://cdn.example.com/blob"), final]
+
+        resp = self._adapter()._request_with_retry("GET", "https://reg.io/v2/blob")
+
+        assert resp is final
+        assert mock_request.call_args_list[1][0][1] == "https://cdn.example.com/blob"
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_resolves_a_relative_location_against_the_current_url(self, mock_request):
+        final = MagicMock(status_code=200, headers={})
+        mock_request.side_effect = [_redirect("/v2/token"), final]
+
+        self._adapter()._request_with_retry("GET", "https://reg.io/v2/")
+
+        assert mock_request.call_args_list[1][0][1] == "https://reg.io/v2/token"
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_bounds_a_redirect_chain(self, mock_request):
+        mock_request.return_value = _redirect("https://reg.io/v2/again")
+
+        with pytest.raises(ImageRegistryNetworkError, match="redirects"):
+            self._adapter()._request_with_retry("GET", "https://reg.io/v2/")
+
+        assert mock_request.call_count == _MAX_REDIRECTS + 1
