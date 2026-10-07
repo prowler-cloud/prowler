@@ -40,6 +40,10 @@ def _ip_is_non_public(ip_str: str) -> bool:
         addr = ipaddress.ip_address(ip_str)
     except ValueError:
         return False
+    # is_global is the broad check; the properties stay because some multicast
+    # ranges report is_global and would otherwise slip through
+    if not addr.is_global:
+        return True
     return any(getattr(addr, prop) for prop in _NON_PUBLIC_IP_PROPERTIES)
 
 
@@ -139,6 +143,7 @@ class RegistryAdapter(ABC):
         signatures, SBOMs...) override this; by default everything is assumed
         to be an image.
         """
+        del repository, tag  # the default inspects neither
         return True
 
     def _origin_url(self) -> str:
@@ -226,7 +231,7 @@ class RegistryAdapter(ABC):
             )
 
         try:
-            addr = ipaddress.ip_address(host)
+            ipaddress.ip_address(host)
         except ValueError:
             try:
                 infos = socket.getaddrinfo(host, None)
@@ -245,9 +250,7 @@ class RegistryAdapter(ABC):
                         ),
                     )
         else:
-            if any(
-                getattr(addr, prop) for prop in _NON_PUBLIC_IP_PROPERTIES
-            ) and not self._ip_is_allowed(host):
+            if _ip_is_non_public(host) and not self._ip_is_allowed(host):
                 raise ImageRegistryAuthError(
                     file=__file__,
                     message=(
@@ -277,6 +280,9 @@ class RegistryAdapter(ABC):
 
     def _request_with_retry(self, method: str, url: str, **kwargs) -> requests.Response:
         context_label = kwargs.pop("context_label", None) or self.registry_url
+        # the only chokepoint every outbound URL passes through, including the
+        # tenant-supplied registry URL that no caller validates
+        url = self._validate_outbound_url(url, enforce_origin=False)
         kwargs.setdefault("timeout", 30)
         kwargs.setdefault("verify", self.verify_ssl)
         headers = kwargs.get("headers", {})

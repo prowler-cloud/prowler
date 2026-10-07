@@ -547,6 +547,44 @@ class TestOutboundUrlValidator:
         assert canonical == "https://ghcr.io/token"
 
 
+class TestTenantSuppliedRegistryUrlValidator:
+    @pytest.mark.parametrize(
+        "registry_url",
+        [
+            "http://169.254.169.254",
+            "http://10.0.0.5:5000",
+            "http://127.0.0.1:5000",
+            "http://100.100.100.200",
+            "http://100.64.0.1",
+        ],
+    )
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_rejects_a_non_public_registry_url_before_any_request(
+        self, mock_request, registry_url
+    ):
+        adapter = OciRegistryAdapter(registry_url=registry_url)
+
+        with pytest.raises(ImageRegistryAuthError):
+            adapter.list_repositories()
+
+        mock_request.assert_not_called()
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_allows_a_registry_url_inside_an_allowlisted_network(
+        self, mock_request, monkeypatch
+    ):
+        monkeypatch.setenv(
+            "PROWLER_IMAGE_PROVIDER_ALLOWED_PRIVATE_NETWORKS", "10.0.0.0/8"
+        )
+        resp = MagicMock(status_code=200, headers={}, ok=True)
+        resp.json.return_value = {"repositories": ["internal-app"]}
+        mock_request.return_value = resp
+        adapter = OciRegistryAdapter(registry_url="http://10.0.0.5:5000")
+
+        assert adapter.list_repositories() == ["internal-app"]
+        assert mock_request.called
+
+
 class TestObtainBearerTokenAppliesValidator:
     """Integration: malicious Www-Authenticate realm must be rejected before the second call."""
 
