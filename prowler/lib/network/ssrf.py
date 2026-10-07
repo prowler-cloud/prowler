@@ -73,6 +73,10 @@ def _ip_is_non_public(address: str) -> bool:
         parsed = _unwrap_ipv6(ipaddress.ip_address(address))
     except ValueError:
         return False
+    # is_global is the broad check; the properties stay because some multicast
+    # ranges report is_global and would otherwise slip through
+    if not parsed.is_global:
+        return True
     return any(getattr(parsed, prop) for prop in _NON_PUBLIC_IP_PROPERTIES)
 
 
