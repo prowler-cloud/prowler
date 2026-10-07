@@ -117,7 +117,9 @@ def extract_host(url: str) -> str:
         return scp_like.group("host")
     host = urlparse(url).hostname
     if not host:
-        raise OutboundURLNotAllowedError(f"Could not read a host from URL {url!r}")
+        # The URL itself stays out of the message: a configured repository or auth
+        # URL can carry credentials in its userinfo, and this message is logged
+        raise OutboundURLNotAllowedError("Could not read a host from the supplied URL")
     return host
 
 
@@ -128,6 +130,9 @@ def validate_outbound_host(host: str) -> None:
     hostile DNS server can still answer differently the second time.
     """
     if outbound_check_skipped():
+        logger.warning(
+            f"{SKIP_OUTBOUND_CHECK_ENV} is set — destination check disabled for host {host!r}"
+        )
         return
 
     networks = allowed_private_networks()
