@@ -211,10 +211,11 @@ def sanitize_csv_value(value):
     ):
         return value
     try:
-        # float() also accepts nan/inf and padded forms, which a spreadsheet
-        # renders as text, so only a finite number is left untouched
-        if isfinite(float(value)) and value == value.strip():
-            return value
+        number = float(value)
     except ValueError:
-        pass
+        return f"'{value}"
+    # float() also accepts nan/inf and whitespace-padded forms, which a spreadsheet
+    # renders as text rather than as a number
+    if isfinite(number) and value == value.strip():
+        return value
     return f"'{value}"
