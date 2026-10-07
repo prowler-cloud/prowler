@@ -401,7 +401,14 @@ def prowler_provider_connection_test(provider: Provider) -> Connection:
         return Connection(is_connected=False, error=secret_error)
 
     if provider.provider == Provider.ProviderChoices.KUBERNETES.value:
-        _validate_kubernetes_secret(prowler_provider_kwargs)
+        # A rejected stored kubeconfig is a failed connection, not a task error.
+        try:
+            _validate_kubernetes_secret(prowler_provider_kwargs)
+        except ValidationError as validation_error:
+            return Connection(
+                is_connected=False,
+                error=Exception(validation_error.detail["kubeconfig_content"][0]),
+            )
 
     # For IaC provider, construct the kwargs properly for test_connection
     if provider.provider == Provider.ProviderChoices.IAC.value:

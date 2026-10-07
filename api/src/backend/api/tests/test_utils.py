@@ -14,6 +14,7 @@ from api.utils import (
     return_prowler_provider,
     validate_invitation,
 )
+from api.v1.serializers import KUBERNETES_KUBECONFIG_NON_INLINE_CREDENTIALS_ERROR
 from prowler.providers.alibabacloud.alibabacloud_provider import AlibabacloudProvider
 from prowler.providers.aws.aws_provider import AwsProvider
 from prowler.providers.aws.lib.security_hub.security_hub import SecurityHubConnection
@@ -325,10 +326,12 @@ class TestProwlerProviderConnectionTest:
         provider.uid = "provider_uid"
         provider.secret.secret = {"kubeconfig_content": TOKEN_FILE_KUBECONFIG}
 
-        with pytest.raises(ValidationError) as exc_info:
-            prowler_provider_connection_test(provider)
+        connection = prowler_provider_connection_test(provider)
 
-        assert "/etc/passwd" not in str(exc_info.value)
+        assert connection.is_connected is False
+        assert (
+            str(connection.error) == KUBERNETES_KUBECONFIG_NON_INLINE_CREDENTIALS_ERROR
+        )
         mock_return_prowler_provider.return_value.test_connection.assert_not_called()
 
     @patch("api.utils.return_prowler_provider")

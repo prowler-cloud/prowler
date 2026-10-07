@@ -3,7 +3,8 @@ from datetime import UTC, datetime
 from unittest.mock import MagicMock, patch
 
 import pytest
-from api.models import Integration, LighthouseConfiguration, Provider
+from api.models import Integration, LighthouseConfiguration, Provider, ProviderSecret
+from api.v1.serializers import KUBERNETES_KUBECONFIG_NON_INLINE_CREDENTIALS_ERROR
 from tasks.jobs.connection import (
     check_integration_connection,
     check_lighthouse_connection,
@@ -76,6 +77,39 @@ def test_check_provider_connection_exception(
 
     mock_provider_instance.save.assert_called_once()
     assert mock_provider_instance.connected is False
+
+
+@pytest.mark.django_db
+def test_check_provider_connection_with_stored_non_inline_kubeconfig(
+    kubernetes_provider,
+):
+    """A kubeconfig stored before the inline-only rule marks the provider as disconnected."""
+    kubernetes_provider.connected = True
+    kubernetes_provider.save()
+    ProviderSecret.objects.create(
+        tenant_id=kubernetes_provider.tenant_id,
+        provider=kubernetes_provider,
+        secret_type=ProviderSecret.TypeChoices.STATIC,
+        secret={
+            "kubeconfig_content": (
+                "apiVersion: v1\n"
+                "kind: Config\n"
+                "users:\n"
+                "- name: test-user\n"
+                "  user:\n"
+                "    tokenFile: /etc/passwd\n"
+            )
+        },
+    )
+
+    result = check_provider_connection(provider_id=str(kubernetes_provider.id))
+
+    kubernetes_provider.refresh_from_db()
+    assert result == {
+        "connected": False,
+        "error": KUBERNETES_KUBECONFIG_NON_INLINE_CREDENTIALS_ERROR,
+    }
+    assert kubernetes_provider.connected is False
 
 
 @pytest.mark.parametrize(
