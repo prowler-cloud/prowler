@@ -77,6 +77,9 @@ vulnerabilities:
 # exists in the image, only its purl inside that manifest. The UI lock lists proxy-addr 2.0.7
 # through express, but the Next standalone output does not ship it, so the shared entry
 # hides nothing real in the UI image either (checked on prowlercloud/prowler-ui:latest).
+# @modelcontextprotocol/sdk 1.27.1 (CVE-2026-104850) is another: only its purl is in that
+# manifest. The entry is pinned to 1.27.1 because the UI really depends on the SDK (1.26.0
+# via @langchain/mcp-adapters), and a version-less purl would hide that finding too.
   - id: CVE-2020-0606
     purls:
       - "pkg:nuget/Microsoft.WindowsDesktop.App.Ref"
@@ -172,6 +175,10 @@ vulnerabilities:
   - id: CVE-2026-90711
     purls:
       - "pkg:npm/proxy-addr"
+    expired_at: 2027-01-31
+  - id: CVE-2026-104850
+    purls:
+      - "pkg:npm/%40modelcontextprotocol%2Fsdk@1.27.1"
     expired_at: 2027-01-31
 
   # CVE-2026-84304 is a DoS in grpc-go <= 1.83.0: a peer fragments a gRPC stream into
