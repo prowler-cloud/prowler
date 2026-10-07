@@ -1905,7 +1905,7 @@ class ProviderViewSet(DisablePaginationMixin, BaseRLSViewSet):
             self.required_permissions = [Permissions.MANAGE_PROVIDERS]
 
     def get_queryset(self):
-        user_roles = get_role(self.request.user, self.request.tenant_id)
+        user_roles = self.user_role
         if user_roles.unlimited_visibility:
             # User has unlimited visibility, return all providers
             queryset = Provider.objects.filter(tenant_id=self.request.tenant_id)
@@ -3067,7 +3067,7 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
         return super().get_serializer_class()
 
     def get_queryset(self):
-        user_roles = get_role(self.request.user, self.request.tenant_id)
+        user_roles = self.user_role
         base_queryset = AttackPathsScan.objects.filter(tenant_id=self.request.tenant_id)
 
         if user_roles.unlimited_visibility:
@@ -3421,7 +3421,7 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
     required_permissions = []
 
     def get_queryset(self):
-        user_roles = get_role(self.request.user, self.request.tenant_id)
+        user_roles = self.user_role
         if user_roles.unlimited_visibility:
             # User has unlimited visibility, return all scans
             queryset = Resource.all_objects.filter(tenant_id=self.request.tenant_id)
@@ -3553,13 +3553,15 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
 
         tenant_id = request.tenant_id
         query_params = request.query_params
-        user_roles = get_role(request.user, tenant_id)
+        user_roles = self.user_role
 
         queryset = ResourceScanSummary.objects.filter(tenant_id=tenant_id)
         if not user_roles.unlimited_visibility:
             queryset = queryset.filter(
-                scan_id__in=_scans_visible_to(user_roles, tenant_id).values_list(
-                    "id", flat=True
+                scan_id__in=list(
+                    _scans_visible_to(user_roles, tenant_id).values_list(
+                        "id", flat=True
+                    )
                 )
             )
 
@@ -3667,7 +3669,7 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
     def metadata_latest(self, request):
         tenant_id = request.tenant_id
         query_params = request.query_params
-        user_roles = get_role(request.user, tenant_id)
+        user_roles = self.user_role
 
         latest_scans_queryset = _scans_visible_to(
             user_roles, tenant_id
@@ -4051,7 +4053,7 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
 
     def get_queryset(self):
         tenant_id = self.request.tenant_id
-        user_roles = get_role(self.request.user, self.request.tenant_id)
+        user_roles = self.user_role
         if user_roles.unlimited_visibility:
             # User has unlimited visibility, return all findings
             queryset = Finding.all_objects.filter(tenant_id=tenant_id)
@@ -4125,9 +4127,9 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
 
         tenant_id = request.tenant_id
         query_params = request.query_params
-        user_roles = get_role(request.user, tenant_id)
-        visible_scan_ids = _scans_visible_to(user_roles, tenant_id).values_list(
-            "id", flat=True
+        user_roles = self.user_role
+        visible_scan_ids = list(
+            _scans_visible_to(user_roles, tenant_id).values_list("id", flat=True)
         )
 
         queryset = ResourceScanSummary.objects.filter(tenant_id=tenant_id)
@@ -4296,7 +4298,7 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
     def metadata_latest(self, request):
         tenant_id = request.tenant_id
         query_params = request.query_params
-        user_roles = get_role(request.user, tenant_id)
+        user_roles = self.user_role
 
         latest_scans_queryset = _scans_visible_to(
             user_roles, tenant_id
