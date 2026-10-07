@@ -1331,3 +1331,13 @@ class TestSanitizeCSVValue:
     @pytest.mark.parametrize("value", [None, True, -1, -1.5, ""])
     def test_non_string_and_empty_values_are_untouched(self, value):
         assert sanitize_csv_value(value) == value
+
+    @pytest.mark.parametrize(
+        "value", ["-nan", "+nan", "-inf", "+inf", "-infinity", "+Infinity"]
+    )
+    def test_non_finite_float_literal_is_prefixed(self, value):
+        assert sanitize_csv_value(value) == f"'{value}"
+
+    @pytest.mark.parametrize("value", ["-1 ", "+1\t", "-1\n"])
+    def test_padded_number_is_prefixed(self, value):
+        assert sanitize_csv_value(value) == f"'{value}"

@@ -1,3 +1,6 @@
+from math import isfinite
+
+
 def unroll_list(listed_items: list, separator: str = "|") -> str:
     """
     Unrolls a list of items into a single string, separated by a specified separator.
@@ -208,7 +211,10 @@ def sanitize_csv_value(value):
     ):
         return value
     try:
-        float(value)
-        return value
+        # float() also accepts nan/inf and padded forms, which a spreadsheet
+        # renders as text, so only a finite number is left untouched
+        if isfinite(float(value)) and value == value.strip():
+            return value
     except ValueError:
-        return f"'{value}"
+        pass
+    return f"'{value}"
