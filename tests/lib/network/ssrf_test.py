@@ -133,6 +133,28 @@ class TestOutboundCheckOptOut:
 
         assert outbound_check_skipped()
 
+    @pytest.mark.parametrize("chosen", ["false", "0", "off", ""])
+    def test_the_cli_entrypoint_respects_an_explicit_value(self, monkeypatch, chosen):
+        """setdefault, not assignment: an operator who opted in keeps the check."""
+        monkeypatch.setattr(os, "environ", dict(os.environ))
+        os.environ[SKIP_OUTBOUND_CHECK_ENV] = chosen
+
+        import prowler.__main__ as prowler_main
+
+        class _Stop(Exception):
+            pass
+
+        def _parser_that_stops():
+            raise _Stop
+
+        monkeypatch.setattr(prowler_main, "ProwlerArgumentParser", _parser_that_stops)
+
+        with pytest.raises(_Stop):
+            prowler_main.prowler()
+
+        assert os.environ[SKIP_OUTBOUND_CHECK_ENV] == chosen
+        assert not outbound_check_skipped()
+
 
 class TestAllowedPrivateNetworks:
     def test_is_empty_when_unset(self, monkeypatch):
