@@ -1,1 +1,1 @@
-OpenStack connection test rejects an `auth_url` with a non-HTTP scheme or a host that resolves to a loopback, link-local or private address, so a tenant-supplied clouds.yaml can no longer make the worker probe internal services
+OpenStack auth_url resolving to loopback, private or otherwise non-public hosts rejected before the SDK connects, on both the connection test and the scan

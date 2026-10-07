@@ -482,6 +482,7 @@ class OpenstackProvider(Provider):
             region: Optional region override — when given, the connection is
                 scoped to this specific region instead of the session default.
         """
+        OpenstackProvider._validate_auth_url(session.auth_url)
         try:
             # Don't load from clouds.yaml or environment variables, we configure this in setup_session()
             conn = connect(
@@ -627,8 +628,6 @@ class OpenstackProvider(Provider):
                 user_domain_name=user_domain_name,
                 project_domain_name=project_domain_name,
             )
-
-            OpenstackProvider._validate_auth_url(session.auth_url)
 
             # Validate provider_id matches project_id from config
             if provider_id and session.project_id != provider_id:

@@ -1727,6 +1727,36 @@ clouds:
                     raise_on_exception=True,
                 )
 
+    def test_scan_initialisation_rejects_a_non_public_auth_url(self):
+        with patch(
+            "prowler.providers.openstack.openstack_provider.connect"
+        ) as mock_connect:
+            with pytest.raises(OpenStackAuthUrlNotAllowedError):
+                OpenstackProvider(
+                    auth_url="https://169.254.169.254:5000/v3",
+                    username="test-user",
+                    password="test-password",
+                    project_id="test-project-id",
+                    region_name="RegionOne",
+                )
+
+        mock_connect.assert_not_called()
+
+    def test_scan_initialisation_rejects_shared_address_space(self):
+        with patch(
+            "prowler.providers.openstack.openstack_provider.connect"
+        ) as mock_connect:
+            with pytest.raises(OpenStackAuthUrlNotAllowedError):
+                OpenstackProvider(
+                    auth_url="https://100.100.100.200:5000/v3",
+                    username="test-user",
+                    password="test-password",
+                    project_id="test-project-id",
+                    region_name="RegionOne",
+                )
+
+        mock_connect.assert_not_called()
+
     def test_test_connection_allows_public_auth_url(self):
         result, mock_connect = self._test_connection(
             auth_url="https://openstack.example.com:5000/v3"
