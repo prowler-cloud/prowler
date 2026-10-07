@@ -8,6 +8,7 @@ on them -- always pass them explicitly, as these tests do.
 
 import base64
 import json
+import time
 
 import jwt
 import pytest
@@ -123,6 +124,61 @@ async def test_http_mode_rejects_a_jwt_with_a_forged_signature(http_request_head
 
     with pytest.raises(CredentialError, match="could not be verified"):
         await auth.get_valid_token()
+
+
+async def test_http_mode_reads_the_verifying_key_from_a_file(
+    http_request_headers, monkeypatch, tmp_path
+):
+    """Compose mounts the API's public key; reading it is what enables verification."""
+    key_file = tmp_path / "jwt_public.pem"
+    key_file.write_text(JWT_VERIFYING_KEY)
+    monkeypatch.setenv("DJANGO_TOKEN_VERIFYING_KEY_FILE", str(key_file))
+    http_request_headers(authorization=f"Bearer {fake_jwt()}")
+
+    auth = ProwlerAppAuth(mode="http", jwt_verifying_key=None)
+
+    assert auth.jwt_verifying_key == JWT_VERIFYING_KEY.strip()
+    assert await auth.get_valid_token()
+
+
+async def test_http_mode_rejects_a_forged_jwt_when_the_key_comes_from_a_file(
+    http_request_headers, monkeypatch, tmp_path
+):
+    key_file = tmp_path / "jwt_public.pem"
+    key_file.write_text(JWT_VERIFYING_KEY)
+    monkeypatch.setenv("DJANGO_TOKEN_VERIFYING_KEY_FILE", str(key_file))
+    http_request_headers(
+        authorization=f"Bearer {fake_jwt(signing_key=ROGUE_JWT_SIGNING_KEY)}"
+    )
+
+    auth = ProwlerAppAuth(mode="http", jwt_verifying_key=None)
+
+    with pytest.raises(CredentialError, match="could not be verified"):
+        await auth.get_valid_token()
+
+
+async def test_http_mode_ignores_an_unreadable_verifying_key_file(
+    http_request_headers, monkeypatch, tmp_path
+):
+    monkeypatch.setenv(
+        "DJANGO_TOKEN_VERIFYING_KEY_FILE", str(tmp_path / "does-not-exist.pem")
+    )
+
+    auth = ProwlerAppAuth(mode="http", jwt_verifying_key=None)
+
+    assert auth.jwt_verifying_key is None
+
+
+async def test_http_mode_tolerates_a_token_issued_slightly_in_the_future(
+    http_request_headers,
+):
+    """Clock drift between the API host and this server must not reject fresh tokens."""
+    token = fake_jwt(iat=int(time.time()) + 10)
+    http_request_headers(authorization=f"Bearer {token}")
+
+    auth = ProwlerAppAuth(mode="http", jwt_verifying_key=JWT_VERIFYING_KEY)
+
+    assert await auth.get_valid_token() == token
 
 
 async def test_http_mode_rejects_a_jwt_declaring_the_none_algorithm(

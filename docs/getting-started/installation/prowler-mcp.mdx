@@ -222,6 +222,21 @@ Configure the server using environment variables:
 | `PROWLER_API_KEY` | Prowler API key | Only for STDIO mode | - |
 | `API_BASE_URL` | Custom Prowler API endpoint | No | `https://api.prowler.com/api/v1` |
 | `PROWLER_MCP_TRANSPORT_MODE` | Default transport mode (overwritten by `--transport` argument) | No | `stdio` |
+| `DJANGO_TOKEN_VERIFYING_KEY` | Prowler API RS256 public key, used in HTTP mode to verify the signature of the bearer token. Escaped newlines (`\n`) are accepted so it fits in an env file | Recommended for HTTP mode | - |
+| `DJANGO_TOKEN_VERIFYING_KEY_FILE` | Path to that same public key on disk, read when `DJANGO_TOKEN_VERIFYING_KEY` is empty | No | - |
+
+<Warning>
+In HTTP mode, without either of the two variables above the MCP server only
+checks that the bearer token is readable and unexpired, not that its signature
+is valid. The Prowler API still verifies every forwarded token, so a forged one
+is refused one hop later, but the MCP server will have acted on it first. Set
+one of them.
+
+Docker Compose wires this up already: the API writes the pair to
+`_data/api/jwt_public.pem` on first boot, and the `mcp-server` service mounts
+that directory read-only with `DJANGO_TOKEN_VERIFYING_KEY_FILE` pointing at it.
+A deployment that does not use Compose has to supply the public key itself.
+</Warning>
 
 <CodeGroup>
 ```bash macOS/Linux

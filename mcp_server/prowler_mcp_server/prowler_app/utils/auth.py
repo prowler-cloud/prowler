@@ -1,6 +1,7 @@
 import base64
 import json
 import os
+import pathlib
 from datetime import datetime
 
 import jwt
@@ -13,6 +14,11 @@ from prowler_mcp_server.lib.logger import logger
 # The Prowler API signs its JWTs with RS256. Pinning the list keeps a token that
 # declares `alg: none`, or an HMAC algorithm keyed with the public key, out.
 JWT_ALGORITHMS = ["RS256"]
+
+VERIFYING_KEY_FILE_ENV = "DJANGO_TOKEN_VERIFYING_KEY_FILE"
+
+# Tolerated clock drift between the API that issues a token and this server.
+JWT_CLOCK_SKEW_SECONDS = 30
 
 
 class ProwlerAppAuth:
@@ -35,7 +41,7 @@ class ProwlerAppAuth:
             jwt_verifying_key.replace("\\n", "\n").strip() or None
             if jwt_verifying_key
             else None
-        )
+        ) or self._read_verifying_key_file()
 
         if mode == "stdio":  # STDIO mode
             # PROWLER_API_KEY is the current variable; PROWLER_APP_API_KEY is kept
@@ -86,6 +92,20 @@ class ProwlerAppAuth:
             logger.warning(f"Failed to parse JWT token: {e}")
             return None
 
+    @staticmethod
+    def _read_verifying_key_file() -> str | None:
+        """Public key from DJANGO_TOKEN_VERIFYING_KEY_FILE, which compose mounts from the API."""
+        path = os.getenv(VERIFYING_KEY_FILE_ENV, "").strip()
+        if not path:
+            return None
+        try:
+            return pathlib.Path(path).read_text().strip() or None
+        except OSError as error:
+            logger.warning(
+                f"Could not read {VERIFYING_KEY_FILE_ENV} at {path}: {error}"
+            )
+            return None
+
     def _verify_jwt(self, token: str) -> dict:
         """Verify the signature and standard time claims; raise CredentialError otherwise."""
         try:
@@ -96,6 +116,9 @@ class ProwlerAppAuth:
                 # The API's audience is deployment-specific and unknown here; the
                 # API checks it on every forwarded request.
                 options={"require": ["exp"], "verify_aud": False},
+                # The API and this server may sit on hosts with drifting clocks,
+                # and iat is only checked once a verifying key is configured.
+                leeway=JWT_CLOCK_SKEW_SECONDS,
             )
         except jwt.ExpiredSignatureError:
             raise CredentialError("The token has expired")

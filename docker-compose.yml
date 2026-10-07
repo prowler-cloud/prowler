@@ -175,6 +175,11 @@ services:
     restart: unless-stopped
     environment:
       - PROWLER_MCP_TRANSPORT_MODE=http
+      # The API generates this key pair on first boot; reading the public half
+      # here is what lets the MCP server verify token signatures.
+      - DJANGO_TOKEN_VERIFYING_KEY_FILE=/home/prowler/.config/prowler-api/jwt_public.pem
+    volumes:
+      - "./_data/api:/home/prowler/.config/prowler-api:ro"
     env_file:
       - path: .env
         required: false
