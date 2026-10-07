@@ -35,6 +35,7 @@ from prowler.providers.iac.exceptions.exceptions import (
     IacScanError,
     IacTrivyNotFoundError,
 )
+from prowler.providers.iac.lib.git_transport import guarded_pool_manager, ls_remote
 
 
 class IacProvider(Provider):
@@ -348,6 +349,7 @@ class IacProvider(Provider):
                 )
 
             temporary_directory = tempfile.mkdtemp()
+            pool_manager = guarded_pool_manager()
             logger.info(
                 f"Cloning repository {original_url} into {temporary_directory}..."
             )
@@ -367,7 +369,10 @@ class IacProvider(Provider):
                         try:
                             bar.title = f"-> Cloning {original_url}..."
                             porcelain.clone(
-                                repository_url, temporary_directory, depth=1
+                                repository_url,
+                                temporary_directory,
+                                depth=1,
+                                pool_manager=pool_manager,
                             )
                             bar.title = "-> Repository cloned successfully!"
                         except Exception as clone_error:
@@ -376,12 +381,22 @@ class IacProvider(Provider):
                 else:
                     # No TTY, just clone without progress bar
                     logger.info(f"Cloning {original_url}...")
-                    porcelain.clone(repository_url, temporary_directory, depth=1)
+                    porcelain.clone(
+                        repository_url,
+                        temporary_directory,
+                        depth=1,
+                        pool_manager=pool_manager,
+                    )
                     logger.info("Repository cloned successfully!")
             except (AttributeError, OSError):
                 # Fallback if isatty() check fails
                 logger.info(f"Cloning {original_url}...")
-                porcelain.clone(repository_url, temporary_directory, depth=1)
+                porcelain.clone(
+                    repository_url,
+                    temporary_directory,
+                    depth=1,
+                    pool_manager=pool_manager,
+                )
                 logger.info("Repository cloned successfully!")
 
             # Detect the branch name from the cloned repository
@@ -689,16 +704,19 @@ class IacProvider(Provider):
                         # Public repository
                         auth_url = scan_repository_url
 
-                    # Use dulwich to test the connection
-                    porcelain.ls_remote(auth_url)
+                    # not porcelain.ls_remote: it cannot be given the pool manager
+                    # that validates redirect destinations
+                    ls_remote(auth_url)
 
                     return Connection(is_connected=True)
 
                 except Exception as e:
-                    # The raw error may carry the token-bearing URL or the
-                    # remote's response, so it is logged and never returned
+                    # A hostile remote can echo the Authorization header back in a git
+                    # ERR packet that dulwich copies into the exception text
                     error_msg = str(e)
-                    logger.error(f"IaC repository connection test failed: {error_msg}")
+                    logger.error(
+                        f"IaC repository connection test failed: {e.__class__.__name__}"
+                    )
                     if "authentication" in error_msg.lower() or "401" in error_msg:
                         return Connection(
                             is_connected=False,

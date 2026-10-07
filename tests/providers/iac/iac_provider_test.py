@@ -785,7 +785,9 @@ class TestIacProvider:
         url = "https://github.com/user/repo.git"
         with mock.patch.object(provider, "_detect_branch_name", return_value="main"):
             temp_dir, branch_name = provider._clone_repository(url)
-        mock_clone.assert_called_with(url, "/tmp/fake-dir", depth=1)
+        mock_clone.assert_called_with(
+            url, "/tmp/fake-dir", depth=1, pool_manager=mock.ANY
+        )
         assert temp_dir == "/tmp/fake-dir"
         assert branch_name == "main"
 
@@ -799,7 +801,9 @@ class TestIacProvider:
                 url, github_username="user", personal_access_token="token123"
             )
         expected_url = "https://user:token123@github.com/user/repo.git"
-        mock_clone.assert_called_with(expected_url, "/tmp/fake-dir", depth=1)
+        mock_clone.assert_called_with(
+            expected_url, "/tmp/fake-dir", depth=1, pool_manager=mock.ANY
+        )
         assert temp_dir == "/tmp/fake-dir"
         assert branch_name == "develop"
 
@@ -813,9 +817,29 @@ class TestIacProvider:
                 url, oauth_app_token="oauth456"
             )
         expected_url = "https://oauth2:oauth456@github.com/user/repo.git"
-        mock_clone.assert_called_with(expected_url, "/tmp/fake-dir", depth=1)
+        mock_clone.assert_called_with(
+            expected_url, "/tmp/fake-dir", depth=1, pool_manager=mock.ANY
+        )
         assert temp_dir == "/tmp/fake-dir"
         assert branch_name == "master"
+
+    @mock.patch("prowler.providers.iac.iac_provider.porcelain.clone")
+    @mock.patch("tempfile.mkdtemp", return_value="/tmp/fake-dir")
+    def test_clone_repository_validates_redirect_destinations(
+        self, _mock_mkdtemp, mock_clone
+    ):
+        """dulwich adopts a redirect's destination, so the clone needs the guarded manager."""
+        provider = IacProvider()
+        with (
+            mock.patch.object(provider, "_detect_branch_name", return_value="main"),
+            mock.patch(
+                "prowler.providers.iac.iac_provider.guarded_pool_manager",
+                return_value="the-guarded-manager",
+            ),
+        ):
+            provider._clone_repository("https://github.com/user/repo.git")
+
+        assert mock_clone.call_args.kwargs["pool_manager"] == "the-guarded-manager"
 
     @mock.patch("prowler.providers.iac.iac_provider.porcelain.clone")
     @mock.patch("tempfile.mkdtemp", return_value="/tmp/fake-dir")
@@ -881,9 +905,7 @@ class TestIacProvider:
         assert branch_name == "main"
 
     def test_test_connection_rejects_loopback_url(self):
-        with patch(
-            "prowler.providers.iac.iac_provider.porcelain.ls_remote"
-        ) as mock_ls_remote:
+        with patch("prowler.providers.iac.iac_provider.ls_remote") as mock_ls_remote:
             connection = IacProvider.test_connection(
                 scan_repository_url="https://127.0.0.1/user/repo.git"
             )
@@ -893,9 +915,7 @@ class TestIacProvider:
         mock_ls_remote.assert_not_called()
 
     def test_test_connection_rejects_private_range_url(self):
-        with patch(
-            "prowler.providers.iac.iac_provider.porcelain.ls_remote"
-        ) as mock_ls_remote:
+        with patch("prowler.providers.iac.iac_provider.ls_remote") as mock_ls_remote:
             connection = IacProvider.test_connection(
                 scan_repository_url="https://10.0.0.1/user/repo.git"
             )
@@ -944,9 +964,7 @@ class TestIacProvider:
                 "prowler.lib.network.ssrf.socket.getaddrinfo",
                 return_value=[(None, None, None, None, ("140.82.121.4", 0))],
             ) as mock_getaddrinfo,
-            patch(
-                "prowler.providers.iac.iac_provider.porcelain.ls_remote"
-            ) as mock_ls_remote,
+            patch("prowler.providers.iac.iac_provider.ls_remote") as mock_ls_remote,
         ):
             connection = IacProvider.test_connection(
                 scan_repository_url="https://github.com/user/repo.git"
@@ -963,7 +981,7 @@ class TestIacProvider:
                 return_value=[(None, None, None, None, ("140.82.121.4", 0))],
             ),
             patch(
-                "prowler.providers.iac.iac_provider.porcelain.ls_remote",
+                "prowler.providers.iac.iac_provider.ls_remote",
                 side_effect=Exception(
                     "https://x-access-token:SENTINEL_TOKEN@github.com/user/repo.git refused"
                 ),
