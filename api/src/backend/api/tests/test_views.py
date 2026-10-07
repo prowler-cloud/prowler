@@ -153,6 +153,47 @@ class TestUserViewSet:
         )
         return shared_user, role_a, role_b
 
+    @staticmethod
+    def _user_in_two_tenants_with_unique_roles(tenant_a, tenant_b):
+        suffix = uuid4()
+        user = User.objects.create_user(
+            name="scaled_user",
+            email=f"scaled-user-{suffix}@prowler.com",
+            password="TmpPass123@",
+        )
+        for tenant in (tenant_a, tenant_b):
+            Membership.objects.create(user=user, tenant=tenant)
+            role = Role.objects.create(name=f"role-{tenant.id}-{suffix}", tenant=tenant)
+            UserRoleRelationship.objects.create(user=user, role=role, tenant=tenant)
+        return user
+
+    def test_users_list_query_count_does_not_grow_with_user_count(
+        self, authenticated_client, tenants_fixture
+    ):
+        tenant_a, tenant_b, _ = tenants_fixture
+        self._user_in_two_tenants_with_unique_roles(tenant_a, tenant_b)
+        params = {"include": "memberships,roles"}
+
+        with CaptureQueriesContext(connection) as baseline:
+            response = authenticated_client.get(reverse("user-list"), params)
+        assert response.status_code == status.HTTP_200_OK
+        baseline_users = len(response.json()["data"])
+
+        for _ in range(3):
+            self._user_in_two_tenants_with_unique_roles(tenant_a, tenant_b)
+
+        with CaptureQueriesContext(connection) as scaled:
+            response = authenticated_client.get(reverse("user-list"), params)
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) > baseline_users
+
+        assert len(scaled.captured_queries) == len(baseline.captured_queries), (
+            "Tenant-scoped relations are re-querying per user: "
+            f"{len(baseline.captured_queries)} queries for {baseline_users} users "
+            f"vs {len(scaled.captured_queries)} for "
+            f"{len(response.json()['data'])}. The prefetch is being discarded."
+        )
+
     def test_users_retrieve_scopes_relations_to_active_tenant(
         self, authenticated_client, tenants_fixture
     ):
