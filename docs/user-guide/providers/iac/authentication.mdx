@@ -14,18 +14,18 @@ Prowler's Infrastructure as Code (IaC) provider enables you to scan local or rem
 
 ### Private Repository Hosts
 
-By default Prowler rejects a repository URL that resolves to a non-public address, as an SSRF defense. The check runs before the connection test and before the scan clones the repository, so a self-hosted GitLab, Gitea or Bitbucket on an internal network is rejected unless the trusted ranges are declared:
+**Prowler CLI scans a repository on an internal network with no extra configuration.** On the CLI the operator supplies the repository URL themselves, so there is nothing to defend against and the check below does not apply.
+
+**Prowler App rejects a repository URL that resolves to a non-public address**, as an SSRF defense. There the URL arrives from a tenant and the worker must not be used to reach the internal network it runs in. The check covers both the connection test and the scan clone. To scan a self-hosted GitLab, Gitea or Bitbucket from Prowler App, declare the trusted ranges:
 
 ```console
-export PROWLER_ALLOWED_PRIVATE_NETWORKS="10.20.0.0/16,192.168.65.254/32"
-prowler iac --scan-repository-url https://git.internal/team/infra.git
+PROWLER_ALLOWED_PRIVATE_NETWORKS="10.20.0.0/16,192.168.65.254/32"
 ```
 
-The value is a comma-separated list of IPs and CIDRs. A resolved address inside an allowlisted range is permitted; every other non-public address stays blocked, so link-local (`169.254.169.254`), loopback and the rest of the internal network remain protected. Malformed entries are rejected, and a non-empty allowlist is logged as a relaxed security control. When unset, only public addresses are reachable.
+The value is a comma-separated list of IPs and CIDRs. A resolved address inside an allowlisted range is permitted; every other non-public address stays blocked, so link-local (`169.254.169.254`), loopback and the rest of the internal network remain protected. Malformed entries are rejected, and a non-empty allowlist is logged as a relaxed security control.
 
-The variable is read by the process that runs the scan:
+The scan runs in the worker, not the API, so the variable has to reach the worker:
 
-- **CLI**: export it in the shell running `prowler`.
 - **Docker Compose**: set it in the root `.env`; it reaches the worker through the shared environment file.
 - **Helm**: add it under `api.djangoConfig`, which is rendered into the API ConfigMap that the worker inherits through `envFrom`.
 
@@ -35,4 +35,4 @@ api:
     PROWLER_ALLOWED_PRIVATE_NETWORKS: "10.20.0.0/16"
 ```
 
-In Prowler App the scan runs in the worker, not the API, so setting the variable only on the API container has no effect. The same variable applies to the Kubernetes and OpenStack providers. The Image provider has its own, `PROWLER_IMAGE_PROVIDER_ALLOWED_PRIVATE_NETWORKS`.
+Setting it only on the API container has no effect. The same variable applies to the Kubernetes and OpenStack providers. The Image provider has its own, `PROWLER_IMAGE_PROVIDER_ALLOWED_PRIVATE_NETWORKS`.

@@ -12,6 +12,14 @@ from prowler.lib.logger import logger
 
 ALLOWED_PRIVATE_NETWORKS_ENV = "PROWLER_ALLOWED_PRIVATE_NETWORKS"
 
+# The check stays on unless a host process opts out. `prowler/__main__.py` opts the
+# CLI out, because there the operator and the person supplying the URL are the same
+# and there is no SSRF boundary to defend. Anything else -- Prowler App's API and
+# worker above all -- keeps the check, so a missing setting fails safe.
+SKIP_OUTBOUND_CHECK_ENV = "PROWLER_SKIP_OUTBOUND_HOST_CHECK"
+
+_TRUTHY = {"1", "true", "yes", "on"}
+
 _NON_PUBLIC_IP_PROPERTIES = (
     "is_private",
     "is_loopback",
@@ -57,6 +65,11 @@ def allowed_private_networks() -> tuple:
             + ", ".join(str(network) for network in networks)
         )
     return networks
+
+
+def outbound_check_skipped() -> bool:
+    """Whether this process asked to skip the non-public destination check."""
+    return os.environ.get(SKIP_OUTBOUND_CHECK_ENV, "").strip().lower() in _TRUTHY
 
 
 def _unwrap_ipv6(address: ipaddress._BaseAddress) -> ipaddress._BaseAddress:
@@ -114,6 +127,9 @@ def validate_outbound_host(host: str) -> None:
     Resolution happens here and again inside the client that connects, so a
     hostile DNS server can still answer differently the second time.
     """
+    if outbound_check_skipped():
+        return
+
     networks = allowed_private_networks()
 
     try:
