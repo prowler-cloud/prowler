@@ -10,6 +10,7 @@ import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 import openaiSchema from "@/lib/provider-credentials/fixtures/openai-credential-schema.json";
 import templateSchema from "@/lib/provider-credentials/fixtures/template-credential-schema.json";
+import unionSchema from "@/lib/provider-credentials/fixtures/union-credential-schema.json";
 import { useProviderWizardStore } from "@/store/provider-wizard/store";
 import type { ProviderSchemasResult } from "@/types/provider-schema";
 
@@ -180,6 +181,77 @@ describe("dynamic credentials in the provider wizard", () => {
         verify_tls: false,
         timeout_seconds: 60,
         auth_scheme: "bearer",
+      },
+    });
+  });
+  it("shows only the chosen variant's fields when a schema offers several", async () => {
+    // Given
+    const user = userEvent.setup();
+    getProviderSchemas.mockResolvedValue({
+      status: "success",
+      providerType: "acme",
+      secretTypes: { static: unionSchema },
+    });
+    render(<DynamicCredentialsStep {...props} />);
+    await screen.findByLabelText(/API Host/);
+    const method = screen.getByRole("combobox", {
+      name: "Authentication method",
+    });
+
+    // Then
+    expect(method).toHaveTextContent("API token");
+    expect(screen.getByLabelText(/^Token/)).toBeVisible();
+    expect(screen.queryByLabelText(/Username/)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/Password/)).not.toBeInTheDocument();
+    expect(
+      screen.queryByLabelText(/Authentication Method/),
+    ).not.toBeInTheDocument();
+
+    // When: a token typed before switching away is gone on return.
+    await user.type(screen.getByLabelText(/^Token/), "previous-variant-token");
+    await user.click(method);
+    await user.click(
+      screen.getByRole("option", { name: "Username and password" }),
+    );
+    await user.click(method);
+    await user.click(screen.getByRole("option", { name: "API token" }));
+
+    // Then
+    expect(screen.getByLabelText(/^Token/)).toHaveValue("");
+
+    // When
+    await user.click(method);
+    await user.click(
+      screen.getByRole("option", { name: "Username and password" }),
+    );
+    await user.type(screen.getByLabelText(/API Host/), "api.acme.test");
+    await user.type(screen.getByLabelText(/Username/), "fixture-user");
+    await user.type(
+      screen.getByLabelText(/Password/),
+      "fixture-password-not-a-secret",
+    );
+
+    // Then
+    expect(screen.queryByLabelText(/^Token/)).not.toBeInTheDocument();
+
+    // When
+    act(() =>
+      screen
+        .getByLabelText(/Username/)
+        .closest("form")!
+        .requestSubmit(),
+    );
+
+    // Then: the variant's fixed discriminator travels with its own fields only.
+    await waitFor(() => expect(props.onNext).toHaveBeenCalledOnce());
+    expect(saveDynamicProviderCredentials).toHaveBeenCalledWith({
+      providerId: "account",
+      secretType: "static",
+      secret: {
+        auth_method: "basic",
+        host: "api.acme.test",
+        username: "fixture-user",
+        password: "fixture-password-not-a-secret",
       },
     });
   });

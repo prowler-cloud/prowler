@@ -2,8 +2,10 @@ import { describe, expect, it } from "vitest";
 
 import openaiSchema from "./fixtures/openai-credential-schema.json";
 import templateSchema from "./fixtures/template-credential-schema.json";
+import unionSchema from "./fixtures/union-credential-schema.json";
 import {
   parseRegistryCredentialSchema,
+  parseRegistryCredentialVariants,
   REGISTRY_CREDENTIAL_SCHEMA_LIMITS,
 } from "./provider-credential-schema";
 
@@ -157,8 +159,20 @@ describe("parseRegistryCredentialSchema", () => {
     ["definitions", { definitions: {} }],
     ["combinators", { anyOf: [] }],
     ["additional properties", { additionalProperties: true }],
+    ["typed additional properties", { additionalProperties: {} }],
   ])("rejects risky root keywords: %s", (_name, keyword) => {
     expect(parseRegistryCredentialSchema({ ...schema, ...keyword })).toBeNull();
+  });
+
+  it("accepts the closed object pydantic emits for extra='forbid'", () => {
+    // Given / When
+    const result = parseRegistryCredentialSchema({
+      ...schema,
+      additionalProperties: false,
+    });
+
+    // Then
+    expect(result).toEqual(parseRegistryCredentialSchema(schema));
   });
 
   it.each([
@@ -261,6 +275,101 @@ describe("parseRegistryCredentialSchema", () => {
       null,
       null,
       null,
+    ]);
+  });
+});
+
+describe("parseRegistryCredentialVariants", () => {
+  it("splits a pydantic union into variants that keep only their own fields", () => {
+    // Given / When
+    const result = parseRegistryCredentialVariants(unionSchema);
+
+    // Then
+    expect(
+      result?.map(({ label, schema }) => [
+        label,
+        schema.fields.map(({ name, kind }) => [name, kind]),
+      ]),
+    ).toEqual([
+      [
+        "API token",
+        [
+          ["auth_method", "constant"],
+          ["host", "text"],
+          ["token", "password"],
+        ],
+      ],
+      [
+        "Username and password",
+        [
+          ["auth_method", "constant"],
+          ["host", "text"],
+          ["username", "text"],
+          ["password", "password"],
+        ],
+      ],
+    ]);
+    expect(result?.[1].schema.fields[0].defaultValue).toBe("basic");
+  });
+
+  it("accepts anyOf, which pydantic emits for a union without discriminator", () => {
+    // Given
+    const { oneOf, discriminator: _discriminator, ...root } = unionSchema;
+
+    // When
+    const result = parseRegistryCredentialVariants({ ...root, anyOf: oneOf });
+
+    // Then
+    expect(result?.map(({ label }) => label)).toEqual([
+      "API token",
+      "Username and password",
+    ]);
+  });
+
+  it.each([
+    ["an unsupported variant", { oneOf: [templateSchema, { type: "array" }] }],
+    ["no variants", { oneOf: [] }],
+    ["variants that are not a list", { oneOf: templateSchema }],
+    ["both combinators", { oneOf: [templateSchema], anyOf: [templateSchema] }],
+    ["unknown root keywords", { oneOf: [templateSchema], $defs: {} }],
+    [
+      "a malformed discriminator",
+      { oneOf: [templateSchema], discriminator: 1 },
+    ],
+    [
+      "too many variants",
+      {
+        oneOf: Array.from(
+          { length: REGISTRY_CREDENTIAL_SCHEMA_LIMITS.MAX_VARIANTS + 1 },
+          () => templateSchema,
+        ),
+      },
+    ],
+  ])("rejects a union with %s", (_name, union) => {
+    expect(parseRegistryCredentialVariants(union)).toBeNull();
+  });
+
+  it.each([
+    { type: "string", const: "token", default: "basic" },
+    { type: "string", const: "" },
+    { type: "string", const: "token", enum: ["token"] },
+    { type: "integer", const: 1 },
+  ])("rejects a discriminator that is not one fixed string: %j", (property) => {
+    expect(
+      parseRegistryCredentialSchema({
+        type: "object",
+        properties: { auth_method: property },
+      }),
+    ).toBeNull();
+  });
+
+  it("returns a flat schema as its only variant", () => {
+    // Given / When
+    const result = parseRegistryCredentialVariants(templateSchema);
+
+    // Then
+    expect(result).toEqual([
+      { schema: parseRegistryCredentialSchema(templateSchema) },
     ]);
   });
 });

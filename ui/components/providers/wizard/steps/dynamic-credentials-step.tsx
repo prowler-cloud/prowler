@@ -20,7 +20,7 @@ import { Skeleton } from "@/components/shadcn/skeleton/skeleton";
 import { useToast } from "@/components/shadcn/toast";
 import { StatusAlert } from "@/components/shared/status-alert";
 import {
-  parseRegistryCredentialSchema,
+  parseRegistryCredentialVariants,
   type RegistryCredentialSchema,
 } from "@/lib/provider-credentials/provider-credential-schema";
 import {
@@ -28,7 +28,10 @@ import {
   validateCredentialValues,
 } from "@/lib/provider-credentials/provider-credential-values";
 import { useProviderWizardStore } from "@/store/provider-wizard/store";
-import type { ProviderSchemasResult } from "@/types/provider-schema";
+import type {
+  ProviderSchemasResult,
+  ProviderSecretTypes,
+} from "@/types/provider-schema";
 
 import {
   WIZARD_FOOTER_ACTION_TYPE,
@@ -41,6 +44,39 @@ interface DynamicCredentialsStepProps {
   onNext: () => void;
   onBack: () => void;
   onFooterChange: (config: WizardFooterConfig) => void;
+}
+
+interface CredentialMethod {
+  id: string;
+  secretType: string;
+  label: string;
+  schema: RegistryCredentialSchema | null;
+}
+
+// Each variant of a secret type's schema is a method of its own.
+function listCredentialMethods(
+  secretTypes: ProviderSecretTypes,
+): CredentialMethod[] {
+  return Object.entries(secretTypes).flatMap(([secretType, value]) => {
+    const label = secretType.replaceAll("_", " ");
+    const variants = parseRegistryCredentialVariants(value);
+    if (!variants || variants.length === 1) {
+      return [
+        {
+          id: secretType,
+          secretType,
+          label,
+          schema: variants?.[0].schema ?? null,
+        },
+      ];
+    }
+    return variants.map((variant, index) => ({
+      id: `${secretType}/${index}`,
+      secretType,
+      label: variant.label ?? `${label} ${index + 1}`,
+      schema: variant.schema,
+    }));
+  });
 }
 
 function credentialFormError(status: ProviderSchemasResult["status"]) {
@@ -233,12 +269,11 @@ function DynamicCredentialsContent(props: DynamicCredentialsStepProps) {
   }, [providerType, attempt]);
 
   const methods =
-    schemas?.status === "success" ? Object.keys(schemas.secretTypes) : [];
-  const secretType = selectedMethod || methods[0];
-  const schema =
-    schemas?.status === "success" && secretType
-      ? parseRegistryCredentialSchema(schemas.secretTypes[secretType])
-      : null;
+    schemas?.status === "success"
+      ? listCredentialMethods(schemas.secretTypes)
+      : [];
+  const method = methods.find(({ id }) => id === selectedMethod) ?? methods[0];
+  const schema = method?.schema ?? null;
   useEffect(() => {
     if (!schema)
       onFooterChange({
@@ -277,7 +312,7 @@ function DynamicCredentialsContent(props: DynamicCredentialsStepProps) {
             Authentication method
           </FieldLabel>
           <Select
-            value={secretType}
+            value={method?.id}
             disabled={saving}
             onValueChange={setSelectedMethod}
           >
@@ -285,20 +320,20 @@ function DynamicCredentialsContent(props: DynamicCredentialsStepProps) {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {methods.map((method) => (
-                <SelectItem key={method} value={method}>
-                  {method.replaceAll("_", " ")}
+              {methods.map(({ id, label }) => (
+                <SelectItem key={id} value={id}>
+                  {label}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
         </Field>
       )}
-      {schema ? (
+      {method && schema ? (
         <DynamicCredentialForm
-          key={`${secretType}/${attempt}`}
+          key={`${method.id}/${attempt}`}
           {...props}
-          secretType={secretType}
+          secretType={method.secretType}
           schema={schema}
           onLoadingChange={setSaving}
         />
