@@ -594,10 +594,10 @@
   {
     "section": "dependencies",
     "name": "sharp",
-    "from": "0.35.3",
-    "to": "0.35.4",
+    "from": "0.35.4",
+    "to": "0.35.5",
     "strategy": "installed",
-    "generatedAt": "2026-09-09T12:39:08.649Z"
+    "generatedAt": "2026-10-07T09:34:53.599Z"
   },
   {
     "section": "dependencies",
