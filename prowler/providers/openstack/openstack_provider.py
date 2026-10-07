@@ -14,12 +14,14 @@ from prowler.config.config import (
     load_and_validate_config_file,
 )
 from prowler.lib.logger import logger
+from prowler.lib.network.ssrf import OutboundURLNotAllowedError, validate_outbound_url
 from prowler.lib.utils.utils import print_boxes
 from prowler.providers.common.models import Audit_Metadata, Connection
 from prowler.providers.common.provider import Provider
 from prowler.providers.openstack.exceptions.exceptions import (
     OpenStackAmbiguousRegionError,
     OpenStackAuthenticationError,
+    OpenStackAuthUrlNotAllowedError,
     OpenStackCloudNotFoundError,
     OpenStackConfigFileNotFoundError,
     OpenStackCredentialsError,
@@ -455,6 +457,15 @@ class OpenstackProvider(Provider):
             )
 
     @staticmethod
+    def _validate_auth_url(auth_url: str) -> None:
+        """Reject an auth_url the worker must not reach; the detail stays in the log."""
+        try:
+            validate_outbound_url(auth_url, allowed_schemes=("http", "https"))
+        except OutboundURLNotAllowedError as error:
+            logger.warning(f"OpenStack auth_url rejected: {error}")
+            raise OpenStackAuthUrlNotAllowedError()
+
+    @staticmethod
     def _create_connection(
         session: OpenStackSession,
         region: str | None = None,
@@ -617,6 +628,8 @@ class OpenstackProvider(Provider):
                 project_domain_name=project_domain_name,
             )
 
+            OpenstackProvider._validate_auth_url(session.auth_url)
+
             # Validate provider_id matches project_id from config
             if provider_id and session.project_id != provider_id:
                 raise OpenStackInvalidProviderIdError(
@@ -636,6 +649,7 @@ class OpenstackProvider(Provider):
         except (
             OpenStackCredentialsError,
             OpenStackAuthenticationError,
+            OpenStackAuthUrlNotAllowedError,
             OpenStackSessionError,
             OpenStackConfigFileNotFoundError,
             OpenStackCloudNotFoundError,

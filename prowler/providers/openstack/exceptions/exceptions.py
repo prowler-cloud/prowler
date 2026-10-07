@@ -54,6 +54,10 @@ class OpenStackBaseException(ProwlerException):
             "message": "Ambiguous region configuration in clouds.yaml",
             "remediation": "Use either 'region_name' or 'regions' in your cloud configuration, not both.",
         },
+        (17012, "OpenStackAuthUrlNotAllowedError"): {
+            "message": "OpenStack auth_url points at a destination the connection test cannot reach",
+            "remediation": "Use an http or https auth_url that resolves to a public address, or allow the private network through PROWLER_ALLOWED_PRIVATE_NETWORKS.",
+        },
     }
 
     def __init__(self, code, file=None, original_exception=None, message=None):
@@ -208,6 +212,18 @@ class OpenStackAmbiguousRegionError(OpenStackBaseException):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             code=17011,
+            file=file,
+            original_exception=original_exception,
+            message=message,
+        )
+
+
+class OpenStackAuthUrlNotAllowedError(OpenStackBaseException):
+    """Exception for an auth_url rejected by the outbound URL guard"""
+
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            code=17012,
             file=file,
             original_exception=original_exception,
             message=message,
