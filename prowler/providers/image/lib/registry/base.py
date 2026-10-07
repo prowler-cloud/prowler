@@ -30,6 +30,13 @@ _ALLOWLIST_HINT = (
     "PROWLER_IMAGE_PROVIDER_ALLOWED_PRIVATE_NETWORKS."
 )
 
+# Same variable the shared guard reads; `prowler/__main__.py` sets it so the CLI,
+# where the operator supplies the registry themselves, is not refused its own
+# private network. Unset means the check runs, so a missing setting fails safe.
+SKIP_OUTBOUND_CHECK_ENV = "PROWLER_SKIP_OUTBOUND_HOST_CHECK"
+
+_TRUTHY = {"1", "true", "yes", "on"}
+
 _NON_PUBLIC_IP_PROPERTIES = (
     "is_private",
     "is_loopback",
@@ -38,6 +45,10 @@ _NON_PUBLIC_IP_PROPERTIES = (
     "is_reserved",
     "is_unspecified",
 )
+
+
+def _outbound_check_skipped() -> bool:
+    return os.environ.get(SKIP_OUTBOUND_CHECK_ENV, "").strip().lower() in _TRUTHY
 
 
 def _ip_is_non_public(ip_str: str) -> bool:
@@ -234,6 +245,9 @@ class RegistryAdapter(ABC):
                 file=__file__,
                 message=f"URL has no host: {canonical_url}",
             )
+
+        if _outbound_check_skipped():
+            return canonical_url
 
         try:
             ipaddress.ip_address(host)

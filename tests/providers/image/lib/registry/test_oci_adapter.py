@@ -585,6 +585,44 @@ class TestTenantSuppliedRegistryUrlValidator:
         assert mock_request.called
 
 
+class TestOutboundCheckOptOut:
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_private_registry_is_reachable_when_the_check_is_skipped(
+        self, mock_request, monkeypatch
+    ):
+        monkeypatch.setenv("PROWLER_SKIP_OUTBOUND_HOST_CHECK", "true")
+        resp = MagicMock(status_code=200, headers={}, ok=True)
+        resp.json.return_value = {"repositories": ["internal-app"]}
+        mock_request.return_value = resp
+        adapter = OciRegistryAdapter(registry_url="http://10.0.0.5:5000")
+
+        assert adapter.list_repositories() == ["internal-app"]
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_private_registry_is_refused_when_the_variable_is_unset(
+        self, mock_request, monkeypatch
+    ):
+        monkeypatch.delenv("PROWLER_SKIP_OUTBOUND_HOST_CHECK", raising=False)
+        adapter = OciRegistryAdapter(registry_url="http://10.0.0.5:5000")
+
+        with pytest.raises(ImageRegistryAuthError):
+            adapter.list_repositories()
+
+        mock_request.assert_not_called()
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_the_scheme_check_still_applies_when_skipped(
+        self, mock_request, monkeypatch
+    ):
+        monkeypatch.setenv("PROWLER_SKIP_OUTBOUND_HOST_CHECK", "true")
+        adapter = OciRegistryAdapter(registry_url="https://registry.example.com")
+
+        with pytest.raises(ImageRegistryAuthError, match="Disallowed URL scheme"):
+            adapter._validate_outbound_url("file:///etc/passwd", enforce_origin=False)
+
+        mock_request.assert_not_called()
+
+
 class TestObtainBearerTokenAppliesValidator:
     """Integration: malicious Www-Authenticate realm must be rejected before the second call."""
 
