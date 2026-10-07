@@ -38,6 +38,15 @@ PUBLISHED_ENCRYPTION_KEY_DIGESTS = frozenset(
     }
 )
 
+# SHA-256 of the base64 body of JWT signing keys that were committed to this
+# repository with a working value. Anyone holding one can forge tokens.
+PUBLISHED_SIGNING_KEY_DIGESTS = frozenset(
+    {
+        # contrib/k8s/helm/prowler-app/examples/minimal-installation/secrets.yaml
+        "375d5755ab4a7d38c58b38c67c1a6d1cab5afc91844445d8489c15ce7779d949",
+    }
+)
+
 ENCRYPTION_KEY_DOCS = (
     "https://docs.prowler.com/getting-started/installation/prowler-app"
     "#secrets-encryption-key"
@@ -48,6 +57,16 @@ _keys_initialized = False  # Flag to prevent multiple executions within the same
 
 def _digest(value):
     return hashlib.sha256(value.encode()).hexdigest()
+
+
+def _pem_digest(value):
+    """Digest of a PEM's base64 body, so indentation and line wrapping do not matter."""
+    body = "".join(
+        line.strip()
+        for line in value.splitlines()
+        if line.strip() and "-----" not in line
+    )
+    return _digest(body)
 
 
 class ApiConfig(AppConfig):
@@ -206,6 +225,16 @@ class ApiConfig(AppConfig):
         # Check if both JWT keys are set; if not, generate them
         signing_key = env.str(SIGNING_KEY_ENV, default="").strip()
         verifying_key = env.str(VERIFYING_KEY_ENV, default="").strip()
+
+        if signing_key and _pem_digest(signing_key) in PUBLISHED_SIGNING_KEY_DIGESTS:
+            raise ImproperlyConfigured(
+                f"'{SIGNING_KEY_ENV}' is set to a key pair that was published in the "
+                "Prowler repository and is therefore public. Anyone holding it can "
+                "forge API tokens. Generate a new pair with 'openssl genrsa -out "
+                "private.pem 2048' and 'openssl rsa -in private.pem -pubout', set both "
+                "variables and restart. Existing sessions end and users sign in again; "
+                "no stored data needs re-encrypting."
+            )
 
         if not signing_key or not verifying_key:
             logger.info(

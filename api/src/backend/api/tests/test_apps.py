@@ -251,6 +251,40 @@ def test_ensure_secrets_refuses_published_encryption_key(monkeypatch, secrets_di
     assert not (secrets_dir / ENCRYPTION_KEY_FILE).exists()
 
 
+def test_ensure_crypto_keys_refuses_published_signing_key(monkeypatch, tmp_path):
+    published, verifying = _stub_keys()
+    monkeypatch.setattr(
+        api_apps_module, "KEYS_DIRECTORY", Path(tmp_path), raising=False
+    )
+    monkeypatch.setattr(api_apps_module, "_keys_initialized", False, raising=False)
+    monkeypatch.setenv(SIGNING_KEY_ENV, published)
+    monkeypatch.setenv(VERIFYING_KEY_ENV, verifying)
+    monkeypatch.setattr(settings, "TESTING", False, raising=False)
+    monkeypatch.setattr(
+        api_apps_module,
+        "PUBLISHED_SIGNING_KEY_DIGESTS",
+        frozenset({api_apps_module._pem_digest(published)}),
+        raising=False,
+    )
+
+    with pytest.raises(ImproperlyConfigured) as exc_info:
+        ApiConfig("api", api_apps_module)._ensure_crypto_keys()
+
+    assert SIGNING_KEY_ENV in str(exc_info.value)
+    assert "PRIVATE" not in str(exc_info.value)
+    assert not (Path(tmp_path) / PRIVATE_KEY_FILE).exists()
+
+
+def test_pem_digest_ignores_indentation_and_wrapping():
+    # derived from the existing stub so no PEM literal is added to this file
+    flat = _stub_keys()[0]
+    indented = "".join(f"    {line}\n" for line in flat.splitlines())
+    wrapped = flat.replace("PRIVATE\n", "PRIV\nATE\n", 1)
+
+    assert api_apps_module._pem_digest(indented) == api_apps_module._pem_digest(flat)
+    assert api_apps_module._pem_digest(wrapped) == api_apps_module._pem_digest(flat)
+
+
 def test_ensure_secrets_generates_encryption_key_when_empty(secrets_dir):
     _make_app()._ensure_secrets()
 
