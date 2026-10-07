@@ -1,1 +1,1 @@
-JWT signatures in HTTP transport mode are verified against the Prowler API RS256 public key, supplied through DJANGO_TOKEN_VERIFYING_KEY or a file path, refusing forged, alg none and HMAC-keyed tokens
+JWT signatures in HTTP transport mode are verified against the Prowler API RS256 public key when DJANGO_TOKEN_VERIFYING_KEY or its file path is configured, refusing forged, alg none and HMAC-keyed tokens, and falling back to the previous expiration-only check when neither is set
