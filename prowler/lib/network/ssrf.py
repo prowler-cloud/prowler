@@ -126,7 +126,10 @@ def validate_outbound_host(host: str) -> None:
     for address in addresses:
         if _ip_is_non_public(address) and not _ip_is_allowlisted(address, networks):
             raise OutboundURLNotAllowedError(
-                f"Host {host!r} resolves to non-public address {address} and cannot be reached"
+                f"Host {host!r} resolves to non-public address {address} and cannot be "
+                f"reached. To scan a target on a private network, list the trusted "
+                f"ranges in the {ALLOWED_PRIVATE_NETWORKS_ENV} environment variable of "
+                f"the process running the scan"
             )
 
 
