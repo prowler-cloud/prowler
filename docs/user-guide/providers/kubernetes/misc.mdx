@@ -71,4 +71,4 @@ api:
 
 Setting it only on the API container has no effect. The same variable applies to the IaC and OpenStack providers. The Image provider has its own, `PROWLER_IMAGE_PROVIDER_ALLOWED_PRIVATE_NETWORKS`.
 
-The check resolves the cluster hostname locally, before the Kubernetes client connects. If egress is only possible through `HTTPS_PROXY` and the hostname cannot be resolved locally, declare the cluster's address range in `PROWLER_ALLOWED_PRIVATE_NETWORKS` or make the name resolvable to the scanning process.
+The check resolves the cluster hostname locally, before the Kubernetes client connects. If egress is only possible through `HTTPS_PROXY` and the hostname cannot be resolved locally, make the name resolvable to the scanning process. An allowlisted range does not help here: a host that does not resolve is rejected before any address is compared against the allowlist.
