@@ -25,6 +25,11 @@ _MAX_RETRIES = 3
 _BACKOFF_BASE = 1
 _USER_AGENT = f"Prowler/{prowler_version} (registry-adapter)"
 
+_ALLOWLIST_HINT = (
+    "To scan a registry on a private network, list the trusted ranges in "
+    "PROWLER_IMAGE_PROVIDER_ALLOWED_PRIVATE_NETWORKS."
+)
+
 _NON_PUBLIC_IP_PROPERTIES = (
     "is_private",
     "is_loopback",
@@ -245,8 +250,8 @@ class RegistryAdapter(ABC):
                     raise ImageRegistryAuthError(
                         file=__file__,
                         message=(
-                            f"Host {host!r} resolves to non-public address {resolved_ip}. "
-                            "This may indicate an SSRF attempt."
+                            f"Host {host!r} resolves to non-public address "
+                            f"{resolved_ip}. {_ALLOWLIST_HINT}"
                         ),
                     )
         else:
@@ -255,7 +260,7 @@ class RegistryAdapter(ABC):
                     file=__file__,
                     message=(
                         f"URL targets a non-public address: {host}. "
-                        "This may indicate an SSRF attempt."
+                        f"{_ALLOWLIST_HINT}"
                     ),
                 )
 
