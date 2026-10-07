@@ -57,8 +57,9 @@ class ProwlerAppAuth:
                 raise ValueError("Prowler API key format is incorrect")
         elif mode == "http" and not self.jwt_verifying_key:
             logger.warning(
-                "DJANGO_TOKEN_VERIFYING_KEY is not set: JWT signatures will not be "
-                "verified by the MCP server, only their expiration"
+                f"Neither DJANGO_TOKEN_VERIFYING_KEY nor {VERIFYING_KEY_FILE_ENV} is "
+                "set: JWT signatures will not be verified by the MCP server, only "
+                "their expiration"
             )
 
     def _parse_jwt(self, token: str) -> dict | None:

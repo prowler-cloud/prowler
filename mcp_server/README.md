@@ -105,7 +105,7 @@ Deploy your own remote MCP server:
 
 - Full control over deployment
 - Requires Python 3.12+ or Docker
-- Set `DJANGO_TOKEN_VERIFYING_KEY` to the Prowler API's JWT public key (PEM, `\n`-escaped newlines allowed) so the server verifies the signature of user tokens before forwarding them; without it only their expiration is checked
+- Set `DJANGO_TOKEN_VERIFYING_KEY` to the Prowler API's JWT public key (PEM, `\n`-escaped newlines allowed), or `DJANGO_TOKEN_VERIFYING_KEY_FILE` to a file holding it, so the server verifies the signature of user tokens before forwarding them; with neither set only their expiration is checked
 
 See the [Installation Guide](https://docs.prowler.com/getting-started/installation/prowler-mcp) for complete instructions.
 
