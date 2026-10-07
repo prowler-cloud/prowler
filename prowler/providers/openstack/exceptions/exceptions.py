@@ -55,7 +55,7 @@ class OpenStackBaseException(ProwlerException):
             "remediation": "Use either 'region_name' or 'regions' in your cloud configuration, not both.",
         },
         (17012, "OpenStackAuthUrlNotAllowedError"): {
-            "message": "OpenStack auth_url points at a destination the connection test cannot reach",
+            "message": "OpenStack auth_url points at a destination Prowler must not reach",
             "remediation": "Use an http or https auth_url that resolves to a public address, or allow the private network through PROWLER_ALLOWED_PRIVATE_NETWORKS.",
         },
     }
