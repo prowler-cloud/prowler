@@ -207,6 +207,18 @@ describe("dynamic credentials in the provider wizard", () => {
       screen.queryByLabelText(/Authentication Method/),
     ).not.toBeInTheDocument();
 
+    // When: a token typed before switching away is gone on return.
+    await user.type(screen.getByLabelText(/^Token/), "previous-variant-token");
+    await user.click(method);
+    await user.click(
+      screen.getByRole("option", { name: "Username and password" }),
+    );
+    await user.click(method);
+    await user.click(screen.getByRole("option", { name: "API token" }));
+
+    // Then
+    expect(screen.getByLabelText(/^Token/)).toHaveValue("");
+
     // When
     await user.click(method);
     await user.click(
