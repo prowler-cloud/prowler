@@ -498,10 +498,10 @@
   {
     "section": "dependencies",
     "name": "next",
-    "from": "16.3.3",
-    "to": "16.3.6",
+    "from": "16.3.6",
+    "to": "16.3.8",
     "strategy": "installed",
-    "generatedAt": "2026-10-01T09:28:54.112Z"
+    "generatedAt": "2026-10-08T12:43:06.476Z"
   },
   {
     "section": "dependencies",
