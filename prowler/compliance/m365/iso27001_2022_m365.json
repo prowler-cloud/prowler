@@ -202,6 +202,7 @@
         "admincenter_users_admins_reduced_license_footprint",
         "entra_admin_portals_access_restriction",
         "entra_admin_users_phishing_resistant_mfa_enabled",
+        "entra_authentication_method_no_deleted_group_references",
         "entra_conditional_access_policy_mfa_enforced_for_guest_users",
         "entra_conditional_access_policy_block_o365_elevated_insider_risk",
         "entra_conditional_access_policy_block_unknown_device_platforms",
@@ -279,6 +280,7 @@
       "Checks": [
         "entra_admin_portals_access_restriction",
         "entra_app_registration_no_unused_privileged_permissions",
+        "entra_authentication_method_no_deleted_group_references",
         "entra_policy_guest_users_access_restrictions",
         "entra_service_principal_no_secrets_for_permanent_tier0_roles",
         "sharepoint_external_sharing_managed",
@@ -719,6 +721,7 @@
         "entra_admin_users_mfa_enabled",
         "entra_admin_users_sign_in_frequency_enabled",
         "entra_all_apps_conditional_access_coverage",
+        "entra_authentication_method_no_deleted_group_references",
         "entra_conditional_access_policy_device_registration_mfa_required",
         "entra_conditional_access_policy_mfa_enforced_for_guest_users",
         "entra_intune_enrollment_sign_in_frequency_every_time",

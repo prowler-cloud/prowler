@@ -1,0 +1,41 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_authentication_method_no_deleted_group_references",
+  "CheckTitle": "Authentication method configurations ensure all group references resolve to existing Microsoft Entra groups",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "Every group identifier referenced by includeTargets or excludeTargets in the tenant's authentication methods policy must resolve to an existing Microsoft Entra group.\n\nThis check audits all authentication method configurations regardless of state and reports any whose group references no longer resolve in the directory.",
+  "Risk": "When a group referenced by an authentication method configuration is **deleted**, the reference becomes orphaned. Include-target deletions silently remove users from a strong method (e.g. passkeys, Authenticator), potentially pushing them to weaker alternatives. Exclude-target deletions re-expose users who were supposed to be blocked from a weak method (e.g. SMS).",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/graph/api/resources/authenticationmethodspolicy?view=graph-rest-1.0",
+    "https://learn.microsoft.com/en-us/graph/api/resources/authenticationmethodconfiguration?view=graph-rest-1.0",
+    "https://learn.microsoft.com/en-us/graph/api/group-get?view=graph-rest-1.0",
+    "https://learn.microsoft.com/en-us/entra/identity/authentication/concept-authentication-methods-manage"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the Microsoft Entra admin center (https://entra.microsoft.com)\n2. Navigate to Protection > Authentication methods > Policies\n3. Select the affected authentication method\n4. Under Enable and Target, remove the deleted group from Include or Exclude targets\n5. Add a valid replacement group if needed\n6. Save the configuration\n\nIf the group is still within the 30-day soft-delete window, it can be restored from Entra ID > Groups > Deleted groups.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Audit authentication method configurations periodically and remove references to deleted groups. Stale references in include targets silently remove users from strong methods; stale references in exclude targets re-expose users to weak methods. Treat both as misconfigurations regardless of method state.",
+      "Url": "https://hub.prowler.com/check/entra_authentication_method_no_deleted_group_references"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "entra_conditional_access_policy_no_deleted_object_references"
+  ],
+  "Notes": "The check runs against all authentication method configurations regardless of state (enabled or disabled) - stale references in disabled methods become live the moment the method is enabled. Only HTTP 404 responses flag a group id as deleted (FAIL). Transient Graph errors (5xx, throttling, insufficient permissions) are not treated as deletions; a configuration whose references could not be resolved for those reasons is reported as MANUAL so it is not silently considered clean. The special target id 'all_users' and non-GUID ids are ignored."
+}
