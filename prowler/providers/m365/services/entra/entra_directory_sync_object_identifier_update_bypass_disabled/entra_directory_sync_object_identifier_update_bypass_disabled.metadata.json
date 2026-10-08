@@ -1,0 +1,41 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_directory_sync_object_identifier_update_bypass_disabled",
+  "CheckTitle": "Disabled onPremisesObjectIdentifier update bypass enforces hard-match security protections",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "On hybrid tenants the tenant-level feature flag allowOnPremUpdateOfOnPremisesObjectIdentifierEnabled must be false. When enabled it bypasses the hard-match security protections that prevent an on-premises sync engine from taking over a cloud account that already has onPremisesObjectIdentifier set or holds a privileged Entra role.",
+  "Risk": "An attacker with write access to on-premises Active Directory can craft an object whose sourceAnchor or immutableId matches a privileged cloud account. With the bypass enabled, the sync engine overwrites the cloud identity, granting the attacker full control of that account and any roles it holds.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/entra/identity/hybrid/connect/how-to-connect-install-existing-tenant#temporarily-allow-onpremisesobjectidentifier-updates",
+    "https://learn.microsoft.com/en-us/graph/api/resources/onpremisesdirectorysynchronizationfeature?view=graph-rest-1.0",
+    "https://learn.microsoft.com/en-us/graph/api/onpremisesdirectorysynchronization-get?view=graph-rest-1.0"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "No Entra admin center UI exists for this flag. Use Microsoft Graph PowerShell:\n1. Connect-MgGraph -Scopes \"OnPremDirectorySynchronization.ReadWrite.All\"\n2. $OnPremSync = Get-MgDirectoryOnPremiseSynchronization\n3. $OnPremSync.Features.AllowOnPremUpdateOfOnPremisesObjectIdentifierEnabled = $false\n4. Update-MgDirectoryOnPremiseSynchronization -OnPremisesDirectorySynchronizationId $OnPremSync.Id -Features $OnPremSync.Features\n\nBefore disabling, finish remediating affected objects (clear onPremisesObjectIdentifier to null where intended, temporarily remove privileged roles during a planned hard match).",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Disable allowOnPremUpdateOfOnPremisesObjectIdentifierEnabled once migration or recovery work is complete. The bypass is a temporary measure that weakens hard-match protections enforced since July 2026.",
+      "Url": "https://hub.prowler.com/check/entra_directory_sync_object_identifier_update_bypass_disabled"
+    }
+  },
+  "Categories": [
+    "identity-access",
+    "e3"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "entra_directory_sync_object_takeover_blocked"
+  ],
+  "Notes": "This check only applies to hybrid tenants with on-premises directory synchronization enabled. Cloud-only tenants receive a PASS since the attack path does not exist. The msgraph-sdk may not model the property natively; the service layer falls back to features.additional_data to parse it."
+}

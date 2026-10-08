@@ -902,6 +902,22 @@ class Entra(M365Service):
             sync_data = await self.client.directory.on_premises_synchronization.get()
             for sync in getattr(sync_data, "value", []) or []:
                 features = getattr(sync, "features", None)
+                # Parse allowOnPremUpdateOfOnPremisesObjectIdentifierEnabled.
+                # The msgraph SDK may not model this property yet, so Kiota
+                # stores the unknown JSON key in features.additional_data.
+                # Try the native attribute first, then fall back to
+                # additional_data to stay forward-compatible with future SDK
+                # versions that add the property.
+                allow_on_prem_update = getattr(
+                    features,
+                    "allow_on_prem_update_of_on_premises_object_identifier_enabled",
+                    None,
+                )
+                if allow_on_prem_update is None:
+                    allow_on_prem_update = (
+                        getattr(features, "additional_data", {}) or {}
+                    ).get("allowOnPremUpdateOfOnPremisesObjectIdentifierEnabled")
+
                 directory_sync_settings.append(
                     DirectorySyncSettings(
                         id=sync.id,
@@ -923,6 +939,7 @@ class Entra(M365Service):
                             False,
                         )
                         or False,
+                        allow_on_prem_update_of_on_premises_object_identifier_enabled=allow_on_prem_update,
                     )
                 )
         except ODataError as error:
@@ -976,6 +993,10 @@ class Entra(M365Service):
                         "accountEnabled",
                         "onPremisesSyncEnabled",
                         "employeeHireDate",
+                        "userPrincipalName",
+                        "mailNickname",
+                        "onPremisesSamAccountName",
+                        "onPremisesDistinguishedName",
                     ],
                 )
             )
@@ -1037,6 +1058,14 @@ class Entra(M365Service):
                         ),
                         user_type=getattr(user, "user_type", None),
                         employee_hire_date=getattr(user, "employee_hire_date", None),
+                        user_principal_name=getattr(user, "user_principal_name", None),
+                        mail_nickname=getattr(user, "mail_nickname", None),
+                        on_premises_sam_account_name=getattr(
+                            user, "on_premises_sam_account_name", None
+                        ),
+                        on_premises_distinguished_name=getattr(
+                            user, "on_premises_distinguished_name", None
+                        ),
                     )
 
                 next_link = getattr(users_response, "odata_next_link", None)
@@ -2625,6 +2654,7 @@ class DirectorySyncSettings(BaseModel):
     seamless_sso_enabled: bool = False
     block_soft_match_enabled: bool = False
     block_cloud_object_takeover_through_hard_match_enabled: bool = False
+    allow_on_prem_update_of_on_premises_object_identifier_enabled: Optional[bool] = None
 
 
 class AuthenticationMethodConfiguration(BaseModel):
@@ -2718,6 +2748,10 @@ class User(BaseModel):
             (typically 'Member' or 'Guest'). ``None`` when Microsoft Graph does not
             return the property; checks must not assume a default in that case.
         employee_hire_date: The user's hire date as reported by Microsoft Graph.
+        user_principal_name: The user's UPN (e.g., ``user@contoso.com``).
+        mail_nickname: The user's mail alias.
+        on_premises_sam_account_name: The on-premises SAM account name synced from AD.
+        on_premises_distinguished_name: The on-premises AD distinguished name.
     """
 
     id: str
@@ -2729,6 +2763,10 @@ class User(BaseModel):
     authentication_methods: List[str] = []
     user_type: Optional[str] = None
     employee_hire_date: Optional[datetime] = None
+    user_principal_name: Optional[str] = None
+    mail_nickname: Optional[str] = None
+    on_premises_sam_account_name: Optional[str] = None
+    on_premises_distinguished_name: Optional[str] = None
 
 
 class InvitationsFrom(Enum):
