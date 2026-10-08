@@ -91,6 +91,7 @@ class Entra(M365Service):
         # instead of silently evaluating an empty directory.
         self.users_error: Optional[str] = None
         self.exchange_mailbox_permission_service_principals_error: Optional[str] = None
+        self.privileged_permission_service_principals_error: Optional[str] = None
         attributes = loop.run_until_complete(
             gather(
                 self._get_authorization_policy(),
@@ -114,6 +115,7 @@ class Entra(M365Service):
                 self._get_authentication_methods_policy_settings(),
                 self._get_pim_role_approval_settings(),
                 self._get_access_review_definitions(),
+                self._get_privileged_permission_service_principals(),
             )
         )
 
@@ -150,6 +152,9 @@ class Entra(M365Service):
             19
         ]
         self.access_review_definitions: List[AccessReviewDefinition] = attributes[20]
+        self.privileged_permission_service_principals: Dict[str, "ServicePrincipal"] = (
+            attributes[21]
+        )
         self.user_accounts_status = {}
 
         # Resolve directory-object identifiers referenced by Conditional Access
@@ -2081,6 +2086,292 @@ OAuthAppInfo
 
         return service_principals
 
+    async def _get_privileged_permission_service_principals(
+        self,
+    ) -> Dict[str, "ServicePrincipal"]:
+        """Retrieve service principals that hold privileged permissions.
+
+        Identifies non-Microsoft, non-managed-identity service principals that
+        hold privileged application permissions (``appRoleAssignments``),
+        admin-consented delegated permissions (``oauth2PermissionGrants`` with
+        ``consentType`` ``AllPrincipals``), or non-Tier-0 privileged directory
+        roles.  Service principals that already hold Tier 0 directory roles are
+        excluded because they are covered by
+        ``entra_service_principal_privileged_role_no_owners``.
+
+        For each qualifying service principal, owners are resolved on both the
+        service principal object and its parent application registration (when
+        the app registration exists in the audited tenant).
+
+        Returns:
+            Dict[str, ServicePrincipal]: Privileged service principals keyed
+                by service principal ID.
+        """
+        logger.info("Entra - Getting service principals with privileged permissions...")
+        self.privileged_permission_service_principals_error = None
+        service_principals: Dict[str, ServicePrincipal] = {}
+
+        audit_cfg = self.audit_config or {}
+        privileged_perms = set(
+            audit_cfg.get(
+                "privileged_app_permissions",
+                list(DEFAULT_PRIVILEGED_APP_PERMISSIONS),
+            )
+        )
+        privileged_role_ids = set(
+            audit_cfg.get(
+                "privileged_non_tier0_role_template_ids",
+                list(PRIVILEGED_NON_TIER0_ROLE_TEMPLATE_IDS.keys()),
+            )
+        )
+
+        try:
+            # ----------------------------------------------------------
+            # Phase 1: Iterate all service principals.
+            #   - Build appRole maps from resource SPs for permission
+            #     resolution (e.g. Microsoft Graph, Exchange Online).
+            #   - Collect candidate SPs (non-first-party, non-MI).
+            # ----------------------------------------------------------
+            resource_sp_app_roles: Dict[str, Dict[str, str]] = {}
+            candidate_sps = []
+
+            sp_response = await self.client.service_principals.get()
+            while sp_response:
+                for sp in getattr(sp_response, "value", []) or []:
+                    # Cache appRoles from every SP for later resolution.
+                    for role in getattr(sp, "app_roles", []) or []:
+                        role_id = str(getattr(role, "id", ""))
+                        role_value = getattr(role, "value", "") or ""
+                        if role_id and role_value:
+                            resource_sp_app_roles.setdefault(sp.id, {})[
+                                role_id
+                            ] = role_value
+
+                    # Exclude Microsoft first-party service principals.
+                    raw_owner = getattr(sp, "app_owner_organization_id", None)
+                    app_owner_org_id = str(raw_owner).lower() if raw_owner else None
+                    if app_owner_org_id in MICROSOFT_FIRST_PARTY_TENANT_IDS:
+                        continue
+
+                    # Exclude managed identities (cannot have owners).
+                    sp_type = (
+                        getattr(sp, "service_principal_type", "Application")
+                        or "Application"
+                    )
+                    if sp_type == "ManagedIdentity":
+                        continue
+
+                    candidate_sps.append(sp)
+
+                next_link = getattr(sp_response, "odata_next_link", None)
+                if not next_link:
+                    break
+                sp_response = await self.client.service_principals.with_url(
+                    next_link
+                ).get()
+
+            # ----------------------------------------------------------
+            # Phase 2: Fetch directory role assignments to identify
+            #   Tier 0 SPs (excluded) and non-Tier-0 privileged SPs.
+            # ----------------------------------------------------------
+            candidate_ids = {sp.id for sp in candidate_sps}
+            tier0_sp_ids: set = set()
+            privileged_role_assignments: Dict[str, List[str]] = {}
+
+            role_response = (
+                await self.client.role_management.directory.role_assignments.get()
+            )
+            while role_response:
+                for assignment in getattr(role_response, "value", []) or []:
+                    principal_id = getattr(assignment, "principal_id", None)
+                    role_def_id = getattr(assignment, "role_definition_id", None)
+                    if principal_id not in candidate_ids:
+                        continue
+                    if role_def_id in TIER_0_ROLE_TEMPLATE_IDS:
+                        tier0_sp_ids.add(principal_id)
+                    elif role_def_id in privileged_role_ids:
+                        privileged_role_assignments.setdefault(principal_id, []).append(
+                            role_def_id
+                        )
+
+                next_link = getattr(role_response, "odata_next_link", None)
+                if not next_link:
+                    break
+                role_response = await self.client.role_management.directory.role_assignments.with_url(
+                    next_link
+                ).get()
+
+            # Drop Tier 0 SPs from candidates.
+            candidate_sps = [sp for sp in candidate_sps if sp.id not in tier0_sp_ids]
+
+            # ----------------------------------------------------------
+            # Phase 3: Build application-object-ID mapping for owner
+            #   lookups on the parent app registration.
+            # ----------------------------------------------------------
+            application_object_id_by_app_id: Dict[str, str] = {}
+            app_response = await self.client.applications.get()
+            while app_response:
+                for app in getattr(app_response, "value", []) or []:
+                    app_id = getattr(app, "app_id", None)
+                    obj_id = getattr(app, "id", None)
+                    if app_id and obj_id:
+                        application_object_id_by_app_id[app_id] = obj_id
+                next_link = getattr(app_response, "odata_next_link", None)
+                if not next_link:
+                    break
+                app_response = await self.client.applications.with_url(next_link).get()
+
+            # ----------------------------------------------------------
+            # Phase 4: For each candidate, resolve privileged
+            #   appRoleAssignments and oauth2PermissionGrants, then
+            #   fetch owners for qualifying SPs.
+            # ----------------------------------------------------------
+            for sp in candidate_sps:
+                priv_app_perms: List[str] = []
+                priv_delegated_perms: List[str] = []
+                priv_role_ids: List[str] = privileged_role_assignments.get(sp.id, [])
+
+                # --- appRoleAssignments ---
+                try:
+                    assignments_response = (
+                        await self.client.service_principals.by_service_principal_id(
+                            sp.id
+                        ).app_role_assignments.get()
+                    )
+                    while assignments_response:
+                        for a in getattr(assignments_response, "value", []) or []:
+                            resource_id = str(getattr(a, "resource_id", ""))
+                            app_role_id = str(getattr(a, "app_role_id", ""))
+                            perm_value = resource_sp_app_roles.get(resource_id, {}).get(
+                                app_role_id
+                            )
+                            if perm_value and perm_value in privileged_perms:
+                                priv_app_perms.append(perm_value)
+                        next_link = getattr(
+                            assignments_response, "odata_next_link", None
+                        )
+                        if not next_link:
+                            break
+                        assignments_response = (
+                            await self.client.service_principals.by_service_principal_id(
+                                sp.id
+                            )
+                            .app_role_assignments.with_url(next_link)
+                            .get()
+                        )
+                except Exception as error:
+                    logger.error(
+                        f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
+
+                # --- oauth2PermissionGrants ---
+                try:
+                    grants_response = (
+                        await self.client.service_principals.by_service_principal_id(
+                            sp.id
+                        ).oauth2_permission_grants.get()
+                    )
+                    while grants_response:
+                        for g in getattr(grants_response, "value", []) or []:
+                            consent_type = getattr(g, "consent_type", "") or ""
+                            if consent_type == "AllPrincipals":
+                                scope = getattr(g, "scope", "") or ""
+                                for s in scope.split():
+                                    if s in privileged_perms:
+                                        priv_delegated_perms.append(s)
+                        next_link = getattr(grants_response, "odata_next_link", None)
+                        if not next_link:
+                            break
+                        grants_response = (
+                            await self.client.service_principals.by_service_principal_id(
+                                sp.id
+                            )
+                            .oauth2_permission_grants.with_url(next_link)
+                            .get()
+                        )
+                except Exception as error:
+                    logger.error(
+                        f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
+
+                # Skip if no privileged permissions found.
+                if (
+                    not priv_app_perms
+                    and not priv_delegated_perms
+                    and not priv_role_ids
+                ):
+                    continue
+
+                # --- Owners ---
+                sp_owner_ids: List[str] = []
+                app_owner_ids: List[str] = []
+
+                try:
+                    sp_owners_response = (
+                        await self.client.service_principals.by_service_principal_id(
+                            sp.id
+                        ).owners.get()
+                    )
+                    sp_owner_ids = [
+                        getattr(owner, "id", None)
+                        for owner in (getattr(sp_owners_response, "value", []) or [])
+                        if getattr(owner, "id", None)
+                    ]
+                except Exception as error:
+                    logger.error(
+                        f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
+
+                sp_app_id = getattr(sp, "app_id", "") or ""
+                app_object_id = application_object_id_by_app_id.get(sp_app_id)
+                if app_object_id:
+                    try:
+                        app_owners_response = (
+                            await self.client.applications.by_application_id(
+                                app_object_id
+                            ).owners.get()
+                        )
+                        app_owner_ids = [
+                            getattr(owner, "id", None)
+                            for owner in (
+                                getattr(app_owners_response, "value", []) or []
+                            )
+                            if getattr(owner, "id", None)
+                        ]
+                    except Exception as error:
+                        logger.error(
+                            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
+
+                raw_owner = getattr(sp, "app_owner_organization_id", None)
+                service_principals[sp.id] = ServicePrincipal(
+                    id=sp.id,
+                    name=getattr(sp, "display_name", "") or "",
+                    app_id=sp_app_id,
+                    app_owner_organization_id=(
+                        str(raw_owner).lower() if raw_owner else None
+                    ),
+                    service_principal_type=(
+                        getattr(sp, "service_principal_type", "Application")
+                        or "Application"
+                    ),
+                    privileged_app_permissions=sorted(set(priv_app_perms)),
+                    privileged_delegated_permissions=sorted(set(priv_delegated_perms)),
+                    privileged_directory_role_ids=list(set(priv_role_ids)),
+                    sp_owner_ids=sp_owner_ids,
+                    app_owner_ids=app_owner_ids,
+                )
+
+        except Exception as error:
+            self.privileged_permission_service_principals_error = (
+                f"{error.__class__.__name__}: {error}"
+            )
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+        return service_principals
+
     async def _get_app_registrations(self) -> Dict[str, "AppRegistration"]:
         """Retrieve application registrations from Microsoft Entra.
 
@@ -2881,6 +3172,45 @@ EXCHANGE_MAILBOX_GRAPH_PERMISSIONS = {
     "MailboxSettings.ReadWrite",
 }
 
+# Default set of application and delegated permission values considered
+# privileged. Used by ``_get_privileged_permission_service_principals``
+# to decide which service principals require owner accountability.
+# The list is configurable via the ``privileged_app_permissions`` key
+# in the M365 audit-config file.
+DEFAULT_PRIVILEGED_APP_PERMISSIONS = {
+    "RoleManagement.ReadWrite.Directory",
+    "AppRoleAssignment.ReadWrite.All",
+    "Application.ReadWrite.All",
+    "Directory.ReadWrite.All",
+    "Domain.ReadWrite.All",
+    "User.ReadWrite.All",
+    "Group.ReadWrite.All",
+    "GroupMember.ReadWrite.All",
+    "Mail.ReadWrite",
+    "Mail.Send",
+    "Files.ReadWrite.All",
+    "Sites.FullControl.All",
+    "full_access_as_app",  # Office 365 Exchange Online
+}
+
+# Non-Tier-0 directory roles that still grant significant administrative
+# capabilities. Service principals holding these roles are flagged by
+# ``entra_service_principal_privileged_permissions_no_owners``.
+# The mapping is {role_template_id: display_name}.
+PRIVILEGED_NON_TIER0_ROLE_TEMPLATE_IDS = {
+    "29232cdf-9323-42fd-ade2-1d097af3e4de": "Exchange Administrator",
+    "f28a1f50-f6e7-4571-818b-6a12f2af6b6c": "SharePoint Administrator",
+    "69091246-20e8-4a56-aa4d-066075b2a7a8": "Teams Administrator",
+    "17315797-102d-40b4-93e0-432062caca18": "Compliance Administrator",
+    "3a2c62db-5318-420d-8d74-23affee5d9d5": "Intune Administrator",
+    "11648597-926c-4cf3-9c36-bcebb0ba8dcc": "Power Platform Administrator",
+    "fdd7a751-b60b-444a-984c-02652fe8fa1c": "Groups Administrator",
+    "7698a772-787b-4ac8-901f-60d6b08affd2": "Cloud Device Administrator",
+    "44367163-eba1-44c3-98af-f5787879f96a": "Dynamics 365 Administrator",
+    "e3973bdf-4987-49ae-837a-ba8e231c7286": "Azure DevOps Administrator",
+    "7495fdc4-34c4-4d15-a289-98788ce399fd": "Azure Information Protection Administrator",
+}
+
 
 class ServicePrincipal(BaseModel):
     """Model representing a Microsoft Entra ID service principal.
@@ -2904,6 +3234,14 @@ class ServicePrincipal(BaseModel):
         app_owner_ids: Principal IDs that own the parent app registration.
             Populated only for service principals that hold a permanent Tier 0
             directory role assignment.
+        privileged_app_permissions: Resolved names of privileged application
+            permissions (appRoleAssignments) held by this service principal.
+            Populated by ``_get_privileged_permission_service_principals``.
+        privileged_delegated_permissions: Resolved names of privileged
+            admin-consented delegated permissions (oauth2PermissionGrants with
+            consentType ``AllPrincipals``) held by this service principal.
+        privileged_directory_role_ids: Non-Tier-0 privileged directory role
+            template IDs assigned to this service principal.
     """
 
     id: str
@@ -2918,6 +3256,9 @@ class ServicePrincipal(BaseModel):
     exchange_mailbox_permissions: List[str] = []
     sp_owner_ids: List[str] = []
     app_owner_ids: List[str] = []
+    privileged_app_permissions: List[str] = []
+    privileged_delegated_permissions: List[str] = []
+    privileged_directory_role_ids: List[str] = []
 
 
 class AppRegistration(BaseModel):

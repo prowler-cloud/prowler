@@ -1,0 +1,41 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_service_principal_privileged_permissions_no_owners",
+  "CheckTitle": "Owner accountability ensures governance of service principals with privileged permissions",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "Service principals holding **privileged permissions** (application permissions, admin-consented delegated permissions, or non-Tier-0 privileged directory roles) are evaluated for the presence of at least one **owner** on either the service principal or its parent **app registration**.",
+  "Risk": "A privileged service principal with **no owner** is an orphaned asset: nobody reviews its credentials, permissions, or usage, and nobody is accountable for rotating secrets or decommissioning it. Orphaned privileged apps are a common **persistence vector** after a compromise and weaken **accountability** across the tenant.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/entra/identity/enterprise-apps/overview-assign-app-owners",
+    "https://learn.microsoft.com/en-us/graph/api/serviceprincipal-list-owners?view=graph-rest-1.0",
+    "https://learn.microsoft.com/en-us/graph/api/application-list-owners?view=graph-rest-1.0",
+    "https://learn.microsoft.com/en-us/graph/api/serviceprincipal-list-approleassignments?view=graph-rest-1.0"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the Microsoft Entra admin center (https://entra.microsoft.com)\n2. Go to Identity > Applications > Enterprise applications > select the service principal\n3. Under Owners, assign at least one accountable owner\n4. Repeat for the parent App Registration under Identity > Applications > App registrations\n5. If the application is no longer needed, remove its privileged permissions or delete it entirely",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Assign at least one accountable owner to every service principal that holds privileged permissions. Owners should periodically review the application's credentials, permissions, and usage. Remove privileged permissions or decommission applications that nobody claims.",
+      "Url": "https://hub.prowler.com/check/entra_service_principal_privileged_permissions_no_owners"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "entra_service_principal_privileged_role_no_owners"
+  ],
+  "Notes": "Only service principals with privileged permissions (configurable via audit config) are evaluated. Microsoft first-party service principals, managed identities, and service principals holding Tier 0 directory roles are excluded."
+}

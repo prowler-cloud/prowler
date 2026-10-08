@@ -715,6 +715,26 @@ m365:
   # m365.exchange_mailbox_properties_auditing_enabled
   # Maximum number of days to keep audit logs
   audit_log_age: 90
+  # m365.entra_service_principal_privileged_permissions_no_owners
+  # Application and delegated permission values considered privileged.
+  # Service principals holding any of these (via appRoleAssignments or
+  # admin-consented oauth2PermissionGrants) must have at least one owner.
+  privileged_app_permissions:
+    [
+      "RoleManagement.ReadWrite.Directory",
+      "AppRoleAssignment.ReadWrite.All",
+      "Application.ReadWrite.All",
+      "Directory.ReadWrite.All",
+      "Domain.ReadWrite.All",
+      "User.ReadWrite.All",
+      "Group.ReadWrite.All",
+      "GroupMember.ReadWrite.All",
+      "Mail.ReadWrite",
+      "Mail.Send",
+      "Files.ReadWrite.All",
+      "Sites.FullControl.All",
+      "full_access_as_app",
+    ]
 
 # GitHub Configuration
 github:
