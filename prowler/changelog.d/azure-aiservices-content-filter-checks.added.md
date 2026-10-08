@@ -1,0 +1,1 @@
+`aiservices_account_network_acls_default_action_deny` check for Azure provider

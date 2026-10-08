@@ -56,6 +56,7 @@ def build_sdk_account(
     identity=None,
     private_endpoint_connections=None,
     restrict_outbound_network_access=None,
+    network_acls=None,
 ):
     account = MagicMock()
     account.id = ACCOUNT_ID
@@ -73,6 +74,7 @@ def build_sdk_account(
     account.properties.restrict_outbound_network_access = (
         restrict_outbound_network_access
     )
+    account.properties.network_acls = network_acls
     return account
 
 
@@ -209,6 +211,7 @@ class Test_AIServices_get_accounts:
         assert account.encryption_key_source == "Microsoft.CognitiveServices"
         assert account.private_endpoint_connection_statuses == []
         assert account.restrict_outbound_network_access is False
+        assert account.network_acls_default_action == "Allow"
 
     def test_new_fields_default_when_unset(self):
         mock_client = MagicMock()
@@ -220,6 +223,7 @@ class Test_AIServices_get_accounts:
         assert account.private_endpoint_connection_statuses == []
         assert account.identity_type is None
         assert account.restrict_outbound_network_access is False
+        assert account.network_acls_default_action == "Allow"
 
     def test_private_endpoint_statuses_mapped(self):
         broken = MagicMock()
@@ -282,6 +286,34 @@ class Test_AIServices_get_accounts:
         account = aiservices._get_accounts()[AZURE_SUBSCRIPTION_ID][ACCOUNT_ID]
 
         assert account.restrict_outbound_network_access is True
+
+    def test_network_acls_default_action_enum_mapped_to_value(self):
+        from azure.mgmt.cognitiveservices.models import NetworkRuleAction
+
+        network_acls = MagicMock()
+        network_acls.default_action = NetworkRuleAction.DENY
+        mock_client = MagicMock()
+        mock_client.accounts.list.return_value = [
+            build_sdk_account(network_acls=network_acls)
+        ]
+        aiservices = build_service(mock_client)
+
+        account = aiservices._get_accounts()[AZURE_SUBSCRIPTION_ID][ACCOUNT_ID]
+
+        assert account.network_acls_default_action == "Deny"
+
+    def test_network_acls_default_action_none_treated_as_allow(self):
+        network_acls = MagicMock()
+        network_acls.default_action = None
+        mock_client = MagicMock()
+        mock_client.accounts.list.return_value = [
+            build_sdk_account(network_acls=network_acls)
+        ]
+        aiservices = build_service(mock_client)
+
+        account = aiservices._get_accounts()[AZURE_SUBSCRIPTION_ID][ACCOUNT_ID]
+
+        assert account.network_acls_default_action == "Allow"
 
     def test_list_failure_leaves_subscription_empty(self):
         mock_client = MagicMock()

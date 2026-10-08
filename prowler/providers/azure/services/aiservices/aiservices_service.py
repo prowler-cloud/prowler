@@ -61,7 +61,8 @@ class AIServices(AzureService):
 
         Unset properties follow Azure defaults: public network access on,
         local (key) authentication on, Microsoft-managed encryption, no
-        managed identity, and unrestricted outbound access.
+        managed identity, unrestricted outbound access, and a network ACL
+        default action of `Allow`.
 
         Args:
             sdk_account: `azure.mgmt.cognitiveservices.models.Account`.
@@ -72,6 +73,9 @@ class AIServices(AzureService):
         properties = sdk_account.properties
         encryption = getattr(properties, "encryption", None)
         key_vault_properties = getattr(encryption, "key_vault_properties", None)
+        default_action = getattr(
+            getattr(properties, "network_acls", None), "default_action", None
+        )
         return Account(
             id=sdk_account.id,
             name=sdk_account.name,
@@ -91,6 +95,10 @@ class AIServices(AzureService):
             identity_type=getattr(getattr(sdk_account, "identity", None), "type", None),
             restrict_outbound_network_access=bool(
                 getattr(properties, "restrict_outbound_network_access", False)
+            ),
+            # NetworkRuleAction is a str enum; keep the plain value.
+            network_acls_default_action=(
+                getattr(default_action, "value", default_action) or "Allow"
             ),
         )
 
@@ -166,6 +174,7 @@ class Account(BaseModel):
     private_endpoint_connection_statuses: list[str] = []
     identity_type: Optional[str] = None
     restrict_outbound_network_access: bool = False
+    network_acls_default_action: str = "Allow"
     # Monitor DiagnosticSetting dataclasses. Left untyped: Pydantic would
     # re-validate them and reject log entries whose category is None.
     monitor_diagnostic_settings: Optional[list] = None
