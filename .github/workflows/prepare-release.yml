@@ -97,15 +97,22 @@ jobs:
         elif [ "$PATCH_VERSION" -eq 0 ]; then
           # Only cut the branch once the compiled changelogs are on master
           MASTER_SHA=$(git rev-parse origin/master)
+          VERSION_REGEX="${PROWLER_VERSION//./\\.}"
           FOUND_CHANGELOG=false
           for changelog in prowler/CHANGELOG.md api/CHANGELOG.md ui/CHANGELOG.md mcp_server/CHANGELOG.md; do
-            if git show "origin/master:$changelog" 2>/dev/null | grep -qE "^## \[.*\(Prowler v?${PROWLER_VERSION}\)"; then
+            if git show "origin/master:$changelog" 2>/dev/null | grep -qE "^## \[.*\(Prowler v?${VERSION_REGEX}\)"; then
               FOUND_CHANGELOG=true
               break
             fi
           done
           if [ "$FOUND_CHANGELOG" != "true" ]; then
             echo "ERROR: No changelog entry for Prowler $PROWLER_VERSION on master. Merge the compiled changelogs PR first."
+            exit 1
+          fi
+          # Check the SDK version on master before creating the remote branch
+          if ! git show "origin/master:pyproject.toml" | grep -qE "^version = \"${VERSION_REGEX}\"$" \
+            || ! git show "origin/master:prowler/config/config.py" | grep -qE "^prowler_version = \"${VERSION_REGEX}\"$"; then
+            echo "ERROR: pyproject.toml or prowler/config/config.py on master is not at version $PROWLER_VERSION. Fix master before creating $BRANCH_NAME."
             exit 1
           fi
           echo "Branch $BRANCH_NAME does not exist, creating it from master ($MASTER_SHA)..."
