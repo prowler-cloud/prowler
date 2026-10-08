@@ -1,0 +1,40 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_cross_tenant_access_default_outbound_restricted",
+  "CheckTitle": "Default cross-tenant access policy restricts outbound B2B collaboration and direct connect",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "The default cross-tenant access policy should **not** allow every user and group to access every application of any external tenant through B2B collaboration outbound or B2B direct connect outbound.\n\nOutbound access should be scoped to specific groups and applications, or blocked by default and opened per partner organization.",
+  "Risk": "With unrestricted outbound defaults, any user can join any external organization, accept B2B invitations, or use Teams shared channels via direct connect without approval. This widens **data exfiltration paths**, lets attackers lure users into attacker-controlled tenants, and removes control over which external organizations the tenant collaborates with.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/entra/external-id/cross-tenant-access-overview",
+    "https://learn.microsoft.com/entra/external-id/cross-tenant-access-settings-b2b-collaboration"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to the Microsoft Entra admin center at https://entra.microsoft.com/\n2. Go to **External Identities** > **Cross-tenant access settings**\n3. Select the **Default settings** tab\n4. Under **Outbound access settings**, click **Edit outbound defaults**\n5. On the **B2B collaboration** tab, restrict **Users and groups** and **Applications** to specific selections or set access to **Block**\n6. On the **B2B direct connect** tab, restrict **Users and groups** and **Applications** to specific selections or set access to **Block**\n7. Click **Save**",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Restrict default outbound cross-tenant access to specific groups and applications, or block it by default and allow collaboration per partner organization using partner-specific policies.",
+      "Url": "https://hub.prowler.com/check/entra_cross_tenant_access_default_outbound_restricted"
+    }
+  },
+  "Categories": [
+    "trust-boundaries",
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "entra_policy_guest_invitations_restricted_to_allowed_domains"
+  ],
+  "Notes": ""
+}

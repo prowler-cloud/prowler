@@ -1,0 +1,1 @@
+`entra_cross_tenant_access_default_outbound_restricted` check for M365 provider, verifying that default cross-tenant access does not let all users reach all external applications through B2B collaboration or B2B direct connect

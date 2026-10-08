@@ -49,6 +49,7 @@ class Entra(M365Service):
         oauth_apps (dict): Dictionary of OAuth applications from Defender XDR.
         authentication_method_configurations (dict): Dictionary of authentication method configurations.
         service_principals (dict): Dictionary of service principals with credentials and role assignments.
+        cross_tenant_access_default (CrossTenantAccessDefault): The default cross-tenant access policy configuration.
     """
 
     def __init__(self, provider: M365Provider):
@@ -114,6 +115,7 @@ class Entra(M365Service):
                 self._get_authentication_methods_policy_settings(),
                 self._get_pim_role_approval_settings(),
                 self._get_access_review_definitions(),
+                self._get_cross_tenant_access_default(),
             )
         )
 
@@ -150,6 +152,9 @@ class Entra(M365Service):
             19
         ]
         self.access_review_definitions: List[AccessReviewDefinition] = attributes[20]
+        self.cross_tenant_access_default: Optional[CrossTenantAccessDefault] = (
+            attributes[21]
+        )
         self.user_accounts_status = {}
 
         # Resolve directory-object identifiers referenced by Conditional Access
@@ -1551,6 +1556,86 @@ OAuthAppInfo
             )
         return b2b_policy
 
+    async def _get_cross_tenant_access_default(self):
+        """Retrieve the default cross-tenant access policy configuration.
+
+        Fetches the tenant's default cross-tenant access policy from
+        ``policies/crossTenantAccessPolicy/default`` to determine whether
+        B2B collaboration outbound and B2B direct connect outbound settings
+        are unrestricted (allowed for all users and all applications).
+
+        Returns:
+            Optional[CrossTenantAccessDefault]: The parsed default cross-tenant
+                access policy, or None on error.
+        """
+        logger.info("Entra - Getting cross-tenant access default policy...")
+        cross_tenant_default = None
+        try:
+            policy = await self.client.policies.cross_tenant_access_policy.default.get()
+            if policy:
+                cross_tenant_default = CrossTenantAccessDefault(
+                    b2b_collaboration_outbound=self._parse_b2b_setting(
+                        policy.b2b_collaboration_outbound
+                    ),
+                    b2b_direct_connect_outbound=self._parse_b2b_setting(
+                        policy.b2b_direct_connect_outbound
+                    ),
+                )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return cross_tenant_default
+
+    @staticmethod
+    def _parse_b2b_setting(setting) -> Optional["CrossTenantB2BSetting"]:
+        """Parse a crossTenantAccessPolicyB2BSetting into a model.
+
+        Extracts the ``usersAndGroups`` and ``applications`` target configuration
+        from a Graph SDK B2B setting object and converts them into a
+        ``CrossTenantB2BSetting`` model.
+
+        Args:
+            setting: A Graph SDK ``CrossTenantAccessPolicyB2BSetting`` object,
+                or None if the setting is absent.
+
+        Returns:
+            Optional[CrossTenantB2BSetting]: The parsed B2B setting, or None
+                if the input is None.
+        """
+        if setting is None:
+            return None
+
+        def parse_target_config(config) -> Optional["CrossTenantTargetConfiguration"]:
+            """Parse a target configuration (usersAndGroups or applications)."""
+            if config is None:
+                return None
+            access_type = None
+            if config.access_type is not None:
+                access_type = config.access_type.value
+            targets = []
+            if config.targets:
+                for t in config.targets:
+                    target_value = getattr(t, "target", None)
+                    target_type = getattr(t, "target_type", None)
+                    if target_type is not None:
+                        target_type = target_type.value
+                    targets.append(
+                        CrossTenantTarget(
+                            target=target_value,
+                            target_type=target_type,
+                        )
+                    )
+            return CrossTenantTargetConfiguration(
+                access_type=access_type,
+                targets=targets,
+            )
+
+        return CrossTenantB2BSetting(
+            users_and_groups=parse_target_config(setting.users_and_groups),
+            applications=parse_target_config(setting.applications),
+        )
+
     async def _get_named_locations(self):
         """Retrieve Conditional Access named locations from Microsoft Entra.
 
@@ -2935,3 +3020,56 @@ class AppRegistration(BaseModel):
     app_id: str = ""
     name: str = ""
     password_credentials: List[PasswordCredential] = []
+
+
+class CrossTenantTarget(BaseModel):
+    """A single target entry in a cross-tenant access target configuration.
+
+    Attributes:
+        target: The target identifier (e.g. ``AllUsers``, ``AllApplications``,
+            or a specific group/application ID).
+        target_type: The type of the target (e.g. ``user``, ``application``).
+    """
+
+    target: Optional[str] = None
+    target_type: Optional[str] = None
+
+
+class CrossTenantTargetConfiguration(BaseModel):
+    """Target configuration for users/groups or applications in a B2B setting.
+
+    Attributes:
+        access_type: The access type (``allowed``, ``blocked``, or
+            ``unknownFutureValue``). None if not set.
+        targets: List of targets for this configuration.
+    """
+
+    access_type: Optional[str] = None
+    targets: List[CrossTenantTarget] = []
+
+
+class CrossTenantB2BSetting(BaseModel):
+    """A B2B setting (collaboration or direct connect) within the cross-tenant policy.
+
+    Attributes:
+        users_and_groups: Target configuration for users and groups.
+        applications: Target configuration for applications.
+    """
+
+    users_and_groups: Optional[CrossTenantTargetConfiguration] = None
+    applications: Optional[CrossTenantTargetConfiguration] = None
+
+
+class CrossTenantAccessDefault(BaseModel):
+    """Default cross-tenant access policy configuration.
+
+    Represents the tenant's default cross-tenant access policy, specifically
+    the B2B collaboration outbound and B2B direct connect outbound settings.
+
+    Attributes:
+        b2b_collaboration_outbound: The outbound B2B collaboration setting.
+        b2b_direct_connect_outbound: The outbound B2B direct connect setting.
+    """
+
+    b2b_collaboration_outbound: Optional[CrossTenantB2BSetting] = None
+    b2b_direct_connect_outbound: Optional[CrossTenantB2BSetting] = None
