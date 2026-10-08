@@ -16,7 +16,8 @@ class entra_cross_tenant_access_default_outbound_restricted(Check):
       fully open (allowed for AllUsers AND AllApplications).
     - FAIL: At least one of the outbound settings allows all users and all
       applications.
-    - MANUAL: The default policy or one of its outbound settings could not be read.
+    - MANUAL: The default policy or one of its outbound settings could not be
+      read or is incomplete, and no setting is fully open.
     """
 
     def execute(self) -> List[CheckReportM365]:
@@ -53,12 +54,13 @@ class entra_cross_tenant_access_default_outbound_restricted(Check):
             findings.append(report)
             return findings
 
+        collaboration_open = self._is_fully_open(policy.b2b_collaboration_outbound)
+        direct_connect_open = self._is_fully_open(policy.b2b_direct_connect_outbound)
+
         unrestricted_settings = []
-
-        if self._is_fully_open(policy.b2b_collaboration_outbound):
+        if collaboration_open:
             unrestricted_settings.append("B2B collaboration outbound")
-
-        if self._is_fully_open(policy.b2b_direct_connect_outbound):
+        if direct_connect_open:
             unrestricted_settings.append("B2B direct connect outbound")
 
         if unrestricted_settings:
@@ -68,6 +70,13 @@ class entra_cross_tenant_access_default_outbound_restricted(Check):
                 f"Default cross-tenant access policy has unrestricted outbound "
                 f"access: {joined} allows all users to access all applications "
                 f"in any external tenant."
+            )
+        elif collaboration_open is None or direct_connect_open is None:
+            report.status = "MANUAL"
+            report.status_extended = (
+                "Cannot evaluate the default cross-tenant access outbound settings: "
+                "the users and groups or applications configuration of an outbound "
+                "setting is incomplete."
             )
         else:
             report.status = "PASS"
@@ -80,7 +89,7 @@ class entra_cross_tenant_access_default_outbound_restricted(Check):
         return findings
 
     @staticmethod
-    def _is_fully_open(setting: Optional[CrossTenantB2BSetting]) -> bool:
+    def _is_fully_open(setting: Optional[CrossTenantB2BSetting]) -> Optional[bool]:
         """Determine whether a B2B outbound setting is fully open.
 
         A setting is fully open when usersAndGroups has accessType ``allowed``
@@ -91,30 +100,26 @@ class entra_cross_tenant_access_default_outbound_restricted(Check):
             setting: The B2B setting to evaluate, or None if absent.
 
         Returns:
-            True if the setting is fully open, False otherwise.
+            True if the setting is fully open, False if it is demonstrably
+            restricted, or None if its configuration is missing or incomplete.
         """
         if setting is None:
-            return False
+            return None
 
-        users_open = False
-        apps_open = False
-
-        if (
-            setting.users_and_groups is not None
-            and setting.users_and_groups.access_type == "allowed"
+        configurations = (setting.users_and_groups, setting.applications)
+        if any(
+            config is None
+            or config.access_type not in ("allowed", "blocked")
+            or not config.targets
+            for config in configurations
         ):
-            for target in setting.users_and_groups.targets:
-                if target.target == "AllUsers":
-                    users_open = True
-                    break
+            return None
 
-        if (
-            setting.applications is not None
-            and setting.applications.access_type == "allowed"
-        ):
-            for target in setting.applications.targets:
-                if target.target == "AllApplications":
-                    apps_open = True
-                    break
-
+        users_open = setting.users_and_groups.access_type == "allowed" and any(
+            target.target == "AllUsers" for target in setting.users_and_groups.targets
+        )
+        apps_open = setting.applications.access_type == "allowed" and any(
+            target.target == "AllApplications"
+            for target in setting.applications.targets
+        )
         return users_open and apps_open

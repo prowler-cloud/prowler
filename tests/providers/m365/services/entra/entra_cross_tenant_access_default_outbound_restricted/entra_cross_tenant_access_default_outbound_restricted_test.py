@@ -66,7 +66,7 @@ def _specific_groups_allowed():
 
 class Test_entra_cross_tenant_access_default_outbound_restricted:
     def _run(self, policy):
-        entra_client = mock.MagicMock
+        entra_client = mock.MagicMock()
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
@@ -160,6 +160,51 @@ class Test_entra_cross_tenant_access_default_outbound_restricted:
         )
         assert len(result) == 1
         assert result[0].status == "MANUAL"
+
+    def test_incomplete_setting_with_blocked_setting_manual(self):
+        """MANUAL when no setting is open but one has no users and groups data."""
+        result = self._run(
+            CrossTenantAccessDefault(
+                b2b_collaboration_outbound=CrossTenantB2BSetting(
+                    users_and_groups=None,
+                    applications=_blocked_setting().applications,
+                ),
+                b2b_direct_connect_outbound=_blocked_setting(),
+            )
+        )
+        assert len(result) == 1
+        assert result[0].status == "MANUAL"
+        assert "incomplete" in result[0].status_extended
+
+    def test_setting_without_targets_manual(self):
+        """MANUAL when an access configuration has no targets."""
+        result = self._run(
+            CrossTenantAccessDefault(
+                b2b_collaboration_outbound=CrossTenantB2BSetting(
+                    users_and_groups=CrossTenantTargetConfiguration(
+                        access_type="allowed", targets=[]
+                    ),
+                    applications=_blocked_setting().applications,
+                ),
+                b2b_direct_connect_outbound=_blocked_setting(),
+            )
+        )
+        assert len(result) == 1
+        assert result[0].status == "MANUAL"
+
+    def test_open_setting_with_incomplete_setting_fail(self):
+        """FAIL takes precedence when one setting is open and the other incomplete."""
+        result = self._run(
+            CrossTenantAccessDefault(
+                b2b_collaboration_outbound=_all_users_all_apps_allowed(),
+                b2b_direct_connect_outbound=CrossTenantB2BSetting(
+                    users_and_groups=None, applications=None
+                ),
+            )
+        )
+        assert len(result) == 1
+        assert result[0].status == "FAIL"
+        assert "B2B collaboration outbound" in result[0].status_extended
 
     def test_users_allowed_all_but_apps_blocked_pass(self):
         """PASS when users are allowed for all but applications are blocked."""
