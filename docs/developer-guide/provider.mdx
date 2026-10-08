@@ -3344,7 +3344,7 @@ The API uses each model in two places:
 
 #### 2.10.1. Fields Supported by the Credentials Form
 
-The credentials form accepts flat models only. Each field maps to one form control:
+The credentials form accepts flat models only. The one exception is a discriminated union of flat models, described in section 2.10.2. Each field maps to one form control:
 
 | Pydantic Field | Form Control |
 | --- | --- |
@@ -3411,7 +3411,7 @@ class AcmeStaticCredentials(
 
 The credentials form renders the union as follows:
 
-* **Authentication method selector:** each model in the union becomes one option, labeled with the model's `title`, in declaration order. The first model is the default, and a union accepts up to eight models.
+* **Authentication method selector:** each model in the union becomes one option, labeled with the model's `title`, in declaration order. The first model is the default. A union accepts up to eight models; with more, the form shows "Credential form not supported".
 * **Method fields:** the form shows only the fields of the selected method. Switching methods clears the values entered so far.
 * **Discriminator:** the form never shows the `Literal` field and always sends its value, so the API validates the secret against the matching model.
 
