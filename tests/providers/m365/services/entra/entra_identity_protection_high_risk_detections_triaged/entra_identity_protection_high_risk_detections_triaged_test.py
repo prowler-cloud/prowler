@@ -7,7 +7,7 @@ from tests.providers.m365.m365_fixtures import DOMAIN, set_mocked_m365_provider
 class Test_entra_identity_protection_high_risk_detections_triaged:
     def test_no_detections_pass(self):
         """PASS when there are no untriaged high-risk detections."""
-        entra_client = mock.MagicMock
+        entra_client = mock.MagicMock()
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
         entra_client.tenant_domain = DOMAIN
@@ -44,7 +44,7 @@ class Test_entra_identity_protection_high_risk_detections_triaged:
 
     def test_detections_present_fail(self):
         """FAIL when there are untriaged high-risk detections."""
-        entra_client = mock.MagicMock
+        entra_client = mock.MagicMock()
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
         entra_client.tenant_domain = DOMAIN
@@ -100,7 +100,7 @@ class Test_entra_identity_protection_high_risk_detections_triaged:
 
     def test_detections_many_users_truncated(self):
         """FAIL with truncated user list when more than 5 users are affected."""
-        entra_client = mock.MagicMock
+        entra_client = mock.MagicMock()
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
         entra_client.tenant_domain = DOMAIN
@@ -145,7 +145,7 @@ class Test_entra_identity_protection_high_risk_detections_triaged:
 
     def test_error_manual(self):
         """MANUAL when risk detections cannot be retrieved."""
-        entra_client = mock.MagicMock
+        entra_client = mock.MagicMock()
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
         entra_client.tenant_domain = DOMAIN
@@ -183,7 +183,7 @@ class Test_entra_identity_protection_high_risk_detections_triaged:
 
     def test_single_detection_fail(self):
         """FAIL with a single detection for one user."""
-        entra_client = mock.MagicMock
+        entra_client = mock.MagicMock()
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
         entra_client.tenant_domain = DOMAIN

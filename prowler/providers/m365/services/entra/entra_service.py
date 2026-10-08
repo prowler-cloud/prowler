@@ -2290,11 +2290,14 @@ OAuthAppInfo
                     request_info, "bytes", {}
                 )
                 if not response:
-                    break
+                    # No body means nothing was read: report it, do not assume "no detections".
+                    self.high_risk_detections_error = (
+                        "Unable to retrieve Identity Protection risk detections "
+                        "(empty response)."
+                    )
+                    return None
                 data = json.loads(response)
                 page = data.get("value", []) or []
-                if not page:
-                    break
                 for item in page:
                     detections.append(
                         RiskDetection(
