@@ -27,6 +27,7 @@ import {
   getCredentialDefaults,
   validateCredentialValues,
 } from "@/lib/provider-credentials/provider-credential-values";
+import { formatRegistryLabel } from "@/lib/registry/labels";
 import { useProviderWizardStore } from "@/store/provider-wizard/store";
 import type {
   ProviderSchemasResult,
@@ -58,7 +59,7 @@ function listCredentialMethods(
   secretTypes: ProviderSecretTypes,
 ): CredentialMethod[] {
   return Object.entries(secretTypes).flatMap(([secretType, value]) => {
-    const label = secretType.replaceAll("_", " ");
+    const label = formatRegistryLabel(secretType);
     const variants = parseRegistryCredentialVariants(value);
     if (!variants || variants.length === 1) {
       return [

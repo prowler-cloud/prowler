@@ -22,6 +22,10 @@ const manageGroupsActionsMock = vi.hoisted(() => ({
   getAllProviderGroups: vi.fn(),
 }));
 
+const registryActionsMock = vi.hoisted(() => ({
+  getRegistryProviderLogos: vi.fn(),
+}));
+
 vi.mock("@/actions/providers", () => providersActionsMock);
 vi.mock(
   "@/actions/organizations/organizations",
@@ -30,6 +34,7 @@ vi.mock(
 vi.mock("@/actions/scans", () => scansActionsMock);
 vi.mock("@/actions/schedules", () => schedulesActionsMock);
 vi.mock("@/actions/manage-groups/manage-groups", () => manageGroupsActionsMock);
+vi.mock("@/actions/registry/registry", () => registryActionsMock);
 
 import { SearchParamsProps } from "@/types";
 import { NODE_KIND } from "@/types/organizations";
@@ -1312,5 +1317,97 @@ describe("loadProvidersAccountsViewData", () => {
     expect(findProviderRow(viewData.rows, "provider-2")?.hasSchedule).toBe(
       false,
     );
+  });
+
+  const givenRegistryProviderPage = (
+    logos: Promise<Record<string, string>>,
+  ) => {
+    const registryProvider = {
+      ...providersResponse.data[1],
+      id: "provider-vcf",
+      attributes: {
+        ...providersResponse.data[1].attributes,
+        provider: "vcf",
+        is_dynamic: true,
+      },
+    };
+    providersActionsMock.getProviders.mockResolvedValue({
+      ...providersResponse,
+      data: [providersResponse.data[0], registryProvider],
+    });
+    providersActionsMock.getAllProviders.mockResolvedValue(providersResponse);
+    schedulesActionsMock.getSchedules.mockResolvedValue({ data: [] });
+    organizationsActionsMock.listOrganizationsSafe.mockResolvedValue({
+      data: [],
+    });
+    organizationsActionsMock.listOrganizationNodesSafe.mockResolvedValue({
+      data: [],
+    });
+    registryActionsMock.getRegistryProviderLogos.mockReturnValue(logos);
+  };
+
+  it("streams the logo the registry publishes for each provider type", async () => {
+    // Given
+    givenRegistryProviderPage(
+      Promise.resolve({
+        vcf: "https://media.registry.example.com/providers/vcf/logo.png",
+      }),
+    );
+
+    // When
+    const viewData = await loadProvidersAccountsViewData({
+      searchParams: {} satisfies SearchParamsProps,
+      isCloud: true,
+    });
+
+    // Then
+    await expect(viewData.registryLogos).resolves.toEqual({
+      vcf: "https://media.registry.example.com/providers/vcf/logo.png",
+    });
+  });
+
+  it("returns the provider rows without waiting for registry logos", async () => {
+    // Given: a registry that never answers.
+    givenRegistryProviderPage(new Promise(() => {}));
+
+    // When
+    const result = await Promise.race([
+      loadProvidersAccountsViewData({
+        searchParams: {} satisfies SearchParamsProps,
+        isCloud: true,
+      }),
+      new Promise<"blocked">((resolve) =>
+        setTimeout(() => resolve("blocked"), 200),
+      ),
+    ]);
+
+    // Then
+    expect(result).not.toBe("blocked");
+    if (result === "blocked") return;
+    expect(findProviderRow(result.rows, "provider-vcf")).toBeDefined();
+  });
+
+  it("does not ask the registry for logos when the page lists no registry providers", async () => {
+    // Given
+    registryActionsMock.getRegistryProviderLogos.mockClear();
+    providersActionsMock.getProviders.mockResolvedValue(providersResponse);
+    providersActionsMock.getAllProviders.mockResolvedValue(providersResponse);
+    schedulesActionsMock.getSchedules.mockResolvedValue({ data: [] });
+    organizationsActionsMock.listOrganizationsSafe.mockResolvedValue({
+      data: [],
+    });
+    organizationsActionsMock.listOrganizationNodesSafe.mockResolvedValue({
+      data: [],
+    });
+
+    // When
+    const viewData = await loadProvidersAccountsViewData({
+      searchParams: {} satisfies SearchParamsProps,
+      isCloud: true,
+    });
+
+    // Then
+    await expect(viewData.registryLogos).resolves.toEqual({});
+    expect(registryActionsMock.getRegistryProviderLogos).not.toHaveBeenCalled();
   });
 });
