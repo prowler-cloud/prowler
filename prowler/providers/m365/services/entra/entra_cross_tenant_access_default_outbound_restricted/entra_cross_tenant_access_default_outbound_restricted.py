@@ -40,15 +40,11 @@ class entra_cross_tenant_access_default_outbound_restricted(Check):
             resource_id="crossTenantAccessPolicyConfigurationDefault",
         )
 
-        if (
-            policy is None
-            or policy.b2b_collaboration_outbound is None
-            or policy.b2b_direct_connect_outbound is None
-        ):
+        if policy is None:
             report.status = "MANUAL"
             report.status_extended = (
                 "Cannot evaluate the default cross-tenant access outbound settings: "
-                "the policy or its outbound settings could not be read. "
+                "the policy could not be read. "
                 "Verify that the Policy.Read.All permission is granted to the scanning application."
             )
             findings.append(report)

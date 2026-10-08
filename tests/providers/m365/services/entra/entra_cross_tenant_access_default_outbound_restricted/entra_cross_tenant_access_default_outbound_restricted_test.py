@@ -206,6 +206,18 @@ class Test_entra_cross_tenant_access_default_outbound_restricted:
         assert result[0].status == "FAIL"
         assert "B2B collaboration outbound" in result[0].status_extended
 
+    def test_open_setting_with_missing_setting_fail(self):
+        """FAIL takes precedence when one setting is open and the other missing."""
+        result = self._run(
+            CrossTenantAccessDefault(
+                b2b_collaboration_outbound=_all_users_all_apps_allowed(),
+                b2b_direct_connect_outbound=None,
+            )
+        )
+        assert len(result) == 1
+        assert result[0].status == "FAIL"
+        assert "B2B collaboration outbound" in result[0].status_extended
+
     def test_users_allowed_all_but_apps_blocked_pass(self):
         """PASS when users are allowed for all but applications are blocked."""
         result = self._run(
