@@ -227,6 +227,22 @@ export async function getInstalledRegistryProviderOptions(): Promise<RegistryPro
   };
 }
 
+/** Logo of each registry provider type; empty whenever Registry is out of reach. */
+export async function getRegistryProviderLogos(): Promise<
+  Record<string, string>
+> {
+  const access = (await auth())?.accessToken;
+  const permission = await evaluateRegistryProviderAccess(access);
+  if (!access || permission.status !== REGISTRY_ACCESS.ELIGIBLE) return {};
+  const result = await readRegistryProviders(access, null);
+  if (result.status !== "ready") return {};
+  return Object.fromEntries(
+    result.providers.flatMap(({ type, logoUrl }) =>
+      logoUrl?.startsWith("https://") ? [[type, logoUrl]] : [],
+    ),
+  );
+}
+
 async function readCompleteRegistryCatalog(
   accessToken: string,
   credential: RegistryCredentialStatus | null,

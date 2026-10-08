@@ -3,6 +3,7 @@
 import { ColumnDef, Row, RowSelectionState } from "@tanstack/react-table";
 import { Building2, FolderTree, Terminal } from "lucide-react";
 
+import { RegistryProviderLogo } from "@/components/providers/registry-provider-logo";
 import type {
   OrgWizardInitialData,
   ProviderWizardInitialData,
@@ -247,6 +248,15 @@ export function getColumnProviders(
           >
             <EntityInfo
               cloudProvider={provider.attributes.provider}
+              icon={
+                provider.attributes.is_dynamic ? (
+                  <RegistryProviderLogo
+                    type={provider.attributes.provider}
+                    logoUrl={provider.logoUrl}
+                    size={35}
+                  />
+                ) : undefined
+              }
               entityAlias={provider.attributes.alias}
               entityId={provider.attributes.uid}
               nameAction={

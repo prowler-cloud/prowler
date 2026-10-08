@@ -70,6 +70,8 @@ export interface ProvidersProviderRow
   scheduleSummary?: ScanScheduleSummary;
   /** Completed-at timestamp for the provider's last scan when exposed by API. */
   lastScanAt?: string | null;
+  /** Registry providers only: the logo their registry publishes. */
+  logoUrl?: string;
   subRows?: ProvidersTableRow[];
 }
 
