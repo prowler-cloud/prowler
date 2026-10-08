@@ -1,0 +1,36 @@
+{
+  "Provider": "huaweicloud",
+  "CheckID": "bms_instance_public_ip",
+  "CheckTitle": "BMS instances should not have public IP addresses directly assigned",
+  "CheckType": [],
+  "ServiceName": "bms",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "HUAWEICLOUD::BMS::Instance",
+  "ResourceGroup": "compute",
+  "Description": "Ensure that Bare Metal Server (BMS) instances do not have public IP addresses directly assigned to reduce exposure to the internet.",
+  "Risk": "BMS instances with directly assigned public IP addresses are exposed to the internet, increasing the attack surface and risk of unauthorized access.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.huaweicloud.com/intl/en-us/usermanual-bms/bms_01_0006.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "hcloud EIP UnbindPublicIp --publicip_id <eip_id>",
+      "NativeIaC": "",
+      "Other": "1. Log on to the Huawei Cloud console\n2. Navigate to Elastic IP\n3. Find the EIP bound to the BMS instance\n4. Click Unbind\n5. Use a NAT gateway or ELB for outbound/internet access instead",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Remove public IP addresses from BMS instances and use a NAT gateway or load balancer for internet access.",
+      "Url": "https://hub.prowler.com/check/bms_instance_public_ip"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
