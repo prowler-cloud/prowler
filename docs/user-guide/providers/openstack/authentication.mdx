@@ -611,6 +611,40 @@ If specific checks fail due to insufficient permissions:
 Using Public Cloud credentials can limit Keystone API access, so the command above may not work. Verify permissions in the provider's control panel instead.
 </Warning>
 
+### Private Keystone Endpoints
+
+Most OpenStack deployments keep Keystone on an internal network, which is the normal case rather than the exception.
+
+**Prowler CLI scans a private cloud with no extra configuration:**
+
+```console
+export OS_AUTH_URL="https://keystone.internal:5000/v3"
+prowler openstack
+```
+
+On the CLI the operator supplies the `auth_url` themselves, so there is nothing to defend against and the check below does not apply.
+
+**Prowler App rejects an `auth_url` that resolves to a non-public address**, as an SSRF defense, before the SDK connects and on both the connection test and the scan. There the URL arrives from a tenant and the worker must not be used to reach the internal network it runs in. To scan a private cloud from Prowler App, declare the trusted ranges:
+
+```console
+PROWLER_ALLOWED_PRIVATE_NETWORKS="10.20.0.0/16,192.168.65.254/32"
+```
+
+The value is a comma-separated list of IPs and CIDRs. A resolved address inside an allowlisted range is permitted; every other non-public address stays blocked, so link-local (`169.254.169.254`), loopback and the rest of the internal network remain protected. Malformed entries are rejected, and a non-empty allowlist is logged as a relaxed security control.
+
+The scan runs in the worker, not the API, so the variable has to reach the worker:
+
+- **Docker Compose**: set it in the root `.env`; it reaches the worker through the shared environment file.
+- **Helm**: add it under `api.djangoConfig`, which is rendered into the API ConfigMap that the worker inherits through `envFrom`.
+
+```yaml
+api:
+  djangoConfig:
+    PROWLER_ALLOWED_PRIVATE_NETWORKS: "10.20.0.0/16"
+```
+
+Setting it only on the API container has no effect. The same variable applies to the Kubernetes and IaC providers. The Image provider has its own, `PROWLER_IMAGE_PROVIDER_ALLOWED_PRIVATE_NETWORKS`.
+
 ## Next Steps
 
 - [Getting Started with OpenStack](/user-guide/providers/openstack/getting-started-openstack) - Run your first scan
