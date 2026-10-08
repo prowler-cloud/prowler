@@ -16,7 +16,7 @@ CHECK_MODULE = (
 
 def _mock_entra_client():
     """Return a MagicMock pre-configured with common attributes."""
-    entra_client = mock.MagicMock
+    entra_client = mock.MagicMock()
     entra_client.audited_tenant = "audited_tenant"
     entra_client.audited_domain = DOMAIN
     entra_client.tenant_domain = DOMAIN
@@ -81,7 +81,7 @@ class Test_entra_service_principal_privileged_permissions_no_owners:
             assert result[0].resource_name == "Service Principals"
             assert "Cannot evaluate" in result[0].status_extended
             assert "ODataError: Insufficient privileges" in result[0].status_extended
-            assert "Application.Read.All" in result[0].status_extended
+            assert "Directory.Read.All" in result[0].status_extended
 
     def test_privileged_app_permissions_with_sp_owners_pass(self):
         """SP with privileged app permissions and SP owners: expected PASS."""
@@ -593,3 +593,40 @@ class Test_entra_service_principal_privileged_permissions_no_owners:
             assert result[0].status == "FAIL"
             # The check uses sorted(set(...)) so duplicates are removed and sorted
             assert "Directory.ReadWrite.All, Mail.Send" in result[0].status_extended
+
+    def test_lookup_error_manual(self):
+        """SP whose permissions or owners could not be read: expected MANUAL."""
+        entra_client = _mock_entra_client()
+        sp_id = str(uuid4())
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_m365_provider(),
+            ),
+            mock.patch(
+                f"{CHECK_MODULE}.entra_client",
+                new=entra_client,
+            ),
+        ):
+            from prowler.providers.m365.services.entra.entra_service_principal_privileged_permissions_no_owners.entra_service_principal_privileged_permissions_no_owners import (
+                entra_service_principal_privileged_permissions_no_owners,
+            )
+
+            entra_client.privileged_permission_service_principals = {
+                sp_id: ServicePrincipal(
+                    id=sp_id,
+                    name="ThrottledApp",
+                    app_id=str(uuid4()),
+                    privileged_app_permissions=["Directory.ReadWrite.All"],
+                    privileged_permissions_error="service principal owners (ODataError)",
+                )
+            }
+
+            check = entra_service_principal_privileged_permissions_no_owners()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "MANUAL"
+            assert result[0].resource_id == sp_id
+            assert "service principal owners" in result[0].status_extended

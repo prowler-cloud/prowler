@@ -9,7 +9,7 @@
   "Severity": "medium",
   "ResourceType": "NotDefined",
   "ResourceGroup": "IAM",
-  "Description": "Service principals holding **privileged permissions** (application permissions, admin-consented delegated permissions, or non-Tier-0 privileged directory roles) are evaluated for the presence of at least one **owner** on either the service principal or its parent **app registration**.",
+  "Description": "Service principals holding **privileged permissions** (application permissions, admin-consented delegated permissions, or privileged directory roles) are evaluated for the presence of at least one **owner** on either the service principal or its parent **app registration**.",
   "Risk": "A privileged service principal with **no owner** is an orphaned asset: nobody reviews its credentials, permissions, or usage, and nobody is accountable for rotating secrets or decommissioning it. Orphaned privileged apps are a common **persistence vector** after a compromise and weaken **accountability** across the tenant.",
   "RelatedUrl": "",
   "AdditionalURLs": [
@@ -37,5 +37,5 @@
   "RelatedTo": [
     "entra_service_principal_privileged_role_no_owners"
   ],
-  "Notes": "Only service principals with privileged permissions (configurable via audit config) are evaluated. Microsoft first-party service principals, managed identities, and service principals holding Tier 0 directory roles are excluded."
+  "Notes": "Only service principals with privileged permissions (configurable via audit config) are evaluated. Microsoft first-party service principals and managed identities are excluded, as are tenant-owned service principals holding Tier 0 directory roles, which `entra_service_principal_privileged_role_no_owners` already covers."
 }

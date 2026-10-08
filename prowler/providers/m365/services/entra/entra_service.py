@@ -2095,9 +2095,12 @@ OAuthAppInfo
         hold privileged application permissions (``appRoleAssignments``),
         admin-consented delegated permissions (``oauth2PermissionGrants`` with
         ``consentType`` ``AllPrincipals``), or non-Tier-0 privileged directory
-        roles.  Service principals that already hold Tier 0 directory roles are
-        excluded because they are covered by
-        ``entra_service_principal_privileged_role_no_owners``.
+        roles.  Tenant-owned service principals that hold Tier 0 directory roles
+        are excluded because they are covered by
+        ``entra_service_principal_privileged_role_no_owners``; third-party ones
+        are kept and their Tier 0 roles count as privileged.  When a
+        per-principal lookup fails, the principal is kept with
+        ``privileged_permissions_error`` set.
 
         For each qualifying service principal, owners are resolved on both the
         service principal object and its parent application registration (when
@@ -2175,6 +2178,19 @@ OAuthAppInfo
             #   Tier 0 SPs (excluded) and non-Tier-0 privileged SPs.
             # ----------------------------------------------------------
             candidate_ids = {sp.id for sp in candidate_sps}
+            # entra_service_principal_privileged_role_no_owners only evaluates
+            # tenant-owned principals, so only those Tier 0 holders are excluded here;
+            # third-party Tier 0 holders are evaluated by this check instead.
+            tenant_id_normalized = (
+                str(self.tenant_id).lower() if self.tenant_id else None
+            )
+            tenant_owned_ids = {
+                sp.id
+                for sp in candidate_sps
+                if tenant_id_normalized
+                and str(getattr(sp, "app_owner_organization_id", "") or "").lower()
+                == tenant_id_normalized
+            }
             tier0_sp_ids: set = set()
             privileged_role_assignments: Dict[str, List[str]] = {}
 
@@ -2188,7 +2204,12 @@ OAuthAppInfo
                     if principal_id not in candidate_ids:
                         continue
                     if role_def_id in TIER_0_ROLE_TEMPLATE_IDS:
-                        tier0_sp_ids.add(principal_id)
+                        if principal_id in tenant_owned_ids:
+                            tier0_sp_ids.add(principal_id)
+                        else:
+                            privileged_role_assignments.setdefault(
+                                principal_id, []
+                            ).append(role_def_id)
                     elif role_def_id in privileged_role_ids:
                         privileged_role_assignments.setdefault(principal_id, []).append(
                             role_def_id
@@ -2230,6 +2251,7 @@ OAuthAppInfo
                 priv_app_perms: List[str] = []
                 priv_delegated_perms: List[str] = []
                 priv_role_ids: List[str] = privileged_role_assignments.get(sp.id, [])
+                retrieval_errors: List[str] = []
 
                 # --- appRoleAssignments ---
                 try:
@@ -2260,6 +2282,9 @@ OAuthAppInfo
                             .get()
                         )
                 except Exception as error:
+                    retrieval_errors.append(
+                        f"appRoleAssignments ({error.__class__.__name__})"
+                    )
                     logger.error(
                         f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
@@ -2290,15 +2315,20 @@ OAuthAppInfo
                             .get()
                         )
                 except Exception as error:
+                    retrieval_errors.append(
+                        f"oauth2PermissionGrants ({error.__class__.__name__})"
+                    )
                     logger.error(
                         f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
 
-                # Skip if no privileged permissions found.
+                # Skip if no privileged permissions found, unless the lookup
+                # failed: then the principal is kept so the check reports MANUAL.
                 if (
                     not priv_app_perms
                     and not priv_delegated_perms
                     and not priv_role_ids
+                    and not retrieval_errors
                 ):
                     continue
 
@@ -2318,6 +2348,9 @@ OAuthAppInfo
                         if getattr(owner, "id", None)
                     ]
                 except Exception as error:
+                    retrieval_errors.append(
+                        f"service principal owners ({error.__class__.__name__})"
+                    )
                     logger.error(
                         f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
@@ -2339,6 +2372,9 @@ OAuthAppInfo
                             if getattr(owner, "id", None)
                         ]
                     except Exception as error:
+                        retrieval_errors.append(
+                            f"application owners ({error.__class__.__name__})"
+                        )
                         logger.error(
                             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                         )
@@ -2360,6 +2396,9 @@ OAuthAppInfo
                     privileged_directory_role_ids=list(set(priv_role_ids)),
                     sp_owner_ids=sp_owner_ids,
                     app_owner_ids=app_owner_ids,
+                    privileged_permissions_error=(
+                        "; ".join(retrieval_errors) if retrieval_errors else None
+                    ),
                 )
 
         except Exception as error:
@@ -3240,8 +3279,11 @@ class ServicePrincipal(BaseModel):
         privileged_delegated_permissions: Resolved names of privileged
             admin-consented delegated permissions (oauth2PermissionGrants with
             consentType ``AllPrincipals``) held by this service principal.
-        privileged_directory_role_ids: Non-Tier-0 privileged directory role
-            template IDs assigned to this service principal.
+        privileged_directory_role_ids: Privileged directory role template IDs
+            assigned to this service principal (non-Tier 0, plus Tier 0 for
+            third-party principals).
+        privileged_permissions_error: Set when the privileged permissions or
+            owners of this service principal could not be fully retrieved.
     """
 
     id: str
@@ -3259,6 +3301,7 @@ class ServicePrincipal(BaseModel):
     privileged_app_permissions: List[str] = []
     privileged_delegated_permissions: List[str] = []
     privileged_directory_role_ids: List[str] = []
+    privileged_permissions_error: Optional[str] = None
 
 
 class AppRegistration(BaseModel):

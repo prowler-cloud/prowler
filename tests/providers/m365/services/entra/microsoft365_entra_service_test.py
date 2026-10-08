@@ -1990,3 +1990,124 @@ class TestGetUsersError:
         assert users == {}
         assert service.users_error is not None
         assert "Unable to retrieve users from Microsoft Graph" in service.users_error
+
+
+class TestPrivilegedPermissionServicePrincipals:
+    TENANT_ID = "11111111-1111-1111-1111-111111111111"
+    THIRD_PARTY_TENANT_ID = "22222222-2222-2222-2222-222222222222"
+    GLOBAL_ADMIN = "62e90394-69f5-4237-9190-012177145e10"
+
+    @staticmethod
+    def _page(items):
+        return SimpleNamespace(value=items, odata_next_link=None)
+
+    def _service(self, service_principals, role_assignments, sp_calls):
+        """Build an Entra service whose Graph client returns the given objects.
+
+        ``sp_calls`` maps a service principal ID to callables returning the
+        ``appRoleAssignments``, ``oauth2PermissionGrants`` and ``owners`` pages.
+        """
+        service = Entra.__new__(Entra)
+        service.audit_config = {}
+        service.tenant_id = self.TENANT_ID
+        service.privileged_permission_service_principals_error = None
+
+        def by_sp_id(sp_id):
+            calls = sp_calls[sp_id]
+            return SimpleNamespace(
+                app_role_assignments=SimpleNamespace(
+                    get=AsyncMock(side_effect=calls["app_roles"])
+                ),
+                oauth2_permission_grants=SimpleNamespace(
+                    get=AsyncMock(return_value=self._page([]))
+                ),
+                owners=SimpleNamespace(get=AsyncMock(side_effect=calls["owners"])),
+            )
+
+        service.client = SimpleNamespace(
+            service_principals=SimpleNamespace(
+                get=AsyncMock(return_value=self._page(service_principals)),
+                by_service_principal_id=by_sp_id,
+            ),
+            role_management=SimpleNamespace(
+                directory=SimpleNamespace(
+                    role_assignments=SimpleNamespace(
+                        get=AsyncMock(return_value=self._page(role_assignments))
+                    )
+                )
+            ),
+            applications=SimpleNamespace(get=AsyncMock(return_value=self._page([]))),
+        )
+        return service
+
+    def _sp(self, sp_id, owner_tenant):
+        return SimpleNamespace(
+            id=sp_id,
+            app_id=f"app-{sp_id}",
+            display_name=sp_id,
+            app_owner_organization_id=owner_tenant,
+            service_principal_type="Application",
+            app_roles=[],
+        )
+
+    def test_tier0_only_excluded_for_tenant_owned_principals(self):
+        service = self._service(
+            [
+                self._sp("own", self.TENANT_ID),
+                self._sp("isv", self.THIRD_PARTY_TENANT_ID),
+            ],
+            [
+                SimpleNamespace(
+                    principal_id="own", role_definition_id=self.GLOBAL_ADMIN
+                ),
+                SimpleNamespace(
+                    principal_id="isv", role_definition_id=self.GLOBAL_ADMIN
+                ),
+            ],
+            {
+                sp_id: {
+                    "app_roles": [self._page([])],
+                    "owners": [self._page([])],
+                }
+                for sp_id in ("own", "isv")
+            },
+        )
+
+        result = asyncio.run(service._get_privileged_permission_service_principals())
+
+        assert list(result) == ["isv"]
+        assert result["isv"].privileged_directory_role_ids == [self.GLOBAL_ADMIN]
+        assert result["isv"].privileged_permissions_error is None
+
+    def test_owner_lookup_error_is_recorded(self):
+        service = self._service(
+            [self._sp("isv", self.THIRD_PARTY_TENANT_ID)],
+            [SimpleNamespace(principal_id="isv", role_definition_id=self.GLOBAL_ADMIN)],
+            {
+                "isv": {
+                    "app_roles": [self._page([])],
+                    "owners": RuntimeError("throttled"),
+                }
+            },
+        )
+
+        result = asyncio.run(service._get_privileged_permission_service_principals())
+
+        assert "service principal owners" in result["isv"].privileged_permissions_error
+
+    def test_permission_lookup_error_keeps_principal(self):
+        service = self._service(
+            [self._sp("isv", self.THIRD_PARTY_TENANT_ID)],
+            [],
+            {
+                "isv": {
+                    "app_roles": RuntimeError("throttled"),
+                    "owners": [self._page([])],
+                }
+            },
+        )
+
+        result = asyncio.run(service._get_privileged_permission_service_principals())
+
+        assert list(result) == ["isv"]
+        assert "appRoleAssignments" in result["isv"].privileged_permissions_error

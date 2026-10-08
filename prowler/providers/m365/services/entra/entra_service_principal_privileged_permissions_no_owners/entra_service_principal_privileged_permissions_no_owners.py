@@ -17,9 +17,10 @@ class entra_service_principal_privileged_permissions_no_owners(Check):
     privileged non-Tier-0 directory roles) must have at least one owner on
     either the service principal or on its parent application registration.
 
-    Service principals holding Tier 0 directory roles are excluded because
-    they are already covered by
-    ``entra_service_principal_privileged_role_no_owners``.
+    Tenant-owned service principals holding Tier 0 directory roles are
+    excluded because they are already covered by
+    ``entra_service_principal_privileged_role_no_owners``; third-party ones
+    are evaluated here.
 
     - PASS: The service principal holds privileged permissions and has at
       least one owner on the service principal or its parent app
@@ -27,7 +28,8 @@ class entra_service_principal_privileged_permissions_no_owners(Check):
     - FAIL: The service principal holds privileged permissions and has no
       owners on either the service principal or the parent app
       registration.
-    - MANUAL: Service principal data could not be retrieved.
+    - MANUAL: Service principal data could not be retrieved, either for the
+      whole tenant or for the permissions or owners of a single principal.
     """
 
     def execute(self) -> List[CheckReportM365]:
@@ -53,14 +55,29 @@ class entra_service_principal_privileged_permissions_no_owners(Check):
                 "Cannot evaluate privileged permissions for service "
                 "principals: "
                 f"{entra_client.privileged_permission_service_principals_error}. "
-                "Verify that the scanning application has "
-                "Application.Read.All, DelegatedPermissionGrant.Read.All, "
-                "and RoleManagement.Read.Directory permissions."
+                "Verify that the scanning application has the "
+                "Directory.Read.All permission."
             )
             findings.append(report)
             return findings
 
         for sp in entra_client.privileged_permission_service_principals.values():
+            # A failed lookup means the permissions or owners are unknown.
+            if sp.privileged_permissions_error:
+                report = CheckReportM365(
+                    metadata=self.metadata(),
+                    resource=sp,
+                    resource_name=sp.name,
+                    resource_id=sp.id,
+                )
+                report.status = "MANUAL"
+                report.status_extended = (
+                    f"Cannot evaluate service principal '{sp.name}': could not "
+                    f"retrieve {sp.privileged_permissions_error}."
+                )
+                findings.append(report)
+                continue
+
             # Build a human-readable list of all privileged permissions.
             all_privileged: List[str] = []
             all_privileged.extend(sp.privileged_app_permissions)
