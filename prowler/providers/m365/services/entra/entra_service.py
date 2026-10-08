@@ -91,6 +91,7 @@ class Entra(M365Service):
         # instead of silently evaluating an empty directory.
         self.users_error: Optional[str] = None
         self.exchange_mailbox_permission_service_principals_error: Optional[str] = None
+        self.high_risk_detections_error: Optional[str] = None
         attributes = loop.run_until_complete(
             gather(
                 self._get_authorization_policy(),
@@ -114,6 +115,7 @@ class Entra(M365Service):
                 self._get_authentication_methods_policy_settings(),
                 self._get_pim_role_approval_settings(),
                 self._get_access_review_definitions(),
+                self._get_high_risk_detections(),
             )
         )
 
@@ -150,6 +152,7 @@ class Entra(M365Service):
             19
         ]
         self.access_review_definitions: List[AccessReviewDefinition] = attributes[20]
+        self.high_risk_detections: Optional[List[RiskDetection]] = attributes[21]
         self.user_accounts_status = {}
 
         # Resolve directory-object identifiers referenced by Conditional Access
@@ -2258,6 +2261,94 @@ OAuthAppInfo
                     f"{error.__class__.__name__}: {error}"
                 )
 
+    async def _get_high_risk_detections(self):
+        """Retrieve high-risk Identity Protection risk detections still at risk.
+
+        Queries ``identityProtection/riskDetections`` filtered by
+        ``riskLevel eq 'high'`` and ``riskState eq 'atRisk'`` to find
+        detections that have not yet been triaged (remediated, dismissed
+        or confirmed).
+
+        Returns:
+            Optional[List[RiskDetection]]: The list of untriaged high-risk
+            detections, or ``None`` when the data could not be retrieved
+            (missing license or permission).
+        """
+        logger.info("Entra - Getting high-risk Identity Protection detections...")
+        detections: List[RiskDetection] = []
+        try:
+            url = (
+                "https://graph.microsoft.com/v1.0/identityProtection/"
+                "riskDetections?$filter=riskLevel%20eq%20'high'%20"
+                "and%20riskState%20eq%20'atRisk'"
+            )
+            request_info = self.client.identity_protection.with_url(
+                url
+            ).to_get_request_information()
+            while True:
+                response = await self.client.request_adapter.send_primitive_async(
+                    request_info, "bytes", {}
+                )
+                if not response:
+                    break
+                data = json.loads(response)
+                page = data.get("value", []) or []
+                if not page:
+                    break
+                for item in page:
+                    detections.append(
+                        RiskDetection(
+                            id=item.get("id", ""),
+                            risk_event_type=item.get("riskEventType", ""),
+                            risk_level=item.get("riskLevel", ""),
+                            risk_state=item.get("riskState", ""),
+                            user_principal_name=item.get("userPrincipalName", ""),
+                            detected_date_time=item.get("detectedDateTime"),
+                        )
+                    )
+                next_link = data.get("@odata.nextLink") or data.get("nextLink")
+                if not next_link:
+                    break
+                request_info = self.client.identity_protection.with_url(
+                    next_link
+                ).to_get_request_information()
+        except ODataError as error:
+            error_code = getattr(error.error, "code", None) if error.error else None
+            status_code = getattr(error, "response_status_code", None)
+            if error_code == "Authorization_RequestDenied":
+                self.high_risk_detections_error = (
+                    "Insufficient privileges to read Identity Protection risk detections. "
+                    "Required permission: IdentityRiskEvent.Read.All."
+                )
+            elif status_code == 403 or error_code in (
+                "InsufficientLicense",
+                "Authentication_Unauthorized",
+            ):
+                self.high_risk_detections_error = (
+                    "Unable to read Identity Protection risk detections. "
+                    "The tenant may lack a Microsoft Entra ID P2 license or the "
+                    "IdentityRiskEvent.Read.All permission is not granted."
+                )
+            else:
+                self.high_risk_detections_error = (
+                    f"Unable to retrieve Identity Protection risk detections "
+                    f"({error_code or error.__class__.__name__})."
+                )
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            return None
+        except Exception as error:
+            self.high_risk_detections_error = (
+                f"Unable to retrieve Identity Protection risk detections "
+                f"({error.__class__.__name__})."
+            )
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            return None
+        return detections
+
 
 class ConditionalAccessPolicyState(Enum):
     ENABLED = "enabled"
@@ -2935,3 +3026,23 @@ class AppRegistration(BaseModel):
     app_id: str = ""
     name: str = ""
     password_credentials: List[PasswordCredential] = []
+
+
+class RiskDetection(BaseModel):
+    """Model representing a Microsoft Entra ID Protection risk detection.
+
+    Attributes:
+        id: The unique identifier of the risk detection.
+        risk_event_type: The type of risk event detected (e.g., leakedCredentials).
+        risk_level: The level of the detected risk (e.g., high, medium, low).
+        risk_state: The state of the risk detection (e.g., atRisk, remediated).
+        user_principal_name: The user principal name of the affected user.
+        detected_date_time: The date and time the risk was detected.
+    """
+
+    id: str
+    risk_event_type: str = ""
+    risk_level: str = ""
+    risk_state: str = ""
+    user_principal_name: str = ""
+    detected_date_time: Optional[str] = None
