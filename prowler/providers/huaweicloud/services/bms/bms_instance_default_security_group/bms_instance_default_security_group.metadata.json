@@ -1,0 +1,36 @@
+{
+  "Provider": "huaweicloud",
+  "CheckID": "bms_instance_default_security_group",
+  "CheckTitle": "BMS instances should not use the default security group",
+  "CheckType": [],
+  "ServiceName": "bms",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "HUAWEICLOUD::BMS::Instance",
+  "ResourceGroup": "compute",
+  "Description": "Ensure that Bare Metal Server (BMS) instances are not using the default security group, which may have overly permissive rules.",
+  "Risk": "The default security group may contain overly permissive rules that allow unrestricted access to BMS instances, increasing the risk of unauthorized access.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.huaweicloud.com/intl/en-us/usermanual-bms/bms_01_0007.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "hcloud ECS ChangeSecurityGroups --server_id <instance_id> --security_group_id <custom_sg_id>",
+      "NativeIaC": "",
+      "Other": "1. Log on to the Huawei Cloud console\n2. Navigate to Elastic Cloud Server\n3. Select the BMS instance\n4. Click More > Manage Security Group\n5. Remove the default security group\n6. Add a custom security group with appropriate rules",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Replace the default security group with a custom security group that has least-privilege rules.",
+      "Url": "https://hub.prowler.com/check/bms_instance_default_security_group"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
