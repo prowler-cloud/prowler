@@ -23,6 +23,7 @@ class ecs_securitygroup_restrict_rdp_internet(Check):
 
             # Check ingress rules for unrestricted access to RDP port
             has_unrestricted_access = False
+            open_cidr = ""
 
             for ingress_rule in security_group.ingress_rules:
                 # Check if rule allows traffic (policy == "accept")
@@ -34,9 +35,20 @@ class ecs_securitygroup_restrict_rdp_internet(Check):
                 if protocol not in ["tcp", "all"]:
                     continue
 
-                # Check if source is public (0.0.0.0/0)
-                source_cidr = ingress_rule.get("source_cidr_ip", "")
-                if not is_public_cidr(source_cidr):
+                # IPv6 sources are returned in a separate field, so a rule open
+                # to ::/0 has an empty source_cidr_ip.
+                source_cidr = next(
+                    (
+                        cidr
+                        for cidr in (
+                            ingress_rule.get("source_cidr_ip", ""),
+                            ingress_rule.get("ipv6_source_cidr_ip", ""),
+                        )
+                        if is_public_cidr(cidr)
+                    ),
+                    None,
+                )
+                if source_cidr is None:
                     continue
 
                 # Check if port range includes RDP port
@@ -45,16 +57,18 @@ class ecs_securitygroup_restrict_rdp_internet(Check):
                 if protocol == "all":
                     # If protocol is "all", all ports are open
                     has_unrestricted_access = True
+                    open_cidr = source_cidr
                     break
                 elif port_in_range(port_range, check_port):
                     has_unrestricted_access = True
+                    open_cidr = source_cidr
                     break
 
             if has_unrestricted_access:
                 report.status = "FAIL"
                 report.status_extended = (
                     f"Security group {security_group.name} ({security_group.id}) "
-                    f"has Microsoft RDP port 3389 open to the internet (0.0.0.0/0)."
+                    f"has Microsoft RDP port 3389 open to the internet ({open_cidr})."
                 )
             else:
                 report.status = "PASS"
