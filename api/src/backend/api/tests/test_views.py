@@ -34,6 +34,7 @@ from api.models import (
     Integration,
     Invitation,
     InvitationRoleRelationship,
+    LighthouseConfiguration,
     LighthouseProviderConfiguration,
     LighthouseProviderModels,
     LighthouseTenantConfiguration,
@@ -5338,7 +5339,28 @@ class TestTaskViewSet:
                 status.HTTP_202_ACCEPTED,
             ),
             ("integration-jira", {"manage_providers": True}, status.HTTP_403_FORBIDDEN),
-            ("lighthouse-connection-check", {}, status.HTTP_202_ACCEPTED),
+            (
+                "lighthouse-connection-check",
+                {"manage_account": True},
+                status.HTTP_202_ACCEPTED,
+            ),
+            ("lighthouse-connection-check", {}, status.HTTP_403_FORBIDDEN),
+            (
+                "lighthouse-provider-connection-check",
+                {"manage_account": True},
+                status.HTTP_202_ACCEPTED,
+            ),
+            (
+                "lighthouse-provider-connection-check",
+                {},
+                status.HTTP_403_FORBIDDEN,
+            ),
+            (
+                "lighthouse-provider-models-refresh",
+                {"manage_account": True},
+                status.HTTP_202_ACCEPTED,
+            ),
+            ("lighthouse-provider-models-refresh", {}, status.HTTP_403_FORBIDDEN),
         ],
     )
     @patch("api.v1.views.AsyncResult")
@@ -17740,6 +17762,260 @@ class TestTenantApiKeyViewSet:
         # Verify error object structure
         error = response_data["errors"][0]
         assert "detail" in error or "title" in error
+
+
+@pytest.mark.django_db
+class TestLighthouseWritePermissions:
+    ORIGINAL_CREDENTIALS = {"api_key": "original-key"}
+    ORIGINAL_BASE_URL = "https://llm.example.com/v1"
+
+    @pytest.fixture
+    def provider_config(self, tenants_fixture):
+        config = LighthouseProviderConfiguration(
+            tenant_id=tenants_fixture[0].id,
+            provider_type=LighthouseProviderConfiguration.LLMProviderChoices.OPENAI_COMPATIBLE,
+            base_url=self.ORIGINAL_BASE_URL,
+            is_active=True,
+        )
+        config.credentials_decoded = self.ORIGINAL_CREDENTIALS
+        config.save()
+        return config
+
+    @pytest.fixture
+    def legacy_config(self, tenants_fixture):
+        return LighthouseConfiguration.objects.create(
+            tenant_id=tenants_fixture[0].id,
+            name="OpenAI",
+            api_key_decoded="sk-fake-test-key-for-unit-testing-only",
+            model="gpt-4o",
+            temperature=0,
+            max_tokens=4000,
+            business_context="original context",
+            is_active=True,
+        )
+
+    @pytest.mark.parametrize(
+        "attributes",
+        [
+            {"credentials": {"api_key": "replaced-key"}},
+            {"base_url": "https://other.example.com/v1"},
+        ],
+    )
+    def test_provider_update_forbidden_without_permission(
+        self, authenticated_client_no_permissions_rbac, provider_config, attributes
+    ):
+        response = authenticated_client_no_permissions_rbac.patch(
+            reverse("lighthouse-providers-detail", kwargs={"pk": provider_config.id}),
+            data={
+                "data": {
+                    "type": "lighthouse-providers",
+                    "id": str(provider_config.id),
+                    "attributes": attributes,
+                }
+            },
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        provider_config.refresh_from_db()
+        assert provider_config.credentials_decoded == self.ORIGINAL_CREDENTIALS
+        assert provider_config.base_url == self.ORIGINAL_BASE_URL
+
+    def test_provider_create_forbidden_without_permission(
+        self, authenticated_client_no_permissions_rbac
+    ):
+        response = authenticated_client_no_permissions_rbac.post(
+            reverse("lighthouse-providers-list"),
+            data={
+                "data": {
+                    "type": "lighthouse-providers",
+                    "attributes": {
+                        "provider_type": "openai",
+                        "credentials": {"api_key": "sk-fake-test-key-1234"},
+                    },
+                }
+            },
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        assert not LighthouseProviderConfiguration.objects.exists()
+
+    def test_provider_delete_forbidden_without_permission(
+        self, authenticated_client_no_permissions_rbac, provider_config
+    ):
+        response = authenticated_client_no_permissions_rbac.delete(
+            reverse("lighthouse-providers-detail", kwargs={"pk": provider_config.id})
+        )
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        assert LighthouseProviderConfiguration.objects.filter(
+            id=provider_config.id
+        ).exists()
+
+    @pytest.mark.parametrize(
+        "url_name, task",
+        [
+            (
+                "lighthouse-providers-connection",
+                "check_lighthouse_provider_connection_task",
+            ),
+            (
+                "lighthouse-providers-refresh-models",
+                "refresh_lighthouse_provider_models_task",
+            ),
+        ],
+    )
+    def test_provider_actions_forbidden_without_permission(
+        self, authenticated_client_no_permissions_rbac, provider_config, url_name, task
+    ):
+        with patch(f"api.v1.views.{task}.delay") as mock_delay:
+            response = authenticated_client_no_permissions_rbac.post(
+                reverse(url_name, kwargs={"pk": provider_config.id})
+            )
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        mock_delay.assert_not_called()
+
+    def test_tenant_config_update_forbidden_without_permission(
+        self, authenticated_client_no_permissions_rbac
+    ):
+        response = authenticated_client_no_permissions_rbac.patch(
+            reverse("lighthouse-configurations"),
+            data={
+                "data": {
+                    "type": "lighthouse-configurations",
+                    "attributes": {"business_context": "replaced context"},
+                }
+            },
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        assert not LighthouseTenantConfiguration.objects.exists()
+
+    def test_legacy_config_create_forbidden_without_permission(
+        self, authenticated_client_no_permissions_rbac
+    ):
+        response = authenticated_client_no_permissions_rbac.post(
+            reverse("lighthouseconfiguration-list"),
+            data={
+                "data": {
+                    "type": "lighthouse-configurations",
+                    "attributes": {
+                        "name": "OpenAI",
+                        "api_key": "sk-fake-test-key-for-unit-testing-only",
+                        "model": "gpt-4o",
+                        "temperature": 0,
+                        "max_tokens": 4000,
+                    },
+                }
+            },
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        assert not LighthouseConfiguration.objects.exists()
+
+    def test_legacy_config_put_forbidden_without_permission(
+        self, authenticated_client_no_permissions_rbac, legacy_config
+    ):
+        response = authenticated_client_no_permissions_rbac.put(
+            reverse("lighthouseconfiguration-detail", kwargs={"pk": legacy_config.id}),
+            data={
+                "data": {
+                    "type": "lighthouse-configurations",
+                    "id": str(legacy_config.id),
+                    "attributes": {"business_context": "replaced context"},
+                }
+            },
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        legacy_config.refresh_from_db()
+        assert legacy_config.business_context == "original context"
+
+    def test_legacy_config_update_forbidden_without_permission(
+        self, authenticated_client_no_permissions_rbac, legacy_config
+    ):
+        response = authenticated_client_no_permissions_rbac.patch(
+            reverse("lighthouseconfiguration-detail", kwargs={"pk": legacy_config.id}),
+            data={
+                "data": {
+                    "type": "lighthouse-configurations",
+                    "id": str(legacy_config.id),
+                    "attributes": {"business_context": "replaced context"},
+                }
+            },
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        legacy_config.refresh_from_db()
+        assert legacy_config.business_context == "original context"
+
+    def test_legacy_config_delete_forbidden_without_permission(
+        self, authenticated_client_no_permissions_rbac, legacy_config
+    ):
+        response = authenticated_client_no_permissions_rbac.delete(
+            reverse("lighthouseconfiguration-detail", kwargs={"pk": legacy_config.id})
+        )
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        assert LighthouseConfiguration.objects.filter(id=legacy_config.id).exists()
+
+    @patch("api.v1.views.check_lighthouse_connection_task.delay")
+    def test_legacy_config_connection_forbidden_without_permission(
+        self, mock_delay, authenticated_client_no_permissions_rbac, legacy_config
+    ):
+        response = authenticated_client_no_permissions_rbac.post(
+            reverse(
+                "lighthouseconfiguration-connection", kwargs={"pk": legacy_config.id}
+            )
+        )
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        mock_delay.assert_not_called()
+
+    def test_tenant_config_update_allowed_with_manage_account(
+        self, authenticated_client_rbac_manage_account
+    ):
+        response = authenticated_client_rbac_manage_account.patch(
+            reverse("lighthouse-configurations"),
+            data={
+                "data": {
+                    "type": "lighthouse-configurations",
+                    "attributes": {"business_context": "manage account context"},
+                }
+            },
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert (
+            response.json()["data"]["attributes"]["business_context"]
+            == "manage account context"
+        )
+
+    def test_reads_stay_open_without_permission(
+        self,
+        authenticated_client_no_permissions_rbac,
+        tenants_fixture,
+        provider_config,
+        legacy_config,
+    ):
+        LighthouseTenantConfiguration.objects.create(tenant_id=tenants_fixture[0].id)
+
+        for url in (
+            reverse("lighthouse-providers-list"),
+            reverse("lighthouse-providers-detail", kwargs={"pk": provider_config.id}),
+            reverse("lighthouse-models-list"),
+            reverse("lighthouse-configurations"),
+            reverse("lighthouseconfiguration-list"),
+        ):
+            response = authenticated_client_no_permissions_rbac.get(url)
+            assert response.status_code == status.HTTP_200_OK, url
 
 
 @pytest.mark.django_db

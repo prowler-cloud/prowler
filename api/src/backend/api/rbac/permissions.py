@@ -35,9 +35,9 @@ TASK_REVOKE_PERMISSIONS: dict[str, list[Permissions] | None] = {
     "scan-report": [Permissions.MANAGE_SCANS],
     "attack-paths-scan-perform": [Permissions.MANAGE_SCANS],
     "findings-mute-latest-scans": [Permissions.MANAGE_SCANS],
-    "lighthouse-connection-check": [],
-    "lighthouse-provider-connection-check": [],
-    "lighthouse-provider-models-refresh": [],
+    "lighthouse-connection-check": [Permissions.MANAGE_ACCOUNT],
+    "lighthouse-provider-connection-check": [Permissions.MANAGE_ACCOUNT],
+    "lighthouse-provider-models-refresh": [Permissions.MANAGE_ACCOUNT],
 }
 
 
