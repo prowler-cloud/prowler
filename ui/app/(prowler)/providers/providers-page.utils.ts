@@ -154,7 +154,6 @@ const loadRegistryLogos = async (
 const enrichProviders = (
   providersResponse: ProvidersApiResponse | undefined,
   schedulesByProviderId: Record<string, ScheduleAttributes>,
-  registryLogos: Record<string, string>,
 ): ProvidersProviderRow[] => {
   const providerGroupLookup = createProviderGroupLookup(providersResponse);
   const now = new Date();
@@ -183,10 +182,6 @@ const enrichProviders = (
       hasSchedule: scheduleSummary !== undefined,
       scheduleSummary,
       lastScanAt: getProviderLastScanAt(provider),
-      ...(provider.attributes.is_dynamic &&
-      Object.hasOwn(registryLogos, provider.attributes.provider)
-        ? { logoUrl: registryLogos[provider.attributes.provider] }
-        : {}),
     };
   });
 };
@@ -588,7 +583,6 @@ export async function loadProvidersAccountsViewData({
     schedulesResponse,
     organizationsResponse,
     organizationNodesResponse,
-    registryLogos,
   ] = await Promise.all([
     providersRequest,
     // Unfiltered fetch for ProviderTypeSelector — only needs distinct types;
@@ -605,18 +599,13 @@ export async function loadProvidersAccountsViewData({
     isCloud
       ? listOrganizationNodesSafe()
       : Promise.resolve(emptyOrganizationNodesResponse),
-    providersRequest.then(loadRegistryLogos),
   ]);
 
   const schedulesByProviderId = buildSchedulesByProviderId(schedulesResponse);
 
   const orgs = organizationsResponse.data;
   const nodes = organizationNodesResponse.data;
-  const providers = enrichProviders(
-    providersResponse,
-    schedulesByProviderId,
-    registryLogos,
-  );
+  const providers = enrichProviders(providersResponse, schedulesByProviderId);
 
   const hierarchyStatus: HierarchyStatus =
     isCloud &&
@@ -641,6 +630,7 @@ export async function loadProvidersAccountsViewData({
     providerGroups: allProviderGroupsResponse?.data ?? [],
     rows,
     hierarchyStatus,
+    registryLogos: providersRequest.then(loadRegistryLogos),
   };
 }
 

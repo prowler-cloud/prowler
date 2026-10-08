@@ -70,8 +70,6 @@ export interface ProvidersProviderRow
   scheduleSummary?: ScanScheduleSummary;
   /** Completed-at timestamp for the provider's last scan when exposed by API. */
   lastScanAt?: string | null;
-  /** Registry providers only: the logo their registry publishes. */
-  logoUrl?: string;
   subRows?: ProvidersTableRow[];
 }
 
@@ -107,6 +105,8 @@ export interface ProvidersAccountsViewData {
   rows: ProvidersTableRow[];
   /** `unavailable` when the hierarchy fetch failed (drives the degraded notice). */
   hierarchyStatus: HierarchyStatus;
+  /** Registry logo per provider type, streamed so rows never wait for it. */
+  registryLogos: Promise<Record<string, string>>;
 }
 
 export function isProvidersOrganizationRow(

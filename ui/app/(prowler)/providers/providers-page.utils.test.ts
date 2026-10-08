@@ -1319,8 +1319,9 @@ describe("loadProvidersAccountsViewData", () => {
     );
   });
 
-  it("shows a registry provider with the logo its registry publishes", async () => {
-    // Given
+  const givenRegistryProviderPage = (
+    logos: Promise<Record<string, string>>,
+  ) => {
     const registryProvider = {
       ...providersResponse.data[1],
       id: "provider-vcf",
@@ -1342,9 +1343,16 @@ describe("loadProvidersAccountsViewData", () => {
     organizationsActionsMock.listOrganizationNodesSafe.mockResolvedValue({
       data: [],
     });
-    registryActionsMock.getRegistryProviderLogos.mockResolvedValue({
-      vcf: "https://media.registry.example.com/providers/vcf/logo.png",
-    });
+    registryActionsMock.getRegistryProviderLogos.mockReturnValue(logos);
+  };
+
+  it("streams the logo the registry publishes for each provider type", async () => {
+    // Given
+    givenRegistryProviderPage(
+      Promise.resolve({
+        vcf: "https://media.registry.example.com/providers/vcf/logo.png",
+      }),
+    );
 
     // When
     const viewData = await loadProvidersAccountsViewData({
@@ -1353,12 +1361,30 @@ describe("loadProvidersAccountsViewData", () => {
     });
 
     // Then
-    expect(findProviderRow(viewData.rows, "provider-vcf")?.logoUrl).toBe(
-      "https://media.registry.example.com/providers/vcf/logo.png",
-    );
-    expect(
-      findProviderRow(viewData.rows, "provider-1")?.logoUrl,
-    ).toBeUndefined();
+    await expect(viewData.registryLogos).resolves.toEqual({
+      vcf: "https://media.registry.example.com/providers/vcf/logo.png",
+    });
+  });
+
+  it("returns the provider rows without waiting for registry logos", async () => {
+    // Given: a registry that never answers.
+    givenRegistryProviderPage(new Promise(() => {}));
+
+    // When
+    const result = await Promise.race([
+      loadProvidersAccountsViewData({
+        searchParams: {} satisfies SearchParamsProps,
+        isCloud: true,
+      }),
+      new Promise<"blocked">((resolve) =>
+        setTimeout(() => resolve("blocked"), 200),
+      ),
+    ]);
+
+    // Then
+    expect(result).not.toBe("blocked");
+    if (result === "blocked") return;
+    expect(findProviderRow(result.rows, "provider-vcf")).toBeDefined();
   });
 
   it("does not ask the registry for logos when the page lists no registry providers", async () => {
@@ -1375,12 +1401,13 @@ describe("loadProvidersAccountsViewData", () => {
     });
 
     // When
-    await loadProvidersAccountsViewData({
+    const viewData = await loadProvidersAccountsViewData({
       searchParams: {} satisfies SearchParamsProps,
       isCloud: true,
     });
 
     // Then
+    await expect(viewData.registryLogos).resolves.toEqual({});
     expect(registryActionsMock.getRegistryProviderLogos).not.toHaveBeenCalled();
   });
 });
