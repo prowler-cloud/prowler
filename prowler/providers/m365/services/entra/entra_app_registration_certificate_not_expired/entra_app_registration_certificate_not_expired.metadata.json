@@ -1,0 +1,41 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_app_registration_certificate_not_expired",
+  "CheckTitle": "Valid certificates protect app registrations from authentication failures and credential clutter",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "This check evaluates certificate credentials (keyCredentials) on Microsoft Entra ID application registrations to identify certificates that are already expired or will expire within a configurable warning window (default 30 days). Expired certificates should be removed as credential clutter, and certificates about to expire should be rotated to prevent workload outages.",
+  "Risk": "Expired certificates can no longer authenticate but remain on the app registration, creating clutter that hides attacker-added credentials. Certificates about to expire risk causing workload outages if not rotated in time. Both conditions weaken the security posture by reducing visibility into active credentials.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/entra/identity-platform/certificate-credentials",
+    "https://learn.microsoft.com/en-us/entra/identity/monitoring-health/recommendation-remove-unused-credential-from-apps",
+    "https://learn.microsoft.com/en-us/graph/api/resources/keycredential?view=graph-rest-1.0",
+    "https://maester.dev/docs/tests/MT.1199"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "az ad app credential delete --id <appId> --key-id <keyId> --cert",
+      "NativeIaC": "",
+      "Other": "1. Navigate to Microsoft Entra admin center (https://entra.microsoft.com)\n2. Go to Entra ID > App registrations\n3. Select the flagged application\n4. Go to Certificates & secrets > Certificates\n5. For certificates about to expire, upload a replacement certificate and update the workload configuration\n6. Confirm the workload authenticates with the new certificate\n7. Delete expired or replaced certificates\n8. If the app registration is no longer needed, delete the application instead\n9. Prefer managed identities or workload identity federation, which have no expiring credential",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Remove expired certificate credentials from affected app registrations and rotate certificates that are about to expire. Prefer managed identities or workload identity federation to eliminate expiring credentials entirely.",
+      "Url": "https://hub.prowler.com/check/entra_app_registration_certificate_not_expired"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "entra_app_registration_client_secret_unused"
+  ],
+  "Notes": "Client secrets (passwordCredentials) are deliberately NOT evaluated by this check; they are already covered by entra_app_registration_client_secret_unused. The expiration threshold is configurable via the audit_config key app_registration_certificate_expiration_threshold_days (default 30). Certificates stored on service principals (e.g. enterprise-app SAML signing certificates) are out of scope."
+}

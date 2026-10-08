@@ -91,6 +91,11 @@ class Entra(M365Service):
         # instead of silently evaluating an empty directory.
         self.users_error: Optional[str] = None
         self.exchange_mailbox_permission_service_principals_error: Optional[str] = None
+        # Set when _get_app_registrations() fails (missing permission,
+        # throttling, any API error including mid-pagination).  Checks that
+        # depend on app_registrations must emit a MANUAL finding when this is
+        # set instead of silently evaluating an empty dict.
+        self.app_registrations_error: Optional[str] = None
         attributes = loop.run_until_complete(
             gather(
                 self._get_authorization_policy(),
@@ -2084,11 +2089,17 @@ OAuthAppInfo
     async def _get_app_registrations(self) -> Dict[str, "AppRegistration"]:
         """Retrieve application registrations from Microsoft Entra.
 
-        Fetches every application object and its password credentials (client
-        secrets) across all pages. Customer-owned applications should
-        authenticate using certificates, federated identity credentials, or
-        managed identities, so any entry in ``passwordCredentials`` is reported
-        by the related check.
+        Fetches every application object together with its password credentials
+        (client secrets) and key credentials (certificates) across all pages.
+        Customer-owned applications should authenticate using certificates,
+        federated identity credentials, or managed identities, so any entry in
+        ``passwordCredentials`` is reported by the related check.  Certificate
+        credentials are consumed by the lifetime and expiry checks.
+
+        On any exception (missing permission, throttling, mid-pagination
+        failure) the method sets ``self.app_registrations_error`` so that
+        downstream checks can emit a ``MANUAL`` finding instead of silently
+        returning no findings.
 
         Returns:
             Dict[str, AppRegistration]: Application registrations keyed by the
@@ -2116,11 +2127,34 @@ OAuthAppInfo
                             )
                         )
 
+                    key_credentials = []
+                    for cred in getattr(app, "key_credentials", []) or []:
+                        raw_thumbprint = getattr(cred, "custom_key_identifier", None)
+                        if isinstance(raw_thumbprint, bytes):
+                            thumbprint = raw_thumbprint.hex()
+                        elif isinstance(raw_thumbprint, str):
+                            thumbprint = raw_thumbprint
+                        else:
+                            thumbprint = None
+
+                        key_credentials.append(
+                            KeyCredential(
+                                key_id=str(getattr(cred, "key_id", "")),
+                                display_name=getattr(cred, "display_name", None),
+                                start_date_time=getattr(cred, "start_date_time", None),
+                                end_date_time=getattr(cred, "end_date_time", None),
+                                custom_key_identifier=thumbprint,
+                                usage=getattr(cred, "usage", None),
+                                type_=getattr(cred, "type", None),
+                            )
+                        )
+
                     app_registrations[object_id] = AppRegistration(
                         id=object_id,
                         app_id=app_id,
                         name=getattr(app, "display_name", "") or "",
                         password_credentials=password_credentials,
+                        key_credentials=key_credentials,
                     )
 
                 next_link = getattr(app_response, "odata_next_link", None)
@@ -2132,6 +2166,7 @@ OAuthAppInfo
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+            self.app_registrations_error = str(error)
         return app_registrations
 
     async def _resolve_directory_object_references(
@@ -2824,15 +2859,28 @@ class PasswordCredential(BaseModel):
 
 
 class KeyCredential(BaseModel):
-    """Model representing a key credential (certificate) on a service principal.
+    """Model representing a key credential (certificate) on a service principal or app registration.
 
     Attributes:
         key_id: The unique identifier of the credential.
         display_name: The optional display name of the credential.
+        start_date_time: The time at which the credential becomes valid.
+            ``None`` when the API does not report it.
+        end_date_time: The expiration time of the credential. ``None`` when the
+            API does not report it.
+        custom_key_identifier: The certificate thumbprint (hex-encoded), used to
+            deduplicate Sign/Verify pairs that represent the same certificate.
+        usage: The usage of the key, e.g. ``"Sign"`` or ``"Verify"``.
+        type_: The type of the key, e.g. ``"AsymmetricX509Cert"``.
     """
 
     key_id: str
     display_name: Optional[str] = None
+    start_date_time: Optional[datetime] = None
+    end_date_time: Optional[datetime] = None
+    custom_key_identifier: Optional[str] = None
+    usage: Optional[str] = None
+    type_: Optional[str] = None
 
 
 # Control Plane (Tier 0) role template IDs.
@@ -2929,9 +2977,12 @@ class AppRegistration(BaseModel):
         name: The application's display name.
         password_credentials: List of password credentials (client secrets)
             registered on the application.
+        key_credentials: List of key credentials (certificates) registered on
+            the application.
     """
 
     id: str
     app_id: str = ""
     name: str = ""
     password_credentials: List[PasswordCredential] = []
+    key_credentials: List[KeyCredential] = []
