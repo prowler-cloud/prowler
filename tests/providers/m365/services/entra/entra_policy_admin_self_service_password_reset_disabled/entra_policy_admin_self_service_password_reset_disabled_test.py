@@ -9,7 +9,7 @@ from tests.providers.m365.m365_fixtures import set_mocked_m365_provider
 class Test_entra_policy_admin_self_service_password_reset_disabled:
     def test_no_auth_policy(self):
         """When authorization_policy is None, the check returns a MANUAL finding."""
-        entra_client = mock.MagicMock
+        entra_client = mock.MagicMock()
         entra_client.authorization_policy = None
 
         with (
@@ -38,7 +38,7 @@ class Test_entra_policy_admin_self_service_password_reset_disabled:
 
     def test_auth_policy_sspr_none(self):
         """When allowed_to_use_sspr is None, the check returns a MANUAL finding."""
-        entra_client = mock.MagicMock
+        entra_client = mock.MagicMock()
         entra_client.authorization_policy = AuthorizationPolicy(
             id="authorizationPolicy",
             name="Authorization Policy",
@@ -74,7 +74,7 @@ class Test_entra_policy_admin_self_service_password_reset_disabled:
 
     def test_sspr_enabled_fail(self):
         """When allowed_to_use_sspr is True, the check returns FAIL."""
-        entra_client = mock.MagicMock
+        entra_client = mock.MagicMock()
         entra_client.authorization_policy = AuthorizationPolicy(
             id="authorizationPolicy",
             name="Authorization Policy",
@@ -114,7 +114,7 @@ class Test_entra_policy_admin_self_service_password_reset_disabled:
 
     def test_sspr_disabled_pass(self):
         """When allowed_to_use_sspr is False, the check returns PASS."""
-        entra_client = mock.MagicMock
+        entra_client = mock.MagicMock()
         entra_client.authorization_policy = AuthorizationPolicy(
             id="authorizationPolicy",
             name="Authorization Policy",
