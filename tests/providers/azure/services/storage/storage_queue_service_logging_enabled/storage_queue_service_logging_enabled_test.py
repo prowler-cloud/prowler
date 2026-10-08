@@ -62,7 +62,7 @@ def _make_diag_setting(logs, name="diag-queue"):
 class Test_storage_queue_service_logging_enabled:
     def test_no_storage_accounts(self):
         """No storage accounts in any subscription — no findings."""
-        storage_client = mock.MagicMock
+        storage_client = mock.MagicMock()
         storage_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         storage_client.storage_accounts = {}
 
@@ -86,7 +86,7 @@ class Test_storage_queue_service_logging_enabled:
 
     def test_account_kind_without_queue_skipped(self):
         """BlobStorage, BlockBlobStorage, FileStorage should produce no findings."""
-        storage_client = mock.MagicMock
+        storage_client = mock.MagicMock()
         storage_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         storage_client.storage_accounts = {
             AZURE_SUBSCRIPTION_ID: [
@@ -117,7 +117,7 @@ class Test_storage_queue_service_logging_enabled:
     def test_diag_settings_none_returns_manual(self):
         """When diagnostic settings could not be read, emit MANUAL."""
         account_name = "manualaccount"
-        storage_client = mock.MagicMock
+        storage_client = mock.MagicMock()
         storage_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         storage_client.storage_accounts = {
             AZURE_SUBSCRIPTION_ID: [
@@ -153,7 +153,7 @@ class Test_storage_queue_service_logging_enabled:
         """Empty diagnostic settings list — all three categories are missing."""
         account_name = "nologsaccount"
         account_id = str(uuid4())
-        storage_client = mock.MagicMock
+        storage_client = mock.MagicMock()
         storage_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         storage_client.storage_accounts = {
             AZURE_SUBSCRIPTION_ID: [
@@ -192,7 +192,7 @@ class Test_storage_queue_service_logging_enabled:
     def test_partial_categories_returns_fail(self):
         """Only StorageRead enabled — should FAIL listing missing categories."""
         account_name = "partialaccount"
-        storage_client = mock.MagicMock
+        storage_client = mock.MagicMock()
         storage_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         storage_client.storage_accounts = {
             AZURE_SUBSCRIPTION_ID: [
@@ -239,7 +239,7 @@ class Test_storage_queue_service_logging_enabled:
         """All three required categories enabled in one setting — PASS."""
         account_name = "compliantaccount"
         account_id = str(uuid4())
-        storage_client = mock.MagicMock
+        storage_client = mock.MagicMock()
         storage_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         storage_client.storage_accounts = {
             AZURE_SUBSCRIPTION_ID: [
@@ -300,7 +300,7 @@ class Test_storage_queue_service_logging_enabled:
     def test_all_logs_category_group_returns_pass(self):
         """The allLogs category group should satisfy the requirement."""
         account_name = "alllogs"
-        storage_client = mock.MagicMock
+        storage_client = mock.MagicMock()
         storage_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         storage_client.storage_accounts = {
             AZURE_SUBSCRIPTION_ID: [
@@ -343,7 +343,7 @@ class Test_storage_queue_service_logging_enabled:
     def test_categories_split_across_settings_returns_pass(self):
         """Categories spread across multiple diagnostic settings should PASS."""
         account_name = "splitaccount"
-        storage_client = mock.MagicMock
+        storage_client = mock.MagicMock()
         storage_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         storage_client.storage_accounts = {
             AZURE_SUBSCRIPTION_ID: [
@@ -402,7 +402,7 @@ class Test_storage_queue_service_logging_enabled:
     def test_disabled_categories_returns_fail(self):
         """Categories present but disabled should result in FAIL."""
         account_name = "disabledaccount"
-        storage_client = mock.MagicMock
+        storage_client = mock.MagicMock()
         storage_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         storage_client.storage_accounts = {
             AZURE_SUBSCRIPTION_ID: [
@@ -455,7 +455,7 @@ class Test_storage_queue_service_logging_enabled:
 
     def test_storagev2_account_kind_produces_finding(self):
         """StorageV2 accounts should be evaluated (not skipped)."""
-        storage_client = mock.MagicMock
+        storage_client = mock.MagicMock()
         storage_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         storage_client.storage_accounts = {
             AZURE_SUBSCRIPTION_ID: [
@@ -484,7 +484,7 @@ class Test_storage_queue_service_logging_enabled:
 
     def test_storage_v1_account_kind_produces_finding(self):
         """Legacy Storage (v1) accounts have a Queue service and should be evaluated."""
-        storage_client = mock.MagicMock
+        storage_client = mock.MagicMock()
         storage_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         storage_client.storage_accounts = {
             AZURE_SUBSCRIPTION_ID: [
@@ -514,7 +514,7 @@ class Test_storage_queue_service_logging_enabled:
     def test_all_logs_category_group_disabled_returns_fail(self):
         """allLogs category group present but disabled should not satisfy the check."""
         account_name = "alllogs-disabled"
-        storage_client = mock.MagicMock
+        storage_client = mock.MagicMock()
         storage_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         storage_client.storage_accounts = {
             AZURE_SUBSCRIPTION_ID: [
