@@ -256,6 +256,7 @@
         "entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced",
         "entra_legacy_authentication_blocked",
         "entra_managed_device_required_for_authentication",
+        "entra_policy_admin_self_service_password_reset_disabled",
         "entra_seamless_sso_disabled",
         "entra_service_principal_no_secrets_for_permanent_tier0_roles",
         "entra_users_mfa_enabled",
@@ -672,6 +673,7 @@
         "entra_break_glass_account_fido2_security_key_registered",
         "entra_emergency_access_exclusion",
         "entra_app_registration_no_unused_privileged_permissions",
+        "entra_policy_admin_self_service_password_reset_disabled",
         "entra_policy_ensure_default_user_cannot_create_tenants",
         "entra_policy_guest_invite_only_for_admin_roles",
         "entra_seamless_sso_disabled",
@@ -731,6 +733,7 @@
         "entra_emergency_access_exclusion",
         "entra_identity_protection_sign_in_risk_enabled",
         "entra_managed_device_required_for_authentication",
+        "entra_policy_admin_self_service_password_reset_disabled",
         "entra_seamless_sso_disabled",
         "entra_service_principal_no_secrets_for_permanent_tier0_roles",
         "entra_users_mfa_enabled"
