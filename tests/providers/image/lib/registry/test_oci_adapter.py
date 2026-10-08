@@ -1485,3 +1485,50 @@ class TestValidatedRedirects:
             self._adapter()._request_with_retry("GET", "https://reg.io/v2/")
 
         assert mock_request.call_count == _MAX_REDIRECTS + 1
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_drops_credentials_on_a_cross_origin_redirect(self, mock_request):
+        """Following redirects by hand loses what requests' rebuild_auth does."""
+        mock_request.side_effect = [
+            _redirect("https://cdn.example.com/signed?sig=abc"),
+            MagicMock(status_code=200, headers={}),
+        ]
+
+        self._adapter()._request_with_retry(
+            "GET",
+            "https://reg.io/v2/blob",
+            headers={"Authorization": "Bearer a-token"},
+            auth=("user", "pass"),
+        )
+
+        hop_kwargs = mock_request.call_args_list[1].kwargs
+        assert "Authorization" not in hop_kwargs["headers"]
+        assert "auth" not in hop_kwargs
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_keeps_credentials_on_a_same_origin_redirect(self, mock_request):
+        mock_request.side_effect = [
+            _redirect("https://reg.io/v2/token"),
+            MagicMock(status_code=200, headers={}),
+        ]
+
+        self._adapter()._request_with_retry(
+            "GET", "https://reg.io/v2/", headers={"Authorization": "Bearer a-token"}
+        )
+
+        hop_headers = mock_request.call_args_list[1].kwargs["headers"]
+        assert hop_headers["Authorization"] == "Bearer a-token"
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_does_not_reapply_params_to_the_redirect_destination(self, mock_request):
+        """A signed URL a registry redirects to carries its own query."""
+        mock_request.side_effect = [
+            _redirect("https://reg.io/signed?sig=abc"),
+            MagicMock(status_code=200, headers={}),
+        ]
+
+        self._adapter()._request_with_retry(
+            "GET", "https://reg.io/v2/_catalog", params={"n": 200}
+        )
+
+        assert "params" not in mock_request.call_args_list[1].kwargs

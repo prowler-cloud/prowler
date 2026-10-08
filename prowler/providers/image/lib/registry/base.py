@@ -98,6 +98,30 @@ def _parse_allowed_private_networks(
     return tuple(networks)
 
 
+def _next_hop_kwargs(kwargs: dict, old_url: str, new_url: str) -> dict:
+    """Request options for a redirect hop, rebuilt the way ``requests`` would.
+
+    Following redirects by hand loses what ``Session.resolve_redirects`` does for
+    free, so both of its rules are reapplied here.
+    """
+    hop = dict(kwargs)
+    # the Location carries its own query; reapplying params can invalidate a
+    # signed URL a registry redirects to
+    hop.pop("params", None)
+    # borrowed rather than restated: the port and scheme cases are subtle, and a
+    # hop that keeps credentials hands the registry token to an unrelated host
+    with requests.Session() as redirect_rules:
+        if not redirect_rules.should_strip_auth(old_url, new_url):
+            return hop
+    hop.pop("auth", None)
+    hop["headers"] = {
+        name: value
+        for name, value in (hop.get("headers") or {}).items()
+        if name.lower() != "authorization"
+    }
+    return hop
+
+
 class RegistryAdapter(ABC):
     """Abstract base class for registry adapters."""
 
@@ -310,16 +334,19 @@ class RegistryAdapter(ABC):
         ``requests`` follows redirects itself, which would send the request to a
         host the guard never saw.
         """
+        hop_kwargs = dict(kwargs)
         for _ in range(_MAX_REDIRECTS + 1):
-            resp = requests.request(method, url, allow_redirects=False, **kwargs)
+            resp = requests.request(method, url, allow_redirects=False, **hop_kwargs)
             if resp.status_code not in _REDIRECT_STATUSES:
                 return resp
             location = resp.headers.get("Location")
             if not location:
                 return resp
-            url = self._validate_outbound_url(
+            target = self._validate_outbound_url(
                 urljoin(url, location), enforce_origin=False
             )
+            hop_kwargs = _next_hop_kwargs(hop_kwargs, url, target)
+            url = target
         raise ImageRegistryNetworkError(
             file=__file__,
             message=f"More than {_MAX_REDIRECTS} redirects from {url}.",
