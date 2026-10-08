@@ -8,11 +8,6 @@ import {
   PROVIDER_TYPE_DATA,
 } from "@/components/icons/providers-badge/provider-type-icon";
 import { Badge, SearchInput } from "@/components/shadcn";
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@/components/shadcn/avatar";
 import { FormMessage } from "@/components/shadcn/form";
 import {
   Tabs,
@@ -23,6 +18,8 @@ import {
 import type { RegistryProviderOption } from "@/lib/registry/provider-options";
 import { cn } from "@/lib/utils";
 import type { AddProviderFormValues } from "@/types/formSchemas";
+
+import { RegistryProviderLogo } from "./registry-provider-logo";
 
 const PROVIDERS = Object.entries(PROVIDER_TYPE_DATA).map(
   ([value, { label }]) => ({ value, label }),
@@ -135,19 +132,11 @@ export const RadioGroupProvider: FC<RadioGroupProviderProps> = ({
 
                     <div className="flex min-w-0 flex-1 items-center gap-1.5">
                       {provider.registry ? (
-                        <Avatar>
-                          <AvatarImage
-                            src={
-                              provider.logoUrl?.startsWith("https://")
-                                ? provider.logoUrl
-                                : undefined
-                            }
-                            alt=""
-                          />
-                          <AvatarFallback>
-                            <ProviderTypeIcon type={provider.value} size={26} />
-                          </AvatarFallback>
-                        </Avatar>
+                        <RegistryProviderLogo
+                          type={provider.value}
+                          logoUrl={provider.logoUrl}
+                          size={26}
+                        />
                       ) : (
                         <ProviderTypeIcon type={provider.value} size={26} />
                       )}
