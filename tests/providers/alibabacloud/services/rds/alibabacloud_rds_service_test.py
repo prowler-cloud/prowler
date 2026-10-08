@@ -67,3 +67,34 @@ class TestRDSService:
 
         assert request.dbinstance_id == "rm-test"
         assert request.region_id == "cn-qingdao"
+
+    def test_describe_db_instance_ip_array_reads_security_iplist(self):
+        from alibabacloud_rds20140815 import models as sdk_models
+
+        from prowler.providers.alibabacloud.services.rds import (
+            rds_service as rds_service_module,
+        )
+
+        service = rds_service_module.RDS.__new__(rds_service_module.RDS)
+        regional_client = MagicMock(region="cn-qingdao")
+        regional_client.describe_dbinstance_iparray_list.return_value = SimpleNamespace(
+            body=SimpleNamespace(
+                items=SimpleNamespace(
+                    dbinstance_iparray=[
+                        sdk_models.DescribeDBInstanceIPArrayListResponseBodyItemsDBInstanceIPArray(
+                            dbinstance_iparray_name="default",
+                            security_iplist="10.0.0.0/8, 0.0.0.0/0",
+                        ),
+                        sdk_models.DescribeDBInstanceIPArrayListResponseBodyItemsDBInstanceIPArray(
+                            dbinstance_iparray_name="ipv6",
+                            security_iplist="::/0",
+                            security_iptype="IPv6",
+                        ),
+                    ]
+                )
+            )
+        )
+
+        ips = service._describe_db_instance_ip_array(regional_client, "rm-test")
+
+        assert ips == ["10.0.0.0/8", "0.0.0.0/0", "::/0"]
