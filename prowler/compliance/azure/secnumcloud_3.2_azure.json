@@ -794,7 +794,10 @@
         "postgresql_flexible_server_log_disconnections_on",
         "postgresql_flexible_server_log_retention_days_greater_3",
         "mysql_flexible_server_audit_log_enabled",
-        "mysql_flexible_server_audit_log_connection_activated"
+        "mysql_flexible_server_audit_log_connection_activated",
+        "storage_queue_service_logging_enabled",
+        "storage_blob_service_logging_enabled",
+        "storage_table_service_logging_enabled"
       ]
     },
     {

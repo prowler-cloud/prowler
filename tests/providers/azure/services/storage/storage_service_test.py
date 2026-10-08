@@ -1,3 +1,4 @@
+import sys
 from unittest.mock import MagicMock, patch
 
 from prowler.providers.azure.services.storage.storage_service import (
@@ -541,3 +542,62 @@ class Test_Storage_get_storage_accounts:
         mock_client.storage_accounts.list_by_resource_group.assert_called_once_with(
             resource_group_name="RG"
         )
+
+
+class Test_Storage_get_services_diagnostic_settings:
+    """Diagnostic settings of the Queue, Blob and Table services."""
+
+    def _run(self, diagnostic_settings_with_uri, kind="StorageV2"):
+        storage = MagicMock()
+        storage.storage_accounts = mock_storage_get_storage_accounts(None)
+        account = storage.storage_accounts[AZURE_SUBSCRIPTION_ID][0]
+        account.kind = kind
+        monitor_client = MagicMock()
+        monitor_client.clients = {AZURE_SUBSCRIPTION_ID: MagicMock()}
+        monitor_client.diagnostic_settings_with_uri.side_effect = (
+            diagnostic_settings_with_uri
+        )
+        fake_module = MagicMock(monitor_client=monitor_client)
+        with patch.dict(
+            sys.modules,
+            {"prowler.providers.azure.services.monitor.monitor_client": fake_module},
+        ):
+            Storage._get_services_diagnostic_settings(storage)
+        return account, monitor_client
+
+    def test_settings_are_stored_per_service(self):
+        account, monitor_client = self._run(lambda *args, **kwargs: [])
+        assert account.queue_service_diagnostic_settings == []
+        assert account.blob_service_diagnostic_settings == []
+        assert account.table_service_diagnostic_settings == []
+        uris = [
+            call.args[1]
+            for call in monitor_client.diagnostic_settings_with_uri.call_args_list
+        ]
+        assert [uri.rsplit("/", 2)[-2] for uri in uris] == [
+            "queueServices",
+            "blobServices",
+            "tableServices",
+        ]
+        assert all(
+            call.kwargs["raise_on_error"]
+            for call in monitor_client.diagnostic_settings_with_uri.call_args_list
+        )
+
+    def test_read_error_leaves_settings_as_none(self):
+        def raise_error(*args, **kwargs):
+            raise Exception("AuthorizationFailed")
+
+        account, _ = self._run(raise_error)
+        assert account.queue_service_diagnostic_settings is None
+        assert account.blob_service_diagnostic_settings is None
+        assert account.table_service_diagnostic_settings is None
+
+    def test_file_storage_account_has_no_queue_blob_or_table_service(self):
+        account, monitor_client = self._run(
+            lambda *args, **kwargs: [], kind="FileStorage"
+        )
+        monitor_client.diagnostic_settings_with_uri.assert_not_called()
+        assert account.queue_service_diagnostic_settings is None
+        assert account.blob_service_diagnostic_settings is None
+        assert account.table_service_diagnostic_settings is None

@@ -463,7 +463,10 @@
         "postgresql_flexible_server_log_checkpoints_on",
         "postgresql_flexible_server_log_connections_on",
         "postgresql_flexible_server_log_disconnections_on",
-        "postgresql_flexible_server_log_retention_days_greater_3"
+        "postgresql_flexible_server_log_retention_days_greater_3",
+        "storage_queue_service_logging_enabled",
+        "storage_blob_service_logging_enabled",
+        "storage_table_service_logging_enabled"
       ]
     },
     {
@@ -502,7 +505,8 @@
         "monitor_alert_delete_policy_assignment",
         "monitor_alert_delete_public_ip_address_rule",
         "monitor_alert_delete_security_solution",
-        "monitor_alert_delete_sqlserver_fr"
+        "monitor_alert_delete_sqlserver_fr",
+        "storage_blob_service_logging_enabled"
       ]
     },
     {

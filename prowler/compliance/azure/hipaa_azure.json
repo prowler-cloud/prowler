@@ -94,7 +94,10 @@
         "network_flow_log_captured_sent",
         "network_flow_log_more_than_90_days",
         "app_http_logs_enabled",
-        "appinsights_ensure_is_configured"
+        "appinsights_ensure_is_configured",
+        "storage_queue_service_logging_enabled",
+        "storage_blob_service_logging_enabled",
+        "storage_table_service_logging_enabled"
       ]
     },
     {
@@ -394,7 +397,8 @@
         "sqlserver_auditing_enabled",
         "keyvault_logging_enabled",
         "network_flow_log_captured_sent",
-        "app_http_logs_enabled"
+        "app_http_logs_enabled",
+        "storage_queue_service_logging_enabled"
       ]
     },
     {
@@ -675,7 +679,10 @@
         "postgresql_flexible_server_log_connections_on",
         "postgresql_flexible_server_log_disconnections_on",
         "mysql_flexible_server_audit_log_enabled",
-        "mysql_flexible_server_audit_log_connection_activated"
+        "mysql_flexible_server_audit_log_connection_activated",
+        "storage_queue_service_logging_enabled",
+        "storage_blob_service_logging_enabled",
+        "storage_table_service_logging_enabled"
       ]
     },
     {
