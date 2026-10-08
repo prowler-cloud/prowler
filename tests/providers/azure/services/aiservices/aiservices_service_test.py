@@ -84,6 +84,34 @@ def build_sdk_private_endpoint_connection(status):
     return connection
 
 
+def build_sdk_deployment(
+    name="gpt-4o", rai_policy_name=None, model_name="gpt-4o", capabilities=None
+):
+    deployment = MagicMock()
+    deployment.id = f"{ACCOUNT_ID}/deployments/{name}"
+    deployment.name = name
+    deployment.properties.rai_policy_name = rai_policy_name
+    deployment.properties.model.name = model_name
+    deployment.properties.capabilities = capabilities
+    return deployment
+
+
+def build_sdk_rai_policy(name, content_filters):
+    policy = MagicMock()
+    policy.name = name
+    policy.properties.content_filters = content_filters
+    return policy
+
+
+def build_sdk_content_filter(name, source, enabled=True, blocking=True):
+    content_filter = MagicMock()
+    content_filter.name = name
+    content_filter.source = source
+    content_filter.enabled = enabled
+    content_filter.blocking = blocking
+    return content_filter
+
+
 def build_service(mock_client, resource_groups=None):
     with patch(f"{SERVICE_PATH}.AIServices._get_accounts", return_value={}):
         aiservices = AIServices(set_mocked_azure_provider())
@@ -314,6 +342,97 @@ class Test_AIServices_get_accounts:
         account = aiservices._get_accounts()[AZURE_SUBSCRIPTION_ID][ACCOUNT_ID]
 
         assert account.network_acls_default_action == "Allow"
+
+    def test_deployments_and_rai_policies_mapped(self):
+        from azure.mgmt.cognitiveservices.models import RaiPolicyContentSource
+
+        mock_client = MagicMock()
+        mock_client.accounts.list.return_value = [build_sdk_account()]
+        mock_client.deployments.list.return_value = [
+            build_sdk_deployment(
+                rai_policy_name="Microsoft.DefaultV2",
+                capabilities={"chatCompletion": "true", "area": "EUR"},
+            ),
+            build_sdk_deployment(name="gpt-4o-mini", rai_policy_name=""),
+        ]
+        mock_client.rai_policies.list.return_value = [
+            build_sdk_rai_policy(
+                "Microsoft.DefaultV2",
+                [
+                    build_sdk_content_filter(
+                        "Jailbreak", RaiPolicyContentSource.PROMPT
+                    ),
+                    build_sdk_content_filter("Hate", "Completion", blocking=False),
+                ],
+            )
+        ]
+        aiservices = build_service(mock_client)
+
+        account = aiservices._get_accounts()[AZURE_SUBSCRIPTION_ID][ACCOUNT_ID]
+
+        mock_client.deployments.list.assert_called_once_with(
+            resource_group_name=RESOURCE_GROUP, account_name="openai1"
+        )
+        mock_client.rai_policies.list.assert_called_once_with(
+            resource_group_name=RESOURCE_GROUP, account_name="openai1"
+        )
+        assert [d.name for d in account.deployments] == ["gpt-4o", "gpt-4o-mini"]
+        assert account.deployments[0].id == f"{ACCOUNT_ID}/deployments/gpt-4o"
+        assert account.deployments[0].location == "eastus"
+        assert account.deployments[0].model_name == "gpt-4o"
+        assert account.deployments[0].rai_policy_name == "Microsoft.DefaultV2"
+        assert account.deployments[1].rai_policy_name == ""
+        assert account.deployments[0].capabilities == {
+            "chatCompletion": "true",
+            "area": "EUR",
+        }
+        assert account.deployments[1].capabilities == {}
+        policy = account.rai_policies["Microsoft.DefaultV2"]
+        assert policy.content_filters[0].name == "Jailbreak"
+        assert policy.content_filters[0].source == "Prompt"
+        assert policy.content_filters[0].enabled is True
+        assert policy.content_filters[0].blocking is True
+        assert policy.content_filters[1].blocking is False
+
+    def test_deployment_without_properties_uses_empty_policy_name(self):
+        deployment = build_sdk_deployment()
+        deployment.properties = None
+        mock_client = MagicMock()
+        mock_client.accounts.list.return_value = [build_sdk_account()]
+        mock_client.deployments.list.return_value = [deployment]
+        mock_client.rai_policies.list.return_value = []
+        aiservices = build_service(mock_client)
+
+        account = aiservices._get_accounts()[AZURE_SUBSCRIPTION_ID][ACCOUNT_ID]
+
+        assert account.deployments[0].rai_policy_name == ""
+        assert account.deployments[0].model_name == ""
+        assert account.deployments[0].capabilities == {}
+        assert account.rai_policies == {}
+
+    def test_deployments_failure_is_none(self):
+        mock_client = MagicMock()
+        mock_client.accounts.list.return_value = [build_sdk_account()]
+        mock_client.deployments.list.side_effect = Exception("boom")
+        mock_client.rai_policies.list.return_value = []
+        aiservices = build_service(mock_client)
+
+        account = aiservices._get_accounts()[AZURE_SUBSCRIPTION_ID][ACCOUNT_ID]
+
+        assert account.deployments is None
+        assert account.rai_policies == {}
+
+    def test_rai_policies_failure_is_none(self):
+        mock_client = MagicMock()
+        mock_client.accounts.list.return_value = [build_sdk_account()]
+        mock_client.deployments.list.return_value = [build_sdk_deployment()]
+        mock_client.rai_policies.list.side_effect = Exception("boom")
+        aiservices = build_service(mock_client)
+
+        account = aiservices._get_accounts()[AZURE_SUBSCRIPTION_ID][ACCOUNT_ID]
+
+        assert len(account.deployments) == 1
+        assert account.rai_policies is None
 
     def test_list_failure_leaves_subscription_empty(self):
         mock_client = MagicMock()

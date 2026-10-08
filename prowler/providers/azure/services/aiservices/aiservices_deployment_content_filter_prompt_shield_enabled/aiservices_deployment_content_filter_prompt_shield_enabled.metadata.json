@@ -1,0 +1,38 @@
+{
+  "Provider": "azure",
+  "CheckID": "aiservices_deployment_content_filter_prompt_shield_enabled",
+  "CheckTitle": "AI services model deployment blocks jailbreak attempts with Prompt Shields",
+  "CheckType": [],
+  "ServiceName": "aiservices",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "microsoft.cognitiveservices/accounts/deployments",
+  "ResourceGroup": "ai_ml",
+  "Description": "**Azure AI services model deployments** (including **Azure OpenAI** and **Azure AI Foundry**) apply a **content filter policy** (`raiPolicyName`). **Prompt Shields** for direct attacks is the policy's `Jailbreak` filter; it should be enabled and blocking on prompts so user prompt injection attempts are rejected before the model runs.",
+  "Risk": "Without a blocking jailbreak filter, crafted prompts can override the system prompt and safety training:\n- **Integrity**: the model ignores its instructions and produces harmful or policy-violating output\n- **Confidentiality**: attackers extract system prompts, grounding data, or tool results\n- **Excessive agency**: agents with tools act on attacker instructions",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/ai-foundry/openai/concepts/content-filter-prompt-shields",
+    "https://learn.microsoft.com/en-us/azure/ai-foundry/openai/how-to/content-filters",
+    "https://learn.microsoft.com/en-us/azure/ai-foundry/openai/concepts/default-safety-policies"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "az cognitiveservices account deployment create --name <account_name> --resource-group <resource_group> --deployment-name <deployment_name> --model-name <model_name> --model-version <model_version> --model-format OpenAI --sku-name Standard --sku-capacity <capacity> --rai-policy-name Microsoft.DefaultV2",
+      "NativeIaC": "```bicep\n// Deploy a model with a content filter policy that blocks jailbreak attempts\nresource deployment 'Microsoft.CognitiveServices/accounts/deployments@2024-10-01' = {\n  parent: account\n  name: '<deployment_name>'\n  sku: { name: 'Standard', capacity: <capacity> }\n  properties: {\n    model: { format: 'OpenAI', name: '<model_name>', version: '<model_version>' }\n    raiPolicyName: 'Microsoft.DefaultV2' // CRITICAL: policy includes a blocking Jailbreak filter on prompts\n  }\n}\n```",
+      "Other": "1. In the Azure AI Foundry portal, open the resource and go to Guardrails + controls > Content filters\n2. Create or edit a content filter and, under Input filter, turn on Prompt Shields for jailbreak attacks with the Annotate and block action\n3. Go to Deployments, open the deployment, and assign that content filter\n4. Save the deployment",
+      "Terraform": "```hcl\nresource \"azurerm_cognitive_deployment\" \"<example_resource_name>\" {\n  name                 = \"<deployment_name>\"\n  cognitive_account_id = \"<account_resource_id>\"\n  rai_policy_name      = \"Microsoft.DefaultV2\" # CRITICAL: policy includes a blocking Jailbreak filter on prompts\n\n  model {\n    format  = \"OpenAI\"\n    name    = \"<model_name>\"\n    version = \"<model_version>\"\n  }\n\n  sku {\n    name     = \"Standard\"\n    capacity = <capacity>\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Assign every model deployment an explicit content filter policy whose **Prompt Shields** jailbreak filter is enabled and set to **block** on prompts, such as `Microsoft.DefaultV2` or a custom policy. Avoid relying on the account default, which cannot be verified from configuration.",
+      "Url": "https://hub.prowler.com/check/aiservices_deployment_content_filter_prompt_shield_enabled"
+    }
+  },
+  "Categories": [
+    "gen-ai"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Deployments with an empty raiPolicyName use the account default content filter policy. Azure Resource Manager does not report which policy that is, and the legacy Microsoft.Default policy has no Jailbreak filter, so these deployments are reported as MANUAL. Deployments whose capabilities show no text generation (embeddings, transcription, image generation) are skipped. A custom policy must list its own Jailbreak filter; filters inherited from basePolicyName are not evaluated."
+}

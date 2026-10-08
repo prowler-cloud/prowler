@@ -48,6 +48,12 @@ class AIServices(AzureService):
                     account.monitor_diagnostic_settings = self._get_diagnostic_settings(
                         subscription, account.id
                     )
+                    account.deployments = self._get_deployments(
+                        subscription, client, account
+                    )
+                    account.rai_policies = self._get_rai_policies(
+                        subscription, client, account
+                    )
                     accounts[subscription][account.id] = account
                 except Exception as error:
                     logger.error(
@@ -101,6 +107,105 @@ class AIServices(AzureService):
                 getattr(default_action, "value", default_action) or "Allow"
             ),
         )
+
+    @staticmethod
+    def _get_deployments(
+        subscription: str, client, account: "Account"
+    ) -> Optional[list["Deployment"]]:
+        """Get the model deployments of one account.
+
+        Args:
+            subscription: Subscription ID that holds the account.
+            client: `CognitiveServicesManagementClient` for the subscription.
+            account: The account whose deployments are listed.
+
+        Returns:
+            The account's deployments, or `None` when they cannot be read.
+        """
+        try:
+            deployments = []
+            for sdk_deployment in client.deployments.list(
+                resource_group_name=_resource_group(account.id),
+                account_name=account.name,
+            ):
+                properties = getattr(sdk_deployment, "properties", None)
+                capabilities = getattr(properties, "capabilities", None)
+                deployments.append(
+                    Deployment(
+                        id=sdk_deployment.id,
+                        name=sdk_deployment.name,
+                        location=account.location,
+                        model_name=getattr(
+                            getattr(properties, "model", None), "name", None
+                        )
+                        or "",
+                        # An empty name means the deployment uses the account
+                        # default policy, which ARM does not identify.
+                        rai_policy_name=getattr(properties, "rai_policy_name", None)
+                        or "",
+                        capabilities=(
+                            capabilities if isinstance(capabilities, dict) else {}
+                        ),
+                    )
+                )
+            return deployments
+        except Exception as error:
+            logger.error(
+                f"Subscription ID: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            return None
+
+    @staticmethod
+    def _get_rai_policies(
+        subscription: str, client, account: "Account"
+    ) -> Optional[dict[str, "RaiPolicy"]]:
+        """Get the content filter (RAI) policies of one account.
+
+        Uses `list` because `get` returns 404 for system-managed policies such
+        as `Microsoft.Default`.
+
+        Args:
+            subscription: Subscription ID that holds the account.
+            client: `CognitiveServicesManagementClient` for the subscription.
+            account: The account whose policies are listed.
+
+        Returns:
+            Policies keyed by name, or `None` when they cannot be read.
+        """
+        try:
+            policies = {}
+            for sdk_policy in client.rai_policies.list(
+                resource_group_name=_resource_group(account.id),
+                account_name=account.name,
+            ):
+                content_filters = []
+                for sdk_filter in (
+                    getattr(
+                        getattr(sdk_policy, "properties", None),
+                        "content_filters",
+                        None,
+                    )
+                    or []
+                ):
+                    source = getattr(sdk_filter, "source", None)
+                    content_filters.append(
+                        ContentFilter(
+                            name=getattr(sdk_filter, "name", None) or "",
+                            # RaiPolicyContentSource is a str enum; keep the plain value.
+                            source=getattr(source, "value", source) or "",
+                            enabled=bool(getattr(sdk_filter, "enabled", False)),
+                            blocking=bool(getattr(sdk_filter, "blocking", False)),
+                        )
+                    )
+                policies[sdk_policy.name] = RaiPolicy(
+                    name=sdk_policy.name, content_filters=content_filters
+                )
+            return policies
+        except Exception as error:
+            logger.error(
+                f"Subscription ID: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            return None
 
     @staticmethod
     def _private_endpoint_statuses(properties) -> list[str]:
@@ -160,6 +265,39 @@ class AIServices(AzureService):
             return None
 
 
+def _resource_group(resource_id: str) -> str:
+    """Get the resource group name from an ARM resource ID."""
+    return resource_id.split("/")[4]
+
+
+class ContentFilter(BaseModel):
+    """One content filter of a content filter (RAI) policy."""
+
+    name: str
+    source: str
+    enabled: bool
+    blocking: bool
+
+
+class RaiPolicy(BaseModel):
+    """Content filter (RAI) policy of an AI services account."""
+
+    name: str
+    content_filters: list[ContentFilter] = []
+
+
+class Deployment(BaseModel):
+    """Model deployment of an AI services account."""
+
+    id: str
+    name: str
+    location: str
+    model_name: str = ""
+    rai_policy_name: str = ""
+    # Model capabilities, for example {"chatCompletion": "true"}.
+    capabilities: dict[str, str] = {}
+
+
 class Account(BaseModel):
     """Azure AI services account."""
 
@@ -175,6 +313,9 @@ class Account(BaseModel):
     identity_type: Optional[str] = None
     restrict_outbound_network_access: bool = False
     network_acls_default_action: str = "Allow"
+    # None when the list call fails, so checks can report MANUAL.
+    deployments: Optional[list[Deployment]] = None
+    rai_policies: Optional[dict[str, RaiPolicy]] = None
     # Monitor DiagnosticSetting dataclasses. Left untyped: Pydantic would
     # re-validate them and reject log entries whose category is None.
     monitor_diagnostic_settings: Optional[list] = None
