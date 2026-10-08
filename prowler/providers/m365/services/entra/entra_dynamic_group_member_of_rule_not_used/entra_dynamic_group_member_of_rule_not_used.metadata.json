@@ -1,0 +1,41 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_dynamic_group_member_of_rule_not_used",
+  "CheckTitle": "Dynamic group rules prevent stale access by avoiding the retiring memberOf operator",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "This check verifies that dynamic membership groups in Microsoft Entra ID do not use the **memberOf** rule operator (`user.memberof` / `device.memberof`).\n\nMicrosoft is retiring this public-preview operator on November 3, 2026. Groups that still use it will stop updating and remain frozen in their last known membership.",
+  "Risk": "A frozen dynamic group retains every user or device from retirement time and never updates membership. Departed or re-roled members keep app assignments, Teams/SharePoint access, group-based licences, and **Conditional Access** targeting (inclusion or exclusion). This creates a silent, growing access-control gap.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/entra/identity/users/groups-dynamic-rule-member-of",
+    "https://learn.microsoft.com/entra/identity/users/groups-dynamic-membership",
+    "https://maester.dev/docs/tests/MT.1197"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "Update-MgGroup -GroupId <id> -MembershipRule '<new attribute-based rule>' -MembershipRuleProcessingState On",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the Microsoft Entra admin center (https://entra.microsoft.com/)\n2. Navigate to Identity > Groups > All groups\n3. Select the affected dynamic group\n4. Open Dynamic membership rules\n5. Replace the memberOf expression with attribute-based rules (e.g. user.department, user.extensionAttributeN, user.employeeType)\n6. Alternatively, convert the group to Assigned membership under Properties > Membership type\n7. Validate the resulting membership and every app, Conditional Access policy, licence, and SharePoint/Teams assignment that uses the group",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Replace the **memberOf** operator in dynamic group rules with attribute-based expressions (e.g. `user.department`, `user.extensionAttributeN`) or convert the group to **Assigned** membership before the operator retirement date. Validate all dependent policies and assignments after migration.",
+      "Url": "https://hub.prowler.com/check/entra_dynamic_group_member_of_rule_not_used"
+    }
+  },
+  "Categories": [
+    "identity-access",
+    "e3"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "entra_dynamic_group_for_guests_created"
+  ],
+  "Notes": "Ported from Maester control MT.1197 (Test-MtDynamicGroupMemberOfRule, MIT licensed). The check does not depend on the current date for PASS/FAIL; the date only changes the wording in status_extended."
+}

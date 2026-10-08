@@ -90,6 +90,10 @@ class Entra(M365Service):
         # dependencies) fails, so checks can report that users are unavailable
         # instead of silently evaluating an empty directory.
         self.users_error: Optional[str] = None
+        # Set when the Microsoft Graph /groups request fails (permissions,
+        # throttling, mid-pagination error), so checks can emit a MANUAL
+        # finding instead of silently evaluating an empty group list.
+        self.groups_error: Optional[str] = None
         self.exchange_mailbox_permission_service_principals_error: Optional[str] = None
         attributes = loop.run_until_complete(
             gather(
@@ -807,6 +811,14 @@ class Entra(M365Service):
         )
 
     async def _get_groups(self):
+        """Retrieve all Entra ID groups via Microsoft Graph.
+
+        Fetches groups with their core properties including dynamic membership
+        configuration.  On any API error (permissions, throttling,
+        mid-pagination failure) the partial result collected so far is returned
+        **and** ``self.groups_error`` is set so that checks can emit a MANUAL
+        finding instead of silently evaluating an incomplete group list.
+        """
         logger.info("Entra - Getting groups...")
         groups = []
         try:
@@ -817,6 +829,7 @@ class Entra(M365Service):
                         "displayName",
                         "groupTypes",
                         "membershipRule",
+                        "membershipRuleProcessingState",
                         "isAssignableToRole",
                         "isManagementRestricted",
                     ],
@@ -837,6 +850,9 @@ class Entra(M365Service):
                             name=group.display_name,
                             groupTypes=group.group_types or [],
                             membershipRule=group.membership_rule,
+                            membership_rule_processing_state=getattr(
+                                group, "membership_rule_processing_state", None
+                            ),
                             is_assignable_to_role=getattr(
                                 group, "is_assignable_to_role", False
                             )
@@ -851,10 +867,24 @@ class Entra(M365Service):
                 next_link = getattr(groups_data, "odata_next_link", None)
                 if not next_link:
                     break
-                groups_data = await self.client.groups.with_url(next_link).get()
+                try:
+                    groups_data = await self.client.groups.with_url(next_link).get()
+                except Exception as pagination_error:
+                    logger.error(
+                        f"{pagination_error.__class__.__name__}[{pagination_error.__traceback__.tb_lineno}]: {pagination_error}"
+                    )
+                    self.groups_error = (
+                        f"Groups list may be incomplete due to a pagination error: "
+                        f"{pagination_error.__class__.__name__}"
+                    )
+                    break
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            self.groups_error = (
+                f"Unable to retrieve groups from Microsoft Graph "
+                f"({error.__class__.__name__})"
             )
         return groups
 
@@ -2643,10 +2673,13 @@ class AuthenticationMethodConfiguration(BaseModel):
 
 
 class Group(BaseModel):
+    """Model representing a Microsoft Entra ID group."""
+
     id: str
     name: str
     groupTypes: List[str]
     membershipRule: Optional[str]
+    membership_rule_processing_state: Optional[str] = None
     is_assignable_to_role: bool = False
     is_management_restricted: bool = False
 
