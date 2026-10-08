@@ -1659,14 +1659,43 @@ class FindingMetadataSerializer(BaseSerializerV1):
 
 
 # Provider secrets
-KUBERNETES_KUBECONFIG_UNSUPPORTED_COMMAND_AUTH_ERROR = (
-    "Kubernetes kubeconfig command-based authentication is not supported in "
-    "Prowler Cloud for security reasons."
+KUBERNETES_KUBECONFIG_NON_INLINE_CREDENTIALS_ERROR = (
+    "Only inline Kubernetes credentials are supported. "
+    "For user authentication use token, username/password, or client-certificate-data with client-key-data; "
+    "clusters may use certificate-authority-data. "
+    "File-path fields (tokenFile, client-certificate, client-key, certificate-authority), "
+    "command-based authentication (exec, cmd-path), auth-provider directives, and proxy URLs are not supported."
 )
 KUBERNETES_KUBECONFIG_INVALID_ERROR = "Invalid Kubernetes kubeconfig content."
 
 
-def kubeconfig_contains_unsupported_command_auth(kubeconfig: dict) -> bool:
+KUBECONFIG_ALLOWED_USER_KEYS = frozenset(
+    {
+        "token",
+        "username",
+        "password",
+        "client-certificate-data",
+        "client-key-data",
+        "as",
+        "as-uid",
+        "as-groups",
+        "as-user-extra",
+    }
+)
+KUBECONFIG_ALLOWED_CLUSTER_KEYS = frozenset(
+    {
+        "server",
+        "certificate-authority-data",
+        "insecure-skip-tls-verify",
+        "tls-server-name",
+        "disable-compression",
+        "extensions",
+    }
+)
+
+
+def kubeconfig_is_inline_only_credentials(kubeconfig: dict) -> bool:
+    """Accept only inline credentials; reject file-reference and auth-provider fields."""
     users = kubeconfig.get("users", [])
     if not isinstance(users, list):
         raise ValidationError(KUBERNETES_KUBECONFIG_INVALID_ERROR)
@@ -1679,21 +1708,25 @@ def kubeconfig_contains_unsupported_command_auth(kubeconfig: dict) -> bool:
         if not isinstance(user, dict):
             raise ValidationError(KUBERNETES_KUBECONFIG_INVALID_ERROR)
 
-        if "exec" in user:
-            return True
+        if any(key not in KUBECONFIG_ALLOWED_USER_KEYS for key in user):
+            return False
 
-        auth_provider = user.get("auth-provider", {})
-        if not isinstance(auth_provider, dict):
-            continue
+    clusters = kubeconfig.get("clusters", [])
+    if not isinstance(clusters, list):
+        raise ValidationError(KUBERNETES_KUBECONFIG_INVALID_ERROR)
 
-        auth_provider_config = auth_provider.get("config", {})
-        if not isinstance(auth_provider_config, dict):
-            continue
+    for cluster_entry in clusters:
+        if not isinstance(cluster_entry, dict):
+            raise ValidationError(KUBERNETES_KUBECONFIG_INVALID_ERROR)
 
-        if "cmd-path" in auth_provider_config:
-            return True
+        cluster = cluster_entry.get("cluster", {})
+        if not isinstance(cluster, dict):
+            raise ValidationError(KUBERNETES_KUBECONFIG_INVALID_ERROR)
 
-    return False
+        if any(key not in KUBECONFIG_ALLOWED_CLUSTER_KEYS for key in cluster):
+            return False
+
+    return True
 
 
 class BaseWriteProviderSecretSerializer(BaseWriteSerializer):
@@ -1876,7 +1909,7 @@ class MongoDBAtlasProviderSecret(serializers.Serializer):
 
 
 class KubernetesProviderSecret(serializers.Serializer):
-    kubeconfig_content = serializers.CharField()
+    kubeconfig_content = serializers.CharField(trim_whitespace=False)
 
     def validate_kubeconfig_content(self, kubeconfig_content):
         try:
@@ -1889,9 +1922,9 @@ class KubernetesProviderSecret(serializers.Serializer):
         if not isinstance(kubeconfig, dict):
             raise serializers.ValidationError(KUBERNETES_KUBECONFIG_INVALID_ERROR)
 
-        if kubeconfig_contains_unsupported_command_auth(kubeconfig):
+        if not kubeconfig_is_inline_only_credentials(kubeconfig):
             raise serializers.ValidationError(
-                KUBERNETES_KUBECONFIG_UNSUPPORTED_COMMAND_AUTH_ERROR
+                KUBERNETES_KUBECONFIG_NON_INLINE_CREDENTIALS_ERROR
             )
 
         return kubeconfig_content

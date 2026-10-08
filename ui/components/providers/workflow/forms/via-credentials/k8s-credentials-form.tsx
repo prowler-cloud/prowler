@@ -5,8 +5,8 @@ import { Control, useWatch } from "react-hook-form";
 import { WizardTextareaField } from "@/components/providers/workflow/forms/fields";
 import { KubernetesCredentials } from "@/types";
 import {
-  KUBECONFIG_UNSUPPORTED_COMMAND_AUTHENTICATION_ERROR,
-  kubeconfigContainsUnsupportedCommandAuthentication,
+  KUBECONFIG_NON_INLINE_CREDENTIALS_ERROR,
+  kubeconfigIsInlineOnlyCredentials,
 } from "@/types/formSchemas";
 
 export const KubernetesCredentialsForm = ({
@@ -18,8 +18,9 @@ export const KubernetesCredentialsForm = ({
     control,
     name: "kubeconfig_content",
   });
-  const hasUnsupportedCommandAuthentication =
-    kubeconfigContainsUnsupportedCommandAuthentication(kubeconfigContent ?? "");
+  const hasUnsupportedCredentials = !kubeconfigIsInlineOnlyCredentials(
+    kubeconfigContent ?? "",
+  );
 
   return (
     <>
@@ -41,9 +42,9 @@ export const KubernetesCredentialsForm = ({
         minRows={10}
         isRequired
       />
-      {hasUnsupportedCommandAuthentication && (
+      {hasUnsupportedCredentials && (
         <p className="text-text-error-primary text-xs">
-          {KUBECONFIG_UNSUPPORTED_COMMAND_AUTHENTICATION_ERROR}
+          {KUBECONFIG_NON_INLINE_CREDENTIALS_ERROR}
         </p>
       )}
     </>
