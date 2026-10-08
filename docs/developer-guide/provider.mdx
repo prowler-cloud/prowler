@@ -3325,6 +3325,102 @@ def __init__(
     )
 ```
 
+### 2.10. Declare Credential Schemas for External Providers
+
+External providers, installed from Prowler Registry, have no credential serializer in the API. They describe their credentials through the `get_credentials_schema()` class method, and Prowler Cloud and Prowler Private Cloud build the credentials form from that description.
+
+The method returns a dictionary that maps each secret type the provider accepts (`static`, `role` or `service_account`) to a pydantic model:
+
+```python
+@classmethod
+def get_credentials_schema(cls) -> dict:
+    return {"static": AcmeStaticCredentials}
+```
+
+The API uses each model in two places:
+
+* **Form description:** `GET /api/v1/provider-schemas/{provider_type}` returns the model's `model_json_schema()` for each secret type, with internal references inlined.
+* **Secret validation:** `POST /api/v1/providers/secrets/` validates the secret with `model_validate()` against the model of the chosen secret type.
+
+#### 2.10.1. Fields Supported by the Credentials Form
+
+The credentials form accepts flat models only. Each field maps to one form control:
+
+| Pydantic Field | Form Control |
+| --- | --- |
+| `str` | Text input. `json_schema_extra={"examples": ["..."]}` sets the placeholder, and `json_schema_extra={"x-prowler-widget": "textarea"}` renders a text area. |
+| `SecretStr` | Masked input. |
+| `Literal["a", "b"]` | Select with one option per value. |
+| `bool` | Checkbox. |
+| `int` | Number input. `ge` and `le` set the minimum and maximum. |
+
+The following rules also apply:
+
+* **Labels:** `title` sets the field label and `description` its help text.
+* **Required fields:** a field without a default is required.
+* **Optional fields:** use a default such as `default=""` instead of `Optional[...]`. `Optional` emits `anyOf` with `null`, and the form rejects the whole schema.
+* **Limits:** at most 12 fields per model and 20 options per select. Field names start with a letter and contain only letters, digits, `_` and `-`.
+
+When a schema breaks any of these rules, the form shows "Credential form not supported" instead of the fields.
+
+#### 2.10.2. Offering Several Authentication Methods
+
+To accept several authentication methods within one secret type, such as an API token or a username and password, declare one model per method and join them in a discriminated union:
+
+```python
+from typing import Annotated, Literal, Union
+
+from pydantic import BaseModel, ConfigDict, Field, RootModel, SecretStr
+
+
+class AcmeCredentialsBase(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    host: str = Field(
+        title="API Host",
+        description="Hostname of the Acme API.",
+        json_schema_extra={"examples": ["api.acme.example.com"]},
+    )
+
+
+class AcmeTokenCredentials(AcmeCredentialsBase):
+    model_config = ConfigDict(title="API Token")
+
+    auth_method: Literal["token"] = "token"
+    token: SecretStr = Field(title="Token", description="Acme API token.")
+
+
+class AcmeBasicCredentials(AcmeCredentialsBase):
+    model_config = ConfigDict(title="Username and Password")
+
+    auth_method: Literal["basic"] = "basic"
+    username: str = Field(title="Username", description="Acme user.")
+    password: SecretStr = Field(title="Password", description="Password of the user.")
+
+
+class AcmeStaticCredentials(
+    RootModel[
+        Annotated[
+            Union[AcmeTokenCredentials, AcmeBasicCredentials],
+            Field(discriminator="auth_method"),
+        ]
+    ]
+):
+    """An Acme API token, or a username and password."""
+```
+
+The credentials form renders the union as follows:
+
+* **Authentication method selector:** each model in the union becomes one option, labeled with the model's `title`, in declaration order. The first model is the default, and a union accepts up to eight models.
+* **Method fields:** the form shows only the fields of the selected method. Switching methods clears the values entered so far.
+* **Discriminator:** the form never shows the `Literal` field and always sends its value, so the API validates the secret against the matching model.
+
+The secret passed to `get_scan_arguments()` and `get_connection_arguments()` includes the discriminator (`auth_method` in the example). Remove it there when the provider constructor or `test_connection()` does not accept it. Clients that call the API directly must send the discriminator too: pydantic rejects a secret without it.
+
+<Warning>
+Do not model several authentication methods as one flat model with a selector field and optional credential fields. The JSON schema of such a model does not state which fields each method needs, so the credentials form shows every field at once and cannot require the right ones.
+</Warning>
+
 ---
 
 ## Step 3: Integrate the Provider in the UI

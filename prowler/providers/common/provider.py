@@ -269,6 +269,13 @@ class Provider(ABC):
         whether it is required (no default) or optional. An empty dict means no
         schema is declared: the secret is accepted as an object and validated by
         :meth:`test_connection`.
+
+        A secret type with several authentication methods maps to a
+        discriminated union: a ``RootModel`` over one titled model per method,
+        each with a ``Literal`` discriminator field. Prowler Cloud offers one
+        option per method and shows only that method's fields. A flat model with
+        a selector and optional fields cannot say which fields each method
+        needs, so the form shows them all.
         """
         return {}
 
