@@ -105,10 +105,11 @@ class entra_app_registration_redirect_uris_secure(Check):
         findings: list[CheckReportM365] = []
 
         for app_id, app in entra_client.app_registrations.items():
+            display_name = app.name or app.app_id
             report = CheckReportM365(
                 metadata=self.metadata(),
                 resource=app,
-                resource_name=app.name or app.app_id,
+                resource_name=display_name,
                 resource_id=app_id,
             )
 
@@ -135,19 +136,17 @@ class entra_app_registration_redirect_uris_secure(Check):
                 else:
                     displayed = ", ".join(insecure)
                 report.status_extended = (
-                    f"App registration {app.name} has {total} insecure "
+                    f"App registration {display_name} has {total} insecure "
                     f"redirect URI(s): {displayed}."
                 )
             else:
                 report.status = "PASS"
                 if all_uris:
                     report.status_extended = (
-                        f"App registration {app.name} has all redirect URIs secure."
+                        f"App registration {display_name} has all redirect URIs secure."
                     )
                 else:
-                    report.status_extended = (
-                        f"App registration {app.name} has no redirect URIs configured."
-                    )
+                    report.status_extended = f"App registration {display_name} has no redirect URIs configured."
 
             findings.append(report)
 

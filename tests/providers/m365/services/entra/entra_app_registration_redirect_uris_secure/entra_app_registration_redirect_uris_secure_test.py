@@ -10,7 +10,7 @@ class Test_entra_app_registration_redirect_uris_secure:
 
     def test_no_app_registrations(self):
         """No app registrations in tenant: no findings."""
-        entra_client = mock.MagicMock
+        entra_client = mock.MagicMock()
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
 
@@ -39,7 +39,7 @@ class Test_entra_app_registration_redirect_uris_secure:
         """App with no redirect URIs configured: expected PASS."""
         app_id = str(uuid4())
         app_name = "Clean App"
-        entra_client = mock.MagicMock
+        entra_client = mock.MagicMock()
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
 
@@ -78,7 +78,7 @@ class Test_entra_app_registration_redirect_uris_secure:
         """App with only secure redirect URIs: expected PASS."""
         app_id = str(uuid4())
         app_name = "Secure App"
-        entra_client = mock.MagicMock
+        entra_client = mock.MagicMock()
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
 
@@ -125,7 +125,7 @@ class Test_entra_app_registration_redirect_uris_secure:
         """App with an http:// URI on a non-localhost host: expected FAIL."""
         app_id = str(uuid4())
         app_name = "Http App"
-        entra_client = mock.MagicMock
+        entra_client = mock.MagicMock()
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
 
@@ -168,7 +168,7 @@ class Test_entra_app_registration_redirect_uris_secure:
         """App with http://localhost: expected PASS (loopback is allowed)."""
         app_id = str(uuid4())
         app_name = "Localhost App"
-        entra_client = mock.MagicMock
+        entra_client = mock.MagicMock()
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
 
@@ -210,7 +210,7 @@ class Test_entra_app_registration_redirect_uris_secure:
         """App with a host on *.azurewebsites.net: expected FAIL."""
         app_id = str(uuid4())
         app_name = "Azure Web App"
-        entra_client = mock.MagicMock
+        entra_client = mock.MagicMock()
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
 
@@ -252,7 +252,7 @@ class Test_entra_app_registration_redirect_uris_secure:
         """App with host exactly azurewebsites.net (no subdomain): expected FAIL."""
         app_id = str(uuid4())
         app_name = "Bare Domain App"
-        entra_client = mock.MagicMock
+        entra_client = mock.MagicMock()
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
 
@@ -292,7 +292,7 @@ class Test_entra_app_registration_redirect_uris_secure:
         """App with a wildcard in the redirect URI: expected FAIL."""
         app_id = str(uuid4())
         app_name = "Wildcard App"
-        entra_client = mock.MagicMock
+        entra_client = mock.MagicMock()
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
 
@@ -333,7 +333,7 @@ class Test_entra_app_registration_redirect_uris_secure:
         """App with a malformed URI (no scheme): expected FAIL."""
         app_id = str(uuid4())
         app_name = "Malformed App"
-        entra_client = mock.MagicMock
+        entra_client = mock.MagicMock()
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
 
@@ -375,7 +375,7 @@ class Test_entra_app_registration_redirect_uris_secure:
         """App with a malformed URI (scheme but no host): expected FAIL."""
         app_id = str(uuid4())
         app_name = "No Host App"
-        entra_client = mock.MagicMock
+        entra_client = mock.MagicMock()
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
 
@@ -415,7 +415,7 @@ class Test_entra_app_registration_redirect_uris_secure:
         """App with custom scheme public-client URIs: expected PASS."""
         app_id = str(uuid4())
         app_name = "Native App"
-        entra_client = mock.MagicMock
+        entra_client = mock.MagicMock()
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
 
@@ -461,7 +461,7 @@ class Test_entra_app_registration_redirect_uris_secure:
         """App with multiple insecure redirect URIs: expected FAIL listing all."""
         app_id = str(uuid4())
         app_name = "Legacy Portal"
-        entra_client = mock.MagicMock
+        entra_client = mock.MagicMock()
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
 
@@ -507,7 +507,7 @@ class Test_entra_app_registration_redirect_uris_secure:
         app_name_pass = "Secure App"
         app_id_fail = str(uuid4())
         app_name_fail = "Insecure App"
-        entra_client = mock.MagicMock
+        entra_client = mock.MagicMock()
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
 
@@ -557,7 +557,7 @@ class Test_entra_app_registration_redirect_uris_secure:
         """App with more than 5 insecure URIs: status_extended is truncated."""
         app_id = str(uuid4())
         app_name = "Many URIs App"
-        entra_client = mock.MagicMock
+        entra_client = mock.MagicMock()
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
 
@@ -598,7 +598,7 @@ class Test_entra_app_registration_redirect_uris_secure:
         """App with exactly 5 insecure URIs: all displayed, no truncation."""
         app_id = str(uuid4())
         app_name = "Five URIs App"
-        entra_client = mock.MagicMock
+        entra_client = mock.MagicMock()
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
 
@@ -639,7 +639,7 @@ class Test_entra_app_registration_redirect_uris_secure:
         """App with a wildcard in the path (not host): expected FAIL."""
         app_id = str(uuid4())
         app_name = "Wildcard Path App"
-        entra_client = mock.MagicMock
+        entra_client = mock.MagicMock()
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
 
@@ -679,7 +679,7 @@ class Test_entra_app_registration_redirect_uris_secure:
         """App with insecure SPA redirect URI: expected FAIL."""
         app_id = str(uuid4())
         app_name = "Insecure SPA"
-        entra_client = mock.MagicMock
+        entra_client = mock.MagicMock()
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
 
@@ -719,7 +719,7 @@ class Test_entra_app_registration_redirect_uris_secure:
         """App with no display name: resource_name falls back to app_id."""
         app_id = str(uuid4())
         app_app_id = str(uuid4())
-        entra_client = mock.MagicMock
+        entra_client = mock.MagicMock()
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
 
@@ -751,3 +751,4 @@ class Test_entra_app_registration_redirect_uris_secure:
             assert len(result) == 1
             assert result[0].status == "PASS"
             assert result[0].resource_name == app_app_id
+            assert f"App registration {app_app_id} has" in result[0].status_extended
