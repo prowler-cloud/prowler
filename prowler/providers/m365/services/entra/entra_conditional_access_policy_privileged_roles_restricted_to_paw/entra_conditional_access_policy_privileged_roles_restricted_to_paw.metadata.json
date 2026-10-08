@@ -9,7 +9,7 @@
   "Severity": "medium",
   "ResourceType": "NotDefined",
   "ResourceGroup": "IAM",
-  "Description": "An enabled Conditional Access policy should target **privileged directory roles**, apply to **all cloud apps**, **block access** from devices not matching a device filter that identifies **Privileged Access Workstations (PAWs)**.\n\nThis limits privileged sessions to hardened, dedicated devices and reduces the blast radius of a compromised endpoint.",
+  "Description": "An enabled Conditional Access policy should target **privileged directory roles**, apply to **all cloud apps**, and **block access** from devices not matching a device filter that identifies **Privileged Access Workstations (PAWs)**.\n\nThis limits privileged sessions to hardened, dedicated devices and reduces the blast radius of a compromised endpoint.",
   "Risk": "Privileged users signing in from everyday workstations are exposed to **phishing**, **malware**, and **token theft**. Without restricting privileged sessions to dedicated PAWs, an attacker who compromises an ordinary endpoint can hijack admin credentials and escalate to **tenant-wide control**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
