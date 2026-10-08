@@ -1,0 +1,43 @@
+{
+  "Provider": "aws",
+  "CheckID": "bedrockagentcore_runtime_vpc_configured",
+  "CheckTitle": "Amazon Bedrock AgentCore runtime uses VPC network mode with subnets and security groups",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices/Network Reachability",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices"
+  ],
+  "ServiceName": "bedrockagentcore",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "AwsBedrockAgentCoreRuntime",
+  "ResourceGroup": "ai_ml",
+  "Description": "**Amazon Bedrock AgentCore runtimes** are evaluated for **VPC network mode**. A runtime with `networkMode` set to `VPC` and non-empty `subnets` and `securityGroups` in `networkModeConfig` keeps agent traffic inside a customer VPC rather than AWS-managed public connectivity.",
+  "Risk": "A **public or default** AgentCore runtime can reach the internet without VPC controls, weakening **confidentiality** and **integrity**. Agents can exfiltrate data or contact untrusted endpoints. Missing subnets or security groups leave VPC mode incomplete, so traffic is not confined to the intended network boundary.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/agentcore-vpc.html",
+    "https://docs.aws.amazon.com/bedrock-agentcore-control/latest/APIReference/API_NetworkConfiguration.html",
+    "https://docs.aws.amazon.com/bedrock-agentcore-control/latest/APIReference/API_GetAgentRuntime.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aws bedrock-agentcore-control create-agent-runtime --agent-runtime-name <example_resource_name> --role-arn <example_resource_id> --agent-runtime-artifact '{\"containerConfiguration\":{\"containerUri\":\"<example_resource_id>\"}}' --network-configuration '{\"networkMode\":\"VPC\",\"networkModeConfig\":{\"subnets\":[\"<example_resource_id>\"],\"securityGroups\":[\"<example_resource_id>\"]}}'",
+      "NativeIaC": "```yaml\nResources:\n  AgentRuntime:\n    Type: AWS::BedrockAgentCore::Runtime\n    Properties:\n      AgentRuntimeName: <example_resource_name>\n      RoleArn: <example_resource_id>\n      AgentRuntimeArtifact:\n        ContainerConfiguration:\n          ContainerUri: <example_resource_id>\n      NetworkConfiguration:\n        NetworkMode: VPC # Critical: places the runtime in a customer VPC so the check passes\n        NetworkModeConfig:\n          Subnets:\n            - <example_resource_id> # Critical: at least one VPC subnet\n          SecurityGroups:\n            - <example_resource_id> # Critical: at least one security group\n```",
+      "Other": "1. Open the Amazon Bedrock AgentCore console\n2. Open Agent Runtimes and select the runtime\n3. Under Network configuration, choose VPC\n4. Select at least one subnet and one security group\n5. Save the runtime configuration",
+      "Terraform": "```hcl\nresource \"aws_bedrockagentcore_agent_runtime\" \"example\" {\n  agent_runtime_name = \"<example_resource_name>\"\n  role_arn           = \"<example_resource_id>\"\n\n  agent_runtime_artifact {\n    container_configuration {\n      container_uri = \"<example_resource_id>\"\n    }\n  }\n\n  # Critical: VPC mode with subnets and security groups makes the check PASS\n  network_configuration {\n    network_mode = \"VPC\"\n    network_mode_config {\n      subnets         = [\"<example_resource_id>\"]\n      security_groups = [\"<example_resource_id>\"]\n    }\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Deploy AgentCore runtimes in **VPC** mode with private subnets and least-privilege security groups. Use **VPC endpoints** for AgentCore, ECR, S3, and CloudWatch Logs so agents do not require public egress.",
+      "Url": "https://hub.prowler.com/check/bedrockagentcore_runtime_vpc_configured"
+    }
+  },
+  "Categories": [
+    "internet-exposed",
+    "trust-boundaries",
+    "gen-ai"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Reports one finding per AgentCore runtime. A runtime whose detail could not be retrieved returns MANUAL rather than PASS/FAIL, preventing false PASS results when permissions are insufficient."
+}
