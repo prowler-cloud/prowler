@@ -1,3 +1,4 @@
+import { formatRegistryLabel } from "@/lib/registry/labels";
 import { isKnownProviderType } from "@/types/providers";
 import type {
   RegistryCatalogArtifact,
@@ -63,7 +64,8 @@ export function buildRegistryProviderOptions(
       );
     }
   }
-  return Array.from(options.values()).sort((left, right) =>
-    left.label.localeCompare(right.label),
-  );
+  return Array.from(options.values(), (option) => ({
+    ...option,
+    label: formatRegistryLabel(option.label),
+  })).sort((left, right) => left.label.localeCompare(right.label));
 }
