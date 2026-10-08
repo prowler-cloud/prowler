@@ -16,6 +16,8 @@ class Bedrock(AWSService):
         self.guardrails = {}
         self.guardrails_scanned_regions = set()
         self.guardrails_scan_errors = {}
+        self.model_invocation_jobs = {}
+        self.model_invocation_jobs_scan_errors = {}
         self.custom_models = {}
         self.custom_models_scan_errors = {}
         self.__threading_call__(self._get_model_invocation_logging_configuration)
@@ -24,6 +26,10 @@ class Bedrock(AWSService):
         self.__threading_call__(self._list_tags_for_resource, self.guardrails.values())
         self.__threading_call__(self._list_custom_models)
         self.__threading_call__(self._get_custom_model, self.custom_models.values())
+        self.__threading_call__(self._list_model_invocation_jobs)
+        self.__threading_call__(
+            self._get_model_invocation_job, self.model_invocation_jobs.values()
+        )
 
     def _get_model_invocation_logging_arn_template(self, region):
         return (
@@ -57,6 +63,62 @@ class Bedrock(AWSService):
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def _list_model_invocation_jobs(self, regional_client):
+        """List Bedrock model invocation jobs in a region."""
+        logger.info("Bedrock - Listing Model Invocation Jobs...")
+        try:
+            paginator = regional_client.get_paginator("list_model_invocation_jobs")
+            for page in paginator.paginate():
+                for job in page.get("invocationJobSummaries", []):
+                    job_arn = job.get("jobArn", "")
+                    if job_arn and (
+                        not self.audit_resources
+                        or is_resource_filtered(job_arn, self.audit_resources)
+                    ):
+                        self.model_invocation_jobs[job_arn] = ModelInvocationJob(
+                            name=job.get("jobName", ""),
+                            arn=job_arn,
+                            region=regional_client.region,
+                        )
+        except ClientError as error:
+            code = error.response["Error"].get("Code", error.__class__.__name__)
+            if code != "ValidationException":
+                self.model_invocation_jobs_scan_errors[regional_client.region] = code
+            logger.error(
+                f"{regional_client.region} -- "
+                f"{error.__class__.__name__}"
+                f"[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        except Exception as error:
+            self.model_invocation_jobs_scan_errors[regional_client.region] = (
+                error.__class__.__name__
+            )
+            logger.error(
+                f"{regional_client.region} -- "
+                f"{error.__class__.__name__}"
+                f"[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def _get_model_invocation_job(self, job):
+        """Fetch S3 output encryption for a model invocation job."""
+        logger.info("Bedrock - Getting Model Invocation Job...")
+        try:
+            job_info = self.regional_clients[job.region].get_model_invocation_job(
+                jobIdentifier=job.arn
+            )
+            job.s3_encryption_key_id = (
+                job_info.get("outputDataConfig", {})
+                .get("s3OutputDataConfig", {})
+                .get("s3EncryptionKeyId")
+            )
+            job.detail_retrieved = True
+        except Exception as error:
+            logger.error(
+                f"{job.region} -- "
+                f"{error.__class__.__name__}"
+                f"[{error.__traceback__.tb_lineno}]: {error}"
             )
 
     def _list_guardrails(self, regional_client):
@@ -237,6 +299,16 @@ class CustomModel(BaseModel):
     region: str
     kms_key_arn: Optional[str] = None
     # False when GetCustomModel failed: absent key is unknown, not unset.
+    detail_retrieved: bool = False
+
+
+class ModelInvocationJob(BaseModel):
+    """Model representing a Bedrock model invocation job."""
+
+    name: str
+    arn: str
+    region: str
+    s3_encryption_key_id: Optional[str] = None
     detail_retrieved: bool = False
 
 

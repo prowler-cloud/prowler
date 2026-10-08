@@ -6,7 +6,11 @@ import pytest
 from boto3 import client
 from moto import mock_aws
 
-from prowler.providers.aws.services.bedrock.bedrock_service import Bedrock, BedrockAgent
+from prowler.providers.aws.services.bedrock.bedrock_service import (
+    Bedrock,
+    BedrockAgent,
+    ModelInvocationJob,
+)
 from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_WEST_1,
@@ -491,3 +495,96 @@ class TestBedrockPromptPagination:
 
         assert bedrock_agent_service.prompts == {}
         assert bedrock_agent_service.prompt_scanned_regions == set()
+
+
+class TestBedrockModelInvocationJobPagination:
+    def test_list_model_invocation_jobs_pagination(self):
+        audit_info = MagicMock()
+        audit_info.audited_partition = "aws"
+        audit_info.audited_account = "123456789012"
+        audit_info.audit_resources = None
+
+        regional_client = MagicMock()
+        regional_client.region = "us-east-1"
+
+        paginator = MagicMock()
+        paginator.paginate.return_value = [
+            {
+                "invocationJobSummaries": [
+                    {
+                        "jobArn": "arn:aws:bedrock:us-east-1:123456789012:model-invocation-job/job-1",
+                        "jobName": "job-1",
+                    }
+                ]
+            },
+            {
+                "invocationJobSummaries": [
+                    {
+                        "jobArn": "arn:aws:bedrock:us-east-1:123456789012:model-invocation-job/job-2",
+                        "jobName": "job-2",
+                    }
+                ]
+            },
+        ]
+        regional_client.get_paginator.return_value = paginator
+
+        bedrock_service = Bedrock(audit_info)
+        bedrock_service.regional_clients = {"us-east-1": regional_client}
+        bedrock_service.model_invocation_jobs = {}
+
+        bedrock_service._list_model_invocation_jobs(regional_client)
+
+        assert len(bedrock_service.model_invocation_jobs) == 2
+
+        assert (
+            "arn:aws:bedrock:us-east-1:123456789012:model-invocation-job/job-1"
+            in bedrock_service.model_invocation_jobs
+        )
+
+        assert (
+            "arn:aws:bedrock:us-east-1:123456789012:model-invocation-job/job-2"
+            in bedrock_service.model_invocation_jobs
+        )
+
+        regional_client.get_paginator.assert_called_once_with(
+            "list_model_invocation_jobs"
+        )
+        paginator.paginate.assert_called_once()
+
+    def test_get_model_invocation_job_s3_encryption_key(self):
+        audit_info = MagicMock()
+        audit_info.audited_partition = "aws"
+        audit_info.audited_account = "123456789012"
+        audit_info.audit_resources = None
+
+        regional_client = MagicMock()
+        regional_client.region = "us-east-1"
+
+        regional_client.get_model_invocation_job.return_value = {
+            "outputDataConfig": {
+                "s3OutputDataConfig": {
+                    "s3EncryptionKeyId": "arn:aws:kms:us-east-1:123456789012:key/test-key"
+                }
+            }
+        }
+
+        bedrock_service = Bedrock(audit_info)
+        bedrock_service.regional_clients = {"us-east-1": regional_client}
+
+        job = ModelInvocationJob(
+            name="job-1",
+            arn="arn:aws:bedrock:us-east-1:123456789012:model-invocation-job/job-1",
+            region="us-east-1",
+        )
+
+        bedrock_service._get_model_invocation_job(job)
+
+        assert (
+            job.s3_encryption_key_id
+            == "arn:aws:kms:us-east-1:123456789012:key/test-key"
+        )
+        assert job.detail_retrieved is True
+
+        regional_client.get_model_invocation_job.assert_called_once_with(
+            jobIdentifier=job.arn
+        )
