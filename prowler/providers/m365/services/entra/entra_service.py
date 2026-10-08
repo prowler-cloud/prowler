@@ -86,6 +86,7 @@ class Entra(M365Service):
         self.tenant_domain = provider.identity.tenant_domain
         self.tenant_id = getattr(provider.identity, "tenant_id", None)
         self.user_registration_details_error: Optional[str] = None
+        self.conditional_access_policies_error: Optional[str] = None
         # Set when the Microsoft Graph /users request (or its directory role
         # dependencies) fails, so checks can report that users are unavailable
         # instead of silently evaluating an empty directory.
@@ -275,14 +276,44 @@ class Entra(M365Service):
                                     [],
                                 )
                             ],
-                            included_user_actions=[
-                                UserAction(user_action)
-                                for user_action in getattr(
+                            included_user_actions=self._parse_user_actions(
+                                getattr(
                                     policy.conditions.applications,
                                     "include_user_actions",
                                     [],
                                 )
+                            ),
+                            included_authentication_context_class_references=[
+                                ref
+                                for ref in getattr(
+                                    policy.conditions.applications,
+                                    "include_authentication_context_class_references",
+                                    [],
+                                )
+                                or []
                             ],
+                            application_filter_mode=(
+                                getattr(
+                                    getattr(
+                                        policy.conditions.applications,
+                                        "application_filter",
+                                        None,
+                                    ),
+                                    "mode",
+                                    None,
+                                )
+                            ),
+                            application_filter_rule=(
+                                getattr(
+                                    getattr(
+                                        policy.conditions.applications,
+                                        "application_filter",
+                                        None,
+                                    ),
+                                    "rule",
+                                    None,
+                                )
+                            ),
                         ),
                         user_conditions=UsersConditions(
                             included_groups=[
@@ -584,7 +615,35 @@ class Entra(M365Service):
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+            self.conditional_access_policies_error = (
+                f"{error.__class__.__name__}: {error}"
+            )
         return conditional_access_policies
+
+    @staticmethod
+    def _parse_user_actions(raw_actions) -> list:
+        """Parse user actions from the Graph API response.
+
+        Converts raw user action strings into ``UserAction`` enum values.
+        Unknown values are kept as plain strings so that a single
+        unrecognised action does not abort parsing of the entire policy list.
+
+        Args:
+            raw_actions: Iterable of user action strings from the SDK response.
+
+        Returns:
+            A list of ``UserAction`` enum members or plain strings.
+        """
+        parsed = []
+        for action in raw_actions or []:
+            try:
+                parsed.append(UserAction(action))
+            except ValueError:
+                logger.warning(
+                    f"Unknown user action '{action}' in Conditional Access policy; keeping as string."
+                )
+                parsed.append(action)
+        return parsed
 
     async def _get_admin_consent_policy(self):
         """
@@ -2271,9 +2330,14 @@ class UserAction(Enum):
 
 
 class ApplicationsConditions(BaseModel):
+    """Model representing application conditions for Conditional Access policies."""
+
     included_applications: List[str]
     excluded_applications: List[str]
-    included_user_actions: List[UserAction]
+    included_user_actions: List[Any] = []
+    included_authentication_context_class_references: List[str] = []
+    application_filter_mode: Optional[str] = None
+    application_filter_rule: Optional[str] = None
 
 
 class GuestOrExternalUserType(Enum):
