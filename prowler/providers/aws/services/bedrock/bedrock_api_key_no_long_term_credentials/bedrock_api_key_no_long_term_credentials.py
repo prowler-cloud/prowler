@@ -19,18 +19,33 @@ class bedrock_api_key_no_long_term_credentials(Check):
     FAIL (high) for any other active long-term key.
     """
 
-    def execute(self):
+    def execute(self) -> list[Check_Report_AWS]:
+        """Execute the check logic.
+
+        Returns:
+            A list of reports containing the result of the check.
+        """
         findings = []
         for api_key in iam_client.service_specific_credentials:
             if api_key.service_name != "bedrock.amazonaws.com":
-                continue
-            if not api_key.expiration_date:
                 continue
 
             report = Check_Report_AWS(metadata=self.metadata(), resource=api_key)
             now = datetime.now(timezone.utc)
 
-            if api_key.expiration_date <= now:
+            if api_key.expiration_date is None:
+                # ExpirationDate "is only present for Bedrock API keys ... that were created with
+                # an expiration period" (IAM ServiceSpecificCredentialMetadata), so its absence is
+                # the never-expiring key itself, not a key outside this check's scope.
+                report.status = "FAIL"
+                report.check_metadata.Severity = Severity.critical
+                report.status_extended = (
+                    f"Bedrock long-term API key {api_key.id} in user "
+                    f"{api_key.user.name} has no expiration date, so it never expires. "
+                    f"Use short-term Bedrock API keys (session-scoped, valid up to "
+                    f"12 hours) for non-exploratory workloads instead."
+                )
+            elif api_key.expiration_date <= now:
                 report.status = "PASS"
                 report.status_extended = (
                     f"Bedrock long-term API key {api_key.id} in user "

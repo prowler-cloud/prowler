@@ -1,0 +1,1 @@
+`bedrock_api_key_no_long_term_credentials` now reports a Bedrock long-term API key that never expires; IAM only returns `ExpirationDate` for keys created with an expiration period, so keys created without one were skipped and produced no finding at all
