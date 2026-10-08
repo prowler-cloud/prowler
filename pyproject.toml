@@ -108,7 +108,7 @@ dependencies = [
   "tzlocal==5.3.1",
   "uuid6==2024.7.10",
   "py-iam-expand==0.3.0",
-  "h2==4.3.0",
+  "h2==4.4.1",
   "oci==2.184.1",
   "alibabacloud_credentials==1.0.3",
   "alibabacloud_ram20150501==1.2.0",
