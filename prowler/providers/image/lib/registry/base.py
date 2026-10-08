@@ -98,28 +98,61 @@ def _parse_allowed_private_networks(
     return tuple(networks)
 
 
-def _next_hop_kwargs(kwargs: dict, old_url: str, new_url: str) -> dict:
-    """Request options for a redirect hop, rebuilt the way ``requests`` would.
+# 307 and 308 are the two that must replay the request unchanged
+_BODY_PRESERVING_REDIRECTS = frozenset({307, 308})
+_BODY_OPTIONS = ("data", "json", "files")
+_BODY_HEADERS = ("content-length", "content-type", "transfer-encoding")
 
-    Following redirects by hand loses what ``Session.resolve_redirects`` does for
-    free, so both of its rules are reapplied here.
+
+def _rebuilt_method(method: str, status_code: int) -> str:
+    """How ``requests`` rewrites the method on a redirect (RFC 7231 and history)."""
+    if status_code in (302, 303) and method != "HEAD":
+        return "GET"
+    if status_code == 301 and method == "POST":
+        return "GET"
+    return method
+
+
+def _next_hop(
+    method: str, kwargs: dict, old_url: str, new_url: str, status_code: int
+) -> tuple[str, dict]:
+    """Method and options for a redirect hop, rebuilt the way ``requests`` would.
+
+    Following redirects by hand loses everything ``Session.resolve_redirects``
+    does, so its rules are reapplied here rather than only the ones that first
+    came to mind.
     """
     hop = dict(kwargs)
     # the Location carries its own query; reapplying params can invalidate a
     # signed URL a registry redirects to
     hop.pop("params", None)
+
+    if status_code not in _BODY_PRESERVING_REDIRECTS:
+        # a redirected login would otherwise re-send its credentials in the body
+        for option in _BODY_OPTIONS:
+            hop.pop(option, None)
+        hop["headers"] = {
+            name: value
+            for name, value in (hop.get("headers") or {}).items()
+            if name.lower() not in _BODY_HEADERS
+        }
+        method = _rebuilt_method(method, status_code)
+
     # borrowed rather than restated: the port and scheme cases are subtle, and a
-    # hop that keeps credentials hands the registry token to an unrelated host
+    # hop that keeps credentials hands the registry token to an unrelated host.
+    # `should_strip_auth` ignores `self`, but calling it off a live session reads
+    # better than passing None.
     with requests.Session() as redirect_rules:
         if not redirect_rules.should_strip_auth(old_url, new_url):
-            return hop
+            return method, hop
+
     hop.pop("auth", None)
     hop["headers"] = {
         name: value
         for name, value in (hop.get("headers") or {}).items()
         if name.lower() != "authorization"
     }
-    return hop
+    return method, hop
 
 
 class RegistryAdapter(ABC):
@@ -345,7 +378,9 @@ class RegistryAdapter(ABC):
             target = self._validate_outbound_url(
                 urljoin(url, location), enforce_origin=False
             )
-            hop_kwargs = _next_hop_kwargs(hop_kwargs, url, target)
+            method, hop_kwargs = _next_hop(
+                method, hop_kwargs, url, target, resp.status_code
+            )
             url = target
         raise ImageRegistryNetworkError(
             file=__file__,

@@ -1532,3 +1532,43 @@ class TestValidatedRedirects:
         )
 
         assert "params" not in mock_request.call_args_list[1].kwargs
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_a_redirected_post_becomes_a_get_without_its_body(self, mock_request):
+        """A redirected login would otherwise re-send its credentials."""
+        mock_request.side_effect = [
+            _redirect("https://cdn.example.com/elsewhere"),
+            MagicMock(status_code=200, headers={}),
+        ]
+
+        self._adapter()._request_with_retry(
+            "POST", "https://reg.io/v2/users/login", json={"password": "a-password"}
+        )
+
+        hop = mock_request.call_args_list[1]
+        assert hop[0][0] == "GET"
+        assert "json" not in hop.kwargs
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_a_temporary_redirect_replays_the_request(self, mock_request):
+        mock_request.side_effect = [
+            MagicMock(status_code=307, headers={"Location": "https://reg.io/v2/moved"}),
+            MagicMock(status_code=200, headers={}),
+        ]
+
+        self._adapter()._request_with_retry("POST", "https://reg.io/v2/", json={"a": 1})
+
+        hop = mock_request.call_args_list[1]
+        assert hop[0][0] == "POST"
+        assert hop.kwargs["json"] == {"a": 1}
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_a_301_only_rewrites_a_post(self, mock_request):
+        mock_request.side_effect = [
+            MagicMock(status_code=301, headers={"Location": "https://reg.io/v2/moved"}),
+            MagicMock(status_code=200, headers={}),
+        ]
+
+        self._adapter()._request_with_retry("PUT", "https://reg.io/v2/")
+
+        assert mock_request.call_args_list[1][0][0] == "PUT"
