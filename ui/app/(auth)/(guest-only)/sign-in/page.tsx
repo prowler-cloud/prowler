@@ -4,6 +4,7 @@ import {
   isGithubOAuthEnabled,
   isGoogleOAuthEnabled,
 } from "@/lib/helper";
+import { isSelfRegistrationEnabled } from "@/lib/shared/env";
 
 const SignIn = () => {
   const GOOGLE_AUTH_URL = getAuthUrl("google");
@@ -15,6 +16,7 @@ const SignIn = () => {
       githubAuthUrl={GITHUB_AUTH_URL}
       isGoogleOAuthEnabled={isGoogleOAuthEnabled}
       isGithubOAuthEnabled={isGithubOAuthEnabled}
+      isSelfRegistrationEnabled={isSelfRegistrationEnabled()}
     />
   );
 };

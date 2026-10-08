@@ -71,6 +71,7 @@ from django.db import IntegrityError, transaction
 from drf_spectacular.utils import extend_schema_field
 from jwt.exceptions import InvalidKeyError
 from prowler.lib.mutelist.mutelist import Mutelist
+from prowler.providers.oraclecloud.config import OCI_REGIONS
 from rest_framework.reverse import reverse
 from rest_framework.validators import UniqueTogetherValidator
 from rest_framework_json_api import serializers
@@ -1917,9 +1918,16 @@ class IacProviderSecret(serializers.Serializer):
         resource_name = "provider-secrets"
 
 
-class LegacyOCIRegionField(serializers.Field):
+class OCIHomeRegionField(serializers.Field):
+    """Optional OCI home region; blank or non-string legacy values are dropped."""
+
     def to_internal_value(self, data):
-        return data
+        if not isinstance(data, str) or not data.strip():
+            return None
+        region = data.strip()
+        if region not in OCI_REGIONS:
+            raise serializers.ValidationError(f"Invalid OCI region: {region}")
+        return region
 
     def to_representation(self, value):
         return value
@@ -1932,10 +1940,11 @@ class OracleCloudProviderSecret(serializers.Serializer):
     key_content = serializers.CharField(required=False)
     tenancy = serializers.CharField()
     pass_phrase = serializers.CharField(required=False)
-    region = LegacyOCIRegionField(required=False, allow_null=True)
+    region = OCIHomeRegionField(required=False, allow_null=True)
 
     def validate(self, attrs):
-        attrs.pop("region", None)
+        if not attrs.get("region"):
+            attrs.pop("region", None)
 
         if "key_file" not in attrs and "key_content" not in attrs:
             raise serializers.ValidationError(
@@ -2149,6 +2158,12 @@ class InvitationSerializer(RLSSerializer):
         if tenant_id is not None:
             self.fields["roles"].queryset = Role.objects.filter(tenant_id=tenant_id)
 
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if instance.is_lapsed:
+            data["state"] = Invitation.State.EXPIRED.value
+        return data
+
     class Meta:
         model = Invitation
         fields = [
@@ -2175,6 +2190,7 @@ class InvitationBaseWriteSerializer(BaseWriteSerializer):
             self.fields["roles"].queryset = Role.objects.filter(tenant_id=tenant_id)
 
     def validate_email(self, value):
+        value = value.strip().lower()
         user = User.objects.filter(email=value).first()
         tenant_id = self.context["tenant_id"]
         if user and Membership.objects.filter(user=user, tenant=tenant_id).exists():
@@ -2182,9 +2198,13 @@ class InvitationBaseWriteSerializer(BaseWriteSerializer):
                 "The user may already be a member of the tenant or there was an issue with the "
                 "email provided."
             )
-        if Invitation.objects.filter(
-            email=value, state=Invitation.State.PENDING
-        ).exists():
+        pending_invitations = Invitation.objects.filter(
+            tenant_id=tenant_id, email=value, state=Invitation.State.PENDING
+        )
+        pending_invitations.filter(Invitation.lapsed_q()).update(
+            state=Invitation.State.EXPIRED
+        )
+        if pending_invitations.filter(expires_at__gt=datetime.now(UTC)).exists():
             raise ValidationError(
                 "Unable to process your request. Please check the information provided and "
                 "try again."

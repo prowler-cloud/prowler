@@ -24,15 +24,16 @@ export class ScansPage extends BasePage {
     super(page);
 
     // Scan provider selection elements
-    // The sidebar exposes its own icon-button labeled "Launch Scan"
-    // (aria-label, wrapped in a Tooltip), so scoping by accessible name
-    // alone hits a strict-mode duplicate. Scope to the page-shell's
+    // The sidebar exposes its own action labeled "Launch Scan" (it reads
+    // "Add Provider" only while the tenant has no providers), so scoping by
+    // accessible name alone hits a strict-mode duplicate. Scope to the page-shell's
     // tabs-and-actions group, which only contains the visible-text
     // Launch Scan button.
     this.launchScanButton = page
       .getByRole("group", { name: /scan tabs/i })
       .getByRole("button", { name: /^Launch Scan$/i });
-    this.launchScanDialog = page.getByRole("dialog");
+    // By name: in Cloud the Lighthouse callout is also a dialog
+    this.launchScanDialog = page.getByRole("dialog", { name: "Launch A Scan" });
     // The modal renders the providers picker as the shared MultiSelect-based
     // AccountsSelector (used in single-select mode via closeOnSelect). Scoping
     // to the dialog avoids matching the search combobox that appears in the
@@ -68,7 +69,8 @@ export class ScansPage extends BasePage {
     });
 
     // Main content elements
-    this.scanTable = page.locator("table");
+    // getByRole skips the hidden <table> shells React leaves while streaming rows
+    this.scanTable = page.getByRole("table");
     // The scans view renders each tab with its own empty state, so a <table>
     // is NOT guaranteed (an empty tab shows a NoScansEmptyState card instead).
     // The tabs group is always present once providers exist, so it is the

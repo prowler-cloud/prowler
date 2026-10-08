@@ -5,6 +5,7 @@ import {
   GitBranch,
   LayoutGrid,
   MessageCircleQuestion,
+  Package,
   Settings,
   ShieldCheck,
   SquareChartGantt,
@@ -32,6 +33,7 @@ interface NavigationConfigOptions {
   pathname: string;
   apiDocsUrl?: string | null;
   cloudBillingEnabled?: boolean;
+  registryEligible?: boolean;
   permissions?: RolePermissionAttributes;
 }
 
@@ -108,6 +110,7 @@ export function getNavigationConfig({
   pathname,
   apiDocsUrl = null,
   cloudBillingEnabled = false,
+  registryEligible = false,
   permissions,
 }: NavigationConfigOptions): NavigationSection[] {
   const isCloudEnvironment = isCloud();
@@ -180,6 +183,18 @@ export function getNavigationConfig({
           icon: Warehouse,
           active: isRouteActive(pathname, "/resources"),
         },
+        ...(registryEligible
+          ? [
+              {
+                kind: NAVIGATION_ITEM_KIND.LINK,
+                href: "/registry",
+                label: "Registry",
+                icon: Package,
+                active: isRouteActive(pathname, "/registry"),
+                highlight: true,
+              } as const,
+            ]
+          : []),
       ],
     },
     {

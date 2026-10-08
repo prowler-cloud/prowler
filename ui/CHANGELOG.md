@@ -4,6 +4,45 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [1.44.0] (Prowler v5.44.0)
+
+### 🚀 Added
+
+- Sidebar action reads Add Provider while the tenant has no providers [(#12852)](https://github.com/prowler-cloud/prowler/pull/12852)
+
+### 🔄 Changed
+
+- AWS accounts are connected in a single wizard step: the account is read from the role ARN, or typed for access keys, the role is assumed with Prowler's own credentials, and the credentials are stored and tested with the account [(#12852)](https://github.com/prowler-cloud/prowler/pull/12852)
+- New tenants without providers land on the Add Provider wizard on first sign-in instead of a welcome modal [(#12852)](https://github.com/prowler-cloud/prowler/pull/12852)
+- Findings page paints a skeleton at once and streams the table before the filters; the "Finding Group" options load in a single request when the dropdown opens [(#12891)](https://github.com/prowler-cloud/prowler/pull/12891)
+
+### 🐞 Fixed
+
+- Mute rule creation errors show the API error message instead of the raw JSON:API response body [(#12853)](https://github.com/prowler-cloud/prowler/pull/12853)
+- Provider connection test no longer reports `Max retries exceeded` for checks that take longer than 30 seconds, such as networks where some AWS endpoints are unreachable; the wait now covers the backend task's full time limit and falls back to the provider's current connection state if it is still exhausted [(#12869)](https://github.com/prowler-cloud/prowler/pull/12869)
+- Sidebar no longer throws a React hydration error on full page loads for users who last used the chat mode [(#12873)](https://github.com/prowler-cloud/prowler/pull/12873)
+- Icons now ship in the UI bundle instead of being fetched from `api.iconify.design`, so pages render correctly in air-gapped deployments [(#12892)](https://github.com/prowler-cloud/prowler/pull/12892)
+
+---
+
+## [1.43.0] (Prowler v5.43.0)
+
+### 🚀 Added
+
+- Registry marketplace and external provider onboarding for Private Cloud, with permission-based access independent of billing, confirmed artifact installation, schema-driven credentials, connection checks, and scan launch [(#12494)](https://github.com/prowler-cloud/prowler/pull/12494)
+- AWS Marketplace button variant with outlined styling for light and dark themes [(#12803)](https://github.com/prowler-cloud/prowler/pull/12803)
+- `UI_SELF_REGISTRATION_ENABLED` flag for Prowler Private Cloud deployments; when `"false"`, `/sign-up` only opens with an invitation, the sign-in page drops the "Sign up" link and the profile hides **Create organization** [(#12815)](https://github.com/prowler-cloud/prowler/pull/12815)
+- "Invite your team" step offered once after the first provider is connected, before the onboarding checkpoint, reusing the invitation form tagged with `source=onboarding` [(#12819)](https://github.com/prowler-cloud/prowler/pull/12819)
+
+### 🐞 Fixed
+
+- Automatic onboarding stays hidden on billing pages and remains available after leaving billing [(#12803)](https://github.com/prowler-cloud/prowler/pull/12803)
+- Per-provider breakdown and OCSF download for FedRAMP 20x KSI and Class C FRR in the cross-provider compliance view [(#12810)](https://github.com/prowler-cloud/prowler/pull/12810)
+- Edit and Revoke actions are disabled for expired and revoked invitations [(#12831)](https://github.com/prowler-cloud/prowler/pull/12831)
+- Cloudflare API token links in the provider wizard request the SSL and Certificates, Bot Management and Zone WAF read permissions the scan needs [(#12842)](https://github.com/prowler-cloud/prowler/pull/12842)
+
+---
+
 ## [1.42.0] (Prowler v5.42.0)
 
 ### 🚀 Added

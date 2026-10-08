@@ -4,6 +4,138 @@ description: "New features and improvements in each Prowler release"
 rss: true
 ---
 
+<Update label="v5.44.0" description="September 29, 2026">
+  ### 🔁 Findings — Re-check a Resource with a Partial Scan
+
+  <Note>
+  This feature is available exclusively in **Prowler Cloud** and **Prowler Private Cloud** with a [subscription](https://prowler.com/pricing).
+  </Note>
+
+  A resource that has just been fixed can be confirmed from the Findings page without waiting for the next full scan. **Re-check resource** is available in the actions menu of every resource row and in the resource detail drawer, and a hint icon next to **Last seen** opens it directly. It launches a partial scan that runs again only the checks that last reported on that resource; its findings update when the scan completes, and every other resource keeps the results of the latest full scan. Roles need the Manage Scans permission, and a re-check is refused while the provider has a scan running or queued.
+
+  Re-checked resources that now pass drop out of the finding groups list and its drill-down instead of opening a detail panel that still reports `FAIL`. Partial scans do not change overviews or compliance until the next full scan and produce no report files, so the Scans table marks them as **Partial**, offers no report download for them, and the per-scan Compliance selector leaves them out.
+
+  Partial scans can also be launched outside the Findings page:
+
+  - **API:** `POST /api/v1/scans` accepts up to 10 resources in `resource_uids`, and scans expose `is_partial` with a `filter[is_partial]` filter.
+  - **MCP Server:** `prowler_trigger_scan` takes a `resource_uids` argument, and `prowler_list_scans` and `prowler_get_scan` return `is_partial`, with an `is_partial` filter on `prowler_list_scans`.
+  - **Lighthouse AI:** can launch a partial scan to re-check specific resources, such as confirming a remediation.
+
+  ### ☁️ AWS — Connect an Account in One Step
+
+  The Add Provider wizard connects an AWS account in a single step. The account ID is read from the role ARN (or typed when using static access keys), the role is assumed with Prowler's own credentials, and the account, its credentials and the connection test are handled by one submit. A confirmed connection goes straight to the launch step. A refused connection stays on the form with the reason the API returned, so the fields can be fixed and retried without registering the account twice.
+
+  New tenants without providers now land on this wizard on their first sign-in instead of a welcome modal, and the sidebar action reads **Add Provider** until the first provider is connected.
+
+  Read more in the [Getting Started with AWS documentation](https://docs.prowler.com/user-guide/providers/aws/getting-started-aws).
+
+  ### 🔌 Connection Tests No Longer Give Up Early
+
+  The provider connection test no longer reports `Max retries exceeded` for checks that take longer than 30 seconds, such as networks where some AWS endpoints are unreachable. The UI now waits for the full time limit of the backend task, and if that is still exhausted it shows the provider's current connection state instead of a failure.
+
+  On the SDK side, STS calls after a role assumption reuse the region that answered, so an unreachable partition region is waited on once instead of twice. The new `PROWLER_AWS_BOTO3_RETRIES_MAX_ATTEMPTS` environment variable sets the Boto3 retries for deployments that build the AWS provider without CLI flags, next to the existing timeout variables; `0` disables retries.
+
+  Read more in the [Boto3 configuration documentation](https://docs.prowler.com/user-guide/providers/aws/boto3-configuration#retries-configuration).
+
+  ### 🗄️ Self-Hosted — S3-Compatible Storage and Air-Gapped Deployments
+
+  - `DJANGO_OUTPUT_S3_AWS_ENDPOINT_URL` points scan output uploads and downloads at S3-compatible object storage such as MinIO. Previously the only way to reach it was exporting process-wide AWS environment variables, which also hijacked unrelated AWS API calls such as role assumption for AWS providers.
+  - Report downloads from a bucket with default SSE-KMS encryption no longer fail with `InvalidArgument`: when `DJANGO_OUTPUT_S3_AWS_DEFAULT_REGION` is set, download URLs are signed with Signature Version 4 for that region.
+  - Icons ship in the UI bundle instead of being fetched from `api.iconify.design`, so pages render correctly without internet access.
+  - Celery worker fatal errors are logged instead of silenced, and every long-running service in `docker-compose.yml` restarts automatically after an unexpected crash.
+
+  ### 📊 Consistent Latest Scan Across Endpoints
+
+  Every endpoint now resolves a provider's latest completed scan the same way, so overlapping scans no longer make findings, compliance and mute rules read from different scans. Providers whose latest completed scan has no `completed_at` timestamp are no longer missing from those endpoints, and resources no longer keep a stale failed findings count when a scoped or imported scan completes after a full scan.
+
+  ### 🛠️ Prowler App Fixes
+
+  - API key authentication no longer locks the key row on every request, so a heavily used key no longer serializes all its requests; `last_used_at` is updated at most once per minute.
+  - `POST /api/v1/scans` returns the new scan ID in `task_args` again.
+  - Provider deletion no longer fails when the provider has Attack Paths scans recorded on a sink that is no longer configured, such as Neptune after moving back to Neo4j.
+  - A periodic sweep drops orphaned Attack Paths temporary Neo4j databases left behind when a worker or Neo4j crashes mid-scan.
+  - **Prowler Cloud:** imported findings no longer stay stuck in `pending` when the ingestion worker picks up the job before it is committed, and a failed enqueue marks the ingestion as failed.
+  - **Prowler Cloud:** the Lighthouse AI connection check reports a network failure as one, naming the endpoint it could not reach, instead of hitting a time limit that looked the same as a bad key.
+  - **Prowler Cloud:** the finding groups endpoints no longer query Manual Pass triages once per finding, and skip that overlay for tenants with no active Manual Pass.
+  - The Findings page renders a skeleton at once and streams the table before the filters, and the **Finding Group** options load when the dropdown opens.
+  - Mute rule creation errors show the API error message instead of the raw response body.
+  - The sidebar no longer throws a hydration error on full page loads for users who last used the chat mode.
+
+  ### 🔐 Security Updates
+
+  - `DELETE /api/v1/tasks/{id}` requires the permission of the operation that queued the task and rejects provider deletions, and `GET /api/v1/tasks` hides tasks of providers outside the role's visibility.
+  - The UI E2E workflow receives its AWS credentials through environment variables instead of template expansion.
+
+  See the [full release notes on GitHub](https://github.com/prowler-cloud/prowler/releases/tag/5.44.0) for the complete list of changes.
+</Update>
+
+<Update label="v5.43.0" description="September 21, 2026">
+  ### 🏛️ Compliance — FedRAMP 20x Consolidated Rules 2026
+
+  The FedRAMP 20x Phase One pilot frameworks (`fedramp_20x_ksi_low_aws`, `fedramp_20x_ksi_low_azure` and `fedramp_20x_ksi_low_gcp`) are replaced by two universal frameworks built from the FedRAMP Consolidated Rules for 2026, each covering AWS, Azure, GCP, Kubernetes and Microsoft 365 from a single definition:
+
+  - **FedRAMP 20x KSI** (`fedramp_20x_ksi_2026`): the 46 Key Security Indicators across 10 themes. There is one indicator catalog for every class instead of a separate Low fork; each indicator carries its class applicability and NIST SP 800-53 controls.
+  - **FedRAMP 20x Class C FRR** (`fedramp_20x_frr_class_c_2026`): the 158 FedRAMP Rules of the Class C ruleset that bind cloud service providers. Most are program obligations (reports, notifications, certification package) and stay manual; checks are mapped only where they evidence part of the rule text. Configurable checks carry configuration requirements, so a relaxed `audit_config` cannot turn a requirement green.
+
+  Automation or stored results that reference the pilot framework IDs need to move to `fedramp_20x_ksi_2026`. In Prowler App, both frameworks show the per-provider breakdown in the cross-provider compliance view and can be downloaded as OCSF.
+
+  Read more in the [Compliance documentation](https://docs.prowler.com/user-guide/compliance/tutorials/compliance).
+
+  ### 🔎 AWS — Inspector Coverage, CISA KEV and FIPS Checks
+
+  Seven new AWS checks back the vulnerability detection and cryptography rules of FedRAMP 20x Class C:
+
+  - `inspector2_coverage_scan_status_active` and `inspector2_coverage_recently_scanned` report resources Amazon Inspector is not scanning, or last scanned more than `inspector2_max_days_since_last_scan` days ago (default 3).
+  - `inspector2_active_findings_no_known_exploited_vulnerabilities` and `inspector2_active_findings_kev_within_due_date` report active findings whose CVE is in the CISA Known Exploited Vulnerabilities catalog, and those still open past the CISA due date. The KEV data comes from Inspector itself through `inspector2:BatchGetFindingDetails`, so no external feed is needed.
+  - `inspector2_active_findings_within_max_age` reports active findings first observed more than `inspector2_active_finding_max_age_days` days ago (default 192).
+  - `elbv2_listener_fips_tls_enabled` and `transfer_server_fips_security_policy_enabled` report HTTPS/TLS load balancer listeners and Transfer Family servers without a FIPS security policy.
+
+  `inspector2:BatchGetFindingDetails` is not part of `SecurityAudit`, so it is now included in the Prowler additions policy and the CloudFormation scan role. Without it, the KEV checks report `MANUAL` naming the missing permission instead of a false `FAIL`.
+
+  Explore all AWS checks at [Prowler Hub](https://hub.prowler.com/check?provider=aws).
+
+  ### ☁️ AWS — Partition Bootstrap Failover
+
+  When `PROWLER_AWS_PARTITION` is set, the bootstrap STS calls (validating credentials, assuming a role and getting an MFA session token) now try up to two more regions of the partition if the first one cannot be reached. A GovCloud host whose configured region belongs to another partition was still sent to `us-gov-east-1`, and on a network that routes only to `us-gov-west-1` the connection check and the scan failed on perfectly valid credentials. Only connection errors and timeouts move on to the next region; credential errors are reported from the first one as before. Later STS calls reuse the region that answered, and nothing changes when `PROWLER_AWS_PARTITION` is unset.
+
+  Read more in the [AWS Regions and Partitions documentation](https://docs.prowler.com/user-guide/providers/aws/regions-and-partitions).
+
+  ### 🌐 Azure — Sovereign Cloud Endpoints for Defender and Key Vault
+
+  Defender security contacts and Key Vault key rotation policies now use the endpoints of the cloud selected with `--azure-region` instead of the hardcoded `management.azure.com` and `vault.azure.net` hosts, so both work on `AzureUSGovernment` and `AzureChinaCloud`. Key Vault clients are built from the vault URI that Azure returns for each vault.
+
+  Read more in the [Azure non-default cloud documentation](https://docs.prowler.com/user-guide/providers/azure/use-non-default-cloud).
+
+  ### ✉️ Invitations — Expired Invitations No Longer Block Re-Invites
+
+  A pending invitation past its expiry date is now reported as expired, and inviting the same email again marks it as expired and creates the new invitation instead of returning a generic error. The Invitations table disables Edit and Revoke on expired and revoked invitations, and `filter[state__in]` on the invitations endpoint no longer returns a server error.
+
+  In Prowler Cloud, new organizations are offered an **Invite your team** step once the first provider is connected, and Prowler Private Cloud deployments can set `UI_SELF_REGISTRATION_ENABLED=false` to make sign-up invitation-only.
+
+  Read more in the [Invitations documentation](https://docs.prowler.com/user-guide/tutorials/prowler-app-rbac#invitations).
+
+  ### 📄 Reports — Downloads on Self-Hosted Storage
+
+  Report downloads no longer depend on the storage host being the same inside and outside the container network. `DJANGO_OUTPUT_S3_AWS_PUBLIC_ENDPOINT_URL` signs the download URL against a browser-reachable host, so a deployment whose object storage answers only on an internal address serves the file instead of a link the browser cannot open. Leaving `DJANGO_OUTPUT_S3_AWS_DEFAULT_REGION` unset, common on S3-compatible storage with no meaningful region, no longer makes the download fail with a server error.
+
+  ### 🔍 Checks
+
+  - **Huawei Cloud:** new `smn_topic_subscriptions` check reports SMN topics without any subscription.
+  - **Cloudflare:** the API token links in the provider wizard request the SSL and Certificates, Bot Management and Zone WAF read permissions the checks need, so a token created from the wizard no longer produces failures on permissions it was never granted.
+  - **Microsoft 365:** five Defender malware, anti-phishing and inbound anti-spam checks no longer fail with `KeyError` on tenants that use the Standard or Strict preset security policies, which dropped every finding of those checks. Preset policies are covered by `defender_strict_preset_security_policy_enabled`.
+  - **Google Workspace:** `security_2sv_enforced` reports domain-wide 2-Step Verification failures as `FAIL` even when every failing setting is overridden for a group or organizational unit.
+
+  Explore all checks at [Prowler Hub](https://hub.prowler.com/check).
+
+  ### 🔐 Security Updates
+
+  - `libsqlite3-0`, `gzip`, `perl-base`, `libssh2-1t64` and `libpcre2-8-0` upgraded in the SDK and API container images, patching high-severity Debian CVEs.
+  - PowerShell upgraded to 7.5.11 in the SDK and API container images, bundling .NET runtime 9.0.20 and patching CVE-2026-62901.
+  - `anyio` upgraded to 4.14.2 in the SDK, the API and the MCP Server, patching CVE-2026-63374.
+
+  See the [full release notes on GitHub](https://github.com/prowler-cloud/prowler/releases/tag/5.43.0) for the complete list of changes.
+</Update>
+
 <Update label="v5.42.0" description="September 11, 2026">
   ### ☁️ AWS — ISO Partitions
 

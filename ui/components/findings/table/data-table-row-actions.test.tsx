@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { useJiraDispatchStore } from "@/store/jira-dispatch/store";
+import { usePartialScanStore } from "@/store/partial-scan/store";
 import {
   FINDING_TRIAGE_DISABLED_REASON,
   FINDING_TRIAGE_STATUS,
@@ -42,6 +43,14 @@ vi.mock("@/lib/deployment", () => ({
 
 vi.mock("@/lib/shared/env", () => ({
   isCloud: isCloudMock,
+}));
+
+// The re-check menu item reads the session for manage_scans; grant it here.
+vi.mock("@/hooks/use-auth", () => ({
+  useAuth: () => ({
+    permissions: { manage_scans: true },
+    hasPermission: () => true,
+  }),
 }));
 
 vi.mock("./lighthouse-skills-launch", async (importOriginal) => {
@@ -170,6 +179,58 @@ describe("DataTableRowActions", () => {
     useJiraDispatchStore.getState().closeJiraDispatch();
   });
 
+  it("offers a Cloud re-check of the row's resource with its provider id", async () => {
+    // Given — a flat finding row expanded with its resource and provider
+    const user = userEvent.setup();
+    isCloudMock.mockReturnValue(true);
+    usePartialScanStore.getState().closePartialScan();
+    render(
+      <DataTableRowActions
+        row={makeFindingRow({
+          relationships: {
+            resource: {
+              attributes: { name: "my-bucket", uid: "arn:aws:s3:::my-bucket" },
+            },
+            provider: {
+              id: "provider-1",
+              attributes: { alias: "prod", provider: "aws", uid: "123" },
+            },
+          },
+        })}
+      />,
+    );
+
+    // When
+    await user.click(screen.getByRole("button", { name: "Re-check resource" }));
+
+    // Then
+    expect(usePartialScanStore.getState().activeTarget).toEqual({
+      providerId: "provider-1",
+      providerUid: "123",
+      providerType: "aws",
+      providerAlias: "prod",
+      resourceUid: "arn:aws:s3:::my-bucket",
+      resourceName: "my-bucket",
+    });
+  });
+
+  it("does not offer a re-check outside Prowler Cloud", () => {
+    render(
+      <DataTableRowActions
+        row={makeFindingRow({
+          relationships: {
+            resource: { attributes: { uid: "arn:aws:s3:::my-bucket" } },
+            provider: { id: "provider-1", attributes: { provider: "aws" } },
+          },
+        })}
+      />,
+    );
+
+    expect(
+      screen.queryByRole("button", { name: "Re-check resource" }),
+    ).not.toBeInTheDocument();
+  });
+
   it("launches a Lighthouse skill from the row submenu with finding context", async () => {
     // Given
     const user = userEvent.setup();
@@ -212,6 +273,10 @@ describe("DataTableRowActions", () => {
     );
 
     expect(screen.queryByText("Lighthouse Skills")).not.toBeInTheDocument();
+    // A group spans many resources, so a single-resource re-check is not offered.
+    expect(
+      screen.queryByRole("button", { name: "Re-check resource" }),
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: "Triage Decision" }),
     ).not.toBeInTheDocument();

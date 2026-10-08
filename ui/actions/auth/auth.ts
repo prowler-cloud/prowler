@@ -4,7 +4,7 @@ import { AuthError } from "next-auth";
 
 import { signIn, signOut } from "@/auth.config";
 import { apiBaseUrl } from "@/lib";
-import { UserMeError } from "@/lib/auth-errors";
+import { fetchCurrentUser } from "@/lib/auth/current-user";
 import { addAuthEvent } from "@/lib/sentry-breadcrumbs";
 import type { UtmParams } from "@/lib/utm";
 import type { SignInFormData, SignUpFormData } from "@/types";
@@ -145,66 +145,15 @@ export const getUserByMe = async (
   accessToken: string,
   signal?: AbortSignal,
 ) => {
-  const url = new URL(`${apiBaseUrl}/users/me?include=roles`);
+  const currentUser = await fetchCurrentUser(accessToken, { signal });
 
-  try {
-    const response = await fetch(url.toString(), {
-      method: "GET",
-      headers: {
-        Accept: "application/vnd.api+json",
-        Authorization: `Bearer ${accessToken}`,
-      },
-      signal,
-    });
-
-    if (!response.ok) {
-      const errorMessage =
-        response.status === 401
-          ? "Invalid or expired token"
-          : response.status === 403
-            ? "Access denied"
-            : response.status === 404
-              ? "User not found"
-              : "Unable to load user";
-      throw new UserMeError(errorMessage, response.status);
-    }
-
-    const parsedResponse = await response.json();
-
-    const userRole = parsedResponse.included?.find(
-      (item: any) => item.type === "roles",
-    );
-
-    const permissions = {
-      manage_users: userRole.attributes.manage_users || false,
-      manage_account: userRole.attributes.manage_account || false,
-      manage_providers: userRole.attributes.manage_providers || false,
-      manage_scans: userRole.attributes.manage_scans || false,
-      manage_ingestions: userRole.attributes.manage_ingestions || false,
-      manage_integrations: userRole.attributes.manage_integrations || false,
-      manage_billing: userRole.attributes.manage_billing || false,
-      manage_alerts: userRole.attributes.manage_alerts || false,
-      manage_lighthouse_ai_configuration:
-        userRole.attributes.manage_lighthouse_ai_configuration || false,
-      unlimited_visibility: userRole.attributes.unlimited_visibility || false,
-    };
-
-    return {
-      name: parsedResponse.data.attributes.name,
-      email: parsedResponse.data.attributes.email,
-      company: parsedResponse.data.attributes.company_name,
-      dateJoined: parsedResponse.data.attributes.date_joined,
-      permissions,
-    };
-  } catch (error: unknown) {
-    if (error instanceof UserMeError) throw error;
-
-    throw new UserMeError(
-      error instanceof Error
-        ? error.message
-        : "Network error or server unreachable",
-    );
-  }
+  return {
+    name: currentUser.name,
+    email: currentUser.email,
+    company: currentUser.company,
+    dateJoined: currentUser.dateJoined,
+    permissions: currentUser.permissions,
+  };
 };
 
 export async function logOut() {

@@ -12,6 +12,7 @@ import { FormButtons } from "@/components/shadcn/form";
 import { Input } from "@/components/shadcn/input/input";
 import { Modal } from "@/components/shadcn/modal";
 import { toast } from "@/components/shadcn/toast";
+import { useReportDownload } from "@/hooks/use-report-download";
 import {
   TASK_WATCHER_STATUS,
   trackAndPollTask,
@@ -47,6 +48,8 @@ interface CrossProviderPdfButtonProps {
   /** Already-generated report matching these filters, if any — offered as an
    *  instant download instead of forcing a re-generate. */
   latestPdf: LatestCrossProviderPdf | null;
+  /** Prowler Cloud tenants without a paid plan cannot download reports. */
+  subscriptionOnly?: boolean;
 }
 
 export const CrossProviderPdfButton = ({
@@ -54,7 +57,9 @@ export const CrossProviderPdfButton = ({
   providerType,
   filters,
   latestPdf,
+  subscriptionOnly = false,
 }: CrossProviderPdfButtonProps) => {
+  const runReportDownload = useReportDownload(subscriptionOnly);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [reportName, setReportName] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -185,13 +190,15 @@ export const CrossProviderPdfButton = ({
               icon={<DownloadIcon />}
               label={`Download latest${formatGeneratedAt(availablePdf.completedAt)}`}
               description={availablePdf.filename}
-              onSelect={() => downloadPdf(availablePdf.taskId)}
+              onSelect={() =>
+                runReportDownload(() => downloadPdf(availablePdf.taskId))
+              }
             />
           )}
           <ActionDropdownItem
             icon={<FileTextIcon />}
             label="Generate new report…"
-            onSelect={() => setDialogOpen(true)}
+            onSelect={() => runReportDownload(() => setDialogOpen(true))}
           />
         </ActionDropdown>
       )}

@@ -62,8 +62,14 @@ export function DiscoveryCalloutContent({
       side={side}
       align={align}
       sideOffset={8}
-      // A discovery hint must never steal focus from what the user is doing.
+      // A hint is worth showing even mid-tour: above driver.js's overlay (z 10000)
+      // and still dismissible while the tour locks the rest of the page.
+      className="z-[10001]"
+      data-tour-interactive
+      // A discovery hint must never steal focus from what the user is doing,
+      // nor vanish because something else took it (a tour popover, a form).
       onOpenAutoFocus={(event) => event.preventDefault()}
+      onFocusOutside={(event) => event.preventDefault()}
       data-testid={testId}
     >
       <div className="flex flex-col gap-2">

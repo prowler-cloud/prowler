@@ -48,6 +48,11 @@ vi.mock(
 
 vi.mock("@/app/(prowler)/alerts/_actions", () => alertsActionMocks);
 
+// The findings filters lazily load check options through this Server Action.
+vi.mock("@/actions/finding-groups", () => ({
+  getFindingGroupCheckOptions: vi.fn().mockResolvedValue([]),
+}));
+
 vi.mock(
   "@/components/compliance/compliance-header/compliance-scan-info",
   () => ({

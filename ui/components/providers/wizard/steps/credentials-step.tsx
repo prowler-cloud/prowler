@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 
 import { getProviderFormType } from "@/lib/provider-helpers";
 import { useProviderWizardStore } from "@/store/provider-wizard/store";
-import { ProviderType } from "@/types/providers";
+import { isKnownProviderType, ProviderType } from "@/types/providers";
 
 import {
   AddViaCredentialsForm,
@@ -23,6 +23,7 @@ import { SelectViaGitHub } from "../../workflow/forms/select-credentials-type/gi
 import { SelectViaM365 } from "../../workflow/forms/select-credentials-type/m365";
 import { UpdateViaServiceAccountForm } from "../../workflow/forms/update-via-service-account-key-form";
 
+import { DynamicCredentialsStep } from "./dynamic-credentials-step";
 import {
   WIZARD_FOOTER_ACTION_TYPE,
   WizardFooterConfig,
@@ -34,7 +35,22 @@ interface CredentialsStepProps {
   onFooterChange: (config: WizardFooterConfig) => void;
 }
 
-export function CredentialsStep({
+export function CredentialsStep(props: CredentialsStepProps) {
+  const providerId = useProviderWizardStore((state) => state.providerId);
+  const providerType = useProviderWizardStore((state) => state.providerType);
+  if (providerId && providerType && !isKnownProviderType(providerType)) {
+    return (
+      <DynamicCredentialsStep
+        {...props}
+        providerId={providerId}
+        providerType={providerType}
+      />
+    );
+  }
+  return <BuiltinCredentialsStep {...props} />;
+}
+
+function BuiltinCredentialsStep({
   onNext,
   onBack,
   onFooterChange,

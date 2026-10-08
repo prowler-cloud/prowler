@@ -24,3 +24,22 @@ export interface ProviderWizardIdentity {
   uid: string | null;
   alias: string | null;
 }
+
+export type AwsConnectDraftValues = Record<string, string>;
+
+/** Which panel the AWS connect step shows: the access forms or the teammate invitation. */
+export const AWS_CONNECT_PANEL = {
+  ACCESS: "access",
+  INVITE: "invite",
+} as const;
+
+export type AwsConnectPanel =
+  (typeof AWS_CONNECT_PANEL)[keyof typeof AWS_CONNECT_PANEL];
+
+/** What the AWS connect step typed so far; in memory only, gone with the wizard. */
+export interface AwsConnectDraft {
+  method: string;
+  panel: AwsConnectPanel;
+  roleValues: AwsConnectDraftValues;
+  keysValues: AwsConnectDraftValues;
+}

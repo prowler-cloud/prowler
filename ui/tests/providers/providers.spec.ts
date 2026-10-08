@@ -1,6 +1,7 @@
 import { test } from "@playwright/test";
 
 import { isCloud } from "@/lib/shared/env";
+import { makeSuffix } from "../helpers";
 import {
   ProvidersPage,
   AWSProviderData,
@@ -108,86 +109,14 @@ test.describe("Add Provider", () => {
         // Select AWS provider
         await providersPage.selectAWSProvider();
 
-        // Fill provider details
-        await providersPage.fillAWSProviderDetails(awsProviderData);
-        await providersPage.clickNext();
-
-        await providersPage.verifyCredentialsPageLoaded();
-
-        // Select static credentials type
-        await providersPage.selectCredentialsType(
+        // AWS registers the account and its credentials in a single step
+        await providersPage.selectAwsAccessMethod(
           AWS_CREDENTIAL_OPTIONS.AWS_CREDENTIALS,
         );
+        await providersPage.fillAWSProviderDetails(awsProviderData);
 
         // Fill static credentials
         await providersPage.fillStaticCredentials(staticCredentials);
-        await providersPage.clickNext();
-
-        // Confirm the provider connection without launching a scan
-        await providersPage.completeProviderConnectionWithoutLaunchingScan(
-          accountId,
-        );
-      },
-    );
-
-    test(
-      "should add a new AWS provider with assume role credentials with Access Key and Secret Key",
-      {
-        tag: [
-          "@critical",
-          "@e2e",
-          "@providers",
-          "@aws",
-          "@serial",
-          "@PROVIDER-E2E-002",
-        ],
-      },
-      async ({ page }) => {
-        // Validate required environment variables
-        if (!roleArn) {
-          throw new Error(
-            "E2E_AWS_PROVIDER_ROLE_ARN environment variable is not set",
-          );
-        }
-
-        // Prepare test data for AWS provider
-        const awsProviderData: AWSProviderData = {
-          accountId: accountId,
-          alias: "Test E2E AWS Account - Credentials",
-        };
-
-        // Prepare role-based credentials
-        const roleCredentials: AWSProviderCredential = {
-          type: AWS_CREDENTIAL_OPTIONS.AWS_ROLE_ARN,
-          accessKeyId: accessKey,
-          secretAccessKey: secretKey,
-          roleArn: roleArn,
-        };
-
-        // Navigate to providers page
-        await providersPage.goto();
-        await providersPage.verifyPageLoaded();
-
-        // Start adding new provider
-        await providersPage.clickAddProvider();
-        await providersPage.verifyConnectAccountPageLoaded();
-
-        // Select AWS provider
-        await providersPage.selectAWSProvider();
-
-        // Fill provider details
-        await providersPage.fillAWSProviderDetails(awsProviderData);
-        await providersPage.clickNext();
-
-        await providersPage.verifyCredentialsPageLoaded();
-
-        // Select role credentials type
-        await providersPage.selectCredentialsType(
-          AWS_CREDENTIAL_OPTIONS.AWS_ROLE_ARN,
-        );
-
-        // Fill role credentials
-        await providersPage.fillRoleCredentials(roleCredentials);
         await providersPage.clickNext();
 
         // Confirm the provider connection without launching a scan
@@ -240,21 +169,15 @@ test.describe("Add Provider", () => {
         // Select AWS provider
         await providersPage.selectAWSProvider();
 
-        // Fill provider details
-        await providersPage.fillAWSProviderDetails(awsProviderData);
-        await providersPage.clickNext();
-
-        // Select role credentials type
-        await providersPage.selectCredentialsType(
+        // AWS registers the account (read from the role ARN) and its
+        // credentials in a single step
+        await providersPage.selectAwsAccessMethod(
           AWS_CREDENTIAL_OPTIONS.AWS_ROLE_ARN,
         );
-        await providersPage.verifyCredentialsPageLoaded();
+        await providersPage.fillAWSProviderDetails(awsProviderData);
 
-        // Select Authentication Method
-        await providersPage.selectAuthenticationMethod(
-          AWS_CREDENTIAL_OPTIONS.AWS_SDK_DEFAULT,
-        );
-
+        // The role is assumed with the credentials of the host running Prowler
+        // (AWS SDK default); the wizard asks for nothing else.
         // Fill role credentials
         await providersPage.fillRoleCredentials(roleCredentials);
         await providersPage.clickNext();
@@ -337,6 +260,44 @@ test.describe("Add Provider", () => {
         await providersPage.clickNext();
 
         await providersPage.verifyLoadProviderPageAfterNewProvider();
+      },
+    );
+  });
+
+  test.describe("Invite a teammate from the AWS step", () => {
+    let providersPage: ProvidersPage;
+
+    test.beforeEach(async ({ page }) => {
+      providersPage = new ProvidersPage(page);
+    });
+
+    // The admin user can invite (manage_account) and add providers.
+    test.use({ storageState: "playwright/.auth/admin_user.json" });
+
+    test(
+      "should invite a teammate to connect the AWS account instead",
+      {
+        tag: ["@high", "@e2e", "@providers", "@aws", "@PROVIDER-E2E-020"],
+      },
+      async () => {
+        const uniqueEmail = `e2e+aws-${makeSuffix(10)}@prowler.com`;
+
+        // Navigate to providers page
+        await providersPage.goto();
+        await providersPage.verifyPageLoaded();
+
+        // Start adding new provider and pick AWS
+        await providersPage.clickAddProvider();
+        await providersPage.verifyConnectAccountPageLoaded();
+        await providersPage.selectAWSProvider();
+
+        // Hand the account over to a teammate instead of connecting it
+        await providersPage.selectAwsInviteTeammate();
+        await providersPage.sendTeammateInvitation(uniqueEmail);
+
+        // The invitation exists and the link to share is shown; Done closes the wizard
+        await providersPage.verifyTeammateInvitationSent(uniqueEmail);
+        await providersPage.finishTeammateInvitation();
       },
     );
   });
@@ -744,8 +705,9 @@ test.describe("Add Provider", () => {
         await providersPage.clickAddProvider();
         await providersPage.verifyConnectAccountPageLoaded();
 
-        // Select M365 provider
+        // Select GCP provider and the single-project onboarding method
         await providersPage.selectGCPProvider();
+        await providersPage.selectGCPSingleProjectMethod();
 
         // Fill provider details
         await providersPage.fillGCPProviderDetails(gcpProviderData);
@@ -1031,6 +993,7 @@ test.describe("Add Provider", () => {
     const userId = process.env.E2E_OCI_USER_ID ?? "";
     const fingerprint = process.env.E2E_OCI_FINGERPRINT ?? "";
     const keyContent = process.env.E2E_OCI_KEY_CONTENT ?? "";
+    const homeRegion = process.env.E2E_OCI_REGION ?? "us-ashburn-1";
 
     // Setup before each test
     test.beforeEach(async ({ page }) => {
@@ -1072,6 +1035,7 @@ test.describe("Add Provider", () => {
           userId: userId,
           fingerprint: fingerprint,
           keyContent: keyContent,
+          homeRegion: homeRegion,
         };
 
         // Navigate to providers page
@@ -1516,6 +1480,7 @@ test.describe("Update Provider Credentials", () => {
     const userId = process.env.E2E_OCI_USER_ID ?? "";
     const fingerprint = process.env.E2E_OCI_FINGERPRINT ?? "";
     const keyContent = process.env.E2E_OCI_KEY_CONTENT ?? "";
+    const homeRegion = process.env.E2E_OCI_REGION ?? "us-ashburn-1";
 
     // Setup before each test
     test.beforeEach(async ({ page }) => {
@@ -1542,6 +1507,7 @@ test.describe("Update Provider Credentials", () => {
           userId: userId,
           fingerprint: fingerprint,
           keyContent: keyContent,
+          homeRegion: homeRegion,
         };
 
         // Navigate to providers page

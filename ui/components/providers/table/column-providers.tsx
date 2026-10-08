@@ -251,7 +251,7 @@ export function getColumnProviders(
               entityId={provider.attributes.uid}
               nameAction={
                 provider.attributes.is_dynamic ? (
-                  <Badge variant="info">Custom</Badge>
+                  <Badge variant="info">Registry</Badge>
                 ) : undefined
               }
             />

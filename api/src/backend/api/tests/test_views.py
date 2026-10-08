@@ -60,6 +60,7 @@ from api.models import (
     User,
     UserRoleRelationship,
 )
+from api.rbac.permissions import TASK_REVOKE_PERMISSIONS
 from api.rls import Tenant
 from api.uuid_utils import datetime_to_uuid7
 from api.v1.views import (
@@ -82,7 +83,7 @@ from django.db import close_old_connections, connection, connections
 from django.db.models import Count
 from django.db.models.signals import pre_delete
 from django.http import JsonResponse
-from django.test import RequestFactory
+from django.test import RequestFactory, override_settings
 from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 from django_celery_results.models import TaskResult
@@ -3362,7 +3363,7 @@ current-context: test-context
         provider_secret = ProviderSecret.objects.get()
         assert "region" not in provider_secret.secret
 
-    def test_provider_secrets_create_oraclecloud_accepts_and_ignores_region(
+    def test_provider_secrets_create_oraclecloud_stores_region(
         self,
         authenticated_client,
         oraclecloud_provider,
@@ -3371,14 +3372,14 @@ current-context: test-context
             authenticated_client,
             oraclecloud_provider,
             self._oraclecloud_secret(
-                key_content="  test-key-content  ", region=" us-ashburn-1 "
+                key_content="  test-key-content  ", region=" me-abudhabi-1 "
             ),
         )
 
         assert response.status_code == status.HTTP_201_CREATED
         provider_secret = ProviderSecret.objects.get()
         assert provider_secret.secret["key_content"] == "test-key-content"
-        assert "region" not in provider_secret.secret
+        assert provider_secret.secret["region"] == "me-abudhabi-1"
 
     def test_provider_secrets_update_oraclecloud_without_region_stores_no_region(
         self,
@@ -3411,7 +3412,7 @@ current-context: test-context
         provider_secret.refresh_from_db()
         assert "region" not in provider_secret.secret
 
-    def test_provider_secrets_update_oraclecloud_accepts_and_ignores_region(
+    def test_provider_secrets_update_oraclecloud_stores_region(
         self,
         authenticated_client,
         oraclecloud_provider,
@@ -3429,7 +3430,7 @@ current-context: test-context
                 "type": "provider-secrets",
                 "id": str(provider_secret.id),
                 "attributes": {
-                    "secret": self._oraclecloud_secret(region=" us-ashburn-1 ")
+                    "secret": self._oraclecloud_secret(region=" me-abudhabi-1 ")
                 },
             }
         }
@@ -3442,7 +3443,7 @@ current-context: test-context
 
         assert response.status_code == status.HTTP_200_OK
         provider_secret.refresh_from_db()
-        assert "region" not in provider_secret.secret
+        assert provider_secret.secret["region"] == "me-abudhabi-1"
 
     @pytest.mark.parametrize(
         "attributes, error_code, error_pointer",
@@ -3950,6 +3951,43 @@ class TestScanViewSet:
         assert scan.trigger == Scan.TriggerChoices.MANUAL
         mock_enqueue_scan_execution.assert_called_once()
         # assert scan.scanner_args == expected_scanner_args
+
+    @patch("api.v1.views.enqueue_scan_execution_on_commit")
+    def test_scans_create_returns_the_scan_id_in_task_args(
+        self,
+        mock_enqueue_scan_execution,
+        authenticated_client,
+        okta_provider,
+    ):
+        """The 202 is a task, so `task_args` is the only place the scan id is.
+
+        It is serialized before the on_commit publish that would otherwise fill
+        the kwargs, so the record has to carry them from the start.
+        """
+        payload = {
+            "data": {
+                "type": "scans",
+                "attributes": {"name": "New Scan"},
+                "relationships": {
+                    "provider": {
+                        "data": {"type": "providers", "id": str(okta_provider.id)}
+                    }
+                },
+            }
+        }
+
+        response = authenticated_client.post(
+            reverse("scan-list"),
+            data=payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+
+        assert response.status_code == status.HTTP_202_ACCEPTED
+        scan = Scan.objects.get()
+        assert response.json()["data"]["attributes"]["task_args"] == {
+            "scan_id": str(scan.id),
+            "provider_id": str(okta_provider.id),
+        }
 
     @patch("tasks.tasks.perform_scan_task.apply_async")
     def test_scans_create_queues_scan_when_provider_has_active_scan(
@@ -4539,6 +4577,52 @@ class TestScanViewSet:
         response = authenticated_client.get(url)
         assert response.status_code == status.HTTP_302_FOUND
         assert response["Location"] == presigned_url
+
+    @override_settings(
+        DJANGO_OUTPUT_S3_AWS_PUBLIC_ENDPOINT_URL="https://storage.example.com",
+        DJANGO_OUTPUT_S3_AWS_ACCESS_KEY_ID="access-key",
+        DJANGO_OUTPUT_S3_AWS_SECRET_ACCESS_KEY="secret-key",
+        DJANGO_OUTPUT_S3_AWS_SESSION_TOKEN="",
+        DJANGO_OUTPUT_S3_AWS_DEFAULT_REGION="eu-west-1",
+    )
+    def test_report_s3_redirects_to_the_public_storage_host(
+        self, authenticated_client, scans_fixture, monkeypatch
+    ):
+        """The object is looked up internally but the redirect the browser follows is public."""
+        scan = scans_fixture[0]
+        bucket = "test-bucket"
+        key = "report.zip"
+        scan.output_location = f"s3://{bucket}/{key}"
+        scan.state = StateChoices.COMPLETED
+        scan.save()
+
+        monkeypatch.setattr(
+            "api.v1.views.env",
+            type("env", (), {"str": lambda self, *_args, **_kwargs: bucket})(),
+        )
+
+        head_calls = []
+
+        class InternalS3Client:
+            def head_object(self, Bucket, Key):
+                head_calls.append((Bucket, Key))
+                return {}
+
+            def generate_presigned_url(self, *_args, **_kwargs):
+                raise AssertionError("the internal client must not sign the redirect")
+
+        monkeypatch.setattr("api.v1.views.get_s3_client", lambda: InternalS3Client())
+
+        url = reverse("scan-report", kwargs={"pk": scan.id})
+        response = authenticated_client.get(url)
+
+        assert response.status_code == status.HTTP_302_FOUND
+        assert head_calls == [(bucket, key)]
+
+        location = urlparse(response["Location"])
+        assert location.netloc == "storage.example.com"
+        assert location.path == f"/{bucket}/{key}"
+        assert "X-Amz-Signature" in parse_qs(location.query)
 
     def test_report_s3_success_no_local_files(
         self, authenticated_client, scans_fixture, monkeypatch
@@ -5156,6 +5240,7 @@ class TestTaskViewSet:
     @patch("api.v1.views.AsyncResult", return_value=Mock())
     def test_tasks_revoke(self, mock_async_result, authenticated_client, tasks_fixture):
         _, task2 = tasks_fixture
+        self._set_task_name(task2, "scan-perform")
         response = authenticated_client.delete(
             reverse("task-detail", kwargs={"pk": task2.id})
         )
@@ -5171,11 +5256,310 @@ class TestTaskViewSet:
 
     def test_tasks_revoke_invalid_status(self, authenticated_client, tasks_fixture):
         task1, _ = tasks_fixture
+        self._set_task_name(task1, "scan-perform")
         response = authenticated_client.delete(
             reverse("task-detail", kwargs={"pk": task1.id})
         )
         # Task status is SUCCESS
         assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    @staticmethod
+    def _set_task_name(task, name):
+        task.task_runner_task.task_name = name
+        task.task_runner_task.save(update_fields=["task_name"])
+
+    @staticmethod
+    def _set_task_kwargs(task, kwargs):
+        task.task_runner_task.task_kwargs = json.dumps(repr(kwargs))
+        task.task_runner_task.save(update_fields=["task_kwargs"])
+
+    @staticmethod
+    def _client_with_role(tenant, factory, **permissions):
+        user = User.objects.create_user(
+            name=f"revoker-{uuid4()}",
+            email=f"revoker-{uuid4()}@prowler.com",
+            password=TEST_PASSWORD,
+        )
+        Membership.objects.create(
+            user=user, tenant=tenant, role=Membership.RoleChoices.MEMBER
+        )
+        flags = {
+            "manage_users": False,
+            "manage_account": False,
+            "manage_billing": False,
+            "manage_providers": False,
+            "manage_integrations": False,
+            "manage_scans": False,
+            "unlimited_visibility": True,
+            **permissions,
+        }
+        role = Role.objects.create(
+            name=f"revoker-{uuid4()}", tenant_id=tenant.id, **flags
+        )
+        UserRoleRelationship.objects.create(user=user, role=role, tenant_id=tenant.id)
+        return factory(user, tenant)
+
+    @patch("api.v1.views.AsyncResult")
+    def test_tasks_revoke_without_permission_is_forbidden(
+        self, mock_async_result, authenticated_client_no_permissions_rbac, tasks_fixture
+    ):
+        _, pending_task = tasks_fixture
+        self._set_task_name(pending_task, "provider-connection-check")
+
+        response = authenticated_client_no_permissions_rbac.delete(
+            reverse("task-detail", kwargs={"pk": pending_task.id})
+        )
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        mock_async_result.return_value.revoke.assert_not_called()
+
+    @pytest.mark.parametrize(
+        "task_name, permissions, expected_status",
+        [
+            (
+                "provider-connection-check",
+                {"manage_providers": True},
+                status.HTTP_202_ACCEPTED,
+            ),
+            (
+                "provider-connection-check",
+                {"manage_scans": True},
+                status.HTTP_403_FORBIDDEN,
+            ),
+            ("scan-perform", {"manage_scans": True}, status.HTTP_202_ACCEPTED),
+            (
+                "scan-perform-scheduled",
+                {"manage_providers": True},
+                status.HTTP_403_FORBIDDEN,
+            ),
+            (
+                "integration-jira",
+                {"manage_integrations": True},
+                status.HTTP_202_ACCEPTED,
+            ),
+            ("integration-jira", {"manage_providers": True}, status.HTTP_403_FORBIDDEN),
+            ("lighthouse-connection-check", {}, status.HTTP_202_ACCEPTED),
+        ],
+    )
+    @patch("api.v1.views.AsyncResult")
+    def test_tasks_revoke_requires_originating_operation_permission(
+        self,
+        mock_async_result,
+        authenticated_client_for_tenant_factory,
+        tenants_fixture,
+        tasks_fixture,
+        task_name,
+        permissions,
+        expected_status,
+    ):
+        tenant, *_ = tenants_fixture
+        _, pending_task = tasks_fixture
+        self._set_task_name(pending_task, task_name)
+        client = self._client_with_role(
+            tenant, authenticated_client_for_tenant_factory, **permissions
+        )
+
+        response = client.delete(reverse("task-detail", kwargs={"pk": pending_task.id}))
+
+        assert response.status_code == expected_status
+        if expected_status == status.HTTP_202_ACCEPTED:
+            mock_async_result.return_value.revoke.assert_called_once()
+        else:
+            mock_async_result.return_value.revoke.assert_not_called()
+
+    @patch("api.v1.views.AsyncResult")
+    def test_tasks_revoke_provider_deletion_is_forbidden_even_for_admin(
+        self, mock_async_result, authenticated_client, tasks_fixture
+    ):
+        _, pending_task = tasks_fixture
+        self._set_task_name(pending_task, "provider-deletion")
+
+        response = authenticated_client.delete(
+            reverse("task-detail", kwargs={"pk": pending_task.id})
+        )
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        mock_async_result.return_value.revoke.assert_not_called()
+
+    @patch("api.v1.views.AsyncResult")
+    def test_tasks_revoke_unmapped_task_is_forbidden(
+        self, mock_async_result, authenticated_client, tasks_fixture
+    ):
+        _, pending_task = tasks_fixture
+        assert pending_task.task_runner_task.task_name not in TASK_REVOKE_PERMISSIONS
+
+        response = authenticated_client.delete(
+            reverse("task-detail", kwargs={"pk": pending_task.id})
+        )
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        mock_async_result.return_value.revoke.assert_not_called()
+
+    def test_every_rls_task_has_revoke_permissions(self):
+        from config.celery import RLSTask, celery_app
+
+        rls_task_names = {
+            name for name, task in celery_app.tasks.items() if isinstance(task, RLSTask)
+        }
+        assert rls_task_names
+        assert rls_task_names <= set(TASK_REVOKE_PERMISSIONS)
+
+    @patch("api.v1.views.AsyncResult")
+    def test_tasks_hidden_for_providers_outside_role_visibility(
+        self,
+        mock_async_result,
+        authenticated_client_no_permissions_rbac,
+        tasks_fixture,
+        aws_provider_pair,
+    ):
+        client = authenticated_client_no_permissions_rbac
+        limited_user = client.user
+        tenant = Membership.objects.filter(user=limited_user).first().tenant
+        allowed_provider, denied_provider = aws_provider_pair
+        allowed_task, denied_task = tasks_fixture
+        self._set_task_kwargs(
+            allowed_task,
+            {"tenant_id": str(tenant.id), "provider_id": str(allowed_provider.id)},
+        )
+        self._set_task_name(denied_task, "provider-deletion")
+        self._set_task_kwargs(
+            denied_task,
+            {"tenant_id": str(tenant.id), "provider_id": str(denied_provider.id)},
+        )
+        provider_group = ProviderGroup.objects.create(
+            name="limited-task-group", tenant_id=tenant.id
+        )
+        ProviderGroupMembership.objects.create(
+            tenant_id=tenant.id,
+            provider_group=provider_group,
+            provider=allowed_provider,
+        )
+        RoleProviderGroupRelationship.objects.create(
+            tenant_id=tenant.id,
+            role=limited_user.roles.first(),
+            provider_group=provider_group,
+        )
+
+        response = client.get(reverse("task-list"))
+        assert response.status_code == status.HTTP_200_OK
+        assert [item["id"] for item in response.json()["data"]] == [
+            str(allowed_task.id)
+        ]
+
+        response = client.get(reverse("task-detail", kwargs={"pk": denied_task.id}))
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+        response = client.delete(reverse("task-detail", kwargs={"pk": denied_task.id}))
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+        mock_async_result.return_value.revoke.assert_not_called()
+
+    @patch("api.v1.views.AsyncResult")
+    def test_tasks_of_soft_deleted_provider_stay_visible_to_its_groups(
+        self,
+        mock_async_result,
+        authenticated_client_for_tenant_factory,
+        tenants_fixture,
+        tasks_fixture,
+        aws_provider_pair,
+    ):
+        tenant, *_ = tenants_fixture
+        provider, _ = aws_provider_pair
+        finished_task, pending_task = tasks_fixture
+        client = self._client_with_role(
+            tenant,
+            authenticated_client_for_tenant_factory,
+            manage_providers=True,
+            unlimited_visibility=False,
+        )
+        provider_group = ProviderGroup.objects.create(
+            name="own-group", tenant_id=tenant.id
+        )
+        ProviderGroupMembership.objects.create(
+            tenant_id=tenant.id, provider_group=provider_group, provider=provider
+        )
+        RoleProviderGroupRelationship.objects.create(
+            tenant_id=tenant.id,
+            role=client.user.roles.first(),
+            provider_group=provider_group,
+        )
+        for task, name in (
+            (finished_task, "provider-deletion"),
+            (pending_task, "provider-connection-check"),
+        ):
+            self._set_task_name(task, name)
+            self._set_task_kwargs(
+                task, {"tenant_id": str(tenant.id), "provider_id": str(provider.id)}
+            )
+        provider.is_deleted = True
+        provider.save()
+
+        response = client.get(reverse("task-detail", kwargs={"pk": finished_task.id}))
+        assert response.status_code == status.HTTP_200_OK
+
+        response = client.delete(reverse("task-detail", kwargs={"pk": pending_task.id}))
+        assert response.status_code == status.HTTP_202_ACCEPTED
+        mock_async_result.return_value.revoke.assert_called_once()
+
+    def test_tasks_without_provider_stay_visible_for_limited_roles(
+        self, authenticated_client_no_permissions_rbac, tasks_fixture, aws_provider_pair
+    ):
+        response = authenticated_client_no_permissions_rbac.get(reverse("task-list"))
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) == len(tasks_fixture)
+
+    def test_tasks_list_without_role_is_forbidden(
+        self, authenticated_client_rbac_noroles, tasks_fixture
+    ):
+        response = authenticated_client_rbac_noroles.get(reverse("task-list"))
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_tasks_revoke_without_permission_hides_task_status(
+        self, authenticated_client_no_permissions_rbac, tasks_fixture
+    ):
+        finished_task, _ = tasks_fixture
+        self._set_task_name(finished_task, "provider-connection-check")
+
+        response = authenticated_client_no_permissions_rbac.delete(
+            reverse("task-detail", kwargs={"pk": finished_task.id})
+        )
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    @patch("api.v1.views.AsyncResult")
+    def test_tasks_revoke_unauthenticated_returns_401(
+        self, mock_async_result, tasks_fixture
+    ):
+        from rest_framework.test import APIClient
+
+        _, pending_task = tasks_fixture
+        self._set_task_name(pending_task, "scan-perform")
+
+        response = APIClient().delete(
+            reverse("task-detail", kwargs={"pk": pending_task.id})
+        )
+
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+        mock_async_result.return_value.revoke.assert_not_called()
+
+    @patch("api.v1.views.AsyncResult")
+    def test_tasks_revoke_foreign_tenant_task_returns_404(
+        self,
+        mock_async_result,
+        authenticated_client_for_tenant_factory,
+        tenants_fixture,
+        tasks_fixture,
+    ):
+        _, foreign_tenant, *_ = tenants_fixture
+        _, pending_task = tasks_fixture
+        self._set_task_name(pending_task, "scan-perform")
+        client = self._client_with_role(
+            foreign_tenant, authenticated_client_for_tenant_factory, manage_scans=True
+        )
+
+        response = client.delete(reverse("task-detail", kwargs={"pk": pending_task.id}))
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+        mock_async_result.return_value.revoke.assert_not_called()
 
 
 @pytest.mark.django_db
@@ -8784,6 +9168,190 @@ class TestInvitationViewSet:
             user.id
         )
 
+    @staticmethod
+    def _invitation_create_payload(email, role):
+        return json.dumps(
+            {
+                "data": {
+                    "type": "invitations",
+                    "attributes": {"email": email},
+                    "relationships": {
+                        "roles": {"data": [{"type": "roles", "id": str(role.id)}]}
+                    },
+                }
+            }
+        )
+
+    @staticmethod
+    def _create_lapsed_invitation(email, tenant, inviter):
+        return Invitation.objects.create(
+            email=email,
+            state=Invitation.State.PENDING,
+            expires_at=datetime.now(UTC) - timedelta(days=1),
+            inviter=inviter,
+            tenant=tenant,
+        )
+
+    def test_invitations_create_with_lapsed_pending_invitation_for_same_email(
+        self,
+        authenticated_client,
+        create_test_user,
+        tenants_fixture,
+        invitations_fixture,
+        roles_fixture,
+    ):
+        lapsed_invitation, expired_invitation = invitations_fixture
+        lapsed_invitation.expires_at = datetime.now(UTC) - timedelta(days=1)
+        lapsed_invitation.save()
+        other_email_lapsed_invitation = self._create_lapsed_invitation(
+            "other@prowler.com", tenants_fixture[0], create_test_user
+        )
+
+        response = authenticated_client.post(
+            reverse("invitation-list"),
+            data=self._invitation_create_payload(
+                lapsed_invitation.email, roles_fixture[0]
+            ),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_201_CREATED
+        new_invitation = Invitation.objects.get(id=response.json()["data"]["id"])
+        assert new_invitation.email == lapsed_invitation.email
+        assert new_invitation.state == Invitation.State.PENDING
+        lapsed_invitation.refresh_from_db()
+        assert lapsed_invitation.state == Invitation.State.EXPIRED
+        expired_invitation.refresh_from_db()
+        assert expired_invitation.state == Invitation.State.EXPIRED
+        other_email_lapsed_invitation.refresh_from_db()
+        assert other_email_lapsed_invitation.state == Invitation.State.PENDING
+
+    def test_invitations_create_with_active_pending_invitation_for_same_email(
+        self,
+        authenticated_client,
+        create_test_user,
+        tenants_fixture,
+        invitations_fixture,
+        roles_fixture,
+    ):
+        active_invitation, _ = invitations_fixture
+        self._create_lapsed_invitation(
+            active_invitation.email, tenants_fixture[0], create_test_user
+        )
+        invitation_count = Invitation.objects.count()
+
+        response = authenticated_client.post(
+            reverse("invitation-list"),
+            data=self._invitation_create_payload(
+                active_invitation.email, roles_fixture[0]
+            ),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert (
+            response.json()["errors"][0]["source"]["pointer"]
+            == "/data/attributes/email"
+        )
+        assert Invitation.objects.count() == invitation_count
+        active_invitation.refresh_from_db()
+        assert active_invitation.state == Invitation.State.PENDING
+
+    def test_invitations_create_ignores_pending_invitations_from_other_tenants(
+        self, authenticated_client, create_test_user, tenants_fixture, roles_fixture
+    ):
+        email = "cross_tenant@prowler.com"
+        other_tenant = tenants_fixture[1]
+        other_tenant_lapsed_invitation = self._create_lapsed_invitation(
+            email, other_tenant, create_test_user
+        )
+        Invitation.objects.create(
+            email=email, inviter=create_test_user, tenant=other_tenant
+        )
+
+        response = authenticated_client.post(
+            reverse("invitation-list"),
+            data=self._invitation_create_payload(email, roles_fixture[0]),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_201_CREATED
+        other_tenant_lapsed_invitation.refresh_from_db()
+        assert other_tenant_lapsed_invitation.state == Invitation.State.PENDING
+
+    def test_invitations_report_lapsed_pending_invitation_as_expired(
+        self,
+        authenticated_client,
+        create_test_user,
+        tenants_fixture,
+        invitations_fixture,
+    ):
+        active_invitation, expired_invitation = invitations_fixture
+        lapsed_invitation = self._create_lapsed_invitation(
+            "lapsed@prowler.com", tenants_fixture[0], create_test_user
+        )
+
+        list_response = authenticated_client.get(reverse("invitation-list"))
+        retrieve_response = authenticated_client.get(
+            reverse("invitation-detail", kwargs={"pk": lapsed_invitation.id})
+        )
+
+        assert list_response.status_code == status.HTTP_200_OK
+        assert retrieve_response.status_code == status.HTTP_200_OK
+        assert {
+            invitation["id"]: invitation["attributes"]["state"]
+            for invitation in list_response.json()["data"]
+        } == {
+            str(active_invitation.id): Invitation.State.PENDING.value,
+            str(expired_invitation.id): Invitation.State.EXPIRED.value,
+            str(lapsed_invitation.id): Invitation.State.EXPIRED.value,
+        }
+        assert (
+            retrieve_response.json()["data"]["attributes"]["state"]
+            == Invitation.State.EXPIRED.value
+        )
+
+    @pytest.mark.parametrize(
+        "filter_name, filter_value, expected_invitations",
+        [
+            ("state", "pending", {"active"}),
+            ("state", "expired", {"expired", "lapsed"}),
+            ("state", "accepted", set()),
+            ("state__in", "pending", {"active"}),
+            ("state__in", "expired", {"expired", "lapsed"}),
+            ("state__in", "pending,expired", {"active", "expired", "lapsed"}),
+            ("state__in", "accepted,revoked", set()),
+        ],
+    )
+    def test_invitations_filter_state_treats_lapsed_pending_as_expired(
+        self,
+        authenticated_client,
+        create_test_user,
+        tenants_fixture,
+        invitations_fixture,
+        filter_name,
+        filter_value,
+        expected_invitations,
+    ):
+        active_invitation, expired_invitation = invitations_fixture
+        lapsed_invitation = self._create_lapsed_invitation(
+            "lapsed@prowler.com", tenants_fixture[0], create_test_user
+        )
+        invitation_ids = {
+            "active": str(active_invitation.id),
+            "expired": str(expired_invitation.id),
+            "lapsed": str(lapsed_invitation.id),
+        }
+
+        response = authenticated_client.get(
+            reverse("invitation-list"), {f"filter[{filter_name}]": filter_value}
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert {invitation["id"] for invitation in response.json()["data"]} == {
+            invitation_ids[name] for name in expected_invitations
+        }
+
     @pytest.mark.parametrize(
         "email",
         [
@@ -8791,8 +9359,10 @@ class TestInvitationViewSet:
             "invalid_email@",
             # There is a pending invitation with this email
             "testing@prowler.com",
+            "TESTING@prowler.com",
             # User is already a member of the tenant
             TEST_USER,
+            TEST_USER.upper(),
         ],
     )
     def test_invitations_create_invalid_email(
@@ -9046,6 +9616,56 @@ class TestInvitationViewSet:
             response.json()["errors"][0]["detail"]
             == "This invitation cannot be revoked."
         )
+
+    def test_invitations_delete_lapsed_invitation(
+        self, authenticated_client, invitations_fixture
+    ):
+        invitation, *_ = invitations_fixture
+        invitation.expires_at = datetime.now(UTC) - timedelta(days=1)
+        invitation.save()
+
+        response = authenticated_client.delete(
+            reverse("invitation-detail", kwargs={"pk": str(invitation.id)})
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert (
+            response.json()["errors"][0]["detail"]
+            == "This invitation cannot be revoked."
+        )
+        invitation.refresh_from_db()
+        assert invitation.state == Invitation.State.PENDING
+
+    def test_invitations_partial_update_lapsed_invitation(
+        self, authenticated_client, invitations_fixture
+    ):
+        invitation, *_ = invitations_fixture
+        invitation.expires_at = datetime.now(UTC) - timedelta(days=1)
+        invitation.save()
+        data = {
+            "data": {
+                "id": str(invitation.id),
+                "type": "invitations",
+                "attributes": {
+                    "email": invitation.email,
+                    "expires_at": self.TOMORROW_ISO,
+                },
+            }
+        }
+
+        response = authenticated_client.patch(
+            reverse("invitation-detail", kwargs={"pk": str(invitation.id)}),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert (
+            response.json()["errors"][0]["detail"]
+            == "This invitation cannot be updated."
+        )
+        invitation.refresh_from_db()
+        assert invitation.is_lapsed
 
     def test_invitations_accept_invitation_new_user(self, client, invitations_fixture):
         invitation, *_ = invitations_fixture

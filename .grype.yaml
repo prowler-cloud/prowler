@@ -115,3 +115,29 @@ ignore:
   - vulnerability: CVE-2026-9669
     package:
       name: python
+  # CVE-2026-82049 (tarfile data/tar filter bypass via a hard link to a symlink) has no
+  # fixed CPython release on any branch: the fix is merged on main and 3.13 only, and the
+  # 3.12 backport is still open. Grype records 3.14.0b1 as the fix, so only-fixed does not
+  # drop it, yet python:3.12.14-slim-trixie reports it too. Prowler never extracts tar
+  # archives to disk: the ECR image inspection reads members in memory with extractfile().
+  # Remove once the base image ships a 3.12 release that includes the backport.
+  # https://github.com/python/cpython/issues/157190
+  # https://github.com/python/cpython/pull/157454
+  - vulnerability: CVE-2026-82049
+    package:
+      name: python
+
+  # zlib in the Alpine base images of the UI (node:24.18.1-alpine) and MCP
+  # (python:3.13.14-alpine3.23) containers. CVE-2026-85091 is a heap overflow in
+  # gz_vacate() reached only through non-blocking gzwrite() followed by gzprintf() after
+  # a write stall. Node links its own bundled zlib and the MCP server never writes gzip
+  # files, so neither image calls that path. TEMPORARY: the 1.3.2-r1 fix is in the
+  # Alpine index and could be taken with `apk add --upgrade`, but we wait for the base
+  # images to ship it instead (the newest node:24-alpine and python:3.13-alpine3.23 still
+  # carry 1.3.2-r0). Pinned to that version so the rule stops matching on its own once a
+  # base image moves forward. Remove when the base digests are bumped, by 2026-11-07.
+  # https://security.alpinelinux.org/vuln/CVE-2026-85091
+  - vulnerability: CVE-2026-85091
+    package:
+      name: zlib
+      version: 1.3.2-r0

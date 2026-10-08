@@ -12,6 +12,7 @@ import { pollTaskCompletion } from "@/components/providers/organizations/org-acc
 import { Button, useToast } from "@/components/shadcn";
 import { getNodeLabel } from "@/lib/organizations";
 import { NodeKind, OrganizationType } from "@/types/organizations";
+import { CONNECTION_CHECK_STATUS } from "@/types/providers";
 import {
   PROVIDERS_GROUP_KIND,
   ProvidersGroupKind,
@@ -85,11 +86,11 @@ export function DeleteOrganizationForm({
     const taskId = extractTaskId(result);
     const taskResult = taskId
       ? await pollTaskCompletion(taskId)
-      : { success: true as const };
+      : { status: CONNECTION_CHECK_STATUS.SUCCESS };
 
     setIsLoading(false);
 
-    if (!taskResult.success) {
+    if (taskResult.status !== CONNECTION_CHECK_STATUS.SUCCESS) {
       toast({
         variant: "destructive",
         title: "Deletion did not complete",

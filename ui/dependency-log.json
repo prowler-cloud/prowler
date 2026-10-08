@@ -498,10 +498,10 @@
   {
     "section": "dependencies",
     "name": "next",
-    "from": "16.2.11",
-    "to": "16.3.3",
+    "from": "16.3.3",
+    "to": "16.3.6",
     "strategy": "installed",
-    "generatedAt": "2026-09-09T12:23:05.642Z"
+    "generatedAt": "2026-10-01T09:28:54.112Z"
   },
   {
     "section": "dependencies",
@@ -594,10 +594,10 @@
   {
     "section": "dependencies",
     "name": "sharp",
-    "from": "0.35.3",
-    "to": "0.35.4",
+    "from": "0.35.4",
+    "to": "0.35.5",
     "strategy": "installed",
-    "generatedAt": "2026-09-09T12:39:08.649Z"
+    "generatedAt": "2026-10-07T09:34:53.599Z"
   },
   {
     "section": "dependencies",
@@ -660,14 +660,6 @@
     "name": "zustand",
     "from": "5.0.8",
     "to": "5.0.8",
-    "strategy": "installed",
-    "generatedAt": "2025-10-22T12:36:37.962Z"
-  },
-  {
-    "section": "devDependencies",
-    "name": "@iconify/react",
-    "from": "5.2.1",
-    "to": "5.2.1",
     "strategy": "installed",
     "generatedAt": "2025-10-22T12:36:37.962Z"
   },

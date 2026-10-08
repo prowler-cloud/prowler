@@ -8,6 +8,7 @@ import {
   addCredentialsRoleFormSchema,
   addProviderFormSchema,
   KUBECONFIG_UNSUPPORTED_COMMAND_AUTHENTICATION_ERROR,
+  roleFormSchema,
   samlConfigFormSchema,
 } from "./formSchemas";
 
@@ -19,6 +20,30 @@ const BASE_AWS_ROLE_VALUES = {
   [ProviderCredentialFields.EXTERNAL_ID]: "tenant-123",
   [ProviderCredentialFields.CREDENTIALS_TYPE]: "access-secret-key",
 } as const;
+
+describe("roleFormSchema", () => {
+  it("defaults manage_registry to false", () => {
+    // Given / When
+    const result = roleFormSchema.parse({ name: "Registry manager" });
+
+    // Then
+    expect(result.manage_registry).toBe(false);
+  });
+
+  it.each(["true", 1, null])(
+    "rejects malformed manage_registry values of %j",
+    (manageRegistry) => {
+      // Given / When
+      const result = roleFormSchema.safeParse({
+        name: "Registry manager",
+        manage_registry: manageRegistry,
+      });
+
+      // Then
+      expect(result.success).toBe(false);
+    },
+  );
+});
 
 describe("addCredentialsRoleFormSchema", () => {
   it("accepts AWS role credentials when access and secret keys are present", () => {
@@ -282,10 +307,32 @@ describe("addCredentialsFormSchema - oraclecloud", () => {
     [ProviderCredentialFields.OCI_TENANCY]: "ocid1.tenancy.oc1..example",
   } as const;
 
-  it("accepts OCI API key credentials without region", () => {
+  it("rejects OCI API key credentials without a home region", () => {
     const schema = addCredentialsFormSchema("oraclecloud");
 
     const result = schema.safeParse(BASE_OCI_VALUES);
+
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects an unknown OCI home region", () => {
+    const schema = addCredentialsFormSchema("oraclecloud");
+
+    const result = schema.safeParse({
+      ...BASE_OCI_VALUES,
+      [ProviderCredentialFields.OCI_REGION]: "mars-north-1",
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("accepts OCI API key credentials with a home region", () => {
+    const schema = addCredentialsFormSchema("oraclecloud");
+
+    const result = schema.safeParse({
+      ...BASE_OCI_VALUES,
+      [ProviderCredentialFields.OCI_REGION]: "me-abudhabi-1",
+    });
 
     expect(result.success).toBe(true);
   });
