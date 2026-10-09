@@ -11,6 +11,7 @@ from prowler.providers.aws.services.iam.lib.policy import (
     iam_pattern_matches,
     is_codebuild_using_allowed_github_org,
     is_condition_block_restrictive,
+    is_condition_block_restrictive_for_trusted_accounts,
     is_condition_block_restrictive_organization,
     is_condition_block_restrictive_sns_endpoint,
     is_condition_restricting_from_private_ip,
@@ -364,6 +365,273 @@ class Test_Policy:
         }
         assert not is_condition_block_restrictive(
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
+        )
+
+    def test_trusted_account_condition_allows_subset_of_trusted_accounts(self):
+        condition_statement = {
+            "StringEquals": {
+                "aws:PrincipalAccount": TRUSTED_AWS_ACCOUNT_NUMBER_LIST[:2]
+            }
+        }
+
+        assert is_condition_block_restrictive_for_trusted_accounts(
+            condition_statement,
+            set(TRUSTED_AWS_ACCOUNT_NUMBER_LIST),
+        )
+
+    def test_principal_account_if_exists_allows_trusted_subset(self):
+        condition_statement = {
+            "StringEqualsIfExists": {
+                "aws:PrincipalAccount": TRUSTED_AWS_ACCOUNT_NUMBER_LIST[:2]
+            }
+        }
+
+        assert is_condition_block_restrictive_for_trusted_accounts(
+            condition_statement,
+            set(TRUSTED_AWS_ACCOUNT_NUMBER_LIST),
+        )
+
+    def test_principal_account_if_exists_rejects_untrusted(self):
+        condition_statement = {
+            "StringEqualsIfExists": {
+                "aws:PrincipalAccount": [
+                    TRUSTED_AWS_ACCOUNT_NUMBER,
+                    NON_TRUSTED_AWS_ACCOUNT_NUMBER,
+                ]
+            }
+        }
+
+        assert not is_condition_block_restrictive_for_trusted_accounts(
+            condition_statement, {TRUSTED_AWS_ACCOUNT_NUMBER}
+        )
+
+    def test_trusted_account_condition_rejects_untrusted_list_member(self):
+        condition_statement = {
+            "StringEquals": {
+                "aws:PrincipalAccount": [
+                    TRUSTED_AWS_ACCOUNT_NUMBER,
+                    NON_TRUSTED_AWS_ACCOUNT_NUMBER,
+                ]
+            }
+        }
+
+        assert not is_condition_block_restrictive_for_trusted_accounts(
+            condition_statement, {TRUSTED_AWS_ACCOUNT_NUMBER}
+        )
+
+    def test_trusted_account_condition_intersects_operators(self):
+        condition_statement = {
+            "StringEquals": {
+                "aws:PrincipalAccount": [
+                    TRUSTED_AWS_ACCOUNT_NUMBER,
+                    NON_TRUSTED_AWS_ACCOUNT_NUMBER,
+                ]
+            },
+            "StringLike": {"aws:PrincipalAccount": TRUSTED_AWS_ACCOUNT_NUMBER},
+        }
+
+        assert is_condition_block_restrictive_for_trusted_accounts(
+            condition_statement, {TRUSTED_AWS_ACCOUNT_NUMBER}
+        )
+
+    def test_trusted_account_condition_intersects_string_like_wildcard(self):
+        condition_statement = {
+            "StringEquals": {"aws:PrincipalAccount": [TRUSTED_AWS_ACCOUNT_NUMBER]},
+            "StringLike": {"aws:PrincipalAccount": "12345678901*"},
+        }
+
+        assert is_condition_block_restrictive_for_trusted_accounts(
+            condition_statement, {TRUSTED_AWS_ACCOUNT_NUMBER}
+        )
+
+    def test_trusted_condition_rejects_unbounded_string_like(self):
+        account_condition = {"aws:PrincipalAccount": "12345678901*"}
+        condition_statement = {"StringLike": account_condition}
+
+        assert not is_condition_block_restrictive_for_trusted_accounts(
+            condition_statement, {TRUSTED_AWS_ACCOUNT_NUMBER}
+        )
+
+    def test_principal_arn_condition_allows_trusted_set(self):
+        condition_statement = {
+            "StringEquals": {
+                "aws:PrincipalArn": [
+                    "arn:aws:iam::123456789012:role/app",
+                    "arn:aws:iam::123456789013:role/app",
+                ]
+            }
+        }
+
+        assert is_condition_block_restrictive_for_trusted_accounts(
+            condition_statement,
+            {
+                "123456789012",
+                "123456789013",
+                "123456789014",
+            },
+        )
+
+    def test_principal_arn_condition_rejects_untrusted(self):
+        condition_statement = {
+            "StringEquals": {
+                "aws:PrincipalArn": [
+                    "arn:aws:iam::123456789012:role/app",
+                    "arn:aws:iam::111222333444:role/app",
+                ]
+            }
+        }
+
+        assert not is_condition_block_restrictive_for_trusted_accounts(
+            condition_statement, {"123456789012"}
+        )
+
+    def test_principal_arn_allows_trusted_sts_federated_user(self):
+        condition_statement = {
+            "StringEquals": {
+                "aws:PrincipalArn": [
+                    "arn:aws:iam::123456789012:role/app",
+                    "arn:aws:sts::123456789013:federated-user/app",
+                ]
+            }
+        }
+
+        assert is_condition_block_restrictive_for_trusted_accounts(
+            condition_statement, {"123456789012", "123456789013"}
+        )
+
+    def test_principal_arn_rejects_untrusted_sts_federated_user(self):
+        condition_statement = {
+            "ArnEquals": {
+                "aws:PrincipalArn": [
+                    "arn:aws:iam::123456789012:role/app",
+                    "arn:aws:sts::111222333444:federated-user/app",
+                ]
+            }
+        }
+
+        assert not is_condition_block_restrictive_for_trusted_accounts(
+            condition_statement, {"123456789012"}
+        )
+
+    def test_principal_arn_if_exists_does_not_restrict_anonymous_callers(self):
+        condition_statement = {
+            "StringEqualsIfExists": {
+                "aws:PrincipalArn": "arn:aws:iam::123456789012:role/app"
+            }
+        }
+
+        assert not is_condition_block_restrictive_for_trusted_accounts(
+            condition_statement, {"123456789012"}
+        )
+
+    def test_principal_arn_equals_wildcard_intersects_trusted_account(self):
+        condition_statement = {
+            "StringEquals": {"aws:PrincipalAccount": "123456789012"},
+            "ArnEquals": {"aws:PrincipalArn": "arn:aws:iam::*:role/app"},
+        }
+
+        assert is_condition_block_restrictive_for_trusted_accounts(
+            condition_statement, {"123456789012"}
+        )
+
+    def test_principal_arn_equals_wildcard_without_account_bound(self):
+        condition_statement = {
+            "ArnEquals": {"aws:PrincipalArn": "arn:aws:iam::*:role/app"}
+        }
+
+        assert not is_condition_block_restrictive_for_trusted_accounts(
+            condition_statement, {"123456789012"}
+        )
+
+    def test_principal_arn_like_allows_trusted_accounts(self):
+        condition_statement = {
+            "ArnLike": {
+                "aws:PrincipalArn": [
+                    "arn:aws:iam::123456789012:role/app*",
+                    "arn:aws:iam::123456789013:role/app*",
+                ]
+            }
+        }
+
+        assert is_condition_block_restrictive_for_trusted_accounts(
+            condition_statement,
+            {"123456789012", "123456789013"},
+        )
+
+    def test_principal_arn_equals_allows_trusted_account(self):
+        trusted_role_arn = "arn:aws:iam::123456789012:role/app"
+        arn_condition = {"aws:PrincipalArn": trusted_role_arn}
+        condition_statement = {"ArnEquals": arn_condition}
+
+        assert is_condition_block_restrictive_for_trusted_accounts(
+            condition_statement,
+            {"123456789012"},
+        )
+
+    def test_principal_arn_wildcard_needs_account_bound(self):
+        condition_statement = {
+            "StringLike": {"aws:PrincipalArn": "arn:aws:iam::*:role/app"}
+        }
+
+        assert not is_condition_block_restrictive_for_trusted_accounts(
+            condition_statement, {"123456789012"}
+        )
+
+    def test_principal_arn_wildcard_intersects_account(self):
+        account_ids = ["123456789012", "111222333444"]
+        condition_statement = {
+            "StringEquals": {"aws:PrincipalAccount": account_ids},
+            "StringLike": {"aws:PrincipalArn": "arn:aws:iam::*:role/app"},
+        }
+
+        assert not is_condition_block_restrictive_for_trusted_accounts(
+            condition_statement, {"123456789012"}
+        )
+
+    def test_principal_arn_wildcard_passes_for_trusted_account(self):
+        condition_statement = {
+            "StringEquals": {"aws:PrincipalAccount": ["123456789012"]},
+            "StringLike": {"aws:PrincipalArn": "arn:aws:iam::*:role/app"},
+        }
+
+        assert is_condition_block_restrictive_for_trusted_accounts(
+            condition_statement, {"123456789012"}
+        )
+
+    def test_source_account_does_not_bound_principal_account_list(self):
+        condition_statement = {
+            "StringEquals": {
+                "aws:PrincipalAccount": [
+                    TRUSTED_AWS_ACCOUNT_NUMBER,
+                    NON_TRUSTED_AWS_ACCOUNT_NUMBER,
+                ],
+                "aws:SourceAccount": TRUSTED_AWS_ACCOUNT_NUMBER,
+            }
+        }
+
+        assert not is_condition_block_restrictive_for_trusted_accounts(
+            condition_statement, {TRUSTED_AWS_ACCOUNT_NUMBER}
+        )
+
+    def test_resource_account_does_not_trust_untrusted_principal(self):
+        condition_statement = {
+            "StringEquals": {
+                "aws:PrincipalAccount": NON_TRUSTED_AWS_ACCOUNT_NUMBER,
+                "aws:ResourceAccount": TRUSTED_AWS_ACCOUNT_NUMBER,
+            }
+        }
+
+        assert not is_condition_block_restrictive_for_trusted_accounts(
+            condition_statement, {TRUSTED_AWS_ACCOUNT_NUMBER}
+        )
+
+    def test_resource_account_without_principal_condition_is_not_restrictive(self):
+        condition_statement = {
+            "StringEquals": {"aws:ResourceAccount": TRUSTED_AWS_ACCOUNT_NUMBER}
+        }
+
+        assert not is_condition_block_restrictive_for_trusted_accounts(
+            condition_statement, {TRUSTED_AWS_ACCOUNT_NUMBER}
         )
 
     def test_condition_parser_string_equals_aws_PrincipalAccount_list(self):
