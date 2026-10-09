@@ -1,0 +1,41 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_conditional_access_policy_non_corporate_device_persistent_browser_disabled",
+  "CheckTitle": "Conditional Access policy enforces non-persistent browser session for non-corporate devices",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "Microsoft Entra **Conditional Access** policy with **persistent browser session** set to *never* prevents browser sessions from persisting after the browser is closed on non-corporate devices.\n\nThis ensures that sessions on unmanaged or shared devices are not reusable, reducing the risk of unauthorized access through leftover session cookies.",
+  "Risk": "Without non-persistent browser session enforcement on non-corporate devices, sessions may persist after the browser is closed.\n\n- **Session reuse** on shared or public devices lets the next user inherit active sessions\n- **Data leakage** through leftover Microsoft 365 session cookies\n- **Unauthorized access** from compromised personal devices",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/entra/identity/conditional-access/howto-conditional-access-session-lifetime",
+    "https://learn.microsoft.com/entra/identity/conditional-access/policy-all-users-persistent-browser",
+    "https://learn.microsoft.com/entra/identity/conditional-access/concept-condition-filters-for-devices"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to the Microsoft Entra admin center at https://entra.microsoft.com.\n2. Expand **Protection** > **Conditional Access** and select **Policies**.\n3. Click **New policy** (or **New policy from template** > *Require reauthentication and disable browser persistence*).\n4. Under **Users**, select **All users** and exclude break-glass accounts.\n5. Under **Target resources**, select **All resources (formerly cloud apps)** > **Include All resources**.\n6. Under **Conditions** > **Filter for devices**, select **Exclude filtered devices** and set the rule to `device.isCompliant -eq True -or device.trustType -eq \"ServerAD\"`.\n7. Under **Session**, enable **Persistent browser session** and set it to **Never persistent**.\n8. Set the policy to **On** and click **Create**.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Configure a Conditional Access policy to enforce **non-persistent browser sessions** on non-corporate devices. Use device filters to target unmanaged endpoints and set the persistent browser session control to *never*.\n\nThis aligns with **zero trust** principles by preventing session reuse on untrusted devices.",
+      "Url": "https://hub.prowler.com/check/entra_conditional_access_policy_non_corporate_device_persistent_browser_disabled"
+    }
+  },
+  "Categories": [
+    "e3"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced",
+    "entra_conditional_access_policy_app_enforced_restrictions"
+  ],
+  "Notes": "A qualifying policy must target all users, all applications, set persistent browser session to never, and include a device filter targeting non-corporate devices. Requires Entra ID P1 license."
+}
