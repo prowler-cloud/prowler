@@ -63,6 +63,7 @@ from api.models import (
 from api.rbac.permissions import TASK_REVOKE_PERMISSIONS
 from api.rls import Tenant
 from api.uuid_utils import datetime_to_uuid7
+from api.v1.serializers import MembershipIncludeSerializer
 from api.v1.views import (
     ComplianceOverviewViewSet,
     CustomSAMLLoginView,
@@ -132,6 +133,145 @@ class TestUserViewSet:
         response = authenticated_client.get(reverse("user-me"))
         assert response.status_code == status.HTTP_200_OK
         assert response.json()["data"]["attributes"]["email"] == create_test_user.email
+
+    @staticmethod
+    def _shared_user_in_two_tenants(tenant_a, tenant_b):
+        shared_user = User.objects.create_user(
+            name="shared_user",
+            email=f"shared-user-{uuid4()}@prowler.com",
+            password="TmpPass123@",
+        )
+        Membership.objects.create(user=shared_user, tenant=tenant_a)
+        Membership.objects.create(user=shared_user, tenant=tenant_b)
+        role_a = Role.objects.create(name="role-a", tenant=tenant_a)
+        role_b = Role.objects.create(name="role-b", tenant=tenant_b)
+        UserRoleRelationship.objects.create(
+            user=shared_user, role=role_a, tenant=tenant_a
+        )
+        UserRoleRelationship.objects.create(
+            user=shared_user, role=role_b, tenant=tenant_b
+        )
+        return shared_user, role_a, role_b
+
+    @staticmethod
+    def _user_in_two_tenants_with_unique_roles(tenant_a, tenant_b):
+        suffix = uuid4()
+        user = User.objects.create_user(
+            name="scaled_user",
+            email=f"scaled-user-{suffix}@prowler.com",
+            password="TmpPass123@",
+        )
+        for tenant in (tenant_a, tenant_b):
+            Membership.objects.create(user=user, tenant=tenant)
+            role = Role.objects.create(name=f"role-{tenant.id}-{suffix}", tenant=tenant)
+            UserRoleRelationship.objects.create(user=user, role=role, tenant=tenant)
+        return user
+
+    def test_users_list_query_count_does_not_grow_with_user_count(
+        self, authenticated_client, tenants_fixture
+    ):
+        tenant_a, tenant_b, _ = tenants_fixture
+        self._user_in_two_tenants_with_unique_roles(tenant_a, tenant_b)
+        params = {"include": "memberships,roles"}
+
+        with CaptureQueriesContext(connection) as baseline:
+            response = authenticated_client.get(reverse("user-list"), params)
+        assert response.status_code == status.HTTP_200_OK
+        baseline_users = len(response.json()["data"])
+
+        for _ in range(3):
+            self._user_in_two_tenants_with_unique_roles(tenant_a, tenant_b)
+
+        with CaptureQueriesContext(connection) as scaled:
+            response = authenticated_client.get(reverse("user-list"), params)
+        assert response.status_code == status.HTTP_200_OK
+        assert len(response.json()["data"]) > baseline_users
+
+        assert len(scaled.captured_queries) == len(baseline.captured_queries), (
+            "Tenant-scoped relations are re-querying per user: "
+            f"{len(baseline.captured_queries)} queries for {baseline_users} users "
+            f"vs {len(scaled.captured_queries)} for "
+            f"{len(response.json()['data'])}. The prefetch is being discarded."
+        )
+
+    def test_users_retrieve_scopes_relations_to_active_tenant(
+        self, authenticated_client, tenants_fixture
+    ):
+        tenant_a, tenant_b, _ = tenants_fixture
+        shared_user, role_a, role_b = self._shared_user_in_two_tenants(
+            tenant_a, tenant_b
+        )
+
+        response = authenticated_client.get(
+            reverse("user-detail", kwargs={"pk": shared_user.id}),
+            {"include": "memberships,roles,memberships.tenant"},
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        payload = response.json()
+        relationships = payload["data"]["relationships"]
+        assert len(relationships["memberships"]["data"]) == 1
+        assert [item["id"] for item in relationships["roles"]["data"]] == [
+            str(role_a.id)
+        ]
+
+        included = payload["included"]
+        included_memberships = [i for i in included if i["type"] == "memberships"]
+        assert len(included_memberships) == 1
+        assert included_memberships[0]["relationships"]["tenant"]["data"]["id"] == str(
+            tenant_a.id
+        )
+        assert {i["id"] for i in included if i["type"] == "roles"} == {str(role_a.id)}
+        assert {
+            i["attributes"]["name"] for i in included if i["type"] == "tenants"
+        } == {tenant_a.name}
+        body = response.content.decode()
+        assert tenant_b.name not in body
+        assert str(tenant_b.id) not in body
+        assert str(role_b.id) not in body
+
+    def test_users_me_keeps_own_memberships_and_scopes_roles(
+        self, authenticated_client, create_test_user, tenants_fixture
+    ):
+        tenant_a, tenant_b, _ = tenants_fixture
+
+        response = authenticated_client.get(
+            reverse("user-me"), {"include": "memberships,roles,memberships.tenant"}
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        payload = response.json()
+        relationships = payload["data"]["relationships"]
+        assert len(relationships["memberships"]["data"]) == 2
+        assert {
+            i["attributes"]["name"]
+            for i in payload["included"]
+            if i["type"] == "tenants"
+        } == {tenant_a.name, tenant_b.name}
+        active_roles = create_test_user.roles.filter(tenant_id=tenant_a.id)
+        assert {i["id"] for i in relationships["roles"]["data"]} == {
+            str(role.id) for role in active_roles
+        }
+
+    def test_membership_include_serializer_hides_tenant_of_non_member(
+        self, create_test_user, tenants_fixture
+    ):
+        tenant_a, _, isolated_tenant = tenants_fixture
+        outsider = User.objects.create_user(
+            name="outsider",
+            email=f"outsider-{uuid4()}@prowler.com",
+            password="TmpPass123@",
+        )
+        foreign_membership = Membership.objects.create(
+            user=outsider, tenant=isolated_tenant
+        )
+        own_membership = Membership.objects.get(user=create_test_user, tenant=tenant_a)
+        request = SimpleNamespace(user=create_test_user, tenant_id=str(tenant_a.id))
+
+        serializer = MembershipIncludeSerializer(context={"request": request})
+
+        assert serializer.get_tenant(own_membership) == tenant_a
+        assert serializer.get_tenant(foreign_membership) is None
 
     def test_users_create(self, client):
         valid_user_payload = {

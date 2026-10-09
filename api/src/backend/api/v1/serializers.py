@@ -377,27 +377,48 @@ class UserSerializer(BaseModelSerializerV1):
     def _can_view_relationships(self, instance) -> bool:
         """Allow self to view own relationships. Require manage_account to view others."""
         role = self.context.get("role")
+        return self._is_self(instance) or bool(role and role.manage_account)
+
+    def _is_self(self, instance) -> bool:
         request = self.context.get("request")
-        is_self = bool(
+        return bool(
             request
             and getattr(request, "user", None)
             and getattr(instance, "id", None) == request.user.id
         )
-        return is_self or (role and role.manage_account)
+
+    def _active_tenant_id(self):
+        return getattr(self.context.get("request"), "tenant_id", None)
+
+    @staticmethod
+    def _in_tenant(related_manager, tenant_id):
+        """Filter a prefetched related manager in memory.
+
+        ``.filter()`` clones the queryset without its result cache, so it would
+        discard the viewset's prefetch and re-query once per serialized user.
+        """
+        return [
+            item
+            for item in related_manager.all()
+            if str(item.tenant_id) == str(tenant_id)
+        ]
 
     def get_roles(self, instance):
-        return (
-            instance.roles.all()
-            if self._can_view_relationships(instance)
-            else Role.objects.none()
-        )
+        tenant_id = self._active_tenant_id()
+        if not tenant_id or not self._can_view_relationships(instance):
+            return Role.objects.none()
+        return self._in_tenant(instance.roles, tenant_id)
 
     def get_memberships(self, instance):
-        return (
-            instance.memberships.all()
-            if self._can_view_relationships(instance)
-            else Membership.objects.none()
-        )
+        if not self._can_view_relationships(instance):
+            return Membership.objects.none()
+        # Own memberships span tenants on purpose: the tenant switcher reads them.
+        if self._is_self(instance):
+            return instance.memberships.all()
+        tenant_id = self._active_tenant_id()
+        if not tenant_id:
+            return Membership.objects.none()
+        return self._in_tenant(instance.memberships, tenant_id)
 
 
 class UserMeSerializer(UserSerializer):
@@ -731,11 +752,32 @@ class MembershipIncludeSerializer(serializers.ModelSerializer):
 
     included_serializers = {"tenant": "api.v1.serializers.TenantIncludeSerializer"}
 
+    _REQUESTER_TENANTS_ATTR = "_prowler_requester_tenants"
+
+    def _requester_tenants(self):
+        """Tenants the requester belongs to, resolved once per request.
+
+        Memoised on the request because DRF builds a serializer instance per
+        included object, so a per-instance cache would still query per membership.
+        """
+        request = self.context.get("request")
+        user = getattr(request, "user", None)
+        if user is None:
+            return {}
+        tenants = getattr(request, self._REQUESTER_TENANTS_ATTR, None)
+        if tenants is None:
+            tenants = {
+                tenant.id: tenant
+                for tenant in Tenant.objects.using(MainRouter.admin_db).filter(
+                    membership__user_id=user.id
+                )
+            }
+            setattr(request, self._REQUESTER_TENANTS_ATTR, tenants)
+        return tenants
+
     def get_tenant(self, instance):
-        try:
-            return Tenant.objects.using(MainRouter.admin_db).get(id=instance.tenant_id)
-        except Tenant.DoesNotExist:
-            return None
+        """Resolve the tenant only when the requester is a member of it."""
+        return self._requester_tenants().get(instance.tenant_id)
 
 
 # Provider Groups
