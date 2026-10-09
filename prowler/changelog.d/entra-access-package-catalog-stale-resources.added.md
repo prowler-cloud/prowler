@@ -1,0 +1,1 @@
+`entra_access_package_catalog_no_stale_resource_references` check for M365 provider, flagging entitlement management catalogs that reference deleted groups, deleted service principals or removed app roles
