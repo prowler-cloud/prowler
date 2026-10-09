@@ -42,7 +42,7 @@ runs:
   using: 'composite'
   steps:
     - name: Run Grype vulnerability scan (JSON)
-      uses: anchore/scan-action@e1165082ffb1fe366ebaf02d8526e7c4989ea9d2 # v7.4.0
+      uses: anchore/scan-action@27805bf3b4e84b4a5c980df22ed233c00390a439 # v7.4.2
       with:
         image: ${{ inputs.image-name }}:${{ inputs.image-tag }}
         output-format: 'json'
@@ -55,7 +55,7 @@ runs:
 
     - name: Run Grype vulnerability scan (SARIF)
       if: inputs.upload-sarif == 'true' && github.event_name == 'push'
-      uses: anchore/scan-action@e1165082ffb1fe366ebaf02d8526e7c4989ea9d2 # v7.4.0
+      uses: anchore/scan-action@27805bf3b4e84b4a5c980df22ed233c00390a439 # v7.4.2
       with:
         image: ${{ inputs.image-name }}:${{ inputs.image-tag }}
         output-format: 'sarif'
@@ -69,7 +69,7 @@ runs:
 
     - name: Upload Grype results to GitHub Security tab
       if: inputs.upload-sarif == 'true' && github.event_name == 'push'
-      uses: github/codeql-action/upload-sarif@3599b3baa15b485a2e49ef411a7a4bb2452e7f93 # v3.30.5
+      uses: github/codeql-action/upload-sarif@1190a975f95ce23525efb6a3fc21ea29567c1b52 # v3.38.2
       with:
         sarif_file: 'grype-results.sarif'
         category: 'grype-container'
