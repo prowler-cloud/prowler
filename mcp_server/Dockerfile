@@ -34,6 +34,11 @@ LABEL maintainer="https://github.com/prowler-cloud"
 RUN addgroup -g 1001 prowler && \
     adduser -D -u 1001 -G prowler prowler
 
+# pip is build-only; the entrypoint runs the venv directly.
+RUN rm -rf /usr/local/lib/python3.13/site-packages/pip \
+    /usr/local/lib/python3.13/site-packages/pip-*.dist-info \
+    /usr/local/bin/pip /usr/local/bin/pip3 /usr/local/bin/pip3.13
+
 WORKDIR /app
 USER prowler
 
