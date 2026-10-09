@@ -15,7 +15,8 @@ _MEMBEROF_PROPERTY_RE = re.compile(r"(?i)\b(user|device)\.memberof\b")
 _GUID_RE = re.compile(r"(?i)\b[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}\b")
 
 # Matches single- or double-quoted string literals to strip before detection.
-_QUOTED_LITERAL_RE = re.compile(r"""('[^']*'|"[^"]*")""")
+# Entra rules escape quotes inside literals with a backtick (e.g. "a`"b").
+_QUOTED_LITERAL_RE = re.compile(r"""('(?:`.|[^'`])*'|"(?:`.|[^"`])*")""")
 
 # The date Microsoft retires the memberOf preview operator.
 _RETIREMENT_DATE = date(2026, 11, 3)

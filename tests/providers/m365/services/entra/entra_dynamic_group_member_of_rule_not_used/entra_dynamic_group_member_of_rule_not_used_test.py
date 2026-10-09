@@ -324,6 +324,43 @@ class Test_entra_dynamic_group_member_of_rule_not_used:
             assert len(result) == 1
             assert result[0].status == "PASS"
 
+    def test_fail_memberof_after_backtick_escaped_quote(self):
+        """A backtick-escaped quote in an earlier literal must not hide memberOf."""
+        entra_client = mock.MagicMock()
+        entra_client.groups_error = None
+        entra_client.groups = [
+            Group(
+                id="g-escaped",
+                name="Escaped Quote Group",
+                groupTypes=["DynamicMembership"],
+                membershipRule=(
+                    'user.department -eq "R`"D" -or user.memberof -any '
+                    "(group.objectId -in ['11111111-1111-1111-1111-111111111111']) "
+                    '-or user.city -eq "Madrid"'
+                ),
+                membership_rule_processing_state="On",
+            )
+        ]
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_m365_provider(),
+            ),
+            mock.patch(
+                f"{CHECK_MODULE}.entra_client",
+                new=entra_client,
+            ),
+        ):
+            from prowler.providers.m365.services.entra.entra_dynamic_group_member_of_rule_not_used.entra_dynamic_group_member_of_rule_not_used import (
+                entra_dynamic_group_member_of_rule_not_used,
+            )
+
+            check = entra_dynamic_group_member_of_rule_not_used()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+
     def test_case_insensitive_detection(self):
         """Detection is case-insensitive (User.MemberOf should FAIL)."""
         entra_client = mock.MagicMock()
