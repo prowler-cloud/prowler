@@ -12,7 +12,7 @@ class GoogleWorkspaceBaseException(ProwlerException):
         },
         (12001, "GoogleWorkspaceNoCredentialsError"): {
             "message": "Google Workspace credentials are required to authenticate",
-            "remediation": "Set the GOOGLEWORKSPACE_CREDENTIALS_FILE or GOOGLEWORKSPACE_CREDENTIALS_CONTENT environment variable with a valid Service Account JSON.",
+            "remediation": "Set the GOOGLEWORKSPACE_CREDENTIALS_FILE or GOOGLEWORKSPACE_CREDENTIALS_CONTENT environment variable with a valid Service Account JSON, or set GOOGLEWORKSPACE_IMPERSONATE_SERVICE_ACCOUNT (or --impersonate-service-account) to authenticate keyless through Application Default Credentials.",
         },
         (12002, "GoogleWorkspaceInvalidCredentialsError"): {
             "message": "Google Workspace credentials provided are not valid",
@@ -41,6 +41,10 @@ class GoogleWorkspaceBaseException(ProwlerException):
         (12008, "GoogleWorkspaceInvalidProviderIdError"): {
             "message": "The provided provider_id does not match the credentials customer ID",
             "remediation": "Check the provider_id (Customer ID) and ensure it matches the Google Workspace organization for the given credentials.",
+        },
+        (12009, "GoogleWorkspaceADCError"): {
+            "message": "Application Default Credentials could not be loaded for Service Account impersonation",
+            "remediation": "Authenticate with `gcloud auth application-default login`, run where Application Default Credentials are provided (for example Workload Identity Federation in CI), or set GOOGLE_APPLICATION_CREDENTIALS. The calling identity needs roles/iam.serviceAccountTokenCreator on the impersonated Service Account.",
         },
     }
 
@@ -127,4 +131,11 @@ class GoogleWorkspaceInvalidProviderIdError(GoogleWorkspaceBaseException):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             12008, file=file, original_exception=original_exception, message=message
+        )
+
+
+class GoogleWorkspaceADCError(GoogleWorkspaceCredentialsError):
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            12009, file=file, original_exception=original_exception, message=message
         )
