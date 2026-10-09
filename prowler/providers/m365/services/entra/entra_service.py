@@ -227,6 +227,9 @@ class Entra(M365Service):
                 ),
                 guest_invite_settings=auth_policy.allow_invites_from,
                 guest_user_role_id=auth_policy.guest_user_role_id,
+                block_msol_powershell=getattr(
+                    auth_policy, "block_msol_power_shell", None
+                ),
             )
         except Exception as error:
             logger.error(
@@ -2510,12 +2513,15 @@ class DefaultUserRolePermissions(BaseModel):
 
 
 class AuthorizationPolicy(BaseModel):
+    """Tenant-wide authorization policy from Microsoft Entra ID."""
+
     id: str
     name: str
     description: str
     default_user_role_permissions: Optional[DefaultUserRolePermissions]
     guest_invite_settings: Optional[str]
     guest_user_role_id: Optional[UUID]
+    block_msol_powershell: Optional[bool] = None
 
 
 # Well-known directory setting template IDs (from /groupSettings).

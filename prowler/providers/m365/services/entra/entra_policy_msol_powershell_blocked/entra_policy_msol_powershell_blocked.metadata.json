@@ -1,0 +1,39 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_policy_msol_powershell_blocked",
+  "CheckTitle": "Blocking legacy MSOnline (MSOL) PowerShell protects the tenant from unsupported administrative access",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "The tenant authorization policy property `blockMsolPowerShell` controls whether the retired **MSOnline (MSOL) PowerShell** module and its legacy service endpoint are accessible. When set to `true`, user-based access through that endpoint is disabled without affecting Microsoft Entra Connect or Microsoft Graph PowerShell.",
+  "Risk": "The MSOnline and AzureAD PowerShell modules are **retired** and no longer receive security updates. They use a legacy endpoint that is less monitored than Microsoft Graph, providing an **unsupported administrative channel** to identity data and configuration. Attackers or insiders could exploit this path to read or modify directory objects while bypassing modern controls and audit coverage.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/graph/api/resources/authorizationpolicy?view=graph-rest-1.0",
+    "https://learn.microsoft.com/powershell/azure/active-directory/overview",
+    "https://learn.microsoft.com/powershell/microsoftgraph/migration-steps",
+    "https://maester.dev/docs/tests/MT.1185"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "Update-MgPolicyAuthorizationPolicy -BodyParameter @{ blockMsolPowerShell = $true }",
+      "NativeIaC": "",
+      "Other": "1. Connect to Microsoft Graph PowerShell with the required scope:\n   `Connect-MgGraph -Scopes \"Policy.ReadWrite.Authorization\"`\n2. Run:\n   `Update-MgPolicyAuthorizationPolicy -BodyParameter @{ blockMsolPowerShell = $true }`\n3. Verify the change:\n   `(Get-MgPolicyAuthorizationPolicy).BlockMsolPowerShell`\n\n*Note: There is no Entra admin center toggle for this setting. Before enabling, migrate any remaining scripts from MSOnline/AzureAD to Microsoft Graph PowerShell.*",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Block the legacy MSOnline PowerShell endpoint by setting `blockMsolPowerShell` to **true** in the authorization policy. Before enabling, migrate all automation and scripts from the retired MSOnline/AzureAD modules to **Microsoft Graph PowerShell**. This does not affect Microsoft Entra Connect sync or Microsoft Graph-based tooling.",
+      "Url": "https://hub.prowler.com/check/entra_policy_msol_powershell_blocked"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "The blockMsolPowerShell setting is not enabled by default in every tenant and must be verified explicitly. It does not affect Microsoft Entra Connect or Microsoft Graph PowerShell."
+}
