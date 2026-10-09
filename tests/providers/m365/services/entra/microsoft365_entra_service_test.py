@@ -952,10 +952,12 @@ class Test_Entra_Service:
         assert set(request_configuration.query_parameters.select) == {
             "id",
             "displayName",
+            "userPrincipalName",
             "userType",
             "accountEnabled",
             "onPremisesSyncEnabled",
             "employeeHireDate",
+            "createdDateTime",
         }
         with_url_mock.assert_called_once_with("next-link")
         assert users["user-1"].directory_roles_ids == ["role-template-1"]

@@ -10,6 +10,9 @@ from uuid import UUID
 from kiota_abstractions.base_request_configuration import RequestConfiguration
 from msgraph.generated.groups.groups_request_builder import GroupsRequestBuilder
 from msgraph.generated.models.o_data_errors.o_data_error import ODataError
+from msgraph.generated.users.item.user_item_request_builder import (
+    UserItemRequestBuilder,
+)
 from msgraph.generated.users.users_request_builder import UsersRequestBuilder
 from pydantic.v1 import BaseModel, validator
 
@@ -168,6 +171,16 @@ class Entra(M365Service):
         ) = loop.run_until_complete(
             self._resolve_directory_object_references(self.conditional_access_policies)
         )
+
+        # Phase 3: Privileged-user sign-in data for the stale account check.
+        # Depends on ``self.users`` and ``self.groups`` being populated.
+        self.privileged_users_sign_in_data: Dict[str, "PrivilegedUserSignInData"] = {}
+        self.privileged_users_sign_in_error: Optional[str] = None
+        self.privileged_users_roles: Dict[str, List["PrivilegedUserRoleAssignment"]] = (
+            {}
+        )
+        self.pim_eligible_error: Optional[str] = None
+        loop.run_until_complete(self._load_privileged_user_stale_data())
 
         if created_loop:
             asyncio.set_event_loop(None)
@@ -972,10 +985,12 @@ class Entra(M365Service):
                     select=[
                         "id",
                         "displayName",
+                        "userPrincipalName",
                         "userType",
                         "accountEnabled",
                         "onPremisesSyncEnabled",
                         "employeeHireDate",
+                        "createdDateTime",
                     ],
                 )
             )
@@ -1007,6 +1022,11 @@ class Entra(M365Service):
                 await self._get_user_registration_details()
             )
 
+            # Preserve the full role members map so the second init phase can
+            # identify groups that hold Tier 0 directory roles and resolve
+            # their user members for the stale privileged-user check.
+            self._role_members_map = dict(user_roles_map)
+
             while users_response:
                 for user in getattr(users_response, "value", []) or []:
                     reg_info = registration_details.get(user.id, {})
@@ -1026,6 +1046,7 @@ class Entra(M365Service):
                     users[user.id] = User(
                         id=user.id,
                         name=user.display_name,
+                        user_principal_name=getattr(user, "user_principal_name", None),
                         on_premises_sync_enabled=(
                             True if (user.on_premises_sync_enabled) else False
                         ),
@@ -1037,6 +1058,7 @@ class Entra(M365Service):
                         ),
                         user_type=getattr(user, "user_type", None),
                         employee_hire_date=getattr(user, "employee_hire_date", None),
+                        created_date_time=getattr(user, "created_date_time", None),
                     )
 
                 next_link = getattr(users_response, "odata_next_link", None)
@@ -1044,6 +1066,7 @@ class Entra(M365Service):
                     break
                 users_response = await self.client.users.with_url(next_link).get()
         except ODataError as error:
+            self._role_members_map = {}
             error_code = getattr(error.error, "code", None) if error.error else None
             if error_code == "Authorization_RequestDenied":
                 self.users_error = "Insufficient privileges to read users and directory roles. Required permissions: User.Read.All, Directory.Read.All or RoleManagement.Read.Directory"
@@ -1053,6 +1076,7 @@ class Entra(M365Service):
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
         except Exception as error:
+            self._role_members_map = {}
             self.users_error = f"Unable to retrieve users from Microsoft Graph ({error.__class__.__name__})"
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -1120,6 +1144,279 @@ class Entra(M365Service):
             error_message = f"Failed to retrieve user registration details: {error}"
 
         return registration_details, error_message
+
+    async def _load_privileged_user_stale_data(self) -> None:
+        """Load sign-in activity and PIM eligibility for Tier 0 privileged users.
+
+        This orchestrator runs as a second initialisation phase (after users,
+        groups, and directory roles have been loaded) and populates:
+
+        - ``self.privileged_users_roles``: user-id -> list of
+          ``PrivilegedUserRoleAssignment`` (active and eligible).
+        - ``self.privileged_users_sign_in_data``: user-id ->
+          ``PrivilegedUserSignInData``.
+        - ``self.privileged_users_sign_in_error``: tenant-level error when
+          sign-in activity cannot be read at all (e.g. no P1 licence).
+        - ``self.pim_eligible_error``: error message if PIM eligibility
+          lookup failed (check will note that eligible holders were not
+          evaluated).
+        """
+        logger.info("Entra - Loading privileged user stale data...")
+
+        if self.users_error or not self.users:
+            return
+
+        # ---- 1. Active Tier 0 holders (from directory role members) ----
+        # user_id -> set of role_template_ids
+        active_assignments: Dict[str, set] = {}
+        role_members_map = getattr(self, "_role_members_map", {})
+        group_ids = {g.id for g in self.groups}
+
+        for member_id, role_template_ids in role_members_map.items():
+            tier0_ids = [
+                rid for rid in role_template_ids if rid in TIER_0_ROLE_TEMPLATE_IDS
+            ]
+            if not tier0_ids:
+                continue
+
+            if member_id in self.users:
+                # Direct user member of a Tier 0 role
+                for rid in tier0_ids:
+                    active_assignments.setdefault(member_id, set()).add(rid)
+            elif member_id in group_ids:
+                # Group member of a Tier 0 role — resolve user members
+                group_user_ids = await self._get_group_user_members(member_id)
+                for uid in group_user_ids:
+                    for rid in tier0_ids:
+                        active_assignments.setdefault(uid, set()).add(rid)
+
+        # ---- 2. PIM eligible Tier 0 holders ----
+        eligible_assignments: Dict[str, set] = {}
+        pim_data, self.pim_eligible_error = (
+            await self._get_pim_role_eligibility_instances()
+        )
+        for user_id, role_ids in pim_data.items():
+            for rid in role_ids:
+                eligible_assignments.setdefault(user_id, set()).add(rid)
+
+        # ---- 3. Merge into privileged_users_roles ----
+        all_user_ids = set(active_assignments.keys()) | set(eligible_assignments.keys())
+        for uid in all_user_ids:
+            assignments: List["PrivilegedUserRoleAssignment"] = []
+            for rid in active_assignments.get(uid, set()):
+                assignments.append(
+                    PrivilegedUserRoleAssignment(
+                        role_template_id=rid, assignment_type="active"
+                    )
+                )
+            for rid in eligible_assignments.get(uid, set()):
+                # If the same role is both active and eligible, include
+                # eligible only if not already listed as active.
+                if rid not in active_assignments.get(uid, set()):
+                    assignments.append(
+                        PrivilegedUserRoleAssignment(
+                            role_template_id=rid, assignment_type="eligible"
+                        )
+                    )
+            if assignments:
+                self.privileged_users_roles[uid] = assignments
+
+        # ---- 4. Ensure all privileged users exist in self.users ----
+        # Users discovered via PIM eligibility or group membership may not
+        # already be in self.users (edge case: the bulk /users listing is
+        # paginated and Graph returned the user on a later page that was
+        # already processed, or the user was fetched via a different
+        # endpoint). We do NOT add them here—checks will handle missing
+        # users gracefully.
+
+        # ---- 5. Fetch sign-in activity for every privileged user ----
+        if not self.privileged_users_roles:
+            return
+
+        sign_in_results = await gather(
+            *[
+                self._get_user_sign_in_activity(uid)
+                for uid in self.privileged_users_roles
+            ]
+        )
+
+        tenant_error = None
+        for uid, result in zip(self.privileged_users_roles, sign_in_results):
+            if result.error and not tenant_error:
+                # Detect tenant-level errors (P1 licence missing)
+                if "RequestFromNonPremiumTenantOrB2CTenant" in (result.error or ""):
+                    tenant_error = (
+                        "Cannot evaluate stale privileged accounts: user sign-in "
+                        "activity requires a Microsoft Entra ID P1 or P2 licence."
+                    )
+                elif "Authorization_RequestDenied" in (result.error or ""):
+                    tenant_error = (
+                        "Cannot evaluate stale privileged accounts: sign-in activity "
+                        "requires the AuditLog.Read.All permission."
+                    )
+            self.privileged_users_sign_in_data[uid] = result
+
+        if tenant_error:
+            self.privileged_users_sign_in_error = tenant_error
+
+    async def _get_user_sign_in_activity(
+        self, user_id: str
+    ) -> "PrivilegedUserSignInData":
+        """Fetch sign-in activity for a single user.
+
+        Issues ``GET /v1.0/users/{id}?$select=signInActivity`` to retrieve
+        the user's sign-in timestamps. Requires Microsoft Entra ID P1/P2.
+
+        Args:
+            user_id: The user's object ID.
+
+        Returns:
+            A ``PrivilegedUserSignInData`` instance. On failure, the
+            ``error`` field is populated.
+        """
+        try:
+            query_parameters = (
+                UserItemRequestBuilder.UserItemRequestBuilderGetQueryParameters(
+                    select=["id", "signInActivity"],
+                )
+            )
+            request_configuration = RequestConfiguration(
+                query_parameters=query_parameters,
+            )
+            user_response = await self.client.users.by_user_id(user_id).get(
+                request_configuration=request_configuration,
+            )
+            sign_in = getattr(user_response, "sign_in_activity", None)
+            return PrivilegedUserSignInData(
+                last_successful_sign_in=getattr(
+                    sign_in, "last_successful_sign_in_date_time", None
+                ),
+                last_sign_in=getattr(sign_in, "last_sign_in_date_time", None),
+                last_non_interactive_sign_in=getattr(
+                    sign_in, "last_non_interactive_sign_in_date_time", None
+                ),
+            )
+        except ODataError as error:
+            error_code = getattr(error.error, "code", None) if error.error else None
+            error_msg = (
+                f"Unable to read sign-in activity for user {user_id}: "
+                f"{error_code or error.__class__.__name__}"
+            )
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            return PrivilegedUserSignInData(error=error_msg)
+        except Exception as error:
+            error_msg = (
+                f"Unable to read sign-in activity for user {user_id}: "
+                f"{error.__class__.__name__}"
+            )
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            return PrivilegedUserSignInData(error=error_msg)
+
+    async def _get_pim_role_eligibility_instances(
+        self,
+    ) -> Tuple[Dict[str, List[str]], Optional[str]]:
+        """Fetch PIM role eligibility schedule instances for Tier 0 roles.
+
+        Issues ``GET /v1.0/roleManagement/directory/roleEligibilityScheduleInstances``
+        and returns user principals with Tier 0 eligible assignments.
+
+        Returns:
+            A tuple of:
+            - Dictionary mapping user_id to list of eligible Tier 0 role
+              template IDs.
+            - Error message if the call failed, or None.
+        """
+        eligible: Dict[str, List[str]] = {}
+        error_message = None
+        try:
+            response = await (
+                self.client.role_management.directory.role_eligibility_schedule_instances.get()
+            )
+            while response:
+                for instance in getattr(response, "value", []) or []:
+                    role_def_id = getattr(instance, "role_definition_id", None)
+                    principal_id = getattr(instance, "principal_id", None)
+                    if (
+                        role_def_id
+                        and principal_id
+                        and role_def_id in TIER_0_ROLE_TEMPLATE_IDS
+                    ):
+                        # Only include if the principal is a known user
+                        if principal_id in self.users:
+                            eligible.setdefault(principal_id, []).append(role_def_id)
+                        else:
+                            # Could be a group — resolve its user members
+                            group_ids = {g.id for g in self.groups}
+                            if principal_id in group_ids:
+                                member_ids = await self._get_group_user_members(
+                                    principal_id
+                                )
+                                for uid in member_ids:
+                                    eligible.setdefault(uid, []).append(role_def_id)
+                next_link = getattr(response, "odata_next_link", None)
+                if not next_link:
+                    break
+                response = await self.client.role_management.directory.role_eligibility_schedule_instances.with_url(
+                    next_link
+                ).get()
+        except ODataError as error:
+            error_code = getattr(error.error, "code", None) if error.error else None
+            error_message = (
+                f"Unable to read PIM role eligibility ({error_code or error.__class__.__name__}). "
+                "Eligible (PIM) assignments could not be read and were not evaluated."
+            )
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        except Exception as error:
+            error_message = (
+                f"Unable to read PIM role eligibility ({error.__class__.__name__}). "
+                "Eligible (PIM) assignments could not be read and were not evaluated."
+            )
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return eligible, error_message
+
+    async def _get_group_user_members(self, group_id: str) -> List[str]:
+        """Resolve direct user members of a role-assignable group.
+
+        Issues ``GET /v1.0/groups/{id}/members`` and returns IDs of
+        members that are users (``#microsoft.graph.user``). Role-assignable
+        groups cannot be nested, so no recursion is needed.
+
+        Args:
+            group_id: The group object ID.
+
+        Returns:
+            List of user object IDs that are direct members of the group.
+        """
+        user_ids: List[str] = []
+        try:
+            response = await self.client.groups.by_group_id(group_id).members.get()
+            while response:
+                for member in getattr(response, "value", []) or []:
+                    odata_type = getattr(member, "odata_type", "")
+                    if odata_type == "#microsoft.graph.user":
+                        user_ids.append(member.id)
+                next_link = getattr(response, "odata_next_link", None)
+                if not next_link:
+                    break
+                response = (
+                    await self.client.groups.by_group_id(group_id)
+                    .members.with_url(next_link)
+                    .get()
+                )
+        except Exception as error:
+            logger.error(
+                f"Failed to resolve members of group {group_id}: "
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return user_ids
 
     async def _get_oauth_apps(self) -> Optional[Dict[str, "OAuthApp"]]:
         """
@@ -2708,6 +3005,7 @@ class User(BaseModel):
     Attributes:
         id: The user's unique identifier.
         name: The user's display name.
+        user_principal_name: The user's principal name (UPN).
         on_premises_sync_enabled: Whether the user is synced from on-premises directory.
         directory_roles_ids: List of directory role template IDs assigned to the user.
         is_mfa_capable: Whether the user has registered a strong authentication method for MFA.
@@ -2718,10 +3016,12 @@ class User(BaseModel):
             (typically 'Member' or 'Guest'). ``None`` when Microsoft Graph does not
             return the property; checks must not assume a default in that case.
         employee_hire_date: The user's hire date as reported by Microsoft Graph.
+        created_date_time: The date and time the user was created.
     """
 
     id: str
     name: str
+    user_principal_name: Optional[str] = None
     on_premises_sync_enabled: bool
     directory_roles_ids: List[str] = []
     is_mfa_capable: bool = False
@@ -2729,6 +3029,41 @@ class User(BaseModel):
     authentication_methods: List[str] = []
     user_type: Optional[str] = None
     employee_hire_date: Optional[datetime] = None
+    created_date_time: Optional[datetime] = None
+
+
+class PrivilegedUserSignInData(BaseModel):
+    """Sign-in activity data fetched individually for a privileged user.
+
+    This data is fetched via ``GET /v1.0/users/{id}?$select=signInActivity``
+    (requires Microsoft Entra ID P1/P2) and is stored separately from the bulk
+    ``User`` model to avoid breaking tenants without a P1 licence.
+
+    Attributes:
+        last_successful_sign_in: The last successful interactive or
+            non-interactive sign-in date/time.
+        last_sign_in: The last interactive sign-in date/time.
+        last_non_interactive_sign_in: The last non-interactive sign-in
+            date/time.
+        error: Per-user error message if the lookup failed.
+    """
+
+    last_successful_sign_in: Optional[datetime] = None
+    last_sign_in: Optional[datetime] = None
+    last_non_interactive_sign_in: Optional[datetime] = None
+    error: Optional[str] = None
+
+
+class PrivilegedUserRoleAssignment(BaseModel):
+    """A single Tier 0 role assignment for a privileged user.
+
+    Attributes:
+        role_template_id: The directory role template ID.
+        assignment_type: Whether the assignment is 'active' or 'eligible'.
+    """
+
+    role_template_id: str
+    assignment_type: str  # "active" or "eligible"
 
 
 class InvitationsFrom(Enum):
@@ -2858,6 +3193,26 @@ TIER_0_ROLE_TEMPLATE_IDS = {
     "fe930be7-5e62-47db-91af-98c3a49a38b1",  # User Administrator
     "d29b2b05-8046-44ba-8758-1e26182fcf32",  # Directory Synchronization Accounts
     "e00e864a-17c5-4a4b-9c06-f5b95a8d5bd8",  # Partner Tier2 Support
+}
+
+# Human-readable display names for the Tier 0 role template IDs above, used in
+# check messages to identify which privileged roles a user holds.
+TIER_0_ROLE_NAMES = {
+    "62e90394-69f5-4237-9190-012177145e10": "Global Administrator",
+    "e8611ab8-c189-46e8-94e1-60213ab1f814": "Privileged Role Administrator",
+    "7be44c8a-adaf-4e2a-84d6-ab2649e08a13": "Privileged Authentication Administrator",
+    "9b895d92-2cd3-44c7-9d02-a6ac2d5ea5c3": "Application Administrator",
+    "158c047a-c907-4556-b7ef-446551a6b5f7": "Cloud Application Administrator",
+    "c4e39bd9-1100-46d3-8c65-fb160da0071f": "Authentication Administrator",
+    "0526716b-113d-4c15-b2c8-68e3c22b9f80": "Authentication Policy Administrator",
+    "b1be1c3e-b65d-4f19-8427-f6fa0d97feb9": "Conditional Access Administrator",
+    "8329153b-31d0-4727-b945-745eb3bc5f31": "Domain Name Administrator",
+    "be2f45a1-457d-42af-a067-6ec1fa63bc45": "External Identity Provider Administrator",
+    "8ac3fc64-6eca-42ea-9e69-59f4c7b60eb2": "Hybrid Identity Administrator",
+    "194ae4cb-b126-40b2-bd5b-6091b380977d": "Security Administrator",
+    "fe930be7-5e62-47db-91af-98c3a49a38b1": "User Administrator",
+    "d29b2b05-8046-44ba-8758-1e26182fcf32": "Directory Synchronization Accounts",
+    "e00e864a-17c5-4a4b-9c06-f5b95a8d5bd8": "Partner Tier2 Support",
 }
 
 MICROSOFT_GRAPH_APP_ID = "00000003-0000-0000-c000-000000000000"
