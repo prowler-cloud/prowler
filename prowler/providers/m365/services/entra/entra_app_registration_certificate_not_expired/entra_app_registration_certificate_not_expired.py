@@ -95,6 +95,8 @@ class entra_app_registration_certificate_not_expired(Check):
                 end_dt = cred.end_date_time
                 if end_dt.tzinfo is None:
                     end_dt = end_dt.replace(tzinfo=timezone.utc)
+                else:
+                    end_dt = end_dt.astimezone(timezone.utc)
 
                 if end_dt < now:
                     # Already expired.

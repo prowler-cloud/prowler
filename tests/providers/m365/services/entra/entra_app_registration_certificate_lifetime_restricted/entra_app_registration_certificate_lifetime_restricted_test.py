@@ -980,8 +980,10 @@ class Test_entra_app_registration_certificate_lifetime_restricted:
         app_id = str(uuid4())
         app_name = "Naive DT App"
         # Create naive datetimes (no timezone)
-        start_naive = datetime(2025, 1, 1, 0, 0, 0)
-        end_naive = datetime(2027, 6, 1, 0, 0, 0)  # ~912 days
+        # Dates relative to now so the certificate is never already expired.
+        now_naive = datetime.now(timezone.utc).replace(tzinfo=None)
+        start_naive = now_naive - timedelta(days=100)
+        end_naive = now_naive + timedelta(days=812)  # ~912 days
         entra_client = mock.MagicMock()
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
@@ -1245,8 +1247,8 @@ class Test_entra_app_registration_certificate_lifetime_restricted:
         """Status extended includes the expiry date formatted as YYYY-MM-DD."""
         app_id = str(uuid4())
         app_name = "Expiry Date App"
-        start = datetime(2025, 1, 1, tzinfo=timezone.utc)
-        end = datetime(2027, 6, 15, tzinfo=timezone.utc)  # ~895 days
+        start = datetime.now(timezone.utc) - timedelta(days=100)
+        end = start + timedelta(days=895)
         entra_client = mock.MagicMock()
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
@@ -1291,4 +1293,4 @@ class Test_entra_app_registration_certificate_lifetime_restricted:
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert "expires 2027-06-15" in result[0].status_extended
+            assert f"expires {end.strftime('%Y-%m-%d')}" in result[0].status_extended

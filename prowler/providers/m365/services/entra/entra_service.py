@@ -2166,7 +2166,7 @@ OAuthAppInfo
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-            self.app_registrations_error = str(error)
+            self.app_registrations_error = f"{error.__class__.__name__}: {error}"
         return app_registrations
 
     async def _resolve_directory_object_references(

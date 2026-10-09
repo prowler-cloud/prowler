@@ -678,7 +678,7 @@ class Test_entra_app_registration_certificate_not_expired:
             )
 
             # Naive datetime (no tzinfo) that is expired
-            expired_naive = datetime.utcnow() - timedelta(days=5)
+            expired_naive = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(days=5)
             entra_client.app_registrations = {
                 app_id: AppRegistration(
                     id=app_id,
