@@ -416,11 +416,14 @@ class IacProvider(Provider):
 
             return temporary_directory, branch_name
         except Exception as error:
+            # the authenticated URL embeds the token, and ProwlerException puts
+            # original_exception into its str(), which the API returns verbatim
             logger.critical(
-                f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
+                f"{error.__class__.__name__}:{error.__traceback__.tb_lineno}"
             )
             raise IacRepositoryCloneError(
-                file=__file__, original_exception=error
+                file=__file__,
+                message=f"Unable to clone the repository to scan ({error.__class__.__name__})",
             ) from error
 
     def run(self) -> List[CheckReportIAC]:

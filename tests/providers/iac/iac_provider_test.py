@@ -861,13 +861,19 @@ class TestIacProvider:
         lets the API report the failure as a normal task error instead of a
         `SystemExit` escaping the Celery worker.
         """
-        mock_clone.side_effect = Exception("repository not found")
+        mock_clone.side_effect = Exception(
+            "https://x-access-token:SENTINEL_TOKEN@github.com/user/repo.git refused"
+        )
 
         with pytest.raises(IacRepositoryCloneError) as exc_info:
             IacProvider(scan_repository_url="https://github.com/user/repo.git")
 
-        assert "repository not found" in str(exc_info.value)
+        # ProwlerException formats original_exception into its str(), and the API
+        # returns that, so the authenticated URL must not reach it
+        assert "SENTINEL_TOKEN" not in str(exc_info.value)
+        assert "Exception" in str(exc_info.value)
         assert exc_info.value.code == 21000
+        assert isinstance(exc_info.value.__cause__, Exception)
 
     def test_detect_branch_name_main(self):
         """Test detecting 'main' branch from .git/HEAD"""
