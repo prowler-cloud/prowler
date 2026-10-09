@@ -1,0 +1,1 @@
+CloudFormation scan role now grants `lambda:GetLayerVersion`, and its StackSet role `amplify:ListApps` and `amplify:ListBranches`, so `awslambda_layer_no_secrets_in_content` and `amplify_app_no_secrets_in_environment` can scan accounts onboarded with it
