@@ -1,15 +1,27 @@
 import http.server
+import socket
 import threading
+from unittest import mock
 
 import pytest
+from dulwich.config import ConfigDict
 
 from prowler.lib.network.ssrf import (
     ALLOWED_PRIVATE_NETWORKS_ENV,
     OutboundURLNotAllowedError,
 )
+from prowler.providers.iac.lib import git_transport
 from prowler.providers.iac.lib.git_transport import ls_remote
 
 LINK_LOCAL_TARGET = "http://169.254.169.254/evil/info/refs?service=git-upload-pack"
+
+
+def _resolves_to(*addresses):
+    return mock.patch.object(
+        socket,
+        "getaddrinfo",
+        return_value=[(2, 1, 6, "", (address, 0)) for address in addresses],
+    )
 
 
 class _Recorder:
@@ -90,3 +102,37 @@ class TestLsRemote:
             ls_remote(f"http://x-access-token:a-token@127.0.0.1:{origin.port}/repo.git")
 
         assert origin.requests[0][1] is not None
+
+
+class TestEffectiveDestination:
+    def test_rejects_a_private_host_an_insteadof_rule_rewrites_to(self, monkeypatch):
+        """git rewrites the URL before dulwich picks the transport.
+
+        The supplied host resolves public on purpose, so only the rewrite can
+        make this fail.
+        """
+        config = ConfigDict()
+        config.set(
+            (b"url", b"ssh://10.0.0.5/"), b"insteadOf", b"https://reg.example.com/"
+        )
+        monkeypatch.setattr(git_transport, "git_config", lambda: config)
+
+        with _resolves_to("140.82.121.4"):
+            with pytest.raises(OutboundURLNotAllowedError, match="non-public"):
+                git_transport.ls_remote("https://reg.example.com/org/repo.git")
+
+    def test_keeps_credentials_out_of_the_proxy_base_url(self):
+        assert (
+            git_transport.proxy_base_url("https://user:a-token@github.com:8443/o/r.git")
+            == "https://github.com:8443"
+        )
+
+    def test_honours_a_no_proxy_bypass(self, monkeypatch, origin):
+        """Built without base_url, dulwich cannot see no_proxy and uses the proxy."""
+        monkeypatch.setenv("http_proxy", "http://127.0.0.1:1")
+        monkeypatch.setenv("no_proxy", "127.0.0.1")
+
+        with pytest.raises(Exception):
+            git_transport.ls_remote(f"{origin.url}/repo.git")
+
+        assert len(origin.requests) == 1

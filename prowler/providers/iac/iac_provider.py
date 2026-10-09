@@ -35,7 +35,14 @@ from prowler.providers.iac.exceptions.exceptions import (
     IacScanError,
     IacTrivyNotFoundError,
 )
-from prowler.providers.iac.lib.git_transport import guarded_pool_manager, ls_remote
+from prowler.providers.iac.lib.git_transport import (
+    ALLOWED_SCHEMES,
+    effective_url,
+    git_config,
+    guarded_pool_manager,
+    ls_remote,
+    proxy_base_url,
+)
 
 
 class IacProvider(Provider):
@@ -331,9 +338,11 @@ class IacProvider(Provider):
         Returns:
             tuple[str, str]: (temporary_directory, branch_name)
         """
-        validate_outbound_url(
-            repository_url, allowed_schemes=("http", "https", "ssh", "git")
-        )
+        # one config for both: git rewrites the URL again inside porcelain, and the
+        # guard must judge the same destination dulwich will connect to
+        config = git_config()
+        target = effective_url(config, repository_url)
+        validate_outbound_url(target, allowed_schemes=ALLOWED_SCHEMES)
         try:
             original_url = repository_url
 
@@ -349,7 +358,7 @@ class IacProvider(Provider):
                 )
 
             temporary_directory = tempfile.mkdtemp()
-            pool_manager = guarded_pool_manager()
+            pool_manager = guarded_pool_manager(config, proxy_base_url(target))
             logger.info(
                 f"Cloning repository {original_url} into {temporary_directory}..."
             )
@@ -372,6 +381,7 @@ class IacProvider(Provider):
                                 repository_url,
                                 temporary_directory,
                                 depth=1,
+                                config=config,
                                 pool_manager=pool_manager,
                             )
                             bar.title = "-> Repository cloned successfully!"
@@ -385,6 +395,7 @@ class IacProvider(Provider):
                         repository_url,
                         temporary_directory,
                         depth=1,
+                        config=config,
                         pool_manager=pool_manager,
                     )
                     logger.info("Repository cloned successfully!")
@@ -395,6 +406,7 @@ class IacProvider(Provider):
                     repository_url,
                     temporary_directory,
                     depth=1,
+                    config=config,
                     pool_manager=pool_manager,
                 )
                 logger.info("Repository cloned successfully!")
@@ -676,8 +688,7 @@ class IacProvider(Provider):
 
             try:
                 validate_outbound_url(
-                    scan_repository_url,
-                    allowed_schemes=("http", "https", "ssh", "git"),
+                    scan_repository_url, allowed_schemes=ALLOWED_SCHEMES
                 )
             except OutboundURLNotAllowedError as error:
                 logger.warning(f"Rejected IaC repository URL: {error}")

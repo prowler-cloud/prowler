@@ -786,7 +786,7 @@ class TestIacProvider:
         with mock.patch.object(provider, "_detect_branch_name", return_value="main"):
             temp_dir, branch_name = provider._clone_repository(url)
         mock_clone.assert_called_with(
-            url, "/tmp/fake-dir", depth=1, pool_manager=mock.ANY
+            url, "/tmp/fake-dir", depth=1, config=mock.ANY, pool_manager=mock.ANY
         )
         assert temp_dir == "/tmp/fake-dir"
         assert branch_name == "main"
@@ -802,7 +802,11 @@ class TestIacProvider:
             )
         expected_url = "https://user:token123@github.com/user/repo.git"
         mock_clone.assert_called_with(
-            expected_url, "/tmp/fake-dir", depth=1, pool_manager=mock.ANY
+            expected_url,
+            "/tmp/fake-dir",
+            depth=1,
+            config=mock.ANY,
+            pool_manager=mock.ANY,
         )
         assert temp_dir == "/tmp/fake-dir"
         assert branch_name == "develop"
@@ -818,7 +822,11 @@ class TestIacProvider:
             )
         expected_url = "https://oauth2:oauth456@github.com/user/repo.git"
         mock_clone.assert_called_with(
-            expected_url, "/tmp/fake-dir", depth=1, pool_manager=mock.ANY
+            expected_url,
+            "/tmp/fake-dir",
+            depth=1,
+            config=mock.ANY,
+            pool_manager=mock.ANY,
         )
         assert temp_dir == "/tmp/fake-dir"
         assert branch_name == "master"
