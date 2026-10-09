@@ -36,6 +36,24 @@ class entra_directory_sync_object_identifier_update_bypass_disabled(Check):
         findings = []
 
         organizations = entra_client.organizations or []
+
+        # Without the organization we cannot tell cloud-only from hybrid.
+        if not organizations:
+            report = CheckReportM365(
+                self.metadata(),
+                resource={},
+                resource_id="entra_directory_sync",
+                resource_name="Entra Directory Sync",
+            )
+            report.status = "MANUAL"
+            report.status_extended = (
+                "Cannot determine whether on-premises synchronization is enabled: "
+                "the organization could not be read. Verify that Directory.Read.All "
+                "is granted."
+            )
+            findings.append(report)
+            return findings
+
         on_premises_sync_enabled = any(
             organization.on_premises_sync_enabled for organization in organizations
         )

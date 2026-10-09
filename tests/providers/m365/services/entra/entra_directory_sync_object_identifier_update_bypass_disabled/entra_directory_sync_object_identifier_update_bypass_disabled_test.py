@@ -36,8 +36,8 @@ def _cloud_only_org():
 class Test_entra_directory_sync_object_identifier_update_bypass_disabled:
     """Tests for the onPremisesObjectIdentifier update bypass check."""
 
-    def test_no_resources(self):
-        """No findings when there are no organizations and no sync settings."""
+    def test_no_organizations_manual(self):
+        """MANUAL when the organization cannot be read (hybrid status unknown)."""
         entra_client = mock.MagicMock()
 
         with (
@@ -61,7 +61,9 @@ class Test_entra_directory_sync_object_identifier_update_bypass_disabled:
             check = entra_directory_sync_object_identifier_update_bypass_disabled()
             result = check.execute()
 
-            assert len(result) == 0
+            assert len(result) == 1
+            assert result[0].status == "MANUAL"
+            assert "organization could not be read" in result[0].status_extended
 
     def test_bypass_disabled(self):
         """PASS when bypass is disabled on a hybrid tenant."""
