@@ -10,6 +10,9 @@ from uuid import UUID
 from kiota_abstractions.base_request_configuration import RequestConfiguration
 from msgraph.generated.groups.groups_request_builder import GroupsRequestBuilder
 from msgraph.generated.models.o_data_errors.o_data_error import ODataError
+from msgraph.generated.role_management.directory.role_assignment_schedule_instances.role_assignment_schedule_instances_request_builder import (
+    RoleAssignmentScheduleInstancesRequestBuilder,
+)
 from msgraph.generated.users.users_request_builder import UsersRequestBuilder
 from pydantic.v1 import BaseModel, validator
 
@@ -91,6 +94,11 @@ class Entra(M365Service):
         # instead of silently evaluating an empty directory.
         self.users_error: Optional[str] = None
         self.exchange_mailbox_permission_service_principals_error: Optional[str] = None
+        # Set when roleAssignmentScheduleInstances cannot be read (403,
+        # missing licence, or any API error).
+        self.role_assignment_schedule_instances_error: Optional[str] = None
+        # Set when subscribedSkus cannot be read.
+        self.subscribed_skus_error: Optional[str] = None
         attributes = loop.run_until_complete(
             gather(
                 self._get_authorization_policy(),
@@ -114,6 +122,8 @@ class Entra(M365Service):
                 self._get_authentication_methods_policy_settings(),
                 self._get_pim_role_approval_settings(),
                 self._get_access_review_definitions(),
+                self._get_role_assignment_schedule_instances(),
+                self._get_subscribed_skus(),
             )
         )
 
@@ -150,6 +160,10 @@ class Entra(M365Service):
             19
         ]
         self.access_review_definitions: List[AccessReviewDefinition] = attributes[20]
+        self.role_assignment_schedule_instances: Optional[
+            List["RoleAssignmentScheduleInstance"]
+        ] = attributes[21]
+        self.subscribed_skus: Optional[List["SubscribedSku"]] = attributes[22]
         self.user_accounts_status = {}
 
         # Resolve directory-object identifiers referenced by Conditional Access
@@ -169,9 +183,72 @@ class Entra(M365Service):
             self._resolve_directory_object_references(self.conditional_access_policies)
         )
 
+        # Members of role-assignable groups that hold Tier 0 roles, fetched here
+        # so checks never call Graph themselves. ``None`` marks a group whose
+        # members could not be read.
+        self.tier0_role_group_members: Dict[str, Optional[List[str]]] = (
+            loop.run_until_complete(self._get_tier0_role_group_members())
+        )
+
         if created_loop:
             asyncio.set_event_loop(None)
             loop.close()
+
+    async def _get_tier0_role_group_members(self) -> Dict[str, Optional[List[str]]]:
+        """Retrieve the members of role-assignable groups holding Tier 0 roles.
+
+        Returns:
+            Dict[str, Optional[List[str]]]: Member object IDs keyed by group ID,
+                or ``None`` for a group whose members could not be read.
+        """
+        tier0_principal_ids = {
+            getattr(instance, "principal_id", None)
+            for instance in (self.role_assignment_schedule_instances or [])
+            if getattr(instance, "role_definition_id", None) in TIER_0_ROLE_TEMPLATE_IDS
+        }
+        group_ids = {
+            getattr(group, "id", None)
+            for group in (self.groups or [])
+            if getattr(group, "is_assignable_to_role", False)
+            and getattr(group, "id", None) in tier0_principal_ids
+        }
+        members: Dict[str, Optional[List[str]]] = {}
+        for group_id in sorted(group_ids):
+            members[group_id] = await self._get_group_member_ids(group_id)
+        return members
+
+    async def _get_group_member_ids(self, group_id: str) -> Optional[List[str]]:
+        """Retrieve the member object IDs of a group, following pagination.
+
+        Args:
+            group_id: The group object ID.
+
+        Returns:
+            Optional[List[str]]: Member object IDs, or ``None`` on failure.
+        """
+        try:
+            member_ids: List[str] = []
+            response = await self.client.groups.by_group_id(group_id).members.get()
+            while response:
+                for member in getattr(response, "value", []) or []:
+                    member_id = getattr(member, "id", None)
+                    if member_id:
+                        member_ids.append(member_id)
+                next_link = getattr(response, "odata_next_link", None)
+                if not next_link:
+                    break
+                response = (
+                    await self.client.groups.by_group_id(group_id)
+                    .members.with_url(next_link)
+                    .get()
+                )
+            return member_ids
+        except Exception as error:
+            logger.error(
+                f"Failed to fetch members for group {group_id}: "
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            return None
 
     async def _get_authorization_policy(self):
         logger.info("Entra - Getting authorization policy...")
@@ -972,6 +1049,7 @@ class Entra(M365Service):
                     select=[
                         "id",
                         "displayName",
+                        "userPrincipalName",
                         "userType",
                         "accountEnabled",
                         "onPremisesSyncEnabled",
@@ -1036,6 +1114,7 @@ class Entra(M365Service):
                             "authentication_methods", []
                         ),
                         user_type=getattr(user, "user_type", None),
+                        user_principal_name=getattr(user, "user_principal_name", None),
                         employee_hire_date=getattr(user, "employee_hire_date", None),
                     )
 
@@ -1489,6 +1568,122 @@ OAuthAppInfo
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
         return definitions
+
+    async def _get_role_assignment_schedule_instances(
+        self,
+    ) -> Optional[List["RoleAssignmentScheduleInstance"]]:
+        """Retrieve active role assignment schedule instances from PIM.
+
+        Calls ``GET /v1.0/roleManagement/directory/roleAssignmentScheduleInstances
+        ?$expand=principal`` and returns parsed ``RoleAssignmentScheduleInstance``
+        objects. On any API error (403, missing licence, etc.) the method sets
+        ``self.role_assignment_schedule_instances_error`` and returns ``None`` so
+        checks can distinguish "no data" from "no instances".
+
+        Returns:
+            A list of instances, or ``None`` when the API call fails.
+        """
+        logger.info("Entra - Getting role assignment schedule instances...")
+        instances: List[RoleAssignmentScheduleInstance] = []
+        try:
+            query_parameters = RoleAssignmentScheduleInstancesRequestBuilder.RoleAssignmentScheduleInstancesRequestBuilderGetQueryParameters(
+                expand=["principal"],
+            )
+            request_configuration = RequestConfiguration(
+                query_parameters=query_parameters,
+            )
+            response = await self.client.role_management.directory.role_assignment_schedule_instances.get(
+                request_configuration=request_configuration,
+            )
+            while response:
+                for item in getattr(response, "value", []) or []:
+                    principal = getattr(item, "principal", None)
+                    principal_odata_type = (
+                        getattr(principal, "odata_type", None) if principal else None
+                    )
+                    principal_display_name = (
+                        getattr(principal, "display_name", None) if principal else None
+                    )
+                    # userPrincipalName is only present on user principals.
+                    principal_upn = (
+                        getattr(principal, "user_principal_name", None)
+                        if principal
+                        else None
+                    )
+                    instances.append(
+                        RoleAssignmentScheduleInstance(
+                            id=getattr(item, "id", "") or "",
+                            principal_id=getattr(item, "principal_id", None),
+                            role_definition_id=getattr(
+                                item, "role_definition_id", None
+                            ),
+                            directory_scope_id=getattr(item, "directory_scope_id", "/")
+                            or "/",
+                            assignment_type=getattr(item, "assignment_type", None),
+                            member_type=getattr(item, "member_type", None),
+                            end_date_time=getattr(item, "end_date_time", None),
+                            start_date_time=getattr(item, "start_date_time", None),
+                            principal_odata_type=principal_odata_type,
+                            principal_display_name=principal_display_name or "",
+                            principal_upn=principal_upn,
+                        )
+                    )
+                next_link = getattr(response, "odata_next_link", None)
+                if not next_link:
+                    break
+                response = await self.client.role_management.directory.role_assignment_schedule_instances.with_url(
+                    next_link
+                ).get()
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            self.role_assignment_schedule_instances_error = (
+                f"Unable to retrieve role assignment schedule instances: "
+                f"{error.__class__.__name__}: {error}"
+            )
+            return None
+        return instances
+
+    async def _get_subscribed_skus(self) -> Optional[List["SubscribedSku"]]:
+        """Retrieve the tenant's subscribed SKUs and their service plans.
+
+        Used to determine whether the tenant has a Microsoft Entra ID P2 or
+        Entra ID Governance licence, which is required for Privileged Identity
+        Management.
+
+        Returns:
+            A list of subscribed SKUs, or ``None`` when the API call fails.
+        """
+        logger.info("Entra - Getting subscribed SKUs...")
+        skus: List[SubscribedSku] = []
+        try:
+            response = await self.client.subscribed_skus.get()
+            for sku in getattr(response, "value", []) or []:
+                capability_status = getattr(sku, "capability_status", None)
+                service_plan_names = []
+                for plan in getattr(sku, "service_plans", []) or []:
+                    plan_name = getattr(plan, "service_plan_name", None)
+                    if plan_name:
+                        service_plan_names.append(plan_name)
+                skus.append(
+                    SubscribedSku(
+                        sku_id=getattr(sku, "sku_id", "") or "",
+                        sku_part_number=getattr(sku, "sku_part_number", "") or "",
+                        capability_status=capability_status or "",
+                        service_plan_names=service_plan_names,
+                    )
+                )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            self.subscribed_skus_error = (
+                f"Unable to retrieve subscribed SKUs: "
+                f"{error.__class__.__name__}: {error}"
+            )
+            return None
+        return skus
 
     async def _get_b2b_collaboration_policy(self):
         """Retrieve the legacy B2B collaboration (invitation domains) policy.
@@ -2728,6 +2923,7 @@ class User(BaseModel):
     account_enabled: bool = True
     authentication_methods: List[str] = []
     user_type: Optional[str] = None
+    user_principal_name: Optional[str] = None
     employee_hire_date: Optional[datetime] = None
 
 
@@ -2935,3 +3131,75 @@ class AppRegistration(BaseModel):
     app_id: str = ""
     name: str = ""
     password_credentials: List[PasswordCredential] = []
+
+
+class RoleAssignmentScheduleInstance(BaseModel):
+    """Model representing an active PIM role assignment schedule instance.
+
+    Each instance represents an active directory role assignment, either a
+    standing assignment (``assignmentType == "Assigned"``) or a PIM just-in-time
+    activation (``assignmentType == "Activated"``).
+
+    Attributes:
+        id: The instance's unique identifier.
+        principal_id: The assigned principal's object ID.
+        role_definition_id: The directory role template ID.
+        directory_scope_id: The scope of the assignment (``"/"`` = tenant-wide).
+        assignment_type: ``"Assigned"`` (standing) or ``"Activated"`` (PIM JIT).
+        member_type: ``"Direct"``, ``"Group"``, or ``"Inherited"``.
+        end_date_time: When the assignment expires (``None`` = permanent).
+        start_date_time: When the assignment started.
+        principal_odata_type: The OData type of the principal
+            (e.g. ``"#microsoft.graph.user"``).
+        principal_display_name: The principal's display name.
+        principal_upn: The user principal name (only for user principals).
+    """
+
+    id: str
+    principal_id: Optional[str] = None
+    role_definition_id: Optional[str] = None
+    directory_scope_id: str = "/"
+    assignment_type: Optional[str] = None
+    member_type: Optional[str] = None
+    end_date_time: Optional[datetime] = None
+    start_date_time: Optional[datetime] = None
+    principal_odata_type: Optional[str] = None
+    principal_display_name: str = ""
+    principal_upn: Optional[str] = None
+
+
+class SubscribedSku(BaseModel):
+    """Model representing a Microsoft 365 subscribed SKU.
+
+    Attributes:
+        sku_id: The SKU's unique identifier.
+        sku_part_number: The SKU part number (e.g. ``"AAD_PREMIUM_P2"``).
+        capability_status: The capability status (e.g. ``"Enabled"``).
+        service_plan_names: Names of the service plans included in the SKU.
+    """
+
+    sku_id: str = ""
+    sku_part_number: str = ""
+    capability_status: str = ""
+    service_plan_names: List[str] = []
+
+
+# Human-readable display names for each Tier 0 role, keyed by role template ID.
+# Used by checks that need to include the role name in status_extended messages.
+TIER_0_ROLE_NAMES = {
+    "62e90394-69f5-4237-9190-012177145e10": "Global Administrator",
+    "e8611ab8-c189-46e8-94e1-60213ab1f814": "Privileged Role Administrator",
+    "7be44c8a-adaf-4e2a-84d6-ab2649e08a13": "Privileged Authentication Administrator",
+    "9b895d92-2cd3-44c7-9d02-a6ac2d5ea5c3": "Application Administrator",
+    "158c047a-c907-4556-b7ef-446551a6b5f7": "Cloud Application Administrator",
+    "c4e39bd9-1100-46d3-8c65-fb160da0071f": "Authentication Administrator",
+    "0526716b-113d-4c15-b2c8-68e3c22b9f80": "Authentication Policy Administrator",
+    "b1be1c3e-b65d-4f19-8427-f6fa0d97feb9": "Conditional Access Administrator",
+    "8329153b-31d0-4727-b945-745eb3bc5f31": "Domain Name Administrator",
+    "be2f45a1-457d-42af-a067-6ec1fa63bc45": "External Identity Provider Administrator",
+    "8ac3fc64-6eca-42ea-9e69-59f4c7b60eb2": "Hybrid Identity Administrator",
+    "194ae4cb-b126-40b2-bd5b-6091b380977d": "Security Administrator",
+    "fe930be7-5e62-47db-91af-98c3a49a38b1": "User Administrator",
+    "d29b2b05-8046-44ba-8758-1e26182fcf32": "Directory Synchronization Accounts",
+    "e00e864a-17c5-4a4b-9c06-f5b95a8d5bd8": "Partner Tier2 Support",
+}

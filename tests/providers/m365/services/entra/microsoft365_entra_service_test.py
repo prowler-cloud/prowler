@@ -953,6 +953,7 @@ class Test_Entra_Service:
             "id",
             "displayName",
             "userType",
+            "userPrincipalName",
             "accountEnabled",
             "onPremisesSyncEnabled",
             "employeeHireDate",
@@ -1990,3 +1991,69 @@ class TestGetUsersError:
         assert users == {}
         assert service.users_error is not None
         assert "Unable to retrieve users from Microsoft Graph" in service.users_error
+
+
+class TestTier0RoleGroupMembers:
+    GLOBAL_ADMIN = "62e90394-69f5-4237-9190-012177145e10"
+    READER = "88d8e3e3-8f55-4a1e-953a-9b9898b8876b"
+
+    def _service(self, members_get):
+        service = Entra.__new__(Entra)
+        service.role_assignment_schedule_instances = [
+            SimpleNamespace(
+                principal_id="tier0-group", role_definition_id=self.GLOBAL_ADMIN
+            ),
+            SimpleNamespace(
+                principal_id="reader-group", role_definition_id=self.READER
+            ),
+            SimpleNamespace(
+                principal_id="plain-group", role_definition_id=self.GLOBAL_ADMIN
+            ),
+        ]
+        service.groups = [
+            SimpleNamespace(id="tier0-group", is_assignable_to_role=True),
+            SimpleNamespace(id="reader-group", is_assignable_to_role=True),
+            SimpleNamespace(id="plain-group", is_assignable_to_role=False),
+        ]
+        by_group_id = MagicMock(
+            return_value=SimpleNamespace(
+                members=SimpleNamespace(
+                    get=members_get,
+                    with_url=MagicMock(
+                        return_value=SimpleNamespace(
+                            get=AsyncMock(
+                                return_value=SimpleNamespace(
+                                    value=[SimpleNamespace(id="user-2")],
+                                    odata_next_link=None,
+                                )
+                            )
+                        )
+                    ),
+                )
+            )
+        )
+        service.client = SimpleNamespace(
+            groups=SimpleNamespace(by_group_id=by_group_id)
+        )
+        return service, by_group_id
+
+    def test_only_role_assignable_tier0_groups_are_read(self):
+        service, by_group_id = self._service(
+            AsyncMock(
+                return_value=SimpleNamespace(
+                    value=[SimpleNamespace(id="user-1")], odata_next_link="next"
+                )
+            )
+        )
+
+        members = asyncio.run(service._get_tier0_role_group_members())
+
+        assert members == {"tier0-group": ["user-1", "user-2"]}
+        assert {c.args[0] for c in by_group_id.call_args_list} == {"tier0-group"}
+
+    def test_member_read_error_is_reported_as_none(self):
+        service, _ = self._service(AsyncMock(side_effect=RuntimeError("throttled")))
+
+        assert asyncio.run(service._get_tier0_role_group_members()) == {
+            "tier0-group": None
+        }
