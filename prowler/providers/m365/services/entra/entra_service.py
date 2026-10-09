@@ -91,6 +91,7 @@ class Entra(M365Service):
         # instead of silently evaluating an empty directory.
         self.users_error: Optional[str] = None
         self.exchange_mailbox_permission_service_principals_error: Optional[str] = None
+        self.enterprise_apps_error: Optional[str] = None
         attributes = loop.run_until_complete(
             gather(
                 self._get_authorization_policy(),
@@ -114,6 +115,7 @@ class Entra(M365Service):
                 self._get_authentication_methods_policy_settings(),
                 self._get_pim_role_approval_settings(),
                 self._get_access_review_definitions(),
+                self._get_enterprise_app_assignment_settings(),
             )
         )
 
@@ -150,6 +152,7 @@ class Entra(M365Service):
             19
         ]
         self.access_review_definitions: List[AccessReviewDefinition] = attributes[20]
+        self.enterprise_apps: Optional[Dict[str, "ServicePrincipal"]] = attributes[21]
         self.user_accounts_status = {}
 
         # Resolve directory-object identifiers referenced by Conditional Access
@@ -2081,6 +2084,85 @@ OAuthAppInfo
 
         return service_principals
 
+    async def _get_enterprise_app_assignment_settings(
+        self,
+    ) -> Optional[Dict[str, "ServicePrincipal"]]:
+        """Retrieve all service principals with their assignment-required setting.
+
+        Pages through ``/servicePrincipals`` with an explicit ``$select`` to
+        include ``appRoleAssignmentRequired``, ``accountEnabled``,
+        ``servicePrincipalType``, and ``appOwnerOrganizationId``.  No tenant
+        filter is applied: filtering (e.g. excluding Microsoft first-party
+        apps) belongs in the checks that consume this data.
+
+        On any error (missing permissions, throttling, mid-pagination failure)
+        the method sets ``self.enterprise_apps_error`` and returns ``None`` so
+        that checks can emit a single ``MANUAL`` finding instead of silently
+        evaluating a partial or empty list.
+
+        Returns:
+            A dict of ``ServicePrincipal`` objects keyed by object id, or
+            ``None`` when the data could not be retrieved.
+        """
+        logger.info("Entra - Getting enterprise application assignment settings...")
+        enterprise_apps: Dict[str, ServicePrincipal] = {}
+
+        try:
+            request_config = RequestConfiguration()
+            request_config.query_parameters = self.client.service_principals.ServicePrincipalsRequestBuilder.ServicePrincipalsRequestBuilderGetQueryParameters(
+                select=[
+                    "id",
+                    "appId",
+                    "displayName",
+                    "appOwnerOrganizationId",
+                    "appRoleAssignmentRequired",
+                    "accountEnabled",
+                    "servicePrincipalType",
+                ],
+            )
+            sp_response = await self.client.service_principals.get(
+                request_configuration=request_config
+            )
+
+            while sp_response:
+                for sp in getattr(sp_response, "value", []) or []:
+                    sp_id = getattr(sp, "id", None)
+                    if not sp_id:
+                        continue
+
+                    raw_owner = getattr(sp, "app_owner_organization_id", None)
+                    app_owner_org_id = str(raw_owner).lower() if raw_owner else None
+
+                    enterprise_apps[sp_id] = ServicePrincipal(
+                        id=sp_id,
+                        name=getattr(sp, "display_name", "") or "",
+                        app_id=getattr(sp, "app_id", "") or "",
+                        app_owner_organization_id=app_owner_org_id,
+                        account_enabled=getattr(sp, "account_enabled", True),
+                        service_principal_type=getattr(
+                            sp, "service_principal_type", "Application"
+                        ),
+                        app_role_assignment_required=getattr(
+                            sp, "app_role_assignment_required", None
+                        ),
+                    )
+
+                next_link = getattr(sp_response, "odata_next_link", None)
+                if not next_link:
+                    break
+                sp_response = await self.client.service_principals.with_url(
+                    next_link
+                ).get()
+
+        except Exception as error:
+            self.enterprise_apps_error = f"{error.__class__.__name__}: {error}"
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            return None
+
+        return enterprise_apps
+
     async def _get_app_registrations(self) -> Dict[str, "AppRegistration"]:
         """Retrieve application registrations from Microsoft Entra.
 
@@ -2904,6 +2986,11 @@ class ServicePrincipal(BaseModel):
         app_owner_ids: Principal IDs that own the parent app registration.
             Populated only for service principals that hold a permanent Tier 0
             directory role assignment.
+        app_role_assignment_required: Whether the service principal requires
+            explicit user/group assignment before users can sign in. ``True``
+            means only assigned users can obtain tokens; ``False`` means any
+            directory user (including guests) can sign in. ``None`` means the
+            value could not be determined.
     """
 
     id: str
@@ -2918,6 +3005,7 @@ class ServicePrincipal(BaseModel):
     exchange_mailbox_permissions: List[str] = []
     sp_owner_ids: List[str] = []
     app_owner_ids: List[str] = []
+    app_role_assignment_required: Optional[bool] = None
 
 
 class AppRegistration(BaseModel):
@@ -2935,3 +3023,34 @@ class AppRegistration(BaseModel):
     app_id: str = ""
     name: str = ""
     password_credentials: List[PasswordCredential] = []
+
+
+# Default list of privileged Microsoft first-party application IDs that
+# should have ``appRoleAssignmentRequired = true`` to prevent any user from
+# signing in with them.  Based on Maester MT.1186.
+DEFAULT_PRIVILEGED_FIRST_PARTY_APP_IDS = [
+    "1950a258-227b-4e31-a9cf-717495945fc2",  # Microsoft Azure PowerShell
+    "04b07795-8ddb-461a-bbee-02f9e1bf7b46",  # Microsoft Azure CLI
+    "14d82eec-204b-4c2f-b7e8-296a70dab67e",  # Microsoft Graph Command Line Tools
+    "de8bc8b5-d9f9-48b1-a8ad-b748da725064",  # Graph Explorer
+    "1b730954-1685-4b74-9bfd-dac224a7b894",  # Azure Active Directory PowerShell
+    "12128f48-ec9e-42f0-b203-ea49fb6af367",  # Microsoft Teams PowerShell Cmdlets
+    "fb78d390-0c51-40cd-8e17-fdbfab77341b",  # Microsoft Exchange Online PowerShell
+    "9bc3ab49-b65d-410a-85ad-de819febfddc",  # Microsoft SharePoint Online Management Shell
+    "9cee029c-6210-4654-90bb-17e6e9d36617",  # Power Platform CLI
+]
+
+# Friendly names for the monitored first-party appIds.  Used by the check
+# when no service principal exists in the tenant (so there is no
+# ``displayName`` to read from Graph).
+PRIVILEGED_FIRST_PARTY_APP_NAMES = {
+    "1950a258-227b-4e31-a9cf-717495945fc2": "Microsoft Azure PowerShell",
+    "04b07795-8ddb-461a-bbee-02f9e1bf7b46": "Microsoft Azure CLI",
+    "14d82eec-204b-4c2f-b7e8-296a70dab67e": "Microsoft Graph Command Line Tools",
+    "de8bc8b5-d9f9-48b1-a8ad-b748da725064": "Graph Explorer",
+    "1b730954-1685-4b74-9bfd-dac224a7b894": "Azure Active Directory PowerShell",
+    "12128f48-ec9e-42f0-b203-ea49fb6af367": "Microsoft Teams PowerShell Cmdlets",
+    "fb78d390-0c51-40cd-8e17-fdbfab77341b": "Microsoft Exchange Online PowerShell",
+    "9bc3ab49-b65d-410a-85ad-de819febfddc": "Microsoft SharePoint Online Management Shell",
+    "9cee029c-6210-4654-90bb-17e6e9d36617": "Power Platform CLI",
+}

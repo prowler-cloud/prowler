@@ -687,6 +687,20 @@ m365:
   # Entra
   # m365.entra_admin_users_sign_in_frequency_enabled
   sign_in_frequency: 4 # 4 hours
+  # m365.entra_service_principal_non_microsoft_assignment_required
+  # Application (client) IDs of non-Microsoft apps intentionally open to all users
+  entra_assignment_required_excluded_app_ids: []
+  # m365.entra_service_principal_privileged_first_party_assignment_required
+  entra_privileged_first_party_app_ids:
+    - "1950a258-227b-4e31-a9cf-717495945fc2"  # Microsoft Azure PowerShell
+    - "04b07795-8ddb-461a-bbee-02f9e1bf7b46"  # Microsoft Azure CLI
+    - "14d82eec-204b-4c2f-b7e8-296a70dab67e"  # Microsoft Graph Command Line Tools
+    - "de8bc8b5-d9f9-48b1-a8ad-b748da725064"  # Graph Explorer
+    - "1b730954-1685-4b74-9bfd-dac224a7b894"  # Azure Active Directory PowerShell
+    - "12128f48-ec9e-42f0-b203-ea49fb6af367"  # Microsoft Teams PowerShell Cmdlets
+    - "fb78d390-0c51-40cd-8e17-fdbfab77341b"  # Microsoft Exchange Online PowerShell
+    - "9bc3ab49-b65d-410a-85ad-de819febfddc"  # Microsoft SharePoint Online Management Shell
+    - "9cee029c-6210-4654-90bb-17e6e9d36617"  # Power Platform CLI
   # Teams
   # m365.teams_external_file_sharing_restricted
   allowed_cloud_storage_services:
