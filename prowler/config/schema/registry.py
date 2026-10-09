@@ -10,6 +10,7 @@ from prowler.config.schema.azure import AzureProviderConfig
 from prowler.config.schema.base import ProviderConfigBase
 from prowler.config.schema.cloudflare import CloudflareProviderConfig
 from prowler.config.schema.e2enetworks import E2eNetworksProviderConfig
+from prowler.config.schema.fly import FlyProviderConfig
 from prowler.config.schema.gcp import GCPProviderConfig
 from prowler.config.schema.github import GitHubProviderConfig
 from prowler.config.schema.kubernetes import KubernetesProviderConfig
@@ -30,6 +31,7 @@ SCHEMAS: dict[str, type[ProviderConfigBase]] = {
     "cloudflare": CloudflareProviderConfig,
     "e2enetworks": E2eNetworksProviderConfig,
     "vercel": VercelProviderConfig,
+    "fly": FlyProviderConfig,
     "okta": OktaProviderConfig,
     "alibabacloud": AlibabaCloudProviderConfig,
     "openstack": OpenStackProviderConfig,

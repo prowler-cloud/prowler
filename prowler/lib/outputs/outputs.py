@@ -44,6 +44,8 @@ def stdout_report(finding, color, verbose, status, fix, provider=None):
         details = finding.zone_name
     elif finding.check_metadata.Provider == "googleworkspace":
         details = finding.location
+    elif finding.check_metadata.Provider == "fly":
+        details = f"{finding.app_name} ({finding.region})"
     elif finding.check_metadata.Provider == "vercel":
         details = finding.region
     elif finding.check_metadata.Provider == "okta":

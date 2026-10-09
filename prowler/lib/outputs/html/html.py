@@ -1787,6 +1787,73 @@ class HTML(Output):
             return ""
 
     @staticmethod
+    def get_fly_assessment_summary(provider: Provider) -> str:
+        """
+        get_fly_assessment_summary gets the HTML assessment summary for the Fly.io provider
+
+        Args:
+            provider (Provider): the Fly.io provider object
+
+        Returns:
+            str: HTML assessment summary for the Fly.io provider
+        """
+        try:
+            organization = getattr(provider.identity, "organization", None)
+            org_slug = getattr(organization, "slug", None) or "-"
+            org_name = getattr(organization, "name", None) or "-"
+            org_id = getattr(organization, "id", None) or "-"
+            filter_apps = getattr(provider, "filter_apps", None)
+            apps = ", ".join(sorted(filter_apps)) if filter_apps else "All apps"
+
+            org_slug = escape(str(org_slug))
+            org_name = escape(str(org_name))
+            org_id = escape(str(org_id))
+            apps = escape(str(apps))
+            assessment_items = f"""
+                            <li class="list-group-item">
+                                <b>Organization:</b> {org_slug}
+                            </li>
+                            <li class="list-group-item">
+                                <b>Organization Name:</b> {org_name}
+                            </li>
+                            <li class="list-group-item">
+                                <b>Organization ID:</b> {org_id}
+                            </li>
+                            <li class="list-group-item">
+                                <b>Apps:</b> {apps}
+                            </li>"""
+
+            credentials_items = """
+                            <li class="list-group-item">
+                                <b>Authentication:</b> API Token
+                            </li>"""
+
+            return f"""
+                <div class="col-md-2">
+                    <div class="card">
+                        <div class="card-header">
+                            Fly.io Assessment Summary
+                        </div>
+                        <ul class="list-group list-group-flush">{assessment_items}
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            Fly.io Credentials
+                        </div>
+                        <ul class="list-group list-group-flush">{credentials_items}
+                        </ul>
+                    </div>
+                </div>"""
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+            )
+            return ""
+
+    @staticmethod
     def get_huaweicloud_assessment_summary(provider: Provider) -> str:
         """
         get_huaweicloud_assessment_summary gets the HTML assessment summary for the Huawei Cloud provider
