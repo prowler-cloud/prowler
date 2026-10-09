@@ -1,0 +1,1 @@
+`aiservices_account_network_acls_default_action_deny` and `aiservices_deployment_content_filter_prompt_shield_enabled` checks for Azure provider

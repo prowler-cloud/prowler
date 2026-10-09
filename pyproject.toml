@@ -41,6 +41,7 @@ dependencies = [
   "azure-keyvault-keys==4.10.0",
   "azure-mgmt-applicationinsights==4.1.0",
   "azure-mgmt-authorization==4.0.0",
+  "azure-mgmt-cognitiveservices==14.1.0",
   "azure-mgmt-compute==34.0.0",
   "azure-mgmt-containerregistry==12.0.0",
   "azure-mgmt-containerservice==34.1.0",

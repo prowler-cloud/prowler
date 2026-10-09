@@ -1,0 +1,38 @@
+{
+  "Provider": "azure",
+  "CheckID": "aiservices_account_managed_identity_enabled",
+  "CheckTitle": "AI services account has a managed identity",
+  "CheckType": [],
+  "ServiceName": "aiservices",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "microsoft.cognitiveservices/accounts",
+  "ResourceGroup": "ai_ml",
+  "Description": "**Azure AI services accounts** (including **Azure OpenAI** and **Azure AI Foundry**) can use a system-assigned or user-assigned **managed identity** to reach other Azure resources, such as Key Vault for customer-managed keys or Storage and AI Search for data sources, without stored credentials.",
+  "Risk": "Without a managed identity, the account cannot authenticate to other Azure resources through Microsoft Entra ID:\n- **Credentials**: integrations fall back to connection strings and keys that must be stored and rotated\n- **Encryption**: customer-managed keys cannot be configured, because they need an identity\n- **Auditability**: access by the service is not tied to an Entra ID principal",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/entra/identity/managed-identities-azure-resources/overview",
+    "https://learn.microsoft.com/en-us/azure/ai-services/openai/how-to/managed-identity"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "az cognitiveservices account identity assign --name <example_resource_name> --resource-group <resource_group>",
+      "NativeIaC": "```bicep\n// Enable a system-assigned managed identity on an Azure AI services account\nresource account 'Microsoft.CognitiveServices/accounts@2024-10-01' = {\n  name: '<example_resource_name>'\n  location: '<location>'\n  kind: 'OpenAI'\n  sku: { name: 'S0' }\n  identity: { type: 'SystemAssigned' } // CRITICAL: gives the account an Entra ID identity\n  properties: {\n    customSubDomainName: '<example_resource_name>'\n  }\n}\n```",
+      "Other": "1. In the Azure portal, open the AI services account and go to Resource Management > Identity\n2. On the System assigned tab, set Status to On and click Save, or add a user-assigned identity\n3. Grant the identity least-privilege roles on the resources it must reach",
+      "Terraform": "```hcl\nresource \"azurerm_cognitive_account\" \"<example_resource_name>\" {\n  name                  = \"<example_resource_name>\"\n  location              = \"<location>\"\n  resource_group_name   = \"<resource_group>\"\n  kind                  = \"OpenAI\"\n  sku_name              = \"S0\"\n  custom_subdomain_name = \"<example_resource_name>\"\n\n  identity {\n    type = \"SystemAssigned\" # CRITICAL: gives the account an Entra ID identity\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Enable a **managed identity** on AI services accounts and use it, instead of keys or connection strings, to reach **Key Vault**, **Storage**, and **AI Search**. Grant it only the roles each integration needs.",
+      "Url": "https://hub.prowler.com/check/aiservices_account_managed_identity_enabled"
+    }
+  },
+  "Categories": [
+    "identity-access",
+    "gen-ai"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
