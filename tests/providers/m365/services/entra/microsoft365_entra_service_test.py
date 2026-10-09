@@ -956,6 +956,10 @@ class Test_Entra_Service:
             "accountEnabled",
             "onPremisesSyncEnabled",
             "employeeHireDate",
+            "userPrincipalName",
+            "mailNickname",
+            "onPremisesSamAccountName",
+            "onPremisesDistinguishedName",
         }
         with_url_mock.assert_called_once_with("next-link")
         assert users["user-1"].directory_roles_ids == ["role-template-1"]

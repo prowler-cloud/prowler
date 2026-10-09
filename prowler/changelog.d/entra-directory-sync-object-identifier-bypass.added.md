@@ -1,0 +1,1 @@
+`entra_directory_sync_object_identifier_update_bypass_disabled` check for M365 provider, verifying that the temporary bypass allowing on-premises updates of `onPremisesObjectIdentifier` is disabled in directory sync settings
