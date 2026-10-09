@@ -142,6 +142,18 @@ class Test_entra_conditional_access_policy_user_and_sign_in_risk_not_combined:
         assert result[0].resource_id == policy.id
         assert "configures sign-in risk on its own" in result[0].status_extended
 
+    def test_partial_read_adds_manual(self):
+        """A partial read keeps per-policy results and adds a tenant MANUAL."""
+        policy = _make_policy(
+            display_name="User Risk Policy",
+            user_risk_levels=[RiskLevel.HIGH],
+        )
+        result = self._run({policy.id: policy}, error="ValueError: bad enum value")
+        statuses = sorted(r.status for r in result)
+        assert statuses == ["MANUAL", "PASS"]
+        manual = next(r for r in result if r.status == "MANUAL")
+        assert "partially read" in manual.status_extended
+
     def test_policy_combines_both_risks_fail(self):
         """Policy combines user risk and sign-in risk; FAIL."""
         policy = _make_policy(

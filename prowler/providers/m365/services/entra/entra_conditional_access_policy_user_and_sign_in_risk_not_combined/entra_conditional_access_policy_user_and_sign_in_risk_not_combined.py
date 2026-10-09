@@ -80,6 +80,22 @@ class entra_conditional_access_policy_user_and_sign_in_risk_not_combined(Check):
 
             findings.append(report)
 
+        # A partial read may have hidden other risk policies: say so explicitly.
+        if found_risk_policy and entra_client.conditional_access_policies_error:
+            report = CheckReportM365(
+                metadata=self.metadata(),
+                resource={},
+                resource_name="Conditional Access Policies",
+                resource_id="conditionalAccessPolicies",
+            )
+            report.status = "MANUAL"
+            report.status_extended = (
+                "Conditional Access policies were only partially read "
+                f"({entra_client.conditional_access_policies_error}); policies not "
+                "retrieved may also combine user risk and sign-in risk."
+            )
+            findings.append(report)
+
         if not found_risk_policy:
             report = CheckReportM365(
                 metadata=self.metadata(),
