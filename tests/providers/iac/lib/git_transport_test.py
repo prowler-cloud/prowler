@@ -9,6 +9,7 @@ from dulwich.config import ConfigDict
 from prowler.lib.network.ssrf import (
     ALLOWED_PRIVATE_NETWORKS_ENV,
     OutboundURLNotAllowedError,
+    validate_outbound_url,
 )
 from prowler.providers.iac.lib import git_transport
 from prowler.providers.iac.lib.git_transport import ls_remote
@@ -121,11 +122,38 @@ class TestEffectiveDestination:
             with pytest.raises(OutboundURLNotAllowedError, match="non-public"):
                 git_transport.ls_remote("https://reg.example.com/org/repo.git")
 
-    def test_keeps_credentials_out_of_the_proxy_base_url(self):
-        assert (
-            git_transport.proxy_base_url("https://user:a-token@github.com:8443/o/r.git")
-            == "https://github.com:8443"
-        )
+    @pytest.mark.parametrize(
+        "url,expected",
+        [
+            (
+                "https://user:a-token@github.com:8443/o/r.git",
+                "https://github.com:8443/o/r.git",
+            ),
+            # the path stays: an http.<url>.* section can be path-specific
+            ("https://user:a-token@github.com/o/r.git", "https://github.com/o/r.git"),
+            # urlparse drops the brackets of an IPv6 literal
+            ("https://user:a-token@[::1]:8443/o/r.git", "https://[::1]:8443/o/r.git"),
+            # nothing to strip, so nothing is rewritten
+            (
+                "https://[2606:4700:4700::1111]/o/r.git",
+                "https://[2606:4700:4700::1111]/o/r.git",
+            ),
+        ],
+    )
+    def test_strips_only_the_credentials_from_the_proxy_base_url(self, url, expected):
+        assert git_transport.proxy_base_url(url) == expected
+
+    @pytest.mark.parametrize("scheme", ["http", "https", "ssh", "git+ssh", "git"])
+    def test_allows_every_scheme_dulwich_can_transport(self, scheme, monkeypatch):
+        """A scheme dulwich routes must reach the host check, not be refused on scheme."""
+        monkeypatch.setattr(git_transport, "git_config", ConfigDict)
+
+        with _resolves_to("140.82.121.4"):
+            # the scheme must not be what rejects it; a public host is accepted
+            validate_outbound_url(
+                f"{scheme}://host.example/o/r.git",
+                allowed_schemes=git_transport.ALLOWED_SCHEMES,
+            )
 
     def test_honours_a_no_proxy_bypass(self, monkeypatch, origin):
         """Built without base_url, dulwich cannot see no_proxy and uses the proxy."""

@@ -13,7 +13,7 @@ from prowler.lib.network.ssrf import validate_outbound_url
 
 # shared so the connection test and the clone cannot disagree about what a
 # tenant is allowed to configure
-ALLOWED_SCHEMES = ("http", "https", "ssh", "git")
+ALLOWED_SCHEMES = ("http", "https", "ssh", "git+ssh", "git")
 
 
 class _GuardedRedirects:
@@ -51,11 +51,20 @@ def effective_url(config: Config, url: str) -> str:
 
 
 def proxy_base_url(url: str) -> str:
-    """Scheme and host only, for dulwich's ``no_proxy`` and ``http.<url>.*`` matching."""
+    """URL without credentials, for dulwich's ``no_proxy`` and ``http.<url>.*`` matching.
+
+    Only the userinfo is removed. The path stays, because an ``http.<url>.*``
+    section can be path-specific and dulwich ranks matches by path length.
+    """
     parsed = urlparse(url)
+    if parsed.username is None and parsed.password is None:
+        return url
     host = parsed.hostname or ""
-    netloc = f"{host}:{parsed.port}" if parsed.port else host
-    return urlunparse((parsed.scheme, netloc, "", "", "", ""))
+    # urlparse drops the brackets of an IPv6 literal and they are not optional
+    netloc = f"[{host}]" if ":" in host else host
+    if parsed.port:
+        netloc = f"{netloc}:{parsed.port}"
+    return urlunparse(parsed._replace(netloc=netloc))
 
 
 def guarded_pool_manager(config: Config, base_url: str) -> urllib3.PoolManager:
