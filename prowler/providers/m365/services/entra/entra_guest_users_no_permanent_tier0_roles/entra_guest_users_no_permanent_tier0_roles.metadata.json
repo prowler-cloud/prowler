@@ -1,0 +1,41 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_guest_users_no_permanent_tier0_roles",
+  "CheckTitle": "Entra prevents external guest users from holding standing Tier 0 directory role assignments",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "Microsoft Entra **Tier 0 (Control Plane)** directory roles are evaluated for standing assignments held by **external (B2B guest)** users, either directly or through role-assignable groups.\n\nStanding assignments with `assignmentType` **Assigned** are flagged; PIM just-in-time activations (**Activated**) are not.",
+  "Risk": "An external user's credentials, MFA methods, device posture, and lifecycle are controlled by their **home tenant**, not yours. A standing Tier 0 role on such an account means that compromising or failing to off-board an identity **outside your control** grants an attacker tenant-takeover privileges (Global Administrator, Privileged Role Administrator, etc.) at any time.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/entra/identity/role-based-access-control/security-planning",
+    "https://learn.microsoft.com/entra/identity/role-based-access-control/best-practices",
+    "https://learn.microsoft.com/entra/identity/role-based-access-control/privileged-roles-permissions",
+    "https://maester.dev/docs/tests/MT.1025"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the Microsoft Entra admin center (https://entra.microsoft.com)\n2. Navigate to Identity > Roles & admins > All roles\n3. Select the Tier 0 role (e.g. Global Administrator)\n4. Open Active assignments and locate the guest user\n5. Select Remove or Update to change the assignment to Eligible (with approval)\n6. For partners or MSPs, prefer GDAP or cross-tenant admin delegation instead of guest accounts",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Remove **standing** Tier 0 role assignments from external (guest) users. If external administration is required, use **GDAP** or **cross-tenant admin delegation**. As a minimum, convert standing assignments to **eligible** (PIM just-in-time) with **approval** required. Regularly review privileged role assignments and off-board unused guest accounts.",
+      "Url": "https://hub.prowler.com/check/entra_guest_users_no_permanent_tier0_roles"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "entra_service_principal_no_secrets_for_permanent_tier0_roles"
+  ],
+  "Notes": "Port of Maester test MT.1025. Uses TIER_0_ROLE_TEMPLATE_IDS from entra_service.py for consistency with other Prowler Tier 0 checks. Detects both direct and group-inherited assignments."
+}

@@ -687,6 +687,10 @@ m365:
   # Entra
   # m365.entra_admin_users_sign_in_frequency_enabled
   sign_in_frequency: 4 # 4 hours
+  # m365.entra_pim_tier0_roles_no_permanent_active_assignments
+  max_permanent_break_glass_global_admins: 2
+  # Optional explicit emergency-access user object IDs, merged with the CA-exclusion heuristic
+  emergency_access_user_ids: []
   # Teams
   # m365.teams_external_file_sharing_restricted
   allowed_cloud_storage_services:
