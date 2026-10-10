@@ -1,3 +1,6 @@
+from math import isfinite
+
+
 def unroll_list(listed_items: list, separator: str = "|") -> str:
     """
     Unrolls a list of items into a single string, separated by a specified separator.
@@ -199,3 +202,20 @@ def parse_html_string(str: str) -> str:
             string += f"\n&#x2022;{elem}\n"
 
     return string
+
+
+def sanitize_csv_value(value):
+    """Prefix a cell with `'` when a spreadsheet would evaluate it as a formula; numbers are left as they are."""
+    if not isinstance(value, str) or not value.startswith(
+        ("=", "+", "-", "@", "\t", "\r")
+    ):
+        return value
+    try:
+        number = float(value)
+    except ValueError:
+        return f"'{value}"
+    # float() also accepts nan/inf and whitespace-padded forms, which a spreadsheet
+    # renders as text rather than as a number
+    if isfinite(number) and value == value.strip():
+        return value
+    return f"'{value}"

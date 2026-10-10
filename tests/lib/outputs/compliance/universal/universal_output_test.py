@@ -228,6 +228,34 @@ class TestCSVFileWrite:
         assert "REQUIREMENTS_ATTRIBUTES_SECTION" in content
         assert "IAM" in content
 
+    def test_batch_write_neutralises_formula_initiators(self, tmp_path):
+        reqs = [
+            UniversalComplianceRequirement(
+                id="1.1",
+                description="test",
+                attributes={"Section": "IAM"},
+                checks={"aws": ["check_a"]},
+            ),
+        ]
+        fw = _make_framework(reqs, [AttributeMetadata(key="Section", type="str")])
+
+        finding = _make_finding("check_a", "PASS", {"TestFW-1.0": ["1.1"]})
+        finding.status_extended = "=cmd"
+        finding.resource_name = "-1"
+        filepath = str(tmp_path / "test.csv")
+
+        output = UniversalComplianceOutput(
+            findings=[finding], framework=fw, file_path=filepath
+        )
+        output.batch_write_data_to_file()
+
+        with open(filepath, "r") as f:
+            header, row = f.read().splitlines()
+        cells = dict(zip(header.split(";"), row.split(";")))
+
+        assert cells["STATUSEXTENDED"] == "'=cmd"
+        assert cells["RESOURCENAME"] == "-1"
+
 
 class TestNoFindings:
     def test_empty_findings_no_data(self, tmp_path):
