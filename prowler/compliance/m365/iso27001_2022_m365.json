@@ -175,6 +175,7 @@
       ],
       "Checks": [
         "entra_conditional_access_policy_app_enforced_restrictions",
+        "entra_cross_tenant_access_default_outbound_restricted",
         "exchange_transport_config_smtp_auth_disabled",
         "exchange_transport_rules_mail_forwarding_disabled",
         "exchange_transport_rules_whitelist_disabled",
@@ -207,6 +208,7 @@
         "entra_conditional_access_policy_block_unknown_device_platforms",
         "entra_conditional_access_policy_directory_sync_account_excluded",
         "entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced",
+        "entra_cross_tenant_access_default_outbound_restricted",
         "entra_policy_guest_users_access_restrictions",
         "entra_seamless_sso_disabled"
       ]
@@ -300,6 +302,7 @@
       ],
       "Checks": [
         "sharepoint_external_sharing_managed",
+        "entra_cross_tenant_access_default_outbound_restricted",
         "entra_identity_protection_sign_in_risk_enabled",
         "entra_identity_protection_user_risk_enabled"
       ]
