@@ -57,6 +57,14 @@ class entra_authentication_method_no_deleted_group_references(Check):
             return findings
 
         for method_id, config in configs.items():
+            # Only configurations that reference groups are evaluated.
+            if (
+                config.targets_read
+                and not config.include_target_group_ids
+                and not config.exclude_target_group_ids
+            ):
+                continue
+
             report = CheckReportM365(
                 metadata=self.metadata(),
                 resource=config,

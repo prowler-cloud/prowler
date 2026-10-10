@@ -20,7 +20,7 @@
   ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "Invoke-MgGraphRequest -Method PATCH -Uri 'https://graph.microsoft.com/v1.0/policies/authenticationMethodsPolicy/authenticationMethodConfigurations/<methodId>' -Body '{\"@odata.type\": \"#microsoft.graph.<methodType>AuthenticationMethodConfiguration\", \"includeTargets\": [<targets without the deleted group>], \"excludeTargets\": [<targets without the deleted group>]}'",
       "NativeIaC": "",
       "Other": "1. Sign in to the Microsoft Entra admin center (https://entra.microsoft.com)\n2. Navigate to Protection > Authentication methods > Policies\n3. Select the affected authentication method\n4. Under Enable and Target, remove the deleted group from Include or Exclude targets\n5. Add a valid replacement group if needed\n6. Save the configuration\n\nIf the group is still within the 30-day soft-delete window, it can be restored from Entra ID > Groups > Deleted groups.",
       "Terraform": ""

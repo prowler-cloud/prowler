@@ -1316,6 +1316,10 @@ OAuthAppInfo
                                     exclude_target_group_ids.append(target_id)
                                 except ValueError:
                                     pass
+                    else:
+                        # Graph returns [] when there are no exclusions; a missing
+                        # collection means the exclusions could not be read.
+                        targets_read = False
 
                     authentication_method_configurations[method_id] = (
                         AuthenticationMethodConfiguration(

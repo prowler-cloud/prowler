@@ -91,7 +91,7 @@ class Test_entra_authentication_method_no_deleted_group_references:
             assert result[0].resource_name == "Authentication Methods Policy"
             assert "could not be read" in result[0].status_extended
 
-    def test_all_users_only_pass(self):
+    def test_all_users_only_no_findings(self):
         """Config targeting all_users (no group ids) passes."""
         entra_client = _entra_client_mock()
         config = _make_config(method_id="Fido2", state="enabled")
@@ -111,10 +111,7 @@ class Test_entra_authentication_method_no_deleted_group_references:
             check = entra_authentication_method_no_deleted_group_references()
             result = check.execute()
 
-            assert len(result) == 1
-            assert result[0].status == "PASS"
-            assert result[0].resource_id == "Fido2"
-            assert "does not reference deleted groups" in result[0].status_extended
+            assert len(result) == 0
 
     def test_all_references_resolve_pass(self):
         """Config with group ids that all resolve: PASS."""
@@ -362,13 +359,9 @@ class Test_entra_authentication_method_no_deleted_group_references:
             check = entra_authentication_method_no_deleted_group_references()
             result = check.execute()
 
-            assert len(result) == 2
-
-            fido2_result = next(r for r in result if r.resource_id == "Fido2")
-            sms_result = next(r for r in result if r.resource_id == "Sms")
-
-            assert fido2_result.status == "PASS"
-            assert sms_result.status == "FAIL"
+            assert len(result) == 1
+            assert result[0].resource_id == "Sms"
+            assert result[0].status == "FAIL"
 
     def test_both_include_and_exclude_deleted(self):
         """Config with deleted groups in both include and exclude: FAIL lists both."""
