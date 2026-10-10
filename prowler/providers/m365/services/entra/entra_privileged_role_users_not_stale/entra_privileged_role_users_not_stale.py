@@ -69,23 +69,39 @@ class entra_privileged_role_users_not_stale(Check):
             findings.append(report)
             return findings
 
-        # ---- No Tier 0 users at all ----
-        if not entra_client.privileged_users_roles:
+        # ---- Group-held Tier 0 roles whose members could not be read ----
+        group_error = entra_client.privileged_group_resolution_error
+        if group_error:
             report = CheckReportM365(
                 metadata=self.metadata(),
                 resource={},
                 resource_name="Privileged Users",
                 resource_id="privilegedUsers",
             )
-            report.status = "PASS"
-            report.status_extended = "No users hold Tier 0 roles."
+            report.status = "MANUAL"
+            report.status_extended = (
+                f"Some Tier 0 role holders could not be identified: {group_error}"
+            )
             findings.append(report)
+
+        # ---- No Tier 0 users at all ----
+        if not entra_client.privileged_users_roles:
+            if not group_error:
+                report = CheckReportM365(
+                    metadata=self.metadata(),
+                    resource={},
+                    resource_name="Privileged Users",
+                    resource_id="privilegedUsers",
+                )
+                report.status = "PASS"
+                report.status_extended = "No users hold Tier 0 roles."
+                findings.append(report)
             return findings
 
         # ---- Configuration ----
-        threshold_days = entra_client.audit_config.get(
-            "stale_privileged_account_days", 90
-        )
+        threshold_days = entra_client.audit_config.get("stale_privileged_account_days")
+        if threshold_days is None:  # unset or left empty in config.yaml
+            threshold_days = 90
         now = datetime.now(timezone.utc)
         threshold_date = now - timedelta(days=threshold_days)
 
@@ -104,7 +120,21 @@ class entra_privileged_role_users_not_stale(Check):
         for user_id, assignments in entra_client.privileged_users_roles.items():
             user = entra_client.users.get(user_id)
             if not user:
-                # User not in the directory listing - skip
+                # Holder found through a group or PIM but missing from the
+                # directory listing: its activity cannot be evaluated.
+                report = CheckReportM365(
+                    metadata=self.metadata(),
+                    resource={},
+                    resource_name=user_id,
+                    resource_id=user_id,
+                )
+                report.status = "MANUAL"
+                report.status_extended = (
+                    f"User {user_id} holds a Tier 0 role but is not in the "
+                    "directory user listing, so its sign-in activity could not be "
+                    "evaluated."
+                )
+                findings.append(report)
                 continue
 
             report = CheckReportM365(

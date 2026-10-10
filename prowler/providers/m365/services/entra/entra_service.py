@@ -180,6 +180,9 @@ class Entra(M365Service):
             {}
         )
         self.pim_eligible_error: Optional[str] = None
+        # Set when the members of a group holding a Tier 0 role cannot be read.
+        self.privileged_group_resolution_error: Optional[str] = None
+        self._group_user_members_cache: Dict[str, List[str]] = {}
         loop.run_until_complete(self._load_privileged_user_stale_data())
 
         if created_loop:
@@ -1332,6 +1335,7 @@ class Entra(M365Service):
         """
         eligible: Dict[str, List[str]] = {}
         error_message = None
+        group_ids = {g.id for g in self.groups}
         try:
             response = await (
                 self.client.role_management.directory.role_eligibility_schedule_instances.get()
@@ -1350,7 +1354,6 @@ class Entra(M365Service):
                             eligible.setdefault(principal_id, []).append(role_def_id)
                         else:
                             # Could be a group — resolve its user members
-                            group_ids = {g.id for g in self.groups}
                             if principal_id in group_ids:
                                 member_ids = await self._get_group_user_members(
                                     principal_id
@@ -1395,6 +1398,11 @@ class Entra(M365Service):
         Returns:
             List of user object IDs that are direct members of the group.
         """
+        cache = getattr(self, "_group_user_members_cache", None)
+        if cache is None:
+            cache = self._group_user_members_cache = {}
+        if group_id in cache:
+            return cache[group_id]
         user_ids: List[str] = []
         try:
             response = await self.client.groups.by_group_id(group_id).members.get()
@@ -1412,10 +1420,16 @@ class Entra(M365Service):
                     .get()
                 )
         except Exception as error:
+            if not getattr(self, "privileged_group_resolution_error", None):
+                self.privileged_group_resolution_error = (
+                    f"Members of group {group_id} holding a Tier 0 role could not "
+                    f"be read ({error.__class__.__name__})."
+                )
             logger.error(
                 f"Failed to resolve members of group {group_id}: "
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+        cache[group_id] = user_ids
         return user_ids
 
     async def _get_oauth_apps(self) -> Optional[Dict[str, "OAuthApp"]]:

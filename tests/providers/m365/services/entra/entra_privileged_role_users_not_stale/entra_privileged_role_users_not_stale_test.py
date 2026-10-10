@@ -75,6 +75,7 @@ def _setup_mock():
     entra_client.users_error = None
     entra_client.privileged_users_sign_in_error = None
     entra_client.pim_eligible_error = None
+    entra_client.privileged_group_resolution_error = None
     entra_client.audit_config = {"stale_privileged_account_days": 90}
     entra_client.conditional_access_policies = {}
     entra_client.privileged_users_roles = {}
@@ -110,6 +111,34 @@ class Test_entra_privileged_role_users_not_stale:
             assert result[0].status == "MANUAL"
             assert "Insufficient privileges" in result[0].status_extended
             assert result[0].resource_name == "Privileged Users"
+
+    def test_group_resolution_error_manual_not_pass(self):
+        """MANUAL instead of PASS when group-held Tier 0 members could not be read."""
+        entra_client = _setup_mock()
+        entra_client.privileged_group_resolution_error = (
+            "Members of group g-1 holding a Tier 0 role could not be read (ODataError)."
+        )
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_m365_provider(),
+            ),
+            mock.patch(
+                f"{CHECK_MODULE_PATH}.entra_client",
+                new=entra_client,
+            ),
+        ):
+            from prowler.providers.m365.services.entra.entra_privileged_role_users_not_stale.entra_privileged_role_users_not_stale import (
+                entra_privileged_role_users_not_stale,
+            )
+
+            check = entra_privileged_role_users_not_stale()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "MANUAL"
+            assert "could not be identified" in result[0].status_extended
 
     def test_sign_in_tenant_error_p1_missing(self):
         """MANUAL when P1 licence is missing."""
@@ -923,8 +952,8 @@ class Test_entra_privileged_role_users_not_stale:
             assert result[0].status == "FAIL"
             assert "never signed in" in result[0].status_extended
 
-    def test_user_in_roles_but_not_in_users_dict_skipped(self):
-        """No finding emitted when user is in privileged_users_roles but not in users."""
+    def test_user_in_roles_but_not_in_users_dict_manual(self):
+        """MANUAL when a Tier 0 holder is missing from the directory user listing."""
         user_id = str(uuid4())
         entra_client = _setup_mock()
 
@@ -960,7 +989,9 @@ class Test_entra_privileged_role_users_not_stale:
             check = entra_privileged_role_users_not_stale()
             result = check.execute()
 
-            assert len(result) == 0
+            assert len(result) == 1
+            assert result[0].status == "MANUAL"
+            assert "not in the directory user listing" in result[0].status_extended
 
     def test_break_glass_never_signed_in(self):
         """PASS for break glass account that has never signed in (last_str = 'never')."""
