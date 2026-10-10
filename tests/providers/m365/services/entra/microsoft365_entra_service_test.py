@@ -1990,3 +1990,58 @@ class TestGetUsersError:
         assert users == {}
         assert service.users_error is not None
         assert "Unable to retrieve users from Microsoft Graph" in service.users_error
+
+
+class TestHighRiskDetections:
+    def _service(self, send_mock):
+        service = Entra.__new__(Entra)
+        service.high_risk_detections_error = None
+        service.client = SimpleNamespace(
+            identity_protection=SimpleNamespace(
+                with_url=MagicMock(
+                    return_value=SimpleNamespace(
+                        to_get_request_information=MagicMock(return_value="request")
+                    )
+                )
+            ),
+            request_adapter=SimpleNamespace(send_primitive_async=send_mock),
+        )
+        return service
+
+    def test_paginates_detections_across_an_empty_page(self):
+        pages = [
+            json.dumps({"value": [], "@odata.nextLink": "next-link"}),
+            json.dumps(
+                {
+                    "value": [
+                        {
+                            "id": "detection-1",
+                            "riskEventType": "leakedCredentials",
+                            "riskLevel": "high",
+                            "riskState": "atRisk",
+                            "userPrincipalName": "user@contoso.com",
+                        }
+                    ]
+                }
+            ),
+        ]
+        service = self._service(AsyncMock(side_effect=[p.encode() for p in pages]))
+
+        detections = asyncio.run(service._get_high_risk_detections())
+
+        assert [d.id for d in detections] == ["detection-1"]
+        assert service.high_risk_detections_error is None
+
+    def test_empty_first_page_returns_no_detections(self):
+        service = self._service(
+            AsyncMock(return_value=json.dumps({"value": []}).encode())
+        )
+
+        assert asyncio.run(service._get_high_risk_detections()) == []
+        assert service.high_risk_detections_error is None
+
+    def test_empty_response_is_reported_as_error(self):
+        service = self._service(AsyncMock(return_value=None))
+
+        assert asyncio.run(service._get_high_risk_detections()) is None
+        assert "empty response" in service.high_risk_detections_error
