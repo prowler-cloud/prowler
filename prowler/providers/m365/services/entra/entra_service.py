@@ -227,6 +227,9 @@ class Entra(M365Service):
                 ),
                 guest_invite_settings=auth_policy.allow_invites_from,
                 guest_user_role_id=auth_policy.guest_user_role_id,
+                allowed_to_use_sspr=getattr(
+                    auth_policy, "allowed_to_use_s_s_p_r", None
+                ),
             )
         except Exception as error:
             logger.error(
@@ -2510,12 +2513,15 @@ class DefaultUserRolePermissions(BaseModel):
 
 
 class AuthorizationPolicy(BaseModel):
+    """Tenant authorization policy (policies/authorizationPolicy)."""
+
     id: str
     name: str
     description: str
     default_user_role_permissions: Optional[DefaultUserRolePermissions]
     guest_invite_settings: Optional[str]
     guest_user_role_id: Optional[UUID]
+    allowed_to_use_sspr: Optional[bool] = None
 
 
 # Well-known directory setting template IDs (from /groupSettings).
