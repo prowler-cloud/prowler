@@ -1,0 +1,36 @@
+{
+  "Provider": "m365",
+  "CheckID": "sharepoint_default_sharing_link_permission_configured",
+  "CheckTitle": "SharePoint default sharing link permission is set to View",
+  "CheckType": [],
+  "ServiceName": "sharepoint",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "collaboration",
+  "Description": "**Microsoft 365 SharePoint** default sharing link permission is evaluated to ensure it defaults to 'View' rather than 'Edit'.",
+  "Risk": "Defaulting new sharing links to Edit grants unnecessary write access and increases the blast radius of accidental oversharing.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/sharepoint/change-default-sharing-link"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "Set-SPOTenant -DefaultLinkPermission View",
+      "NativeIaC": "",
+      "Other": "1. Go to the Microsoft 365 admin center > Admin centers > SharePoint\n2. Navigate to Policies > Sharing\n3. Under File and folder links, choose View for the Default link permission.\n4. Click Save",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Set the default sharing link permission to View to minimize accidental oversharing of write access.",
+      "Url": "https://hub.prowler.com/check/sharepoint_default_sharing_link_permission_configured"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

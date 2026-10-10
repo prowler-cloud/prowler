@@ -534,7 +534,8 @@ class TestM365Provider:
         with (
             patch("prowler.providers.m365.m365_provider.M365PowerShell") as mock_ps,
             patch(
-                "prowler.providers.m365.m365_provider.initialize_m365_powershell_modules"
+                "prowler.providers.m365.m365_provider.initialize_m365_powershell_modules",
+                return_value=True,
             ) as mock_init_modules,
         ):
             mock_session = MagicMock()
@@ -542,7 +543,7 @@ class TestM365Provider:
             mock_session.close = MagicMock()
             mock_ps.return_value = mock_session
 
-            M365Provider.setup_powershell(
+            credentials = M365Provider.setup_powershell(
                 m365_credentials=credentials_dict,
                 identity=M365IdentityInfo(
                     identity_id=IDENTITY_ID,
@@ -555,6 +556,7 @@ class TestM365Provider:
                 init_modules=True,
             )
             mock_init_modules.assert_called_once()
+            assert credentials.pnp_powershell_ready is True
 
     def test_setup_powershell_init_modules_failure(self):
         """Test that setup_powershell handles initialization failures correctly"""
@@ -591,6 +593,41 @@ class TestM365Provider:
                 )
 
             assert str(exc_info.value) == "Module initialization failed"
+
+    def test_setup_powershell_marks_pnp_unready_when_initialization_returns_false(
+        self,
+    ):
+        """A failed module initializer preserves credentials but disables PnP."""
+        credentials_dict = {
+            "client_id": "test_client_id",
+            "tenant_id": "test_tenant_id",
+            "client_secret": "test_client_secret",
+        }
+        identity = M365IdentityInfo(
+            identity_id=IDENTITY_ID,
+            identity_type="User",
+            tenant_id=TENANT_ID,
+            tenant_domain=DOMAIN,
+            tenant_domains=["test.onmicrosoft.com"],
+            location=LOCATION,
+        )
+
+        with (
+            patch("prowler.providers.m365.m365_provider.M365PowerShell") as mock_ps,
+            patch(
+                "prowler.providers.m365.m365_provider.initialize_m365_powershell_modules",
+                return_value=False,
+            ),
+        ):
+            credentials = M365Provider.setup_powershell(
+                m365_credentials=credentials_dict,
+                identity=identity,
+                init_modules=True,
+            )
+
+        assert credentials.client_secret == "test_client_secret"
+        assert credentials.pnp_powershell_ready is False
+        mock_ps.return_value.close.assert_called_once_with()
 
     def test_test_connection_provider_id_not_in_tenant_domains(self):
         """Test that an exception is raised when provider_id is not in tenant_domains"""

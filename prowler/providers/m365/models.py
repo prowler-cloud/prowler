@@ -30,6 +30,7 @@ class M365Credentials(BaseModel):
     tenant_id: str = ""
     tenant_domains: list[str] = []
     certificate_content: Optional[str] = None
+    pnp_powershell_ready: Optional[bool] = None
 
 
 class M365OutputOptions(ProviderOutputOptions):
