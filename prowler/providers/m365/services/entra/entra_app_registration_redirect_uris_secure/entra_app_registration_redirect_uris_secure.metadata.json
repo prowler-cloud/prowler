@@ -1,0 +1,41 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_app_registration_redirect_uris_secure",
+  "CheckTitle": "Secure redirect URIs protect application registration tokens from interception and theft",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "Entra ID **application registrations** must use **secure redirect URIs**. This check flags web, SPA and public-client redirect URIs that use plain `http://` on non-loopback hosts, reside on shared platform domains like `azurewebsites.net`, contain wildcards, or are malformed.\n\nTokens are delivered to redirect URIs, so insecure URIs expose them to interception or theft.",
+  "Risk": "An insecure redirect URI allows an attacker to **intercept authorization codes and tokens** in transit (plain HTTP), **redirect them** to a host they control (wildcard or malformed URI), or **claim a dangling subdomain** on a shared platform domain like `azurewebsites.net` to receive valid tokens for the application's users.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/entra/identity-platform/reply-url",
+    "https://learn.microsoft.com/azure/security/fundamentals/subdomain-takeover",
+    "https://learn.microsoft.com/graph/api/resources/application"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to Microsoft Entra admin center (https://entra.microsoft.com)\n2. Go to Applications > App registrations\n3. Select the flagged application\n4. Go to Authentication\n5. Replace any `http://` redirect URIs with `https://`\n6. Remove any wildcard URIs and unused or malformed URIs\n7. Move applications off `*.azurewebsites.net` onto a custom domain you own\n8. Delete redirect URIs whose domain no longer resolves in DNS",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Use only `https://` redirect URIs pointing to domains you own and control. Remove **wildcard** entries, replace shared platform domains with **custom domains**, and clean up unused or malformed URIs to prevent token theft via redirect manipulation or subdomain takeover.",
+      "Url": "https://hub.prowler.com/check/entra_app_registration_redirect_uris_secure"
+    }
+  },
+  "Categories": [
+    "internet-exposed",
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "entra_app_registration_client_secret_unused"
+  ],
+  "Notes": "DNS resolution checks for dangling domains are not performed by this check due to network egress requirements, non-deterministic results, and false positives on internal-only hostnames. Custom URI schemes used by public clients (msal://, ms-appx-web://, brk-://, urn:ietf:wg:oauth:2.0:oob, com.company.app://) are excluded from validation. Loopback hosts (localhost, 127.0.0.1, [::1]) are allowed over plain HTTP per Microsoft's platform behaviour."
+}

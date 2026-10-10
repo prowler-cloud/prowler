@@ -2116,11 +2116,34 @@ OAuthAppInfo
                             )
                         )
 
+                    # Extract redirect URIs from web, spa and publicClient
+                    web_obj = getattr(app, "web", None)
+                    web_redirect_uris = (
+                        list(getattr(web_obj, "redirect_uris", []) or [])
+                        if web_obj
+                        else []
+                    )
+                    spa_obj = getattr(app, "spa", None)
+                    spa_redirect_uris = (
+                        list(getattr(spa_obj, "redirect_uris", []) or [])
+                        if spa_obj
+                        else []
+                    )
+                    public_client_obj = getattr(app, "public_client", None)
+                    public_client_redirect_uris = (
+                        list(getattr(public_client_obj, "redirect_uris", []) or [])
+                        if public_client_obj
+                        else []
+                    )
+
                     app_registrations[object_id] = AppRegistration(
                         id=object_id,
                         app_id=app_id,
                         name=getattr(app, "display_name", "") or "",
                         password_credentials=password_credentials,
+                        web_redirect_uris=web_redirect_uris,
+                        spa_redirect_uris=spa_redirect_uris,
+                        public_client_redirect_uris=public_client_redirect_uris,
                     )
 
                 next_link = getattr(app_response, "odata_next_link", None)
@@ -2929,9 +2952,16 @@ class AppRegistration(BaseModel):
         name: The application's display name.
         password_credentials: List of password credentials (client secrets)
             registered on the application.
+        web_redirect_uris: Redirect URIs configured for the web platform.
+        spa_redirect_uris: Redirect URIs configured for the SPA platform.
+        public_client_redirect_uris: Redirect URIs configured for the
+            public client (mobile/desktop) platform.
     """
 
     id: str
     app_id: str = ""
     name: str = ""
     password_credentials: List[PasswordCredential] = []
+    web_redirect_uris: List[str] = []
+    spa_redirect_uris: List[str] = []
+    public_client_redirect_uris: List[str] = []

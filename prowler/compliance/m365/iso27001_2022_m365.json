@@ -174,6 +174,7 @@
         }
       ],
       "Checks": [
+        "entra_app_registration_redirect_uris_secure",
         "entra_conditional_access_policy_app_enforced_restrictions",
         "exchange_transport_config_smtp_auth_disabled",
         "exchange_transport_rules_mail_forwarding_disabled",
@@ -925,6 +926,7 @@
         "admincenter_users_admins_reduced_license_footprint",
         "defender_malware_policy_comprehensive_attachments_filter_applied",
         "entra_app_registration_no_unused_privileged_permissions",
+        "entra_app_registration_redirect_uris_secure",
         "entra_policy_restricts_user_consent_for_apps",
         "entra_thirdparty_integrated_apps_not_allowed",
         "sharepoint_modern_authentication_required"
