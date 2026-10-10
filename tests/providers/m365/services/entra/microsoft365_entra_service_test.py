@@ -952,10 +952,12 @@ class Test_Entra_Service:
         assert set(request_configuration.query_parameters.select) == {
             "id",
             "displayName",
+            "userPrincipalName",
             "userType",
             "accountEnabled",
             "onPremisesSyncEnabled",
             "employeeHireDate",
+            "createdDateTime",
         }
         with_url_mock.assert_called_once_with("next-link")
         assert users["user-1"].directory_roles_ids == ["role-template-1"]
@@ -1990,3 +1992,36 @@ class TestGetUsersError:
         assert users == {}
         assert service.users_error is not None
         assert "Unable to retrieve users from Microsoft Graph" in service.users_error
+
+
+class TestGroupUserMembers:
+    def _service(self, members_get):
+        service = Entra.__new__(Entra)
+        service.privileged_group_resolution_error = None
+        service._group_user_members_cache = {}
+        by_group_id = MagicMock(
+            return_value=SimpleNamespace(members=SimpleNamespace(get=members_get))
+        )
+        service.client = SimpleNamespace(
+            groups=SimpleNamespace(by_group_id=by_group_id)
+        )
+        return service, by_group_id
+
+    def test_members_are_cached_per_group(self):
+        page = SimpleNamespace(
+            value=[SimpleNamespace(id="user-1", odata_type="#microsoft.graph.user")],
+            odata_next_link=None,
+        )
+        service, by_group_id = self._service(AsyncMock(return_value=page))
+
+        first = asyncio.run(service._get_group_user_members("g-1"))
+        second = asyncio.run(service._get_group_user_members("g-1"))
+
+        assert first == second == ["user-1"]
+        assert by_group_id.call_count == 1
+
+    def test_lookup_error_is_recorded(self):
+        service, _ = self._service(AsyncMock(side_effect=RuntimeError("throttled")))
+
+        assert asyncio.run(service._get_group_user_members("g-1")) == []
+        assert "g-1" in service.privileged_group_resolution_error
