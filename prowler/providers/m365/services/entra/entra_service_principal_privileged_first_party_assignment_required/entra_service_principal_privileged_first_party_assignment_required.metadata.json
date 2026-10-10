@@ -1,0 +1,39 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_service_principal_privileged_first_party_assignment_required",
+  "CheckTitle": "Privileged Microsoft first-party administration apps require explicit user assignment",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "Microsoft Entra **service principals** for privileged first-party administration tools (Azure PowerShell, Azure CLI, Graph Explorer, Microsoft Graph Command Line Tools, etc.) have **appRoleAssignmentRequired** set to `true`, restricting sign-in to explicitly assigned users and groups.",
+  "Risk": "These Microsoft apps hold broad delegated permissions (e.g. `Directory.AccessAsUser.All`). By default **any user** can sign in. After compromising any account an attacker uses these tools to **enumerate the directory and exfiltrate data**. A missing service principal is also open because Entra creates it on first sign-in with assignment not required.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/entra/identity-platform/howto-restrict-your-app-to-a-set-of-users",
+    "https://learn.microsoft.com/entra/identity/enterprise-apps/create-service-principal-cross-tenant",
+    "https://maester.dev/docs/tests/MT.1186",
+    "https://learn.microsoft.com/graph/api/resources/serviceprincipal?view=graph-rest-1.0"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. If the service principal is missing, create it:\n   - PowerShell: `New-MgServicePrincipal -AppId <appId>`\n   - Azure CLI: `az ad sp create --id <appId>`\n2. In the Microsoft Entra admin center (https://entra.microsoft.com) go to Identity > Applications > Enterprise applications\n3. Remove the \"Application type == Enterprise Applications\" filter so Microsoft applications are listed\n4. Search by appId and select the app\n5. Go to Users and groups and assign the admin users/groups that need access\n6. Go to Properties > set \"Assignment required?\" to **Yes** > Save\n\n**Warning**: once enforced, unassigned users (including the identity running Prowler in browser/Azure CLI auth modes) can no longer sign in with these tools. Assign the scanning identity and admin group first.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Restrict privileged Microsoft first-party administration tools to explicitly assigned administrators. Create the service principal if it does not exist, assign only the users or groups who need access, and set **appRoleAssignmentRequired** to `true`. This removes a common post-compromise reconnaissance path.",
+      "Url": "https://hub.prowler.com/check/entra_service_principal_privileged_first_party_assignment_required"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Based on Maester control MT.1186. The list of monitored appIds is configurable via entra_privileged_first_party_app_ids in the m365 audit config. These are Microsoft first-party apps and are intentionally NOT filtered by MICROSOFT_FIRST_PARTY_TENANT_IDS."
+}

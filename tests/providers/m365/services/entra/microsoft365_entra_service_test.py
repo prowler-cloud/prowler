@@ -1990,3 +1990,32 @@ class TestGetUsersError:
         assert users == {}
         assert service.users_error is not None
         assert "Unable to retrieve users from Microsoft Graph" in service.users_error
+
+
+class TestEnterpriseAppAssignmentSettings:
+    def test_reads_assignment_settings(self):
+        service = Entra.__new__(Entra)
+        service.enterprise_apps_error = None
+        page = SimpleNamespace(
+            value=[
+                SimpleNamespace(
+                    id="sp-1",
+                    app_id="app-1",
+                    display_name="Contoso App",
+                    app_owner_organization_id="tenant-1",
+                    app_role_assignment_required=False,
+                    account_enabled=True,
+                    service_principal_type="Application",
+                )
+            ],
+            odata_next_link=None,
+        )
+        service.client = SimpleNamespace(
+            service_principals=SimpleNamespace(get=AsyncMock(return_value=page))
+        )
+
+        apps = asyncio.run(service._get_enterprise_app_assignment_settings())
+
+        assert service.enterprise_apps_error is None
+        assert apps["sp-1"].app_role_assignment_required is False
+        assert apps["sp-1"].app_id == "app-1"

@@ -42,6 +42,24 @@ class M365ProviderConfig(ProviderConfigBase):
         description="File extensions blocked by the malware policy.",
     )
 
+    # --- Entra (enterprise app assignment) --------------------------------
+    entra_assignment_required_excluded_app_ids: Optional[list[str]] = Field(
+        default=None,
+        description=(
+            "Application (client) IDs of enterprise apps deliberately open "
+            "to all tenant users (e.g. an intranet portal). These apps are "
+            "excluded from the assignment-required check."
+        ),
+    )
+    entra_privileged_first_party_app_ids: Optional[list[str]] = Field(
+        default=None,
+        description=(
+            "Application (client) IDs of high-privilege Microsoft first-party "
+            "apps (Azure CLI, Azure PowerShell, Graph Explorer, ...) that must "
+            "require explicit user assignment."
+        ),
+    )
+
     # --- Mailbox auditing ---------------------------------------------
     audit_log_age: Optional[int] = Field(
         default=None,
