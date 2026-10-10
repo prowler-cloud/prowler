@@ -90,6 +90,8 @@ class Entra(M365Service):
         # dependencies) fails, so checks can report that users are unavailable
         # instead of silently evaluating an empty directory.
         self.users_error: Optional[str] = None
+        # Set when the authentication methods policy could not be read.
+        self.authentication_method_configurations_error: Optional[str] = None
         self.exchange_mailbox_permission_service_principals_error: Optional[str] = None
         attributes = loop.run_until_complete(
             gather(
@@ -167,6 +169,22 @@ class Entra(M365Service):
             self.errored_directory_object_references,
         ) = loop.run_until_complete(
             self._resolve_directory_object_references(self.conditional_access_policies)
+        )
+
+        # Resolve group identifiers referenced by authentication method
+        # configurations. Similar to CA policies, this runs as a second phase
+        # after the main gather has populated
+        # ``authentication_method_configurations``. Group ids already resolved
+        # for CA policies are deduplicated to avoid redundant Graph calls.
+        self.unresolved_authentication_method_group_references: Set[str]
+        self.errored_authentication_method_group_references: Set[str]
+        (
+            self.unresolved_authentication_method_group_references,
+            self.errored_authentication_method_group_references,
+        ) = loop.run_until_complete(
+            self._resolve_authentication_method_group_references(
+                self.authentication_method_configurations
+            )
         )
 
         if created_loop:
@@ -1251,11 +1269,12 @@ OAuthAppInfo
         """Retrieve authentication method configurations from Microsoft Entra.
 
         Fetches the authentication methods policy and extracts the configuration
-        state for each authentication method (e.g., SMS, Voice, FIDO2, etc.).
+        state for each authentication method (e.g., SMS, Voice, FIDO2, etc.),
+        including the group IDs referenced in includeTargets and excludeTargets.
 
         Returns:
             Dict[str, AuthenticationMethodConfiguration]: Dictionary of authentication
-                method configurations keyed by method ID (e.g., 'sms', 'voice').
+                method configurations keyed by method ID (e.g., 'Sms', 'Voice').
         """
         logger.info("Entra - Getting authentication method configurations...")
         authentication_method_configurations = {}
@@ -1266,6 +1285,42 @@ OAuthAppInfo
             ):
                 method_id = getattr(config, "id", "")
                 if method_id:
+                    include_target_group_ids = []
+                    exclude_target_group_ids = []
+                    targets_read = True
+
+                    # Extract include targets (only available on derived types)
+                    include_targets = getattr(config, "include_targets", None)
+                    if include_targets is not None:
+                        for target in include_targets:
+                            target_id = getattr(target, "id", None)
+                            if target_id and target_id != "all_users":
+                                try:
+                                    UUID(target_id)
+                                    include_target_group_ids.append(target_id)
+                                except ValueError:
+                                    pass
+                    else:
+                        # Derived types should expose include_targets;
+                        # None means the targets could not be read.
+                        targets_read = False
+
+                    # Extract exclude targets (available on the base type)
+                    exclude_targets = getattr(config, "exclude_targets", None)
+                    if exclude_targets is not None:
+                        for target in exclude_targets:
+                            target_id = getattr(target, "id", None)
+                            if target_id and target_id != "all_users":
+                                try:
+                                    UUID(target_id)
+                                    exclude_target_group_ids.append(target_id)
+                                except ValueError:
+                                    pass
+                    else:
+                        # Graph returns [] when there are no exclusions; a missing
+                        # collection means the exclusions could not be read.
+                        targets_read = False
+
                     authentication_method_configurations[method_id] = (
                         AuthenticationMethodConfiguration(
                             id=method_id,
@@ -1274,12 +1329,16 @@ OAuthAppInfo
                                 if getattr(config, "state", None)
                                 else "disabled"
                             ),
+                            include_target_group_ids=include_target_group_ids,
+                            exclude_target_group_ids=exclude_target_group_ids,
+                            targets_read=targets_read,
                         )
                     )
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+            self.authentication_method_configurations_error = str(error)
         return authentication_method_configurations
 
     async def _get_device_registration_policy(self):
@@ -2258,6 +2317,79 @@ OAuthAppInfo
                     f"{error.__class__.__name__}: {error}"
                 )
 
+    async def _resolve_authentication_method_group_references(
+        self,
+        configs: Dict[str, "AuthenticationMethodConfiguration"],
+    ) -> Tuple[Set[str], Set[str]]:
+        """Resolve group identifiers referenced by authentication method configurations.
+
+        Collects every group id from include/exclude targets across all
+        authentication method configurations, deduplicates them, skips any
+        already resolved for Conditional Access policies, and queries
+        Microsoft Graph for each remaining one. Group ids that return HTTP 404
+        are reported as deleted; non-404 errors are reported as unresolvable.
+
+        Args:
+            configs: Authentication method configurations keyed by method ID.
+
+        Returns:
+            Tuple[Set[str], Set[str]]: A pair of sets. The first holds group
+                ids confirmed deleted (HTTP 404). The second holds group ids
+                whose lookup failed for any other reason and could be neither
+                confirmed present nor confirmed deleted.
+        """
+        logger.info(
+            "Entra - Resolving group references in authentication method "
+            "configurations..."
+        )
+
+        all_group_ids: Set[str] = set()
+        for config in configs.values():
+            all_group_ids.update(config.include_target_group_ids)
+            all_group_ids.update(config.exclude_target_group_ids)
+
+        # Reuse the results of the Conditional Access resolver for groups it
+        # already found deleted or could not look up, to avoid repeated calls.
+        already_known_deleted = {
+            gid
+            for type_, gid in self.unresolved_directory_object_references
+            if type_ == "group"
+        }
+        already_known_errored = {
+            gid
+            for type_, gid in self.errored_directory_object_references
+            if type_ == "group"
+        }
+
+        unresolved: Set[str] = set()
+        errored: Set[str] = set()
+
+        # Carry over already-known results
+        for gid in all_group_ids & already_known_deleted:
+            unresolved.add(gid)
+        for gid in all_group_ids & already_known_errored:
+            errored.add(gid)
+
+        # Resolve remaining group ids that were not already resolved for CA
+        ids_to_resolve = all_group_ids - already_known_deleted - already_known_errored
+
+        # Use a temporary set of (type, id) tuples for _resolve_identifiers_for_type
+        tmp_unresolved: Set[Tuple[str, str]] = set()
+        tmp_errored: Set[Tuple[str, str]] = set()
+
+        if ids_to_resolve:
+            await self._resolve_identifiers_for_type(
+                "group", ids_to_resolve, tmp_unresolved, tmp_errored
+            )
+
+        # Extract plain group ids from the (type, id) tuples
+        for _, gid in tmp_unresolved:
+            unresolved.add(gid)
+        for _, gid in tmp_errored:
+            errored.add(gid)
+
+        return unresolved, errored
+
 
 class ConditionalAccessPolicyState(Enum):
     ENABLED = "enabled"
@@ -2634,12 +2766,19 @@ class AuthenticationMethodConfiguration(BaseModel):
     FIDO2) within the tenant's authentication methods policy.
 
     Attributes:
-        id: The authentication method identifier (e.g., 'sms', 'voice').
+        id: The authentication method identifier (e.g., 'Sms', 'Voice', 'Fido2').
         state: The state of the authentication method ('enabled' or 'disabled').
+        include_target_group_ids: Group IDs from includeTargets (derived types only).
+        exclude_target_group_ids: Group IDs from excludeTargets (base type).
+        targets_read: False when include_targets is unexpectedly None on a
+            derived type that should expose it, indicating a read issue.
     """
 
     id: str
     state: str = "disabled"
+    include_target_group_ids: List[str] = []
+    exclude_target_group_ids: List[str] = []
+    targets_read: bool = True
 
 
 class Group(BaseModel):

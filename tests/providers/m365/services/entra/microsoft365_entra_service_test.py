@@ -1990,3 +1990,36 @@ class TestGetUsersError:
         assert users == {}
         assert service.users_error is not None
         assert "Unable to retrieve users from Microsoft Graph" in service.users_error
+
+
+class TestAuthenticationMethodTargets:
+    def _service(self, config):
+        service = Entra.__new__(Entra)
+        service.authentication_method_configurations_error = None
+        policy = SimpleNamespace(authentication_method_configurations=[config])
+        service.client = SimpleNamespace(
+            policies=SimpleNamespace(
+                authentication_methods_policy=SimpleNamespace(
+                    get=AsyncMock(return_value=policy)
+                )
+            )
+        )
+        return service
+
+    def test_missing_exclude_targets_is_unread(self):
+        config = SimpleNamespace(
+            id="Fido2", state=None, include_targets=[], exclude_targets=None
+        )
+        configs = asyncio.run(
+            self._service(config)._get_authentication_method_configurations()
+        )
+        assert configs["Fido2"].targets_read is False
+
+    def test_empty_exclude_targets_is_read(self):
+        config = SimpleNamespace(
+            id="Fido2", state=None, include_targets=[], exclude_targets=[]
+        )
+        configs = asyncio.run(
+            self._service(config)._get_authentication_method_configurations()
+        )
+        assert configs["Fido2"].targets_read is True
