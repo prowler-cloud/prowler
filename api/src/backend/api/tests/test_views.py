@@ -98,6 +98,11 @@ from rest_framework_simplejwt.token_blacklist.models import (
     OutstandingToken,
 )
 from rest_framework_simplejwt.tokens import RefreshToken
+from tasks.jobs.backfill import (
+    aggregate_scan_category_summaries,
+    aggregate_scan_resource_group_summaries,
+    backfill_resource_scan_summaries,
+)
 
 
 class TestViewSet:
@@ -7089,6 +7094,99 @@ class TestAttackPathsScanViewSet:
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
 
+def _client_restricted_to_provider(tenant, provider, factory):
+    """Authenticated client for a fresh member whose role only sees `provider`."""
+    user = User.objects.create_user(
+        name=f"restricted-{uuid4()}",
+        email=f"restricted-{uuid4()}@prowler.com",
+        password=TEST_PASSWORD,
+    )
+    Membership.objects.create(
+        user=user, tenant=tenant, role=Membership.RoleChoices.MEMBER
+    )
+    role = Role.objects.create(
+        name=f"restricted-{uuid4()}",
+        tenant_id=tenant.id,
+        manage_users=False,
+        manage_account=False,
+        manage_billing=False,
+        manage_providers=False,
+        manage_integrations=False,
+        manage_scans=False,
+        unlimited_visibility=False,
+    )
+    UserRoleRelationship.objects.create(user=user, role=role, tenant_id=tenant.id)
+    provider_group = ProviderGroup.objects.create(
+        name=f"restricted-{uuid4()}", tenant_id=tenant.id
+    )
+    ProviderGroupMembership.objects.create(
+        tenant_id=tenant.id, provider_group=provider_group, provider=provider
+    )
+    RoleProviderGroupRelationship.objects.create(
+        tenant_id=tenant.id, role=role, provider_group=provider_group
+    )
+    return factory(user, tenant)
+
+
+def _completed_scan_with_summaries(
+    tenant, provider, resources, *, categories, resource_group
+):
+    """Completed scan for `provider` with one finding over `resources`, summary tables filled."""
+    tenant_id = str(tenant.id)
+    scan = Scan.objects.create(
+        name=f"scan-{uuid4()}",
+        provider=provider,
+        trigger=Scan.TriggerChoices.MANUAL,
+        state=StateChoices.COMPLETED,
+        tenant_id=tenant_id,
+    )
+    finding = Finding.objects.create(
+        tenant_id=tenant_id,
+        uid=f"finding-{uuid4()}",
+        scan=scan,
+        delta="new",
+        status=Status.FAIL,
+        status_extended="test status",
+        impact=Severity.critical,
+        impact_extended="test impact",
+        severity=Severity.critical,
+        raw_result={"status": Status.FAIL},
+        check_id="scoped_check",
+        check_metadata={"CheckId": "scoped_check"},
+        categories=categories,
+        resource_groups=resource_group,
+        first_seen_at="2024-01-02T00:00:00Z",
+    )
+    finding.add_resources(resources)
+    backfill_resource_scan_summaries(tenant_id, str(scan.id))
+    aggregate_scan_category_summaries(tenant_id, str(scan.id))
+    aggregate_scan_resource_group_summaries(tenant_id, str(scan.id))
+    return scan
+
+
+@pytest.fixture
+def scans_per_provider_fixture(tenants_fixture, aws_provider_pair, resources_fixture):
+    """One completed scan per provider; provider 2 only owns the `test` typed resource."""
+    tenant = tenants_fixture[0]
+    provider1, provider2 = aws_provider_pair
+    resource1, resource2, resource3 = resources_fixture
+    _completed_scan_with_summaries(
+        tenant,
+        provider1,
+        [resource1, resource2],
+        categories=["iam"],
+        resource_group="identity",
+    )
+    _completed_scan_with_summaries(
+        tenant,
+        provider2,
+        [resource3],
+        categories=["data-protection"],
+        resource_group="data",
+    )
+    return tenant, provider2
+
+
 @pytest.mark.django_db
 class TestResourceViewSet:
     def test_resources_list_none(self, authenticated_client):
@@ -7459,6 +7557,42 @@ class TestResourceViewSet:
         assert attributes["regions"] == [latest_scan_resource.region]
         assert attributes["types"] == [latest_scan_resource.type]
         assert "groups" in attributes
+
+    def test_resources_metadata_restricted_to_provider_group(
+        self, authenticated_client_for_tenant_factory, scans_per_provider_fixture
+    ):
+        tenant, provider2 = scans_per_provider_fixture
+        client = _client_restricted_to_provider(
+            tenant, provider2, authenticated_client_for_tenant_factory
+        )
+
+        response = client.get(
+            reverse("resource-metadata"), {"filter[updated_at]": TODAY}
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        attributes = response.json()["data"]["attributes"]
+        assert set(attributes["services"]) == {"ec2"}
+        assert set(attributes["regions"]) == {"us-east-1"}
+        assert set(attributes["types"]) == {"test"}
+        assert set(attributes["groups"]) == {"compute"}
+
+    def test_resources_metadata_latest_restricted_to_provider_group(
+        self, authenticated_client_for_tenant_factory, scans_per_provider_fixture
+    ):
+        tenant, provider2 = scans_per_provider_fixture
+        client = _client_restricted_to_provider(
+            tenant, provider2, authenticated_client_for_tenant_factory
+        )
+
+        response = client.get(reverse("resource-metadata_latest"))
+
+        assert response.status_code == status.HTTP_200_OK
+        attributes = response.json()["data"]["attributes"]
+        assert set(attributes["services"]) == {"ec2"}
+        assert set(attributes["regions"]) == {"us-east-1"}
+        assert set(attributes["types"]) == {"test"}
+        assert set(attributes["groups"]) == {"compute"}
 
     def test_resources_latest_filter_by_provider_id(
         self, authenticated_client, latest_scan_resource
@@ -9091,6 +9225,53 @@ class TestFindingViewSet:
         attributes = response.json()["data"]["attributes"]
         assert "groups" in attributes
         assert "ai_ml" in attributes["groups"]
+
+    @patch("api.v1.views.backfill_scan_resource_summaries_task.apply_async")
+    def test_findings_metadata_restricted_to_provider_group(
+        self,
+        mock_backfill,
+        authenticated_client_for_tenant_factory,
+        scans_per_provider_fixture,
+    ):
+        tenant, provider2 = scans_per_provider_fixture
+        client = _client_restricted_to_provider(
+            tenant, provider2, authenticated_client_for_tenant_factory
+        )
+
+        response = client.get(
+            reverse("finding-metadata"), {"filter[inserted_at]": TODAY}
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        mock_backfill.assert_not_called()
+        attributes = response.json()["data"]["attributes"]
+        assert set(attributes["services"]) == {"ec2"}
+        assert set(attributes["regions"]) == {"us-east-1"}
+        assert set(attributes["resource_types"]) == {"test"}
+        assert set(attributes["categories"]) == {"data-protection"}
+
+    @patch("api.v1.views.backfill_scan_resource_summaries_task.apply_async")
+    def test_findings_metadata_latest_restricted_to_provider_group(
+        self,
+        mock_backfill,
+        authenticated_client_for_tenant_factory,
+        scans_per_provider_fixture,
+    ):
+        tenant, provider2 = scans_per_provider_fixture
+        client = _client_restricted_to_provider(
+            tenant, provider2, authenticated_client_for_tenant_factory
+        )
+
+        response = client.get(reverse("finding-metadata_latest"))
+
+        assert response.status_code == status.HTTP_200_OK
+        mock_backfill.assert_not_called()
+        attributes = response.json()["data"]["attributes"]
+        assert set(attributes["services"]) == {"ec2"}
+        assert set(attributes["regions"]) == {"us-east-1"}
+        assert set(attributes["resource_types"]) == {"test"}
+        assert set(attributes["categories"]) == {"data-protection"}
+        assert set(attributes["groups"]) == {"data"}
 
     def test_findings_filter_by_category(
         self, authenticated_client, findings_with_categories
