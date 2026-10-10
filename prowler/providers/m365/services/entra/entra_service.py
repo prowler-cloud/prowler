@@ -228,27 +228,7 @@ class Entra(M365Service):
                 "https://graph.microsoft.com/v1.0/identityGovernance/"
                 "entitlementManagement/assignmentPolicies?$expand=accessPackage"
             )
-            request_info = self.client.identity_governance.with_url(
-                url
-            ).to_get_request_information()
-            raw_policies: list = []
-            while True:
-                response = await self.client.request_adapter.send_primitive_async(
-                    request_info, "bytes", {}
-                )
-                if not response:
-                    break
-                data = json.loads(response)
-                page = data.get("value", []) or []
-                if not page:
-                    break
-                raw_policies.extend(page)
-                next_link = data.get("@odata.nextLink") or data.get("nextLink")
-                if not next_link:
-                    break
-                request_info = self.client.identity_governance.with_url(
-                    next_link
-                ).to_get_request_information()
+            raw_policies = await self._paginate_graph_url(url)
 
             for raw_policy in raw_policies:
                 approval_settings = raw_policy.get("requestApprovalSettings", {}) or {}

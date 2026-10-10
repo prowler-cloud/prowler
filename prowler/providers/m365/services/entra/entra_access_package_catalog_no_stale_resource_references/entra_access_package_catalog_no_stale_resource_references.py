@@ -46,7 +46,8 @@ class entra_access_package_catalog_no_stale_resource_references(Check):
             )
             report.status = "MANUAL"
             report.status_extended = (
-                "Entitlement management data could not be read. "
+                "Entitlement management data could not be read "
+                f"({entra_client.entitlement_management_error or 'unknown error'}). "
                 "Verify that the EntitlementManagement.Read.All permission "
                 "is granted to the scanning application and that the tenant "
                 "has a Microsoft Entra ID P2 or Entra ID Governance license."
