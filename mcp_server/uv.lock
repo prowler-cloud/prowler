@@ -792,6 +792,7 @@ source = { editable = "." }
 dependencies = [
     { name = "fastmcp" },
     { name = "httpx" },
+    { name = "pyjwt", extra = ["crypto"] },
 ]
 
 [package.dev-dependencies]
@@ -810,6 +811,7 @@ dev = [
 requires-dist = [
     { name = "fastmcp", specifier = "==3.4.5" },
     { name = "httpx", specifier = "==0.28.1" },
+    { name = "pyjwt", extras = ["crypto"], specifier = "==2.14.0" },
 ]
 
 [package.metadata.requires-dev]
