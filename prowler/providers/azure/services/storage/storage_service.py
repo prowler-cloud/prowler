@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Any, List, Optional
 
 from azure.mgmt.storage import StorageManagementClient
 from pydantic import BaseModel
@@ -7,6 +7,14 @@ from prowler.lib.logger import logger
 from prowler.providers.azure.azure_provider import AzureProvider
 from prowler.providers.azure.lib.service.service import AzureService
 
+# Storage services whose diagnostic settings are collected, with the account
+# kinds that do not expose that service.
+SERVICES_WITH_LOGGING = {
+    "queue": {"BlobStorage", "BlockBlobStorage", "FileStorage"},
+    "blob": {"FileStorage"},
+    "table": {"BlobStorage", "BlockBlobStorage", "FileStorage"},
+}
+
 
 class Storage(AzureService):
     def __init__(self, provider: AzureProvider):
@@ -14,6 +22,7 @@ class Storage(AzureService):
         self.storage_accounts = self._get_storage_accounts()
         self._get_blob_properties()
         self._get_file_share_properties()
+        self._get_services_diagnostic_settings()
 
     def _get_storage_accounts(self):
         logger.info("Storage - Getting storage accounts...")
@@ -43,6 +52,7 @@ class Storage(AzureService):
                         Account(
                             id=storage_account.id,
                             name=storage_account.name,
+                            kind=getattr(storage_account, "kind", "StorageV2"),
                             resouce_group_name=resouce_group_name,
                             enable_https_traffic_only=storage_account.enable_https_traffic_only,
                             infrastructure_encryption=storage_account.encryption.require_infrastructure_encryption,
@@ -262,6 +272,49 @@ class Storage(AzureService):
                         f"Subscription ID: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
 
+    def _get_services_diagnostic_settings(self):
+        """Fetch Azure Monitor diagnostic settings for the Queue, Blob and Table services.
+
+        For every storage account, lists the diagnostic settings of
+        ``{service}Services/default`` and stores them on the account as
+        ``{service}_service_diagnostic_settings``. Account kinds that do not
+        expose a service are skipped. When the settings cannot be read the
+        attribute stays ``None``, so checks can tell "could not read" (MANUAL)
+        apart from "no settings configured" (empty list).
+        """
+        from prowler.providers.azure.services.monitor.monitor_client import (
+            monitor_client,
+        )
+
+        logger.info("Storage - Getting Queue, Blob and Table diagnostic settings...")
+        for subscription, accounts in self.storage_accounts.items():
+            for account in accounts:
+                for service, kinds_without_service in SERVICES_WITH_LOGGING.items():
+                    if account.kind in kinds_without_service:
+                        continue
+                    try:
+                        resource_uri = (
+                            f"subscriptions/{subscription}/resourceGroups/"
+                            f"{account.resouce_group_name}/providers/"
+                            f"Microsoft.Storage/storageAccounts/{account.name}/"
+                            f"{service}Services/default"
+                        )
+                        setattr(
+                            account,
+                            f"{service}_service_diagnostic_settings",
+                            monitor_client.diagnostic_settings_with_uri(
+                                subscription,
+                                resource_uri,
+                                monitor_client.clients[subscription],
+                                raise_on_error=True,
+                            ),
+                        )
+                    except Exception as error:
+                        logger.error(
+                            f"Subscription ID: {subscription} -- "
+                            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
+
 
 class DeleteRetentionPolicy(BaseModel):
     enabled: bool
@@ -304,6 +357,7 @@ class FileServiceProperties(BaseModel):
 class Account(BaseModel):
     id: str
     name: str
+    kind: str = "StorageV2"
     location: str
     resouce_group_name: str
     enable_https_traffic_only: bool
@@ -321,3 +375,6 @@ class Account(BaseModel):
     blob_properties: Optional[BlobProperties] = None
     default_to_entra_authorization: bool = False
     file_service_properties: Optional[FileServiceProperties] = None
+    queue_service_diagnostic_settings: Optional[List[Any]] = None
+    blob_service_diagnostic_settings: Optional[List[Any]] = None
+    table_service_diagnostic_settings: Optional[List[Any]] = None

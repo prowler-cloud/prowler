@@ -33,7 +33,9 @@ class Monitor(AzureService):
                 )
         return diagnostics_settings
 
-    def diagnostic_settings_with_uri(self, subscription, uri, client):
+    def diagnostic_settings_with_uri(
+        self, subscription, uri, client, raise_on_error: bool = False
+    ):
         diagnostics_settings = []
         try:
             settings = client.diagnostic_settings.list(resource_uri=uri)
@@ -63,6 +65,9 @@ class Monitor(AzureService):
             logger.error(
                 f"Subscription ID: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+            # Let callers that must tell "could not read" from "no settings" handle it.
+            if raise_on_error:
+                raise
         return diagnostics_settings
 
     def get_alert_rules(self):

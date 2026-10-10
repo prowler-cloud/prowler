@@ -714,7 +714,10 @@
       ],
       "Checks": [
         "entra_trusted_named_locations_exists",
-        "monitor_diagnostic_setting_with_appropriate_categories"
+        "monitor_diagnostic_setting_with_appropriate_categories",
+        "storage_queue_service_logging_enabled",
+        "storage_blob_service_logging_enabled",
+        "storage_table_service_logging_enabled"
       ]
     },
     {
@@ -736,7 +739,8 @@
         }
       ],
       "Checks": [
-        "monitor_storage_account_with_activity_logs_is_private"
+        "monitor_storage_account_with_activity_logs_is_private",
+        "storage_blob_service_logging_enabled"
       ]
     },
     {
@@ -1181,7 +1185,8 @@
         "network_watcher_enabled",
         "defender_ensure_notify_alerts_severity_is_high",
         "network_public_ip_shodan",
-        "app_http_logs_enabled"
+        "app_http_logs_enabled",
+        "storage_queue_service_logging_enabled"
       ]
     },
     {
