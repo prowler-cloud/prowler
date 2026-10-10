@@ -18,6 +18,8 @@ DATABASES = {
 
 DATABASE_ROUTERS = []
 TESTING = True
+# `_ensure_secrets` is skipped while testing, and Django rejects an empty SECRET_KEY
+SECRET_KEY = env("SECRET_KEY", default="insecure-testing-secret-key-do-not-use-in-prod")
 # Override page size for testing to a value only slightly above the current fixture count.
 # We explicitly set PAGE_SIZE to 15 (round number just above fixture) to avoid masking pagination bugs, while not setting it excessively high.
 # If you add more providers to the fixture, please review that the total value is below the current one and update this value if needed.

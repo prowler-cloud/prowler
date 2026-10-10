@@ -8,13 +8,20 @@ import api
 import api.apps as api_apps_module
 import pytest
 from api.apps import (
+    ENCRYPTION_KEY_ENV,
+    ENCRYPTION_KEY_FILE,
     PRIVATE_KEY_FILE,
     PUBLIC_KEY_FILE,
+    SECRET_KEY_ENV,
+    SECRET_KEY_FILE,
     SIGNING_KEY_ENV,
     VERIFYING_KEY_ENV,
     ApiConfig,
 )
+from cryptography.fernet import Fernet
+from django.apps import AppConfig
 from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured
 
 
 @pytest.fixture(autouse=True)
@@ -203,3 +210,197 @@ def test_ready_never_eagerly_initializes_neo4j_driver(monkeypatch, argv):
         config.ready()
 
     init_driver.assert_not_called()
+
+
+@pytest.fixture
+def secrets_dir(monkeypatch, tmp_path):
+    """Isolated key directory with both symmetric secrets empty and generation enabled."""
+    monkeypatch.setattr(
+        api_apps_module, "KEYS_DIRECTORY", Path(tmp_path), raising=False
+    )
+    monkeypatch.setattr(settings, "TESTING", False, raising=False)
+    monkeypatch.setattr(settings, "SECRET_KEY", settings.SECRET_KEY, raising=False)
+    monkeypatch.setattr(settings, "SECRETS_ENCRYPTION_KEY", "", raising=False)
+    monkeypatch.setattr(
+        settings, "DRF_API_KEY", settings.DRF_API_KEY.copy(), raising=False
+    )
+    monkeypatch.delenv(ENCRYPTION_KEY_ENV, raising=False)
+    monkeypatch.delenv(SECRET_KEY_ENV, raising=False)
+    return Path(tmp_path)
+
+
+def _throwaway_fernet_key():
+    return Fernet.generate_key().decode()
+
+
+def test_ensure_secrets_refuses_published_encryption_key(monkeypatch, secrets_dir):
+    published = _throwaway_fernet_key()
+    monkeypatch.setattr(settings, "SECRETS_ENCRYPTION_KEY", published, raising=False)
+    monkeypatch.setattr(
+        api_apps_module,
+        "PUBLISHED_ENCRYPTION_KEY_DIGESTS",
+        frozenset({api_apps_module._digest(published)}),
+        raising=False,
+    )
+
+    with pytest.raises(ImproperlyConfigured) as exc_info:
+        _make_app()._ensure_secrets()
+
+    assert ENCRYPTION_KEY_ENV in str(exc_info.value)
+    assert published not in str(exc_info.value)
+    assert not (secrets_dir / ENCRYPTION_KEY_FILE).exists()
+
+
+def test_ensure_crypto_keys_refuses_published_signing_key(monkeypatch, tmp_path):
+    published, verifying = _stub_keys()
+    monkeypatch.setattr(
+        api_apps_module, "KEYS_DIRECTORY", Path(tmp_path), raising=False
+    )
+    monkeypatch.setattr(api_apps_module, "_keys_initialized", False, raising=False)
+    monkeypatch.setenv(SIGNING_KEY_ENV, published)
+    monkeypatch.setenv(VERIFYING_KEY_ENV, verifying)
+    monkeypatch.setattr(settings, "TESTING", False, raising=False)
+    monkeypatch.setattr(
+        api_apps_module,
+        "PUBLISHED_SIGNING_KEY_DIGESTS",
+        frozenset({api_apps_module._pem_digest(published)}),
+        raising=False,
+    )
+
+    with pytest.raises(ImproperlyConfigured) as exc_info:
+        ApiConfig("api", api_apps_module)._ensure_crypto_keys()
+
+    assert SIGNING_KEY_ENV in str(exc_info.value)
+    assert "PRIVATE" not in str(exc_info.value)
+    assert not (Path(tmp_path) / PRIVATE_KEY_FILE).exists()
+
+
+def test_pem_digest_ignores_indentation_and_wrapping():
+    # derived from the existing stub so no PEM literal is added to this file
+    flat = _stub_keys()[0]
+    indented = "".join(f"    {line}\n" for line in flat.splitlines())
+    wrapped = flat.replace("PRIVATE\n", "PRIV\nATE\n", 1)
+
+    assert api_apps_module._pem_digest(indented) == api_apps_module._pem_digest(flat)
+    assert api_apps_module._pem_digest(wrapped) == api_apps_module._pem_digest(flat)
+
+
+def test_ensure_secrets_generates_encryption_key_when_empty(secrets_dir):
+    _make_app()._ensure_secrets()
+
+    key_path = secrets_dir / ENCRYPTION_KEY_FILE
+    generated = key_path.read_text()
+    assert key_path.stat().st_mode & 0o777 == 0o600
+    Fernet(generated.encode())
+    assert settings.SECRETS_ENCRYPTION_KEY == generated
+    assert settings.DRF_API_KEY["FERNET_SECRET"] == generated
+    assert os.environ[ENCRYPTION_KEY_ENV] == generated
+
+
+def test_ensure_secrets_reuses_persisted_encryption_key(monkeypatch, secrets_dir):
+    persisted = _throwaway_fernet_key()
+    (secrets_dir / ENCRYPTION_KEY_FILE).write_text(persisted + "\n")
+
+    def _fail_generate():
+        raise AssertionError("a persisted encryption key must not be regenerated")
+
+    monkeypatch.setattr(
+        ApiConfig, "_generate_encryption_key", staticmethod(_fail_generate)
+    )
+
+    _make_app()._ensure_secrets()
+
+    assert settings.SECRETS_ENCRYPTION_KEY == persisted
+    assert (secrets_dir / ENCRYPTION_KEY_FILE).read_text() == persisted + "\n"
+
+
+def test_ensure_secrets_keeps_explicit_encryption_key(monkeypatch, secrets_dir):
+    explicit = _throwaway_fernet_key()
+    monkeypatch.setattr(settings, "SECRETS_ENCRYPTION_KEY", explicit, raising=False)
+
+    _make_app()._ensure_secrets()
+
+    assert settings.SECRETS_ENCRYPTION_KEY == explicit
+    assert not (secrets_dir / ENCRYPTION_KEY_FILE).exists()
+
+
+@pytest.mark.skipif(os.geteuid() == 0, reason="root ignores directory permissions")
+def test_ensure_secrets_refuses_empty_encryption_key_when_unpersistable(
+    monkeypatch, secrets_dir
+):
+    secrets_dir.chmod(0o500)
+    monkeypatch.setattr(
+        api_apps_module, "KEYS_DIRECTORY", secrets_dir / "keys", raising=False
+    )
+
+    try:
+        with pytest.raises(ImproperlyConfigured) as exc_info:
+            _make_app()._ensure_secrets()
+    finally:
+        secrets_dir.chmod(0o700)
+
+    assert ENCRYPTION_KEY_ENV in str(exc_info.value)
+    assert settings.SECRETS_ENCRYPTION_KEY == ""
+
+
+def test_ensure_secrets_recovers_when_another_process_wrote_the_key_first(
+    monkeypatch, secrets_dir
+):
+    winner = _throwaway_fernet_key()
+    real_open = os.open
+
+    def _lose_the_race(path, flags, *args):
+        if Path(path).name == ENCRYPTION_KEY_FILE:
+            (secrets_dir / ENCRYPTION_KEY_FILE).write_text(winner)
+        return real_open(path, flags, *args)
+
+    monkeypatch.setattr(api_apps_module.os, "open", _lose_the_race)
+
+    _make_app()._ensure_secrets()
+
+    assert settings.SECRETS_ENCRYPTION_KEY == winner
+
+
+def test_ensure_secrets_generates_secret_key_when_empty(monkeypatch, secrets_dir):
+    monkeypatch.setattr(
+        settings, "SECRETS_ENCRYPTION_KEY", _throwaway_fernet_key(), raising=False
+    )
+
+    _make_app()._ensure_secrets()
+
+    generated = (secrets_dir / SECRET_KEY_FILE).read_text()
+    assert len(generated) == 50
+    assert settings.SECRET_KEY == generated
+    assert os.environ[SECRET_KEY_ENV] == generated
+
+
+def test_ensure_secrets_keeps_explicit_secret_key(monkeypatch, secrets_dir):
+    monkeypatch.setattr(
+        settings, "SECRETS_ENCRYPTION_KEY", _throwaway_fernet_key(), raising=False
+    )
+    monkeypatch.setenv(SECRET_KEY_ENV, "explicit-throwaway-secret-key")
+
+    _make_app()._ensure_secrets()
+
+    assert not (secrets_dir / SECRET_KEY_FILE).exists()
+
+
+def test_ensure_secrets_is_skipped_while_testing(monkeypatch, secrets_dir):
+    monkeypatch.setattr(settings, "TESTING", True, raising=False)
+
+    _make_app()._ensure_secrets()
+
+    assert not (secrets_dir / ENCRYPTION_KEY_FILE).exists()
+    assert not (secrets_dir / SECRET_KEY_FILE).exists()
+
+
+def test_import_models_settles_secrets_before_loading_models(monkeypatch):
+    calls = []
+    monkeypatch.setattr(
+        ApiConfig, "_ensure_secrets", lambda self: calls.append("secrets")
+    )
+    monkeypatch.setattr(AppConfig, "import_models", lambda self: calls.append("models"))
+
+    _make_app().import_models()
+
+    assert calls == ["secrets", "models"]
