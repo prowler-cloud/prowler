@@ -244,6 +244,7 @@
         "defenderxdr_endpoint_privileged_user_exposed_credentials",
         "entra_admin_users_mfa_enabled",
         "entra_admin_users_sign_in_frequency_enabled",
+        "entra_app_registration_certificate_lifetime_restricted",
         "entra_break_glass_account_fido2_security_key_registered",
         "entra_conditional_access_policy_mfa_enforced_for_guest_users",
         "entra_default_app_management_policy_enabled",
@@ -261,7 +262,8 @@
         "entra_users_mfa_enabled",
         "exchange_organization_modern_authentication_enabled",
         "exchange_transport_config_smtp_auth_disabled",
-        "sharepoint_modern_authentication_required"
+        "sharepoint_modern_authentication_required",
+        "entra_app_registration_certificate_not_expired"
       ]
     },
     {
@@ -719,6 +721,7 @@
         "entra_admin_users_mfa_enabled",
         "entra_admin_users_sign_in_frequency_enabled",
         "entra_all_apps_conditional_access_coverage",
+        "entra_app_registration_certificate_lifetime_restricted",
         "entra_conditional_access_policy_device_registration_mfa_required",
         "entra_conditional_access_policy_mfa_enforced_for_guest_users",
         "entra_intune_enrollment_sign_in_frequency_every_time",
