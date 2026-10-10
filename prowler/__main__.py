@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import os
 import sys
 import tempfile
 from os import environ
@@ -236,6 +237,12 @@ def _send_ocsf_to_cloud(file_path: str) -> dict | None:
 
 
 def prowler():
+    # On the CLI the operator supplies the target themselves, so the outbound host
+    # check defends nothing and would refuse their own private network. setdefault,
+    # so an operator who set the variable explicitly keeps their choice. The name is
+    # the one the registry guard reads, in `image/lib/registry/base.py`.
+    os.environ.setdefault("PROWLER_SKIP_OUTBOUND_HOST_CHECK", "true")
+
     # Parse Arguments
     # Refactor(CLI)
     parser = ProwlerArgumentParser()

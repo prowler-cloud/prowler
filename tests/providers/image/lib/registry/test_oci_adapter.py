@@ -11,6 +11,7 @@ from prowler.providers.image.exceptions.exceptions import (
     ImageRegistryCatalogError,
     ImageRegistryNetworkError,
 )
+from prowler.providers.image.lib.registry.base import _MAX_REDIRECTS
 from prowler.providers.image.lib.registry.oci_adapter import OciRegistryAdapter
 
 
@@ -545,6 +546,104 @@ class TestOutboundUrlValidator:
         ):
             canonical = adapter._validate_outbound_url("https://ghcr.io/token")
         assert canonical == "https://ghcr.io/token"
+
+
+class TestTenantSuppliedRegistryUrlValidator:
+    @pytest.mark.parametrize(
+        "registry_url",
+        [
+            "http://169.254.169.254",
+            "http://10.0.0.5:5000",
+            "http://127.0.0.1:5000",
+            "http://100.100.100.200",
+            "http://100.64.0.1",
+        ],
+    )
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_rejects_a_non_public_registry_url_before_any_request(
+        self, mock_request, registry_url
+    ):
+        adapter = OciRegistryAdapter(registry_url=registry_url)
+
+        with pytest.raises(ImageRegistryAuthError):
+            adapter.list_repositories()
+
+        mock_request.assert_not_called()
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_allows_a_registry_url_inside_an_allowlisted_network(
+        self, mock_request, monkeypatch
+    ):
+        monkeypatch.setenv(
+            "PROWLER_IMAGE_PROVIDER_ALLOWED_PRIVATE_NETWORKS", "10.0.0.0/8"
+        )
+        resp = MagicMock(status_code=200, headers={}, ok=True)
+        resp.json.return_value = {"repositories": ["internal-app"]}
+        mock_request.return_value = resp
+        adapter = OciRegistryAdapter(registry_url="http://10.0.0.5:5000")
+
+        assert adapter.list_repositories() == ["internal-app"]
+        assert mock_request.called
+
+
+class TestOutboundCheckOptOut:
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_private_registry_is_reachable_when_the_check_is_skipped(
+        self, mock_request, monkeypatch
+    ):
+        monkeypatch.setenv("PROWLER_SKIP_OUTBOUND_HOST_CHECK", "true")
+        resp = MagicMock(status_code=200, headers={}, ok=True)
+        resp.json.return_value = {"repositories": ["internal-app"]}
+        mock_request.return_value = resp
+        adapter = OciRegistryAdapter(registry_url="http://10.0.0.5:5000")
+
+        assert adapter.list_repositories() == ["internal-app"]
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_private_registry_is_refused_when_the_variable_is_unset(
+        self, mock_request, monkeypatch
+    ):
+        monkeypatch.delenv("PROWLER_SKIP_OUTBOUND_HOST_CHECK", raising=False)
+        adapter = OciRegistryAdapter(registry_url="http://10.0.0.5:5000")
+
+        with pytest.raises(ImageRegistryAuthError):
+            adapter.list_repositories()
+
+        mock_request.assert_not_called()
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_the_origin_rule_still_applies_when_skipped(
+        self, mock_request, monkeypatch
+    ):
+        """Skipping the address check must not let a registry redirect us elsewhere."""
+        monkeypatch.setenv("PROWLER_SKIP_OUTBOUND_HOST_CHECK", "true")
+        adapter = OciRegistryAdapter(registry_url="https://registry.example.com")
+
+        with pytest.raises(ImageRegistryAuthError, match="unrelated to registry host"):
+            adapter._validate_outbound_url("https://attacker.example.net/token")
+
+        mock_request.assert_not_called()
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_a_same_origin_url_is_allowed_when_skipped(self, mock_request, monkeypatch):
+        monkeypatch.setenv("PROWLER_SKIP_OUTBOUND_HOST_CHECK", "true")
+        adapter = OciRegistryAdapter(registry_url="https://registry.example.com")
+
+        assert adapter._validate_outbound_url(
+            "https://registry.example.com/v2/token"
+        ).startswith("https://registry.example.com/")
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_the_scheme_check_still_applies_when_skipped(
+        self, mock_request, monkeypatch
+    ):
+        monkeypatch.setenv("PROWLER_SKIP_OUTBOUND_HOST_CHECK", "true")
+        adapter = OciRegistryAdapter(registry_url="https://registry.example.com")
+
+        with pytest.raises(ImageRegistryAuthError, match="Disallowed URL scheme"):
+            adapter._validate_outbound_url("file:///etc/passwd", enforce_origin=False)
+
+        mock_request.assert_not_called()
 
 
 class TestObtainBearerTokenAppliesValidator:
@@ -1325,3 +1424,151 @@ class TestOciAdapterArtifactIndexAndCaseInsensitivity:
             {"artifactType": "Application/vnd.CNCF.Helm.Config.v1+json"},
         )
         assert self._adapter().is_container_image("charts/app", "1.0") is False
+
+
+def _redirect(location: str):
+    return MagicMock(status_code=302, headers={"Location": location})
+
+
+class TestValidatedRedirects:
+    """A registry may redirect, but the guard must see each destination.
+
+    ``requests`` follows redirects itself, so without this the final host is
+    never validated.
+    """
+
+    def _adapter(self):
+        return OciRegistryAdapter("https://reg.io", token="t")
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_never_lets_requests_follow_on_its_own(self, mock_request):
+        mock_request.return_value = MagicMock(status_code=200, headers={})
+
+        self._adapter()._request_with_retry("GET", "https://reg.io/v2/")
+
+        assert mock_request.call_args.kwargs["allow_redirects"] is False
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_rejects_a_redirect_to_a_non_public_address(self, mock_request):
+        mock_request.return_value = _redirect("http://169.254.169.254/latest/meta-data")
+
+        with pytest.raises(ImageRegistryAuthError, match="non-public"):
+            self._adapter()._request_with_retry("GET", "https://reg.io/v2/")
+
+        assert mock_request.call_count == 1
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_follows_a_redirect_to_a_public_address(self, mock_request):
+        # Docker Hub sends blob pulls to a CDN on an unrelated host
+        final = MagicMock(status_code=200, headers={})
+        mock_request.side_effect = [_redirect("https://cdn.example.com/blob"), final]
+
+        resp = self._adapter()._request_with_retry("GET", "https://reg.io/v2/blob")
+
+        assert resp is final
+        assert mock_request.call_args_list[1][0][1] == "https://cdn.example.com/blob"
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_resolves_a_relative_location_against_the_current_url(self, mock_request):
+        final = MagicMock(status_code=200, headers={})
+        mock_request.side_effect = [_redirect("/v2/token"), final]
+
+        self._adapter()._request_with_retry("GET", "https://reg.io/v2/")
+
+        assert mock_request.call_args_list[1][0][1] == "https://reg.io/v2/token"
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_bounds_a_redirect_chain(self, mock_request):
+        mock_request.return_value = _redirect("https://reg.io/v2/again")
+
+        with pytest.raises(ImageRegistryNetworkError, match="redirects"):
+            self._adapter()._request_with_retry("GET", "https://reg.io/v2/")
+
+        assert mock_request.call_count == _MAX_REDIRECTS + 1
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_drops_credentials_on_a_cross_origin_redirect(self, mock_request):
+        """Following redirects by hand loses what requests' rebuild_auth does."""
+        mock_request.side_effect = [
+            _redirect("https://cdn.example.com/signed?sig=abc"),
+            MagicMock(status_code=200, headers={}),
+        ]
+
+        self._adapter()._request_with_retry(
+            "GET",
+            "https://reg.io/v2/blob",
+            headers={"Authorization": "Bearer a-token"},
+            auth=("user", "pass"),
+        )
+
+        hop_kwargs = mock_request.call_args_list[1].kwargs
+        assert "Authorization" not in hop_kwargs["headers"]
+        assert "auth" not in hop_kwargs
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_keeps_credentials_on_a_same_origin_redirect(self, mock_request):
+        mock_request.side_effect = [
+            _redirect("https://reg.io/v2/token"),
+            MagicMock(status_code=200, headers={}),
+        ]
+
+        self._adapter()._request_with_retry(
+            "GET", "https://reg.io/v2/", headers={"Authorization": "Bearer a-token"}
+        )
+
+        hop_headers = mock_request.call_args_list[1].kwargs["headers"]
+        assert hop_headers["Authorization"] == "Bearer a-token"
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_does_not_reapply_params_to_the_redirect_destination(self, mock_request):
+        """A signed URL a registry redirects to carries its own query."""
+        mock_request.side_effect = [
+            _redirect("https://reg.io/signed?sig=abc"),
+            MagicMock(status_code=200, headers={}),
+        ]
+
+        self._adapter()._request_with_retry(
+            "GET", "https://reg.io/v2/_catalog", params={"n": 200}
+        )
+
+        assert "params" not in mock_request.call_args_list[1].kwargs
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_a_redirected_post_becomes_a_get_without_its_body(self, mock_request):
+        """A redirected login would otherwise re-send its credentials."""
+        mock_request.side_effect = [
+            _redirect("https://cdn.example.com/elsewhere"),
+            MagicMock(status_code=200, headers={}),
+        ]
+
+        self._adapter()._request_with_retry(
+            "POST", "https://reg.io/v2/users/login", json={"password": "a-password"}
+        )
+
+        hop = mock_request.call_args_list[1]
+        assert hop[0][0] == "GET"
+        assert "json" not in hop.kwargs
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_a_temporary_redirect_replays_the_request(self, mock_request):
+        mock_request.side_effect = [
+            MagicMock(status_code=307, headers={"Location": "https://reg.io/v2/moved"}),
+            MagicMock(status_code=200, headers={}),
+        ]
+
+        self._adapter()._request_with_retry("POST", "https://reg.io/v2/", json={"a": 1})
+
+        hop = mock_request.call_args_list[1]
+        assert hop[0][0] == "POST"
+        assert hop.kwargs["json"] == {"a": 1}
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_a_301_only_rewrites_a_post(self, mock_request):
+        mock_request.side_effect = [
+            MagicMock(status_code=301, headers={"Location": "https://reg.io/v2/moved"}),
+            MagicMock(status_code=200, headers={}),
+        ]
+
+        self._adapter()._request_with_retry("PUT", "https://reg.io/v2/")
+
+        assert mock_request.call_args_list[1][0][0] == "PUT"
