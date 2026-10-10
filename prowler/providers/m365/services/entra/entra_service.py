@@ -91,6 +91,9 @@ class Entra(M365Service):
         # instead of silently evaluating an empty directory.
         self.users_error: Optional[str] = None
         self.exchange_mailbox_permission_service_principals_error: Optional[str] = None
+        self.entitlement_management_error: Optional[str] = None
+        # Set when access package assignment policies could not be read.
+        self.assignment_policies_error: Optional[str] = None
         attributes = loop.run_until_complete(
             gather(
                 self._get_authorization_policy(),
@@ -114,6 +117,8 @@ class Entra(M365Service):
                 self._get_authentication_methods_policy_settings(),
                 self._get_pim_role_approval_settings(),
                 self._get_access_review_definitions(),
+                self._get_entitlement_management(),
+                self._get_assignment_policies(),
             )
         )
 
@@ -150,6 +155,12 @@ class Entra(M365Service):
             19
         ]
         self.access_review_definitions: List[AccessReviewDefinition] = attributes[20]
+        self.access_package_catalogs: Optional[List["AccessPackageCatalog"]] = (
+            attributes[21]
+        )
+        self.assignment_policies: Optional[List["AccessPackageAssignmentPolicy"]] = (
+            attributes[22]
+        )
         self.user_accounts_status = {}
 
         # Resolve directory-object identifiers referenced by Conditional Access
@@ -169,9 +180,289 @@ class Entra(M365Service):
             self._resolve_directory_object_references(self.conditional_access_policies)
         )
 
+        # Resolve groups and service principals referenced by entitlement
+        # management catalogs.  Runs as a separate phase because it depends on
+        # the main gather having populated ``access_package_catalogs`` first.
+        # Results are cached so the check reads them without issuing Graph calls.
+        self.catalog_group_exists: Dict[str, bool] = {}
+        self.catalog_sp_app_roles: Dict[str, Optional[List[Dict[str, Any]]]] = {}
+        self.catalog_errored_ids: Set[str] = set()
+        if self.access_package_catalogs is not None:
+            (
+                self.catalog_group_exists,
+                self.catalog_sp_app_roles,
+                self.catalog_errored_ids,
+            ) = loop.run_until_complete(
+                self._resolve_catalog_resource_references(self.access_package_catalogs)
+            )
+
+        # Resolve approver users/groups referenced by access package assignment
+        # policies. This phase validates singleUser and groupMembers approvers
+        # so the check can report deleted, disabled, or empty approvers.
+        if self.assignment_policies is not None:
+            loop.run_until_complete(
+                self._resolve_assignment_policy_approvers(self.assignment_policies)
+            )
+
         if created_loop:
             asyncio.set_event_loop(None)
             loop.close()
+
+    async def _get_assignment_policies(self):
+        """Retrieve access package assignment policies from entitlement management.
+
+        Fetches ``identityGovernance/entitlementManagement/assignmentPolicies``
+        with ``$expand=accessPackage`` and parses the approval settings for each
+        policy that requires approval (``isApprovalRequiredForAdd`` or
+        ``isApprovalRequiredForUpdate``).
+
+        Returns:
+            Optional[List[AccessPackageAssignmentPolicy]]: The parsed policies
+                that require approval, or ``None`` when the listing itself fails
+                (missing permission, unlicensed tenant, throttling).
+        """
+        logger.info("Entra - Getting access package assignment policies...")
+        policies: List[AccessPackageAssignmentPolicy] = []
+        try:
+            url = (
+                "https://graph.microsoft.com/v1.0/identityGovernance/"
+                "entitlementManagement/assignmentPolicies?$expand=accessPackage"
+            )
+            raw_policies = await self._paginate_graph_url(url)
+
+            for raw_policy in raw_policies:
+                approval_settings = raw_policy.get("requestApprovalSettings", {}) or {}
+                is_add = bool(approval_settings.get("isApprovalRequiredForAdd", False))
+                is_update = bool(
+                    approval_settings.get("isApprovalRequiredForUpdate", False)
+                )
+                if not is_add and not is_update:
+                    # Policy does not require approval — skip.
+                    continue
+
+                access_package = raw_policy.get("accessPackage", {}) or {}
+                raw_stages = approval_settings.get("stages") or []
+                stages: List[ApprovalStage] = []
+                for raw_stage in raw_stages:
+                    approvers: List[Approver] = []
+                    for raw_approver in raw_stage.get("primaryApprovers") or []:
+                        odata_type = raw_approver.get("@odata.type", "")
+                        approvers.append(
+                            Approver(
+                                odata_type=odata_type,
+                                user_id=raw_approver.get("userId"),
+                                group_id=raw_approver.get("groupId"),
+                                display_name=raw_approver.get("description"),
+                            )
+                        )
+                    stages.append(ApprovalStage(primary_approvers=approvers))
+
+                policies.append(
+                    AccessPackageAssignmentPolicy(
+                        id=raw_policy.get("id", ""),
+                        display_name=raw_policy.get("displayName", ""),
+                        access_package_id=access_package.get("id", ""),
+                        access_package_name=access_package.get("displayName", ""),
+                        is_approval_required_for_add=is_add,
+                        is_approval_required_for_update=is_update,
+                        stages=stages,
+                    )
+                )
+        except Exception as error:
+            self.assignment_policies_error = f"{error.__class__.__name__}: {error}"
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            return None
+        return policies
+
+    async def _resolve_assignment_policy_approvers(
+        self,
+        policies: List["AccessPackageAssignmentPolicy"],
+    ) -> None:
+        """Validate singleUser and groupMembers approvers across all policies.
+
+        Deduplicates user and group identifiers, queries Microsoft Graph once
+        per identifier, and annotates each ``Approver`` with the validation
+        result. HTTP 404 marks an approver as deleted; non-404 errors leave it
+        as errored so the check can report MANUAL.
+
+        Args:
+            policies: Assignment policies whose approvers need validation.
+        """
+        logger.info(
+            "Entra - Resolving approver references in access package "
+            "assignment policies..."
+        )
+
+        # Collect unique user and group IDs across all policies.
+        user_ids: Set[str] = set()
+        group_ids: Set[str] = set()
+        for policy in policies:
+            for stage in policy.stages:
+                for approver in stage.primary_approvers:
+                    if (
+                        approver.odata_type == "#microsoft.graph.singleUser"
+                        and approver.user_id
+                    ):
+                        user_ids.add(approver.user_id)
+                    elif (
+                        approver.odata_type == "#microsoft.graph.groupMembers"
+                        and approver.group_id
+                    ):
+                        group_ids.add(approver.group_id)
+
+        # Resolve users: exists? enabled?
+        user_results: Dict[str, ApproverResolution] = {}
+        for uid in user_ids:
+            user_results[uid] = await self._resolve_approver_user(uid)
+
+        # Resolve groups: exists? has members?
+        group_results: Dict[str, ApproverResolution] = {}
+        for gid in group_ids:
+            group_results[gid] = await self._resolve_approver_group(gid)
+
+        # Annotate approver objects with resolution results.
+        for policy in policies:
+            for stage in policy.stages:
+                for approver in stage.primary_approvers:
+                    if approver.odata_type == "#microsoft.graph.singleUser":
+                        if approver.user_id and approver.user_id in user_results:
+                            approver.resolution = user_results[approver.user_id]
+                        elif not approver.user_id:
+                            approver.resolution = ApproverResolution(
+                                status=ApproverStatus.INVALID_ENTRY,
+                            )
+                    elif approver.odata_type == "#microsoft.graph.groupMembers":
+                        if approver.group_id and approver.group_id in group_results:
+                            approver.resolution = group_results[approver.group_id]
+                        elif not approver.group_id:
+                            approver.resolution = ApproverResolution(
+                                status=ApproverStatus.INVALID_ENTRY,
+                            )
+
+    async def _resolve_approver_user(self, user_id: str) -> "ApproverResolution":
+        """Look up a single user by ID and return its approval resolution status.
+
+        Args:
+            user_id: The Microsoft Entra ID user identifier.
+
+        Returns:
+            ApproverResolution with the appropriate status.
+        """
+        try:
+            config = RequestConfiguration()
+            config.query_parameters = (
+                UsersRequestBuilder.UsersRequestBuilderGetQueryParameters(
+                    select=["id", "displayName", "accountEnabled"],
+                )
+            )
+            user = await self.client.users.by_user_id(user_id).get(
+                request_configuration=config
+            )
+            display_name = getattr(user, "display_name", None)
+            enabled = getattr(user, "account_enabled", None)
+            if enabled is False:
+                return ApproverResolution(
+                    status=ApproverStatus.USER_DISABLED,
+                    display_name=display_name,
+                )
+            return ApproverResolution(
+                status=ApproverStatus.VALID,
+                display_name=display_name,
+            )
+        except ODataError as error:
+            status_code = getattr(error, "response_status_code", None)
+            error_code = getattr(error.error, "code", None) if error.error else None
+            if status_code == 404 or error_code == "Request_ResourceNotFound":
+                return ApproverResolution(status=ApproverStatus.USER_DELETED)
+            logger.warning(
+                f"Entra - Could not resolve approver user '{user_id}': "
+                f"{error.__class__.__name__}: {error}"
+            )
+            return ApproverResolution(status=ApproverStatus.ERROR)
+        except Exception as error:
+            logger.warning(
+                f"Entra - Unexpected error resolving approver user '{user_id}': "
+                f"{error.__class__.__name__}: {error}"
+            )
+            return ApproverResolution(status=ApproverStatus.ERROR)
+
+    async def _resolve_approver_group(self, group_id: str) -> "ApproverResolution":
+        """Look up a group by ID and check if it has at least one member.
+
+        Args:
+            group_id: The Microsoft Entra ID group identifier.
+
+        Returns:
+            ApproverResolution with the appropriate status.
+        """
+        try:
+            config = RequestConfiguration()
+            config.query_parameters = (
+                GroupsRequestBuilder.GroupsRequestBuilderGetQueryParameters(
+                    select=["id", "displayName"],
+                )
+            )
+            group = await self.client.groups.by_group_id(group_id).get(
+                request_configuration=config
+            )
+            display_name = getattr(group, "display_name", None)
+        except ODataError as error:
+            status_code = getattr(error, "response_status_code", None)
+            error_code = getattr(error.error, "code", None) if error.error else None
+            if status_code == 404 or error_code == "Request_ResourceNotFound":
+                return ApproverResolution(status=ApproverStatus.GROUP_DELETED)
+            logger.warning(
+                f"Entra - Could not resolve approver group '{group_id}': "
+                f"{error.__class__.__name__}: {error}"
+            )
+            return ApproverResolution(status=ApproverStatus.ERROR)
+        except Exception as error:
+            logger.warning(
+                f"Entra - Unexpected error resolving approver group '{group_id}': "
+                f"{error.__class__.__name__}: {error}"
+            )
+            return ApproverResolution(status=ApproverStatus.ERROR)
+
+        # Group exists — check membership.
+        try:
+            members_url = (
+                f"https://graph.microsoft.com/v1.0/groups/{group_id}"
+                "/members?$top=1&$select=id"
+            )
+            members_request_info = self.client.groups.with_url(
+                members_url
+            ).to_get_request_information()
+            members_response = await self.client.request_adapter.send_primitive_async(
+                members_request_info, "bytes", {}
+            )
+            if members_response:
+                members_data = json.loads(members_response)
+                members = members_data.get("value", []) or []
+                if not members:
+                    return ApproverResolution(
+                        status=ApproverStatus.GROUP_EMPTY,
+                        display_name=display_name,
+                    )
+            else:
+                return ApproverResolution(
+                    status=ApproverStatus.GROUP_EMPTY,
+                    display_name=display_name,
+                )
+            return ApproverResolution(
+                status=ApproverStatus.VALID,
+                display_name=display_name,
+            )
+        except Exception as error:
+            logger.warning(
+                f"Entra - Could not check members for approver group "
+                f"'{group_id}': {error.__class__.__name__}: {error}"
+            )
+            return ApproverResolution(
+                status=ApproverStatus.ERROR,
+                display_name=display_name,
+            )
 
     async def _get_authorization_policy(self):
         logger.info("Entra - Getting authorization policy...")
@@ -1489,6 +1780,340 @@ OAuthAppInfo
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
         return definitions
+
+    async def _get_entitlement_management(
+        self,
+    ) -> Optional[List["AccessPackageCatalog"]]:
+        """Retrieve entitlement management catalogs, resources, and access packages.
+
+        Fetches all access package catalogs from
+        ``identityGovernance/entitlementManagement/catalogs``, then for each catalog
+        retrieves its resources and access packages (with resourceRoleScopes expanded).
+
+        This data is consumed by checks that validate catalog resource references
+        (stale groups, deleted service principals, removed app roles) and by checks
+        that look for unused catalog resources.
+
+        Returns:
+            Optional[List[AccessPackageCatalog]]: The list of parsed catalogs with
+                their resources and access packages, or ``None`` if the catalog list
+                could not be read (permission, licence, or API error).
+        """
+        logger.info("Entra - Getting entitlement management catalogs...")
+        try:
+            catalogs_url = (
+                "https://graph.microsoft.com/v1.0/identityGovernance/"
+                "entitlementManagement/catalogs"
+            )
+            raw_catalogs = await self._paginate_graph_url(catalogs_url)
+        except Exception as error:
+            self.entitlement_management_error = f"{error.__class__.__name__}: {error}"
+            logger.error(
+                f"Entra - Could not read entitlement management catalogs: "
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            return None
+
+        catalogs: List[AccessPackageCatalog] = []
+        for raw_catalog in raw_catalogs:
+            catalog_id = raw_catalog.get("id", "")
+            catalog_display_name = raw_catalog.get("displayName", "")
+            catalog_type = raw_catalog.get("catalogType", "")
+            catalog_state = raw_catalog.get("state", "")
+
+            # Fetch catalog resources
+            resources: Optional[List[AccessPackageResource]] = None
+            resources_error: Optional[str] = None
+            try:
+                resources_url = (
+                    f"https://graph.microsoft.com/v1.0/identityGovernance/"
+                    f"entitlementManagement/catalogs/{catalog_id}/resources"
+                )
+                raw_resources = await self._paginate_graph_url(resources_url)
+                resources = []
+                for raw_resource in raw_resources:
+                    resources.append(
+                        AccessPackageResource(
+                            id=raw_resource.get("id", ""),
+                            display_name=raw_resource.get("displayName", ""),
+                            origin_id=raw_resource.get("originId", ""),
+                            origin_system=raw_resource.get("originSystem", ""),
+                        )
+                    )
+            except Exception as error:
+                resources_error = f"{error.__class__.__name__}: {error}"
+                logger.warning(
+                    f"Entra - Could not read resources for catalog "
+                    f"'{catalog_display_name}' ({catalog_id}): "
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: "
+                    f"{error}"
+                )
+
+            # Fetch access packages for this catalog
+            access_packages: Optional[List[AccessPackage]] = None
+            access_packages_error: Optional[str] = None
+            try:
+                packages_url = (
+                    f"https://graph.microsoft.com/v1.0/identityGovernance/"
+                    f"entitlementManagement/catalogs/{catalog_id}/accessPackages"
+                )
+                raw_packages = await self._paginate_graph_url(packages_url)
+                access_packages = []
+                for raw_package in raw_packages:
+                    pkg_id = raw_package.get("id", "")
+                    pkg_display_name = raw_package.get("displayName", "")
+
+                    # Fetch resourceRoleScopes for each access package
+                    role_scopes: Optional[List[AccessPackageResourceRoleScope]] = None
+                    role_scopes_error: Optional[str] = None
+                    try:
+                        role_scopes_url = (
+                            f"https://graph.microsoft.com/v1.0/identityGovernance/"
+                            f"entitlementManagement/accessPackages/{pkg_id}"
+                            f"?$expand=resourceRoleScopes($expand=role,scope)"
+                        )
+                        request_info = self.client.identity_governance.with_url(
+                            role_scopes_url
+                        ).to_get_request_information()
+                        response = (
+                            await self.client.request_adapter.send_primitive_async(
+                                request_info, "bytes", {}
+                            )
+                        )
+                        role_scopes = []
+                        if response:
+                            pkg_data = json.loads(response)
+                            for rrs in pkg_data.get("resourceRoleScopes", []) or []:
+                                role = rrs.get("role", {}) or {}
+                                scope = rrs.get("scope", {}) or {}
+                                role_scopes.append(
+                                    AccessPackageResourceRoleScope(
+                                        role_origin_id=role.get("originId", ""),
+                                        role_display_name=role.get("displayName", ""),
+                                        role_origin_system=role.get("originSystem", ""),
+                                        scope_origin_id=scope.get("originId", ""),
+                                        scope_origin_system=scope.get(
+                                            "originSystem", ""
+                                        ),
+                                    )
+                                )
+                    except Exception as error:
+                        role_scopes_error = f"{error.__class__.__name__}: {error}"
+                        logger.warning(
+                            f"Entra - Could not read resourceRoleScopes for "
+                            f"access package '{pkg_display_name}' ({pkg_id}): "
+                            f"{error.__class__.__name__}"
+                            f"[{error.__traceback__.tb_lineno}]: {error}"
+                        )
+
+                    access_packages.append(
+                        AccessPackage(
+                            id=pkg_id,
+                            display_name=pkg_display_name,
+                            catalog_id=catalog_id,
+                            resource_role_scopes=role_scopes,
+                            resource_role_scopes_error=role_scopes_error,
+                        )
+                    )
+            except Exception as error:
+                access_packages_error = f"{error.__class__.__name__}: {error}"
+                logger.warning(
+                    f"Entra - Could not read access packages for catalog "
+                    f"'{catalog_display_name}' ({catalog_id}): "
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: "
+                    f"{error}"
+                )
+
+            catalogs.append(
+                AccessPackageCatalog(
+                    id=catalog_id,
+                    display_name=catalog_display_name,
+                    catalog_type=catalog_type,
+                    state=catalog_state,
+                    resources=resources,
+                    resources_error=resources_error,
+                    access_packages=access_packages,
+                    access_packages_error=access_packages_error,
+                )
+            )
+
+        return catalogs
+
+    async def _paginate_graph_url(self, url: str) -> List[Dict[str, Any]]:
+        """Fetch all pages of a Graph API list endpoint.
+
+        Issues GET requests following ``@odata.nextLink`` pagination until all
+        pages are consumed.
+
+        Args:
+            url: The initial Microsoft Graph API URL to fetch.
+
+        Returns:
+            List[Dict[str, Any]]: Aggregated ``value`` items from all pages.
+        """
+        results: List[Dict[str, Any]] = []
+        request_info = self.client.identity_governance.with_url(
+            url
+        ).to_get_request_information()
+        while True:
+            response = await self.client.request_adapter.send_primitive_async(
+                request_info, "bytes", {}
+            )
+            if not response:
+                break
+            data = json.loads(response)
+            page = data.get("value", []) or []
+            if not page:
+                break
+            results.extend(page)
+            next_link = data.get("@odata.nextLink") or data.get("nextLink")
+            if not next_link:
+                break
+            request_info = self.client.identity_governance.with_url(
+                next_link
+            ).to_get_request_information()
+        return results
+
+    async def _resolve_catalog_resource_references(
+        self,
+        catalogs: List["AccessPackageCatalog"],
+    ) -> Tuple[
+        Dict[str, bool],
+        Dict[str, Optional[List[Dict[str, Any]]]],
+        Set[str],
+    ]:
+        """Resolve groups and service principals referenced by catalog resources.
+
+        For each unique ``originId`` with ``originSystem`` of ``AadGroup`` or
+        ``AadApplication``, queries Microsoft Graph to determine whether the
+        directory object still exists. For service principals, also fetches
+        ``appRoles`` to allow downstream checks to verify role references.
+
+        Only HTTP 404 (or ``Request_ResourceNotFound``) is treated as deleted.
+        Non-404 errors are tracked separately so checks can report them as
+        MANUAL rather than incorrectly flagging them as deleted.
+
+        Args:
+            catalogs: The list of access package catalogs whose resources and
+                access package role scopes should be resolved.
+
+        Returns:
+            Tuple containing:
+                - group_exists: Maps group ``originId`` to ``True`` (exists)
+                  or ``False`` (confirmed deleted / 404).
+                - sp_app_roles: Maps service principal ``originId`` to a list
+                  of ``appRoles`` dicts (each with ``id`` and ``isEnabled``)
+                  if the SP exists, or ``None`` if confirmed deleted (404).
+                - errored_ids: Set of ``originId`` values whose lookup failed
+                  with a non-404 error and could not be verified.
+        """
+        logger.info(
+            "Entra - Resolving catalog resource references (groups, "
+            "service principals)..."
+        )
+
+        group_ids: Set[str] = set()
+        sp_ids: Set[str] = set()
+
+        for catalog in catalogs:
+            if catalog.resources:
+                for resource in catalog.resources:
+                    if resource.origin_system == "AadGroup" and resource.origin_id:
+                        group_ids.add(resource.origin_id)
+                    elif (
+                        resource.origin_system == "AadApplication"
+                        and resource.origin_id
+                    ):
+                        sp_ids.add(resource.origin_id)
+
+            if catalog.access_packages:
+                for pkg in catalog.access_packages:
+                    if not pkg.resource_role_scopes:
+                        continue
+                    for rrs in pkg.resource_role_scopes:
+                        if (
+                            rrs.scope_origin_system == "AadGroup"
+                            and rrs.scope_origin_id
+                        ):
+                            group_ids.add(rrs.scope_origin_id)
+                        elif (
+                            rrs.scope_origin_system == "AadApplication"
+                            and rrs.scope_origin_id
+                        ):
+                            sp_ids.add(rrs.scope_origin_id)
+
+        group_exists: Dict[str, bool] = {}
+        sp_app_roles: Dict[str, Optional[List[Dict[str, Any]]]] = {}
+        errored_ids: Set[str] = set()
+
+        # Resolve groups serially to limit throttling
+        for gid in group_ids:
+            try:
+                config = RequestConfiguration()
+                config.query_parameters = (
+                    GroupsRequestBuilder.GroupsRequestBuilderGetQueryParameters(
+                        select=["id"],
+                    )
+                )
+                await self.client.groups.by_group_id(gid).get(
+                    request_configuration=config
+                )
+                group_exists[gid] = True
+            except ODataError as error:
+                status_code = getattr(error, "response_status_code", None)
+                error_code = getattr(error.error, "code", None) if error.error else None
+                if status_code == 404 or error_code == "Request_ResourceNotFound":
+                    group_exists[gid] = False
+                else:
+                    errored_ids.add(gid)
+                    logger.warning(
+                        f"Entra - Could not resolve group '{gid}' for catalog "
+                        f"resource check: {error.__class__.__name__}: {error}"
+                    )
+            except Exception as error:
+                errored_ids.add(gid)
+                logger.warning(
+                    f"Entra - Unexpected error resolving group '{gid}' for "
+                    f"catalog resource check: "
+                    f"{error.__class__.__name__}: {error}"
+                )
+
+        # Resolve service principals serially, fetching appRoles
+        for spid in sp_ids:
+            try:
+                sp = await self.client.service_principals.by_service_principal_id(
+                    spid
+                ).get()
+                roles = []
+                for role in getattr(sp, "app_roles", []) or []:
+                    roles.append(
+                        {
+                            "id": str(role.id) if role.id else "",
+                            "isEnabled": bool(getattr(role, "is_enabled", False)),
+                        }
+                    )
+                sp_app_roles[spid] = roles
+            except ODataError as error:
+                status_code = getattr(error, "response_status_code", None)
+                error_code = getattr(error.error, "code", None) if error.error else None
+                if status_code == 404 or error_code == "Request_ResourceNotFound":
+                    sp_app_roles[spid] = None
+                else:
+                    errored_ids.add(spid)
+                    logger.warning(
+                        f"Entra - Could not resolve service principal '{spid}' "
+                        f"for catalog resource check: "
+                        f"{error.__class__.__name__}: {error}"
+                    )
+            except Exception as error:
+                errored_ids.add(spid)
+                logger.warning(
+                    f"Entra - Unexpected error resolving service principal "
+                    f"'{spid}' for catalog resource check: "
+                    f"{error.__class__.__name__}: {error}"
+                )
+
+        return group_exists, sp_app_roles, errored_ids
 
     async def _get_b2b_collaboration_policy(self):
         """Retrieve the legacy B2B collaboration (invitation domains) policy.
@@ -2935,3 +3560,168 @@ class AppRegistration(BaseModel):
     app_id: str = ""
     name: str = ""
     password_credentials: List[PasswordCredential] = []
+
+
+class AccessPackageResource(BaseModel):
+    """A resource registered in an entitlement management catalog.
+
+    Attributes:
+        id: The catalog-internal identifier of the resource entry.
+        display_name: The display name stored on the catalog resource.
+        origin_id: The directory object identifier (group ID or service
+            principal ID) of the underlying resource.
+        origin_system: The origin system type (e.g. ``AadGroup``,
+            ``AadApplication``, ``SharePointOnline``).
+    """
+
+    id: str = ""
+    display_name: str = ""
+    origin_id: str = ""
+    origin_system: str = ""
+
+
+class AccessPackageResourceRoleScope(BaseModel):
+    """A role-scope pair granted by an access package.
+
+    Attributes:
+        role_origin_id: The origin identifier of the role being granted
+            (e.g. an app role ID or ``Member_<groupId>``).
+        role_display_name: The display name of the role.
+        role_origin_system: The origin system of the role.
+        scope_origin_id: The origin identifier of the scope (the resource,
+            e.g. a service principal ID or group ID).
+        scope_origin_system: The origin system of the scope.
+    """
+
+    role_origin_id: str = ""
+    role_display_name: str = ""
+    role_origin_system: str = ""
+    scope_origin_id: str = ""
+    scope_origin_system: str = ""
+
+
+class AccessPackage(BaseModel):
+    """An access package within an entitlement management catalog.
+
+    Attributes:
+        id: The access package identifier.
+        display_name: The display name of the access package.
+        catalog_id: The identifier of the parent catalog.
+        resource_role_scopes: The list of resource role scopes granted by
+            this access package, or ``None`` if they could not be read.
+        resource_role_scopes_error: Error message if the role scopes could
+            not be read, ``None`` otherwise.
+    """
+
+    id: str = ""
+    display_name: str = ""
+    catalog_id: str = ""
+    resource_role_scopes: Optional[List[AccessPackageResourceRoleScope]] = None
+    resource_role_scopes_error: Optional[str] = None
+
+
+class AccessPackageCatalog(BaseModel):
+    """An entitlement management access package catalog.
+
+    Attributes:
+        id: The catalog identifier.
+        display_name: The display name of the catalog.
+        catalog_type: The catalog type (e.g. ``userManaged``,
+            ``serviceDefault``).
+        state: The catalog state (e.g. ``published``, ``unpublished``).
+        resources: The list of resources registered in the catalog, or
+            ``None`` if they could not be read.
+        resources_error: Error message if resources could not be read.
+        access_packages: The list of access packages in the catalog, or
+            ``None`` if they could not be read.
+        access_packages_error: Error message if access packages could not
+            be read.
+    """
+
+    id: str = ""
+    display_name: str = ""
+    catalog_type: str = ""
+    state: str = ""
+    resources: Optional[List[AccessPackageResource]] = None
+    resources_error: Optional[str] = None
+    access_packages: Optional[List[AccessPackage]] = None
+    access_packages_error: Optional[str] = None
+
+
+class ApproverStatus(str, Enum):
+    """Resolution status for an access package assignment policy approver."""
+
+    VALID = "valid"
+    USER_DELETED = "user_deleted"
+    USER_DISABLED = "user_disabled"
+    GROUP_DELETED = "group_deleted"
+    GROUP_EMPTY = "group_empty"
+    INVALID_ENTRY = "invalid_entry"
+    ERROR = "error"
+
+
+class ApproverResolution(BaseModel):
+    """Result of resolving a single approver against Microsoft Graph.
+
+    Attributes:
+        status: The resolution status (valid, deleted, disabled, empty, error).
+        display_name: The approver's display name when available.
+    """
+
+    status: ApproverStatus = ApproverStatus.VALID
+    display_name: Optional[str] = None
+
+
+class Approver(BaseModel):
+    """A primary approver in an access package approval stage.
+
+    Attributes:
+        odata_type: The OData type discriminator (e.g.
+            ``#microsoft.graph.singleUser``).
+        user_id: The user ID for ``singleUser`` approvers.
+        group_id: The group ID for ``groupMembers`` approvers.
+        display_name: Optional display name from the policy payload.
+        resolution: The validation result after Graph lookup. ``None`` for
+            approver types that cannot be validated statically (manager,
+            sponsor).
+    """
+
+    odata_type: str = ""
+    user_id: Optional[str] = None
+    group_id: Optional[str] = None
+    display_name: Optional[str] = None
+    resolution: Optional[ApproverResolution] = None
+
+
+class ApprovalStage(BaseModel):
+    """An approval stage within an access package assignment policy.
+
+    Attributes:
+        primary_approvers: The list of primary approvers for this stage.
+    """
+
+    primary_approvers: List[Approver] = []
+
+
+class AccessPackageAssignmentPolicy(BaseModel):
+    """An access package assignment policy that requires approval.
+
+    Attributes:
+        id: The policy's unique identifier.
+        display_name: The policy's display name.
+        access_package_id: The ID of the parent access package.
+        access_package_name: The display name of the parent access package.
+        is_approval_required_for_add: Whether approval is required for new
+            access requests.
+        is_approval_required_for_update: Whether approval is required for
+            access renewal.
+        stages: The approval stages with their primary approvers.
+    """
+
+    id: str
+    display_name: str = ""
+    access_package_id: str = ""
+    access_package_name: str = ""
+    is_approval_required_for_add: bool = False
+    is_approval_required_for_update: bool = False
+    stages: List[ApprovalStage] = []

@@ -200,6 +200,7 @@
       ],
       "Checks": [
         "admincenter_users_admins_reduced_license_footprint",
+        "entra_access_package_catalog_no_stale_resource_references",
         "entra_admin_portals_access_restriction",
         "entra_admin_users_phishing_resistant_mfa_enabled",
         "entra_conditional_access_policy_mfa_enforced_for_guest_users",
@@ -208,7 +209,8 @@
         "entra_conditional_access_policy_directory_sync_account_excluded",
         "entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced",
         "entra_policy_guest_users_access_restrictions",
-        "entra_seamless_sso_disabled"
+        "entra_seamless_sso_disabled",
+        "entra_access_package_assignment_policy_approvers_valid"
       ]
     },
     {
@@ -277,13 +279,16 @@
         }
       ],
       "Checks": [
+        "entra_access_package_catalog_no_stale_resource_references",
         "entra_admin_portals_access_restriction",
         "entra_app_registration_no_unused_privileged_permissions",
         "entra_policy_guest_users_access_restrictions",
         "entra_service_principal_no_secrets_for_permanent_tier0_roles",
         "sharepoint_external_sharing_managed",
         "sharepoint_external_sharing_restricted",
-        "sharepoint_guest_sharing_restricted"
+        "sharepoint_guest_sharing_restricted",
+        "entra_access_package_assignment_policy_approvers_valid",
+        "entra_access_package_catalog_no_unused_resources"
       ]
     },
     {
@@ -675,7 +680,8 @@
         "entra_policy_ensure_default_user_cannot_create_tenants",
         "entra_policy_guest_invite_only_for_admin_roles",
         "entra_seamless_sso_disabled",
-        "entra_service_principal_no_secrets_for_permanent_tier0_roles"
+        "entra_service_principal_no_secrets_for_permanent_tier0_roles",
+        "entra_access_package_catalog_no_unused_resources"
       ]
     },
     {
