@@ -9,6 +9,7 @@ from prowler.lib.check.models import Check, CheckReportM365
 from prowler.providers.m365.services.entra.entra_client import entra_client
 from prowler.providers.m365.services.entra.entra_service import (
     GLOBAL_ADMINISTRATOR_ROLE_TEMPLATE_ID,
+    TIER_0_ROLE_NAMES,
     TIER_0_ROLE_TEMPLATE_IDS,
 )
 from prowler.providers.m365.services.entra.lib.break_glass import (
@@ -20,24 +21,6 @@ from prowler.providers.m365.services.entra.lib.pim_licencing import has_pim_lice
 # cannot be managed via PIM; exclude from evaluation.
 PIM_EXEMPT_ROLE_TEMPLATE_IDS = {
     "d29b2b05-8046-44ba-8758-1e26182fcf32",  # Directory Synchronization Accounts
-}
-
-# Human-readable names for Tier 0 role template IDs.
-TIER_0_ROLE_NAMES = {
-    "62e90394-69f5-4237-9190-012177145e10": "Global Administrator",
-    "e8611ab8-c189-46e8-94e1-60213ab1f814": "Privileged Role Administrator",
-    "7be44c8a-adaf-4e2a-84d6-ab2649e08a13": "Privileged Authentication Administrator",
-    "9b895d92-2cd3-44c7-9d02-a6ac2d5ea5c3": "Application Administrator",
-    "158c047a-c907-4556-b7ef-446551a6b5f7": "Cloud Application Administrator",
-    "c4e39bd9-1100-46d3-8c65-fb160da0071f": "Authentication Administrator",
-    "0526716b-113d-4c15-b2c8-68e3c22b9f80": "Authentication Policy Administrator",
-    "b1be1c3e-b65d-4f19-8427-f6fa0d97feb9": "Conditional Access Administrator",
-    "8329153b-31d0-4727-b945-745eb3bc5f31": "Domain Name Administrator",
-    "be2f45a1-457d-42af-a067-6ec1fa63bc45": "External Identity Provider Administrator",
-    "8ac3fc64-6eca-42ea-9e69-59f4c7b60eb2": "Hybrid Identity Administrator",
-    "194ae4cb-b126-40b2-bd5b-6091b380977d": "Security Administrator",
-    "fe930be7-5e62-47db-91af-98c3a49a38b1": "User Administrator",
-    "e00e864a-17c5-4a4b-9c06-f5b95a8d5bd8": "Partner Tier2 Support",
 }
 
 
@@ -121,10 +104,12 @@ class entra_pim_tier0_roles_no_permanent_active_assignments(Check):
 
         # --- Break-glass identification ----------------------------------
         max_break_glass_ga = entra_client.audit_config.get(
-            "max_permanent_break_glass_global_admins", 2
+            "max_permanent_break_glass_global_admins"
         )
-        configured_emergency_ids = entra_client.audit_config.get(
-            "emergency_access_user_ids", []
+        if max_break_glass_ga is None:  # unset or left empty in config.yaml
+            max_break_glass_ga = 2
+        configured_emergency_ids = (
+            entra_client.audit_config.get("emergency_access_user_ids") or []
         )
 
         break_glass_ids = identify_break_glass_user_ids(

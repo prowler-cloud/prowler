@@ -1,5 +1,6 @@
 """Check that no external (guest) user holds a standing Tier 0 directory role."""
 
+from types import SimpleNamespace
 from typing import List, Optional
 
 from prowler.lib.check.models import Check, CheckReportM365
@@ -128,7 +129,17 @@ class entra_guest_users_no_permanent_tier0_roles(Check):
 
             # If the principal is a role-assignable group, resolve members
             group = groups_by_id.get(inst.principal_id)
-            if group and group.is_assignable_to_role:
+            is_group_principal = (
+                inst.principal_odata_type or ""
+            ).lower() == "#microsoft.graph.group"
+            if is_group_principal and group is None:
+                # The /groups listing may have failed; the assignment still
+                # tells us the principal is a group.
+                group = SimpleNamespace(
+                    id=inst.principal_id,
+                    name=inst.principal_display_name or inst.principal_id,
+                )
+            if is_group_principal or (group and group.is_assignable_to_role):
                 member_findings = self._evaluate_group_members(
                     group=group,
                     role_name=role_name,

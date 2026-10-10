@@ -2001,20 +2001,23 @@ class TestTier0RoleGroupMembers:
         service = Entra.__new__(Entra)
         service.role_assignment_schedule_instances = [
             SimpleNamespace(
-                principal_id="tier0-group", role_definition_id=self.GLOBAL_ADMIN
+                principal_id="tier0-group",
+                role_definition_id=self.GLOBAL_ADMIN,
+                principal_odata_type="#microsoft.graph.group",
             ),
             SimpleNamespace(
-                principal_id="reader-group", role_definition_id=self.READER
+                principal_id="reader-group",
+                role_definition_id=self.READER,
+                principal_odata_type="#microsoft.graph.group",
             ),
             SimpleNamespace(
-                principal_id="plain-group", role_definition_id=self.GLOBAL_ADMIN
+                principal_id="admin-user",
+                role_definition_id=self.GLOBAL_ADMIN,
+                principal_odata_type="#microsoft.graph.user",
             ),
         ]
-        service.groups = [
-            SimpleNamespace(id="tier0-group", is_assignable_to_role=True),
-            SimpleNamespace(id="reader-group", is_assignable_to_role=True),
-            SimpleNamespace(id="plain-group", is_assignable_to_role=False),
-        ]
+        # The /groups listing is not needed: the principal type identifies groups.
+        service.groups = []
         by_group_id = MagicMock(
             return_value=SimpleNamespace(
                 members=SimpleNamespace(
@@ -2037,7 +2040,7 @@ class TestTier0RoleGroupMembers:
         )
         return service, by_group_id
 
-    def test_only_role_assignable_tier0_groups_are_read(self):
+    def test_only_groups_holding_tier0_roles_are_read(self):
         service, by_group_id = self._service(
             AsyncMock(
                 return_value=SimpleNamespace(

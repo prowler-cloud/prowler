@@ -201,16 +201,14 @@ class Entra(M365Service):
             Dict[str, Optional[List[str]]]: Member object IDs keyed by group ID,
                 or ``None`` for a group whose members could not be read.
         """
-        tier0_principal_ids = {
+        # The assignment's principal type identifies groups even when the
+        # /groups listing itself failed.
+        group_ids = {
             getattr(instance, "principal_id", None)
             for instance in (self.role_assignment_schedule_instances or [])
             if getattr(instance, "role_definition_id", None) in TIER_0_ROLE_TEMPLATE_IDS
-        }
-        group_ids = {
-            getattr(group, "id", None)
-            for group in (self.groups or [])
-            if getattr(group, "is_assignable_to_role", False)
-            and getattr(group, "id", None) in tier0_principal_ids
+            and (getattr(instance, "principal_odata_type", None) or "").lower()
+            == "#microsoft.graph.group"
         }
         members: Dict[str, Optional[List[str]]] = {}
         for group_id in sorted(group_ids):

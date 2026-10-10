@@ -46,8 +46,18 @@ def _make_instance(
     assignment_type="Assigned",
     directory_scope_id="/",
     end_date_time=None,
+    principal_odata_type=None,
+    principal_display_name=None,
 ):
     """Create a test RoleAssignmentScheduleInstance model."""
+    optional = {
+        key: value
+        for key, value in {
+            "principal_odata_type": principal_odata_type,
+            "principal_display_name": principal_display_name,
+        }.items()
+        if value is not None
+    }
     return RoleAssignmentScheduleInstance(
         id=str(uuid4()),
         principal_id=principal_id,
@@ -56,6 +66,7 @@ def _make_instance(
         assignment_type=assignment_type,
         member_type="Direct",
         end_date_time=end_date_time,
+        **optional,
     )
 
 
@@ -665,6 +676,55 @@ class Test_entra_guest_users_no_permanent_tier0_roles:
             assert len(fail_results) == 1
             assert "via group 'Tier0 Admins'" in fail_results[0].status_extended
             assert "Group Guest" in fail_results[0].status_extended
+
+    def test_guest_in_group_missing_from_groups_listing_fail(self):
+        """A Tier 0 group missing from /groups is still identified by its principal type."""
+        entra_client = mock.MagicMock()
+        entra_client.audited_tenant = "audited_tenant"
+        entra_client.audited_domain = DOMAIN
+
+        guest_id = str(uuid4())
+        group_id = str(uuid4())
+        guest = _make_user(
+            user_id=guest_id,
+            name="Group Guest",
+            user_type="Guest",
+            user_principal_name="group_guest#EXT#@contoso.onmicrosoft.com",
+        )
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_m365_provider(),
+            ),
+            mock.patch(
+                f"{CHECK_MODULE}.entra_client",
+                new=entra_client,
+            ),
+        ):
+            from prowler.providers.m365.services.entra.entra_guest_users_no_permanent_tier0_roles.entra_guest_users_no_permanent_tier0_roles import (
+                entra_guest_users_no_permanent_tier0_roles,
+            )
+
+            entra_client.role_assignment_schedule_instances = [
+                _make_instance(
+                    principal_id=group_id,
+                    principal_odata_type="#microsoft.graph.group",
+                    principal_display_name="Tier0 Admins",
+                ),
+            ]
+            entra_client.role_assignment_schedule_instances_error = None
+            entra_client.users_error = None
+            entra_client.users = {guest_id: guest}
+            entra_client.groups = []
+            entra_client.tier0_role_group_members = {group_id: [guest_id]}
+
+            check = entra_guest_users_no_permanent_tier0_roles()
+            result = check.execute()
+
+            fail_results = [r for r in result if r.status == "FAIL"]
+            assert len(fail_results) == 1
+            assert "via group 'Tier0 Admins'" in fail_results[0].status_extended
 
     def test_multiple_guest_assignments_multiple_fails(self):
         """Multiple guests with standing Tier 0 roles: expected one FAIL per assignment."""
