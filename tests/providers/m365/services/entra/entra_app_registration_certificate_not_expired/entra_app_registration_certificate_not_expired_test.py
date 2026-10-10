@@ -678,7 +678,9 @@ class Test_entra_app_registration_certificate_not_expired:
             )
 
             # Naive datetime (no tzinfo) that is expired
-            expired_naive = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(days=5)
+            expired_naive = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(
+                days=5
+            )
             entra_client.app_registrations = {
                 app_id: AppRegistration(
                     id=app_id,
@@ -701,3 +703,55 @@ class Test_entra_app_registration_certificate_not_expired:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert "CN=naive-cert" in result[0].status_extended
+
+    def test_expired_certificate_fail_with_unset_threshold(self):
+        """Unset threshold falls back to the default. Certificate already expired: expected FAIL."""
+        app_id = str(uuid4())
+        app_name = "Legacy App"
+        entra_client = mock.MagicMock()
+        entra_client.audited_tenant = "audited_tenant"
+        entra_client.audited_domain = DOMAIN
+        entra_client.app_registrations_error = None
+        entra_client.audit_config = {
+            "app_registration_certificate_expiration_threshold_days": None
+        }
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_m365_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.m365.services.entra.entra_app_registration_certificate_not_expired.entra_app_registration_certificate_not_expired.entra_client",
+                new=entra_client,
+            ),
+        ):
+            from prowler.providers.m365.services.entra.entra_app_registration_certificate_not_expired.entra_app_registration_certificate_not_expired import (
+                entra_app_registration_certificate_not_expired,
+            )
+
+            expired = datetime.now(timezone.utc) - timedelta(days=60)
+            entra_client.app_registrations = {
+                app_id: AppRegistration(
+                    id=app_id,
+                    app_id=str(uuid4()),
+                    name=app_name,
+                    key_credentials=[
+                        KeyCredential(
+                            key_id=str(uuid4()),
+                            display_name="CN=old-cert",
+                            end_date_time=expired,
+                            custom_key_identifier="CCDD3344",
+                        ),
+                    ],
+                )
+            }
+
+            check = entra_app_registration_certificate_not_expired()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert "expired" in result[0].status_extended
+            assert "CN=old-cert" in result[0].status_extended
+            assert result[0].resource_name == app_name

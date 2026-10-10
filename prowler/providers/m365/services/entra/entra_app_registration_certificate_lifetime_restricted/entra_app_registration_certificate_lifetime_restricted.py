@@ -52,8 +52,10 @@ class entra_app_registration_certificate_lifetime_restricted(Check):
             return findings
 
         max_days = entra_client.audit_config.get(
-            "app_registration_certificate_max_validity_days", 365
+            "app_registration_certificate_max_validity_days"
         )
+        if max_days is None:  # unset or left empty in config.yaml
+            max_days = 365
         now = datetime.now(timezone.utc)
 
         for app_id, app in entra_client.app_registrations.items():

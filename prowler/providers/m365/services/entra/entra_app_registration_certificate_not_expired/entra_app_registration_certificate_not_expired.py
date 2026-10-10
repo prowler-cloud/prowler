@@ -52,8 +52,10 @@ class entra_app_registration_certificate_not_expired(Check):
             return findings
 
         threshold_days = entra_client.audit_config.get(
-            "app_registration_certificate_expiration_threshold_days", 30
+            "app_registration_certificate_expiration_threshold_days"
         )
+        if threshold_days is None:  # unset or left empty in config.yaml
+            threshold_days = 30
         now = datetime.now(timezone.utc)
         threshold_date = now + timedelta(days=threshold_days)
 

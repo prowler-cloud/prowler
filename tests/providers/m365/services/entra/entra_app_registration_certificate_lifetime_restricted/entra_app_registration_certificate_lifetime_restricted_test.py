@@ -1294,3 +1294,62 @@ class Test_entra_app_registration_certificate_lifetime_restricted:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert f"expires {end.strftime('%Y-%m-%d')}" in result[0].status_extended
+
+    def test_certificate_exceeding_limit_fail_with_unset_threshold(self):
+        """Unset threshold falls back to the default. Certificate with validity > max_days: expected FAIL."""
+        app_id = str(uuid4())
+        app_name = "Payroll Sync"
+        now = datetime.now(timezone.utc)
+        entra_client = mock.MagicMock()
+        entra_client.audited_tenant = "audited_tenant"
+        entra_client.audited_domain = DOMAIN
+        entra_client.app_registrations_error = None
+        entra_client.audit_config = {
+            "app_registration_certificate_max_validity_days": None
+        }
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_m365_provider(),
+            ),
+            mock.patch(
+                f"{CHECK_MODULE}.entra_client",
+                new=entra_client,
+            ),
+        ):
+            from prowler.providers.m365.services.entra.entra_app_registration_certificate_lifetime_restricted.entra_app_registration_certificate_lifetime_restricted import (
+                entra_app_registration_certificate_lifetime_restricted,
+            )
+
+            entra_client.app_registrations = {
+                app_id: AppRegistration(
+                    id=app_id,
+                    app_id=str(uuid4()),
+                    name=app_name,
+                    key_credentials=[
+                        KeyCredential(
+                            key_id=str(uuid4()),
+                            display_name="payroll-prod",
+                            start_date_time=now - timedelta(days=30),
+                            end_date_time=now + timedelta(days=700),
+                            custom_key_identifier="ccdd",
+                            usage="Verify",
+                            type_="AsymmetricX509Cert",
+                        ),
+                    ],
+                )
+            }
+
+            check = entra_app_registration_certificate_lifetime_restricted()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert (
+                "1 certificate(s) valid for longer than 365 days"
+                in result[0].status_extended
+            )
+            assert "'payroll-prod'" in result[0].status_extended
+            assert result[0].resource_name == app_name
+            assert result[0].resource_id == app_id
