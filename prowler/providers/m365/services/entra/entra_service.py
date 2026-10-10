@@ -9,6 +9,9 @@ from uuid import UUID
 
 from kiota_abstractions.base_request_configuration import RequestConfiguration
 from msgraph.generated.groups.groups_request_builder import GroupsRequestBuilder
+from msgraph.generated.service_principals.service_principals_request_builder import (
+    ServicePrincipalsRequestBuilder,
+)
 from msgraph.generated.models.o_data_errors.o_data_error import ODataError
 from msgraph.generated.users.users_request_builder import UsersRequestBuilder
 from pydantic.v1 import BaseModel, validator
@@ -2109,7 +2112,7 @@ OAuthAppInfo
 
         try:
             request_config = RequestConfiguration()
-            request_config.query_parameters = self.client.service_principals.ServicePrincipalsRequestBuilder.ServicePrincipalsRequestBuilderGetQueryParameters(
+            request_config.query_parameters = ServicePrincipalsRequestBuilder.ServicePrincipalsRequestBuilderGetQueryParameters(
                 select=[
                     "id",
                     "appId",

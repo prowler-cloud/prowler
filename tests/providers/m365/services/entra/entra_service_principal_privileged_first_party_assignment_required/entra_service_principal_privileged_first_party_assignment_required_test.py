@@ -194,6 +194,36 @@ class Test_entra_service_principal_privileged_first_party_assignment_required:
             assert result[0].resource_id == TEST_APP_ID
             assert result[0].resource_name == TEST_APP_NAME
 
+    def test_empty_config_falls_back_to_defaults(self):
+        """An explicit null app ID list falls back to the default monitored apps."""
+        entra_client = mock.MagicMock()
+        entra_client.audited_tenant = "audited_tenant"
+        entra_client.audited_domain = DOMAIN
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_m365_provider(),
+            ),
+            mock.patch(
+                f"{CHECK_MODULE}.entra_client",
+                new=entra_client,
+            ),
+        ):
+            from prowler.providers.m365.services.entra.entra_service_principal_privileged_first_party_assignment_required.entra_service_principal_privileged_first_party_assignment_required import (
+                entra_service_principal_privileged_first_party_assignment_required,
+            )
+
+            entra_client.enterprise_apps_error = None
+            entra_client.audit_config = {"entra_privileged_first_party_app_ids": None}
+            entra_client.enterprise_apps = {}
+
+            check = entra_service_principal_privileged_first_party_assignment_required()
+            result = check.execute()
+
+            assert len(result) == len(DEFAULT_PRIVILEGED_FIRST_PARTY_APP_IDS)
+            assert all(r.status == "FAIL" for r in result)
+
     def test_service_principal_assignment_required_null(self):
         """SP exists but appRoleAssignmentRequired is None: expected MANUAL."""
         entra_client = mock.MagicMock()

@@ -387,6 +387,31 @@ class Test_entra_service_principal_non_microsoft_assignment_required:
 
         assert len(result) == 0
 
+    def test_excluded_app_id_config_is_case_insensitive(self):
+        """Exclusions match regardless of the hexadecimal casing of the app ID."""
+        sp_id = str(uuid4())
+        app_id = str(uuid4())
+        client = self._make_client(
+            enterprise_apps={
+                sp_id: ServicePrincipal(
+                    id=sp_id,
+                    name="Intranet Portal",
+                    app_id=app_id.lower(),
+                    app_owner_organization_id=THIRD_PARTY_TENANT_ID,
+                    service_principal_type="Application",
+                    account_enabled=True,
+                    app_role_assignment_required=False,
+                ),
+            }
+        )
+        client.audit_config = {
+            "entra_assignment_required_excluded_app_ids": [app_id.upper()],
+        }
+
+        result = self._run_check(client)
+
+        assert len(result) == 0
+
     def test_excluded_app_id_config_none(self):
         """When the exclusion config key is None, it is treated as empty."""
         sp_id = str(uuid4())

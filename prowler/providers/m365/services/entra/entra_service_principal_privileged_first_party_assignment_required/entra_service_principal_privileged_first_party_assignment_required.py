@@ -55,10 +55,13 @@ class entra_service_principal_privileged_first_party_assignment_required(Check):
             findings.append(report)
             return findings
 
+        # None (key unset or left empty in config.yaml) means "use the defaults";
+        # an explicit empty list means "monitor nothing".
         monitored_app_ids = entra_client.audit_config.get(
-            "entra_privileged_first_party_app_ids",
-            DEFAULT_PRIVILEGED_FIRST_PARTY_APP_IDS,
+            "entra_privileged_first_party_app_ids"
         )
+        if monitored_app_ids is None:
+            monitored_app_ids = DEFAULT_PRIVILEGED_FIRST_PARTY_APP_IDS
 
         # enterprise_apps holds every service principal; look them up by app ID.
         sp_lookup = {

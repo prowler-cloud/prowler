@@ -53,12 +53,15 @@ class entra_service_principal_non_microsoft_assignment_required(Check):
             findings.append(report)
             return findings
 
-        excluded_app_ids: set[str] = set(
-            entra_client.audit_config.get(
-                "entra_assignment_required_excluded_app_ids", []
+        excluded_app_ids: set[str] = {
+            app_id.lower()
+            for app_id in (
+                entra_client.audit_config.get(
+                    "entra_assignment_required_excluded_app_ids", []
+                )
+                or []
             )
-            or []
-        )
+        }
 
         for sp in entra_client.enterprise_apps.values():
             # Only evaluate Application and Legacy types (skip
@@ -74,7 +77,7 @@ class entra_service_principal_non_microsoft_assignment_required(Check):
                 continue
 
             # Skip apps explicitly excluded by configuration.
-            if sp.app_id and sp.app_id in excluded_app_ids:
+            if sp.app_id and sp.app_id.lower() in excluded_app_ids:
                 continue
 
             report = CheckReportM365(
