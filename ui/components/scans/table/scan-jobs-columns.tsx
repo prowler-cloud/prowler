@@ -118,7 +118,10 @@ const resourcesColumn: ColumnDef<ScanProps> = {
     <DataTableColumnHeader column={column} title="Resources" />
   ),
   cell: ({ row }) => (
-    <ResourceCountCell count={row.original.attributes.unique_resource_count} />
+    <ResourceCountCell
+      count={row.original.attributes.unique_resource_count}
+      scanId={row.original.pendingSchedule ? undefined : row.original.id}
+    />
   ),
   enableSorting: false,
 };

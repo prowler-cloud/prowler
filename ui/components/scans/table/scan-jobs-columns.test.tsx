@@ -216,6 +216,37 @@ describe("getScanJobsColumns", () => {
     expect(screen.queryByText("Partial")).not.toBeInTheDocument();
   });
 
+  it("links the completed row resource count using its scan id", () => {
+    // Given
+    const scan = makeCompletedScan();
+
+    // When
+    renderCell("resources", scan);
+
+    // Then
+    expect(screen.getByRole("link", { name: "7" })).toHaveAttribute(
+      "href",
+      "/resources?filter[scan]=scan-1",
+    );
+  });
+
+  it("does not link a synthetic schedule row even when its count is positive", () => {
+    // Given
+    const scan = makeScheduledScan();
+    const pendingScan = {
+      ...scan,
+      id: "schedule-provider-1",
+      pendingSchedule: { summary: "Daily" },
+    };
+
+    // When
+    renderCell("resources", pendingScan);
+
+    // Then
+    expect(screen.queryByRole("link")).not.toBeInTheDocument();
+    expect(screen.getByText("7")).toBeVisible();
+  });
+
   it("renders the completed duration column", () => {
     renderCell("duration", makeCompletedScan());
 
