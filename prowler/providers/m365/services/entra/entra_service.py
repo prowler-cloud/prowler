@@ -1265,6 +1265,27 @@ OAuthAppInfo
 
         return oauth_apps
 
+    @staticmethod
+    def _is_group_target(target) -> bool:
+        """Tell whether an authentication method target refers to a group.
+
+        Uses ``target_type`` when Graph returns it, so user targets are never
+        looked up as groups. Older payloads without a type fall back to
+        "any GUID other than ``all_users``".
+        """
+        target_type = getattr(target, "target_type", None)
+        if target_type is not None:
+            value = getattr(target_type, "value", target_type)
+            return str(value).lower() == "group"
+        target_id = getattr(target, "id", None)
+        if not target_id or target_id == "all_users":
+            return False
+        try:
+            UUID(target_id)
+        except ValueError:
+            return False
+        return True
+
     async def _get_authentication_method_configurations(self):
         """Retrieve authentication method configurations from Microsoft Entra.
 
@@ -1294,12 +1315,8 @@ OAuthAppInfo
                     if include_targets is not None:
                         for target in include_targets:
                             target_id = getattr(target, "id", None)
-                            if target_id and target_id != "all_users":
-                                try:
-                                    UUID(target_id)
-                                    include_target_group_ids.append(target_id)
-                                except ValueError:
-                                    pass
+                            if self._is_group_target(target) and target_id:
+                                include_target_group_ids.append(target_id)
                     else:
                         # Derived types should expose include_targets;
                         # None means the targets could not be read.
@@ -1310,12 +1327,8 @@ OAuthAppInfo
                     if exclude_targets is not None:
                         for target in exclude_targets:
                             target_id = getattr(target, "id", None)
-                            if target_id and target_id != "all_users":
-                                try:
-                                    UUID(target_id)
-                                    exclude_target_group_ids.append(target_id)
-                                except ValueError:
-                                    pass
+                            if self._is_group_target(target) and target_id:
+                                exclude_target_group_ids.append(target_id)
                     else:
                         # Graph returns [] when there are no exclusions; a missing
                         # collection means the exclusions could not be read.

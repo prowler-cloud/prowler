@@ -72,16 +72,6 @@ class entra_authentication_method_no_deleted_group_references(Check):
                 resource_id=method_id,
             )
 
-            # If targets could not be read for this configuration, MANUAL.
-            if not config.targets_read:
-                report.status = "MANUAL"
-                report.status_extended = (
-                    f"Authentication method {method_id} ({config.state}) "
-                    f"targets could not be read and cannot be evaluated."
-                )
-                findings.append(report)
-                continue
-
             # Collect deleted and errored group ids for this configuration.
             deleted_include = [
                 gid for gid in config.include_target_group_ids if gid in unresolved
@@ -108,6 +98,14 @@ class entra_authentication_method_no_deleted_group_references(Check):
                     deleted_exclude,
                     errored_include,
                     errored_exclude,
+                )
+            elif not config.targets_read:
+                # A confirmed deletion above still wins; otherwise the unread
+                # targets leave the configuration unverified.
+                report.status = "MANUAL"
+                report.status_extended = (
+                    f"Authentication method {method_id} ({config.state}) "
+                    f"targets could not be read and cannot be evaluated."
                 )
             elif has_errored:
                 report.status = "MANUAL"

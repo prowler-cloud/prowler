@@ -328,6 +328,35 @@ class Test_entra_authentication_method_no_deleted_group_references:
             assert result[0].status == "MANUAL"
             assert "could not be read" in result[0].status_extended
 
+    def test_confirmed_deletion_wins_over_unread_targets(self):
+        """A confirmed deleted group gives FAIL even when exclusions were unread."""
+        entra_client = _entra_client_mock()
+        deleted_group = str(uuid4())
+        entra_client.authentication_method_configurations = {
+            "Sms": _make_config(
+                method_id="Sms",
+                include_target_group_ids=[deleted_group],
+                targets_read=False,
+            )
+        }
+        entra_client.unresolved_authentication_method_group_references = {deleted_group}
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_m365_provider(),
+            ),
+            mock.patch(CHECK_MODULE, new=entra_client),
+        ):
+            from prowler.providers.m365.services.entra.entra_authentication_method_no_deleted_group_references.entra_authentication_method_no_deleted_group_references import (
+                entra_authentication_method_no_deleted_group_references,
+            )
+
+            result = entra_authentication_method_no_deleted_group_references().execute()
+
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+
     def test_multiple_configs_mixed(self):
         """Multiple configs: clean one PASSes, dirty one FAILs."""
         entra_client = _entra_client_mock()
