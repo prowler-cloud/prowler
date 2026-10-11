@@ -1990,3 +1990,28 @@ class TestGetUsersError:
         assert users == {}
         assert service.users_error is not None
         assert "Unable to retrieve users from Microsoft Graph" in service.users_error
+
+
+class TestPaginateGraphUrl:
+    def test_follows_next_link_after_an_empty_page(self):
+        pages = [
+            json.dumps({"value": [], "@odata.nextLink": "next"}).encode(),
+            json.dumps({"value": [{"id": "policy-1"}]}).encode(),
+        ]
+        service = Entra.__new__(Entra)
+        service.client = SimpleNamespace(
+            identity_governance=SimpleNamespace(
+                with_url=MagicMock(
+                    return_value=SimpleNamespace(
+                        to_get_request_information=MagicMock(return_value="request")
+                    )
+                )
+            ),
+            request_adapter=SimpleNamespace(
+                send_primitive_async=AsyncMock(side_effect=pages)
+            ),
+        )
+
+        result = asyncio.run(service._paginate_graph_url("https://graph/first"))
+
+        assert result == [{"id": "policy-1"}]

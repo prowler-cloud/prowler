@@ -1963,8 +1963,7 @@ OAuthAppInfo
                 break
             data = json.loads(response)
             page = data.get("value", []) or []
-            if not page:
-                break
+            # An empty page can still carry @odata.nextLink: keep following it.
             results.extend(page)
             next_link = data.get("@odata.nextLink") or data.get("nextLink")
             if not next_link:
