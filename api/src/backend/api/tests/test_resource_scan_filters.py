@@ -23,51 +23,55 @@ from django.urls import reverse
 
 
 def create_scan(provider):
-    return Scan.objects.create(
-        tenant_id=provider.tenant_id,
-        provider=provider,
-        state=StateChoices.COMPLETED,
-        trigger=Scan.TriggerChoices.MANUAL,
-        started_at=datetime.now(UTC),
-        completed_at=datetime.now(UTC),
-    )
+    with rls_transaction(provider.tenant_id):
+        return Scan.objects.create(
+            tenant_id=provider.tenant_id,
+            provider=provider,
+            state=StateChoices.COMPLETED,
+            trigger=Scan.TriggerChoices.MANUAL,
+            started_at=datetime.now(UTC),
+            completed_at=datetime.now(UTC),
+        )
 
 
 def create_resource(provider):
-    return Resource.objects.create(
-        tenant_id=provider.tenant_id,
-        provider=provider,
-        uid=str(uuid4()),
-        name="Scan resource",
-        service="ec2",
-        region="us-east-1",
-        type="instance",
-    )
+    with rls_transaction(provider.tenant_id):
+        return Resource.objects.create(
+            tenant_id=provider.tenant_id,
+            provider=provider,
+            uid=str(uuid4()),
+            name="Scan resource",
+            service="ec2",
+            region="us-east-1",
+            type="instance",
+        )
 
 
 def map_resource(scan, resource):
-    finding = Finding.objects.create(
-        tenant_id=scan.tenant_id,
-        scan=scan,
-        uid=str(uuid4()),
-        check_id="test_check",
-        status=StatusChoices.PASS,
-        severity="low",
-        impact="low",
-    )
-    finding.add_resources([resource])
-    return finding
+    with rls_transaction(scan.tenant_id):
+        finding = Finding.objects.create(
+            tenant_id=scan.tenant_id,
+            scan=scan,
+            uid=str(uuid4()),
+            check_id="test_check",
+            status=StatusChoices.PASS,
+            severity="low",
+            impact="low",
+        )
+        finding.add_resources([resource])
+        return finding
 
 
 def summarize_resource(scan, resource, tenant_id=None):
-    return ResourceScanSummary.objects.create(
-        tenant_id=tenant_id or scan.tenant_id,
-        scan_id=scan.id,
-        resource_id=resource.id,
-        service=resource.service,
-        region=resource.region,
-        resource_type=resource.type,
-    )
+    with rls_transaction(tenant_id or scan.tenant_id):
+        return ResourceScanSummary.objects.create(
+            tenant_id=tenant_id or scan.tenant_id,
+            scan_id=scan.id,
+            resource_id=resource.id,
+            service=resource.service,
+            region=resource.region,
+            resource_type=resource.type,
+        )
 
 
 def assert_resources(client, filters, resources):
@@ -165,9 +169,14 @@ class TestResourceScanFilters:
             summarize_resource(scan, resource, tenant_id=other_tenant.id)
         else:
             finding = map_resource(scan, resource)
-            ResourceFindingMapping.objects.filter(finding=finding).update(
-                tenant_id=other_tenant.id
-            )
+            with rls_transaction(scan.tenant_id):
+                ResourceFindingMapping.objects.filter(finding=finding).delete()
+            with rls_transaction(other_tenant.id):
+                ResourceFindingMapping.objects.create(
+                    tenant_id=other_tenant.id,
+                    finding_id=finding.id,
+                    resource_id=resource.id,
+                )
 
         assert_resources(authenticated_client, {"filter[scan]": str(scan.id)}, [])
 
@@ -175,9 +184,10 @@ class TestResourceScanFilters:
         self, authenticated_client, aws_provider, tenants_fixture
     ):
         other_tenant = tenants_fixture[2]
-        other_provider = Provider.objects.create(
-            tenant_id=other_tenant.id, provider="aws", uid="111122223333"
-        )
+        with rls_transaction(other_tenant.id):
+            other_provider = Provider.objects.create(
+                tenant_id=other_tenant.id, provider="aws", uid="111122223333"
+            )
         foreign_scan = create_scan(other_provider)
         foreign_resource = create_resource(other_provider)
         map_resource(foreign_scan, foreign_resource)
@@ -208,18 +218,19 @@ class TestResourceScanFilters:
         add_membership(visible_scan, visible)
         add_membership(hidden_scan, hidden)
         tenant_id = visible_provider.tenant_id
-        role = Role.objects.get(tenant_id=tenant_id, name="admin")
-        role.unlimited_visibility = False
-        role.save(update_fields=["unlimited_visibility"])
-        group = ProviderGroup.objects.create(
-            tenant_id=tenant_id, name="Visible providers"
-        )
-        ProviderGroupMembership.objects.create(
-            tenant_id=tenant_id, provider=visible_provider, provider_group=group
-        )
-        RoleProviderGroupRelationship.objects.create(
-            tenant_id=tenant_id, role=role, provider_group=group
-        )
+        with rls_transaction(tenant_id):
+            role = Role.objects.get(tenant_id=tenant_id, name="admin")
+            role.unlimited_visibility = False
+            role.save(update_fields=["unlimited_visibility"])
+            group = ProviderGroup.objects.create(
+                tenant_id=tenant_id, name="Visible providers"
+            )
+            ProviderGroupMembership.objects.create(
+                tenant_id=tenant_id, provider=visible_provider, provider_group=group
+            )
+            RoleProviderGroupRelationship.objects.create(
+                tenant_id=tenant_id, role=role, provider_group=group
+            )
 
         assert_resources(
             authenticated_client,
@@ -257,8 +268,9 @@ class TestResourceScanFilters:
         resource = create_resource(aws_provider)
         add_membership = map_resource if membership == "mapping" else summarize_resource
         add_membership(scan, resource)
-        aws_provider.is_deleted = True
-        aws_provider.save(update_fields=["is_deleted"])
+        with rls_transaction(aws_provider.tenant_id):
+            aws_provider.is_deleted = True
+            aws_provider.save(update_fields=["is_deleted"])
 
         assert_resources(authenticated_client, {filter_name: str(scan.id)}, [resource])
 
@@ -272,26 +284,28 @@ class TestResourceScanFilters:
         add_membership = map_resource if membership == "mapping" else summarize_resource
         add_membership(scan, resource)
         tenant_id = aws_provider.tenant_id
-        role = Role.objects.get(tenant_id=tenant_id, name="admin")
-        role.unlimited_visibility = False
-        role.save(update_fields=["unlimited_visibility"])
-        group = ProviderGroup.objects.create(
-            tenant_id=tenant_id, name="Visible providers"
-        )
-        ProviderGroupMembership.objects.create(
-            tenant_id=tenant_id, provider=aws_provider, provider_group=group
-        )
-        RoleProviderGroupRelationship.objects.create(
-            tenant_id=tenant_id, role=role, provider_group=group
-        )
+        with rls_transaction(tenant_id):
+            role = Role.objects.get(tenant_id=tenant_id, name="admin")
+            role.unlimited_visibility = False
+            role.save(update_fields=["unlimited_visibility"])
+            group = ProviderGroup.objects.create(
+                tenant_id=tenant_id, name="Visible providers"
+            )
+            ProviderGroupMembership.objects.create(
+                tenant_id=tenant_id, provider=aws_provider, provider_group=group
+            )
+            RoleProviderGroupRelationship.objects.create(
+                tenant_id=tenant_id, role=role, provider_group=group
+            )
         date_filter = {"filter[updated_at]": resource.updated_at.date().isoformat()}
         scan_filter = {filter_name: str(scan.id)}
 
         assert_resources(authenticated_client, date_filter, [resource])
         assert_resources(authenticated_client, scan_filter, [resource])
 
-        aws_provider.is_deleted = True
-        aws_provider.save(update_fields=["is_deleted"])
+        with rls_transaction(aws_provider.tenant_id):
+            aws_provider.is_deleted = True
+            aws_provider.save(update_fields=["is_deleted"])
 
         assert_resources(authenticated_client, date_filter, [])
         assert_resources(authenticated_client, scan_filter, [])
