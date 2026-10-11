@@ -704,7 +704,7 @@ class Test_entra_app_registration_certificate_not_expired:
             assert result[0].status == "FAIL"
             assert "CN=naive-cert" in result[0].status_extended
 
-    def test_expired_certificate_fail_with_unset_threshold(self):
+    def test_expiring_certificate_fail_with_unset_threshold(self):
         """Unset threshold falls back to the default. Certificate already expired: expected FAIL."""
         app_id = str(uuid4())
         app_name = "Legacy App"
@@ -730,7 +730,7 @@ class Test_entra_app_registration_certificate_not_expired:
                 entra_app_registration_certificate_not_expired,
             )
 
-            expired = datetime.now(timezone.utc) - timedelta(days=60)
+            expired = datetime.now(timezone.utc) + timedelta(days=15)
             entra_client.app_registrations = {
                 app_id: AppRegistration(
                     id=app_id,
@@ -752,6 +752,6 @@ class Test_entra_app_registration_certificate_not_expired:
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert "expired" in result[0].status_extended
+            assert "expiring within 30 days" in result[0].status_extended
             assert "CN=old-cert" in result[0].status_extended
             assert result[0].resource_name == app_name
