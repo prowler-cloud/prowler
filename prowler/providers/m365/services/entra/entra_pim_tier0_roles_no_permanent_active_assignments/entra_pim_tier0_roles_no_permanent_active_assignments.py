@@ -153,13 +153,16 @@ class entra_pim_tier0_roles_no_permanent_active_assignments(Check):
 
         # Count break-glass users with standing GA assignments for the
         # threshold check.
-        break_glass_ga_assigned_count = sum(
-            1
-            for inst in evaluated_instances
-            if inst.assignment_type == "Assigned"
-            and inst.role_definition_id == GLOBAL_ADMINISTRATOR_ROLE_TEMPLATE_ID
-            and inst.principal_odata_type == "#microsoft.graph.user"
-            and inst.principal_id in break_glass_ids
+        # Count distinct accounts: one account can hold GA at several scopes.
+        break_glass_ga_assigned_count = len(
+            {
+                inst.principal_id
+                for inst in evaluated_instances
+                if inst.assignment_type == "Assigned"
+                and inst.role_definition_id == GLOBAL_ADMINISTRATOR_ROLE_TEMPLATE_ID
+                and inst.principal_odata_type == "#microsoft.graph.user"
+                and inst.principal_id in break_glass_ids
+            }
         )
 
         # --- Evaluate each instance --------------------------------------

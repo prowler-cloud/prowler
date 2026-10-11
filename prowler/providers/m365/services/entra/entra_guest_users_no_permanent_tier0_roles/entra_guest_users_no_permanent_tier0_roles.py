@@ -101,6 +101,7 @@ class entra_guest_users_no_permanent_tier0_roles(Check):
 
         # --- Evaluate each standing Tier 0 instance --------------------------
         fail_found = False
+        unverified_group = False
 
         for inst in standing_tier0_instances:
             role_name = TIER_0_ROLE_NAMES.get(
@@ -147,6 +148,7 @@ class entra_guest_users_no_permanent_tier0_roles(Check):
                     end_date_time=inst.end_date_time,
                 )
                 if member_findings is None:
+                    unverified_group = True
                     # Could not read group members -> MANUAL for this group
                     report = CheckReportM365(
                         metadata=self.metadata(),
@@ -165,8 +167,8 @@ class entra_guest_users_no_permanent_tier0_roles(Check):
                         fail_found = True
                     findings.extend(member_findings)
 
-        # --- Tenant-level PASS if no FAIL findings ----------------------------
-        if not fail_found:
+        # --- Tenant-level PASS only when every assignment was verified -------
+        if not fail_found and not unverified_group:
             report = CheckReportM365(
                 metadata=self.metadata(),
                 resource={},

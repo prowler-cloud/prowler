@@ -985,14 +985,15 @@ class Test_entra_guest_users_no_permanent_tier0_roles:
             check = entra_guest_users_no_permanent_tier0_roles()
             result = check.execute()
 
-            # MANUAL for unreadable group + PASS (no external users found otherwise)
+            # MANUAL for the unreadable group and no tenant-level PASS, since
+            # that group's members could still be external users.
             manual_results = [r for r in result if r.status == "MANUAL"]
             pass_results = [r for r in result if r.status == "PASS"]
             assert len(manual_results) == 1
             assert manual_results[0].resource_id == group_id
             assert "Secret Admins" in manual_results[0].status_extended
             assert "could not be read" in manual_results[0].status_extended
-            assert len(pass_results) == 1
+            assert len(pass_results) == 0
 
     # ------------------------------------------------------------------
     # Mixed / complex scenarios

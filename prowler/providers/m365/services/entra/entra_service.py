@@ -1657,7 +1657,13 @@ OAuthAppInfo
         skus: List[SubscribedSku] = []
         try:
             response = await self.client.subscribed_skus.get()
-            for sku in getattr(response, "value", []) or []:
+            raw_skus = list(getattr(response, "value", []) or [])
+            next_link = getattr(response, "odata_next_link", None)
+            while next_link:
+                response = await self.client.subscribed_skus.with_url(next_link).get()
+                raw_skus.extend(getattr(response, "value", []) or [])
+                next_link = getattr(response, "odata_next_link", None)
+            for sku in raw_skus:
                 capability_status = getattr(sku, "capability_status", None)
                 service_plan_names = []
                 for plan in getattr(sku, "service_plans", []) or []:

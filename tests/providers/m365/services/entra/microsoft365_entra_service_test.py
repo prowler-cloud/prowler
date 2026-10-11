@@ -2060,3 +2060,35 @@ class TestTier0RoleGroupMembers:
         assert asyncio.run(service._get_tier0_role_group_members()) == {
             "tier0-group": None
         }
+
+
+class TestSubscribedSkus:
+    def test_reads_every_page(self):
+        def sku(part, plan):
+            return SimpleNamespace(
+                sku_id=part,
+                sku_part_number=part,
+                capability_status="Enabled",
+                service_plans=[SimpleNamespace(service_plan_name=plan)],
+            )
+
+        first = SimpleNamespace(
+            value=[sku("O365_E3", "EXCHANGE_S_ENTERPRISE")], odata_next_link="next"
+        )
+        second = SimpleNamespace(
+            value=[sku("AAD_PREMIUM_P2", "AAD_PREMIUM_P2")], odata_next_link=None
+        )
+        service = Entra.__new__(Entra)
+        service.subscribed_skus_error = None
+        service.client = SimpleNamespace(
+            subscribed_skus=SimpleNamespace(
+                get=AsyncMock(return_value=first),
+                with_url=MagicMock(
+                    return_value=SimpleNamespace(get=AsyncMock(return_value=second))
+                ),
+            )
+        )
+
+        skus = asyncio.run(service._get_subscribed_skus())
+
+        assert [s.sku_part_number for s in skus] == ["O365_E3", "AAD_PREMIUM_P2"]
