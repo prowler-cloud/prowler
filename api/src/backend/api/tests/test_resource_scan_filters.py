@@ -261,3 +261,37 @@ class TestResourceScanFilters:
         aws_provider.save(update_fields=["is_deleted"])
 
         assert_resources(authenticated_client, {filter_name: str(scan.id)}, [resource])
+
+    @pytest.mark.parametrize("filter_name", ["filter[scan]", "filter[scan__in]"])
+    @pytest.mark.parametrize("membership", ["mapping", "summary"])
+    def test_limited_visibility_excludes_soft_deleted_provider_resources(
+        self, authenticated_client, aws_provider, filter_name, membership
+    ):
+        scan = create_scan(aws_provider)
+        resource = create_resource(aws_provider)
+        add_membership = map_resource if membership == "mapping" else summarize_resource
+        add_membership(scan, resource)
+        tenant_id = aws_provider.tenant_id
+        role = Role.objects.get(tenant_id=tenant_id, name="admin")
+        role.unlimited_visibility = False
+        role.save(update_fields=["unlimited_visibility"])
+        group = ProviderGroup.objects.create(
+            tenant_id=tenant_id, name="Visible providers"
+        )
+        ProviderGroupMembership.objects.create(
+            tenant_id=tenant_id, provider=aws_provider, provider_group=group
+        )
+        RoleProviderGroupRelationship.objects.create(
+            tenant_id=tenant_id, role=role, provider_group=group
+        )
+        date_filter = {"filter[updated_at]": resource.updated_at.date().isoformat()}
+        scan_filter = {filter_name: str(scan.id)}
+
+        assert_resources(authenticated_client, date_filter, [resource])
+        assert_resources(authenticated_client, scan_filter, [resource])
+
+        aws_provider.is_deleted = True
+        aws_provider.save(update_fields=["is_deleted"])
+
+        assert_resources(authenticated_client, date_filter, [])
+        assert_resources(authenticated_client, scan_filter, [])

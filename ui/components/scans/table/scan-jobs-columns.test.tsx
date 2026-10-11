@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 
 import { type ScanProps, SCAN_JOBS_TAB, type ScanJobsTab } from "@/types";
+import { SCAN_STATE } from "@/types/scans";
 import {
   SCAN_SCHEDULE_CAPABILITY,
   type ScanScheduleCapability,
@@ -230,9 +231,24 @@ describe("getScanJobsColumns", () => {
     );
   });
 
+  it.each(
+    Object.values(SCAN_STATE).filter((state) => state !== SCAN_STATE.COMPLETED),
+  )("keeps a positive resource count as text for a %s scan", (state) => {
+    // Given
+    const scan = makeCompletedScan();
+    scan.attributes.state = state;
+
+    // When
+    renderCell("resources", scan);
+
+    // Then
+    expect(screen.queryByRole("link")).not.toBeInTheDocument();
+    expect(screen.getByText("7")).toBeVisible();
+  });
+
   it("does not link a synthetic schedule row even when its count is positive", () => {
     // Given
-    const scan = makeScheduledScan();
+    const scan = makeCompletedScan();
     const pendingScan = {
       ...scan,
       id: "schedule-provider-1",
