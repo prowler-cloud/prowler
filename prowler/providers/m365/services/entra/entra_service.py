@@ -1192,6 +1192,13 @@ class Entra(M365Service):
                 for uid in group_user_ids:
                     for rid in tier0_ids:
                         active_assignments.setdefault(uid, set()).add(rid)
+            elif not group_ids and not self.privileged_group_resolution_error:
+                # The /groups listing came back empty, so a non-user Tier 0
+                # principal may be a group whose members were never read.
+                self.privileged_group_resolution_error = (
+                    f"Tier 0 principal {member_id} could not be resolved because "
+                    "the groups listing is empty or could not be read."
+                )
 
         # ---- 2. PIM eligible Tier 0 holders ----
         eligible_assignments: Dict[str, set] = {}
@@ -1360,6 +1367,15 @@ class Entra(M365Service):
                                 )
                                 for uid in member_ids:
                                     eligible.setdefault(uid, []).append(role_def_id)
+                            elif (
+                                not group_ids
+                                and not self.privileged_group_resolution_error
+                            ):
+                                self.privileged_group_resolution_error = (
+                                    f"Eligible Tier 0 principal {principal_id} could "
+                                    "not be resolved because the groups listing is "
+                                    "empty or could not be read."
+                                )
                 next_link = getattr(response, "odata_next_link", None)
                 if not next_link:
                     break

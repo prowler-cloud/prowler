@@ -86,7 +86,22 @@ class entra_privileged_role_users_not_stale(Check):
 
         # ---- No Tier 0 users at all ----
         if not entra_client.privileged_users_roles:
-            if not group_error:
+            if entra_client.pim_eligible_error and not group_error:
+                # Eligible holders could not be enumerated, so "no holders"
+                # is not established.
+                report = CheckReportM365(
+                    metadata=self.metadata(),
+                    resource={},
+                    resource_name="Privileged Users",
+                    resource_id="privilegedUsers",
+                )
+                report.status = "MANUAL"
+                report.status_extended = (
+                    "No active Tier 0 role holders were found, but PIM-eligible "
+                    f"holders could not be read: {entra_client.pim_eligible_error}"
+                )
+                findings.append(report)
+            elif not group_error:
                 report = CheckReportM365(
                     metadata=self.metadata(),
                     resource={},

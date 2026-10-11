@@ -140,6 +140,31 @@ class Test_entra_privileged_role_users_not_stale:
             assert result[0].status == "MANUAL"
             assert "could not be identified" in result[0].status_extended
 
+    def test_no_holders_with_pim_error_manual(self):
+        """No active holders and unreadable PIM eligibility: MANUAL, not PASS."""
+        entra_client = _setup_mock()
+        entra_client.pim_eligible_error = "Unable to read PIM role eligibility (403)."
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_m365_provider(),
+            ),
+            mock.patch(
+                f"{CHECK_MODULE_PATH}.entra_client",
+                new=entra_client,
+            ),
+        ):
+            from prowler.providers.m365.services.entra.entra_privileged_role_users_not_stale.entra_privileged_role_users_not_stale import (
+                entra_privileged_role_users_not_stale,
+            )
+
+            result = entra_privileged_role_users_not_stale().execute()
+
+            assert len(result) == 1
+            assert result[0].status == "MANUAL"
+            assert "PIM-eligible holders could not be read" in result[0].status_extended
+
     def test_sign_in_tenant_error_p1_missing(self):
         """MANUAL when P1 licence is missing."""
         entra_client = _setup_mock()
