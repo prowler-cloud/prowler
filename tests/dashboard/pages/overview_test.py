@@ -1,3 +1,4 @@
+from importlib.util import module_from_spec, spec_from_file_location
 from types import SimpleNamespace
 from unittest.mock import patch
 
@@ -172,3 +173,57 @@ def test_table_keeps_selected_assessment_rows(run_callback, monkeypatch):
     assert rows[0]["ASSESSMENT_TIME"] == "2026-10-08"
     assert rows[0]["STATUS"] == "FAIL"
     assert rows[0]["ACCOUNT_UID"] == "111 - AWS"
+
+
+def test_region_option_with_spaces_round_trips_to_chart_and_summaries(
+    run_callback, history, monkeypatch
+):
+    history["REGION"] = history["REGION"].replace({"east": "US East"})
+    options = overview.create_region_dropdown(run_callback()[8]).children[1].options
+    east_option = options[1]
+    assert east_option == {"label": "US East", "value": "US East"}
+
+    rows = []
+    card_frames = []
+    original_card = overview.create_provider_card
+
+    def capture_card(provider, logo, account_type, frame):
+        card_frames.append(frame.copy())
+        return original_card(provider, logo, account_type, frame)
+
+    monkeypatch.setattr(overview, "create_provider_card", capture_card)
+    monkeypatch.setattr(
+        overview, "generate_table", lambda row, *_args: rows.append(row.copy())
+    )
+    result = run_callback(regions=[east_option["value"]])
+    counts = chart_counts(result)
+    assert counts[("2026-10-08", "FAIL")] == 1
+    assert counts[("2026-10-10", "PASS")] == 1
+    assert counts[("2026-10-10", "FAIL")] == 0
+    assert result[8] == ["All", "US East"]
+    assert len(rows) == 1
+    assert rows[0]["REGION"] == "US East"
+    assert rows[0]["ASSESSMENT_TIME"] == "2026-10-10"
+    assert len(card_frames) == 1
+    assert card_frames[0]["REGION"].tolist() == ["US East"]
+    assert card_frames[0]["STATUS"].tolist() == ["PASS"]
+
+
+def test_initial_region_dropdown_preserves_spaces(history, tmp_path):
+    history["REGION"] = history["REGION"].replace({"east": "US East"})
+    history["FINDING_UID"] = [f"finding-{index}" for index in history.index]
+    csv_path = tmp_path / "findings.csv"
+    history.to_csv(csv_path, sep=";", index=False)
+    spec = spec_from_file_location("overview_region_fixture", overview.__file__)
+    module = module_from_spec(spec)
+    # Load real CSV initialization and layout without registering duplicate callbacks.
+    with (
+        patch("glob.glob", return_value=[str(csv_path)]),
+        patch("dash.register_page"),
+        patch("dash.callback", side_effect=lambda *_args, **_kwargs: lambda func: func),
+    ):
+        spec.loader.exec_module(module)
+    options = module.region_dropdown.children[1].options
+    assert {"label": "US East", "value": "US East"} in options
+    assert {"label": "All", "value": "All"} in options
+    assert {"label": "west", "value": "west"} in options

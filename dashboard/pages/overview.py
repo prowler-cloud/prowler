@@ -275,14 +275,6 @@ else:
     data["REGION"].fillna("-")
     regions = ["All"] + list(data["REGION"].unique())
     regions = [x for x in regions if str(x) != "nan" and x.__class__.__name__ == "str"]
-    # Correct the values
-    options = []
-    for value in regions:
-        if " " in value:
-            options.append(value.split(" ")[1])
-        else:
-            options.append(value)
-    regions = options
     region_dropdown = create_region_dropdown(regions)
 
     # Severity Dropdown
@@ -897,16 +889,6 @@ def filter_data(
         for x in region_filter_options
         if str(x) != "nan" and x.__class__.__name__ == "str"
     ]
-    # Correct the values
-    options = []
-    for value in region_filter_options:
-        if " " in value:
-            options.append(value.split(" ")[1])
-        else:
-            options.append(value)
-
-    region_filter_options = options
-
     # Filter Severity
     if severity_values == ["All"]:
         updated_severity_values = filtered_data["SEVERITY"].unique()
