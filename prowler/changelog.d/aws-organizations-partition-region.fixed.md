@@ -1,0 +1,1 @@
+AWS Organizations metadata is fetched from the partition of the audited account, using the region that answered the STS bootstrap, instead of the commercial `us-east-1` endpoint a session without a region resolves to, which timed out in GovCloud
