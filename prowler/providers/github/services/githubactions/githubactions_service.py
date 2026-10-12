@@ -186,7 +186,7 @@ class GithubActions(GithubService):
                                 return local[path_key]
 
             logger.warning(
-                f"Could not extract workflow file from zizmor location, skipping it: {location}"
+                "Could not extract workflow file from zizmor location, skipping it"
             )
             return None
         except Exception as error:

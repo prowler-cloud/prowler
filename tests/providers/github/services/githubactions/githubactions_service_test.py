@@ -69,6 +69,21 @@ class TestGithubActionsService:
         result = GithubActions._extract_workflow_file_from_location(location)
         assert result == ".github/workflows/test.yml"
 
+    def test_extract_workflow_file_from_location_warning_omits_location(self):
+        # Locations can carry workflow source text, which must not reach the logs
+        location = {
+            "symbolic": {"key": {"Local": {}}},
+            "concrete": {"feature": "run: echo zq7rk2mx9v"},
+        }
+        with patch(
+            "prowler.providers.github.services.githubactions.githubactions_service.logger"
+        ) as mock_logger:
+            result = GithubActions._extract_workflow_file_from_location(location)
+
+        assert result is None
+        mock_logger.warning.assert_called_once()
+        assert "zq7rk2mx9v" not in str(mock_logger.warning.call_args)
+
     def test_extract_workflow_file_from_location_missing_key(self):
         location = {"symbolic": {}}
         result = GithubActions._extract_workflow_file_from_location(location)
