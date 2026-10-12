@@ -390,7 +390,7 @@ class AwsProvider(Provider):
             )
 
         self._organizations_metadata = self.get_organizations_info(
-            aws_organizations_session, self._identity.account
+            aws_organizations_session, self._identity.account, sts_region
         )
 
         # Fallback to the original (pre-assume) session when no explicit
@@ -412,7 +412,7 @@ class AwsProvider(Provider):
                 "Retrying AWS Organizations metadata retrieval with the original session"
             )
             self._organizations_metadata = self.get_organizations_info(
-                self._session.original_session, self._identity.account
+                self._session.original_session, self._identity.account, sts_region
             )
         ########
 
@@ -508,7 +508,10 @@ class AwsProvider(Provider):
 
     # TODO: This can be moved to another class since it doesn't need self
     def get_organizations_info(
-        self, organizations_session: Session, aws_account_id: str
+        self,
+        organizations_session: Session,
+        aws_account_id: str,
+        region: str | None = None,
     ) -> AWSOrganizationsInfo:
         """
         get_organizations_info returns a AWSOrganizationsInfo object if the account to be audited is a delegated administrator for AWS Organizations or if the AWS Organizations Role ARN (--organizations-role) is passed.
@@ -516,6 +519,7 @@ class AwsProvider(Provider):
         Args:
         - organizations_session: needs to be a Session object with permissions to do organizations:DescribeAccount and organizations:ListTagsForResource.
         - aws_account_id: is the AWS Account ID from which we want to get the AWS Organizations account metadata
+        - region: a region of the audited partition, so the client reaches that partition's Organizations endpoint
 
         Returns:
         - AWSOrganizationsInfo object with the AWS Organizations metadata for the account to be audited.
@@ -529,6 +533,7 @@ class AwsProvider(Provider):
                 get_organizations_metadata(
                     aws_account_id=aws_account_id,
                     session=organizations_session,
+                    region=region,
                 )
             )
 

@@ -10,6 +10,7 @@ import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 import openaiSchema from "@/lib/provider-credentials/fixtures/openai-credential-schema.json";
 import templateSchema from "@/lib/provider-credentials/fixtures/template-credential-schema.json";
+import unionSchema from "@/lib/provider-credentials/fixtures/union-credential-schema.json";
 import { useProviderWizardStore } from "@/store/provider-wizard/store";
 import type { ProviderSchemasResult } from "@/types/provider-schema";
 
@@ -156,12 +157,16 @@ describe("dynamic credentials in the provider wizard", () => {
     expect(timeout).toHaveAttribute("min", "1");
     expect(timeout).toHaveAttribute("max", "300");
     expect(timeout).toHaveAttribute("step", "1");
-    expect(
-      screen.getByRole("combobox", { name: "Authentication Scheme" }),
-    ).toHaveTextContent("bearer");
+    const authScheme = screen.getByRole("combobox", {
+      name: "Authentication Scheme",
+    });
+    expect(authScheme).toHaveTextContent("Bearer");
     expect(apiUrl).toHaveValue("");
 
-    // When: false must remain a boolean and numeric input must become a number.
+    // When: options read capitalized but submit their raw schema value.
+    await user.click(authScheme);
+    await user.click(screen.getByRole("option", { name: "Basic" }));
+    // False must remain a boolean and numeric input must become a number.
     await user.type(apiUrl, "https://api.example.test");
     await user.type(apiKey, "fixture-key-not-a-secret");
     await user.click(verifyTls);
@@ -179,7 +184,78 @@ describe("dynamic credentials in the provider wizard", () => {
         api_key: "fixture-key-not-a-secret",
         verify_tls: false,
         timeout_seconds: 60,
-        auth_scheme: "bearer",
+        auth_scheme: "basic",
+      },
+    });
+  });
+  it("shows only the chosen variant's fields when a schema offers several", async () => {
+    // Given
+    const user = userEvent.setup();
+    getProviderSchemas.mockResolvedValue({
+      status: "success",
+      providerType: "acme",
+      secretTypes: { static: unionSchema },
+    });
+    render(<DynamicCredentialsStep {...props} />);
+    await screen.findByLabelText(/API Host/);
+    const method = screen.getByRole("combobox", {
+      name: "Authentication method",
+    });
+
+    // Then
+    expect(method).toHaveTextContent("API token");
+    expect(screen.getByLabelText(/^Token/)).toBeVisible();
+    expect(screen.queryByLabelText(/Username/)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/Password/)).not.toBeInTheDocument();
+    expect(
+      screen.queryByLabelText(/Authentication Method/),
+    ).not.toBeInTheDocument();
+
+    // When: a token typed before switching away is gone on return.
+    await user.type(screen.getByLabelText(/^Token/), "previous-variant-token");
+    await user.click(method);
+    await user.click(
+      screen.getByRole("option", { name: "Username and password" }),
+    );
+    await user.click(method);
+    await user.click(screen.getByRole("option", { name: "API token" }));
+
+    // Then
+    expect(screen.getByLabelText(/^Token/)).toHaveValue("");
+
+    // When
+    await user.click(method);
+    await user.click(
+      screen.getByRole("option", { name: "Username and password" }),
+    );
+    await user.type(screen.getByLabelText(/API Host/), "api.acme.test");
+    await user.type(screen.getByLabelText(/Username/), "fixture-user");
+    await user.type(
+      screen.getByLabelText(/Password/),
+      "fixture-password-not-a-secret",
+    );
+
+    // Then
+    expect(screen.queryByLabelText(/^Token/)).not.toBeInTheDocument();
+
+    // When
+    act(() =>
+      screen
+        .getByLabelText(/Username/)
+        .closest("form")!
+        .requestSubmit(),
+    );
+
+    // Then: the variant's fixed discriminator travels with its own fields only.
+    await waitFor(() => expect(props.onNext).toHaveBeenCalledOnce());
+    expect(saveDynamicProviderCredentials).toHaveBeenCalledWith({
+      providerId: "account",
+      secretType: "static",
+      secret: {
+        auth_method: "basic",
+        host: "api.acme.test",
+        username: "fixture-user",
+        password: "fixture-password-not-a-secret",
       },
     });
   });
@@ -275,7 +351,7 @@ describe("dynamic credentials in the provider wizard", () => {
     await user.click(
       screen.getByRole("combobox", { name: "Authentication method" }),
     );
-    await user.click(screen.getByRole("option", { name: "personal token" }));
+    await user.click(screen.getByRole("option", { name: "Personal token" }));
     expect(screen.getByLabelText(/API token/)).toHaveValue("");
     expect(JSON.stringify(sessionStorage)).not.toContain(
       "previous-method-secret",
