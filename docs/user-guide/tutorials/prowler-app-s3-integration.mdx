@@ -330,8 +330,8 @@ Once the required permissions are set up, proceed to configure the S3 integratio
 
     ![Configuration form](/images/prowler-app/s3/s3-integration-ui-4.png)
 
-6. Click "Next" to configure credentials
-7. Configure AWS authentication using one of the supported methods:
+5. Click "Next" to configure credentials
+6. Configure AWS authentication using one of the supported methods:
 
     - **AWS SDK Default:** Use default AWS credentials from the environment. For Prowler Cloud users, this is the recommended option as the service has AWS credentials to assume IAM roles with ARNs matching `arn:aws:iam::*:role/Prowler*` or `arn:aws:iam::*:role/prowler*`
     - **Access Keys:** Provide AWS access key ID and secret access key
@@ -339,14 +339,14 @@ Once the required permissions are set up, proceed to configure the S3 integratio
 
     ![Credentials configuration](/images/prowler-app/s3/s3-integration-ui-5.png)
 
-8. Optional - For IAM role authentication, complete the required fields:
+7. Optional - For IAM role authentication, complete the required fields:
 
     - **Role ARN:** The Amazon Resource Name of the IAM role
     - **External ID:** Unique identifier for additional security (defaults to Tenant/Organization ID) - mandatory and automatically filled
     - **Role Session Name:** Optional - name for the assumed role session
     - **Session Duration:** Optional - duration in seconds for the session
 
-9. Click "Create Integration" to verify the connection and complete the setup
+8. Click "Create Integration" to verify the connection and complete the setup
 
 <Check>
 Once credentials are configured and the connection test passes, the S3 integration will be active. Scan results will automatically be exported to the specified bucket after each scan completes. Run a new scan and check the S3 bucket to verify the integration is working.
