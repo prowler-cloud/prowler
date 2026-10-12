@@ -1075,7 +1075,7 @@ class TestSecurityHubIntegrationUploads:
         # Verify findings were transformed and sent
         assert mock_finding_output.transform_api_finding.call_count == 2
         mock_asff.assert_called_once()
-        mock_asff_instance.transform.assert_called_once_with(transformed_findings)
+        mock_asff_instance.transform.assert_not_called()
         mock_security_hub.batch_send_to_security_hub.assert_called_once()
         mock_security_hub.archive_previous_findings.assert_called_once()
 
@@ -1715,9 +1715,153 @@ def security_hub_upload():
         )
 
 
+@pytest.fixture
+def real_security_hub_conversion(security_hub_upload):
+    """Run the installed ASFF converter and SDK sender against synthetic finding fields."""
+    from prowler.lib.outputs.asff.asff import ASFF
+    from prowler.providers.aws.lib.security_hub.security_hub import SecurityHub
+
+    upload = security_hub_upload
+    upload.mocks["ASFF"].side_effect = ASFF
+    endpoint = MagicMock()
+    endpoint.batch_import_findings.side_effect = lambda Findings: {
+        "SuccessCount": len(Findings),
+        "FailedCount": 0,
+    }
+    sdk = object.__new__(SecurityHub)
+    sdk._enabled_regions = {"us-east-1": endpoint}
+    sdk.archive_previous_findings = MagicMock()
+
+    def make_client(integration, tenant, payload):
+        """Apply real SDK filtering to the converter's validated ASFF output."""
+        sdk._findings_per_region = sdk.filter(
+            payload, integration.configuration["send_only_fails"]
+        )
+        return True, sdk
+
+    upload.mocks["get_security_hub_client_from_integration"].side_effect = make_client
+
+    def finding(identifier, status="FAIL", valid=True):
+        """Provide all converter fields, with an optional invalid resource tag shape."""
+        return SimpleNamespace(
+            status=status,
+            muted=False,
+            compliance={},
+            partition="aws",
+            account_uid="123456789012",
+            account_ou_uid="",
+            account_ou_name="",
+            region="us-east-1",
+            resource_uid=f"arn:aws:ec2:us-east-1:123456789012:instance/{identifier}",
+            resource_tags={} if valid else ["invalid-tags"],
+            status_extended="Synthetic resource observation",
+            metadata=SimpleNamespace(
+                CheckID="synthetic_check",
+                CheckType=[],
+                Severity=SimpleNamespace(value="high"),
+                CheckTitle="Synthetic check",
+                ResourceType="AwsEc2Instance",
+                Remediation=SimpleNamespace(
+                    Recommendation=SimpleNamespace(
+                        Text="Synthetic guidance", Url="https://example.com/guidance"
+                    )
+                ),
+            ),
+        )
+
+    return SimpleNamespace(upload=upload, endpoint=endpoint, sdk=sdk, finding=finding)
+
+
 @pytest.mark.django_db
 class TestSecurityHubDelivery:
+    @pytest.mark.parametrize("count", [1, 2])
+    def test_real_asff_converts_each_row_once(
+        self, real_security_hub_conversion, count
+    ):
+        """Healthy rows each produce one validated ASFF item and one accepted send."""
+        scenario = real_security_hub_conversion
+        scenario.upload.findings[:] = [
+            scenario.finding(f"finding-{index}") for index in range(count)
+        ]
+        assert upload_security_hub_integration("tenant", "provider", "scan") is True
+        sent = scenario.endpoint.batch_import_findings.call_args.kwargs["Findings"]
+        assert len(sent) == count
+        assert len({finding["Id"] for finding in sent}) == count
+
+    @pytest.mark.parametrize(
+        "validity", [[True, False], [True, False, True], [False, True]]
+    )
+    def test_real_asff_partial_conversion_skips_archive(
+        self, real_security_hub_conversion, validity
+    ):
+        """A converted prefix cannot authorize success after a later row fails validation."""
+        scenario = real_security_hub_conversion
+        scenario.upload.findings[:] = [
+            scenario.finding(f"finding-{index}", valid=valid)
+            for index, valid in enumerate(validity)
+        ]
+        assert upload_security_hub_integration("tenant", "provider", "scan") is False
+        scenario.sdk.archive_previous_findings.assert_not_called()
+        converted_prefix = validity.index(False)
+        assert scenario.endpoint.batch_import_findings.call_count == bool(
+            converted_prefix
+        )
+        if converted_prefix:
+            assert (
+                len(
+                    scenario.endpoint.batch_import_findings.call_args.kwargs["Findings"]
+                )
+                == converted_prefix
+            )
+
+    @pytest.mark.parametrize("statuses", [["MANUAL"], ["FAIL", "MANUAL", "PASS"]])
+    def test_real_asff_manual_and_pass_filtering(
+        self, real_security_hub_conversion, statuses
+    ):
+        """MANUAL conversion exclusion and SDK PASS filtering remain distinct no-op policies."""
+        scenario = real_security_hub_conversion
+        scenario.upload.integration.configuration["send_only_fails"] = True
+        scenario.upload.findings[:] = [
+            scenario.finding(f"finding-{index}", status=status)
+            for index, status in enumerate(statuses)
+        ]
+        assert upload_security_hub_integration("tenant", "provider", "scan") is (
+            "FAIL" in statuses
+        )
+        if "FAIL" in statuses:
+            sent = scenario.endpoint.batch_import_findings.call_args.kwargs["Findings"]
+            assert len(sent) == 1
+            assert sent[0]["Compliance"]["Status"] == "FAILED"
+            scenario.sdk.archive_previous_findings.assert_called_once()
+        else:
+            scenario.endpoint.batch_import_findings.assert_not_called()
+            scenario.sdk.archive_previous_findings.assert_not_called()
+
+    def test_real_asff_conversion_failure_stays_sticky(
+        self, real_security_hub_conversion
+    ):
+        """A later healthy page cannot clear an earlier partial conversion loss."""
+        scenario = real_security_hub_conversion
+        scenario.upload.findings[:] = [
+            scenario.finding("first"),
+            scenario.finding("invalid", valid=False),
+            scenario.finding("skipped"),
+            scenario.finding("healthy-1"),
+            scenario.finding("healthy-2"),
+            scenario.finding("healthy-3"),
+        ]
+        with patch("tasks.jobs.integrations.DJANGO_FINDINGS_BATCH_SIZE", 3):
+            assert (
+                upload_security_hub_integration("tenant", "provider", "scan") is False
+            )
+        assert [
+            len(call.kwargs["Findings"])
+            for call in scenario.endpoint.batch_import_findings.call_args_list
+        ] == [1, 3]
+        scenario.sdk.archive_previous_findings.assert_not_called()
+
     def test_partial_delivery_skips_archival(self, security_hub_upload):
+        """Partial acceptance reports incomplete delivery and prevents archival."""
         security_hub_upload.client.batch_send_to_security_hub.return_value = 1
 
         with patch("tasks.jobs.integrations.logger") as logger:
@@ -1734,6 +1878,7 @@ class TestSecurityHubDelivery:
         security_hub_upload.client.archive_previous_findings.assert_not_called()
 
     def test_intentional_empty_payload_succeeds(self, security_hub_upload):
+        """Connected intentional filtering to zero eligible entries succeeds."""
         security_hub_upload.client._findings_per_region = {"us-east-1": []}
         security_hub_upload.client.batch_send_to_security_hub.return_value = 0
 
@@ -1742,6 +1887,7 @@ class TestSecurityHubDelivery:
     def test_database_retry_discards_previous_client_and_counts(
         self, security_hub_upload
     ):
+        """Only the recreated client from a completed replay reaches archival."""
         upload = security_hub_upload
         replacement = MagicMock()
         replacement._findings_per_region = {"us-east-1": upload.payload}
@@ -1752,6 +1898,7 @@ class TestSecurityHubDelivery:
         ]
 
         def interrupted_page():
+            """Yield a processed page before a synthetic replica conflict."""
             yield upload.findings, None
             raise OperationalError("Conflict with recovery")
 
@@ -1770,6 +1917,7 @@ class TestSecurityHubDelivery:
         replacement.archive_previous_findings.assert_called_once()
 
     def test_empty_database_with_real_batches(self, security_hub_upload):
+        """The real empty terminal batch creates no transformer or client."""
         security_hub_upload.findings.clear()
 
         assert upload_security_hub_integration("tenant", "provider", "scan") is True
@@ -1779,7 +1927,10 @@ class TestSecurityHubDelivery:
         ].assert_not_called()
 
     def test_zero_conversion_after_accepted_page_fails(self, security_hub_upload):
+        """A later empty conversion cannot hide lost non-MANUAL input."""
         upload = security_hub_upload
+        upload.payload[:] = upload.payload[:1]
+        upload.client.batch_send_to_security_hub.return_value = 1
         upload.mocks["ASFF"].side_effect = [
             SimpleNamespace(
                 data=upload.payload, _data=MagicMock(), transform=MagicMock()
@@ -1794,6 +1945,7 @@ class TestSecurityHubDelivery:
 
     @pytest.mark.parametrize("accepted", [0, 3])
     def test_delivery_count_mismatch(self, security_hub_upload, accepted):
+        """Rejected or excessive accepted counts prevent success and archival."""
         upload = security_hub_upload
         upload.client.batch_send_to_security_hub.return_value = accepted
         assert upload_security_hub_integration("tenant", "provider", "scan") is False
@@ -1805,9 +1957,11 @@ class TestSecurityHubDelivery:
     def test_delivery_failure_stays_incomplete_across_pages(
         self, security_hub_upload, outcomes
     ):
+        """Healthy pages never clear earlier delivery shortfalls or send errors."""
         upload = security_hub_upload
+        upload.findings[:] = [SimpleNamespace(status="FAIL") for _ in range(4)]
         upload.client.batch_send_to_security_hub.side_effect = outcomes
-        with patch("tasks.jobs.integrations.DJANGO_FINDINGS_BATCH_SIZE", 1):
+        with patch("tasks.jobs.integrations.DJANGO_FINDINGS_BATCH_SIZE", 2):
             assert (
                 upload_security_hub_integration("tenant", "provider", "scan") is False
             )
@@ -1815,6 +1969,7 @@ class TestSecurityHubDelivery:
 
     @pytest.mark.parametrize("count", [0, 999, 1000, 1001, 2000])
     def test_real_batch_boundaries(self, security_hub_upload, count):
+        """Actual per-page payload sizes and accepted totals match nonempty database batches."""
         upload = security_hub_upload
         upload.findings[:] = [
             SimpleNamespace(Id=f"finding-{index}", status="FAIL")
@@ -1826,10 +1981,12 @@ class TestSecurityHubDelivery:
         sent_sizes = []
 
         def create_client(integration, tenant, payload):
+            """Select the current page payload for the synthetic sender."""
             upload.client._findings_per_region = {"us-east-1": payload}
             return True, upload.client
 
         def send():
+            """Record the actual page size and return its accepted count."""
             size = sum(
                 len(findings)
                 for findings in upload.client._findings_per_region.values()
@@ -1869,6 +2026,7 @@ class TestSecurityHubDelivery:
 
     @pytest.mark.parametrize("status", ["MANUAL", "FAIL"])
     def test_empty_asff_preserves_failure(self, security_hub_upload, status):
+        """Empty ASFF preserves MANUAL-only failure and rejects non-MANUAL conversion loss."""
         upload = security_hub_upload
         upload.findings[:] = [SimpleNamespace(status=status)]
         upload.mocks["ASFF"].return_value.data = []
@@ -1876,6 +2034,7 @@ class TestSecurityHubDelivery:
         upload.mocks["get_security_hub_client_from_integration"].assert_not_called()
 
     def test_escaping_transform_error(self, security_hub_upload):
+        """An escaping finding transformation error prevents archival."""
         upload = security_hub_upload
         upload.mocks["FindingOutput"].transform_api_finding.side_effect = ValueError(
             "conversion failed"
@@ -1884,6 +2043,7 @@ class TestSecurityHubDelivery:
         upload.client.archive_previous_findings.assert_not_called()
 
     def test_integrations_keep_separate_delivery_results(self, security_hub_upload):
+        """A healthy integration cannot conceal another integration delivery failure."""
         upload = security_hub_upload
         second = SimpleNamespace(
             id="integration-2", configuration=upload.integration.configuration
@@ -1906,6 +2066,7 @@ class TestSecurityHubDelivery:
 
     @pytest.mark.parametrize("failure", ["rejected", "request", "region"])
     def test_locked_sdk_shortfall(self, security_hub_upload, failure):
+        """Real SDK rejection, request, and Region failures produce the incomplete-delivery warning."""
         from prowler.providers.aws.lib.security_hub.security_hub import SecurityHub
 
         upload = security_hub_upload
@@ -1924,6 +2085,7 @@ class TestSecurityHubDelivery:
                 dict=lambda identifier=identifier, **kwargs: {"Id": identifier},
             )
             findings.append(finding)
+        upload.findings[:] = [SimpleNamespace(status="FAIL") for _ in findings]
         upload.mocks["ASFF"].return_value.data = findings
         sdk._findings_per_region = sdk.filter(findings, False)
         success = {"SuccessCount": 100, "FailedCount": 0}
@@ -1968,6 +2130,7 @@ class TestSecurityHubDelivery:
 
     @pytest.mark.parametrize("status", ["PASSED", "WARNING"])
     def test_locked_sdk_intentional_filtering(self, security_hub_upload, status):
+        """Real SDK PASS and muted filtering sends nothing and succeeds."""
         from prowler.providers.aws.lib.security_hub.security_hub import SecurityHub
 
         upload = security_hub_upload
@@ -1990,6 +2153,7 @@ class TestSecurityHubDelivery:
     def test_retry_uses_only_completed_attempt(
         self, security_hub_upload, first_accepted, final_accepted
     ):
+        """Completed replay counts and delivery results exclude the abandoned attempt."""
         upload = security_hub_upload
         replacement = MagicMock()
         replacement._findings_per_region = {"us-west-2": upload.payload}
@@ -2001,6 +2165,7 @@ class TestSecurityHubDelivery:
         ]
 
         def interrupted():
+            """Yield a processed page before raising the recorded replica iterator error."""
             yield upload.findings, None
             raise OperationalError("Conflict with recovery")
 
@@ -2029,6 +2194,7 @@ class TestSecurityHubDelivery:
 
     @pytest.mark.parametrize("final", ["empty", "connection", "exhausted"])
     def test_retry_does_not_archive_abandoned_state(self, security_hub_upload, final):
+        """Empty, disconnected, or exhausted replay never archives abandoned client state."""
         upload = security_hub_upload
         reached_errors = []
         replacement = MagicMock()
@@ -2036,6 +2202,7 @@ class TestSecurityHubDelivery:
         replacement.batch_send_to_security_hub.return_value = 2
 
         def interrupted(attempt):
+            """Yield a processed page before raising the recorded replica iterator error."""
             yield upload.findings, None
             reached_errors.append(attempt)
             raise OperationalError(f"Conflict with recovery in attempt {attempt}")
@@ -2072,6 +2239,7 @@ class TestSecurityHubDelivery:
 
     @pytest.mark.parametrize("result", [True, False])
     def test_task_wrapper_preserves_business_result(self, result):
+        """The actual Celery wrapper returns the integration business boolean unchanged."""
         from tasks.tasks import security_hub_integration_task
 
         with patch("tasks.tasks.upload_security_hub_integration", return_value=result):

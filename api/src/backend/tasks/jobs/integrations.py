@@ -354,10 +354,16 @@ def upload_security_hub_integration(
                                     file_path="",
                                     file_extension="json",
                                 )
-                                asff_transformer.transform(transformed_findings)
 
                                 # Get the batch of ASFF findings
                                 batch_asff_findings = asff_transformer.data
+                                expected_asff_findings = sum(
+                                    finding.status != "MANUAL"
+                                    for finding in transformed_findings
+                                )
+                                if len(batch_asff_findings) != expected_asff_findings:
+                                    # ASFF catches errors and can return only a converted prefix.
+                                    delivery_incomplete = True
 
                                 if batch_asff_findings:
                                     # Create Security Hub client for first batch or reuse existing
@@ -425,13 +431,6 @@ def upload_security_hub_integration(
                                         logger.error(
                                             f"Failed to send batch {batch_number} to Security Hub: {str(batch_error)}"
                                         )
-
-                                elif any(
-                                    finding.status != "MANUAL"
-                                    for finding in transformed_findings
-                                ):
-                                    # ASFF catches conversion errors; empty output is not a filtered no-op.
-                                    delivery_incomplete = True
 
                                 # Clear memory after processing each batch
                                 asff_transformer._data.clear()
