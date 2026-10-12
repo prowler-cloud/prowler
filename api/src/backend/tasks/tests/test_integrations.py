@@ -1,4 +1,6 @@
+from contextlib import ExitStack
 from datetime import UTC, datetime
+from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -1651,6 +1653,375 @@ class TestSecurityHubIntegrationUploads:
 
         mock_security_hub.batch_send_to_security_hub.assert_called_once()
         mock_security_hub.archive_previous_findings.assert_called_once()
+
+
+@pytest.fixture
+def security_hub_archive():
+    """Use the installed SDK filter, sender, and archive selector with synthetic endpoints."""
+    from prowler.providers.aws.lib.security_hub.security_hub import SecurityHub
+
+    with ExitStack() as stack:
+        mocks = {
+            name: stack.enter_context(patch(f"tasks.jobs.integrations.{name}"))
+            for name in (
+                "rls_transaction",
+                "Integration",
+                "Provider",
+                "Finding",
+                "initialize_prowler_provider",
+                "FindingOutput",
+                "ASFF",
+                "get_security_hub_client_from_integration",
+            )
+        }
+        findings = []
+        integration = SimpleNamespace(
+            id="integration-1",
+            configuration={"archive_previous_findings": True, "send_only_fails": False},
+        )
+        mocks["Integration"].objects.filter.return_value = [integration]
+        mocks[
+            "Finding"
+        ].all_objects.filter.return_value.order_by.return_value.iterator.side_effect = (
+            lambda: iter(findings)
+        )
+        mocks["FindingOutput"].transform_api_finding.side_effect = (
+            lambda finding, provider: finding
+        )
+        mocks["ASFF"].side_effect = lambda **kwargs: SimpleNamespace(
+            data=[
+                finding for finding in kwargs["findings"] if finding.status != "MANUAL"
+            ],
+            _data=MagicMock(),
+            transform=MagicMock(),
+        )
+        clients = []
+        endpoints = {}
+
+        def finding(identifier, region="us-east-1", status="FAIL"):
+            payload = {"Id": identifier, "RecordState": "ACTIVE"}
+            return SimpleNamespace(
+                Id=identifier,
+                status=status,
+                Compliance=SimpleNamespace(
+                    Status={"FAIL": "FAILED", "PASS": "PASSED", "MUTED": "WARNING"}.get(
+                        status, "NOT_AVAILABLE"
+                    )
+                ),
+                Resources=[SimpleNamespace(Region=region)],
+                dict=lambda **kwargs: payload.copy(),
+            )
+
+        def make_client(integration, tenant, payload):
+            client = object.__new__(SecurityHub)
+            client._aws_account_id = "123456789012"
+            client._enabled_regions = endpoints
+            client._findings_per_region = client.filter(
+                payload, integration.configuration["send_only_fails"]
+            )
+            clients.append(client)
+            return True, client
+
+        mocks["get_security_hub_client_from_integration"].side_effect = make_client
+
+        def region(name, identifiers):
+            endpoint = MagicMock()
+            endpoint.batch_import_findings.side_effect = lambda Findings: {
+                "SuccessCount": len(Findings),
+                "FailedCount": 0,
+            }
+            endpoint.get_paginator.return_value.paginate.side_effect = lambda **kwargs: [
+                {
+                    "Findings": [
+                        {"Id": identifier, "RecordState": "ACTIVE"}
+                        for identifier in identifiers
+                    ]
+                }
+            ]
+            endpoints[name] = endpoint
+            return endpoint
+
+        def archived(endpoint):
+            return [
+                item["Id"]
+                for call in endpoint.batch_import_findings.call_args_list
+                for item in call.kwargs["Findings"]
+                if item.get("RecordState") == "ARCHIVED"
+            ]
+
+        yield SimpleNamespace(
+            mocks=mocks,
+            integration=integration,
+            findings=findings,
+            clients=clients,
+            endpoints=endpoints,
+            finding=finding,
+            region=region,
+            archived=archived,
+            make_client=make_client,
+        )
+
+
+@pytest.mark.django_db
+class TestSecurityHubBatchArchival:
+    @pytest.mark.parametrize("count", [999, 1000, 1001, 2000])
+    def test_all_database_pages_protect_current_ids(self, security_hub_archive, count):
+        scenario = security_hub_archive
+        scenario.findings[:] = [
+            scenario.finding(f"current-{index}") for index in range(count)
+        ]
+        endpoint = scenario.region(
+            "us-east-1", [finding.Id for finding in scenario.findings] + ["previous"]
+        )
+
+        assert upload_security_hub_integration("tenant", "provider", "scan") is True
+        assert scenario.archived(endpoint) == ["previous"]
+
+    def test_retry_recreates_client_for_completed_attempt(self, security_hub_archive):
+        scenario = security_hub_archive
+        scenario.findings[:] = [scenario.finding("current")]
+        endpoint = scenario.region("us-east-1", ["abandoned", "current", "previous"])
+
+        def interrupted():
+            yield [scenario.finding("abandoned")], False
+            raise OperationalError("Conflict with recovery")
+
+        with (
+            patch(
+                "tasks.jobs.integrations.batched",
+                side_effect=[interrupted(), [(scenario.findings, True)]],
+            ),
+            patch("tasks.jobs.integrations.READ_REPLICA_ALIAS", "replica"),
+            patch("tasks.jobs.integrations.REPLICA_MAX_ATTEMPTS", 2),
+            patch("tasks.jobs.integrations.time.sleep"),
+        ):
+            assert upload_security_hub_integration("tenant", "provider", "scan") is True
+
+        assert len(scenario.clients) == 2
+        assert scenario.archived(endpoint) == ["abandoned", "previous"]
+
+    @pytest.mark.parametrize("status", ["PASS", "MUTED", "MANUAL"])
+    def test_filtered_final_page_preserves_earlier_current_ids(
+        self, security_hub_archive, status
+    ):
+        scenario = security_hub_archive
+        scenario.integration.configuration["send_only_fails"] = True
+        scenario.findings[:] = [
+            scenario.finding(f"current-{index}") for index in range(1000)
+        ] + [scenario.finding("excluded", status=status)]
+        endpoint = scenario.region(
+            "us-east-1",
+            [finding.Id for finding in scenario.findings[:-1]] + ["previous"],
+        )
+        assert upload_security_hub_integration("tenant", "provider", "scan") is True
+        assert scenario.archived(endpoint) == ["previous"]
+
+    def test_regions_keep_separate_id_sets_and_enabled_empty_keys(
+        self, security_hub_archive
+    ):
+        scenario = security_hub_archive
+        scenario.findings[:] = [
+            scenario.finding("shared"),
+            scenario.finding("west", "us-west-2"),
+        ]
+        east = scenario.region("us-east-1", ["shared", "previous-east"])
+        west = scenario.region("us-west-2", ["shared", "west", "previous-west"])
+        empty = scenario.region("eu-west-1", ["previous-empty"])
+        with patch("tasks.jobs.integrations.DJANGO_FINDINGS_BATCH_SIZE", 1):
+            assert upload_security_hub_integration("tenant", "provider", "scan") is True
+        assert scenario.archived(east) == ["previous-east"]
+        assert scenario.archived(west) == ["shared", "previous-west"]
+        assert scenario.archived(empty) == ["previous-empty"]
+
+    def test_integrations_use_their_own_filter_and_regions(self, security_hub_archive):
+        scenario = security_hub_archive
+        second = SimpleNamespace(
+            id="integration-2",
+            configuration={"archive_previous_findings": True, "send_only_fails": True},
+        )
+        scenario.mocks["Integration"].objects.filter.return_value = [
+            scenario.integration,
+            second,
+        ]
+        scenario.findings[:] = [
+            scenario.finding("fail"),
+            scenario.finding("pass", status="PASS"),
+            scenario.finding("west", "us-west-2"),
+        ]
+        east_first = scenario.region("us-east-1", ["fail", "pass", "previous"])
+        west_first = scenario.region("us-west-2", ["west", "previous-west"])
+        second_endpoint = MagicMock()
+        second_endpoint.batch_import_findings.side_effect = lambda Findings: {
+            "SuccessCount": len(Findings),
+            "FailedCount": 0,
+        }
+        second_endpoint.get_paginator.return_value.paginate.side_effect = (
+            lambda **kwargs: [
+                {
+                    "Findings": [
+                        {"Id": identifier, "RecordState": "ACTIVE"}
+                        for identifier in ["fail", "pass", "previous"]
+                    ]
+                }
+            ]
+        )
+        factory = scenario.mocks["get_security_hub_client_from_integration"].side_effect
+
+        def make_client(integration, tenant, payload):
+            connected, client = factory(integration, tenant, payload)
+            if integration is second:
+                client._enabled_regions = {"us-east-1": second_endpoint}
+                client._findings_per_region = client.filter(payload, True)
+            return connected, client
+
+        scenario.mocks[
+            "get_security_hub_client_from_integration"
+        ].side_effect = make_client
+        with patch("tasks.jobs.integrations.DJANGO_FINDINGS_BATCH_SIZE", 1):
+            assert upload_security_hub_integration("tenant", "provider", "scan") is True
+        assert scenario.archived(east_first) == ["previous"]
+        assert scenario.archived(west_first) == ["previous-west"]
+        assert scenario.archived(second_endpoint) == ["pass", "previous"]
+
+    @pytest.mark.parametrize("raises", [False, True])
+    def test_archive_restores_exact_last_payload(self, security_hub_archive, raises):
+        from prowler.providers.aws.lib.security_hub.security_hub import SecurityHub
+
+        scenario = security_hub_archive
+        scenario.findings[:] = [scenario.finding("current"), scenario.finding("last")]
+        scenario.region("us-east-1", ["current", "last", "previous"])
+        original_archive = SecurityHub.archive_previous_findings
+        mappings = []
+        original_send = SecurityHub.batch_send_to_security_hub
+
+        def send(client):
+            mappings.append(client._findings_per_region)
+            return original_send(client)
+
+        def archive(client):
+            assert client._findings_per_region is not mappings[-1]
+            if raises:
+                raise RuntimeError("synthetic archive failure")
+            return original_archive(client)
+
+        with (
+            patch.object(SecurityHub, "batch_send_to_security_hub", send),
+            patch.object(SecurityHub, "archive_previous_findings", archive),
+            patch("tasks.jobs.integrations.DJANGO_FINDINGS_BATCH_SIZE", 1),
+        ):
+            assert upload_security_hub_integration("tenant", "provider", "scan") is True
+        assert scenario.clients[-1]._findings_per_region is mappings[-1]
+        assert [finding.Id for finding in mappings[-1]["us-east-1"]] == ["last"]
+
+    def test_duplicates_are_retained_once(self, security_hub_archive):
+        from prowler.providers.aws.lib.security_hub.security_hub import SecurityHub
+
+        scenario = security_hub_archive
+        scenario.findings[:] = [
+            scenario.finding("current"),
+            scenario.finding("current"),
+        ]
+        scenario.region("us-east-1", ["current", "previous"])
+        retained = {}
+
+        def archive(client):
+            retained.update(
+                {
+                    region: [finding.Id for finding in findings]
+                    for region, findings in client._findings_per_region.items()
+                }
+            )
+            return 0
+
+        with (
+            patch.object(SecurityHub, "archive_previous_findings", archive),
+            patch("tasks.jobs.integrations.DJANGO_FINDINGS_BATCH_SIZE", 1),
+        ):
+            assert upload_security_hub_integration("tenant", "provider", "scan") is True
+        assert retained == {"us-east-1": ["current"]}
+
+    @pytest.mark.parametrize("configured", [False, None])
+    def test_archive_disabled_preserves_normal_payload(
+        self, security_hub_archive, configured
+    ):
+        from prowler.providers.aws.lib.security_hub.security_hub import SecurityHub
+
+        scenario = security_hub_archive
+        if configured is None:
+            scenario.integration.configuration.pop("archive_previous_findings")
+        else:
+            scenario.integration.configuration["archive_previous_findings"] = configured
+        scenario.findings[:] = [scenario.finding("current"), scenario.finding("last")]
+        for finding in scenario.findings:
+            # Normal filter/send uses the serialized Id, never this archival-only attribute.
+            del finding.Id
+        endpoint = scenario.region("us-east-1", ["previous"])
+        with (
+            patch.object(SecurityHub, "archive_previous_findings") as archive,
+            patch("tasks.jobs.integrations.DJANGO_FINDINGS_BATCH_SIZE", 1),
+        ):
+            assert upload_security_hub_integration("tenant", "provider", "scan") is True
+        archive.assert_not_called()
+        endpoint.get_paginator.assert_not_called()
+        assert endpoint.batch_import_findings.call_count == 2
+        assert scenario.clients[-1]._findings_per_region["us-east-1"] == [
+            scenario.findings[-1]
+        ]
+
+    def test_explicit_empty_mapping_selects_no_regions(self, security_hub_archive):
+        scenario = security_hub_archive
+        scenario.findings[:] = [scenario.finding("current")]
+        endpoint = scenario.region("us-east-1", ["previous"])
+        factory = scenario.mocks["get_security_hub_client_from_integration"].side_effect
+
+        empty_mapping = {}
+
+        def make_client(*args):
+            connected, client = factory(*args)
+            client._findings_per_region = empty_mapping
+            return connected, client
+
+        scenario.mocks[
+            "get_security_hub_client_from_integration"
+        ].side_effect = make_client
+        upload_security_hub_integration("tenant", "provider", "scan")
+        endpoint.get_paginator.assert_not_called()
+        assert scenario.clients[-1]._findings_per_region is empty_mapping
+
+    @pytest.mark.parametrize("final", ["empty", "exhausted"])
+    def test_retry_never_archives_abandoned_attempt(self, security_hub_archive, final):
+        scenario = security_hub_archive
+        scenario.findings[:] = [scenario.finding("current")]
+        endpoint = scenario.region("us-east-1", ["current", "previous"])
+
+        def interrupted():
+            yield scenario.findings, False
+            raise OperationalError("Conflict with recovery")
+
+        with (
+            patch(
+                "tasks.jobs.integrations.batched",
+                side_effect=[interrupted(), [] if final == "empty" else interrupted()],
+            ),
+            patch("tasks.jobs.integrations.READ_REPLICA_ALIAS", "replica"),
+            patch("tasks.jobs.integrations.REPLICA_MAX_ATTEMPTS", 2),
+            patch("tasks.jobs.integrations.time.sleep"),
+        ):
+            assert upload_security_hub_integration("tenant", "provider", "scan") is (
+                final == "empty"
+            )
+        endpoint.get_paginator.assert_not_called()
+
+    def test_sdk_archive_region_error_remains_nonfatal(self, security_hub_archive):
+        scenario = security_hub_archive
+        scenario.findings[:] = [scenario.finding("current")]
+        endpoint = scenario.region("us-east-1", ["current", "previous"])
+        endpoint.get_paginator.side_effect = RuntimeError("synthetic paginator failure")
+        assert upload_security_hub_integration("tenant", "provider", "scan") is True
+        assert (
+            scenario.clients[-1]._findings_per_region["us-east-1"] == scenario.findings
+        )
+        assert scenario.archived(endpoint) == []
 
 
 @pytest.mark.django_db
