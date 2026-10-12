@@ -1699,6 +1699,7 @@ def security_hub_archive():
         endpoints = {}
 
         def finding(identifier, region="us-east-1", status="FAIL"):
+            """Build a synthetic ASFF-shaped finding with serializable ID and filtering fields."""
             payload = {"Id": identifier, "RecordState": "ACTIVE"}
             return SimpleNamespace(
                 Id=identifier,
@@ -1713,6 +1714,7 @@ def security_hub_archive():
             )
 
         def make_client(integration, tenant, payload):
+            """Create an installed SDK client using this integration filter and enabled Regions."""
             client = object.__new__(SecurityHub)
             client._aws_account_id = "123456789012"
             client._enabled_regions = endpoints
@@ -1725,6 +1727,7 @@ def security_hub_archive():
         mocks["get_security_hub_client_from_integration"].side_effect = make_client
 
         def region(name, identifiers):
+            """Configure a synthetic regional import endpoint and prior-finding paginator."""
             endpoint = MagicMock()
             endpoint.batch_import_findings.side_effect = lambda Findings: {
                 "SuccessCount": len(Findings),
@@ -1742,6 +1745,7 @@ def security_hub_archive():
             return endpoint
 
         def archived(endpoint):
+            """Collect only IDs submitted with the ARCHIVED record state."""
             return [
                 item["Id"]
                 for call in endpoint.batch_import_findings.call_args_list
@@ -1766,6 +1770,7 @@ def security_hub_archive():
 class TestSecurityHubBatchArchival:
     @pytest.mark.parametrize("count", [999, 1000, 1001, 2000])
     def test_all_database_pages_protect_current_ids(self, security_hub_archive, count):
+        """Real SDK archival protects current IDs from every database export page."""
         scenario = security_hub_archive
         scenario.findings[:] = [
             scenario.finding(f"current-{index}") for index in range(count)
@@ -1778,11 +1783,13 @@ class TestSecurityHubBatchArchival:
         assert scenario.archived(endpoint) == ["previous"]
 
     def test_retry_recreates_client_for_completed_attempt(self, security_hub_archive):
+        """A completed replay protects its IDs using a fresh client."""
         scenario = security_hub_archive
         scenario.findings[:] = [scenario.finding("current")]
         endpoint = scenario.region("us-east-1", ["abandoned", "current", "previous"])
 
         def interrupted():
+            """Yield one processed page before simulating a replica iterator conflict."""
             yield [scenario.finding("abandoned")], False
             raise OperationalError("Conflict with recovery")
 
@@ -1804,6 +1811,7 @@ class TestSecurityHubBatchArchival:
     def test_filtered_final_page_preserves_earlier_current_ids(
         self, security_hub_archive, status
     ):
+        """Final PASS, muted, or MANUAL rows preserve earlier eligible IDs."""
         scenario = security_hub_archive
         scenario.integration.configuration["send_only_fails"] = True
         scenario.findings[:] = [
@@ -1819,6 +1827,7 @@ class TestSecurityHubBatchArchival:
     def test_regions_keep_separate_id_sets_and_enabled_empty_keys(
         self, security_hub_archive
     ):
+        """Protection stays regional while enabled empty Regions still select prior findings."""
         scenario = security_hub_archive
         scenario.findings[:] = [
             scenario.finding("shared"),
@@ -1834,6 +1843,7 @@ class TestSecurityHubBatchArchival:
         assert scenario.archived(empty) == ["previous-empty"]
 
     def test_integrations_use_their_own_filter_and_regions(self, security_hub_archive):
+        """Distinct integration filters and Regions produce independent archival protection."""
         scenario = security_hub_archive
         second = SimpleNamespace(
             id="integration-2",
@@ -1868,6 +1878,7 @@ class TestSecurityHubBatchArchival:
         factory = scenario.mocks["get_security_hub_client_from_integration"].side_effect
 
         def make_client(integration, tenant, payload):
+            """Create an installed SDK client using this integration filter and enabled Regions."""
             connected, client = factory(integration, tenant, payload)
             if integration is second:
                 client._enabled_regions = {"us-east-1": second_endpoint}
@@ -1885,6 +1896,7 @@ class TestSecurityHubBatchArchival:
 
     @pytest.mark.parametrize("raises", [False, True])
     def test_archive_restores_exact_last_payload(self, security_hub_archive, raises):
+        """The exact final payload mapping returns after normal or escaping archive completion."""
         from prowler.providers.aws.lib.security_hub.security_hub import SecurityHub
 
         scenario = security_hub_archive
@@ -1895,10 +1907,12 @@ class TestSecurityHubBatchArchival:
         original_send = SecurityHub.batch_send_to_security_hub
 
         def send(client):
+            """Capture the exact payload mapping before invoking the real SDK sender."""
             mappings.append(client._findings_per_region)
             return original_send(client)
 
         def archive(client):
+            """Inspect the temporary ID-only archival input without retaining full payloads."""
             assert client._findings_per_region is not mappings[-1]
             if raises:
                 raise RuntimeError("synthetic archive failure")
@@ -1914,6 +1928,7 @@ class TestSecurityHubBatchArchival:
         assert [finding.Id for finding in mappings[-1]["us-east-1"]] == ["last"]
 
     def test_duplicates_are_retained_once(self, security_hub_archive):
+        """Repeated finding IDs occupy one entry in regional archival protection."""
         from prowler.providers.aws.lib.security_hub.security_hub import SecurityHub
 
         scenario = security_hub_archive
@@ -1925,6 +1940,7 @@ class TestSecurityHubBatchArchival:
         retained = {}
 
         def archive(client):
+            """Inspect the temporary ID-only archival input without retaining full payloads."""
             retained.update(
                 {
                     region: [finding.Id for finding in findings]
@@ -1944,6 +1960,7 @@ class TestSecurityHubBatchArchival:
     def test_archive_disabled_preserves_normal_payload(
         self, security_hub_archive, configured
     ):
+        """Disabled or absent archival flags avoid ID access, retention, and archival."""
         from prowler.providers.aws.lib.security_hub.security_hub import SecurityHub
 
         scenario = security_hub_archive
@@ -1969,6 +1986,7 @@ class TestSecurityHubBatchArchival:
         ]
 
     def test_explicit_empty_mapping_selects_no_regions(self, security_hub_archive):
+        """Explicit empty protection selects no Regions and restores the exact empty mapping."""
         scenario = security_hub_archive
         scenario.findings[:] = [scenario.finding("current")]
         endpoint = scenario.region("us-east-1", ["previous"])
@@ -1977,6 +1995,7 @@ class TestSecurityHubBatchArchival:
         empty_mapping = {}
 
         def make_client(*args):
+            """Create an installed SDK client using this integration filter and enabled Regions."""
             connected, client = factory(*args)
             client._findings_per_region = empty_mapping
             return connected, client
@@ -1990,11 +2009,13 @@ class TestSecurityHubBatchArchival:
 
     @pytest.mark.parametrize("final", ["empty", "exhausted"])
     def test_retry_never_archives_abandoned_attempt(self, security_hub_archive, final):
+        """Empty or exhausted replay does not archive IDs from abandoned work."""
         scenario = security_hub_archive
         scenario.findings[:] = [scenario.finding("current")]
         endpoint = scenario.region("us-east-1", ["current", "previous"])
 
         def interrupted():
+            """Yield one processed page before simulating a replica iterator conflict."""
             yield scenario.findings, False
             raise OperationalError("Conflict with recovery")
 
@@ -2013,6 +2034,7 @@ class TestSecurityHubBatchArchival:
         endpoint.get_paginator.assert_not_called()
 
     def test_sdk_archive_region_error_remains_nonfatal(self, security_hub_archive):
+        """SDK-swallowed regional archival errors retain the existing nonfatal result."""
         scenario = security_hub_archive
         scenario.findings[:] = [scenario.finding("current")]
         endpoint = scenario.region("us-east-1", ["current", "previous"])
