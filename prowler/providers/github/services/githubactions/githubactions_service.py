@@ -173,6 +173,18 @@ class GithubActions(GithubService):
 
     @staticmethod
     def _extract_workflow_file_from_location(location: dict) -> Optional[str]:
+        """Extract the workflow file path from a zizmor finding location.
+
+        zizmor 1.27.0 and later report the local path as ``verbatim_path``,
+        while earlier versions use ``given_path``.
+
+        Args:
+            location: A location entry from zizmor's JSON output.
+
+        Returns:
+            The first non-empty path found, or None when the location has no
+            usable path.
+        """
         try:
             symbolic = location.get("symbolic", {})
             if "key" in symbolic:
