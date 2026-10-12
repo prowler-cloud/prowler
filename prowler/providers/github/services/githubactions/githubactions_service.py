@@ -179,10 +179,15 @@ class GithubActions(GithubService):
                 key = symbolic["key"]
                 if isinstance(key, dict) and "Local" in key:
                     local = key["Local"]
-                    if isinstance(local, dict) and "given_path" in local:
-                        return local["given_path"]
+                    # zizmor >= 1.27.0 renamed "given_path" to "verbatim_path"
+                    if isinstance(local, dict):
+                        for path_key in ("verbatim_path", "given_path"):
+                            if path_key in local:
+                                return local[path_key]
 
-            logger.debug(f"Could not extract workflow file from location: {location}")
+            logger.warning(
+                f"Could not extract workflow file from zizmor location, skipping it: {location}"
+            )
             return None
         except Exception as error:
             logger.error(

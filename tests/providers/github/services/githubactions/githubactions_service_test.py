@@ -3,6 +3,8 @@ import json
 import sys
 from unittest.mock import ANY, MagicMock, patch
 
+import pytest
+
 from prowler.providers.github.services.githubactions.githubactions_service import (
     GithubActions,
     GithubActionsWorkflowFinding,
@@ -52,6 +54,16 @@ class TestGithubActionsService:
         location = {
             "symbolic": {
                 "key": {"Local": {"given_path": ".github/workflows/test.yml"}},
+            }
+        }
+        result = GithubActions._extract_workflow_file_from_location(location)
+        assert result == ".github/workflows/test.yml"
+
+    def test_extract_workflow_file_from_location_verbatim_path(self):
+        # zizmor >= 1.27.0 reports the local path as "verbatim_path"
+        location = {
+            "symbolic": {
+                "key": {"Local": {"verbatim_path": ".github/workflows/test.yml"}},
             }
         }
         result = GithubActions._extract_workflow_file_from_location(location)
@@ -280,7 +292,8 @@ class TestGithubActionsService:
             # Since zizmor is missing, _scan_repositories should not be called
             assert service.findings == {}
 
-    def test_scan_repositories_strips_temp_dir_prefix(self):
+    @pytest.mark.parametrize("path_key", ["given_path", "verbatim_path"])
+    def test_scan_repositories_strips_temp_dir_prefix(self, path_key):
         temp_dir = "/var/folders/xx/tmp48xjp_g0"
         zizmor_output = [
             {
@@ -293,7 +306,7 @@ class TestGithubActionsService:
                         "symbolic": {
                             "key": {
                                 "Local": {
-                                    "given_path": f"{temp_dir}/.github/workflows/release.yml"
+                                    path_key: f"{temp_dir}/.github/workflows/release.yml"
                                 }
                             },
                             "annotation": "Injection risk",
