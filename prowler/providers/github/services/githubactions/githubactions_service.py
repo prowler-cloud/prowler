@@ -182,8 +182,9 @@ class GithubActions(GithubService):
                     # zizmor >= 1.27.0 renamed "given_path" to "verbatim_path"
                     if isinstance(local, dict):
                         for path_key in ("verbatim_path", "given_path"):
-                            if path_key in local:
-                                return local[path_key]
+                            path = local.get(path_key)
+                            if isinstance(path, str) and path:
+                                return path
 
             logger.warning(
                 "Could not extract workflow file from zizmor location, skipping it"

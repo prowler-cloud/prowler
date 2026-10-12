@@ -69,6 +69,23 @@ class TestGithubActionsService:
         result = GithubActions._extract_workflow_file_from_location(location)
         assert result == ".github/workflows/test.yml"
 
+    @pytest.mark.parametrize("unusable", [None, "", 123])
+    def test_extract_workflow_file_from_location_skips_unusable_verbatim_path(
+        self, unusable
+    ):
+        location = {
+            "symbolic": {
+                "key": {
+                    "Local": {
+                        "verbatim_path": unusable,
+                        "given_path": ".github/workflows/test.yml",
+                    }
+                },
+            }
+        }
+        result = GithubActions._extract_workflow_file_from_location(location)
+        assert result == ".github/workflows/test.yml"
+
     def test_extract_workflow_file_from_location_warning_omits_location(self):
         # Locations can carry workflow source text, which must not reach the logs
         location = {
