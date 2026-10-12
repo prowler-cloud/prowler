@@ -282,13 +282,15 @@ describe("InviteTeammatePanel", () => {
     // When
     const { onUiState } = renderPanel();
 
-    // Then
+    // Then: the footer drops the action a commit after the message shows.
     expect(
       await screen.findByText(/Roles could not be loaded right now/),
     ).toBeInTheDocument();
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("button", { name: "Send invitation" }),
+      ).not.toBeInTheDocument(),
+    );
     expect(lastUiState(onUiState)).toMatchObject({ showAction: false });
-    expect(
-      screen.queryByRole("button", { name: "Send invitation" }),
-    ).not.toBeInTheDocument();
   });
 });
