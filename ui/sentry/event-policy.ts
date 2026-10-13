@@ -23,6 +23,8 @@ const EXPECTED_CONTROL_FLOW_MESSAGES = [
   "NEXT_NOT_FOUND",
   "AbortError",
   "ResizeObserver",
+  // Client disconnected mid-stream; Next.js forwards it to onRequestError (vercel/next.js#96704)
+  "The destination stream closed early",
 ] as const;
 
 const HTTP_CONTEXT_MESSAGES = [
