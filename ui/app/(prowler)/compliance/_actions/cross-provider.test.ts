@@ -5,11 +5,13 @@ const {
   getAuthHeadersMock,
   handleApiResponseMock,
   captureExceptionMock,
+  isReportDownloadLockedMock,
 } = vi.hoisted(() => ({
   fetchMock: vi.fn(),
   getAuthHeadersMock: vi.fn(),
   handleApiResponseMock: vi.fn(),
   captureExceptionMock: vi.fn(),
+  isReportDownloadLockedMock: vi.fn(),
 }));
 
 vi.mock("@/lib", () => ({
@@ -26,6 +28,12 @@ vi.mock("@/lib/server-actions-helper", () => ({
 
 vi.mock("@sentry/nextjs", () => ({
   captureException: captureExceptionMock,
+}));
+
+vi.mock("@/lib/report-download-access", () => ({
+  REPORT_DOWNLOAD_LOCKED_ERROR:
+    "Report downloads require an active subscription.",
+  isReportDownloadLocked: isReportDownloadLockedMock,
 }));
 
 import {
@@ -56,6 +64,29 @@ beforeEach(() => {
     Authorization: "Bearer test-token",
   });
   handleApiResponseMock.mockResolvedValue({ data: null });
+  isReportDownloadLockedMock.mockResolvedValue(false);
+});
+
+describe("cross-provider PDF reports for subscription-only tenants", () => {
+  it.each([
+    {
+      name: "generation",
+      run: () => generateCrossProviderPdf({ complianceId: "csa_ccm_4.0" }),
+    },
+    { name: "download", run: () => getCrossProviderPdfBinary("task-1") },
+  ])("rejects the $name without calling the API", async ({ run }) => {
+    // Given
+    isReportDownloadLockedMock.mockResolvedValue(true);
+
+    // When
+    const result = await run();
+
+    // Then
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(result).toEqual({
+      error: "Report downloads require an active subscription.",
+    });
+  });
 });
 
 describe("getCrossProviderComplianceOverview", () => {

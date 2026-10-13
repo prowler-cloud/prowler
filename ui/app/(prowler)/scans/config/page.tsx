@@ -1,3 +1,4 @@
+import { SlidersVertical } from "lucide-react";
 import { redirect } from "next/navigation";
 
 import { getProviders } from "@/actions/providers";
@@ -28,7 +29,7 @@ export default async function ScanConfigPage() {
   const richProviders = providersResponse.data;
 
   return (
-    <ContentLayout title="Configuration" icon="lucide:sliders">
+    <ContentLayout title="Configuration" icon={<SlidersVertical />}>
       <ScanConfigurationsManager
         initialConfigs={configs}
         richProviders={richProviders}

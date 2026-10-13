@@ -27,7 +27,7 @@
 ### Flow Steps
 
 1. Navigate to Scans page
-2. Click "Launch Scan" to open the launch scan modal
+2. Click "Launch Scan" beside the scan tabs to open the launch scan modal
 3. Open the Cloud Account selector and choose the entry whose text contains E2E_AWS_PROVIDER_ACCOUNT_ID
 4. Optionally fill Scan Note
 5. Click "Launch Scan" in the modal
@@ -46,6 +46,7 @@
 
 - Scans page loads correctly
 - Launch Scan modal opens correctly
+- The page-level "Launch Scan" button is located in the "Scan tabs" group, distinct from the sidebar action
 - Cloud Account select is available and lists the configured provider UID
 - "Launch Scan" button is rendered and enabled when form is valid
 - Success toast message: "The scan was launched successfully."

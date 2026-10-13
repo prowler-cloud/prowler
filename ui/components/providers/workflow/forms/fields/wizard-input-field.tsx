@@ -1,6 +1,6 @@
 "use client";
 
-import { Icon } from "@iconify/react";
+import { Eye, EyeOff } from "lucide-react";
 import { InputHTMLAttributes, useState } from "react";
 import { Control, FieldPath, FieldValues } from "react-hook-form";
 
@@ -149,16 +149,19 @@ export const WizardInputField = <T extends FieldValues>({
                         : "Hide password"
                     }
                   >
-                    <Icon
-                      className="pointer-events-none text-xl"
-                      icon={
-                        (password && isPasswordVisible) ||
-                        (confirmPassword && isConfirmPasswordVisible) ||
-                        (type === "password" && isPasswordVisible)
-                          ? "solar:eye-closed-linear"
-                          : "solar:eye-bold"
-                      }
-                    />
+                    {(password && isPasswordVisible) ||
+                    (confirmPassword && isConfirmPasswordVisible) ||
+                    (type === "password" && isPasswordVisible) ? (
+                      <EyeOff
+                        aria-hidden="true"
+                        className="pointer-events-none size-5"
+                      />
+                    ) : (
+                      <Eye
+                        aria-hidden="true"
+                        className="pointer-events-none size-5"
+                      />
+                    )}
                   </button>
                 )}
               </div>

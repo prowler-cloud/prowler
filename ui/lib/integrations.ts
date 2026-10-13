@@ -54,7 +54,7 @@ export const GATED_INTEGRATIONS: Record<string, GatedIntegration> = {
       { key: "UI_POSTHOG_KEY", legacy: "POSTHOG_KEY" },
       { key: "UI_POSTHOG_HOST", legacy: "POSTHOG_HOST" },
     ],
-    optional: [],
+    optional: [{ key: "UI_POSTHOG_UI_HOST" }],
   },
 } as const satisfies Record<string, GatedIntegration>;
 

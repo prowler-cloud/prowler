@@ -1,3 +1,4 @@
+import { UserCog } from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
 
@@ -18,7 +19,7 @@ export default async function Roles({
   const searchParamsKey = JSON.stringify(resolvedSearchParams || {});
 
   return (
-    <ContentLayout title="Roles" icon="lucide:user-cog">
+    <ContentLayout title="Roles" icon={<UserCog />}>
       <div className="flex flex-col gap-6">
         <div className="flex flex-row items-end justify-between">
           <DataTableFilterCustom

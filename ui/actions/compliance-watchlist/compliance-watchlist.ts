@@ -12,6 +12,7 @@ import {
 } from "@/lib/compliance/watchlist";
 import type {
   ComplianceCatalog,
+  ComplianceCatalogLoad,
   ComplianceWatchlistActionResult,
   ComplianceWatchlistBulkDiff,
   ComplianceWatchlistTarget,
@@ -43,6 +44,12 @@ const REQUEST_TIMEOUT_MS = 15_000;
 const EMPTY_CATALOG: ComplianceCatalog = {
   entries: [],
   meta: { totalEntries: 0, watchlistCount: 0, eligibleProviderTypes: [] },
+};
+
+// Gave up without an answer: distinct from a legitimately empty catalog.
+const UNAVAILABLE_CATALOG: ComplianceCatalogLoad = {
+  ...EMPTY_CATALOG,
+  unavailable: true,
 };
 
 const GENERIC_ERROR = "Could not update the compliance watchlist.";
@@ -97,9 +104,9 @@ const buildCatalogUrl = (page: number, providerTypes?: string[]): string => {
 
 export const getComplianceCatalog = async (
   input: { providerTypes?: string[] } = {},
-): Promise<ComplianceCatalog> => {
+): Promise<ComplianceCatalogLoad> => {
   const parsedInput = complianceCatalogInputSchema.safeParse(input);
-  if (!parsedInput.success) return EMPTY_CATALOG;
+  if (!parsedInput.success) return UNAVAILABLE_CATALOG;
 
   const { providerTypes } = parsedInput.data;
 
@@ -127,15 +134,16 @@ export const getComplianceCatalog = async (
     };
 
     const firstPage = await fetchPage(1);
-    if (!firstPage) return EMPTY_CATALOG;
+    if (!firstPage) return UNAVAILABLE_CATALOG;
 
     const pageCount = Math.min(
       Math.max(1, firstPage.pageCount),
       MAX_CATALOG_PAGES,
     );
-    if (pageCount <= 1) return firstPage.catalog;
+    if (pageCount <= 1) return { ...firstPage.catalog, unavailable: false };
 
     const rest: ComplianceCatalog[] = [];
+    let incomplete = firstPage.pageCount > MAX_CATALOG_PAGES;
     for (let page = 2; page <= pageCount; page += CATALOG_FETCH_CONCURRENCY) {
       const batch = await Promise.all(
         Array.from(
@@ -143,13 +151,17 @@ export const getComplianceCatalog = async (
           (_, index) => fetchPage(page + index),
         ),
       );
+      if (batch.some((pageResult) => pageResult === null)) incomplete = true;
       rest.push(...batch.flatMap((page) => (page ? [page.catalog] : [])));
     }
 
-    return mergeCatalogPages([firstPage.catalog, ...rest]);
+    return {
+      ...mergeCatalogPages([firstPage.catalog, ...rest]),
+      unavailable: incomplete,
+    };
   } catch (error) {
     console.error("Error fetching compliance catalog:", error);
-    return EMPTY_CATALOG;
+    return UNAVAILABLE_CATALOG;
   }
 };
 

@@ -111,6 +111,110 @@ def _verify_local_email(user):
     )
 
 
+def test_social_account_name_falls_back_to_login_for_blank_name():
+    adapter = ProwlerSocialAccountAdapter()
+
+    name = adapter._get_social_account_name(
+        {"name": "   ", "login": "octocat"},
+        "verified@example.com",
+    )
+
+    assert name == "octocat"
+
+
+@pytest.mark.parametrize("provider_name", [None, "", "   ", 123, ["name"]])
+def test_social_account_name_ignores_unusable_provider_names(provider_name):
+    adapter = ProwlerSocialAccountAdapter()
+
+    name = adapter._get_social_account_name(
+        {"name": provider_name, "login": "octocat"},
+        "verified@example.com",
+    )
+
+    assert name == "octocat"
+
+
+def test_social_account_name_uses_login_when_name_is_missing():
+    adapter = ProwlerSocialAccountAdapter()
+
+    name = adapter._get_social_account_name(
+        {"login": "octocat"},
+        "verified@example.com",
+    )
+
+    assert name == "octocat"
+
+
+def test_social_account_name_falls_back_to_username_then_email():
+    adapter = ProwlerSocialAccountAdapter()
+
+    username_name = adapter._get_social_account_name(
+        {"name": "ab", "login": None, "username": "  monalisa  "},
+        "verified@example.com",
+    )
+    email_name = adapter._get_social_account_name({}, "  verified@example.com  ")
+
+    assert username_name == "monalisa"
+    assert email_name == "verified@example.com"
+
+
+def test_social_account_name_trims_and_limits_provider_name():
+    adapter = ProwlerSocialAccountAdapter()
+    max_length = User._meta.get_field("name").max_length
+
+    trimmed_name = adapter._get_social_account_name(
+        {"name": "  Ada Lovelace  "},
+        "verified@example.com",
+    )
+    limited_name = adapter._get_social_account_name(
+        {"name": "a" * (max_length + 1)},
+        "verified@example.com",
+    )
+
+    assert trimmed_name == "Ada Lovelace"
+    assert limited_name == "a" * max_length
+
+
+def test_social_account_name_rejects_missing_identity():
+    adapter = ProwlerSocialAccountAdapter()
+
+    with pytest.raises(
+        ValueError,
+        match="Social account does not provide a valid user identity",
+    ):
+        adapter._get_social_account_name({}, "")
+
+
+def test_save_user_applies_normalized_social_account_name(rf):
+    adapter = ProwlerSocialAccountAdapter()
+    request = rf.post("/")
+    request.session = {}
+    sociallogin = MagicMock(spec=SocialLogin)
+    sociallogin.provider = MagicMock()
+    sociallogin.provider.id = "github"
+    sociallogin.account = MagicMock()
+    sociallogin.account.extra_data = {"name": None, "login": "  octocat  "}
+    user = User(email="verified@example.com")
+    user.save = MagicMock()
+    invitation = SimpleNamespace(tenant_id="tenant-id")
+
+    with (
+        patch("api.adapters.super") as mock_super,
+        patch("api.adapters.transaction.atomic"),
+        patch("api.adapters.write_db_alias"),
+        patch.object(adapter, "_get_invitation_token", return_value="token"),
+        patch(
+            "api.adapters.accept_invitation_for_user",
+            return_value=(invitation, True),
+        ),
+    ):
+        mock_super.return_value.save_user.return_value = user
+        saved_user = adapter.save_user(request, sociallogin)
+
+    assert saved_user.name == "octocat"
+    assert request.prowler_invitation_token == "token"
+
+
 @pytest.mark.django_db
 class TestProwlerSocialAccountAdapter:
     def test_get_user_by_email_returns_user(self, create_test_user):

@@ -1132,7 +1132,6 @@
         "etcd_no_auto_tls",
         "etcd_no_peer_auto_tls",
         "etcd_peer_tls_config",
-        "etcd_tls_encryption",
         "kubelet_tls_cert_and_key"
       ]
     },

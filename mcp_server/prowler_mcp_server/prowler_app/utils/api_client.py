@@ -7,26 +7,20 @@ from typing import Any
 from urllib.parse import urlparse
 
 import httpx
+from fastmcp.exceptions import ToolError
 
 from prowler_mcp_server import __version__
+from prowler_mcp_server.lib.errors import (
+    InvalidArgument,
+    ProwlerAPIError,
+    ProwlerAPIInvalidResponse,
+    ProwlerAPIUnreachable,
+    jsonapi_detail,
+)
 from prowler_mcp_server.lib.logger import logger
 from prowler_mcp_server.prowler_app.utils.auth import ProwlerAppAuth
 
 ALLOWED_EXTERNAL_DOMAINS: frozenset[str] = frozenset({"raw.githubusercontent.com"})
-
-
-class ProwlerAPIError(Exception):
-    """An error response returned by the Prowler API.
-
-    Raised only when the API answered with an error status, which tells a caller
-    something no plain exception can: the request reached Prowler and was
-    rejected, so it changed nothing. A timeout or a dropped connection stays a
-    bare exception because the request may well have been processed.
-    """
-
-    def __init__(self, message: str, status_code: int) -> None:
-        super().__init__(message)
-        self.status_code: int = status_code
 
 
 class HTTPMethod(StrEnum):
@@ -88,7 +82,8 @@ class ProwlerAPIClient(metaclass=SingletonMeta):
 
         Raises:
             ProwlerAPIError: If the API answered with an error status
-            Exception: If the request could not be completed
+            ProwlerAPIUnreachable: If the request got no answer
+            ProwlerAPIInvalidResponse: If the answer was not readable as JSON
         """
         try:
             token: str = await self.auth_manager.get_valid_token()
@@ -103,30 +98,74 @@ class ProwlerAPIClient(metaclass=SingletonMeta):
                 json=json_data,
             )
             response.raise_for_status()
-
-            if not response.content:
-                return {
-                    "success": True,
-                    "status_code": response.status_code,
-                }
-            else:
-                return response.json()
         except httpx.HTTPStatusError as e:
-            logger.error(f"HTTP error during {method.value} {path}: {e}")
-            error_detail: str = ""
+            status: int = e.response.status_code
+            # `jsonapi_detail` returns nothing for a 5xx, so a server error never
+            # puts upstream text into the exception message either.
+            detail: str | None = jsonapi_detail(e.response)
+            # The full body goes to the log and nowhere else. A body that is not
+            # JSON:API is upstream text of unknown provenance, and the exception
+            # message is read by a model.
+            logger.error(
+                "HTTP error during %s %s: %s %s",
+                method.value,
+                path,
+                status,
+                (e.response.text or "")[:500],
+            )
+
+            message = f"API request failed: {status}"
+            if detail:
+                message = f"{message} - {detail}"
+
+            # Carried on the exception, not into the message: a tool needs the
+            # body to tell an answer with an error status -- a 404 holding the
+            # empty result of a query that matched nothing -- apart from a
+            # request that actually failed.
             try:
-                error_data: dict[str, any] = e.response.json()
-                error_detail = error_data.get("errors", [{}])[0].get("detail", "")
-            except Exception:
-                error_detail = e.response.text
+                body = e.response.json()
+            except ValueError:
+                body = None
 
             raise ProwlerAPIError(
-                f"API request failed: {e.response.status_code} - {error_detail}",
-                e.response.status_code,
-            )
+                message,
+                status,
+                detail=detail,
+                payload=body if isinstance(body, dict) else None,
+            ) from e
+        except httpx.RequestError as e:
+            # No answer came back, so whether the request was applied is unknown.
+            logger.error(f"Error during {method.value} {path}: {e}")
+            raise ProwlerAPIUnreachable(
+                f"{method.value} {path} got no answer: {type(e).__name__}"
+            ) from e
         except Exception as e:
             logger.error(f"Error during {method.value} {path}: {e}")
             raise
+
+        if not response.content:
+            return {
+                "success": True,
+                "status_code": response.status_code,
+            }
+
+        # Parsed outside the block above so that a body we cannot read is told
+        # apart from an argument a tool could not parse: both are a
+        # `JSONDecodeError`, and only the second one is the caller's doing.
+        try:
+            return response.json()
+        except ValueError as e:
+            logger.error(
+                "Unreadable response body during %s %s: %s %s",
+                method.value,
+                path,
+                response.status_code,
+                (response.text or "")[:500],
+            )
+            raise ProwlerAPIInvalidResponse(
+                f"{method.value} {path} answered {response.status_code} with a "
+                "body that is not JSON"
+            ) from e
 
     async def get(
         self, path: str, params: dict[str, any] | None = None
@@ -229,14 +268,14 @@ class ProwlerAPIClient(metaclass=SingletonMeta):
             Raw text content from the URL
 
         Raises:
-            ValueError: If the URL domain is not in the allowlist
-            Exception: If the HTTP request fails
+            InvalidArgument: If the URL scheme or domain is not allowed
+            ToolError: If the fetch failed
         """
         parsed = urlparse(url)
         if parsed.scheme != "https":
-            raise ValueError(f"Only HTTPS URLs are allowed, got '{parsed.scheme}'")
+            raise InvalidArgument(f"Only HTTPS URLs are allowed, got '{parsed.scheme}'")
         if parsed.hostname not in ALLOWED_EXTERNAL_DOMAINS:
-            raise ValueError(
+            raise InvalidArgument(
                 f"Domain '{parsed.hostname}' is not allowed. "
                 f"Allowed domains: {', '.join(sorted(ALLOWED_EXTERNAL_DOMAINS))}"
             )
@@ -249,13 +288,20 @@ class ProwlerAPIClient(metaclass=SingletonMeta):
             response.raise_for_status()
             return response.text
         except httpx.HTTPStatusError as e:
-            logger.error(f"HTTP error fetching external URL {url}: {e}")
-            raise Exception(
-                f"Failed to fetch external URL: {e.response.status_code}"
-            ) from e
-        except Exception as e:
+            # The status is ours to report; the body is upstream text and stays
+            # in the log. No `from` clause: this sentence is the final word.
+            logger.error(
+                "HTTP error fetching external URL %s: %s %s",
+                url,
+                e.response.status_code,
+                (e.response.text or "")[:500],
+            )
+            raise ToolError(
+                f"Fetching {url} failed with status {e.response.status_code}."
+            )
+        except httpx.RequestError as e:
             logger.error(f"Error fetching external URL {url}: {e}")
-            raise
+            raise ToolError(f"Fetching {url} got no answer: {type(e).__name__}.")
 
     async def poll_task_until_complete(
         self,
@@ -278,7 +324,7 @@ class ProwlerAPIClient(metaclass=SingletonMeta):
             The complete task response when terminal state is reached
 
         Raises:
-            Exception: If task fails, is cancelled, or timeout is exceeded
+            ToolError: If the task fails, is cancelled, or the timeout is exceeded
         """
         terminal_states = {"completed", "failed", "cancelled"}
         start_time = asyncio.get_event_loop().time()
@@ -292,7 +338,7 @@ class ProwlerAPIClient(metaclass=SingletonMeta):
             # Check if we've exceeded the timeout
             current_time = asyncio.get_event_loop().time()
             if current_time >= max_time:
-                raise Exception(
+                raise ToolError(
                     f"Task {task_id} polling timed out after {timeout} seconds. "
                     f"The task may still be running. Try increasing the timeout or check task status manually."
                 )
@@ -311,10 +357,14 @@ class ProwlerAPIClient(metaclass=SingletonMeta):
                     logger.info(f"Task {task_id} completed successfully")
                     return response
                 elif state == "failed":
-                    error_msg = task_attrs.get("error", "Unknown error")
-                    raise Exception(f"Task {task_id} failed: {error_msg}")
+                    # The task's own failure text is an upstream body: a celery
+                    # traceback, a provider message. Log it, never relay it.
+                    logger.error(
+                        f"Task {task_id} failed: {task_attrs.get('error', 'no error reported')}"
+                    )
+                    raise ToolError(f"Task {task_id} failed.")
                 elif state == "cancelled":
-                    raise Exception(f"Task {task_id} was cancelled")
+                    raise ToolError(f"Task {task_id} was cancelled")
 
             # Wait before next poll
             await asyncio.sleep(poll_interval)
@@ -330,12 +380,12 @@ class ProwlerAPIClient(metaclass=SingletonMeta):
             Parsed datetime object
 
         Raises:
-            ValueError: If date format is invalid
+            InvalidArgument: If date format is invalid
         """
         try:
             return datetime.strptime(date_str, "%Y-%m-%d")
         except ValueError:
-            raise ValueError(
+            raise InvalidArgument(
                 f"Invalid date format for {param_name}. Expected YYYY-MM-DD (e.g., '2025-01-15'), got '{date_str}'. "
                 f"Full date required - partial dates like '2025' or '2025-01' are not accepted."
             )
@@ -347,10 +397,10 @@ class ProwlerAPIClient(metaclass=SingletonMeta):
             page_size: Page size to validate
 
         Raises:
-            ValueError: If page size is out of valid range (1-1000)
+            InvalidArgument: If page size is out of valid range (1-1000)
         """
         if page_size < 1 or page_size > 1000:
-            raise ValueError(
+            raise InvalidArgument(
                 f"Invalid page_size: {page_size}. Must be between 1 and 1000 (inclusive)."
             )
 
@@ -373,7 +423,7 @@ class ProwlerAPIClient(metaclass=SingletonMeta):
             None if no dates provided, otherwise tuple of (date_from, date_to) as strings
 
         Raises:
-            ValueError: If date range exceeds max_days or date format is invalid
+            InvalidArgument: If date range exceeds max_days or date format is invalid
         """
         if not date_from and not date_to:
             return None
@@ -394,7 +444,7 @@ class ProwlerAPIClient(metaclass=SingletonMeta):
 
         # Validate that date_from is before or equal to date_to
         if from_date > to_date:
-            raise ValueError(
+            raise InvalidArgument(
                 f"Invalid date range: date_from must be before or equal to date_to. "
                 f"Got date_from='{from_date.date()}' and date_to='{to_date.date()}'. "
                 f"Please swap the dates or use the correct order."
@@ -403,7 +453,7 @@ class ProwlerAPIClient(metaclass=SingletonMeta):
         # Validate range doesn't exceed max_days
         delta: int = (to_date - from_date).days + 1
         if delta > max_days:
-            raise ValueError(
+            raise InvalidArgument(
                 f"Date range cannot exceed {max_days} days. "
                 f"Requested range: {from_date.date()} to {to_date.date()} ({delta} days)"
             )

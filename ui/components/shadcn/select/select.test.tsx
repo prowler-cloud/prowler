@@ -74,8 +74,8 @@ describe("Select", () => {
     expect(selectedItem).toHaveClass(
       "data-[state=checked]:hover:bg-button-tertiary/15",
     );
-    expect(selectedItem).toHaveClass("hover:bg-slate-200");
-    expect(selectedItem).toHaveClass("dark:hover:bg-slate-700/50");
+    // Shared highlight: same neutral gray as menu items.
+    expect(selectedItem).toHaveClass("hover:bg-border-neutral-secondary");
     expect(
       within(selectedItem).queryByRole("img", { hidden: true }),
     ).toBeNull();

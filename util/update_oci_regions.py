@@ -178,6 +178,34 @@ def update_config_file(regions, config_file_path):
     logging.info(f"Updated OCI_COMMERCIAL_REGIONS with {len(regions)} regions")
 
 
+def update_ui_regions_file(regions, ui_file_path):
+    """Rewrite OCI_COMMERCIAL_REGIONS in the UI region list used by the credentials form."""
+    logging.info(f"Updating UI regions file: {ui_file_path}")
+
+    with open(ui_file_path, "r") as f:
+        ui_content = f.read()
+
+    new_regions_array = "const OCI_COMMERCIAL_REGIONS = [\n"
+    for region_id in regions.keys():
+        new_regions_array += f'  "{region_id}",\n'
+    new_regions_array += "];"
+
+    pattern = r"const OCI_COMMERCIAL_REGIONS = \[[^\]]*\];"
+    if not re.search(pattern, ui_content):
+        raise Exception(
+            "Validation failed: OCI_COMMERCIAL_REGIONS not found in the UI regions file."
+        )
+    updated_content = re.sub(pattern, new_regions_array, ui_content)
+
+    if updated_content == ui_content:
+        logging.warning("No changes detected in UI regions file")
+        return
+
+    with open(ui_file_path, "w") as f:
+        f.write(updated_content)
+    logging.info("Successfully updated UI regions file")
+
+
 def main():
     """
     Main execution function for OCI regions updater.
@@ -200,6 +228,16 @@ def main():
         )
 
         update_config_file(commercial_regions, config_file_path)
+
+        ui_file_path = os.path.join(
+            os.path.dirname(os.path.realpath(__file__)),
+            "..",
+            "ui",
+            "lib",
+            "provider-credentials",
+            "oci-regions.ts",
+        )
+        update_ui_regions_file(commercial_regions, ui_file_path)
 
         logging.info("OCI regions update completed successfully")
         return 0

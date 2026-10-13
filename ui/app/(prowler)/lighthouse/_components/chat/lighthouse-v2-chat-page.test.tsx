@@ -1,5 +1,6 @@
 import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import type { Survey } from "posthog-js";
 import { type ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -21,6 +22,9 @@ import type {
   LighthouseV2SupportedModel,
   LighthouseV2SupportedProvider,
 } from "@/app/(prowler)/lighthouse/_types";
+import { buildLighthouseMessageContent } from "@/lib/lighthouse/message-content";
+import { getSkillById } from "@/lib/lighthouse/skills/registry";
+import { LIGHTHOUSE_SKILL_ID } from "@/types/lighthouse-skills";
 
 import { LighthouseV2ChatPage } from "./lighthouse-v2-chat-page";
 
@@ -31,11 +35,15 @@ const {
   getMessagesMock,
   sendMessageMock,
   updateConfigurationMock,
+  captureMock,
+  onSurveysLoadedMock,
 } = vi.hoisted(() => ({
   createSessionMock: vi.fn(),
   getMessagesMock: vi.fn(),
   sendMessageMock: vi.fn(),
   updateConfigurationMock: vi.fn(),
+  captureMock: vi.fn(),
+  onSurveysLoadedMock: vi.fn(),
 }));
 
 vi.mock("@/app/(prowler)/lighthouse/_actions", () => ({
@@ -43,6 +51,13 @@ vi.mock("@/app/(prowler)/lighthouse/_actions", () => ({
   getLighthouseV2Messages: getMessagesMock,
   sendLighthouseV2Message: sendMessageMock,
   updateLighthouseV2Configuration: updateConfigurationMock,
+}));
+
+vi.mock("posthog-js", () => ({
+  default: {
+    capture: captureMock,
+    onSurveysLoaded: onSurveysLoadedMock,
+  },
 }));
 
 vi.mock("next/navigation", () => ({
@@ -94,6 +109,43 @@ const supportedProviders: LighthouseV2SupportedProvider[] = [
   { id: "openai-compatible", name: "OpenAI Compatible" },
 ];
 
+const OUTCOME_FEEDBACK_SURVEY = {
+  id: "survey-123",
+  name: "Lighthouse Request Outcome Feedback",
+  type: "api",
+  questions: [
+    {
+      id: "rating-question-id",
+      type: "rating",
+      display: "emoji",
+      scale: 2,
+      question: "How was this outcome?",
+      lowerBoundLabel: "Not helpful",
+      upperBoundLabel: "Helpful",
+    },
+    {
+      id: "reasons-question-id",
+      type: "multiple_choice",
+      optional: true,
+      choices: [
+        "Don't like the style",
+        "Didn't fully follow instructions",
+        "Low quality",
+        "Biased",
+        "Safety or legal concern",
+        "Other",
+      ],
+      question: "What could be improved?",
+    },
+    {
+      id: "details-question-id",
+      type: "open",
+      optional: true,
+      question: "Additional feedback",
+    },
+  ],
+} as unknown as Survey;
+
 describe("LighthouseV2ChatPage", () => {
   beforeEach(() => {
     vi.stubGlobal(
@@ -112,6 +164,12 @@ describe("LighthouseV2ChatPage", () => {
     getMessagesMock.mockReset();
     sendMessageMock.mockReset();
     updateConfigurationMock.mockReset();
+    captureMock.mockReset();
+    onSurveysLoadedMock.mockReset();
+    onSurveysLoadedMock.mockImplementation((callback) => {
+      callback([OUTCOME_FEEDBACK_SURVEY]);
+      return () => {};
+    });
     resetPanelChatStoreForTests();
     eventSources = stubEventSource();
     window.history.replaceState(null, "", "/lighthouse");
@@ -542,6 +600,191 @@ describe("LighthouseV2ChatPage", () => {
     );
   });
 
+  it("renders each outcome control under its paired assistant answer and submits against the initiating user message", async () => {
+    // Given
+    const user = userEvent.setup();
+    const firstUserMessage = message("message-user-1", "user", "First prompt");
+    const secondUserMessage = message(
+      "message-user-2",
+      "user",
+      "Second prompt",
+    );
+    renderPage({
+      initialSessionId: "session-1",
+      initialMessages: [
+        firstUserMessage,
+        message("message-assistant-1", "assistant", "First answer"),
+        secondUserMessage,
+        message("message-assistant-2", "assistant", "Second answer"),
+      ],
+    });
+    const firstPrompt = screen.getByText("First prompt").closest("article");
+    const firstAnswer = screen.getByText("First answer").closest("article");
+    const secondPrompt = screen.getByText("Second prompt").closest("article");
+    const secondAnswer = screen.getByText("Second answer").closest("article");
+    if (!firstPrompt || !firstAnswer || !secondPrompt || !secondAnswer) {
+      throw new Error("Expected every chat message to render");
+    }
+
+    // When
+    await user.click(
+      within(firstAnswer).getByRole("button", {
+        name: "Mark outcome as not helpful",
+      }),
+    );
+    await user.click(screen.getByRole("button", { name: "Submit" }));
+    await user.click(
+      within(secondAnswer).getByRole("button", {
+        name: "Mark outcome as not helpful",
+      }),
+    );
+    await user.click(screen.getByRole("button", { name: "Submit" }));
+
+    // Then
+    expect(
+      within(firstPrompt).queryByRole("button", { name: /Mark outcome/ }),
+    ).not.toBeInTheDocument();
+    expect(
+      within(secondPrompt).queryByRole("button", { name: /Mark outcome/ }),
+    ).not.toBeInTheDocument();
+    expect(
+      within(firstAnswer).getByRole("button", {
+        name: "Mark outcome as helpful",
+      }),
+    ).toBeInTheDocument();
+    expect(
+      within(secondAnswer).getByRole("button", {
+        name: "Mark outcome as helpful",
+      }),
+    ).toBeInTheDocument();
+    expect(captureMock).toHaveBeenCalledWith(
+      "survey sent",
+      expect.objectContaining({
+        $ai_trace_id: "message-user-1",
+        "$survey_response_rating-question-id": 2,
+      }),
+    );
+    expect(captureMock).toHaveBeenCalledWith(
+      "survey sent",
+      expect.objectContaining({
+        $ai_trace_id: "message-user-2",
+        "$survey_response_rating-question-id": 2,
+      }),
+    );
+    expect(captureMock).toHaveBeenCalledTimes(2);
+    expect(onSurveysLoadedMock).toHaveBeenCalledOnce();
+  });
+
+  it.each([
+    ["unavailable", []],
+    [
+      "invalid",
+      [
+        {
+          ...OUTCOME_FEEDBACK_SURVEY,
+          questions: [
+            { ...OUTCOME_FEEDBACK_SURVEY.questions[0], optional: true },
+            OUTCOME_FEEDBACK_SURVEY.questions[1],
+            OUTCOME_FEEDBACK_SURVEY.questions[2],
+          ],
+        } as unknown as Survey,
+      ],
+    ],
+  ])(
+    "does not render outcome feedback controls when the API survey is %s",
+    (_state, surveys) => {
+      // Given
+      onSurveysLoadedMock.mockImplementation((callback) => {
+        callback(surveys);
+        return () => {};
+      });
+
+      // When
+      renderPage({
+        initialSessionId: "session-1",
+        initialMessages: [
+          message("message-user-1", "user", "Prompt"),
+          message("message-assistant-1", "assistant", "Answer"),
+        ],
+      });
+
+      // Then
+      expect(
+        screen.queryByRole("button", { name: "Mark outcome as helpful" }),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole("button", { name: "Mark outcome as not helpful" }),
+      ).not.toBeInTheDocument();
+    },
+  );
+
+  it("cleans up the outcome feedback survey subscription when the chat unmounts", () => {
+    // Given
+    const unsubscribe = vi.fn();
+    onSurveysLoadedMock.mockImplementation((callback) => {
+      callback([OUTCOME_FEEDBACK_SURVEY]);
+      return unsubscribe;
+    });
+    const { unmount } = renderPage();
+
+    // When
+    unmount();
+
+    // Then
+    expect(unsubscribe).toHaveBeenCalledOnce();
+  });
+
+  it("does not attach outcome feedback to an assistant after an optimistic user prompt", () => {
+    // Given / When
+    renderPage({
+      initialSessionId: "session-1",
+      initialMessages: [
+        message("optimistic-user-1", "user", "Pending prompt"),
+        message("message-assistant-1", "assistant", "Unpaired answer"),
+      ],
+    });
+
+    // Then
+    expect(
+      screen.queryByRole("button", { name: /Mark outcome/ }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("hands the suggested follow-up skill off to a fresh session", async () => {
+    // Given: a persisted triage run in the currently open session
+    const user = userEvent.setup();
+    const triage = getSkillById(LIGHTHOUSE_SKILL_ID.TRIAGE_DECISION);
+    if (!triage) throw new Error("triage skill missing from the catalog");
+    const launch = message("message-launch", "user", "Triage Decision");
+    launch.parts[0].content = buildLighthouseMessageContent(
+      "Triage Decision",
+      undefined,
+      triage,
+    );
+    renderPage({
+      initialSessionId: "session-old",
+      initialMessages: [
+        launch,
+        message("message-answer", "assistant", "Verdict: real risk"),
+      ],
+    });
+
+    // When: the receipt's suggested next skill is launched
+    await user.click(
+      screen.getByRole("button", { name: /Next: Contextual Fix/ }),
+    );
+
+    // Then: the catalog requires the fix to run in a separate session, so a
+    // new one is created and the triage conversation leaves the screen.
+    await waitFor(() => expect(sendMessageMock).toHaveBeenCalled());
+    expect(createSessionMock).toHaveBeenCalled();
+    expect(sendMessageMock.mock.calls[0][0]).toMatchObject({
+      sessionId: "session-1",
+      skillId: LIGHTHOUSE_SKILL_ID.CONTEXTUAL_FIX,
+    });
+    expect(screen.queryByText("Verdict: real risk")).not.toBeInTheDocument();
+  });
+
   it("renders streamed deltas and reloads persisted messages on message.end", async () => {
     // Given
     const user = userEvent.setup();
@@ -658,6 +901,39 @@ describe("LighthouseV2ChatPage", () => {
     // Then: the draft is kept in the input and no second message is sent
     expect(input).toHaveValue("Next question");
     expect(sendMessageMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps outcome feedback available after a terminal run error", async () => {
+    // Given
+    const user = userEvent.setup();
+    getMessagesMock.mockResolvedValue({
+      data: [message("task-1", "user", "Run this check")],
+    });
+    renderPage();
+    await user.type(
+      screen.getByRole("textbox", { name: "Message" }),
+      ["Run this check", "{Enter}"].join(""),
+    );
+    await waitFor(() => expect(eventSources).toHaveLength(1));
+
+    // When
+    act(() => eventSources[0].emit("error", { detail: "Agent run failed." }));
+
+    // Then
+    expect(await screen.findByText("Agent run failed.")).toBeInTheDocument();
+    await user.click(
+      await screen.findByRole("button", {
+        name: "Mark outcome as not helpful",
+      }),
+    );
+    await user.click(screen.getByRole("button", { name: "Submit" }));
+    expect(captureMock).toHaveBeenCalledWith(
+      "survey sent",
+      expect.objectContaining({
+        $ai_trace_id: "task-1",
+        "$survey_response_rating-question-id": 2,
+      }),
+    );
   });
 
   it("surfaces a connection error when the stream closes without retrying", async () => {

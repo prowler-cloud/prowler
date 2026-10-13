@@ -40,6 +40,9 @@ describe("isOcsfSupported", () => {
     expect(isOcsfSupported("dora_2022_2554")).toBe(true);
     expect(isOcsfSupported("csa_ccm_4.0")).toBe(true);
     expect(isOcsfSupported("cis_controls_8.1")).toBe(true);
+    expect(isOcsfSupported("cmmc_2.0")).toBe(true);
+    expect(isOcsfSupported("fedramp_20x_ksi_2026")).toBe(true);
+    expect(isOcsfSupported("fedramp_20x_frr_class_c_2026")).toBe(true);
   });
 
   it("returns false for legacy/per-provider frameworks without OCSF output", () => {

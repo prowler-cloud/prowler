@@ -64,7 +64,7 @@ runs:
         scanners: 'vuln'
         ignore-unfixed: 'true' # A finding with no available fix is not actionable, so it must not gate
         timeout: '5m'
-        version: 'v0.72.0'
+        version: 'v0.74.0'
       # Not trivyignores: that input drops the .yaml extension Trivy parses by.
       env:
         TRIVY_IGNOREFILE: '.trivyignore.yaml'
@@ -81,7 +81,7 @@ runs:
         scanners: 'vuln'
         ignore-unfixed: 'true' # A finding with no available fix is not actionable, so it must not gate
         timeout: '5m'
-        version: 'v0.72.0'
+        version: 'v0.74.0'
       # Not trivyignores: that input drops the .yaml extension Trivy parses by.
       env:
         TRIVY_IGNOREFILE: '.trivyignore.yaml'

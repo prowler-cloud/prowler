@@ -302,6 +302,7 @@ export const handlersForOrganizations = (
     organizations.map((o) => o.secretId).filter((id): id is string => !!id),
   );
   let orgSeq = 0;
+  let providerSeq = 0;
   let secretSeq = 0;
   /** Reads per connection task, so `executingPolls` can hold one task running. */
   const connectionTaskReads = new Map<string, number>();
@@ -347,7 +348,11 @@ export const handlersForOrganizations = (
         orgType: String(attrs.org_type ?? "aws"),
         name: String(attrs.name ?? ""),
         externalId: String(attrs.external_id ?? ""),
-        rootExternalId: null,
+        // Writable on POST for Azure (the target Management Group); AWS and GCP
+        // leave it to discovery and send nothing.
+        rootExternalId: attrs.root_external_id
+          ? String(attrs.root_external_id)
+          : null,
         providerIds: [],
         nodeIds: [],
         secretId: null,
@@ -503,6 +508,8 @@ export const handlersForOrganizations = (
               result:
                 fx.discovery.status === "succeeded" ? fx.discovery.result : {},
               error: fx.discovery.error,
+              // Machine code and human message are separate fields on the wire.
+              error_message: fx.discovery.errorMessage ?? null,
               inserted_at: TS,
               updated_at: TS,
             },
@@ -558,6 +565,37 @@ export const handlersForOrganizations = (
     http.get(`${API}/scan-configurations`, () =>
       HttpResponse.json({ data: [], meta: collectionMeta(0) }),
     ),
+
+    // --- single-account connect (AWS one-step form) -----------------------
+    http.post(`${API}/providers`, async ({ request }) => {
+      const body = (await request.json()) as {
+        data: { attributes: { provider: string; uid: string; alias?: string } };
+      };
+      providerSeq += 1;
+      return HttpResponse.json(
+        {
+          data: {
+            id: `provider-created-${providerSeq}`,
+            type: "providers",
+            attributes: {
+              ...body.data.attributes,
+              connection: { connected: false, last_checked_at: null },
+            },
+          },
+        },
+        { status: 201 },
+      );
+    }),
+
+    http.post(`${API}/providers/secrets`, () => {
+      secretSeq += 1;
+      return HttpResponse.json(
+        {
+          data: { id: `secret-created-${secretSeq}`, type: "provider-secrets" },
+        },
+        { status: 201 },
+      );
+    }),
 
     // --- providers (uid resolution) + connection testing -----------------
     http.get<{ id: string }>(`${API}/providers/:id`, ({ params }) => {

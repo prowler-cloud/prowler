@@ -23,6 +23,9 @@ interface ResourceDetailDrawerProps {
   currentFinding: ResourceDrawerFinding | null;
   otherFindings: ResourceDrawerFinding[];
   showSyntheticResourceHint?: boolean;
+  // Forwarded to DetailSidePanel: false opens the Details tab without
+  // selecting it (skill launches keep the AI chat tab in front).
+  selectTabOnOpen?: boolean;
   onNavigatePrev: () => void;
   onNavigateNext: () => void;
   onMuteComplete: () => void;
@@ -41,6 +44,7 @@ export function ResourceDetailDrawer({
   currentFinding,
   otherFindings,
   showSyntheticResourceHint = false,
+  selectTabOnOpen,
   onNavigatePrev,
   onNavigateNext,
   onMuteComplete,
@@ -68,6 +72,7 @@ export function ResourceDetailDrawer({
       title="Resource Finding Details"
       description="View finding details for the selected resource"
       context={context}
+      selectTabOnOpen={selectTabOnOpen}
     >
       <ResourceDetailDrawerContent
         isLoading={isLoading}

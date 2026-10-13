@@ -470,3 +470,87 @@ class Test_KeyVault_get_key_vaults:
         mock_client.vaults.list_by_resource_group.assert_called_once_with(
             resource_group_name="MyRG"
         )
+
+
+class Test_KeyVault_get_keys:
+    def test_get_keys_builds_key_client_from_vault_uri(self):
+        mock_client = MagicMock()
+        mock_client.keys.list.return_value = []
+
+        mock_provider = MagicMock()
+        mock_provider.identity = MagicMock()
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=mock_provider,
+            ),
+            patch(
+                "prowler.providers.azure.services.monitor.monitor_service.Monitor",
+                new=MagicMock(),
+            ),
+            patch(
+                "prowler.providers.azure.services.keyvault.keyvault_service.KeyVault._get_key_vaults",
+                return_value={},
+            ),
+        ):
+            from prowler.providers.azure.services.keyvault.keyvault_service import (
+                KeyVault,
+            )
+
+            keyvault = KeyVault(set_mocked_azure_provider())
+
+        keyvault.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+        provider = set_mocked_azure_provider()
+        vault_uri = "https://my-vault.vault.usgovcloudapi.net/"
+
+        with patch(
+            "prowler.providers.azure.services.keyvault.keyvault_service.KeyClient"
+        ) as mock_key_client_cls:
+            mock_key_client_cls.return_value.list_properties_of_keys.return_value = []
+            keys = keyvault._get_keys(
+                AZURE_SUBSCRIPTION_ID, RESOURCE_GROUP, "my-vault", vault_uri, provider
+            )
+
+        assert keys == []
+        mock_key_client_cls.assert_called_once_with(
+            vault_url=vault_uri, credential=provider.session
+        )
+
+    def test_get_keys_without_vault_uri_skips_rotation_policies(self):
+        mock_client = MagicMock()
+        mock_client.keys.list.return_value = []
+
+        mock_provider = MagicMock()
+        mock_provider.identity = MagicMock()
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=mock_provider,
+            ),
+            patch(
+                "prowler.providers.azure.services.monitor.monitor_service.Monitor",
+                new=MagicMock(),
+            ),
+            patch(
+                "prowler.providers.azure.services.keyvault.keyvault_service.KeyVault._get_key_vaults",
+                return_value={},
+            ),
+        ):
+            from prowler.providers.azure.services.keyvault.keyvault_service import (
+                KeyVault,
+            )
+
+            keyvault = KeyVault(set_mocked_azure_provider())
+
+        keyvault.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+        provider = set_mocked_azure_provider()
+
+        with patch(
+            "prowler.providers.azure.services.keyvault.keyvault_service.KeyClient"
+        ) as mock_key_client_cls:
+            keys = keyvault._get_keys(
+                AZURE_SUBSCRIPTION_ID, RESOURCE_GROUP, "my-vault", "", provider
+            )
+
+        assert keys == []
+        mock_key_client_cls.assert_not_called()

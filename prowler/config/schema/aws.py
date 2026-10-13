@@ -267,6 +267,15 @@ class AWSProviderConfig(ProviderConfigBase):
             f"values accepted by the AWS API: {list(_CLOUDWATCH_RETENTION_DAYS)}."
         ),
     )
+    agentcore_log_group_name_prefixes: Optional[list[str]] = Field(
+        default=None,
+        description=(
+            "Log group name prefixes that identify Bedrock AgentCore agent "
+            "telemetry. Set this when AgentCore log delivery is pointed at log "
+            "groups outside the service defaults; the value replaces the "
+            "defaults, so list them alongside any prefix of your own."
+        ),
+    )
     recommended_cdk_bootstrap_version: Optional[int] = Field(
         default=None,
         ge=1,
@@ -322,6 +331,20 @@ class AWSProviderConfig(ProviderConfigBase):
     ] = Field(
         default=None,
         description="Highest severity tolerated for ECR images.",
+    )
+
+    # --- Inspector2 -------------------------------------------------------
+    inspector2_max_days_since_last_scan: Optional[int] = Field(
+        default=None,
+        ge=1,
+        le=90,
+        description="Days since Inspector2 last scanned a covered resource. Range: 1..90.",
+    )
+    inspector2_active_finding_max_age_days: Optional[int] = Field(
+        default=None,
+        ge=1,
+        le=365,
+        description="Days an Inspector2 finding can stay active since first observed. Range: 1..365.",
     )
 
     # --- Trusted Advisor --------------------------------------------------

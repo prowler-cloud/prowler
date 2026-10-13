@@ -10,7 +10,7 @@ class Test_defenderxdr_critical_asset_management_pending_approvals:
     """Tests for the defenderxdr_critical_asset_management_pending_approvals check."""
 
     def test_api_failed_missing_permission(self):
-        """Test FAIL when API call fails (None): missing ThreatHunting.Read.All permission."""
+        """Test MANUAL when API call fails (None): missing ThreatHunting.Read.All permission."""
         defenderxdr_client = mock.MagicMock()
         defenderxdr_client.audited_tenant = "audited_tenant"
         defenderxdr_client.audited_domain = DOMAIN
@@ -34,9 +34,10 @@ class Test_defenderxdr_critical_asset_management_pending_approvals:
             result = check.execute()
 
             assert len(result) == 1
-            assert result[0].status == "FAIL"
+            assert result[0].status == "MANUAL"
             assert (
-                "Unable to query Critical Asset Management" in result[0].status_extended
+                "Cannot evaluate Critical Asset Management pending approvals"
+                in result[0].status_extended
             )
             assert "ThreatHunting.Read.All" in result[0].status_extended
             assert result[0].resource_id == "criticalAssetManagement"

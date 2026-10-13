@@ -1,3 +1,4 @@
+import { SquareChartGantt } from "lucide-react";
 import { Suspense } from "react";
 
 import { getAllProviderGroups } from "@/actions/manage-groups/manage-groups";
@@ -59,7 +60,7 @@ export default async function Home({
     ]);
 
   return (
-    <ContentLayout title="Overview" icon="lucide:square-chart-gantt">
+    <ContentLayout title="Overview" icon={<SquareChartGantt />}>
       <AppSidebarModeSync mode={APP_SIDEBAR_MODE.BROWSE} />
       <OverviewProviderContext
         searchParams={resolvedSearchParams}

@@ -21,6 +21,7 @@ describe("cloud upgrade content", () => {
       "Keep Every Provider Checked Automatically",
       "Turn Findings into Alerts",
       "Add Your Entire AWS Organization",
+      "Add Your Entire Azure Management Group",
       "Add Your Entire GCP Organization",
       "Bring CLI Findings into One Cloud View",
       "See Compliance Across Every Provider",
@@ -68,6 +69,7 @@ describe("cloud upgrade URLs", () => {
     [CLOUD_UPGRADE_FEATURE.ADVANCED_SCHEDULING, "advanced-scheduling"],
     [CLOUD_UPGRADE_FEATURE.ALERTS, "alerts"],
     [CLOUD_UPGRADE_FEATURE.AWS_ORGANIZATIONS, "organization"],
+    [CLOUD_UPGRADE_FEATURE.AZURE_ORGANIZATIONS, "azure-organization"],
     [CLOUD_UPGRADE_FEATURE.CLI_IMPORT, "cli-import"],
     [
       CLOUD_UPGRADE_FEATURE.CROSS_PROVIDER_COMPLIANCE,

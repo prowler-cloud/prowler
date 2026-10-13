@@ -281,6 +281,7 @@ export type OCICredentials = {
   [ProviderCredentialFields.OCI_FINGERPRINT]: string;
   [ProviderCredentialFields.OCI_KEY_CONTENT]: string;
   [ProviderCredentialFields.OCI_TENANCY]: string;
+  [ProviderCredentialFields.OCI_REGION]: string;
   [ProviderCredentialFields.OCI_PASS_PHRASE]?: string;
   [ProviderCredentialFields.PROVIDER_ID]: string;
 };
@@ -419,6 +420,7 @@ export interface InvitationProps {
         manage_integrations?: boolean;
         manage_scans?: boolean;
         manage_alerts?: boolean;
+        manage_lighthouse_ai_configuration?: boolean;
         permission_state?: PermissionState;
       };
     };
@@ -444,6 +446,7 @@ export interface Role {
     manage_integrations: boolean;
     manage_scans: boolean;
     manage_alerts?: boolean;
+    manage_lighthouse_ai_configuration?: boolean;
     unlimited_visibility: boolean;
     permission_state: PermissionState;
     inserted_at: string;
@@ -583,6 +586,7 @@ export interface FindingProps {
     uid: string;
     delta: FindingDelta;
     status: FindingStatus;
+    raw_status?: FindingStatus;
     status_extended: string;
     severity: Severity;
     check_id: string;

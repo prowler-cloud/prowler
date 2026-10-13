@@ -1,8 +1,10 @@
+import { renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import {
   migrateAppSidebarState,
   useAppSidebarMode,
+  useHydratedAppSidebarMode,
 } from "./app-sidebar-mode-store";
 import { APP_SIDEBAR_MODE } from "./types";
 
@@ -69,5 +71,22 @@ describe("app sidebar mode store", () => {
 
     // Then
     expect(useAppSidebarMode.getState().mode).toBe(APP_SIDEBAR_MODE.CHAT);
+  });
+
+  it("answers browse on the first render and the persisted mode once mounted", () => {
+    // Given — a tenant that last used the chat; the server rendered browse.
+    useAppSidebarMode.setState({ mode: APP_SIDEBAR_MODE.CHAT });
+    const renders: string[] = [];
+
+    // When
+    renderHook(() => {
+      const mode = useHydratedAppSidebarMode();
+      renders.push(mode);
+      return mode;
+    });
+
+    // Then — the hydrating render matches the HTML, the next one the store.
+    expect(renders[0]).toBe(APP_SIDEBAR_MODE.BROWSE);
+    expect(renders[renders.length - 1]).toBe(APP_SIDEBAR_MODE.CHAT);
   });
 });

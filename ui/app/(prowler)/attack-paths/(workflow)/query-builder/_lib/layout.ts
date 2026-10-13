@@ -8,29 +8,31 @@ import { type Edge, type Node, Position } from "@xyflow/react";
 
 import type { GraphEdge, GraphNode } from "@/types/attack-paths";
 
+import { orientEdgeForLayout } from "./edge-orientation";
+import { GROUP_NODE_LABEL, OUTCOME_NODE_LABEL } from "./group-graph";
 import {
   FINDING_NODE_DIMENSIONS,
+  GROUP_NODE_DIMENSIONS,
   INTERNET_NODE_DIMENSIONS,
+  OUTCOME_NODE_DIMENSIONS,
   RESOURCE_NODE_DIMENSIONS,
 } from "./node-dimensions";
 import { isProwlerFindingNode } from "./node-types";
-
-// Container relationships that get reversed for proper hierarchy
-const CONTAINER_RELATIONS = new Set([
-  "RUNS_IN",
-  "BELONGS_TO",
-  "LOCATED_IN",
-  "PART_OF",
-]);
 
 interface NodeData extends Record<string, unknown> {
   graphNode: GraphNode;
 }
 
-const NODE_TYPE = {
+// Shared with the `NODE_TYPES` component registry in attack-path-graph so the
+// type strings can't drift apart.
+export const NODE_TYPE = {
   FINDING: "finding",
   INTERNET: "internet",
   RESOURCE: "resource",
+  // React Flow reserves "group" for its built-in container node (styled via
+  // .react-flow__node-group), so use a distinct type for our custom node.
+  GROUP: "classGroup",
+  OUTCOME: "outcome",
 } as const;
 
 type NodeType = (typeof NODE_TYPE)[keyof typeof NODE_TYPE];
@@ -38,6 +40,9 @@ type NodeType = (typeof NODE_TYPE)[keyof typeof NODE_TYPE];
 const isFindingNode = isProwlerFindingNode;
 
 const getNodeType = (labels: string[]): NodeType => {
+  // Synthetic view nodes are tagged with a reserved label.
+  if (labels.includes(OUTCOME_NODE_LABEL)) return NODE_TYPE.OUTCOME;
+  if (labels.includes(GROUP_NODE_LABEL)) return NODE_TYPE.GROUP;
   if (isFindingNode(labels)) return NODE_TYPE.FINDING;
   if (labels.some((l) => l.toLowerCase() === "internet"))
     return NODE_TYPE.INTERNET;
@@ -56,6 +61,16 @@ const getNodeDimensions = (
     return {
       width: INTERNET_NODE_DIMENSIONS.DIAMETER,
       height: INTERNET_NODE_DIMENSIONS.DIAMETER,
+    };
+  if (type === NODE_TYPE.GROUP)
+    return {
+      width: GROUP_NODE_DIMENSIONS.WIDTH,
+      height: GROUP_NODE_DIMENSIONS.HEIGHT,
+    };
+  if (type === NODE_TYPE.OUTCOME)
+    return {
+      width: OUTCOME_NODE_DIMENSIONS.WIDTH,
+      height: OUTCOME_NODE_DIMENSIONS.HEIGHT,
     };
   return {
     width: RESOURCE_NODE_DIMENSIONS.WIDTH,
@@ -90,12 +105,11 @@ export const layoutWithDagre = (
 
   // Add edges, reversing container relationships for proper hierarchy
   edges.forEach((edge) => {
-    let sourceId = edge.source;
-    let targetId = edge.target;
-
-    if (CONTAINER_RELATIONS.has(edge.type)) {
-      [sourceId, targetId] = [targetId, sourceId];
-    }
+    const [sourceId, targetId] = orientEdgeForLayout(
+      edge.source,
+      edge.target,
+      edge.type,
+    );
 
     if (sourceId && targetId) {
       g.setEdge(

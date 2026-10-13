@@ -25,7 +25,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 # =============================================================================
 # Final stage - Minimal runtime environment
 # =============================================================================
-FROM python:3.13.14-alpine3.23@sha256:9fdbf2e3e82628351513560b121e2ee6ce31cac212be9e070c5a5e2769fb5e76
+FROM python:3.13.16-alpine3.23@sha256:07b20c774a247152e74f622034c1482495d299e070eec620ddff13e01264290b
 
 LABEL maintainer="https://github.com/prowler-cloud"
 
@@ -33,6 +33,11 @@ LABEL maintainer="https://github.com/prowler-cloud"
 # Using specific UID/GID for consistency across environments
 RUN addgroup -g 1001 prowler && \
     adduser -D -u 1001 -G prowler prowler
+
+# pip is build-only; the entrypoint runs the venv directly.
+RUN rm -rf /usr/local/lib/python3.13/site-packages/pip \
+    /usr/local/lib/python3.13/site-packages/pip-*.dist-info \
+    /usr/local/bin/pip /usr/local/bin/pip3 /usr/local/bin/pip3.13
 
 WORKDIR /app
 USER prowler

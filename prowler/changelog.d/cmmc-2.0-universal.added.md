@@ -1,1 +1,0 @@
-CMMC 2.0 universal compliance framework (`cmmc_2.0`) with the 149 official requirements from 32 CFR Part 170 — Level 1 (15, 48 CFR 52.204-21), Level 2 (110, NIST SP 800-171 Rev 2) and Level 3 (24, NIST SP 800-172) — with AWS, Azure, GCP, Alibaba Cloud, Oracle Cloud and M365 check mappings and config guardrails

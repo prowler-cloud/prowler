@@ -107,17 +107,12 @@ export async function addAWSProvider(
   // Select AWS provider
   await providersPage.selectAWSProvider();
 
-  // Fill provider details
-  await providersPage.fillAWSProviderDetails(awsProviderData);
-  await providersPage.clickNext();
-
-  // Verify credentials page is loaded
-  await providersPage.verifyCredentialsPageLoaded();
-
-  // Select static credentials type
-  await providersPage.selectCredentialsType(
+  // AWS registers the account and its credentials in a single step
+  await providersPage.selectAwsAccessMethod(
     AWS_CREDENTIAL_OPTIONS.AWS_CREDENTIALS,
   );
+  await providersPage.fillAWSProviderDetails(awsProviderData);
+
   // Fill static credentials
   await providersPage.fillStaticCredentials(staticCredentials);
   await providersPage.clickNext();
@@ -193,14 +188,10 @@ export async function deleteProviderIfExists(
   await expect(deleteMenuItem).toBeVisible({ timeout: 5000 });
   await deleteMenuItem.click();
 
-  // Wait for confirmation modal to appear. Exclude the Next.js dev error
-  // overlay, which is also role="dialog" and would otherwise be matched first,
-  // making the assertion wait on the wrong (hidden) element.
-  const modal = page.page
-    .locator(
-      '[role="dialog"]:not([data-nextjs-dialog="true"]), .modal, [data-testid*="modal"]',
-    )
-    .first();
+  // Match the delete dialog by name; other dialogs (Lighthouse callout, Next.js overlay) may be open
+  const modal = page.page.getByRole("dialog", {
+    name: "Are you absolutely sure?",
+  });
 
   await expect(modal).toBeVisible({ timeout: 10000 });
 

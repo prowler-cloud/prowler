@@ -53,10 +53,12 @@ const runtimeConfig: RuntimePublicConfig = {
   apiDocsUrl: null,
   posthogEnabled: false,
   posthogKey: null,
-  posthogHost: null,
+  posthogIngestionHost: null,
+  posthogUiHost: null,
   reoDevClientId: null,
   cloudEnabled: false,
   cloudBillingEnabled: false,
+  selfRegistrationEnabled: true,
   stripePublishableKey: null,
   stripePublishableKeyV2: null,
 };

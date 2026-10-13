@@ -1,7 +1,18 @@
 import {
-  pollConnectionTestStatus,
+  revalidateIntegrationConnectionPages,
   testIntegrationConnection,
 } from "@/actions/integrations";
+import type { useToast } from "@/components/shadcn/toast/use-toast";
+import { evaluateIntegrationConnectionTask } from "@/lib/integrations/test-connection-result";
+import {
+  TASK_WATCHER_STATUS,
+  trackAndPollTask,
+} from "@/store/task-watcher/store";
+import {
+  INTEGRATION_CONNECTION_TASK_KIND,
+  type IntegrationConnectionTaskResult,
+  type IntegrationConnectionTestResponse,
+} from "@/types/integrations";
 
 // Integration configuration type
 export interface IntegrationMessages {
@@ -58,6 +69,47 @@ interface TestConnectionOptions {
   onComplete?: () => void;
 }
 
+export const executeIntegrationConnectionTest = async (
+  integrationId: string,
+  onStarted?: () => void,
+): Promise<IntegrationConnectionTestResponse> => {
+  const started = await testIntegrationConnection(integrationId);
+
+  if (!started.success) {
+    return {
+      success: false,
+      error: started.error || "Connection test could not be started.",
+    };
+  }
+
+  if (!started.taskId) {
+    return {
+      success: false,
+      error: "Failed to start connection test. No task ID received.",
+    };
+  }
+
+  onStarted?.();
+
+  const tracked = await trackAndPollTask<IntegrationConnectionTaskResult>({
+    taskId: started.taskId,
+    kind: INTEGRATION_CONNECTION_TASK_KIND,
+    meta: { integrationId },
+    notifyHandler: false,
+  });
+
+  await revalidateIntegrationConnectionPages();
+
+  if (tracked.status !== TASK_WATCHER_STATUS.READY) {
+    return {
+      success: false,
+      error: tracked.error || "Failed to track the connection test.",
+    };
+  }
+
+  return evaluateIntegrationConnectionTask(tracked.result);
+};
+
 export const runTestConnection = async ({
   integrationId,
   integrationType,
@@ -67,44 +119,22 @@ export const runTestConnection = async ({
   onComplete,
 }: TestConnectionOptions) => {
   try {
-    // Start the test without waiting for completion
-    const result = await testIntegrationConnection(integrationId, false);
+    const result = await executeIntegrationConnectionTest(
+      integrationId,
+      onStart,
+    );
 
-    if (!result || (!result.success && !result.error)) {
-      onError?.("Connection test could not be started. Please try again.");
-      onComplete?.();
-      return;
-    }
-
-    if (result.error) {
-      onError?.(result.error);
-      onComplete?.();
-      return;
-    }
-
-    if (!result.taskId) {
-      onError?.("Failed to start connection test. No task ID received.");
-      onComplete?.();
-      return;
-    }
-
-    // Notify that test has started
-    onStart?.();
-
-    // Poll for the test completion
-    const pollResult = await pollConnectionTestStatus(result.taskId);
-
-    if (pollResult.success) {
+    if (result.success) {
       const config = INTEGRATION_CONFIG[integrationType];
       const defaultMessage =
         config?.successMessage ||
         `Successfully connected to ${integrationType}.`;
-      onSuccess?.(pollResult.message || defaultMessage);
+      onSuccess?.(result.message || defaultMessage);
     } else {
       const config = INTEGRATION_CONFIG[integrationType];
       const defaultError =
         config?.errorMessage || `Failed to connect to ${integrationType}.`;
-      onError?.(pollResult.error || defaultError);
+      onError?.(result.error || defaultError);
     }
   } catch (_error) {
     onError?.(
@@ -119,7 +149,7 @@ export const triggerTestConnectionWithDelay = (
   integrationId: string | undefined,
   shouldTestConnection: boolean | undefined,
   integrationType: string,
-  toast: any,
+  toast: ReturnType<typeof useToast>["toast"],
   delay = 200,
   onComplete?: () => void,
 ) => {

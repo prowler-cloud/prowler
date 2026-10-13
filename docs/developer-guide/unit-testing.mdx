@@ -154,7 +154,7 @@ Failing to update this table when adding cross-service dependencies may result i
 For AWS provider, different testing approaches apply based on API coverage based on several criteria.
 
 <Note>
-Prowler leverages and contributes to the[Moto](https://github.com/getmoto/moto) library for mocking AWS infrastructure in tests.
+Prowler leverages and contributes to the [Moto](https://github.com/getmoto/moto) library for mocking AWS infrastructure in tests.
 
 </Note>
 - AWS API Calls Covered by [Moto](https://github.com/getmoto/moto):
@@ -408,7 +408,7 @@ In all above scenarios, check execution must occur within the context of mocked 
 
 When a service requires API calls that are partially covered by the Moto decorator, additional mocking is necessary. In such cases, custom mocked API calls must be implemented alongside Moto to ensure full coverage.
 
-To achieve this, mock the `botocore.client.BaseClient._make_api_call` function—the method responsible for making actual API requests to AWS—using `mock.patch <https://docs.python.org/3/library/unittest.mock.html#patch>`:
+To achieve this, mock the `botocore.client.BaseClient._make_api_call` function—the method responsible for making actual API requests to AWS—using [`mock.patch`](https://docs.python.org/3/library/unittest.mock.html#patch):
 
 ```python
 
@@ -475,7 +475,7 @@ However, if additional `moto` decorators are applied alongside the patch, Moto w
 
 </Note>
 <Note>
-The source of the above implementation can be found here:[Patch Other Services with Moto](https://docs.getmoto.org/en/latest/docs/services/patching\_other\_services.html)
+The source of the above implementation can be found here: [Patch Other Services with Moto](https://docs.getmoto.org/en/latest/docs/services/patching_other_services.html)
 
 </Note>
 #### Mocking Several Services
@@ -525,7 +525,7 @@ with mock.patch(
 ):
 ```
 
-As demonstrated in the code above, mocking both the AWS audit information and all utilized services is mandatory for proper test execution.
+As demonstrated in the code above, mocking both the AWS audit information and all used services is mandatory for proper test execution.
 
 #### Patching vs. Importing
 
@@ -603,7 +603,7 @@ with mock.patch(
 
 will cause that the service is initialized only once—at the moment of mocking out `set_mocked_aws_provider([<region>])` using `mock.patch`.
 
-Later, when Python attempts to import the client at the check level, the execution continues using`from prowler.providers.<provider>.services.<service>.<service>_client`. As a result of it being already mocked out, the execution will continue using `service_client` without getting into `<service>_client.py`.
+Later, when Python attempts to import the client at the check level, the execution continues using `from prowler.providers.<provider>.services.<service>.<service>_client`. As a result of it being already mocked out, the execution will continue using `service_client` without getting into `<service>_client.py`.
 
 ### Testing AWS Services
 

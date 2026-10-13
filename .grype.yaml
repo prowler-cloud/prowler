@@ -17,6 +17,99 @@ ignore:
   - vulnerability: CVE-2026-71556
     package:
       name: github.com/go-git/go-git/v5
+  # CVE-2026-84304 is the same temporary exception documented in .trivyignore.yaml:
+  # Trivy 0.74.0 still embeds grpc 1.82.1, while the 1.83.1 fix is not in any release.
+  # Prowler only runs `trivy image` / `trivy fs`, never client/server mode, so no gRPC
+  # endpoint exists in the image. Pinned to the embedded version so the rule stops
+  # matching on its own once Trivy bumps grpc. Remove with the Trivy exception by 2026-10-15.
+  # https://github.com/aquasecurity/trivy/pull/11176
+  - vulnerability: CVE-2026-84304
+    package:
+      name: google.golang.org/grpc
+      version: v1.82.1
+  # CVE-2026-84445 is the same temporary exception documented in .trivyignore.yaml:
+  # Trivy 0.74.0 still embeds grpc 1.82.1, while the 1.82.2 / 1.83.2 fix is not in any
+  # release. The panic needs a gRPC server built with `xds.NewGRPCServer()`; Prowler only
+  # runs `trivy image` / `trivy fs`, so the image serves no gRPC at all. Pinned to the
+  # embedded version so the rule stops matching on its own once Trivy bumps grpc. Remove
+  # with the Trivy exception by 2026-10-15.
+  # https://github.com/advisories/GHSA-2v4p-qf9q-27wj
+  - vulnerability: CVE-2026-84445
+    package:
+      name: google.golang.org/grpc
+      version: v1.82.1
+  # CVE-2026-56855 / CVE-2026-78662 are the same temporary exception documented in
+  # .trivyignore.yaml: Trivy 0.74.0 still embeds golang.org/x/crypto v0.55.0, while the
+  # 0.56.0 fix (published 2026-09-02) hasn't reached any Trivy release, or even Trivy
+  # main, yet. Pinned to the embedded version so the rule stops matching on its own once
+  # Trivy bumps it. Remove with the Trivy exception by 2026-10-15.
+  - vulnerability: CVE-2026-56855
+    package:
+      name: golang.org/x/crypto
+      version: v0.55.0
+  - vulnerability: CVE-2026-78662
+    package:
+      name: golang.org/x/crypto
+      version: v0.55.0
+  # Go 1.27.1 and golang.org/x/net v0.59.0 in Trivy 0.75.0, the latest release. Fixed in
+  # Go 1.27.2 and x/net 0.60.0, which only Trivy main has. Almost every entry is an HTTP,
+  # HTTP/2 or TLS server path (or Windows-only), and Trivy runs here only as a client. The
+  # two client-side ones are a DoS from a hostile HTTP/2 peer (CVE-2026-78669) and an
+  # unframed CONNECT body sent through a proxy (CVE-2026-56866); Trivy's only peer is the
+  # TLS-authenticated database registry and it never sends CONNECT with a body. Pinned to
+  # the embedded versions. Remove with the Trivy exception by 2026-11-15.
+  - vulnerability: CVE-2026-56857
+    package:
+      name: stdlib
+      version: go1.27.1
+  - vulnerability: CVE-2026-56866
+    package:
+      name: stdlib
+      version: go1.27.1
+  - vulnerability: CVE-2026-78659
+    package:
+      name: stdlib
+      version: go1.27.1
+  - vulnerability: CVE-2026-78660
+    package:
+      name: stdlib
+      version: go1.27.1
+  - vulnerability: CVE-2026-78663
+    package:
+      name: stdlib
+      version: go1.27.1
+  - vulnerability: CVE-2026-78669
+    package:
+      name: stdlib
+      version: go1.27.1
+  - vulnerability: CVE-2026-94439
+    package:
+      name: stdlib
+      version: go1.27.1
+  - vulnerability: CVE-2026-94440
+    package:
+      name: stdlib
+      version: go1.27.1
+  - vulnerability: CVE-2026-97031
+    package:
+      name: stdlib
+      version: go1.27.1
+  - vulnerability: CVE-2026-78659
+    package:
+      name: golang.org/x/net
+      version: v0.59.0
+  - vulnerability: CVE-2026-78660
+    package:
+      name: golang.org/x/net
+      version: v0.59.0
+  - vulnerability: CVE-2026-78663
+    package:
+      name: golang.org/x/net
+      version: v0.59.0
+  - vulnerability: CVE-2026-78669
+    package:
+      name: golang.org/x/net
+      version: v0.59.0
   - vulnerability: CVE-2026-56852
     package:
       name: golang.org/x/text
@@ -32,6 +125,19 @@ ignore:
   - vulnerability: CVE-2026-26127
     package:
       name: Microsoft.Bcl.Memory
+
+  # The .NET runtime bundled inside the PowerShell tarball the Dockerfile pins.
+  # CVE-2026-62901 is the same temporary exception documented in .trivyignore.yaml:
+  # fixed in .NET 9.0.19 / 10.0.11 (2026-08-11), but no published PowerShell release
+  # ships a patched runtime yet (7.5.9 bundles 9.0.18; 7.6.4 bundles 10.0.x < 10.0.11).
+  # pwsh runs only local M365 module cmdlets; nothing listens for inbound WebSocket
+  # connections. Remove with the Trivy exception by 2026-09-15.
+  - vulnerability: CVE-2026-62901
+    package:
+      name: Microsoft.NETCore.App.Runtime.linux-x64
+  - vulnerability: CVE-2026-62901
+    package:
+      name: Microsoft.NETCore.App.Runtime.linux-arm64
 
 
   # The CPython interpreter, compiled into the official base image.
@@ -68,3 +174,29 @@ ignore:
   - vulnerability: CVE-2026-9669
     package:
       name: python
+  # CVE-2026-82049 (tarfile data/tar filter bypass via a hard link to a symlink) has no
+  # fixed CPython release on any branch: the fix is merged on main and 3.13 only, and the
+  # 3.12 backport is still open. Grype records 3.14.0b1 as the fix, so only-fixed does not
+  # drop it, yet python:3.12.14-slim-trixie reports it too. Prowler never extracts tar
+  # archives to disk: the ECR image inspection reads members in memory with extractfile().
+  # Remove once the base image ships a 3.12 release that includes the backport.
+  # https://github.com/python/cpython/issues/157190
+  # https://github.com/python/cpython/pull/157454
+  - vulnerability: CVE-2026-82049
+    package:
+      name: python
+
+  # zlib in the Alpine base images of the UI (node:24.18.1-alpine) and MCP
+  # (python:3.13.14-alpine3.23) containers. CVE-2026-85091 is a heap overflow in
+  # gz_vacate() reached only through non-blocking gzwrite() followed by gzprintf() after
+  # a write stall. Node links its own bundled zlib and the MCP server never writes gzip
+  # files, so neither image calls that path. TEMPORARY: the 1.3.2-r1 fix is in the
+  # Alpine index and could be taken with `apk add --upgrade`, but we wait for the base
+  # images to ship it instead (the newest node:24-alpine and python:3.13-alpine3.23 still
+  # carry 1.3.2-r0). Pinned to that version so the rule stops matching on its own once a
+  # base image moves forward. Remove when the base digests are bumped, by 2026-11-07.
+  # https://security.alpinelinux.org/vuln/CVE-2026-85091
+  - vulnerability: CVE-2026-85091
+    package:
+      name: zlib
+      version: 1.3.2-r0

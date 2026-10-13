@@ -205,6 +205,47 @@ class TestSlackIntegration:
             },
         ]
 
+    def test_create_message_blocks_no_findings(self):
+        """A scan that produced no findings must still build a valid message.
+
+        The pass/fail percentages divide by ``stats["findings_count"]``, which is
+        initialised to 0 in ``prowler/lib/outputs/outputs.py``. With no findings
+        that raises ``ZeroDivisionError``, the handler logs it and returns
+        ``None``, and ``send()`` then passes ``blocks=None`` to
+        ``chat_postMessage``.
+        """
+        aws_provider = set_mocked_aws_provider()
+        slack = Slack(SLACK_TOKEN, SLACK_CHANNEL, aws_provider)
+        args = "--slack"
+        stats = {
+            "total_pass": 0,
+            "total_fail": 0,
+            "total_critical_severity_pass": 0,
+            "total_critical_severity_fail": 0,
+            "total_high_severity_fail": 0,
+            "total_high_severity_pass": 0,
+            "total_medium_severity_fail": 0,
+            "total_medium_severity_pass": 0,
+            "total_low_severity_fail": 0,
+            "total_low_severity_pass": 0,
+            "resources_count": 0,
+            "findings_count": 0,
+        }
+
+        blocks = slack.__create_message_blocks__(
+            f"AWS Account *{AWS_ACCOUNT_NUMBER}*", aws_logo, stats, args
+        )
+
+        assert blocks is not None, (
+            "__create_message_blocks__ returned None, so send() passes "
+            "blocks=None to chat_postMessage"
+        )
+        assert isinstance(blocks, list) and blocks
+        # The percentages must degrade to 0% rather than raising.
+        rendered = str(blocks)
+        assert "0 Passed findings* (0%)" in rendered
+        assert "0 Failed findings* (0%)" in rendered
+
     def test_create_message_blocks_azure(self):
         aws_provider = set_mocked_azure_provider()
         slack = Slack(SLACK_TOKEN, SLACK_CHANNEL, aws_provider)

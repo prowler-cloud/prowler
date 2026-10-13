@@ -118,6 +118,24 @@ describe("OnboardingTrigger", () => {
       );
     });
 
+    it("starts at the step the page asks for, skipping the ones before it", async () => {
+      // Given
+      searchParamsValue = new URLSearchParams("onboarding=add-provider");
+
+      // When
+      render(
+        <OnboardingTrigger
+          flow={addProviderFlow}
+          startAtTarget="provider-type"
+        />,
+      );
+
+      // Then
+      await waitFor(() =>
+        expect(startMock).toHaveBeenCalledExactlyOnceWith("provider-type"),
+      );
+    });
+
     it("strips only the onboarding param and preserves other query params", async () => {
       searchParamsValue = new URLSearchParams(
         "scanId=scan-1&onboarding=add-provider&tab=completed",

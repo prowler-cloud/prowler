@@ -31,7 +31,7 @@ interface ScansFilterBarProps {
   onScanStatusChange: (value: string) => void;
 }
 
-const filterItemClass = "w-full md:w-[calc(50%-0.375rem)] xl:w-60";
+const filterItemClass = "w-full sm:max-w-[240px] sm:min-w-[180px] sm:flex-1";
 
 export function ScansFilterBar({
   providers,
@@ -67,33 +67,37 @@ export function ScansFilterBar({
       </div>
 
       {showScheduleTypeFilter && (
-        <Select value={scheduleType} onValueChange={onScheduleTypeChange}>
-          <SelectTrigger aria-label="All Types" className={filterItemClass}>
-            <SelectValue placeholder="All Types" />
-          </SelectTrigger>
-          <SelectContent>
-            {triggerFilterOptions.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className={filterItemClass}>
+          <Select value={scheduleType} onValueChange={onScheduleTypeChange}>
+            <SelectTrigger aria-label="All Types">
+              <SelectValue placeholder="All Types" />
+            </SelectTrigger>
+            <SelectContent>
+              {triggerFilterOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       )}
 
       {showStatusFilter && (
-        <Select value={scanStatus} onValueChange={onScanStatusChange}>
-          <SelectTrigger aria-label="All Statuses" className={filterItemClass}>
-            <SelectValue placeholder="All Statuses" />
-          </SelectTrigger>
-          <SelectContent>
-            {statusFilterOptions.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className={filterItemClass}>
+          <Select value={scanStatus} onValueChange={onScanStatusChange}>
+            <SelectTrigger aria-label="All Statuses">
+              <SelectValue placeholder="All Statuses" />
+            </SelectTrigger>
+            <SelectContent>
+              {statusFilterOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       )}
     </>
   );

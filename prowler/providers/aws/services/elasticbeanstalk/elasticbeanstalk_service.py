@@ -56,6 +56,8 @@ class ElasticBeanstalk(AWSService):
             option_settings = configuration_settings["ConfigurationSettings"][0].get(
                 "OptionSettings", {}
             )
+            environment.option_settings = option_settings
+
             for option in option_settings:
                 if (
                     option["Namespace"] == "aws:elasticbeanstalk:healthreporting:system"
@@ -123,3 +125,4 @@ class Environment(BaseModel):
     managed_platform_updates: Optional[str]
     cloudwatch_stream_logs: Optional[str]
     tags: Optional[list] = []
+    option_settings: Optional[list] = None

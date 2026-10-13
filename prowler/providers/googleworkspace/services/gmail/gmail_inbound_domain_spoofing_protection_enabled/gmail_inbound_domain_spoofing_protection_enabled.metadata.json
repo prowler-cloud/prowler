@@ -9,7 +9,7 @@
   "Severity": "medium",
   "ResourceType": "NotDefined",
   "ResourceGroup": "collaboration",
-  "Description": "Verifies that Gmail is configured to take a protective action (such as moving to spam, quarantining, or showing a warning) when inbound emails spoof the organization's own domain. This protects against attackers sending emails that appear to originate from within the organization but are actually external.",
+  "Description": "Verifies that Gmail moves out of the inbox, to spam or quarantine, the inbound emails that spoof the organization's own domain. An action that only shows a warning is not enough. This protects against attackers sending emails that appear to originate from within the organization but are actually external.",
   "Risk": "Without protection against inbound domain spoofing, users may receive **emails that appear to come from their own organization** but are sent by external attackers. This enables **internal impersonation**, **phishing**, and **business email compromise** attacks that exploit trust in internal communications.",
   "RelatedUrl": "",
   "AdditionalURLs": [

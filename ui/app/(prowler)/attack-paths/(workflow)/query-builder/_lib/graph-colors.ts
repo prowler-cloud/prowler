@@ -1,3 +1,8 @@
+import {
+  GROUP_NODE_LABEL,
+  GROUP_PROPS,
+  OUTCOME_NODE_LABEL,
+} from "./group-graph";
 import { isProwlerFindingNode } from "./node-types";
 
 /**
@@ -62,6 +67,12 @@ export const GRAPH_SELECTION_COLOR = "#ffffff";
 export const GRAPH_BORDER_COLOR = "#374151";
 export const GRAPH_ALERT_BORDER_COLOR = "#ef4444"; // Red 500 - for resources with findings
 
+// Terminal outcome node: distinct orange, independent of the resource palette.
+export const GRAPH_OUTCOME_FILL_COLOR = "#c2410c"; // Orange 700
+export const GRAPH_OUTCOME_BORDER_COLOR = "#f97316"; // Orange 500
+// Outline behind a group node's count badge, for contrast on any fill.
+export const GRAPH_COUNT_BADGE_STROKE_COLOR = "#0b1120"; // Slate 950
+
 /**
  * Get node fill color based on labels and properties
  */
@@ -69,6 +80,15 @@ export const getNodeColor = (
   labels: string[],
   properties?: Record<string, unknown>,
 ): string => {
+  if (labels.includes(OUTCOME_NODE_LABEL)) {
+    return GRAPH_OUTCOME_FILL_COLOR;
+  }
+
+  if (labels.includes(GROUP_NODE_LABEL)) {
+    const classLabel = String(properties?.[GROUP_PROPS.CLASS] ?? "");
+    return getNodeColor([classLabel]);
+  }
+
   const isFinding = isProwlerFindingNode(labels);
   if (isFinding && properties?.severity) {
     const severity = String(properties.severity).toLowerCase();
@@ -102,6 +122,19 @@ export const getNodeBorderColor = (
   labels: string[],
   properties?: Record<string, unknown>,
 ): string => {
+  if (labels.includes(OUTCOME_NODE_LABEL)) {
+    return GRAPH_OUTCOME_BORDER_COLOR;
+  }
+
+  if (labels.includes(GROUP_NODE_LABEL)) {
+    if (properties?.[GROUP_PROPS.HAS_FINDINGS]) {
+      return GRAPH_ALERT_BORDER_COLOR;
+    }
+
+    const classLabel = String(properties?.[GROUP_PROPS.CLASS] ?? "");
+    return getNodeBorderColor([classLabel]);
+  }
+
   const isFinding = isProwlerFindingNode(labels);
   if (isFinding && properties?.severity) {
     const severity = String(properties.severity).toLowerCase();

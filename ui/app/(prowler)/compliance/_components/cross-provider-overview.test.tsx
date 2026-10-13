@@ -4,9 +4,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ACTION_ERROR_STATUS, USAGE_LIMIT_MESSAGE } from "@/lib/action-errors";
 import { useComplianceWatchlistViewStore } from "@/store/compliance/store";
 import { makeComplianceCatalogEntry } from "@/test-utils/compliance-watchlist";
+import type { ComplianceCatalogEntry } from "@/types/compliance-watchlist";
 
 import { getCrossProviderComplianceOverview } from "../_actions/cross-provider";
-import { CROSS_PROVIDER_FRAMEWORKS } from "../_lib/cross-provider-frameworks";
 import { loadComplianceWatchlistContext } from "../_lib/watchlist-context";
 import type { CrossProviderOverviewResult } from "../_types";
 import {
@@ -40,12 +40,9 @@ vi.mock("@/actions/compliance-watchlist", () => ({
 
 // The watchlist context reads the session through next-auth, which cannot be
 // imported in this environment; the watchlist behaviour has its own tests.
+// It also carries the catalog the section builds its cards from.
 vi.mock("../_lib/watchlist-context", () => ({
-  loadComplianceWatchlistContext: vi.fn(async () => ({
-    entries: [],
-    eligibleProviderTypes: [],
-    canManage: false,
-  })),
+  loadComplianceWatchlistContext: vi.fn(),
 }));
 
 vi.mock("./cross-provider-filters", () => ({
@@ -71,6 +68,45 @@ vi.mock("./cross-provider-framework-card", () => ({
     </div>
   ),
 }));
+
+const DORA_ID = "dora_2022_2554";
+
+// One card per entry, ordered by title.
+const UNIVERSAL_FRAMEWORKS = [
+  { complianceId: "csa_ccm_4.0", framework: "CSA-CCM" },
+  { complianceId: "cis_controls_8.1", framework: "CIS-Controls" },
+  { complianceId: "cmmc_2.0", framework: "CMMC" },
+  { complianceId: DORA_ID, framework: "DORA" },
+];
+
+const EXPECTED_TITLES = ["CIS-Controls", "CMMC", "CSA-CCM", "DORA"];
+
+const catalogEntries = (pinned: string[] = []): ComplianceCatalogEntry[] =>
+  UNIVERSAL_FRAMEWORKS.map(({ complianceId, framework }) =>
+    makeComplianceCatalogEntry({
+      complianceId,
+      // The catalog keys a universal framework under `*`.
+      providerType: "*",
+      framework,
+      inWatchlist: pinned.includes(complianceId),
+      watchlistEntryId: pinned.includes(complianceId)
+        ? `entry-${complianceId}`
+        : null,
+    }),
+  );
+
+const withCatalog = (
+  entries: ComplianceCatalogEntry[],
+  eligibleProviderTypes: string[] = ["aws", "azure"],
+  canManage = true,
+  unavailable = false,
+) =>
+  vi.mocked(loadComplianceWatchlistContext).mockResolvedValue({
+    entries,
+    eligibleProviderTypes,
+    canManage,
+    unavailable,
+  });
 
 const successResult = (complianceId: string): CrossProviderOverviewResult => ({
   status: CROSS_PROVIDER_OVERVIEW_RESULT_STATUS.SUCCESS,
@@ -110,13 +146,67 @@ const renderOverview = async () =>
 describe("CrossProviderOverview", () => {
   beforeEach(() => {
     vi.mocked(getCrossProviderComplianceOverview).mockReset();
+    vi.mocked(loadComplianceWatchlistContext).mockReset();
+    withCatalog(catalogEntries());
+  });
+
+  it("renders one card per universal framework the catalog reports", async () => {
+    // ACME is what an entry-point package would contribute.
+    withCatalog([
+      ...catalogEntries(),
+      makeComplianceCatalogEntry({
+        complianceId: "acme_1.0",
+        providerType: "*",
+        framework: "ACME",
+      }),
+    ]);
+    vi.mocked(getCrossProviderComplianceOverview).mockImplementation(
+      async ({ complianceId }) => successResult(complianceId),
+    );
+
+    // When
+    await renderOverview();
+
+    // Then
+    const cards = screen.getAllByTestId("framework-card");
+    expect(cards.map((card) => card.textContent)).toEqual([
+      "ACME",
+      ...EXPECTED_TITLES,
+    ]);
+  });
+
+  it("renders no cards when the catalog reports no universal framework", async () => {
+    withCatalog([]);
+
+    await renderOverview();
+
+    expect(screen.queryByTestId("framework-card")).not.toBeInTheDocument();
+    expect(getCrossProviderComplianceOverview).not.toHaveBeenCalled();
+    expect(
+      screen.getByText(/No cross-provider compliance data yet/i),
+    ).toBeInTheDocument();
+  });
+
+  it("reports the failure instead of claiming there is no data", async () => {
+    withCatalog([], ["aws", "azure"], true, true);
+
+    await renderOverview();
+
+    expect(
+      screen.getByText(CROSS_PROVIDER_OVERVIEW_LOAD_ERROR_MESSAGE),
+    ).toBeInTheDocument();
+    expect(screen.queryByTestId("framework-card")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/No cross-provider compliance data yet/i),
+    ).not.toBeInTheDocument();
+    expect(getCrossProviderComplianceOverview).not.toHaveBeenCalled();
   });
 
   it("degrades to a partial view when a single framework fails to load", async () => {
     // Given: DORA fails, the other frameworks load
     vi.mocked(getCrossProviderComplianceOverview).mockImplementation(
       async ({ complianceId }) =>
-        complianceId === "dora_2022_2554"
+        complianceId === DORA_ID
           ? loadErrorResult
           : successResult(complianceId),
     );
@@ -126,7 +216,7 @@ describe("CrossProviderOverview", () => {
 
     // Then: loaded cards render, the failed framework is called out by name
     expect(screen.getAllByTestId("framework-card")).toHaveLength(
-      CROSS_PROVIDER_FRAMEWORKS.length - 1,
+      UNIVERSAL_FRAMEWORKS.length - 1,
     );
     expect(screen.getByText(/Could not load DORA/)).toBeInTheDocument();
     expect(
@@ -154,7 +244,7 @@ describe("CrossProviderOverview", () => {
     // Given: one framework hits the usage limit (402)
     vi.mocked(getCrossProviderComplianceOverview).mockImplementation(
       async ({ complianceId }) =>
-        complianceId === "dora_2022_2554"
+        complianceId === DORA_ID
           ? {
               status: CROSS_PROVIDER_OVERVIEW_RESULT_STATUS.ACTION_ERROR,
               result: { status: ACTION_ERROR_STATUS.PAYMENT_REQUIRED },
@@ -173,58 +263,32 @@ describe("CrossProviderOverview", () => {
   });
 });
 
-// DORA's compatible provider types, per the static catalog.
-const DORA_ID = "dora_2022_2554";
-
-const catalogEntry = (
-  complianceId: string,
-  providerType: string,
-  inWatchlist: boolean,
-) =>
-  makeComplianceCatalogEntry({
-    complianceId,
-    providerType,
-    inWatchlist,
-    watchlistEntryId: inWatchlist ? `entry-${providerType}` : null,
-  });
-
 describe("CrossProviderOverview watchlist", () => {
   beforeEach(() => {
     localStorage.clear();
     useComplianceWatchlistViewStore.setState({ showOnlyWatchlist: false });
+    vi.mocked(loadComplianceWatchlistContext).mockReset();
     vi.mocked(getCrossProviderComplianceOverview).mockImplementation(
       async ({ complianceId }) => successResult(complianceId),
     );
   });
 
-  const withWatchlist = (
-    entries: ReturnType<typeof catalogEntry>[],
-    eligibleProviderTypes: string[],
-    canManage = true,
-  ) =>
-    vi.mocked(loadComplianceWatchlistContext).mockResolvedValue({
-      entries,
-      eligibleProviderTypes,
-      canManage,
-    });
-
-  it("keeps the configured framework order when one is pinned", async () => {
-    // One card, one entry: the catalog keys a universal framework under `*`.
-    withWatchlist([catalogEntry(DORA_ID, "*", true)], ["aws", "azure"]);
+  it("keeps the catalog order when one framework is pinned", async () => {
+    withCatalog(catalogEntries([DORA_ID]));
 
     await renderOverview();
 
     const cards = screen.getAllByTestId("framework-card");
-    expect(cards).toHaveLength(CROSS_PROVIDER_FRAMEWORKS.length);
-    expect(cards.map((card) => card.textContent)).toEqual(
-      CROSS_PROVIDER_FRAMEWORKS.map((framework) => framework.title),
+    expect(cards.map((card) => card.textContent)).toEqual(EXPECTED_TITLES);
+    expect(cards[EXPECTED_TITLES.indexOf("DORA")]).toHaveAttribute(
+      "data-pin-state",
+      "pinned",
     );
-    expect(cards[2]).toHaveAttribute("data-pin-state", "pinned");
   });
 
   it("narrows the grid to the pinned frameworks when the filter is on", async () => {
     useComplianceWatchlistViewStore.setState({ showOnlyWatchlist: true });
-    withWatchlist([catalogEntry(DORA_ID, "*", true)], ["aws", "azure"]);
+    withCatalog(catalogEntries([DORA_ID]));
 
     await renderOverview();
 
@@ -235,7 +299,7 @@ describe("CrossProviderOverview watchlist", () => {
 
   it("explains the blank grid when nothing universal is pinned", async () => {
     useComplianceWatchlistViewStore.setState({ showOnlyWatchlist: true });
-    withWatchlist([catalogEntry(DORA_ID, "*", false)], ["aws"]);
+    withCatalog(catalogEntries());
 
     await renderOverview();
 
@@ -245,14 +309,13 @@ describe("CrossProviderOverview watchlist", () => {
     expect(screen.queryByTestId("framework-card")).not.toBeInTheDocument();
   });
 
-  it("ignores the filter without a catalog, so OSS never blanks out", async () => {
-    useComplianceWatchlistViewStore.setState({ showOnlyWatchlist: true });
-    withWatchlist([], [], false);
+  it("cannot manage the watchlist without the permission", async () => {
+    withCatalog(catalogEntries([DORA_ID]), ["aws", "azure"], false);
 
     await renderOverview();
 
-    expect(screen.getAllByTestId("framework-card")).toHaveLength(
-      CROSS_PROVIDER_FRAMEWORKS.length,
-    );
+    for (const card of screen.getAllByTestId("framework-card")) {
+      expect(card).toHaveAttribute("data-can-manage", "false");
+    }
   });
 });

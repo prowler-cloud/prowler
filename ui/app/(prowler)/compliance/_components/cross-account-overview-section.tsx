@@ -16,7 +16,7 @@ import type { SearchParamsProps } from "@/types";
 import type { ComplianceOverviewData } from "@/types/compliance";
 import { isKnownProviderType, type KnownProviderType } from "@/types/providers";
 
-import { CROSS_PROVIDER_FRAMEWORKS } from "../_lib/cross-provider-frameworks";
+import { loadCrossProviderFrameworks } from "../_lib/cross-provider-catalog";
 import { loadComplianceWatchlistContext } from "../_lib/watchlist-context";
 import type { CrossAccountFrameworkEntry } from "../_types";
 
@@ -87,8 +87,12 @@ export const CrossAccountOverviewSection = async ({
     scansByType.filter((entry) => entry !== null),
   );
 
+  // Universal frameworks belong to "Across providers" above. Without the
+  // catalog we cannot tell them apart, and that section already reports it.
+  const catalog = await loadCrossProviderFrameworks();
+  if (catalog.unavailable) return null;
   const universalIds = new Set(
-    CROSS_PROVIDER_FRAMEWORKS.map((entry) => entry.complianceId),
+    catalog.frameworks.map((entry) => entry.complianceId),
   );
 
   const entriesByType = await Promise.all(

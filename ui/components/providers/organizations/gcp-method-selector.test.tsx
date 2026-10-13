@@ -7,6 +7,8 @@ import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
 
 import { GcpMethodSelector } from "./gcp-method-selector";
 
+// OSS gating only: `CloudUpgradeModal` mounts outside the providers page, so the
+// harness cannot see the upsell open. The Cloud case is restated by integration.
 describe("GcpMethodSelector", () => {
   afterEach(() => {
     vi.unstubAllEnvs();
@@ -39,30 +41,5 @@ describe("GcpMethodSelector", () => {
     expect(useCloudUpgradeStore.getState().activeFeature).toBe(
       CLOUD_UPGRADE_FEATURE.GCP_ORGANIZATIONS,
     );
-  });
-
-  it("enters the GCP org flow in Cloud", async () => {
-    // Given
-    vi.stubEnv("UI_CLOUD_ENABLED", "true");
-    const user = userEvent.setup();
-    const onSelectOrganizations = vi.fn();
-
-    // When
-    render(
-      <GcpMethodSelector
-        onSelectSingle={vi.fn()}
-        onSelectOrganizations={onSelectOrganizations}
-      />,
-    );
-
-    // Then
-    await user.click(
-      screen.getByRole("radio", {
-        name: /add multiple projects with gcp organization/i,
-      }),
-    );
-
-    expect(onSelectOrganizations).toHaveBeenCalledTimes(1);
-    expect(useCloudUpgradeStore.getState().activeFeature).toBeNull();
   });
 });

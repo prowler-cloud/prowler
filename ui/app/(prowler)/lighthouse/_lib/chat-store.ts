@@ -8,6 +8,7 @@ import {
 } from "@/app/(prowler)/lighthouse/_actions";
 import {
   createInitialLighthouseV2StreamState,
+  LIGHTHOUSE_V2_STREAM_STATUS,
   type LighthouseV2StreamState,
   reduceLighthouseV2Event,
 } from "@/app/(prowler)/lighthouse/_lib/event-reducer";
@@ -20,6 +21,7 @@ import { notifyLighthouseV2SessionsChanged } from "@/app/(prowler)/lighthouse/_l
 import { parseStreamEvent } from "@/app/(prowler)/lighthouse/_lib/stream-event-parser";
 import { buildLighthouseV2StreamUrl } from "@/app/(prowler)/lighthouse/_lib/stream-url";
 import {
+  LIGHTHOUSE_V2_MESSAGE_ROLE,
   LIGHTHOUSE_V2_PROVIDER_TYPE,
   LIGHTHOUSE_V2_SSE_EVENT,
   type LighthouseV2Configuration,
@@ -31,6 +33,7 @@ import {
 } from "@/app/(prowler)/lighthouse/_types";
 import { prepareLighthouseContext } from "@/lib/lighthouse/context/compiler";
 import type { LighthouseContextEnvelope } from "@/types/lighthouse-context";
+import type { LighthouseSkillDefinition } from "@/types/lighthouse-skills";
 
 export interface LighthouseChatConfig {
   configurations: LighthouseV2Configuration[];
@@ -63,6 +66,7 @@ export interface LighthouseChatState {
   isSubmitting: boolean;
   isLoadingSession: boolean;
   lastSubmission: LighthouseChatSubmission | null;
+  failedOutcomeMessageId: string | null;
   selectedModelSelection: LighthouseV2ModelSelection | null;
   modelPreferenceSaving: boolean;
   setSessionUrlSyncEnabled: (enabled: boolean) => void;
@@ -72,6 +76,7 @@ export interface LighthouseChatState {
   submitMessage: (
     displayText: string,
     context?: LighthouseContextEnvelope,
+    skill?: LighthouseSkillDefinition,
   ) => Promise<void>;
   retryLastMessage: () => Promise<void>;
   openSession: (sessionId: string) => Promise<void>;
@@ -83,9 +88,31 @@ export interface LighthouseChatState {
 export interface LighthouseChatSubmission {
   displayText: string;
   context?: LighthouseContextEnvelope;
+  skill?: LighthouseSkillDefinition;
+}
+
+interface LighthouseChatPendingTerminalEvent {
+  sessionId: string;
+  event: LighthouseV2SSEEvent;
+  submissionVersion: number;
 }
 
 export type LighthouseChatStore = StoreApi<LighthouseChatState>;
+
+function findLastPersistedUserMessageId(
+  messages: LighthouseV2Message[],
+): string | null {
+  for (let index = messages.length - 1; index >= 0; index -= 1) {
+    const message = messages[index];
+    if (
+      message?.role === LIGHTHOUSE_V2_MESSAGE_ROLE.USER &&
+      !message.id.startsWith("optimistic-")
+    ) {
+      return message.id;
+    }
+  }
+  return null;
+}
 
 export function selectLighthouseChatCanSend(
   state: LighthouseChatState,
@@ -102,6 +129,19 @@ export function selectLighthouseChatCanSend(
     !state.blockedByConflict &&
     !state.isSubmitting
   );
+}
+
+// The skill whose run is currently visible in the stream. Derived, not stored:
+// it is the last submission's skill for as long as that run is still active.
+export function selectLighthouseChatActiveSkill(
+  state: LighthouseChatState,
+): LighthouseSkillDefinition | undefined {
+  const skill = state.lastSubmission?.skill;
+  if (!skill) return undefined;
+  const isRunActive =
+    Boolean(state.streamState.activeTaskId) ||
+    state.streamState.status === LIGHTHOUSE_V2_STREAM_STATUS.STREAMING;
+  return isRunActive ? skill : undefined;
 }
 
 export function createLighthouseChatStore(
@@ -125,6 +165,7 @@ export function createLighthouseChatStore(
   // Each accepted submit owns its loading state. A reset can start a
   // replacement while the cancelled submit is still settling.
   let submissionIntentVersion = 0;
+  let pendingTerminalEvent: LighthouseChatPendingTerminalEvent | null = null;
   let syncUrlToSession = options.syncUrlToSession;
 
   const syncSessionUrl = (sessionId: string | null) => {
@@ -157,41 +198,67 @@ export function createLighthouseChatStore(
       return false;
     };
 
-    const handleTerminalEvent = async (
+    const refreshAfterTerminalEvent = async (
       sessionId: string,
       event: LighthouseV2SSEEvent,
     ) => {
-      if (
-        event.type === LIGHTHOUSE_V2_SSE_EVENT.MESSAGE_END ||
-        event.type === LIGHTHOUSE_V2_SSE_EVENT.ERROR
-      ) {
-        closeStream();
-        set({ blockedByConflict: false });
-        if (event.type === LIGHTHOUSE_V2_SSE_EVENT.ERROR) {
-          set({ feedback: event.detail || "Agent run failed." });
-        }
-        // A fast follow-up can start while this refresh is in flight; applying
-        // it would erase the new optimistic message and provisional task id.
-        const noNewerSubmission = () =>
-          !get().isSubmitting && !get().streamState.activeTaskId;
-        const refreshed = await refreshMessages(sessionId, noNewerSubmission);
-        if (refreshed) {
-          set({ streamState: createInitialLighthouseV2StreamState() });
-        }
-        notifyLighthouseV2SessionsChanged();
+      // A fast follow-up can start while this refresh is in flight; applying
+      // it would erase the new optimistic message and provisional task id.
+      const noNewerSubmission = () =>
+        !get().isSubmitting && !get().streamState.activeTaskId;
+      const refreshed = await refreshMessages(sessionId, noNewerSubmission);
+      if (refreshed) {
+        const failedOutcomeMessageId =
+          event.type === LIGHTHOUSE_V2_SSE_EVENT.ERROR
+            ? findLastPersistedUserMessageId(get().messages)
+            : null;
+        set({
+          streamState: createInitialLighthouseV2StreamState(),
+          failedOutcomeMessageId,
+        });
       }
+      notifyLighthouseV2SessionsChanged();
     };
 
-    const startStream = (streamUrl: string, sessionId: string) => {
+    const handleTerminalEvent = async (
+      sessionId: string,
+      event: LighthouseV2SSEEvent,
+      submissionVersion: number,
+    ) => {
+      if (
+        event.type !== LIGHTHOUSE_V2_SSE_EVENT.MESSAGE_END &&
+        event.type !== LIGHTHOUSE_V2_SSE_EVENT.ERROR
+      ) {
+        return;
+      }
+
+      closeStream();
+      set({ blockedByConflict: false });
+      if (event.type === LIGHTHOUSE_V2_SSE_EVENT.ERROR) {
+        set({ feedback: event.detail || "Agent run failed." });
+      }
+      if (get().isSubmitting) {
+        pendingTerminalEvent = { sessionId, event, submissionVersion };
+        return;
+      }
+      await refreshAfterTerminalEvent(sessionId, event);
+    };
+
+    const startStream = (
+      streamUrl: string,
+      sessionId: string,
+      submissionVersion: number,
+    ) => {
       closeStream();
       const source = new EventSource(streamUrl);
       eventSource = source;
 
       const applyEvent = (event: LighthouseV2SSEEvent) => {
+        if (submissionVersion !== submissionIntentVersion) return;
         set((current) => ({
           streamState: reduceLighthouseV2Event(current.streamState, event),
         }));
-        void handleTerminalEvent(sessionId, event);
+        void handleTerminalEvent(sessionId, event, submissionVersion);
       };
 
       source.addEventListener("message.delta", (event) =>
@@ -225,10 +292,10 @@ export function createLighthouseChatStore(
       // treat everything else as a reconnect.
       source.onerror = () => {
         if (eventSource !== source) return;
-        if (source.readyState === EventSource.CLOSED) {
-          closeStream();
-          set({ feedback: "Unable to connect to the response stream." });
-        }
+        if (source.readyState !== EventSource.CLOSED) return;
+
+        closeStream();
+        set({ feedback: "Unable to connect to the response stream." });
         set((current) => ({
           streamState: reduceLighthouseV2Event(current.streamState, {
             type: "disconnect",
@@ -264,6 +331,7 @@ export function createLighthouseChatStore(
     const submitMessageInternal = async (
       displayText: string,
       context?: LighthouseContextEnvelope,
+      skill?: LighthouseSkillDefinition,
     ): Promise<void> => {
       if (!displayText.trim()) return;
       const selection = get().selectedModelSelection;
@@ -288,17 +356,20 @@ export function createLighthouseChatStore(
         }
 
         const provisionalTaskId = `pending-${Date.now()}`;
-        const lastSubmission = contextSnapshot
-          ? { displayText, context: contextSnapshot }
-          : { displayText };
+        const lastSubmission = {
+          displayText,
+          ...(contextSnapshot ? { context: contextSnapshot } : {}),
+          ...(skill ? { skill } : {}),
+        };
         set((current) => ({
           feedback: null,
+          failedOutcomeMessageId: null,
           blockedByConflict: false,
           lastSubmission,
           input: "",
           messages: [
             ...current.messages,
-            buildOptimisticMessage("user", displayText, contextSnapshot),
+            buildOptimisticMessage("user", displayText, contextSnapshot, skill),
           ],
           streamState: createInitialLighthouseV2StreamState(provisionalTaskId),
         }));
@@ -306,12 +377,17 @@ export function createLighthouseChatStore(
         // Subscribe to the same-origin SSE proxy BEFORE sending the message:
         // the backend has no replay buffer, so the listener must be attached
         // before the worker starts emitting.
-        startStream(buildLighthouseV2StreamUrl(sessionId), sessionId);
+        startStream(
+          buildLighthouseV2StreamUrl(sessionId),
+          sessionId,
+          submissionVersion,
+        );
 
         const result = await sendLighthouseV2Message({
           sessionId,
           displayText,
           ...(contextSnapshot ? { context: contextSnapshot } : {}),
+          ...(skill ? { skillId: skill.id } : {}),
           provider: selection.providerType,
           model: selection.modelId,
         });
@@ -345,8 +421,23 @@ export function createLighthouseChatStore(
         }));
         notifyLighthouseV2SessionsChanged();
       } finally {
+        const terminalEvent =
+          pendingTerminalEvent?.submissionVersion === submissionVersion
+            ? pendingTerminalEvent
+            : null;
+        if (terminalEvent) pendingTerminalEvent = null;
         if (submissionVersion === submissionIntentVersion) {
           set({ isSubmitting: false });
+          const streamStatus = get().streamState.status;
+          const shouldRefreshTerminalEvent =
+            streamStatus === LIGHTHOUSE_V2_STREAM_STATUS.ERROR ||
+            streamStatus === LIGHTHOUSE_V2_STREAM_STATUS.COMPLETED;
+          if (terminalEvent && shouldRefreshTerminalEvent) {
+            await refreshAfterTerminalEvent(
+              terminalEvent.sessionId,
+              terminalEvent.event,
+            );
+          }
         }
       }
     };
@@ -362,6 +453,7 @@ export function createLighthouseChatStore(
       isSubmitting: false,
       isLoadingSession: false,
       lastSubmission: null,
+      failedOutcomeMessageId: null,
       selectedModelSelection: resolveInitialModelSelection(
         connectedConfigurations,
         config.modelsByProvider,
@@ -374,13 +466,18 @@ export function createLighthouseChatStore(
 
       setInput: (value) => set({ input: value }),
 
-      dismissFeedback: () => set({ feedback: null }),
+      dismissFeedback: () =>
+        set({ feedback: null, failedOutcomeMessageId: null }),
 
       selectModel: async (selection) => {
         // The selection drives the model used for the next message, so it stays
         // applied even if persisting it as the provider's default model fails —
         // reverting it would make a connected provider unusable when the save 4xxs.
-        set({ selectedModelSelection: selection, feedback: null });
+        set({
+          selectedModelSelection: selection,
+          feedback: null,
+          failedOutcomeMessageId: null,
+        });
 
         const configId = connectedConfigurations.find(
           (configuration) =>
@@ -401,13 +498,17 @@ export function createLighthouseChatStore(
         }
       },
 
-      submitMessage: (displayText, context) =>
-        submitMessageInternal(displayText, context),
+      submitMessage: (displayText, context, skill) =>
+        submitMessageInternal(displayText, context, skill),
 
       retryLastMessage: async () => {
         const submission = get().lastSubmission;
         if (!submission) return;
-        await submitMessageInternal(submission.displayText, submission.context);
+        await submitMessageInternal(
+          submission.displayText,
+          submission.context,
+          submission.skill,
+        );
       },
 
       openSession: async (sessionId) => {
@@ -424,6 +525,7 @@ export function createLighthouseChatStore(
           isSubmitting: false,
           isLoadingSession: true,
           lastSubmission: null,
+          failedOutcomeMessageId: null,
           streamState: createInitialLighthouseV2StreamState(),
         });
         syncSessionUrl(sessionId);
@@ -451,6 +553,7 @@ export function createLighthouseChatStore(
           isSubmitting: false,
           isLoadingSession: false,
           lastSubmission: null,
+          failedOutcomeMessageId: null,
           streamState: createInitialLighthouseV2StreamState(),
         });
         syncSessionUrl(null);

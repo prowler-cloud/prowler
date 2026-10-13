@@ -1,12 +1,12 @@
-import { Icon } from "@iconify/react";
 import Link from "next/link";
+import type { ReactElement } from "react";
 
 import { Button } from "@/components/shadcn/button/button";
 import { Separator } from "@/components/shadcn/separator/separator";
 
 interface NavigationHeaderProps {
   title: string;
-  icon: string;
+  icon: ReactElement;
   href?: string;
 }
 
@@ -25,8 +25,8 @@ export const NavigationHeader = ({
           size="icon"
           asChild
         >
-          <Link href={href || ""}>
-            <Icon icon={icon} className="text-text-neutral-secondary" />
+          <Link href={href || ""} className="text-text-neutral-secondary">
+            {icon}
           </Link>
         </Button>
         <Separator orientation="vertical" className="h-6" />

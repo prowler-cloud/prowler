@@ -10,6 +10,10 @@ import { z } from "zod";
 
 import { updateOrganizationName } from "@/actions/organizations/organizations";
 import { AWSProviderBadge } from "@/components/icons/providers-badge";
+import {
+  AWS_ONBOARDING_METHOD,
+  AwsOnboardingMethodTabs,
+} from "@/components/providers/wizard/steps/aws/aws-onboarding-method-tabs";
 import type { WizardFooterConfig } from "@/components/providers/wizard/steps/footer-controls";
 import { WIZARD_FOOTER_ACTION_TYPE } from "@/components/providers/wizard/steps/footer-controls";
 import type { OrgWizardIntent } from "@/components/providers/wizard/types";
@@ -22,6 +26,7 @@ import { Checkbox } from "@/components/shadcn/checkbox/checkbox";
 import { Form } from "@/components/shadcn/form";
 import { Spinner } from "@/components/shadcn/spinner/spinner";
 import { getAWSOrgDeploymentQuickLink } from "@/lib";
+import { organizationNameFallbackHint } from "@/lib/organizations";
 import { useOrgSetupStore } from "@/store/organizations/store";
 import type { OrgSetupPhase } from "@/types/organizations";
 import { ORG_SETUP_PHASE, ORGANIZATION_TYPE } from "@/types/organizations";
@@ -70,6 +75,8 @@ interface OrgSetupFormProps {
   onBack: () => void;
   onClose?: () => void;
   onNext: () => void;
+  /** Keeps the single/organization tabs on screen; absent when the flow was entered directly. */
+  onSelectSingleAccount?: () => void;
   onFooterChange: (config: WizardFooterConfig) => void;
   onPhaseChange: (phase: OrgSetupPhase) => void;
   initialPhase?: OrgSetupPhase;
@@ -81,6 +88,7 @@ export function OrgSetupForm({
   onBack,
   onClose,
   onNext,
+  onSelectSingleAccount,
   onFooterChange,
   onPhaseChange,
   initialPhase = ORG_SETUP_PHASE.DETAILS,
@@ -113,6 +121,7 @@ export function OrgSetupForm({
   const [setupPhase, setSetupPhase] = useState<OrgSetupPhase>(initialPhase);
   const [isSaving, setIsSaving] = useState(false);
   const formId = "org-wizard-setup-form";
+  const formRef = useRef<HTMLFormElement>(null);
 
   const isReadOnlyOrgId = Boolean(initialValues?.awsOrgId);
 
@@ -299,10 +308,8 @@ export function OrgSetupForm({
 
   useEffect(() => {
     if (!apiError) return;
-    document
-      .getElementById(formId)
-      ?.scrollIntoView({ block: "start", behavior: "smooth" });
-  }, [apiError, formId]);
+    formRef.current?.scrollIntoView({ block: "start", behavior: "smooth" });
+  }, [apiError]);
 
   return (
     <Form {...form}>
@@ -313,6 +320,7 @@ export function OrgSetupForm({
       />
       <form
         id={formId}
+        ref={formRef}
         onSubmit={handleFormSubmit}
         className="flex flex-col gap-5"
       >
@@ -324,6 +332,13 @@ export function OrgSetupForm({
                 Amazon Web Services (AWS) / Organization Details
               </h3>
             </div>
+
+            {onSelectSingleAccount && (
+              <AwsOnboardingMethodTabs
+                value={AWS_ONBOARDING_METHOD.ORGANIZATION}
+                onSelectSingle={onSelectSingleAccount}
+              />
+            )}
 
             <p className="text-muted-foreground text-sm">
               Enter the Organization ID for the accounts you want to add to
@@ -410,8 +425,7 @@ export function OrgSetupForm({
             />
 
             <p className="text-muted-foreground text-sm">
-              If left blank, Prowler will use the Organization name stored in
-              AWS.
+              {organizationNameFallbackHint(ORGANIZATION_TYPE.AWS)}
             </p>
           </div>
         )}

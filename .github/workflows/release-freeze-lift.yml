@@ -1,0 +1,27 @@
+name: 'Tools: Release Freeze Lift'
+
+run-name: 'Lift release freeze after Prowler ${{ github.event.release.tag_name }}'
+
+on:
+  release:
+    types:
+      - 'published'
+
+permissions: {}
+
+jobs:
+  release-freeze-lift:
+    if: github.repository == 'prowler-cloud/prowler' && !github.event.release.prerelease
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
+        with:
+          egress-policy: audit
+
+      - name: Disable release freeze
+        env:
+          GH_TOKEN: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}
+        run: |
+          gh variable set RELEASE_FREEZE --body false --repo "${GITHUB_REPOSITORY}"

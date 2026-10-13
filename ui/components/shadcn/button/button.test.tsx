@@ -21,6 +21,18 @@ describe("Button", () => {
     );
   });
 
+  it("supports extra-small text buttons", () => {
+    render(
+      <Button variant="outline" size="xs">
+        Create Jira ticket
+      </Button>,
+    );
+
+    const button = screen.getByRole("button", { name: "Create Jira ticket" });
+    expect(button).toHaveClass("h-7");
+    expect(button).toHaveClass("text-xs");
+  });
+
   it("supports extra-small link buttons", () => {
     render(
       <Button variant="link" size="link-xs">

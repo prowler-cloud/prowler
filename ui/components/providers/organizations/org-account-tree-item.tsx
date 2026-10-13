@@ -11,6 +11,7 @@ import {
 import {
   getCandidateNoun,
   getNodeLabel,
+  shortenNodeId,
   toNodeKind,
 } from "@/lib/organizations";
 import { cn } from "@/lib/utils";
@@ -71,18 +72,35 @@ function InertContainerNote({
  * An identifier in the fixed-width id column. GCP project ids run to 30
  * characters and AWS OU ids longer still, so the text ellipsizes and the full
  * value moves to a tooltip.
+ *
+ * `shortened` replaces the visible text when ellipsizing would hide everything
+ * that distinguishes the value: every Azure management-group id in a tenant reads
+ * `/providers/Microsoft....`. The accessible name stays the canonical value — the
+ * tooltip needs a hover, a screen reader should not.
+ *
+ * `role="img"` is what makes that accessible name count: ARIA prohibits naming a
+ * bare `span`, so assistive tech may drop the `aria-label` and read only the
+ * shortened text. Same reason `InertContainerNote` above carries the role.
  */
 function TruncatedId({
   value,
+  shortened,
   className,
 }: {
   value: string;
+  shortened?: string;
   className?: string;
 }) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <span className={cn("truncate text-sm", className)}>{value}</span>
+        <span
+          role="img"
+          className={cn("truncate text-sm", className)}
+          aria-label={value}
+        >
+          {shortened ?? value}
+        </span>
       </TooltipTrigger>
       <TooltipContent side="top">{value}</TooltipContent>
     </Tooltip>
@@ -123,7 +141,7 @@ export function OrgAccountTreeItem({
           {ItemIcon && (
             <ItemIcon className="text-text-neutral-tertiary size-4 shrink-0" />
           )}
-          <TruncatedId value={item.id} />
+          <TruncatedId value={item.id} shortened={shortenNodeId(item.id)} />
         </div>
         <div className="min-w-0 flex-1">
           {isEditableNode ? (

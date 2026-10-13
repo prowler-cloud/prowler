@@ -2,7 +2,9 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { useCloudUpgradeStore } from "@/store/cloud-upgrade/store";
 import type { ScanProps } from "@/types";
+import { PAID_PLAN_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
 import { SCAN_SCHEDULE_CAPABILITY } from "@/types/schedules";
 
 import { ScanJobsRowActions } from "./scan-jobs-row-actions";
@@ -42,11 +44,6 @@ vi.mock("@/actions/schedules", () => ({
 
 vi.mock("@/lib/helper", () => ({
   downloadScanZip: downloadScanZipMock,
-}));
-
-vi.mock("@/lib/date-utils", () => ({
-  toLocalDateString: (value: string | null | undefined) =>
-    value ? "2026-01-01" : undefined,
 }));
 
 vi.mock("@/components/scans/edit-alias-modal", () => ({
@@ -127,6 +124,7 @@ describe("ScanJobsRowActions", () => {
   afterEach(() => {
     vi.unstubAllEnvs();
     vi.clearAllMocks();
+    useCloudUpgradeStore.getState().closeCloudUpgrade();
   });
 
   it("opens the Edit modal seeded with the current scan name", async () => {
@@ -314,13 +312,14 @@ describe("ScanJobsRowActions", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("links completed scans to filtered findings", async () => {
+  it("links completed scans to filtered findings without a browser-local date", async () => {
     // Given
     const user = userEvent.setup();
     render(
       <ScanJobsRowActions
         scan={makeScan({
           state: "completed",
+          started_at: "2026-01-01T09:50:00Z",
           completed_at: "2026-01-01T10:05:00Z",
         })}
         tab="completed"
@@ -335,8 +334,32 @@ describe("ScanJobsRowActions", () => {
 
     // Then
     expect(pushMock).toHaveBeenCalledWith(
-      "/findings?filter[scan__in]=scan-1&filter[inserted_at]=2026-01-01&filter[status__in]=FAIL",
+      "/findings?filter[scan__in]=scan-1&filter[status__in]=FAIL",
     );
+  });
+
+  it("disables View Findings when the completed scan has no completion timestamp", async () => {
+    // Given
+    const user = userEvent.setup();
+    render(
+      <ScanJobsRowActions
+        scan={makeScan({ state: "completed", completed_at: "" })}
+        tab="completed"
+      />,
+    );
+
+    // When
+    await user.click(
+      screen.getByRole("button", { name: /open actions menu/i }),
+    );
+    const viewFindings = screen.getByRole("menuitem", {
+      name: /view findings/i,
+    });
+    await user.click(viewFindings);
+
+    // Then
+    expect(viewFindings).toHaveAttribute("aria-disabled", "true");
+    expect(pushMock).not.toHaveBeenCalled();
   });
 
   it("triggers downloadScanZip with the scan id when downloading reports", async () => {
@@ -362,6 +385,65 @@ describe("ScanJobsRowActions", () => {
 
     // Then
     expect(downloadScanZipMock).toHaveBeenCalledWith("scan-1", toastMock);
+  });
+
+  it("offers neither report download nor compliance for a partial scan", async () => {
+    // A partial scan re-checks a few resources: no report files, no compliance.
+    const user = userEvent.setup();
+    render(
+      <ScanJobsRowActions
+        scan={makeScan({
+          state: "completed",
+          completed_at: "2026-01-01T10:05:00Z",
+          is_partial: true,
+        })}
+        tab="completed"
+      />,
+    );
+
+    await user.click(
+      screen.getByRole("button", { name: /open actions menu/i }),
+    );
+
+    expect(
+      screen.queryByRole("menuitem", { name: /download scan reports/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("menuitem", { name: /view compliance/i }),
+    ).not.toBeInTheDocument();
+    // The rest of the completed-scan actions stay available.
+    expect(
+      screen.getByRole("menuitem", { name: /view findings/i }),
+    ).toBeInTheDocument();
+  });
+
+  it("opens the paid plan upgrade instead of downloading subscription-only reports", async () => {
+    // Given
+    const user = userEvent.setup();
+    render(
+      <ScanJobsRowActions
+        scan={makeScan({
+          state: "completed",
+          completed_at: "2026-01-01T10:05:00Z",
+        })}
+        tab="completed"
+        subscriptionOnly
+      />,
+    );
+
+    // When
+    await user.click(
+      screen.getByRole("button", { name: /open actions menu/i }),
+    );
+    await user.click(
+      screen.getByRole("menuitem", { name: /download scan reports/i }),
+    );
+
+    // Then
+    expect(downloadScanZipMock).not.toHaveBeenCalled();
+    expect(useCloudUpgradeStore.getState().activeFeature).toBe(
+      PAID_PLAN_UPGRADE_FEATURE.REPORT_DOWNLOAD,
+    );
   });
 
   it("opens failed scan error details from the actions menu", async () => {

@@ -29,9 +29,9 @@
 1. Navigate to providers page
 2. Click "Add Provider" button
 3. Select AWS provider type
-4. Fill provider details (account ID and alias)
-5. Select "credentials" authentication type
-6. Fill static credentials (access key and secret key)
+4. On the single AWS step, select the "Access keys" access method
+5. Fill provider details (account ID and alias)
+6. Fill static credentials (access key and secret key) and click "Connect account"
 7. Confirm provider connection without launching a scan
 8. Verify return to Providers page
 9. Verify provider exists in Providers table
@@ -58,63 +58,6 @@
 - Test uses environment variables for AWS credentials
 - Provider cleanup performed before each test to ensure clean state
 - Requires valid AWS account with appropriate permissions
-
----
-
-## Test Case: `PROVIDER-E2E-002` - Add AWS Provider with Assume Role Credentials Access Key and Secret Key
-
-**Priority:** `critical`
-
-**Tags:**
-
-- type → @e2e, @serial
-- feature → @providers
-- provider → @aws
-
-**Description/Objective:** Validates the complete flow of adding a new AWS provider using role-based authentication with Access Key and Secret Key
-
-**Preconditions:**
-
-- Admin user authentication required (admin.auth.setup setup)
-- Environment variables configured: E2E_AWS_PROVIDER_ACCOUNT_ID, E2E_AWS_PROVIDER_ACCESS_KEY, E2E_AWS_PROVIDER_SECRET_KEY, E2E_AWS_PROVIDER_ROLE_ARN
-- Remove any existing provider with the same Account ID before starting the test
-- This test must be run serially and never in parallel with other tests, as it requires the Account ID not to be already registered beforehand.
-
-### Flow Steps
-
-1. Navigate to providers page
-2. Click "Add Provider" button
-3. Select AWS provider type
-4. Fill provider details (account ID and alias)
-5. Select "role" authentication type
-6. Fill role credentials (access key, secret key, and role ARN)
-7. Confirm provider connection without launching a scan
-8. Verify return to Providers page
-9. Verify provider exists in Providers table
-
-### Expected Result
-
-- AWS provider successfully added with role credentials
-- Provider connection validated without launching a scan
-- User returned to Providers page
-- Provider appears in Providers table with the expected UID
-
-### Key verification points
-
-- Provider page loads correctly
-- Connect account page displays AWS option
-- Role credentials form accepts all required fields
-- Launch step appears
-- Successful return to Providers page after closing the launch step
-- Provider exists in Providers table (verified by account ID)
-- Provider UID matches the expected value
-
-### Notes
-
-- Test uses environment variables for AWS credentials and role ARN
-- Provider cleanup performed before each test to ensure clean state
-- Requires valid AWS account with role assumption permissions
-- Role ARN must be properly configured
 
 ---
 
@@ -374,12 +317,13 @@
 1. Navigate to providers page
 2. Click "Add Provider" button
 3. Select GCP provider type
-4. Fill provider details (project ID and alias)
-5. Select service account credentials type
-6. Fill GCP service account key credentials
-7. Confirm provider connection without launching a scan
-8. Verify return to Providers page
-9. Verify provider exists in Providers table
+4. Select "Add A Single GCP Project"
+5. Fill provider details (project ID and alias)
+6. Select service account credentials type
+7. Fill GCP service account key credentials
+8. Confirm provider connection without launching a scan
+9. Verify return to Providers page
+10. Verify provider exists in Providers table
 
 ### Expected Result
 
@@ -617,10 +561,10 @@
 1. Navigate to providers page
 2. Click "Add Provider" button
 3. Select AWS provider type
-4. Fill provider details (account ID and alias)
-5. Select "role" authentication type
-6. Switch authentication method to "Use AWS SDK default credentials"
-7. Fill role ARN using AWS SDK credential inputs
+4. On the single AWS step, keep the "IAM Role" access method
+5. Fill the alias (the account ID is read from the role ARN)
+6. Nothing to choose: the role is assumed with the host's AWS SDK default credentials
+7. Fill the role ARN and click "Connect account"
 8. Confirm provider connection without launching a scan
 9. Verify return to Providers page
 10. Verify provider exists in Providers table
@@ -636,8 +580,8 @@
 
 - Provider page loads correctly
 - Connect account page displays AWS option
-- Credentials form exposes AWS SDK default authentication method
-- Role ARN field accepts provided value when SDK method is selected
+- The role form asks for no credentials of its own: the AWS SDK default chain assumes the role
+- Role ARN field accepts the provided value
 - Launch step appears
 - Successful return to Providers page after closing the launch step
 - Provider exists in Providers table (verified by account ID)
@@ -667,7 +611,7 @@
 **Preconditions:**
 
 - Admin user authentication required (admin.auth.setup setup)
-- Environment variables configured: E2E_OCI_TENANCY_ID, E2E_OCI_USER_ID, E2E_OCI_FINGERPRINT, E2E_OCI_KEY_CONTENT
+- Environment variables configured: E2E_OCI_TENANCY_ID, E2E_OCI_USER_ID, E2E_OCI_FINGERPRINT, E2E_OCI_KEY_CONTENT, E2E_OCI_REGION (optional, defaults to us-ashburn-1)
 - Remove any existing provider with the same Tenancy ID before starting the test
 - This test must be run serially and never in parallel with other tests, as it requires the Tenancy ID not to be already registered beforehand.
 
@@ -678,7 +622,7 @@
 3. Select OCI provider type
 4. Fill provider details (tenancy ID and alias)
 5. Verify OCI credentials page is loaded
-6. Fill OCI credentials (user ID, fingerprint, key content)
+6. Fill OCI credentials (user ID, fingerprint, key content, home region)
 7. Confirm provider connection without launching a scan
 8. Verify return to Providers page
 9. Verify provider exists in Providers table
@@ -696,7 +640,7 @@
 - Connect account page displays OCI option
 - Provider details form accepts tenancy ID and alias
 - OCI credentials page loads
-- Credentials form accepts all required fields (user ID, fingerprint, key content)
+- Credentials form accepts all required fields (user ID, fingerprint, key content, home region)
 - Launch step appears
 - Successful return to Providers page after closing the launch step
 - Provider exists in Providers table (verified by tenancy ID)
@@ -726,7 +670,7 @@
 **Preconditions:**
 
 - Admin user authentication required (admin.auth.setup setup)
-- Environment variables configured: E2E_OCI_TENANCY_ID, E2E_OCI_USER_ID, E2E_OCI_FINGERPRINT, E2E_OCI_KEY_CONTENT
+- Environment variables configured: E2E_OCI_TENANCY_ID, E2E_OCI_USER_ID, E2E_OCI_FINGERPRINT, E2E_OCI_KEY_CONTENT, E2E_OCI_REGION (optional, defaults to us-ashburn-1)
 - An OCI provider with the specified Tenancy ID must already exist (run PROVIDER-E2E-012 first)
 - This test must be run serially and never in parallel with other tests
 
@@ -738,7 +682,7 @@
 4. Click "Update Credentials" option
 5. Verify update credentials page is loaded
 6. Verify OCI credentials form fields are visible (confirms providerUid is loaded)
-7. Fill OCI credentials (user ID, fingerprint, key content)
+7. Fill OCI credentials (user ID, fingerprint, key content, home region)
 8. Click Next to submit
 9. Verify successful navigation to test connection page
 
@@ -1131,3 +1075,52 @@
 - Private Key is provided as base64-encoded PEM content and decoded before use (multi-line content)
 - Provider cleanup performed before each test to ensure clean state
 - Requires a valid Okta API Services app with a registered public key (JWK) matching the provided private key
+
+---
+
+## Test Case: `PROVIDER-E2E-020` - Invite a Teammate From the AWS Connect Step
+
+**Priority:** `high`
+
+**Tags:**
+
+- type → @e2e
+- feature → @providers
+- provider → @aws
+
+**Description/Objective:** Validates that a user who cannot connect the AWS account can invite a teammate from the AWS connect step, without leaving the wizard, and gets the invitation link to share.
+
+**Preconditions:**
+
+- Admin user authentication required (admin.auth.setup setup): the option is only offered to users who can invite (`manage_account`)
+- No environment variables required: no provider is created
+
+### Flow Steps
+
+1. Navigate to providers page
+2. Click "Add Provider" button
+3. Select AWS provider type
+4. Select the "I don't have access, invite a teammate" option
+5. Fill the teammate email (the admin role comes preselected)
+6. Click "Send invitation"
+7. Verify the confirmation and the invitation link
+8. Click "Done"
+
+### Expected Result
+
+- The AWS access form is replaced by the invitation form
+- The invitation is created and the confirmation shows the invited email and the accept link
+- "Done" closes the wizard without creating a provider
+
+### Key verification points
+
+- The invite option is visible on the AWS step for the admin user
+- "Send invitation" is enabled once a valid email is typed
+- Confirmation text "Invitation sent to {email}" is visible
+- The accept link contains `/invitation/accept?invitation_token=`
+- The wizard modal is closed after "Done"
+
+### Notes
+
+- Uses a unique email per run so the invitation never collides with a pending one
+- The invitation is left pending; it expires on its own after 7 days

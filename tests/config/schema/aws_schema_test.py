@@ -203,6 +203,53 @@ class TestAWSELBv2PQCTLSAllowedPolicies:
         assert _validate({"elbv2_listener_pqc_tls_allowed_policies": value}) == {}
 
 
+class TestAWSAgentCoreLogGroupNamePrefixes:
+    def test_valid_prefix_list_round_trips(self):
+        prefixes = [
+            "/aws/bedrock-agentcore/",
+            "/aws/vendedlogs/bedrock-agentcore/",
+        ]
+
+        assert _validate({"agentcore_log_group_name_prefixes": prefixes}) == {
+            "agentcore_log_group_name_prefixes": prefixes
+        }
+
+    def test_null_round_trips(self):
+        """A bare `agentcore_log_group_name_prefixes:` in the config file arrives as None.
+
+        It has to survive validation rather than be dropped, because the check distinguishes it
+        from an empty list: None means "use the built-in defaults" while [] means "match no log
+        group". Dropping it would collapse the two.
+        """
+        assert _validate({"agentcore_log_group_name_prefixes": None}) == {
+            "agentcore_log_group_name_prefixes": None
+        }
+
+    def test_empty_list_round_trips(self):
+        """[] is a valid instruction, not a missing value -- see test_null_round_trips."""
+        assert _validate({"agentcore_log_group_name_prefixes": []}) == {
+            "agentcore_log_group_name_prefixes": []
+        }
+
+    def test_key_is_exposed_in_scan_config_schema(self):
+        aws_properties = SCAN_CONFIG_SCHEMA["properties"]["aws"]["properties"]
+
+        assert "agentcore_log_group_name_prefixes" in aws_properties
+
+    @pytest.mark.parametrize(
+        "value",
+        [
+            # A single prefix written without the list, which is the mistake the YAML invites.
+            "/aws/bedrock-agentcore/",
+            ["/aws/bedrock-agentcore/", 123],
+            {"prefix": "/aws/bedrock-agentcore/"},
+            123,
+        ],
+    )
+    def test_invalid_prefix_values_are_dropped(self, value):
+        assert _validate({"agentcore_log_group_name_prefixes": value}) == {}
+
+
 class Test_AWS_Secrets_Ignore_Files:
     def test_valid_file_patterns_round_trip(self):
         files = ["*.deps.json", "vendor/*.js"]

@@ -12,11 +12,14 @@ import { isProwlerFindingNode } from "./_lib";
 import type { PageFixture } from "./attack-paths-page.fixtures";
 
 export class AttackPathPageHarness extends BrowserHarness<PageFixture> {
+  private static readonly FLOW_SEL = ".react-flow";
   private static readonly NODE_SEL = ".react-flow__node";
   private static readonly EDGE_SEL = ".react-flow__edge";
   private static readonly VIEWPORT_SEL = ".react-flow__viewport";
   private static readonly MINIMAP_SEL = ".react-flow__minimap";
   private static readonly BACKGROUND_SEL = ".react-flow__background";
+  // Matches the graph's auto-fit duration; a pause this long means no fit is mid-flight.
+  private static readonly FIT_ANIMATION_MS = 300;
 
   private static isFindingElement(el: Element): boolean {
     return (
@@ -243,10 +246,9 @@ export class AttackPathPageHarness extends BrowserHarness<PageFixture> {
   }
 
   /**
-   * Inline `transform` of the React Flow viewport element. This is the
-   * pan/zoom matrix React Flow rewrites on every fit/zoom/pan, so comparing
-   * it before vs. after a user action is enough to assert that the viewport
-   * actually moved (or stayed put).
+   * Inline `transform` of the React Flow viewport element. Compare transforms
+   * only when the scenario guarantees different final camera positions; an
+   * unchanged transform does not prove that a fit operation did not run.
    */
   get viewportTransform(): string {
     return this.viewport?.style.transform ?? "";
@@ -255,9 +257,53 @@ export class AttackPathPageHarness extends BrowserHarness<PageFixture> {
   /** Wait until the React Flow viewport transform changes from `previous`. */
   async waitForViewportChange(
     previous: string,
-    timeoutMs = 2000,
+    timeoutMs?: number,
   ): Promise<void> {
-    await this.waitFor(() => this.viewportTransform !== previous, timeoutMs);
+    await this.waitFor(
+      () => this.viewportTransform !== previous,
+      timeoutMs,
+      "the viewport transform to change",
+    );
+  }
+
+  /** Wait until the viewport stops moving and return its settled transform. */
+  async waitForViewportSettled(): Promise<string> {
+    return this.waitForStable(
+      () => this.viewportTransform,
+      AttackPathPageHarness.FIT_ANIMATION_MS,
+      undefined,
+      "the viewport to settle",
+    );
+  }
+
+  /** Wait until every requested node is fully contained in the graph canvas. */
+  async waitForNodesInViewport(
+    nodeIds: string[],
+    timeoutMs?: number,
+  ): Promise<void> {
+    const allInViewport = () => {
+      const canvas = this.q(AttackPathPageHarness.FLOW_SEL);
+      if (!canvas) return false;
+
+      const canvasRect = canvas.getBoundingClientRect();
+      return nodeIds.every((nodeId) => {
+        const node = this.getNodeById(nodeId);
+        if (!node) return false;
+
+        const nodeRect = node.getBoundingClientRect();
+        return (
+          nodeRect.left >= canvasRect.left &&
+          nodeRect.right <= canvasRect.right &&
+          nodeRect.top >= canvasRect.top &&
+          nodeRect.bottom <= canvasRect.bottom
+        );
+      });
+    };
+    await this.waitFor(
+      allInViewport,
+      timeoutMs,
+      `nodes ${nodeIds.join(", ")} to be in the viewport`,
+    );
   }
 
   /** Wait until exactly `count` edges are highlighted. */

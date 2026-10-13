@@ -268,7 +268,6 @@
         "iam_role_administratoraccess_policy",
         "iam_aws_attached_policy_no_administrative_privileges",
         "iam_customer_unattached_policy_no_administrative_privileges",
-        "iam_role_administratoraccess_policy",
         "iam_user_administrator_access_policy",
         "organizations_delegated_administrators",
         "cloudwatch_changes_to_network_route_tables_alarm_configured",
@@ -1936,9 +1935,7 @@
         "cloudwatch_changes_to_network_acls_alarm_configured",
         "cloudwatch_changes_to_network_gateways_alarm_configured",
         "cloudwatch_changes_to_network_route_tables_alarm_configured",
-        "cloudwatch_changes_to_vpcs_alarm_configured",
-        "cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled",
-        "cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled"
+        "cloudwatch_changes_to_vpcs_alarm_configured"
       ]
     },
     {
@@ -3867,7 +3864,6 @@
       ],
       "Checks": [
         "acm_certificates_transparency_logs_enabled",
-        "acm_certificates_transparency_logs_enabled",
         "apigateway_restapi_logging_enabled",
         "apigatewayv2_api_access_logging_enabled",
         "appsync_field_level_logging_enabled",
@@ -3945,7 +3941,6 @@
         "iam_root_hardware_mfa_enabled",
         "iam_root_mfa_enabled",
         "iam_user_hardware_mfa_enabled",
-        "iam_user_mfa_enabled_console_access",
         "s3_bucket_no_mfa_delete"
       ]
     },
@@ -5219,8 +5214,6 @@
         "iam_customer_unattached_policy_no_administrative_privileges",
         "iam_group_administrator_access_policy",
         "iam_inline_policy_no_administrative_privileges",
-        "iam_policy_cloudshell_admin_not_attached",
-        "iam_role_administratoraccess_policy",
         "iam_user_administrator_access_policy",
         "organizations_delegated_administrators",
         "rds_cluster_default_admin",
@@ -5291,8 +5284,6 @@
         "iam_customer_unattached_policy_no_administrative_privileges",
         "iam_group_administrator_access_policy",
         "iam_inline_policy_no_administrative_privileges",
-        "iam_policy_cloudshell_admin_not_attached",
-        "iam_role_administratoraccess_policy",
         "iam_user_administrator_access_policy",
         "organizations_delegated_administrators",
         "rds_cluster_default_admin",
@@ -6357,8 +6348,7 @@
       ],
       "Checks": [
         "cognito_user_pool_blocks_compromised_credentials_sign_in_attempts",
-        "cognito_user_pool_blocks_potential_malicious_sign_in_attempts",
-        "cognito_user_pool_blocks_compromised_credentials_sign_in_attempts"
+        "cognito_user_pool_blocks_potential_malicious_sign_in_attempts"
       ]
     },
     {
@@ -6670,7 +6660,6 @@
         "sagemaker_training_jobs_intercontainer_encryption_enabled",
         "sagemaker_training_jobs_volume_and_output_encryption_enabled",
         "sns_topics_kms_encryption_at_rest_enabled",
-        "sqs_queues_server_side_encryption_enabled",
         "storagegateway_fileshare_encryption_enabled",
         "transfer_server_in_transit_encryption_enabled",
         "workspaces_volume_encryption_enabled"
@@ -7696,13 +7685,11 @@
         "dynamodb_accelerator_cluster_in_transit_encryption_enabled",
         "transfer_server_in_transit_encryption_enabled",
         "dms_endpoint_redis_in_transit_encryption_enabled",
-        "dynamodb_accelerator_cluster_in_transit_encryption_enabled",
         "ec2_transitgateway_auto_accept_vpc_attachments",
         "elasticache_redis_cluster_in_transit_encryption_enabled",
         "kafka_cluster_in_transit_encryption_enabled",
         "kafka_connector_in_transit_encryption_enabled",
-        "redshift_cluster_in_transit_encryption_enabled",
-        "transfer_server_in_transit_encryption_enabled"
+        "redshift_cluster_in_transit_encryption_enabled"
       ]
     },
     {
@@ -10967,7 +10954,6 @@
         "kms_cmk_not_multi_region",
         "cloudfront_distributions_geo_restrictions_enabled",
         "cloudtrail_multi_region_enabled_logging_management_events",
-        "kms_cmk_not_multi_region",
         "organizations_scp_check_deny_regions",
         "s3_multi_region_access_point_public_access_block"
       ]

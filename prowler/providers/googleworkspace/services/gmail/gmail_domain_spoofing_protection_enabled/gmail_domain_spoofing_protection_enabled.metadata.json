@@ -9,7 +9,7 @@
   "Severity": "medium",
   "ResourceType": "NotDefined",
   "ResourceGroup": "collaboration",
-  "Description": "Verifies that Gmail is configured to take a protective action (such as moving to spam, quarantining, or showing a warning) when emails appear to come from domain names that look similar to the organization's domain. Lookalike domains are a common phishing technique used to trick users into trusting malicious messages.",
+  "Description": "Verifies that Gmail moves out of the inbox, to spam or quarantine, the emails that appear to come from domain names that look similar to the organization's domain. An action that only shows a warning is not enough. Lookalike domains are a common phishing technique used to trick users into trusting malicious messages.",
   "Risk": "Without protection against domain spoofing based on similar domain names, users may receive **phishing emails from lookalike domains** (e.g., examp1e.com instead of example.com) that appear legitimate. This enables **credential theft, malware delivery, and business email compromise** attacks.",
   "RelatedUrl": "",
   "AdditionalURLs": [

@@ -7,9 +7,12 @@ import type {
 } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { isGroupedJiraDispatchEnabledMock } = vi.hoisted(() => ({
-  isGroupedJiraDispatchEnabledMock: vi.fn(() => true),
-}));
+const { isCloudMock, isGroupedJiraDispatchEnabledMock, launchSkillMock } =
+  vi.hoisted(() => ({
+    isCloudMock: vi.fn(() => false),
+    isGroupedJiraDispatchEnabledMock: vi.fn(() => true),
+    launchSkillMock: vi.fn(),
+  }));
 
 // CustomLink pulls the "@/lib" barrel (and next-auth with it) into the unit env.
 vi.mock("@/components/shadcn/custom/custom-link", () => ({
@@ -66,6 +69,19 @@ vi.mock("@/components/shadcn/dropdown", () => ({
     <button disabled={disabled} onClick={onSelect} title={disabledTooltip}>
       {label}
     </button>
+  ),
+  DropdownMenuLabel: ({ children }: { children?: ReactNode }) => (
+    <div>{children}</div>
+  ),
+  DropdownMenuSeparator: () => <hr />,
+  DropdownMenuSub: ({ children }: { children: ReactNode }) => (
+    <div>{children}</div>
+  ),
+  DropdownMenuSubContent: ({ children }: { children: ReactNode }) => (
+    <div>{children}</div>
+  ),
+  DropdownMenuSubTrigger: ({ children }: { children: ReactNode }) => (
+    <span>{children}</span>
   ),
 }));
 
@@ -169,6 +185,27 @@ vi.mock("@/lib/deployment", () => ({
   PROWLER_CLOUD_ONLY_TOOLTIP: "Available only in Prowler Cloud",
 }));
 
+vi.mock("@/lib/shared/env", () => ({
+  isCloud: isCloudMock,
+}));
+
+// The re-check menu item reads the session for manage_scans; grant it here.
+vi.mock("@/hooks/use-auth", () => ({
+  useAuth: () => ({
+    permissions: { manage_scans: true },
+    hasPermission: () => true,
+  }),
+}));
+
+vi.mock("./lighthouse-skills-launch", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("./lighthouse-skills-launch")>();
+  return {
+    ...actual,
+    useLighthouseSkillLaunch: () => launchSkillMock,
+  };
+});
+
 const notificationIndicatorMock = vi.fn((_props: unknown) => null);
 
 vi.mock("./notification-indicator", () => ({
@@ -179,6 +216,7 @@ vi.mock("./notification-indicator", () => ({
 }));
 
 import { useJiraDispatchStore } from "@/store/jira-dispatch/store";
+import { usePartialScanStore } from "@/store/partial-scan/store";
 import type { FindingResourceRow } from "@/types";
 import {
   FINDING_TRIAGE_DISABLED_REASON,
@@ -247,10 +285,14 @@ function getColumnIds(columns: ReturnType<typeof getColumnFindingResources>) {
 
 function renderResourceActionsCell({
   resource = makeResource(),
+  onSkillLaunchOpenDrawer,
   onTriageUpdateAction,
   onTriageNoteLoadAction,
 }: {
   resource?: FindingResourceRow;
+  onSkillLaunchOpenDrawer?: Parameters<
+    typeof getColumnFindingResources
+  >[0]["onSkillLaunchOpenDrawer"];
   onTriageUpdateAction?: Parameters<
     typeof getColumnFindingResources
   >[0]["onTriageUpdateAction"];
@@ -261,6 +303,7 @@ function renderResourceActionsCell({
   const columns = getColumnFindingResources({
     rowSelection: {},
     selectableRowCount: 1,
+    onSkillLaunchOpenDrawer,
     onTriageUpdateAction,
     onTriageNoteLoadAction,
   });
@@ -272,17 +315,113 @@ function renderResourceActionsCell({
     throw new Error("actions column not found");
   }
   const CellComponent = actionsColumn.cell as (props: {
-    row: { original: FindingResourceRow };
+    row: { original: FindingResourceRow; index: number };
   }) => ReactNode;
 
-  render(<div>{CellComponent({ row: { original: resource } })}</div>);
+  render(<div>{CellComponent({ row: { original: resource, index: 0 } })}</div>);
+}
+
+function renderLastSeenCell(resource: FindingResourceRow = makeResource()) {
+  const columns = getColumnFindingResources({
+    rowSelection: {},
+    selectableRowCount: 1,
+  });
+  const column = columns.find(
+    (col) => (col as { id?: string }).id === "lastSeen",
+  );
+  if (!column?.cell) {
+    throw new Error("lastSeen column not found");
+  }
+  const CellComponent = column.cell as (props: {
+    row: { original: FindingResourceRow; index: number };
+  }) => ReactNode;
+
+  render(<div>{CellComponent({ row: { original: resource, index: 0 } })}</div>);
 }
 
 describe("column-finding-resources", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    isCloudMock.mockReturnValue(false);
     isGroupedJiraDispatchEnabledMock.mockReturnValue(true);
     useJiraDispatchStore.getState().closeJiraDispatch();
+  });
+
+  it("offers a Cloud re-check identified by provider uid and type", async () => {
+    // Given — drill-down rows carry no provider id, only its uid and type
+    const user = userEvent.setup();
+    isCloudMock.mockReturnValue(true);
+    usePartialScanStore.getState().closePartialScan();
+    renderResourceActionsCell();
+
+    // When
+    await user.click(screen.getByRole("button", { name: "Re-check resource" }));
+
+    // Then
+    expect(usePartialScanStore.getState().activeTarget).toEqual({
+      providerUid: "123456789",
+      providerType: "aws",
+      providerAlias: "production",
+      resourceUid: "arn:aws:s3:::my-bucket",
+      resourceName: "my-bucket",
+    });
+  });
+
+  it("offers the re-check beside Last seen on Cloud rows", async () => {
+    // The quiet icon next to the timestamp opens the same confirmation as ⋮.
+    const user = userEvent.setup();
+    isCloudMock.mockReturnValue(true);
+    usePartialScanStore.getState().closePartialScan();
+    renderLastSeenCell();
+
+    await user.click(screen.getByRole("button", { name: "Re-check resource" }));
+
+    expect(usePartialScanStore.getState().activeTarget).toEqual(
+      expect.objectContaining({ resourceUid: "arn:aws:s3:::my-bucket" }),
+    );
+  });
+
+  it("keeps Last seen plain outside Prowler Cloud", () => {
+    renderLastSeenCell();
+
+    expect(screen.getByText("2024-01-01T00:00:00Z")).toBeInTheDocument();
+    expect(screen.queryByRole("button")).not.toBeInTheDocument();
+  });
+
+  it("hides the re-check outside Prowler Cloud", () => {
+    renderResourceActionsCell();
+
+    expect(
+      screen.queryByRole("button", { name: "Re-check resource" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("opens the finding drawer and launches a row skill with full context", async () => {
+    // Given
+    const user = userEvent.setup();
+    const onSkillLaunchOpenDrawer = vi.fn();
+    isCloudMock.mockReturnValue(true);
+    renderResourceActionsCell({ onSkillLaunchOpenDrawer });
+
+    // When
+    await user.click(screen.getByRole("button", { name: "Triage Decision" }));
+
+    // Then
+    expect(onSkillLaunchOpenDrawer).toHaveBeenCalledWith(0);
+    expect(launchSkillMock).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "triage-decision" }),
+      expect.objectContaining({
+        kind: "finding",
+        findingId: "finding-1",
+        checkId: "s3_check",
+        providerUid: "123456789",
+        resourceUid: "arn:aws:s3:::my-bucket",
+        region: "us-east-1",
+      }),
+    );
+    expect(onSkillLaunchOpenDrawer.mock.invocationCallOrder[0]).toBeLessThan(
+      launchSkillMock.mock.invocationCallOrder[0],
+    );
   });
 
   it("should render actions as the last visible column after Triage without Notes", () => {
