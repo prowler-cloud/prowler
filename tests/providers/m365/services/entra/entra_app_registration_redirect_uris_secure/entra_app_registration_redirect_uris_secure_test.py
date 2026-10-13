@@ -752,3 +752,32 @@ class Test_entra_app_registration_redirect_uris_secure:
             assert result[0].status == "PASS"
             assert result[0].resource_name == app_app_id
             assert f"App registration {app_app_id} has" in result[0].status_extended
+
+    def test_check_uri_edge_cases(self):
+        """Edge cases for the redirect URI evaluation helper."""
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=set_mocked_m365_provider(),
+        ):
+            from prowler.providers.m365.services.entra.entra_app_registration_redirect_uris_secure.entra_app_registration_redirect_uris_secure import (
+                _check_uri,
+            )
+
+            # Loopback hosts are allowed over plain http.
+            assert _check_uri("http://localhost:3000/callback") is None
+            assert _check_uri("http://127.0.0.1:8080/callback") is None
+            assert _check_uri("http://[::1]:8080/callback") is None
+            # Wildcards are flagged even in native schemes.
+            assert _check_uri("com.contoso.app://*") == "contains wildcard"
+            # Prefixes only exempt the scheme, not any string that starts with them.
+            assert _check_uri("msalfoo.example.com/callback") == "malformed URI"
+            assert _check_uri("msal11111111-1111-1111-1111-111111111111://auth") is None
+            assert _check_uri("urn:ietf:wg:oauth:2.0:oob") is None
+            # Invalid ports make the URI malformed.
+            assert (
+                _check_uri("https://example.com:notaport/callback") == "malformed URI"
+            )
+            assert _check_uri("https://example.com:99999/callback") == "malformed URI"
+            # azurewebsites.net explains when the takeover risk applies.
+            reason = _check_uri("https://contoso.azurewebsites.net/signin-oidc")
+            assert "subdomain takeover risk if the App Service is removed" in reason

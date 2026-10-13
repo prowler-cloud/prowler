@@ -19,7 +19,7 @@
   ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "az ad app update --id <app-id> --web-redirect-uris https://<owned-domain>/signin-oidc",
       "NativeIaC": "",
       "Other": "1. Navigate to Microsoft Entra admin center (https://entra.microsoft.com)\n2. Go to Applications > App registrations\n3. Select the flagged application\n4. Go to Authentication\n5. Replace any `http://` redirect URIs with `https://`\n6. Remove any wildcard URIs and unused or malformed URIs\n7. Move applications off `*.azurewebsites.net` onto a custom domain you own\n8. Delete redirect URIs whose domain no longer resolves in DNS",
       "Terraform": ""
@@ -34,8 +34,6 @@
     "identity-access"
   ],
   "DependsOn": [],
-  "RelatedTo": [
-    "entra_app_registration_client_secret_unused"
-  ],
+  "RelatedTo": [],
   "Notes": "DNS resolution checks for dangling domains are not performed by this check due to network egress requirements, non-deterministic results, and false positives on internal-only hostnames. Custom URI schemes used by public clients (msal://, ms-appx-web://, brk-://, urn:ietf:wg:oauth:2.0:oob, com.company.app://) are excluded from validation. Loopback hosts (localhost, 127.0.0.1, [::1]) are allowed over plain HTTP per Microsoft's platform behaviour."
 }

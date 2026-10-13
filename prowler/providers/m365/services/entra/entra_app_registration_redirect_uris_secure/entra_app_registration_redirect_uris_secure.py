@@ -32,13 +32,15 @@ def _is_custom_scheme_uri(uri: str) -> bool:
         True when the scheme is a recognised custom/native scheme that should
         not be validated further.
     """
-    lower = uri.lower()
-    if lower.startswith("urn:"):
+    if ":" not in uri:
+        return False
+    # Compare against the scheme only, never against the rest of the URI.
+    scheme = uri.split(":", 1)[0].lower()
+    if scheme == "urn":
         return True
-    for prefix in _PUBLIC_CLIENT_CUSTOM_SCHEME_PREFIXES:
-        if lower.startswith(prefix):
-            return True
-    return False
+    return any(
+        scheme.startswith(prefix) for prefix in _PUBLIC_CLIENT_CUSTOM_SCHEME_PREFIXES
+    )
 
 
 def _check_uri(uri: str) -> str | None:
@@ -50,13 +52,14 @@ def _check_uri(uri: str) -> str | None:
     Returns:
         A reason string when the URI is insecure, or None when it is safe.
     """
+    # Wildcards are never legitimate, not even in native schemes, so this
+    # runs first (and before parsing, since wildcards may break urlparse).
+    if "*" in uri:
+        return "contains wildcard"
+
     # Skip recognised custom schemes (public-client / native).
     if _is_custom_scheme_uri(uri):
         return None
-
-    # Wildcard check (before parsing - wildcards may break urlparse).
-    if "*" in uri:
-        return "contains wildcard"
 
     try:
         parsed = urlparse(uri)
@@ -70,6 +73,12 @@ def _check_uri(uri: str) -> str | None:
     if not scheme or not host:
         return "malformed URI"
 
+    # urlparse accepts invalid ports; reading .port is what validates them.
+    try:
+        parsed.port
+    except ValueError:
+        return "malformed URI"
+
     # Plain HTTP with a non-loopback host.
     if scheme == "http" and host not in _LOOPBACK_HOSTS:
         return "uses http:// with non-localhost host"
@@ -77,7 +86,10 @@ def _check_uri(uri: str) -> str | None:
     # Platform domain susceptible to subdomain takeover.
     for domain in _PLATFORM_DOMAINS:
         if host == domain.lstrip(".") or host.endswith(domain):
-            return f"host on shared platform domain {domain.lstrip('.')}"
+            return (
+                f"host on shared platform domain {domain.lstrip('.')}, "
+                "subdomain takeover risk if the App Service is removed"
+            )
 
     return None
 
