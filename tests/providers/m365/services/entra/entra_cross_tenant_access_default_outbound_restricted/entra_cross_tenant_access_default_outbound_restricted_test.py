@@ -64,6 +64,24 @@ def _specific_groups_allowed():
     )
 
 
+def _setting(users_access, users_targets, apps_access, apps_targets):
+    return CrossTenantB2BSetting(
+        users_and_groups=CrossTenantTargetConfiguration(
+            access_type=users_access,
+            targets=[
+                CrossTenantTarget(target=t, target_type="user") for t in users_targets
+            ],
+        ),
+        applications=CrossTenantTargetConfiguration(
+            access_type=apps_access,
+            targets=[
+                CrossTenantTarget(target=t, target_type="application")
+                for t in apps_targets
+            ],
+        ),
+    )
+
+
 class Test_entra_cross_tenant_access_default_outbound_restricted:
     def _run(self, policy):
         entra_client = mock.MagicMock()
@@ -283,3 +301,64 @@ class Test_entra_cross_tenant_access_default_outbound_restricted:
         assert len(result) == 1
         assert result[0].resource_name == "Cross-Tenant Access Default Policy"
         assert result[0].resource_id == "crossTenantAccessPolicyConfigurationDefault"
+
+    def test_blocking_one_group_with_all_apps_allowed_fails(self):
+        """Blocking a single group leaves every other user able to reach every app."""
+        result = self._run(
+            CrossTenantAccessDefault(
+                b2b_collaboration_outbound=_setting(
+                    "blocked", ["group-1"], "allowed", ["AllApplications"]
+                ),
+                b2b_direct_connect_outbound=_blocked_setting(),
+            )
+        )
+        assert result[0].status == "FAIL"
+        assert "B2B collaboration outbound" in result[0].status_extended
+
+    def test_blocking_one_app_with_all_users_allowed_fails(self):
+        """Blocking a single application leaves every other application reachable."""
+        result = self._run(
+            CrossTenantAccessDefault(
+                b2b_collaboration_outbound=_setting(
+                    "allowed", ["AllUsers"], "blocked", ["app-1"]
+                ),
+                b2b_direct_connect_outbound=_blocked_setting(),
+            )
+        )
+        assert result[0].status == "FAIL"
+
+    def test_all_microsoft_apps_counts_as_open(self):
+        """AllMicrosoftApps reaches every Microsoft cloud application."""
+        result = self._run(
+            CrossTenantAccessDefault(
+                b2b_collaboration_outbound=_setting(
+                    "allowed", ["AllUsers"], "allowed", ["AllMicrosoftApps"]
+                ),
+                b2b_direct_connect_outbound=_blocked_setting(),
+            )
+        )
+        assert result[0].status == "FAIL"
+
+    def test_users_limited_to_group_with_partial_app_block_passes(self):
+        """Users allowed only for a specific group restrict the setting."""
+        result = self._run(
+            CrossTenantAccessDefault(
+                b2b_collaboration_outbound=_setting(
+                    "allowed", ["group-1"], "blocked", ["app-1"]
+                ),
+                b2b_direct_connect_outbound=_blocked_setting(),
+            )
+        )
+        assert result[0].status == "PASS"
+
+    def test_all_users_blocked_with_all_apps_allowed_passes(self):
+        """Blocking every user restricts the setting whatever the applications."""
+        result = self._run(
+            CrossTenantAccessDefault(
+                b2b_collaboration_outbound=_setting(
+                    "blocked", ["AllUsers"], "allowed", ["AllApplications"]
+                ),
+                b2b_direct_connect_outbound=_blocked_setting(),
+            )
+        )
+        assert result[0].status == "PASS"

@@ -18,7 +18,7 @@
   ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "Invoke-MgGraphRequest -Method PATCH -Uri 'https://graph.microsoft.com/v1.0/policies/crossTenantAccessPolicy/default' -Body '{\"b2bCollaborationOutbound\": {\"usersAndGroups\": {\"accessType\": \"blocked\", \"targets\": [{\"target\": \"AllUsers\", \"targetType\": \"user\"}]}, \"applications\": {\"accessType\": \"blocked\", \"targets\": [{\"target\": \"AllApplications\", \"targetType\": \"application\"}]}}}'",
       "NativeIaC": "",
       "Other": "1. Navigate to the Microsoft Entra admin center at https://entra.microsoft.com/\n2. Go to **External Identities** > **Cross-tenant access settings**\n3. Select the **Default settings** tab\n4. Under **Outbound access settings**, click **Edit outbound defaults**\n5. On the **B2B collaboration** tab, restrict **Users and groups** and **Applications** to specific selections or set access to **Block**\n6. On the **B2B direct connect** tab, restrict **Users and groups** and **Applications** to specific selections or set access to **Block**\n7. Click **Save**",
       "Terraform": ""

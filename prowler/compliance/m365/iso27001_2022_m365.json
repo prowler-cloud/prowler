@@ -302,7 +302,6 @@
       ],
       "Checks": [
         "sharepoint_external_sharing_managed",
-        "entra_cross_tenant_access_default_outbound_restricted",
         "entra_identity_protection_sign_in_risk_enabled",
         "entra_identity_protection_user_risk_enabled"
       ]
