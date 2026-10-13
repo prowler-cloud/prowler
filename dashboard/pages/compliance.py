@@ -19,10 +19,12 @@ from dashboard.config import (
     error_action,
     fail_color,
     folder_path_compliance,
+    folder_path_overview,
     info_color,
     manual_color,
     pass_color,
 )
+from dashboard.lib.accounts import format_aws_account_label, load_aws_account_names
 from dashboard.lib.dropdowns import (
     create_account_dropdown_compliance,
     create_compliance_dropdown,
@@ -51,13 +53,34 @@ for file in glob.glob(os.path.join(folder_path_compliance, "*.csv")):
     except UnicodeDecodeError:
         logger.error(f"Error decoding file: {file}")
 
+# The compliance CSVs only carry the AWS account ID, so the account names
+# are read from the findings CSVs that the Overview page also loads.
+aws_account_names = load_aws_account_names(folder_path_overview)
+
+
+def build_account_options(accounts: list) -> list:
+    """Label AWS accounts with their name while keeping the account ID as the value."""
+    return [
+        {
+            "label": format_aws_account_label(account, aws_account_names),
+            "value": account,
+        }
+        for account in accounts
+    ]
+
 
 def load_csv_files(csv_files):
     # Load CSV files into a single pandas DataFrame.
     dfs = []
     results = []
     for file in csv_files:
-        df = pd.read_csv(file, sep=";", on_bad_lines="skip", encoding=encoding_format)
+        df = pd.read_csv(
+            file,
+            sep=";",
+            on_bad_lines="skip",
+            encoding=encoding_format,
+            dtype={"ACCOUNTID": str},
+        )
         if "CHECKID" in df.columns:
             dfs.append(df)
             result = file
@@ -175,7 +198,9 @@ else:
         if item.__class__.__name__ == "str" and "nan" not in item:
             list_items.append(item)
 
-    account_dropdown = create_account_dropdown_compliance(list_items)
+    account_dropdown = create_account_dropdown_compliance(
+        build_account_options(list_items)
+    )
 
     # Select Region - Dropdown
 
@@ -392,6 +417,7 @@ def display_data(
         for item in account_filter_options
         if isinstance(item, str) and item.lower() != "nan"
     ]
+    account_filter_options = build_account_options(account_filter_options)
 
     # Filter REGION
     if region_filter_analytics == ["All"]:
