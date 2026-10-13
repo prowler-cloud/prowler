@@ -2076,6 +2076,94 @@ class TestAppRegistrationRedirectUris:
         assert apps["obj-2"].public_client_redirect_uris == []
 
 
+class TestGetGroups:
+    @staticmethod
+    def _graph_group(group_id, rule=None, processing_state=None):
+        return SimpleNamespace(
+            id=group_id,
+            display_name=f"Group {group_id}",
+            group_types=["DynamicMembership"] if rule else None,
+            membership_rule=rule,
+            membership_rule_processing_state=processing_state,
+            is_assignable_to_role=None,
+            is_management_restricted=None,
+        )
+
+    def test_maps_dynamic_rule_fields_across_pages(self):
+        entra_service = Entra.__new__(Entra)
+        entra_service.groups_error = None
+        page_one = SimpleNamespace(
+            value=[
+                self._graph_group(
+                    "g-1",
+                    rule="user.memberof -any (group.objectId -in ['x'])",
+                    processing_state="Paused",
+                )
+            ],
+            odata_next_link="next-link",
+        )
+        page_two = SimpleNamespace(
+            value=[self._graph_group("g-2")], odata_next_link=None
+        )
+        next_page_builder = SimpleNamespace(get=AsyncMock(return_value=page_two))
+        with_url_mock = MagicMock(return_value=next_page_builder)
+        entra_service.client = SimpleNamespace(
+            groups=SimpleNamespace(
+                get=AsyncMock(return_value=page_one), with_url=with_url_mock
+            )
+        )
+
+        groups = asyncio.run(entra_service._get_groups())
+
+        with_url_mock.assert_called_once_with("next-link")
+        assert entra_service.groups_error is None
+        assert [group.id for group in groups] == ["g-1", "g-2"]
+        assert groups[0].groupTypes == ["DynamicMembership"]
+        assert groups[0].membershipRule.startswith("user.memberof")
+        assert groups[0].membership_rule_processing_state == "Paused"
+        assert groups[1].groupTypes == []
+        assert groups[1].membershipRule is None
+        assert groups[1].membership_rule_processing_state is None
+        assert groups[1].is_assignable_to_role is False
+
+    def test_pagination_error_keeps_partial_groups_and_sets_error(self):
+        entra_service = Entra.__new__(Entra)
+        entra_service.groups_error = None
+        page_one = SimpleNamespace(
+            value=[self._graph_group("g-1")], odata_next_link="next-link"
+        )
+        failing_builder = SimpleNamespace(
+            get=AsyncMock(side_effect=RuntimeError("throttled"))
+        )
+        entra_service.client = SimpleNamespace(
+            groups=SimpleNamespace(
+                get=AsyncMock(return_value=page_one),
+                with_url=MagicMock(return_value=failing_builder),
+            )
+        )
+
+        groups = asyncio.run(entra_service._get_groups())
+
+        assert [group.id for group in groups] == ["g-1"]
+        assert "pagination error: RuntimeError" in entra_service.groups_error
+
+    def test_initial_error_returns_no_groups_and_sets_error(self):
+        entra_service = Entra.__new__(Entra)
+        entra_service.groups_error = None
+        entra_service.client = SimpleNamespace(
+            groups=SimpleNamespace(
+                get=AsyncMock(side_effect=PermissionError("forbidden"))
+            )
+        )
+
+        groups = asyncio.run(entra_service._get_groups())
+
+        assert groups == []
+        assert entra_service.groups_error == (
+            "Unable to retrieve groups from Microsoft Graph (PermissionError)"
+        )
+
+
 class TestTier0RoleGroupMembers:
     GLOBAL_ADMIN = "62e90394-69f5-4237-9190-012177145e10"
     READER = "88d8e3e3-8f55-4a1e-953a-9b9898b8876b"
