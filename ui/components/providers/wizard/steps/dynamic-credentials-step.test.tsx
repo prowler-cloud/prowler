@@ -157,12 +157,16 @@ describe("dynamic credentials in the provider wizard", () => {
     expect(timeout).toHaveAttribute("min", "1");
     expect(timeout).toHaveAttribute("max", "300");
     expect(timeout).toHaveAttribute("step", "1");
-    expect(
-      screen.getByRole("combobox", { name: "Authentication Scheme" }),
-    ).toHaveTextContent("bearer");
+    const authScheme = screen.getByRole("combobox", {
+      name: "Authentication Scheme",
+    });
+    expect(authScheme).toHaveTextContent("Bearer");
     expect(apiUrl).toHaveValue("");
 
-    // When: false must remain a boolean and numeric input must become a number.
+    // When: options read capitalized but submit their raw schema value.
+    await user.click(authScheme);
+    await user.click(screen.getByRole("option", { name: "Basic" }));
+    // False must remain a boolean and numeric input must become a number.
     await user.type(apiUrl, "https://api.example.test");
     await user.type(apiKey, "fixture-key-not-a-secret");
     await user.click(verifyTls);
@@ -180,7 +184,7 @@ describe("dynamic credentials in the provider wizard", () => {
         api_key: "fixture-key-not-a-secret",
         verify_tls: false,
         timeout_seconds: 60,
-        auth_scheme: "bearer",
+        auth_scheme: "basic",
       },
     });
   });
@@ -347,7 +351,7 @@ describe("dynamic credentials in the provider wizard", () => {
     await user.click(
       screen.getByRole("combobox", { name: "Authentication method" }),
     );
-    await user.click(screen.getByRole("option", { name: "personal token" }));
+    await user.click(screen.getByRole("option", { name: "Personal token" }));
     expect(screen.getByLabelText(/API token/)).toHaveValue("");
     expect(JSON.stringify(sessionStorage)).not.toContain(
       "previous-method-secret",
