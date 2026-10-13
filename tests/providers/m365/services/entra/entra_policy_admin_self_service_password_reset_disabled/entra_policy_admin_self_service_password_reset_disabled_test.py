@@ -32,7 +32,7 @@ class Test_entra_policy_admin_self_service_password_reset_disabled:
             assert len(result) == 1
             assert result[0].status == "MANUAL"
             assert "Cannot evaluate" in result[0].status_extended
-            assert "Policy.Read.All" in result[0].status_extended
+            assert "could not be retrieved" in result[0].status_extended
             assert result[0].resource_name == "Authorization Policy"
             assert result[0].resource_id == "authorizationPolicy"
 
@@ -106,7 +106,8 @@ class Test_entra_policy_admin_self_service_password_reset_disabled:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == "Self-Service Password Reset (SSPR) is enabled for administrators."
+                == "Self-Service Password Reset (SSPR) is enabled for administrators "
+                "(allowedToUseSSPR is true in the authorization policy)."
             )
             assert result[0].resource_id == "authorizationPolicy"
             assert result[0].resource_name == "Authorization Policy"
@@ -146,7 +147,8 @@ class Test_entra_policy_admin_self_service_password_reset_disabled:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == "Self-Service Password Reset (SSPR) is disabled for administrators."
+                == "Self-Service Password Reset (SSPR) is disabled for administrators "
+                "(allowedToUseSSPR is false in the authorization policy)."
             )
             assert result[0].resource_id == "authorizationPolicy"
             assert result[0].resource_name == "Authorization Policy"

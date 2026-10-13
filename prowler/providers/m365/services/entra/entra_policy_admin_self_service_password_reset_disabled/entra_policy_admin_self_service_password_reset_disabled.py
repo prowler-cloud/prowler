@@ -19,11 +19,7 @@ class entra_policy_admin_self_service_password_reset_disabled(Check):
     """
 
     def execute(self) -> List[CheckReportM365]:
-        """Execute the SSPR administrator check.
-
-        Returns:
-            A list of reports containing the result of the check.
-        """
+        """Evaluate allowedToUseSSPR on the tenant authorization policy."""
         findings = []
         auth_policy = entra_client.authorization_policy
 
@@ -36,9 +32,10 @@ class entra_policy_admin_self_service_password_reset_disabled(Check):
             )
             report.status = "MANUAL"
             report.status_extended = (
-                "Cannot evaluate whether SSPR is disabled for administrators: "
-                "the authorization policy or the allowedToUseSSPR property could not be read. "
-                "Verify that the Policy.Read.All permission is granted to the scanning application."
+                "Cannot evaluate whether SSPR is disabled for administrators: the "
+                "authorization policy or its allowedToUseSSPR setting could not be "
+                "retrieved. Check the scanning application's permissions and any "
+                "Microsoft Graph API errors in the scan log."
             )
             findings.append(report)
             return findings
@@ -53,12 +50,14 @@ class entra_policy_admin_self_service_password_reset_disabled(Check):
         if not auth_policy.allowed_to_use_sspr:
             report.status = "PASS"
             report.status_extended = (
-                "Self-Service Password Reset (SSPR) is disabled for administrators."
+                "Self-Service Password Reset (SSPR) is disabled for administrators "
+                "(allowedToUseSSPR is false in the authorization policy)."
             )
         else:
             report.status = "FAIL"
             report.status_extended = (
-                "Self-Service Password Reset (SSPR) is enabled for administrators."
+                "Self-Service Password Reset (SSPR) is enabled for administrators "
+                "(allowedToUseSSPR is true in the authorization policy)."
             )
 
         findings.append(report)
