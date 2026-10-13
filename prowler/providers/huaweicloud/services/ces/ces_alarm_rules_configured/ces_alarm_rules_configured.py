@@ -1,76 +1,146 @@
-from prowler.lib.check.models import Check, CheckReportHuaweiCloud
-from prowler.providers.huaweicloud.services.ces.ces_client import ces_client
+from unittest import mock
+
+from tests.providers.huaweicloud.huaweicloud_fixtures import (
+    set_mocked_huaweicloud_provider,
+)
 
 
-class ces_alarm_rules_configured(Check):
-    """Check if CES alarm rules are configured and enabled."""
+class Test_ces_alarm_rules_configured:
+    def test_no_resources(self):
+        """Test when there are no regional clients."""
+        ces_client = mock.MagicMock()
+        ces_client.alarms = []
+        ces_client.regional_clients = {}  # NEW: No regional clients
+        ces_client.regional_failures = {}
 
-    def execute(self) -> list[CheckReportHuaweiCloud]:
-        findings = []
-        
-        # NEW: No findings if there are no regional clients
-        if not ces_client.regional_clients:
-            return findings
-
-        # NEW: Track which regions we've scanned
-        scanned_regions = set(ces_client.regional_clients.keys())
-        
-        # NEW: Group alarms by region to detect regions with no alarms
-        alarms_by_region = {}
-        for alarm in ces_client.alarms:
-            if alarm.region not in alarms_by_region:
-                alarms_by_region[alarm.region] = []
-            alarms_by_region[alarm.region].append(alarm)
-
-        # NEW: Report per-region findings
-        for region in scanned_regions:
-            # Check if retrieval failed for this region
-            if region in ces_client.regional_failures:
-                report = CheckReportHuaweiCloud(
-                    metadata=self.metadata(),
-                    resource={},
-                )
-                report.region = region
-                report.resource_id = ""
-                report.resource_name = "CES Alarms"
-                report.resource_arn = f"huaweicloud:ces:{region}:{ces_client.audited_account}:alarms"
-                report.status = "MANUAL"
-                report.status_extended = f"Could not retrieve CES alarm rules: {ces_client.regional_failures[region]}"
-                findings.append(report)
-                continue
-
-            # Check if region has no alarms
-            if region not in alarms_by_region:
-                report = CheckReportHuaweiCloud(
-                    metadata=self.metadata(),
-                    resource={},
-                )
-                report.region = region
-                report.resource_id = ""
-                report.resource_name = "CES Alarms"
-                report.resource_arn = f"huaweicloud:ces:{region}:{ces_client.audited_account}:alarms"
-                report.status = "FAIL"
-                report.status_extended = "No CES alarm rules are configured. No alerts will be received for availability or security incidents."
-                findings.append(report)
-
-        # Report per-alarm findings
-        for alarm in ces_client.alarms:
-            report = CheckReportHuaweiCloud(
-                metadata=self.metadata(),
-                resource=alarm,
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_huaweicloud_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.huaweicloud.services.ces.ces_alarm_rules_configured.ces_alarm_rules_configured.ces_client",
+                new=ces_client,
+            ),
+        ):
+            from prowler.providers.huaweicloud.services.ces.ces_alarm_rules_configured.ces_alarm_rules_configured import (
+                ces_alarm_rules_configured,
             )
-            report.region = alarm.region
-            report.resource_id = alarm.alarm_id
-            report.resource_name = alarm.alarm_name
-            report.resource_arn = f"huaweicloud:ces:{alarm.region}:{ces_client.audited_account}:alarm/{alarm.alarm_id}"
 
-            if alarm.alarm_enabled:
-                report.status = "PASS"
-                report.status_extended = f"CES alarm rule '{alarm.alarm_name}' ({alarm.alarm_id}) is enabled."
-            else:
-                report.status = "FAIL"
-                report.status_extended = f"CES alarm rule '{alarm.alarm_name}' ({alarm.alarm_id}) is disabled."
+            check = ces_alarm_rules_configured()
+            result = check.execute()
+            assert len(result) == 0  # No findings when no regional clients
 
-            findings.append(report)
+    def test_no_alarms(self):
+        ces_client = mock.MagicMock()
+        ces_client.alarms = []
+        ces_client.regional_clients = {"la-south-2": mock.MagicMock()}
+        ces_client.regional_failures = {}
+        ces_client.region = "la-south-2"
+        ces_client.audited_account = "123456789012"
 
-        return findings
+    def test_alarm_enabled(self):
+        ces_client = mock.MagicMock()
+        ces_client.alarms = [
+            mock.MagicMock(
+                alarm_id="alarm-001",
+                alarm_name="cpu-alarm",
+                alarm_enabled=True,
+                region="la-south-2",
+            )
+        ]
+        ces_client.region = "la-south-2"
+        ces_client.audited_account = "123456789012"
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_huaweicloud_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.huaweicloud.services.ces.ces_alarm_rules_configured.ces_alarm_rules_configured.ces_client",
+                new=ces_client,
+            ),
+        ):
+            from prowler.providers.huaweicloud.services.ces.ces_alarm_rules_configured.ces_alarm_rules_configured import (
+                ces_alarm_rules_configured,
+            )
+
+            check = ces_alarm_rules_configured()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert "cpu-alarm" in result[0].status_extended
+
+    def test_alarm_disabled(self):
+        ces_client = mock.MagicMock()
+        ces_client.alarms = [
+            mock.MagicMock(
+                alarm_id="alarm-002",
+                alarm_name="disk-alarm",
+                alarm_enabled=False,
+                region="la-south-2",
+            )
+        ]
+        ces_client.region = "la-south-2"
+        ces_client.audited_account = "123456789012"
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_huaweicloud_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.huaweicloud.services.ces.ces_alarm_rules_configured.ces_alarm_rules_configured.ces_client",
+                new=ces_client,
+            ),
+        ):
+            from prowler.providers.huaweicloud.services.ces.ces_alarm_rules_configured.ces_alarm_rules_configured import (
+                ces_alarm_rules_configured,
+            )
+
+            check = ces_alarm_rules_configured()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert "disk-alarm" in result[0].status_extended
+            assert "disabled" in result[0].status_extended
+
+    def test_mixed_alarms(self):
+        ces_client = mock.MagicMock()
+        ces_client.alarms = [
+            mock.MagicMock(
+                alarm_id="alarm-001",
+                alarm_name="cpu-alarm",
+                alarm_enabled=True,
+                region="la-south-2",
+            ),
+            mock.MagicMock(
+                alarm_id="alarm-002",
+                alarm_name="disk-alarm",
+                alarm_enabled=False,
+                region="la-south-2",
+            ),
+        ]
+        ces_client.region = "la-south-2"
+        ces_client.audited_account = "123456789012"
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_huaweicloud_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.huaweicloud.services.ces.ces_alarm_rules_configured.ces_alarm_rules_configured.ces_client",
+                new=ces_client,
+            ),
+        ):
+            from prowler.providers.huaweicloud.services.ces.ces_alarm_rules_configured.ces_alarm_rules_configured import (
+                ces_alarm_rules_configured,
+            )
+
+            check = ces_alarm_rules_configured()
+            result = check.execute()
+            assert len(result) == 2
+            assert result[0].status == "PASS"
+            assert result[1].status == "FAIL"
