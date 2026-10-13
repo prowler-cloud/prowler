@@ -232,6 +232,9 @@ class Entra(M365Service):
                 ),
                 guest_invite_settings=auth_policy.allow_invites_from,
                 guest_user_role_id=auth_policy.guest_user_role_id,
+                block_msol_powershell=getattr(
+                    auth_policy, "block_msol_power_shell", None
+                ),
             )
         except Exception as error:
             logger.error(
@@ -2127,6 +2130,25 @@ OAuthAppInfo
                             )
                         )
 
+                    # Extract redirect URIs from web, spa and publicClient
+                    web_obj = getattr(app, "web", None)
+                    web_redirect_uris = (
+                        list(getattr(web_obj, "redirect_uris", []) or [])
+                        if web_obj
+                        else []
+                    )
+                    spa_obj = getattr(app, "spa", None)
+                    spa_redirect_uris = (
+                        list(getattr(spa_obj, "redirect_uris", []) or [])
+                        if spa_obj
+                        else []
+                    )
+                    public_client_obj = getattr(app, "public_client", None)
+                    public_client_redirect_uris = (
+                        list(getattr(public_client_obj, "redirect_uris", []) or [])
+                        if public_client_obj
+                        else []
+                    )
                     key_credentials = []
                     for cred in getattr(app, "key_credentials", []) or []:
                         raw_thumbprint = getattr(cred, "custom_key_identifier", None)
@@ -2154,6 +2176,9 @@ OAuthAppInfo
                         app_id=app_id,
                         name=getattr(app, "display_name", "") or "",
                         password_credentials=password_credentials,
+                        web_redirect_uris=web_redirect_uris,
+                        spa_redirect_uris=spa_redirect_uris,
+                        public_client_redirect_uris=public_client_redirect_uris,
                         key_credentials=key_credentials,
                     )
 
@@ -2545,12 +2570,15 @@ class DefaultUserRolePermissions(BaseModel):
 
 
 class AuthorizationPolicy(BaseModel):
+    """Tenant-wide authorization policy from Microsoft Entra ID."""
+
     id: str
     name: str
     description: str
     default_user_role_permissions: Optional[DefaultUserRolePermissions]
     guest_invite_settings: Optional[str]
     guest_user_role_id: Optional[UUID]
+    block_msol_powershell: Optional[bool] = None
 
 
 # Well-known directory setting template IDs (from /groupSettings).
@@ -2977,6 +3005,10 @@ class AppRegistration(BaseModel):
         name: The application's display name.
         password_credentials: List of password credentials (client secrets)
             registered on the application.
+        web_redirect_uris: Redirect URIs configured for the web platform.
+        spa_redirect_uris: Redirect URIs configured for the SPA platform.
+        public_client_redirect_uris: Redirect URIs configured for the
+            public client (mobile/desktop) platform.
         key_credentials: List of key credentials (certificates) registered on
             the application.
     """
@@ -2985,4 +3017,7 @@ class AppRegistration(BaseModel):
     app_id: str = ""
     name: str = ""
     password_credentials: List[PasswordCredential] = []
+    web_redirect_uris: List[str] = []
+    spa_redirect_uris: List[str] = []
+    public_client_redirect_uris: List[str] = []
     key_credentials: List[KeyCredential] = []
