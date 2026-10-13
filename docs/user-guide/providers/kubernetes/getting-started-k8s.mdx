@@ -24,7 +24,7 @@ title: 'Getting Started with Kubernetes'
 For Kubernetes, Prowler Cloud uses a `kubeconfig` file to authenticate. Paste the contents of your `kubeconfig` file into the `Kubeconfig content` field.
 
 <Note>
-Kubeconfigs that use `users[].user.exec` authentication are not supported in Prowler Cloud or Prowler Local Server. For security reasons, Prowler Cloud does not run commands declared by uploaded kubeconfigs. Use kubeconfig credentials that do not rely on `exec` authentication, such as the ServiceAccount token flow documented below.
+Only inline kubeconfig credentials are supported: `token`, `username`/`password`, or `client-certificate-data` with `client-key-data` for users, and `certificate-authority-data` for clusters. Kubeconfigs that reference external files (`tokenFile`, `client-certificate`, `client-key`, `certificate-authority`), run commands (`exec`, `cmd-path`), use `auth-provider` directives, set a proxy URL, or include unsupported user or cluster fields are rejected. Impersonation fields (`as`, `as-uid`, `as-groups`, `as-user-extra`) are accepted but not applied, so Prowler connects with the identity of the user credentials. Use inline credentials such as the ServiceAccount token flow documented below.
 </Note>
 
 By default, the `kubeconfig` file is located at `~/.kube/config`.
@@ -95,6 +95,8 @@ If you are adding an **EKS**, **GKE**, **AKS** or external cluster, follow these
     kubectl config set-credentials prowler-sa --token=<SA_TOKEN>
     kubectl config set-context <CONTEXT_NAME> --user=prowler-sa
     ```
+
+    Prowler validates the entire kubeconfig file and requires it to contain only the ServiceAccount user and its cluster entry with certificate-authority-data; remove any exec entries from EKS, GKE, or AKS or Prowler will reject the file.
 
     Replace `<SA_TOKEN>` with the generated token and `<CONTEXT_NAME>` with your KubeConfig Context Name of your EKS, GKE or AKS cluster.
 
