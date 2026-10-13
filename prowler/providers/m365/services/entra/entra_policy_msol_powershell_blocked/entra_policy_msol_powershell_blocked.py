@@ -40,7 +40,7 @@ class entra_policy_msol_powershell_blocked(Check):
                 resource_id="authorizationPolicy",
             )
             report.status = "MANUAL"
-            report.status_extended = "Cannot evaluate whether legacy MSOnline (MSOL) PowerShell is blocked: the authorization policy could not be retrieved. Verify that the Policy.Read.All permission is granted to the scanning application."
+            report.status_extended = "Cannot evaluate whether legacy MSOnline (MSOL) PowerShell is blocked: the authorization policy could not be retrieved. Check the scanning application's permissions and any Microsoft Graph API errors in the scan log."
             findings.append(report)
             return findings
 
@@ -51,7 +51,7 @@ class entra_policy_msol_powershell_blocked(Check):
             resource_id=auth_policy.id,
         )
 
-        block_msol = getattr(auth_policy, "block_msol_powershell", None)
+        block_msol = auth_policy.block_msol_powershell
 
         if block_msol is None:
             report.status = "MANUAL"

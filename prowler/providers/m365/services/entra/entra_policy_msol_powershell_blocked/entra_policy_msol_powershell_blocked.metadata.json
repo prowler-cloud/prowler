@@ -1,7 +1,7 @@
 {
   "Provider": "m365",
   "CheckID": "entra_policy_msol_powershell_blocked",
-  "CheckTitle": "Blocking legacy MSOnline (MSOL) PowerShell protects the tenant from unsupported administrative access",
+  "CheckTitle": "Tenant blocks the legacy MSOnline (MSOL) PowerShell module",
   "CheckType": [],
   "ServiceName": "entra",
   "SubServiceName": "",

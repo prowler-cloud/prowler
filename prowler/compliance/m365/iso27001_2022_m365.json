@@ -732,7 +732,6 @@
         "entra_emergency_access_exclusion",
         "entra_identity_protection_sign_in_risk_enabled",
         "entra_managed_device_required_for_authentication",
-        "entra_policy_msol_powershell_blocked",
         "entra_seamless_sso_disabled",
         "entra_service_principal_no_secrets_for_permanent_tier0_roles",
         "entra_users_mfa_enabled"
