@@ -194,6 +194,18 @@ vulnerabilities:
       - "pkg:golang/golang.org/x/crypto@v0.55.0"
     expired_at: 2026-10-15
 
+  # CVE-2026-78669 is an HTTP/2 DoS in the same Trivy 0.75.0 binary (stdlib 1.27.1 and
+  # golang.org/x/net 0.59.0): a malicious peer burns CPU with many small SETTINGS frames.
+  # Unlike the two above it also hits clients, but Trivy's only HTTP/2 peer here is the
+  # TLS-authenticated registry serving the vulnerability database, and the worst case is
+  # a slow scan. Fixed in Go 1.27.2 and x/net 0.60.0, which Trivy main already pulls in
+  # but no release ships yet. Same retirement rule as above.
+  - id: CVE-2026-78669
+    purls:
+      - "pkg:golang/stdlib@v1.27.1"
+      - "pkg:golang/golang.org/x/net@v0.59.0"
+    expired_at: 2026-11-15
+
   - id: CVE-2026-56852
     purls:
       - "pkg:golang/golang.org/x/text"
