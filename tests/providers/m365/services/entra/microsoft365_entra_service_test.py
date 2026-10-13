@@ -2019,3 +2019,57 @@ class TestAuthorizationPolicyMsolMapping:
         policy = asyncio.run(service._get_authorization_policy())
 
         assert policy.block_msol_powershell is value
+
+
+class TestAppRegistrationRedirectUris:
+    def test_redirect_uris_are_read_for_every_platform(self):
+        app = SimpleNamespace(
+            id="obj-1",
+            app_id="app-1",
+            display_name="Portal",
+            password_credentials=[],
+            key_credentials=[],
+            web=SimpleNamespace(redirect_uris=["https://portal.contoso.com/signin"]),
+            spa=SimpleNamespace(redirect_uris=["http://localhost:3000"]),
+            public_client=SimpleNamespace(redirect_uris=["msalapp-1://auth"]),
+        )
+        service = Entra.__new__(Entra)
+        service.client = SimpleNamespace(
+            applications=SimpleNamespace(
+                get=AsyncMock(
+                    return_value=SimpleNamespace(value=[app], odata_next_link=None)
+                )
+            )
+        )
+
+        apps = asyncio.run(service._get_app_registrations())
+
+        assert apps["obj-1"].web_redirect_uris == ["https://portal.contoso.com/signin"]
+        assert apps["obj-1"].spa_redirect_uris == ["http://localhost:3000"]
+        assert apps["obj-1"].public_client_redirect_uris == ["msalapp-1://auth"]
+
+    def test_missing_platforms_give_empty_lists(self):
+        app = SimpleNamespace(
+            id="obj-2",
+            app_id="app-2",
+            display_name="Daemon",
+            password_credentials=[],
+            key_credentials=[],
+            web=None,
+            spa=None,
+            public_client=None,
+        )
+        service = Entra.__new__(Entra)
+        service.client = SimpleNamespace(
+            applications=SimpleNamespace(
+                get=AsyncMock(
+                    return_value=SimpleNamespace(value=[app], odata_next_link=None)
+                )
+            )
+        )
+
+        apps = asyncio.run(service._get_app_registrations())
+
+        assert apps["obj-2"].web_redirect_uris == []
+        assert apps["obj-2"].spa_redirect_uris == []
+        assert apps["obj-2"].public_client_redirect_uris == []
