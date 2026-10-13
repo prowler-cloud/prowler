@@ -231,6 +231,9 @@ class Entra(M365Service):
                 ),
                 guest_invite_settings=auth_policy.allow_invites_from,
                 guest_user_role_id=auth_policy.guest_user_role_id,
+                allowed_to_use_sspr=getattr(
+                    auth_policy, "allowed_to_use_s_s_p_r", None
+                ),
                 block_msol_powershell=getattr(
                     auth_policy, "block_msol_power_shell", None
                 ),
@@ -2574,6 +2577,7 @@ class AuthorizationPolicy(BaseModel):
     default_user_role_permissions: Optional[DefaultUserRolePermissions]
     guest_invite_settings: Optional[str]
     guest_user_role_id: Optional[UUID]
+    allowed_to_use_sspr: Optional[bool] = None
     block_msol_powershell: Optional[bool] = None
 
 
