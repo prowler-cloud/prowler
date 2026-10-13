@@ -2025,3 +2025,33 @@ class TestGroupUserMembers:
 
         assert asyncio.run(service._get_group_user_members("g-1")) == []
         assert "g-1" in service.privileged_group_resolution_error
+
+
+class TestPrivilegedGroupResolution:
+    GLOBAL_ADMIN = "62e90394-69f5-4237-9190-012177145e10"
+
+    def _service(self, member_id):
+        service = Entra.__new__(Entra)
+        service.users_error = None
+        service.users = {"user-1": MagicMock()}
+        service.groups = []
+        service.service_principals = {"sp-1": MagicMock()}
+        service._role_members_map = {member_id: [self.GLOBAL_ADMIN]}
+        service.privileged_group_resolution_error = None
+        service.privileged_users_roles = {}
+        service._get_pim_role_eligibility_instances = AsyncMock(return_value=({}, None))
+        return service
+
+    def test_known_service_principal_is_not_flagged_when_groups_are_empty(self):
+        service = self._service("sp-1")
+
+        asyncio.run(service._load_privileged_user_stale_data())
+
+        assert service.privileged_group_resolution_error is None
+
+    def test_unknown_principal_is_flagged_when_groups_are_empty(self):
+        service = self._service("unknown-1")
+
+        asyncio.run(service._load_privileged_user_stale_data())
+
+        assert "unknown-1" in service.privileged_group_resolution_error

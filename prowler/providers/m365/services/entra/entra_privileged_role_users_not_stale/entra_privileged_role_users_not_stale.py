@@ -29,7 +29,8 @@ class entra_privileged_role_users_not_stale(Check):
       never signed in outside the grace period, or the account is disabled
       while still holding a Tier 0 role).
     - MANUAL: Sign-in activity cannot be read (missing P1/P2 licence or
-      permissions), or a per-user lookup failed.
+      permissions), a per-user lookup failed, or only a recent sign-in
+      attempt is recorded with no successful sign-in.
     """
 
     def execute(self) -> list[CheckReportM365]:
@@ -206,6 +207,35 @@ class entra_privileged_role_users_not_stale(Check):
                 )
                 findings.append(report)
                 continue
+
+            # ---- Sign-in attempts without a recorded success ----
+            # Attempt timestamps include failed sign-ins, so they only prove
+            # staleness when even the latest attempt is past the threshold.
+            if sign_in_data and sign_in_data.last_successful_sign_in is None:
+                last_attempt = self._get_last_activity(sign_in_data)
+                if last_attempt is not None:
+                    attempt_str = last_attempt.strftime("%Y-%m-%d")
+                    if last_attempt >= threshold_date:
+                        report.status = "MANUAL"
+                        report.status_extended = (
+                            f"User '{user.name}' ({upn}) holds Tier 0 role(s) "
+                            f"{roles_str} and has a sign-in attempt on "
+                            f"{attempt_str}, but no successful sign-in is "
+                            f"recorded, so recent use cannot be confirmed."
+                            f"{pim_suffix}"
+                        )
+                    else:
+                        report.status = "FAIL"
+                        report.status_extended = (
+                            f"User '{user.name}' ({upn}) holds Tier 0 role(s) "
+                            f"{roles_str}, has no recorded successful sign-in "
+                            f"and its last sign-in attempt was on "
+                            f"{attempt_str} ({(now - last_attempt).days} days "
+                            f"ago, threshold {threshold_days} days)."
+                            f"{pim_suffix}"
+                        )
+                    findings.append(report)
+                    continue
 
             # ---- Evaluate sign-in activity ----
             last_activity = self._get_last_activity(sign_in_data)

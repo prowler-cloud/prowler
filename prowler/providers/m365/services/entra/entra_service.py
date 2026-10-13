@@ -1174,6 +1174,8 @@ class Entra(M365Service):
         active_assignments: Dict[str, set] = {}
         role_members_map = getattr(self, "_role_members_map", {})
         group_ids = {g.id for g in self.groups}
+        # Known service principals are not groups, so they never need resolving.
+        service_principal_ids = set(getattr(self, "service_principals", None) or {})
 
         for member_id, role_template_ids in role_members_map.items():
             tier0_ids = [
@@ -1192,7 +1194,11 @@ class Entra(M365Service):
                 for uid in group_user_ids:
                     for rid in tier0_ids:
                         active_assignments.setdefault(uid, set()).add(rid)
-            elif not group_ids and not self.privileged_group_resolution_error:
+            elif (
+                not group_ids
+                and member_id not in service_principal_ids
+                and not self.privileged_group_resolution_error
+            ):
                 # The /groups listing came back empty, so a non-user Tier 0
                 # principal may be a group whose members were never read.
                 self.privileged_group_resolution_error = (
@@ -1343,6 +1349,7 @@ class Entra(M365Service):
         eligible: Dict[str, List[str]] = {}
         error_message = None
         group_ids = {g.id for g in self.groups}
+        service_principal_ids = set(getattr(self, "service_principals", None) or {})
         try:
             response = await (
                 self.client.role_management.directory.role_eligibility_schedule_instances.get()
@@ -1369,6 +1376,7 @@ class Entra(M365Service):
                                     eligible.setdefault(uid, []).append(role_def_id)
                             elif (
                                 not group_ids
+                                and principal_id not in service_principal_ids
                                 and not self.privileged_group_resolution_error
                             ):
                                 self.privileged_group_resolution_error = (

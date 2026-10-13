@@ -696,8 +696,8 @@ class Test_entra_privileged_role_users_not_stale:
                 in result[0].status_extended
             )
 
-    def test_fallback_last_sign_in_when_no_successful(self):
-        """PASS using lastSignInDateTime when lastSuccessfulSignIn is null."""
+    def test_recent_attempt_without_successful_sign_in_is_manual(self):
+        """MANUAL when only recent attempts exist and no success is recorded."""
         user_id = str(uuid4())
         entra_client = _setup_mock()
 
@@ -747,7 +747,8 @@ class Test_entra_privileged_role_users_not_stale:
             result = check.execute()
 
             assert len(result) == 1
-            assert result[0].status == "PASS"
+            assert result[0].status == "MANUAL"
+            assert "no successful sign-in is recorded" in result[0].status_extended
             assert "Fallback Admin" in result[0].status_extended
 
     def test_multiple_users_mixed_results(self):
@@ -1072,12 +1073,12 @@ class Test_entra_privileged_role_users_not_stale:
             assert "emergency-access account" in result[0].status_extended
             assert "last sign-in never" in result[0].status_extended
 
-    def test_fallback_only_non_interactive_sign_in(self):
-        """PASS using only lastNonInteractiveSignInDateTime when others are null."""
+    def test_old_attempt_without_successful_sign_in_is_fail(self):
+        """FAIL when even the latest attempt is past the threshold."""
         user_id = str(uuid4())
         entra_client = _setup_mock()
 
-        recent = datetime.now(timezone.utc) - timedelta(days=15)
+        recent = datetime.now(timezone.utc) - timedelta(days=200)
 
         entra_client.users = {
             user_id: User(
@@ -1123,7 +1124,8 @@ class Test_entra_privileged_role_users_not_stale:
             result = check.execute()
 
             assert len(result) == 1
-            assert result[0].status == "PASS"
+            assert result[0].status == "FAIL"
+            assert "no recorded successful sign-in" in result[0].status_extended
             assert "NonInteractive Admin" in result[0].status_extended
 
     def test_custom_threshold_days(self):
