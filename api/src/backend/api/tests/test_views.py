@@ -18017,6 +18017,106 @@ class TestLighthouseWritePermissions:
             response = authenticated_client_no_permissions_rbac.get(url)
             assert response.status_code == status.HTTP_200_OK, url
 
+    LEGACY_API_KEY = "sk-fake-test-key-for-unit-testing-only"
+
+    @pytest.mark.parametrize(
+        "query",
+        [
+            "?fields[lighthouse-providers]=credentials",
+            "?fields[lighthouse-providers]=base_url,%20credentials",
+            "?fields[lighthouse-providers]=base_url&fields[lighthouse-providers]=credentials",
+        ],
+    )
+    def test_provider_decrypted_credentials_forbidden_without_permission(
+        self, authenticated_client_no_permissions_rbac, provider_config, query
+    ):
+        for url in (
+            reverse("lighthouse-providers-list"),
+            reverse("lighthouse-providers-detail", kwargs={"pk": provider_config.id}),
+        ):
+            response = authenticated_client_no_permissions_rbac.get(url + query)
+
+            assert response.status_code == status.HTTP_403_FORBIDDEN, url + query
+            assert self.ORIGINAL_CREDENTIALS["api_key"] not in response.content.decode()
+
+    def test_legacy_decrypted_api_key_forbidden_without_permission(
+        self, authenticated_client_no_permissions_rbac, legacy_config
+    ):
+        response = authenticated_client_no_permissions_rbac.get(
+            reverse("lighthouseconfiguration-list")
+            + "?fields[lighthouse-config]=api_key"
+        )
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        assert self.LEGACY_API_KEY not in response.content.decode()
+
+    def test_masked_reads_stay_open_without_permission(
+        self, authenticated_client_no_permissions_rbac, provider_config, legacy_config
+    ):
+        providers = authenticated_client_no_permissions_rbac.get(
+            reverse("lighthouse-providers-list")
+            + "?fields[lighthouse-providers]=base_url,is_active"
+        )
+        assert providers.status_code == status.HTTP_200_OK
+        assert self.ORIGINAL_CREDENTIALS["api_key"] not in providers.content.decode()
+
+        masked = authenticated_client_no_permissions_rbac.get(
+            reverse("lighthouse-providers-list")
+        )
+        assert masked.status_code == status.HTTP_200_OK
+        assert masked.json()["data"][0]["attributes"]["credentials"] == {
+            "api_key": "*" * len(self.ORIGINAL_CREDENTIALS["api_key"])
+        }
+
+        legacy = authenticated_client_no_permissions_rbac.get(
+            reverse("lighthouseconfiguration-list")
+        )
+        assert legacy.status_code == status.HTTP_200_OK
+        legacy_api_key = legacy.json()["data"][0]["attributes"]["api_key"]
+        assert legacy_api_key and set(legacy_api_key) == {"*"}
+
+    def test_decrypted_credentials_allowed_with_manage_account(
+        self, authenticated_client_rbac_manage_account
+    ):
+        tenant_id = (
+            authenticated_client_rbac_manage_account.user.roles.first().tenant_id
+        )
+        provider_config = LighthouseProviderConfiguration(
+            tenant_id=tenant_id,
+            provider_type=LighthouseProviderConfiguration.LLMProviderChoices.OPENAI_COMPATIBLE,
+            base_url=self.ORIGINAL_BASE_URL,
+            is_active=True,
+        )
+        provider_config.credentials_decoded = self.ORIGINAL_CREDENTIALS
+        provider_config.save()
+        LighthouseConfiguration.objects.create(
+            tenant_id=tenant_id,
+            name="OpenAI",
+            api_key_decoded=self.LEGACY_API_KEY,
+            model="gpt-4o",
+            temperature=0,
+            max_tokens=4000,
+            business_context="original context",
+            is_active=True,
+        )
+
+        providers = authenticated_client_rbac_manage_account.get(
+            reverse("lighthouse-providers-list")
+            + "?fields[lighthouse-providers]=credentials"
+        )
+        assert providers.status_code == status.HTTP_200_OK
+        assert (
+            providers.json()["data"][0]["attributes"]["credentials"]
+            == self.ORIGINAL_CREDENTIALS
+        )
+
+        legacy = authenticated_client_rbac_manage_account.get(
+            reverse("lighthouseconfiguration-list")
+            + "?fields[lighthouse-config]=api_key"
+        )
+        assert legacy.status_code == status.HTTP_200_OK
+        assert legacy.json()["data"][0]["attributes"]["api_key"] == self.LEGACY_API_KEY
+
 
 @pytest.mark.django_db
 class TestLighthouseTenantConfigViewSet:

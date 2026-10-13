@@ -7031,6 +7031,14 @@ class IntegrationJiraViewSet(BaseRLSViewSet):
         )
 
 
+def requested_sparse_fields(request, resource_name: str) -> set[str]:
+    """Return every field named in `fields[<resource_name>]`, across repeated params."""
+    values = request.query_params.getlist(f"fields[{resource_name}]")
+    return {
+        field.strip() for value in values for field in value.split(",") if field.strip()
+    }
+
+
 @extend_schema_view(
     list=extend_schema(
         tags=["Lighthouse AI"],
@@ -7076,8 +7084,11 @@ class LighthouseConfigViewSet(BaseRLSViewSet):
     required_permissions = [Permissions.MANAGE_ACCOUNT]
 
     def set_required_permissions(self):
-        """Require MANAGE_ACCOUNT for writes; reads stay open."""
-        if self.request.method in SAFE_METHODS:
+        """Require MANAGE_ACCOUNT for writes and for reading the decrypted API key."""
+        reads_api_key = "api_key" in requested_sparse_fields(
+            self.request, "lighthouse-config"
+        )
+        if self.request.method in SAFE_METHODS and not reads_api_key:
             self.required_permissions = []
         else:
             self.required_permissions = [Permissions.MANAGE_ACCOUNT]
@@ -7158,8 +7169,11 @@ class LighthouseProviderConfigViewSet(BaseRLSViewSet):
     required_permissions = [Permissions.MANAGE_ACCOUNT]
 
     def set_required_permissions(self):
-        """Require MANAGE_ACCOUNT for writes; reads stay open."""
-        if self.request.method in SAFE_METHODS:
+        """Require MANAGE_ACCOUNT for writes and for reading decrypted credentials."""
+        reads_credentials = "credentials" in requested_sparse_fields(
+            self.request, "lighthouse-providers"
+        )
+        if self.request.method in SAFE_METHODS and not reads_credentials:
             self.required_permissions = []
         else:
             self.required_permissions = [Permissions.MANAGE_ACCOUNT]
