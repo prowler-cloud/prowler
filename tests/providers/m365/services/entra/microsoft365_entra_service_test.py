@@ -2034,6 +2034,26 @@ class TestAuthenticationMethodTargets:
         )
         assert configs["Fido2"].include_target_group_ids == [group_id]
 
+    def test_typed_all_users_sentinel_is_not_a_group(self):
+        group_id = "22222222-2222-2222-2222-222222222222"
+        config = SimpleNamespace(
+            id="Fido2",
+            state=None,
+            include_targets=[
+                SimpleNamespace(
+                    id="all_users", target_type=SimpleNamespace(value="group")
+                ),
+                SimpleNamespace(
+                    id=group_id, target_type=SimpleNamespace(value="group")
+                ),
+            ],
+            exclude_targets=[],
+        )
+        configs = asyncio.run(
+            self._service(config)._get_authentication_method_configurations()
+        )
+        assert configs["Fido2"].include_target_group_ids == [group_id]
+
     def test_empty_exclude_targets_is_read(self):
         config = SimpleNamespace(
             id="Fido2", state=None, include_targets=[], exclude_targets=[]

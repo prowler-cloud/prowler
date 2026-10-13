@@ -1273,13 +1273,14 @@ OAuthAppInfo
         looked up as groups. Older payloads without a type fall back to
         "any GUID other than ``all_users``".
         """
+        target_id = getattr(target, "id", None)
+        # Graph returns the all_users sentinel with targetType "group".
+        if not target_id or target_id == "all_users":
+            return False
         target_type = getattr(target, "target_type", None)
         if target_type is not None:
             value = getattr(target_type, "value", target_type)
             return str(value).lower() == "group"
-        target_id = getattr(target, "id", None)
-        if not target_id or target_id == "all_users":
-            return False
         try:
             UUID(target_id)
         except ValueError:
