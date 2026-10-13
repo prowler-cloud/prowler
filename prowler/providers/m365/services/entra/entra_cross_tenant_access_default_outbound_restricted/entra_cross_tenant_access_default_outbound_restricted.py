@@ -8,7 +8,8 @@ from prowler.providers.m365.services.entra.entra_service import (
 )
 
 # Targets that cover every user or every application. AllMicrosoftApps is
-# treated as broad access too: it reaches every Microsoft cloud application.
+# treated as broad too: allowing it opens and blocking it closes access to
+# every Microsoft cloud application.
 ALL_USERS_TARGETS = {"AllUsers"}
 ALL_APPLICATIONS_TARGETS = {"AllApplications", "AllMicrosoftApps"}
 
@@ -132,7 +133,7 @@ class entra_cross_tenant_access_default_outbound_restricted(Check):
             entra_cross_tenant_access_default_outbound_restricted._dimension_open(
                 setting.applications,
                 allowed_all_targets=ALL_APPLICATIONS_TARGETS,
-                blocked_all_targets={"AllApplications"},
+                blocked_all_targets=ALL_APPLICATIONS_TARGETS,
             )
         )
         return users_open and apps_open

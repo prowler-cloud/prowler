@@ -339,6 +339,18 @@ class Test_entra_cross_tenant_access_default_outbound_restricted:
         )
         assert result[0].status == "FAIL"
 
+    def test_blocking_all_microsoft_apps_restricts_applications(self):
+        """Blocking AllMicrosoftApps closes the applications dimension."""
+        result = self._run(
+            CrossTenantAccessDefault(
+                b2b_collaboration_outbound=_setting(
+                    "blocked", ["group-1"], "blocked", ["AllMicrosoftApps"]
+                ),
+                b2b_direct_connect_outbound=_blocked_setting(),
+            )
+        )
+        assert result[0].status == "PASS"
+
     def test_users_limited_to_group_with_partial_app_block_passes(self):
         """Users allowed only for a specific group restrict the setting."""
         result = self._run(
