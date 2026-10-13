@@ -100,8 +100,8 @@ class Test_entra_dynamic_group_member_of_rule_not_used:
             assert "Cannot evaluate" in result[0].status_extended
             assert result[0].status_extended.endswith(".")
 
-    def test_dynamic_group_null_rule_returns_manual(self):
-        """A dynamic group with a null membership rule produces MANUAL."""
+    def test_dynamic_group_null_rule_returns_pass(self):
+        """A dynamic group with a null membership rule cannot use memberOf."""
         entra_client = mock.MagicMock()
         entra_client.groups_error = None
         entra_client.groups = [
@@ -131,11 +131,11 @@ class Test_entra_dynamic_group_member_of_rule_not_used:
             check = entra_dynamic_group_member_of_rule_not_used()
             result = check.execute()
             assert len(result) == 1
-            assert result[0].status == "MANUAL"
-            assert "could not be read" in result[0].status_extended
+            assert result[0].status == "PASS"
+            assert "has no membership rule" in result[0].status_extended
 
-    def test_dynamic_group_empty_rule_returns_manual(self):
-        """A dynamic group with an empty membership rule produces MANUAL."""
+    def test_dynamic_group_empty_rule_returns_pass(self):
+        """A dynamic group with an empty membership rule cannot use memberOf."""
         entra_client = mock.MagicMock()
         entra_client.groups_error = None
         entra_client.groups = [
@@ -165,7 +165,7 @@ class Test_entra_dynamic_group_member_of_rule_not_used:
             check = entra_dynamic_group_member_of_rule_not_used()
             result = check.execute()
             assert len(result) == 1
-            assert result[0].status == "MANUAL"
+            assert result[0].status == "PASS"
 
     def test_pass_no_memberof_rule(self):
         """A dynamic group with attribute-based rule passes."""

@@ -66,12 +66,10 @@ class entra_dynamic_group_member_of_rule_not_used(Check):
     membership, creating a silent access-control gap.
 
     - PASS: The dynamic group's membership rule does not reference the
-      ``memberOf`` property.
+      ``memberOf`` property, or the group has no membership rule.
     - FAIL: The dynamic group's membership rule references ``user.memberof``
       or ``device.memberof``.
-    - MANUAL: Groups could not be read (permissions, throttling, API error),
-      or a dynamic group has a null/empty membership rule that could not be
-      evaluated.
+    - MANUAL: Groups could not be read (permissions, throttling, API error).
     """
 
     def execute(self) -> List[CheckReportM365]:
@@ -111,12 +109,12 @@ class entra_dynamic_group_member_of_rule_not_used(Check):
                 resource_id=group.id,
             )
 
-            # A null/empty membership rule cannot be evaluated.
+            # A dynamic group without a rule cannot use the memberOf operator.
             if not group.membershipRule:
-                report.status = "MANUAL"
+                report.status = "PASS"
                 report.status_extended = (
-                    f"Dynamic group {group.name} has no membership rule; "
-                    f"the rule could not be read."
+                    f"Dynamic group {group.name} has no membership rule, so it "
+                    f"does not use the memberOf rule operator."
                 )
                 findings.append(report)
                 continue
