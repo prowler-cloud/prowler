@@ -34,7 +34,7 @@ class ces_alarm_rules_configured(Check):
                 report.resource_id = ""
                 report.resource_name = "CES Alarms"
                 report.resource_arn = f"huaweicloud:ces:{region}:{ces_client.audited_account}:alarms"
-                report.status = "UNKNOWN"
+                report.status = "MANUAL"
                 report.status_extended = f"Could not retrieve CES alarm rules: {ces_client.regional_failures[region]}"
                 findings.append(report)
                 continue
