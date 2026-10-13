@@ -19,7 +19,7 @@
   ],
   "Remediation": {
     "Code": {
-      "CLI": "az ad app update --id <app-id> --web-redirect-uris https://<owned-domain>/signin-oidc",
+      "CLI": "az ad app update --id \"$APP_ID\" --web-redirect-uris \"https://$OWNED_DOMAIN/signin-oidc\"",
       "NativeIaC": "",
       "Other": "1. Navigate to Microsoft Entra admin center (https://entra.microsoft.com)\n2. Go to Applications > App registrations\n3. Select the flagged application\n4. Go to Authentication\n5. Replace any `http://` redirect URIs with `https://`\n6. Remove any wildcard URIs and unused or malformed URIs\n7. Move applications off `*.azurewebsites.net` onto a custom domain you own\n8. Delete redirect URIs whose domain no longer resolves in DNS",
       "Terraform": ""
