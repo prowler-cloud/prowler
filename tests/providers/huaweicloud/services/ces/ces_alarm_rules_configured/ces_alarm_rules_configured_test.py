@@ -39,7 +39,6 @@ class Test_ces_alarm_rules_configured:
         ces_client.region = "la-south-2"
         ces_client.audited_account = "123456789012"
 
-
     def test_alarm_enabled(self):
         ces_client = mock.MagicMock()
         ces_client.alarms = [
@@ -141,6 +140,10 @@ class Test_ces_alarm_rules_configured:
             )
 
             check = ces_alarm_rules_configured()
+            result = check.execute()
+            assert len(result) == 2
+            assert result[0].status == "PASS"
+            assert result[1].status == "FAIL"
             result = check.execute()
             assert len(result) == 2
             assert result[0].status == "PASS"
