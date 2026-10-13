@@ -1990,3 +1990,32 @@ class TestGetUsersError:
         assert users == {}
         assert service.users_error is not None
         assert "Unable to retrieve users from Microsoft Graph" in service.users_error
+
+
+class TestAuthorizationPolicyMsolMapping:
+    """``blockMsolPowerShell`` from the Graph SDK model reaches ``AuthorizationPolicy``."""
+
+    @pytest.mark.parametrize("value", [True, False, None])
+    def test_block_msol_powershell_is_mapped(self, value):
+        from msgraph.generated.models.authorization_policy import (
+            AuthorizationPolicy as GraphAuthorizationPolicy,
+        )
+
+        graph_policy = GraphAuthorizationPolicy(
+            id="authorizationPolicy",
+            display_name="Authorization Policy",
+            description="Used to manage authorization related settings across the company.",
+            block_msol_power_shell=value,
+        )
+        service = Entra.__new__(Entra)
+        service.client = SimpleNamespace(
+            policies=SimpleNamespace(
+                authorization_policy=SimpleNamespace(
+                    get=AsyncMock(return_value=graph_policy)
+                )
+            )
+        )
+
+        policy = asyncio.run(service._get_authorization_policy())
+
+        assert policy.block_msol_powershell is value
