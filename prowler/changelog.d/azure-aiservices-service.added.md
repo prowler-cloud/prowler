@@ -1,0 +1,1 @@
+Azure AI Services service for Azure provider, including the `aiservices_account_public_network_access_disabled`, `aiservices_account_local_auth_disabled`, and `aiservices_account_encrypted_with_cmk` checks

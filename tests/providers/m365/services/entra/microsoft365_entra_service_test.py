@@ -2164,6 +2164,85 @@ class TestGetGroups:
         )
 
 
+class TestCrossTenantAccessDefault:
+    """The Graph SDK default policy is mapped to ``CrossTenantAccessDefault``."""
+
+    def test_maps_outbound_settings_from_the_sdk_model(self):
+        from msgraph.generated.models.cross_tenant_access_policy_b2_b_setting import (
+            CrossTenantAccessPolicyB2BSetting,
+        )
+        from msgraph.generated.models.cross_tenant_access_policy_configuration_default import (
+            CrossTenantAccessPolicyConfigurationDefault,
+        )
+        from msgraph.generated.models.cross_tenant_access_policy_target import (
+            CrossTenantAccessPolicyTarget,
+        )
+        from msgraph.generated.models.cross_tenant_access_policy_target_configuration import (
+            CrossTenantAccessPolicyTargetConfiguration,
+        )
+        from msgraph.generated.models.cross_tenant_access_policy_target_configuration_access_type import (
+            CrossTenantAccessPolicyTargetConfigurationAccessType as AccessType,
+        )
+        from msgraph.generated.models.cross_tenant_access_policy_target_type import (
+            CrossTenantAccessPolicyTargetType as TargetType,
+        )
+
+        def config(access, target, target_type):
+            return CrossTenantAccessPolicyTargetConfiguration(
+                access_type=access,
+                targets=[
+                    CrossTenantAccessPolicyTarget(
+                        target=target, target_type=target_type
+                    )
+                ],
+            )
+
+        graph_policy = CrossTenantAccessPolicyConfigurationDefault(
+            b2b_collaboration_outbound=CrossTenantAccessPolicyB2BSetting(
+                users_and_groups=config(
+                    AccessType.Blocked, "group-1", TargetType.Group
+                ),
+                applications=config(
+                    AccessType.Allowed, "AllApplications", TargetType.Application
+                ),
+            ),
+            b2b_direct_connect_outbound=None,
+        )
+        service = Entra.__new__(Entra)
+        service.client = SimpleNamespace(
+            policies=SimpleNamespace(
+                cross_tenant_access_policy=SimpleNamespace(
+                    default=SimpleNamespace(get=AsyncMock(return_value=graph_policy))
+                )
+            )
+        )
+
+        policy = asyncio.run(service._get_cross_tenant_access_default())
+
+        users = policy.b2b_collaboration_outbound.users_and_groups
+        apps = policy.b2b_collaboration_outbound.applications
+        assert users.access_type == "blocked"
+        assert users.targets[0].target == "group-1"
+        assert users.targets[0].target_type == "group"
+        assert apps.access_type == "allowed"
+        assert apps.targets[0].target == "AllApplications"
+        assert policy.b2b_direct_connect_outbound is None
+
+    def test_read_error_returns_none(self):
+        service = Entra.__new__(Entra)
+        service.client = SimpleNamespace(
+            policies=SimpleNamespace(
+                cross_tenant_access_policy=SimpleNamespace(
+                    default=SimpleNamespace(
+                        get=AsyncMock(side_effect=RuntimeError("403"))
+                    )
+                )
+            )
+        )
+
+        assert asyncio.run(service._get_cross_tenant_access_default()) is None
+
+
 class TestTier0RoleGroupMembers:
     GLOBAL_ADMIN = "62e90394-69f5-4237-9190-012177145e10"
     READER = "88d8e3e3-8f55-4a1e-953a-9b9898b8876b"

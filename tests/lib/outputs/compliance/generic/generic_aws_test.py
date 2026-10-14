@@ -136,6 +136,28 @@ class TestAWSGenericCompliance:
 
         assert content == expected_csv
 
+    def test_batch_write_neutralises_formula_initiators(self):
+        mock_file = StringIO()
+        findings = [
+            generate_finding_output(
+                status_extended="=cmd",
+                resource_uid="-1",
+                compliance={"NIST-800-53-Revision-4": "ac_2_4"},
+            )
+        ]
+        output = GenericCompliance(findings, NIST_800_53_REVISION_4_AWS)
+        output._file_descriptor = mock_file
+
+        with patch.object(mock_file, "close", return_value=None):
+            output.batch_write_data_to_file()
+
+        mock_file.seek(0)
+        header, row, _ = mock_file.read().splitlines()
+        cells = dict(zip(header.split(";"), row.split(";")))
+
+        assert cells["STATUSEXTENDED"] == "'=cmd"
+        assert cells["RESOURCEID"] == "-1"
+
     def test_csv_row_count_matches_framework_checks_not_stored_compliance(self):
         """Regression test for PROWLER-1763.
 

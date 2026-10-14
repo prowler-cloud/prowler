@@ -1,4 +1,5 @@
 import tempfile
+from csv import DictReader
 from datetime import datetime
 from io import StringIO, TextIOWrapper
 from typing import List
@@ -130,6 +131,29 @@ class TestCSV:
         content = mock_file.read()
 
         assert content == expected_csv
+
+    def test_csv_write_neutralises_formula_initiators(self):
+        mock_file = StringIO()
+        findings = [
+            generate_finding_output(
+                resource_name='=HYPERLINK("http://attacker.example")',
+                resource_details="-1",
+                resource_tags={"=cmd": "x", "env": "prod"},
+            )
+        ]
+
+        output = CSV(findings)
+        output._file_descriptor = mock_file
+
+        with patch.object(mock_file, "close", return_value=None):
+            output.batch_write_data_to_file()
+
+        mock_file.seek(0)
+        cells = next(DictReader(mock_file, delimiter=";"))
+
+        assert cells["RESOURCE_NAME"] == '\'=HYPERLINK("http://attacker.example")'
+        assert cells["RESOURCE_DETAILS"] == "-1"
+        assert cells["RESOURCE_TAGS"] == "'=cmd=x | env=prod"
 
     def test_batch_write_data_to_file_without_findings(self):
         assert not CSV([])._file_descriptor
