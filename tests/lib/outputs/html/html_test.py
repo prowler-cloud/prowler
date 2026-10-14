@@ -910,6 +910,23 @@ class TestHTML:
         assert "&#x2022;key&amp;&lt;&gt;&#39;&#34;&lt;img" in output_data
         assert "=value&amp;&lt;&gt;&#39;&#34;&lt;img" in output_data
 
+    def test_transform_escapes_compliance(self):
+        xss_payload = '<img src=x onerror="window.PROWLER_COMPLIANCE_XSS=1">'
+        findings = [
+            generate_finding_output(
+                compliance={f"Framework{xss_payload}-1.0": [xss_payload, "1.1"]},
+            )
+        ]
+
+        output_data = HTML(findings).data[0]
+
+        assert xss_payload not in output_data
+        assert (
+            "&#x2022;Framework&lt;img src=x "
+            "onerror=&#34;window.PROWLER_COMPLIANCE_XSS=1&#34;&gt;-1.0: "
+            "&lt;img src=x onerror=&#34;window.PROWLER_COMPLIANCE_XSS=1&#34;&gt;, 1.1"
+        ) in output_data
+
     def test_transform_escapes_metadata_fields(self):
         finding = generate_finding_output()
         finding.metadata.Severity = MagicMock(value='<img data-field="severity" src=x>')
