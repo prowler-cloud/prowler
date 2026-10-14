@@ -79,6 +79,7 @@ def load_csv_files(csv_files):
             sep=";",
             on_bad_lines="skip",
             encoding=encoding_format,
+            encoding_errors=error_action,
             dtype={"ACCOUNTID": str},
         )
         if "CHECKID" in df.columns:

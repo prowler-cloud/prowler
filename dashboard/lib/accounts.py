@@ -3,6 +3,7 @@ import os
 
 import pandas as pd
 
+from dashboard.config import encoding_format, error_action
 from prowler.lib.logger import logger
 
 
@@ -54,6 +55,10 @@ def load_aws_account_names(folder_path: str) -> dict:
                 on_bad_lines="skip",
                 usecols=lambda column: column in columns,
                 dtype=str,
+                # Keep names such as "NA" as text; empty names are dropped later
+                keep_default_na=False,
+                encoding=encoding_format,
+                encoding_errors=error_action,
             )
         except Exception:
             logger.error(f"Error reading file {file}")

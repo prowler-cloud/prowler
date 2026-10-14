@@ -51,6 +51,17 @@ class TestLoadAwsAccountNames:
             "012345678901": "prod-payments"
         }
 
+    def test_keeps_names_that_look_like_missing_values(self, tmp_path):
+        (tmp_path / "scan.csv").write_text(
+            "PROVIDER;ACCOUNT_UID;ACCOUNT_NAME\n"
+            "aws;111111111111;NA\n"
+            "aws;222222222222;N/A\n"
+        )
+        assert load_aws_account_names(str(tmp_path)) == {
+            "111111111111": "NA",
+            "222222222222": "N/A",
+        }
+
     def test_file_without_name_column_is_ignored(self, tmp_path):
         (tmp_path / "scan.csv").write_text(
             "PROVIDER;ACCOUNT_UID;CHECK_ID\naws;111111111111;check_a\n"

@@ -32,7 +32,7 @@ from dashboard.config import (
     muted_pass_color,
     pass_color,
 )
-from dashboard.lib.accounts import build_aws_account_names, format_aws_account_label
+from dashboard.lib.accounts import format_aws_account_label, load_aws_account_names
 from dashboard.lib.cards import create_provider_card
 from dashboard.lib.dropdowns import (
     create_account_dropdown,
@@ -243,7 +243,7 @@ else:
     date_dropdown = create_date_dropdown(assesment_times)
 
     # Cloud Account Dropdown
-    aws_account_names = build_aws_account_names(data)
+    aws_account_names = load_aws_account_names(folder_path_overview)
     accounts = []
     if "ACCOUNT_NAME" in data.columns:
         for account in data["ACCOUNT_NAME"].unique():
