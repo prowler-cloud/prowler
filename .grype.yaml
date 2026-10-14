@@ -51,6 +51,65 @@ ignore:
     package:
       name: golang.org/x/crypto
       version: v0.55.0
+  # Go 1.27.1 and golang.org/x/net v0.59.0 in Trivy 0.75.0, the latest release. Fixed in
+  # Go 1.27.2 and x/net 0.60.0, which only Trivy main has. Almost every entry is an HTTP,
+  # HTTP/2 or TLS server path (or Windows-only), and Trivy runs here only as a client. The
+  # two client-side ones are a DoS from a hostile HTTP/2 peer (CVE-2026-78669) and an
+  # unframed CONNECT body sent through a proxy (CVE-2026-56866); Trivy's only peer is the
+  # TLS-authenticated database registry and it never sends CONNECT with a body. Pinned to
+  # the embedded versions. Remove with the Trivy exception by 2026-11-15.
+  - vulnerability: CVE-2026-56857
+    package:
+      name: stdlib
+      version: go1.27.1
+  - vulnerability: CVE-2026-56866
+    package:
+      name: stdlib
+      version: go1.27.1
+  - vulnerability: CVE-2026-78659
+    package:
+      name: stdlib
+      version: go1.27.1
+  - vulnerability: CVE-2026-78660
+    package:
+      name: stdlib
+      version: go1.27.1
+  - vulnerability: CVE-2026-78663
+    package:
+      name: stdlib
+      version: go1.27.1
+  - vulnerability: CVE-2026-78669
+    package:
+      name: stdlib
+      version: go1.27.1
+  - vulnerability: CVE-2026-94439
+    package:
+      name: stdlib
+      version: go1.27.1
+  - vulnerability: CVE-2026-94440
+    package:
+      name: stdlib
+      version: go1.27.1
+  - vulnerability: CVE-2026-97031
+    package:
+      name: stdlib
+      version: go1.27.1
+  - vulnerability: CVE-2026-78659
+    package:
+      name: golang.org/x/net
+      version: v0.59.0
+  - vulnerability: CVE-2026-78660
+    package:
+      name: golang.org/x/net
+      version: v0.59.0
+  - vulnerability: CVE-2026-78663
+    package:
+      name: golang.org/x/net
+      version: v0.59.0
+  - vulnerability: CVE-2026-78669
+    package:
+      name: golang.org/x/net
+      version: v0.59.0
   - vulnerability: CVE-2026-56852
     package:
       name: golang.org/x/text
@@ -66,6 +125,13 @@ ignore:
   - vulnerability: CVE-2026-26127
     package:
       name: Microsoft.Bcl.Memory
+
+  # Documented in .trivyignore.yaml: ships inside ExchangeOnlineManagement
+  # 3.10.1, the latest gallery release. Re-check on the next EXO release.
+  - vulnerability: CVE-2026-84008
+    package:
+      name: System.Security.Cryptography.Pkcs
+      version: 10.0.0
 
   # The .NET runtime bundled inside the PowerShell tarball the Dockerfile pins.
   # CVE-2026-62901 is the same temporary exception documented in .trivyignore.yaml:

@@ -440,6 +440,28 @@ describe("RegistryExplorer", () => {
     expect(cardFor("AWS guard")).toBeTruthy();
   });
 
+  it("re-renders the page when a refresh reports a lapsed subscription", async () => {
+    // Given
+    const screen = await render(<RegistryExplorer initialState={readyState} />);
+    refreshRegistryCollectionsMock.mockResolvedValue({
+      status: "subscription_required",
+    });
+    // When
+    await screen.getByRole("button", { name: "Refresh Registry" }).click();
+    // Then
+    // The mocked router never swaps the page, so the explorer may refresh again.
+    await expect
+      .poll(() => vi.mocked(registryRouter.refresh).mock.calls.length)
+      .toBeGreaterThanOrEqual(1);
+    expect(vi.mocked(registryRouter.replace)).not.toHaveBeenCalled();
+    await expect
+      .element(screen.getByRole("button", { name: "Refresh Registry" }))
+      .toBeEnabled();
+    expect(document.body.textContent).not.toContain(
+      "Registry could not be refreshed.",
+    );
+  });
+
   it.each(["access_denied", "reconnect", "onboarding"])(
     "honors %s from a collection refresh",
     async (status) => {

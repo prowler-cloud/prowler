@@ -190,6 +190,9 @@ export async function classifyRegistryFailure(
   endpoint: RegistryEndpoint,
   credentialStatus: RegistryCredentialStatus | null,
 ): Promise<RegistryFailureResult> {
+  if (response.status === 402) {
+    return { status: REGISTRY_FAILURE.SUBSCRIPTION_REQUIRED };
+  }
   if (response.status === 401 || response.status === 403) {
     return { status: REGISTRY_FAILURE.ACCESS_DENIED };
   }
@@ -198,15 +201,16 @@ export async function classifyRegistryFailure(
     return { status: REGISTRY_FAILURE.ERROR };
   }
 
+  const code = await getRegistryErrorCode(response);
   if (
     response.status === 409 &&
-    credentialStatus !== null &&
-    !isActiveRegistryCredential(credentialStatus)
+    (code === "registry_credential_not_configured" ||
+      (credentialStatus !== null &&
+        !isActiveRegistryCredential(credentialStatus)))
   ) {
     return { status: REGISTRY_FAILURE.ONBOARDING };
   }
 
-  const code = await getRegistryErrorCode(response);
   if (response.status === 502 && code === REGISTRY_ERROR_CODE.KEY_REJECTED) {
     return { status: REGISTRY_FAILURE.RECONNECT };
   }

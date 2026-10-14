@@ -306,7 +306,7 @@ class Storage(AzureService):
                                 subscription,
                                 resource_uri,
                                 monitor_client.clients[subscription],
-                                raise_on_error=True,
+                                raise_errors=True,
                             ),
                         )
                     except Exception as error:

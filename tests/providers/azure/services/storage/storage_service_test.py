@@ -580,7 +580,7 @@ class Test_Storage_get_services_diagnostic_settings:
             "tableServices",
         ]
         assert all(
-            call.kwargs["raise_on_error"]
+            call.kwargs["raise_errors"]
             for call in monitor_client.diagnostic_settings_with_uri.call_args_list
         )
 

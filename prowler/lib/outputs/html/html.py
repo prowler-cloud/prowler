@@ -116,7 +116,7 @@ class HTML(Output):
                             <td>{str(escape(finding.status_extended)).replace("_", "<wbr />_")}</td>
                             <td><p class="show-read-more">{HTML.process_markdown(str(escape(finding.metadata.Risk)))}</p></td>
                             <td><p class="show-read-more">{HTML.process_markdown(str(escape(finding.metadata.Remediation.Recommendation.Text)))}</p> <a class="read-more" href="{str(escape(_safe_url(finding.metadata.Remediation.Recommendation.Url)))}"><i class="fas fa-external-link-alt"></i></a></td>
-                            <td><p class="show-read-more">{parse_html_string(unroll_dict(finding.compliance, separator=": "))}</p></td>
+                            <td><p class="show-read-more">{parse_html_string(str(escape(unroll_dict(finding.compliance, separator=": "))))}</p></td>
                         </tr>
                         """)
         except Exception as error:

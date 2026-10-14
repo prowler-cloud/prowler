@@ -10,6 +10,7 @@ import { MutedFindingsConfigButton } from "@/components/providers/muted-findings
 import { NoProvidersAdded } from "@/components/providers/no-providers-added";
 import { ProvidersAccountsTable } from "@/components/providers/providers-accounts-table";
 import { ProvidersFilters } from "@/components/providers/providers-filters";
+import { RegistryLogosContext } from "@/components/providers/table/registry-row-logo";
 import { ProviderWizardModal } from "@/components/providers/wizard";
 import type {
   OrgWizardInitialData,
@@ -81,6 +82,8 @@ interface ProvidersAccountsViewProps {
   scanConfigStatus?: ScanConfigurationListStatus;
   isScanLimitReached?: boolean;
   hierarchyStatus?: HierarchyStatus;
+  /** Registry logo per provider type; rows render before it resolves. */
+  registryLogos?: Promise<Record<string, string>>;
 }
 
 export function ProvidersAccountsView({
@@ -95,6 +98,7 @@ export function ProvidersAccountsView({
   scanConfigStatus,
   isScanLimitReached,
   hierarchyStatus = HIERARCHY_STATUS.AVAILABLE,
+  registryLogos,
 }: ProvidersAccountsViewProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -219,18 +223,20 @@ export function ProvidersAccountsView({
               </>
             }
           />
-          <ProvidersAccountsTable
-            isCloud={isCloud}
-            metadata={metadata}
-            rows={rows}
-            scanScheduleCapability={scanScheduleCapability}
-            scanConfigs={scanConfigs}
-            scanConfigStatus={scanConfigStatus}
-            onOpenProviderWizard={(initialData) =>
-              openProviderWizard(WIZARD_OPEN_SOURCE.ROW_ACTION, initialData)
-            }
-            onOpenOrganizationWizard={openOrganizationWizard}
-          />
+          <RegistryLogosContext value={registryLogos ?? null}>
+            <ProvidersAccountsTable
+              isCloud={isCloud}
+              metadata={metadata}
+              rows={rows}
+              scanScheduleCapability={scanScheduleCapability}
+              scanConfigs={scanConfigs}
+              scanConfigStatus={scanConfigStatus}
+              onOpenProviderWizard={(initialData) =>
+                openProviderWizard(WIZARD_OPEN_SOURCE.ROW_ACTION, initialData)
+              }
+              onOpenOrganizationWizard={openOrganizationWizard}
+            />
+          </RegistryLogosContext>
         </div>
       )}
       <ProviderWizardModal
