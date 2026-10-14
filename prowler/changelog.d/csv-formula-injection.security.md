@@ -1,0 +1,1 @@
+CSV outputs (findings, compliance and AWS quick inventory) prefix cells starting with `=`, `+`, `-`, `@`, tab or carriage return with a single quote so spreadsheet applications treat them as text instead of formulas; signed numbers such as `-1` are left untouched
