@@ -640,6 +640,30 @@ jobs:
           flags: prowler-py${{ matrix.python-version }}-e2enetworks
           files: ./e2enetworks_coverage.xml
 
+      # Huawei Cloud Provider
+      - name: Check if Huawei Cloud files changed
+        if: steps.check-changes.outputs.any_changed == 'true'
+        id: changed-huaweicloud
+        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
+        with:
+          files: |
+            ./prowler/**/huaweicloud/**
+            ./tests/**/huaweicloud/**
+            ./uv.lock
+
+      - name: Run Huawei Cloud tests
+        if: steps.changed-huaweicloud.outputs.any_changed == 'true'
+        run: uv run pytest -n auto --cov=./prowler/providers/huaweicloud --cov-report=xml:huaweicloud_coverage.xml tests/providers/huaweicloud
+
+      - name: Upload Huawei Cloud coverage to Codecov
+        if: steps.changed-huaweicloud.outputs.any_changed == 'true'
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        with:
+          flags: prowler-py${{ matrix.python-version }}-huaweicloud
+          files: ./huaweicloud_coverage.xml
+
       # External Provider (dynamic loading)
       - name: Check if External Provider files changed
         if: steps.check-changes.outputs.any_changed == 'true'
