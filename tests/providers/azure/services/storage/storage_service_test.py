@@ -418,6 +418,7 @@ class Test_Storage_get_storage_accounts:
     def test_get_storage_accounts_private_endpoints(
         self, endpoint_properties, resource_group_scoped
     ):
+        """Preserve SDK endpoint shapes and continue to a fixed empty-list control."""
         accounts = []
         for name in ("without-endpoints", "following-account"):
             accounts.append(
@@ -444,6 +445,7 @@ class Test_Storage_get_storage_accounts:
                     }
                 )
             )
+        # A fixed empty-list control proves collection continues after the first account.
         accounts[1].private_endpoint_connections = []
         mock_client = MagicMock()
         mock_client.storage_accounts.list.return_value = accounts
