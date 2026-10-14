@@ -1,0 +1,1 @@
+IaC repository URLs resolving to loopback, private or otherwise non-public hosts rejected before both the connection test and the scan clone, including every destination a redirect points to, with raw errors no longer echoed to the caller or the logs

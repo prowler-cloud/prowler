@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import os
 import sys
 import tempfile
 from os import environ
@@ -55,6 +56,7 @@ from prowler.lib.check.custom_checks_metadata import (
 from prowler.lib.check.models import CheckMetadata
 from prowler.lib.cli.parser import ProwlerArgumentParser
 from prowler.lib.logger import logger, set_logging_config
+from prowler.lib.network.ssrf import SKIP_OUTBOUND_CHECK_ENV
 from prowler.lib.outputs.asff.asff import ASFF
 from prowler.lib.outputs.compliance.asd_essential_eight.asd_essential_eight_aws import (
     ASDEssentialEightAWS,
@@ -236,6 +238,11 @@ def _send_ocsf_to_cloud(file_path: str) -> dict | None:
 
 
 def prowler():
+    # On the CLI the operator supplies the target themselves, so the outbound host
+    # check defends nothing and would refuse their own private network. setdefault,
+    # so an operator who set the variable explicitly keeps their choice.
+    os.environ.setdefault(SKIP_OUTBOUND_CHECK_ENV, "true")
+
     # Parse Arguments
     # Refactor(CLI)
     parser = ProwlerArgumentParser()
