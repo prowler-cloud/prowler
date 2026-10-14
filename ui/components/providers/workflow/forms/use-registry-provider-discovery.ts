@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { getInstalledRegistryProviderOptions } from "@/actions/registry/registry";
 import {
@@ -16,16 +16,21 @@ export function useRegistryProviderDiscovery() {
   );
   const [attempt, setAttempt] = useState(0);
   const [isRetryingDiscovery, setIsRetryingDiscovery] = useState(false);
+  // Initial, retry and artifact-change loads overlap: only the newest applies.
+  const latestRequest = useRef(0);
 
   useEffect(() => {
     if (!isCloud()) return;
     let active = true;
     const load = async () => {
+      const request = ++latestRequest.current;
+      const isCurrent = () => active && request === latestRequest.current;
       try {
         const discovery = await getInstalledRegistryProviderOptions();
-        if (active) setResult(discovery);
+        if (isCurrent()) setResult(discovery);
       } catch {
-        if (active) setResult({ status: REGISTRY_PROVIDER_DISCOVERY.UNKNOWN });
+        if (isCurrent())
+          setResult({ status: REGISTRY_PROVIDER_DISCOVERY.UNKNOWN });
       }
     };
     void load().then(() => {
