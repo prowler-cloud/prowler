@@ -45,6 +45,9 @@ class AIServices(AzureService):
             for sdk_account in sdk_accounts:
                 try:
                     account = self._to_account(sdk_account)
+                    account.monitor_diagnostic_settings = self._get_diagnostic_settings(
+                        subscription, account.id
+                    )
                     accounts[subscription][account.id] = account
                 except Exception as error:
                     logger.error(
@@ -57,7 +60,8 @@ class AIServices(AzureService):
         """Map an SDK account to the Prowler model.
 
         Unset properties follow Azure defaults: public network access on,
-        local (key) authentication on, and Microsoft-managed encryption.
+        local (key) authentication on, Microsoft-managed encryption, no
+        managed identity, and unrestricted outbound access.
 
         Args:
             sdk_account: `azure.mgmt.cognitiveservices.models.Account`.
@@ -81,7 +85,71 @@ class AIServices(AzureService):
                 getattr(encryption, "key_source", None) or MICROSOFT_MANAGED_KEY_SOURCE
             ),
             encryption_key_name=getattr(key_vault_properties, "key_name", None),
+            private_endpoint_connection_statuses=AIServices._private_endpoint_statuses(
+                properties
+            ),
+            identity_type=getattr(getattr(sdk_account, "identity", None), "type", None),
+            restrict_outbound_network_access=bool(
+                getattr(properties, "restrict_outbound_network_access", False)
+            ),
         )
+
+    @staticmethod
+    def _private_endpoint_statuses(properties) -> list[str]:
+        """Get the connection status of each private endpoint on an account.
+
+        Args:
+            properties: `azure.mgmt.cognitiveservices.models.AccountProperties`,
+                or `None`.
+
+        Returns:
+            One status (`Approved`, `Pending`, `Rejected`) per connection that
+            reports one.
+        """
+        statuses = []
+        for connection in (
+            getattr(properties, "private_endpoint_connections", None) or []
+        ):
+            state = getattr(
+                getattr(connection, "properties", None),
+                "private_link_service_connection_state",
+                None,
+            )
+            status = getattr(state, "status", None)
+            if status:
+                statuses.append(status)
+        return statuses
+
+    @staticmethod
+    def _get_diagnostic_settings(subscription: str, account_id: str) -> Optional[list]:
+        """Get the Azure Monitor diagnostic settings of one account.
+
+        Args:
+            subscription: Subscription ID that holds the account.
+            account_id: Account resource ID.
+
+        Returns:
+            The account's `DiagnosticSetting` items, or `None` when they cannot
+            be read.
+        """
+        try:
+            # Imported here because the Monitor client is built from the global
+            # provider at import time; importing this module must not need it.
+            from prowler.providers.azure.services.monitor.monitor_client import (
+                monitor_client,
+            )
+
+            return monitor_client.diagnostic_settings_with_uri(
+                subscription,
+                account_id,
+                monitor_client.clients[subscription],
+                raise_errors=True,
+            )
+        except Exception as error:
+            logger.error(
+                f"Subscription ID: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            return None
 
 
 class Account(BaseModel):
@@ -95,3 +163,9 @@ class Account(BaseModel):
     disable_local_auth: bool
     encryption_key_source: str
     encryption_key_name: Optional[str] = None
+    private_endpoint_connection_statuses: list[str] = []
+    identity_type: Optional[str] = None
+    restrict_outbound_network_access: bool = False
+    # Monitor DiagnosticSetting dataclasses. Left untyped: Pydantic would
+    # re-validate them and reject log entries whose category is None.
+    monitor_diagnostic_settings: Optional[list] = None
