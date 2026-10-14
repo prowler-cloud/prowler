@@ -973,6 +973,20 @@ wheels = [
 ]
 
 [[package]]
+name = "azure-mgmt-cognitiveservices"
+version = "14.1.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "azure-mgmt-core" },
+    { name = "msrest" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/fa/8e/9fcfdd507413a2536c5458b40942705ea8d74fe4e17f05fd1c32bb0225a9/azure_mgmt_cognitiveservices-14.1.0.tar.gz", hash = "sha256:915191374d0adb443863c20aaea2c9f3b9d558a849ac2b78f152249262fdcaf8", size = 184444, upload-time = "2025-10-24T07:28:14.229Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d3/25/ed6bbc01a03991255dd22aa41091360d225f1be20c88710af0f4a6c27459/azure_mgmt_cognitiveservices-14.1.0-py3-none-any.whl", hash = "sha256:3c0eecc00d183842a11d754f4f5c3328ff86f2d6c0a2b81b28dd7e073680258e", size = 290096, upload-time = "2025-10-24T07:28:15.766Z" },
+]
+
+[[package]]
 name = "azure-mgmt-compute"
 version = "34.0.0"
 source = { registry = "https://pypi.org/simple" }
@@ -3789,6 +3803,7 @@ dependencies = [
     { name = "azure-mgmt-apimanagement" },
     { name = "azure-mgmt-applicationinsights" },
     { name = "azure-mgmt-authorization" },
+    { name = "azure-mgmt-cognitiveservices" },
     { name = "azure-mgmt-compute" },
     { name = "azure-mgmt-containerregistry" },
     { name = "azure-mgmt-containerservice" },
@@ -3913,6 +3928,7 @@ requires-dist = [
     { name = "azure-mgmt-apimanagement", specifier = "==5.0.0" },
     { name = "azure-mgmt-applicationinsights", specifier = "==4.1.0" },
     { name = "azure-mgmt-authorization", specifier = "==4.0.0" },
+    { name = "azure-mgmt-cognitiveservices", specifier = "==14.1.0" },
     { name = "azure-mgmt-compute", specifier = "==34.0.0" },
     { name = "azure-mgmt-containerregistry", specifier = "==12.0.0" },
     { name = "azure-mgmt-containerservice", specifier = "==34.1.0" },
