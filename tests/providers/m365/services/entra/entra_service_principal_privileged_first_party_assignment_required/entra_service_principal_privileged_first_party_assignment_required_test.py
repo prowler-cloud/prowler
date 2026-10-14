@@ -114,6 +114,51 @@ class Test_entra_service_principal_privileged_first_party_assignment_required:
             assert "open to all users" in result[0].status_extended
             assert result[0].resource_id == sp_id
 
+    def test_service_principal_assignment_required_false_unknown_enabled_state(self):
+        """accountEnabled unknown, appRoleAssignmentRequired=false: FAIL without claiming it is open."""
+        entra_client = mock.MagicMock()
+        entra_client.audited_tenant = "audited_tenant"
+        entra_client.audited_domain = DOMAIN
+
+        sp_id = str(uuid4())
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_m365_provider(),
+            ),
+            mock.patch(
+                f"{CHECK_MODULE}.entra_client",
+                new=entra_client,
+            ),
+        ):
+            from prowler.providers.m365.services.entra.entra_service_principal_privileged_first_party_assignment_required.entra_service_principal_privileged_first_party_assignment_required import (
+                entra_service_principal_privileged_first_party_assignment_required,
+            )
+
+            entra_client.enterprise_apps_error = None
+            entra_client.audit_config = {
+                "entra_privileged_first_party_app_ids": [TEST_APP_ID],
+            }
+            entra_client.enterprise_apps = {
+                TEST_APP_ID: ServicePrincipal(
+                    id=sp_id,
+                    app_id=TEST_APP_ID,
+                    name=TEST_APP_NAME,
+                    app_role_assignment_required=False,
+                    account_enabled=None,
+                ),
+            }
+
+            check = entra_service_principal_privileged_first_party_assignment_required()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert "enabled state is unknown" in result[0].status_extended
+            assert "open to all users" not in result[0].status_extended
+            assert result[0].resource_id == sp_id
+
     def test_service_principal_exists_assignment_required_false_disabled(self):
         """SP exists, disabled, appRoleAssignmentRequired=false: expected FAIL."""
         entra_client = mock.MagicMock()

@@ -22,8 +22,8 @@ class entra_service_principal_non_microsoft_assignment_required(Check):
     - FAIL: The service principal is enabled and ``appRoleAssignmentRequired``
       is ``False``.
     - MANUAL: The enterprise application list could not be retrieved, or an
-      individual service principal's assignment/enabled state is
-      indeterminate.
+      individual service principal's type, assignment or (when assignment
+      is not required) enabled state is indeterminate.
     """
 
     def execute(self) -> list[CheckReportM365]:
@@ -65,8 +65,11 @@ class entra_service_principal_non_microsoft_assignment_required(Check):
 
         for sp in entra_client.enterprise_apps.values():
             # Only evaluate Application and Legacy types (skip
-            # ManagedIdentity, SocialIdp, and any other types).
-            if sp.service_principal_type not in ("Application", "Legacy"):
+            # ManagedIdentity, SocialIdp, and any other types). An unknown
+            # type is reported as MANUAL below.
+            if sp.service_principal_type is not None and (
+                sp.service_principal_type not in ("Application", "Legacy")
+            ):
                 continue
 
             # Skip Microsoft first-party service principals.
@@ -90,6 +93,16 @@ class entra_service_principal_non_microsoft_assignment_required(Check):
             # When the assignment-required value is indeterminate, or
             # accountEnabled is null while assignment is not required, emit
             # MANUAL for this individual service principal.
+            if sp.service_principal_type is None:
+                report.status = "MANUAL"
+                report.status_extended = (
+                    f"Enterprise application '{sp.name}' (appId {sp.app_id}) "
+                    "has no servicePrincipalType in the Graph response; it "
+                    "cannot be determined whether it is in scope."
+                )
+                findings.append(report)
+                continue
+
             if sp.app_role_assignment_required is None:
                 report.status = "MANUAL"
                 report.status_extended = (
@@ -106,6 +119,14 @@ class entra_service_principal_non_microsoft_assignment_required(Check):
                 report.status_extended = (
                     f"Enterprise application '{sp.name}' (appId {sp.app_id}) "
                     "requires explicit user assignment."
+                )
+            elif sp.account_enabled is None:
+                report.status = "MANUAL"
+                report.status_extended = (
+                    f"Enterprise application '{sp.name}' (appId {sp.app_id}) "
+                    "does not require user assignment, but its accountEnabled "
+                    "state is missing from the Graph response; whether users "
+                    "can sign in to it cannot be determined."
                 )
             elif not sp.account_enabled:
                 # Disabled SPs cannot be signed into, so PASS, but note that

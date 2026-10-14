@@ -136,6 +136,52 @@ class Test_entra_service_principal_non_microsoft_assignment_required:
         assert "does not require user assignment" in result[0].status_extended
         assert "any user in the tenant" in result[0].status_extended
 
+    def test_unknown_enabled_state_assignment_not_required_manual(self):
+        """accountEnabled missing while assignment is not required: MANUAL."""
+        sp_id = str(uuid4())
+        client = self._make_client(
+            enterprise_apps={
+                sp_id: ServicePrincipal(
+                    id=sp_id,
+                    name="Unknown State App",
+                    app_id=str(uuid4()),
+                    app_owner_organization_id=THIRD_PARTY_TENANT_ID,
+                    service_principal_type="Application",
+                    account_enabled=None,
+                    app_role_assignment_required=False,
+                ),
+            }
+        )
+
+        result = self._run_check(client)
+
+        assert len(result) == 1
+        assert result[0].status == "MANUAL"
+        assert "accountEnabled" in result[0].status_extended
+
+    def test_unknown_service_principal_type_manual(self):
+        """servicePrincipalType missing: MANUAL, scope cannot be decided."""
+        sp_id = str(uuid4())
+        client = self._make_client(
+            enterprise_apps={
+                sp_id: ServicePrincipal(
+                    id=sp_id,
+                    name="Untyped App",
+                    app_id=str(uuid4()),
+                    app_owner_organization_id=THIRD_PARTY_TENANT_ID,
+                    service_principal_type=None,
+                    account_enabled=True,
+                    app_role_assignment_required=False,
+                ),
+            }
+        )
+
+        result = self._run_check(client)
+
+        assert len(result) == 1
+        assert result[0].status == "MANUAL"
+        assert "servicePrincipalType" in result[0].status_extended
+
     def test_disabled_sp_assignment_not_required_pass(self):
         """Disabled SP with appRoleAssignmentRequired=False: PASS with advisory."""
         sp_id = str(uuid4())

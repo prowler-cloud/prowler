@@ -2173,11 +2173,20 @@ class TestEnterpriseAppAssignmentSettings:
                     id="sp-1",
                     app_id="app-1",
                     display_name="Contoso App",
-                    app_owner_organization_id="tenant-1",
+                    app_owner_organization_id="Tenant-1",
                     app_role_assignment_required=False,
-                    account_enabled=True,
-                    service_principal_type="Application",
-                )
+                    account_enabled=False,
+                    service_principal_type="Legacy",
+                ),
+                SimpleNamespace(
+                    id="sp-2",
+                    app_id="app-2",
+                    display_name="Unknown State App",
+                    app_owner_organization_id=None,
+                    app_role_assignment_required=True,
+                    account_enabled=None,
+                    service_principal_type=None,
+                ),
             ],
             odata_next_link=None,
         )
@@ -2190,3 +2199,10 @@ class TestEnterpriseAppAssignmentSettings:
         assert service.enterprise_apps_error is None
         assert apps["sp-1"].app_role_assignment_required is False
         assert apps["sp-1"].app_id == "app-1"
+        assert apps["sp-1"].account_enabled is False
+        assert apps["sp-1"].service_principal_type == "Legacy"
+        assert apps["sp-1"].app_owner_organization_id == "tenant-1"
+        # Missing Graph values stay unknown instead of defaulting to enabled.
+        assert apps["sp-2"].account_enabled is None
+        assert apps["sp-2"].service_principal_type is None
+        assert apps["sp-2"].app_owner_organization_id is None

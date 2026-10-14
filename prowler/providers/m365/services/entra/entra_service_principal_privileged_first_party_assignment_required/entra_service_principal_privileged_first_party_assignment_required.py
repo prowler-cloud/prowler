@@ -125,6 +125,14 @@ class entra_service_principal_privileged_first_party_assignment_required(Check):
                         f"is disabled but assignment is not required; it "
                         f"becomes open to all users if re-enabled."
                     )
+                elif sp_info.account_enabled is None:
+                    report.status = "FAIL"
+                    report.status_extended = (
+                        f"Service principal '{display_name}' ({app_id_lower}) "
+                        f"does not require explicit user assignment "
+                        f"(appRoleAssignmentRequired is false); its enabled "
+                        f"state is unknown."
+                    )
                 else:
                     report.status = "FAIL"
                     report.status_extended = (

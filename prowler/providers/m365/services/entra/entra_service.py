@@ -2177,9 +2177,10 @@ OAuthAppInfo
                         name=getattr(sp, "display_name", "") or "",
                         app_id=getattr(sp, "app_id", "") or "",
                         app_owner_organization_id=app_owner_org_id,
-                        account_enabled=getattr(sp, "account_enabled", True),
+                        # Keep missing Graph values as None (unknown).
+                        account_enabled=getattr(sp, "account_enabled", None),
                         service_principal_type=getattr(
-                            sp, "service_principal_type", "Application"
+                            sp, "service_principal_type", None
                         ),
                         app_role_assignment_required=getattr(
                             sp, "app_role_assignment_required", None
@@ -3069,8 +3070,8 @@ class ServicePrincipal(BaseModel):
     password_credentials: List[PasswordCredential] = []
     key_credentials: List[KeyCredential] = []
     directory_role_template_ids: List[str] = []
-    account_enabled: bool = True
-    service_principal_type: str = "Application"
+    account_enabled: Optional[bool] = True
+    service_principal_type: Optional[str] = "Application"
     exchange_mailbox_permissions: List[str] = []
     sp_owner_ids: List[str] = []
     app_owner_ids: List[str] = []
