@@ -30,7 +30,7 @@ class aiservices_account_network_acls_default_action_deny(Check):
                     report.status_extended = (
                         f"{prefix} has public network access disabled."
                     )
-                elif account.network_acls_default_action == "Deny":
+                elif account.network_acls_default_action.lower() == "deny":
                     report.status = "PASS"
                     report.status_extended = f"{prefix} restricts public network access to selected networks."
                 else:

@@ -91,3 +91,10 @@ class Test_aiservices_account_network_acls_default_action_deny:
         assert result[0].resource_id == ACCOUNT_ID
         assert result[0].resource_name == "openai1"
         assert result[0].subscription == AZURE_SUBSCRIPTION_ID
+
+    def test_default_action_deny_case_insensitive(self):
+        result = run_check(
+            {AZURE_SUBSCRIPTION_ID: {ACCOUNT_ID: build_account(True, "deny")}}
+        )
+        assert len(result) == 1
+        assert result[0].status == "PASS"
