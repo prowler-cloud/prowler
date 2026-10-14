@@ -73,14 +73,14 @@ For prices, included resources and per-resource rates, see the [Prowler Cloud pr
   </Step>
 
   <Step title="Click Set up your account">
-    AWS confirms the purchase and shows a **Set up your account** button. Click it. AWS sends your browser to Prowler Cloud with a one-time setup link.
+    AWS confirms the purchase and shows a **Set up your account** button. Click it. AWS sends your browser to Prowler Cloud with a setup link.
 
     <Frame>
       <img src="/images/aws-marketplace/set-up-your-account.png" alt="AWS Marketplace purchase confirmation banner with the Set up your account button" />
     </Frame>
 
     <Note>
-    The setup link is single use and expires quickly: AWS documents roughly one hour, and never more than four. If you close the tab, press back, or need to start over, return to [Manage subscriptions](https://console.aws.amazon.com/marketplace/subscriptions) in the AWS Marketplace console, open **Prowler Cloud**, and click **Set up your account** again to get a fresh link.
+    The setup link expires quickly: AWS documents roughly one hour, and never more than four. If the link expires, you close the tab, or need to start over, return to [Manage subscriptions](https://console.aws.amazon.com/marketplace/subscriptions) in the AWS Marketplace console, open **Prowler Cloud**, and click **Set up your account** again to get a fresh link.
     </Note>
   </Step>
 </Steps>
@@ -177,9 +177,7 @@ Cancelling stops future charges. Usage accrued before the cancellation still app
 
 ### Annual
 
-{/* TODO(cutover): confirm against the production annual listing's offer terms before publishing. AWS's buyer guide says public contracts have no self-service cancel, but the August [DEV] annual test agreements were cancelled from the buyer console. If the real listing allows self-service cancel, replace this subsection with the monthly steps. */}
-
-AWS does not offer self-service cancellation for annual contracts bought through a public listing.
+Open the agreement from [Manage subscriptions](https://console.aws.amazon.com/marketplace/subscriptions) first. If the **Actions** menu shows **Cancel subscription**, follow the monthly steps above. If it does not, AWS does not allow self-service cancellation for that contract:
 
 - **Within 48 hours of purchase**, contact AWS Customer Service. AWS can cancel the contract and refund the full amount, but only if you ask for the refund.
 - **After 48 hours**, contact [support@prowler.com](mailto:support@prowler.com). Prowler starts the cancellation request through AWS Marketplace and you approve it in the AWS Marketplace console. A refund is not automatic. Ask for it when you request the cancellation.
@@ -208,7 +206,7 @@ Each error appears on the Prowler Cloud billing page with the title below. Your 
 
 <AccordionGroup>
   <Accordion title="Your AWS Marketplace link has expired">
-    The one-time setup link from AWS was used or timed out. AWS documents roughly one hour of validity, and never more than four. Submitting the same link twice, for example by pressing back and resending the page, also counts as a reuse.
+    AWS no longer accepts the setup link, usually because it timed out. AWS documents roughly one hour of validity, and never more than four.
 
     Open **Manage subscriptions** in the AWS Marketplace console, open **Prowler Cloud**, and click **Set up your account** to get a fresh link.
 
