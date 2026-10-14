@@ -2167,6 +2167,7 @@ class TestHighRiskDetections:
     def _service(self, send_mock):
         service = Entra.__new__(Entra)
         service.high_risk_detections_error = None
+        service.hidden_risk_level_detections = 0
         service.client = SimpleNamespace(
             identity_protection=SimpleNamespace(
                 with_url=MagicMock(
@@ -2202,6 +2203,26 @@ class TestHighRiskDetections:
 
         assert [d.id for d in detections] == ["detection-1"]
         assert service.high_risk_detections_error is None
+
+    def test_keeps_high_detections_and_counts_hidden_levels(self):
+        page = json.dumps(
+            {
+                "value": [
+                    {"id": "d-high", "riskLevel": "high", "riskState": "atRisk"},
+                    {"id": "d-medium", "riskLevel": "medium", "riskState": "atRisk"},
+                    {"id": "d-hidden", "riskLevel": "hidden", "riskState": "atRisk"},
+                ]
+            }
+        )
+        service = self._service(AsyncMock(return_value=page.encode()))
+
+        detections = asyncio.run(service._get_high_risk_detections())
+
+        assert [d.id for d in detections] == ["d-high"]
+        assert service.hidden_risk_level_detections == 1
+        url = service.client.identity_protection.with_url.call_args[0][0]
+        assert "riskState%20eq%20'atRisk'" in url
+        assert "riskLevel" not in url
 
     def test_empty_first_page_returns_no_detections(self):
         service = self._service(

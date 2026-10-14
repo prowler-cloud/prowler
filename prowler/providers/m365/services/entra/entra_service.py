@@ -96,6 +96,7 @@ class Entra(M365Service):
         self.groups_error: Optional[str] = None
         self.exchange_mailbox_permission_service_principals_error: Optional[str] = None
         self.high_risk_detections_error: Optional[str] = None
+        self.hidden_risk_level_detections: int = 0
         attributes = loop.run_until_complete(
             gather(
                 self._get_authorization_policy(),
@@ -2324,9 +2325,12 @@ OAuthAppInfo
         """Retrieve high-risk Identity Protection risk detections still at risk.
 
         Queries ``identityProtection/riskDetections`` filtered by
-        ``riskLevel eq 'high'`` and ``riskState eq 'atRisk'`` to find
-        detections that have not yet been triaged (remediated, dismissed
-        or confirmed).
+        ``riskState eq 'atRisk'`` to find detections that have not yet been
+        triaged (remediated, dismissed or confirmed), and keeps the ones with
+        ``riskLevel`` ``high``. The level is not used in the filter because
+        tenants without Entra ID P2 receive ``hidden`` instead of the real
+        level; those detections are counted in
+        ``self.hidden_risk_level_detections`` so the check can report MANUAL.
 
         Returns:
             Optional[List[RiskDetection]]: The list of untriaged high-risk
@@ -2338,8 +2342,7 @@ OAuthAppInfo
         try:
             url = (
                 "https://graph.microsoft.com/v1.0/identityProtection/"
-                "riskDetections?$filter=riskLevel%20eq%20'high'%20"
-                "and%20riskState%20eq%20'atRisk'"
+                "riskDetections?$filter=riskState%20eq%20'atRisk'"
             )
             request_info = self.client.identity_protection.with_url(
                 url
@@ -2358,11 +2361,17 @@ OAuthAppInfo
                 data = json.loads(response)
                 page = data.get("value", []) or []
                 for item in page:
+                    risk_level = item.get("riskLevel", "")
+                    if risk_level == "hidden":
+                        self.hidden_risk_level_detections += 1
+                        continue
+                    if risk_level != "high":
+                        continue
                     detections.append(
                         RiskDetection(
                             id=item.get("id", ""),
                             risk_event_type=item.get("riskEventType", ""),
-                            risk_level=item.get("riskLevel", ""),
+                            risk_level=risk_level,
                             risk_state=item.get("riskState", ""),
                             user_principal_name=item.get("userPrincipalName", ""),
                             detected_date_time=item.get("detectedDateTime"),

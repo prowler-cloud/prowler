@@ -28,6 +28,7 @@ class Test_entra_identity_protection_high_risk_detections_triaged:
 
             entra_client.high_risk_detections = []
             entra_client.high_risk_detections_error = None
+            entra_client.hidden_risk_level_detections = 0
 
             check = entra_identity_protection_high_risk_detections_triaged()
             result = check.execute()
@@ -41,6 +42,40 @@ class Test_entra_identity_protection_high_risk_detections_triaged:
             assert result[0].resource_name == "Identity Protection Risk Detections"
             assert result[0].resource_id == DOMAIN
             assert result[0].location == "global"
+
+    def test_hidden_risk_levels_manual(self):
+        """MANUAL when at-risk detections hide their level and none is high."""
+        entra_client = mock.MagicMock()
+        entra_client.audited_tenant = "audited_tenant"
+        entra_client.audited_domain = DOMAIN
+        entra_client.tenant_domain = DOMAIN
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_m365_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.m365.services.entra.entra_identity_protection_high_risk_detections_triaged.entra_identity_protection_high_risk_detections_triaged.entra_client",
+                new=entra_client,
+            ),
+        ):
+            from prowler.providers.m365.services.entra.entra_identity_protection_high_risk_detections_triaged.entra_identity_protection_high_risk_detections_triaged import (
+                entra_identity_protection_high_risk_detections_triaged,
+            )
+
+            entra_client.high_risk_detections = []
+            entra_client.high_risk_detections_error = None
+            entra_client.hidden_risk_level_detections = 2
+
+            check = entra_identity_protection_high_risk_detections_triaged()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "MANUAL"
+            assert "2 detection(s) still at risk have a hidden risk level" in (
+                result[0].status_extended
+            )
 
     def test_detections_present_fail(self):
         """FAIL when there are untriaged high-risk detections."""
@@ -82,6 +117,7 @@ class Test_entra_identity_protection_high_risk_detections_triaged:
                 ),
             ]
             entra_client.high_risk_detections_error = None
+            entra_client.hidden_risk_level_detections = 0
 
             check = entra_identity_protection_high_risk_detections_triaged()
             result = check.execute()
@@ -130,6 +166,7 @@ class Test_entra_identity_protection_high_risk_detections_triaged:
                 for i in range(1, 8)
             ]
             entra_client.high_risk_detections_error = None
+            entra_client.hidden_risk_level_detections = 0
 
             check = entra_identity_protection_high_risk_detections_triaged()
             result = check.execute()
@@ -213,6 +250,7 @@ class Test_entra_identity_protection_high_risk_detections_triaged:
                 ),
             ]
             entra_client.high_risk_detections_error = None
+            entra_client.hidden_risk_level_detections = 0
 
             check = entra_identity_protection_high_risk_detections_triaged()
             result = check.execute()
