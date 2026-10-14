@@ -51,6 +51,65 @@ ignore:
     package:
       name: golang.org/x/crypto
       version: v0.55.0
+  # Go 1.27.1 and golang.org/x/net v0.59.0 in Trivy 0.75.0, the latest release. Fixed in
+  # Go 1.27.2 and x/net 0.60.0, which only Trivy main has. Almost every entry is an HTTP,
+  # HTTP/2 or TLS server path (or Windows-only), and Trivy runs here only as a client. The
+  # two client-side ones are a DoS from a hostile HTTP/2 peer (CVE-2026-78669) and an
+  # unframed CONNECT body sent through a proxy (CVE-2026-56866); Trivy's only peer is the
+  # TLS-authenticated database registry and it never sends CONNECT with a body. Pinned to
+  # the embedded versions. Remove with the Trivy exception by 2026-11-15.
+  - vulnerability: CVE-2026-56857
+    package:
+      name: stdlib
+      version: go1.27.1
+  - vulnerability: CVE-2026-56866
+    package:
+      name: stdlib
+      version: go1.27.1
+  - vulnerability: CVE-2026-78659
+    package:
+      name: stdlib
+      version: go1.27.1
+  - vulnerability: CVE-2026-78660
+    package:
+      name: stdlib
+      version: go1.27.1
+  - vulnerability: CVE-2026-78663
+    package:
+      name: stdlib
+      version: go1.27.1
+  - vulnerability: CVE-2026-78669
+    package:
+      name: stdlib
+      version: go1.27.1
+  - vulnerability: CVE-2026-94439
+    package:
+      name: stdlib
+      version: go1.27.1
+  - vulnerability: CVE-2026-94440
+    package:
+      name: stdlib
+      version: go1.27.1
+  - vulnerability: CVE-2026-97031
+    package:
+      name: stdlib
+      version: go1.27.1
+  - vulnerability: CVE-2026-78659
+    package:
+      name: golang.org/x/net
+      version: v0.59.0
+  - vulnerability: CVE-2026-78660
+    package:
+      name: golang.org/x/net
+      version: v0.59.0
+  - vulnerability: CVE-2026-78663
+    package:
+      name: golang.org/x/net
+      version: v0.59.0
+  - vulnerability: CVE-2026-78669
+    package:
+      name: golang.org/x/net
+      version: v0.59.0
   - vulnerability: CVE-2026-56852
     package:
       name: golang.org/x/text
@@ -126,3 +185,18 @@ ignore:
   - vulnerability: CVE-2026-82049
     package:
       name: python
+
+  # zlib in the Alpine base images of the UI (node:24.18.1-alpine) and MCP
+  # (python:3.13.14-alpine3.23) containers. CVE-2026-85091 is a heap overflow in
+  # gz_vacate() reached only through non-blocking gzwrite() followed by gzprintf() after
+  # a write stall. Node links its own bundled zlib and the MCP server never writes gzip
+  # files, so neither image calls that path. TEMPORARY: the 1.3.2-r1 fix is in the
+  # Alpine index and could be taken with `apk add --upgrade`, but we wait for the base
+  # images to ship it instead (the newest node:24-alpine and python:3.13-alpine3.23 still
+  # carry 1.3.2-r0). Pinned to that version so the rule stops matching on its own once a
+  # base image moves forward. Remove when the base digests are bumped, by 2026-11-07.
+  # https://security.alpinelinux.org/vuln/CVE-2026-85091
+  - vulnerability: CVE-2026-85091
+    package:
+      name: zlib
+      version: 1.3.2-r0
