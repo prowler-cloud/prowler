@@ -29,7 +29,13 @@ class network_rdp_internet_access_restricted(Check):
                         )
                     )
                     and rule.protocol in ["TCP", "Tcp", "*"]
-                    and rule.source_address_prefix in ["Internet", "*", "0.0.0.0/0"]
+                    and any(
+                        source in ["Internet", "*", "0.0.0.0/0"]
+                        for source in [
+                            rule.source_address_prefix,
+                            *(rule.source_address_prefixes or []),
+                        ]
+                    )
                     and rule.access == "Allow"
                     and rule.direction == "Inbound"
                     for rule in security_group.security_rules

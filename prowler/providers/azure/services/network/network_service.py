@@ -1,5 +1,5 @@
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import List, Optional
 
 from azure.core.exceptions import ResourceNotFoundError
@@ -48,6 +48,10 @@ class Network(AzureService):
                                     source_address_prefix=getattr(
                                         rule, "source_address_prefix", ""
                                     ),
+                                    source_address_prefixes=getattr(
+                                        rule, "source_address_prefixes", None
+                                    )
+                                    or [],
                                     access=getattr(rule, "access", "Allow"),
                                     direction=getattr(rule, "direction", "Inbound"),
                                 )
@@ -300,6 +304,7 @@ class SecurityRule:
     source_address_prefix: Optional[str]
     access: Optional[str]
     direction: Optional[str]
+    source_address_prefixes: List[str] = field(default_factory=list)
 
 
 @dataclass
