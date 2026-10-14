@@ -126,6 +126,13 @@ ignore:
     package:
       name: Microsoft.Bcl.Memory
 
+  # Documented in .trivyignore.yaml: ships inside ExchangeOnlineManagement
+  # 3.10.1, the latest gallery release. Re-check on the next EXO release.
+  - vulnerability: CVE-2026-84008
+    package:
+      name: System.Security.Cryptography.Pkcs
+      version: 10.0.0
+
   # The .NET runtime bundled inside the PowerShell tarball the Dockerfile pins.
   # CVE-2026-62901 is the same temporary exception documented in .trivyignore.yaml:
   # fixed in .NET 9.0.19 / 10.0.11 (2026-08-11), but no published PowerShell release
