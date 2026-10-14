@@ -1,0 +1,38 @@
+{
+  "Provider": "azure",
+  "CheckID": "aiservices_account_uses_private_endpoint",
+  "CheckTitle": "AI services account has an approved private endpoint connection",
+  "CheckType": [],
+  "ServiceName": "aiservices",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "microsoft.cognitiveservices/accounts",
+  "ResourceGroup": "ai_ml",
+  "Description": "**Azure AI services accounts** (including **Azure OpenAI** and **Azure AI Foundry**) can be reached through a **private endpoint**, a private IP address in your virtual network. Only connections in the `Approved` state carry traffic; `Pending` and `Rejected` connections do not.",
+  "Risk": "Without an approved private endpoint, clients reach the account over its public endpoint:\n- **Confidentiality**: prompts and completions cross the public internet\n- **Exposure**: the endpoint stays reachable for credential stuffing and key replay\n- **Control**: network-layer controls such as NSGs and private DNS do not apply",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/ai-services/cognitive-services-virtual-networks",
+    "https://learn.microsoft.com/en-us/azure/private-link/private-endpoint-overview"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "az network private-endpoint create --name <private_endpoint_name> --resource-group <resource_group> --vnet-name <vnet_name> --subnet <subnet_name> --private-connection-resource-id <account_resource_id> --group-id account --connection-name <connection_name>",
+      "NativeIaC": "```bicep\n// Private endpoint for an Azure AI services account\nresource privateEndpoint 'Microsoft.Network/privateEndpoints@2023-11-01' = {\n  name: '<example_resource_name>'\n  location: '<location>'\n  properties: {\n    subnet: { id: '<subnet_id>' }\n    privateLinkServiceConnections: [\n      {\n        name: '<example_resource_name>'\n        properties: {\n          privateLinkServiceId: '<account_resource_id>'\n          groupIds: [ 'account' ] // CRITICAL: connects the account through the private endpoint\n        }\n      }\n    ]\n  }\n}\n```",
+      "Other": "1. In the Azure portal, open the AI services account and go to Resource Management > Networking\n2. Select the Private endpoint connections tab and click + Private endpoint\n3. Choose the virtual network and subnet, keep the target sub-resource account, and enable private DNS integration\n4. Approve the connection if it shows Pending, then set Public network access to Disabled",
+      "Terraform": "```hcl\nresource \"azurerm_private_endpoint\" \"<example_resource_name>\" {\n  name                = \"<example_resource_name>\"\n  location            = \"<location>\"\n  resource_group_name = \"<resource_group>\"\n  subnet_id           = azurerm_subnet.<example_resource_name>.id\n\n  private_service_connection {\n    name                           = \"<example_resource_name>\"\n    private_connection_resource_id = azurerm_cognitive_account.<example_resource_name>.id\n    subresource_names              = [\"account\"] # CRITICAL: connects the account through the private endpoint\n    is_manual_connection           = false\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Connect AI services accounts to your virtual network through an **approved private endpoint** with **private DNS** integration. Then disable **public network access** so the public endpoint stops accepting traffic.",
+      "Url": "https://hub.prowler.com/check/aiservices_account_uses_private_endpoint"
+    }
+  },
+  "Categories": [
+    "internet-exposed",
+    "gen-ai"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

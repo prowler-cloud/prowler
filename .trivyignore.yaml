@@ -108,6 +108,23 @@ vulnerabilities:
     purls:
       - "pkg:nuget/System.Security.Cryptography.Xml"
     expired_at: 2027-01-31
+  # Same manifest, pinned to 8.0.4: PowerShell's own copy is also flagged by these CVEs.
+  - id: CVE-2026-96222
+    purls:
+      - "pkg:nuget/System.Security.Cryptography.Xml@8.0.4"
+    expired_at: 2027-01-31
+  - id: CVE-2026-96958
+    purls:
+      - "pkg:nuget/System.Security.Cryptography.Xml@8.0.4"
+    expired_at: 2027-01-31
+  - id: CVE-2026-96959
+    purls:
+      - "pkg:nuget/System.Security.Cryptography.Xml@8.0.4"
+    expired_at: 2027-01-31
+  - id: CVE-2026-96960
+    purls:
+      - "pkg:nuget/System.Security.Cryptography.Xml@8.0.4"
+    expired_at: 2027-01-31
   - id: CVE-2026-13676
     purls:
       - "pkg:npm/fast-uri"
@@ -214,6 +231,16 @@ vulnerabilities:
       - "pkg:golang/stdlib@v1.27.1"
       - "pkg:golang/golang.org/x/net@v0.59.0"
     expired_at: 2026-11-15
+
+  # Unlike the manifest entries above, this DLL ships in the image:
+  # ExchangeOnlineManagement/3.10.1/netCore/System.Security.Cryptography.Pkcs.dll. It is a
+  # DoS in CMS/PKCS parsing; Prowler only feeds it the tenant's own certificate. 3.10.1 is
+  # the latest gallery release, so only Microsoft can update it. Re-check on the next EXO
+  # release.
+  - id: CVE-2026-84008
+    purls:
+      - "pkg:nuget/System.Security.Cryptography.Pkcs@10.0.0"
+    expired_at: 2026-12-15
 
   - id: CVE-2026-56852
     purls:

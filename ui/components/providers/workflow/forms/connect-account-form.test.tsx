@@ -9,6 +9,10 @@ const { addProvider, updateProvider, getInstalledRegistryProviderOptions } =
     getInstalledRegistryProviderOptions: vi.fn(),
   }));
 
+vi.mock("@/hooks/use-auth", () => ({
+  useAuth: () => ({ permissions: { manage_registry: true } }),
+}));
+
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn() }),
 }));
@@ -22,6 +26,8 @@ vi.mock("@/actions/providers/registry-provider", () => ({
 vi.mock("@/actions/registry/registry", () => ({
   getInstalledRegistryProviderOptions,
 }));
+
+import { useCloudUpgradeStore } from "@/store/cloud-upgrade/store";
 
 import { ConnectAccountForm } from "./connect-account-form";
 
@@ -84,6 +90,57 @@ describe("provider account aliases", () => {
 });
 
 describe("Registry provider source tabs", () => {
+  it("explains Registry setup without claiming a connection failure", async () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
+    getInstalledRegistryProviderOptions.mockResolvedValue({
+      status: "onboarding",
+    });
+
+    // When
+    render(<ConnectAccountForm onSuccess={vi.fn()} />);
+
+    // Then
+    expect(
+      await screen.findByText("Registry is not connected yet"),
+    ).toBeVisible();
+    expect(
+      screen.queryByRole("button", { name: "Unlock Registry" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Registry providers could not be loaded"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("offers the Registry paid plan upgrade while keeping built-in providers usable", async () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
+    getInstalledRegistryProviderOptions.mockResolvedValue({
+      status: "subscription_required",
+    });
+    const user = userEvent.setup();
+    useCloudUpgradeStore.getState().closeCloudUpgrade();
+
+    // When
+    render(<ConnectAccountForm onSuccess={vi.fn()} />);
+    await user.click(
+      await screen.findByRole("button", { name: "Unlock Registry" }),
+    );
+
+    // Then
+    expect(useCloudUpgradeStore.getState().activeFeature).toBe("registry");
+    expect(
+      screen.getByRole("option", { name: /Amazon Web Services/ }),
+    ).toBeVisible();
+    expect(
+      screen.queryByText("Registry providers could not be loaded"),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Retry Registry providers" }),
+    ).not.toBeInTheDocument();
+    useCloudUpgradeStore.getState().closeCloudUpgrade();
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
     vi.stubEnv("UI_CLOUD_ENABLED", "true");
