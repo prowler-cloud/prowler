@@ -126,9 +126,9 @@ ignore:
     package:
       name: Microsoft.Bcl.Memory
 
-  # CVE-2026-84008, documented in .trivyignore.yaml: ships inside ExchangeOnlineManagement
+  # Documented in .trivyignore.yaml: ships inside ExchangeOnlineManagement
   # 3.10.1, the latest gallery release. Re-check on the next EXO release.
-  - vulnerability: GHSA-846f-f764-76mx
+  - vulnerability: CVE-2026-84008
     package:
       name: System.Security.Cryptography.Pkcs
       version: 10.0.0
