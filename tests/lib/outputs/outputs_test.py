@@ -1341,3 +1341,24 @@ class TestSanitizeCSVValue:
     @pytest.mark.parametrize("value", ["-1 ", "+1\t", "-1\n"])
     def test_padded_number_is_prefixed(self, value):
         assert sanitize_csv_value(value) == f"'{value}"
+
+    @pytest.mark.parametrize(
+        "payload",
+        [
+            "=cmd|' /C calc'!A0",
+            "+cmd|' /C calc'!A0",
+            "-1+1|cmd|' /C calc'!A0",
+            "@SUM(1+1)*cmd|' /C calc'!A0",
+            "-0x1",
+        ],
+    )
+    def test_formula_payload_is_prefixed(self, payload):
+        assert sanitize_csv_value(payload) == f"'{payload}"
+
+    @pytest.mark.parametrize("value", [" =cmd", "\n=cmd", "  -1+1|cmd", " \n@SUM(1)"])
+    def test_whitespace_before_formula_initiator_is_prefixed(self, value):
+        assert sanitize_csv_value(value) == f"'{value}"
+
+    @pytest.mark.parametrize("value", [" ", "\n", "  text"])
+    def test_whitespace_without_initiator_is_untouched(self, value):
+        assert sanitize_csv_value(value) == value

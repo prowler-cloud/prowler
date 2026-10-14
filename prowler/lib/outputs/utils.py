@@ -206,8 +206,9 @@ def parse_html_string(str: str) -> str:
 
 def sanitize_csv_value(value):
     """Prefix a cell with `'` when a spreadsheet would evaluate it as a formula; numbers are left as they are."""
-    if not isinstance(value, str) or not value.startswith(
-        ("=", "+", "-", "@", "\t", "\r")
+    if not isinstance(value, str) or not (
+        value.startswith(("\t", "\r"))
+        or value.lstrip().startswith(("=", "+", "-", "@"))
     ):
         return value
     try:
