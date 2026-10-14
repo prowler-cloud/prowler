@@ -14,6 +14,8 @@ TEXT_GENERATION_CAPABILITIES = {
     "responses",
     "assistants",
 }
+# Capabilities of models that take no text prompts.
+NON_TEXT_CAPABILITIES = {"embeddings", "imagegenerations"}
 
 
 class aiservices_deployment_content_filter_prompt_shield_enabled(Check):
@@ -27,9 +29,9 @@ class aiservices_deployment_content_filter_prompt_shield_enabled(Check):
         default policy (empty `raiPolicyName`), because Azure does not say
         which policy that is, or when the policy cannot be read.
 
-        Deployments whose capabilities show no text generation (embeddings,
-        transcription, image generation) are skipped. Deployments that report
-        no capabilities are evaluated.
+        Deployments whose capabilities show only non-text models (embeddings,
+        image generation) are skipped. All other deployments are evaluated,
+        including those that report no or unrecognized capabilities.
 
         Returns:
             One finding per evaluated deployment, plus one MANUAL finding per account
@@ -89,12 +91,18 @@ class aiservices_deployment_content_filter_prompt_shield_enabled(Check):
 
 
 def _takes_text_prompts(deployment: Deployment) -> bool:
-    """Return whether a deployment serves a model that takes text prompts."""
-    if not deployment.capabilities:
-        return True
-    return any(
-        name.lower() in TEXT_GENERATION_CAPABILITIES and str(value).lower() == "true"
+    """Return whether a deployment may serve a model that takes text prompts.
+
+    Capabilities are an open map, so only a known non-text capability with no
+    text-generation capability rules a deployment out.
+    """
+    enabled = {
+        name.lower()
         for name, value in deployment.capabilities.items()
+        if str(value).lower() == "true"
+    }
+    return bool(enabled & TEXT_GENERATION_CAPABILITIES) or not (
+        enabled & NON_TEXT_CAPABILITIES
     )
 
 

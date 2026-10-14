@@ -173,12 +173,23 @@ class Test_aiservices_deployment_content_filter_prompt_shield_enabled:
         )
         assert run_check({AZURE_SUBSCRIPTION_ID: {ACCOUNT_ID: account}}) == []
 
-    def test_text_capability_set_to_false_is_skipped(self):
-        account = build_account(
-            rai_policies=policies(jailbreak_filter()),
-            capabilities={"chatCompletion": "false"},
+    def test_unrecognized_capabilities_is_evaluated(self):
+        finding = single(
+            build_account(
+                rai_policies=policies(jailbreak_filter()),
+                capabilities={"realtime": "true", "area": "EUR"},
+            )
         )
-        assert run_check({AZURE_SUBSCRIPTION_ID: {ACCOUNT_ID: account}}) == []
+        assert finding.status == "PASS"
+
+    def test_embeddings_with_text_capability_is_evaluated(self):
+        finding = single(
+            build_account(
+                rai_policies=policies(jailbreak_filter()),
+                capabilities={"embeddings": "true", "chatCompletion": "true"},
+            )
+        )
+        assert finding.status == "PASS"
 
     def test_missing_capabilities_is_evaluated(self):
         finding = single(
