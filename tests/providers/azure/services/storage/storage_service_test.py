@@ -1,11 +1,15 @@
 from unittest.mock import MagicMock, patch
 
+import pytest
+from azure.mgmt.storage.models import StorageAccount
+
 from prowler.providers.azure.services.storage.storage_service import (
     Account,
     BlobProperties,
     DeleteRetentionPolicy,
     FileServiceProperties,
     NetworkRuleSet,
+    PrivateEndpointConnection,
     SMBProtocolSettings,
     Storage,
 )
@@ -392,6 +396,113 @@ class Test_Storage_Service_Retention_Policy_None_Handling:
 
 
 class Test_Storage_get_storage_accounts:
+    @pytest.mark.parametrize(
+        "endpoint_properties",
+        [
+            {},
+            {"privateEndpointConnections": None},
+            {"privateEndpointConnections": []},
+            {
+                "privateEndpointConnections": [
+                    {
+                        "id": "endpoint-id",
+                        "name": "endpoint-name",
+                        "type": "Microsoft.Storage/storageAccounts/privateEndpointConnections",
+                    }
+                ]
+            },
+        ],
+        ids=["omitted", "null", "empty", "populated"],
+    )
+    @pytest.mark.parametrize("resource_group_scoped", [False, True])
+    def test_get_storage_accounts_private_endpoints(
+        self, endpoint_properties, resource_group_scoped
+    ):
+        accounts = []
+        for name in ("without-endpoints", "following-account"):
+            accounts.append(
+                StorageAccount.deserialize(
+                    {
+                        "id": f"/subscriptions/{AZURE_SUBSCRIPTION_ID}/resourceGroups/{RESOURCE_GROUP}/providers/Microsoft.Storage/storageAccounts/{name}",
+                        "name": name,
+                        "location": "westeurope",
+                        "sku": {"name": "Standard_LRS"},
+                        "properties": {
+                            "supportsHttpsTrafficOnly": True,
+                            "allowBlobPublicAccess": False,
+                            "minimumTlsVersion": "TLS1_2",
+                            "networkAcls": {
+                                "bypass": "AzureServices",
+                                "defaultAction": "Deny",
+                            },
+                            "encryption": {
+                                "keySource": "Microsoft.Storage",
+                                "requireInfrastructureEncryption": False,
+                            },
+                            **endpoint_properties,
+                        },
+                    }
+                )
+            )
+        accounts[1].private_endpoint_connections = []
+        mock_client = MagicMock()
+        mock_client.storage_accounts.list.return_value = accounts
+        mock_client.storage_accounts.list_by_resource_group.return_value = accounts
+
+        with (
+            patch.object(Storage, "_get_storage_accounts", return_value={}),
+            patch.object(Storage, "_get_blob_properties"),
+            patch.object(Storage, "_get_file_share_properties"),
+        ):
+            storage = Storage(set_mocked_azure_provider())
+
+        storage.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+        storage.resource_groups = (
+            {AZURE_SUBSCRIPTION_ID: [RESOURCE_GROUP]} if resource_group_scoped else None
+        )
+
+        result = storage._get_storage_accounts()[AZURE_SUBSCRIPTION_ID]
+
+        assert [account.name for account in result] == [
+            "without-endpoints",
+            "following-account",
+        ]
+        assert result[0].private_endpoint_connections == [
+            PrivateEndpointConnection(
+                id=endpoint.id, name=endpoint.name, type=endpoint.type
+            )
+            for endpoint in (accounts[0].private_endpoint_connections or [])
+        ]
+        assert result[1].private_endpoint_connections == []
+        assert result[0].id == accounts[0].id
+        assert result[0].resouce_group_name == RESOURCE_GROUP
+        assert result[0].location == "westeurope"
+
+        storage.storage_accounts = {AZURE_SUBSCRIPTION_ID: result}
+        with (
+            patch(
+                "prowler.providers.azure.services.storage.storage_service.Storage",
+                return_value=MagicMock,
+            ),
+            patch(
+                "prowler.providers.azure.services.storage.storage_ensure_private_endpoints_in_storage_accounts.storage_ensure_private_endpoints_in_storage_accounts.storage_client",
+                new=storage,
+            ),
+        ):
+            from prowler.providers.azure.services.storage.storage_ensure_private_endpoints_in_storage_accounts.storage_ensure_private_endpoints_in_storage_accounts import (
+                storage_ensure_private_endpoints_in_storage_accounts,
+            )
+
+            findings = storage_ensure_private_endpoints_in_storage_accounts().execute()
+
+        assert [finding.status for finding in findings] == [
+            "PASS" if result[0].private_endpoint_connections else "FAIL",
+            "FAIL",
+        ]
+        assert [finding.resource_id for finding in findings] == [
+            account.id for account in accounts
+        ]
+
     def test_get_storage_accounts_no_resource_groups(self):
         mock_client = MagicMock()
         mock_client.storage_accounts = MagicMock()
