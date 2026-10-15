@@ -1229,6 +1229,20 @@ wheels = [
 ]
 
 [[package]]
+name = "azure-mgmt-cognitiveservices"
+version = "14.1.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "azure-mgmt-core" },
+    { name = "msrest" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/fa/8e/9fcfdd507413a2536c5458b40942705ea8d74fe4e17f05fd1c32bb0225a9/azure_mgmt_cognitiveservices-14.1.0.tar.gz", hash = "sha256:915191374d0adb443863c20aaea2c9f3b9d558a849ac2b78f152249262fdcaf8", size = 184444, upload-time = "2025-10-24T07:28:14.229Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d3/25/ed6bbc01a03991255dd22aa41091360d225f1be20c88710af0f4a6c27459/azure_mgmt_cognitiveservices-14.1.0-py3-none-any.whl", hash = "sha256:3c0eecc00d183842a11d754f4f5c3328ff86f2d6c0a2b81b28dd7e073680258e", size = 290096, upload-time = "2025-10-24T07:28:15.766Z" },
+]
+
+[[package]]
 name = "azure-mgmt-compute"
 version = "34.0.0"
 source = { registry = "https://pypi.org/simple" }
@@ -3503,6 +3517,17 @@ wheels = [
 ]
 
 [[package]]
+name = "huaweicloudsdksmn"
+version = "3.1.204"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "huaweicloudsdkcore" },
+]
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e9/5d/c0de47d011f1932c9c0ddf669c238d9fad01653d438d38203703526799d7/huaweicloudsdksmn-3.1.204-py3-none-any.whl", hash = "sha256:b0818ea9293e27458c8fa1d2da021c98006cbf9ce01cf17a0f1df598c4da3a6c", size = 323674, upload-time = "2026-07-09T09:04:24.804Z" },
+]
+
+[[package]]
 name = "huaweicloudsdkvpc"
 version = "3.1.204"
 source = { registry = "https://pypi.org/simple" }
@@ -4203,7 +4228,7 @@ wheels = [
 
 [package.optional-dependencies]
 broker = [
-    { name = "pymsalruntime" },
+    { name = "pymsalruntime", marker = "sys_platform == 'win32'" },
 ]
 
 [[package]]
@@ -4836,8 +4861,8 @@ wheels = [
 
 [[package]]
 name = "prowler"
-version = "5.41.0"
-source = { git = "https://github.com/prowler-cloud/prowler.git?rev=master#f05a490cd74a2c0f11a5d66d8ce29d03fa5c64a2" }
+version = "5.45.0"
+source = { git = "https://github.com/prowler-cloud/prowler.git?rev=v5.45#9b56a3b657ef72c456a50ae9c9a0b044ce81dd5c" }
 dependencies = [
     { name = "alibabacloud-actiontrail20200706" },
     { name = "alibabacloud-credentials" },
@@ -4858,6 +4883,7 @@ dependencies = [
     { name = "azure-mgmt-apimanagement" },
     { name = "azure-mgmt-applicationinsights" },
     { name = "azure-mgmt-authorization" },
+    { name = "azure-mgmt-cognitiveservices" },
     { name = "azure-mgmt-compute" },
     { name = "azure-mgmt-containerregistry" },
     { name = "azure-mgmt-containerservice" },
@@ -4901,6 +4927,7 @@ dependencies = [
     { name = "huaweicloudsdkkms" },
     { name = "huaweicloudsdkobs" },
     { name = "huaweicloudsdkrds" },
+    { name = "huaweicloudsdksmn" },
     { name = "huaweicloudsdkvpc" },
     { name = "huaweicloudsdkwaf" },
     { name = "jsonschema" },
@@ -5039,7 +5066,7 @@ requires-dist = [
     { name = "matplotlib", specifier = "==3.10.8" },
     { name = "neo4j", specifier = "==6.1.0" },
     { name = "openai", specifier = "==1.109.1" },
-    { name = "prowler", git = "https://github.com/prowler-cloud/prowler.git?rev=master" },
+    { name = "prowler", git = "https://github.com/prowler-cloud/prowler.git?rev=v5.45" },
     { name = "psycopg2-binary", specifier = "==2.9.9" },
     { name = "pytest-celery", extras = ["redis"], specifier = "==1.3.0" },
     { name = "reportlab", specifier = "==4.4.10" },
