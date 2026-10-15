@@ -62,6 +62,12 @@ class ECR(AWSService):
                                 immutability=repository.get(
                                     "imageTagMutability", "MUTABLE"
                                 ),
+                                encryption_type=repository.get(
+                                    "encryptionConfiguration", {}
+                                ).get("encryptionType", "AES256"),
+                                kms_key=repository.get(
+                                    "encryptionConfiguration", {}
+                                ).get("kmsKey"),
                                 policy=None,
                                 images_details=[],
                                 lifecycle_policy=None,
@@ -545,6 +551,8 @@ class Repository(BaseModel):
     registry_id = str
     scan_on_push: bool
     immutability: Optional[str]
+    encryption_type: str = "AES256"
+    kms_key: Optional[str] = None
     policy: Optional[dict]
     images_details: Optional[list[ImageDetails]]
     lifecycle_policy: Optional[str]
