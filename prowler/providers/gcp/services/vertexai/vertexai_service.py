@@ -40,6 +40,14 @@ class VertexAI(GCPService):
                         self.workbench_instances.append(
                             self._parse_workbench_instance(instance, project_id)
                         )
+                    # The wildcard list reports locations it could not reach
+                    # instead of raising, so the project was not fully scanned.
+                    unreachable = response.get("unreachable", [])
+                    if unreachable:
+                        self.workbench_instances_lookup_failed.add(project_id)
+                        logger.error(
+                            f"{project_id} -- Workbench instances could not be listed in unreachable locations: {', '.join(unreachable)}"
+                        )
                     request = instances.list_next(
                         previous_request=request, previous_response=response
                     )
