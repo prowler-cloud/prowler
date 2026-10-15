@@ -18,9 +18,9 @@
   ],
   "Remediation": {
     "Code": {
-      "CLI": "gcloud workbench instances create <example_resource_name> --location=<example_zone> --disable-public-ip",
+      "CLI": "curl -X PATCH -H \"Authorization: Bearer $(gcloud auth print-access-token)\" -H \"Content-Type: application/json\" -d '{\"gceSetup\": {\"disablePublicIp\": true}}' \"https://notebooks.googleapis.com/v2/projects/<example_project_id>/locations/<example_zone>/instances/<example_resource_name>?updateMask=gceSetup.disable_public_ip\"",
       "NativeIaC": "",
-      "Other": "The public IP setting cannot be changed after creation.\n1. In Google Cloud Console, go to Vertex AI > Workbench > Instances\n2. Click Create new, then Advanced options\n3. In Networking, select a VPC network and subnetwork with Private Google Access or Cloud NAT\n4. Clear Assign external IP address\n5. Click Create, migrate notebooks and data, then delete the old instance",
+      "Other": "Update the existing instance in place; `gcloud workbench instances update` has no public IP flag, so use the Notebooks API.\n1. Confirm the instance subnetwork has Private Google Access or Cloud NAT, so the notebook keeps access to Google APIs and package repositories\n2. Call `instances.patch` with `updateMask=gceSetup.disable_public_ip` and `gceSetup.disablePublicIp` set to `true`, as in the CLI command\n3. Wait for the returned operation to finish, then confirm in Compute Engine > VM instances that the instance VM has no external IP\n4. Only if the update is rejected, create a new instance with `gcloud workbench instances create --disable-public-ip`, migrate notebooks and data, and delete the old instance",
       "Terraform": "```hcl\nresource \"google_workbench_instance\" \"<example_resource_name>\" {\n  name     = \"<example_resource_name>\"\n  location = \"<example_zone>\"\n\n  gce_setup {\n    disable_public_ip = true # FIX: No external IP is assigned to the notebook VM\n\n    network_interfaces {\n      network = \"<example_network_id>\"\n      subnet  = \"<example_subnet_id>\"\n    }\n  }\n}\n```"
     },
     "Recommendation": {
