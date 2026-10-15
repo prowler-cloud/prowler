@@ -117,7 +117,7 @@ jobs:
           fi
           echo "Branch $BRANCH_NAME does not exist, creating it from master ($MASTER_SHA)..."
           gh api --method POST "repos/${GITHUB_REPOSITORY}/git/refs" -f ref="refs/heads/${BRANCH_NAME}" -f sha="${MASTER_SHA}"
-          git fetch origin "+refs/heads/${BRANCH_NAME}:refs/remotes/origin/${BRANCH_NAME}"
+          git update-ref "refs/remotes/origin/${BRANCH_NAME}" "$MASTER_SHA"
           git checkout -b "$BRANCH_NAME" "origin/$BRANCH_NAME"
         else
           echo "ERROR: Branch $BRANCH_NAME does not exist. For patch releases (X.Y.Z), the branch should already exist."
