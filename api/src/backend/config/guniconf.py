@@ -53,7 +53,7 @@ preload_app = not DEBUG
 # that may take longer, such as complex API operations.
 timeout = env.int("GUNICORN_TIMEOUT", default=120)
 
-# Recycle workers after N requests (+ jitter) to cap memory growth. 0 disables.
+# Recycle workers after N requests (+ jitter) to cap memory growth. GUNICORN_MAX_REQUESTS=0 disables.
 max_requests = env.int("GUNICORN_MAX_REQUESTS", default=10000)
 max_requests_jitter = env.int("GUNICORN_MAX_REQUESTS_JITTER", default=1000)
 
