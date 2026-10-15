@@ -7,14 +7,20 @@ from prowler.providers.aws.services.cloudtrail.cloudtrail_client import (
 def fixer(region):
     """
     NOTE: Define the S3 bucket name in the fixer_config.yaml file.
-    Enable CloudTrail in a region. Requires the cloudtrail:CreateTrail permission.
+    Enable CloudTrail in a region. Creates the trail and starts logging on it,
+    since a trail created through the API does not deliver events until
+    StartLogging is called.
+    Requires the cloudtrail:CreateTrail and cloudtrail:StartLogging permissions.
     Permissions:
     {
         "Version": "2012-10-17",
         "Statement": [
             {
                 "Effect": "Allow",
-                "Action": "cloudtrail:CreateTrail",
+                "Action": [
+                    "cloudtrail:CreateTrail",
+                    "cloudtrail:StartLogging"
+                ],
                 "Resource": "*"
             }
         ]
@@ -50,6 +56,7 @@ def fixer(region):
         if cloudtrail_fixer_config.get("KmsKeyId"):
             args["KmsKeyId"] = cloudtrail_fixer_config.get("KmsKeyId")
         regional_client.create_trail(**args)
+        regional_client.start_logging(Name=args["Name"])
     except Exception as error:
         logger.error(
             f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
