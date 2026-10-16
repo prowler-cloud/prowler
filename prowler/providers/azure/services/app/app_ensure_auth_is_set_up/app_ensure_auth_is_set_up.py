@@ -13,7 +13,22 @@ class app_ensure_auth_is_set_up(Check):
             subscription_name = app_client.subscriptions.get(
                 subscription_id, subscription_id
             )
+            if any(app.auth_enabled is None for app in apps.values()):
+                report = Check_Report_Azure(metadata=self.metadata(), resource={})
+                report.subscription = subscription_id
+                report.resource_name = subscription_name
+                report.resource_id = f"/subscriptions/{subscription_id}"
+                report.status = "MANUAL"
+                report.status_extended = (
+                    f"App authentication settings could not be retrieved for one or more apps "
+                    f"in subscription '{subscription_name} ({subscription_id})'. "
+                    "Verify Microsoft.Web/sites/config/list/Action access and retry the scan."
+                )
+                findings.append(report)
+
             for app in apps.values():
+                if app.auth_enabled is None:
+                    continue
                 report = Check_Report_Azure(metadata=self.metadata(), resource=app)
                 report.subscription = subscription_id
                 report.status = "PASS"
