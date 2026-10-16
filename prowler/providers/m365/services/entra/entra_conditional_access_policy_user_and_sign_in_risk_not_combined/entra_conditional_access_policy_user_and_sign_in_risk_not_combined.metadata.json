@@ -1,0 +1,44 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_conditional_access_policy_user_and_sign_in_risk_not_combined",
+  "CheckTitle": "Conditional Access ensures user risk and sign-in risk are enforced in separate policies",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "Conditional Access policies that set both **user risk** and **sign-in risk** conditions combine them with AND logic, so the policy only applies when both risks are present simultaneously.\n\nThis leaves most risk events uncovered. Microsoft recommends creating **separate policies** for user risk and sign-in risk to ensure each risk type is independently enforced.",
+  "Risk": "A policy that combines user risk and sign-in risk only triggers when **both** conditions are true at the same time. A compromised user signing in without a risky sign-in, or a risky sign-in from a low-risk user, bypasses the policy entirely.\n\nAdministrators may believe Identity Protection is enforced while most risk events remain unmitigated.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/entra/id-protection/howto-identity-protection-configure-risk-policies",
+    "https://learn.microsoft.com/entra/identity/conditional-access/policy-risk-based-user",
+    "https://learn.microsoft.com/entra/identity/conditional-access/policy-risk-based-sign-in",
+    "https://maester.dev/docs/tests/MT.1049"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to the **Microsoft Entra admin center** at https://entra.microsoft.com/\n2. Go to **Protection** > **Conditional Access** > **Policies**\n3. Select the policy that combines both risk conditions\n4. Under **Conditions**, remove one of the risk conditions (keep only **User risk** or only **Sign-in risk**)\n5. Create a **new policy** for the removed risk type using the recommended templates: *Require password change for high-risk users* or *Require MFA for elevated sign-in risk*\n6. Validate in **Report-only** mode, then switch to **On**",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Configure **separate Conditional Access policies** for user risk and sign-in risk. Because all conditions in a policy are ANDed, combining both risk types in one policy creates a gap where individual risk events are not covered. Use Microsoft's risk-based policy templates to ensure each risk type is independently enforced.",
+      "Url": "https://hub.prowler.com/check/entra_conditional_access_policy_user_and_sign_in_risk_not_combined"
+    }
+  },
+  "Categories": [
+    "identity-access",
+    "e5"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "entra_identity_protection_user_risk_enabled",
+    "entra_identity_protection_sign_in_risk_enabled",
+    "entra_conditional_access_policy_block_high_medium_sign_in_risk"
+  ],
+  "Notes": "Inspired by Maester control MT.1049. Report-only policies are also evaluated because they are misconfigured and will be ineffective once enforced. Requires Entra ID P2 for risk conditions."
+}
