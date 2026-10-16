@@ -616,6 +616,30 @@ jobs:
           flags: prowler-py${{ matrix.python-version }}-linode
           files: ./linode_coverage.xml
 
+      # Snowflake Provider
+      - name: Check if Snowflake files changed
+        if: steps.check-changes.outputs.any_changed == 'true'
+        id: changed-snowflake
+        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
+        with:
+          files: |
+            ./prowler/**/snowflake/**
+            ./tests/**/snowflake/**
+            ./uv.lock
+
+      - name: Run Snowflake tests
+        if: steps.changed-snowflake.outputs.any_changed == 'true'
+        run: uv run pytest -n auto --cov=./prowler/providers/snowflake --cov-report=xml:snowflake_coverage.xml tests/providers/snowflake
+
+      - name: Upload Snowflake coverage to Codecov
+        if: steps.changed-snowflake.outputs.any_changed == 'true'
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        with:
+          flags: prowler-py${{ matrix.python-version }}-snowflake
+          files: ./snowflake_coverage.xml
+
       # E2E Networks Provider
       - name: Check if E2E Networks files changed
         if: steps.check-changes.outputs.any_changed == 'true'

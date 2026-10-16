@@ -1,0 +1,48 @@
+---
+title: 'Getting Started With Snowflake on Prowler'
+---
+
+import { VersionBadge } from "/snippets/version-badge.mdx"
+
+<VersionBadge version="5.40.0" />
+
+Prowler for Snowflake assesses how users authenticate to a Snowflake account, including multi-factor authentication coverage.
+
+<Note>
+Snowflake support in Prowler is community-maintained. For commercial support or to request additional service coverage, [contact us](https://prowler.com/contact).
+</Note>
+
+## Prerequisites
+
+Set up authentication for Snowflake with the [Snowflake Authentication](/user-guide/providers/snowflake/authentication) guide before starting:
+
+- Create a `TYPE = SERVICE` user with an RSA key pair
+- Grant its role `IMPORTED PRIVILEGES ON DATABASE SNOWFLAKE` and usage on a warehouse
+
+## Prowler CLI
+
+### Run Prowler for Snowflake
+
+```bash
+prowler snowflake
+```
+
+### Run a specific check
+
+```bash
+prowler snowflake --check users_mfa_enabled
+```
+
+### List available checks
+
+```bash
+prowler snowflake --list-checks
+```
+
+## What is scanned
+
+Every statement Prowler runs against Snowflake is a `SELECT` against the `SNOWFLAKE.ACCOUNT_USAGE` schema. There is no write path, and no table in your own databases is read.
+
+| Service | Description |
+|---------|-------------|
+| `users` | User authentication posture, including multi-factor authentication coverage |

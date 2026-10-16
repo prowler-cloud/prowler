@@ -1163,6 +1163,39 @@ class CheckReportLinode(Check_Report):
 
 
 @dataclass
+class CheckReportSnowflake(Check_Report):
+    """Contains the Snowflake Check's finding information."""
+
+    resource_name: str
+    resource_id: str
+    region: str
+
+    def __init__(
+        self,
+        metadata: Dict,
+        resource: Any,
+        resource_name: str,
+        resource_id: str,
+        region: str = "global",
+    ) -> None:
+        """Initialize the Snowflake Check's finding information.
+
+        Args:
+            metadata: The metadata of the check.
+            resource: Basic information about the resource.
+            resource_name: The name of the resource related with the finding.
+            resource_id: The id of the resource related with the finding.
+            region: The region of the resource related with the finding. Snowflake
+                resources are account-scoped rather than regional, so this defaults to
+                "global".
+        """
+        super().__init__(metadata, resource)
+        self.resource_name = resource_name
+        self.resource_id = resource_id
+        self.region = region
+
+
+@dataclass
 class CheckReportM365(Check_Report):
     """Contains the M365 Check's finding information."""
 

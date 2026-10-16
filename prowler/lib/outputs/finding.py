@@ -480,6 +480,23 @@ class Finding(BaseModel):
                 output_data["resource_uid"] = check_output.resource_id
                 output_data["region"] = check_output.region
 
+            elif provider.type == "snowflake":
+                output_data["auth_method"] = "key_pair"
+                # The account locator read from the account itself is preferred over the
+                # identifier supplied on the command line, so a finding always names the
+                # account actually scanned.
+                output_data["account_uid"] = (
+                    get_nested_attribute(provider, "identity.account_locator")
+                    or get_nested_attribute(provider, "identity.account")
+                    or "snowflake"
+                )
+                output_data["account_name"] = get_nested_attribute(
+                    provider, "identity.account"
+                )
+                output_data["resource_name"] = check_output.resource_name
+                output_data["resource_uid"] = check_output.resource_id
+                output_data["region"] = check_output.region
+
             elif provider.type == "linode":
                 output_data["auth_method"] = "api_token"
                 # account_uid is a required string, but the account ID may be

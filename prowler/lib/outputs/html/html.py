@@ -1787,6 +1787,77 @@ class HTML(Output):
             return ""
 
     @staticmethod
+    def get_snowflake_assessment_summary(provider: Provider) -> str:
+        """
+        get_snowflake_assessment_summary gets the HTML assessment summary for the Snowflake provider
+
+        Args:
+            provider (Provider): the Snowflake provider object
+
+        Returns:
+            str: HTML assessment summary for the Snowflake provider
+        """
+        try:
+            account = getattr(provider.identity, "account", None) or "-"
+            account_locator = getattr(provider.identity, "account_locator", None) or "-"
+            region = getattr(provider.identity, "region", None) or "-"
+            user = getattr(provider.identity, "user", None) or "-"
+            role = getattr(provider.identity, "role", None) or "-"
+
+            account = escape(str(account))
+            account_locator = escape(str(account_locator))
+            region = escape(str(region))
+            user = escape(str(user))
+            role = escape(str(role))
+
+            assessment_items = f"""
+                            <li class="list-group-item">
+                                <b>Account:</b> {account}
+                            </li>
+                            <li class="list-group-item">
+                                <b>Account Locator:</b> {account_locator}
+                            </li>
+                            <li class="list-group-item">
+                                <b>Region:</b> {region}
+                            </li>"""
+
+            credentials_items = f"""
+                            <li class="list-group-item">
+                                <b>Authentication:</b> Key-pair (RSA)
+                            </li>
+                            <li class="list-group-item">
+                                <b>User:</b> {user}
+                            </li>
+                            <li class="list-group-item">
+                                <b>Role:</b> {role}
+                            </li>"""
+
+            return f"""
+                <div class="col-md-2">
+                    <div class="card">
+                        <div class="card-header">
+                            Snowflake Assessment Summary
+                        </div>
+                        <ul class="list-group list-group-flush">{assessment_items}
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            Snowflake Credentials
+                        </div>
+                        <ul class="list-group list-group-flush">{credentials_items}
+                        </ul>
+                    </div>
+                </div>"""
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+            )
+            return ""
+
+    @staticmethod
     def get_huaweicloud_assessment_summary(provider: Provider) -> str:
         """
         get_huaweicloud_assessment_summary gets the HTML assessment summary for the Huawei Cloud provider
