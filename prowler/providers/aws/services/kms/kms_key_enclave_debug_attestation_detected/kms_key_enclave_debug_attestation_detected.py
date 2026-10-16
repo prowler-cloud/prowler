@@ -15,6 +15,9 @@ from prowler.providers.aws.services.kms.lib.enclave import (
     resolve_kms_key_resource,
     synthetic_account_kms_resource,
 )
+from prowler.providers.aws.services.kms.lib.inventory import (
+    get_kms_inventory_error_reports,
+)
 
 
 class kms_key_enclave_debug_attestation_detected(Check):
@@ -50,7 +53,7 @@ class kms_key_enclave_debug_attestation_detected(Check):
         Returns:
             list[Check_Report_AWS]: one report per KMS key evaluated.
         """
-        findings = []
+        findings = get_kms_inventory_error_reports(self.metadata(), kms_client)
 
         lookback_hours = kms_client.audit_config.get(
             ENCLAVE_DEBUG_CONFIG_LOOKBACK_KEY,
@@ -81,7 +84,8 @@ class kms_key_enclave_debug_attestation_detected(Check):
             list(cloudtrail_client.trails.values()) if cloudtrail_client.trails else []
         )
         if not trails:
-            return self._emit_no_trail_manual(target_key_ids)
+            findings.extend(self._emit_no_trail_manual(target_key_ids))
+            return findings
 
         # LookupEvents is a per-region API even for multi-region trails, so
         # iterate over every audited region. A multi-region trail in us-east-1
