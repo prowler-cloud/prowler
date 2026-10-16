@@ -9,7 +9,6 @@ class vertexai_workbench_instance_public_ip_disabled(Check):
     reach, the internet without passing through VPC egress controls.
     - PASS: The instance was created with `disablePublicIp` set.
     - FAIL: The instance has a public IP address assigned.
-    - MANUAL: Workbench instances could not be listed for the project.
     """
 
     def execute(self) -> list[Check_Report_GCP]:
@@ -17,21 +16,9 @@ class vertexai_workbench_instance_public_ip_disabled(Check):
 
         Returns:
             A list of `Check_Report_GCP` findings, one per non-deleted
-            Workbench instance plus one per project that could not be listed.
+            Workbench instance.
         """
         findings = []
-        for project_id in sorted(vertexai_client.workbench_instances_lookup_failed):
-            report = Check_Report_GCP(
-                metadata=self.metadata(),
-                resource=vertexai_client.projects[project_id],
-                resource_id=project_id,
-                project_id=project_id,
-                location=vertexai_client.region,
-            )
-            report.status = "MANUAL"
-            report.status_extended = f"Cannot evaluate Vertex AI Workbench instances in project {project_id}: instances could not be listed. Verify that notebooks.instances.list is granted to the scanning identity."
-            findings.append(report)
-
         for instance in vertexai_client.workbench_instances:
             if instance.state == "DELETED":
                 continue

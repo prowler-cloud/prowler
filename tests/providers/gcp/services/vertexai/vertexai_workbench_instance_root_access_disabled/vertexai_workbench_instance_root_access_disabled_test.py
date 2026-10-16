@@ -15,12 +15,9 @@ def _instance_id(name: str) -> str:
     return f"projects/{GCP_PROJECT_ID}/locations/{_ZONE}/instances/{name}"
 
 
-def _mock_vertexai_client(instances=None, lookup_failed=None):
+def _mock_vertexai_client(instances=None):
     vertexai_client = mock.MagicMock()
     vertexai_client.workbench_instances = instances or []
-    vertexai_client.workbench_instances_lookup_failed = lookup_failed or set()
-    vertexai_client.projects = set_mocked_gcp_provider().projects
-    vertexai_client.region = "global"
     return vertexai_client
 
 
@@ -105,15 +102,3 @@ class Test_vertexai_workbench_instance_root_access_disabled:
         )
 
         assert len(result) == 0
-
-    def test_lookup_failed_reports_manual(self):
-        result = _run_check(_mock_vertexai_client(lookup_failed={GCP_PROJECT_ID}))
-
-        assert len(result) == 1
-        assert result[0].status == "MANUAL"
-        assert (
-            result[0].status_extended
-            == f"Cannot evaluate Vertex AI Workbench instances in project {GCP_PROJECT_ID}: instances could not be listed. Verify that notebooks.instances.list is granted to the scanning identity."
-        )
-        assert result[0].resource_id == GCP_PROJECT_ID
-        assert result[0].project_id == GCP_PROJECT_ID

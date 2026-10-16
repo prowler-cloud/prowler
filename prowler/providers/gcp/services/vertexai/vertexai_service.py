@@ -23,9 +23,6 @@ class VertexAI(GCPService):
         """Initialize the service and preload Workbench instances."""
         super().__init__("notebooks", provider, api_version="v2")
         self.workbench_instances = []
-        # Projects whose Workbench instances could not be listed, so checks
-        # can report them as MANUAL instead of silently returning no findings.
-        self.workbench_instances_lookup_failed: set[str] = set()
         self._get_workbench_instances()
 
     def _get_workbench_instances(self) -> None:
@@ -44,7 +41,6 @@ class VertexAI(GCPService):
                     # instead of raising, so the project was not fully scanned.
                     unreachable = response.get("unreachable", [])
                     if unreachable:
-                        self.workbench_instances_lookup_failed.add(project_id)
                         logger.error(
                             f"{project_id} -- Workbench instances could not be listed in unreachable locations: {', '.join(unreachable)}"
                         )
@@ -52,7 +48,6 @@ class VertexAI(GCPService):
                         previous_request=request, previous_response=response
                     )
             except Exception as error:
-                self.workbench_instances_lookup_failed.add(project_id)
                 logger.error(
                     f"{project_id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )

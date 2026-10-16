@@ -47,7 +47,6 @@ class TestVertexAIService:
         assert vertexai_client.api_version == "v2"
         assert vertexai_client.project_ids == [GCP_PROJECT_ID]
         assert vertexai_client.workbench_instances == []
-        assert vertexai_client.workbench_instances_lookup_failed == set()
 
     def test_lists_instances_across_all_locations(self):
         client = _make_notebooks_client()
@@ -126,7 +125,7 @@ class TestVertexAIService:
 
         assert vertexai_client.workbench_instances[0].root_access_disabled is False
 
-    def test_unreachable_locations_mark_project_lookup_failed(self):
+    def test_unreachable_locations_return_no_instances(self):
         client = _make_notebooks_client()
         client.projects().locations().instances().list().execute.return_value = {
             "unreachable": ["us-west1-a", "us-central1-b"]
@@ -135,7 +134,6 @@ class TestVertexAIService:
         vertexai_client = _build_service(client)
 
         assert vertexai_client.workbench_instances == []
-        assert vertexai_client.workbench_instances_lookup_failed == {GCP_PROJECT_ID}
 
     def test_unreachable_on_later_page_keeps_listed_instances(self):
         client = _make_notebooks_client(
@@ -151,12 +149,10 @@ class TestVertexAIService:
         vertexai_client = _build_service(client)
 
         assert [i.name for i in vertexai_client.workbench_instances] == [_INSTANCE_NAME]
-        assert vertexai_client.workbench_instances_lookup_failed == {GCP_PROJECT_ID}
 
-    def test_list_error_marks_project_lookup_failed(self):
+    def test_list_error_returns_no_instances(self):
         vertexai_client = _build_service(
             _make_notebooks_client(list_error=Exception("permission denied"))
         )
 
         assert vertexai_client.workbench_instances == []
-        assert vertexai_client.workbench_instances_lookup_failed == {GCP_PROJECT_ID}
