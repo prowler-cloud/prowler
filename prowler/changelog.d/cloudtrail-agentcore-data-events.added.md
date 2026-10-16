@@ -1,0 +1,1 @@
+`cloudtrail_agentcore_data_events_enabled` and `cloudtrail_agentcore_memory_data_events_enabled` checks for AWS provider, flagging accounts where no actively logging trail selects Amazon Bedrock AgentCore data events through an advanced event selector, leaving agent invocations, memory record operations, gateway tool calls and built-in tool sessions with no audit trail
