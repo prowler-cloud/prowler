@@ -1,6 +1,7 @@
 import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { ComponentProps } from "react";
+import { beforeEach, describe, expect, expectTypeOf, it, vi } from "vitest";
 
 import { GraphNode } from "@/types/attack-paths";
 import { IssueAttributes } from "@/types/issues";
@@ -44,6 +45,18 @@ vi.mock("@/components/attack-paths/graph/attack-path-graph", () => ({
 import { IssueGraph } from "./issue-graph";
 
 const issue = { legs: {} } as IssueAttributes;
+
+it("requires provider and scan identifiers together in the graph props", () => {
+  type Props = ComponentProps<typeof IssueGraph>;
+  type BaseProps = Pick<Props, "issue" | "resourceUids">;
+
+  expectTypeOf<BaseProps>().toExtend<Props>();
+  expectTypeOf<
+    BaseProps & { providerId: string; scanId: string }
+  >().toExtend<Props>();
+  expectTypeOf<BaseProps & { providerId: string }>().not.toExtend<Props>();
+  expectTypeOf<BaseProps & { scanId: string }>().not.toExtend<Props>();
+});
 
 describe("IssueGraph finding lookup", () => {
   beforeEach(() => {

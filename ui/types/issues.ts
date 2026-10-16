@@ -63,8 +63,16 @@ export interface IssueDetailAttributes extends IssueAttributes {
   resource_uids: string[];
 }
 
+export const ISSUE_RELATIONSHIP_TYPE = {
+  PROVIDERS: "providers",
+  SCANS: "scans",
+} as const;
+
+export type IssueRelationshipType =
+  (typeof ISSUE_RELATIONSHIP_TYPE)[keyof typeof ISSUE_RELATIONSHIP_TYPE];
+
 export interface IssueRelationshipData {
-  type: "providers" | "scans";
+  type: IssueRelationshipType;
   id: string;
 }
 

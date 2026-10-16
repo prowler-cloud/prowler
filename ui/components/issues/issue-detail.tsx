@@ -82,8 +82,9 @@ export const IssueDetail = ({
         <IssueGraph
           issue={issue}
           resourceUids={state.resources}
-          providerId={providerId}
-          scanId={scanId}
+          {...(providerId && scanId
+            ? { providerId, scanId }
+            : { providerId: undefined, scanId: undefined })}
         />
       )}
       <section aria-label="Exploitability assessment">

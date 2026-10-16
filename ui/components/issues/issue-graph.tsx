@@ -16,12 +16,22 @@ import { isProwlerFindingNode } from "@/lib/attack-paths/node-types";
 import { GraphNode } from "@/types/attack-paths";
 import { IssueAttributes } from "@/types/issues";
 
-interface IssueGraphProps {
+interface IssueGraphBaseProps {
   issue: IssueAttributes;
   resourceUids: string[];
-  providerId?: string;
-  scanId?: string;
 }
+
+interface ScopedIssueGraphProps extends IssueGraphBaseProps {
+  providerId: string;
+  scanId: string;
+}
+
+interface UnscopedIssueGraphProps extends IssueGraphBaseProps {
+  providerId?: never;
+  scanId?: never;
+}
+
+type IssueGraphProps = ScopedIssueGraphProps | UnscopedIssueGraphProps;
 
 export const IssueGraph = ({
   issue,
