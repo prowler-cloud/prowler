@@ -124,6 +124,9 @@ describe("getNavigationConfig", () => {
 
     // Then
     expect(sections[0]?.items.map((item) => item.label)).toEqual(["Overview"]);
+    expect(items.find((item) => item.label === "Issues")).toMatchObject({
+      href: "/issues",
+    });
     expect(configuration.children).not.toEqual(
       expect.arrayContaining([
         expect.objectContaining({ label: "CLI Import" }),
