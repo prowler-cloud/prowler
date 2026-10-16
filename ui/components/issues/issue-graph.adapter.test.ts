@@ -72,18 +72,81 @@ describe("buildIssueGraph", () => {
     },
   );
 
-  it("caps the resources and skips findings on resources it did not draw", () => {
+  it("prioritizes resources with evidence before applying the graph limit", () => {
+    // Given - evidence belongs to resources beyond the initial graph limit.
     const uids = Array.from(
       { length: GRAPH_RESOURCE_LIMIT + 3 },
       (_, i) => `arn:aws:s3:::${String.fromCharCode(97 + i)}`,
     ).reverse();
 
+    // When
     const view = buildIssueGraph(issue(), uids);
 
+    // Then - both findings remain visible within the resource limit.
     expect(view.nodes.filter((n) => n.id.startsWith("resource:"))).toHaveLength(
       GRAPH_RESOURCE_LIMIT,
     );
-    // arn:aws:s3:::a and ::b are the last three after reversing, so not drawn.
-    expect(view.nodes.some((n) => n.id.startsWith("finding:"))).toBe(false);
+    expect(ids(view)).toEqual(
+      expect.arrayContaining([
+        "resource:arn:aws:s3:::a",
+        "resource:arn:aws:s3:::b",
+        "finding:s3_bucket_public_access · arn:aws:s3:::a",
+        "finding:s3_bucket_default_encryption · arn:aws:s3:::b",
+      ]),
+    );
   });
+
+  it("keeps the limit and skips findings whose resources do not fit", () => {
+    // Given - more evidence-bearing resources than the graph can display.
+    const uids = Array.from(
+      { length: GRAPH_RESOURCE_LIMIT + 1 },
+      (_, i) => `resource-${i}`,
+    );
+    const assessedIssue = issue();
+    assessedIssue.legs.reachability.evidence = uids.map(
+      (uid) => `check · ${uid}`,
+    );
+
+    // When
+    const view = buildIssueGraph(assessedIssue, uids);
+
+    // Then - preserve input order and never leave an edge without its resource.
+    expect(
+      view.nodes.filter((node) => node.id.startsWith("resource:")),
+    ).toHaveLength(GRAPH_RESOURCE_LIMIT);
+    expect(view.edges).toHaveLength(GRAPH_RESOURCE_LIMIT);
+    expect(ids(view)).not.toContain(
+      `finding:check · resource-${GRAPH_RESOURCE_LIMIT}`,
+    );
+    for (const edge of view.edges) {
+      expect(ids(view)).toContain(edge.source);
+      expect(ids(view)).toContain(edge.target);
+    }
+    expect(uids[0]).toBe("resource-0");
+  });
+
+  it.each([
+    { evidence: [] },
+    { evidence: ["malformed", " · resource-12", "check · unrelated-resource"] },
+  ])(
+    "preserves resource order without matching valid evidence: $evidence",
+    ({ evidence }) => {
+      // Given
+      const uids = Array.from(
+        { length: GRAPH_RESOURCE_LIMIT + 1 },
+        (_, i) => `resource-${i}`,
+      );
+      const assessedIssue = issue();
+      assessedIssue.legs.reachability.evidence = evidence;
+
+      // When
+      const view = buildIssueGraph(assessedIssue, uids);
+
+      // Then
+      expect(ids(view)).toEqual(
+        uids.slice(0, GRAPH_RESOURCE_LIMIT).map((uid) => `resource:${uid}`),
+      );
+      expect(view.edges).toEqual([]);
+    },
+  );
 });

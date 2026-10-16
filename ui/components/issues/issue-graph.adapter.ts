@@ -34,7 +34,18 @@ export const buildIssueGraph = (
 ): AttackPathView => {
   const nodes: GraphNode[] = [];
   const edges: GraphEdge[] = [];
-  const resources = resourceUids.slice(0, GRAPH_RESOURCE_LIMIT);
+  const evidence = Object.values(issue.legs ?? {})
+    .flatMap((leg) => leg?.evidence ?? [])
+    .map((line) => {
+      const [checkId, uid] = line.split(" · ");
+      return { line, checkId, uid };
+    })
+    .filter(({ checkId, uid }) => checkId && uid);
+  const evidenceResources = new Set(evidence.map(({ uid }) => uid));
+  const resources = [
+    ...resourceUids.filter((uid) => evidenceResources.has(uid)),
+    ...resourceUids.filter((uid) => !evidenceResources.has(uid)),
+  ].slice(0, GRAPH_RESOURCE_LIMIT);
   const resourceId = (uid: string) => `resource:${uid}`;
 
   resources.forEach((uid) => {
@@ -47,31 +58,28 @@ export const buildIssueGraph = (
 
   const shown = new Set(resources);
   const seen = new Set<string>();
-  Object.values(issue.legs ?? {}).forEach((leg) =>
-    leg?.evidence?.forEach((line) => {
-      const [checkId, uid] = line.split(" · ");
-      if (!checkId || !uid || !shown.has(uid) || seen.has(line)) return;
-      seen.add(line);
-      const id = `finding:${line}`;
-      nodes.push({
+  evidence.forEach(({ line, checkId, uid }) => {
+    if (!shown.has(uid) || seen.has(line)) return;
+    seen.add(line);
+    const id = `finding:${line}`;
+    nodes.push({
+      id,
+      labels: ["ProwlerFinding"],
+      // check_id + resource_uid let a click find the finding in the scan.
+      properties: {
         id,
-        labels: ["ProwlerFinding"],
-        // check_id + resource_uid let a click find the finding in the scan.
-        properties: {
-          id,
-          check_title: checkId,
-          check_id: checkId,
-          resource_uid: uid,
-        },
-      });
-      edges.push({
-        id: `${uid}->${id}`,
-        source: resourceId(uid),
-        target: id,
-        type: "HAS_FINDING",
-      });
-    }),
-  );
+        check_title: checkId,
+        check_id: checkId,
+        resource_uid: uid,
+      },
+    });
+    edges.push({
+      id: `${uid}->${id}`,
+      source: resourceId(uid),
+      target: id,
+      type: "HAS_FINDING",
+    });
+  });
 
   return { nodes, edges, groupMembers: new Map() };
 };
