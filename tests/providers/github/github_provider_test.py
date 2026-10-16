@@ -30,6 +30,7 @@ from tests.providers.github.github_fixtures import (
     APP_ID,
     APP_KEY,
     APP_NAME,
+    INSTALLATION_TOKEN,
     OAUTH_TOKEN,
     PAT_TOKEN,
 )
@@ -788,3 +789,174 @@ class TestGitHubProviderLoadReposFromFile:
         provider._load_repos_from_file(str(repo_file))
 
         assert provider.repositories == ["owner/valid-repo", "owner/also-valid"]
+
+
+class TestGitHubProviderInstallationToken:
+    """A GitHub App installation token minted outside Prowler, e.g. by a KMS-held key."""
+
+    @staticmethod
+    def _repositories(*owners):
+        return {
+            "total_count": len(owners),
+            "repositories": [
+                {"full_name": f"{owner}/repo-{i}", "owner": {"login": owner}}
+                for i, owner in enumerate(owners)
+            ],
+        }
+
+    def test_setup_session_with_installation_token(self):
+        session = GithubProvider.setup_session(
+            github_app_installation_token=INSTALLATION_TOKEN
+        )
+
+        assert session == GithubSession(
+            token=INSTALLATION_TOKEN, id=0, key="", installation=True
+        )
+
+    def test_setup_session_with_installation_token_from_environment(self, monkeypatch):
+        for name in (
+            "GITHUB_PERSONAL_ACCESS_TOKEN",
+            "GITHUB_OAUTH_APP_TOKEN",
+            "GITHUB_APP_ID",
+            "GITHUB_APP_KEY",
+        ):
+            monkeypatch.delenv(name, raising=False)
+        monkeypatch.setenv("GITHUB_APP_INSTALLATION_TOKEN", INSTALLATION_TOKEN)
+
+        session = GithubProvider.setup_session()
+
+        assert session.token == INSTALLATION_TOKEN
+        assert session.installation is True
+
+    def test_setup_session_personal_access_token_is_not_an_installation(self):
+        session = GithubProvider.setup_session(personal_access_token=PAT_TOKEN)
+
+        assert session.installation is False
+
+    def test_setup_identity_does_not_ask_for_a_user(self, monkeypatch):
+        """`GET /user` is refused for installation tokens, so it must not be called."""
+        monkeypatch.setenv("GITHUB_APP_ID", APP_ID)
+        session = GithubSession(
+            token=INSTALLATION_TOKEN, id="", key="", installation=True
+        )
+
+        with patch("prowler.providers.github.github_provider.Github") as mock_github:
+            client = mock_github.return_value
+            client.requester.requestJsonAndCheck.return_value = (
+                {},
+                self._repositories("test-org", "test-org"),
+            )
+
+            identity = GithubProvider.setup_identity(session)
+
+        client.get_user.assert_not_called()
+        client.requester.requestJsonAndCheck.assert_called_once_with(
+            "GET",
+            "/installation/repositories",
+            parameters={"per_page": 100, "page": 1},
+        )
+        assert identity == GithubAppIdentityInfo(
+            app_id=APP_ID,
+            app_name="GitHub App installation",
+            installations=["test-org"],
+        )
+
+    def test_setup_identity_follows_pages(self):
+        session = GithubSession(
+            token=INSTALLATION_TOKEN, id="", key="", installation=True
+        )
+        first = self._repositories(*(["test-org"] * 100))
+        second = self._repositories("other-owner")
+
+        with patch("prowler.providers.github.github_provider.Github") as mock_github:
+            mock_github.return_value.requester.requestJsonAndCheck.side_effect = [
+                ({}, first),
+                ({}, second),
+            ]
+
+            identity = GithubProvider.setup_identity(session)
+
+        assert identity.installations == ["test-org", "other-owner"]
+
+    def test_setup_identity_with_a_rejected_installation_token(self):
+        session = GithubSession(
+            token=INSTALLATION_TOKEN, id="", key="", installation=True
+        )
+
+        with patch("prowler.providers.github.github_provider.Github") as mock_github:
+            mock_github.return_value.requester.requestJsonAndCheck.side_effect = (
+                Exception("401 Bad credentials")
+            )
+
+            with pytest.raises(GithubSetUpIdentityError) as error:
+                GithubProvider.setup_identity(session)
+
+        assert isinstance(error.value.original_exception, GithubInvalidTokenError)
+
+    def test_validate_provider_id_with_installation_token(self):
+        session = GithubSession(
+            token=INSTALLATION_TOKEN, id="", key="", installation=True
+        )
+
+        with patch("prowler.providers.github.github_provider.Github") as mock_github:
+            mock_github.return_value.requester.requestJsonAndCheck.return_value = (
+                {},
+                self._repositories("test-org"),
+            )
+
+            GithubProvider.validate_provider_id(session, "test-org")
+
+            with pytest.raises(GithubInvalidProviderIdError):
+                GithubProvider.validate_provider_id(session, "someone-else")
+
+    def test_test_connection_with_installation_token_success(self):
+        with (
+            patch(
+                "prowler.providers.github.github_provider.GithubProvider.setup_session",
+                return_value=GithubSession(
+                    token=INSTALLATION_TOKEN, id="", key="", installation=True
+                ),
+            ) as setup_session,
+            patch(
+                "prowler.providers.github.github_provider.GithubProvider.setup_identity",
+                return_value=GithubAppIdentityInfo(
+                    app_id=APP_ID,
+                    app_name="GitHub App installation",
+                    installations=["test-org"],
+                ),
+            ),
+        ):
+            connection = GithubProvider.test_connection(
+                github_app_installation_token=INSTALLATION_TOKEN
+            )
+
+        assert connection.is_connected is True
+        assert (
+            setup_session.call_args.kwargs["github_app_installation_token"]
+            == INSTALLATION_TOKEN
+        )
+
+    def test_github_provider_installation_token_auth_method(self):
+        with (
+            patch(
+                "prowler.providers.github.github_provider.GithubProvider.setup_session",
+                return_value=GithubSession(
+                    token=INSTALLATION_TOKEN, id="", key="", installation=True
+                ),
+            ),
+            patch(
+                "prowler.providers.github.github_provider.GithubProvider.setup_identity",
+                return_value=GithubAppIdentityInfo(
+                    app_id=APP_ID,
+                    app_name="GitHub App installation",
+                    installations=["test-org"],
+                ),
+            ),
+        ):
+            provider = GithubProvider(
+                github_app_installation_token=INSTALLATION_TOKEN,
+                organizations=["test-org"],
+            )
+
+        assert provider.auth_method == "GitHub App Installation Token"
+        assert provider.identity.installations == ["test-org"]

@@ -52,6 +52,7 @@ class GithubActions(GithubService):
                 temp_dir = self._clone_repository(
                     f"https://github.com/{repo.full_name}",
                     provider.session.token,
+                    installation=getattr(provider.session, "installation", False),
                 )
                 if not temp_dir:
                     continue
@@ -91,14 +92,17 @@ class GithubActions(GithubService):
                     shutil.rmtree(temp_dir, ignore_errors=True)
 
     def _clone_repository(
-        self, repository_url: str, token: str = None
+        self, repository_url: str, token: str = None, installation: bool = False
     ) -> Optional[str]:
         try:
             auth_url = repository_url
             if token:
+                # GitHub accepts a personal token as the user part of the URL, but
+                # an App installation token only as the password of x-access-token.
+                credentials = f"x-access-token:{token}" if installation else token
                 auth_url = repository_url.replace(
                     "https://github.com/",
-                    f"https://{token}@github.com/",
+                    f"https://{credentials}@github.com/",
                 )
 
             temp_dir = tempfile.mkdtemp()

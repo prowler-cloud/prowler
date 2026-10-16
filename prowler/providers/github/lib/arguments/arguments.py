@@ -1,4 +1,10 @@
-SENSITIVE_ARGUMENTS = frozenset({"--personal-access-token", "--oauth-app-token"})
+SENSITIVE_ARGUMENTS = frozenset(
+    {
+        "--personal-access-token",
+        "--oauth-app-token",
+        "--github-app-installation-token",
+    }
+)
 
 
 def init_parser(self):
@@ -39,6 +45,13 @@ def init_parser(self):
         help="GitHub App Key Path to log in against GitHub",
         default=None,
         metavar="GITHUB_APP_KEY",
+    )
+    github_auth_subparser.add_argument(
+        "--github-app-installation-token",
+        nargs="?",
+        help="GitHub App installation token to log in against GitHub, minted outside Prowler so the App private key never has to be on this machine",
+        default=None,
+        metavar="GITHUB_APP_INSTALLATION_TOKEN",
     )
 
     github_scoping_subparser = github_parser.add_argument_group("Scan Scoping")
