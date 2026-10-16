@@ -1,5 +1,5 @@
 from types import SimpleNamespace
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, call, patch
 
 import pytest
 from azure.core.exceptions import HttpResponseError, ResourceNotFoundError
@@ -82,6 +82,10 @@ class Test_App_Auth_Settings_Failure:
         assert result[sites[failed_index].id].auth_enabled is None
         assert result[sites[1 - failed_index].id].auth_enabled is True
         assert all(not site.https_only for site in result.values())
+        assert client.web_apps.get_auth_settings_v2.call_args_list == [
+            call(resource_group_name=site.resource_group, name=site.name)
+            for site in sites
+        ]
         assert {finding.resource_id for finding in findings} == set(result)
         assert [finding.status for finding in findings] == ["FAIL", "FAIL"]
 
@@ -128,6 +132,11 @@ class Test_App_Auth_Settings_Failure:
         assert [finding.status for finding in findings] == ["MANUAL", "PASS", "FAIL"]
         assert findings[0].resource_id == f"/subscriptions/{AZURE_SUBSCRIPTION_ID}"
         assert findings[0].subscription == AZURE_SUBSCRIPTION_ID
+        for index in range(unknown_count):
+            assert (
+                client.apps[AZURE_SUBSCRIPTION_ID][f"app-{index}"].resource_id
+                in findings[0].status_extended
+            )
         assert (
             "authentication settings could not be retrieved"
             in findings[0].status_extended
@@ -159,4 +168,7 @@ class Test_App_Auth_Settings_Failure:
         assert (
             app._get_app_auth_enabled(AZURE_SUBSCRIPTION_ID, RESOURCE_GROUP, "app-0")
             is expected
+        )
+        client.web_apps.get_auth_settings_v2.assert_called_once_with(
+            resource_group_name=RESOURCE_GROUP, name="app-0"
         )
