@@ -132,6 +132,10 @@
           "network_ssh_internet_access_restricted",
           "network_udp_internet_access_restricted",
           "network_http_internet_access_restricted"
+        ],
+        "gcp": [
+          "compute_firewall_rdp_access_from_the_internet_allowed",
+          "compute_firewall_ssh_access_from_the_internet_allowed"
         ]
       }
     },
@@ -147,7 +151,8 @@
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
-        "azure": []
+        "azure": [],
+        "gcp": []
       }
     },
     {
@@ -168,6 +173,13 @@
           "keyvault_access_only_through_private_endpoints",
           "network_rdp_internet_access_restricted",
           "network_ssh_internet_access_restricted"
+        ],
+        "gcp": [
+          "cloudstorage_bucket_public_access",
+          "compute_firewall_rdp_access_from_the_internet_allowed",
+          "compute_firewall_ssh_access_from_the_internet_allowed",
+          "kms_key_not_publicly_accessible",
+          "secretmanager_secret_not_publicly_accessible"
         ]
       }
     },
@@ -189,6 +201,13 @@
           "network_udp_internet_access_restricted",
           "network_http_internet_access_restricted",
           "storage_account_public_network_access_disabled"
+        ],
+        "gcp": [
+          "cloudsql_instance_public_access",
+          "cloudstorage_bucket_public_access",
+          "compute_firewall_rdp_access_from_the_internet_allowed",
+          "compute_firewall_ssh_access_from_the_internet_allowed",
+          "compute_network_default_in_use"
         ]
       }
     },
@@ -204,7 +223,8 @@
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
-        "azure": []
+        "azure": [],
+        "gcp": []
       }
     },
     {
@@ -219,7 +239,8 @@
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
-        "azure": []
+        "azure": [],
+        "gcp": []
       }
     },
     {
@@ -234,7 +255,8 @@
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
-        "azure": []
+        "azure": [],
+        "gcp": []
       }
     },
     {
@@ -252,6 +274,9 @@
         "azure": [
           "entra_policy_guest_users_access_restrictions",
           "entra_policy_guest_invite_only_for_admin_roles"
+        ],
+        "gcp": [
+          "iam_service_account_unused"
         ]
       }
     },
@@ -269,7 +294,8 @@
       "checks": {
         "azure": [
           "entra_security_defaults_enabled"
-        ]
+        ],
+        "gcp": []
       }
     },
     {
@@ -284,7 +310,8 @@
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
-        "azure": []
+        "azure": [],
+        "gcp": []
       }
     },
     {
@@ -299,7 +326,8 @@
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
-        "azure": []
+        "azure": [],
+        "gcp": []
       }
     },
     {
@@ -320,6 +348,14 @@
           "storage_account_public_network_access_disabled",
           "storage_ensure_minimum_tls_version_12",
           "keyvault_rbac_enabled"
+        ],
+        "gcp": [
+          "bigquery_dataset_public_access",
+          "cloudfunction_function_not_publicly_accessible",
+          "cloudsql_instance_ssl_connections",
+          "cloudstorage_bucket_public_access",
+          "kms_key_not_publicly_accessible",
+          "secretmanager_secret_not_publicly_accessible"
         ]
       }
     },
@@ -335,7 +371,8 @@
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
-        "azure": []
+        "azure": [],
+        "gcp": []
       }
     },
     {
@@ -350,7 +387,8 @@
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
-        "azure": []
+        "azure": [],
+        "gcp": []
       }
     },
     {
@@ -365,7 +403,8 @@
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
-        "azure": []
+        "azure": [],
+        "gcp": []
       }
     },
     {
@@ -380,7 +419,8 @@
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
-        "azure": []
+        "azure": [],
+        "gcp": []
       }
     },
     {
@@ -398,7 +438,8 @@
         "azure": [
           "defender_ensure_system_updates_are_applied",
           "defender_auto_provisioning_vulnerabilty_assessments_machines_on"
-        ]
+        ],
+        "gcp": []
       }
     },
     {
@@ -413,7 +454,8 @@
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
-        "azure": []
+        "azure": [],
+        "gcp": []
       }
     },
     {
@@ -431,6 +473,10 @@
         "azure": [
           "entra_security_defaults_enabled",
           "storage_default_to_entra_authorization_enabled"
+        ],
+        "gcp": [
+          "compute_instance_block_project_wide_ssh_keys_disabled",
+          "compute_project_os_login_enabled"
         ]
       }
     },
@@ -446,7 +492,8 @@
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
-        "azure": []
+        "azure": [],
+        "gcp": []
       }
     },
     {
@@ -467,6 +514,9 @@
           "entra_conditional_access_policy_require_mfa_for_admin_portals",
           "entra_conditional_access_policy_require_mfa_for_management_api",
           "entra_user_with_vm_access_has_mfa"
+        ],
+        "gcp": [
+          "compute_project_os_login_2fa_enabled"
         ]
       }
     },
@@ -486,6 +536,12 @@
           "entra_global_admin_in_less_than_five_users",
           "iam_role_user_access_admin_restricted",
           "iam_subscription_roles_owner_custom_not_created"
+        ],
+        "gcp": [
+          "compute_instance_default_service_account_in_use_with_full_api_access",
+          "iam_role_kms_enforce_separation_of_duties",
+          "iam_role_sa_enforce_separation_of_duties",
+          "iam_sa_no_administrative_privileges"
         ]
       }
     },
@@ -504,7 +560,8 @@
         "azure": [
           "entra_global_admin_in_less_than_five_users",
           "iam_role_user_access_admin_restricted"
-        ]
+        ],
+        "gcp": []
       }
     },
     {
@@ -522,6 +579,9 @@
         "azure": [
           "entra_security_defaults_enabled",
           "entra_privileged_user_has_mfa"
+        ],
+        "gcp": [
+          "compute_project_os_login_2fa_enabled"
         ]
       }
     },
@@ -541,6 +601,9 @@
           "entra_security_defaults_enabled",
           "entra_privileged_user_has_mfa",
           "entra_non_privileged_user_has_mfa"
+        ],
+        "gcp": [
+          "compute_project_os_login_2fa_enabled"
         ]
       }
     },
@@ -560,7 +623,8 @@
           "defender_assessments_vm_endpoint_protection_installed",
           "defender_ensure_wdatp_is_enabled",
           "defender_ensure_defender_for_server_is_on"
-        ]
+        ],
+        "gcp": []
       }
     },
     {
@@ -579,7 +643,8 @@
           "defender_ensure_wdatp_is_enabled",
           "defender_ensure_defender_for_server_is_on",
           "defender_ensure_defender_for_storage_is_on"
-        ]
+        ],
+        "gcp": []
       }
     },
     {
@@ -594,7 +659,8 @@
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
-        "azure": []
+        "azure": [],
+        "gcp": []
       }
     }
   ]
