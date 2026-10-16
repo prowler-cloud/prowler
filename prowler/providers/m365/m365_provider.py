@@ -9,6 +9,7 @@ from uuid import UUID
 from azure.core.exceptions import ClientAuthenticationError, HttpResponseError
 from azure.identity import (
     CertificateCredential,
+    ClientAssertionCredential,
     ClientSecretCredential,
     CredentialUnavailableError,
     DefaultAzureCredential,
@@ -132,6 +133,7 @@ class M365Provider(Provider):
         mutelist_path: str = None,
         mutelist_content: dict = None,
         fixer_config: dict = {},
+        oidc_auth: bool = False,
     ):
         """
         Initializes the M365 provider.
@@ -146,6 +148,7 @@ class M365Provider(Provider):
             fixer_config (dict): The fixer configuration.
             mutelist_path (str): The path to the mutelist file.
             mutelist_content (dict): The mutelist content.
+            oidc_auth (bool): Use a federated token (workload identity federation) instead of a secret or certificate.
 
         Returns:
             None
@@ -175,6 +178,7 @@ class M365Provider(Provider):
             client_secret,
             certificate_content,
             certificate_path,
+            oidc_auth=oidc_auth,
         )
 
         logger.info("Checking if region is different than default one")
@@ -201,6 +205,7 @@ class M365Provider(Provider):
             tenant_id,
             m365_credentials,
             self._region_config,
+            oidc_auth=oidc_auth,
         )
 
         # Set up the identity
@@ -210,6 +215,7 @@ class M365Provider(Provider):
             az_cli_auth,
             certificate_auth,
             self._session,
+            oidc_auth=oidc_auth,
         )
 
         # Set up PowerShell session credentials
@@ -220,6 +226,7 @@ class M365Provider(Provider):
             m365_credentials=m365_credentials,
             identity=self.identity,
             init_modules=init_modules,
+            oidc_auth=oidc_auth,
         )
 
         # Audit Config
@@ -298,6 +305,7 @@ class M365Provider(Provider):
         client_secret: str,
         certificate_content: str,
         certificate_path: str,
+        oidc_auth: bool = False,
     ):
         """
         Validates the authentication arguments for the M365 provider.
@@ -312,6 +320,7 @@ class M365Provider(Provider):
             client_secret (str): The M365 Client Secret.
             certificate_content (str): The M365 Certificate Content.
             certificate_path (str): The path to the certificate file.
+            oidc_auth (bool): Flag indicating whether OIDC (workload identity federation) authentication is enabled.
 
         Raises:
             M365BrowserAuthNoTenantIDError: If browser authentication is enabled but the tenant ID is not found.
@@ -328,10 +337,11 @@ class M365Provider(Provider):
                 and not sp_env_auth
                 and not browser_auth
                 and not certificate_auth
+                and not oidc_auth
             ):
                 raise M365NoAuthenticationMethodError(
                     file=os.path.basename(__file__),
-                    message="M365 provider requires at least one authentication method set: [--az-cli-auth | --sp-env-auth | --browser-auth | --certificate-auth]",
+                    message="M365 provider requires at least one authentication method set: [--az-cli-auth | --sp-env-auth | --browser-auth | --certificate-auth | --oidc-auth]",
                 )
             elif browser_auth and not tenant_id:
                 raise M365BrowserAuthNoTenantIDError(
@@ -395,6 +405,7 @@ class M365Provider(Provider):
         m365_credentials: dict = {},
         identity: M365IdentityInfo = None,
         init_modules: bool = False,
+        oidc_auth: bool = False,
     ) -> M365Credentials:
         """Gets the M365 credentials.
 
@@ -424,6 +435,14 @@ class M365Provider(Provider):
                 client_secret=client_secret,
                 tenant_id=tenant_id,
                 tenant_domains=identity.tenant_domains,
+            )
+
+        elif oidc_auth:
+            credentials = M365Credentials(
+                client_id=getenv("AZURE_CLIENT_ID"),
+                tenant_id=getenv("AZURE_TENANT_ID"),
+                tenant_domains=identity.tenant_domains,
+                oidc=True,
             )
 
         elif certificate_auth:
@@ -491,6 +510,7 @@ class M365Provider(Provider):
         tenant_id: str,
         m365_credentials: dict,
         region_config: M365RegionConfig,
+        oidc_auth: bool = False,
     ):
         """Returns the M365 credentials object.
 
@@ -509,6 +529,7 @@ class M365Provider(Provider):
                 - certificate_path: The path to the certificate file.
                 - provider_id: The M365 provider ID (in this case the Tenant ID).
             region_config (M365RegionConfig): The region configuration object.
+            oidc_auth (bool): Flag indicating whether to use OIDC (workload identity federation) authentication.
 
         Returns:
             credentials: The M365 credentials object.
@@ -527,6 +548,14 @@ class M365Provider(Provider):
                         f"{environment_credentials_error.__class__.__name__}[{environment_credentials_error.__traceback__.tb_lineno}] -- {environment_credentials_error}"
                     )
                     raise environment_credentials_error
+            elif oidc_auth:
+                try:
+                    M365Provider.check_oidc_creds_env_vars()
+                except M365EnvironmentVariableError as environment_variable_error:
+                    logger.critical(
+                        f"{environment_variable_error.__class__.__name__}[{environment_variable_error.__traceback__.tb_lineno}] -- {environment_variable_error}"
+                    )
+                    raise environment_variable_error
             elif certificate_auth:
                 try:
                     M365Provider.check_certificate_creds_env_vars(
@@ -586,6 +615,8 @@ class M365Provider(Provider):
                         raise M365ConfigCredentialsError(
                             file=os.path.basename(__file__), original_exception=error
                         )
+                elif oidc_auth:
+                    credentials = M365Provider.oidc_credential(region_config)
                 elif certificate_auth:
                     try:
                         if certificate_path:
@@ -686,6 +717,7 @@ class M365Provider(Provider):
         certificate_content: str = None,
         certificate_path: str = None,
         provider_id: str = None,
+        oidc_auth: bool = False,
     ) -> Connection:
         """Test connection to M365 tenant and PowerShell modules.
 
@@ -703,6 +735,7 @@ class M365Provider(Provider):
             client_id (str): The M365 client ID.
             client_secret (str): The M365 client secret.
             provider_id (str): The M365 provider ID (in this case the Tenant ID).
+            oidc_auth (bool): Flag indicating whether to use OIDC (workload identity federation) authentication.
 
 
         Returns:
@@ -736,6 +769,7 @@ class M365Provider(Provider):
                 client_secret,
                 certificate_content,
                 certificate_path,
+                oidc_auth=oidc_auth,
             )
             region_config = M365Provider.setup_region_config(region)
 
@@ -764,6 +798,7 @@ class M365Provider(Provider):
                 tenant_id,
                 m365_credentials,
                 region_config,
+                oidc_auth=oidc_auth,
             )
 
             GraphServiceClient(credentials=session)
@@ -777,6 +812,7 @@ class M365Provider(Provider):
                 az_cli_auth,
                 certificate_auth,
                 session,
+                oidc_auth=oidc_auth,
             )
 
             if not identity:
@@ -800,6 +836,7 @@ class M365Provider(Provider):
                 certificate_path,
                 m365_credentials,
                 identity,
+                oidc_auth=oidc_auth,
             )
             logger.info("M365 provider: Connection to PowerShell successful")
 
@@ -961,12 +998,78 @@ class M365Provider(Provider):
                 )
 
     @staticmethod
+    def check_oidc_creds_env_vars():
+        """
+        Checks the environment variables required for OIDC (workload identity federation) authentication.
+
+        Requires AZURE_CLIENT_ID, AZURE_TENANT_ID and a federated token, either in
+        AZURE_FEDERATED_TOKEN or in the file named by AZURE_FEDERATED_TOKEN_FILE
+        (the variable azure-identity and Kubernetes workload identity use).
+
+        Raises:
+            M365EnvironmentVariableError: If any of them is missing.
+        """
+        logger.info("M365 provider: checking OIDC environment variables ...")
+        for env_var in ["AZURE_CLIENT_ID", "AZURE_TENANT_ID"]:
+            if not getenv(env_var):
+                raise M365EnvironmentVariableError(
+                    file=os.path.basename(__file__),
+                    message=f"Missing environment variable {env_var} required to authenticate.",
+                )
+        if not getenv("AZURE_FEDERATED_TOKEN") and not getenv(
+            "AZURE_FEDERATED_TOKEN_FILE"
+        ):
+            raise M365EnvironmentVariableError(
+                file=os.path.basename(__file__),
+                message="Missing environment variable AZURE_FEDERATED_TOKEN or AZURE_FEDERATED_TOKEN_FILE required to authenticate.",
+            )
+
+    @staticmethod
+    def read_federated_token() -> str:
+        """
+        Returns the current federated token.
+
+        Read on every call rather than once, so a token file that is refreshed
+        during a long scan keeps working.
+
+        Returns:
+            str: The federated token (a JWT).
+        """
+        token = getenv("AZURE_FEDERATED_TOKEN")
+        if token:
+            return token.strip()
+        with open(getenv("AZURE_FEDERATED_TOKEN_FILE"), "r") as token_file:
+            return token_file.read().strip()
+
+    @staticmethod
+    def oidc_credential(region_config: M365RegionConfig = None):
+        """
+        Returns a credential that presents the federated token as the client assertion.
+
+        Args:
+            region_config (M365RegionConfig): The region configuration, for the authority.
+
+        Returns:
+            ClientAssertionCredential: The credential.
+        """
+        kwargs = {}
+        if region_config and getattr(region_config, "authority", None):
+            kwargs["authority"] = region_config.authority
+        return ClientAssertionCredential(
+            tenant_id=getenv("AZURE_TENANT_ID"),
+            client_id=getenv("AZURE_CLIENT_ID"),
+            func=M365Provider.read_federated_token,
+            **kwargs,
+        )
+
+    @staticmethod
     def setup_identity(
         sp_env_auth,
         browser_auth,
         az_cli_auth,
         certificate_auth,
         session,
+        oidc_auth: bool = False,
     ):
         """
         Sets up the identity for the M365 provider.
@@ -1029,6 +1132,12 @@ class M365Provider(Provider):
                 identity.identity_id = (
                     getenv("AZURE_CLIENT_ID")
                     or session.credentials[0]._credential.client_id
+                    or "Unknown user id (Missing AAD permissions)"
+                )
+            elif oidc_auth:
+                identity.identity_type = "Service Principal (OIDC)"
+                identity.identity_id = (
+                    getenv("AZURE_CLIENT_ID")
                     or "Unknown user id (Missing AAD permissions)"
                 )
             elif certificate_auth:

@@ -314,6 +314,25 @@ After exporting the secret-based variables, run:
 python3 prowler-cli.py m365 --sp-env-auth --init-modules --log-level ERROR
 ```
 
+### OIDC (Workload Identity Federation) Authentication
+
+**Authentication flag for CLI:** `--oidc-auth`
+
+For environments that do not allow long-lived secrets or certificates. The application registration trusts an external identity provider through a [federated identity credential](https://learn.microsoft.com/en-us/entra/workload-id/workload-identity-federation) (for example GitHub Actions, Kubernetes, or AWS outbound identity federation), and Prowler presents that provider's token instead of a secret. It needs the same permissions as the other application methods, including `Exchange.ManageAsApp` and the Teams roles for the PowerShell checks.
+
+```console
+export AZURE_CLIENT_ID="00000000-0000-0000-0000-000000000000"
+export AZURE_TENANT_ID="00000000-0000-0000-0000-000000000000"
+# Either the token itself...
+export AZURE_FEDERATED_TOKEN="eyJ..."
+# ...or a file holding it, read again whenever a new access token is needed
+export AZURE_FEDERATED_TOKEN_FILE="/var/run/secrets/azure/tokens/azure-identity-token"
+
+python3 prowler-cli.py m365 --oidc-auth --init-modules --log-level ERROR
+```
+
+Prowler exchanges the federated token for the Microsoft Graph, Teams and Exchange Online access tokens itself and passes only those access tokens to PowerShell.
+
 <a id="azure-cli-authentication"></a>
 ### Azure CLI Authentication
 
