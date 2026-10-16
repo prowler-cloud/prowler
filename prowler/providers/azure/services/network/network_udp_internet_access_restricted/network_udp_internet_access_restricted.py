@@ -18,7 +18,7 @@ class network_udp_internet_access_restricted(Check):
                 report.status_extended = f"Security Group {security_group.name} from subscription {subscription_name} ({subscription}) has UDP internet access restricted."
                 rule_fail_condition = any(
                     (
-                        rule.protocol in ["UDP", "Udp"]
+                        rule.protocol in ["UDP", "Udp", "*"]
                         and (
                             rule.source_address_prefix
                             and rule.source_address_prefix
