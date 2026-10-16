@@ -2240,3 +2240,113 @@ class TestCrossTenantAccessDefault:
         )
 
         assert asyncio.run(service._get_cross_tenant_access_default()) is None
+
+
+class TestHighRiskDetections:
+    def _service(self, send_mock):
+        service = Entra.__new__(Entra)
+        service.high_risk_detections_error = None
+        service.hidden_risk_level_detections = 0
+        service.client = SimpleNamespace(
+            identity_protection=SimpleNamespace(
+                with_url=MagicMock(
+                    return_value=SimpleNamespace(
+                        to_get_request_information=MagicMock(return_value="request")
+                    )
+                )
+            ),
+            request_adapter=SimpleNamespace(send_primitive_async=send_mock),
+        )
+        return service
+
+    def test_paginates_detections_across_an_empty_page(self):
+        pages = [
+            json.dumps({"value": [], "@odata.nextLink": "next-link"}),
+            json.dumps(
+                {
+                    "value": [
+                        {
+                            "id": "detection-1",
+                            "riskEventType": "leakedCredentials",
+                            "riskLevel": "high",
+                            "riskState": "atRisk",
+                            "userPrincipalName": "user@contoso.com",
+                        }
+                    ]
+                }
+            ),
+        ]
+        service = self._service(AsyncMock(side_effect=[p.encode() for p in pages]))
+
+        detections = asyncio.run(service._get_high_risk_detections())
+
+        assert [d.id for d in detections] == ["detection-1"]
+        assert service.high_risk_detections_error is None
+
+    def test_keeps_high_detections_and_counts_hidden_levels(self):
+        page = json.dumps(
+            {
+                "value": [
+                    {"id": "d-high", "riskLevel": "high", "riskState": "atRisk"},
+                    {"id": "d-medium", "riskLevel": "medium", "riskState": "atRisk"},
+                    {"id": "d-hidden", "riskLevel": "hidden", "riskState": "atRisk"},
+                    {
+                        "id": "d-future",
+                        "riskLevel": "unknownFutureValue",
+                        "riskState": "atRisk",
+                    },
+                    {"id": "d-missing", "riskState": "atRisk"},
+                ]
+            }
+        )
+        service = self._service(AsyncMock(return_value=page.encode()))
+
+        detections = asyncio.run(service._get_high_risk_detections())
+
+        assert [d.id for d in detections] == ["d-high"]
+        assert service.hidden_risk_level_detections == 3
+        url = service.client.identity_protection.with_url.call_args[0][0]
+        assert "riskState%20eq%20'atRisk'" in url
+        assert "riskLevel" not in url
+
+    def test_empty_first_page_returns_no_detections(self):
+        service = self._service(
+            AsyncMock(return_value=json.dumps({"value": []}).encode())
+        )
+
+        assert asyncio.run(service._get_high_risk_detections()) == []
+        assert service.high_risk_detections_error is None
+
+    def test_empty_response_is_reported_as_error(self):
+        service = self._service(AsyncMock(return_value=None))
+
+        assert asyncio.run(service._get_high_risk_detections()) is None
+        assert "empty response" in service.high_risk_detections_error
+
+
+class TestEntraInitAttributeMapping:
+    """Each attribute must receive the result of its own getter in ``__init__``."""
+
+    def test_gathered_results_land_on_their_attributes(self):
+        expected = {
+            "cross_tenant_access_default": (
+                "_get_cross_tenant_access_default",
+                entra_service.CrossTenantAccessDefault(),
+            ),
+            "high_risk_detections": ("_get_high_risk_detections", []),
+        }
+        patches = [
+            patch.object(Entra, getter, new=AsyncMock(return_value=sentinel))
+            for getter, sentinel in expected.values()
+        ]
+        for active_patch in patches:
+            active_patch.start()
+        try:
+            with patch("prowler.providers.m365.lib.service.service.M365PowerShell"):
+                entra_client = Entra(set_mocked_m365_provider())
+        finally:
+            for active_patch in patches:
+                active_patch.stop()
+
+        for attribute, (_, sentinel) in expected.items():
+            assert getattr(entra_client, attribute) is sentinel, attribute
