@@ -16,7 +16,6 @@ import type { GraphHandle } from "@/components/attack-paths/graph/attack-path-gr
 import { FindingDetailDrawer } from "@/components/findings/table";
 import { LighthouseContextContributor } from "@/components/lighthouse/context-contributor";
 import { PageReady } from "@/components/onboarding";
-import { useFindingDetails } from "@/hooks/use-finding-details";
 import { AutoRefresh } from "@/components/scans";
 import { Button, Card, useToast } from "@/components/shadcn";
 import {
@@ -28,6 +27,7 @@ import {
   DialogTrigger,
 } from "@/components/shadcn/dialog";
 import { StatusAlert } from "@/components/shared/status-alert";
+import { useFindingDetails } from "@/hooks/use-finding-details";
 import { useMountEffect } from "@/hooks/use-mount-effect";
 import { exportGraphAsPNG, isProwlerFindingNode } from "@/lib/attack-paths";
 import {
