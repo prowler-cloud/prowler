@@ -198,40 +198,6 @@ vulnerabilities:
       - "pkg:npm/%40modelcontextprotocol%2Fsdk@1.27.1"
     expired_at: 2027-01-31
 
-  # CVE-2026-78667 and CVE-2026-97031 are DoS bugs in the Go standard library: net/http
-  # burns CPU parsing a Range header with a large number of small ranges in FileServer,
-  # ServeContent and ServeFile, and crypto/tls lets a client exhaust server memory with
-  # multiple ECH outer extension references. Both are server-side code paths. Fixed in
-  # Go 1.26.9 and 1.27.2 (released 2026-10-08). Trivy 0.75.0, the latest published
-  # release and the version the images ship, is built with go1.27.1, and Trivy main
-  # still declares `go 1.27.0`:
-  # https://github.com/aquasecurity/trivy/blob/v0.75.0/go.mod
-  # Prowler invokes Trivy exclusively as `trivy fs` and `trivy image` on a local path,
-  # never `trivy server`, so no HTTP or TLS listener ever exists in the image; its only
-  # TLS use is as a client pulling the vulnerability database. The purl is pinned to the
-  # stdlib version so the entry retires itself on the next Trivy bump. Remove this
-  # temporary suppression as soon as a Trivy release is built with Go >= 1.27.2.
-  - id: CVE-2026-78667
-    purls:
-      - "pkg:golang/stdlib@v1.27.1"
-    expired_at: 2026-11-15
-  - id: CVE-2026-97031
-    purls:
-      - "pkg:golang/stdlib@v1.27.1"
-    expired_at: 2026-11-15
-
-  # CVE-2026-78669 is an HTTP/2 DoS in the same Trivy 0.75.0 binary (stdlib 1.27.1 and
-  # golang.org/x/net 0.59.0): a malicious peer burns CPU with many small SETTINGS frames.
-  # Unlike the two above it also hits clients, but Trivy's only HTTP/2 peer here is the
-  # TLS-authenticated registry serving the vulnerability database, and the worst case is
-  # a slow scan. Fixed in Go 1.27.2 and x/net 0.60.0, which Trivy main already pulls in
-  # but no release ships yet. Same retirement rule as above.
-  - id: CVE-2026-78669
-    purls:
-      - "pkg:golang/stdlib@v1.27.1"
-      - "pkg:golang/golang.org/x/net@v0.59.0"
-    expired_at: 2026-11-15
-
   # Unlike the manifest entries above, this DLL ships in the image:
   # ExchangeOnlineManagement/3.10.1/netCore/System.Security.Cryptography.Pkcs.dll. It is a
   # DoS in CMS/PKCS parsing; Prowler only feeds it the tenant's own certificate. 3.10.1 is
@@ -241,20 +207,3 @@ vulnerabilities:
     purls:
       - "pkg:nuget/System.Security.Cryptography.Pkcs@10.0.0"
     expired_at: 2026-12-15
-
-  - id: CVE-2026-56852
-    purls:
-      - "pkg:golang/golang.org/x/text"
-    expired_at: 2026-12-31
-  - id: GHSA-hrxh-6v49-42gf
-    purls:
-      - "pkg:golang/google.golang.org/grpc"
-    expired_at: 2026-12-31
-  - id: CVE-2026-50151
-    purls:
-      - "pkg:golang/oras.land/oras-go/v2"
-    expired_at: 2026-12-31
-  - id: CVE-2026-50163
-    purls:
-      - "pkg:golang/oras.land/oras-go/v2"
-    expired_at: 2026-12-31
