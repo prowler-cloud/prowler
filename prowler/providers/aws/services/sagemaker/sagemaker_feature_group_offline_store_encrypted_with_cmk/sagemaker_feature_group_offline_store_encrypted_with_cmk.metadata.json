@@ -1,0 +1,42 @@
+{
+  "Provider": "aws",
+  "CheckID": "sagemaker_feature_group_offline_store_encrypted_with_cmk",
+  "CheckTitle": "SageMaker Feature Group offline store is encrypted with a KMS Customer Managed Key",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Effects/Data Exposure"
+  ],
+  "ServiceName": "sagemaker",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "AwsSageMakerFeatureGroup",
+  "ResourceGroup": "ai_ml",
+  "Description": "This check ensures that Amazon SageMaker Feature Groups that have an offline store configured encrypt the offline store S3 data with a KMS key (OfflineStoreConfig.S3StorageConfig.KmsKeyId). Feature groups without an offline store are not in scope.",
+  "Risk": "The offline store persists feature data in Amazon S3 for training and batch inference. Without encryption using a KMS Customer Managed Key, that data can be exposed through misconfigured bucket access, copied backups, or account compromise, and the organization loses fine-grained key access control, rotation, and revocation over its ML feature data.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/sagemaker/latest/dg/feature-store-security.html",
+    "https://docs.aws.amazon.com/sagemaker/latest/APIReference/API_S3StorageConfig.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aws sagemaker create-feature-group --feature-group-name <feature_group_name> --record-identifier-feature-name <id_feature> --event-time-feature-name <event_time_feature> --feature-definitions <definitions> --role-arn <role_arn> --offline-store-config 'S3StorageConfig={S3Uri=s3://<bucket>/<prefix>,KmsKeyId=<kms_key_arn>}'",
+      "NativeIaC": "```yaml\n# CloudFormation: SageMaker Feature Group offline store encrypted with a KMS key\nResources:\n  <example_resource_name>:\n    Type: AWS::SageMaker::FeatureGroup\n    Properties:\n      FeatureGroupName: <example_resource_name>\n      RecordIdentifierFeatureName: <id_feature>\n      EventTimeFeatureName: <event_time_feature>\n      RoleArn: <example_resource_arn>\n      FeatureDefinitions:\n        - FeatureName: <id_feature>\n          FeatureType: Integral\n        - FeatureName: <event_time_feature>\n          FeatureType: String\n      OfflineStoreConfig:\n        S3StorageConfig:\n          S3Uri: s3://<bucket>/<prefix>\n          KmsKeyId: <kms_key_arn>  # Critical: encrypts the offline store S3 data with the KMS key\n```",
+      "Other": "1. Open the AWS Console > Amazon SageMaker > Feature Store > Feature Groups.\n2. Because the offline store KMS key cannot be changed after creation, create a new feature group with the same schema, choosing a KMS Customer Managed Key for the offline store S3 encryption.\n3. Backfill/ingest the records into the new feature group.\n4. Repoint consumers to the new feature group and delete the unencrypted one.",
+      "Terraform": "```hcl\n# Terraform: SageMaker Feature Group offline store encrypted with a KMS key\nresource \"aws_sagemaker_feature_group\" \"<example_resource_name>\" {\n  feature_group_name             = \"<example_resource_name>\"\n  record_identifier_feature_name = \"<id_feature>\"\n  event_time_feature_name        = \"<event_time_feature>\"\n  role_arn                       = \"<example_resource_arn>\"\n\n  feature_definition {\n    feature_name = \"<id_feature>\"\n    feature_type = \"Integral\"\n  }\n  feature_definition {\n    feature_name = \"<event_time_feature>\"\n    feature_type = \"String\"\n  }\n\n  offline_store_config {\n    s3_storage_config {\n      s3_uri     = \"s3://<bucket>/<prefix>\"\n      kms_key_id = \"<kms_key_arn>\"  # Critical: encrypts the offline store S3 data with the KMS key\n    }\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Configure the offline store of every SageMaker Feature Group with a KMS Customer Managed Key by setting OfflineStoreConfig.S3StorageConfig.KmsKeyId at creation time. Enforce least-privilege key policies, enable key rotation, and align key access with your data classification and defense-in-depth strategy.",
+      "Url": "https://hub.prowler.com/check/sagemaker_feature_group_offline_store_encrypted_with_cmk"
+    }
+  },
+  "Categories": [
+    "encryption",
+    "gen-ai"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
