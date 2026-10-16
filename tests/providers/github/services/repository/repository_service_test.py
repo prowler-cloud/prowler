@@ -158,9 +158,37 @@ class Test_Repository_GraphQL:
                 assert len(repos) == 1
                 assert 1 in repos
                 assert repos[1].name == "repo1"
+                assert repos[1].secret_scanning_enabled is None
 
                 mock_graphql_call.assert_called_once()
                 mock_client.get_repo.assert_called_once_with("owner1/repo1")
+
+    @pytest.mark.parametrize(
+        ("status", "expected"), [("enabled", True), ("disabled", False)]
+    )
+    def test_secret_scanning_status(self, status, expected):
+        provider = set_mocked_github_provider()
+        provider.repositories = []
+        provider.organizations = []
+        self.mock_repo1.security_and_analysis = MagicMock()
+        self.mock_repo1.security_and_analysis.secret_scanning.status = status
+
+        with patch.object(Repository, "__init__", lambda *_: None):
+            repository_service = Repository(provider)
+            mock_client = MagicMock()
+            repository_service.clients = [mock_client]
+            repository_service.provider = provider
+
+            with patch.object(
+                repository_service,
+                "_get_accessible_repos_graphql",
+                return_value=["owner1/repo1"],
+            ):
+                mock_client.get_repo.return_value = self.mock_repo1
+
+                repos = repository_service._list_repositories()
+
+                assert repos[1].secret_scanning_enabled is expected
 
     def test_graphql_call_api_error(self):
         """Test that an error during the GraphQL call is handled gracefully"""
