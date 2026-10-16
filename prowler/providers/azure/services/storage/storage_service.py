@@ -52,7 +52,7 @@ class Storage(AzureService):
                         Account(
                             id=storage_account.id,
                             name=storage_account.name,
-                            kind=getattr(storage_account, "kind", "StorageV2"),
+                            kind=getattr(storage_account, "kind", None) or "StorageV2",
                             resouce_group_name=resouce_group_name,
                             enable_https_traffic_only=storage_account.enable_https_traffic_only,
                             infrastructure_encryption=storage_account.encryption.require_infrastructure_encryption,

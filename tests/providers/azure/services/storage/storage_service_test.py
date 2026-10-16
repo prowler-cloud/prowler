@@ -1,4 +1,5 @@
 import sys
+from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 from prowler.providers.azure.services.storage.storage_service import (
@@ -601,3 +602,47 @@ class Test_Storage_get_services_diagnostic_settings:
         assert account.queue_service_diagnostic_settings is None
         assert account.blob_service_diagnostic_settings is None
         assert account.table_service_diagnostic_settings is None
+
+
+class Test_Storage_account_kind:
+    """A missing or null account kind falls back to StorageV2."""
+
+    @staticmethod
+    def _sdk_account(kind):
+        account = MagicMock(
+            id=f"/subscriptions/{AZURE_SUBSCRIPTION_ID}/resourceGroups/rg/providers/Microsoft.Storage/storageAccounts/sa",
+            kind=kind,
+            key_policy=None,
+            enable_https_traffic_only=True,
+            allow_blob_public_access=False,
+            public_network_access="Disabled",
+            minimum_tls_version="TLS1_2",
+            private_endpoint_connections=[],
+            location="westeurope",
+            default_to_o_auth_authentication=False,
+            allow_cross_tenant_replication=False,
+            allow_shared_key_access=False,
+            encryption=MagicMock(
+                require_infrastructure_encryption=True, key_source="Microsoft.Storage"
+            ),
+            network_rule_set=MagicMock(bypass="AzureServices", default_action="Deny"),
+            sku=SimpleNamespace(name="Standard_LRS"),
+        )
+        # ``name`` is a MagicMock constructor argument, so set it afterwards.
+        account.name = "sa"
+        return account
+
+    def _load(self, kind):
+        storage = Storage.__new__(Storage)
+        storage.clients = {AZURE_SUBSCRIPTION_ID: MagicMock()}
+        storage.list_with_rg_scope = MagicMock(return_value=[self._sdk_account(kind)])
+        return storage._get_storage_accounts()[AZURE_SUBSCRIPTION_ID]
+
+    def test_null_kind_defaults_to_storage_v2(self):
+        accounts = self._load(kind=None)
+
+        assert len(accounts) == 1
+        assert accounts[0].kind == "StorageV2"
+
+    def test_explicit_kind_is_kept(self):
+        assert self._load(kind="BlockBlobStorage")[0].kind == "BlockBlobStorage"
