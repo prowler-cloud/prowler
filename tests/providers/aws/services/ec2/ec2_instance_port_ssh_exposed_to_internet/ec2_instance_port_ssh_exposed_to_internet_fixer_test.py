@@ -349,3 +349,81 @@ class Test_ec2_instance_port_ssh_exposed_to_internet_fixer:
             )
 
             assert fixer(instance.id, AWS_REGION_EU_WEST_1)
+
+    @mock_aws
+    def test_ec2_fixer_keeps_other_sources_of_the_rule(self):
+        # Create EC2 Mocked Resources
+        ec2_client = client("ec2", region_name=AWS_REGION_EU_WEST_1)
+        vpc_id = ec2_client.create_vpc(CidrBlock="10.0.0.0/16")["Vpc"]["VpcId"]
+        subnet_id = ec2_client.create_subnet(VpcId=vpc_id, CidrBlock="10.0.0.0/24")[
+            "Subnet"
+        ]["SubnetId"]
+        bastion_sg_id = ec2_client.create_security_group(
+            GroupName="bastion", Description="bastion", VpcId=vpc_id
+        )["GroupId"]
+        sg_id = ec2_client.create_security_group(
+            GroupName="app", Description="app", VpcId=vpc_id
+        )["GroupId"]
+        prefix_list_id = ec2_client.create_managed_prefix_list(
+            PrefixListName="corp",
+            AddressFamily="IPv4",
+            MaxEntries=5,
+            Entries=[{"Cidr": "198.51.100.0/24"}],
+        )["PrefixList"]["PrefixListId"]
+        ec2_client.authorize_security_group_ingress(
+            GroupId=sg_id,
+            IpPermissions=[
+                {
+                    "IpProtocol": "tcp",
+                    "FromPort": 22,
+                    "ToPort": 22,
+                    "IpRanges": [{"CidrIp": "0.0.0.0/0"}, {"CidrIp": "10.0.0.0/8"}],
+                    "Ipv6Ranges": [{"CidrIpv6": "::/0"}, {"CidrIpv6": "2001:db8::/32"}],
+                    "PrefixListIds": [{"PrefixListId": prefix_list_id}],
+                    "UserIdGroupPairs": [{"GroupId": bastion_sg_id}],
+                }
+            ],
+        )
+        instance_id = ec2_client.run_instances(
+            ImageId="ami-12345678",
+            MinCount=1,
+            MaxCount=1,
+            InstanceType="t2.micro",
+            SubnetId=subnet_id,
+            SecurityGroupIds=[sg_id],
+        )["Instances"][0]["InstanceId"]
+
+        from prowler.providers.aws.services.ec2.ec2_service import EC2
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.ec2.ec2_instance_port_ssh_exposed_to_internet.ec2_instance_port_ssh_exposed_to_internet_fixer.ec2_client",
+                new=EC2(aws_provider),
+            ),
+        ):
+            # Test Fixer
+            from prowler.providers.aws.services.ec2.ec2_instance_port_ssh_exposed_to_internet.ec2_instance_port_ssh_exposed_to_internet_fixer import (
+                fixer,
+            )
+
+            assert fixer(instance_id, AWS_REGION_EU_WEST_1)
+
+        ingress_rules = ec2_client.describe_security_groups(GroupIds=[sg_id])[
+            "SecurityGroups"
+        ][0]["IpPermissions"]
+        assert len(ingress_rules) == 1
+        assert ingress_rules[0]["IpRanges"] == [{"CidrIp": "10.0.0.0/8"}]
+        assert ingress_rules[0]["Ipv6Ranges"] == [{"CidrIpv6": "2001:db8::/32"}]
+        assert [
+            prefix_list["PrefixListId"]
+            for prefix_list in ingress_rules[0]["PrefixListIds"]
+        ] == [prefix_list_id]
+        assert [
+            group_pair["GroupId"] for group_pair in ingress_rules[0]["UserIdGroupPairs"]
+        ] == [bastion_sg_id]

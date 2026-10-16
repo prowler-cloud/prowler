@@ -102,6 +102,35 @@ def check_security_group(
     return False
 
 
+def get_any_address_ip_permission(ingress_rule: Any) -> dict:
+    """
+    Build an IpPermission that only contains the any-address sources (0.0.0.0/0 and ::/0) of the given ingress rule.
+
+    Revoking the original rule would also remove the other sources that share it
+    (private CIDRs, other IPv6 ranges, prefix lists and security group references).
+
+    @param ingress_rule: AWS Security Group IpPermissions Ingress Rule
+
+    @return: IpPermission with the same protocol and ports and only the 0.0.0.0/0 and ::/0 ranges
+    """
+    ip_permission = {
+        key: ingress_rule[key]
+        for key in ("IpProtocol", "FromPort", "ToPort")
+        if key in ingress_rule
+    }
+    ip_permission["IpRanges"] = [
+        ip_range
+        for ip_range in ingress_rule.get("IpRanges", [])
+        if ip_range.get("CidrIp") == "0.0.0.0/0"
+    ]
+    ip_permission["Ipv6Ranges"] = [
+        ip_range
+        for ip_range in ingress_rule.get("Ipv6Ranges", [])
+        if ip_range.get("CidrIpv6") == "::/0"
+    ]
+    return ip_permission
+
+
 def _is_cidr_public(cidr: str, any_address: bool = False) -> bool:
     """
     Check if an input CIDR is public
