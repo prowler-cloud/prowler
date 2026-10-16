@@ -1,0 +1,1 @@
+`--impersonate-service-account` flag and `GOOGLEWORKSPACE_IMPERSONATE_SERVICE_ACCOUNT` environment variable for the Google Workspace provider, authenticating through Application Default Credentials and Service Account impersonation so Domain-Wide Delegation works without downloading a Service Account key

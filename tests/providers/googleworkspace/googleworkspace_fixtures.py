@@ -12,6 +12,9 @@ from prowler.providers.googleworkspace.models import (
 DOMAIN = "test-company.com"
 CUSTOMER_ID = "C1234567"
 DELEGATED_USER = "prowler-reader@test-company.com"
+IMPERSONATED_SERVICE_ACCOUNT = (
+    "prowler-reader@test-project-12345.iam.gserviceaccount.com"
+)
 ROOT_ORG_UNIT_ID = "03ph8a2z1234"
 
 # Service Account credentials (mock)
