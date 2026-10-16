@@ -18,6 +18,10 @@ class SageMaker(AWSService):
         self.sagemaker_training_jobs = []
         self.sagemaker_processing_jobs = []
         self.processing_jobs_scanned_regions = set()
+        self.processing_jobs_list_failed_regions = set()
+        self.sagemaker_transform_jobs = []
+        self.transform_jobs_scanned_regions = set()
+        self.transform_jobs_list_failed_regions = set()
         self.sagemaker_domains = []
         self.endpoint_configs = {}
         self.sagemaker_model_registries = []
@@ -28,6 +32,7 @@ class SageMaker(AWSService):
         self.__threading_call__(self._list_models)
         self.__threading_call__(self._list_training_jobs)
         self.__threading_call__(self._list_processing_jobs)
+        self.__threading_call__(self._list_transform_jobs)
         self.__threading_call__(self._list_endpoint_configs)
         self.__threading_call__(self._list_domains)
         self.__threading_call__(self._list_model_package_groups)
@@ -50,6 +55,9 @@ class SageMaker(AWSService):
             self._describe_processing_job, self.sagemaker_processing_jobs
         )
         self.__threading_call__(
+            self._describe_transform_job, self.sagemaker_transform_jobs
+        )
+        self.__threading_call__(
             self._describe_endpoint_config, list(self.endpoint_configs.values())
         )
         self.__threading_call__(self._describe_domain, self.sagemaker_domains)
@@ -65,6 +73,9 @@ class SageMaker(AWSService):
         )
         self.__threading_call__(
             self._list_tags_for_resource, self.sagemaker_processing_jobs
+        )
+        self.__threading_call__(
+            self._list_tags_for_resource, self.sagemaker_transform_jobs
         )
         self.__threading_call__(
             self._list_tags_for_resource, list(self.endpoint_configs.values())
@@ -148,9 +159,10 @@ class SageMaker(AWSService):
 
         Populates ``self.sagemaker_processing_jobs`` with `ProcessingJob`
         entries and adds ``regional_client.region`` to
-        ``self.processing_jobs_scanned_regions`` once pagination succeeds, so
-        regions where ``ListProcessingJobs`` fails are skipped by checks that
-        consume that set.
+        ``self.processing_jobs_scanned_regions`` once pagination succeeds.
+        Regions where ``ListProcessingJobs`` fails are recorded in
+        ``self.processing_jobs_list_failed_regions`` so checks can emit MANUAL
+        instead of treating a failed inventory as empty.
 
         Args:
             regional_client: Regional SageMaker boto3 client.
@@ -176,16 +188,19 @@ class SageMaker(AWSService):
                         )
             self.processing_jobs_scanned_regions.add(regional_client.region)
         except Exception as error:
+            self.processing_jobs_list_failed_regions.add(regional_client.region)
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
     def _describe_processing_job(self, processing_job):
-        """Describe a SageMaker processing job and enrich its image metadata.
+        """Describe a SageMaker processing job and enrich inventory fields.
 
-        Reads ``AppSpecification.ImageUri`` from ``DescribeProcessingJob`` and
-        stores it on ``processing_job.image_uri``. Errors are logged and
-        swallowed so a failure in one job does not abort the scan.
+        Reads ``AppSpecification.ImageUri`` and
+        ``ProcessingResources.ClusterConfig.VolumeKmsKeyId`` from
+        ``DescribeProcessingJob``. On API failure, sets
+        ``processing_job.detail_fetch_error`` so checks can emit MANUAL rather
+        than asserting compliance from an unread response.
 
         Args:
             processing_job: ProcessingJob model to enrich in-place.
@@ -198,7 +213,12 @@ class SageMaker(AWSService):
             )
             app_spec = describe_processing_job.get("AppSpecification", {})
             processing_job.image_uri = app_spec.get("ImageUri")
+            cluster_config = describe_processing_job.get(
+                "ProcessingResources", {}
+            ).get("ClusterConfig", {})
+            processing_job.volume_kms_key_id = cluster_config.get("VolumeKmsKeyId")
         except Exception as error:
+            processing_job.detail_fetch_error = error.__class__.__name__
             logger.error(
                 f"{processing_job.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
@@ -436,6 +456,71 @@ class SageMaker(AWSService):
             )
         )
 
+
+    def _list_transform_jobs(self, regional_client):
+        """List SageMaker transform jobs in a region.
+
+        Populates ``self.sagemaker_transform_jobs`` with `TransformJob`
+        entries and adds ``regional_client.region`` to
+        ``self.transform_jobs_scanned_regions`` once pagination succeeds.
+        Regions where ``ListTransformJobs`` fails are recorded in
+        ``self.transform_jobs_list_failed_regions`` so checks can emit MANUAL
+        instead of treating a failed inventory as empty.
+
+        Args:
+            regional_client: Regional SageMaker boto3 client.
+        """
+        logger.info("SageMaker - listing transform jobs...")
+        try:
+            list_transform_jobs_paginator = regional_client.get_paginator(
+                "list_transform_jobs"
+            )
+            for page in list_transform_jobs_paginator.paginate():
+                for transform_job in page["TransformJobSummaries"]:
+                    if not self.audit_resources or (
+                        is_resource_filtered(
+                            transform_job["TransformJobArn"], self.audit_resources
+                        )
+                    ):
+                        self.sagemaker_transform_jobs.append(
+                            TransformJob(
+                                name=transform_job["TransformJobName"],
+                                region=regional_client.region,
+                                arn=transform_job["TransformJobArn"],
+                            )
+                        )
+            self.transform_jobs_scanned_regions.add(regional_client.region)
+        except Exception as error:
+            self.transform_jobs_list_failed_regions.add(regional_client.region)
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def _describe_transform_job(self, transform_job):
+        """Describe a SageMaker transform job and retain volume KMS key state.
+
+        Reads ``TransformResources.VolumeKmsKeyId`` from
+        ``DescribeTransformJob``. On API failure, sets
+        ``transform_job.detail_fetch_error`` so checks can emit MANUAL rather
+        than asserting compliance from an unread response.
+
+        Args:
+            transform_job: TransformJob model to enrich in-place.
+        """
+        logger.info("SageMaker - describing transform job...")
+        try:
+            regional_client = self.regional_clients[transform_job.region]
+            describe_transform_job = regional_client.describe_transform_job(
+                TransformJobName=transform_job.name
+            )
+            transform_resources = describe_transform_job.get("TransformResources", {})
+            transform_job.volume_kms_key_id = transform_resources.get("VolumeKmsKeyId")
+        except Exception as error:
+            transform_job.detail_fetch_error = error.__class__.__name__
+            logger.error(
+                f"{transform_job.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
     def _list_tags_for_resource(self, resource):
         """
         Lists tags for a specific SageMaker resource.
@@ -630,6 +715,12 @@ class ProcessingJob(BaseModel):
         arn: Processing job ARN.
         image_uri: Container image URI from `AppSpecification.ImageUri`,
             populated by `_describe_processing_job`.
+        volume_kms_key_id: KMS key ID from
+            `ProcessingResources.ClusterConfig.VolumeKmsKeyId`.
+        detail_fetch_error: Exception class name when DescribeProcessingJob
+            failed. Distinguishes "no VolumeKmsKeyId" (None + no error) from
+            "details could not be described" (None + error). Checks that assert
+            volume encryption should emit MANUAL when this is set.
         tags: Resource tags, populated by `_list_tags_for_resource`.
     """
 
@@ -637,6 +728,31 @@ class ProcessingJob(BaseModel):
     region: str
     arn: str
     image_uri: Optional[str] = None
+    volume_kms_key_id: Optional[str] = None
+    detail_fetch_error: Optional[str] = None
+    tags: Optional[list] = []
+
+
+class TransformJob(BaseModel):
+    """Represents a SageMaker batch transform job.
+
+    Attributes:
+        name: Transform job name.
+        region: AWS region where the job lives.
+        arn: Transform job ARN.
+        volume_kms_key_id: KMS key ID from `TransformResources.VolumeKmsKeyId`.
+        detail_fetch_error: Exception class name when DescribeTransformJob
+            failed. Distinguishes "no VolumeKmsKeyId" (None + no error) from
+            "details could not be described" (None + error). Checks that assert
+            volume encryption should emit MANUAL when this is set.
+        tags: Resource tags, populated by `_list_tags_for_resource`.
+    """
+
+    name: str
+    region: str
+    arn: str
+    volume_kms_key_id: Optional[str] = None
+    detail_fetch_error: Optional[str] = None
     tags: Optional[list] = []
 
 
