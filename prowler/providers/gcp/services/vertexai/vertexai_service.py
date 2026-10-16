@@ -34,8 +34,31 @@ class VertexAI(GCPService):
                 while request is not None:
                     response = request.execute(num_retries=DEFAULT_RETRY_ATTEMPTS)
                     for instance in response.get("instances", []):
+                        gce_setup = instance.get("gceSetup", {})
+                        metadata = gce_setup.get("metadata", {})
+                        network_interfaces = gce_setup.get("networkInterfaces", [])
+                        # Name format: projects/{project}/locations/{zone}/instances/{instance}
+                        name_parts = instance["name"].split("/")
                         self.workbench_instances.append(
-                            self._parse_workbench_instance(instance, project_id)
+                            WorkbenchInstance(
+                                id=instance["name"],
+                                name=name_parts[-1],
+                                project_id=project_id,
+                                location=name_parts[3],
+                                state=instance.get("state", "STATE_UNSPECIFIED"),
+                                public_ip_disabled=gce_setup.get(
+                                    "disablePublicIp", False
+                                ),
+                                root_access_disabled=str(
+                                    metadata.get(ROOT_ACCESS_DISABLED_METADATA_KEY, "")
+                                ).lower()
+                                == "true",
+                                network=(
+                                    network_interfaces[0].get("network")
+                                    if network_interfaces
+                                    else None
+                                ),
+                            )
                         )
                     # The wildcard list reports locations it could not reach
                     # instead of raising, so the project was not fully scanned.
@@ -51,32 +74,6 @@ class VertexAI(GCPService):
                 logger.error(
                     f"{project_id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
-
-    @staticmethod
-    def _parse_workbench_instance(
-        instance: dict, project_id: str
-    ) -> "WorkbenchInstance":
-        """Build a WorkbenchInstance from a Notebooks v2 API instance payload."""
-        gce_setup = instance.get("gceSetup", {})
-        metadata = gce_setup.get("metadata", {})
-        network_interfaces = gce_setup.get("networkInterfaces", [])
-        # Name format: projects/{project}/locations/{zone}/instances/{instance}
-        name_parts = instance["name"].split("/")
-        return WorkbenchInstance(
-            id=instance["name"],
-            name=name_parts[-1],
-            project_id=project_id,
-            location=name_parts[3],
-            state=instance.get("state", "STATE_UNSPECIFIED"),
-            public_ip_disabled=gce_setup.get("disablePublicIp", False),
-            root_access_disabled=str(
-                metadata.get(ROOT_ACCESS_DISABLED_METADATA_KEY, "")
-            ).lower()
-            == "true",
-            network=(
-                network_interfaces[0].get("network") if network_interfaces else None
-            ),
-        )
 
 
 class WorkbenchInstance(BaseModel):
