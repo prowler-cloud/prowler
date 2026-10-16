@@ -392,6 +392,13 @@ class Compute(GCPService):
     def _describe_backend_service(self):
         for balancer in self.load_balancers:
             if balancer.service:
+                # Global backend buckets have no logConfig and log every request
+                if (
+                    "/backendBuckets/" in balancer.service
+                    and "/regions/" not in balancer.service
+                ):
+                    balancer.logging = True
+                    continue
                 try:
                     backend_service_name = balancer.service.split("/")[-1]
                     is_regional = "/regions/" in balancer.service
