@@ -164,7 +164,7 @@ class Entra(M365Service):
         self.cross_tenant_access_default: Optional[CrossTenantAccessDefault] = (
             attributes[21]
         )
-        self.enterprise_apps: Optional[Dict[str, "ServicePrincipal"]] = attributes[21]
+        self.enterprise_apps: Optional[Dict[str, "ServicePrincipal"]] = attributes[22]
         self.user_accounts_status = {}
 
         # Resolve directory-object identifiers referenced by Conditional Access

@@ -2285,3 +2285,31 @@ class TestEnterpriseAppAssignmentSettings:
         assert apps["sp-2"].account_enabled is None
         assert apps["sp-2"].service_principal_type is None
         assert apps["sp-2"].app_owner_organization_id is None
+
+
+class TestEntraInitAttributeMapping:
+    """Each attribute must receive the result of its own getter in ``__init__``."""
+
+    def test_gathered_results_land_on_their_attributes(self):
+        expected = {
+            "cross_tenant_access_default": (
+                "_get_cross_tenant_access_default",
+                entra_service.CrossTenantAccessDefault(),
+            ),
+            "enterprise_apps": ("_get_enterprise_app_assignment_settings", {}),
+        }
+        patches = [
+            patch.object(Entra, getter, new=AsyncMock(return_value=sentinel))
+            for getter, sentinel in expected.values()
+        ]
+        for active_patch in patches:
+            active_patch.start()
+        try:
+            with patch("prowler.providers.m365.lib.service.service.M365PowerShell"):
+                entra_client = Entra(set_mocked_m365_provider())
+        finally:
+            for active_patch in patches:
+                active_patch.stop()
+
+        for attribute, (_, sentinel) in expected.items():
+            assert getattr(entra_client, attribute) is sentinel, attribute
