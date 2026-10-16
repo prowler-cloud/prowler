@@ -19,10 +19,12 @@ class network_udp_internet_access_restricted(Check):
                 rule_fail_condition = any(
                     (
                         rule.protocol in ["UDP", "Udp"]
-                        and (
-                            rule.source_address_prefix
-                            and rule.source_address_prefix
-                            in ["Internet", "*", "0.0.0.0/0"]
+                        and any(
+                            source in ["Internet", "*", "0.0.0.0/0"]
+                            for source in [
+                                rule.source_address_prefix,
+                                *(rule.source_address_prefixes or []),
+                            ]
                         )
                         and rule.access == "Allow"
                         and rule.direction == "Inbound"
