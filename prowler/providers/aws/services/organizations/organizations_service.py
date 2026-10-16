@@ -170,14 +170,18 @@ class Organizations(AWSService):
             )
             for page in list_delegated_administrators_paginator.paginate():
                 for delegated_administrator in page["DelegatedAdministrators"]:
+                    admin_id = delegated_administrator.get("Id")
                     self.delegated_administrators.append(
                         DelegatedAdministrator(
                             arn=delegated_administrator.get("Arn"),
-                            id=delegated_administrator.get("Id"),
+                            id=admin_id,
                             name=delegated_administrator.get("Name"),
                             email=delegated_administrator.get("Email"),
                             status=delegated_administrator.get("Status"),
                             joinedmethod=delegated_administrator.get("JoinedMethod"),
+                            delegated_services=self._list_delegated_services_for_account(
+                                admin_id
+                            ),
                         )
                     )
 
@@ -191,6 +195,47 @@ class Organizations(AWSService):
             )
 
         return self.delegated_administrators
+
+    def _list_delegated_services_for_account(self, account_id) -> Optional[list]:
+        """List the AWS service principals a delegated administrator is registered for.
+
+        Args:
+            account_id: The AWS account ID of the delegated administrator to query.
+
+        Returns:
+            A list of AWS service principal strings the account is a delegated
+            administrator for, an empty list if the account has none, or
+            ``None`` if the services could not be determined, e.g. because the
+            caller lacks the separate `organizations:ListDelegatedServicesForAccount`
+            permission or another error occurred.
+        """
+        logger.info(
+            "Organizations - List Delegated Services for account: %s ...", account_id
+        )
+        delegated_services = []
+        try:
+            list_delegated_services_paginator = self.client.get_paginator(
+                "list_delegated_services_for_account"
+            )
+            for page in list_delegated_services_paginator.paginate(
+                AccountId=account_id
+            ):
+                for delegated_service in page["DelegatedServices"]:
+                    delegated_services.append(delegated_service.get("ServicePrincipal"))
+
+        except ClientError as error:
+            logger.warning(
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            return None
+
+        except Exception as error:
+            logger.error(
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            return None
+
+        return delegated_services
 
 
 class Policy(BaseModel):
@@ -209,6 +254,7 @@ class DelegatedAdministrator(BaseModel):
     email: str
     status: str
     joinedmethod: str
+    delegated_services: Optional[list[str]] = None
 
 
 class Organization(BaseModel):
