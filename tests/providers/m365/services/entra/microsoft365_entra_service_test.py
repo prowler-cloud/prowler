@@ -2342,3 +2342,35 @@ class TestSubscribedSkus:
         skus = asyncio.run(service._get_subscribed_skus())
 
         assert [s.sku_part_number for s in skus] == ["O365_E3", "AAD_PREMIUM_P2"]
+
+
+class TestEntraInitAttributeMapping:
+    """Each attribute must receive the result of its own getter in ``__init__``."""
+
+    def test_gathered_results_land_on_their_attributes(self):
+        expected = {
+            "cross_tenant_access_default": (
+                "_get_cross_tenant_access_default",
+                entra_service.CrossTenantAccessDefault(),
+            ),
+            "role_assignment_schedule_instances": (
+                "_get_role_assignment_schedule_instances",
+                [],
+            ),
+            "subscribed_skus": ("_get_subscribed_skus", []),
+        }
+        patches = [
+            patch.object(Entra, getter, new=AsyncMock(return_value=sentinel))
+            for getter, sentinel in expected.values()
+        ]
+        for active_patch in patches:
+            active_patch.start()
+        try:
+            with patch("prowler.providers.m365.lib.service.service.M365PowerShell"):
+                entra_client = Entra(set_mocked_m365_provider())
+        finally:
+            for active_patch in patches:
+                active_patch.stop()
+
+        for attribute, (_, sentinel) in expected.items():
+            assert getattr(entra_client, attribute) is sentinel, attribute

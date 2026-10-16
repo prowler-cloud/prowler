@@ -171,8 +171,8 @@ class Entra(M365Service):
         )
         self.role_assignment_schedule_instances: Optional[
             List["RoleAssignmentScheduleInstance"]
-        ] = attributes[21]
-        self.subscribed_skus: Optional[List["SubscribedSku"]] = attributes[22]
+        ] = attributes[22]
+        self.subscribed_skus: Optional[List["SubscribedSku"]] = attributes[23]
         self.user_accounts_status = {}
 
         # Resolve directory-object identifiers referenced by Conditional Access
