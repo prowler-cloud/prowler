@@ -1,0 +1,1 @@
+`compute_firewall_ssh_access_from_the_internet_allowed` and `compute_firewall_rdp_access_from_the_internet_allowed` checks no longer report a false negative for firewall rules that allow ingress from IPv6 `::/0`
