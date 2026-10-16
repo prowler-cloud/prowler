@@ -1,0 +1,42 @@
+{
+  "Provider": "aws",
+  "CheckID": "bedrock_guardrail_iam_condition_enforcement_enabled",
+  "CheckTitle": "IAM policy allowing Bedrock model invocation requires a guardrail through the bedrock:GuardrailIdentifier condition key",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Effects/Data Exposure"
+  ],
+  "ServiceName": "bedrock",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "AwsIamPolicy",
+  "ResourceGroup": "ai_ml",
+  "Description": "**Customer-managed and inline IAM policies** that allow `bedrock:InvokeModel` or `bedrock:InvokeModelWithResponseStream` on Bedrock resources are examined for the `bedrock:GuardrailIdentifier` condition key. Each such `Allow` must require a guardrail on the request, or the policy must deny the same operations when no guardrail is supplied.",
+  "Risk": "A guardrail is only applied when the caller names it in the inference request. Without an **IAM condition** on `bedrock:GuardrailIdentifier`, any holder of the policy can call `InvokeModel`, `Converse` or their streaming variants with no guardrail, bypassing content filters, denied topics and **sensitive information** masking, which opens the way to prompt injection and data leakage.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/bedrock/latest/userguide/guardrails-permissions-id.html",
+    "https://docs.aws.amazon.com/bedrock/latest/userguide/guardrails-permissions.html",
+    "https://docs.aws.amazon.com/service-authorization/latest/reference/list_amazonbedrock.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aws iam create-policy-version --policy-arn <POLICY_ARN> --set-as-default --policy-document '{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Action\":[\"bedrock:InvokeModel\",\"bedrock:InvokeModelWithResponseStream\"],\"Resource\":\"arn:aws:bedrock:<REGION>::foundation-model/*\",\"Condition\":{\"StringEquals\":{\"bedrock:GuardrailIdentifier\":\"arn:aws:bedrock:<REGION>:<ACCOUNT_ID>:guardrail/<GUARDRAIL_ID>:<VERSION>\"}}}]}'",
+      "NativeIaC": "```yaml\n# CloudFormation: allow model invocation only with the approved guardrail\nResources:\n  <example_resource_name>:\n    Type: AWS::IAM::ManagedPolicy\n    Properties:\n      PolicyDocument:\n        Version: '2012-10-17'\n        Statement:\n          - Effect: Allow\n            Action:\n              - bedrock:InvokeModel\n              - bedrock:InvokeModelWithResponseStream\n            Resource: !Sub 'arn:${AWS::Partition}:bedrock:${AWS::Region}::foundation-model/*'\n            Condition:\n              StringEquals:  # FIX: require the guardrail on every inference request\n                bedrock:GuardrailIdentifier: !Sub 'arn:${AWS::Partition}:bedrock:${AWS::Region}:${AWS::AccountId}:guardrail/<example_resource_id>:1'\n```",
+      "Other": "1. In the AWS console, open IAM and select the policy (Policies for a customer-managed policy, or the user, group or role for an inline policy)\n2. Choose Edit > JSON\n3. Find each Allow statement whose Action includes bedrock:InvokeModel or bedrock:InvokeModelWithResponseStream\n4. Add a Condition with StringEquals on bedrock:GuardrailIdentifier set to the approved guardrail ARN and version\n5. Optionally add a matching Deny with StringNotEquals on the same key so other policies cannot bypass it\n6. Save the policy and re-run the check",
+      "Terraform": "```hcl\n# Allow model invocation only with the approved guardrail\nresource \"aws_iam_policy\" \"<example_resource_name>\" {\n  name = \"<example_resource_name>\"\n  policy = jsonencode({\n    Version = \"2012-10-17\"\n    Statement = [{\n      Effect   = \"Allow\"\n      Action   = [\"bedrock:InvokeModel\", \"bedrock:InvokeModelWithResponseStream\"]\n      Resource = \"arn:aws:bedrock:${var.region}::foundation-model/*\"\n      Condition = {\n        StringEquals = {  # FIX: require the guardrail on every inference request\n          \"bedrock:GuardrailIdentifier\" = \"arn:aws:bedrock:${var.region}:${var.account_id}:guardrail/<example_resource_id>:1\"\n        }\n      }\n    }]\n  })\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Require a guardrail on every model invocation an IAM policy allows: add a `StringEquals` condition on `bedrock:GuardrailIdentifier` naming the approved guardrail and version, and pair it with a `Deny` using `StringNotEquals` on the same key so no other grant can bypass it. Apply **least privilege** to `bedrock:InvokeModel*` and keep guardrail policies under change control.",
+      "Url": "https://hub.prowler.com/check/bedrock_guardrail_iam_condition_enforcement_enabled"
+    }
+  },
+  "Categories": [
+    "identity-access",
+    "gen-ai"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Scope is customer-managed policies (attached ones, or all when scanning unused services) and inline policies; AWS-managed policies are skipped because they cannot be edited. Policies that grant neither operation produce no finding. An Action of \"*\" is left to the administrative-privileges checks. A Deny in the same policy clears the finding when it covers the Allow's resources and applies either unconditionally or exactly when no guardrail is supplied; guardrail enforcement placed in a different policy, a permissions boundary or an SCP is not evaluated."
+}
