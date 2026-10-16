@@ -875,6 +875,7 @@
           "accessanalyzer_enabled_without_findings",
           "bedrock_agent_role_least_privilege",
           "bedrock_agent_role_not_shared_across_agents",
+          "bedrock_knowledge_base_role_least_privilege",
           "efs_access_point_enforce_root_directory",
           "efs_access_point_enforce_user_identity",
           "iam_role_access_not_stale_to_bedrock",
