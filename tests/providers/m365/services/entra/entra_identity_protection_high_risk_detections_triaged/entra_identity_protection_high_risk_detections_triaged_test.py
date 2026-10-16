@@ -73,8 +73,9 @@ class Test_entra_identity_protection_high_risk_detections_triaged:
 
             assert len(result) == 1
             assert result[0].status == "MANUAL"
-            assert "2 detection(s) still at risk have a hidden risk level" in (
-                result[0].status_extended
+            assert (
+                "2 detection(s) still at risk have a hidden or unknown risk level"
+                in (result[0].status_extended)
             )
 
     def test_detections_present_fail(self):

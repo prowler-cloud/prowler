@@ -28,6 +28,10 @@ run_hunting_query_body = importlib.import_module(
 CONDITIONAL_ACCESS_SENTINEL_IDS = {"All", "None", "GuestsOrExternalUsers"}
 
 
+# Risk levels whose meaning is known; anything else cannot be evaluated.
+KNOWN_RISK_LEVELS = {"none", "low", "medium", "high"}
+
+
 class Entra(M365Service):
     """
     Microsoft Entra ID service class.
@@ -162,7 +166,7 @@ class Entra(M365Service):
         self.cross_tenant_access_default: Optional[CrossTenantAccessDefault] = (
             attributes[21]
         )
-        self.high_risk_detections: Optional[List[RiskDetection]] = attributes[21]
+        self.high_risk_detections: Optional[List[RiskDetection]] = attributes[22]
         self.user_accounts_status = {}
 
         # Resolve directory-object identifiers referenced by Conditional Access
@@ -2414,8 +2418,9 @@ OAuthAppInfo
         triaged (remediated, dismissed or confirmed), and keeps the ones with
         ``riskLevel`` ``high``. The level is not used in the filter because
         tenants without Entra ID P2 receive ``hidden`` instead of the real
-        level; those detections are counted in
-        ``self.hidden_risk_level_detections`` so the check can report MANUAL.
+        level. Detections whose level is hidden, ``unknownFutureValue`` or
+        missing are counted in ``self.hidden_risk_level_detections`` so the
+        check can report MANUAL.
 
         Returns:
             Optional[List[RiskDetection]]: The list of untriaged high-risk
@@ -2447,7 +2452,8 @@ OAuthAppInfo
                 page = data.get("value", []) or []
                 for item in page:
                     risk_level = item.get("riskLevel", "")
-                    if risk_level == "hidden":
+                    if risk_level not in KNOWN_RISK_LEVELS:
+                        # hidden (no P2 licence), unknownFutureValue or missing.
                         self.hidden_risk_level_detections += 1
                         continue
                     if risk_level != "high":

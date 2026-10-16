@@ -2290,6 +2290,12 @@ class TestHighRiskDetections:
                     {"id": "d-high", "riskLevel": "high", "riskState": "atRisk"},
                     {"id": "d-medium", "riskLevel": "medium", "riskState": "atRisk"},
                     {"id": "d-hidden", "riskLevel": "hidden", "riskState": "atRisk"},
+                    {
+                        "id": "d-future",
+                        "riskLevel": "unknownFutureValue",
+                        "riskState": "atRisk",
+                    },
+                    {"id": "d-missing", "riskState": "atRisk"},
                 ]
             }
         )
@@ -2298,7 +2304,7 @@ class TestHighRiskDetections:
         detections = asyncio.run(service._get_high_risk_detections())
 
         assert [d.id for d in detections] == ["d-high"]
-        assert service.hidden_risk_level_detections == 1
+        assert service.hidden_risk_level_detections == 3
         url = service.client.identity_protection.with_url.call_args[0][0]
         assert "riskState%20eq%20'atRisk'" in url
         assert "riskLevel" not in url
@@ -2316,3 +2322,31 @@ class TestHighRiskDetections:
 
         assert asyncio.run(service._get_high_risk_detections()) is None
         assert "empty response" in service.high_risk_detections_error
+
+
+class TestEntraInitAttributeMapping:
+    """Each attribute must receive the result of its own getter in ``__init__``."""
+
+    def test_gathered_results_land_on_their_attributes(self):
+        expected = {
+            "cross_tenant_access_default": (
+                "_get_cross_tenant_access_default",
+                entra_service.CrossTenantAccessDefault(),
+            ),
+            "high_risk_detections": ("_get_high_risk_detections", []),
+        }
+        patches = [
+            patch.object(Entra, getter, new=AsyncMock(return_value=sentinel))
+            for getter, sentinel in expected.values()
+        ]
+        for active_patch in patches:
+            active_patch.start()
+        try:
+            with patch("prowler.providers.m365.lib.service.service.M365PowerShell"):
+                entra_client = Entra(set_mocked_m365_provider())
+        finally:
+            for active_patch in patches:
+                active_patch.stop()
+
+        for attribute, (_, sentinel) in expected.items():
+            assert getattr(entra_client, attribute) is sentinel, attribute

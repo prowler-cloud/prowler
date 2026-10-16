@@ -13,7 +13,7 @@ class entra_identity_protection_high_risk_detections_triaged(Check):
     - FAIL: One or more high-risk detections remain untriaged.
     - MANUAL: Risk detections could not be read (missing Entra ID P2 license
       or IdentityRiskEvent.Read.All permission), or detections still at risk
-      have a hidden risk level and none is known to be high.
+      have a hidden or unknown risk level and none is known to be high.
     """
 
     def execute(self) -> list[CheckReportM365]:
@@ -55,8 +55,8 @@ class entra_identity_protection_high_risk_detections_triaged(Check):
             report.status_extended = (
                 f"Cannot confirm that no high-risk Identity Protection detections "
                 f"are pending triage: {hidden_count} detection(s) still at risk "
-                f"have a hidden risk level, which Microsoft Graph returns when "
-                f"the tenant lacks a Microsoft Entra ID P2 license."
+                f"have a hidden or unknown risk level (Microsoft Graph hides the "
+                f"level when the tenant lacks a Microsoft Entra ID P2 license)."
             )
         elif not detections:
             report.status = "PASS"
