@@ -5,104 +5,106 @@ sidebarTitle: "Codex / ChatGPT"
 
 Connect [OpenAI Codex](https://learn.chatgpt.com/docs/extend/mcp) to the Prowler Cloud MCP Server at `https://mcp.prowler.com/mcp` so Codex can query findings, inspect checks, and manage your Prowler providers.
 
-## Which Codex Surfaces Work
+## Preferred Setup: Install the Prowler Plugin
 
-Codex keeps MCP servers in one file, `~/.codex/config.toml`. You can set it up from either the **Codex / ChatGPT desktop app** or the **Codex CLI** — both write to that same file, so pick whichever you already use.
+The Prowler plugin is the recommended setup for Codex CLI. It adds Prowler Cloud security and compliance skills and configures the Prowler MCP Server with the required `User-Agent` header.
 
-| Surface | Set it up here | Notes |
-|---------|----------------|-------|
-| **[Codex / ChatGPT desktop app](https://learn.chatgpt.com/docs/app)** (macOS, Windows) | ✅ Yes | **Settings → MCP servers** |
-| **Codex CLI** (terminal) | ✅ Yes | `codex mcp` commands |
-| **Codex IDE extension** (VS Code) | Inherits | Works automatically once the app or CLI is configured |
-| **ChatGPT on the web** | ❌ No | Does not read local Codex configuration |
-
-<Note>
-**Codex and ChatGPT share one desktop app.** Since July 2026 the standalone Codex app and the ChatGPT desktop app are the same application: Codex is a dedicated coding surface inside it, alongside Chat and Work. If you already had the Codex app, updating turns it into the new ChatGPT desktop app and it still opens in Codex. Either way, this guide applies.
-
-Not to be confused with **ChatGPT Classic**, the name given to the previous-generation ChatGPT desktop app.
-</Note>
-
-<Note>
-**Configure once, use everywhere.** The Codex documentation states that the ChatGPT desktop app, Codex CLI, and IDE extension "share this configuration. Once you configure your MCP servers, you can switch among those clients without redoing setup." Set the server up in the app or the CLI and the IDE extension picks it up with no extra work.
-</Note>
+| Surface | Recommended Setup | Notes |
+|---------|-------------------|-------|
+| **Codex CLI** | Prowler plugin | Reliably inherits the API key from the launching shell. |
+| **Codex / ChatGPT desktop app** | Plugin when supported, otherwise [manual MCP setup](#manual-mcp-setup-advanced-or-fallback) | May require configuring the application launch environment. |
+| **Codex IDE extension** | Plugin when supported, otherwise [manual MCP setup](#manual-mcp-setup-advanced-or-fallback) | May require configuring the IDE launch environment. |
+| **ChatGPT on the web** | Not supported | Does not read local Codex configuration. |
 
 ## Prerequisites
 
-- **The Codex / ChatGPT desktop app, or Codex CLI 0.46.0 or later.** Remote MCP servers over streamable HTTP were added to the CLI in 0.46.0 — check with `codex --version` and upgrade if needed.
+- **Codex CLI with plugin support.** Check with `codex --version` and `codex plugin --help`.
 - **A Prowler Cloud account.** The free tier is enough to start. Sign up at [cloud.prowler.com](https://cloud.prowler.com).
 
 ## Step 1: Get Your Prowler API Key
 
-Create an API key in Prowler Cloud and copy it. The key begins with `pk_` and is shown only once. Check the [API Keys](/user-guide/tutorials/prowler-app-api-keys#creating-api-keys) guide for details.
+Create an API key in Prowler Cloud and copy it. The key is shown only once. Check the [API Keys](/user-guide/tutorials/prowler-app-api-keys#creating-api-keys) guide for details.
 
-## Step 2: Add the Prowler MCP Server
+## Step 2: Set the API Key Environment Variable
 
-The Prowler MCP Server needs two request headers: `Authorization` to authenticate you, and `User-Agent` because Codex does not send one by default.
+Export the key in the shell that launches Codex. Do not add a real key to a repository, shell history, or shared configuration file.
 
-Each tab below is a complete setup — follow the one that matches the surface you use.
+```bash
+export PROWLER_API_KEY="<your-Prowler-Cloud-API-key>"
+```
 
-<Tabs>
-  <Tab title="Codex / ChatGPT desktop app">
-    1. Open **Settings** and select **Plugins → MCPs**
-    2. Click **Add server**
-    3. Enter `prowler` as the name and choose type **Streamable HTTP**
-    4. Enter the URL `https://mcp.prowler.com/mcp`
-    5. Add two headers:
-
-       | Header | Value |
-       |--------|-------|
-       | `Authorization` | `Bearer pk_your_api_key_here` |
-       | `User-Agent` | `codex` |
-
-    6. Save the server
-
-    <Frame>
-      <img src="/images/prowler-mcp/codex/codex-app-mcp-servers.png" alt="Codex / ChatGPT desktop app Settings showing the MCP servers panel with the Add server dialog and both headers filled in" />
-    </Frame>
-
-    <Note>
-    **Enter the key directly here rather than using an environment variable.** Codex can read credentials from an environment variable, but desktop applications do not reliably inherit variables exported in a shell profile — on macOS an app launched from Finder or the Dock typically sees none of them. Pasting the key into the dialog is the approach that works consistently in the app.
-    </Note>
-
-    <Warning>
-    **This stores your API key in plain text** in `~/.codex/config.toml`. Treat that file accordingly: exclude it from dotfile repositories and config sync, and create the key from an account with the minimum permissions you need so its exposure is limited. Revoke and re-issue the key in Prowler Cloud if the file is ever shared.
-    </Warning>
-  </Tab>
-
-  <Tab title="Codex CLI">
-    Register the server:
-
-    ```bash
-    codex mcp add prowler --url https://mcp.prowler.com/mcp
-    ```
-
-    Codex confirms with `Added global MCP server 'prowler'.`
-
-    Then add both headers by hand, since `codex mcp add` has no flag for headers. Open `~/.codex/config.toml` and complete the entry:
-
-    ```toml
-    [mcp_servers.prowler]
-    url = "https://mcp.prowler.com/mcp"
-    http_headers = { Authorization = "Bearer pk_your_api_key_here", "User-Agent" = "codex" }
-    ```
-
-    <Note>
-    **Write the key literally rather than using an environment variable.** This is the form that works across every Codex surface. All of them read this same file, but only the CLI reliably sees variables exported in your shell profile — see the warning below.
-    </Note>
-
-    <Warning>
-    **This stores your API key in plain text** in `~/.codex/config.toml`. Treat that file accordingly: exclude it from dotfile repositories and config sync, and create the key from an account with the minimum permissions you need so its exposure is limited. Revoke and re-issue the key in Prowler Cloud if the file is ever shared.
-    </Warning>
-  </Tab>
-</Tabs>
-
-Restart Codex once you are done.
+`PROWLER_API_KEY` must contain the raw API key, without the `Bearer ` prefix. The plugin adds that prefix when it sends the `Authorization` header.
 
 <Note>
-**Local server:** Replace the URL with your own HTTP endpoint. Everything else stays the same.
+**Codex CLI reliably inherits this variable** when it starts from the shell where you exported it. Codex Desktop and IDE integrations may not inherit variables from your shell profile. Configure the desktop application or IDE launch environment with `PROWLER_API_KEY` when you use those surfaces.
 </Note>
 
-## Step 3: Verify the Connection
+## Step 3: Install the Plugin
+
+Add the Prowler marketplace, then install the Prowler plugin:
+
+```bash
+codex plugin marketplace add prowler-cloud/prowler --ref master
+codex plugin add prowler@prowler-plugins
+```
+
+The marketplace does not install Prowler by default. The `codex plugin add` command explicitly installs it.
+
+## Step 4: Verify the Plugin
+
+```bash
+codex plugin list --marketplace prowler-plugins
+```
+
+Start Codex from the same shell, then ask it to list your Prowler providers or to help triage a compliance framework.
+
+## Manual MCP Setup: Advanced or Fallback
+
+Use this setup only when the plugin is unavailable for your Codex surface or when you need a custom MCP configuration. The manual configuration must include the `User-Agent` header because Codex does not send one by default.
+
+### Codex CLI
+
+Register the server:
+
+```bash
+codex mcp add prowler --url https://mcp.prowler.com/mcp
+```
+
+Then update `~/.codex/config.toml` because `codex mcp add` has no flag for the required header:
+
+```toml
+[mcp_servers.prowler]
+url = "https://mcp.prowler.com/mcp"
+bearer_token_env_var = "PROWLER_API_KEY"
+http_headers = { "User-Agent" = "codex" }
+```
+
+This manual CLI configuration uses the same secure environment-backed contract as the plugin: `PROWLER_API_KEY` holds the raw key, and Codex adds the `Bearer ` prefix.
+
+### Codex / ChatGPT Desktop App
+
+First configure `PROWLER_API_KEY` in the desktop application's launch environment. An API key exported only in a shell profile may not be available when the app starts from Finder, the Dock, or a launcher.
+
+If you cannot configure the launch environment, add the server manually:
+
+1. Open **Settings** and select **Plugins → MCPs**
+2. Click **Add server**
+3. Enter `prowler` as the name and choose type **Streamable HTTP**
+4. Enter the URL `https://mcp.prowler.com/mcp`
+5. Add the `User-Agent` header with the value `codex`
+6. If the app supports a reference to its launch environment, use `PROWLER_API_KEY`. Otherwise, add an `Authorization` header with `Bearer ` followed by the API key.
+
+<Warning>
+A literal `Authorization` header stores the API key in plain text in `~/.codex/config.toml`. Use it only as a last resort, exclude the file from dotfile repositories and configuration sync, and revoke and re-issue the key if the file is shared.
+</Warning>
+
+Restart Codex after installing the plugin or changing the MCP configuration.
+
+<Note>
+**Local server:** Replace the URL with your own HTTP endpoint. Keep the same authentication and `User-Agent` configuration.
+</Note>
+
+## Step 5: Verify the Connection
 
 Run `/mcp` in the app or in a CLI session to list connected servers and their tools.
 
@@ -121,7 +123,7 @@ codex mcp get prowler   # full entry, header values masked
 **Verify rather than assume.** Codex silently ignores unrecognized keys in `config.toml` — a misspelled key name produces no error at all, and the server simply never receives your credentials. Always confirm with `codex mcp get prowler` after editing the file by hand.
 </Warning>
 
-## Step 4: Start Using Prowler MCP
+## Step 6: Start Using Prowler MCP
 
 Ask Codex questions that use the Prowler tools:
 
@@ -145,15 +147,14 @@ Codex reports a handshake failure on startup, with an HTML error page rather tha
   <head><title>403 Forbidden</title></head>
 ```
 
-The `User-Agent` header is missing. Codex's HTTP client does not send one, and requests without it are rejected before reaching the MCP server. Note this is a **403**, not a 401 — so it is not an API key problem. Add the header as shown in [Step 2](#step-2-add-the-prowler-mcp-server); the value itself does not matter, only that the header is present.
+The `User-Agent` header is missing. Codex's HTTP client does not send one, and requests without it are rejected before reaching the MCP server. Note this is a **403**, not a 401 — so it is not an API key problem. The plugin adds this header automatically. For a manual configuration, add it as shown in [Manual MCP Setup](#manual-mcp-setup-advanced-or-fallback); the value itself does not matter, only that the header is present.
 
 ### Authentication Fails With 401
 
-- Run `codex mcp get prowler` and confirm the entry has the headers you expect. Values are masked, but a missing header shows as `-`.
-- If you used a literal header, confirm the value starts with `Bearer ` and contains the full key.
-- **If it works in the CLI but fails in the desktop app or the VS Code extension, you are almost certainly using an environment variable.** Those surfaces do not inherit your shell profile. Switch that entry to a literal `Authorization` header as shown in [Step 2](#step-2-add-the-prowler-mcp-server).
-- If you use an environment variable, verify it is set in the environment Codex was launched from: `echo $PROWLER_API_KEY`.
-- With `env_http_headers` the variable must include the `Bearer ` prefix. With `bearer_token_env_var` it must **not** — Codex adds the prefix itself.
+- For a manual configuration, run `codex mcp get prowler` and confirm the entry has the headers you expect. Values are masked, but a missing header shows as `-`.
+- Verify the Codex process has `PROWLER_API_KEY` in its launch environment without printing the key: `test -n "$PROWLER_API_KEY" && echo "PROWLER_API_KEY is set"`.
+- `PROWLER_API_KEY` must contain the raw key without `Bearer `. The plugin and the `bearer_token_env_var` manual configuration add the prefix automatically.
+- If the CLI works but Codex Desktop or an IDE fails, configure `PROWLER_API_KEY` in that application's launch environment. Shell-profile exports may not be inherited. Use a literal `Authorization` header only as the last-resort desktop fallback described in [Manual MCP Setup](#manual-mcp-setup-advanced-or-fallback).
 - Confirm the key has not been revoked in Prowler Cloud.
 
 ### Server Not Listed
