@@ -55,15 +55,11 @@ vi.mock("@/actions/organizations/organizations", () => ({
   listOrganizationsSafe: vi.fn(),
 }));
 
-vi.mock("@/lib/provider-filters", () => ({
-  appendSanitizedProviderTypeFilters: vi.fn(),
-}));
-
 vi.mock("next/navigation", () => ({
   redirect: vi.fn(),
 }));
 
-import { getResourceEvents } from "./resources";
+import { getMetadataInfo, getResourceEvents, getResources } from "./resources";
 
 describe("getResourceEvents", () => {
   beforeEach(() => {
@@ -205,5 +201,39 @@ describe("getResourceEvents", () => {
     // Then
     expect(result).toEqual({ error: "Invalid resource ID format." });
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+});
+
+describe("scan-scoped resources API requests", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.stubGlobal("fetch", fetchMock);
+    getAuthHeadersMock.mockResolvedValue({ Authorization: "Bearer token" });
+    fetchMock.mockResolvedValue(new Response("", { status: 200 }));
+    handleApiResponseMock.mockResolvedValue({ data: [] });
+  });
+
+  it("preserves scan scope and pagination on the historical resource endpoint", async () => {
+    // Given
+    const filters = {
+      "filter[scan]": "historical-scan",
+      "filter[service]": "ec2",
+    };
+
+    // When
+    await getResources({ filters, page: 2, pageSize: 20 });
+    await getMetadataInfo({ filters });
+
+    // Then
+    const resourcesUrl = new URL(fetchMock.mock.calls[0][0]);
+    const metadataUrl = new URL(fetchMock.mock.calls[1][0]);
+    expect(resourcesUrl.pathname).toBe("/api/v1/resources");
+    expect(resourcesUrl.searchParams.get("page[number]")).toBe("2");
+    expect(resourcesUrl.searchParams.get("page[size]")).toBe("20");
+    expect(metadataUrl.pathname).toBe("/api/v1/resources/metadata");
+    for (const url of [resourcesUrl, metadataUrl]) {
+      expect(url.searchParams.get("filter[scan]")).toBe("historical-scan");
+      expect(url.searchParams.get("filter[service]")).toBe("ec2");
+    }
   });
 });
