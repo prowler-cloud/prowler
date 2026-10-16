@@ -19,6 +19,26 @@ class M365ProviderConfig(ProviderConfigBase):
         ),
     )
 
+    # --- Entra (app registration certificates) --------------------------
+    app_registration_certificate_max_validity_days: Optional[int] = Field(
+        default=None,
+        ge=1,
+        le=3650,
+        description=(
+            "Maximum validity period, in days, of an app registration "
+            "certificate. Range: 1..3650 (Prowler default 365)."
+        ),
+    )
+    app_registration_certificate_expiration_threshold_days: Optional[int] = Field(
+        default=None,
+        ge=0,
+        le=365,
+        description=(
+            "Days before expiry at which an app registration certificate is "
+            "reported as about to expire. Range: 0..365 (Prowler default 30)."
+        ),
+    )
+
     # --- Teams ---------------------------------------------------------
     allowed_cloud_storage_services: Optional[list[str]] = Field(
         default=None,
