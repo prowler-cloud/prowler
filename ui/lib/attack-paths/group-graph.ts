@@ -20,6 +20,12 @@
  * over stable raw data, never a data mutation.
  */
 
+import { orientEdgeForLayout } from "@/lib/attack-paths/edge-orientation";
+import { isProwlerFindingNode } from "@/lib/attack-paths/node-types";
+import {
+  NODE_CATEGORY,
+  resolveNodeVisual,
+} from "@/lib/attack-paths/node-visuals";
 import type {
   AttackPathGraphData,
   AttackPathOutcome,
@@ -27,10 +33,6 @@ import type {
   GraphNode,
   GraphRelationship,
 } from "@/types/attack-paths";
-
-import { orientEdgeForLayout } from "./edge-orientation";
-import { isProwlerFindingNode } from "./node-types";
-import { NODE_CATEGORY, resolveNodeVisual } from "./node-visuals";
 
 // Synthetic labels so layout/getNodeType and the node registry can identify the
 // injected nodes. Real graph labels never collide with these.

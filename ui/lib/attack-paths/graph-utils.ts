@@ -2,9 +2,8 @@
  * Utility functions for attack path graph operations
  */
 
+import { isProwlerFindingNode } from "@/lib/attack-paths/node-types";
 import type { AttackPathGraphData } from "@/types/attack-paths";
-
-import { isProwlerFindingNode } from "./node-types";
 
 export const resolveHiddenFindingIds = ({
   expandedResources,

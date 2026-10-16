@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { getNodeLabelDisplay } from "./node-label-lines";
+import { getNodeLabelDisplay } from "@/lib/attack-paths/node-label-lines";
 
 describe("getNodeLabelDisplay", () => {
   it("adds an ellipsis within the max width when wrapped label text exceeds the visible line budget", () => {

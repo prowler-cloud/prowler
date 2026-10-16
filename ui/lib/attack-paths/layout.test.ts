@@ -1,9 +1,8 @@
 import { Position } from "@xyflow/react";
 import { describe, expect, it } from "vitest";
 
+import { layoutWithDagre } from "@/lib/attack-paths/layout";
 import type { GraphEdge, GraphNode } from "@/types/attack-paths";
-
-import { layoutWithDagre } from "./layout";
 
 const findingNode: GraphNode = {
   id: "finding-1",

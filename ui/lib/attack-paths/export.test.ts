@@ -1,9 +1,8 @@
 import type { Rect } from "@xyflow/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { exportGraphAsJSON, exportGraphAsPNG } from "@/lib/attack-paths/export";
 import type { AttackPathGraphData } from "@/types/attack-paths";
-
-import { exportGraphAsJSON, exportGraphAsPNG } from "./export";
 
 const bounds: Rect = { x: 0, y: 0, width: 100, height: 100 };
 

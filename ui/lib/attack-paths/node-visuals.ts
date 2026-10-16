@@ -46,10 +46,9 @@ import {
   AWSIAMIcon,
   AWSLambdaIcon,
 } from "@/components/icons/services/IconServices";
+import { formatNodeLabel } from "@/lib/attack-paths/format";
+import { isProwlerFindingLabel } from "@/lib/attack-paths/node-types";
 import type { GraphNode, GraphNodePropertyValue } from "@/types/attack-paths";
-
-import { formatNodeLabel } from "./format";
-import { isProwlerFindingLabel } from "./node-types";
 
 export const NODE_CATEGORY = {
   FINDING: "finding",

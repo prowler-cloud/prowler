@@ -3,13 +3,12 @@ import userEvent from "@testing-library/user-event";
 import { type NodeProps, Position } from "@xyflow/react";
 import { describe, expect, it, vi } from "vitest";
 
+import { ResourceNode } from "@/components/attack-paths/graph/nodes/resource-node";
 import type { GraphNode } from "@/types/attack-paths";
-
-import { ResourceNode } from "./resource-node";
 
 const hiddenHandlesMock = vi.hoisted(() => vi.fn(() => null));
 
-vi.mock("./hidden-handles", () => ({
+vi.mock("@/components/attack-paths/graph/nodes/hidden-handles", () => ({
   HiddenHandles: hiddenHandlesMock,
 }));
 

@@ -10,9 +10,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
-import { isCloud } from "@/lib/shared/env";
-import type { AttackPathGraphData, GraphNode } from "@/types/attack-paths";
-
 import {
   getNodeBorderColor,
   getNodeColor,
@@ -22,10 +19,15 @@ import {
   GRAPH_EDGE_HIGHLIGHT_COLOR,
   GRAPH_NODE_BORDER_COLORS,
   GRAPH_NODE_COLORS,
-} from "../../_lib/graph-colors";
-import { resolveHiddenFindingIds } from "../../_lib/graph-utils";
-import { isProwlerFindingNode } from "../../_lib/node-types";
-import { NODE_CATEGORY, resolveNodeVisual } from "../../_lib/node-visuals";
+} from "@/lib/attack-paths/graph-colors";
+import { resolveHiddenFindingIds } from "@/lib/attack-paths/graph-utils";
+import { isProwlerFindingNode } from "@/lib/attack-paths/node-types";
+import {
+  NODE_CATEGORY,
+  resolveNodeVisual,
+} from "@/lib/attack-paths/node-visuals";
+import { isCloud } from "@/lib/shared/env";
+import type { AttackPathGraphData, GraphNode } from "@/types/attack-paths";
 
 const LEGEND_PREVIEW = {
   BADGE_RADIUS: 16,

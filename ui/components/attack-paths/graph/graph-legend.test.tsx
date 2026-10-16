@@ -1,10 +1,9 @@
 import { render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { GraphLegend } from "@/components/attack-paths/graph/graph-legend";
 import { isCloud } from "@/lib/shared/env";
 import type { AttackPathGraphData } from "@/types/attack-paths";
-
-import { GraphLegend } from "./graph-legend";
 
 vi.mock("next-themes", () => ({
   useTheme: () => ({ resolvedTheme: "dark" }),

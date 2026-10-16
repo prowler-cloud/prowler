@@ -22,14 +22,11 @@ import {
   useState,
 } from "react";
 
-import { isCloud } from "@/lib/shared/env";
-import { cn } from "@/lib/utils";
-import type {
-  AttackPathGraphData,
-  AttackPathOutcome,
-  GraphNode,
-} from "@/types/attack-paths";
-
+import { FindingNode } from "@/components/attack-paths/graph/nodes/finding-node";
+import { GroupNode } from "@/components/attack-paths/graph/nodes/group-node";
+import { InternetNode } from "@/components/attack-paths/graph/nodes/internet-node";
+import { OutcomeNode } from "@/components/attack-paths/graph/nodes/outcome-node";
+import { ResourceNode } from "@/components/attack-paths/graph/nodes/resource-node";
 import {
   computeFilteredSubgraph,
   getNodeBorderColor,
@@ -38,18 +35,19 @@ import {
   GRAPH_EDGE_HIGHLIGHT_COLOR,
   isProwlerFindingNode,
   resolveHiddenFindingIds,
-} from "../../_lib";
+} from "@/lib/attack-paths";
 import {
   type AttackPathView,
   buildAttackPathView,
-} from "../../_lib/group-graph";
-import { layoutWithDagre, NODE_TYPE } from "../../_lib/layout";
-
-import { FindingNode } from "./nodes/finding-node";
-import { GroupNode } from "./nodes/group-node";
-import { InternetNode } from "./nodes/internet-node";
-import { OutcomeNode } from "./nodes/outcome-node";
-import { ResourceNode } from "./nodes/resource-node";
+} from "@/lib/attack-paths/group-graph";
+import { layoutWithDagre, NODE_TYPE } from "@/lib/attack-paths/layout";
+import { isCloud } from "@/lib/shared/env";
+import { cn } from "@/lib/utils";
+import type {
+  AttackPathGraphData,
+  AttackPathOutcome,
+  GraphNode,
+} from "@/types/attack-paths";
 
 // --- Types ---
 

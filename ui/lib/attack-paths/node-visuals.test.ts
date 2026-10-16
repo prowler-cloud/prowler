@@ -33,9 +33,11 @@ import {
   AWSIAMIcon,
   AWSLambdaIcon,
 } from "@/components/icons/services/IconServices";
+import {
+  NODE_CATEGORY,
+  resolveNodeVisual,
+} from "@/lib/attack-paths/node-visuals";
 import type { GraphNode } from "@/types/attack-paths";
-
-import { NODE_CATEGORY, resolveNodeVisual } from "./node-visuals";
 
 const buildNode = (labels: string[], properties = {}): GraphNode => ({
   id: labels[0] ?? "unknown-node",

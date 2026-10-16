@@ -2,18 +2,16 @@
 
 import { type NodeProps } from "@xyflow/react";
 
-import type { GraphNode } from "@/types/attack-paths";
-
+import { GraphNodeShell } from "@/components/attack-paths/graph/nodes/graph-node-shell";
 import {
   GRAPH_COUNT_BADGE_STROKE_COLOR,
   resolveNodeColors,
   resolveNodeVisual,
-} from "../../../_lib";
-import { GROUP_PROPS } from "../../../_lib/group-graph";
-import { GROUP_NODE_DIMENSIONS } from "../../../_lib/node-dimensions";
-import { getNodeLabelDisplay } from "../../../_lib/node-label-lines";
-
-import { GraphNodeShell } from "./graph-node-shell";
+} from "@/lib/attack-paths";
+import { GROUP_PROPS } from "@/lib/attack-paths/group-graph";
+import { GROUP_NODE_DIMENSIONS } from "@/lib/attack-paths/node-dimensions";
+import { getNodeLabelDisplay } from "@/lib/attack-paths/node-label-lines";
+import type { GraphNode } from "@/types/attack-paths";
 
 interface GroupNodeData {
   graphNode: GraphNode;

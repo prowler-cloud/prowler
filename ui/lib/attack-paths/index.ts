@@ -1,5 +1,9 @@
-export { exportGraphAsJSON, exportGraphAsPNG } from "./export";
-export { formatNodeLabel, formatNodeLabels, truncateLabel } from "./format";
+export { exportGraphAsJSON, exportGraphAsPNG } from "@/lib/attack-paths/export";
+export {
+  formatNodeLabel,
+  formatNodeLabels,
+  truncateLabel,
+} from "@/lib/attack-paths/format";
 export {
   getNodeBorderColor,
   getNodeColor,
@@ -14,17 +18,20 @@ export {
   GRAPH_OUTCOME_FILL_COLOR,
   GRAPH_SELECTION_COLOR,
   resolveNodeColors,
-} from "./graph-colors";
+} from "@/lib/attack-paths/graph-colors";
 export {
   computeFilteredSubgraph,
   getPathEdges,
   resolveHiddenFindingIds,
-} from "./graph-utils";
-export { layoutWithDagre } from "./layout";
-export { isProwlerFindingLabel, isProwlerFindingNode } from "./node-types";
+} from "@/lib/attack-paths/graph-utils";
+export { layoutWithDagre } from "@/lib/attack-paths/layout";
+export {
+  isProwlerFindingLabel,
+  isProwlerFindingNode,
+} from "@/lib/attack-paths/node-types";
 export {
   NODE_CATEGORY,
   type NodeCategory,
   type NodeVisual,
   resolveNodeVisual,
-} from "./node-visuals";
+} from "@/lib/attack-paths/node-visuals";

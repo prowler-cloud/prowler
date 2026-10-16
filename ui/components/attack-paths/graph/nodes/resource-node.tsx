@@ -2,18 +2,16 @@
 
 import { type NodeProps, Position } from "@xyflow/react";
 
+import { HiddenHandles } from "@/components/attack-paths/graph/nodes/hidden-handles";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
+import { resolveNodeColors, resolveNodeVisual } from "@/lib/attack-paths";
+import { RESOURCE_NODE_DIMENSIONS } from "@/lib/attack-paths/node-dimensions";
+import { getNodeLabelDisplay } from "@/lib/attack-paths/node-label-lines";
 import type { GraphNode } from "@/types/attack-paths";
-
-import { resolveNodeColors, resolveNodeVisual } from "../../../_lib";
-import { RESOURCE_NODE_DIMENSIONS } from "../../../_lib/node-dimensions";
-import { getNodeLabelDisplay } from "../../../_lib/node-label-lines";
-
-import { HiddenHandles } from "./hidden-handles";
 
 interface ResourceNodeData {
   graphNode: GraphNode;
@@ -115,8 +113,7 @@ export const ResourceNode = ({ data, selected }: NodeProps) => {
         y={NAME_Y}
         textAnchor="middle"
         dominantBaseline="middle"
-        fill="#ffffff"
-        style={{ textShadow: "0 1px 2px rgba(0,0,0,0.5)" }}
+        className="fill-text-neutral-primary"
         pointerEvents="none"
       >
         {displayName.lines.map((line, index) => (
@@ -135,7 +132,7 @@ export const ResourceNode = ({ data, selected }: NodeProps) => {
             x={TEXT_X}
             y={TYPE_Y}
             fontSize="9px"
-            fill="rgba(255,255,255,0.8)"
+            className="fill-text-neutral-secondary"
           >
             {typeLabel}
           </tspan>

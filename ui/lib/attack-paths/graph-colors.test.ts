@@ -7,12 +7,12 @@ import {
   GRAPH_OUTCOME_BORDER_COLOR,
   GRAPH_OUTCOME_FILL_COLOR,
   resolveNodeColors,
-} from "./graph-colors";
+} from "@/lib/attack-paths/graph-colors";
 import {
   GROUP_NODE_LABEL,
   GROUP_PROPS,
   OUTCOME_NODE_LABEL,
-} from "./group-graph";
+} from "@/lib/attack-paths/group-graph";
 
 describe("resolveNodeColors", () => {
   it("prioritizes selected state over hasFindings for the border color", () => {

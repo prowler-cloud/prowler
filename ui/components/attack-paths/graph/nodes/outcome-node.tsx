@@ -3,17 +3,15 @@
 import { type NodeProps } from "@xyflow/react";
 import { Crosshair } from "lucide-react";
 
-import type { GraphNode } from "@/types/attack-paths";
-
+import { GraphNodeShell } from "@/components/attack-paths/graph/nodes/graph-node-shell";
 import {
   GRAPH_OUTCOME_BORDER_COLOR,
   GRAPH_OUTCOME_FILL_COLOR,
-} from "../../../_lib";
-import { OUTCOME_PROPS } from "../../../_lib/group-graph";
-import { OUTCOME_NODE_DIMENSIONS } from "../../../_lib/node-dimensions";
-import { getNodeLabelDisplay } from "../../../_lib/node-label-lines";
-
-import { GraphNodeShell } from "./graph-node-shell";
+} from "@/lib/attack-paths";
+import { OUTCOME_PROPS } from "@/lib/attack-paths/group-graph";
+import { OUTCOME_NODE_DIMENSIONS } from "@/lib/attack-paths/node-dimensions";
+import { getNodeLabelDisplay } from "@/lib/attack-paths/node-label-lines";
+import type { GraphNode } from "@/types/attack-paths";
 
 interface OutcomeNodeData {
   graphNode: GraphNode;

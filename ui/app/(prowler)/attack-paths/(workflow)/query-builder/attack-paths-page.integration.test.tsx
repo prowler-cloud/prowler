@@ -15,6 +15,8 @@ import { beforeEach, describe, expect, test as base, vi } from "vitest";
 import { handlersForFixture } from "@/__tests__/msw/handlers/attack-paths";
 import { worker } from "@/__tests__/msw/worker";
 import { render } from "@/__tests__/render-browser";
+import { getPathEdges, isProwlerFindingNode } from "@/lib/attack-paths";
+import { layoutWithDagre } from "@/lib/attack-paths/layout";
 import { useLighthouseContextStore } from "@/store/lighthouse-context/store";
 import { resetLighthouseContextStore } from "@/store/lighthouse-context/store.test-utils";
 
@@ -37,8 +39,6 @@ vi.mock("@/actions/findings", async () => {
 });
 
 import { useGraphStore } from "./_hooks/use-graph-state";
-import { getPathEdges, isProwlerFindingNode } from "./_lib";
-import { layoutWithDagre } from "./_lib/layout";
 import AttackPathsPage from "./attack-paths-page";
 import { fixtures, type PageFixture } from "./attack-paths-page.fixtures";
 import { AttackPathPageHarness } from "./attack-paths-page.harness";

@@ -2,8 +2,8 @@ import {
   GROUP_NODE_LABEL,
   GROUP_PROPS,
   OUTCOME_NODE_LABEL,
-} from "./group-graph";
-import { isProwlerFindingNode } from "./node-types";
+} from "@/lib/attack-paths/group-graph";
+import { isProwlerFindingNode } from "@/lib/attack-paths/node-types";
 
 /**
  * Color constants for attack path graph visualization

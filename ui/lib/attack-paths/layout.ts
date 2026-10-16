@@ -6,18 +6,20 @@
 import { Graph, layout as dagreLayout } from "@dagrejs/dagre";
 import { type Edge, type Node, Position } from "@xyflow/react";
 
-import type { GraphEdge, GraphNode } from "@/types/attack-paths";
-
-import { orientEdgeForLayout } from "./edge-orientation";
-import { GROUP_NODE_LABEL, OUTCOME_NODE_LABEL } from "./group-graph";
+import { orientEdgeForLayout } from "@/lib/attack-paths/edge-orientation";
+import {
+  GROUP_NODE_LABEL,
+  OUTCOME_NODE_LABEL,
+} from "@/lib/attack-paths/group-graph";
 import {
   FINDING_NODE_DIMENSIONS,
   GROUP_NODE_DIMENSIONS,
   INTERNET_NODE_DIMENSIONS,
   OUTCOME_NODE_DIMENSIONS,
   RESOURCE_NODE_DIMENSIONS,
-} from "./node-dimensions";
-import { isProwlerFindingNode } from "./node-types";
+} from "@/lib/attack-paths/node-dimensions";
+import { isProwlerFindingNode } from "@/lib/attack-paths/node-types";
+import type { GraphEdge, GraphNode } from "@/types/attack-paths";
 
 interface NodeData extends Record<string, unknown> {
   graphNode: GraphNode;

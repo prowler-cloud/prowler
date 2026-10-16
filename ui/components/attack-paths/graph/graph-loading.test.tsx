@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
-import { GraphLoading } from "./graph-loading";
+import { GraphLoading } from "@/components/attack-paths/graph/graph-loading";
 
 describe("GraphLoading", () => {
   it("uses the provider wizard loading pattern", () => {

@@ -2,11 +2,9 @@
 
 import { type NodeProps } from "@xyflow/react";
 
+import { HiddenHandles } from "@/components/attack-paths/graph/nodes/hidden-handles";
+import { resolveNodeColors } from "@/lib/attack-paths";
 import type { GraphNode } from "@/types/attack-paths";
-
-import { resolveNodeColors } from "../../../_lib";
-
-import { HiddenHandles } from "./hidden-handles";
 
 interface InternetNodeData {
   graphNode: GraphNode;

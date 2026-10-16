@@ -1,11 +1,5 @@
 import { describe, expect, it } from "vitest";
 
-import type {
-  AttackPathGraphData,
-  AttackPathOutcome,
-  GraphNode,
-} from "@/types/attack-paths";
-
 import {
   buildAttackPathView,
   GROUP_NODE_LABEL,
@@ -13,7 +7,12 @@ import {
   groupKey,
   OUTCOME_NODE_LABEL,
   OUTCOME_PROPS,
-} from "./group-graph";
+} from "@/lib/attack-paths/group-graph";
+import type {
+  AttackPathGraphData,
+  AttackPathOutcome,
+  GraphNode,
+} from "@/types/attack-paths";
 
 const node = (id: string, label: string): GraphNode => ({
   id,

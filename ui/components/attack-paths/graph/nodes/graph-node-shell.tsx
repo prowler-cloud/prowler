@@ -3,14 +3,13 @@
 import { Position } from "@xyflow/react";
 import type { ReactNode } from "react";
 
+import { HiddenHandles } from "@/components/attack-paths/graph/nodes/hidden-handles";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
 import { cn } from "@/lib/utils";
-
-import { HiddenHandles } from "./hidden-handles";
 
 interface GraphNodeShellProps {
   width: number;

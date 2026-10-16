@@ -7,9 +7,7 @@
 
 import type { Rect } from "@xyflow/react";
 
-import type { AttackPathGraphData, GraphEdge } from "@/types/attack-paths";
-
-import { truncateLabel } from "./format";
+import { truncateLabel } from "@/lib/attack-paths/format";
 import {
   getNodeBorderColor,
   getNodeColor,
@@ -18,23 +16,24 @@ import {
   GRAPH_EDGE_COLOR_DARK,
   GRAPH_OUTCOME_BORDER_COLOR,
   GRAPH_OUTCOME_FILL_COLOR,
-} from "./graph-colors";
+} from "@/lib/attack-paths/graph-colors";
 import {
   GROUP_NODE_LABEL,
   GROUP_PROPS,
   OUTCOME_NODE_LABEL,
   OUTCOME_PROPS,
-} from "./group-graph";
-import { layoutWithDagre } from "./layout";
+} from "@/lib/attack-paths/group-graph";
+import { layoutWithDagre } from "@/lib/attack-paths/layout";
 import {
   FINDING_NODE_DIMENSIONS,
   GROUP_NODE_DIMENSIONS,
   OUTCOME_NODE_DIMENSIONS,
   RESOURCE_NODE_DIMENSIONS,
-} from "./node-dimensions";
-import { getNodeLabelDisplay } from "./node-label-lines";
-import { isProwlerFindingNode } from "./node-types";
-import { resolveNodeVisual } from "./node-visuals";
+} from "@/lib/attack-paths/node-dimensions";
+import { getNodeLabelDisplay } from "@/lib/attack-paths/node-label-lines";
+import { isProwlerFindingNode } from "@/lib/attack-paths/node-types";
+import { resolveNodeVisual } from "@/lib/attack-paths/node-visuals";
+import type { AttackPathGraphData, GraphEdge } from "@/types/attack-paths";
 
 interface ExportGraphOptions {
   expandedResources?: ReadonlySet<string>;
