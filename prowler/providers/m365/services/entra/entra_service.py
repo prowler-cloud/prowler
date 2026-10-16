@@ -165,10 +165,10 @@ class Entra(M365Service):
             attributes[21]
         )
         self.access_package_catalogs: Optional[List["AccessPackageCatalog"]] = (
-            attributes[21]
+            attributes[22]
         )
         self.assignment_policies: Optional[List["AccessPackageAssignmentPolicy"]] = (
-            attributes[22]
+            attributes[23]
         )
         self.user_accounts_status = {}
 
