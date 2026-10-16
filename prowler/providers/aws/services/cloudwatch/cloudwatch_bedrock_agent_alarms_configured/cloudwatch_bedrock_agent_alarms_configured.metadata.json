@@ -1,0 +1,43 @@
+{
+  "Provider": "aws",
+  "CheckID": "cloudwatch_bedrock_agent_alarms_configured",
+  "CheckTitle": "Bedrock Agent invocation rates have enabled CloudWatch alarms",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "cloudwatch",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "AwsCloudWatchAlarm",
+  "ResourceGroup": "monitoring",
+  "Description": "Regions with Bedrock Agents have an enabled CloudWatch alarm for `InvocationCount` or `InvocationThrottles` in the `AWS/Bedrock/Agents` namespace. Direct and metric-math alarms are evaluated with the documented Agent dimensions.",
+  "Risk": "Without rate alarms, looping or runaway agents can keep invoking services unnoticed. This can exhaust quotas, increase costs, and disrupt workloads before operators can respond.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/bedrock/latest/userguide/monitoring-agents-cw-metrics.html",
+    "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/AlarmThatSendsEmail.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aws cloudwatch put-metric-alarm --alarm-name example_resource --namespace AWS/Bedrock/Agents --metric-name InvocationCount --dimensions Name=Operation,Value=InvokeAgent --statistic Sum --period 300 --evaluation-periods 1 --threshold 1000 --comparison-operator GreaterThanThreshold --actions-enabled",
+      "NativeIaC": "```yaml\nResources:\n  ExampleResource:\n    Type: AWS::CloudWatch::Alarm\n    Properties:\n      Namespace: AWS/Bedrock/Agents\n      MetricName: InvocationCount\n      Dimensions:\n        - Name: Operation\n          Value: InvokeAgent\n      Statistic: Sum\n      Period: 300\n      EvaluationPeriods: 1\n      Threshold: 1000\n      ComparisonOperator: GreaterThanThreshold\n      ActionsEnabled: true\n```",
+      "Other": "1. Open CloudWatch and choose Alarms > All alarms > Create alarm\n2. Select `AWS/Bedrock/Agents` and the `InvocationCount` or `InvocationThrottles` metric\n3. Set a threshold based on expected traffic\n4. Add a notification action and create the alarm",
+      "Terraform": "```hcl\nresource \"aws_cloudwatch_metric_alarm\" \"example_resource\" {\n  alarm_name          = \"example_resource\"\n  namespace           = \"AWS/Bedrock/Agents\"\n  metric_name         = \"InvocationCount\"\n  statistic           = \"Sum\"\n  period              = 300\n  evaluation_periods  = 1\n  threshold           = 1000\n  comparison_operator = \"GreaterThanThreshold\"\n  actions_enabled     = true\n\n  dimensions = {\n    Operation = \"InvokeAgent\"\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Set CloudWatch alarms for Bedrock Agent invocation counts and throttles using thresholds based on normal peak traffic. Keep alarm actions enabled and use the related alarm-action check to verify that notifications or automation are configured.",
+      "Url": "https://hub.prowler.com/check/cloudwatch_bedrock_agent_alarms_configured"
+    }
+  },
+  "Categories": [
+    "gen-ai",
+    "threat-detection"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "cloudwatch_alarm_actions_enabled",
+    "cloudwatch_alarm_actions_alarm_state_configured"
+  ],
+  "Notes": "Returns one finding per region with Bedrock Agents. Inventory or alarm collection errors return MANUAL; regions with no agents return no finding. Alarm action targets are evaluated by the related check."
+}
