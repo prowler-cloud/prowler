@@ -20,6 +20,7 @@ RESOURCE_LIMIT_KEYS = [
     "max_lambda_functions",
     "max_ecs_task_definitions",
     "max_codeartifact_packages",
+    "max_sagemaker_training_jobs",
 ]
 
 

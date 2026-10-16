@@ -165,6 +165,12 @@ class AWSProviderConfig(ProviderConfigBase):
         le=1_000_000,
         description="Resource scan limit for CodeArtifact packages. Use 0 or -1 to disable.",
     )
+    max_sagemaker_training_jobs: ResourceScanLimit = Field(
+        default=None,
+        ge=-1,
+        le=1_000_000,
+        description="Resource scan limit for SageMaker training jobs. Use 0 or -1 to disable.",
+    )
 
     # --- IAM ---------------------------------------------------------------
     mute_non_default_regions: Optional[bool] = None
