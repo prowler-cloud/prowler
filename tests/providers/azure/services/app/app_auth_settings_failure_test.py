@@ -14,6 +14,21 @@ from tests.providers.azure.azure_fixtures import (
 
 
 class Test_App_Auth_Settings_Failure:
+    @pytest.fixture(autouse=True)
+    def mocked_provider(self):
+        """Keep lazy service-client imports isolated in every test order."""
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            patch(
+                "prowler.providers.azure.services.monitor.monitor_service.Monitor",
+                new=MagicMock(),
+            ),
+        ):
+            yield
+
     @pytest.mark.parametrize("scoped", [False, True])
     @pytest.mark.parametrize("failed_index", [0, 1])
     def test_auth_settings_error_retains_apps(self, scoped, failed_index):
