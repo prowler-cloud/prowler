@@ -1,0 +1,39 @@
+{
+  "Provider": "azure",
+  "CheckID": "storage_queue_service_logging_enabled",
+  "CheckTitle": "Queue service diagnostic logging monitors read, write, and delete operations on storage accounts",
+  "CheckType": [],
+  "ServiceName": "storage",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Microsoft.Storage/storageAccounts",
+  "ResourceGroup": "storage",
+  "Description": "Azure Storage accounts are evaluated for whether **diagnostic settings** on the Queue service (`queueServices/default`) have the **StorageRead**, **StorageWrite**, and **StorageDelete** log categories enabled.\n\nThese logs capture all data-plane read, write, and delete operations on queue messages, enabling security monitoring and incident investigation.",
+  "Risk": "Without Queue service diagnostic logging, there is **no record** of who read, modified, or deleted messages in queues.\n\n- **Data exfiltration** through queue reads cannot be detected\n- **Tampering** with or deletion of messages goes unnoticed\n- **Incident investigation** is impossible without an audit trail",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/azure/storage/queues/monitor-queue-storage",
+    "https://learn.microsoft.com/azure/azure-monitor/essentials/diagnostic-settings",
+    "https://learn.microsoft.com/rest/api/monitor/diagnostic-settings/list"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "az monitor diagnostic-settings create --name diag-queue --resource \"<storageAccountId>/queueServices/default\" --workspace <logAnalyticsWorkspaceId> --logs '[{\"category\":\"StorageRead\",\"enabled\":true},{\"category\":\"StorageWrite\",\"enabled\":true},{\"category\":\"StorageDelete\",\"enabled\":true}]'",
+      "NativeIaC": "```bicep\nparam storageAccountName string\nparam workspaceId string\n\nresource sa 'Microsoft.Storage/storageAccounts@2023-01-01' existing = {\n  name: storageAccountName\n  resource queue 'queueServices' existing = {\n    name: 'default'\n  }\n}\n\nresource diag 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {\n  name: 'example_resource'\n  scope: sa::queue\n  properties: {\n    workspaceId: workspaceId\n    logs: [\n      { category: 'StorageRead', enabled: true }   // Required\n      { category: 'StorageWrite', enabled: true }   // Required\n      { category: 'StorageDelete', enabled: true }  // Required\n    ]\n  }\n}\n```",
+      "Other": "1. In Azure Portal, open the target Storage account\n2. Go to **Monitoring** > **Diagnostic settings**\n3. Select the **queue** sub-resource\n4. Click **Add diagnostic setting**\n5. Enable **StorageRead**, **StorageWrite**, and **StorageDelete** categories\n6. Choose a destination (e.g., Log Analytics workspace)\n7. Click **Save**",
+      "Terraform": "```hcl\nresource \"azurerm_monitor_diagnostic_setting\" \"example_resource\" {\n  name                       = \"example_resource\"\n  target_resource_id         = \"${azurerm_storage_account.example_resource.id}/queueServices/default\"\n  log_analytics_workspace_id = \"<example_resource_id>\"\n\n  enabled_log {\n    category = \"StorageRead\"  # Required\n  }\n  enabled_log {\n    category = \"StorageWrite\"  # Required\n  }\n  enabled_log {\n    category = \"StorageDelete\"  # Required\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Enable **Azure Monitor diagnostic settings** on the Queue service of every storage account to log all read, write, and delete operations. Send logs to a central **Log Analytics workspace** or storage account with appropriate **retention** and **immutability** policies. Accounts using only classic Storage Analytics logging will need to migrate to diagnostic settings for this check to pass.",
+      "Url": "https://hub.prowler.com/check/storage_queue_service_logging_enabled"
+    }
+  },
+  "Categories": [
+    "logging",
+    "forensics-ready"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Account kinds without a Queue service (BlobStorage, BlockBlobStorage, FileStorage) are excluded from evaluation. Classic Storage Analytics logging (data-plane) is not evaluated because it requires account keys or data-plane RBAC; accounts relying solely on classic logging will receive a FAIL finding."
+}
