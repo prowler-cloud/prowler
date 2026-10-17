@@ -714,13 +714,17 @@ class Test_KeyVault_get_keys:
             ]
             rotation_findings = keyvault_key_rotation_enabled().execute()
             assert [
-                (finding.resource_id, finding.status) for finding in rotation_findings
+                (finding.resource_id, finding.resource_name, finding.status)
+                for finding in rotation_findings
             ] == [
-                (healthy_key.id, "FAIL"),
-                (f"/subscriptions/{AZURE_SUBSCRIPTION_ID}", "MANUAL"),
+                (listed_key.id, "key", "MANUAL"),
+                (healthy_key.id, "healthy-key", "FAIL"),
+                (another_unreadable_key.id, "another-unreadable-key", "MANUAL"),
             ]
-            assert rotation_findings[1].subscription == AZURE_SUBSCRIPTION_ID
-            assert (
-                "Microsoft.KeyVault/vaults/keys/read"
-                in rotation_findings[1].status_extended
-            )
+            for finding in (rotation_findings[0], rotation_findings[2]):
+                assert finding.subscription == AZURE_SUBSCRIPTION_ID
+                assert (
+                    f"Cannot evaluate the rotation policy of key {finding.resource_name} in Key Vault vault"
+                    in finding.status_extended
+                )
+                assert "Microsoft.KeyVault/vaults/keys/read" in finding.status_extended

@@ -1,1 +1,1 @@
-Key Vault rotation policy collection through Azure Resource Manager, avoiding false failures when vault data-plane access is restricted
+Key Vault key rotation policies are read through Azure Resource Manager on the selected cloud instead of the vault data plane, so `keyvault_key_rotation_enabled` no longer false-fails private or firewalled vaults; keys whose details cannot be read are reported as `MANUAL`
