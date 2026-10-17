@@ -1,0 +1,1 @@
+`awslambda_function_not_publicly_accessible`, `ecr_repositories_not_publicly_accessible`, `glacier_vaults_policy_public_access` and `opensearch_service_domains_not_publicly_accessible` fixers remove only the public statements instead of deleting or replacing the whole resource policy
