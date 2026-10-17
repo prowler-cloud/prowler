@@ -32,6 +32,22 @@ def _grants_public_write(statement: dict, account_id: str) -> bool:
     )
 
 
+def _is_block_public_policy_denial(error: ClientError) -> bool:
+    """
+    Check if S3 denied a PutBucketPolicy call because of the Block Public Access "BlockPublicPolicy" setting.
+    S3 returns a generic AccessDenied code in this case, and only the message tells it apart from a missing
+    s3:PutBucketPolicy permission ("... because public policies are blocked by the BlockPublicPolicy block public access setting.").
+    Args:
+        error (ClientError): The error raised by PutBucketPolicy.
+    Returns:
+        bool: True if the denial was caused by BlockPublicPolicy, False otherwise.
+    """
+    error_details = error.response.get("Error", {})
+    return error_details.get(
+        "Code"
+    ) == "AccessDenied" and "BlockPublicPolicy" in error_details.get("Message", "")
+
+
 def _apply_statements(
     regional_client, bucket_name: str, policy: dict, statements: list
 ) -> None:
@@ -111,14 +127,11 @@ def fixer(resource_id: str, region: str) -> bool:
                     {"Statement": [statement]}, s3_client.audited_account
                 )
             ]
-            if (
-                error.response.get("Error", {}).get("Code") != "AccessDenied"
-                or not public_statements
-            ):
+            if not _is_block_public_policy_denial(error) or not public_statements:
                 raise
             logger.warning(
-                f"{region} -- S3 rejected the policy of bucket {resource_id} because it is still public, likely due to "
-                f"Block Public Access (BlockPublicPolicy). Also removing the public statements: "
+                f"{region} -- S3 rejected the policy of bucket {resource_id} because it is still public and "
+                f"Block Public Access (BlockPublicPolicy) is enabled. Also removing the public statements: "
                 f"{[statement.get('Sid', '<no Sid>') for statement in public_statements]}"
             )
             _apply_statements(
