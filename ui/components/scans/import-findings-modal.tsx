@@ -223,10 +223,9 @@ export function ImportFindingsModal() {
     <>
       <Button
         type="button"
-        size="lg"
-        variant="secondary"
+        variant="outline"
         onClick={() => handleOpenChange(true)}
-        className="w-full md:w-auto"
+        className="w-full sm:w-auto"
       >
         Import Findings
       </Button>

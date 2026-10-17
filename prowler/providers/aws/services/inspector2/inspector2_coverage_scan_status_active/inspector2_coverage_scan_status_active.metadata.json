@@ -1,0 +1,42 @@
+{
+  "Provider": "aws",
+  "CheckID": "inspector2_coverage_scan_status_active",
+  "CheckTitle": "Inspector2 covered resource is actively scanned",
+  "CheckType": [
+    "Software and Configuration Checks/Vulnerabilities/CVE",
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "inspector2",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Other",
+  "ResourceGroup": "security",
+  "Description": "**Amazon Inspector** coverage is evaluated for every resource it tracks (EC2 instances, ECR images and repositories, Lambda functions). A resource whose scan status is `INACTIVE`, for example because of `UNMANAGED_EC2_INSTANCE`, `NO_INVENTORY`, `UNSUPPORTED_OS` or `ACCESS_DENIED`, is not being scanned for vulnerabilities.\n\nStopped, terminated, tag-excluded and aged-out resources are not evaluated.",
+  "Risk": "Resources that Inspector cannot scan silently fall out of **vulnerability detection**. New CVEs affecting those workloads are never reported, so exploitable software can stay deployed while the account still appears covered.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/inspector/latest/user/assessing-coverage.html",
+    "https://docs.aws.amazon.com/inspector/latest/user/scanning-ec2.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. In the Amazon Inspector console, choose Account management\n2. Open the Instances, Container images or Lambda functions tab and review the resources that are not actively scanned\n3. Fix the reported cause: register EC2 instances with Systems Manager or set the EC2 scan mode to hybrid, use supported operating systems and runtimes, and grant access to the required encryption keys\n4. Confirm the resource is actively scanned",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Resolve the reason reported in each inactive resource's scan status so Inspector can scan every in-scope workload. Register EC2 instances with **Systems Manager** or enable **hybrid scanning**, keep operating systems and runtimes supported, and treat scanning gaps as vulnerabilities to track.",
+      "Url": "https://hub.prowler.com/check/inspector2_coverage_scan_status_active"
+    }
+  },
+  "Categories": [
+    "vulnerabilities"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "inspector2_is_enabled"
+  ],
+  "Notes": ""
+}

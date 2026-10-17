@@ -23,7 +23,7 @@ class codebuild_project_uses_allowed_github_organizations(Check):
                 project_role = next(
                     (
                         role
-                        for role in iam_client.roles
+                        for role in iam_client.roles or []
                         if role.arn == project.service_role_arn
                     ),
                     None,

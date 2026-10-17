@@ -72,3 +72,27 @@ describe("getRuntimePublicConfig PostHog hosts", () => {
     expect(config.posthogUiHost).toBeNull();
   });
 });
+
+describe("getRuntimePublicConfig self-registration flag", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it("is enabled when UI_SELF_REGISTRATION_ENABLED is unset", async () => {
+    vi.stubEnv("UI_SELF_REGISTRATION_ENABLED", undefined);
+
+    const { getRuntimePublicConfig } = await importFresh();
+    const config = await getRuntimePublicConfig();
+
+    expect(config.selfRegistrationEnabled).toBe(true);
+  });
+
+  it('is disabled only when UI_SELF_REGISTRATION_ENABLED is "false"', async () => {
+    vi.stubEnv("UI_SELF_REGISTRATION_ENABLED", "false");
+
+    const { getRuntimePublicConfig } = await importFresh();
+    const config = await getRuntimePublicConfig();
+
+    expect(config.selfRegistrationEnabled).toBe(false);
+  });
+});

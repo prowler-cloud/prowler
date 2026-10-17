@@ -7,6 +7,7 @@ import {
   getAttributionParamsFromCallbackPath,
   getInvitationTokenFromCallbackPath,
   getSafeCallbackPath,
+  isSelfRegistrationDisabledResponse,
 } from "@/lib/auth-callback-url";
 import { apiBaseUrl, baseUrl } from "@/lib/helper";
 
@@ -44,6 +45,11 @@ export async function GET(req: Request) {
     });
 
     if (!response.ok) {
+      if (await isSelfRegistrationDisabledResponse(response)) {
+        return NextResponse.redirect(
+          new URL("/sign-in?error=SelfRegistrationDisabled", baseUrl),
+        );
+      }
       throw new Error("Failed to exchange code for tokens");
     }
 

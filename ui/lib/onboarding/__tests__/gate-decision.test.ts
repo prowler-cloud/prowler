@@ -18,14 +18,26 @@ describe("shouldStartOnboarding", () => {
   it("returns true for a zero-provider user with no completion record", () => {
     const result = shouldStartOnboarding({
       hasProviders: false,
+      canManageProviders: true,
       completionRecord: null,
     });
     expect(result).toBe(true);
   });
 
+  it("returns false when the user cannot add providers, even in an empty tenant", () => {
+    // Limited-visibility users see zero providers without the tenant being empty.
+    const result = shouldStartOnboarding({
+      hasProviders: false,
+      canManageProviders: false,
+      completionRecord: null,
+    });
+    expect(result).toBe(false);
+  });
+
   it("returns false when the user already has providers", () => {
     const result = shouldStartOnboarding({
       hasProviders: true,
+      canManageProviders: true,
       completionRecord: null,
     });
     expect(result).toBe(false);
@@ -34,6 +46,7 @@ describe("shouldStartOnboarding", () => {
   it("returns false when a dismissed record exists", () => {
     const result = shouldStartOnboarding({
       hasProviders: false,
+      canManageProviders: true,
       completionRecord: recordWithState(TOUR_COMPLETION_STATES.DISMISSED),
     });
     expect(result).toBe(false);
@@ -42,6 +55,7 @@ describe("shouldStartOnboarding", () => {
   it("returns false when a completed record exists", () => {
     const result = shouldStartOnboarding({
       hasProviders: false,
+      canManageProviders: true,
       completionRecord: recordWithState(TOUR_COMPLETION_STATES.COMPLETED),
     });
     expect(result).toBe(false);
@@ -50,6 +64,7 @@ describe("shouldStartOnboarding", () => {
   it("returns false when a skipped record exists", () => {
     const result = shouldStartOnboarding({
       hasProviders: false,
+      canManageProviders: true,
       completionRecord: recordWithState(TOUR_COMPLETION_STATES.SKIPPED),
     });
     expect(result).toBe(false);
@@ -59,6 +74,7 @@ describe("shouldStartOnboarding", () => {
     // strict === false check rejects non-false values; don't force onboarding on unknown state
     const result = shouldStartOnboarding({
       hasProviders: undefined,
+      canManageProviders: true,
       completionRecord: null,
     });
     expect(result).toBe(false);
@@ -67,6 +83,7 @@ describe("shouldStartOnboarding", () => {
   it("fails open when hasProviders is null", () => {
     const result = shouldStartOnboarding({
       hasProviders: null as unknown as boolean,
+      canManageProviders: true,
       completionRecord: null,
     });
     expect(result).toBe(false);

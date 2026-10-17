@@ -50,6 +50,8 @@ interface ComplianceCardProps {
    * viewer cannot curate the organization's watchlist.
    */
   watchlistAction?: ReactNode;
+  /** Prowler Cloud tenants without a paid plan cannot download reports. */
+  subscriptionOnly?: boolean;
 }
 
 export const ComplianceCard: React.FC<ComplianceCardProps> = ({
@@ -62,6 +64,7 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
   id,
   isLatestCisForProvider = false,
   watchlistAction,
+  subscriptionOnly = false,
 }) => {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -174,6 +177,7 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
             isLatestCisForProvider,
           )}
           disabled={hasRegionFilter}
+          subscriptionOnly={subscriptionOnly}
         />
         {watchlistAction}
       </CardAction>

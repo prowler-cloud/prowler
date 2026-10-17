@@ -474,6 +474,20 @@ export interface CMMCAttributesMetadata {
   SourceRequirement: string;
 }
 
+// FedRAMP 20x KSI (`prowler/compliance/fedramp_20x_ksi_2026.json`), grouped by Theme.
+export interface FedRAMP20xKSIAttributesMetadata {
+  Theme: string;
+  NISTControls?: string | null;
+  ClassApplicability: string;
+}
+
+// FedRAMP 20x Class C FRR (`prowler/compliance/fedramp_20x_frr_class_c_2026.json`), grouped by Ruleset.
+export interface FedRAMP20xFRRAttributesMetadata {
+  Ruleset: string;
+  Subset: string;
+  Force: string;
+}
+
 export interface AttributesItemData {
   type: "compliance-requirements-attributes";
   id: string;
@@ -501,6 +515,8 @@ export interface AttributesItemData {
         | CISControlsAttributesMetadata[]
         | CyberEssentialsAttributesMetadata[]
         | CMMCAttributesMetadata[]
+        | FedRAMP20xKSIAttributesMetadata[]
+        | FedRAMP20xFRRAttributesMetadata[]
         | GenericAttributesMetadata[];
       check_ids: string[];
       // MITRE structure

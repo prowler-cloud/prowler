@@ -1,6 +1,10 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import {
+  PROVIDER_FUNNEL_EVENT,
+  type ProviderFunnelDetail,
+} from "@/lib/provider-funnel/provider-funnel-events";
 import { useOrgSetupStore } from "@/store/organizations/store";
 import { useProviderWizardStore } from "@/store/provider-wizard/store";
 import { ORG_WIZARD_STEP, ORGANIZATION_TYPE } from "@/types/organizations";
@@ -40,7 +44,18 @@ vi.mock("next-auth/react", () => ({
 }));
 
 describe("useProviderWizardController", () => {
+  const funnelSignals: ProviderFunnelDetail[] = [];
+  const recordFunnelSignal: EventListener = (event) => {
+    funnelSignals.push((event as CustomEvent<ProviderFunnelDetail>).detail);
+  };
+
+  afterEach(() => {
+    window.removeEventListener(PROVIDER_FUNNEL_EVENT, recordFunnelSignal);
+  });
+
   beforeEach(() => {
+    funnelSignals.length = 0;
+    window.addEventListener(PROVIDER_FUNNEL_EVENT, recordFunnelSignal);
     vi.useRealTimers();
     vi.clearAllMocks();
     requestOpenOnWizardCloseMock.mockClear();
@@ -142,6 +157,70 @@ describe("useProviderWizardController", () => {
     // Checkpoint stays untouched, but the close still refreshes.
     expect(requestOpenOnWizardCloseMock).not.toHaveBeenCalled();
     expect(refreshMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("signals the step where the wizard was left and that no provider was created", () => {
+    // Given
+    const { result } = renderHook(() =>
+      useProviderWizardController({ open: true, onOpenChange: vi.fn() }),
+    );
+
+    // When
+    act(() => {
+      result.current.handleClose();
+    });
+
+    // Then
+    expect(funnelSignals).toEqual([
+      { step: "wizard_closed", lastStep: "connect", providerCreated: false },
+    ]);
+  });
+
+  it("signals a close after the provider was created, from the step reached", () => {
+    // Given
+    const { result } = renderHook(() =>
+      useProviderWizardController({ open: true, onOpenChange: vi.fn() }),
+    );
+    act(() => {
+      useProviderWizardStore.getState().setProvider({
+        id: "provider-1",
+        type: "aws",
+        uid: "123456789012",
+        alias: null,
+      });
+      result.current.setCurrentStep(PROVIDER_WIZARD_STEP.TEST);
+    });
+
+    // When
+    act(() => {
+      result.current.handleClose();
+    });
+
+    // Then
+    expect(funnelSignals).toEqual([
+      { step: "wizard_closed", lastStep: "test", providerCreated: true },
+    ]);
+  });
+
+  it("signals the organization method when the organizations flow opens", () => {
+    // Given
+    const { result } = renderHook(() =>
+      useProviderWizardController({ open: true, onOpenChange: vi.fn() }),
+    );
+
+    // When
+    act(() => {
+      result.current.openOrganizationsFlow(ORGANIZATION_TYPE.AZURE);
+    });
+
+    // Then
+    expect(funnelSignals).toEqual([
+      {
+        step: "method_selected",
+        providerType: "azure",
+        method: "organization",
+      },
+    ]);
   });
 
   it("hydrates update mode when initial data is provided", async () => {
@@ -251,6 +330,8 @@ describe("useProviderWizardController", () => {
     expect(result.current.wizardVariant).toBe("provider");
     expect(result.current.isProviderFlow).toBe(true);
     expect(result.current.currentStep).toBe(PROVIDER_WIZARD_STEP.CONNECT);
+    // Back lands on the AWS connect step the tabs live on, not the provider picker.
+    expect(result.current.providerTypeHint).toBe("aws");
   });
 
   it("moves to launch step after a successful connection test in add mode", () => {

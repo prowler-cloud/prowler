@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Icon } from "@iconify/react";
+import { RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -110,8 +110,8 @@ export const LighthouseSettings = () => {
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-center py-12">
-            <Icon
-              icon="heroicons:arrow-path"
+            <RefreshCw
+              aria-hidden="true"
               className="h-8 w-8 animate-spin text-gray-400"
             />
           </div>

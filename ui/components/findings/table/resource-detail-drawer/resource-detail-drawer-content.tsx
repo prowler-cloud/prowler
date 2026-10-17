@@ -27,6 +27,8 @@ import {
 import { JiraDispatchActionItem } from "@/components/findings/jira-dispatch-action-item";
 import { MarkdownContainer } from "@/components/findings/markdown-container";
 import { MuteFindingsModal } from "@/components/findings/mute-findings-modal";
+import { RecheckResourceActionItem } from "@/components/findings/recheck-resource-action-item";
+import { RecheckResourceIconButton } from "@/components/findings/recheck-resource-icon-button";
 import { getComplianceIcon } from "@/components/icons";
 import {
   Badge,
@@ -408,6 +410,14 @@ export function ResourceDetailDrawerContent({
   const resourceRegionLabel = resourceRegion || "-";
   const firstSeenAt = currentResource?.firstSeenAt ?? f?.firstSeenAt ?? null;
   const lastSeenAt = currentResource?.lastSeenAt ?? f?.updatedAt ?? null;
+  const recheckTarget = {
+    providerId: f?.providerId,
+    providerUid,
+    providerType,
+    providerAlias,
+    resourceUid,
+    resourceName,
+  };
   const hasPrev = currentIndex > 0;
   const hasNext = currentIndex < totalResources - 1;
   const selectedScanIds = parseSelectedScanIds(
@@ -726,7 +736,12 @@ export function ResourceDetailDrawerContent({
                     variant="compact"
                     className="min-w-0"
                   >
-                    <DateWithTime inline dateTime={lastSeenAt || "-"} />
+                    <span className="group flex items-center gap-1.5">
+                      <DateWithTime inline dateTime={lastSeenAt || "-"} />
+                      {f && (
+                        <RecheckResourceIconButton target={recheckTarget} />
+                      )}
+                    </span>
                   </InfoField>
                   <InfoField
                     label="First seen"
@@ -784,6 +799,7 @@ export function ResourceDetailDrawerContent({
                       label={buildJiraActionLabel({ findingCount: 1 })}
                       payload={jiraPayload}
                     />
+                    <RecheckResourceActionItem target={recheckTarget} />
                     {externalResourceTarget && (
                       <ActionDropdownItem
                         icon={<ExternalLink className="size-5" />}

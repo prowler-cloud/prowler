@@ -12,6 +12,7 @@ from api.db_router import MainRouter
 from api.db_utils import rls_transaction
 from api.exceptions import ProviderConnectionError, ProviderDeletedException
 from api.models import (
+    AttackSurfaceOverview,
     Finding,
     MuteRule,
     Provider,
@@ -5327,8 +5328,13 @@ class TestAggregateAttackSurface:
         mock_queryset = MagicMock()
         mock_queryset.values.return_value = mock_queryset
         mock_queryset.annotate.return_value = [
-            {"check_id": "check_internet_1", "total": 10, "failed": 3, "muted": 1},
-            {"check_id": "check_secrets_1", "total": 5, "failed": 2, "muted": 0},
+            {
+                "check_id": "check_internet_1",
+                "total": 10,
+                "failed": 3,
+                "muted_count": 1,
+            },
+            {"check_id": "check_secrets_1", "total": 5, "failed": 2, "muted_count": 0},
         ]
 
         ctx = MagicMock()
@@ -5377,7 +5383,7 @@ class TestAggregateAttackSurface:
         mock_queryset = MagicMock()
         mock_queryset.values.return_value = mock_queryset
         mock_queryset.annotate.return_value = [
-            {"check_id": "check_internet_1", "total": 5, "failed": 1, "muted": 0},
+            {"check_id": "check_internet_1", "total": 5, "failed": 1, "muted_count": 0},
         ]
 
         ctx = MagicMock()
@@ -5460,8 +5466,13 @@ class TestAggregateAttackSurface:
         mock_queryset = MagicMock()
         mock_queryset.values.return_value = mock_queryset
         mock_queryset.annotate.return_value = [
-            {"check_id": "check_internet_1", "total": 10, "failed": 3, "muted": 1},
-            {"check_id": "check_internet_2", "total": 5, "failed": 2, "muted": 0},
+            {
+                "check_id": "check_internet_1",
+                "total": 10,
+                "failed": 3,
+                "muted_count": 1,
+            },
+            {"check_id": "check_internet_2", "total": 5, "failed": 2, "muted_count": 0},
         ]
 
         ctx = MagicMock()
@@ -5481,6 +5492,62 @@ class TestAggregateAttackSurface:
         assert overview.total_findings == 15  # 10 + 5
         assert overview.failed_findings == 5  # 3 + 2
         assert overview.muted_failed_findings == 1  # 1 + 0
+
+    @patch("tasks.jobs.scan._get_attack_surface_mapping_from_provider")
+    def test_aggregate_attack_surface_counts_real_findings(
+        self, mock_get_mapping, tenants_fixture, scans_fixture
+    ):
+        """Run the aggregation query against real Finding rows.
+
+        The other tests mock the queryset, so they never execute the real
+        `annotate`. This one guards the row keys the query returns."""
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+
+        mock_get_mapping.return_value = {
+            "privilege-escalation": {"check_privesc_1"},
+            "secrets": {"check_secrets_1"},
+        }
+
+        def create_finding(uid, check_id, status, muted):
+            Finding.objects.create(
+                tenant_id=tenant.id,
+                uid=uid,
+                scan=scan,
+                status=status,
+                status_extended="status extended",
+                impact=Severity.high,
+                severity=Severity.high,
+                raw_result={"status": status},
+                check_id=check_id,
+                check_metadata={"CheckId": check_id},
+                muted=muted,
+                first_seen_at="2024-01-02T00:00:00Z",
+            )
+
+        create_finding("privesc_fail", "check_privesc_1", Status.FAIL, False)
+        create_finding("privesc_fail_2", "check_privesc_1", Status.FAIL, False)
+        create_finding("privesc_fail_muted", "check_privesc_1", Status.FAIL, True)
+        create_finding("privesc_pass", "check_privesc_1", Status.PASS, False)
+        create_finding("secrets_pass_muted", "check_secrets_1", Status.PASS, True)
+        create_finding("unmapped_fail", "check_unmapped", Status.FAIL, False)
+
+        aggregate_attack_surface(str(tenant.id), str(scan.id))
+
+        overviews = {
+            overview.attack_surface_type: overview
+            for overview in AttackSurfaceOverview.objects.filter(
+                tenant_id=tenant.id, scan_id=scan.id
+            )
+        }
+
+        assert set(overviews) == {"privilege-escalation", "secrets"}
+        assert overviews["privilege-escalation"].total_findings == 4
+        assert overviews["privilege-escalation"].failed_findings == 2
+        assert overviews["privilege-escalation"].muted_failed_findings == 1
+        assert overviews["secrets"].total_findings == 1
+        assert overviews["secrets"].failed_findings == 0
+        assert overviews["secrets"].muted_failed_findings == 0
 
     @patch("tasks.jobs.scan.Scan.all_objects.select_related")
     @patch("tasks.jobs.scan.rls_transaction")
@@ -5966,6 +6033,112 @@ class TestResetEphemeralResourceFindingsCount:
 
         resource2.refresh_from_db()
         assert resource2.failed_findings_count == 5
+
+    def test_runs_when_newer_scan_is_not_full_scope(
+        self, tenants_fixture, scans_fixture, aws_provider, resources_fixture
+    ):
+        """A newer scoped scan must not block the full-scope scan's cleanup.
+
+        The race guard used to pick the newest COMPLETED scan of any scope
+        despite being named after full-scope ones, so a single scoped scan
+        landing after a complete one made the complete scan skip its cleanup
+        and leave ephemeral resources with a stale count permanently.
+        """
+        from datetime import timedelta
+
+        tenant, *_ = tenants_fixture
+        scan1, *_ = scans_fixture
+        resource1, resource2, _ = resources_fixture
+
+        Resource.objects.filter(id=resource2.id).update(failed_findings_count=5)
+        self._make_scan_summary(tenant.id, scan1.id, resource1)
+
+        newer_completed_at = scan1.completed_at + timedelta(minutes=5)
+        Scan.objects.create(
+            name="Newer scoped scan",
+            provider=aws_provider,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.COMPLETED,
+            tenant_id=tenant.id,
+            started_at=newer_completed_at,
+            completed_at=newer_completed_at,
+            scanner_args={"checks": ["check1"]},
+        )
+
+        result = reset_ephemeral_resource_findings_count(
+            tenant_id=str(tenant.id), scan_id=str(scan1.id)
+        )
+
+        assert result["status"] == "completed"
+
+        resource2.refresh_from_db()
+        assert resource2.failed_findings_count == 0
+
+    def test_runs_when_many_newer_scans_are_not_full_scope(
+        self, tenants_fixture, scans_fixture, aws_provider, resources_fixture
+    ):
+        """The walk must not give up before it reaches the full-scope scan.
+
+        A fixed look-back window returned None once more newer scoped scans
+        had landed than it inspected, and skipped the cleanup exactly like the
+        original bug did with one.
+        """
+        from datetime import timedelta
+
+        tenant, *_ = tenants_fixture
+        scan1, *_ = scans_fixture
+        resource1, resource2, _ = resources_fixture
+
+        Resource.objects.filter(id=resource2.id).update(failed_findings_count=5)
+        self._make_scan_summary(tenant.id, scan1.id, resource1)
+
+        for minutes in range(1, 41):
+            newer_completed_at = scan1.completed_at + timedelta(minutes=minutes)
+            Scan.objects.create(
+                name=f"Newer scoped scan {minutes}",
+                provider=aws_provider,
+                trigger=Scan.TriggerChoices.MANUAL,
+                state=StateChoices.COMPLETED,
+                tenant_id=tenant.id,
+                started_at=newer_completed_at,
+                completed_at=newer_completed_at,
+                scanner_args={"checks": ["check1"]},
+            )
+
+        result = reset_ephemeral_resource_findings_count(
+            tenant_id=str(tenant.id), scan_id=str(scan1.id)
+        )
+
+        assert result["status"] == "completed"
+
+        resource2.refresh_from_db()
+        assert resource2.failed_findings_count == 0
+
+    def test_runs_when_completed_at_is_null(
+        self, tenants_fixture, scans_fixture, aws_provider, resources_fixture
+    ):
+        """NULL `completed_at` used to make the reset never run at all.
+
+        The old guard filtered `completed_at__isnull=False`, so a provider
+        whose completed scans all had a NULL `completed_at` resolved the
+        "latest" scan to None, which never equals `scan.id`.
+        """
+        tenant, *_ = tenants_fixture
+        scan1, *_ = scans_fixture
+        resource1, resource2, _ = resources_fixture
+
+        Scan.all_objects.filter(id=scan1.id).update(completed_at=None)
+        Resource.objects.filter(id=resource2.id).update(failed_findings_count=5)
+        self._make_scan_summary(tenant.id, scan1.id, resource1)
+
+        result = reset_ephemeral_resource_findings_count(
+            tenant_id=str(tenant.id), scan_id=str(scan1.id)
+        )
+
+        assert result["status"] == "completed"
+
+        resource2.refresh_from_db()
+        assert resource2.failed_findings_count == 0
 
     def test_does_not_touch_other_providers_resources(
         self, tenants_fixture, scans_fixture, aws_provider, resources_fixture

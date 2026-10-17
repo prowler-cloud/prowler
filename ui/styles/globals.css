@@ -92,6 +92,7 @@
   --bg-button-tertiary-hover: var(--color-blue-500);
   --bg-button-tertiary-active: var(--color-indigo-600);
   --bg-button-disabled: var(--color-neutral-300);
+  --button-aws-marketplace: #232f3e;
 
   /* Radar Map */
   --bg-radar-map: #b51c8033;
@@ -218,6 +219,7 @@
   --bg-button-tertiary-hover: var(--color-blue-400);
   --bg-button-tertiary-active: var(--color-blue-600);
   --bg-button-disabled: var(--color-neutral-700);
+  --button-aws-marketplace: var(--color-white);
 
   /* Neutral Map */
   --bg-neutral-map: var(--color-gray-800);
@@ -330,6 +332,7 @@
   --color-button-tertiary-hover: var(--bg-button-tertiary-hover);
   --color-button-tertiary-active: var(--bg-button-tertiary-active);
   --color-button-disabled: var(--bg-button-disabled);
+  --color-button-aws-marketplace: var(--button-aws-marketplace);
 
   /* Input Colors */
   --color-bg-input-primary: var(--bg-input-primary);

@@ -1,9 +1,10 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { GET } from "./route";
 
-const { getAuthHeadersMock } = vi.hoisted(() => ({
+const { getAuthHeadersMock, isReportDownloadLockedMock } = vi.hoisted(() => ({
   getAuthHeadersMock: vi.fn(),
+  isReportDownloadLockedMock: vi.fn(),
 }));
 
 vi.mock("@/lib", () => ({
@@ -11,11 +12,47 @@ vi.mock("@/lib", () => ({
   getAuthHeaders: getAuthHeadersMock,
 }));
 
+vi.mock("@/lib/report-download-access", () => ({
+  REPORT_DOWNLOAD_LOCKED_ERROR:
+    "Report downloads require an active subscription.",
+  isReportDownloadLocked: isReportDownloadLockedMock,
+}));
+
 describe("GET /api/scans/[scanId]/report", () => {
+  beforeEach(() => {
+    isReportDownloadLockedMock.mockResolvedValue(false);
+  });
+
   afterEach(() => {
     vi.unstubAllGlobals();
     vi.clearAllMocks();
   });
+
+  it.each([
+    { label: "download", url: "http://localhost/api" },
+    { label: "preflight", url: "http://localhost/api?preflight=1" },
+  ])(
+    "rejects the $label without reaching the API when downloads are locked",
+    async ({ url }) => {
+      // Given
+      const fetchMock = vi.fn();
+      vi.stubGlobal("fetch", fetchMock);
+      isReportDownloadLockedMock.mockResolvedValue(true);
+
+      // When
+      const response = await GET(new Request(url), {
+        params: Promise.resolve({ scanId: "scan-123" }),
+      });
+
+      // Then
+      expect(fetchMock).not.toHaveBeenCalled();
+      expect(response.status).toBe(403);
+      expect(response.headers.get("cache-control")).toBe("no-store");
+      await expect(response.text()).resolves.toBe(
+        "Report downloads require an active subscription.",
+      );
+    },
+  );
 
   it("streams the upstream report body without buffering it", async () => {
     const upstreamBody = new ReadableStream({

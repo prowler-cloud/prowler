@@ -114,20 +114,20 @@ describe("getAWSOrgDeploymentQuickLink", () => {
 });
 
 describe("PRECONFIGURED_CREDENTIAL_URLS", () => {
-  it("keeps the Cloudflare User API Token URL under the profile route with the four required read scopes", () => {
+  it("keeps the Cloudflare User API Token URL under the profile route with the seven required read scopes", () => {
     // Snapshot check: fixes the exact URL so a stray edit to the permission
     // scopes, token name, account/zone selectors or console origin trips a
     // failing test instead of silently shipping a broken pre-configured
     // token flow to users. Matches the "User API Token" link in
     // docs/user-guide/providers/cloudflare/authentication.mdx.
     expect(PRECONFIGURED_CREDENTIAL_URLS.CLOUDFLARE_API_TOKEN_USER).toBe(
-      "https://dash.cloudflare.com/profile/api-tokens?permissionGroupKeys=%5B%7B%22key%22%3A%22account_settings%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22zone%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22zone_settings%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22dns%22%2C%22type%22%3A%22read%22%7D%5D&accountId=%2A&zoneId=all&name=Prowler%20Security%20Scanner",
+      "https://dash.cloudflare.com/profile/api-tokens?permissionGroupKeys=%5B%7B%22key%22%3A%22account_settings%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22zone%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22zone_settings%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22dns%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22ssl_and_certificates%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22bot_management%22%2C%22type%22%3A%22read%22%7D%2C%7B%22key%22%3A%22zone_waf%22%2C%22type%22%3A%22read%22%7D%5D&accountId=%2A&zoneId=all&name=Prowler%20Security%20Scanner",
     );
   });
 
-  it("carries the four Prowler read scopes as decoded permissionGroupKeys on the Cloudflare User API Token URL", () => {
+  it("carries the seven Prowler read scopes as decoded permissionGroupKeys on the Cloudflare User API Token URL", () => {
     // Semantic contract: the URL must request read on account_settings, zone,
-    // zone_settings and dns and reuse the shared Prowler token name.
+    // zone_settings, dns, ssl_and_certificates, bot_management and zone_waf and reuse the shared Prowler token name.
     const parsed = new URL(
       PRECONFIGURED_CREDENTIAL_URLS.CLOUDFLARE_API_TOKEN_USER,
     );
@@ -140,6 +140,9 @@ describe("PRECONFIGURED_CREDENTIAL_URLS", () => {
       { key: "zone", type: "read" },
       { key: "zone_settings", type: "read" },
       { key: "dns", type: "read" },
+      { key: "ssl_and_certificates", type: "read" },
+      { key: "bot_management", type: "read" },
+      { key: "zone_waf", type: "read" },
     ]);
     expect(parsed.searchParams.get("name")).toBe("Prowler Security Scanner");
   });
@@ -214,6 +217,9 @@ describe("buildCloudflareAccountOwnedApiTokenUrl", () => {
       { key: "zone", type: "read" },
       { key: "zone_settings", type: "read" },
       { key: "dns", type: "read" },
+      { key: "ssl_and_certificates", type: "read" },
+      { key: "bot_management", type: "read" },
+      { key: "zone_waf", type: "read" },
     ]);
   });
 

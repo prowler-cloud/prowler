@@ -187,6 +187,27 @@ class TestRoutingByDatabasePrefix:
         sink_backend_stub.drop_database.assert_called_once_with("db-tenant-abc")
         mock_ingest.drop_database.assert_not_called()
 
+    def test_list_databases_always_routes_to_ingest(self, sink_backend_stub):
+        with patch("api.attack_paths.database.ingest") as mock_ingest:
+            mock_ingest.list_databases.return_value = ["db-tmp-scan-uuid-1"]
+
+            assert db_module.list_databases() == ["db-tmp-scan-uuid-1"]
+
+        mock_ingest.list_databases.assert_called_once_with()
+
+    def test_ingest_list_databases_dedupes_cluster_rows(self):
+        from api.attack_paths.ingest import driver as ingest_driver
+
+        with patch.object(ingest_driver, "get_session") as mock_get_session:
+            session = mock_get_session.return_value.__enter__.return_value
+            session.run.return_value = [{"name": "db-tmp-scan-uuid-1"}]
+
+            assert ingest_driver.list_databases() == ["db-tmp-scan-uuid-1"]
+
+        session.run.assert_called_once_with(
+            "SHOW DATABASES YIELD name RETURN DISTINCT name"
+        )
+
     def test_clear_cache_routes_temp_to_ingest(self, sink_backend_stub):
         with patch("api.attack_paths.database.ingest") as mock_ingest:
             db_module.clear_cache("db-tmp-scan-uuid-1")

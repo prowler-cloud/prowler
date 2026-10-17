@@ -409,7 +409,7 @@ def batch_delete(tenant_id, queryset, batch_size=settings.DJANGO_DELETION_BATCH_
 
     Args:
         tenant_id (str): Tenant ID the queryset belongs to.
-        queryset (QuerySet): The queryset of objects to delete.
+        queryset: The queryset of objects to delete.
         batch_size (int): The number of objects to delete in each batch.
 
     Returns:

@@ -3,16 +3,20 @@ import uuid
 import zipfile
 from datetime import datetime
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, call, patch
+from urllib.parse import parse_qs, urlparse
 
+import boto3
 import pytest
 from botocore.exceptions import ClientError
+from django.test import override_settings
 from tasks.jobs.export import (
     _compress_output_files,
     _generate_compliance_output_directory,
     _generate_output_directory,
     _upload_to_s3,
     get_s3_client,
+    get_s3_presign_client,
 )
 
 
@@ -48,14 +52,58 @@ class TestOutputs:
         client_mock.list_buckets.assert_called()
 
     @patch("tasks.jobs.export.boto3.client")
+    @override_settings(
+        DJANGO_OUTPUT_S3_AWS_ACCESS_KEY_ID="access-key",
+        DJANGO_OUTPUT_S3_AWS_SECRET_ACCESS_KEY="secret-key",
+        DJANGO_OUTPUT_S3_AWS_SESSION_TOKEN="",
+        DJANGO_OUTPUT_S3_AWS_DEFAULT_REGION="",
+    )
+    def test_get_s3_client_without_a_region_uses_a_default(self, mock_boto_client):
+        """botocore rejects an empty region up front, and the download views do not catch it."""
+        get_s3_client()
+
+        assert mock_boto_client.call_args.kwargs["region_name"] == "us-east-1"
+
+    @patch("tasks.jobs.export.boto3.client")
+    @override_settings(DJANGO_OUTPUT_S3_AWS_ENDPOINT_URL="http://minio:9000")
+    def test_get_s3_client_passes_the_endpoint_when_set(self, mock_boto_client):
+        get_s3_client()
+
+        assert mock_boto_client.call_args.kwargs["endpoint_url"] == "http://minio:9000"
+
+    @patch("tasks.jobs.export.boto3.client")
+    @override_settings(DJANGO_OUTPUT_S3_AWS_ENDPOINT_URL="")
+    def test_get_s3_client_endpoint_empty_by_default(self, mock_boto_client):
+        """Empty keeps today's behavior: no endpoint override, real S3 is used."""
+        get_s3_client()
+
+        assert mock_boto_client.call_args.kwargs["endpoint_url"] is None
+
+    @patch("tasks.jobs.export.boto3.client")
+    @override_settings(DJANGO_OUTPUT_S3_AWS_ENDPOINT_URL="http://minio:9000")
+    def test_get_s3_client_does_not_fall_back_when_endpoint_set(self, mock_boto_client):
+        """A configured endpoint means the explicit client failed talking to it. The fallback
+        goes to the default provider chain (e.g. an EC2 instance role) against real AWS, so it
+        must not be used: the original error propagates instead."""
+        error = ClientError({"Error": {"Code": "403"}}, "ListBuckets")
+        mock_boto_client.side_effect = error
+
+        with pytest.raises(ClientError):
+            get_s3_client()
+
+        mock_boto_client.assert_called_once()
+
+    @patch("tasks.jobs.export.boto3.client")
     @patch("tasks.jobs.export.settings")
     def test_get_s3_client_fallback(self, mock_settings, mock_boto_client):
+        mock_settings.DJANGO_OUTPUT_S3_AWS_ENDPOINT_URL = ""
         mock_boto_client.side_effect = [
             ClientError({"Error": {"Code": "403"}}, "ListBuckets"),
             MagicMock(),
         ]
         client = get_s3_client()
         assert client is not None
+        assert mock_boto_client.call_args_list[1] == call("s3")
 
     @patch("tasks.jobs.export.get_s3_client")
     @patch("tasks.jobs.export.base")
@@ -243,3 +291,167 @@ class TestOutputs:
         assert os.path.isdir(os.path.dirname(ens))
         assert threatscore.endswith(f"aws-test-check-{expected_timestamp}")
         assert ens.endswith(f"aws-test-check-{expected_timestamp}")
+
+
+PRESIGN_SETTINGS = {
+    "DJANGO_OUTPUT_S3_AWS_ACCESS_KEY_ID": "access-key",
+    "DJANGO_OUTPUT_S3_AWS_SECRET_ACCESS_KEY": "secret-key",
+    "DJANGO_OUTPUT_S3_AWS_SESSION_TOKEN": "",
+    "DJANGO_OUTPUT_S3_AWS_DEFAULT_REGION": "eu-west-1",
+}
+
+
+def _presign(client):
+    return client.generate_presigned_url(
+        "get_object",
+        Params={"Bucket": "output-bucket", "Key": "tenant/scan/report.zip"},
+        ExpiresIn=300,
+    )
+
+
+class TestS3PresignClient:
+    @override_settings(
+        **{**PRESIGN_SETTINGS, "DJANGO_OUTPUT_S3_AWS_DEFAULT_REGION": ""},
+        DJANGO_OUTPUT_S3_AWS_PUBLIC_ENDPOINT_URL="",
+    )
+    def test_no_public_endpoint_and_no_region_returns_none(self):
+        # Without a region, SigV4 would have to guess one and break other regions.
+        assert get_s3_presign_client() is None
+
+    @override_settings(**PRESIGN_SETTINGS, DJANGO_OUTPUT_S3_AWS_PUBLIC_ENDPOINT_URL="")
+    def test_region_without_public_endpoint_signs_sigv4_on_the_regional_host(self):
+        # SSE-KMS objects reject the SigV2 URLs boto3 presigns by default, and the
+        # global host redirects for new buckets, which breaks a SigV4 signature.
+        url = urlparse(_presign(get_s3_presign_client()))
+        query = parse_qs(url.query)
+
+        assert url.netloc == "s3.eu-west-1.amazonaws.com"
+        assert url.path == "/output-bucket/tenant/scan/report.zip"
+        assert query["X-Amz-Algorithm"] == ["AWS4-HMAC-SHA256"]
+        assert "/eu-west-1/s3/aws4_request" in query["X-Amz-Credential"][0]
+
+    @override_settings(
+        **{
+            **PRESIGN_SETTINGS,
+            "DJANGO_OUTPUT_S3_AWS_ACCESS_KEY_ID": "",
+            "DJANGO_OUTPUT_S3_AWS_SECRET_ACCESS_KEY": "",
+        },
+        DJANGO_OUTPUT_S3_AWS_PUBLIC_ENDPOINT_URL="",
+    )
+    def test_region_without_static_keys_signs_with_the_default_chain(self, monkeypatch):
+        # An ECS task role reaches boto3 through the default chain, like the env here.
+        # A fresh default session keeps these keys from being cached for later tests.
+        monkeypatch.setattr(boto3, "DEFAULT_SESSION", None)
+        monkeypatch.setenv("AWS_ACCESS_KEY_ID", "role-access-key")
+        monkeypatch.setenv("AWS_SECRET_ACCESS_KEY", "role-secret-key")
+        monkeypatch.setenv("AWS_DEFAULT_REGION", "us-east-1")
+
+        query = parse_qs(urlparse(_presign(get_s3_presign_client())).query)
+
+        assert query["X-Amz-Credential"][0].startswith("role-access-key/")
+        assert "/eu-west-1/s3/aws4_request" in query["X-Amz-Credential"][0]
+
+    @override_settings(
+        **{**PRESIGN_SETTINGS, "DJANGO_OUTPUT_S3_AWS_DEFAULT_REGION": ""},
+        DJANGO_OUTPUT_S3_AWS_PUBLIC_ENDPOINT_URL="",
+        DJANGO_OUTPUT_S3_AWS_ENDPOINT_URL="http://minio:9000",
+    )
+    def test_internal_endpoint_without_public_endpoint_signs_against_it(self):
+        # No browser-reachable host was configured, so the internal one is the best
+        # available target instead of falling through to the real AWS host.
+        url = urlparse(_presign(get_s3_presign_client()))
+
+        assert url.netloc == "minio:9000"
+        assert url.path == "/output-bucket/tenant/scan/report.zip"
+
+    @override_settings(
+        **PRESIGN_SETTINGS,
+        DJANGO_OUTPUT_S3_AWS_PUBLIC_ENDPOINT_URL="https://storage.example.com",
+        DJANGO_OUTPUT_S3_AWS_ENDPOINT_URL="http://minio:9000",
+    )
+    def test_public_endpoint_wins_over_the_internal_endpoint(self):
+        url = urlparse(_presign(get_s3_presign_client()))
+
+        assert url.netloc == "storage.example.com"
+
+    @override_settings(
+        **PRESIGN_SETTINGS,
+        DJANGO_OUTPUT_S3_AWS_PUBLIC_ENDPOINT_URL="https://storage.example.com",
+    )
+    def test_url_targets_the_public_host_in_path_style(self):
+        url = urlparse(_presign(get_s3_presign_client()))
+
+        assert url.netloc == "storage.example.com"
+        assert url.path == "/output-bucket/tenant/scan/report.zip"
+
+    @override_settings(
+        **PRESIGN_SETTINGS,
+        DJANGO_OUTPUT_S3_AWS_PUBLIC_ENDPOINT_URL="https://storage.example.com",
+    )
+    def test_signature_covers_the_public_host(self):
+        query = parse_qs(urlparse(_presign(get_s3_presign_client())).query)
+
+        assert query["X-Amz-SignedHeaders"] == ["host"]
+        assert "/eu-west-1/s3/aws4_request" in query["X-Amz-Credential"][0]
+
+    @override_settings(
+        **PRESIGN_SETTINGS,
+        DJANGO_OUTPUT_S3_AWS_PUBLIC_ENDPOINT_URL="https://storage.example.com",
+    )
+    def test_signature_is_bound_to_the_host_it_was_signed_against(self):
+        """Rewriting the host afterwards cannot work, which is why the endpoint is a setting."""
+        public = parse_qs(urlparse(_presign(get_s3_presign_client())).query)
+
+        with override_settings(
+            DJANGO_OUTPUT_S3_AWS_PUBLIC_ENDPOINT_URL="http://minio:9000"
+        ):
+            internal = parse_qs(urlparse(_presign(get_s3_presign_client())).query)
+
+        assert public["X-Amz-Signature"] != internal["X-Amz-Signature"]
+
+    @override_settings(
+        **{**PRESIGN_SETTINGS, "DJANGO_OUTPUT_S3_AWS_DEFAULT_REGION": ""},
+        DJANGO_OUTPUT_S3_AWS_PUBLIC_ENDPOINT_URL="https://storage.example.com",
+    )
+    def test_region_falls_back_to_the_minio_default(self):
+        query = parse_qs(urlparse(_presign(get_s3_presign_client())).query)
+
+        assert "/us-east-1/s3/aws4_request" in query["X-Amz-Credential"][0]
+
+    @override_settings(
+        **PRESIGN_SETTINGS,
+        DJANGO_OUTPUT_S3_AWS_PUBLIC_ENDPOINT_URL="https://storage.example.com",
+    )
+    def test_unset_session_token_is_left_out_of_the_url(self):
+        """An empty token still reaches the URL as a blank param that storage signs over."""
+        url = _presign(get_s3_presign_client())
+        query = parse_qs(urlparse(url).query, keep_blank_values=True)
+
+        assert "X-Amz-Security-Token" not in query
+
+    @override_settings(
+        **{**PRESIGN_SETTINGS, "DJANGO_OUTPUT_S3_AWS_SESSION_TOKEN": "session-token"},
+        DJANGO_OUTPUT_S3_AWS_PUBLIC_ENDPOINT_URL="https://storage.example.com",
+    )
+    def test_session_token_is_forwarded_when_set(self):
+        query = parse_qs(urlparse(_presign(get_s3_presign_client())).query)
+
+        assert query["X-Amz-Security-Token"] == ["session-token"]
+
+    @override_settings(
+        **{
+            **PRESIGN_SETTINGS,
+            "DJANGO_OUTPUT_S3_AWS_ACCESS_KEY_ID": "",
+            "DJANGO_OUTPUT_S3_AWS_SECRET_ACCESS_KEY": "",
+        },
+        DJANGO_OUTPUT_S3_AWS_PUBLIC_ENDPOINT_URL="https://storage.example.com",
+    )
+    def test_blank_static_credentials_defer_to_the_provider_chain(self, monkeypatch):
+        """Empty keys would otherwise be signed as-is, yielding a blank credential scope."""
+        monkeypatch.setenv("AWS_ACCESS_KEY_ID", "chain-key")
+        monkeypatch.setenv("AWS_SECRET_ACCESS_KEY", "chain-secret")
+        monkeypatch.delenv("AWS_SESSION_TOKEN", raising=False)
+
+        query = parse_qs(urlparse(_presign(get_s3_presign_client())).query)
+
+        assert query["X-Amz-Credential"][0].startswith("chain-key/")

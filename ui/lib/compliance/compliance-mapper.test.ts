@@ -55,6 +55,13 @@ vi.mock(
   () => ({ ENSCustomDetails: stubFactory("ENSStub") }),
 );
 vi.mock(
+  "@/components/compliance/compliance-custom-details/fedramp-20x-details",
+  () => ({
+    FedRAMP20xFRRCustomDetails: stubFactory("FedRAMP20xFRRStub"),
+    FedRAMP20xKSICustomDetails: stubFactory("FedRAMP20xKSIStub"),
+  }),
+);
+vi.mock(
   "@/components/compliance/compliance-custom-details/generic-details",
   () => ({ GenericCustomDetails: stubFactory("GenericStub") }),
 );
@@ -159,6 +166,8 @@ describe("getComplianceMapper", () => {
       { framework: "CMMC", expected: "CMMCStub" },
       { framework: "Okta-IDaaS-STIG", expected: "OktaIDaaSStigStub" },
       { framework: "Cyber-Essentials", expected: "CyberEssentialsStub" },
+      { framework: "FedRAMP-20x-KSI", expected: "FedRAMP20xKSIStub" },
+      { framework: "FedRAMP-20x-FRR-Class-C", expected: "FedRAMP20xFRRStub" },
     ];
 
     for (const { framework, expected } of wiring) {
@@ -206,6 +215,8 @@ describe("getComplianceMapper", () => {
       "CMMC",
       "Okta-IDaaS-STIG",
       "Cyber-Essentials",
+      "FedRAMP-20x-KSI",
+      "FedRAMP-20x-FRR-Class-C",
     ]) {
       const mapper = getComplianceMapper(framework);
       expect(Object.keys(mapper).sort(), framework).toEqual(expectedKeys);

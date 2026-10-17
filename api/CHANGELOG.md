@@ -4,6 +4,79 @@ All notable changes to the **Prowler API** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [1.46.0] (Prowler v5.45.0)
+
+### 🐞 Fixed
+
+- OCI provider secrets keep the region as home region for credential validation and scans, instead of always using us-ashburn-1 [(#12865)](https://github.com/prowler-cloud/prowler/pull/12865)
+- Gunicorn workers are now recycled after 10000 requests (plus up to 1000 of jitter) to cap memory growth, configurable with `GUNICORN_MAX_REQUESTS` and `GUNICORN_MAX_REQUESTS_JITTER` [(#13047)](https://github.com/prowler-cloud/prowler/pull/13047)
+
+### 🔐 Security
+
+- `pyjwt` from 2.13.0 to 2.14.0, patching GHSA-ffc3-869f-jxw9 [(#12911)](https://github.com/prowler-cloud/prowler/pull/12911)
+- Sentry error events no longer include user identity, IP addresses, cookies, headers or request bodies, which could contain personal data or provider credentials [(#12912)](https://github.com/prowler-cloud/prowler/pull/12912)
+- Kubernetes kubeconfig validation accepts only inline credentials and known cluster fields, rejecting file-path fields (`tokenFile`, `client-certificate`, `client-key`, `certificate-authority`), command-based authentication (`exec`, `cmd-path`), `auth-provider` directives, proxy URLs and unknown user or cluster keys; stored kubeconfigs are re-validated before each scan and connection test [(#12952)](https://github.com/prowler-cloud/prowler/pull/12952)
+- `django` from 5.1.15 to 5.2.17, patching CVE-2026-15307 [(#12953)](https://github.com/prowler-cloud/prowler/pull/12953)
+- `dulwich` from 1.2.5 to 1.2.9, patching GHSA-5fqc-mrg8-w798, GHSA-8mcx-5rqc-vhmf, GHSA-8w8g-wq8h-fq33 and GHSA-cm62-gvxx-vmxx [(#12953)](https://github.com/prowler-cloud/prowler/pull/12953)
+- `urllib3` from 2.7.0 to 2.8.0, patching CVE-2026-97687 and CVE-2026-97689 [(#12953)](https://github.com/prowler-cloud/prowler/pull/12953)
+- `pymongo` from 4.15.1 to 4.18.2, patching CVE-2026-96748 and CVE-2026-96749 [(#12955)](https://github.com/prowler-cloud/prowler/pull/12955)
+- `GET /api/v1/users/{id}` no longer exposes another user's memberships, roles or tenant names from tenants other than the one in the request token [(#12965)](https://github.com/prowler-cloud/prowler/pull/12965)
+- Python base image from 3.12.13 to 3.12.15 and Trivy from 0.74.0 to 0.75.0 in the API container image, patching CVE-2026-19445, CVE-2026-19553 and the grpc-go and x/crypto CVEs bundled in Trivy [(#13009)](https://github.com/prowler-cloud/prowler/pull/13009)
+- PowerShell from 7.5.11 to 7.5.12 in the API container image, bundling .NET runtime 9.0.21 [(#13037)](https://github.com/prowler-cloud/prowler/pull/13037)
+
+---
+
+## [1.45.0] (Prowler v5.44.0)
+
+### 🚀 Added
+
+- Scan output uploads and downloads can now target S3-compatible object storage such as MinIO directly via `DJANGO_OUTPUT_S3_AWS_ENDPOINT_URL`, instead of relying on process-wide AWS environment variables that also hijacked unrelated AWS API calls [(#12871)](https://github.com/prowler-cloud/prowler/pull/12871)
+
+### 🔄 Changed
+
+- Unify how every endpoint resolves a provider latest completed scan, so overlapping scans no longer make findings, compliance and mute rules read from different scans [(#12858)](https://github.com/prowler-cloud/prowler/pull/12858)
+
+### 🐞 Fixed
+
+- Celery loggers are now declared explicitly in `custom_logging.py` so fatal worker errors are no longer silenced by `disable_existing_loggers=True`. All long-running services in `docker-compose.yml` now have `restart: unless-stopped` so containers recover automatically after unexpected crashes. [(#12465)](https://github.com/prowler-cloud/prowler/pull/12465)
+- Scan report downloads from an S3 bucket with default SSE-KMS encryption no longer fail with an `InvalidArgument` error: when `DJANGO_OUTPUT_S3_AWS_DEFAULT_REGION` is set, presigned download URLs are signed with AWS Signature Version 4 for that region [(#12746)](https://github.com/prowler-cloud/prowler/pull/12746)
+- Adds a periodic sweep that drops orphaned Attack Paths temp Neo4j scan databases left behind when a worker or Neo4j crashes mid-scan, before they accumulate unbounded [(#12832)](https://github.com/prowler-cloud/prowler/pull/12832)
+- Providers whose most recent completed scan has no `completed_at` timestamp are no longer missing from every endpoint that reports a provider's latest scan, which now falls back to scan creation order instead of skipping the provider [(#12858)](https://github.com/prowler-cloud/prowler/pull/12858)
+- Resources no longer keep a stale failed findings count forever when a scoped or imported scan for the same provider completes after a full scan, which used to make the full scan skip its own cleanup [(#12858)](https://github.com/prowler-cloud/prowler/pull/12858)
+- `POST /api/v1/scans` again returns the new scan id in the response `task_args`, which had been empty since the scan broker publish moved to transaction commit [(#12878)](https://github.com/prowler-cloud/prowler/pull/12878)
+- API key authentication no longer locks the key row on every request and now throttles `last_used_at` updates to once per 60 seconds, preventing a hot key from serializing all its requests onto a single locked row [(#12882)](https://github.com/prowler-cloud/prowler/pull/12882)
+- Provider deletion no longer fails when the provider has Attack Paths scans recorded on a sink that is no longer configured, such as Neptune after moving back to Neo4j [(#12894)](https://github.com/prowler-cloud/prowler/pull/12894)
+
+### 🔐 Security
+
+- `DELETE /api/v1/tasks/{id}` requires the permission of the operation that queued the task and rejects provider deletions, and `GET /api/v1/tasks` hides tasks of providers outside the visibility of the role [(#12893)](https://github.com/prowler-cloud/prowler/pull/12893)
+
+---
+
+## [1.44.0] (Prowler v5.43.0)
+
+### 🐞 Fixed
+
+- Report download URLs can be signed against a browser-reachable storage host via `DJANGO_OUTPUT_S3_AWS_PUBLIC_ENDPOINT_URL`, so downloads complete on deployments where storage is only reachable inside the container network [(#12552)](https://github.com/prowler-cloud/prowler/pull/12552)
+- A scan report download no longer fails with a server error when `DJANGO_OUTPUT_S3_AWS_DEFAULT_REGION` is unset, which is common on storage with no meaningful region [(#12552)](https://github.com/prowler-cloud/prowler/pull/12552)
+- Lapsed pending invitations are reported as expired and no longer block a new invitation for the same email [(#12831)](https://github.com/prowler-cloud/prowler/pull/12831)
+
+### 🔐 Security
+
+- `libsqlite3-0`, `gzip`, `perl-base` and `libpcre2-8-0` upgraded in the API container image, patching high Debian CVEs [(#12804)](https://github.com/prowler-cloud/prowler/pull/12804)
+- PowerShell from 7.5.9 to 7.5.11 in the API container image, bundling .NET runtime 9.0.20 and patching CVE-2026-62901 [(#12811)](https://github.com/prowler-cloud/prowler/pull/12811)
+- Bumped `anyio` to 4.14.2 to resolve CVE-2026-63374 [(#12848)](https://github.com/prowler-cloud/prowler/pull/12848)
+
+---
+
+## [1.43.0] (Prowler v5.42.0)
+
+### 🔄 Changed
+
+- Speed up compliance overview ingestion by reading ThreatScore mappings from the compliance template instead of each finding, generating time-ordered `uuid7` row ids and grouping inserted rows by framework and requirement [(#12738)](https://github.com/prowler-cloud/prowler/pull/12738)
+
+---
+
 ## [1.42.0] (Prowler v5.41.0)
 
 ### 🚀 Added

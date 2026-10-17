@@ -126,12 +126,12 @@ Every AWS provider scan will enqueue an Attack Paths ingestion job automatically
 
 | Provider | Checks | Services | [Compliance Frameworks](https://docs.prowler.com/user-guide/compliance/tutorials/compliance) | [Categories](https://docs.prowler.com/user-guide/cli/tutorials/misc#categories) | Support | Interface |
 |---|---|---|---|---|---|---|
-| AWS | 639 | 86 | 47 | 19 | Official | UI, API, CLI |
-| Azure | 191 | 22 | 21 | 16 | Official | UI, API, CLI |
-| GCP | 109 | 20 | 19 | 12 | Official | UI, API, CLI |
-| Kubernetes | 92 | 7 | 8 | 11 | Official | UI, API, CLI |
+| AWS | 662 | 86 | 50 | 19 | Official | UI, API, CLI |
+| Azure | 191 | 22 | 25 | 16 | Official | UI, API, CLI |
+| GCP | 110 | 20 | 22 | 12 | Official | UI, API, CLI |
+| Kubernetes | 92 | 7 | 11 | 11 | Official | UI, API, CLI |
 | GitHub | 24 | 3 | 2 | 5 | Official | UI, API, CLI |
-| M365 | 143 | 10 | 6 | 10 | Official | UI, API, CLI |
+| M365 | 144 | 10 | 9 | 10 | Official | UI, API, CLI |
 | OCI | 52 | 14 | 5 | 10 | Official | UI, API, CLI |
 | Alibaba Cloud | 63 | 9 | 6 | 9 | Official | UI, API, CLI |
 | Cloudflare | 29 | 3 | 2 | 5 | Official | UI, API, CLI |

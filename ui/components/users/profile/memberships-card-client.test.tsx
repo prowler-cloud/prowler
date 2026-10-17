@@ -205,4 +205,22 @@ describe("MembershipsCardClient", () => {
       screen.getByRole("menuitem", { name: /delete organization/i }),
     ).toBeInTheDocument();
   });
+
+  it("hides the create organization action when self-registration is disabled", () => {
+    // Given / When
+    render(
+      <MembershipsCardClient
+        memberships={memberships}
+        tenantsMap={tenantsMap}
+        hasManageAccount={true}
+        sessionTenantId="tenant-1"
+        canCreateOrganization={false}
+      />,
+    );
+
+    // Then
+    expect(
+      screen.queryByRole("button", { name: "Create organization" }),
+    ).not.toBeInTheDocument();
+  });
 });

@@ -11,6 +11,10 @@ import { CSACustomDetails } from "@/components/compliance/compliance-custom-deta
 import { CyberEssentialsCustomDetails } from "@/components/compliance/compliance-custom-details/cyber-essentials-details";
 import { DORACustomDetails } from "@/components/compliance/compliance-custom-details/dora-details";
 import { ENSCustomDetails } from "@/components/compliance/compliance-custom-details/ens-details";
+import {
+  FedRAMP20xFRRCustomDetails,
+  FedRAMP20xKSICustomDetails,
+} from "@/components/compliance/compliance-custom-details/fedramp-20x-details";
 import { GenericCustomDetails } from "@/components/compliance/compliance-custom-details/generic-details";
 import { ISOCustomDetails } from "@/components/compliance/compliance-custom-details/iso-details";
 import { KISACustomDetails } from "@/components/compliance/compliance-custom-details/kisa-details";
@@ -72,6 +76,11 @@ import {
   mapComplianceData as mapENSComplianceData,
   toAccordionItems as toENSAccordionItems,
 } from "./ens";
+import {
+  mapFRRComplianceData as mapFedRAMP20xFRRComplianceData,
+  mapKSIComplianceData as mapFedRAMP20xKSIComplianceData,
+  toAccordionItems as toFedRAMP20xAccordionItems,
+} from "./fedramp-20x";
 import {
   mapComplianceData as mapGenericComplianceData,
   toAccordionItems as toGenericAccordionItems,
@@ -295,6 +304,27 @@ const getComplianceMappers = (): Record<string, ComplianceMapper> => ({
       calculateCategoryHeatmapData(data),
     getDetailsComponent: (requirement: Requirement) =>
       createElement(CMMCCustomDetails, { requirement }),
+  },
+  // Universal frameworks must compose requirement names as `${id} - ${name}`
+  // (see `composeRequirementName`); the generic mapper does not, so they need
+  // a dedicated entry for the cross-provider breakdown to render.
+  "FedRAMP-20x-KSI": {
+    mapComplianceData: mapFedRAMP20xKSIComplianceData,
+    toAccordionItems: toFedRAMP20xAccordionItems,
+    getTopFailedSections,
+    calculateCategoryHeatmapData: (data: Framework[]) =>
+      calculateCategoryHeatmapData(data),
+    getDetailsComponent: (requirement: Requirement) =>
+      createElement(FedRAMP20xKSICustomDetails, { requirement }),
+  },
+  "FedRAMP-20x-FRR-Class-C": {
+    mapComplianceData: mapFedRAMP20xFRRComplianceData,
+    toAccordionItems: toFedRAMP20xAccordionItems,
+    getTopFailedSections,
+    calculateCategoryHeatmapData: (data: Framework[]) =>
+      calculateCategoryHeatmapData(data),
+    getDetailsComponent: (requirement: Requirement) =>
+      createElement(FedRAMP20xFRRCustomDetails, { requirement }),
   },
 });
 

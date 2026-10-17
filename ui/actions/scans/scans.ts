@@ -15,9 +15,14 @@ import {
 } from "@/lib/compliance/compliance-report-types";
 import { runWithConcurrencyLimit } from "@/lib/concurrency";
 import { appendSanitizedProviderTypeFilters } from "@/lib/provider-filters";
+import {
+  isReportDownloadLocked,
+  REPORT_DOWNLOAD_LOCKED_ERROR,
+} from "@/lib/report-download-access";
 import { addScanOperation } from "@/lib/sentry-breadcrumbs";
 import { handleApiError, handleApiResponse } from "@/lib/server-actions-helper";
 import { SCAN_STATES } from "@/types/attack-paths";
+import { PARTIAL_SCAN_MAX_RESOURCES } from "@/types/partial-scans";
 
 const ORGANIZATION_SCAN_CONCURRENCY_LIMIT = 5;
 
@@ -167,6 +172,70 @@ export const scanOnDemand = async (formData: FormData) => {
     const response = await fetch(url.toString(), {
       method: "POST",
       headers: headers,
+      body: JSON.stringify(requestBody),
+    });
+
+    const result = await handleApiResponse(response, "/scans");
+    if (result?.data?.id) {
+      addScanOperation("start", result.data.id);
+      revalidatePath("/scans");
+    }
+    return result;
+  } catch (error) {
+    addScanOperation("create");
+    return handleApiError(error);
+  }
+};
+
+/** Prowler Cloud only: re-check up to PARTIAL_SCAN_MAX_RESOURCES resources of one provider. */
+export const createPartialScan = async ({
+  providerId,
+  resourceUids,
+}: {
+  providerId: string;
+  resourceUids: string[];
+}) => {
+  if (!providerId) {
+    return { error: "Provider ID is required" };
+  }
+  if (
+    resourceUids.length === 0 ||
+    resourceUids.length > PARTIAL_SCAN_MAX_RESOURCES
+  ) {
+    return {
+      error: `Select between 1 and ${PARTIAL_SCAN_MAX_RESOURCES} resources to re-check`,
+    };
+  }
+
+  const headers = await getAuthHeaders({ contentType: true });
+
+  addScanOperation("create", undefined, {
+    provider_id: providerId,
+    partial: true,
+    resource_count: resourceUids.length,
+  });
+
+  const url = new URL(`${apiBaseUrl}/scans`);
+
+  try {
+    const requestBody = {
+      data: {
+        type: "scans",
+        attributes: { resource_uids: resourceUids },
+        relationships: {
+          provider: {
+            data: {
+              type: "providers",
+              id: providerId,
+            },
+          },
+        },
+      },
+    };
+
+    const response = await fetch(url.toString(), {
+      method: "POST",
+      headers,
       body: JSON.stringify(requestBody),
     });
 
@@ -377,6 +446,10 @@ export const updateScan = async (formData: FormData) => {
 };
 
 export const getExportsZip = async (scanId: string) => {
+  if (await isReportDownloadLocked()) {
+    return { error: REPORT_DOWNLOAD_LOCKED_ERROR };
+  }
+
   const headers = await getAuthHeaders({ contentType: false });
 
   const url = new URL(`${apiBaseUrl}/scans/${scanId}/report`);
@@ -457,6 +530,10 @@ const _fetchScanBinary = async (
   filename: string,
   errorLabel: string,
 ): Promise<ScanBinaryResult> => {
+  if (await isReportDownloadLocked()) {
+    return { error: REPORT_DOWNLOAD_LOCKED_ERROR };
+  }
+
   const headers = await getAuthHeaders({ contentType: false });
   const url = new URL(`${apiBaseUrl}/scans/${scanId}/${urlPath}`);
 

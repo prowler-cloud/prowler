@@ -50,6 +50,11 @@ def _make_provider(**kwargs):
     return ImageProvider(**defaults)
 
 
+@pytest.fixture(autouse=True)
+def _no_configured_cache_dir(monkeypatch):
+    monkeypatch.delenv("TRIVY_CACHE_DIR", raising=False)
+
+
 class TestImageProvider:
     def test_image_provider(self):
         """Test default initialization."""
@@ -998,6 +1003,34 @@ class TestCleanup:
 
         provider.cleanup()
         provider.cleanup()
+
+    def test_configured_cache_dir_is_used(self, monkeypatch, tmp_path):
+        """A deployment that supplies a cache directory gets that one."""
+        monkeypatch.setenv("TRIVY_CACHE_DIR", str(tmp_path))
+
+        provider = _make_provider()
+
+        assert provider._trivy_cache_dir == str(tmp_path)
+
+    def test_configured_cache_dir_survives_cleanup(self, monkeypatch, tmp_path):
+        """A supplied directory is not the provider's to delete: it holds a
+        database the deployment may have no way to fetch again."""
+        monkeypatch.setenv("TRIVY_CACHE_DIR", str(tmp_path))
+        provider = _make_provider()
+
+        provider.cleanup()
+
+        assert os.path.isdir(str(tmp_path))
+
+    def test_unset_cache_dir_keeps_the_temporary_one(self, monkeypatch):
+        """Without one configured, nothing changes for existing deployments."""
+        monkeypatch.delenv("TRIVY_CACHE_DIR", raising=False)
+
+        provider = _make_provider()
+
+        assert os.path.isdir(provider._trivy_cache_dir)
+        provider.cleanup()
+        assert not os.path.isdir(provider._trivy_cache_dir)
 
     def test_cleanup_removes_trivy_cache_dir(self):
         """Test that cleanup removes the temporary Trivy cache directory."""

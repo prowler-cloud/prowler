@@ -292,6 +292,32 @@ class TestHuaweiCloudEndpointAlignment:
         endpoint = "https://ecs.af-north-1.myhuaweicloud.com"
         assert _align_endpoint_tld("af-north-1", endpoint) == endpoint
 
+    def test_smn_client_uses_europe_endpoint(self):
+        session = HuaweiCloudSession(
+            HuaweiCloudCredentials(ak=ACCESS_KEY, sk=SECRET_KEY),
+            region="eu-west-101",
+        )
+        builder = mock.MagicMock()
+        builder.with_credentials.return_value = builder
+        builder.with_http_config.return_value = builder
+        builder.with_region.return_value = builder
+        expected_client = mock.MagicMock()
+        builder.build.return_value = expected_client
+
+        with (
+            mock.patch(
+                "huaweicloudsdksmn.v2.SmnClient.new_builder", return_value=builder
+            ),
+            mock.patch.object(session, "_http_config"),
+            mock.patch.object(session, "_get_basic_credentials"),
+        ):
+            client = session.client("smn", "eu-west-101")
+
+        assert client is expected_client
+        region = builder.with_region.call_args.args[0]
+        assert region.id == "eu-west-101"
+        assert region.endpoints == ["https://smn.eu-west-101.myhuaweicloud.eu"]
+
 
 class TestHuaweiCloudProviderValidationRegion:
     def test_no_regions_uses_default(self):

@@ -44,6 +44,7 @@ interface CrossProviderDetailProps {
   complianceId: string;
   searchParams: Record<string, string | string[] | undefined>;
   targetSection?: string;
+  subscriptionOnly?: boolean;
 }
 
 /**
@@ -57,6 +58,7 @@ export const CrossProviderDetail = async ({
   complianceId,
   searchParams,
   targetSection,
+  subscriptionOnly = false,
 }: CrossProviderDetailProps) => {
   const filters = parseCrossProviderFilters(searchParams);
 
@@ -206,6 +208,7 @@ export const CrossProviderDetail = async ({
             complianceId={complianceId}
             filters={{ ...filters, scanIds: attrs.scan_ids }}
             latestPdf={latestPdf}
+            subscriptionOnly={subscriptionOnly}
           />
         }
         filters={

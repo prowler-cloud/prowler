@@ -224,6 +224,7 @@ export interface OCIProviderCredential {
   userId?: string;
   fingerprint?: string;
   keyContent?: string;
+  homeRegion?: string;
 }
 
 // AlibabaCloud credential options
@@ -365,6 +366,7 @@ export class ProvidersPage extends BasePage {
   readonly ociUserIdInput: Locator;
   readonly ociFingerprintInput: Locator;
   readonly ociKeyContentInput: Locator;
+  readonly ociHomeRegionCombobox: Locator;
 
   // AlibabaCloud provider form elements
   readonly alibabacloudAccountIdInput: Locator;
@@ -397,19 +399,21 @@ export class ProvidersPage extends BasePage {
     // "Add Provider" control; with zero providers the page renders the empty
     // state whose CTA is labelled "Open Add Provider modal" (button on
     // /providers, link on /scans). Only one of these is ever in the DOM at once.
-    this.addProviderButton = page
+    // Scoped to <main>: an empty tenant also gets an "Add Provider" CTA in the sidebar.
+    const main = page.getByRole("main");
+    this.addProviderButton = main
       .getByRole("button", {
         name: "Add Provider",
         exact: true,
       })
       .or(
-        page.getByRole("link", {
+        main.getByRole("link", {
           name: "Add Provider",
           exact: true,
         }),
       )
-      .or(page.getByRole("button", { name: "Open Add Provider modal" }))
-      .or(page.getByRole("link", { name: "Open Add Provider modal" }));
+      .or(main.getByRole("button", { name: "Open Add Provider modal" }))
+      .or(main.getByRole("link", { name: "Open Add Provider modal" }));
 
     // Table displaying existing providers
     this.providersTable = page.getByRole("table");
@@ -507,6 +511,9 @@ export class ProvidersPage extends BasePage {
     });
     this.ociKeyContentInput = page.getByRole("textbox", {
       name: /Private Key Content/i,
+    });
+    this.ociHomeRegionCombobox = page.getByRole("combobox", {
+      name: /Home Region/i,
     });
 
     // AlibabaCloud provider form inputs
@@ -701,13 +708,55 @@ export class ProvidersPage extends BasePage {
     await this.selectProviderRadio(this.githubProviderRadio);
   }
 
-  async selectAWSSingleAccountMethod(): Promise<void> {
-    const singleAccountOption = this.page.getByRole("radio", {
-      name: "Add A Single AWS Cloud Account",
+  // Offered on the AWS step to a user who can invite but cannot reach the account.
+  async selectAwsInviteTeammate(): Promise<void> {
+    const invite = this.wizardModal.getByRole("radio", {
+      name: /invite a teammate/i,
+    });
+    await expect(invite).toBeVisible({ timeout: 10000 });
+    await invite.click();
+    await expect(
+      this.wizardModal.getByRole("textbox", { name: /Teammate email/i }),
+    ).toBeVisible({ timeout: 10000 });
+  }
+
+  // The admin role comes preselected; only the email is needed.
+  async sendTeammateInvitation(email: string): Promise<void> {
+    await this.wizardModal
+      .getByRole("textbox", { name: /Teammate email/i })
+      .fill(email);
+    const send = this.page.getByRole("button", {
+      name: "Send invitation",
       exact: true,
     });
-    await expect(singleAccountOption).toBeVisible({ timeout: 10000 });
-    await singleAccountOption.click();
+    await expect(send).toBeEnabled({ timeout: 10000 });
+    await send.click();
+  }
+
+  async verifyTeammateInvitationSent(email: string): Promise<void> {
+    await expect(
+      this.wizardModal.getByText(`Invitation sent to ${email}`),
+    ).toBeVisible({ timeout: 15000 });
+    await expect(
+      this.wizardModal.getByText(/\/invitation\/accept\?invitation_token=/),
+    ).toBeVisible();
+  }
+
+  // "Done" replaces the submit once the invitation exists and closes the wizard.
+  async finishTeammateInvitation(): Promise<void> {
+    await this.page.getByRole("button", { name: "Done", exact: true }).click();
+    await expect(this.wizardModal).not.toBeVisible();
+  }
+
+  // AWS picks its access method on the same step that registers the account.
+  async selectAwsAccessMethod(type: AWSCredentialType): Promise<void> {
+    const name =
+      type === AWS_CREDENTIAL_OPTIONS.AWS_CREDENTIALS
+        ? "Static access keys"
+        : /IAM Role/;
+    const accessMethod = this.wizardModal.getByRole("radio", { name });
+    await expect(accessMethod).toBeVisible({ timeout: 10000 });
+    await accessMethod.click();
   }
 
   async selectAzureSingleSubscriptionMethod(): Promise<void> {
@@ -719,13 +768,17 @@ export class ProvidersPage extends BasePage {
     await singleSubscriptionOption.click();
   }
 
+  async selectGCPSingleProjectMethod(): Promise<void> {
+    const singleProjectOption = this.page.getByRole("radio", {
+      name: "Add A Single GCP Project",
+      exact: true,
+    });
+    await expect(singleProjectOption).toBeVisible({ timeout: 10000 });
+    await singleProjectOption.click();
+  }
+
   async selectAWSOrganizationsMethod(): Promise<void> {
-    await this.page
-      .getByRole("radio", {
-        name: "Add Multiple Accounts With AWS Organizations",
-        exact: true,
-      })
-      .click();
+    await this.page.getByRole("tab", { name: /Full AWS Organization/ }).click();
   }
 
   async verifyOrganizationsAuthenticationStepLoaded(): Promise<void> {
@@ -765,10 +818,12 @@ export class ProvidersPage extends BasePage {
     await this.page.getByRole("option", { name: optionName }).click();
   }
 
+  // The account id is only typed for access keys; with a role it is read from the ARN.
   async fillAWSProviderDetails(data: AWSProviderData): Promise<void> {
-    await this.selectAWSSingleAccountMethod();
-    await expect(this.accountIdInput).toBeVisible({ timeout: 10000 });
-    await this.accountIdInput.fill(data.accountId);
+    await expect(this.aliasInput).toBeVisible({ timeout: 10000 });
+    if (await this.accountIdInput.isVisible().catch(() => false)) {
+      await this.accountIdInput.fill(data.accountId);
+    }
 
     if (data.alias) {
       await this.aliasInput.fill(data.alias);
@@ -872,6 +927,7 @@ export class ProvidersPage extends BasePage {
     const actionNames = [
       "Go to scans",
       "Authenticate",
+      "Connect account",
       "Next",
       "Save",
       "Check connection",
@@ -1114,41 +1170,6 @@ export class ProvidersPage extends BasePage {
 
   async fillRoleCredentials(credentials: AWSProviderCredential): Promise<void> {
     await expect(this.roleArnInput).toBeVisible({ timeout: 10000 });
-    const accessKeyInputInWizard = this.wizardModal.getByPlaceholder(
-      "Enter the AWS Access Key ID",
-    );
-    const secretKeyInputInWizard = this.wizardModal.getByPlaceholder(
-      "Enter the AWS Secret Access Key",
-    );
-    const accessKeyId =
-      credentials.accessKeyId || process.env.E2E_AWS_PROVIDER_ACCESS_KEY;
-    const secretAccessKey =
-      credentials.secretAccessKey || process.env.E2E_AWS_PROVIDER_SECRET_KEY;
-
-    const shouldFillStaticKeys = Boolean(accessKeyId || secretAccessKey);
-    if (shouldFillStaticKeys) {
-      const accessKeyIsVisible = await accessKeyInputInWizard
-        .isVisible()
-        .catch(() => false);
-
-      // In cloud env the default can be SDK mode, so expose Access/Secret explicitly.
-      if (!accessKeyIsVisible) {
-        await this.selectAuthenticationMethod(
-          AWS_CREDENTIAL_OPTIONS.AWS_ROLE_ARN,
-        );
-      }
-    }
-
-    if (accessKeyId) {
-      await expect(accessKeyInputInWizard).toBeVisible({ timeout: 10000 });
-      await accessKeyInputInWizard.fill(accessKeyId);
-      await expect(accessKeyInputInWizard).toHaveValue(accessKeyId);
-    }
-    if (secretAccessKey) {
-      await expect(secretKeyInputInWizard).toBeVisible({ timeout: 10000 });
-      await secretKeyInputInWizard.fill(secretAccessKey);
-      await expect(secretKeyInputInWizard).toHaveValue(secretAccessKey);
-    }
     if (credentials.roleArn) {
       await this.roleArnInput.fill(credentials.roleArn);
     }
@@ -1308,6 +1329,12 @@ export class ProvidersPage extends BasePage {
     if (credentials.keyContent) {
       await this.ociKeyContentInput.fill(credentials.keyContent);
     }
+    if (credentials.homeRegion) {
+      await this.ociHomeRegionCombobox.click();
+      await this.page
+        .locator(`[role="option"][data-value="${credentials.homeRegion}"]`)
+        .click();
+    }
   }
 
   async verifyOCICredentialsPageLoaded(): Promise<void> {
@@ -1318,6 +1345,7 @@ export class ProvidersPage extends BasePage {
     await expect(this.ociUserIdInput).toBeVisible();
     await expect(this.ociFingerprintInput).toBeVisible();
     await expect(this.ociKeyContentInput).toBeVisible();
+    await expect(this.ociHomeRegionCombobox).toBeVisible();
   }
 
   async verifyOCIUpdateCredentialsPageLoaded(): Promise<void> {
@@ -1328,6 +1356,7 @@ export class ProvidersPage extends BasePage {
     await expect(this.ociUserIdInput).toBeVisible();
     await expect(this.ociFingerprintInput).toBeVisible();
     await expect(this.ociKeyContentInput).toBeVisible();
+    await expect(this.ociHomeRegionCombobox).toBeVisible();
   }
 
   async selectAlibabaCloudProvider(): Promise<void> {
@@ -1661,33 +1690,6 @@ export class ProvidersPage extends BasePage {
       return true;
     } catch {
       return false;
-    }
-  }
-
-  async selectAuthenticationMethod(method: AWSCredentialType): Promise<void> {
-    // Select the authentication method (shadcn Select renders as combobox + listbox)
-
-    const trigger = this.page.locator('[role="combobox"]').filter({
-      hasText: /AWS SDK Default|Prowler Cloud will assume|Access & Secret Key/i,
-    });
-
-    await trigger.click();
-
-    const listbox = this.page.getByRole("listbox");
-    await expect(listbox).toBeVisible({ timeout: 10000 });
-
-    if (method === AWS_CREDENTIAL_OPTIONS.AWS_ROLE_ARN) {
-      await this.page
-        .getByRole("option", { name: "Access & Secret Key" })
-        .click({ force: true });
-    } else if (method === AWS_CREDENTIAL_OPTIONS.AWS_SDK_DEFAULT) {
-      await this.page
-        .getByRole("option", {
-          name: /AWS SDK Default|Prowler Cloud will assume your IAM role/i,
-        })
-        .click({ force: true });
-    } else {
-      throw new Error(`Invalid authentication method: ${method}`);
     }
   }
 

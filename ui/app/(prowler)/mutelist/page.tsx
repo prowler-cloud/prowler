@@ -1,3 +1,4 @@
+import { VolumeX } from "lucide-react";
 import { Suspense } from "react";
 
 import { ContentLayout } from "@/components/shadcn/content-layout";
@@ -15,7 +16,7 @@ export default async function MutelistPage({
   const searchParamsKey = JSON.stringify(resolvedSearchParams);
 
   return (
-    <ContentLayout title="Mutelist" icon="lucide:volume-x">
+    <ContentLayout title="Mutelist" icon={<VolumeX />}>
       <MutelistTabs
         simpleContent={
           <Suspense key={searchParamsKey} fallback={<MuteRulesTableSkeleton />}>
