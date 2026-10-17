@@ -76,6 +76,52 @@ DENY_MITIGATED_POLICY = {
     ],
 }
 
+SCOPED_DENY_POLICY = {
+    "Version": "2012-10-17",
+    "Statement": [
+        {"Effect": "Allow", "Action": "bedrock:Retrieve", "Resource": "*"},
+        {
+            "Effect": "Deny",
+            "Action": "bedrock:Retrieve",
+            "Resource": "arn:aws:bedrock:us-east-1:123456789012:knowledge-base/OTHERKB123",
+        },
+    ],
+}
+
+CONDITIONAL_DENY_POLICY = {
+    "Version": "2012-10-17",
+    "Statement": [
+        {"Effect": "Allow", "Action": "bedrock:Retrieve", "Resource": "*"},
+        {
+            "Effect": "Deny",
+            "Action": "bedrock:Retrieve",
+            "Resource": "*",
+            "Condition": {"StringEquals": {"aws:PrincipalTag/team": "red"}},
+        },
+    ],
+}
+
+INVOKE_WILDCARD_ALLOW_POLICY = {
+    "Version": "2012-10-17",
+    "Statement": [{"Effect": "Allow", "Action": "bedrock:Invoke*", "Resource": "*"}],
+}
+
+INVOKE_WILDCARD_GLOBAL_DENY_POLICY = {
+    "Version": "2012-10-17",
+    "Statement": [{"Effect": "Deny", "Action": "bedrock:Invoke*", "Resource": "*"}],
+}
+
+INVOKE_WILDCARD_SCOPED_DENY_POLICY = {
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Deny",
+            "Action": "bedrock:Invoke*",
+            "Resource": KB_ARN,
+        },
+    ],
+}
+
 
 # Mock ListKnowledgeBases and GetKnowledgeBase at the botocore level. We control
 # the responses directly and keep IAM calls going to moto.
@@ -271,6 +317,30 @@ class Test_bedrock_knowledge_base_role_least_privilege:
         assert result[0].status == "PASS"
 
     @mock_aws(config={"iam": {"load_aws_managed_policies": True}})
+    def test_kb_role_scoped_deny_does_not_cancel_violation(self):
+        """A Deny scoped to one ARN does not cancel a broad Allow -> FAIL."""
+        role_arn = _setup_role(inline_policies={"ScopedDeny": SCOPED_DENY_POLICY})
+
+        result = _run_check(role_arn_for_get_kb=role_arn)
+
+        assert len(result) == 1
+        assert result[0].status == "FAIL"
+        assert "on all resources (*)" in result[0].status_extended
+
+    @mock_aws(config={"iam": {"load_aws_managed_policies": True}})
+    def test_kb_role_conditional_deny_does_not_cancel_violation(self):
+        """A conditional Deny does not cancel a broad Allow -> FAIL."""
+        role_arn = _setup_role(
+            inline_policies={"ConditionalDeny": CONDITIONAL_DENY_POLICY}
+        )
+
+        result = _run_check(role_arn_for_get_kb=role_arn)
+
+        assert len(result) == 1
+        assert result[0].status == "FAIL"
+        assert "on all resources (*)" in result[0].status_extended
+
+    @mock_aws(config={"iam": {"load_aws_managed_policies": True}})
     def test_kb_role_not_resolvable(self):
         """roleArn returned by GetKnowledgeBase doesn't match any IAM role -> MANUAL."""
         result = _run_check(
@@ -319,3 +389,75 @@ class Test_bedrock_knowledge_base_role_least_privilege:
         assert len(result) == 1
         assert result[0].status == "MANUAL"
         assert "could not be listed" in result[0].status_extended
+
+    @mock_aws(config={"iam": {"load_aws_managed_policies": True}})
+    def test_unreadable_policy_gives_manual(self):
+        """A policy whose document cannot be read -> MANUAL, not a silent PASS."""
+        role_arn = _setup_role(
+            managed_policy_documents=[("BroadBedrock", BROAD_MANAGED_POLICY)],
+            inline_policies={"NarrowAccess": NARROW_INLINE_POLICY},
+        )
+
+        def _drop_policy_documents(iam_service):
+            # Simulate GetPolicyVersion/GetRolePolicy failures: the IAM service
+            # has the policy references on the role but no documents for them.
+            iam_service.policies = {}
+
+        result = _run_check(
+            role_arn_for_get_kb=role_arn, patch_iam=_drop_policy_documents
+        )
+
+        assert len(result) == 1
+        assert result[0].status == "MANUAL"
+        assert "could not be read" in result[0].status_extended
+
+    @mock_aws(config={"iam": {"load_aws_managed_policies": True}})
+    def test_violation_still_fails_with_unreadable_policy(self):
+        """A real violation still FAILs even when another policy is unreadable."""
+        role_arn = _setup_role(
+            managed_policy_documents=[("BroadBedrock", BROAD_MANAGED_POLICY)],
+            inline_policies={"NarrowAccess": NARROW_INLINE_POLICY},
+        )
+
+        def _drop_inline_policy_document(iam_service):
+            # Simulate a GetRolePolicy failure for the inline policy only.
+            iam_service.policies.pop(f"{ROLE_ARN}:policy/NarrowAccess", None)
+
+        result = _run_check(
+            role_arn_for_get_kb=role_arn, patch_iam=_drop_inline_policy_document
+        )
+
+        assert len(result) == 1
+        assert result[0].status == "FAIL"
+        assert "managed policy BroadBedrock" in result[0].status_extended
+
+    @mock_aws(config={"iam": {"load_aws_managed_policies": True}})
+    def test_unscoped_deny_in_other_policy_cancels_violation(self):
+        """An unscoped Deny in one policy cancels a broad Allow in another -> PASS.
+
+        IAM evaluates a role's identity policies together, so the Deny in the
+        inline policy means the managed policy's wildcard can never be used.
+        """
+        role_arn = _setup_role(
+            managed_policy_documents=[("WideAllow", INVOKE_WILDCARD_ALLOW_POLICY)],
+            inline_policies={"GlobalDeny": INVOKE_WILDCARD_GLOBAL_DENY_POLICY},
+        )
+
+        result = _run_check(role_arn_for_get_kb=role_arn)
+
+        assert len(result) == 1
+        assert result[0].status == "PASS"
+
+    @mock_aws(config={"iam": {"load_aws_managed_policies": True}})
+    def test_scoped_deny_in_other_policy_does_not_cancel_violation(self):
+        """A scoped Deny in another policy does not cancel a broad Allow -> FAIL."""
+        role_arn = _setup_role(
+            managed_policy_documents=[("WideAllow", INVOKE_WILDCARD_ALLOW_POLICY)],
+            inline_policies={"ScopedDeny": INVOKE_WILDCARD_SCOPED_DENY_POLICY},
+        )
+
+        result = _run_check(role_arn_for_get_kb=role_arn)
+
+        assert len(result) == 1
+        assert result[0].status == "FAIL"
+        assert "managed policy WideAllow" in result[0].status_extended
