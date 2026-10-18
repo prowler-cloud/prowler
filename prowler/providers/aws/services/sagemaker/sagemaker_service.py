@@ -22,6 +22,7 @@ class SageMaker(AWSService):
         self.endpoint_configs = {}
         self.sagemaker_model_registries = []
         self.sagemaker_monitoring_schedules = []
+        self.data_quality_job_definitions = []
 
         # Retrieve resources concurrently
         self.__threading_call__(self._list_notebook_instances)
@@ -32,6 +33,7 @@ class SageMaker(AWSService):
         self.__threading_call__(self._list_domains)
         self.__threading_call__(self._list_model_package_groups)
         self.__threading_call__(self._list_monitoring_schedules)
+        self.__threading_call__(self._list_data_quality_job_definitions)
 
         # Describe resources concurrently
         self.__threading_call__(self._describe_model, self.sagemaker_models)
@@ -53,6 +55,10 @@ class SageMaker(AWSService):
             self._describe_endpoint_config, list(self.endpoint_configs.values())
         )
         self.__threading_call__(self._describe_domain, self.sagemaker_domains)
+        self.__threading_call__(
+            self._describe_data_quality_job_definition,
+            self.data_quality_job_definitions,
+        )
 
         # List tags concurrently for each resource collection
         # This replaces the previous sequential sequential execution to improve performance
@@ -70,6 +76,10 @@ class SageMaker(AWSService):
             self._list_tags_for_resource, list(self.endpoint_configs.values())
         )
         self.__threading_call__(self._list_tags_for_resource, self.sagemaker_domains)
+        self.__threading_call__(
+            self._list_tags_for_resource,
+            self.data_quality_job_definitions,
+        )
 
     def _list_notebook_instances(self, regional_client):
         logger.info("SageMaker - listing notebook instances...")
@@ -201,6 +211,63 @@ class SageMaker(AWSService):
         except Exception as error:
             logger.error(
                 f"{processing_job.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def _list_data_quality_job_definitions(self, regional_client):
+        """List SageMaker data quality job definitions in a region.
+
+        Populates ``self.data_quality_job_definitions`` with
+        `DataQualityJobDefinition` entries.
+
+        Args:
+            regional_client: Regional SageMaker boto3 client.
+        """
+        logger.info("SageMaker - listing data quality job definitions...")
+        try:
+            list_data_quality_job_definitions_paginator = regional_client.get_paginator(
+                "list_data_quality_job_definitions"
+            )
+            for page in list_data_quality_job_definitions_paginator.paginate():
+                for job_def in page.get("JobDefinitionSummaries", []):
+                    job_def_arn = job_def["MonitoringJobDefinitionArn"]
+                    if not self.audit_resources or (
+                        is_resource_filtered(job_def_arn, self.audit_resources)
+                    ):
+                        self.data_quality_job_definitions.append(
+                            DataQualityJobDefinition(
+                                name=job_def["MonitoringJobDefinitionName"],
+                                region=regional_client.region,
+                                arn=job_def_arn,
+                            )
+                        )
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def _describe_data_quality_job_definition(self, job_def):
+        """Describe a SageMaker data quality job definition and check inter-container encryption.
+
+        Inspects ``NetworkConfig.EnableInterContainerTrafficEncryption`` from
+        ``DescribeDataQualityJobDefinition``.
+
+        Args:
+            job_def: DataQualityJobDefinition model to enrich in-place.
+        """
+        logger.info("SageMaker - describing data quality job definition...")
+        try:
+            regional_client = self.regional_clients[job_def.region]
+            describe_job_def = regional_client.describe_data_quality_job_definition(
+                JobDefinitionName=job_def.name
+            )
+            network_config = describe_job_def.get("NetworkConfig", {})
+            job_def.enable_inter_container_traffic_encryption = network_config.get(
+                "EnableInterContainerTrafficEncryption", False
+            )
+            job_def.detail_retrieved = True
+        except Exception as error:
+            logger.error(
+                f"{job_def.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
     def _describe_notebook_instance(self, notebook_instance):
@@ -681,3 +748,24 @@ class MonitoringSchedule(BaseModel):
     arn: str
     has_schedules: bool = False
     is_scheduled: bool = False
+
+
+class DataQualityJobDefinition(BaseModel):
+    """Represents a SageMaker data quality job definition.
+
+    Attributes:
+        name: Data quality job definition name.
+        region: AWS region where the job definition lives.
+        arn: Data quality job definition ARN.
+        enable_inter_container_traffic_encryption: Whether inter-container traffic
+            encryption is enabled.
+        detail_retrieved: True if DescribeDataQualityJobDefinition succeeded.
+        tags: Resource tags, populated by `_list_tags_for_resource`.
+    """
+
+    name: str
+    region: str
+    arn: str
+    enable_inter_container_traffic_encryption: bool = False
+    detail_retrieved: bool = False
+    tags: Optional[list] = []
