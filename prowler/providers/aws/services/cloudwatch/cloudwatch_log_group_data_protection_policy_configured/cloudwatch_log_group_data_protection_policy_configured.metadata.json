@@ -14,7 +14,7 @@
   "ResourceType": "AwsLogsLogGroup",
   "ResourceGroup": "monitoring",
   "Description": "**CloudWatch log groups** are checked to ensure a **data protection policy** is configured to audit and mask sensitive data identifiers such as PII and credentials.",
-  "Risk": "Without a data protection policy, sensitive data written to CloudWatch Logs is stored in clear text and accessible to every principal with logs:GetLogEvents permission, widening exposure of regulated or confidential information.",
+  "Risk": "CloudWatch Logs encrypts log data at rest by default. Without a data protection policy, sensitive data such as PII or credentials remains unmasked. Anyone with logs:GetLogEvents or logs:FilterLogEvents can view unmasked sensitive values, widening exposure and leading to compliance violations under GDPR, HIPAA, and PCI DSS.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/mask-sensitive-log-data.html",

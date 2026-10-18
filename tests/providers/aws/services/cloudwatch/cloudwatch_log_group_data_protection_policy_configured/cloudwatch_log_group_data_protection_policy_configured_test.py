@@ -34,6 +34,11 @@ ACTIVE_POLICY = {
 def _run_check(log_groups):
     logs_client = mock.MagicMock()
     logs_client.log_groups = log_groups
+    logs_client.region = AWS_REGION_US_EAST_1
+    logs_client.audited_account = AWS_ACCOUNT_NUMBER
+    logs_client.log_group_arn_template = (
+        f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:log-group"
+    )
 
     aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
@@ -55,6 +60,21 @@ class Test_cloudwatch_log_group_data_protection_policy_configured:
     def test_no_log_groups(self):
         result = _run_check({})
         assert len(result) == 0
+
+    def test_log_groups_unavailable(self):
+        result = _run_check(None)
+        assert len(result) == 1
+        assert result[0].status == "MANUAL"
+        assert (
+            result[0].status_extended
+            == "Log groups could not be retrieved, so data protection policies for CloudWatch log groups could not be verified."
+        )
+        assert result[0].resource_id == AWS_ACCOUNT_NUMBER
+        assert (
+            result[0].resource_arn
+            == f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:log-group"
+        )
+        assert result[0].region == AWS_REGION_US_EAST_1
 
     def test_log_group_with_active_data_protection_policy(self):
         from prowler.providers.aws.services.cloudwatch.cloudwatch_service import (
