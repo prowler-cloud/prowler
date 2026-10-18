@@ -279,6 +279,8 @@ class SageMaker(AWSService):
                         all_encrypted = False
                         break
                 tuning_job.all_definitions_encrypted = all_encrypted
+            else:
+                tuning_job.all_definitions_encrypted = None
             tuning_job.detail_retrieved = True
         except Exception as error:
             logger.error(
@@ -737,7 +739,7 @@ class HyperParameterTuningJob(BaseModel):
     name: str
     region: str
     arn: str
-    all_definitions_encrypted: bool = False
+    all_definitions_encrypted: Optional[bool] = None
     detail_retrieved: bool = False
     tags: Optional[list] = []
 

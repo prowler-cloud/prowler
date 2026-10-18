@@ -20,7 +20,13 @@ class sagemaker_hyperparameter_tuning_job_volume_encrypted_with_cmk(Check):
         findings = []
         for tuning_job in sagemaker_client.sagemaker_hyperparameter_tuning_jobs:
             report = Check_Report_AWS(metadata=self.metadata(), resource=tuning_job)
-            if tuning_job.all_definitions_encrypted:
+            if not tuning_job.detail_retrieved:
+                report.status = "MANUAL"
+                report.status_extended = f"SageMaker hyperparameter tuning job {tuning_job.name} configuration could not be retrieved in region {tuning_job.region}; verify manually."
+            elif tuning_job.all_definitions_encrypted is None:
+                report.status = "MANUAL"
+                report.status_extended = f"SageMaker hyperparameter tuning job {tuning_job.name} has no training job definitions configured; verify manually."
+            elif tuning_job.all_definitions_encrypted:
                 report.status = "PASS"
                 report.status_extended = f"SageMaker hyperparameter tuning job {tuning_job.name} has storage volume encrypted with KMS CMK."
             else:
