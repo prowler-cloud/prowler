@@ -412,6 +412,28 @@ class Test_CloudWatch_Service:
         assert logs.log_groups[arn].data_protection_policy_retrieved is False
 
     @mock_aws
+    def test_get_data_protection_policy_generic_exception(self):
+        logs_client = client("logs", region_name=AWS_REGION_US_EAST_1)
+        logs_client.create_log_group(logGroupName="/log-group/generic-error")
+
+        aws_provider = set_mocked_aws_provider(
+            expected_checks=["cloudwatch_log_group_data_protection_policy_configured"]
+        )
+        arn = f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:log-group:/log-group/generic-error:*"
+
+        def mock_make_api_call(self, operation_name, kwarg):
+            if operation_name == "GetDataProtectionPolicy":
+                raise Exception("Unexpected error")
+            return make_api_call(self, operation_name, kwarg)
+
+        with patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call):
+            logs = Logs(aws_provider)
+
+        assert arn in logs.log_groups
+        assert logs.log_groups[arn].data_protection_policy is None
+        assert logs.log_groups[arn].data_protection_policy_retrieved is False
+
+    @mock_aws
     def test_describe_log_groups_access_denied_leaves_inventory_unknown(self):
         """A denied DescribeLogGroups must leave both indexes None, not empty dicts.
 

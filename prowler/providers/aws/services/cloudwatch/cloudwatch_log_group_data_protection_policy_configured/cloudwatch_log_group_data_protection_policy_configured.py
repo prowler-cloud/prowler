@@ -33,7 +33,9 @@ class cloudwatch_log_group_data_protection_policy_configured(Check):
         Returns:
             A list of reports containing the result of the check.
         """
-        if logs_client.log_groups is None:
+        if logs_client.log_groups is None or getattr(
+            logs_client, "log_groups_unavailable", False
+        ):
             report = Check_Report_AWS(metadata=self.metadata(), resource={})
             report.status = "MANUAL"
             report.status_extended = "Log groups could not be retrieved, so data protection policies for CloudWatch log groups could not be verified."
