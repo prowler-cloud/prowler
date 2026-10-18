@@ -18,6 +18,19 @@ class sagemaker_hyperparameter_tuning_job_volume_encrypted_with_cmk(Check):
             A list of reports containing the result of the check.
         """
         findings = []
+        for region, error in sorted(
+            sagemaker_client.sagemaker_hyperparameter_tuning_jobs_scan_errors.items()
+        ):
+            report = Check_Report_AWS(
+                metadata=self.metadata(), resource={"region": region}
+            )
+            report.region = region
+            report.resource_id = "hyper-parameter-tuning-job/unknown"
+            report.resource_arn = f"arn:{sagemaker_client.audited_partition}:sagemaker:{region}:{sagemaker_client.audited_account}:hyper-parameter-tuning-job/unknown"
+            report.status = "MANUAL"
+            report.status_extended = f"SageMaker hyperparameter tuning jobs could not be listed in region {region} ({error}); verify manually that every hyperparameter tuning job uses a customer-managed KMS key."
+            findings.append(report)
+
         for tuning_job in sagemaker_client.sagemaker_hyperparameter_tuning_jobs:
             report = Check_Report_AWS(metadata=self.metadata(), resource=tuning_job)
             if not tuning_job.detail_retrieved:

@@ -23,6 +23,7 @@ class SageMaker(AWSService):
         self.sagemaker_model_registries = []
         self.sagemaker_monitoring_schedules = []
         self.sagemaker_hyperparameter_tuning_jobs = []
+        self.sagemaker_hyperparameter_tuning_jobs_scan_errors = {}
 
         # Retrieve resources concurrently
         self.__threading_call__(self._list_notebook_instances)
@@ -242,7 +243,19 @@ class SageMaker(AWSService):
                                 arn=tuning_job["HyperParameterTuningJobArn"],
                             )
                         )
+        except ClientError as error:
+            code = error.response["Error"].get("Code", error.__class__.__name__)
+            if code not in ("ValidationException", "UnsupportedOperationException"):
+                self.sagemaker_hyperparameter_tuning_jobs_scan_errors[
+                    regional_client.region
+                ] = code
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
         except Exception as error:
+            self.sagemaker_hyperparameter_tuning_jobs_scan_errors[
+                regional_client.region
+            ] = error.__class__.__name__
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )

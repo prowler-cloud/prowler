@@ -656,3 +656,25 @@ class Test_SageMaker_Service:
         with patch("botocore.client.BaseClient._make_api_call", new=mock_access_denied):
             sagemaker = SageMaker(aws_provider)
             assert sagemaker.sagemaker_model_registries == []
+
+    def test_list_hyper_parameter_tuning_jobs_error(self):
+        def mock_access_denied(self, operation_name, kwarg):
+            if operation_name == "ListHyperParameterTuningJobs":
+                raise botocore.exceptions.ClientError(
+                    {
+                        "Error": {
+                            "Code": "AccessDeniedException",
+                            "Message": "Access Denied",
+                        }
+                    },
+                    "ListHyperParameterTuningJobs",
+                )
+            return mock_make_api_call(self, operation_name, kwarg)
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        with patch("botocore.client.BaseClient._make_api_call", new=mock_access_denied):
+            sagemaker = SageMaker(aws_provider)
+            assert sagemaker.sagemaker_hyperparameter_tuning_jobs == []
+            assert sagemaker.sagemaker_hyperparameter_tuning_jobs_scan_errors == {
+                AWS_REGION_EU_WEST_1: "AccessDeniedException"
+            }

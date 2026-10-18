@@ -4,6 +4,7 @@ from boto3 import client
 from moto import mock_aws
 
 from tests.providers.aws.utils import (
+    AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_WEST_1,
     AWS_REGION_US_EAST_1,
     set_mocked_aws_provider,
@@ -332,4 +333,44 @@ class Test_sagemaker_hyperparameter_tuning_job_volume_encrypted_with_cmk:
             )
             assert result[0].resource_id == job_name
             assert result[0].resource_arn == job_arn
+            assert result[0].region == AWS_REGION_EU_WEST_1
+
+    def test_tuning_job_scan_error(self):
+        sagemaker_client = mock.MagicMock()
+        sagemaker_client.sagemaker_hyperparameter_tuning_jobs = []
+        sagemaker_client.sagemaker_hyperparameter_tuning_jobs_scan_errors = {
+            AWS_REGION_EU_WEST_1: "AccessDeniedException"
+        }
+        sagemaker_client.audited_partition = "aws"
+        sagemaker_client.audited_account = AWS_ACCOUNT_NUMBER
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.sagemaker.sagemaker_hyperparameter_tuning_job_volume_encrypted_with_cmk.sagemaker_hyperparameter_tuning_job_volume_encrypted_with_cmk.sagemaker_client",
+                new=sagemaker_client,
+            ),
+        ):
+            from prowler.providers.aws.services.sagemaker.sagemaker_hyperparameter_tuning_job_volume_encrypted_with_cmk.sagemaker_hyperparameter_tuning_job_volume_encrypted_with_cmk import (
+                sagemaker_hyperparameter_tuning_job_volume_encrypted_with_cmk,
+            )
+
+            check = sagemaker_hyperparameter_tuning_job_volume_encrypted_with_cmk()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "MANUAL"
+            assert (
+                result[0].status_extended
+                == f"SageMaker hyperparameter tuning jobs could not be listed in region {AWS_REGION_EU_WEST_1} (AccessDeniedException); verify manually that every hyperparameter tuning job uses a customer-managed KMS key."
+            )
+            assert result[0].resource_id == "hyper-parameter-tuning-job/unknown"
+            assert (
+                result[0].resource_arn
+                == f"arn:aws:sagemaker:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:hyper-parameter-tuning-job/unknown"
+            )
             assert result[0].region == AWS_REGION_EU_WEST_1
