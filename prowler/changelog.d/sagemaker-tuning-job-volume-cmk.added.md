@@ -1,0 +1,1 @@
+`sagemaker_hyperparameter_tuning_job_volume_encrypted_with_cmk` check for AWS provider
