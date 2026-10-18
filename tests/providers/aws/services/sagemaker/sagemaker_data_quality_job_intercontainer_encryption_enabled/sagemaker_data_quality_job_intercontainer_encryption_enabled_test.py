@@ -21,6 +21,7 @@ class Test_sagemaker_data_quality_job_intercontainer_encryption_enabled:
     def test_no_data_quality_jobs(self):
         sagemaker_client = mock.MagicMock
         sagemaker_client.data_quality_job_definitions = []
+        sagemaker_client.data_quality_job_definitions_scan_errors = {}
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
@@ -53,6 +54,7 @@ class Test_sagemaker_data_quality_job_intercontainer_encryption_enabled:
                 detail_retrieved=True,
             )
         ]
+        sagemaker_client.data_quality_job_definitions_scan_errors = {}
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
@@ -93,6 +95,7 @@ class Test_sagemaker_data_quality_job_intercontainer_encryption_enabled:
                 detail_retrieved=True,
             )
         ]
+        sagemaker_client.data_quality_job_definitions_scan_errors = {}
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
@@ -133,6 +136,7 @@ class Test_sagemaker_data_quality_job_intercontainer_encryption_enabled:
                 detail_retrieved=False,
             )
         ]
+        sagemaker_client.data_quality_job_definitions_scan_errors = {}
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
@@ -160,6 +164,46 @@ class Test_sagemaker_data_quality_job_intercontainer_encryption_enabled:
             )
             assert result[0].resource_id == test_data_quality_job
             assert result[0].resource_arn == test_arn_data_quality_job
+            assert result[0].region == AWS_REGION_EU_WEST_1
+
+    def test_data_quality_job_scan_error(self):
+        sagemaker_client = mock.MagicMock
+        sagemaker_client.data_quality_job_definitions = []
+        sagemaker_client.data_quality_job_definitions_scan_errors = {
+            AWS_REGION_EU_WEST_1: "AccessDeniedException"
+        }
+        sagemaker_client.audited_account = AWS_ACCOUNT_NUMBER
+        sagemaker_client.audited_partition = "aws"
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.sagemaker.sagemaker_data_quality_job_intercontainer_encryption_enabled.sagemaker_data_quality_job_intercontainer_encryption_enabled.sagemaker_client",
+                sagemaker_client,
+            ),
+        ):
+            from prowler.providers.aws.services.sagemaker.sagemaker_data_quality_job_intercontainer_encryption_enabled.sagemaker_data_quality_job_intercontainer_encryption_enabled import (
+                sagemaker_data_quality_job_intercontainer_encryption_enabled,
+            )
+
+            check = sagemaker_data_quality_job_intercontainer_encryption_enabled()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "MANUAL"
+            assert (
+                result[0].status_extended
+                == f"SageMaker data quality job definitions could not be listed in region {AWS_REGION_EU_WEST_1} due to AccessDeniedException."
+            )
+            assert result[0].resource_id == AWS_ACCOUNT_NUMBER
+            assert (
+                result[0].resource_arn
+                == f"arn:aws:sagemaker:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:data-quality-job-definition"
+            )
             assert result[0].region == AWS_REGION_EU_WEST_1
 
     @mock_aws

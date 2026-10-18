@@ -600,3 +600,45 @@ class Test_SageMaker_Service:
                 is False
             )
             assert sagemaker.data_quality_job_definitions[0].detail_retrieved is False
+
+    def test_list_data_quality_job_definitions_error(self):
+        def mock_list_error(self, operation_name, kwarg):
+            if operation_name == "ListDataQualityJobDefinitions":
+                raise botocore.exceptions.ClientError(
+                    {
+                        "Error": {
+                            "Code": "AccessDeniedException",
+                            "Message": "Access Denied",
+                        }
+                    },
+                    "ListDataQualityJobDefinitions",
+                )
+            return mock_make_api_call(self, operation_name, kwarg)
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        with patch("botocore.client.BaseClient._make_api_call", new=mock_list_error):
+            sagemaker = SageMaker(aws_provider)
+            assert sagemaker.data_quality_job_definitions == []
+            assert (
+                sagemaker.data_quality_job_definitions_scan_errors.get(
+                    AWS_REGION_EU_WEST_1
+                )
+                == "AccessDeniedException"
+            )
+
+    def test_list_data_quality_job_definitions_generic_error(self):
+        def mock_generic_error(self, operation_name, kwarg):
+            if operation_name == "ListDataQualityJobDefinitions":
+                raise Exception("Generic error")
+            return mock_make_api_call(self, operation_name, kwarg)
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        with patch("botocore.client.BaseClient._make_api_call", new=mock_generic_error):
+            sagemaker = SageMaker(aws_provider)
+            assert sagemaker.data_quality_job_definitions == []
+            assert (
+                sagemaker.data_quality_job_definitions_scan_errors.get(
+                    AWS_REGION_EU_WEST_1
+                )
+                == "Exception"
+            )

@@ -23,6 +23,7 @@ class SageMaker(AWSService):
         self.sagemaker_model_registries = []
         self.sagemaker_monitoring_schedules = []
         self.data_quality_job_definitions = []
+        self.data_quality_job_definitions_scan_errors = {}
 
         # Retrieve resources concurrently
         self.__threading_call__(self._list_notebook_instances)
@@ -240,7 +241,19 @@ class SageMaker(AWSService):
                                 arn=job_def_arn,
                             )
                         )
+        except ClientError as error:
+            code = error.response["Error"].get("Code", error.__class__.__name__)
+            if code not in ("ValidationException", "UnsupportedOperationException"):
+                self.data_quality_job_definitions_scan_errors[
+                    regional_client.region
+                ] = code
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
         except Exception as error:
+            self.data_quality_job_definitions_scan_errors[regional_client.region] = (
+                error.__class__.__name__
+            )
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
