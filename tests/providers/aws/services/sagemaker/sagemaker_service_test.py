@@ -384,6 +384,37 @@ class Test_SageMaker_Service:
             sagemaker.sagemaker_hyperparameter_tuning_jobs[0].detail_retrieved is True
         )
 
+    def test_describe_hyper_parameter_tuning_jobs_encrypted_via_tuning_resource_config(
+        self,
+    ):
+        def mock_tuning_resource_config(self, operation_name, kwarg):
+            if operation_name == "DescribeHyperParameterTuningJob":
+                return {
+                    "TrainingJobDefinition": {
+                        "HyperParameterTuningResourceConfig": {
+                            "VolumeKmsKeyId": kms_key_id
+                        },
+                    },
+                }
+            return mock_make_api_call(self, operation_name, kwarg)
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        with patch(
+            "botocore.client.BaseClient._make_api_call",
+            new=mock_tuning_resource_config,
+        ):
+            sagemaker = SageMaker(aws_provider)
+            assert (
+                sagemaker.sagemaker_hyperparameter_tuning_jobs[
+                    0
+                ].all_definitions_encrypted
+                is True
+            )
+            assert (
+                sagemaker.sagemaker_hyperparameter_tuning_jobs[0].detail_retrieved
+                is True
+            )
+
     def test_describe_hyper_parameter_tuning_jobs_unencrypted(self):
         def mock_unencrypted(self, operation_name, kwarg):
             if operation_name == "DescribeHyperParameterTuningJob":

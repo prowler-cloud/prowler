@@ -272,9 +272,14 @@ class SageMaker(AWSService):
                 all_encrypted = True
                 for definition in definitions:
                     resource_config = definition.get("ResourceConfig", {})
-                    kms_key_id = resource_config.get(
-                        "VolumeKmsKeyId"
-                    ) or definition.get("VolumeKmsKeyId")
+                    tuning_resource_config = definition.get(
+                        "HyperParameterTuningResourceConfig", {}
+                    )
+                    kms_key_id = (
+                        resource_config.get("VolumeKmsKeyId")
+                        or tuning_resource_config.get("VolumeKmsKeyId")
+                        or definition.get("VolumeKmsKeyId")
+                    )
                     if not kms_key_id:
                         all_encrypted = False
                         break
