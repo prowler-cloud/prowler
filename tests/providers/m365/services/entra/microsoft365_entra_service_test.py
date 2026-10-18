@@ -2249,11 +2249,14 @@ class TestHighRiskDetections:
         service.hidden_risk_level_detections = 0
         service.client = SimpleNamespace(
             identity_protection=SimpleNamespace(
+                risk_detections=SimpleNamespace(
+                    to_get_request_information=MagicMock(return_value="request")
+                ),
                 with_url=MagicMock(
                     return_value=SimpleNamespace(
                         to_get_request_information=MagicMock(return_value="request")
                     )
-                )
+                ),
             ),
             request_adapter=SimpleNamespace(send_primitive_async=send_mock),
         )
@@ -2305,9 +2308,14 @@ class TestHighRiskDetections:
 
         assert [d.id for d in detections] == ["d-high"]
         assert service.hidden_risk_level_detections == 3
-        url = service.client.identity_protection.with_url.call_args[0][0]
-        assert "riskState%20eq%20'atRisk'" in url
-        assert "riskLevel" not in url
+        # The first page is built through the SDK, so the configured Graph
+        # endpoint is used, and it filters on the risk state only.
+        first_request = (
+            service.client.identity_protection.risk_detections.to_get_request_information
+        )
+        query = first_request.call_args.kwargs["request_configuration"].query_parameters
+        assert query.filter == "riskState eq 'atRisk'"
+        service.client.identity_protection.with_url.assert_not_called()
 
     def test_empty_first_page_returns_no_detections(self):
         service = self._service(

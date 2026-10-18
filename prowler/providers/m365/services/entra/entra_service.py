@@ -9,6 +9,9 @@ from uuid import UUID
 
 from kiota_abstractions.base_request_configuration import RequestConfiguration
 from msgraph.generated.groups.groups_request_builder import GroupsRequestBuilder
+from msgraph.generated.identity_protection.risk_detections.risk_detections_request_builder import (
+    RiskDetectionsRequestBuilder,
+)
 from msgraph.generated.models.o_data_errors.o_data_error import ODataError
 from msgraph.generated.users.users_request_builder import UsersRequestBuilder
 from pydantic.v1 import BaseModel, validator
@@ -2430,13 +2433,16 @@ OAuthAppInfo
         logger.info("Entra - Getting high-risk Identity Protection detections...")
         detections: List[RiskDetection] = []
         try:
-            url = (
-                "https://graph.microsoft.com/v1.0/identityProtection/"
-                "riskDetections?$filter=riskState%20eq%20'atRisk'"
+            # Built through the SDK so the configured Graph endpoint (including
+            # national clouds) is used instead of a fixed global host.
+            request_config = RequestConfiguration(
+                query_parameters=RiskDetectionsRequestBuilder.RiskDetectionsRequestBuilderGetQueryParameters(
+                    filter="riskState eq 'atRisk'",
+                )
             )
-            request_info = self.client.identity_protection.with_url(
-                url
-            ).to_get_request_information()
+            request_info = self.client.identity_protection.risk_detections.to_get_request_information(
+                request_configuration=request_config
+            )
             while True:
                 response = await self.client.request_adapter.send_primitive_async(
                     request_info, "bytes", {}

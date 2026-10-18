@@ -55,8 +55,10 @@ class entra_identity_protection_high_risk_detections_triaged(Check):
             report.status_extended = (
                 f"Cannot confirm that no high-risk Identity Protection detections "
                 f"are pending triage: {hidden_count} detection(s) still at risk "
-                f"have a hidden or unknown risk level (Microsoft Graph hides the "
-                f"level when the tenant lacks a Microsoft Entra ID P2 license)."
+                f"have a hidden or unknown risk level. A hidden level may mean the "
+                f"tenant lacks a Microsoft Entra ID P2 license; review any other "
+                f"unknown levels (such as unknownFutureValue) in the Identity "
+                f"Protection portal."
             )
         elif not detections:
             report.status = "PASS"
