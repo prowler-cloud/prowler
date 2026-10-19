@@ -4203,7 +4203,7 @@ wheels = [
 
 [package.optional-dependencies]
 broker = [
-    { name = "pymsalruntime" },
+    { name = "pymsalruntime", marker = "sys_platform == 'win32'" },
 ]
 
 [[package]]
@@ -4939,7 +4939,7 @@ dependencies = [
 
 [[package]]
 name = "prowler-api"
-version = "1.46.0"
+version = "1.47.0"
 source = { virtual = "." }
 dependencies = [
     { name = "cartography" },

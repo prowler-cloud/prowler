@@ -1,0 +1,40 @@
+{
+  "Provider": "gcp",
+  "CheckID": "vertexai_workbench_instance_public_ip_disabled",
+  "CheckTitle": "Vertex AI Workbench instance does not have a public IP address",
+  "CheckType": [],
+  "ServiceName": "vertexai",
+  "SubServiceName": "workbench",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "notebooks.googleapis.com/Instance",
+  "ResourceGroup": "ai_ml",
+  "Description": "**Vertex AI Workbench instances** are JupyterLab VMs used to explore data, train models, and call generative AI APIs. The finding determines whether an instance was created with **public IP disabled** (`disablePublicIp`), so it has no external address and reaches the internet only through controlled egress such as **Cloud NAT** or **Private Google Access**.",
+  "Risk": "A notebook VM with a public IP has **direct internet access**:\n- **Confidentiality**: training data, models, and service account tokens can be exfiltrated around VPC egress controls\n- **Integrity**: untrusted packages and models are pulled straight into an environment holding project credentials\n- **Exposure**: the Jupyter stack is reachable for scanning and exploitation",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://cloud.google.com/vertex-ai/docs/workbench/instances/create",
+    "https://cloud.google.com/vertex-ai/docs/workbench/instances/introduction"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "curl -X PATCH -H \"Authorization: Bearer $(gcloud auth print-access-token)\" -H \"Content-Type: application/json\" -d '{\"gceSetup\": {\"disablePublicIp\": true}}' \"https://notebooks.googleapis.com/v2/projects/<example_project_id>/locations/<example_zone>/instances/<example_resource_name>?updateMask=gceSetup.disable_public_ip\"",
+      "NativeIaC": "",
+      "Other": "Update the existing instance in place; `gcloud workbench instances update` has no public IP flag, so use the Notebooks API.\n1. Confirm the instance subnetwork has Private Google Access or Cloud NAT, so the notebook keeps access to Google APIs and package repositories\n2. Call `instances.patch` with `updateMask=gceSetup.disable_public_ip` and `gceSetup.disablePublicIp` set to `true`, as in the CLI command\n3. Wait for the returned operation to finish, then confirm in Compute Engine > VM instances that the instance VM has no external IP\n4. Only if the update is rejected, create a new instance with `gcloud workbench instances create --disable-public-ip`, migrate notebooks and data, and delete the old instance",
+      "Terraform": "```hcl\nresource \"google_workbench_instance\" \"<example_resource_name>\" {\n  name     = \"<example_resource_name>\"\n  location = \"<example_zone>\"\n\n  gce_setup {\n    disable_public_ip = true # FIX: No external IP is assigned to the notebook VM\n\n    network_interfaces {\n      network = \"<example_network_id>\"\n      subnet  = \"<example_subnet_id>\"\n    }\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Create Workbench instances **without external IPs** and keep them on private networks.\n- Use **Cloud NAT** for controlled egress and **Private Google Access** for Google APIs\n- Reach JupyterLab through the IAM-authenticated **Workbench proxy** or **IAP**\n- Place AI projects inside a **VPC Service Controls** perimeter\n- Enforce the `constraints/compute.vmExternalIpAccess` organization policy",
+      "Url": "https://hub.prowler.com/check/vertexai_workbench_instance_public_ip_disabled"
+    }
+  },
+  "Categories": [
+    "internet-exposed",
+    "gen-ai"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "compute_instance_public_ip"
+  ],
+  "Notes": "Workbench instances are backed by Compute Engine VMs, which compute_instance_public_ip also evaluates; this check reports the finding against the Workbench resource that owners manage."
+}
