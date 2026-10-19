@@ -1,3 +1,4 @@
+import re
 from datetime import datetime
 from typing import Optional
 
@@ -30,6 +31,7 @@ class Backup(AWSService):
         self.backup_report_plans = []
         self.__threading_call__(self._list_backup_report_plans)
         self.protected_resources = []
+        self.backup_selections = []
         self.__threading_call__(self._list_backup_selections)
         # Recovery points are listed first, then only the selected subset is
         # tagged and exposed for checks.
@@ -168,8 +170,14 @@ class Backup(AWSService):
                                 BackupPlanId=backup_plan.id, SelectionId=selection_id
                             )["BackupSelection"]
 
-                            self.protected_resources.extend(
-                                backup_selection.get("Resources", [])
+                            resources = backup_selection.get("Resources", [])
+                            not_resources = backup_selection.get("NotResources", [])
+                            # Preserve the flattened resource list for existing callers.
+                            self.protected_resources.extend(resources)
+                            self.backup_selections.append(
+                                BackupSelection(
+                                    resources=resources, not_resources=not_resources
+                                )
                             )
 
         except ClientError as error:
@@ -180,6 +188,21 @@ class Backup(AWSService):
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+
+    def get_protected_resources(self, resource_arn: str) -> list[str]:
+        """Return inclusion patterns from selections that do not exclude this ARN.
+
+        Only NotResources is evaluated here. Callers retain their existing
+        inclusion rules, and an independent selection can still cover the ARN.
+        """
+        resources = []
+        for selection in self.backup_selections:
+            if not any(
+                re.fullmatch(re.escape(pattern).replace(r"\*", r"\S*"), resource_arn)
+                for pattern in selection.not_resources
+            ):
+                resources.extend(selection.resources)
+        return resources
 
     def _list_tags(self, resource):
         try:
@@ -249,6 +272,13 @@ class Backup(AWSService):
                 self.recovery_point_limit,
             )
         )
+
+
+class BackupSelection(BaseModel):
+    """Keep a selection's inclusion patterns paired with its exclusions."""
+
+    resources: list[str]
+    not_resources: list[str]
 
 
 class BackupVault(BaseModel):
