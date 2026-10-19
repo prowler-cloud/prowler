@@ -5,6 +5,14 @@ from prowler.providers.aws.services.dynamodb.dynamodb_client import dynamodb_cli
 
 class dynamodb_table_protected_by_backup_plan(Check):
     def execute(self):
+        """Evaluate DynamoDB table coverage by AWS Backup selections.
+
+        Apply selection-local exclusions before the existing inclusion rules.
+        Selection coverage does not establish backup completion or restorability.
+
+        Returns:
+            A list of findings, one per collected DynamoDB table.
+        """
         findings = []
         for table in dynamodb_client.tables.values():
             report = Check_Report_AWS(metadata=self.metadata(), resource=table)
