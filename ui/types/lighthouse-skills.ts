@@ -1,15 +1,5 @@
 import type { LucideIcon } from "lucide-react";
 
-// Variants of the FEATURE_FLAG.SKILL_LAUNCHER experiment (see
-// lib/feature-flags). Anything other than "dropdown" renders the card control.
-export const SKILL_LAUNCHER_VARIANT = {
-  CARD: "card",
-  DROPDOWN: "dropdown",
-} as const;
-
-export type SkillLauncherVariant =
-  (typeof SKILL_LAUNCHER_VARIANT)[keyof typeof SKILL_LAUNCHER_VARIANT];
-
 export const LIGHTHOUSE_SKILL_ID = {
   CONTEXTUAL_FIX: "contextual-fix",
   TRIAGE_DECISION: "triage-decision",

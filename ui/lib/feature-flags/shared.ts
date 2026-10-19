@@ -3,9 +3,6 @@
 // lives here, including the ones only the cloud fork reads, so the registry
 // never diverges between repos.
 export const FEATURE_FLAG = {
-  // Multivariate flag deciding which skill launcher the finding detail drawer
-  // renders ("card" | "dropdown").
-  SKILL_LAUNCHER: "finding-detail-skill-launcher",
   // Boolean flag gating the experimental Issues feature (contextual findings).
   // Read by cloud only.
   ISSUES: "issues-feature",
