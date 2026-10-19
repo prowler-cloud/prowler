@@ -5,6 +5,14 @@ from prowler.providers.aws.services.rds.rds_client import rds_client
 
 class rds_cluster_protected_by_backup_plan(Check):
     def execute(self):
+        """Evaluate RDS cluster coverage by AWS Backup selections.
+
+        Apply selection-local exclusions before the existing inclusion rules.
+        Selection coverage does not establish backup completion or restorability.
+
+        Returns:
+            A list of findings, one per collected RDS cluster.
+        """
         findings = []
         for db_cluster in rds_client.db_clusters.values():
             report = Check_Report_AWS(metadata=self.metadata(), resource=db_cluster)
