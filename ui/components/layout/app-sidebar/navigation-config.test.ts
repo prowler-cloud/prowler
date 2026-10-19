@@ -106,6 +106,39 @@ describe("getNavigationConfig", () => {
     );
   });
 
+  it("hides Issues in Cloud until the feature flag resolves on", () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
+
+    // When
+    const labels = getNavigationConfig({
+      pathname: "/",
+      apiDocsUrl: null,
+    })
+      .flatMap((section) => section.items)
+      .map((item) => item.label);
+
+    // Then
+    expect(labels).not.toContain("Issues");
+  });
+
+  it("never shows Issues in Local Server, even with the flag on", () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
+
+    // When
+    const labels = getNavigationConfig({
+      pathname: "/",
+      apiDocsUrl: null,
+      issuesEnabled: true,
+    })
+      .flatMap((section) => section.items)
+      .map((item) => item.label);
+
+    // Then
+    expect(labels).not.toContain("Issues");
+  });
+
   it("uses Cloud destinations and current New badges", () => {
     // Given
     vi.stubEnv("UI_CLOUD_ENABLED", "true");
@@ -114,6 +147,7 @@ describe("getNavigationConfig", () => {
     const sections = getNavigationConfig({
       pathname: "/scans/config",
       apiDocsUrl: "https://ignored.example/docs",
+      issuesEnabled: true,
     });
     const items = sections.flatMap((section) => section.items);
     const configuration = items.find((item) => item.label === "Configuration");

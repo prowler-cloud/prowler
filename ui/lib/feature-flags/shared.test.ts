@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { FEATURE_FLAG } from "./shared";
+import { FEATURE_FLAG, FEATURE_FLAG_STATE } from "./shared";
 
 describe("FEATURE_FLAG", () => {
   it("should map each flag to the key PostHog knows it by", () => {
@@ -15,5 +15,15 @@ describe("FEATURE_FLAG", () => {
     const keys = Object.values(FEATURE_FLAG);
 
     expect(new Set(keys).size).toBe(keys.length);
+  });
+});
+
+describe("FEATURE_FLAG_STATE", () => {
+  it("should distinguish the unresolved state from a resolved off", () => {
+    expect(FEATURE_FLAG_STATE).toEqual({
+      PENDING: "pending",
+      ON: "on",
+      OFF: "off",
+    });
   });
 });

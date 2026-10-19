@@ -35,6 +35,8 @@ interface NavigationConfigOptions {
   apiDocsUrl?: string | null;
   cloudBillingEnabled?: boolean;
   registryEligible?: boolean;
+  // PostHog FEATURE_FLAG.ISSUES, resolved by the caller; Cloud only.
+  issuesEnabled?: boolean;
   permissions?: RolePermissionAttributes;
 }
 
@@ -112,6 +114,7 @@ export function getNavigationConfig({
   apiDocsUrl = null,
   cloudBillingEnabled = false,
   registryEligible = false,
+  issuesEnabled = false,
   permissions,
 }: NavigationConfigOptions): NavigationSection[] {
   const isCloudEnvironment = isCloud();
@@ -161,7 +164,7 @@ export function getNavigationConfig({
           icon: Tag,
           active: isRouteActive(pathname, "/findings"),
         },
-        ...(isCloudEnvironment
+        ...(isCloudEnvironment && issuesEnabled
           ? [
               {
                 kind: NAVIGATION_ITEM_KIND.LINK,
