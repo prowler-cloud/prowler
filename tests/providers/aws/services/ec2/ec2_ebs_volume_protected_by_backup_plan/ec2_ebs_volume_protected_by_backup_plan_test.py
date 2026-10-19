@@ -170,7 +170,7 @@ class Test_ec2_ebs_volume_protected_by_backup_plan:
         ]
 
         backup_client = mock.MagicMock()
-        backup_client.protected_resources = [
+        backup_client.get_protected_resources.return_value = [
             f"arn:aws:ec2:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:volume/volume-tester"
         ]
 
@@ -236,7 +236,9 @@ class Test_ec2_ebs_volume_protected_by_backup_plan:
         ]
 
         backup_client = mock.MagicMock()
-        backup_client.protected_resources = ["arn:aws:ec2:*:*:volume/*"]
+        backup_client.get_protected_resources.return_value = [
+            "arn:aws:ec2:*:*:volume/*"
+        ]
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
@@ -299,7 +301,7 @@ class Test_ec2_ebs_volume_protected_by_backup_plan:
         ]
 
         backup_client = mock.MagicMock()
-        backup_client.protected_resources = ["*"]
+        backup_client.get_protected_resources.return_value = ["*"]
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
