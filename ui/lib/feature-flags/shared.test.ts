@@ -5,7 +5,6 @@ import { FEATURE_FLAG, FEATURE_FLAG_STATE } from "./shared";
 describe("FEATURE_FLAG", () => {
   it("should map each flag to the key PostHog knows it by", () => {
     expect(FEATURE_FLAG).toEqual({
-      SKILL_LAUNCHER: "finding-detail-skill-launcher",
       ISSUES: "issues-feature",
       BILLING_SYSTEM_METRONOME: "BILLING_SYSTEM_METRONOME",
     });

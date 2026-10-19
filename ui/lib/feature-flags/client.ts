@@ -1,9 +1,6 @@
 "use client";
 
-import {
-  useFeatureFlagEnabled,
-  useFeatureFlagVariantKey,
-} from "posthog-js/react";
+import { useFeatureFlagEnabled } from "posthog-js/react";
 
 import {
   FEATURE_FLAG_STATE,
@@ -30,16 +27,4 @@ export function useFeatureFlagState(flag: FeatureFlag): FeatureFlagState {
 // a disabled flag all read as false.
 export function useFeatureFlag(flag: FeatureFlag): boolean {
   return useFeatureFlagState(flag) === FEATURE_FLAG_STATE.ON;
-}
-
-// Multivariate flag. Returns the resolved key when it is one of `variants`;
-// unresolved, boolean or unknown values fall back to `fallback`.
-export function useFeatureFlagVariant<T extends string>(
-  flag: FeatureFlag,
-  variants: readonly T[],
-  fallback: T,
-): T {
-  const value = useFeatureFlagVariantKey(flag);
-  const match = variants.find((variant) => variant === value);
-  return match ?? fallback;
 }
