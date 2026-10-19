@@ -129,7 +129,7 @@ class Test_rds_instance_protected_by_backup_plan:
             )
         }
 
-        backup.protected_resources = [
+        backup.get_protected_resources.return_value = [
             f"arn:aws:rds:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:db:db-master-2"
         ]
 
@@ -213,7 +213,7 @@ class Test_rds_instance_protected_by_backup_plan:
         }
 
         backup = mock.MagicMock()
-        backup.protected_resources = [arn]
+        backup.get_protected_resources.return_value = [arn]
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
@@ -296,7 +296,7 @@ class Test_rds_instance_protected_by_backup_plan:
         }
 
         backup = mock.MagicMock()
-        backup.protected_resources = [arn]
+        backup.get_protected_resources.return_value = [arn]
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
@@ -378,7 +378,7 @@ class Test_rds_instance_protected_by_backup_plan:
         }
 
         backup = mock.MagicMock()
-        backup.protected_resources = [arn]
+        backup.get_protected_resources.return_value = [arn]
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
