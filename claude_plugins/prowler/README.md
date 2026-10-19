@@ -8,6 +8,10 @@ End-to-end cloud security and compliance from inside [Claude Code](https://www.c
 
 Prowler Cloud connects Claude to your cloud security posture. The bundled `framework-compliance-triage` skill checks that a provider account is connected to Prowler Cloud, reads the latest scan and compliance report for the framework you pick (CIS, PCI-DSS, NIST, Prowler ThreatScore and more), and then walks you through fixing each failed requirement. Every change is proposed first and applied only after you approve it.
 
+## Supported providers
+
+Any provider Prowler Cloud supports, including AWS, Azure, GCP, Kubernetes, Microsoft 365, GitHub, Google Workspace, Cloudflare, Oracle Cloud, Alibaba Cloud, Huawei Cloud, OpenStack, Linode, Scaleway, STACKIT, E2E Networks, NHN Cloud, MongoDB Atlas, Okta, Vercel, VCF, Infrastructure as Code, container images and LLMs. The full list lives in the [Prowler Registry](https://registry.prowler.com/providers).
+
 ## Requirements
 
 - [Claude Code](https://www.claude.com/product/claude-code) installed and signed in.
