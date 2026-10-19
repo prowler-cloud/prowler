@@ -9,7 +9,7 @@
   "Severity": "critical",
   "ResourceType": "Pod",
   "ResourceGroup": "container",
-  "Description": "**Kubernetes API server** authorization is evaluated via the `--authorization-mode` setting to detect any use of `AlwaysAllow`. The focus is whether policy-driven authorizers are configured instead of an allow-all mode.",
+  "Description": "**Kubernetes API server** authorization is evaluated via the `--authorization-mode` setting, or via the `--authorization-config` file when that is used instead (the two are mutually exclusive), to detect any use of `AlwaysAllow`. The focus is whether policy-driven authorizers are configured instead of an allow-all mode.",
   "Risk": "`AlwaysAllow` permits all API requests, eroding **confidentiality** (secrets readable), **integrity** (privilege escalation, role changes, config edits), and **availability** (object deletion, cluster disruption). Enables rapid cluster takeover and data exfiltration.",
   "RelatedUrl": "",
   "AdditionalURLs": [
