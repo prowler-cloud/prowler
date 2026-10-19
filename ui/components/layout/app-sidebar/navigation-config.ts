@@ -1,6 +1,7 @@
 import {
   Code,
   CreditCard,
+  Crosshair,
   FileText,
   GitBranch,
   LayoutGrid,
@@ -160,6 +161,18 @@ export function getNavigationConfig({
           icon: Tag,
           active: isRouteActive(pathname, "/findings"),
         },
+        ...(isCloudEnvironment
+          ? [
+              {
+                kind: NAVIGATION_ITEM_KIND.LINK,
+                href: "/issues",
+                label: "Issues",
+                icon: Crosshair,
+                active: isRouteActive(pathname, "/issues"),
+                highlight: true,
+              } as const,
+            ]
+          : []),
         {
           kind: NAVIGATION_ITEM_KIND.LINK,
           href: "/attack-paths",
