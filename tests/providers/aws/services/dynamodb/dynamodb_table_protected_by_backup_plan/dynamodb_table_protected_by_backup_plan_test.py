@@ -183,7 +183,7 @@ class Test_dynamodb_table_protected_by_backup_plan:
         }
 
         backup = mock.MagicMock()
-        backup.protected_resources = [
+        backup.get_protected_resources.return_value = [
             f"arn:aws:dynamodb:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:table/test1"
         ]
 
@@ -247,7 +247,7 @@ class Test_dynamodb_table_protected_by_backup_plan:
         }
 
         backup = mock.MagicMock()
-        backup.protected_resources = ["arn:aws:dynamodb:*:*:table/*"]
+        backup.get_protected_resources.return_value = ["arn:aws:dynamodb:*:*:table/*"]
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
@@ -308,7 +308,7 @@ class Test_dynamodb_table_protected_by_backup_plan:
         }
 
         backup = mock.MagicMock()
-        backup.protected_resources = ["*"]
+        backup.get_protected_resources.return_value = ["*"]
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
