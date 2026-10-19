@@ -69,6 +69,16 @@ def collect_backup(provider, plans):
     role = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:role/backup-test"
 
     def api_call(api_client, operation, kwargs):
+        """Return validated Backup responses and delegate other service calls.
+
+        Args:
+            api_client: Botocore client making the request.
+            operation: SDK operation name to dispatch.
+            kwargs: Request parameters supplied by the collector.
+
+        Returns:
+            A schema-validated Backup response or the delegated SDK response.
+        """
         if api_client.meta.service_model.service_name != "backup":
             return original(api_client, operation, kwargs)
         calls.append((operation, kwargs.copy()))
@@ -142,6 +152,7 @@ def collect_backup(provider, plans):
 
 @mock_aws
 def test_preserves_flat_resources_and_filters_selections_independently():
+    """Keep flattened resources intact while filtering selections independently."""
     excluded = f"arn:aws:ec2:{REGION}:{AWS_ACCOUNT_NUMBER}:volume/vol-excluded"
     covered = f"arn:aws:ec2:{REGION}:{AWS_ACCOUNT_NUMBER}:volume/vol-covered"
     backup = collect_backup(
