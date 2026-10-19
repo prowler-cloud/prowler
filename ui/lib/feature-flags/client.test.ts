@@ -13,10 +13,46 @@ vi.mock("posthog-js/react", () => ({
   useFeatureFlagVariantKey: useFeatureFlagVariantKeyMock,
 }));
 
-import { useFeatureFlag, useFeatureFlagVariant } from "./client";
-import { FEATURE_FLAG } from "./shared";
+import {
+  useFeatureFlag,
+  useFeatureFlagState,
+  useFeatureFlagVariant,
+} from "./client";
+import { FEATURE_FLAG, FEATURE_FLAG_STATE } from "./shared";
 
 const VARIANTS = ["card", "dropdown"] as const;
+
+describe("useFeatureFlagState", () => {
+  beforeEach(() => {
+    useFeatureFlagEnabledMock.mockReset();
+  });
+
+  it("should pass the flag key through to PostHog", () => {
+    useFeatureFlagEnabledMock.mockReturnValue(undefined);
+
+    renderHook(() => useFeatureFlagState(FEATURE_FLAG.ISSUES));
+
+    expect(useFeatureFlagEnabledMock).toHaveBeenCalledWith("issues-feature");
+  });
+
+  it.each([
+    ["on", true, FEATURE_FLAG_STATE.ON],
+    ["off", false, FEATURE_FLAG_STATE.OFF],
+    [
+      "pending (not initialized or still loading)",
+      undefined,
+      FEATURE_FLAG_STATE.PENDING,
+    ],
+  ])("should report %s", (_label, flagValue, expected) => {
+    useFeatureFlagEnabledMock.mockReturnValue(flagValue);
+
+    const { result } = renderHook(() =>
+      useFeatureFlagState(FEATURE_FLAG.ISSUES),
+    );
+
+    expect(result.current).toBe(expected);
+  });
+});
 
 describe("useFeatureFlag", () => {
   beforeEach(() => {

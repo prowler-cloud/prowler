@@ -15,3 +15,15 @@ export const FEATURE_FLAG = {
 } as const;
 
 export type FeatureFlag = (typeof FEATURE_FLAG)[keyof typeof FEATURE_FLAG];
+
+// Resolution state of a boolean flag. PENDING covers both "flags still
+// loading" and "PostHog never initialized" (OSS builds): neither case can
+// tell whether the flag is on, so gates render neither branch yet.
+export const FEATURE_FLAG_STATE = {
+  PENDING: "pending",
+  ON: "on",
+  OFF: "off",
+} as const;
+
+export type FeatureFlagState =
+  (typeof FEATURE_FLAG_STATE)[keyof typeof FEATURE_FLAG_STATE];
