@@ -4,6 +4,28 @@ All notable changes to the **Prowler API** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [1.46.0] (Prowler v5.45.0)
+
+### 🐞 Fixed
+
+- OCI provider secrets keep the region as home region for credential validation and scans, instead of always using us-ashburn-1 [(#12865)](https://github.com/prowler-cloud/prowler/pull/12865)
+- Gunicorn workers are now recycled after 10000 requests (plus up to 1000 of jitter) to cap memory growth, configurable with `GUNICORN_MAX_REQUESTS` and `GUNICORN_MAX_REQUESTS_JITTER` [(#13047)](https://github.com/prowler-cloud/prowler/pull/13047)
+
+### 🔐 Security
+
+- `pyjwt` from 2.13.0 to 2.14.0, patching GHSA-ffc3-869f-jxw9 [(#12911)](https://github.com/prowler-cloud/prowler/pull/12911)
+- Sentry error events no longer include user identity, IP addresses, cookies, headers or request bodies, which could contain personal data or provider credentials [(#12912)](https://github.com/prowler-cloud/prowler/pull/12912)
+- Kubernetes kubeconfig validation accepts only inline credentials and known cluster fields, rejecting file-path fields (`tokenFile`, `client-certificate`, `client-key`, `certificate-authority`), command-based authentication (`exec`, `cmd-path`), `auth-provider` directives, proxy URLs and unknown user or cluster keys; stored kubeconfigs are re-validated before each scan and connection test [(#12952)](https://github.com/prowler-cloud/prowler/pull/12952)
+- `django` from 5.1.15 to 5.2.17, patching CVE-2026-15307 [(#12953)](https://github.com/prowler-cloud/prowler/pull/12953)
+- `dulwich` from 1.2.5 to 1.2.9, patching GHSA-5fqc-mrg8-w798, GHSA-8mcx-5rqc-vhmf, GHSA-8w8g-wq8h-fq33 and GHSA-cm62-gvxx-vmxx [(#12953)](https://github.com/prowler-cloud/prowler/pull/12953)
+- `urllib3` from 2.7.0 to 2.8.0, patching CVE-2026-97687 and CVE-2026-97689 [(#12953)](https://github.com/prowler-cloud/prowler/pull/12953)
+- `pymongo` from 4.15.1 to 4.18.2, patching CVE-2026-96748 and CVE-2026-96749 [(#12955)](https://github.com/prowler-cloud/prowler/pull/12955)
+- `GET /api/v1/users/{id}` no longer exposes another user's memberships, roles or tenant names from tenants other than the one in the request token [(#12965)](https://github.com/prowler-cloud/prowler/pull/12965)
+- Python base image from 3.12.13 to 3.12.15 and Trivy from 0.74.0 to 0.75.0 in the API container image, patching CVE-2026-19445, CVE-2026-19553 and the grpc-go and x/crypto CVEs bundled in Trivy [(#13009)](https://github.com/prowler-cloud/prowler/pull/13009)
+- PowerShell from 7.5.11 to 7.5.12 in the API container image, bundling .NET runtime 9.0.21 [(#13037)](https://github.com/prowler-cloud/prowler/pull/13037)
+
+---
+
 ## [1.45.0] (Prowler v5.44.0)
 
 ### 🚀 Added

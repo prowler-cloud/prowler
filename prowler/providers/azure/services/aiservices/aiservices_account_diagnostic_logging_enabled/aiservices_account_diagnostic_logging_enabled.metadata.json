@@ -1,0 +1,38 @@
+{
+  "Provider": "azure",
+  "CheckID": "aiservices_account_diagnostic_logging_enabled",
+  "CheckTitle": "AI services account sends audit logs through a diagnostic setting",
+  "CheckType": [],
+  "ServiceName": "aiservices",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "microsoft.cognitiveservices/accounts",
+  "ResourceGroup": "ai_ml",
+  "Description": "**Azure AI services accounts** (including **Azure OpenAI** and **Azure AI Foundry**) emit resource logs only when a **diagnostic setting** routes them to Log Analytics, Storage, or Event Hubs. This check passes when the `Audit` category, or the `audit` or `allLogs` category group, is enabled.",
+  "Risk": "Without audit logs, data-plane activity on the account leaves no record:\n- **Detection**: key misuse, unusual callers, and prompt abuse go unnoticed\n- **Investigation**: incident responders cannot reconstruct who called which model and when\n- **Compliance**: audit-trail requirements for AI workloads are not met",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/ai-services/diagnostic-logging",
+    "https://learn.microsoft.com/en-us/azure/azure-monitor/platform/diagnostic-settings"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "az monitor diagnostic-settings create --name <setting_name> --resource <account_resource_id> --workspace <log_analytics_workspace_id> --logs '[{\"categoryGroup\":\"audit\",\"enabled\":true}]'",
+      "NativeIaC": "```bicep\n// Send audit logs from an Azure AI services account to Log Analytics\nresource account 'Microsoft.CognitiveServices/accounts@2024-10-01' existing = {\n  name: '<example_resource_name>'\n}\n\nresource diagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {\n  name: '<example_resource_name>'\n  scope: account\n  properties: {\n    workspaceId: '<log_analytics_workspace_id>'\n    logs: [\n      {\n        categoryGroup: 'audit' // CRITICAL: sends audit logs\n        enabled: true\n      }\n    ]\n  }\n}\n```",
+      "Other": "1. In the Azure portal, open the AI services account and go to Monitoring > Diagnostic settings\n2. Click + Add diagnostic setting\n3. Under Category groups, select audit (or allLogs)\n4. Choose a destination such as a Log Analytics workspace and click Save",
+      "Terraform": "```hcl\nresource \"azurerm_monitor_diagnostic_setting\" \"<example_resource_name>\" {\n  name                       = \"<example_resource_name>\"\n  target_resource_id         = azurerm_cognitive_account.<example_resource_name>.id\n  log_analytics_workspace_id = azurerm_log_analytics_workspace.<example_resource_name>.id\n\n  enabled_log {\n    category_group = \"audit\" # CRITICAL: sends audit logs\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Add a **diagnostic setting** to each AI services account that sends the **audit** category group to a **Log Analytics workspace**, and alert on unusual activity. Add **RequestResponse** logs where your data-handling policy allows it.",
+      "Url": "https://hub.prowler.com/check/aiservices_account_diagnostic_logging_enabled"
+    }
+  },
+  "Categories": [
+    "logging",
+    "gen-ai"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

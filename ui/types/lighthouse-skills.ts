@@ -1,9 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 
-// PostHog multivariate flag deciding which skill launcher the finding detail
-// drawer renders. Anything other than "dropdown" falls back to the card control.
-export const SKILL_LAUNCHER_FLAG = "finding-detail-skill-launcher";
-
+// Variants of the FEATURE_FLAG.SKILL_LAUNCHER experiment (see
+// lib/feature-flags). Anything other than "dropdown" renders the card control.
 export const SKILL_LAUNCHER_VARIANT = {
   CARD: "card",
   DROPDOWN: "dropdown",

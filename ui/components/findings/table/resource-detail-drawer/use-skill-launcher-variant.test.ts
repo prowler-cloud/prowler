@@ -1,49 +1,44 @@
 import { renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { useFeatureFlagVariantKeyMock } = vi.hoisted(() => ({
-  useFeatureFlagVariantKeyMock: vi.fn(),
+const { useFeatureFlagVariantMock } = vi.hoisted(() => ({
+  useFeatureFlagVariantMock: vi.fn(),
 }));
 
-vi.mock("posthog-js/react", () => ({
-  useFeatureFlagVariantKey: useFeatureFlagVariantKeyMock,
+vi.mock("@/lib/feature-flags/client", () => ({
+  useFeatureFlagVariant: useFeatureFlagVariantMock,
 }));
 
 import { useSkillLauncherVariant } from "./use-skill-launcher-variant";
 
 describe("useSkillLauncherVariant", () => {
   beforeEach(() => {
-    useFeatureFlagVariantKeyMock.mockReset();
+    useFeatureFlagVariantMock.mockReset();
   });
 
-  it("should ask PostHog for the experiment flag", () => {
-    useFeatureFlagVariantKeyMock.mockReturnValue(undefined);
+  it("should read the skill launcher flag with card as the fallback", () => {
+    useFeatureFlagVariantMock.mockReturnValue("card");
 
     renderHook(() => useSkillLauncherVariant());
 
-    expect(useFeatureFlagVariantKeyMock).toHaveBeenCalledWith(
+    expect(useFeatureFlagVariantMock).toHaveBeenCalledWith(
       "finding-detail-skill-launcher",
+      ["card", "dropdown"],
+      "card",
     );
   });
 
-  it("should return the dropdown variant when the flag resolves to it", () => {
-    useFeatureFlagVariantKeyMock.mockReturnValue("dropdown");
-
-    const { result } = renderHook(() => useSkillLauncherVariant());
-
-    expect(result.current).toBe("dropdown");
-  });
-
   it.each([
+    ["dropdown", "dropdown"],
     ["card", "card"],
-    ["unresolved flag", undefined],
-    ["boolean flag", false],
-    ["unknown variant", "weird"],
-  ])("should fall back to card for %s", (_label, flagValue) => {
-    useFeatureFlagVariantKeyMock.mockReturnValue(flagValue);
+  ])(
+    "should return the %s variant the flag module resolves",
+    (_label, variant) => {
+      useFeatureFlagVariantMock.mockReturnValue(variant);
 
-    const { result } = renderHook(() => useSkillLauncherVariant());
+      const { result } = renderHook(() => useSkillLauncherVariant());
 
-    expect(result.current).toBe("card");
-  });
+      expect(result.current).toBe(variant);
+    },
+  );
 });
