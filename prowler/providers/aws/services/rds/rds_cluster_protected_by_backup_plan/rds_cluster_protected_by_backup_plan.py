@@ -13,11 +13,12 @@ class rds_cluster_protected_by_backup_plan(Check):
                 f"RDS Cluster {db_cluster.id} is not protected by a backup plan."
             )
 
+            protected_resources = backup_client.get_protected_resources(db_cluster.arn)
             if (
-                db_cluster.arn in backup_client.protected_resources
+                db_cluster.arn in protected_resources
                 or f"arn:{rds_client.audited_partition}:rds:*:*:cluster:*"
-                in backup_client.protected_resources
-                or "*" in backup_client.protected_resources
+                in protected_resources
+                or "*" in protected_resources
             ):
                 report.status = "PASS"
                 report.status_extended = (
