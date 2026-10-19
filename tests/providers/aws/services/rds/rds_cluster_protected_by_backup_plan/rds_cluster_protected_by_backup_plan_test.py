@@ -121,6 +121,7 @@ class Test_rds_cluster_protected_by_backup_plan:
                 assert result[0].resource_tags == []
 
     def test_rds_cluster_without_backup_plan(self):
+        """Verify FAIL when protected resources contain only a different ARN."""
         cluster = mock.MagicMock()
         backup = mock.MagicMock()
 
@@ -203,6 +204,7 @@ class Test_rds_cluster_protected_by_backup_plan:
                 assert result[0].resource_tags == []
 
     def test_rds_cluster_with_backup_plan(self):
+        """Verify PASS when the cluster ARN is returned as a protected resource."""
         cluster = mock.MagicMock()
 
         from prowler.providers.aws.services.rds.rds_service import DBCluster
@@ -283,6 +285,7 @@ class Test_rds_cluster_protected_by_backup_plan:
                 assert result[0].resource_tags == []
 
     def test_rds_cluster_with_backup_plan_via_cluster_wildcard(self):
+        """Verify PASS when the cluster wildcard covers the RDS cluster."""
         cluster = mock.MagicMock()
         cluster.audited_partition = "aws"
 
@@ -364,6 +367,7 @@ class Test_rds_cluster_protected_by_backup_plan:
                 assert result[0].resource_tags == []
 
     def test_rds_cluster_with_backup_plan_via_all_wildcard(self):
+        """Verify PASS when the all-resources wildcard covers the RDS cluster."""
         cluster = mock.MagicMock()
 
         from prowler.providers.aws.services.rds.rds_service import DBCluster
