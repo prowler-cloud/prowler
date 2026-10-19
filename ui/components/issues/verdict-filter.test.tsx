@@ -25,41 +25,99 @@ const counts = {
   unknown: 0,
 };
 
-const hrefOf = (name: RegExp) =>
-  screen.getByRole("link", { name }).getAttribute("href");
+const lastPushedParams = () =>
+  new URL(navigationState.push.mock.calls.at(-1)![0], "http://localhost")
+    .searchParams;
 
 describe("VerdictFilter", () => {
-  it("drops the page when a verdict is set or cleared, keeping other params", () => {
+  it("renders one tab per verdict with its count and the fold", () => {
+    navigationState.searchParams = new URLSearchParams();
+    render(<VerdictFilter summary={{ counts, total: 2, findings: 9 }} />);
+
+    expect(screen.getByRole("tab", { name: "All, 2 issues" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    expect(
+      screen.getByRole("tab", { name: "Exploitable, 2 issues" }),
+    ).toHaveAttribute("aria-selected", "false");
+    expect(screen.getAllByRole("tab")).toHaveLength(6);
+    expect(
+      screen.getByText("9 failed findings folded into 2 issues"),
+    ).toBeInTheDocument();
+  });
+
+  it("selects the verdict tab and resets the page, keeping other params", async () => {
+    const user = userEvent.setup();
     navigationState.searchParams = new URLSearchParams(
       "page=3&pageSize=10&filter[verdict]=likely",
     );
-    render(<VerdictFilter summary={{ counts, total: 2 }} />);
+    render(<VerdictFilter summary={{ counts, total: 2, findings: 9 }} />);
 
-    const set = new URLSearchParams(hrefOf(/^exploitable 2$/i)!.split("?")[1]);
-    expect(set.get("page")).toBeNull();
-    expect(set.get("pageSize")).toBe("10");
-    expect(set.get("filter[verdict]")).toBe("exploitable");
+    expect(
+      screen.getByRole("tab", { name: "Likely, 0 issues" }),
+    ).toHaveAttribute("aria-selected", "true");
+    await user.click(
+      screen.getByRole("tab", { name: "Exploitable, 2 issues" }),
+    );
 
-    const cleared = new URLSearchParams(hrefOf(/likely/i)!.split("?")[1]);
-    expect(cleared.get("page")).toBeNull();
-    expect(cleared.get("filter[verdict]")).toBeNull();
+    const params = lastPushedParams();
+    expect(params.get("page")).toBe("1");
+    expect(params.get("pageSize")).toBe("10");
+    expect(params.get("filter[verdict]")).toBe("exploitable");
   });
 
-  it("offers an All chip that clears the verdict and is active without one", () => {
+  it("marks the tabs a combined filter covers and lets All replace it", async () => {
+    const user = userEvent.setup();
+    navigationState.searchParams = new URLSearchParams(
+      "filter[verdict__in]=exploitable,likely",
+    );
+    render(<VerdictFilter summary={{ counts, total: 2, findings: 9 }} />);
+
+    // No single tab owns the combined filter, so none is selected...
+    expect(
+      screen
+        .getAllByRole("tab")
+        .every((tab) => tab.getAttribute("aria-selected") === "false"),
+    ).toBe(true);
+    // ...but the covered tabs are marked, and there is no chip for it.
+    expect(
+      screen.getByRole("tab", { name: "Exploitable, 2 issues" }),
+    ).toHaveAttribute("data-highlighted", "true");
+    expect(
+      screen.getByRole("tab", { name: "Likely, 0 issues" }),
+    ).toHaveAttribute("data-highlighted", "true");
+    expect(
+      screen.getByRole("tab", { name: "Conditional, 0 issues" }),
+    ).not.toHaveAttribute("data-highlighted");
+    expect(screen.queryByRole("region", { name: "Active filters" })).toBeNull();
+    expect(screen.getByRole("tablist")).toHaveAccessibleDescription(
+      "Showing Exploitable and Likely issues",
+    );
+
+    await user.click(screen.getByRole("tab", { name: "All, 2 issues" }));
+
+    expect(navigationState.push).toHaveBeenLastCalledWith("/issues", {
+      scroll: false,
+    });
+  });
+
+  it("shows no chip strip for a verdict picked from the tabs", () => {
     navigationState.searchParams = new URLSearchParams(
       "filter[verdict]=likely",
     );
-    render(<VerdictFilter summary={{ counts, total: 2 }} />);
+    render(<VerdictFilter summary={{ counts, total: 2, findings: 9 }} />);
 
-    expect(hrefOf(/^all 2$/i)).toBe("/issues");
+    expect(screen.queryByRole("region", { name: "Active filters" })).toBeNull();
   });
+
   it("shows the pattern filter and lets the user remove it", async () => {
     // Given
     const user = userEvent.setup();
     navigationState.searchParams = new URLSearchParams(
       "page=3&filter[pattern]=aws_public_bucket&filter[provider_id__in]=provider-1",
     );
-    render(<VerdictFilter summary={{ counts, total: 2 }} />);
+    render(<VerdictFilter summary={{ counts, total: 2, findings: 9 }} />);
     // When
     await user.click(
       screen.getByRole("button", {
@@ -67,14 +125,9 @@ describe("VerdictFilter", () => {
       }),
     );
     // Then
-    const target = new URL(
-      navigationState.push.mock.calls.at(-1)![0],
-      "http://localhost",
-    );
-    expect(target.searchParams.has("filter[pattern]")).toBe(false);
-    expect(target.searchParams.get("filter[provider_id__in]")).toBe(
-      "provider-1",
-    );
-    expect(target.searchParams.get("page")).toBe("1");
+    const target = lastPushedParams();
+    expect(target.has("filter[pattern]")).toBe(false);
+    expect(target.get("filter[provider_id__in]")).toBe("provider-1");
+    expect(target.get("page")).toBe("1");
   });
 });
