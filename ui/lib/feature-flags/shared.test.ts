@@ -3,8 +3,12 @@ import { describe, expect, it } from "vitest";
 import { FEATURE_FLAG } from "./shared";
 
 describe("FEATURE_FLAG", () => {
-  it("should map the skill launcher to the PostHog key the experiment uses", () => {
-    expect(FEATURE_FLAG.SKILL_LAUNCHER).toBe("finding-detail-skill-launcher");
+  it("should map each flag to the key PostHog knows it by", () => {
+    expect(FEATURE_FLAG).toEqual({
+      SKILL_LAUNCHER: "finding-detail-skill-launcher",
+      ISSUES: "issues-feature",
+      BILLING_SYSTEM_METRONOME: "BILLING_SYSTEM_METRONOME",
+    });
   });
 
   it("should not contain duplicate keys", () => {
