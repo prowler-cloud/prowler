@@ -90,7 +90,10 @@ describe("VerdictFilter", () => {
     expect(
       screen.getByRole("tab", { name: "Conditional, 0 issues" }),
     ).not.toHaveAttribute("data-highlighted");
-    expect(screen.queryByRole("button", { name: /Remove/ })).toBeNull();
+    expect(screen.queryByRole("region", { name: "Active filters" })).toBeNull();
+    expect(screen.getByRole("tablist")).toHaveAccessibleDescription(
+      "Showing Exploitable and Likely issues",
+    );
 
     await user.click(screen.getByRole("tab", { name: "All, 2 issues" }));
 
@@ -105,8 +108,7 @@ describe("VerdictFilter", () => {
     );
     render(<VerdictFilter summary={{ counts, total: 2, findings: 9 }} />);
 
-    expect(screen.queryByRole("button", { name: "Clear All" })).toBeNull();
-    expect(screen.queryByRole("button", { name: /Remove/ })).toBeNull();
+    expect(screen.queryByRole("region", { name: "Active filters" })).toBeNull();
   });
 
   it("shows the pattern filter and lets the user remove it", async () => {

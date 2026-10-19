@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { ComponentProps } from "react";
+import { ComponentProps, useId } from "react";
 
 import { ClearFiltersButton } from "@/components/filters/clear-filters-button";
 import { FilterSummaryStrip } from "@/components/filters/filter-summary-strip";
@@ -58,6 +58,12 @@ export function VerdictFilter({ summary }: { summary?: VerdictSummary }) {
   const active = searchParams.get("filter[verdict]");
   const combined = searchParams.get("filter[verdict__in]")?.split(",") ?? [];
   const value = combined.length ? "" : (active ?? ALL_TAB);
+  // No tab is selected under a combined filter, so the tab list says what
+  // the list is showing.
+  const combinedLabels = combined.map(
+    (id) => VERDICTS.find((verdict) => verdict.id === id)?.label ?? id,
+  );
+  const descriptionId = useId();
 
   const handleChange = (next: string) => {
     navigateWithParams((params) => {
@@ -95,7 +101,17 @@ export function VerdictFilter({ summary }: { summary?: VerdictSummary }) {
       <Tabs value={value} onValueChange={handleChange}>
         <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
           <div className="min-w-0 overflow-x-auto">
-            <TabsList aria-label="Filter issues by verdict">
+            {combinedLabels.length ? (
+              <p id={descriptionId} className="sr-only">
+                Showing {combinedLabels.join(" and ")} issues
+              </p>
+            ) : null}
+            <TabsList
+              aria-label="Filter issues by verdict"
+              aria-describedby={
+                combinedLabels.length ? descriptionId : undefined
+              }
+            >
               {tabs.map((tab) => (
                 <TabsTrigger
                   key={tab.id}
