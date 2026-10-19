@@ -13,11 +13,12 @@ class dynamodb_table_protected_by_backup_plan(Check):
                 f"DynamoDB table {table.name} is not protected by a backup plan."
             )
 
+            protected_resources = backup_client.get_protected_resources(table.arn)
             if (
-                table.arn in backup_client.protected_resources
+                table.arn in protected_resources
                 or f"arn:{dynamodb_client.audited_partition}:dynamodb:*:*:table/*"
-                in backup_client.protected_resources
-                or "*" in backup_client.protected_resources
+                in protected_resources
+                or "*" in protected_resources
             ):
                 report.status = "PASS"
                 report.status_extended = (
