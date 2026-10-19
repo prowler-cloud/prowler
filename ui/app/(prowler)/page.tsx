@@ -11,7 +11,9 @@ import {
   AppSidebarModeSync,
 } from "@/components/layout/app-sidebar";
 import { ContentLayout } from "@/components/shadcn/content-layout";
+import { FeatureFlagGate } from "@/components/shared/feature-flag-gate";
 import { DOCS_URLS } from "@/lib/external-urls";
+import { FEATURE_FLAG } from "@/lib/feature-flags";
 import { isCloud } from "@/lib/shared/env";
 import { SearchParamsProps } from "@/types";
 
@@ -103,9 +105,11 @@ export default async function Home({
         </Suspense>
 
         {isCloud() && (
-          <Suspense fallback={<ExploitabilityChartSkeleton />}>
-            <ExploitabilityChartSSR searchParams={resolvedSearchParams} />
-          </Suspense>
+          <FeatureFlagGate flag={FEATURE_FLAG.ISSUES}>
+            <Suspense fallback={<ExploitabilityChartSkeleton />}>
+              <ExploitabilityChartSSR searchParams={resolvedSearchParams} />
+            </Suspense>
+          </FeatureFlagGate>
         )}
 
         <Suspense fallback={<StatusChartSkeleton />}>
@@ -154,9 +158,11 @@ export default async function Home({
             <AttackSurfaceSSR searchParams={resolvedSearchParams} />
           </Suspense>
           {isCloud() && (
-            <Suspense fallback={<TopIssuesSkeleton />}>
-              <TopIssuesSSR searchParams={resolvedSearchParams} />
-            </Suspense>
+            <FeatureFlagGate flag={FEATURE_FLAG.ISSUES}>
+              <Suspense fallback={<TopIssuesSkeleton />}>
+                <TopIssuesSSR searchParams={resolvedSearchParams} />
+              </Suspense>
+            </FeatureFlagGate>
           )}
           <Suspense fallback={<FindingSeverityOverTimeSkeleton />}>
             <FindingSeverityOverTimeSSR searchParams={resolvedSearchParams} />

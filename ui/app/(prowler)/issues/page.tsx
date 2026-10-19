@@ -7,6 +7,8 @@ import { getAllProviders } from "@/actions/providers";
 import { ProviderAccountSelectors } from "@/components/filters/provider-account-selectors";
 import { ProviderGroupSelector } from "@/components/filters/provider-group-selector";
 import { ContentLayout } from "@/components/shadcn/content-layout";
+import { FeatureFlagGate } from "@/components/shared/feature-flag-gate";
+import { FEATURE_FLAG } from "@/lib/feature-flags";
 import { isCloud } from "@/lib/shared/env";
 import { SearchParamsProps } from "@/types";
 
@@ -27,22 +29,39 @@ export default async function Issues({
 
   return (
     <ContentLayout title="Issues" icon={<ShieldAlert />}>
-      <Suspense
+      {/* Deployment gate above (notFound); per-account rollout here. The route
+          stays reachable by URL, so the off state explains itself. */}
+      <FeatureFlagGate
+        flag={FEATURE_FLAG.ISSUES}
         fallback={
-          <p className="text-text-neutral-tertiary text-sm">Loading issues…</p>
+          <p className="text-text-neutral-tertiary text-sm">
+            Issues is not available for this account yet.
+          </p>
         }
       >
-        <IssuesList
-          searchParams={resolvedSearchParams}
-          filters={
-            // Same layout as the overview's selector row.
-            <div className="mb-6 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-              <ProviderAccountSelectors providers={providersData?.data ?? []} />
-              <ProviderGroupSelector groups={providerGroupsData?.data ?? []} />
-            </div>
+        <Suspense
+          fallback={
+            <p className="text-text-neutral-tertiary text-sm">
+              Loading issues…
+            </p>
           }
-        />
-      </Suspense>
+        >
+          <IssuesList
+            searchParams={resolvedSearchParams}
+            filters={
+              // Same layout as the overview's selector row.
+              <div className="mb-6 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+                <ProviderAccountSelectors
+                  providers={providersData?.data ?? []}
+                />
+                <ProviderGroupSelector
+                  groups={providerGroupsData?.data ?? []}
+                />
+              </div>
+            }
+          />
+        </Suspense>
+      </FeatureFlagGate>
     </ContentLayout>
   );
 }
