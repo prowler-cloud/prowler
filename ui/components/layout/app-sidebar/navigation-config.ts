@@ -68,7 +68,6 @@ function getCloudFeature({
     href,
     label,
     active,
-    highlight: true,
   };
 }
 
