@@ -37,23 +37,27 @@ const TONE_BADGE: Record<VerdictTone, ComponentProps<typeof Badge>["variant"]> =
     [VERDICT_TONE.neutral]: "tag",
   };
 
+/**
+ * A combined verdict filter (the overview's "exploitable or likely" link)
+ * selects no single tab, so the tabs it covers are marked by hand.
+ */
+const HIGHLIGHT = "text-slate-900 after:scale-x-100 dark:text-white";
+
+/** Filters the issue list understands but no control on this page sets. */
 const EXTRA_FILTER_LABELS = {
   "filter[pattern]": "Pattern",
   "filter[cloud]": "Cloud",
   "filter[severity]": "Severity",
   "filter[provider_type]": "Provider type",
   "filter[provider_alias]": "Account",
-  "filter[verdict__in]": "Verdicts",
 } as const;
 
 export function VerdictFilter({ summary }: { summary?: VerdictSummary }) {
   const searchParams = useSearchParams();
   const { clearFilter, navigateWithParams } = useUrlFilters();
   const active = searchParams.get("filter[verdict]");
-  const multiple = searchParams.get("filter[verdict__in]");
-  // A combined verdict filter (the overview's "exploitable or likely" link)
-  // is shown as a chip below; no single tab owns it.
-  const value = multiple ? "" : (active ?? ALL_TAB);
+  const combined = searchParams.get("filter[verdict__in]")?.split(",") ?? [];
+  const value = combined.length ? "" : (active ?? ALL_TAB);
 
   const handleChange = (next: string) => {
     navigateWithParams((params) => {
@@ -70,6 +74,7 @@ export function VerdictFilter({ summary }: { summary?: VerdictSummary }) {
       count: summary?.total,
       underline: "",
       badge: "tag" as const,
+      highlighted: false,
     },
     ...VERDICTS.map(({ id, label, tone }) => ({
       id,
@@ -77,22 +82,12 @@ export function VerdictFilter({ summary }: { summary?: VerdictSummary }) {
       count: summary?.counts[id],
       underline: TONE_UNDERLINE[tone],
       badge: TONE_BADGE[tone],
+      highlighted: combined.includes(id),
     })),
   ];
   const chips = Object.entries(EXTRA_FILTER_LABELS).flatMap(([key, label]) => {
-    const value = searchParams.get(key);
-    if (!value) return [];
-    const displayValue =
-      key === "filter[verdict__in]"
-        ? value
-            .split(",")
-            .map(
-              (id) =>
-                VERDICTS.find((verdict) => verdict.id === id)?.label ?? id,
-            )
-            .join(", ")
-        : value;
-    return [{ key, label, value, displayValue }];
+    const chipValue = searchParams.get(key);
+    return chipValue ? [{ key, label, value: chipValue }] : [];
   });
 
   return (
@@ -105,7 +100,12 @@ export function VerdictFilter({ summary }: { summary?: VerdictSummary }) {
                 <TabsTrigger
                   key={tab.id}
                   value={tab.id}
-                  className={cn("shrink-0", tab.underline)}
+                  data-highlighted={tab.highlighted || undefined}
+                  className={cn(
+                    "shrink-0",
+                    tab.underline,
+                    tab.highlighted && HIGHLIGHT,
+                  )}
                   aria-label={
                     tab.count === undefined
                       ? undefined
@@ -134,11 +134,15 @@ export function VerdictFilter({ summary }: { summary?: VerdictSummary }) {
           ) : null}
         </div>
       </Tabs>
-      <FilterSummaryStrip
-        chips={chips}
-        onRemove={(key) => clearFilter(key)}
-        trailingContent={<ClearFiltersButton />}
-      />
+      {/* Only filters that arrived by link get a chip; the tabs and the scope
+          selectors are their own controls, so they never need one. */}
+      {chips.length ? (
+        <FilterSummaryStrip
+          chips={chips}
+          onRemove={(key) => clearFilter(key)}
+          trailingContent={<ClearFiltersButton />}
+        />
+      ) : null}
     </div>
   );
 }

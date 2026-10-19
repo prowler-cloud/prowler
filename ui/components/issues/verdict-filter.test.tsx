@@ -67,30 +67,46 @@ describe("VerdictFilter", () => {
     expect(params.get("filter[verdict]")).toBe("exploitable");
   });
 
-  it("clears the verdict from the All tab, replacing a combined filter", async () => {
+  it("marks the tabs a combined filter covers and lets All replace it", async () => {
     const user = userEvent.setup();
     navigationState.searchParams = new URLSearchParams(
       "filter[verdict__in]=exploitable,likely",
     );
     render(<VerdictFilter summary={{ counts, total: 2, findings: 9 }} />);
 
-    // The combined filter is a chip, not a tab.
+    // No single tab owns the combined filter, so none is selected...
     expect(
       screen
         .getAllByRole("tab")
         .every((tab) => tab.getAttribute("aria-selected") === "false"),
     ).toBe(true);
+    // ...but the covered tabs are marked, and there is no chip for it.
     expect(
-      screen.getByRole("button", {
-        name: "Remove Verdicts filter: Exploitable, Likely",
-      }),
-    ).toBeInTheDocument();
+      screen.getByRole("tab", { name: "Exploitable, 2 issues" }),
+    ).toHaveAttribute("data-highlighted", "true");
+    expect(
+      screen.getByRole("tab", { name: "Likely, 0 issues" }),
+    ).toHaveAttribute("data-highlighted", "true");
+    expect(
+      screen.getByRole("tab", { name: "Conditional, 0 issues" }),
+    ).not.toHaveAttribute("data-highlighted");
+    expect(screen.queryByRole("button", { name: /Remove/ })).toBeNull();
 
     await user.click(screen.getByRole("tab", { name: "All, 2 issues" }));
 
     expect(navigationState.push).toHaveBeenLastCalledWith("/issues", {
       scroll: false,
     });
+  });
+
+  it("shows no chip strip for a verdict picked from the tabs", () => {
+    navigationState.searchParams = new URLSearchParams(
+      "filter[verdict]=likely",
+    );
+    render(<VerdictFilter summary={{ counts, total: 2, findings: 9 }} />);
+
+    expect(screen.queryByRole("button", { name: "Clear All" })).toBeNull();
+    expect(screen.queryByRole("button", { name: /Remove/ })).toBeNull();
   });
 
   it("shows the pattern filter and lets the user remove it", async () => {

@@ -25,7 +25,7 @@ export const IssuesList = async ({
   filters: filterControls,
 }: {
   searchParams: SearchParamsProps;
-  /** The scope selectors, rendered between the verdict tabs and the table. */
+  /** The scope selectors, rendered above the verdict tabs: they scope every tab. */
   filters?: ReactNode;
 }) => {
   const filters: Record<string, string> = {};
@@ -65,6 +65,8 @@ export const IssuesList = async ({
         <IssuesLoadError message="Failed to load issue summary." />
       )}
 
+      {filterControls}
+
       <VerdictFilter
         summary={
           attributes
@@ -76,8 +78,6 @@ export const IssuesList = async ({
             : undefined
         }
       />
-
-      {filterControls}
 
       {rows === null ? (
         <IssuesLoadError />
