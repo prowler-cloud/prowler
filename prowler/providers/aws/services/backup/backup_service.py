@@ -16,6 +16,11 @@ from prowler.providers.aws.lib.service.service import AWSService
 
 class Backup(AWSService):
     def __init__(self, provider):
+        """Collect Backup resources and selections for the audited provider.
+
+        Args:
+            provider: AWS provider supplying sessions, regions, and audit settings.
+        """
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
         self.backup_plan_arn_template = f"arn:{self.audited_partition}:backup:{self.region}:{self.audited_account}:backup-plan"
@@ -158,6 +163,14 @@ class Backup(AWSService):
             )
 
     def _list_backup_selections(self, regional_client):
+        """Collect selection inclusions and exclusions for the known backup plans.
+
+        Keep each selection's Resources and NotResources together while retaining
+        the flattened Resources list for existing callers.
+
+        Args:
+            regional_client: Regional Backup client used to retrieve selections.
+        """
         logger.info("Backup - Listing Backup Selections...")
         try:
             for backup_plan in self.backup_plans:
