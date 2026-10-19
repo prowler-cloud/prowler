@@ -139,7 +139,7 @@ describe("getNavigationConfig", () => {
     expect(labels).not.toContain("Issues");
   });
 
-  it("uses Cloud destinations and current New badges", () => {
+  it("uses Cloud destinations and keeps Configuration children unbadged", () => {
     // Given
     vi.stubEnv("UI_CLOUD_ENABLED", "true");
 
@@ -166,12 +166,14 @@ describe("getNavigationConfig", () => {
         expect.objectContaining({ label: "CLI Import" }),
       ]),
     );
-    expect(
-      configuration.children.find((item) => item.label === "Alerts"),
-    ).toEqual(expect.objectContaining({ highlight: true }));
-    expect(
-      configuration.children.find((item) => item.label === "Scans"),
-    ).toEqual(expect.objectContaining({ active: true, highlight: true }));
+    const alerts = configuration.children.find(
+      (item) => item.label === "Alerts",
+    );
+    const scans = configuration.children.find((item) => item.label === "Scans");
+    expect(alerts).toMatchObject({ href: "/alerts" });
+    expect(alerts).not.toHaveProperty("highlight");
+    expect(scans).toMatchObject({ href: "/scans/config", active: true });
+    expect(scans).not.toHaveProperty("highlight");
     expect(items.find((item) => item.label === "Attack Paths")).not.toEqual(
       expect.objectContaining({ highlight: true }),
     );
