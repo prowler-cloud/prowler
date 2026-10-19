@@ -12,11 +12,12 @@ class ec2_ebs_volume_protected_by_backup_plan(Check):
             report.status_extended = (
                 f"EBS Volume {volume.id} is not protected by a backup plan."
             )
+            protected_resources = backup_client.get_protected_resources(volume.arn)
             if (
-                volume.arn in backup_client.protected_resources
+                volume.arn in protected_resources
                 or f"arn:{ec2_client.audited_partition}:ec2:*:*:volume/*"
-                in backup_client.protected_resources
-                or "*" in backup_client.protected_resources
+                in protected_resources
+                or "*" in protected_resources
             ):
                 report.status = "PASS"
                 report.status_extended = (
