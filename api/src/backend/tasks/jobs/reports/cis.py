@@ -172,14 +172,10 @@ class CISReportGenerator(BaseComplianceReportGenerator):
 
         # Metadata table via base class helper
         info_rows = self._build_info_rows(data, language=self.config.language)
-        metadata_data = []
-        for label, value in info_rows:
-            if label in ("Name:", "Description:") and value:
-                metadata_data.append(
-                    [label, Paragraph(str(value), self.styles["normal_center"])]
-                )
-            else:
-                metadata_data.append([label, value])
+        metadata_data = [
+            [label, Paragraph(escape_html(str(value)), self.styles["normal_center"])]
+            for label, value in info_rows
+        ]
 
         metadata_table = Table(metadata_data, colWidths=[2 * inch, 4 * inch])
         metadata_table.setStyle(

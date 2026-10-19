@@ -4,6 +4,29 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [1.45.0] (Prowler v5.45.0)
+
+### 🚀 Added
+
+- Option to invite a teammate from the AWS connect step when the user cannot access the account credentials [(#12917)](https://github.com/prowler-cloud/prowler/pull/12917)
+
+### 🐞 Fixed
+
+- Required home region selector in the OCI credentials form, so tenancies not subscribed to us-ashburn-1 can connect [(#12865)](https://github.com/prowler-cloud/prowler/pull/12865)
+- First-login redirect to the add-provider wizard is retried on the next load when the navigation was cut short, on Cloud and self-hosted alike, instead of being written off after a single attempt [(#12914)](https://github.com/prowler-cloud/prowler/pull/12914)
+- Slack partial channel list message tells the user to invite the app to a missing channel [(#13036)](https://github.com/prowler-cloud/prowler/pull/13036)
+- Registry provider discovery distinguishes paid-plan upgrades, missing credentials, and connection failures [(#13038)](https://github.com/prowler-cloud/prowler/pull/13038)
+
+### 🔐 Security
+
+- `next` to 16.3.6, patching a remote code execution in `next/og` `ImageResponse` (GHSA-vcvr-r3jv-pc5j) [(#12922)](https://github.com/prowler-cloud/prowler/pull/12922)
+- Kubernetes kubeconfig form validation accepts only inline credentials and known cluster fields, rejecting file-path, command-based, `auth-provider`, proxy URL and unknown fields before submission [(#12952)](https://github.com/prowler-cloud/prowler/pull/12952)
+- `proxy-addr` to 2.0.8, patching IP spoofing through IPv4-mapped IPv6 trust subnets (GHSA-jqcg-44mw-7w3h) [(#12957)](https://github.com/prowler-cloud/prowler/pull/12957)
+- `sharp` to 0.35.5, patching a librsvg memory vulnerability that can lead to remote code execution on glibc-based Linux (GHSA-wq5f-xc86-pv6w) [(#12968)](https://github.com/prowler-cloud/prowler/pull/12968)
+- `next` to 16.3.8, patching a server-side request forgery in Image Optimization (GHSA-cjq9-62q9-8jv4) [(#12987)](https://github.com/prowler-cloud/prowler/pull/12987)
+
+---
+
 ## [1.44.0] (Prowler v5.44.0)
 
 ### 🚀 Added

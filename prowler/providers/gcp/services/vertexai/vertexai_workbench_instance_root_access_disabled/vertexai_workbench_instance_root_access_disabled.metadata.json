@@ -1,0 +1,38 @@
+{
+  "Provider": "gcp",
+  "CheckID": "vertexai_workbench_instance_root_access_disabled",
+  "CheckTitle": "Vertex AI Workbench instance has root access disabled",
+  "CheckType": [],
+  "ServiceName": "vertexai",
+  "SubServiceName": "workbench",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "notebooks.googleapis.com/Instance",
+  "ResourceGroup": "ai_ml",
+  "Description": "**Vertex AI Workbench instances** give the JupyterLab user **passwordless sudo** by default. The finding determines whether root access is disabled by setting the `notebook-disable-root` instance metadata key to `true`.",
+  "Risk": "With root access, a notebook user, or any malicious package, model, or notebook they run, can:\n- **Integrity**: tamper with the OS, Jupyter server, and libraries, or install persistent backdoors\n- **Confidentiality**: read every user's files and credentials on the VM\n- **Defense evasion**: disable monitoring agents and audit tooling",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://cloud.google.com/vertex-ai/docs/workbench/instances/manage-metadata",
+    "https://cloud.google.com/vertex-ai/docs/workbench/instances/introduction"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "gcloud workbench instances update <example_resource_name> --location=<example_zone> --metadata=notebook-disable-root=true",
+      "NativeIaC": "",
+      "Other": "1. In Google Cloud Console, go to Vertex AI > Workbench > Instances\n2. Click the instance name and open the Software and security tab\n3. Under Metadata, add the key notebook-disable-root with the value true\n4. Click Submit and restart the instance if prompted",
+      "Terraform": "```hcl\nresource \"google_workbench_instance\" \"<example_resource_name>\" {\n  name     = \"<example_resource_name>\"\n  location = \"<example_zone>\"\n\n  gce_setup {\n    metadata = {\n      notebook-disable-root = \"true\" # FIX: Removes passwordless sudo for the notebook user\n    }\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Disable root access on Workbench instances and apply **least privilege** to notebook users.\n- Install required packages in user space (`pip install --user`, virtual environments, or custom containers)\n- Build approved images for system-level dependencies instead of granting sudo\n- Attach a dedicated, minimally scoped **service account** to each instance",
+      "Url": "https://hub.prowler.com/check/vertexai_workbench_instance_root_access_disabled"
+    }
+  },
+  "Categories": [
+    "identity-access",
+    "gen-ai"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
