@@ -49,8 +49,9 @@ export default async function Issues({
           <IssuesList
             searchParams={resolvedSearchParams}
             filters={
-              // Same layout as the overview's selector row.
-              <div className="mb-6 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+              // The three scope selectors share one row on desktop, like the
+              // other list pages.
+              <div className="mb-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 <ProviderAccountSelectors
                   providers={providersData?.data ?? []}
                 />

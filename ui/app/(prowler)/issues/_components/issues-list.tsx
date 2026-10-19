@@ -2,7 +2,6 @@ import { ReactNode } from "react";
 
 import { getIssues, getIssuesOverview } from "@/actions/issues";
 import { IssuesLoadError } from "@/components/issues/issues-load-error";
-import { IssuesSummary } from "@/components/issues/issues-summary";
 import { IssuesTable } from "@/components/issues/issues-table";
 import { VerdictFilter } from "@/components/issues/verdict-filter";
 import { ISSUE_SCOPE_KEYS } from "@/lib/issues/scope";
@@ -26,7 +25,7 @@ export const IssuesList = async ({
   filters: filterControls,
 }: {
   searchParams: SearchParamsProps;
-  /** The scope selectors, rendered between the verdict chips and the table. */
+  /** The scope selectors, rendered between the verdict tabs and the table. */
   filters?: ReactNode;
 }) => {
   const filters: Record<string, string> = {};
@@ -62,16 +61,18 @@ export const IssuesList = async ({
 
   return (
     <>
-      {attributes ? (
-        <IssuesSummary overview={attributes} />
-      ) : (
+      {attributes ? null : (
         <IssuesLoadError message="Failed to load issue summary." />
       )}
 
       <VerdictFilter
         summary={
           attributes
-            ? { counts: verdictCounts(attributes), total: attributes.issues }
+            ? {
+                counts: verdictCounts(attributes),
+                total: attributes.issues,
+                findings: attributes.findings,
+              }
             : undefined
         }
       />

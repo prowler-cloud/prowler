@@ -1,19 +1,41 @@
 "use client";
 
-import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { ComponentProps } from "react";
 
 import { ClearFiltersButton } from "@/components/filters/clear-filters-button";
 import { FilterSummaryStrip } from "@/components/filters/filter-summary-strip";
-import { Button } from "@/components/shadcn/button/button";
+import { Badge, Tabs, TabsList, TabsTrigger } from "@/components/shadcn";
 import { useUrlFilters } from "@/hooks/use-url-filters";
-import { VERDICTS } from "@/lib/issues/verdicts";
+import { VERDICT_TONE, VERDICTS, VerdictTone } from "@/lib/issues/verdicts";
+import { cn } from "@/lib/utils";
 import type { Verdict } from "@/types/issues";
 
 interface VerdictSummary {
   counts: Record<Verdict, number>;
+  /** Issues in scope, whatever their verdict. */
   total: number;
+  /** Failed findings those issues fold. */
+  findings: number;
 }
+
+const ALL_TAB = "all";
+
+/** The active tab takes the verdict's colour instead of the default accent. */
+const TONE_UNDERLINE: Record<VerdictTone, string> = {
+  [VERDICT_TONE.fail]: "after:bg-bg-fail",
+  [VERDICT_TONE.warning]: "after:bg-bg-data-medium",
+  [VERDICT_TONE.pass]: "after:bg-bg-pass",
+  [VERDICT_TONE.neutral]: "after:bg-bg-data-muted",
+};
+
+const TONE_BADGE: Record<VerdictTone, ComponentProps<typeof Badge>["variant"]> =
+  {
+    [VERDICT_TONE.fail]: "error",
+    [VERDICT_TONE.warning]: "warning",
+    [VERDICT_TONE.pass]: "success",
+    [VERDICT_TONE.neutral]: "tag",
+  };
 
 const EXTRA_FILTER_LABELS = {
   "filter[pattern]": "Pattern",
@@ -26,26 +48,35 @@ const EXTRA_FILTER_LABELS = {
 
 export function VerdictFilter({ summary }: { summary?: VerdictSummary }) {
   const searchParams = useSearchParams();
-  const { clearFilter } = useUrlFilters();
+  const { clearFilter, navigateWithParams } = useUrlFilters();
   const active = searchParams.get("filter[verdict]");
   const multiple = searchParams.get("filter[verdict__in]");
+  // A combined verdict filter (the overview's "exploitable or likely" link)
+  // is shown as a chip below; no single tab owns it.
+  const value = multiple ? "" : (active ?? ALL_TAB);
 
-  const hrefFor = (verdict: Verdict | null) => {
-    const params = new URLSearchParams(searchParams.toString());
-    params.delete("page");
-    params.delete("filter[verdict__in]");
-    if (verdict === null || active === verdict)
-      params.delete("filter[verdict]");
-    else params.set("filter[verdict]", verdict);
-    return params.size ? `/issues?${params}` : "/issues";
+  const handleChange = (next: string) => {
+    navigateWithParams((params) => {
+      params.delete("filter[verdict__in]");
+      if (next === ALL_TAB) params.delete("filter[verdict]");
+      else params.set("filter[verdict]", next);
+    });
   };
 
-  const options = [
-    { id: null, label: "All", count: summary?.total },
-    ...VERDICTS.map(({ id, label }) => ({
+  const tabs = [
+    {
+      id: ALL_TAB,
+      label: "All",
+      count: summary?.total,
+      underline: "",
+      badge: "tag" as const,
+    },
+    ...VERDICTS.map(({ id, label, tone }) => ({
       id,
       label,
       count: summary?.counts[id],
+      underline: TONE_UNDERLINE[tone],
+      badge: TONE_BADGE[tone],
     })),
   ];
   const chips = Object.entries(EXTRA_FILTER_LABELS).flatMap(([key, label]) => {
@@ -66,34 +97,43 @@ export function VerdictFilter({ summary }: { summary?: VerdictSummary }) {
 
   return (
     <div className="mb-6 flex flex-col gap-4">
-      <div
-        className="flex flex-wrap gap-2"
-        role="group"
-        aria-label="Filter issues by verdict"
-      >
-        {options.map((option) => {
-          const isActive =
-            !multiple &&
-            (active === option.id || (!active && option.id === null));
-          return (
-            <Button
-              key={option.id ?? "all"}
-              asChild
-              variant={isActive ? "default" : "outline"}
-              size="sm"
-            >
-              <Link
-                href={hrefFor(option.id)}
-                aria-current={isActive ? "true" : undefined}
-                scroll={false}
-              >
-                {option.label}
-                {option.count === undefined ? "" : ` ${option.count}`}
-              </Link>
-            </Button>
-          );
-        })}
-      </div>
+      <Tabs value={value} onValueChange={handleChange}>
+        <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
+          <div className="min-w-0 overflow-x-auto">
+            <TabsList aria-label="Filter issues by verdict">
+              {tabs.map((tab) => (
+                <TabsTrigger
+                  key={tab.id}
+                  value={tab.id}
+                  className={cn("shrink-0", tab.underline)}
+                  aria-label={
+                    tab.count === undefined
+                      ? undefined
+                      : `${tab.label}, ${tab.count.toLocaleString()} ${tab.count === 1 ? "issue" : "issues"}`
+                  }
+                  adornment={
+                    tab.count === undefined ? undefined : (
+                      <Badge variant={tab.badge} size="sm">
+                        {tab.count.toLocaleString()}
+                      </Badge>
+                    )
+                  }
+                >
+                  {tab.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </div>
+          {summary ? (
+            // The fold: how much noise the issue count removed.
+            <p className="text-text-neutral-tertiary text-xs">
+              {summary.findings.toLocaleString()} failed findings folded into{" "}
+              {summary.total.toLocaleString()}{" "}
+              {summary.total === 1 ? "issue" : "issues"}
+            </p>
+          ) : null}
+        </div>
+      </Tabs>
       <FilterSummaryStrip
         chips={chips}
         onRemove={(key) => clearFilter(key)}
