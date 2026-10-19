@@ -47,6 +47,35 @@ def make_apiserver_pod(
     )
 
 
+def make_apiserver_pod_with_containers(
+    commands,
+    name="kube-apiserver-node-1",
+    uid="kube-apiserver-node-1-uid",
+):
+    return Pod(
+        name=name,
+        uid=uid,
+        namespace="kube-system",
+        labels=None,
+        annotations=None,
+        node_name=None,
+        service_account=None,
+        status_phase="Running",
+        pod_ip="10.0.0.1",
+        host_ip="192.168.1.1",
+        host_pid=False,
+        host_ipc=False,
+        host_network=False,
+        security_context={},
+        containers={
+            f"kube-apiserver-{i}": make_apiserver_container(
+                command=command, name=f"kube-apiserver-{i}"
+            )
+            for i, command in enumerate(commands)
+        },
+    )
+
+
 def run_check(module_path, class_name, pods):
     mock_client = mock.MagicMock()
     mock_client.apiserver_pods = pods
