@@ -3,18 +3,49 @@ import { ComponentProps } from "react";
 import { Badge } from "@/components/shadcn/badge/badge";
 import { LegName, LegState, Verdict } from "@/types/issues";
 
+/** The colour family a verdict reads in, shared by the overview card and the tabs. */
+export const VERDICT_TONE = {
+  fail: "fail",
+  warning: "warning",
+  pass: "pass",
+  neutral: "neutral",
+} as const;
+
+export type VerdictTone = (typeof VERDICT_TONE)[keyof typeof VERDICT_TONE];
+
 interface VerdictDisplay {
   id: Verdict;
   label: string;
   variant: ComponentProps<typeof Badge>["variant"];
+  tone: VerdictTone;
 }
 
 export const VERDICTS: VerdictDisplay[] = [
-  { id: "exploitable", label: "Exploitable", variant: "error" },
-  { id: "likely", label: "Likely", variant: "error" },
-  { id: "conditional", label: "Conditional", variant: "outline" },
-  { id: "not_exploitable", label: "Not exploitable", variant: "success" },
-  { id: "unknown", label: "Unknown", variant: "tag" },
+  {
+    id: "exploitable",
+    label: "Exploitable",
+    variant: "error",
+    tone: VERDICT_TONE.fail,
+  },
+  { id: "likely", label: "Likely", variant: "error", tone: VERDICT_TONE.fail },
+  {
+    id: "conditional",
+    label: "Conditional",
+    variant: "outline",
+    tone: VERDICT_TONE.warning,
+  },
+  {
+    id: "not_exploitable",
+    label: "Not exploitable",
+    variant: "success",
+    tone: VERDICT_TONE.pass,
+  },
+  {
+    id: "unknown",
+    label: "Unknown",
+    variant: "tag",
+    tone: VERDICT_TONE.neutral,
+  },
 ];
 
 const LEG_GOOD_WHEN_YES: Record<LegName, boolean> = {
