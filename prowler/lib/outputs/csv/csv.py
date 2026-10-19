@@ -4,7 +4,7 @@ from typing import List
 from prowler.lib.logger import logger
 from prowler.lib.outputs.finding import Finding
 from prowler.lib.outputs.output import Output
-from prowler.lib.outputs.utils import unroll_dict, unroll_list
+from prowler.lib.outputs.utils import sanitize_csv_value, unroll_dict, unroll_list
 
 
 class CSV(Output):
@@ -106,7 +106,9 @@ class CSV(Output):
                 if self._file_descriptor.tell() == 0:
                     csv_writer.writeheader()
                 for finding in self._data:
-                    csv_writer.writerow(finding)
+                    csv_writer.writerow(
+                        {k: sanitize_csv_value(v) for k, v in finding.items()}
+                    )
                 if self.close_file or self._from_cli:
                     self._file_descriptor.close()
         except Exception as error:

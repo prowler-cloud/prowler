@@ -4,6 +4,68 @@ description: "New features and improvements in each Prowler release"
 rss: true
 ---
 
+<Update label="v5.45.0" description="October 15, 2026">
+  ### 🤖 Azure — AI Services Coverage
+
+  A new Azure AI Services service audits the Azure AI and Azure OpenAI accounts of each subscription, with nine checks across network exposure, authentication, encryption, identity, logging and content safety, all contributed by @rajeshnadiminti. Thank you!
+
+  - `aiservices_account_public_network_access_disabled`, `aiservices_account_network_acls_default_action_deny`, `aiservices_account_uses_private_endpoint` and `aiservices_account_outbound_network_restricted` cover how the account can be reached and what it can reach.
+  - `aiservices_account_local_auth_disabled` and `aiservices_account_managed_identity_enabled` cover key-based access and the account's own identity.
+  - `aiservices_account_encrypted_with_cmk` and `aiservices_account_diagnostic_logging_enabled` cover customer-managed key encryption and diagnostic logs.
+  - `aiservices_deployment_content_filter_prompt_shield_enabled` verifies that model deployments have Prompt Shields enabled in their content filter.
+
+  ### 🪪 Microsoft 365 — New Entra ID Checks
+
+  Five new Entra ID checks, all contributed by @kinomakino. Thank you!
+
+  - `entra_cross_tenant_access_default_outbound_restricted` verifies that the default cross-tenant access policy does not let every user reach every external application through B2B collaboration or B2B direct connect.
+  - `entra_policy_admin_self_service_password_reset_disabled` verifies that Self-Service Password Reset is disabled for administrators.
+  - `entra_policy_msol_powershell_blocked` verifies that the tenant authorization policy blocks the legacy MSOnline PowerShell module.
+  - `entra_app_registration_redirect_uris_secure` flags app registrations with HTTP, wildcard, malformed or `azurewebsites.net` redirect URIs.
+  - `entra_dynamic_group_member_of_rule_not_used` flags dynamic groups whose membership rule uses the `memberOf` operator, which Microsoft retires on November 3, 2026.
+
+  Explore all checks at [Prowler Hub](https://hub.prowler.com/check).
+
+  ### ☁️ OCI — Connect Tenancies Outside us-ashburn-1
+
+  OCI API key credentials now take a home region, and the credentials form in Prowler App requires it. Identity calls that validate the credentials and discover the subscribed regions used to go to `us-ashburn-1` regardless of the tenancy, so a tenancy not subscribed to that region could not connect. The home region is only used for that bootstrap; scans still audit every subscribed region.
+
+  Read more in the [Getting Started with OCI documentation](https://docs.prowler.com/user-guide/providers/oci/getting-started-oci).
+
+  ### 🛠️ Improvements and Fixes
+
+  - **AWS:** Organizations metadata is fetched from the partition of the audited account, using the region that answered the STS bootstrap, instead of the commercial `us-east-1` endpoint, which timed out in GovCloud.
+  - API Gunicorn workers are recycled after 10,000 requests, plus up to 1,000 of jitter, to cap memory growth. Both values are configurable with `GUNICORN_MAX_REQUESTS` and `GUNICORN_MAX_REQUESTS_JITTER`.
+  - The first-login redirect to the Add Provider wizard is retried on the next load when the navigation was cut short, instead of being written off after a single attempt.
+  - The AWS connect step offers to invite a teammate when the user cannot access the account credentials.
+  - **Prowler Cloud:** the Slack channel picker reads the channels the Prowler app is in before the public ones, so invited private channels show up in large workspaces, and the partial list message tells the user to invite the app to a missing channel.
+
+  ### 🔐 Security Updates
+
+  - Kubernetes kubeconfigs accept only inline credentials and known cluster fields. File-path fields, command-based authentication, `auth-provider` directives, proxy URLs and unknown keys are rejected by the API and the credentials form, and stored kubeconfigs are re-validated before each scan and connection test.
+  - IaC repository URLs that resolve to loopback, private or otherwise non-public hosts are rejected before the connection test and the scan clone, including every destination a redirect points to.
+  - CSV outputs prefix cells starting with `=`, `+`, `-`, `@`, tab or carriage return with a single quote so spreadsheet applications treat them as text, and the HTML report escapes the compliance column.
+  - `GET /api/v1/users/{id}` no longer exposes another user's memberships, roles or tenant names from tenants other than the one in the request token.
+  - API error reports sent to Sentry no longer include user identity, IP addresses, cookies, headers or request bodies.
+  - PowerShell upgraded to 7.5.12 in the SDK and API container images, bundling .NET runtime 9.0.21.
+  - Python base images upgraded to 3.12.15 in the SDK and API and to 3.13.16 in the MCP Server, and Trivy to 0.75.0, patching CVE-2026-19445, CVE-2026-19553 and the grpc-go and x/crypto CVEs bundled in Trivy.
+  - `django` upgraded to 5.2.17 in the API, patching CVE-2026-15307.
+  - `pyjwt` upgraded to 2.14.0 in the SDK, the API and the MCP Server, patching GHSA-ffc3-869f-jxw9.
+  - `pymongo` upgraded to 4.18.2 and `urllib3` to 2.8.0 in the SDK and the API, patching CVE-2026-96748, CVE-2026-96749, CVE-2026-97687 and CVE-2026-97689.
+  - `dulwich` upgraded to 1.2.9 in the SDK and the API, patching GHSA-5fqc-mrg8-w798, GHSA-8mcx-5rqc-vhmf, GHSA-8w8g-wq8h-fq33 and GHSA-cm62-gvxx-vmxx.
+  - `next` upgraded to 16.3.8 in the UI, patching a remote code execution in `next/og` (GHSA-vcvr-r3jv-pc5j) and a server-side request forgery in Image Optimization (GHSA-cjq9-62q9-8jv4).
+  - `sharp` upgraded to 0.35.5 and `proxy-addr` to 2.0.8 in the UI, patching GHSA-wq5f-xc86-pv6w and GHSA-jqcg-44mw-7w3h.
+
+  ### 🙌 External Contributors
+
+  Thank you to our community contributors for this release!
+
+  - @rajeshnadiminti: Azure AI Services service and its checks ([#12925](https://github.com/prowler-cloud/prowler/pull/12925), [#12926](https://github.com/prowler-cloud/prowler/pull/12926), [#12997](https://github.com/prowler-cloud/prowler/pull/12997))
+  - @kinomakino: Microsoft 365 `entra_cross_tenant_access_default_outbound_restricted` ([#12991](https://github.com/prowler-cloud/prowler/pull/12991)), `entra_policy_admin_self_service_password_reset_disabled` ([#12990](https://github.com/prowler-cloud/prowler/pull/12990)), `entra_policy_msol_powershell_blocked` ([#13004](https://github.com/prowler-cloud/prowler/pull/13004)), `entra_app_registration_redirect_uris_secure` ([#12993](https://github.com/prowler-cloud/prowler/pull/12993)) and `entra_dynamic_group_member_of_rule_not_used` ([#13003](https://github.com/prowler-cloud/prowler/pull/13003)) checks
+
+  See the [full release notes on GitHub](https://github.com/prowler-cloud/prowler/releases/tag/5.45.0) for the complete list of changes.
+</Update>
+
 <Update label="v5.44.0" description="September 29, 2026">
   ### 🔁 Findings — Re-check a Resource with a Partial Scan
 

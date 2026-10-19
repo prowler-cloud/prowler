@@ -215,10 +215,21 @@ export const PAID_PLAN_UPGRADE_ADMIN_NOTE =
 const CLOUD_UTM_SOURCE = "prowler-cloud";
 
 const PAID_PLAN_UPGRADE_UTM_CONTENT = {
+  [PAID_PLAN_UPGRADE_FEATURE.REGISTRY]: "registry",
   [PAID_PLAN_UPGRADE_FEATURE.REPORT_DOWNLOAD]: "report-download",
 } as const satisfies Record<PaidPlanUpgradeFeature, string>;
 
 export const PAID_PLAN_UPGRADE_CONTENT = {
+  [PAID_PLAN_UPGRADE_FEATURE.REGISTRY]: {
+    title: "Unlock Prowler Registry",
+    description: "Prowler Registry is included in paid plans.",
+    benefits: [
+      "Connect custom cloud providers",
+      "Extend your assessments with custom security checks",
+      "Use private compliance frameworks across your accounts",
+    ],
+    primaryCta: "Upgrade to Unlock Registry",
+  },
   [PAID_PLAN_UPGRADE_FEATURE.REPORT_DOWNLOAD]: {
     title: "Download Your Scan Reports",
     description: "Report downloads are included in Prowler Cloud paid plans.",
