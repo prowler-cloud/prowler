@@ -5,6 +5,14 @@ from prowler.providers.aws.services.ec2.ec2_client import ec2_client
 
 class ec2_ebs_volume_protected_by_backup_plan(Check):
     def execute(self):
+        """Evaluate EBS volume coverage by AWS Backup selections.
+
+        Apply selection-local exclusions before the existing inclusion rules.
+        Selection coverage does not establish backup completion or restorability.
+
+        Returns:
+            A list of findings, one per collected EBS volume.
+        """
         findings = []
         for volume in ec2_client.volumes:
             report = Check_Report_AWS(metadata=self.metadata(), resource=volume)
