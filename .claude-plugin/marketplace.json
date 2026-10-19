@@ -1,6 +1,6 @@
 {
   "name": "prowler-plugins",
-  "description": "Prowler Cloud Security for Claude Code",
+  "description": "Prowler Cloud Security for Claude",
   "owner": {
     "name": "Prowler",
     "email": "support@prowler.com"
@@ -9,7 +9,7 @@
     {
       "name": "prowler",
       "source": "./claude_plugins/prowler",
-      "description": "Prowler for Claude Code — cloud security and compliance skills powered by the Prowler MCP server. Bundles compliance triage and remediation; more skills coming.",
+      "description": "Prowler Cloud security and compliance skills for Claude, powered by the Prowler MCP server. Triage compliance gaps and remediate findings until an AWS, Azure, GCP, Kubernetes, GitHub or M365 account meets the framework you choose.",
       "category": "security",
       "homepage": "https://prowler.com"
     }
