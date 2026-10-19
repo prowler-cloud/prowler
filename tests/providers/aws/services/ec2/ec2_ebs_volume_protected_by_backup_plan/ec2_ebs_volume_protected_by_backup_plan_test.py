@@ -156,6 +156,7 @@ class Test_ec2_ebs_volume_protected_by_backup_plan:
                 assert result[0].resource_tags is None
 
     def test_ec2_instance_with_backup_plan(self):
+        """Verify PASS when the EBS volume ARN is returned as a protected resource."""
         ec2_client = mock.MagicMock()
         from prowler.providers.aws.services.ec2.ec2_service import Volume
 
@@ -221,6 +222,7 @@ class Test_ec2_ebs_volume_protected_by_backup_plan:
                 assert result[0].resource_tags is None
 
     def test_ec2_instance_with_backup_plan_via_volume_wildcard(self):
+        """Verify PASS when the volume wildcard covers the EBS volume."""
         ec2_client = mock.MagicMock()
         from prowler.providers.aws.services.ec2.ec2_service import Volume
 
@@ -287,6 +289,7 @@ class Test_ec2_ebs_volume_protected_by_backup_plan:
                 assert result[0].resource_tags is None
 
     def test_ec2_instance_with_backup_plan_via_all_wildcard(self):
+        """Verify PASS when the all-resources wildcard covers the EBS volume."""
         ec2_client = mock.MagicMock()
         from prowler.providers.aws.services.ec2.ec2_service import Volume
 

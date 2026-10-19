@@ -124,6 +124,16 @@ class Test_ec2_ebs_backup_selection_exclusions:
         make_api_call = BaseClient._make_api_call
 
         def selection_api_call(api_client, operation_name, kwargs):
+            """Return prepared selections and delegate other SDK operations.
+
+            Args:
+                api_client: Botocore client making the request.
+                operation_name: SDK operation name to dispatch.
+                kwargs: Request parameters supplied to the SDK operation.
+
+            Returns:
+                A copied selection response or the delegated SDK response.
+            """
             if api_client.meta.service_model.service_name == "backup":
                 if operation_name == "ListBackupSelections":
                     assert kwargs["BackupPlanId"] == plan_id
