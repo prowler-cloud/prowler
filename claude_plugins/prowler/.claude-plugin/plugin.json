@@ -3,7 +3,7 @@
   "name": "prowler",
   "displayName": "Prowler Cloud",
   "version": "0.1.0",
-  "description": "Prowler Cloud security and compliance skills for Claude, powered by the Prowler MCP server. Triage compliance gaps and remediate findings across AWS, Azure, GCP, Kubernetes, Microsoft 365, GitHub, Google Workspace, Cloudflare, Oracle Cloud, Alibaba Cloud, Huawei Cloud, OpenStack, Linode, Scaleway, STACKIT, E2E Networks, NHN Cloud, MongoDB Atlas, Okta, Vercel, VCF, IaC, container images and LLMs until your account meets the framework you choose.",
+  "description": "Prowler Cloud security and compliance skills for Claude, powered by the Prowler MCP server. Triage compliance gaps and remediate findings on AWS, Azure, GCP, Kubernetes, Microsoft 365, GitHub and many more providers listed at https://registry.prowler.com, plus custom providers, until your account meets the framework you choose.",
   "author": {
     "name": "Prowler",
     "email": "support@prowler.com",

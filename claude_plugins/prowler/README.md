@@ -10,7 +10,7 @@ Prowler Cloud connects Claude to your cloud security posture. The bundled `frame
 
 ## Supported providers
 
-Any provider Prowler Cloud supports, including AWS, Azure, GCP, Kubernetes, Microsoft 365, GitHub, Google Workspace, Cloudflare, Oracle Cloud, Alibaba Cloud, Huawei Cloud, OpenStack, Linode, Scaleway, STACKIT, E2E Networks, NHN Cloud, MongoDB Atlas, Okta, Vercel, VCF, Infrastructure as Code, container images and LLMs. The full list lives in the [Prowler Registry](https://registry.prowler.com/providers).
+Any provider Prowler Cloud supports, including AWS, Azure, GCP, Kubernetes, Microsoft 365, GitHub, Google Workspace, Cloudflare, Oracle Cloud, Alibaba Cloud, Huawei Cloud, OpenStack, Linode, Scaleway, STACKIT, E2E Networks, NHN Cloud, MongoDB Atlas, Okta, Vercel, VCF, Infrastructure as Code, container images and LLMs. The full, growing list lives in the [Prowler Registry](https://registry.prowler.com/providers). Prowler also supports custom providers, so you can add your own and use them with this plugin.
 
 ## Requirements
 
