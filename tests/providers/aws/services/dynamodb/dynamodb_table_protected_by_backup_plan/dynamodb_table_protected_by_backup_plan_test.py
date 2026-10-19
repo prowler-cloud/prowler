@@ -171,6 +171,7 @@ class Test_dynamodb_table_protected_by_backup_plan:
                 assert result[0].resource_tags == []
 
     def test_dynamodb_table_with_backup_plan(self):
+        """Verify PASS when the table ARN is returned as a protected resource."""
         dynamodb_client = mock.MagicMock()
         from prowler.providers.aws.services.dynamodb.dynamodb_service import Table
 
@@ -234,6 +235,7 @@ class Test_dynamodb_table_protected_by_backup_plan:
                 assert result[0].resource_tags == []
 
     def test_dynamodb_table_with_backup_plan_via_wildcard_all_tables(self):
+        """Verify PASS when the table wildcard is returned as a protected resource."""
         dynamodb_client = mock.MagicMock()
         from prowler.providers.aws.services.dynamodb.dynamodb_service import Table
 
@@ -296,6 +298,7 @@ class Test_dynamodb_table_protected_by_backup_plan:
                 assert result[0].resource_tags == []
 
     def test_dynamodb_table_with_backup_plan_via_wildcard_all_resources(self):
+        """Verify PASS when the all-resources wildcard covers the table."""
         dynamodb_client = mock.MagicMock()
         from prowler.providers.aws.services.dynamodb.dynamodb_service import Table
 
