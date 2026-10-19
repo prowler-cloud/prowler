@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 
-import { getLatestFindings } from "@/actions/findings";
+import { getFindings } from "@/actions/findings";
 import { AttackPathGraph } from "@/components/attack-paths/graph/attack-path-graph";
 import { FindingDetailDrawer } from "@/components/findings/table";
 import {
@@ -14,11 +14,12 @@ import { Card } from "@/components/shadcn/card/card";
 import { useFindingDetails } from "@/hooks/use-finding-details";
 import { isProwlerFindingNode } from "@/lib/attack-paths/node-types";
 import { GraphNode } from "@/types/attack-paths";
-import { IssueAttributes } from "@/types/issues";
+import { IssueAttributes, IssueFinding } from "@/types/issues";
 
 interface IssueGraphBaseProps {
   issue: IssueAttributes;
   resourceUids: string[];
+  findings?: IssueFinding[];
 }
 
 interface ScopedIssueGraphProps extends IssueGraphBaseProps {
@@ -36,11 +37,17 @@ type IssueGraphProps = ScopedIssueGraphProps | UnscopedIssueGraphProps;
 export const IssueGraph = ({
   issue,
   resourceUids,
+  findings = [],
   providerId,
   scanId,
 }: IssueGraphProps) => {
   const finding = useFindingDetails();
-  const view = buildIssueGraph(issue, resourceUids);
+  const view = buildIssueGraph(issue, resourceUids, findings);
+  const shownFindings = new Set(
+    view.nodes.flatMap((node) =>
+      node.properties.finding_id ? [String(node.properties.finding_id)] : [],
+    ),
+  ).size;
   const pending = useRef(false);
   const mounted = useRef(true);
   const [loading, setLoading] = useState(false);
@@ -64,7 +71,8 @@ export const IssueGraph = ({
     setError(null);
     setLookupComplete(false);
     finding.resetFindingDetails();
-    if (!providerId || !scanId) {
+    let findingId = node.properties.finding_id;
+    if (!findingId && (!providerId || !scanId)) {
       setError(
         "Finding details are unavailable because this issue has no provider or scan reference.",
       );
@@ -73,29 +81,33 @@ export const IssueGraph = ({
     pending.current = true;
     setLoading(true);
     try {
-      const response = await getLatestFindings({
-        pageSize: 1,
-        filters: {
-          "filter[provider_id]": providerId,
-          "filter[check_id]": String(node.properties.check_id),
-          "filter[resource_uid]": String(node.properties.resource_uid),
-          "filter[status]": "FAIL",
-        },
-      });
-      if (!mounted.current) return;
-      if (!Array.isArray(response?.data)) {
-        setError("Could not load this finding. Select the finding to retry.");
-        return;
+      if (!findingId) {
+        const response = await getFindings({
+          pageSize: 1,
+          filters: {
+            "filter[provider_id]": providerId,
+            "filter[scan]": scanId,
+            "filter[check_id]": String(node.properties.check_id),
+            "filter[resource_uid]": String(node.properties.resource_uid),
+            "filter[status]": "FAIL",
+          },
+        });
+        if (!mounted.current) return;
+        if (!Array.isArray(response?.data)) {
+          setError("Could not load this finding. Select the finding to retry.");
+          return;
+        }
+        const match = response.data[0];
+        // Reject mismatched responses even though the lookup is scoped to the scan.
+        if (!match || match.relationships?.scan?.data?.id !== scanId) {
+          setError(
+            "This finding is no longer available for the issue's scan. Refresh issues to load the latest assessment.",
+          );
+          return;
+        }
+        findingId = match.id;
       }
-      const match = response.data[0];
-      // The latest endpoint has no scan filter. Never open a newer scan's finding.
-      if (!match || match.relationships?.scan?.data?.id !== scanId) {
-        setError(
-          "This finding is no longer available for the issue's scan. Refresh issues to load the latest assessment.",
-        );
-        return;
-      }
-      await finding.navigateToFinding(match.id);
+      await finding.navigateToFinding(String(findingId));
       if (mounted.current) setLookupComplete(true);
     } catch {
       if (mounted.current)
@@ -115,9 +127,11 @@ export const IssueGraph = ({
     >
       <h4 className="text-sm font-semibold">Finding evidence</h4>
       <p className="text-text-neutral-tertiary text-sm">
-        Checks linked to {Math.min(resourceUids.length, GRAPH_RESOURCE_LIMIT)}{" "}
-        of {resourceUids.length} affected resources. These links show evidence
-        associations, not confirmed attack paths.
+        Showing {shownFindings} of {issue.findings_count} issue findings across{" "}
+        {Math.min(resourceUids.length, GRAPH_RESOURCE_LIMIT)} of{" "}
+        {resourceUids.length} affected resources, plus supporting checks cited
+        by the assessment. These links show evidence associations, not confirmed
+        attack paths.
       </p>
       {loading && (
         <p role="status" className="text-sm">

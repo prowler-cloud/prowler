@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
-import { getIssue } from "@/actions/issues";
+import { getIssue, getIssueFindings } from "@/actions/issues";
 import { IssueGraph } from "@/components/issues/issue-graph";
 import { IssuesLoadError } from "@/components/issues/issues-load-error";
 import { Badge } from "@/components/shadcn/badge/badge";
@@ -11,7 +11,12 @@ import { Button } from "@/components/shadcn/button/button";
 import { Card } from "@/components/shadcn/card/card";
 import { CodeSnippet } from "@/components/shadcn/code-snippet";
 import { legBadgeVariant } from "@/lib/issues/verdicts";
-import { IssueAttributes, LegName, LegState } from "@/types/issues";
+import {
+  IssueAttributes,
+  IssueFinding,
+  LegName,
+  LegState,
+} from "@/types/issues";
 
 const LEG_QUESTIONS: Record<LegName, string> = {
   reachability: "Can an attacker reach it?",
@@ -45,7 +50,13 @@ interface IssueDetailProps {
 type ResourcesState =
   | { status: "loading" }
   | { status: "error" }
-  | { status: "loaded"; resources: string[] };
+  | {
+      status: "loaded";
+      resources: string[];
+      findings: IssueFinding[] | undefined;
+      scanId?: string;
+      providerId?: string;
+    };
 
 export const IssueDetail = ({
   id,
@@ -61,12 +72,31 @@ export const IssueDetail = ({
   useEffect(() => {
     let cancelled = false;
     getIssue(id)
-      .then((detail) => {
+      .then(async (detail) => {
         if (cancelled) return;
-        const resources = detail?.data?.attributes.resource_uids;
-        setState(
-          resources ? { status: "loaded", resources } : { status: "error" },
-        );
+        const attributes = detail?.data?.attributes;
+        if (!attributes?.resource_uids) {
+          setState({ status: "error" });
+          return;
+        }
+        const detailScanId =
+          detail?.data.relationships?.scan?.data?.id ?? scanId;
+        const detailProviderId =
+          detail?.data.relationships?.provider?.data?.id ?? providerId;
+        const findingUids = attributes.finding_uids ?? [];
+        const findings = detailScanId
+          ? await getIssueFindings(detailScanId, findingUids)
+          : findingUids.length === 0
+            ? []
+            : undefined;
+        if (!cancelled)
+          setState({
+            status: "loaded",
+            resources: attributes.resource_uids,
+            findings,
+            scanId: detailScanId,
+            providerId: detailProviderId,
+          });
       })
       .catch(() => {
         if (!cancelled) setState({ status: "error" });
@@ -74,19 +104,34 @@ export const IssueDetail = ({
     return () => {
       cancelled = true;
     };
-  }, [id, attempt]);
+  }, [id, scanId, providerId, attempt]);
+
+  const retry = () => {
+    setState({ status: "loading" });
+    setAttempt((value) => value + 1);
+  };
+  const activeScanId = state.status === "loaded" ? state.scanId : scanId;
 
   return (
     <div className="flex min-w-0 flex-col gap-4 py-4">
-      {state.status === "loaded" && state.resources.length > 0 && (
-        <IssueGraph
-          issue={issue}
-          resourceUids={state.resources}
-          {...(providerId && scanId
-            ? { providerId, scanId }
-            : { providerId: undefined, scanId: undefined })}
+      {state.status === "loaded" && state.findings === undefined && (
+        <IssuesLoadError
+          message="Could not load the findings for this issue."
+          onRetry={retry}
         />
       )}
+      {state.status === "loaded" &&
+        state.findings !== undefined &&
+        state.resources.length > 0 && (
+          <IssueGraph
+            issue={issue}
+            resourceUids={state.resources}
+            findings={state.findings}
+            {...(state.providerId && state.scanId
+              ? { providerId: state.providerId, scanId: state.scanId }
+              : { providerId: undefined, scanId: undefined })}
+          />
+        )}
       <section aria-label="Exploitability assessment">
         <h4 className="mb-3 text-sm font-semibold">
           Exploitability assessment
@@ -130,15 +175,12 @@ export const IssueDetail = ({
       </section>
       {state.status === "loading" ? (
         <p role="status" className="text-text-neutral-tertiary text-sm">
-          Loading affected resources…
+          Loading issue details…
         </p>
       ) : state.status === "error" ? (
         <IssuesLoadError
           message="Could not load the resources for this issue."
-          onRetry={() => {
-            setState({ status: "loading" });
-            setAttempt((value) => value + 1);
-          }}
+          onRetry={retry}
         />
       ) : state.resources.length > 0 ? (
         <section aria-label="Affected resources">
@@ -177,10 +219,10 @@ export const IssueDetail = ({
       <section aria-label="Remediation">
         <h4 className="mb-3 text-sm font-semibold">Remediation</h4>
         <p className="text-text-neutral-secondary text-sm">{issue.fix}</p>
-        {scanId && (
+        {activeScanId && (
           <Button asChild variant="link" size="link-sm">
             <Link
-              href={`/findings?${new URLSearchParams({ "filter[scan__in]": scanId, "filter[status__in]": "FAIL" })}`}
+              href={`/findings?${new URLSearchParams({ "filter[scan__in]": activeScanId, "filter[status__in]": "FAIL" })}`}
             >
               Open this scan&apos;s failed findings
             </Link>

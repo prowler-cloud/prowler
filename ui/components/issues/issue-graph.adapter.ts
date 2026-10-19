@@ -1,6 +1,6 @@
 import { AttackPathView } from "@/lib/attack-paths/group-graph";
 import { GraphEdge, GraphNode } from "@/types/attack-paths";
-import { IssueAttributes } from "@/types/issues";
+import { IssueAttributes, IssueFinding } from "@/types/issues";
 
 /** Resources drawn before the rest are left to the list below the graph. */
 export const GRAPH_RESOURCE_LIMIT = 12;
@@ -27,10 +27,11 @@ const resourceLabel = (uid: string) =>
 const shortName = (uid: string) =>
   uid.split(/[/:]/).filter(Boolean).pop() ?? uid;
 
-/** Evidence associates checks with resources; aggregate legs do not prove paths. */
+/** Folded findings and supporting evidence associate checks with resources, not attack paths. */
 export const buildIssueGraph = (
   issue: IssueAttributes,
   resourceUids: string[],
+  findings: IssueFinding[] = [],
 ): AttackPathView => {
   const nodes: GraphNode[] = [];
   const edges: GraphEdge[] = [];
@@ -42,9 +43,17 @@ export const buildIssueGraph = (
     })
     .filter(({ checkId, uid }) => checkId && uid);
   const evidenceResources = new Set(evidence.map(({ uid }) => uid));
+  const findingResources = new Set(
+    findings.map(({ resourceUid }) => resourceUid),
+  );
   const resources = [
-    ...resourceUids.filter((uid) => evidenceResources.has(uid)),
-    ...resourceUids.filter((uid) => !evidenceResources.has(uid)),
+    ...resourceUids.filter((uid) => findingResources.has(uid)),
+    ...resourceUids.filter(
+      (uid) => !findingResources.has(uid) && evidenceResources.has(uid),
+    ),
+    ...resourceUids.filter(
+      (uid) => !findingResources.has(uid) && !evidenceResources.has(uid),
+    ),
   ].slice(0, GRAPH_RESOURCE_LIMIT);
   const resourceId = (uid: string) => `resource:${uid}`;
 
@@ -58,19 +67,23 @@ export const buildIssueGraph = (
 
   const shown = new Set(resources);
   const seen = new Set<string>();
-  evidence.forEach(({ line, checkId, uid }) => {
+  const addFinding = (
+    uid: string,
+    checkId: string,
+    properties: GraphNode["properties"],
+  ) => {
+    const line = `${checkId} · ${uid}`;
     if (!shown.has(uid) || seen.has(line)) return;
     seen.add(line);
     const id = `finding:${line}`;
     nodes.push({
       id,
       labels: ["ProwlerFinding"],
-      // check_id + resource_uid let a click find the finding in the scan.
       properties: {
         id,
-        check_title: checkId,
         check_id: checkId,
         resource_uid: uid,
+        ...properties,
       },
     });
     edges.push({
@@ -79,7 +92,18 @@ export const buildIssueGraph = (
       target: id,
       type: "HAS_FINDING",
     });
-  });
+  };
+
+  findings.forEach(({ id, checkId, checkTitle, severity, resourceUid }) =>
+    addFinding(resourceUid, checkId, {
+      finding_id: id,
+      check_title: checkTitle,
+      severity,
+    }),
+  );
+  evidence.forEach(({ checkId, uid }) =>
+    addFinding(uid, checkId, { check_title: checkId }),
+  );
 
   return { nodes, edges, groupMembers: new Map() };
 };

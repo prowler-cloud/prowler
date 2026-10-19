@@ -94,6 +94,27 @@ const setup = () => {
         },
       }),
     ),
+    http.get("*/findings", () =>
+      HttpResponse.json({
+        data: [
+          {
+            type: "findings",
+            id: "f1",
+            attributes: {
+              check_id: "s3_public",
+              severity: "critical",
+              check_metadata: { checktitle: "S3 bucket is public" },
+            },
+            relationships: {
+              resources: { data: [{ type: "resources", id: "r1" }] },
+            },
+          },
+        ],
+        included: [
+          { type: "resources", id: "r1", attributes: { uid: resource } },
+        ],
+      }),
+    ),
   );
 };
 
@@ -137,6 +158,11 @@ describe("Issues responsive layout", () => {
         .toBeVisible();
       await expect
         .element(screen.getByText("Partly", { exact: true }))
+        .toBeVisible();
+      await expect
+        .element(
+          screen.getByRole("img", { name: "Critical finding risk icon" }),
+        )
         .toBeVisible();
       expect(document.documentElement.scrollWidth).toBeLessThanOrEqual(width);
       const detailBounds = screen

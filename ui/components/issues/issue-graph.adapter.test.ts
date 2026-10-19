@@ -31,6 +31,67 @@ const ids = (view: ReturnType<typeof buildIssueGraph>) =>
   view.nodes.map((n) => n.id);
 
 describe("buildIssueGraph", () => {
+  it("draws folded findings absent from leg evidence with their real severity", () => {
+    // Given - only the instance is cited, but both security groups also have findings.
+    const resources = ["instance", "security-group-ssh", "security-group-rdp"];
+    const assessedIssue = issue();
+    assessedIssue.legs.reachability.evidence = ["ssh · instance"];
+    const findings = resources.map((resourceUid, index) => ({
+      id: `finding-${index}`,
+      checkId: index === 2 ? "rdp" : "ssh",
+      checkTitle: index === 2 ? "RDP exposed" : "SSH exposed",
+      severity: index === 0 ? ("critical" as const) : ("high" as const),
+      resourceUid,
+    }));
+
+    // When
+    const view = buildIssueGraph(assessedIssue, resources, findings);
+
+    // Then - cited findings are not duplicated and every resource has its finding.
+    expect(view.edges).toHaveLength(3);
+    for (const finding of findings) {
+      expect(view.nodes).toContainEqual(
+        expect.objectContaining({
+          id: `finding:${finding.checkId} · ${finding.resourceUid}`,
+          properties: expect.objectContaining({
+            finding_id: finding.id,
+            check_title: finding.checkTitle,
+            severity: finding.severity,
+          }),
+        }),
+      );
+    }
+  });
+
+  it("prioritizes folded findings over evidence-only resources at the graph limit", () => {
+    // Given - the first 12 resources have evidence; the last has a folded finding.
+    const resources = Array.from(
+      { length: GRAPH_RESOURCE_LIMIT + 1 },
+      (_, index) => `resource-${index}`,
+    );
+    const assessedIssue = issue();
+    assessedIssue.legs.reachability.evidence = resources
+      .slice(0, GRAPH_RESOURCE_LIMIT)
+      .map((uid) => `supporting-check · ${uid}`);
+    const resourceUid = resources[GRAPH_RESOURCE_LIMIT];
+    // When
+    const view = buildIssueGraph(assessedIssue, resources, [
+      {
+        id: "folded",
+        checkId: "ssh",
+        checkTitle: "SSH exposed",
+        severity: "critical",
+        resourceUid,
+      },
+    ]);
+    // Then
+    expect(view.nodes[0].id).toBe(`resource:${resourceUid}`);
+    expect(ids(view)).toContain(`finding:ssh · ${resourceUid}`);
+    expect(
+      view.nodes.filter((node) => node.id.startsWith("resource:")),
+    ).toHaveLength(GRAPH_RESOURCE_LIMIT);
+  });
+
   it("draws only resource-to-finding evidence associations", () => {
     const view = buildIssueGraph(issue(), ["arn:aws:s3:::a", "arn:aws:s3:::b"]);
 

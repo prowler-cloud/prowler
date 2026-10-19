@@ -63,6 +63,18 @@ export interface IssueDetailAttributes extends IssueAttributes {
   resource_uids: string[];
 }
 
+/** Maximum findings loaded for the graph preview, independently of its resource limit. */
+export const ISSUE_FINDINGS_LIMIT = 50;
+
+/** One finding-to-resource association from the issue's own scan. */
+export interface IssueFinding {
+  id: string;
+  checkId: string;
+  checkTitle: string;
+  severity: Severity;
+  resourceUid: string;
+}
+
 export const ISSUE_RELATIONSHIP_TYPE = {
   PROVIDERS: "providers",
   SCANS: "scans",

@@ -5,11 +5,17 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { IssueDetail } from "@/components/issues/issue-detail";
 import { IssueAttributes } from "@/types/issues";
 
-const { getIssueMock } = vi.hoisted(() => ({ getIssueMock: vi.fn() }));
+const { getIssueMock, getIssueFindingsMock } = vi.hoisted(() => ({
+  getIssueMock: vi.fn(),
+  getIssueFindingsMock: vi.fn(),
+}));
 
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
 
-vi.mock("@/actions/issues", () => ({ getIssue: getIssueMock }));
+vi.mock("@/actions/issues", () => ({
+  getIssue: getIssueMock,
+  getIssueFindings: getIssueFindingsMock,
+}));
 
 vi.mock("@/components/issues/issue-graph", () => ({
   IssueGraph: ({ resourceUids }: { resourceUids: string[] }) => (
@@ -36,6 +42,7 @@ const issue = {
 describe("IssueDetail", () => {
   beforeEach(() => {
     getIssueMock.mockReset();
+    getIssueFindingsMock.mockResolvedValue([]);
   });
 
   it("links to the issue's scan findings and reveals every folded resource", async () => {
@@ -71,5 +78,34 @@ describe("IssueDetail", () => {
       await screen.findByText(/could not load the resources/i),
     ).toBeInTheDocument();
     expect(screen.queryByTestId("issue-graph")).not.toBeInTheDocument();
+  });
+
+  it("reports a failed findings request and retries using the issue scan", async () => {
+    // Given
+    getIssueMock.mockResolvedValue({
+      data: {
+        attributes: {
+          resource_uids: resourceUids,
+          finding_uids: ["finding-uid"],
+        },
+      },
+    });
+    getIssueFindingsMock
+      .mockResolvedValueOnce(undefined)
+      .mockResolvedValueOnce([]);
+    render(<IssueDetail id="issue-1" issue={issue} scanId="scan-1" />);
+
+    // When
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Could not load the findings for this issue",
+    );
+    expect(screen.queryByTestId("issue-graph")).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Retry" }));
+
+    // Then
+    expect(await screen.findByTestId("issue-graph")).toBeInTheDocument();
+    expect(getIssueFindingsMock).toHaveBeenLastCalledWith("scan-1", [
+      "finding-uid",
+    ]);
   });
 });

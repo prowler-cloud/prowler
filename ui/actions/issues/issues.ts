@@ -3,10 +3,14 @@
 import { apiBaseUrl, getAuthHeaders } from "@/lib";
 import { handleApiResponse } from "@/lib/server-actions-helper";
 import {
+  ISSUE_FINDINGS_LIMIT,
   IssueDetailResponse,
+  IssueFinding,
   IssueResponse,
   IssuesOverviewResponse,
 } from "@/types/issues";
+
+import { toIssueFindings } from "./issues.adapter";
 
 const withFilters = (
   url: URL,
@@ -83,6 +87,36 @@ export const getIssue = async (
     return await handleApiResponse(response);
   } catch (error) {
     console.error("Error fetching issue:", error);
+    return undefined;
+  }
+};
+
+/** Load a bounded preview from the issue's exact scan, including every resource association. */
+export const getIssueFindings = async (
+  scanId: string,
+  findingUids: string[],
+): Promise<IssueFinding[] | undefined> => {
+  if (!scanId) return undefined;
+  const uids = Array.from(new Set(findingUids)).slice(0, ISSUE_FINDINGS_LIMIT);
+  if (uids.length === 0) return [];
+
+  const headers = await getAuthHeaders({ contentType: false });
+  const url = new URL(`${apiBaseUrl}/findings`);
+  url.searchParams.set("filter[scan]", scanId);
+  url.searchParams.set("filter[uid__in]", uids.join(","));
+  url.searchParams.set("include", "resources");
+  url.searchParams.set(
+    "fields[findings]",
+    "check_id,severity,check_metadata,resources",
+  );
+  url.searchParams.set("fields[resources]", "uid");
+  url.searchParams.set("page[size]", String(uids.length));
+
+  try {
+    const response = await fetch(url.toString(), { headers });
+    return toIssueFindings(await handleApiResponse(response));
+  } catch (error) {
+    console.error("Error fetching issue findings:", error);
     return undefined;
   }
 };
