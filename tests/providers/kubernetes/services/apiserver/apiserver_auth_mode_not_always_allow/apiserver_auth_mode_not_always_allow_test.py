@@ -130,3 +130,24 @@ class TestApiserverAuthModeNotAlwaysAllow:
         assert len(result) == 1
         assert result[0].status == "PASS"
         assert "authorization-config" in result[0].status_extended
+
+    def test_authorization_mode_space_separated_always_allow_fail(self):
+        pod = make_apiserver_pod(
+            command=["kube-apiserver", "--authorization-mode", "AlwaysAllow"]
+        )
+
+        result = run_check(MODULE, CLASS, [pod])
+
+        assert len(result) == 1
+        assert result[0].status == "FAIL"
+        assert "AlwaysAllow" in result[0].status_extended
+
+    def test_authorization_mode_space_separated_rbac_pass(self):
+        pod = make_apiserver_pod(
+            command=["kube-apiserver", "--authorization-mode", "RBAC,Node"]
+        )
+
+        result = run_check(MODULE, CLASS, [pod])
+
+        assert len(result) == 1
+        assert result[0].status == "PASS"
