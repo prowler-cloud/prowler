@@ -102,9 +102,15 @@ class Test_bedrock_guardrail_iam_condition_enforcement_enabled:
         )
         assert _run([policy]) == []
 
-    def test_admin_star_action_left_to_admin_checks(self):
-        policy = _policy([_allow("*", "*")])
-        assert _run([policy]) == []
+    def test_star_action_is_a_grant(self):
+        """Action "*" grants invocation; the admin checks only cover Resource "*"."""
+        for resource in ["*", MODEL_ARN_PATTERN]:
+            policy = _policy([_allow("*", resource)])
+            assert _run([policy])[0].status == "FAIL", resource
+
+    def test_star_action_with_guardrail_condition_passes(self):
+        policy = _policy([_allow("*", "*", condition=REQUIRE_GUARDRAIL)])
+        assert _run([policy])[0].status == "PASS"
 
     def test_aws_managed_policy_not_evaluated(self):
         policy = _policy([_allow("bedrock:*", "*")], policy_type="AWS")
@@ -276,11 +282,7 @@ class Test_bedrock_guardrail_iam_condition_enforcement_enabled:
     def test_wildcard_actions_are_expanded(self):
         for action in ["bedrock:*", "bedrock:Invoke*", "bedrock:InvokeModel*", "*:*"]:
             policy = _policy([_allow(action, "*")])
-            result = _run([policy])
-            if action == "*:*":
-                assert result == []
-            else:
-                assert result[0].status == "FAIL", action
+            assert _run([policy])[0].status == "FAIL", action
 
     def test_action_pattern_not_reaching_invoke_is_ignored(self):
         policy = _policy([_allow("bedrock:Get*", "*")])

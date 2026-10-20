@@ -88,20 +88,16 @@ def _operations_named(action_patterns: list) -> set:
 def _granted_operations(statement: dict) -> set:
     """Return the guardrail-enforceable operations an Allow statement grants.
 
-    An ``Action`` of ``*`` or ``*:*`` is deliberately not read as a grant: a statement allowing
-    every action is what the administrative-privileges checks report, and repeating it here would
-    duplicate them. ``NotAction`` is resolved exactly, because it grants every action it does not
-    list: the operation is granted when no listed pattern names it.
+    An ``Action`` of ``*`` or ``*:*`` grants both operations like any other matching pattern. The
+    administrative-privileges checks only look at statements on ``Resource: "*"``, so skipping it
+    here would let ``Action: "*"`` on a Bedrock ARN pass both. ``NotAction`` is resolved exactly,
+    because it grants every action it does not list: the operation is granted when no listed
+    pattern names it.
     """
     if "NotAction" in statement:
         excluded = _operations_named(_as_list(statement.get("NotAction")))
         return set(GUARDRAIL_ENFORCEABLE_OPERATIONS) - excluded
-    actions = [
-        action
-        for action in _as_list(statement.get("Action"))
-        if not (isinstance(action, str) and action.strip() in ("*", "*:*"))
-    ]
-    return _operations_named(actions)
+    return _operations_named(_as_list(statement.get("Action")))
 
 
 def _resource_reaches_bedrock(resource: str) -> bool:
