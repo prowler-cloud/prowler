@@ -1,0 +1,1 @@
+`apiserver_auth_mode_include_node` and `apiserver_auth_mode_include_rbac` no longer report false positives on clusters that configure authorization through `--authorization-config` (mutually exclusive with `--authorization-mode`); `--authorization-mode` parsing now also tolerates the space-separated flag form and containers without a command list
