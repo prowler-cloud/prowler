@@ -13,11 +13,14 @@ import { Input } from "@/components/shadcn/input/input";
 const STORED_SECRET_PLACEHOLDER = "•".repeat(36);
 
 export function CredentialFields({
+  credentialsOptional = false,
   errors,
   hasStoredCredentials = false,
   provider,
   register,
 }: {
+  // Keys may be left blank (Bedrock with the installation's own role).
+  credentialsOptional?: boolean;
   errors: ReturnType<
     typeof useForm<LighthouseV2ConfigFormValues>
   >["formState"]["errors"];
@@ -27,9 +30,13 @@ export function CredentialFields({
     typeof useForm<LighthouseV2ConfigFormValues>
   >["register"];
 }) {
-  const secretPlaceholder = hasStoredCredentials
-    ? STORED_SECRET_PLACEHOLDER
-    : undefined;
+  // With optional keys a saved configuration may have none, so the masked
+  // placeholder would suggest a key that is not there.
+  const secretPlaceholder =
+    hasStoredCredentials && !credentialsOptional
+      ? STORED_SECRET_PLACEHOLDER
+      : undefined;
+  const keyLabelSuffix = credentialsOptional ? " (optional)" : "";
   return (
     <div className="grid gap-4">
       {(provider === LIGHTHOUSE_V2_PROVIDER_TYPE.OPENAI ||
@@ -69,7 +76,7 @@ export function CredentialFields({
         <div className="grid gap-4 md:grid-cols-2">
           <Field>
             <FieldLabel htmlFor="lighthouse-v2-access-key">
-              AWS access key ID
+              AWS access key ID{keyLabelSuffix}
             </FieldLabel>
             <Input
               id="lighthouse-v2-access-key"
@@ -86,7 +93,7 @@ export function CredentialFields({
 
           <Field>
             <FieldLabel htmlFor="lighthouse-v2-secret-key">
-              AWS secret access key
+              AWS secret access key{keyLabelSuffix}
             </FieldLabel>
             <Input
               id="lighthouse-v2-secret-key"
