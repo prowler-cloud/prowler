@@ -4,12 +4,12 @@
   "CheckTitle": "Vertex AI Workbench instance has automatic upgrades scheduled",
   "CheckType": [],
   "ServiceName": "vertexai",
-  "SubServiceName": "workbench",
+  "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "low",
   "ResourceType": "notebooks.googleapis.com/Instance",
   "ResourceGroup": "ai_ml",
-  "Description": "**Vertex AI Workbench instances** are not upgraded automatically by default. The finding determines whether automatic upgrades are scheduled by setting the `notebook-upgrade-schedule` instance metadata key to a Unix-cron expression (GMT). Any non-empty schedule passes; the check does not evaluate how often it runs.",
+  "Description": "**Vertex AI Workbench instances** are not upgraded automatically by default. The finding determines whether automatic upgrades are scheduled by setting the `notebook-upgrade-schedule` instance metadata key to a Unix-cron expression (GMT).",
   "Risk": "Without scheduled upgrades, long-lived instances keep running outdated images:\n- **Known vulnerabilities**: JupyterLab, Python ML libraries, and OS packages stay unpatched against published CVEs\n- **Drift**: instances fall behind the image versions the rest of the organization has validated",
   "RelatedUrl": "",
   "AdditionalURLs": [
@@ -20,7 +20,7 @@
     "Code": {
       "CLI": "gcloud workbench instances update <example_resource_name> --location=<example_zone> --metadata=notebook-upgrade-schedule=\"00 19 * * MON\"",
       "NativeIaC": "",
-      "Other": "1. In Google Cloud Console, go to Vertex AI > Workbench > Instances\n2. Click the instance name to open the Instance details page\n3. In the Environment auto-upgrade section, set the upgrade schedule\n4. Click Submit\n5. If the section cannot be edited for the instance, set the notebook-upgrade-schedule metadata key with the CLI command instead",
+      "Other": "1. In Google Cloud Console, go to Vertex AI > Workbench > Instances\n2. Click the instance name to open the Instance details page\n3. In the Environment auto-upgrade section, set the upgrade schedule\n4. Click Submit",
       "Terraform": "```hcl\nresource \"google_workbench_instance\" \"<example_resource_name>\" {\n  name     = \"<example_resource_name>\"\n  location = \"<example_zone>\"\n\n  gce_setup {\n    metadata = {\n      notebook-upgrade-schedule = \"00 19 * * MON\" # FIX: Upgrades the instance every Monday at 19:00 GMT\n    }\n  }\n}\n```"
     },
     "Recommendation": {

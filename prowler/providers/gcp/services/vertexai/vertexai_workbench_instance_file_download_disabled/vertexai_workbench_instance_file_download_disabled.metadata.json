@@ -4,7 +4,7 @@
   "CheckTitle": "Vertex AI Workbench instance has file downloads disabled",
   "CheckType": [],
   "ServiceName": "vertexai",
-  "SubServiceName": "workbench",
+  "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "notebooks.googleapis.com/Instance",
@@ -20,7 +20,7 @@
     "Code": {
       "CLI": "gcloud workbench instances update <example_resource_name> --location=<example_zone> --metadata=notebook-disable-downloads=true",
       "NativeIaC": "",
-      "Other": "1. In Google Cloud Console, go to Vertex AI > Workbench > Instances\n2. Click the instance name and open the Software and security tab\n3. Under Metadata, add the key notebook-disable-downloads with the value true\n4. Click Submit and restart the instance if prompted",
+      "Other": "1. In Google Cloud Console, go to Vertex AI > Workbench > Instances\n2. Click the instance name and open the Software and security tab\n3. Under Metadata, add the key notebook-disable-downloads with the value true\n4. Click Submit",
       "Terraform": "```hcl\nresource \"google_workbench_instance\" \"<example_resource_name>\" {\n  name     = \"<example_resource_name>\"\n  location = \"<example_zone>\"\n\n  gce_setup {\n    metadata = {\n      notebook-disable-downloads = \"true\" # FIX: Blocks file downloads from the JupyterLab UI\n    }\n  }\n}\n```"
     },
     "Recommendation": {
@@ -32,6 +32,8 @@
     "gen-ai"
   ],
   "DependsOn": [],
-  "RelatedTo": [],
+  "RelatedTo": [
+    "vertexai_workbench_instance_terminal_access_disabled"
+  ],
   "Notes": "This setting only blocks downloads through the JupyterLab UI. Users who can run code or open a terminal can still copy data off the instance, so pair it with vertexai_workbench_instance_terminal_access_disabled."
 }

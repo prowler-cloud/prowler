@@ -4,7 +4,7 @@
   "CheckTitle": "Vertex AI Workbench instance has terminal access disabled",
   "CheckType": [],
   "ServiceName": "vertexai",
-  "SubServiceName": "workbench",
+  "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "notebooks.googleapis.com/Instance",
@@ -20,7 +20,7 @@
     "Code": {
       "CLI": "gcloud workbench instances update <example_resource_name> --location=<example_zone> --metadata=notebook-disable-terminal=true",
       "NativeIaC": "",
-      "Other": "1. In Google Cloud Console, go to Vertex AI > Workbench > Instances\n2. Click the instance name and open the Software and security tab\n3. Under Metadata, add the key notebook-disable-terminal with the value true\n4. Click Submit and restart the instance if prompted",
+      "Other": "1. In Google Cloud Console, go to Vertex AI > Workbench > Instances\n2. Click the instance name and open the Software and security tab\n3. Under Metadata, add the key notebook-disable-terminal with the value true\n4. Click Submit",
       "Terraform": "```hcl\nresource \"google_workbench_instance\" \"<example_resource_name>\" {\n  name     = \"<example_resource_name>\"\n  location = \"<example_zone>\"\n\n  gce_setup {\n    metadata = {\n      notebook-disable-terminal = \"true\" # FIX: Removes the JupyterLab terminal\n    }\n  }\n}\n```"
     },
     "Recommendation": {
@@ -33,6 +33,9 @@
     "gen-ai"
   ],
   "DependsOn": [],
-  "RelatedTo": [],
+  "RelatedTo": [
+    "vertexai_workbench_instance_root_access_disabled",
+    "vertexai_workbench_instance_file_download_disabled"
+  ],
   "Notes": "Disabling the terminal does not stop code execution from notebook cells. Pair it with vertexai_workbench_instance_root_access_disabled and a minimally scoped service account."
 }
