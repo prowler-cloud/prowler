@@ -233,14 +233,12 @@ def _deny_covers_statement(deny_resources: list, statement: dict) -> bool:
 
 
 def _operations_denied(statement: dict) -> set:
-    """Return the enforceable operations a Deny statement names through ``Action``.
+    """Return the enforceable operations a Deny statement refuses.
 
-    ``NotAction`` on a Deny is not credited: it is not needed to express this control, and not
-    crediting it errs toward reporting rather than toward silence.
+    Resolved the same way as an Allow: ``NotAction`` denies every action it does not list, so an
+    operation is denied when no listed pattern names it.
     """
-    if "NotAction" in statement:
-        return set()
-    return _operations_named(_as_list(statement.get("Action")))
+    return _granted_operations(statement)
 
 
 def evaluate_guardrail_enforcement(document: dict) -> tuple:

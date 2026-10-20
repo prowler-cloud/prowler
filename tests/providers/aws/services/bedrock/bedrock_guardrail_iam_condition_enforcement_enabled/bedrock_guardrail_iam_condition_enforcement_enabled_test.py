@@ -382,6 +382,28 @@ class Test_bedrock_guardrail_iam_condition_enforcement_enabled:
             result[0].status_extended
         )
 
+    def test_not_action_deny_excluding_other_actions_clears_finding(self):
+        deny = {
+            "Effect": "Deny",
+            "NotAction": "s3:GetObject",
+            "Resource": "*",
+            "Condition": {"Null": {"bedrock:GuardrailIdentifier": "true"}},
+        }
+        policy = _policy([_allow(INVOKE_ACTIONS), deny])
+        assert _run([policy])[0].status == "PASS"
+
+    def test_not_action_deny_excluding_one_invocation_leaves_it_open(self):
+        deny = {
+            "Effect": "Deny",
+            "NotAction": "bedrock:InvokeModelWithResponseStream",
+            "Resource": "*",
+        }
+        result = _run([_policy([_allow(INVOKE_ACTIONS), deny])])
+        assert result[0].status == "FAIL"
+        assert "allows bedrock:InvokeModelWithResponseStream without" in (
+            result[0].status_extended
+        )
+
     def test_single_statement_document_as_dict(self):
         policy = _policy([])
         policy.document = {
