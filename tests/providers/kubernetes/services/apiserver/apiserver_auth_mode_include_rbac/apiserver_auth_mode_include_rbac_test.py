@@ -24,17 +24,17 @@ class TestApiserverAuthModeIncludeRbac:
 
         assert result == []
 
-    def test_authorization_config_file_pass(self):
+    def test_authorization_config_file_manual(self):
         pod = make_apiserver_pod(command=TALOS_COMMAND)
 
         result = run_check(MODULE, CLASS, [pod])
 
         assert len(result) == 1
-        assert result[0].status == "PASS"
+        assert result[0].status == "MANUAL"
         assert "authorization-config" in result[0].status_extended
         assert "was not inspected" in result[0].status_extended
 
-    def test_authorization_config_separate_arg_pass(self):
+    def test_authorization_config_separate_arg_manual(self):
         pod = make_apiserver_pod(
             command=[
                 "kube-apiserver",
@@ -46,10 +46,10 @@ class TestApiserverAuthModeIncludeRbac:
         result = run_check(MODULE, CLASS, [pod])
 
         assert len(result) == 1
-        assert result[0].status == "PASS"
+        assert result[0].status == "MANUAL"
         assert "authorization-config" in result[0].status_extended
 
-    def test_authorization_config_in_later_container_pass(self):
+    def test_authorization_config_in_later_container_manual(self):
         pod = make_apiserver_pod_with_containers(
             [
                 ["kube-apiserver", "--etcd-servers=https://127.0.0.1:2379"],
@@ -60,7 +60,7 @@ class TestApiserverAuthModeIncludeRbac:
         result = run_check(MODULE, CLASS, [pod])
 
         assert len(result) == 1
-        assert result[0].status == "PASS"
+        assert result[0].status == "MANUAL"
         assert "authorization-config" in result[0].status_extended
 
     def test_authorization_mode_includes_rbac_pass(self):
@@ -114,7 +114,7 @@ class TestApiserverAuthModeIncludeRbac:
         assert result[0].status == "FAIL"
         assert "RBAC" in result[0].status_extended
 
-    def test_authorization_config_with_always_allow_mode_pass(self):
+    def test_authorization_config_with_always_allow_mode_manual(self):
         # --authorization-config makes --authorization-mode inert, so an
         # AlwaysAllow value there must not flip the verdict.
         pod = make_apiserver_pod(
@@ -124,14 +124,14 @@ class TestApiserverAuthModeIncludeRbac:
         result = run_check(MODULE, CLASS, [pod])
 
         assert len(result) == 1
-        assert result[0].status == "PASS"
+        assert result[0].status == "MANUAL"
         assert "authorization-config" in result[0].status_extended
 
-    def test_bare_authorization_config_token_pass(self):
+    def test_bare_authorization_config_token_manual(self):
         pod = make_apiserver_pod(command=["kube-apiserver", "--authorization-config"])
 
         result = run_check(MODULE, CLASS, [pod])
 
         assert len(result) == 1
-        assert result[0].status == "PASS"
+        assert result[0].status == "MANUAL"
         assert "authorization-config" in result[0].status_extended

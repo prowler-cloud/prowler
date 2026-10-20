@@ -44,10 +44,11 @@ class apiserver_auth_mode_include_node(Check):
                     if not node_auth_mode_set:
                         break
             if authorization_config:
-                report.status = "PASS"
+                report.status = "MANUAL"
                 report.status_extended = (
                     f"API Server authorization is configured through --authorization-config in pod {pod.name}; "
-                    "the referenced configuration file was not inspected."
+                    "the referenced configuration file was not inspected. "
+                    "Manually verify that the Node authorizer is enabled in the authorization configuration."
                 )
             elif not node_auth_mode_set:
                 report.status = "FAIL"
