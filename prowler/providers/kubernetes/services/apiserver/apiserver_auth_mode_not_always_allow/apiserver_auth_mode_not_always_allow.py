@@ -19,13 +19,13 @@ class apiserver_auth_mode_not_always_allow(Check):
                 command == "--authorization-config"
                 or command.startswith("--authorization-config=")
                 for container in pod.containers.values()
-                for command in container.command
+                for command in container.command or []
             )
             always_allow_in_auth_mode = True
             if not authorization_config:
                 for container in pod.containers.values():
                     always_allow_in_auth_mode = True
-                    for command in container.command:
+                    for command in container.command or []:
                         if command.startswith("--authorization-mode"):
                             if "AlwaysAllow" not in (command.split("=")[1]):
                                 always_allow_in_auth_mode = False

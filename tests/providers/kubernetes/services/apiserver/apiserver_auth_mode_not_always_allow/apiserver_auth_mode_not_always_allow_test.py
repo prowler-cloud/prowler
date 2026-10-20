@@ -94,6 +94,29 @@ class TestApiserverAuthModeNotAlwaysAllow:
         assert "authorization-config" in result[0].status_extended
         assert "was not inspected" in result[0].status_extended
 
+    def test_container_without_command_no_crash(self):
+        pod = make_apiserver_pod(command=None)
+
+        result = run_check(MODULE, CLASS, [pod])
+
+        assert len(result) == 1
+        assert result[0].status == "FAIL"
+        assert "AlwaysAllow" in result[0].status_extended
+
+    def test_none_command_first_container_authorization_config_later_pass(self):
+        pod = make_apiserver_pod_with_containers(
+            [
+                None,
+                TALOS_COMMAND,
+            ]
+        )
+
+        result = run_check(MODULE, CLASS, [pod])
+
+        assert len(result) == 1
+        assert result[0].status == "PASS"
+        assert "authorization-config" in result[0].status_extended
+
     def test_authorization_config_first_container_with_always_allow_later_pass(self):
         pod = make_apiserver_pod_with_containers(
             [
