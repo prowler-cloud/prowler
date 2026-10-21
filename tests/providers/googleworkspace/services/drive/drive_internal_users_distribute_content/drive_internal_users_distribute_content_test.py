@@ -3,6 +3,7 @@ from unittest.mock import patch
 from prowler.providers.googleworkspace.services.drive.drive_service import DrivePolicies
 from tests.providers.googleworkspace.googleworkspace_fixtures import (
     CUSTOMER_ID,
+    DOMAIN,
     set_mocked_googleworkspace_provider,
 )
 
@@ -129,6 +130,39 @@ class TestDriveInternalUsersDistributeContent:
             assert len(findings) == 1
             assert findings[0].status == "FAIL"
             assert "not explicitly configured" in findings[0].status_extended
+
+    def test_pass_when_the_service_is_off_for_everyone(self):
+        """A service that is off cannot expose anything, whatever its other settings say"""
+        mock_provider = set_mocked_googleworkspace_provider()
+
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=mock_provider,
+            ),
+            patch(
+                "prowler.providers.googleworkspace.services.drive.drive_internal_users_distribute_content.drive_internal_users_distribute_content.drive_client"
+            ) as mock_client,
+        ):
+            from prowler.providers.googleworkspace.services.drive.drive_internal_users_distribute_content.drive_internal_users_distribute_content import (
+                drive_internal_users_distribute_content,
+            )
+
+            mock_client.provider = mock_provider
+            mock_client.policies_fetched = True
+            mock_client.policies = DrivePolicies(
+                service_state="DISABLED",
+                allowed_parties_for_distributing_content="ALL_ELIGIBLE_USERS",
+            )
+
+            findings = drive_internal_users_distribute_content().execute()
+
+            assert len(findings) == 1
+            assert findings[0].status == "PASS"
+            assert findings[0].status_extended == (
+                f"Google Drive is turned off for everyone in domain {DOMAIN}, "
+                f"so no content can be distributed outside the organization."
+            )
 
     def test_no_findings_when_fetch_failed(self):
         """Test no findings returned when the API fetch failed"""

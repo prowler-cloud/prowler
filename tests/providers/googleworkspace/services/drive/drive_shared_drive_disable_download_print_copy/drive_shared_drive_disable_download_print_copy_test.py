@@ -3,6 +3,7 @@ from unittest.mock import patch
 from prowler.providers.googleworkspace.services.drive.drive_service import DrivePolicies
 from tests.providers.googleworkspace.googleworkspace_fixtures import (
     CUSTOMER_ID,
+    DOMAIN,
     set_mocked_googleworkspace_provider,
 )
 
@@ -129,6 +130,38 @@ class TestDriveSharedDriveDisableDownloadPrintCopy:
             assert len(findings) == 1
             assert findings[0].status == "PASS"
             assert "secure default" in findings[0].status_extended
+
+    def test_pass_when_the_service_is_off_for_everyone(self):
+        """A service that is off cannot expose anything, whatever its other settings say"""
+        mock_provider = set_mocked_googleworkspace_provider()
+
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=mock_provider,
+            ),
+            patch(
+                "prowler.providers.googleworkspace.services.drive.drive_shared_drive_disable_download_print_copy.drive_shared_drive_disable_download_print_copy.drive_client"
+            ) as mock_client,
+        ):
+            from prowler.providers.googleworkspace.services.drive.drive_shared_drive_disable_download_print_copy.drive_shared_drive_disable_download_print_copy import (
+                drive_shared_drive_disable_download_print_copy,
+            )
+
+            mock_client.provider = mock_provider
+            mock_client.policies_fetched = True
+            mock_client.policies = DrivePolicies(
+                service_state="DISABLED", allowed_parties_for_download_print_copy="ALL"
+            )
+
+            findings = drive_shared_drive_disable_download_print_copy().execute()
+
+            assert len(findings) == 1
+            assert findings[0].status == "PASS"
+            assert findings[0].status_extended == (
+                f"Google Drive is turned off for everyone in domain {DOMAIN}, "
+                f"so no shared drive file can be downloaded, printed or copied."
+            )
 
     def test_no_findings_when_fetch_failed(self):
         """Test no findings returned when the API fetch failed"""

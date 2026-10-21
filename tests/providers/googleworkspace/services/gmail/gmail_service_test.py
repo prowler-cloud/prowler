@@ -215,6 +215,61 @@ class TestGmailService:
             assert gmail.policies_fetched is True
             assert gmail.policies.enable_auto_forwarding is False
 
+    def test_reads_the_service_status_and_its_overrides(self):
+        """Off at the customer level only counts when no org unit or group turns the service back on"""
+        mock_provider = set_mocked_googleworkspace_provider()
+        mock_provider.audit_config = {}
+        mock_provider.fixer_config = {}
+        mock_session = MagicMock()
+        mock_session.credentials = MagicMock()
+        mock_provider.session = mock_session
+
+        mock_service = MagicMock()
+        mock_policies_list = MagicMock()
+        mock_policies_list.execute.return_value = {
+            "policies": [
+                {
+                    "type": "ADMIN",
+                    "policyQuery": {"sortOrder": 201.00122},
+                    "setting": {
+                        "type": "settings/gmail.service_status",
+                        "value": {"serviceState": "DISABLED"},
+                    },
+                },
+                {
+                    "type": "ADMIN",
+                    "policyQuery": {"orgUnit": "orgUnits/sub", "sortOrder": 301.00122},
+                    "setting": {
+                        "type": "settings/gmail.service_status",
+                        "value": {"serviceState": "ENABLED"},
+                    },
+                },
+            ]
+        }
+        mock_service.policies().list.return_value = mock_policies_list
+        mock_service.policies().list_next.return_value = None
+
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=mock_provider,
+            ),
+            patch(
+                "prowler.providers.googleworkspace.services.gmail.gmail_service.GoogleWorkspaceService._build_service",
+                return_value=mock_service,
+            ),
+        ):
+            from prowler.providers.googleworkspace.services.gmail.gmail_service import (
+                Gmail,
+            )
+
+            fetched = Gmail(mock_provider)
+
+            assert fetched.policies_fetched is True
+            assert fetched.policies.service_state == "DISABLED"
+            assert fetched.policies.service_state_overridden is True
+            assert fetched.policies.off_for_everyone is False
+
     def test_gmail_fetch_policies_empty_response(self):
         """Test handling empty policies response"""
         mock_provider = set_mocked_googleworkspace_provider()

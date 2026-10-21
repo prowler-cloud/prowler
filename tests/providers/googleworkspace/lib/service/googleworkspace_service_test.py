@@ -7,6 +7,7 @@ from prowler.providers.googleworkspace.lib.service.service import (
     OVERRIDE_SCOPE,
     UNKNOWN_SCOPE,
     GoogleWorkspaceService,
+    ServicePolicies,
 )
 
 ROOT_OU_ID = "03ph8a2z1234"
@@ -207,6 +208,86 @@ class TestEffectivePolicies:
 
     def test_no_policies(self):
         assert _make_service()._effective_policies([]) == []
+
+
+class TestServiceStatus:
+    def test_off_at_the_customer_level_with_no_override(self):
+        status = _policy("chat.service_status", {"serviceState": "DISABLED"}, 201.1)
+        other = _policy("chat.chat_apps_access", {"enableApps": True}, 100.1)
+
+        assert _make_service()._service_status(
+            [other, status], "chat.service_status"
+        ) == (
+            "DISABLED",
+            False,
+        )
+
+    def test_the_greatest_sort_order_gives_the_state(self):
+        default = _policy("chat.service_status", {"serviceState": "ENABLED"}, 100.1)
+        admin = _policy("chat.service_status", {"serviceState": "DISABLED"}, 201.1)
+
+        assert _make_service()._service_status(
+            [admin, default], "chat.service_status"
+        ) == (
+            "DISABLED",
+            False,
+        )
+
+    def test_an_org_unit_or_group_with_its_own_status_is_an_override(self):
+        root = _policy("chat.service_status", {"serviceState": "DISABLED"}, 201.1)
+        sub_ou = _policy(
+            "chat.service_status",
+            {"serviceState": "ENABLED"},
+            301.1,
+            org_unit="orgUnits/sub",
+        )
+        group = _policy(
+            "chat.service_status", {"serviceState": "ENABLED"}, 401.1, group="groups/g1"
+        )
+
+        svc = _make_service()
+        assert svc._service_status([root, sub_ou], "chat.service_status") == (
+            "DISABLED",
+            True,
+        )
+        assert svc._service_status([root, group], "chat.service_status") == (
+            "DISABLED",
+            True,
+        )
+
+    def test_an_unresolved_scope_counts_as_an_override(self):
+        """Without the root OU id a scoped policy may be the root or a sub-OU; neither may be assumed"""
+        status = _policy("chat.service_status", {"serviceState": "DISABLED"}, 201.1)
+
+        assert _make_service(root_org_unit_id=None)._service_status(
+            [status], "chat.service_status"
+        ) == (None, True)
+
+    def test_no_status_policy(self):
+        other = _policy("chat.chat_apps_access", {"enableApps": True}, 100.1)
+
+        assert _make_service()._service_status([other], "chat.service_status") == (
+            None,
+            False,
+        )
+
+
+class TestServicePolicies:
+    @pytest.mark.parametrize(
+        "state, overridden, expected",
+        [
+            ("DISABLED", False, True),
+            ("DISABLED", True, False),
+            ("ENABLED", False, False),
+            (None, False, False),
+        ],
+    )
+    def test_off_for_everyone(self, state, overridden, expected):
+        policies = ServicePolicies(
+            service_state=state, service_state_overridden=overridden
+        )
+
+        assert policies.off_for_everyone is expected
 
 
 class TestListPolicies:

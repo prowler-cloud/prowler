@@ -5,6 +5,7 @@ from prowler.providers.googleworkspace.services.groups.groups_service import (
 )
 from tests.providers.googleworkspace.googleworkspace_fixtures import (
     CUSTOMER_ID,
+    DOMAIN,
     set_mocked_googleworkspace_provider,
 )
 
@@ -243,6 +244,38 @@ class TestGroupsCreationRestricted:
             assert "ANYONE_CAN_CREATE" in findings[0].status_extended
             assert "external members" in findings[0].status_extended
             assert "incoming email" in findings[0].status_extended
+
+    def test_pass_when_the_service_is_off_for_everyone(self):
+        """A service that is off cannot expose anything, whatever its other settings say"""
+        mock_provider = set_mocked_googleworkspace_provider()
+
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=mock_provider,
+            ),
+            patch(
+                "prowler.providers.googleworkspace.services.groups.groups_creation_restricted.groups_creation_restricted.groups_client"
+            ) as mock_client,
+        ):
+            from prowler.providers.googleworkspace.services.groups.groups_creation_restricted.groups_creation_restricted import (
+                groups_creation_restricted,
+            )
+
+            mock_client.provider = mock_provider
+            mock_client.policies_fetched = True
+            mock_client.policies = GroupsPolicies(
+                service_state="DISABLED", create_groups_access_level="USERS_IN_DOMAIN"
+            )
+
+            findings = groups_creation_restricted().execute()
+
+            assert len(findings) == 1
+            assert findings[0].status == "PASS"
+            assert findings[0].status_extended == (
+                f"Groups for Business is turned off for everyone in domain {DOMAIN}, "
+                f"so no group can be created or used."
+            )
 
     def test_no_findings_when_fetch_failed(self):
         """Test no findings returned when the API fetch failed"""

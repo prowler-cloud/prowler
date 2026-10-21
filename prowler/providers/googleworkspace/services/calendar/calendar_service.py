@@ -1,9 +1,10 @@
 from typing import Optional
 
-from pydantic import BaseModel
-
 from prowler.lib.logger import logger
-from prowler.providers.googleworkspace.lib.service.service import GoogleWorkspaceService
+from prowler.providers.googleworkspace.lib.service.service import (
+    GoogleWorkspaceService,
+    ServicePolicies,
+)
 
 
 class Calendar(GoogleWorkspaceService):
@@ -35,6 +36,11 @@ class Calendar(GoogleWorkspaceService):
                 'setting.type.matches("calendar.*")',
                 "fetching calendar policies",
             )
+
+            (
+                self.policies.service_state,
+                self.policies.service_state_overridden,
+            ) = self._service_status(policies, "calendar.service_status")
 
             for policy in self._effective_policies(policies):
                 setting = policy.get("setting", {})
@@ -86,7 +92,7 @@ class Calendar(GoogleWorkspaceService):
             )
 
 
-class CalendarPolicies(BaseModel):
+class CalendarPolicies(ServicePolicies):
     """Model for domain-level Calendar policy settings."""
 
     primary_calendar_external_sharing: Optional[str] = None

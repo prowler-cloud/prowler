@@ -26,7 +26,13 @@ class drive_external_sharing_warn_users(Check):
 
             warning_enabled = drive_client.policies.warn_for_external_sharing
 
-            if warning_enabled is True:
+            if drive_client.policies.off_for_everyone:
+                report.status = "PASS"
+                report.status_extended = (
+                    f"Google Drive is turned off for everyone in domain "
+                    f"{drive_client.provider.identity.domain}, so no file can be shared outside the organization."
+                )
+            elif warning_enabled is True:
                 report.status = "PASS"
                 report.status_extended = (
                     f"External sharing warnings for Drive and Docs are enabled "

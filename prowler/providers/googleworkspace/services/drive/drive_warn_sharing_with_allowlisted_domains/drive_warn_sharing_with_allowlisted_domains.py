@@ -29,7 +29,13 @@ class drive_warn_sharing_with_allowlisted_domains(Check):
                 drive_client.policies.warn_for_sharing_outside_allowlisted_domains
             )
 
-            if warn_enabled is True:
+            if drive_client.policies.off_for_everyone:
+                report.status = "PASS"
+                report.status_extended = (
+                    f"Google Drive is turned off for everyone in domain "
+                    f"{drive_client.provider.identity.domain}, so no file can be shared with allowlisted domains."
+                )
+            elif warn_enabled is True:
                 report.status = "PASS"
                 report.status_extended = (
                     f"Users are warned when sharing files with allowlisted "

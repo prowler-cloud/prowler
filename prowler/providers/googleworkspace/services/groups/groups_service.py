@@ -1,9 +1,10 @@
 from typing import Optional
 
-from pydantic import BaseModel
-
 from prowler.lib.logger import logger
-from prowler.providers.googleworkspace.lib.service.service import GoogleWorkspaceService
+from prowler.providers.googleworkspace.lib.service.service import (
+    GoogleWorkspaceService,
+    ServicePolicies,
+)
 
 
 class Groups(GoogleWorkspaceService):
@@ -35,6 +36,11 @@ class Groups(GoogleWorkspaceService):
                 'setting.type.matches("groups_for_business.*")',
                 "fetching Groups for Business policies",
             )
+
+            (
+                self.policies.service_state,
+                self.policies.service_state_overridden,
+            ) = self._service_status(policies, "groups_for_business.service_status")
 
             for policy in self._effective_policies(policies):
                 setting = policy.get("setting", {})
@@ -83,7 +89,7 @@ class Groups(GoogleWorkspaceService):
             logger.debug("Groups for Business sharing settings fetched.")
 
 
-class GroupsPolicies(BaseModel):
+class GroupsPolicies(ServicePolicies):
     """Model for domain-level Groups for Business policy settings."""
 
     # groups_for_business.groups_sharing

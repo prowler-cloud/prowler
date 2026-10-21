@@ -1,9 +1,10 @@
 from typing import Optional
 
-from pydantic import BaseModel
-
 from prowler.lib.logger import logger
-from prowler.providers.googleworkspace.lib.service.service import GoogleWorkspaceService
+from prowler.providers.googleworkspace.lib.service.service import (
+    GoogleWorkspaceService,
+    ServicePolicies,
+)
 
 
 class Drive(GoogleWorkspaceService):
@@ -36,6 +37,11 @@ class Drive(GoogleWorkspaceService):
                 'setting.type.matches("drive_and_docs.*")',
                 "fetching Drive and Docs policies",
             )
+
+            (
+                self.policies.service_state,
+                self.policies.service_state_overridden,
+            ) = self._service_status(policies, "drive_and_docs.service_status")
 
             for policy in self._effective_policies(policies):
                 setting = policy.get("setting", {})
@@ -108,7 +114,7 @@ class Drive(GoogleWorkspaceService):
             )
 
 
-class DrivePolicies(BaseModel):
+class DrivePolicies(ServicePolicies):
     """Model for domain-level Drive and Docs policy settings."""
 
     # drive_and_docs.external_sharing

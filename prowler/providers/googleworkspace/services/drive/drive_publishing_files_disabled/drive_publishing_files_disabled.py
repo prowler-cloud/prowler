@@ -27,7 +27,13 @@ class drive_publishing_files_disabled(Check):
 
             allow_publishing = drive_client.policies.allow_publishing_files
 
-            if allow_publishing is False:
+            if drive_client.policies.off_for_everyone:
+                report.status = "PASS"
+                report.status_extended = (
+                    f"Google Drive is turned off for everyone in domain "
+                    f"{drive_client.provider.identity.domain}, so no file can be published to the web."
+                )
+            elif allow_publishing is False:
                 report.status = "PASS"
                 report.status_extended = (
                     f"Publishing files to the web is disabled in domain "

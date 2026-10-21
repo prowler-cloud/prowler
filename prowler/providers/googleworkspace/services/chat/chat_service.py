@@ -1,9 +1,10 @@
 from typing import Optional
 
-from pydantic import BaseModel
-
 from prowler.lib.logger import logger
-from prowler.providers.googleworkspace.lib.service.service import GoogleWorkspaceService
+from prowler.providers.googleworkspace.lib.service.service import (
+    GoogleWorkspaceService,
+    ServicePolicies,
+)
 
 
 class Chat(GoogleWorkspaceService):
@@ -35,6 +36,11 @@ class Chat(GoogleWorkspaceService):
                 'setting.type.matches("chat.*")',
                 "fetching Chat policies",
             )
+
+            (
+                self.policies.service_state,
+                self.policies.service_state_overridden,
+            ) = self._service_status(policies, "chat.service_status")
 
             for policy in self._effective_policies(policies):
                 setting = policy.get("setting", {})
@@ -81,7 +87,7 @@ class Chat(GoogleWorkspaceService):
             logger.debug("Chat apps access settings fetched.")
 
 
-class ChatPolicies(BaseModel):
+class ChatPolicies(ServicePolicies):
     """Model for domain-level Chat policy settings."""
 
     # chat.chat_file_sharing

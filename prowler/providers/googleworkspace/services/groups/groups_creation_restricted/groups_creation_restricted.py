@@ -56,7 +56,13 @@ class groups_creation_restricted(Check):
                     "group owners can allow incoming email from outside the organization"
                 )
 
-            if not issues:
+            if policies.off_for_everyone:
+                report.status = "PASS"
+                report.status_extended = (
+                    f"Groups for Business is turned off for everyone in domain "
+                    f"{domain}, so no group can be created or used."
+                )
+            elif not issues:
                 report.status = "PASS"
                 report.status_extended = (
                     f"Group creation is properly restricted in domain {domain}: "

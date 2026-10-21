@@ -36,5 +36,5 @@
     "groups_creation_restricted",
     "groups_view_conversations_restricted"
   ],
-  "Notes": ""
+  "Notes": "When Groups for Business is turned off for everyone, the check passes: the setting cannot expose anything while the service is off."
 }

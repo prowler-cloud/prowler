@@ -26,7 +26,13 @@ class drive_sharing_allowlisted_domains(Check):
 
             mode = drive_client.policies.external_sharing_mode
 
-            if mode == "ALLOWLISTED_DOMAINS":
+            if drive_client.policies.off_for_everyone:
+                report.status = "PASS"
+                report.status_extended = (
+                    f"Google Drive is turned off for everyone in domain "
+                    f"{drive_client.provider.identity.domain}, so no file can be shared outside the organization."
+                )
+            elif mode == "ALLOWLISTED_DOMAINS":
                 report.status = "PASS"
                 report.status_extended = (
                     f"Drive and Docs external sharing in domain "

@@ -1,9 +1,10 @@
 from typing import Optional
 
-from pydantic import BaseModel
-
 from prowler.lib.logger import logger
-from prowler.providers.googleworkspace.lib.service.service import GoogleWorkspaceService
+from prowler.providers.googleworkspace.lib.service.service import (
+    GoogleWorkspaceService,
+    ServicePolicies,
+)
 
 
 class Gmail(GoogleWorkspaceService):
@@ -35,6 +36,11 @@ class Gmail(GoogleWorkspaceService):
                 'setting.type.matches("gmail.*")',
                 "fetching Gmail policies",
             )
+
+            (
+                self.policies.service_state,
+                self.policies.service_state_overridden,
+            ) = self._service_status(policies, "gmail.service_status")
 
             for policy in self._effective_policies(policies):
                 setting = policy.get("setting", {})
@@ -158,7 +164,7 @@ class Gmail(GoogleWorkspaceService):
             logger.debug("Gmail comprehensive mail storage setting fetched.")
 
 
-class GmailPolicies(BaseModel):
+class GmailPolicies(ServicePolicies):
     """Model for domain-level Gmail policy settings."""
 
     # gmail.mail_delegation

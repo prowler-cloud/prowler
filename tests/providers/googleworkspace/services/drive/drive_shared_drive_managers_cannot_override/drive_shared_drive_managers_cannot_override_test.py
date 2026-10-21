@@ -3,6 +3,7 @@ from unittest.mock import patch
 from prowler.providers.googleworkspace.services.drive.drive_service import DrivePolicies
 from tests.providers.googleworkspace.googleworkspace_fixtures import (
     CUSTOMER_ID,
+    DOMAIN,
     set_mocked_googleworkspace_provider,
 )
 
@@ -99,6 +100,38 @@ class TestDriveSharedDriveManagersCannotOverride:
             assert len(findings) == 1
             assert findings[0].status == "FAIL"
             assert "not explicitly configured" in findings[0].status_extended
+
+    def test_pass_when_the_service_is_off_for_everyone(self):
+        """A service that is off cannot expose anything, whatever its other settings say"""
+        mock_provider = set_mocked_googleworkspace_provider()
+
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=mock_provider,
+            ),
+            patch(
+                "prowler.providers.googleworkspace.services.drive.drive_shared_drive_managers_cannot_override.drive_shared_drive_managers_cannot_override.drive_client"
+            ) as mock_client,
+        ):
+            from prowler.providers.googleworkspace.services.drive.drive_shared_drive_managers_cannot_override.drive_shared_drive_managers_cannot_override import (
+                drive_shared_drive_managers_cannot_override,
+            )
+
+            mock_client.provider = mock_provider
+            mock_client.policies_fetched = True
+            mock_client.policies = DrivePolicies(
+                service_state="DISABLED", allow_managers_to_override_settings=True
+            )
+
+            findings = drive_shared_drive_managers_cannot_override().execute()
+
+            assert len(findings) == 1
+            assert findings[0].status == "PASS"
+            assert findings[0].status_extended == (
+                f"Google Drive is turned off for everyone in domain {DOMAIN}, "
+                f"so no shared drive setting can be overridden."
+            )
 
     def test_no_findings_when_fetch_failed(self):
         """Test no findings returned when the API fetch failed"""

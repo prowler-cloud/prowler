@@ -39,5 +39,5 @@
     "drive_access_checker_recipients_only",
     "drive_internal_users_distribute_content"
   ],
-  "Notes": ""
+  "Notes": "When Google Drive is turned off for everyone, the check passes: the setting cannot expose anything while the service is off."
 }

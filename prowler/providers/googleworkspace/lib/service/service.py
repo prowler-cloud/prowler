@@ -1,5 +1,8 @@
+from typing import Optional
+
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
+from pydantic import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.providers.googleworkspace.googleworkspace_provider import (
@@ -27,6 +30,28 @@ def _sort_order(policy: dict) -> float:
         return float((policy.get("policyQuery") or {}).get("sortOrder") or 0)
     except (TypeError, ValueError):
         return 0.0
+
+
+class ServicePolicies(BaseModel):
+    """Base of the per-service policy models: carries the service status.
+
+    `service_state` is the customer-level value of the service's
+    `<service>.service_status` setting. `service_state_overridden` records
+    that an organizational unit or group carries its own status policy, in
+    which case "off" at the customer level does not mean off for everyone.
+    """
+
+    service_state: Optional[str] = None
+    service_state_overridden: bool = False
+
+    @property
+    def off_for_everyone(self) -> bool:
+        """Whether the service is off at the customer level with no override.
+
+        A service that is off cannot expose anything through its other
+        settings, so checks on those settings pass with that reason.
+        """
+        return self.service_state == "DISABLED" and not self.service_state_overridden
 
 
 class GoogleWorkspaceService:
@@ -135,6 +160,30 @@ class GoogleWorkspaceService:
             elif _sort_order(policy) >= _sort_order(kept[index]):
                 kept[index] = policy
         return kept
+
+    def _service_status(
+        self, policies: list[dict], setting_type: str
+    ) -> tuple[Optional[str], bool]:
+        """Return a service's customer-level state and whether anything overrides it.
+
+        The state comes from the effective customer-level policy of the given
+        `<service>.service_status` setting. Any policy of that setting outside
+        the customer scope, including one whose scope could not be resolved,
+        counts as an override: "off" then holds only for part of the tenant.
+        """
+        status_policies = [
+            policy for policy in policies if _setting_type(policy) == setting_type
+        ]
+        overridden = any(
+            not self._is_customer_level_policy(policy) for policy in status_policies
+        )
+        effective = self._effective_policies(status_policies)
+        state = None
+        if effective:
+            state = (
+                (effective[0].get("setting") or {}).get("value", {}).get("serviceState")
+            )
+        return state, overridden
 
     def _handle_api_error(self, error, context: str, resource_name: str = ""):
         """
