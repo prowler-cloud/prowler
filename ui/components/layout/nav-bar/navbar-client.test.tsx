@@ -103,7 +103,7 @@ describe("NavbarClient", () => {
     expect(
       screen.getByRole("heading", { name: "Findings" }),
     ).toBeInTheDocument();
-    expect(screen.getAllByText("See how it works")).not.toHaveLength(0);
+    expect(await screen.findAllByText("See how it works")).not.toHaveLength(0);
     expect(
       screen.getByRole("button", {
         name: /start product tour: explore your findings/i,
