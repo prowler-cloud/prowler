@@ -5,6 +5,8 @@ import re
 from os import environ
 
 from colorama import Fore, Style
+from google.auth import default, impersonated_credentials
+from google.auth.exceptions import DefaultCredentialsError
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 
@@ -18,6 +20,7 @@ from prowler.lib.utils.utils import print_boxes
 from prowler.providers.common.models import Audit_Metadata, Connection
 from prowler.providers.common.provider import Provider
 from prowler.providers.googleworkspace.exceptions.exceptions import (
+    GoogleWorkspaceADCError,
     GoogleWorkspaceImpersonationError,
     GoogleWorkspaceInsufficientScopesError,
     GoogleWorkspaceInvalidCredentialsError,
@@ -79,6 +82,7 @@ class GoogleworkspaceProvider(Provider):
         credentials_file: str = None,
         credentials_content: str = None,
         delegated_user: str = None,
+        impersonate_service_account: str = None,
         # Provider configuration
         config_path: str = None,
         config_content: dict = None,
@@ -93,6 +97,8 @@ class GoogleworkspaceProvider(Provider):
             credentials_file (str): Path to Service Account JSON credentials file.
             credentials_content (str): Service Account JSON credentials as a string.
             delegated_user (str): Email of the user to impersonate via Domain-Wide Delegation.
+            impersonate_service_account (str): Email of a Service Account to impersonate through
+                Application Default Credentials for keyless Domain-Wide Delegation (no JSON key).
             config_path (str): Path to the audit configuration file.
             config_content (dict): Audit configuration content.
             fixer_config (dict): Fixer configuration content.
@@ -106,9 +112,10 @@ class GoogleworkspaceProvider(Provider):
         logging.getLogger("googleapiclient.discovery_cache").setLevel(logging.ERROR)
 
         self._session, resolved_delegated_user = GoogleworkspaceProvider.setup_session(
-            credentials_file,
-            credentials_content,
-            delegated_user,
+            credentials_file=credentials_file,
+            credentials_content=credentials_content,
+            delegated_user=delegated_user,
+            impersonate_service_account=impersonate_service_account,
         )
 
         self._identity = GoogleworkspaceProvider.setup_identity(
@@ -183,14 +190,23 @@ class GoogleworkspaceProvider(Provider):
         credentials_file: str = None,
         credentials_content: str = None,
         delegated_user: str = None,
+        impersonate_service_account: str = None,
     ) -> tuple[GoogleWorkspaceSession, str]:
         """
         Sets up the Google Workspace session with Service Account and Domain-Wide Delegation.
+
+        Credentials are resolved in this order: credentials_file, credentials_content,
+        the GOOGLEWORKSPACE_CREDENTIALS_FILE and GOOGLEWORKSPACE_CREDENTIALS_CONTENT
+        environment variables, impersonate_service_account, then the
+        GOOGLEWORKSPACE_IMPERSONATE_SERVICE_ACCOUNT environment variable. Service Account
+        key material always wins over impersonation, whichever way each is provided.
 
         Args:
             credentials_file (str): Path to Service Account JSON credentials file.
             credentials_content (str): Service Account JSON credentials as a string.
             delegated_user (str): Email of the user to impersonate via Domain-Wide Delegation.
+            impersonate_service_account (str): Email of a Service Account to impersonate through
+                Application Default Credentials for keyless Domain-Wide Delegation (no JSON key).
 
         Returns:
             tuple[GoogleWorkspaceSession, str]: Tuple containing the authenticated session and resolved delegated user email.
@@ -199,6 +215,7 @@ class GoogleworkspaceProvider(Provider):
             GoogleWorkspaceNoCredentialsError: If no credentials are provided.
             GoogleWorkspaceMissingDelegatedUserError: If delegated_user is not provided.
             GoogleWorkspaceInvalidCredentialsError: If credentials are invalid.
+            GoogleWorkspaceADCError: If Application Default Credentials cannot be loaded for impersonation.
             GoogleWorkspaceImpersonationError: If impersonation fails.
             GoogleWorkspaceSetUpSessionError: If session setup fails.
         """
@@ -220,7 +237,10 @@ class GoogleworkspaceProvider(Provider):
                 message=f"Invalid delegated user email format: {delegated_user}. Must be a valid email address.",
             )
 
-        # Determine credentials source
+        # Determine credentials source. Service Account key material (argument,
+        # then environment variable) always wins over keyless impersonation
+        # (argument, then environment variable).
+        impersonated_service_account = None
         if credentials_file:
             logger.info(
                 f"Using Service Account credentials from file: {credentials_file}"
@@ -266,7 +286,7 @@ class GoogleworkspaceProvider(Provider):
         else:
             # Try environment variables
             logger.info(
-                "Looking for GOOGLEWORKSPACE_CREDENTIALS_FILE or GOOGLEWORKSPACE_CREDENTIALS_CONTENT environment variables..."
+                "Looking for GOOGLEWORKSPACE_CREDENTIALS_FILE, GOOGLEWORKSPACE_CREDENTIALS_CONTENT or GOOGLEWORKSPACE_IMPERSONATE_SERVICE_ACCOUNT environment variables..."
             )
             env_file = environ.get("GOOGLEWORKSPACE_CREDENTIALS_FILE", "")
             env_content = environ.get("GOOGLEWORKSPACE_CREDENTIALS_CONTENT", "")
@@ -316,16 +336,36 @@ class GoogleworkspaceProvider(Provider):
                         message="Invalid service account credentials in GOOGLEWORKSPACE_CREDENTIALS_CONTENT",
                     )
             else:
-                raise GoogleWorkspaceNoCredentialsError(
-                    file=os.path.basename(__file__),
-                    message="No credentials provided. Set the GOOGLEWORKSPACE_CREDENTIALS_FILE or GOOGLEWORKSPACE_CREDENTIALS_CONTENT environment variable.",
+                # The flag wins over its environment variable
+                impersonated_service_account = (
+                    impersonate_service_account
+                    or environ.get("GOOGLEWORKSPACE_IMPERSONATE_SERVICE_ACCOUNT")
+                    or None
                 )
+                if impersonated_service_account:
+                    credentials = (
+                        GoogleworkspaceProvider.setup_impersonated_credentials(
+                            impersonated_service_account,
+                            delegated_user,
+                        )
+                    )
+                else:
+                    raise GoogleWorkspaceNoCredentialsError(
+                        file=os.path.basename(__file__),
+                        message="No credentials provided. Set the GOOGLEWORKSPACE_CREDENTIALS_FILE or GOOGLEWORKSPACE_CREDENTIALS_CONTENT environment variable, or GOOGLEWORKSPACE_IMPERSONATE_SERVICE_ACCOUNT to authenticate keyless through Application Default Credentials.",
+                    )
 
         # Perform Domain-Wide Delegation impersonation
         logger.info(f"Impersonating user: {delegated_user}")
-        # Note: with_subject() never fails - it just creates an object
-        # We need to verify the delegation actually works by making an API call
-        delegated_credentials = credentials.with_subject(delegated_user)
+        if impersonated_service_account:
+            # Impersonated credentials already carry the delegated user as the JWT
+            # subject: google-auth asks the IAM Credentials API to sign the delegation
+            # assertion on every refresh, so there is no with_subject() step here.
+            delegated_credentials = credentials
+        else:
+            # Note: with_subject() never fails - it just creates an object
+            # We need to verify the delegation actually works by making an API call
+            delegated_credentials = credentials.with_subject(delegated_user)
 
         # Test the delegation by making an actual API call to verify it works
         try:
@@ -344,16 +384,26 @@ class GoogleworkspaceProvider(Provider):
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
             )
             error_message = str(error).lower()
+            # Admin SDK errors carry "403"/"forbidden"; an IAM Credentials refusal on
+            # the impersonation path (signJwt, or getAccessToken behind Workload
+            # Identity Federation) surfaces as a RefreshError whose body says
+            # "PERMISSION_DENIED"; an unauthorized Domain-Wide Delegation client
+            # surfaces as a RefreshError with "unauthorized_client".
             if (
                 "403" in str(error)
                 or "forbidden" in error_message
                 or "insufficient" in error_message
                 or "unauthorized" in error_message
+                or "permission_denied" in error_message
+                or "permission denied" in error_message
             ):
+                remediation = "Ensure the Service Account Client ID is authorized in Google Workspace Admin Console with the required OAuth scopes."
+                if impersonated_service_account:
+                    remediation += f" When impersonating {impersonated_service_account} through Application Default Credentials, also ensure the calling identity holds roles/iam.serviceAccountTokenCreator on that Service Account (iam.serviceAccounts.signJwt) and, behind Workload Identity Federation, roles/iam.workloadIdentityUser (iam.serviceAccounts.getAccessToken)."
                 raise GoogleWorkspaceInsufficientScopesError(
                     file=os.path.basename(__file__),
                     original_exception=error,
-                    message=f"Domain-Wide Delegation is not configured or user {delegated_user} lacks required permissions. Ensure the Service Account Client ID is authorized in Google Workspace Admin Console with the required OAuth scopes.",
+                    message=f"Domain-Wide Delegation is not configured or user {delegated_user} lacks required permissions. {remediation}",
                 )
             else:
                 raise GoogleWorkspaceImpersonationError(
@@ -362,8 +412,69 @@ class GoogleworkspaceProvider(Provider):
                     message=f"Failed to verify delegation for user {delegated_user}: {error}",
                 )
 
-        session = GoogleWorkspaceSession(credentials=delegated_credentials)
+        session = GoogleWorkspaceSession(
+            credentials=delegated_credentials,
+            impersonated_service_account=impersonated_service_account,
+        )
         return session, delegated_user
+
+    @staticmethod
+    def setup_impersonated_credentials(
+        service_account_email: str,
+        delegated_user: str,
+    ) -> impersonated_credentials.Credentials:
+        """
+        Builds keyless Domain-Wide Delegation credentials by impersonating a Service Account
+        through Application Default Credentials (ADC).
+
+        The ADC identity (a user signed in with `gcloud auth application-default login`, a
+        Workload Identity Federation credential in CI, a GCE/GKE metadata identity, or the
+        Service Account itself) asks the IAM Credentials API to sign the delegation JWT on
+        behalf of `service_account_email`, so no Service Account private key is ever
+        downloaded. The calling identity needs `roles/iam.serviceAccountTokenCreator`
+        (`iam.serviceAccounts.signJwt`) on the Service Account, and the Service Account
+        Client ID must be authorized for Domain-Wide Delegation exactly as with a JSON key.
+
+        Args:
+            service_account_email (str): Email of the Service Account to impersonate.
+            delegated_user (str): Email of the user to impersonate via Domain-Wide Delegation.
+
+        Returns:
+            impersonated_credentials.Credentials: Credentials that authenticate as the delegated user.
+
+        Raises:
+            GoogleWorkspaceInvalidCredentialsError: If the Service Account email is malformed.
+            GoogleWorkspaceADCError: If Application Default Credentials cannot be loaded.
+        """
+        email_pattern = re.compile(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
+        if not email_pattern.match(service_account_email):
+            raise GoogleWorkspaceInvalidCredentialsError(
+                file=os.path.basename(__file__),
+                message=f"Invalid Service Account email format: {service_account_email}. Must be a valid Service Account email address.",
+            )
+
+        logger.info(
+            f"Using Application Default Credentials to impersonate Service Account: {service_account_email}"
+        )
+        try:
+            # The ADC project is not needed: the delegated access token is issued to
+            # the Service Account's own OAuth client, so Admin SDK and Cloud Identity
+            # calls are attributed to the project that hosts the Service Account and
+            # no quota project has to be set on the source credentials.
+            source_credentials, _ = default()
+        except DefaultCredentialsError as error:
+            raise GoogleWorkspaceADCError(
+                file=os.path.basename(__file__),
+                original_exception=error,
+                message=f"Application Default Credentials could not be loaded to impersonate {service_account_email}: {error}",
+            )
+
+        return impersonated_credentials.Credentials(
+            source_credentials=source_credentials,
+            target_principal=service_account_email,
+            target_scopes=GoogleworkspaceProvider.SCOPES,
+            subject=delegated_user,
+        )
 
     @staticmethod
     def setup_identity(
@@ -506,11 +617,15 @@ class GoogleworkspaceProvider(Provider):
         Usage:
             >>> self.print_credentials()
         """
+        if self.session.impersonated_service_account:
+            authentication_method = f"Application Default Credentials impersonating {self.session.impersonated_service_account} with Domain-Wide Delegation"
+        else:
+            authentication_method = "Service Account with Domain-Wide Delegation"
         report_lines = [
             f"Google Workspace Domain: {Fore.YELLOW}{self.identity.domain}{Style.RESET_ALL}",
             f"Customer ID: {Fore.YELLOW}{self.identity.customer_id}{Style.RESET_ALL}",
             f"Delegated User: {Fore.YELLOW}{self.identity.delegated_user}{Style.RESET_ALL}",
-            f"Authentication Method: {Fore.YELLOW}Service Account with Domain-Wide Delegation{Style.RESET_ALL}",
+            f"Authentication Method: {Fore.YELLOW}{authentication_method}{Style.RESET_ALL}",
         ]
         report_title = f"{Style.BRIGHT}Using the Google Workspace credentials below:{Style.RESET_ALL}"
         print_boxes(report_lines, report_title)
@@ -522,6 +637,7 @@ class GoogleworkspaceProvider(Provider):
         delegated_user: str = None,
         raise_on_exception: bool = True,
         provider_id: str = None,
+        impersonate_service_account: str = None,
     ) -> Connection:
         """Test connection to Google Workspace.
 
@@ -533,6 +649,8 @@ class GoogleworkspaceProvider(Provider):
             delegated_user (str): Email of the user to impersonate via Domain-Wide Delegation.
             raise_on_exception (bool): Flag indicating whether to raise an exception if the connection fails.
             provider_id (str): The provider ID (Customer ID). Optional, not used in connection test.
+            impersonate_service_account (str): Email of a Service Account to impersonate through
+                Application Default Credentials for keyless Domain-Wide Delegation (no JSON key).
 
         Returns:
             Connection: Connection object with success status or error information.
@@ -556,6 +674,7 @@ class GoogleworkspaceProvider(Provider):
                 credentials_file=credentials_file,
                 credentials_content=credentials_content,
                 delegated_user=delegated_user,
+                impersonate_service_account=impersonate_service_account,
             )
 
             # Set up the identity to test the connection
