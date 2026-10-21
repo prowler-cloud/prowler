@@ -42,6 +42,8 @@ Set the following environment variables for Microsoft Entra ID (formerly Azure A
 ```env
 SOCIAL_MICROSOFT_OAUTH_CLIENT_ID=""
 SOCIAL_MICROSOFT_OAUTH_CLIENT_SECRET=""
+# Must match the redirect URI registered for the Entra ID app.
+SOCIAL_MICROSOFT_OAUTH_CALLBACK_URL="${AUTH_URL}/api/auth/callback/microsoft"
 # "organizations" (default) or "common" for multi-tenant sign-in, or a specific
 # directory (tenant) ID to restrict login to a single Entra ID tenant.
 SOCIAL_MICROSOFT_OAUTH_TENANT="organizations"
@@ -71,7 +73,7 @@ To obtain the Microsoft credentials:
    - **Accounts in any organizational directory** for `organizations` (default).
    - **Accounts in any organizational directory and personal Microsoft accounts** for `common`.
    - **Accounts in this organizational directory only** when restricting login to a single tenant (set `SOCIAL_MICROSOFT_OAUTH_TENANT` to that directory/tenant ID).
-3. Add a **Web** redirect URI pointing to `SOCIAL_MICROSOFT_OAUTH_CALLBACK_URL` (e.g. `https://<your-app>/api/auth/callback/microsoft`).
+3. Add a **Web** redirect URI pointing to `SOCIAL_MICROSOFT_OAUTH_CALLBACK_URL` (for example, `https://<your-app>/api/auth/callback/microsoft`).
 4. Under **API permissions**, add the Microsoft Graph **delegated** permission `User.Read` (used to read the signed-in user's profile from `/me`).
 5. Under **Certificates & secrets**, create a **client secret** and copy its value into `SOCIAL_MICROSOFT_OAUTH_CLIENT_SECRET`. Copy the **Application (client) ID** into `SOCIAL_MICROSOFT_OAUTH_CLIENT_ID`.
 

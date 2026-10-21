@@ -98,9 +98,9 @@ export const getAuthUrl = (provider: AuthSocialProvider) => {
       // Entra ID authorize endpoint is tenant-scoped. "organizations" (the
       // default) allows any work/school account; a specific directory (tenant)
       // ID restricts sign-in to a single Entra ID tenant.
-      baseUrl: `https://login.microsoftonline.com/${
-        process.env.SOCIAL_MICROSOFT_OAUTH_TENANT || "organizations"
-      }/oauth2/v2.0/authorize`,
+      baseUrl: `https://login.microsoftonline.com/${encodeURIComponent(
+        process.env.SOCIAL_MICROSOFT_OAUTH_TENANT || "organizations",
+      )}/oauth2/v2.0/authorize`,
       params: {
         client_id: process.env.SOCIAL_MICROSOFT_OAUTH_CLIENT_ID,
         redirect_uri: process.env.SOCIAL_MICROSOFT_OAUTH_CALLBACK_URL,
