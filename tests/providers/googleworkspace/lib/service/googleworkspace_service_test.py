@@ -255,6 +255,23 @@ class TestServiceStatus:
             True,
         )
 
+    def test_a_sub_org_unit_that_is_also_off_is_not_an_override(self):
+        """An org unit that turns the service off as well changes nothing for anyone"""
+        root = _policy("chat.service_status", {"serviceState": "DISABLED"}, 201.1)
+        sub_ou = _policy(
+            "chat.service_status",
+            {"serviceState": "DISABLED"},
+            301.1,
+            org_unit="orgUnits/sub",
+        )
+
+        assert _make_service()._service_status(
+            [root, sub_ou], "chat.service_status"
+        ) == (
+            "DISABLED",
+            False,
+        )
+
     def test_an_unresolved_scope_counts_as_an_override(self):
         """Without the root OU id a scoped policy may be the root or a sub-OU; neither may be assumed"""
         status = _policy("chat.service_status", {"serviceState": "DISABLED"}, 201.1)

@@ -27,13 +27,7 @@ class drive_shared_drive_members_only_access(Check):
 
             allow_non_member = drive_client.policies.allow_non_member_access
 
-            if drive_client.policies.off_for_everyone:
-                report.status = "PASS"
-                report.status_extended = (
-                    f"Google Drive is turned off for everyone in domain "
-                    f"{drive_client.provider.identity.domain}, so no shared drive file can be shared with non-members."
-                )
-            elif allow_non_member is False:
+            if allow_non_member is False:
                 report.status = "PASS"
                 report.status_extended = (
                     f"Shared drive file access in domain "

@@ -129,7 +129,7 @@ class TestGmailAnomalousAttachmentProtectionEnabled:
             assert "insecure default" in findings[0].status_extended
 
     def test_pass_when_the_service_is_off_for_everyone(self):
-        """A service that is off cannot expose anything, whatever its other settings say"""
+        """A setting that only acts while the service is on has no effect once the service is off"""
         mock_provider = set_mocked_googleworkspace_provider()
 
         with (
@@ -157,7 +157,7 @@ class TestGmailAnomalousAttachmentProtectionEnabled:
             assert findings[0].status == "PASS"
             assert findings[0].status_extended == (
                 f"Gmail is turned off for everyone in domain {DOMAIN}, "
-                f"so no email is delivered through Gmail."
+                f"so no user mailbox receives mail through Gmail."
             )
 
     def test_no_findings_when_fetch_failed(self):

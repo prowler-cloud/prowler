@@ -37,5 +37,5 @@
     "drive_warn_sharing_with_allowlisted_domains",
     "drive_publishing_files_disabled"
   ],
-  "Notes": "When Google Drive is turned off for everyone, the check passes: the setting cannot expose anything while the service is off."
+  "Notes": ""
 }

@@ -27,13 +27,7 @@ class drive_shared_drive_managers_cannot_override(Check):
 
             allow_override = drive_client.policies.allow_managers_to_override_settings
 
-            if drive_client.policies.off_for_everyone:
-                report.status = "PASS"
-                report.status_extended = (
-                    f"Google Drive is turned off for everyone in domain "
-                    f"{drive_client.provider.identity.domain}, so no shared drive setting can be overridden."
-                )
-            elif allow_override is False:
+            if allow_override is False:
                 report.status = "PASS"
                 report.status_extended = (
                     f"Shared drive managers in domain "

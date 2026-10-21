@@ -27,13 +27,7 @@ class drive_internal_users_distribute_content(Check):
 
             allowed = drive_client.policies.allowed_parties_for_distributing_content
 
-            if drive_client.policies.off_for_everyone:
-                report.status = "PASS"
-                report.status_extended = (
-                    f"Google Drive is turned off for everyone in domain "
-                    f"{drive_client.provider.identity.domain}, so no content can be distributed outside the organization."
-                )
-            elif allowed in ("ELIGIBLE_INTERNAL_USERS", "NONE"):
+            if allowed in ("ELIGIBLE_INTERNAL_USERS", "NONE"):
                 report.status = "PASS"
                 report.status_extended = (
                     f"Distributing content outside the organization in domain "

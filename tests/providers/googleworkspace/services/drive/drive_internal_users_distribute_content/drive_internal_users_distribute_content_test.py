@@ -3,7 +3,6 @@ from unittest.mock import patch
 from prowler.providers.googleworkspace.services.drive.drive_service import DrivePolicies
 from tests.providers.googleworkspace.googleworkspace_fixtures import (
     CUSTOMER_ID,
-    DOMAIN,
     set_mocked_googleworkspace_provider,
 )
 
@@ -131,8 +130,8 @@ class TestDriveInternalUsersDistributeContent:
             assert findings[0].status == "FAIL"
             assert "not explicitly configured" in findings[0].status_extended
 
-    def test_pass_when_the_service_is_off_for_everyone(self):
-        """A service that is off cannot expose anything, whatever its other settings say"""
+    def test_evaluates_the_setting_when_the_service_is_off_for_everyone(self):
+        """Existing shares stay reachable when Drive is off, so the stored setting still counts"""
         mock_provider = set_mocked_googleworkspace_provider()
 
         with (
@@ -158,11 +157,8 @@ class TestDriveInternalUsersDistributeContent:
             findings = drive_internal_users_distribute_content().execute()
 
             assert len(findings) == 1
-            assert findings[0].status == "PASS"
-            assert findings[0].status_extended == (
-                f"Google Drive is turned off for everyone in domain {DOMAIN}, "
-                f"so no content can be distributed outside the organization."
-            )
+            assert findings[0].status == "FAIL"
+            assert "turned off" not in findings[0].status_extended
 
     def test_no_findings_when_fetch_failed(self):
         """Test no findings returned when the API fetch failed"""

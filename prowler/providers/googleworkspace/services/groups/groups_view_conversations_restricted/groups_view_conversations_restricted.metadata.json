@@ -36,5 +36,5 @@
     "groups_external_access_restricted",
     "groups_creation_restricted"
   ],
-  "Notes": "When Groups for Business is turned off for everyone, the check passes: the setting cannot expose anything while the service is off."
+  "Notes": "When Groups for Business is turned off for everyone, the check passes: the setting has no effect while the service is off."
 }

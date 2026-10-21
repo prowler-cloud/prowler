@@ -96,7 +96,7 @@ class TestDriveDesktopAccessDisabled:
             assert "not explicitly configured" in findings[0].status_extended
 
     def test_pass_when_the_service_is_off_for_everyone(self):
-        """A service that is off cannot expose anything, whatever its other settings say"""
+        """A setting that only acts while the service is on has no effect once the service is off"""
         mock_provider = set_mocked_googleworkspace_provider()
 
         with (

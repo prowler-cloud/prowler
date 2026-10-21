@@ -36,5 +36,5 @@
     "drive_external_sharing_warn_users",
     "drive_sharing_allowlisted_domains"
   ],
-  "Notes": "This check is meaningful only when external sharing is restricted to allowlisted domains. See the related check drive_sharing_allowlisted_domains. When Google Drive is turned off for everyone, the check passes: the setting cannot expose anything while the service is off."
+  "Notes": "This check is meaningful only when external sharing is restricted to allowlisted domains. See the related check drive_sharing_allowlisted_domains."
 }

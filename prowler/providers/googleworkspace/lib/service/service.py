@@ -24,6 +24,11 @@ def _setting_type(policy: dict) -> str:
     return (policy.get("setting") or {}).get("type", "").removeprefix("settings/")
 
 
+def _service_state(policy: dict) -> Optional[str]:
+    """Return the serviceState a service status policy carries, if any."""
+    return (((policy.get("setting") or {}).get("value")) or {}).get("serviceState")
+
+
 def _sort_order(policy: dict) -> float:
     """Return the policy's sortOrder, or 0 when the API did not give one."""
     try:
@@ -37,7 +42,7 @@ class ServicePolicies(BaseModel):
 
     `service_state` is the customer-level value of the service's
     `<service>.service_status` setting. `service_state_overridden` records
-    that an organizational unit or group carries its own status policy, in
+    that an organizational unit or group turns the service back on, in
     which case "off" at the customer level does not mean off for everyone.
     """
 
@@ -48,8 +53,10 @@ class ServicePolicies(BaseModel):
     def off_for_everyone(self) -> bool:
         """Whether the service is off at the customer level with no override.
 
-        A service that is off cannot expose anything through its other
-        settings, so checks on those settings pass with that reason.
+        Settings that only act while the service is on have no effect then,
+        so the checks on them pass with that reason. Settings that govern
+        what already exists, such as Drive shares or Groups, keep being
+        evaluated: Google keeps existing shares and groups reachable.
         """
         return self.service_state == "DISABLED" and not self.service_state_overridden
 
@@ -167,23 +174,33 @@ class GoogleWorkspaceService:
         """Return a service's customer-level state and whether anything overrides it.
 
         The state comes from the effective customer-level policy of the given
-        `<service>.service_status` setting. Any policy of that setting outside
-        the customer scope, including one whose scope could not be resolved,
-        counts as an override: "off" then holds only for part of the tenant.
+        `<service>.service_status` setting. A policy of that setting outside
+        the customer scope counts as an override when it turns the service on,
+        or when its scope could not be resolved: "off" then holds only for
+        part of the tenant.
         """
         status_policies = [
             policy for policy in policies if _setting_type(policy) == setting_type
         ]
         overridden = any(
-            not self._is_customer_level_policy(policy) for policy in status_policies
+            self._overrides_service_status(policy) for policy in status_policies
         )
         effective = self._effective_policies(status_policies)
-        state = None
-        if effective:
-            state = (
-                (effective[0].get("setting") or {}).get("value", {}).get("serviceState")
-            )
+        state = _service_state(effective[0]) if effective else None
         return state, overridden
+
+    def _overrides_service_status(self, policy: dict) -> bool:
+        """Whether a status policy turns the service back on for part of the tenant.
+
+        A sub-OU or group policy counts only when it does not say DISABLED: an
+        OU that also turns the service off changes nothing, and Google lets an
+        access group only turn a service on. A policy whose scope cannot be
+        resolved counts as well, since it may be either.
+        """
+        scope = self._policy_scope(policy)
+        if scope == CUSTOMER_SCOPE:
+            return False
+        return scope == UNKNOWN_SCOPE or _service_state(policy) != "DISABLED"
 
     def _handle_api_error(self, error, context: str, resource_name: str = ""):
         """

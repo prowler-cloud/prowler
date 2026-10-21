@@ -27,13 +27,7 @@ class drive_shared_drive_disable_download_print_copy(Check):
 
             allowed = drive_client.policies.allowed_parties_for_download_print_copy
 
-            if drive_client.policies.off_for_everyone:
-                report.status = "PASS"
-                report.status_extended = (
-                    f"Google Drive is turned off for everyone in domain "
-                    f"{drive_client.provider.identity.domain}, so no shared drive file can be downloaded, printed or copied."
-                )
-            elif allowed in ("EDITORS_ONLY", "MANAGERS_ONLY"):
+            if allowed in ("EDITORS_ONLY", "MANAGERS_ONLY"):
                 report.status = "PASS"
                 report.status_extended = (
                     f"Download, print, and copy in shared drives in domain "

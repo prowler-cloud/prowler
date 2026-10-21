@@ -29,13 +29,7 @@ class groups_external_access_restricted(Check):
             collaboration = groups_client.policies.collaboration_capability
             domain = groups_client.provider.identity.domain
 
-            if groups_client.policies.off_for_everyone:
-                report.status = "PASS"
-                report.status_extended = (
-                    f"Groups for Business is turned off for everyone in domain "
-                    f"{groups_client.provider.identity.domain}, so no group can be reached from outside the organization."
-                )
-            elif collaboration == "DOMAIN_USERS_ONLY":
+            if collaboration == "DOMAIN_USERS_ONLY":
                 report.status = "PASS"
                 report.status_extended = (
                     f"Groups external access is set to private (domain users only) "

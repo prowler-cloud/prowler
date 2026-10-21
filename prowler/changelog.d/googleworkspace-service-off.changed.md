@@ -1,1 +1,1 @@
-Google Workspace checks for Chat, Drive, Gmail, Calendar and Groups pass with the reason stated when the app is turned off for everyone and no organizational unit or group turns it back on
+Google Workspace checks for Chat, Drive, Gmail, Calendar and Groups pass with the reason stated when the app is turned off for everyone and no organizational unit or group turns it back on. The rule covers settings that only act while the app is on: Drive sharing and Groups settings keep being evaluated because existing shares and groups stay reachable

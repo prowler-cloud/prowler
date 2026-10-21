@@ -33,7 +33,7 @@ class gmail_anomalous_attachment_protection_enabled(Check):
                 report.status = "PASS"
                 report.status_extended = (
                     f"Gmail is turned off for everyone in domain "
-                    f"{gmail_client.provider.identity.domain}, so no email is delivered through Gmail."
+                    f"{gmail_client.provider.identity.domain}, so no user mailbox receives mail through Gmail."
                 )
             elif enabled is False:
                 report.status = "FAIL"
