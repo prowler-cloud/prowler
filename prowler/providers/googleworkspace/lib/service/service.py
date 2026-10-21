@@ -1,5 +1,3 @@
-from typing import Optional
-
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
@@ -25,30 +23,22 @@ class GoogleWorkspaceService:
         self.fixer_config = provider.fixer_config
         self.credentials = provider.session.credentials
 
-    def _build_service(
-        self, api_name: str, api_version: str, scopes: Optional[list[str]] = None
-    ):
+    def _build_service(self, api_name: str, api_version: str):
         """
         Build and return a Google API service client.
 
         Args:
             api_name: The name of the API (e.g., 'admin')
             api_version: The API version (e.g., 'directory_v1')
-            scopes: OAuth scopes for an optional API. They are requested as a
-                separate token, so a scope the admin has not granted fails
-                only that API's calls and never the session.
 
         Returns:
             A Google API service client
         """
         try:
-            credentials = (
-                self.credentials.with_scopes(scopes) if scopes else self.credentials
-            )
             return build(
                 api_name,
                 api_version,
-                credentials=credentials,
+                credentials=self.credentials,
                 cache_discovery=False,
             )
         except Exception as error:

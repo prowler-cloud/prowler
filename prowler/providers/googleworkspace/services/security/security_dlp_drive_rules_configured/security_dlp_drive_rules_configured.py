@@ -65,7 +65,7 @@ class security_dlp_drive_rules_configured(Check):
                     f"in domain {domain}. DLP rules should be configured "
                     f"to detect and prevent sharing of sensitive information "
                     f"through Drive."
-                    f"{edition_reason_suffix(security_client.editions, EDITIONS_WITHOUT_DRIVE_DLP, EDITION_EXPLANATION)}"
+                    f"{edition_reason_suffix(security_client.provider.editions, EDITIONS_WITHOUT_DRIVE_DLP, EDITION_EXPLANATION)}"
                 )
 
             findings.append(report)

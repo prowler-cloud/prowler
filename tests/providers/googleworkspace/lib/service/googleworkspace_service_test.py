@@ -1,4 +1,4 @@
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -124,39 +124,4 @@ class TestPolicyScope:
         assert (
             svc._policy_scope({"policyQuery": {"group": "groups/xyz"}})
             == OVERRIDE_SCOPE
-        )
-
-
-class TestBuildService:
-    def test_uses_the_session_credentials_by_default(self):
-        svc = _make_service()
-        svc.credentials = MagicMock()
-
-        with patch(
-            "prowler.providers.googleworkspace.lib.service.service.build"
-        ) as build:
-            client = svc._build_service("cloudidentity", "v1")
-
-        build.assert_called_once_with(
-            "cloudidentity", "v1", credentials=svc.credentials, cache_discovery=False
-        )
-        assert client is build.return_value
-
-    def test_narrows_the_credentials_to_the_scopes_asked_for(self):
-        """An optional API gets its own token, so a scope the admin did not grant cannot break the main session"""
-        svc = _make_service()
-        svc.credentials = MagicMock()
-        scopes = ["https://www.googleapis.com/auth/apps.licensing"]
-
-        with patch(
-            "prowler.providers.googleworkspace.lib.service.service.build"
-        ) as build:
-            svc._build_service("licensing", "v1", scopes=scopes)
-
-        svc.credentials.with_scopes.assert_called_once_with(scopes)
-        build.assert_called_once_with(
-            "licensing",
-            "v1",
-            credentials=svc.credentials.with_scopes.return_value,
-            cache_discovery=False,
         )

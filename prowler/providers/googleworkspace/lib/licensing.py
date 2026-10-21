@@ -36,6 +36,15 @@ SKU_EDITIONS = {
     "Google-Apps-Lite": "G Suite Lite",
 }
 
+# Google, "Manage shared drives as an admin": the default sharing settings are
+# "Not supported for Business Starter. All shared drive sharing settings are
+# set to allow." The Admin console greys the controls out on that edition.
+EDITIONS_WITHOUT_SHARED_DRIVE_SETTINGS = {"Business Starter"}
+SHARED_DRIVE_SETTINGS_EXPLANATION = (
+    "shared drive settings cannot be changed on the Google Workspace {editions} "
+    "edition, where Google keeps every option allowed."
+)
+
 
 def fetch_editions(service, customer_id: str) -> list[str]:
     """Return the Google Workspace editions licensed to the customer.

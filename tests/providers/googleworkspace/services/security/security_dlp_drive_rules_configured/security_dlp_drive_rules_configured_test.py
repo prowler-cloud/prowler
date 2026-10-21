@@ -118,7 +118,7 @@ class TestSecurityDlpDriveRulesConfigured:
             mock_client.provider = mock_provider
             mock_client.policies_fetched = True
             mock_client.policies = SecurityPolicies(dlp_drive_rules_exist=None)
-            mock_client.editions = ["Business Starter"]
+            mock_provider.editions = ["Business Starter"]
 
             findings = security_dlp_drive_rules_configured().execute()
 
@@ -151,7 +151,7 @@ class TestSecurityDlpDriveRulesConfigured:
             mock_client.provider = mock_provider
             mock_client.policies_fetched = True
             mock_client.policies = SecurityPolicies(dlp_drive_rules_exist=None)
-            mock_client.editions = ["Business Starter", "Enterprise Standard"]
+            mock_provider.editions = ["Business Starter", "Enterprise Standard"]
 
             findings = security_dlp_drive_rules_configured().execute()
 

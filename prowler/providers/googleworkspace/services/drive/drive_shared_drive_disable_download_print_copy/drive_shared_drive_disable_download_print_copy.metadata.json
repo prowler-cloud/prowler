@@ -35,5 +35,5 @@
     "drive_shared_drive_managers_cannot_override",
     "drive_shared_drive_members_only_access"
   ],
-  "Notes": ""
+  "Notes": "Not configurable on Business Starter: Google keeps every shared drive sharing setting allowed on that edition. When the Licensing API scope is authorized and every edition the tenant holds is Business Starter, the finding says so."
 }
