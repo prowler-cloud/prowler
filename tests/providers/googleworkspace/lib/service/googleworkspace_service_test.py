@@ -125,3 +125,139 @@ class TestPolicyScope:
             svc._policy_scope({"policyQuery": {"group": "groups/xyz"}})
             == OVERRIDE_SCOPE
         )
+
+
+def _policy(
+    setting_type,
+    value,
+    sort_order=None,
+    org_unit=f"orgUnits/{ROOT_OU_ID}",
+    group=None,
+):
+    """Build a policy as the Cloud Identity Policy API returns it."""
+    policy = {"setting": {"type": f"settings/{setting_type}", "value": value}}
+    query = {}
+    if org_unit:
+        query["orgUnit"] = org_unit
+    if group:
+        query["group"] = group
+    if sort_order is not None:
+        query["sortOrder"] = sort_order
+    if query:
+        policy["policyQuery"] = query
+    return policy
+
+
+class TestEffectivePolicies:
+    def test_the_greatest_sort_order_wins_whatever_the_api_order(self):
+        """The ADMIN policy saved in the console outranks Google's SYSTEM defaults, even when the API returns it first"""
+        admin = _policy("security.password", {"minimumLength": 12}, 201.00131)
+        default_a = _policy("security.password", {"minimumLength": 8}, 100.00001)
+        default_b = _policy("security.password", {"minimumLength": 8}, 100.00003)
+        svc = _make_service()
+
+        assert svc._effective_policies([admin, default_a, default_b]) == [admin]
+        assert svc._effective_policies([default_a, default_b, admin]) == [admin]
+
+    def test_each_setting_type_is_reduced_on_its_own(self):
+        password_admin = _policy("security.password", {"minimumLength": 12}, 201.1)
+        password_default = _policy("security.password", {"minimumLength": 8}, 100.1)
+        session_default = _policy(
+            "security.session_controls", {"webSessionDuration": "1209600s"}, 100.3
+        )
+
+        assert _make_service()._effective_policies(
+            [password_admin, password_default, session_default]
+        ) == [password_admin, session_default]
+
+    def test_a_single_policy_is_kept_as_is(self):
+        policy = _policy("sites.service_status", {"serviceState": "ENABLED"})
+
+        assert _make_service()._effective_policies([policy]) == [policy]
+
+    def test_without_a_sort_order_the_last_policy_wins(self):
+        """No sort order means no documented precedence, so the API order is kept"""
+        first = _policy("sites.service_status", {"serviceState": "ENABLED"})
+        last = _policy("sites.service_status", {"serviceState": "DISABLED"})
+
+        assert _make_service()._effective_policies([first, last]) == [last]
+
+    def test_policies_outside_the_customer_scope_are_dropped(self):
+        root = _policy("security.password", {"minimumLength": 8}, 100.1)
+        sub_ou = _policy(
+            "security.password", {"minimumLength": 14}, 300.1, org_unit="orgUnits/sub"
+        )
+        group = _policy(
+            "security.password", {"minimumLength": 16}, 400.1, group="groups/g1"
+        )
+
+        assert _make_service()._effective_policies([sub_ou, root, group]) == [root]
+
+    def test_rules_are_items_rather_than_values_so_every_one_is_kept(self):
+        """Each rule.* policy is a distinct rule, not a competing value for one setting"""
+        dlp_a = _policy("rule.dlp", {"displayName": "cards", "state": "ACTIVE"}, 1)
+        dlp_b = _policy("rule.dlp", {"displayName": "ids", "state": "INACTIVE"}, 2)
+        alert = _policy("rule.system_defined_alerts", {"displayName": "Leaked"}, 1)
+
+        assert _make_service()._effective_policies([dlp_a, dlp_b, alert]) == [
+            dlp_a,
+            dlp_b,
+            alert,
+        ]
+
+    def test_no_policies(self):
+        assert _make_service()._effective_policies([]) == []
+
+
+class TestListPolicies:
+    def test_collects_every_page(self):
+        svc = _make_service()
+        page_1 = {"policies": [_policy("gmail.pop_access", {"enablePopAccess": True})]}
+        page_2 = {
+            "policies": [_policy("gmail.imap_access", {"enableImapAccess": True})]
+        }
+        request_1, request_2 = MagicMock(), MagicMock()
+        request_1.execute.return_value = page_1
+        request_2.execute.return_value = page_2
+        service = MagicMock()
+        service.policies().list.return_value = request_1
+        service.policies().list_next.side_effect = [request_2, None]
+
+        policies, succeeded = svc._list_policies(
+            service, 'setting.type.matches("gmail.*")', "fetching Gmail policies"
+        )
+
+        assert succeeded is True
+        assert policies == page_1["policies"] + page_2["policies"]
+        service.policies().list.assert_called_once_with(
+            pageSize=100, filter='setting.type.matches("gmail.*")'
+        )
+
+    def test_a_failing_page_keeps_what_was_read_and_reports_the_failure(self):
+        svc = _make_service()
+        page_1 = {"policies": [_policy("gmail.pop_access", {"enablePopAccess": True})]}
+        request_1, request_2 = MagicMock(), MagicMock()
+        request_1.execute.return_value = page_1
+        request_2.execute.side_effect = Exception("boom")
+        service = MagicMock()
+        service.policies().list.return_value = request_1
+        service.policies().list_next.side_effect = [request_2, None]
+
+        policies, succeeded = svc._list_policies(
+            service, 'setting.type.matches("gmail.*")', "fetching Gmail policies"
+        )
+
+        assert succeeded is False
+        assert policies == page_1["policies"]
+
+    def test_a_failing_list_call_reports_the_failure(self):
+        svc = _make_service()
+        service = MagicMock()
+        service.policies().list.side_effect = Exception("boom")
+
+        policies, succeeded = svc._list_policies(
+            service, 'setting.type.matches("gmail.*")', "fetching Gmail policies"
+        )
+
+        assert succeeded is False
+        assert policies == []

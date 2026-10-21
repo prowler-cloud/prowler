@@ -11,6 +11,23 @@ CUSTOMER_SCOPE = "customer"
 OVERRIDE_SCOPE = "override"
 UNKNOWN_SCOPE = "unknown"
 
+# Settings whose policies are items of a list rather than competing values for
+# one setting: every rule is a distinct policy and none outranks another.
+LIST_SETTING_NAMESPACES = ("rule.",)
+
+
+def _setting_type(policy: dict) -> str:
+    """Return the setting type of a policy without the "settings/" prefix."""
+    return (policy.get("setting") or {}).get("type", "").removeprefix("settings/")
+
+
+def _sort_order(policy: dict) -> float:
+    """Return the policy's sortOrder, or 0 when the API did not give one."""
+    try:
+        return float((policy.get("policyQuery") or {}).get("sortOrder") or 0)
+    except (TypeError, ValueError):
+        return 0.0
+
 
 class GoogleWorkspaceService:
     def __init__(
@@ -70,6 +87,54 @@ class GoogleWorkspaceService:
     def _is_customer_level_policy(self, policy: dict) -> bool:
         """Whether a policy applies to the whole domain."""
         return self._policy_scope(policy) == CUSTOMER_SCOPE
+
+    def _list_policies(
+        self, service, filter_str: str, context: str
+    ) -> tuple[list[dict], bool]:
+        """Read every Cloud Identity policy matching a filter, across pages.
+
+        Returns the policies read and whether every page was read. A failing
+        page is logged, the pages read before it are kept, and the caller
+        decides what a partial read means for its checks.
+        """
+        policies: list[dict] = []
+        try:
+            request = service.policies().list(pageSize=100, filter=filter_str)
+            while request is not None:
+                response = request.execute()
+                policies.extend(response.get("policies", []))
+                request = service.policies().list_next(request, response)
+        except Exception as error:
+            self._handle_api_error(error, context, self.provider.identity.customer_id)
+            return policies, False
+        return policies, True
+
+    def _effective_policies(self, policies: list[dict]) -> list[dict]:
+        """Keep, per setting type, the customer-level policy Google applies.
+
+        The API returns every policy that exists for a setting: Google's
+        SYSTEM defaults next to the ADMIN policy saved in the Admin console.
+        The value in force is the one with the greatest policyQuery.sortOrder
+        (Policy API concepts, Max and Merge reducers), not the last one
+        listed. Policies without a sort order keep the API order, so the last
+        one wins. Rules are not reduced: each policy is a distinct rule.
+        """
+        kept: list[dict] = []
+        position: dict[str, int] = {}
+        for policy in policies:
+            if not self._is_customer_level_policy(policy):
+                continue
+            setting_type = _setting_type(policy)
+            if setting_type.startswith(LIST_SETTING_NAMESPACES):
+                kept.append(policy)
+                continue
+            index = position.get(setting_type)
+            if index is None:
+                position[setting_type] = len(kept)
+                kept.append(policy)
+            elif _sort_order(policy) >= _sort_order(kept[index]):
+                kept[index] = policy
+        return kept
 
     def _handle_api_error(self, error, context: str, resource_name: str = ""):
         """

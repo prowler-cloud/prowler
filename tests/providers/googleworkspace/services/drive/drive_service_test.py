@@ -92,6 +92,59 @@ class TestDriveService:
             )
             assert drive.policies.allow_drive_for_desktop is False
 
+    def test_the_admin_policy_outranks_a_system_default_returned_after_it(self):
+        """The greatest sortOrder is the value in force, whatever order the API lists them in"""
+        mock_provider = set_mocked_googleworkspace_provider()
+        mock_provider.audit_config = {}
+        mock_provider.fixer_config = {}
+        mock_session = MagicMock()
+        mock_session.credentials = MagicMock()
+        mock_provider.session = mock_session
+
+        mock_service = MagicMock()
+        mock_policies_list = MagicMock()
+        mock_policies_list.execute.return_value = {
+            "policies": [
+                {
+                    "type": "ADMIN",
+                    "policyQuery": {"sortOrder": 201.00131},
+                    "setting": {
+                        "type": "settings/drive_and_docs.external_sharing",
+                        "value": {"externalSharingMode": "ALLOWLISTED_DOMAINS"},
+                    },
+                },
+                {
+                    "type": "SYSTEM",
+                    "policyQuery": {"sortOrder": 100.0001},
+                    "setting": {
+                        "type": "settings/drive_and_docs.external_sharing",
+                        "value": {"externalSharingMode": "ALLOWED"},
+                    },
+                },
+            ]
+        }
+        mock_service.policies().list.return_value = mock_policies_list
+        mock_service.policies().list_next.return_value = None
+
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=mock_provider,
+            ),
+            patch(
+                "prowler.providers.googleworkspace.services.drive.drive_service.GoogleWorkspaceService._build_service",
+                return_value=mock_service,
+            ),
+        ):
+            from prowler.providers.googleworkspace.services.drive.drive_service import (
+                Drive,
+            )
+
+            drive = Drive(mock_provider)
+
+            assert drive.policies_fetched is True
+            assert drive.policies.external_sharing_mode == "ALLOWLISTED_DOMAINS"
+
     def test_drive_fetch_policies_empty_response(self):
         """Test handling empty policies response"""
         mock_provider = set_mocked_googleworkspace_provider()

@@ -77,6 +77,66 @@ class TestCalendarService:
             )
             assert calendar.policies.external_invitations_warning is True
 
+    def test_the_admin_policy_outranks_a_system_default_returned_after_it(self):
+        """The greatest sortOrder is the value in force, whatever order the API lists them in"""
+        mock_provider = set_mocked_googleworkspace_provider()
+        mock_provider.audit_config = {}
+        mock_provider.fixer_config = {}
+        mock_session = MagicMock()
+        mock_session.credentials = MagicMock()
+        mock_provider.session = mock_session
+
+        mock_service = MagicMock()
+        mock_policies_list = MagicMock()
+        mock_policies_list.execute.return_value = {
+            "policies": [
+                {
+                    "type": "ADMIN",
+                    "policyQuery": {"sortOrder": 201.00131},
+                    "setting": {
+                        "type": "settings/calendar.secondary_calendar_max_allowed_external_sharing",
+                        "value": {
+                            "maxAllowedExternalSharing": "EXTERNAL_FREE_BUSY_ONLY"
+                        },
+                    },
+                },
+                {
+                    "type": "SYSTEM",
+                    "policyQuery": {"sortOrder": 100.00004},
+                    "setting": {
+                        "type": "settings/calendar.secondary_calendar_max_allowed_external_sharing",
+                        "value": {
+                            "maxAllowedExternalSharing": "EXTERNAL_ALL_INFO_READ_ONLY"
+                        },
+                    },
+                },
+            ]
+        }
+        mock_service.policies().list.return_value = mock_policies_list
+        mock_service.policies().list_next.return_value = None
+
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=mock_provider,
+            ),
+            patch(
+                "prowler.providers.googleworkspace.services.calendar.calendar_service.GoogleWorkspaceService._build_service",
+                return_value=mock_service,
+            ),
+        ):
+            from prowler.providers.googleworkspace.services.calendar.calendar_service import (
+                Calendar,
+            )
+
+            calendar = Calendar(mock_provider)
+
+            assert calendar.policies_fetched is True
+            assert (
+                calendar.policies.secondary_calendar_external_sharing
+                == "EXTERNAL_FREE_BUSY_ONLY"
+            )
+
     def test_calendar_fetch_policies_empty_response(self):
         """Test handling empty policies response"""
         mock_provider = set_mocked_googleworkspace_provider()
