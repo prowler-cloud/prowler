@@ -808,7 +808,9 @@ class SAMLConfigurationViewSet(BaseRLSViewSet):
     """
 
     serializer_class = SAMLConfigurationSerializer
-    required_permissions = [Permissions.MANAGE_INTEGRATIONS]
+    # The IdP behind this configuration decides who signs in and which role
+    # they get, so writing it is account administration, not an integration.
+    required_permissions = [Permissions.MANAGE_ACCOUNT]
     queryset = SAMLConfiguration.objects.all()
 
     def get_queryset(self):
