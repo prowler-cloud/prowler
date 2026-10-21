@@ -33,7 +33,7 @@ class groups_view_conversations_restricted(Check):
                 report.status = "PASS"
                 report.status_extended = (
                     f"Groups for Business is turned off for everyone in domain "
-                    f"{groups_client.provider.identity.domain}, so no group conversation can be viewed."
+                    f"{groups_client.provider.identity.domain}, so no group conversation can be viewed in the Google Groups app."
                 )
             elif view_access == "GROUP_MEMBERS":
                 report.status = "PASS"

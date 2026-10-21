@@ -169,7 +169,7 @@ class TestGroupsViewConversationsRestricted:
             assert findings[0].status == "PASS"
             assert findings[0].status_extended == (
                 f"Groups for Business is turned off for everyone in domain {DOMAIN}, "
-                f"so no group conversation can be viewed."
+                f"so no group conversation can be viewed in the Google Groups app."
             )
 
     def test_no_findings_when_fetch_failed(self):
