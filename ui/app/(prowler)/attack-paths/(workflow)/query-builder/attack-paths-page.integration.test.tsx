@@ -632,8 +632,9 @@ describe("auto-fitting the viewport", () => {
     await graph.executeQuery();
     await graph.waitForGraphStable(3);
     await graph.expandAllFindings();
-
-    const beforeFilter = graph.viewportTransform;
+    // Expanding starts its own fit; settle it so the click targets a still node
+    // and the change below can only come from the filtered-view fit.
+    const beforeFilter = await graph.waitForViewportSettled();
     expect(beforeFilter).toBeTruthy();
 
     await graph.clickFirstFindingNode();
