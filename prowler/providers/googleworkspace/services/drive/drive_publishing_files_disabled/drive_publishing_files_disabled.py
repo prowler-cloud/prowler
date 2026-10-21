@@ -10,7 +10,10 @@ class drive_publishing_files_disabled(Check):
     This check verifies that the domain-level Drive and Docs policy prevents
     users from publishing files to the web or making them visible to anyone
     with the link, blocking unintended public exposure of organizational
-    content.
+    content. The publishing option only exists when sharing outside of the
+    organization is ON: with allowlisted domains or sharing OFF, Google hides
+    it and nothing can be made visible to anyone with the link, whatever
+    value the API still stores for the flag.
     """
 
     def execute(self) -> List[CheckReportGoogleWorkspace]:
@@ -26,8 +29,23 @@ class drive_publishing_files_disabled(Check):
             )
 
             allow_publishing = drive_client.policies.allow_publishing_files
+            sharing_mode = drive_client.policies.external_sharing_mode
 
-            if allow_publishing is False:
+            if sharing_mode == "ALLOWLISTED_DOMAINS":
+                report.status = "PASS"
+                report.status_extended = (
+                    f"Publishing files to the web is not possible in domain "
+                    f"{drive_client.provider.identity.domain}: sharing outside of "
+                    f"the organization is limited to allowlisted domains."
+                )
+            elif sharing_mode == "DISALLOWED":
+                report.status = "PASS"
+                report.status_extended = (
+                    f"Publishing files to the web is not possible in domain "
+                    f"{drive_client.provider.identity.domain}: sharing outside of "
+                    f"the organization is off."
+                )
+            elif allow_publishing is False:
                 report.status = "PASS"
                 report.status_extended = (
                     f"Publishing files to the web is disabled in domain "
