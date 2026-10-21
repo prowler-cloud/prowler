@@ -234,6 +234,9 @@ FINDINGS_TABLE_PARTITION_MAX_AGE_MONTHS = env.int("...", None)  # Optional clean
 | `SOCIAL_GOOGLE_OAUTH_CLIENT_SECRET` | Google OAuth secret |
 | `SOCIAL_GITHUB_OAUTH_CLIENT_ID` | GitHub OAuth client ID |
 | `SOCIAL_GITHUB_OAUTH_CLIENT_SECRET` | GitHub OAuth secret |
+| `SOCIAL_MICROSOFT_OAUTH_CLIENT_ID` | Microsoft Entra ID OAuth client ID |
+| `SOCIAL_MICROSOFT_OAUTH_CLIENT_SECRET` | Microsoft Entra ID OAuth secret |
+| `SOCIAL_MICROSOFT_OAUTH_TENANT` | Entra ID tenant: `organizations` (default), `common`, or a directory (tenant) ID |
 
 ---
 

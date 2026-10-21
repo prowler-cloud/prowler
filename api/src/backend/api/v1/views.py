@@ -15,6 +15,7 @@ import sentry_sdk
 from allauth.socialaccount.models import SocialAccount, SocialApp
 from allauth.socialaccount.providers.github.views import GitHubOAuth2Adapter
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
+from allauth.socialaccount.providers.microsoft.views import MicrosoftGraphOAuth2Adapter
 from allauth.socialaccount.providers.saml.views import FinishACSView, LoginView
 from api.attack_paths import database as graph_database
 from api.attack_paths import get_queries_for_provider, get_query_by_id
@@ -254,6 +255,7 @@ from config.env import env
 from config.settings.social_login import (
     GITHUB_OAUTH_CALLBACK_URL,
     GOOGLE_OAUTH_CALLBACK_URL,
+    MICROSOFT_OAUTH_CALLBACK_URL,
 )
 from config.version import RELEASE_ID
 from dj_rest_auth.registration.views import SocialLoginView
@@ -657,6 +659,37 @@ class GithubSocialLoginView(SocialLoginView):
             return Response(
                 data={
                     "type": "github-social-tokens",
+                    "attributes": serializer.validated_data,
+                },
+                status=status.HTTP_200_OK,
+            )
+        return original_response
+
+
+@extend_schema(exclude=True)
+class MicrosoftSocialLoginView(SocialLoginView):
+    adapter_class = MicrosoftGraphOAuth2Adapter
+    client_class = CustomOAuth2Client
+    callback_url = MICROSOFT_OAUTH_CALLBACK_URL
+
+    def get_response(self):
+        original_response = super().get_response()
+
+        if self.user and self.user.is_authenticated:
+            tenant_id = _accept_social_invitation(self.request, self.user)
+            serializer_data = {"email": self.user.email}
+            if tenant_id:
+                serializer_data["tenant_id"] = tenant_id
+            serializer = TokenSocialLoginSerializer(data=serializer_data)
+
+            try:
+                serializer.is_valid(raise_exception=True)
+            except TokenError as e:
+                raise InvalidToken(e.args[0])
+
+            return Response(
+                data={
+                    "type": "microsoft-social-tokens",
                     "attributes": serializer.validated_data,
                 },
                 status=status.HTTP_200_OK,
