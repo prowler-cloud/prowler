@@ -28,7 +28,7 @@ class TestGmailDomainSpoofingProtectionEnabled:
             mock_client.policies_fetched = True
             mock_client.policies = GmailPolicies(
                 detect_domain_name_spoofing=True,
-                domain_spoofing_consequence="SPAM_FOLDER",
+                domain_name_spoofing_consequence="SPAM_FOLDER",
             )
 
             check = gmail_domain_spoofing_protection_enabled()
@@ -59,7 +59,7 @@ class TestGmailDomainSpoofingProtectionEnabled:
             mock_client.provider = mock_provider
             mock_client.policies_fetched = True
             mock_client.policies = GmailPolicies(
-                domain_spoofing_consequence="SPAM_FOLDER",
+                domain_name_spoofing_consequence="SPAM_FOLDER",
             )
 
             check = gmail_domain_spoofing_protection_enabled()
@@ -92,7 +92,7 @@ class TestGmailDomainSpoofingProtectionEnabled:
             mock_client.policies_fetched = True
             mock_client.policies = GmailPolicies(
                 detect_domain_name_spoofing=True,
-                domain_spoofing_consequence="NO_ACTION",
+                domain_name_spoofing_consequence="NO_ACTION",
             )
 
             check = gmail_domain_spoofing_protection_enabled()
@@ -122,7 +122,7 @@ class TestGmailDomainSpoofingProtectionEnabled:
             mock_client.policies_fetched = True
             mock_client.policies = GmailPolicies(
                 detect_domain_name_spoofing=True,
-                domain_spoofing_consequence="WARNING",
+                domain_name_spoofing_consequence="WARNING",
             )
 
             check = gmail_domain_spoofing_protection_enabled()
@@ -152,7 +152,7 @@ class TestGmailDomainSpoofingProtectionEnabled:
             mock_client.policies_fetched = True
             mock_client.policies = GmailPolicies(
                 detect_domain_name_spoofing=False,
-                domain_spoofing_consequence="WARNING",
+                domain_name_spoofing_consequence="WARNING",
             )
 
             check = gmail_domain_spoofing_protection_enabled()

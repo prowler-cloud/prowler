@@ -31,7 +31,7 @@ class gmail_domain_spoofing_protection_enabled(Check):
             )
 
             enabled = gmail_client.policies.detect_domain_name_spoofing
-            consequence = gmail_client.policies.domain_spoofing_consequence
+            consequence = gmail_client.policies.domain_name_spoofing_consequence
             domain = gmail_client.provider.identity.domain
 
             if enabled is False:
