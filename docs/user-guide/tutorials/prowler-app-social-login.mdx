@@ -15,7 +15,7 @@ Prowler supports social login using Google, GitHub, and Microsoft Entra ID OAuth
 <img src="/images/prowler-app/social-login/social_login_buttons.png" alt="Social login buttons" width="700"  />
 ## Configuring Social Login Credentials
 
-To enable social login with Google and GitHub, you must define the following environment variables:
+To enable social login with Google, GitHub, and Microsoft Entra ID, you must define the following environment variables:
 
 ### Google OAuth Configuration
 
@@ -77,7 +77,7 @@ To obtain the Microsoft credentials:
 
 ### Overview of the Steps
 
-For both providers, the process generally involves:
+For all three providers, the process generally involves:
 
 1. Registering your application in the provider's developer portal.
 2. Defining the authorized redirect URL (`SOCIAL_<PROVIDER>_OAUTH_CALLBACK_URL`).
