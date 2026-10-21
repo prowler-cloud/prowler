@@ -132,6 +132,34 @@ class TestSecurityDlpDriveRulesConfigured:
                 f"on the Google Workspace Business Starter edition."
             )
 
+    def test_fail_with_cloud_identity_premium_gives_no_excuse(self):
+        """Cloud Identity Premium brings DLP for Drive to a Workspace license that lacks it"""
+        mock_provider = set_mocked_googleworkspace_provider()
+
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=mock_provider,
+            ),
+            patch(
+                "prowler.providers.googleworkspace.services.security.security_dlp_drive_rules_configured.security_dlp_drive_rules_configured.security_client"
+            ) as mock_client,
+        ):
+            from prowler.providers.googleworkspace.services.security.security_dlp_drive_rules_configured.security_dlp_drive_rules_configured import (
+                security_dlp_drive_rules_configured,
+            )
+
+            mock_client.provider = mock_provider
+            mock_client.policies_fetched = True
+            mock_client.policies = SecurityPolicies(dlp_drive_rules_exist=None)
+            mock_provider.editions = ["Business Starter", "Cloud Identity Premium"]
+
+            findings = security_dlp_drive_rules_configured().execute()
+
+            assert len(findings) == 1
+            assert findings[0].status == "FAIL"
+            assert "This may be expected" not in findings[0].status_extended
+
     def test_fail_on_an_edition_with_drive_dlp_gives_no_excuse(self):
         mock_provider = set_mocked_googleworkspace_provider()
 

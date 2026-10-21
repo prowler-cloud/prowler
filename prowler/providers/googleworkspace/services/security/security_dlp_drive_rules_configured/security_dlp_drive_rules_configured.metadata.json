@@ -34,5 +34,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "Required edition: Frontline Standard or Plus, Enterprise Standard or Plus, Education Fundamentals, Standard or Plus, or Enterprise Essentials Plus. When the Licensing API scope is authorized and every edition the tenant holds lacks DLP for Drive, the finding says so."
+  "Notes": "Required edition: Frontline Standard or Plus, Enterprise Standard or Plus, Education Fundamentals, Standard or Plus, or Enterprise Essentials Plus; Cloud Identity Premium users also get DLP for Drive when their Google Workspace license includes Drive log events. When the Licensing API scope is authorized and every edition the tenant holds lacks DLP for Drive, the finding says so; a Cloud Identity Premium subscription suppresses that explanation."
 }

@@ -77,9 +77,14 @@ class TestGoogleWorkspaceProvider:
         """The licensed editions let checks say when a feature is not sold on the tenant's edition"""
         mock_credentials = MagicMock(spec=Credentials)
         licensing = MagicMock()
-        licensing.licenseAssignments().listForProduct.return_value.execute.return_value = {
-            "items": [{"skuId": "1010020027"}]
-        }
+        pages = {"Google-Apps": {"items": [{"skuId": "1010020027"}]}, "101005": {}}
+
+        def list_for_product(productId, **_kwargs):
+            request = MagicMock()
+            request.execute.return_value = pages[productId]
+            return request
+
+        licensing.licenseAssignments().listForProduct.side_effect = list_for_product
 
         with (
             patch(
@@ -120,7 +125,8 @@ class TestGoogleWorkspaceProvider:
                 credentials=mock_credentials.with_scopes.return_value,
                 cache_discovery=False,
             )
-            licensing.licenseAssignments().listForProduct.return_value.execute.assert_called_once()
+            # One pass over both products, nothing on the second access
+            assert licensing.licenseAssignments().listForProduct.call_count == 2
 
     def test_editions_stay_unknown_when_the_licensing_api_is_unavailable(self):
         """A missing scope or disabled API must not cost anything else"""

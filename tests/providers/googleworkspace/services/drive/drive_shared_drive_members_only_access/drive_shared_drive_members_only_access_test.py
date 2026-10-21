@@ -126,7 +126,7 @@ class TestDriveSharedDriveMembersOnlyAccess:
                 f"be added to files. Shared drive file access should be restricted "
                 f"to members only. This may be expected because shared drive "
                 f"settings cannot be changed on the Google Workspace Business Starter "
-                f"edition, where Google keeps every option allowed."
+                f"edition, where new shared drives allow every sharing option."
             )
 
     def test_no_findings_when_fetch_failed(self):

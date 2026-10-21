@@ -164,7 +164,7 @@ class TestDriveSharedDriveDisableDownloadPrintCopy:
                 f"set to ALL. These actions should be restricted to editors or "
                 f"managers only. This may be expected because shared drive settings "
                 f"cannot be changed on the Google Workspace Business Starter edition, "
-                f"where Google keeps every option allowed."
+                f"where new shared drives allow every sharing option."
             )
 
     def test_fail_on_a_supported_edition_gives_no_excuse(self):
