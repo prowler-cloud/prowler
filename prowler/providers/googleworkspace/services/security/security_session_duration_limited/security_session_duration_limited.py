@@ -14,6 +14,19 @@ from prowler.providers.googleworkspace.services.security.security_client import 
 MAX_SESSION_DURATION_SECONDS = 43200  # 12 hours
 
 
+def _edition_suffix() -> str:
+    """Read the editions only when a finding is about to carry the suffix.
+
+    The provider reads the editions on first use, so a passing tenant never
+    pays the Licensing API calls nor sees its authorization warning.
+    """
+    return edition_reason_suffix(
+        security_client.provider.editions,
+        EDITIONS_WITHOUT_SESSION_CONTROL,
+        SESSION_CONTROL_EXPLANATION,
+    )
+
+
 class security_session_duration_limited(Check):
     """Check that Google session control is configured to 12 hours or less.
 
@@ -38,11 +51,6 @@ class security_session_duration_limited(Check):
 
             duration_str = security_client.policies.web_session_duration
             domain = security_client.provider.identity.domain
-            edition_suffix = edition_reason_suffix(
-                security_client.provider.editions,
-                EDITIONS_WITHOUT_SESSION_CONTROL,
-                SESSION_CONTROL_EXPLANATION,
-            )
 
             if duration_str is None:
                 report.status = "FAIL"
@@ -50,7 +58,7 @@ class security_session_duration_limited(Check):
                     f"Google session control is not explicitly configured "
                     f"in domain {domain}. The default is 14 days. "
                     f"Web session duration should be 12 hours or less."
-                    f"{edition_suffix}"
+                    f"{_edition_suffix()}"
                 )
                 findings.append(report)
                 return findings
@@ -81,7 +89,7 @@ class security_session_duration_limited(Check):
                     f"Google session control is set to {duration_hours:.0f} hours "
                     f"in domain {domain}. "
                     f"Web session duration should be 12 hours or less."
-                    f"{edition_suffix}"
+                    f"{_edition_suffix()}"
                 )
 
             findings.append(report)

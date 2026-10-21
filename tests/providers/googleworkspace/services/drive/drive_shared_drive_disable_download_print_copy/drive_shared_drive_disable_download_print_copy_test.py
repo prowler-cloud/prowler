@@ -196,6 +196,31 @@ class TestDriveSharedDriveDisableDownloadPrintCopy:
             assert findings[0].status == "FAIL"
             assert "This may be expected" not in findings[0].status_extended
 
+    def test_no_resources(self):
+        """No policies could be read, so there is nothing to report"""
+        mock_provider = set_mocked_googleworkspace_provider()
+
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=mock_provider,
+            ),
+            patch(
+                "prowler.providers.googleworkspace.services.drive.drive_shared_drive_disable_download_print_copy.drive_shared_drive_disable_download_print_copy.drive_client"
+            ) as mock_drive_client,
+        ):
+            from prowler.providers.googleworkspace.services.drive.drive_shared_drive_disable_download_print_copy.drive_shared_drive_disable_download_print_copy import (
+                drive_shared_drive_disable_download_print_copy,
+            )
+
+            mock_drive_client.provider = mock_provider
+            mock_drive_client.policies_fetched = False
+            mock_drive_client.policies = DrivePolicies()
+
+            findings = drive_shared_drive_disable_download_print_copy().execute()
+
+            assert len(findings) == 0
+
     def test_no_findings_when_fetch_failed(self):
         """Test no findings returned when the API fetch failed"""
         mock_provider = set_mocked_googleworkspace_provider()

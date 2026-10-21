@@ -1,4 +1,4 @@
-from unittest.mock import patch
+from unittest.mock import PropertyMock, patch
 
 from prowler.providers.googleworkspace.services.security.security_service import (
     SecurityPolicies,
@@ -40,6 +40,35 @@ class TestSecuritySessionDurationLimited:
             assert findings[0].resource_name == "Security Policies"
             assert findings[0].resource_id == "securityPolicies"
             assert findings[0].customer_id == CUSTOMER_ID
+
+    def test_pass_does_not_read_the_editions(self):
+        """A passing tenant must not trigger the Licensing API lookup"""
+        mock_provider = set_mocked_googleworkspace_provider()
+        type(mock_provider).editions = PropertyMock(
+            side_effect=AssertionError("editions read on a passing finding")
+        )
+
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=mock_provider,
+            ),
+            patch(
+                "prowler.providers.googleworkspace.services.security.security_session_duration_limited.security_session_duration_limited.security_client"
+            ) as mock_client,
+        ):
+            from prowler.providers.googleworkspace.services.security.security_session_duration_limited.security_session_duration_limited import (
+                security_session_duration_limited,
+            )
+
+            mock_client.provider = mock_provider
+            mock_client.policies_fetched = True
+            mock_client.policies = SecurityPolicies(web_session_duration="43200s")
+
+            findings = security_session_duration_limited().execute()
+
+            assert len(findings) == 1
+            assert findings[0].status == "PASS"
 
     def test_fail_long_session_duration(self):
         """Test FAIL when session duration is too long (336 hours)"""

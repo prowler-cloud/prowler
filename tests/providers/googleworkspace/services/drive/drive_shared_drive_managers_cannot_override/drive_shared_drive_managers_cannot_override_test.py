@@ -137,6 +137,31 @@ class TestDriveSharedDriveManagersCannotOverride:
                 f"edition, where new shared drives allow every sharing option."
             )
 
+    def test_no_resources(self):
+        """No policies could be read, so there is nothing to report"""
+        mock_provider = set_mocked_googleworkspace_provider()
+
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=mock_provider,
+            ),
+            patch(
+                "prowler.providers.googleworkspace.services.drive.drive_shared_drive_managers_cannot_override.drive_shared_drive_managers_cannot_override.drive_client"
+            ) as mock_drive_client,
+        ):
+            from prowler.providers.googleworkspace.services.drive.drive_shared_drive_managers_cannot_override.drive_shared_drive_managers_cannot_override import (
+                drive_shared_drive_managers_cannot_override,
+            )
+
+            mock_drive_client.provider = mock_provider
+            mock_drive_client.policies_fetched = False
+            mock_drive_client.policies = DrivePolicies()
+
+            findings = drive_shared_drive_managers_cannot_override().execute()
+
+            assert len(findings) == 0
+
     def test_no_findings_when_fetch_failed(self):
         """Test no findings returned when the API fetch failed"""
         mock_provider = set_mocked_googleworkspace_provider()
