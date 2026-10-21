@@ -239,6 +239,85 @@ class TestSecurityService:
             assert security.policies.google_services_restricted is True
             assert security.policies.dlp_drive_rules_exist is True
 
+    def test_the_editions_come_from_the_licensing_api(self):
+        """The licensed editions let the checks say when a feature is not sold on the tenant's edition"""
+        mock_provider = set_mocked_googleworkspace_provider()
+        mock_provider.audit_config = {}
+        mock_provider.fixer_config = {}
+        mock_session = MagicMock()
+        mock_session.credentials = MagicMock()
+        mock_provider.session = mock_session
+
+        mock_service = MagicMock()
+        empty_page = MagicMock()
+        empty_page.execute.return_value = {"policies": []}
+        mock_service.policies().list.return_value = empty_page
+        mock_service.policies().list_next.return_value = None
+        mock_service.licenseAssignments().listForProduct.return_value.execute.return_value = {
+            "items": [{"skuId": "1010020027"}]
+        }
+
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=mock_provider,
+            ),
+            patch(
+                "prowler.providers.googleworkspace.services.security.security_service.GoogleWorkspaceService._build_service",
+                return_value=mock_service,
+            ) as build_service,
+        ):
+            from prowler.providers.googleworkspace.services.security.security_service import (
+                Security,
+            )
+
+            security = Security(mock_provider)
+
+            assert security.policies_fetched is True
+            assert security.editions == ["Business Starter"]
+            build_service.assert_any_call(
+                "licensing",
+                "v1",
+                scopes=["https://www.googleapis.com/auth/apps.licensing"],
+            )
+
+    def test_the_editions_stay_unknown_when_the_licensing_api_is_unavailable(self):
+        """A missing scope or disabled API must not cost the security findings"""
+        mock_provider = set_mocked_googleworkspace_provider()
+        mock_provider.audit_config = {}
+        mock_provider.fixer_config = {}
+        mock_session = MagicMock()
+        mock_session.credentials = MagicMock()
+        mock_provider.session = mock_session
+
+        mock_service = MagicMock()
+        empty_page = MagicMock()
+        empty_page.execute.return_value = {"policies": []}
+        mock_service.policies().list.return_value = empty_page
+        mock_service.policies().list_next.return_value = None
+        mock_service.licenseAssignments().listForProduct.return_value.execute.side_effect = Exception(
+            "Request had insufficient authentication scopes."
+        )
+
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=mock_provider,
+            ),
+            patch(
+                "prowler.providers.googleworkspace.services.security.security_service.GoogleWorkspaceService._build_service",
+                return_value=mock_service,
+            ),
+        ):
+            from prowler.providers.googleworkspace.services.security.security_service import (
+                Security,
+            )
+
+            security = Security(mock_provider)
+
+            assert security.policies_fetched is True
+            assert security.editions == []
+
     def test_fetch_policies_empty_response(self):
         """Test handling empty policies response across all namespaces"""
         mock_provider = set_mocked_googleworkspace_provider()

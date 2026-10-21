@@ -3,6 +3,10 @@ from typing import List, Optional
 from pydantic import BaseModel, Field
 
 from prowler.lib.logger import logger
+from prowler.providers.googleworkspace.lib.licensing import (
+    LICENSING_SCOPE,
+    fetch_editions,
+)
 from prowler.providers.googleworkspace.lib.service.service import (
     CUSTOMER_SCOPE,
     UNKNOWN_SCOPE,
@@ -15,16 +19,31 @@ class Security(GoogleWorkspaceService):
 
     Uses the Cloud Identity Policy API v1 to read authentication, password,
     session, recovery, API control, and DLP settings configured in the
-    Admin Console.
+    Admin Console, and the Licensing API to learn which editions the tenant
+    holds, so checks can say when a feature is not sold on them.
     """
 
     def __init__(self, provider):
         super().__init__(provider)
         self.policies = SecurityPolicies()
         self.policies_fetched = False
+        self.editions: List[str] = []
         self._overridden = set()
         self._observed = set()
         self._fetch_security_policies()
+        self._fetch_editions()
+
+    def _fetch_editions(self):
+        """Read the licensed Google Workspace editions, best effort.
+
+        The Licensing API needs its own scope and API enablement. Without
+        them the editions stay unknown and findings carry no edition context;
+        the security policies do not depend on it.
+        """
+        self.editions = fetch_editions(
+            self._build_service("licensing", "v1", scopes=[LICENSING_SCOPE]),
+            self.provider.identity.customer_id,
+        )
 
     def _fetch_security_policies(self):
         """Fetch security policies from the Cloud Identity Policy API v1."""
