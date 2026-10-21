@@ -26,7 +26,13 @@ class chat_apps_installation_disabled(Check):
 
             apps_enabled = chat_client.policies.enable_apps
 
-            if apps_enabled is False:
+            if chat_client.policies.off_for_everyone:
+                report.status = "PASS"
+                report.status_extended = (
+                    f"Google Chat is turned off for everyone in domain "
+                    f"{chat_client.provider.identity.domain}, so Chat apps cannot be installed."
+                )
+            elif apps_enabled is False:
                 report.status = "PASS"
                 report.status_extended = (
                     f"Chat apps installation is disabled "
