@@ -1,0 +1,1 @@
+Pillow from 12.3.0 to 13.0.0, certifi to 2026.10.19, aiohttp to 3.14.5 with yarl 1.25.1, uv to 0.13.4 and Trivy to 0.76.1 in the API container image, patching the Pillow JPEG decoder heap overflow, the compromised emSign root CAs bundled in certifi and uv, the aiohttp resource exhaustion advisories and the Go 1.27.2 stdlib CVE in the Trivy binary
