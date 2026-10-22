@@ -24,7 +24,7 @@ class app_ensure_php_version_is_latest(Check):
                     report.status = "FAIL"
 
                     php_latest_version = app_client.audit_config.get(
-                        "php_latest_version", "8.2"
+                        "php_latest_version", "8.5"
                     )
 
                     report.status_extended = f"PHP version is set to '{framework}', the latest version that you could use is the '{php_latest_version}' version, for app '{app.name}' in subscription '{subscription_name} ({subscription_id})'."

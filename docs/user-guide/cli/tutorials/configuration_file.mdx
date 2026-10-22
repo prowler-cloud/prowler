@@ -214,7 +214,7 @@ The following list includes all the Azure checks with configurable variables tha
 | `apim_threat_detection_llm_jacking`                      | `apim_threat_detection_llm_jacking_minutes`     | Integer         | `1440`                                                     |
 | `apim_threat_detection_llm_jacking`                      | `apim_threat_detection_llm_jacking_threshold`   | Float           | `0.1`                                                      |
 | `app_ensure_java_version_is_latest`                      | `java_latest_version`                           | String          | `"17"`                                                     |
-| `app_ensure_php_version_is_latest`                       | `php_latest_version`                            | String          | `"8.2"`                                                    |
+| `app_ensure_php_version_is_latest`                       | `php_latest_version`                            | String          | `"8.5"`                                                    |
 | `app_ensure_python_version_is_latest`                    | `python_latest_version`                         | String          | `"3.12"`                                                   |
 | `defender_attack_path_notifications_properly_configured` | `defender_attack_path_minimal_risk_level`       | String          | `"High"`                                                   |
 | `network_public_ip_shodan`                               | `shodan_api_key`                                | String          | `null`                                                     |
@@ -719,7 +719,7 @@ azure:
 
   # Azure App Service
   # azure.app_ensure_php_version_is_latest
-  php_latest_version: "8.2"
+  php_latest_version: "8.5"
   # azure.app_ensure_python_version_is_latest
   python_latest_version: "3.12"
   # azure.app_ensure_java_version_is_latest
