@@ -7,6 +7,7 @@ describe("FEATURE_FLAG", () => {
     expect(FEATURE_FLAG).toEqual({
       ISSUES: "issues-feature",
       BILLING_SYSTEM_METRONOME: "BILLING_SYSTEM_METRONOME",
+      FINDINGS_TRIAL_PREVIEW: "findings-trial-preview",
     });
   });
 
