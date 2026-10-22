@@ -177,7 +177,7 @@ describe("DataTable", () => {
   });
 
   describe("when a preview lock limits the visible rows", () => {
-    it("blurs the rows past the limit, keeps them inert, and floats the overlay over them", () => {
+    it("blurs the rows past the limit, keeps their content inert, and floats the overlay over them", () => {
       // Given
       const renderAfterRow = vi.fn(() => null);
       render(
@@ -203,8 +203,8 @@ describe("DataTable", () => {
       const lockedRow = screen.getByText("Finding C").closest("tr");
 
       // Then
-      expect(visibleRow).not.toHaveAttribute("inert");
-      expect(lockedRow).toHaveAttribute("inert");
+      expect(visibleRow?.querySelector("[inert]")).toBeNull();
+      expect(lockedRow?.querySelector("td > div")).toHaveAttribute("inert");
       expect(lockedRow).toHaveAttribute("aria-hidden", "true");
       expect(lockedRow).toHaveClass("select-none");
       expect(screen.getByText("Unlock every finding")).toBeInTheDocument();

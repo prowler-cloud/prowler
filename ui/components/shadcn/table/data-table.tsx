@@ -53,14 +53,15 @@ const TABLE_COLUMN_GAP_CLASS = "pr-6";
 const STICKY_ACTION_COLUMN_CLASS = "sticky right-0 z-20 min-w-12";
 const STICKY_ACTION_CELL_CLASS = `${STICKY_ACTION_COLUMN_CLASS} last:rounded-r-none! overflow-visible bg-bg-neutral-secondary before:pointer-events-none before:absolute before:inset-y-0 before:-left-8 before:w-8 before:bg-gradient-to-r before:from-transparent before:to-bg-neutral-secondary before:content-[''] group-hover:bg-bg-neutral-tertiary group-hover:before:to-bg-neutral-tertiary group-data-[state=selected]:bg-bg-neutral-tertiary group-data-[state=selected]:before:to-bg-neutral-tertiary`;
 
-// Locked rows stay in the DOM as a teaser but cannot be read, focused or clicked.
+// Locked cells stay in the DOM as a teaser but cannot be read or focused.
+// The row receives clicks to open the upgrade prompt instead of cell actions.
 // The blur goes on the cells: browsers do not reliably filter table rows.
 const LOCKED_ROW_CLASS_NAME =
-  "pointer-events-none select-none opacity-70 hover:bg-transparent [&>td]:blur-[6px]";
+  "cursor-pointer select-none opacity-70 hover:bg-transparent [&>td]:blur-[6px]";
 
 /**
- * Preview lock: rows past `visibleRowCount` render blurred and inert, `overlay`
- * floats over them, and pagination hands every click to `onLockedInteraction`.
+ * Preview lock: rows past `visibleRowCount` render blurred with inert content,
+ * `overlay` floats over them, and row/pagination clicks call `onLockedInteraction`.
  */
 export interface DataTablePreviewLock extends DataTablePaginationLock {
   overlay: ReactNode;
@@ -317,7 +318,12 @@ export function DataTable<TData, TValue>({
     target: HTMLElement | null,
     position: number,
   ) => {
-    if (!onRowClick || isLockedPosition(position)) {
+    if (isLockedPosition(position)) {
+      previewLock?.onLockedInteraction();
+      return;
+    }
+
+    if (!onRowClick) {
       return;
     }
 
@@ -432,7 +438,6 @@ export function DataTable<TData, TValue>({
                       data-locked-row={
                         isLockedPosition(position) ? "" : undefined
                       }
-                      inert={isLockedPosition(position) || undefined}
                       aria-hidden={isLockedPosition(position) || undefined}
                       className={cn(
                         "group",
@@ -455,9 +460,18 @@ export function DataTable<TData, TValue>({
                             "cell",
                           )}
                         >
-                          {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext(),
+                          {isLockedPosition(position) ? (
+                            <div inert className="pointer-events-none">
+                              {flexRender(
+                                cell.column.columnDef.cell,
+                                cell.getContext(),
+                              )}
+                            </div>
+                          ) : (
+                            flexRender(
+                              cell.column.columnDef.cell,
+                              cell.getContext(),
+                            )
                           )}
                         </TableCell>
                       ))}

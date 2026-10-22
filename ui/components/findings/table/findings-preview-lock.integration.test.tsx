@@ -1,6 +1,6 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { page } from "vitest/browser";
+import { page, userEvent } from "vitest/browser";
 
 import { render } from "@/__tests__/render-browser";
 import { DataTable } from "@/components/shadcn/table/data-table";
@@ -142,5 +142,71 @@ describe("Findings preview layout", () => {
     expect(useCloudUpgradeStore.getState().activeFeature).toBe(
       PAID_PLAN_UPGRADE_FEATURE.FINDINGS_PREVIEW,
     );
+  });
+
+  it("opens the upgrade prompt when clicking a blurred row without firing its actions", async () => {
+    // Given
+    await page.viewport(1280, 1800);
+    const onLockedInteraction = vi.fn();
+    const onRowAction = vi.fn();
+    const onRowClick = vi.fn();
+    const screen = await render(
+      <div>
+        <DataTable
+          columns={[
+            {
+              accessorKey: "name",
+              header: "Finding group",
+              cell: ({ row }) => (
+                <button type="button" onClick={onRowAction}>
+                  {row.original.name}
+                </button>
+              ),
+            },
+          ]}
+          data={Array.from({ length: 20 }, (_, index) => ({
+            name: `Finding ${index + 1}`,
+          }))}
+          onRowClick={onRowClick}
+          previewLock={{
+            visibleRowCount: 10,
+            overlay: <FindingsPreviewLock totalCount={20} />,
+            onLockedInteraction,
+          }}
+        />
+        <button type="button">After table</button>
+      </div>,
+    );
+
+    // When: a real pointer click at the inert content's position, outside the card.
+    await screen
+      .getByText("Finding 20", { exact: true })
+      .click({ force: true });
+
+    // Then
+    expect(onLockedInteraction).toHaveBeenCalledOnce();
+    expect(onRowAction).not.toHaveBeenCalled();
+    expect(onRowClick).not.toHaveBeenCalled();
+
+    // When / Then: keyboard focus skips every blurred action, keeping the CTA usable.
+    (
+      screen
+        .getByRole("button", { name: "Finding 10", exact: true })
+        .element() as HTMLButtonElement
+    ).focus();
+    await userEvent.tab();
+    await expect
+      .element(screen.getByRole("button", { name: "Unlock All Findings" }))
+      .toHaveFocus();
+    await userEvent.tab();
+    await expect
+      .element(screen.getByRole("button", { name: "After table" }))
+      .toHaveFocus();
+
+    // Visible row actions still work.
+    await screen
+      .getByRole("button", { name: "Finding 1", exact: true })
+      .click();
+    expect(onRowAction).toHaveBeenCalledOnce();
   });
 });
