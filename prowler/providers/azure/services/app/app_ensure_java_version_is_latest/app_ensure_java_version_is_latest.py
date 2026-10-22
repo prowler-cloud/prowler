@@ -29,7 +29,7 @@ class app_ensure_java_version_is_latest(Check):
                     if "java" in linux_framework.lower()
                     else f"java{windows_version}"
                 )
-                minimum = app_client.audit_config.get("java_latest_version", "17")
+                minimum = app_client.audit_config.get("java_latest_version") or "17"
 
                 report = Check_Report_Azure(metadata=self.metadata(), resource=app)
                 report.subscription = subscription_id

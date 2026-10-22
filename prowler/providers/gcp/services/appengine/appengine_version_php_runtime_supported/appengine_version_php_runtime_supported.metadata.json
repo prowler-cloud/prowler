@@ -34,5 +34,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "Only versions with serving status SERVING and a PHP runtime are evaluated. Flexible environment and custom runtimes are reported as MANUAL since the deployed PHP release is not visible through the Admin API."
+  "Notes": "Only versions with serving status SERVING and a PHP runtime are evaluated. Flexible environment versions are reported as MANUAL since the deployed PHP release is not visible through the Admin API; versions on the custom runtime are not evaluated at all because the Admin API does not expose which language they run."
 }

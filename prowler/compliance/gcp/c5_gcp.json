@@ -4427,7 +4427,9 @@
           "ComplementaryCriteria": ""
         }
       ],
-      "Checks": []
+      "Checks": [
+        "appengine_version_php_runtime_supported"
+      ]
     },
     {
       "Id": "OPS-33.01AS",

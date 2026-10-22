@@ -16,7 +16,10 @@ class appengine_version_php_runtime_supported(Check):
 
     def execute(self) -> list[Check_Report_GCP]:
         findings = []
-        minimum = appengine_client.audit_config.get("appengine_php_min_version", "8.2")
+        # `or` covers an explicit null in the config file, which .get() would return as None
+        minimum = (
+            appengine_client.audit_config.get("appengine_php_min_version") or "8.2"
+        )
 
         for version in appengine_client.versions:
             runtime = version.runtime.lower()

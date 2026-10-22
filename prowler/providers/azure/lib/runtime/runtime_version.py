@@ -4,15 +4,15 @@ _VERSION_RE = re.compile(r"\d+(?:\.\d+)*")
 _JAVA_SUFFIX_RE = re.compile(r"-(?:java|jre)(\d+)", re.IGNORECASE)
 
 
-def parse_runtime_version(value: str) -> tuple[int, ...]:
+def parse_runtime_version(value) -> tuple[int, ...]:
     """Return the first dotted number in a stack string as an int tuple, empty if none."""
-    match = _VERSION_RE.search(value or "")
+    match = _VERSION_RE.search("" if value is None else str(value))
     return tuple(int(part) for part in match.group().split(".")) if match else ()
 
 
-def parse_java_version(value: str) -> tuple[int, ...]:
+def parse_java_version(value) -> tuple[int, ...]:
     """Java major from 'JAVA|17-java17', 'TOMCAT|10.0-java11', '1.8' or '17'."""
-    match = _JAVA_SUFFIX_RE.search(value or "")
+    match = _JAVA_SUFFIX_RE.search("" if value is None else str(value))
     if match:
         return (int(match.group(1)),)
     version = parse_runtime_version(value)

@@ -29,7 +29,7 @@ class app_ensure_python_version_is_latest(Check):
                     if "python" in linux_framework.lower()
                     else windows_version
                 )
-                minimum = app_client.audit_config.get("python_latest_version", "3.12")
+                minimum = app_client.audit_config.get("python_latest_version") or "3.12"
 
                 report = Check_Report_Azure(metadata=self.metadata(), resource=app)
                 report.subscription = subscription_id

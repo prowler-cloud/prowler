@@ -75,7 +75,7 @@ class Test_lightsail_instance_php_blueprint_updated:
         assert result[0].status == "MANUAL"
         assert (
             result[0].status_extended
-            == f"Lightsail instance test-instance was created from the PHP blueprint '{blueprint_id}'; the PHP runtime cannot be inspected through the API, verify with 'php -v' that it runs a fixed release (8.2.35, 8.3.36, 8.4.27, 8.5.12 or newer) and migrate Bitnami-packaged blueprints, which do not receive package updates."
+            == f"Lightsail instance test-instance was created from the PHP blueprint '{blueprint_id}'; the PHP runtime cannot be inspected through the API, verify over SSH that it runs a fixed release (8.2.35, 8.3.36, 8.4.27, 8.5.12 or newer); Bitnami-packaged blueprints bundle a PHP copy that apt never updates, so migrate them to the Lightsail-packaged blueprint or replace the bundled PHP with a package-managed one."
         )
         assert result[0].resource_id == "1234/5678"
         assert result[0].resource_arn == INSTANCE_ARN

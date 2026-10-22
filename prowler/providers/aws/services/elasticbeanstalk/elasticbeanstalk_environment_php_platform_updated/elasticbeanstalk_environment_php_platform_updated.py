@@ -44,11 +44,16 @@ def _php_platform(environment) -> tuple[str, str, str] | None:
 class elasticbeanstalk_environment_php_platform_updated(Check):
     def execute(self):
         findings = []
-        min_php_branch = elasticbeanstalk_client.audit_config.get(
-            "elasticbeanstalk_php_min_branch", "8.2"
+        # `or` covers an explicit null in the config file, which .get() would return as None
+        min_php_branch = (
+            elasticbeanstalk_client.audit_config.get("elasticbeanstalk_php_min_branch")
+            or "8.2"
         )
-        min_platform_version = elasticbeanstalk_client.audit_config.get(
-            "elasticbeanstalk_php_min_platform_version", "4.13.13"
+        min_platform_version = (
+            elasticbeanstalk_client.audit_config.get(
+                "elasticbeanstalk_php_min_platform_version"
+            )
+            or "4.13.13"
         )
 
         for environment in elasticbeanstalk_client.environments.values():
