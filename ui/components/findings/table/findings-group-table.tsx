@@ -351,13 +351,14 @@ const FindingsGroupTableContent = ({
   };
 
   // Drives the onboarding "Open a finding group" step: opens the first row when
-  // drillable, otherwise the first drillable group. Returns false when none can
-  // open so the tour skips the resources step instead of hanging.
+  // drillable, otherwise the first drillable previewed group (a locked row
+  // would only open the upgrade prompt). Returns false when none can open so
+  // the tour skips the resources step instead of hanging.
   const openFirstFindingGroup = (): boolean => {
     const target =
-      safeData[0] && canDrillDownFindingGroup(safeData[0])
-        ? safeData[0]
-        : safeData.find((group) => canDrillDownFindingGroup(group));
+      previewedGroups[0] && canDrillDownFindingGroup(previewedGroups[0])
+        ? previewedGroups[0]
+        : previewedGroups.find((group) => canDrillDownFindingGroup(group));
     if (!target) return false;
     handleDrillDown(target.checkId, target);
     return true;

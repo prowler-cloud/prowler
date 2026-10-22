@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Fragment, type ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -137,7 +137,35 @@ vi.mock("@/components/lighthouse/context-contributor", () => ({
 }));
 
 vi.mock("@/components/onboarding", () => ({
-  OnboardingTrigger: () => <div data-testid="onboarding-trigger" />,
+  // Exposes the "Open a finding group" step so tests can drive it and read
+  // whether the handler waited for the resources step.
+  OnboardingTrigger: ({
+    stepHandlers,
+  }: {
+    stepHandlers?: Record<
+      string,
+      {
+        onNext?: (context: {
+          waitForStep: (target: string) => Promise<void>;
+        }) => Promise<void>;
+      }
+    >;
+  }) => (
+    <button
+      type="button"
+      data-testid="onboarding-trigger"
+      onClick={() => {
+        const waitForStep = vi.fn(async () => {});
+        void stepHandlers?.group?.onNext?.({ waitForStep }).then(() => {
+          document.body.dataset.tourWaited = String(
+            waitForStep.mock.calls.length > 0,
+          );
+        });
+      }}
+    >
+      Open first group
+    </button>
+  ),
   PageReady: () => <div data-testid="page-ready" />,
 }));
 
@@ -502,6 +530,38 @@ describe("FindingsGroupTable", () => {
       expect(
         screen.getByRole("button", { name: "Select finding-1" }),
       ).toBeInTheDocument();
+    });
+
+    it("skips the tour resources step when the only drillable group is locked", async () => {
+      // Given: the previewed rows cannot drill down, a locked one can
+      const user = userEvent.setup();
+      delete document.body.dataset.tourWaited;
+      render(
+        <FindingsGroupTable
+          data={[
+            makeGroup("check-a", 0, { resourcesTotal: 0 }),
+            makeGroup("check-b", 0, { resourcesTotal: 0 }),
+            makeGroup("check-c"),
+          ]}
+          resolvedFilters={{}}
+          hasHistoricalData={false}
+          previewRowLimit={2}
+        />,
+      );
+
+      // When
+      await user.click(
+        screen.getByRole("button", { name: "Open first group" }),
+      );
+
+      // Then: no drill-down, no upgrade prompt, and the tour did not wait
+      await waitFor(() =>
+        expect(document.body.dataset.tourWaited).toBe("false"),
+      );
+      expect(
+        screen.queryByRole("button", { name: "Select finding-1" }),
+      ).not.toBeInTheDocument();
+      expect(useCloudUpgradeStore.getState().activeFeature).toBeNull();
     });
 
     it("ignores an expanded deep link that points past the preview", () => {
