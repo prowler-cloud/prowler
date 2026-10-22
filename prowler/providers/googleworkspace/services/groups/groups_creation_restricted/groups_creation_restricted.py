@@ -13,6 +13,10 @@ class groups_creation_restricted(Check):
     - Only organization admins can create groups (not all users)
     - Group owners cannot allow external members
     - Group owners cannot allow incoming email from outside the organization
+
+    When Groups for Business is off for everyone, nobody can create a group in
+    the Google Groups app, so the creation setting is moot. Existing groups
+    stay active and keep receiving mail, so the other two settings still count.
     """
 
     def execute(self) -> List[CheckReportGoogleWorkspace]:
@@ -35,10 +39,12 @@ class groups_creation_restricted(Check):
             incoming_mail = policies.owners_can_allow_incoming_mail_from_public
 
             issues = []
+            service_off = policies.off_for_everyone
 
             # Check creation access level
-            # Default is USERS_IN_DOMAIN (insecure) — only ADMIN_ONLY is compliant
-            if access_level is None or access_level != "ADMIN_ONLY":
+            # Default is USERS_IN_DOMAIN (insecure) — only ADMIN_ONLY is compliant.
+            # Moot while the service is off: nobody can create a group then.
+            if not service_off and access_level != "ADMIN_ONLY":
                 effective = access_level or "USERS_IN_DOMAIN (default)"
                 issues.append(
                     f"group creation is set to {effective} instead of ADMIN_ONLY"
@@ -56,12 +62,27 @@ class groups_creation_restricted(Check):
                     "group owners can allow incoming email from outside the organization"
                 )
 
-            if not issues:
+            if not issues and service_off:
+                report.status = "PASS"
+                report.status_extended = (
+                    f"Groups for Business is turned off for everyone in domain "
+                    f"{domain}, so no group can be created, and existing groups "
+                    f"allow no external members and no incoming email from outside."
+                )
+            elif not issues:
                 report.status = "PASS"
                 report.status_extended = (
                     f"Group creation is properly restricted in domain {domain}: "
                     f"admin-only creation, no external members, "
                     f"no incoming email from outside."
+                )
+            elif service_off:
+                report.status = "FAIL"
+                issues_text = "; ".join(issues)
+                report.status_extended = (
+                    f"Groups for Business is turned off for everyone in domain "
+                    f"{domain}, so no group can be created, but existing groups "
+                    f"remain active and are not fully restricted: {issues_text}."
                 )
             else:
                 report.status = "FAIL"
