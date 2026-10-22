@@ -146,10 +146,14 @@ class GoogleWorkspaceService:
 
         The API returns every policy that exists for a setting: Google's
         SYSTEM defaults next to the ADMIN policy saved in the Admin console.
-        The value in force is the one with the greatest policyQuery.sortOrder
-        (Policy API concepts, Max and Merge reducers), not the last one
-        listed. Policies without a sort order keep the API order, so the last
-        one wins. Rules are not reduced: each policy is a distinct rule.
+        The value in force is the one with the greatest policyQuery.sortOrder,
+        which is the Policy API's Max reducer, not the last one listed. Rule
+        settings use the List reducer and are not reduced here: each policy is
+        a distinct rule. Settings resolved with the Merge or MaxMap reducers
+        combine several policies; this method keeps the greatest one for them
+        too, which is exact as long as that policy carries every field of the
+        setting, as policies saved from the Admin console do. Policies without
+        a sort order keep the API order, so the last one wins.
         """
         kept: list[dict] = []
         position: dict[str, int] = {}
