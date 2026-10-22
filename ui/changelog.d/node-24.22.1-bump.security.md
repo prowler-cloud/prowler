@@ -1,0 +1,1 @@
+Node.js from 24.18.1 to 24.22.1 LTS in the UI container image and `.nvmrc`, patching the 10 CVEs of the October 2026 security release, including the Brotli decoder remote code execution (CVE-2026-111497); the base image moves to Alpine 3.24, so the targeted `libcrypto3` / `libssl3` upgrade is no longer needed
