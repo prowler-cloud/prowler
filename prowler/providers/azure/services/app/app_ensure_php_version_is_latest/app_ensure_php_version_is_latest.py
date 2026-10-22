@@ -29,7 +29,7 @@ class app_ensure_php_version_is_latest(Check):
                     if "php" in linux_framework.lower()
                     else windows_version
                 )
-                minimum = app_client.audit_config.get("php_latest_version") or "8.2"
+                minimum = app_client.audit_config.get("php_latest_version") or "8.5"
 
                 report = Check_Report_Azure(metadata=self.metadata(), resource=app)
                 report.subscription = subscription_id

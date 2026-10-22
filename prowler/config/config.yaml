@@ -574,7 +574,7 @@ azure:
   # Azure App Service
   # Minimum runtime versions; any newer version passes
   # azure.app_ensure_php_version_is_latest
-  php_latest_version: "8.2"
+  php_latest_version: "8.5"
   # azure.app_ensure_python_version_is_latest
   python_latest_version: "3.12"
   # azure.app_ensure_java_version_is_latest

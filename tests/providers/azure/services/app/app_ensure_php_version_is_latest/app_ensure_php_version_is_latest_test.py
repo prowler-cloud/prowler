@@ -165,7 +165,7 @@ class Test_app_ensure_php_version_is_latest:
 
     def test_app_default_minimum(self):
         app_client, _ = _app_client(
-            mock.MagicMock(linux_fx_version="PHP|8.4", php_version="")
+            mock.MagicMock(linux_fx_version="PHP|8.5", php_version="")
         )
         result = _run_check(app_client)
         assert len(result) == 1
