@@ -29,10 +29,15 @@ def _run_check(app_client):
 
 
 def _app_client(configurations, audit_config=None):
-    from prowler.providers.azure.services.app.app_service import WebApp
+    # app_service imports monitor_client, which needs the provider patched at import time
+    with mock.patch(
+        "prowler.providers.common.provider.Provider.get_global_provider",
+        return_value=set_mocked_azure_provider(),
+    ):
+        from prowler.providers.azure.services.app.app_service import WebApp
 
     resource_id = f"/subscriptions/{uuid4()}"
-    app_client = mock.MagicMock
+    app_client = mock.MagicMock()
     app_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
     app_client.audit_config = audit_config or {}
     app_client.apps = {
@@ -54,13 +59,13 @@ def _app_client(configurations, audit_config=None):
 
 class Test_app_ensure_php_version_is_latest:
     def test_app_no_subscriptions(self):
-        app_client = mock.MagicMock
+        app_client = mock.MagicMock()
         app_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         app_client.apps = {}
         assert len(_run_check(app_client)) == 0
 
     def test_app_subscription_empty(self):
-        app_client = mock.MagicMock
+        app_client = mock.MagicMock()
         app_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         app_client.apps = {AZURE_SUBSCRIPTION_ID: {}}
         assert len(_run_check(app_client)) == 0

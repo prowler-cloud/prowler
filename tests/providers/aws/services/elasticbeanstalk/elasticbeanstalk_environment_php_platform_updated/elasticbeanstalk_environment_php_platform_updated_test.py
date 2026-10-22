@@ -28,7 +28,7 @@ def _environment(solution_stack_name="", platform_arn=""):
 
 
 def _run_check(environments, audit_config=None):
-    elasticbeanstalk_client = mock.MagicMock
+    elasticbeanstalk_client = mock.MagicMock()
     elasticbeanstalk_client.environments = environments
     elasticbeanstalk_client.audit_config = audit_config or {}
 

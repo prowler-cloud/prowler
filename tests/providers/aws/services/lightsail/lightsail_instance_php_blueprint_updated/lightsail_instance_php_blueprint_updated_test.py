@@ -44,6 +44,10 @@ def _run_check(instances, audit_config=None):
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=set_mocked_aws_provider([AWS_REGION_US_EAST_1]),
         ),
+        patch(
+            "prowler.providers.aws.services.lightsail.lightsail_service.Lightsail",
+            new=lightsail_client,
+        ),
         patch(f"{CHECK_PATH}.lightsail_client", new=lightsail_client),
     ):
         from prowler.providers.aws.services.lightsail.lightsail_instance_php_blueprint_updated.lightsail_instance_php_blueprint_updated import (

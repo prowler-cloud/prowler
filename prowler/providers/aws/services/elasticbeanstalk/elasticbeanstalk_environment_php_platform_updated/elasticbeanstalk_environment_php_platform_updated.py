@@ -15,11 +15,18 @@ PLATFORM_ARN_RE = re.compile(
     r"platform/PHP (?P<branch>\d+\.\d+) running on (?P<family>[^/]+)/(?P<version>\d+(?:\.\d+)+)",
     re.IGNORECASE,
 )
-FIXED_PLATFORM_FAMILY = "Amazon Linux 2023"
+AMAZON_LINUX_YEAR_RE = re.compile(r"Amazon Linux (\d{4})")
+# First Amazon Linux generation that received platform versions with the fixed PHP release
+FIXED_PLATFORM_YEAR = 2023
 
 
 def _version_tuple(value: str) -> tuple[int, ...]:
     return tuple(int(part) for part in value.split(".")) if value else ()
+
+
+def _family_has_fixed_releases(family: str) -> bool:
+    match = AMAZON_LINUX_YEAR_RE.search(family)
+    return bool(match) and int(match.group(1)) >= FIXED_PLATFORM_YEAR
 
 
 def _php_platform(environment) -> tuple[str, str, str] | None:
@@ -57,7 +64,7 @@ class elasticbeanstalk_environment_php_platform_updated(Check):
 
             if _version_tuple(php_branch) < _version_tuple(min_php_branch):
                 report.status_extended = f"Elastic Beanstalk environment {environment.name} runs PHP {php_branch}, a branch that no longer receives security fixes (minimum supported branch is {min_php_branch})."
-            elif FIXED_PLATFORM_FAMILY not in family:
+            elif not _family_has_fixed_releases(family):
                 report.status_extended = f"Elastic Beanstalk environment {environment.name} runs PHP {php_branch} on platform '{stack}', a platform family without fixed PHP releases; migrate it to a PHP {php_branch} Amazon Linux 2023 platform version {min_platform_version} or newer."
             elif _version_tuple(platform_version) < _version_tuple(
                 min_platform_version

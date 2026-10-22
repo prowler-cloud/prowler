@@ -29,7 +29,7 @@ def _web_acl(rules):
 
 
 def _run_check(web_acls):
-    wafv2_client = mock.MagicMock
+    wafv2_client = mock.MagicMock()
     wafv2_client.web_acls = web_acls
 
     with (
