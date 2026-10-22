@@ -26,7 +26,13 @@ class chat_external_file_sharing_disabled(Check):
 
             external_sharing = chat_client.policies.external_file_sharing
 
-            if external_sharing == "NO_FILES":
+            if chat_client.policies.off_for_everyone:
+                report.status = "PASS"
+                report.status_extended = (
+                    f"Google Chat is turned off for everyone in domain "
+                    f"{chat_client.provider.identity.domain}, so no files can be shared externally through Chat."
+                )
+            elif external_sharing == "NO_FILES":
                 report.status = "PASS"
                 report.status_extended = (
                     f"External file sharing in Chat is disabled "
