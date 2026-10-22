@@ -235,6 +235,9 @@ export function DataTable<TData, TValue>({
   // full table width it would scroll away (and clip) on wide tables. Measured
   // on mount only, which is when a locked table arrives from the server.
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const previewOverlayRef = useRef<HTMLDivElement>(null);
+  const lastRowRef = useRef<HTMLTableRowElement>(null);
+  const [previewPaddingBottom, setPreviewPaddingBottom] = useState(0);
   const scrollportPin = useScrollportPin(() =>
     previewLock ? scrollContainerRef.current : null,
   );
@@ -279,6 +282,35 @@ export function DataTable<TData, TValue>({
     previewLock !== undefined && rows.length > previewLock.visibleRowCount
       ? previewLock.visibleRowCount - 1
       : null;
+
+  // A short result set may not have enough blurred rows to contain the card.
+  // Reserve its overflow inside the table so the scrollport cannot clip the CTA.
+  useEffect(() => {
+    const overlay = previewOverlayRef.current;
+    const lastRow = lastRowRef.current;
+    const scrollContainer = scrollContainerRef.current;
+    if (overlayPosition === null || !overlay || !lastRow || !scrollContainer) {
+      return;
+    }
+
+    const measure = () => {
+      setPreviewPaddingBottom(
+        Math.max(
+          0,
+          Math.ceil(
+            overlay.getBoundingClientRect().bottom -
+              lastRow.getBoundingClientRect().bottom,
+          ),
+        ),
+      );
+    };
+    measure();
+    if (typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(measure);
+    observer.observe(overlay);
+    observer.observe(scrollContainer);
+    return () => observer.disconnect();
+  }, [overlayPosition, rows.length]);
 
   const handleRowClick = (
     row: Row<TData>,
@@ -339,7 +371,14 @@ export function DataTable<TData, TValue>({
           </div>
         </div>
       )}
-      <Table className={getSubRows ? "table-fixed" : undefined}>
+      <Table
+        className={getSubRows ? "table-fixed" : undefined}
+        style={
+          overlayPosition !== null
+            ? { paddingBottom: previewPaddingBottom }
+            : undefined
+        }
+      >
         <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (
             <TableRow key={`${headerGroup.id}-${selectionKey}-${expansionKey}`}>
@@ -385,6 +424,9 @@ export function DataTable<TData, TValue>({
                 ) : (
                   <Fragment key={row.id}>
                     <TableRow
+                      ref={
+                        position === rows.length - 1 ? lastRowRef : undefined
+                      }
                       {...getRowAttributes?.(row)}
                       data-state={row.getIsSelected() && "selected"}
                       data-locked-row={
@@ -442,7 +484,10 @@ export function DataTable<TData, TValue>({
                                 : undefined
                             }
                           >
-                            <div className="absolute inset-x-0 top-8 flex justify-center px-4">
+                            <div
+                              ref={previewOverlayRef}
+                              className="absolute inset-x-0 top-8 flex justify-center px-4"
+                            >
                               {previewLock.overlay}
                             </div>
                           </div>
