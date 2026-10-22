@@ -74,6 +74,20 @@ class Test_app_ensure_php_version_is_latest:
         app_client, _ = _app_client(None)
         assert len(_run_check(app_client)) == 0
 
+    def test_app_linux_fx_version_none_is_skipped(self):
+        app_client, _ = _app_client(
+            mock.MagicMock(linux_fx_version=None, php_version="")
+        )
+        assert len(_run_check(app_client)) == 0
+
+    def test_app_linux_fx_version_none_uses_windows_version(self):
+        app_client, _ = _app_client(
+            mock.MagicMock(linux_fx_version=None, php_version="8.5")
+        )
+        result = _run_check(app_client)
+        assert len(result) == 1
+        assert result[0].status == "PASS"
+
     def test_app_other_runtime_is_skipped(self):
         app_client, _ = _app_client(
             mock.MagicMock(linux_fx_version="PYTHON|3.12", php_version="")

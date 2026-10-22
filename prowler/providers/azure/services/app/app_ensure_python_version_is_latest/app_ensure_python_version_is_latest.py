@@ -18,7 +18,10 @@ class app_ensure_python_version_is_latest(Check):
                 subscription_id, subscription_id
             )
             for app in apps.values():
-                linux_framework = getattr(app.configurations, "linux_fx_version", "")
+                # The SDK can return None for linuxFxVersion, which getattr preserves
+                linux_framework = (
+                    getattr(app.configurations, "linux_fx_version", "") or ""
+                )
                 windows_version = getattr(app.configurations, "python_version", "")
 
                 if "python" not in linux_framework.lower() and not windows_version:
