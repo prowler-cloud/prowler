@@ -58,11 +58,11 @@ class TestGmailService:
                         "type": "settings/gmail.spoofing_and_authentication",
                         "value": {
                             "detectDomainNameSpoofing": True,
-                            "domainSpoofingConsequence": "SPAM_FOLDER",
+                            "domainNameSpoofingConsequence": "SPAM_FOLDER",
                             "detectEmployeeNameSpoofing": True,
                             "employeeNameSpoofingConsequence": "SPAM_FOLDER",
                             "detectDomainSpoofingFromUnauthenticatedSenders": True,
-                            "inboundDomainSpoofingConsequence": "QUARANTINE",
+                            "domainSpoofingConsequence": "QUARANTINE",
                             "detectUnauthenticatedEmails": True,
                             "unauthenticatedEmailConsequence": "WARNING",
                             "detectGroupsSpoofing": True,
@@ -146,7 +146,7 @@ class TestGmailService:
             assert gmail.policies.enable_external_image_scanning is True
             assert gmail.policies.enable_aggressive_warnings_on_untrusted_links is True
             assert gmail.policies.detect_domain_name_spoofing is True
-            assert gmail.policies.domain_spoofing_consequence == "SPAM_FOLDER"
+            assert gmail.policies.domain_name_spoofing_consequence == "SPAM_FOLDER"
             assert gmail.policies.detect_employee_name_spoofing is True
             assert gmail.policies.employee_name_spoofing_consequence == "SPAM_FOLDER"
             assert gmail.policies.detect_inbound_domain_spoofing is True
@@ -319,6 +319,67 @@ class TestGmailService:
             assert fetched.policies.service_state == "DISABLED"
             assert fetched.policies.service_state_overridden is True
             assert fetched.policies.off_for_everyone is False
+
+    def test_each_spoofing_action_is_read_from_its_own_field(self):
+        """The API pairs each detect flag with a consequence: domainNameSpoofing
+        for similar domain names and domainSpoofing for inbound emails spoofing
+        the domain. Reading the wrong one left the inbound check unable to pass
+        and the similar-names check reporting the inbound action."""
+        mock_provider = set_mocked_googleworkspace_provider()
+        mock_provider.audit_config = {}
+        mock_provider.fixer_config = {}
+        mock_session = MagicMock()
+        mock_session.credentials = MagicMock()
+        mock_provider.session = mock_session
+
+        mock_service = MagicMock()
+        mock_policies_list = MagicMock()
+        mock_policies_list.execute.return_value = {
+            "policies": [
+                {
+                    "setting": {
+                        "type": "settings/gmail.spoofing_and_authentication",
+                        "value": {
+                            "detectDomainNameSpoofing": True,
+                            "domainNameSpoofingConsequence": "WARNING",
+                            "detectEmployeeNameSpoofing": True,
+                            "employeeNameSpoofingConsequence": "QUARANTINE",
+                            "detectDomainSpoofingFromUnauthenticatedSenders": True,
+                            "domainSpoofingConsequence": "SPAM_FOLDER",
+                            "detectUnauthenticatedEmails": False,
+                            "unauthenticatedEmailConsequence": "NO_ACTION",
+                            "detectGroupsSpoofing": True,
+                            "groupsSpoofingVisibilityType": "ALL_GROUPS",
+                            "groupsSpoofingConsequence": "QUARANTINE",
+                        },
+                    }
+                },
+            ]
+        }
+        mock_service.policies().list.return_value = mock_policies_list
+        mock_service.policies().list_next.return_value = None
+
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=mock_provider,
+            ),
+            patch(
+                "prowler.providers.googleworkspace.services.gmail.gmail_service.GoogleWorkspaceService._build_service",
+                return_value=mock_service,
+            ),
+        ):
+            from prowler.providers.googleworkspace.services.gmail.gmail_service import (
+                Gmail,
+            )
+
+            gmail = Gmail(mock_provider)
+
+            assert gmail.policies.domain_name_spoofing_consequence == "WARNING"
+            assert gmail.policies.employee_name_spoofing_consequence == "QUARANTINE"
+            assert gmail.policies.inbound_domain_spoofing_consequence == "SPAM_FOLDER"
+            assert gmail.policies.unauthenticated_email_consequence == "NO_ACTION"
+            assert gmail.policies.groups_spoofing_consequence == "QUARANTINE"
 
     def test_gmail_fetch_policies_empty_response(self):
         """Test handling empty policies response"""
@@ -648,7 +709,7 @@ class TestGmailService:
             enable_external_image_scanning=True,
             enable_aggressive_warnings_on_untrusted_links=True,
             detect_domain_name_spoofing=True,
-            domain_spoofing_consequence="SPAM_FOLDER",
+            domain_name_spoofing_consequence="SPAM_FOLDER",
             detect_employee_name_spoofing=True,
             employee_name_spoofing_consequence="SPAM_FOLDER",
             detect_inbound_domain_spoofing=True,
@@ -670,7 +731,7 @@ class TestGmailService:
         assert policies.encrypted_attachment_protection_consequence == "SPAM_FOLDER"
         assert policies.enable_shortener_scanning is True
         assert policies.detect_domain_name_spoofing is True
-        assert policies.domain_spoofing_consequence == "SPAM_FOLDER"
+        assert policies.domain_name_spoofing_consequence == "SPAM_FOLDER"
         assert policies.enable_pop_access is False
         assert policies.enable_auto_forwarding is False
         assert policies.enable_enhanced_pre_delivery_scanning is True

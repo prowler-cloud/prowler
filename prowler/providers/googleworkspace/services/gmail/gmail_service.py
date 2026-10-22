@@ -100,11 +100,14 @@ class Gmail(GoogleWorkspaceService):
             logger.debug("Gmail links and external images settings fetched.")
 
         elif setting_type == "gmail.spoofing_and_authentication":
+            # Each detect flag pairs with its own consequence:
+            # domainNameSpoofing is the similar-domain-names
+            # protection, domainSpoofing is the inbound one.
             self.policies.detect_domain_name_spoofing = value.get(
                 "detectDomainNameSpoofing"
             )
-            self.policies.domain_spoofing_consequence = value.get(
-                "domainSpoofingConsequence"
+            self.policies.domain_name_spoofing_consequence = value.get(
+                "domainNameSpoofingConsequence"
             )
             self.policies.detect_employee_name_spoofing = value.get(
                 "detectEmployeeNameSpoofing"
@@ -116,7 +119,7 @@ class Gmail(GoogleWorkspaceService):
                 "detectDomainSpoofingFromUnauthenticatedSenders"
             )
             self.policies.inbound_domain_spoofing_consequence = value.get(
-                "inboundDomainSpoofingConsequence"
+                "domainSpoofingConsequence"
             )
             self.policies.detect_unauthenticated_emails = value.get(
                 "detectUnauthenticatedEmails"
@@ -185,7 +188,7 @@ class GmailPolicies(ServicePolicies):
 
     # gmail.spoofing_and_authentication
     detect_domain_name_spoofing: Optional[bool] = None
-    domain_spoofing_consequence: Optional[str] = None
+    domain_name_spoofing_consequence: Optional[str] = None
     detect_employee_name_spoofing: Optional[bool] = None
     employee_name_spoofing_consequence: Optional[str] = None
     detect_inbound_domain_spoofing: Optional[bool] = None
