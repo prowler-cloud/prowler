@@ -1,0 +1,1 @@
+Azure App Service runtime checks (`app_ensure_php_version_is_latest`, `app_ensure_python_version_is_latest`, `app_ensure_java_version_is_latest`) now pass any runtime at or above the configured minimum instead of failing every version newer than the configured one

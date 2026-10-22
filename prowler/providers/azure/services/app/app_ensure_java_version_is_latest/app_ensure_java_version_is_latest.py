@@ -1,4 +1,8 @@
 from prowler.lib.check.models import Check, Check_Report_Azure
+from prowler.providers.azure.lib.runtime.runtime_version import (
+    parse_java_version,
+    runtime_version_at_least,
+)
 from prowler.providers.azure.services.app.app_client import app_client
 
 
@@ -15,26 +19,29 @@ class app_ensure_java_version_is_latest(Check):
             )
             for app in apps.values():
                 linux_framework = getattr(app.configurations, "linux_fx_version", "")
-                windows_framework_version = getattr(
-                    app.configurations, "java_version", None
+                windows_version = getattr(app.configurations, "java_version", None)
+
+                if "java" not in linux_framework.lower() and not windows_version:
+                    continue
+
+                framework = (
+                    linux_framework
+                    if "java" in linux_framework.lower()
+                    else f"java{windows_version}"
                 )
+                minimum = app_client.audit_config.get("java_latest_version", "17")
 
-                if "java" in linux_framework.lower() or windows_framework_version:
-                    report = Check_Report_Azure(metadata=self.metadata(), resource=app)
-                    report.subscription = subscription_id
-                    report.status = "FAIL"
-                    java_latest_version = app_client.audit_config.get(
-                        "java_latest_version", "17"
-                    )
-                    report.status_extended = f"Java version is set to '{f'java{windows_framework_version}' if windows_framework_version else linux_framework}', but should be set to 'java {java_latest_version}' for app '{app.name}' in subscription '{subscription_name} ({subscription_id})'."
+                report = Check_Report_Azure(metadata=self.metadata(), resource=app)
+                report.subscription = subscription_id
+                report.status = "FAIL"
+                report.status_extended = f"Java version is set to '{framework}', which is below the minimum supported version 'java {minimum}', for app '{app.name}' in subscription '{subscription_name} ({subscription_id})'."
 
-                    if (
-                        f"java{java_latest_version}" in linux_framework
-                        or java_latest_version == windows_framework_version
-                    ):
-                        report.status = "PASS"
-                        report.status_extended = f"Java version is set to 'java {java_latest_version}' for app '{app.name}' in subscription '{subscription_name} ({subscription_id})'."
+                if runtime_version_at_least(
+                    parse_java_version(framework), parse_java_version(minimum)
+                ):
+                    report.status = "PASS"
+                    report.status_extended = f"Java version is set to '{framework}', which meets the minimum supported version 'java {minimum}', for app '{app.name}' in subscription '{subscription_name} ({subscription_id})'."
 
-                    findings.append(report)
+                findings.append(report)
 
         return findings
