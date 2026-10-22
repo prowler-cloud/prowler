@@ -1,4 +1,4 @@
-from typing import Any, Optional
+from typing import Any, ClassVar, Optional
 
 from botocore.exceptions import ClientError
 from pydantic.v1 import BaseModel
@@ -266,6 +266,7 @@ class Stage(BaseModel):
     tracing_enabled: Optional[bool] = None
     cache_enabled: Optional[bool] = None
     cache_data_encrypted: Optional[bool] = None
+    sensitive_fields: ClassVar[tuple[str, ...]] = ("variables",)
     variables: Optional[dict] = {}
 
 

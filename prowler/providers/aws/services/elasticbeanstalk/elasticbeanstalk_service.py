@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import ClassVar, Optional
 
 from botocore.client import ClientError
 from pydantic.v1 import BaseModel
@@ -125,4 +125,5 @@ class Environment(BaseModel):
     managed_platform_updates: Optional[str]
     cloudwatch_stream_logs: Optional[str]
     tags: Optional[list] = []
+    sensitive_fields: ClassVar[tuple[str, ...]] = ("option_settings",)
     option_settings: Optional[list] = None
