@@ -149,11 +149,14 @@ class GoogleWorkspaceService:
         The value in force is the one with the greatest policyQuery.sortOrder,
         which is the Policy API's Max reducer, not the last one listed. Rule
         settings use the List reducer and are not reduced here: each policy is
-        a distinct rule. Settings resolved with the Merge or MaxMap reducers
-        combine several policies; this method keeps the greatest one for them
-        too, which is exact as long as that policy carries every field of the
-        setting, as policies saved from the Admin console do. Policies without
-        a sort order keep the API order, so the last one wins.
+        a distinct rule. Settings resolved with the Merge, MaxMap or MergeMap
+        reducers combine several policies; this method keeps the greatest one
+        for them too, which is exact only when that policy supplies the whole
+        reduced value: every field, plus the array values Merge concatenates
+        and the keyed entries MaxMap and MergeMap keep from policies with a
+        lower sortOrder. Policies saved from the Admin console carry every
+        field of the setting. Policies without a sort order keep the API order,
+        so the last one wins.
         """
         kept: list[dict] = []
         position: dict[str, int] = {}
