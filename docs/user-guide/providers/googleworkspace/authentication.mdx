@@ -25,6 +25,14 @@ Prowler requests the following read-only OAuth 2.0 scopes:
 The delegated user must be a **super administrator** in your Google Workspace organization. Using a non-admin account will result in permission errors when accessing the Admin SDK.
 </Warning>
 
+### Optional Scope for Edition Context
+
+Prowler can read which Google Workspace editions the tenant holds, Cloud Identity Premium included, and state in a finding when the audited feature is not sold on them (for example, Data Loss Prevention (DLP) for Drive or Google session control). This needs the Enterprise License Manager API enabled in the GCP project (Step 2) and the scope `https://www.googleapis.com/auth/apps.licensing` added to the Domain-Wide Delegation list (Step 5). Without the scope, every check runs the same and findings carry no edition context.
+
+<Warning>
+The `apps.licensing` scope is Google's "view and manage licenses" scope and has no read-only variant. Prowler only lists license assignments, but anyone holding the Service Account key could assign or revoke licenses with it on behalf of the super administrator. Grant it only if you want the edition context, and protect the key accordingly.
+</Warning>
+
 ## Setup Steps
 
 ### Step 1: Create a Google Cloud Platform (GCP) Project (if Needed)
@@ -41,6 +49,7 @@ In the [Google Cloud Console](https://console.cloud.google.com), select the targ
 |-----|--------------|--------------|
 | **[Admin SDK API](https://console.cloud.google.com/apis/library/admin.googleapis.com)** | `admin.googleapis.com` | Directory service checks (users, roles, domains) |
 | **[Cloud Identity API](https://console.cloud.google.com/apis/library/cloudidentity.googleapis.com)** | `cloudidentity.googleapis.com` | All service checks except Directory (domain-level application policies) |
+| **[Enterprise License Manager API](https://console.cloud.google.com/apis/library/licensing.googleapis.com)** | `licensing.googleapis.com` | Optional: edition context in findings (see Optional Scope for Edition Context) |
 
 For each API:
 
@@ -49,7 +58,7 @@ For each API:
 3. Click **Enable**
 
 <Note>
-Both APIs must be enabled in the same GCP project that hosts the Service Account. All service checks except Directory will return no findings if the Cloud Identity API is not enabled. The Identity and Access Management (IAM) API (`iam.googleapis.com`) is a different API: enabling it does not replace the Cloud Identity API.
+The Admin SDK API and the Cloud Identity API must be enabled in the same GCP project that hosts the Service Account. All service checks except Directory will return no findings if the Cloud Identity API is not enabled. The Identity and Access Management (IAM) API (`iam.googleapis.com`) is a different API: enabling it does not replace the Cloud Identity API.
 </Note>
 
 ### Step 3: Create a Service Account
@@ -113,6 +122,8 @@ The constraint only blocks new key creation. Keys that already exist keep workin
 ```
 https://www.googleapis.com/auth/admin.directory.user.readonly,https://www.googleapis.com/auth/admin.directory.domain.readonly,https://www.googleapis.com/auth/admin.directory.customer.readonly,https://www.googleapis.com/auth/admin.directory.orgunit.readonly,https://www.googleapis.com/auth/cloud-identity.policies.readonly,https://www.googleapis.com/auth/admin.directory.rolemanagement.readonly
 ```
+
+   To enable the optional edition context, append `,https://www.googleapis.com/auth/apps.licensing` to the list.
 
 7. Click **Authorize**
 

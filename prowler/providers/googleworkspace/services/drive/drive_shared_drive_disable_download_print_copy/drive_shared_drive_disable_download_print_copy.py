@@ -1,6 +1,11 @@
 from typing import List
 
 from prowler.lib.check.models import Check, CheckReportGoogleWorkspace
+from prowler.providers.googleworkspace.lib.licensing import (
+    EDITIONS_WITHOUT_SHARED_DRIVE_SETTINGS,
+    SHARED_DRIVE_SETTINGS_EXPLANATION,
+    edition_reason_suffix,
+)
 from prowler.providers.googleworkspace.services.drive.drive_client import drive_client
 
 
@@ -10,7 +15,9 @@ class drive_shared_drive_disable_download_print_copy(Check):
     This check verifies that the domain-level Drive and Docs policy prevents
     viewers and commenters of shared drive files from downloading, printing,
     or copying their contents — limiting them to read and comment actions
-    only and reducing the risk of bulk data exfiltration.
+    only and reducing the risk of bulk data exfiltration. The setting is
+    edition-gated: when every edition the tenant holds lacks it, the finding
+    says so.
     """
 
     def execute(self) -> List[CheckReportGoogleWorkspace]:
@@ -48,6 +55,7 @@ class drive_shared_drive_disable_download_print_copy(Check):
                     f"Download, print, and copy in shared drives in domain "
                     f"{drive_client.provider.identity.domain} is set to {allowed}. "
                     f"These actions should be restricted to editors or managers only."
+                    f"{edition_reason_suffix(drive_client.provider.editions, EDITIONS_WITHOUT_SHARED_DRIVE_SETTINGS, SHARED_DRIVE_SETTINGS_EXPLANATION)}"
                 )
 
             findings.append(report)
