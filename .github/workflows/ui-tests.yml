@@ -21,7 +21,8 @@ permissions: {}
 
 jobs:
   ui-tests:
-    # ubuntu-latest moved to 26.04, where `playwright install` refuses to install
+    # ubuntu-latest is moving to 26.04 (rollout began October 19, 2026; completion
+    # targeted for November 19, 2026), where `playwright install` refuses to install
     # Chromium for the pinned Playwright. Stay on 24.04 until the suite upgrades.
     runs-on: ubuntu-24.04
     timeout-minutes: 20
