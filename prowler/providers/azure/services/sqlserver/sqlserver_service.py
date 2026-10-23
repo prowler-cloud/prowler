@@ -157,15 +157,20 @@ class SQLServer(AzureService):
             server_name=server_name,
             vulnerability_assessment_name="default",
         )
+        recurring_scans = vulnerability_assessment.recurring_scans
         return ServerVulnerabilityAssessment(
             id=vulnerability_assessment.id,
             name=vulnerability_assessment.name,
             type=vulnerability_assessment.type,
             storage_container_path=vulnerability_assessment.storage_container_path,
-            recurring_scans=VulnerabilityAssessmentRecurringScans(
-                is_enabled=vulnerability_assessment.recurring_scans.is_enabled,
-                emails=vulnerability_assessment.recurring_scans.emails,
-                email_subscription_admins=vulnerability_assessment.recurring_scans.email_subscription_admins,
+            recurring_scans=(
+                VulnerabilityAssessmentRecurringScans(
+                    is_enabled=recurring_scans.is_enabled,
+                    emails=recurring_scans.emails,
+                    email_subscription_admins=recurring_scans.email_subscription_admins,
+                )
+                if recurring_scans is not None
+                else None
             ),
         )
 
@@ -292,7 +297,7 @@ class ServerVulnerabilityAssessment:
     name: str
     type: str
     storage_container_path: str
-    recurring_scans: VulnerabilityAssessmentRecurringScans
+    recurring_scans: Optional[VulnerabilityAssessmentRecurringScans]
 
 
 @dataclass
