@@ -1,0 +1,98 @@
+name: 'Tools: CodeRabbit Review Notify'
+
+on:
+  pull_request_review:
+    types:
+      - 'submitted'
+  pull_request:
+    branches:
+      - 'master'
+    paths:
+      - '.github/coderabbit-notify/**'
+      - '.github/workflows/coderabbit-notify.yml'
+
+permissions: {}
+
+jobs:
+  test:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
+        with:
+          egress-policy: block
+          allowed-endpoints: >
+            github.com:443
+
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Run notification tests
+        run: node --test .github/coderabbit-notify/lib.test.mjs
+
+  notify:
+    if: >-
+      github.event_name == 'pull_request_review' &&
+      github.event.review.user.login == 'coderabbitai[bot]' &&
+      github.repository == 'prowler-cloud/prowler'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
+        with:
+          egress-policy: block
+          allowed-endpoints: >
+            api.github.com:443
+            github.com:443
+            slack.com:443
+
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Decide whether to notify
+        id: decide
+        env:
+          GH_TOKEN: ${{ github.token }}
+          LAUNCHER_URL: ${{ vars.CODERABBIT_LAUNCHER_URL }}
+        run: node .github/coderabbit-notify/notify.mjs decide
+
+      - name: Check whether this review was already notified
+        if: steps.decide.outputs.notify == 'true'
+        id: dedup
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ runner.temp }}/coderabbit-notify-sent
+          key: coderabbit-notify-${{ steps.decide.outputs.publication_id }}
+          lookup-only: true
+
+      - name: Send the Slack direct message
+        if: steps.decide.outputs.notify == 'true' && steps.dedup.outputs.cache-hit != 'true'
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.CODERABBIT_SLACK_BOT_TOKEN }}
+          PUBLICATION_ID: ${{ steps.decide.outputs.publication_id }}
+        run: |
+          node .github/coderabbit-notify/notify.mjs send
+          echo "$PUBLICATION_ID" > "$RUNNER_TEMP/coderabbit-notify-sent"
+
+      - name: Record the review as notified
+        if: steps.decide.outputs.notify == 'true' && steps.dedup.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ runner.temp }}/coderabbit-notify-sent
+          key: coderabbit-notify-${{ steps.decide.outputs.publication_id }}

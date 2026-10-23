@@ -1,0 +1,21 @@
+{
+  "base": {
+    "ref": "master"
+  },
+  "draft": false,
+  "head": {
+    "ref": "feat/ui-issues-page-tabs",
+    "repo": {
+      "fork": false,
+      "full_name": "prowler-cloud/prowler"
+    },
+    "sha": "dd8a1ed797282d52faae053e3cbbd44c9b593451"
+  },
+  "html_url": "https://github.com/prowler-cloud/prowler/pull/13093",
+  "number": 13093,
+  "state": "closed",
+  "title": "feat(ui): redesign the Exploitability card and the issues verdict filter",
+  "user": {
+    "login": "alejandrobailo"
+  }
+}
