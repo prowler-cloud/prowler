@@ -242,6 +242,14 @@ class S3(AWSService):
                 )
 
     def _get_bucket_acl(self, bucket):
+        """Load the bucket owner and ACL grantees into the bucket.
+
+        Sets bucket.acl_retrieved to False when the ACL cannot be read for a
+        reason other than the bucket no longer existing (e.g. AccessDenied).
+
+        Args:
+            bucket: The Bucket to populate.
+        """
         logger.info("S3 - Get buckets acl...")
         try:
             regional_client = self.regional_clients[bucket.region]
@@ -266,10 +274,12 @@ class S3(AWSService):
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
             else:
+                bucket.acl_retrieved = False
                 logger.error(
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         except Exception as error:
+            bucket.acl_retrieved = False
             if regional_client:
                 logger.error(
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -786,9 +796,11 @@ class Bucket(BaseModel):
     tags: List[Dict[str, str]] = Field(default_factory=list)
     lifecycle: List[LifeCycleRule] = Field(default_factory=list)
     replication_rules: List[ReplicationRule] = Field(default_factory=list)
-    # False when GetBucketVersioning / GetBucketReplication failed for a reason
-    # other than the bucket or configuration not existing (e.g. AccessDenied).
+    # False when GetBucketVersioning / GetBucketReplication / GetBucketAcl failed
+    # for a reason other than the bucket or configuration not existing (e.g.
+    # AccessDenied).
     versioning_retrieved: bool = True
     replication_retrieved: bool = True
+    acl_retrieved: bool = True
     notification_config: Dict = Field(default_factory=dict)
     object_sampling: Optional[BucketObjectSampling] = None
