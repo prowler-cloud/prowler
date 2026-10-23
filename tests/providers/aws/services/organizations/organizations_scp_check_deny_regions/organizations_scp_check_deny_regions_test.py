@@ -4,6 +4,7 @@ from boto3 import client
 from moto import mock_aws
 
 from prowler.providers.aws.services.organizations.organizations_service import (
+    Organization,
     Organizations,
 )
 from tests.providers.aws.utils import (
@@ -488,5 +489,46 @@ class Test_organizations_scp_check_deny_regions:
                 assert (
                     result[0].status_extended
                     == f"AWS Organization {org_id} has SCP policy {policy_id} restricting all configured regions found."
+                )
+                assert result[0].region == AWS_REGION_EU_WEST_1
+
+    def test_organization_policies_unavailable(self):
+        organizations_client = mock.MagicMock
+        organizations_client.region = AWS_REGION_EU_WEST_1
+        organizations_client.policies_unavailable = True
+        organizations_client.audit_config = {
+            "organizations_enabled_regions": [AWS_REGION_EU_WEST_1]
+        }
+        organizations_client.organization = Organization(
+            id="o-1234567890",
+            arn="arn:aws:organizations::1234567890:organization/o-1234567890",
+            status="ACTIVE",
+            master_id="1234567890",
+            policies=None,
+            delegated_administrators=None,
+        )
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ):
+            with mock.patch(
+                "prowler.providers.aws.services.organizations.organizations_scp_check_deny_regions.organizations_scp_check_deny_regions.organizations_client",
+                new=organizations_client,
+            ):
+                from prowler.providers.aws.services.organizations.organizations_scp_check_deny_regions.organizations_scp_check_deny_regions import (
+                    organizations_scp_check_deny_regions,
+                )
+
+                check = organizations_scp_check_deny_regions()
+                result = check.execute()
+
+                assert len(result) == 1
+                assert result[0].status == "MANUAL"
+                assert (
+                    "Cannot evaluate SCP region restrictions"
+                    in result[0].status_extended
                 )
                 assert result[0].region == AWS_REGION_EU_WEST_1
