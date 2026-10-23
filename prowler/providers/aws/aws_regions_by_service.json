@@ -1517,8 +1517,10 @@
           "ap-southeast-1",
           "ap-southeast-2",
           "eu-central-1",
+          "eu-north-1",
           "eu-west-1",
           "eu-west-2",
+          "eu-west-3",
           "sa-east-1",
           "us-east-1",
           "us-west-2"
@@ -1924,7 +1926,10 @@
           "us-west-1",
           "us-west-2"
         ],
-        "aws-cn": [],
+        "aws-cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
         "aws-eusc": [],
         "aws-iso": [],
         "aws-iso-b": [],
@@ -1938,6 +1943,7 @@
         "aws": [
           "ap-northeast-1",
           "ap-south-1",
+          "ap-southeast-1",
           "ap-southeast-2",
           "ca-central-1",
           "eu-central-1",
@@ -3107,7 +3113,8 @@
         "aws-iso-e": [],
         "aws-iso-f": [],
         "aws-us-gov": [
-          "us-gov-east-1"
+          "us-gov-east-1",
+          "us-gov-west-1"
         ]
       }
     },
@@ -3303,7 +3310,8 @@
         "aws-iso-e": [],
         "aws-iso-f": [],
         "aws-us-gov": [
-          "us-gov-east-1"
+          "us-gov-east-1",
+          "us-gov-west-1"
         ]
       }
     },
@@ -4262,7 +4270,10 @@
         "aws-iso-b": [],
         "aws-iso-e": [],
         "aws-iso-f": [],
-        "aws-us-gov": []
+        "aws-us-gov": [
+          "us-gov-east-1",
+          "us-gov-west-1"
+        ]
       }
     },
     "deadline-cloud": {
@@ -5972,6 +5983,18 @@
         ]
       }
     },
+    "eventbridgev2": {
+      "regions": {
+        "aws": [],
+        "aws-cn": [],
+        "aws-eusc": [],
+        "aws-iso": [],
+        "aws-iso-b": [],
+        "aws-iso-e": [],
+        "aws-iso-f": [],
+        "aws-us-gov": []
+      }
+    },
     "events": {
       "regions": {
         "aws": [
@@ -6745,18 +6768,23 @@
           "ap-northeast-2",
           "ap-northeast-3",
           "ap-south-1",
+          "ap-south-2",
           "ap-southeast-1",
           "ap-southeast-2",
+          "ap-southeast-3",
           "ap-southeast-5",
           "ap-southeast-7",
           "ca-central-1",
           "eu-central-1",
           "eu-north-1",
           "eu-south-1",
+          "eu-south-2",
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
+          "il-central-1",
           "me-south-1",
+          "mx-central-1",
           "sa-east-1",
           "us-east-1",
           "us-east-2",
@@ -10175,6 +10203,20 @@
         ]
       }
     },
+    "network-security-manager": {
+      "regions": {
+        "aws": [
+          "us-east-1"
+        ],
+        "aws-cn": [],
+        "aws-eusc": [],
+        "aws-iso": [],
+        "aws-iso-b": [],
+        "aws-iso-e": [],
+        "aws-iso-f": [],
+        "aws-us-gov": []
+      }
+    },
     "networkflowmonitor": {
       "regions": {
         "aws": [
@@ -11019,6 +11061,7 @@
           "ap-southeast-2",
           "ap-southeast-3",
           "ap-southeast-4",
+          "ap-southeast-5",
           "ap-southeast-6",
           "eu-central-1",
           "eu-north-1",
@@ -13473,6 +13516,10 @@
     "securityagent": {
       "regions": {
         "aws": [
+          "ap-northeast-2",
+          "ca-central-1",
+          "eu-north-1",
+          "eu-west-2",
           "us-east-1",
           "us-west-2"
         ],
@@ -16045,6 +16092,22 @@
           "us-gov-east-1",
           "us-gov-west-1"
         ]
+      }
+    },
+    "wellarchitectedagent": {
+      "regions": {
+        "aws": [
+          "us-east-1",
+          "us-east-2",
+          "us-west-2"
+        ],
+        "aws-cn": [],
+        "aws-eusc": [],
+        "aws-iso": [],
+        "aws-iso-b": [],
+        "aws-iso-e": [],
+        "aws-iso-f": [],
+        "aws-us-gov": []
       }
     },
     "wellarchitectedtool": {
