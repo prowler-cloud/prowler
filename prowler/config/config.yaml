@@ -687,6 +687,12 @@ m365:
   # Entra
   # m365.entra_admin_users_sign_in_frequency_enabled
   sign_in_frequency: 4 # 4 hours
+  # m365.entra_app_registration_certificate_lifetime_restricted
+  # Maximum validity period, in days, of a certificate credential on an app registration
+  app_registration_certificate_max_validity_days: 365
+  # m365.entra_app_registration_certificate_not_expired
+  # Days before expiry at which an app registration certificate is reported as about to expire
+  app_registration_certificate_expiration_threshold_days: 30
   # Teams
   # m365.teams_external_file_sharing_restricted
   allowed_cloud_storage_services:
