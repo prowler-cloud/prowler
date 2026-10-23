@@ -21,7 +21,8 @@ Nothing here calls a model. The agent runs on the author's machine and account a
 ## Setup
 
 1. **Slack app.** Create a bot with the `chat:write` and `im:write` scopes, install it in the
-   workspace and store its token as the repository secret `CODERABBIT_SLACK_BOT_TOKEN`.
+   workspace and store its token as the repository secret `CODERABBIT_SLACK_BOT_TOKEN`. Until it
+   exists, the workflow decides as usual but logs a warning instead of sending.
 2. **Launcher.** Host `launcher/index.html` on any HTTPS origin (GitHub Pages or an internal host)
    and store its URL as the repository variable `CODERABBIT_LAUNCHER_URL`. Without it, the message
    still goes out with the command to run and only the pull request button.

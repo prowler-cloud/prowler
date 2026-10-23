@@ -46,7 +46,12 @@ async function runDecide() {
 }
 
 async function runSend() {
-  const token = requireEnv("SLACK_BOT_TOKEN");
+  const token = process.env.SLACK_BOT_TOKEN;
+  if (!token) {
+    // Setup gap, not a code failure: warn in the run annotations and leave the check green.
+    console.log("::warning::CODERABBIT_SLACK_BOT_TOKEN is not configured, skipping Slack delivery");
+    return;
+  }
   const { slackUserId, message } = JSON.parse(readFileSync(messagePath, "utf8"));
 
   const opened = await slack(token, "conversations.open", { users: slackUserId });
