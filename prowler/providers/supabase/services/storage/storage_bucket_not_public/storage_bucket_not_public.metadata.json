@@ -1,0 +1,37 @@
+{
+  "Provider": "supabase",
+  "CheckID": "storage_bucket_not_public",
+  "CheckTitle": "Supabase Storage bucket is private",
+  "CheckType": [],
+  "ServiceName": "storage",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "storage",
+  "Description": "**Supabase Storage buckets** are assessed for the **public** flag. Objects in a public bucket are served to anyone who knows or guesses the path, without a JWT and without evaluating `storage.objects` policies.",
+  "Risk": "A public bucket makes every upload, including user documents, exports and backups placed there by mistake, **downloadable from the internet** by URL; paths are often predictable or leak through logs and referrers.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://supabase.com/docs/guides/storage/security/access-control",
+    "https://supabase.com/docs/guides/storage/buckets/fundamentals#public-buckets"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Open the Supabase Dashboard and select the project\n2. Go to Storage and open the bucket settings\n3. Turn off Public bucket\n4. Serve files through signed URLs or policies on storage.objects",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Keep buckets private and use signed URLs or RLS policies on `storage.objects`; reserve public buckets for genuinely public assets with no sensitive content.",
+      "Url": "https://hub.prowler.com/check/storage_bucket_not_public"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Public buckets are legitimate for static assets; review the contents before muting the finding."
+}

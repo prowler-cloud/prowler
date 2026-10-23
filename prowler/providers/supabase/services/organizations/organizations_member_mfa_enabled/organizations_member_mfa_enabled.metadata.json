@@ -1,0 +1,37 @@
+{
+  "Provider": "supabase",
+  "CheckID": "organizations_member_mfa_enabled",
+  "CheckTitle": "Supabase organization members have multi-factor authentication enabled",
+  "CheckType": [],
+  "ServiceName": "organizations",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "This check verifies whether each Supabase organization member has multi-factor authentication enabled for their Supabase account.",
+  "Risk": "Without multi-factor authentication, compromised credentials can allow unauthorized access to Supabase organizations, projects, and management operations available to the member.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://supabase.com/docs/reference/api/v1-list-organization-members",
+    "https://supabase.com/docs/guides/platform/multi-factor-authentication"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "Ask the organization member to open Supabase Dashboard > Account Settings > Security and enroll a TOTP factor. Organization owners on eligible plans can also enforce MFA for all members.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Require every organization member to enroll multi-factor authentication and periodically review membership for accounts that do not meet this requirement.",
+      "Url": "https://hub.prowler.com/check/organizations_member_mfa_enabled"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

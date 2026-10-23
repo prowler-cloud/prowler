@@ -60,6 +60,7 @@ jobs:
             cli.codecov.io:443
             auth.docker.io:443
             api.vercel.com:443
+            api.supabase.com:443
             api.atlassian.com:443
             aka.ms:443
 
@@ -543,6 +544,30 @@ jobs:
         with:
           flags: prowler-py${{ matrix.python-version }}-vercel
           files: ./vercel_coverage.xml
+
+      # Supabase Provider
+      - name: Check if Supabase files changed
+        if: steps.check-changes.outputs.any_changed == 'true'
+        id: changed-supabase
+        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
+        with:
+          files: |
+            ./prowler/**/supabase/**
+            ./tests/**/supabase/**
+            ./uv.lock
+
+      - name: Run Supabase tests
+        if: steps.changed-supabase.outputs.any_changed == 'true'
+        run: uv run pytest -n auto --cov=./prowler/providers/supabase --cov-report=xml:supabase_coverage.xml tests/providers/supabase
+
+      - name: Upload Supabase coverage to Codecov
+        if: steps.changed-supabase.outputs.any_changed == 'true'
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        with:
+          flags: prowler-py${{ matrix.python-version }}-supabase
+          files: ./supabase_coverage.xml
 
       # Scaleway Provider
       - name: Check if Scaleway files changed

@@ -1,0 +1,35 @@
+---
+title: "Supabase Authentication in Prowler"
+---
+
+Prowler authenticates to the Supabase Management API with a Personal Access Token (PAT) read from the `SUPABASE_ACCESS_TOKEN` environment variable. The token is never accepted on the command line, so it does not end up in shell history or process listings.
+
+## Create a Personal Access Token
+
+1. Open the [Supabase Dashboard](https://supabase.com/dashboard/account/tokens) and go to **Account** > **Access Tokens**.
+2. Click **Generate new token**, give it a name such as `prowler-read-only`, and copy the value once.
+3. Export it before running Prowler:
+
+```bash
+export SUPABASE_ACCESS_TOKEN="sbp_..."
+prowler supabase
+```
+
+## Required Access
+
+Personal Access Tokens inherit the permissions of the account that created them. The account must be a member of every organization you want to audit; Prowler reads organizations, members, projects and project configuration and never writes.
+
+<Tip>
+Create the token from a dedicated organization member with the **Read-only** role where your plan supports it, enable MFA on that account, and rotate the token periodically. Prowler does not use the project `anon` or `service_role` keys.
+</Tip>
+
+## Troubleshooting
+
+| Error | Cause |
+|---|---|
+| `SupabaseCredentialsError` | `SUPABASE_ACCESS_TOKEN` is not set |
+| `SupabaseAuthenticationError` | The token is invalid, expired or revoked |
+| `SupabaseInsufficientPermissionsError` | The account cannot read the requested organization or project |
+| `SupabaseRateLimitError` | The Management API rate limit stayed active after the configured retries |
+
+Prowler honours `X-RateLimit-Reset` and `Retry-After` headers and retries requests up to `max_retries` times (configurable in the audit configuration).

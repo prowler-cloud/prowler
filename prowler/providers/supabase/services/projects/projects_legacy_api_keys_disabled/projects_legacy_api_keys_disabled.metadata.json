@@ -1,0 +1,37 @@
+{
+  "Provider": "supabase",
+  "CheckID": "projects_legacy_api_keys_disabled",
+  "CheckTitle": "Supabase project has legacy anon and service_role API keys disabled",
+  "CheckType": [],
+  "ServiceName": "projects",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "**Supabase projects** are assessed for **legacy JWT API keys** (`anon`, `service_role`). The newer publishable and secret keys can be rotated and revoked individually, while the legacy keys are long-lived tokens derived from the project JWT secret.",
+  "Risk": "Legacy keys cannot be revoked without rotating the whole JWT secret, so a leaked `service_role` key stays valid and **bypasses row level security** for every table until a disruptive full rotation is performed.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://supabase.com/docs/guides/api/api-keys"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Open the Supabase Dashboard and select the project\n2. Go to Project Settings > API Keys\n3. Create publishable and secret keys and migrate clients and servers to them\n4. Disable the legacy anon and service_role keys",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Migrate to publishable and secret API keys, then disable the legacy keys so a leak can be contained by revoking one key.",
+      "Url": "https://hub.prowler.com/check/projects_legacy_api_keys_disabled"
+    }
+  },
+  "Categories": [
+    "identity-access",
+    "secrets"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

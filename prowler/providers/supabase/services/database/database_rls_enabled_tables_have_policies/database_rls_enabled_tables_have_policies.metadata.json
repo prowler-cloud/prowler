@@ -1,0 +1,36 @@
+{
+  "Provider": "supabase",
+  "CheckID": "database_rls_enabled_tables_have_policies",
+  "CheckTitle": "Supabase tables with Row Level Security enabled define at least one policy",
+  "CheckType": [],
+  "ServiceName": "database",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "database",
+  "Description": "**Supabase tables** with **Row Level Security enabled but no policies** are reported. Such tables deny every request through the Data API, which usually means the table was secured by default and then forgotten, or that the service role is being used from clients to work around it.",
+  "Risk": "Tables that deny everything push developers to query them with the **service role key**, which bypasses RLS entirely; a key used that way tends to leak into client code or logs and exposes the whole database.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Open the Supabase Dashboard and select the project\n2. Go to Authentication > Policies\n3. For tables with RLS enabled and no policies, add explicit policies or move the table to a private schema",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Give every RLS-enabled table deliberate policies and never use the service role key from clients to bypass them.",
+      "Url": "https://hub.prowler.com/check/database_rls_enabled_tables_have_policies"
+    }
+  },
+  "Categories": [
+    "trust-boundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Results come from the Supabase security advisor exposed by the Management API; projects where the advisor could not run are not reported."
+}

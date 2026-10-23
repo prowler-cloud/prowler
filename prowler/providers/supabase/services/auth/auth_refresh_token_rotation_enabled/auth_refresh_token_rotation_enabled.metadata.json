@@ -1,0 +1,36 @@
+{
+  "Provider": "supabase",
+  "CheckID": "auth_refresh_token_rotation_enabled",
+  "CheckTitle": "Supabase Auth rotates refresh tokens on every use",
+  "CheckType": [],
+  "ServiceName": "auth",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "**Supabase Auth** is assessed for **refresh token rotation**. With rotation, each refresh issues a new token and invalidates the old one, so replaying a captured token is detected.",
+  "Risk": "Without rotation, a refresh token stolen from local storage, logs or a device backup **keeps minting access tokens** until the user signs out everywhere, enabling persistent silent account access.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://supabase.com/docs/guides/auth/sessions#refresh-token-rotation"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Open the Supabase Dashboard and select the project\n2. Go to Authentication > Sessions (or Settings)\n3. Enable Refresh token rotation and keep the reuse interval short",
+      "Terraform": "```hcl\nresource \"supabase_settings\" \"<example_resource_name>\" {\n  project_ref = \"<PROJECT_REF>\"\n\n  auth = jsonencode({\n    refresh_token_rotation_enabled = true\n  })\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Enable refresh token rotation and a short reuse interval; pair it with session timeboxing for sensitive apps.",
+      "Url": "https://hub.prowler.com/check/auth_refresh_token_rotation_enabled"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
