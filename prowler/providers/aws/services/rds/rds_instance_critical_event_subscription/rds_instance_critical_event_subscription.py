@@ -63,16 +63,23 @@ class rds_instance_critical_event_subscription(Check):
                             report.status_extended = "RDS instance event categories of maintenance, configuration change, and failure are not subscribed."
                         findings.append(report)
                 else:
-                    findings.append(self._account_fail_report(region, subscriptions[0]))
+                    findings.append(self._account_fail_report(region))
 
         return findings
 
-    def _account_fail_report(self, region, db_event):
-        report = Check_Report_AWS(metadata=self.metadata(), resource=db_event)
+    def _account_fail_report(self, region, db_event=None):
+        # Without a matching subscription this finding is account-level:
+        # build it from an empty resource so an unrelated subscription's
+        # payload and tags cannot leak into it (a tag-based mutelist entry
+        # on that subscription could otherwise mute this finding).
+        report = Check_Report_AWS(
+            metadata=self.metadata(),
+            resource=db_event if db_event is not None else {},
+        )
         report.status = "FAIL"
         report.status_extended = "RDS instance event categories of maintenance, configuration change, and failure are not subscribed."
         report.resource_id = rds_client.audited_account
         report.resource_arn = rds_client._get_rds_arn_template(region)
         report.region = region
-        report.resource_tags = db_event.tags
+        report.resource_tags = db_event.tags if db_event is not None else []
         return report

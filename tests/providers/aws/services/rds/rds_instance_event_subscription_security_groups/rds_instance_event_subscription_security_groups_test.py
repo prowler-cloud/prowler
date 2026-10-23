@@ -601,3 +601,6 @@ class Test_rds_instance_no_event_subscriptions:
                 assert result[0].region == AWS_REGION_US_EAST_1
                 assert result[0].resource_id == AWS_ACCOUNT_NUMBER
                 assert result[0].resource_arn == RDS_ACCOUNT_ARN
+                # Account-level finding: no unrelated subscription data or tags
+                assert result[0].resource == {}
+                assert result[0].resource_tags == []
