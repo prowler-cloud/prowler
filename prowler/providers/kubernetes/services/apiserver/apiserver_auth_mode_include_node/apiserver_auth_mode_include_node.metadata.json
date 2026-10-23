@@ -9,7 +9,7 @@
   "Severity": "high",
   "ResourceType": "Pod",
   "ResourceGroup": "container",
-  "Description": "**Kubernetes API server** authorization settings include the **Node authorizer** in `--authorization-mode`. The evaluation looks for `Node` among the configured modes.",
+  "Description": "**Kubernetes API server** authorization settings include the **Node authorizer** in `--authorization-mode`. The evaluation looks for `Node` among the configured modes. When `--authorization-config` is used instead (the two flags are mutually exclusive), the check only reports that the flag is configured; the referenced file is not inspected, so its authorizers are not verified.",
   "Risk": "Without **Node authorization**, kubelet identities may gain overly broad permissions via other modes. A compromised node could read unrelated **Secrets**, enumerate cluster workloads, or alter node/pod status, degrading **confidentiality** and **integrity** and enabling lateral movement.",
   "RelatedUrl": "",
   "AdditionalURLs": [
