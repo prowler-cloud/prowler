@@ -42,7 +42,13 @@ Always fetch first so the exact reviewed head is available locally:
 git fetch origin <headRefName>
 ```
 
-If the current checkout is already on `headRefName` and `git status --porcelain` is empty: when `git rev-parse HEAD` equals `headRefOid`, stay there; when it is behind, run `git pull --ff-only`; when it has diverged, stop and tell the author.
+If the current checkout is already on `headRefName` and `git status --porcelain` is empty: when `git rev-parse HEAD` equals `headRefOid`, stay there; when it is behind, fast-forward to the validated head rather than to whatever upstream the branch tracks:
+
+```bash
+git merge --ff-only <headRefOid>
+```
+
+Then confirm `git rev-parse HEAD` equals `headRefOid`. If the merge refuses (the branch has diverged) or the sha still differs, stop and tell the author.
 
 Otherwise create a worktree pinned to the exact PR head, never a local branch that may be stale:
 
