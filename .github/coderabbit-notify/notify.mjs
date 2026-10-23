@@ -18,7 +18,8 @@ async function runDecide() {
   const review = event.review;
   const pullRequest = event.pull_request;
   const repo = event.repository.full_name;
-  const slackUsers = JSON.parse(readFileSync(join(here, "slack-users.json"), "utf8"));
+  // The GitHub login -> Slack id map is a repository secret, never a committed file: Slack ids are personal identifiers.
+  const slackUsers = parseSlackUsers(process.env.SLACK_USERS);
 
   // The event payload is a snapshot; the PR may have moved or closed since. Decide on the live state.
   const live = await fetchPullRequest(repo, pullRequest.number);
@@ -62,6 +63,20 @@ async function runSend() {
   const posted = await slack(token, "chat.postMessage", { channel, ...message });
   console.log(`sent Slack message ${posted.ts} to ${slackUserId}`);
   setOutput("sent", "true");
+}
+
+function parseSlackUsers(raw) {
+  if (!raw) {
+    console.log("::warning::CODERABBIT_SLACK_USERS is not configured, no author can be notified");
+    return {};
+  }
+  try {
+    const map = JSON.parse(raw);
+    if (!map || typeof map !== "object" || Array.isArray(map)) fail("CODERABBIT_SLACK_USERS must be a JSON object");
+    return map;
+  } catch (error) {
+    fail(`CODERABBIT_SLACK_USERS is not valid JSON: ${error.message}`);
+  }
 }
 
 async function fetchPullRequest(repo, number) {

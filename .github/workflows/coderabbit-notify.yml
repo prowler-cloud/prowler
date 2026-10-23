@@ -74,6 +74,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           LAUNCHER_URL: ${{ vars.CODERABBIT_LAUNCHER_URL }}
+          SLACK_USERS: ${{ secrets.CODERABBIT_SLACK_USERS }}
         run: node .github/coderabbit-notify/notify.mjs decide
 
       - name: Check whether this review was already notified
