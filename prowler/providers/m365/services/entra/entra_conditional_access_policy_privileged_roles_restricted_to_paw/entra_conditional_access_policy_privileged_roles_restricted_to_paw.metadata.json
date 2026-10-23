@@ -1,0 +1,42 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_conditional_access_policy_privileged_roles_restricted_to_paw",
+  "CheckTitle": "Conditional Access policy restricts privileged roles to Privileged Access Workstations (PAWs)",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "An enabled Conditional Access policy should target **privileged directory roles**, apply to **all cloud apps**, and **block access** from devices not matching a device filter that identifies **Privileged Access Workstations (PAWs)**.\n\nThis limits privileged sessions to hardened, dedicated devices and reduces the blast radius of a compromised endpoint.",
+  "Risk": "Privileged users signing in from everyday workstations are exposed to **phishing**, **malware**, and **token theft**. Without restricting privileged sessions to dedicated PAWs, an attacker who compromises an ordinary endpoint can hijack admin credentials and escalate to **tenant-wide control**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/entra/identity/conditional-access/concept-condition-filters-for-devices",
+    "https://learn.microsoft.com/security/privileged-access-workstations/privileged-access-devices",
+    "https://learn.microsoft.com/entra/identity/role-based-access-control/permissions-reference",
+    "https://learn.microsoft.com/graph/api/resources/conditionalaccesspolicy"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to the Microsoft Entra admin center at https://entra.microsoft.com/\n2. Go to **Protection** > **Conditional Access** > **Policies** > **New policy**\n3. Under **Users**, select **Include** > **Select users and groups** > **Directory roles** and add each privileged role\n4. Under **Target resources**, select **All cloud apps**\n5. Under **Conditions** > **Filter for devices**, set mode to **Exclude** and add a rule matching PAWs (e.g., `device.extensionAttribute1 -eq \"PAW\"`)\n6. Under **Grant**, select **Block access**\n7. Exclude documented break-glass accounts under **Users** > **Exclude**\n8. Test the policy in **Report-only** mode, then set to **On** and click **Save**",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Create a Conditional Access policy that **blocks** privileged role sign-ins from any device not identified as a **Privileged Access Workstation**. Use a device filter with an extension attribute or compliance tag to identify PAWs. Exclude only documented **break-glass accounts** and test in report-only mode before enforcing.",
+      "Url": "https://hub.prowler.com/check/entra_conditional_access_policy_privileged_roles_restricted_to_paw"
+    }
+  },
+  "Categories": [
+    "identity-access",
+    "e3"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "entra_admin_users_sign_in_frequency_enabled"
+  ],
+  "Notes": "This check verifies that a device filter is present and configured, but cannot determine whether the filter rule accurately identifies PAWs. Manual review of the device filter rule is recommended."
+}
