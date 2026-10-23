@@ -71,7 +71,7 @@ class Test_kms_cmk_are_used:
             assert result[0].resource_arn == key["Arn"]
 
     @pytest.mark.parametrize(
-        "no_of_keys_created,expected_no_of_results",
+        "no_of_keys_created,expected_no_of_passes",
         [
             (5, 3),
             (7, 5),
@@ -80,7 +80,7 @@ class Test_kms_cmk_are_used:
     )
     @mock_aws
     def test_kms_cmk_are_used_when_describe_key_fails_on_2_keys_out_of_x_keys(
-        self, no_of_keys_created: int, expected_no_of_results: int
+        self, no_of_keys_created: int, expected_no_of_passes: int
     ) -> None:
         # Generate KMS Client
         kms_client = client("kms", region_name=AWS_REGION_US_EAST_1)
@@ -131,7 +131,10 @@ class Test_kms_cmk_are_used:
             check = kms_cmk_are_used()
             result = check.execute()
 
-            assert len(result) == expected_no_of_results
+            assert len(result) == no_of_keys_created
+            statuses = [report.status for report in result]
+            assert statuses.count("PASS") == expected_no_of_passes
+            assert statuses.count("MANUAL") == 2
 
     @mock_aws
     def test_kms_key_with_deletion(self):
