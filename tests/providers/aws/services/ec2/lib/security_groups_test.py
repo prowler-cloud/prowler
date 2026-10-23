@@ -3,6 +3,7 @@ import pytest
 from prowler.providers.aws.services.ec2.lib.security_groups import (
     _is_cidr_public,
     check_security_group,
+    get_any_address_ip_permission,
 )
 
 TRANSPORT_PROTOCOL_TCP = "tcp"
@@ -411,3 +412,45 @@ class Test_check_security_group:
             port, port, TRANSPORT_PROTOCOL_ALL, [], [IP_V6_ALL_CIDRS]
         )
         assert check_security_group(ingress_rule, TRANSPORT_PROTOCOL_ALL, None, True)
+
+
+class Test_get_any_address_ip_permission:
+    def test_only_any_address_ranges_are_kept(self):
+        ingress_rule = {
+            "IpProtocol": TRANSPORT_PROTOCOL_TCP,
+            "FromPort": 22,
+            "ToPort": 22,
+            "IpRanges": [
+                {"CidrIp": IP_V4_ALL_CIDRS},
+                {"CidrIp": IP_V4_PRIVATE_CIDR, "Description": "internal"},
+            ],
+            "Ipv6Ranges": [
+                {"CidrIpv6": IP_V6_ALL_CIDRS},
+                {"CidrIpv6": IP_V6_PRIVATE_CIDR},
+            ],
+            "PrefixListIds": [{"PrefixListId": "pl-12345678"}],
+            "UserIdGroupPairs": [{"GroupId": "sg-12345678", "UserId": "123456789012"}],
+        }
+
+        assert get_any_address_ip_permission(ingress_rule) == {
+            "IpProtocol": TRANSPORT_PROTOCOL_TCP,
+            "FromPort": 22,
+            "ToPort": 22,
+            "IpRanges": [{"CidrIp": IP_V4_ALL_CIDRS}],
+            "Ipv6Ranges": [{"CidrIpv6": IP_V6_ALL_CIDRS}],
+        }
+
+    def test_all_traffic_rule_without_ports(self):
+        ingress_rule = {
+            "IpProtocol": TRANSPORT_PROTOCOL_ALL,
+            "IpRanges": [{"CidrIp": IP_V4_ALL_CIDRS}, {"CidrIp": IP_V4_PUBLIC_CIDR}],
+            "Ipv6Ranges": [],
+            "PrefixListIds": [],
+            "UserIdGroupPairs": [],
+        }
+
+        assert get_any_address_ip_permission(ingress_rule) == {
+            "IpProtocol": TRANSPORT_PROTOCOL_ALL,
+            "IpRanges": [{"CidrIp": IP_V4_ALL_CIDRS}],
+            "Ipv6Ranges": [],
+        }
