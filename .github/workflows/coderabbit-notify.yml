@@ -86,16 +86,21 @@ jobs:
           lookup-only: true
 
       - name: Send the Slack direct message
+        id: send
         if: steps.decide.outputs.notify == 'true' && steps.dedup.outputs.cache-hit != 'true'
         env:
           SLACK_BOT_TOKEN: ${{ secrets.CODERABBIT_SLACK_BOT_TOKEN }}
-          PUBLICATION_ID: ${{ steps.decide.outputs.publication_id }}
-        run: |
-          node .github/coderabbit-notify/notify.mjs send
-          echo "$PUBLICATION_ID" > "$RUNNER_TEMP/coderabbit-notify-sent"
+        run: node .github/coderabbit-notify/notify.mjs send
 
+      # Only a delivered message is recorded, so a redelivery after the token is configured still sends.
       - name: Record the review as notified
-        if: steps.decide.outputs.notify == 'true' && steps.dedup.outputs.cache-hit != 'true'
+        if: steps.send.outputs.sent == 'true'
+        env:
+          PUBLICATION_ID: ${{ steps.decide.outputs.publication_id }}
+        run: echo "$PUBLICATION_ID" > "$RUNNER_TEMP/coderabbit-notify-sent"
+
+      - name: Save the notified marker
+        if: steps.send.outputs.sent == 'true'
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ${{ runner.temp }}/coderabbit-notify-sent

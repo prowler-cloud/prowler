@@ -50,6 +50,7 @@ async function runSend() {
   if (!token) {
     // Setup gap, not a code failure: warn in the run annotations and leave the check green.
     console.log("::warning::CODERABBIT_SLACK_BOT_TOKEN is not configured, skipping Slack delivery");
+    setOutput("sent", "false");
     return;
   }
   const { slackUserId, message } = JSON.parse(readFileSync(messagePath, "utf8"));
@@ -60,6 +61,7 @@ async function runSend() {
 
   const posted = await slack(token, "chat.postMessage", { channel, ...message });
   console.log(`sent Slack message ${posted.ts} to ${slackUserId}`);
+  setOutput("sent", "true");
 }
 
 async function fetchPullRequest(repo, number) {
