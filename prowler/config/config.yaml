@@ -687,6 +687,8 @@ m365:
   # Entra
   # m365.entra_admin_users_sign_in_frequency_enabled
   sign_in_frequency: 4 # 4 hours
+  # m365.entra_privileged_role_users_not_stale
+  stale_privileged_account_days: 90 # days without a successful sign-in
   # Teams
   # m365.teams_external_file_sharing_restricted
   allowed_cloud_storage_services:

@@ -1,0 +1,40 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_privileged_role_users_not_stale",
+  "CheckTitle": "Regular sign-in activity ensures Tier 0 Entra privileged accounts remain active",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "Users holding **Tier 0 Microsoft Entra roles** (Global Administrator, Privileged Role Administrator, etc.) are evaluated for recent sign-in activity. Accounts that have not signed in within a configurable threshold (default 90 days) or that are disabled while still holding a privileged role are flagged.",
+  "Risk": "Dormant privileged accounts are **high-value targets** for password spraying, credential stuffing, and token replay. Their credentials often do not rotate and anomalous usage is less likely to be noticed. A compromised stale account with a Tier 0 role can lead to **full tenant takeover**, breaking **confidentiality** and **integrity**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/entra/id-governance/privileged-identity-management/pim-how-to-configure-security-alerts",
+    "https://learn.microsoft.com/en-us/entra/identity/monitoring-health/howto-manage-inactive-user-accounts",
+    "https://maester.dev/docs/tests/MT.1029"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to Microsoft Entra admin center > Identity > Users.\n2. Select the stale privileged user.\n3. Review sign-in activity under Monitoring & health > Sign-in logs.\n4. If the access is no longer needed, go to Assigned roles and remove the Tier 0 role(s).\n5. If the account itself is unused, disable or delete it.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Review inactive privileged accounts regularly and remove unnecessary Tier 0 role assignments. Use **PIM** for just-in-time elevation with time-limited activations and configure **recurring access reviews** on privileged roles to enforce **least privilege** and detect abandoned accounts proactively.",
+      "Url": "https://hub.prowler.com/check/entra_privileged_role_users_not_stale"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "entra_access_review_privileged_roles_configured"
+  ],
+  "Notes": "Requires Microsoft Entra ID P1 or P2 for signInActivity. PIM-eligible assignments require RoleEligibilitySchedule.Read.Directory or RoleManagement.Read.Directory. Port of Maester test MT.1029."
+}
