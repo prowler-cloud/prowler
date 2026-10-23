@@ -1,0 +1,44 @@
+{
+  "Provider": "aws",
+  "CheckID": "elasticbeanstalk_environment_php_platform_updated",
+  "CheckTitle": "Elastic Beanstalk PHP environment runs a platform version with the fixed PHP release",
+  "CheckType": [
+    "Software and Configuration Checks/Patch Management",
+    "Software and Configuration Checks/Vulnerabilities/CVE"
+  ],
+  "ServiceName": "elasticbeanstalk",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "critical",
+  "ResourceType": "AwsElasticBeanstalkEnvironment",
+  "ResourceGroup": "compute",
+  "Description": "**Elastic Beanstalk PHP environments** are evaluated to confirm they run a supported PHP branch (`elasticbeanstalk_php_min_branch`, `8.2` by default) on an **Amazon Linux 2023 platform version** that bundles the fixed PHP release (`elasticbeanstalk_php_min_platform_version`, `4.13.13` by default). The platform family, version and PHP branch are read from the environment's solution stack name.",
+  "Risk": "PHP platform versions published before the fixed release bundle a PHP runtime vulnerable to **unauthenticated remote code execution** through crafted web requests, giving attackers code execution with the web worker's privileges, access to application data and the ability to crash the environment. Branches that reached end of life never receive the fix.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/elasticbeanstalk/latest/relnotes/release-2026-10-21-al2023-php84-php85.html",
+    "https://docs.aws.amazon.com/elasticbeanstalk/latest/relnotes/release-2026-10-22-al2023-php82-php83.html",
+    "https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/using-features.platform.upgrade.html",
+    "https://www.php.net/supported-versions.php"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aws elasticbeanstalk update-environment --environment-name <environment-name> --solution-stack-name \"64bit Amazon Linux 2023 v4.13.13 running PHP 8.4\"",
+      "NativeIaC": "```yaml\nResources:\n  <example_resource_name>:\n    Type: AWS::ElasticBeanstalk::Environment\n    Properties:\n      ApplicationName: <example_resource_name>\n      SolutionStackName: \"64bit Amazon Linux 2023 v4.13.13 running PHP 8.4\" # Critical: platform version with the fixed PHP release\n```",
+      "Other": "1. Open the AWS Management Console and go to Elastic Beanstalk\n2. Select the environment and open its dashboard\n3. Under Platform, choose Change version\n4. Select platform version 4.13.13 or newer for a supported PHP branch (8.2 or newer)\n5. Click Save and wait for the environment update to finish",
+      "Terraform": "```hcl\nresource \"aws_elastic_beanstalk_environment\" \"<example_resource_name>\" {\n  name                = \"<example_resource_name>\"\n  application         = \"<example_resource_name>\"\n  solution_stack_name = \"64bit Amazon Linux 2023 v4.13.13 running PHP 8.4\" # Critical: platform version with the fixed PHP release\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Update every PHP environment to the latest Amazon Linux 2023 platform version and keep **managed platform updates** enabled so future security releases are applied automatically. Move environments still on PHP 8.1 or older to a supported branch, since those branches receive no fixes. Validate in staging and roll out with a maintenance window.",
+      "Url": "https://hub.prowler.com/check/elasticbeanstalk_environment_php_platform_updated"
+    }
+  },
+  "Categories": [
+    "vulnerabilities"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "elasticbeanstalk_environment_managed_updates_enabled"
+  ],
+  "Notes": "Only environments whose solution stack runs PHP are evaluated. Platform versions are compared only within the Amazon Linux 2023 family; older families are reported as failing because they did not receive fixed PHP releases."
+}

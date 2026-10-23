@@ -39,6 +39,10 @@ class ElasticBeanstalk(AWSService):
                             application_name=environment["ApplicationName"],
                             name=environment["EnvironmentName"],
                             region=regional_client.region,
+                            platform_arn=environment.get("PlatformArn", ""),
+                            solution_stack_name=environment.get(
+                                "SolutionStackName", ""
+                            ),
                         )
         except Exception as error:
             logger.error(
@@ -121,6 +125,8 @@ class Environment(BaseModel):
     arn: str
     region: str
     application_name: str
+    platform_arn: str = ""
+    solution_stack_name: str = ""
     health_reporting: Optional[str]
     managed_platform_updates: Optional[str]
     cloudwatch_stream_logs: Optional[str]
