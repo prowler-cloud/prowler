@@ -16,6 +16,19 @@ class rds_instance_certificate_expiration(Check):
         findings = []
         for db_instance in rds_client.db_instances.values():
             report = Check_Report_AWS(metadata=self.metadata(), resource=db_instance)
+
+            # No certificate data: PASS if the instance has no CA certificate,
+            # no finding if it has one that could not be retrieved.
+            if not db_instance.cert:
+                if not db_instance.ca_cert:
+                    report.status = "PASS"
+                    report.check_metadata.Severity = Severity.informational
+                    report.status_extended = (
+                        f"RDS Instance {db_instance.id} does not use a CA certificate."
+                    )
+                    findings.append(report)
+                continue
+
             report.status = "FAIL"
             report.check_metadata.Severity = Severity.critical
             report.status_extended = (
