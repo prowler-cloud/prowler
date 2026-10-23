@@ -29,17 +29,23 @@ class zone_challenge_passage_configured(Check):
                 metadata=self.metadata(),
                 resource=zone,
             )
-            # API returns seconds, convert to minutes
-            challenge_ttl_minutes = zone.settings.challenge_ttl // 60
-
-            if min_minutes <= challenge_ttl_minutes <= max_minutes:
-                report.status = "PASS"
-                report.status_extended = f"Challenge Passage is set to {challenge_ttl_minutes} minutes for zone {zone.name}."
-            else:
+            challenge_ttl = zone.settings.challenge_ttl
+            if challenge_ttl is None:
                 report.status = "FAIL"
                 report.status_extended = (
-                    f"Challenge Passage is set to {challenge_ttl_minutes} minutes for zone {zone.name} "
-                    f"(recommended: between {min_minutes} and {max_minutes} minutes)."
+                    f"Challenge Passage is not configured for zone {zone.name}."
                 )
+            else:
+                # API returns seconds, convert to minutes
+                challenge_ttl_minutes = challenge_ttl // 60
+                if min_minutes <= challenge_ttl_minutes <= max_minutes:
+                    report.status = "PASS"
+                    report.status_extended = f"Challenge Passage is set to {challenge_ttl_minutes} minutes for zone {zone.name}."
+                else:
+                    report.status = "FAIL"
+                    report.status_extended = (
+                        f"Challenge Passage is set to {challenge_ttl_minutes} minutes for zone {zone.name} "
+                        f"(recommended: between {min_minutes} and {max_minutes} minutes)."
+                    )
             findings.append(report)
         return findings
