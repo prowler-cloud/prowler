@@ -97,55 +97,82 @@ class Cloudtrail(AWSService):
             )
 
     def _get_trail_status(self):
+        """Retrieve the logging status of every named trail, one ``GetTrailStatus`` call per trail.
+
+        Sets ``is_logging`` from the response, and ``latest_cloudwatch_delivery_time``
+        when the trail reports a ``LatestCloudWatchLogsDeliveryTime``.
+
+        A trail whose status cannot be read keeps its ``is_logging`` default of ``False``
+        and records the exception class name in ``status_error``, so a check can report an
+        undetermined result instead of reading that default as "not logging".
+        """
         logger.info("Cloudtrail - Getting trail status")
-        try:
-            for trail in self.trails.values():
-                for region, client in self.regional_clients.items():
-                    if trail.region == region and trail.name:
+        for trail in self.trails.values():
+            for region, client in self.regional_clients.items():
+                if trail.region == region and trail.name:
+                    # Per trail, so that one unreadable trail neither aborts the scan of the
+                    # remaining trails nor leaves them looking like they are not logging.
+                    # `status_error` is what lets a check tell "could not read" apart from the
+                    # False default of is_logging: a missing IsLogging raises here too.
+                    try:
                         status = client.get_trail_status(Name=trail.arn)
                         trail.is_logging = status["IsLogging"]
                         if "LatestCloudWatchLogsDeliveryTime" in status:
                             trail.latest_cloudwatch_delivery_time = status[
                                 "LatestCloudWatchLogsDeliveryTime"
                             ]
-
-        except Exception as error:
-            logger.error(
-                f"{client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
+                    except Exception as error:
+                        trail.status_error = error.__class__.__name__
+                        logger.error(
+                            f"{client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
 
     def _get_event_selectors(self):
-        logger.info("Cloudtrail - Getting event selector")
-        try:
-            for trail in self.trails.values():
-                for region, client in self.regional_clients.items():
-                    if trail.region == region and trail.name:
-                        data_events = client.get_event_selectors(TrailName=trail.arn)
-                        # EventSelectors
-                        if (
-                            "EventSelectors" in data_events
-                            and data_events["EventSelectors"]
-                        ):
-                            for event in data_events["EventSelectors"]:
-                                event_selector = Event_Selector(
-                                    is_advanced=False, event_selector=event
-                                )
-                                trail.data_events.append(event_selector)
-                        # AdvancedEventSelectors
-                        elif (
-                            "AdvancedEventSelectors" in data_events
-                            and data_events["AdvancedEventSelectors"]
-                        ):
-                            for event in data_events["AdvancedEventSelectors"]:
-                                event_selector = Event_Selector(
-                                    is_advanced=True, event_selector=event
-                                )
-                                trail.data_events.append(event_selector)
+        """Retrieve the event selectors of every named trail, one ``GetEventSelectors`` call per trail.
 
-        except Exception as error:
-            logger.error(
-                f"{client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-            )
+        Appends every selector the trail returns to its ``data_events``, as basic
+        (``EventSelectors``) or advanced (``AdvancedEventSelectors``) entries. A trail
+        carries one kind or the other, never both.
+
+        A trail whose selectors cannot be read records the exception class name in
+        ``event_selectors_error`` and is skipped, so the empty ``data_events`` left behind
+        is not read as "this trail selects no data events".
+        """
+        logger.info("Cloudtrail - Getting event selector")
+        for trail in self.trails.values():
+            for region, client in self.regional_clients.items():
+                if trail.region == region and trail.name:
+                    # Per trail: an empty data_events list means "this trail selects no data
+                    # events" to every check that reads it, so a failed read must be recorded
+                    # rather than left to look like an answer.
+                    try:
+                        data_events = client.get_event_selectors(TrailName=trail.arn)
+                    except Exception as error:
+                        trail.event_selectors_error = error.__class__.__name__
+                        logger.error(
+                            f"{client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
+                        continue
+                    # EventSelectors
+                    if (
+                        "EventSelectors" in data_events
+                        and data_events["EventSelectors"]
+                    ):
+                        for event in data_events["EventSelectors"]:
+                            event_selector = Event_Selector(
+                                is_advanced=False, event_selector=event
+                            )
+                            trail.data_events.append(event_selector)
+                    # AdvancedEventSelectors
+                    elif (
+                        "AdvancedEventSelectors" in data_events
+                        and data_events["AdvancedEventSelectors"]
+                    ):
+                        for event in data_events["AdvancedEventSelectors"]:
+                            event_selector = Event_Selector(
+                                is_advanced=True, event_selector=event
+                            )
+                            trail.data_events.append(event_selector)
 
     def _get_insight_selectors(self):
         logger.info("Cloudtrail - Getting trail insight selectors...")
@@ -278,6 +305,76 @@ class Event_Selector(BaseModel):
     event_selector: dict
 
 
+def data_event_resource_types(event_selector: dict) -> tuple[set[str], set[str]]:
+    """Split the resource types of one advanced event selector by coverage.
+
+    eventCategory and resources.type are the only two fields that widen what a selector
+    logs; every other supported field (eventName, readOnly, resources.ARN, eventSource,
+    eventType, userIdentity.arn, sessionCredentialFromConsole) removes events from the
+    selection, and how many it removes cannot be read back from the trail configuration.
+
+    Args:
+        event_selector: The raw ``AdvancedEventSelectors`` entry from
+            ``GetEventSelectors``.
+
+    Returns:
+        ``(complete, narrowed)``: the ``resources.type`` values this selector logs
+        every data event for, and those it logs only a filtered subset of. Both are
+        empty when the selector is not a data event selector.
+    """
+    event_categories = set()
+    resource_types = set()
+    has_narrowing_field = False
+
+    for field_selector in event_selector.get("FieldSelectors") or []:
+        field = field_selector.get("Field")
+        # eventCategory and resources.type can only use the Equals operator.
+        values = field_selector.get("Equals") or []
+        if field == "eventCategory":
+            event_categories.update(values)
+        elif field == "resources.type":
+            resource_types.update(values)
+        else:
+            # Includes a field selector with no Field at all: an unrecognizable filter is a
+            # filter whose effect on coverage is unknown, not one with no effect.
+            has_narrowing_field = True
+
+    if event_categories != {"Data"}:
+        return set(), set()
+    if has_narrowing_field:
+        return set(), resource_types
+    return resource_types, set()
+
+
+def trail_data_event_coverage(
+    trail: "Trail", resource_types: frozenset
+) -> tuple[set[str], set[str]]:
+    """Report how a trail's event selectors cover the given data event resource types.
+
+    Args:
+        trail: The trail whose event selectors have already been retrieved.
+        resource_types: The ``resources.type`` values of interest.
+
+    Basic (classic) event selectors need no special case: they carry ``DataResources``
+    rather than ``FieldSelectors``, and their only supported resource types are
+    AWS::DynamoDB::Table, AWS::Lambda::Function and AWS::S3::Object. Every other resource
+    type requires an advanced event selector.
+
+    Returns:
+        ``(complete, narrowed)`` subsets of ``resource_types``. A type appearing in
+        ``complete`` is never also reported as ``narrowed``.
+    """
+    complete = set()
+    narrowed = set()
+    for data_event in trail.data_events:
+        selector_complete, selector_narrowed = data_event_resource_types(
+            data_event.event_selector
+        )
+        complete |= selector_complete & resource_types
+        narrowed |= selector_narrowed & resource_types
+    return complete, narrowed - complete
+
+
 class Trail(BaseModel):
     name: str = None
     is_multiregion: bool = None
@@ -294,3 +391,7 @@ class Trail(BaseModel):
     data_events: list[Event_Selector] = []
     tags: Optional[list] = []
     has_insight_selectors: str = None
+    # Short exception names when GetTrailStatus / GetEventSelectors could not be read, so a
+    # check can report an undetermined result instead of a verdict built on a default value.
+    status_error: Optional[str] = None
+    event_selectors_error: Optional[str] = None
