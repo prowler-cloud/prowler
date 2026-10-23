@@ -1,0 +1,1 @@
+`entra_pim_tier0_roles_no_permanent_active_assignments` check for M365 provider, flagging standing (non-PIM) active assignments of Tier 0 directory roles, with a configurable allowance for break-glass accounts

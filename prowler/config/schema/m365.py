@@ -19,6 +19,24 @@ class M365ProviderConfig(ProviderConfigBase):
         ),
     )
 
+    # --- Entra (Tier 0 standing assignments) ----------------------------
+    max_permanent_break_glass_global_admins: Optional[int] = Field(
+        default=None,
+        ge=0,
+        le=5,
+        description=(
+            "Break-glass accounts allowed to keep a standing Global "
+            "Administrator assignment. Range: 0..5 (Prowler default 2)."
+        ),
+    )
+    emergency_access_user_ids: Optional[list[str]] = Field(
+        default=None,
+        description=(
+            "Object IDs of emergency-access (break-glass) users, merged with "
+            "the accounts excluded from every enabled Conditional Access policy."
+        ),
+    )
+
     # --- Teams ---------------------------------------------------------
     allowed_cloud_storage_services: Optional[list[str]] = Field(
         default=None,

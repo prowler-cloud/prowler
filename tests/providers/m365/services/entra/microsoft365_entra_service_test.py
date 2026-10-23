@@ -953,6 +953,7 @@ class Test_Entra_Service:
             "id",
             "displayName",
             "userType",
+            "userPrincipalName",
             "accountEnabled",
             "onPremisesSyncEnabled",
             "employeeHireDate",
@@ -2240,3 +2241,136 @@ class TestCrossTenantAccessDefault:
         )
 
         assert asyncio.run(service._get_cross_tenant_access_default()) is None
+
+
+class TestTier0RoleGroupMembers:
+    GLOBAL_ADMIN = "62e90394-69f5-4237-9190-012177145e10"
+    READER = "88d8e3e3-8f55-4a1e-953a-9b9898b8876b"
+
+    def _service(self, members_get):
+        service = Entra.__new__(Entra)
+        service.role_assignment_schedule_instances = [
+            SimpleNamespace(
+                principal_id="tier0-group",
+                role_definition_id=self.GLOBAL_ADMIN,
+                principal_odata_type="#microsoft.graph.group",
+            ),
+            SimpleNamespace(
+                principal_id="reader-group",
+                role_definition_id=self.READER,
+                principal_odata_type="#microsoft.graph.group",
+            ),
+            SimpleNamespace(
+                principal_id="admin-user",
+                role_definition_id=self.GLOBAL_ADMIN,
+                principal_odata_type="#microsoft.graph.user",
+            ),
+        ]
+        # The /groups listing is not needed: the principal type identifies groups.
+        service.groups = []
+        by_group_id = MagicMock(
+            return_value=SimpleNamespace(
+                members=SimpleNamespace(
+                    get=members_get,
+                    with_url=MagicMock(
+                        return_value=SimpleNamespace(
+                            get=AsyncMock(
+                                return_value=SimpleNamespace(
+                                    value=[SimpleNamespace(id="user-2")],
+                                    odata_next_link=None,
+                                )
+                            )
+                        )
+                    ),
+                )
+            )
+        )
+        service.client = SimpleNamespace(
+            groups=SimpleNamespace(by_group_id=by_group_id)
+        )
+        return service, by_group_id
+
+    def test_only_groups_holding_tier0_roles_are_read(self):
+        service, by_group_id = self._service(
+            AsyncMock(
+                return_value=SimpleNamespace(
+                    value=[SimpleNamespace(id="user-1")], odata_next_link="next"
+                )
+            )
+        )
+
+        members = asyncio.run(service._get_tier0_role_group_members())
+
+        assert members == {"tier0-group": ["user-1", "user-2"]}
+        assert {c.args[0] for c in by_group_id.call_args_list} == {"tier0-group"}
+
+    def test_member_read_error_is_reported_as_none(self):
+        service, _ = self._service(AsyncMock(side_effect=RuntimeError("throttled")))
+
+        assert asyncio.run(service._get_tier0_role_group_members()) == {
+            "tier0-group": None
+        }
+
+
+class TestSubscribedSkus:
+    def test_reads_every_page(self):
+        def sku(part, plan):
+            return SimpleNamespace(
+                sku_id=part,
+                sku_part_number=part,
+                capability_status="Enabled",
+                service_plans=[SimpleNamespace(service_plan_name=plan)],
+            )
+
+        first = SimpleNamespace(
+            value=[sku("O365_E3", "EXCHANGE_S_ENTERPRISE")], odata_next_link="next"
+        )
+        second = SimpleNamespace(
+            value=[sku("AAD_PREMIUM_P2", "AAD_PREMIUM_P2")], odata_next_link=None
+        )
+        service = Entra.__new__(Entra)
+        service.subscribed_skus_error = None
+        service.client = SimpleNamespace(
+            subscribed_skus=SimpleNamespace(
+                get=AsyncMock(return_value=first),
+                with_url=MagicMock(
+                    return_value=SimpleNamespace(get=AsyncMock(return_value=second))
+                ),
+            )
+        )
+
+        skus = asyncio.run(service._get_subscribed_skus())
+
+        assert [s.sku_part_number for s in skus] == ["O365_E3", "AAD_PREMIUM_P2"]
+
+
+class TestEntraInitAttributeMapping:
+    """Each attribute must receive the result of its own getter in ``__init__``."""
+
+    def test_gathered_results_land_on_their_attributes(self):
+        expected = {
+            "cross_tenant_access_default": (
+                "_get_cross_tenant_access_default",
+                entra_service.CrossTenantAccessDefault(),
+            ),
+            "role_assignment_schedule_instances": (
+                "_get_role_assignment_schedule_instances",
+                [],
+            ),
+            "subscribed_skus": ("_get_subscribed_skus", []),
+        }
+        patches = [
+            patch.object(Entra, getter, new=AsyncMock(return_value=sentinel))
+            for getter, sentinel in expected.values()
+        ]
+        for active_patch in patches:
+            active_patch.start()
+        try:
+            with patch("prowler.providers.m365.lib.service.service.M365PowerShell"):
+                entra_client = Entra(set_mocked_m365_provider())
+        finally:
+            for active_patch in patches:
+                active_patch.stop()
+
+        for attribute, (_, sentinel) in expected.items():
+            assert getattr(entra_client, attribute) is sentinel, attribute
