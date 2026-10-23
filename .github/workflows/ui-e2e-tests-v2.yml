@@ -397,7 +397,7 @@ jobs:
       # only shows up here; Playwright just reports a missing footer button.
       - name: Dump API service logs
         if: failure()
-        run: docker compose logs --no-color --tail=300 api worker worker-beat
+        run: docker compose logs --no-color --tail=300 api worker worker-beat || true
 
       - name: Upload test reports
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
