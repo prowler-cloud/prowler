@@ -463,3 +463,144 @@ class Test_rds_instance_no_event_subscriptions:
                     == f"arn:aws:rds:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:es:TestSub"
                 )
                 assert result[0].resource_tags == [{"Key": "test", "Value": "testing"}]
+
+    @mock_aws
+    def test_rds_security_event_subscription_ignores_other_source_types(self):
+        conn = client("rds", region_name=AWS_REGION_US_EAST_1)
+        conn.create_db_parameter_group(
+            DBParameterGroupName="test",
+            DBParameterGroupFamily="default.postgres14",
+            Description="test parameter group",
+        )
+        # Create cluster first before instance
+        conn.create_db_cluster(
+            DBClusterIdentifier="db-cluster-1",
+            Engine="postgres",
+            MasterUsername="admin",
+            MasterUserPassword="password",
+        )
+        conn.create_db_instance(
+            DBInstanceIdentifier="db-master-1",
+            AllocatedStorage=10,
+            Engine="postgres",
+            DBName="postgres",
+            DBInstanceClass="db.m1.small",
+            DBParameterGroupName="test",
+            DBClusterIdentifier="db-cluster-1",
+        )
+        conn.create_event_subscription(
+            SubscriptionName="SecGroupSub",
+            SnsTopicArn=f"arn:aws:sns:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:test",
+            SourceType="db-security-group",
+            Enabled=True,
+        )
+        conn.create_event_subscription(
+            SubscriptionName="ClusterSub",
+            SnsTopicArn=f"arn:aws:sns:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:test",
+            SourceType="db-cluster",
+            EventCategories=["maintenance", "failure"],
+            Enabled=True,
+        )
+        from prowler.providers.aws.services.rds.rds_service import RDS
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ):
+            with mock.patch(
+                "prowler.providers.aws.services.rds.rds_instance_event_subscription_security_groups.rds_instance_event_subscription_security_groups.rds_client",
+                new=RDS(aws_provider),
+            ):
+                # Test Check
+                from prowler.providers.aws.services.rds.rds_instance_event_subscription_security_groups.rds_instance_event_subscription_security_groups import (
+                    rds_instance_event_subscription_security_groups,
+                )
+
+                check = rds_instance_event_subscription_security_groups()
+                result = check.execute()
+
+                assert len(result) == 1
+                assert result[0].status == "PASS"
+                assert (
+                    result[0].status_extended
+                    == "RDS security group events are subscribed."
+                )
+                assert result[0].resource_id == "SecGroupSub"
+                assert result[0].region == AWS_REGION_US_EAST_1
+                assert (
+                    result[0].resource_arn
+                    == f"arn:aws:rds:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:es:SecGroupSub"
+                )
+
+    @mock_aws
+    def test_rds_security_event_subscription_single_account_fail_without_match(self):
+        conn = client("rds", region_name=AWS_REGION_US_EAST_1)
+        conn.create_db_parameter_group(
+            DBParameterGroupName="test",
+            DBParameterGroupFamily="default.postgres14",
+            Description="test parameter group",
+        )
+        # Create cluster first before instance
+        conn.create_db_cluster(
+            DBClusterIdentifier="db-cluster-1",
+            Engine="postgres",
+            MasterUsername="admin",
+            MasterUserPassword="password",
+        )
+        conn.create_db_instance(
+            DBInstanceIdentifier="db-master-1",
+            AllocatedStorage=10,
+            Engine="postgres",
+            DBName="postgres",
+            DBInstanceClass="db.m1.small",
+            DBParameterGroupName="test",
+            DBClusterIdentifier="db-cluster-1",
+        )
+        conn.create_event_subscription(
+            SubscriptionName="ClusterSub1",
+            SnsTopicArn=f"arn:aws:sns:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:test",
+            SourceType="db-cluster",
+            EventCategories=["maintenance", "failure"],
+            Enabled=True,
+        )
+        conn.create_event_subscription(
+            SubscriptionName="ClusterSub2",
+            SnsTopicArn=f"arn:aws:sns:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:test",
+            SourceType="db-cluster",
+            EventCategories=["maintenance"],
+            Enabled=True,
+        )
+        from prowler.providers.aws.services.rds.rds_service import RDS
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ):
+            with mock.patch(
+                "prowler.providers.aws.services.rds.rds_instance_event_subscription_security_groups.rds_instance_event_subscription_security_groups.rds_client",
+                new=RDS(aws_provider),
+            ):
+                # Test Check
+                from prowler.providers.aws.services.rds.rds_instance_event_subscription_security_groups.rds_instance_event_subscription_security_groups import (
+                    rds_instance_event_subscription_security_groups,
+                )
+
+                check = rds_instance_event_subscription_security_groups()
+                result = check.execute()
+
+                assert len(result) == 1
+                assert result[0].status == "FAIL"
+                assert (
+                    result[0].status_extended
+                    == "RDS security group event categories of configuration change and failure are not subscribed."
+                )
+                assert result[0].region == AWS_REGION_US_EAST_1
+                assert result[0].resource_id == AWS_ACCOUNT_NUMBER
+                assert result[0].resource_arn == RDS_ACCOUNT_ARN
+                # Account-level finding: no unrelated subscription data or tags
+                assert result[0].resource == {}
+                assert result[0].resource_tags == []
