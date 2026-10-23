@@ -1,0 +1,24 @@
+{
+  "Provider": "aws",
+  "CheckID": "iam_role_github_oidc_trust_subject_restricted",
+  "CheckTitle": "IAM roles trusting GitHub Actions OIDC restrict the subject claim",
+  "CheckType": ["Software and Configuration Checks/AWS Security Best Practices", "TTPs/Initial Access"],
+  "ServiceName": "iam",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "arn:partition:iam::account-id:role/resource-id",
+  "Severity": "high",
+  "ResourceType": "AwsIamRole",
+  "ResourceGroup": "IAM",
+  "Description": "IAM roles that trust the GitHub Actions OIDC provider must constrain the `token.actions.githubusercontent.com:sub` claim to a specific repository owner.",
+  "Risk": "Without a repository-owner constraint, workflows from unauthorized GitHub repositories may assume the role and access AWS resources.",
+  "RelatedUrl": "https://docs.github.com/en/actions/security-for-github-actions/security-hardening-your-deployments/configuring-openid-connect-in-amazon-web-services",
+  "AdditionalURLs": ["https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_providers_create_oidc.html", "https://docs.github.com/en/actions/security-for-github-actions/security-hardening-your-deployments/about-security-hardening-with-openid-connect"],
+  "Remediation": {
+    "Code": {"CLI": "aws iam update-assume-role-policy --role-name <ROLE_NAME> --policy-document file://updated-trust-policy.json", "NativeIaC": "", "Other": "Edit the complete existing trust policy to add a strict condition for token.actions.githubusercontent.com:sub, such as repo:ORG/REPOSITORY:ref:refs/heads/main. Retain all existing required statements.", "Terraform": ""},
+    "Recommendation": {"Text": "Restrict GitHub Actions OIDC trust to repositories and owners that your organization controls.", "Url": "https://hub.prowler.com/check/iam_role_github_oidc_trust_subject_restricted"}
+  },
+  "Categories": ["identity-access"],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Roles without a GitHub Actions OIDC federated trust statement are outside the scope of this check."
+}
