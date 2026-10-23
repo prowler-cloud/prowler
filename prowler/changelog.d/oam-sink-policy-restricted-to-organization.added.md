@@ -1,0 +1,1 @@
+`oam_sink_policy_restricted_to_organization` check for AWS provider, reporting CloudWatch Observability Access Manager sinks whose resource policy lets any AWS account create a cross-account observability link without an organization condition
