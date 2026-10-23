@@ -41,6 +41,11 @@ class TestVercelMetadata:
             "secrets",
             "vercel-hobby-plan",
         ],
+        "project_environment_no_secrets_with_public_prefix": [
+            "secrets",
+            "internet-exposed",
+            "vercel-hobby-plan",
+        ],
         "project_environment_production_vars_not_in_preview": [
             "secrets",
             "vercel-hobby-plan",
@@ -49,6 +54,7 @@ class TestVercelMetadata:
             "internet-exposed",
             "vercel-hobby-plan",
         ],
+        "project_linked_to_git_repository": ["vercel-hobby-plan"],
         "project_password_protection_enabled": [
             "internet-exposed",
             "vercel-pro-plan",

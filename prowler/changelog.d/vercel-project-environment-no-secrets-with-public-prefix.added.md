@@ -1,0 +1,1 @@
+`project_environment_no_secrets_with_public_prefix` check for Vercel to flag secret-like environment variables that frontend frameworks inline into the browser bundle through public prefixes such as `NEXT_PUBLIC_` or `VITE_`
