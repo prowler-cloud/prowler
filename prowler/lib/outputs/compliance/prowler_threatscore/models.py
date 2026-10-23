@@ -173,3 +173,31 @@ class ProwlerThreatScoreAlibabaModel(BaseModel):
     ResourceId: str
     ResourceName: str
     CheckId: str
+
+
+class ProwlerThreatScoreGoogleWorkspaceModel(BaseModel):
+    """
+    ProwlerThreatScoreGoogleWorkspaceModel generates a finding's output in Google Workspace Prowler ThreatScore Compliance format.
+    """
+
+    Provider: str
+    Description: str
+    Domain: str
+    AssessmentDate: str
+    Requirements_Id: str
+    Requirements_Description: str
+    Requirements_Attributes_Title: str
+    Requirements_Attributes_Section: str
+    Requirements_Attributes_SubSection: Optional[str] = None
+    Requirements_Attributes_AttributeDescription: str
+    Requirements_Attributes_AdditionalInformation: str
+    Requirements_Attributes_LevelOfRisk: int
+    Requirements_Attributes_Weight: int
+    Status: str
+    StatusExtended: str
+    ResourceId: str
+    ResourceName: str
+    CheckId: str
+    Muted: bool
+    Framework: str
+    Name: str

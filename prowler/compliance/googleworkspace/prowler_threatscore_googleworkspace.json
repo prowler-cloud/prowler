@@ -1,0 +1,1179 @@
+{
+  "Framework": "ProwlerThreatScore",
+  "Name": "Prowler ThreatScore Compliance Framework for Google Workspace",
+  "Version": "1.0",
+  "Provider": "GoogleWorkspace",
+  "Description": "Prowler ThreatScore Compliance Framework for Google Workspace ensures that the Google Workspace tenant is compliant taking into account four main pillars: Identity and Access Management, Attack Surface, Forensic Readiness and Encryption",
+  "Requirements": [
+    {
+      "Id": "1.1.1",
+      "Description": "The domain-level policy enforces 2-Step Verification (Multi-Factor Authentication) for all users. 2-Step Verification requires users to present a second form of authentication beyond their password, significantly reducing the risk of account compromise.",
+      "Checks": [
+        "security_2sv_enforced"
+      ],
+      "Attributes": [
+        {
+          "Title": "2-Step Verification is enforced for all users",
+          "Section": "1. IAM",
+          "SubSection": "1.1 Authentication",
+          "AttributeDescription": "The domain-level policy enforces 2-Step Verification (Multi-Factor Authentication) for all users. 2-Step Verification requires users to present a second form of authentication beyond their password, significantly reducing the risk of account compromise.",
+          "AdditionalInformation": "Without 2-Step Verification enforcement, users can access their accounts with only a password. If credentials are compromised through phishing, credential stuffing, or data breaches, attackers gain immediate access to the user's account and organizational data without any additional verification.",
+          "LevelOfRisk": 5,
+          "Weight": 1000
+        }
+      ]
+    },
+    {
+      "Id": "1.1.2",
+      "Description": "POP and IMAP allow users to access Gmail through legacy or third-party email clients that may not support modern authentication mechanisms such as multifactor authentication. Disabling these protocols forces users to access email through approved clients only.",
+      "Checks": [
+        "gmail_pop_imap_access_disabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "POP and IMAP access is disabled for all users",
+          "Section": "1. IAM",
+          "SubSection": "1.1 Authentication",
+          "AttributeDescription": "POP and IMAP allow users to access Gmail through legacy or third-party email clients that may not support modern authentication mechanisms such as multifactor authentication. Disabling these protocols forces users to access email through approved clients only.",
+          "AdditionalInformation": "With POP and IMAP enabled, users can access email through legacy clients that rely on simple password authentication, bypassing multifactor authentication and other modern security controls. This significantly increases the risk of credential-based account compromise.",
+          "LevelOfRisk": 5,
+          "Weight": 1000
+        }
+      ]
+    },
+    {
+      "Id": "1.1.3",
+      "Description": "The domain-level policy disables access to less secure apps that do not use modern security standards such as OAuth. Blocking these apps helps keep user accounts and organizational data safe.",
+      "Checks": [
+        "security_less_secure_apps_disabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "Less secure app access is disabled",
+          "Section": "1. IAM",
+          "SubSection": "1.1 Authentication",
+          "AttributeDescription": "The domain-level policy disables access to less secure apps that do not use modern security standards such as OAuth. Blocking these apps helps keep user accounts and organizational data safe.",
+          "AdditionalInformation": "When less secure app access is enabled, users can allow apps that use basic authentication (username and password only) to access their Google account. These apps are more vulnerable to credential theft and do not support 2-Step Verification, increasing the risk of account compromise.",
+          "LevelOfRisk": 5,
+          "Weight": 1000
+        }
+      ]
+    },
+    {
+      "Id": "1.1.4",
+      "Description": "The domain-level 2-Step Verification policy requires hardware security keys only as the allowed sign-in factor, providing the strongest phishing-resistant authentication. Note: the Policy API returns domain-wide policies only and cannot verify admin role-specific enforcement.",
+      "Checks": [
+        "security_2sv_hardware_keys_admins"
+      ],
+      "Attributes": [
+        {
+          "Title": "Hardware security keys are required for 2-Step Verification",
+          "Section": "1. IAM",
+          "SubSection": "1.1 Authentication",
+          "AttributeDescription": "The domain-level 2-Step Verification policy requires hardware security keys only as the allowed sign-in factor, providing the strongest phishing-resistant authentication. Note: the Policy API returns domain-wide policies only and cannot verify admin role-specific enforcement.",
+          "AdditionalInformation": "When 2SV methods include SMS, phone calls, or software-based authenticators, users are vulnerable to SIM swapping, SS7 attacks, and real-time phishing proxies that can intercept one-time codes. Hardware security keys are resistant to all known remote phishing techniques.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "1.1.5",
+      "Description": "The domain-level policy enables the Advanced Protection Program with user self-enrollment and blocks the use of security codes. The Advanced Protection Program is Google's strongest account security offering, requiring hardware security keys and applying a curated set of high-security policies.",
+      "Checks": [
+        "security_advanced_protection_configured"
+      ],
+      "Attributes": [
+        {
+          "Title": "Advanced Protection Program is configured",
+          "Section": "1. IAM",
+          "SubSection": "1.1 Authentication",
+          "AttributeDescription": "The domain-level policy enables the Advanced Protection Program with user self-enrollment and blocks the use of security codes. The Advanced Protection Program is Google's strongest account security offering, requiring hardware security keys and applying a curated set of high-security policies.",
+          "AdditionalInformation": "Without the Advanced Protection Program, user accounts rely on standard security controls that are vulnerable to sophisticated phishing attacks, targeted credential theft, and third-party app data access. Allowing security codes alongside Advanced Protection weakens its protections by providing an alternative authentication path that can be intercepted.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "1.1.6",
+      "Description": "The domain-level login challenges configuration has the employee ID challenge disabled. CIS 4.1.4.1 also requires Post-SSO verification to be enabled, but that setting is not exposed by the Cloud Identity Policy API. This check only covers the employee ID challenge portion of the control.",
+      "Checks": [
+        "security_login_challenges_configured"
+      ],
+      "Attributes": [
+        {
+          "Title": "Login challenges are configured correctly",
+          "Section": "1. IAM",
+          "SubSection": "1.1 Authentication",
+          "AttributeDescription": "The domain-level login challenges configuration has the employee ID challenge disabled. CIS 4.1.4.1 also requires Post-SSO verification to be enabled, but that setting is not exposed by the Cloud Identity Policy API. This check only covers the employee ID challenge portion of the control.",
+          "AdditionalInformation": "When the employee ID login challenge is enabled without proper configuration, it may create a false sense of security or interfere with the login flow. The employee ID challenge is a supplementary verification method that should only be used when specifically required by the organization.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "1.1.7",
+      "Description": "The domain-level Google session control limits web session duration to 12 hours or less. When a session expires, users must re-authenticate, reducing the window of opportunity for session hijacking.",
+      "Checks": [
+        "security_session_duration_limited"
+      ],
+      "Attributes": [
+        {
+          "Title": "Google session control is configured to 12 hours or less",
+          "Section": "1. IAM",
+          "SubSection": "1.1 Authentication",
+          "AttributeDescription": "The domain-level Google session control limits web session duration to 12 hours or less. When a session expires, users must re-authenticate, reducing the window of opportunity for session hijacking.",
+          "AdditionalInformation": "The default 14-day session duration means that a compromised session token provides an attacker with two weeks of uninterrupted access without re-authentication. Shorter session durations limit the impact of stolen cookies, session hijacking, and unauthorized access from shared or untrusted devices.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "1.1.8",
+      "Description": "The domain-level policy disables self-service account recovery for Super Admin accounts. When disabled, Super Admins cannot use recovery options (phone, email) to regain access, reducing the risk of account takeover through compromised recovery channels.",
+      "Checks": [
+        "security_super_admin_recovery_disabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "Super Admin account recovery is disabled",
+          "Section": "1. IAM",
+          "SubSection": "1.1 Authentication",
+          "AttributeDescription": "The domain-level policy disables self-service account recovery for Super Admin accounts. When disabled, Super Admins cannot use recovery options (phone, email) to regain access, reducing the risk of account takeover through compromised recovery channels.",
+          "AdditionalInformation": "If Super Admin account recovery is enabled, an attacker who compromises a Super Admin's recovery phone or email could use the self-service recovery flow to take over the account, gaining full administrative control over the entire Google Workspace organization.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "1.1.9",
+      "Description": "The domain-level password policy is configured with enhanced security settings: minimum length of 14 characters, strong passwords enforced, password reuse disallowed, enforcement at next sign-in enabled, and password expiration set to 365 days.",
+      "Checks": [
+        "security_password_policy_strong"
+      ],
+      "Attributes": [
+        {
+          "Title": "Password policy is configured for enhanced security",
+          "Section": "1. IAM",
+          "SubSection": "1.1 Authentication",
+          "AttributeDescription": "The domain-level password policy is configured with enhanced security settings: minimum length of 14 characters, strong passwords enforced, password reuse disallowed, enforcement at next sign-in enabled, and password expiration set to 365 days.",
+          "AdditionalInformation": "Weak password policies allow users to set short, simple, or previously compromised passwords that are vulnerable to brute-force attacks, credential stuffing, and password spraying. Without enforcement at sign-in, users may continue using weak passwords indefinitely.",
+          "LevelOfRisk": 2,
+          "Weight": 8
+        }
+      ]
+    },
+    {
+      "Id": "1.1.10",
+      "Description": "The domain-level policy enables self-service account recovery for non-Super Admin users. When enabled, users can recover access to their accounts if their password is forgotten, reducing helpdesk burden and downtime.",
+      "Checks": [
+        "security_user_recovery_enabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "User account recovery is enabled",
+          "Section": "1. IAM",
+          "SubSection": "1.1 Authentication",
+          "AttributeDescription": "The domain-level policy enables self-service account recovery for non-Super Admin users. When enabled, users can recover access to their accounts if their password is forgotten, reducing helpdesk burden and downtime.",
+          "AdditionalInformation": "When user account recovery is disabled, users who lose access to their accounts must contact an administrator to regain access. This increases helpdesk burden, extends downtime, and may lead to users adopting insecure workarounds like sharing credentials.",
+          "LevelOfRisk": 2,
+          "Weight": 8
+        }
+      ]
+    },
+    {
+      "Id": "1.2.1",
+      "Description": "The domain-wide default restricts external sharing of Drive and Docs files to a curated list of allowlisted domains, rather than allowing sharing with arbitrary external recipients. This converts external sharing from an open default into a controlled allow-list that aligns with documented business relationships.",
+      "Checks": [
+        "drive_sharing_allowlisted_domains"
+      ],
+      "Attributes": [
+        {
+          "Title": "Document sharing is restricted to allowlisted domains",
+          "Section": "1. IAM",
+          "SubSection": "1.2 Authorization",
+          "AttributeDescription": "The domain-wide default restricts external sharing of Drive and Docs files to a curated list of allowlisted domains, rather than allowing sharing with arbitrary external recipients. This converts external sharing from an open default into a controlled allow-list that aligns with documented business relationships.",
+          "AdditionalInformation": "When external sharing is unrestricted, users can share organizational content with any external Google account, including untrusted or unknown parties. Restricting sharing to allowlisted domains drastically reduces the surface area for accidental and malicious data exfiltration through Drive.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "1.2.2",
+      "Description": "The domain-wide default restricts distributing organizational content to shared drives owned by another organization to eligible internal users only. This prevents external collaborators with manager access to internal shared drives from moving content out of the organization.",
+      "Checks": [
+        "drive_internal_users_distribute_content"
+      ],
+      "Attributes": [
+        {
+          "Title": "Only internal users can distribute content outside the organization",
+          "Section": "1. IAM",
+          "SubSection": "1.2 Authorization",
+          "AttributeDescription": "The domain-wide default restricts distributing organizational content to shared drives owned by another organization to eligible internal users only. This prevents external collaborators with manager access to internal shared drives from moving content out of the organization.",
+          "AdditionalInformation": "If external users can move files from internal shared drives into shared drives owned by another organization, the organization loses authoritative control over its own data. This is a frequently overlooked path for unintentional or malicious data exfiltration through shared drive collaboration.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "1.2.3",
+      "Description": "The domain-wide Drive and Docs default prevents users from publishing files to the web or making them visible to the world as public or unlisted. Publishing a file to the web exposes its content to anyone on the internet, often without any audit trail, making it one of the highest-impact misconfigurations available to end users.",
+      "Checks": [
+        "drive_publishing_files_disabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "Publishing Drive files to the web is disabled",
+          "Section": "1. IAM",
+          "SubSection": "1.2 Authorization",
+          "AttributeDescription": "The domain-wide Drive and Docs default prevents users from publishing files to the web or making them visible to the world as public or unlisted. Publishing a file to the web exposes its content to anyone on the internet, often without any audit trail, making it one of the highest-impact misconfigurations available to end users.",
+          "AdditionalInformation": "Allowing users to publish Drive files to the web creates a path for unbounded data exposure. Sensitive documents, intellectual property, customer data, or internal communications can be made publicly accessible — and indexed by search engines — with a single click, often unintentionally.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "1.2.4",
+      "Description": "The domain-wide Access Checker configuration ensures that when a user shares a Drive file via a Google product other than Drive itself (e.g. by pasting a link in Gmail), the suggestions never expand sharing to a wider audience or to anyone with the link. Access Checker is set to recipients only.",
+      "Checks": [
+        "drive_access_checker_recipients_only"
+      ],
+      "Attributes": [
+        {
+          "Title": "Drive Access Checker is configured to recipients only",
+          "Section": "1. IAM",
+          "SubSection": "1.2 Authorization",
+          "AttributeDescription": "The domain-wide Access Checker configuration ensures that when a user shares a Drive file via a Google product other than Drive itself (e.g. by pasting a link in Gmail), the suggestions never expand sharing to a wider audience or to anyone with the link. Access Checker is set to recipients only.",
+          "AdditionalInformation": "If Access Checker suggests broader audiences or public visibility, users may inadvertently widen access to a file beyond the people they intended to share with. This is a common cause of unintentional internal or external over-sharing.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "1.2.5",
+      "Description": "The domain-wide default restricts shared drive file access to explicit members only. Non-members cannot be added to individual files inside the drive, preserving the shared drive's membership boundary as the authoritative access control surface.",
+      "Checks": [
+        "drive_shared_drive_members_only_access"
+      ],
+      "Attributes": [
+        {
+          "Title": "Shared drive file access is restricted to members only",
+          "Section": "1. IAM",
+          "SubSection": "1.2 Authorization",
+          "AttributeDescription": "The domain-wide default restricts shared drive file access to explicit members only. Non-members cannot be added to individual files inside the drive, preserving the shared drive's membership boundary as the authoritative access control surface.",
+          "AdditionalInformation": "If non-members can be added to files inside a shared drive, the drive's membership becomes meaningless as a security control. Sensitive content scoped to a specific team can be silently extended to users who were never granted access to the drive itself, leading to unintended information disclosure.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "1.2.6",
+      "Description": "Automatic email forwarding allows users to automatically forward all incoming email to an external address. Disabling this feature prevents unauthorized data exfiltration through email forwarding rules.",
+      "Checks": [
+        "gmail_auto_forwarding_disabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "Automatic forwarding options are disabled",
+          "Section": "1. IAM",
+          "SubSection": "1.2 Authorization",
+          "AttributeDescription": "Automatic email forwarding allows users to automatically forward all incoming email to an external address. Disabling this feature prevents unauthorized data exfiltration through email forwarding rules.",
+          "AdditionalInformation": "With auto-forwarding enabled, an attacker who gains control of a user account can create forwarding rules to exfiltrate all incoming email to an external address. This can persist undetected and provide the attacker with continuous access to sensitive communications even after the account is recovered.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "1.2.7",
+      "Description": "Mail delegation allows a delegate to read, send, and delete messages on behalf of another user. When enabled at the user level, this creates a risk that unauthorized individuals could gain access to sensitive email content. Only administrators should be able to manage mailbox delegation.",
+      "Checks": [
+        "gmail_mail_delegation_disabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "Mail delegation is disabled for users",
+          "Section": "1. IAM",
+          "SubSection": "1.2 Authorization",
+          "AttributeDescription": "Mail delegation allows a delegate to read, send, and delete messages on behalf of another user. When enabled at the user level, this creates a risk that unauthorized individuals could gain access to sensitive email content. Only administrators should be able to manage mailbox delegation.",
+          "AdditionalInformation": "If users can delegate access to their mailbox, an attacker who compromises one account could silently delegate access to maintain persistent email surveillance. This also increases the risk of insider threats and data exfiltration through shared mailbox access.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "1.2.8",
+      "Description": "Google Groups for Business external access controls whether people outside the organization can view and search for groups. When set to private, only users within the domain can discover and access groups, while external users can still email a group if the group's own settings allow it.",
+      "Checks": [
+        "groups_external_access_restricted"
+      ],
+      "Attributes": [
+        {
+          "Title": "Accessing groups from outside the organization is set to private",
+          "Section": "1. IAM",
+          "SubSection": "1.2 Authorization",
+          "AttributeDescription": "Google Groups for Business external access controls whether people outside the organization can view and search for groups. When set to private, only users within the domain can discover and access groups, while external users can still email a group if the group's own settings allow it.",
+          "AdditionalInformation": "Allowing external access to groups exposes group names, descriptions, and membership to anyone outside the organization, increasing the risk of information disclosure and enabling external parties to identify targets for social engineering attacks.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "1.2.9",
+      "Description": "Google Groups for Business creation settings control who can create groups and whether group owners can add external members or allow incoming email from outside the organization. Restricting creation to admins and disabling external member and incoming email options limits the attack surface.",
+      "Checks": [
+        "groups_creation_restricted"
+      ],
+      "Attributes": [
+        {
+          "Title": "Group creation is restricted to admins with no external members or incoming email",
+          "Section": "1. IAM",
+          "SubSection": "1.2 Authorization",
+          "AttributeDescription": "Google Groups for Business creation settings control who can create groups and whether group owners can add external members or allow incoming email from outside the organization. Restricting creation to admins and disabling external member and incoming email options limits the attack surface.",
+          "AdditionalInformation": "Allowing any user to create groups with external members or incoming email from outside increases the risk of unauthorized data sharing, spam delivery, and shadow IT groups that bypass organizational controls.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "1.2.10",
+      "Description": "The Additional Google services configuration disables access to external Google Groups for all users. This setting controls whether users can access groups created outside the organization from their Google Workspace account.",
+      "Checks": [
+        "additionalservices_external_groups_disabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "Access to external Google Groups is off for everyone",
+          "Section": "1. IAM",
+          "SubSection": "1.2 Authorization",
+          "AttributeDescription": "The Additional Google services configuration disables access to external Google Groups for all users. This setting controls whether users can access groups created outside the organization from their Google Workspace account.",
+          "AdditionalInformation": "When external Google Groups access is enabled, users can access and participate in groups created outside the organization, potentially exposing them to phishing, social engineering, or data leakage through unmanaged external group communications.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "1.2.11",
+      "Description": "Google Chat external messaging controls whether users can send messages to people outside the organization. If external messaging is allowed, it can optionally be restricted to only allowlisted domains to limit the scope of external communication.",
+      "Checks": [
+        "chat_external_messaging_restricted"
+      ],
+      "Attributes": [
+        {
+          "Title": "External Chat messaging is restricted to allowed domains",
+          "Section": "1. IAM",
+          "SubSection": "1.2 Authorization",
+          "AttributeDescription": "Google Chat external messaging controls whether users can send messages to people outside the organization. If external messaging is allowed, it can optionally be restricted to only allowlisted domains to limit the scope of external communication.",
+          "AdditionalInformation": "Unrestricted external messaging allows users to communicate freely with any external party, increasing the risk of data exfiltration through conversation content and social engineering attacks from untrusted domains targeting internal users.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "1.2.12",
+      "Description": "Google Chat external spaces allow users to create or join collaborative spaces that include people outside the organization. If external spaces are allowed, they can optionally be restricted to only allowlisted domains to limit external participation.",
+      "Checks": [
+        "chat_external_spaces_restricted"
+      ],
+      "Attributes": [
+        {
+          "Title": "External spaces in Chat are restricted to allowed domains",
+          "Section": "1. IAM",
+          "SubSection": "1.2 Authorization",
+          "AttributeDescription": "Google Chat external spaces allow users to create or join collaborative spaces that include people outside the organization. If external spaces are allowed, they can optionally be restricted to only allowlisted domains to limit external participation.",
+          "AdditionalInformation": "Unrestricted external spaces allow users to add anyone from any domain to persistent group conversations. This increases the risk of confidential information exposure in shared spaces and enables unauthorized external access to ongoing organizational discussions.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "1.2.13",
+      "Description": "Google Chat external file sharing controls whether users can share files with people outside the organization via Chat conversations. Files often contain confidential information, and organizations in regulated industries need to control the flow of this information outside their boundaries.",
+      "Checks": [
+        "chat_external_file_sharing_disabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "External file sharing in Chat is set to no files",
+          "Section": "1. IAM",
+          "SubSection": "1.2 Authorization",
+          "AttributeDescription": "Google Chat external file sharing controls whether users can share files with people outside the organization via Chat conversations. Files often contain confidential information, and organizations in regulated industries need to control the flow of this information outside their boundaries.",
+          "AdditionalInformation": "Enabled external file sharing allows users to send files containing confidential information to external parties through Chat. This creates a data leakage channel that bypasses DLP controls, particularly dangerous for organizations handling regulated data such as PII, PHI, or financial records.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "1.2.14",
+      "Description": "The domain-wide default prevents viewers and commenters of files stored in shared drives from downloading, printing, or copying the file contents. They can only read and comment on the existing content, preventing bulk extraction of sensitive material from shared drives.",
+      "Checks": [
+        "drive_shared_drive_disable_download_print_copy"
+      ],
+      "Attributes": [
+        {
+          "Title": "Viewers and commenters cannot download, print, or copy shared drive files",
+          "Section": "1. IAM",
+          "SubSection": "1.2 Authorization",
+          "AttributeDescription": "The domain-wide default prevents viewers and commenters of files stored in shared drives from downloading, printing, or copying the file contents. They can only read and comment on the existing content, preventing bulk extraction of sensitive material from shared drives.",
+          "AdditionalInformation": "When viewers and commenters can download, print, or copy shared drive files, they can bulk-extract sensitive content — including intellectual property, personally identifiable information, and confidential business documents — using nothing more than read access. This is one of the most direct paths to data exfiltration through Drive.",
+          "LevelOfRisk": 2,
+          "Weight": 8
+        }
+      ]
+    },
+    {
+      "Id": "1.2.15",
+      "Description": "The domain-wide default prevents members with manager access to a shared drive from overriding the shared drive settings established by administrators. This ensures that security controls — such as external access, member-only access, and download restrictions — cannot be relaxed at the individual shared drive level.",
+      "Checks": [
+        "drive_shared_drive_managers_cannot_override"
+      ],
+      "Attributes": [
+        {
+          "Title": "Shared drive managers cannot override shared drive settings",
+          "Section": "1. IAM",
+          "SubSection": "1.2 Authorization",
+          "AttributeDescription": "The domain-wide default prevents members with manager access to a shared drive from overriding the shared drive settings established by administrators. This ensures that security controls — such as external access, member-only access, and download restrictions — cannot be relaxed at the individual shared drive level.",
+          "AdditionalInformation": "If shared drive managers can override organizational defaults, unauthorized data exposure can occur when a manager intentionally or accidentally weakens a shared drive's security posture (for example, allowing external members or enabling download for viewers).",
+          "LevelOfRisk": 2,
+          "Weight": 8
+        }
+      ]
+    },
+    {
+      "Id": "1.2.16",
+      "Description": "The domain-wide Drive and Docs configuration warns users when they attempt to share a file with users outside the organization. This prompt gives users an opportunity to reconsider before exposing organizational content to external parties, reducing the likelihood of accidental data disclosure through everyday sharing actions.",
+      "Checks": [
+        "drive_external_sharing_warn_users"
+      ],
+      "Attributes": [
+        {
+          "Title": "Users are warned when sharing files outside the domain",
+          "Section": "1. IAM",
+          "SubSection": "1.2 Authorization",
+          "AttributeDescription": "The domain-wide Drive and Docs configuration warns users when they attempt to share a file with users outside the organization. This prompt gives users an opportunity to reconsider before exposing organizational content to external parties, reducing the likelihood of accidental data disclosure through everyday sharing actions.",
+          "AdditionalInformation": "Without external sharing warnings, users may unintentionally share sensitive documents with external recipients who are not entitled to the data. This is a common vector for inadvertent leakage of intellectual property, personally identifiable information, and confidential business data through routine Drive sharing.",
+          "LevelOfRisk": 2,
+          "Weight": 8
+        }
+      ]
+    },
+    {
+      "Id": "1.2.17",
+      "Description": "At the domain level, even when external sharing is restricted to allowlisted domains, Google Drive warns users before they share a file with a user in an allowlisted domain. This second-step prompt helps users recognize when they are crossing the organizational boundary, even within permitted destinations.",
+      "Checks": [
+        "drive_warn_sharing_with_allowlisted_domains"
+      ],
+      "Attributes": [
+        {
+          "Title": "Users are warned when sharing files with allowlisted domains",
+          "Section": "1. IAM",
+          "SubSection": "1.2 Authorization",
+          "AttributeDescription": "At the domain level, even when external sharing is restricted to allowlisted domains, Google Drive warns users before they share a file with a user in an allowlisted domain. This second-step prompt helps users recognize when they are crossing the organizational boundary, even within permitted destinations.",
+          "AdditionalInformation": "Allowlisted domains are still external. Users may not realize that even an allowlisted recipient is outside the organization, leading to unintentional disclosure of sensitive content to legitimate but external collaborators. A warning prompt at share time mitigates that without preventing the sharing itself.",
+          "LevelOfRisk": 2,
+          "Weight": 8
+        }
+      ]
+    },
+    {
+      "Id": "1.2.18",
+      "Description": "The domain-wide default for primary calendars shares only free/busy information with external users. When external sharing is set to share full event details, sensitive information such as meeting titles, attendees, locations, and descriptions is exposed to users outside the organization.",
+      "Checks": [
+        "calendar_external_sharing_primary_calendar"
+      ],
+      "Attributes": [
+        {
+          "Title": "External sharing for primary calendars is restricted to free/busy only",
+          "Section": "1. IAM",
+          "SubSection": "1.2 Authorization",
+          "AttributeDescription": "The domain-wide default for primary calendars shares only free/busy information with external users. When external sharing is set to share full event details, sensitive information such as meeting titles, attendees, locations, and descriptions is exposed to users outside the organization.",
+          "AdditionalInformation": "Overly permissive external sharing of primary calendars exposes sensitive meeting metadata — titles, attendees, locations, and descriptions — to users outside the organization. This increases the risk of information disclosure, social engineering, and targeted phishing based on insights into organizational activities.",
+          "LevelOfRisk": 2,
+          "Weight": 8
+        }
+      ]
+    },
+    {
+      "Id": "1.2.19",
+      "Description": "The domain-wide default for secondary calendars shares only free/busy information with external users. Secondary calendars are additional calendars users create beyond their primary calendar (e.g., for projects, teams, or personal events), and are commonly used to organize sensitive or focused activities that should not be visible to external parties.",
+      "Checks": [
+        "calendar_external_sharing_secondary_calendar"
+      ],
+      "Attributes": [
+        {
+          "Title": "External sharing for secondary calendars is restricted to free/busy only",
+          "Section": "1. IAM",
+          "SubSection": "1.2 Authorization",
+          "AttributeDescription": "The domain-wide default for secondary calendars shares only free/busy information with external users. Secondary calendars are additional calendars users create beyond their primary calendar (e.g., for projects, teams, or personal events), and are commonly used to organize sensitive or focused activities that should not be visible to external parties.",
+          "AdditionalInformation": "Overly permissive external sharing of secondary calendars exposes project-specific or team-specific event details to users outside the organization. Because secondary calendars often hold more targeted activities (e.g., product launches, internal reviews), unrestricted external sharing increases the risk of information disclosure and competitive intelligence leakage.",
+          "LevelOfRisk": 2,
+          "Weight": 8
+        }
+      ]
+    },
+    {
+      "Id": "1.2.20",
+      "Description": "The domain-wide Google Calendar configuration warns users when they invite guests from outside the organization to an event. This prompt gives users a chance to reconsider before sharing meeting details with external parties, reducing the likelihood of accidental information disclosure through calendar invitations.",
+      "Checks": [
+        "calendar_external_invitations_warning"
+      ],
+      "Attributes": [
+        {
+          "Title": "External invitation warnings are enabled for Google Calendar",
+          "Section": "1. IAM",
+          "SubSection": "1.2 Authorization",
+          "AttributeDescription": "The domain-wide Google Calendar configuration warns users when they invite guests from outside the organization to an event. This prompt gives users a chance to reconsider before sharing meeting details with external parties, reducing the likelihood of accidental information disclosure through calendar invitations.",
+          "AdditionalInformation": "Without external invitation warnings, users may unintentionally include external guests in internal meetings, exposing confidential meeting details, agendas, and internal attendee lists to unauthorized parties. This is a common vector for inadvertent data leakage through everyday calendar actions.",
+          "LevelOfRisk": 2,
+          "Weight": 8
+        }
+      ]
+    },
+    {
+      "Id": "1.2.21",
+      "Description": "Google Groups for Business conversation viewing controls who can see group conversations by default. Restricting this to group members only ensures that conversations are visible only to participants, not all users in the organization or external parties.",
+      "Checks": [
+        "groups_view_conversations_restricted"
+      ],
+      "Attributes": [
+        {
+          "Title": "Default permission to view conversations is set to all group members",
+          "Section": "1. IAM",
+          "SubSection": "1.2 Authorization",
+          "AttributeDescription": "Google Groups for Business conversation viewing controls who can see group conversations by default. Restricting this to group members only ensures that conversations are visible only to participants, not all users in the organization or external parties.",
+          "AdditionalInformation": "Allowing all organization users or anyone to view group conversations can lead to information disclosure of sensitive discussions, internal decisions, and confidential data shared within groups.",
+          "LevelOfRisk": 2,
+          "Weight": 8
+        }
+      ]
+    },
+    {
+      "Id": "1.2.22",
+      "Description": "The domain-wide default allows users to create new shared drives. Shared drives are owned by the organization (not the individual user), so content stored in them survives the deletion of the original creator's account, supporting data continuity and reducing the risk of accidental data loss.",
+      "Checks": [
+        "drive_shared_drive_creation_allowed"
+      ],
+      "Attributes": [
+        {
+          "Title": "Users are allowed to create new shared drives",
+          "Section": "1. IAM",
+          "SubSection": "1.2 Authorization",
+          "AttributeDescription": "The domain-wide default allows users to create new shared drives. Shared drives are owned by the organization (not the individual user), so content stored in them survives the deletion of the original creator's account, supporting data continuity and reducing the risk of accidental data loss.",
+          "AdditionalInformation": "When users cannot create shared drives, they store collaborative content in their personal My Drive instead. When that user account is deleted, the data is also deleted, leading to unintentional data loss of organizationally significant information. Allowing shared drive creation makes data survivable across account lifecycle events.",
+          "LevelOfRisk": 1,
+          "Weight": 1
+        }
+      ]
+    },
+    {
+      "Id": "1.2.23",
+      "Description": "Google Chat internal file sharing controls whether users can share files with other people inside the organization via Chat conversations. Organizations in regulated industries may need to control and audit all file sharing, even between internal users.",
+      "Checks": [
+        "chat_internal_file_sharing_disabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "Internal file sharing in Chat is set to no files",
+          "Section": "1. IAM",
+          "SubSection": "1.2 Authorization",
+          "AttributeDescription": "Google Chat internal file sharing controls whether users can share files with other people inside the organization via Chat conversations. Organizations in regulated industries may need to control and audit all file sharing, even between internal users.",
+          "AdditionalInformation": "Unrestricted internal file sharing in Chat allows files with sensitive information to be distributed freely without passing through approved channels. This undermines data governance and audit trail requirements, making it harder to track data movement within the organization.",
+          "LevelOfRisk": 1,
+          "Weight": 1
+        }
+      ]
+    },
+    {
+      "Id": "1.3.1",
+      "Description": "The domain-wide default disables Google Drive for desktop for the organization. The Drive for desktop client synchronizes Drive content to local devices and uses its own \"offline\" mechanism that does not respect the central offline-access device policy, so disabling it closes a synchronization channel that would otherwise place organizational content on potentially unmanaged endpoints.",
+      "Checks": [
+        "drive_desktop_access_disabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "Google Drive for desktop is disabled",
+          "Section": "1. IAM",
+          "SubSection": "1.3 Privilege Escalation Prevention",
+          "AttributeDescription": "The domain-wide default disables Google Drive for desktop for the organization. The Drive for desktop client synchronizes Drive content to local devices and uses its own \"offline\" mechanism that does not respect the central offline-access device policy, so disabling it closes a synchronization channel that would otherwise place organizational content on potentially unmanaged endpoints.",
+          "AdditionalInformation": "When Drive for desktop is enabled, organizational files are synchronized to local devices and remain accessible if the device is lost, stolen, or compromised. Because Drive for desktop bypasses the central offline-access controls, this channel is a frequently overlooked path for sensitive data to leave organization-managed environments.",
+          "LevelOfRisk": 5,
+          "Weight": 1000
+        }
+      ]
+    },
+    {
+      "Id": "1.3.2",
+      "Description": "The domain-level API controls configuration restricts third-party app access to at least one Google service. This check verifies that the administrator has configured API access controls rather than leaving all services at the unrestricted default. The CIS benchmark recommends restricting access to all applicable services, particularly high-risk scopes like Drive and Gmail.",
+      "Checks": [
+        "security_app_access_restricted"
+      ],
+      "Attributes": [
+        {
+          "Title": "Application access to Google services is restricted",
+          "Section": "1. IAM",
+          "SubSection": "1.3 Privilege Escalation Prevention",
+          "AttributeDescription": "The domain-level API controls configuration restricts third-party app access to at least one Google service. This check verifies that the administrator has configured API access controls rather than leaving all services at the unrestricted default. The CIS benchmark recommends restricting access to all applicable services, particularly high-risk scopes like Drive and Gmail.",
+          "AdditionalInformation": "When application access to Google services is unrestricted, any third-party app that users consent to can access sensitive organizational data through Google APIs. This includes apps that may request broad OAuth scopes for Drive, Gmail, and other services, potentially leading to data exfiltration through unvetted applications.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "1.3.3",
+      "Description": "The domain-wide Google Workspace Marketplace configuration restricts which apps users can install. Only admin-approved apps from the Marketplace allowlist are permitted, preventing users from installing unvetted third-party applications.",
+      "Checks": [
+        "marketplace_apps_access_restricted"
+      ],
+      "Attributes": [
+        {
+          "Title": "Users access to Google Workspace Marketplace apps is restricted",
+          "Section": "1. IAM",
+          "SubSection": "1.3 Privilege Escalation Prevention",
+          "AttributeDescription": "The domain-wide Google Workspace Marketplace configuration restricts which apps users can install. Only admin-approved apps from the Marketplace allowlist are permitted, preventing users from installing unvetted third-party applications.",
+          "AdditionalInformation": "Allowing unrestricted Marketplace app installation exposes the organization to unvetted third-party applications that may request broad OAuth scopes, potentially gaining access to sensitive organizational data including emails, documents, and calendar events without proper security review.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "1.3.4",
+      "Description": "Google Chat apps connect to external services to look up information, schedule meetings, or complete tasks. Apps are accounts created by Google, users in the organization, or third parties that can access user data including email addresses, conversation content, and organizational information.",
+      "Checks": [
+        "chat_apps_installation_disabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "Chat apps installation is disabled for users",
+          "Section": "1. IAM",
+          "SubSection": "1.3 Privilege Escalation Prevention",
+          "AttributeDescription": "Google Chat apps connect to external services to look up information, schedule meetings, or complete tasks. Apps are accounts created by Google, users in the organization, or third parties that can access user data including email addresses, conversation content, and organizational information.",
+          "AdditionalInformation": "Unrestricted Chat app installation allows unvetted third-party applications to access user data including conversation content and organizational information. An attacker could distribute a malicious Chat app to exfiltrate confidential data or establish persistent access to internal communications.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "1.3.5",
+      "Description": "The domain-level API controls configuration trusts internal domain-owned apps to access restricted Google Workspace APIs. This avoids the need to individually trust each internal app.",
+      "Checks": [
+        "security_internal_apps_trusted"
+      ],
+      "Attributes": [
+        {
+          "Title": "Internal apps can access Google Workspace APIs",
+          "Section": "1. IAM",
+          "SubSection": "1.3 Privilege Escalation Prevention",
+          "AttributeDescription": "The domain-level API controls configuration trusts internal domain-owned apps to access restricted Google Workspace APIs. This avoids the need to individually trust each internal app.",
+          "AdditionalInformation": "When internal apps are not trusted, legitimate organization-built applications cannot access restricted Google Workspace API scopes, potentially breaking internal workflows and forcing administrators to trust each app individually, which increases administrative overhead.",
+          "LevelOfRisk": 3,
+          "Weight": 10
+        }
+      ]
+    },
+    {
+      "Id": "1.3.6",
+      "Description": "Google Workspace domain has between 2 and 4 super administrators. Having too few super admins creates a single point of failure and administrative access issues if the only admin is unavailable. Having too many super admins increases the attack surface and the risk of unauthorized access to critical administrative functions.",
+      "Checks": [
+        "directory_super_admin_count"
+      ],
+      "Attributes": [
+        {
+          "Title": "Domain has 2-4 super administrators",
+          "Section": "1. IAM",
+          "SubSection": "1.3 Privilege Escalation Prevention",
+          "AttributeDescription": "Google Workspace domain has between 2 and 4 super administrators. Having too few super admins creates a single point of failure and administrative access issues if the only admin is unavailable. Having too many super admins increases the attack surface and the risk of unauthorized access to critical administrative functions.",
+          "AdditionalInformation": "Having fewer than 2 super administrators creates a single point of failure and may prevent administrative access in emergencies. Having more than 4 super administrators increases the security risk by expanding the attack surface for compromised accounts with full administrative privileges.",
+          "LevelOfRisk": 2,
+          "Weight": 8
+        }
+      ]
+    },
+    {
+      "Id": "1.3.7",
+      "Description": "Super admin accounts do not also hold additional admin roles such as Groups Admin, User Management Admin, etc. Each super administrator has a separate, non-admin account for daily activities, following the principle of least privilege.",
+      "Checks": [
+        "directory_super_admin_only_admin_roles"
+      ],
+      "Attributes": [
+        {
+          "Title": "All super admin accounts are used only for super admin activities",
+          "Section": "1. IAM",
+          "SubSection": "1.3 Privilege Escalation Prevention",
+          "AttributeDescription": "Super admin accounts do not also hold additional admin roles such as Groups Admin, User Management Admin, etc. Each super administrator has a separate, non-admin account for daily activities, following the principle of least privilege.",
+          "AdditionalInformation": "A super admin account that also holds additional admin roles increases the attack surface for phishing and credential theft. Compromising a single dual-role account grants full administrative access, bypassing separation of duties and enabling unauthorized changes to users, billing, and security settings.",
+          "LevelOfRisk": 2,
+          "Weight": 8
+        }
+      ]
+    },
+    {
+      "Id": "2.1.1",
+      "Description": "A per-user outbound gateway allows users to send mail through an external SMTP server instead of Google's mail servers. Disabling this setting ensures all outbound email is routed through the organization's configured mail infrastructure.",
+      "Checks": [
+        "gmail_per_user_outbound_gateway_disabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "Per-user outbound gateways are disabled",
+          "Section": "2. Attack Surface",
+          "SubSection": "2.1 Network",
+          "AttributeDescription": "A per-user outbound gateway allows users to send mail through an external SMTP server instead of Google's mail servers. Disabling this setting ensures all outbound email is routed through the organization's configured mail infrastructure.",
+          "AdditionalInformation": "With per-user outbound gateways enabled, users can route outbound email through external SMTP servers, bypassing organizational email security controls, DLP policies, and audit logging. This creates an unmonitored channel for data exfiltration and policy circumvention.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "2.1.2",
+      "Description": "Incoming webhooks let external applications post asynchronous messages into Google Chat spaces without being a Chat app. When enabled, users can configure webhooks and developers can call them to send content from external applications.",
+      "Checks": [
+        "chat_incoming_webhooks_disabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "Incoming webhooks in Chat are disabled for users",
+          "Section": "2. Attack Surface",
+          "SubSection": "2.1 Network",
+          "AttributeDescription": "Incoming webhooks let external applications post asynchronous messages into Google Chat spaces without being a Chat app. When enabled, users can configure webhooks and developers can call them to send content from external applications.",
+          "AdditionalInformation": "Exposed webhook URLs allow unauthorized content injection into Chat spaces. Attackers can send fraudulent or misleading messages that appear to come from trusted services, creating a vector for social engineering and phishing within internal communications.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "2.2.1",
+      "Description": "At least one active Data Loss Prevention (DLP) rule targeting Google Drive file sharing is configured. DLP policies detect and prevent users from sharing sensitive information such as credit card numbers, identity numbers, and other regulated data through Drive.",
+      "Checks": [
+        "security_dlp_drive_rules_configured"
+      ],
+      "Attributes": [
+        {
+          "Title": "DLP policies for Google Drive are configured",
+          "Section": "2. Attack Surface",
+          "SubSection": "2.2 Storage",
+          "AttributeDescription": "At least one active Data Loss Prevention (DLP) rule targeting Google Drive file sharing is configured. DLP policies detect and prevent users from sharing sensitive information such as credit card numbers, identity numbers, and other regulated data through Drive.",
+          "AdditionalInformation": "Without DLP policies, users can freely share files containing sensitive information through Google Drive without any detection or prevention controls. This increases the risk of accidental data exposure, regulatory non-compliance, and data breaches through oversharing.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "2.3.1",
+      "Description": "Verifies that Gmail is configured to take a protective action (such as moving to spam, quarantining, or showing a warning) when emails contain anomalous attachment types. Unusual file types that are uncommon for the sender or organization may indicate an attempt to deliver malware through less-scrutinized formats.",
+      "Checks": [
+        "gmail_anomalous_attachment_protection_enabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "Protection against anomalous attachment types in emails is enabled",
+          "Section": "2. Attack Surface",
+          "SubSection": "2.3 Application",
+          "AttributeDescription": "Verifies that Gmail is configured to take a protective action (such as moving to spam, quarantining, or showing a warning) when emails contain anomalous attachment types. Unusual file types that are uncommon for the sender or organization may indicate an attempt to deliver malware through less-scrutinized formats.",
+          "AdditionalInformation": "Without protection against anomalous attachment types, users may receive emails with unusual file formats that are designed to bypass standard security filters. Attackers may use uncommon file extensions or MIME types to deliver malware that evades signature-based detection.",
+          "LevelOfRisk": 5,
+          "Weight": 1000
+        }
+      ]
+    },
+    {
+      "Id": "2.3.2",
+      "Description": "Verifies that Gmail is configured to take a protective action (such as moving to spam, quarantining, or showing a warning) when an attachment containing scripts is received from an untrusted sender. Script-bearing attachments (e.g., .js, .vbs, .ps1) are a common malware delivery mechanism.",
+      "Checks": [
+        "gmail_script_attachment_protection_enabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "Protection against attachments with scripts from untrusted senders is enabled",
+          "Section": "2. Attack Surface",
+          "SubSection": "2.3 Application",
+          "AttributeDescription": "Verifies that Gmail is configured to take a protective action (such as moving to spam, quarantining, or showing a warning) when an attachment containing scripts is received from an untrusted sender. Script-bearing attachments (e.g., .js, .vbs, .ps1) are a common malware delivery mechanism.",
+          "AdditionalInformation": "Without protection against script-bearing attachments from untrusted senders, users may receive files containing malicious scripts that can execute harmful code when opened. Attackers commonly use script attachments to deliver malware, backdoors, or credential stealers.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "2.3.3",
+      "Description": "Verifies that Gmail is configured to take a protective action (such as moving to spam, quarantining, or showing a warning) when an encrypted attachment is received from an untrusted sender. Encrypted attachments cannot be scanned for malware by security filters, making them a common vector for delivering malicious payloads.",
+      "Checks": [
+        "gmail_encrypted_attachment_protection_enabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "Protection against encrypted attachments from untrusted senders is enabled",
+          "Section": "2. Attack Surface",
+          "SubSection": "2.3 Application",
+          "AttributeDescription": "Verifies that Gmail is configured to take a protective action (such as moving to spam, quarantining, or showing a warning) when an encrypted attachment is received from an untrusted sender. Encrypted attachments cannot be scanned for malware by security filters, making them a common vector for delivering malicious payloads.",
+          "AdditionalInformation": "Without protection against encrypted attachments from untrusted senders, users may receive password-protected archives containing malware that bypass standard content scanning. Attackers commonly use encrypted attachments to evade detection and deliver ransomware, trojans, or other malicious payloads.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "2.3.4",
+      "Description": "Enhanced pre-delivery message scanning adds additional security checks for messages identified as potentially suspicious. When enabled, Gmail may slightly delay delivery to perform deeper analysis, improving detection of phishing and malware that might otherwise evade standard filters.",
+      "Checks": [
+        "gmail_enhanced_pre_delivery_scanning_enabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "Enhanced pre-delivery message scanning is enabled",
+          "Section": "2. Attack Surface",
+          "SubSection": "2.3 Application",
+          "AttributeDescription": "Enhanced pre-delivery message scanning adds additional security checks for messages identified as potentially suspicious. When enabled, Gmail may slightly delay delivery to perform deeper analysis, improving detection of phishing and malware that might otherwise evade standard filters.",
+          "AdditionalInformation": "Without enhanced pre-delivery scanning, some sophisticated phishing and malware messages may pass through standard filters and be delivered to users. The additional scanning layer catches threats that the first-pass filters miss, reducing the organization's exposure to zero-day phishing campaigns and targeted attacks.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "2.3.5",
+      "Description": "Gmail can display a warning prompt when users click on links to domains that are not trusted. This gives users an opportunity to reconsider before navigating to a potentially malicious website.",
+      "Checks": [
+        "gmail_untrusted_link_warnings_enabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "Warning prompt for clicks on untrusted domain links is enabled",
+          "Section": "2. Attack Surface",
+          "SubSection": "2.3 Application",
+          "AttributeDescription": "Gmail can display a warning prompt when users click on links to domains that are not trusted. This gives users an opportunity to reconsider before navigating to a potentially malicious website.",
+          "AdditionalInformation": "Without untrusted link warnings, users may click on phishing links or links to malware distribution sites without any warning. This significantly increases the success rate of social engineering attacks targeting the organization.",
+          "LevelOfRisk": 2,
+          "Weight": 8
+        }
+      ]
+    },
+    {
+      "Id": "2.3.6",
+      "Description": "Gmail can identify and expand links behind shortened URLs (e.g., bit.ly, goo.gl) to check if the destination is malicious. URL shorteners are commonly used in phishing campaigns to obscure the true destination of a link.",
+      "Checks": [
+        "gmail_shortener_scanning_enabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "Identification of links behind shortened URLs is enabled",
+          "Section": "2. Attack Surface",
+          "SubSection": "2.3 Application",
+          "AttributeDescription": "Gmail can identify and expand links behind shortened URLs (e.g., bit.ly, goo.gl) to check if the destination is malicious. URL shorteners are commonly used in phishing campaigns to obscure the true destination of a link.",
+          "AdditionalInformation": "Without shortened URL scanning, attackers can use URL shortening services to hide malicious destinations in phishing emails. Users cannot visually verify where the link leads, increasing the success rate of phishing and credential harvesting attacks.",
+          "LevelOfRisk": 2,
+          "Weight": 8
+        }
+      ]
+    },
+    {
+      "Id": "2.3.7",
+      "Description": "Gmail can scan images linked in email messages to detect malicious content. External images can be used to deliver tracking pixels, exploit browser vulnerabilities, or serve as part of phishing campaigns.",
+      "Checks": [
+        "gmail_external_image_scanning_enabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "Scanning of linked images for malicious content is enabled",
+          "Section": "2. Attack Surface",
+          "SubSection": "2.3 Application",
+          "AttributeDescription": "Gmail can scan images linked in email messages to detect malicious content. External images can be used to deliver tracking pixels, exploit browser vulnerabilities, or serve as part of phishing campaigns.",
+          "AdditionalInformation": "Without external image scanning, attackers can use linked images to track email opens, deliver exploit payloads via image rendering vulnerabilities, or use images as part of sophisticated phishing schemes that mimic legitimate communications.",
+          "LevelOfRisk": 2,
+          "Weight": 8
+        }
+      ]
+    },
+    {
+      "Id": "2.3.8",
+      "Description": "The domain-wide Google Sites configuration has the service disabled for all users. Google Sites allows users to create internal and external websites, which may expose sensitive information or create unmanaged content outside the organization's control.",
+      "Checks": [
+        "sites_service_disabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "Service status for Google Sites is set to off",
+          "Section": "2. Attack Surface",
+          "SubSection": "2.3 Application",
+          "AttributeDescription": "The domain-wide Google Sites configuration has the service disabled for all users. Google Sites allows users to create internal and external websites, which may expose sensitive information or create unmanaged content outside the organization's control.",
+          "AdditionalInformation": "When Google Sites is enabled, users can create websites that may inadvertently expose internal information to external parties. These sites can be difficult to track and manage, creating potential data leakage vectors outside the organization's standard content management controls.",
+          "LevelOfRisk": 2,
+          "Weight": 8
+        }
+      ]
+    },
+    {
+      "Id": "3.2.1",
+      "Description": "Comprehensive mail storage ensures that a copy of all sent and received messages in the domain, including messages sent or received by non-Gmail mailboxes, is stored in users' Gmail mailboxes. This makes all messages accessible to Google Vault for retention, eDiscovery, and compliance purposes.",
+      "Checks": [
+        "gmail_comprehensive_mail_storage_enabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "Comprehensive mail storage is enabled",
+          "Section": "3. Logging and Monitoring",
+          "SubSection": "3.2 Retention",
+          "AttributeDescription": "Comprehensive mail storage ensures that a copy of all sent and received messages in the domain, including messages sent or received by non-Gmail mailboxes, is stored in users' Gmail mailboxes. This makes all messages accessible to Google Vault for retention, eDiscovery, and compliance purposes.",
+          "AdditionalInformation": "Without comprehensive mail storage, messages sent through other Google services (Calendar, Drive, etc.) may not be stored in Gmail and therefore not subject to Vault retention policies. This creates gaps in compliance coverage, eDiscovery, and audit trails that could violate regulatory requirements.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "3.3.1",
+      "Description": "The Government-backed attacks system-defined alert rule should be enabled with alerts sent to the alert center, email notifications turned on, and recipients set to all super administrators. This ensures administrators are notified when Google believes users are being targeted by a government-backed attacker.",
+      "Checks": [
+        "rules_government_backed_attacks_alert_configured"
+      ],
+      "Attributes": [
+        {
+          "Title": "Government-backed attacks alert rule is configured",
+          "Section": "3. Logging and Monitoring",
+          "SubSection": "3.3 Monitoring",
+          "AttributeDescription": "The Government-backed attacks system-defined alert rule should be enabled with alerts sent to the alert center, email notifications turned on, and recipients set to all super administrators. This ensures administrators are notified when Google believes users are being targeted by a government-backed attacker.",
+          "AdditionalInformation": "Without this alert enabled, administrators will not be notified of potential government-backed attacks targeting their users. These attacks are sophisticated and require immediate response to protect affected accounts and investigate the threat.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "3.3.2",
+      "Description": "The User suspended due to suspicious activity system-defined alert rule should be enabled with alerts sent to the alert center, email notifications turned on, and recipients set to all super administrators. This ensures administrators are notified when Google suspends an account due to a potential compromise.",
+      "Checks": [
+        "rules_suspicious_activity_suspension_alert_configured"
+      ],
+      "Attributes": [
+        {
+          "Title": "User suspended due to suspicious activity alert rule is configured",
+          "Section": "3. Logging and Monitoring",
+          "SubSection": "3.3 Monitoring",
+          "AttributeDescription": "The User suspended due to suspicious activity system-defined alert rule should be enabled with alerts sent to the alert center, email notifications turned on, and recipients set to all super administrators. This ensures administrators are notified when Google suspends an account due to a potential compromise.",
+          "AdditionalInformation": "Without this alert enabled, administrators will not be promptly notified when Google suspends a user account due to detected compromise. The suspended user cannot work, and the underlying security incident requires immediate investigation.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "3.3.3",
+      "Description": "The User granted Admin privilege system-defined alert rule should be enabled with alerts sent to the alert center, email notifications turned on, and recipients set to all super administrators. This ensures administrators are notified when a user is given elevated admin privileges.",
+      "Checks": [
+        "rules_admin_privilege_granted_alert_configured"
+      ],
+      "Attributes": [
+        {
+          "Title": "User granted Admin privilege alert rule is configured",
+          "Section": "3. Logging and Monitoring",
+          "SubSection": "3.3 Monitoring",
+          "AttributeDescription": "The User granted Admin privilege system-defined alert rule should be enabled with alerts sent to the alert center, email notifications turned on, and recipients set to all super administrators. This ensures administrators are notified when a user is given elevated admin privileges.",
+          "AdditionalInformation": "Without this alert enabled, administrators will not be notified when users receive elevated admin privileges. Unauthorized privilege escalation could indicate account compromise or insider threats and requires immediate verification.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "3.3.4",
+      "Description": "The Leaked password system-defined alert rule should be enabled with alerts sent to the alert center, email notifications turned on, and recipients set to all super administrators. This ensures administrators are notified when Google detects compromised credentials requiring a password reset.",
+      "Checks": [
+        "rules_leaked_password_alert_configured"
+      ],
+      "Attributes": [
+        {
+          "Title": "Leaked password alert rule is configured",
+          "Section": "3. Logging and Monitoring",
+          "SubSection": "3.3 Monitoring",
+          "AttributeDescription": "The Leaked password system-defined alert rule should be enabled with alerts sent to the alert center, email notifications turned on, and recipients set to all super administrators. This ensures administrators are notified when Google detects compromised credentials requiring a password reset.",
+          "AdditionalInformation": "Without this alert enabled, administrators will not be notified when Google detects that a user's credentials have been compromised in a publicized breach. The user likely reused their password at another site that was breached, and their account requires an immediate password change.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "3.3.5",
+      "Description": "The Gmail potential employee spoofing system-defined alert rule should be enabled with alerts sent to the alert center, email notifications turned on, and recipients set to all super administrators. This ensures administrators are notified when incoming messages have a sender name matching the directory but from an external domain.",
+      "Checks": [
+        "rules_gmail_employee_spoofing_alert_configured"
+      ],
+      "Attributes": [
+        {
+          "Title": "Gmail potential employee spoofing alert rule is configured",
+          "Section": "3. Logging and Monitoring",
+          "SubSection": "3.3 Monitoring",
+          "AttributeDescription": "The Gmail potential employee spoofing system-defined alert rule should be enabled with alerts sent to the alert center, email notifications turned on, and recipients set to all super administrators. This ensures administrators are notified when incoming messages have a sender name matching the directory but from an external domain.",
+          "AdditionalInformation": "Without this alert enabled, administrators will not be notified of potential employee spoofing via email. Attackers may impersonate internal employees using external email addresses to conduct phishing attacks against the organization.",
+          "LevelOfRisk": 2,
+          "Weight": 8
+        }
+      ]
+    },
+    {
+      "Id": "3.3.6",
+      "Description": "The User's password changed system-defined alert rule should be enabled with alerts sent to the alert center, email notifications turned on, and recipients set to all super administrators. This ensures administrators are promptly notified when user passwords are changed.",
+      "Checks": [
+        "rules_password_changed_alert_configured"
+      ],
+      "Attributes": [
+        {
+          "Title": "User's password changed alert rule is configured",
+          "Section": "3. Logging and Monitoring",
+          "SubSection": "3.3 Monitoring",
+          "AttributeDescription": "The User's password changed system-defined alert rule should be enabled with alerts sent to the alert center, email notifications turned on, and recipients set to all super administrators. This ensures administrators are promptly notified when user passwords are changed.",
+          "AdditionalInformation": "Without this alert enabled, administrators will not be notified when user passwords are changed. This could allow credential compromise and account takeover to go undetected, giving attackers time to establish persistence.",
+          "LevelOfRisk": 2,
+          "Weight": 8
+        }
+      ]
+    },
+    {
+      "Id": "3.3.7",
+      "Description": "The Suspicious login system-defined alert rule should be enabled with alerts sent to the alert center, email notifications turned on, and recipients set to all super administrators. This ensures administrators are notified when Google detects a sign-in attempt that does not match a user's normal behavior.",
+      "Checks": [
+        "rules_suspicious_login_alert_configured"
+      ],
+      "Attributes": [
+        {
+          "Title": "Suspicious login alert rule is configured",
+          "Section": "3. Logging and Monitoring",
+          "SubSection": "3.3 Monitoring",
+          "AttributeDescription": "The Suspicious login system-defined alert rule should be enabled with alerts sent to the alert center, email notifications turned on, and recipients set to all super administrators. This ensures administrators are notified when Google detects a sign-in attempt that does not match a user's normal behavior.",
+          "AdditionalInformation": "Without this alert enabled, administrators will not be notified of suspicious login attempts such as sign-ins from unusual locations. This could indicate an active attack using previously obtained credentials.",
+          "LevelOfRisk": 2,
+          "Weight": 8
+        }
+      ]
+    },
+    {
+      "Id": "3.3.8",
+      "Description": "The Suspicious programmatic login system-defined alert rule should be enabled with alerts sent to the alert center, email notifications turned on, and recipients set to all super administrators. This ensures administrators are notified when Google detects suspicious login attempts from applications or programs.",
+      "Checks": [
+        "rules_suspicious_programmatic_login_alert_configured"
+      ],
+      "Attributes": [
+        {
+          "Title": "Suspicious programmatic login alert rule is configured",
+          "Section": "3. Logging and Monitoring",
+          "SubSection": "3.3 Monitoring",
+          "AttributeDescription": "The Suspicious programmatic login system-defined alert rule should be enabled with alerts sent to the alert center, email notifications turned on, and recipients set to all super administrators. This ensures administrators are notified when Google detects suspicious login attempts from applications or programs.",
+          "AdditionalInformation": "Without this alert enabled, administrators will not be notified of suspicious programmatic login attempts. This could indicate automated credential stuffing or unauthorized API access using compromised credentials.",
+          "LevelOfRisk": 2,
+          "Weight": 8
+        }
+      ]
+    },
+    {
+      "Id": "4.1.1",
+      "Description": "Verifies that Gmail is configured to take a protective action (such as moving to spam, quarantining, or showing a warning) when emails are not authenticated via SPF or DKIM. Unauthenticated emails cannot be verified as originating from the claimed sender, making them more likely to be spoofed or forged.",
+      "Checks": [
+        "gmail_unauthenticated_email_protection_enabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "Protection against any unauthenticated emails is enabled",
+          "Section": "4. Encryption",
+          "SubSection": "4.1 In-Transit",
+          "AttributeDescription": "Verifies that Gmail is configured to take a protective action (such as moving to spam, quarantining, or showing a warning) when emails are not authenticated via SPF or DKIM. Unauthenticated emails cannot be verified as originating from the claimed sender, making them more likely to be spoofed or forged.",
+          "AdditionalInformation": "Without protection against unauthenticated emails, users may receive spoofed or forged messages that fail SPF and DKIM checks but are still delivered normally. This enables phishing, spam, and impersonation attacks that exploit the lack of sender verification.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "4.1.2",
+      "Description": "Verifies that Gmail is configured to take a protective action (such as moving to spam, quarantining, or showing a warning) when inbound emails spoof the organization's own domain. This protects against attackers sending emails that appear to originate from within the organization but are actually external.",
+      "Checks": [
+        "gmail_inbound_domain_spoofing_protection_enabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "Protection against inbound emails spoofing your domain is enabled",
+          "Section": "4. Encryption",
+          "SubSection": "4.1 In-Transit",
+          "AttributeDescription": "Verifies that Gmail is configured to take a protective action (such as moving to spam, quarantining, or showing a warning) when inbound emails spoof the organization's own domain. This protects against attackers sending emails that appear to originate from within the organization but are actually external.",
+          "AdditionalInformation": "Without protection against inbound domain spoofing, users may receive emails that appear to come from their own organization but are sent by external attackers. This enables internal impersonation, phishing, and business email compromise attacks that exploit trust in internal communications.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "4.1.3",
+      "Description": "Verifies that Gmail is configured to take a protective action (such as moving to spam, quarantining, or showing a warning) when emails appear to come from domain names that look similar to the organization's domain. Lookalike domains are a common phishing technique used to trick users into trusting malicious messages.",
+      "Checks": [
+        "gmail_domain_spoofing_protection_enabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "Protection against domain spoofing based on similar domain names is enabled",
+          "Section": "4. Encryption",
+          "SubSection": "4.1 In-Transit",
+          "AttributeDescription": "Verifies that Gmail is configured to take a protective action (such as moving to spam, quarantining, or showing a warning) when emails appear to come from domain names that look similar to the organization's domain. Lookalike domains are a common phishing technique used to trick users into trusting malicious messages.",
+          "AdditionalInformation": "Without protection against domain spoofing based on similar domain names, users may receive phishing emails from lookalike domains (e.g., examp1e.com instead of example.com) that appear legitimate. This enables credential theft, malware delivery, and business email compromise attacks.",
+          "LevelOfRisk": 4,
+          "Weight": 100
+        }
+      ]
+    },
+    {
+      "Id": "4.1.4",
+      "Description": "Verifies that Gmail is configured to take a protective action (such as moving to spam, quarantining, or showing a warning) when the sender's display name matches an employee's name but the email comes from an external address. This is a common social engineering technique where attackers impersonate colleagues or executives.",
+      "Checks": [
+        "gmail_employee_name_spoofing_protection_enabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "Protection against spoofing of employee names is enabled",
+          "Section": "4. Encryption",
+          "SubSection": "4.1 In-Transit",
+          "AttributeDescription": "Verifies that Gmail is configured to take a protective action (such as moving to spam, quarantining, or showing a warning) when the sender's display name matches an employee's name but the email comes from an external address. This is a common social engineering technique where attackers impersonate colleagues or executives.",
+          "AdditionalInformation": "Without protection against employee name spoofing, users may receive emails that appear to come from colleagues or executives but are actually from external attackers. This enables business email compromise (BEC), wire fraud, and social engineering attacks that exploit trust relationships.",
+          "LevelOfRisk": 2,
+          "Weight": 8
+        }
+      ]
+    },
+    {
+      "Id": "4.1.5",
+      "Description": "Verifies that Gmail is configured to take a protective action (such as moving to spam, quarantining, or showing a warning) when groups receive inbound emails that spoof the organization's domain. Google Groups are a high-value target because a single spoofed message can reach many recipients at once.",
+      "Checks": [
+        "gmail_groups_spoofing_protection_enabled"
+      ],
+      "Attributes": [
+        {
+          "Title": "Groups are protected from inbound emails spoofing your domain",
+          "Section": "4. Encryption",
+          "SubSection": "4.1 In-Transit",
+          "AttributeDescription": "Verifies that Gmail is configured to take a protective action (such as moving to spam, quarantining, or showing a warning) when groups receive inbound emails that spoof the organization's domain. Google Groups are a high-value target because a single spoofed message can reach many recipients at once.",
+          "AdditionalInformation": "Without protection of groups from domain-spoofing emails, attackers can send spoofed messages to group mailboxes that appear to originate from the organization. Since groups distribute to many recipients, a single spoofed email can enable mass phishing, social engineering, or misinformation campaigns across the organization.",
+          "LevelOfRisk": 2,
+          "Weight": 8
+        }
+      ]
+    }
+  ]
+}
