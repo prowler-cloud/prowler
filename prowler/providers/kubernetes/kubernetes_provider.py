@@ -15,6 +15,7 @@ from prowler.config.config import (
     load_and_validate_config_file,
 )
 from prowler.lib.logger import logger
+from prowler.lib.network.ssrf import OutboundURLNotAllowedError, validate_outbound_url
 from prowler.lib.utils.utils import print_boxes
 from prowler.providers.common.models import Audit_Metadata, Connection
 from prowler.providers.common.provider import Provider
@@ -24,6 +25,7 @@ from prowler.providers.kubernetes.exceptions.exceptions import (
     KubernetesError,
     KubernetesInvalidKubeConfigFileError,
     KubernetesInvalidProviderIdError,
+    KubernetesKubeConfigServerNotAllowedError,
     KubernetesSetUpSessionError,
     KubernetesTimeoutError,
 )
@@ -255,6 +257,7 @@ class KubernetesProvider(Provider):
             if kubeconfig_content:
                 logger.info("Using kubeconfig content...")
                 config_data = safe_load(kubeconfig_content)
+                KubernetesProvider.validate_cluster_servers(config_data)
                 config.load_kube_config_from_dict(config_data, context=context)
                 if context:
                     contexts = config_data.get("contexts", [])
@@ -327,6 +330,11 @@ class KubernetesProvider(Provider):
                     api_client=ApiClient(configuration), context=context
                 )
 
+        except OutboundURLNotAllowedError as server_error:
+            logger.warning(f"Rejected kubeconfig cluster server: {server_error}")
+            raise KubernetesKubeConfigServerNotAllowedError(
+                file=os.path.abspath(__file__)
+            )
         except parser.ParserError as parser_error:
             logger.critical(
                 f"{parser_error.__class__.__name__}[{parser_error.__traceback__.tb_lineno}]: {parser_error}"
@@ -355,6 +363,14 @@ class KubernetesProvider(Provider):
             raise KubernetesSetUpSessionError(
                 original_exception=error, file=os.path.abspath(__file__)
             )
+
+    @staticmethod
+    def validate_cluster_servers(config_data: dict) -> None:
+        """Reject any cluster server URL that is not a public HTTP(S) endpoint."""
+        for cluster in (config_data or {}).get("clusters") or []:
+            server = ((cluster or {}).get("cluster") or {}).get("server")
+            if server:
+                validate_outbound_url(server, allowed_schemes=("http", "https"))
 
     @staticmethod
     def test_connection(
@@ -440,6 +456,13 @@ class KubernetesProvider(Provider):
             if raise_on_exception:
                 raise invalid_provider_id_error
             return Connection(error=invalid_provider_id_error)
+        except KubernetesKubeConfigServerNotAllowedError as server_not_allowed_error:
+            logger.critical(
+                f"KubernetesKubeConfigServerNotAllowedError[{server_not_allowed_error.__traceback__.tb_lineno}]: {server_not_allowed_error}"
+            )
+            if raise_on_exception:
+                raise server_not_allowed_error
+            return Connection(error=server_not_allowed_error)
         except KubernetesSetUpSessionError as setup_session_error:
             logger.critical(
                 f"KubernetesSetUpSessionError[{setup_session_error.__traceback__.tb_lineno}]: {setup_session_error}"
