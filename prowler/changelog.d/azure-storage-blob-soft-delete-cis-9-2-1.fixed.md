@@ -1,1 +1,1 @@
-Added the `storage_ensure_blob_soft_delete_is_enabled` check and mapped it to CIS Azure 6.0 requirement 9.2.1, so blob soft delete is no longer evaluated using the container soft delete setting checked by `storage_ensure_soft_delete_is_enabled` (CIS 9.2.2)
+`storage_ensure_blob_soft_delete_is_enabled` now maps to CIS Azure 6.0 requirement 9.2.1, so blob soft delete is no longer evaluated using the container soft delete setting checked by `storage_ensure_soft_delete_is_enabled` (CIS 9.2.2)
