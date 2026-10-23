@@ -1,0 +1,1 @@
+`organizations_delegated_administrators` no longer collapses every delegated administrator into a single organization-level finding; each account is now reported separately, with the AWS service(s) it is delegated for included in `status_extended`
