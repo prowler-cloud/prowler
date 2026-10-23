@@ -78,6 +78,7 @@ Patterns tailored for Prowler development:
 | `prowler-compliance` | Compliance framework structure |
 | `prowler-provider` | Add new cloud providers |
 | `prowler-pr` | Pull request conventions |
+| `address-review` | Address CodeRabbit review findings on a PR |
 | `prowler-docs` | Documentation style guide |
 | `prowler-attack-paths-query` | Create Attack Paths openCypher queries |
 
