@@ -119,11 +119,25 @@ def create_region_dropdown_compliance(regions: list) -> html.Div:
     )
 
 
+def to_dropdown_options(items: list) -> list:
+    """
+    Normalize dropdown items to {"label", "value"} dicts.
+    Args:
+        items (list): Plain strings or {"label", "value"} dicts.
+    Returns:
+        list: Items as {"label", "value"} dicts.
+    """
+    return [
+        item if isinstance(item, dict) else {"label": item, "value": item}
+        for item in items
+    ]
+
+
 def create_account_dropdown(accounts: list) -> html.Div:
     """
     Dropdown to select the account.
     Args:
-        accounts (list): List of accounts.
+        accounts (list): List of accounts, as plain strings or {"label", "value"} dicts.
     Returns:
         html.Div: Dropdown to select the account.
     """
@@ -135,7 +149,7 @@ def create_account_dropdown(accounts: list) -> html.Div:
             ),
             dcc.Dropdown(
                 id="cloud-account-filter",
-                options=[{"label": account, "value": account} for account in accounts],
+                options=to_dropdown_options(accounts),
                 value=["All"],  # Initial selection is ALL
                 clearable=False,
                 multi=True,
@@ -149,7 +163,7 @@ def create_account_dropdown_compliance(accounts: list) -> html.Div:
     """
     Dropdown to select the account.
     Args:
-        accounts (list): List of accounts.
+        accounts (list): List of accounts, as plain strings or {"label", "value"} dicts.
     Returns:
         html.Div: Dropdown to select the account.
     """
@@ -161,7 +175,7 @@ def create_account_dropdown_compliance(accounts: list) -> html.Div:
             ),
             dcc.Dropdown(
                 id="cloud-account-filter-compliance",
-                options=[{"label": account, "value": account} for account in accounts],
+                options=to_dropdown_options(accounts),
                 value=["All"],  # Initial selection is ALL
                 clearable=False,
                 multi=True,
