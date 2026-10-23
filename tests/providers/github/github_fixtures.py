@@ -14,6 +14,7 @@ OAUTH_TOKEN = "oauth-token"
 APP_ID = "app-id"
 APP_NAME = "app-name"
 APP_KEY = "app-key"
+INSTALLATION_TOKEN = "ghs_installation-token"
 
 
 # Mocked GitHub Provider
