@@ -3,7 +3,16 @@ from prowler.providers.azure.services.keyvault.keyvault_client import keyvault_c
 
 
 class keyvault_key_rotation_enabled(Check):
-    def execute(self) -> Check_Report_Azure:
+    """Evaluate key rotation while distinguishing unavailable policy data."""
+
+    def execute(self) -> list[Check_Report_Azure]:
+        """Evaluate the rotation policy of every listed Key Vault key.
+
+        Returns:
+            One finding per key: PASS when its rotation policy includes a
+            Rotate action, FAIL when it does not, and MANUAL when the key's
+            Azure Resource Manager details could not be retrieved.
+        """
         findings = []
         for subscription, key_vaults in keyvault_client.key_vaults.items():
             subscription_name = keyvault_client.subscriptions.get(
@@ -13,7 +22,10 @@ class keyvault_key_rotation_enabled(Check):
                 for key in keyvault.keys or []:
                     report = Check_Report_Azure(metadata=self.metadata(), resource=key)
                     report.subscription = subscription
-                    if (
+                    if not key.rotation_policy_accessible:
+                        report.status = "MANUAL"
+                        report.status_extended = f"Cannot evaluate the rotation policy of key {key.name} in Key Vault {keyvault.name} from subscription {subscription_name} ({subscription}) because its Azure Resource Manager details could not be retrieved. Verify Microsoft.KeyVault/vaults/keys/read permission and ARM API availability."
+                    elif (
                         key.rotation_policy
                         and key.rotation_policy.lifetime_actions
                         and any(
