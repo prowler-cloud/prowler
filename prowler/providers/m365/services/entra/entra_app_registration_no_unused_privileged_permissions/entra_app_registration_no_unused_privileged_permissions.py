@@ -15,7 +15,8 @@ class entra_app_registration_no_unused_privileged_permissions(Check):
 
     - PASS: The app has no unused privileged permissions.
     - FAIL: The app has one or more unused privileged permissions that should be revoked.
-      It also fails when OAuth App Governance data is not available.
+    - MANUAL: OAuth App Governance data is not available (App Governance not enabled or
+      missing permission), so the check cannot be evaluated.
     """
 
     # InUse field values from OAuthAppInfo:
@@ -47,11 +48,12 @@ class entra_app_registration_no_unused_privileged_permissions(Check):
                 resource_name="OAuth Applications",
                 resource_id="oauthApps",
             )
-            report.status = "FAIL"
+            report.status = "MANUAL"
             report.status_extended = (
-                "OAuth App Governance data is unavailable. "
-                "Enable App Governance in Microsoft Defender for Cloud Apps and "
-                "grant ThreatHunting.Read.All to evaluate unused privileged permissions."
+                "Cannot evaluate unused privileged permissions: OAuth App "
+                "Governance data is unavailable. Enable App Governance in "
+                "Microsoft Defender for Cloud Apps and grant the "
+                "ThreatHunting.Read.All permission to the scanning application."
             )
             findings.append(report)
             return findings

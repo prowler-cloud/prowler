@@ -1,10 +1,12 @@
 import {
   Code,
   CreditCard,
+  Crosshair,
   FileText,
   GitBranch,
   LayoutGrid,
   MessageCircleQuestion,
+  Package,
   Settings,
   ShieldCheck,
   SquareChartGantt,
@@ -32,6 +34,9 @@ interface NavigationConfigOptions {
   pathname: string;
   apiDocsUrl?: string | null;
   cloudBillingEnabled?: boolean;
+  registryEligible?: boolean;
+  // PostHog FEATURE_FLAG.ISSUES, resolved by the caller; Cloud only.
+  issuesEnabled?: boolean;
   permissions?: RolePermissionAttributes;
 }
 
@@ -63,7 +68,6 @@ function getCloudFeature({
     href,
     label,
     active,
-    highlight: true,
   };
 }
 
@@ -108,6 +112,8 @@ export function getNavigationConfig({
   pathname,
   apiDocsUrl = null,
   cloudBillingEnabled = false,
+  registryEligible = false,
+  issuesEnabled = false,
   permissions,
 }: NavigationConfigOptions): NavigationSection[] {
   const isCloudEnvironment = isCloud();
@@ -157,6 +163,18 @@ export function getNavigationConfig({
           icon: Tag,
           active: isRouteActive(pathname, "/findings"),
         },
+        ...(isCloudEnvironment && issuesEnabled
+          ? [
+              {
+                kind: NAVIGATION_ITEM_KIND.LINK,
+                href: "/issues",
+                label: "Issues",
+                icon: Crosshair,
+                active: isRouteActive(pathname, "/issues"),
+                highlight: true,
+              } as const,
+            ]
+          : []),
         {
           kind: NAVIGATION_ITEM_KIND.LINK,
           href: "/attack-paths",
@@ -180,6 +198,18 @@ export function getNavigationConfig({
           icon: Warehouse,
           active: isRouteActive(pathname, "/resources"),
         },
+        ...(registryEligible
+          ? [
+              {
+                kind: NAVIGATION_ITEM_KIND.LINK,
+                href: "/registry",
+                label: "Registry",
+                icon: Package,
+                active: isRouteActive(pathname, "/registry"),
+                highlight: true,
+              } as const,
+            ]
+          : []),
       ],
     },
     {

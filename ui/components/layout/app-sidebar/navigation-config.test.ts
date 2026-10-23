@@ -106,7 +106,40 @@ describe("getNavigationConfig", () => {
     );
   });
 
-  it("uses Cloud destinations and current New badges", () => {
+  it("hides Issues in Cloud until the feature flag resolves on", () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
+
+    // When
+    const labels = getNavigationConfig({
+      pathname: "/",
+      apiDocsUrl: null,
+    })
+      .flatMap((section) => section.items)
+      .map((item) => item.label);
+
+    // Then
+    expect(labels).not.toContain("Issues");
+  });
+
+  it("never shows Issues in Local Server, even with the flag on", () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
+
+    // When
+    const labels = getNavigationConfig({
+      pathname: "/",
+      apiDocsUrl: null,
+      issuesEnabled: true,
+    })
+      .flatMap((section) => section.items)
+      .map((item) => item.label);
+
+    // Then
+    expect(labels).not.toContain("Issues");
+  });
+
+  it("uses Cloud destinations and keeps Configuration children unbadged", () => {
     // Given
     vi.stubEnv("UI_CLOUD_ENABLED", "true");
 
@@ -114,6 +147,7 @@ describe("getNavigationConfig", () => {
     const sections = getNavigationConfig({
       pathname: "/scans/config",
       apiDocsUrl: "https://ignored.example/docs",
+      issuesEnabled: true,
     });
     const items = sections.flatMap((section) => section.items);
     const configuration = items.find((item) => item.label === "Configuration");
@@ -124,17 +158,22 @@ describe("getNavigationConfig", () => {
 
     // Then
     expect(sections[0]?.items.map((item) => item.label)).toEqual(["Overview"]);
+    expect(items.find((item) => item.label === "Issues")).toMatchObject({
+      href: "/issues",
+    });
     expect(configuration.children).not.toEqual(
       expect.arrayContaining([
         expect.objectContaining({ label: "CLI Import" }),
       ]),
     );
-    expect(
-      configuration.children.find((item) => item.label === "Alerts"),
-    ).toEqual(expect.objectContaining({ highlight: true }));
-    expect(
-      configuration.children.find((item) => item.label === "Scans"),
-    ).toEqual(expect.objectContaining({ active: true, highlight: true }));
+    const alerts = configuration.children.find(
+      (item) => item.label === "Alerts",
+    );
+    const scans = configuration.children.find((item) => item.label === "Scans");
+    expect(alerts).toMatchObject({ href: "/alerts" });
+    expect(alerts).not.toHaveProperty("highlight");
+    expect(scans).toMatchObject({ href: "/scans/config", active: true });
+    expect(scans).not.toHaveProperty("highlight");
     expect(items.find((item) => item.label === "Attack Paths")).not.toEqual(
       expect.objectContaining({ highlight: true }),
     );

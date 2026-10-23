@@ -3,20 +3,27 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ChevronLeftIcon, ChevronRightIcon, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { Dispatch, SetStateAction, useEffect, useState } from "react";
+import { Dispatch, SetStateAction, useEffect, useRef, useState } from "react";
 import { useForm, UseFormReturn } from "react-hook-form";
-import { z } from "zod";
 
-import { addProvider } from "@/actions/providers/providers";
-import { AwsMethodSelector } from "@/components/providers/organizations/aws-method-selector";
+import { addProvider, updateProvider } from "@/actions/providers/providers";
+import { addRegistryProvider } from "@/actions/providers/registry-provider";
 import { AzureMethodSelector } from "@/components/providers/organizations/azure-method-selector";
 import { GcpMethodSelector } from "@/components/providers/organizations/gcp-method-selector";
 import { WizardInputField } from "@/components/providers/workflow/forms/fields";
 import { ProviderTitleDocs } from "@/components/providers/workflow/provider-title-docs";
-import { Button, useToast } from "@/components/shadcn";
-import { Form } from "@/components/shadcn/form";
 import {
-  addProviderFormSchema,
+  RegistryUpgradePrompt,
+  RegistrySetupPrompt,
+} from "@/components/registry/registry-upgrade-prompt";
+import { Button, useToast } from "@/components/shadcn";
+import { Alert, AlertDescription, AlertTitle } from "@/components/shadcn/alert";
+import { Form } from "@/components/shadcn/form";
+import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
+import { REGISTRY_PROVIDER_DISCOVERY } from "@/lib/registry/provider-options";
+import {
+  createAddProviderFormSchema,
+  AddProviderFormValues,
   ApiError,
   KnownProviderType,
   ProviderType,
@@ -26,10 +33,13 @@ import {
   OrgFlowType,
   toOrgFlowType,
 } from "@/types/organizations";
+import { isKnownProviderType } from "@/types/providers";
 
 import { RadioGroupProvider } from "../../radio-group-provider";
 
-export type FormValues = z.infer<typeof addProviderFormSchema>;
+import { useRegistryProviderDiscovery } from "./use-registry-provider-discovery";
+
+export type FormValues = AddProviderFormValues;
 
 export interface ConnectAccountSuccessData {
   id: string;
@@ -40,12 +50,13 @@ export interface ConnectAccountSuccessData {
 
 /**
  * Provider types that offer an organization-onboarding method choice: exactly the
- * ones with an onboarding flow, so a new flow type cannot miss the fork.
+ * ones with an onboarding flow, so a new flow type cannot miss the fork. AWS is the
+ * exception: the wizard's own AWS step hosts its single-account/organization switch.
  */
 function providerHasOrgMethod(
   providerType: ProviderType | undefined,
 ): providerType is OrgFlowType {
-  return toOrgFlowType(providerType) !== undefined;
+  return providerType !== "aws" && toOrgFlowType(providerType) !== undefined;
 }
 
 interface ConnectAccountFormProps {
@@ -209,7 +220,28 @@ export const ConnectAccountForm = ({
   const [method, setMethod] = useState<"single" | null>(null);
   const router = useRouter();
 
-  const formSchema = addProviderFormSchema;
+  const {
+    result: registryDiscovery,
+    isRetryingDiscovery,
+    retryDiscovery,
+  } = useRegistryProviderDiscovery();
+  const registryOptions =
+    registryDiscovery?.status === REGISTRY_PROVIDER_DISCOVERY.READY
+      ? registryDiscovery.options
+      : [];
+  const registryAvailable =
+    registryDiscovery?.status === REGISTRY_PROVIDER_DISCOVERY.READY ||
+    registryDiscovery?.status === REGISTRY_PROVIDER_DISCOVERY.ERROR;
+  const registryError =
+    registryDiscovery?.status === REGISTRY_PROVIDER_DISCOVERY.ERROR ||
+    registryDiscovery?.status === REGISTRY_PROVIDER_DISCOVERY.UNKNOWN;
+  const [providerError, setProviderError] = useState<string | null>(null);
+  const submitting = useRef(false);
+  const createdAccount = useRef<ConnectAccountSuccessData | null>(null);
+
+  const formSchema = createAddProviderFormSchema(
+    registryOptions.map((option) => option.type),
+  );
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -229,6 +261,22 @@ export const ConnectAccountForm = ({
   const isLoading = form.formState.isSubmitting;
 
   const onSubmitClient = async (values: FormValues) => {
+    if (submitting.current) return;
+    const existingAccount =
+      createdAccount.current?.providerType === values.providerType &&
+      createdAccount.current.uid === values.providerUid
+        ? createdAccount.current
+        : null;
+    if (
+      existingAccount &&
+      (existingAccount.alias ?? "") === (values.providerAlias?.trim() ?? "") &&
+      onSuccess
+    ) {
+      onSuccess(existingAccount);
+      return;
+    }
+    submitting.current = true;
+    setProviderError(null);
     const formValues = { ...values };
 
     const formData = new FormData();
@@ -237,7 +285,20 @@ export const ConnectAccountForm = ({
     );
 
     try {
-      const data = await addProvider(formData);
+      let data;
+      if (existingAccount) {
+        const update = new FormData();
+        update.set(ProviderCredentialFields.PROVIDER_ID, existingAccount.id);
+        update.set(
+          ProviderCredentialFields.PROVIDER_ALIAS,
+          values.providerAlias?.trim() ?? "",
+        );
+        data = await updateProvider(update);
+      } else {
+        data = await (isKnownProviderType(values.providerType)
+          ? addProvider(formData)
+          : addRegistryProvider(formData));
+      }
 
       if (data?.errors && data.errors.length > 0) {
         data.errors.forEach((error: ApiError) => {
@@ -246,10 +307,9 @@ export const ConnectAccountForm = ({
 
           switch (pointer) {
             case "/data/attributes/provider":
-              form.setError("providerType", {
-                type: "server",
-                message: errorMessage,
-              });
+              // Provider selection is hidden here; keep failures visible and
+              // retryable when availability changes without editing the form.
+              setProviderError(errorMessage);
               break;
             case "/data/attributes/uid":
             case "/data/attributes/__all__":
@@ -280,12 +340,13 @@ export const ConnectAccountForm = ({
         } = data.data;
 
         if (onSuccess) {
-          onSuccess({
+          createdAccount.current = {
             id,
             providerType: createdProviderType,
             uid: uid || values.providerUid,
             alias: alias ?? values.providerAlias ?? null,
-          });
+          };
+          onSuccess(createdAccount.current);
           return;
         }
 
@@ -301,10 +362,13 @@ export const ConnectAccountForm = ({
             ? error.message
             : "Something went wrong. Please try again.",
       });
+    } finally {
+      submitting.current = false;
     }
   };
 
   const handleBackStep = () => {
+    setProviderError(null);
     applyBackStep({
       prevStep,
       method,
@@ -327,6 +391,7 @@ export const ConnectAccountForm = ({
 
   useEffect(() => {
     onBackHandlerChange?.(() => {
+      setProviderError(null);
       applyBackStep({
         prevStep,
         method,
@@ -352,7 +417,7 @@ export const ConnectAccountForm = ({
     onUiStateChange?.({
       showBack: prevStep === 2,
       showAction: prevStep === 2 && showUidForm,
-      actionLabel: "Next",
+      actionLabel: isLoading ? "Creating provider..." : "Next",
       actionDisabled: !canSubmit || isLoading,
       isLoading,
     });
@@ -375,24 +440,40 @@ export const ConnectAccountForm = ({
         {/* Step 1: Provider selection */}
         {prevStep === 1 && (
           <div data-tour-id="add-provider-provider-type">
+            {registryDiscovery?.status ===
+              REGISTRY_PROVIDER_DISCOVERY.SUBSCRIPTION_REQUIRED && (
+              <RegistryUpgradePrompt />
+            )}
+            {registryDiscovery?.status ===
+              REGISTRY_PROVIDER_DISCOVERY.ONBOARDING && <RegistrySetupPrompt />}
+            {registryError && (
+              <Alert variant="warning">
+                <AlertTitle>Registry providers could not be loaded</AlertTitle>
+                <AlertDescription>
+                  Built-in providers are available. Check the Registry
+                  connection and try again.
+                  {/* aria-disabled, not disabled: the pressed button keeps focus. */}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    aria-disabled={isRetryingDiscovery}
+                    onClick={retryDiscovery}
+                  >
+                    {isRetryingDiscovery
+                      ? "Retrying…"
+                      : "Retry Registry providers"}
+                  </Button>
+                </AlertDescription>
+              </Alert>
+            )}
             <RadioGroupProvider
+              registryAvailable={registryAvailable}
+              registryOptions={registryOptions}
               control={form.control}
               isInvalid={!!form.formState.errors.providerType}
               errorMessage={form.formState.errors.providerType?.message}
             />
           </div>
-        )}
-        {/* Step 2: AWS method selector (before choosing a method) */}
-        {prevStep === 2 && providerType === "aws" && method === null && (
-          <>
-            <ProviderTitleDocs providerType={providerType} />
-            <AwsMethodSelector
-              onSelectSingle={() => setMethod("single")}
-              onSelectOrganizations={() =>
-                onSelectOrganizations?.(ORGANIZATION_TYPE.AWS)
-              }
-            />
-          </>
         )}
         {/* Step 2: Azure method selector (before choosing a method) */}
         {prevStep === 2 && providerType === "azure" && method === null && (
@@ -423,6 +504,12 @@ export const ConnectAccountForm = ({
         {prevStep === 2 && showUidForm && (
           <>
             <ProviderTitleDocs providerType={providerType} />
+            {providerError && (
+              <Alert variant="destructive">
+                <AlertTitle>Unable to create provider</AlertTitle>
+                <AlertDescription>{providerError}</AlertDescription>
+              </Alert>
+            )}
             <WizardInputField
               control={form.control}
               name="providerUid"
@@ -465,13 +552,14 @@ export const ConnectAccountForm = ({
                 variant="default"
                 size="lg"
                 disabled={isLoading}
+                aria-busy={isLoading || undefined}
               >
                 {isLoading ? (
-                  <Loader2 className="animate-spin" />
+                  <Loader2 aria-hidden className="animate-spin" />
                 ) : (
                   <ChevronRightIcon size={24} />
                 )}
-                {isLoading ? "Loading" : "Next"}
+                {isLoading ? "Creating provider..." : "Next"}
               </Button>
             )}
           </div>

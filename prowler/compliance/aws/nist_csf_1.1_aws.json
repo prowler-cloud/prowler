@@ -20,7 +20,6 @@
       "Checks": [
         "apigateway_restapi_logging_enabled",
         "cloudtrail_multi_region_enabled",
-        "cloudtrail_multi_region_enabled",
         "cloudtrail_cloudwatch_logging_enabled",
         "elbv2_logging_enabled",
         "elb_logging_enabled",
@@ -29,8 +28,7 @@
         "ec2_securitygroup_default_restrict_traffic",
         "vpc_flow_logs_enabled",
         "ec2_networkacl_allow_ingress_any_port",
-        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
-        "ec2_networkacl_allow_ingress_any_port"
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22"
       ]
     },
     {
@@ -81,7 +79,6 @@
         "cloudtrail_multi_region_enabled",
         "cloudtrail_s3_dataevents_read_enabled",
         "cloudtrail_s3_dataevents_write_enabled",
-        "cloudtrail_multi_region_enabled",
         "cloudtrail_cloudwatch_logging_enabled",
         "elbv2_logging_enabled",
         "elb_logging_enabled",
@@ -106,7 +103,6 @@
         "cloudtrail_multi_region_enabled",
         "cloudtrail_s3_dataevents_read_enabled",
         "cloudtrail_s3_dataevents_write_enabled",
-        "cloudtrail_multi_region_enabled",
         "elbv2_logging_enabled",
         "elb_logging_enabled",
         "guardduty_is_enabled",
@@ -165,7 +161,6 @@
         "cloudtrail_multi_region_enabled",
         "cloudtrail_s3_dataevents_read_enabled",
         "cloudtrail_s3_dataevents_write_enabled",
-        "cloudtrail_multi_region_enabled",
         "elbv2_logging_enabled",
         "elb_logging_enabled",
         "guardduty_is_enabled",
@@ -259,7 +254,6 @@
         "cloudtrail_multi_region_enabled",
         "cloudtrail_s3_dataevents_read_enabled",
         "cloudtrail_s3_dataevents_write_enabled",
-        "cloudtrail_multi_region_enabled",
         "guardduty_is_enabled",
         "s3_bucket_server_access_logging_enabled",
         "securityhub_enabled"
@@ -365,7 +359,6 @@
         "cloudtrail_multi_region_enabled",
         "cloudtrail_s3_dataevents_read_enabled",
         "cloudtrail_s3_dataevents_write_enabled",
-        "cloudtrail_multi_region_enabled",
         "guardduty_is_enabled",
         "s3_bucket_server_access_logging_enabled",
         "securityhub_enabled"
@@ -402,7 +395,6 @@
         "cloudtrail_multi_region_enabled",
         "cloudtrail_s3_dataevents_read_enabled",
         "cloudtrail_s3_dataevents_write_enabled",
-        "cloudtrail_multi_region_enabled",
         "elbv2_logging_enabled",
         "elb_logging_enabled",
         "guardduty_is_enabled",
@@ -536,7 +528,6 @@
       ],
       "Checks": [
         "apigateway_restapi_logging_enabled",
-        "cloudtrail_multi_region_enabled",
         "cloudtrail_multi_region_enabled",
         "elbv2_logging_enabled",
         "elb_logging_enabled",
@@ -838,7 +829,6 @@
         "iam_root_hardware_mfa_enabled",
         "iam_root_mfa_enabled",
         "iam_user_mfa_enabled_console_access",
-        "iam_user_mfa_enabled_console_access",
         "awslambda_function_not_publicly_accessible",
         "awslambda_function_url_public",
         "rds_instance_no_public_access",
@@ -850,8 +840,7 @@
         "sagemaker_notebook_instance_without_direct_internet_access_configured",
         "ec2_securitygroup_default_restrict_traffic",
         "ec2_networkacl_allow_ingress_any_port",
-        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
-        "ec2_networkacl_allow_ingress_any_port"
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22"
       ]
     },
     {
@@ -908,8 +897,7 @@
         "sagemaker_notebook_instance_without_direct_internet_access_configured",
         "ec2_securitygroup_default_restrict_traffic",
         "ec2_networkacl_allow_ingress_any_port",
-        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
-        "ec2_networkacl_allow_ingress_any_port"
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22"
       ]
     },
     {
@@ -925,7 +913,6 @@
         }
       ],
       "Checks": [
-        "cloudtrail_multi_region_enabled",
         "cloudtrail_multi_region_enabled",
         "redshift_cluster_audit_logging",
         "s3_bucket_server_access_logging_enabled"
@@ -946,7 +933,6 @@
       "Checks": [
         "iam_root_hardware_mfa_enabled",
         "iam_root_mfa_enabled",
-        "iam_user_mfa_enabled_console_access",
         "iam_user_mfa_enabled_console_access"
       ]
     },
@@ -1047,7 +1033,6 @@
         "cloudtrail_multi_region_enabled",
         "cloudtrail_s3_dataevents_read_enabled",
         "cloudtrail_s3_dataevents_write_enabled",
-        "cloudtrail_multi_region_enabled",
         "ec2_ebs_public_snapshot",
         "elbv2_logging_enabled",
         "elb_logging_enabled",
@@ -1247,7 +1232,6 @@
         "s3_bucket_public_access",
         "s3_bucket_policy_public_write_access",
         "s3_account_level_public_access_blocks",
-        "s3_bucket_public_access",
         "sagemaker_notebook_instance_without_direct_internet_access_configured"
       ]
     },
@@ -1265,13 +1249,10 @@
       ],
       "Checks": [
         "dynamodb_tables_pitr_enabled",
-        "dynamodb_tables_pitr_enabled",
-        "efs_have_backup_enabled",
         "efs_have_backup_enabled",
         "elbv2_deletion_protection",
         "rds_instance_backup_enabled",
         "rds_instance_multi_az",
-        "rds_instance_backup_enabled",
         "redshift_cluster_automated_snapshot",
         "s3_bucket_object_versioning"
       ]
@@ -1291,7 +1272,6 @@
       "Checks": [
         "config_recorder_all_regions_enabled",
         "ec2_instance_managed_by_ssm",
-        "ssm_managed_compliant_patching",
         "ssm_managed_compliant_patching"
       ],
       "ConfigRequirements": [
@@ -1316,7 +1296,6 @@
         }
       ],
       "Checks": [
-        "cloudtrail_multi_region_enabled",
         "cloudtrail_multi_region_enabled"
       ]
     },
@@ -1334,7 +1313,6 @@
       ],
       "Checks": [
         "apigateway_restapi_logging_enabled",
-        "cloudtrail_multi_region_enabled",
         "cloudtrail_multi_region_enabled",
         "cloudtrail_cloudwatch_logging_enabled",
         "elbv2_logging_enabled",
@@ -1386,8 +1364,7 @@
         "rds_instance_no_public_access",
         "redshift_cluster_public_access",
         "ec2_networkacl_allow_ingress_any_port",
-        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
-        "ec2_networkacl_allow_ingress_any_port"
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22"
       ]
     },
     {
@@ -1410,12 +1387,12 @@
       ]
     },
     {
-      "Id": "rp_1",
+      "Id": "rc_rp_1",
       "Name": "RC.RP-1",
       "Description": "Recovery plan is executed during or after a cybersecurity incident.",
       "Attributes": [
         {
-          "ItemId": "rp_1",
+          "ItemId": "rc_rp_1",
           "Section": "Recover (RC)",
           "SubSection": "Recovery Planning (RC.RP)",
           "Service": "aws"
@@ -1423,14 +1400,10 @@
       ],
       "Checks": [
         "dynamodb_tables_pitr_enabled",
-        "dynamodb_tables_pitr_enabled",
-        "efs_have_backup_enabled",
         "efs_have_backup_enabled",
         "elbv2_deletion_protection",
         "rds_instance_backup_enabled",
-        "rds_instance_backup_enabled",
         "rds_instance_multi_az",
-        "rds_instance_backup_enabled",
         "redshift_cluster_automated_snapshot",
         "s3_bucket_object_versioning"
       ]
@@ -1481,14 +1454,10 @@
       ],
       "Checks": [
         "dynamodb_tables_pitr_enabled",
-        "dynamodb_tables_pitr_enabled",
-        "efs_have_backup_enabled",
         "efs_have_backup_enabled",
         "elbv2_deletion_protection",
         "rds_instance_backup_enabled",
-        "rds_instance_backup_enabled",
         "rds_instance_multi_az",
-        "rds_instance_backup_enabled",
         "redshift_cluster_automated_snapshot",
         "s3_bucket_object_versioning"
       ]

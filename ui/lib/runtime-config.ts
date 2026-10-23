@@ -8,7 +8,7 @@ import {
   readGatedEnv,
 } from "@/lib/integrations";
 import { type RuntimePublicConfig } from "@/lib/runtime-config.shared";
-import { readBoolEnv, readEnv } from "@/lib/runtime-env";
+import { readBoolEnv, readEnv, readOptOutEnv } from "@/lib/runtime-env";
 
 // `connection()` forces a per-request runtime read (never build-snapshotted);
 // only this allowlist reaches the client. Each migrated key falls back to its
@@ -43,13 +43,16 @@ export async function getRuntimePublicConfig(): Promise<RuntimePublicConfig> {
       "UI_POSTHOG_KEY",
       "POSTHOG_KEY",
     ),
-    posthogHost: readGatedEnv(
+    posthogIngestionHost: readGatedEnv(
       "UI_POSTHOG_ENABLED",
       "UI_POSTHOG_HOST",
       "POSTHOG_HOST",
     ),
+    posthogUiHost: readGatedEnv("UI_POSTHOG_ENABLED", "UI_POSTHOG_UI_HOST"),
     reoDevClientId: readEnv("REO_DEV_CLIENT_ID"),
     cloudEnabled: readBoolEnv("UI_CLOUD_ENABLED"),
+    // Off only when explicitly "false": invited users can still register.
+    selfRegistrationEnabled: readOptOutEnv("UI_SELF_REGISTRATION_ENABLED"),
     // Install-level selector "legacy" | "metronome" | "false"; the client only
     // needs on/off, so expose a derived boolean (the raw selector is read
     // server-side for V1/V2 routing). Default (unset) is off.

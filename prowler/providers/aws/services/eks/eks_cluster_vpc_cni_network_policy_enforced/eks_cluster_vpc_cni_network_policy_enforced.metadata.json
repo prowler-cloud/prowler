@@ -1,0 +1,42 @@
+{
+  "Provider": "aws",
+  "CheckID": "eks_cluster_vpc_cni_network_policy_enforced",
+  "CheckTitle": "EKS cluster enforces Kubernetes network policies through the Amazon VPC CNI add-on",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices/Network Reachability",
+    "TTPs/Lateral Movement"
+  ],
+  "ServiceName": "eks",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "AwsEksCluster",
+  "ResourceGroup": "container",
+  "Description": "**Amazon EKS clusters** are evaluated for whether the **Amazon VPC CNI** managed add-on sets `enableNetworkPolicy` to `true`, which is what makes the CNI enforce Kubernetes `NetworkPolicy` resources. The policy objects themselves live in the cluster and are not exposed by the EKS API, so only this enforcement precondition is verified.",
+  "Risk": "Without CNI **network policy enforcement** every `NetworkPolicy` an operator authors is inert, so pods reach every other pod and service in the cluster. That unrestricted east-west path lets one compromised container move **laterally** to sidecars, tool executors and internal APIs, widening the blast radius and easing **data exfiltration**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/eks/latest/userguide/cni-network-policy.html",
+    "https://docs.aws.amazon.com/eks/latest/APIReference/API_UpdateAddon.html",
+    "https://docs.aws.amazon.com/eks/latest/userguide/updating-an-add-on.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aws eks update-addon --cluster-name <example_cluster_name> --addon-name vpc-cni --resolve-conflicts PRESERVE --configuration-values '{\"enableNetworkPolicy\":\"true\"}'",
+      "NativeIaC": "```yaml\n# CloudFormation: enable network policy enforcement in the VPC CNI add-on\nResources:\n  <example_resource_name>:\n    Type: AWS::EKS::Addon\n    Properties:\n      ClusterName: <example_cluster_name>\n      AddonName: vpc-cni\n      ResolveConflicts: PRESERVE\n      ConfigurationValues: '{\"enableNetworkPolicy\":\"true\"}'  # critical: makes the CNI enforce NetworkPolicy resources\n```",
+      "Other": "1. Open the AWS Console and go to EKS > Clusters\n2. Select <your cluster> and open the Add-ons tab\n3. Select the Amazon VPC CNI add-on and click Edit\n4. Expand Optional configuration settings and set enableNetworkPolicy to \"true\" in the configuration values\n5. Click Save changes",
+      "Terraform": "```hcl\n# Enable network policy enforcement in the VPC CNI managed add-on\nresource \"aws_eks_addon\" \"<example_resource_name>\" {\n  cluster_name                = \"<example_cluster_name>\"\n  addon_name                  = \"vpc-cni\"\n  resolve_conflicts_on_update = \"PRESERVE\"\n\n  configuration_values = jsonencode({\n    enableNetworkPolicy = \"true\"  # critical: makes the CNI enforce NetworkPolicy resources\n  })\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Set `enableNetworkPolicy` to `true` on the Amazon VPC CNI add-on, then author `NetworkPolicy` resources that allow each workload only its declared dependencies, ideally with `strict` enforcement mode so traffic is denied until the policy is in place. Layer security groups for Pods to reach VPC resources such as databases.",
+      "Url": "https://hub.prowler.com/check/eks_cluster_vpc_cni_network_policy_enforced"
+    }
+  },
+  "Categories": [
+    "trust-boundaries",
+    "cluster-security"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "The EKS API exposes only the add-on setting, not the Kubernetes NetworkPolicy resources, so a PASS is the enforcement precondition rather than proof that pod-to-pod traffic is restricted. A FAIL is a statement about the managed add-on, not about the cluster: two documented architectures enforce network policies with this setting false and neither is visible to the EKS API. A third-party policy engine -- the EKS Best Practices Guide recommends Calico and Cilium in its 'ThirdParty Network Policy Engines' section (eks/latest/best-practices/network-security.html) -- would correctly leave it false, since two enforcers are not run together. And a self-managed VPC CNI can be enabled by Helm or by the amazon-vpc-cni ConfigMap key enable-network-policy-controller with the aws-node DaemonSet, two of the three paths AWS documents (eks/latest/userguide/cni-network-policy-configure.html); only the managed add-on path is readable here. A cluster with no vpc-cni managed add-on at all reports MANUAL for the same reason. Detecting Calico or Cilium is deliberately not attempted, because any signal would be a guess presented as a measurement."
+}

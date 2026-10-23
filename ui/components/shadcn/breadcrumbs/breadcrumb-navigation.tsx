@@ -1,9 +1,23 @@
 "use client";
 
-import { Icon } from "@iconify/react";
+import {
+  BellRing,
+  Cloud,
+  Database,
+  GitBranch,
+  Key,
+  Layers,
+  Puzzle,
+  Search,
+  Server,
+  ShieldCheck,
+  Timer,
+  Users,
+  UsersRound,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { ReactNode } from "react";
+import type { ReactElement, ReactNode } from "react";
 
 import { LighthouseIcon } from "@/components/icons/Icons";
 import { buildPerScanComplianceHref } from "@/lib/compliance/compliance-tab-url";
@@ -12,7 +26,7 @@ import { cn } from "@/lib/utils";
 export interface CustomBreadcrumbItem {
   name: string;
   path?: string;
-  icon?: string | ReactNode;
+  icon?: ReactElement;
   isLast?: boolean;
   isClickable?: boolean;
   onClick?: () => void;
@@ -21,7 +35,7 @@ export interface CustomBreadcrumbItem {
 interface BreadcrumbNavigationProps {
   mode?: "auto" | "custom" | "hybrid";
   title?: string;
-  icon?: string | ReactNode;
+  icon?: ReactElement;
   titleAction?: ReactNode;
   customItems?: CustomBreadcrumbItem[];
   className?: string;
@@ -43,21 +57,21 @@ export function BreadcrumbNavigation({
   const searchParams = useSearchParams();
 
   const generateAutoBreadcrumbs = (): CustomBreadcrumbItem[] => {
-    const pathIconMapping: Record<string, string | ReactNode> = {
-      "/integrations": "lucide:puzzle",
-      "/alerts": "lucide:bell-ring",
-      "/providers": "lucide:cloud",
-      "/users": "lucide:users",
-      "/compliance": "lucide:shield-check",
-      "/findings": "lucide:search",
-      "/scans": "lucide:timer",
-      "/roles": "lucide:key",
-      "/resources": "lucide:database",
+    const pathIconMapping: Record<string, ReactElement> = {
+      "/integrations": <Puzzle />,
+      "/alerts": <BellRing />,
+      "/providers": <Cloud />,
+      "/users": <Users />,
+      "/compliance": <ShieldCheck />,
+      "/findings": <Search />,
+      "/scans": <Timer />,
+      "/roles": <Key />,
+      "/resources": <Database />,
       "/lighthouse": <LighthouseIcon />,
-      "/manage-groups": "lucide:users-2",
-      "/services": "lucide:server",
-      "/workloads": "lucide:layers",
-      "/attack-paths": "lucide:git-branch",
+      "/manage-groups": <UsersRound />,
+      "/services": <Server />,
+      "/workloads": <Layers />,
+      "/attack-paths": <GitBranch />,
     };
 
     const pathSegments = pathname
@@ -116,15 +130,8 @@ export function BreadcrumbNavigation({
     showIcon: boolean = true,
   ) => (
     <div className="flex items-center gap-2">
-      {showIcon && typeof icon === "string" ? (
-        <Icon
-          className="text-text-neutral-primary"
-          height={24}
-          icon={icon}
-          width={24}
-        />
-      ) : showIcon && icon ? (
-        <div className="flex h-8 w-8 items-center justify-center *:h-full *:w-full">
+      {showIcon && icon ? (
+        <div className="text-text-neutral-primary flex shrink-0 items-center justify-center">
           {icon}
         </div>
       ) : null}
@@ -170,20 +177,10 @@ export function BreadcrumbNavigation({
                   href={buildNavigationUrl(breadcrumb.path)}
                   className="flex cursor-pointer items-center gap-2"
                 >
-                  {index === 0 &&
-                  breadcrumb.icon &&
-                  typeof breadcrumb.icon === "string" ? (
-                    <Icon
-                      aria-hidden="true"
-                      className="text-text-neutral-primary"
-                      height={24}
-                      icon={breadcrumb.icon}
-                      width={24}
-                    />
-                  ) : index === 0 && breadcrumb.icon ? (
-                    <div className="flex h-6 w-6 items-center justify-center *:h-full *:w-full">
+                  {index === 0 && breadcrumb.icon ? (
+                    <BreadcrumbIcon className="text-text-neutral-primary">
                       {breadcrumb.icon}
-                    </div>
+                    </BreadcrumbIcon>
                   ) : null}
                   <span className="text-text-neutral-primary hover:text-button-primary max-w-[150px] truncate text-sm font-bold transition-colors sm:max-w-none">
                     {breadcrumb.name}
@@ -194,20 +191,10 @@ export function BreadcrumbNavigation({
                   onClick={breadcrumb.onClick}
                   className="text-text-neutral-primary hover:text-text-neutral-primary-hover flex cursor-pointer items-center gap-2 text-sm font-medium transition-colors"
                 >
-                  {index === 0 &&
-                  breadcrumb.icon &&
-                  typeof breadcrumb.icon === "string" ? (
-                    <Icon
-                      aria-hidden="true"
-                      className="text-text-neutral-primary"
-                      height={24}
-                      icon={breadcrumb.icon}
-                      width={24}
-                    />
-                  ) : index === 0 && breadcrumb.icon ? (
-                    <div className="flex h-6 w-6 items-center justify-center *:h-full *:w-full">
+                  {index === 0 && breadcrumb.icon ? (
+                    <BreadcrumbIcon className="text-text-neutral-primary">
                       {breadcrumb.icon}
-                    </div>
+                    </BreadcrumbIcon>
                   ) : null}
                   <span className="max-w-[150px] truncate sm:max-w-none">
                     {breadcrumb.name}
@@ -215,20 +202,10 @@ export function BreadcrumbNavigation({
                 </button>
               ) : (
                 <div className="flex items-center gap-2">
-                  {index === 0 &&
-                  breadcrumb.icon &&
-                  typeof breadcrumb.icon === "string" ? (
-                    <Icon
-                      aria-hidden="true"
-                      className="text-text-neutral-tertiary"
-                      height={24}
-                      icon={breadcrumb.icon}
-                      width={24}
-                    />
-                  ) : index === 0 && breadcrumb.icon ? (
-                    <div className="flex h-6 w-6 items-center justify-center *:h-full *:w-full">
+                  {index === 0 && breadcrumb.icon ? (
+                    <BreadcrumbIcon className="text-text-neutral-tertiary">
                       {breadcrumb.icon}
-                    </div>
+                    </BreadcrumbIcon>
                   ) : null}
                   <span className="max-w-[150px] truncate text-sm font-medium text-gray-900 sm:max-w-none dark:text-gray-100">
                     {breadcrumb.name}
@@ -247,6 +224,26 @@ export function BreadcrumbNavigation({
           ))}
         </ol>
       </nav>
+    </div>
+  );
+}
+
+function BreadcrumbIcon({
+  children,
+  className,
+}: {
+  children: ReactNode;
+  className: string;
+}) {
+  return (
+    <div
+      aria-hidden="true"
+      className={cn(
+        "flex h-6 w-6 items-center justify-center *:h-full *:w-full",
+        className,
+      )}
+    >
+      {children}
     </div>
   );
 }

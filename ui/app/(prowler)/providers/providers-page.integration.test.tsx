@@ -203,13 +203,89 @@ describe("Organization onboarding wizard", () => {
 
         expect(harness.applyCallCount).toBe(1);
 
-        await harness.enableInitialScan();
         await harness.saveScheduleAndLaunch();
         await harness.waitForLaunchComplete();
 
         expect(harness.scheduleBulkCallCount).toBe(1);
         expect(harness.organizationBulkScanCallCount).toBe(1);
       }, 60000);
+    });
+
+    describe("Wizard progress", () => {
+      it("drops the credentials and test rows once AWS is picked, since one step covers them", async () => {
+        const harness = new ProvidersPageHarness(awsOnboardingFixture());
+        await harness.mount();
+        expect(harness.stepperLabels()).toEqual([
+          "Link a Provider",
+          "Authenticate Credentials",
+          "Validate Connection",
+          "Launch Scan",
+        ]);
+
+        await harness.selectProviderType(/Amazon Web Services/);
+        await harness.waitForAwsConnectStep();
+
+        expect(harness.stepperLabels()).toEqual([
+          "Link a Provider",
+          "Launch Scan",
+        ]);
+      }, 40000);
+    });
+
+    describe("Single account with access keys", () => {
+      // Runs compiled by the React Compiler, unlike the unit suite: it guards the
+      // form's validity being read as a reactive value, not frozen in a memo.
+      it("enables Connect account once the form is filled and jumps to the launch step", async () => {
+        const harness = new ProvidersPageHarness(awsOnboardingFixture());
+        await harness.mount();
+        await harness.selectProviderType(/Amazon Web Services/);
+        await harness.waitForAwsConnectStep();
+        await harness.chooseMethod(/Static access keys/);
+        await harness.fillAwsAccountKeys({
+          accountId: "210987654321",
+          accessKeyId: "AKIAEXAMPLE",
+          secretAccessKey: "secret-value",
+        });
+
+        await harness.connectAccount();
+
+        await harness.waitForProviderLaunchStep();
+        expect(harness.providerCreateCallCount).toBe(1);
+        expect(harness.secretCreateCallCount).toBe(1);
+        // Reaching launch above is what proves no separate test step ran; this
+        // pins that the one step really did check the connection.
+        expect(harness.connectionCallCount).toBe(1);
+        const secret = await harness.lastRequestBody<{
+          data: { relationships: { provider: { data: { id: string } } } };
+        }>("POST", "/providers/secrets");
+        expect(secret?.data.relationships.provider.data.id).toBe(
+          "provider-created-1",
+        );
+      }, 40000);
+    });
+
+    describe("Leaving the organization flow", () => {
+      it("keeps the method tabs on Organization Details and switches back to a single account", async () => {
+        const harness = new ProvidersPageHarness(awsOnboardingFixture());
+        await harness.mount();
+        await harness.chooseAwsOrganizations();
+
+        await harness.switchToAwsSingleAccount();
+
+        await harness.waitForAwsConnectStep();
+        expect(harness.hasOrganizationSetupStep()).toBe(false);
+      }, 40000);
+
+      it("returns to the AWS single-account step when going back from Organization Details", async () => {
+        const harness = new ProvidersPageHarness(awsOnboardingFixture());
+        await harness.mount();
+        await harness.chooseAwsOrganizations();
+
+        await harness.goBack();
+
+        await harness.waitForAwsConnectStep();
+        expect(harness.hasOrganizationSetupStep()).toBe(false);
+      }, 40000);
     });
 
     describe("Account selection", () => {
@@ -618,7 +694,6 @@ describe("Organization onboarding wizard", () => {
         await harness.testConnections();
         await harness.waitForProjectsConnected();
 
-        await harness.enableInitialScan();
         await harness.saveScheduleAndLaunch();
         await harness.waitForPartialScheduleSave(1, 1);
 
@@ -648,7 +723,6 @@ describe("Organization onboarding wizard", () => {
         await harness.testConnections();
         await harness.waitForProjectsConnected();
 
-        await harness.enableInitialScan();
         await harness.saveScheduleAndLaunch();
         await harness.waitForScheduleSaveFailure();
 
@@ -669,7 +743,6 @@ describe("Organization onboarding wizard", () => {
         await harness.testConnections();
         await harness.waitForProjectsConnected();
 
-        await harness.enableInitialScan();
         await harness.saveScheduleAndLaunch();
         await harness.waitForLaunchComplete();
 
@@ -701,7 +774,6 @@ describe("Organization onboarding wizard", () => {
         expect(harness.usesAccountWording()).toBe(false);
         expect(harness.applyCallCount).toBe(1);
 
-        await harness.enableInitialScan();
         await harness.saveScheduleAndLaunch();
         await harness.waitForLaunchComplete();
 
@@ -1087,7 +1159,6 @@ describe("Organization onboarding wizard", () => {
         await harness.testConnections();
         await harness.waitForSubscriptionsConnected();
 
-        await harness.enableInitialScan();
         await harness.saveScheduleAndLaunch();
         await harness.waitForPartialScheduleSave(1, 1);
 
@@ -1112,7 +1183,6 @@ describe("Organization onboarding wizard", () => {
         await harness.testConnections();
         await harness.waitForSubscriptionsConnected();
 
-        await harness.enableInitialScan();
         await harness.saveScheduleAndLaunch();
         await harness.waitForScheduleSaveFailure();
 
@@ -1131,7 +1201,6 @@ describe("Organization onboarding wizard", () => {
         await harness.testConnections();
         await harness.waitForSubscriptionsConnected();
 
-        await harness.enableInitialScan();
         await harness.saveScheduleAndLaunch();
         await harness.waitForLaunchComplete();
 

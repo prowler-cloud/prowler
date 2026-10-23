@@ -1,60 +1,17 @@
 import { describe, expect, it } from "vitest";
 
-import { getComplianceIcon } from "@/components/icons/compliance/IconCompliance";
-import { PROVIDER_TYPES } from "@/types/providers";
+import type { CrossProviderFrameworkEntry } from "../cross-provider-frameworks";
+import { buildCrossProviderDetailHref } from "../cross-provider-frameworks";
 
-import {
-  buildCrossProviderDetailHref,
-  CROSS_PROVIDER_FRAMEWORKS,
-  resolveCrossProviderFramework,
-} from "../cross-provider-frameworks";
-
-describe("CROSS_PROVIDER_FRAMEWORKS catalog", () => {
-  it("uses titles that resolve to a compliance icon", () => {
-    for (const entry of CROSS_PROVIDER_FRAMEWORKS) {
-      expect(getComplianceIcon(entry.title), entry.title).not.toBeNull();
-    }
-  });
-
-  it("only lists providers the UI knows how to render", () => {
-    for (const entry of CROSS_PROVIDER_FRAMEWORKS) {
-      for (const provider of entry.compatibleProviders) {
-        expect(PROVIDER_TYPES).toContain(provider);
-      }
-      expect(new Set(entry.compatibleProviders).size).toBe(
-        entry.compatibleProviders.length,
-      );
-    }
-  });
-});
-
-describe("resolveCrossProviderFramework", () => {
-  it.each([
-    [undefined, "CSA-CCM"],
-    ["csa_ccm_4.0", "DORA"],
-    ["csa_ccm_4.0", "csa-ccm"],
-  ])("rejects invalid detail links", (complianceId, title) => {
-    expect(resolveCrossProviderFramework(complianceId, title)).toBeUndefined();
-  });
-
-  it("resolves the catalog entry for a valid detail link", () => {
-    // Given
-    const expected = CROSS_PROVIDER_FRAMEWORKS[0];
-
-    // When
-    const framework = resolveCrossProviderFramework(
-      expected.complianceId,
-      expected.title,
-    );
-
-    // Then
-    expect(framework).toEqual(expected);
-  });
-});
+const entry: CrossProviderFrameworkEntry = {
+  complianceId: "csa_ccm_4.0",
+  title: "CSA-CCM",
+  version: "4.0",
+  description: "CSA Cloud Controls Matrix v4.0.",
+  providerTypes: ["aws", "azure"],
+};
 
 describe("buildCrossProviderDetailHref", () => {
-  const entry = CROSS_PROVIDER_FRAMEWORKS[0];
-
   it("builds the detail path with cross-provider mode and identity params", () => {
     const href = buildCrossProviderDetailHref(entry);
 

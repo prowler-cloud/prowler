@@ -1,5 +1,7 @@
 "use client";
 
+import { AmazonWebServicesIcon, OpenAIIcon } from "@/components/icons/Icons";
+import type { IconComponent } from "@/types/components";
 import type { LighthouseProvider } from "@/types/lighthouse-v1";
 
 export type LLMProviderFieldType = "text" | "password";
@@ -17,7 +19,7 @@ export interface LLMProviderConfig {
   id: LighthouseProvider;
   name: string;
   description: string;
-  icon: string;
+  icon: IconComponent;
   fields: LLMProviderField[];
 }
 
@@ -29,7 +31,7 @@ export const LLM_PROVIDER_REGISTRY: Record<
     id: "openai",
     name: "OpenAI",
     description: "Industry-leading GPT models for general-purpose AI",
-    icon: "simple-icons:openai",
+    icon: OpenAIIcon,
     fields: [
       {
         name: "api_key",
@@ -45,7 +47,7 @@ export const LLM_PROVIDER_REGISTRY: Record<
     id: "bedrock",
     name: "Amazon Bedrock",
     description: "AWS-managed AI with Claude, Llama, Titan & more",
-    icon: "simple-icons:amazonwebservices",
+    icon: AmazonWebServicesIcon,
     fields: [
       {
         name: "access_key_id",
@@ -77,7 +79,7 @@ export const LLM_PROVIDER_REGISTRY: Record<
     id: "openai_compatible",
     name: "OpenAI Compatible",
     description: "Connect to custom OpenAI-compatible endpoints",
-    icon: "simple-icons:openai",
+    icon: OpenAIIcon,
     fields: [
       {
         name: "api_key",

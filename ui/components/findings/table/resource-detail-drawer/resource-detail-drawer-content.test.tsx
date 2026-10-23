@@ -9,7 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import { createPortal } from "react-dom";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // ---------------------------------------------------------------------------
 // Hoist mocks for components that pull in next-auth transitively
@@ -28,7 +28,6 @@ const {
   mockRequestPanelChatMessage,
   mockRequestPanelSkillLaunch,
   mockIsCloud,
-  mockUseSkillLauncherVariant,
   mockCurrentLighthouseContext,
 } = vi.hoisted(() => ({
   mockGetComplianceIcon: vi.fn((_: string) => null as string | null),
@@ -43,7 +42,6 @@ const {
   mockRequestPanelChatMessage: vi.fn(),
   mockRequestPanelSkillLaunch: vi.fn(),
   mockIsCloud: vi.fn(() => true),
-  mockUseSkillLauncherVariant: vi.fn(() => "card"),
   mockCurrentLighthouseContext: {
     schemaVersion: 1,
     transport: "inline",
@@ -310,10 +308,6 @@ vi.mock("@/components/icons", () => ({
   LighthouseIcon: () => null,
 }));
 
-vi.mock("./use-skill-launcher-variant", () => ({
-  useSkillLauncherVariant: mockUseSkillLauncherVariant,
-}));
-
 vi.mock("@/components/icons/services/IconServices", () => ({
   JiraIcon: () => null,
 }));
@@ -404,6 +398,14 @@ vi.mock("@/lib/date-utils", () => ({
 
 vi.mock("@/lib/shared/env", () => ({
   isCloud: mockIsCloud,
+}));
+
+// The re-check menu item reads the session for manage_scans; grant it here.
+vi.mock("@/hooks/use-auth", () => ({
+  useAuth: () => ({
+    permissions: { manage_scans: true },
+    hasPermission: () => true,
+  }),
 }));
 
 vi.mock("@/app/(prowler)/lighthouse/_lib/panel-chat-store", () => ({
@@ -543,6 +545,7 @@ vi.mock("../../muted", () => ({
 // ---------------------------------------------------------------------------
 
 import type { ResourceDrawerFinding } from "@/actions/findings";
+import { usePartialScanStore } from "@/store/partial-scan/store";
 import { SIDE_PANEL_TAB, useSidePanelStore } from "@/store/side-panel";
 import type { FindingResourceRow } from "@/types";
 import type { FindingComplianceFramework } from "@/types/compliance-watchlist";
@@ -562,7 +565,6 @@ afterEach(() => {
     (_: string) => null as string | null,
   );
   mockIsCloud.mockReturnValue(true);
-  mockUseSkillLauncherVariant.mockReturnValue("card");
   useSidePanelStore.setState({
     isOpen: false,
     selectedTab: SIDE_PANEL_TAB.AI_CHAT,
@@ -655,6 +657,7 @@ const mockFinding: ResourceDrawerFinding = {
   resourceGroup: "default",
   resourceDetails: null,
   resourceMetadata: null,
+  providerId: "provider-1",
   providerType: "aws",
   providerAlias: "prod",
   providerUid: "123456789",
@@ -830,82 +833,7 @@ const mockResourceRow: FindingResourceRow = {
   lastSeenAt: null,
 };
 
-describe("ResourceDetailDrawerContent — Lighthouse AI", () => {
-  it("should open the Lighthouse tab without starting a conversation", async () => {
-    // Given
-    const user = userEvent.setup();
-    useSidePanelStore.setState({
-      isOpen: true,
-      selectedTab: SIDE_PANEL_TAB.CONTEXT,
-    });
-    render(
-      <ResourceDetailDrawerContent
-        isLoading={false}
-        isNavigating={false}
-        checkMeta={mockCheckMeta}
-        currentIndex={0}
-        totalResources={1}
-        currentFinding={mockFinding}
-        otherFindings={[]}
-        onNavigatePrev={vi.fn()}
-        onNavigateNext={vi.fn()}
-        onMuteComplete={vi.fn()}
-      />,
-    );
-
-    // When: the free-form fallback only navigates to the chat tab
-    await user.click(
-      screen.getByRole("button", {
-        name: /ask Lighthouse anything about this finding/i,
-      }),
-    );
-
-    // Then — no conversation is started on the user's behalf
-    expect(mockRequestPanelChatMessage).not.toHaveBeenCalled();
-    expect(useSidePanelStore.getState()).toMatchObject({
-      isOpen: true,
-      selectedTab: SIDE_PANEL_TAB.AI_CHAT,
-    });
-
-    // And launching a skill goes through the skill launcher with the context
-    await user.click(screen.getByRole("button", { name: /Triage Decision/ }));
-    expect(mockRequestPanelSkillLaunch).toHaveBeenCalledWith(
-      expect.objectContaining({ id: "triage-decision" }),
-      mockCurrentLighthouseContext,
-    );
-  });
-
-  it("should hide the action when the Lighthouse panel tab is unavailable", () => {
-    // Given
-    mockIsCloud.mockReturnValue(false);
-
-    // When
-    render(
-      <ResourceDetailDrawerContent
-        isLoading={false}
-        isNavigating={false}
-        checkMeta={mockCheckMeta}
-        currentIndex={0}
-        totalResources={1}
-        currentFinding={mockFinding}
-        otherFindings={[]}
-        onNavigatePrev={vi.fn()}
-        onNavigateNext={vi.fn()}
-        onMuteComplete={vi.fn()}
-      />,
-    );
-
-    // Then
-    expect(screen.queryByText("Lighthouse AI Skills")).not.toBeInTheDocument();
-    expect(
-      screen.queryByRole("button", {
-        name: /ask Lighthouse anything about this finding/i,
-      }),
-    ).not.toBeInTheDocument();
-  });
-});
-
-describe("ResourceDetailDrawerContent — skill launcher experiment", () => {
+describe("ResourceDetailDrawerContent — Lighthouse skills rail", () => {
   const renderDrawer = (overrides: { isNavigating?: boolean } = {}) =>
     render(
       <ResourceDetailDrawerContent
@@ -922,15 +850,13 @@ describe("ResourceDetailDrawerContent — skill launcher experiment", () => {
       />,
     );
 
-  it("should swap the footer card for the header chip rail on the dropdown variant", async () => {
+  it("should launch a skill from the header chip rail", async () => {
     // Given
     const user = userEvent.setup();
-    mockUseSkillLauncherVariant.mockReturnValue("dropdown");
     renderDrawer();
 
-    // Then — control card gone, rail chips present. The always-open dropdown
-    // mock repeats every skill as a menu button, hence getAllByRole.
-    expect(screen.queryByText("Lighthouse AI Skills")).not.toBeInTheDocument();
+    // Then — rail chips present. The always-open dropdown mock repeats every
+    // skill as a menu button, hence getAllByRole.
     expect(
       screen.getAllByRole("button", { name: "Contextual Fix" }).length,
     ).toBeGreaterThan(0);
@@ -954,7 +880,6 @@ describe("ResourceDetailDrawerContent — skill launcher experiment", () => {
   it("should start a fresh conversation from the rail prompt", async () => {
     // Given
     const user = userEvent.setup();
-    mockUseSkillLauncherVariant.mockReturnValue("dropdown");
     renderDrawer();
 
     // When
@@ -979,7 +904,6 @@ describe("ResourceDetailDrawerContent — skill launcher experiment", () => {
 
   it("should hide the rail outside cloud and while navigating", () => {
     // Given
-    mockUseSkillLauncherVariant.mockReturnValue("dropdown");
     mockIsCloud.mockReturnValue(false);
 
     // When
@@ -1000,21 +924,6 @@ describe("ResourceDetailDrawerContent — skill launcher experiment", () => {
     // Then
     expect(
       screen.queryByRole("button", { name: "Contextual Fix" }),
-    ).not.toBeInTheDocument();
-  });
-
-  it("should keep the card control for unresolved or unknown variants", () => {
-    // Given — the hook already collapses those to "card"; the drawer treats
-    // anything that is not exactly "dropdown" as control.
-    mockUseSkillLauncherVariant.mockReturnValue("card");
-
-    // When
-    renderDrawer();
-
-    // Then
-    expect(screen.getByText("Lighthouse AI Skills")).toBeInTheDocument();
-    expect(
-      screen.queryByRole("button", { name: "More Lighthouse skills" }),
     ).not.toBeInTheDocument();
   });
 });
@@ -1904,7 +1813,9 @@ describe("ResourceDetailDrawerContent — header skeleton while navigating", () 
     expect(screen.getByText("security")).toBeInTheDocument();
     expect(screen.queryByText("Status Extended:")).not.toBeInTheDocument();
     expect(screen.queryByText("uid-1")).not.toBeInTheDocument();
-    expect(screen.queryByText("Lighthouse AI Skills")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "More Lighthouse skills" }),
+    ).not.toBeInTheDocument();
   });
 
   it("should keep the overview tab shell visible with section skeletons when navigating to a different check", () => {
@@ -2239,5 +2150,82 @@ describe("ResourceDetailDrawerContent — Metadata tab", () => {
     expect(
       screen.queryByText("No metadata available for this resource."),
     ).not.toBeInTheDocument();
+  });
+});
+
+describe("ResourceDetailDrawerContent — re-check resource", () => {
+  beforeEach(() => {
+    usePartialScanStore.getState().closePartialScan();
+  });
+
+  it("should offer a re-check of the current resource with its provider id", async () => {
+    // Given — the drawer finding was fetched with scan.provider, so it knows the id
+    const user = userEvent.setup();
+    mockIsCloud.mockReturnValue(true);
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating={false}
+        checkMeta={mockCheckMeta}
+        currentIndex={0}
+        totalResources={1}
+        currentFinding={mockFinding}
+        otherFindings={[]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    // When
+    await user.click(
+      within(screen.getByRole("menu", { name: "Resource actions" })).getByRole(
+        "button",
+        { name: "Re-check resource" },
+      ),
+    );
+
+    // Then
+    expect(usePartialScanStore.getState().activeTarget).toEqual({
+      providerId: "provider-1",
+      providerUid: "123456789",
+      providerType: "aws",
+      providerAlias: "prod",
+      resourceUid: "arn:aws:s3:::bucket",
+      resourceName: "my-bucket",
+    });
+  });
+
+  it("should offer the re-check beside Last detected with the provider id", async () => {
+    const user = userEvent.setup();
+    mockIsCloud.mockReturnValue(true);
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating={false}
+        checkMeta={mockCheckMeta}
+        currentIndex={0}
+        totalResources={1}
+        currentFinding={mockFinding}
+        otherFindings={[]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    const metadataRow = screen.getByTestId(
+      "resource-detail-secondary-metadata-row",
+    );
+    await user.click(
+      within(metadataRow).getByRole("button", { name: "Re-check resource" }),
+    );
+
+    expect(usePartialScanStore.getState().activeTarget).toEqual(
+      expect.objectContaining({
+        providerId: "provider-1",
+        resourceUid: "arn:aws:s3:::bucket",
+      }),
+    );
   });
 });

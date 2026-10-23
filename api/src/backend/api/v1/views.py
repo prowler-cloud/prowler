@@ -125,10 +125,14 @@ from api.models import (
 )
 from api.pagination import ComplianceOverviewPagination
 from api.rbac.permissions import (
+    TASK_REVOKE_PERMISSIONS,
     Permissions,
     get_integrations,
     get_providers,
     get_role,
+    get_tasks,
+    get_user_roles,
+    roles_have_permissions,
 )
 from api.renderers import APIJSONRenderer, PlainTextRenderer
 from api.rls import Tenant
@@ -244,7 +248,6 @@ from api.v1.serializers import (
     UserUpdateSerializer,
 )
 from botocore.exceptions import ClientError, NoCredentialsError, ParamValidationError
-from celery import chain
 from celery.result import AsyncResult
 from config.custom_logging import BackendLogger
 from config.env import env
@@ -327,7 +330,7 @@ from rest_framework_simplejwt.token_blacklist.models import (
 )
 from tasks.beat import schedule_provider_scan
 from tasks.jobs.attack_paths import db_utils as attack_paths_db_utils
-from tasks.jobs.export import get_s3_client
+from tasks.jobs.export import get_s3_client, get_s3_presign_client
 from tasks.tasks import (
     QUEUED_SCAN_TASK_STATE,
     backfill_compliance_summaries_task,
@@ -342,12 +345,20 @@ from tasks.tasks import (
     enqueue_scan_execution_on_commit,
     get_active_provider_scan,
     jira_integration_task,
-    mute_historical_findings_task,
-    reaggregate_all_finding_group_summaries_task,
+    mute_findings_in_latest_scans_task,
     refresh_lighthouse_provider_models_task,
 )
 
 logger = logging.getLogger(BackendLogger.API)
+
+
+def _scans_visible_to(role, tenant_id):
+    """Tenant scans, narrowed to the role's provider groups unless it has unlimited visibility."""
+    scans = Scan.all_objects.filter(tenant_id=tenant_id)
+    if role.unlimited_visibility:
+        return scans
+    return scans.filter(provider__in=get_providers(role))
+
 
 CACHE_DECORATOR = cache_control(
     max_age=django_settings.CACHE_MAX_AGE,
@@ -797,7 +808,9 @@ class SAMLConfigurationViewSet(BaseRLSViewSet):
     """
 
     serializer_class = SAMLConfigurationSerializer
-    required_permissions = [Permissions.MANAGE_INTEGRATIONS]
+    # The IdP behind this configuration decides who signs in and which role
+    # they get, so writing it is account administration, not an integration.
+    required_permissions = [Permissions.MANAGE_ACCOUNT]
     queryset = SAMLConfiguration.objects.all()
 
     def get_queryset(self):
@@ -1894,7 +1907,7 @@ class ProviderViewSet(DisablePaginationMixin, BaseRLSViewSet):
             self.required_permissions = [Permissions.MANAGE_PROVIDERS]
 
     def get_queryset(self):
-        user_roles = get_role(self.request.user, self.request.tenant_id)
+        user_roles = self.user_role
         if user_roles.unlimited_visibility:
             # User has unlimited visibility, return all providers
             queryset = Provider.objects.filter(tenant_id=self.request.tenant_id)
@@ -2409,7 +2422,8 @@ class ScanViewSet(ProviderVisibilityMixin, BaseRLSViewSet):
             }
             if content_type:
                 params["ResponseContentType"] = content_type
-            url = client.generate_presigned_url(
+            # The browser follows this URL, so it is signed against the public host.
+            url = (get_s3_presign_client() or client).generate_presigned_url(
                 "get_object",
                 Params=params,
                 ExpiresIn=300,
@@ -2823,6 +2837,15 @@ class ScanViewSet(ProviderVisibilityMixin, BaseRLSViewSet):
                 tenant_id=self.request.tenant_id,
                 task_id=pre_task_id,
                 task_status=(QUEUED_SCAN_TASK_STATE if active_scan else None),
+                # This response is serialized before the on_commit publish,
+                # so without these the caller gets a task id and no scan id.
+                # Kept in step with what `enqueue_scan_execution_on_commit`
+                # publishes below.
+                task_kwargs={
+                    "tenant_id": str(self.request.tenant_id),
+                    "scan_id": str(scan.id),
+                    "provider_id": str(scan.provider_id),
+                },
             )
 
             if not active_scan:
@@ -2850,17 +2873,29 @@ class ScanViewSet(ProviderVisibilityMixin, BaseRLSViewSet):
     list=extend_schema(
         tags=["Task"],
         summary="List all tasks",
-        description="Retrieve a list of all tasks with options for filtering by name, state, and other criteria.",
+        description=(
+            "Retrieve a list of all tasks with options for filtering by name, state, and other "
+            "criteria. Tasks that reference a provider are only returned when the role can "
+            "access it; tasks without a provider reference are returned for every role."
+        ),
     ),
     retrieve=extend_schema(
         tags=["Task"],
         summary="Retrieve data from a specific task",
-        description="Fetch detailed information about a specific task by its ID.",
+        description=(
+            "Fetch detailed information about a specific task by its ID. Tasks tied to a provider "
+            "outside the visibility of the role are not found."
+        ),
     ),
     destroy=extend_schema(
         tags=["Task"],
         summary="Revoke a task",
-        description="Try to revoke a task using its ID. Only tasks that are not yet in progress can be revoked.",
+        description=(
+            "Try to revoke a task using its ID. Only tasks that are not yet in progress can be "
+            "revoked, and the caller needs the same permission as the operation that queued "
+            "the task (for example MANAGE_SCANS for a scan). Provider deletions cannot be "
+            "revoked."
+        ),
         responses={202: OpenApiResponse(response=TaskSerializer)},
     ),
 )
@@ -2876,13 +2911,26 @@ class TaskViewSet(BaseRLSViewSet):
     required_permissions = []
 
     def get_queryset(self):
-        return Task.objects.annotate(
-            name=F("task_runner_task__task_name"),
-            state=F("task_runner_task__status"),
-        ).select_related("task_runner_task")
+        return (
+            get_tasks(self.user_role)
+            .annotate(
+                name=F("task_runner_task__task_name"),
+                state=F("task_runner_task__status"),
+            )
+            .select_related("task_runner_task")
+        )
 
     def destroy(self, request, *args, pk=None, **kwargs):
-        task = get_object_or_404(Task, pk=pk)
+        task = self.get_object()
+        required_permissions = TASK_REVOKE_PERMISSIONS.get(
+            task.task_runner_task.task_name
+        )
+        # Same multi-role semantics as HasPermissions.
+        if required_permissions is None or not roles_have_permissions(
+            get_user_roles(request.user, request.tenant_id), required_permissions
+        ):
+            raise PermissionDenied("You do not have permission to revoke this task.")
+
         if task.task_runner_task.status not in ["PENDING", "RECEIVED"]:
             serializer = TaskSerializer(task)
             return Response(
@@ -3021,7 +3069,7 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
         return super().get_serializer_class()
 
     def get_queryset(self):
-        user_roles = get_role(self.request.user, self.request.tenant_id)
+        user_roles = self.user_role
         base_queryset = AttackPathsScan.objects.filter(tenant_id=self.request.tenant_id)
 
         if user_roles.unlimited_visibility:
@@ -3375,7 +3423,7 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
     required_permissions = []
 
     def get_queryset(self):
-        user_roles = get_role(self.request.user, self.request.tenant_id)
+        user_roles = self.user_role
         if user_roles.unlimited_visibility:
             # User has unlimited visibility, return all scans
             queryset = Resource.all_objects.filter(tenant_id=self.request.tenant_id)
@@ -3479,12 +3527,8 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
         filtered_queryset = self.filter_queryset(self.get_queryset())
 
         latest_scans = (
-            Scan.all_objects.filter(
-                tenant_id=tenant_id,
-                state=StateChoices.COMPLETED,
-            )
-            .order_by("provider_id", "-inserted_at")
-            .distinct("provider_id")
+            Scan.all_objects.filter(tenant_id=tenant_id)
+            .latest_per_provider()
             .values("provider_id")
         )
 
@@ -3511,8 +3555,15 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
 
         tenant_id = request.tenant_id
         query_params = request.query_params
+        user_roles = self.user_role
 
         queryset = ResourceScanSummary.objects.filter(tenant_id=tenant_id)
+        if not user_roles.unlimited_visibility:
+            queryset = queryset.filter(
+                scan_id__in=_scans_visible_to(user_roles, tenant_id).values_list(
+                    "id", flat=True
+                )
+            )
 
         if scans := query_params.get("filter[scan__in]") or query_params.get(
             "filter[scan]"
@@ -3590,7 +3641,10 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
         all_groups = Resource.objects.filter(
             tenant_id=tenant_id,
             groups__isnull=False,
-        ).values_list("groups", flat=True)
+        )
+        if not user_roles.unlimited_visibility:
+            all_groups = all_groups.filter(provider__in=get_providers(user_roles))
+        all_groups = all_groups.values_list("groups", flat=True)
         groups = sorted(
             {g for groups_list in all_groups if groups_list for g in groups_list}
         )
@@ -3615,12 +3669,11 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
     def metadata_latest(self, request):
         tenant_id = request.tenant_id
         query_params = request.query_params
+        user_roles = self.user_role
 
-        latest_scans_queryset = (
-            Scan.all_objects.filter(tenant_id=tenant_id, state=StateChoices.COMPLETED)
-            .order_by("provider_id", "-inserted_at")
-            .distinct("provider_id")
-        )
+        latest_scans_queryset = _scans_visible_to(
+            user_roles, tenant_id
+        ).latest_per_provider()
 
         queryset = ResourceScanSummary.objects.filter(
             tenant_id=tenant_id,
@@ -3660,7 +3713,10 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
         all_groups = Resource.objects.filter(
             tenant_id=tenant_id,
             groups__isnull=False,
-        ).values_list("groups", flat=True)
+        )
+        if not user_roles.unlimited_visibility:
+            all_groups = all_groups.filter(provider__in=get_providers(user_roles))
+        all_groups = all_groups.values_list("groups", flat=True)
         groups = sorted(
             {g for groups_list in all_groups if groups_list for g in groups_list}
         )
@@ -3997,7 +4053,7 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
 
     def get_queryset(self):
         tenant_id = self.request.tenant_id
-        user_roles = get_role(self.request.user, self.request.tenant_id)
+        user_roles = self.user_role
         if user_roles.unlimited_visibility:
             # User has unlimited visibility, return all findings
             queryset = Finding.all_objects.filter(tenant_id=tenant_id)
@@ -4071,8 +4127,16 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
 
         tenant_id = request.tenant_id
         query_params = request.query_params
+        user_roles = self.user_role
+        visible_scan_ids = (
+            None
+            if user_roles.unlimited_visibility
+            else _scans_visible_to(user_roles, tenant_id).values_list("id", flat=True)
+        )
 
         queryset = ResourceScanSummary.objects.filter(tenant_id=tenant_id)
+        if not user_roles.unlimited_visibility:
+            queryset = queryset.filter(scan_id__in=visible_scan_ids)
         scan_based_filters = {}
         category_scan_filters = {}  # Filters for ScanCategorySummary
 
@@ -4130,7 +4194,10 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
         if not queryset.exists():
             raw_scans_ids = Scan.objects.filter(
                 tenant_id=tenant_id, **scan_based_filters
-            ).values_list("id", "unique_resource_count")
+            )
+            if not user_roles.unlimited_visibility:
+                raw_scans_ids = raw_scans_ids.filter(id__in=visible_scan_ids)
+            raw_scans_ids = raw_scans_ids.values_list("id", "unique_resource_count")
             scan_ids = [
                 scan_id for scan_id, count in raw_scans_ids if count and count > 0
             ]
@@ -4172,11 +4239,13 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
         )
 
         # Get categories from ScanCategorySummary using same scan filters
+        category_summaries = ScanCategorySummary.objects.filter(
+            tenant_id=tenant_id, **category_scan_filters
+        )
+        if not user_roles.unlimited_visibility:
+            category_summaries = category_summaries.filter(scan_id__in=visible_scan_ids)
         categories = list(
-            ScanCategorySummary.objects.filter(
-                tenant_id=tenant_id, **category_scan_filters
-            )
-            .values_list("category", flat=True)
+            category_summaries.values_list("category", flat=True)
             .distinct()
             .order_by("category")
         )
@@ -4207,12 +4276,9 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
         tenant_id = request.tenant_id
         filtered_queryset = self.filter_queryset(self.get_queryset())
 
-        latest_scan_ids = list(
-            Scan.all_objects.filter(tenant_id=tenant_id, state=StateChoices.COMPLETED)
-            .order_by("provider_id", "-inserted_at")
-            .distinct("provider_id")
-            .values_list("id", flat=True)
-        )
+        latest_scan_ids = Scan.all_objects.filter(
+            tenant_id=tenant_id
+        ).latest_ids_per_provider()
         filtered_queryset = filtered_queryset.filter(
             tenant_id=tenant_id, scan_id__in=latest_scan_ids
         )
@@ -4234,12 +4300,11 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
     def metadata_latest(self, request):
         tenant_id = request.tenant_id
         query_params = request.query_params
+        user_roles = self.user_role
 
-        latest_scans_queryset = (
-            Scan.all_objects.filter(tenant_id=tenant_id, state=StateChoices.COMPLETED)
-            .order_by("provider_id", "-inserted_at")
-            .distinct("provider_id")
-        )
+        latest_scans_queryset = _scans_visible_to(
+            user_roles, tenant_id
+        ).latest_per_provider()
         raw_latest_scans_ids = list(
             latest_scans_queryset.values_list("id", "unique_resource_count")
         )
@@ -4473,7 +4538,7 @@ class InvitationViewSet(BaseRLSViewSet):
 
     def partial_update(self, request, *args, **kwargs):
         instance = self.get_object()
-        if instance.state != Invitation.State.PENDING:
+        if instance.state != Invitation.State.PENDING or instance.is_lapsed:
             raise ValidationError(detail="This invitation cannot be updated.")
         serializer = self.get_serializer(
             instance,
@@ -4487,7 +4552,7 @@ class InvitationViewSet(BaseRLSViewSet):
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
-        if instance.state != Invitation.State.PENDING:
+        if instance.state != Invitation.State.PENDING or instance.is_lapsed:
             raise ValidationError(detail="This invitation cannot be revoked.")
         instance.state = Invitation.State.REVOKED
         instance.save()
@@ -4980,11 +5045,7 @@ class ComplianceOverviewViewSet(
         if provider_filters:
             scans = scans.filter(**provider_filters)
 
-        return list(
-            scans.order_by("provider_id", "-inserted_at")
-            .distinct("provider_id")
-            .values_list("id", flat=True)
-        )
+        return scans.latest_ids_per_provider()
 
     def _filtered_queryset_for_latest_provider_scans(self, latest_scan_ids=None):
         if latest_scan_ids is None:
@@ -5726,14 +5787,9 @@ class OverviewViewSet(ProviderFilterParamsMixin, BaseRLSViewSet):
             else {}
         )
 
-        latest_scan_ids = (
-            Scan.all_objects.filter(
-                tenant_id=tenant_id, state=StateChoices.COMPLETED, **provider_filter
-            )
-            .order_by("provider_id", "-inserted_at")
-            .distinct("provider_id")
-            .values_list("id", flat=True)
-        )
+        latest_scan_ids = Scan.all_objects.filter(
+            tenant_id=tenant_id, **provider_filter
+        ).latest_ids_per_provider()
 
         return filtered_queryset.filter(
             tenant_id=tenant_id, scan_id__in=latest_scan_ids
@@ -5760,16 +5816,10 @@ class OverviewViewSet(ProviderFilterParamsMixin, BaseRLSViewSet):
 
     def _latest_scan_ids_for_allowed_providers(self, tenant_id, provider_filters=None):
         provider_filter = self._get_provider_filter()
-        queryset = Scan.all_objects.filter(
-            tenant_id=tenant_id, state=StateChoices.COMPLETED, **provider_filter
-        )
+        queryset = Scan.all_objects.filter(tenant_id=tenant_id, **provider_filter)
         if provider_filters:
             queryset = queryset.filter(**provider_filters)
-        return (
-            queryset.order_by("provider_id", "-inserted_at")
-            .distinct("provider_id")
-            .values_list("id", flat=True)
-        )
+        return queryset.latest_ids_per_provider()
 
     @action(detail=False, methods=["get"], url_name="providers")
     def providers(self, request):
@@ -5781,14 +5831,9 @@ class OverviewViewSet(ProviderFilterParamsMixin, BaseRLSViewSet):
             else {}
         )
 
-        latest_scan_ids = (
-            Scan.all_objects.filter(
-                tenant_id=tenant_id, state=StateChoices.COMPLETED, **provider_filter
-            )
-            .order_by("provider_id", "-inserted_at")
-            .distinct("provider_id")
-            .values_list("id", flat=True)
-        )
+        latest_scan_ids = Scan.all_objects.filter(
+            tenant_id=tenant_id, **provider_filter
+        ).latest_ids_per_provider()
 
         findings_aggregated = (
             queryset.filter(scan_id__in=latest_scan_ids)
@@ -7551,35 +7596,28 @@ class MuteRuleViewSet(BaseRLSViewSet):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        # Create the mute rule
+        tenant_id = str(request.tenant_id)
+        finding_ids = serializer.validated_data["finding_ids"]
+        provider_ids = list(
+            dict.fromkeys(
+                Finding.all_objects.filter(
+                    id__in=finding_ids, tenant_id=tenant_id
+                ).values_list("scan__provider_id", flat=True)
+            )
+        )
+
         mute_rule = serializer.save()
 
-        tenant_id = str(request.tenant_id)
-        finding_ids = request.data.get("finding_ids", [])
-
-        # Immediately mute the selected findings
-        Finding.all_objects.filter(
-            id__in=finding_ids, tenant_id=tenant_id, muted=False
-        ).update(
-            muted=True,
-            muted_at=mute_rule.inserted_at,
-            muted_reason=mute_rule.reason,
-        )
-
-        # Launch background task for historical muting + reaggregation
         transaction.on_commit(
-            lambda: chain(
-                mute_historical_findings_task.si(
-                    tenant_id=tenant_id,
-                    mute_rule_id=str(mute_rule.id),
-                ),
-                reaggregate_all_finding_group_summaries_task.si(
-                    tenant_id=tenant_id,
-                ),
-            ).apply_async()
+            lambda: mute_findings_in_latest_scans_task.apply_async(
+                kwargs={
+                    "tenant_id": tenant_id,
+                    "mute_rule_id": str(mute_rule.id),
+                    "provider_ids": [str(provider_id) for provider_id in provider_ids],
+                }
+            )
         )
 
-        # Return the created mute rule
         serializer = self.get_serializer(mute_rule)
         return Response(
             data=serializer.data,
@@ -7942,18 +7980,13 @@ class FindingGroupViewSet(JsonApiFilterMixin, BaseRLSViewSet):
 
     def _get_latest_findings_per_provider(self, filtered_queryset):
         """Keep only findings from each provider's most recent completed scan."""
-        # Materialize to a literal IN list. Left as a subquery, Postgres can't
-        # estimate the match count and picks a serial nested loop on
-        # resource_finding_mappings when one scan dominates findings
-        latest_scan_ids = list(
-            Scan.objects.filter(
-                tenant_id=self.request.tenant_id,
-                state=StateChoices.COMPLETED,
-            )
-            .order_by("provider_id", "-completed_at", "-inserted_at")
-            .distinct("provider_id")
-            .values_list("id", flat=True)
-        )
+        # `latest_ids_per_provider` materializes to a literal IN list.
+        # Left as a subquery, Postgres can't estimate the match count and picks
+        # a serial nested loop on resource_finding_mappings when one scan
+        # dominates findings
+        latest_scan_ids = Scan.objects.filter(
+            tenant_id=self.request.tenant_id
+        ).latest_ids_per_provider()
         return filtered_queryset.filter(scan_id__in=latest_scan_ids)
 
     def _post_process_aggregation(self, aggregated_data):
@@ -8899,16 +8932,14 @@ class FindingGroupViewSet(JsonApiFilterMixin, BaseRLSViewSet):
         tenant_id = request.tenant_id
         queryset = self._get_finding_queryset()
 
-        # Order by -completed_at (matching the /latest summary path and the
-        # daily summary upsert keyed on midnight(completed_at)) so that
-        # overlapping scans do not make /resources and /latest read from
-        # different scans and report diverging counts.
-        latest_scan_ids = (
-            Scan.objects.filter(tenant_id=tenant_id, state=StateChoices.COMPLETED)
-            .order_by("provider_id", "-completed_at", "-inserted_at")
-            .distinct("provider_id")
-            .values_list("id", flat=True)
-        )
+        # The shared selector orders by -completed_at (matching the /latest
+        # summary path and the daily summary upsert keyed on
+        # midnight(completed_at)) so that overlapping scans do not make
+        # /resources and /latest read from different scans and report
+        # diverging counts.
+        latest_scan_ids = Scan.objects.filter(
+            tenant_id=tenant_id
+        ).latest_ids_per_provider()
 
         normalized_params = self._normalize_jsonapi_params(request.query_params)
         # Remove date filters since we're using latest

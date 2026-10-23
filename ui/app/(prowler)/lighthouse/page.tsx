@@ -56,7 +56,7 @@ export default async function AIChatbot({
     const chatRouteKey = validSessionId ?? initialPrompt ?? "new";
 
     return (
-      <ContentLayout title="Lighthouse AI" icon={<LighthouseIcon />}>
+      <ContentLayout title="Lighthouse AI" icon={<LighthouseIcon size={32} />}>
         <AppSidebarModeSync mode={APP_SIDEBAR_MODE.CHAT} closeSidePanel />
         {/* [contain:layout] traps streamdown's fixed fullscreen overlay inside
             the chat area so it never covers the sidebar or navbar. */}
@@ -91,7 +91,7 @@ export default async function AIChatbot({
   }
 
   return (
-    <ContentLayout title="Lighthouse AI" icon={<LighthouseIcon />}>
+    <ContentLayout title="Lighthouse AI" icon={<LighthouseIcon size={32} />}>
       <div className="-mx-6 -my-4 h-[calc(100dvh-4.5rem)] sm:-mx-8">
         <Chat
           hasConfig={hasConfig}

@@ -5,7 +5,8 @@ import { useEffect, useRef, useState } from "react";
 import { applyDiscovery } from "@/actions/organizations/organizations";
 import { buildApplyPayload } from "@/actions/organizations/organizations.adapter";
 import {
-  getProviderUidsByIds,
+  getProviderConnectionBaselines,
+  getProviderUidsAndConnectionBaselines,
   revalidateProviders,
   startProviderConnectionChecks,
 } from "@/actions/providers/providers";
@@ -13,12 +14,14 @@ import {
   WIZARD_FOOTER_ACTION_TYPE,
   WizardFooterConfig,
 } from "@/components/providers/wizard/steps/footer-controls";
+import { resolveProviderConnectionState } from "@/lib/provider-helpers";
 import { useOrgSetupStore } from "@/store/organizations/store";
 import {
   CONNECTION_TEST_STATUS,
   ConnectionTestStatus,
   PROVIDER_SECRET_STATE,
 } from "@/types/organizations";
+import { CONNECTION_CHECK_STATUS } from "@/types/providers";
 import { TREE_ITEM_STATUS, TreeDataItem } from "@/types/tree";
 
 import {
@@ -26,6 +29,7 @@ import {
   canAdvanceToLaunchStep,
   getLaunchableProviderIds,
   pollConnectionTasks,
+  type PollConnectionTaskResult,
 } from "../org-account-selection.utils";
 
 import { extractErrorMessage } from "./error-utils";
@@ -141,13 +145,22 @@ function buildTreeWithConnectionState(
         status = TREE_ITEM_STATUS.ERROR;
         errorMessage =
           (providerId && connectionErrors[providerId]) || "Connection failed.";
-      } else if (
-        showPendingState ||
-        connectionStatus === CONNECTION_TEST_STATUS.PENDING
-      ) {
+      } else if (showPendingState) {
+        // A batch test is actively in flight -- genuinely waiting on a response,
+        // so the spinner is accurate.
         isLoading = true;
         status = undefined;
         errorMessage = undefined;
+      } else if (connectionStatus === CONNECTION_TEST_STATUS.PENDING) {
+        // The wait was exhausted with no confirmed outcome, and nothing is
+        // polling this account any more -- a spinner here would be misleading.
+        // A static icon marks it as unresolved instead; "Test Connections"
+        // retries it (see `hasUnresolvedConnections`).
+        isLoading = false;
+        status = TREE_ITEM_STATUS.PENDING;
+        errorMessage =
+          (providerId && connectionErrors[providerId]) ||
+          "The connection test is still running. Refresh in a moment to see the result.";
       } else if (hasAppliedProviders) {
         // Applied, but no outcome ever arrived for this account — typically an
         // unresolved provider uid. Without this the row falls back to a plain
@@ -241,6 +254,13 @@ export function useOrgAccountSelectionFlow({
   const hasConnectionErrors = Object.values(connectionResults).some(
     (status) => status === CONNECTION_TEST_STATUS.ERROR,
   );
+  // A wait exhausted with no verdict, distinct from a confirmed error: it does
+  // not earn the error banner (see `org-account-selection.tsx`), but it still
+  // needs a way back to a resolved state, so it counts toward `canRetry` below.
+  const hasPendingConnections = Object.values(connectionResults).some(
+    (status) => status === CONNECTION_TEST_STATUS.PENDING,
+  );
+  const hasUnresolvedConnections = hasConnectionErrors || hasPendingConnections;
   const willReplaceSelectedNames = sanitizedSelectedCandidateIds
     .map((id) => candidateLookup.get(id))
     .filter(
@@ -281,7 +301,10 @@ export function useOrgAccountSelectionFlow({
     };
   }, []);
 
-  const testAllConnections = async (providerIds: string[]) => {
+  const testAllConnections = async (
+    providerIds: string[],
+    precomputedBaselines?: Record<string, string | null>,
+  ) => {
     connectionTestAbortControllerRef.current?.abort();
     const abortController = new AbortController();
     connectionTestAbortControllerRef.current = abortController;
@@ -296,26 +319,49 @@ export function useOrgAccountSelectionFlow({
 
     const settleProvider = (
       providerId: string,
-      result: { success: boolean; error?: string },
+      result: PollConnectionTaskResult,
     ) => {
       if (!isMountedRef.current || signal.aborted) {
         return;
       }
+
+      // Still running past the wait -- neither a pass nor a fail. Leaves the
+      // account pending rather than reporting a failure the backend never gave;
+      // the message is kept (not nulled) so the tree can explain the static
+      // pending icon it now shows once `isTesting` stops.
+      if (result.status === CONNECTION_CHECK_STATUS.PENDING) {
+        setConnectionResult(providerId, CONNECTION_TEST_STATUS.PENDING);
+        setConnectionError(providerId, result.error ?? null);
+        return;
+      }
+
+      const succeeded = result.status === CONNECTION_CHECK_STATUS.SUCCESS;
       setConnectionResult(
         providerId,
-        result.success
+        succeeded
           ? CONNECTION_TEST_STATUS.SUCCESS
           : CONNECTION_TEST_STATUS.ERROR,
       );
       setConnectionError(
         providerId,
-        result.success
+        succeeded
           ? null
           : result.error || "Connection failed for this account.",
       );
     };
 
     try {
+      // Read before dispatch, so the fallback below can tell each provider's own
+      // check result apart from whatever (possibly stale) result was already on
+      // record -- by comparing values, not by comparing timestamps against the
+      // browser's clock. See `resolveProviderConnectionState`. The initial apply
+      // already reads this alongside the created providers' uids (see
+      // `handleApplyAndTest`) and passes it in, so a retry is the only path that
+      // fetches it here.
+      const connectionBaselines =
+        precomputedBaselines ??
+        (await getProviderConnectionBaselines(providerIds));
+
       // One action dispatches every check and one reads every pending task per
       // round: Next runs client-invoked server actions one at a time, so a loop
       // here would serialize the batch whatever concurrency it asked for.
@@ -341,7 +387,7 @@ export function useOrgAccountSelectionFlow({
         // No task id means no check ever ran, so it cannot count as passing.
         if (!outcome.taskId) {
           settleProvider(providerId, {
-            success: false,
+            status: CONNECTION_CHECK_STATUS.FAILED,
             error: "Connection test did not start.",
           });
           continue;
@@ -357,6 +403,17 @@ export function useOrgAccountSelectionFlow({
           if (providerId) {
             settleProvider(providerId, result);
           }
+        },
+        resolveExhausted: async (taskId) => {
+          const providerId = providerIdByTaskId.get(taskId);
+          if (!providerId) {
+            return null;
+          }
+          const state = await resolveProviderConnectionState(
+            providerId,
+            connectionBaselines[providerId],
+          );
+          return { status: state.status, error: state.error ?? undefined };
         },
       });
     } catch {
@@ -443,10 +500,21 @@ export function useOrgAccountSelectionFlow({
       ) ?? [];
 
     setCreatedProviderIds(providerIds);
+
+    // One filtered `/providers` read for both: the apply view rejects `include`,
+    // so the created providers' uids are read back separately, and the flow needs
+    // their connection baselines before dispatch anyway (see `testAllConnections`).
+    // Reading them together avoids fetching the same provider ids twice.
+    const { uidById, baselineById } =
+      await getProviderUidsAndConnectionBaselines(providerIds);
+    if (!isMountedRef.current) {
+      return;
+    }
+
     const mapping = await buildCandidateToProviderMap({
       selectedCandidateIds: currentSelectedCandidateIds,
       providerIds,
-      resolveProviderUids: getProviderUidsByIds,
+      resolveProviderUids: async () => uidById,
     });
     if (!isMountedRef.current) {
       return;
@@ -456,7 +524,7 @@ export function useOrgAccountSelectionFlow({
     setIsApplying(false);
     lastAppliedSelectionKeyRef.current = currentSelectionKey;
 
-    await testAllConnections(providerIds);
+    await testAllConnections(providerIds, baselineById);
   };
 
   const handleStartTesting = () => {
@@ -482,12 +550,18 @@ export function useOrgAccountSelectionFlow({
       return;
     }
 
-    const failedProviderIds = createdProviderIds.filter(
+    // Retries both confirmed failures and accounts a previous wait exhausted
+    // without a verdict -- otherwise a still-pending account has no way back to
+    // a resolved state once the batch that produced it has stopped polling.
+    const unresolvedProviderIds = createdProviderIds.filter(
       (providerId) =>
-        connectionResults[providerId] === CONNECTION_TEST_STATUS.ERROR,
+        connectionResults[providerId] === CONNECTION_TEST_STATUS.ERROR ||
+        connectionResults[providerId] === CONNECTION_TEST_STATUS.PENDING,
     );
     const providerIdsToTest =
-      failedProviderIds.length > 0 ? failedProviderIds : createdProviderIds;
+      unresolvedProviderIds.length > 0
+        ? unresolvedProviderIds
+        : createdProviderIds;
     void testAllConnections(providerIdsToTest);
   };
   startTestingActionRef.current = handleStartTesting;
@@ -513,7 +587,7 @@ export function useOrgAccountSelectionFlow({
       return;
     }
 
-    const canRetry = hasConnectionErrors || Boolean(applyError);
+    const canRetry = hasUnresolvedConnections || Boolean(applyError);
     const hasSelectedAccounts = selectedCount > 0;
 
     onFooterChange({
@@ -542,7 +616,7 @@ export function useOrgAccountSelectionFlow({
     });
   }, [
     applyError,
-    hasConnectionErrors,
+    hasUnresolvedConnections,
     isApplying,
     isTesting,
     isTestingView,

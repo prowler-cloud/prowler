@@ -119,6 +119,14 @@ aws:
   # aws.cloudwatch_log_group_retention_policy_specific_days_enabled --> by default is 365 days
   log_group_retention_days: 365
 
+  # aws.cloudwatch_log_group_agentcore_data_protection_policy_enabled
+  # Log group name prefixes that hold Bedrock AgentCore agent telemetry. This list REPLACES
+  # the defaults rather than adding to them, so keep both entries below when adding your own
+  # or the log groups AgentCore creates itself stop being assessed.
+  agentcore_log_group_name_prefixes:
+    - "/aws/bedrock-agentcore/"
+    - "/aws/vendedlogs/bedrock-agentcore/"
+
   # AWS CloudFormation Configuration
   # cloudformation_stack_cdktoolkit_bootstrap_version --> by default is 21
   recommended_cdk_bootstrap_version: 21
@@ -131,6 +139,28 @@ aws:
   # aws.appstream_fleet_maximum_session_duration
   max_session_duration_seconds: 36000 # 10 Hours
 
+  # AWS Elastic Beanstalk Configuration
+  # aws.elasticbeanstalk_environment_php_platform_updated
+  # Oldest PHP branch still receiving security fixes
+  elasticbeanstalk_php_min_branch: "8.2"
+  # Oldest Amazon Linux 2023 PHP platform version bundling the fixed PHP release
+  elasticbeanstalk_php_min_platform_version: "4.13.13"
+
+  # AWS Lightsail Configuration
+  # aws.lightsail_instance_php_blueprint_updated
+  # Blueprint id prefixes that ship PHP and require manual runtime verification
+  lightsail_php_blueprints:
+    [
+      "wordpress",
+      "lamp",
+      "nginx",
+      "drupal",
+      "joomla",
+      "magento",
+      "prestashop",
+      "plesk",
+      "cpanel",
+    ]
   # AWS Lambda Configuration
   # aws.awslambda_function_using_supported_runtimes
   obsolete_lambda_runtimes:
@@ -181,6 +211,14 @@ aws:
   # HIGH
   # MEDIUM
   ecr_repository_vulnerability_minimum_severity: "MEDIUM"
+
+  # AWS Inspector2
+  # aws.inspector2_coverage_recently_scanned
+  # Maximum days since Inspector2 last scanned an actively covered resource
+  inspector2_max_days_since_last_scan: 3
+  # aws.inspector2_active_findings_within_max_age
+  # Maximum days an Inspector2 finding can stay active since it was first observed
+  inspector2_active_finding_max_age_days: 192
 
   # AWS Trusted Advisor
   # aws.trustedadvisor_premium_support_plan_subscribed
@@ -534,8 +572,9 @@ azure:
   defender_attack_path_minimal_risk_level: "High"
 
   # Azure App Service
+  # Minimum runtime versions; any newer version passes
   # azure.app_ensure_php_version_is_latest
-  php_latest_version: "8.2"
+  php_latest_version: "8.5"
   # azure.app_ensure_python_version_is_latest
   python_latest_version: "3.12"
   # azure.app_ensure_java_version_is_latest
@@ -634,6 +673,10 @@ gcp:
   # GCP Secret Manager Rotation Period
   # gcp.secretmanager_secret_rotation_enabled
   secretmanager_max_rotation_days: 90
+  # GCP App Engine PHP runtime
+  # gcp.appengine_version_php_runtime_supported
+  # Oldest PHP branch still receiving security fixes
+  appengine_php_min_version: "8.2"
 
 # Kubernetes Configuration
 kubernetes:

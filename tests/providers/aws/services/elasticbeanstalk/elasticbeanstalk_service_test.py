@@ -7,7 +7,11 @@ from moto import mock_aws
 from prowler.providers.aws.services.elasticbeanstalk.elasticbeanstalk_service import (
     ElasticBeanstalk,
 )
-from tests.providers.aws.utils import AWS_REGION_EU_WEST_1, set_mocked_aws_provider
+from tests.providers.aws.utils import (
+    AWS_ACCOUNT_NUMBER,
+    AWS_REGION_EU_WEST_1,
+    set_mocked_aws_provider,
+)
 
 make_api_call = botocore.client.BaseClient._make_api_call
 
@@ -118,6 +122,44 @@ class Test_ElasticBeanstalk_Service:
                 environment["EnvironmentArn"]
             ].application_name
             == "test-app"
+        )
+
+    @mock_aws
+    def test_describe_environments_platform(self):
+        environment_arn = f"arn:aws:elasticbeanstalk:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:environment/test-app/test-env"
+
+        def mock_describe_environments(self, operation_name, kwarg):
+            if operation_name == "DescribeEnvironments":
+                return {
+                    "Environments": [
+                        {
+                            "EnvironmentId": "e-abc123",
+                            "EnvironmentArn": environment_arn,
+                            "ApplicationName": "test-app",
+                            "EnvironmentName": "test-env",
+                            "SolutionStackName": "64bit Amazon Linux 2023 v4.13.13 running PHP 8.4",
+                            "PlatformArn": f"arn:aws:elasticbeanstalk:{AWS_REGION_EU_WEST_1}::platform/PHP 8.4 running on 64bit Amazon Linux 2023/4.13.13",
+                        }
+                    ]
+                }
+            return make_api_call(self, operation_name, kwarg)
+
+        with patch(
+            "botocore.client.BaseClient._make_api_call",
+            new=mock_describe_environments,
+        ):
+            elasticbeanstalk = ElasticBeanstalk(
+                set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+            )
+
+        environment = elasticbeanstalk.environments[environment_arn]
+        assert (
+            environment.solution_stack_name
+            == "64bit Amazon Linux 2023 v4.13.13 running PHP 8.4"
+        )
+        assert (
+            environment.platform_arn
+            == f"arn:aws:elasticbeanstalk:{AWS_REGION_EU_WEST_1}::platform/PHP 8.4 running on 64bit Amazon Linux 2023/4.13.13"
         )
 
     # Test _describe_configuration_settings

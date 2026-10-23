@@ -28,9 +28,13 @@ import { ProviderProps } from "@/types/providers";
 import {
   buildFindingGroupFilterOption,
   buildFindingsFilterChips,
-  type FindingCheckFilterOption,
+  FILTER_CONTROL_COLUMN_CLASS,
   getFindingsFilterDisplayValue,
 } from "./findings-filters.utils";
+import {
+  type FindingCheckOptionsSource,
+  useFindingCheckOptions,
+} from "./use-finding-check-options";
 
 interface FindingsFiltersProps {
   /** Provider data for provider/account filter controls. */
@@ -44,7 +48,8 @@ interface FindingsFiltersProps {
   uniqueResourceTypes: string[];
   uniqueCategories: string[];
   uniqueGroups: string[];
-  checkOptions?: FindingCheckFilterOption[];
+  /** Enables the lazily loaded Finding Group filter. */
+  checkOptionsSource?: FindingCheckOptionsSource;
   trailingControls?: ReactNode;
   variant?: "default" | "alerts-edit";
 }
@@ -71,8 +76,6 @@ const countVisibleFilterKeys = (filters: Record<string, string[]>): number =>
     return true;
   }).length;
 
-const FILTER_CONTROL_COLUMN_CLASS =
-  "min-w-0 flex-none basis-full sm:basis-[calc((100%_-_0.75rem)/2)] lg:basis-[calc((100%_-_1.5rem)/3)] xl:basis-[calc((100%_-_2.25rem)/4)] 2xl:basis-[calc((100%_-_3rem)/5)]";
 const FILTER_GRID_ITEM_CLASS = "min-w-0";
 const FINDING_GROUP_FILTER_KEYS = ["filter[check_id]", "filter[check_id__in]"];
 
@@ -89,7 +92,7 @@ export const FindingsFilterBatchControls = ({
   uniqueResourceTypes,
   uniqueCategories,
   uniqueGroups,
-  checkOptions = [],
+  checkOptionsSource,
   trailingControls,
   appliedFilters,
   pendingFilters,
@@ -107,6 +110,11 @@ export const FindingsFilterBatchControls = ({
 }: FindingsFilterBatchControlsProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const isAlertsEdit = variant === "alerts-edit";
+  const {
+    options: checkOptions,
+    isLoading: isLoadingCheckOptions,
+    loadAll: loadCheckOptions,
+  } = useFindingCheckOptions({ source: checkOptionsSource });
   const checkTitles = Object.fromEntries(
     checkOptions.map(({ checkId, checkTitle }) => [
       checkId,
@@ -118,6 +126,9 @@ export const FindingsFilterBatchControls = ({
     selectedCheckIds: getFilterValue("filter[check_id]"),
     selectedCheckIdsIn: getFilterValue("filter[check_id__in]"),
     checkTitles,
+    lazy: checkOptionsSource
+      ? { onOpen: loadCheckOptions, isLoading: isLoadingCheckOptions }
+      : undefined,
   });
 
   const customFilters = [

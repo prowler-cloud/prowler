@@ -1,8 +1,13 @@
 import {
   CLOUD_UPGRADE_FEATURE,
   type CloudUpgradeFeature,
+  PAID_PLAN_UPGRADE_FEATURE,
+  type PaidPlanUpgradeFeature,
+  type UpgradeFeature,
 } from "@/types/cloud-upgrade";
 import { MAX_SAML_ADDITIONAL_EMAIL_DOMAINS } from "@/types/saml";
+
+import { FINDINGS_PREVIEW_ROW_LIMIT } from "./findings-access";
 
 interface CloudUpgradeContent {
   title: string;
@@ -200,3 +205,70 @@ export const getCloudUpgradePrimaryUrl = (feature: CloudUpgradeFeature) =>
 
 export const getCloudUpgradeCompareUrl = (feature: CloudUpgradeFeature) =>
   buildCloudUpgradeUrl(PRICING_URL, feature);
+
+export const isCloudUpgradeFeature = (
+  feature: UpgradeFeature,
+): feature is CloudUpgradeFeature => feature in CLOUD_UPGRADE_CONTENT;
+
+export const PAID_PLAN_UPGRADE_BADGE = "Available on paid plans";
+export const PAID_PLAN_UPGRADE_ADMIN_NOTE =
+  "Ask an account admin to upgrade your plan.";
+
+const CLOUD_UTM_SOURCE = "prowler-cloud";
+
+const PAID_PLAN_UPGRADE_UTM_CONTENT = {
+  [PAID_PLAN_UPGRADE_FEATURE.FINDINGS_PREVIEW]: "findings-preview",
+  [PAID_PLAN_UPGRADE_FEATURE.REGISTRY]: "registry",
+  [PAID_PLAN_UPGRADE_FEATURE.REPORT_DOWNLOAD]: "report-download",
+} as const satisfies Record<PaidPlanUpgradeFeature, string>;
+
+export const PAID_PLAN_UPGRADE_CONTENT = {
+  [PAID_PLAN_UPGRADE_FEATURE.FINDINGS_PREVIEW]: {
+    title: "See Every Finding in Your Account",
+    description: `Trial accounts preview the ${FINDINGS_PREVIEW_ROW_LIMIT} most critical finding groups. Paid plans unlock the full list.`,
+    benefits: [
+      "Browse, sort, and page through every finding group",
+      "Drill into each affected resource across all your providers",
+      "Download reports and compliance evidence for the full scan",
+    ],
+    primaryCta: "Upgrade to See All Findings",
+  },
+  [PAID_PLAN_UPGRADE_FEATURE.REGISTRY]: {
+    title: "Unlock Prowler Registry",
+    description: "Prowler Registry is included in paid plans.",
+    benefits: [
+      "Connect custom cloud providers",
+      "Extend your assessments with custom security checks",
+      "Use private compliance frameworks across your accounts",
+    ],
+    primaryCta: "Upgrade to Unlock Registry",
+  },
+  [PAID_PLAN_UPGRADE_FEATURE.REPORT_DOWNLOAD]: {
+    title: "Download Your Scan Reports",
+    description: "Report downloads are included in Prowler Cloud paid plans.",
+    benefits: [
+      "Download the full scan output in CSV, JSON-OCSF, and HTML",
+      "Export compliance reports as CSV, OCSF, and PDF",
+      "Share evidence with auditors and your team",
+    ],
+    primaryCta: "Upgrade to Download",
+  },
+} as const satisfies Record<PaidPlanUpgradeFeature, CloudUpgradeContent>;
+
+export const isPaidPlanUpgradeFeature = (
+  feature: UpgradeFeature,
+): feature is PaidPlanUpgradeFeature => feature in PAID_PLAN_UPGRADE_CONTENT;
+
+export const getPaidPlanUpgradeBillingHref = (
+  feature: PaidPlanUpgradeFeature,
+) => `/billing?${new URLSearchParams({ feature })}`;
+
+export const getPaidPlanUpgradeCompareUrl = (
+  feature: PaidPlanUpgradeFeature,
+) => {
+  const url = new URL(PRICING_URL);
+  url.searchParams.set("utm_source", CLOUD_UTM_SOURCE);
+  url.searchParams.set("utm_content", PAID_PLAN_UPGRADE_UTM_CONTENT[feature]);
+
+  return url.toString();
+};

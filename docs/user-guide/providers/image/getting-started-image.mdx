@@ -96,6 +96,29 @@ Install Trivy using one of the following methods:
 
 For additional installation methods, see the [Trivy installation guide](https://trivy.dev/latest/getting-started/installation/).
 
+### Vulnerability Database Cache
+
+<VersionBadge version="5.42.0" />
+
+Trivy keeps its vulnerability database in a cache directory. By default Prowler gives it a temporary one and removes it when the scan ends, so the database is downloaded again for every scan.
+
+Set `TRIVY_CACHE_DIR` to a directory that persists and the database is downloaded once and reused:
+
+```bash
+export TRIVY_CACHE_DIR="$HOME/.cache/trivy"
+prowler image --image <image>
+```
+
+Prowler never deletes a directory you supply. Trivy still creates and updates its cache and database files inside it.
+
+<Note>
+A host with no internet access needs a pre-populated vulnerability database in a persistent directory, with `TRIVY_CACHE_DIR` pointing at it. Populate the directory on a machine that does have access and copy it across.
+
+Trivy tries to refresh the database when it considers it stale, and that download fails without network access. Set `TRIVY_SKIP_DB_UPDATE=true` (and `TRIVY_SKIP_JAVA_DB_UPDATE=true` if Java scanning is enabled) so it uses the supplied database as is.
+
+The database ages. A scan run against an old one reports only the vulnerabilities known when it was built, and nothing in the output says so, so keep track of when it was last refreshed.
+</Note>
+
 
 ### Supported Scanners
 
@@ -306,8 +329,20 @@ prowler image --registry internal-registry.local --registry-insecure
 ```
 
 <Warning>
-Skipping TLS verification disables certificate validation for registry connections. Use this flag only for trusted internal registries with self-signed certificates.
+Skipping TLS verification disables certificate validation for registry connections, including the Trivy image pull (`TRIVY_INSECURE`). Use this flag only for trusted internal registries with self-signed certificates.
 </Warning>
+
+#### On-Premises Registries and Private Networks
+
+<VersionBadge version="5.41.0" />
+
+By default, Prowler rejects registry-provided URLs (token endpoints, pagination links) that resolve to non-public addresses, as an SSRF defense. On-premises registries live on private networks by definition, so to scan them declare the trusted ranges explicitly:
+
+```bash
+export PROWLER_IMAGE_PROVIDER_ALLOWED_PRIVATE_NETWORKS="192.168.65.254/32,10.20.0.0/16"
+```
+
+The value is a comma-separated list of IPs and CIDRs. A resolved address inside an allowlisted range is permitted; every other non-public address stays blocked, so link-local (`169.254.169.254`), loopback, and the rest of the internal network remain protected. The variable applies to registry enumeration and to the connection test. Malformed entries fail at startup, and a non-empty allowlist is logged as a relaxed security control. When unset, behavior is unchanged: only public addresses are followed.
 
 #### Supported Registries
 

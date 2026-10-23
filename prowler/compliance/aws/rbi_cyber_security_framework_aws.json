@@ -109,9 +109,7 @@
         "guardduty_no_high_severity_findings",
         "rds_instance_minor_version_upgrade_enabled",
         "redshift_cluster_automatic_upgrades",
-        "ssm_managed_compliant_patching",
-        "ssm_managed_compliant_patching",
-        "rds_instance_minor_version_upgrade_enabled"
+        "ssm_managed_compliant_patching"
       ]
     },
     {

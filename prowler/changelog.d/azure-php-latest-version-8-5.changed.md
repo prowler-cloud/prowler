@@ -1,0 +1,1 @@
+Default `php_latest_version` for `app_ensure_php_version_is_latest` raised from `8.2` to `8.5`, the newest PHP runtime on Azure App Service for Linux, following the PHP2Shell (CVE-2026-109618, CVE-2026-109619) security release

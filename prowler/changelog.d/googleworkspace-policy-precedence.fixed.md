@@ -1,0 +1,1 @@
+Google Workspace checks now read the policy Google applies (greatest sortOrder) instead of the last policy the Cloud Identity Policy API lists, which reported default values over admin-configured ones

@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { useUIStore } from "@/store/ui/store";
 import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
 
 import { AppSidebarContent } from "./app-sidebar-content";
@@ -9,14 +10,18 @@ import { useAppSidebarMode } from "./app-sidebar-mode-store";
 import { APP_SIDEBAR_MODE } from "./types";
 
 const {
+  issuesFlagValue,
   openCloudUpgradeMock,
   openLaunchScanModalMock,
   pathnameValue,
+  permissionsValue,
   pushMock,
 } = vi.hoisted(() => ({
+  issuesFlagValue: { current: false },
   openCloudUpgradeMock: vi.fn(),
   openLaunchScanModalMock: vi.fn(),
   pathnameValue: { current: "/findings" },
+  permissionsValue: { current: {} as Record<string, boolean> },
   pushMock: vi.fn(),
 }));
 
@@ -26,11 +31,16 @@ vi.mock("next/navigation", () => ({
 }));
 
 vi.mock("@/hooks", () => ({
-  useAuth: () => ({ permissions: {} }),
+  useAuth: () => ({ permissions: permissionsValue.current }),
 }));
 
 vi.mock("@/hooks/use-runtime-config", () => ({
   useRuntimeConfig: () => ({ apiDocsUrl: "https://local.example/docs" }),
+}));
+
+vi.mock("@/lib/feature-flags", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/feature-flags")>()),
+  useFeatureFlag: () => issuesFlagValue.current,
 }));
 
 vi.mock("@/store", () => ({
@@ -53,10 +63,17 @@ vi.mock("@/app/(prowler)/lighthouse/_components/navigation", () => ({
 describe("AppSidebarContent", () => {
   beforeEach(() => {
     pathnameValue.current = "/findings";
+    permissionsValue.current = { manage_providers: true };
+    issuesFlagValue.current = false;
     pushMock.mockClear();
     openCloudUpgradeMock.mockClear();
     openLaunchScanModalMock.mockClear();
     useAppSidebarMode.setState({ mode: APP_SIDEBAR_MODE.BROWSE });
+    useUIStore.setState({
+      registryEligible: false,
+      hasProviders: false,
+      hasProvidersResolved: false,
+    });
   });
 
   afterEach(() => {
@@ -87,6 +104,58 @@ describe("AppSidebarContent", () => {
       undefined,
     );
     expect(screen.getAllByText("Cloud").length).toBeGreaterThan(0);
+  });
+
+  it("shows Registry navigation when the server marked this request eligible", () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
+    useUIStore.setState({ registryEligible: true });
+
+    // When
+    render(<AppSidebarContent />);
+
+    // Then
+    expect(screen.getByRole("link", { name: /Registry/ })).toHaveAttribute(
+      "href",
+      "/registry",
+    );
+  });
+
+  it("shows Issues navigation in Cloud once the feature flag is on", () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
+    issuesFlagValue.current = true;
+
+    // When
+    render(<AppSidebarContent />);
+
+    // Then
+    expect(screen.getByRole("link", { name: /Issues/ })).toHaveAttribute(
+      "href",
+      "/issues",
+    );
+  });
+
+  it("hides Issues navigation in Cloud while the feature flag is off", () => {
+    // Given / When
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
+    render(<AppSidebarContent />);
+
+    // Then
+    expect(
+      screen.queryByRole("link", { name: /Issues/ }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("hides Registry navigation without a server eligibility decision", () => {
+    // Given / When
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
+    render(<AppSidebarContent />);
+
+    // Then
+    expect(
+      screen.queryByRole("link", { name: /Registry/ }),
+    ).not.toBeInTheDocument();
   });
 
   it("keeps the existing Lighthouse chat sidebar in Cloud Chat mode", () => {
@@ -133,6 +202,67 @@ describe("AppSidebarContent", () => {
 
     // Then
     expect(pushMock).toHaveBeenCalledWith("/lighthouse");
+  });
+
+  it("offers Add Provider instead of Launch Scan once the tenant is known to have no providers", () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
+    useUIStore.setState({ hasProviders: false, hasProvidersResolved: true });
+
+    // When
+    render(<AppSidebarContent />);
+
+    // Then
+    expect(screen.getByRole("link", { name: "Add Provider" })).toHaveAttribute(
+      "href",
+      "/providers?addProvider=true&addProviderSource=sidebar_cta",
+    );
+    expect(
+      screen.queryByRole("link", { name: "Launch Scan" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("keeps Launch Scan for a user who cannot add providers", () => {
+    // Given: an empty list may only mean limited visibility.
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
+    permissionsValue.current = { manage_providers: false };
+    useUIStore.setState({ hasProviders: false, hasProvidersResolved: true });
+
+    // When
+    render(<AppSidebarContent />);
+
+    // Then
+    expect(screen.getByRole("link", { name: "Launch Scan" })).toBeVisible();
+    expect(
+      screen.queryByRole("link", { name: "Add Provider" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("keeps Launch Scan while the provider count is still unresolved", () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
+    useUIStore.setState({ hasProviders: false, hasProvidersResolved: false });
+
+    // When
+    render(<AppSidebarContent />);
+
+    // Then
+    expect(screen.getByRole("link", { name: "Launch Scan" })).toBeVisible();
+    expect(
+      screen.queryByRole("link", { name: "Add Provider" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("keeps Launch Scan for a tenant that already has providers", () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
+    useUIStore.setState({ hasProviders: true, hasProvidersResolved: true });
+
+    // When
+    render(<AppSidebarContent />);
+
+    // Then
+    expect(screen.getByRole("link", { name: "Launch Scan" })).toBeVisible();
   });
 
   it("opens the current scan modal instead of navigating from the scans route", async () => {

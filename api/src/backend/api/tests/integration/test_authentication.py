@@ -1,9 +1,9 @@
 import json
-import time
 from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
 import pytest
+from api.authentication import API_KEY_LAST_USED_AT_THROTTLE_SECONDS
 from api.db_router import MainRouter
 from api.models import Membership, Role, TenantAPIKey, User, UserRoleRelationship
 from api.signals import revoke_membership_api_keys, revoke_user_api_keys
@@ -11,6 +11,7 @@ from conftest import TEST_PASSWORD, get_api_tokens, get_authorization_header
 from django.db.utils import ConnectionDoesNotExist
 from django.urls import reverse
 from drf_simple_apikey.crypto import get_crypto
+from freezegun import freeze_time
 from rest_framework.test import APIClient
 from rest_framework_simplejwt.token_blacklist.models import (
     BlacklistedToken,
@@ -527,7 +528,7 @@ class TestAPIKeyAuthentication:
     def test_last_used_at_tracking(
         self, create_test_user, tenants_fixture, api_keys_fixture
     ):
-        """Verify last_used_at timestamp updates on each authentication."""
+        """Verify last_used_at timestamp is set on first use and throttled after that."""
         client = APIClient()
         api_key = api_keys_fixture[0]
 
@@ -536,7 +537,11 @@ class TestAPIKeyAuthentication:
 
         # Use API key to authenticate
         api_key_headers = get_api_key_header(api_key._raw_key)
-        first_response = client.get(reverse("provider-list"), headers=api_key_headers)
+        start = datetime.now(UTC)
+        with freeze_time(start):
+            first_response = client.get(
+                reverse("provider-list"), headers=api_key_headers
+            )
         assert first_response.status_code == 200
 
         # Reload from database and check last_used_at is set
@@ -544,17 +549,23 @@ class TestAPIKeyAuthentication:
         first_used_at = api_key.last_used_at
         assert first_used_at is not None
 
-        # Use the same key again after a small delay
-        time.sleep(0.1)
-
+        # Using the same key again within the throttle interval does not rewrite it
         second_response = client.get(reverse("provider-list"), headers=api_key_headers)
         assert second_response.status_code == 200
 
-        # Reload and verify last_used_at was updated
         api_key.refresh_from_db()
-        second_used_at = api_key.last_used_at
-        assert second_used_at is not None
-        assert second_used_at > first_used_at
+        assert api_key.last_used_at == first_used_at
+
+        # Past the throttle interval, the next use refreshes it
+        later = start + timedelta(seconds=API_KEY_LAST_USED_AT_THROTTLE_SECONDS + 1)
+        with freeze_time(later):
+            third_response = client.get(
+                reverse("provider-list"), headers=api_key_headers
+            )
+        assert third_response.status_code == 200
+
+        api_key.refresh_from_db()
+        assert api_key.last_used_at > first_used_at
 
 
 @pytest.mark.django_db
@@ -1441,6 +1452,7 @@ class TestAPIKeyRLSBypass:
 
         The update to last_used_at during authentication must also use the
         admin database since it occurs before RLS context is established.
+        Past the throttle interval, using the key again refreshes the timestamp.
         """
         client = APIClient()
         api_key = api_keys_fixture[0]
@@ -1448,7 +1460,11 @@ class TestAPIKeyRLSBypass:
         assert api_key.last_used_at is None
 
         api_key_headers = get_api_key_header(api_key._raw_key)
-        first_response = client.get(reverse("provider-list"), headers=api_key_headers)
+        start = datetime.now(UTC)
+        with freeze_time(start):
+            first_response = client.get(
+                reverse("provider-list"), headers=api_key_headers
+            )
 
         assert first_response.status_code == 200
 
@@ -1456,9 +1472,11 @@ class TestAPIKeyRLSBypass:
         first_timestamp = api_key.last_used_at
         assert first_timestamp is not None
 
-        time.sleep(0.1)
-
-        second_response = client.get(reverse("provider-list"), headers=api_key_headers)
+        later = start + timedelta(seconds=API_KEY_LAST_USED_AT_THROTTLE_SECONDS + 1)
+        with freeze_time(later):
+            second_response = client.get(
+                reverse("provider-list"), headers=api_key_headers
+            )
         assert second_response.status_code == 200
 
         api_key.refresh_from_db()

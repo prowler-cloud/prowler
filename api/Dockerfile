@@ -1,26 +1,38 @@
-FROM python:3.12.13-slim-trixie@sha256:57cd7c3a7a273101a6485ba99423ee568157882804b1124b4dd04266317710de AS build
+FROM python:3.12.15-slim-trixie@sha256:05cda9777409a9c3ffddd94a4c476b79f0769a0b4857f0c7ed9226b6800b0d6f AS build
 
 LABEL maintainer="https://github.com/prowler-cloud/api"
 
-ARG POWERSHELL_VERSION=7.5.9
+ARG POWERSHELL_VERSION=7.5.12
 ENV POWERSHELL_VERSION=${POWERSHELL_VERSION}
 # Opt out of PowerShell telemetry (Application Insights -> dc.services.visualstudio.com)
 ENV POWERSHELL_TELEMETRY_OPTOUT=1
 
-ARG TRIVY_VERSION=0.74.0
+ARG TRIVY_VERSION=0.76.1
 ENV TRIVY_VERSION=${TRIVY_VERSION}
 
 ARG ZIZMOR_VERSION=1.24.1
 ENV ZIZMOR_VERSION=${ZIZMOR_VERSION}
 
 # Pinned here, not fetched with the artefact: a compromised release ships its own checksum.
-ARG TRIVY_SHA256_AMD64=2ae6fe3ee734b7fdf11335663e18c75ea12dccc76062f09f164a3b0f8be4371a
-ARG TRIVY_SHA256_ARM64=b94ce1976bbf3c15b514b605ee88be7c6d94a29be2302847ff01cb794d47aad5
-ARG POWERSHELL_SHA256_AMD64=492ff26bb958336bf61e597ce19e07648b4003bd2a08659e02f0e3e0446ebfe0
-ARG POWERSHELL_SHA256_ARM64=2503b71da3e83635592b092df59a0aca4c3606b4d9b068217bb00be989cb0d56
+ARG TRIVY_SHA256_AMD64=c7cbe3137fb8a48a17574bede3dd6beb16742d1e9772929940fc90082c39d9c0
+ARG TRIVY_SHA256_ARM64=e174dff2a6dba5e3ae41f8d0537a6324405bd08132497340304c6b20e0f16a1f
+ARG POWERSHELL_SHA256_AMD64=db85ae1f45005ffd20e456890585167257151fa99406ccd7ab344f7cf3a766fd
+ARG POWERSHELL_SHA256_ARM64=29eb382cd510e4bd246902650ff6cf9f3b56f959d1bd0be75e0a1e425177c831
 ARG ZIZMOR_SHA256_AMD64=a8000f3c683319a523d3b20df0e75457ba591f049cfcbfa98966631b56733c03
 ARG ZIZMOR_SHA256_ARM64=d66e37ef8a375fb07939c630ebf9709a6e0f20242bdc3faf672a7ed97e0b768d
 
+# High CVEs fixed in Debian trixie but not yet in the pinned base image:
+#   openssl/libssl3t64/openssl-provider-legacy 3.5.7-1~deb13u2  CVE-2026-14456,
+#   -14457, -18798, -54874, -63072, -63073, -63074, -63075, -63076, -75803
+#   libsqlite3-0 3.46.1-7+deb13u2  CVE-2026-11822, -11824
+#   gzip 1.13-1+deb13u1  CVE-2026-41992
+#   perl-base 5.40.1-6+deb13u1  CVE-2026-42497, -48962, -57432
+#   libssh2-1t64 1.11.1-1+deb13u2  CVE-2026-58050
+#   libpcre2-8-0 10.46-1~deb13u2  CVE-2026-86145, -89161
+# Taken as a targeted --only-upgrade rather than by moving the digest: the newest
+# published python:3.12-slim-trixie carries the same vulnerable versions. The three
+# openssl packages are flagged separately, so all are named.
+# Drop each one once the base image ships its fixed version.
 # hadolint ignore=DL3008
 RUN apt-get update && apt-get install -y --no-install-recommends \
     wget \
@@ -36,7 +48,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libtool \
     libxslt1-dev \
     python3-dev \
-    && apt-get install -y --no-install-recommends --only-upgrade util-linux \
+    && apt-get install -y --no-install-recommends --only-upgrade \
+       util-linux libssl3t64 openssl openssl-provider-legacy \
+       libsqlite3-0 gzip perl-base libssh2-1t64 libpcre2-8-0 \
     && rm -rf /var/lib/apt/lists/*
 
 # Install PowerShell
@@ -111,7 +125,7 @@ RUN mkdir -p /tmp/prowler_api_output
 COPY --chown=prowler:prowler pyproject.toml uv.lock ./
 
 RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir uv==0.12.0
+    pip install --no-cache-dir uv==0.13.4
 
 ENV PATH="/home/prowler/.local/bin:$PATH"
 

@@ -18,10 +18,12 @@ export const RUNTIME_CONFIG_KEYS = [
   "apiDocsUrl",
   "posthogEnabled",
   "posthogKey",
-  "posthogHost",
+  "posthogIngestionHost",
+  "posthogUiHost",
   "reoDevClientId",
   "cloudBillingEnabled",
   "cloudEnabled",
+  "selfRegistrationEnabled",
   "stripePublishableKey",
   "stripePublishableKeyV2",
 ] as const satisfies ReadonlyArray<keyof RuntimePublicConfig>;

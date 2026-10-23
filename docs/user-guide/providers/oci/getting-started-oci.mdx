@@ -12,7 +12,7 @@ The following steps apply to Prowler Cloud and Prowler Local Server.
 1. Sign in to the [OCI Console](https://cloud.oracle.com/) and open **Tenancy Details** to copy the Tenancy OCID.
 2. Go to **Identity & Security** → **Users**, select the principal that owns the API key, and copy the **User OCID**.
 3. Generate or locate the API key fingerprint and private key for that user. Follow the [Config File Authentication steps](/user-guide/providers/oci/authentication#config-file-authentication-manual-api-key-setup) to create or rotate the key pair and copy the fingerprint.
-4. Note the **Region** identifier to scan (for example, `us-ashburn-1`).
+4. In **Tenancy Details**, note the **Home Region** identifier (for example, `me-abudhabi-1`). Any other region the tenancy is subscribed to also works.
 
 ### Step 2: Access Prowler Cloud
 1. Navigate to [Prowler Cloud](https://cloud.prowler.com/) or launch [Prowler Local Server](/user-guide/tutorials/prowler-app).
@@ -26,11 +26,17 @@ Prowler Cloud connects to OCI with API key credentials. Provide:
 
 - **User OCID** for the API key owner
 - **Fingerprint** of the API key
-- **Region** (for example, `us-ashburn-1`)
+- **Home Region**: select it from the list (for example, `me-abudhabi-1`)
 - **Private Key Content** (paste the full PEM value)
 - **Passphrase (Optional)** if the private key is encrypted
 
 Select **Next**, then **Launch Scan** to validate the connection and start the first OCI scan. The private key content is encoded for secure transmission.
+
+<Note>
+The home region is used only to validate the credentials and discover the regions the tenancy is subscribed to. It does not limit the scan: Prowler audits every subscribed region. OCI Identity and Access Management (IAM) only answers in subscribed regions, so a tenancy that is not subscribed to the selected region cannot be validated.
+</Note>
+
+Providers created without a region keep using `us-ashburn-1` for validation. If such a provider fails with `401 NotAuthenticated`, update its credentials and select the home region.
 
 ![Add OCI API Key Credentials](./images/oci-add-api-key-credentials.png)
 
@@ -333,6 +339,11 @@ prowler oci \
 - Ensure policies are not restricted by conditions that exclude your user
 
 #### Region Issues
+
+**Error: "OCI credential validation failed" with `401 NotAuthenticated` on `get_tenancy`**
+- The tenancy is not subscribed to the region used for validation (by default `us-ashburn-1`)
+- In Prowler Cloud or Prowler Local Server, update the provider credentials and select the tenancy home region
+- In Prowler CLI, set `region` in `~/.oci/config` to the home region. All subscribed regions are still scanned; `--region` also works but limits the scan to that region
 
 **Error: "Invalid region"**
 - Check available regions: `prowler oci --list-regions`

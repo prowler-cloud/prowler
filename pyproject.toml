@@ -41,6 +41,7 @@ dependencies = [
   "azure-keyvault-keys==4.10.0",
   "azure-mgmt-applicationinsights==4.1.0",
   "azure-mgmt-authorization==4.0.0",
+  "azure-mgmt-cognitiveservices==14.1.0",
   "azure-mgmt-compute==34.0.0",
   "azure-mgmt-containerregistry==12.0.0",
   "azure-mgmt-containerservice==34.1.0",
@@ -76,7 +77,7 @@ dependencies = [
   "dash==3.1.1",
   "dash-bootstrap-components==2.0.3",
   "defusedxml==0.7.1",
-  "dulwich==1.2.5",
+  "dulwich==1.2.9",
   "google-api-python-client==2.163.0",
   "google-auth-httplib2==0.2.0",
   "jsonschema==4.23.0",
@@ -102,7 +103,9 @@ dependencies = [
   "stackit-iaas==1.4.0",
   "stackit-objectstorage==1.4.0",
   "stackit-resourcemanager==0.8.0",
+  "stackit-ske==1.12.0",
   "tabulate==0.9.0",
+  "truststore==0.10.4",
   "tzlocal==5.3.1",
   "uuid6==2024.7.10",
   "py-iam-expand==0.3.0",
@@ -131,6 +134,7 @@ dependencies = [
   "huaweicloudsdkkms==3.1.204",
   "huaweicloudsdkobs==3.1.204",
   "huaweicloudsdkrds==3.1.204",
+  "huaweicloudsdksmn==3.1.204",
   "huaweicloudsdkvpc==3.1.204",
   "huaweicloudsdkwaf==3.1.204",
   "zstandard==0.25.0"
@@ -141,7 +145,7 @@ maintainers = [{name = "Prowler Engineering", email = "engineering@prowler.com"}
 name = "prowler"
 readme = "README.md"
 requires-python = ">=3.10,<3.14"
-version = "5.40.0"
+version = "5.46.0"
 
 [project.scripts]
 prowler = "prowler.__main__:prowler"
@@ -179,7 +183,7 @@ constraint-dependencies = [
   "aenum==3.1.17",
   "aiofiles==24.1.0",
   "aiohappyeyeballs==2.6.1",
-  "aiohttp==3.14.3",
+  "aiohttp==3.14.5",
   "aiosignal==1.4.0",
   "alibabacloud-actiontrail20200706==2.4.1",
   "alibabacloud-credentials==1.0.3",
@@ -211,7 +215,7 @@ constraint-dependencies = [
   "aliyun-log-fastpb==0.3.0",
   "annotated-types==0.7.0",
   "antlr4-python3-runtime==4.13.2",
-  "anyio==4.13.0",
+  "anyio==4.14.2",
   "apscheduler==3.11.2",
   "astroid==3.3.11",
   "async-timeout==5.0.1",
@@ -224,7 +228,7 @@ constraint-dependencies = [
   "bandit==1.8.3",
   "black==26.3.1",
   "blinker==1.9.0",
-  "certifi==2026.4.22",
+  "certifi==2026.10.19",
   "cffi==2.0.0",
   "cfn-lint==1.51.0",
   "charset-normalizer==3.4.7",
@@ -269,6 +273,7 @@ constraint-dependencies = [
   "huaweicloudsdkkms==3.1.204",
   "huaweicloudsdkobs==3.1.204",
   "huaweicloudsdkrds==3.1.204",
+  "huaweicloudsdksmn==3.1.204",
   "huaweicloudsdkvpc==3.1.204",
   "huaweicloudsdkwaf==3.1.204",
   "hyperframe==6.1.0",
@@ -345,7 +350,7 @@ constraint-dependencies = [
   "pydash==8.0.6",
   "pyflakes==3.2.0",
   "pygments==2.20.0",
-  "pyjwt==2.13.0",
+  "pyjwt==2.14.0",
   "pylint==3.3.4",
   "pynacl==1.6.2",
   "pyopenssl==26.4.0",
@@ -383,18 +388,24 @@ constraint-dependencies = [
   "typing-inspection==0.4.2",
   "tzdata==2026.2",
   "uritemplate==4.2.0",
-  "urllib3==2.7.0",
+  "urllib3==2.8.0",
   "vulture==2.14",
   "websocket-client==1.9.0",
   "werkzeug==3.1.8",
   "wrapt==2.1.2",
   "xlsxwriter==3.2.9",
   "xmltodict==1.0.4",
-  "yarl==1.23.0",
+  "yarl==1.25.1",
   "zipp==3.23.1",
   "zstd==1.5.7.2"
 ]
-override-dependencies = ["okta==3.4.2"]
+override-dependencies = [
+  "okta==3.4.2",
+  # huaweicloudsdkcore pins pymongo==4.15.1 exactly (still so in 3.1.216) and only uses
+  # its bson types. The container installs from this lock, so the override reaches the
+  # image; a pip install of the wheel still resolves 4.15.1 through the huawei pin.
+  "pymongo==4.18.2"
+]
 
 [tool.vulture]
 # Suppress known false positives. The CI command only passes --exclude and

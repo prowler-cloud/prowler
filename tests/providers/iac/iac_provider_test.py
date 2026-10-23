@@ -7,6 +7,11 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from prowler.lib.check.models import CheckReportIAC
+from prowler.lib.network.ssrf import OutboundURLNotAllowedError
+from prowler.providers.iac.exceptions.exceptions import (
+    IacRepositoryCloneError,
+    IacScanError,
+)
 from prowler.providers.iac.iac_provider import IacProvider
 from tests.providers.iac.iac_fixtures import (
     DEFAULT_SCAN_PATH,
@@ -323,12 +328,10 @@ class TestIacProvider:
             stdout=get_invalid_trivy_output(), stderr=""
         )
 
-        with pytest.raises(SystemExit) as excinfo:
+        with pytest.raises(IacScanError):
             # Consume the generator
             for _ in provider.run_scan("/test/directory", ["all"], []):
                 pass
-
-        assert excinfo.value.code == 1
 
     @patch("subprocess.run")
     def test_iac_provider_run_scan_null_output(self, mock_subprocess):
@@ -337,13 +340,12 @@ class TestIacProvider:
 
         mock_subprocess.return_value = MagicMock(stdout="null", stderr="")
 
-        with pytest.raises(SystemExit) as exc_info:
+        with pytest.raises(IacScanError):
             # Consume the generator
             for _ in provider.run_scan(
                 "/test/directory", ["vuln", "misconfig", "secret"], []
             ):
                 pass
-        assert exc_info.value.code == 1
 
     def test_iac_provider_process_finding_dockerfile(self):
         """Test processing a Dockerfile finding"""
@@ -514,14 +516,12 @@ class TestIacProvider:
         # Make subprocess.run raise an exception
         mock_subprocess.side_effect = Exception("Test exception")
 
-        with pytest.raises(SystemExit) as exc_info:
+        with pytest.raises(IacScanError):
             # Consume the generator
             for _ in provider.run_scan(
                 "/test/directory", ["vuln", "misconfig", "secret"], []
             ):
                 pass
-
-        assert exc_info.value.code == 1
 
     @patch("subprocess.run")
     def test_run_scan_with_different_frameworks(self, mock_subprocess):
@@ -785,7 +785,9 @@ class TestIacProvider:
         url = "https://github.com/user/repo.git"
         with mock.patch.object(provider, "_detect_branch_name", return_value="main"):
             temp_dir, branch_name = provider._clone_repository(url)
-        mock_clone.assert_called_with(url, "/tmp/fake-dir", depth=1)
+        mock_clone.assert_called_with(
+            url, "/tmp/fake-dir", depth=1, config=mock.ANY, pool_manager=mock.ANY
+        )
         assert temp_dir == "/tmp/fake-dir"
         assert branch_name == "main"
 
@@ -799,7 +801,13 @@ class TestIacProvider:
                 url, github_username="user", personal_access_token="token123"
             )
         expected_url = "https://user:token123@github.com/user/repo.git"
-        mock_clone.assert_called_with(expected_url, "/tmp/fake-dir", depth=1)
+        mock_clone.assert_called_with(
+            expected_url,
+            "/tmp/fake-dir",
+            depth=1,
+            config=mock.ANY,
+            pool_manager=mock.ANY,
+        )
         assert temp_dir == "/tmp/fake-dir"
         assert branch_name == "develop"
 
@@ -813,9 +821,59 @@ class TestIacProvider:
                 url, oauth_app_token="oauth456"
             )
         expected_url = "https://oauth2:oauth456@github.com/user/repo.git"
-        mock_clone.assert_called_with(expected_url, "/tmp/fake-dir", depth=1)
+        mock_clone.assert_called_with(
+            expected_url,
+            "/tmp/fake-dir",
+            depth=1,
+            config=mock.ANY,
+            pool_manager=mock.ANY,
+        )
         assert temp_dir == "/tmp/fake-dir"
         assert branch_name == "master"
+
+    @mock.patch("prowler.providers.iac.iac_provider.porcelain.clone")
+    @mock.patch("tempfile.mkdtemp", return_value="/tmp/fake-dir")
+    def test_clone_repository_validates_redirect_destinations(
+        self, _mock_mkdtemp, mock_clone
+    ):
+        """dulwich adopts a redirect's destination, so the clone needs the guarded manager."""
+        provider = IacProvider()
+        with (
+            mock.patch.object(provider, "_detect_branch_name", return_value="main"),
+            mock.patch(
+                "prowler.providers.iac.iac_provider.guarded_pool_manager",
+                return_value="the-guarded-manager",
+            ),
+        ):
+            provider._clone_repository("https://github.com/user/repo.git")
+
+        assert mock_clone.call_args.kwargs["pool_manager"] == "the-guarded-manager"
+
+    @mock.patch("prowler.providers.iac.iac_provider.porcelain.clone")
+    @mock.patch("tempfile.mkdtemp", return_value="/tmp/fake-dir")
+    def test_clone_repository_failure_raises(self, _mock_mkdtemp, mock_clone):
+        """A failed clone must raise a typed error instead of returning `None`.
+
+        `_clone_repository` is annotated `-> tuple[str, str]` and `__init__`
+        unpacks the result directly, so falling through the error handler used
+        to raise `TypeError: cannot unpack non-sequence NoneType`. Raising
+        `IacRepositoryCloneError` lets the CLI exit with the logged message and
+        lets the API report the failure as a normal task error instead of a
+        `SystemExit` escaping the Celery worker.
+        """
+        mock_clone.side_effect = Exception(
+            "https://x-access-token:SENTINEL_TOKEN@github.com/user/repo.git refused"
+        )
+
+        with pytest.raises(IacRepositoryCloneError) as exc_info:
+            IacProvider(scan_repository_url="https://github.com/user/repo.git")
+
+        # ProwlerException formats original_exception into its str(), and the API
+        # returns that, so the authenticated URL must not reach it
+        assert "SENTINEL_TOKEN" not in str(exc_info.value)
+        assert "Exception" in str(exc_info.value)
+        assert exc_info.value.code == 21000
+        assert isinstance(exc_info.value.__cause__, Exception)
 
     def test_detect_branch_name_main(self):
         """Test detecting 'main' branch from .git/HEAD"""
@@ -859,3 +917,95 @@ class TestIacProvider:
         # Pass a non-existent directory
         branch_name = provider._detect_branch_name("/non/existent/path")
         assert branch_name == "main"
+
+    def test_test_connection_rejects_loopback_url(self):
+        with patch("prowler.providers.iac.iac_provider.ls_remote") as mock_ls_remote:
+            connection = IacProvider.test_connection(
+                scan_repository_url="https://127.0.0.1/user/repo.git"
+            )
+
+        assert connection.is_connected is False
+        assert connection.error == "Repository URL is not an allowed destination."
+        mock_ls_remote.assert_not_called()
+
+    def test_test_connection_rejects_private_range_url(self):
+        with patch("prowler.providers.iac.iac_provider.ls_remote") as mock_ls_remote:
+            connection = IacProvider.test_connection(
+                scan_repository_url="https://10.0.0.1/user/repo.git"
+            )
+
+        assert connection.is_connected is False
+        assert connection.error == "Repository URL is not an allowed destination."
+        mock_ls_remote.assert_not_called()
+
+    def test_clone_repository_rejects_a_non_public_url(self):
+        provider = IacProvider.__new__(IacProvider)
+        with patch("prowler.providers.iac.iac_provider.porcelain.clone") as mock_clone:
+            with pytest.raises(OutboundURLNotAllowedError):
+                provider._clone_repository("https://169.254.169.254/org/repo.git")
+
+        mock_clone.assert_not_called()
+
+    def test_clone_repository_rejects_shared_address_space(self):
+        provider = IacProvider.__new__(IacProvider)
+        with patch("prowler.providers.iac.iac_provider.porcelain.clone") as mock_clone:
+            with pytest.raises(OutboundURLNotAllowedError):
+                provider._clone_repository("https://100.100.100.200/org/repo.git")
+
+        mock_clone.assert_not_called()
+
+    def test_clone_repository_does_not_validate_the_token_bearing_url(self):
+        provider = IacProvider.__new__(IacProvider)
+        with patch(
+            "prowler.lib.network.ssrf.socket.getaddrinfo",
+            return_value=[(None, None, None, None, ("140.82.121.4", 0))],
+        ) as mock_getaddrinfo:
+            with patch("prowler.providers.iac.iac_provider.porcelain.clone"):
+                with patch.object(
+                    IacProvider, "_detect_branch_name", return_value="main"
+                ):
+                    provider._clone_repository(
+                        "https://github.com/org/repo.git",
+                        github_username="user",
+                        personal_access_token="token",
+                    )
+
+        assert mock_getaddrinfo.call_args[0][0] == "github.com"
+
+    def test_test_connection_allows_public_url(self):
+        with (
+            patch(
+                "prowler.lib.network.ssrf.socket.getaddrinfo",
+                return_value=[(None, None, None, None, ("140.82.121.4", 0))],
+            ) as mock_getaddrinfo,
+            patch("prowler.providers.iac.iac_provider.ls_remote") as mock_ls_remote,
+        ):
+            connection = IacProvider.test_connection(
+                scan_repository_url="https://github.com/user/repo.git"
+            )
+
+        assert connection.is_connected is True
+        mock_getaddrinfo.assert_called_once_with("github.com", None)
+        mock_ls_remote.assert_called_once_with("https://github.com/user/repo.git")
+
+    def test_test_connection_does_not_echo_raw_error(self):
+        with (
+            patch(
+                "prowler.lib.network.ssrf.socket.getaddrinfo",
+                return_value=[(None, None, None, None, ("140.82.121.4", 0))],
+            ),
+            patch(
+                "prowler.providers.iac.iac_provider.ls_remote",
+                side_effect=Exception(
+                    "https://x-access-token:SENTINEL_TOKEN@github.com/user/repo.git refused"
+                ),
+            ),
+        ):
+            connection = IacProvider.test_connection(
+                scan_repository_url="https://github.com/user/repo.git",
+                oauth_app_token="SENTINEL_TOKEN",
+            )
+
+        assert connection.is_connected is False
+        assert connection.error == "Failed to connect to repository."
+        assert "SENTINEL_TOKEN" not in connection.error

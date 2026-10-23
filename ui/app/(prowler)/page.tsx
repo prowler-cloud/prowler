@@ -1,3 +1,4 @@
+import { SquareChartGantt } from "lucide-react";
 import { Suspense } from "react";
 
 import { getAllProviderGroups } from "@/actions/manage-groups/manage-groups";
@@ -10,7 +11,9 @@ import {
   AppSidebarModeSync,
 } from "@/components/layout/app-sidebar";
 import { ContentLayout } from "@/components/shadcn/content-layout";
+import { FeatureFlagGate } from "@/components/shared/feature-flag-gate";
 import { DOCS_URLS } from "@/lib/external-urls";
+import { FEATURE_FLAG } from "@/lib/feature-flags";
 import { isCloud } from "@/lib/shared/env";
 import { SearchParamsProps } from "@/types";
 
@@ -23,6 +26,12 @@ import {
   AttackSurfaceSSR,
 } from "./_overview/attack-surface";
 import { CheckFindingsSSR } from "./_overview/check-findings";
+import {
+  ExploitabilityChartSkeleton,
+  ExploitabilityChartSSR,
+  TopIssuesSkeleton,
+  TopIssuesSSR,
+} from "./_overview/exploitability";
 import { GraphsTabsWrapper } from "./_overview/graphs-tabs/graphs-tabs-wrapper";
 import { RiskPipelineViewSkeleton } from "./_overview/graphs-tabs/risk-pipeline-view";
 import {
@@ -59,7 +68,7 @@ export default async function Home({
     ]);
 
   return (
-    <ContentLayout title="Overview" icon="lucide:square-chart-gantt">
+    <ContentLayout title="Overview" icon={<SquareChartGantt />}>
       <AppSidebarModeSync mode={APP_SIDEBAR_MODE.BROWSE} />
       <OverviewProviderContext
         searchParams={resolvedSearchParams}
@@ -94,6 +103,14 @@ export default async function Home({
         <Suspense fallback={<ThreatScoreSkeleton />}>
           <ThreatScoreSSR searchParams={resolvedSearchParams} />
         </Suspense>
+
+        {isCloud() && (
+          <FeatureFlagGate flag={FEATURE_FLAG.ISSUES}>
+            <Suspense fallback={<ExploitabilityChartSkeleton />}>
+              <ExploitabilityChartSSR searchParams={resolvedSearchParams} />
+            </Suspense>
+          </FeatureFlagGate>
+        )}
 
         <Suspense fallback={<StatusChartSkeleton />}>
           <CheckFindingsSSR searchParams={resolvedSearchParams} />
@@ -135,11 +152,18 @@ export default async function Home({
           </div>
         </div>
 
-        {/* Charts column: Attack Surface on top, Findings Over Time below */}
+        {/* Charts column: Attack Surface, Top issues, Findings Over Time */}
         <div className="flex flex-1 flex-col gap-6">
           <Suspense fallback={<AttackSurfaceSkeleton />}>
             <AttackSurfaceSSR searchParams={resolvedSearchParams} />
           </Suspense>
+          {isCloud() && (
+            <FeatureFlagGate flag={FEATURE_FLAG.ISSUES}>
+              <Suspense fallback={<TopIssuesSkeleton />}>
+                <TopIssuesSSR searchParams={resolvedSearchParams} />
+              </Suspense>
+            </FeatureFlagGate>
+          )}
           <Suspense fallback={<FindingSeverityOverTimeSkeleton />}>
             <FindingSeverityOverTimeSSR searchParams={resolvedSearchParams} />
           </Suspense>

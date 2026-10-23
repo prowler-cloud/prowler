@@ -1,3 +1,4 @@
+import { User } from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
 
@@ -20,7 +21,7 @@ export default async function Users({
   const searchParamsKey = JSON.stringify(resolvedSearchParams || {});
 
   return (
-    <ContentLayout title="Users" icon="lucide:user">
+    <ContentLayout title="Users" icon={<User />}>
       <div className="flex flex-col gap-6">
         <div className="flex flex-row items-end justify-end">
           <Button asChild>

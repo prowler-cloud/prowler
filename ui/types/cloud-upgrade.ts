@@ -16,3 +16,15 @@ export const CLOUD_UPGRADE_FEATURE = {
 
 export type CloudUpgradeFeature =
   (typeof CLOUD_UPGRADE_FEATURE)[keyof typeof CLOUD_UPGRADE_FEATURE];
+
+// Prowler Cloud features gated behind a paid plan.
+export const PAID_PLAN_UPGRADE_FEATURE = {
+  FINDINGS_PREVIEW: "findings_preview",
+  REGISTRY: "registry",
+  REPORT_DOWNLOAD: "report_download",
+} as const;
+
+export type PaidPlanUpgradeFeature =
+  (typeof PAID_PLAN_UPGRADE_FEATURE)[keyof typeof PAID_PLAN_UPGRADE_FEATURE];
+
+export type UpgradeFeature = CloudUpgradeFeature | PaidPlanUpgradeFeature;

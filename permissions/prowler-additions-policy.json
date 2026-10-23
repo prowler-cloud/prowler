@@ -38,6 +38,7 @@
         "glue:GetSecurityConfiguration*",
         "glue:SearchTables",
         "glue:GetMLTransforms",
+        "inspector2:BatchGetFindingDetails",
         "lambda:GetFunction*",
         "lambda:GetLayerVersion",
         "logs:FilterLogEvents",

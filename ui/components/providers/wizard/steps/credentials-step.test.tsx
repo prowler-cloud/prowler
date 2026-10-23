@@ -1,3 +1,6 @@
+vi.mock("./dynamic-credentials-step", () => ({
+  DynamicCredentialsStep: () => <div>dynamic-credentials-form</div>,
+}));
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
