@@ -762,6 +762,7 @@ class Repository(GithubService):
                     approval_count_source = "ruleset_not_active"
 
             secret_scanning_enabled = False
+            secret_scanning_push_protection_enabled = False
             dependabot_alerts_enabled = False
             try:
                 if (
@@ -770,6 +771,14 @@ class Repository(GithubService):
                 ):
                     secret_scanning_enabled = (
                         repo.security_and_analysis.secret_scanning.status == "enabled"
+                    )
+                if (
+                    repo.security_and_analysis
+                    and repo.security_and_analysis.secret_scanning_push_protection
+                ):
+                    secret_scanning_push_protection_enabled = (
+                        repo.security_and_analysis.secret_scanning_push_protection.status
+                        == "enabled"
                     )
                 try:
                     # Use get_dependabot_alerts to check if Dependabot alerts are enabled
@@ -794,6 +803,7 @@ class Repository(GithubService):
                     f"{repo.full_name}: {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
                 secret_scanning_enabled = None
+                secret_scanning_push_protection_enabled = None
                 dependabot_alerts_enabled = None
             repos[repo.id] = Repo(
                 id=repo.id,
@@ -840,6 +850,7 @@ class Repository(GithubService):
                 securitymd=securitymd_exists,
                 codeowners_exists=codeowners_exists,
                 secret_scanning_enabled=secret_scanning_enabled,
+                secret_scanning_push_protection_enabled=secret_scanning_push_protection_enabled,
                 dependabot_alerts_enabled=dependabot_alerts_enabled,
                 delete_branch_on_merge=delete_branch_on_merge,
             )
@@ -1006,5 +1017,6 @@ class Repo(BaseModel):
     securitymd: Optional[bool]
     codeowners_exists: Optional[bool]
     secret_scanning_enabled: Optional[bool]
+    secret_scanning_push_protection_enabled: Optional[bool] = None
     dependabot_alerts_enabled: Optional[bool]
     delete_branch_on_merge: Optional[bool]
