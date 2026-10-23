@@ -15,6 +15,13 @@ check "s3_integration_requirements" {
   }
 }
 
+check "realtime_detection_requirements" {
+  assert {
+    condition     = !var.enable_realtime_detection || (var.prowler_webhook_url != "" && var.prowler_api_key != "")
+    error_message = "When enable_realtime_detection is true, both prowler_webhook_url and prowler_api_key must be provided and non-empty."
+  }
+}
+
 # IAM Role
 ###################################
 data "aws_iam_policy_document" "prowler_assume_role_policy" {
@@ -113,8 +120,19 @@ module "s3_integration" {
 
   source = "./s3-integration"
 
-  s3_integration_bucket_name    = var.s3_integration_bucket_name
+  s3_integration_bucket_name       = var.s3_integration_bucket_name
   s3_integration_bucket_account_id = var.s3_integration_bucket_account_id
 
   prowler_role_name = aws_iam_role.prowler_scan.name
+}
+
+# Real-Time Detection Module
+###################################
+module "realtime_detection" {
+  count = var.enable_realtime_detection ? 1 : 0
+
+  source = "./realtime-detection"
+
+  prowler_webhook_url = var.prowler_webhook_url
+  prowler_api_key     = var.prowler_api_key
 }
