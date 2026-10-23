@@ -30,6 +30,9 @@ class M365Credentials(BaseModel):
     tenant_id: str = ""
     tenant_domains: list[str] = []
     certificate_content: Optional[str] = None
+    # Workload identity federation: no secret or certificate, the access tokens
+    # are obtained with a federated token as the client assertion.
+    oidc: bool = False
 
 
 class M365OutputOptions(ProviderOutputOptions):

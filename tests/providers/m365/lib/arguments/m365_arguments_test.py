@@ -76,13 +76,14 @@ class TestM365Arguments:
         arguments.init_parser(mock_m365_args)
 
         # Verify authentication arguments were added to the mutually exclusive group
-        assert self.mock_auth_modes_group.add_argument.call_count == 5
+        assert self.mock_auth_modes_group.add_argument.call_count == 6
 
         # Check that all authentication arguments are present
         calls = self.mock_auth_modes_group.add_argument.call_args_list
         auth_args = [call[0][0] for call in calls]
 
         assert "--az-cli-auth" in auth_args
+        assert "--oidc-auth" in auth_args
         assert "--env-auth" in auth_args
         assert "--sp-env-auth" in auth_args
         assert "--browser-auth" in auth_args
