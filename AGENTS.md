@@ -54,6 +54,7 @@ Use these skills for detailed patterns on-demand:
 | `prowler-tour` | Keep product-tour definitions aligned with the UI | [SKILL.md](skills/prowler-tour/SKILL.md) |
 | `gh-aw` | GitHub Agentic Workflows (gh-aw) | [SKILL.md](skills/gh-aw/SKILL.md) |
 | `skill-creator` | Create new AI agent skills | [SKILL.md](skills/skill-creator/SKILL.md) |
+| `address-review` | Address CodeRabbit review findings on a PR | [SKILL.md](skills/address-review/SKILL.md) |
 
 ### Auto-invoke Skills
 
@@ -70,6 +71,7 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 | Adding privilege escalation detection queries | `prowler-attack-paths-query` |
 | Adding services to existing providers | `prowler-provider` |
 | Adding, updating, or removing a tour definition (*.tour.ts) | `prowler-tour` |
+| Addressing CodeRabbit review comments on a pull request | `address-review` |
 | After creating/modifying a skill | `skill-sync` |
 | App Router / Server Actions | `nextjs-16` |
 | Auditing check-to-requirement mappings as a cloud auditor | `prowler-compliance` |
