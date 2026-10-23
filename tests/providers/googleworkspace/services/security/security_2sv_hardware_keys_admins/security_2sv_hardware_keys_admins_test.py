@@ -215,8 +215,8 @@ class TestSecurity2svHardwareKeysAdmins:
         assert "accepted method is ALL" in findings[0].status_extended
         assert "also overridden" in findings[0].status_extended
 
-    def test_manual_when_every_failing_setting_is_overridden(self):
-        """The admin group may get the overriding value, which is not exposed"""
+    def test_fail_when_every_failing_setting_is_overridden(self):
+        """SCuBA GWS.COMMONCONTROLS.1.1 still fails for users outside the override"""
         findings = run_check(
             **{
                 **COMPLIANT,
@@ -228,11 +228,9 @@ class TestSecurity2svHardwareKeysAdmins:
         )
 
         assert len(findings) == 1
-        assert findings[0].status == "MANUAL"
+        assert findings[0].status == "FAIL"
         assert "accepted method is ALL" in findings[0].status_extended
-        assert "administrative accounts may be configured correctly" in (
-            findings[0].status_extended
-        )
+        assert "also overridden" in findings[0].status_extended
 
     def test_fail_when_only_some_failing_settings_are_overridden(self):
         """A failure no override reaches is still proven for the whole domain"""
