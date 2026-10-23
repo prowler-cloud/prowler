@@ -1,0 +1,32 @@
+{
+  "Provider": "huaweicloud",
+  "CheckID": "nat_dnat_sensitive_ports",
+  "CheckTitle": "NAT Gateway DNAT rules do not expose sensitive ports to the internet",
+  "CheckType": [],
+  "ServiceName": "nat",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "dnat_rule/{id}",
+  "Severity": "critical",
+  "ResourceType": "NatGatewayDnatRule",
+  "ResourceGroup": "network",
+  "Description": "This check verifies that NAT Gateway DNAT rules do not expose sensitive ports (SSH, RDP, MySQL, PostgreSQL, Redis, MongoDB, MSSQL) to the internet.",
+  "Risk": "Exposing sensitive ports via DNAT rules allows direct internet access to internal services, increasing the attack surface and risk of unauthorized access.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Remove DNAT rules that expose sensitive ports or restrict access using security groups.",
+      "Url": "https://hub.prowler.com/check/nat_dnat_sensitive_ports"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
