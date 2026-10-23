@@ -46,6 +46,7 @@ from dashboard.lib.dropdowns import (
 )
 from dashboard.lib.layouts import create_layout_overview
 from prowler.lib.logger import logger
+from prowler.lib.outputs.utils import sanitize_csv_value
 
 # Suppress warnings
 warnings.filterwarnings("ignore")
@@ -83,6 +84,18 @@ m365_provider_logo = html.Img(
 alibabacloud_provider_logo = html.Img(
     src="assets/images/providers/alibabacloud_provider.png", alt="alibabacloud provider"
 )
+
+
+def _sanitize_csv_export(data):
+    """Return a copy of the findings DataFrame safe to download as CSV.
+
+    Finding fields are attacker-influenced (resource names, tags, ...), so a
+    cell starting with a spreadsheet formula initiator (`=`, `+`, `-`, `@`, a
+    tab or a carriage return) would be evaluated when the export is opened in
+    Excel or LibreOffice. Neutralise those cells with the same helper the SDK
+    CSV writers use, leaving numbers untouched.
+    """
+    return data.apply(lambda column: column.map(sanitize_csv_value))
 
 
 def load_csv_files(csv_files):
@@ -1550,7 +1563,9 @@ def filter_data(
     ):
         if ctx.triggered_id == "download_link_csv":
             csv_data = dcc.send_data_frame(
-                filtered_data.to_csv, "prowler-dashboard-export.csv", index=False
+                _sanitize_csv_export(filtered_data).to_csv,
+                "prowler-dashboard-export.csv",
+                index=False,
             )
         if ctx.triggered_id == "download_link_xlsx":
             csv_data = dcc.send_data_frame(
