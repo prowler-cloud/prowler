@@ -1,6 +1,3 @@
-# pnpm 11+ workspace config. .npmrc is auth/registry only; everything else lives here.
-# Reference: https://pnpm.io/supply-chain-security
-
 packages: []
 
 # Refuse to install on Node/pnpm outside the `engines` block in package.json.
@@ -85,7 +82,7 @@ overrides:
   # GHSA-cmwh-pvxp-8882 (permanent ALLOWED_ATTR pollution via setConfig()); 3.4.13
   # also closes the CUSTOM_ELEMENT_HANDLING afterSanitizeElements bypass and the
   # IN_PLACE hook removal that left a detached subtree executable.
-  "dompurify": "3.4.13"
+  "dompurify": "3.4.16"
 
   # Advisories flagged by `pnpm audit` on 2026-09-08. Every pin below is the
   # oldest patched release and was published more than 7 days before that date,
@@ -163,3 +160,6 @@ trustPolicyExclude:
 
 # Block transitive dependencies from using exotic specifiers (git URLs, tarballs).
 blockExoticSubdeps: true
+minimumReleaseAgeExclude:
+  # Renovate security update: dompurify@3.4.16
+  - dompurify@3.4.16
