@@ -66,3 +66,7 @@ class VercelProviderConfig(ProviderConfigBase):
         default=None,
         description="Suffixes that mark a project env var as secret-like.",
     )
+    public_env_prefixes: Optional[list[str]] = Field(
+        default=None,
+        description="Prefixes that frontend frameworks expose to the browser bundle.",
+    )
