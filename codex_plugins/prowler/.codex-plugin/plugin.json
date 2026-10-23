@@ -1,0 +1,24 @@
+{
+  "name": "prowler",
+  "displayName": "Prowler Cloud Security",
+  "version": "0.1.0",
+  "description": "Cloud security and compliance skills powered by the Prowler MCP server.",
+  "author": {
+    "name": "Prowler",
+    "email": "support@prowler.com",
+    "url": "https://prowler.com"
+  },
+  "homepage": "https://docs.prowler.com",
+  "repository": "https://github.com/prowler-cloud/prowler",
+  "license": "Apache-2.0",
+  "category": "security",
+  "keywords": [
+    "prowler",
+    "security",
+    "compliance",
+    "cloud-security",
+    "mcp"
+  ],
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json"
+}
