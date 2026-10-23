@@ -1,0 +1,45 @@
+{
+  "Provider": "aws",
+  "CheckID": "sagemaker_processing_job_volume_encrypted_with_cmk",
+  "CheckTitle": "SageMaker processing job volumes use customer-managed KMS keys",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Effects/Data Exposure"
+  ],
+  "ServiceName": "sagemaker",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Other",
+  "ResourceGroup": "ai_ml",
+  "Description": "**Amazon SageMaker processing jobs** are assessed for **at-rest encryption** of their attached ML storage volumes using a **customer-managed KMS key**. The finding reflects whether `ProcessingResources.ClusterConfig.VolumeKmsKeyId` is set on the job.",
+  "Risk": "When `VolumeKmsKeyId` is omitted, SageMaker encrypts the processing job ML storage volume with a **transient key** and discards it immediately after encryption, not an AWS managed KMS key. That transient key cannot carry a custom key policy, so **rotation**, **access**, and **lifecycle** remain outside the account owner's control. Intermediate processing data on the volume then cannot be independently revoked, and grants to that data cannot be audited or restricted through a key policy. Configure `VolumeKmsKeyId` when customer-managed key policy and audit controls are required.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/sagemaker/latest/dg/key-management.html",
+    "https://docs.aws.amazon.com/sagemaker/latest/APIReference/API_DescribeProcessingJob.html",
+    "https://docs.aws.amazon.com/sagemaker/latest/APIReference/API_ProcessingClusterConfig.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "```yaml\n# CloudFormation: SageMaker ProcessingJob with volume CMEK\nResources:\n  <example_resource_name>:\n    Type: AWS::SageMaker::ProcessingJob\n    Properties:\n      ProcessingJobName: <example_resource_name>\n      RoleArn: <example_role_arn>\n      AppSpecification:\n        ImageUri: <example_ecr_image_uri>\n      ProcessingResources:\n        ClusterConfig:\n          InstanceCount: 1\n          InstanceType: ml.m5.xlarge\n          VolumeSizeInGB: 30\n          VolumeKmsKeyId: <example_kms_key_arn>  # Critical: encrypts the processing EBS volume with a customer-managed key\n      ProcessingOutputConfig:\n        Outputs:\n          - OutputName: output-1\n            S3Output:\n              S3Uri: s3://<example_bucket>/output\n              LocalPath: /opt/ml/processing/output\n              S3UploadMode: EndOfJob\n```",
+      "Other": "1. In the AWS console, go to SageMaker > Processing > Processing jobs\n2. Create a new processing job (existing jobs cannot change VolumeKmsKeyId)\n3. Under Resource configuration, set Volume encryption key to your customer-managed KMS key\n4. Complete required fields and create the job\n5. Verify DescribeProcessingJob shows ProcessingResources.ClusterConfig.VolumeKmsKeyId",
+      "Terraform": "```hcl\n# SageMaker Processing Job with volume CMEK\n# Note: aws_sagemaker_processing_job is not a first-class Terraform resource in all\n# providers; use the AWS CLI/SDK or CloudFormation equivalent with VolumeKmsKeyId set:\n# ProcessingResources.ClusterConfig.VolumeKmsKeyId = \"<example_kms_key_arn>\"\n```"
+    },
+    "Recommendation": {
+      "Text": "Set `VolumeKmsKeyId` on every SageMaker processing job using a **customer-managed KMS key** with a least-privilege key policy and **rotation** enabled. Existing jobs cannot change the key; recreate non-compliant jobs.",
+      "Url": "https://hub.prowler.com/check/sagemaker_processing_job_volume_encrypted_with_cmk"
+    }
+  },
+  "Categories": [
+    "encryption",
+    "gen-ai"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "sagemaker_training_jobs_volume_and_output_encryption_enabled",
+    "sagemaker_transform_job_volume_encrypted_with_cmk"
+  ],
+  "Notes": "Reports MANUAL when DescribeProcessingJob fails so an unread job is never treated as compliant. VolumeKmsKeyId lives under ProcessingResources.ClusterConfig."
+}

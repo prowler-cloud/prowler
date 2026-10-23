@@ -1,0 +1,1 @@
+`sagemaker_transform_job_volume_encrypted_with_cmk` check for AWS provider, verifying that every SageMaker transform job encrypts its ML storage volume with a customer-managed KMS key (`TransformResources.VolumeKmsKeyId`) and reporting MANUAL when the job details cannot be described
