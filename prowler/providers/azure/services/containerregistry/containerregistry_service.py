@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 
-from azure.mgmt.containerregistry import ContainerRegistryManagementClient
+from azure.mgmt.containerregistry.v2023_11_01_preview import (
+    ContainerRegistryManagementClient,
+)
 
 from prowler.lib.logger import logger
 from prowler.providers.azure.azure_provider import AzureProvider
@@ -41,7 +43,7 @@ class ContainerRegistry(AzureService):
                                     False
                                     if getattr(
                                         registry,
-                                        "public_network_access_enabled",
+                                        "public_network_access",
                                         "Enabled",
                                     )
                                     == "Disabled"
@@ -62,6 +64,7 @@ class ContainerRegistry(AzureService):
                                     for pec in getattr(
                                         registry, "private_endpoint_connections", []
                                     )
+                                    or []
                                 ],
                             )
                         },
