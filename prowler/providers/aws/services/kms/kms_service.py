@@ -1,6 +1,7 @@
 import json
 from typing import Optional
 
+from botocore.exceptions import ClientError
 from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
@@ -13,6 +14,7 @@ class KMS(AWSService):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
         self.keys = []
+        self.keys_scan_errors = {}
         self.__threading_call__(self._list_keys)
         if self.keys:
             self._describe_key()
@@ -42,7 +44,14 @@ class KMS(AWSService):
                         logger.error(
                             f"{regional_client.region} -- {error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
                         )
+        except ClientError as error:
+            code = error.response["Error"].get("Code", error.__class__.__name__)
+            self.keys_scan_errors[regional_client.region] = code
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
+            )
         except Exception as error:
+            self.keys_scan_errors[regional_client.region] = error.__class__.__name__
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
             )
@@ -54,13 +63,21 @@ class KMS(AWSService):
                 regional_client = self.regional_clients[key.region]
                 try:
                     response = regional_client.describe_key(KeyId=key.id)
-                    key.state = response["KeyMetadata"]["KeyState"]
-                    key.origin = response["KeyMetadata"]["Origin"]
-                    key.manager = response["KeyMetadata"]["KeyManager"]
-                    key.spec = response["KeyMetadata"]["CustomerMasterKeySpec"]
-                    key.multi_region = response["KeyMetadata"]["MultiRegion"]
+                    key.state = response["KeyMetadata"].get("KeyState")
+                    key.origin = response["KeyMetadata"].get("Origin")
+                    key.manager = response["KeyMetadata"].get("KeyManager")
+                    key.spec = response["KeyMetadata"].get("CustomerMasterKeySpec")
+                    key.multi_region = response["KeyMetadata"].get("MultiRegion", False)
                     key.description = response["KeyMetadata"].get("Description", "")
+                    key.detail_retrieved = True
+                except ClientError as error:
+                    code = error.response["Error"].get("Code", error.__class__.__name__)
+                    key.describe_error = code
+                    logger.error(
+                        f"{regional_client.region} -- {error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
+                    )
                 except Exception as error:
+                    key.describe_error = error.__class__.__name__
                     logger.error(
                         f"{regional_client.region} -- {error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
                     )
@@ -106,6 +123,14 @@ class KMS(AWSService):
                             regional_client.get_key_policy(
                                 KeyId=key.id, PolicyName="default"
                             )["Policy"]
+                        )
+                    except ClientError as error:
+                        code = error.response["Error"].get(
+                            "Code", error.__class__.__name__
+                        )
+                        key.policy_fetch_error = code
+                        logger.error(
+                            f"{regional_client.region} -- {error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"
                         )
                     except Exception as error:
                         key.policy_fetch_error = error.__class__.__name__
@@ -173,6 +198,8 @@ class Key(BaseModel):
     # error class name). Checks that make security assertions from the policy
     # should emit MANUAL when this is set, not silently skip the key.
     policy_fetch_error: Optional[str] = None
+    describe_error: Optional[str] = None
+    detail_retrieved: bool = False
     spec: Optional[str]
     region: str
     multi_region: Optional[bool]
