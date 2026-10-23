@@ -26,6 +26,8 @@ Refer to the [Prowler Cloud guide](/user-guide/tutorials/prowler-app) for detail
     curl -sLO "https://raw.githubusercontent.com/prowler-cloud/prowler/refs/tags/${VERSION}/docker-compose.yml"
     # Environment variables can be customized in the .env file. Using default values in production environments is not recommended.
     curl -sLO "https://raw.githubusercontent.com/prowler-cloud/prowler/refs/tags/${VERSION}/.env"
+    # AUTH_SECRET is not shipped: set it in .env before the first start
+    perl -pi -e "s|^AUTH_SECRET=.*|AUTH_SECRET=\"$(openssl rand -base64 32)\"|" .env
     docker compose up -d
     ```
 
@@ -34,12 +36,17 @@ Refer to the [Prowler Cloud guide](/user-guide/tutorials/prowler-app) for detail
     Invoke-WebRequest -Uri "https://raw.githubusercontent.com/prowler-cloud/prowler/refs/tags/$VERSION/docker-compose.yml" -OutFile "docker-compose.yml"
     # Environment variables can be customized in the .env file. Using default values in production environments is not recommended.
     Invoke-WebRequest -Uri "https://raw.githubusercontent.com/prowler-cloud/prowler/refs/tags/$VERSION/.env" -OutFile ".env"
+    # AUTH_SECRET is not shipped: set it in .env before the first start
+    $AuthSecret = [Convert]::ToBase64String([System.Security.Cryptography.RandomNumberGenerator]::GetBytes(32))
+    (Get-Content .env) -replace '^AUTH_SECRET=.*', "AUTH_SECRET=`"$AuthSecret`"" | Set-Content .env
     docker compose up -d
     ```
     </CodeGroup>
 
     <Callout icon="lock" iconType="regular" color="#e74c3c">
       For a secure setup, the API auto-generates a unique key pair, `DJANGO_TOKEN_SIGNING_KEY` and `DJANGO_TOKEN_VERIFYING_KEY`, and stores it in `~/.config/prowler-api` (non-container) or the bound Docker volume in `_data/api` (container). Never commit or reuse static/default keys. To rotate keys, delete the stored key files and restart the API.
+
+      The API also generates `DJANGO_SECRETS_ENCRYPTION_KEY` on the first start, stored next to the key pair as `secrets_encryption.key`. Unlike the key pair, this one cannot be rotated by deleting the file: it protects every stored credential. See [Secrets encryption key](#secrets-encryption-key).
     </Callout>
 
   </Tab>
@@ -148,8 +155,18 @@ The `--policy always` flag ensures that Docker pulls the latest images even if t
 <Note>
   **What Gets Preserved During Upgrade**
 
-  Everything is preserved, nothing will be deleted after the update.
+  Everything is preserved, nothing will be deleted after the update. The `_data/` directory holds the database, the graph store and the keys under `_data/api`, including `secrets_encryption.key`: never remove it when upgrading.
 </Note>
+
+### Secrets encryption key
+
+`DJANGO_SECRETS_ENCRYPTION_KEY` is the symmetric key that encrypts every cloud provider credential, integration credential and LLM key stored by Prowler. When the variable is empty, the API generates the key on the first start and persists it as `_data/api/secrets_encryption.key` (`~/.config/prowler-api/secrets_encryption.key` outside a container), where the `api`, `worker` and `worker-beat` containers read it. To manage it yourself, set the variable to the output of `openssl rand -base64 32` before the first start.
+
+<Warning>
+  Keep this key across upgrades and back it up together with the database. Rotating it means re-encrypting every stored credential: Prowler does not do that automatically, so setting a new key leaves the existing credentials unreadable and they have to be entered again.
+</Warning>
+
+Older `.env` files shipped a working value for this variable, so every installation that kept it shares the same public key. The API now refuses to start with it and logs `DJANGO_SECRETS_ENCRYPTION_KEY is set to a value that was published in the Prowler repository`. To recover, clear the variable in `.env` (or set a freshly generated one), restart the stack and enter the provider, integration and LLM credentials again; they were encrypted with a public key and must be considered exposed.
 
 ### Troubleshooting Installation Issues
 
