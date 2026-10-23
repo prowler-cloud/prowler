@@ -42,6 +42,8 @@ test_sso_instance_id = "app-test-instance-id"
 test_sso_application_arn = (
     f"arn:aws:sso::{AWS_ACCOUNT_NUMBER}:application/sagemaker/apl-test"
 )
+test_data_quality_job = "test-data-quality-job"
+test_arn_data_quality_job = f"arn:aws:sagemaker:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:data-quality-job-definition/{test_data_quality_job}"
 
 make_api_call = botocore.client.BaseClient._make_api_call
 
@@ -73,6 +75,23 @@ def mock_make_api_call(self, operation_name, kwarg):
                     "TrainingJobArn": test_arn_training_job,
                 },
             ]
+        }
+    if operation_name == "ListDataQualityJobDefinitions":
+        return {
+            "JobDefinitionSummaries": [
+                {
+                    "MonitoringJobDefinitionName": test_data_quality_job,
+                    "MonitoringJobDefinitionArn": test_arn_data_quality_job,
+                },
+            ]
+        }
+    if operation_name == "DescribeDataQualityJobDefinition":
+        return {
+            "JobDefinitionName": test_data_quality_job,
+            "JobDefinitionArn": test_arn_data_quality_job,
+            "NetworkConfig": {
+                "EnableInterContainerTrafficEncryption": True,
+            },
         }
     if operation_name == "DescribeNotebookInstance":
         return {
@@ -461,17 +480,20 @@ class Test_SageMaker_Service:
                 patch(
                     "prowler.providers.aws.services.sagemaker.sagemaker_service.SageMaker._list_domains"
                 ),
+                patch(
+                    "prowler.providers.aws.services.sagemaker.sagemaker_service.SageMaker._list_data_quality_job_definitions"
+                ),
             ):
                 sagemaker_service = SageMaker(audit_info)
 
                 # Check that __threading_call__ was called for _list_tags_for_resource
-                # (one for each resource type: models, notebooks, training jobs, processing jobs, endpoint configs, domains)
+                # (one for each resource type: models, notebooks, training jobs, processing jobs, endpoint configs, domains, data quality job definitions)
                 tag_calls = [
                     c
                     for c in mock_threading_call.call_args_list
                     if c[0][0] == sagemaker_service._list_tags_for_resource
                 ]
-                assert len(tag_calls) == 6
+                assert len(tag_calls) == 7
 
     # Test SageMaker list model package groups
     def test_list_model_package_groups(self):
@@ -502,3 +524,121 @@ class Test_SageMaker_Service:
         with patch("botocore.client.BaseClient._make_api_call", new=mock_access_denied):
             sagemaker = SageMaker(aws_provider)
             assert sagemaker.sagemaker_model_registries == []
+
+    def test_list_data_quality_job_definitions(self):
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        with patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call):
+            sagemaker = SageMaker(aws_provider)
+            assert len(sagemaker.data_quality_job_definitions) == 1
+            assert (
+                sagemaker.data_quality_job_definitions[0].name == test_data_quality_job
+            )
+            assert (
+                sagemaker.data_quality_job_definitions[0].arn
+                == test_arn_data_quality_job
+            )
+            assert (
+                sagemaker.data_quality_job_definitions[0].region == AWS_REGION_EU_WEST_1
+            )
+
+    def test_describe_data_quality_job_definition_encrypted(self):
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        with patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call):
+            sagemaker = SageMaker(aws_provider)
+            assert (
+                sagemaker.data_quality_job_definitions[
+                    0
+                ].enable_inter_container_traffic_encryption
+                is True
+            )
+            assert sagemaker.data_quality_job_definitions[0].detail_retrieved is True
+
+    def test_describe_data_quality_job_definition_unencrypted(self):
+        def mock_unencrypted(self, operation_name, kwarg):
+            if operation_name == "DescribeDataQualityJobDefinition":
+                return {
+                    "JobDefinitionName": test_data_quality_job,
+                    "JobDefinitionArn": test_arn_data_quality_job,
+                    "NetworkConfig": {
+                        "EnableInterContainerTrafficEncryption": False,
+                    },
+                }
+            return mock_make_api_call(self, operation_name, kwarg)
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        with patch("botocore.client.BaseClient._make_api_call", new=mock_unencrypted):
+            sagemaker = SageMaker(aws_provider)
+            assert (
+                sagemaker.data_quality_job_definitions[
+                    0
+                ].enable_inter_container_traffic_encryption
+                is False
+            )
+            assert sagemaker.data_quality_job_definitions[0].detail_retrieved is True
+
+    def test_describe_data_quality_job_definition_error(self):
+        def mock_error(self, operation_name, kwarg):
+            if operation_name == "DescribeDataQualityJobDefinition":
+                raise botocore.exceptions.ClientError(
+                    {
+                        "Error": {
+                            "Code": "AccessDeniedException",
+                            "Message": "Access Denied",
+                        }
+                    },
+                    "DescribeDataQualityJobDefinition",
+                )
+            return mock_make_api_call(self, operation_name, kwarg)
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        with patch("botocore.client.BaseClient._make_api_call", new=mock_error):
+            sagemaker = SageMaker(aws_provider)
+            assert (
+                sagemaker.data_quality_job_definitions[
+                    0
+                ].enable_inter_container_traffic_encryption
+                is False
+            )
+            assert sagemaker.data_quality_job_definitions[0].detail_retrieved is False
+
+    def test_list_data_quality_job_definitions_error(self):
+        def mock_list_error(self, operation_name, kwarg):
+            if operation_name == "ListDataQualityJobDefinitions":
+                raise botocore.exceptions.ClientError(
+                    {
+                        "Error": {
+                            "Code": "AccessDeniedException",
+                            "Message": "Access Denied",
+                        }
+                    },
+                    "ListDataQualityJobDefinitions",
+                )
+            return mock_make_api_call(self, operation_name, kwarg)
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        with patch("botocore.client.BaseClient._make_api_call", new=mock_list_error):
+            sagemaker = SageMaker(aws_provider)
+            assert sagemaker.data_quality_job_definitions == []
+            assert (
+                sagemaker.data_quality_job_definitions_scan_errors.get(
+                    AWS_REGION_EU_WEST_1
+                )
+                == "AccessDeniedException"
+            )
+
+    def test_list_data_quality_job_definitions_generic_error(self):
+        def mock_generic_error(self, operation_name, kwarg):
+            if operation_name == "ListDataQualityJobDefinitions":
+                raise Exception("Generic error")
+            return mock_make_api_call(self, operation_name, kwarg)
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        with patch("botocore.client.BaseClient._make_api_call", new=mock_generic_error):
+            sagemaker = SageMaker(aws_provider)
+            assert sagemaker.data_quality_job_definitions == []
+            assert (
+                sagemaker.data_quality_job_definitions_scan_errors.get(
+                    AWS_REGION_EU_WEST_1
+                )
+                == "Exception"
+            )
