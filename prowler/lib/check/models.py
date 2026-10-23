@@ -1451,12 +1451,15 @@ class CheckReportVercel(Check_Report):
 
 @dataclass
 class CheckReportSupabase(Check_Report):
-    """Contains a Supabase organization member finding."""
+    """Contains a Supabase finding for an organization, project or project resource."""
 
     resource_name: str
     resource_id: str
     organization_slug: str
     organization_name: str
+    project_ref: str
+    project_name: str
+    project_region: str
 
     def __init__(self, metadata: Dict, resource: Any) -> None:
         super().__init__(metadata, resource)
@@ -1464,11 +1467,14 @@ class CheckReportSupabase(Check_Report):
         self.resource_id = getattr(resource, "id", "")
         self.organization_slug = getattr(resource, "organization_slug", "")
         self.organization_name = getattr(resource, "organization_name", "")
+        self.project_ref = getattr(resource, "project_ref", "")
+        self.project_name = getattr(resource, "project_name", "")
+        self.project_region = getattr(resource, "region", "") or ""
 
     @property
     def region(self) -> str:
-        """Supabase organization membership is global."""
-        return "global"
+        """Project resources report the Supabase region; organization resources are global."""
+        return self.project_region or "global"
 
 
 @dataclass

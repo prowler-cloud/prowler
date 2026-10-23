@@ -11,6 +11,9 @@ ORGANIZATION_ID = "org-id"
 ORGANIZATION_NAME = "Test Organization"
 ORGANIZATION_SLUG = "test-organization"
 USER_ID = "user-id"
+PROJECT_REF = "abcdefghijklmnopqrst"
+PROJECT_NAME = "storefront"
+PROJECT_REGION = "eu-west-1"
 
 
 def set_mocked_supabase_provider():

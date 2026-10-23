@@ -1,1 +1,1 @@
-Supabase provider with the `organizations_member_mfa_enabled` check
+Supabase provider with organization, project, auth, storage and database checks for the hosted Supabase platform

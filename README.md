@@ -143,6 +143,7 @@ Every AWS provider scan will enqueue an Attack Paths ingestion job automatically
 | OpenStack | 34 | 5 | 1 | 9 | Official | UI, API, CLI |
 | Vercel | 26 | 6 | 1 | 8 | Official | UI, API, CLI |
 | Okta | 29 | 8 | 2 | 2 | Official | UI, API, CLI |
+| Supabase | 25 | 5 | 0 | 8 | Official | CLI |
 | Linode [Contact us](https://prowler.com/contact) | 10 | 3 | 1 | 4 | Unofficial | CLI |
 | Huawei Cloud [Contact us](https://prowler.com/contact) | 25 | 10 | 1 | 6 | Unofficial | CLI |
 | E2E Networks [Contact us](https://prowler.com/contact) | 27 | 6 | 0 | 2 | Unofficial | CLI |

@@ -1,0 +1,38 @@
+{
+  "Provider": "supabase",
+  "CheckID": "database_rls_enabled_on_public_tables",
+  "CheckTitle": "Supabase public tables exposed through the Data API have Row Level Security enabled",
+  "CheckType": [],
+  "ServiceName": "database",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "critical",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "database",
+  "Description": "**Supabase tables** in schemas exposed through PostgREST are assessed for **Row Level Security (RLS)**. Without RLS, anyone holding the public anon key can read and modify every row with a single HTTP request.",
+  "Risk": "A table without RLS in an exposed schema is **fully readable and writable from the internet** with the anon key shipped in the frontend, which is the most common cause of Supabase data breaches.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://supabase.com/docs/guides/database/database-linter?lint=0013_rls_disabled_in_public",
+    "https://supabase.com/docs/guides/database/postgres/row-level-security"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "ALTER TABLE public.<TABLE> ENABLE ROW LEVEL SECURITY;",
+      "NativeIaC": "",
+      "Other": "1. Open the Supabase Dashboard and select the project\n2. Go to Authentication > Policies (or Table Editor > table > RLS)\n3. Enable RLS on every exposed table\n4. Add policies that scope rows to auth.uid() or move internal tables out of the exposed schemas",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable RLS on all tables in exposed schemas and write explicit policies; keep internal tables in a private schema.",
+      "Url": "https://hub.prowler.com/check/database_rls_enabled_on_public_tables"
+    }
+  },
+  "Categories": [
+    "internet-exposed",
+    "trust-boundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Results come from the Supabase security advisor exposed by the Management API; projects where the advisor could not run are not reported."
+}

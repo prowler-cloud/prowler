@@ -35,13 +35,14 @@ class SupabaseProvider(Provider):
     """Hosted Supabase Cloud Management API provider."""
 
     _type = "supabase"
-    _cli_help_text = "Supabase Provider (PoC)"
+    _cli_help_text = "Supabase Provider"
     sdk_only = True
     audit_metadata: Audit_Metadata
 
     def __init__(
         self,
         access_token: str = None,
+        projects: list[str] = None,
         config_path: str = None,
         config_content: dict | None = None,
         fixer_config: dict = {},
@@ -55,6 +56,7 @@ class SupabaseProvider(Provider):
         self._identity = self.setup_identity(
             self._session, self._audit_config.get("max_retries", 3)
         )
+        self._filter_projects = [project for project in (projects or []) if project]
         self._fixer_config = fixer_config
         self._mutelist = (
             SupabaseMutelist(mutelist_content=mutelist_content)
@@ -76,6 +78,11 @@ class SupabaseProvider(Provider):
     @property
     def identity(self):
         return self._identity
+
+    @property
+    def filter_projects(self) -> list[str]:
+        """Project refs or names the scan is limited to; empty scans everything."""
+        return self._filter_projects
 
     @property
     def audit_config(self):
@@ -147,6 +154,7 @@ class SupabaseProvider(Provider):
     def from_cli_args(cls, arguments: Namespace, fixer_config: dict):
         """Create the provider from non-secret CLI configuration."""
         return cls(
+            projects=getattr(arguments, "project", None),
             config_path=arguments.config_file,
             mutelist_path=arguments.mutelist_file,
             fixer_config=fixer_config,
@@ -157,11 +165,16 @@ class SupabaseProvider(Provider):
             ", ".join(organization.slug for organization in self.identity.organizations)
             or "none"
         )
+        lines = [
+            f"Authentication: {Fore.YELLOW}Personal Access Token{Style.RESET_ALL}",
+            f"Organizations: {Fore.YELLOW}{organizations}{Style.RESET_ALL}",
+        ]
+        if self.filter_projects:
+            lines.append(
+                f"Projects: {Fore.YELLOW}{', '.join(self.filter_projects)}{Style.RESET_ALL}"
+            )
         print_boxes(
-            [
-                f"Authentication: {Fore.YELLOW}Personal Access Token{Style.RESET_ALL}",
-                f"Organizations: {Fore.YELLOW}{organizations}{Style.RESET_ALL}",
-            ],
+            lines,
             f"{Style.BRIGHT}Using the Supabase credentials below:{Style.RESET_ALL}",
         )
 
@@ -199,8 +212,8 @@ class SupabaseProvider(Provider):
     def get_output_options(self, arguments, bulk_checks_metadata):
         return SupabaseOutputOptions(arguments, bulk_checks_metadata, self.identity)
 
-    def get_stdout_detail(self, _finding) -> str:
-        return "global"
+    def get_stdout_detail(self, finding) -> str:
+        return finding.region
 
     def get_summary_entity(self) -> tuple[str, str]:
         organizations = ", ".join(
@@ -216,7 +229,7 @@ class SupabaseProvider(Provider):
             "account_name": check_output.organization_name,
             "resource_name": check_output.resource_name,
             "resource_uid": check_output.resource_id,
-            "region": "global",
+            "region": check_output.region,
         }
 
     def get_html_assessment_summary(self) -> str:

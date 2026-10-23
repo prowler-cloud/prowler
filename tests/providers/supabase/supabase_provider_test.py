@@ -128,6 +128,25 @@ class TestSupabaseProvider:
         assert arguments.provider == "supabase"
         assert not hasattr(arguments, "supabase_access_token")
 
+    def test_cli_project_filter_is_passed_to_provider(self):
+        arguments = ProwlerArgumentParser().parse(
+            ["prowler", "supabase", "--project", "storefront", "abcdefghijklmnopqrst"]
+        )
+
+        assert arguments.project == ["storefront", "abcdefghijklmnopqrst"]
+
+        with (
+            mock.patch.object(SupabaseProvider, "setup_session"),
+            mock.patch.object(SupabaseProvider, "setup_identity"),
+            mock.patch(
+                "prowler.providers.supabase.supabase_provider.load_and_validate_config_file",
+                return_value={},
+            ),
+        ):
+            provider = SupabaseProvider.from_cli_args(arguments, fixer_config={})
+
+        assert provider.filter_projects == ["storefront", "abcdefghijklmnopqrst"]
+
     def test_provider_registry_and_class_resolution(self):
         assert ProviderName.SUPABASE.value == "supabase"
         assert Provider.get_class("supabase") is SupabaseProvider
@@ -143,6 +162,7 @@ class TestSupabaseProviderOutputHooks:
             organization_name=ORGANIZATION_NAME,
             resource_name="member user-id",
             resource_id="user-id",
+            region="global",
         )
 
         output = provider.get_finding_output_data(check_output)
@@ -251,4 +271,4 @@ class TestSupabaseProviderOutputHooks:
             "Organization",
             f"{ORGANIZATION_NAME} ({ORGANIZATION_SLUG})",
         )
-        assert provider.get_stdout_detail(mock.MagicMock()) == "global"
+        assert provider.get_stdout_detail(mock.MagicMock(region="global")) == "global"

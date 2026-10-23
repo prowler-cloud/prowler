@@ -34,6 +34,7 @@ class TestSupabaseMutelist:
             resource_id=resource_id,
             resource_name=f"member {resource_id}",
             resource_tags=[],
+            region="global",
         )
         finding.check_metadata.CheckID = "organizations_member_mfa_enabled"
 

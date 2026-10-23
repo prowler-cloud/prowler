@@ -763,6 +763,15 @@ cloudflare:
 supabase:
   # Maximum retries for Management API requests (0 disables retries)
   max_retries: 3
+  # supabase.projects_postgrest_max_rows_limited
+  # Maximum rows a single Data API request may return
+  postgrest_max_rows: 1000
+  # supabase.auth_password_min_length
+  # Minimum password length Supabase Auth must enforce
+  auth_password_min_length: 8
+  # supabase.auth_otp_expiry_within_threshold
+  # Maximum validity of email one-time passcodes, in seconds
+  auth_otp_expiry_seconds: 3600
 
 # Vercel Configuration
 vercel:

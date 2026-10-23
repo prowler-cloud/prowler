@@ -1,0 +1,36 @@
+{
+  "Provider": "supabase",
+  "CheckID": "database_functions_search_path_set",
+  "CheckTitle": "Supabase database functions pin their search_path",
+  "CheckType": [],
+  "ServiceName": "database",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "database",
+  "Description": "**Supabase database functions** are assessed for a **fixed search_path**. A function without `SET search_path` resolves unqualified object names at call time, so a caller who can create objects in an earlier schema can redirect the function.",
+  "Risk": "A SECURITY DEFINER function with a mutable search_path can be made to execute attacker-controlled functions or tables, leading to **privilege escalation to the function owner**, often `postgres`.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://supabase.com/docs/guides/database/database-linter?lint=0011_function_search_path_mutable"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "ALTER FUNCTION public.<FUNCTION>() SET search_path = '';",
+      "NativeIaC": "",
+      "Other": "1. Identify the function from the finding\n2. Run `ALTER FUNCTION <schema>.<function>(<args>) SET search_path = '';`\n3. Fully qualify every object reference inside the function body",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Set an empty search_path on every function (especially SECURITY DEFINER ones) and qualify object names.",
+      "Url": "https://hub.prowler.com/check/database_functions_search_path_set"
+    }
+  },
+  "Categories": [
+    "trust-boundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Results come from the Supabase security advisor exposed by the Management API; projects where the advisor could not run are not reported."
+}

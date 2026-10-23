@@ -10,7 +10,7 @@ class SupabaseMutelist(Mutelist):
         return self.is_muted(
             finding.organization_slug,
             finding.check_metadata.CheckID,
-            "global",
+            finding.region,
             finding.resource_id or finding.resource_name,
             unroll_dict(unroll_tags(finding.resource_tags)),
         )

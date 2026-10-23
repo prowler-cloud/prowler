@@ -27,6 +27,13 @@ class SupabaseIdentityInfo(BaseModel):
 
     organizations: list[SupabaseOrganization] = Field(default_factory=list)
 
+    def organization_name(self, slug: str) -> str:
+        """Return the display name of an organization in scope, or its slug."""
+        for organization in self.organizations:
+            if organization.slug == slug:
+                return organization.name
+        return slug
+
 
 class SupabaseOutputOptions(ProviderOutputOptions):
     """Customize output filenames for Supabase scans."""
