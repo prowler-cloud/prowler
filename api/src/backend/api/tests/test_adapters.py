@@ -145,6 +145,36 @@ def test_social_account_name_uses_login_when_name_is_missing():
     assert name == "octocat"
 
 
+def test_social_account_name_uses_microsoft_display_name():
+    """Microsoft Graph returns displayName/givenName/surname instead of the
+    name/login/username fields used by Google and GitHub."""
+    adapter = ProwlerSocialAccountAdapter()
+
+    name = adapter._get_social_account_name(
+        {
+            "displayName": "Ada Lovelace",
+            "givenName": "Ada",
+            "surname": "Lovelace",
+            "mailNickname": "ada",
+        },
+        "ada@example.com",
+    )
+
+    assert name == "Ada Lovelace"
+
+
+def test_social_account_name_builds_microsoft_name_from_parts():
+    """Fall back to givenName + surname when displayName is absent."""
+    adapter = ProwlerSocialAccountAdapter()
+
+    name = adapter._get_social_account_name(
+        {"givenName": "Ada", "surname": "Lovelace"},
+        "ada@example.com",
+    )
+
+    assert name == "Ada Lovelace"
+
+
 def test_social_account_name_falls_back_to_username_then_email():
     adapter = ProwlerSocialAccountAdapter()
 
@@ -407,6 +437,25 @@ class TestProwlerSocialAccountAdapter:
         adapter.pre_social_login(request, sociallogin)
 
         sociallogin.connect.assert_called_once_with(request, create_test_user)
+
+    def test_pre_social_login_blocks_unverified_microsoft_email(
+        self, create_test_user, rf
+    ):
+        """Microsoft Entra ID emails are not marked verified by allauth, so they
+        must not be able to claim an existing local account."""
+        _verify_local_email(create_test_user)
+        adapter = ProwlerSocialAccountAdapter()
+        sociallogin = _oauth_sociallogin(
+            create_test_user,
+            provider="microsoft",
+            provider_email_verified=False,
+        )
+
+        with pytest.raises(ImmediateHttpResponse) as exc_info:
+            adapter.pre_social_login(rf.get("/"), sociallogin)
+
+        assert exc_info.value.response.status_code == 403
+        sociallogin.connect.assert_not_called()
 
     def test_verified_social_account_link_does_not_send_notification(
         self, create_test_user, rf

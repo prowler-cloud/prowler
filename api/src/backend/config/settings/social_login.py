@@ -9,6 +9,14 @@ GITHUB_OAUTH_CLIENT_ID = env("SOCIAL_GITHUB_OAUTH_CLIENT_ID", default="")
 GITHUB_OAUTH_CLIENT_SECRET = env("SOCIAL_GITHUB_OAUTH_CLIENT_SECRET", default="")
 GITHUB_OAUTH_CALLBACK_URL = env("SOCIAL_GITHUB_OAUTH_CALLBACK_URL", default="")
 
+MICROSOFT_OAUTH_CLIENT_ID = env("SOCIAL_MICROSOFT_OAUTH_CLIENT_ID", default="")
+MICROSOFT_OAUTH_CLIENT_SECRET = env("SOCIAL_MICROSOFT_OAUTH_CLIENT_SECRET", default="")
+MICROSOFT_OAUTH_CALLBACK_URL = env("SOCIAL_MICROSOFT_OAUTH_CALLBACK_URL", default="")
+# Microsoft Entra ID tenant. Use "organizations" (default) or "common" for
+# multi-tenant sign-in, or a specific directory (tenant) ID to restrict login to
+# a single Entra ID tenant.
+MICROSOFT_OAUTH_TENANT = env("SOCIAL_MICROSOFT_OAUTH_TENANT", default="organizations")
+
 # Allauth settings
 ACCOUNT_LOGIN_METHODS = {"email"}  # Use Email / Password authentication
 ACCOUNT_SIGNUP_FIELDS = ["email*", "password1*", "password2*"]
@@ -62,6 +70,20 @@ SOCIALACCOUNT_PROVIDERS = {
         "SCOPE": [
             "user",
             "read:org",
+        ],
+    },
+    "microsoft": {
+        "APP": {
+            "client_id": MICROSOFT_OAUTH_CLIENT_ID,
+            "secret": MICROSOFT_OAUTH_CLIENT_SECRET,
+            # The MicrosoftGraphOAuth2Adapter resolves the Entra ID tenant from
+            # the app `settings` first, falling back to the provider `TENANT`.
+            "settings": {
+                "tenant": MICROSOFT_OAUTH_TENANT,
+            },
+        },
+        "SCOPE": [
+            "User.Read",
         ],
     },
     "saml": {

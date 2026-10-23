@@ -32,14 +32,18 @@ import { SignInFormData, signInSchema } from "@/types";
 export const SignInForm = ({
   googleAuthUrl,
   githubAuthUrl,
+  microsoftAuthUrl,
   isGoogleOAuthEnabled,
   isGithubOAuthEnabled,
+  isMicrosoftOAuthEnabled,
   isSelfRegistrationEnabled = true,
 }: {
   googleAuthUrl?: string;
   githubAuthUrl?: string;
+  microsoftAuthUrl?: string;
   isGoogleOAuthEnabled?: boolean;
   isGithubOAuthEnabled?: boolean;
+  isMicrosoftOAuthEnabled?: boolean;
   isSelfRegistrationEnabled?: boolean;
 }) => {
   const router = useRouter();
@@ -215,9 +219,11 @@ export const SignInForm = ({
           <SocialButtons
             googleAuthUrl={googleAuthUrl}
             githubAuthUrl={githubAuthUrl}
+            microsoftAuthUrl={microsoftAuthUrl}
             callbackUrl={socialCallbackUrl}
             isGoogleOAuthEnabled={isGoogleOAuthEnabled}
             isGithubOAuthEnabled={isGithubOAuthEnabled}
+            isMicrosoftOAuthEnabled={isMicrosoftOAuthEnabled}
           />
         )}
         {isSamlMode ? (

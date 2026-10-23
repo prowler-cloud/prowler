@@ -7,8 +7,10 @@ export const AuthForm = ({
   isCloudEnv,
   googleAuthUrl,
   githubAuthUrl,
+  microsoftAuthUrl,
   isGoogleOAuthEnabled,
   isGithubOAuthEnabled,
+  isMicrosoftOAuthEnabled,
   isSelfRegistrationEnabled = true,
 }: {
   type: string;
@@ -16,8 +18,10 @@ export const AuthForm = ({
   isCloudEnv?: boolean;
   googleAuthUrl?: string;
   githubAuthUrl?: string;
+  microsoftAuthUrl?: string;
   isGoogleOAuthEnabled?: boolean;
   isGithubOAuthEnabled?: boolean;
+  isMicrosoftOAuthEnabled?: boolean;
   isSelfRegistrationEnabled?: boolean;
 }) => {
   if (type === "sign-in") {
@@ -25,8 +29,10 @@ export const AuthForm = ({
       <SignInForm
         googleAuthUrl={googleAuthUrl}
         githubAuthUrl={githubAuthUrl}
+        microsoftAuthUrl={microsoftAuthUrl}
         isGoogleOAuthEnabled={isGoogleOAuthEnabled}
         isGithubOAuthEnabled={isGithubOAuthEnabled}
+        isMicrosoftOAuthEnabled={isMicrosoftOAuthEnabled}
         isSelfRegistrationEnabled={isSelfRegistrationEnabled}
       />
     );
@@ -38,8 +44,10 @@ export const AuthForm = ({
       isCloudEnv={isCloudEnv}
       googleAuthUrl={googleAuthUrl}
       githubAuthUrl={githubAuthUrl}
+      microsoftAuthUrl={microsoftAuthUrl}
       isGoogleOAuthEnabled={isGoogleOAuthEnabled}
       isGithubOAuthEnabled={isGithubOAuthEnabled}
+      isMicrosoftOAuthEnabled={isMicrosoftOAuthEnabled}
     />
   );
 };
