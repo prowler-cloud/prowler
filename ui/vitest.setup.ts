@@ -77,6 +77,8 @@ if (!Range.prototype.getBoundingClientRect) {
 }
 
 class MockResizeObserver implements ResizeObserver {
+  // Same signature as the real constructor; the callback never fires in jsdom.
+  constructor(_callback: ResizeObserverCallback) {}
   observe() {}
   unobserve() {}
   disconnect() {}

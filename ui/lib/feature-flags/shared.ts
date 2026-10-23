@@ -9,6 +9,9 @@ export const FEATURE_FLAG = {
   // Boolean flag evaluated server-side per tenant in cloud. When on, it pins
   // the tenant to legacy billing; off or absent means the new Metronome system.
   BILLING_SYSTEM_METRONOME: "BILLING_SYSTEM_METRONOME",
+  // Boolean flag evaluated server-side per tenant in cloud. When on, trial
+  // tenants only preview the most critical finding groups on /findings.
+  FINDINGS_TRIAL_PREVIEW: "findings-trial-preview",
 } as const;
 
 export type FeatureFlag = (typeof FEATURE_FLAG)[keyof typeof FEATURE_FLAG];
