@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Open local agent</title>
+  <style>
+    :root { --bg: #ffffff; --fg: #0f172a; --muted: #475569; --line: #cbd5e1; --panel: #f8fafc; --accent: #4f46e5; --accent-fg: #ffffff; }
+    @media (prefers-color-scheme: dark) {
+      :root { --bg: #0b1220; --fg: #e2e8f0; --muted: #94a3b8; --line: #334155; --panel: #111a2e; --accent: #818cf8; --accent-fg: #0b1220; }
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; }
+    main { max-width: 640px; margin: 0 auto; padding: 40px 16px 64px; }
+    h1 { font-size: 22px; margin: 0 0 4px; }
+    p { margin: 8px 0; }
+    .muted { color: var(--muted); font-size: 14px; }
+    code, .cmd { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 14px; }
+    .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px; margin: 16px 0; }
+    label { display: block; font-size: 14px; color: var(--muted); margin-bottom: 4px; }
+    input[type=text] { width: 100%; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--fg); font-size: 14px; }
+    .row { display: flex; gap: 8px; align-items: center; }
+    .row input { flex: 1; }
+    button, a.button { display: inline-block; padding: 10px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); font-size: 15px; cursor: pointer; text-decoration: none; }
+    button.primary, a.button.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+    a.button[aria-disabled=true] { opacity: .5; cursor: not-allowed; }
+    .apps { display: grid; gap: 10px; margin: 12px 0; }
+    .apps a.button { text-align: left; width: 100%; }
+    .apps small { display: block; color: inherit; opacity: .75; font-size: 13px; }
+    .cmd { display: block; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 10px; overflow-x: auto; white-space: pre; }
+    .hidden { display: none; }
+    .error { color: #b91c1c; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Open local agent</h1>
+  <p id="context" class="muted"></p>
+  <p id="error" class="error hidden"></p>
+
+  <div id="app" class="hidden">
+    <div class="panel">
+      <label for="folder">Local clone of <span id="repo-label"></span> (absolute path, used by Claude Desktop and Codex)</label>
+      <div class="row">
+        <input id="folder" type="text" placeholder="/Users/you/Dev/prowler" autocomplete="off" spellcheck="false">
+        <button id="save-folder" type="button">Save</button>
+      </div>
+      <p class="muted">Saved in this browser only. Never sent anywhere.</p>
+    </div>
+
+    <p>The app opens on the repository with this command prefilled. Review it, then press send.</p>
+    <code id="command" class="cmd"></code>
+
+    <div class="apps">
+      <a id="open-claude-code" class="button primary" href="#">Claude Code<small>Terminal session in a clone where you have run <code>claude</code> before</small></a>
+      <a id="open-claude-desktop" class="button" href="#">Claude Desktop<small>Opens the saved folder; Desktop asks you to confirm it</small></a>
+      <a id="open-codex" class="button" href="#">Codex Desktop<small>Matches a workspace by Git remote, or uses the saved folder</small></a>
+    </div>
+
+    <p><a id="pr-link" class="button" target="_blank" rel="noopener">View pull request</a></p>
+
+    <div id="recovery" class="panel hidden">
+      <p><strong>Nothing opened?</strong> The app may not be installed, or this repository may not be known to it yet. Run the task from a terminal instead:</p>
+      <code id="terminal-command" class="cmd"></code>
+      <p class="row"><button id="copy-command" type="button">Copy command</button><span id="copied" class="muted hidden">Copied</span></p>
+      <p class="muted">
+        Install: <a href="https://code.claude.com/docs/en/overview" target="_blank" rel="noopener">Claude Code</a> ·
+        <a href="https://claude.com/download" target="_blank" rel="noopener">Claude Desktop</a> ·
+        <a href="https://developers.openai.com/codex/app" target="_blank" rel="noopener">Codex Desktop</a>.
+        If the folder above is wrong, change it and try again.
+      </p>
+    </div>
+  </div>
+</main>
+
+<script>
+  (function () {
+    var params = new URLSearchParams(location.search);
+    var repo = params.get("repo") || "";
+    var pr = params.get("pr") || "";
+    var sha = params.get("sha") || "";
+    var $ = function (id) { return document.getElementById(id); };
+
+    var valid = /^[\w-][\w.-]*\/[\w-][\w.-]*$/.test(repo) && /^\d+$/.test(pr) && /^[0-9a-f]{7,40}$/.test(sha);
+    if (!valid) {
+      $("error").textContent = "This link is missing the repository, pull request number or commit. Open it from the Slack message again.";
+      $("error").classList.remove("hidden");
+      return;
+    }
+
+    var command = "/address-review " + pr + " " + sha;
+    var prUrl = "https://github.com/" + repo + "/pull/" + pr;
+    var storageKey = "coderabbit-launcher:folder:" + repo;
+
+    $("context").textContent = repo + "#" + pr + " · reviewed commit " + sha.slice(0, 7);
+    $("repo-label").textContent = repo;
+    $("command").textContent = command;
+    $("pr-link").href = prUrl;
+    $("app").classList.remove("hidden");
+
+    function readFolder() {
+      try { return localStorage.getItem(storageKey) || ""; } catch (e) { return ""; }
+    }
+    function writeFolder(value) {
+      try { localStorage.setItem(storageKey, value); } catch (e) { /* private mode: keep it in the input only */ }
+    }
+    function folder() { return $("folder").value.trim(); }
+
+    $("folder").value = readFolder();
+    $("save-folder").addEventListener("click", function () { writeFolder(folder()); render(); });
+    $("folder").addEventListener("change", function () { writeFolder(folder()); render(); });
+
+    // The three links are plain anchors so they can be copied or opened in a new tab.
+    function render() {
+      var hasFolder = folder().length > 0 && folder().charAt(0) === "/";
+      var q = encodeURIComponent(command);
+
+      $("open-claude-code").href = "claude-cli://open?repo=" + encodeURIComponent(repo) + "&q=" + q;
+
+      var desktop = $("open-claude-desktop");
+      if (hasFolder) {
+        desktop.href = "claude://code/new?folder=" + encodeURIComponent(folder()) + "&q=" + q;
+        desktop.removeAttribute("aria-disabled");
+      } else {
+        desktop.removeAttribute("href");
+        desktop.setAttribute("aria-disabled", "true");
+      }
+
+      var codex = "codex://new?originUrl=" + encodeURIComponent("https://github.com/" + repo + ".git") + "&prompt=" + q;
+      if (hasFolder) codex += "&path=" + encodeURIComponent(folder());
+      $("open-codex").href = codex;
+
+      var cd = hasFolder ? "cd " + shellQuote(folder()) + " && " : "";
+      $("terminal-command").textContent = cd + "claude " + shellQuote(command);
+    }
+
+    function shellQuote(value) { return "'" + value.replace(/'/g, "'\\''") + "'"; }
+
+    ["open-claude-code", "open-claude-desktop", "open-codex"].forEach(function (id) {
+      $(id).addEventListener("click", function (event) {
+        if (!this.hasAttribute("href")) { event.preventDefault(); $("folder").focus(); return; }
+        $("recovery").classList.remove("hidden");
+      });
+    });
+    $("copy-command").addEventListener("click", function () {
+      var text = $("terminal-command").textContent;
+      var done = function () { $("copied").classList.remove("hidden"); setTimeout(function () { $("copied").classList.add("hidden"); }, 1500); };
+      if (navigator.clipboard) navigator.clipboard.writeText(text).then(done, function () {});
+    });
+
+    render();
+  })();
+</script>
+</body>
+</html>
