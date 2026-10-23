@@ -43,7 +43,7 @@
     <div class="panel">
       <label for="folder">Local clone of <span id="repo-label"></span> (absolute path, used by Claude Desktop and Codex)</label>
       <div class="row">
-        <input id="folder" type="text" placeholder="/Users/you/Dev/prowler" autocomplete="off" spellcheck="false">
+        <input id="folder" type="text" placeholder="/Users/you/Dev/prowler or C:\Dev\prowler" autocomplete="off" spellcheck="false">
         <button id="save-folder" type="button">Save</button>
       </div>
       <p class="muted">Saved in this browser only. Never sent anywhere.</p>
@@ -113,7 +113,8 @@
 
     // The three links are plain anchors so they can be copied or opened in a new tab.
     function render() {
-      var hasFolder = folder().length > 0 && folder().charAt(0) === "/";
+      // Absolute on macOS/Linux ("/...") or Windows ("C:\\..." or "C:/...").
+      var hasFolder = /^(\/|[A-Za-z]:[\\/])/.test(folder());
       var q = encodeURIComponent(command);
 
       $("open-claude-code").href = "claude-cli://open?repo=" + encodeURIComponent(repo) + "&q=" + q;

@@ -20,9 +20,15 @@ async function runDecide() {
   const repo = event.repository.full_name;
   const slackUsers = JSON.parse(readFileSync(join(here, "slack-users.json"), "utf8"));
 
-  const headSha = await fetchHeadSha(repo, pullRequest.number);
+  // The event payload is a snapshot; the PR may have moved or closed since. Decide on the live state.
+  const live = await fetchPullRequest(repo, pullRequest.number);
   const slackUserId = resolveSlackUser(slackUsers, pullRequest.user?.login);
-  const decision = decide({ review, pullRequest, headSha, slackUserId });
+  const decision = decide({
+    review,
+    pullRequest: { ...pullRequest, state: live.state },
+    headSha: live.headSha,
+    slackUserId,
+  });
 
   console.log(`decision: notify=${decision.notify} (${decision.reason})`);
   setOutput("notify", String(decision.notify));
@@ -51,12 +57,8 @@ async function runSend() {
   console.log(`sent Slack message ${posted.ts} to ${slackUserId}`);
 }
 
-async function fetchHeadSha(repo, number) {
-  const token = process.env.GH_TOKEN;
-  if (!token) {
-    console.log("GH_TOKEN is not set, skipping the head sha check");
-    return null;
-  }
+async function fetchPullRequest(repo, number) {
+  const token = requireEnv("GH_TOKEN");
   const response = await fetch(`https://api.github.com/repos/${repo}/pulls/${number}`, {
     headers: {
       Authorization: `Bearer ${token}`,
@@ -66,7 +68,7 @@ async function fetchHeadSha(repo, number) {
   });
   if (!response.ok) fail(`GitHub API ${response.status} while reading PR ${number}`);
   const pr = await response.json();
-  return pr.head?.sha ?? null;
+  return { headSha: pr.head?.sha ?? null, state: pr.state ?? null };
 }
 
 async function slack(token, method, payload) {

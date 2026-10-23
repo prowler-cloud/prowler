@@ -48,6 +48,10 @@ jobs:
     permissions:
       contents: read
       pull-requests: read
+    # One run at a time per review, so a redelivery reaches the cache check after the first run saved.
+    concurrency:
+      group: coderabbit-notify-${{ github.event.review.id }}
+      cancel-in-progress: false
 
     steps:
       - name: Harden Runner

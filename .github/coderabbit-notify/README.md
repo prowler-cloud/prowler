@@ -33,8 +33,8 @@ Nothing here calls a model. The agent runs on the author's machine and account a
 A message is sent only when all of these hold:
 
 - the review comes from `coderabbitai[bot]` and its body contains `Actionable comments posted: N` with N > 0;
-- the review's `commit_id` equals the PR head at run time (older reviews are superseded);
-- the PR is open and its author is in `slack-users.json`;
+- the review's `commit_id` equals the PR head read from the API at run time (older reviews are superseded);
+- the PR is still open at run time and its author is in `slack-users.json`;
 - the review's `publication` id (an HTML marker CodeRabbit leaves in the body) has not been seen.
   Seen ids are stored in the Actions cache under `coderabbit-notify-<id>`, so a redelivered event
   does not send a second message.
@@ -45,10 +45,11 @@ A message is sent only when all of these hold:
 node --test .github/coderabbit-notify/lib.test.mjs
 ```
 
-To try `decide` against a recorded event without Slack:
+To try `decide` against a recorded event without Slack (it reads the live PR head and state, so it
+needs a GitHub token):
 
 ```bash
-GITHUB_EVENT_PATH=/path/to/event.json node .github/coderabbit-notify/notify.mjs decide
+GH_TOKEN=$(gh auth token) GITHUB_EVENT_PATH=/path/to/event.json node .github/coderabbit-notify/notify.mjs decide
 ```
 
 ## Still to verify in the pilot

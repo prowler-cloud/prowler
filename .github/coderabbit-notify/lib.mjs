@@ -28,7 +28,8 @@ export function decide({ review, pullRequest, headSha, slackUserId }) {
   if (!parsed.isCodeRabbit) return skip("review is not from CodeRabbit", parsed);
   if (parsed.actionable === 0) return skip("review has no actionable comments", parsed);
   if (!parsed.publicationId) return skip("review body has no publication id", parsed);
-  if (headSha && parsed.commitId !== headSha) {
+  if (!headSha) return skip("PR head is unknown, refusing to notify on a possibly superseded review", parsed);
+  if (parsed.commitId !== headSha) {
     return skip(`reviewed commit ${short(parsed.commitId)} is not the PR head ${short(headSha)}`, parsed);
   }
   if (pullRequest?.state && pullRequest.state !== "open") return skip("pull request is not open", parsed);

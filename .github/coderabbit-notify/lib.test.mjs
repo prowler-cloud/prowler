@@ -67,6 +67,12 @@ test("decide skips unmapped authors", () => {
   assert.match(decision.reason, /not mapped/);
 });
 
+test("decide skips when the PR head could not be read", () => {
+  const decision = decide({ review: latest, pullRequest, headSha: null, slackUserId: "U123" });
+  assert.equal(decision.notify, false);
+  assert.match(decision.reason, /head is unknown/);
+});
+
 test("decide skips closed pull requests", () => {
   const closed = { ...pullRequest, state: "closed" };
   const decision = decide({ review: latest, pullRequest: closed, headSha: latest.commit_id, slackUserId: "U123" });
