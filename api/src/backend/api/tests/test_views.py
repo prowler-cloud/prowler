@@ -7355,23 +7355,39 @@ class TestResourceViewSet:
         assert len(response.json()["data"]) == 3
 
     def test_resource_filter_by_scan_id(
-        self, authenticated_client, resources_fixture, scans_fixture
+        self, authenticated_client, resources_fixture, scans_fixture, findings_fixture
     ):
         response = authenticated_client.get(
             reverse("resource-list"),
             {"filter[scan]": scans_fixture[0].id},
         )
         assert response.status_code == status.HTTP_200_OK
-        assert len(response.json()["data"]) == 2
+        assert {item["id"] for item in response.json()["data"]} == {
+            str(resource.id) for resource in resources_fixture[:2]
+        }
 
     def test_resource_filter_by_scan_id_in(
-        self, authenticated_client, resources_fixture, scans_fixture
+        self, authenticated_client, resources_fixture, scans_fixture, findings_fixture
     ):
+        with rls_transaction(scans_fixture[1].tenant_id):
+            finding = Finding.objects.create(
+                tenant_id=scans_fixture[1].tenant_id,
+                scan=scans_fixture[1],
+                uid="second_scan_finding",
+                check_id="test_check_id",
+                status=StatusChoices.PASS,
+                severity="low",
+                impact="low",
+            )
+            finding.add_resources([resources_fixture[2]])
         response = authenticated_client.get(
             reverse("resource-list"),
             {"filter[scan.in]": f"{scans_fixture[0].id},{scans_fixture[1].id}"},
         )
         assert response.status_code == status.HTTP_200_OK
+        assert {item["id"] for item in response.json()["data"]} == {
+            str(resource.id) for resource in resources_fixture
+        }
         assert len(response.json()["data"]) == 3
 
     def test_resource_filter_by_provider_id_in(
