@@ -137,6 +137,16 @@
         "aws-us-gov": []
       }
     },
+    "account-access": {
+      "regions": {
+        "aws": [
+          "ap-southeast-1"
+        ],
+        "aws-cn": [],
+        "aws-eusc": [],
+        "aws-us-gov": []
+      }
+    },
     "acm": {
       "regions": {
         "aws": [
