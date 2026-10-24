@@ -151,3 +151,50 @@ class TestApiserverAuthModeNotAlwaysAllow:
 
         assert len(result) == 1
         assert result[0].status == "PASS"
+
+    def test_authorization_mode_repeated_rbac_then_always_allow_fail(self):
+        pod = make_apiserver_pod(
+            command=[
+                "kube-apiserver",
+                "--authorization-mode",
+                "RBAC",
+                "--authorization-mode=AlwaysAllow",
+            ]
+        )
+
+        result = run_check(MODULE, CLASS, [pod])
+
+        assert len(result) == 1
+        assert result[0].status == "FAIL"
+        assert "AlwaysAllow" in result[0].status_extended
+
+    def test_authorization_mode_repeated_always_allow_then_rbac_fail(self):
+        pod = make_apiserver_pod(
+            command=[
+                "kube-apiserver",
+                "--authorization-mode=AlwaysAllow",
+                "--authorization-mode",
+                "RBAC",
+            ]
+        )
+
+        result = run_check(MODULE, CLASS, [pod])
+
+        assert len(result) == 1
+        assert result[0].status == "FAIL"
+        assert "AlwaysAllow" in result[0].status_extended
+
+    def test_authorization_mode_repeated_safe_modes_pass(self):
+        pod = make_apiserver_pod(
+            command=[
+                "kube-apiserver",
+                "--authorization-mode=Node",
+                "--authorization-mode",
+                "RBAC",
+            ]
+        )
+
+        result = run_check(MODULE, CLASS, [pod])
+
+        assert len(result) == 1
+        assert result[0].status == "PASS"

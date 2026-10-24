@@ -36,9 +36,14 @@ class apiserver_auth_mode_not_always_allow(Check):
                             value = command.partition("=")[2]
                         else:
                             continue
-                        if "AlwaysAllow" not in value:
-                            always_allow_in_auth_mode = False
+                        if "AlwaysAllow" in value:
+                            # Fail as soon as any value carries AlwaysAllow.
+                            always_allow_in_auth_mode = True
                             break
+                        # Do not stop at a safe value: repeated flags
+                        # accumulate (pflag StringSlice), so a later flag
+                        # may still carry AlwaysAllow.
+                        always_allow_in_auth_mode = False
                     if always_allow_in_auth_mode:
                         break
             if authorization_config:
