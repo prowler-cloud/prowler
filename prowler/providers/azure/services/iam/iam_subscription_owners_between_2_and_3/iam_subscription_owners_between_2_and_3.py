@@ -39,7 +39,7 @@ class iam_subscription_owners_between_2_and_3(Check):
             owner_assignments = [
                 assignment
                 for assignment in assignments.values()
-                if assignment.role_id == OWNER_ROLE_ID
+                if assignment.role_id.casefold() == OWNER_ROLE_ID.casefold()
             ]
             owners = {assignment.agent_id for assignment in owner_assignments}
             direct_owners = {

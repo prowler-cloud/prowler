@@ -145,3 +145,11 @@ class Test_iam_subscription_owners_between_2_and_3:
         )
         assert result[0].status == "FAIL"
         assert "owner count of 1 (1 direct, 0 inherited)" in result[0].status_extended
+
+    def test_owner_role_id_matched_case_insensitively(self):
+        result = run_with(
+            build_assignment(OWNER_ROLE_ID.upper()),
+            build_assignment(OWNER_ROLE_ID.upper()),
+        )
+        assert result[0].status == "PASS"
+        assert "owner count of 2 (2 direct, 0 inherited)" in result[0].status_extended
