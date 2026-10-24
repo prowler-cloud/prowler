@@ -1148,7 +1148,9 @@
     {
       "Id": "5.27",
       "Description": "Ensure there are between 2 and 3 subscription owners",
-      "Checks": [],
+      "Checks": [
+        "iam_subscription_owners_between_2_and_3"
+      ],
       "Attributes": [
         {
           "Section": "5 Identity Services",
