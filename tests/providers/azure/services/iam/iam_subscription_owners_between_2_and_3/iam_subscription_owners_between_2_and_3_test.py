@@ -31,10 +31,11 @@ def build_assignment(
     )
 
 
-def run_check(role_assignments):
+def run_check(role_assignments, lookup_failed=()):
     iam_client = mock.MagicMock()
     iam_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
     iam_client.role_assignments = role_assignments
+    iam_client.role_assignments_lookup_failed = set(lookup_failed)
     with (
         mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
@@ -58,15 +59,35 @@ class Test_iam_subscription_owners_between_2_and_3:
     def test_no_subscriptions(self):
         assert run_check({}) == []
 
-    def test_role_assignments_unreadable_is_manual(self):
-        result = run_check({AZURE_SUBSCRIPTION_ID: {}})
+    def test_role_assignments_lookup_failed_is_manual(self):
+        result = run_check(
+            {AZURE_SUBSCRIPTION_ID: {}}, lookup_failed={AZURE_SUBSCRIPTION_ID}
+        )
         assert len(result) == 1
         assert result[0].status == "MANUAL"
         assert (
             result[0].status_extended
-            == f"Role assignments for subscription {AZURE_SUBSCRIPTION_DISPLAY} could not be read; grant Microsoft.Authorization/roleAssignments/read (included in Reader) to count its owners."
+            == f"Cannot evaluate the owner count of subscription {AZURE_SUBSCRIPTION_DISPLAY}: its role assignments could not be read completely. Verify that Microsoft.Authorization/roleAssignments/read (included in Reader) is granted to the scanning identity."
         )
         assert result[0].resource_id == SUBSCRIPTION_SCOPE
+
+    def test_partial_read_with_two_owners_is_manual(self):
+        owners = [build_assignment(OWNER_ROLE_ID) for _ in range(2)]
+        result = run_check(
+            {AZURE_SUBSCRIPTION_ID: {owner.id: owner for owner in owners}},
+            lookup_failed={AZURE_SUBSCRIPTION_ID},
+        )
+        assert len(result) == 1
+        assert result[0].status == "MANUAL"
+
+    def test_no_role_assignments_fail(self):
+        result = run_check({AZURE_SUBSCRIPTION_ID: {}})
+        assert len(result) == 1
+        assert result[0].status == "FAIL"
+        assert (
+            result[0].status_extended
+            == f"Subscription {AZURE_SUBSCRIPTION_DISPLAY} has an owner count of 0 (0 direct, 0 inherited), outside the recommended 2 to 3."
+        )
 
     def test_two_direct_owners_pass(self):
         result = run_with(

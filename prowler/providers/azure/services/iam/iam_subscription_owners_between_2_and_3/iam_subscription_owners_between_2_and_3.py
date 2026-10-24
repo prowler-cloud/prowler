@@ -16,8 +16,8 @@ class iam_subscription_owners_between_2_and_3(Check):
         management group or the root scope all count, once per principal.
 
         Returns:
-            One finding per subscription. MANUAL when no role assignments
-            could be read for the subscription.
+            One finding per subscription. MANUAL when the role assignments of
+            the subscription could not be read completely.
         """
         findings = []
         for subscription_id, assignments in iam_client.role_assignments.items():
@@ -29,9 +29,9 @@ class iam_subscription_owners_between_2_and_3(Check):
             report.resource_name = subscription_id
             report.resource_id = f"/subscriptions/{subscription_id}"
 
-            if not assignments:
+            if subscription_id in iam_client.role_assignments_lookup_failed:
                 report.status = "MANUAL"
-                report.status_extended = f"Role assignments for subscription {subscription_name} ({subscription_id}) could not be read; grant Microsoft.Authorization/roleAssignments/read (included in Reader) to count its owners."
+                report.status_extended = f"Cannot evaluate the owner count of subscription {subscription_name} ({subscription_id}): its role assignments could not be read completely. Verify that Microsoft.Authorization/roleAssignments/read (included in Reader) is granted to the scanning identity."
                 findings.append(report)
                 continue
 

@@ -14,13 +14,14 @@
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://learn.microsoft.com/en-us/azure/role-based-access-control/best-practices",
-    "https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles/privileged#owner"
+    "https://learn.microsoft.com/en-us/azure/role-based-access-control/built-in-roles/privileged#owner",
+    "https://learn.microsoft.com/en-us/azure/role-based-access-control/role-assignments-remove"
   ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "az role assignment create --assignee <principal_id_or_upn> --role Owner --scope /subscriptions/<subscription_id>",
       "NativeIaC": "",
-      "Other": "1. In the Azure portal, open Subscriptions and select the subscription\n2. Go to Access control (IAM) > Role assignments and filter by Role = Owner\n3. If more than 3 principals are listed, select the extra assignments and click Delete\n4. If fewer than 2 are listed, click Add > Add role assignment and assign Owner to a second administrator or group",
+      "Other": "1. In the Azure portal, open Subscriptions and select the subscription\n2. Go to Access control (IAM) > Role assignments and filter by Role = Owner\n3. If more than 3 principals are listed, select the extra direct assignments (Scope: This resource) and remove them\n4. Remove extra inherited assignments where they are granted: click the link next to (Inherited) in the Scope column and remove the assignment at that management group or root scope\n5. If fewer than 2 are listed, click Add > Add role assignment and assign Owner to a second administrator or group",
       "Terraform": ""
     },
     "Recommendation": {
