@@ -35,17 +35,19 @@ class iam_subscription_owners_between_2_and_3(Check):
                 findings.append(report)
                 continue
 
-            subscription_scope = f"/subscriptions/{subscription_id}".lower()
+            subscription_scope = f"/subscriptions/{subscription_id}".casefold()
             owner_assignments = [
                 assignment
                 for assignment in assignments.values()
                 if assignment.role_id.casefold() == OWNER_ROLE_ID.casefold()
             ]
-            owners = {assignment.agent_id for assignment in owner_assignments}
+            owners = {
+                assignment.agent_id.casefold() for assignment in owner_assignments
+            }
             direct_owners = {
-                assignment.agent_id
+                assignment.agent_id.casefold()
                 for assignment in owner_assignments
-                if (assignment.scope or "").lower() == subscription_scope
+                if (assignment.scope or "").casefold() == subscription_scope
             }
             owner_count = len(owners)
             inherited_count = len(owners - direct_owners)
