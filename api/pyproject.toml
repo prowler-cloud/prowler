@@ -60,7 +60,7 @@ dependencies = [
   "neo4j (==6.1.0)",
   "cartography (==0.138.1)",
   "gevent (==25.9.1)",
-  "werkzeug (==3.1.7)",
+  "werkzeug (==3.1.9)",
   "sqlparse (==0.6.0)",
   "fonttools (==4.62.1)",
   "uvicorn-worker (==0.4.0)"
