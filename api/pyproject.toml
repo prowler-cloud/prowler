@@ -52,7 +52,7 @@ dependencies = [
   "uuid6==2024.7.10",
   "openai (==1.109.1)",
   "xmlsec==1.3.17",
-  "h2 (==4.3.0)",
+  "h2 (==4.4.1)",
   "markdown (==3.10.2)",
   "drf-simple-apikey (==2.2.1)",
   "matplotlib (==3.10.8)",
