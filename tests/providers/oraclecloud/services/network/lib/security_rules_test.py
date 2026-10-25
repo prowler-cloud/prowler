@@ -138,7 +138,7 @@ class Test_rule_allows_tcp_port:
                     "protocol": "6",
                     "tcp_options": {"destination_port_range": {"min": 23, "max": 23}},
                 },
-                id="port-range-above-target",
+                id="port-range-just-above-target",
             ),
         ],
     )
