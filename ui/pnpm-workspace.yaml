@@ -1,6 +1,3 @@
-# pnpm 11+ workspace config. .npmrc is auth/registry only; everything else lives here.
-# Reference: https://pnpm.io/supply-chain-security
-
 packages: []
 
 # Refuse to install on Node/pnpm outside the `engines` block in package.json.
@@ -44,7 +41,7 @@ overrides:
   # GHSA-v6wh-96g9-6wx3 (launch-editor NTLMv2 hash disclosure). Dev-only tooling
   # (vitest/@vitejs/plugin-react); consumers allow ^7 but never resolve past 7.3.2
   # without a nudge.
-  "vite@>=7 <8": "7.3.5"
+  "vite@>=7 <8": "7.3.7"
   # GHSA-96hv-2xvq-fx4p (memory exhaustion DoS from tiny fragments, high) +
   # GHSA-58qx-3vcg-4xpx (uninitialized memory disclosure), both fixed in 8.21.0.
   # Not 8.21.1: it is still inside StepSecurity's 7-day npm cooldown gate.
@@ -163,3 +160,6 @@ trustPolicyExclude:
 
 # Block transitive dependencies from using exotic specifiers (git URLs, tarballs).
 blockExoticSubdeps: true
+minimumReleaseAgeExclude:
+  # Renovate security update: vite@7.3.7
+  - vite@7.3.7
