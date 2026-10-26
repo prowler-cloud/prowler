@@ -241,6 +241,14 @@ class Test_Network_Service:
         )
 
 
+@patch(
+    "prowler.providers.azure.services.network.network_service.Network._get_waf_policies",
+    new=mock_network_get_waf_policies,
+)
+@patch(
+    "prowler.providers.azure.services.network.network_service.Network._get_application_gateways",
+    new=mock_network_get_application_gateways,
+)
 class Test_Network_get_security_groups:
     def test_get_security_groups_no_resource_groups(self):
         mock_client = MagicMock()
@@ -410,6 +418,14 @@ class Test_Network_get_security_groups:
         )
 
 
+@patch(
+    "prowler.providers.azure.services.network.network_service.Network._get_waf_policies",
+    new=mock_network_get_waf_policies,
+)
+@patch(
+    "prowler.providers.azure.services.network.network_service.Network._get_application_gateways",
+    new=mock_network_get_application_gateways,
+)
 class Test_Network_get_network_watchers:
     def test_get_network_watchers_no_resource_groups(self):
         mock_client = MagicMock()
@@ -514,6 +530,14 @@ class Test_Network_get_network_watchers:
         assert AZURE_SUBSCRIPTION_ID in result
 
 
+@patch(
+    "prowler.providers.azure.services.network.network_service.Network._get_waf_policies",
+    new=mock_network_get_waf_policies,
+)
+@patch(
+    "prowler.providers.azure.services.network.network_service.Network._get_application_gateways",
+    new=mock_network_get_application_gateways,
+)
 class Test_Network_get_bastion_hosts:
     def test_get_bastion_hosts_no_resource_groups(self):
         mock_client = MagicMock()
@@ -619,6 +643,14 @@ class Test_Network_get_bastion_hosts:
         assert result[AZURE_SUBSCRIPTION_ID] == []
 
 
+@patch(
+    "prowler.providers.azure.services.network.network_service.Network._get_waf_policies",
+    new=mock_network_get_waf_policies,
+)
+@patch(
+    "prowler.providers.azure.services.network.network_service.Network._get_application_gateways",
+    new=mock_network_get_application_gateways,
+)
 class Test_Network_get_public_ip_addresses:
     def test_get_public_ip_addresses_no_resource_groups(self):
         mock_client = MagicMock()
@@ -724,6 +756,14 @@ class Test_Network_get_public_ip_addresses:
         assert result[AZURE_SUBSCRIPTION_ID] == []
 
 
+@patch(
+    "prowler.providers.azure.services.network.network_service.Network._get_waf_policies",
+    new=mock_network_get_waf_policies,
+)
+@patch(
+    "prowler.providers.azure.services.network.network_service.Network._get_application_gateways",
+    new=mock_network_get_application_gateways,
+)
 class Test_Network_get_network_watchers_extra:
     def test_get_network_watchers_with_multiple_resource_groups(self):
         mock_client = MagicMock()
@@ -793,6 +833,14 @@ class Test_Network_get_network_watchers_extra:
         mock_client.network_watchers.list.assert_not_called()
 
 
+@patch(
+    "prowler.providers.azure.services.network.network_service.Network._get_waf_policies",
+    new=mock_network_get_waf_policies,
+)
+@patch(
+    "prowler.providers.azure.services.network.network_service.Network._get_application_gateways",
+    new=mock_network_get_application_gateways,
+)
 class Test_Network_get_bastion_hosts_extra:
     def test_get_bastion_hosts_with_multiple_resource_groups(self):
         mock_client = MagicMock()
@@ -862,6 +910,14 @@ class Test_Network_get_bastion_hosts_extra:
         )
 
 
+@patch(
+    "prowler.providers.azure.services.network.network_service.Network._get_waf_policies",
+    new=mock_network_get_waf_policies,
+)
+@patch(
+    "prowler.providers.azure.services.network.network_service.Network._get_application_gateways",
+    new=mock_network_get_application_gateways,
+)
 class Test_Network_get_public_ip_addresses_extra:
     def test_get_public_ip_addresses_with_multiple_resource_groups(self):
         mock_client = MagicMock()
@@ -931,6 +987,14 @@ class Test_Network_get_public_ip_addresses_extra:
         )
 
 
+@patch(
+    "prowler.providers.azure.services.network.network_service.Network._get_waf_policies",
+    new=mock_network_get_waf_policies,
+)
+@patch(
+    "prowler.providers.azure.services.network.network_service.Network._get_application_gateways",
+    new=mock_network_get_application_gateways,
+)
 class Test_Network_get_virtual_networks_extra:
     def _ctx(self):
         return (
