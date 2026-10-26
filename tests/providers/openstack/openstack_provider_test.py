@@ -16,6 +16,7 @@ from prowler.providers.common.models import Connection
 from prowler.providers.openstack.exceptions.exceptions import (
     OpenStackAmbiguousRegionError,
     OpenStackAuthenticationError,
+    OpenStackAuthUrlNotAllowedError,
     OpenStackCloudNotFoundError,
     OpenStackConfigFileNotFoundError,
     OpenStackCredentialsError,
@@ -25,6 +26,23 @@ from prowler.providers.openstack.exceptions.exceptions import (
 )
 from prowler.providers.openstack.models import OpenStackIdentityInfo, OpenStackSession
 from prowler.providers.openstack.openstack_provider import OpenstackProvider
+
+PUBLIC_IP = "8.8.8.8"
+
+
+def _fake_getaddrinfo(host_to_ip: dict):
+    def _getaddrinfo(host, *_args, **_kwargs):
+        return [(None, None, None, None, (host_to_ip.get(host, PUBLIC_IP), 0))]
+
+    return _getaddrinfo
+
+
+@pytest.fixture(autouse=True)
+def _dns_resolves_public(monkeypatch):
+    """Keep the outbound URL guard offline: every hostname resolves to a public IP."""
+    monkeypatch.setattr(
+        "prowler.lib.network.ssrf.socket.getaddrinfo", _fake_getaddrinfo({})
+    )
 
 
 class TestOpenstackProvider:
@@ -1620,3 +1638,156 @@ clouds:
 
         assert result.is_connected is False
         assert isinstance(result.error, OpenStackInvalidProviderIdError)
+
+
+class TestOpenstackProviderAuthUrlGuard:
+    """Test suite for the outbound URL guard applied to auth_url in test_connection."""
+
+    CLOUDS_YAML = """
+clouds:
+  test-cloud:
+    auth:
+      auth_url: {auth_url}
+      username: test-user
+      password: test-password
+      project_id: test-project-id
+    region_name: RegionOne
+"""
+
+    @staticmethod
+    def _test_connection(**kwargs) -> tuple[Connection, MagicMock]:
+        with patch(
+            "prowler.providers.openstack.openstack_provider.connect"
+        ) as mock_connect:
+            mock_connect.return_value = MagicMock()
+            result = OpenstackProvider.test_connection(
+                username="test-user",
+                password="test-password",
+                project_id="test-project-id",
+                region_name="RegionOne",
+                raise_on_exception=False,
+                **kwargs,
+            )
+        return result, mock_connect
+
+    @pytest.mark.parametrize(
+        "auth_url",
+        [
+            "https://127.0.0.1:5000/v3",
+            "https://[::1]:5000/v3",
+            "https://10.0.0.5:5000/v3",
+            "https://172.16.0.5:5000/v3",
+            "https://192.168.1.5:5000/v3",
+            "http://169.254.169.254/latest/meta-data",
+            "ftp://keystone.example.com:5000/v3",
+        ],
+    )
+    def test_test_connection_rejects_non_public_auth_url(self, auth_url):
+        result, mock_connect = self._test_connection(auth_url=auth_url)
+
+        assert result.is_connected is False
+        assert isinstance(result.error, OpenStackAuthUrlNotAllowedError)
+        mock_connect.assert_not_called()
+
+    def test_test_connection_rejects_hostname_resolving_to_private_ip(
+        self, monkeypatch
+    ):
+        monkeypatch.setattr(
+            "prowler.lib.network.ssrf.socket.getaddrinfo",
+            _fake_getaddrinfo({"keystone.example.com": "10.0.0.5"}),
+        )
+
+        result, mock_connect = self._test_connection(
+            auth_url="https://keystone.example.com:5000/v3"
+        )
+
+        assert result.is_connected is False
+        assert isinstance(result.error, OpenStackAuthUrlNotAllowedError)
+        mock_connect.assert_not_called()
+
+    def test_test_connection_rejection_does_not_echo_the_target(self):
+        result, _ = self._test_connection(
+            auth_url="https://placeholder-user:placeholder-token@10.0.0.5:5000/v3"  # trufflehog:ignore
+        )
+
+        assert isinstance(result.error, OpenStackAuthUrlNotAllowedError)
+        assert result.error.original_exception is None
+        for fragment in ("10.0.0.5", "placeholder-token", "non-public", "resolves"):
+            assert fragment not in str(result.error)
+
+    def test_test_connection_rejection_raises_when_requested(self):
+        with patch("prowler.providers.openstack.openstack_provider.connect"):
+            with pytest.raises(OpenStackAuthUrlNotAllowedError):
+                OpenstackProvider.test_connection(
+                    auth_url="https://127.0.0.1:5000/v3",
+                    username="test-user",
+                    password="test-password",
+                    project_id="test-project-id",
+                    region_name="RegionOne",
+                    raise_on_exception=True,
+                )
+
+    def test_scan_initialisation_rejects_a_non_public_auth_url(self):
+        with patch(
+            "prowler.providers.openstack.openstack_provider.connect"
+        ) as mock_connect:
+            with pytest.raises(OpenStackAuthUrlNotAllowedError):
+                OpenstackProvider(
+                    auth_url="https://169.254.169.254:5000/v3",
+                    username="test-user",
+                    password="test-password",
+                    project_id="test-project-id",
+                    region_name="RegionOne",
+                )
+
+        mock_connect.assert_not_called()
+
+    def test_scan_initialisation_rejects_shared_address_space(self):
+        with patch(
+            "prowler.providers.openstack.openstack_provider.connect"
+        ) as mock_connect:
+            with pytest.raises(OpenStackAuthUrlNotAllowedError):
+                OpenstackProvider(
+                    auth_url="https://100.100.100.200:5000/v3",
+                    username="test-user",
+                    password="test-password",
+                    project_id="test-project-id",
+                    region_name="RegionOne",
+                )
+
+        mock_connect.assert_not_called()
+
+    def test_test_connection_allows_public_auth_url(self):
+        result, mock_connect = self._test_connection(
+            auth_url="https://openstack.example.com:5000/v3"
+        )
+
+        assert result.is_connected is True
+        assert result.error is None
+        mock_connect.assert_called_once()
+
+    def test_test_connection_rejects_private_auth_url_from_clouds_yaml_content(
+        self,
+    ):
+        result, mock_connect = self._test_connection(
+            clouds_yaml_content=self.CLOUDS_YAML.format(
+                auth_url="https://127.0.0.1:5000/v3"
+            ),
+            clouds_yaml_cloud="test-cloud",
+        )
+
+        assert result.is_connected is False
+        assert isinstance(result.error, OpenStackAuthUrlNotAllowedError)
+        mock_connect.assert_not_called()
+
+    def test_test_connection_allows_public_auth_url_from_clouds_yaml_content(self):
+        result, mock_connect = self._test_connection(
+            clouds_yaml_content=self.CLOUDS_YAML.format(
+                auth_url="https://openstack.example.com:5000/v3"
+            ),
+            clouds_yaml_cloud="test-cloud",
+        )
+
+        assert result.is_connected is True
+        assert result.error is None
+        mock_connect.assert_called_once()
