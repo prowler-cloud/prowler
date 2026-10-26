@@ -22,6 +22,7 @@ class SageMaker(AWSService):
         self.endpoint_configs = {}
         self.sagemaker_model_registries = []
         self.sagemaker_monitoring_schedules = []
+        self.feature_groups = {}
 
         # Retrieve resources concurrently
         self.__threading_call__(self._list_notebook_instances)
@@ -32,6 +33,7 @@ class SageMaker(AWSService):
         self.__threading_call__(self._list_domains)
         self.__threading_call__(self._list_model_package_groups)
         self.__threading_call__(self._list_monitoring_schedules)
+        self.__threading_call__(self._list_feature_groups)
 
         # Describe resources concurrently
         self.__threading_call__(self._describe_model, self.sagemaker_models)
@@ -53,6 +55,9 @@ class SageMaker(AWSService):
             self._describe_endpoint_config, list(self.endpoint_configs.values())
         )
         self.__threading_call__(self._describe_domain, self.sagemaker_domains)
+        self.__threading_call__(
+            self._describe_feature_group, list(self.feature_groups.values())
+        )
 
         # List tags concurrently for each resource collection
         # This replaces the previous sequential sequential execution to improve performance
@@ -70,6 +75,9 @@ class SageMaker(AWSService):
             self._list_tags_for_resource, list(self.endpoint_configs.values())
         )
         self.__threading_call__(self._list_tags_for_resource, self.sagemaker_domains)
+        self.__threading_call__(
+            self._list_tags_for_resource, list(self.feature_groups.values())
+        )
 
     def _list_notebook_instances(self, regional_client):
         logger.info("SageMaker - listing notebook instances...")
@@ -541,6 +549,48 @@ class SageMaker(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def _list_feature_groups(self, regional_client):
+        logger.info("SageMaker - listing feature groups...")
+        try:
+            paginator = regional_client.get_paginator("list_feature_groups")
+            for page in paginator.paginate():
+                for feature_group in page["FeatureGroupSummaries"]:
+                    if not self.audit_resources or (
+                        is_resource_filtered(
+                            feature_group["FeatureGroupArn"], self.audit_resources
+                        )
+                    ):
+                        self.feature_groups[feature_group["FeatureGroupArn"]] = (
+                            FeatureGroup(
+                                name=feature_group["FeatureGroupName"],
+                                region=regional_client.region,
+                                arn=feature_group["FeatureGroupArn"],
+                            )
+                        )
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def _describe_feature_group(self, feature_group):
+        logger.info("SageMaker - describing feature groups...")
+        try:
+            regional_client = self.regional_clients[feature_group.region]
+            describe_feature_group = regional_client.describe_feature_group(
+                FeatureGroupName=feature_group.name
+            )
+            offline_store_config = describe_feature_group.get("OfflineStoreConfig")
+            if offline_store_config:
+                feature_group.offline_store_enabled = True
+                feature_group.offline_store_kms_key_id = offline_store_config.get(
+                    "S3StorageConfig", {}
+                ).get("KmsKeyId")
+            feature_group.describe_succeeded = True
+        except Exception as error:
+            logger.error(
+                f"{feature_group.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
     def _list_monitoring_schedules(self, regional_client):
         logger.info("SageMaker - listing monitoring schedules...")
         name = "SageMaker Monitoring Schedules"
@@ -663,6 +713,16 @@ class EndpointConfig(BaseModel):
     arn: str
     production_variants: list[ProductionVariant] = []
     kms_key_id: Optional[str] = None
+    tags: Optional[list] = []
+
+
+class FeatureGroup(BaseModel):
+    name: str
+    region: str
+    arn: str
+    describe_succeeded: bool = False
+    offline_store_enabled: bool = False
+    offline_store_kms_key_id: Optional[str] = None
     tags: Optional[list] = []
 
 
