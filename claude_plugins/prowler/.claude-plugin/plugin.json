@@ -1,8 +1,9 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "prowler",
+  "displayName": "Prowler Cloud",
   "version": "0.1.0",
-  "description": "Prowler for Claude Code — cloud security and compliance skills powered by the Prowler MCP server. Bundles compliance triage and remediation; more skills coming.",
+  "description": "Prowler Cloud security and compliance skills for Claude, powered by the Prowler MCP server. Triage compliance gaps and remediate findings on AWS, Azure, GCP, Kubernetes, Microsoft 365, GitHub and many more providers listed at https://registry.prowler.com, plus custom providers, until your account meets the framework you choose.",
   "author": {
     "name": "Prowler",
     "email": "support@prowler.com",
@@ -12,11 +13,26 @@
   "repository": "https://github.com/prowler-cloud/prowler",
   "license": "Apache-2.0",
   "keywords": [
+    "alibabacloud",
+    "aws",
+    "azure",
+    "cloud-security",
+    "cloudflare",
+    "compliance",
+    "gcp",
+    "github",
+    "huaweicloud",
+    "iac",
+    "kubernetes",
+    "m365",
+    "mcp",
+    "mongodbatlas",
+    "okta",
+    "openstack",
+    "oraclecloud",
     "prowler",
     "security",
-    "compliance",
-    "cloud-security",
-    "mcp"
+    "vercel"
   ],
   "userConfig": {
     "api_key": {

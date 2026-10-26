@@ -1,0 +1,1 @@
+`vertexai_workbench_instance_terminal_access_disabled`, `vertexai_workbench_instance_file_download_disabled` and `vertexai_workbench_instance_auto_upgrade_enabled` checks for GCP provider, with Vertex AI Workbench checks mapped to CCC MLDE requirements

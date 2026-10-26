@@ -207,7 +207,24 @@ class Test_WAFv2_Service:
                         "CloudWatchMetricsEnabled": True,
                         "MetricName": "web-acl-test-metric",
                     },
-                }
+                },
+                {
+                    "Name": "AWS-AWSManagedRulesPHPRuleSet",
+                    "Priority": 2,
+                    "Statement": {
+                        "ManagedRuleGroupStatement": {
+                            "VendorName": "AWS",
+                            "Name": "AWSManagedRulesPHPRuleSet",
+                            "Version": "Version_2.3",
+                        }
+                    },
+                    "OverrideAction": {"None": {}},
+                    "VisibilityConfig": {
+                        "SampledRequestsEnabled": True,
+                        "CloudWatchMetricsEnabled": True,
+                        "MetricName": "php-rule-set",
+                    },
+                },
             ],
             VisibilityConfig={
                 "SampledRequestsEnabled": False,
@@ -221,6 +238,11 @@ class Test_WAFv2_Service:
         aws = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         wafv2 = WAFv2(aws)
         assert len(wafv2.web_acls) == 1
-        assert len(wafv2.web_acls[waf_arn].rules) == 1
+        assert len(wafv2.web_acls[waf_arn].rules) == 2
         assert wafv2.web_acls[waf_arn].rules[0].name == "rule-on"
         assert wafv2.web_acls[waf_arn].rules[0].cloudwatch_metrics_enabled
+        assert wafv2.web_acls[waf_arn].rules[0].managed_rule_group is None
+        managed = wafv2.web_acls[waf_arn].rules[1].managed_rule_group
+        assert managed.vendor_name == "AWS"
+        assert managed.name == "AWSManagedRulesPHPRuleSet"
+        assert managed.version == "Version_2.3"

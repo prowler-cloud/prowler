@@ -1,0 +1,1 @@
+certifi to 2026.10.19 and aiohttp to 3.14.5 with yarl 1.25.1 in the SDK, plus uv 0.13.4 and Trivy 0.76.1 in its container image, patching the compromised emSign root CAs bundled in certifi and uv, the aiohttp resource exhaustion advisories and the Go 1.27.2 stdlib CVE in the Trivy binary

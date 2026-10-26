@@ -93,7 +93,9 @@ class DummyResource:
         details=None,
         metadata=None,
         partition=None,
+        id=None,
     ):
+        self.id = id or uid
         self.uid = uid
         self.name = name
         self.resource_arn = resource_arn
@@ -136,6 +138,51 @@ class DummyAPIFinding:
     A dummy API finding model to simulate the database model.
     Attributes will be added dynamically.
     """
+
+
+def _aws_api_finding_fixture():
+    provider = DummyProvider(uid="account123")
+    provider.type = "aws"
+    provider.organizations_metadata = SimpleNamespace(
+        account_name="test-account",
+        account_email="test@example.com",
+        organization_arn="arn:aws:organizations::123456789012:organization/o-abcdef123456",
+        organization_id="o-abcdef123456",
+        account_tags={},
+    )
+    provider.identity = SimpleNamespace(
+        account="123456789012", partition="aws", profile="default"
+    )
+    api_finding = DummyAPIFinding()
+    api_finding.inserted_at = 1234567890
+    api_finding.scan = DummyScan(provider=provider)
+    api_finding.uid = "finding-uid-1"
+    api_finding.status = "FAIL"
+    api_finding.status_extended = "extended"
+    api_finding.check_metadata = {
+        "provider": "aws",
+        "checkid": "service_check_001",
+        "checktitle": "Test Check",
+        "checktype": [],
+        "servicename": "service",
+        "subservicename": "",
+        "severity": "high",
+        "resourcetype": "TestResource",
+        "description": "A test check",
+        "risk": "High risk",
+        "relatedurl": "",
+        "remediation": {
+            "recommendation": {"text": "Fix it", "url": ""},
+            "code": {"nativeiac": "", "terraform": "", "cli": "", "other": ""},
+        },
+        "resourceidtemplate": "",
+        "categories": [],
+        "dependson": [],
+        "relatedto": [],
+        "notes": "",
+    }
+    api_finding.muted = False
+    return provider, api_finding
 
 
 class TestFinding:
@@ -1114,6 +1161,93 @@ class TestFinding:
             "ENS-RD2022": ["op.acc.2.gcp.rbak.1"],
             "MITRE-ATTACK": ["T1098"],
         }
+
+    @patch(
+        "prowler.lib.outputs.finding.get_check_compliance",
+        new=mock_get_check_compliance,
+    )
+    def test_transform_api_finding_shares_parsed_metadata_within_cache(self):
+        provider, api_finding = _aws_api_finding_fixture()
+        resource = DummyResource(
+            uid="res-uid-1",
+            name="ResourceName1",
+            resource_arn="arn",
+            region="us-east-1",
+            tags=[],
+            metadata='{"nested": {"items": [1, 2, 3]}}',
+        )
+        api_finding.resources = DummyResources(resource)
+        _, other_api_finding = _aws_api_finding_fixture()
+        other_api_finding.resources = DummyResources(resource)
+        metadata_cache = {}
+
+        first = Finding.transform_api_finding(
+            api_finding, provider, metadata_cache=metadata_cache
+        )
+        second = Finding.transform_api_finding(
+            other_api_finding, provider, metadata_cache=metadata_cache
+        )
+
+        assert first.resource_metadata == {"nested": {"items": [1, 2, 3]}}
+        assert second.resource_metadata is first.resource_metadata
+        assert metadata_cache == {resource.id: first.resource_metadata}
+
+    @patch(
+        "prowler.lib.outputs.finding.get_check_compliance",
+        new=mock_get_check_compliance,
+    )
+    def test_transform_api_finding_without_cache_parses_each_time(self):
+        provider, api_finding = _aws_api_finding_fixture()
+        resource = DummyResource(
+            uid="res-uid-1",
+            name="ResourceName1",
+            resource_arn="arn",
+            region="us-east-1",
+            tags=[],
+            metadata='{"a": 1}',
+        )
+        api_finding.resources = DummyResources(resource)
+        _, other_api_finding = _aws_api_finding_fixture()
+        other_api_finding.resources = DummyResources(resource)
+
+        first = Finding.transform_api_finding(api_finding, provider)
+        second = Finding.transform_api_finding(other_api_finding, provider)
+
+        assert first.resource_metadata == second.resource_metadata == {"a": 1}
+        assert first.resource_metadata is not second.resource_metadata
+
+    @patch(
+        "prowler.lib.outputs.finding.get_check_compliance",
+        new=mock_get_check_compliance,
+    )
+    @patch("prowler.lib.outputs.finding.RESOURCE_METADATA_WARNING_SIZE", 16)
+    @patch("prowler.lib.outputs.finding.logger")
+    def test_transform_api_finding_warns_once_on_large_metadata(self, logger):
+        provider, api_finding = _aws_api_finding_fixture()
+        resource = DummyResource(
+            uid="res-uid-1",
+            name="ResourceName1",
+            resource_arn="arn",
+            region="us-east-1",
+            tags=[],
+            metadata='{"payload": "' + "x" * 32 + '"}',
+        )
+        api_finding.resources = DummyResources(resource)
+        _, other_api_finding = _aws_api_finding_fixture()
+        other_api_finding.resources = DummyResources(resource)
+        metadata_cache = {}
+
+        Finding.transform_api_finding(
+            api_finding, provider, metadata_cache=metadata_cache
+        )
+        Finding.transform_api_finding(
+            other_api_finding, provider, metadata_cache=metadata_cache
+        )
+
+        logger.warning.assert_called_once()
+        message = logger.warning.call_args.args[0]
+        assert "res-uid-1" in message
+        assert str(len(resource.metadata)) in message
 
     @patch(
         "prowler.lib.outputs.finding.get_check_compliance",

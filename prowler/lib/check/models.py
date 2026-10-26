@@ -12,6 +12,7 @@ from pydantic.v1 import BaseModel, Field, ValidationError, validator
 from pydantic.v1.error_wrappers import ErrorWrapper
 
 from prowler.lib.check.compliance_models import Compliance
+from prowler.lib.check.redact import redact_sensitive_fields
 from prowler.lib.check.utils import recover_checks_from_provider
 from prowler.lib.logger import logger
 from prowler.providers.common.provider import Provider as ProviderABC
@@ -747,6 +748,7 @@ class Check_Report:
                 f"Resource metadata {type(resource)} in {self.check_metadata.CheckID} could not be converted to dict"
             )
             self.resource = {}
+        self.resource = redact_sensitive_fields(resource, self.resource)
         self.status_extended = ""
         self.resource_details = ""
         self.resource_tags = getattr(resource, "tags", []) if resource else []

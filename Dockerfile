@@ -8,15 +8,15 @@ ENV POWERSHELL_VERSION=${POWERSHELL_VERSION}
 # Opt out of PowerShell telemetry (Application Insights -> dc.services.visualstudio.com)
 ENV POWERSHELL_TELEMETRY_OPTOUT=1
 
-ARG TRIVY_VERSION=0.76.0
+ARG TRIVY_VERSION=0.76.1
 ENV TRIVY_VERSION=${TRIVY_VERSION}
 
 ARG ZIZMOR_VERSION=1.24.1
 ENV ZIZMOR_VERSION=${ZIZMOR_VERSION}
 
 # Pinned here, not fetched with the artefact: a compromised release ships its own checksum.
-ARG TRIVY_SHA256_AMD64=e24b1c51293c1b15e4ba8d45bbc7891ba053f90278ec2698f3562c993e145fe7
-ARG TRIVY_SHA256_ARM64=aab21e677a7b7071fc79f1711480840754c18a1b9d9cefa7ccd06af63a0e8f4c
+ARG TRIVY_SHA256_AMD64=c7cbe3137fb8a48a17574bede3dd6beb16742d1e9772929940fc90082c39d9c0
+ARG TRIVY_SHA256_ARM64=e174dff2a6dba5e3ae41f8d0537a6324405bd08132497340304c6b20e0f16a1f
 ARG POWERSHELL_SHA256_AMD64=db85ae1f45005ffd20e456890585167257151fa99406ccd7ab344f7cf3a766fd
 ARG POWERSHELL_SHA256_ARM64=29eb382cd510e4bd246902650ff6cf9f3b56f959d1bd0be75e0a1e425177c831
 ARG ZIZMOR_SHA256_AMD64=a8000f3c683319a523d3b20df0e75457ba591f049cfcbfa98966631b56733c03
@@ -30,6 +30,7 @@ ARG ZIZMOR_SHA256_ARM64=d66e37ef8a375fb07939c630ebf9709a6e0f20242bdc3faf672a7ed9
 #   perl-base 5.40.1-6+deb13u1  CVE-2026-42497, -48962, -57432
 #   libssh2-1t64 1.11.1-1+deb13u2  CVE-2026-58050
 #   libpcre2-8-0 10.46-1~deb13u2  CVE-2026-86145, -89161
+#   libbrotli1 1.1.0-2+deb13u1  CVE-2026-111497
 # Taken as a targeted --only-upgrade rather than by moving the digest: the newest
 # published python:3.12-slim-trixie carries the same vulnerable versions. The three
 # openssl packages are flagged separately, so all are named.
@@ -40,7 +41,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential pkg-config libzstd-dev zlib1g-dev \
     && apt-get install -y --no-install-recommends --only-upgrade \
        util-linux libssl3t64 openssl openssl-provider-legacy \
-       libsqlite3-0 gzip perl-base libssh2-1t64 libpcre2-8-0 \
+       libsqlite3-0 gzip perl-base libssh2-1t64 libpcre2-8-0 libbrotli1 \
     && rm -rf /var/lib/apt/lists/*
 
 # Install PowerShell
@@ -121,13 +122,15 @@ ENV HOME='/home/prowler'
 ENV PATH="${HOME}/.local/bin:${PATH}"
 #hadolint ignore=DL3013
 RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir uv==0.12.0
+    pip install --no-cache-dir uv==0.13.4
 
 RUN uv sync --locked --compile-bytecode && \
     rm -rf ~/.cache/uv
 
-# Install PowerShell modules
-RUN .venv/bin/python prowler/providers/m365/lib/powershell/m365_powershell.py
+# Install PowerShell modules. Drop the MicrosoftTeams build SBOM: Trivy reports the npm
+# tooling it declares as installed, though none ships (see .trivyignore.yaml).
+RUN .venv/bin/python prowler/providers/m365/lib/powershell/m365_powershell.py && \
+    rm -rf "${HOME}"/.local/share/powershell/Modules/MicrosoftTeams/*/_manifest
 
 USER root
 

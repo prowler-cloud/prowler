@@ -1,10 +1,11 @@
+import json
 from datetime import UTC, datetime, timedelta
 from unittest.mock import patch
 
 import pytest
 from django_celery_beat.models import IntervalSchedule, PeriodicTask
 from django_celery_results.models import TaskResult
-from tasks.utils import batched, get_next_execution_datetime
+from tasks.utils import CustomEncoder, batched, get_next_execution_datetime
 
 
 @pytest.mark.django_db
@@ -100,3 +101,18 @@ class TestBatchedFunction:
         result = list(batched([1, 2, 3], 5))
         expected = [([1, 2, 3], True)]
         assert result == expected
+
+
+class TestCustomEncoder:
+    def test_set_serialized_in_stable_order(self):
+        zones = {"us-east-1d", "us-east-1a", "us-east-1c", "us-east-1b"}
+
+        assert json.dumps({"zones": zones}, cls=CustomEncoder) == json.dumps(
+            {"zones": "{'us-east-1a', 'us-east-1b', 'us-east-1c', 'us-east-1d'}"}
+        )
+
+    def test_empty_set_keeps_str_representation(self):
+        assert json.dumps(set(), cls=CustomEncoder) == json.dumps("set()")
+
+    def test_frozenset_serialized_like_set(self):
+        assert json.dumps(frozenset({2, 1}), cls=CustomEncoder) == json.dumps("{1, 2}")

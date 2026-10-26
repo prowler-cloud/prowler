@@ -105,6 +105,35 @@ class TestGroupsExternalAccessRestricted:
             assert findings[0].status == "PASS"
             assert "secure default" in findings[0].status_extended
 
+    def test_evaluates_the_setting_when_the_service_is_off_for_everyone(self):
+        """Existing groups stay active when Groups for Business is off, so the stored setting still counts"""
+        mock_provider = set_mocked_googleworkspace_provider()
+
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=mock_provider,
+            ),
+            patch(
+                "prowler.providers.googleworkspace.services.groups.groups_external_access_restricted.groups_external_access_restricted.groups_client"
+            ) as mock_client,
+        ):
+            from prowler.providers.googleworkspace.services.groups.groups_external_access_restricted.groups_external_access_restricted import (
+                groups_external_access_restricted,
+            )
+
+            mock_client.provider = mock_provider
+            mock_client.policies_fetched = True
+            mock_client.policies = GroupsPolicies(
+                service_state="DISABLED", collaboration_capability="ANYONE_CAN_POST"
+            )
+
+            findings = groups_external_access_restricted().execute()
+
+            assert len(findings) == 1
+            assert findings[0].status == "FAIL"
+            assert "turned off" not in findings[0].status_extended
+
     def test_no_findings_when_fetch_failed(self):
         """Test no findings returned when the API fetch failed"""
         mock_provider = set_mocked_googleworkspace_provider()
