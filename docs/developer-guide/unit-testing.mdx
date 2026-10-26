@@ -284,7 +284,7 @@ class Test_iam_password_policy_uppercase:
 
         assert len(results) == 1
         assert result[0].status == "FAIL"
-        assert result[0].status_extended == "IAM password policy does not srequire at least one uppercase letter."
+        assert result[0].status_extended == "IAM password policy does not require at least one uppercase letter."
         assert result[0].resource_arn == f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
         assert result[0].resource_id == AWS_ACCOUNT_NUMBER
         assert result[0].resource_tags == []
@@ -882,7 +882,7 @@ from unittest import mock
 
 from uuid import uuid4
 
-# Import some constans values needed in almost every check
+# Import some constant values needed in almost every check
 
 from tests.providers.azure.azure_fixtures import (
     AZURE_SUBSCRIPTION_ID,
@@ -1024,7 +1024,7 @@ from prowler.providers.azure.services.appinsights.appinsights_service import (
     Component,
 )
 
-# Import some constans values needed in almost every check
+# Import some constant values needed in almost every check
 
 from tests.providers.azure.azure_fixtures import (
     AZURE_SUBSCRIPTION_ID,
