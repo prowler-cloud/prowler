@@ -1,1 +1,0 @@
-black from 26.3.1 to 26.10.1 and graphql-core from 3.2.8 to 3.2.12 in the SDK, and libbrotli1 1.1.0-2+deb13u1 in its container image, which no longer ships the MicrosoftTeams build SBOM that Trivy read as installed zod and body-parser
