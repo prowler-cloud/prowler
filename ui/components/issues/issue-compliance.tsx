@@ -8,6 +8,7 @@ import {
   ComplianceFrameworkChip,
   complianceFrameworkLabel,
 } from "@/components/compliance/compliance-framework-chip";
+import { IssuesLoadError } from "@/components/issues/issues-load-error";
 import type { FindingComplianceFramework } from "@/types/compliance-watchlist";
 import { IssueFinding } from "@/types/issues";
 
@@ -43,6 +44,7 @@ export const IssueCompliance = ({
   truncated = false,
 }: IssueComplianceProps) => {
   const [state, setState] = useState<ComplianceState>({ status: "loading" });
+  const [attempt, setAttempt] = useState(0);
   const checks = new Map(findings.map((f) => [f.checkId, f.id]));
   const representatives = Array.from(checks.values()).slice(
     0,
@@ -88,7 +90,12 @@ export const IssueCompliance = ({
     return () => {
       cancelled = true;
     };
-  }, [key]);
+  }, [key, attempt]);
+
+  const retry = () => {
+    setState({ status: "loading" });
+    setAttempt((value) => value + 1);
+  };
 
   const incomplete =
     state.status === "loaded" &&
@@ -116,9 +123,10 @@ export const IssueCompliance = ({
           Loading frameworks…
         </p>
       ) : state.status === "unavailable" ? (
-        <p className="text-text-neutral-tertiary text-sm">
-          Could not load the frameworks for this issue.
-        </p>
+        <IssuesLoadError
+          message="Could not load the frameworks for this issue."
+          onRetry={retry}
+        />
       ) : (
         <>
           {state.frameworks.length === 0 ? (
