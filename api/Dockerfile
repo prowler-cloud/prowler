@@ -7,15 +7,15 @@ ENV POWERSHELL_VERSION=${POWERSHELL_VERSION}
 # Opt out of PowerShell telemetry (Application Insights -> dc.services.visualstudio.com)
 ENV POWERSHELL_TELEMETRY_OPTOUT=1
 
-ARG TRIVY_VERSION=0.76.0
+ARG TRIVY_VERSION=0.76.1
 ENV TRIVY_VERSION=${TRIVY_VERSION}
 
 ARG ZIZMOR_VERSION=1.24.1
 ENV ZIZMOR_VERSION=${ZIZMOR_VERSION}
 
 # Pinned here, not fetched with the artefact: a compromised release ships its own checksum.
-ARG TRIVY_SHA256_AMD64=e24b1c51293c1b15e4ba8d45bbc7891ba053f90278ec2698f3562c993e145fe7
-ARG TRIVY_SHA256_ARM64=aab21e677a7b7071fc79f1711480840754c18a1b9d9cefa7ccd06af63a0e8f4c
+ARG TRIVY_SHA256_AMD64=c7cbe3137fb8a48a17574bede3dd6beb16742d1e9772929940fc90082c39d9c0
+ARG TRIVY_SHA256_ARM64=e174dff2a6dba5e3ae41f8d0537a6324405bd08132497340304c6b20e0f16a1f
 ARG POWERSHELL_SHA256_AMD64=db85ae1f45005ffd20e456890585167257151fa99406ccd7ab344f7cf3a766fd
 ARG POWERSHELL_SHA256_ARM64=29eb382cd510e4bd246902650ff6cf9f3b56f959d1bd0be75e0a1e425177c831
 ARG ZIZMOR_SHA256_AMD64=a8000f3c683319a523d3b20df0e75457ba591f049cfcbfa98966631b56733c03
@@ -125,7 +125,7 @@ RUN mkdir -p /tmp/prowler_api_output
 COPY --chown=prowler:prowler pyproject.toml uv.lock ./
 
 RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir uv==0.12.0
+    pip install --no-cache-dir uv==0.13.4
 
 ENV PATH="/home/prowler/.local/bin:$PATH"
 
@@ -134,8 +134,10 @@ RUN uv sync --locked --no-install-project && \
     rm -rf ~/.cache/uv
 
 # Invoked as a module so the base image's Python minor version is not baked
-# into a site-packages path.
-RUN .venv/bin/python -m prowler.providers.m365.lib.powershell.m365_powershell
+# into a site-packages path. Drop the MicrosoftTeams build SBOM: Trivy reports the npm
+# tooling it declares as installed, though none ships (see .trivyignore.yaml).
+RUN .venv/bin/python -m prowler.providers.m365.lib.powershell.m365_powershell && \
+    rm -rf /home/prowler/.local/share/powershell/Modules/MicrosoftTeams/*/_manifest
 
 USER root
 

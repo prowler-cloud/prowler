@@ -742,7 +742,7 @@ class TestGenerateOutputs:
             patch("tasks.tasks.FindingOutput._transform_findings_stats"),
             patch(
                 "tasks.tasks.FindingOutput.transform_api_finding",
-                side_effect=lambda f, _prov: f,
+                side_effect=lambda f, _prov, **_kw: f,
             ),
             patch("tasks.tasks._compress_output_files", return_value="outdir.zip"),
             patch("tasks.tasks._upload_to_s3", return_value="s3://bucket/outdir.zip"),

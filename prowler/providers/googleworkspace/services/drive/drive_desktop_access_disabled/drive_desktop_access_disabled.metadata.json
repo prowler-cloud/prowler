@@ -20,7 +20,7 @@
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "1. Sign in to the Google **Admin console** at https://admin.google.com\n2. Navigate to **Apps** > **Google Workspace** > **Drive and Docs**\n3. Click **Features and Applications** > **Google Drive for desktop**\n4. **Uncheck** *Allow Google Drive for desktop in your organization*\n5. Click **Save**",
+      "Other": "1. Sign in to the Google **Admin console** at https://admin.google.com\n2. Navigate to **Apps** > **Google Workspace** > **Drive and Docs**\n3. Open the **Google Drive for desktop** card (its own section on the Drive and Docs settings page, below Features and Applications)\n4. **Uncheck** *Allow Google Drive for desktop in your organization*\n5. Click **Save**",
       "Terraform": ""
     },
     "Recommendation": {
@@ -31,5 +31,5 @@
   "Categories": [],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": ""
+  "Notes": "When Google Drive is turned off for everyone, the check passes: the setting has no effect while the service is off."
 }

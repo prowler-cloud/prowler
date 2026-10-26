@@ -25,7 +25,7 @@ from prowler.lib.check.compliance_config_eval import (
 )
 from prowler.lib.check.compliance_models import ComplianceFramework
 from prowler.lib.logger import logger
-from prowler.lib.outputs.utils import unroll_dict_to_list
+from prowler.lib.outputs.utils import is_plain_json, unroll_dict_to_list
 from prowler.lib.utils.utils import open_file
 
 if TYPE_CHECKING:
@@ -57,6 +57,12 @@ def _sanitize_resource_data(resource_details, resource_metadata) -> dict:
         if isinstance(obj, (list, tuple)):
             return [_make_serializable(v) for v in obj]
         return obj
+
+    if is_plain_json(resource_metadata):
+        return {
+            "details": resource_details,
+            "metadata": resource_metadata,
+        }
 
     try:
         converted = _make_serializable(resource_metadata)
@@ -193,6 +199,15 @@ class OCSFComplianceOutput:
 
         for finding in findings:
             if finding.check_id in check_req_map:
+                try:
+                    resource_data = _sanitize_resource_data(
+                        finding.resource_details, finding.resource_metadata
+                    )
+                except Exception as error:
+                    logger.error(
+                        f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
+                    continue
                 for req in check_req_map[finding.check_id]:
                     cf = self._build_compliance_finding(
                         finding,
@@ -200,6 +215,7 @@ class OCSFComplianceOutput:
                         req,
                         compliance_name,
                         requirement_config_status.get(req.id, (True, "")),
+                        resource_data=resource_data,
                     )
                     if cf:
                         self._data.append(cf)
@@ -255,8 +271,13 @@ class OCSFComplianceOutput:
         requirement,
         compliance_name: str,
         config_status: tuple = (True, ""),
+        resource_data: dict | None = None,
     ) -> ComplianceFinding:
         try:
+            if resource_data is None:
+                resource_data = _sanitize_resource_data(
+                    finding.resource_details, finding.resource_metadata
+                )
             effective_status, message = apply_config_status(
                 finding.status, finding.status_extended, config_status
             )
@@ -348,10 +369,7 @@ class OCSFComplianceOutput:
                             if finding.provider == "kubernetes"
                             else None
                         ),
-                        data=_sanitize_resource_data(
-                            finding.resource_details,
-                            finding.resource_metadata,
-                        ),
+                        data=resource_data,
                     )
                 ],
                 severity_id=finding_severity.value,

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import ipaddress
 from dataclasses import dataclass
-from typing import Dict, List
+from typing import ClassVar, Dict, List
 
 from openstack import exceptions as openstack_exceptions
 
@@ -169,6 +169,7 @@ class ComputeInstance:
 
     # Configuration Security
     has_config_drive: bool
+    sensitive_fields: ClassVar[tuple[str, ...]] = ("metadata", "user_data")
     metadata: Dict[str, str]
     user_data: str
 

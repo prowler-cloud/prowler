@@ -1,9 +1,11 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Fragment, type ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { resolveFindingIdsByVisibleGroupResources } from "@/actions/findings/findings-by-resource";
+import { useCloudUpgradeStore } from "@/store";
+import { PAID_PLAN_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
 import {
   FINDINGS_ROW_TYPE,
   type FindingGroupRow,
@@ -43,8 +45,10 @@ vi.mock("@/components/shadcn/table", () => ({
     data,
     toolbarRightContent,
     getRowAttributes,
+    getRowCanSelect,
     onRowSelectionChange,
     renderAfterRow,
+    previewLock,
   }: {
     data?: Array<{ checkId?: string }>;
     toolbarRightContent?: ReactNode;
@@ -52,6 +56,11 @@ vi.mock("@/components/shadcn/table", () => ({
       index: number;
       original: { checkId?: string };
     }) => Record<string, string | undefined>;
+    getRowCanSelect?: (row: {
+      index: number;
+      original: { checkId?: string };
+    }) => boolean;
+    previewLock?: { visibleRowCount: number; overlay: ReactNode };
     onRowSelectionChange?: (
       updater: (previous: Record<string, boolean>) => Record<string, boolean>,
     ) => void;
@@ -62,12 +71,23 @@ vi.mock("@/components/shadcn/table", () => ({
   }) => (
     <div>
       <div data-testid="table-toolbar-right">{toolbarRightContent}</div>
+      {previewLock && (
+        <div
+          data-testid="preview-lock"
+          data-visible={previewLock.visibleRowCount}
+        >
+          {previewLock.overlay}
+        </div>
+      )}
       <table>
         <tbody>
           {(data ?? []).map((original, index) => (
             <Fragment key={original.checkId ?? index}>
               <tr
                 data-testid={`row-${index}`}
+                data-can-select={String(
+                  getRowCanSelect?.({ index, original }) ?? true,
+                )}
                 {...getRowAttributes?.({ index, original })}
               >
                 <td>{original.checkId}</td>
@@ -117,7 +137,35 @@ vi.mock("@/components/lighthouse/context-contributor", () => ({
 }));
 
 vi.mock("@/components/onboarding", () => ({
-  OnboardingTrigger: () => <div data-testid="onboarding-trigger" />,
+  // Exposes the "Open a finding group" step so tests can drive it and read
+  // whether the handler waited for the resources step.
+  OnboardingTrigger: ({
+    stepHandlers,
+  }: {
+    stepHandlers?: Record<
+      string,
+      {
+        onNext?: (context: {
+          waitForStep: (target: string) => Promise<void>;
+        }) => Promise<void>;
+      }
+    >;
+  }) => (
+    <button
+      type="button"
+      data-testid="onboarding-trigger"
+      onClick={() => {
+        const waitForStep = vi.fn(async () => {});
+        void stepHandlers?.group?.onNext?.({ waitForStep }).then(() => {
+          document.body.dataset.tourWaited = String(
+            waitForStep.mock.calls.length > 0,
+          );
+        });
+      }}
+    >
+      Open first group
+    </button>
+  ),
   PageReady: () => <div data-testid="page-ready" />,
 }));
 
@@ -419,6 +467,143 @@ describe("FindingsGroupTable", () => {
       filters: { "filter[severity]": "high" },
       hasDateOrScanFilter: false,
       resourceSearch: undefined,
+    });
+  });
+
+  describe("when the table is locked to a preview", () => {
+    const lockedGroups = [
+      makeGroup("check-a"),
+      makeGroup("check-b"),
+      makeGroup("check-c"),
+    ];
+
+    beforeEach(() => {
+      useCloudUpgradeStore.getState().closeCloudUpgrade();
+    });
+
+    it("floats the unlock prompt over the table and keeps locked groups unselectable", () => {
+      // Given / When
+      render(
+        <FindingsGroupTable
+          data={lockedGroups}
+          metadata={{
+            pagination: { page: 1, pages: 1, count: 40 },
+            version: "v1",
+          }}
+          resolvedFilters={{}}
+          hasHistoricalData={false}
+          previewRowLimit={2}
+        />,
+      );
+
+      // Then
+      expect(screen.getByTestId("preview-lock")).toHaveAttribute(
+        "data-visible",
+        "2",
+      );
+      expect(
+        screen.getByRole("button", { name: "Unlock All Findings" }),
+      ).toBeInTheDocument();
+      expect(screen.getByTestId("row-1")).toHaveAttribute(
+        "data-can-select",
+        "true",
+      );
+      expect(screen.getByTestId("row-2")).toHaveAttribute(
+        "data-can-select",
+        "false",
+      );
+    });
+
+    it("still opens an expanded deep link inside the preview", () => {
+      // Given / When
+      render(
+        <FindingsGroupTable
+          data={lockedGroups}
+          resolvedFilters={{}}
+          hasHistoricalData={false}
+          expandedCheckId="check-b"
+          previewRowLimit={2}
+        />,
+      );
+
+      // Then
+      expect(
+        screen.getByRole("button", { name: "Select finding-1" }),
+      ).toBeInTheDocument();
+    });
+
+    it("skips the tour resources step when the only drillable group is locked", async () => {
+      // Given: the previewed rows cannot drill down, a locked one can
+      const user = userEvent.setup();
+      delete document.body.dataset.tourWaited;
+      render(
+        <FindingsGroupTable
+          data={[
+            makeGroup("check-a", 0, { resourcesTotal: 0 }),
+            makeGroup("check-b", 0, { resourcesTotal: 0 }),
+            makeGroup("check-c"),
+          ]}
+          resolvedFilters={{}}
+          hasHistoricalData={false}
+          previewRowLimit={2}
+        />,
+      );
+
+      // When
+      await user.click(
+        screen.getByRole("button", { name: "Open first group" }),
+      );
+
+      // Then: no drill-down, no upgrade prompt, and the tour did not wait
+      await waitFor(() =>
+        expect(document.body.dataset.tourWaited).toBe("false"),
+      );
+      expect(
+        screen.queryByRole("button", { name: "Select finding-1" }),
+      ).not.toBeInTheDocument();
+      expect(useCloudUpgradeStore.getState().activeFeature).toBeNull();
+    });
+
+    it("ignores an expanded deep link that points past the preview", () => {
+      // Given / When
+      render(
+        <FindingsGroupTable
+          data={lockedGroups}
+          resolvedFilters={{}}
+          hasHistoricalData={false}
+          expandedCheckId="check-c"
+          previewRowLimit={2}
+        />,
+      );
+
+      // Then
+      expect(
+        screen.queryByRole("button", { name: "Select finding-1" }),
+      ).not.toBeInTheDocument();
+    });
+
+    it("answers a drill-down past the preview with the upgrade prompt", async () => {
+      // Given
+      const user = userEvent.setup();
+      render(
+        <FindingsGroupTable
+          data={lockedGroups}
+          resolvedFilters={{}}
+          hasHistoricalData={false}
+          previewRowLimit={2}
+        />,
+      );
+
+      // When
+      await user.click(screen.getByRole("button", { name: "Expand check-c" }));
+
+      // Then
+      expect(useCloudUpgradeStore.getState().activeFeature).toBe(
+        PAID_PLAN_UPGRADE_FEATURE.FINDINGS_PREVIEW,
+      );
+      expect(
+        screen.queryByRole("button", { name: "Select finding-1" }),
+      ).not.toBeInTheDocument();
     });
   });
 });

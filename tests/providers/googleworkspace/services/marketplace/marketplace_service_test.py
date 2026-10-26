@@ -142,6 +142,59 @@ class TestMarketplaceService:
             assert marketplace.policies_fetched is True
             assert marketplace.policies.access_level == "ALLOW_NONE"
 
+    def test_the_admin_policy_outranks_a_system_default_returned_after_it(self):
+        """The greatest sortOrder is the value in force, whatever order the API lists them in"""
+        mock_provider = set_mocked_googleworkspace_provider()
+        mock_provider.audit_config = {}
+        mock_provider.fixer_config = {}
+        mock_session = MagicMock()
+        mock_session.credentials = MagicMock()
+        mock_provider.session = mock_session
+
+        mock_service = MagicMock()
+        mock_policies_list = MagicMock()
+        mock_policies_list.execute.return_value = {
+            "policies": [
+                {
+                    "type": "ADMIN",
+                    "policyQuery": {"sortOrder": 201.00131},
+                    "setting": {
+                        "type": "settings/workspace_marketplace.apps_access_options",
+                        "value": {"accessLevel": "ALLOW_LISTED_APPS"},
+                    },
+                },
+                {
+                    "type": "SYSTEM",
+                    "policyQuery": {"sortOrder": 100.00002},
+                    "setting": {
+                        "type": "settings/workspace_marketplace.apps_access_options",
+                        "value": {"accessLevel": "ALLOW_ALL"},
+                    },
+                },
+            ]
+        }
+        mock_service.policies().list.return_value = mock_policies_list
+        mock_service.policies().list_next.return_value = None
+
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=mock_provider,
+            ),
+            patch(
+                "prowler.providers.googleworkspace.services.marketplace.marketplace_service.GoogleWorkspaceService._build_service",
+                return_value=mock_service,
+            ),
+        ):
+            from prowler.providers.googleworkspace.services.marketplace.marketplace_service import (
+                Marketplace,
+            )
+
+            marketplace = Marketplace(mock_provider)
+
+            assert marketplace.policies_fetched is True
+            assert marketplace.policies.access_level == "ALLOW_LISTED_APPS"
+
     def test_fetch_policies_empty_response(self):
         """Test handling empty policies response"""
         mock_provider = set_mocked_googleworkspace_provider()

@@ -28,7 +28,13 @@ class drive_shared_drive_creation_allowed(Check):
 
             allow_creation = drive_client.policies.allow_shared_drive_creation
 
-            if allow_creation is True:
+            if drive_client.policies.off_for_everyone:
+                report.status = "PASS"
+                report.status_extended = (
+                    f"Google Drive is turned off for everyone in domain "
+                    f"{drive_client.provider.identity.domain}, so no shared drive can be created."
+                )
+            elif allow_creation is True:
                 report.status = "PASS"
                 report.status_extended = (
                     f"Users in domain {drive_client.provider.identity.domain} "
