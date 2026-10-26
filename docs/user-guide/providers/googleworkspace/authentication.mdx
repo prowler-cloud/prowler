@@ -25,6 +25,14 @@ Prowler requests the following read-only OAuth 2.0 scopes:
 The delegated user must be a **super administrator** in your Google Workspace organization. Using a non-admin account will result in permission errors when accessing the Admin SDK.
 </Warning>
 
+### Optional Scope for Edition Context
+
+Prowler can read which Google Workspace editions the tenant holds, Cloud Identity Premium included, and state in a finding when the audited feature is not sold on them (for example, Data Loss Prevention (DLP) for Drive or Google session control). This needs the Enterprise License Manager API enabled in the GCP project (Step 2) and the scope `https://www.googleapis.com/auth/apps.licensing` added to the Domain-Wide Delegation list (Step 5). Without the scope, every check runs the same and findings carry no edition context.
+
+<Warning>
+The `apps.licensing` scope is Google's "view and manage licenses" scope and has no read-only variant. Prowler only lists license assignments, but anyone holding the Service Account key could assign or revoke licenses with it on behalf of the super administrator. Grant it only if you want the edition context, and protect the key accordingly.
+</Warning>
+
 ## Setup Steps
 
 ### Step 1: Create a Google Cloud Platform (GCP) Project (if Needed)
@@ -35,21 +43,22 @@ The project is only used to host the Service Account — it does not need to hav
 
 ### Step 2: Enable Required APIs
 
-In the [Google Cloud Console](https://console.cloud.google.com), select the target project and navigate to **APIs & Services → Library**. Search for and enable each of the following APIs:
+In the [Google Cloud Console](https://console.cloud.google.com), select the target project and enable each of the following APIs:
 
-| API | Required For |
-|-----|--------------|
-| **Admin SDK API** | Directory service checks (users, roles, domains) |
-| **Cloud Identity API** | All service checks except Directory (domain-level application policies) |
+| API | Service Name | Required For |
+|-----|--------------|--------------|
+| **[Admin SDK API](https://console.cloud.google.com/apis/library/admin.googleapis.com)** | `admin.googleapis.com` | Directory service checks (users, roles, domains) |
+| **[Cloud Identity API](https://console.cloud.google.com/apis/library/cloudidentity.googleapis.com)** | `cloudidentity.googleapis.com` | All service checks except Directory (domain-level application policies) |
+| **[Enterprise License Manager API](https://console.cloud.google.com/apis/library/licensing.googleapis.com)** | `licensing.googleapis.com` | Optional: edition context in findings (see Optional Scope for Edition Context) |
 
 For each API:
 
-1. Search for the API name in the library
-2. Click the API result
+1. Open the link above, or navigate to **APIs & Services → Library** and search for the API name
+2. Confirm the target project is selected in the project picker
 3. Click **Enable**
 
 <Note>
-Both APIs must be enabled in the same GCP project that hosts the Service Account. All service checks except Directory will return no findings if the Cloud Identity API is not enabled.
+The Admin SDK API and the Cloud Identity API must be enabled in the same GCP project that hosts the Service Account. All service checks except Directory will return no findings if the Cloud Identity API is not enabled. The Identity and Access Management (IAM) API (`iam.googleapis.com`) is a different API: enabling it does not replace the Cloud Identity API.
 </Note>
 
 ### Step 3: Create a Service Account
@@ -77,6 +86,30 @@ The Service Account does not need any GCP IAM roles. Its access to Google Worksp
 This JSON key grants access to your Google Workspace organization. Never commit it to version control, share it in plain text, or store it in an insecure location.
 </Warning>
 
+#### Service Account Key Creation Is Disabled
+
+Organizations created on or after May 3, 2024 enforce the [Secure by Default](https://docs.cloud.google.com/resource-manager/docs/secure-by-default-organizations) organization policy `iam.managed.disableServiceAccountKeyCreation`, and the **Add key** dialog shows "Service account key creation is disabled". To create the key, a user with the Organization Policy Administrator role (`roles/orgpolicy.policyAdmin`) on the organization must turn off enforcement for the project that hosts the Service Account:
+
+1. In the Google Cloud Console, select the project and navigate to **IAM & Admin → Organization Policies**
+2. Open **Disable service account key creation** (`iam.managed.disableServiceAccountKeyCreation`) and click **Manage policy**
+3. Select **Override parent's policy**, click **Add a rule**, set **Enforcement** to **Off**, and click **Set policy**
+4. Return to the Service Account **Keys** tab and create the key
+
+Alternatively, override the policy with the Google Cloud CLI:
+
+```yaml policy.yaml
+name: projects/PROJECT_ID/policies/iam.managed.disableServiceAccountKeyCreation
+spec:
+  rules:
+    - enforce: false
+```
+
+```console
+gcloud org-policies set-policy policy.yaml
+```
+
+The constraint only blocks new key creation. Keys that already exist keep working, so enforcement can be restored once the key has been downloaded.
+
 ### Step 5: Configure Domain-Wide Delegation in Google Workspace
 
 1. Navigate to the [Google Workspace Admin Console](https://admin.google.com)
@@ -89,6 +122,8 @@ This JSON key grants access to your Google Workspace organization. Never commit 
 ```
 https://www.googleapis.com/auth/admin.directory.user.readonly,https://www.googleapis.com/auth/admin.directory.domain.readonly,https://www.googleapis.com/auth/admin.directory.customer.readonly,https://www.googleapis.com/auth/admin.directory.orgunit.readonly,https://www.googleapis.com/auth/cloud-identity.policies.readonly,https://www.googleapis.com/auth/admin.directory.rolemanagement.readonly
 ```
+
+   To enable the optional edition context, append `,https://www.googleapis.com/auth/apps.licensing` to the list.
 
 7. Click **Authorize**
 

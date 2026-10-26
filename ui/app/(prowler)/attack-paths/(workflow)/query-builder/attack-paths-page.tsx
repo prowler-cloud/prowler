@@ -12,10 +12,10 @@ import {
   getAvailableQueries,
 } from "@/actions/attack-paths";
 import { adaptQueryResultToGraphData } from "@/actions/attack-paths/query-result.adapter";
+import type { GraphHandle } from "@/components/attack-paths/graph/attack-path-graph";
 import { FindingDetailDrawer } from "@/components/findings/table";
 import { LighthouseContextContributor } from "@/components/lighthouse/context-contributor";
 import { PageReady } from "@/components/onboarding";
-import { useFindingDetails } from "@/components/resources/table/use-finding-details";
 import { AutoRefresh } from "@/components/scans";
 import { Button, Card, useToast } from "@/components/shadcn";
 import {
@@ -27,7 +27,15 @@ import {
   DialogTrigger,
 } from "@/components/shadcn/dialog";
 import { StatusAlert } from "@/components/shared/status-alert";
+import { useFindingDetails } from "@/hooks/use-finding-details";
 import { useMountEffect } from "@/hooks/use-mount-effect";
+import { exportGraphAsPNG, isProwlerFindingNode } from "@/lib/attack-paths";
+import {
+  buildAttackPathView,
+  GROUP_NODE_LABEL,
+  GROUP_PROPS,
+  OUTCOME_NODE_LABEL,
+} from "@/lib/attack-paths/group-graph";
 import { buildAttackPathContext } from "@/lib/lighthouse/context/contributions";
 import { isCloud } from "@/lib/shared/env";
 import { attackPathsEmptyTour } from "@/lib/tours/attack-paths-empty.tour";
@@ -63,23 +71,15 @@ import {
   ScanListTable,
 } from "./_components";
 import { AttackPathsStatusPanel } from "./_components/attack-paths-status-panel";
-import type { GraphHandle } from "./_components/graph/attack-path-graph";
 import { useAttackPathScans } from "./_hooks/use-attack-path-scans";
 import { useGraphState } from "./_hooks/use-graph-state";
 import { useQueryBuilder } from "./_hooks/use-query-builder";
-import { exportGraphAsPNG, isProwlerFindingNode } from "./_lib";
 import {
   ATTACK_PATHS_VIEW_STATES,
   getAttackPathsViewState,
   getGraphBuildingProgress,
   isScanInFlight,
 } from "./_lib/get-attack-paths-view-state";
-import {
-  buildAttackPathView,
-  GROUP_NODE_LABEL,
-  GROUP_PROPS,
-  OUTCOME_NODE_LABEL,
-} from "./_lib/group-graph";
 
 const SCROLL_CONTAINER_CLASS =
   "minimal-scrollbar relative z-0 w-full gap-4 overflow-auto shadow-sm";

@@ -13,6 +13,7 @@ import {
   getScanScheduleCapability,
   getScheduleFormDefaults,
   getScheduleFormValues,
+  getSetupScheduleFormDefaults,
   isScheduleConfigured,
   parseSchedulesBulkResult,
 } from "@/lib/schedules";
@@ -216,6 +217,18 @@ describe("getScheduleFormDefaults", () => {
     expect(
       getScheduleFormDefaults(new Date(2026, 5, 10, 23, 1, 0, 0)).hour,
     ).toBe(0);
+  });
+});
+
+describe("getSetupScheduleFormDefaults", () => {
+  it("keeps the schedule defaults but ticks the initial scan", () => {
+    const now = new Date(2026, 5, 10, 10, 30, 0, 0);
+
+    expect(getSetupScheduleFormDefaults(now)).toEqual({
+      ...getScheduleFormDefaults(now),
+      launchInitialScan: true,
+    });
+    expect(getScheduleFormDefaults(now).launchInitialScan).toBe(false);
   });
 });
 

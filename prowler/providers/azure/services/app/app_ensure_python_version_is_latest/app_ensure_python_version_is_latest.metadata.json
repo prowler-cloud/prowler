@@ -1,7 +1,7 @@
 {
   "Provider": "azure",
   "CheckID": "app_ensure_python_version_is_latest",
-  "CheckTitle": "App Service web app uses the latest supported Python version or 3.12 by default",
+  "CheckTitle": "App Service web app runs a supported Python version (3.12 or newer by default)",
   "CheckType": [],
   "ServiceName": "app",
   "SubServiceName": "",
@@ -9,7 +9,7 @@
   "Severity": "low",
   "ResourceType": "microsoft.web/sites",
   "ResourceGroup": "serverless",
-  "Description": "**Azure App Service web apps** using **Python** are assessed to confirm the runtime is the **latest supported version** (e.g., `3.12`). The evaluation reads the app's stack configuration to detect Python usage and compares the configured runtime against the defined latest baseline.",
+  "Description": "**Azure App Service web apps** using **Python** are assessed to confirm the runtime is at or above the configured **minimum supported version** (`python_latest_version`, `3.12` by default). The evaluation reads the app's stack configuration to detect Python usage and compares the configured runtime against that baseline.",
   "Risk": "Outdated **Python runtimes** weaken security and reliability:\n- Compromise confidentiality via known interpreter/SSL flaws\n- Undermine integrity through RCE and package exploitation\n- Reduce availability when deprecated versions lose patches and break under load",
   "RelatedUrl": "",
   "AdditionalURLs": [

@@ -1,0 +1,1 @@
+Resource metadata attached to findings no longer carries the values that secrets checks scan (CloudFormation outputs, Lambda environment variables, EC2 user data and similar fields); they are replaced with `REDACTED` before reaching the Evidence tab, the API and the output files

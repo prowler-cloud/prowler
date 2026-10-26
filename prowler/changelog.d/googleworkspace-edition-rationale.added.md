@@ -1,0 +1,1 @@
+Google Workspace findings state when a feature is not sold on the tenant edition: Drive DLP rules, Google session control and the shared drive sharing settings on Business Starter; reading editions needs the optional `apps.licensing` scope

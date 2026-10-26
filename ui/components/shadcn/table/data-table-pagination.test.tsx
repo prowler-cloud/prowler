@@ -1,13 +1,17 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { MetaDataProps } from "@/types";
 
-const mocks = vi.hoisted(() => ({ searchParams: new URLSearchParams() }));
+const mocks = vi.hoisted(() => ({
+  searchParams: new URLSearchParams(),
+  push: vi.fn(),
+}));
 
 vi.mock("next/navigation", () => ({
   usePathname: () => "/providers",
-  useRouter: () => ({ push: vi.fn() }),
+  useRouter: () => ({ push: mocks.push }),
   useSearchParams: () => mocks.searchParams,
 }));
 
@@ -175,5 +179,55 @@ describe("DataTablePagination", () => {
       "data-value",
       "20",
     );
+  });
+
+  describe("when the table is locked to a preview", () => {
+    const lockedMetadata: MetaDataProps = {
+      pagination: { page: 1, pages: 2, count: 25, itemsPerPage: [10, 20, 50] },
+      version: "latest",
+    };
+
+    it("counts pages by the visible rows and routes navigation to the lock handler", async () => {
+      // Given
+      const user = userEvent.setup();
+      const onLockedInteraction = vi.fn();
+      render(
+        <DataTablePagination
+          metadata={lockedMetadata}
+          lock={{ visibleRowCount: 10, onLockedInteraction }}
+        />,
+      );
+
+      // When
+      await user.click(screen.getByLabelText("Go to next page"));
+      await user.click(screen.getByLabelText("Go to last page"));
+
+      // Then
+      expect(screen.getByText("Page 1 of 3")).toBeInTheDocument();
+      expect(onLockedInteraction).toHaveBeenCalledTimes(2);
+      expect(mocks.push).not.toHaveBeenCalled();
+      expect(screen.getByLabelText("Go to next page")).not.toHaveAttribute(
+        "href",
+      );
+    });
+
+    it("opens the lock handler instead of the rows-per-page menu", async () => {
+      // Given
+      const user = userEvent.setup();
+      const onLockedInteraction = vi.fn();
+      render(
+        <DataTablePagination
+          metadata={lockedMetadata}
+          lock={{ visibleRowCount: 10, onLockedInteraction }}
+        />,
+      );
+
+      // When
+      await user.click(screen.getByRole("button", { name: "10" }));
+
+      // Then
+      expect(onLockedInteraction).toHaveBeenCalledTimes(1);
+      expect(screen.queryByTestId("page-size-select")).not.toBeInTheDocument();
+    });
   });
 });
