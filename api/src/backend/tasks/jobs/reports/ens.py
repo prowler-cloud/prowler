@@ -13,7 +13,7 @@ from .base import (
     get_requirement_metadata,
 )
 from .charts import create_horizontal_bar_chart, create_radar_chart
-from .components import get_color_for_compliance
+from .components import escape_html, get_color_for_compliance
 from .config import (
     COLOR_BG_BLUE,
     COLOR_BLUE,
@@ -99,15 +99,10 @@ class ENSReportGenerator(BaseComplianceReportGenerator):
 
         # Compliance info table - use base class helper for consistency
         info_rows = self._build_info_rows(data, language="es")
-        # Convert tuples to lists and wrap long text in Paragraphs
-        info_data = []
-        for label, value in info_rows:
-            if label in ("Nombre:", "Descripción:") and value:
-                info_data.append(
-                    [label, Paragraph(value, self.styles["normal_center"])]
-                )
-            else:
-                info_data.append([label, value])
+        info_data = [
+            [label, Paragraph(escape_html(str(value)), self.styles["normal_center"])]
+            for label, value in info_rows
+        ]
 
         info_table = Table(info_data, colWidths=[2 * inch, 4 * inch])
         info_table.setStyle(

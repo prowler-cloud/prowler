@@ -1,6 +1,6 @@
 from datetime import datetime
 from ipaddress import IPv4Address, IPv6Address, ip_address
-from typing import Optional, Union
+from typing import ClassVar, Optional, Union
 
 from botocore.client import ClientError
 from pydantic.v1 import BaseModel
@@ -776,6 +776,7 @@ class Instance(BaseModel):
     private_ip: Optional[str]
     public_dns: Optional[str]
     public_ip: Optional[str]
+    sensitive_fields: ClassVar[tuple[str, ...]] = ("user_data",)
     user_data: Optional[str]
     http_tokens: Optional[str]
     http_endpoint: Optional[str]
@@ -898,6 +899,7 @@ class InstanceMetadataDefaults(BaseModel):
 
 
 class TemplateData(BaseModel):
+    sensitive_fields: ClassVar[tuple[str, ...]] = ("user_data",)
     user_data: str
     network_interfaces: Optional[list[NetworkInterface]]
     associate_public_ip_address: Optional[bool]

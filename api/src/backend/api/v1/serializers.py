@@ -377,27 +377,48 @@ class UserSerializer(BaseModelSerializerV1):
     def _can_view_relationships(self, instance) -> bool:
         """Allow self to view own relationships. Require manage_account to view others."""
         role = self.context.get("role")
+        return self._is_self(instance) or bool(role and role.manage_account)
+
+    def _is_self(self, instance) -> bool:
         request = self.context.get("request")
-        is_self = bool(
+        return bool(
             request
             and getattr(request, "user", None)
             and getattr(instance, "id", None) == request.user.id
         )
-        return is_self or (role and role.manage_account)
+
+    def _active_tenant_id(self):
+        return getattr(self.context.get("request"), "tenant_id", None)
+
+    @staticmethod
+    def _in_tenant(related_manager, tenant_id):
+        """Filter a prefetched related manager in memory.
+
+        ``.filter()`` clones the queryset without its result cache, so it would
+        discard the viewset's prefetch and re-query once per serialized user.
+        """
+        return [
+            item
+            for item in related_manager.all()
+            if str(item.tenant_id) == str(tenant_id)
+        ]
 
     def get_roles(self, instance):
-        return (
-            instance.roles.all()
-            if self._can_view_relationships(instance)
-            else Role.objects.none()
-        )
+        tenant_id = self._active_tenant_id()
+        if not tenant_id or not self._can_view_relationships(instance):
+            return Role.objects.none()
+        return self._in_tenant(instance.roles, tenant_id)
 
     def get_memberships(self, instance):
-        return (
-            instance.memberships.all()
-            if self._can_view_relationships(instance)
-            else Membership.objects.none()
-        )
+        if not self._can_view_relationships(instance):
+            return Membership.objects.none()
+        # Own memberships span tenants on purpose: the tenant switcher reads them.
+        if self._is_self(instance):
+            return instance.memberships.all()
+        tenant_id = self._active_tenant_id()
+        if not tenant_id:
+            return Membership.objects.none()
+        return self._in_tenant(instance.memberships, tenant_id)
 
 
 class UserMeSerializer(UserSerializer):
@@ -731,11 +752,32 @@ class MembershipIncludeSerializer(serializers.ModelSerializer):
 
     included_serializers = {"tenant": "api.v1.serializers.TenantIncludeSerializer"}
 
+    _REQUESTER_TENANTS_ATTR = "_prowler_requester_tenants"
+
+    def _requester_tenants(self):
+        """Tenants the requester belongs to, resolved once per request.
+
+        Memoised on the request because DRF builds a serializer instance per
+        included object, so a per-instance cache would still query per membership.
+        """
+        request = self.context.get("request")
+        user = getattr(request, "user", None)
+        if user is None:
+            return {}
+        tenants = getattr(request, self._REQUESTER_TENANTS_ATTR, None)
+        if tenants is None:
+            tenants = {
+                tenant.id: tenant
+                for tenant in Tenant.objects.using(MainRouter.admin_db).filter(
+                    membership__user_id=user.id
+                )
+            }
+            setattr(request, self._REQUESTER_TENANTS_ATTR, tenants)
+        return tenants
+
     def get_tenant(self, instance):
-        try:
-            return Tenant.objects.using(MainRouter.admin_db).get(id=instance.tenant_id)
-        except Tenant.DoesNotExist:
-            return None
+        """Resolve the tenant only when the requester is a member of it."""
+        return self._requester_tenants().get(instance.tenant_id)
 
 
 # Provider Groups
@@ -1659,14 +1701,43 @@ class FindingMetadataSerializer(BaseSerializerV1):
 
 
 # Provider secrets
-KUBERNETES_KUBECONFIG_UNSUPPORTED_COMMAND_AUTH_ERROR = (
-    "Kubernetes kubeconfig command-based authentication is not supported in "
-    "Prowler Cloud for security reasons."
+KUBERNETES_KUBECONFIG_NON_INLINE_CREDENTIALS_ERROR = (
+    "Only inline Kubernetes credentials are supported. "
+    "For user authentication use token, username/password, or client-certificate-data with client-key-data; "
+    "clusters may use certificate-authority-data. "
+    "File-path fields (tokenFile, client-certificate, client-key, certificate-authority), "
+    "command-based authentication (exec, cmd-path), auth-provider directives, and proxy URLs are not supported."
 )
 KUBERNETES_KUBECONFIG_INVALID_ERROR = "Invalid Kubernetes kubeconfig content."
 
 
-def kubeconfig_contains_unsupported_command_auth(kubeconfig: dict) -> bool:
+KUBECONFIG_ALLOWED_USER_KEYS = frozenset(
+    {
+        "token",
+        "username",
+        "password",
+        "client-certificate-data",
+        "client-key-data",
+        "as",
+        "as-uid",
+        "as-groups",
+        "as-user-extra",
+    }
+)
+KUBECONFIG_ALLOWED_CLUSTER_KEYS = frozenset(
+    {
+        "server",
+        "certificate-authority-data",
+        "insecure-skip-tls-verify",
+        "tls-server-name",
+        "disable-compression",
+        "extensions",
+    }
+)
+
+
+def kubeconfig_is_inline_only_credentials(kubeconfig: dict) -> bool:
+    """Accept only inline credentials; reject file-reference and auth-provider fields."""
     users = kubeconfig.get("users", [])
     if not isinstance(users, list):
         raise ValidationError(KUBERNETES_KUBECONFIG_INVALID_ERROR)
@@ -1679,21 +1750,25 @@ def kubeconfig_contains_unsupported_command_auth(kubeconfig: dict) -> bool:
         if not isinstance(user, dict):
             raise ValidationError(KUBERNETES_KUBECONFIG_INVALID_ERROR)
 
-        if "exec" in user:
-            return True
+        if any(key not in KUBECONFIG_ALLOWED_USER_KEYS for key in user):
+            return False
 
-        auth_provider = user.get("auth-provider", {})
-        if not isinstance(auth_provider, dict):
-            continue
+    clusters = kubeconfig.get("clusters", [])
+    if not isinstance(clusters, list):
+        raise ValidationError(KUBERNETES_KUBECONFIG_INVALID_ERROR)
 
-        auth_provider_config = auth_provider.get("config", {})
-        if not isinstance(auth_provider_config, dict):
-            continue
+    for cluster_entry in clusters:
+        if not isinstance(cluster_entry, dict):
+            raise ValidationError(KUBERNETES_KUBECONFIG_INVALID_ERROR)
 
-        if "cmd-path" in auth_provider_config:
-            return True
+        cluster = cluster_entry.get("cluster", {})
+        if not isinstance(cluster, dict):
+            raise ValidationError(KUBERNETES_KUBECONFIG_INVALID_ERROR)
 
-    return False
+        if any(key not in KUBECONFIG_ALLOWED_CLUSTER_KEYS for key in cluster):
+            return False
+
+    return True
 
 
 class BaseWriteProviderSecretSerializer(BaseWriteSerializer):
@@ -1876,7 +1951,7 @@ class MongoDBAtlasProviderSecret(serializers.Serializer):
 
 
 class KubernetesProviderSecret(serializers.Serializer):
-    kubeconfig_content = serializers.CharField()
+    kubeconfig_content = serializers.CharField(trim_whitespace=False)
 
     def validate_kubeconfig_content(self, kubeconfig_content):
         try:
@@ -1889,9 +1964,9 @@ class KubernetesProviderSecret(serializers.Serializer):
         if not isinstance(kubeconfig, dict):
             raise serializers.ValidationError(KUBERNETES_KUBECONFIG_INVALID_ERROR)
 
-        if kubeconfig_contains_unsupported_command_auth(kubeconfig):
+        if not kubeconfig_is_inline_only_credentials(kubeconfig):
             raise serializers.ValidationError(
-                KUBERNETES_KUBECONFIG_UNSUPPORTED_COMMAND_AUTH_ERROR
+                KUBERNETES_KUBECONFIG_NON_INLINE_CREDENTIALS_ERROR
             )
 
         return kubeconfig_content

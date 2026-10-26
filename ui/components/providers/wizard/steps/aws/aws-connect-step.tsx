@@ -7,6 +7,7 @@ import {
   KeyRound,
   Loader2,
   ShieldCheck,
+  UserPlus,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useEffect, useRef, useState } from "react";
@@ -35,6 +36,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/shadcn/collapsible";
 import { Form } from "@/components/shadcn/form";
+import { useAuth } from "@/hooks/use-auth";
 import { useFormServerErrors } from "@/hooks/use-form-server-errors";
 import { useMountEffect } from "@/hooks/use-mount-effect";
 import { PROVIDER_CREDENTIALS_ERROR_MAPPING } from "@/lib/error-mappings";
@@ -43,13 +45,21 @@ import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-cr
 import {
   ACCOUNT_SUBMIT_OUTCOME,
   dispatchProviderFunnel,
+  PROVIDER_FUNNEL_METHOD,
   PROVIDER_FUNNEL_STEP,
 } from "@/lib/provider-funnel/provider-funnel-events";
 import { testProviderConnection } from "@/lib/provider-helpers";
+import { endActiveTour } from "@/lib/tours/use-driver-tour";
 import { useProviderWizardStore } from "@/store/provider-wizard/store";
 import type { AWSCredentials, AWSCredentialsRole } from "@/types";
-import type { AwsConnectDraft } from "@/types/provider-wizard";
+import {
+  AWS_CONNECT_PANEL,
+  type AwsConnectDraft,
+  type AwsConnectPanel,
+} from "@/types/provider-wizard";
 import { CONNECTION_CHECK_STATUS } from "@/types/providers";
+
+import { InviteTeammatePanel } from "../invite-teammate/invite-teammate-panel";
 
 import {
   awsKeysConnectSchema,
@@ -84,6 +94,11 @@ const initialMethod = (): AwsAccessMethod =>
     ? AWS_ACCESS_METHOD.CREDENTIALS
     : AWS_ACCESS_METHOD.ROLE;
 
+const initialPanel = (): AwsConnectPanel =>
+  readDraft()?.panel === AWS_CONNECT_PANEL.INVITE
+    ? AWS_CONNECT_PANEL.INVITE
+    : AWS_CONNECT_PANEL.ACCESS;
+
 function useDraftValues<T extends FieldValues>(
   form: UseFormReturn<T>,
   key: keyof Pick<AwsConnectDraft, "roleValues" | "keysValues">,
@@ -112,14 +127,41 @@ export function AwsConnectStep({
 }: AwsConnectStepProps) {
   // Local state needed: the access method only matters until the account is connected.
   const [method, setMethod] = useState<AwsAccessMethod>(initialMethod);
+  // Local state needed: whether the step shows the access forms or hands the
+  // account over to a teammate. Separate from the method, which is the `via`
+  // an account gets connected with.
+  const [panel, setPanel] = useState<AwsConnectPanel>(initialPanel);
   // Local state needed: the active form reports it so the method cannot change mid-submit.
   const [isBusy, setIsBusy] = useState(false);
+  const { permissions } = useAuth();
+  // Inviting takes `manage_account`, which the API also asks of the roles list.
+  const canInvite = permissions.manage_account === true;
 
-  const isRole = method === AWS_ACCESS_METHOD.ROLE;
+  const isInvite = canInvite && panel === AWS_CONNECT_PANEL.INVITE;
+  const isRole = !isInvite && method === AWS_ACCESS_METHOD.ROLE;
+  const isKeys = !isInvite && method === AWS_ACCESS_METHOD.CREDENTIALS;
 
   const chooseMethod = (next: AwsAccessMethod) => {
+    setPanel(AWS_CONNECT_PANEL.ACCESS);
     setMethod(next);
-    useProviderWizardStore.getState().setAwsConnectDraft({ method: next });
+    useProviderWizardStore
+      .getState()
+      .setAwsConnectDraft({ method: next, panel: AWS_CONNECT_PANEL.ACCESS });
+  };
+
+  const chooseInvite = () => {
+    if (isInvite) return;
+    setPanel(AWS_CONNECT_PANEL.INVITE);
+    useProviderWizardStore
+      .getState()
+      .setAwsConnectDraft({ panel: AWS_CONNECT_PANEL.INVITE });
+    // Delegating diverges from the path the tour guides toward. No-op off-onboarding.
+    endActiveTour();
+    dispatchProviderFunnel({
+      step: PROVIDER_FUNNEL_STEP.METHOD_SELECTED,
+      providerType: "aws",
+      method: PROVIDER_FUNNEL_METHOD.INVITE_TEAMMATE,
+    });
   };
 
   return (
@@ -133,11 +175,11 @@ export function AwsConnectStep({
 
       <div
         role="radiogroup"
-        aria-label="AWS access method"
+        aria-label="AWS connection option"
         className="flex flex-col gap-3"
       >
         <p className="text-text-neutral-secondary text-sm">
-          Choose how Prowler should access your account.
+          Choose how to connect this account.
         </p>
         <RadioCard
           icon={ShieldCheck}
@@ -153,20 +195,40 @@ export function AwsConnectStep({
         <RadioCard
           icon={KeyRound}
           title="Static access keys"
-          selected={!isRole}
+          selected={isKeys}
           disabled={isBusy}
           onClick={() => chooseMethod(AWS_ACCESS_METHOD.CREDENTIALS)}
         />
+        {canInvite && (
+          <RadioCard
+            icon={UserPlus}
+            title="I don't have access, invite a teammate"
+            selected={isInvite}
+            disabled={isBusy}
+            onClick={chooseInvite}
+          />
+        )}
       </div>
 
-      {isRole ? (
+      {isInvite && (
+        <InviteTeammatePanel
+          providerType="aws"
+          formId={formId}
+          onUiStateChange={onUiStateChange}
+          onBusyChange={setIsBusy}
+        />
+      )}
+
+      {isRole && (
         <AwsRoleConnectForm
           formId={formId}
           onConnected={onConnected}
           onBusyChange={setIsBusy}
           onUiStateChange={onUiStateChange}
         />
-      ) : (
+      )}
+
+      {isKeys && (
         <AwsKeysConnectForm
           formId={formId}
           onConnected={onConnected}

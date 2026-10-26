@@ -185,6 +185,7 @@ export function ProviderWizardModal({
                         handleTestSuccess();
                         endActiveTour();
                       }}
+                      onClose={handleClose}
                       onSelectOrganizations={openOrganizationsFlow}
                       onFooterChange={setFooterConfig}
                       onProviderTypeChange={(providerType) => {

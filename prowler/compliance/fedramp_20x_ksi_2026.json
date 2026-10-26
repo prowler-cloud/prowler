@@ -354,7 +354,8 @@
           "kafka_cluster_uses_latest_version",
           "opensearch_service_domains_updated_to_the_latest_service_software_version",
           "rds_instance_deprecated_engine_version",
-          "wellarchitected_workload_no_high_or_medium_risks"
+          "wellarchitected_workload_no_high_or_medium_risks",
+          "elasticbeanstalk_environment_php_platform_updated"
         ],
         "azure": [],
         "gcp": [],
@@ -718,7 +719,8 @@
           "waf_regional_rule_with_conditions",
           "waf_regional_rulegroup_not_empty",
           "waf_regional_webacl_with_rules",
-          "wafv2_webacl_with_rules"
+          "wafv2_webacl_with_rules",
+          "wafv2_webacl_managed_rule_groups_enabled"
         ],
         "azure": [
           "network_vnet_ddos_protection_enabled",
@@ -1756,7 +1758,8 @@
           "ecr_registry_enhanced_scanning_enabled",
           "inspector2_active_findings_exist",
           "inspector2_is_enabled",
-          "ssm_managed_compliant_patching"
+          "ssm_managed_compliant_patching",
+          "elasticbeanstalk_environment_php_platform_updated"
         ],
         "azure": [
           "app_ensure_java_version_is_latest",
@@ -1765,7 +1768,9 @@
           "app_function_latest_runtime_version",
           "defender_ensure_system_updates_are_applied"
         ],
-        "gcp": [],
+        "gcp": [
+          "appengine_version_php_runtime_supported"
+        ],
         "kubernetes": [],
         "m365": []
       },

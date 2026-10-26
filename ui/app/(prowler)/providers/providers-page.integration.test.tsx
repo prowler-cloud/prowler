@@ -203,7 +203,6 @@ describe("Organization onboarding wizard", () => {
 
         expect(harness.applyCallCount).toBe(1);
 
-        await harness.enableInitialScan();
         await harness.saveScheduleAndLaunch();
         await harness.waitForLaunchComplete();
 
@@ -695,7 +694,6 @@ describe("Organization onboarding wizard", () => {
         await harness.testConnections();
         await harness.waitForProjectsConnected();
 
-        await harness.enableInitialScan();
         await harness.saveScheduleAndLaunch();
         await harness.waitForPartialScheduleSave(1, 1);
 
@@ -725,7 +723,6 @@ describe("Organization onboarding wizard", () => {
         await harness.testConnections();
         await harness.waitForProjectsConnected();
 
-        await harness.enableInitialScan();
         await harness.saveScheduleAndLaunch();
         await harness.waitForScheduleSaveFailure();
 
@@ -746,7 +743,6 @@ describe("Organization onboarding wizard", () => {
         await harness.testConnections();
         await harness.waitForProjectsConnected();
 
-        await harness.enableInitialScan();
         await harness.saveScheduleAndLaunch();
         await harness.waitForLaunchComplete();
 
@@ -778,7 +774,6 @@ describe("Organization onboarding wizard", () => {
         expect(harness.usesAccountWording()).toBe(false);
         expect(harness.applyCallCount).toBe(1);
 
-        await harness.enableInitialScan();
         await harness.saveScheduleAndLaunch();
         await harness.waitForLaunchComplete();
 
@@ -1164,7 +1159,6 @@ describe("Organization onboarding wizard", () => {
         await harness.testConnections();
         await harness.waitForSubscriptionsConnected();
 
-        await harness.enableInitialScan();
         await harness.saveScheduleAndLaunch();
         await harness.waitForPartialScheduleSave(1, 1);
 
@@ -1189,7 +1183,6 @@ describe("Organization onboarding wizard", () => {
         await harness.testConnections();
         await harness.waitForSubscriptionsConnected();
 
-        await harness.enableInitialScan();
         await harness.saveScheduleAndLaunch();
         await harness.waitForScheduleSaveFailure();
 
@@ -1208,7 +1201,6 @@ describe("Organization onboarding wizard", () => {
         await harness.testConnections();
         await harness.waitForSubscriptionsConnected();
 
-        await harness.enableInitialScan();
         await harness.saveScheduleAndLaunch();
         await harness.waitForLaunchComplete();
 

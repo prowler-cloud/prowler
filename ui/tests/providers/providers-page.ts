@@ -708,6 +708,59 @@ export class ProvidersPage extends BasePage {
     await this.selectProviderRadio(this.githubProviderRadio);
   }
 
+  // Offered on the AWS step to a user who can invite but cannot reach the account.
+  async selectAwsInviteTeammate(): Promise<void> {
+    const invite = this.wizardModal.getByRole("radio", {
+      name: /invite a teammate/i,
+    });
+    await expect(invite).toBeVisible({ timeout: 10000 });
+    await invite.click();
+    await expect(
+      this.wizardModal.getByRole("textbox", { name: /Teammate email/i }),
+    ).toBeVisible({ timeout: 10000 });
+  }
+
+  // The form preselects a role only when the tenant has one named exactly
+  // "admin"; the E2E tenant's is "e2e_admin", so pick the role explicitly.
+  async sendTeammateInvitation(
+    email: string,
+    rolePattern: RegExp = /admin/i,
+  ): Promise<void> {
+    await this.wizardModal
+      .getByRole("textbox", { name: /Teammate email/i })
+      .fill(email);
+    // Radix Select: the trigger is a combobox and its options render in a portal.
+    const roleSelect = this.wizardModal.getByRole("combobox", {
+      name: "Select a role",
+    });
+    await roleSelect.click();
+    const option = this.page.getByRole("option", { name: rolePattern }).first();
+    await expect(option).toBeVisible({ timeout: 10000 });
+    await option.click();
+    await expect(roleSelect).not.toContainText("Select a role");
+    const send = this.page.getByRole("button", {
+      name: "Send invitation",
+      exact: true,
+    });
+    await expect(send).toBeEnabled({ timeout: 10000 });
+    await send.click();
+  }
+
+  async verifyTeammateInvitationSent(email: string): Promise<void> {
+    await expect(
+      this.wizardModal.getByText(`Invitation sent to ${email}`),
+    ).toBeVisible({ timeout: 15000 });
+    await expect(
+      this.wizardModal.getByText(/\/invitation\/accept\?invitation_token=/),
+    ).toBeVisible();
+  }
+
+  // "Done" replaces the submit once the invitation exists and closes the wizard.
+  async finishTeammateInvitation(): Promise<void> {
+    await this.page.getByRole("button", { name: "Done", exact: true }).click();
+    await expect(this.wizardModal).not.toBeVisible();
+  }
+
   // AWS picks its access method on the same step that registers the account.
   async selectAwsAccessMethod(type: AWSCredentialType): Promise<void> {
     const name =

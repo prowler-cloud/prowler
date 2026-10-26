@@ -15,6 +15,7 @@ from api.attack_paths.queries.schema import (
     RAW_SCHEMA_URL,
     get_cartography_schema_query,
 )
+from api.attack_paths.sink.base import SinkDatabase
 from api.models import AttackPathsScan
 from config.custom_logging import BackendLogger
 from config.env import env
@@ -135,7 +136,7 @@ def execute_query(
             cypher = inject_provider_label(cypher, provider_id)
 
         graph = backend.execute_read_query(database_name, cypher, parameters)
-        return _serialize_graph(graph, provider_id)
+        return _serialize_graph(graph, provider_id, backend)
 
     except graph_database.WriteQueryNotAllowedException:
         raise PermissionDenied(
@@ -174,6 +175,8 @@ def execute_custom_query(
     # 1. `neo4j.READ_ACCESS` - prevents mutations at the driver level
     # 2. `inject_provider_label()` - regex-based label injection scopes node patterns
     # 3. `_serialize_graph()` - post-query filter drops nodes without the provider label
+    #    and any node or relationship the backend did not store (APOC virtual
+    #    entities can carry an arbitrary label and arbitrary properties)
     # 4. `USING QUERY:TIMEOUTMILLISECONDS` on Neptune - server-side runaway cutoff
     #
     # Layer 2 is best-effort (regex can't fully parse Cypher);
@@ -193,7 +196,7 @@ def execute_custom_query(
 
     try:
         graph = backend.execute_read_query(database_name, cypher, None)
-        serialized = _serialize_graph(graph, provider_id)
+        serialized = _serialize_graph(graph, provider_id, backend)
         return _truncate_graph(serialized)
 
     except graph_database.ClientStatementException as exc:
@@ -265,13 +268,15 @@ def _truncate_graph(graph: dict[str, Any]) -> dict[str, Any]:
     return graph
 
 
-def _serialize_graph(graph, provider_id: str) -> dict[str, Any]:
+def _serialize_graph(graph, provider_id: str, backend: SinkDatabase) -> dict[str, Any]:
     provider_label = get_provider_label(provider_id)
 
     nodes = []
     kept_node_ids = set()
     for node in graph.nodes:
-        if provider_label not in node.labels:
+        if provider_label not in node.labels or not backend.is_persisted_element_id(
+            node.element_id
+        ):
             continue
 
         kept_node_ids.add(node.element_id)
@@ -286,7 +291,7 @@ def _serialize_graph(graph, provider_id: str) -> dict[str, Any]:
     filtered_count = len(graph.nodes) - len(nodes)
     if filtered_count > 0:
         logger.debug(
-            f"Filtered {filtered_count} nodes without provider label {provider_label}"
+            f"Filtered {filtered_count} nodes without provider label {provider_label} or not stored"
         )
 
     relationships = []
@@ -294,6 +299,7 @@ def _serialize_graph(graph, provider_id: str) -> dict[str, Any]:
         if (
             relationship.start_node.element_id not in kept_node_ids
             or relationship.end_node.element_id not in kept_node_ids
+            or not backend.is_persisted_element_id(relationship.element_id)
         ):
             continue
 

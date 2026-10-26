@@ -2,14 +2,13 @@
 
 import { create } from "zustand";
 
+import { computeFilteredSubgraph } from "@/lib/attack-paths";
 import type {
   AttackPathGraphData,
   AttackPathQueryExecution,
   GraphNode,
   GraphState,
 } from "@/types/attack-paths";
-
-import { computeFilteredSubgraph } from "../_lib";
 
 interface FilteredViewState {
   isFilteredView: boolean;

@@ -14,6 +14,7 @@ import { PROVIDER_WIZARD_MODE } from "@/types/provider-wizard";
 import { ProviderType } from "@/types/providers";
 
 import { AwsConnectStep } from "./aws/aws-connect-step";
+import { AWS_CONNECT_ACTION_KIND, type AwsConnectUiState } from "./aws/types";
 import {
   WIZARD_FOOTER_ACTION_TYPE,
   WizardFooterConfig,
@@ -23,6 +24,8 @@ interface ConnectStepProps {
   onNext: () => void;
   /** AWS registers, stores and tests the account in this step, so it skips ahead. */
   onCredentialsSaved: () => void;
+  /** AWS offers it as the footer action once a teammate has been invited instead. */
+  onClose: () => void;
   onSelectOrganizations: (orgType: OrgFlowType) => void;
   onFooterChange: (config: WizardFooterConfig) => void;
   onProviderTypeChange: (providerType: ProviderType | null) => void;
@@ -33,6 +36,7 @@ interface ConnectStepProps {
 export function ConnectStep({
   onNext,
   onCredentialsSaved,
+  onClose,
   onSelectOrganizations,
   onFooterChange,
   onProviderTypeChange,
@@ -41,9 +45,13 @@ export function ConnectStep({
   const { setProvider, setVia, setSecretId, setMode } =
     useProviderWizardStore();
   const backHandlerRef = useRef<(() => void) | null>(null);
+  // The modal hands over a fresh `onClose` every render; the footer effect
+  // keeps one closure and reads the latest through the ref, as LaunchStep does.
+  const closeHandlerRef = useRef(onClose);
+  closeHandlerRef.current = onClose;
   // Local state needed: AWS swaps the generic account form for its one-step form.
   const [isAwsFlow, setIsAwsFlow] = useState(initialProviderType === "aws");
-  const [uiState, setUiState] = useState({
+  const [uiState, setUiState] = useState<AwsConnectUiState>({
     showBack: false,
     showAction: false,
     actionLabel: "Next",
@@ -74,6 +82,8 @@ export function ConnectStep({
     if (uiState.showAction && !uiState.actionDisabled && !uiState.isLoading) {
       endActiveTour();
     }
+    // Nothing left to submit once a teammate has been invited: the action closes.
+    const closes = uiState.actionKind === AWS_CONNECT_ACTION_KIND.CLOSE;
     onFooterChange({
       showBack: uiState.showBack,
       backLabel: "Back",
@@ -86,8 +96,11 @@ export function ConnectStep({
       actionLabel: uiState.actionLabel,
       actionLoading: uiState.isLoading,
       actionDisabled: uiState.actionDisabled || uiState.isLoading,
-      actionType: WIZARD_FOOTER_ACTION_TYPE.SUBMIT,
-      actionFormId: formId,
+      actionType: closes
+        ? WIZARD_FOOTER_ACTION_TYPE.BUTTON
+        : WIZARD_FOOTER_ACTION_TYPE.SUBMIT,
+      actionFormId: closes ? undefined : formId,
+      onAction: closes ? () => closeHandlerRef.current() : undefined,
     });
   }, [isAwsFlow, onFooterChange, uiState]);
 

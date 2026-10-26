@@ -4,6 +4,38 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [5.45.0] (Prowler v5.45.0)
+
+### 🚀 Added
+
+- Azure AI Services service for Azure provider, including the `aiservices_account_public_network_access_disabled`, `aiservices_account_local_auth_disabled`, and `aiservices_account_encrypted_with_cmk` checks [(#12925)](https://github.com/prowler-cloud/prowler/pull/12925)
+- `aiservices_account_uses_private_endpoint`, `aiservices_account_outbound_network_restricted`, `aiservices_account_managed_identity_enabled`, and `aiservices_account_diagnostic_logging_enabled` checks for Azure provider [(#12926)](https://github.com/prowler-cloud/prowler/pull/12926)
+- `entra_policy_admin_self_service_password_reset_disabled` check for M365 provider, verifying that Self-Service Password Reset is disabled for administrators [(#12990)](https://github.com/prowler-cloud/prowler/pull/12990)
+- `entra_cross_tenant_access_default_outbound_restricted` check for M365 provider, verifying that default cross-tenant access does not let all users reach all external applications through B2B collaboration or B2B direct connect [(#12991)](https://github.com/prowler-cloud/prowler/pull/12991)
+- `entra_app_registration_redirect_uris_secure` check for M365 provider, flagging app registrations with HTTP, wildcard, malformed or `azurewebsites.net` redirect URIs [(#12993)](https://github.com/prowler-cloud/prowler/pull/12993)
+- `aiservices_account_network_acls_default_action_deny` and `aiservices_deployment_content_filter_prompt_shield_enabled` checks for Azure provider [(#12997)](https://github.com/prowler-cloud/prowler/pull/12997)
+- `entra_dynamic_group_member_of_rule_not_used` check for M365 provider, flagging dynamic groups whose membership rule uses the `memberOf` operator that Microsoft retires on November 3, 2026 [(#13003)](https://github.com/prowler-cloud/prowler/pull/13003)
+- `entra_policy_msol_powershell_blocked` check for M365 provider, verifying that the tenant authorization policy blocks the legacy MSOnline PowerShell module [(#13004)](https://github.com/prowler-cloud/prowler/pull/13004)
+
+### 🐞 Fixed
+
+- OCI API key credentials accept a home region to bootstrap identity calls, so tenancies not subscribed to us-ashburn-1 can connect [(#12865)](https://github.com/prowler-cloud/prowler/pull/12865)
+- AWS Organizations metadata is fetched from the partition of the audited account, using the region that answered the STS bootstrap, instead of the commercial `us-east-1` endpoint a session without a region resolves to, which timed out in GovCloud [(#12988)](https://github.com/prowler-cloud/prowler/pull/12988)
+
+### 🔐 Security
+
+- `pyjwt` from 2.13.0 to 2.14.0, patching GHSA-ffc3-869f-jxw9 [(#12911)](https://github.com/prowler-cloud/prowler/pull/12911)
+- `dulwich` from 1.2.5 to 1.2.9, patching GHSA-5fqc-mrg8-w798, GHSA-8mcx-5rqc-vhmf, GHSA-8w8g-wq8h-fq33 and GHSA-cm62-gvxx-vmxx [(#12953)](https://github.com/prowler-cloud/prowler/pull/12953)
+- `urllib3` from 2.7.0 to 2.8.0, patching CVE-2026-97687 and CVE-2026-97689 [(#12953)](https://github.com/prowler-cloud/prowler/pull/12953)
+- `pymongo` from 4.15.1 to 4.18.2, patching CVE-2026-96748 and CVE-2026-96749 [(#12955)](https://github.com/prowler-cloud/prowler/pull/12955)
+- IaC repository URLs resolving to loopback, private or otherwise non-public hosts rejected before both the connection test and the scan clone, including every destination a redirect points to, with raw errors no longer echoed to the caller or the logs [(#12960)](https://github.com/prowler-cloud/prowler/pull/12960)
+- HTML report compliance column is now escaped, so framework names and requirement IDs containing markup are shown as text instead of being rendered by the browser [(#12963)](https://github.com/prowler-cloud/prowler/pull/12963)
+- CSV outputs (findings, compliance and AWS quick inventory) prefix cells starting with `=`, `+`, `-`, `@`, tab or carriage return with a single quote so spreadsheet applications treat them as text instead of formulas; signed numbers such as `-1` are left untouched [(#12963)](https://github.com/prowler-cloud/prowler/pull/12963)
+- Python base image from 3.12.13 to 3.12.15 and Trivy from 0.74.0 to 0.75.0 in the SDK container image, patching CVE-2026-19445, CVE-2026-19553 and the grpc-go and x/crypto CVEs bundled in Trivy [(#13009)](https://github.com/prowler-cloud/prowler/pull/13009)
+- PowerShell from 7.5.11 to 7.5.12 in the SDK container image, bundling .NET runtime 9.0.21 [(#13037)](https://github.com/prowler-cloud/prowler/pull/13037)
+
+---
+
 ## [5.44.0] (Prowler v5.44.0)
 
 ### 🚀 Added

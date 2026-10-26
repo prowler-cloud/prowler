@@ -288,7 +288,7 @@ aws:
 
 azure:
   defender_attack_path_minimal_risk_level: "High"
-  php_latest_version: "8.2"
+  php_latest_version: "8.5"
   python_latest_version: "3.12"
   java_latest_version: "17"
   vm_backup_min_daily_retention_days: 7

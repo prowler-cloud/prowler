@@ -41,6 +41,8 @@ export type WizardOpenSource =
 export const PROVIDER_FUNNEL_METHOD = {
   SINGLE: "single",
   ORGANIZATION: "organization",
+  // The user cannot connect the account and hands it to a teammate instead.
+  INVITE_TEAMMATE: "invite_teammate",
 } as const;
 
 export type ProviderFunnelMethod =

@@ -23,6 +23,10 @@ const {
   updateCredentialsProvider,
   testProviderConnection,
   openCloudUpgradeMock,
+  endActiveTour,
+  getInvitationRoles,
+  sendInvite,
+  session,
 } = vi.hoisted(() => ({
   addProvider: vi.fn(),
   addCredentialsProvider: vi.fn(),
@@ -30,14 +34,24 @@ const {
   updateCredentialsProvider: vi.fn(),
   testProviderConnection: vi.fn(),
   openCloudUpgradeMock: vi.fn(),
+  endActiveTour: vi.fn(),
+  getInvitationRoles: vi.fn(),
+  sendInvite: vi.fn(),
+  // Mutable: only the permissions differ between suites.
+  session: {
+    data: { tenantId: "tenant-abc" } as {
+      tenantId: string;
+      user?: { permissions: Record<string, boolean> };
+    },
+  },
 }));
 
 vi.mock("next-auth/react", () => ({
-  useSession: () => ({
-    data: { tenantId: "tenant-abc" },
-    status: "authenticated",
-  }),
+  useSession: () => ({ data: session.data, status: "authenticated" }),
 }));
+vi.mock("@/lib/tours/use-driver-tour", () => ({ endActiveTour }));
+vi.mock("@/actions/invitations/roles", () => ({ getInvitationRoles }));
+vi.mock("@/actions/invitations/invitation", () => ({ sendInvite }));
 vi.mock("@/actions/providers/providers", () => ({
   addProvider,
   addCredentialsProvider,
@@ -130,6 +144,7 @@ describe("AwsConnectStep", () => {
   afterEach(() => {
     window.removeEventListener(PROVIDER_FUNNEL_EVENT, recordFunnelSignal);
     vi.unstubAllEnvs();
+    session.data = { tenantId: "tenant-abc" };
   });
 
   describe("in Prowler Cloud", () => {
@@ -752,6 +767,101 @@ describe("AwsConnectStep", () => {
         credentials_type: "aws-sdk-default",
       });
       expect(secret).not.toHaveProperty("aws_access_key_id");
+    });
+  });
+
+  describe("inviting a teammate who can connect the account", () => {
+    const inviteRadio = () =>
+      screen.queryByRole("radio", { name: /invite a teammate/i });
+
+    beforeEach(() => {
+      session.data = {
+        tenantId: "tenant-abc",
+        user: { permissions: { manage_account: true } },
+      };
+      getInvitationRoles.mockResolvedValue([
+        { id: "22222222-2222-4222-8222-222222222222", name: "admin" },
+      ]);
+    });
+
+    it("is not offered to a user who cannot invite", () => {
+      // Given: no `manage_account`, so the API would refuse the invitation.
+      session.data = { tenantId: "tenant-abc" };
+
+      // When
+      renderStep();
+
+      // Then
+      expect(inviteRadio()).not.toBeInTheDocument();
+      expect(screen.getByRole("radio", { name: /IAM Role/ })).toBeChecked();
+    });
+
+    it("swaps the AWS form for the invitation and signals the choice once", async () => {
+      // Given
+      const { user } = renderStep();
+
+      // When
+      await user.click(inviteRadio()!);
+      await user.click(inviteRadio()!);
+
+      // Then: the teammate form takes the step and the footer, the tour steps aside.
+      expect(inviteRadio()).toBeChecked();
+      expect(
+        screen.queryByRole("textbox", { name: /Role ARN/ }),
+      ).not.toBeInTheDocument();
+      expect(
+        await screen.findByRole("textbox", { name: /Teammate email/ }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: "Send invitation" }),
+      ).toBeInTheDocument();
+      expect(endActiveTour).toHaveBeenCalled();
+      expect(
+        funnelSignals.filter((signal) => signal.step === "method_selected"),
+      ).toEqual([
+        {
+          step: "method_selected",
+          providerType: "aws",
+          method: "invite_teammate",
+        },
+      ]);
+    });
+
+    it("comes back to the IAM Role form with what was typed", async () => {
+      // Given
+      const { user } = renderStep();
+      await user.type(
+        screen.getByRole("textbox", { name: /Role ARN/ }),
+        ROLE_ARN,
+      );
+      await user.click(inviteRadio()!);
+      await screen.findByRole("textbox", { name: /Teammate email/ });
+
+      // When
+      await user.click(screen.getByRole("radio", { name: /IAM Role/ }));
+
+      // Then
+      expect(screen.getByRole("textbox", { name: /Role ARN/ })).toHaveValue(
+        ROLE_ARN,
+      );
+      expect(inviteRadio()).not.toBeChecked();
+    });
+
+    it("restores the invitation panel when the step is reopened", async () => {
+      // Given: the user left for the organizations tab and came back.
+      const { user, unmount } = renderStep();
+      await user.click(inviteRadio()!);
+      await screen.findByRole("textbox", { name: /Teammate email/ });
+      unmount();
+
+      // When
+      renderStep();
+
+      // Then
+      expect(inviteRadio()).toBeChecked();
+      expect(
+        await screen.findByRole("textbox", { name: /Teammate email/ }),
+      ).toBeInTheDocument();
     });
   });
 });

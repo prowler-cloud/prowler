@@ -26,7 +26,13 @@ class gmail_external_image_scanning_enabled(Check):
 
             scanning_enabled = gmail_client.policies.enable_external_image_scanning
 
-            if scanning_enabled is True:
+            if gmail_client.policies.off_for_everyone:
+                report.status = "PASS"
+                report.status_extended = (
+                    f"Gmail is turned off for everyone in domain "
+                    f"{gmail_client.provider.identity.domain}, so no user mailbox receives mail through Gmail."
+                )
+            elif scanning_enabled is True:
                 report.status = "PASS"
                 report.status_extended = (
                     f"Scanning of linked images for malicious content is enabled "

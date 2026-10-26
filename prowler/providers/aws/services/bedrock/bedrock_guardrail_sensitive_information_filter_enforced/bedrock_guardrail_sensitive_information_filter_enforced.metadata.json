@@ -1,0 +1,46 @@
+{
+  "Provider": "aws",
+  "CheckID": "bedrock_guardrail_sensitive_information_filter_enforced",
+  "CheckTitle": "Amazon Bedrock guardrail sensitive information filter acts on the output path",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/AWS Security Best Practices/Runtime Behavior Analysis",
+    "Effects/Data Exposure",
+    "Sensitive Data Identifications/PII"
+  ],
+  "ServiceName": "bedrock",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Other",
+  "ResourceGroup": "ai_ml",
+  "Description": "A **Bedrock guardrail** sensitive information entry whose action is `NONE` reports the detected PII or regex match in the trace and still delivers it to the caller. The evaluation looks for guardrails whose configured PII entities and custom regexes are set to `BLOCK` or `ANONYMIZE` on the output path.",
+  "Risk": "A filter that detects without acting reads as configured while **PII**, credentials and secrets keep flowing through model output.\n- Reviews and dashboards record the filter as present, so the gap goes unnoticed\n- Leaked tokens and customer records enable unauthorized access, fraud and identity theft",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/bedrock/latest/userguide/guardrails-sensitive-filters.html",
+    "https://docs.aws.amazon.com/bedrock/latest/APIReference/API_GuardrailPiiEntity.html",
+    "https://docs.aws.amazon.com/bedrock/latest/APIReference/API_GuardrailRegex.html",
+    "https://docs.aws.amazon.com/bedrock/latest/userguide/guardrails-components.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the AWS Management Console and open Amazon Bedrock\n2. Go to Guardrails and select <example_resource_name>\n3. Click Edit (or Open draft) and open Sensitive information filters\n4. For every PII type and regular expression listed, change the action from None to Mask or Block, and leave the output evaluation enabled\n5. Click Save, then publish a new guardrail version and point your agents and model invocations at it\nNote for API and CLI users: UpdateGuardrail replaces the whole guardrail, so it must be a read-modify-write. Call GetGuardrail first, edit only the actions inside the returned sensitiveInformationPolicyConfig, and send every other policy block back unchanged. AWS states \"Include both fields that you want to update as well as fields that you want to keep the same\" -- omitting a block deletes it. Changes land on the working draft only, so publish a new version afterwards.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Set every PII entity and custom regular expression in the guardrail sensitive information policy to `BLOCK` or `ANONYMIZE` rather than `NONE`, and keep output evaluation enabled so matches are stopped on the response path. Use `BLOCK` for values that must never appear, `ANONYMIZE` where the surrounding answer is still useful. Confirm the result with an `ApplyGuardrail` call using `source=OUTPUT` and check that the assessment reports the entity as blocked or anonymized.",
+      "Url": "https://hub.prowler.com/check/bedrock_guardrail_sensitive_information_filter_enforced"
+    }
+  },
+  "Categories": [
+    "gen-ai"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "bedrock_guardrail_sensitive_information_filter_enabled"
+  ],
+  "Notes": "Scoped to guardrails that already carry a sensitive information policy; a guardrail with no such policy is reported by bedrock_guardrail_sensitive_information_filter_enabled instead. GetGuardrail reports `action` for every entry and omits the per-path `outputAction` and `outputEnabled` unless they were set explicitly, in which case `action` governs the output path — verified against a live guardrail whose entries carried only `action: ANONYMIZE` and which masked PII on an ApplyGuardrail call with source=OUTPUT. An entry whose action the API does not report is MANUAL, never PASS. Like the other guardrail checks, this reads the working draft, because the collector calls GetGuardrail without guardrailVersion."
+}

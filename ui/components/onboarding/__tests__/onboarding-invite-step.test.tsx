@@ -19,8 +19,8 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn() }),
 }));
 
-vi.mock("@/actions/onboarding/invite", () => ({
-  getOnboardingInviteRoles: getRolesMock,
+vi.mock("@/actions/invitations/roles", () => ({
+  getInvitationRoles: getRolesMock,
 }));
 
 vi.mock("@/actions/invitations/invitation", () => ({
@@ -85,7 +85,13 @@ describe("OnboardingInviteStep", () => {
     outcomes.length = 0;
     window.addEventListener(ONBOARDING_INVITE_STEP_EVENT, recordOutcome);
     getRolesMock.mockReset().mockResolvedValue(ROLES);
-    sendInviteMock.mockReset().mockResolvedValue({ data: { id: "inv-1" } });
+    // The API answers with the created record, token included.
+    sendInviteMock.mockReset().mockResolvedValue({
+      data: {
+        id: "inv-1",
+        attributes: { email: "teammate@company.com", token: "abc123DEF45678" },
+      },
+    });
     toastMock.mockReset();
   });
 

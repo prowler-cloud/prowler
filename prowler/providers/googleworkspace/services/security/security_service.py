@@ -78,52 +78,33 @@ class Security(GoogleWorkspaceService):
 
     def _fetch_namespace(self, service, filter_str: str, fetch_succeeded: bool) -> bool:
         """Fetch policies for a single namespace filter."""
-        try:
-            request = service.policies().list(
-                pageSize=100,
-                filter=filter_str,
+        policies, succeeded = self._list_policies(
+            service, filter_str, f"fetching policies with filter {filter_str}"
+        )
+
+        customer_level = []
+        for policy in policies:
+            setting_type = (
+                policy.get("setting", {}).get("type", "").removeprefix("settings/")
             )
 
-            while request is not None:
-                try:
-                    response = request.execute()
+            scope = self._policy_scope(policy)
+            if scope != CUSTOMER_SCOPE:
+                if scope == UNKNOWN_SCOPE:
+                    self.policies.unresolved_scope = True
+                elif setting_type:
+                    self._overridden.add(setting_type)
+                continue
 
-                    for policy in response.get("policies", []):
-                        setting = policy.get("setting", {})
-                        setting_type = setting.get("type", "").removeprefix("settings/")
+            self._observed.add(setting_type)
+            customer_level.append(policy)
 
-                        scope = self._policy_scope(policy)
-                        if scope != CUSTOMER_SCOPE:
-                            if scope == UNKNOWN_SCOPE:
-                                self.policies.unresolved_scope = True
-                            elif setting_type:
-                                self._overridden.add(setting_type)
-                            continue
+        for policy in self._effective_policies(customer_level):
+            setting = policy.get("setting", {})
+            setting_type = setting.get("type", "").removeprefix("settings/")
+            self._process_setting(setting_type, setting.get("value", {}))
 
-                        self._observed.add(setting_type)
-                        value = setting.get("value", {})
-
-                        self._process_setting(setting_type, value)
-
-                    request = service.policies().list_next(request, response)
-
-                except Exception as error:
-                    self._handle_api_error(
-                        error,
-                        f"fetching policies with filter {filter_str}",
-                        self.provider.identity.customer_id,
-                    )
-                    return False
-
-        except Exception as error:
-            self._handle_api_error(
-                error,
-                f"listing policies with filter {filter_str}",
-                self.provider.identity.customer_id,
-            )
-            return False
-
-        return fetch_succeeded
+        return fetch_succeeded and succeeded
 
     def _process_setting(self, setting_type: str, value: dict):
         """Process a single policy setting and populate the model."""

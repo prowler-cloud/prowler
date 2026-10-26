@@ -7,65 +7,18 @@
 
 ignore:
 
-  # Modules compiled into the Trivy binary we ship.
-  # Only a Trivy rebuild by its vendor can change these; the version is pinned in our Dockerfile.
-  # CVE-2026-71556 is the same temporary exception documented in .trivyignore.yaml:
-  # Trivy 0.73.0 still embeds go-git 5.19.1, while the 5.19.2 fix is merged only on
-  # Trivy main. Remove this entry with the Trivy exception by 2026-09-15.
-  # https://github.com/aquasecurity/trivy/blob/v0.73.0/go.mod#L46
-  # https://github.com/aquasecurity/trivy/commit/a2edba9a03987ba0d2ebc8212c1a9a1e6979497b
-  - vulnerability: CVE-2026-71556
-    package:
-      name: github.com/go-git/go-git/v5
-  # CVE-2026-84304 is the same temporary exception documented in .trivyignore.yaml:
-  # Trivy 0.74.0 still embeds grpc 1.82.1, while the 1.83.1 fix is not in any release.
-  # Prowler only runs `trivy image` / `trivy fs`, never client/server mode, so no gRPC
-  # endpoint exists in the image. Pinned to the embedded version so the rule stops
-  # matching on its own once Trivy bumps grpc. Remove with the Trivy exception by 2026-10-15.
-  # https://github.com/aquasecurity/trivy/pull/11176
-  - vulnerability: CVE-2026-84304
-    package:
-      name: google.golang.org/grpc
-      version: v1.82.1
-  # CVE-2026-84445 is the same temporary exception documented in .trivyignore.yaml:
-  # Trivy 0.74.0 still embeds grpc 1.82.1, while the 1.82.2 / 1.83.2 fix is not in any
-  # release. The panic needs a gRPC server built with `xds.NewGRPCServer()`; Prowler only
-  # runs `trivy image` / `trivy fs`, so the image serves no gRPC at all. Pinned to the
-  # embedded version so the rule stops matching on its own once Trivy bumps grpc. Remove
-  # with the Trivy exception by 2026-10-15.
-  # https://github.com/advisories/GHSA-2v4p-qf9q-27wj
-  - vulnerability: CVE-2026-84445
-    package:
-      name: google.golang.org/grpc
-      version: v1.82.1
-  # CVE-2026-56855 / CVE-2026-78662 are the same temporary exception documented in
-  # .trivyignore.yaml: Trivy 0.74.0 still embeds golang.org/x/crypto v0.55.0, while the
-  # 0.56.0 fix (published 2026-09-02) hasn't reached any Trivy release, or even Trivy
-  # main, yet. Pinned to the embedded version so the rule stops matching on its own once
-  # Trivy bumps it. Remove with the Trivy exception by 2026-10-15.
-  - vulnerability: CVE-2026-56855
-    package:
-      name: golang.org/x/crypto
-      version: v0.55.0
-  - vulnerability: CVE-2026-78662
-    package:
-      name: golang.org/x/crypto
-      version: v0.55.0
-  - vulnerability: CVE-2026-56852
-    package:
-      name: golang.org/x/text
-  - vulnerability: GHSA-hrxh-6v49-42gf
-    package:
-      name: google.golang.org/grpc
-  - vulnerability: CVE-2026-50151
-    package:
-      name: oras.land/oras-go/v2
-
   # Shipped inside the PowerShell tarball, in its bundled MicrosoftTeams module.
   # Not a dependency we declare, and not one we can upgrade independently.
   - vulnerability: CVE-2026-26127
     package:
       name: Microsoft.Bcl.Memory
+
+  # Documented in .trivyignore.yaml: ships inside ExchangeOnlineManagement
+  # 3.10.1, the latest gallery release. Re-check on the next EXO release.
+  - vulnerability: CVE-2026-84008
+    package:
+      name: System.Security.Cryptography.Pkcs
+      version: 10.0.0
 
   # The .NET runtime bundled inside the PowerShell tarball the Dockerfile pins.
   # CVE-2026-62901 is the same temporary exception documented in .trivyignore.yaml:
@@ -126,3 +79,19 @@ ignore:
   - vulnerability: CVE-2026-82049
     package:
       name: python
+
+  # zlib in the Alpine base image of the MCP (python:3.13.16-alpine3.23) container.
+  # CVE-2026-85091 is a heap overflow in gz_vacate() reached only through non-blocking
+  # gzwrite() followed by gzprintf() after a write stall; the MCP server never writes
+  # gzip files, so the image never calls that path. The UI image no longer needs this:
+  # node:24.22.1-alpine is built on Alpine 3.24 and ships 1.3.2-r1. TEMPORARY: the fix
+  # landed in the 3.23 index on 2026-10-06, two days after the pinned python image was
+  # built, and could be taken with `apk add --upgrade`, but we wait for the base image
+  # to ship it instead (python:3.13.17-alpine3.23, built 2026-10-22, already does).
+  # Pinned to that version so the rule stops matching on its own once the base image
+  # moves forward. Remove when the MCP digest is bumped, by 2026-11-07.
+  # https://security.alpinelinux.org/vuln/CVE-2026-85091
+  - vulnerability: CVE-2026-85091
+    package:
+      name: zlib
+      version: 1.3.2-r0
