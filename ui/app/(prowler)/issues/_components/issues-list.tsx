@@ -17,6 +17,8 @@ const ISSUE_FILTER_KEYS = [
   "filter[severity]",
   "filter[provider_type]",
   "filter[provider_alias]",
+  "filter[triage_status]",
+  "filter[triage_status__in]",
   ...ISSUE_SCOPE_KEYS,
 ];
 

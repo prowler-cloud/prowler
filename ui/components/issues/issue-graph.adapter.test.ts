@@ -38,9 +38,11 @@ describe("buildIssueGraph", () => {
     assessedIssue.legs.reachability.evidence = ["ssh · instance"];
     const findings = resources.map((resourceUid, index) => ({
       id: `finding-${index}`,
+      uid: `finding-uid-${index}`,
       checkId: index === 2 ? "rdp" : "ssh",
       checkTitle: index === 2 ? "RDP exposed" : "SSH exposed",
       severity: index === 0 ? ("critical" as const) : ("high" as const),
+      triageStatus: "open" as const,
       resourceUid,
     }));
 
@@ -78,9 +80,11 @@ describe("buildIssueGraph", () => {
     const view = buildIssueGraph(assessedIssue, resources, [
       {
         id: "folded",
+        uid: "folded-uid",
         checkId: "ssh",
         checkTitle: "SSH exposed",
         severity: "critical",
+        triageStatus: "open",
         resourceUid,
       },
     ]);

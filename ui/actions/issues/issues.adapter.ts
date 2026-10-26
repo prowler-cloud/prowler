@@ -1,13 +1,22 @@
 import { FindingProps } from "@/types/components";
+import {
+  FINDING_TRIAGE_STATUS,
+  FindingTriageStatus,
+} from "@/types/findings-triage";
 import { IssueFinding, IssueTriageNote } from "@/types/issues";
 import { JsonApiDocument, JsonApiResource } from "@/types/jsonapi";
 import { ResourceProps } from "@/types/resources";
 
-interface IssueFindingResource extends Pick<FindingProps, "id"> {
-  attributes: Pick<
+interface IssueFindingAttributes
+  extends Pick<
     FindingProps["attributes"],
-    "check_id" | "check_metadata" | "severity"
-  >;
+    "uid" | "check_id" | "check_metadata" | "severity"
+  > {
+  triage_status?: FindingTriageStatus | null;
+}
+
+interface IssueFindingResource extends Pick<FindingProps, "id"> {
+  attributes: IssueFindingAttributes;
   relationships: Pick<FindingProps["relationships"], "resources">;
 }
 
@@ -33,11 +42,15 @@ export const toIssueFindings = (
       return [
         {
           id: finding.id,
+          uid: finding.attributes.uid,
           checkId: finding.attributes.check_id,
           checkTitle:
             finding.attributes.check_metadata?.checktitle ||
             finding.attributes.check_id,
           severity: finding.attributes.severity,
+          // A finding nobody has triaged reads as open, as on the Findings page.
+          triageStatus:
+            finding.attributes.triage_status ?? FINDING_TRIAGE_STATUS.OPEN,
           resourceUid,
         },
       ];
