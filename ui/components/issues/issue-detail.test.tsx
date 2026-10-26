@@ -18,6 +18,9 @@ vi.mock("@/actions/issues", () => ({
   getIssueNotes: async () => [],
 }));
 
+vi.mock("@/components/issues/issue-compliance", () => ({
+  IssueCompliance: () => null,
+}));
 vi.mock("@/components/findings/send-to-jira-modal", () => ({
   SendToJiraModal: () => null,
 }));

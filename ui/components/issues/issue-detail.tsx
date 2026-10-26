@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { getIssue, getIssueFindings } from "@/actions/issues";
+import { IssueCompliance } from "@/components/issues/issue-compliance";
 import { IssueGraph } from "@/components/issues/issue-graph";
 import { IssueSendToJira } from "@/components/issues/issue-send-to-jira";
 import { IssueTriage } from "@/components/issues/issue-triage";
@@ -260,6 +261,11 @@ export const IssueDetail = ({
           )}
         </div>
       </section>
+      {state.status === "loaded" &&
+        state.findings &&
+        state.findings.length > 0 && (
+          <IssueCompliance findings={state.findings} scanId={activeScanId} />
+        )}
       <IssueTriage id={id} status={issue.triage_status} />
     </div>
   );
