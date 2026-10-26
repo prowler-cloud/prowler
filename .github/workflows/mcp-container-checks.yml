@@ -77,6 +77,7 @@ jobs:
             auth.docker.io:443
             production.cloudflare.docker.com:443
             production.cloudfront.docker.com:443
+            tuf-repo-cdn.sigstore.dev:443
             ghcr.io:443
             pkg-containers.githubusercontent.com:443
             files.pythonhosted.org:443
