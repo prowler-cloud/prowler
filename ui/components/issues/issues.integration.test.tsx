@@ -256,6 +256,7 @@ describe("Issues responsive layout", () => {
             issues={1}
             findings={3}
             actionable={1}
+            coveredFindings={0}
             scope={{}}
           />
           <TopIssues issues={[issue]} scope={{}} />

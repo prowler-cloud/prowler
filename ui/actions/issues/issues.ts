@@ -115,7 +115,7 @@ export const getIssueFindings = async (
   url.searchParams.set("include", "resources");
   url.searchParams.set(
     "fields[findings]",
-    "check_id,severity,check_metadata,resources",
+    "uid,check_id,severity,check_metadata,triage_status,resources",
   );
   url.searchParams.set("fields[resources]", "uid");
   url.searchParams.set("page[size]", String(uids.length));

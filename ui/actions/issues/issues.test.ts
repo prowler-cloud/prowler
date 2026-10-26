@@ -59,9 +59,12 @@ describe("issues actions", () => {
         {
           id: "finding-1",
           attributes: {
+            uid: "finding-uid",
             check_id: "ssh",
             severity: "critical",
             check_metadata: { checktitle: "SSH exposed" },
+            // Nobody has triaged it yet.
+            triage_status: null,
           },
           relationships: { resources: { data: [{ id: "r1" }, { id: "r2" }] } },
         },
@@ -81,12 +84,15 @@ describe("issues actions", () => {
     expect(url.searchParams.get("filter[scan]")).toBe("issue-scan");
     expect(url.searchParams.get("filter[uid__in]")).toBe("finding-uid");
     expect(url.searchParams.get("include")).toBe("resources");
+    expect(url.searchParams.get("fields[findings]")).toContain("triage_status");
     expect(findings).toEqual(
       ["instance", "security-group"].map((resourceUid) => ({
         id: "finding-1",
+        uid: "finding-uid",
         checkId: "ssh",
         checkTitle: "SSH exposed",
         severity: "critical",
+        triageStatus: "open",
         resourceUid,
       })),
     );
