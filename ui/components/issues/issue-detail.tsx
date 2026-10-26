@@ -14,6 +14,7 @@ import { Button } from "@/components/shadcn/button/button";
 import { Card } from "@/components/shadcn/card/card";
 import { CodeSnippet } from "@/components/shadcn/code-snippet";
 import { InfoField } from "@/components/shadcn/info-field/info-field";
+import { riskFactors } from "@/lib/issues/risk-factors";
 import { legBadgeVariant } from "@/lib/issues/verdicts";
 import {
   ATTACKER_START_LABEL,
@@ -117,9 +118,23 @@ export const IssueDetail = ({
     setAttempt((value) => value + 1);
   };
   const activeScanId = state.status === "loaded" ? state.scanId : scanId;
+  const factors = riskFactors(issue);
 
   return (
     <div className="flex min-w-0 flex-col gap-4 py-4">
+      {/* The conditions that hold at once: the verdict says how bad, these
+          say why, and which part to argue with. */}
+      {factors.length > 0 && (
+        <ul aria-label="Risk factors" className="flex flex-wrap gap-1.5">
+          {factors.map((factor) => (
+            <li key={factor.label}>
+              <Badge variant={factor.variant} title={factor.title}>
+                {factor.label}
+              </Badge>
+            </li>
+          ))}
+        </ul>
+      )}
       {state.status === "loaded" && state.findings === undefined && (
         <IssuesLoadError
           message="Could not load the findings for this issue."
