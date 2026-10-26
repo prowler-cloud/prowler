@@ -3162,3 +3162,54 @@ class Test_iam_pattern_matches:
         start = time.perf_counter()
         assert iam_pattern_matches(pattern, "bedrock-agentcore.amazonaws.com") is False
         assert time.perf_counter() - start < 0.5
+
+
+class Test_is_condition_block_restrictive_account_list:
+    def test_list_value_with_all_accounts_trusted(self):
+        condition = {
+            "StringEquals": {
+                "aws:PrincipalAccount": TRUSTED_AWS_ACCOUNT_NUMBER_LIST[:2]
+            }
+        }
+        assert is_condition_block_restrictive(
+            condition, TRUSTED_AWS_ACCOUNT_NUMBER_LIST
+        )
+
+    def test_list_value_with_untrusted_account(self):
+        condition = {
+            "StringEquals": {
+                "aws:PrincipalAccount": [
+                    TRUSTED_AWS_ACCOUNT_NUMBER,
+                    NON_TRUSTED_AWS_ACCOUNT_NUMBER,
+                ]
+            }
+        }
+        assert not is_condition_block_restrictive(
+            condition, TRUSTED_AWS_ACCOUNT_NUMBER_LIST
+        )
+
+    def test_string_value_matching_one_trusted_account(self):
+        condition = {
+            "StringEquals": {"aws:PrincipalAccount": TRUSTED_AWS_ACCOUNT_NUMBER_LIST[1]}
+        }
+        assert is_condition_block_restrictive(
+            condition, TRUSTED_AWS_ACCOUNT_NUMBER_LIST
+        )
+
+    def test_string_value_not_trusted(self):
+        condition = {
+            "StringEquals": {"aws:PrincipalAccount": NON_TRUSTED_AWS_ACCOUNT_NUMBER}
+        }
+        assert not is_condition_block_restrictive(
+            condition, TRUSTED_AWS_ACCOUNT_NUMBER_LIST
+        )
+
+    def test_single_account_with_list_value_is_unchanged(self):
+        condition = {
+            "StringEquals": {
+                "aws:PrincipalAccount": TRUSTED_AWS_ACCOUNT_NUMBER_LIST[:2]
+            }
+        }
+        assert not is_condition_block_restrictive(
+            condition, TRUSTED_AWS_ACCOUNT_NUMBER_LIST[0]
+        )
