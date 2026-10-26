@@ -36,9 +36,11 @@ const framework = (
 
 const finding = (id: string, checkId: string): IssueFinding => ({
   id,
+  uid: id,
   checkId,
   checkTitle: checkId,
   severity: "high",
+  triageStatus: "open",
   resourceUid: `r-${id}`,
 });
 

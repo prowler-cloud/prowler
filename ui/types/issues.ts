@@ -96,9 +96,12 @@ export const ISSUE_FINDINGS_LIMIT = 50;
 /** One finding-to-resource association from the issue's own scan. */
 export interface IssueFinding {
   id: string;
+  uid: string;
   checkId: string;
   checkTitle: string;
   severity: Severity;
+  /** The finding's own triage, which stays where it lives. */
+  triageStatus: FindingTriageStatus;
   resourceUid: string;
 }
 

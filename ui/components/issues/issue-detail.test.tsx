@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -184,5 +184,77 @@ describe("IssueDetail", () => {
     expect(getIssueFindingsMock).toHaveBeenLastCalledWith("scan-1", [
       "finding-uid",
     ]);
+  });
+
+  it("names the conditions that make the path, explained by each leg", async () => {
+    getIssueMock.mockResolvedValue({
+      data: { attributes: { resource_uids: [] } },
+    });
+    render(
+      <IssueDetail
+        id="issue-1"
+        issue={{
+          ...issue,
+          outcome: "data_exposure",
+          attacker_start: "internet",
+          legs: {
+            ...issue.legs,
+            controls: {
+              state: "no",
+              text: "The public access block is off.",
+              evidence: [],
+            },
+          },
+        }}
+      />,
+    );
+
+    const factors = screen.getByRole("list", { name: "Risk factors" });
+    expect(factors).toHaveTextContent("Internet-reachable");
+    expect(screen.getByText("No control blocking")).toHaveAttribute(
+      "title",
+      "The public access block is off.",
+    );
+  });
+
+  it("lists each folded finding once, with its own triage and a link to it", async () => {
+    getIssueMock.mockResolvedValue({
+      data: {
+        attributes: { resource_uids: ["bucket"], finding_uids: ["f-1", "f-2"] },
+      },
+    });
+    const finding = {
+      id: "finding-1",
+      uid: "f-1",
+      checkId: "s3_bucket_public_access",
+      checkTitle: "Bucket is public",
+      severity: "critical",
+      triageStatus: "risk_accepted",
+      resourceUid: "bucket",
+    };
+    getIssueFindingsMock.mockResolvedValue([
+      finding,
+      // The same finding on a second resource is still one finding.
+      { ...finding, resourceUid: "other-bucket" },
+      {
+        ...finding,
+        id: "finding-2",
+        uid: "f-2",
+        checkTitle: "Bucket has no logging",
+        triageStatus: "open",
+      },
+    ]);
+    render(<IssueDetail id="issue-1" issue={issue} scanId="scan-1" />);
+
+    const section = await screen.findByRole("region", { name: "Findings" });
+    expect(
+      within(section).getByRole("link", { name: "Bucket is public" }),
+    ).toHaveAttribute(
+      "href",
+      "/findings?filter%5Bscan__in%5D=scan-1&filter%5Buid__in%5D=f-1",
+    );
+    expect(within(section).getAllByRole("listitem")).toHaveLength(2);
+    expect(within(section).getByText("Risk Accepted")).toBeInTheDocument();
+    expect(within(section).getByText("Showing 2 of 300.")).toBeInTheDocument();
   });
 });
