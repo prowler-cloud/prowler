@@ -1,1 +1,1 @@
-djangorestframework from 3.15.2 to 3.18.3 in the API, patching the JSON parser charset and Accept header denial of service and the TokenProxy revocation bypass
+djangorestframework from 3.15.2 to 3.18.3 in the API, patching the JSON parser charset and Accept header denial of service and the TokenProxy revocation bypass, and the API container image no longer ships the MicrosoftTeams build SBOM that Trivy read as installed zod and body-parser
