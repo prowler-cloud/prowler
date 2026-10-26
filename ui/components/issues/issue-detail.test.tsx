@@ -138,6 +138,54 @@ describe("IssueDetail", () => {
     ).toBeInTheDocument();
   });
 
+  it("claims no outcome for an issue that is not one path", async () => {
+    getIssueMock.mockResolvedValue({
+      data: { attributes: { resource_uids: [] } },
+    });
+    render(<IssueDetail id="issue-1" issue={issue} />);
+
+    expect(screen.queryByText("Outcome")).not.toBeInTheDocument();
+  });
+
+  it("says so when the resources cannot be loaded", async () => {
+    getIssueMock.mockResolvedValue(undefined);
+    render(<IssueDetail id="issue-1" issue={issue} />);
+
+    expect(
+      await screen.findByText(/could not load the resources/i),
+    ).toBeInTheDocument();
+    expect(screen.queryByTestId("issue-graph")).not.toBeInTheDocument();
+  });
+
+  it("reports a failed findings request and retries using the issue scan", async () => {
+    // Given
+    getIssueMock.mockResolvedValue({
+      data: {
+        attributes: {
+          resource_uids: resourceUids,
+          finding_uids: ["finding-uid"],
+        },
+      },
+    });
+    getIssueFindingsMock
+      .mockResolvedValueOnce(undefined)
+      .mockResolvedValueOnce([]);
+    render(<IssueDetail id="issue-1" issue={issue} scanId="scan-1" />);
+
+    // When
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Could not load the findings for this issue",
+    );
+    expect(screen.queryByTestId("issue-graph")).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Retry" }));
+
+    // Then
+    expect(await screen.findByTestId("issue-graph")).toBeInTheDocument();
+    expect(getIssueFindingsMock).toHaveBeenLastCalledWith("scan-1", [
+      "finding-uid",
+    ]);
+  });
+
   it("names the conditions that make the path, explained by each leg", async () => {
     getIssueMock.mockResolvedValue({
       data: { attributes: { resource_uids: [] } },
@@ -208,53 +256,5 @@ describe("IssueDetail", () => {
     expect(within(section).getAllByRole("listitem")).toHaveLength(2);
     expect(within(section).getByText("Risk Accepted")).toBeInTheDocument();
     expect(within(section).getByText("Showing 2 of 300.")).toBeInTheDocument();
-  });
-
-  it("claims no outcome for an issue that is not one path", async () => {
-    getIssueMock.mockResolvedValue({
-      data: { attributes: { resource_uids: [] } },
-    });
-    render(<IssueDetail id="issue-1" issue={issue} />);
-
-    expect(screen.queryByText("Outcome")).not.toBeInTheDocument();
-  });
-
-  it("says so when the resources cannot be loaded", async () => {
-    getIssueMock.mockResolvedValue(undefined);
-    render(<IssueDetail id="issue-1" issue={issue} />);
-
-    expect(
-      await screen.findByText(/could not load the resources/i),
-    ).toBeInTheDocument();
-    expect(screen.queryByTestId("issue-graph")).not.toBeInTheDocument();
-  });
-
-  it("reports a failed findings request and retries using the issue scan", async () => {
-    // Given
-    getIssueMock.mockResolvedValue({
-      data: {
-        attributes: {
-          resource_uids: resourceUids,
-          finding_uids: ["finding-uid"],
-        },
-      },
-    });
-    getIssueFindingsMock
-      .mockResolvedValueOnce(undefined)
-      .mockResolvedValueOnce([]);
-    render(<IssueDetail id="issue-1" issue={issue} scanId="scan-1" />);
-
-    // When
-    expect(await screen.findByRole("alert")).toHaveTextContent(
-      "Could not load the findings for this issue",
-    );
-    expect(screen.queryByTestId("issue-graph")).not.toBeInTheDocument();
-    await userEvent.click(screen.getByRole("button", { name: "Retry" }));
-
-    // Then
-    expect(await screen.findByTestId("issue-graph")).toBeInTheDocument();
-    expect(getIssueFindingsMock).toHaveBeenLastCalledWith("scan-1", [
-      "finding-uid",
-    ]);
   });
 });
