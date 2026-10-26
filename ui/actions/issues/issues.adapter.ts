@@ -1,5 +1,5 @@
 import { FindingProps } from "@/types/components";
-import { IssueFinding } from "@/types/issues";
+import { IssueFinding, IssueTriageNote } from "@/types/issues";
 import { JsonApiDocument, JsonApiResource } from "@/types/jsonapi";
 import { ResourceProps } from "@/types/resources";
 
@@ -43,4 +43,35 @@ export const toIssueFindings = (
       ];
     }),
   );
+};
+
+interface IssueTriageNoteResource
+  extends JsonApiResource<{ body: string; inserted_at: string }> {
+  relationships?: { created_by?: { data: { id: string } | null } };
+}
+
+interface IssueTriageNotesDocument
+  extends JsonApiDocument<IssueTriageNoteResource[]> {
+  included?: JsonApiResource<{ name?: string; email?: string }>[];
+}
+
+export const toIssueTriageNotes = (
+  payload: IssueTriageNotesDocument | undefined,
+): IssueTriageNote[] | undefined => {
+  if (!Array.isArray(payload?.data)) return undefined;
+  const authors = new Map(
+    (payload.included ?? [])
+      .filter((resource) => resource.type === "users")
+      .map((user) => [user.id, user.attributes.name || user.attributes.email]),
+  );
+
+  return payload.data.map((note) => {
+    const authorId = note.relationships?.created_by?.data?.id;
+    return {
+      id: note.id,
+      body: note.attributes.body,
+      insertedAt: note.attributes.inserted_at,
+      author: authorId ? authors.get(authorId) : undefined,
+    };
+  });
 };

@@ -15,8 +15,12 @@ vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
 vi.mock("@/actions/issues", () => ({
   getIssue: getIssueMock,
   getIssueFindings: getIssueFindingsMock,
+  getIssueNotes: async () => [],
 }));
 
+vi.mock("@/components/findings/send-to-jira-modal", () => ({
+  SendToJiraModal: () => null,
+}));
 vi.mock("@/components/issues/issue-graph", () => ({
   IssueGraph: ({ resourceUids }: { resourceUids: string[] }) => (
     <div data-testid="issue-graph">{resourceUids.length} resources</div>
@@ -35,6 +39,7 @@ const issue = {
   legs: {},
   fix: "Review these findings individually.",
   findings_count: 300,
+  triage_status: "open",
   inserted_at: "",
   updated_at: "",
 } as unknown as IssueAttributes;

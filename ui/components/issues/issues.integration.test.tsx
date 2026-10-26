@@ -21,6 +21,8 @@ const issue: IssueResource = {
     verdict: "likely",
     severity: "high",
     findings_count: 3,
+    triage_status: "open",
+    notes_count: 0,
     fix: "Enable S3 Block Public Access and review the bucket policy.",
     inserted_at: "",
     updated_at: "",
@@ -82,6 +84,7 @@ const setup = () => {
       }),
     ),
     http.get("*/issues", () => HttpResponse.json({ data: [issue] })),
+    http.get("*/issues/issue-1/notes", () => HttpResponse.json({ data: [] })),
     http.get("*/issues/issue-1", () =>
       HttpResponse.json({
         data: {

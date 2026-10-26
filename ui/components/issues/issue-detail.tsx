@@ -5,6 +5,8 @@ import { useEffect, useState } from "react";
 
 import { getIssue, getIssueFindings } from "@/actions/issues";
 import { IssueGraph } from "@/components/issues/issue-graph";
+import { IssueSendToJira } from "@/components/issues/issue-send-to-jira";
+import { IssueTriage } from "@/components/issues/issue-triage";
 import { IssuesLoadError } from "@/components/issues/issues-load-error";
 import { Badge } from "@/components/shadcn/badge/badge";
 import { Button } from "@/components/shadcn/button/button";
@@ -219,16 +221,28 @@ export const IssueDetail = ({
       <section aria-label="Remediation">
         <h4 className="mb-3 text-sm font-semibold">Remediation</h4>
         <p className="text-text-neutral-secondary text-sm">{issue.fix}</p>
-        {activeScanId && (
-          <Button asChild variant="link" size="link-sm">
-            <Link
-              href={`/findings?${new URLSearchParams({ "filter[scan__in]": activeScanId, "filter[status__in]": "FAIL" })}`}
-            >
-              Open this scan&apos;s failed findings
-            </Link>
-          </Button>
-        )}
+        <div className="flex flex-wrap items-center gap-3">
+          {activeScanId && (
+            <Button asChild variant="link" size="link-sm">
+              <Link
+                href={`/findings?${new URLSearchParams({ "filter[scan__in]": activeScanId, "filter[status__in]": "FAIL" })}`}
+              >
+                Open this scan&apos;s failed findings
+              </Link>
+            </Button>
+          )}
+          {state.status === "loaded" && state.findings && (
+            // shortcut: the ticket groups the loaded preview (ISSUE_FINDINGS_LIMIT
+            // findings), not every finding of a larger issue; page through
+            // finding_uids if tickets for big issues need all of them.
+            <IssueSendToJira
+              title={issue.title}
+              findingIds={Array.from(new Set(state.findings.map((f) => f.id)))}
+            />
+          )}
+        </div>
       </section>
+      <IssueTriage id={id} status={issue.triage_status} />
     </div>
   );
 };

@@ -17,11 +17,16 @@ vi.mock("@/lib/server-actions-helper", () => ({
   handleApiResponse: handleApiResponseMock,
 }));
 
+vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
+
 import {
+  addIssueNote,
   getIssue,
   getIssueFindings,
+  getIssueNotes,
   getIssues,
   getIssuesOverview,
+  updateIssueTriage,
 } from "./issues";
 
 describe("issues actions", () => {
@@ -117,5 +122,87 @@ describe("issues actions", () => {
     await expect(
       getIssueFindings("scan-1", ["uid-1"]),
     ).resolves.toBeUndefined();
+  });
+
+  it("triages through the issue's triage, as findings are triaged", async () => {
+    // Given
+    fetchMock.mockResolvedValue(new Response("{}", { status: 200 }));
+
+    // When
+    const result = await updateIssueTriage("issue-1", {
+      status: "risk_accepted",
+      note: "Static site.",
+    });
+
+    // Then
+    expect(result).toEqual({ success: true });
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe("https://api.example.com/api/v1/issues/issue-1/triage");
+    expect(init.method).toBe("PATCH");
+    expect(JSON.parse(init.body)).toEqual({
+      data: {
+        type: "issue-triages",
+        attributes: { status: "risk_accepted", note: "Static site." },
+      },
+    });
+  });
+
+  it("returns the API's reason when a triage write is refused", async () => {
+    fetchMock.mockResolvedValue(
+      Response.json(
+        { errors: [{ detail: "You do not have permission." }] },
+        { status: 403 },
+      ),
+    );
+
+    await expect(addIssueNote("issue-1", "note")).resolves.toEqual({
+      error: "You do not have permission.",
+    });
+    expect(fetchMock.mock.calls[0][0]).toBe(
+      "https://api.example.com/api/v1/issues/issue-1/triage/notes",
+    );
+  });
+
+  it("names each note's author from the included users", async () => {
+    // Given
+    handleApiResponseMock.mockResolvedValue({
+      data: [
+        {
+          type: "issue-triage-notes",
+          id: "note-1",
+          attributes: { body: "Accepted.", inserted_at: "2026-10-20" },
+          relationships: { created_by: { data: { type: "users", id: "u1" } } },
+        },
+        {
+          type: "issue-triage-notes",
+          id: "note-2",
+          attributes: { body: "Orphan.", inserted_at: "2026-10-19" },
+          relationships: { created_by: { data: null } },
+        },
+      ],
+      included: [{ type: "users", id: "u1", attributes: { name: "Ana" } }],
+    });
+
+    // When
+    const notes = await getIssueNotes("issue-1");
+
+    // Then
+    const url = new URL(fetchMock.mock.calls[0][0]);
+    expect(url.pathname).toBe("/api/v1/issues/issue-1/triage/notes");
+    expect(url.searchParams.get("include")).toBe("created_by");
+    expect(notes).toEqual([
+      {
+        id: "note-1",
+        body: "Accepted.",
+        insertedAt: "2026-10-20",
+        author: "Ana",
+      },
+      {
+        id: "note-2",
+        body: "Orphan.",
+        insertedAt: "2026-10-19",
+        author: undefined,
+      },
+    ]);
   });
 });

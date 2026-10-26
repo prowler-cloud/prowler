@@ -4,6 +4,7 @@ import { ColumnDef, Row } from "@tanstack/react-table";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { createContext, useContext, useState } from "react";
 
+import { TRIAGE_STATUS_TEXT_CLASS } from "@/components/findings/table/finding-triage-status-control";
 import { IssueDetail } from "@/components/issues/issue-detail";
 import { Badge } from "@/components/shadcn/badge/badge";
 import { Button } from "@/components/shadcn/button/button";
@@ -11,7 +12,9 @@ import { EntityInfo } from "@/components/shadcn/entities";
 import { DataTable, DataTableColumnHeader } from "@/components/shadcn/table";
 import { TableCell, TableRow } from "@/components/shadcn/table/table";
 import { VERDICTS } from "@/lib/issues/verdicts";
+import { cn } from "@/lib/utils";
 import { MetaDataProps } from "@/types";
+import { FINDING_TRIAGE_STATUS_LABELS } from "@/types/findings-triage";
 import { IssueResponse } from "@/types/issues";
 
 type IssueRow = IssueResponse["data"][number];
@@ -104,6 +107,18 @@ const columns: ColumnDef<IssueRow>[] = [
         <Badge variant={verdict?.variant ?? "tag"}>
           {verdict?.label ?? row.original.attributes.verdict}
         </Badge>
+      );
+    },
+  },
+  {
+    id: "triage",
+    header: "Triage",
+    cell: ({ row }) => {
+      const triage = row.original.attributes.triage_status;
+      return (
+        <span className={cn("text-sm", TRIAGE_STATUS_TEXT_CLASS[triage])}>
+          {FINDING_TRIAGE_STATUS_LABELS[triage]}
+        </span>
       );
     },
   },
