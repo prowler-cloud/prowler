@@ -1,0 +1,42 @@
+{
+  "Provider": "aws",
+  "CheckID": "sagemaker_hyperparameter_tuning_job_volume_encrypted_with_cmk",
+  "CheckTitle": "Amazon SageMaker hyperparameter tuning job storage volume is encrypted with KMS CMK",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Effects/Data Exposure"
+  ],
+  "ServiceName": "sagemaker",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Other",
+  "ResourceGroup": "ai_ml",
+  "Description": "**Amazon SageMaker hyperparameter tuning jobs** use **KMS encryption** for their attached ML storage volumes via `VolumeKmsKeyId` in training job definitions.\n\nThe check evaluates hyperparameter tuning jobs to ensure attached storage volumes are encrypted with a customer-managed KMS key (CMK).",
+  "Risk": "Storage volumes without KMS CMK encryption rely on default AWS-managed encryption, which cannot be controlled by custom KMS key policies, rotation policies, or revoked immediately in the event of security compromise. This creates risk of data exposure for training datasets, model artifacts, intermediate checkpoints, and tuning logs.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/sagemaker/latest/dg/sms-security-kms.html",
+    "https://docs.aws.amazon.com/sagemaker/latest/dg/automatic-model-tuning-ex.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aws sagemaker create-hyper-parameter-tuning-job --hyper-parameter-tuning-job-name <job_name> --hyper-parameter-tuning-job-config <config> --training-job-definition \"AlgorithmSpecification={...},RoleArn=<role>,OutputDataConfig={...},ResourceConfig={InstanceType=ml.m5.large,InstanceCount=1,VolumeSizeInGB=10,VolumeKmsKeyId=<kms_key_id>},StoppingCondition={...}\"",
+      "NativeIaC": "```yaml\n# CloudFormation: SageMaker HyperParameterTuningJob with volume KMS encryption enabled\nResources:\n  <example_resource_name>:\n    Type: AWS::SageMaker::HyperParameterTuningJob\n    Properties:\n      HyperParameterTuningJobName: <example_resource_name>\n      HyperParameterTuningJobConfig:\n        Strategy: Bayesian\n        HyperParameterTuningJobObjective:\n          Type: Maximize\n          MetricName: <metric_name>\n        ResourceLimits:\n          MaxNumberOfTrainingJobs: 10\n          MaxParallelTrainingJobs: 2\n      TrainingJobDefinition:\n        RoleArn: <example_role_arn>\n        AlgorithmSpecification:\n          TrainingImage: <example_ecr_image_uri>\n          TrainingInputMode: File\n        OutputDataConfig:\n          S3OutputPath: s3://<example_bucket>\n        ResourceConfig:\n          InstanceType: ml.m5.large\n          InstanceCount: 1\n          VolumeSizeInGB: 10\n          VolumeKmsKeyId: <example_kms_key_arn>  # CRITICAL: Encrypts the storage volume with the specified KMS key\n        StoppingCondition:\n          MaxRuntimeInSeconds: 3600\n```",
+      "Other": "1. In the AWS console, go to Amazon SageMaker > Training > Hyperparameter tuning jobs\n2. When creating a tuning job, in the Training job configuration section under Resource configuration, specify an AWS KMS key ID or ARN in Volume encryption key\n3. Ensure all training job definitions specify a customer-managed KMS key for storage volume encryption",
+      "Terraform": "```hcl\n# SageMaker HyperParameter Tuning Job with storage volume KMS encryption enabled\nresource \"aws_sagemaker_hyperparameter_tuning_job\" \"<example_resource_name>\" {\n  name = \"<example_resource_name>\"\n\n  hyperparameter_tuning_job_config {\n    strategy = \"Bayesian\"\n    hyperparameter_tuning_job_objective {\n      type        = \"Maximize\"\n      metric_name = \"<metric_name>\"\n    }\n    resource_limits {\n      max_number_of_training_jobs = 10\n      max_parallel_training_jobs  = 2\n    }\n  }\n\n  training_job_definition {\n    role_arn = \"<example_role_arn>\"\n    algorithm_specification {\n      training_image      = \"<example_ecr_image_uri>\"\n      training_input_mode = \"File\"\n    }\n    output_data_config {\n      s3_output_path = \"s3://<example_bucket>\"\n    }\n    resource_config {\n      instance_type     = \"ml.m5.large\"\n      instance_count    = 1\n      volume_size_in_gb = 10\n      volume_kms_key_id = \"<example_kms_key_arn>\" # CRITICAL: Enables KMS encryption for storage volumes\n    }\n    stopping_condition {\n      max_runtime_in_seconds = 3600\n    }\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Configure SageMaker hyperparameter tuning jobs with a **customer-managed KMS key (CMK)** for attached storage volume encryption across all training job definitions. Apply least-privilege key policies and enable key rotation.",
+      "Url": "https://hub.prowler.com/check/sagemaker_hyperparameter_tuning_job_volume_encrypted_with_cmk"
+    }
+  },
+  "Categories": [
+    "encryption",
+    "gen-ai"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
