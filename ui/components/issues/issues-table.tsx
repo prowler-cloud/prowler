@@ -10,6 +10,7 @@ import { Button } from "@/components/shadcn/button/button";
 import { EntityInfo } from "@/components/shadcn/entities";
 import { DataTable, DataTableColumnHeader } from "@/components/shadcn/table";
 import { TableCell, TableRow } from "@/components/shadcn/table/table";
+import { TriageStatusBadge } from "@/components/shared/triage/triage-status-badge";
 import { VERDICTS } from "@/lib/issues/verdicts";
 import { MetaDataProps } from "@/types";
 import { IssueResponse } from "@/types/issues";
@@ -105,6 +106,14 @@ const columns: ColumnDef<IssueRow>[] = [
           {verdict?.label ?? row.original.attributes.verdict}
         </Badge>
       );
+    },
+  },
+  {
+    id: "triage",
+    header: "Triage",
+    cell: ({ row }) => {
+      const triage = row.original.attributes.triage_status;
+      return <TriageStatusBadge status={triage} showLabel={false} />;
     },
   },
 ];

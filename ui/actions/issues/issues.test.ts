@@ -1,12 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { fetchMock, getAuthHeadersMock, handleApiResponseMock } = vi.hoisted(
-  () => ({
-    fetchMock: vi.fn(),
-    getAuthHeadersMock: vi.fn(),
-    handleApiResponseMock: vi.fn(),
-  }),
-);
+const {
+  fetchMock,
+  getAuthHeadersMock,
+  handleApiErrorMock,
+  handleApiResponseMock,
+} = vi.hoisted(() => ({
+  fetchMock: vi.fn(),
+  getAuthHeadersMock: vi.fn(),
+  handleApiErrorMock: vi.fn(),
+  handleApiResponseMock: vi.fn(),
+}));
 
 vi.mock("@/lib", () => ({
   apiBaseUrl: "https://api.example.com/api/v1",
@@ -14,14 +18,20 @@ vi.mock("@/lib", () => ({
 }));
 
 vi.mock("@/lib/server-actions-helper", () => ({
+  handleApiError: handleApiErrorMock,
   handleApiResponse: handleApiResponseMock,
 }));
 
+vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
+
 import {
+  addIssueNote,
   getIssue,
   getIssueFindings,
+  getIssueNotes,
   getIssues,
   getIssuesOverview,
+  updateIssueTriage,
 } from "./issues";
 
 describe("issues actions", () => {
@@ -54,9 +64,12 @@ describe("issues actions", () => {
         {
           id: "finding-1",
           attributes: {
+            uid: "finding-uid",
             check_id: "ssh",
             severity: "critical",
             check_metadata: { checktitle: "SSH exposed" },
+            // Nobody has triaged it yet.
+            triage_status: null,
           },
           relationships: { resources: { data: [{ id: "r1" }, { id: "r2" }] } },
         },
@@ -76,12 +89,15 @@ describe("issues actions", () => {
     expect(url.searchParams.get("filter[scan]")).toBe("issue-scan");
     expect(url.searchParams.get("filter[uid__in]")).toBe("finding-uid");
     expect(url.searchParams.get("include")).toBe("resources");
+    expect(url.searchParams.get("fields[findings]")).toContain("triage_status");
     expect(findings).toEqual(
       ["instance", "security-group"].map((resourceUid) => ({
         id: "finding-1",
+        uid: "finding-uid",
         checkId: "ssh",
         checkTitle: "SSH exposed",
         severity: "critical",
+        triageStatus: "open",
         resourceUid,
       })),
     );
@@ -117,5 +133,124 @@ describe("issues actions", () => {
     await expect(
       getIssueFindings("scan-1", ["uid-1"]),
     ).resolves.toBeUndefined();
+  });
+
+  it("triages through the issue's triage, as findings are triaged", async () => {
+    // Given
+    const response = new Response("{}", { status: 200 });
+    fetchMock.mockResolvedValue(response);
+    handleApiResponseMock.mockResolvedValue({ data: {} });
+
+    // When
+    const result = await updateIssueTriage("issue-1", {
+      status: "risk_accepted",
+      note: "Static site.",
+    });
+
+    // Then
+    expect(result).toEqual({ success: true });
+    // The list shows each issue's triage status.
+    expect(handleApiResponseMock).toHaveBeenCalledWith(response, "/issues");
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe("https://api.example.com/api/v1/issues/issue-1/triage");
+    expect(init.method).toBe("PATCH");
+    expect(JSON.parse(init.body)).toEqual({
+      data: {
+        type: "issue-triages",
+        attributes: { status: "risk_accepted", note: "Static site." },
+      },
+    });
+  });
+
+  it("returns the API's reason when a triage write is refused", async () => {
+    handleApiResponseMock.mockResolvedValue({
+      error: "You do not have permission.",
+      status: 403,
+    });
+
+    await expect(addIssueNote("issue-1", "note")).resolves.toEqual({
+      error: "You do not have permission.",
+    });
+    expect(fetchMock.mock.calls[0][0]).toBe(
+      "https://api.example.com/api/v1/issues/issue-1/triage/notes",
+    );
+  });
+
+  it("returns the shared, sanitized message when a triage write fails on the server", async () => {
+    // Given: handleApiResponse rejects on a 5xx (see beforeEach)
+    handleApiErrorMock.mockReturnValue({ error: "Something went wrong." });
+
+    // When
+    const result = await addIssueNote("issue-1", "note");
+
+    // Then
+    expect(result).toEqual({ error: "Something went wrong." });
+    expect(handleApiErrorMock).toHaveBeenCalledWith(new Error("Server error"));
+  });
+
+  it.each([
+    {
+      operation: "updating triage",
+      save: () => updateIssueTriage("issue-1", { status: "risk_accepted" }),
+    },
+    {
+      operation: "adding a note",
+      save: () => addIssueNote("issue-1", "Accepted."),
+    },
+  ])(
+    "returns a save error when authentication fails while $operation",
+    async ({ save }) => {
+      // Given
+      getAuthHeadersMock.mockRejectedValue(new Error("Session lookup failed"));
+      handleApiErrorMock.mockReturnValue({ error: "Something went wrong." });
+
+      // When / Then
+      await expect(save()).resolves.toEqual({ error: "Something went wrong." });
+      expect(fetchMock).not.toHaveBeenCalled();
+    },
+  );
+
+  it("names each note's author from the included users", async () => {
+    // Given
+    handleApiResponseMock.mockResolvedValue({
+      data: [
+        {
+          type: "issue-triage-notes",
+          id: "note-1",
+          attributes: { body: "Accepted.", inserted_at: "2026-10-20" },
+          relationships: { created_by: { data: { type: "users", id: "u1" } } },
+        },
+        {
+          type: "issue-triage-notes",
+          id: "note-2",
+          attributes: { body: "Orphan.", inserted_at: "2026-10-19" },
+          relationships: { created_by: { data: null } },
+        },
+      ],
+      included: [{ type: "users", id: "u1", attributes: { name: "Ana" } }],
+    });
+
+    // When
+    const notes = await getIssueNotes("issue-1");
+
+    // Then
+    const url = new URL(fetchMock.mock.calls[0][0]);
+    expect(url.pathname).toBe("/api/v1/issues/issue-1/triage/notes");
+    expect(url.searchParams.get("include")).toBe("created_by");
+    expect(url.searchParams.get("page[size]")).toBe("100");
+    expect(notes).toEqual([
+      {
+        id: "note-1",
+        body: "Accepted.",
+        insertedAt: "2026-10-20",
+        author: "Ana",
+      },
+      {
+        id: "note-2",
+        body: "Orphan.",
+        insertedAt: "2026-10-19",
+        author: undefined,
+      },
+    ]);
   });
 });
