@@ -605,9 +605,14 @@ export class AttackPathPageHarness extends BrowserHarness<PageFixture> {
     for (const id of Array.from(resourceWithFindingIds)) {
       const el = this.getNodeById(id);
       if (el) {
+        const beforeExpansion = await this.waitForViewportSettled();
         await this.user.click(el);
+        // Measuring new findings can delay the automatic fit. A quiet viewport
+        // alone does not prove that this fit has started or finished.
+        await this.waitForViewportChange(beforeExpansion);
         await this.waitForViewportSettled();
         await this.fit();
+        await this.waitForNodesInViewport(this.renderedNodeIds);
         await this.waitForViewportSettled();
       }
     }
