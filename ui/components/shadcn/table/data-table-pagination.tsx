@@ -5,6 +5,7 @@ import {
   ChevronLast,
   ChevronLeft,
   ChevronRight,
+  Lock,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -20,11 +21,22 @@ import { getPaginationInfo } from "@/lib";
 import { cn } from "@/lib/utils";
 import { MetaDataProps } from "@/types";
 
+/**
+ * Preview lock: the table only shows `visibleRowCount` rows, so every control
+ * reports pages by that count and hands the click to `onLockedInteraction`
+ * (an upgrade prompt) instead of paging.
+ */
+export interface DataTablePaginationLock {
+  visibleRowCount: number;
+  onLockedInteraction: () => void;
+}
+
 interface DataTablePaginationProps {
   metadata?: MetaDataProps;
   disableScroll?: boolean;
   /** Prefix for URL params to avoid conflicts (e.g., "findings" -> "findingsPage") */
   paramPrefix?: string;
+  lock?: DataTablePaginationLock;
 
   /*
    * Controlled mode: Use these props to manage pagination via React state
@@ -44,10 +56,21 @@ const NAV_BUTTON_STYLES = {
   disabled: "text-text-neutral-tertiary cursor-not-allowed pointer-events-none",
 } as const;
 
+const PAGE_SIZE_TRIGGER_CLASS_NAME =
+  "bg-bg-neutral-tertiary border-border-neutral-tertiary !h-auto !w-auto !min-w-0 !gap-1 !rounded-full !px-[19px] !py-[9px] !text-xs !font-medium backdrop-blur-[46px]";
+
+const LOCKED_NAV_CONTROLS = [
+  { label: "Go to first page", Icon: ChevronFirst },
+  { label: "Go to previous page", Icon: ChevronLeft },
+  { label: "Go to next page", Icon: ChevronRight },
+  { label: "Go to last page", Icon: ChevronLast },
+] as const;
+
 export function DataTablePagination({
   metadata,
   disableScroll = false,
   paramPrefix = "",
+  lock,
   controlledPage,
   controlledPageSize,
   onPageChange,
@@ -73,10 +96,15 @@ export function DataTablePagination({
 
   const {
     currentPage: metaCurrentPage,
-    totalPages,
+    totalPages: metaTotalPages,
     totalEntries,
     itemsPerPageOptions,
   } = getPaginationInfo(metadata);
+  // A locked table shows fewer rows than it fetched: count pages by what the
+  // user actually sees so "Page 1 of N" stays honest.
+  const totalPages = lock
+    ? Math.ceil(totalEntries / lock.visibleRowCount)
+    : metaTotalPages;
 
   // Gated separately: a large page size collapses the table to one page, and the
   // selector is the only way back to a smaller one.
@@ -90,11 +118,13 @@ export function DataTablePagination({
   if (!showPageSizeSelector && !showPageNavigation) return null;
 
   // For controlled mode, use controlled values; for prefixed, read from URL; otherwise use metadata
-  const currentPage = isControlled
-    ? controlledPage
-    : paramPrefix
-      ? parseInt(searchParams.get(pageParam) || "1", 10)
-      : metaCurrentPage;
+  const currentPage = lock
+    ? 1
+    : isControlled
+      ? controlledPage
+      : paramPrefix
+        ? parseInt(searchParams.get(pageParam) || "1", 10)
+        : metaCurrentPage;
 
   const createPageUrl = (pageNumber: number | string) => {
     const params = new URLSearchParams(searchParams);
@@ -138,7 +168,25 @@ export function DataTablePagination({
   return (
     <div className="flex w-full items-center justify-end gap-6 py-1.5">
       {/* Rows per page selector */}
-      {showPageSizeSelector && (
+      {showPageSizeSelector && lock && (
+        <div className="flex items-center gap-3">
+          <span className="text-text-neutral-secondary text-xs font-medium whitespace-nowrap">
+            Rows per page
+          </span>
+          <button
+            type="button"
+            className={cn(
+              "flex items-center rounded-full border",
+              PAGE_SIZE_TRIGGER_CLASS_NAME,
+            )}
+            onClick={lock.onLockedInteraction}
+          >
+            {lock.visibleRowCount}
+            <Lock aria-hidden="true" className="size-3" />
+          </button>
+        </div>
+      )}
+      {showPageSizeSelector && !lock && (
         <div className="flex items-center gap-3">
           <span className="text-text-neutral-secondary text-xs font-medium whitespace-nowrap">
             Rows per page
@@ -178,7 +226,7 @@ export function DataTablePagination({
           >
             <SelectTrigger
               iconSize="sm"
-              className="bg-bg-neutral-tertiary border-border-neutral-tertiary !h-auto !w-auto !min-w-0 !gap-1 !rounded-full !px-[19px] !py-[9px] !text-xs !font-medium backdrop-blur-[46px]"
+              className={PAGE_SIZE_TRIGGER_CLASS_NAME}
             >
               <SelectValue />
             </SelectTrigger>
@@ -203,7 +251,23 @@ export function DataTablePagination({
             Page {currentPage} of {totalPages}
           </span>
           <div className="flex items-center gap-3">
-            {isControlled ? (
+            {lock ? (
+              // Every arrow looks enabled on purpose: the click is the upsell.
+              LOCKED_NAV_CONTROLS.map(({ label, Icon }) => (
+                <button
+                  key={label}
+                  type="button"
+                  aria-label={label}
+                  className={cn(
+                    NAV_BUTTON_STYLES.base,
+                    NAV_BUTTON_STYLES.enabled,
+                  )}
+                  onClick={lock.onLockedInteraction}
+                >
+                  <Icon className="size-6" aria-hidden="true" />
+                </button>
+              ))
+            ) : isControlled ? (
               <>
                 <button
                   type="button"

@@ -7,6 +7,7 @@ path while phase-1 drains tenant DBs.
 
 import atexit
 import logging
+import re
 import threading
 import time
 from collections.abc import Iterator
@@ -185,6 +186,13 @@ class Neo4jSink(SinkDatabase):
                 return result.graph()
 
             return session.execute_read(_run)
+
+    # APOC virtual nodes report a bare negative number and virtual
+    # relationships a random UUID, neither in the stored-entity format.
+    _PERSISTED_ELEMENT_ID_RE = re.compile(r"^\d+:[^:]+:\d+$")
+
+    def is_persisted_element_id(self, element_id: str) -> bool:
+        return bool(self._PERSISTED_ELEMENT_ID_RE.match(element_id))
 
     def create_database(self, database: str) -> None:
         with self.get_session() as session:
