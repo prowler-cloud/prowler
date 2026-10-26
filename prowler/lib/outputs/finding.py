@@ -21,7 +21,7 @@ from prowler.lib.utils.utils import dict_to_lowercase, get_nested_attribute
 from prowler.providers.common.provider import Provider
 from prowler.providers.github.models import GithubAppIdentityInfo, GithubIdentityInfo
 
-RESOURCE_METADATA_WARNING_BYTES = 10 * 1024 * 1024
+RESOURCE_METADATA_WARNING_SIZE = 10 * 1024 * 1024
 
 
 class Finding(BaseModel):
@@ -606,18 +606,19 @@ class Finding(BaseModel):
     @staticmethod
     def _load_resource_metadata(resource, metadata_cache: dict | None) -> dict:
         """Parse the stored metadata once per resource when a cache is given."""
-        if metadata_cache is not None and resource.id in metadata_cache:
+        if metadata_cache is None:
+            return json.loads(resource.metadata)
+        if resource.id in metadata_cache:
             return metadata_cache[resource.id]
 
-        metadata_bytes = len(resource.metadata)
-        if metadata_bytes > RESOURCE_METADATA_WARNING_BYTES:
+        metadata_size = len(resource.metadata)
+        if metadata_size > RESOURCE_METADATA_WARNING_SIZE:
             logger.warning(
-                f"Resource {resource.id} ({resource.uid}) has {metadata_bytes} bytes of metadata"
+                f"Resource {resource.id} ({resource.uid}) has {metadata_size} characters of metadata"
             )
 
         metadata = json.loads(resource.metadata)
-        if metadata_cache is not None:
-            metadata_cache[resource.id] = metadata
+        metadata_cache[resource.id] = metadata
         return metadata
 
     @classmethod

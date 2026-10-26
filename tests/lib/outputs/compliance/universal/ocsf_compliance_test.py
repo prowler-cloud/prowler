@@ -330,6 +330,28 @@ class TestOCSFComplianceOutput:
             for cf in output.data
         )
 
+    def test_resource_data_error_skips_only_that_finding(self):
+        fw = _make_framework([_simple_requirement("REQ-1", ["check_a"])])
+        broken = _make_finding("check_a")
+        healthy = _make_finding("check_a")
+
+        def sanitize(details, metadata):
+            if metadata is broken.resource_metadata:
+                raise RuntimeError("boom")
+            return _sanitize_resource_data(details, metadata)
+
+        broken.resource_metadata = {"broken": True}
+        with patch(
+            "prowler.lib.outputs.compliance.universal.ocsf_compliance._sanitize_resource_data",
+            side_effect=sanitize,
+        ):
+            output = OCSFComplianceOutput(
+                findings=[broken, healthy], framework=fw, provider="aws"
+            )
+
+        assert len(output.data) == 1
+        assert output.data[0].resources[0].data["metadata"] == {}
+
     def test_requirement_attributes_in_unmapped(self):
         req = UniversalComplianceRequirement(
             id="REQ-1",

@@ -199,9 +199,15 @@ class OCSFComplianceOutput:
 
         for finding in findings:
             if finding.check_id in check_req_map:
-                resource_data = _sanitize_resource_data(
-                    finding.resource_details, finding.resource_metadata
-                )
+                try:
+                    resource_data = _sanitize_resource_data(
+                        finding.resource_details, finding.resource_metadata
+                    )
+                except Exception as error:
+                    logger.error(
+                        f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
+                    continue
                 for req in check_req_map[finding.check_id]:
                     cf = self._build_compliance_finding(
                         finding,

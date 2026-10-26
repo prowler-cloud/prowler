@@ -1220,7 +1220,7 @@ class TestFinding:
         "prowler.lib.outputs.finding.get_check_compliance",
         new=mock_get_check_compliance,
     )
-    @patch("prowler.lib.outputs.finding.RESOURCE_METADATA_WARNING_BYTES", 16)
+    @patch("prowler.lib.outputs.finding.RESOURCE_METADATA_WARNING_SIZE", 16)
     @patch("prowler.lib.outputs.finding.logger")
     def test_transform_api_finding_warns_once_on_large_metadata(self, logger):
         provider, api_finding = _aws_api_finding_fixture()
