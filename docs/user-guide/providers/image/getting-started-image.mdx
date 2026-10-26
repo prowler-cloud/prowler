@@ -3,6 +3,7 @@ title: "Getting Started with the Image Provider"
 ---
 
 import { VersionBadge } from "/snippets/version-badge.mdx"
+import { AppliesTo } from "/snippets/applies-to.mdx"
 
 Prowler's Image provider enables comprehensive container image security scanning by integrating with [Trivy](https://trivy.dev/). This provider detects vulnerabilities, exposed secrets, and misconfigurations in container images, converting Trivy findings into Prowler's standard reporting format for unified security assessment.
 
@@ -27,13 +28,15 @@ Prowler's Image provider enables comprehensive container image security scanning
 
 <VersionBadge version="5.21.0" />
 
+<AppliesTo />
+
 ### Supported Scanners
 
 Prowler Cloud does not support scanner selection. The vulnerability, secret, and misconfiguration scanners run automatically during each scan.
 
 ### Step 1: Access Prowler Cloud
 
-1. Navigate to [Prowler Cloud](https://cloud.prowler.com/) or launch [Prowler Local Server](/user-guide/tutorials/prowler-app)
+1. Sign in to [Prowler Cloud](https://cloud.prowler.com/sign-in) or [create an account](https://cloud.prowler.com/sign-up)
 2. Navigate to "Configuration" > "Providers"
 
     ![Providers Page](/images/prowler-app/cloud-providers-page.png)

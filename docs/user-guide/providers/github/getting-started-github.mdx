@@ -2,6 +2,8 @@
 title: 'Getting Started with GitHub'
 ---
 
+import { AppliesTo } from "/snippets/applies-to.mdx"
+
 This guide covers setting up GitHub security scanning with Prowler. Choose a preferred interface below:
 
 <Note>
@@ -16,7 +18,7 @@ Prowler can scan either:
 </Note>
 
 <CardGroup cols={2}>
-  <Card title="Prowler Cloud & Local Server" icon="cloud" href="#prowler-cloud-and-prowler-local-server">
+  <Card title="Prowler Cloud" icon="cloud" href="#prowler-cloud">
     Web-based interface with centralized management
   </Card>
   <Card title="Prowler CLI" icon="terminal" href="#prowler-cli">
@@ -26,7 +28,9 @@ Prowler can scan either:
 
 ---
 
-## Prowler Cloud and Prowler Local Server
+## Prowler Cloud
+
+<AppliesTo />
 
 <iframe width="560" height="380" src="https://www.youtube-nocookie.com/embed/9ETI84Xpu2g" title="Prowler Cloud Onboarding Github" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen="1"></iframe>
 
@@ -34,7 +38,7 @@ Prowler can scan either:
 
 ### Prerequisites
 
-Before adding GitHub to Prowler Cloud or Prowler Local Server, ensure you have:
+Before adding GitHub to Prowler Cloud, ensure you have:
 
 1. **GitHub Account Access**
    - Personal GitHub account, OR
@@ -46,9 +50,9 @@ Before adding GitHub to Prowler Cloud or Prowler Local Server, ensure you have:
      - OAuth App Token
      - GitHub App Credentials (Not Recommended - limited data access)
 
-### Step 1: Access Prowler Cloud or Prowler Local Server
+### Step 1: Access Prowler Cloud
 
-1. Navigate to [Prowler Cloud](https://cloud.prowler.com/) or launch [Prowler Local Server](/user-guide/tutorials/prowler-app)
+1. Sign in to [Prowler Cloud](https://cloud.prowler.com/sign-in) or [create an account](https://cloud.prowler.com/sign-up)
 2. Go to **Configuration** → **Providers**
 
     ![Providers Page](/images/prowler-app/cloud-providers-page.png)
