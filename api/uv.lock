@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 5
 requires-python = ">=3.11, <3.13"
 resolution-markers = [
     "python_full_version >= '3.12' and sys_platform == 'win32'",
@@ -150,7 +150,7 @@ constraints = [
     { name = "django-postgres-extra", specifier = "==2.0.9" },
     { name = "django-silk", specifier = "==5.3.2" },
     { name = "django-timezone-field", specifier = "==7.2.1" },
-    { name = "djangorestframework", specifier = "==3.15.2" },
+    { name = "djangorestframework", specifier = "==3.18.3" },
     { name = "djangorestframework-jsonapi", specifier = "==7.0.2" },
     { name = "djangorestframework-simplejwt", specifier = "==5.5.1" },
     { name = "dnspython", specifier = "==2.8.0" },
@@ -2510,14 +2510,14 @@ wheels = [
 
 [[package]]
 name = "djangorestframework"
-version = "3.15.2"
+version = "3.18.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "django" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/2c/ce/31482eb688bdb4e271027076199e1aa8d02507e530b6d272ab8b4481557c/djangorestframework-3.15.2.tar.gz", hash = "sha256:36fe88cd2d6c6bec23dca9804bab2ba5517a8bb9d8f47ebc68981b56840107ad", size = 1067420, upload-time = "2024-06-19T07:59:32.891Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/8d/b2/1cee76b188301f7d03169ca77fab2b3d3ec5d01b3469189f944af2d7f11a/djangorestframework-3.18.3.tar.gz", hash = "sha256:446a9b352e7eff630421ab3f2328bd2401b109a9470afa4a31189994911ed030", size = 923563, upload-time = "2026-10-06T21:33:51.521Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/7c/b6/fa99d8f05eff3a9310286ae84c4059b08c301ae4ab33ae32e46e8ef76491/djangorestframework-3.15.2-py3-none-any.whl", hash = "sha256:2b8871b062ba1aefc2de01f773875441a961fefbf79f5eed1e32b2f096944b20", size = 1071235, upload-time = "2024-06-19T07:59:26.106Z" },
+    { url = "https://files.pythonhosted.org/packages/c4/dd/de5f4543765bec94e036a5e9593a42f8fa7efec8de78eb56b9ca834385f3/djangorestframework-3.18.3-py3-none-any.whl", hash = "sha256:8544bb674846731b1e3c9b309236ee1dc412905a0aa725be2ec193ca950a7d12", size = 903986, upload-time = "2026-10-06T21:33:49.917Z" },
 ]
 
 [[package]]
@@ -4204,7 +4204,7 @@ wheels = [
 
 [package.optional-dependencies]
 broker = [
-    { name = "pymsalruntime", marker = "sys_platform == 'win32'" },
+    { name = "pymsalruntime" },
 ]
 
 [[package]]
@@ -5029,7 +5029,7 @@ requires-dist = [
     { name = "django-filter", specifier = "==24.3" },
     { name = "django-guid", specifier = "==3.5.0" },
     { name = "django-postgres-extra", specifier = "==2.0.9" },
-    { name = "djangorestframework", specifier = "==3.15.2" },
+    { name = "djangorestframework", specifier = "==3.18.3" },
     { name = "djangorestframework-jsonapi", specifier = "==7.0.2" },
     { name = "djangorestframework-simplejwt", specifier = "==5.5.1" },
     { name = "drf-nested-routers", specifier = "==0.95.0" },
