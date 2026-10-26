@@ -16,7 +16,8 @@ rss: true
   - Patterns cover AWS, Azure, GCP and Microsoft 365 and are keyed on Prowler check IDs, so detection is never reimplemented. Six more AWS paths ship in this release: Lambda functions anyone can invoke, snapshots shared with every AWS account, instances that can leak their role's credentials, database ports open to the internet, stale or weakly protected IAM user credentials, and roles another AWS account can use.
   - Each issue says what the path buys an attacker and where the attacker has to start, lists the compliance frameworks its findings put at risk, and can be sent to Jira as one grouped ticket.
   - An attack path can be triaged with a status and notes from its detail. The decision is kept per account and pattern, so it survives the next scan, which marks it resolved when the path is gone and reopened when it comes back.
-  - The Overview shows a verdict share card and the top issues, with counts scoped to the latest completed scan of each provider.
+  - The issue list opens with summary tiles and names the account of each issue, so two accounts with the same misconfiguration no longer read as one row. Each issue shows its risk factors, the triage status of every folded finding and an issue graph that starts internet-facing paths at the Internet node, drawn only where a reachability check failed on the resource, and has a page of its own to share.
+  - The Overview shows a verdict share card and the top issues with their risk factors, with counts scoped to the latest completed scan of each provider.
   - **API:** `GET /api/v1/issues`, `GET /api/v1/issues/{id}` and `GET /api/v1/issues/overview`, with `filter[outcome__in]`, `filter[attacker_start__in]` and `filter[triage_status__in]`; triage lives at `/api/v1/issues/{id}/triage` and `/api/v1/issues/{id}/triage/notes`.
 
   ### 🐘 PHP — Coverage After the October Security Release
