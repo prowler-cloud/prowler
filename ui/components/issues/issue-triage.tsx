@@ -8,24 +8,20 @@ import {
   getIssueNotes,
   updateIssueTriage,
 } from "@/actions/issues";
-import { TriageStatusPicker } from "@/components/findings/table/finding-triage-status-control";
 import { IssuesLoadError } from "@/components/issues/issues-load-error";
 import { Button } from "@/components/shadcn/button/button";
 import { DateWithTime } from "@/components/shadcn/entities";
 import { Textarea } from "@/components/shadcn/textarea/textarea";
 import { useToast } from "@/components/shadcn/toast/use-toast";
+import { TriageStatusPicker } from "@/components/shared/triage/triage-status-picker";
 import {
   FINDING_TRIAGE_MANUAL_STATUS_VALUES,
   FINDING_TRIAGE_NOTE_MAX_LENGTH,
-  type FindingTriageStatus,
   isManualStatus,
 } from "@/types/findings-triage";
 import { IssueTriageNote } from "@/types/issues";
 
-interface IssueTriageProps {
-  id: string;
-  status: FindingTriageStatus;
-}
+import type { IssueTriageProps } from "./types";
 
 /**
  * The decision on the path, and why.

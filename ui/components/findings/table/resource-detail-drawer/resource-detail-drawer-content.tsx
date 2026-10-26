@@ -75,6 +75,7 @@ import {
   type QueryEditorLanguage,
 } from "@/components/shared/query-code-editor";
 import { ResourceMetadataPanel } from "@/components/shared/resource-metadata-panel";
+import { TriageStatusBadge } from "@/components/shared/triage/triage-status-badge";
 import { useLighthouseCurrentContext } from "@/hooks/use-lighthouse-context";
 import { getFailingForLabel, formatDuration } from "@/lib/date-utils";
 import { shouldRefreshAfterTriageUpdate } from "@/lib/finding-triage";
@@ -97,7 +98,6 @@ import { Muted } from "../../muted";
 import { DeltaIndicator } from "../delta-indicator";
 import {
   FindingNoteActionItem,
-  FindingTriageStatusBadge,
   FindingTriageStatusCell,
 } from "../finding-triage-cells";
 import { DeltaValues, NotificationIndicator } from "../notification-indicator";
@@ -534,7 +534,7 @@ export function ResourceDetailDrawerContent({
           {findingIsMuted !== undefined && (
             <Muted isMuted={findingIsMuted} mutedReason={findingMutedReason} />
           )}
-          {findingTriage && <FindingTriageStatusBadge triage={findingTriage} />}
+          {findingTriage && <TriageStatusBadge status={findingTriage.status} />}
         </div>
 
         {showCheckMetaContent ? (
