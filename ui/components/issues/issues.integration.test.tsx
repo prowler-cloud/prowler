@@ -4,9 +4,16 @@ import { page, userEvent } from "vitest/browser";
 
 import { worker } from "@/__tests__/msw/worker";
 import { render } from "@/__tests__/render-browser";
+import {
+  getFindingGroups,
+  getFindingGroupResources,
+} from "@/actions/finding-groups";
+import { getScan } from "@/actions/scans";
 import { ExploitabilityChart } from "@/app/(prowler)/_overview/exploitability/_components/exploitability-chart";
 import { TopIssues } from "@/app/(prowler)/_overview/exploitability/_components/top-issues";
 import { IssuesList } from "@/app/(prowler)/issues/_components/issues-list";
+import { applyDefaultMutedFilter, extractFiltersAndQuery } from "@/lib";
+import { resolveFindingScanDateFilters } from "@/lib/findings-scan-filters";
 import { IssueResource, IssuesOverviewAttributes } from "@/types/issues";
 
 const resource = `arn:aws:s3:::production-customer-data-${"long-resource-name-".repeat(8)}`;
@@ -117,8 +124,10 @@ const setup = () => {
             type: "findings",
             id: "f1",
             attributes: {
+              uid: "finding-uid-1",
               check_id: "s3_public",
               severity: "critical",
+              triage_status: "risk_accepted",
               check_metadata: { checktitle: "S3 bucket is public" },
             },
             relationships: {
@@ -138,6 +147,82 @@ describe("Issues responsive layout", () => {
   afterEach(async () => {
     localStorage.removeItem("theme");
     await page.viewport(1280, 800);
+  });
+
+  it("opens the selected finding's group and muted resource through the destination actions", async () => {
+    // Given: the destination returns the finding only for its supported filters.
+    setup();
+    worker.use(
+      http.get("*/scans/scan-1", () =>
+        HttpResponse.json({
+          data: {
+            id: "scan-1",
+            type: "scans",
+            attributes: {
+              inserted_at: "2026-10-20T10:00:00Z",
+              completed_at: "2026-10-20T11:00:00Z",
+            },
+          },
+        }),
+      ),
+      http.get("*/finding-groups", ({ request }) => {
+        const params = new URL(request.url).searchParams;
+        const matches =
+          params.get("filter[check_id__in]") === "s3_public" &&
+          params.get("filter[resource_uid]") === resource &&
+          params.get("filter[scan__in]") === "scan-1" &&
+          params.get("filter[inserted_at]") === "2026-10-20" &&
+          params.get("filter[muted]") === "include";
+        return HttpResponse.json({
+          data: matches ? [{ id: "s3_public", type: "finding-groups" }] : [],
+        });
+      }),
+      http.get("*/finding-groups/s3_public/resources", ({ request }) => {
+        const params = new URL(request.url).searchParams;
+        const matches =
+          params.get("filter[resource_uid]") === resource &&
+          params.get("filter[muted]") === "include";
+        return HttpResponse.json({
+          data: matches
+            ? [{ id: "r1", attributes: { finding_id: "f1", muted: true } }]
+            : [],
+        });
+      }),
+    );
+    const screen = await render(await IssuesList({ searchParams: {} }));
+    await screen
+      .getByRole("button", { name: `Expand ${issue.attributes.title}` })
+      .click();
+    const link = screen.getByRole("link", { name: "S3 bucket is public" });
+    await expect.element(link).toBeVisible();
+
+    // When: resolve the same filters used by the Findings page and drill-down.
+    const destination = new URL(
+      link.element().getAttribute("href")!,
+      window.location.origin,
+    );
+    const { filters } = extractFiltersAndQuery(
+      Object.fromEntries(destination.searchParams),
+    );
+    const resolvedFilters = applyDefaultMutedFilter(
+      await resolveFindingScanDateFilters({
+        filters,
+        scans: [],
+        loadScan: async (id) => (await getScan(id))?.data,
+      }),
+    );
+    const groups = await getFindingGroups({ filters: resolvedFilters });
+
+    // Then
+    expect(groups.data).toEqual([{ id: "s3_public", type: "finding-groups" }]);
+    expect(destination.searchParams.get("expandedCheckId")).toBe("s3_public");
+    const resources = await getFindingGroupResources({
+      checkId: "s3_public",
+      filters: resolvedFilters,
+    });
+    expect(resources.data).toEqual([
+      { id: "r1", attributes: { finding_id: "f1", muted: true } },
+    ]);
   });
 
   it.each([

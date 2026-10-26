@@ -144,12 +144,17 @@ describe("IssueDetail", () => {
     render(<IssueDetail id="issue-1" issue={issue} scanId="scan-1" />);
 
     const section = await screen.findByRole("region", { name: "Findings" });
-    expect(
-      within(section).getByRole("link", { name: "Bucket is public" }),
-    ).toHaveAttribute(
-      "href",
-      "/findings?filter%5Bscan__in%5D=scan-1&filter%5Buid__in%5D=f-1",
-    );
+    const link = within(section).getByRole("link", {
+      name: "Bucket is public",
+    });
+    const destination = new URL(link.getAttribute("href")!, "https://app.test");
+    expect(Object.fromEntries(destination.searchParams)).toEqual({
+      "filter[scan__in]": "scan-1",
+      "filter[check_id__in]": "s3_bucket_public_access",
+      "filter[resource_uid]": "other-bucket",
+      "filter[muted]": "include",
+      expandedCheckId: "s3_bucket_public_access",
+    });
     expect(within(section).getAllByRole("listitem")).toHaveLength(2);
     expect(within(section).getByText("Risk Accepted")).toBeInTheDocument();
     expect(within(section).getByText("Showing 2 of 300.")).toBeInTheDocument();
