@@ -13,11 +13,15 @@ import { Badge } from "@/components/shadcn/badge/badge";
 import { Button } from "@/components/shadcn/button/button";
 import { Card } from "@/components/shadcn/card/card";
 import { CodeSnippet } from "@/components/shadcn/code-snippet";
+import { InfoField } from "@/components/shadcn/info-field/info-field";
+import { riskFactors } from "@/lib/issues/risk-factors";
 import { legBadgeVariant } from "@/lib/issues/verdicts";
 import { createJiraDispatchPayload } from "@/lib/jira-dispatch-selection";
 import { useJiraDispatchStore } from "@/store/jira-dispatch/store";
 import { JIRA_DISPATCH_TARGET } from "@/types/integrations";
 import {
+  ATTACKER_START_LABEL,
+  ISSUE_OUTCOME_LABEL,
   IssueAttributes,
   IssueFinding,
   LegName,
@@ -120,6 +124,7 @@ export const IssueDetail = ({
     setAttempt((value) => value + 1);
   };
   const activeScanId = state.status === "loaded" ? state.scanId : scanId;
+  const factors = riskFactors(issue);
   const uniqueFindings =
     state.status === "loaded"
       ? Array.from(
@@ -137,6 +142,19 @@ export const IssueDetail = ({
 
   return (
     <div className="flex min-w-0 flex-col gap-4 py-4">
+      {/* The conditions that hold at once: the verdict says how bad, these
+          say why, and which part to argue with. */}
+      {factors.length > 0 && (
+        <ul aria-label="Risk factors" className="flex flex-wrap gap-1.5">
+          {factors.map((factor) => (
+            <li key={factor.label}>
+              <Badge variant={factor.variant} title={factor.title}>
+                {factor.label}
+              </Badge>
+            </li>
+          ))}
+        </ul>
+      )}
       {state.status === "loaded" && state.findings === undefined && (
         <IssuesLoadError
           message="Could not load the findings for this issue."
@@ -155,6 +173,21 @@ export const IssueDetail = ({
               : { providerId: undefined, scanId: undefined })}
           />
         )}
+      {issue.outcome && issue.attacker_start && (
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <InfoField label="Outcome">
+            {ISSUE_OUTCOME_LABEL[issue.outcome]}
+          </InfoField>
+          {/* Inline, not an InfoTooltip: its trigger has no tab stop. */}
+          <InfoField label="Starts from">
+            {ATTACKER_START_LABEL[issue.attacker_start]}
+            <p className="text-text-neutral-tertiary text-xs">
+              Where the attacker has to be standing. Whether they also need a
+              credential is the Access leg.
+            </p>
+          </InfoField>
+        </div>
+      )}
       <section aria-label="Exploitability assessment">
         <h4 className="mb-3 text-sm font-semibold">
           Exploitability assessment

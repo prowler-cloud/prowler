@@ -34,6 +34,26 @@ export const LEG_STATE = {
 
 export type LegState = (typeof LEG_STATE)[keyof typeof LEG_STATE];
 
+/** What walking the path buys the attacker. */
+export const ISSUE_OUTCOME_LABEL = {
+  data_exposure: "Data exposure",
+  privilege_escalation: "Privilege escalation",
+  code_execution: "Code execution",
+} as const;
+
+export type IssueOutcome = keyof typeof ISSUE_OUTCOME_LABEL;
+
+/** Where the attacker has to be standing; whether they need a credential is the access leg. */
+export const ATTACKER_START_LABEL = {
+  internet: "The internet",
+  authenticated_principal: "Any signed-in identity",
+  credential_leak: "A leaked credential",
+  foothold: "A foothold on a host",
+  external_user: "An outside user",
+} as const;
+
+export type AttackerStart = keyof typeof ATTACKER_START_LABEL;
+
 export interface LegAssessment {
   state: LegState;
   text: string;
@@ -48,6 +68,9 @@ export interface IssueAttributes {
   title: string;
   verdict: Verdict;
   severity: Severity;
+  /** Blank on the hygiene and unmodelled issues, which are not one path. */
+  outcome: IssueOutcome | "";
+  attacker_start: AttackerStart | "";
   legs: Record<LegName, LegAssessment>;
   fix: string;
   findings_count: number;
