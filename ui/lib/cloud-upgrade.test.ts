@@ -1,12 +1,18 @@
 import { describe, expect, it } from "vitest";
 
-import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
+import {
+  CLOUD_UPGRADE_FEATURE,
+  PAID_PLAN_UPGRADE_FEATURE,
+} from "@/types/cloud-upgrade";
 
 import {
   CLOUD_UPGRADE_CONTENT,
   CLOUD_UPGRADE_FOOTER_NOTE,
   getCloudUpgradeCompareUrl,
   getCloudUpgradePrimaryUrl,
+  getPaidPlanUpgradeBillingHref,
+  isPaidPlanUpgradeFeature,
+  PAID_PLAN_UPGRADE_CONTENT,
 } from "./cloud-upgrade";
 
 describe("cloud upgrade content", () => {
@@ -88,5 +94,21 @@ describe("cloud upgrade URLs", () => {
 
     // Then
     expect(url.searchParams.get("utm_content")).toBe(contentSlug);
+  });
+});
+
+describe("paid plan upgrade content", () => {
+  it("sends the findings preview upgrade to billing with its feature", () => {
+    // Given / When / Then
+    expect(
+      isPaidPlanUpgradeFeature(PAID_PLAN_UPGRADE_FEATURE.FINDINGS_PREVIEW),
+    ).toBe(true);
+    expect(
+      getPaidPlanUpgradeBillingHref(PAID_PLAN_UPGRADE_FEATURE.FINDINGS_PREVIEW),
+    ).toBe("/billing?feature=findings_preview");
+    expect(
+      PAID_PLAN_UPGRADE_CONTENT[PAID_PLAN_UPGRADE_FEATURE.FINDINGS_PREVIEW]
+        .title,
+    ).toBe("See Every Finding in Your Account");
   });
 });

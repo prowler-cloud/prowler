@@ -7,8 +7,8 @@
 import { vi } from "vitest";
 
 import { BrowserHarness } from "@/__tests__/browser-harness";
+import { isProwlerFindingNode } from "@/lib/attack-paths";
 
-import { isProwlerFindingNode } from "./_lib";
 import type { PageFixture } from "./attack-paths-page.fixtures";
 
 export class AttackPathPageHarness extends BrowserHarness<PageFixture> {

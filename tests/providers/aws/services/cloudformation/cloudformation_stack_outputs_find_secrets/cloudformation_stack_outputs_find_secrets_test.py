@@ -78,6 +78,8 @@ class Test_cloudformation_stack_outputs_find_secrets:
             )
             assert result[0].region == AWS_REGION
             assert result[0].resource_tags == []
+            assert result[0].resource["outputs"] == ["REDACTED", "REDACTED"]
+            assert cloudformation_client.stacks[0].outputs[1] == "ENV:DEV"
 
     def test_stack_secret_in_outputs_false_case(self):
         cloudformation_client = mock.MagicMock

@@ -60,7 +60,8 @@
         "wafv2_webacl_logging_enabled",
         "wafv2_webacl_rule_logging_enabled",
         "apigateway_restapi_waf_acl_attached",
-        "cognito_user_pool_waf_acl_attached"
+        "cognito_user_pool_waf_acl_attached",
+        "wafv2_webacl_managed_rule_groups_enabled"
       ]
     },
     {
@@ -552,7 +553,8 @@
         }
       ],
       "Checks": [
-        "bedrock_guardrail_sensitive_information_filter_enabled"
+        "bedrock_guardrail_sensitive_information_filter_enabled",
+        "bedrock_guardrail_sensitive_information_filter_enforced"
       ]
     },
     {
@@ -585,6 +587,7 @@
       ],
       "Checks": [
         "bedrock_model_invocation_logging_enabled",
+        "bedrock_model_invocation_logging_text_data_enabled",
         "bedrock_model_invocation_logs_encryption_enabled"
       ]
     },

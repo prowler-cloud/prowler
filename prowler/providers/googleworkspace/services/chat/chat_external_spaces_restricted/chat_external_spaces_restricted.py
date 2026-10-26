@@ -27,7 +27,13 @@ class chat_external_spaces_restricted(Check):
             spaces_enabled = chat_client.policies.external_spaces_enabled
             allowlist_mode = chat_client.policies.external_spaces_domain_allowlist_mode
 
-            if spaces_enabled is False:
+            if chat_client.policies.off_for_everyone:
+                report.status = "PASS"
+                report.status_extended = (
+                    f"Google Chat is turned off for everyone in domain "
+                    f"{chat_client.provider.identity.domain}, so no external spaces can be created or joined."
+                )
+            elif spaces_enabled is False:
                 report.status = "PASS"
                 report.status_extended = (
                     f"External spaces are disabled "
