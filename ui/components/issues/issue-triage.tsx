@@ -8,23 +8,17 @@ import {
   getIssueNotes,
   updateIssueTriage,
 } from "@/actions/issues";
-import { TRIAGE_STATUS_TEXT_CLASS } from "@/components/findings/table/finding-triage-status-control";
+import { TriageStatusPicker } from "@/components/findings/table/finding-triage-status-control";
+import { IssuesLoadError } from "@/components/issues/issues-load-error";
 import { Button } from "@/components/shadcn/button/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-} from "@/components/shadcn/select/select";
+import { DateWithTime } from "@/components/shadcn/entities";
 import { Textarea } from "@/components/shadcn/textarea/textarea";
 import { useToast } from "@/components/shadcn/toast/use-toast";
-import { cn } from "@/lib/utils";
 import {
   FINDING_TRIAGE_MANUAL_STATUS_VALUES,
   FINDING_TRIAGE_NOTE_MAX_LENGTH,
-  FINDING_TRIAGE_STATUS_LABELS,
-  type FindingTriageManualStatus,
   type FindingTriageStatus,
+  isManualStatus,
 } from "@/types/findings-triage";
 import { IssueTriageNote } from "@/types/issues";
 
@@ -32,11 +26,6 @@ interface IssueTriageProps {
   id: string;
   status: FindingTriageStatus;
 }
-
-const isManualStatus = (
-  status: FindingTriageStatus,
-): status is FindingTriageManualStatus =>
-  (FINDING_TRIAGE_MANUAL_STATUS_VALUES as readonly string[]).includes(status);
 
 /**
  * The decision on the path, and why.
@@ -103,35 +92,12 @@ export const IssueTriage = ({ id, status }: IssueTriageProps) => {
       <h4 className="text-sm font-semibold">Triage</h4>
       <div className="flex flex-wrap items-center gap-2">
         <div className="w-40">
-          <Select
+          <TriageStatusPicker
+            disabled={pending}
             value={nextStatus}
-            onValueChange={(value) =>
-              setNextStatus(value as FindingTriageStatus)
-            }
-          >
-            <SelectTrigger aria-label="Triage status" size="sm" iconSize="sm">
-              <span
-                className={cn("truncate", TRIAGE_STATUS_TEXT_CLASS[nextStatus])}
-              >
-                {FINDING_TRIAGE_STATUS_LABELS[nextStatus]}
-              </span>
-            </SelectTrigger>
-            <SelectContent>
-              {FINDING_TRIAGE_MANUAL_STATUS_VALUES.map((value) => (
-                <SelectItem
-                  key={value}
-                  value={value}
-                  aria-label={FINDING_TRIAGE_STATUS_LABELS[value]}
-                >
-                  <span
-                    className={cn("truncate", TRIAGE_STATUS_TEXT_CLASS[value])}
-                  >
-                    {FINDING_TRIAGE_STATUS_LABELS[value]}
-                  </span>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            statusValues={FINDING_TRIAGE_MANUAL_STATUS_VALUES}
+            onValueChange={setNextStatus}
+          />
         </div>
         <Button
           size="sm"
@@ -152,9 +118,10 @@ export const IssueTriage = ({ id, status }: IssueTriageProps) => {
         onChange={(event) => setNote(event.target.value)}
       />
       {notes === undefined ? (
-        <p role="alert" className="text-text-neutral-tertiary text-sm">
-          Could not load the notes for this issue.
-        </p>
+        <IssuesLoadError
+          message="Could not load the notes for this issue."
+          onRetry={() => setReload((value) => value + 1)}
+        />
       ) : notes.length > 0 ? (
         <ul className="flex flex-col gap-2">
           {notes.map((item) => (
@@ -162,10 +129,10 @@ export const IssueTriage = ({ id, status }: IssueTriageProps) => {
               <p className="text-text-neutral-secondary text-sm whitespace-pre-wrap">
                 {item.body}
               </p>
-              <span className="text-text-neutral-tertiary text-xs">
-                {item.author ?? "Unknown"} ·{" "}
-                {new Date(item.insertedAt).toLocaleString()}
-              </span>
+              <div className="text-text-neutral-tertiary flex items-center gap-2 text-xs">
+                <span>{item.author ?? "Unknown"}</span>
+                <DateWithTime inline dateTime={item.insertedAt} />
+              </div>
             </li>
           ))}
         </ul>

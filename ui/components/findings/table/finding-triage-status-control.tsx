@@ -47,7 +47,7 @@ const MUTELIST_CONFIRMATION_TITLE = "Mute finding?";
 export const MANUAL_PASS_NOTE_REQUIRED_COPY =
   "Add a Triage Note explaining why this finding passes.";
 
-function TriageStatusPicker({
+export function TriageStatusPicker({
   disabled,
   size = "sm",
   value,

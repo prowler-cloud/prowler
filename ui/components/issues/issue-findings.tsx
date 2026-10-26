@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { TRIAGE_STATUS_TEXT_CLASS } from "@/components/findings/table/finding-triage-status-control";
+import { Button } from "@/components/shadcn/button/button";
 import { Card } from "@/components/shadcn/card/card";
 import { SeverityBadge } from "@/components/shadcn/table/severity-badge";
 import { cn } from "@/lib/utils";
@@ -43,12 +44,21 @@ export const IssueFindings = ({
             <Card variant="inner" padding="md" className="h-full gap-1">
               <div className="flex items-start justify-between gap-3">
                 {scanId ? (
-                  <Link
-                    href={findingHref(scanId, finding.uid)}
-                    className="text-text-neutral-primary min-w-0 text-sm break-words hover:underline"
-                  >
-                    {finding.checkTitle}
-                  </Link>
+                  <div className="min-w-0">
+                    <Button
+                      asChild
+                      variant="link"
+                      size="link-sm"
+                      className="max-w-full"
+                    >
+                      <Link
+                        href={findingHref(scanId, finding.uid)}
+                        title={finding.checkTitle}
+                      >
+                        <span className="truncate">{finding.checkTitle}</span>
+                      </Link>
+                    </Button>
+                  </div>
                 ) : (
                   <span className="text-text-neutral-primary min-w-0 text-sm break-words">
                     {finding.checkTitle}

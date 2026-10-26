@@ -65,7 +65,8 @@ describe("IssueTriage", () => {
     render(<IssueTriage id="issue-1" status="open" />);
 
     expect(await screen.findByText("Public by design.")).toBeInTheDocument();
-    expect(screen.getByText(/^Ana ·/)).toBeInTheDocument();
+    expect(screen.getByText("Ana")).toBeInTheDocument();
+    expect(screen.getByText("Oct 20, 2026")).toBeInTheDocument();
   });
 
   it("saves a new status together with its note", async () => {
@@ -185,12 +186,18 @@ describe("IssueTriage", () => {
     );
   });
 
-  it("says so when the notes cannot be loaded", async () => {
-    getIssueNotesMock.mockResolvedValue(undefined);
+  it("says so when the notes cannot be loaded, and loads them on retry", async () => {
+    const user = userEvent.setup();
+    getIssueNotesMock.mockResolvedValueOnce(undefined);
     render(<IssueTriage id="issue-1" status="open" />);
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "Could not load the notes for this issue.",
     );
+
+    await user.click(screen.getByRole("button", { name: "Retry" }));
+
+    expect(await screen.findByText("Public by design.")).toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 });
