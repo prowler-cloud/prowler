@@ -37,6 +37,8 @@ const issue = {
   title: "Findings no attack path models yet (300)",
   verdict: "unknown",
   severity: "high",
+  outcome: "",
+  attacker_start: "",
   legs: {},
   fix: "Review these findings individually.",
   findings_count: 300,
@@ -77,6 +79,39 @@ describe("IssueDetail", () => {
     expect(screen.getByTestId("issue-graph")).toHaveTextContent("15 resources");
   });
 
+  it("says what a path buys the attacker and where it starts", async () => {
+    getIssueMock.mockResolvedValue({
+      data: { attributes: { resource_uids: [] } },
+    });
+    render(
+      <IssueDetail
+        id="issue-1"
+        issue={{
+          ...issue,
+          pattern: "aws_public_bucket",
+          outcome: "data_exposure",
+          attacker_start: "internet",
+        }}
+      />,
+    );
+
+    expect(screen.getByText("Data exposure")).toBeInTheDocument();
+    expect(screen.getByText("The internet")).toBeInTheDocument();
+    // Shown inline so keyboard users can read it too.
+    expect(
+      screen.getByText(/Where the attacker has to be standing/),
+    ).toBeInTheDocument();
+  });
+
+  it("claims no outcome for an issue that is not one path", async () => {
+    getIssueMock.mockResolvedValue({
+      data: { attributes: { resource_uids: [] } },
+    });
+    render(<IssueDetail id="issue-1" issue={issue} />);
+
+    expect(screen.queryByText("Outcome")).not.toBeInTheDocument();
+  });
+
   it("says so when the resources cannot be loaded", async () => {
     getIssueMock.mockResolvedValue(undefined);
     render(<IssueDetail id="issue-1" issue={issue} />);
@@ -114,6 +149,37 @@ describe("IssueDetail", () => {
     expect(getIssueFindingsMock).toHaveBeenLastCalledWith("scan-1", [
       "finding-uid",
     ]);
+  });
+
+  it("names the conditions that make the path, explained by each leg", async () => {
+    getIssueMock.mockResolvedValue({
+      data: { attributes: { resource_uids: [] } },
+    });
+    render(
+      <IssueDetail
+        id="issue-1"
+        issue={{
+          ...issue,
+          outcome: "data_exposure",
+          attacker_start: "internet",
+          legs: {
+            ...issue.legs,
+            controls: {
+              state: "no",
+              text: "The public access block is off.",
+              evidence: [],
+            },
+          },
+        }}
+      />,
+    );
+
+    const factors = screen.getByRole("list", { name: "Risk factors" });
+    expect(factors).toHaveTextContent("Internet-reachable");
+    expect(screen.getByText("No control blocking")).toHaveAttribute(
+      "title",
+      "The public access block is off.",
+    );
   });
 
   it("lists each folded finding once, with its own triage and a link to it", async () => {
