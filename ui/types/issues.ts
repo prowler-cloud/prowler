@@ -50,7 +50,6 @@ export const ATTACKER_START_LABEL = {
   credential_leak: "A leaked credential",
   foothold: "A foothold on a host",
   external_user: "An outside user",
-  third_party: "A compromised third party",
 } as const;
 
 export type AttackerStart = keyof typeof ATTACKER_START_LABEL;
