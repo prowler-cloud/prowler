@@ -21,6 +21,8 @@ from prowler.lib.utils.utils import dict_to_lowercase, get_nested_attribute
 from prowler.providers.common.provider import Provider
 from prowler.providers.github.models import GithubAppIdentityInfo, GithubIdentityInfo
 
+RESOURCE_METADATA_WARNING_BYTES = 10 * 1024 * 1024
+
 
 class Finding(BaseModel):
     """
@@ -601,8 +603,27 @@ class Finding(BaseModel):
             )
             raise error
 
+    @staticmethod
+    def _load_resource_metadata(resource, metadata_cache: dict | None) -> dict:
+        """Parse the stored metadata once per resource when a cache is given."""
+        if metadata_cache is not None and resource.id in metadata_cache:
+            return metadata_cache[resource.id]
+
+        metadata_bytes = len(resource.metadata)
+        if metadata_bytes > RESOURCE_METADATA_WARNING_BYTES:
+            logger.warning(
+                f"Resource {resource.id} ({resource.uid}) has {metadata_bytes} bytes of metadata"
+            )
+
+        metadata = json.loads(resource.metadata)
+        if metadata_cache is not None:
+            metadata_cache[resource.id] = metadata
+        return metadata
+
     @classmethod
-    def transform_api_finding(cls, finding, provider) -> "Finding":
+    def transform_api_finding(
+        cls, finding, provider, metadata_cache: dict | None = None
+    ) -> "Finding":
         """
         Transform a FindingModel instance into an API-friendly Finding object.
 
@@ -616,6 +637,8 @@ class Finding(BaseModel):
         Args:
             finding (API Finding): An API Finding instance containing data from the database.
             provider (Provider): the provider object.
+            metadata_cache (dict | None): parsed resource metadata keyed by resource id,
+                shared by the findings of a batch so each resource is parsed once.
 
         Returns:
             Finding: A new Finding instance populated with data from the provided model.
@@ -624,7 +647,7 @@ class Finding(BaseModel):
         resource = finding.resources.first()
         finding.resource_arn = resource.uid
         finding.resource_name = resource.name
-        finding.resource = json.loads(resource.metadata)
+        finding.resource = cls._load_resource_metadata(resource, metadata_cache)
         finding.resource_details = resource.details
 
         finding.resource_id = resource.name if provider.type == "aws" else resource.uid
