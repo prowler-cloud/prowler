@@ -184,6 +184,8 @@ export const getIssueNotes = async (
     `${apiBaseUrl}/issues/${encodeURIComponent(id)}/triage/notes`,
   );
   url.searchParams.set("include", "created_by");
+  // shortcut: newest 100 notes only (the API's max page size; its default is 10), page through links.next once an issue's history outgrows it
+  url.searchParams.set("page[size]", "100");
 
   try {
     const response = await fetch(url.toString(), { headers });

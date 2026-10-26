@@ -50,9 +50,17 @@ export const IssueTriage = ({ id, status }: IssueTriageProps) => {
   const { toast } = useToast();
   const [pending, startTransition] = useTransition();
   const [nextStatus, setNextStatus] = useState(status);
+  const [shownStatus, setShownStatus] = useState(status);
   const [note, setNote] = useState("");
   const [notes, setNotes] = useState<IssueTriageNote[] | undefined>([]);
   const [reload, setReload] = useState(0);
+
+  // Follow the status the server now reports (a refresh after a save, or
+  // someone else's decision), so a note-only save never writes back a stale one.
+  if (status !== shownStatus) {
+    setShownStatus(status);
+    setNextStatus(status);
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -139,6 +147,8 @@ export const IssueTriage = ({ id, status }: IssueTriageProps) => {
         value={note}
         maxLength={FINDING_TRIAGE_NOTE_MAX_LENGTH}
         rows={3}
+        // A successful save clears the note: text typed meanwhile would be lost.
+        disabled={pending}
         onChange={(event) => setNote(event.target.value)}
       />
       {notes === undefined ? (

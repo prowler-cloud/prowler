@@ -190,6 +190,7 @@ describe("issues actions", () => {
     const url = new URL(fetchMock.mock.calls[0][0]);
     expect(url.pathname).toBe("/api/v1/issues/issue-1/triage/notes");
     expect(url.searchParams.get("include")).toBe("created_by");
+    expect(url.searchParams.get("page[size]")).toBe("100");
     expect(notes).toEqual([
       {
         id: "note-1",

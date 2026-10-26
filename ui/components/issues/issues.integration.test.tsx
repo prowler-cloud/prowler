@@ -84,7 +84,20 @@ const setup = () => {
       }),
     ),
     http.get("*/issues", () => HttpResponse.json({ data: [issue] })),
-    http.get("*/issues/issue-1/notes", () => HttpResponse.json({ data: [] })),
+    http.get("*/issues/issue-1/triage/notes", () =>
+      HttpResponse.json({
+        data: [
+          {
+            type: "issue-triage-notes",
+            id: "note-1",
+            attributes: {
+              body: "Public by design.",
+              inserted_at: "2026-10-20T10:00:00Z",
+            },
+          },
+        ],
+      }),
+    ),
     http.get("*/issues/issue-1", () =>
       HttpResponse.json({
         data: {
@@ -162,6 +175,7 @@ describe("Issues responsive layout", () => {
       await expect
         .element(screen.getByText("Partly", { exact: true }))
         .toBeVisible();
+      await expect.element(screen.getByText("Public by design.")).toBeVisible();
       await expect
         .element(
           screen.getByRole("img", { name: "Critical finding risk icon" }),

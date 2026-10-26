@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -110,6 +110,52 @@ describe("IssueTriage", () => {
       "Asked the owner.",
     );
     expect(updateIssueTriageMock).not.toHaveBeenCalled();
+  });
+
+  it("follows a status someone else set, so a note alone does not undo it", async () => {
+    // Given
+    const user = userEvent.setup();
+    const { rerender } = render(<IssueTriage id="issue-1" status="open" />);
+
+    // When - a refresh brings another user's decision
+    rerender(<IssueTriage id="issue-1" status="remediating" />);
+    await user.type(
+      screen.getByRole("textbox", { name: "Triage note" }),
+      "Asked the owner.",
+    );
+    await user.click(screen.getByRole("button", { name: "Save triage" }));
+
+    // Then
+    expect(
+      screen.getByRole("combobox", { name: "Triage status" }),
+    ).toHaveTextContent("Remediating");
+    expect(addIssueNoteMock).toHaveBeenCalledWith(
+      "issue-1",
+      "Asked the owner.",
+    );
+    expect(updateIssueTriageMock).not.toHaveBeenCalled();
+  });
+
+  it("locks the note while it is being saved", async () => {
+    // Given
+    let finish: (value: { success: true }) => void = () => {};
+    addIssueNoteMock.mockReturnValue(
+      new Promise((resolve) => {
+        finish = resolve;
+      }),
+    );
+    const user = userEvent.setup();
+    render(<IssueTriage id="issue-1" status="open" />);
+    const textbox = screen.getByRole("textbox", { name: "Triage note" });
+
+    // When
+    await user.type(textbox, "Asked the owner.");
+    await user.click(screen.getByRole("button", { name: "Save triage" }));
+
+    // Then
+    expect(textbox).toBeDisabled();
+    finish({ success: true });
+    await waitFor(() => expect(textbox).toBeEnabled());
   });
 
   it("keeps the note and says why when the save fails", async () => {

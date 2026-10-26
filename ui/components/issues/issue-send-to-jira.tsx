@@ -18,8 +18,9 @@ interface IssueSendToJiraProps {
 }
 
 /**
- * One ticket for the attack path, grouping its findings: four tickets for one
- * bucket would undo the fold.
+ * Grouped by default: four tickets for one bucket would undo the fold. The
+ * grouped dispatch makes one ticket per check, not per selection, so a path
+ * spanning two checks gets two tickets.
  */
 export const IssueSendToJira = ({
   title,
@@ -46,7 +47,7 @@ export const IssueSendToJira = ({
         }}
         defaultDispatchMode={JIRA_DISPATCH_MODE.GROUPED}
         canChooseGroupedDispatch
-        description={`One ticket for this attack path, grouping its ${findingIds.length} ${
+        description={`One ticket per check on this attack path, grouping its ${findingIds.length} ${
           findingIds.length === 1 ? "finding" : "findings"
         }.`}
       />
