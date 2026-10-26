@@ -60,7 +60,8 @@
         "wafv2_webacl_logging_enabled",
         "wafv2_webacl_rule_logging_enabled",
         "apigateway_restapi_waf_acl_attached",
-        "cognito_user_pool_waf_acl_attached"
+        "cognito_user_pool_waf_acl_attached",
+        "wafv2_webacl_managed_rule_groups_enabled"
       ]
     },
     {
