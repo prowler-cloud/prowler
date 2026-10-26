@@ -1,10 +1,13 @@
 """GCP provider config schema with safety bounds."""
 
-from typing import Optional
+from typing import Annotated, Optional
 
-from pydantic import Field
+from pydantic import AfterValidator, Field
 
 from prowler.config.schema.base import ProviderConfigBase
+from prowler.config.schema.validators import make_dotted_version_validator
+
+_validate_php_branch = make_dotted_version_validator(2, 2)
 
 
 class GCPProviderConfig(ProviderConfigBase):
@@ -42,4 +45,12 @@ class GCPProviderConfig(ProviderConfigBase):
         ge=1,
         le=3650,
         description="Min retention period on Cloud Storage buckets. Range: 1..3650.",
+    )
+
+    # --- App Engine -----------------------------------------------------
+    appengine_php_min_version: Annotated[
+        Optional[str], AfterValidator(_validate_php_branch)
+    ] = Field(
+        default=None,
+        description='Oldest PHP branch still receiving security fixes, e.g. "8.2".',
     )

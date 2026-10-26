@@ -29,8 +29,6 @@ import type { SearchParamsProps } from "@/types";
 
 import { ProvidersTabContent } from "./providers-tab-content";
 
-const INITIAL_SCAN_LABEL = "Launch an initial scan now for immediate findings";
-
 interface MountOptions {
   /** Seed `?addProvider=true` so the wizard opens on mount. Default true. */
   openWizard?: boolean;
@@ -910,14 +908,6 @@ export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
   }
 
   // --- Wizard: launch step ------------------------------------------------
-
-  /** Tick "launch an initial scan now" on the launch step's schedule form. */
-  async enableInitialScan(): Promise<void> {
-    const checkbox = await this.waitFor(() =>
-      this.q(`[role="checkbox"][aria-label="${INITIAL_SCAN_LABEL}"]`),
-    );
-    await this.clickElement(checkbox);
-  }
 
   /** Save the scan schedules and launch the initial scans (footer action). */
   async saveScheduleAndLaunch(): Promise<void> {

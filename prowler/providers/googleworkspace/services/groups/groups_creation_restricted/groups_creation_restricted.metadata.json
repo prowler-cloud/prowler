@@ -36,5 +36,5 @@
     "groups_external_access_restricted",
     "groups_view_conversations_restricted"
   ],
-  "Notes": ""
+  "Notes": "When Groups for Business is turned off for everyone, only the group creation setting is exempt: no group can be created in the Google Groups app, but existing groups stay active, so the external members and incoming email settings are still evaluated."
 }

@@ -40,6 +40,9 @@ The following list includes all the AWS checks with configurable variables that 
 | `awslambda_function_no_secrets_in_variables`                           | `secrets_ignore_patterns`                         | List of Strings | `[]`                                                                                                                                 |
 | `awslambda_function_using_supported_runtimes`                          | `obsolete_lambda_runtimes`                        | List of Strings | See `config.yaml`                                                                                                                    |
 | `awslambda_function_vpc_multi_az`                                      | `lambda_min_azs`                                  | Integer         | `2`                                                                                                                                  |
+| `elasticbeanstalk_environment_php_platform_updated`                    | `elasticbeanstalk_php_min_branch`                 | String          | `"8.2"`                                                                                                                              |
+| `elasticbeanstalk_environment_php_platform_updated`                    | `elasticbeanstalk_php_min_platform_version`       | String          | `"4.13.13"`                                                                                                                          |
+| `lightsail_instance_php_blueprint_updated`                             | `lightsail_php_blueprints`                        | List of Strings | See `config.yaml`                                                                                                                    |
 | `cloudformation_stack_cdktoolkit_bootstrap_version`                    | `recommended_cdk_bootstrap_version`               | Integer         | `21`                                                                                                                                 |
 | `cloudformation_stack_outputs_find_secrets`                            | `secrets_ignore_patterns`                         | List of Strings | `[]`                                                                                                                                 |
 | `cloudfront_distributions_pqc_tls_enabled`                             | `cloudfront_pqc_min_protocol_versions`            | List of Strings | `["TLSv1.3_2025"]`                                                                                                                   |
@@ -215,7 +218,7 @@ The following list includes all the Azure checks with configurable variables tha
 | `apim_threat_detection_llm_jacking`                      | `apim_threat_detection_llm_jacking_minutes`     | Integer         | `1440`                                                     |
 | `apim_threat_detection_llm_jacking`                      | `apim_threat_detection_llm_jacking_threshold`   | Float           | `0.1`                                                      |
 | `app_ensure_java_version_is_latest`                      | `java_latest_version`                           | String          | `"17"`                                                     |
-| `app_ensure_php_version_is_latest`                       | `php_latest_version`                            | String          | `"8.2"`                                                    |
+| `app_ensure_php_version_is_latest`                       | `php_latest_version`                            | String          | `"8.5"`                                                    |
 | `app_ensure_python_version_is_latest`                    | `python_latest_version`                         | String          | `"3.12"`                                                   |
 | `defender_attack_path_notifications_properly_configured` | `defender_attack_path_minimal_risk_level`       | String          | `"High"`                                                   |
 | `network_public_ip_shodan`                               | `shodan_api_key`                                | String          | `null`                                                     |
@@ -232,6 +235,7 @@ The following list includes all the GCP checks with configurable variables that 
 
 | Check Name                                        | Value                             | Type    | Default |
 |---------------------------------------------------|-----------------------------------|---------|---------|
+| `appengine_version_php_runtime_supported`         | `appengine_php_min_version`       | String  | `"8.2"` |
 | `cloudstorage_bucket_sufficient_retention_period` | `storage_min_retention_days`      | Integer | `90`    |
 | `compute_instance_group_multiple_zones`           | `mig_min_zones`                   | Integer | `2`     |
 | `compute_public_address_shodan`                   | `shodan_api_key`                  | String  | `null`  |
@@ -449,6 +453,28 @@ aws:
   # aws.appstream_fleet_maximum_session_duration
   max_session_duration_seconds: 36000 # 10 Hours
 
+  # AWS Elastic Beanstalk Configuration
+  # aws.elasticbeanstalk_environment_php_platform_updated
+  # Oldest PHP branch still receiving security fixes
+  elasticbeanstalk_php_min_branch: "8.2"
+  # Oldest Amazon Linux 2023 PHP platform version bundling the fixed PHP release
+  elasticbeanstalk_php_min_platform_version: "4.13.13"
+
+  # AWS Lightsail Configuration
+  # aws.lightsail_instance_php_blueprint_updated
+  # Blueprint id prefixes that ship PHP and require manual runtime verification
+  lightsail_php_blueprints:
+    [
+      "wordpress",
+      "lamp",
+      "nginx",
+      "drupal",
+      "joomla",
+      "magento",
+      "prestashop",
+      "plesk",
+      "cpanel",
+    ]
   # AWS Lambda Configuration
   # aws.awslambda_function_using_supported_runtimes
   obsolete_lambda_runtimes:
@@ -719,8 +745,9 @@ azure:
   shodan_api_key: null
 
   # Azure App Service
+  # Minimum runtime versions; any newer version passes
   # azure.app_ensure_php_version_is_latest
-  php_latest_version: "8.2"
+  php_latest_version: "8.5"
   # azure.app_ensure_python_version_is_latest
   python_latest_version: "3.12"
   # azure.app_ensure_java_version_is_latest

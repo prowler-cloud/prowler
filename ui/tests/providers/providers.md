@@ -1101,7 +1101,7 @@
 2. Click "Add Provider" button
 3. Select AWS provider type
 4. Select the "I don't have access, invite a teammate" option
-5. Fill the teammate email (the admin role comes preselected)
+5. Fill the teammate email and pick a role that can manage providers (the form preselects one only when the tenant has a role named exactly `admin`; the E2E tenant's is `e2e_admin`)
 6. Click "Send invitation"
 7. Verify the confirmation and the invitation link
 8. Click "Done"
@@ -1115,7 +1115,7 @@
 ### Key verification points
 
 - The invite option is visible on the AWS step for the admin user
-- "Send invitation" is enabled once a valid email is typed
+- "Send invitation" is enabled once a valid email is typed and a role is selected
 - Confirmation text "Invitation sent to {email}" is visible
 - The accept link contains `/invitation/accept?invitation_token=`
 - The wizard modal is closed after "Done"

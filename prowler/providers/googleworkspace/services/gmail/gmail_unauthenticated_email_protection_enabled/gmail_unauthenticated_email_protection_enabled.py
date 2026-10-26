@@ -27,7 +27,13 @@ class gmail_unauthenticated_email_protection_enabled(Check):
             enabled = gmail_client.policies.detect_unauthenticated_emails
             consequence = gmail_client.policies.unauthenticated_email_consequence
 
-            if enabled is False:
+            if gmail_client.policies.off_for_everyone:
+                report.status = "PASS"
+                report.status_extended = (
+                    f"Gmail is turned off for everyone in domain "
+                    f"{gmail_client.provider.identity.domain}, so no user mailbox receives mail through Gmail."
+                )
+            elif enabled is False:
                 report.status = "FAIL"
                 report.status_extended = (
                     f"Protection against unauthenticated emails is disabled "

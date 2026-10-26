@@ -11,6 +11,7 @@ _ZONE = "us-central1-a"
 _INSTANCE_NAME = "my-workbench"
 _INSTANCE_ID = f"projects/{GCP_PROJECT_ID}/locations/{_ZONE}/instances/{_INSTANCE_NAME}"
 _NETWORK = f"projects/{GCP_PROJECT_ID}/global/networks/default"
+_UPGRADE_SCHEDULE = "00 19 * * MON"
 
 
 def _make_notebooks_client(instances_list=None, list_error=None):
@@ -65,7 +66,12 @@ class TestVertexAIService:
                         "state": "ACTIVE",
                         "gceSetup": {
                             "disablePublicIp": True,
-                            "metadata": {"notebook-disable-root": "true"},
+                            "metadata": {
+                                "notebook-disable-root": "true",
+                                "notebook-disable-terminal": "true",
+                                "notebook-disable-downloads": "true",
+                                "notebook-upgrade-schedule": _UPGRADE_SCHEDULE,
+                            },
                             "networkInterfaces": [{"network": _NETWORK}],
                         },
                     }
@@ -82,6 +88,9 @@ class TestVertexAIService:
         assert instance.state == "ACTIVE"
         assert instance.public_ip_disabled is True
         assert instance.root_access_disabled is True
+        assert instance.terminal_access_disabled is True
+        assert instance.file_download_disabled is True
+        assert instance.upgrade_schedule == _UPGRADE_SCHEDULE
         assert instance.network == _NETWORK
 
     def test_get_workbench_instance_defaults(self):
@@ -95,7 +104,66 @@ class TestVertexAIService:
         assert instance.state == "STATE_UNSPECIFIED"
         assert instance.public_ip_disabled is False
         assert instance.root_access_disabled is False
+        assert instance.terminal_access_disabled is False
+        assert instance.file_download_disabled is False
+        assert instance.upgrade_schedule is None
         assert instance.network is None
+
+    def test_disable_metadata_flags_are_case_insensitive(self):
+        vertexai_client = _build_service(
+            _make_notebooks_client(
+                instances_list=[
+                    {
+                        "name": _INSTANCE_ID,
+                        "gceSetup": {
+                            "metadata": {
+                                "notebook-disable-terminal": "TRUE",
+                                "notebook-disable-downloads": "True",
+                            }
+                        },
+                    }
+                ]
+            )
+        )
+
+        instance = vertexai_client.workbench_instances[0]
+        assert instance.terminal_access_disabled is True
+        assert instance.file_download_disabled is True
+
+    def test_disable_metadata_flags_false(self):
+        vertexai_client = _build_service(
+            _make_notebooks_client(
+                instances_list=[
+                    {
+                        "name": _INSTANCE_ID,
+                        "gceSetup": {
+                            "metadata": {
+                                "notebook-disable-terminal": "false",
+                                "notebook-disable-downloads": "false",
+                            }
+                        },
+                    }
+                ]
+            )
+        )
+
+        instance = vertexai_client.workbench_instances[0]
+        assert instance.terminal_access_disabled is False
+        assert instance.file_download_disabled is False
+
+    def test_blank_upgrade_schedule_is_treated_as_unset(self):
+        vertexai_client = _build_service(
+            _make_notebooks_client(
+                instances_list=[
+                    {
+                        "name": _INSTANCE_ID,
+                        "gceSetup": {"metadata": {"notebook-upgrade-schedule": "  "}},
+                    }
+                ]
+            )
+        )
+
+        assert vertexai_client.workbench_instances[0].upgrade_schedule is None
 
     def test_root_access_metadata_is_case_insensitive(self):
         vertexai_client = _build_service(
