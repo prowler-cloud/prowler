@@ -308,6 +308,7 @@ class Test_cloudwatch_log_group_data_protection_policy_configured:
         assert result[0].region == AWS_REGION_US_EAST_1
 
     def test_has_active_data_protection_non_dict(self):
+        set_mocked_aws_provider([AWS_REGION_US_EAST_1])
         from prowler.providers.aws.services.cloudwatch.cloudwatch_log_group_data_protection_policy_configured.cloudwatch_log_group_data_protection_policy_configured import (
             _has_active_data_protection,
         )
