@@ -2349,6 +2349,78 @@ class TestProcessFindingMicroBatch:
         assert resource_cache[finding.resource_uid].service == finding.service_name
         assert tag_cache.keys() == {("team", "devsec")}
 
+    def test_process_finding_micro_batch_skips_unchanged_resource(
+        self, tenants_fixture, scans_fixture
+    ):
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+        provider = scan.provider
+
+        resource_metadata = {"owner": "platform", "ports": [22, 443]}
+        existing_resource = Resource.objects.create(
+            tenant_id=tenant.id,
+            provider=provider,
+            uid="arn:aws:ec2:us-east-1:123456789012:instance/i-001",
+            name="i-001",
+            region="us-east-1",
+            service="ec2",
+            type="instance",
+            metadata=json.dumps(resource_metadata, cls=CustomEncoder),
+            details="details",
+            partition="aws",
+        )
+
+        finding = FakeFinding(
+            uid="finding-unchanged",
+            status=StatusChoices.PASS,
+            status_extended="passing",
+            severity=Severity.low,
+            check_id="ec2_public_instance",
+            resource_uid=existing_resource.uid,
+            resource_name=existing_resource.name,
+            region=existing_resource.region,
+            service_name=existing_resource.service,
+            resource_type=existing_resource.type,
+            resource_tags={},
+            resource_metadata=resource_metadata,
+            resource_details=existing_resource.details,
+            partition=existing_resource.partition,
+            raw={"status": "PASS"},
+            compliance={},
+            metadata={"source": "prowler"},
+            muted=False,
+        )
+
+        with (
+            patch("tasks.jobs.scan.rls_transaction", new=noop_rls_transaction),
+            patch("api.db_utils.rls_transaction", new=noop_rls_transaction),
+            patch(
+                "tasks.jobs.scan.Resource.objects.bulk_update",
+                wraps=Resource.objects.bulk_update,
+            ) as bulk_update,
+        ):
+            _process_finding_micro_batch(
+                str(tenant.id),
+                [finding],
+                scan,
+                provider,
+                {existing_resource.uid: existing_resource},
+                {},
+                {},
+                {existing_resource.uid: 0},
+                set(),
+                set(),
+                {},
+                {},
+                {},
+                {},
+            )
+
+        bulk_update.assert_not_called()
+        assert Finding.objects.filter(
+            tenant_id=tenant.id, scan_id=scan.id, uid=finding.uid
+        ).exists()
+
     def test_process_finding_micro_batch_refreshes_empty_resource_name(
         self, tenants_fixture, scans_fixture
     ):
