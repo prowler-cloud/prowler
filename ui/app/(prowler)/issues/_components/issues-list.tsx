@@ -2,6 +2,7 @@ import { ReactNode } from "react";
 
 import { getIssues, getIssuesOverview } from "@/actions/issues";
 import { IssuesLoadError } from "@/components/issues/issues-load-error";
+import { IssuesSummary } from "@/components/issues/issues-summary";
 import { IssuesTable } from "@/components/issues/issues-table";
 import { VerdictFilter } from "@/components/issues/verdict-filter";
 import { ISSUE_SCOPE_KEYS } from "@/lib/issues/scope";
@@ -36,17 +37,16 @@ export const IssuesList = async ({
     if (typeof value === "string" && value) filters[key] = value;
   });
 
+  // The counts are deliberately NOT filtered by verdict: the ladder has to
+  // keep showing every verdict's total, or picking one would zero the rest
+  // and there would be no way back.
+  const scope = Object.fromEntries(
+    Object.entries(filters).filter(
+      ([key]) => key !== "filter[verdict]" && key !== "filter[verdict__in]",
+    ),
+  );
   const [summary, issues] = await Promise.all([
-    // The counts are deliberately NOT filtered by verdict: the ladder has to
-    // keep showing every verdict's total, or picking one would zero the rest
-    // and there would be no way back.
-    getIssuesOverview({
-      filters: Object.fromEntries(
-        Object.entries(filters).filter(
-          ([key]) => key !== "filter[verdict]" && key !== "filter[verdict__in]",
-        ),
-      ),
-    }),
+    getIssuesOverview({ filters: scope }),
     getIssues({
       filters,
       page: Number(searchParams.page) || 1,
@@ -63,7 +63,11 @@ export const IssuesList = async ({
 
   return (
     <>
-      {attributes ? null : (
+      {attributes ? (
+        <div className="mb-6">
+          <IssuesSummary summary={attributes} scope={scope} />
+        </div>
+      ) : (
         <IssuesLoadError message="Failed to load issue summary." />
       )}
 
@@ -75,7 +79,6 @@ export const IssuesList = async ({
             ? {
                 counts: verdictCounts(attributes),
                 total: attributes.issues,
-                findings: attributes.findings,
               }
             : undefined
         }

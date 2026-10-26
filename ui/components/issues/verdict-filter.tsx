@@ -15,8 +15,6 @@ interface VerdictSummary {
   counts: Record<Verdict, number>;
   /** Issues in scope, whatever their verdict. */
   total: number;
-  /** Failed findings those issues fold. */
-  findings: number;
 }
 
 const ALL_TAB = "all";
@@ -142,14 +140,6 @@ export function VerdictFilter({ summary }: { summary?: VerdictSummary }) {
               ))}
             </TabsList>
           </div>
-          {summary ? (
-            // The fold: how much noise the issue count removed.
-            <p className="text-text-neutral-tertiary text-xs">
-              {summary.findings.toLocaleString()} failed findings folded into{" "}
-              {summary.total.toLocaleString()}{" "}
-              {summary.total === 1 ? "issue" : "issues"}
-            </p>
-          ) : null}
         </div>
       </Tabs>
       {/* Only filters that arrived by link get a chip; the tabs and the scope

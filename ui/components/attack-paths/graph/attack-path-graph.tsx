@@ -76,6 +76,9 @@ interface AttackPathGraphProps {
   onNodeClick?: (node: GraphNode) => void;
   onNodeDoubleClick?: (node: GraphNode) => void;
   onInitialFilter?: (filteredData: AttackPathGraphData) => void;
+  // Floor for the automatic fit: a graph that would shrink below it is shown
+  // at this zoom and panned instead, so its labels stay readable.
+  minFitZoom?: number;
   ref?: Ref<GraphHandle>;
   className?: string;
 }
@@ -194,6 +197,13 @@ const AUTO_FIT_OPTIONS = {
   duration: 300,
 } as const;
 
+// With a zoom floor the graph can be larger than the canvas and is centred on
+// it, so the minimap's lopsided padding would only push the top out of view.
+const fitOptionsFor = (minFitZoom?: number) =>
+  minFitZoom === undefined
+    ? AUTO_FIT_OPTIONS
+    : { ...AUTO_FIT_OPTIONS, padding: "32px" as const, minZoom: minFitZoom };
+
 const MEASURED_FIT_MAX_ATTEMPTS = 30;
 
 const scheduleMeasuredFit = (
@@ -230,6 +240,7 @@ const GraphCanvas = ({
   onNodeClick,
   onNodeDoubleClick,
   onInitialFilter,
+  minFitZoom,
   ref,
 }: GraphCanvasProps) => {
   const { zoomIn, zoomOut, fitView, getZoom, getNodes, getNodesBounds } =
@@ -265,9 +276,9 @@ const GraphCanvas = ({
           visibleNodes.every((n) => (n.measured?.width ?? 0) > 0)
         );
       },
-      () => fitView(AUTO_FIT_OPTIONS),
+      () => fitView(fitOptionsFor(minFitZoom)),
     );
-  }, [expandedClasses, fitView, getNodes]);
+  }, [expandedClasses, fitView, getNodes, minFitZoom]);
 
   // --- initialNodeId: synchronous filtered-view derivation on first render ---
   // Compute the effective data: if initialNodeId is set and valid, derive filtered subgraph
@@ -352,15 +363,15 @@ const GraphCanvas = ({
           );
 
           if (contextualNodes.length > 0) {
-            fitView({ ...AUTO_FIT_OPTIONS, nodes: contextualNodes });
+            fitView({ ...fitOptionsFor(minFitZoom), nodes: contextualNodes });
             return;
           }
         }
 
-        fitView(AUTO_FIT_OPTIONS);
+        fitView(fitOptionsFor(minFitZoom));
       },
     );
-  }, [expanded, isFilteredView, fitView, getNodes]);
+  }, [expanded, isFilteredView, fitView, getNodes, minFitZoom]);
 
   useEffect(() => {
     const previous = previousExpandedRef.current;
@@ -384,7 +395,7 @@ const GraphCanvas = ({
             visibleNodes.every((n) => (n.measured?.width ?? 0) > 0)
           );
         },
-        () => fitView(AUTO_FIT_OPTIONS),
+        () => fitView(fitOptionsFor(minFitZoom)),
       );
     }
 
@@ -415,10 +426,10 @@ const GraphCanvas = ({
         const contextualNodes = getNodes().filter((n) =>
           contextualFitNodeIds.has(n.id),
         );
-        fitView({ ...AUTO_FIT_OPTIONS, nodes: contextualNodes });
+        fitView({ ...fitOptionsFor(minFitZoom), nodes: contextualNodes });
       },
     );
-  }, [expanded, fitView, getNodes]);
+  }, [expanded, fitView, getNodes, minFitZoom]);
 
   // Cloud reshapes into the attack-path view: drop the account hub, collapse
   // each resource class into one expandable node, and inject the outcome node.
@@ -592,7 +603,10 @@ const GraphCanvas = ({
         onNodeMouseEnter={handleNodeMouseEnter}
         onNodeMouseLeave={handleNodeMouseLeave}
         fitView
-        fitViewOptions={{ ...AUTO_FIT_OPTIONS, includeHiddenNodes: true }}
+        fitViewOptions={{
+          ...fitOptionsFor(minFitZoom),
+          includeHiddenNodes: true,
+        }}
         // Supported React Flow behavior: wheel over the graph zooms the
         // viewport. The surrounding UX avoids using node details as inline
         // content, so this no longer fights a below-graph details section.
@@ -646,6 +660,7 @@ export const AttackPathGraph = ({
   onNodeClick,
   onNodeDoubleClick,
   onInitialFilter,
+  minFitZoom,
   ref,
   className,
 }: AttackPathGraphProps) => {
@@ -674,6 +689,7 @@ export const AttackPathGraph = ({
           onNodeClick={onNodeClick}
           onNodeDoubleClick={onNodeDoubleClick}
           onInitialFilter={onInitialFilter}
+          minFitZoom={minFitZoom}
         />
       </ReactFlowProvider>
     </div>
