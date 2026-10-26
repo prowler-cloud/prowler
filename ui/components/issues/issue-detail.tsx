@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 import { getIssue, getIssueFindings } from "@/actions/issues";
+import { IssueCompliance } from "@/components/issues/issue-compliance";
 import { IssueFindings } from "@/components/issues/issue-findings";
 import { IssueGraph } from "@/components/issues/issue-graph";
 import { IssueTriage } from "@/components/issues/issue-triage";
@@ -21,6 +22,7 @@ import { useJiraDispatchStore } from "@/store/jira-dispatch/store";
 import { JIRA_DISPATCH_TARGET } from "@/types/integrations";
 import {
   ATTACKER_START_LABEL,
+  ISSUE_FINDINGS_LIMIT,
   ISSUE_OUTCOME_LABEL,
   IssueAttributes,
   IssueFinding,
@@ -64,6 +66,8 @@ type ResourcesState =
       status: "loaded";
       resources: string[];
       findings: IssueFinding[] | undefined;
+      /** `getIssueFindings` capped the preview at ISSUE_FINDINGS_LIMIT. */
+      findingsTruncated: boolean;
       scanId?: string;
       providerId?: string;
     };
@@ -107,6 +111,7 @@ export const IssueDetail = ({
             status: "loaded",
             resources: attributes.resource_uids,
             findings,
+            findingsTruncated: new Set(findingUids).size > ISSUE_FINDINGS_LIMIT,
             scanId: detailScanId,
             providerId: detailProviderId,
           });
@@ -307,6 +312,15 @@ export const IssueDetail = ({
             findings={uniqueFindings}
             scanId={activeScanId}
             total={issue.findings_count}
+          />
+        )}
+      {state.status === "loaded" &&
+        state.findings &&
+        state.findings.length > 0 && (
+          <IssueCompliance
+            findings={state.findings}
+            scanId={activeScanId}
+            truncated={state.findingsTruncated}
           />
         )}
       <IssueTriage id={id} status={issue.triage_status} />
