@@ -17,6 +17,7 @@ import { InfoField } from "@/components/shadcn/info-field/info-field";
 import { legBadgeVariant } from "@/lib/issues/verdicts";
 import {
   ATTACKER_START_LABEL,
+  ISSUE_FINDINGS_LIMIT,
   ISSUE_OUTCOME_LABEL,
   IssueAttributes,
   IssueFinding,
@@ -60,6 +61,8 @@ type ResourcesState =
       status: "loaded";
       resources: string[];
       findings: IssueFinding[] | undefined;
+      /** `getIssueFindings` capped the preview at ISSUE_FINDINGS_LIMIT. */
+      findingsTruncated: boolean;
       scanId?: string;
       providerId?: string;
     };
@@ -100,6 +103,7 @@ export const IssueDetail = ({
             status: "loaded",
             resources: attributes.resource_uids,
             findings,
+            findingsTruncated: new Set(findingUids).size > ISSUE_FINDINGS_LIMIT,
             scanId: detailScanId,
             providerId: detailProviderId,
           });
@@ -264,7 +268,11 @@ export const IssueDetail = ({
       {state.status === "loaded" &&
         state.findings &&
         state.findings.length > 0 && (
-          <IssueCompliance findings={state.findings} scanId={activeScanId} />
+          <IssueCompliance
+            findings={state.findings}
+            scanId={activeScanId}
+            truncated={state.findingsTruncated}
+          />
         )}
       <IssueTriage id={id} status={issue.triage_status} />
     </div>

@@ -42,12 +42,23 @@ const finding = (id: string, checkId: string): IssueFinding => ({
   resourceUid: `r-${id}`,
 });
 
-const renderCompliance = (findings: IssueFinding[], scanId?: string) =>
+const renderCompliance = (
+  findings: IssueFinding[],
+  scanId?: string,
+  truncated?: boolean,
+) =>
   render(
     <TooltipProvider>
-      <IssueCompliance findings={findings} scanId={scanId} />
+      <IssueCompliance
+        findings={findings}
+        scanId={scanId}
+        truncated={truncated}
+      />
     </TooltipProvider>,
   );
+
+const INCOMPLETE =
+  "Not every finding could be checked, so this list may be incomplete.";
 
 describe("IssueCompliance", () => {
   beforeEach(() => {
@@ -111,5 +122,45 @@ describe("IssueCompliance", () => {
     expect(
       await screen.findByText("Could not load the frameworks for this issue."),
     ).toBeInTheDocument();
+  });
+
+  it("does not claim no framework applies when one lookup failed", async () => {
+    // Given
+    getFrameworksMock
+      .mockResolvedValueOnce({ frameworks: [], unavailable: false })
+      .mockResolvedValueOnce({ frameworks: [], unavailable: true });
+
+    // When
+    renderCompliance([finding("f1", "check-a"), finding("f2", "check-b")]);
+
+    // Then
+    expect(await screen.findByText(INCOMPLETE)).toBeInTheDocument();
+    expect(
+      screen.queryByText(/behind this issue map to a framework/),
+    ).not.toBeInTheDocument();
+  });
+
+  it("stops loading when a lookup is rejected", async () => {
+    getFrameworksMock.mockRejectedValue(new Error("Network error"));
+    renderCompliance([finding("f1", "check-a")]);
+
+    expect(
+      await screen.findByText("Could not load the frameworks for this issue."),
+    ).toBeInTheDocument();
+  });
+
+  it("flags the list as incomplete when the findings are a capped preview", async () => {
+    getFrameworksMock.mockResolvedValue({
+      frameworks: [framework("cis_aws", "CIS")],
+      unavailable: false,
+    });
+    renderCompliance([finding("f1", "check-a")], "scan-1", true);
+
+    expect(
+      await screen.findByRole("button", {
+        name: "Open CIS compliance details",
+      }),
+    ).toBeInTheDocument();
+    expect(screen.getByText(INCOMPLETE)).toBeInTheDocument();
   });
 });

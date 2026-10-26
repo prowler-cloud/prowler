@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { IssueDetail } from "@/components/issues/issue-detail";
-import { IssueAttributes } from "@/types/issues";
+import { ISSUE_FINDINGS_LIMIT, IssueAttributes } from "@/types/issues";
 
 const { getIssueMock, getIssueFindingsMock } = vi.hoisted(() => ({
   getIssueMock: vi.fn(),
@@ -19,7 +19,8 @@ vi.mock("@/actions/issues", () => ({
 }));
 
 vi.mock("@/components/issues/issue-compliance", () => ({
-  IssueCompliance: () => null,
+  IssueCompliance: ({ truncated }: { truncated: boolean }) =>
+    truncated ? <p>Compliance from a capped preview</p> : null,
 }));
 vi.mock("@/components/findings/send-to-jira-modal", () => ({
   SendToJiraModal: () => null,
@@ -101,6 +102,39 @@ describe("IssueDetail", () => {
     // Shown inline so keyboard users can read it too.
     expect(
       screen.getByText(/Where the attacker has to be standing/),
+    ).toBeInTheDocument();
+  });
+
+  it("tells the compliance section when the findings preview was capped", async () => {
+    // Given - one more finding than the preview loads
+    getIssueMock.mockResolvedValue({
+      data: {
+        attributes: {
+          resource_uids: [],
+          finding_uids: Array.from(
+            { length: ISSUE_FINDINGS_LIMIT + 1 },
+            (_, i) => `uid-${i}`,
+          ),
+        },
+        relationships: { scan: { data: { type: "scans", id: "scan-1" } } },
+      },
+    });
+    getIssueFindingsMock.mockResolvedValue([
+      {
+        id: "f1",
+        checkId: "check-a",
+        checkTitle: "Check A",
+        severity: "high",
+        resourceUid: "r1",
+      },
+    ]);
+
+    // When
+    render(<IssueDetail id="issue-1" issue={issue} />);
+
+    // Then
+    expect(
+      await screen.findByText("Compliance from a capped preview"),
     ).toBeInTheDocument();
   });
 

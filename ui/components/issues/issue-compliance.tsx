@@ -18,11 +18,18 @@ export const COMPLIANCE_LOOKUP_LIMIT = 6;
 type ComplianceState =
   | { status: "loading" }
   | { status: "unavailable" }
-  | { status: "loaded"; frameworks: FindingComplianceFramework[] };
+  | {
+      status: "loaded";
+      frameworks: FindingComplianceFramework[];
+      /** Some lookups failed, so frameworks may be missing. */
+      partial: boolean;
+    };
 
 interface IssueComplianceProps {
   findings: IssueFinding[];
   scanId?: string;
+  /** `findings` is a capped preview of a larger issue. */
+  truncated?: boolean;
 }
 
 /**
@@ -30,11 +37,17 @@ interface IssueComplianceProps {
  * mapping. Frameworks belong to the check, so one finding per check answers
  * for all of them.
  */
-export const IssueCompliance = ({ findings, scanId }: IssueComplianceProps) => {
+export const IssueCompliance = ({
+  findings,
+  scanId,
+  truncated = false,
+}: IssueComplianceProps) => {
   const [state, setState] = useState<ComplianceState>({ status: "loading" });
-  const representatives = Array.from(
-    new Map(findings.map((f) => [f.checkId, f.id])).values(),
-  ).slice(0, COMPLIANCE_LOOKUP_LIMIT);
+  const checks = new Map(findings.map((f) => [f.checkId, f.id]));
+  const representatives = Array.from(checks.values()).slice(
+    0,
+    COMPLIANCE_LOOKUP_LIMIT,
+  );
   const key = representatives.join(",");
 
   useEffect(() => {
@@ -44,30 +57,42 @@ export const IssueCompliance = ({ findings, scanId }: IssueComplianceProps) => {
         .split(",")
         .filter(Boolean)
         .map((id) => getFindingComplianceFrameworks(id)),
-    ).then((results) => {
-      if (cancelled) return;
-      if (results.length > 0 && results.every((r) => r.unavailable)) {
-        setState({ status: "unavailable" });
-        return;
-      }
-      const byId = new Map(
-        results.flatMap((r) => r.frameworks).map((f) => [f.complianceId, f]),
-      );
-      // Watchlist first: a public bucket maps into dozens of frameworks, and
-      // the ones this organization reports on should not be buried.
-      const frameworks = Array.from(byId.values()).sort(
-        (a, b) =>
-          Number(b.inWatchlist) - Number(a.inWatchlist) ||
-          complianceFrameworkLabel(a).localeCompare(
-            complianceFrameworkLabel(b),
-          ),
-      );
-      setState({ status: "loaded", frameworks });
-    });
+    )
+      .then((results) => {
+        if (cancelled) return;
+        if (results.length > 0 && results.every((r) => r.unavailable)) {
+          setState({ status: "unavailable" });
+          return;
+        }
+        const byId = new Map(
+          results.flatMap((r) => r.frameworks).map((f) => [f.complianceId, f]),
+        );
+        // Watchlist first: a public bucket maps into dozens of frameworks, and
+        // the ones this organization reports on should not be buried.
+        const frameworks = Array.from(byId.values()).sort(
+          (a, b) =>
+            Number(b.inWatchlist) - Number(a.inWatchlist) ||
+            complianceFrameworkLabel(a).localeCompare(
+              complianceFrameworkLabel(b),
+            ),
+        );
+        setState({
+          status: "loaded",
+          frameworks,
+          partial: results.some((r) => r.unavailable),
+        });
+      })
+      .catch(() => {
+        if (!cancelled) setState({ status: "unavailable" });
+      });
     return () => {
       cancelled = true;
     };
   }, [key]);
+
+  const incomplete =
+    state.status === "loaded" &&
+    (state.partial || truncated || checks.size > COMPLIANCE_LOOKUP_LIMIT);
 
   const open = (framework: FindingComplianceFramework) => {
     if (!scanId) return;
@@ -94,21 +119,33 @@ export const IssueCompliance = ({ findings, scanId }: IssueComplianceProps) => {
         <p className="text-text-neutral-tertiary text-sm">
           Could not load the frameworks for this issue.
         </p>
-      ) : state.frameworks.length === 0 ? (
-        <p className="text-text-neutral-tertiary text-sm">
-          None of the findings behind this issue map to a framework requirement.
-        </p>
       ) : (
-        <div className="flex flex-wrap items-center gap-2">
-          {state.frameworks.map((framework) => (
-            <ComplianceFrameworkChip
-              key={framework.complianceId}
-              framework={framework}
-              isNavigable={Boolean(scanId)}
-              onOpen={open}
-            />
-          ))}
-        </div>
+        <>
+          {state.frameworks.length === 0 ? (
+            <p className="text-text-neutral-tertiary text-sm">
+              {incomplete
+                ? "None of the findings checked map to a framework requirement."
+                : "None of the findings behind this issue map to a framework requirement."}
+            </p>
+          ) : (
+            <div className="flex flex-wrap items-center gap-2">
+              {state.frameworks.map((framework) => (
+                <ComplianceFrameworkChip
+                  key={framework.complianceId}
+                  framework={framework}
+                  isNavigable={Boolean(scanId)}
+                  onOpen={open}
+                />
+              ))}
+            </div>
+          )}
+          {incomplete && (
+            <p className="text-text-neutral-tertiary mt-2 text-xs">
+              Not every finding could be checked, so this list may be
+              incomplete.
+            </p>
+          )}
+        </>
       )}
     </section>
   );
