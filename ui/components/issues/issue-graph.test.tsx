@@ -76,9 +76,11 @@ describe("IssueGraph finding lookup", () => {
         findings={[
           {
             id: "folded-finding",
+            uid: "folded-finding-uid",
             checkId: "ssh",
             checkTitle: "SSH exposed",
             severity: "critical",
+            triageStatus: "open",
             resourceUid: "bucket",
           },
         ]}
