@@ -147,6 +147,22 @@ describe("IssueDetail", () => {
     expect(screen.queryByText("Outcome")).not.toBeInTheDocument();
   });
 
+  it("links each affected resource to it on the Resources page", async () => {
+    getIssueMock.mockResolvedValue({
+      data: { attributes: { resource_uids: ["arn:aws:s3:::bucket"] } },
+    });
+    render(<IssueDetail id="issue-1" issue={issue} providerId="provider-1" />);
+
+    expect(
+      await screen.findByRole("link", {
+        name: "Open in Resources: arn:aws:s3:::bucket",
+      }),
+    ).toHaveAttribute(
+      "href",
+      "/resources?filter%5Buid%5D=arn%3Aaws%3As3%3A%3A%3Abucket&filter%5Bprovider_id__in%5D=provider-1",
+    );
+  });
+
   it("says so when the resources cannot be loaded", async () => {
     getIssueMock.mockResolvedValue(undefined);
     render(<IssueDetail id="issue-1" issue={issue} />);

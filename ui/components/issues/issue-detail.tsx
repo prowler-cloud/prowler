@@ -49,6 +49,15 @@ const STATE_LABELS: Record<LegState, string> = {
 };
 const RESOURCE_PAGE_SIZE = 12;
 
+// The issue carries resource uids, not ids, so this opens the Resources list
+// on that one resource rather than its drawer.
+const resourceHref = (uid: string, providerId?: string) =>
+  `/resources?${new URLSearchParams({
+    "filter[uid]": uid,
+    // A uid is unique within an account, not across them.
+    ...(providerId && { "filter[provider_id__in]": providerId }),
+  })}`;
+
 interface IssueDetailProps {
   id: string;
   issue: IssueAttributes;
@@ -230,8 +239,19 @@ export const IssueDetail = ({
           </h4>
           <ul className="flex flex-col gap-2">
             {state.resources.slice(0, visibleResources).map((uid) => (
-              <li key={uid} className="min-w-0">
+              <li
+                key={uid}
+                className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1"
+              >
                 <CodeSnippet value={uid} multiline ariaLabel={`Copy ${uid}`} />
+                <Button asChild variant="link" size="link-sm">
+                  <Link
+                    href={resourceHref(uid, state.providerId)}
+                    aria-label={`Open in Resources: ${uid}`}
+                  >
+                    Open in Resources
+                  </Link>
+                </Button>
               </li>
             ))}
           </ul>
