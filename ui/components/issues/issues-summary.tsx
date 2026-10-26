@@ -1,16 +1,15 @@
 import {
   CircleHelp,
   Layers,
+  type LucideIcon,
   Shield,
   ShieldCheck,
   TriangleAlert,
 } from "lucide-react";
 import Link from "next/link";
-import { ReactNode } from "react";
 
-import { Card } from "@/components/shadcn/card/card";
+import { CardVariant, ResourceStatsCard } from "@/components/shadcn";
 import { issuesHref } from "@/lib/issues/scope";
-import { cn } from "@/lib/utils";
 import { IssuesOverviewAttributes } from "@/types/issues";
 
 interface TileProps {
@@ -18,11 +17,11 @@ interface TileProps {
   label: string;
   detail?: string;
   href: string;
-  icon: ReactNode;
-  tone: string;
+  icon: LucideIcon;
+  variant: CardVariant;
 }
 
-const Tile = ({ value, label, detail, href, icon, tone }: TileProps) => (
+const Tile = ({ value, label, detail, href, icon, variant }: TileProps) => (
   <Link
     href={href}
     aria-label={[`${value.toLocaleString()} ${label}`, detail]
@@ -30,26 +29,12 @@ const Tile = ({ value, label, detail, href, icon, tone }: TileProps) => (
       .join(", ")}
     className="focus-visible:ring-ring/50 min-w-0 rounded-xl focus-visible:ring-2 focus-visible:outline-none"
   >
-    <Card
-      variant="inner"
-      padding="md"
-      className="hover:border-border-neutral-primary h-full gap-1 transition-colors"
-    >
-      <span className="flex items-center gap-2">
-        <span className={cn("flex items-center gap-1.5", tone)}>
-          {icon}
-          <span className="text-base leading-none font-semibold tabular-nums">
-            {value.toLocaleString()}
-          </span>
-        </span>
-        <span className="text-text-neutral-secondary truncate text-sm">
-          {label}
-        </span>
-      </span>
-      {detail && (
-        <span className="text-text-neutral-tertiary text-xs">{detail}</span>
-      )}
-    </Card>
+    <ResourceStatsCard
+      badge={{ icon, count: value.toLocaleString(), variant }}
+      label={label}
+      stats={detail ? [{ icon: ShieldCheck, label: detail }] : []}
+      className="hover:border-border-neutral-primary h-full transition-colors"
+    />
   </Link>
 );
 
@@ -71,41 +56,37 @@ export const IssuesSummary = ({
       value={summary.findings}
       label="Failed findings folded"
       href={issuesHref(scope)}
-      icon={<Layers className="size-4" aria-hidden="true" />}
-      tone="text-text-error-primary"
+      icon={Layers}
+      variant={CardVariant.fail}
     />
     <Tile
       value={summary.issues}
       label="Issues"
       href={issuesHref(scope)}
-      icon={<Shield className="size-4" aria-hidden="true" />}
-      tone="text-text-neutral-primary"
+      icon={Shield}
+      variant={CardVariant.default}
     />
     <Tile
       value={summary.actionable}
       label="Exploitable or likely"
       href={issuesHref(scope, { "filter[verdict__in]": "exploitable,likely" })}
-      icon={<TriangleAlert className="size-4" aria-hidden="true" />}
-      tone={
-        summary.actionable > 0
-          ? "text-text-error-primary"
-          : "text-text-success-primary"
-      }
+      icon={TriangleAlert}
+      variant={summary.actionable > 0 ? CardVariant.fail : CardVariant.pass}
     />
     <Tile
       value={summary.not_exploitable}
       label="Not exploitable"
       detail={`${summary.not_exploitable_findings.toLocaleString()} ${summary.not_exploitable_findings === 1 ? "finding" : "findings"} covered by a control`}
       href={issuesHref(scope, { "filter[verdict]": "not_exploitable" })}
-      icon={<ShieldCheck className="size-4" aria-hidden="true" />}
-      tone="text-text-success-primary"
+      icon={ShieldCheck}
+      variant={CardVariant.pass}
     />
     <Tile
       value={summary.unknown}
       label="Unknown"
       href={issuesHref(scope, { "filter[verdict]": "unknown" })}
-      icon={<CircleHelp className="size-4" aria-hidden="true" />}
-      tone="text-text-warning-primary"
+      icon={CircleHelp}
+      variant={CardVariant.warning}
     />
   </div>
 );
