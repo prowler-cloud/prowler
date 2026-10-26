@@ -1,5 +1,6 @@
 ---
-title: 'Test Impact Analysis'
+title: 'Test Impact Analysis in CI'
+description: 'Prowler test impact analysis maps changed files to relevant SDK, API, and Playwright E2E tests through a GitHub Actions workflow and configurable path rules.'
 ---
 
 Test impact analysis (TIA) determines which tests to run based on the files changed in a pull request. Instead of running the full test suite on every pull request, TIA maps changed files to the specific Prowler SDK, API, and end-to-end (E2E) tests that cover them. This approach reduces continuous integration (CI) time and resource usage while maintaining confidence that relevant code paths are tested.
