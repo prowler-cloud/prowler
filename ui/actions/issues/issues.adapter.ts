@@ -1,29 +1,7 @@
-import { FindingProps } from "@/types/components";
-import {
-  FINDING_TRIAGE_STATUS,
-  FindingTriageStatus,
-} from "@/types/findings-triage";
-import { IssueFinding, IssueTriageNote } from "@/types/issues";
-import { JsonApiDocument, JsonApiResource } from "@/types/jsonapi";
-import { ResourceProps } from "@/types/resources";
+import { FINDING_TRIAGE_STATUS } from "@/types/findings-triage";
+import type { IssueFinding, IssueTriageNote } from "@/types/issues";
 
-interface IssueFindingAttributes
-  extends Pick<
-    FindingProps["attributes"],
-    "uid" | "check_id" | "check_metadata" | "severity"
-  > {
-  triage_status?: FindingTriageStatus | null;
-}
-
-interface IssueFindingResource extends Pick<FindingProps, "id"> {
-  attributes: IssueFindingAttributes;
-  relationships: Pick<FindingProps["relationships"], "resources">;
-}
-
-interface IssueFindingsDocument
-  extends JsonApiDocument<IssueFindingResource[]> {
-  included?: JsonApiResource<Pick<ResourceProps["attributes"], "uid">>[];
-}
+import type { IssueFindingsDocument, IssueTriageNotesDocument } from "./types";
 
 export const toIssueFindings = (
   payload: IssueFindingsDocument | undefined,
@@ -57,16 +35,6 @@ export const toIssueFindings = (
     }),
   );
 };
-
-interface IssueTriageNoteResource
-  extends JsonApiResource<{ body: string; inserted_at: string }> {
-  relationships?: { created_by?: { data: { id: string } | null } };
-}
-
-interface IssueTriageNotesDocument
-  extends JsonApiDocument<IssueTriageNoteResource[]> {
-  included?: JsonApiResource<{ name?: string; email?: string }>[];
-}
 
 export const toIssueTriageNotes = (
   payload: IssueTriageNotesDocument | undefined,

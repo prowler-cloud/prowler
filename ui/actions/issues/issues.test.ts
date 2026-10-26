@@ -188,6 +188,28 @@ describe("issues actions", () => {
     expect(handleApiErrorMock).toHaveBeenCalledWith(new Error("Server error"));
   });
 
+  it.each([
+    {
+      operation: "updating triage",
+      save: () => updateIssueTriage("issue-1", { status: "risk_accepted" }),
+    },
+    {
+      operation: "adding a note",
+      save: () => addIssueNote("issue-1", "Accepted."),
+    },
+  ])(
+    "returns a save error when authentication fails while $operation",
+    async ({ save }) => {
+      // Given
+      getAuthHeadersMock.mockRejectedValue(new Error("Session lookup failed"));
+      handleApiErrorMock.mockReturnValue({ error: "Something went wrong." });
+
+      // When / Then
+      await expect(save()).resolves.toEqual({ error: "Something went wrong." });
+      expect(fetchMock).not.toHaveBeenCalled();
+    },
+  );
+
   it("names each note's author from the included users", async () => {
     // Given
     handleApiResponseMock.mockResolvedValue({

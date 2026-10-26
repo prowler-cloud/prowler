@@ -31,6 +31,7 @@ import {
   FINDING_TRIAGE_RESOLVED_LOCKED_COPY,
   FINDING_TRIAGE_STATUS,
   MANUAL_PASS_PROVENANCE,
+  MANUAL_PASS_NOTE_REQUIRED_COPY,
   type FindingTriageContext,
   type FindingTriageDetail,
   type FindingTriageModalStatus,
@@ -41,10 +42,7 @@ import {
   isTriageStatusLocked,
 } from "@/types/findings-triage";
 
-import {
-  FindingTriageStatusControl,
-  MANUAL_PASS_NOTE_REQUIRED_COPY,
-} from "./finding-triage-status-control";
+import { FindingTriageStatusControl } from "./finding-triage-status-control";
 import { buildFindingTriageUpdateInput } from "./finding-triage-submit";
 
 interface FindingNoteModalProps {
