@@ -1,7 +1,7 @@
 from datetime import datetime
 from itertools import zip_longest
 from re import sub
-from typing import Optional
+from typing import ClassVar, Optional
 
 from pydantic.v1 import BaseModel
 
@@ -286,6 +286,7 @@ class ECS(AWSService):
 
 class ContainerEnvVariable(BaseModel):
     name: str
+    sensitive_fields: ClassVar[tuple[str, ...]] = ("value",)
     value: str
 
 

@@ -8,7 +8,8 @@ import type { AddProviderFormValues } from "@/types/formSchemas";
 
 import { RadioGroupProvider } from "./radio-group-provider";
 
-const LOGO_URL = "https://media.registry.example.com/providers/vcf/logo.png";
+// Keep even speculative browser requests on loopback; MSW serves the image.
+const LOGO_URL = "https://127.0.0.1/providers/vcf/logo.png";
 
 function Selector() {
   const form = useForm<AddProviderFormValues>();
@@ -52,6 +53,9 @@ describe("provider selector logos", () => {
     await expect
       .poll(() => registry.querySelector("img")?.getAttribute("src"))
       .toBe(LOGO_URL);
+    await expect
+      .poll(() => registry.querySelector("img")?.naturalWidth)
+      .toBe(1);
 
     // Then
     expect(logoBox(registry)).toEqual(logoBox(builtIn));

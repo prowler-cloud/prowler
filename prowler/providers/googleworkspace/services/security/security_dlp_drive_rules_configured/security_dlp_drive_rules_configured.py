@@ -1,6 +1,11 @@
 from typing import List
 
 from prowler.lib.check.models import Check, CheckReportGoogleWorkspace
+from prowler.providers.googleworkspace.lib.licensing import (
+    DRIVE_DLP_EXPLANATION,
+    EDITIONS_WITHOUT_DRIVE_DLP,
+    edition_reason_suffix,
+)
 from prowler.providers.googleworkspace.services.security.security_client import (
     security_client,
 )
@@ -11,7 +16,9 @@ class security_dlp_drive_rules_configured(Check):
 
     This check verifies that at least one active Data Loss Prevention (DLP)
     rule targeting Google Drive file sharing exists, helping to prevent
-    unintended exposure of sensitive information.
+    unintended exposure of sensitive information. DLP for Drive is
+    edition-gated: when every edition the tenant holds lacks it, the finding
+    says so. A Cloud Identity Premium subscription counts as holding it.
     """
 
     def execute(self) -> List[CheckReportGoogleWorkspace]:
@@ -43,6 +50,7 @@ class security_dlp_drive_rules_configured(Check):
                     f"in domain {domain}. DLP rules should be configured "
                     f"to detect and prevent sharing of sensitive information "
                     f"through Drive."
+                    f"{edition_reason_suffix(security_client.provider.editions, EDITIONS_WITHOUT_DRIVE_DLP, DRIVE_DLP_EXPLANATION)}"
                 )
 
             findings.append(report)

@@ -24,9 +24,9 @@ interface LighthouseSkillsRailProps {
   onSubmitPrompt: (text: string) => void;
 }
 
-// Finding-detail skill launcher, "dropdown" experiment variant (chip rail):
-// one compact row under the finding title — direct-launch chips plus a +N
-// trigger opening the same skills menu used by the table row surfaces.
+// Finding-detail skill launcher (chip rail): one compact row under the
+// finding title — direct-launch chips plus a +N trigger opening the same
+// skills menu used by the table row surfaces.
 export function LighthouseSkillsRail({
   onLaunchSkill,
   onSubmitPrompt,

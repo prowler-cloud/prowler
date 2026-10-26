@@ -36,5 +36,5 @@
     "chat_internal_file_sharing_disabled",
     "drive_sharing_allowlisted_domains"
   ],
-  "Notes": ""
+  "Notes": "When Google Chat is turned off for everyone, the check passes: the setting has no effect while the service is off."
 }

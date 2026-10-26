@@ -720,11 +720,24 @@ export class ProvidersPage extends BasePage {
     ).toBeVisible({ timeout: 10000 });
   }
 
-  // The admin role comes preselected; only the email is needed.
-  async sendTeammateInvitation(email: string): Promise<void> {
+  // The form preselects a role only when the tenant has one named exactly
+  // "admin"; the E2E tenant's is "e2e_admin", so pick the role explicitly.
+  async sendTeammateInvitation(
+    email: string,
+    rolePattern: RegExp = /admin/i,
+  ): Promise<void> {
     await this.wizardModal
       .getByRole("textbox", { name: /Teammate email/i })
       .fill(email);
+    // Radix Select: the trigger is a combobox and its options render in a portal.
+    const roleSelect = this.wizardModal.getByRole("combobox", {
+      name: "Select a role",
+    });
+    await roleSelect.click();
+    const option = this.page.getByRole("option", { name: rolePattern }).first();
+    await expect(option).toBeVisible({ timeout: 10000 });
+    await option.click();
+    await expect(roleSelect).not.toContainText("Select a role");
     const send = this.page.getByRole("button", {
       name: "Send invitation",
       exact: true,

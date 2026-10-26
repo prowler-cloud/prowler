@@ -22,6 +22,12 @@ GUARDRAIL_ARN = (
 
 
 def mock_make_api_call(self, operation_name, kwarg):
+    """Serve one fully configured guardrail, and defer any other operation to botocore.
+
+    The sensitiveInformationPolicy carries one PII entity and one regex, both with an action and
+    neither with outputAction or outputEnabled, which is the shape GetGuardrail returns when the
+    per-path settings were never configured.
+    """
     if operation_name == "ListGuardrails":
         return {
             "guardrails": [
@@ -48,7 +54,16 @@ def mock_make_api_call(self, operation_name, kwarg):
                     },
                 ]
             },
-            "sensitiveInformationPolicy": True,
+            "sensitiveInformationPolicy": {
+                "piiEntities": [{"type": "EMAIL", "action": "ANONYMIZE"}],
+                "regexes": [
+                    {
+                        "name": "account-id",
+                        "pattern": "[0-9]{12}",
+                        "action": "BLOCK",
+                    }
+                ],
+            },
             "blockedInputMessaging": "Sorry, the model cannot answer this question.",
             "blockedOutputsMessaging": "Sorry, the model cannot answer this question.",
         }
@@ -58,6 +73,66 @@ def mock_make_api_call(self, operation_name, kwarg):
                 {"Key": "Name", "Value": "test"},
             ]
         }
+    return make_api_call(self, operation_name, kwarg)
+
+
+def mock_make_api_call_guardrail_regex_output_path(self, operation_name, kwarg):
+    """A guardrail whose REGEX carries explicit per-path settings.
+
+    The shared fixture omits outputAction and outputEnabled on both arms, so an assertion that they
+    are all None passes whether or not the regex arm reads them -- it cannot discriminate. This
+    fixture blocks on input and leaks on output, which is the shape that separates the two.
+    """
+    if operation_name == "GetGuardrail":
+        return {
+            "guardrailArn": GUARDRAIL_ARN,
+            "guardrailId": "test-id",
+            "name": "test",
+            "status": "READY",
+            "sensitiveInformationPolicy": {
+                "regexes": [
+                    {
+                        "name": "internal-token",
+                        "pattern": "tok-[0-9]+",
+                        "action": "BLOCK",
+                        "outputAction": "NONE",
+                        "outputEnabled": True,
+                    }
+                ]
+            },
+            "blockedInputMessaging": "no",
+            "blockedOutputsMessaging": "no",
+        }
+    return mock_make_api_call(self, operation_name, kwarg)
+
+
+def mock_make_api_call_get_guardrail_denied(self, operation_name, kwarg):
+    """List the guardrail successfully but deny GetGuardrail.
+
+    Reproduces the partial-permission state a caller holding bedrock:ListGuardrails without
+    bedrock:GetGuardrail sees: the resource is known to exist, its configuration is not.
+    """
+    if operation_name == "ListGuardrails":
+        return {
+            "guardrails": [
+                {
+                    "id": "test-id",
+                    "arn": GUARDRAIL_ARN,
+                    "status": "READY",
+                    "name": "test",
+                }
+            ]
+        }
+    elif operation_name == "GetGuardrail":
+        raise botocore.exceptions.ClientError(
+            {
+                "Error": {
+                    "Code": "AccessDeniedException",
+                    "Message": "not authorized to perform: bedrock:GetGuardrail",
+                }
+            },
+            "GetGuardrail",
+        )
     return make_api_call(self, operation_name, kwarg)
 
 
@@ -129,6 +204,36 @@ class Test_Bedrock_Service:
         )
         assert not bedrock.logging_configurations[AWS_REGION_US_EAST_1].enabled
 
+    @mock_aws
+    def test_get_model_invocation_logging_delivery_flags(self):
+        """The delivery flags must be carried through, not inferred from the destination.
+
+        A configuration can name a log group while excluding the request and response bodies.
+        Asserting only `enabled` reports content capture that is switched off.
+        """
+        aws_provider = set_mocked_aws_provider(audited_regions=[AWS_REGION_EU_WEST_1])
+        bedrock_client_eu_west_1 = client("bedrock", region_name="eu-west-1")
+        bedrock_client_eu_west_1.put_model_invocation_logging_configuration(
+            loggingConfig={
+                "cloudWatchConfig": {"logGroupName": "Test", "roleArn": "testrole"},
+                "textDataDeliveryEnabled": False,
+                "imageDataDeliveryEnabled": False,
+                "embeddingDataDeliveryEnabled": True,
+                "videoDataDeliveryEnabled": False,
+            }
+        )
+        bedrock = Bedrock(aws_provider)
+        config = bedrock.logging_configurations[AWS_REGION_EU_WEST_1]
+        assert config.enabled
+        assert config.text_data_delivery_enabled is False
+        assert config.image_data_delivery_enabled is False
+        assert config.embedding_data_delivery_enabled is True
+        # The fourth flag was the one of four asserted nowhere, so its read could be mis-keyed or
+        # dropped with the suite green. False rather than True on purpose: it differs from the
+        # embedding flag beside it, so a swap between the two is caught as well as a read that
+        # returns None.
+        assert config.video_data_delivery_enabled is False
+
     @mock.patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
     @mock_aws
     def test_list_guardrails(self):
@@ -143,10 +248,76 @@ class Test_Bedrock_Service:
     @mock.patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
     @mock_aws
     def test_get_guardrail(self):
+        """A guardrail read without error must record the filters found and no error.
+
+        detail_retrieved True with detail_error None is the state that entitles a check to make a
+        claim about the filters; it is asserted here so the clean read is distinguishable from the
+        denied read rather than only inferable from it.
+        """
         aws_provider = set_mocked_aws_provider(audited_regions=[AWS_REGION_US_EAST_1])
         bedrock = Bedrock(aws_provider)
         assert bedrock.guardrails[GUARDRAIL_ARN].sensitive_information_filter
         assert bedrock.guardrails[GUARDRAIL_ARN].prompt_attack_filter_strength == "HIGH"
+        assert bedrock.guardrails[GUARDRAIL_ARN].detail_retrieved is True
+        assert bedrock.guardrails[GUARDRAIL_ARN].detail_error is None
+
+    @mock.patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
+    @mock_aws
+    def test_get_guardrail_sensitive_information_entries(self):
+        """Every PII entity and regex must be carried through with its per-path action.
+
+        The presence of a sensitive information policy says nothing about whether a match is
+        acted on: an entry whose action is NONE detects the value and still returns it.
+        """
+        aws_provider = set_mocked_aws_provider(audited_regions=[AWS_REGION_US_EAST_1])
+        bedrock = Bedrock(aws_provider)
+        entries = bedrock.guardrails[GUARDRAIL_ARN].sensitive_information_entries
+        assert [entry.name for entry in entries] == [
+            "PII entity EMAIL",
+            "regex account-id",
+        ]
+        assert entries[0].action == "ANONYMIZE"
+        assert entries[1].action == "BLOCK"
+        # The API omits the per-path settings unless they were configured explicitly.
+        assert all(entry.output_action is None for entry in entries)
+        assert all(entry.output_enabled is None for entry in entries)
+
+    @mock.patch(
+        "botocore.client.BaseClient._make_api_call",
+        new=mock_make_api_call_guardrail_regex_output_path,
+    )
+    @mock_aws
+    def test_get_guardrail_regex_carries_its_per_path_settings(self):
+        """A regex's outputAction and outputEnabled must be read, not only a PII entity's.
+
+        Mis-keying either read on the regex arm left all 202 bedrock tests green while a guardrail
+        that blocks on input and leaks on output flipped FAIL -> PASS in the check above -- its
+        central claim, output-path enforcement, reversed with nothing failing. The PII arm was
+        already covered; only the regex arm was not, and the existing assertion could not tell,
+        because the shared fixture omits these fields on both arms so `all(... is None)` holds
+        either way.
+        """
+        aws_provider = set_mocked_aws_provider(audited_regions=[AWS_REGION_US_EAST_1])
+        bedrock = Bedrock(aws_provider)
+        entries = bedrock.guardrails[GUARDRAIL_ARN].sensitive_information_entries
+        assert [entry.name for entry in entries] == ["regex internal-token"]
+        assert entries[0].action == "BLOCK"
+        assert entries[0].output_action == "NONE"
+        assert entries[0].output_enabled is True
+
+    @mock.patch(
+        "botocore.client.BaseClient._make_api_call",
+        new=mock_make_api_call_get_guardrail_denied,
+    )
+    @mock_aws
+    def test_get_guardrail_error_records_unretrieved_detail(self):
+        """A guardrail whose detail was never read must be distinguishable from a clean read."""
+        aws_provider = set_mocked_aws_provider(audited_regions=[AWS_REGION_US_EAST_1])
+        bedrock = Bedrock(aws_provider)
+        guardrail = bedrock.guardrails[GUARDRAIL_ARN]
+        assert guardrail.detail_retrieved is False
+        assert guardrail.detail_error == "AccessDeniedException"
+        assert guardrail.sensitive_information_entries == []
 
     @mock.patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
     @mock_aws

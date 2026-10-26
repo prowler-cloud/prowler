@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import ClassVar, Optional
 
 from botocore.client import ClientError
 from pydantic.v1 import BaseModel
@@ -82,6 +82,7 @@ class Stack(BaseModel):
     """In the CloudFormation API the "Stacks[].StackId" is the ARN"""
     name: str
     """Stacks[].StackName"""
+    sensitive_fields: ClassVar[tuple[str, ...]] = ("outputs",)
     outputs: list[str]
     """Stacks[].Outputs"""
     enable_termination_protection: bool = False

@@ -1,0 +1,1 @@
+`bedrock_guardrail_sensitive_information_filter_enforced` check for AWS provider, flagging Bedrock guardrails whose PII entities or custom regexes take no action on the output path, so a detected match is reported in the trace and still delivered to the caller

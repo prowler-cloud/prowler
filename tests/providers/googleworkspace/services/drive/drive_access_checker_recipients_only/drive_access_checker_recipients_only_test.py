@@ -3,6 +3,7 @@ from unittest.mock import patch
 from prowler.providers.googleworkspace.services.drive.drive_service import DrivePolicies
 from tests.providers.googleworkspace.googleworkspace_fixtures import (
     CUSTOMER_ID,
+    DOMAIN,
     set_mocked_googleworkspace_provider,
 )
 
@@ -127,6 +128,39 @@ class TestDriveAccessCheckerRecipientsOnly:
             assert len(findings) == 1
             assert findings[0].status == "FAIL"
             assert "not explicitly configured" in findings[0].status_extended
+
+    def test_pass_when_the_service_is_off_for_everyone(self):
+        """A setting that only acts while the service is on has no effect once the service is off"""
+        mock_provider = set_mocked_googleworkspace_provider()
+
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=mock_provider,
+            ),
+            patch(
+                "prowler.providers.googleworkspace.services.drive.drive_access_checker_recipients_only.drive_access_checker_recipients_only.drive_client"
+            ) as mock_client,
+        ):
+            from prowler.providers.googleworkspace.services.drive.drive_access_checker_recipients_only.drive_access_checker_recipients_only import (
+                drive_access_checker_recipients_only,
+            )
+
+            mock_client.provider = mock_provider
+            mock_client.policies_fetched = True
+            mock_client.policies = DrivePolicies(
+                service_state="DISABLED",
+                access_checker_suggestions="RECIPIENTS_OR_AUDIENCE_OR_PUBLIC",
+            )
+
+            findings = drive_access_checker_recipients_only().execute()
+
+            assert len(findings) == 1
+            assert findings[0].status == "PASS"
+            assert findings[0].status_extended == (
+                f"Google Drive is turned off for everyone in domain {DOMAIN}, "
+                f"so Access Checker cannot widen any share."
+            )
 
     def test_no_findings_when_fetch_failed(self):
         """Test no findings returned when the API fetch failed"""
