@@ -19,6 +19,10 @@ vi.mock("@/actions/findings/finding-compliance-frameworks", () => ({
   getFindingComplianceFrameworks: getFrameworksMock,
 }));
 
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ refresh: vi.fn() }),
+}));
+
 const framework = (
   complianceId: string,
   name: string,
@@ -117,13 +121,26 @@ describe("IssueCompliance", () => {
     );
   });
 
-  it("says so when no framework could be loaded", async () => {
-    getFrameworksMock.mockResolvedValue({ frameworks: [], unavailable: true });
+  it("says so when no framework could be loaded, and looks again on retry", async () => {
+    // Given
+    const user = userEvent.setup();
+    getFrameworksMock.mockResolvedValueOnce({
+      frameworks: [],
+      unavailable: true,
+    });
     renderCompliance([finding("f1", "check-a")]);
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Could not load the frameworks for this issue.",
+    );
 
+    // When
+    await user.click(screen.getByRole("button", { name: "Retry" }));
+
+    // Then
     expect(
-      await screen.findByText("Could not load the frameworks for this issue."),
+      await screen.findByText(/behind this issue map to a framework/),
     ).toBeInTheDocument();
+    expect(getFrameworksMock).toHaveBeenCalledTimes(2);
   });
 
   it("does not claim no framework applies when one lookup failed", async () => {
