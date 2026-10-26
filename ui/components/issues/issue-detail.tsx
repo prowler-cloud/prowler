@@ -12,8 +12,11 @@ import { Badge } from "@/components/shadcn/badge/badge";
 import { Button } from "@/components/shadcn/button/button";
 import { Card } from "@/components/shadcn/card/card";
 import { CodeSnippet } from "@/components/shadcn/code-snippet";
+import { InfoField } from "@/components/shadcn/info-field/info-field";
 import { legBadgeVariant } from "@/lib/issues/verdicts";
 import {
+  ATTACKER_START_LABEL,
+  ISSUE_OUTCOME_LABEL,
   IssueAttributes,
   IssueFinding,
   LegName,
@@ -134,6 +137,19 @@ export const IssueDetail = ({
               : { providerId: undefined, scanId: undefined })}
           />
         )}
+      {issue.outcome && issue.attacker_start && (
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <InfoField label="Outcome">
+            {ISSUE_OUTCOME_LABEL[issue.outcome]}
+          </InfoField>
+          <InfoField
+            label="Starts from"
+            tooltipContent="Where the attacker has to be standing. Whether they also need a credential is the Access leg."
+          >
+            {ATTACKER_START_LABEL[issue.attacker_start]}
+          </InfoField>
+        </div>
+      )}
       <section aria-label="Exploitability assessment">
         <h4 className="mb-3 text-sm font-semibold">
           Exploitability assessment

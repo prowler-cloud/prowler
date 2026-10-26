@@ -20,6 +20,8 @@ const issue: IssueResource = {
     title: "Public bucket exposes customer data",
     verdict: "likely",
     severity: "high",
+    outcome: "data_exposure",
+    attacker_start: "internet",
     findings_count: 3,
     triage_status: "open",
     notes_count: 0,

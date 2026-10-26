@@ -36,6 +36,8 @@ const issue = {
   title: "Findings no attack path models yet (300)",
   verdict: "unknown",
   severity: "high",
+  outcome: "",
+  attacker_start: "",
   legs: {},
   fix: "Review these findings individually.",
   findings_count: 300,
@@ -73,6 +75,35 @@ describe("IssueDetail", () => {
     );
     expect(screen.getByText("resource-15")).toBeInTheDocument();
     expect(screen.getByTestId("issue-graph")).toHaveTextContent("15 resources");
+  });
+
+  it("says what a path buys the attacker and where it starts", async () => {
+    getIssueMock.mockResolvedValue({
+      data: { attributes: { resource_uids: [] } },
+    });
+    render(
+      <IssueDetail
+        id="issue-1"
+        issue={{
+          ...issue,
+          pattern: "aws_public_bucket",
+          outcome: "data_exposure",
+          attacker_start: "internet",
+        }}
+      />,
+    );
+
+    expect(screen.getByText("Data exposure")).toBeInTheDocument();
+    expect(screen.getByText("The internet")).toBeInTheDocument();
+  });
+
+  it("claims no outcome for an issue that is not one path", async () => {
+    getIssueMock.mockResolvedValue({
+      data: { attributes: { resource_uids: [] } },
+    });
+    render(<IssueDetail id="issue-1" issue={issue} />);
+
+    expect(screen.queryByText("Outcome")).not.toBeInTheDocument();
   });
 
   it("says so when the resources cannot be loaded", async () => {
