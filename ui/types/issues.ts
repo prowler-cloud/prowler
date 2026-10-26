@@ -1,5 +1,6 @@
 import { MetaDataProps } from "@/types";
 import { Severity } from "@/types/components";
+import { FindingTriageStatus } from "@/types/findings-triage";
 import { ProviderType } from "@/types/providers";
 
 /** An issue is a group of findings folded along one attack path. */
@@ -50,6 +51,9 @@ export interface IssueAttributes {
   legs: Record<LegName, LegAssessment>;
   fix: string;
   findings_count: number;
+  /** The decision on the path, kept per account and pattern across scans. */
+  triage_status: FindingTriageStatus;
+  notes_count: number;
   inserted_at: string;
   updated_at: string;
 }
@@ -69,9 +73,12 @@ export const ISSUE_FINDINGS_LIMIT = 50;
 /** One finding-to-resource association from the issue's own scan. */
 export interface IssueFinding {
   id: string;
+  uid: string;
   checkId: string;
   checkTitle: string;
   severity: Severity;
+  /** The finding's own triage, which stays where it lives. */
+  triageStatus: FindingTriageStatus;
   resourceUid: string;
 }
 
@@ -132,4 +139,12 @@ export interface IssuesOverviewResource {
 
 export interface IssuesOverviewResponse {
   data: IssuesOverviewResource;
+}
+
+/** One note on an issue's triage, newest first. */
+export interface IssueTriageNote {
+  id: string;
+  body: string;
+  insertedAt: string;
+  author?: string;
 }

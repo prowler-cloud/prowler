@@ -17,7 +17,13 @@ vi.mock("next/navigation", () => ({
 }));
 vi.mock("@/lib", () => ({ getPaginationInfo: vi.fn() }));
 vi.mock("@/contexts", () => ({ useFilterTransitionOptional: () => null }));
-vi.mock("@/actions/issues", () => ({ getIssue }));
+vi.mock("@/actions/issues", () => ({
+  getIssue,
+  getIssueNotes: async () => [],
+}));
+vi.mock("@/components/findings/send-to-jira-modal", () => ({
+  SendToJiraModal: () => null,
+}));
 vi.mock("@/components/issues/issue-graph", () => ({ IssueGraph: () => null }));
 
 const issue: IssueResponse["data"][number] = {
@@ -31,6 +37,8 @@ const issue: IssueResponse["data"][number] = {
     verdict: "likely",
     severity: "high",
     findings_count: 3,
+    triage_status: "open",
+    notes_count: 0,
     fix: "Restrict access",
     inserted_at: "",
     updated_at: "",

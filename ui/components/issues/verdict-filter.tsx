@@ -50,6 +50,8 @@ const EXTRA_FILTER_LABELS = {
   "filter[severity]": "Severity",
   "filter[provider_type]": "Provider type",
   "filter[provider_alias]": "Account",
+  "filter[triage_status]": "Triage",
+  "filter[triage_status__in]": "Triage",
 } as const;
 
 export function VerdictFilter({ summary }: { summary?: VerdictSummary }) {
