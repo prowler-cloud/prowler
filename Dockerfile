@@ -30,6 +30,7 @@ ARG ZIZMOR_SHA256_ARM64=d66e37ef8a375fb07939c630ebf9709a6e0f20242bdc3faf672a7ed9
 #   perl-base 5.40.1-6+deb13u1  CVE-2026-42497, -48962, -57432
 #   libssh2-1t64 1.11.1-1+deb13u2  CVE-2026-58050
 #   libpcre2-8-0 10.46-1~deb13u2  CVE-2026-86145, -89161
+#   libbrotli1 1.1.0-2+deb13u1  CVE-2026-111497
 # Taken as a targeted --only-upgrade rather than by moving the digest: the newest
 # published python:3.12-slim-trixie carries the same vulnerable versions. The three
 # openssl packages are flagged separately, so all are named.
@@ -40,7 +41,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential pkg-config libzstd-dev zlib1g-dev \
     && apt-get install -y --no-install-recommends --only-upgrade \
        util-linux libssl3t64 openssl openssl-provider-legacy \
-       libsqlite3-0 gzip perl-base libssh2-1t64 libpcre2-8-0 \
+       libsqlite3-0 gzip perl-base libssh2-1t64 libpcre2-8-0 libbrotli1 \
     && rm -rf /var/lib/apt/lists/*
 
 # Install PowerShell
@@ -126,8 +127,10 @@ RUN pip install --no-cache-dir --upgrade pip && \
 RUN uv sync --locked --compile-bytecode && \
     rm -rf ~/.cache/uv
 
-# Install PowerShell modules
-RUN .venv/bin/python prowler/providers/m365/lib/powershell/m365_powershell.py
+# Install PowerShell modules. Drop the MicrosoftTeams build SBOM: Trivy reports the npm
+# tooling it declares as installed, though none ships (see .trivyignore.yaml).
+RUN .venv/bin/python prowler/providers/m365/lib/powershell/m365_powershell.py && \
+    rm -rf "${HOME}"/.local/share/powershell/Modules/MicrosoftTeams/*/_manifest
 
 USER root
 

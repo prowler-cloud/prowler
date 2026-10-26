@@ -27,7 +27,7 @@ from uuid6 import UUID
 from prowler.lib.logger import logger
 from prowler.lib.outputs.finding import Finding
 from prowler.lib.outputs.output import Output
-from prowler.lib.outputs.utils import unroll_dict_to_list
+from prowler.lib.outputs.utils import is_plain_json, unroll_dict_to_list
 
 
 class OCSF(Output):
@@ -278,6 +278,12 @@ class OCSF(Output):
             if isinstance(obj, (list, tuple)):
                 return [_make_serializable(v) for v in obj]
             return obj
+
+        if is_plain_json(resource_metadata):
+            return {
+                "details": resource_details,
+                "metadata": resource_metadata,
+            }
 
         try:
             converted = _make_serializable(resource_metadata)

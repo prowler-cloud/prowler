@@ -1,5 +1,6 @@
 "use client";
 
+import { Send } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
@@ -7,7 +8,6 @@ import { getIssue, getIssueFindings } from "@/actions/issues";
 import { IssueCompliance } from "@/components/issues/issue-compliance";
 import { IssueFindings } from "@/components/issues/issue-findings";
 import { IssueGraph } from "@/components/issues/issue-graph";
-import { IssueSendToJira } from "@/components/issues/issue-send-to-jira";
 import { IssueTriage } from "@/components/issues/issue-triage";
 import { IssuesLoadError } from "@/components/issues/issues-load-error";
 import { Badge } from "@/components/shadcn/badge/badge";
@@ -17,6 +17,9 @@ import { CodeSnippet } from "@/components/shadcn/code-snippet";
 import { InfoField } from "@/components/shadcn/info-field/info-field";
 import { riskFactors } from "@/lib/issues/risk-factors";
 import { legBadgeVariant } from "@/lib/issues/verdicts";
+import { createJiraDispatchPayload } from "@/lib/jira-dispatch-selection";
+import { useJiraDispatchStore } from "@/store/jira-dispatch/store";
+import { JIRA_DISPATCH_TARGET } from "@/types/integrations";
 import {
   ATTACKER_START_LABEL,
   ISSUE_FINDINGS_LIMIT,
@@ -75,6 +78,9 @@ export const IssueDetail = ({
   scanId,
   providerId,
 }: IssueDetailProps) => {
+  const openJiraDispatch = useJiraDispatchStore(
+    (state) => state.openJiraDispatch,
+  );
   const [visibleResources, setVisibleResources] = useState(RESOURCE_PAGE_SIZE);
   const [attempt, setAttempt] = useState(0);
   // Resource UIDs are only included by the detail endpoint, fetched on expansion.
@@ -124,6 +130,20 @@ export const IssueDetail = ({
   };
   const activeScanId = state.status === "loaded" ? state.scanId : scanId;
   const factors = riskFactors(issue);
+  const uniqueFindings =
+    state.status === "loaded"
+      ? Array.from(
+          new Map(
+            state.findings?.map((finding) => [finding.id, finding]),
+          ).values(),
+        )
+      : [];
+  const jiraPayload = createJiraDispatchPayload({
+    findingTitle: issue.title,
+    targetIds: uniqueFindings.map((finding) => finding.id),
+    targetType: JIRA_DISPATCH_TARGET.FINDING_ID,
+    description: `Send ${uniqueFindings.length} of ${issue.findings_count} findings on this attack path.`,
+  });
 
   return (
     <div className="flex min-w-0 flex-col gap-4 py-4">
@@ -270,14 +290,18 @@ export const IssueDetail = ({
               </Link>
             </Button>
           )}
-          {state.status === "loaded" && state.findings && (
+          {jiraPayload && (
             // shortcut: the ticket groups the loaded preview (ISSUE_FINDINGS_LIMIT
             // findings), not every finding of a larger issue; page through
             // finding_uids if tickets for big issues need all of them.
-            <IssueSendToJira
-              title={issue.title}
-              findingIds={Array.from(new Set(state.findings.map((f) => f.id)))}
-            />
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => openJiraDispatch(jiraPayload)}
+            >
+              <Send aria-hidden="true" />
+              Send to Jira
+            </Button>
           )}
         </div>
       </section>
@@ -285,7 +309,7 @@ export const IssueDetail = ({
         state.findings &&
         state.findings.length > 0 && (
           <IssueFindings
-            findings={state.findings}
+            findings={uniqueFindings}
             scanId={activeScanId}
             total={issue.findings_count}
           />

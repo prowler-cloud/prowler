@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { IssueDetail } from "@/components/issues/issue-detail";
+import { useJiraDispatchStore } from "@/store/jira-dispatch/store";
 import { ISSUE_FINDINGS_LIMIT, IssueAttributes } from "@/types/issues";
 
 const { getIssueMock, getIssueFindingsMock } = vi.hoisted(() => ({
@@ -54,6 +55,7 @@ describe("IssueDetail", () => {
   beforeEach(() => {
     getIssueMock.mockReset();
     getIssueFindingsMock.mockResolvedValue([]);
+    useJiraDispatchStore.getState().closeJiraDispatch();
   });
 
   it("links to the issue's scan findings and reveals every folded resource", async () => {
@@ -247,14 +249,62 @@ describe("IssueDetail", () => {
     render(<IssueDetail id="issue-1" issue={issue} scanId="scan-1" />);
 
     const section = await screen.findByRole("region", { name: "Findings" });
-    expect(
-      within(section).getByRole("link", { name: "Bucket is public" }),
-    ).toHaveAttribute(
-      "href",
-      "/findings?filter%5Bscan__in%5D=scan-1&filter%5Buid__in%5D=f-1",
-    );
+    const link = within(section).getByRole("link", {
+      name: "Bucket is public",
+    });
+    const destination = new URL(link.getAttribute("href")!, "https://app.test");
+    expect(Object.fromEntries(destination.searchParams)).toEqual({
+      "filter[scan__in]": "scan-1",
+      "filter[check_id__in]": "s3_bucket_public_access",
+      "filter[resource_uid]": "other-bucket",
+      "filter[muted]": "include",
+      expandedCheckId: "s3_bucket_public_access",
+    });
     expect(within(section).getAllByRole("listitem")).toHaveLength(2);
     expect(within(section).getByText("Risk Accepted")).toBeInTheDocument();
     expect(within(section).getByText("Showing 2 of 300.")).toBeInTheDocument();
+  });
+
+  it("opens the global Jira flow with unique finding IDs", async () => {
+    // Given
+    const user = userEvent.setup();
+    getIssueMock.mockResolvedValue({
+      data: {
+        attributes: { resource_uids: ["bucket"], finding_uids: ["f-1"] },
+      },
+    });
+    const finding = {
+      id: "finding-1",
+      uid: "f-1",
+      checkId: "s3_public",
+      checkTitle: "Bucket is public",
+      severity: "critical",
+      triageStatus: "open",
+      resourceUid: "bucket",
+    };
+    getIssueFindingsMock.mockResolvedValue([
+      finding,
+      { ...finding, resourceUid: "other-bucket" },
+      { ...finding, id: "finding-2", uid: "f-2" },
+    ]);
+    const view = render(
+      <IssueDetail id="issue-1" issue={issue} scanId="scan-1" />,
+    );
+
+    // When
+    await user.click(
+      await screen.findByRole("button", { name: "Send to Jira" }),
+    );
+    view.unmount();
+
+    // Then: the globally hosted modal survives the detail closing.
+    expect(useJiraDispatchStore.getState().activePayload).toMatchObject({
+      findingTitle: issue.title,
+      selection: {
+        kind: "target-list",
+        targetType: "finding_id",
+        targetIds: ["finding-1", "finding-2"],
+      },
+    });
   });
 });

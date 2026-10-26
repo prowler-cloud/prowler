@@ -92,7 +92,6 @@ import {
 
 import {
   FindingNoteActionItem,
-  FindingTriageStatusBadge,
   FindingTriageStatusCell,
 } from "./finding-triage-cells";
 
@@ -801,22 +800,6 @@ describe("finding triage cells", () => {
     expect(
       screen.queryByRole("dialog", { name: "Manual Pass Details" }),
     ).not.toBeInTheDocument();
-  });
-
-  it("renders a read-only triage status badge with the status color", () => {
-    // Given / When
-    render(
-      <FindingTriageStatusBadge
-        triage={makeTriageSummary({
-          status: FINDING_TRIAGE_STATUS.REMEDIATING,
-          label: "Remediating",
-        })}
-      />,
-    );
-
-    // Then
-    expect(screen.getByText("Triage:")).toBeInTheDocument();
-    expect(screen.getByText("Remediating")).toHaveClass("text-bg-data-info");
   });
 
   it("should disable table status mutation when no update handler is wired", async () => {

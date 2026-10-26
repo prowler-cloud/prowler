@@ -5,7 +5,7 @@ requires = ["hatchling==1.32.0"]
 [dependency-groups]
 dev = [
   "bandit==1.8.3",
-  "black==26.3.1",
+  "black==26.10.1",
   "coverage==7.6.12",
   "docker==7.1.0",
   "filelock==3.20.3",
@@ -226,7 +226,7 @@ constraint-dependencies = [
   "azure-core==1.41.0",
   "azure-mgmt-core==1.6.0",
   "bandit==1.8.3",
-  "black==26.3.1",
+  "black==26.10.1",
   "blinker==1.9.0",
   "certifi==2026.10.19",
   "cffi==2.0.0",
@@ -258,7 +258,7 @@ constraint-dependencies = [
   "google-auth==2.52.0",
   "googleapis-common-protos==1.75.0",
   "graphemeu==0.7.2",
-  "graphql-core==3.2.8",
+  "graphql-core==3.2.12",
   "h11==0.16.0",
   "hpack==4.1.0",
   "httpcore==1.0.9",

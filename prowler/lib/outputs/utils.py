@@ -220,3 +220,20 @@ def sanitize_csv_value(value):
     if isfinite(number) and value == value.strip():
         return value
     return f"'{value}"
+
+
+def is_plain_json(value) -> bool:
+    """Return True when value is made only of JSON types with str keys."""
+    try:
+        if value is None or isinstance(value, (str, int, float, bool)):
+            return True
+        if isinstance(value, dict):
+            return all(
+                isinstance(key, str) and is_plain_json(item)
+                for key, item in value.items()
+            )
+        if isinstance(value, list):
+            return all(is_plain_json(item) for item in value)
+        return False
+    except RecursionError:
+        return False

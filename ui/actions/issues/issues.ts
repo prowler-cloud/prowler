@@ -2,7 +2,6 @@
 
 import { apiBaseUrl, getAuthHeaders } from "@/lib";
 import { handleApiError, handleApiResponse } from "@/lib/server-actions-helper";
-import { FindingTriageManualStatus } from "@/types/findings-triage";
 import {
   ISSUE_FINDINGS_LIMIT,
   IssueDetailResponse,
@@ -13,8 +12,12 @@ import {
 } from "@/types/issues";
 
 import { toIssueFindings, toIssueTriageNotes } from "./issues.adapter";
-
-type IssueWriteResult = { success: true } | { error: string };
+import {
+  ISSUE_TRIAGE_WRITE_METHOD,
+  type IssueTriageWriteMethod,
+  type IssueWriteResult,
+  type UpdateIssueTriageInput,
+} from "./types";
 
 const withFilters = (
   url: URL,
@@ -128,11 +131,11 @@ export const getIssueFindings = async (
 /** Write one issue triage request; any non-2xx comes back as an error to show. */
 const writeIssueTriage = async (
   path: string,
-  method: "PATCH" | "POST",
+  method: IssueTriageWriteMethod,
   data: Record<string, unknown>,
 ): Promise<IssueWriteResult> => {
-  const headers = await getAuthHeaders({ contentType: true });
   try {
+    const headers = await getAuthHeaders({ contentType: true });
     const response = await fetch(`${apiBaseUrl}${path}`, {
       method,
       headers,
@@ -149,19 +152,30 @@ const writeIssueTriage = async (
 /** Set the status of the path an issue describes, with an optional note. */
 export const updateIssueTriage = async (
   id: string,
-  { status, note }: { status: FindingTriageManualStatus; note?: string },
-) =>
-  writeIssueTriage(`/issues/${encodeURIComponent(id)}/triage`, "PATCH", {
-    type: "issue-triages",
-    attributes: { status, ...(note ? { note } : {}) },
-  });
+  { status, note }: UpdateIssueTriageInput,
+): Promise<IssueWriteResult> =>
+  writeIssueTriage(
+    `/issues/${encodeURIComponent(id)}/triage`,
+    ISSUE_TRIAGE_WRITE_METHOD.UPDATE,
+    {
+      type: "issue-triages",
+      attributes: { status, ...(note ? { note } : {}) },
+    },
+  );
 
 /** Add a note to an issue's triage without changing its status. */
-export const addIssueNote = async (id: string, body: string) =>
-  writeIssueTriage(`/issues/${encodeURIComponent(id)}/triage/notes`, "POST", {
-    type: "issue-triage-notes",
-    attributes: { body },
-  });
+export const addIssueNote = async (
+  id: string,
+  body: string,
+): Promise<IssueWriteResult> =>
+  writeIssueTriage(
+    `/issues/${encodeURIComponent(id)}/triage/notes`,
+    ISSUE_TRIAGE_WRITE_METHOD.ADD_NOTE,
+    {
+      type: "issue-triage-notes",
+      attributes: { body },
+    },
+  );
 
 export const getIssueNotes = async (
   id: string,
