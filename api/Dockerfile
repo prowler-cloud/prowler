@@ -134,8 +134,10 @@ RUN uv sync --locked --no-install-project && \
     rm -rf ~/.cache/uv
 
 # Invoked as a module so the base image's Python minor version is not baked
-# into a site-packages path.
-RUN .venv/bin/python -m prowler.providers.m365.lib.powershell.m365_powershell
+# into a site-packages path. Drop the MicrosoftTeams build SBOM: Trivy reports the npm
+# tooling it declares as installed, though none ships (see .trivyignore.yaml).
+RUN .venv/bin/python -m prowler.providers.m365.lib.powershell.m365_powershell && \
+    rm -rf /home/prowler/.local/share/powershell/Modules/MicrosoftTeams/*/_manifest
 
 USER root
 
