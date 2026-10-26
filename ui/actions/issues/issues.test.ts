@@ -1,12 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { fetchMock, getAuthHeadersMock, handleApiResponseMock } = vi.hoisted(
-  () => ({
-    fetchMock: vi.fn(),
-    getAuthHeadersMock: vi.fn(),
-    handleApiResponseMock: vi.fn(),
-  }),
-);
+const {
+  fetchMock,
+  getAuthHeadersMock,
+  handleApiErrorMock,
+  handleApiResponseMock,
+} = vi.hoisted(() => ({
+  fetchMock: vi.fn(),
+  getAuthHeadersMock: vi.fn(),
+  handleApiErrorMock: vi.fn(),
+  handleApiResponseMock: vi.fn(),
+}));
 
 vi.mock("@/lib", () => ({
   apiBaseUrl: "https://api.example.com/api/v1",
@@ -14,6 +18,7 @@ vi.mock("@/lib", () => ({
 }));
 
 vi.mock("@/lib/server-actions-helper", () => ({
+  handleApiError: handleApiErrorMock,
   handleApiResponse: handleApiResponseMock,
 }));
 
@@ -132,7 +137,9 @@ describe("issues actions", () => {
 
   it("triages through the issue's triage, as findings are triaged", async () => {
     // Given
-    fetchMock.mockResolvedValue(new Response("{}", { status: 200 }));
+    const response = new Response("{}", { status: 200 });
+    fetchMock.mockResolvedValue(response);
+    handleApiResponseMock.mockResolvedValue({ data: {} });
 
     // When
     const result = await updateIssueTriage("issue-1", {
@@ -142,6 +149,8 @@ describe("issues actions", () => {
 
     // Then
     expect(result).toEqual({ success: true });
+    // The list shows each issue's triage status.
+    expect(handleApiResponseMock).toHaveBeenCalledWith(response, "/issues");
     const [url, init] = fetchMock.mock.calls[0];
     expect(url).toBe("https://api.example.com/api/v1/issues/issue-1/triage");
     expect(init.method).toBe("PATCH");
@@ -154,12 +163,10 @@ describe("issues actions", () => {
   });
 
   it("returns the API's reason when a triage write is refused", async () => {
-    fetchMock.mockResolvedValue(
-      Response.json(
-        { errors: [{ detail: "You do not have permission." }] },
-        { status: 403 },
-      ),
-    );
+    handleApiResponseMock.mockResolvedValue({
+      error: "You do not have permission.",
+      status: 403,
+    });
 
     await expect(addIssueNote("issue-1", "note")).resolves.toEqual({
       error: "You do not have permission.",
@@ -167,6 +174,18 @@ describe("issues actions", () => {
     expect(fetchMock.mock.calls[0][0]).toBe(
       "https://api.example.com/api/v1/issues/issue-1/triage/notes",
     );
+  });
+
+  it("returns the shared, sanitized message when a triage write fails on the server", async () => {
+    // Given: handleApiResponse rejects on a 5xx (see beforeEach)
+    handleApiErrorMock.mockReturnValue({ error: "Something went wrong." });
+
+    // When
+    const result = await addIssueNote("issue-1", "note");
+
+    // Then
+    expect(result).toEqual({ error: "Something went wrong." });
+    expect(handleApiErrorMock).toHaveBeenCalledWith(new Error("Server error"));
   });
 
   it("names each note's author from the included users", async () => {

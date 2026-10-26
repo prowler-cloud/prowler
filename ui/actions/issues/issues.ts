@@ -1,9 +1,7 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
-
 import { apiBaseUrl, getAuthHeaders } from "@/lib";
-import { handleApiResponse } from "@/lib/server-actions-helper";
+import { handleApiError, handleApiResponse } from "@/lib/server-actions-helper";
 import { FindingTriageManualStatus } from "@/types/findings-triage";
 import {
   ISSUE_FINDINGS_LIMIT,
@@ -15,8 +13,6 @@ import {
 } from "@/types/issues";
 
 import { toIssueFindings, toIssueTriageNotes } from "./issues.adapter";
-
-const JSON_API_CONTENT_TYPE = "application/vnd.api+json";
 
 type IssueWriteResult = { success: true } | { error: string };
 
@@ -135,27 +131,18 @@ const writeIssueTriage = async (
   method: "PATCH" | "POST",
   data: Record<string, unknown>,
 ): Promise<IssueWriteResult> => {
-  const headers = await getAuthHeaders({ contentType: false });
+  const headers = await getAuthHeaders({ contentType: true });
   try {
     const response = await fetch(`${apiBaseUrl}${path}`, {
       method,
-      headers: { ...headers, "Content-Type": JSON_API_CONTENT_TYPE },
+      headers,
       body: JSON.stringify({ data }),
     });
-    if (!response.ok) {
-      const payload = await response.json().catch(() => undefined);
-      return {
-        error:
-          payload?.errors?.[0]?.detail ??
-          `Could not save the triage (${response.status}).`,
-      };
-    }
     // The list shows each issue's triage status.
-    revalidatePath("/issues");
-    return { success: true };
+    const result = await handleApiResponse(response, "/issues");
+    return result?.error ? { error: result.error } : { success: true };
   } catch (error) {
-    console.error("Error saving issue triage:", error);
-    return { error: "Could not reach the API." };
+    return handleApiError(error);
   }
 };
 
