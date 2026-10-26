@@ -1,3 +1,5 @@
+from typing import ClassVar
+
 from botocore.exceptions import ClientError
 from pydantic.v1 import BaseModel, Field
 
@@ -13,6 +15,7 @@ class Pipeline(BaseModel):
     name: str
     arn: str
     region: str
+    sensitive_fields: ClassVar[tuple[str, ...]] = ("definition",)
     definition: dict = Field(default_factory=dict)
     tags: list[dict] = Field(default_factory=list)
 

@@ -1,0 +1,38 @@
+{
+  "Provider": "gcp",
+  "CheckID": "vertexai_workbench_instance_auto_upgrade_enabled",
+  "CheckTitle": "Vertex AI Workbench instance has automatic upgrades scheduled",
+  "CheckType": [],
+  "ServiceName": "vertexai",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "notebooks.googleapis.com/Instance",
+  "ResourceGroup": "ai_ml",
+  "Description": "**Vertex AI Workbench instances** are not upgraded automatically by default. The finding determines whether automatic upgrades are scheduled by setting the `notebook-upgrade-schedule` instance metadata key to a Unix-cron expression (GMT).",
+  "Risk": "Without scheduled upgrades, long-lived instances keep running outdated images:\n- **Known vulnerabilities**: JupyterLab, Python ML libraries, and OS packages stay unpatched against published CVEs\n- **Drift**: instances fall behind the image versions the rest of the organization has validated",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://cloud.google.com/vertex-ai/docs/workbench/instances/manage-metadata",
+    "https://cloud.google.com/vertex-ai/docs/workbench/instances/upgrade"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "gcloud workbench instances update <example_resource_name> --location=<example_zone> --metadata=notebook-upgrade-schedule=\"00 19 * * MON\"",
+      "NativeIaC": "",
+      "Other": "1. In Google Cloud Console, go to Vertex AI > Workbench > Instances\n2. Click the instance name to open the Instance details page\n3. In the Environment auto-upgrade section, set the upgrade schedule\n4. Click Submit",
+      "Terraform": "```hcl\nresource \"google_workbench_instance\" \"<example_resource_name>\" {\n  name     = \"<example_resource_name>\"\n  location = \"<example_zone>\"\n\n  gce_setup {\n    metadata = {\n      notebook-upgrade-schedule = \"00 19 * * MON\" # FIX: Upgrades the instance every Monday at 19:00 GMT\n    }\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Schedule automatic upgrades for every Workbench instance and pick a window that does not interrupt long-running jobs.\n- Store notebooks and data on the data disk or in Cloud Storage so upgrades do not lose work\n- Review release notes for breaking changes in preinstalled frameworks",
+      "Url": "https://hub.prowler.com/check/vertexai_workbench_instance_auto_upgrade_enabled"
+    }
+  },
+  "Categories": [
+    "vulnerabilities",
+    "gen-ai"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "The check only verifies that a schedule is set. It does not validate the cron expression or how often it runs."
+}

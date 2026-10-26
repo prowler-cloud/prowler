@@ -28,6 +28,9 @@ test.describe.serial("Registry", () => {
       !fixtureMode,
       "Registry browser acceptance is available only through the self-contained fixture profile.",
     );
+    // The saved manager state carries the first-run marker for the enabled
+    // profile's origin only; the flag-off and Local profiles serve other ports.
+    await new RegistryPage(page).skipFirstRunRedirect();
     await controlledRegistryFixture.reset();
     // Exercise the real media CSP without contacting the Registry service.
     await page.route(

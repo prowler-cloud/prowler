@@ -133,11 +133,23 @@ class WAFv2(AWSService):
                 try:
                     rules = get_web_acl.get("WebACL", {}).get("Rules", [])
                     for rule in rules:
+                        managed_statement = rule.get("Statement", {}).get(
+                            "ManagedRuleGroupStatement"
+                        )
                         new_rule = Rule(
                             name=rule.get("Name", ""),
                             cloudwatch_metrics_enabled=rule.get(
                                 "VisibilityConfig", {}
                             ).get("CloudWatchMetricsEnabled", False),
+                            managed_rule_group=(
+                                ManagedRuleGroup(
+                                    vendor_name=managed_statement.get("VendorName", ""),
+                                    name=managed_statement.get("Name", ""),
+                                    version=managed_statement.get("Version", ""),
+                                )
+                                if managed_statement
+                                else None
+                            ),
                         )
                         if (
                             rule.get("Statement", {})
@@ -200,11 +212,20 @@ class Scope(Enum):
     CLOUDFRONT = "CLOUDFRONT"
 
 
+class ManagedRuleGroup(BaseModel):
+    """Managed rule group referenced by a Web ACL rule."""
+
+    vendor_name: str
+    name: str
+    version: str = ""
+
+
 class Rule(BaseModel):
     """Model representing a rule for the Web ACL."""
 
     name: str
     cloudwatch_metrics_enabled: bool = False
+    managed_rule_group: Optional[ManagedRuleGroup] = None
 
 
 class WebAclv2(BaseModel):

@@ -1,0 +1,1 @@
+Attack Paths custom queries strip block comments before the blocked-operation check and drop APOC virtual nodes and relationships from results, so `LOAD CSV` can no longer be split with a comment nor its response returned under a forged provider label

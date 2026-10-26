@@ -198,6 +198,9 @@ export class SignInPage extends BasePage {
    */
   async loginAndVerify(credentials: SignInCredentials): Promise<void> {
     await this.goto();
+    // Like the auth setups: the E2E tenant owns no providers, so a fresh
+    // context would otherwise land on the add-provider wizard, not Overview.
+    await this.skipFirstRunRedirect();
     await this.login(credentials);
     await this.verifySuccessfulLogin();
   }
@@ -400,18 +403,5 @@ export class SignInPage extends BasePage {
     await this.login(credentials);
     await this.verifySuccessfulLogin();
     await this.page.context().storageState({ path: storagePath });
-  }
-
-  /**
-   * An empty tenant redirects each fresh browser context to the add-provider
-   * wizard once. Suites expect a plain landing, so mark that first run as done
-   * with the browser-wide key (the per-tenant one is only written by the app)
-   * before signing in; sign-up.spec covers the redirect itself with a brand-new
-   * tenant. Call it on a page already on the app origin.
-   */
-  async skipFirstRunRedirect(): Promise<void> {
-    await this.page.evaluate(() => {
-      window.localStorage.setItem("prowler.onboarding.first-run", "true");
-    });
   }
 }

@@ -1,5 +1,5 @@
 from itertools import zip_longest
-from typing import Optional
+from typing import ClassVar, Optional
 
 from botocore.exceptions import ClientError
 from pydantic.v1 import BaseModel
@@ -14,6 +14,7 @@ class ContainerEnvVariable(BaseModel):
     """An environment variable name-value pair."""
 
     name: str
+    sensitive_fields: ClassVar[tuple[str, ...]] = ("value",)
     value: str
 
 
@@ -21,6 +22,7 @@ class BatchContainerProperties(BaseModel):
     """Container properties for an AWS Batch job definition."""
 
     image: Optional[str]
+    sensitive_fields: ClassVar[tuple[str, ...]] = ("command",)
     command: list[str] = []
     environment: list[ContainerEnvVariable] = []
 

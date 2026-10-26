@@ -19,8 +19,8 @@ import { Skeleton } from "@/components/shadcn/skeleton/skeleton";
 import { LoadingState } from "@/components/shadcn/spinner/loading-state";
 import { TableCell, TableRow } from "@/components/shadcn/table";
 import { useFindingGroupResourceState } from "@/hooks/use-finding-group-resource-state";
-import { useMountEffect } from "@/hooks/use-mount-effect";
 import { useScrollHint } from "@/hooks/use-scroll-hint";
+import { useScrollportPin } from "@/hooks/use-scrollport-pin";
 import { buildFindingResourceContext } from "@/lib/lighthouse/context/contributions";
 import { cn } from "@/lib/utils";
 import { SIDE_PANEL_TAB, useSidePanelStore } from "@/store/side-panel";
@@ -224,31 +224,9 @@ export function InlineResourceContainer({
   // moves the group columns while this block stays in place — which also
   // lets the sub-table's own sticky actions column anchor to a scrollport
   // that is actually visible from the start.
-  const [scrollportPin, setScrollportPin] = useState<{
-    width: number;
-    left: number;
-  } | null>(null);
-  useMountEffect(() => {
-    const scrollParent = scrollContainerRef.current?.closest(
-      "[data-table-scroll-container]",
-    );
-    if (!(scrollParent instanceof HTMLElement)) return;
-    const measure = () => {
-      const styles = getComputedStyle(scrollParent);
-      const paddingLeft = parseFloat(styles.paddingLeft);
-      setScrollportPin({
-        width:
-          scrollParent.clientWidth -
-          paddingLeft -
-          parseFloat(styles.paddingRight),
-        left: paddingLeft,
-      });
-    };
-    measure();
-    const observer = new ResizeObserver(measure);
-    observer.observe(scrollParent);
-    return () => observer.disconnect();
-  });
+  const scrollportPin = useScrollportPin(() =>
+    scrollContainerRef.current?.closest("[data-table-scroll-container]"),
+  );
 
   // Combine scrollContainerRef (for IntersectionObserver root) with scrollHintContainerRef
   const combinedScrollRef = (node: HTMLDivElement | null) => {

@@ -26,7 +26,13 @@ class gmail_auto_forwarding_disabled(Check):
 
             forwarding_enabled = gmail_client.policies.enable_auto_forwarding
 
-            if forwarding_enabled is False:
+            if gmail_client.policies.off_for_everyone:
+                report.status = "PASS"
+                report.status_extended = (
+                    f"Gmail is turned off for everyone in domain "
+                    f"{gmail_client.provider.identity.domain}, so no email can be forwarded."
+                )
+            elif forwarding_enabled is False:
                 report.status = "PASS"
                 report.status_extended = (
                     f"Automatic email forwarding is disabled "

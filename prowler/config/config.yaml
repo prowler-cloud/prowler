@@ -139,6 +139,28 @@ aws:
   # aws.appstream_fleet_maximum_session_duration
   max_session_duration_seconds: 36000 # 10 Hours
 
+  # AWS Elastic Beanstalk Configuration
+  # aws.elasticbeanstalk_environment_php_platform_updated
+  # Oldest PHP branch still receiving security fixes
+  elasticbeanstalk_php_min_branch: "8.2"
+  # Oldest Amazon Linux 2023 PHP platform version bundling the fixed PHP release
+  elasticbeanstalk_php_min_platform_version: "4.13.13"
+
+  # AWS Lightsail Configuration
+  # aws.lightsail_instance_php_blueprint_updated
+  # Blueprint id prefixes that ship PHP and require manual runtime verification
+  lightsail_php_blueprints:
+    [
+      "wordpress",
+      "lamp",
+      "nginx",
+      "drupal",
+      "joomla",
+      "magento",
+      "prestashop",
+      "plesk",
+      "cpanel",
+    ]
   # AWS Lambda Configuration
   # aws.awslambda_function_using_supported_runtimes
   obsolete_lambda_runtimes:
@@ -550,8 +572,9 @@ azure:
   defender_attack_path_minimal_risk_level: "High"
 
   # Azure App Service
+  # Minimum runtime versions; any newer version passes
   # azure.app_ensure_php_version_is_latest
-  php_latest_version: "8.2"
+  php_latest_version: "8.5"
   # azure.app_ensure_python_version_is_latest
   python_latest_version: "3.12"
   # azure.app_ensure_java_version_is_latest
@@ -650,6 +673,10 @@ gcp:
   # GCP Secret Manager Rotation Period
   # gcp.secretmanager_secret_rotation_enabled
   secretmanager_max_rotation_days: 90
+  # GCP App Engine PHP runtime
+  # gcp.appengine_version_php_runtime_supported
+  # Oldest PHP branch still receiving security fixes
+  appengine_php_min_version: "8.2"
 
 # Kubernetes Configuration
 kubernetes:

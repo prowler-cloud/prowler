@@ -19,6 +19,10 @@ import {
   extractSortAndKey,
   hasDateOrScanFilter,
 } from "@/lib";
+import {
+  FINDINGS_PREVIEW_ROW_LIMIT,
+  isFindingsPreviewLocked,
+} from "@/lib/findings-access";
 import { resolveFindingScanDateFilters } from "@/lib/findings-scan-filters";
 import { ScanProps } from "@/types";
 import { SearchParamsProps } from "@/types/components";
@@ -110,8 +114,16 @@ const SSRDataTable = async ({
   searchParams: SearchParamsProps;
   filters: Record<string, string>;
 }) => {
-  const page = parseInt(searchParams.page?.toString() || "1", 10);
-  const pageSize = parseInt(searchParams.pageSize?.toString() || "10", 10);
+  // A locked preview ignores the URL paging: it always shows the first page,
+  // the readable rows plus one blurred page as a teaser. Filters and sort
+  // still apply, so the readable rows are the most critical of the selection.
+  const previewLocked = await isFindingsPreviewLocked();
+  const page = previewLocked
+    ? 1
+    : parseInt(searchParams.page?.toString() || "1", 10);
+  const pageSize = previewLocked
+    ? FINDINGS_PREVIEW_ROW_LIMIT * 2
+    : parseInt(searchParams.pageSize?.toString() || "10", 10);
   const expandedCheckIdParam = searchParams.expandedCheckId;
   const expandedCheckId = Array.isArray(expandedCheckIdParam)
     ? expandedCheckIdParam[0]
@@ -150,6 +162,7 @@ const SSRDataTable = async ({
         resolvedFilters={filters}
         hasHistoricalData={hasHistoricalData}
         expandedCheckId={expandedCheckId}
+        previewRowLimit={previewLocked ? FINDINGS_PREVIEW_ROW_LIMIT : undefined}
       />
     </>
   );
