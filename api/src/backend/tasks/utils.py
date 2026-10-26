@@ -19,6 +19,11 @@ class CustomEncoder(json.JSONEncoder):
             return o.isoformat(timespec="seconds")
         if isinstance(o, timedelta):
             return o.total_seconds()
+        # Same representation as str(set), with a stable order across processes
+        if isinstance(o, (set, frozenset)):
+            if not o:
+                return "set()"
+            return "{" + ", ".join(repr(item) for item in sorted(o, key=repr)) + "}"
 
         # Custom object serialization
         try:
