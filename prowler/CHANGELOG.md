@@ -4,6 +4,46 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [5.46.0] (Prowler v5.46.0)
+
+### 🚀 Added
+
+- `cognito_user_pool_account_recovery_sms_not_preferred` check verifying Cognito user pools do not rank SMS first for account recovery [(#12251)](https://github.com/prowler-cloud/prowler/pull/12251)
+- `bedrock_guardrail_sensitive_information_filter_enforced` check for AWS provider, flagging Bedrock guardrails whose PII entities or custom regexes take no action on the output path, so a detected match is reported in the trace and still delivered to the caller [(#12663)](https://github.com/prowler-cloud/prowler/pull/12663)
+- `bedrock_model_invocation_logging_text_data_enabled` check for AWS provider, verifying that model invocation logging delivers prompt and response text rather than naming a destination while excluding request and response bodies [(#12663)](https://github.com/prowler-cloud/prowler/pull/12663)
+- Vertex AI service for GCP provider, including the `vertexai_workbench_instance_public_ip_disabled` and `vertexai_workbench_instance_root_access_disabled` checks mapped to PCI DSS 4.0 [(#13062)](https://github.com/prowler-cloud/prowler/pull/13062)
+- `vertexai_workbench_instance_terminal_access_disabled`, `vertexai_workbench_instance_file_download_disabled` and `vertexai_workbench_instance_auto_upgrade_enabled` checks for GCP provider, with Vertex AI Workbench checks mapped to CCC MLDE requirements [(#13077)](https://github.com/prowler-cloud/prowler/pull/13077)
+- Google Workspace findings state when a feature is not sold on the tenant edition: Drive DLP rules, Google session control and the shared drive sharing settings on Business Starter; reading editions needs the optional `apps.licensing` scope [(#13113)](https://github.com/prowler-cloud/prowler/pull/13113)
+- `wafv2_webacl_managed_rule_groups_enabled` check to verify WAFv2 Web ACLs reference at least one managed rule group [(#13127)](https://github.com/prowler-cloud/prowler/pull/13127)
+- `appengine` GCP service and `appengine_version_php_runtime_supported` check to flag App Engine serving versions on PHP runtimes without security fixes [(#13127)](https://github.com/prowler-cloud/prowler/pull/13127)
+- `elasticbeanstalk_environment_php_platform_updated` check to flag Elastic Beanstalk PHP environments on branches without security fixes or on platform versions older than the one bundling the fixed PHP release [(#13127)](https://github.com/prowler-cloud/prowler/pull/13127)
+- `lightsail_instance_php_blueprint_updated` check to flag Lightsail instances created from PHP blueprints for manual verification of the PHP release [(#13127)](https://github.com/prowler-cloud/prowler/pull/13127)
+
+### 🔄 Changed
+
+- Google Workspace checks for Chat, Drive, Gmail, Calendar and Groups pass with the reason stated when the app is turned off for everyone and no organizational unit or group turns it back on. The rule covers settings that only act while the app is on: Drive sharing settings and the settings of existing groups keep being evaluated because existing shares and groups stay reachable, and only group creation is exempt when Groups for Business is off [(#13117)](https://github.com/prowler-cloud/prowler/pull/13117)
+- Default `php_latest_version` for `app_ensure_php_version_is_latest` raised from `8.2` to `8.5`, the newest PHP runtime on Azure App Service for Linux, following the PHP2Shell (CVE-2026-109618, CVE-2026-109619) security release [(#13128)](https://github.com/prowler-cloud/prowler/pull/13128)
+
+### 🐞 Fixed
+
+- `bedrock_api_key_no_long_term_credentials` now reports a Bedrock long-term API key that never expires; IAM only returns `ExpirationDate` for keys created with an expiration period, so keys created without one were skipped and produced no finding at all [(#12663)](https://github.com/prowler-cloud/prowler/pull/12663)
+- `drive_desktop_access_disabled` remediation steps for Google Workspace now point to the Google Drive for desktop card in the Admin console instead of Features and Applications [(#13113)](https://github.com/prowler-cloud/prowler/pull/13113)
+- Gmail spoofing checks read each protection action from its own Policy API field; the inbound domain spoofing check could never pass and the similar domain names check reported the inbound action [(#13114)](https://github.com/prowler-cloud/prowler/pull/13114)
+- Google Workspace `drive_publishing_files_disabled` passes when sharing outside the organization is limited to allowlisted domains or off, since publishing to the web only exists with sharing on [(#13115)](https://github.com/prowler-cloud/prowler/pull/13115)
+- Google Workspace checks now read the policy Google applies (greatest sortOrder) instead of the last policy the Cloud Identity Policy API lists, which reported default values over admin-configured ones [(#13117)](https://github.com/prowler-cloud/prowler/pull/13117)
+- Azure App Service runtime checks (`app_ensure_php_version_is_latest`, `app_ensure_python_version_is_latest`, `app_ensure_java_version_is_latest`) now pass any runtime at or above the configured minimum instead of failing every version newer than the configured one [(#13127)](https://github.com/prowler-cloud/prowler/pull/13127)
+- Scan report generation parses each resource's metadata once per batch and sanitizes it once per finding, so providers with very large resource metadata no longer exhaust the worker memory [(#13149)](https://github.com/prowler-cloud/prowler/pull/13149)
+
+### 🔐 Security
+
+- OpenStack auth_url resolving to loopback, private or otherwise non-public hosts rejected before the SDK connects, on both the connection test and the scan [(#12962)](https://github.com/prowler-cloud/prowler/pull/12962)
+- Trivy from 0.75.0 to 0.76.0 in the SDK container image, built with Go 1.27.2 and x/net 0.60.0, patching the HTTP/2 and TLS CVEs bundled in Trivy 0.75.0 [(#13064)](https://github.com/prowler-cloud/prowler/pull/13064)
+- certifi to 2026.10.19 and aiohttp to 3.14.5 with yarl 1.25.1 in the SDK, plus uv 0.13.4 and Trivy 0.76.1 in its container image, patching the compromised emSign root CAs bundled in certifi and uv, the aiohttp resource exhaustion advisories and the Go 1.27.2 stdlib CVE in the Trivy binary [(#13107)](https://github.com/prowler-cloud/prowler/pull/13107)
+- Resource metadata attached to findings no longer carries the values that secrets checks scan (CloudFormation outputs, Lambda environment variables, EC2 user data and similar fields); they are replaced with `REDACTED` before reaching the Evidence tab, the API and the output files [(#13129)](https://github.com/prowler-cloud/prowler/pull/13129)
+- black from 26.3.1 to 26.10.1 and graphql-core from 3.2.8 to 3.2.12 in the SDK, and libbrotli1 1.1.0-2+deb13u1 in its container image, which no longer ships the MicrosoftTeams build SBOM that Trivy read as installed zod and body-parser [(#13135)](https://github.com/prowler-cloud/prowler/pull/13135)
+
+---
+
 ## [5.45.0] (Prowler v5.45.0)
 
 ### 🚀 Added

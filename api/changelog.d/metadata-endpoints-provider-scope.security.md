@@ -1,1 +1,0 @@
-`GET /resources/metadata`, `GET /resources/metadata/latest`, `GET /findings/metadata` and `GET /findings/metadata/latest` now honour the provider groups of the caller role instead of aggregating every provider in the tenant

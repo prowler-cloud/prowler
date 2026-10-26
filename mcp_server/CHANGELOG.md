@@ -4,6 +4,14 @@ All notable changes to the **Prowler MCP Server** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [0.12.4] (Prowler v5.46.0)
+
+### 🔐 Security
+
+- certifi from 2026.4.22 to 2026.10.19 in the MCP Server container image, dropping the emSign root CAs whose intermediate keys were compromised [(#13107)](https://github.com/prowler-cloud/prowler/pull/13107)
+
+---
+
 ## [0.12.3] (Prowler v5.45.0)
 
 ### 🔐 Security
