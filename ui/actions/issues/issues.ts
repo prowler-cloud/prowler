@@ -134,8 +134,8 @@ const writeIssueTriage = async (
   method: IssueTriageWriteMethod,
   data: Record<string, unknown>,
 ): Promise<IssueWriteResult> => {
-  const headers = await getAuthHeaders({ contentType: true });
   try {
+    const headers = await getAuthHeaders({ contentType: true });
     const response = await fetch(`${apiBaseUrl}${path}`, {
       method,
       headers,
