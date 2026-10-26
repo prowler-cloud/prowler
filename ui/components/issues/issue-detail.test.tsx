@@ -95,6 +95,10 @@ describe("IssueDetail", () => {
 
     expect(screen.getByText("Data exposure")).toBeInTheDocument();
     expect(screen.getByText("The internet")).toBeInTheDocument();
+    // Shown inline so keyboard users can read it too.
+    expect(
+      screen.getByText(/Where the attacker has to be standing/),
+    ).toBeInTheDocument();
   });
 
   it("claims no outcome for an issue that is not one path", async () => {

@@ -142,11 +142,13 @@ export const IssueDetail = ({
           <InfoField label="Outcome">
             {ISSUE_OUTCOME_LABEL[issue.outcome]}
           </InfoField>
-          <InfoField
-            label="Starts from"
-            tooltipContent="Where the attacker has to be standing. Whether they also need a credential is the Access leg."
-          >
+          {/* Inline, not an InfoTooltip: its trigger has no tab stop. */}
+          <InfoField label="Starts from">
             {ATTACKER_START_LABEL[issue.attacker_start]}
+            <p className="text-text-neutral-tertiary text-xs">
+              Where the attacker has to be standing. Whether they also need a
+              credential is the Access leg.
+            </p>
           </InfoField>
         </div>
       )}
