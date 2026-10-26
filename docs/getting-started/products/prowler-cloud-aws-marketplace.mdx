@@ -67,7 +67,7 @@ For prices, included resources and per-resource rates, see the [Prowler Cloud pr
           <img src="/images/aws-marketplace/purchase-annual.png" alt="Purchase options for the annual listing showing the contract details, the providers dimension and the Number of units table" />
         </Frame>
 
-        **Auto-renewal** is on by default. Leave it on to have AWS renew the contract for another 12 months at the end date, or choose **Do not automatically renew this contract**. You can change this from **Manage subscriptions** any time before the renewal date.
+        **Auto-renewal** is on by default. Leave it on to have AWS renew the contract for another 12 months at the end date, or select **Do not automatically renew this contract**. You can change this from **Manage subscriptions** any time before the renewal date.
       </Tab>
     </Tabs>
   </Step>
@@ -135,7 +135,7 @@ Nothing is linked until you confirm it in Prowler Cloud. The purchase is safe on
   </Step>
 </Steps>
 
-If something goes wrong during activation, see [Activation errors](#activation-errors).
+If something goes wrong during activation, see [Activation Errors](#activation-errors).
 
 ## After Activation
 
@@ -166,8 +166,8 @@ Cancel from the AWS Marketplace console at any time:
 
 1. Open [Manage subscriptions](https://console.aws.amazon.com/marketplace/subscriptions) and open **Prowler Cloud**.
 2. Under **Active agreements**, select the agreement and click **View details**.
-3. Open the **Actions** menu and choose **Cancel subscription**.
-4. Type `confirm` and choose **Yes, cancel subscription**.
+3. Open the **Actions** menu and select **Cancel subscription**.
+4. Type `confirm` and select **Yes, cancel subscription**.
 
 <Frame>
   <img src="/images/aws-marketplace/aws-manage-subscriptions.png" alt="Prowler Cloud agreement page in the AWS Marketplace console with the Actions menu open on Cancel subscription" />
@@ -184,7 +184,7 @@ Open the agreement from [Manage subscriptions](https://console.aws.amazon.com/ma
 
 See [Refunds and cancellations in AWS Marketplace](https://docs.aws.amazon.com/marketplace/latest/buyerguide/buyer-refunds.html) for the AWS side of the process.
 
-### What happens after cancellation
+### What Happens After Cancellation
 
 Once AWS ends the subscription, Prowler Cloud pauses scans for the organization. Providers, findings and scan history stay readable. A **Subscription required** card in the sidebar, labeled **Subscription cancelled**, explains it: "Scans are paused and your assessment data remains available. Subscribe again to continue scanning." The billing page shows the plan selection page.
 
@@ -200,7 +200,7 @@ Deleting your Prowler Cloud organization does not cancel the AWS subscription. A
 
 ## Troubleshooting
 
-### Activation errors
+### Activation Errors
 
 Each error appears on the Prowler Cloud billing page with the title below. Your AWS purchase is never lost by any of them. **Continue to billing** closes the message without activating.
 
@@ -302,7 +302,7 @@ Each error appears on the Prowler Cloud billing page with the title below. Your 
   </Accordion>
 </AccordionGroup>
 
-### Errors before the sign-in page
+### Errors Before the Sign-in Page
 
 If the redirect from AWS itself fails, Prowler Cloud shows a plain page instead of the app. Each page links back to Prowler Cloud billing and to your AWS Marketplace subscriptions.
 
@@ -332,7 +332,7 @@ If the redirect from AWS itself fails, Prowler Cloud shows a plain page instead 
   </Accordion>
 </AccordionGroup>
 
-### SEPA payment method issues
+### SEPA Payment Method Issues
 
 If AWS Marketplace notifies that payment failed due to an issue with the payment method, this typically occurs when a SEPA bank account is set as the default payment method. AWS Marketplace does not support SEPA bank accounts for product subscriptions, even when the account includes valid alternative payment methods. This is because AWS Marketplace invoices are issued by AWS Inc., a US entity. SEPA accounts do not recognize these invoices as valid, causing subscription failures.
 
@@ -356,7 +356,7 @@ The AWS Marketplace team acknowledges this limitation: "We apologize for these a
 
 </Note>
 
-### Credit and debit card storage restrictions (AISPL customers in India)
+### Credit and Debit Card Storage Restrictions (AISPL Customers in India)
 
 AWS Marketplace no longer supports payments using credit or debit cards stored on file for Amazon Internet Services Private Limited (AISPL) customers. This restriction stems from Reserve Bank of India (RBI) regulations regarding payment aggregators, which prohibit the storage of card data. As explained in [this AWS blog post](https://aws.amazon.com/blogs/awsmarketplace/restriction-on-credit-and-debit-card-purchases-for-aispl-customers-using-aws-marketplace/):
 
