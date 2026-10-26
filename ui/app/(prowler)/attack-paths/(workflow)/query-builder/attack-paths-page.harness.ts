@@ -588,7 +588,8 @@ export class AttackPathPageHarness extends BrowserHarness<PageFixture> {
   /**
    * Click every resource that the fixture's relationships connect to a finding.
    * Findings are hidden by default in the full graph view (Tier 1) — clicking
-   * their adjacent resources reveals them.
+   * their adjacent resources reveals them. Restore the full view after each
+   * expansion because its contextual fit can move the next resource off-screen.
    */
   async expandAllFindings(): Promise<void> {
     const findingIds = new Set(
@@ -605,7 +606,9 @@ export class AttackPathPageHarness extends BrowserHarness<PageFixture> {
       const el = this.getNodeById(id);
       if (el) {
         await this.user.click(el);
-        await this.waitForTransition(50);
+        await this.waitForViewportSettled();
+        await this.fit();
+        await this.waitForViewportSettled();
       }
     }
   }
