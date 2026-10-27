@@ -32,7 +32,11 @@ describe("wizard stepper", () => {
     await expect
       .element(screen.getByText("Authenticate Credentials"))
       .toBeVisible();
-    await expect.element(screen.getByText("Link a Provider")).not.toBeVisible();
+    // Other steps keep their names for assistive tech but take no room.
+    const otherStep = screen.getByText("Link a Provider").element();
+    expect(otherStep.checkVisibility()).toBe(true);
+    // The block holding the name is clipped to 1px; the text inside overflows it.
+    expect(boxOf(otherStep.closest("div")!).width).toBeLessThanOrEqual(1);
     await expect
       .element(
         screen.getByText(
@@ -40,7 +44,6 @@ describe("wizard stepper", () => {
         ),
       )
       .not.toBeVisible();
-    // Assistive tech hears the same thing the row shows: the current step.
     expect(
       screen
         .getByText("Authenticate Credentials")

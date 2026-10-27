@@ -124,7 +124,7 @@ export function WizardStepper({
               <div
                 className={cn(
                   "min-w-0 flex-col gap-1 lg:flex lg:pt-[10px]",
-                  isActive ? "flex" : "hidden",
+                  isActive ? "flex" : "sr-only lg:not-sr-only",
                 )}
               >
                 <span
@@ -168,10 +168,7 @@ function StepCircle({ isComplete, isActive, icon: Icon }: StepCircleProps) {
   if (isComplete) {
     return (
       <div
-        className={cn(
-          "bg-button-primary-press flex shrink-0 items-center justify-center rounded-full",
-          CIRCLE_SIZE,
-        )}
+        className={`bg-button-primary-press flex shrink-0 items-center justify-center rounded-full ${CIRCLE_SIZE}`}
       >
         <CircleCheckBig className="text-bg-neutral-primary size-4 lg:size-6" />
       </div>
@@ -181,10 +178,7 @@ function StepCircle({ isComplete, isActive, icon: Icon }: StepCircleProps) {
   if (isActive) {
     return (
       <div
-        className={cn(
-          "border-border-input-primary-pressed bg-bg-neutral-secondary flex shrink-0 items-center justify-center rounded-full border",
-          CIRCLE_SIZE,
-        )}
+        className={`border-border-input-primary-pressed bg-bg-neutral-secondary flex shrink-0 items-center justify-center rounded-full border ${CIRCLE_SIZE}`}
       >
         <StepIcon icon={Icon} className="text-border-input-primary-pressed" />
       </div>
@@ -193,10 +187,7 @@ function StepCircle({ isComplete, isActive, icon: Icon }: StepCircleProps) {
 
   return (
     <div
-      className={cn(
-        "border-border-neutral-secondary bg-bg-neutral-secondary flex shrink-0 items-center justify-center rounded-full border",
-        CIRCLE_SIZE,
-      )}
+      className={`border-border-neutral-secondary bg-bg-neutral-secondary flex shrink-0 items-center justify-center rounded-full border ${CIRCLE_SIZE}`}
     >
       <StepIcon icon={Icon} className="text-text-neutral-tertiary" />
     </div>
