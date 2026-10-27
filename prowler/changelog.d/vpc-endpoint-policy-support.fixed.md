@@ -1,0 +1,1 @@
+`vpc_endpoint_connections_trust_boundaries` now skips VPC endpoints whose service AWS reports as not supporting endpoint policies (`VpcEndpointPolicySupported`), instead of failing endpoints like Amazon SES SMTP whose default policy cannot be changed

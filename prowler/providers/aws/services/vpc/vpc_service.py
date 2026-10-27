@@ -19,6 +19,7 @@ class VPC(AWSService):
         self.vpcs = {}
         self.vpc_peering_connections = []
         self.vpc_endpoints = []
+        self.vpc_endpoint_policy_supported = {}
         self.vpc_endpoint_services = []
         self.__threading_call__(self._describe_vpcs)
         self.__threading_call__(self._describe_vpc_peering_connections)
@@ -264,6 +265,10 @@ class VPC(AWSService):
             for page in describe_vpc_endpoint_services_paginator.paginate():
                 for endpoint in page["ServiceDetails"]:
                     try:
+                        # Record policy support for all services, since endpoints can point to Amazon or third-party ones.
+                        self.vpc_endpoint_policy_supported[endpoint["ServiceName"]] = (
+                            endpoint.get("VpcEndpointPolicySupported")
+                        )
                         # Only collect endpoint services owned by the audited account.
                         # The API returns ALL available services in the region,
                         # including Amazon and third-party ones we can't inspect.
