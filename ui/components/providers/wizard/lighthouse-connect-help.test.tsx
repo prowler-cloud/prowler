@@ -2,10 +2,12 @@ import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { buildCurrentLighthouseContext } from "@/hooks/use-lighthouse-context";
 import {
   PROVIDER_FUNNEL_EVENT,
   type ProviderFunnelDetail,
 } from "@/lib/provider-funnel/provider-funnel-events";
+import { useLighthouseContextStore } from "@/store/lighthouse-context/store";
 import { useProviderWizardStore } from "@/store/provider-wizard/store";
 import { SIDE_PANEL_TAB, useSidePanelStore } from "@/store/side-panel";
 
@@ -44,6 +46,15 @@ function renderHelp(providerType: string | null = "aws") {
   );
 }
 
+// The context a follow-up typed in the panel carries on /providers.
+function panelContextOnProviders() {
+  return buildCurrentLighthouseContext(
+    "/providers",
+    new URLSearchParams(),
+    Object.values(useLighthouseContextStore.getState().contributions),
+  ).context;
+}
+
 function connectedConfiguration(connected: boolean) {
   return { data: [{ id: "config-1", connected }] };
 }
@@ -56,6 +67,7 @@ describe("LighthouseConnectHelp", () => {
       selectedTab: SIDE_PANEL_TAB.AI_CHAT,
     });
     useProviderWizardStore.getState().reset();
+    useLighthouseContextStore.setState({ contributions: {} });
   });
 
   it("invites the user to ask Lighthouse AI about the provider they picked", async () => {
@@ -150,5 +162,50 @@ describe("LighthouseConnectHelp", () => {
       await screen.findByRole("button", { name: "Ask about this step" }),
     ).toBeInTheDocument();
     expect(screen.getByText("Lighthouse AI is guiding you")).toBeVisible();
+  });
+
+  it("keeps follow-ups in the panel aware of the step and method the user is on", async () => {
+    // Given: the guide was opened on the connect step
+    const { rerender, unmount } = renderHelp("aws");
+    await screen.findByRole("button", { name: "Ask Lighthouse AI" });
+
+    // When: the user switches to access keys and moves on to the next step
+    act(() =>
+      useProviderWizardStore.getState().setAwsConnectDraft({
+        method: "credentials",
+        keysValues: { awsSecretAccessKey: "super-secret-value" },
+      }),
+    );
+    rerender(
+      <LighthouseConnectHelp
+        docsLink={AWS_DOCS}
+        docsDestination="AWS"
+        providerType="aws"
+        mode="add"
+        stepName="test"
+        stepLabel="Test Connection"
+        isOrganizationsFlow={false}
+      />,
+    );
+
+    // Then: a follow-up carries the current wizard state, never the secret
+    const followUpContext = panelContextOnProviders();
+    expect(followUpContext?.items).toContainEqual(
+      expect.objectContaining({
+        kind: "provider",
+        providerType: "aws",
+        wizardStep: "test",
+        connectionMethod: "credentials",
+      }),
+    );
+    expect(JSON.stringify(followUpContext)).not.toContain("super-secret-value");
+
+    // When: the wizard closes
+    unmount();
+
+    // Then
+    expect(
+      panelContextOnProviders()?.items.some((item) => item.kind === "provider"),
+    ).toBe(false);
   });
 });

@@ -3,6 +3,7 @@
 import { ExternalLink, Info } from "lucide-react";
 import { useState } from "react";
 
+import { LighthouseContextContributor } from "@/components/lighthouse/context-contributor";
 import { usePanelSkillLaunch } from "@/components/lighthouse/use-panel-skill-launch";
 import { Button } from "@/components/shadcn/button/button";
 import {
@@ -17,6 +18,7 @@ import {
 import { getVisibleSidePanelTabs } from "@/components/side-panel/side-panel-tabs";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { useMountEffect } from "@/hooks/use-mount-effect";
+import { buildProviderWizardContext } from "@/lib/lighthouse/context/contributions";
 import { getSkillById } from "@/lib/lighthouse/skills/registry";
 import {
   dispatchProviderFunnel,
@@ -64,6 +66,12 @@ export function LighthouseConnectHelp({
     (state) => state.isOpen && state.selectedTab === SIDE_PANEL_TAB.AI_CHAT,
   );
   const launchPanelSkill = usePanelSkillLaunch();
+  const providerUid = useProviderWizardStore((state) => state.providerUid);
+  const via = useProviderWizardStore((state) => state.via);
+  // Only the method leaves the AWS draft: its values may hold access keys.
+  const awsDraftMethod = useProviderWizardStore(
+    (state) => state.awsConnectDraft?.method,
+  );
 
   if (!isLighthouseReady || !CONNECTION_GUIDE_SKILL) {
     return (
@@ -80,10 +88,22 @@ export function LighthouseConnectHelp({
     );
   }
 
+  const wizardContext = {
+    providerType,
+    providerUid,
+    mode,
+    stepName,
+    stepLabel,
+    connectionMethod: resolveConnectionMethod({
+      isOrganizationsFlow,
+      providerType,
+      via,
+      awsDraftMethod,
+    }),
+    docsUrl: docsLink,
+  };
+
   const askLighthouse = () => {
-    // Read at click time: only the method is taken from the draft, never values.
-    const { providerUid, via, awsConnectDraft } =
-      useProviderWizardStore.getState();
     dispatchProviderFunnel({
       step: PROVIDER_FUNNEL_STEP.LIGHTHOUSE_HELP_OPENED,
       providerType,
@@ -91,20 +111,7 @@ export function LighthouseConnectHelp({
     });
     launchPanelSkill(
       CONNECTION_GUIDE_SKILL,
-      buildProviderWizardHelpContext({
-        providerType,
-        providerUid,
-        mode,
-        stepName,
-        stepLabel,
-        connectionMethod: resolveConnectionMethod({
-          isOrganizationsFlow,
-          providerType,
-          via,
-          awsDraftMethod: awsConnectDraft?.method,
-        }),
-        docsUrl: docsLink,
-      }),
+      buildProviderWizardHelpContext(wizardContext),
     );
   };
 
@@ -136,6 +143,11 @@ export function LighthouseConnectHelp({
           {copy.action}
         </LighthouseCalloutAction>
       </LighthouseCalloutActions>
+      {/* Follow-ups typed in the panel carry the wizard's current state. */}
+      <LighthouseContextContributor
+        contributorId="provider-wizard"
+        item={buildProviderWizardContext(wizardContext)}
+      />
     </LighthouseCallout>
   );
 }
