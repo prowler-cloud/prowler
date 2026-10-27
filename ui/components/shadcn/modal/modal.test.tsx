@@ -8,12 +8,18 @@ import { Modal } from "./modal";
 interface OpenerHarnessProps {
   isNonModal: boolean;
   onCloseAutoFocus?: (event: Event) => void;
+  // A field that takes focus as it mounts, so Radix skips its open autofocus.
+  hasAutoFocusField?: boolean;
 }
 
 // A controlled Modal opened by a plain button, the way the app opens them.
-function OpenerHarness({ isNonModal, onCloseAutoFocus }: OpenerHarnessProps) {
+function OpenerHarness({
+  isNonModal,
+  onCloseAutoFocus,
+  hasAutoFocusField = false,
+}: OpenerHarnessProps) {
   const [open, setOpen] = useState(false);
-  const body = <input aria-label="Account ID" />;
+  const body = <input aria-label="Account ID" autoFocus={hasAutoFocusField} />;
   return (
     <>
       <button type="button" onClick={() => setOpen(true)}>
@@ -70,6 +76,32 @@ describe("Modal focus on close", () => {
       await waitFor(() =>
         expect(screen.queryByRole("dialog")).not.toBeInTheDocument(),
       );
+      await waitFor(() =>
+        expect(
+          screen.getByRole("button", { name: "Add provider" }),
+        ).toHaveFocus(),
+      );
+    },
+  );
+
+  it.each([
+    { mode: "modal", isNonModal: false },
+    { mode: "non-modal", isNonModal: true },
+  ])(
+    "returns focus to the opener of a $mode dialog whose field takes focus on mount",
+    async ({ isNonModal }) => {
+      // Given
+      const user = userEvent.setup();
+      render(<OpenerHarness isNonModal={isNonModal} hasAutoFocusField />);
+      await user.click(screen.getByRole("button", { name: "Add provider" }));
+      await waitFor(() =>
+        expect(screen.getByLabelText("Account ID")).toHaveFocus(),
+      );
+
+      // When
+      await user.click(screen.getByRole("button", { name: "Close" }));
+
+      // Then
       await waitFor(() =>
         expect(
           screen.getByRole("button", { name: "Add provider" }),

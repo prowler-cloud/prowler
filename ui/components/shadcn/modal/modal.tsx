@@ -1,6 +1,12 @@
 "use client";
 
-import { type ReactNode, type Ref, useRef, useState } from "react";
+import {
+  type FocusEvent,
+  type ReactNode,
+  type Ref,
+  useRef,
+  useState,
+} from "react";
 
 import {
   Dialog,
@@ -100,6 +106,18 @@ export const Modal = ({
     onOpenAutoFocus(event);
   };
 
+  // A self-focusing field skips Radix open autofocus: take the opener it left.
+  const handleFocusCapture = (event: FocusEvent<HTMLDivElement>) => {
+    const previous = event.relatedTarget;
+    if (
+      !openerRef.current &&
+      previous instanceof HTMLElement &&
+      !event.currentTarget.contains(previous)
+    ) {
+      openerRef.current = previous;
+    }
+  };
+
   const handleCloseAutoFocus = (event: Event) => {
     onCloseAutoFocus?.(event);
     const opener = openerRef.current;
@@ -146,6 +164,7 @@ export const Modal = ({
           container={isNonModal ? frame : undefined}
           onOpenAutoFocus={handleOpenAutoFocus}
           onCloseAutoFocus={handleCloseAutoFocus}
+          onFocusCapture={handleFocusCapture}
           onEscapeKeyDown={onEscapeKeyDown}
           onInteractOutside={isNonModal ? preventOutsideDismiss : undefined}
           // Radix requires an accessible description; opt out explicitly when none is provided.
