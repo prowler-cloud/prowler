@@ -33,6 +33,12 @@ describe("wizard stepper", () => {
       .element(screen.getByText("Authenticate Credentials"))
       .toBeVisible();
     // Other steps keep their names for assistive tech but take no room.
+    await expect.element(
+      screen.getByRole("navigation", { name: "Wizard progress" }),
+    ).toMatchAriaInlineSnapshot(`
+        - navigation "Wizard progress":
+          - text: Link a Provider Authenticate Credentials Validate Connection Launch Scan
+      `);
     const otherStep = screen.getByText("Link a Provider").element();
     expect(otherStep.checkVisibility()).toBe(true);
     // The block holding the name is clipped to 1px; the text inside overflows it.

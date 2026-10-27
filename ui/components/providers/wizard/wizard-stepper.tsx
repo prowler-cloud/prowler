@@ -226,9 +226,15 @@ function StepIcon({
   icon: IconComponent;
   className: string;
 }) {
-  // Size classes win over the custom SVGs' width/height attributes.
+  // Decorative like lucide's; size classes beat the SVG's width/height attributes.
   if (isCustomSvgIcon(Icon)) {
-    return <Icon size={24} className={cn("size-4 lg:size-6", className)} />;
+    return (
+      <Icon
+        aria-hidden
+        size={24}
+        className={cn("size-4 lg:size-6", className)}
+      />
+    );
   }
   return <Icon className={cn("size-4 lg:size-6", className)} />;
 }
