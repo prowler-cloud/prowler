@@ -24,6 +24,7 @@ describe("useSidePanelStore", () => {
       contextTab: null,
       contextOwnerToken: 0,
       contextOutlet: null,
+      modalHostCount: 0,
     });
   });
 
@@ -315,5 +316,21 @@ describe("useSidePanelStore", () => {
     });
     expect(persisted.state.isOpen).toBeUndefined();
     expect(persisted.state.contextTab).toBeUndefined();
+  });
+
+  it("counts modal hosts until each one unregisters, ignoring repeated cleanups", () => {
+    // Given: two dialogs share the screen with the panel
+    const unregisterFirst = useSidePanelStore.getState().registerModalHost();
+    const unregisterSecond = useSidePanelStore.getState().registerModalHost();
+    expect(useSidePanelStore.getState().modalHostCount).toBe(2);
+
+    // When: the first one unregisters twice (e.g. a double cleanup)
+    unregisterFirst();
+    unregisterFirst();
+
+    // Then: only its own registration is released
+    expect(useSidePanelStore.getState().modalHostCount).toBe(1);
+    unregisterSecond();
+    expect(useSidePanelStore.getState().modalHostCount).toBe(0);
   });
 });
