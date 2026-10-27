@@ -7,7 +7,7 @@ import {
   REGISTRY_PROVIDER_DISCOVERY,
   type RegistryProviderDiscoveryResult,
 } from "@/lib/registry/provider-options";
-import { isCloud } from "@/lib/shared/env";
+import { isRegistryEnabled } from "@/lib/shared/env";
 
 export function useRegistryProviderDiscovery() {
   // Local state needed: discovery and retries resolve asynchronously.
@@ -20,7 +20,7 @@ export function useRegistryProviderDiscovery() {
   const latestRequest = useRef(0);
 
   useEffect(() => {
-    if (!isCloud()) return;
+    if (!isRegistryEnabled()) return;
     let active = true;
     const load = async () => {
       const request = ++latestRequest.current;

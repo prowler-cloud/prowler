@@ -22,6 +22,7 @@ describe("useRegistryProviderDiscovery", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.stubEnv("UI_CLOUD_ENABLED", "true");
+    vi.stubEnv("UI_REGISTRY_ENABLED", "true");
   });
 
   it("ignores a stale discovery that settles after a newer one", async () => {

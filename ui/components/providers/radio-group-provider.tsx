@@ -1,6 +1,6 @@
 "use client";
 
-import { FC, useState } from "react";
+import { FC, ReactNode, useState } from "react";
 import { Control, Controller } from "react-hook-form";
 
 import {
@@ -9,6 +9,7 @@ import {
 } from "@/components/icons/providers-badge/provider-type-icon";
 import { Badge, SearchInput } from "@/components/shadcn";
 import { FormMessage } from "@/components/shadcn/form";
+import { Skeleton } from "@/components/shadcn/skeleton/skeleton";
 import {
   Tabs,
   TabsContent,
@@ -26,6 +27,7 @@ const PROVIDERS = Object.entries(PROVIDER_TYPE_DATA).map(
 );
 
 const PROVIDER_TAB = { ALL: "all", REGISTRY: "registry" } as const;
+const REGISTRY_SKELETON_ROWS = 3;
 type ProviderTab = (typeof PROVIDER_TAB)[keyof typeof PROVIDER_TAB];
 
 interface RadioGroupProviderProps {
@@ -36,6 +38,10 @@ interface RadioGroupProviderProps {
    * Local (OSS) and flag-off deployments, where the source tabs are hidden.
    */
   registryAvailable?: boolean;
+  /** Discovery in flight: the Registry tab shows placeholder rows. */
+  registryLoading?: boolean;
+  /** Shown in the Registry tab instead of its list (upgrade, setup, retry). */
+  registryNotice?: ReactNode;
   registryOptions?: RegistryProviderOption[];
   isInvalid: boolean;
   errorMessage?: string;
@@ -46,6 +52,8 @@ export const RadioGroupProvider: FC<RadioGroupProviderProps> = ({
   isInvalid,
   errorMessage,
   registryAvailable = false,
+  registryLoading = false,
+  registryNotice,
   registryOptions = [],
 }) => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -161,6 +169,19 @@ export const RadioGroupProvider: FC<RadioGroupProviderProps> = ({
             )}
           </div>
         );
+        const registryPlaceholder = registryLoading ? (
+          <div
+            role="status"
+            aria-label="Loading Registry providers"
+            className="flex flex-col gap-3"
+          >
+            {Array.from({ length: REGISTRY_SKELETON_ROWS }, (_, index) => (
+              <Skeleton key={index} className="h-[72px] w-full rounded-lg" />
+            ))}
+          </div>
+        ) : (
+          registryNotice
+        );
         const validationMessage = errorMessage && (
           <FormMessage className="text-text-error-primary">
             {errorMessage}
@@ -188,7 +209,11 @@ export const RadioGroupProvider: FC<RadioGroupProviderProps> = ({
               <TabsTrigger value={PROVIDER_TAB.REGISTRY}>Registry</TabsTrigger>
             </TabsList>
             {searchInput}
-            <TabsContent value={activeTab}>{providerList}</TabsContent>
+            <TabsContent value={activeTab}>
+              {activeTab === PROVIDER_TAB.REGISTRY && registryPlaceholder
+                ? registryPlaceholder
+                : providerList}
+            </TabsContent>
             {validationMessage}
           </Tabs>
         );

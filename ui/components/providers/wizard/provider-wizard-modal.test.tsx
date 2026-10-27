@@ -154,8 +154,9 @@ async function enterAccountDetails() {
 
 describe("provider wizard account creation", () => {
   beforeEach(() => {
-    // Registry discovery only runs in Cloud.
+    // Registry discovery only runs in Cloud with Registry enabled.
     vi.stubEnv("UI_CLOUD_ENABLED", "true");
+    vi.stubEnv("UI_REGISTRY_ENABLED", "true");
     useProviderWizardStore.getState().reset();
     resetToasts();
     getInstalledRegistryProviderOptions.mockResolvedValue({
@@ -525,44 +526,45 @@ describe("provider wizard account creation", () => {
     );
     const user = userEvent.setup();
     render(<ProviderWizardModal open onOpenChange={vi.fn()} />);
-    await screen.findByText("Registry providers could not be loaded");
     expect(
-      screen.getByRole("option", { name: /Amazon Web Services/ }),
+      await screen.findByRole("option", { name: /Amazon Web Services/ }),
     ).toBeVisible();
 
-    // Then: an unanswered discovery cannot vouch for Registry availability.
-    expect(
-      screen.queryByRole("tab", { name: "Registry" }),
-    ).not.toBeInTheDocument();
-
     // When
+    await user.click(screen.getByRole("tab", { name: "Registry" }));
     await user.click(
-      screen.getByRole("button", { name: "Retry Registry providers" }),
+      await screen.findByRole("button", { name: "Retry Registry providers" }),
     );
 
     // Then
     expect(
       await screen.findByRole("option", { name: "Acme Cloud Registry" }),
     ).toBeVisible();
-    expect(screen.getByRole("tab", { name: "Registry" })).toBeVisible();
     expect(
       screen.queryByText("Registry providers could not be loaded"),
     ).not.toBeInTheDocument();
   });
 
-  it("keeps the Registry tab with a retry when eligible discovery fails", async () => {
+  it("shows the retry inside the Registry tab when eligible discovery fails", async () => {
     // Given: Cloud with Registry enabled, but the catalog read failed.
     getInstalledRegistryProviderOptions.mockResolvedValueOnce({
       status: "error",
     });
     const user = userEvent.setup();
     render(<ProviderWizardModal open onOpenChange={vi.fn()} />);
-    await screen.findByText("Registry providers could not be loaded");
 
     // When
-    await user.click(screen.getByRole("tab", { name: "Registry" }));
+    await user.click(await screen.findByRole("tab", { name: "Registry" }));
 
     // Then
-    expect(screen.getByText("No Registry providers available.")).toBeVisible();
+    expect(
+      await screen.findByText("Registry providers could not be loaded"),
+    ).toBeVisible();
+    expect(
+      screen.getByRole("button", { name: "Retry Registry providers" }),
+    ).toBeVisible();
+    expect(
+      screen.queryByText("No Registry providers available."),
+    ).not.toBeInTheDocument();
   });
 });
