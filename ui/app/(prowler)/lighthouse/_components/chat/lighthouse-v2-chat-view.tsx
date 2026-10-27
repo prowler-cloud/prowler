@@ -37,9 +37,8 @@ import { Skeleton } from "@/components/shadcn/skeleton/skeleton";
 import { useLighthouseCurrentContext } from "@/hooks/use-lighthouse-context";
 import { useMountEffect } from "@/hooks/use-mount-effect";
 
-import { ProviderIcon } from "../config/provider-icon";
-
 import { ChatComposerPanel } from "./composer";
+import { CurrentModelDisplay } from "./current-model-display";
 import { ChatEmptyState } from "./empty-state";
 import { useLighthouseChatStore } from "./lighthouse-chat-store-provider";
 import {
@@ -183,7 +182,7 @@ export function LighthouseV2ChatView({
         modelName={selectedModelLabel}
       />
     ) : (
-      <div className="min-w-0 flex-1 sm:max-w-48">
+      <div className="min-w-36 flex-1 sm:max-w-48">
         <Combobox
           aria-label="Model"
           value={selectedModelValue}
@@ -319,36 +318,6 @@ function SessionLoadingState() {
       <Skeleton className="h-24 w-full" />
       <Skeleton className="h-10 w-1/2 self-end" />
       <Skeleton className="h-16 w-full" />
-    </div>
-  );
-}
-
-interface CurrentModelDisplayProps {
-  provider: LighthouseV2ProviderType;
-  providerName: string;
-  modelName: string;
-}
-
-function CurrentModelDisplay({
-  provider,
-  providerName,
-  modelName,
-}: CurrentModelDisplayProps) {
-  return (
-    <div
-      aria-label={`Current model: ${providerName} ${modelName}`}
-      className="border-border-neutral-secondary bg-bg-neutral-secondary flex h-8 max-w-48 min-w-0 items-center gap-2 rounded-lg border px-2.5 text-sm"
-    >
-      <ProviderIcon
-        provider={provider}
-        className="text-text-neutral-secondary size-3.5 shrink-0"
-      />
-      <span className="text-text-neutral-tertiary shrink-0">
-        {providerName}
-      </span>
-      <span className="text-text-neutral-primary min-w-0 truncate font-medium">
-        {modelName}
-      </span>
     </div>
   );
 }
