@@ -15,6 +15,7 @@ import {
   LighthouseCalloutIcon,
   LighthouseCalloutTitle,
 } from "@/components/shadcn/lighthouse-callout";
+import { Skeleton } from "@/components/shadcn/skeleton/skeleton";
 import { getVisibleSidePanelTabs } from "@/components/side-panel/side-panel-tabs";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { useMountEffect } from "@/hooks/use-mount-effect";
@@ -25,6 +26,7 @@ import {
   PROVIDER_FUNNEL_STEP,
 } from "@/lib/provider-funnel/provider-funnel-events";
 import { SIDE_PANEL_PUSH_MEDIA_QUERY } from "@/lib/ui-layout";
+import { useLighthouseLlmStore } from "@/store/lighthouse-llm/store";
 import { useProviderWizardStore } from "@/store/provider-wizard/store";
 import { SIDE_PANEL_TAB, useSidePanelStore } from "@/store/side-panel";
 import { LIGHTHOUSE_SKILL_ID } from "@/types/lighthouse-skills";
@@ -39,6 +41,13 @@ import {
 const CONNECTION_GUIDE_SKILL = getSkillById(
   LIGHTHOUSE_SKILL_ID.PROVIDER_CONNECTION_GUIDE,
 );
+
+const HELP_STATE = {
+  DOCS: "docs",
+  CHECKING: "checking",
+  LIGHTHOUSE: "lighthouse",
+} as const;
+type HelpState = (typeof HELP_STATE)[keyof typeof HELP_STATE];
 
 interface LighthouseConnectHelpProps {
   docsLink: string;
@@ -61,7 +70,7 @@ export function LighthouseConnectHelp({
   stepLabel,
   isOrganizationsFlow,
 }: LighthouseConnectHelpProps) {
-  const isLighthouseReady = useIsLighthouseReady();
+  const helpState = useHelpState();
   const isGuiding = useSidePanelStore(
     (state) => state.isOpen && state.selectedTab === SIDE_PANEL_TAB.AI_CHAT,
   );
@@ -73,7 +82,7 @@ export function LighthouseConnectHelp({
     (state) => state.awsConnectDraft?.method,
   );
 
-  if (!isLighthouseReady || !CONNECTION_GUIDE_SKILL) {
+  if (helpState === HELP_STATE.DOCS || !CONNECTION_GUIDE_SKILL) {
     return (
       <div className="text-muted-foreground flex flex-wrap items-center gap-2 text-sm">
         <Info className="size-4 shrink-0" />
@@ -120,13 +129,8 @@ export function LighthouseConnectHelp({
     ? getProviderDisplayName(providerType)
     : null;
   const copy = getHelpCopy({ isGuiding, providerName });
-
-  return (
-    <LighthouseCallout
-      aria-label="Help from Lighthouse AI"
-      className="animate-in fade-in-0 slide-in-from-top-1 mt-2 duration-300"
-    >
-      <HelpShownSignal providerType={providerType} wizardStep={stepName} />
+  const calloutContent = (
+    <>
       <LighthouseCalloutIcon />
       <LighthouseCalloutBody>
         <LighthouseCalloutTitle>{copy.title}</LighthouseCalloutTitle>
@@ -145,6 +149,32 @@ export function LighthouseConnectHelp({
           {copy.action}
         </LighthouseCalloutAction>
       </LighthouseCalloutActions>
+    </>
+  );
+
+  if (helpState === HELP_STATE.CHECKING) {
+    return (
+      <div
+        role="status"
+        aria-label="Loading Lighthouse AI help"
+        className="relative mt-2"
+      >
+        {/* Invisible copy sizes the placeholder exactly like the callout. */}
+        <LighthouseCallout aria-hidden inert className="invisible">
+          {calloutContent}
+        </LighthouseCallout>
+        <Skeleton className="absolute inset-0 rounded-2xl" />
+      </div>
+    );
+  }
+
+  return (
+    <LighthouseCallout
+      aria-label="Help from Lighthouse AI"
+      className="animate-in fade-in-0 slide-in-from-top-1 mt-2 duration-300"
+    >
+      <HelpShownSignal providerType={providerType} wizardStep={stepName} />
+      {calloutContent}
       {/* Follow-ups typed in the panel carry the wizard's current state. */}
       <LighthouseContextContributor
         contributorId="provider-wizard"
@@ -196,13 +226,20 @@ function getHelpCopy({ isGuiding, providerName }: HelpCopyInput) {
 
 // Lighthouse AI can only help beside the wizard when the panel hosts the chat
 // (cloud), the panel pushes instead of covering it, and an LLM is connected.
-function useIsLighthouseReady(): boolean {
+function useHelpState(): HelpState {
   const canHostChat = getVisibleSidePanelTabs().some(
     (tab) => tab.id === SIDE_PANEL_TAB.AI_CHAT,
   );
   const isPushViewport = useMediaQuery(SIDE_PANEL_PUSH_MEDIA_QUERY);
-  // Local state needed: whether an LLM is connected is fetched once per open.
-  const [hasConnectedLlm, setHasConnectedLlm] = useState(false);
+  // Kept across openings; every opening still refreshes it.
+  const hasConnectedLlm = useLighthouseLlmStore(
+    (state) => state.hasConnectedLlm,
+  );
+  const setHasConnectedLlm = useLighthouseLlmStore(
+    (state) => state.setHasConnectedLlm,
+  );
+  // Local state needed: a failed check only falls back for this opening.
+  const [checkFailed, setCheckFailed] = useState(false);
 
   useMountEffect(() => {
     if (!canHostChat) return;
@@ -212,18 +249,24 @@ function useIsLighthouseReady(): boolean {
       .then(({ getLighthouseV2Configurations }) =>
         getLighthouseV2Configurations(),
       )
-      .then((result) => {
-        if (!isMounted || "error" in result) return;
-        setHasConnectedLlm(
-          result.data.some((configuration) => configuration.connected),
-        );
-      })
+      .then((result) =>
+        "error" in result
+          ? null
+          : result.data.some((configuration) => configuration.connected),
+      )
       // Optional help: a failed check just leaves the docs link in place.
-      .catch(() => {});
+      .catch(() => null)
+      .then((connected) => {
+        if (connected !== null) setHasConnectedLlm(connected);
+        else if (isMounted) setCheckFailed(true);
+      });
     return () => {
       isMounted = false;
     };
   });
 
-  return canHostChat && isPushViewport && hasConnectedLlm;
+  if (!canHostChat || !isPushViewport) return HELP_STATE.DOCS;
+  if (hasConnectedLlm === null)
+    return checkFailed ? HELP_STATE.DOCS : HELP_STATE.CHECKING;
+  return hasConnectedLlm ? HELP_STATE.LIGHTHOUSE : HELP_STATE.DOCS;
 }
