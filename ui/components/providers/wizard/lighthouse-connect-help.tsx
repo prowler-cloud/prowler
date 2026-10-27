@@ -134,7 +134,8 @@ export function LighthouseConnectHelp({
       <LighthouseCalloutIcon />
       <LighthouseCalloutBody>
         <LighthouseCalloutTitle>{copy.title}</LighthouseCalloutTitle>
-        <LighthouseCalloutDescription>
+        {/* A stacked wizard keeps the list in view: title and actions only. */}
+        <LighthouseCalloutDescription className="hidden lg:block">
           {copy.description}
         </LighthouseCalloutDescription>
       </LighthouseCalloutBody>
