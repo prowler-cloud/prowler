@@ -88,9 +88,8 @@ const COMPLIANCE_LOGOS = [
   // The compliance_id is `dora_2022_2554`; the `dora` keyword still matches
   // it via `includes`, with no provider suffix.
   ["dora", DORALogo],
-  // NATO D32 — universal framework installed from the Registry
-  // (`nato_cloud_directive_rev1`); the `nato` keyword matches both the id and
-  // the title "NATO D32 (...)".
+  // Matches the id `nato_cloud_directive_rev1` and the framework
+  // `NATO-Cloud-Directive` that the cards pass.
   ["nato", NATOLogo],
   ["secnumcloud", ANSSILogo],
   ["okta", OktaLogo],

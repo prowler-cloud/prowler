@@ -94,9 +94,10 @@ describe("getComplianceIcon", () => {
       expect(getComplianceIcon("nist_800_53_revision_5_aws")).toBe(nistLogo);
     });
 
-    it("resolves NATO D32 by its id and by its title", () => {
+    it("resolves NATO D32 by its id, its framework and its title", () => {
       const natoLogo = getComplianceIcon("nato_cloud_directive_rev1");
       expect(natoLogo).toBeDefined();
+      expect(getComplianceIcon("NATO-Cloud-Directive")).toBe(natoLogo);
       expect(
         getComplianceIcon(
           "NATO D32 (AC/322-D(2021)0032-REV1) - NATO Restricted baseline",
