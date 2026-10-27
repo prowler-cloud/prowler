@@ -219,7 +219,11 @@ class Defender(AzureService):
                         id=contact_configuration.get("id", ""),
                         name=contact_configuration.get("name", "default"),
                         enabled=props.get("isEnabled", False),
-                        emails=props.get("emails", "").split(";"),
+                        emails=[
+                            email.strip()
+                            for email in props.get("emails", "").split(";")
+                            if email.strip()
+                        ],
                         phone=props.get("phone", ""),
                         notifications_by_role=NotificationsByRole(
                             state=notifications_by_role_state_bool,
