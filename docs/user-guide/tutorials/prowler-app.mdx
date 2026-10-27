@@ -85,16 +85,12 @@ For detailed instructions on configuring credentials for each provider, refer to
 <ProviderCards />
 
 ## Step 5: Test Connection
-After adding your cloud account credentials, click the `Check connection` button to verify that Prowler can successfully connect to your provider:
+To verify the credentials, click the connect action at the bottom of the same step (for example, `Connect account`, `Connect subscription` or `Connect project`). Prowler saves the provider and its credentials and tests the connection in that single action. When the test succeeds, the wizard moves straight to launching the scan. When it fails, the reason appears above the form, the values stay in place and `Retry connection` tests the corrected credentials without adding the provider twice.
 
 <img src="/images/test-connection-button.png" alt="Test Connection" width="700" />
 
 <Note>
-For a single AWS account, Prowler tests the connection as part of the `Connect account` step, so the wizard moves straight to launching the scan.
-</Note>
-
-<Note>
-To delegate the AWS connection, select `I don't have access, invite a teammate` on the same step when you cannot create the IAM role or do not have the account credentials. Prowler App sends the invitation to the tenant and shows the link to share. Prowler Cloud also emails it. This option is available to users who can manage the account.
+To delegate the connection, select `I don't have access, invite a teammate` on the same step when you cannot create the credentials yourself. The option is available for every provider to users who can manage the account. Prowler App adds the invitation to the tenant and shows the link to share. Prowler Cloud also emails it.
 </Note>
 
 ## Step 6: Scan Started
