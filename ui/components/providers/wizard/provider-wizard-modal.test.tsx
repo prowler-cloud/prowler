@@ -34,6 +34,7 @@ const {
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ refresh: vi.fn(), push: vi.fn() }),
+  usePathname: () => "/providers",
 }));
 const { getInvitationRoles, sendInvite, session } = vi.hoisted(() => ({
   getInvitationRoles: vi.fn(),

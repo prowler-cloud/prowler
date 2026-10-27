@@ -1,6 +1,6 @@
 "use client";
 
-import { ExternalLink, Info, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 import { AzureOrgSetupForm } from "@/components/providers/organizations/azure-org-setup-form";
 import { GcpOrgSetupForm } from "@/components/providers/organizations/gcp-org-setup-form";
@@ -9,7 +9,7 @@ import { OrgLaunchScan } from "@/components/providers/organizations/org-launch-s
 import { OrgSetupForm } from "@/components/providers/organizations/org-setup-form";
 import { Button } from "@/components/shadcn/button/button";
 import { DialogHeader, DialogTitle } from "@/components/shadcn/dialog";
-import { Modal } from "@/components/shadcn/modal";
+import { SidePanelHostModal } from "@/components/side-panel/side-panel-host-modal";
 import { useScanScheduleCapability } from "@/hooks/use-scan-schedule-capability";
 import { useScrollHint } from "@/hooks/use-scroll-hint";
 import {
@@ -25,6 +25,7 @@ import { PROVIDER_WIZARD_STEP } from "@/types/provider-wizard";
 import type { ScanScheduleCapability } from "@/types/schedules";
 
 import { useProviderWizardController } from "./hooks/use-provider-wizard-controller";
+import { LighthouseConnectHelp } from "./lighthouse-connect-help";
 import {
   getCredentialsRetryStep,
   getLaunchBackStep,
@@ -38,7 +39,11 @@ import { WIZARD_FOOTER_ACTION_TYPE } from "./steps/footer-controls";
 import { LaunchStep } from "./steps/launch-step";
 import { TestConnectionStep } from "./steps/test-connection-step";
 import type { OrgWizardInitialData, ProviderWizardInitialData } from "./types";
-import { WizardStepper } from "./wizard-stepper";
+import {
+  getActiveStepIndex,
+  PROVIDER_WIZARD_STEPS,
+  WizardStepper,
+} from "./wizard-stepper";
 
 interface ProviderWizardModalProps {
   open: boolean;
@@ -84,6 +89,7 @@ export function ProviderWizardModal({
     setOrgCurrentStep,
     setOrgSetupPhase,
     setProviderTypeHint,
+    stepName,
     wizardVariant,
   } = useProviderWizardController({
     open,
@@ -108,28 +114,47 @@ export function ProviderWizardModal({
     currentStep,
     isDirectCredentialsEntry,
   });
+  const orgStepOffset = getOrganizationsStepperOffset(
+    orgCurrentStep,
+    orgSetupPhase,
+  );
+  const stepLabel = isProviderFlow
+    ? providerStepper.steps[
+        getActiveStepIndex(
+          currentStep,
+          providerStepper.stepOffset,
+          providerStepper.steps.length,
+        )
+      ].label
+    : PROVIDER_WIZARD_STEPS[
+        getActiveStepIndex(
+          orgCurrentStep,
+          orgStepOffset,
+          PROVIDER_WIZARD_STEPS.length,
+        )
+      ].label;
 
   return (
-    <Modal
+    <SidePanelHostModal
       open={open}
       onOpenChange={handleDialogOpenChange}
       size="4xl"
-      className="flex !h-[90vh] !max-h-[90vh] !min-h-[90vh] !w-[calc(100vw-24px)] !max-w-[1192px] flex-col overflow-hidden p-4 sm:!w-[calc(100vw-40px)] sm:p-6 lg:!w-[calc(100vw-64px)] lg:p-8"
+      // cqw: widths follow the space the side panel leaves, not the viewport.
+      className="flex !h-[90vh] !max-h-[90vh] !min-h-[90vh] !w-[calc(100cqw-24px)] !max-w-[1192px] flex-col overflow-hidden p-4 sm:!w-[calc(100cqw-40px)] sm:p-6 lg:!w-[calc(100cqw-64px)] lg:p-8"
     >
       <DialogHeader className="gap-2 p-0">
         <DialogTitle className="text-lg font-semibold">
           {modalTitle}
         </DialogTitle>
-        <div className="text-muted-foreground flex flex-wrap items-center gap-2 text-sm">
-          <Info className="size-4 shrink-0" />
-          <span>For assistance connecting a Provider visit</span>
-          <Button variant="link" size="link-sm" className="h-auto p-0" asChild>
-            <a href={docsLink} target="_blank" rel="noopener noreferrer">
-              <ExternalLink className="size-3.5 shrink-0" />
-              <span>{`${docsDestination} Documentation`}</span>
-            </a>
-          </Button>
-        </div>
+        <LighthouseConnectHelp
+          docsLink={docsLink}
+          docsDestination={docsDestination}
+          providerType={isProviderFlow ? providerTypeHint : organizationType}
+          mode={mode}
+          stepName={stepName}
+          stepLabel={stepLabel}
+          isOrganizationsFlow={!isProviderFlow}
+        />
       </DialogHeader>
 
       <div className="mt-6 flex min-h-0 flex-1 flex-col overflow-hidden lg:mt-8">
@@ -144,10 +169,7 @@ export function ProviderWizardModal({
             ) : (
               <WizardStepper
                 currentStep={orgCurrentStep}
-                stepOffset={getOrganizationsStepperOffset(
-                  orgCurrentStep,
-                  orgSetupPhase,
-                )}
+                stepOffset={orgStepOffset}
               />
             )}
           </div>
@@ -451,6 +473,6 @@ export function ProviderWizardModal({
           </div>
         )}
       </div>
-    </Modal>
+    </SidePanelHostModal>
   );
 }

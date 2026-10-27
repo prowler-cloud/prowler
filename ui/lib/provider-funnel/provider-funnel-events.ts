@@ -13,6 +13,7 @@ export const PROVIDER_FUNNEL_STEP = {
   ROLE_TEMPLATE_OPENED: "role_template_opened",
   ACCOUNT_SUBMITTED: "account_submitted",
   WIZARD_CLOSED: "wizard_closed",
+  LIGHTHOUSE_HELP_OPENED: "lighthouse_help_opened",
 } as const;
 
 export type ProviderFunnelStep =
@@ -106,6 +107,13 @@ export interface WizardClosedDetail {
   providerCreated: boolean;
 }
 
+// Asked Lighthouse AI how to connect, from inside the wizard.
+export interface LighthouseHelpOpenedDetail {
+  step: typeof PROVIDER_FUNNEL_STEP.LIGHTHOUSE_HELP_OPENED;
+  providerType: string | null;
+  wizardStep: string;
+}
+
 export type ProviderFunnelDetail =
   | SidebarCtaClickedDetail
   | WizardOpenedDetail
@@ -113,7 +121,8 @@ export type ProviderFunnelDetail =
   | MethodSelectedDetail
   | RoleTemplateOpenedDetail
   | AccountSubmittedDetail
-  | WizardClosedDetail;
+  | WizardClosedDetail
+  | LighthouseHelpOpenedDetail;
 
 export function dispatchProviderFunnel(detail: ProviderFunnelDetail): void {
   if (typeof window === "undefined") return;

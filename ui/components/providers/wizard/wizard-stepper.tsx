@@ -58,14 +58,24 @@ export const AWS_PROVIDER_WIZARD_STEPS: StepConfig[] = [
   STEPS[3],
 ];
 
+/** The stepper row a wizard step lands on once its offset is applied. */
+export function getActiveStepIndex(
+  currentStep: number,
+  stepOffset: number,
+  stepCount: number,
+): number {
+  return Math.max(0, Math.min(currentStep + stepOffset, stepCount - 1));
+}
+
 export function WizardStepper({
   currentStep,
   stepOffset = 0,
   steps = STEPS,
 }: WizardStepperProps) {
-  const activeVisualStep = Math.max(
-    0,
-    Math.min(currentStep + stepOffset, steps.length - 1),
+  const activeVisualStep = getActiveStepIndex(
+    currentStep,
+    stepOffset,
+    steps.length,
   );
 
   return (
