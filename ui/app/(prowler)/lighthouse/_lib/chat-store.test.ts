@@ -351,6 +351,36 @@ describe("createLighthouseChatStore", () => {
     expect(store.getState().streamState.activeTaskId).toBeNull();
   });
 
+  it("swaps the live reply for the persisted one in a single update", async () => {
+    // Given
+    const store = makeStore();
+    await store.getState().submitMessage("Summarize findings");
+    eventSources[0].emit("message.delta", { content: "Persisted answer" });
+    getMessagesMock.mockResolvedValue({
+      data: [message("message-1", "assistant", "Persisted answer")],
+    });
+    let showedBothReplies = false;
+    store.subscribe((state) => {
+      const hasPersistedReply = state.messages.some(
+        (item) => item.role === "assistant",
+      );
+      showedBothReplies ||=
+        hasPersistedReply && state.streamState.assistantText !== "";
+    });
+
+    // When
+    eventSources[0].emit("message.end", { message_id: "message-1" });
+
+    // Then
+    await vi.waitFor(() =>
+      expect(store.getState().streamState.assistantText).toBe(""),
+    );
+    expect(store.getState().messages).toEqual([
+      expect.objectContaining({ id: "message-1", role: "assistant" }),
+    ]);
+    expect(showedBothReplies).toBe(false);
+  });
+
   it("keeps the persisted user message ratable after a terminal error", async () => {
     // Given
     const store = makeStore();
