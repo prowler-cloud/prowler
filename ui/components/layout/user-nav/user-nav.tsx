@@ -4,11 +4,7 @@ import { LogOut } from "lucide-react";
 import { useSession } from "next-auth/react";
 
 import { logOut } from "@/actions/auth";
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@/components/shadcn/avatar/avatar";
+import { Avatar, AvatarFallback } from "@/components/shadcn/avatar/avatar";
 import { Button } from "@/components/shadcn/button/button";
 import { CustomLink } from "@/components/shadcn/custom/custom-link";
 import {
@@ -43,7 +39,6 @@ export const UserNav = () => {
           >
             <CustomLink href="/profile" target="_self" aria-label="Account">
               <Avatar className="h-8 w-8">
-                <AvatarImage src="#" alt="Avatar" />
                 <AvatarFallback className="bg-transparent text-xs font-bold">
                   {initials}
                 </AvatarFallback>
