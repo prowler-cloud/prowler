@@ -218,16 +218,18 @@ export function useProviderWizardController({
     initialProviderId && initialProviderType && initialProviderUid,
   );
 
+  const isProviderFlow = wizardVariant === WIZARD_VARIANT.PROVIDER;
+  const stepName = isProviderFlow
+    ? PROVIDER_STEP_NAME[currentStep]
+    : ORG_STEP_NAME[orgCurrentStep];
+
   const handleClose = () => {
     // Read providerId before reset clears it — non-null means a provider was connected.
     const connectedProviderId = useProviderWizardStore.getState().providerId;
 
     dispatchProviderFunnel({
       step: PROVIDER_FUNNEL_STEP.WIZARD_CLOSED,
-      lastStep:
-        wizardVariant === WIZARD_VARIANT.PROVIDER
-          ? PROVIDER_STEP_NAME[currentStep]
-          : ORG_STEP_NAME[orgCurrentStep],
+      lastStep: stepName,
       providerCreated: connectedProviderId !== null,
     });
 
@@ -293,7 +295,6 @@ export function useProviderWizardController({
     setOrgSetupPhase(ORG_SETUP_PHASE.DETAILS);
   };
 
-  const isProviderFlow = wizardVariant === WIZARD_VARIANT.PROVIDER;
   const docsLink = isProviderFlow
     ? getProviderHelpText(
         providerTypeHint ?? providerType ?? "",
@@ -327,6 +328,7 @@ export function useProviderWizardController({
     setOrgCurrentStep,
     setOrgSetupPhase,
     setProviderTypeHint,
+    stepName,
     backToProviderFlow,
     wizardVariant,
   };

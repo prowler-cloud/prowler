@@ -18,8 +18,11 @@ interface SkillMessageCardProps {
 export function SkillMessageCard({ skillRef, context }: SkillMessageCardProps) {
   const definition = getSkillById(skillRef.skillId);
   const Icon = definition?.icon ?? Sparkles;
-  const findingLabel = context?.items.find(
-    (item) => item.kind === LIGHTHOUSE_CONTEXT_KIND.FINDING,
+  // The subject the skill ran on: a finding, or the provider being connected.
+  const subjectLabel = context?.items.find(
+    (item) =>
+      item.kind === LIGHTHOUSE_CONTEXT_KIND.FINDING ||
+      item.kind === LIGHTHOUSE_CONTEXT_KIND.PROVIDER,
   )?.label;
 
   return (
@@ -34,9 +37,9 @@ export function SkillMessageCard({ skillRef, context }: SkillMessageCardProps) {
             {skillRef.name}
           </span>
         </span>
-        {findingLabel && (
+        {subjectLabel && (
           <span className="text-text-neutral-secondary truncate text-xs">
-            {findingLabel}
+            {subjectLabel}
           </span>
         )}
       </div>

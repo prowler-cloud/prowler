@@ -4,6 +4,7 @@ import { CornerDownRight, PencilLine } from "lucide-react";
 import { useState, type KeyboardEvent } from "react";
 
 import { LighthouseIcon } from "@/components/icons";
+import { usePanelSkillLaunch } from "@/components/lighthouse/use-panel-skill-launch";
 import {
   ActionDropdown,
   ActionDropdownItem,
@@ -13,7 +14,7 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
 } from "@/components/shadcn/dropdown";
-import { getAllSkills } from "@/lib/lighthouse/skills/registry";
+import { getSkillsForSurface } from "@/lib/lighthouse/skills/registry";
 import { cn } from "@/lib/utils";
 import { SIDE_PANEL_TAB, useSidePanelStore } from "@/store/side-panel";
 import {
@@ -21,7 +22,10 @@ import {
   type LighthouseContextEnvelope,
   type LighthouseFindingContextItem,
 } from "@/types/lighthouse-context";
-import type { LighthouseSkillDefinition } from "@/types/lighthouse-skills";
+import {
+  LIGHTHOUSE_SKILL_SURFACE,
+  type LighthouseSkillDefinition,
+} from "@/types/lighthouse-skills";
 
 // Launching from a table row bypasses the context-contribution store: the row
 // already knows its finding, so the launch carries a minimal one-item envelope.
@@ -36,21 +40,12 @@ function buildRowEnvelope(
 }
 
 export function useLighthouseSkillLaunch() {
-  const openSidePanel = useSidePanelStore((state) => state.openPanel);
+  const launchPanelSkill = usePanelSkillLaunch();
 
   return (
     skill: LighthouseSkillDefinition,
     findingItem: LighthouseFindingContextItem,
-  ) => {
-    openSidePanel(SIDE_PANEL_TAB.AI_CHAT);
-    // Lazy import: the panel chat store pulls in the whole chat/server-action
-    // graph, which table columns must not load just to render a menu. Ordering
-    // is safe — the store queues launches until the panel exists.
-    void import("@/app/(prowler)/lighthouse/_lib/panel-chat-store").then(
-      ({ requestPanelSkillLaunch }) =>
-        requestPanelSkillLaunch(skill, buildRowEnvelope(findingItem)),
-    );
-  };
+  ) => launchPanelSkill(skill, buildRowEnvelope(findingItem));
 }
 
 // Free-text sibling of useLighthouseSkillLaunch: starts a fresh Lighthouse
@@ -69,7 +64,7 @@ export function useLighthousePromptLaunch() {
 
 // The one skills-menu catalog split, shared by every surface: the first
 // enabled skill leads as RECOMMENDED, the rest follow in catalog order.
-const MENU_SKILLS = getAllSkills();
+const MENU_SKILLS = getSkillsForSurface(LIGHTHOUSE_SKILL_SURFACE.FINDING);
 const RECOMMENDED_SKILL = MENU_SKILLS.find((skill) => skill.enabled);
 const REST_SKILLS = MENU_SKILLS.filter((skill) => skill !== RECOMMENDED_SKILL);
 

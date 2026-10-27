@@ -46,6 +46,9 @@ interface SidePanelState {
   contextOwnerToken: number;
   // Portal target the context owner renders its detail content into.
   contextOutlet: HTMLElement | null;
+  // Open dialogs sharing the screen with the panel; while > 0 the app shell
+  // behind them is inert and panel links must not navigate away.
+  modalHostCount: number;
   openPanel: (tab?: SidePanelTabId) => void;
   closePanel: (tab?: SidePanelTabId) => void;
   togglePanel: () => void;
@@ -57,7 +60,12 @@ interface SidePanelState {
   ) => number;
   unregisterContextTab: (token: number) => void;
   setContextOutlet: (element: HTMLElement | null) => void;
+  // Returns the unregister cleanup; calling it more than once is a no-op.
+  registerModalHost: () => () => void;
 }
+
+export const selectHasModalHost = (state: SidePanelState): boolean =>
+  state.modalHostCount > 0;
 
 // Monotonic so a recycled token can never let a stale detail view unregister
 // (or portal over) a later registrant.
@@ -74,6 +82,7 @@ export const useSidePanelStore = create<SidePanelState>()(
       contextTab: null,
       contextOwnerToken: 0,
       contextOutlet: null,
+      modalHostCount: 0,
       openPanel: (tab) => {
         set({
           isOpen: true,
@@ -136,6 +145,15 @@ export const useSidePanelStore = create<SidePanelState>()(
         }));
       },
       setContextOutlet: (element) => set({ contextOutlet: element }),
+      registerModalHost: () => {
+        set((state) => ({ modalHostCount: state.modalHostCount + 1 }));
+        let isRegistered = true;
+        return () => {
+          if (!isRegistered) return;
+          isRegistered = false;
+          set((state) => ({ modalHostCount: state.modalHostCount - 1 }));
+        };
+      },
     }),
     {
       name: "side-panel-store",
