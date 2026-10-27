@@ -1,6 +1,7 @@
 import {
   addCredentialsProvider,
   addProvider,
+  getProvider,
   updateCredentialsProvider,
   updateProvider,
 } from "@/actions/providers/providers";
@@ -103,7 +104,8 @@ const uidError = (detail: string): ApiError =>
   ({ detail, source: { pointer: UID_ERROR_POINTER } }) as ApiError;
 
 type EnsureResult =
-  | { providerId: string; errors: null }
+  // `reused`: the account existed before this submit, so it may hold a secret.
+  | { providerId: string; errors: null; reused: boolean }
   | { providerId: null; errors: ApiError[] };
 
 // A retry may carry a new alias; the account registered earlier has to follow it.
@@ -114,7 +116,7 @@ const renameProvider = async (
 ): Promise<EnsureResult> => {
   const store = useProviderWizardStore.getState();
   if (alias === undefined || (store.providerAlias ?? "") === alias)
-    return { providerId, errors: null };
+    return { providerId, errors: null, reused: true };
 
   const updated = readCreatedId(
     await updateProvider(
@@ -132,7 +134,7 @@ const renameProvider = async (
     uid: store.providerUid ?? "",
     alias: alias || null,
   });
-  return { providerId, errors: null };
+  return { providerId, errors: null, reused: true };
 };
 
 const createProvider = (providerType: string, uid: string, alias: string) => {
@@ -202,8 +204,27 @@ export async function ensureProviderAccount({
   store.setMode(PROVIDER_WIZARD_MODE.ADD);
   // The layout only re-counts providers on a server render; flip the shared flag now.
   useUIStore.getState().setHasProviders(true);
-  return { providerId, errors: null };
+  return { providerId, errors: null, reused: false };
 }
+
+interface ProviderSecretRelationship {
+  data?: { relationships?: { secret?: { data?: { id?: unknown } | null } } };
+}
+
+// The secret an existing account already holds, read back from the API.
+const readStoredSecretId = async (providerId: string) => {
+  const formData = new FormData();
+  formData.append("id", providerId);
+  try {
+    const response = (await getProvider(
+      formData,
+    )) as ProviderSecretRelationship;
+    const id = response?.data?.relationships?.secret?.data?.id;
+    return typeof id === "string" && id ? id : null;
+  } catch {
+    return null;
+  }
+};
 
 /** Registers the account (or reuses it) and stores its credentials in a single submit. */
 export async function connectProviderAccount(
@@ -239,8 +260,11 @@ export async function connectProviderAccount(
     [ProviderCredentialFields.PROVIDER_ID]: provider.providerId,
     [ProviderCredentialFields.PROVIDER_TYPE]: providerType,
   });
-  // A provider holds one secret: resubmitting a connected account edits it in place.
-  const storedSecretId = useProviderWizardStore.getState().secretId;
+  // A provider holds one secret: resubmitting a connected account edits it in
+  // place, including one whose create committed although its response was lost.
+  const storedSecretId =
+    useProviderWizardStore.getState().secretId ??
+    (provider.reused ? await readStoredSecretId(provider.providerId) : null);
   const secret = readCreatedId(
     storedSecretId
       ? await updateCredentialsProvider(storedSecretId, secretFormData)

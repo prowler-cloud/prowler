@@ -8,12 +8,14 @@ import { connectProviderAccount } from "./connect-provider-account";
 const {
   addProvider,
   addCredentialsProvider,
+  getProvider,
   updateProvider,
   updateCredentialsProvider,
   addRegistryProvider,
 } = vi.hoisted(() => ({
   addProvider: vi.fn(),
   addCredentialsProvider: vi.fn(),
+  getProvider: vi.fn(),
   updateProvider: vi.fn(),
   updateCredentialsProvider: vi.fn(),
   addRegistryProvider: vi.fn(),
@@ -22,6 +24,7 @@ const {
 vi.mock("@/actions/providers/providers", () => ({
   addProvider,
   addCredentialsProvider,
+  getProvider,
   updateProvider,
   updateCredentialsProvider,
 }));
@@ -67,6 +70,9 @@ describe("connectProviderAccount", () => {
     addCredentialsProvider.mockResolvedValue({ data: { id: "secret-1" } });
     updateProvider.mockResolvedValue({ data: { id: "provider-1" } });
     updateCredentialsProvider.mockResolvedValue({ data: { id: "secret-1" } });
+    getProvider.mockResolvedValue({
+      data: { id: "provider-1", relationships: { secret: { data: null } } },
+    });
   });
 
   describe("when connecting a new account", () => {
@@ -324,6 +330,41 @@ describe("connectProviderAccount", () => {
       expect(useProviderWizardStore.getState().providerAlias).toBe(
         "Production EU",
       );
+    });
+  });
+
+  describe("when a secret was stored but its response was lost", () => {
+    it("updates the stored secret on the retry instead of creating a second one", async () => {
+      // Given: the create committed server-side but the wizard never heard back.
+      addCredentialsProvider.mockResolvedValueOnce({ error: "Network error" });
+      await connectProviderAccount(awsRoleInput);
+      getProvider.mockResolvedValueOnce({
+        data: {
+          id: "provider-1",
+          relationships: {
+            secret: { data: { type: "provider-secrets", id: "secret-lost" } },
+          },
+        },
+      });
+
+      // When
+      const result = await connectProviderAccount(awsRoleInput);
+
+      // Then
+      expect(result).toEqual({ ok: true, providerId: "provider-1" });
+      expect(addCredentialsProvider).toHaveBeenCalledOnce();
+      expect(updateCredentialsProvider).toHaveBeenCalledExactlyOnceWith(
+        "secret-lost",
+        expect.any(FormData),
+      );
+    });
+
+    it("does not read the account back when it was just registered", async () => {
+      // When
+      await connectProviderAccount(awsRoleInput);
+
+      // Then: a brand-new account cannot hold a secret yet.
+      expect(getProvider).not.toHaveBeenCalled();
     });
   });
 
