@@ -1,7 +1,5 @@
-// Durable "this browser already went through the first-run redirect" memory.
-// Self-hosted deployments run no tour, so no completion record would ever be
-// written there; without this marker an empty tenant would be redirected on
-// every page load.
+// Durable "this browser already went through the first-run redirect" memory;
+// without it an empty tenant would be redirected on every page load.
 //
 // The first run is resolved when the add-provider wizard actually opens, not
 // when the redirect is issued: a navigation cut short (a second login, a tab
@@ -9,11 +7,11 @@
 // an attempt; after a few attempts that never reached the wizard the marker
 // resolves anyway, so a browser can never be trapped in the redirect.
 //
-// Scoped per tenant, like the other onboarding markers: going through the first
-// run in one tenant must not silence it for another one on the same browser.
-// The bare key is a browser-wide opt-out: written before markers were scoped,
-// by e2e storage state, or when no usable tenant id exists.
-const FIRST_RUN_MARKER_KEY = "prowler.onboarding.first-run";
+// Scoped per tenant: going through the first run in one tenant must not
+// silence it for another one on the same browser. The bare key is a
+// browser-wide opt-out: written by e2e storage state, or when no usable
+// tenant id exists.
+const FIRST_RUN_MARKER_KEY = "prowler.first-run";
 const HANDLED_VALUE = "true";
 
 export const FIRST_RUN_MAX_ATTEMPTS = 3;

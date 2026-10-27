@@ -5,15 +5,10 @@ import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
 import { useMountEffect } from "@/hooks/use-mount-effect";
 import {
-  getOrderedFlows,
-  type OnboardingFlow,
-  shouldStartOnboarding,
-} from "@/lib/onboarding";
-import {
   isFirstRunHandled,
   markFirstRunHandled,
   recordFirstRunAttempt,
-} from "@/lib/onboarding/first-run-marker";
+} from "@/lib/provider-funnel/first-run-marker";
 import {
   PROVIDER_FUNNEL_EVENT,
   PROVIDER_FUNNEL_STEP,
@@ -21,12 +16,8 @@ import {
   WIZARD_OPEN_SOURCE,
 } from "@/lib/provider-funnel/provider-funnel-events";
 import { buildAddProviderHref } from "@/lib/providers-navigation";
-import { isCloud } from "@/lib/shared/env";
-import { localStorageAdapter } from "@/lib/tours/store/local-storage-adapter";
-import { useTourCompletion } from "@/lib/tours/use-tour-completion";
-import { useOnboardingCheckpointStore } from "@/store/onboarding-checkpoint";
 
-interface OnboardingGateProps {
+interface FirstRunRedirectProps {
   // `undefined` = fetch failed/ambiguous; fail-open (never force the first run).
   hasProviders?: boolean;
   // Scopes the first-run marker so one tenant's first run never silences another's.
@@ -36,53 +27,37 @@ interface OnboardingGateProps {
 // New-tenant gate. Mounted once in the layout: an empty tenant is sent straight to
 // the add-provider wizard, retried per load until the wizard opens once for that
 // tenant on this browser (bounded attempts). Renders nothing.
-export function OnboardingGate({
+export function FirstRunRedirect({
   hasProviders,
   tenantId = null,
-}: OnboardingGateProps) {
+}: FirstRunRedirectProps) {
   const pathname = usePathname();
   const { permissions } = useAuth();
-  // Billing must stay usable before onboarding; leaving it keeps the gate eligible.
+  // Billing must stay usable before a provider exists; leaving it keeps the gate eligible.
   const isBillingRoute =
     pathname === "/billing" || pathname?.startsWith("/billing/");
 
-  // Gate forces only the first flow (`add-provider`); remaining flows come via checkpoint/replay.
-  const flow = getOrderedFlows()[0] ?? null;
-
-  // Returns null on server/first render; the redirect re-reads storage before acting.
-  const completionRecord = useTourCompletion(flow?.tour ?? null);
-
+  // Strict `=== false`: an unknown count fails open. Limited-visibility users list
+  // zero providers in a tenant that is not empty, so the permission is required.
   const shouldRedirect =
-    flow !== null &&
-    !isBillingRoute &&
-    shouldStartOnboarding({
-      hasProviders,
-      canManageProviders: permissions.manage_providers === true,
-      completionRecord,
-    });
+    hasProviders === false &&
+    permissions.manage_providers === true &&
+    !isBillingRoute;
 
   if (!shouldRedirect) return null;
 
-  return <FirstRunRedirect flow={flow} tenantId={tenantId} />;
+  return <AddProviderRedirect tenantId={tenantId} />;
 }
 
-interface FirstRunRedirectProps {
-  flow: OnboardingFlow;
+interface AddProviderRedirectProps {
   tenantId: string | null;
 }
 
-function FirstRunRedirect({ flow, tenantId }: FirstRunRedirectProps) {
+function AddProviderRedirect({ tenantId }: AddProviderRedirectProps) {
   const router = useRouter();
 
   useMountEffect(() => {
-    // Hydration renders with an empty completion snapshot, so decide from storage here.
-    const tourId = { id: flow.tour.id, version: flow.tour.version };
-    if (
-      isFirstRunHandled(tenantId) ||
-      localStorageAdapter.get(tourId) !== null
-    ) {
-      return;
-    }
+    if (isFirstRunHandled(tenantId)) return;
 
     // The wizard opening resolves the first run, whether this redirect got there
     // or the user opened it on their own. Until then each load retries, bounded
@@ -96,14 +71,7 @@ function FirstRunRedirect({ flow, tenantId }: FirstRunRedirectProps) {
     window.addEventListener(PROVIDER_FUNNEL_EVENT, resolveOnWizardOpened);
     recordFirstRunAttempt(tenantId);
 
-    const addProviderHref = buildAddProviderHref(WIZARD_OPEN_SOURCE.FIRST_RUN);
-    if (!isCloud()) {
-      router.replace(addProviderHref);
-    } else {
-      // Tours and the post-connect checkpoint are Cloud-only.
-      useOnboardingCheckpointStore.getState().arm();
-      router.replace(`${addProviderHref}&onboarding=${flow.id}`);
-    }
+    router.replace(buildAddProviderHref(WIZARD_OPEN_SOURCE.FIRST_RUN));
 
     return () =>
       window.removeEventListener(PROVIDER_FUNNEL_EVENT, resolveOnWizardOpened);

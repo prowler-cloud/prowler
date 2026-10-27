@@ -7,7 +7,7 @@ import {
   getCompliancesOverview,
 } from "@/actions/compliances";
 import { getThreatScore } from "@/actions/overview";
-import { getScan, getScans, getScansByState } from "@/actions/scans";
+import { getScan, getScans } from "@/actions/scans";
 import {
   ComplianceSkeletonGrid,
   NoScansAvailable,
@@ -93,29 +93,8 @@ export default async function Compliance({
   // Only the active tab's payload is built: switching tabs is a real
   // navigation, so pre-building the inactive tab buys nothing.
   if (activeTab === COMPLIANCE_TAB.CROSS_PROVIDER) {
-    // The tour's anchors (search, framework cards) only exist on Single Scan,
-    // so replaying it from here navigates there — and with no scan to render
-    // those anchors never mount. Fall back to the scan flow instead, matching
-    // the Per Scan branch below. Fail-open: a failed fetch assumes scans exist.
-    const scansByState = await getScansByState();
-    const hasCompletedScan = Array.isArray(scansByState?.data)
-      ? scansByState.data.length > 0
-      : true;
-
     return (
-      <ContentLayout
-        title="Compliance"
-        icon={<ShieldCheck />}
-        onboardingAction={
-          hasCompletedScan
-            ? { flowId: "view-compliance" }
-            : {
-                flowId: "view-compliance",
-                fallbackFlowId: "view-first-scan",
-                useFallback: true,
-              }
-        }
-      >
+      <ContentLayout title="Compliance" icon={<ShieldCheck />}>
         <CompliancePageTabs
           activeTab={activeTab}
           crossProviderEnabled={crossProviderEnabled}
@@ -170,15 +149,7 @@ export default async function Compliance({
 
   if (!scansData?.data) {
     return (
-      <ContentLayout
-        title="Compliance"
-        icon={<ShieldCheck />}
-        onboardingAction={{
-          flowId: "view-compliance",
-          fallbackFlowId: "view-first-scan",
-          useFallback: true,
-        }}
-      >
+      <ContentLayout title="Compliance" icon={<ShieldCheck />}>
         <CompliancePageTabs
           activeTab={activeTab}
           crossProviderEnabled={crossProviderEnabled}
@@ -226,14 +197,6 @@ export default async function Compliance({
     (await resolveUrlScanId(scanIdFromUrl, expandedScansData)) ||
     expandedScansData[0]?.id ||
     null;
-  const onboardingAction = selectedScanId
-    ? { flowId: "view-compliance" }
-    : {
-        flowId: "view-compliance",
-        fallbackFlowId: "view-first-scan",
-        useFallback: true,
-      };
-
   const selectedScan = expandedScansData.find(
     (scan) => scan.id === selectedScanId,
   );
@@ -321,11 +284,7 @@ export default async function Compliance({
   );
 
   return (
-    <ContentLayout
-      title="Compliance"
-      icon={<ShieldCheck />}
-      onboardingAction={onboardingAction}
-    >
+    <ContentLayout title="Compliance" icon={<ShieldCheck />}>
       <CompliancePageTabs
         activeTab={activeTab}
         crossProviderEnabled={crossProviderEnabled}

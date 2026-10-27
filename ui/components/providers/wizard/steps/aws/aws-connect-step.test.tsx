@@ -23,7 +23,6 @@ const {
   updateCredentialsProvider,
   testProviderConnection,
   openCloudUpgradeMock,
-  endActiveTour,
   getInvitationRoles,
   sendInvite,
   session,
@@ -34,7 +33,6 @@ const {
   updateCredentialsProvider: vi.fn(),
   testProviderConnection: vi.fn(),
   openCloudUpgradeMock: vi.fn(),
-  endActiveTour: vi.fn(),
   getInvitationRoles: vi.fn(),
   sendInvite: vi.fn(),
   // Mutable: only the permissions differ between suites.
@@ -49,7 +47,6 @@ const {
 vi.mock("next-auth/react", () => ({
   useSession: () => ({ data: session.data, status: "authenticated" }),
 }));
-vi.mock("@/lib/tours/use-driver-tour", () => ({ endActiveTour }));
 vi.mock("@/actions/invitations/roles", () => ({ getInvitationRoles }));
 vi.mock("@/actions/invitations/invitation", () => ({ sendInvite }));
 vi.mock("@/actions/providers/providers", () => ({
@@ -804,7 +801,7 @@ describe("AwsConnectStep", () => {
       await user.click(inviteRadio()!);
       await user.click(inviteRadio()!);
 
-      // Then: the teammate form takes the step and the footer, the tour steps aside.
+      // Then: the teammate form takes the step and the footer.
       expect(inviteRadio()).toBeChecked();
       expect(
         screen.queryByRole("textbox", { name: /Role ARN/ }),
@@ -815,7 +812,6 @@ describe("AwsConnectStep", () => {
       expect(
         screen.getByRole("button", { name: "Send invitation" }),
       ).toBeInTheDocument();
-      expect(endActiveTour).toHaveBeenCalled();
       expect(
         funnelSignals.filter((signal) => signal.step === "method_selected"),
       ).toEqual([

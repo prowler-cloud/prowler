@@ -439,7 +439,7 @@ export const ConnectAccountForm = ({
       >
         {/* Step 1: Provider selection */}
         {prevStep === 1 && (
-          <div data-tour-id="add-provider-provider-type">
+          <div>
             {registryDiscovery?.status ===
               REGISTRY_PROVIDER_DISCOVERY.SUBSCRIPTION_REQUIRED && (
               <RegistryUpgradePrompt />

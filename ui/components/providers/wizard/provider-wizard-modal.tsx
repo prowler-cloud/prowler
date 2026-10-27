@@ -16,7 +16,6 @@ import {
   dispatchProviderFunnel,
   PROVIDER_FUNNEL_STEP,
 } from "@/lib/provider-funnel/provider-funnel-events";
-import { advanceActiveTour, endActiveTour } from "@/lib/tours/use-driver-tour";
 import {
   ORG_SETUP_PHASE,
   ORG_WIZARD_STEP,
@@ -157,12 +156,7 @@ export function ProviderWizardModal({
             className="hidden w-[100px] min-w-0 shrink lg:block"
           />
 
-          {/* Anchors the add-provider tour's final step to the form column only, so
-              its popover has room on the left, under the stepper. */}
-          <div
-            data-tour-id="add-provider-wizard-body"
-            className="relative flex min-h-0 flex-1 flex-col overflow-hidden"
-          >
+          <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
             <div className="relative min-h-0 flex-1 overflow-hidden">
               <div
                 ref={containerRef}
@@ -174,24 +168,17 @@ export function ProviderWizardModal({
                       initialProviderType={providerTypeHint}
                       onNext={() => {
                         setCurrentStep(PROVIDER_WIZARD_STEP.CREDENTIALS);
-                        // Reaching credentials is the tour's handoff point: end it so the
-                        // user continues on their own. No-op off-onboarding.
-                        endActiveTour();
                       }}
                       onCredentialsSaved={() => {
                         // AWS stored its credentials and tested the connection in this
                         // step, so it takes the same exit the test step took: an update
                         // closes the wizard, an add moves on to the launch step.
                         handleTestSuccess();
-                        endActiveTour();
                       }}
                       onClose={handleClose}
                       onSelectOrganizations={openOrganizationsFlow}
                       onFooterChange={setFooterConfig}
                       onProviderTypeChange={(providerType) => {
-                        // Picking a type reveals the account-detail inputs. Advance the tour
-                        // to its wizard-body step, pinned beside the form. No-op off-onboarding.
-                        if (providerType) advanceActiveTour();
                         // The form re-reports the same type on re-render; signal a pick once.
                         if (providerType && providerType !== providerTypeHint) {
                           dispatchProviderFunnel({
@@ -383,8 +370,7 @@ export function ProviderWizardModal({
         {(resolvedFooterConfig.showBack ||
           resolvedFooterConfig.showSecondaryAction ||
           resolvedFooterConfig.showAction) && (
-          // Outside the tour's spotlight, yet the way forward: keep it clickable.
-          <div className="mt-8 pt-6" data-tour-interactive>
+          <div className="mt-8 pt-6">
             <div className="flex items-center justify-between">
               <div>
                 {resolvedFooterConfig.showBack && (

@@ -8,7 +8,6 @@ import {
   PROVIDER_FUNNEL_EVENT,
   type ProviderFunnelDetail,
 } from "@/lib/provider-funnel/provider-funnel-events";
-import { endActiveTour } from "@/lib/tours/use-driver-tour";
 import { useProviderWizardStore } from "@/store/provider-wizard/store";
 import { useUIStore } from "@/store/ui/store";
 import { CONNECTION_CHECK_STATUS } from "@/types/providers";
@@ -73,10 +72,6 @@ vi.mock(
 );
 vi.mock("@/hooks/use-scroll-hint", () => ({
   useScrollHint: () => ({ showScrollHint: false }),
-}));
-vi.mock("@/lib/tours/use-driver-tour", () => ({
-  advanceActiveTour: vi.fn(),
-  endActiveTour: vi.fn(),
 }));
 vi.mock("./steps/credentials-step", () => ({
   CredentialsStep: ({ onBack }: { onBack: () => void }) => (
@@ -448,27 +443,6 @@ describe("provider wizard account creation", () => {
         await screen.findByRole("textbox", { name: /Role ARN/ }),
       ).toBeVisible();
       expect(screen.queryByText("Credential details")).not.toBeInTheDocument();
-    });
-
-    it("steps the tour aside once the account can be connected", async () => {
-      // Given
-      vi.mocked(endActiveTour).mockClear();
-      const user = await pickAws();
-
-      // When
-      await user.type(
-        screen.getByRole("textbox", { name: /Role ARN/ }),
-        ROLE_ARN,
-      );
-
-      // Then: the footer sits outside the tour's spotlight, so the tour ends
-      // right when the user is ready to press Connect account.
-      await waitFor(() =>
-        expect(
-          screen.getByRole("button", { name: "Connect account" }),
-        ).toBeEnabled(),
-      );
-      expect(endActiveTour).toHaveBeenCalled();
     });
 
     it("closes the wizard once a teammate has been invited to connect the account instead", async () => {

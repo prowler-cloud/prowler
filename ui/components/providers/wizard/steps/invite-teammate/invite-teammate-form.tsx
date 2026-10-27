@@ -18,7 +18,7 @@ import {
   INVITATION_SOURCE,
   type InvitationRoleOption,
   type SentInvitation,
-} from "@/types/onboarding-invite";
+} from "@/types/invitations";
 import { getProviderDisplayName, type ProviderType } from "@/types/providers";
 
 import { AWS_CONNECT_ACTION_KIND, type AwsConnectUiState } from "../aws/types";

@@ -2,7 +2,6 @@
 export const INVITATION_SOURCE_PARAM = "source";
 
 export const INVITATION_SOURCE = {
-  ONBOARDING: "onboarding",
   // Sent from the add-provider wizard by a user who cannot connect the account.
   PROVIDER_CONNECT: "provider_connect",
 } as const;
