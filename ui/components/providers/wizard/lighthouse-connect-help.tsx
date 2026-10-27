@@ -7,6 +7,7 @@ import { LighthouseContextContributor } from "@/components/lighthouse/context-co
 import { usePanelSkillLaunch } from "@/components/lighthouse/use-panel-skill-launch";
 import { Button } from "@/components/shadcn/button/button";
 import {
+  LIGHTHOUSE_CALLOUT_LAYOUT,
   LighthouseCallout,
   LighthouseCalloutAction,
   LighthouseCalloutActions,
@@ -33,10 +34,7 @@ import { LIGHTHOUSE_SKILL_ID } from "@/types/lighthouse-skills";
 import type { ProviderWizardMode } from "@/types/provider-wizard";
 import { getProviderDisplayName } from "@/types/providers";
 
-import {
-  buildProviderWizardHelpContext,
-  resolveConnectionMethod,
-} from "./lighthouse-connect-help.utils";
+import { buildProviderWizardHelpContext } from "./lighthouse-connect-help.utils";
 
 const CONNECTION_GUIDE_SKILL = getSkillById(
   LIGHTHOUSE_SKILL_ID.PROVIDER_CONNECTION_GUIDE,
@@ -57,6 +55,8 @@ interface LighthouseConnectHelpProps {
   // Stable step id for Lighthouse and analytics, and the label the stepper shows.
   stepName: string;
   stepLabel: string;
+  // What the connect step shows: the picked method, or "organizations".
+  connectionMethod: string | null;
   isOrganizationsFlow: boolean;
 }
 
@@ -68,6 +68,7 @@ export function LighthouseConnectHelp({
   mode,
   stepName,
   stepLabel,
+  connectionMethod,
   isOrganizationsFlow,
 }: LighthouseConnectHelpProps) {
   const helpState = useHelpState();
@@ -76,11 +77,6 @@ export function LighthouseConnectHelp({
   );
   const launchPanelSkill = usePanelSkillLaunch();
   const providerUid = useProviderWizardStore((state) => state.providerUid);
-  const via = useProviderWizardStore((state) => state.via);
-  // Only the method leaves the AWS draft: its values may hold access keys.
-  const awsDraftMethod = useProviderWizardStore(
-    (state) => state.awsConnectDraft?.method,
-  );
 
   if (helpState === HELP_STATE.DOCS || !CONNECTION_GUIDE_SKILL) {
     return (
@@ -104,12 +100,7 @@ export function LighthouseConnectHelp({
     mode,
     stepName,
     stepLabel,
-    connectionMethod: resolveConnectionMethod({
-      isOrganizationsFlow,
-      providerType,
-      via,
-      awsDraftMethod,
-    }),
+    connectionMethod,
     docsUrl: docsLink,
   };
 
@@ -158,10 +149,15 @@ export function LighthouseConnectHelp({
       <div
         role="status"
         aria-label="Loading Lighthouse AI help"
-        className="relative mt-2"
+        className="relative"
       >
         {/* Invisible copy sizes the placeholder exactly like the callout. */}
-        <LighthouseCallout aria-hidden inert className="invisible">
+        <LighthouseCallout
+          aria-hidden
+          inert
+          layout={LIGHTHOUSE_CALLOUT_LAYOUT.SIDEBAR}
+          className="invisible"
+        >
           {calloutContent}
         </LighthouseCallout>
         <Skeleton className="absolute inset-0 rounded-2xl" />
@@ -172,7 +168,8 @@ export function LighthouseConnectHelp({
   return (
     <LighthouseCallout
       aria-label="Help from Lighthouse AI"
-      className="animate-in fade-in-0 slide-in-from-top-1 mt-2 duration-300"
+      layout={LIGHTHOUSE_CALLOUT_LAYOUT.SIDEBAR}
+      className="animate-in fade-in-0 slide-in-from-top-1 duration-300"
     >
       <HelpShownSignal providerType={providerType} wizardStep={stepName} />
       {calloutContent}

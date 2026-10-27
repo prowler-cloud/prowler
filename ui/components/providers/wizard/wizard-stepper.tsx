@@ -1,13 +1,13 @@
 "use client";
 
-import { CircleCheckBig, FolderGit2, KeyRound, Rocket } from "lucide-react";
+import { CircleCheckBig, KeyRound, Link2, Network } from "lucide-react";
 import { Fragment, ReactElement } from "react";
 
 import { ProwlerShort } from "@/components/icons/prowler/ProwlerIcons";
 import { cn } from "@/lib/utils";
 import { IconComponent, IconSvgProps } from "@/types/components";
 
-interface StepConfig {
+export interface StepConfig {
   label: string;
   description: string;
   icon: IconComponent;
@@ -15,56 +15,57 @@ interface StepConfig {
 
 interface WizardStepperProps {
   currentStep: number;
-  stepOffset?: number;
-  steps?: StepConfig[];
+  steps: readonly StepConfig[];
 }
 
-const STEPS: StepConfig[] = [
+const LAUNCH_STEP: StepConfig = {
+  label: "Launch Scan",
+  description: "Scan newly connected resources.",
+  icon: ProwlerShort,
+};
+
+// Connect registers the account, stores its credentials and tests them at once.
+export const PROVIDER_WIZARD_STEPS: readonly StepConfig[] = [
   {
-    label: "Link a Provider",
-    description: "Enter the provider details you would like to add in Prowler.",
-    icon: FolderGit2,
-  },
-  {
-    label: "Authenticate Credentials",
+    label: "Connect Provider",
     description:
-      "Authorize a secure connection between Prowler and your provider.",
+      "Choose how Prowler accesses it, add the details and test the connection.",
+    icon: Link2,
+  },
+  LAUNCH_STEP,
+];
+
+// Opened on an existing account: only its credentials change.
+export const UPDATE_PROVIDER_WIZARD_STEPS: readonly StepConfig[] = [
+  {
+    label: "Update Credentials",
+    description:
+      "Replace the credentials Prowler uses and test the connection.",
+    icon: KeyRound,
+  },
+];
+
+export const ORGANIZATION_WIZARD_STEPS: readonly StepConfig[] = [
+  {
+    label: "Organization Access",
+    description:
+      "Name the organization and deploy the access Prowler uses in every account.",
     icon: KeyRound,
   },
   {
-    label: "Validate Connection",
-    description:
-      "Review provider resources and test the connection to Prowler.",
-    icon: Rocket,
+    label: "Select Accounts",
+    description: "Prowler discovers the organization; pick what to connect.",
+    icon: Network,
   },
-  {
-    label: "Launch Scan",
-    description: "Scan newly connected resources.",
-    icon: ProwlerShort,
-  },
+  LAUNCH_STEP,
 ];
 
-export const PROVIDER_WIZARD_STEPS = STEPS;
-
-// AWS registers the account, stores its credentials and tests the connection in
-// one step, so the wizard goes straight from CONNECT to LAUNCH.
-export const AWS_PROVIDER_WIZARD_STEPS: StepConfig[] = [
-  {
-    label: "Link a Provider",
-    description:
-      "Enter the account details and the credentials Prowler will use, then test the connection.",
-    icon: FolderGit2,
-  },
-  STEPS[3],
-];
-
-/** The stepper row a wizard step lands on once its offset is applied. */
+/** The stepper row a wizard step lands on, kept inside the rows that exist. */
 export function getActiveStepIndex(
   currentStep: number,
-  stepOffset: number,
   stepCount: number,
 ): number {
-  return Math.max(0, Math.min(currentStep + stepOffset, stepCount - 1));
+  return Math.max(0, Math.min(currentStep, stepCount - 1));
 }
 
 const CONNECTOR_DIRECTION = {
@@ -74,16 +75,8 @@ const CONNECTOR_DIRECTION = {
 type ConnectorDirection =
   (typeof CONNECTOR_DIRECTION)[keyof typeof CONNECTOR_DIRECTION];
 
-export function WizardStepper({
-  currentStep,
-  stepOffset = 0,
-  steps = STEPS,
-}: WizardStepperProps) {
-  const activeVisualStep = getActiveStepIndex(
-    currentStep,
-    stepOffset,
-    steps.length,
-  );
+export function WizardStepper({ currentStep, steps }: WizardStepperProps) {
+  const activeVisualStep = getActiveStepIndex(currentStep, steps.length);
 
   // Below lg the wizard stacks: one row of steps, naming only the current one.
   return (

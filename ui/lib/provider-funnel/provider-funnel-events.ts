@@ -93,7 +93,8 @@ export const ACCOUNT_SUBMIT_OUTCOME = {
 export type AccountSubmitOutcome =
   (typeof ACCOUNT_SUBMIT_OUTCOME)[keyof typeof ACCOUNT_SUBMIT_OUTCOME];
 
-// Account and credentials sent together (the one-step AWS form).
+// Account and credentials sent together from the connect step; `via` is
+// "default" for a provider with a single method.
 export interface AccountSubmittedDetail {
   step: typeof PROVIDER_FUNNEL_STEP.ACCOUNT_SUBMITTED;
   providerType: string;

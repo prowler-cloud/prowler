@@ -8,15 +8,38 @@ import { cn } from "@/lib/utils";
 // Inline invitation to hand a task to Lighthouse AI. Compound usage:
 // LighthouseCallout > LighthouseCalloutIcon + LighthouseCalloutBody
 // (Title, Description) + LighthouseCalloutActions (LighthouseCalloutAction).
+export const LIGHTHOUSE_CALLOUT_LAYOUT = {
+  /** A row: icon, copy and actions side by side. */
+  INLINE: "inline",
+  /** A row until lg, then a narrow column for a sidebar. */
+  SIDEBAR: "sidebar",
+} as const;
+
+export type LighthouseCalloutLayout =
+  (typeof LIGHTHOUSE_CALLOUT_LAYOUT)[keyof typeof LIGHTHOUSE_CALLOUT_LAYOUT];
+
+const LAYOUT_STYLES = {
+  [LIGHTHOUSE_CALLOUT_LAYOUT.INLINE]: "",
+  [LIGHTHOUSE_CALLOUT_LAYOUT.SIDEBAR]:
+    "lg:flex-col lg:items-start lg:gap-3 lg:px-4 lg:py-4",
+} as const satisfies Record<LighthouseCalloutLayout, string>;
+
+interface LighthouseCalloutProps extends ComponentProps<"section"> {
+  layout?: LighthouseCalloutLayout;
+}
+
 export function LighthouseCallout({
   className,
+  layout = LIGHTHOUSE_CALLOUT_LAYOUT.INLINE,
   ...props
-}: ComponentProps<"section">) {
+}: LighthouseCalloutProps) {
   return (
     <section
       data-slot="lighthouse-callout"
+      data-layout={layout}
       className={cn(
-        "gradient-border-lighthouse bg-bg-neutral-primary bg-lighthouse-soft flex flex-col gap-3 rounded-2xl px-4 py-3.5 sm:flex-row sm:items-center sm:gap-4",
+        "gradient-border-lighthouse bg-bg-neutral-primary bg-lighthouse-soft group/lighthouse-callout flex flex-col gap-3 rounded-2xl px-4 py-3.5 sm:flex-row sm:items-center sm:gap-4",
+        LAYOUT_STYLES[layout],
         className,
       )}
       {...props}
@@ -91,7 +114,11 @@ export function LighthouseCalloutActions({
 }: ComponentProps<"div">) {
   return (
     <div
-      className={cn("flex shrink-0 items-center gap-2", className)}
+      className={cn(
+        // A sidebar stacks the actions so their height never depends on the copy.
+        "flex shrink-0 items-center gap-2 group-data-[layout=sidebar]/lighthouse-callout:lg:flex-col-reverse group-data-[layout=sidebar]/lighthouse-callout:lg:items-start",
+        className,
+      )}
       {...props}
     />
   );
