@@ -227,14 +227,12 @@ describe("provider wizard", () => {
       ).toBeVisible();
       expect(saveDynamicProviderCredentials).not.toHaveBeenCalled();
 
-      // When / Then
+      // When / Then: the action reads "Connect provider" again once the
+      // refused attempt has settled.
       await user.click(
-        screen.getByRole("button", { name: "Connect provider" }),
+        await screen.findByRole("button", { name: "Connect provider" }),
       );
-      // Two saves and a connection test run in sequence; a busy suite needs room.
-      expect(
-        await screen.findByText("Launch scan", {}, { timeout: 5000 }),
-      ).toBeVisible();
+      expect(await screen.findByText("Launch scan")).toBeVisible();
       expect(addRegistryProvider).toHaveBeenCalledTimes(2);
     });
   });
