@@ -153,7 +153,10 @@ function RegistryCredentialForm({
   const [uid, setUid] = useState(
     () => useProviderWizardStore.getState().providerUid ?? "",
   );
-  const [alias, setAlias] = useState("");
+  // A remount (back from the launch step) keeps the alias already saved.
+  const [alias, setAlias] = useState(
+    () => useProviderWizardStore.getState().providerAlias ?? "",
+  );
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const inFlight = useRef(false);

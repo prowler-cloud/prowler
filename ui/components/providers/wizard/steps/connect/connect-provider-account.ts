@@ -21,7 +21,7 @@ const ACCOUNT_FIELDS: readonly string[] = [
 ];
 
 // Secrets that repeat the account id read it from the account, not the form.
-const UID_MIRROR_FIELD: Partial<Record<string, string>> = {
+export const UID_MIRROR_FIELD: Partial<Record<string, string>> = {
   oraclecloud: ProviderCredentialFields.OCI_TENANCY,
   googleworkspace: ProviderCredentialFields.GOOGLEWORKSPACE_CUSTOMER_ID,
 };

@@ -20,12 +20,14 @@ const {
   toast,
   addRegistryProvider,
   testProviderConnection,
+  updateProvider,
 } = vi.hoisted(() => ({
   getProviderSchemas: vi.fn(),
   saveDynamicProviderCredentials: vi.fn(),
   toast: vi.fn(),
   addRegistryProvider: vi.fn(),
   testProviderConnection: vi.fn(),
+  updateProvider: vi.fn(),
 }));
 vi.mock("@/actions/providers/provider-schemas", () => ({ getProviderSchemas }));
 vi.mock("@/actions/providers/dynamic-provider-credentials", () => ({
@@ -38,7 +40,7 @@ vi.mock("@/actions/providers/registry-provider", () => ({
 vi.mock("@/actions/providers/providers", () => ({
   addProvider: vi.fn(),
   addCredentialsProvider: vi.fn(),
-  updateProvider: vi.fn(),
+  updateProvider,
   updateCredentialsProvider: vi.fn(),
 }));
 // The real module reaches next-auth through lib/helper -> auth.config.
@@ -524,5 +526,30 @@ describe("dynamic credentials in the provider wizard", () => {
     expect(await screen.findByText("Provider UID is required")).toBeVisible();
     expect(addRegistryProvider).not.toHaveBeenCalled();
     expect(saveDynamicProviderCredentials).not.toHaveBeenCalled();
+  });
+
+  it("keeps the saved alias when the form comes back from the launch step", async () => {
+    // Given: the account was registered with an alias, then the step remounted.
+    useProviderWizardStore.getState().setProvider({
+      id: "account",
+      type: "acme",
+      uid: "acme-uid",
+      alias: "Production",
+    });
+    render(<RegistryConnectForm {...props} locked={false} />);
+    const token = await screen.findByLabelText(/API token/);
+
+    // Then
+    expect(
+      screen.getByRole("textbox", { name: "Provider alias (optional)" }),
+    ).toHaveValue("Production");
+
+    // When
+    fireEvent.change(token, { target: { value: "fixture-token" } });
+    act(() => token.closest("form")!.requestSubmit());
+
+    // Then: resubmitting does not rename the account to an empty alias.
+    await waitFor(() => expect(props.onConnected).toHaveBeenCalledOnce());
+    expect(updateProvider).not.toHaveBeenCalled();
   });
 });

@@ -52,9 +52,12 @@ export function ConnectStep({
   // The modal hands over fresh callbacks every render; the footer effect keeps
   // one closure and reads the latest through refs.
   const closeRef = useRef(onClose);
-  closeRef.current = onClose;
   const providerChangeRef = useRef(onProviderTypeChange);
-  providerChangeRef.current = onProviderTypeChange;
+  // Synced after render: render must not write refs.
+  useEffect(() => {
+    closeRef.current = onClose;
+    providerChangeRef.current = onProviderTypeChange;
+  }, [onClose, onProviderTypeChange]);
 
   const isPicking = providerType === null;
 

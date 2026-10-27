@@ -47,6 +47,7 @@ export function ConnectionFeedback({
       <div
         ref={alertRef}
         role="status"
+        data-testid="connection-pending"
         className="bg-bg-warning-secondary border-border-neutral-secondary flex items-start gap-3 rounded-lg border p-4"
       >
         <ConnectionPending
@@ -67,6 +68,7 @@ export function ConnectionFeedback({
     <div
       ref={alertRef}
       role="alert"
+      data-testid="connection-error"
       className="border-border-error flex items-start gap-3 rounded-lg border p-4"
     >
       <CircleAlert

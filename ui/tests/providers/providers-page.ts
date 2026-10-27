@@ -606,7 +606,8 @@ export class ProvidersPage extends BasePage {
     this.connectSubmitButton = page.getByRole("button", {
       name: CONNECT_STEP_SUBMIT_NAME,
     });
-    this.connectionError = this.wizardModal.getByRole("alert").first();
+    // Only the connection test's verdict, never another alert in the form.
+    this.connectionError = this.wizardModal.getByTestId("connection-error");
     this.backButton = page.getByRole("button", { name: "Back" });
 
     // Button to save the form

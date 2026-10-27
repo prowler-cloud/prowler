@@ -19,6 +19,7 @@ import type { KnownProviderType } from "@/types/providers";
 
 import { AliasField } from "./alias-field";
 import { getUidFieldDetails } from "./connect-methods";
+import { UID_MIRROR_FIELD } from "./connect-provider-account";
 import { ConnectionFeedback } from "./connection-feedback";
 import {
   getCredentialsFormDefaults,
@@ -28,12 +29,6 @@ import { ProviderCredentialsFields } from "./provider-credentials-fields";
 import type { ConnectFormProps } from "./types";
 import { readDraftValues, useDraftValues } from "./use-connect-draft";
 import { useConnectSubmit } from "./use-connect-submit";
-
-// Secrets that repeat the account id: their hidden field follows the uid typed above.
-const UID_MIRROR_FIELD: Partial<Record<KnownProviderType, string>> = {
-  oraclecloud: ProviderCredentialFields.OCI_TENANCY,
-  googleworkspace: ProviderCredentialFields.GOOGLEWORKSPACE_CUSTOMER_ID,
-};
 
 interface GenericConnectFormProps extends ConnectFormProps {
   providerType: KnownProviderType;
@@ -51,6 +46,7 @@ export function GenericConnectForm({
   const { data: session } = useSession();
   const storedUid = useProviderWizardStore.getState().providerUid ?? "";
   const uidField = getUidFieldDetails(providerType);
+  // Secrets that repeat the account id: their hidden field follows the uid above.
   const mirrorField = UID_MIRROR_FIELD[providerType];
 
   const credentialsSchema = getCredentialsFormSchema(providerType, method);
