@@ -6,16 +6,6 @@ import { getAttackPathScans } from "@/actions/attack-paths";
 import { useMountEffect } from "@/hooks/use-mount-effect";
 import type { AttackPathScan } from "@/types/attack-paths";
 
-export interface UseAttackPathScansOptions {
-  /**
-   * Invoked once the initial load resolves with no scan whose graph data is
-   * ready (including empty results or a fetch failure). The page passes a
-   * redirect only during onboarding replay; an established user gets `undefined`
-   * and stays on the page.
-   */
-  onNoReadyScan?: () => void;
-}
-
 export interface UseAttackPathScansResult {
   scans: AttackPathScan[];
   scansLoading: boolean;
@@ -30,11 +20,7 @@ export interface UseAttackPathScansResult {
  * project forbids `useEffect` in components, but a reusable data hook is the
  * sanctioned place for a mount-time fetch when no fetching library is wired up.
  */
-export function useAttackPathScans(
-  options: UseAttackPathScansOptions = {},
-): UseAttackPathScansResult {
-  const { onNoReadyScan } = options;
-
+export function useAttackPathScans(): UseAttackPathScansResult {
   const [scans, setScans] = useState<AttackPathScan[]>([]);
   const [scansLoading, setScansLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
@@ -64,20 +50,15 @@ export function useAttackPathScans(
       if (!mountedRef.current) return;
       if (scansData?.data) {
         setScans(scansData.data);
-        if (!scansData.data.some((scan) => scan.attributes.graph_data_ready)) {
-          onNoReadyScan?.();
-        }
       } else {
         setScans([]);
         setLoadError(true);
-        onNoReadyScan?.();
       }
     } catch (error) {
       if (!mountedRef.current) return;
       console.error("Failed to load scans:", error);
       setScans([]);
       setLoadError(true);
-      onNoReadyScan?.();
     } finally {
       if (mountedRef.current) setScansLoading(false);
     }

@@ -291,8 +291,6 @@ export function InlineResourceContainer({
         <td colSpan={columnCount} className="max-w-0 p-0">
           <AnimatePresence initial>
             <motion.div
-              // Onboarding anchor: the "Review the affected resources" tour step.
-              data-tour-id="explore-findings-resources"
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: "auto", opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}

@@ -49,7 +49,6 @@ import {
   PROVIDER_FUNNEL_STEP,
 } from "@/lib/provider-funnel/provider-funnel-events";
 import { testProviderConnection } from "@/lib/provider-helpers";
-import { endActiveTour } from "@/lib/tours/use-driver-tour";
 import { useProviderWizardStore } from "@/store/provider-wizard/store";
 import type { AWSCredentials, AWSCredentialsRole } from "@/types";
 import {
@@ -155,8 +154,6 @@ export function AwsConnectStep({
     useProviderWizardStore
       .getState()
       .setAwsConnectDraft({ panel: AWS_CONNECT_PANEL.INVITE });
-    // Delegating diverges from the path the tour guides toward. No-op off-onboarding.
-    endActiveTour();
     dispatchProviderFunnel({
       step: PROVIDER_FUNNEL_STEP.METHOD_SELECTED,
       providerType: "aws",

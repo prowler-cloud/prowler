@@ -17,23 +17,14 @@ import type { ProviderWizardInitialData } from "../types";
 
 import { useProviderWizardController } from "./use-provider-wizard-controller";
 
-const { refreshMock, requestOpenOnWizardCloseMock } = vi.hoisted(() => ({
+const { refreshMock } = vi.hoisted(() => ({
   refreshMock: vi.fn(),
-  requestOpenOnWizardCloseMock: vi.fn(),
 }));
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({
     refresh: refreshMock,
   }),
-}));
-
-vi.mock("@/store/onboarding-checkpoint", () => ({
-  useOnboardingCheckpointStore: {
-    getState: () => ({
-      requestOpenOnWizardClose: requestOpenOnWizardCloseMock,
-    }),
-  },
 }));
 
 vi.mock("next-auth/react", () => ({
@@ -58,11 +49,8 @@ describe("useProviderWizardController", () => {
     window.addEventListener(PROVIDER_FUNNEL_EVENT, recordFunnelSignal);
     vi.useRealTimers();
     vi.clearAllMocks();
-    requestOpenOnWizardCloseMock.mockClear();
     sessionStorage.clear();
     localStorage.clear();
-    // Checkpoint is Cloud-only.
-    vi.stubEnv("UI_CLOUD_ENABLED", "true");
     useProviderWizardStore.getState().reset();
     useOrgSetupStore.getState().reset();
   });
@@ -84,78 +72,6 @@ describe("useProviderWizardController", () => {
 
     // Then
     expect(onOpenChange).toHaveBeenCalledWith(false);
-    expect(refreshMock).toHaveBeenCalledTimes(1);
-  });
-
-  it("requests the onboarding checkpoint with providerConnected:true when a provider was created", () => {
-    const onOpenChange = vi.fn();
-    const { result } = renderHook(() =>
-      useProviderWizardController({
-        open: true,
-        onOpenChange,
-      }),
-    );
-    act(() => {
-      useProviderWizardStore.getState().setProvider({
-        id: "provider-1",
-        type: "aws",
-        uid: "111111111111",
-        alias: "production",
-      });
-    });
-
-    act(() => {
-      result.current.handleClose();
-    });
-
-    // providerId is read before the store reset clears it.
-    expect(requestOpenOnWizardCloseMock).toHaveBeenCalledWith({
-      providerConnected: true,
-    });
-  });
-
-  it("requests the onboarding checkpoint with providerConnected:false when no provider was created", () => {
-    const onOpenChange = vi.fn();
-    const { result } = renderHook(() =>
-      useProviderWizardController({
-        open: true,
-        onOpenChange,
-      }),
-    );
-
-    act(() => {
-      result.current.handleClose();
-    });
-
-    expect(requestOpenOnWizardCloseMock).toHaveBeenCalledWith({
-      providerConnected: false,
-    });
-  });
-
-  it("does not request the onboarding checkpoint in self-hosted (OSS) deployments", () => {
-    vi.stubEnv("UI_CLOUD_ENABLED", "false");
-    const onOpenChange = vi.fn();
-    const { result } = renderHook(() =>
-      useProviderWizardController({
-        open: true,
-        onOpenChange,
-      }),
-    );
-    act(() => {
-      useProviderWizardStore.getState().setProvider({
-        id: "provider-1",
-        type: "aws",
-        uid: "111111111111",
-        alias: "production",
-      });
-    });
-
-    act(() => {
-      result.current.handleClose();
-    });
-
-    // Checkpoint stays untouched, but the close still refreshes.
-    expect(requestOpenOnWizardCloseMock).not.toHaveBeenCalled();
     expect(refreshMock).toHaveBeenCalledTimes(1);
   });
 

@@ -199,7 +199,6 @@ export default defineConfig(() => {
         "@react-aria/visually-hidden",
         "framer-motion",
         "cmdk",
-        "driver.js",
         "react-markdown",
         "streamdown",
         "jwt-decode",

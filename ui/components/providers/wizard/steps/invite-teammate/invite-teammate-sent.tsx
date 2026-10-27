@@ -6,7 +6,7 @@ import { CodeSnippet } from "@/components/shadcn/code-snippet/code-snippet";
 import { useMountEffect } from "@/hooks/use-mount-effect";
 import { buildInvitationAcceptLink } from "@/lib/invitations/accept-link";
 import { isCloud } from "@/lib/shared/env";
-import type { SentInvitation } from "@/types/onboarding-invite";
+import type { SentInvitation } from "@/types/invitations";
 import { getProviderDisplayName, type ProviderType } from "@/types/providers";
 
 import { AWS_CONNECT_ACTION_KIND, type AwsConnectUiState } from "../aws/types";
