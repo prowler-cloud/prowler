@@ -1,10 +1,15 @@
+import { useState } from "react";
 import { beforeEach, describe, expect, it } from "vitest";
 import { page, userEvent } from "vitest/browser";
 
 import { render } from "@/__tests__/render-browser";
 import { SidePanel } from "@/components/shadcn/side-panel/side-panel";
 import { SIDE_PANEL_ELEMENT_ID } from "@/lib/ui-layout";
-import { SIDE_PANEL_TAB, useSidePanelStore } from "@/store/side-panel";
+import {
+  selectHasModalHost,
+  SIDE_PANEL_TAB,
+  useSidePanelStore,
+} from "@/store/side-panel";
 
 import { SidePanelHostModal } from "./side-panel-host-modal";
 
@@ -31,6 +36,29 @@ function WizardStandIn() {
       <SidePanelHostModal
         open
         onOpenChange={() => {}}
+        title="Adding A Provider"
+      >
+        <input aria-label="AWS account ID" />
+      </SidePanelHostModal>
+    </>
+  );
+}
+
+// The page behind goes inert while the wizard is open, like MainLayout does.
+function ShellWithOpener() {
+  const isShellInert = useSidePanelStore(selectHasModalHost);
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <main inert={isShellInert}>
+        <button type="button" onClick={() => setOpen(true)}>
+          Add provider
+        </button>
+      </main>
+      <PanelStandIn />
+      <SidePanelHostModal
+        open={open}
+        onOpenChange={setOpen}
         title="Adding A Provider"
       >
         <input aria-label="AWS account ID" />
@@ -87,5 +115,22 @@ describe("SidePanelHostModal beside the side panel", () => {
     expect(useSidePanelStore.getState().isOpen).toBe(false);
     await expect.element(page.getByRole("dialog")).toBeVisible();
     await expect.element(page.getByRole("dialog")).toHaveFocus();
+  });
+
+  it("gives focus back to the button that opened the wizard once the page is usable again", async () => {
+    // Given: the user opened the wizard and is typing in it
+    render(<ShellWithOpener />);
+    await userEvent.click(page.getByRole("button", { name: "Add provider" }));
+    await userEvent.click(page.getByLabelText("AWS account ID"));
+    await userEvent.keyboard("1234");
+
+    // When
+    await userEvent.keyboard("{Escape}");
+
+    // Then
+    await expect.element(page.getByRole("dialog")).not.toBeInTheDocument();
+    await expect
+      .element(page.getByRole("button", { name: "Add provider" }))
+      .toHaveFocus();
   });
 });

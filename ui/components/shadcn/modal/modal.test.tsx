@@ -1,8 +1,107 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
 
 import { Modal } from "./modal";
+
+interface OpenerHarnessProps {
+  isNonModal: boolean;
+  onCloseAutoFocus?: (event: Event) => void;
+}
+
+// A controlled Modal opened by a plain button, the way the app opens them.
+function OpenerHarness({ isNonModal, onCloseAutoFocus }: OpenerHarnessProps) {
+  const [open, setOpen] = useState(false);
+  const body = <input aria-label="Account ID" />;
+  return (
+    <>
+      <button type="button" onClick={() => setOpen(true)}>
+        Add provider
+      </button>
+      <button type="button">Elsewhere</button>
+      {isNonModal ? (
+        <Modal
+          open={open}
+          onOpenChange={setOpen}
+          onCloseAutoFocus={onCloseAutoFocus}
+          modal={false}
+          title="Wizard"
+        >
+          {body}
+        </Modal>
+      ) : (
+        <Modal
+          open={open}
+          onOpenChange={setOpen}
+          onCloseAutoFocus={onCloseAutoFocus}
+          title="Wizard"
+        >
+          {body}
+        </Modal>
+      )}
+    </>
+  );
+}
+
+describe("Modal focus on close", () => {
+  it.each([
+    { mode: "modal", isNonModal: false, closeWith: "the close button" },
+    { mode: "modal", isNonModal: false, closeWith: "Escape" },
+    { mode: "non-modal", isNonModal: true, closeWith: "the close button" },
+    { mode: "non-modal", isNonModal: true, closeWith: "Escape" },
+  ])(
+    "returns focus to the button that opened the $mode dialog after closing with $closeWith",
+    async ({ isNonModal, closeWith }) => {
+      // Given
+      const user = userEvent.setup();
+      render(<OpenerHarness isNonModal={isNonModal} />);
+      await user.click(screen.getByRole("button", { name: "Add provider" }));
+      await user.click(await screen.findByLabelText("Account ID"));
+
+      // When
+      if (closeWith === "Escape") {
+        await user.keyboard("{Escape}");
+      } else {
+        await user.click(screen.getByRole("button", { name: "Close" }));
+      }
+
+      // Then
+      await waitFor(() =>
+        expect(screen.queryByRole("dialog")).not.toBeInTheDocument(),
+      );
+      await waitFor(() =>
+        expect(
+          screen.getByRole("button", { name: "Add provider" }),
+        ).toHaveFocus(),
+      );
+    },
+  );
+
+  it("keeps the focus target chosen by the consumer", async () => {
+    // Given: the consumer sends focus somewhere else on close
+    const user = userEvent.setup();
+    render(
+      <OpenerHarness
+        isNonModal={false}
+        onCloseAutoFocus={(event) => {
+          event.preventDefault();
+          screen.getByRole("button", { name: "Elsewhere" }).focus();
+        }}
+      />,
+    );
+    await user.click(screen.getByRole("button", { name: "Add provider" }));
+    await user.click(await screen.findByLabelText("Account ID"));
+
+    // When
+    await user.click(screen.getByRole("button", { name: "Close" }));
+
+    // Then
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Elsewhere" })).toHaveFocus(),
+    );
+  });
+});
 
 function getBackdrop(): HTMLElement {
   const backdrop = document.querySelector<HTMLElement>(

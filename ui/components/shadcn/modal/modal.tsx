@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactNode, type Ref, useState } from "react";
+import { type ReactNode, type Ref, useRef, useState } from "react";
 
 import {
   Dialog,
@@ -89,6 +89,25 @@ export const Modal = ({
   // reference for the whole dialog.
   const [frame, setFrame] = useState<HTMLDivElement | null>(null);
   const isNonModal = !modal;
+  // Modal is always controlled, so Radix has no trigger to give focus back to.
+  const openerRef = useRef<HTMLElement | null>(null);
+
+  const handleOpenAutoFocus = (event: Event) => {
+    openerRef.current =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
+    onOpenAutoFocus(event);
+  };
+
+  const handleCloseAutoFocus = (event: Event) => {
+    onCloseAutoFocus?.(event);
+    const opener = openerRef.current;
+    openerRef.current = null;
+    if (event.defaultPrevented) return;
+    event.preventDefault();
+    opener?.focus({ preventScroll: true });
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange} modal={modal}>
@@ -125,8 +144,8 @@ export const Modal = ({
         <DialogContent
           ref={ref}
           container={isNonModal ? frame : undefined}
-          onOpenAutoFocus={onOpenAutoFocus}
-          onCloseAutoFocus={onCloseAutoFocus}
+          onOpenAutoFocus={handleOpenAutoFocus}
+          onCloseAutoFocus={handleCloseAutoFocus}
           onEscapeKeyDown={onEscapeKeyDown}
           onInteractOutside={isNonModal ? preventOutsideDismiss : undefined}
           // Radix requires an accessible description; opt out explicitly when none is provided.
