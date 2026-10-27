@@ -552,4 +552,26 @@ describe("dynamic credentials in the provider wizard", () => {
     await waitFor(() => expect(props.onConnected).toHaveBeenCalledOnce());
     expect(updateProvider).not.toHaveBeenCalled();
   });
+
+  it("starts blank when the saved account belongs to another provider", async () => {
+    // Given: an account of another Registry provider was registered earlier.
+    useProviderWizardStore.getState().setProvider({
+      id: "other-account",
+      type: "other",
+      uid: "other-uid",
+      alias: "Other alias",
+    });
+
+    // When
+    render(<RegistryConnectForm {...props} locked={false} />);
+    await screen.findByLabelText(/API token/);
+
+    // Then
+    expect(screen.getByRole("textbox", { name: "Provider UID" })).toHaveValue(
+      "",
+    );
+    expect(
+      screen.getByRole("textbox", { name: "Provider alias (optional)" }),
+    ).toHaveValue("");
+  });
 });

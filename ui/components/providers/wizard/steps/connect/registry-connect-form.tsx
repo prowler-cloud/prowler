@@ -130,6 +130,13 @@ const saveFailureMessage = (status: string) =>
       ? "You no longer have permission to update these credentials. Contact an administrator."
       : "Check your credentials and try again. Your provider account is already created.";
 
+const savedAccount = (providerType: string) => {
+  const store = useProviderWizardStore.getState();
+  return store.providerType === providerType
+    ? { uid: store.providerUid ?? "", alias: store.providerAlias ?? "" }
+    : { uid: "", alias: "" };
+};
+
 interface RegistryCredentialFormProps extends ConnectFormProps {
   providerType: string;
   secretType: string;
@@ -150,13 +157,10 @@ function RegistryCredentialForm({
   // Credentials belong only to this form. A new account or authentication
   // method mounts a fresh instance; no values enter the persisted wizard store.
   const [values, setValues] = useState(() => getCredentialDefaults(schema));
-  const [uid, setUid] = useState(
-    () => useProviderWizardStore.getState().providerUid ?? "",
-  );
-  // A remount (back from the launch step) keeps the alias already saved.
-  const [alias, setAlias] = useState(
-    () => useProviderWizardStore.getState().providerAlias ?? "",
-  );
+  // A remount (back from the launch step) keeps the account already saved for
+  // this provider; another provider's account never leaks into the form.
+  const [uid, setUid] = useState(() => savedAccount(providerType).uid);
+  const [alias, setAlias] = useState(() => savedAccount(providerType).alias);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const inFlight = useRef(false);

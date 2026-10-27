@@ -1,9 +1,9 @@
 ---
-title: "Prowler Cloud"
-sidebarTitle: "Getting Started"
+title: 'Prowler Cloud'
+sidebarTitle: 'Getting Started'
 ---
 
-import { ProviderCards } from "/snippets/provider-cards.mdx";
+import { ProviderCards } from "/snippets/provider-cards.mdx"
 
 **Prowler Cloud** is a web application that simplifies running Prowler. This tutorial will guide you through setting up and using it.
 
@@ -19,20 +19,16 @@ If you are a [Prowler Cloud](https://cloud.prowler.com/sign-in) user, you can ac
 After [installing](/getting-started/installation/prowler-app) **Prowler Local Server**, access it at [http://localhost:3000](http://localhost:3000).
 
 To view the auto-generated **Prowler API** documentation, navigate to [http://localhost:8080/api/v1/docs](http://localhost:8080/api/v1/docs). This documentation provides details on available endpoints, parameters, and responses.
-
 </Note>
 
 ## Step 1: Sign Up
-
 ### Sign Up with Email
-
 To get started, sign up using your email and password:
 
 <img src="/images/sign-up-button.png" alt="Sign Up Button" width="320" />
 <img src="/images/sign-up.png" alt="Sign Up" width="285" />
 
 ### Sign Up with Social Login
-
 If Social Login is enabled, you can sign up using your preferred provider (e.g., Google, GitHub).
 
 <Note>
@@ -56,7 +52,6 @@ Once registered, log in with your email and password to access Prowler Cloud.
 Upon logging in, the Overview page will display. At this stage, no data is present: add a provider to begin scanning your cloud environment.
 
 ## Step 3: Add a Provider
-
 To perform security scans, link a cloud provider account. Prowler supports the following providers and more:
 
 - **AWS**
@@ -81,7 +76,6 @@ Steps to add a provider:
 <img src="/images/add-provider.png" alt="Add Provider" width="700" />
 
 ## Step 4: Configure the Provider
-
 Select the cloud provider to scan and configure authentication credentials. Each provider has specific requirements and authentication methods.
 
 <img src="/images/select-provider.png" alt="Select a Provider" width="700" />
@@ -91,25 +85,13 @@ For detailed instructions on configuring credentials for each provider, refer to
 <ProviderCards />
 
 ## Step 5: Test Connection
-
-To verify the credentials, click the connect action at the bottom of the same step (for example, `Connect account`, `Connect subscription` or `Connect project`). Prowler saves the provider and its credentials and tests the connection in that single action. When the test succeeds, the wizard moves straight to launching the scan. When it fails, the reason appears above the form, the values stay in place and `Retry connection` tests the corrected credentials without adding the provider twice.
-
-<img
-  src="/images/test-connection-button.png"
-  alt="Test Connection"
-  width="700"
-/>
+To verify the credentials, click the connect action at the bottom of the same step (for example, `Connect account`, `Connect subscription` or `Connect project`). Prowler saves the provider and its credentials and tests the connection in that single action. When the test succeeds, the wizard moves straight to launching the scan. When it fails, the reason appears above the form and the values stay in place: click `Retry connection` to test again, or correct a field, which brings back the connect action, and click it. Neither adds the provider twice.
 
 <Note>
-  To delegate the connection, select `I don't have access, invite a teammate` on
-  the same step when you cannot create the credentials yourself. The option is
-  available for every provider to users who can manage the account. Prowler
-  Local Server adds the invitation to the tenant and shows the link to share.
-  Prowler Cloud also emails it.
+To delegate the connection, select `I don't have access, invite a teammate` on the same step when you cannot create the credentials yourself. The option is available for every provider to users who can manage the account. Prowler Local Server adds the invitation to the tenant and shows the link to share. Prowler Cloud also emails it.
 </Note>
 
 ## Step 6: Scan Started
-
 After the connection check succeeds, save the provider and start your first scan with the `Launch Scan` button. The `Scans` section shows the scan in progress:
 
 <img src="/images/provider-added.png" alt="Start Now" width="700" />
@@ -123,39 +105,37 @@ Track the progress of your scan in the `Scans` section:
 
 <img src="/images/scan-progress.png" alt="Scan Progress" width="700" />
 
+
 <Note>
 **How Dashboards Display Scan Data**
 
 Each dashboard handles scan data differently:
 
-- **Overview** displays aggregated metrics from the **latest completed scan per provider** only.
-- **Findings** displays results from the **latest completed scan per provider** by default. To access historical findings, apply a date or scan filter.
-- **Resources** lists **all discovered resources across all scans**. However, when selecting a resource, the Findings tab within the resource detail shows only findings from the **latest completed scan**. If the latest scan did not evaluate a particular resource, its Findings tab may appear empty.
+* **Overview** displays aggregated metrics from the **latest completed scan per provider** only.
+* **Findings** displays results from the **latest completed scan per provider** by default. To access historical findings, apply a date or scan filter.
+* **Resources** lists **all discovered resources across all scans**. However, when selecting a resource, the Findings tab within the resource detail shows only findings from the **latest completed scan**. If the latest scan did not evaluate a particular resource, its Findings tab may appear empty.
 
 When a new scan completes or a new data ingestion is processed, the dashboards automatically reflect the updated results.
-
 </Note>
 
 ## Step 8: Analyze the Findings
-
 While the scan is running, start exploring the findings in these sections:
 
 - **Overview**: High-level summary of the scans.
 
-  <img src="/images/products/overview.png" alt="Overview" width="700" />
+    <img src="/images/products/overview.png" alt="Overview" width="700" />
 
 - **Compliance**: Insights into compliance status.
 
-  <img src="/images/compliance.png" alt="Compliance" width="700" />
+    <img src="/images/compliance.png" alt="Compliance" width="700" />
 
 - **Findings**: Detailed list of findings detected, where you can filter by severity, service, and more.
 
-  <img src="/images/findings.png" alt="Findings" width="700" />
+    <img src="/images/findings.png" alt="Findings" width="700" />
 
 To view all `new` findings that have not been seen prior to this scan, click the `Delta` filter and select `new`. To view all `changed` findings that have had a status change (from `PASS` to `FAIL` for example), click the `Delta` filter and select `changed`.
 
 ## Step 9: Download the Outputs
-
 Once a scan is complete, navigate to the `Scans` section to download the output files generated by Prowler:
 
 You can download the output files generated by Prowler as a single `zip` file. This archive contains the CSV, JSON-OCSF, and HTML reports detailing the findings.
@@ -183,11 +163,7 @@ Once your scan has finished, you don’t need to grab the entire ZIP—just pull
 
 - Click its **Download** icon to retrieve that report’s CSV file with all the detailed findings.
 
-<img
-  src="/images/compliance_download.png"
-  alt="Download compliance output"
-  width="700"
-/>
+<img src="/images/compliance_download.png" alt="Download compliance output" width="700" />
 
 <Note>
 **API Note**
