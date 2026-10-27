@@ -208,4 +208,42 @@ describe("LighthouseConnectHelp", () => {
       panelContextOnProviders()?.items.some((item) => item.kind === "provider"),
     ).toBe(false);
   });
+
+  it("leaves a provider account from an earlier wizard out of organization setup", async () => {
+    // Given: sessionStorage still holds the account of an earlier provider wizard
+    const user = userEvent.setup();
+    useProviderWizardStore.getState().setProvider({
+      id: "provider-1",
+      type: "aws",
+      uid: "111122223333",
+      alias: null,
+    });
+    render(
+      <LighthouseConnectHelp
+        docsLink={AWS_DOCS}
+        docsDestination="AWS"
+        providerType="aws"
+        mode="add"
+        stepName="setup"
+        stepLabel="Organization Setup"
+        isOrganizationsFlow
+      />,
+    );
+
+    // When
+    await user.click(
+      await screen.findByRole("button", { name: "Ask Lighthouse AI" }),
+    );
+
+    // Then: neither the guide nor follow-ups mention that account
+    await waitFor(() => expect(requestPanelSkillLaunchMock).toHaveBeenCalled());
+    const [, launchContext] = requestPanelSkillLaunchMock.mock.calls[0];
+    expect(JSON.stringify(launchContext)).not.toContain("111122223333");
+    expect(JSON.stringify(panelContextOnProviders())).not.toContain(
+      "111122223333",
+    );
+    expect(launchContext.items[0]).toMatchObject({
+      connectionMethod: "organizations",
+    });
+  });
 });

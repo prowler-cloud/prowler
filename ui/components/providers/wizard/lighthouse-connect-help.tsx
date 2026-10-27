@@ -90,7 +90,8 @@ export function LighthouseConnectHelp({
 
   const wizardContext = {
     providerType,
-    providerUid,
+    // The store keeps the last provider's account across opens; an organization has none.
+    providerUid: isOrganizationsFlow ? null : providerUid,
     mode,
     stepName,
     stepLabel,
