@@ -55,6 +55,20 @@ function panelContextOnProviders() {
   ).context;
 }
 
+// Collects the funnel signals dispatched until stop() is called.
+function recordFunnelEvents() {
+  const events: ProviderFunnelDetail[] = [];
+  const record = (event: Event) =>
+    events.push((event as CustomEvent<ProviderFunnelDetail>).detail);
+  window.addEventListener(PROVIDER_FUNNEL_EVENT, record);
+  return {
+    stop: () => {
+      window.removeEventListener(PROVIDER_FUNNEL_EVENT, record);
+      return events;
+    },
+  };
+}
+
 function connectedConfiguration(connected: boolean) {
   return { data: [{ id: "config-1", connected }] };
 }
@@ -88,19 +102,50 @@ describe("LighthouseConnectHelp", () => {
   it("keeps only the documentation link while Lighthouse AI is not set up", async () => {
     // Given
     getConfigurationsMock.mockResolvedValue(connectedConfiguration(false));
+    const funnelEvents = recordFunnelEvents();
 
     // When
     renderHelp("aws");
     await waitFor(() => expect(getConfigurationsMock).toHaveBeenCalled());
     await act(() => Promise.resolve());
 
-    // Then
+    // Then: nothing was offered, so nothing counts as shown
     expect(
       screen.queryByRole("button", { name: "Ask Lighthouse AI" }),
     ).not.toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: /AWS documentation/i }),
     ).toHaveAttribute("href", AWS_DOCS);
+    expect(funnelEvents.stop()).toEqual([]);
+  });
+
+  it("reports the offer once, with the step where it first appeared", async () => {
+    // Given
+    const funnelEvents = recordFunnelEvents();
+    const { rerender } = renderHelp("aws");
+    await screen.findByRole("button", { name: "Ask Lighthouse AI" });
+
+    // When: the user moves on to the next step with the callout still there
+    rerender(
+      <LighthouseConnectHelp
+        docsLink={AWS_DOCS}
+        docsDestination="AWS"
+        providerType="aws"
+        mode="add"
+        stepName="test"
+        stepLabel="Test Connection"
+        isOrganizationsFlow={false}
+      />,
+    );
+
+    // Then
+    expect(funnelEvents.stop()).toEqual([
+      {
+        step: "lighthouse_help_shown",
+        providerType: "aws",
+        wizardStep: "connect",
+      },
+    ]);
   });
 
   it("asks for a connection guide about the current step without sharing typed credentials", async () => {
@@ -110,16 +155,14 @@ describe("LighthouseConnectHelp", () => {
       method: "credentials",
       keysValues: { awsSecretAccessKey: "super-secret-value" },
     });
-    const funnelEvents: ProviderFunnelDetail[] = [];
-    const recordFunnelEvent = (event: Event) =>
-      funnelEvents.push((event as CustomEvent<ProviderFunnelDetail>).detail);
-    window.addEventListener(PROVIDER_FUNNEL_EVENT, recordFunnelEvent);
     renderHelp("aws");
+    const askButton = await screen.findByRole("button", {
+      name: "Ask Lighthouse AI",
+    });
+    const funnelEvents = recordFunnelEvents();
 
     // When
-    await user.click(
-      await screen.findByRole("button", { name: "Ask Lighthouse AI" }),
-    );
+    await user.click(askButton);
 
     // Then: the AI tab opens and runs the guide with the wizard state
     expect(useSidePanelStore.getState()).toMatchObject({
@@ -137,14 +180,13 @@ describe("LighthouseConnectHelp", () => {
       docsUrl: AWS_DOCS,
     });
     expect(JSON.stringify(context)).not.toContain("super-secret-value");
-    expect(funnelEvents).toEqual([
+    expect(funnelEvents.stop()).toEqual([
       {
         step: "lighthouse_help_opened",
         providerType: "aws",
         wizardStep: "connect",
       },
     ]);
-    window.removeEventListener(PROVIDER_FUNNEL_EVENT, recordFunnelEvent);
   });
 
   it("offers help with the current step while Lighthouse AI is already guiding", async () => {

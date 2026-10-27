@@ -126,6 +126,7 @@ export function LighthouseConnectHelp({
       aria-label="Help from Lighthouse AI"
       className="animate-in fade-in-0 slide-in-from-top-1 mt-2 duration-300"
     >
+      <HelpShownSignal providerType={providerType} wizardStep={stepName} />
       <LighthouseCalloutIcon />
       <LighthouseCalloutBody>
         <LighthouseCalloutTitle>{copy.title}</LighthouseCalloutTitle>
@@ -151,6 +152,23 @@ export function LighthouseConnectHelp({
       />
     </LighthouseCallout>
   );
+}
+
+interface HelpShownSignalProps {
+  providerType: string | null;
+  wizardStep: string;
+}
+
+// Mounted only while the callout renders: one exposure per wizard opening.
+function HelpShownSignal({ providerType, wizardStep }: HelpShownSignalProps) {
+  useMountEffect(() => {
+    dispatchProviderFunnel({
+      step: PROVIDER_FUNNEL_STEP.LIGHTHOUSE_HELP_SHOWN,
+      providerType,
+      wizardStep,
+    });
+  });
+  return null;
 }
 
 interface HelpCopyInput {
