@@ -3213,3 +3213,29 @@ class Test_is_condition_block_restrictive_account_list:
         assert not is_condition_block_restrictive(
             condition, TRUSTED_AWS_ACCOUNT_NUMBER_LIST[0]
         )
+
+    def test_source_arn_list_with_arns_of_several_trusted_accounts(self):
+        condition = {
+            "ArnLike": {
+                "aws:SourceArn": [
+                    f"arn:aws:cloudtrail:*:{TRUSTED_AWS_ACCOUNT_NUMBER_LIST[0]}:trail/*",
+                    f"arn:aws:cloudtrail:*:{TRUSTED_AWS_ACCOUNT_NUMBER_LIST[1]}:trail/*",
+                ]
+            }
+        }
+        assert is_condition_block_restrictive(
+            condition, TRUSTED_AWS_ACCOUNT_NUMBER_LIST
+        )
+
+    def test_source_arn_list_with_untrusted_account(self):
+        condition = {
+            "ArnLike": {
+                "aws:SourceArn": [
+                    f"arn:aws:cloudtrail:*:{TRUSTED_AWS_ACCOUNT_NUMBER_LIST[0]}:trail/*",
+                    f"arn:aws:cloudtrail:*:{NON_TRUSTED_AWS_ACCOUNT_NUMBER}:trail/*",
+                ]
+            }
+        }
+        assert not is_condition_block_restrictive(
+            condition, TRUSTED_AWS_ACCOUNT_NUMBER_LIST
+        )

@@ -740,15 +740,11 @@ def is_condition_block_restrictive(
                                     and "aws:sourcevpce" != value
                                 ):
                                     if value == "aws:sourcearn":
-                                        # Use the specialized function to properly validate SourceArn restrictions
-                                        # Create a minimal statement to test with our function
+                                        # Use the specialized function to properly validate SourceArn restrictions.
+                                        # Test each ARN on its own so a list can name several trusted accounts.
                                         test_statement = {
                                             "Condition": {
-                                                condition_operator: {
-                                                    value: condition_statement[
-                                                        condition_operator
-                                                    ][value]
-                                                }
+                                                condition_operator: {value: item}
                                             }
                                         }
                                         is_condition_key_restrictive = any(
