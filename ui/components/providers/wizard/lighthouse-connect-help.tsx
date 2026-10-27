@@ -236,15 +236,15 @@ function useHelpState(): HelpState {
   const hasConnectedLlm = useLighthouseLlmStore(
     (state) => state.hasConnectedLlm,
   );
-  const setHasConnectedLlm = useLighthouseLlmStore(
-    (state) => state.setHasConnectedLlm,
-  );
-  // Local state needed: a failed check only falls back for this opening.
+  const startCheck = useLighthouseLlmStore((state) => state.startCheck);
+  const settleCheck = useLighthouseLlmStore((state) => state.settleCheck);
+  // Local state needed: with nothing remembered, a failed check shows the docs.
   const [checkFailed, setCheckFailed] = useState(false);
 
   useMountEffect(() => {
     if (!canHostChat) return;
     let isMounted = true;
+    const check = startCheck();
     // Lazy: the Lighthouse actions only load where the chat can exist (cloud).
     import("@/app/(prowler)/lighthouse/_actions")
       .then(({ getLighthouseV2Configurations }) =>
@@ -255,10 +255,10 @@ function useHelpState(): HelpState {
           ? null
           : result.data.some((configuration) => configuration.connected),
       )
-      // Optional help: a failed check just leaves the docs link in place.
+      // Optional help: a failed check keeps the last answer, else the docs.
       .catch(() => null)
       .then((connected) => {
-        if (connected !== null) setHasConnectedLlm(connected);
+        if (connected !== null) settleCheck(check, connected);
         else if (isMounted) setCheckFailed(true);
       });
     return () => {

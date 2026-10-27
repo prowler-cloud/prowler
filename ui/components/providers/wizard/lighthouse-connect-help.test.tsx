@@ -74,6 +74,17 @@ function connectedConfiguration(connected: boolean) {
   return { data: [{ id: "config-1", connected }] };
 }
 
+// An LLM check the test settles by hand.
+function pendingCheck() {
+  let settle: (
+    result: ReturnType<typeof connectedConfiguration>,
+  ) => void = () => {};
+  const promise = new Promise((resolve) => {
+    settle = resolve;
+  });
+  return { promise, settle };
+}
+
 describe("LighthouseConnectHelp", () => {
   beforeEach(() => {
     getConfigurationsMock.mockResolvedValue(connectedConfiguration(true));
@@ -83,7 +94,7 @@ describe("LighthouseConnectHelp", () => {
     });
     useProviderWizardStore.getState().reset();
     useLighthouseContextStore.setState({ contributions: {} });
-    useLighthouseLlmStore.setState({ hasConnectedLlm: null });
+    useLighthouseLlmStore.setState({ hasConnectedLlm: null, latestCheck: 0 });
   });
 
   it("invites the user to ask Lighthouse AI about the provider they picked", async () => {
@@ -174,6 +185,50 @@ describe("LighthouseConnectHelp", () => {
     ).not.toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: /AWS documentation/i }),
+    ).toBeVisible();
+  });
+
+  it("ignores an older check that answers after a newer opening", async () => {
+    // Given: the wizard closes while its check runs, then opens again
+    const olderCheck = pendingCheck();
+    const newerCheck = pendingCheck();
+    getConfigurationsMock
+      .mockReturnValueOnce(olderCheck.promise)
+      .mockReturnValueOnce(newerCheck.promise);
+    const firstOpening = renderHelp("aws");
+    await waitFor(() => expect(getConfigurationsMock).toHaveBeenCalledOnce());
+    firstOpening.unmount();
+    renderHelp("aws");
+    await waitFor(() => expect(getConfigurationsMock).toHaveBeenCalledTimes(2));
+
+    // When: the newer check answers first, then the older one
+    await act(async () => newerCheck.settle(connectedConfiguration(false)));
+    await act(async () => olderCheck.settle(connectedConfiguration(true)));
+
+    // Then
+    expect(
+      screen.queryByRole("button", { name: "Ask Lighthouse AI" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: /AWS documentation/i }),
+    ).toBeVisible();
+  });
+
+  it("keeps the remembered answer when a later check fails", async () => {
+    // Given: an earlier opening found a connected LLM
+    const firstOpening = renderHelp("aws");
+    await screen.findByRole("button", { name: "Ask Lighthouse AI" });
+    firstOpening.unmount();
+    getConfigurationsMock.mockRejectedValueOnce(new Error("network"));
+
+    // When
+    renderHelp("aws");
+    await waitFor(() => expect(getConfigurationsMock).toHaveBeenCalledTimes(2));
+    await act(() => Promise.resolve());
+
+    // Then: a failed refresh does not swap the callout for the docs line
+    expect(
+      screen.getByRole("button", { name: "Ask Lighthouse AI" }),
     ).toBeVisible();
   });
 
