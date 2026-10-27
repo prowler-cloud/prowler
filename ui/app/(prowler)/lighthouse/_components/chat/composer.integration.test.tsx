@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { describe, expect, it } from "vitest";
 import { page } from "vitest/browser";
 
@@ -13,6 +14,7 @@ import { LIGHTHOUSE_SKILL_ID } from "@/types/lighthouse-skills";
 
 import { ChatComposerPanel } from "./composer";
 import { CurrentModelDisplay } from "./current-model-display";
+import { ModelSelect } from "./model-select";
 import { SkillComposerPill } from "./skill-composer-pill";
 
 const CONNECTION_GUIDE = getSkillById(
@@ -35,7 +37,54 @@ const PROVIDERS_CONTEXT: LighthouseContextEnvelope = {
   ],
 };
 
-function ComposerInPanel({ width }: { width: number }) {
+// The two model controls the chat view can put in the footer.
+const MODEL_CONTROLS = [
+  {
+    name: "the current model",
+    control: (
+      <CurrentModelDisplay
+        provider="openai"
+        providerName="OpenAI"
+        modelName="GPT-5.2"
+      />
+    ),
+    locate: () => page.getByLabelText("Current model: OpenAI GPT-5.2"),
+    // The part of the control that must stay readable.
+    readableText: () => page.getByText("OpenAI", { exact: true }),
+  },
+  {
+    name: "the model picker",
+    control: (
+      <ModelSelect
+        value="openai:gpt-5.2-codex-max"
+        onValueChange={() => {}}
+        groups={[
+          {
+            heading: "OpenAI",
+            options: [
+              { value: "openai:gpt-5.2-codex-max", label: "GPT-5.2 Codex Max" },
+            ],
+          },
+        ]}
+        isSaving={false}
+      />
+    ),
+    locate: () => page.getByRole("combobox", { name: "Model" }),
+    readableText: () => page.getByText("GPT-5.2 Codex Max"),
+  },
+];
+
+const PANEL_WIDTHS = [
+  { panel: "the narrowest", width: SIDE_PANEL_MIN_WIDTH },
+  { panel: "the default", width: SIDE_PANEL_DEFAULT_WIDTH },
+];
+
+interface ComposerInPanelProps {
+  width: number;
+  modelSelector: ReactNode;
+}
+
+function ComposerInPanel({ width, modelSelector }: ComposerInPanelProps) {
   return (
     <div style={{ width }}>
       <ChatComposerPanel
@@ -46,13 +95,7 @@ function ComposerInPanel({ width }: { width: number }) {
         canSend
         input=""
         isStreaming
-        modelSelector={
-          <CurrentModelDisplay
-            provider="openai"
-            providerName="OpenAI"
-            modelName="GPT-5.2"
-          />
-        }
+        modelSelector={modelSelector}
         contextControl={
           <>
             <SkillComposerPill skill={CONNECTION_GUIDE} />
@@ -74,19 +117,29 @@ function overlaps(a: DOMRect, b: DOMRect) {
   );
 }
 
+function isInside(inner: DOMRect, outer: DOMRect) {
+  return inner.left >= outer.left && inner.right <= outer.right;
+}
+
 describe("Lighthouse composer footer", () => {
-  it.each([
-    ["the narrowest", SIDE_PANEL_MIN_WIDTH],
-    ["the default", SIDE_PANEL_DEFAULT_WIDTH],
-  ])(
-    "keeps the model, the running skill and the context apart in %s side panel",
-    async (_, panelWidth) => {
+  it.each(
+    MODEL_CONTROLS.flatMap((model) =>
+      PANEL_WIDTHS.map((panel) => ({ ...model, ...panel })),
+    ),
+  )(
+    "keeps $name, the running skill and the context apart in $panel side panel",
+    async ({ control, locate, readableText, width }) => {
       // Given / When: a skill runs while the chat sits in the side panel
-      render(<ComposerInPanel width={panelWidth - 32} />);
-      const model = page.getByLabelText("Current model: OpenAI GPT-5.2");
+      render(<ComposerInPanel width={width - 32} modelSelector={control} />);
+      const model = locate();
       await expect.element(model).toBeVisible();
 
-      // Then: no chip covers another, and the model stays readable
+      // Then: no control covers another or leaves the composer
+      const composerBox = page
+        .getByLabelText("Message")
+        .element()
+        .closest("form")!
+        .getBoundingClientRect();
       const modelBox = model.element().getBoundingClientRect();
       const skillBox = page
         .getByText("Skill · Connection Guide")
@@ -97,15 +150,19 @@ describe("Lighthouse composer footer", () => {
         .getByLabelText("Providers context")
         .element()
         .getBoundingClientRect();
-      const providerNameBox = page
-        .getByText("OpenAI", { exact: true })
-        .element()
-        .getBoundingClientRect();
 
       expect(overlaps(modelBox, skillBox)).toBe(false);
       expect(overlaps(modelBox, contextBox)).toBe(false);
       expect(overlaps(skillBox, contextBox)).toBe(false);
-      expect(providerNameBox.right).toBeLessThanOrEqual(modelBox.right);
+      for (const box of [modelBox, skillBox, contextBox]) {
+        expect(isInside(box, composerBox)).toBe(true);
+      }
+      // And the model stays readable: whole, and inside its own control
+      const text = readableText().element() as HTMLElement;
+      expect(text.scrollWidth).toBeLessThanOrEqual(text.clientWidth);
+      expect(text.getBoundingClientRect().right).toBeLessThanOrEqual(
+        modelBox.right,
+      );
     },
   );
 });

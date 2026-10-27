@@ -29,10 +29,7 @@ import {
 } from "@/app/(prowler)/lighthouse/_types";
 import { LighthouseCurrentContextBadge } from "@/components/lighthouse/context-chip";
 import { Card } from "@/components/shadcn";
-import {
-  Combobox,
-  type ComboboxGroup,
-} from "@/components/shadcn/combobox/combobox";
+import { type ComboboxGroup } from "@/components/shadcn/combobox/combobox";
 import { Skeleton } from "@/components/shadcn/skeleton/skeleton";
 import { useLighthouseCurrentContext } from "@/hooks/use-lighthouse-context";
 import { useMountEffect } from "@/hooks/use-mount-effect";
@@ -46,6 +43,7 @@ import {
   type LighthouseFeedbackSurvey,
 } from "./lighthouse-feedback-survey";
 import { MessageBubble } from "./message-bubble";
+import { ModelSelect } from "./model-select";
 import { SkillComposerPill } from "./skill-composer-pill";
 import { SkillRunProgress } from "./skill-run-progress";
 import { StreamingAssistantMessage } from "./streaming-message";
@@ -182,19 +180,12 @@ export function LighthouseV2ChatView({
         modelName={selectedModelLabel}
       />
     ) : (
-      <div className="min-w-36 flex-1 sm:max-w-48">
-        <Combobox
-          aria-label="Model"
-          value={selectedModelValue}
-          onValueChange={handleModelValueChange}
-          groups={modelSelectorGroups}
-          disabled={modelSelectorGroups.length === 0 || modelPreferenceSaving}
-          placeholder="Select model"
-          searchPlaceholder="Search models..."
-          emptyMessage="No models found."
-          size="sm"
-        />
-      </div>
+      <ModelSelect
+        value={selectedModelValue}
+        onValueChange={handleModelValueChange}
+        groups={modelSelectorGroups}
+        isSaving={modelPreferenceSaving}
+      />
     ),
     selectedConfigurationConnected: selectedConfiguration?.connected === true,
     onInputChange: setInput,
