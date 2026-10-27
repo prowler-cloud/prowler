@@ -21,6 +21,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/shadcn/alert";
 import { Form } from "@/components/shadcn/form";
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
 import { REGISTRY_PROVIDER_DISCOVERY } from "@/lib/registry/provider-options";
+import { isRegistryEnabled } from "@/lib/shared/env";
 import {
   createAddProviderFormSchema,
   AddProviderFormValues,
@@ -229,9 +230,10 @@ export const ConnectAccountForm = ({
     registryDiscovery?.status === REGISTRY_PROVIDER_DISCOVERY.READY
       ? registryDiscovery.options
       : [];
+  // The deployment flag is known up front, so the tabs render before discovery.
   const registryAvailable =
-    registryDiscovery?.status === REGISTRY_PROVIDER_DISCOVERY.READY ||
-    registryDiscovery?.status === REGISTRY_PROVIDER_DISCOVERY.ERROR;
+    isRegistryEnabled() &&
+    registryDiscovery?.status !== REGISTRY_PROVIDER_DISCOVERY.ACCESS_DENIED;
   const registryError =
     registryDiscovery?.status === REGISTRY_PROVIDER_DISCOVERY.ERROR ||
     registryDiscovery?.status === REGISTRY_PROVIDER_DISCOVERY.UNKNOWN;
@@ -440,34 +442,41 @@ export const ConnectAccountForm = ({
         {/* Step 1: Provider selection */}
         {prevStep === 1 && (
           <div>
-            {registryDiscovery?.status ===
-              REGISTRY_PROVIDER_DISCOVERY.SUBSCRIPTION_REQUIRED && (
-              <RegistryUpgradePrompt />
-            )}
-            {registryDiscovery?.status ===
-              REGISTRY_PROVIDER_DISCOVERY.ONBOARDING && <RegistrySetupPrompt />}
-            {registryError && (
-              <Alert variant="warning">
-                <AlertTitle>Registry providers could not be loaded</AlertTitle>
-                <AlertDescription>
-                  Built-in providers are available. Check the Registry
-                  connection and try again.
-                  {/* aria-disabled, not disabled: the pressed button keeps focus. */}
-                  <Button
-                    type="button"
-                    variant="outline"
-                    aria-disabled={isRetryingDiscovery}
-                    onClick={retryDiscovery}
-                  >
-                    {isRetryingDiscovery
-                      ? "Retrying…"
-                      : "Retry Registry providers"}
-                  </Button>
-                </AlertDescription>
-              </Alert>
-            )}
             <RadioGroupProvider
               registryAvailable={registryAvailable}
+              registryLoading={registryAvailable && registryDiscovery === null}
+              registryNotice={
+                registryDiscovery?.status ===
+                REGISTRY_PROVIDER_DISCOVERY.SUBSCRIPTION_REQUIRED ? (
+                  <RegistryUpgradePrompt />
+                ) : registryDiscovery?.status ===
+                  REGISTRY_PROVIDER_DISCOVERY.ONBOARDING ? (
+                  <RegistrySetupPrompt />
+                ) : (
+                  registryError && (
+                    <Alert variant="warning">
+                      <AlertTitle>
+                        Registry providers could not be loaded
+                      </AlertTitle>
+                      <AlertDescription>
+                        Built-in providers are available. Check the Registry
+                        connection and try again.
+                        {/* aria-disabled, not disabled: the pressed button keeps focus. */}
+                        <Button
+                          type="button"
+                          variant="outline"
+                          aria-disabled={isRetryingDiscovery}
+                          onClick={retryDiscovery}
+                        >
+                          {isRetryingDiscovery
+                            ? "Retrying…"
+                            : "Retry Registry providers"}
+                        </Button>
+                      </AlertDescription>
+                    </Alert>
+                  )
+                )
+              }
               registryOptions={registryOptions}
               control={form.control}
               isInvalid={!!form.formState.errors.providerType}

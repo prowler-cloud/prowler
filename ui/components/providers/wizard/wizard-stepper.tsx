@@ -1,7 +1,7 @@
 "use client";
 
 import { CircleCheckBig, FolderGit2, KeyRound, Rocket } from "lucide-react";
-import { ReactElement } from "react";
+import { Fragment, ReactElement } from "react";
 
 import { ProwlerShort } from "@/components/icons/prowler/ProwlerIcons";
 import { cn } from "@/lib/utils";
@@ -67,6 +67,13 @@ export function getActiveStepIndex(
   return Math.max(0, Math.min(currentStep + stepOffset, stepCount - 1));
 }
 
+const CONNECTOR_DIRECTION = {
+  VERTICAL: "to bottom",
+  HORIZONTAL: "to right",
+} as const;
+type ConnectorDirection =
+  (typeof CONNECTOR_DIRECTION)[keyof typeof CONNECTOR_DIRECTION];
+
 export function WizardStepper({
   currentStep,
   stepOffset = 0,
@@ -78,42 +85,71 @@ export function WizardStepper({
     steps.length,
   );
 
+  // Below lg the wizard stacks: one row of steps, naming only the current one.
   return (
-    <nav aria-label="Wizard progress" className="flex flex-col gap-0">
+    <nav
+      aria-label="Wizard progress"
+      className="flex items-center gap-2 lg:flex-col lg:items-stretch lg:gap-0"
+    >
       {steps.map((step, index) => {
         const isComplete = index < activeVisualStep;
         const isActive = index === activeVisualStep;
         const isInactive = index > activeVisualStep;
+        const hasNext = index < steps.length - 1;
 
         return (
-          <div key={step.label} className="flex items-start gap-3">
-            <div className="flex flex-col items-center">
-              <StepCircle
-                isComplete={isComplete}
-                isActive={isActive}
-                icon={step.icon}
-              />
-              {index < steps.length - 1 && (
-                <StepConnector isComplete={isComplete} />
+          <Fragment key={step.label}>
+            <div
+              aria-current={isActive ? "step" : undefined}
+              className={cn(
+                "flex min-w-0 items-center gap-2 lg:items-start lg:gap-3",
+                !isActive && "shrink-0",
               )}
-            </div>
+            >
+              <div className="flex flex-col items-center">
+                <StepCircle
+                  isComplete={isComplete}
+                  isActive={isActive}
+                  icon={step.icon}
+                />
+                {hasNext && (
+                  <StepConnector
+                    isComplete={isComplete}
+                    className="hidden h-14 w-px lg:block"
+                    direction={CONNECTOR_DIRECTION.VERTICAL}
+                  />
+                )}
+              </div>
 
-            <div className="flex flex-col gap-1 pt-[10px]">
-              <span
+              <div
                 className={cn(
-                  "text-lg leading-7 font-normal",
-                  isActive && "text-text-neutral-primary",
-                  isComplete && "text-text-neutral-primary",
-                  isInactive && "text-text-neutral-tertiary",
+                  "min-w-0 flex-col gap-1 lg:flex lg:pt-[10px]",
+                  isActive ? "flex" : "sr-only lg:not-sr-only",
                 )}
               >
-                {step.label}
-              </span>
-              <p className="text-text-neutral-secondary text-xs leading-5">
-                {step.description}
-              </p>
+                <span
+                  className={cn(
+                    "truncate text-sm font-normal lg:overflow-visible lg:text-lg lg:leading-7 lg:whitespace-normal",
+                    isActive && "text-text-neutral-primary",
+                    isComplete && "text-text-neutral-primary",
+                    isInactive && "text-text-neutral-tertiary",
+                  )}
+                >
+                  {step.label}
+                </span>
+                <p className="text-text-neutral-secondary hidden text-xs leading-5 lg:block">
+                  {step.description}
+                </p>
+              </div>
             </div>
-          </div>
+            {hasNext && (
+              <StepConnector
+                isComplete={isComplete}
+                className="h-px min-w-3 flex-1 lg:hidden"
+                direction={CONNECTOR_DIRECTION.HORIZONTAL}
+              />
+            )}
+          </Fragment>
         );
       })}
     </nav>
@@ -126,41 +162,58 @@ interface StepCircleProps {
   icon: IconComponent;
 }
 
+const CIRCLE_SIZE = "size-8 lg:size-[44px]";
+
 function StepCircle({ isComplete, isActive, icon: Icon }: StepCircleProps) {
   if (isComplete) {
     return (
-      <div className="bg-button-primary-press flex size-[44px] shrink-0 items-center justify-center rounded-full">
-        <CircleCheckBig className="text-bg-neutral-primary size-6" />
+      <div
+        className={`bg-button-primary-press flex shrink-0 items-center justify-center rounded-full ${CIRCLE_SIZE}`}
+      >
+        <CircleCheckBig className="text-bg-neutral-primary size-4 lg:size-6" />
       </div>
     );
   }
 
   if (isActive) {
     return (
-      <div className="border-border-input-primary-pressed bg-bg-neutral-secondary flex size-[44px] shrink-0 items-center justify-center rounded-full border">
+      <div
+        className={`border-border-input-primary-pressed bg-bg-neutral-secondary flex shrink-0 items-center justify-center rounded-full border ${CIRCLE_SIZE}`}
+      >
         <StepIcon icon={Icon} className="text-border-input-primary-pressed" />
       </div>
     );
   }
 
   return (
-    <div className="border-border-neutral-secondary bg-bg-neutral-secondary flex size-[44px] shrink-0 items-center justify-center rounded-full border">
+    <div
+      className={`border-border-neutral-secondary bg-bg-neutral-secondary flex shrink-0 items-center justify-center rounded-full border ${CIRCLE_SIZE}`}
+    >
       <StepIcon icon={Icon} className="text-text-neutral-tertiary" />
     </div>
   );
 }
 
-function StepConnector({ isComplete }: { isComplete: boolean }) {
+interface StepConnectorProps {
+  isComplete: boolean;
+  className: string;
+  direction: ConnectorDirection;
+}
+
+function StepConnector({
+  isComplete,
+  className,
+  direction,
+}: StepConnectorProps) {
   if (isComplete) {
-    return <div className="bg-border-input-primary-pressed h-14 w-px" />;
+    return <div className={cn("bg-border-input-primary-pressed", className)} />;
   }
 
   return (
     <div
-      className="h-14 w-px"
+      className={className}
       style={{
-        backgroundImage:
-          "repeating-linear-gradient(to bottom, var(--color-bg-data-muted) 0px, var(--color-bg-data-muted) 4px, transparent 4px, transparent 8px)",
+        backgroundImage: `repeating-linear-gradient(${direction}, var(--color-bg-data-muted) 0px, var(--color-bg-data-muted) 4px, transparent 4px, transparent 8px)`,
       }}
     />
   );
@@ -173,10 +226,17 @@ function StepIcon({
   icon: IconComponent;
   className: string;
 }) {
+  // Decorative like lucide's; size classes beat the SVG's width/height attributes.
   if (isCustomSvgIcon(Icon)) {
-    return <Icon size={24} className={className} />;
+    return (
+      <Icon
+        aria-hidden
+        size={24}
+        className={cn("size-4 lg:size-6", className)}
+      />
+    );
   }
-  return <Icon className={cn("size-6", className)} />;
+  return <Icon className={cn("size-4 lg:size-6", className)} />;
 }
 
 function isCustomSvgIcon(

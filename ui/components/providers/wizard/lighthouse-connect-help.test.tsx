@@ -8,6 +8,7 @@ import {
   type ProviderFunnelDetail,
 } from "@/lib/provider-funnel/provider-funnel-events";
 import { useLighthouseContextStore } from "@/store/lighthouse-context/store";
+import { useLighthouseLlmStore } from "@/store/lighthouse-llm/store";
 import { useProviderWizardStore } from "@/store/provider-wizard/store";
 import { SIDE_PANEL_TAB, useSidePanelStore } from "@/store/side-panel";
 
@@ -73,6 +74,17 @@ function connectedConfiguration(connected: boolean) {
   return { data: [{ id: "config-1", connected }] };
 }
 
+// An LLM check the test settles by hand.
+function pendingCheck() {
+  let settle: (
+    result: ReturnType<typeof connectedConfiguration>,
+  ) => void = () => {};
+  const promise = new Promise((resolve) => {
+    settle = resolve;
+  });
+  return { promise, settle };
+}
+
 describe("LighthouseConnectHelp", () => {
   beforeEach(() => {
     getConfigurationsMock.mockResolvedValue(connectedConfiguration(true));
@@ -82,6 +94,7 @@ describe("LighthouseConnectHelp", () => {
     });
     useProviderWizardStore.getState().reset();
     useLighthouseContextStore.setState({ contributions: {} });
+    useLighthouseLlmStore.setState({ hasConnectedLlm: null, latestCheck: 0 });
   });
 
   it("invites the user to ask Lighthouse AI about the provider they picked", async () => {
@@ -97,6 +110,142 @@ describe("LighthouseConnectHelp", () => {
       "href",
       AWS_DOCS,
     );
+  });
+
+  it("holds the callout's place while it checks for a connected LLM", async () => {
+    // Given
+    let settleCheck: (
+      result: ReturnType<typeof connectedConfiguration>,
+    ) => void = () => {};
+    getConfigurationsMock.mockReturnValue(
+      new Promise((resolve) => {
+        settleCheck = resolve;
+      }),
+    );
+    const funnelEvents = recordFunnelEvents();
+
+    // When
+    renderHelp("aws");
+
+    // Then: a placeholder, never the docs line the callout would replace
+    expect(
+      screen.getByRole("status", { name: "Loading Lighthouse AI help" }),
+    ).toBeVisible();
+    expect(
+      screen.queryByRole("link", { name: /AWS documentation/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Ask Lighthouse AI" }),
+    ).not.toBeInTheDocument();
+
+    // When
+    await act(async () => settleCheck(connectedConfiguration(true)));
+
+    // Then
+    expect(
+      screen.getByRole("button", { name: "Ask Lighthouse AI" }),
+    ).toBeVisible();
+    expect(
+      screen.queryByRole("status", { name: "Loading Lighthouse AI help" }),
+    ).not.toBeInTheDocument();
+    expect(funnelEvents.stop()).toHaveLength(1);
+  });
+
+  it("shows the last answer at once when the wizard opens again, then refreshes it", async () => {
+    // Given: an earlier opening found a connected LLM
+    const firstOpening = renderHelp("aws");
+    await screen.findByRole("button", { name: "Ask Lighthouse AI" });
+    firstOpening.unmount();
+    let settleCheck: (
+      result: ReturnType<typeof connectedConfiguration>,
+    ) => void = () => {};
+    getConfigurationsMock.mockReturnValue(
+      new Promise((resolve) => {
+        settleCheck = resolve;
+      }),
+    );
+
+    // When
+    renderHelp("aws");
+
+    // Then: no placeholder while the fresh check runs
+    expect(
+      screen.getByRole("button", { name: "Ask Lighthouse AI" }),
+    ).toBeVisible();
+    expect(
+      screen.queryByRole("status", { name: "Loading Lighthouse AI help" }),
+    ).not.toBeInTheDocument();
+
+    // When: the LLM was disconnected meanwhile
+    await act(async () => settleCheck(connectedConfiguration(false)));
+
+    // Then
+    expect(
+      screen.queryByRole("button", { name: "Ask Lighthouse AI" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: /AWS documentation/i }),
+    ).toBeVisible();
+  });
+
+  it("ignores an older check that answers after a newer opening", async () => {
+    // Given: the wizard closes while its check runs, then opens again
+    const olderCheck = pendingCheck();
+    const newerCheck = pendingCheck();
+    getConfigurationsMock
+      .mockReturnValueOnce(olderCheck.promise)
+      .mockReturnValueOnce(newerCheck.promise);
+    const firstOpening = renderHelp("aws");
+    await waitFor(() => expect(getConfigurationsMock).toHaveBeenCalledOnce());
+    firstOpening.unmount();
+    renderHelp("aws");
+    await waitFor(() => expect(getConfigurationsMock).toHaveBeenCalledTimes(2));
+
+    // When: the newer check answers first, then the older one
+    await act(async () => newerCheck.settle(connectedConfiguration(false)));
+    await act(async () => olderCheck.settle(connectedConfiguration(true)));
+
+    // Then
+    expect(
+      screen.queryByRole("button", { name: "Ask Lighthouse AI" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: /AWS documentation/i }),
+    ).toBeVisible();
+  });
+
+  it("keeps the remembered answer when a later check fails", async () => {
+    // Given: an earlier opening found a connected LLM
+    const firstOpening = renderHelp("aws");
+    await screen.findByRole("button", { name: "Ask Lighthouse AI" });
+    firstOpening.unmount();
+    getConfigurationsMock.mockRejectedValueOnce(new Error("network"));
+
+    // When
+    renderHelp("aws");
+    await waitFor(() => expect(getConfigurationsMock).toHaveBeenCalledTimes(2));
+    await act(() => Promise.resolve());
+
+    // Then: a failed refresh does not swap the callout for the docs line
+    expect(
+      screen.getByRole("button", { name: "Ask Lighthouse AI" }),
+    ).toBeVisible();
+  });
+
+  it("falls back to the documentation link when the check fails", async () => {
+    // Given
+    getConfigurationsMock.mockRejectedValue(new Error("network"));
+
+    // When
+    renderHelp("aws");
+
+    // Then
+    expect(
+      await screen.findByRole("link", { name: /AWS documentation/i }),
+    ).toBeVisible();
+    expect(
+      screen.queryByRole("status", { name: "Loading Lighthouse AI help" }),
+    ).not.toBeInTheDocument();
   });
 
   it("keeps only the documentation link while Lighthouse AI is not set up", async () => {
