@@ -49,6 +49,10 @@ def test_security_contact_email_collection(
     contact = service.security_contact_configurations[AZURE_SUBSCRIPTION_ID]["default"]
     with (
         mock.patch(
+            "prowler.providers.azure.services.defender.defender_service.Defender.__init__",
+            return_value=None,
+        ),
+        mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=provider,
         ),
