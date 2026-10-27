@@ -168,6 +168,160 @@ class Test_cloudtrail_multi_region_enabled_logging_management_events:
                 assert result[0].resource_tags == []
 
     @mock_aws
+    def test_compliant_trail_advanced_event_selector_custom_name(self):
+        cloudtrail_client_us_east_1 = client(
+            "cloudtrail", region_name=AWS_REGION_US_EAST_1
+        )
+        s3_client_us_east_1 = client("s3", region_name=AWS_REGION_US_EAST_1)
+        trail_name_us = "trail_test_us"
+        bucket_name_us = "bucket_test_us"
+        s3_client_us_east_1.create_bucket(Bucket=bucket_name_us)
+        trail_us = cloudtrail_client_us_east_1.create_trail(
+            Name=trail_name_us, S3BucketName=bucket_name_us, IsMultiRegionTrail=True
+        )
+        _ = cloudtrail_client_us_east_1.start_logging(Name=trail_name_us)
+        _ = cloudtrail_client_us_east_1.put_event_selectors(
+            TrailName=trail_name_us,
+            AdvancedEventSelectors=[
+                {
+                    "Name": "Log all management events",
+                    "FieldSelectors": [
+                        {"Field": "eventCategory", "Equals": ["Management"]}
+                    ],
+                }
+            ],
+        )
+
+        from prowler.providers.aws.services.cloudtrail.cloudtrail_service import (
+            Cloudtrail,
+        )
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ):
+            with mock.patch(
+                "prowler.providers.aws.services.cloudtrail.cloudtrail_multi_region_enabled_logging_management_events.cloudtrail_multi_region_enabled_logging_management_events.cloudtrail_client",
+                new=Cloudtrail(aws_provider),
+            ):
+                # Test Check
+                from prowler.providers.aws.services.cloudtrail.cloudtrail_multi_region_enabled_logging_management_events.cloudtrail_multi_region_enabled_logging_management_events import (
+                    cloudtrail_multi_region_enabled_logging_management_events,
+                )
+
+                check = cloudtrail_multi_region_enabled_logging_management_events()
+                result = check.execute()
+                assert len(result) == 1
+                assert result[0].resource_id == trail_name_us
+                assert result[0].resource_arn == trail_us["TrailARN"]
+                assert result[0].region == AWS_REGION_US_EAST_1
+                assert result[0].status == "PASS"
+
+    @mock_aws
+    def test_compliant_trail_advanced_event_selector_without_name(self):
+        cloudtrail_client_us_east_1 = client(
+            "cloudtrail", region_name=AWS_REGION_US_EAST_1
+        )
+        s3_client_us_east_1 = client("s3", region_name=AWS_REGION_US_EAST_1)
+        trail_name_us = "trail_test_us"
+        bucket_name_us = "bucket_test_us"
+        s3_client_us_east_1.create_bucket(Bucket=bucket_name_us)
+        trail_us = cloudtrail_client_us_east_1.create_trail(
+            Name=trail_name_us, S3BucketName=bucket_name_us, IsMultiRegionTrail=True
+        )
+        _ = cloudtrail_client_us_east_1.start_logging(Name=trail_name_us)
+        _ = cloudtrail_client_us_east_1.put_event_selectors(
+            TrailName=trail_name_us,
+            AdvancedEventSelectors=[
+                {
+                    "FieldSelectors": [
+                        {"Field": "eventCategory", "Equals": ["Management"]}
+                    ],
+                }
+            ],
+        )
+
+        from prowler.providers.aws.services.cloudtrail.cloudtrail_service import (
+            Cloudtrail,
+        )
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ):
+            with mock.patch(
+                "prowler.providers.aws.services.cloudtrail.cloudtrail_multi_region_enabled_logging_management_events.cloudtrail_multi_region_enabled_logging_management_events.cloudtrail_client",
+                new=Cloudtrail(aws_provider),
+            ):
+                # Test Check
+                from prowler.providers.aws.services.cloudtrail.cloudtrail_multi_region_enabled_logging_management_events.cloudtrail_multi_region_enabled_logging_management_events import (
+                    cloudtrail_multi_region_enabled_logging_management_events,
+                )
+
+                check = cloudtrail_multi_region_enabled_logging_management_events()
+                result = check.execute()
+                assert len(result) == 1
+                assert result[0].resource_id == trail_name_us
+                assert result[0].resource_arn == trail_us["TrailARN"]
+                assert result[0].region == AWS_REGION_US_EAST_1
+                assert result[0].status == "PASS"
+
+    @mock_aws
+    def test_non_compliant_trail_advanced_event_selector_data_events_only(self):
+        cloudtrail_client_us_east_1 = client(
+            "cloudtrail", region_name=AWS_REGION_US_EAST_1
+        )
+        s3_client_us_east_1 = client("s3", region_name=AWS_REGION_US_EAST_1)
+        trail_name_us = "trail_test_us"
+        bucket_name_us = "bucket_test_us"
+        s3_client_us_east_1.create_bucket(Bucket=bucket_name_us)
+        _ = cloudtrail_client_us_east_1.create_trail(
+            Name=trail_name_us, S3BucketName=bucket_name_us, IsMultiRegionTrail=True
+        )
+        _ = cloudtrail_client_us_east_1.start_logging(Name=trail_name_us)
+        _ = cloudtrail_client_us_east_1.put_event_selectors(
+            TrailName=trail_name_us,
+            AdvancedEventSelectors=[
+                {
+                    "Name": "Management events selector",
+                    "FieldSelectors": [
+                        {"Field": "eventCategory", "Equals": ["Data"]},
+                        {"Field": "resources.type", "Equals": ["AWS::S3::Object"]},
+                    ],
+                }
+            ],
+        )
+
+        from prowler.providers.aws.services.cloudtrail.cloudtrail_service import (
+            Cloudtrail,
+        )
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ):
+            with mock.patch(
+                "prowler.providers.aws.services.cloudtrail.cloudtrail_multi_region_enabled_logging_management_events.cloudtrail_multi_region_enabled_logging_management_events.cloudtrail_client",
+                new=Cloudtrail(aws_provider),
+            ):
+                # Test Check
+                from prowler.providers.aws.services.cloudtrail.cloudtrail_multi_region_enabled_logging_management_events.cloudtrail_multi_region_enabled_logging_management_events import (
+                    cloudtrail_multi_region_enabled_logging_management_events,
+                )
+
+                check = cloudtrail_multi_region_enabled_logging_management_events()
+                result = check.execute()
+                assert result[0].resource_id == AWS_ACCOUNT_NUMBER
+                assert result[0].region == AWS_REGION_US_EAST_1
+                assert result[0].status == "FAIL"
+
+    @mock_aws
     def test_compliant_trail_classic_event_selector(self):
         cloudtrail_client_us_east_1 = client(
             "cloudtrail", region_name=AWS_REGION_US_EAST_1
