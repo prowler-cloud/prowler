@@ -44,6 +44,9 @@ class Network(AzureService):
                                     destination_port_range=getattr(
                                         rule, "destination_port_range", ""
                                     ),
+                                    destination_port_ranges=getattr(
+                                        rule, "destination_port_ranges", []
+                                    ),
                                     protocol=getattr(rule, "protocol", ""),
                                     source_address_prefix=getattr(
                                         rule, "source_address_prefix", ""
@@ -296,10 +299,13 @@ class SecurityRule:
     id: str
     name: str
     destination_port_range: Optional[str]
+    destination_port_ranges: Optional[List[str]]
     protocol: Optional[str]
     source_address_prefix: Optional[str]
     access: Optional[str]
     direction: Optional[str]
+
+
 
 
 @dataclass
@@ -336,3 +342,43 @@ class VirtualNetwork:
     def __post_init__(self):
         if self.subnets is None:
             self.subnets = []
+
+
+def rule_matches_port(rule, target_port: int) -> bool:
+    port_range = getattr(rule, "destination_port_range", None)
+    if port_range:
+        if port_range == "*":
+            return True
+        if "-" in port_range:
+            try:
+                start, end = map(int, port_range.split("-"))
+                if start <= target_port <= end:
+                    return True
+            except ValueError:
+                pass
+        else:
+            try:
+                if int(port_range) == target_port:
+                    return True
+            except ValueError:
+                pass
+
+    port_ranges = getattr(rule, "destination_port_ranges", None)
+    if port_ranges:
+        for pr in port_ranges:
+            if pr == "*":
+                return True
+            if "-" in pr:
+                try:
+                    start, end = map(int, pr.split("-"))
+                    if start <= target_port <= end:
+                        return True
+                except ValueError:
+                    pass
+            else:
+                try:
+                    if int(pr) == target_port:
+                        return True
+                except ValueError:
+                    pass
+    return False
