@@ -96,6 +96,7 @@ class Test_rds_instance_protected_by_backup_plan:
                 assert result[0].resource_tags == []
 
     def test_rds_instance_without_backup_plan(self):
+        """Verify FAIL when protected resources contain only a different ARN."""
         instance = mock.MagicMock()
         backup = mock.MagicMock()
 
@@ -129,7 +130,7 @@ class Test_rds_instance_protected_by_backup_plan:
             )
         }
 
-        backup.protected_resources = [
+        backup.get_protected_resources.return_value = [
             f"arn:aws:rds:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:db:db-master-2"
         ]
 
@@ -180,6 +181,7 @@ class Test_rds_instance_protected_by_backup_plan:
                 assert result[0].resource_tags == []
 
     def test_rds_instance_with_backup_plan(self):
+        """Verify PASS when the instance ARN is returned as a protected resource."""
         instance = mock.MagicMock()
 
         from prowler.providers.aws.services.rds.rds_service import DBInstance
@@ -213,7 +215,7 @@ class Test_rds_instance_protected_by_backup_plan:
         }
 
         backup = mock.MagicMock()
-        backup.protected_resources = [arn]
+        backup.get_protected_resources.return_value = [arn]
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
@@ -262,6 +264,7 @@ class Test_rds_instance_protected_by_backup_plan:
                 assert result[0].resource_tags == []
 
     def test_rds_instance_with_backup_plan_via_instance_wildcard(self):
+        """Preserve PASS for the existing RDS instance wildcard shortcut."""
         instance = mock.MagicMock()
         instance.audited_partition = "aws"
 
@@ -296,7 +299,7 @@ class Test_rds_instance_protected_by_backup_plan:
         }
 
         backup = mock.MagicMock()
-        backup.protected_resources = [arn]
+        backup.get_protected_resources.return_value = [arn]
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
@@ -345,6 +348,7 @@ class Test_rds_instance_protected_by_backup_plan:
                 assert result[0].resource_tags == []
 
     def test_rds_instance_with_backup_plan_via_all_wildcard(self):
+        """Verify PASS when the all-resources wildcard covers the RDS instance."""
         instance = mock.MagicMock()
 
         from prowler.providers.aws.services.rds.rds_service import DBInstance
@@ -378,7 +382,7 @@ class Test_rds_instance_protected_by_backup_plan:
         }
 
         backup = mock.MagicMock()
-        backup.protected_resources = [arn]
+        backup.get_protected_resources.return_value = [arn]
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
