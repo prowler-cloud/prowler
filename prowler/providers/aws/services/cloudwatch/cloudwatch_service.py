@@ -125,6 +125,13 @@ class Logs(AWSService):
             self.__threading_call__(
                 self._list_tags_for_resource, self.log_groups.values()
             )
+            if (
+                "cloudwatch_log_group_data_protection_policy_configured"
+                in provider.audit_metadata.expected_checks
+            ):
+                self.__threading_call__(
+                    self._get_data_protection_policy, self.log_groups.values()
+                )
 
     def _select_log_groups_for_analysis(self):
         """Select the newest log groups for bounded analysis."""
@@ -356,6 +363,32 @@ class Logs(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def _get_data_protection_policy(self, log_group):
+        logger.info(
+            f"CloudWatch Logs - Getting data protection policy for log group {log_group.name}..."
+        )
+        try:
+            regional_client = self.regional_clients[log_group.region]
+            response = regional_client.get_data_protection_policy(
+                logGroupIdentifier=log_group.name
+            )
+            if "policyDocument" in response:
+                log_group.data_protection_policy = json.loads(
+                    response["policyDocument"]
+                )
+                log_group.data_protection_policy_retrieved = True
+        except ClientError as error:
+            if error.response["Error"]["Code"] == "ResourceNotFoundException":
+                log_group.data_protection_policy_retrieved = True
+            else:
+                logger.error(
+                    f"{log_group.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+        except Exception as error:
+            logger.error(
+                f"{log_group.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
 
 class MetricAlarm(BaseModel):
     arn: str
@@ -386,6 +419,8 @@ class LogGroup(BaseModel):
         {}
     )  # Log stream name as the key, array of events as the value
     tags: Optional[list] = []
+    data_protection_policy: Optional[dict] = None
+    data_protection_policy_retrieved: bool = False
 
 
 class ResourcePolicy(BaseModel):
