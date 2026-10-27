@@ -359,26 +359,33 @@ describe("createLighthouseChatStore", () => {
     getMessagesMock.mockResolvedValue({
       data: [message("message-1", "assistant", "Persisted answer")],
     });
-    let showedBothReplies = false;
+    const visibleReplies: string[] = [];
     store.subscribe((state) => {
       const hasPersistedReply = state.messages.some(
         (item) => item.role === "assistant",
       );
-      showedBothReplies ||=
-        hasPersistedReply && state.streamState.assistantText !== "";
+      const hasLiveReply = state.streamState.assistantText !== "";
+      visibleReplies.push(
+        hasPersistedReply && hasLiveReply
+          ? "both"
+          : hasPersistedReply
+            ? "persisted"
+            : hasLiveReply
+              ? "live"
+              : "none",
+      );
     });
 
     // When
     eventSources[0].emit("message.end", { message_id: "message-1" });
 
     // Then
-    await vi.waitFor(() =>
-      expect(store.getState().streamState.assistantText).toBe(""),
+    await vi.waitFor(() => expect(visibleReplies.at(-1)).toBe("persisted"));
+    // Neither both replies nor an empty gap at any point of the swap.
+    const transitions = visibleReplies.filter(
+      (reply, index) => reply !== visibleReplies[index - 1],
     );
-    expect(store.getState().messages).toEqual([
-      expect.objectContaining({ id: "message-1", role: "assistant" }),
-    ]);
-    expect(showedBothReplies).toBe(false);
+    expect(transitions).toEqual(["live", "persisted"]);
   });
 
   it("keeps the persisted user message ratable after a terminal error", async () => {
