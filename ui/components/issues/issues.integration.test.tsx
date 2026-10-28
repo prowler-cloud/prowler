@@ -1,6 +1,6 @@
 import { http, HttpResponse } from "msw";
 import { afterEach, describe, expect, it } from "vitest";
-import { page, userEvent } from "vitest/browser";
+import { page } from "vitest/browser";
 
 import { worker } from "@/__tests__/msw/worker";
 import { render } from "@/__tests__/render-browser";
@@ -12,6 +12,8 @@ import { getScan } from "@/actions/scans";
 import { ExploitabilityChart } from "@/app/(prowler)/_overview/exploitability/_components/exploitability-chart";
 import { TopIssues } from "@/app/(prowler)/_overview/exploitability/_components/top-issues";
 import { IssuesList } from "@/app/(prowler)/issues/_components/issues-list";
+import { IssueDetail } from "@/components/issues/issue-detail";
+import { GlobalSidePanel } from "@/components/side-panel/global-side-panel";
 import { applyDefaultMutedFilter, extractFiltersAndQuery } from "@/lib";
 import { resolveFindingScanDateFilters } from "@/lib/findings-scan-filters";
 import { IssueResource, IssuesOverviewAttributes } from "@/types/issues";
@@ -191,10 +193,14 @@ describe("Issues responsive layout", () => {
         });
       }),
     );
-    const screen = await render(await IssuesList({ searchParams: {} }));
-    await screen
-      .getByRole("button", { name: `Expand ${issue.attributes.title}` })
-      .click();
+    const screen = await render(
+      <IssueDetail
+        id={issue.id}
+        issue={issue.attributes}
+        scanId="scan-1"
+        providerId="provider-1"
+      />,
+    );
     const link = screen.getByRole("link", { name: "S3 bucket is public" });
     await expect.element(link).toBeVisible();
 
@@ -227,6 +233,83 @@ describe("Issues responsive layout", () => {
     ]);
   });
 
+  it("opens a clicked row in the app's Details side panel", async () => {
+    // Given: the list next to the real side panel host the app shell mounts.
+    setup();
+    const content = await IssuesList({ searchParams: {} });
+    const screen = await render(
+      <>
+        {content}
+        <GlobalSidePanel />
+      </>,
+    );
+
+    // When: a plain cell of the row is clicked, not the title button.
+    await screen
+      .getByRole("row", { name: /Public bucket exposes customer data/ })
+      .getByText("Production")
+      .click();
+
+    // Then
+    await expect
+      .element(screen.getByRole("link", { name: "Open the full path" }))
+      .toHaveAttribute("href", "/issues/issue-1");
+    await expect
+      .element(screen.getByText("Block Public Access is disabled."))
+      .toBeVisible();
+  });
+
+  it("resets the Details tab when another row opens", async () => {
+    // Given: the first issue's panel is open on the Remediation tab. The
+    // panel overlays the right edge here (no app shell pushes the page), so
+    // rows are clicked on their leftmost cell.
+    await page.viewport(1440, 900);
+    setup();
+    const secondIssue: IssueResource = {
+      ...issue,
+      id: "issue-2",
+      attributes: {
+        ...issue.attributes,
+        title: "Admin role assumable from any account",
+        account: "Staging",
+      },
+    };
+    worker.use(
+      http.get("*/issues", () =>
+        HttpResponse.json({ data: [issue, secondIssue] }),
+      ),
+    );
+    const content = await IssuesList({ searchParams: {} });
+    const screen = await render(
+      <>
+        {content}
+        <GlobalSidePanel />
+      </>,
+    );
+    await screen
+      .getByRole("row", { name: /Public bucket exposes customer data/ })
+      .getByText("Production")
+      .click();
+    await screen.getByRole("tab", { name: "Remediation" }).click();
+    await expect
+      .element(screen.getByRole("tab", { name: "Remediation" }))
+      .toHaveAttribute("aria-selected", "true");
+
+    // When
+    await screen
+      .getByRole("row", { name: /Admin role assumable from any account/ })
+      .getByText("Likely")
+      .click();
+
+    // Then: the panel remounted on the new issue, back on its first tab
+    await expect
+      .element(screen.getByRole("link", { name: "Open the full path" }))
+      .toHaveAttribute("href", "/issues/issue-2");
+    await expect
+      .element(screen.getByRole("tab", { name: "Exploitability" }))
+      .toHaveAttribute("aria-selected", "true");
+  });
+
   it.each([
     { width: 375, theme: "light" },
     { width: 768, theme: "light" },
@@ -234,7 +317,7 @@ describe("Issues responsive layout", () => {
     { width: 375, theme: "dark" },
     { width: 1440, theme: "dark" },
   ])(
-    "keeps the filters and expanded detail usable at $width px in $theme mode",
+    "keeps the list and the issue detail usable at $width px in $theme mode",
     async ({ width, theme }) => {
       await page.viewport(width, 1000);
       localStorage.setItem("theme", theme);
@@ -243,19 +326,25 @@ describe("Issues responsive layout", () => {
         searchParams: { "filter[pattern]": "aws_public_bucket" },
       });
       const screen = await render(
-        <main className="min-w-0 p-4">
-          <h1 className="mb-6 text-2xl font-semibold">Issues</h1>
+        <main className="flex min-w-0 flex-col gap-6 p-4">
+          <h1 className="text-2xl font-semibold">Issues</h1>
           {content}
+          <IssueDetail
+            id={issue.id}
+            issue={issue.attributes}
+            scanId="scan-1"
+            providerId="provider-1"
+          />
         </main>,
       );
       await expect
         .element(screen.getByRole("button", { name: "Remove Pattern filter" }))
         .toBeVisible();
-      await screen
-        .getByRole("button", {
-          name: "Expand Public bucket exposes customer data",
-        })
-        .click();
+      await expect
+        .element(
+          screen.getByText("The internet → Data exposure · aws_public_bucket"),
+        )
+        .toBeVisible();
       await expect
         .element(screen.getByRole("region", { name: "Affected resources" }))
         .toBeVisible();
@@ -300,35 +389,8 @@ describe("Issues responsive layout", () => {
         Math.max(1000, document.documentElement.scrollHeight),
       );
       await screen.getByRole("main").screenshot();
-      await screen
-        .getByRole("button", {
-          name: "Collapse Public bucket exposes customer data",
-        })
-        .click();
-      await expect
-        .element(screen.getByRole("region", { name: "Affected resources" }))
-        .not.toBeInTheDocument();
     },
   );
-
-  it("keeps keyboard focus on the expansion control", async () => {
-    setup();
-    const screen = await render(await IssuesList({ searchParams: {} }));
-    const toggle = screen.getByRole("button", {
-      name: "Expand Public bucket exposes customer data",
-    });
-    toggle.element().focus();
-    await userEvent.keyboard("{Enter}");
-    await expect
-      .element(
-        screen.getByRole("button", {
-          name: "Collapse Public bucket exposes customer data",
-        }),
-      )
-      .toHaveFocus();
-    await userEvent.keyboard(" ");
-    await expect.element(toggle).toHaveFocus();
-  });
 
   it.each([375, 768, 1440])(
     "contains overview cards at %s px",

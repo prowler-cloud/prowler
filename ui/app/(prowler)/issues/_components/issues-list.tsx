@@ -65,7 +65,7 @@ export const IssuesList = async ({
     <>
       {attributes ? (
         <div className="mb-6">
-          <IssuesSummary summary={attributes} scope={scope} />
+          <IssuesSummary summary={attributes} />
         </div>
       ) : (
         <IssuesLoadError message="Failed to load issue summary." />

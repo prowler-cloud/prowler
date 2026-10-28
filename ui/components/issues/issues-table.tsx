@@ -1,93 +1,66 @@
 "use client";
 
-import { ColumnDef, Row } from "@tanstack/react-table";
-import { ChevronDown, ChevronRight } from "lucide-react";
-import Link from "next/link";
+import { ColumnDef } from "@tanstack/react-table";
 import { createContext, useContext, useState } from "react";
 
-import { IssueDetail } from "@/components/issues/issue-detail";
+import { IssuePanel } from "@/components/issues/issue-panel";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/shadcn";
 import { Badge } from "@/components/shadcn/badge/badge";
-import { Button } from "@/components/shadcn/button/button";
 import { EntityInfo } from "@/components/shadcn/entities";
 import { DataTable, DataTableColumnHeader } from "@/components/shadcn/table";
-import { TableCell, TableRow } from "@/components/shadcn/table/table";
+import { SeverityBadge } from "@/components/shadcn/table/severity-badge";
 import { TriageStatusBadge } from "@/components/shared/triage/triage-status-badge";
-import { VERDICTS } from "@/lib/issues/verdicts";
+import {
+  attackPathLabel,
+  LEG_LABELS,
+  LEG_STATE_LABELS,
+  legBadgeVariant,
+  VERDICTS,
+} from "@/lib/issues/verdicts";
 import { MetaDataProps } from "@/types";
-import { IssueResponse } from "@/types/issues";
+import { IssueResponse, LegName } from "@/types/issues";
 
 type IssueRow = IssueResponse["data"][number];
 
-interface IssueExpansion {
-  openId: string | null;
-  toggle: (id: string) => void;
-}
+/** One letter per leg, in the order the legs are asked. */
+const LEG_LETTERS: Record<LegName, string> = {
+  reachability: "R",
+  access: "A",
+  target: "T",
+  controls: "C",
+  verification: "V",
+};
 
-const IssueExpansionContext = createContext<IssueExpansion | null>(null);
+const OpenIssueContext = createContext<(id: string) => void>(() => {});
 
-function IssueExpandCell({ row }: { row: Row<IssueRow> }) {
-  const expansion = useContext(IssueExpansionContext);
-  const expanded = expansion?.openId === row.original.id;
+function IssueCell({ issue }: { issue: IssueRow }) {
+  const open = useContext(OpenIssueContext);
+  const { title, pattern } = issue.attributes;
+  const path = attackPathLabel(issue.attributes);
+  // Single line like the finding groups title: ellipsis past the max width,
+  // the full title in the tooltip.
   return (
-    <Button
-      variant="ghost"
-      size="icon-sm"
-      aria-label={`${expanded ? "Collapse" : "Expand"} ${row.original.attributes.title}`}
-      aria-expanded={expanded}
-      aria-controls={expanded ? `issue-${row.original.id}` : undefined}
-      onClick={() => expansion?.toggle(row.original.id)}
-    >
-      {expanded ? (
-        <ChevronDown aria-hidden="true" />
-      ) : (
-        <ChevronRight aria-hidden="true" />
-      )}
-    </Button>
+    <div className="flex max-w-[500px] min-w-[120px] flex-col gap-0.5">
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            type="button"
+            onClick={() => open(issue.id)}
+            className="text-text-neutral-primary hover:text-button-tertiary block cursor-pointer truncate border-none bg-transparent p-0 text-left text-sm hover:underline"
+          >
+            {title}
+          </button>
+        </TooltipTrigger>
+        <TooltipContent side="top">{title}</TooltipContent>
+      </Tooltip>
+      <p className="text-text-neutral-tertiary truncate text-xs">
+        {path ? `${path} · ${pattern}` : pattern}
+      </p>
+    </div>
   );
 }
 
 const columns: ColumnDef<IssueRow>[] = [
-  { id: "expand", header: "", cell: IssueExpandCell },
-  {
-    id: "issue",
-    header: "Issue",
-    cell: ({ row }) => (
-      <div className="max-w-[360px] min-w-0">
-        <p className="text-text-neutral-primary text-sm font-medium break-words">
-          {row.original.attributes.title}
-        </p>
-        <p className="text-text-neutral-tertiary truncate text-xs">
-          {row.original.attributes.pattern}
-        </p>
-      </div>
-    ),
-  },
-  {
-    id: "provider",
-    header: "Provider",
-    cell: ({ row }) => (
-      <EntityInfo
-        cloudProvider={row.original.attributes.cloud}
-        entityAlias={row.original.attributes.account}
-      />
-    ),
-  },
-  {
-    id: "findings",
-    accessorKey: "attributes.findings_count",
-    header: ({ column }) => (
-      <DataTableColumnHeader
-        column={column}
-        title="Findings"
-        param="findings_count"
-      />
-    ),
-    cell: ({ row }) => (
-      <span className="text-text-neutral-secondary text-sm tabular-nums">
-        {row.original.attributes.findings_count}
-      </span>
-    ),
-  },
   {
     id: "verdict",
     accessorKey: "attributes.verdict",
@@ -110,12 +83,86 @@ const columns: ColumnDef<IssueRow>[] = [
     },
   },
   {
+    id: "issue",
+    header: "Issue",
+    cell: ({ row }) => <IssueCell issue={row.original} />,
+  },
+  {
+    id: "legs",
+    header: "Why",
+    cell: ({ row }) => (
+      <ul aria-label="Attack path legs" className="flex gap-1">
+        {(Object.keys(LEG_LETTERS) as LegName[]).map((name) => {
+          const leg = row.original.attributes.legs[name];
+          if (!leg) return null;
+          const label = `${LEG_LABELS[name]}: ${LEG_STATE_LABELS[leg.state]}`;
+          return (
+            <li key={name} aria-label={label}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Badge
+                    variant={legBadgeVariant(name, leg.state)}
+                    size="sm"
+                    aria-hidden="true"
+                  >
+                    {LEG_LETTERS[name]}
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-xs">
+                  <p className="font-medium">{label}</p>
+                  <p>{leg.text}</p>
+                </TooltipContent>
+              </Tooltip>
+            </li>
+          );
+        })}
+      </ul>
+    ),
+  },
+  {
+    id: "severity",
+    header: "Severity",
+    cell: ({ row }) => (
+      <SeverityBadge severity={row.original.attributes.severity} />
+    ),
+  },
+  {
+    id: "provider",
+    header: "Account",
+    cell: ({ row }) => (
+      <div className="max-w-[240px]">
+        <EntityInfo
+          cloudProvider={row.original.attributes.cloud}
+          entityAlias={row.original.attributes.account}
+        />
+      </div>
+    ),
+  },
+  {
+    id: "findings",
+    accessorKey: "attributes.findings_count",
+    header: ({ column }) => (
+      <DataTableColumnHeader
+        column={column}
+        title="Findings"
+        param="findings_count"
+      />
+    ),
+    cell: ({ row }) => (
+      <span className="text-text-neutral-secondary text-sm tabular-nums">
+        {row.original.attributes.findings_count.toLocaleString()}
+      </span>
+    ),
+  },
+  {
     id: "triage",
     header: "Triage",
-    cell: ({ row }) => {
-      const triage = row.original.attributes.triage_status;
-      return <TriageStatusBadge status={triage} showLabel={false} />;
-    },
+    cell: ({ row }) => (
+      <TriageStatusBadge
+        status={row.original.attributes.triage_status}
+        showLabel={false}
+      />
+    ),
   },
 ];
 
@@ -126,47 +173,29 @@ export const IssuesTable = ({
   issues: IssueRow[];
   metadata?: MetaDataProps;
 }) => {
-  // One open row at a time: each detail fetches its issue's resource ids.
   const [openId, setOpenId] = useState<string | null>(null);
-
-  const toggleRow = (id: string) =>
-    setOpenId((current) => (current === id ? null : id));
-  const renderAfterRow = (row: Row<IssueRow>) =>
-    row.original.id === openId ? (
-      <TableRow>
-        <TableCell colSpan={columns.length}>
-          <div
-            id={`issue-${row.original.id}`}
-            className="sticky left-0 w-[calc(100cqw-4rem)] min-w-0"
-          >
-            <Button asChild variant="link" size="link-sm">
-              <Link href={`/issues/${row.original.id}`}>
-                Open the full path
-              </Link>
-            </Button>
-            <IssueDetail
-              key={`${row.original.id}-${row.original.attributes.updated_at}`}
-              id={row.original.id}
-              issue={row.original.attributes}
-              scanId={row.original.relationships?.scan?.data?.id}
-              providerId={row.original.relationships?.provider?.data?.id}
-            />
-          </div>
-        </TableCell>
-      </TableRow>
-    ) : null;
+  const openIssue = issues.find((issue) => issue.id === openId);
 
   return (
     <div className="@container min-w-0">
-      <IssueExpansionContext value={{ openId, toggle: toggleRow }}>
+      <OpenIssueContext value={setOpenId}>
         <DataTable
           columns={columns}
           data={issues}
           metadata={metadata}
-          onRowClick={(row) => toggleRow(row.original.id)}
-          renderAfterRow={renderAfterRow}
+          onRowClick={(row) => setOpenId(row.original.id)}
         />
-      </IssueExpansionContext>
+      </OpenIssueContext>
+      {openIssue && (
+        <IssuePanel
+          key={openIssue.id}
+          issue={openIssue}
+          open
+          onOpenChange={(open) => {
+            if (!open) setOpenId(null);
+          }}
+        />
+      )}
     </div>
   );
 };
