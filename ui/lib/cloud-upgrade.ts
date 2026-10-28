@@ -27,6 +27,7 @@ const LOCAL_SERVER_UTM_SOURCE = "prowler-local-server";
 const CLOUD_UPGRADE_UTM_CONTENT = {
   [CLOUD_UPGRADE_FEATURE.ADVANCED_SCHEDULING]: "advanced-scheduling",
   [CLOUD_UPGRADE_FEATURE.ALERTS]: "alerts",
+  [CLOUD_UPGRADE_FEATURE.API_KEYS]: "api-keys",
   [CLOUD_UPGRADE_FEATURE.AWS_ORGANIZATIONS]: "organization",
   [CLOUD_UPGRADE_FEATURE.AZURE_ORGANIZATIONS]: "azure-organization",
   [CLOUD_UPGRADE_FEATURE.CLI_IMPORT]: "cli-import",
@@ -63,6 +64,17 @@ export const CLOUD_UPGRADE_CONTENT = {
       "Manage alert rules from one place",
     ],
     primaryCta: "Create Alerts in Prowler Cloud",
+  },
+  [CLOUD_UPGRADE_FEATURE.API_KEYS]: {
+    title: "Automate Prowler with API Keys",
+    description:
+      "Give scripts, pipelines, and integrations programmatic access to Prowler Cloud.",
+    benefits: [
+      "Create named keys with their own expiration",
+      "Revoke a key without touching your user account",
+      "See when each key was last used",
+    ],
+    primaryCta: "Create API Keys in Prowler Cloud",
   },
   [CLOUD_UPGRADE_FEATURE.AWS_ORGANIZATIONS]: {
     title: "Add Your Entire AWS Organization",

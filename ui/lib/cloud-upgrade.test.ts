@@ -26,6 +26,7 @@ describe("cloud upgrade content", () => {
     expect(titles).toEqual([
       "Keep Every Provider Checked Automatically",
       "Turn Findings into Alerts",
+      "Automate Prowler with API Keys",
       "Add Your Entire AWS Organization",
       "Add Your Entire Azure Management Group",
       "Add Your Entire GCP Organization",
@@ -74,6 +75,7 @@ describe("cloud upgrade URLs", () => {
   it.each([
     [CLOUD_UPGRADE_FEATURE.ADVANCED_SCHEDULING, "advanced-scheduling"],
     [CLOUD_UPGRADE_FEATURE.ALERTS, "alerts"],
+    [CLOUD_UPGRADE_FEATURE.API_KEYS, "api-keys"],
     [CLOUD_UPGRADE_FEATURE.AWS_ORGANIZATIONS, "organization"],
     [CLOUD_UPGRADE_FEATURE.AZURE_ORGANIZATIONS, "azure-organization"],
     [CLOUD_UPGRADE_FEATURE.CLI_IMPORT, "cli-import"],
