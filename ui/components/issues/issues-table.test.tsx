@@ -1,15 +1,13 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { ReactNode } from "react";
+import { describe, expect, it, vi } from "vitest";
 
 import type { IssueResponse } from "@/types/issues";
 
 import { IssuesTable } from "./issues-table";
 
-const { push, getIssue } = vi.hoisted(() => ({
-  push: vi.fn(),
-  getIssue: vi.fn(),
-}));
+const { push } = vi.hoisted(() => ({ push: vi.fn() }));
 vi.mock("next/navigation", () => ({
   usePathname: () => "/issues",
   useRouter: () => ({ push, refresh: vi.fn() }),
@@ -17,17 +15,29 @@ vi.mock("next/navigation", () => ({
 }));
 vi.mock("@/lib", () => ({ getPaginationInfo: vi.fn() }));
 vi.mock("@/contexts", () => ({ useFilterTransitionOptional: () => null }));
-vi.mock("@/actions/issues", () => ({
-  getIssue,
-  getIssueNotes: async () => [],
+vi.mock("@/actions/issues", () => ({ getIssueNotes: async () => [] }));
+// The real panel portals into the app shell's side panel, absent here.
+vi.mock("@/components/side-panel/detail-side-panel", () => ({
+  DetailSidePanel: ({
+    open,
+    onOpenChange,
+    title,
+    children,
+  }: {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    title: string;
+    children: ReactNode;
+  }) =>
+    open ? (
+      <section aria-label={title}>
+        <button type="button" onClick={() => onOpenChange(false)}>
+          Close panel
+        </button>
+        {children}
+      </section>
+    ) : null,
 }));
-vi.mock("@/components/issues/issue-compliance", () => ({
-  IssueCompliance: () => null,
-}));
-vi.mock("@/components/findings/send-to-jira-modal", () => ({
-  SendToJiraModal: () => null,
-}));
-vi.mock("@/components/issues/issue-graph", () => ({ IssueGraph: () => null }));
 
 const issue: IssueResponse["data"][number] = {
   type: "issues",
@@ -47,22 +57,18 @@ const issue: IssueResponse["data"][number] = {
     fix: "Restrict access",
     inserted_at: "",
     updated_at: "",
-    legs: Object.fromEntries(
-      ["reachability", "access", "target", "controls", "verification"].map(
-        (name) => [
-          name,
-          { state: "unknown", text: "Not observed", evidence: [] },
-        ],
-      ),
-    ) as unknown as IssueResponse["data"][number]["attributes"]["legs"],
+    legs: {
+      reachability: { state: "yes", text: "Public", evidence: [] },
+      access: { state: "partial", text: "Some controls", evidence: [] },
+      target: { state: "unknown", text: "Not verified", evidence: [] },
+      controls: { state: "no", text: "Block Public Access off", evidence: [] },
+      verification: { state: "yes", text: "Logging on", evidence: [] },
+    },
   },
+  relationships: { scan: { data: { type: "scans", id: "scan-1" } } },
 };
 
 describe("IssuesTable", () => {
-  beforeEach(() => {
-    getIssue.mockResolvedValue({ data: { attributes: { resource_uids: [] } } });
-  });
-
   it("sorts findings and verdicts through the URL", async () => {
     // Given
     const user = userEvent.setup();
@@ -80,25 +86,61 @@ describe("IssuesTable", () => {
       scroll: false,
     });
   });
-  it("opens and closes the detail with the keyboard", async () => {
+
+  it("says where the path starts, where it leads and why, in the row", () => {
+    // Given / When
+    render(<IssuesTable issues={[issue]} />);
+    const row = screen.getByRole("row", { name: /Public bucket/ });
+
+    // Then
+    expect(
+      within(row).getByText("The internet → Data exposure"),
+    ).toBeInTheDocument();
+    expect(within(row).getByText("High")).toBeInTheDocument();
+    const legs = within(row).getByRole("list", { name: "Attack path legs" });
+    expect(
+      within(legs)
+        .getAllByRole("listitem")
+        .map((item) => item.getAttribute("aria-label")),
+    ).toEqual([
+      "Reachability: Yes",
+      "Access: Partly",
+      "Target: Unknown",
+      "Controls: No",
+      "Verification: Yes",
+    ]);
+  });
+
+  it("opens the issue in the side panel and closes it", async () => {
     // Given
     const user = userEvent.setup();
     render(<IssuesTable issues={[issue]} />);
+
     // When
-    const toggle = screen.getByRole("button", { name: "Expand Public bucket" });
-    toggle.focus();
-    await user.keyboard("{Enter}");
+    await user.click(screen.getByRole("button", { name: "Public bucket" }));
+
     // Then
+    const panel = screen.getByRole("region", { name: "Public bucket" });
+    expect(within(panel).getByText("Restrict access")).toBeInTheDocument();
+    expect(within(panel).getByText("Block Public Access off")).toBeVisible();
     expect(
-      screen.getByRole("button", { name: "Collapse Public bucket" }),
-    ).toHaveAttribute("aria-expanded", "true");
-    expect(await screen.findByText("Restrict access")).toBeInTheDocument();
-    expect(
-      screen.getByRole("link", { name: "Open the full path" }),
+      within(panel).getByRole("link", { name: "Open the full path" }),
     ).toHaveAttribute("href", "/issues/issue-1");
+    expect(
+      within(panel).getByRole("link", {
+        name: "Open this scan's failed findings",
+      }),
+    ).toHaveAttribute(
+      "href",
+      "/findings?filter%5Bscan__in%5D=scan-1&filter%5Bstatus__in%5D=FAIL",
+    );
+
     // When
-    await user.keyboard(" ");
+    await user.click(screen.getByRole("button", { name: "Close panel" }));
+
     // Then
-    expect(screen.queryByText("Restrict access")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("region", { name: "Public bucket" }),
+    ).not.toBeInTheDocument();
   });
 });

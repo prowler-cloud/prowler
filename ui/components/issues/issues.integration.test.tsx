@@ -1,6 +1,6 @@
 import { http, HttpResponse } from "msw";
 import { afterEach, describe, expect, it } from "vitest";
-import { page, userEvent } from "vitest/browser";
+import { page } from "vitest/browser";
 
 import { worker } from "@/__tests__/msw/worker";
 import { render } from "@/__tests__/render-browser";
@@ -12,6 +12,7 @@ import { getScan } from "@/actions/scans";
 import { ExploitabilityChart } from "@/app/(prowler)/_overview/exploitability/_components/exploitability-chart";
 import { TopIssues } from "@/app/(prowler)/_overview/exploitability/_components/top-issues";
 import { IssuesList } from "@/app/(prowler)/issues/_components/issues-list";
+import { IssueDetail } from "@/components/issues/issue-detail";
 import { applyDefaultMutedFilter, extractFiltersAndQuery } from "@/lib";
 import { resolveFindingScanDateFilters } from "@/lib/findings-scan-filters";
 import { IssueResource, IssuesOverviewAttributes } from "@/types/issues";
@@ -191,10 +192,14 @@ describe("Issues responsive layout", () => {
         });
       }),
     );
-    const screen = await render(await IssuesList({ searchParams: {} }));
-    await screen
-      .getByRole("button", { name: `Expand ${issue.attributes.title}` })
-      .click();
+    const screen = await render(
+      <IssueDetail
+        id={issue.id}
+        issue={issue.attributes}
+        scanId="scan-1"
+        providerId="provider-1"
+      />,
+    );
     const link = screen.getByRole("link", { name: "S3 bucket is public" });
     await expect.element(link).toBeVisible();
 
@@ -234,7 +239,7 @@ describe("Issues responsive layout", () => {
     { width: 375, theme: "dark" },
     { width: 1440, theme: "dark" },
   ])(
-    "keeps the filters and expanded detail usable at $width px in $theme mode",
+    "keeps the list and the issue detail usable at $width px in $theme mode",
     async ({ width, theme }) => {
       await page.viewport(width, 1000);
       localStorage.setItem("theme", theme);
@@ -243,19 +248,23 @@ describe("Issues responsive layout", () => {
         searchParams: { "filter[pattern]": "aws_public_bucket" },
       });
       const screen = await render(
-        <main className="min-w-0 p-4">
-          <h1 className="mb-6 text-2xl font-semibold">Issues</h1>
+        <main className="flex min-w-0 flex-col gap-6 p-4">
+          <h1 className="text-2xl font-semibold">Issues</h1>
           {content}
+          <IssueDetail
+            id={issue.id}
+            issue={issue.attributes}
+            scanId="scan-1"
+            providerId="provider-1"
+          />
         </main>,
       );
       await expect
         .element(screen.getByRole("button", { name: "Remove Pattern filter" }))
         .toBeVisible();
-      await screen
-        .getByRole("button", {
-          name: "Expand Public bucket exposes customer data",
-        })
-        .click();
+      await expect
+        .element(screen.getByText("The internet → Data exposure"))
+        .toBeVisible();
       await expect
         .element(screen.getByRole("region", { name: "Affected resources" }))
         .toBeVisible();
@@ -300,35 +309,8 @@ describe("Issues responsive layout", () => {
         Math.max(1000, document.documentElement.scrollHeight),
       );
       await screen.getByRole("main").screenshot();
-      await screen
-        .getByRole("button", {
-          name: "Collapse Public bucket exposes customer data",
-        })
-        .click();
-      await expect
-        .element(screen.getByRole("region", { name: "Affected resources" }))
-        .not.toBeInTheDocument();
     },
   );
-
-  it("keeps keyboard focus on the expansion control", async () => {
-    setup();
-    const screen = await render(await IssuesList({ searchParams: {} }));
-    const toggle = screen.getByRole("button", {
-      name: "Expand Public bucket exposes customer data",
-    });
-    toggle.element().focus();
-    await userEvent.keyboard("{Enter}");
-    await expect
-      .element(
-        screen.getByRole("button", {
-          name: "Collapse Public bucket exposes customer data",
-        }),
-      )
-      .toHaveFocus();
-    await userEvent.keyboard(" ");
-    await expect.element(toggle).toHaveFocus();
-  });
 
   it.each([375, 768, 1440])(
     "contains overview cards at %s px",

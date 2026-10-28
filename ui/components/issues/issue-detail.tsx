@@ -16,7 +16,12 @@ import { Card } from "@/components/shadcn/card/card";
 import { CodeSnippet } from "@/components/shadcn/code-snippet";
 import { InfoField } from "@/components/shadcn/info-field/info-field";
 import { riskFactors } from "@/lib/issues/risk-factors";
-import { legBadgeVariant } from "@/lib/issues/verdicts";
+import {
+  LEG_LABELS,
+  LEG_QUESTIONS,
+  LEG_STATE_LABELS,
+  legBadgeVariant,
+} from "@/lib/issues/verdicts";
 import { createJiraDispatchPayload } from "@/lib/jira-dispatch-selection";
 import { useJiraDispatchStore } from "@/store/jira-dispatch/store";
 import { JIRA_DISPATCH_TARGET } from "@/types/integrations";
@@ -27,29 +32,8 @@ import {
   IssueAttributes,
   IssueFinding,
   LegName,
-  LegState,
 } from "@/types/issues";
 
-const LEG_QUESTIONS: Record<LegName, string> = {
-  reachability: "Can an attacker reach it?",
-  access: "Can an attacker authenticate or bypass authentication?",
-  target: "Is there a target worth reaching?",
-  controls: "Are protective controls in place?",
-  verification: "Would the activity be detected?",
-};
-const LEG_LABELS: Record<LegName, string> = {
-  reachability: "Reachability",
-  access: "Access",
-  target: "Target",
-  controls: "Controls",
-  verification: "Verification",
-};
-const STATE_LABELS: Record<LegState, string> = {
-  yes: "Yes",
-  no: "No",
-  partial: "Partly",
-  unknown: "Unknown",
-};
 const RESOURCE_PAGE_SIZE = 12;
 
 // The issue carries resource uids, not ids, so this opens the Resources list
@@ -215,7 +199,7 @@ export const IssueDetail = ({
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <h5 className="text-sm font-medium">{LEG_LABELS[name]}</h5>
                   <Badge variant={legBadgeVariant(name, leg.state)}>
-                    {STATE_LABELS[leg.state]}
+                    {LEG_STATE_LABELS[leg.state]}
                   </Badge>
                 </div>
                 <p className="text-text-neutral-tertiary text-xs">
