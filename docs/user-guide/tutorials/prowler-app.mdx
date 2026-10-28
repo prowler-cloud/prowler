@@ -85,20 +85,14 @@ For detailed instructions on configuring credentials for each provider, refer to
 <ProviderCards />
 
 ## Step 5: Test Connection
-After adding your cloud account credentials, click the `Check connection` button to verify that Prowler can successfully connect to your provider:
-
-<img src="/images/test-connection-button.png" alt="Test Connection" width="700" />
+To verify the credentials, click the connect action at the bottom of the same step (for example, "Connect account", "Connect subscription" or "Connect project"). Prowler saves the provider and its credentials and tests the connection in that single action. When the test succeeds, the wizard moves straight to launching the scan. When it fails, the reason appears above the form and the values stay in place: click "Retry connection" to test again, or correct a field, which brings back the connect action, and click it. Neither adds the provider twice.
 
 <Note>
-For a single AWS account, Prowler tests the connection as part of the `Connect account` step, so the wizard moves straight to launching the scan.
-</Note>
-
-<Note>
-To delegate the AWS connection, select `I don't have access, invite a teammate` on the same step when you cannot create the IAM role or do not have the account credentials. Prowler App sends the invitation to the tenant and shows the link to share. Prowler Cloud also emails it. This option is available to users who can manage the account.
+To delegate the connection, select "I don't have access, invite a teammate" on the same step when you cannot create the credentials yourself. The option is available for every provider to users who can manage the account. Prowler Local Server adds the invitation to the tenant and shows the link to share. Prowler Cloud also emails it.
 </Note>
 
 ## Step 6: Scan Started
-After the connection check succeeds, save the provider and start your first scan with the `Launch Scan` button. The `Scans` section shows the scan in progress:
+Once the connection test succeeds, the wizard moves to the launch step, since the provider is already saved. To start the first scan, click "Launch scan", or "Save and launch scan" when scanning on a schedule. The `Scans` section shows the scan in progress:
 
 <img src="/images/provider-added.png" alt="Start Now" width="700" />
 

@@ -272,6 +272,17 @@ export interface VercelProviderCredential {
 // accounts get "Launch scan" instead. Anchored so "Save" never matches a longer label.
 const LAUNCH_STEP_ACTION_NAME = /^(Save|Save and launch scan|Launch scan)$/;
 
+// The connect step's single submit: it saves the account and its credentials
+// and tests the connection. The label names what each provider connects
+// ("Connect account", "Connect subscription", ...), "Save and test" when the
+// wizard was opened on an existing account, and "Retry connection" /
+// "Check again" after a failed or still-pending test.
+const CONNECT_STEP_SUBMIT_NAME =
+  /^(Connect (account|subscription|project|cluster|tenant|repository|registry|tenancy|organization|workspace|team|provider)|Save and test|Retry connection|Check again)$/;
+
+// Shown on the submit while the account is saved and its connection tested.
+const CONNECT_STEP_BUSY_NAME = /^(Connecting\.\.\.|Testing connection\.\.\.)$/;
+
 // Providers page
 export class ProvidersPage extends BasePage {
   readonly wizardModal: Locator;
@@ -313,20 +324,23 @@ export class ProvidersPage extends BasePage {
 
   // AWS provider form elements
   readonly accountIdInput: Locator;
-  readonly nextButton: Locator;
+  // Single submit of the connect step (account + credentials + connection test)
+  readonly connectSubmitButton: Locator;
+  // Inline connection-test failure on the connect step
+  readonly connectionError: Locator;
   readonly backButton: Locator;
   readonly saveButton: Locator;
   readonly launchScanButton: Locator;
 
-  // AWS credentials type selection
+  // AWS connection method cards
   readonly roleCredentialsRadio: Locator;
   readonly staticCredentialsRadio: Locator;
 
-  // M365 credentials type selection
+  // M365 connection method cards
   readonly m365StaticCredentialsRadio: Locator;
   readonly m365CertificateCredentialsRadio: Locator;
 
-  // GitHub credentials type selection
+  // GitHub connection method cards
   readonly githubPersonalAccessTokenRadio: Locator;
   readonly githubAppCredentialsRadio: Locator;
 
@@ -482,7 +496,7 @@ export class ProvidersPage extends BasePage {
 
     // Kubernetes provider form inputs
     this.kubernetesContextInput = page.getByRole("textbox", {
-      name: "Context",
+      name: "Kubernetes Context",
     });
     this.kubernetesKubeconfigContentInput = page.getByRole("textbox", {
       name: "Kubeconfig Content",
@@ -495,7 +509,9 @@ export class ProvidersPage extends BasePage {
     });
 
     // GitHub provider form inputs
-    this.githubUsernameInput = page.getByRole("textbox", { name: "Username" });
+    this.githubUsernameInput = page.getByRole("textbox", {
+      name: "Username/Organization",
+    });
     this.githubPersonalAccessTokenInput = page.getByRole("textbox", {
       name: "Personal Access Token",
     });
@@ -537,13 +553,15 @@ export class ProvidersPage extends BasePage {
     this.alibabacloudRoleSessionNameInput = page.getByRole("textbox", {
       name: "Role Session Name",
     });
-    // Radios for selecting AlibabaCloud credentials method
-    this.alibabacloudStaticCredentialsRadio = page.getByRole("radio", {
-      name: /Connect via Access Keys/i,
-    });
-    this.alibabacloudRoleCredentialsRadio = page.getByRole("radio", {
-      name: /Connect assuming RAM Role/i,
-    });
+    // Connection method cards on the AlibabaCloud connect step
+    this.alibabacloudStaticCredentialsRadio = this.wizardModal.getByRole(
+      "radio",
+      { name: /^Static access keys/i },
+    );
+    this.alibabacloudRoleCredentialsRadio = this.wizardModal.getByRole(
+      "radio",
+      { name: /^RAM role/i },
+    );
 
     // Google Workspace
     this.googleworkspaceProviderRadio = page.getByRole("option", {
@@ -584,10 +602,12 @@ export class ProvidersPage extends BasePage {
       name: "Provider alias (optional)",
     });
 
-    // Navigation buttons in the form (next and back)
-    this.nextButton = page
-      .locator("form")
-      .getByRole("button", { name: "Next", exact: true });
+    // Connect step footer: one submit for every provider, and Back to the list
+    this.connectSubmitButton = page.getByRole("button", {
+      name: CONNECT_STEP_SUBMIT_NAME,
+    });
+    // Only the connection test's verdict, never another alert in the form.
+    this.connectionError = this.wizardModal.getByTestId("connection-error");
     this.backButton = page.getByRole("button", { name: "Back" });
 
     // Button to save the form
@@ -599,33 +619,31 @@ export class ProvidersPage extends BasePage {
       exact: true,
     });
 
-    // Radios for selecting AWS credentials method
-    this.roleCredentialsRadio = page.getByRole("radio", {
-      name: /Connect assuming IAM Role/i,
+    // Connection method cards on the connect step. Anchored at the start: a
+    // recommended method's card also reads "Recommended".
+    this.roleCredentialsRadio = this.wizardModal.getByRole("radio", {
+      name: /^IAM Role/,
     });
-    this.staticCredentialsRadio = page.getByRole("radio", {
-      name: /Connect via Credentials/i,
-    });
-
-    // Radios for selecting M365 credentials method
-    this.m365StaticCredentialsRadio = page.getByRole("radio", {
-      name: /App Client Secret Credentials/i,
-    });
-    this.m365CertificateCredentialsRadio = page.getByRole("radio", {
-      name: /App Certificate Credentials/i,
+    this.staticCredentialsRadio = this.wizardModal.getByRole("radio", {
+      name: /^Static access keys/,
     });
 
-    // Radios for selecting GCP credentials method
-    this.gcpServiceAccountRadio = page.getByRole("radio", {
-      name: /Service Account Key/i,
+    this.m365StaticCredentialsRadio = this.wizardModal.getByRole("radio", {
+      name: /^App client secret/i,
+    });
+    this.m365CertificateCredentialsRadio = this.wizardModal.getByRole("radio", {
+      name: /^App certificate/i,
     });
 
-    // Radios for selecting GitHub credentials method
-    this.githubPersonalAccessTokenRadio = page.getByRole("radio", {
-      name: /Personal Access Token/i,
+    this.gcpServiceAccountRadio = this.wizardModal.getByRole("radio", {
+      name: /^Service account key/i,
     });
-    this.githubAppCredentialsRadio = page.getByRole("radio", {
-      name: /GitHub App/i,
+
+    this.githubPersonalAccessTokenRadio = this.wizardModal.getByRole("radio", {
+      name: /^Personal access token/i,
+    });
+    this.githubAppCredentialsRadio = this.wizardModal.getByRole("radio", {
+      name: /^GitHub App/i,
     });
 
     // Inputs for IAM Role credentials
@@ -713,7 +731,7 @@ export class ProvidersPage extends BasePage {
     await this.selectProviderRadio(this.githubProviderRadio);
   }
 
-  // Offered on the AWS step to a user who can invite but cannot reach the account.
+  // Offered on every connect step to a user who can invite (manage_account).
   async selectAwsInviteTeammate(): Promise<void> {
     const invite = this.wizardModal.getByRole("radio", {
       name: /invite a teammate/i,
@@ -766,37 +784,94 @@ export class ProvidersPage extends BasePage {
     await expect(this.wizardModal).not.toBeVisible();
   }
 
-  // AWS picks its access method on the same step that registers the account.
+  // Every provider picks its access method on the connect step itself.
   async selectAwsAccessMethod(type: AWSCredentialType): Promise<void> {
-    const name =
+    const accessMethod =
       type === AWS_CREDENTIAL_OPTIONS.AWS_CREDENTIALS
-        ? "Static access keys"
-        : /IAM Role/;
-    const accessMethod = this.wizardModal.getByRole("radio", { name });
+        ? this.staticCredentialsRadio
+        : this.roleCredentialsRadio;
     await expect(accessMethod).toBeVisible({ timeout: 10000 });
     await accessMethod.click();
+    await expect(accessMethod).toHaveAttribute("aria-checked", "true");
+  }
+
+  // AWS, Azure and GCP open on the single-account tab of their connect step.
+  private async selectSingleAccountTab(name: string): Promise<void> {
+    const singleTab = this.wizardModal.getByRole("tab", { name, exact: true });
+    await expect(singleTab).toBeVisible({ timeout: 10000 });
+    await singleTab.click();
+    await expect(singleTab).toHaveAttribute("aria-selected", "true");
   }
 
   async selectAzureSingleSubscriptionMethod(): Promise<void> {
-    const singleSubscriptionOption = this.page.getByRole("radio", {
-      name: "Add A Single Azure Subscription",
-      exact: true,
-    });
-    await expect(singleSubscriptionOption).toBeVisible({ timeout: 10000 });
-    await singleSubscriptionOption.click();
+    await this.selectSingleAccountTab("Single Azure Subscription");
   }
 
   async selectGCPSingleProjectMethod(): Promise<void> {
-    const singleProjectOption = this.page.getByRole("radio", {
-      name: "Add A Single GCP Project",
-      exact: true,
-    });
-    await expect(singleProjectOption).toBeVisible({ timeout: 10000 });
-    await singleProjectOption.click();
+    await this.selectSingleAccountTab("Single GCP Project");
   }
 
   async selectAWSOrganizationsMethod(): Promise<void> {
     await this.page.getByRole("tab", { name: /Full AWS Organization/ }).click();
+  }
+
+  // Saves the account and its credentials and tests the connection in one go.
+  // Resolves on the launch step (or once an update closes the wizard); a
+  // failed test is reported inline and fails here with its message.
+  async submitConnectStep(): Promise<void> {
+    await this.verifyWizardModalOpen();
+    await expect(this.connectSubmitButton).toBeEnabled({ timeout: 10000 });
+    await this.connectSubmitButton.click();
+
+    const pendingRetry = this.page.getByRole("button", {
+      name: "Check again",
+      exact: true,
+    });
+
+    await this.waitForConnectOutcome(pendingRetry);
+    await this.throwOnConnectionError();
+
+    // The test outlived its wait without a verdict: ask once more.
+    if (await pendingRetry.isVisible().catch(() => false)) {
+      await pendingRetry.click();
+      await this.waitForConnectOutcome();
+      await this.throwOnConnectionError();
+    }
+
+    // An update closes the wizard once its test passes.
+    if (!(await this.wizardModal.isVisible().catch(() => false))) {
+      return;
+    }
+    await expect(this.launchStepAction).toBeVisible();
+  }
+
+  // Waits for the submit to settle: launch step, inline error, pending result
+  // or (for an update) the wizard closing.
+  private async waitForConnectOutcome(pendingRetry?: Locator): Promise<void> {
+    const timeout = 60000;
+    const settled = [
+      this.launchStepAction.waitFor({ state: "visible", timeout }),
+      this.connectionError.waitFor({ state: "visible", timeout }),
+      this.wizardModal.waitFor({ state: "hidden", timeout }),
+      ...(pendingRetry
+        ? [pendingRetry.waitFor({ state: "visible", timeout })]
+        : []),
+    ].map((outcome) => outcome.catch(() => undefined));
+
+    await Promise.race(settled);
+    // Never leave the step mid-submit: the busy label must be gone.
+    await expect(
+      this.page.getByRole("button", { name: CONNECT_STEP_BUSY_NAME }),
+    ).toBeHidden({ timeout });
+  }
+
+  private async throwOnConnectionError(): Promise<void> {
+    if (await this.connectionError.isVisible().catch(() => false)) {
+      const errorText = await this.connectionError.textContent();
+      throw new Error(
+        `Test connection failed with error: ${errorText?.trim() || "Unknown error"}`,
+      );
+    }
   }
 
   async verifyOrganizationsAuthenticationStepLoaded(): Promise<void> {
@@ -886,8 +961,7 @@ export class ProvidersPage extends BasePage {
   }
 
   async fillAZUREProviderDetails(data: AZUREProviderData): Promise<void> {
-    // Azure now offers the Management Group method, so the single-subscription
-    // path goes through the method selector first (as AWS does).
+    // Azure also offers the Management Group tab; stay on the single subscription.
     await this.selectAzureSingleSubscriptionMethod();
     await expect(this.azureSubscriptionIdInput).toBeVisible({ timeout: 10000 });
     await this.azureSubscriptionIdInput.fill(data.subscriptionId);
@@ -943,17 +1017,17 @@ export class ProvidersPage extends BasePage {
     return this.page.getByRole("button", { name: LAUNCH_STEP_ACTION_NAME });
   }
 
+  // Footer action of the organization flows ("Next", "Authenticate") and of
+  // the launch step. The provider connect step submits via submitConnectStep().
   async clickNext(): Promise<void> {
     await this.verifyWizardModalOpen();
 
     const actionNames = [
       "Go to scans",
       "Authenticate",
-      "Connect account",
       "Next",
       "Save",
       "Save and launch scan",
-      "Check connection",
       "Launch scan",
     ] as const;
 
@@ -964,9 +1038,6 @@ export class ProvidersPage extends BasePage {
       });
       if (await button.isVisible().catch(() => false)) {
         await button.click();
-        if (actionName === "Check connection") {
-          await this.handleCheckConnectionCompletion();
-        }
         // The launch step's action (see LAUNCH_STEP_ACTION_NAME) closes the modal.
         if (LAUNCH_STEP_ACTION_NAME.test(actionName)) {
           await this.handleLaunchScanCompletion();
@@ -980,100 +1051,18 @@ export class ProvidersPage extends BasePage {
     );
   }
 
-  private async handleCheckConnectionCompletion(): Promise<void> {
-    // A successful connection advances to the launch step; update flows may
-    // close the modal instead.
-    const launchAction = this.launchStepAction;
-    const connectionError = this.page.locator(
-      "div.border-border-error p.text-text-error-primary",
-    );
-
-    try {
-      await Promise.race([
-        launchAction.waitFor({ state: "visible", timeout: 30000 }),
-        this.wizardModal.waitFor({ state: "hidden", timeout: 30000 }),
-        connectionError.waitFor({ state: "visible", timeout: 30000 }),
-      ]);
-    } catch {
-      // Continue and inspect visible state below.
-    }
-
-    if (await connectionError.isVisible().catch(() => false)) {
-      const errorText = await connectionError.textContent();
-      throw new Error(
-        `Test connection failed with error: ${errorText?.trim() || "Unknown error"}`,
-      );
-    }
-
-    if (await launchAction.isVisible().catch(() => false)) {
-      await launchAction.click();
-      await this.handleLaunchScanCompletion();
-    }
-  }
-
-  private async waitForProviderLaunchChoice(): Promise<void> {
-    const launchAction = this.launchStepAction;
-    const connectionError = this.page.locator(
-      "div.border-border-error p.text-text-error-primary",
-    );
-
-    try {
-      await Promise.race([
-        launchAction.waitFor({ state: "visible", timeout: 30000 }),
-        connectionError.waitFor({ state: "visible", timeout: 30000 }),
-      ]);
-    } catch {
-      // Continue and inspect visible state below.
-    }
-
-    if (await connectionError.isVisible().catch(() => false)) {
-      const errorText = await connectionError.textContent();
-      throw new Error(
-        `Test connection failed with error: ${errorText?.trim() || "Unknown error"}`,
-      );
-    }
-
-    await expect(launchAction).toBeVisible();
-  }
-
   async completeProviderConnectionWithoutLaunchingScan(
     providerUID: string,
   ): Promise<void> {
     await this.verifyWizardModalOpen();
 
-    const checkConnectionButton = this.page.getByRole("button", {
-      name: "Check connection",
-      exact: true,
-    });
-    const launchAction = this.launchStepAction;
-    const connectionError = this.page.locator(
-      "div.border-border-error p.text-text-error-primary",
-    );
-
-    // The test-connection step renders its footer action only after an async
-    // load (canSubmit gate). Wait for the footer to settle on an actionable
-    // state (or surface a connection error) instead of reading visibility on
-    // the first frame, which races the render and falls through.
-    await expect(
-      checkConnectionButton.or(launchAction).or(connectionError),
-    ).toBeVisible({ timeout: 30000 });
-
-    if (await connectionError.isVisible().catch(() => false)) {
-      const errorText = await connectionError.textContent();
-      throw new Error(
-        `Test connection failed with error: ${errorText?.trim() || "Unknown error"}`,
-      );
-    }
+    // submitConnectStep() already tested the connection; a pass lands here.
+    await this.throwOnConnectionError();
+    await expect(this.launchStepAction).toBeVisible({ timeout: 30000 });
 
     // Provider-add E2E validates credentials and provider persistence only.
     // Launching one scan per provider made CI noisy and overloaded the backend;
     // scan execution itself is covered by scans.spec.ts.
-    if (await checkConnectionButton.isVisible().catch(() => false)) {
-      await checkConnectionButton.click();
-      await this.waitForProviderLaunchChoice();
-    } else {
-      await expect(launchAction).toBeVisible();
-    }
 
     await this.wizardModal
       .getByRole("button", { name: "Close", exact: true })
@@ -1090,9 +1079,7 @@ export class ProvidersPage extends BasePage {
   }
 
   private async handleLaunchScanCompletion(): Promise<void> {
-    const connectionError = this.page.locator(
-      "div.border-border-error p.text-text-error-primary",
-    );
+    const connectionError = this.connectionError;
     const launchErrorToast = this.page.getByRole("alert").filter({
       hasText: /Unable to (launch scan|save scan schedule)/i,
     });
@@ -1180,8 +1167,12 @@ export class ProvidersPage extends BasePage {
     if (credentials.roleArn) {
       await this.roleArnInput.fill(credentials.roleArn);
     }
+    // The external id is the tenant's and sits under "Advanced options".
     if (credentials.externalId) {
-      if (await this.externalIdInput.isEnabled()) {
+      if (
+        (await this.externalIdInput.isVisible().catch(() => false)) &&
+        (await this.externalIdInput.isEditable())
+      ) {
         await this.externalIdInput.fill(credentials.externalId);
       }
     }
@@ -1590,19 +1581,11 @@ export class ProvidersPage extends BasePage {
     await this.verifyPageHasProwlerTitle();
     await this.verifyWizardModalOpen();
 
-    const selectorRadio = this.wizardModal.getByRole("radio", {
-      name: /Connect assuming IAM Role/i,
-    });
-    const selectorHint = this.wizardModal.getByText(/Using IAM Role/i);
-    const roleArnInForm = this.wizardModal.getByRole("textbox", {
-      name: "Role ARN",
-    });
-
-    await Promise.race([
-      selectorRadio.waitFor({ state: "visible", timeout: 20000 }),
-      selectorHint.waitFor({ state: "visible", timeout: 20000 }),
-      roleArnInForm.waitFor({ state: "visible", timeout: 20000 }),
-    ]);
+    // The AWS connect step: its method cards and, by default, the role form.
+    await expect(this.roleCredentialsRadio).toBeVisible({ timeout: 20000 });
+    await expect(
+      this.wizardModal.getByRole("textbox", { name: "Role ARN" }),
+    ).toBeVisible({ timeout: 20000 });
   }
 
   async verifyM365CredentialsPageLoaded(): Promise<void> {
@@ -1628,6 +1611,7 @@ export class ProvidersPage extends BasePage {
 
     await this.verifyPageHasProwlerTitle();
     await expect(this.kubernetesContextInput).toBeVisible();
+    await expect(this.kubernetesKubeconfigContentInput).toBeVisible();
   }
 
   async verifyGCPServiceAccountPageLoaded(): Promise<void> {
@@ -1658,13 +1642,8 @@ export class ProvidersPage extends BasePage {
     await this.verifyPageHasProwlerTitle();
     await this.verifyWizardModalOpen();
 
-    // The launch step's action, or "Check connection" for providers that
-    // still have to test the connection first.
-    const launchAction = this.launchStepAction.or(
-      this.page.getByRole("button", { name: "Check connection", exact: true }),
-    );
-
-    await expect(launchAction).toBeVisible();
+    // The connection is tested on the connect step, so only the launch action is left.
+    await expect(this.launchStepAction).toBeVisible();
   }
 
   async verifyLoadProviderPageAfterNewProvider(): Promise<void> {
@@ -1721,39 +1700,29 @@ export class ProvidersPage extends BasePage {
   }
 
   async verifyUpdateCredentialsPageLoaded(): Promise<void> {
-    // Verify the update credentials page is loaded
+    // The wizard opens on the provider's connect step with only its credentials:
+    // "Cancel" closes it and "Save and test" saves and tests them.
     await this.verifyPageHasProwlerTitle();
     await this.verifyWizardModalOpen();
     await expect(
-      this.page.getByRole("button", { name: "Authenticate", exact: true }),
+      this.page.getByRole("button", { name: "Save and test", exact: true }),
+    ).toBeVisible();
+    await expect(
+      this.page.getByRole("button", { name: "Cancel", exact: true }),
     ).toBeVisible();
   }
 
-  async verifyTestConnectionPageLoaded(): Promise<void> {
+  async verifyCredentialsUpdated(): Promise<void> {
+    // A passed test closes an update; "Add Credentials" (no secret yet) goes
+    // on to the launch step instead.
     await this.verifyPageHasProwlerTitle();
-    const testConnectionAction = this.page
-      .getByRole("button", { name: "Launch scan", exact: true })
-      .or(
-        this.page.getByRole("button", {
-          name: "Check connection",
-          exact: true,
-        }),
-      );
+    await this.throwOnConnectionError();
 
-    // Some update flows return directly to providers list after authenticating.
-    try {
-      await Promise.race([
-        testConnectionAction.waitFor({ state: "visible", timeout: 20000 }),
-        this.providersTable.waitFor({ state: "visible", timeout: 20000 }),
-      ]);
-    } catch {
-      // Fall through to explicit assertions below.
-    }
-
-    if (await this.providersTable.isVisible().catch(() => false)) {
+    if (await this.launchStepAction.isVisible().catch(() => false)) {
       return;
     }
 
-    await expect(testConnectionAction).toBeVisible();
+    await expect(this.wizardModal).not.toBeVisible({ timeout: 30000 });
+    await expect(this.providersTable).toBeVisible({ timeout: 30000 });
   }
 }
