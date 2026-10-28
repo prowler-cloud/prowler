@@ -28,6 +28,8 @@ const PROVIDERS = Object.entries(PROVIDER_TYPE_DATA).map(
 
 const PROVIDER_TAB = { ALL: "all", REGISTRY: "registry" } as const;
 const REGISTRY_SKELETON_ROWS = 3;
+// Two providers per row beside a wide wizard, one while it stacks.
+const PROVIDER_GRID = "grid gap-3 lg:grid-cols-2";
 type ProviderTab = (typeof PROVIDER_TAB)[keyof typeof PROVIDER_TAB];
 
 interface RadioGroupProviderProps {
@@ -109,7 +111,7 @@ export const RadioGroupProvider: FC<RadioGroupProviderProps> = ({
           <div
             role="listbox"
             aria-label="Select a provider"
-            className="flex flex-col gap-3"
+            className={PROVIDER_GRID}
           >
             {filteredProviders.length > 0 ? (
               filteredProviders.map((provider) => {
@@ -148,7 +150,7 @@ export const RadioGroupProvider: FC<RadioGroupProviderProps> = ({
                       ) : (
                         <ProviderTypeIcon type={provider.value} size={26} />
                       )}
-                      <span className="text-text-neutral-primary text-sm leading-6">
+                      <span className="text-text-neutral-primary min-w-0 truncate text-sm leading-6">
                         {provider.label}
                       </span>
                       {provider.registry && (
@@ -159,7 +161,7 @@ export const RadioGroupProvider: FC<RadioGroupProviderProps> = ({
                 );
               })
             ) : (
-              <p className="text-text-neutral-tertiary py-4 text-sm">
+              <p className="text-text-neutral-tertiary col-span-full py-4 text-sm">
                 {lowerSearch ? (
                   <>No providers found matching &quot;{searchTerm}&quot;</>
                 ) : (
@@ -173,7 +175,7 @@ export const RadioGroupProvider: FC<RadioGroupProviderProps> = ({
           <div
             role="status"
             aria-label="Loading Registry providers"
-            className="flex flex-col gap-3"
+            className={PROVIDER_GRID}
           >
             {Array.from({ length: REGISTRY_SKELETON_ROWS }, (_, index) => (
               <Skeleton key={index} className="h-[72px] w-full rounded-lg" />
