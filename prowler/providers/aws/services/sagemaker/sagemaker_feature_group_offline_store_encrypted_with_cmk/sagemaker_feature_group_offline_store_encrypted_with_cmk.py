@@ -11,9 +11,26 @@ class sagemaker_feature_group_offline_store_encrypted_with_cmk(Check):
         """Return a finding for each SageMaker Feature Group with an offline store.
 
         Feature Groups without an offline store are out of scope. Feature Groups
-        that could not be described are reported as MANUAL.
+        that could not be described are reported as MANUAL, and regions where the
+        Feature Groups could not be listed are reported in one account-level
+        MANUAL finding.
         """
         findings = []
+        failed_regions = sagemaker_client.feature_groups_list_failed_regions
+        if failed_regions:
+            report = Check_Report_AWS(metadata=self.metadata(), resource={})
+            report.region = sagemaker_client.region
+            report.resource_id = sagemaker_client.audited_account
+            report.resource_arn = sagemaker_client.audited_account_arn
+            report.status = "MANUAL"
+            report.status_extended = (
+                f"Cannot evaluate SageMaker Feature Group offline store encryption "
+                f"in regions {', '.join(sorted(failed_regions))}: Feature Groups "
+                f"could not be listed. Verify that sagemaker:ListFeatureGroups is "
+                f"granted to the scanning identity."
+            )
+            findings.append(report)
+
         for feature_group in sagemaker_client.feature_groups.values():
             if not feature_group.describe_succeeded:
                 report = Check_Report_AWS(

@@ -395,6 +395,7 @@ class Test_SageMaker_Service:
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         sagemaker = SageMaker(aws_provider)
         assert len(sagemaker.feature_groups) == 1
+        assert sagemaker.feature_groups_list_failed_regions == set()
         feature_group = sagemaker.feature_groups[feature_group_arn]
         assert feature_group.name == feature_group_name
         assert feature_group.region == AWS_REGION_EU_WEST_1

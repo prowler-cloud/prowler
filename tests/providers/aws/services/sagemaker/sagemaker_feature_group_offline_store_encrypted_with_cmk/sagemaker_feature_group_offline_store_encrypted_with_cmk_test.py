@@ -14,9 +14,13 @@ kms_key_arn = f"arn:aws:kms:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:key/1234
 CHECK_MODULE = "prowler.providers.aws.services.sagemaker.sagemaker_feature_group_offline_store_encrypted_with_cmk.sagemaker_feature_group_offline_store_encrypted_with_cmk"
 
 
-def run_check(feature_groups):
+def run_check(feature_groups, failed_regions=None):
     sagemaker_client = mock.MagicMock
     sagemaker_client.feature_groups = {fg.arn: fg for fg in feature_groups}
+    sagemaker_client.feature_groups_list_failed_regions = failed_regions or set()
+    sagemaker_client.region = AWS_REGION_EU_WEST_1
+    sagemaker_client.audited_account = AWS_ACCOUNT_NUMBER
+    sagemaker_client.audited_account_arn = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
 
     aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
@@ -113,3 +117,29 @@ class Test_sagemaker_feature_group_offline_store_encrypted_with_cmk:
         assert result[0].status == "MANUAL"
         assert "sagemaker:DescribeFeatureGroup" in result[0].status_extended
         assert result[0].resource_arn == feature_group_arn
+
+    def test_list_failed_is_one_account_level_manual(self):
+        result = run_check(
+            [
+                FeatureGroup(
+                    name=feature_group_name,
+                    arn=feature_group_arn,
+                    region=AWS_REGION_EU_WEST_1,
+                    offline_store_enabled=True,
+                    offline_store_kms_key_id=kms_key_arn,
+                    describe_succeeded=True,
+                )
+            ],
+            failed_regions={"us-east-1", "ap-south-1"},
+        )
+
+        assert len(result) == 2
+        manual = [r for r in result if r.status == "MANUAL"]
+        assert len(manual) == 1
+        assert manual[0].resource_id == AWS_ACCOUNT_NUMBER
+        assert manual[0].resource_arn == f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
+        assert "sagemaker:ListFeatureGroups" in manual[0].status_extended
+        assert "ap-south-1, us-east-1" in manual[0].status_extended
+        passed = [r for r in result if r.status == "PASS"]
+        assert len(passed) == 1
+        assert passed[0].resource_arn == feature_group_arn

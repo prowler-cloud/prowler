@@ -23,6 +23,7 @@ class SageMaker(AWSService):
         self.sagemaker_model_registries = []
         self.sagemaker_monitoring_schedules = []
         self.feature_groups = {}
+        self.feature_groups_list_failed_regions = set()
 
         # Retrieve resources concurrently
         self.__threading_call__(self._list_notebook_instances)
@@ -568,6 +569,7 @@ class SageMaker(AWSService):
                             )
                         )
         except Exception as error:
+            self.feature_groups_list_failed_regions.add(regional_client.region)
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
