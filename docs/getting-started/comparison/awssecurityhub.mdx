@@ -28,7 +28,7 @@ Many teams use Prowler for broad, customizable posture checks across every envir
 
 - **Coverage Centered on AWS and Azure:** Other clouds, Kubernetes, and SaaS platforms such as Microsoft 365, GitHub, Google Workspace, or Okta fall outside the built-in standards.
 
-- **Dependency on AWS Config:** Security Hub CSPM requires [AWS Config to be enabled and recording resources](https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-setup-prereqs.html) to generate control findings for AWS resources.
+- **Dependency on AWS Config:** Security Hub CSPM uses AWS Config rules to generate control findings for AWS resources. When the unified Security Hub is also enabled, Security Hub CSPM [creates a service-linked configuration recorder automatically](https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-setup-prereqs.html). When Security Hub CSPM runs without the unified Security Hub, AWS Config must be enabled manually and recording resources in each region.
 
 - **Regional Configuration:** Security Hub CSPM is enabled per account and region. [Central configuration](https://docs.aws.amazon.com/securityhub/latest/userguide/central-configuration-intro.html) through AWS Organizations simplifies this for multi-account environments.
 
@@ -40,7 +40,7 @@ Prowler is an open-source, multi-cloud security platform available as Prowler Cl
 
 ## Main Advantages of Prowler
 
-- **Multi-Region and Multi-Account Scanning by Default:** Prowler scans every AWS region and multiple AWS accounts without additional configuration and without enabling services such as AWS Config.
+- **Multi-Region Scanning by Default:** Prowler scans every AWS region without additional configuration and without enabling services such as AWS Config. To cover multiple AWS accounts, Prowler assumes a role in each account: onboard the accounts in Prowler Cloud through [AWS Organizations](/user-guide/tutorials/prowler-cloud-aws-organizations), or run Prowler CLI per account as described in [AWS Organizations in Prowler](/user-guide/providers/aws/organizations).
 
 - **Minimal Setup Requirements:** Prowler only needs a role with the appropriate read permissions to start scanning.
 
@@ -66,7 +66,7 @@ Prowler is an official partner integration of Security Hub CSPM. Prowler finding
 
 - **Prowler CLI:** Add the `--security-hub` flag to send findings, as described in [AWS Security Hub Integration with Prowler](/user-guide/providers/aws/securityhub).
 
-- **Cost Control:** Send only failed findings (`--status FAIL` or `--send-sh-only-fails` in Prowler CLI) to reduce the volume of findings that Security Hub CSPM processes.
+- **Cost Control:** In Prowler CLI, `--send-sh-only-fails` sends only failed findings to Security Hub CSPM while keeping all findings in Prowler outputs. `--status FAIL` also limits what is sent, but it removes passing findings from Prowler outputs as well.
 
 ## Comparison Summary
 
@@ -77,7 +77,7 @@ Prowler is an official partner integration of Security Hub CSPM. Prowler finding
 
 ### Setup and Maintenance
 
-- **Security Hub** is enabled per account and region, and Security Hub CSPM requires AWS Config for control findings on AWS resources. AWS Organizations and central configuration help manage this at scale.
+- **Security Hub** is enabled per account and region, and Security Hub CSPM relies on AWS Config for control findings on AWS resources, which must be set up manually unless the unified Security Hub is also enabled. AWS Organizations and central configuration help manage this at scale.
 - **Prowler** only needs the appropriate permissions and runs from many environments, without requiring additional AWS services.
 
 ### Customization and Flexibility
@@ -87,8 +87,9 @@ Prowler is an official partner integration of Security Hub CSPM. Prowler finding
 
 ### Cost Efficiency
 
-- **Security Hub** and Security Hub CSPM are billed based on usage. Refer to [AWS Security Hub pricing](https://aws.amazon.com/security-hub/pricing/).
-- **Prowler** can reduce Security Hub CSPM costs by sending only failed findings, while keeping complete results in its own outputs or in Amazon S3.
+- **Security Hub** uses resource-based pricing, with finding ingestion included. Refer to [AWS Security Hub pricing](https://aws.amazon.com/security-hub/pricing/).
+- **Security Hub CSPM** is billed per security check and per finding ingestion event above a monthly free tier. Refer to [AWS Security Hub CSPM pricing](https://aws.amazon.com/security-hub/cspm/pricing/).
+- **Prowler** can reduce Security Hub CSPM finding ingestion costs with `--send-sh-only-fails`, which sends only failed findings while keeping complete results in its own outputs or in Amazon S3.
 
 ### Multi-Cloud and Multi-Region Support
 
