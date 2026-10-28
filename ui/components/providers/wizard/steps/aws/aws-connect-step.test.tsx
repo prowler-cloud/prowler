@@ -3,12 +3,12 @@ import userEvent from "@testing-library/user-event";
 import { useState } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { Toaster } from "@/components/shadcn/toast/Toaster";
+import { PRICING_URL } from "@/lib/external-urls";
 import {
   PROVIDER_FUNNEL_EVENT,
   type ProviderFunnelDetail,
 } from "@/lib/provider-funnel/provider-funnel-events";
-import { Toaster } from "@/components/shadcn/toast/Toaster";
-import { PRICING_URL } from "@/lib/external-urls";
 import { useProviderWizardStore } from "@/store/provider-wizard/store";
 import {
   CONNECTION_CHECK_STATUS,
