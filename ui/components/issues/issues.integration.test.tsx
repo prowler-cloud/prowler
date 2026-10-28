@@ -259,6 +259,54 @@ describe("Issues responsive layout", () => {
       .toBeVisible();
   });
 
+  it("resets the Details tab when another row opens", async () => {
+    // Given: the first issue's panel is open on the Remediation tab. The
+    // panel overlays the right edge here (no app shell pushes the page), so
+    // rows are clicked on their leftmost cell.
+    await page.viewport(1440, 900);
+    setup();
+    const secondIssue: IssueResource = {
+      ...issue,
+      id: "issue-2",
+      attributes: {
+        ...issue.attributes,
+        title: "Admin role assumable from any account",
+        account: "Staging",
+      },
+    };
+    worker.use(
+      http.get("*/issues", () =>
+        HttpResponse.json({ data: [issue, secondIssue] }),
+      ),
+    );
+    const content = await IssuesList({ searchParams: {} });
+    const screen = await render(
+      <>
+        {content}
+        <GlobalSidePanel />
+      </>,
+    );
+    await screen
+      .getByRole("row", { name: /Public bucket exposes customer data/ })
+      .getByText("Production")
+      .click();
+    await screen.getByRole("tab", { name: "Remediation" }).click();
+
+    // When
+    await screen
+      .getByRole("row", { name: /Admin role assumable from any account/ })
+      .getByText("Likely")
+      .click();
+
+    // Then: the panel remounted on the new issue, back on its first tab
+    await expect
+      .element(screen.getByRole("link", { name: "Open the full path" }))
+      .toHaveAttribute("href", "/issues/issue-2");
+    await expect
+      .element(screen.getByRole("tab", { name: "Exploitability" }))
+      .toHaveAttribute("aria-selected", "true");
+  });
+
   it.each([
     { width: 375, theme: "light" },
     { width: 768, theme: "light" },
