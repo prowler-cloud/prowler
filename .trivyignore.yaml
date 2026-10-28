@@ -226,3 +226,11 @@ vulnerabilities:
     purls:
       - "pkg:nuget/System.Security.Cryptography.Pkcs@10.0.0"
     expired_at: 2026-12-15
+
+  # go-jose 4.1.5 is compiled into the Trivy binary (usr/local/bin/trivy). Trivy merged the
+  # 4.1.6 bump upstream (aquasecurity/trivy#11488) but 0.76.1 is still the latest release.
+  # Bump TRIVY_VERSION and drop this entry once a release ships it.
+  - id: CVE-2026-116587
+    purls:
+      - "pkg:golang/github.com/go-jose/go-jose/v4@v4.1.5"
+    expired_at: 2026-11-20
