@@ -148,6 +148,24 @@ describe("getCrossProviderComplianceOverview", () => {
     });
   });
 
+  it.each([404, 500])(
+    "returns a load error, not an action error, for a %i response",
+    async (status) => {
+      fetchMock.mockResolvedValue(jsonResponse({ errors: [] }, status));
+      handleApiResponseMock.mockResolvedValue({ error: "Not found.", status });
+
+      const result = await getCrossProviderComplianceOverview({
+        complianceId: "nato_cloud_directive_rev1",
+      });
+
+      expect(result).toEqual({
+        status: "load-error",
+        message:
+          "Could not load cross-provider compliance data. Try again later.",
+      });
+    },
+  );
+
   it("returns a load error when the network call throws", async () => {
     fetchMock.mockRejectedValue(new Error("boom"));
 

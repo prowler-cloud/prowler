@@ -23,12 +23,17 @@ const universalEntry = (
     ...overrides,
   });
 
-const withCatalog = (entries: ComplianceCatalogEntry[], unavailable = false) =>
+const withCatalog = (
+  entries: ComplianceCatalogEntry[],
+  unavailable = false,
+  incomplete = false,
+) =>
   vi.mocked(loadComplianceWatchlistContext).mockResolvedValue({
     entries,
     eligibleProviderTypes: ["aws", "azure", "gcp"],
     canManage: true,
     unavailable,
+    incomplete,
   });
 
 describe("loadCrossProviderFrameworks", () => {
@@ -148,6 +153,7 @@ describe("loadCrossProviderFrameworks", () => {
     expect(await loadCrossProviderFrameworks()).toEqual({
       frameworks: [],
       unavailable: false,
+      incomplete: false,
     });
   });
 
@@ -157,6 +163,7 @@ describe("loadCrossProviderFrameworks", () => {
     expect(await loadCrossProviderFrameworks()).toEqual({
       frameworks: [],
       unavailable: true,
+      incomplete: false,
     });
   });
 });
