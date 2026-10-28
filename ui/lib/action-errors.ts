@@ -33,7 +33,7 @@ interface GetActionErrorMessageOptions {
   fallback?: string;
 }
 
-const isActionErrorStatus = (
+export const isActionErrorStatus = (
   status: number | undefined,
 ): status is ActionErrorStatus =>
   status === ACTION_ERROR_STATUS.PAYMENT_REQUIRED ||
