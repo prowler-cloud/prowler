@@ -9,6 +9,8 @@ import { createPartialScan } from "@/actions/scans";
 import { Button } from "@/components/shadcn";
 import { Modal } from "@/components/shadcn/modal";
 import { toast, ToastAction } from "@/components/shadcn/toast";
+import { UsageLimitMessage } from "@/components/shared/usage-limit-message";
+import { isUsageLimitError } from "@/lib/action-errors";
 import {
   findProviderIdForTarget,
   getPartialScanErrorMessage,
@@ -36,6 +38,7 @@ export function RecheckResourceModal({
   const router = useRouter();
   const [isPending, setIsPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isUsageLimited, setIsUsageLimited] = useState(false);
 
   const resourceLabel = hasDisplayName(target.resourceName)
     ? target.resourceName
@@ -61,6 +64,7 @@ export function RecheckResourceModal({
 
     setIsPending(true);
     setError(null);
+    setIsUsageLimited(false);
 
     try {
       const providerId = await resolveProviderId();
@@ -76,6 +80,7 @@ export function RecheckResourceModal({
       const errorMessage = getPartialScanErrorMessage(result);
       if (errorMessage) {
         setError(errorMessage);
+        setIsUsageLimited(isUsageLimitError(result));
         return;
       }
       // An empty 2xx has no scan to follow, so it is not a launch.
@@ -150,11 +155,16 @@ export function RecheckResourceModal({
           </p>
         </div>
 
-        {error && (
-          <p role="alert" className="text-text-error-primary text-sm">
-            {error}
-          </p>
-        )}
+        {error &&
+          (isUsageLimited ? (
+            <div role="alert">
+              <UsageLimitMessage />
+            </div>
+          ) : (
+            <p role="alert" className="text-text-error-primary text-sm">
+              {error}
+            </p>
+          ))}
 
         <div className="flex w-full justify-end gap-4">
           <Button

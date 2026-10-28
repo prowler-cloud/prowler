@@ -3,6 +3,8 @@ import userEvent from "@testing-library/user-event";
 import { useState } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { Toaster } from "@/components/shadcn/toast/Toaster";
+import { PRICING_URL } from "@/lib/external-urls";
 import {
   PROVIDER_FUNNEL_EVENT,
   type ProviderFunnelDetail,
@@ -306,6 +308,50 @@ describe("ProviderConnectStep", () => {
   describe("with access keys, when the API refuses the account", () => {
     beforeEach(() => {
       vi.stubEnv("UI_CLOUD_ENABLED", "true");
+    });
+
+    it("offers the plans when the usage limit refuses the account", async () => {
+      // Given
+      addProvider.mockResolvedValueOnce({
+        errors: [
+          {
+            detail: "Your trial has ended.",
+            status: "402",
+            source: { pointer: "/data" },
+            code: "payment_required",
+          },
+        ],
+        status: 402,
+      });
+      const { onConnected, user } = renderStep();
+      render(<Toaster />);
+      await user.click(
+        screen.getByRole("radio", { name: /Static access keys/ }),
+      );
+      await user.type(
+        screen.getByRole("textbox", { name: /Account ID/ }),
+        "210987654321",
+      );
+      await user.type(
+        screen.getByPlaceholderText("Enter the AWS Access Key ID"),
+        "AKIAEXAMPLE",
+      );
+      await user.type(
+        screen.getByPlaceholderText("Enter the AWS Secret Access Key"),
+        "secret-value",
+      );
+      await waitFor(() => expect(connectButton()).toBeEnabled());
+
+      // When
+      await user.click(connectButton());
+
+      // Then
+      expect(await screen.findByText("Your trial has ended.")).toBeVisible();
+      expect(screen.getByRole("link", { name: "View plans" })).toHaveAttribute(
+        "href",
+        PRICING_URL,
+      );
+      expect(onConnected).not.toHaveBeenCalled();
     });
 
     it("shows the refusal on the Account ID field and stays on the step", async () => {

@@ -130,6 +130,7 @@ import {
   ACTION_ERROR_MESSAGES,
   ACTION_ERROR_STATUS,
 } from "@/lib/action-errors";
+import { PRICING_URL } from "@/lib/external-urls";
 import { ProviderProps } from "@/types";
 import { SCAN_SCHEDULE_CAPABILITY } from "@/types/schedules";
 
@@ -386,6 +387,10 @@ describe("LaunchScanModal", () => {
         ACTION_ERROR_API_MESSAGES[ACTION_ERROR_STATUS.PAYMENT_REQUIRED],
       ),
     ).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "View plans" })).toHaveAttribute(
+      "href",
+      PRICING_URL,
+    );
     expect(toastMock).not.toHaveBeenCalled();
     expect(refreshMock).not.toHaveBeenCalled();
     expect(onOpenChange).not.toHaveBeenCalledWith(false);
@@ -534,6 +539,46 @@ describe("LaunchScanModal", () => {
           title: "Scan schedule saved and initial scan launched",
         }),
       );
+    });
+
+    it("offers the plans when the usage limit refuses the schedule", async () => {
+      const user = userEvent.setup();
+      updateScheduleMock.mockResolvedValueOnce({
+        error: ACTION_ERROR_API_MESSAGES[ACTION_ERROR_STATUS.PAYMENT_REQUIRED],
+        status: ACTION_ERROR_STATUS.PAYMENT_REQUIRED,
+      });
+      renderAdvanced();
+
+      await user.selectOptions(screen.getByLabelText("Providers"), provider.id);
+      await user.click(screen.getByRole("radio", { name: "On a schedule" }));
+      await user.click(screen.getByRole("button", { name: /save schedule/i }));
+
+      expect(
+        await screen.findByRole("link", { name: "View plans" }),
+      ).toHaveAttribute("href", PRICING_URL);
+      expect(toastMock).not.toHaveBeenCalled();
+    });
+
+    it("offers the plans when the schedule saved but the limit refused its first scan", async () => {
+      const user = userEvent.setup();
+      scanOnDemandMock.mockResolvedValueOnce({
+        error: ACTION_ERROR_API_MESSAGES[ACTION_ERROR_STATUS.PAYMENT_REQUIRED],
+        status: ACTION_ERROR_STATUS.PAYMENT_REQUIRED,
+      });
+      renderAdvanced();
+
+      await user.selectOptions(screen.getByLabelText("Providers"), provider.id);
+      await user.click(screen.getByRole("radio", { name: "On a schedule" }));
+      await user.click(
+        await screen.findByLabelText(
+          "Launch an initial scan now for immediate findings",
+        ),
+      );
+      await user.click(screen.getByRole("button", { name: /save schedule/i }));
+
+      await waitFor(() => expect(toastMock).toHaveBeenCalled());
+      const action = toastMock.mock.calls[0]?.[0].action;
+      expect(action.props.children.props.href).toBe(PRICING_URL);
     });
 
     it("disables Save Schedule until a provider is selected", async () => {

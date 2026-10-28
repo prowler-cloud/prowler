@@ -17,7 +17,6 @@ import {
   loadFindingTriageDetail,
   loadLatestFindingTriageNote,
   type ResourceDrawerFinding,
-  updateFindingTriage,
 } from "@/actions/findings";
 import {
   requestPanelChatMessage,
@@ -81,6 +80,7 @@ import { TriageStatusBadge } from "@/components/shared/triage/triage-status-badg
 import { useLighthouseCurrentContext } from "@/hooks/use-lighthouse-context";
 import { getFailingForLabel, formatDuration } from "@/lib/date-utils";
 import { shouldRefreshAfterTriageUpdate } from "@/lib/finding-triage";
+import { updateFindingTriageOrThrow } from "@/lib/finding-triage-update";
 import { buildJiraActionLabel } from "@/lib/jira-dispatch-action";
 import { createJiraDispatchPayload } from "@/lib/jira-dispatch-selection";
 import { getRegionFlag } from "@/lib/region-flags";
@@ -365,7 +365,7 @@ export function ResourceDetailDrawerContent({
   const showOverviewStatusExtended = Boolean(overviewStatusExtended);
 
   const handleDrawerTriageUpdate = async (input: UpdateFindingTriageInput) => {
-    const result = await updateFindingTriage(input);
+    const result = await updateFindingTriageOrThrow(input);
     if (shouldRefreshAfterTriageUpdate(input)) {
       onMuteComplete();
       return result;
