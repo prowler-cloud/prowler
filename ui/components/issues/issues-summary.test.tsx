@@ -25,6 +25,8 @@ describe("IssuesSummary", () => {
     expect(screen.getByRole("paragraph")).toHaveTextContent(
       "13 issues folded from 1,266 failed findings · 283 findings already covered by a control",
     );
+    // The per-verdict links live on the verdict tabs, not here.
+    expect(screen.queryByRole("link")).not.toBeInTheDocument();
   });
 
   it("drops the coverage clause when no finding is covered", () => {

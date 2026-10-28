@@ -13,6 +13,7 @@ import { ExploitabilityChart } from "@/app/(prowler)/_overview/exploitability/_c
 import { TopIssues } from "@/app/(prowler)/_overview/exploitability/_components/top-issues";
 import { IssuesList } from "@/app/(prowler)/issues/_components/issues-list";
 import { IssueDetail } from "@/components/issues/issue-detail";
+import { GlobalSidePanel } from "@/components/side-panel/global-side-panel";
 import { applyDefaultMutedFilter, extractFiltersAndQuery } from "@/lib";
 import { resolveFindingScanDateFilters } from "@/lib/findings-scan-filters";
 import { IssueResource, IssuesOverviewAttributes } from "@/types/issues";
@@ -230,6 +231,32 @@ describe("Issues responsive layout", () => {
     expect(resources.data).toEqual([
       { id: "r1", attributes: { finding_id: "f1", muted: true } },
     ]);
+  });
+
+  it("opens a clicked row in the app's Details side panel", async () => {
+    // Given: the list next to the real side panel host the app shell mounts.
+    setup();
+    const content = await IssuesList({ searchParams: {} });
+    const screen = await render(
+      <>
+        {content}
+        <GlobalSidePanel />
+      </>,
+    );
+
+    // When: a plain cell of the row is clicked, not the title button.
+    await screen
+      .getByRole("row", { name: /Public bucket exposes customer data/ })
+      .getByText("Production")
+      .click();
+
+    // Then
+    await expect
+      .element(screen.getByRole("link", { name: "Open the full path" }))
+      .toHaveAttribute("href", "/issues/issue-1");
+    await expect
+      .element(screen.getByText("Block Public Access is disabled."))
+      .toBeVisible();
   });
 
   it.each([
