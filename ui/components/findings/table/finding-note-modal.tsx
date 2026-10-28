@@ -20,6 +20,8 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
+import { ViewPlansLink } from "@/components/shared/usage-limit-message";
+import { USAGE_LIMIT_MESSAGE } from "@/lib/action-errors";
 import { formatLocalDate } from "@/lib/date-utils";
 import { DOCS_URLS } from "@/lib/external-urls";
 import { useCloudUpgradeStore } from "@/store";
@@ -380,7 +382,15 @@ export function FindingNoteModal({
 
         {submitError && (
           <Alert variant="error">
-            <AlertDescription>{submitError}</AlertDescription>
+            <AlertDescription>
+              {submitError}
+              {submitError === USAGE_LIMIT_MESSAGE && (
+                <>
+                  {" "}
+                  <ViewPlansLink />
+                </>
+              )}
+            </AlertDescription>
           </Alert>
         )}
 

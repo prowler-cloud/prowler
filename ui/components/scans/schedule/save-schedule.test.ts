@@ -89,6 +89,7 @@ describe("saveScheduleWithInitialScan", () => {
     expect(result).toEqual({
       status: SAVE_SCHEDULE_STATUS.ERROR,
       message: "boom",
+      usageLimited: false,
     });
     expect(scanOnDemandMock).not.toHaveBeenCalled();
   });
@@ -107,6 +108,7 @@ describe("saveScheduleWithInitialScan", () => {
     expect(result).toEqual({
       status: SAVE_SCHEDULE_STATUS.ERROR,
       message: ACTION_ERROR_MESSAGES[ACTION_ERROR_STATUS.PAYMENT_REQUIRED],
+      usageLimited: true,
     });
     expect(scanOnDemandMock).not.toHaveBeenCalled();
   });
@@ -133,6 +135,7 @@ describe("saveScheduleWithInitialScan", () => {
     expect(result).toEqual({
       status: SAVE_SCHEDULE_STATUS.SAVED_SCAN_FAILED,
       message: "limit reached",
+      usageLimited: false,
     });
   });
 
@@ -150,6 +153,7 @@ describe("saveScheduleWithInitialScan", () => {
     expect(result).toEqual({
       status: SAVE_SCHEDULE_STATUS.SAVED_SCAN_FAILED,
       message: ACTION_ERROR_MESSAGES[ACTION_ERROR_STATUS.PAYMENT_REQUIRED],
+      usageLimited: true,
     });
   });
 });

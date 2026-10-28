@@ -1,6 +1,8 @@
 import { UseFormReturn } from "react-hook-form";
 
 import { useToast } from "@/components/shadcn";
+import { usageLimitToastAction } from "@/components/shared/usage-limit-message";
+import { isUsageLimitApiError } from "@/lib/action-errors";
 import { ApiError } from "@/types";
 
 /**
@@ -33,6 +35,9 @@ export const useFormServerErrors = <T extends Record<string, any>>(
           variant: "destructive",
           title: "Oops! Something went wrong",
           description: errorMessage,
+          ...(isUsageLimitApiError(error) && {
+            action: usageLimitToastAction(),
+          }),
         });
       }
     });

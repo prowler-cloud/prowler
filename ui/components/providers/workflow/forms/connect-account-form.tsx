@@ -19,6 +19,8 @@ import {
 import { Button, useToast } from "@/components/shadcn";
 import { Alert, AlertDescription, AlertTitle } from "@/components/shadcn/alert";
 import { Form } from "@/components/shadcn/form";
+import { usageLimitToastAction } from "@/components/shared/usage-limit-message";
+import { isUsageLimitApiError } from "@/lib/action-errors";
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
 import { REGISTRY_PROVIDER_DISCOVERY } from "@/lib/registry/provider-options";
 import { isRegistryEnabled } from "@/lib/shared/env";
@@ -331,6 +333,9 @@ export const ConnectAccountForm = ({
                 variant: "destructive",
                 title: "Oops! Something went wrong",
                 description: errorMessage,
+                ...(isUsageLimitApiError(error) && {
+                  action: usageLimitToastAction(),
+                }),
               });
           }
         });

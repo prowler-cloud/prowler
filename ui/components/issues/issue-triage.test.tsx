@@ -2,6 +2,9 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { USAGE_LIMIT_MESSAGE } from "@/lib/action-errors";
+import { PRICING_URL } from "@/lib/external-urls";
+
 import { IssueTriage } from "./issue-triage";
 
 const {
@@ -183,6 +186,30 @@ describe("IssueTriage", () => {
     expect(refreshMock).not.toHaveBeenCalled();
     expect(screen.getByRole("textbox", { name: "Triage note" })).toHaveValue(
       "x",
+    );
+  });
+
+  it("offers the plans when the usage limit refuses the save", async () => {
+    // Given
+    updateIssueTriageMock.mockResolvedValue({
+      error: USAGE_LIMIT_MESSAGE,
+      status: 402,
+    });
+    const user = userEvent.setup();
+    render(<IssueTriage id="issue-1" status="open" />);
+
+    // When
+    await user.click(screen.getByRole("combobox", { name: "Triage status" }));
+    await user.click(screen.getByRole("option", { name: "False Positive" }));
+    await user.click(screen.getByRole("button", { name: "Save triage" }));
+
+    // Then
+    await waitFor(() => expect(toastMock).toHaveBeenCalled());
+    const toastOptions = toastMock.mock.calls[0][0];
+    render(<>{toastOptions.action}</>);
+    expect(screen.getByRole("link", { name: "View plans" })).toHaveAttribute(
+      "href",
+      PRICING_URL,
     );
   });
 

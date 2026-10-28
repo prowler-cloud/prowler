@@ -132,6 +132,11 @@ export interface FindingTriageUpdateResult {
   manualPassExpiresAt: string | null;
 }
 
+/** Returned instead of thrown: a server action's thrown message is sanitized in production. */
+export interface FindingTriageUsageLimitedResult {
+  usageLimited: true;
+}
+
 export interface FindingTriageContext {
   title: string;
   resource?: string;

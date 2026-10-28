@@ -20,7 +20,13 @@ import { EntityInfo } from "@/components/shadcn/entities";
 import { FormButtons } from "@/components/shadcn/form";
 import { Modal } from "@/components/shadcn/modal";
 import { toast } from "@/components/shadcn/toast";
-import { getActionErrorMessage, hasActionError } from "@/lib/action-errors";
+import { UsageLimitMessage } from "@/components/shared/usage-limit-message";
+import {
+  getActionErrorMessage,
+  hasActionError,
+  isUsageLimitError,
+  USAGE_LIMIT_ERROR_TYPE,
+} from "@/lib/action-errors";
 import { runWithConcurrencyLimit } from "@/lib/concurrency";
 import {
   buildScheduleUpdatePayload,
@@ -134,7 +140,10 @@ function EditScanScheduleForm({
       : await updateSchedule(targetProviderIds[0], payload);
 
     if (hasActionError(result)) {
-      form.setError("root", { message: getActionErrorMessage(result) });
+      form.setError("root", {
+        type: isUsageLimitError(result) ? USAGE_LIMIT_ERROR_TYPE : "server",
+        message: getActionErrorMessage(result),
+      });
       return;
     }
 
@@ -189,7 +198,12 @@ function EditScanScheduleForm({
 
     const failedResult = results.find(hasActionError);
     if (failedResult) {
-      form.setError("root", { message: getActionErrorMessage(failedResult) });
+      form.setError("root", {
+        type: isUsageLimitError(failedResult)
+          ? USAGE_LIMIT_ERROR_TYPE
+          : "server",
+        message: getActionErrorMessage(failedResult),
+      });
       return;
     }
 
@@ -206,6 +220,8 @@ function EditScanScheduleForm({
 
   const isSubmitting = form.formState.isSubmitting;
   const rootError = form.formState.errors.root?.message;
+  const isRootUsageLimit =
+    form.formState.errors.root?.type === USAGE_LIMIT_ERROR_TYPE;
 
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-8">
@@ -253,7 +269,12 @@ function EditScanScheduleForm({
         }
       />
 
-      {rootError && <FieldError>{rootError}</FieldError>}
+      {rootError &&
+        (isRootUsageLimit ? (
+          <UsageLimitMessage />
+        ) : (
+          <FieldError>{rootError}</FieldError>
+        ))}
 
       <FormButtons
         onCancel={onClose}

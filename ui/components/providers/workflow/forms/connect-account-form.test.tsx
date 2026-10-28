@@ -27,6 +27,8 @@ vi.mock("@/actions/registry/registry", () => ({
   getInstalledRegistryProviderOptions,
 }));
 
+import { Toaster } from "@/components/shadcn/toast/Toaster";
+import { PRICING_URL } from "@/lib/external-urls";
 import { useCloudUpgradeStore } from "@/store/cloud-upgrade/store";
 
 import { ConnectAccountForm } from "./connect-account-form";
@@ -86,6 +88,52 @@ describe("provider account aliases", () => {
       providerId: "existing",
       providerAlias: "Edited",
     });
+  });
+});
+
+describe("usage limit on provider creation", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    getInstalledRegistryProviderOptions.mockResolvedValue({
+      status: "access_denied",
+    });
+  });
+
+  it("offers the plans when the usage limit refuses a new account", async () => {
+    // Given
+    const user = userEvent.setup();
+    addProvider.mockResolvedValue({
+      errors: [
+        {
+          detail: "Your trial has ended.",
+          status: "402",
+          source: { pointer: "/data" },
+          code: "payment_required",
+        },
+      ],
+      status: 402,
+    });
+    render(
+      <>
+        <ConnectAccountForm onSuccess={vi.fn()} />
+        <Toaster />
+      </>,
+    );
+    await user.click(screen.getByRole("option", { name: "GitHub" }));
+    await user.type(
+      screen.getByRole("textbox", { name: "Username/Organization" }),
+      "octocat",
+    );
+
+    // When
+    await user.click(screen.getByRole("button", { name: "Next" }));
+
+    // Then
+    expect(await screen.findByText("Your trial has ended.")).toBeVisible();
+    expect(screen.getByRole("link", { name: "View plans" })).toHaveAttribute(
+      "href",
+      PRICING_URL,
+    );
   });
 });
 

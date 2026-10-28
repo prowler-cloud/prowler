@@ -46,6 +46,7 @@ export const PROWLER_CF_TEMPLATE_URL =
 
 // Prowler Cloud billing/subscription management page.
 export const BILLING_URL = "https://cloud.prowler.com/billing";
+export const PRICING_URL = "https://prowler.com/pricing";
 
 // Base URL for the CloudFormation "quick create stack" console flow.
 // Hardcoded to us-east-1 because the public template is hosted for that flow.
