@@ -1,7 +1,7 @@
 {
   "Provider": "oraclecloud",
   "CheckID": "network_security_group_ingress_from_internet_to_rdp_port",
-  "CheckTitle": "Network security group restricts ingress from 0.0.0.0/0 to port 3389 (RDP)",
+  "CheckTitle": "Network security group restricts ingress from the internet to port 3389 (RDP)",
   "CheckType": [],
   "ServiceName": "network",
   "SubServiceName": "",
@@ -9,7 +9,7 @@
   "Severity": "high",
   "ResourceType": "NetworkSecurityGroup",
   "ResourceGroup": "network",
-  "Description": "**OCI Network Security Groups** are evaluated for inbound source `0.0.0.0/0` permitting **RDP** on `TCP 3389`, including broad rules (all TCP or any protocol) that implicitly include that port.",
+  "Description": "**OCI Network Security Groups** are evaluated for inbound source `0.0.0.0/0` (IPv4) or `::/0` (IPv6) permitting **RDP** on `TCP 3389`, including broad rules (all TCP or any protocol) that implicitly include that port.",
   "Risk": "Exposed **RDP** enables Internet-scale **brute-force** and **protocol exploit** attempts. Compromise yields interactive access for **data exfiltration** (C), **unauthorized changes** (I), and **service disruption** via ransomware (A), with potential **lateral movement** across the VCN.",
   "RelatedUrl": "",
   "AdditionalURLs": [
@@ -24,7 +24,7 @@
       "Terraform": "```hcl\nresource \"oci_core_network_security_group_security_rule\" \"<example_resource_name>\" {\n  network_security_group_id = \"<example_resource_id>\"\n  direction = \"INGRESS\"\n  protocol  = \"6\" # TCP\n  source    = \"10.0.0.0/8\" # Critical: not 0.0.0.0/0; restricts RDP to an internal CIDR to remove internet exposure\n\n  tcp_options {\n    destination_port_range {\n      min = 3389  # Critical: explicit RDP port\n      max = 3389  # Critical: ensures only 3389 is allowed\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Eliminate open `0.0.0.0/0` rules. Restrict **RDP** to trusted IPs and only when necessary. Prefer **private connectivity** via **VPN**, **bastion/jump hosts**, or **zero-trust** brokers. Apply **least privilege** and time-bound access, monitor logs, and disable RDP where unnecessary.",
+      "Text": "Eliminate open `0.0.0.0/0` and `::/0` rules. Restrict **RDP** to trusted IPs and only when necessary. Prefer **private connectivity** via **VPN**, **bastion/jump hosts**, or **zero-trust** brokers. Apply **least privilege** and time-bound access, monitor logs, and disable RDP where unnecessary.",
       "Url": "https://hub.prowler.com/check/network_security_group_ingress_from_internet_to_rdp_port"
     }
   },
@@ -33,5 +33,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": ""
+  "Notes": "OCI security lists and network security groups accept both IPv4 and IPv6 rules. An ingress rule with source `::/0` exposes the resource to the whole IPv6 internet exactly like `0.0.0.0/0` does for IPv4, so both are treated as unrestricted here."
 }
