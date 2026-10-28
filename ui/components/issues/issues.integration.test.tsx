@@ -291,6 +291,9 @@ describe("Issues responsive layout", () => {
       .getByText("Production")
       .click();
     await screen.getByRole("tab", { name: "Remediation" }).click();
+    await expect
+      .element(screen.getByRole("tab", { name: "Remediation" }))
+      .toHaveAttribute("aria-selected", "true");
 
     // When
     await screen
