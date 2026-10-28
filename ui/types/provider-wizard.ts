@@ -1,10 +1,9 @@
 import { ProviderType } from "./providers";
 
+// Connect registers the account, stores its credentials and tests them in one step.
 export const PROVIDER_WIZARD_STEP = {
   CONNECT: 0,
-  CREDENTIALS: 1,
-  TEST: 2,
-  LAUNCH: 3,
+  LAUNCH: 1,
 } as const;
 
 export type ProviderWizardStep =
@@ -25,21 +24,22 @@ export interface ProviderWizardIdentity {
   alias: string | null;
 }
 
-export type AwsConnectDraftValues = Record<string, string>;
+export type ConnectDraftValues = Record<string, string>;
 
-/** Which panel the AWS connect step shows: the access forms or the teammate invitation. */
-export const AWS_CONNECT_PANEL = {
+/** Which panel the connect step shows: the access forms or the teammate invitation. */
+export const CONNECT_PANEL = {
   ACCESS: "access",
   INVITE: "invite",
 } as const;
 
-export type AwsConnectPanel =
-  (typeof AWS_CONNECT_PANEL)[keyof typeof AWS_CONNECT_PANEL];
+export type ConnectPanel = (typeof CONNECT_PANEL)[keyof typeof CONNECT_PANEL];
 
-/** What the AWS connect step typed so far; in memory only, gone with the wizard. */
-export interface AwsConnectDraft {
-  method: string;
-  panel: AwsConnectPanel;
-  roleValues: AwsConnectDraftValues;
-  keysValues: AwsConnectDraftValues;
+/** What the connect step typed so far; in memory only, gone with the wizard. */
+export interface ConnectDraft {
+  providerType: string;
+  /** The picked access method; null for a provider with a single one. */
+  method: string | null;
+  panel: ConnectPanel;
+  /** Values per access method, so switching methods never mixes their fields. */
+  values: Record<string, ConnectDraftValues>;
 }

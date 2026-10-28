@@ -296,23 +296,10 @@ describe("getProviderHelpText", () => {
   const AWS_CREDENTIALS_STEP_DOCS =
     "https://docs.prowler.com/user-guide/providers/aws/getting-started-aws#step-3-set-up-aws-authentication";
 
-  it("returns the provider shortlink on the connect step", () => {
-    // Given the user is picking a provider (no deep-link into auth yet)
-    // When
+  it("points the connect step to the credentials section of the getting-started page", () => {
+    // The connect step holds the credentials form: with no method picked the
+    // link scrolls the getting-started page to the authentication step.
     const { link } = getProviderHelpText("aws", PROVIDER_WIZARD_STEP.CONNECT);
-
-    // Then
-    expect(link).toBe(AWS_SHORTLINK);
-  });
-
-  it("points to the credentials section of the getting-started page on the credentials step", () => {
-    // No method picked yet — link should scroll the getting-started page to
-    // the credentials/authentication step so the user reads about the choice
-    // in the same page they came from.
-    const { link } = getProviderHelpText(
-      "aws",
-      PROVIDER_WIZARD_STEP.CREDENTIALS,
-    );
 
     expect(link).toBe(AWS_CREDENTIALS_STEP_DOCS);
   });
@@ -320,7 +307,7 @@ describe("getProviderHelpText", () => {
   it("points AWS assume role credentials to the exact setup section", () => {
     const { link } = getProviderHelpText(
       "aws",
-      PROVIDER_WIZARD_STEP.CREDENTIALS,
+      PROVIDER_WIZARD_STEP.CONNECT,
       "role",
     );
 
@@ -332,7 +319,7 @@ describe("getProviderHelpText", () => {
   it("points AWS static credentials to the exact setup section", () => {
     const { link } = getProviderHelpText(
       "aws",
-      PROVIDER_WIZARD_STEP.CREDENTIALS,
+      PROVIDER_WIZARD_STEP.CONNECT,
       "credentials",
     );
 
@@ -347,7 +334,7 @@ describe("getProviderHelpText", () => {
     // resolves to the general credentials step anchor.
     const { link } = getProviderHelpText(
       "gcp",
-      PROVIDER_WIZARD_STEP.CREDENTIALS,
+      PROVIDER_WIZARD_STEP.CONNECT,
       "service-account",
     );
 
@@ -356,22 +343,14 @@ describe("getProviderHelpText", () => {
     );
   });
 
-  it("keeps the shortlink on the test connection step", () => {
-    // Credentials-step docs are only surfaced while the user is still
-    // supplying credentials; after that the shortlink landing is the useful
-    // destination.
-    const { link } = getProviderHelpText("aws", PROVIDER_WIZARD_STEP.TEST);
-
-    expect(link).toBe(AWS_SHORTLINK);
-  });
-
   it("keeps the shortlink on the launch step", () => {
+    // Credentials docs only help while credentials are being supplied.
     const { link } = getProviderHelpText("aws", PROVIDER_WIZARD_STEP.LAUNCH);
 
     expect(link).toBe(AWS_SHORTLINK);
   });
 
-  it("resolves the credentials-step link for every supported provider", () => {
+  it("resolves the connect-step credentials link for every supported provider", () => {
     // Guard against silently dropping a provider from
     // PROVIDER_CREDENTIALS_STEP_DOCS_URL. When no auth method is selected
     // yet, every provider should deep-link to its own getting-started
@@ -445,7 +424,7 @@ describe("getProviderHelpText", () => {
 
     for (const [provider, expected] of cases) {
       expect(
-        getProviderHelpText(provider, PROVIDER_WIZARD_STEP.CREDENTIALS).link,
+        getProviderHelpText(provider, PROVIDER_WIZARD_STEP.CONNECT).link,
       ).toBe(expected);
     }
   });
@@ -500,7 +479,7 @@ describe("getProviderHelpText", () => {
 
     for (const [provider, method, expected] of cases) {
       expect(
-        getProviderHelpText(provider, PROVIDER_WIZARD_STEP.CREDENTIALS, method)
+        getProviderHelpText(provider, PROVIDER_WIZARD_STEP.CONNECT, method)
           .link,
       ).toBe(expected);
     }
@@ -511,7 +490,7 @@ describe("getProviderHelpText", () => {
     // anchor would deep-link into nothing.
     const { link } = getProviderHelpText(
       "not-a-real-provider",
-      PROVIDER_WIZARD_STEP.CREDENTIALS,
+      PROVIDER_WIZARD_STEP.CONNECT,
     );
 
     expect(link).toBe("https://goto.prowler.com/provider-help");
@@ -525,7 +504,7 @@ describe("getProviderHelpText", () => {
       // When
       const { link } = getProviderHelpText(
         provider,
-        PROVIDER_WIZARD_STEP.CREDENTIALS,
+        PROVIDER_WIZARD_STEP.CONNECT,
       );
 
       // Then
