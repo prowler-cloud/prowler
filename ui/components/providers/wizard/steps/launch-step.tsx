@@ -198,6 +198,7 @@ export function LaunchStep({
         variant: "destructive",
         title: "Unable to save scan schedule",
         description: result.message,
+        action: result.usageLimited ? usageLimitToastAction() : undefined,
       });
       return;
     }

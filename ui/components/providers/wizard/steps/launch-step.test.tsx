@@ -577,6 +577,21 @@ describe("LaunchStep", () => {
       expect(toastLink()).toMatchObject({ href: PRICING, target: "_blank" });
     });
 
+    it("offers the pricing page when the schedule itself was refused", async () => {
+      // Given
+      updateScheduleMock.mockResolvedValue(overLimit);
+
+      // When
+      await launch(SCAN_SCHEDULE_CAPABILITY.ADVANCED);
+
+      // Then
+      expect(scanOnDemandMock).not.toHaveBeenCalled();
+      expect(toastMock.mock.calls[0]?.[0].title).toBe(
+        "Unable to save scan schedule",
+      );
+      expect(toastLink()).toMatchObject({ href: PRICING, target: "_blank" });
+    });
+
     it("keeps the plain error when a manual scan fails for another reason", async () => {
       // Given
       scanOnDemandMock.mockResolvedValue({ error: "Scanner unavailable" });
