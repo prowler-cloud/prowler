@@ -490,10 +490,10 @@ class TestAWSProvider:
         captured_sessions = []
         original_get_organizations_info = AwsProvider.get_organizations_info
 
-        def capture(self, organizations_session, aws_account_id):
+        def capture(self, organizations_session, aws_account_id, region=None):
             captured_sessions.append(organizations_session)
             return original_get_organizations_info(
-                self, organizations_session, aws_account_id
+                self, organizations_session, aws_account_id, region
             )
 
         with patch.object(AwsProvider, "get_organizations_info", capture):
@@ -513,10 +513,10 @@ class TestAWSProvider:
         captured_sessions = []
         original_get_organizations_info = AwsProvider.get_organizations_info
 
-        def capture(self, organizations_session, aws_account_id):
+        def capture(self, organizations_session, aws_account_id, region=None):
             captured_sessions.append(organizations_session)
             return original_get_organizations_info(
-                self, organizations_session, aws_account_id
+                self, organizations_session, aws_account_id, region
             )
 
         with patch.object(AwsProvider, "get_organizations_info", capture):
@@ -2131,6 +2131,40 @@ aws:
                 )
 
         assert sts_regions == [AWS_REGION_GOV_CLOUD_US_WEST_1]
+
+    @mock_aws
+    def test_aws_provider_queries_organizations_where_validation_got_an_answer(
+        self, monkeypatch
+    ):
+        monkeypatch.setenv("PROWLER_AWS_PARTITION", AWS_GOV_CLOUD_PARTITION)
+        # No region in the session: Organizations would resolve to us-east-1
+        monkeypatch.delenv("AWS_DEFAULT_REGION", raising=False)
+        monkeypatch.delenv("AWS_REGION", raising=False)
+        answered = AWSCallerIdentity(
+            user_id="test-user-id",
+            account=AWS_ACCOUNT_NUMBER,
+            arn=ARN(AWS_GOV_CLOUD_ACCOUNT_ARN),
+            region=AWS_REGION_GOV_CLOUD_US_WEST_1,
+        )
+        organizations_regions = []
+
+        def get_organizations_metadata(aws_account_id, session, region=None):
+            organizations_regions.append(region)
+            return {}, {}, {}
+
+        with (
+            patch(
+                "prowler.providers.aws.aws_provider.AwsProvider.validate_credentials",
+                return_value=answered,
+            ),
+            patch(
+                "prowler.providers.aws.aws_provider.get_organizations_metadata",
+                side_effect=get_organizations_metadata,
+            ),
+        ):
+            AwsProvider()
+
+        assert organizations_regions == [AWS_REGION_GOV_CLOUD_US_WEST_1]
 
     @mock_aws
     def test_test_connection_with_env_credentials(self, monkeypatch):

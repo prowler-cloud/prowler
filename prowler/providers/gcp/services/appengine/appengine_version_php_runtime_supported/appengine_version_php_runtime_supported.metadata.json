@@ -1,0 +1,38 @@
+{
+  "Provider": "gcp",
+  "CheckID": "appengine_version_php_runtime_supported",
+  "CheckTitle": "App Engine serving version runs a supported PHP runtime",
+  "CheckType": [],
+  "ServiceName": "appengine",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "critical",
+  "ResourceType": "appengine.googleapis.com/Version",
+  "Description": "**App Engine** serving versions that run **PHP** are evaluated to confirm the runtime is a supported branch (`appengine_php_min_version`, `8.2` by default). Standard environment runtimes such as `php82` are compared directly; flexible environment versions are reported for manual verification because their PHP binary lives in a customer-built image that is not patched in place.",
+  "Risk": "PHP runtimes older than the supported branches are vulnerable to **unauthenticated remote code execution** through crafted web requests and receive no fixes, so a serving version pinned to one of them stays exploitable. Flexible environment versions keep the vulnerable binary until they are redeployed on a fixed release.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://cloud.google.com/appengine/docs/standard/lifecycle/support-schedule",
+    "https://cloud.google.com/appengine/docs/standard/php-gen2/runtime",
+    "https://cloud.google.com/appengine/docs/flexible/php/runtime",
+    "https://www.php.net/supported-versions.php"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "gcloud app deploy app.yaml --project <PROJECT_ID>  # with runtime: php84 in app.yaml",
+      "NativeIaC": "",
+      "Other": "1. Edit the service's app.yaml and set runtime to a supported PHP branch (for example php84)\n2. For flexible environment services, rebuild the image on a fixed PHP release\n3. Run gcloud app deploy to create a new version\n4. Route traffic to the new version and stop or delete versions still on unsupported runtimes",
+      "Terraform": "```hcl\nresource \"google_app_engine_standard_app_version\" \"<example_resource_name>\" {\n  version_id = \"v2\"\n  service    = \"default\"\n  runtime    = \"php84\" # Critical: supported PHP runtime to pass the check\n\n  entrypoint {\n    shell = \"serve index.php\"\n  }\n\n  deployment {\n    zip {\n      source_url = \"https://storage.googleapis.com/<example_resource_id>/app.zip\"\n    }\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Deploy every App Engine service on a **supported PHP runtime** and redeploy whenever a branch approaches end of support. Standard environment runtimes on supported branches receive security fixes automatically; flexible environment images must be rebuilt and redeployed, so prefer the standard environment for PHP workloads where possible.",
+      "Url": "https://hub.prowler.com/check/appengine_version_php_runtime_supported"
+    }
+  },
+  "Categories": [
+    "vulnerabilities"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Only versions with serving status SERVING and a PHP runtime are evaluated. Flexible environment versions are reported as MANUAL since the deployed PHP release is not visible through the Admin API; versions on the custom runtime are not evaluated at all because the Admin API does not expose which language they run."
+}

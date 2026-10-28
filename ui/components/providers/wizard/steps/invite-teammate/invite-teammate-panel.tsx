@@ -6,7 +6,7 @@ import { useState } from "react";
 import { useInvitationRoles } from "@/hooks/use-invitation-roles";
 import { useMountEffect } from "@/hooks/use-mount-effect";
 import { orderRolesAdminFirst } from "@/lib/invitations/order-roles";
-import type { SentInvitation } from "@/types/onboarding-invite";
+import type { SentInvitation } from "@/types/invitations";
 import type { ProviderType } from "@/types/providers";
 
 import { AWS_CONNECT_ACTION_KIND, type AwsConnectUiState } from "../aws/types";

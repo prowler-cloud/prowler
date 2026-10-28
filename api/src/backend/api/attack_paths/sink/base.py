@@ -45,6 +45,10 @@ class SinkDatabase(Protocol):
         parameters: dict[str, Any] | None = None,
     ) -> neo4j.graph.Graph: ...
 
+    def is_persisted_element_id(self, element_id: str) -> bool:
+        """Whether an element id belongs to a stored entity rather than one minted at query time."""
+        return True
+
     def create_database(self, database: str) -> None: ...
 
     def drop_database(self, database: str) -> None: ...

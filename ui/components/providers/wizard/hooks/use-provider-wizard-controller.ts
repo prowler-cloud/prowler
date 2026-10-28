@@ -9,9 +9,6 @@ import {
   PROVIDER_FUNNEL_METHOD,
   PROVIDER_FUNNEL_STEP,
 } from "@/lib/provider-funnel/provider-funnel-events";
-import { isCloud } from "@/lib/shared/env";
-import { endActiveTour } from "@/lib/tours/use-driver-tour";
-import { useOnboardingCheckpointStore } from "@/store/onboarding-checkpoint";
 import { useOrgSetupStore } from "@/store/organizations/store";
 import { useProviderWizardStore } from "@/store/provider-wizard/store";
 import {
@@ -221,20 +218,18 @@ export function useProviderWizardController({
     initialProviderId && initialProviderType && initialProviderUid,
   );
 
-  const handleClose = () => {
-    // Closing the wizard at any point ends the add-provider tour; the checkpoint
-    // logic below still drives the handoff to scans. No-op off-onboarding.
-    endActiveTour();
+  const isProviderFlow = wizardVariant === WIZARD_VARIANT.PROVIDER;
+  const stepName = isProviderFlow
+    ? PROVIDER_STEP_NAME[currentStep]
+    : ORG_STEP_NAME[orgCurrentStep];
 
+  const handleClose = () => {
     // Read providerId before reset clears it — non-null means a provider was connected.
     const connectedProviderId = useProviderWizardStore.getState().providerId;
 
     dispatchProviderFunnel({
       step: PROVIDER_FUNNEL_STEP.WIZARD_CLOSED,
-      lastStep:
-        wizardVariant === WIZARD_VARIANT.PROVIDER
-          ? PROVIDER_STEP_NAME[currentStep]
-          : ORG_STEP_NAME[orgCurrentStep],
+      lastStep: stepName,
       providerCreated: connectedProviderId !== null,
     });
 
@@ -247,13 +242,6 @@ export function useProviderWizardController({
     setProviderTypeHint(null);
     setOrgSetupPhase(ORG_SETUP_PHASE.DETAILS);
     onOpenChange(false);
-
-    // Cloud-only; only fires if the store is armed (user started onboarding).
-    if (isCloud()) {
-      useOnboardingCheckpointStore.getState().requestOpenOnWizardClose({
-        providerConnected: connectedProviderId !== null,
-      });
-    }
 
     if (refreshOnClose) {
       router.refresh();
@@ -281,9 +269,6 @@ export function useProviderWizardController({
   const openOrganizationsFlow = (
     orgType: OrgFlowType = ORGANIZATION_TYPE.AWS,
   ) => {
-    // Organizations diverges from the credentials path the tour guides toward; end
-    // it so it doesn't dangle on a step that no longer fits. No-op off-onboarding.
-    endActiveTour();
     dispatchProviderFunnel({
       step: PROVIDER_FUNNEL_STEP.METHOD_SELECTED,
       providerType: orgType,
@@ -310,7 +295,6 @@ export function useProviderWizardController({
     setOrgSetupPhase(ORG_SETUP_PHASE.DETAILS);
   };
 
-  const isProviderFlow = wizardVariant === WIZARD_VARIANT.PROVIDER;
   const docsLink = isProviderFlow
     ? getProviderHelpText(
         providerTypeHint ?? providerType ?? "",
@@ -344,6 +328,7 @@ export function useProviderWizardController({
     setOrgCurrentStep,
     setOrgSetupPhase,
     setProviderTypeHint,
+    stepName,
     backToProviderFlow,
     wizardVariant,
   };

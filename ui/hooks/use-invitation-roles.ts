@@ -4,7 +4,7 @@ import { useState } from "react";
 
 import { getInvitationRoles } from "@/actions/invitations/roles";
 import { useMountEffect } from "@/hooks/use-mount-effect";
-import type { InvitationRoleOption } from "@/types/onboarding-invite";
+import type { InvitationRoleOption } from "@/types/invitations";
 
 // Roles that have not arrived by then count as unavailable, so a request
 // that never answers cannot hold a form behind an empty list.

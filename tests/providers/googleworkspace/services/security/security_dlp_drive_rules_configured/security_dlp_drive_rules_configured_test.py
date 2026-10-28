@@ -5,6 +5,7 @@ from prowler.providers.googleworkspace.services.security.security_service import
 )
 from tests.providers.googleworkspace.googleworkspace_fixtures import (
     CUSTOMER_ID,
+    DOMAIN,
     set_mocked_googleworkspace_provider,
 )
 
@@ -96,6 +97,95 @@ class TestSecurityDlpDriveRulesConfigured:
             assert len(findings) == 1
             assert findings[0].status == "FAIL"
             assert "No active" in findings[0].status_extended
+
+    def test_fail_on_an_edition_without_drive_dlp_says_so(self):
+        """Google only sells Drive data protection on some editions; the finding names the tenant's edition"""
+        mock_provider = set_mocked_googleworkspace_provider()
+
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=mock_provider,
+            ),
+            patch(
+                "prowler.providers.googleworkspace.services.security.security_dlp_drive_rules_configured.security_dlp_drive_rules_configured.security_client"
+            ) as mock_client,
+        ):
+            from prowler.providers.googleworkspace.services.security.security_dlp_drive_rules_configured.security_dlp_drive_rules_configured import (
+                security_dlp_drive_rules_configured,
+            )
+
+            mock_client.provider = mock_provider
+            mock_client.policies_fetched = True
+            mock_client.policies = SecurityPolicies(dlp_drive_rules_exist=None)
+            mock_provider.editions = ["Business Starter"]
+
+            findings = security_dlp_drive_rules_configured().execute()
+
+            assert len(findings) == 1
+            assert findings[0].status == "FAIL"
+            assert findings[0].status_extended == (
+                f"No active DLP policies for Google Drive are configured in domain "
+                f"{DOMAIN}. DLP rules should be configured to detect and prevent "
+                f"sharing of sensitive information through Drive. This may be "
+                f"expected because Drive data protection rules are not available "
+                f"on the Google Workspace Business Starter edition."
+            )
+
+    def test_fail_with_cloud_identity_premium_gives_no_excuse(self):
+        """Cloud Identity Premium brings DLP for Drive to a Workspace license that lacks it"""
+        mock_provider = set_mocked_googleworkspace_provider()
+
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=mock_provider,
+            ),
+            patch(
+                "prowler.providers.googleworkspace.services.security.security_dlp_drive_rules_configured.security_dlp_drive_rules_configured.security_client"
+            ) as mock_client,
+        ):
+            from prowler.providers.googleworkspace.services.security.security_dlp_drive_rules_configured.security_dlp_drive_rules_configured import (
+                security_dlp_drive_rules_configured,
+            )
+
+            mock_client.provider = mock_provider
+            mock_client.policies_fetched = True
+            mock_client.policies = SecurityPolicies(dlp_drive_rules_exist=None)
+            mock_provider.editions = ["Business Starter", "Cloud Identity Premium"]
+
+            findings = security_dlp_drive_rules_configured().execute()
+
+            assert len(findings) == 1
+            assert findings[0].status == "FAIL"
+            assert "This may be expected" not in findings[0].status_extended
+
+    def test_fail_on_an_edition_with_drive_dlp_gives_no_excuse(self):
+        mock_provider = set_mocked_googleworkspace_provider()
+
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=mock_provider,
+            ),
+            patch(
+                "prowler.providers.googleworkspace.services.security.security_dlp_drive_rules_configured.security_dlp_drive_rules_configured.security_client"
+            ) as mock_client,
+        ):
+            from prowler.providers.googleworkspace.services.security.security_dlp_drive_rules_configured.security_dlp_drive_rules_configured import (
+                security_dlp_drive_rules_configured,
+            )
+
+            mock_client.provider = mock_provider
+            mock_client.policies_fetched = True
+            mock_client.policies = SecurityPolicies(dlp_drive_rules_exist=None)
+            mock_provider.editions = ["Business Starter", "Enterprise Standard"]
+
+            findings = security_dlp_drive_rules_configured().execute()
+
+            assert len(findings) == 1
+            assert findings[0].status == "FAIL"
+            assert "This may be expected" not in findings[0].status_extended
 
     def test_no_findings_when_fetch_failed(self):
         """Test no findings returned when the API fetch failed"""

@@ -8,20 +8,20 @@ import { useForm, UseFormReturn } from "react-hook-form";
 
 import { addProvider, updateProvider } from "@/actions/providers/providers";
 import { addRegistryProvider } from "@/actions/providers/registry-provider";
-import { getInstalledRegistryProviderOptions } from "@/actions/registry/registry";
 import { AzureMethodSelector } from "@/components/providers/organizations/azure-method-selector";
 import { GcpMethodSelector } from "@/components/providers/organizations/gcp-method-selector";
 import { WizardInputField } from "@/components/providers/workflow/forms/fields";
 import { ProviderTitleDocs } from "@/components/providers/workflow/provider-title-docs";
+import {
+  RegistryUpgradePrompt,
+  RegistrySetupPrompt,
+} from "@/components/registry/registry-upgrade-prompt";
 import { Button, useToast } from "@/components/shadcn";
 import { Alert, AlertDescription, AlertTitle } from "@/components/shadcn/alert";
 import { Form } from "@/components/shadcn/form";
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
-import {
-  REGISTRY_PROVIDER_DISCOVERY,
-  type RegistryProviderOption,
-} from "@/lib/registry/provider-options";
-import { isCloud } from "@/lib/shared/env";
+import { REGISTRY_PROVIDER_DISCOVERY } from "@/lib/registry/provider-options";
+import { isRegistryEnabled } from "@/lib/shared/env";
 import {
   createAddProviderFormSchema,
   AddProviderFormValues,
@@ -37,6 +37,8 @@ import {
 import { isKnownProviderType } from "@/types/providers";
 
 import { RadioGroupProvider } from "../../radio-group-provider";
+
+import { useRegistryProviderDiscovery } from "./use-registry-provider-discovery";
 
 export type FormValues = AddProviderFormValues;
 
@@ -219,59 +221,25 @@ export const ConnectAccountForm = ({
   const [method, setMethod] = useState<"single" | null>(null);
   const router = useRouter();
 
-  const [registryOptions, setRegistryOptions] = useState<
-    RegistryProviderOption[]
-  >([]);
-  // Only confirmed Cloud and Private Cloud access enables Registry source tabs.
-  // Unknown access stays hidden but remains retryable through the warning.
-  const [registryAvailable, setRegistryAvailable] = useState(false);
-  const [registryError, setRegistryError] = useState(false);
+  const {
+    result: registryDiscovery,
+    isRetryingDiscovery,
+    retryDiscovery,
+  } = useRegistryProviderDiscovery();
+  const registryOptions =
+    registryDiscovery?.status === REGISTRY_PROVIDER_DISCOVERY.READY
+      ? registryDiscovery.options
+      : [];
+  // The deployment flag is known up front, so the tabs render before discovery.
+  const registryAvailable =
+    isRegistryEnabled() &&
+    registryDiscovery?.status !== REGISTRY_PROVIDER_DISCOVERY.ACCESS_DENIED;
+  const registryError =
+    registryDiscovery?.status === REGISTRY_PROVIDER_DISCOVERY.ERROR ||
+    registryDiscovery?.status === REGISTRY_PROVIDER_DISCOVERY.UNKNOWN;
   const [providerError, setProviderError] = useState<string | null>(null);
-  const [discoveryAttempt, setDiscoveryAttempt] = useState(0);
-  // Local state needed: a request in flight cannot be derived from the attempt count.
-  const [isRetryingDiscovery, setIsRetryingDiscovery] = useState(false);
   const submitting = useRef(false);
   const createdAccount = useRef<ConnectAccountSuccessData | null>(null);
-
-  useEffect(() => {
-    // Registry is Cloud-only: elsewhere never ask, so a failure cannot surface it.
-    if (!isCloud()) return;
-    let active = true;
-    const load = async () => {
-      try {
-        const result = await getInstalledRegistryProviderOptions();
-        if (!active) return;
-        setRegistryOptions(
-          result.status === REGISTRY_PROVIDER_DISCOVERY.READY
-            ? result.options
-            : [],
-        );
-        setRegistryAvailable(
-          result.status === REGISTRY_PROVIDER_DISCOVERY.READY ||
-            result.status === REGISTRY_PROVIDER_DISCOVERY.ERROR,
-        );
-        setRegistryError(
-          result.status === REGISTRY_PROVIDER_DISCOVERY.ERROR ||
-            result.status === REGISTRY_PROVIDER_DISCOVERY.UNKNOWN,
-        );
-      } catch {
-        if (active) {
-          setRegistryOptions([]);
-          setRegistryAvailable(false);
-          setRegistryError(true);
-        }
-      }
-    };
-    // Only this effect's own load ends a retry; event reloads must not.
-    void load().then(() => {
-      if (active) setIsRetryingDiscovery(false);
-    });
-    window.addEventListener("registry-artifacts-changed", load);
-    return () => {
-      active = false;
-      window.removeEventListener("registry-artifacts-changed", load);
-    };
-  }, [discoveryAttempt]);
 
   const formSchema = createAddProviderFormSchema(
     registryOptions.map((option) => option.type),
@@ -473,33 +441,42 @@ export const ConnectAccountForm = ({
       >
         {/* Step 1: Provider selection */}
         {prevStep === 1 && (
-          <div data-tour-id="add-provider-provider-type">
-            {registryError && (
-              <Alert variant="warning">
-                <AlertTitle>Registry providers could not be loaded</AlertTitle>
-                <AlertDescription>
-                  Built-in providers are available. Check the Registry
-                  connection and try again.
-                  {/* aria-disabled, not disabled: the pressed button keeps focus. */}
-                  <Button
-                    type="button"
-                    variant="outline"
-                    aria-disabled={isRetryingDiscovery}
-                    onClick={() => {
-                      if (isRetryingDiscovery) return;
-                      setIsRetryingDiscovery(true);
-                      setDiscoveryAttempt((attempt) => attempt + 1);
-                    }}
-                  >
-                    {isRetryingDiscovery
-                      ? "Retrying…"
-                      : "Retry Registry providers"}
-                  </Button>
-                </AlertDescription>
-              </Alert>
-            )}
+          <div>
             <RadioGroupProvider
               registryAvailable={registryAvailable}
+              registryLoading={registryAvailable && registryDiscovery === null}
+              registryNotice={
+                registryDiscovery?.status ===
+                REGISTRY_PROVIDER_DISCOVERY.SUBSCRIPTION_REQUIRED ? (
+                  <RegistryUpgradePrompt />
+                ) : registryDiscovery?.status ===
+                  REGISTRY_PROVIDER_DISCOVERY.ONBOARDING ? (
+                  <RegistrySetupPrompt />
+                ) : (
+                  registryError && (
+                    <Alert variant="warning">
+                      <AlertTitle>
+                        Registry providers could not be loaded
+                      </AlertTitle>
+                      <AlertDescription>
+                        Built-in providers are available. Check the Registry
+                        connection and try again.
+                        {/* aria-disabled, not disabled: the pressed button keeps focus. */}
+                        <Button
+                          type="button"
+                          variant="outline"
+                          aria-disabled={isRetryingDiscovery}
+                          onClick={retryDiscovery}
+                        >
+                          {isRetryingDiscovery
+                            ? "Retrying…"
+                            : "Retry Registry providers"}
+                        </Button>
+                      </AlertDescription>
+                    </Alert>
+                  )
+                )
+              }
               registryOptions={registryOptions}
               control={form.control}
               isInvalid={!!form.formState.errors.providerType}

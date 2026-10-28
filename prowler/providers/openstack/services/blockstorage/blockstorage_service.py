@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Dict, List
+from typing import ClassVar, Dict, List
 
 from openstack import exceptions as openstack_exceptions
 
@@ -135,6 +135,7 @@ class VolumeResource:
     is_bootable: bool
     is_multiattach: bool
     attachments: List[Dict]
+    sensitive_fields: ClassVar[tuple[str, ...]] = ("metadata",)
     metadata: Dict[str, str]
     availability_zone: str
     snapshot_id: str
@@ -152,6 +153,7 @@ class SnapshotResource:
     status: str
     size: int
     volume_id: str
+    sensitive_fields: ClassVar[tuple[str, ...]] = ("metadata",)
     metadata: Dict[str, str]
     project_id: str
     region: str

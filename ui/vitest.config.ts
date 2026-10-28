@@ -96,7 +96,9 @@ export default defineConfig(() => {
               // vertically and ends up overlapping the graph, so Playwright
               // can't click nodes. Use a standard desktop viewport.
               viewport: { width: 1280, height: 800 },
-              provider: playwright(),
+              // Playwright waits forever for an actionable element by default;
+              // fail inside the test budget so the log names the blocker.
+              provider: playwright({ actionTimeout: 10_000 }),
               headless: true,
               instances: [{ browser: "chromium" }],
             },
@@ -197,7 +199,6 @@ export default defineConfig(() => {
         "@react-aria/visually-hidden",
         "framer-motion",
         "cmdk",
-        "driver.js",
         "react-markdown",
         "streamdown",
         "jwt-decode",

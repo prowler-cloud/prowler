@@ -4,6 +4,23 @@ All notable changes to the **Prowler MCP Server** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [0.12.4] (Prowler v5.46.0)
+
+### 🔐 Security
+
+- certifi from 2026.4.22 to 2026.10.19 in the MCP Server container image, dropping the emSign root CAs whose intermediate keys were compromised [(#13107)](https://github.com/prowler-cloud/prowler/pull/13107)
+
+---
+
+## [0.12.3] (Prowler v5.45.0)
+
+### 🔐 Security
+
+- `pyjwt` from 2.13.0 to 2.14.0, patching GHSA-ffc3-869f-jxw9 [(#12911)](https://github.com/prowler-cloud/prowler/pull/12911)
+- Python from 3.13.14 to 3.13.16 in the MCP container image, patching CVE-2026-19445 and CVE-2026-19553 [(#13009)](https://github.com/prowler-cloud/prowler/pull/13009)
+
+---
+
 ## [0.12.2] (Prowler v5.43.0)
 
 ### 🔐 Security

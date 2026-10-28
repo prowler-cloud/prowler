@@ -108,6 +108,23 @@ vulnerabilities:
     purls:
       - "pkg:nuget/System.Security.Cryptography.Xml"
     expired_at: 2027-01-31
+  # Same manifest, pinned to 8.0.4: PowerShell's own copy is also flagged by these CVEs.
+  - id: CVE-2026-96222
+    purls:
+      - "pkg:nuget/System.Security.Cryptography.Xml@8.0.4"
+    expired_at: 2027-01-31
+  - id: CVE-2026-96958
+    purls:
+      - "pkg:nuget/System.Security.Cryptography.Xml@8.0.4"
+    expired_at: 2027-01-31
+  - id: CVE-2026-96959
+    purls:
+      - "pkg:nuget/System.Security.Cryptography.Xml@8.0.4"
+    expired_at: 2027-01-31
+  - id: CVE-2026-96960
+    purls:
+      - "pkg:nuget/System.Security.Cryptography.Xml@8.0.4"
+    expired_at: 2027-01-31
   - id: CVE-2026-13676
     purls:
       - "pkg:npm/fast-uri"
@@ -180,76 +197,32 @@ vulnerabilities:
     purls:
       - "pkg:npm/%40modelcontextprotocol%2Fsdk@1.27.1"
     expired_at: 2027-01-31
+  # Two more SDK declarations and follow-redirects 1.16.0 from the same manifest. The SDK
+  # entries stay pinned to 1.27.1 for the reason above. No lock in this repo lists
+  # follow-redirects, so its pin only keeps a future real dependency from being hidden.
+  - id: CVE-2026-111767
+    purls:
+      - "pkg:npm/%40modelcontextprotocol%2Fsdk@1.27.1"
+    expired_at: 2027-01-31
+  - id: CVE-2026-111768
+    purls:
+      - "pkg:npm/%40modelcontextprotocol%2Fsdk@1.27.1"
+    expired_at: 2027-01-31
+  - id: CVE-2026-111755
+    purls:
+      - "pkg:npm/follow-redirects@1.16.0"
+    expired_at: 2027-01-31
+  - id: CVE-2026-111756
+    purls:
+      - "pkg:npm/follow-redirects@1.16.0"
+    expired_at: 2027-01-31
 
-  # CVE-2026-84304 is a DoS in grpc-go <= 1.83.0: a peer fragments a gRPC stream into
-  # millions of tiny HTTP/2 DATA frames until the receiver runs out of heap. Fixed in
-  # 1.83.1 (published 2026-09-01). Trivy 0.74.0, the latest published release and the
-  # version the images ship, pins 1.82.1 as an indirect dependency:
-  # https://github.com/aquasecurity/trivy/blob/v0.74.0/go.mod
-  # Upstream bump still open: https://github.com/aquasecurity/trivy/pull/11176
-  # Trivy only speaks gRPC in client/server mode (`trivy server`, `--server`). Prowler
-  # invokes it exclusively as `trivy image` and `trivy fs` on a local path, so no gRPC
-  # listener or connection ever exists in the image and the affected path is not
-  # reachable. Remove this temporary suppression as soon as a Trivy release pins
-  # grpc >= 1.83.1.
-  - id: CVE-2026-84304
+  # Unlike the manifest entries above, this DLL ships in the image:
+  # ExchangeOnlineManagement/3.10.1/netCore/System.Security.Cryptography.Pkcs.dll. It is a
+  # DoS in CMS/PKCS parsing; Prowler only feeds it the tenant's own certificate. 3.10.1 is
+  # the latest gallery release, so only Microsoft can update it. Re-check on the next EXO
+  # release.
+  - id: CVE-2026-84008
     purls:
-      - "pkg:golang/google.golang.org/grpc"
-    expired_at: 2026-10-15
-
-  # CVE-2026-84445 is a DoS in grpc-go servers built with `xds.NewGRPCServer()`: a request
-  # carrying neither `:authority` nor `Host` reaches the xDS routing interceptor, which
-  # indexes an empty slice of authorities and panics. The per-RPC goroutine does not
-  # recover, so the whole server process dies. Fixed in 1.82.2 and 1.83.2 (published
-  # 2026-09-08). Trivy 0.74.0, the latest published release and the version the images
-  # ship, pins 1.82.1 as an indirect dependency:
-  # https://github.com/aquasecurity/trivy/blob/v0.74.0/go.mod
-  # Trivy main already carries 1.83.2, but no published release includes it yet.
-  # The reachability argument is the one made for CVE-2026-84304 above, only narrower:
-  # this panic needs an xDS-managed gRPC server. Prowler invokes Trivy exclusively as
-  # `trivy image` and `trivy fs` on a local path, never `trivy server`, so the image runs
-  # no gRPC server at all, xDS or otherwise. Remove this temporary suppression as soon as
-  # a Trivy release pins grpc >= 1.83.2.
-  # https://github.com/advisories/GHSA-2v4p-qf9q-27wj
-  - id: CVE-2026-84445
-    purls:
-      - "pkg:golang/google.golang.org/grpc@v1.82.1"
-    expired_at: 2026-10-15
-
-  # CVE-2026-56855 and CVE-2026-78662 are DoS deadlocks in x/crypto/ssh: a malicious peer
-  # can flood or misuse channel messages (RFC 4254) to block the whole connection.
-  # Fixed in golang.org/x/crypto v0.56.0 (published 2026-09-02). Trivy 0.74.0, the latest
-  # published release and the version the images ship, still pins v0.55.0, and Trivy main
-  # has not bumped it either:
-  # https://github.com/aquasecurity/trivy/blob/v0.74.0/go.mod
-  # x/crypto/ssh is pulled in transitively through go-git's ssh transport, the same
-  # dependency chain as the CVE-2026-71556 entry above. Prowler invokes Trivy only with
-  # `fs` on an existing local path or with `image`; it never asks Trivy to clone over SSH
-  # or to run `trivy server`, so no SSH connection -- as client or server -- ever exists in
-  # the image and the affected code path is not reachable. Remove this temporary
-  # suppression as soon as a fixed Trivy release is available.
-  - id: CVE-2026-56855
-    purls:
-      - "pkg:golang/golang.org/x/crypto@v0.55.0"
-    expired_at: 2026-10-15
-  - id: CVE-2026-78662
-    purls:
-      - "pkg:golang/golang.org/x/crypto@v0.55.0"
-    expired_at: 2026-10-15
-
-  - id: CVE-2026-56852
-    purls:
-      - "pkg:golang/golang.org/x/text"
-    expired_at: 2026-12-31
-  - id: GHSA-hrxh-6v49-42gf
-    purls:
-      - "pkg:golang/google.golang.org/grpc"
-    expired_at: 2026-12-31
-  - id: CVE-2026-50151
-    purls:
-      - "pkg:golang/oras.land/oras-go/v2"
-    expired_at: 2026-12-31
-  - id: CVE-2026-50163
-    purls:
-      - "pkg:golang/oras.land/oras-go/v2"
-    expired_at: 2026-12-31
+      - "pkg:nuget/System.Security.Cryptography.Pkcs@10.0.0"
+    expired_at: 2026-12-15

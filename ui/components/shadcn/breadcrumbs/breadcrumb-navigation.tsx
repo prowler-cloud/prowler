@@ -36,7 +36,6 @@ interface BreadcrumbNavigationProps {
   mode?: "auto" | "custom" | "hybrid";
   title?: string;
   icon?: ReactElement;
-  titleAction?: ReactNode;
   customItems?: CustomBreadcrumbItem[];
   className?: string;
   paramToPreserve?: string;
@@ -47,7 +46,6 @@ export function BreadcrumbNavigation({
   mode = "auto",
   title,
   icon,
-  titleAction,
   customItems = [],
   className = "",
   paramToPreserve = "scanId",
@@ -140,7 +138,6 @@ export function BreadcrumbNavigation({
       >
         {titleText}
       </h1>
-      {titleAction}
     </div>
   );
 

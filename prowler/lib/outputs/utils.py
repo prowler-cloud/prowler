@@ -1,3 +1,6 @@
+from math import isfinite
+
+
 def unroll_list(listed_items: list, separator: str = "|") -> str:
     """
     Unrolls a list of items into a single string, separated by a specified separator.
@@ -199,3 +202,38 @@ def parse_html_string(str: str) -> str:
             string += f"\n&#x2022;{elem}\n"
 
     return string
+
+
+def sanitize_csv_value(value):
+    """Prefix a cell with `'` when a spreadsheet would evaluate it as a formula; numbers are left as they are."""
+    if not isinstance(value, str) or not (
+        value.startswith(("\t", "\r"))
+        or value.lstrip().startswith(("=", "+", "-", "@"))
+    ):
+        return value
+    try:
+        number = float(value)
+    except ValueError:
+        return f"'{value}"
+    # float() also accepts nan/inf and whitespace-padded forms, which a spreadsheet
+    # renders as text rather than as a number
+    if isfinite(number) and value == value.strip():
+        return value
+    return f"'{value}"
+
+
+def is_plain_json(value) -> bool:
+    """Return True when value is made only of JSON types with str keys."""
+    try:
+        if value is None or isinstance(value, (str, int, float, bool)):
+            return True
+        if isinstance(value, dict):
+            return all(
+                isinstance(key, str) and is_plain_json(item)
+                for key, item in value.items()
+            )
+        if isinstance(value, list):
+            return all(is_plain_json(item) for item in value)
+        return False
+    except RecursionError:
+        return False

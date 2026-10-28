@@ -28,7 +28,7 @@ import {
 } from "@/lib/action-errors";
 import {
   getScanScheduleCapability,
-  getScheduleFormDefaults,
+  getSetupScheduleFormDefaults,
   scheduleFormSchema,
 } from "@/lib/schedules";
 import { isCloud } from "@/lib/shared/env";
@@ -99,7 +99,7 @@ export function LaunchStep({
   );
   const form = useForm<ScheduleFormValues>({
     resolver: zodResolver(scheduleFormSchema),
-    defaultValues: getScheduleFormDefaults(),
+    defaultValues: getSetupScheduleFormDefaults(),
   });
 
   const isScheduleMode = canUseScheduleMode && mode === LAUNCH_MODE.SCHEDULE;

@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowLeft, Maximize2 } from "lucide-react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
 import { FormProvider } from "react-hook-form";
 
@@ -12,10 +12,9 @@ import {
   getAvailableQueries,
 } from "@/actions/attack-paths";
 import { adaptQueryResultToGraphData } from "@/actions/attack-paths/query-result.adapter";
+import type { GraphHandle } from "@/components/attack-paths/graph/attack-path-graph";
 import { FindingDetailDrawer } from "@/components/findings/table";
 import { LighthouseContextContributor } from "@/components/lighthouse/context-contributor";
-import { PageReady } from "@/components/onboarding";
-import { useFindingDetails } from "@/components/resources/table/use-finding-details";
 import { AutoRefresh } from "@/components/scans";
 import { Button, Card, useToast } from "@/components/shadcn";
 import {
@@ -27,17 +26,16 @@ import {
   DialogTrigger,
 } from "@/components/shadcn/dialog";
 import { StatusAlert } from "@/components/shared/status-alert";
-import { useMountEffect } from "@/hooks/use-mount-effect";
+import { useFindingDetails } from "@/hooks/use-finding-details";
+import { exportGraphAsPNG, isProwlerFindingNode } from "@/lib/attack-paths";
+import {
+  buildAttackPathView,
+  GROUP_NODE_LABEL,
+  GROUP_PROPS,
+  OUTCOME_NODE_LABEL,
+} from "@/lib/attack-paths/group-graph";
 import { buildAttackPathContext } from "@/lib/lighthouse/context/contributions";
 import { isCloud } from "@/lib/shared/env";
-import { attackPathsEmptyTour } from "@/lib/tours/attack-paths-empty.tour";
-import {
-  attackPathsTour,
-  type AttackPathsTourTarget,
-  pickDemoQuery,
-  pickDemoScan,
-} from "@/lib/tours/attack-paths.tour";
-import { advanceActiveTour, useDriverTour } from "@/lib/tours/use-driver-tour";
 import type {
   AttackPathQuery,
   AttackPathQueryError,
@@ -63,23 +61,15 @@ import {
   ScanListTable,
 } from "./_components";
 import { AttackPathsStatusPanel } from "./_components/attack-paths-status-panel";
-import type { GraphHandle } from "./_components/graph/attack-path-graph";
 import { useAttackPathScans } from "./_hooks/use-attack-path-scans";
 import { useGraphState } from "./_hooks/use-graph-state";
 import { useQueryBuilder } from "./_hooks/use-query-builder";
-import { exportGraphAsPNG, isProwlerFindingNode } from "./_lib";
 import {
   ATTACK_PATHS_VIEW_STATES,
   getAttackPathsViewState,
   getGraphBuildingProgress,
   isScanInFlight,
 } from "./_lib/get-attack-paths-view-state";
-import {
-  buildAttackPathView,
-  GROUP_NODE_LABEL,
-  GROUP_PROPS,
-  OUTCOME_NODE_LABEL,
-} from "./_lib/group-graph";
 
 const SCROLL_CONTAINER_CLASS =
   "minimal-scrollbar relative z-0 w-full gap-4 overflow-auto shadow-sm";
@@ -87,22 +77,13 @@ const SCROLL_CONTAINER_CLASS =
 export default function AttackPathsPage() {
   const searchParams = useSearchParams();
   const pathname = usePathname();
-  const router = useRouter();
   const scanId = searchParams.get("scanId");
-  // Onboarding tours are Cloud-only.
-  const onboardingEnabled = isCloud();
-  const isAttackPathsReplay =
-    onboardingEnabled && searchParams.get("onboarding") === "attack-paths";
   const graphState = useGraphState();
   const finding = useFindingDetails();
   const { toast } = useToast();
 
   const { scans, scansLoading, loadError, refreshScans, retryLoadScans } =
-    useAttackPathScans({
-      onNoReadyScan: isAttackPathsReplay
-        ? () => router.push("/scans?onboarding=view-first-scan")
-        : undefined,
-    });
+    useAttackPathScans();
 
   const [queriesLoading, setQueriesLoading] = useState(true);
   const [queriesError, setQueriesError] = useState<string | null>(null);
@@ -120,62 +101,6 @@ export default function AttackPathsPage() {
     useState<AttackPathOutcome | null>(null);
 
   const queryBuilder = useQueryBuilder(queries);
-
-  const hasReadyScan = scans.some((scan) => scan.attributes.graph_data_ready);
-  const hasNoScans = scans.length === 0;
-
-  useDriverTour(attackPathsEmptyTour, {
-    // Gate on !loadError: the empty-scans CTA anchor only renders in the
-    // NO_SCANS view-state, not in the ERROR state (which also has scans === []).
-    enabled: onboardingEnabled && !scansLoading && !loadError && hasNoScans,
-  });
-
-  const { start: startAttackPathsTour } = useDriverTour<AttackPathsTourTarget>(
-    attackPathsTour,
-    {
-      enabled: onboardingEnabled && !scansLoading && hasReadyScan,
-      autoOpen: !isAttackPathsReplay,
-      // Page owns tour auto-open; OnboardingSequenceBanner is the sole Continue/Skip control.
-      // pickDemoScan/pickDemoQuery policy lives in attack-paths.tour.ts.
-      stepHandlers: {
-        "scan-list": {
-          onNext: async ({ waitForStep }) => {
-            const selected = pickDemoScan(scans);
-            if (!selected) return;
-            const params = new URLSearchParams(searchParams.toString());
-            params.set("scanId", selected.id);
-            router.push(`${pathname}?${params.toString()}`);
-            await waitForStep("query-selector");
-          },
-        },
-        "query-selector": {
-          onNext: async ({ waitForStep }) => {
-            const selected = pickDemoQuery(queries);
-            if (!selected) return;
-            queryBuilder.handleQueryChange(selected.id);
-            await waitForStep("execute-button");
-          },
-        },
-      },
-    },
-  );
-
-  // Onboarding replay entry: start the tour once and strip the `onboarding`
-  // param. Invoked from <AttackPathsReplayTrigger>, which mounts only when the
-  // replay conditions hold — so `useMountEffect` fires it exactly once and the
-  // old `replayStartedRef` run-once guard is gone.
-  const startAttackPathsReplay = () => {
-    startAttackPathsTour();
-
-    const params = new URLSearchParams(searchParams.toString());
-    params.delete("onboarding");
-    const query = params.toString();
-    window.history.replaceState(
-      null,
-      "",
-      query ? `${pathname}?${query}` : pathname,
-    );
-  };
 
   useEffect(() => {
     if (!hasResetRef.current) {
@@ -267,9 +192,6 @@ export default function AttackPathsPage() {
       );
       return;
     }
-
-    // The tour's execute step is autoAdvance: the real Execute click moves it forward.
-    advanceActiveTour();
 
     graphState.startLoading();
     graphState.setError(null);
@@ -510,13 +432,6 @@ export default function AttackPathsPage() {
         onRefresh={refreshScans}
       />
 
-      {isAttackPathsReplay && !scansLoading && hasReadyScan && (
-        <AttackPathsReplayTrigger onReplay={startAttackPathsReplay} />
-      )}
-
-      {/* Enables the navbar replay icon once the initial scan load resolves. */}
-      {!scansLoading && <PageReady />}
-
       {lighthouseContext && (
         <LighthouseContextContributor
           key={JSON.stringify(lighthouseContext)}
@@ -525,7 +440,7 @@ export default function AttackPathsPage() {
         />
       )}
 
-      <div data-tour-id="attack-paths-intro">
+      <div>
         <p className="text-text-neutral-secondary text-sm">
           Select a scan, build a query, and visualize Attack Paths in your
           infrastructure.
@@ -541,12 +456,7 @@ export default function AttackPathsPage() {
           <p className="text-sm">Loading scans...</p>
         </Card>
       ) : viewState === ATTACK_PATHS_VIEW_STATES.NO_SCANS ? (
-        // Keep the empty-scans tour anchor: attackPathsEmptyTour targets
-        // data-tour-id="attack-paths-empty-scans-cta". The panel's NO_SCANS
-        // render is the same "No scans available" + Go to Scan Jobs CTA.
-        <div data-tour-id="attack-paths-empty-scans-cta">
-          <AttackPathsStatusPanel state={viewState} />
-        </div>
+        <AttackPathsStatusPanel state={viewState} />
       ) : viewState !== ATTACK_PATHS_VIEW_STATES.READY ? (
         <AttackPathsStatusPanel
           state={viewState}
@@ -584,13 +494,11 @@ export default function AttackPathsPage() {
               ) : (
                 <>
                   <FormProvider {...queryBuilder.form}>
-                    <div data-tour-id="attack-paths-query-selector">
-                      <QuerySelector
-                        queries={queries}
-                        selectedQueryId={queryBuilder.selectedQuery}
-                        onQueryChange={queryBuilder.handleQueryChange}
-                      />
-                    </div>
+                    <QuerySelector
+                      queries={queries}
+                      selectedQueryId={queryBuilder.selectedQuery}
+                      onQueryChange={queryBuilder.handleQueryChange}
+                    />
 
                     {queryBuilder.selectedQueryData && (
                       <QueryDescription
@@ -605,10 +513,7 @@ export default function AttackPathsPage() {
                     )}
                   </FormProvider>
 
-                  <div
-                    data-tour-id="attack-paths-execute-button"
-                    className="flex justify-end gap-3"
-                  >
+                  <div className="flex justify-end gap-3">
                     <ExecuteButton
                       isLoading={graphState.loading}
                       isDisabled={
@@ -807,27 +712,4 @@ export default function AttackPathsPage() {
       )}
     </div>
   );
-}
-
-interface AttackPathsReplayTriggerProps {
-  onReplay: () => void;
-}
-
-// Conditional-mount trigger: the parent renders this only when the replay
-// should start. The microtask keeps driver.js/flushSync outside React's
-// mount lifecycle while still running before the next browser task.
-function AttackPathsReplayTrigger({ onReplay }: AttackPathsReplayTriggerProps) {
-  useMountEffect(() => {
-    let cancelled = false;
-
-    queueMicrotask(() => {
-      if (!cancelled) onReplay();
-    });
-
-    return () => {
-      cancelled = true;
-    };
-  });
-
-  return null;
 }

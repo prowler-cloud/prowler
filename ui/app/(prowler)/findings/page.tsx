@@ -19,6 +19,10 @@ import {
   extractSortAndKey,
   hasDateOrScanFilter,
 } from "@/lib";
+import {
+  FINDINGS_PREVIEW_ROW_LIMIT,
+  isFindingsPreviewLocked,
+} from "@/lib/findings-access";
 import { resolveFindingScanDateFilters } from "@/lib/findings-scan-filters";
 import { ScanProps } from "@/types";
 import { SearchParamsProps } from "@/types/components";
@@ -36,7 +40,7 @@ export default async function Findings({
   const { filters, query } = extractFiltersAndQuery(resolvedSearchParams);
 
   // The page shell awaits only what both the filters and the table depend on:
-  // the completed scans (onboarding + scan filter) and the scan date range.
+  // the completed scans (scan filter) and the scan date range.
   const [scansData, filtersWithScanDates] = await Promise.all([
     getScans({
       pageSize: 50,
@@ -64,21 +68,8 @@ export default async function Findings({
         scan.attributes.unique_resource_count > 1,
     ) || [];
 
-  const onboardingAction =
-    completedScans.length > 0
-      ? { flowId: "explore-findings" }
-      : {
-          flowId: "explore-findings",
-          fallbackFlowId: "view-first-scan",
-          useFallback: true,
-        };
-
   return (
-    <ContentLayout
-      title="Findings"
-      icon={<Tag />}
-      onboardingAction={onboardingAction}
-    >
+    <ContentLayout title="Findings" icon={<Tag />}>
       <FilterTransitionWrapper>
         <div className="mb-6">
           <Suspense fallback={<FindingsFiltersSkeleton />}>
@@ -110,8 +101,16 @@ const SSRDataTable = async ({
   searchParams: SearchParamsProps;
   filters: Record<string, string>;
 }) => {
-  const page = parseInt(searchParams.page?.toString() || "1", 10);
-  const pageSize = parseInt(searchParams.pageSize?.toString() || "10", 10);
+  // A locked preview ignores the URL paging: it always shows the first page,
+  // the readable rows plus one blurred page as a teaser. Filters and sort
+  // still apply, so the readable rows are the most critical of the selection.
+  const previewLocked = await isFindingsPreviewLocked();
+  const page = previewLocked
+    ? 1
+    : parseInt(searchParams.page?.toString() || "1", 10);
+  const pageSize = previewLocked
+    ? FINDINGS_PREVIEW_ROW_LIMIT * 2
+    : parseInt(searchParams.pageSize?.toString() || "10", 10);
   const expandedCheckIdParam = searchParams.expandedCheckId;
   const expandedCheckId = Array.isArray(expandedCheckIdParam)
     ? expandedCheckIdParam[0]
@@ -150,6 +149,7 @@ const SSRDataTable = async ({
         resolvedFilters={filters}
         hasHistoricalData={hasHistoricalData}
         expandedCheckId={expandedCheckId}
+        previewRowLimit={previewLocked ? FINDINGS_PREVIEW_ROW_LIMIT : undefined}
       />
     </>
   );

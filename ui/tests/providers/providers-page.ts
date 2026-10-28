@@ -267,6 +267,11 @@ export interface VercelProviderCredential {
   apiToken: string;
 }
 
+// The wizard's final action. Setup pre-ticks "launch an initial scan", so the
+// schedule step reads "Save and launch scan" ("Save" once unticked); manual-only
+// accounts get "Launch scan" instead. Anchored so "Save" never matches a longer label.
+const LAUNCH_STEP_ACTION_NAME = /^(Save|Save and launch scan|Launch scan)$/;
+
 // Providers page
 export class ProvidersPage extends BasePage {
   readonly wizardModal: Locator;
@@ -720,11 +725,24 @@ export class ProvidersPage extends BasePage {
     ).toBeVisible({ timeout: 10000 });
   }
 
-  // The admin role comes preselected; only the email is needed.
-  async sendTeammateInvitation(email: string): Promise<void> {
+  // The form preselects a role only when the tenant has one named exactly
+  // "admin"; the E2E tenant's is "e2e_admin", so pick the role explicitly.
+  async sendTeammateInvitation(
+    email: string,
+    rolePattern: RegExp = /admin/i,
+  ): Promise<void> {
     await this.wizardModal
       .getByRole("textbox", { name: /Teammate email/i })
       .fill(email);
+    // Radix Select: the trigger is a combobox and its options render in a portal.
+    const roleSelect = this.wizardModal.getByRole("combobox", {
+      name: "Select a role",
+    });
+    await roleSelect.click();
+    const option = this.page.getByRole("option", { name: rolePattern }).first();
+    await expect(option).toBeVisible({ timeout: 10000 });
+    await option.click();
+    await expect(roleSelect).not.toContainText("Select a role");
     const send = this.page.getByRole("button", {
       name: "Send invitation",
       exact: true,
@@ -921,6 +939,10 @@ export class ProvidersPage extends BasePage {
     }
   }
 
+  private get launchStepAction(): Locator {
+    return this.page.getByRole("button", { name: LAUNCH_STEP_ACTION_NAME });
+  }
+
   async clickNext(): Promise<void> {
     await this.verifyWizardModalOpen();
 
@@ -930,6 +952,7 @@ export class ProvidersPage extends BasePage {
       "Connect account",
       "Next",
       "Save",
+      "Save and launch scan",
       "Check connection",
       "Launch scan",
     ] as const;
@@ -944,9 +967,8 @@ export class ProvidersPage extends BasePage {
         if (actionName === "Check connection") {
           await this.handleCheckConnectionCompletion();
         }
-        // "Save" is the wizard's final action (saves the scan schedule) and
-        // "Launch scan" its legacy/manual counterpart; both close the modal.
-        if (actionName === "Launch scan" || actionName === "Save") {
+        // The launch step's action (see LAUNCH_STEP_ACTION_NAME) closes the modal.
+        if (LAUNCH_STEP_ACTION_NAME.test(actionName)) {
           await this.handleLaunchScanCompletion();
         }
         return;
@@ -959,24 +981,16 @@ export class ProvidersPage extends BasePage {
   }
 
   private async handleCheckConnectionCompletion(): Promise<void> {
-    // A successful connection advances to the schedule step ("Save"); older
-    // flows surfaced a "Launch scan" action instead.
-    const saveScheduleButton = this.page.getByRole("button", {
-      name: "Save",
-      exact: true,
-    });
-    const launchScanButton = this.page.getByRole("button", {
-      name: "Launch scan",
-      exact: true,
-    });
+    // A successful connection advances to the launch step; update flows may
+    // close the modal instead.
+    const launchAction = this.launchStepAction;
     const connectionError = this.page.locator(
       "div.border-border-error p.text-text-error-primary",
     );
 
     try {
       await Promise.race([
-        saveScheduleButton.waitFor({ state: "visible", timeout: 30000 }),
-        launchScanButton.waitFor({ state: "visible", timeout: 30000 }),
+        launchAction.waitFor({ state: "visible", timeout: 30000 }),
         this.wizardModal.waitFor({ state: "hidden", timeout: 30000 }),
         connectionError.waitFor({ state: "visible", timeout: 30000 }),
       ]);
@@ -991,19 +1005,14 @@ export class ProvidersPage extends BasePage {
       );
     }
 
-    if (await saveScheduleButton.isVisible().catch(() => false)) {
-      await saveScheduleButton.click();
-      await this.handleLaunchScanCompletion();
-    } else if (await launchScanButton.isVisible().catch(() => false)) {
-      await launchScanButton.click();
+    if (await launchAction.isVisible().catch(() => false)) {
+      await launchAction.click();
       await this.handleLaunchScanCompletion();
     }
   }
 
   private async waitForProviderLaunchChoice(): Promise<void> {
-    const launchAction = this.page
-      .getByRole("button", { name: "Save", exact: true })
-      .or(this.page.getByRole("button", { name: "Launch scan", exact: true }));
+    const launchAction = this.launchStepAction;
     const connectionError = this.page.locator(
       "div.border-border-error p.text-text-error-primary",
     );
@@ -1036,9 +1045,7 @@ export class ProvidersPage extends BasePage {
       name: "Check connection",
       exact: true,
     });
-    const launchAction = this.page
-      .getByRole("button", { name: "Save", exact: true })
-      .or(this.page.getByRole("button", { name: "Launch scan", exact: true }));
+    const launchAction = this.launchStepAction;
     const connectionError = this.page.locator(
       "div.border-border-error p.text-text-error-primary",
     );
@@ -1651,17 +1658,11 @@ export class ProvidersPage extends BasePage {
     await this.verifyPageHasProwlerTitle();
     await this.verifyWizardModalOpen();
 
-    // The final step saves the scan schedule ("Save"); manual-only accounts
-    // show "Launch scan" and some providers show "Check connection" first.
-    const launchAction = this.page
-      .getByRole("button", { name: "Save", exact: true })
-      .or(this.page.getByRole("button", { name: "Launch scan", exact: true }))
-      .or(
-        this.page.getByRole("button", {
-          name: "Check connection",
-          exact: true,
-        }),
-      );
+    // The launch step's action, or "Check connection" for providers that
+    // still have to test the connection first.
+    const launchAction = this.launchStepAction.or(
+      this.page.getByRole("button", { name: "Check connection", exact: true }),
+    );
 
     await expect(launchAction).toBeVisible();
   }

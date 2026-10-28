@@ -106,10 +106,10 @@
   {
     "section": "dependencies",
     "name": "@next/third-parties",
-    "from": "16.2.6",
-    "to": "16.2.9",
+    "from": "16.2.9",
+    "to": "16.4.1",
     "strategy": "installed",
-    "generatedAt": "2026-06-15T07:49:41.143Z"
+    "generatedAt": "2026-10-23T09:16:43.200Z"
   },
   {
     "section": "dependencies",
@@ -306,10 +306,10 @@
   {
     "section": "dependencies",
     "name": "@sentry/nextjs",
-    "from": "10.27.0",
-    "to": "10.65.0",
+    "from": "10.65.0",
+    "to": "10.75.2",
     "strategy": "installed",
-    "generatedAt": "2026-07-16T15:35:58.334Z"
+    "generatedAt": "2026-10-23T09:16:43.200Z"
   },
   {
     "section": "dependencies",
@@ -417,14 +417,6 @@
   },
   {
     "section": "dependencies",
-    "name": "driver.js",
-    "from": "1.4.0",
-    "to": "1.4.0",
-    "strategy": "installed",
-    "generatedAt": "2026-05-26T13:05:09.776Z"
-  },
-  {
-    "section": "dependencies",
     "name": "framer-motion",
     "from": "11.18.2",
     "to": "11.18.2",
@@ -498,10 +490,10 @@
   {
     "section": "dependencies",
     "name": "next",
-    "from": "16.3.3",
-    "to": "16.3.6",
+    "from": "16.3.8",
+    "to": "16.4.1",
     "strategy": "installed",
-    "generatedAt": "2026-10-01T09:28:54.112Z"
+    "generatedAt": "2026-10-23T09:16:43.200Z"
   },
   {
     "section": "dependencies",
@@ -666,10 +658,10 @@
   {
     "section": "devDependencies",
     "name": "@next/eslint-plugin-next",
-    "from": "16.2.6",
-    "to": "16.2.9",
+    "from": "16.2.9",
+    "to": "16.4.1",
     "strategy": "installed",
-    "generatedAt": "2026-06-15T07:49:41.143Z"
+    "generatedAt": "2026-10-23T09:16:43.200Z"
   },
   {
     "section": "devDependencies",

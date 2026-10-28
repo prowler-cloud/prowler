@@ -32,7 +32,7 @@ import {
   buildScheduleUpdatePayload,
   describeSchedulesBulkFailures,
   getScanScheduleCapability,
-  getScheduleFormDefaults,
+  getSetupScheduleFormDefaults,
   parseSchedulesBulkResult,
   scheduleFormSchema,
 } from "@/lib/schedules";
@@ -121,7 +121,7 @@ export function OrgLaunchScan({
   );
   const form = useForm<ScheduleFormValues>({
     resolver: zodResolver(scheduleFormSchema),
-    defaultValues: getScheduleFormDefaults(),
+    defaultValues: getSetupScheduleFormDefaults(),
   });
   const launchInitialScan = useWatch({
     control: form.control,

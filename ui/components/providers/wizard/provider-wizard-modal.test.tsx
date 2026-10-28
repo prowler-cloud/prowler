@@ -8,7 +8,6 @@ import {
   PROVIDER_FUNNEL_EVENT,
   type ProviderFunnelDetail,
 } from "@/lib/provider-funnel/provider-funnel-events";
-import { endActiveTour } from "@/lib/tours/use-driver-tour";
 import { useProviderWizardStore } from "@/store/provider-wizard/store";
 import { useUIStore } from "@/store/ui/store";
 import { CONNECTION_CHECK_STATUS } from "@/types/providers";
@@ -35,6 +34,7 @@ const {
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ refresh: vi.fn(), push: vi.fn() }),
+  usePathname: () => "/providers",
 }));
 const { getInvitationRoles, sendInvite, session } = vi.hoisted(() => ({
   getInvitationRoles: vi.fn(),
@@ -73,10 +73,6 @@ vi.mock(
 );
 vi.mock("@/hooks/use-scroll-hint", () => ({
   useScrollHint: () => ({ showScrollHint: false }),
-}));
-vi.mock("@/lib/tours/use-driver-tour", () => ({
-  advanceActiveTour: vi.fn(),
-  endActiveTour: vi.fn(),
 }));
 vi.mock("./steps/credentials-step", () => ({
   CredentialsStep: ({ onBack }: { onBack: () => void }) => (
@@ -158,8 +154,9 @@ async function enterAccountDetails() {
 
 describe("provider wizard account creation", () => {
   beforeEach(() => {
-    // Registry discovery only runs in Cloud.
+    // Registry discovery only runs in Cloud with Registry enabled.
     vi.stubEnv("UI_CLOUD_ENABLED", "true");
+    vi.stubEnv("UI_REGISTRY_ENABLED", "true");
     useProviderWizardStore.getState().reset();
     resetToasts();
     getInstalledRegistryProviderOptions.mockResolvedValue({
@@ -450,27 +447,6 @@ describe("provider wizard account creation", () => {
       expect(screen.queryByText("Credential details")).not.toBeInTheDocument();
     });
 
-    it("steps the tour aside once the account can be connected", async () => {
-      // Given
-      vi.mocked(endActiveTour).mockClear();
-      const user = await pickAws();
-
-      // When
-      await user.type(
-        screen.getByRole("textbox", { name: /Role ARN/ }),
-        ROLE_ARN,
-      );
-
-      // Then: the footer sits outside the tour's spotlight, so the tour ends
-      // right when the user is ready to press Connect account.
-      await waitFor(() =>
-        expect(
-          screen.getByRole("button", { name: "Connect account" }),
-        ).toBeEnabled(),
-      );
-      expect(endActiveTour).toHaveBeenCalled();
-    });
-
     it("closes the wizard once a teammate has been invited to connect the account instead", async () => {
       // Given: a user who can invite but cannot reach the account.
       session.data = {
@@ -550,44 +526,45 @@ describe("provider wizard account creation", () => {
     );
     const user = userEvent.setup();
     render(<ProviderWizardModal open onOpenChange={vi.fn()} />);
-    await screen.findByText("Registry providers could not be loaded");
     expect(
-      screen.getByRole("option", { name: /Amazon Web Services/ }),
+      await screen.findByRole("option", { name: /Amazon Web Services/ }),
     ).toBeVisible();
 
-    // Then: an unanswered discovery cannot vouch for Registry availability.
-    expect(
-      screen.queryByRole("tab", { name: "Registry" }),
-    ).not.toBeInTheDocument();
-
     // When
+    await user.click(screen.getByRole("tab", { name: "Registry" }));
     await user.click(
-      screen.getByRole("button", { name: "Retry Registry providers" }),
+      await screen.findByRole("button", { name: "Retry Registry providers" }),
     );
 
     // Then
     expect(
       await screen.findByRole("option", { name: "Acme Cloud Registry" }),
     ).toBeVisible();
-    expect(screen.getByRole("tab", { name: "Registry" })).toBeVisible();
     expect(
       screen.queryByText("Registry providers could not be loaded"),
     ).not.toBeInTheDocument();
   });
 
-  it("keeps the Registry tab with a retry when eligible discovery fails", async () => {
+  it("shows the retry inside the Registry tab when eligible discovery fails", async () => {
     // Given: Cloud with Registry enabled, but the catalog read failed.
     getInstalledRegistryProviderOptions.mockResolvedValueOnce({
       status: "error",
     });
     const user = userEvent.setup();
     render(<ProviderWizardModal open onOpenChange={vi.fn()} />);
-    await screen.findByText("Registry providers could not be loaded");
 
     // When
-    await user.click(screen.getByRole("tab", { name: "Registry" }));
+    await user.click(await screen.findByRole("tab", { name: "Registry" }));
 
     // Then
-    expect(screen.getByText("No Registry providers available.")).toBeVisible();
+    expect(
+      await screen.findByText("Registry providers could not be loaded"),
+    ).toBeVisible();
+    expect(
+      screen.getByRole("button", { name: "Retry Registry providers" }),
+    ).toBeVisible();
+    expect(
+      screen.queryByText("No Registry providers available."),
+    ).not.toBeInTheDocument();
   });
 });

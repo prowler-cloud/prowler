@@ -4,6 +4,49 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [1.46.0] (Prowler v5.46.0)
+
+### 🚀 Added
+
+- Issues page and overview cards for Cloud deployments, with verdict filters, accessible issue details, and scoped finding evidence [(#13068)](https://github.com/prowler-cloud/prowler/pull/13068)
+- Outlined error badge variant with a visible border on error-colored surfaces [(#13111)](https://github.com/prowler-cloud/prowler/pull/13111)
+
+### 🔄 Changed
+
+- "Launch an initial scan now" is ticked by default on the provider and organization setup launch steps, so saving a schedule also runs a first scan unless the box is unticked [(#13104)](https://github.com/prowler-cloud/prowler/pull/13104)
+- SAML SSO integration card on the profile page is shown to roles with the Manage Account permission, matching the API requirement [(#13121)](https://github.com/prowler-cloud/prowler/pull/13121)
+- Default `php_latest_version` in the scan configuration template raised from `8.2` to `8.5` [(#13128)](https://github.com/prowler-cloud/prowler/pull/13128)
+
+### 🔐 Security
+
+- Node.js from 24.18.1 to 24.22.1 LTS in the UI container image and `.nvmrc`, patching the eight CVEs of the October 2026 security release that affect the 24.x line, including the Brotli decoder remote code execution (CVE-2026-111497); the base image moves to Alpine 3.24, so the targeted `libcrypto3` / `libssl3` upgrade is no longer needed [(#13126)](https://github.com/prowler-cloud/prowler/pull/13126)
+- Next.js from 16.3.8 to 16.4.1, `@sentry/nextjs` from 10.65.0 to 10.75.2 and the transitive DOMPurify pin to 3.4.17, closing four critical advisories: two unauthenticated remote code executions in Next.js (Image Optimization with SVG files, GHSA-2464-fhr4-w9xw; `use cache` functions returning typed arrays, GHSA-673q-mjm6-r5xr), the Sentry middleware bypass through the tunnel route (GHSA-mchm-gjx6-7h55) and the DOMPurify `SAFE_FOR_TEMPLATES` bypass (GHSA-cg2g-xh64-v4q7) [(#13135)](https://github.com/prowler-cloud/prowler/pull/13135)
+
+---
+
+## [1.45.0] (Prowler v5.45.0)
+
+### 🚀 Added
+
+- Option to invite a teammate from the AWS connect step when the user cannot access the account credentials [(#12917)](https://github.com/prowler-cloud/prowler/pull/12917)
+
+### 🐞 Fixed
+
+- Required home region selector in the OCI credentials form, so tenancies not subscribed to us-ashburn-1 can connect [(#12865)](https://github.com/prowler-cloud/prowler/pull/12865)
+- First-login redirect to the add-provider wizard is retried on the next load when the navigation was cut short, on Cloud and self-hosted alike, instead of being written off after a single attempt [(#12914)](https://github.com/prowler-cloud/prowler/pull/12914)
+- Slack partial channel list message tells the user to invite the app to a missing channel [(#13036)](https://github.com/prowler-cloud/prowler/pull/13036)
+- Registry provider discovery distinguishes paid-plan upgrades, missing credentials, and connection failures [(#13038)](https://github.com/prowler-cloud/prowler/pull/13038)
+
+### 🔐 Security
+
+- `next` to 16.3.6, patching a remote code execution in `next/og` `ImageResponse` (GHSA-vcvr-r3jv-pc5j) [(#12922)](https://github.com/prowler-cloud/prowler/pull/12922)
+- Kubernetes kubeconfig form validation accepts only inline credentials and known cluster fields, rejecting file-path, command-based, `auth-provider`, proxy URL and unknown fields before submission [(#12952)](https://github.com/prowler-cloud/prowler/pull/12952)
+- `proxy-addr` to 2.0.8, patching IP spoofing through IPv4-mapped IPv6 trust subnets (GHSA-jqcg-44mw-7w3h) [(#12957)](https://github.com/prowler-cloud/prowler/pull/12957)
+- `sharp` to 0.35.5, patching a librsvg memory vulnerability that can lead to remote code execution on glibc-based Linux (GHSA-wq5f-xc86-pv6w) [(#12968)](https://github.com/prowler-cloud/prowler/pull/12968)
+- `next` to 16.3.8, patching a server-side request forgery in Image Optimization (GHSA-cjq9-62q9-8jv4) [(#12987)](https://github.com/prowler-cloud/prowler/pull/12987)
+
+---
+
 ## [1.44.0] (Prowler v5.44.0)
 
 ### 🚀 Added
