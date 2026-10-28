@@ -35,7 +35,7 @@ def check_security_group(
 
     @param ports: List of ports to check. If not provided all ports will be checked unless all_ports is False. (Default: None)
 
-    @param any_address: If True, only 0.0.0.0/0 or "::/0" will be public and do not search for public addresses. (Default: False)
+    @param any_address: If True, only 0.0.0.0/0 or "::/0", or CIDRs in the same ingress rule that together cover every address of one IP version, will be public and do not search for public addresses. (Default: False)
 
     @param all_ports: If True, empty ports list will be treated as all ports. (Default: False)
 

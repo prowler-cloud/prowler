@@ -445,6 +445,16 @@ class Test_check_security_group:
             ingress_rule, TRANSPORT_PROTOCOL_TCP, [port], True
         )
 
+    # TCP Protocol - one half of IPv4 and one half of IPv6 - Ingress 22 to 22 - check 22 - Any Address - Closed
+    def test_one_ipv4_half_and_one_ipv6_half_open_22_tcp_any_address(self):
+        port = 22
+        ingress_rule = self.ingress_rule_generator(
+            port, port, TRANSPORT_PROTOCOL_TCP, ["0.0.0.0/1"], ["8000::/1"]
+        )
+        assert not check_security_group(
+            ingress_rule, TRANSPORT_PROTOCOL_TCP, [port], True
+        )
+
     # TCP Protocol - two halves of IPv4 - Ingress 80 to 80 - check 22 - Any Address - Closed
     def test_split_ipv4_halves_other_port_any_address(self):
         ingress_rule = self.ingress_rule_generator(
