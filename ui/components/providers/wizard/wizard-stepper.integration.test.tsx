@@ -3,7 +3,11 @@ import { describe, expect } from "vitest";
 import { it } from "@/__tests__/fixtures";
 import { render } from "@/__tests__/render-browser";
 
-import { ORGANIZATION_WIZARD_STEPS, WizardStepper } from "./wizard-stepper";
+import {
+  ORGANIZATION_WIZARD_STEPS,
+  PROVIDER_WIZARD_STEPS,
+  WizardStepper,
+} from "./wizard-stepper";
 
 // Like the modal frame: a marked size container, so lg: follows its width.
 function renderInWizardFrame(width: number) {
@@ -71,5 +75,46 @@ describe("wizard stepper", () => {
         screen.getByRole("navigation", { name: "Wizard progress" }).element(),
       ).height,
     ).toBeGreaterThan(200);
+  });
+
+  it.each([360, 720])(
+    "names both steps of the provider flow on one row at %ipx while stacked",
+    async (width) => {
+      // When
+      const screen = await render(
+        <div data-responsive-container className="@container" style={{ width }}>
+          <WizardStepper currentStep={0} steps={PROVIDER_WIZARD_STEPS} />
+        </div>,
+      );
+
+      // Then
+      const progress = screen
+        .getByRole("navigation", { name: "Wizard progress" })
+        .element();
+      // A name clipped to 1px for assistive tech would still count as visible.
+      for (const name of ["Connect Provider", "Launch Scan"]) {
+        const block = screen.getByText(name).element().closest("div")!;
+        expect(boxOf(block).width, name).toBeGreaterThan(20);
+      }
+      expect(boxOf(progress).height).toBeLessThanOrEqual(40);
+      expect(progress.scrollWidth).toBeLessThanOrEqual(width);
+    },
+  );
+
+  it("names the upcoming step beside a wide wizard", async () => {
+    // When
+    const screen = await render(
+      <div
+        data-responsive-container
+        className="@container"
+        style={{ width: 1200 }}
+      >
+        <WizardStepper currentStep={0} steps={PROVIDER_WIZARD_STEPS} />
+      </div>,
+    );
+
+    // Then
+    const block = screen.getByText("Launch Scan").element().closest("div")!;
+    expect(boxOf(block).width).toBeGreaterThan(20);
   });
 });

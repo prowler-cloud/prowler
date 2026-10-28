@@ -68,6 +68,8 @@ export function getActiveStepIndex(
   return Math.max(0, Math.min(currentStep, stepCount - 1));
 }
 
+const MAX_STEPS_NAMED_WHILE_STACKED = 2;
+
 const CONNECTOR_DIRECTION = {
   VERTICAL: "to bottom",
   HORIZONTAL: "to right",
@@ -77,8 +79,10 @@ type ConnectorDirection =
 
 export function WizardStepper({ currentStep, steps }: WizardStepperProps) {
   const activeVisualStep = getActiveStepIndex(currentStep, steps.length);
+  // Stacked, a short flow names every step; a longer one only the current.
+  const namesEveryStep = steps.length <= MAX_STEPS_NAMED_WHILE_STACKED;
 
-  // Below lg the wizard stacks: one row of steps, naming only the current one.
+  // Below lg the wizard stacks: one row of steps.
   return (
     <nav
       aria-label="Wizard progress"
@@ -96,7 +100,7 @@ export function WizardStepper({ currentStep, steps }: WizardStepperProps) {
               aria-current={isActive ? "step" : undefined}
               className={cn(
                 "flex min-w-0 items-center gap-2 lg:items-start lg:gap-3",
-                !isActive && "shrink-0",
+                !isActive && !namesEveryStep && "shrink-0",
               )}
             >
               <div className="flex flex-col items-center">
@@ -117,7 +121,9 @@ export function WizardStepper({ currentStep, steps }: WizardStepperProps) {
               <div
                 className={cn(
                   "min-w-0 flex-col gap-1 lg:flex lg:pt-[10px]",
-                  isActive ? "flex" : "sr-only lg:not-sr-only",
+                  isActive || namesEveryStep
+                    ? "flex"
+                    : "sr-only lg:not-sr-only",
                 )}
               >
                 <span
