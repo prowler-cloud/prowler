@@ -7,7 +7,7 @@ export type ActionErrorStatus =
   (typeof ACTION_ERROR_STATUS)[keyof typeof ACTION_ERROR_STATUS];
 
 // Shown whenever the API returns 402 for an over-limit (trial-expired) tenant.
-// Rendered with a billing link by he `UsageLimitMessage` component, and as
+// Rendered with a pricing link by the `UsageLimitMessage` component, and as
 // plain text in toasts/field errors.
 export const USAGE_LIMIT_MESSAGE =
   "You have exceeded the usage limit of one provider. You can add more providers and run unlimited scans by adding a subscription.";
