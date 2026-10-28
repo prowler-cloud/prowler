@@ -171,3 +171,60 @@ describe("provider selector layout", () => {
     expect(rows[1].left).toBeGreaterThan(rows[0].right);
   });
 });
+
+describe("provider selector header", () => {
+  // Like the wizard's form column: a fixed-height box that scrolls.
+  async function renderScrolled() {
+    const screen = await render(
+      <InWizard width={1200}>
+        <div data-testid="scroller" style={{ height: 420, overflowY: "auto" }}>
+          <Selector />
+        </div>
+      </InWizard>,
+    );
+    const scroller = screen.getByTestId("scroller").element() as HTMLElement;
+    scroller.scrollTop = scroller.scrollHeight;
+    await expect.poll(() => scroller.scrollTop).toBeGreaterThan(0);
+    return { screen, scroller };
+  }
+
+  it("keeps the tabs and the search on top while the providers scroll", async () => {
+    // When
+    const { screen, scroller } = await renderScrolled();
+
+    // Then
+    const search = screen
+      .getByRole("textbox", { name: "Search providers" })
+      .element() as HTMLElement;
+    const tabs = screen
+      .getByRole("tablist", { name: "Provider source" })
+      .element() as HTMLElement;
+    const top = scroller.getBoundingClientRect().top;
+    expect(tabs.getBoundingClientRect().top).toBeGreaterThanOrEqual(top);
+    expect(search.getBoundingClientRect().bottom).toBeLessThan(top + 200);
+    // Nothing scrolled under it shows through: the search is what is hit.
+    const box = search.getBoundingClientRect();
+    expect(
+      document.elementFromPoint(box.left + 8, box.top + box.height / 2),
+    ).toBe(search);
+  });
+
+  it("lands a provider scrolled back into view below the header", async () => {
+    // Given: the first provider sits above the visible area.
+    const { screen } = await renderScrolled();
+    const header = document.querySelector(
+      "[data-slot=provider-picker-header]",
+    ) as HTMLElement;
+    const first = screen
+      .getByRole("option", { name: "Amazon Web Services" })
+      .element() as HTMLElement;
+
+    // When: edge-aligned scrolling, as keyboard navigation does.
+    first.scrollIntoView({ block: "nearest" });
+
+    // Then
+    await expect
+      .poll(() => first.getBoundingClientRect().top)
+      .toBeGreaterThanOrEqual(header.getBoundingClientRect().bottom);
+  });
+});

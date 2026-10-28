@@ -28,6 +28,8 @@ const PROVIDERS = Object.entries(PROVIDER_TYPE_DATA).map(
 
 const PROVIDER_TAB = { ALL: "all", REGISTRY: "registry" } as const;
 const REGISTRY_SKELETON_ROWS = 3;
+// Tabs and search stay on top, opaque, while the providers scroll under them.
+const STICKY_HEADER = "bg-bg-neutral-secondary sticky top-0 z-10 flex flex-col";
 // Two providers per row beside a wide wizard, one while it stacks.
 const PROVIDER_GRID = "grid gap-3 lg:grid-cols-2";
 type ProviderTab = (typeof PROVIDER_TAB)[keyof typeof PROVIDER_TAB];
@@ -97,7 +99,7 @@ export const RadioGroupProvider: FC<RadioGroupProviderProps> = ({
       control={control}
       render={({ field }) => {
         const searchInput = (
-          <div className="relative z-10 shrink-0 py-4">
+          <div className="shrink-0 py-4">
             <SearchInput
               aria-label="Search providers"
               placeholder="Search providers..."
@@ -127,6 +129,8 @@ export const RadioGroupProvider: FC<RadioGroupProviderProps> = ({
                     onClick={() => field.onChange(provider.value)}
                     className={cn(
                       "flex min-h-[72px] w-full items-center gap-4 rounded-lg border px-3 py-2.5 text-left transition-colors",
+                      // Focus scrolling clears the sticky header above the list.
+                      registryAvailable ? "scroll-mt-32" : "scroll-mt-20",
                       "focus-visible:border-button-primary focus-visible:outline-none",
                       isSelected
                         ? "border-button-primary bg-bg-neutral-tertiary"
@@ -193,7 +197,9 @@ export const RadioGroupProvider: FC<RadioGroupProviderProps> = ({
         if (!registryAvailable) {
           return (
             <div className="flex flex-col px-4">
-              {searchInput}
+              <div data-slot="provider-picker-header" className={STICKY_HEADER}>
+                {searchInput}
+              </div>
               <div className="mt-2">{providerList}</div>
               {validationMessage}
             </div>
@@ -206,11 +212,17 @@ export const RadioGroupProvider: FC<RadioGroupProviderProps> = ({
             value={activeTab}
             onValueChange={(value) => setSelectedTab(value as ProviderTab)}
           >
-            <TabsList aria-label="Provider source">
-              <TabsTrigger value={PROVIDER_TAB.ALL}>All providers</TabsTrigger>
-              <TabsTrigger value={PROVIDER_TAB.REGISTRY}>Registry</TabsTrigger>
-            </TabsList>
-            {searchInput}
+            <div data-slot="provider-picker-header" className={STICKY_HEADER}>
+              <TabsList aria-label="Provider source">
+                <TabsTrigger value={PROVIDER_TAB.ALL}>
+                  All providers
+                </TabsTrigger>
+                <TabsTrigger value={PROVIDER_TAB.REGISTRY}>
+                  Registry
+                </TabsTrigger>
+              </TabsList>
+              {searchInput}
+            </div>
             <TabsContent value={activeTab}>
               {activeTab === PROVIDER_TAB.REGISTRY && registryPlaceholder
                 ? registryPlaceholder
