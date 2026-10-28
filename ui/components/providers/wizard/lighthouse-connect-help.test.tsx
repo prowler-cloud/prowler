@@ -33,7 +33,10 @@ vi.mock("@/app/(prowler)/lighthouse/_lib/panel-chat-store", () => ({
 
 const AWS_DOCS = "https://goto.prowler.com/provider-aws";
 
-function renderHelp(providerType: string | null = "aws") {
+function renderHelp(
+  providerType: string | null = "aws",
+  connectionMethod: string | null = "role",
+) {
   return render(
     <LighthouseConnectHelp
       docsLink={AWS_DOCS}
@@ -41,7 +44,8 @@ function renderHelp(providerType: string | null = "aws") {
       providerType={providerType}
       mode="add"
       stepName="connect"
-      stepLabel="Link a Provider"
+      stepLabel="Connect Provider"
+      connectionMethod={connectionMethod}
       isOrganizationsFlow={false}
     />,
   );
@@ -281,8 +285,9 @@ describe("LighthouseConnectHelp", () => {
         docsDestination="AWS"
         providerType="aws"
         mode="add"
-        stepName="test"
-        stepLabel="Test Connection"
+        stepName="launch"
+        stepLabel="Launch Scan"
+        connectionMethod="credentials"
         isOrganizationsFlow={false}
       />,
     );
@@ -300,11 +305,11 @@ describe("LighthouseConnectHelp", () => {
   it("asks for a connection guide about the current step without sharing typed credentials", async () => {
     // Given: the user switched AWS to access keys and typed a secret
     const user = userEvent.setup();
-    useProviderWizardStore.getState().setAwsConnectDraft({
+    useProviderWizardStore.getState().setConnectDraft("aws", {
       method: "credentials",
-      keysValues: { awsSecretAccessKey: "super-secret-value" },
+      values: { credentials: { aws_secret_access_key: "super-secret-value" } },
     });
-    renderHelp("aws");
+    renderHelp("aws", "credentials");
     const askButton = await screen.findByRole("button", {
       name: "Ask Lighthouse AI",
     });
@@ -362,9 +367,11 @@ describe("LighthouseConnectHelp", () => {
 
     // When: the user switches to access keys and moves on to the next step
     act(() =>
-      useProviderWizardStore.getState().setAwsConnectDraft({
+      useProviderWizardStore.getState().setConnectDraft("aws", {
         method: "credentials",
-        keysValues: { awsSecretAccessKey: "super-secret-value" },
+        values: {
+          credentials: { aws_secret_access_key: "super-secret-value" },
+        },
       }),
     );
     rerender(
@@ -373,8 +380,9 @@ describe("LighthouseConnectHelp", () => {
         docsDestination="AWS"
         providerType="aws"
         mode="add"
-        stepName="test"
-        stepLabel="Test Connection"
+        stepName="launch"
+        stepLabel="Launch Scan"
+        connectionMethod="credentials"
         isOrganizationsFlow={false}
       />,
     );
@@ -385,7 +393,7 @@ describe("LighthouseConnectHelp", () => {
       expect.objectContaining({
         kind: "provider",
         providerType: "aws",
-        wizardStep: "test",
+        wizardStep: "launch",
         connectionMethod: "credentials",
       }),
     );
@@ -417,6 +425,7 @@ describe("LighthouseConnectHelp", () => {
         mode="add"
         stepName="setup"
         stepLabel="Organization Setup"
+        connectionMethod="organizations"
         isOrganizationsFlow
       />,
     );

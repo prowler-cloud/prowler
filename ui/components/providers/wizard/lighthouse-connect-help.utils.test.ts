@@ -2,10 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { getLighthouseScopeKey } from "@/lib/lighthouse/context/pages";
 
-import {
-  buildProviderWizardHelpContext,
-  resolveConnectionMethod,
-} from "./lighthouse-connect-help.utils";
+import { buildProviderWizardHelpContext } from "./lighthouse-connect-help.utils";
 
 const PROVIDERS_SCOPE_KEY = getLighthouseScopeKey("/providers");
 
@@ -69,42 +66,5 @@ describe("buildProviderWizardHelpContext", () => {
         docsUrl: "https://goto.prowler.com/providers",
       },
     ]);
-  });
-});
-
-describe("resolveConnectionMethod", () => {
-  it.each([
-    {
-      case: "an organization onboarding",
-      input: { isOrganizationsFlow: true, providerType: "aws", via: null },
-      expected: "organizations",
-    },
-    {
-      case: "the method a connected account used",
-      input: { isOrganizationsFlow: false, providerType: "gcp", via: "sa" },
-      expected: "sa",
-    },
-    {
-      case: "the AWS method picked but not submitted yet",
-      input: {
-        isOrganizationsFlow: false,
-        providerType: "aws",
-        via: null,
-        awsDraftMethod: "credentials",
-      },
-      expected: "credentials",
-    },
-    {
-      case: "the AWS default before any pick",
-      input: { isOrganizationsFlow: false, providerType: "aws", via: null },
-      expected: "role",
-    },
-    {
-      case: "a provider whose method is still unknown",
-      input: { isOrganizationsFlow: false, providerType: "azure", via: null },
-      expected: null,
-    },
-  ])("resolves $case", ({ input, expected }) => {
-    expect(resolveConnectionMethod(input)).toBe(expected);
   });
 });
