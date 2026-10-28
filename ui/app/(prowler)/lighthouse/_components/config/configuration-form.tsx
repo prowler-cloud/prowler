@@ -61,9 +61,14 @@ export function LighthouseV2ConfigurationForm({
   const [deleteOpen, setDeleteOpen] = useState(false);
   const providerType = provider.id;
   const hasConfiguration = Boolean(configuration);
+  const capabilities = { credentialsOptional: provider.credentialsOptional };
   const form = useForm<LighthouseV2ConfigFormValues>({
     resolver: zodResolver(
-      buildLighthouseV2ConfigFormSchema(providerType, hasConfiguration),
+      buildLighthouseV2ConfigFormSchema(
+        providerType,
+        hasConfiguration,
+        capabilities,
+      ),
     ),
     defaultValues: getFormDefaults(configuration),
     mode: "onSubmit",
@@ -107,6 +112,7 @@ export function LighthouseV2ConfigurationForm({
       providerType,
       values,
       hasConfiguration,
+      capabilities,
     );
     const baseUrl = trimToNullable(values.baseUrl);
     const shouldTestAfterSave =
@@ -254,12 +260,15 @@ export function LighthouseV2ConfigurationForm({
                 icon={<KeyRound className="size-4" />}
                 title="Credentials"
                 description={
-                  configuration
-                    ? "Leave blank to keep existing credentials."
-                    : "Credentials are required for new configurations."
+                  provider.credentialsOptional
+                    ? "Leave the keys blank to use this installation's own AWS role; only the region is needed."
+                    : configuration
+                      ? "Leave blank to keep existing credentials."
+                      : "Credentials are required for new configurations."
                 }
               >
                 <CredentialFields
+                  credentialsOptional={provider.credentialsOptional}
                   errors={form.formState.errors}
                   hasStoredCredentials={hasConfiguration}
                   provider={providerType}

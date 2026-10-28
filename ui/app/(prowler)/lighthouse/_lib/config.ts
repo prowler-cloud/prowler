@@ -66,9 +66,16 @@ export function getFormDefaults(
   };
 }
 
+export interface LighthouseV2ProviderCapabilities {
+  // The API accepts this provider without credentials (see
+  // `LighthouseV2SupportedProvider.credentialsOptional`).
+  credentialsOptional?: boolean;
+}
+
 export function buildLighthouseV2ConfigFormSchema(
   provider: LighthouseV2ProviderType,
   hasConfiguration: boolean,
+  { credentialsOptional = false }: LighthouseV2ProviderCapabilities = {},
 ) {
   return lighthouseV2ConfigFormSchemaBase.superRefine((data, ctx) => {
     const apiKey = data.apiKey.trim();
@@ -110,6 +117,39 @@ export function buildLighthouseV2ConfigFormSchema(
 
     if (provider !== LIGHTHOUSE_V2_PROVIDER_TYPE.BEDROCK) return;
 
+    if (credentialsOptional) {
+      // The installation's own role: a region alone is enough, and keys,
+      // when given, still have to come as a pair.
+      const accessKeyId = data.awsAccessKeyId.trim();
+      const secretAccessKey = data.awsSecretAccessKey.trim();
+      if (accessKeyId && !secretAccessKey) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "AWS secret access key is required with an access key ID.",
+          path: ["awsSecretAccessKey"],
+        });
+      }
+      if (secretAccessKey && !accessKeyId) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "AWS access key ID is required with a secret access key.",
+          path: ["awsAccessKeyId"],
+        });
+      }
+      const changesCredentials = Boolean(accessKeyId || secretAccessKey);
+      if (
+        (!hasConfiguration || changesCredentials) &&
+        !data.awsRegionName.trim()
+      ) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "AWS region is required.",
+          path: ["awsRegionName"],
+        });
+      }
+      return;
+    }
+
     const hasAnyBedrockCredential =
       Boolean(data.awsAccessKeyId.trim()) ||
       Boolean(data.awsSecretAccessKey.trim()) ||
@@ -147,6 +187,7 @@ export function buildCredentialPayload(
   provider: LighthouseV2ProviderType,
   values: LighthouseV2ConfigFormValues,
   hasConfiguration: boolean,
+  { credentialsOptional = false }: LighthouseV2ProviderCapabilities = {},
 ): LighthouseV2Credentials | undefined {
   if (provider === LIGHTHOUSE_V2_PROVIDER_TYPE.BEDROCK) {
     const hasBedrockCredentials =
@@ -155,6 +196,16 @@ export function buildCredentialPayload(
       Boolean(values.awsRegionName.trim());
 
     if (hasConfiguration && !hasBedrockCredentials) return undefined;
+
+    // No keys: the installation's own role, so the region alone. Empty key
+    // strings are left out rather than sent.
+    if (
+      credentialsOptional &&
+      !values.awsAccessKeyId.trim() &&
+      !values.awsSecretAccessKey.trim()
+    ) {
+      return { aws_region_name: values.awsRegionName.trim() };
+    }
 
     return {
       aws_access_key_id: values.awsAccessKeyId.trim(),
