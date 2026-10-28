@@ -94,7 +94,7 @@ describe("IssuesTable", () => {
 
     // Then
     expect(
-      within(row).getByText("The internet → Data exposure"),
+      within(row).getByText("The internet → Data exposure · aws_public_bucket"),
     ).toBeInTheDocument();
     expect(within(row).getByText("High")).toBeInTheDocument();
     const legs = within(row).getByRole("list", { name: "Attack path legs" });
@@ -119,13 +119,21 @@ describe("IssuesTable", () => {
     // When
     await user.click(screen.getByRole("button", { name: "Public bucket" }));
 
-    // Then
+    // Then: the assessment tab leads, the full page stays one click away
     const panel = screen.getByRole("region", { name: "Public bucket" });
-    expect(within(panel).getByText("Restrict access")).toBeInTheDocument();
+    expect(
+      within(panel).getByRole("tab", { name: "Exploitability" }),
+    ).toHaveAttribute("aria-selected", "true");
     expect(within(panel).getByText("Block Public Access off")).toBeVisible();
     expect(
       within(panel).getByRole("link", { name: "Open the full path" }),
     ).toHaveAttribute("href", "/issues/issue-1");
+
+    // When
+    await user.click(within(panel).getByRole("tab", { name: "Remediation" }));
+
+    // Then
+    expect(within(panel).getByText("Restrict access")).toBeVisible();
     expect(
       within(panel).getByRole("link", {
         name: "Open this scan's failed findings",
@@ -134,6 +142,14 @@ describe("IssuesTable", () => {
       "href",
       "/findings?filter%5Bscan__in%5D=scan-1&filter%5Bstatus__in%5D=FAIL",
     );
+
+    // When
+    await user.click(within(panel).getByRole("tab", { name: "Triage" }));
+
+    // Then
+    expect(
+      within(panel).getByRole("textbox", { name: "Triage note" }),
+    ).toBeInTheDocument();
 
     // When
     await user.click(screen.getByRole("button", { name: "Close panel" }));

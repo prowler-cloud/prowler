@@ -263,7 +263,9 @@ describe("Issues responsive layout", () => {
         .element(screen.getByRole("button", { name: "Remove Pattern filter" }))
         .toBeVisible();
       await expect
-        .element(screen.getByText("The internet → Data exposure"))
+        .element(
+          screen.getByText("The internet → Data exposure · aws_public_bucket"),
+        )
         .toBeVisible();
       await expect
         .element(screen.getByRole("region", { name: "Affected resources" }))

@@ -4,6 +4,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { createContext, useContext, useState } from "react";
 
 import { IssuePanel } from "@/components/issues/issue-panel";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/shadcn";
 import { Badge } from "@/components/shadcn/badge/badge";
 import { EntityInfo } from "@/components/shadcn/entities";
 import { DataTable, DataTableColumnHeader } from "@/components/shadcn/table";
@@ -36,23 +37,24 @@ function IssueCell({ issue }: { issue: IssueRow }) {
   const open = useContext(OpenIssueContext);
   const { title, pattern } = issue.attributes;
   const path = attackPathLabel(issue.attributes);
+  // Single line like the finding groups title: ellipsis past the max width,
+  // the full title in the tooltip.
   return (
-    <div className="flex max-w-[420px] min-w-60 flex-col gap-1">
-      <button
-        type="button"
-        onClick={() => open(issue.id)}
-        className="text-text-neutral-primary focus-visible:ring-ring/50 self-start rounded-sm text-left text-sm font-medium break-words hover:underline focus-visible:ring-2 focus-visible:outline-none"
-      >
-        {title}
-      </button>
-      <p className="text-text-neutral-tertiary flex flex-wrap items-center gap-x-1.5 text-xs">
-        {path && (
-          <>
-            <span className="text-text-neutral-secondary">{path}</span>
-            <span aria-hidden="true">·</span>
-          </>
-        )}
-        <span className="break-all">{pattern}</span>
+    <div className="flex max-w-[500px] min-w-[120px] flex-col gap-0.5">
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            type="button"
+            onClick={() => open(issue.id)}
+            className="text-text-neutral-primary hover:text-button-tertiary block cursor-pointer truncate border-none bg-transparent p-0 text-left text-sm hover:underline"
+          >
+            {title}
+          </button>
+        </TooltipTrigger>
+        <TooltipContent side="top">{title}</TooltipContent>
+      </Tooltip>
+      <p className="text-text-neutral-tertiary truncate text-xs">
+        {path ? `${path} · ${pattern}` : pattern}
       </p>
     </div>
   );
@@ -95,14 +97,22 @@ const columns: ColumnDef<IssueRow>[] = [
           if (!leg) return null;
           const label = `${LEG_LABELS[name]}: ${LEG_STATE_LABELS[leg.state]}`;
           return (
-            <li key={name} aria-label={label} title={label}>
-              <Badge
-                variant={legBadgeVariant(name, leg.state)}
-                size="sm"
-                aria-hidden="true"
-              >
-                {LEG_LETTERS[name]}
-              </Badge>
+            <li key={name} aria-label={label}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Badge
+                    variant={legBadgeVariant(name, leg.state)}
+                    size="sm"
+                    aria-hidden="true"
+                  >
+                    {LEG_LETTERS[name]}
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-xs">
+                  <p className="font-medium">{label}</p>
+                  <p>{leg.text}</p>
+                </TooltipContent>
+              </Tooltip>
             </li>
           );
         })}
@@ -120,10 +130,12 @@ const columns: ColumnDef<IssueRow>[] = [
     id: "provider",
     header: "Account",
     cell: ({ row }) => (
-      <EntityInfo
-        cloudProvider={row.original.attributes.cloud}
-        entityAlias={row.original.attributes.account}
-      />
+      <div className="max-w-[240px]">
+        <EntityInfo
+          cloudProvider={row.original.attributes.cloud}
+          entityAlias={row.original.attributes.account}
+        />
+      </div>
     ),
   },
   {
