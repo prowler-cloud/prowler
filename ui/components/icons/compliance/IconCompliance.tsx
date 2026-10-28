@@ -18,6 +18,7 @@ import HIPAALogo from "./hipaa.svg";
 import ISOLogo from "./iso-27001.svg";
 import KISALogo from "./kisa.svg";
 import MITRELogo from "./mitre-attack.svg";
+import NATOLogo from "./nato.svg";
 import NIS2Logo from "./nis2.svg";
 import NISTLogo from "./nist.svg";
 import OktaLogo from "./okta.svg";
@@ -87,6 +88,9 @@ const COMPLIANCE_LOGOS = [
   // The compliance_id is `dora_2022_2554`; the `dora` keyword still matches
   // it via `includes`, with no provider suffix.
   ["dora", DORALogo],
+  // Matches the id `nato_cloud_directive_rev1` and the framework
+  // `NATO-Cloud-Directive` that the cards pass.
+  ["nato", NATOLogo],
   ["secnumcloud", ANSSILogo],
   ["okta", OktaLogo],
   ["aws", AWSLogo],

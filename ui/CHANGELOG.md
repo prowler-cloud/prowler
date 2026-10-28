@@ -4,6 +4,26 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [1.46.0] (Prowler v5.46.0)
+
+### 🚀 Added
+
+- Issues page and overview cards for Cloud deployments, with verdict filters, accessible issue details, and scoped finding evidence [(#13068)](https://github.com/prowler-cloud/prowler/pull/13068)
+- Outlined error badge variant with a visible border on error-colored surfaces [(#13111)](https://github.com/prowler-cloud/prowler/pull/13111)
+
+### 🔄 Changed
+
+- "Launch an initial scan now" is ticked by default on the provider and organization setup launch steps, so saving a schedule also runs a first scan unless the box is unticked [(#13104)](https://github.com/prowler-cloud/prowler/pull/13104)
+- SAML SSO integration card on the profile page is shown to roles with the Manage Account permission, matching the API requirement [(#13121)](https://github.com/prowler-cloud/prowler/pull/13121)
+- Default `php_latest_version` in the scan configuration template raised from `8.2` to `8.5` [(#13128)](https://github.com/prowler-cloud/prowler/pull/13128)
+
+### 🔐 Security
+
+- Node.js from 24.18.1 to 24.22.1 LTS in the UI container image and `.nvmrc`, patching the eight CVEs of the October 2026 security release that affect the 24.x line, including the Brotli decoder remote code execution (CVE-2026-111497); the base image moves to Alpine 3.24, so the targeted `libcrypto3` / `libssl3` upgrade is no longer needed [(#13126)](https://github.com/prowler-cloud/prowler/pull/13126)
+- Next.js from 16.3.8 to 16.4.1, `@sentry/nextjs` from 10.65.0 to 10.75.2 and the transitive DOMPurify pin to 3.4.17, closing four critical advisories: two unauthenticated remote code executions in Next.js (Image Optimization with SVG files, GHSA-2464-fhr4-w9xw; `use cache` functions returning typed arrays, GHSA-673q-mjm6-r5xr), the Sentry middleware bypass through the tunnel route (GHSA-mchm-gjx6-7h55) and the DOMPurify `SAFE_FOR_TEMPLATES` bypass (GHSA-cg2g-xh64-v4q7) [(#13135)](https://github.com/prowler-cloud/prowler/pull/13135)
+
+---
+
 ## [1.45.0] (Prowler v5.45.0)
 
 ### 🚀 Added

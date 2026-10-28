@@ -29,17 +29,13 @@ import {
 } from "@/app/(prowler)/lighthouse/_types";
 import { LighthouseCurrentContextBadge } from "@/components/lighthouse/context-chip";
 import { Card } from "@/components/shadcn";
-import {
-  Combobox,
-  type ComboboxGroup,
-} from "@/components/shadcn/combobox/combobox";
+import { type ComboboxGroup } from "@/components/shadcn/combobox/combobox";
 import { Skeleton } from "@/components/shadcn/skeleton/skeleton";
 import { useLighthouseCurrentContext } from "@/hooks/use-lighthouse-context";
 import { useMountEffect } from "@/hooks/use-mount-effect";
 
-import { ProviderIcon } from "../config/provider-icon";
-
 import { ChatComposerPanel } from "./composer";
+import { CurrentModelDisplay } from "./current-model-display";
 import { ChatEmptyState } from "./empty-state";
 import { useLighthouseChatStore } from "./lighthouse-chat-store-provider";
 import {
@@ -47,6 +43,7 @@ import {
   type LighthouseFeedbackSurvey,
 } from "./lighthouse-feedback-survey";
 import { MessageBubble } from "./message-bubble";
+import { ModelSelect } from "./model-select";
 import { SkillComposerPill } from "./skill-composer-pill";
 import { SkillRunProgress } from "./skill-run-progress";
 import { StreamingAssistantMessage } from "./streaming-message";
@@ -183,19 +180,12 @@ export function LighthouseV2ChatView({
         modelName={selectedModelLabel}
       />
     ) : (
-      <div className="min-w-0 flex-1 sm:max-w-48">
-        <Combobox
-          aria-label="Model"
-          value={selectedModelValue}
-          onValueChange={handleModelValueChange}
-          groups={modelSelectorGroups}
-          disabled={modelSelectorGroups.length === 0 || modelPreferenceSaving}
-          placeholder="Select model"
-          searchPlaceholder="Search models..."
-          emptyMessage="No models found."
-          size="sm"
-        />
-      </div>
+      <ModelSelect
+        value={selectedModelValue}
+        onValueChange={handleModelValueChange}
+        groups={modelSelectorGroups}
+        isSaving={modelPreferenceSaving}
+      />
     ),
     selectedConfigurationConnected: selectedConfiguration?.connected === true,
     onInputChange: setInput,
@@ -319,36 +309,6 @@ function SessionLoadingState() {
       <Skeleton className="h-24 w-full" />
       <Skeleton className="h-10 w-1/2 self-end" />
       <Skeleton className="h-16 w-full" />
-    </div>
-  );
-}
-
-interface CurrentModelDisplayProps {
-  provider: LighthouseV2ProviderType;
-  providerName: string;
-  modelName: string;
-}
-
-function CurrentModelDisplay({
-  provider,
-  providerName,
-  modelName,
-}: CurrentModelDisplayProps) {
-  return (
-    <div
-      aria-label={`Current model: ${providerName} ${modelName}`}
-      className="border-border-neutral-secondary bg-bg-neutral-secondary flex h-8 max-w-48 min-w-0 items-center gap-2 rounded-lg border px-2.5 text-sm"
-    >
-      <ProviderIcon
-        provider={provider}
-        className="text-text-neutral-secondary size-3.5 shrink-0"
-      />
-      <span className="text-text-neutral-tertiary shrink-0">
-        {providerName}
-      </span>
-      <span className="text-text-neutral-primary min-w-0 truncate font-medium">
-        {modelName}
-      </span>
     </div>
   );
 }

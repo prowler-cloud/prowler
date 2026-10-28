@@ -93,6 +93,9 @@ describe("IssuesTable", () => {
       screen.getByRole("button", { name: "Collapse Public bucket" }),
     ).toHaveAttribute("aria-expanded", "true");
     expect(await screen.findByText("Restrict access")).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Open the full path" }),
+    ).toHaveAttribute("href", "/issues/issue-1");
     // When
     await user.keyboard(" ");
     // Then

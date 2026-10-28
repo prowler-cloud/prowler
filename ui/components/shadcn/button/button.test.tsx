@@ -47,12 +47,12 @@ describe("Button", () => {
 
   it("supports extra-small icon buttons", () => {
     render(
-      <Button size="icon-xs" aria-label="Open tour">
-        Open tour
+      <Button size="icon-xs" aria-label="Open menu">
+        Open menu
       </Button>,
     );
 
-    expect(screen.getByRole("button", { name: "Open tour" })).toHaveClass(
+    expect(screen.getByRole("button", { name: "Open menu" })).toHaveClass(
       "size-7",
     );
   });

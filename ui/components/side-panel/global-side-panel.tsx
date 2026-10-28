@@ -22,6 +22,7 @@ import { isLighthouseChatRoute } from "@/lib/lighthouse-routes";
 import {
   clampSidePanelWidth,
   getSidePanelMaxWidth,
+  SIDE_PANEL_ELEMENT_ID,
   SIDE_PANEL_MIN_WIDTH,
   SIDE_PANEL_PUSH_MEDIA_QUERY,
 } from "@/lib/ui-layout";
@@ -115,6 +116,7 @@ export function GlobalSidePanel() {
 
   return (
     <SidePanel
+      id={SIDE_PANEL_ELEMENT_ID}
       open={isOpen}
       aria-label="Side panel"
       data-testid="global-side-panel"

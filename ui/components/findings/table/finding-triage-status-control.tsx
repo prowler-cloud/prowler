@@ -6,6 +6,8 @@ import { Button } from "@/components/shadcn";
 import { Modal } from "@/components/shadcn/modal";
 import { useToast } from "@/components/shadcn/toast/use-toast";
 import { TriageStatusPicker } from "@/components/shared/triage/triage-status-picker";
+import { usageLimitToastAction } from "@/components/shared/usage-limit-message";
+import { USAGE_LIMIT_MESSAGE, UsageLimitError } from "@/lib/action-errors";
 import { FINDING_STATUS } from "@/types/components";
 import {
   FINDING_TRIAGE_MANUAL_STATUS_VALUES,
@@ -93,11 +95,13 @@ export function FindingTriageStatusControl(
         previousStatus: triage.status,
         isMuted: triage.isMuted,
       });
-    } catch {
+    } catch (error) {
+      const isUsageLimited = error instanceof UsageLimitError;
       toast({
         variant: "destructive",
         title: "Could not update triage status.",
-        description: "Please try again.",
+        description: isUsageLimited ? USAGE_LIMIT_MESSAGE : "Please try again.",
+        ...(isUsageLimited && { action: usageLimitToastAction() }),
       });
     } finally {
       setIsTableUpdating(false);

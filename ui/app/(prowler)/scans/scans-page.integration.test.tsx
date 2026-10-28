@@ -7,6 +7,7 @@ import {
   ingestionRejectionFixture,
   partiallyProcessedIngestionFixture,
 } from "@/__tests__/msw/handlers/ingestions.fixtures";
+import { PRICING_URL } from "@/lib/external-urls";
 
 import { ScansPageHarness } from "./scans-page.harness";
 
@@ -111,6 +112,36 @@ describe("Scans page import findings", () => {
       expect(harness.ingestionPostCount).toBe(2);
     });
   }
+
+  it("offers the plans when the subscription refuses the upload", async () => {
+    const rejectionFixture = ingestionRejectionFixture(
+      INGESTION_REJECTION.SUBSCRIPTION_REQUIRED,
+    );
+    const harness = new ScansPageHarness(ingestionFixture());
+    await harness.mount({ uploadRejection: rejectionFixture });
+    await harness.openImportFindings();
+    await harness.selectFile(new File(["[]"], "findings.ocsf.json"));
+    await harness.submitImport();
+
+    await harness.waitForUploadError(new RegExp(rejectionFixture.message, "i"));
+    const plansLink = harness.plansLink();
+    expect(plansLink?.href).toBe(PRICING_URL);
+    expect(plansLink?.target).toBe("_blank");
+  });
+
+  it("offers no plans when the upload fails for another reason", async () => {
+    const rejectionFixture = ingestionRejectionFixture(
+      INGESTION_REJECTION.PERMISSION_DENIED,
+    );
+    const harness = new ScansPageHarness(ingestionFixture());
+    await harness.mount({ uploadRejection: rejectionFixture });
+    await harness.openImportFindings();
+    await harness.selectFile(new File(["[]"], "findings.ocsf.json"));
+    await harness.submitImport();
+
+    await harness.waitForUploadError(new RegExp(rejectionFixture.message, "i"));
+    expect(harness.plansLink()).toBeNull();
+  });
 
   it("continues tracking an accepted import while the dialog is closed", async () => {
     const harness = new ScansPageHarness(ingestionFixture());

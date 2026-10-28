@@ -7,11 +7,7 @@ import { FindingsFiltersSkeleton } from "./_components/findings-filters-skeleton
 
 export default function FindingsLoading() {
   return (
-    <ContentLayout
-      title="Findings"
-      icon={<Tag />}
-      onboardingAction={{ flowId: "explore-findings" }}
-    >
+    <ContentLayout title="Findings" icon={<Tag />}>
       <div className="mb-6">
         <FindingsFiltersSkeleton />
       </div>

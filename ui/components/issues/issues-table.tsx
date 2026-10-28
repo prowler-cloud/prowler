@@ -2,6 +2,7 @@
 
 import { ColumnDef, Row } from "@tanstack/react-table";
 import { ChevronDown, ChevronRight } from "lucide-react";
+import Link from "next/link";
 import { createContext, useContext, useState } from "react";
 
 import { IssueDetail } from "@/components/issues/issue-detail";
@@ -138,6 +139,11 @@ export const IssuesTable = ({
             id={`issue-${row.original.id}`}
             className="sticky left-0 w-[calc(100cqw-4rem)] min-w-0"
           >
+            <Button asChild variant="link" size="link-sm">
+              <Link href={`/issues/${row.original.id}`}>
+                Open the full path
+              </Link>
+            </Button>
             <IssueDetail
               key={`${row.original.id}-${row.original.attributes.updated_at}`}
               id={row.original.id}
