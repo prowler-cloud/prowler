@@ -16,6 +16,9 @@ from prowler.config.schema.validators import make_dotted_version_validator
 # MAJOR.MINOR notation.
 _validate_dotted_version = make_dotted_version_validator(1, 2)
 
+# AKS reports "X.Y" minor versions, matching the EKS baseline in the AWS schema.
+_validate_aks_minor = make_dotted_version_validator(2, 2)
+
 
 class AzureProviderConfig(ProviderConfigBase):
     # --- Network ---------------------------------------------------------
@@ -23,6 +26,14 @@ class AzureProviderConfig(ProviderConfigBase):
         default=None,
         max_length=512,
         description="API key for Shodan lookups on Azure public IPs.",
+    )
+
+    # --- AKS -------------------------------------------------------------
+    aks_cluster_oldest_version_supported: Annotated[
+        Optional[str], AfterValidator(_validate_aks_minor)
+    ] = Field(
+        default=None,
+        description='Oldest supported AKS minor version, expected as "X.Y".',
     )
 
     # --- Defender --------------------------------------------------------
