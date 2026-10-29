@@ -4,6 +4,14 @@ All notable changes to the **Prowler API** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [1.48.0] (Prowler v5.47.0)
+
+### 🔐 Security
+
+- pymongo to 4.18.3, dnspython to 2.9.0 and oauthlib to 4.0.0 in the API container image, with django-allauth from 65.15.0 to 65.19.7 because earlier releases cap oauthlib below 4, patching the BSON decoding and DNS compression pointer denial of service advisories and the OAuth device flow token disclosure [(#13185)](https://github.com/prowler-cloud/prowler/pull/13185)
+
+---
+
 ## [1.47.0] (Prowler v5.46.0)
 
 ### 🐞 Fixed

@@ -1,1 +1,0 @@
-Add provider wizard connects every provider in one step, saving the account and credentials and testing the connection together, with teammate invitations for every provider and Lighthouse AI help beside the steps

@@ -4,6 +4,23 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [5.47.0] (Prowler v5.47.0)
+
+### 🚀 Added
+
+- `iam_subscription_owners_between_2_and_3` check for Azure provider, verifying each subscription has between 2 and 3 principals with the Owner role, including owners inherited from management groups, mapped to CIS 5.0 and 6.0 [(#13145)](https://github.com/prowler-cloud/prowler/pull/13145)
+- `network_application_gateway_waf_enabled` and `network_application_gateway_http2_enabled` checks for Azure provider, with Application Gateway and WAF policy collection in the network service, mapped to CIS 5.0 and 6.0 [(#13160)](https://github.com/prowler-cloud/prowler/pull/13160)
+
+### 🐞 Fixed
+
+- Security group internet exposure checks now treat CIDRs in one ingress rule that together cover 0.0.0.0/0 or ::/0 as open to the internet [(#13191)](https://github.com/prowler-cloud/prowler/pull/13191)
+
+### 🔐 Security
+
+- pymongo to 4.18.3, dnspython to 2.9.0 and oauthlib to 4.0.0 in the SDK, patching the BSON decoding and DNS compression pointer denial of service advisories and the OAuth device flow token disclosure; dnspython stays on 2.8.0 for Python 3.10, which 2.9.0 no longer supports [(#13185)](https://github.com/prowler-cloud/prowler/pull/13185)
+
+---
+
 ## [5.46.0] (Prowler v5.46.0)
 
 ### 🚀 Added
