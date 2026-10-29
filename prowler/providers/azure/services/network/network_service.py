@@ -1,6 +1,6 @@
 import re
 from dataclasses import dataclass, field
-from typing import Callable, Iterable, List, Optional
+from typing import Callable, Iterable, List, Optional, Union
 
 from azure.core.exceptions import ResourceNotFoundError
 from azure.mgmt.network import NetworkManagementClient
@@ -430,7 +430,9 @@ class SecurityRule:
     destination_port_ranges: List[str] = field(default_factory=list)
 
 
-def security_rule_allows_port(rule, port: int) -> bool:
+def security_rule_allows_port(
+    rule: Union[SecurityRule, network_models.SecurityRule], port: int
+) -> bool:
     """Return whether a security rule's destination ports include port.
 
     Azure keeps a single port, range or "*" in destination_port_range, and
