@@ -172,3 +172,64 @@ class Test_IAM_get_role_assignments:
             filter="atScope()"
         )
         assert AZURE_SUBSCRIPTION_ID in result
+
+    def test_get_role_assignments_marks_incomplete_read(self):
+        owner_assignment = MagicMock(
+            id="assignment-1",
+            scope=f"/subscriptions/{AZURE_SUBSCRIPTION_ID}",
+            principal_id="principal-1",
+            principal_type="User",
+            role_definition_id="/providers/Microsoft.Authorization/roleDefinitions/8e3af657-a8ff-443c-a75c-2fe8c4bcb635",
+        )
+        owner_assignment.name = "assignment-1"
+
+        def pages():
+            yield owner_assignment
+            raise Exception("next page failed")
+
+        mock_client = MagicMock()
+        mock_client.role_assignments.list_for_subscription.return_value = pages()
+
+        with (
+            patch(
+                "prowler.providers.azure.services.iam.iam_service.IAM._get_roles",
+                return_value=({}, {}),
+            ),
+            patch(
+                "prowler.providers.azure.services.iam.iam_service.IAM._get_role_assignments",
+                return_value={},
+            ),
+        ):
+            iam = IAM(set_mocked_azure_provider())
+
+        iam.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+        iam.resource_groups = None
+
+        result = iam._get_role_assignments()
+
+        assert list(result[AZURE_SUBSCRIPTION_ID]) == ["assignment-1"]
+        assert iam.role_assignments_lookup_failed == {AZURE_SUBSCRIPTION_ID}
+
+    def test_get_role_assignments_complete_read_is_not_marked(self):
+        mock_client = MagicMock()
+        mock_client.role_assignments.list_for_subscription.return_value = []
+
+        with (
+            patch(
+                "prowler.providers.azure.services.iam.iam_service.IAM._get_roles",
+                return_value=({}, {}),
+            ),
+            patch(
+                "prowler.providers.azure.services.iam.iam_service.IAM._get_role_assignments",
+                return_value={},
+            ),
+        ):
+            iam = IAM(set_mocked_azure_provider())
+
+        iam.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+        iam.resource_groups = None
+
+        result = iam._get_role_assignments()
+
+        assert result == {AZURE_SUBSCRIPTION_ID: {}}
+        assert iam.role_assignments_lookup_failed == set()
