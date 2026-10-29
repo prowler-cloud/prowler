@@ -155,7 +155,7 @@ class Test_cloudwatch_log_metric_filter_unauthorized_api_calls:
         cloudtrail_client.create_trail(
             Name="test_trail",
             S3BucketName="test",
-            CloudWatchLogsLogGroupArn=f"arn:aws:logs:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:log-group:/log-group/test:*",
+            CloudWatchLogsLogGroupArn=f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:log-group:/log-group/test:*",
         )
 
         from prowler.providers.aws.services.cloudtrail.cloudtrail_service import (
@@ -230,7 +230,7 @@ class Test_cloudwatch_log_metric_filter_unauthorized_api_calls:
         cloudtrail_client.create_trail(
             Name="test_trail",
             S3BucketName="test",
-            CloudWatchLogsLogGroupArn=f"arn:aws:logs:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:log-group:/log-group/test:*",
+            CloudWatchLogsLogGroupArn=f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:log-group:/log-group/test:*",
         )
         logs_client.put_metric_filter(
             logGroupName="/log-group/test",
@@ -317,7 +317,7 @@ class Test_cloudwatch_log_metric_filter_unauthorized_api_calls:
         cloudtrail_client.create_trail(
             Name="test_trail",
             S3BucketName="test",
-            CloudWatchLogsLogGroupArn=f"arn:aws:logs:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:log-group:/log-group/test:*",
+            CloudWatchLogsLogGroupArn=f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:log-group:/log-group/test:*",
         )
         logs_client.put_metric_filter(
             logGroupName="/log-group/test",
@@ -415,7 +415,7 @@ class Test_cloudwatch_log_metric_filter_unauthorized_api_calls:
         cloudtrail_client.create_trail(
             Name="test_trail",
             S3BucketName="test",
-            CloudWatchLogsLogGroupArn=f"arn:aws:logs:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:log-group:/log-group/test:*",
+            CloudWatchLogsLogGroupArn=f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:log-group:/log-group/test:*",
         )
         logs_client.put_metric_filter(
             logGroupName="/log-group/test",
@@ -513,7 +513,7 @@ class Test_cloudwatch_log_metric_filter_unauthorized_api_calls:
         cloudtrail_client.create_trail(
             Name="test_trail",
             S3BucketName="test",
-            CloudWatchLogsLogGroupArn=f"arn:aws:logs:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:log-group:/log-group/test:*",
+            CloudWatchLogsLogGroupArn=f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:log-group:/log-group/test:*",
         )
         logs_client.put_metric_filter(
             logGroupName="/log-group/test",
