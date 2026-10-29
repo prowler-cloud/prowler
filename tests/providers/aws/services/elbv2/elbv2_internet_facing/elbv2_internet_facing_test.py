@@ -114,6 +114,12 @@ class Test_elbv2_internet_facing:
         security_group = ec2.create_security_group(
             GroupName="a-security-group", Description="First One"
         )
+        security_group.authorize_ingress(
+            CidrIp="10.0.0.0/8",
+            FromPort=443,
+            IpProtocol="tcp",
+            ToPort=443,
+        )
         vpc = ec2.create_vpc(CidrBlock="172.28.7.0/24", InstanceTenancy="default")
         subnet1 = ec2.create_subnet(
             VpcId=vpc.id,
@@ -195,8 +201,10 @@ class Test_elbv2_internet_facing:
             GroupId=default_sg_id,
             IpPermissions=[
                 {
-                    "IpProtocol": "-1",
+                    "FromPort": 443,
+                    "IpProtocol": "tcp",
                     "IpRanges": [{"CidrIp": "0.0.0.0/0"}],
+                    "ToPort": 443,
                 }
             ],
         )
