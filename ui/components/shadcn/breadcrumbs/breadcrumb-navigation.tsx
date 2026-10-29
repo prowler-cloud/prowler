@@ -158,8 +158,10 @@ export function BreadcrumbNavigation({
   return (
     <div className={cn(className, "w-fit max-w-full md:w-full")}>
       <nav aria-label="Breadcrumb">
-        {/* One line: earlier crumbs keep their width, the last one truncates. */}
-        <ol className="flex min-w-0 items-center">
+        {/* From sm up, one line: earlier crumbs keep their width and the
+            last one truncates. Below sm crumbs wrap, so a long trail never
+            pushes the header controls off a phone screen. */}
+        <ol className="flex min-w-0 flex-wrap items-center sm:flex-nowrap">
           {breadcrumbItems.map((breadcrumb, index) => (
             <li
               key={breadcrumb.path || index}

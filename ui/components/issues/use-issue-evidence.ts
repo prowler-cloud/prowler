@@ -75,5 +75,8 @@ export const useIssueEvidence = (
     setAttempt((value) => value + 1);
   };
 
-  return { state, retry };
+  /** Reloads in the background: what is shown stays until the answer lands. */
+  const refresh = () => setAttempt((value) => value + 1);
+
+  return { state, retry, refresh };
 };

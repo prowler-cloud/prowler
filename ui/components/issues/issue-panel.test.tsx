@@ -348,6 +348,33 @@ describe("IssuePanel", () => {
     );
   });
 
+  it("refreshes the findings behind the tabs when a finding closes", async () => {
+    // Given: the finding is triaged while open in the panel
+    getIssue.mockResolvedValue(detailWith(["bucket"], ["f-1"]));
+    getIssueFindings
+      .mockResolvedValueOnce([{ ...finding, triageStatus: "open" }])
+      .mockResolvedValueOnce([{ ...finding, triageStatus: "risk_accepted" }]);
+    getFindingById.mockResolvedValue({
+      data: { id: "finding-1", attributes: {}, relationships: {} },
+    });
+    renderPanel();
+    await openTab("Findings");
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Bucket is public" }),
+    );
+    await screen.findByText("Detail of finding-1");
+
+    // When
+    await userEvent.click(screen.getByText("Issue details"));
+
+    // Then: the row shows the new triage without dropping to a loading state
+    expect(
+      screen.getByRole("button", { name: "Bucket is public" }),
+    ).toBeInTheDocument();
+    expect(await screen.findByText("Risk Accepted")).toBeInTheDocument();
+    expect(screen.queryByText("Loading issue details…")).toBeNull();
+  });
+
   it("opens a finding clicked on the attack path in place", async () => {
     // Given
     getIssue.mockResolvedValue(detailWith(["bucket"], ["f-1"]));

@@ -107,11 +107,11 @@ const IssuePanelContent = ({
   const verdict = VERDICTS.find((item) => item.id === attributes.verdict);
   const scanId = issue.relationships?.scan?.data?.id;
   const providerId = issue.relationships?.provider?.data?.id;
-  const { state: evidence, retry } = useIssueEvidence(
-    issue.id,
-    scanId,
-    providerId,
-  );
+  const {
+    state: evidence,
+    retry,
+    refresh,
+  } = useIssueEvidence(issue.id, scanId, providerId);
   // Controlled so closing a finding returns to the tab it was opened from.
   const [tab, setTab] = useState<IssuePanelTab>(ISSUE_PANEL_TAB.EXPLOITABILITY);
   const [openFindingId, setOpenFindingId] = useState<string | null>(null);
@@ -144,6 +144,8 @@ const IssuePanelContent = ({
   const closeFinding = () => {
     setOpenFindingId(null);
     finding.resetFindingDetails();
+    // The finding may have been triaged or muted while open.
+    refresh();
   };
 
   // A finding opens in place, like a resource's findings do: a second detail
