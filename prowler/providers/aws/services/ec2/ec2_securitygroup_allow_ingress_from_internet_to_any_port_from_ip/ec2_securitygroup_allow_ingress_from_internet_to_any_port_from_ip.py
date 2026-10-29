@@ -41,7 +41,11 @@ class ec2_securitygroup_allow_ingress_from_internet_to_any_port_from_ip(Check):
                             for r in ingress_rule.get("Ipv6Ranges", [])
                         )
                         if has_specific_ip and check_security_group(
-                            ingress_rule, "-1", any_address=False, all_ports=True
+                            ingress_rule,
+                            "-1",
+                            any_address=False,
+                            all_ports=True,
+                            prefix_lists=ec2_client.managed_prefix_lists,
                         ):
                             report.status = "FAIL"
                             report.status_extended = f"Security group {security_group.name} ({security_group.id}) has a port open to a specific public IP address in ingress rule."

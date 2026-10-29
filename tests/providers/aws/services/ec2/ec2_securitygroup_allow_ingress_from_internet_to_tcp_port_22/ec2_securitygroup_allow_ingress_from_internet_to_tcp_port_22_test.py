@@ -1,6 +1,7 @@
 from re import search
 from unittest import mock
 
+import botocore
 from boto3 import client, resource
 from moto import mock_aws
 
@@ -9,6 +10,15 @@ from tests.providers.aws.utils import (
     AWS_REGION_US_EAST_1,
     set_mocked_aws_provider,
 )
+
+make_api_call = botocore.client.BaseClient._make_api_call
+
+
+def mock_make_api_call_prefix_list_entries(self, operation_name, kwarg):
+    # moto does not store the entries of a managed prefix list
+    if operation_name == "GetManagedPrefixListEntries":
+        return {"Entries": [{"Cidr": "0.0.0.0/1"}, {"Cidr": "128.0.0.0/1"}]}
+    return make_api_call(self, operation_name, kwarg)
 
 
 class Test_ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22:
@@ -380,3 +390,75 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22:
                         )
                         assert sg.resource_tags == []
                         assert sg.resource_details == default_sg_name
+
+    @mock.patch(
+        "botocore.client.BaseClient._make_api_call",
+        new=mock_make_api_call_prefix_list_entries,
+    )
+    @mock_aws
+    def test_ec2_non_compliant_sg_prefix_list(self):
+        # Create EC2 Mocked Resources
+        ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
+        ec2_client.create_vpc(CidrBlock="10.0.0.0/16")
+        default_sg = ec2_client.describe_security_groups(GroupNames=["default"])[
+            "SecurityGroups"
+        ][0]
+        default_sg_id = default_sg["GroupId"]
+        default_sg_name = default_sg["GroupName"]
+        prefix_list_id = ec2_client.create_managed_prefix_list(
+            PrefixListName="internet-halves",
+            AddressFamily="IPv4",
+            MaxEntries=5,
+        )["PrefixList"]["PrefixListId"]
+        ec2_client.authorize_security_group_ingress(
+            GroupId=default_sg_id,
+            IpPermissions=[
+                {
+                    "IpProtocol": "tcp",
+                    "FromPort": 22,
+                    "ToPort": 22,
+                    "PrefixListIds": [{"PrefixListId": prefix_list_id}],
+                }
+            ],
+        )
+
+        from prowler.providers.aws.services.ec2.ec2_service import EC2
+        from prowler.providers.aws.services.vpc.vpc_service import VPC
+
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
+        )
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22.ec2_client",
+                new=EC2(aws_provider),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22.vpc_client",
+                new=VPC(aws_provider),
+            ),
+        ):
+            # Test Check
+            from prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22.ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22 import (
+                ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22,
+            )
+
+            check = ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22()
+            result = check.execute()
+
+            # One default sg per region
+            assert len(result) == 3
+            # Search changed sg
+            for sg in result:
+                if sg.resource_id == default_sg_id:
+                    assert sg.status == "FAIL"
+                    assert sg.region == AWS_REGION_US_EAST_1
+                    assert (
+                        sg.status_extended
+                        == f"Security group {default_sg_name} ({default_sg_id}) has SSH port 22 open to the Internet."
+                    )

@@ -27,6 +27,8 @@ class EC2(AWSService):
         self.security_groups = {}
         self.regions_with_sgs = []
         self.__threading_call__(self._describe_security_groups)
+        self.managed_prefix_lists = {}
+        self.__threading_call__(self._describe_managed_prefix_lists)
         self.network_acls = {}
         self.__threading_call__(self._describe_network_acls)
         self.snapshots = []
@@ -172,6 +174,42 @@ class EC2(AWSService):
                         )
                         if sg["GroupName"] != "default":
                             self.regions_with_sgs.append(regional_client.region)
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def _describe_managed_prefix_lists(self, regional_client):
+        try:
+            describe_managed_prefix_lists_paginator = regional_client.get_paginator(
+                "describe_managed_prefix_lists"
+            )
+            for page in describe_managed_prefix_lists_paginator.paginate():
+                for prefix_list in page["PrefixLists"]:
+                    # AWS-managed prefix lists hold AWS service ranges, not the internet
+                    if prefix_list.get("OwnerId") == "AWS":
+                        continue
+                    try:
+                        entries = []
+                        entries_pages = regional_client.get_paginator(
+                            "get_managed_prefix_list_entries"
+                        ).paginate(PrefixListId=prefix_list["PrefixListId"])
+                        for entries_page in entries_pages:
+                            for entry in entries_page["Entries"]:
+                                entries.append(entry["Cidr"])
+                        self.managed_prefix_lists[prefix_list["PrefixListId"]] = (
+                            ManagedPrefixList(
+                                id=prefix_list["PrefixListId"],
+                                arn=prefix_list["PrefixListArn"],
+                                name=prefix_list.get("PrefixListName", ""),
+                                region=regional_client.region,
+                                entries=entries,
+                            )
+                        )
+                    except Exception as error:
+                        logger.error(
+                            f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -842,6 +880,14 @@ class SecurityGroup(BaseModel):
     ingress_rules: list[dict]
     egress_rules: list[dict]
     tags: Optional[list] = []
+
+
+class ManagedPrefixList(BaseModel):
+    id: str
+    arn: str
+    name: str
+    region: str
+    entries: list[str]
 
 
 class NetworkACL(BaseModel):
