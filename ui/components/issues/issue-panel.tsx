@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 
+import { IssueAttackPath } from "@/components/issues/issue-attack-path";
 import { IssueTriage } from "@/components/issues/issue-triage";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/shadcn";
 import { Badge } from "@/components/shadcn/badge/badge";
@@ -38,6 +39,7 @@ export const IssuePanel = ({ issue, open, onOpenChange }: IssuePanelProps) => {
   const { attributes } = issue;
   const verdict = VERDICTS.find((item) => item.id === attributes.verdict);
   const scanId = issue.relationships?.scan?.data?.id;
+  const providerId = issue.relationships?.provider?.data?.id;
 
   return (
     <DetailSidePanel
@@ -78,6 +80,7 @@ export const IssuePanel = ({ issue, open, onOpenChange }: IssuePanelProps) => {
           <div className="mb-4 shrink-0">
             <TabsList>
               <TabsTrigger value="exploitability">Exploitability</TabsTrigger>
+              <TabsTrigger value="attack-path">Attack path</TabsTrigger>
               <TabsTrigger value="remediation">Remediation</TabsTrigger>
               <TabsTrigger value="triage">Triage</TabsTrigger>
             </TabsList>
@@ -122,6 +125,17 @@ export const IssuePanel = ({ issue, open, onOpenChange }: IssuePanelProps) => {
                   );
                 })}
               </ul>
+            </TabsContent>
+
+            {/* Mounted only while selected, so the graph's requests run when
+                someone asks for it. */}
+            <TabsContent value="attack-path">
+              <IssueAttackPath
+                id={issue.id}
+                issue={attributes}
+                scanId={scanId}
+                providerId={providerId}
+              />
             </TabsContent>
 
             <TabsContent value="remediation" className="flex flex-col gap-2">

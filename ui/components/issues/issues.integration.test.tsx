@@ -257,6 +257,17 @@ describe("Issues responsive layout", () => {
     await expect
       .element(screen.getByText("Block Public Access is disabled."))
       .toBeVisible();
+
+    // When: the attack path tab asks for the graph
+    await screen.getByRole("tab", { name: "Attack path" }).click();
+
+    // Then
+    await expect
+      .element(screen.getByRole("region", { name: "Finding evidence" }))
+      .toBeVisible();
+    await expect
+      .element(screen.getByTestId("attack-path-finding-node"))
+      .toBeVisible();
   });
 
   it("resets the Details tab when another row opens", async () => {

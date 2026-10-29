@@ -7,7 +7,10 @@ import type { IssueResponse } from "@/types/issues";
 
 import { IssuesTable } from "./issues-table";
 
-const { push } = vi.hoisted(() => ({ push: vi.fn() }));
+const { push, getIssue } = vi.hoisted(() => ({
+  push: vi.fn(),
+  getIssue: vi.fn(),
+}));
 vi.mock("next/navigation", () => ({
   usePathname: () => "/issues",
   useRouter: () => ({ push, refresh: vi.fn() }),
@@ -15,7 +18,25 @@ vi.mock("next/navigation", () => ({
 }));
 vi.mock("@/lib", () => ({ getPaginationInfo: vi.fn() }));
 vi.mock("@/contexts", () => ({ useFilterTransitionOptional: () => null }));
-vi.mock("@/actions/issues", () => ({ getIssueNotes: async () => [] }));
+vi.mock("@/actions/issues", () => ({
+  getIssue,
+  getIssueFindings: async () => [],
+  getIssueNotes: async () => [],
+}));
+vi.mock("@/components/issues/issue-graph", () => ({
+  IssueGraph: ({
+    resourceUids,
+    readOnly,
+  }: {
+    resourceUids: string[];
+    readOnly?: boolean;
+  }) => (
+    <p>
+      Graph of {resourceUids.join(", ")}
+      {readOnly ? " (read-only)" : ""}
+    </p>
+  ),
+}));
 // The real panel portals into the app shell's side panel, absent here.
 vi.mock("@/components/side-panel/detail-side-panel", () => ({
   DetailSidePanel: ({
@@ -142,6 +163,21 @@ describe("IssuesTable", () => {
       "href",
       "/findings?filter%5Bscan__in%5D=scan-1&filter%5Bstatus__in%5D=FAIL",
     );
+
+    // When
+    getIssue.mockResolvedValue({
+      data: {
+        ...issue,
+        attributes: { ...issue.attributes, resource_uids: ["bucket"] },
+      },
+    });
+    await user.click(within(panel).getByRole("tab", { name: "Attack path" }));
+
+    // Then: the graph loads on demand and leaves finding drill-down to the page
+    expect(
+      await within(panel).findByText("Graph of bucket (read-only)"),
+    ).toBeInTheDocument();
+    expect(getIssue).toHaveBeenCalledWith("issue-1");
 
     // When
     await user.click(within(panel).getByRole("tab", { name: "Triage" }));
