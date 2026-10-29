@@ -26,7 +26,7 @@ dependencies = [
   "celery (==5.6.2)",
   "dj-rest-auth[with_social,jwt] (==7.0.1)",
   "django (==5.2.17)",
-  "django-allauth[saml] (==65.15.0)",
+  "django-allauth[saml] (==65.19.7)",
   "django-celery-beat (==2.9.0)",
   "django-celery-results (==2.6.0)",
   "django-cors-headers==4.4.0",
@@ -71,7 +71,7 @@ name = "prowler-api"
 package-mode = false
 # Needed for the SDK compatibility
 requires-python = ">=3.11,<3.13"
-version = "1.47.0"
+version = "1.48.0"
 
 # Shared ruff baseline (kept in sync with mcp_server/pyproject.toml).
 # target-version tracks this project's lowest supported Python.
@@ -223,7 +223,7 @@ constraint-dependencies = [
   "distro==1.9.0",
   "dj-rest-auth==7.0.1",
   "django==5.2.17",
-  "django-allauth==65.15.0",
+  "django-allauth==65.19.7",
   "django-celery-beat==2.9.0",
   "django-celery-results==2.6.0",
   "django-cors-headers==4.4.0",
@@ -237,7 +237,7 @@ constraint-dependencies = [
   "djangorestframework==3.18.3",
   "djangorestframework-jsonapi==7.0.2",
   "djangorestframework-simplejwt==5.5.1",
-  "dnspython==2.8.0",
+  "dnspython==2.9.0",
   "docker==7.1.0",
   "dogpile-cache==1.5.0",
   "dparse==0.6.4",
@@ -337,7 +337,7 @@ constraint-dependencies = [
   "nest-asyncio==1.6.0",
   "nltk==3.9.4",
   "numpy==2.2.6",
-  "oauthlib==3.3.1",
+  "oauthlib==4.0.0",
   "oci==2.184.1",
   "openai==1.109.1",
   "openstacksdk==4.2.0",
@@ -485,7 +485,7 @@ override-dependencies = [
   "okta==3.4.2",
   # huaweicloudsdkcore (via prowler) pins pymongo==4.15.1 exactly; CVE-2026-96748 and
   # CVE-2026-96749 are fixed in 4.18.2. Only bson types are used, so the override is safe.
-  "pymongo==4.18.2",
+  "pymongo==4.18.3",
   # prowler requires cryptography==50.0.0. Two api-only dependencies still cap it below
   # 49 and cannot move yet: msal, pinned exactly by azure-cli-core (2.83.0 -> 1.35.0b1,
   # 2.89.1 -> 1.36.0, both <49; cartography needs azure-cli-core), and workos 8.3.0

@@ -6,16 +6,21 @@ import { LighthouseSkillsMenuItems } from "@/components/findings/table/lighthous
 import { LighthouseIcon } from "@/components/icons";
 import { ActionDropdown } from "@/components/shadcn/dropdown";
 import {
-  getAllSkills,
   getLaunchableSkills,
+  getSkillsForSurface,
 } from "@/lib/lighthouse/skills/registry";
-import type { LighthouseSkillDefinition } from "@/types/lighthouse-skills";
+import {
+  LIGHTHOUSE_SKILL_SURFACE,
+  type LighthouseSkillDefinition,
+} from "@/types/lighthouse-skills";
 
 // Catalog is static, so the chip split is module-level: launchable skills
 // become direct-launch chips; +N counts what the rail hides (disabled skills
 // today). The menu itself is the app-wide shared skills menu.
-const CHIP_SKILLS = getLaunchableSkills();
-const OVERFLOW_COUNT = getAllSkills().length - CHIP_SKILLS.length;
+const CHIP_SKILLS = getLaunchableSkills(LIGHTHOUSE_SKILL_SURFACE.FINDING);
+const OVERFLOW_COUNT =
+  getSkillsForSurface(LIGHTHOUSE_SKILL_SURFACE.FINDING).length -
+  CHIP_SKILLS.length;
 
 interface LighthouseSkillsRailProps {
   onLaunchSkill: (skill: LighthouseSkillDefinition) => void;

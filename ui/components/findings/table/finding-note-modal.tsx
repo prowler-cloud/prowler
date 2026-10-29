@@ -20,6 +20,8 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
+import { ViewPlansLink } from "@/components/shared/usage-limit-message";
+import { UsageLimitError } from "@/lib/action-errors";
 import { formatLocalDate } from "@/lib/date-utils";
 import { DOCS_URLS } from "@/lib/external-urls";
 import { useCloudUpgradeStore } from "@/store";
@@ -53,6 +55,11 @@ interface FindingNoteModalProps {
   mode?: FindingNoteModalMode;
   initialStatus?: FindingTriageModalStatus;
   onTriageUpdateAction?: FindingTriageUpdateHandler;
+}
+
+interface FindingNoteSubmitError {
+  message: string;
+  isUsageLimited: boolean;
 }
 
 export const FINDING_NOTE_MODAL_MODE = {
@@ -90,7 +97,9 @@ export function FindingNoteModal({
     useState<FindingTriageModalStatus>(initialSelectedStatus);
   const [note, setNote] = useState(triage.noteBody);
   const [manualPassEvidence, setManualPassEvidence] = useState("");
-  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<FindingNoteSubmitError | null>(
+    null,
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const noteTextareaRef = useRef<HTMLTextAreaElement>(null);
   const isManualPassDetails =
@@ -189,11 +198,13 @@ export function FindingNoteModal({
 
       handleOpenChange(false);
     } catch (error) {
-      setSubmitError(
-        error instanceof Error
-          ? error.message
-          : "Could not update the note. Please try again.",
-      );
+      setSubmitError({
+        message:
+          error instanceof Error
+            ? error.message
+            : "Could not update the note. Please try again.",
+        isUsageLimited: error instanceof UsageLimitError,
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -380,7 +391,15 @@ export function FindingNoteModal({
 
         {submitError && (
           <Alert variant="error">
-            <AlertDescription>{submitError}</AlertDescription>
+            <AlertDescription>
+              {submitError.message}
+              {submitError.isUsageLimited && (
+                <>
+                  {" "}
+                  <ViewPlansLink />
+                </>
+              )}
+            </AlertDescription>
           </Alert>
         )}
 

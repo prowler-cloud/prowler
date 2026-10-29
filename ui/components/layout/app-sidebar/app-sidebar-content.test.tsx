@@ -130,10 +130,9 @@ describe("AppSidebarContent", () => {
     render(<AppSidebarContent />);
 
     // Then
-    expect(screen.getByRole("link", { name: /Issues/ })).toHaveAttribute(
-      "href",
-      "/issues",
-    );
+    expect(
+      screen.getByRole("link", { name: /Exploitability issues/ }),
+    ).toHaveAttribute("href", "/issues");
   });
 
   it("hides Issues navigation in Cloud while the feature flag is off", () => {
@@ -143,7 +142,7 @@ describe("AppSidebarContent", () => {
 
     // Then
     expect(
-      screen.queryByRole("link", { name: /Issues/ }),
+      screen.queryByRole("link", { name: /Exploitability issues/ }),
     ).not.toBeInTheDocument();
   });
 

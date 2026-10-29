@@ -1,6 +1,7 @@
 export const CLOUD_UPGRADE_FEATURE = {
   ADVANCED_SCHEDULING: "advanced_scheduling",
   ALERTS: "alerts",
+  API_KEYS: "api_keys",
   AWS_ORGANIZATIONS: "aws_organizations",
   AZURE_ORGANIZATIONS: "azure_organizations",
   CLI_IMPORT: "cli_import",

@@ -1,1 +1,0 @@
-Scan ingestion compares the serialized resource metadata with the stored value and serializes sets in a stable order, so unchanged resources no longer get their metadata, details and updated_at rewritten on every scan

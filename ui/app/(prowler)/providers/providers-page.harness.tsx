@@ -258,6 +258,29 @@ export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
     await this.user.fill(secretInput, secretAccessKey);
   }
 
+  /** Type the project id and service account key on the GCP connect step. */
+  async fillGcpServiceAccount({
+    projectId,
+    serviceAccountKey,
+  }: {
+    projectId: string;
+    serviceAccountKey: string;
+  }): Promise<void> {
+    const projectInput = await this.waitFor(() =>
+      this.inputByName("providerUid"),
+    );
+    await this.user.fill(projectInput, projectId);
+    const keyInput = await this.waitFor(() =>
+      this.q('textarea[name="service_account_key"]'),
+    );
+    await this.user.fill(keyInput, serviceAccountKey);
+  }
+
+  /** Submit the connect step with its provider-specific action label. */
+  async connectWith(label: RegExp): Promise<void> {
+    await this.clickPrimary(label);
+  }
+
   /** Submit the AWS one-step form; waits for its action to become enabled. */
   async connectAccount(): Promise<void> {
     await this.clickPrimary(/Connect account/);
@@ -278,10 +301,20 @@ export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
     await this.user.click(tab);
   }
 
-  /** Select GCP and open the GCP Organization method card (no advance wait). */
+  /** Click the organization tab of the connect step (no advance wait). */
+  async chooseOrganizationTab(name: RegExp): Promise<void> {
+    const tab = await this.waitFor(
+      () => this.byRoleName("tab", name),
+      undefined,
+      "organization tab",
+    );
+    await this.user.click(tab);
+  }
+
+  /** Select GCP and open its organization tab (no advance wait). */
   async chooseGcpOrganizationsMethod(): Promise<void> {
     await this.selectProviderType(/Google Cloud Platform/);
-    await this.chooseMethod(/Add Multiple Projects With GCP Organization/);
+    await this.chooseOrganizationTab(/Full GCP Organization/);
   }
 
   /** Enter the GCP Organization onboarding flow from a fresh wizard. */
@@ -290,12 +323,10 @@ export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
     await this.waitForText(/Organization Details/);
   }
 
-  /** Select Azure and open the Management Group method card (no advance wait). */
+  /** Select Azure and open its Management Group tab (no advance wait). */
   async chooseAzureOrganizationsMethod(): Promise<void> {
     await this.selectProviderType(/Microsoft Azure/);
-    await this.chooseMethod(
-      /Add Multiple Subscriptions With Azure Management Group/,
-    );
+    await this.chooseOrganizationTab(/Azure Management Group/);
   }
 
   /** Enter the Azure Management Group onboarding flow from a fresh wizard. */
@@ -304,9 +335,13 @@ export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
     await this.waitForText(/Organization Details/);
   }
 
-  /** Wait until the wizard shows the selected provider's method fork. */
-  async waitForMethodStep(): Promise<void> {
-    await this.waitForText(/Select a method to add your/);
+  /** Wait until the selected provider's connect step shows its single-account tab. */
+  async waitForConnectStep(): Promise<void> {
+    await this.waitFor(
+      () => this.byRoleName("tab", /^Single /),
+      undefined,
+      "connect step",
+    );
   }
 
   /** Whether the organization setup step is showing (the flow actually started). */

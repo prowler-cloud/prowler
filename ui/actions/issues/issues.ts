@@ -128,7 +128,7 @@ export const getIssueFindings = async (
   }
 };
 
-/** Write one issue triage request; any non-2xx comes back as an error to show. */
+/** Write one issue triage request; any non-2xx comes back as an error to show, with its status. */
 const writeIssueTriage = async (
   path: string,
   method: IssueTriageWriteMethod,
@@ -143,7 +143,9 @@ const writeIssueTriage = async (
     });
     // The list shows each issue's triage status.
     const result = await handleApiResponse(response, "/issues");
-    return result?.error ? { error: result.error } : { success: true };
+    return result?.error
+      ? { error: result.error, status: result.status }
+      : { success: true };
   } catch (error) {
     return handleApiError(error);
   }

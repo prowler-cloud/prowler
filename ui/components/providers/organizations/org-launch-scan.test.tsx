@@ -8,6 +8,7 @@ import {
   ACTION_ERROR_MESSAGES,
   ACTION_ERROR_STATUS,
 } from "@/lib/action-errors";
+import { PRICING_URL } from "@/lib/external-urls";
 import { useOrgSetupStore } from "@/store/organizations/store";
 import {
   SCAN_JOBS_TAB,
@@ -248,6 +249,39 @@ describe("OrgLaunchScan", () => {
       expect(launchOrganizationScansMock).not.toHaveBeenCalled();
       expect(pushMock).not.toHaveBeenCalled();
       expect(onClose).not.toHaveBeenCalled();
+      expect(
+        toastMock.mock.calls[0]?.[0].action.props.children.props.href,
+      ).toBe(PRICING_URL);
+    });
+
+    it("should offer the plans when the schedules saved but the limit refused the initial scans", async () => {
+      // Given
+      const onFooterChange = vi.fn();
+      launchOrganizationScansMock.mockResolvedValue({
+        error: ACTION_ERROR_API_MESSAGES[ACTION_ERROR_STATUS.PAYMENT_REQUIRED],
+        status: ACTION_ERROR_STATUS.PAYMENT_REQUIRED,
+      });
+      render(
+        <OrgLaunchScan
+          onClose={vi.fn()}
+          onBack={vi.fn()}
+          onFooterChange={onFooterChange}
+          capability={SCAN_SCHEDULE_CAPABILITY.ADVANCED}
+        />,
+      );
+
+      // When
+      await screen.findByText("Scan Schedule");
+      await act(async () => {
+        lastFooterConfig(onFooterChange)?.onAction?.();
+      });
+
+      // Then
+      await waitFor(() => expect(toastMock).toHaveBeenCalled());
+      expect(toastMock.mock.calls[0]?.[0].title).toBe("Scan schedules saved");
+      expect(
+        toastMock.mock.calls[0]?.[0].action.props.children.props.href,
+      ).toBe(PRICING_URL);
     });
   });
 
@@ -325,6 +359,37 @@ describe("OrgLaunchScan", () => {
       expect(
         toastMock.mock.calls[0]?.[0].action.props.children.props.href,
       ).toBe(`/scans?tab=${SCAN_JOBS_TAB.ACTIVE}`);
+    });
+
+    it("should offer the plans when the limit refuses the single scan", async () => {
+      // Given
+      const onFooterChange = vi.fn();
+      launchOrganizationScansMock.mockResolvedValue({
+        error: ACTION_ERROR_API_MESSAGES[ACTION_ERROR_STATUS.PAYMENT_REQUIRED],
+        status: ACTION_ERROR_STATUS.PAYMENT_REQUIRED,
+      });
+      render(
+        <OrgLaunchScan
+          onClose={vi.fn()}
+          onBack={vi.fn()}
+          onFooterChange={onFooterChange}
+          capability={SCAN_SCHEDULE_CAPABILITY.MANUAL_ONLY}
+        />,
+      );
+
+      // When
+      await act(async () => {
+        lastFooterConfig(onFooterChange)?.onAction?.();
+      });
+
+      // Then
+      await waitFor(() => expect(toastMock).toHaveBeenCalled());
+      expect(toastMock.mock.calls[0]?.[0].title).toBe(
+        "Unable to launch organization scan",
+      );
+      expect(
+        toastMock.mock.calls[0]?.[0].action.props.children.props.href,
+      ).toBe(PRICING_URL);
     });
   });
 

@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { IssueDetail } from "@/components/issues/issue-detail";
 import { useJiraDispatchStore } from "@/store/jira-dispatch/store";
-import { IssueAttributes } from "@/types/issues";
+import { ISSUE_FINDINGS_LIMIT, IssueAttributes } from "@/types/issues";
 
 const { getIssueMock, getIssueFindingsMock } = vi.hoisted(() => ({
   getIssueMock: vi.fn(),
@@ -19,6 +19,10 @@ vi.mock("@/actions/issues", () => ({
   getIssueNotes: async () => [],
 }));
 
+vi.mock("@/components/issues/issue-compliance", () => ({
+  IssueCompliance: ({ truncated }: { truncated: boolean }) =>
+    truncated ? <p>Compliance from a capped preview</p> : null,
+}));
 vi.mock("@/components/findings/send-to-jira-modal", () => ({
   SendToJiraModal: () => null,
 }));
@@ -103,6 +107,39 @@ describe("IssueDetail", () => {
     ).toBeInTheDocument();
   });
 
+  it("tells the compliance section when the findings preview was capped", async () => {
+    // Given - one more finding than the preview loads
+    getIssueMock.mockResolvedValue({
+      data: {
+        attributes: {
+          resource_uids: [],
+          finding_uids: Array.from(
+            { length: ISSUE_FINDINGS_LIMIT + 1 },
+            (_, i) => `uid-${i}`,
+          ),
+        },
+        relationships: { scan: { data: { type: "scans", id: "scan-1" } } },
+      },
+    });
+    getIssueFindingsMock.mockResolvedValue([
+      {
+        id: "f1",
+        checkId: "check-a",
+        checkTitle: "Check A",
+        severity: "high",
+        resourceUid: "r1",
+      },
+    ]);
+
+    // When
+    render(<IssueDetail id="issue-1" issue={issue} />);
+
+    // Then
+    expect(
+      await screen.findByText("Compliance from a capped preview"),
+    ).toBeInTheDocument();
+  });
+
   it("claims no outcome for an issue that is not one path", async () => {
     getIssueMock.mockResolvedValue({
       data: { attributes: { resource_uids: [] } },
@@ -110,6 +147,22 @@ describe("IssueDetail", () => {
     render(<IssueDetail id="issue-1" issue={issue} />);
 
     expect(screen.queryByText("Outcome")).not.toBeInTheDocument();
+  });
+
+  it("links each affected resource to it on the Resources page", async () => {
+    getIssueMock.mockResolvedValue({
+      data: { attributes: { resource_uids: ["arn:aws:s3:::bucket"] } },
+    });
+    render(<IssueDetail id="issue-1" issue={issue} providerId="provider-1" />);
+
+    expect(
+      await screen.findByRole("link", {
+        name: "Open in Resources: arn:aws:s3:::bucket",
+      }),
+    ).toHaveAttribute(
+      "href",
+      "/resources?filter%5Buid%5D=arn%3Aaws%3As3%3A%3A%3Abucket&filter%5Bprovider_id__in%5D=provider-1",
+    );
   });
 
   it("says so when the resources cannot be loaded", async () => {

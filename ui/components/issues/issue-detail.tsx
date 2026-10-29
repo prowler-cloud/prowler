@@ -2,9 +2,9 @@
 
 import { Send } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
-import { getIssue, getIssueFindings } from "@/actions/issues";
+import { IssueCompliance } from "@/components/issues/issue-compliance";
 import { IssueFindings } from "@/components/issues/issue-findings";
 import { IssueGraph } from "@/components/issues/issue-graph";
 import { IssueTriage } from "@/components/issues/issue-triage";
@@ -14,8 +14,14 @@ import { Button } from "@/components/shadcn/button/button";
 import { Card } from "@/components/shadcn/card/card";
 import { CodeSnippet } from "@/components/shadcn/code-snippet";
 import { InfoField } from "@/components/shadcn/info-field/info-field";
+import { useIssueEvidence } from "@/hooks/use-issue-evidence";
 import { riskFactors } from "@/lib/issues/risk-factors";
-import { legBadgeVariant } from "@/lib/issues/verdicts";
+import {
+  LEG_LABELS,
+  LEG_QUESTIONS,
+  LEG_STATE_LABELS,
+  legBadgeVariant,
+} from "@/lib/issues/verdicts";
 import { createJiraDispatchPayload } from "@/lib/jira-dispatch-selection";
 import { useJiraDispatchStore } from "@/store/jira-dispatch/store";
 import { JIRA_DISPATCH_TARGET } from "@/types/integrations";
@@ -23,32 +29,19 @@ import {
   ATTACKER_START_LABEL,
   ISSUE_OUTCOME_LABEL,
   IssueAttributes,
-  IssueFinding,
   LegName,
-  LegState,
 } from "@/types/issues";
 
-const LEG_QUESTIONS: Record<LegName, string> = {
-  reachability: "Can an attacker reach it?",
-  access: "Can an attacker authenticate or bypass authentication?",
-  target: "Is there a target worth reaching?",
-  controls: "Are protective controls in place?",
-  verification: "Would the activity be detected?",
-};
-const LEG_LABELS: Record<LegName, string> = {
-  reachability: "Reachability",
-  access: "Access",
-  target: "Target",
-  controls: "Controls",
-  verification: "Verification",
-};
-const STATE_LABELS: Record<LegState, string> = {
-  yes: "Yes",
-  no: "No",
-  partial: "Partly",
-  unknown: "Unknown",
-};
 const RESOURCE_PAGE_SIZE = 12;
+
+// The issue carries resource uids, not ids, so this opens the Resources list
+// on that one resource rather than its drawer.
+const resourceHref = (uid: string, providerId?: string) =>
+  `/resources?${new URLSearchParams({
+    "filter[uid]": uid,
+    // A uid is unique within an account, not across them.
+    ...(providerId && { "filter[provider_id__in]": providerId }),
+  })}`;
 
 interface IssueDetailProps {
   id: string;
@@ -56,17 +49,6 @@ interface IssueDetailProps {
   scanId?: string;
   providerId?: string;
 }
-
-type ResourcesState =
-  | { status: "loading" }
-  | { status: "error" }
-  | {
-      status: "loaded";
-      resources: string[];
-      findings: IssueFinding[] | undefined;
-      scanId?: string;
-      providerId?: string;
-    };
 
 export const IssueDetail = ({
   id,
@@ -78,51 +60,7 @@ export const IssueDetail = ({
     (state) => state.openJiraDispatch,
   );
   const [visibleResources, setVisibleResources] = useState(RESOURCE_PAGE_SIZE);
-  const [attempt, setAttempt] = useState(0);
-  // Resource UIDs are only included by the detail endpoint, fetched on expansion.
-  const [state, setState] = useState<ResourcesState>({ status: "loading" });
-
-  useEffect(() => {
-    let cancelled = false;
-    getIssue(id)
-      .then(async (detail) => {
-        if (cancelled) return;
-        const attributes = detail?.data?.attributes;
-        if (!attributes?.resource_uids) {
-          setState({ status: "error" });
-          return;
-        }
-        const detailScanId =
-          detail?.data.relationships?.scan?.data?.id ?? scanId;
-        const detailProviderId =
-          detail?.data.relationships?.provider?.data?.id ?? providerId;
-        const findingUids = attributes.finding_uids ?? [];
-        const findings = detailScanId
-          ? await getIssueFindings(detailScanId, findingUids)
-          : findingUids.length === 0
-            ? []
-            : undefined;
-        if (!cancelled)
-          setState({
-            status: "loaded",
-            resources: attributes.resource_uids,
-            findings,
-            scanId: detailScanId,
-            providerId: detailProviderId,
-          });
-      })
-      .catch(() => {
-        if (!cancelled) setState({ status: "error" });
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [id, scanId, providerId, attempt]);
-
-  const retry = () => {
-    setState({ status: "loading" });
-    setAttempt((value) => value + 1);
-  };
+  const { state, retry } = useIssueEvidence(id, scanId, providerId);
   const activeScanId = state.status === "loaded" ? state.scanId : scanId;
   const factors = riskFactors(issue);
   const uniqueFindings =
@@ -201,7 +139,7 @@ export const IssueDetail = ({
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <h5 className="text-sm font-medium">{LEG_LABELS[name]}</h5>
                   <Badge variant={legBadgeVariant(name, leg.state)}>
-                    {STATE_LABELS[leg.state]}
+                    {LEG_STATE_LABELS[leg.state]}
                   </Badge>
                 </div>
                 <p className="text-text-neutral-tertiary text-xs">
@@ -245,8 +183,19 @@ export const IssueDetail = ({
           </h4>
           <ul className="flex flex-col gap-2">
             {state.resources.slice(0, visibleResources).map((uid) => (
-              <li key={uid} className="min-w-0">
+              <li
+                key={uid}
+                className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1"
+              >
                 <CodeSnippet value={uid} multiline ariaLabel={`Copy ${uid}`} />
+                <Button asChild variant="link" size="link-sm">
+                  <Link
+                    href={resourceHref(uid, state.providerId)}
+                    aria-label={`Open in Resources: ${uid}`}
+                  >
+                    Open in Resources
+                  </Link>
+                </Button>
               </li>
             ))}
           </ul>
@@ -307,6 +256,15 @@ export const IssueDetail = ({
             findings={uniqueFindings}
             scanId={activeScanId}
             total={issue.findings_count}
+          />
+        )}
+      {state.status === "loaded" &&
+        state.findings &&
+        state.findings.length > 0 && (
+          <IssueCompliance
+            findings={state.findings}
+            scanId={activeScanId}
+            truncated={state.findingsTruncated}
           />
         )}
       <IssueTriage id={id} status={issue.triage_status} />

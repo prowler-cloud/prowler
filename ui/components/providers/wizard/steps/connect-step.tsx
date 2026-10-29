@@ -2,96 +2,86 @@
 
 import { useEffect, useRef, useState } from "react";
 
-import {
-  ConnectAccountForm,
-  ConnectAccountSuccessData,
-} from "@/components/providers/workflow/forms";
-import { endActiveTour } from "@/lib/tours/use-driver-tour";
-import { useProviderWizardStore } from "@/store/provider-wizard/store";
-import { useUIStore } from "@/store/ui/store";
-import { ORGANIZATION_TYPE, OrgFlowType } from "@/types/organizations";
-import { PROVIDER_WIZARD_MODE } from "@/types/provider-wizard";
-import { ProviderType } from "@/types/providers";
+import { ProviderPicker } from "@/components/providers/workflow/forms";
+import type { OrgFlowType } from "@/types/organizations";
+import type { ProviderType } from "@/types/providers";
 
-import { AwsConnectStep } from "./aws/aws-connect-step";
-import { AWS_CONNECT_ACTION_KIND, type AwsConnectUiState } from "./aws/types";
+import { ProviderConnectStep } from "./connect/provider-connect-step";
+import { CONNECT_ACTION_KIND, type ConnectUiState } from "./connect/types";
 import {
   WIZARD_FOOTER_ACTION_TYPE,
   WizardFooterConfig,
 } from "./footer-controls";
 
+const FORM_ID = "provider-wizard-connect-form";
+
+const PICKER_UI_STATE: ConnectUiState = {
+  showBack: false,
+  showAction: false,
+  actionLabel: "",
+  actionDisabled: true,
+  isLoading: false,
+};
+
 interface ConnectStepProps {
-  onNext: () => void;
-  /** AWS registers, stores and tests the account in this step, so it skips ahead. */
-  onCredentialsSaved: () => void;
-  /** AWS offers it as the footer action once a teammate has been invited instead. */
+  /** The provider being connected; null while the user is still picking one. */
+  providerType: ProviderType | null;
+  /** The wizard was opened on an existing account: only its credentials change. */
+  locked: boolean;
+  onProviderTypeChange: (providerType: ProviderType | null) => void;
+  /** The account is saved and its connection test passed. */
+  onConnected: () => void;
+  /** The footer offers it once a teammate has been invited instead, or to cancel an update. */
   onClose: () => void;
   onSelectOrganizations: (orgType: OrgFlowType) => void;
   onFooterChange: (config: WizardFooterConfig) => void;
-  onProviderTypeChange: (providerType: ProviderType | null) => void;
-  /** Provider the user was already working with, e.g. when returning from the AWS organization flow. */
-  initialProviderType?: ProviderType | null;
 }
 
+/** Pick a provider, then connect it: account, credentials and test in one step. */
 export function ConnectStep({
-  onNext,
-  onCredentialsSaved,
+  providerType,
+  locked,
+  onProviderTypeChange,
+  onConnected,
   onClose,
   onSelectOrganizations,
   onFooterChange,
-  onProviderTypeChange,
-  initialProviderType = null,
 }: ConnectStepProps) {
-  const { setProvider, setVia, setSecretId, setMode } =
-    useProviderWizardStore();
-  const backHandlerRef = useRef<(() => void) | null>(null);
-  // The modal hands over a fresh `onClose` every render; the footer effect
-  // keeps one closure and reads the latest through the ref, as LaunchStep does.
-  const closeHandlerRef = useRef(onClose);
-  closeHandlerRef.current = onClose;
-  // Local state needed: AWS swaps the generic account form for its one-step form.
-  const [isAwsFlow, setIsAwsFlow] = useState(initialProviderType === "aws");
-  const [uiState, setUiState] = useState<AwsConnectUiState>({
-    showBack: false,
-    showAction: false,
-    actionLabel: "Next",
-    actionDisabled: true,
-    isLoading: false,
-  });
+  // Local state needed: the active form publishes what the footer shows.
+  const [uiState, setUiState] = useState<ConnectUiState>(PICKER_UI_STATE);
+  // The modal hands over fresh callbacks every render; the footer effect keeps
+  // one closure and reads the latest through refs.
+  const closeRef = useRef(onClose);
+  const providerChangeRef = useRef(onProviderTypeChange);
+  // Synced after render: render must not write refs.
+  useEffect(() => {
+    closeRef.current = onClose;
+    providerChangeRef.current = onProviderTypeChange;
+  }, [onClose, onProviderTypeChange]);
 
-  const formId = "provider-wizard-connect-form";
-
-  const handleSuccess = (data: ConnectAccountSuccessData) => {
-    setProvider({
-      id: data.id,
-      type: data.providerType,
-      uid: data.uid,
-      alias: data.alias,
-    });
-    setVia(null);
-    setSecretId(null);
-    setMode(PROVIDER_WIZARD_MODE.ADD);
-    // The layout only re-counts providers on a server render; flip the shared flag now.
-    useUIStore.getState().setHasProviders(true);
-    onNext();
-  };
+  const isPicking = providerType === null;
 
   useEffect(() => {
-    // The footer sits outside the tour's spotlight, so once the user can continue
-    // the tour has done its job and gets out of the way. No-op off-onboarding.
-    if (uiState.showAction && !uiState.actionDisabled && !uiState.isLoading) {
-      endActiveTour();
+    if (isPicking) {
+      onFooterChange({
+        showBack: false,
+        backLabel: "Back",
+        showAction: false,
+        actionLabel: "",
+        actionType: WIZARD_FOOTER_ACTION_TYPE.BUTTON,
+      });
+      return;
     }
     // Nothing left to submit once a teammate has been invited: the action closes.
-    const closes = uiState.actionKind === AWS_CONNECT_ACTION_KIND.CLOSE;
+    const closes = uiState.actionKind === CONNECT_ACTION_KIND.CLOSE;
     onFooterChange({
       showBack: uiState.showBack,
-      backLabel: "Back",
+      // An account opened from the list has nothing to go back to.
+      backLabel: locked ? "Cancel" : "Back",
       backDisabled: uiState.isLoading,
-      // Leaving AWS remounts the generic form on a fresh provider list.
-      onBack: isAwsFlow
-        ? () => setIsAwsFlow(false)
-        : () => backHandlerRef.current?.(),
+      onBack: locked
+        ? () => closeRef.current()
+        : () => providerChangeRef.current(null),
       showAction: uiState.showAction,
       actionLabel: uiState.actionLabel,
       actionLoading: uiState.isLoading,
@@ -99,40 +89,25 @@ export function ConnectStep({
       actionType: closes
         ? WIZARD_FOOTER_ACTION_TYPE.BUTTON
         : WIZARD_FOOTER_ACTION_TYPE.SUBMIT,
-      actionFormId: closes ? undefined : formId,
-      onAction: closes ? () => closeHandlerRef.current() : undefined,
+      actionFormId: closes ? undefined : FORM_ID,
+      onAction: closes ? () => closeRef.current() : undefined,
     });
-  }, [isAwsFlow, onFooterChange, uiState]);
+  }, [isPicking, locked, onFooterChange, uiState]);
 
-  const handleProviderTypeChange = (providerType: ProviderType | null) => {
-    onProviderTypeChange(providerType);
-    if (providerType === "aws") setIsAwsFlow(true);
-  };
-
-  if (isAwsFlow) {
-    return (
-      <AwsConnectStep
-        formId={formId}
-        onConnected={onCredentialsSaved}
-        onSelectOrganizations={() =>
-          onSelectOrganizations(ORGANIZATION_TYPE.AWS)
-        }
-        onUiStateChange={setUiState}
-      />
-    );
+  if (isPicking) {
+    return <ProviderPicker onProviderTypeChange={onProviderTypeChange} />;
   }
 
   return (
-    <ConnectAccountForm
-      formId={formId}
-      hideNavigation
-      onSuccess={handleSuccess}
+    <ProviderConnectStep
+      // A different provider starts from a fresh form and footer.
+      key={providerType}
+      providerType={providerType}
+      formId={FORM_ID}
+      locked={locked}
+      onConnected={onConnected}
       onSelectOrganizations={onSelectOrganizations}
-      onProviderTypeChange={handleProviderTypeChange}
       onUiStateChange={setUiState}
-      onBackHandlerChange={(handler) => {
-        backHandlerRef.current = handler;
-      }}
     />
   );
 }

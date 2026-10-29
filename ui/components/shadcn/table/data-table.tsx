@@ -38,10 +38,6 @@ import { useScrollportPin } from "@/hooks/use-scrollport-pin";
 import { cn } from "@/lib/utils";
 import { FilterOption, MetaDataProps } from "@/types";
 
-type DataTableRowAttributes = {
-  [key: `data-${string}`]: string | undefined;
-};
-
 /**
  * Default column size used by TanStack Table when no explicit size is set.
  * We skip applying inline width styles for columns with this default value
@@ -148,8 +144,6 @@ interface DataTableProviderProps<TData, TValue> {
   searchBadge?: { label: string; onDismiss: () => void };
   /** Optional click handler for top-level rows. */
   onRowClick?: (row: Row<TData>) => void;
-  /** Optional data attributes applied to each top-level row. */
-  getRowAttributes?: (row: Row<TData>) => DataTableRowAttributes;
   /** Optional header rendered inside the table container, above the toolbar. */
   header?: ReactNode;
   /** Optional content rendered in the toolbar before the total entries count. */
@@ -185,7 +179,6 @@ export function DataTable<TData, TValue>({
   renderAfterRow,
   searchBadge,
   onRowClick,
-  getRowAttributes,
   header,
   toolbarRightContent,
   previewLock,
@@ -433,7 +426,6 @@ export function DataTable<TData, TValue>({
                       ref={
                         position === rows.length - 1 ? lastRowRef : undefined
                       }
-                      {...getRowAttributes?.(row)}
                       data-state={row.getIsSelected() && "selected"}
                       data-locked-row={
                         isLockedPosition(position) ? "" : undefined

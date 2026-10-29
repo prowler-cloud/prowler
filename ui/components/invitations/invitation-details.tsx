@@ -68,7 +68,7 @@ export const InvitationDetails = ({ attributes }: InvitationDetailsProps) => {
             <InfoField label="Token">{attributes.token}</InfoField>
 
             <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-              <InfoField label="State">
+              <InfoField label="Status">
                 <span className="capitalize">{attributes.state}</span>
               </InfoField>
 

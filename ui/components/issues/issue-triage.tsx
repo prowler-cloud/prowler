@@ -14,6 +14,8 @@ import { DateWithTime } from "@/components/shadcn/entities";
 import { Textarea } from "@/components/shadcn/textarea/textarea";
 import { useToast } from "@/components/shadcn/toast/use-toast";
 import { TriageStatusPicker } from "@/components/shared/triage/triage-status-picker";
+import { usageLimitToastAction } from "@/components/shared/usage-limit-message";
+import { isUsageLimitError } from "@/lib/action-errors";
 import {
   FINDING_TRIAGE_MANUAL_STATUS_VALUES,
   FINDING_TRIAGE_NOTE_MAX_LENGTH,
@@ -75,6 +77,7 @@ export const IssueTriage = ({ id, status }: IssueTriageProps) => {
           variant: "destructive",
           title: "Triage not saved",
           description: result.error,
+          ...(isUsageLimitError(result) && { action: usageLimitToastAction() }),
         });
         return;
       }

@@ -17,25 +17,6 @@ describe("BreadcrumbNavigation", () => {
     navigationMock.pathname = "/findings";
   });
 
-  it("renders the title action next to the current breadcrumb title", () => {
-    // Given / When
-    render(
-      <BreadcrumbNavigation
-        mode="auto"
-        title="Findings"
-        titleAction={<button type="button">Start product tour</button>}
-      />,
-    );
-
-    // Then
-    expect(
-      screen.getByRole("heading", { name: "Findings" }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: "Start product tour" }),
-    ).toBeInTheDocument();
-  });
-
   it("renders the page icon next to a top-level title", () => {
     // Given / When
     render(

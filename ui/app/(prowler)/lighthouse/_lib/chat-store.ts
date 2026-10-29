@@ -185,6 +185,10 @@ export function createLighthouseChatStore(
     const refreshMessages = async (
       sessionId: string,
       shouldApply: () => boolean = () => true,
+      // Committed in the same update as the messages.
+      getExtraState: (
+        messages: LighthouseV2Message[],
+      ) => Partial<LighthouseChatState> = () => ({}),
     ): Promise<boolean> => {
       const result = await getLighthouseV2Messages(sessionId);
       // The fetch is async, so a reset (new chat, or archiving this session)
@@ -192,7 +196,7 @@ export function createLighthouseChatStore(
       // repopulating a chat that no longer points at this session.
       if (sessionId !== get().activeSessionId || !shouldApply()) return false;
       if ("data" in result) {
-        set({ messages: result.data });
+        set({ messages: result.data, ...getExtraState(result.data) });
         return true;
       }
       return false;
@@ -206,17 +210,15 @@ export function createLighthouseChatStore(
       // it would erase the new optimistic message and provisional task id.
       const noNewerSubmission = () =>
         !get().isSubmitting && !get().streamState.activeTaskId;
-      const refreshed = await refreshMessages(sessionId, noNewerSubmission);
-      if (refreshed) {
-        const failedOutcomeMessageId =
+      // Clearing the stream with the persisted reply keeps the UI from ever
+      // rendering both replies at once.
+      await refreshMessages(sessionId, noNewerSubmission, (messages) => ({
+        streamState: createInitialLighthouseV2StreamState(),
+        failedOutcomeMessageId:
           event.type === LIGHTHOUSE_V2_SSE_EVENT.ERROR
-            ? findLastPersistedUserMessageId(get().messages)
-            : null;
-        set({
-          streamState: createInitialLighthouseV2StreamState(),
-          failedOutcomeMessageId,
-        });
-      }
+            ? findLastPersistedUserMessageId(messages)
+            : null,
+      }));
       notifyLighthouseV2SessionsChanged();
     };
 

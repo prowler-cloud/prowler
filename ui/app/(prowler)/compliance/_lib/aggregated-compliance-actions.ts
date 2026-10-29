@@ -6,7 +6,11 @@ import {
   getAuthHeaders,
   getErrorMessage,
 } from "@/lib";
-import { hasActionError, type ActionErrorResult } from "@/lib/action-errors";
+import {
+  type ActionErrorResult,
+  hasActionError,
+  isActionErrorStatus,
+} from "@/lib/action-errors";
 import {
   isReportDownloadLocked,
   REPORT_DOWNLOAD_LOCKED_ERROR,
@@ -152,9 +156,17 @@ export const getAggregatedComplianceOverview = async <TResponse>(
     const responseData = await handleApiResponse(response);
 
     if (hasActionError(responseData)) {
+      // Only 402/403 gate the whole feature; any other failure is this
+      // framework alone and must not blank its siblings.
+      if (isActionErrorStatus(responseData.status)) {
+        return {
+          status: CROSS_PROVIDER_OVERVIEW_RESULT_STATUS.ACTION_ERROR,
+          result: responseData,
+        };
+      }
       return {
-        status: CROSS_PROVIDER_OVERVIEW_RESULT_STATUS.ACTION_ERROR,
-        result: responseData,
+        status: CROSS_PROVIDER_OVERVIEW_RESULT_STATUS.LOAD_ERROR,
+        message: CROSS_PROVIDER_OVERVIEW_LOAD_ERROR_MESSAGE,
       };
     }
 

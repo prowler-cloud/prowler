@@ -49,7 +49,9 @@ export interface IssueTriageNotesDocument
   included?: JsonApiResource<Partial<Pick<UserAttributes, "name" | "email">>>[];
 }
 
-export type IssueWriteResult = { success: true } | { error: string };
+export type IssueWriteResult =
+  | { success: true }
+  | { error: string; status?: number };
 
 export interface UpdateIssueTriageInput {
   status: FindingTriageManualStatus;

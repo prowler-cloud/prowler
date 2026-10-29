@@ -1,9 +1,8 @@
 "use client";
 
 import { usePathname, useSearchParams } from "next/navigation";
-import { type ReactNode, Suspense, useState } from "react";
+import { type ReactNode, useState } from "react";
 
-import { OnboardingTrigger, PageReady } from "@/components/onboarding";
 import { MutedFindingsConfigButton } from "@/components/providers/muted-findings-config-button";
 import {
   Button,
@@ -12,20 +11,16 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/shadcn";
-import { getFlowById } from "@/lib/onboarding";
 import {
   LAUNCH_SCAN_SEARCH_PARAM,
   LAUNCH_SCAN_SEARCH_VALUE,
 } from "@/lib/scans-navigation";
 import { isCloud } from "@/lib/shared/env";
-import { buildViewFirstScanTour } from "@/lib/tours/view-first-scan.tour";
 import { useScansStore } from "@/store";
 import { SCAN_JOBS_TAB, SCAN_TAB_LABELS, type ScanJobsTab } from "@/types";
 import type { ProviderGroup } from "@/types/components";
 import type { ProviderProps } from "@/types/providers";
 import type { ScanScheduleCapability } from "@/types/schedules";
-
-const viewFirstScanFlow = getFlowById("view-first-scan")!;
 
 import { CliImportBanner } from "./cli-import-banner";
 import { ImportFindingsModal } from "./import-findings-modal";
@@ -73,17 +68,13 @@ export function ScansPageShell({
     (provider) => provider.attributes.connection.connected === true,
   );
   const thereAreNoProviders = providers.length === 0;
-  // Non-blocking onboarding hint: shown when scans can't be launched (no provider, or
+  // Non-blocking hint: shown when scans can't be launched (no provider, or
   // none connected). The table still renders below, so imported scans stay visible.
   const showProvidersHint = thereAreNoProviders || !hasConnectedProviders;
   const isCloudEnvironment = isCloud();
   const launchDisabled = !hasManageScansPermission || !hasConnectedProviders;
   const launchOpen =
     !launchDisabled && (isLaunchScanModalOpen || urlLaunchOpen);
-  // ScanJobsTable only mounts the in-progress row anchor on the active tab.
-  // Other tabs use the fallback tour so every target exists in the current DOM.
-  const hasVisibleInProgressScan =
-    activeScanCount > 0 && filters.activeTab === SCAN_JOBS_TAB.ACTIVE;
 
   const getTabLabel = (tab: ScanJobsTab) => {
     const label = SCAN_TAB_LABELS[tab];
@@ -112,24 +103,6 @@ export function ScansPageShell({
 
   return (
     <div className="flex flex-col gap-[18px]">
-      {/* Gate on the full launch condition: the tour anchors on Launch Scan, which is
-          disabled without a connected provider AND manage_scans — starting it would
-          point at an unusable button. Every start path (?onboarding= URL, active
-          sequence, navbar replay) funnels through this trigger, so gating here covers
-          them all. */}
-      {/* Suspense required: OnboardingTrigger reads useSearchParams */}
-      {!launchDisabled && (
-        <Suspense fallback={null}>
-          <OnboardingTrigger
-            flow={{
-              ...viewFirstScanFlow,
-              tour: buildViewFirstScanTour(hasVisibleInProgressScan),
-            }}
-          />
-        </Suspense>
-      )}
-      {/* Signals the navbar that this route's data has loaded (enables the replay icon). */}
-      <PageReady />
       {showProvidersHint && (
         <ScansProvidersEmptyState thereIsNoProviders={thereAreNoProviders} />
       )}
@@ -162,10 +135,7 @@ export function ScansPageShell({
           aria-label="Scan tabs"
           className="flex flex-wrap items-center justify-between gap-3"
         >
-          <TabsList
-            className="w-full overflow-x-auto sm:w-auto"
-            data-tour-id="view-first-scan-tabs"
-          >
+          <TabsList className="w-full overflow-x-auto sm:w-auto">
             {Object.values(SCAN_JOBS_TAB).map((tab) => (
               <TabsTrigger key={tab} value={tab}>
                 {getTabLabel(tab as ScanJobsTab)}
@@ -178,7 +148,6 @@ export function ScansPageShell({
               onClick={() => handleLaunchOpenChange(true)}
               disabled={launchDisabled}
               className="w-full sm:w-auto"
-              data-tour-id="view-first-scan-launch"
             >
               Launch Scan
             </Button>

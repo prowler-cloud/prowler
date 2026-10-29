@@ -12,6 +12,7 @@ import {
 import { Alert, AlertDescription } from "@/components/shadcn/alert";
 import { Card } from "@/components/shadcn/card/card";
 import { useFindingDetails } from "@/hooks/use-finding-details";
+import { useMediaQuery } from "@/hooks/use-media-query";
 import { isProwlerFindingNode } from "@/lib/attack-paths/node-types";
 import { GraphNode } from "@/types/attack-paths";
 import { IssueAttributes, IssueFinding } from "@/types/issues";
@@ -20,6 +21,11 @@ interface IssueGraphBaseProps {
   issue: IssueAttributes;
   resourceUids: string[];
   findings?: IssueFinding[];
+  /**
+   * No finding drawer on click: for hosts inside the side panel, where a
+   * second detail view would replace the one holding the graph.
+   */
+  readOnly?: boolean;
 }
 
 interface ScopedIssueGraphProps extends IssueGraphBaseProps {
@@ -34,14 +40,21 @@ interface UnscopedIssueGraphProps extends IssueGraphBaseProps {
 
 type IssueGraphProps = ScopedIssueGraphProps | UnscopedIssueGraphProps;
 
+/** Below this the node labels (11px) stop being legible; past it, pan. */
+const ISSUE_GRAPH_MIN_ZOOM = 0.8;
+/** A phone cannot fit even one resource and its finding at that zoom: fit all. */
+const READABLE_ZOOM_MEDIA_QUERY = "(min-width: 768px)";
+
 export const IssueGraph = ({
   issue,
   resourceUids,
   findings = [],
   providerId,
   scanId,
+  readOnly = false,
 }: IssueGraphProps) => {
   const finding = useFindingDetails();
+  const canKeepReadableZoom = useMediaQuery(READABLE_ZOOM_MEDIA_QUERY);
   const view = buildIssueGraph(issue, resourceUids, findings);
   const shownFindings = new Set(
     view.nodes.flatMap((node) =>
@@ -132,6 +145,7 @@ export const IssueGraph = ({
         {resourceUids.length} affected resources, plus supporting checks cited
         by the assessment. These links show evidence associations, not confirmed
         attack paths.
+        {readOnly && " Open the full path to inspect a finding."}
       </p>
       {loading && (
         <p role="status" className="text-sm">
@@ -149,13 +163,14 @@ export const IssueGraph = ({
       <Card
         variant="inner"
         padding="none"
-        className="h-[420px] overflow-hidden"
+        className="h-[560px] overflow-hidden"
       >
         <AttackPathGraph
           data={{ nodes: view.nodes, edges: view.edges }}
           view={view}
           expandedResources={expandedResources}
-          onNodeClick={handleNodeClick}
+          onNodeClick={readOnly ? undefined : handleNodeClick}
+          minFitZoom={canKeepReadableZoom ? ISSUE_GRAPH_MIN_ZOOM : undefined}
         />
       </Card>
       {finding.findingDetails && (

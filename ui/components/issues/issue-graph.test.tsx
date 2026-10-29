@@ -28,11 +28,11 @@ vi.mock("@/components/attack-paths/graph/attack-path-graph", () => ({
     onNodeClick,
   }: {
     data: { nodes: GraphNode[] };
-    onNodeClick: (node: GraphNode) => void;
+    onNodeClick?: (node: GraphNode) => void;
   }) => (
     <button
       onClick={() =>
-        onNodeClick(
+        onNodeClick?.(
           data.nodes.find((node) => node.labels.includes("ProwlerFinding")) ?? {
             id: "finding",
             labels: ["ProwlerFinding"],
@@ -65,6 +65,29 @@ it("requires provider and scan identifiers together in the graph props", () => {
 describe("IssueGraph finding lookup", () => {
   beforeEach(() => {
     navigateToFinding.mockResolvedValue(undefined);
+  });
+
+  it("leaves findings closed in a read-only graph", async () => {
+    // Given: a host that cannot hold a second detail view, such as the panel
+    render(
+      <IssueGraph
+        issue={issue}
+        resourceUids={["bucket"]}
+        providerId="provider-1"
+        scanId="scan-1"
+        readOnly
+      />,
+    );
+
+    // When
+    await userEvent.click(screen.getByRole("button", { name: "Open finding" }));
+
+    // Then
+    expect(navigateToFinding).not.toHaveBeenCalled();
+    expect(getFindings).not.toHaveBeenCalled();
+    expect(
+      screen.getByText(/Open the full path to inspect a finding/),
+    ).toBeInTheDocument();
   });
 
   it("opens a folded finding by id without another lookup", async () => {

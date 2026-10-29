@@ -164,6 +164,14 @@ export class ScansPageHarness extends BrowserHarness<IngestionFixture> {
     await this.waitForText(message);
   }
 
+  plansLink(): HTMLAnchorElement | null {
+    return (
+      Array.from(document.querySelectorAll<HTMLAnchorElement>("a")).find(
+        (link) => link.textContent?.trim() === "View plans",
+      ) ?? null
+    );
+  }
+
   async waitForUploadInProgress(): Promise<void> {
     await this.waitFor(
       () => this.buttonByText(/Importing/i),

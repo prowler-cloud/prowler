@@ -53,7 +53,7 @@ export const sendInvite = async (formData: FormData) => {
   const role = formData.get("role");
   const source = formData.get("source");
   const url = new URL(`${apiBaseUrl}/tenants/invitations`);
-  // Origin of the invitation (e.g. `onboarding`); the API may record it.
+  // Origin of the invitation (e.g. `provider_connect`); the API may record it.
   if (typeof source === "string" && source) {
     url.searchParams.set("source", source);
   }

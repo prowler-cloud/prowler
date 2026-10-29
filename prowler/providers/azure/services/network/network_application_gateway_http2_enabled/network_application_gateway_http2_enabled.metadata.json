@@ -1,0 +1,34 @@
+{
+  "Provider": "azure",
+  "CheckID": "network_application_gateway_http2_enabled",
+  "CheckTitle": "Application Gateway has HTTP/2 enabled",
+  "CheckType": [],
+  "ServiceName": "network",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "microsoft.network/applicationgateways",
+  "ResourceGroup": "network",
+  "Description": "**Azure Application Gateways** are evaluated for **HTTP/2** support on client connections (`enableHttp2`). The gateway offers HTTP/2 only over TLS on HTTPS listeners, and traffic to backend pools always uses HTTP/1.1.",
+  "Risk": "Clients fall back to **HTTP/1.1**, opening more TLS connections and losing HTTP/2 multiplexing and header compression. The direct security impact is low, so treat this as protocol hygiene and performance rather than an exposure.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/application-gateway/configuration-listeners"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "az network application-gateway update --resource-group <resource_group> --name <gateway_name> --http2 Enabled",
+      "NativeIaC": "```bicep\nresource appGw 'Microsoft.Network/applicationGateways@2024-05-01' = {\n  name: '<example_resource_name>'\n  location: '<example_location>'\n  properties: {\n    enableHttp2: true // Critical: enables HTTP/2 for clients\n    // ...existing gateway configuration\n  }\n}\n```",
+      "Other": "1. In the Azure portal, open the Application Gateway\n2. Under Settings, select Configuration\n3. Set HTTP2 to Enabled and click Save",
+      "Terraform": "```hcl\nresource \"azurerm_application_gateway\" \"example_resource\" {\n  # ...existing gateway configuration\n  http2_enabled = true # Critical: enables HTTP/2 for clients\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Enable **HTTP/2** on every gateway so clients that support it negotiate the modern protocol over TLS. HTTP/1.1 clients keep working because the gateway supports both.",
+      "Url": "https://hub.prowler.com/check/network_application_gateway_http2_enabled"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "The Azure API leaves HTTP/2 disabled unless it is set, while the Azure portal enables it by default."
+}
