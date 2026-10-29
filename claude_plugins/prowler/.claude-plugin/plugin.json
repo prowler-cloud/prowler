@@ -3,13 +3,13 @@
   "name": "prowler",
   "displayName": "Prowler Cloud",
   "version": "0.1.0",
-  "description": "Prowler Cloud security and compliance skills for Claude, powered by the Prowler MCP server. Triage compliance gaps and remediate findings on AWS, Azure, GCP, Kubernetes, Microsoft 365, GitHub and many more providers listed at https://registry.prowler.com, plus custom providers, until your account meets the framework you choose.",
+  "description": "Connect Claude to Prowler Cloud through the Prowler MCP server. Reads providers, scans, findings, compliance results and resources for AWS, Azure, GCP, Kubernetes, Microsoft 365, GitHub and the other providers listed at https://registry.prowler.com, and returns remediation guidance for failed checks. Writes are limited to Prowler Cloud itself: triggering scans, finding triage, mute rules and the mutelist, providers and integrations. Your cloud resources are not changed by the connector.",
   "author": {
     "name": "Prowler",
     "email": "support@prowler.com",
     "url": "https://prowler.com"
   },
-  "homepage": "https://docs.prowler.com",
+  "homepage": "https://docs.prowler.com/user-guide/ai-agents",
   "repository": "https://github.com/prowler-cloud/prowler",
   "license": "Apache-2.0",
   "keywords": [

@@ -49,3 +49,36 @@ async def test_every_tool_and_parameter_is_described(mcp_root_server):
 
     for tool in tools:
         assert_tool_contract(tool)
+
+
+async def test_every_tool_says_whether_it_is_read_only_or_destructive(mcp_root_server):
+    """Clients decide whether to ask the user from these hints.
+
+    Left unset, the MCP spec treats a tool as destructive, so a listing would look
+    exactly like a deletion.
+    """
+    async with Client(mcp_root_server) as client:
+        tools = {tool.name: tool.annotations for tool in await client.list_tools()}
+
+    for name, annotations in tools.items():
+        assert annotations is not None, f"{name} has no annotations"
+        assert annotations.readOnlyHint is not None, f"{name} has no readOnlyHint"
+        assert annotations.destructiveHint is not None, f"{name} has no destructiveHint"
+
+    destructive = {name for name, a in tools.items() if a.destructiveHint}
+    assert destructive == {
+        "prowler_create_mute_rule",
+        "prowler_update_mute_rule",
+        "prowler_set_mutelist",
+        "prowler_delete_mutelist",
+        "prowler_delete_mute_rule",
+        "prowler_delete_provider",
+        "prowler_delete_integration",
+        "prowler_set_user_role",
+    }
+    assert tools["prowler_run_attack_paths_query"].readOnlyHint
+    assert tools["prowler_hub_list_checks"].readOnlyHint
+    assert tools["prowler_docs_search"].readOnlyHint
+    assert tools["prowler_get_mutelist"].readOnlyHint
+    assert tools["prowler_hub_get_check_code"].readOnlyHint
+    assert not tools["prowler_trigger_scan"].readOnlyHint

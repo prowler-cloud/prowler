@@ -34,6 +34,8 @@ class RolesTools(BaseTool):
     - prowler_set_user_role: Set the role a user holds (idempotent)
     """
 
+    destructive_tools = frozenset({"set_user_role"})
+
     async def list_roles(
         self,
         page_size: int = Field(
