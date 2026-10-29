@@ -1,0 +1,188 @@
+---
+title: "Prowler Private Cloud"
+sidebarTitle: "Prowler Private Cloud"
+description: "Choose a plan, install Prowler Private Cloud in your own AWS account from AWS Marketplace, and understand billing and infrastructure cost."
+---
+
+import { AwsMarketplaceBanner } from "/snippets/aws-marketplace-banner.mdx"
+
+<AwsMarketplaceBanner />
+
+Prowler Private Cloud is the full Prowler platform, installed in the customer's own AWS account from AWS Marketplace and billed on the AWS bill. Findings, resource data and Lighthouse AI prompts stay in that account and Region.
+
+<Note>
+For AWS GovCloud (US), an air-gapped environment, an on-premises data center, or a different bundle size or contract term, [contact us](https://prowler.com/contact) for a private offer.
+</Note>
+
+## Choose a Plan
+
+Each plan is its own AWS Marketplace listing. All three install the same product and differ only in how many cloud accounts the price covers:
+
+* **Paid accounts:** AWS accounts, Azure subscriptions and Microsoft 365 tenants.
+* **Other accounts:** everything else Prowler scans, such as Google Cloud projects, Kubernetes clusters, GitHub and Okta.
+
+| Plan | Price | Included every month | Extra accounts |
+| --- | --- | --- | --- |
+| [Pay as You Go](https://aws.amazon.com/marketplace/pp/prodview-cpfki233rkskw) | 125 USD per paid account per month, no minimum | 1 other account per paid account | 125 USD each per month |
+| [10-Account Bundle](https://aws.amazon.com/marketplace/pp/prodview-2pgvyyakt34go) | 1,000 USD per month, or 9,600 USD for 12 months upfront | 10 paid and 15 other accounts | 125 USD each per month |
+| [25-Account Bundle](https://aws.amazon.com/marketplace/pp/prodview-ugxkxhdxfrhse) | 2,000 USD per month, or 19,200 USD for 12 months upfront | 25 paid and 40 other accounts | 125 USD each per month |
+
+### Example: Pay as You Go
+
+A month with 4 AWS accounts and 6 Google Cloud projects scanned:
+
+| Charge | Quantity × price | Subtotal |
+| --- | --- | --- |
+| Paid accounts (the 4 AWS accounts) | 4 × 125 USD | 500 USD |
+| Included other accounts (4 Google Cloud projects, 1 per paid account) | 4 × 0 USD | 0 USD |
+| Extra accounts (the other 2 Google Cloud projects) | 2 × 125 USD | 250 USD |
+| **Total** | | **750 USD** |
+
+### Infrastructure Cost
+
+AWS bills the infrastructure the installation runs on separately, at AWS prices. With the default size in us-east-1, it costs about 360 USD a month before scans.
+
+Scans add to that: each scan runs as its own task at about 0.12 USD for every hour it runs, and the database grows while scans run. A scan of one AWS account usually takes:
+
+* **Up to 2,000 resources:** about 10 minutes.
+* **2,000 to 10,000 resources:** about 25 minutes.
+* **Over 10,000 resources:** about an hour.
+
+For example, 10 AWS accounts scanned once a day, at about 20 minutes each:
+
+| Item | Value |
+| --- | --- |
+| Scans per month | 10 accounts × 30 days = 300 scans |
+| Scan time per month | 300 scans × 1/3 hour = 100 hours |
+| **Scan cost per month** | **100 hours × 0.12 USD = about 12 USD** |
+
+Other Regions cost more than us-east-1. Amazon Bedrock is billed per use, only when Lighthouse AI is on.
+
+<Note>
+These figures are estimates based on AWS public list prices. AWS bills the infrastructure directly to your account, and the final amount depends on your Region, usage and any discounts you have with AWS. Prowler does not set or charge these costs.
+</Note>
+
+<AccordionGroup>
+  <Accordion title="Infrastructure cost breakdown">
+    About 360 USD a month for the default size in us-east-1, at AWS list prices, before scans:
+
+    | Resource | About, per month |
+    | --- | --- |
+    | Amazon ECS on AWS Fargate (Prowler services) | 177 USD |
+    | Amazon Aurora PostgreSQL | 47 USD |
+    | Amazon ElastiCache | 37 USD |
+    | NAT gateway | 37 USD |
+    | Application Load Balancer and AWS WAF | 28 USD |
+    | Amazon CloudWatch | 22 USD |
+    | Other AWS services | 10 USD |
+  </Accordion>
+</AccordionGroup>
+
+## How It Works
+
+The installation runs in the customer's AWS account, in the chosen Region. Users reach it through an Amazon CloudFront address, or a [custom domain](#updates-and-settings). Everything else runs in private subnets that cannot be reached from the internet. Scans use read-only access to the connected cloud accounts, and Prowler has no access to the installation.
+
+<Frame>
+  <img className="block dark:hidden" src="/images/products/architecture/prowler-private-cloud-aws-architecture-light.svg" alt="Prowler Private Cloud on AWS: users reach Amazon CloudFront, which connects to an internal load balancer in a private network; the Prowler services run on Amazon ECS, with Amazon Aurora and Amazon ElastiCache for data and other AWS services in the same account; scans reach the connected accounts with read-only access" />
+  <img className="hidden dark:block" src="/images/products/architecture/prowler-private-cloud-aws-architecture-dark.svg" alt="Prowler Private Cloud on AWS: users reach Amazon CloudFront, which connects to an internal load balancer in a private network; the Prowler services run on Amazon ECS, with Amazon Aurora and Amazon ElastiCache for data and other AWS services in the same account; scans reach the connected accounts with read-only access" />
+</Frame>
+
+## Install Prowler Private Cloud
+
+<Steps>
+  <Step title="Subscribe on AWS Marketplace">
+    Open the plan's listing on AWS Marketplace (links in [Choose a Plan](#choose-a-plan)), click **View purchase options**, and subscribe. Then continue to the configuration and to launch. The launch page has a link that opens the AWS CloudFormation console with the Prowler template already loaded.
+  </Step>
+
+  <Step title="Choose a Supported Region">
+    Before creating the stack, switch the console to a supported Region at the top right. The template refuses the others.
+
+    <Accordion title="Supported Regions">
+      | Region code | Region name | Lighthouse AI |
+      | --- | --- | --- |
+      | us-east-1 | US East (N. Virginia) | Available |
+      | us-east-2 | US East (Ohio) | Available |
+      | us-west-1 | US West (N. California) | Not available |
+      | us-west-2 | US West (Oregon) | Available |
+      | ca-central-1 | Canada (Central) | Not available |
+      | sa-east-1 | South America (São Paulo) | Available |
+      | eu-west-1 | Europe (Ireland) | Available |
+      | eu-west-2 | Europe (London) | Available |
+      | eu-west-3 | Europe (Paris) | Not available |
+      | eu-central-1 | Europe (Frankfurt) | Available |
+      | eu-north-1 | Europe (Stockholm) | Available |
+      | ap-east-1 | Asia Pacific (Hong Kong) | Not available |
+      | ap-south-1 | Asia Pacific (Mumbai) | Available |
+      | ap-southeast-1 | Asia Pacific (Singapore) | Available |
+      | ap-southeast-2 | Asia Pacific (Sydney) | Available |
+      | ap-northeast-1 | Asia Pacific (Tokyo) | Available |
+      | ap-northeast-2 | Asia Pacific (Seoul) | Available |
+    </Accordion>
+  </Step>
+
+  <Step title="Fill In the Required Section">
+    Enter:
+
+    * **Admin password:** the password for the built-in account `admin@prowler.local`.
+    * **Notification email:** the address that receives update, alarm and subscription notices.
+    * **Lighthouse AI:** whether to turn it on. Leave it off in the Regions where it is not available.
+    * **Portal access:** who can open the portal, from anywhere or only from an IP range.
+
+    Leave the optional fields and the version as they are, acknowledge the IAM capabilities, and create the stack. The installation takes about 35 minutes.
+  </Step>
+
+  <Step title="Confirm the Notification Email">
+    AWS sends a subscription confirmation to the notification address. Confirm it: without it, no update, alarm or subscription notices arrive.
+  </Step>
+
+  <Step title="Sign In">
+    Open the address in the stack's **Outputs** tab (`UiUrl`), an Amazon CloudFront address until a [custom domain](#updates-and-settings) is set up, and sign in as `admin@prowler.local` with the admin password set in step 3. The AWS account Prowler is installed in is already connected: start its first scan from **Scans**, and invite the team from **Users**.
+  </Step>
+
+  <Step title="Add Cloud Accounts">
+    From **Cloud Providers** in the portal, add single AWS accounts, a whole AWS Organization, or other providers.
+  </Step>
+</Steps>
+
+## How Billing Works
+
+* **Monthly count:** each cloud account Prowler scans in a calendar month (UTC) counts once that month, however many scans it has.
+* **AWS bill:** the subscription appears on the AWS bill, line by line, including the accounts the plan includes at 0.00 USD.
+* **Monthly statement:** at the start of each month, the installation emails last month's usage.
+
+If the subscription ends, Prowler keeps working for 7 days and a daily email counts the days down. After that, new scans and premium features pause, but findings, history and reports stay. Subscribing again resumes everything within the hour.
+
+## Updates and Settings
+
+New Prowler releases install automatically every night. Settings chosen at launch can be changed later with a stack update:
+
+<AccordionGroup>
+  <Accordion title="Use a Custom Domain">
+    Without a custom domain, Prowler runs on its Amazon CloudFront address.
+
+    1. Choose a subdomain that starts with `prowler`, such as `prowler.example.com`.
+    2. Request an AWS Certificate Manager certificate for `cloud.prowler.example.com`, `api.cloud.prowler.example.com` and `mcp.prowler.example.com` in us-east-1. Request a second one in the installation's Region, unless the domain is an Amazon Route 53 hosted zone in the same account.
+    3. Open the AWS CloudFormation console in the installation's Region, go to **Stacks**, select the Prowler stack, and click **Update**, then **Make a direct update**.
+    4. Choose **Use existing template** and click **Next**.
+    5. Fill in the **Your own domain** fields with the domain and the certificates, and leave every other parameter as it is. Click **Next** until the review page.
+    6. Acknowledge the IAM capabilities and click **Submit**.
+  </Accordion>
+  <Accordion title="Turn Lighthouse AI On or Off">
+    To turn Lighthouse AI on:
+
+    1. Open the AWS CloudFormation console in the installation's Region, go to **Stacks**, select the Prowler stack, and click **Update**, then **Make a direct update**.
+    2. Choose **Use existing template** and click **Next**.
+    3. Set **Lighthouse AI** to **Enabled**, and leave every other parameter as it is. Click **Next** until the review page.
+    4. Acknowledge the IAM capabilities and click **Submit**. Lighthouse AI is ready within minutes and needs no keys.
+
+    To turn it off, delete its provider in the portal's Lighthouse AI settings.
+  </Accordion>
+</AccordionGroup>
+
+## Uninstall
+
+Contact [support@prowler.com](mailto:support@prowler.com) for the uninstall steps: the installation protects its data against accidental deletion, so deleting the stack on its own stops partway. Uninstalling does not cancel the subscription; cancel it in the AWS Marketplace console, under **Manage subscriptions**.
+
+## Get Support
+
+Write to [support@prowler.com](mailto:support@prowler.com), with the AWS account ID, the Region and the stack name.
