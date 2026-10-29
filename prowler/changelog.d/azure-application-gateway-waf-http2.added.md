@@ -1,0 +1,1 @@
+`network_application_gateway_waf_enabled` and `network_application_gateway_http2_enabled` checks for Azure provider, with Application Gateway and WAF policy collection in the network service, mapped to CIS 5.0 and 6.0
