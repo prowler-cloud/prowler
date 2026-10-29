@@ -29,6 +29,9 @@ class MutingTools(BaseTool):
     - Managing mute rules (finding-specific muting)
     """
 
+    # A wrong mute hides findings silently and for good, so it is flagged like a deletion.
+    destructive_tools = frozenset({"set_mutelist", "create_mute_rule"})
+
     # ===== MUTELIST TOOLS =====
 
     async def _get_mutelist_raw(self) -> dict[str, Any] | None:
