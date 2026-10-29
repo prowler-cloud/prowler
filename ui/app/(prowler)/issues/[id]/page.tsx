@@ -9,7 +9,7 @@ import { Button } from "@/components/shadcn/button/button";
 import { Card } from "@/components/shadcn/card/card";
 import { ContentLayout } from "@/components/shadcn/content-layout";
 import { EntityInfo } from "@/components/shadcn/entities";
-import { FeatureFlagGate } from "@/components/shared/feature-flag-gate";
+import { FeatureFlagRoute } from "@/components/shared/feature-flag-route";
 import { FEATURE_FLAG } from "@/lib/feature-flags";
 import { VERDICTS } from "@/lib/issues/verdicts";
 import { isCloud } from "@/lib/shared/env";
@@ -34,14 +34,7 @@ export default async function IssuePage({
 
   return (
     <ContentLayout title="Issue" icon={<ShieldAlert />}>
-      <FeatureFlagGate
-        flag={FEATURE_FLAG.ISSUES}
-        fallback={
-          <p className="text-text-neutral-tertiary text-sm">
-            Issues is not available for this account yet.
-          </p>
-        }
-      >
+      <FeatureFlagRoute flag={FEATURE_FLAG.ISSUES}>
         <div className="flex min-w-0 flex-col gap-4">
           <Button asChild variant="link" size="link-sm" className="self-start">
             <Link href="/issues">← All issues</Link>
@@ -70,7 +63,7 @@ export default async function IssuePage({
             />
           </Card>
         </div>
-      </FeatureFlagGate>
+      </FeatureFlagRoute>
     </ContentLayout>
   );
 }

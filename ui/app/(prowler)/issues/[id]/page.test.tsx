@@ -13,8 +13,8 @@ vi.mock("@/actions/issues", () => ({ getIssue }));
 vi.mock("@/components/shadcn/content-layout", () => ({
   ContentLayout: ({ children }: { children: ReactNode }) => children,
 }));
-vi.mock("@/components/shared/feature-flag-gate", () => ({
-  FeatureFlagGate: ({ children }: { children: ReactNode }) => children,
+vi.mock("@/components/shared/feature-flag-route", () => ({
+  FeatureFlagRoute: ({ children }: { children: ReactNode }) => children,
 }));
 vi.mock("@/components/issues/issue-detail", () => ({
   IssueDetail: ({ scanId }: { scanId?: string }) => (

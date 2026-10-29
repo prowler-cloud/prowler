@@ -7,7 +7,7 @@ import { getAllProviders } from "@/actions/providers";
 import { ProviderAccountSelectors } from "@/components/filters/provider-account-selectors";
 import { ProviderGroupSelector } from "@/components/filters/provider-group-selector";
 import { ContentLayout } from "@/components/shadcn/content-layout";
-import { FeatureFlagGate } from "@/components/shared/feature-flag-gate";
+import { FeatureFlagRoute } from "@/components/shared/feature-flag-route";
 import { FEATURE_FLAG } from "@/lib/feature-flags";
 import { isCloud } from "@/lib/shared/env";
 import { SearchParamsProps } from "@/types";
@@ -29,16 +29,9 @@ export default async function Issues({
 
   return (
     <ContentLayout title="Issues" icon={<ShieldAlert />}>
-      {/* Deployment gate above (notFound); per-account rollout here. The route
-          stays reachable by URL, so the off state explains itself. */}
-      <FeatureFlagGate
-        flag={FEATURE_FLAG.ISSUES}
-        fallback={
-          <p className="text-text-neutral-tertiary text-sm">
-            Issues is not available for this account yet.
-          </p>
-        }
-      >
+      {/* Deployment gate above (notFound); per-account rollout here, also a
+          404 when off so the route matches the hidden menu entry. */}
+      <FeatureFlagRoute flag={FEATURE_FLAG.ISSUES}>
         <Suspense
           fallback={
             <p className="text-text-neutral-tertiary text-sm">
@@ -62,7 +55,7 @@ export default async function Issues({
             }
           />
         </Suspense>
-      </FeatureFlagGate>
+      </FeatureFlagRoute>
     </ContentLayout>
   );
 }
