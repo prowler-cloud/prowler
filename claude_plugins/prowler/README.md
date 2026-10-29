@@ -1,6 +1,6 @@
-# Prowler for Claude Code
+# Prowler Cloud
 
-End-to-end cloud security and compliance from inside [Claude Code](https://www.claude.com/product/claude-code), powered by the [Prowler MCP server](https://docs.prowler.com/projects/prowler-mcp/). The plugin lets Claude walk a Prowler Cloud-connected account through a compliance assessment and remediate findings until the chosen security or industry framework is compliant.
+Cloud security and compliance in Claude, powered by the [Prowler MCP server](https://docs.prowler.com/projects/prowler-mcp/). Claude reads your Prowler Cloud providers, scans, findings and compliance results, returns Prowler's remediation guidance for each failed check, and manages triage and mute state. The connector never changes your cloud resources: any fix is applied with your own tools (Terraform, a cloud CLI or the console), and only after you approve it.
 
 > **Preview**: this plugin is under active development. Report issues at <https://github.com/prowler-cloud/prowler/issues> or join the [Slack community](https://goto.prowler.com/slack).
 
@@ -70,7 +70,7 @@ Claude tracks progress in a markdown report under `.prowler/` at your project ro
 
 ## Data and privacy
 
-The plugin stores nothing itself. It connects to the Prowler MCP server at `https://mcp.prowler.com/mcp`, authenticating with the API key you provide (kept in your system keychain and sent only as a bearer token to that server). Through it, Claude reads your Prowler Cloud providers, scans, findings, compliance results and resource metadata, and can trigger scans. It also queries the public Prowler Hub and Prowler documentation. The remediation report is written locally under `.prowler/` in your project. Nothing is sent to any other service. See the [Prowler privacy policy](https://prowler.com/privacy-policy) for how Prowler Cloud handles account data.
+The plugin stores nothing itself. It connects to the Prowler MCP server at `https://mcp.prowler.com/mcp`, authenticating with the API key you provide (kept in your system keychain and sent only as a bearer token to that server). Through it, Claude reads your Prowler Cloud providers, scans, findings, compliance results and resource metadata. It can also write to Prowler Cloud: trigger scans, set finding triage, create mute rules, replace the mutelist, and add or remove providers and integrations. Mutes and deletions are marked as destructive, so your client can ask before running them. It also queries the public Prowler Hub and Prowler documentation. The remediation report is written locally under `.prowler/` in your project. Nothing is sent to any other service. See the [Prowler privacy policy](https://prowler.com/privacy-policy) for how Prowler Cloud handles account data.
 
 ## Uninstalling
 
