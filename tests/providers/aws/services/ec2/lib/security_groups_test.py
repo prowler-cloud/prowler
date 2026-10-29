@@ -515,3 +515,72 @@ class Test_get_any_address_ip_permission:
             "IpRanges": [{"CidrIp": IP_V4_ALL_CIDRS}],
             "Ipv6Ranges": [],
         }
+
+    def test_split_ipv4_halves_are_revoked(self):
+        ingress_rule = {
+            "IpProtocol": TRANSPORT_PROTOCOL_TCP,
+            "FromPort": 22,
+            "ToPort": 22,
+            "IpRanges": [
+                {"CidrIp": "0.0.0.0/1", "Description": "lower half"},
+                {"CidrIp": IP_V4_PRIVATE_CIDR},
+                {"CidrIp": "128.0.0.0/1"},
+            ],
+            "Ipv6Ranges": [{"CidrIpv6": IP_V6_PRIVATE_CIDR}],
+            "PrefixListIds": [{"PrefixListId": "pl-12345678"}],
+            "UserIdGroupPairs": [{"GroupId": "sg-12345678", "UserId": "123456789012"}],
+        }
+
+        assert get_any_address_ip_permission(ingress_rule) == {
+            "IpProtocol": TRANSPORT_PROTOCOL_TCP,
+            "FromPort": 22,
+            "ToPort": 22,
+            "IpRanges": [
+                {"CidrIp": "0.0.0.0/1", "Description": "lower half"},
+                {"CidrIp": "128.0.0.0/1"},
+            ],
+            "Ipv6Ranges": [],
+        }
+
+    def test_split_ipv6_halves_are_revoked(self):
+        ingress_rule = {
+            "IpProtocol": TRANSPORT_PROTOCOL_ALL,
+            "IpRanges": [{"CidrIp": IP_V4_PUBLIC_CIDR}],
+            "Ipv6Ranges": [
+                {"CidrIpv6": "::/1"},
+                {"CidrIpv6": "8000::/2"},
+                {"CidrIpv6": "c000::/2"},
+                {"CidrIpv6": IP_V6_PRIVATE_CIDR},
+            ],
+            "PrefixListIds": [],
+            "UserIdGroupPairs": [],
+        }
+
+        assert get_any_address_ip_permission(ingress_rule) == {
+            "IpProtocol": TRANSPORT_PROTOCOL_ALL,
+            "IpRanges": [],
+            "Ipv6Ranges": [
+                {"CidrIpv6": "::/1"},
+                {"CidrIpv6": "8000::/2"},
+                {"CidrIpv6": "c000::/2"},
+            ],
+        }
+
+    def test_partial_coverage_is_not_revoked(self):
+        ingress_rule = {
+            "IpProtocol": TRANSPORT_PROTOCOL_TCP,
+            "FromPort": 22,
+            "ToPort": 22,
+            "IpRanges": [{"CidrIp": "0.0.0.0/1"}, {"CidrIp": "128.0.0.0/2"}],
+            "Ipv6Ranges": [{"CidrIpv6": "8000::/1"}],
+            "PrefixListIds": [],
+            "UserIdGroupPairs": [],
+        }
+
+        assert get_any_address_ip_permission(ingress_rule) == {
+            "IpProtocol": TRANSPORT_PROTOCOL_TCP,
+            "FromPort": 22,
+            "ToPort": 22,
+            "IpRanges": [],
+            "Ipv6Ranges": [],
+        }

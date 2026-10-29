@@ -131,30 +131,46 @@ def _covers_all_addresses(ingress_rule: Any) -> bool:
 
 def get_any_address_ip_permission(ingress_rule: Any) -> dict:
     """
-    Build an IpPermission that only contains the any-address sources (0.0.0.0/0 and ::/0) of the given ingress rule.
+    Build an IpPermission that only contains the any-address sources of the given ingress rule.
+
+    The any-address sources are 0.0.0.0/0 and ::/0. When the IPv4 (or IPv6) CIDRs of the
+    rule together cover every address of that IP version without one of them, such as
+    0.0.0.0/1 and 128.0.0.0/1, the widest of those CIDRs are the any-address sources, so
+    CIDRs already contained in one of them stay.
 
     Revoking the original rule would also remove the other sources that share it
     (private CIDRs, other IPv6 ranges, prefix lists and security group references).
 
     @param ingress_rule: AWS Security Group IpPermissions Ingress Rule
 
-    @return: IpPermission with the same protocol and ports and only the 0.0.0.0/0 and ::/0 ranges
+    @return: IpPermission with the same protocol and ports and only the any-address ranges
     """
     ip_permission = {
         key: ingress_rule[key]
         for key in ("IpProtocol", "FromPort", "ToPort")
         if key in ingress_rule
     }
-    ip_permission["IpRanges"] = [
-        ip_range
-        for ip_range in ingress_rule.get("IpRanges", [])
-        if ip_range.get("CidrIp") == "0.0.0.0/0"
-    ]
-    ip_permission["Ipv6Ranges"] = [
-        ip_range
-        for ip_range in ingress_rule.get("Ipv6Ranges", [])
-        if ip_range.get("CidrIpv6") == "::/0"
-    ]
+    for key, cidr_key, any_cidr in (
+        ("IpRanges", "CidrIp", "0.0.0.0/0"),
+        ("Ipv6Ranges", "CidrIpv6", "::/0"),
+    ):
+        ip_ranges = ingress_rule.get(key, [])
+        any_address_ranges = [
+            ip_range for ip_range in ip_ranges if ip_range.get(cidr_key) == any_cidr
+        ]
+        if not any_address_ranges and _covers_all_addresses({key: ip_ranges}):
+            networks = [
+                ipaddress.ip_network(ip_range[cidr_key], strict=False)
+                for ip_range in ip_ranges
+            ]
+            any_address_ranges = [
+                ip_range
+                for ip_range, network in zip(ip_ranges, networks)
+                if not any(
+                    network != other and network.subnet_of(other) for other in networks
+                )
+            ]
+        ip_permission[key] = any_address_ranges
     return ip_permission
 
 

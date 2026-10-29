@@ -1,1 +1,1 @@
-EC2 security group fixers revoke only the `0.0.0.0/0` and `::/0` sources of the offending rule instead of the whole rule, keeping private CIDRs, prefix lists and security group references
+EC2 security group fixers revoke only the `0.0.0.0/0` and `::/0` sources of the offending rule instead of the whole rule, keeping private CIDRs, prefix lists and security group references; for a rule whose CIDRs together cover every IPv4 or IPv6 address, the covering CIDRs are revoked
