@@ -33,5 +33,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "Gateways using the legacy WAF configuration are reported as FAIL because Microsoft retires it on 15 March 2027 and newer WAF features, such as bot protection, require a policy. Only the gateway-level policy is evaluated, as in the CIS audit; policies attached to listeners or path rules are not. The policy state comes from the WAF policies collected in the same scan, or is read from the policy itself when it sits outside the scanned resource groups, and a disabled policy is reported as FAIL."
+  "Notes": "Gateways using the legacy WAF configuration are reported as FAIL because Microsoft retires it on 15 March 2027 and newer WAF features, such as bot protection, require a policy. Only the gateway-level policy is evaluated, as in the CIS audit; policies attached to listeners or path rules are not. The policy state comes from the WAF policies collected in the same scan, or is read from the policy itself when it sits outside the scanned resource groups, and a disabled policy is reported as FAIL. The policy mode is not evaluated, so an enabled policy in Detection mode, which only logs requests, is reported as PASS."
 }
