@@ -29,6 +29,7 @@ export const AddRoleForm = ({ groups }: { groups: RoleGroupOption[] }) => {
       manage_alerts: false,
       manage_lighthouse_ai_configuration: false,
       manage_registry: false,
+      manage_prowler_realtime: false,
     }),
   };
 
@@ -58,6 +59,10 @@ export const AddRoleForm = ({ groups }: { groups: RoleGroupOption[] }) => {
         String(values.manage_lighthouse_ai_configuration),
       );
       formData.append("manage_registry", String(values.manage_registry));
+      formData.append(
+        "manage_prowler_realtime",
+        String(values.manage_prowler_realtime),
+      );
     }
 
     if (values.groups && values.groups.length > 0) {

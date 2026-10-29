@@ -139,6 +139,85 @@ describe("getNavigationConfig", () => {
     expect(labels).not.toContain("Exploitability issues");
   });
 
+  it("shows Realtime only in Cloud and only once its feature flag is on", () => {
+    // Given
+    const labelsFor = (realtimeEnabled?: boolean) =>
+      getNavigationConfig({ pathname: "/realtime", realtimeEnabled })
+        .flatMap((section) => section.items)
+        .map((item) => item.label);
+
+    // When / Then
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
+    expect(labelsFor()).not.toContain("Realtime");
+    expect(labelsFor(true)).toContain("Realtime");
+
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
+    expect(labelsFor(true)).not.toContain("Realtime");
+  });
+
+  it("adds Realtime and Cost anomalies to Configuration under the same gate", () => {
+    // Given
+    const childrenFor = (pathname: string, realtimeEnabled?: boolean) => {
+      const configuration = getNavigationConfig({ pathname, realtimeEnabled })
+        .flatMap((section) => section.items)
+        .find((item) => item.label === "Configuration");
+      if (configuration?.kind !== NAVIGATION_ITEM_KIND.COLLAPSIBLE) {
+        throw new Error("Configuration must be a collapsible navigation item");
+      }
+      return configuration.children;
+    };
+
+    // When / Then
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
+    expect(childrenFor("/providers").map((item) => item.label)).not.toEqual(
+      expect.arrayContaining(["Realtime"]),
+    );
+    expect(childrenFor("/realtime/settings", true)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          href: "/realtime/settings",
+          label: "Realtime",
+          active: true,
+        }),
+        expect.objectContaining({
+          href: "/realtime/settings/cost-anomalies",
+          label: "Cost anomalies",
+          active: false,
+        }),
+      ]),
+    );
+    expect(
+      childrenFor("/realtime/settings/cost-anomalies", true).filter(
+        (item) => "active" in item && item.active,
+      ),
+    ).toEqual([
+      expect.objectContaining({
+        href: "/realtime/settings/cost-anomalies",
+      }),
+    ]);
+
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
+    expect(
+      childrenFor("/realtime/settings", true).map((i) => i.label),
+    ).not.toEqual(expect.arrayContaining(["Cost anomalies"]));
+  });
+
+  it("keeps the top-level Realtime entry off while on its settings pages", () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
+    const realtime = (pathname: string) =>
+      getNavigationConfig({ pathname, realtimeEnabled: true })
+        .flatMap((section) => section.items)
+        .find((item) => item.label === "Realtime");
+
+    // When / Then
+    expect(realtime("/realtime")).toMatchObject({ active: true });
+    expect(realtime("/realtime/cost-anomalies/x")).toMatchObject({
+      active: true,
+    });
+    expect(realtime("/realtime/settings")).toMatchObject({ active: false });
+  });
+
   it("uses Cloud destinations and keeps Configuration children unbadged", () => {
     // Given
     vi.stubEnv("UI_CLOUD_ENABLED", "true");

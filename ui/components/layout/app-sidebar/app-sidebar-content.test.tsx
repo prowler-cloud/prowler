@@ -16,6 +16,7 @@ const {
   pathnameValue,
   permissionsValue,
   pushMock,
+  realtimeFlagValue,
 } = vi.hoisted(() => ({
   issuesFlagValue: { current: false },
   openCloudUpgradeMock: vi.fn(),
@@ -23,6 +24,7 @@ const {
   pathnameValue: { current: "/findings" },
   permissionsValue: { current: {} as Record<string, boolean> },
   pushMock: vi.fn(),
+  realtimeFlagValue: { current: false },
 }));
 
 vi.mock("next/navigation", () => ({
@@ -40,7 +42,10 @@ vi.mock("@/hooks/use-runtime-config", () => ({
 
 vi.mock("@/lib/feature-flags", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/feature-flags")>()),
-  useFeatureFlag: () => issuesFlagValue.current,
+  useFeatureFlag: (flag: string) =>
+    flag === "realtime-feature"
+      ? realtimeFlagValue.current
+      : issuesFlagValue.current,
 }));
 
 vi.mock("@/store", () => ({
@@ -65,6 +70,7 @@ describe("AppSidebarContent", () => {
     pathnameValue.current = "/findings";
     permissionsValue.current = { manage_providers: true };
     issuesFlagValue.current = false;
+    realtimeFlagValue.current = false;
     pushMock.mockClear();
     openCloudUpgradeMock.mockClear();
     openLaunchScanModalMock.mockClear();
@@ -133,6 +139,37 @@ describe("AppSidebarContent", () => {
     expect(
       screen.getByRole("link", { name: /Exploitability issues/ }),
     ).toHaveAttribute("href", "/issues");
+  });
+
+  it("shows Realtime navigation in Cloud once its feature flag is on", () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
+    realtimeFlagValue.current = true;
+
+    // When
+    render(<AppSidebarContent />);
+
+    // Then
+    expect(
+      screen
+        .getAllByRole("link", { name: /Realtime/ })
+        .map((link) => link.getAttribute("href")),
+    ).toEqual(["/realtime", "/realtime/settings"]);
+    expect(
+      screen.getByRole("link", { name: "Cost anomalies" }),
+    ).toHaveAttribute("href", "/realtime/settings/cost-anomalies");
+  });
+
+  it("hides Realtime navigation while its feature flag is off", () => {
+    // Given / When
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
+    issuesFlagValue.current = true;
+    render(<AppSidebarContent />);
+
+    // Then
+    expect(
+      screen.queryByRole("link", { name: /Realtime/ }),
+    ).not.toBeInTheDocument();
   });
 
   it("hides Issues navigation in Cloud while the feature flag is off", () => {

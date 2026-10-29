@@ -7,12 +7,17 @@ const hiddenOutsideCloudFields = [
   "manage_registry",
 ];
 
-export const getVisiblePermissionFormFields = (isCloudEnvironment: boolean) =>
+export const getVisiblePermissionFormFields = (
+  isCloudEnvironment: boolean,
+  isRealtimeEnabled = false,
+) =>
   permissionFormFields.filter(
     (permission) =>
       permission.field !== "unlimited_visibility" &&
       (!hiddenOutsideCloudFields.includes(permission.field) ||
-        isCloudEnvironment),
+        isCloudEnvironment) &&
+      // Realtime is Cloud-only and behind a PostHog flag, which never resolves on in OSS.
+      (permission.field !== "manage_prowler_realtime" || isRealtimeEnabled),
   );
 
 export const getUnlimitedVisibilityField = () =>

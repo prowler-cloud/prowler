@@ -7,6 +7,7 @@ import {
   LayoutGrid,
   MessageCircleQuestion,
   Package,
+  Radar,
   Settings,
   ShieldCheck,
   SquareChartGantt,
@@ -37,6 +38,8 @@ interface NavigationConfigOptions {
   registryEligible?: boolean;
   // PostHog FEATURE_FLAG.ISSUES, resolved by the caller; Cloud only.
   issuesEnabled?: boolean;
+  // PostHog FEATURE_FLAG.REALTIME, resolved by the caller; Cloud only.
+  realtimeEnabled?: boolean;
   permissions?: RolePermissionAttributes;
 }
 
@@ -114,6 +117,7 @@ export function getNavigationConfig({
   cloudBillingEnabled = false,
   registryEligible = false,
   issuesEnabled = false,
+  realtimeEnabled = false,
   permissions,
 }: NavigationConfigOptions): NavigationSection[] {
   const isCloudEnvironment = isCloud();
@@ -171,6 +175,21 @@ export function getNavigationConfig({
                 label: "Exploitability issues",
                 icon: Crosshair,
                 active: isRouteActive(pathname, "/issues"),
+                highlight: true,
+              } as const,
+            ]
+          : []),
+        ...(isCloudEnvironment && realtimeEnabled
+          ? [
+              {
+                kind: NAVIGATION_ITEM_KIND.LINK,
+                href: "/realtime",
+                label: "Realtime",
+                icon: Radar,
+                // Its settings pages live under Configuration.
+                active:
+                  isRouteActive(pathname, "/realtime") &&
+                  !isRouteActive(pathname, "/realtime/settings"),
                 highlight: true,
               } as const,
             ]
@@ -269,6 +288,30 @@ export function getNavigationConfig({
               label: "Lighthouse AI",
               active: isRouteActive(pathname, "/lighthouse/settings"),
             },
+            ...(isCloudEnvironment && realtimeEnabled
+              ? [
+                  {
+                    kind: NAVIGATION_ITEM_KIND.LINK,
+                    href: "/realtime/settings",
+                    label: "Realtime",
+                    active:
+                      isRouteActive(pathname, "/realtime/settings") &&
+                      !isRouteActive(
+                        pathname,
+                        "/realtime/settings/cost-anomalies",
+                      ),
+                  } as const,
+                  {
+                    kind: NAVIGATION_ITEM_KIND.LINK,
+                    href: "/realtime/settings/cost-anomalies",
+                    label: "Cost anomalies",
+                    active: isRouteActive(
+                      pathname,
+                      "/realtime/settings/cost-anomalies",
+                    ),
+                  } as const,
+                ]
+              : []),
           ],
         },
         {

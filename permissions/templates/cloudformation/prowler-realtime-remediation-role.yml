@@ -1,0 +1,90 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: |
+  Optional. Creates the ProwlerRemediation IAM role that lets Prowler Realtime Detection and Remediation fix a small, fixed set of misconfigurations
+  automatically (and undo them). It is separate from the read-only ProwlerScan role: without it Prowler Realtime can only alert
+  and propose pull requests. Every permission below is scoped to what the matching fix needs; delete the stack to revoke.
+  If you are deploying this template to be used in Prowler Cloud please do not edit the AccountId and IAMPrincipal parameters.
+
+  What Prowler can do at runtime through this role, and nothing else:
+    - Close internet-open ports (22, 3389, all) on the security group named in an event, revoking only 0.0.0.0/0 and ::/0 rules (undo recorded)
+    - Turn on the four public access block settings of the S3 bucket named in an event (undo recorded)
+    - Turn on the account-wide S3 public access block (undo recorded; can affect buckets that are public on purpose)
+    - Start CloudTrail logging again on trails that were stopped (not revertible)
+    - Enable EBS encryption by default in the region; existing volumes are not changed (undo recorded)
+    - Set PubliclyAccessible to false on the RDS database named in an event (undo recorded)
+
+Parameters:
+  ExternalId:
+    Description: The External ID Prowler Realtime Detection and Remediation uses to assume this role. Use the same value you enter in Prowler Cloud.
+    Type: String
+    MinLength: 8
+    AllowedPattern: ".+"
+    ConstraintDescription: "ExternalId must be at least 8 characters."
+
+  AccountId:
+    Description: AWS account ID that assumes the role. If you are deploying this template to be used in Prowler Cloud please do not edit this.
+    Type: String
+    Default: "232136659152"
+    MinLength: 12
+    MaxLength: 12
+    AllowedPattern: "[0-9]{12}"
+
+  IAMPrincipal:
+    Description: IAM principal allowed to assume the role. If you are deploying this template to be used in Prowler Cloud please do not edit this.
+    Type: String
+    Default: role/prowler*
+
+Resources:
+  ProwlerRemediation:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: ProwlerRemediation
+      MaxSessionDuration: 3600
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: { AWS: !Sub "arn:${AWS::Partition}:iam::${AccountId}:root" }
+            Action: sts:AssumeRole
+            Condition:
+              StringEquals: { "sts:ExternalId": !Ref ExternalId }
+              StringLike: { "aws:PrincipalArn": !Sub "arn:${AWS::Partition}:iam::${AccountId}:${IAMPrincipal}" }
+      Policies:
+        - PolicyName: ProwlerRealtimeFixes
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: SecurityGroupIngress
+                Effect: Allow
+                Action: [ec2:DescribeSecurityGroups, ec2:RevokeSecurityGroupIngress, ec2:AuthorizeSecurityGroupIngress]
+                Resource: "*"
+              - Sid: EbsDefaultEncryption
+                Effect: Allow
+                Action: [ec2:GetEbsEncryptionByDefault, ec2:EnableEbsEncryptionByDefault, ec2:DisableEbsEncryptionByDefault]
+                Resource: "*"
+              - Sid: BucketPublicAccessBlock
+                Effect: Allow
+                Action: [s3:GetBucketPublicAccessBlock, s3:PutBucketPublicAccessBlock]
+                Resource: !Sub "arn:${AWS::Partition}:s3:::*"
+              - Sid: AccountPublicAccessBlock
+                Effect: Allow
+                Action: [s3:GetAccountPublicAccessBlock, s3:PutAccountPublicAccessBlock]
+                Resource: "*"
+              - Sid: CloudTrailLogging
+                Effect: Allow
+                Action: [cloudtrail:DescribeTrails, cloudtrail:GetTrailStatus, cloudtrail:StartLogging]
+                Resource: "*"
+              - Sid: RdsPrivate
+                Effect: Allow
+                Action: [rds:DescribeDBInstances, rds:ModifyDBInstance]
+                Resource: !Sub "arn:${AWS::Partition}:rds:*:${AWS::AccountId}:db:*"
+              - Sid: WhoAmI
+                Effect: Allow
+                Action: sts:GetCallerIdentity
+                Resource: "*"
+
+Outputs:
+  RoleArn:
+    Description: Paste this ARN in Prowler Cloud, Prowler Realtime, Auto-fix.
+    Value: !GetAtt ProwlerRemediation.Arn
