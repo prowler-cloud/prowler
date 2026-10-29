@@ -67,6 +67,21 @@ def mock_make_api_call(self, operation_name, kwarg):
     return make_api_call(self, operation_name, kwarg)
 
 
+# moto does not store the entries of a managed prefix list, so tests set them here by ID
+PREFIX_LIST_ENTRIES = {}
+
+
+def mock_make_api_call_prefix_list_entries(self, operation_name, kwarg):
+    if operation_name == "GetManagedPrefixListEntries":
+        return {
+            "Entries": [
+                {"Cidr": cidr}
+                for cidr in PREFIX_LIST_ENTRIES.get(kwarg["PrefixListId"], [])
+            ]
+        }
+    return make_api_call(self, operation_name, kwarg)
+
+
 def mock_make_api_call_with_state_transition_reason(self, operation_name, kwarg):
     response = make_api_call(self, operation_name, kwarg)
     if operation_name == "DescribeInstances":
@@ -504,6 +519,36 @@ class Test_EC2_Service:
                 assert security_group.tags == [
                     {"Key": "test", "Value": "test"},
                 ]
+
+    # Test EC2 Describe Managed Prefix Lists
+    @mock.patch(
+        "botocore.client.BaseClient._make_api_call",
+        new=mock_make_api_call_prefix_list_entries,
+    )
+    @mock_aws
+    def test_describe_managed_prefix_lists(self):
+        # Generate EC2 Client
+        ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
+        prefix_list = ec2_client.create_managed_prefix_list(
+            PrefixListName="test-prefix-list",
+            AddressFamily="IPv4",
+            MaxEntries=5,
+        )["PrefixList"]
+        PREFIX_LIST_ENTRIES[prefix_list["PrefixListId"]] = ["0.0.0.0/1", "128.0.0.0/1"]
+        # EC2 client for this test class
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
+        )
+        ec2 = EC2(aws_provider)
+
+        # AWS-managed prefix lists, such as the S3 one moto creates, are skipped
+        assert list(ec2.managed_prefix_lists) == [prefix_list["PrefixListId"]]
+        managed_prefix_list = ec2.managed_prefix_lists[prefix_list["PrefixListId"]]
+        assert managed_prefix_list.id == prefix_list["PrefixListId"]
+        assert managed_prefix_list.arn == prefix_list["PrefixListArn"]
+        assert managed_prefix_list.name == "test-prefix-list"
+        assert managed_prefix_list.region == AWS_REGION_US_EAST_1
+        assert managed_prefix_list.entries == ["0.0.0.0/1", "128.0.0.0/1"]
 
     # Test EC2 Describe Nacls
     @mock_aws

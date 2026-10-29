@@ -33,15 +33,34 @@ class ec2_securitygroup_allow_ingress_from_internet_to_any_port_from_ip(Check):
                         # Skip rules that only contain 0.0.0.0/0 or ::/0
                         # (already covered by other SG checks)
                         wildcard_cidrs = ("0.0.0.0/0", "::/0")
-                        has_specific_ip = any(
-                            r["CidrIp"] not in wildcard_cidrs
-                            for r in ingress_rule.get("IpRanges", [])
-                        ) or any(
-                            r["CidrIpv6"] not in wildcard_cidrs
-                            for r in ingress_rule.get("Ipv6Ranges", [])
+                        prefix_list_cidrs = [
+                            cidr
+                            for prefix_list_id in ingress_rule.get("PrefixListIds", [])
+                            if prefix_list_id.get("PrefixListId")
+                            in ec2_client.managed_prefix_lists
+                            for cidr in ec2_client.managed_prefix_lists[
+                                prefix_list_id["PrefixListId"]
+                            ].entries
+                        ]
+                        has_specific_ip = (
+                            any(
+                                r["CidrIp"] not in wildcard_cidrs
+                                for r in ingress_rule.get("IpRanges", [])
+                            )
+                            or any(
+                                r["CidrIpv6"] not in wildcard_cidrs
+                                for r in ingress_rule.get("Ipv6Ranges", [])
+                            )
+                            or any(
+                                cidr not in wildcard_cidrs for cidr in prefix_list_cidrs
+                            )
                         )
                         if has_specific_ip and check_security_group(
-                            ingress_rule, "-1", any_address=False, all_ports=True
+                            ingress_rule,
+                            "-1",
+                            any_address=False,
+                            all_ports=True,
+                            prefix_lists=ec2_client.managed_prefix_lists,
                         ):
                             report.status = "FAIL"
                             report.status_extended = f"Security group {security_group.name} ({security_group.id}) has a port open to a specific public IP address in ingress rule."

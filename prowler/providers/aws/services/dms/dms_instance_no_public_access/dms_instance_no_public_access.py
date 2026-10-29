@@ -24,7 +24,8 @@ class dms_instance_no_public_access(Check):
                 if instance.security_groups:
                     report.status = "PASS"
                     report.status_extended = f"DMS Replication Instance {instance.id} is set as publicly accessible but filtered with security groups."
-                    for security_group in _get_ec2_client().security_groups.values():
+                    ec2_client = _get_ec2_client()
+                    for security_group in ec2_client.security_groups.values():
                         if security_group.id in instance.security_groups:
                             for ingress_rule in security_group.ingress_rules:
                                 if check_security_group(
@@ -32,6 +33,7 @@ class dms_instance_no_public_access(Check):
                                     "-1",
                                     any_address=True,
                                     all_ports=True,
+                                    prefix_lists=ec2_client.managed_prefix_lists,
                                 ):
                                     report.status = "FAIL"
                                     report.status_extended = f"DMS Replication Instance {instance.id} is set as publicly accessible and security group {security_group.name} ({security_group.id}) is open to the Internet."
