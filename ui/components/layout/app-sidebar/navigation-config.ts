@@ -168,7 +168,7 @@ export function getNavigationConfig({
               {
                 kind: NAVIGATION_ITEM_KIND.LINK,
                 href: "/issues",
-                label: "Issues",
+                label: "Exploitability issues",
                 icon: Crosshair,
                 active: isRouteActive(pathname, "/issues"),
                 highlight: true,

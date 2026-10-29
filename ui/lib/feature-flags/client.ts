@@ -1,6 +1,10 @@
 "use client";
 
 import { useFeatureFlagEnabled } from "posthog-js/react";
+import { useState } from "react";
+
+import { useMountEffect } from "@/hooks/use-mount-effect";
+import { useRuntimeConfig } from "@/hooks/use-runtime-config";
 
 import {
   FEATURE_FLAG_STATE,
@@ -15,11 +19,21 @@ import {
 // OSS builds that never init PostHog resolve every read to its fallback.
 
 // Boolean flag with its resolution state. PostHog reports `undefined` until
-// the flags request lands (or forever when it was never initialized), `true`
-// or `false` afterwards; a flag missing from the project resolves to OFF.
+// the flags request lands, `true` or `false` afterwards; a flag missing from
+// the project resolves to OFF. Every PostHog init (the cloud root, the lazy
+// feedback survey) needs the runtime key, so without one, once mounted (the
+// first hydration render still sees the empty config), nothing will ever
+// load flags: the flag is OFF instead of pending forever.
 export function useFeatureFlagState(flag: FeatureFlag): FeatureFlagState {
   const value = useFeatureFlagEnabled(flag);
-  if (value === undefined) return FEATURE_FLAG_STATE.PENDING;
+  const { posthogKey } = useRuntimeConfig();
+  const [mounted, setMounted] = useState(false);
+  useMountEffect(() => setMounted(true));
+  if (value === undefined) {
+    return mounted && !posthogKey
+      ? FEATURE_FLAG_STATE.OFF
+      : FEATURE_FLAG_STATE.PENDING;
+  }
   return value ? FEATURE_FLAG_STATE.ON : FEATURE_FLAG_STATE.OFF;
 }
 
