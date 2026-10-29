@@ -1,13 +1,15 @@
 import { renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { useFeatureFlagEnabledMock } = vi.hoisted(() => ({
+const { useFeatureFlagEnabledMock, posthogClient } = vi.hoisted(() => ({
   useFeatureFlagEnabledMock: vi.fn(),
+  posthogClient: { __loaded: true },
 }));
 
 vi.mock("posthog-js/react", () => ({
   useFeatureFlagEnabled: useFeatureFlagEnabledMock,
 }));
+vi.mock("posthog-js", () => ({ posthog: posthogClient }));
 
 import { useFeatureFlag, useFeatureFlagState } from "./client";
 import { FEATURE_FLAG, FEATURE_FLAG_STATE } from "./shared";
@@ -15,6 +17,7 @@ import { FEATURE_FLAG, FEATURE_FLAG_STATE } from "./shared";
 describe("useFeatureFlagState", () => {
   beforeEach(() => {
     useFeatureFlagEnabledMock.mockReset();
+    posthogClient.__loaded = true;
   });
 
   it("should pass the flag key through to PostHog", () => {
@@ -29,7 +32,7 @@ describe("useFeatureFlagState", () => {
     ["on", true, FEATURE_FLAG_STATE.ON],
     ["off", false, FEATURE_FLAG_STATE.OFF],
     [
-      "pending (not initialized or still loading)",
+      "pending while PostHog loads flags",
       undefined,
       FEATURE_FLAG_STATE.PENDING,
     ],
@@ -41,6 +44,26 @@ describe("useFeatureFlagState", () => {
     );
 
     expect(result.current).toBe(expected);
+  });
+});
+
+describe("useFeatureFlagState without PostHog", () => {
+  beforeEach(() => {
+    useFeatureFlagEnabledMock.mockReset();
+    useFeatureFlagEnabledMock.mockReturnValue(undefined);
+  });
+
+  it("should report off once mounted when nothing initialized PostHog", () => {
+    // Given: a build that never calls posthog.init (OSS)
+    posthogClient.__loaded = false;
+
+    // When
+    const { result } = renderHook(() =>
+      useFeatureFlagState(FEATURE_FLAG.ISSUES),
+    );
+
+    // Then: a flag nobody can turn on is off, not pending forever
+    expect(result.current).toBe(FEATURE_FLAG_STATE.OFF);
   });
 });
 

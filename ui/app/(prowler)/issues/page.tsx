@@ -30,7 +30,7 @@ export default async function Issues({
   return (
     <ContentLayout title="Issues" icon={<ShieldAlert />}>
       {/* Deployment gate above (notFound); per-account rollout here, also a
-          404 when off so the route matches the hidden menu entry. */}
+          redirect to the overview when off, like the hidden menu entry. */}
       <FeatureFlagRoute flag={FEATURE_FLAG.ISSUES}>
         <Suspense
           fallback={

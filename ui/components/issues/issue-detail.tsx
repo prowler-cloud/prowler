@@ -9,12 +9,12 @@ import { IssueFindings } from "@/components/issues/issue-findings";
 import { IssueGraph } from "@/components/issues/issue-graph";
 import { IssueTriage } from "@/components/issues/issue-triage";
 import { IssuesLoadError } from "@/components/issues/issues-load-error";
-import { useIssueEvidence } from "@/components/issues/use-issue-evidence";
 import { Badge } from "@/components/shadcn/badge/badge";
 import { Button } from "@/components/shadcn/button/button";
 import { Card } from "@/components/shadcn/card/card";
 import { CodeSnippet } from "@/components/shadcn/code-snippet";
 import { InfoField } from "@/components/shadcn/info-field/info-field";
+import { useIssueEvidence } from "@/hooks/use-issue-evidence";
 import { riskFactors } from "@/lib/issues/risk-factors";
 import {
   LEG_LABELS,

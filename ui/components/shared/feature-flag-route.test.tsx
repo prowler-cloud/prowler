@@ -1,14 +1,14 @@
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { useFeatureFlagStateMock, notFound } = vi.hoisted(() => ({
+const { useFeatureFlagStateMock, redirect } = vi.hoisted(() => ({
   useFeatureFlagStateMock: vi.fn(),
-  notFound: vi.fn(() => {
-    throw new Error("NOT_FOUND");
+  redirect: vi.fn(() => {
+    throw new Error("REDIRECT");
   }),
 }));
 
-vi.mock("next/navigation", () => ({ notFound }));
+vi.mock("next/navigation", () => ({ redirect }));
 vi.mock("@/lib/feature-flags", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/feature-flags")>()),
   useFeatureFlagState: useFeatureFlagStateMock,
@@ -28,17 +28,17 @@ const renderRoute = () =>
 describe("FeatureFlagRoute", () => {
   beforeEach(() => {
     useFeatureFlagStateMock.mockReset();
-    notFound.mockClear();
+    redirect.mockClear();
   });
 
-  it("answers not found once the flag resolves off", () => {
+  it("sends the user to the overview once the flag resolves off", () => {
     // Given
     useFeatureFlagStateMock.mockReturnValue(FEATURE_FLAG_STATE.OFF);
     vi.spyOn(console, "error").mockImplementation(() => {});
 
     // When / Then
-    expect(renderRoute).toThrow("NOT_FOUND");
-    expect(notFound).toHaveBeenCalled();
+    expect(renderRoute).toThrow("REDIRECT");
+    expect(redirect).toHaveBeenCalledWith("/");
   });
 
   it("renders the route once the flag resolves on", () => {
@@ -50,7 +50,7 @@ describe("FeatureFlagRoute", () => {
 
     // Then
     expect(screen.getByText("route content")).toBeInTheDocument();
-    expect(notFound).not.toHaveBeenCalled();
+    expect(redirect).not.toHaveBeenCalled();
   });
 
   it("renders nothing while the flag is unresolved", () => {
@@ -62,6 +62,6 @@ describe("FeatureFlagRoute", () => {
 
     // Then
     expect(container).toBeEmptyDOMElement();
-    expect(notFound).not.toHaveBeenCalled();
+    expect(redirect).not.toHaveBeenCalled();
   });
 });

@@ -2,7 +2,7 @@
 
 import { IssueGraph } from "@/components/issues/issue-graph";
 import { IssuesLoadError } from "@/components/issues/issues-load-error";
-import { useIssueEvidence } from "@/components/issues/use-issue-evidence";
+import { useIssueEvidence } from "@/hooks/use-issue-evidence";
 import { IssueAttributes } from "@/types/issues";
 
 interface IssueAttackPathProps {
@@ -28,19 +28,21 @@ export const IssueAttackPath = ({
       </p>
     );
   }
+  // Nothing to draw beats a findings error: without resources there is no
+  // graph for the findings to land on.
+  if (state.status === "loaded" && state.resources.length === 0) {
+    return (
+      <p className="text-text-neutral-tertiary text-sm">
+        This issue has no affected resources to draw.
+      </p>
+    );
+  }
   if (state.status === "error" || state.findings === undefined) {
     return (
       <IssuesLoadError
         message="Could not load the attack path for this issue."
         onRetry={retry}
       />
-    );
-  }
-  if (state.resources.length === 0) {
-    return (
-      <p className="text-text-neutral-tertiary text-sm">
-        This issue has no affected resources to draw.
-      </p>
     );
   }
   return (

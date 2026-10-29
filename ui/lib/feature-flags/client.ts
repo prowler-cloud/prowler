@@ -1,6 +1,10 @@
 "use client";
 
+import { posthog } from "posthog-js";
 import { useFeatureFlagEnabled } from "posthog-js/react";
+import { useState } from "react";
+
+import { useMountEffect } from "@/hooks/use-mount-effect";
 
 import {
   FEATURE_FLAG_STATE,
@@ -15,11 +19,19 @@ import {
 // OSS builds that never init PostHog resolve every read to its fallback.
 
 // Boolean flag with its resolution state. PostHog reports `undefined` until
-// the flags request lands (or forever when it was never initialized), `true`
-// or `false` afterwards; a flag missing from the project resolves to OFF.
+// the flags request lands, `true` or `false` afterwards; a flag missing from
+// the project resolves to OFF. The cloud fork inits PostHog in a mount effect
+// at the app root, so once this component has mounted an unloaded client
+// means nobody will init it (OSS): the flag can never turn on, so it is OFF.
 export function useFeatureFlagState(flag: FeatureFlag): FeatureFlagState {
   const value = useFeatureFlagEnabled(flag);
-  if (value === undefined) return FEATURE_FLAG_STATE.PENDING;
+  const [mounted, setMounted] = useState(false);
+  useMountEffect(() => setMounted(true));
+  if (value === undefined) {
+    return mounted && !posthog.__loaded
+      ? FEATURE_FLAG_STATE.OFF
+      : FEATURE_FLAG_STATE.PENDING;
+  }
   return value ? FEATURE_FLAG_STATE.ON : FEATURE_FLAG_STATE.OFF;
 }
 
