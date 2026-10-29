@@ -104,6 +104,12 @@ require_uv() {
 }
 
 services_up() {
+  # Create _data/logs before Docker runs: on first launch, compose
+  # bind-mounts create ./_data as root, after which this user can no
+  # longer mkdir _data/logs and `make dev` fails (see #13082).
+  # Creating it first keeps it user-owned; the later mkdir in all_run
+  # stays as an idempotent safety net.
+  mkdir -p "$REPO_ROOT/_data/logs"
   log "Starting postgres + valkey + neo4j via Docker (waits for healthchecks)..."
   "${COMPOSE[@]}" -f "$COMPOSE_FILE" up -d --wait postgres valkey neo4j
   ok "Services ready: pg:${POSTGRES_PORT} / valkey:${VALKEY_PORT} / neo4j:${NEO4J_PORT} / neo4j-http:${NEO4J_HTTP_PORT}"
