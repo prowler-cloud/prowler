@@ -14,10 +14,18 @@ from tests.providers.aws.utils import (
 make_api_call = botocore.client.BaseClient._make_api_call
 
 
+# moto does not store the entries of a managed prefix list, so tests set them here by ID
+PREFIX_LIST_ENTRIES = {}
+
+
 def mock_make_api_call_prefix_list_entries(self, operation_name, kwarg):
-    # moto does not store the entries of a managed prefix list
     if operation_name == "GetManagedPrefixListEntries":
-        return {"Entries": [{"Cidr": "0.0.0.0/1"}, {"Cidr": "128.0.0.0/1"}]}
+        return {
+            "Entries": [
+                {"Cidr": cidr}
+                for cidr in PREFIX_LIST_ENTRIES.get(kwarg["PrefixListId"], [])
+            ]
+        }
     return make_api_call(self, operation_name, kwarg)
 
 
@@ -410,6 +418,7 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22:
             AddressFamily="IPv4",
             MaxEntries=5,
         )["PrefixList"]["PrefixListId"]
+        PREFIX_LIST_ENTRIES[prefix_list_id] = ["0.0.0.0/1", "128.0.0.0/1"]
         ec2_client.authorize_security_group_ingress(
             GroupId=default_sg_id,
             IpPermissions=[

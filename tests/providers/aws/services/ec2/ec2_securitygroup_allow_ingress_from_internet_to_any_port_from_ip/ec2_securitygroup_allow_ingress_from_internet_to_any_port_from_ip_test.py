@@ -1,5 +1,6 @@
 from unittest import mock
 
+import botocore
 from boto3 import client
 from moto import mock_aws
 
@@ -10,6 +11,22 @@ from tests.providers.aws.utils import (
 )
 
 CHECK_MODULE = "prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_any_port_from_ip.ec2_securitygroup_allow_ingress_from_internet_to_any_port_from_ip"
+
+make_api_call = botocore.client.BaseClient._make_api_call
+
+# moto does not store the entries of a managed prefix list, so tests set them here by ID
+PREFIX_LIST_ENTRIES = {}
+
+
+def mock_make_api_call_prefix_list_entries(self, operation_name, kwarg):
+    if operation_name == "GetManagedPrefixListEntries":
+        return {
+            "Entries": [
+                {"Cidr": cidr}
+                for cidr in PREFIX_LIST_ENTRIES.get(kwarg["PrefixListId"], [])
+            ]
+        }
+    return make_api_call(self, operation_name, kwarg)
 
 
 class Test_ec2_securitygroup_allow_ingress_from_internet_to_any_port_from_ip:
@@ -519,3 +536,85 @@ class Test_ec2_securitygroup_allow_ingress_from_internet_to_any_port_from_ip:
                         sg.status_extended
                         == f"Security group {default_sg_name} ({default_sg_id}) has a port open to a specific public IP address in ingress rule."
                     )
+
+    @mock.patch(
+        "botocore.client.BaseClient._make_api_call",
+        new=mock_make_api_call_prefix_list_entries,
+    )
+    @mock_aws
+    def test_sg_with_specific_public_ip_in_prefix_list(self):
+        """SG whose only source is a prefix list with a specific public IP should FAIL."""
+        ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
+        vpc_response = ec2_client.create_vpc(CidrBlock="10.0.0.0/16")
+        vpc_id = vpc_response["Vpc"]["VpcId"]
+
+        subnet_response = ec2_client.create_subnet(
+            VpcId=vpc_id, CidrBlock="10.0.1.0/24"
+        )
+        subnet_id = subnet_response["Subnet"]["SubnetId"]
+
+        default_sg = ec2_client.describe_security_groups(GroupNames=["default"])[
+            "SecurityGroups"
+        ][0]
+        default_sg_id = default_sg["GroupId"]
+        default_sg_name = default_sg["GroupName"]
+
+        prefix_list_id = ec2_client.create_managed_prefix_list(
+            PrefixListName="partner-ips",
+            AddressFamily="IPv4",
+            MaxEntries=5,
+        )["PrefixList"]["PrefixListId"]
+        PREFIX_LIST_ENTRIES[prefix_list_id] = ["52.94.76.5/32"]
+
+        # Add a prefix list ingress rule (all protocols)
+        ec2_client.authorize_security_group_ingress(
+            GroupId=default_sg_id,
+            IpPermissions=[
+                {
+                    "IpProtocol": "-1",
+                    "PrefixListIds": [{"PrefixListId": prefix_list_id}],
+                }
+            ],
+        )
+
+        # Create Network Interface to make the SG in-use
+        ec2_client.create_network_interface(
+            SubnetId=subnet_id,
+            Groups=[default_sg_id],
+            Description="Test ENI",
+        )
+
+        from prowler.providers.aws.services.ec2.ec2_service import EC2
+        from prowler.providers.aws.services.vpc.vpc_service import VPC
+
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1],
+        )
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                f"{CHECK_MODULE}.ec2_client",
+                new=EC2(aws_provider),
+            ),
+            mock.patch(
+                f"{CHECK_MODULE}.vpc_client",
+                new=VPC(aws_provider),
+            ),
+        ):
+            from prowler.providers.aws.services.ec2.ec2_securitygroup_allow_ingress_from_internet_to_any_port_from_ip.ec2_securitygroup_allow_ingress_from_internet_to_any_port_from_ip import (
+                ec2_securitygroup_allow_ingress_from_internet_to_any_port_from_ip,
+            )
+
+            check = ec2_securitygroup_allow_ingress_from_internet_to_any_port_from_ip()
+            result = check.execute()
+
+            sg = next(sg for sg in result if sg.resource_id == default_sg_id)
+            assert sg.status == "FAIL"
+            assert (
+                sg.status_extended
+                == f"Security group {default_sg_name} ({default_sg_id}) has a port open to a specific public IP address in ingress rule."
+            )

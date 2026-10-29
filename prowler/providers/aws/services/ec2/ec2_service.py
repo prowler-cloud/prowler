@@ -883,6 +883,8 @@ class SecurityGroup(BaseModel):
 
 
 class ManagedPrefixList(BaseModel):
+    """Customer managed prefix list and the CIDRs of its entries."""
+
     id: str
     arn: str
     name: str

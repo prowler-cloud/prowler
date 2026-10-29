@@ -67,10 +67,18 @@ def mock_make_api_call(self, operation_name, kwarg):
     return make_api_call(self, operation_name, kwarg)
 
 
+# moto does not store the entries of a managed prefix list, so tests set them here by ID
+PREFIX_LIST_ENTRIES = {}
+
+
 def mock_make_api_call_prefix_list_entries(self, operation_name, kwarg):
-    # moto does not store the entries of a managed prefix list
     if operation_name == "GetManagedPrefixListEntries":
-        return {"Entries": [{"Cidr": "0.0.0.0/1"}, {"Cidr": "128.0.0.0/1"}]}
+        return {
+            "Entries": [
+                {"Cidr": cidr}
+                for cidr in PREFIX_LIST_ENTRIES.get(kwarg["PrefixListId"], [])
+            ]
+        }
     return make_api_call(self, operation_name, kwarg)
 
 
@@ -526,6 +534,7 @@ class Test_EC2_Service:
             AddressFamily="IPv4",
             MaxEntries=5,
         )["PrefixList"]
+        PREFIX_LIST_ENTRIES[prefix_list["PrefixListId"]] = ["0.0.0.0/1", "128.0.0.0/1"]
         # EC2 client for this test class
         aws_provider = set_mocked_aws_provider(
             [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
