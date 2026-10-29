@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -374,6 +374,48 @@ describe("IssuePanel", () => {
     expect(await screen.findByText("Risk Accepted")).toBeInTheDocument();
     expect(screen.queryByText("Loading issue details…")).toBeNull();
   });
+
+  it.each([
+    {
+      failure: "the findings request",
+      fail: () => getIssueFindings.mockResolvedValueOnce(undefined),
+    },
+    {
+      failure: "the issue request",
+      fail: () => getIssue.mockRejectedValueOnce(new Error("Offline")),
+    },
+  ])(
+    "keeps the loaded rows when $failure fails on a background refresh",
+    async ({ fail }) => {
+      // Given: the findings loaded, and a finding is open
+      getIssue.mockResolvedValue(detailWith(["bucket"], ["f-1"]));
+      getIssueFindings.mockResolvedValueOnce([finding]);
+      getFindingById.mockResolvedValue({
+        data: { id: "finding-1", attributes: {}, relationships: {} },
+      });
+      renderPanel();
+      await openTab("Findings");
+      await userEvent.click(
+        await screen.findByRole("button", { name: "Bucket is public" }),
+      );
+      await screen.findByText("Detail of finding-1");
+      fail();
+
+      // When: closing it refreshes, and the refresh fails
+      await userEvent.click(screen.getByText("Issue details"));
+
+      // Then: the rows stay instead of a load error
+      await waitFor(() =>
+        expect(
+          getIssue.mock.calls.length + getIssueFindings.mock.calls.length,
+        ).toBeGreaterThanOrEqual(3),
+      );
+      expect(
+        screen.getByRole("button", { name: "Bucket is public" }),
+      ).toBeInTheDocument();
+      expect(screen.queryByRole("alert")).toBeNull();
+    },
+  );
 
   it("opens a finding clicked on the attack path in place", async () => {
     // Given

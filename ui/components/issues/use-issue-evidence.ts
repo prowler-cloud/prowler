@@ -34,12 +34,18 @@ export const useIssueEvidence = (
 
   useEffect(() => {
     let cancelled = false;
+    // A failed background refresh keeps what is already shown; only a first
+    // load or a retry (which resets to loading) surfaces the error.
+    const fail = () =>
+      setState((previous) =>
+        previous.status === "loaded" ? previous : { status: "error" },
+      );
     getIssue(id)
       .then(async (detail) => {
         if (cancelled) return;
         const attributes = detail?.data?.attributes;
         if (!attributes?.resource_uids) {
-          setState({ status: "error" });
+          fail();
           return;
         }
         const detailScanId =
@@ -52,18 +58,27 @@ export const useIssueEvidence = (
           : findingUids.length === 0
             ? []
             : undefined;
-        if (!cancelled)
-          setState({
-            status: "loaded",
-            resources: attributes.resource_uids,
-            findings,
-            findingsTruncated: new Set(findingUids).size > ISSUE_FINDINGS_LIMIT,
-            scanId: detailScanId,
-            providerId: detailProviderId,
-          });
+        if (cancelled) return;
+        setState((previous) =>
+          // Same rule for the findings: a refresh that loses them keeps the
+          // ones already shown.
+          findings === undefined &&
+          previous.status === "loaded" &&
+          previous.findings !== undefined
+            ? previous
+            : {
+                status: "loaded",
+                resources: attributes.resource_uids,
+                findings,
+                findingsTruncated:
+                  new Set(findingUids).size > ISSUE_FINDINGS_LIMIT,
+                scanId: detailScanId,
+                providerId: detailProviderId,
+              },
+        );
       })
       .catch(() => {
-        if (!cancelled) setState({ status: "error" });
+        if (!cancelled) fail();
       });
     return () => {
       cancelled = true;
