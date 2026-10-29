@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = ">=3.11, <3.13"
 resolution-markers = [
     "python_full_version >= '3.12' and sys_platform == 'win32'",
@@ -4945,7 +4945,7 @@ dependencies = [
 
 [[package]]
 name = "prowler-api"
-version = "1.48.0"
+version = "1.49.0"
 source = { virtual = "." }
 dependencies = [
     { name = "cartography" },
