@@ -1,83 +1,91 @@
-import Link from "next/link";
-
-import { Button } from "@/components/shadcn/button/button";
-import { Card } from "@/components/shadcn/card/card";
 import { SeverityBadge } from "@/components/shadcn/table/severity-badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/shadcn/table/table";
 import { TriageStatusBadge } from "@/components/shared/triage/triage-status-badge";
-import { MUTED_FILTER } from "@/lib/findings-filters";
 
 import type { IssueFindingsProps } from "./types";
 
+const HEADERS = ["Finding", "Severity", "Triage"] as const;
+
 /**
- * The findings the issue folds, each with its own triage. That triage stays on
- * the finding: the issue's status answers for the combination, the finding's
- * for whether that one check is right.
+ * The findings the issue folds, laid out like the finding panel's "Other
+ * findings" table. Each keeps its own triage: the issue's status answers for
+ * the combination, the finding's for whether that one check is right.
  */
 export const IssueFindings = ({
   findings,
-  scanId,
   total,
+  onOpenFinding,
 }: IssueFindingsProps) => {
   return (
-    <section aria-label="Findings">
-      <h4 className="mb-3 text-sm font-semibold">
-        Findings ({total.toLocaleString()})
-      </h4>
-      <ul className="grid grid-cols-1 gap-2 lg:grid-cols-2">
-        {findings.map((finding) => (
-          <li key={finding.id} className="min-w-0">
-            <Card variant="inner" padding="md" className="h-full">
-              <div className="flex flex-col gap-1">
-                <div className="flex items-start justify-between gap-3">
-                  {scanId ? (
-                    <div className="min-w-0">
-                      <Button
-                        asChild
-                        variant="link"
-                        size="link-sm"
-                        className="max-w-full"
-                      >
-                        <Link
-                          href={`/findings?${new URLSearchParams({
-                            "filter[scan__in]": scanId,
-                            "filter[check_id__in]": finding.checkId,
-                            "filter[resource_uid]": finding.resourceUid,
-                            "filter[muted]": MUTED_FILTER.INCLUDE,
-                            expandedCheckId: finding.checkId,
-                          })}`}
-                          title={finding.checkTitle}
-                        >
-                          <span className="truncate">{finding.checkTitle}</span>
-                        </Link>
-                      </Button>
-                    </div>
-                  ) : (
-                    <span className="text-text-neutral-primary min-w-0 text-sm break-words">
-                      {finding.checkTitle}
-                    </span>
-                  )}
-                  <SeverityBadge severity={finding.severity} />
-                </div>
-                <div className="flex items-baseline justify-between gap-3">
-                  <span className="text-text-neutral-tertiary min-w-0 truncate font-mono text-xs">
-                    {finding.checkId}
-                  </span>
-                  <TriageStatusBadge
-                    status={finding.triageStatus}
-                    showLabel={false}
-                  />
-                </div>
-              </div>
-            </Card>
-          </li>
-        ))}
-      </ul>
-      {findings.length < total && (
-        <p className="text-text-neutral-tertiary mt-2 text-xs">
-          Showing {findings.length.toLocaleString()} of {total.toLocaleString()}
-          .
-        </p>
-      )}
+    <section aria-label="Findings" className="flex flex-col gap-2">
+      <div className="flex items-center justify-end">
+        <span className="text-text-neutral-tertiary text-sm">
+          {findings.length < total
+            ? `Showing ${findings.length.toLocaleString()} of ${total.toLocaleString()}`
+            : `${total.toLocaleString()} Total Entries`}
+        </span>
+      </div>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            {HEADERS.map((header) => (
+              <TableHead key={header}>
+                <span className="text-text-neutral-secondary text-sm font-medium">
+                  {header}
+                </span>
+              </TableHead>
+            ))}
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {findings.map((finding) => (
+            <TableRow
+              key={finding.id}
+              className="group cursor-pointer"
+              onClick={() => onOpenFinding(finding.id)}
+            >
+              {/* max-w-0 lets the title take the spare width and truncate. */}
+              <TableCell className="w-full max-w-0">
+                {/* The row opens the finding; the button is its keyboard stop. */}
+                <button
+                  type="button"
+                  title={finding.checkTitle}
+                  className="text-text-neutral-primary block max-w-full truncate text-left text-sm"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onOpenFinding(finding.id);
+                  }}
+                >
+                  {finding.checkTitle}
+                </button>
+                {/* One check fails on several resources: this tells them apart. */}
+                <p
+                  className="text-text-neutral-tertiary truncate font-mono text-xs"
+                  title={finding.resourceUid}
+                >
+                  {finding.resourceUid}
+                </p>
+              </TableCell>
+              <TableCell>
+                <SeverityBadge severity={finding.severity} />
+              </TableCell>
+              <TableCell>
+                <TriageStatusBadge
+                  status={finding.triageStatus}
+                  showLabel={false}
+                />
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
     </section>
   );
 };

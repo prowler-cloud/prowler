@@ -4,14 +4,12 @@ import { useEffect, useRef, useState } from "react";
 
 import { getFindings } from "@/actions/findings";
 import { AttackPathGraph } from "@/components/attack-paths/graph/attack-path-graph";
-import { FindingDetailDrawer } from "@/components/findings/table";
 import {
   buildIssueGraph,
   GRAPH_RESOURCE_LIMIT,
 } from "@/components/issues/issue-graph.adapter";
 import { Alert, AlertDescription } from "@/components/shadcn/alert";
 import { Card } from "@/components/shadcn/card/card";
-import { useFindingDetails } from "@/hooks/use-finding-details";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { isProwlerFindingNode } from "@/lib/attack-paths/node-types";
 import { GraphNode } from "@/types/attack-paths";
@@ -21,11 +19,8 @@ interface IssueGraphBaseProps {
   issue: IssueAttributes;
   resourceUids: string[];
   findings?: IssueFinding[];
-  /**
-   * No finding drawer on click: for hosts inside the side panel, where a
-   * second detail view would replace the one holding the graph.
-   */
-  readOnly?: boolean;
+  /** Called with the clicked finding's id; the host shows its detail. */
+  onOpenFinding: (findingId: string) => void;
 }
 
 interface ScopedIssueGraphProps extends IssueGraphBaseProps {
@@ -51,9 +46,8 @@ export const IssueGraph = ({
   findings = [],
   providerId,
   scanId,
-  readOnly = false,
+  onOpenFinding,
 }: IssueGraphProps) => {
-  const finding = useFindingDetails();
   const canKeepReadableZoom = useMediaQuery(READABLE_ZOOM_MEDIA_QUERY);
   const view = buildIssueGraph(issue, resourceUids, findings);
   const shownFindings = new Set(
@@ -64,7 +58,6 @@ export const IssueGraph = ({
   const pending = useRef(false);
   const mounted = useRef(true);
   const [loading, setLoading] = useState(false);
-  const [lookupComplete, setLookupComplete] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const expandedResources = new Set(
     view.nodes
@@ -82,8 +75,6 @@ export const IssueGraph = ({
   const handleNodeClick = async (node: GraphNode) => {
     if (!isProwlerFindingNode(node.labels) || pending.current) return;
     setError(null);
-    setLookupComplete(false);
-    finding.resetFindingDetails();
     let findingId = node.properties.finding_id;
     if (!findingId && (!providerId || !scanId)) {
       setError(
@@ -120,8 +111,7 @@ export const IssueGraph = ({
         }
         findingId = match.id;
       }
-      await finding.navigateToFinding(String(findingId));
-      if (mounted.current) setLookupComplete(true);
+      onOpenFinding(String(findingId));
     } catch {
       if (mounted.current)
         setError("Could not load this finding. Select the finding to retry.");
@@ -130,9 +120,6 @@ export const IssueGraph = ({
       if (mounted.current) setLoading(false);
     }
   };
-  const detailFailed =
-    lookupComplete && !finding.findingDetailLoading && !finding.findingDetails;
-
   return (
     <section
       aria-label="Finding evidence"
@@ -144,20 +131,16 @@ export const IssueGraph = ({
         {Math.min(resourceUids.length, GRAPH_RESOURCE_LIMIT)} of{" "}
         {resourceUids.length} affected resources, plus supporting checks cited
         by the assessment. These links show evidence associations, not confirmed
-        attack paths.
-        {readOnly && " Open the full path to inspect a finding."}
+        attack paths. Select a finding to open it.
       </p>
       {loading && (
         <p role="status" className="text-sm">
           Loading finding details…
         </p>
       )}
-      {(error || detailFailed) && (
+      {error && (
         <Alert variant="error">
-          <AlertDescription>
-            {error ??
-              "Could not load this finding. Select the finding to retry."}
-          </AlertDescription>
+          <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
       <Card
@@ -169,23 +152,10 @@ export const IssueGraph = ({
           data={{ nodes: view.nodes, edges: view.edges }}
           view={view}
           expandedResources={expandedResources}
-          onNodeClick={readOnly ? undefined : handleNodeClick}
+          onNodeClick={handleNodeClick}
           minFitZoom={canKeepReadableZoom ? ISSUE_GRAPH_MIN_ZOOM : undefined}
         />
       </Card>
-      {finding.findingDetails && (
-        <FindingDetailDrawer
-          key={finding.findingDetails.id}
-          finding={finding.findingDetails}
-          defaultOpen
-          onOpenChange={(open) => {
-            if (!open) {
-              setLookupComplete(false);
-              finding.resetFindingDetails();
-            }
-          }}
-        />
-      )}
     </section>
   );
 };

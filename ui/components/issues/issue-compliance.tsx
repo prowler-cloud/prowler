@@ -9,6 +9,7 @@ import {
   complianceFrameworkLabel,
 } from "@/components/compliance/compliance-framework-chip";
 import { IssuesLoadError } from "@/components/issues/issues-load-error";
+import { Skeleton } from "@/components/shadcn/skeleton/skeleton";
 import type { FindingComplianceFramework } from "@/types/compliance-watchlist";
 import { IssueFinding } from "@/types/issues";
 
@@ -115,13 +116,21 @@ export const IssueCompliance = ({
     );
   };
 
+  // Laid out like the finding panel's "Compliance Frameworks" header row.
   return (
-    <section aria-label="Compliance affected">
-      <h4 className="mb-3 text-sm font-semibold">Compliance affected</h4>
+    <section aria-label="Compliance affected" className="flex flex-col gap-1.5">
+      <span className="text-text-neutral-tertiary text-xs font-medium">
+        Compliance Frameworks:
+      </span>
       {state.status === "loading" ? (
-        <p role="status" className="text-text-neutral-tertiary text-sm">
-          Loading frameworks…
-        </p>
+        <div className="flex flex-wrap items-center gap-2">
+          <span role="status" className="sr-only">
+            Loading frameworks…
+          </span>
+          <Skeleton className="size-7 rounded-md" />
+          <Skeleton className="size-7 rounded-md" />
+          <Skeleton className="size-7 rounded-md" />
+        </div>
       ) : state.status === "unavailable" ? (
         <IssuesLoadError
           message="Could not load the frameworks for this issue."
@@ -130,7 +139,7 @@ export const IssueCompliance = ({
       ) : (
         <>
           {state.frameworks.length === 0 ? (
-            <p className="text-text-neutral-tertiary text-sm">
+            <p className="text-text-neutral-tertiary text-xs">
               {incomplete
                 ? "None of the findings checked map to a framework requirement."
                 : "None of the findings behind this issue map to a framework requirement."}
@@ -148,7 +157,7 @@ export const IssueCompliance = ({
             </div>
           )}
           {incomplete && (
-            <p className="text-text-neutral-tertiary mt-2 text-xs">
+            <p className="text-text-neutral-tertiary text-xs">
               Not every finding could be checked, so this list may be
               incomplete.
             </p>

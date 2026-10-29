@@ -26,10 +26,13 @@ const ISSUE_FILTER_KEYS = [
 export const IssuesList = async ({
   searchParams,
   filters: filterControls,
+  providerUids,
 }: {
   searchParams: SearchParamsProps;
   /** The scope selectors, rendered above the verdict tabs: they scope every tab. */
   filters?: ReactNode;
+  /** Provider uid by provider id, for the issue panel. */
+  providerUids?: Record<string, string>;
 }) => {
   const filters: Record<string, string> = {};
   ISSUE_FILTER_KEYS.forEach((key) => {
@@ -87,7 +90,11 @@ export const IssuesList = async ({
       {rows === null ? (
         <IssuesLoadError />
       ) : rows.length ? (
-        <IssuesTable issues={rows} metadata={issues?.meta} />
+        <IssuesTable
+          issues={rows}
+          metadata={issues?.meta}
+          providerUids={providerUids}
+        />
       ) : (
         <p className="text-text-neutral-tertiary text-sm">
           No issues match this filter.
