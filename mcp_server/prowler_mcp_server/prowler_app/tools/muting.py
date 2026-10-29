@@ -30,7 +30,10 @@ class MutingTools(BaseTool):
     """
 
     # A wrong mute hides findings silently and for good, so it is flagged like a deletion.
-    destructive_tools = frozenset({"set_mutelist", "create_mute_rule"})
+    # update_mute_rule is included because re-enabling a rule mutes its findings again.
+    destructive_tools = frozenset(
+        {"set_mutelist", "create_mute_rule", "update_mute_rule"}
+    )
 
     # ===== MUTELIST TOOLS =====
 

@@ -68,6 +68,7 @@ async def test_every_tool_says_whether_it_is_read_only_or_destructive(mcp_root_s
     destructive = {name for name, a in tools.items() if a.destructiveHint}
     assert destructive == {
         "prowler_create_mute_rule",
+        "prowler_update_mute_rule",
         "prowler_set_mutelist",
         "prowler_delete_mutelist",
         "prowler_delete_mute_rule",
@@ -78,4 +79,6 @@ async def test_every_tool_says_whether_it_is_read_only_or_destructive(mcp_root_s
     assert tools["prowler_run_attack_paths_query"].readOnlyHint
     assert tools["prowler_hub_list_checks"].readOnlyHint
     assert tools["prowler_docs_search"].readOnlyHint
+    assert tools["prowler_get_mutelist"].readOnlyHint
+    assert tools["prowler_hub_get_check_code"].readOnlyHint
     assert not tools["prowler_trigger_scan"].readOnlyHint
