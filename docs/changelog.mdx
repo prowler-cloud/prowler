@@ -4,6 +4,62 @@ description: "New features and improvements in each Prowler release"
 rss: true
 ---
 
+<Update label="v5.47.0" description="November 9, 2026">
+  ### 🧭 Add Provider — One Step to Connect Any Provider
+
+  The add-provider wizard follows the same model for every provider: one connect step, then the launch step. Adding an Azure subscription used to take six screens; now the account, its alias and its credentials are one form, and a single submit registers the account, stores the secret and tests the connection.
+
+  - A failed connection test shows inline, keeps the values and turns the action into **Retry connection** without registering the account twice.
+  - Access methods show as cards on the same step for AWS, GCP, Microsoft 365, GitHub, Alibaba Cloud and Cloudflare, and AWS, Azure and GCP switch to their organization flow through tabs.
+  - Users with the Manage Account permission can invite a teammate to finish the connection for every provider, not only AWS.
+  - **Ask Lighthouse AI** opens beside the wizard without closing it. It guides the connection from the Prowler docs by default and, when asked, connects the provider itself after confirming the provider, UID and credential field names, never echoing a secret back.
+  - Product tours and the guided onboarding sequence are removed; new tenants still land on the add-provider wizard.
+
+  ### 🎯 Issues — Verdicts Explained in the List
+
+  <Note>
+  This feature is available exclusively in **Prowler Cloud** and **Prowler Private Cloud** with a [subscription](https://prowler.com/pricing).
+  </Note>
+
+  - The issue list leads with the verdict, shows the attack path under each title and adds a **Why** column with the five evidence legs, so the reason for a verdict reads without opening the issue. The summary tiles become one line with the folded findings and the findings already covered by a control.
+  - A row opens in the side panel, next to Lighthouse AI, with the verdict, legs, remediation, triage and an **Attack path** tab with the issue graph, instead of expanding the issue inline.
+  - The menu entry is renamed to **Exploitability issues**.
+
+  ### ☁️ Azure and AWS Checks
+
+  - `network_application_gateway_waf_enabled` and `network_application_gateway_http2_enabled` cover Azure Application Gateways and their WAF policies, mapped to CIS 5.0 and 6.0. Contributed by @BabafemiB. Thank you!
+  - `iam_subscription_owners_between_2_and_3` verifies that each Azure subscription has between two and three Owners, counting owners inherited from management groups, mapped to CIS 5.0 and 6.0. Contributed by @BabafemiB. Thank you!
+  - The AWS security group internet exposure checks treat CIDRs in one ingress rule that together cover `0.0.0.0/0` or `::/0`, such as `0.0.0.0/1` plus `128.0.0.0/1`, as open to the internet; such a rule used to pass `ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22` and its siblings. Contributed by @harshrajdebug. Thank you!
+
+  Explore all checks at [Prowler Hub](https://hub.prowler.com/check).
+
+  ### 🛠️ Improvements and Fixes
+
+  - Every MCP Server tool declares `readOnlyHint` and `destructiveHint`, so clients can tell a listing from a write when deciding whether to ask the user. Mutelist and mute rule writes are marked destructive because they hide findings for good.
+  - The cross-provider compliance tab keeps the frameworks that loaded, with a warning, when one catalog page or framework fails, instead of going blank.
+  - The NATO D32 compliance framework has its own icon on the compliance cards.
+  - Lighthouse AI replies no longer blink when the response finishes streaming, and the user avatar no longer requests the current page as an image, which rendered every page twice.
+  - The Invitations page uses **Status** instead of **State**, and the Invitations and Roles filters show capitalized options.
+  - **Prowler Cloud:** actions refused because the tenant is over its plan's usage limit, such as launching a scan, saving a schedule, adding a provider or triaging a finding, now link to the plans page.
+  - **Prowler Cloud:** creating API keys is a Prowler Cloud feature; on Local Server the button opens the upgrade dialog, and existing keys can still be edited and revoked.
+  - **Prowler Cloud:** issue evaluation after a scan reads the scan's findings through their indexes instead of a server-side cursor that took hours on large scans, so the evaluations no longer queue up behind each other.
+  - **Prowler Private Cloud:** Lighthouse AI can use Amazon Bedrock with only a region, relying on the installation's own AWS role, when the API allows it.
+
+  ### 🔐 Security Updates
+
+  - `pymongo` upgraded to 4.18.3, `dnspython` to 2.9.0 and `oauthlib` to 4.0.0 in the SDK and the API container image, patching the BSON decoding and DNS compression pointer denial of service advisories and the OAuth device flow token disclosure. The API also moves `django-allauth` to 65.19.7, since earlier releases cap `oauthlib` below 4.
+  - `Authlib` upgraded to 1.9.1 and `dnspython` to 2.9.0 in the MCP Server container image, patching CVE-2026-96760 (critical), CVE-2026-114615, CVE-2026-114616 and CVE-2026-114605.
+
+  ### 🙌 External Contributors
+
+  Thank you to our community contributors for this release!
+
+  - @BabafemiB: Azure `network_application_gateway_waf_enabled`, `network_application_gateway_http2_enabled` and `iam_subscription_owners_between_2_and_3` checks ([#13160](https://github.com/prowler-cloud/prowler/pull/13160), [#13145](https://github.com/prowler-cloud/prowler/pull/13145))
+  - @harshrajdebug: AWS security group internet exposure fix for split CIDRs ([#13191](https://github.com/prowler-cloud/prowler/pull/13191))
+
+  See the [full release notes on GitHub](https://github.com/prowler-cloud/prowler/releases/tag/5.47.0) for the complete list of changes.
+</Update>
+
 <Update label="v5.46.0" description="October 26, 2026">
   ### 🎯 Issues — Attack Paths with an Exploitability Verdict
 
