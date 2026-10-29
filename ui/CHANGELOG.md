@@ -4,6 +4,26 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [1.47.0] (Prowler v5.47.0)
+
+### 🚀 Added
+
+- Icon for the NATO D32 compliance framework on the compliance cards [(#13174)](https://github.com/prowler-cloud/prowler/pull/13174)
+
+### 🔄 Changed
+
+- Invitations page uses `Status` instead of `State` in the filter, table column and invitation details, and the Invitations and Roles filters show capitalized options [(#13175)](https://github.com/prowler-cloud/prowler/pull/13175)
+- Product tours and the guided onboarding sequence are no longer shown; new tenants still land on the add-provider wizard [(#13176)](https://github.com/prowler-cloud/prowler/pull/13176)
+- Add provider wizard connects every provider in one step, saving the account and credentials and testing the connection together, with teammate invitations for every provider and Lighthouse AI help beside the steps [(#13181)](https://github.com/prowler-cloud/prowler/pull/13181)
+
+### 🐞 Fixed
+
+- User avatar requesting the current page as an image on every load, which rendered each page twice [(#13177)](https://github.com/prowler-cloud/prowler/pull/13177)
+- Lighthouse AI reply blanking out for a frame when the response finishes streaming, which made the whole text blink and reappear [(#13180)](https://github.com/prowler-cloud/prowler/pull/13180)
+- Compliance cross-provider tab no longer blanks out when a single catalog page or framework fails to load; it shows the frameworks that loaded with a warning instead [(#13183)](https://github.com/prowler-cloud/prowler/pull/13183)
+
+---
+
 ## [1.46.0] (Prowler v5.46.0)
 
 ### 🚀 Added
