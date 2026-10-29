@@ -33,7 +33,7 @@ class Network(AzureService):
         # Subscriptions whose WAF policies could not be listed completely.
         self.waf_policies_lookup_failed: set[str] = set()
         self.waf_policies = self._get_waf_policies()
-        # Subscriptions where a WAF policy outside that listing could not be read.
+        # Casefolded IDs of WAF policies outside that listing that could not be read.
         self.waf_policy_reads_failed: set[str] = set()
         # Subscriptions whose Application Gateways could not be listed completely.
         self.application_gateways_lookup_failed: set[str] = set()
@@ -572,13 +572,13 @@ def read_waf_policy(
     """Read one Application Gateway WAF policy by its resource ID.
 
     A read that fails for any reason other than the policy not existing adds
-    the subscription to reads_failed. Every failure is logged.
+    the casefolded policy ID to reads_failed. Every failure is logged.
 
     Args:
         client: NetworkManagementClient of the gateway's subscription.
         subscription_id: Subscription of the gateway.
         policy_id: Resource ID of the WAF policy.
-        reads_failed: Set of subscriptions where a WAF policy could not be read.
+        reads_failed: Casefolded IDs of WAF policies that could not be read.
 
     Returns:
         The WafPolicy model, or None when the ID is not a WAF policy ID in the
@@ -605,7 +605,7 @@ def read_waf_policy(
             f"Subscription ID: {subscription_id} -- WAF policy: {policy_id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
         )
     except Exception as error:
-        reads_failed.add(subscription_id)
+        reads_failed.add(policy_id.casefold())
         logger.error(
             f"Subscription ID: {subscription_id} -- WAF policy: {policy_id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
         )
@@ -631,7 +631,7 @@ def get_waf_policy_enabled(
         policy_id: Resource ID of the associated WAF policy.
         listed_policies: WafPolicy models listed for the subscription, keyed by
             casefolded policy ID.
-        reads_failed: Set of subscriptions where a WAF policy could not be read.
+        reads_failed: Casefolded IDs of WAF policies that could not be read.
 
     Returns:
         True when the policy is enabled, False when it is disabled, and None

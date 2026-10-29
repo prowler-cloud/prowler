@@ -1485,7 +1485,7 @@ class Test_Network_get_application_gateways:
         network, result = get_gateways(mock_client)
 
         assert result[AZURE_SUBSCRIPTION_ID][GATEWAY_ID].firewall_policy_enabled is None
-        assert network.waf_policy_reads_failed == {AZURE_SUBSCRIPTION_ID}
+        assert network.waf_policy_reads_failed == {GATEWAY_POLICY_ID.casefold()}
         assert network.application_gateways_lookup_failed == set()
 
     def test_missing_waf_policy_is_not_a_failed_read(self):

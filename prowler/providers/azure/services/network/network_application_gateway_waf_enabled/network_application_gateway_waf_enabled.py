@@ -24,18 +24,23 @@ class network_application_gateway_waf_enabled(Check):
             gateways_unlisted = (
                 subscription_id in network_client.application_gateways_lookup_failed
             )
-            # When WAF policies could not be listed or read, an unknown policy
-            # state is reported once for the subscription rather than per gateway.
+            # A policy state left unknown by a failed listing or read is reported
+            # once for the subscription; a missing policy keeps its own finding.
+            policies_unlisted = (
+                subscription_id in network_client.waf_policies_lookup_failed
+            )
             unknown_policy_state = {
                 gateway.id
                 for gateway in gateways.values()
                 if gateway.firewall_policy_id
                 and gateway.firewall_policy_enabled is None
+                and (
+                    policies_unlisted
+                    or gateway.firewall_policy_id.casefold()
+                    in network_client.waf_policy_reads_failed
+                )
             }
-            policies_unreadable = bool(unknown_policy_state) and (
-                subscription_id in network_client.waf_policies_lookup_failed
-                or subscription_id in network_client.waf_policy_reads_failed
-            )
+            policies_unreadable = bool(unknown_policy_state)
             if gateways_unlisted or policies_unreadable:
                 report = Check_Report_Azure(metadata=self.metadata(), resource={})
                 report.subscription = subscription_id

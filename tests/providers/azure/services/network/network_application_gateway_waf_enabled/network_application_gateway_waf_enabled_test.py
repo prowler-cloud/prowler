@@ -218,10 +218,33 @@ class Test_network_application_gateway_waf_enabled:
         }
         result = run_check(
             {AZURE_SUBSCRIPTION_ID: gateways},
-            policy_reads_failed={AZURE_SUBSCRIPTION_ID},
+            policy_reads_failed={POLICY_ID.casefold()},
         )
         assert len(result) == 1
         assert_subscription_finding(result[0], POLICIES_UNLISTED)
+
+    def test_failed_policy_read_keeps_gateway_with_missing_policy(self):
+        other_id = GATEWAY_ID.replace("agw1", "agw2")
+        gateways = {
+            GATEWAY_ID: build_gateway(firewall_policy_id=POLICY_ID),
+            other_id: ApplicationGateway(
+                id=other_id,
+                name="agw2",
+                location="westeurope",
+                firewall_policy_id=POLICY_ID.replace("waf1", "waf2"),
+            ),
+        }
+        result = run_check(
+            {AZURE_SUBSCRIPTION_ID: gateways},
+            policy_reads_failed={POLICY_ID.upper().casefold()},
+        )
+        assert len(result) == 2
+        assert_subscription_finding(result[0], POLICIES_UNLISTED)
+        assert result[1].resource_id == other_id
+        assert result[1].status == "MANUAL"
+        assert result[1].status_extended == (
+            f"Application Gateway agw2 in subscription {AZURE_SUBSCRIPTION_DISPLAY} has a WAF policy associated, but the state of that policy could not be determined. Check the scan log for the error."
+        )
 
     def test_unlisted_gateways_and_policies_give_one_finding(self):
         result = run_check(
