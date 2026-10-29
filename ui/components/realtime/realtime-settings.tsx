@@ -152,10 +152,14 @@ function SettingsBody({
               <span className="text-text-neutral-secondary text-xs font-medium">
                 Enforced compliance frameworks
               </span>
-              <FrameworkBadges
-                frameworks={policy.data?.frameworks ?? []}
-                catalog={catalog}
-              />
+              {policy.data ? (
+                <FrameworkBadges
+                  frameworks={policy.data.frameworks}
+                  catalog={catalog}
+                />
+              ) : (
+                <Badge variant="outline">Not configured</Badge>
+              )}
             </div>
             <PolicyForm
               // A saved policy gets a new id and remounts the form on first save.

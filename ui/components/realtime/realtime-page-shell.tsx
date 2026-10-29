@@ -20,7 +20,10 @@ export const REALTIME_PRODUCT_NAME =
 export async function RealtimePageShell({
   children,
 }: {
-  children: (providers: RealtimeProviderOption[]) => ReactNode;
+  // May be async: page lookups then run only after the Cloud gate below.
+  children: (
+    providers: RealtimeProviderOption[],
+  ) => ReactNode | Promise<ReactNode>;
 }) {
   if (!isCloud()) notFound();
 
@@ -44,7 +47,7 @@ export async function RealtimePageShell({
           </p>
         }
       >
-        {children(providers)}
+        {await children(providers)}
       </FeatureFlagGate>
     </ContentLayout>
   );

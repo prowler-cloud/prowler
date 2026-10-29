@@ -1,5 +1,3 @@
-"use client";
-
 import { ActionsList } from "@/components/realtime/actions-list";
 import { DetectionsList } from "@/components/realtime/detections-list";
 

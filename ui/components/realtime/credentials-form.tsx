@@ -166,7 +166,8 @@ export function CredentialsForm({
             Prowler Cloud can assume, with your external id.
           </>,
           <>
-            Copy the <code className="text-xs">RoleArn</code> output, paste it
+            Copy the <code className="text-xs">RoleArn</code> output (
+            <code className="text-xs">role_arn</code> in Terraform), paste it
             below with the external id, and save.
           </>,
           <>

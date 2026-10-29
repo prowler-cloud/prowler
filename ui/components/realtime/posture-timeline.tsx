@@ -49,17 +49,21 @@ export function PostureTimeline({
 }) {
   const points = timeline.points
     .map((point) => ({ ...point, time: toTime(point.at) }))
-    .filter((point) => !Number.isNaN(point.time));
+    .filter((point) => !Number.isNaN(point.time))
+    .sort((a, b) => a.time - b.time);
   const actions = timeline.actions
     .map((action) => ({ ...action, time: toTime(action.at) }))
     .filter((action) => !Number.isNaN(action.time));
 
   if (points.length === 0) {
     return (
-      <PanelEmpty
-        title="No posture history yet"
-        description="The chart fills in after the first completed scan of this account."
-      />
+      <div className="flex flex-col gap-3">
+        <PanelEmpty
+          title="No posture history yet"
+          description="The chart fills in after the first completed scan of this account."
+        />
+        <ActionList actions={actions} title="Prowler Realtime actions" />
+      </div>
     );
   }
 
@@ -125,27 +129,39 @@ export function PostureTimeline({
         </LineChart>
       </ChartContainer>
 
-      {actions.length > 0 && (
-        <div className="flex flex-col gap-1">
-          <h4 className="text-text-neutral-primary text-sm font-medium">
-            Prowler Realtime actions (dashed lines)
-          </h4>
-          <ul className="flex flex-col gap-1">
-            {actions.slice(0, MAX_LISTED_ACTIONS).map((action, index) => (
-              <li
-                key={`${action.at}-${index}`}
-                className="text-text-neutral-secondary flex flex-wrap items-center gap-2 text-sm"
-              >
-                <span className="text-text-neutral-tertiary tabular-nums">
-                  {formatDateTime(action.at)}
-                </span>
-                <ActionStatusBadge status={action.status} />
-                <span>{action.summary || humanize(action.kind)}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+      <ActionList
+        actions={actions}
+        title="Prowler Realtime actions (dashed lines)"
+      />
+    </div>
+  );
+}
+
+function ActionList({
+  actions,
+  title,
+}: {
+  actions: RealtimeTimelinePayload["actions"];
+  title: string;
+}) {
+  if (actions.length === 0) return null;
+  return (
+    <div className="flex flex-col gap-1">
+      <h4 className="text-text-neutral-primary text-sm font-medium">{title}</h4>
+      <ul className="flex flex-col gap-1">
+        {actions.slice(0, MAX_LISTED_ACTIONS).map((action, index) => (
+          <li
+            key={`${action.at}-${index}`}
+            className="text-text-neutral-secondary flex flex-wrap items-center gap-2 text-sm"
+          >
+            <span className="text-text-neutral-tertiary tabular-nums">
+              {formatDateTime(action.at)}
+            </span>
+            <ActionStatusBadge status={action.status} />
+            <span>{action.summary || humanize(action.kind)}</span>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

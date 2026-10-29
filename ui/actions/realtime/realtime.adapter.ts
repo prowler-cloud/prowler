@@ -2,6 +2,7 @@ import {
   REALTIME_DATA_STORE,
   REALTIME_DETECTION_STATUS,
   REALTIME_FEED_STATUS,
+  REALTIME_INSIGHT_KIND,
   REALTIME_MODE,
   REALTIME_MIN_SEVERITY,
   REALTIME_SETUP_STEP,
@@ -348,9 +349,20 @@ export const toInsightPayload = <K extends RealtimeInsightKind>(
   const attributes = resource?.attributes;
   if (!attributes || attributes.kind !== kind) return null;
   const payload = attributes.payload;
-  return payload && typeof payload === "object"
-    ? (payload as RealtimeInsightPayloads[K])
-    : null;
+  if (!isRecord(payload)) return null;
+  // The cost panel reads these during render; without them it would throw.
+  if (
+    kind === REALTIME_INSIGHT_KIND.COST &&
+    payload.enabled === true &&
+    !(
+      isRecord(payload.total) &&
+      Array.isArray(payload.series) &&
+      Array.isArray(payload.anomalies)
+    )
+  ) {
+    return null;
+  }
+  return payload as unknown as RealtimeInsightPayloads[K];
 };
 
 /**
@@ -440,6 +452,7 @@ export const toDemoPayload = <K extends RealtimeDemoKind>(
   if (!isRecord(payload)) return null;
 
   if (kind in DEMO_LIST_MAPPERS) {
+    if (!Array.isArray(payload.items)) return null;
     const map = DEMO_LIST_MAPPERS[kind as keyof typeof DEMO_LIST_MAPPERS];
     const items = asRecords(payload.items).map((row, index) =>
       map(demoRowToResource(row, index)),

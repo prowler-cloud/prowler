@@ -3,7 +3,8 @@ AWSTemplateFormatVersion: "2010-09-09"
 Description: |
   Optional. Creates the ProwlerRemediation IAM role that lets Prowler Realtime Detection and Remediation fix a small, fixed set of misconfigurations
   automatically (and undo them). It is separate from the read-only ProwlerScan role: without it Prowler Realtime can only alert
-  and propose pull requests. Every permission below is scoped to what the matching fix needs; delete the stack to revoke.
+  and propose pull requests. Every action below is one a listed fix or its undo needs; the resource comes from the event,
+  so most statements cannot name it in advance. Delete the stack to revoke.
   If you are deploying this template to be used in Prowler Cloud please do not edit the AccountId and IAMPrincipal parameters.
 
   What Prowler can do at runtime through this role, and nothing else:

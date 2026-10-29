@@ -12,16 +12,15 @@ export default async function RealtimeSettingsPage({
   searchParams: Promise<SearchParamsProps>;
 }) {
   const resolved = await searchParams;
-  // Only used to warn that the code-fix switch has no LLM behind it.
-  const lighthouseConfigured = Boolean(await isLighthouseConfigured());
 
   return (
     <RealtimePageShell>
-      {(providers) => (
+      {async (providers) => (
         <RealtimeSettings
           providers={providers}
           initialProviderId={first(resolved.provider)}
-          lighthouseConfigured={lighthouseConfigured}
+          // Only used to warn that the code-fix switch has no LLM behind it.
+          lighthouseConfigured={Boolean(await isLighthouseConfigured())}
         />
       )}
     </RealtimePageShell>

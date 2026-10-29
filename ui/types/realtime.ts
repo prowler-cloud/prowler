@@ -27,6 +27,14 @@ export const REALTIME_FEED_STATUS = {
 export type RealtimeFeedStatus =
   (typeof REALTIME_FEED_STATUS)[keyof typeof REALTIME_FEED_STATUS];
 
+/** `sqs` is real time; `lookup` is CloudTrail LookupEvents, minutes behind. */
+export const REALTIME_FEED_SOURCE = {
+  SQS: "sqs",
+  LOOKUP: "lookup",
+} as const;
+export type RealtimeFeedSource =
+  (typeof REALTIME_FEED_SOURCE)[keyof typeof REALTIME_FEED_SOURCE];
+
 export const REALTIME_DETECTION_STATUS = {
   NEW: "new",
   VIOLATION: "violation",
@@ -343,8 +351,7 @@ export interface RealtimeOverviewPolicy {
 
 export interface RealtimeOverviewFeed {
   status: RealtimeFeedStatus;
-  /** `sqs` is real time; `lookup` is CloudTrail LookupEvents, minutes behind. */
-  source: "sqs" | "lookup";
+  source: RealtimeFeedSource;
   last_event_at: string | null;
   last_error: string;
 }
@@ -591,22 +598,42 @@ export type RealtimeResult<T> = RealtimeSuccess<T> | RealtimeFailure;
 
 // ------------------------------------------------------------------ raw JSON:API
 
+export interface RealtimeApiIdentifier {
+  id: string;
+  type: string;
+}
+
+export interface RealtimeApiRelationship {
+  data?: RealtimeApiIdentifier | null;
+}
+
 export interface RealtimeApiResource {
   id: string;
   type: string;
   attributes?: Record<string, unknown>;
-  relationships?: Record<
-    string,
-    { data?: { id: string; type: string } | null } | undefined
-  >;
+  relationships?: Record<string, RealtimeApiRelationship | undefined>;
+}
+
+export interface RealtimeApiPagination {
+  page?: number;
+  pages?: number;
+  count?: number;
+}
+
+export interface RealtimeApiMeta {
+  pagination?: RealtimeApiPagination;
 }
 
 export interface RealtimeApiDocument {
   data?: RealtimeApiResource | RealtimeApiResource[];
-  meta?: { pagination?: { page?: number; pages?: number; count?: number } };
+  meta?: RealtimeApiMeta;
+}
+
+export interface RealtimeApiErrorSource {
+  pointer?: string;
 }
 
 export interface RealtimeApiError {
   detail?: string;
-  source?: { pointer?: string };
+  source?: RealtimeApiErrorSource;
 }

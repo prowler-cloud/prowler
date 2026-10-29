@@ -1,8 +1,9 @@
 # Prowler Realtime Detection and Remediation: remediation-only IAM role (optional).
 #
 # Lets Prowler fix a small, fixed set of misconfigurations automatically (and undo them). It is separate from the
-# read-only ProwlerScan role: without it Prowler can only alert and propose pull requests. Every permission is scoped to
-# what the matching fix needs. Destroy the stack to revoke.
+# read-only ProwlerScan role: without it Prowler can only alert and propose pull requests. Every action is one a listed
+# fix or its undo needs; the resource comes from the event, so most statements cannot name it in advance. Destroy the
+# stack to revoke.
 #
 # If you deploy this to be used in Prowler Cloud, do not edit account_id and iam_principal.
 #

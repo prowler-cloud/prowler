@@ -220,6 +220,8 @@ function SetupFlow({
   const refreshSetup = async () => {
     const result = await getRealtimeSetup(providerId);
     if (result.ok) setup.setData(result.data);
+    // A full reload shows the failure with a retry instead of stale steps.
+    else setup.reload();
   };
 
   const provider = providers.find((item) => item.id === providerId);

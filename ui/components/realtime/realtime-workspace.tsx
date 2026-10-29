@@ -126,7 +126,7 @@ export function RealtimeWorkspace({
           subject="the account"
         />
       ) : (
-        <DemoProvider demo={demo}>
+        <DemoProvider key={providerId} demo={demo}>
           {demo && <DemoBanner providerId={providerId} />}
           <Tabs
             value={tab}

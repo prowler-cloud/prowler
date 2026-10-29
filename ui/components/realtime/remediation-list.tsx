@@ -163,7 +163,8 @@ export function RemediationList({ providerId }: { providerId?: string }) {
         Nothing outside this list is ever fixed automatically. A fix acts only
         on the resource named in the event that triggered it. With dry run on,
         Prowler records what it would change instead of changing it. Every fix
-        is audited: what changed, when, and how to undo it.
+        is audited: what changed, when, and how to undo it when it can be
+        undone.
       </p>
     </section>
   );

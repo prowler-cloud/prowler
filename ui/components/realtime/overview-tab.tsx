@@ -38,6 +38,7 @@ import {
 } from "@/lib/realtime/display";
 import {
   REALTIME_DATA_STORE,
+  REALTIME_FEED_SOURCE,
   REALTIME_INSIGHT_KIND,
   REALTIME_MODE,
   type RealtimeOverviewPayload,
@@ -158,7 +159,7 @@ function OverviewFigures({
         {feed ? (
           <>
             <p className="text-text-neutral-primary text-sm">
-              {feed.source === "sqs"
+              {feed.source === REALTIME_FEED_SOURCE.SQS
                 ? "Real time, through your SQS queue"
                 : "CloudTrail lookup, a few minutes behind"}
             </p>

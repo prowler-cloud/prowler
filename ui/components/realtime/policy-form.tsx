@@ -134,8 +134,7 @@ export function PolicyForm({
       providerId,
       policyId: policy?.id,
       policy: candidate,
-    });
-    setSaving(false);
+    }).finally(() => setSaving(false));
     setConfirmLive(false);
     if (result.ok) {
       setErrors({});

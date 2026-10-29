@@ -2,7 +2,8 @@
 #
 # EventBridge forwards risky AWS API calls recorded by CloudTrail to an SQS queue, and Prowler Cloud reads the queue with
 # the ProwlerScan role. Without it Prowler still works, using CloudTrail LookupEvents with a delay of a few minutes.
-# Apply it in each region you want to watch. Global-service events (IAM, S3 account settings) arrive in us-east-1.
+# Apply it in one region: Prowler Realtime reads one queue per account. Global-service events (IAM, S3 account settings)
+# arrive in us-east-1.
 
 terraform {
   required_version = ">= 1.5"

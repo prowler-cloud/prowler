@@ -47,6 +47,10 @@ describe("embedded Prowler Realtime templates", () => {
       expect(template.content).not.toMatch(
         /Action:\s*['"]?\*|actions\s*=\s*\["\*"\]/,
       );
+      // No service-wide wildcard either, such as ec2:*.
+      expect(template.content).not.toMatch(
+        /(?:Action:|actions\s*=)[^\n]*\b[a-z0-9-]+:\*/,
+      );
       expect(template.content).toMatch(/sts:ExternalId/);
     }
   });

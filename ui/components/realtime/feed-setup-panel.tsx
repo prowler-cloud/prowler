@@ -159,6 +159,7 @@ export function FeedSetupPanel({
 }: FeedSetupPanelProps) {
   const { toast } = useToast();
   const [polling, setPolling] = useState(false);
+  const [starting, setStarting] = useState(false);
   const feedResource = useRealtimeResource(
     () => getRealtimeFeed(providerId),
     `feed:${providerId}`,
@@ -188,10 +189,11 @@ export function FeedSetupPanel({
   };
 
   const startLookup = async () => {
+    setStarting(true);
     const result = await saveRealtimeFeed({
       providerId,
       feed: { queue_url: "", region: DEFAULT_REGION },
-    });
+    }).finally(() => setStarting(false));
     if (result.ok) {
       feedResource.setData(result.data);
       onFeedChanged?.(result.data);
@@ -234,9 +236,9 @@ export function FeedSetupPanel({
             steps={[
               <>
                 Apply the template below in this AWS account, as CloudFormation
-                (stack) or Terraform, in each region you want to watch.
-                Global-service events (IAM, S3 account settings) arrive in
-                us-east-1.
+                (stack) or Terraform, in one region: Prowler Realtime reads one
+                queue per account. Global-service events (IAM, S3 account
+                settings) arrive in us-east-1.
               </>,
               <>
                 It creates an SQS queue, an EventBridge rule for risky API
@@ -245,7 +247,8 @@ export function FeedSetupPanel({
                 changed in your account beyond that.
               </>,
               <>
-                Copy the <code className="text-xs">QueueUrl</code> output and
+                Copy the <code className="text-xs">QueueUrl</code> output (
+                <code className="text-xs">queue_url</code> in Terraform) and
                 paste it below.
               </>,
             ]}
@@ -285,9 +288,10 @@ export function FeedSetupPanel({
                 <Button
                   variant="outline"
                   size="sm"
+                  disabled={starting}
                   onClick={() => void startLookup()}
                 >
-                  Start with CloudTrail lookup
+                  {starting ? "Starting…" : "Start with CloudTrail lookup"}
                 </Button>
               )}
             </div>
@@ -303,7 +307,7 @@ export function FeedSetupPanel({
           )}
 
           <FeedForm
-            key={`${feed?.id ?? "new"}:${feed?.queue_url ?? ""}`}
+            key={`${feed?.id ?? "new"}:${feed?.queue_url ?? ""}:${feed?.region ?? ""}`}
             providerId={providerId}
             feed={feed}
             canManage={canManage}

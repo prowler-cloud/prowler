@@ -273,6 +273,12 @@ export function AlertsSection({
     setErrors({});
   };
   const anyOn = draft.slack.enabled || draft.email.enabled;
+  // The badge reports what is saved, not the unsaved draft.
+  const savedOn = Boolean(
+    policy?.notifications &&
+      (policy.notifications.slack.enabled ||
+        policy.notifications.email.enabled),
+  );
 
   const save = async () => {
     const found = fieldMessages(draft);
@@ -318,8 +324,8 @@ export function AlertsSection({
       title="Alerts"
       description="Get told in Slack or by email when Prowler Realtime detects a risky change and acts on it."
       action={
-        <Badge variant={policy && anyOn ? "success" : "tag"}>
-          {policy && anyOn ? "On" : "Off"}
+        <Badge variant={savedOn ? "success" : "tag"}>
+          {savedOn ? "On" : "Off"}
         </Badge>
       }
     >

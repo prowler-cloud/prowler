@@ -99,6 +99,8 @@ export function StatementBody({
   );
 }
 
+const REFRESH_MS = 60_000;
+
 /** The redacted, hash-stamped statement a third party can hold. */
 export function StatusStatementCard({
   providerId,
@@ -111,6 +113,8 @@ export function StatusStatementCard({
     REALTIME_INSIGHT_KIND.STATUS,
     providerId,
     demo,
+    // Applied and reverted fixes change the counts and the stamp.
+    REFRESH_MS,
   );
   return (
     <RealtimeSection

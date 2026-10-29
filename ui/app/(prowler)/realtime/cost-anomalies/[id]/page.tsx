@@ -1,6 +1,7 @@
 import { AnomalyDetail } from "@/components/realtime/anomaly-detail";
 import { RealtimePageShell } from "@/components/realtime/realtime-page-shell";
 import { DEMO_ANOMALY_ID, DEMO_ANOMALY_SLUG } from "@/lib/realtime/demo";
+import { resolveProviderId } from "@/lib/realtime/providers";
 import { SearchParamsProps } from "@/types";
 
 const first = (value: string | string[] | undefined) =>
@@ -26,11 +27,13 @@ export default async function RealtimeCostAnomalyPage({
 
   return (
     <RealtimePageShell>
-      {() => (
+      {(providers) => (
         <AnomalyDetail
           // The sample anomaly has one fixed page; its data is made up.
           anomalyId={id === DEMO_ANOMALY_SLUG ? DEMO_ANOMALY_ID : decode(id)}
-          providerId={first(resolved.provider) ?? ""}
+          providerId={
+            resolveProviderId(providers, first(resolved.provider)) ?? ""
+          }
           demo={id === DEMO_ANOMALY_SLUG}
         />
       )}

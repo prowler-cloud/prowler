@@ -16,6 +16,8 @@ export default async function Realtime({
     <RealtimePageShell>
       {(providers) => (
         <RealtimeWorkspace
+          // A soft navigation (e.g. the sidebar link) must reset the selection.
+          key={`${first(resolved.provider)}:${first(resolved.tab)}`}
           providers={providers}
           initialProviderId={first(resolved.provider)}
           initialTab={first(resolved.tab)}

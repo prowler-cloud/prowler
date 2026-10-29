@@ -110,11 +110,14 @@ export function AnomalyChart({
             y={baseline}
             stroke={CHART_COLORS.baseline}
             strokeDasharray="4 4"
+            ifOverflow="extendDomain"
           />
           <ReferenceLine
             y={threshold}
             stroke={CHART_COLORS.threshold}
             strokeDasharray="2 4"
+            // Keep the threshold on the chart when every day is below it.
+            ifOverflow="extendDomain"
           />
         </LineChart>
       </ChartContainer>

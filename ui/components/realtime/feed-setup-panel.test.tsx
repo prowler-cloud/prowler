@@ -82,5 +82,12 @@ describe("FeedSetupPanel", () => {
     await user.click(screen.getByRole("button", { name: "Save feed" }));
 
     await waitFor(() => expect(onFeedChanged).toHaveBeenCalled());
+    expect(saveFeed).toHaveBeenCalledWith(
+      expect.objectContaining({
+        feed: expect.objectContaining({
+          queue_url: "https://sqs.us-east-1.amazonaws.com/123456789012/q",
+        }),
+      }),
+    );
   });
 });

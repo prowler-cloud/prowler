@@ -328,6 +328,7 @@ describe("dashboard tabs in demo mode", () => {
     await waitFor(() =>
       expect(screen.queryByText("Detection a")).not.toBeInTheDocument(),
     );
+    expect(screen.getByText("Detection b")).toBeVisible();
     expect(mocks.getDetections).not.toHaveBeenCalled();
   });
 

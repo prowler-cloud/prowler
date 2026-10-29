@@ -198,6 +198,12 @@ export function FindingsTab({
       >
         {findings.loading ? (
           <PanelLoading label="Loading signals" />
+        ) : findings.failure ? (
+          <PanelFailure
+            failure={findings.failure}
+            onRetry={findings.reload}
+            subject="the activity signals"
+          />
         ) : findings.data ? (
           <SignalsList signals={findings.data.signals} />
         ) : null}

@@ -246,9 +246,11 @@ export function ReviewStep({
         <div className="flex flex-col gap-4">
           <p className="text-text-neutral-secondary text-sm">
             Prowler Realtime will apply supported fixes in this account when it
-            detects a matching risky change, using the remediation role. Every
-            change records the exact call that undoes it, and you can revert
-            from the Remediation tab of the dashboard.
+            detects a matching risky change, using the remediation role. Most
+            fixes record the exact call that undoes them, and you can revert
+            those from the Remediation tab of the dashboard. Fixes marked
+            &ldquo;Cannot be undone&rdquo;, such as restarting CloudTrail
+            logging, cannot be reverted.
           </p>
           <div className="flex justify-end gap-2">
             <Button

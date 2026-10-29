@@ -38,19 +38,20 @@ import {
 import {
   REALTIME_ACTION_KIND,
   type RealtimeAction,
+  type RealtimeActionKind,
   type RealtimePage,
 } from "@/types/realtime";
 
 const REFRESH_MS = 20_000;
 
-const KIND_LABELS: Record<string, string> = {
+const KIND_LABELS: Record<RealtimeActionKind, string> = {
   [REALTIME_ACTION_KIND.SELF_FIX]: "Fix in the account",
   [REALTIME_ACTION_KIND.CODE]: "Change in code",
   [REALTIME_ACTION_KIND.PROPOSAL]: "Proposal",
 };
 
 export const actionKindLabel = (kind: string): string =>
-  KIND_LABELS[kind] ?? humanize(kind);
+  KIND_LABELS[kind as RealtimeActionKind] ?? humanize(kind);
 
 interface RevertDialogProps {
   action: RealtimeAction | null;
@@ -255,8 +256,9 @@ export function ActionsList({
   const confirmRevert = async () => {
     if (!pending || demo) return;
     setReverting(true);
-    const result = await revertRealtimeAction(pending.id);
-    setReverting(false);
+    const result = await revertRealtimeAction(pending.id).finally(() =>
+      setReverting(false),
+    );
     if (result.ok) {
       setPending(null);
       toast({ title: "Change reverted", description: result.data.summary });
