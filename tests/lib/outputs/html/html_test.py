@@ -8,7 +8,11 @@ from mock import MagicMock, patch
 from prowler.config.config import prowler_version, timestamp
 from prowler.lib.cli.redact import redact_argv
 from prowler.lib.logger import logger
-from prowler.lib.outputs.html.html import HTML
+from prowler.lib.outputs.html.html import (
+    HTML,
+    PROWLER_CLOUD_CTA_URL,
+    PROWLER_CLOUD_PRICING_URL,
+)
 from prowler.providers.github.models import GithubAppIdentityInfo
 from tests.lib.outputs.fixtures.fixtures import generate_finding_output
 from tests.providers.aws.utils import AWS_REGION_EU_WEST_1, set_mocked_aws_provider
@@ -1521,3 +1525,129 @@ class TestHTML:
         ]
         output_data = HTML(findings).data[0]
         assert 'href="https://hub.prowler.com/check/check-id"' in output_data
+
+    def test_write_header_omits_cloud_cta_by_default(self):
+        mock_file = StringIO()
+        provider = set_mocked_aws_provider(audited_regions=[AWS_REGION_EU_WEST_1])
+
+        HTML.write_header(mock_file, provider, html_stats)
+
+        content = mock_file.getvalue()
+        assert content == get_aws_html_header(sys.argv[1:])
+        assert "prowler-cloud-cta" not in content
+        assert PROWLER_CLOUD_CTA_URL not in content
+        assert "utm_campaign=report-handoff" not in content
+        assert PROWLER_CLOUD_PRICING_URL not in content
+
+    def test_write_header_omits_cloud_cta_when_from_cli_but_not_enabled(self):
+        # `from_cli` alone must never turn the block on: it is a batching flag, not an
+        # OSS marker, and it defaults to True for every library consumer.
+        mock_file = StringIO()
+        provider = set_mocked_aws_provider(audited_regions=[AWS_REGION_EU_WEST_1])
+
+        HTML.write_header(mock_file, provider, html_stats, from_cli=True)
+
+        content = mock_file.getvalue()
+        assert "prowler-cloud-cta" not in content
+        assert "cloud.prowler.com" not in content
+
+    def test_write_header_includes_cloud_cta_when_enabled(self):
+        mock_file = StringIO()
+        provider = set_mocked_aws_provider(audited_regions=[AWS_REGION_EU_WEST_1])
+
+        HTML.write_header(mock_file, provider, html_stats, show_cloud_cta=True)
+
+        content = mock_file.getvalue()
+        assert content.count('class="row mt-3 prowler-cloud-cta"') == 1
+        assert "Keep scanning locally. Bring your findings to Prowler Cloud." in content
+        assert (
+            "Import your accompanying OCSF report to explore managed security workflows."
+            in content
+        )
+        assert f'href="{PROWLER_CLOUD_CTA_URL}"' in content
+        assert ">Explore Prowler Cloud</a>" in content
+        assert f'href="{PROWLER_CLOUD_PRICING_URL}"' in content
+        assert ">Compare editions</a>" in content
+        assert "Nothing is uploaded automatically." in content
+        assert 'rel="noopener noreferrer"' in content
+        assert (
+            "@media print { .prowler-cloud-cta { display: none !important; } }"
+            in content
+        )
+        # Placed after the assessment summary and before the findings table
+        assert (
+            content.index("AWS Assessment Summary")
+            < content.index('class="row mt-3 prowler-cloud-cta"')
+            < content.index('id="findingsTable"')
+        )
+        # No script, form or automatic request is introduced by the block
+        cta_block = HTML.get_cloud_cta()
+        assert "<script" not in cta_block
+        assert "<form" not in cta_block
+        assert "<img" not in cta_block
+        assert "<iframe" not in cta_block
+
+    def test_cloud_cta_does_not_change_assessment_content(self):
+        mock_file_oss = StringIO()
+        mock_file_cloud = StringIO()
+        provider = set_mocked_aws_provider(audited_regions=[AWS_REGION_EU_WEST_1])
+
+        HTML.write_header(mock_file_oss, provider, html_stats, show_cloud_cta=True)
+        HTML.write_header(mock_file_cloud, provider, html_stats, show_cloud_cta=False)
+
+        oss = mock_file_oss.getvalue()
+        cloud = mock_file_cloud.getvalue()
+        stripped = oss.replace(HTML.get_cloud_cta(), "").replace(
+            "\n        @media print { .prowler-cloud-cta { display: none !important; } }",
+            "",
+        )
+        assert stripped == cloud
+
+    def test_batch_write_data_to_file_oss_cli_includes_cloud_cta(self):
+        mock_file = StringIO()
+        findings = [
+            generate_finding_output(
+                remediation_recommendation_url="https://hub.prowler.com/check/check-id"
+            )
+        ]
+        output = HTML(findings, show_cloud_cta=True)
+        output._file_descriptor = mock_file
+        provider = set_mocked_aws_provider(audited_regions=[AWS_REGION_EU_WEST_1])
+
+        with patch.object(mock_file, "close", return_value=None):
+            output.batch_write_data_to_file(provider, html_stats)
+
+        content = mock_file.getvalue()
+        assert PROWLER_CLOUD_CTA_URL in content
+        assert content.count('class="row mt-3 prowler-cloud-cta"') == 1
+        # Findings and footer are untouched
+        assert pass_html_finding in content
+        assert content.endswith(html_footer)
+
+    def test_batch_write_data_to_file_api_omits_cloud_cta(self):
+        # Mirrors how Prowler Cloud / Private Cloud construct the output in the API
+        mock_file = StringIO()
+        findings = [
+            generate_finding_output(
+                remediation_recommendation_url="https://hub.prowler.com/check/check-id"
+            )
+        ]
+        output = HTML(
+            findings,
+            file_path=None,
+            file_extension=".html",
+            from_cli=False,
+        )
+        output._file_descriptor = mock_file
+        output.close_file = True
+        provider = set_mocked_aws_provider(audited_regions=[AWS_REGION_EU_WEST_1])
+
+        with patch.object(mock_file, "close", return_value=None):
+            output.batch_write_data_to_file(provider, html_stats)
+
+        content = mock_file.getvalue()
+        assert "prowler-cloud-cta" not in content
+        assert "cloud.prowler.com" not in content
+        assert "utm_campaign=report-handoff" not in content
+        assert PROWLER_CLOUD_PRICING_URL not in content
+        assert pass_html_finding in content
