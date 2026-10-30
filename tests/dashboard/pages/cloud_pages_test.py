@@ -136,7 +136,11 @@ class TestFindingsHandoffPage:
 class TestOtherCloudPagesUnchanged:
     @pytest.mark.parametrize(
         "slug",
-        [f["slug"] for f in CLOUD_FEATURES if f["slug"] not in ("findings", "mcp")],
+        [
+            f["slug"]
+            for f in CLOUD_FEATURES
+            if f["slug"] not in ("findings", "mcp", "exploitable-issues")
+        ],
     )
     def test_other_pages_keep_upsell_template(self, slug):
         feature = CLOUD_FEATURES_BY_SLUG[slug]
@@ -276,3 +280,84 @@ class TestPageTitles:
         for feature in CLOUD_FEATURES:
             page = dash.page_registry[f"cloud_{feature['slug'].replace('-', '_')}"]
             assert page["title"] == f"Prowler Local Dashboard - {feature['page_title']}"
+
+
+class TestExploitableIssuesPage:
+    def setup_method(self):
+        self.feature = CLOUD_FEATURES_BY_SLUG["exploitable-issues"]
+        self.layout = build_cloud_layout(self.feature)
+        self.text = _serialize(self.layout)
+
+    def test_copy_and_template(self):
+        assert self.feature["nav_label"] == "Exploitable Issues"
+        assert self.feature["route"] == "/cloud/exploitable-issues"
+        assert "Unlock Exploitable Issues" in self.text
+        assert "toxic combinations" in self.text
+        assert "exploitable, likely, conditional or not exploitable" in self.text
+        assert "rolling out" in self.text
+        assert len(self.feature["benefits"]) == 3
+
+    def test_single_upgrade_cta(self):
+        links = list(_links(self.layout))
+        assert len(links) == 1
+        assert links[0].children == "Upgrade to Prowler Cloud"
+        assert links[0].href == f"{CLOUD_CTA_BASE}exploitable-issues"
+        assert links[0].rel == "noopener noreferrer"
+
+
+class TestScreenshots:
+    def _images(self, component):
+        stack = [component]
+        while stack:
+            node = stack.pop()
+            if isinstance(node, html.Img):
+                yield node
+            children = getattr(node, "children", None)
+            if isinstance(children, (list, tuple)):
+                stack.extend(reversed(children))
+            elif children is not None and hasattr(children, "to_plotly_json"):
+                stack.append(children)
+
+    @pytest.mark.parametrize(
+        "slug", [f["slug"] for f in CLOUD_FEATURES if f.get("screenshot")]
+    )
+    def test_screenshot_rendered_with_existing_asset(self, slug):
+        from pathlib import Path
+
+        feature = CLOUD_FEATURES_BY_SLUG[slug]
+        images = list(self._images(build_cloud_layout(feature)))
+        assert len(images) == 1
+        image = images[0]
+        assert (
+            image.src
+            == f"/assets/images/cloud/screenshots/{feature['screenshot']['file']}"
+        )
+        assert image.alt and "Prowler" in image.alt
+        assert image.className == "pc-shot"
+        assert (Path("dashboard") / image.src.lstrip("/")).is_file()
+
+    def test_every_gated_page_but_exploitable_issues_has_a_screenshot(self):
+        missing = [f["slug"] for f in CLOUD_FEATURES if not f.get("screenshot")]
+        assert missing == ["exploitable-issues"]
+
+    def test_pages_without_screenshot_render_no_image(self):
+        layout = build_cloud_layout(CLOUD_FEATURES_BY_SLUG["exploitable-issues"])
+        assert list(self._images(layout)) == []
+
+
+class TestSidebarOrder:
+    def test_findings_first_then_exploitable_issues(self):
+        import re
+        from pathlib import Path
+
+        source = Path("dashboard/__main__.py").read_text()
+        match = re.search(r'"Upgrade to Prowler Cloud",\s*\[([^\]]+)\]', source)
+        slugs = re.findall(r'"([a-z-]+)"', match.group(1))
+        assert slugs[:2] == ["findings", "exploitable-issues"]
+        assert set(slugs) == {
+            "findings",
+            "exploitable-issues",
+            "lighthouse-ai",
+            "mcp",
+            "attack-paths",
+        }

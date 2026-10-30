@@ -72,7 +72,7 @@ DASHBOARD_ITEMS = [
 GATED_GROUPS = [
     (
         "Upgrade to Prowler Cloud",
-        ["lighthouse-ai", "mcp", "attack-paths", "findings"],
+        ["findings", "exploitable-issues", "lighthouse-ai", "mcp", "attack-paths"],
     ),
     ("Configuration", ["alerts", "mutelist", "integrations"]),
     ("Workspace", ["organization"]),
