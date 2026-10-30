@@ -68,11 +68,11 @@ These figures are estimates based on AWS public list prices. AWS bills the infra
 
     | Resource | About, per month |
     | --- | --- |
-    | Amazon ECS on AWS Fargate (Prowler services) | 177 USD |
+    | Amazon Elastic Container Service (ECS) on AWS Fargate (Prowler services) | 177 USD |
     | Amazon Aurora PostgreSQL | 47 USD |
     | Amazon ElastiCache | 37 USD |
-    | NAT gateway | 37 USD |
-    | Application Load Balancer and AWS WAF | 28 USD |
+    | Network Address Translation (NAT) gateway | 37 USD |
+    | Application Load Balancer and AWS Web Application Firewall (WAF) | 28 USD |
     | Amazon CloudWatch | 22 USD |
     | Other AWS services | 10 USD |
   </Accordion>
@@ -128,7 +128,7 @@ The installation runs in the customer's AWS account, in the chosen Region. Users
     * **Lighthouse AI:** whether to turn it on. Leave it off in the Regions where it is not available.
     * **Portal access:** who can open the portal, from anywhere or only from an IP range.
 
-    Leave the optional fields and the version as they are, acknowledge the IAM capabilities, and create the stack. The installation takes about 35 minutes.
+    Leave the optional fields and the version as they are, acknowledge the Identity and Access Management (IAM) capabilities, and create the stack. The installation takes about 35 minutes.
   </Step>
 
   <Step title="Confirm the Notification Email">
