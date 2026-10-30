@@ -196,3 +196,73 @@ def test_get_pods_all_namespaces_fail():
     messages = [call.args[0] for call in mock_logger.error.call_args_list]
     assert "default" in messages[0]
     assert "kube-system" in messages[1]
+
+
+def test_get_pods_records_failed_namespaces():
+    """Namespaces whose pod listing fails are recorded on the service."""
+
+    def list_namespaced_pod(namespace):
+        if namespace == "forbidden":
+            raise ApiException(status=403, reason="Forbidden")
+        return _pod_list_for(namespace)
+
+    core = _build_core(["default", "forbidden", "kube-system"], list_namespaced_pod)
+
+    core._get_pods()
+
+    assert core.failed_namespaces == ["forbidden"]
+    assert set(core.pods) == {"uid-default", "uid-kube-system"}
+
+
+def test_get_pods_warns_when_namespaces_fail():
+    """A partial failure logs one warning naming the failed namespaces."""
+
+    def list_namespaced_pod(namespace):
+        if namespace == "forbidden":
+            raise ApiException(status=403, reason="Forbidden")
+        return _pod_list_for(namespace)
+
+    core = _build_core(["default", "forbidden", "kube-system"], list_namespaced_pod)
+
+    with patch(
+        "prowler.providers.kubernetes.services.core.core_service.logger"
+    ) as mock_logger:
+        core._get_pods()
+
+    mock_logger.warning.assert_called_once()
+    message = mock_logger.warning.call_args.args[0]
+    assert "forbidden" in message
+    assert "1 of 3" in message
+
+
+def test_get_pods_all_fail_records_every_namespace():
+    """When every namespace fails, all of them are recorded and the
+    warning reports the full count."""
+
+    def list_namespaced_pod(namespace):
+        raise ApiException(status=403, reason="Forbidden")
+
+    core = _build_core(["default", "kube-system"], list_namespaced_pod)
+
+    with patch(
+        "prowler.providers.kubernetes.services.core.core_service.logger"
+    ) as mock_logger:
+        core._get_pods()
+
+    assert core.pods == {}
+    assert core.failed_namespaces == ["default", "kube-system"]
+    mock_logger.warning.assert_called_once()
+    assert "2 of 2" in mock_logger.warning.call_args.args[0]
+
+
+def test_get_pods_no_failures_no_warning():
+    """A clean listing records no failures and logs no warning."""
+    core = _build_core(["default", "kube-system"], lambda ns: _pod_list_for(ns))
+
+    with patch(
+        "prowler.providers.kubernetes.services.core.core_service.logger"
+    ) as mock_logger:
+        core._get_pods()
+
+    assert core.failed_namespaces == []
+    mock_logger.warning.assert_not_called()

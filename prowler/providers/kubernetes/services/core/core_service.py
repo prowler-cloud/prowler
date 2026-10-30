@@ -23,6 +23,13 @@ class Core(KubernetesService):
         self._in_worker_node()
 
     def _get_pods(self):
+        """List pods from every namespace into ``self.pods``.
+
+        Namespaces whose listing fails are skipped and recorded in
+        ``self.failed_namespaces``; if any failed, a warning is logged
+        so a partial scan is not mistaken for a complete one.
+        """
+        self.failed_namespaces = []
         for namespace in self.namespaces:
             try:
                 pods = self.client.list_namespaced_pod(namespace)
@@ -58,9 +65,15 @@ class Core(KubernetesService):
                         volumes=volumes,
                     )
             except Exception as error:
+                self.failed_namespaces.append(namespace)
                 logger.error(
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] in namespace '{namespace}': {error}"
                 )
+        if self.failed_namespaces:
+            failed = ", ".join(self.failed_namespaces)
+            logger.warning(
+                f"Partial scan: failed to list pods in {len(self.failed_namespaces)} of {len(self.namespaces)} namespaces ({failed}); findings do not cover those namespaces"
+            )
 
     @staticmethod
     def _build_containers(containers) -> dict:
