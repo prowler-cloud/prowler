@@ -3,6 +3,7 @@ import pytest
 from prowler.providers.aws.services.ec2.lib.security_groups import (
     _is_cidr_public,
     check_security_group,
+    get_any_address_ip_permission,
 )
 
 TRANSPORT_PROTOCOL_TCP = "tcp"
@@ -472,3 +473,176 @@ class Test_check_security_group:
         before = repr(ingress_rule)
         check_security_group(ingress_rule, TRANSPORT_PROTOCOL_TCP, [22], True)
         assert repr(ingress_rule) == before
+
+
+class Test_get_any_address_ip_permission:
+    def test_only_any_address_ranges_are_kept(self):
+        ingress_rule = {
+            "IpProtocol": TRANSPORT_PROTOCOL_TCP,
+            "FromPort": 22,
+            "ToPort": 22,
+            "IpRanges": [
+                {"CidrIp": IP_V4_ALL_CIDRS},
+                {"CidrIp": IP_V4_PRIVATE_CIDR, "Description": "internal"},
+            ],
+            "Ipv6Ranges": [
+                {"CidrIpv6": IP_V6_ALL_CIDRS},
+                {"CidrIpv6": IP_V6_PRIVATE_CIDR},
+            ],
+            "PrefixListIds": [{"PrefixListId": "pl-12345678"}],
+            "UserIdGroupPairs": [{"GroupId": "sg-12345678", "UserId": "123456789012"}],
+        }
+
+        assert get_any_address_ip_permission(ingress_rule) == {
+            "IpProtocol": TRANSPORT_PROTOCOL_TCP,
+            "FromPort": 22,
+            "ToPort": 22,
+            "IpRanges": [{"CidrIp": IP_V4_ALL_CIDRS}],
+            "Ipv6Ranges": [{"CidrIpv6": IP_V6_ALL_CIDRS}],
+        }
+
+    def test_all_traffic_rule_without_ports(self):
+        ingress_rule = {
+            "IpProtocol": TRANSPORT_PROTOCOL_ALL,
+            "IpRanges": [{"CidrIp": IP_V4_ALL_CIDRS}, {"CidrIp": IP_V4_PUBLIC_CIDR}],
+            "Ipv6Ranges": [],
+            "PrefixListIds": [],
+            "UserIdGroupPairs": [],
+        }
+
+        assert get_any_address_ip_permission(ingress_rule) == {
+            "IpProtocol": TRANSPORT_PROTOCOL_ALL,
+            "IpRanges": [{"CidrIp": IP_V4_ALL_CIDRS}],
+            "Ipv6Ranges": [],
+        }
+
+    def test_split_ipv4_halves_are_revoked(self):
+        ingress_rule = {
+            "IpProtocol": TRANSPORT_PROTOCOL_TCP,
+            "FromPort": 22,
+            "ToPort": 22,
+            "IpRanges": [
+                {"CidrIp": "0.0.0.0/1", "Description": "lower half"},
+                {"CidrIp": IP_V4_PRIVATE_CIDR},
+                {"CidrIp": "128.0.0.0/1"},
+            ],
+            "Ipv6Ranges": [{"CidrIpv6": IP_V6_PRIVATE_CIDR}],
+            "PrefixListIds": [{"PrefixListId": "pl-12345678"}],
+            "UserIdGroupPairs": [{"GroupId": "sg-12345678", "UserId": "123456789012"}],
+        }
+
+        assert get_any_address_ip_permission(ingress_rule) == {
+            "IpProtocol": TRANSPORT_PROTOCOL_TCP,
+            "FromPort": 22,
+            "ToPort": 22,
+            "IpRanges": [
+                {"CidrIp": "0.0.0.0/1", "Description": "lower half"},
+                {"CidrIp": "128.0.0.0/1"},
+            ],
+            "Ipv6Ranges": [],
+        }
+
+    def test_split_ipv6_halves_are_revoked(self):
+        ingress_rule = {
+            "IpProtocol": TRANSPORT_PROTOCOL_ALL,
+            "IpRanges": [{"CidrIp": IP_V4_PUBLIC_CIDR}],
+            "Ipv6Ranges": [
+                {"CidrIpv6": "::/1"},
+                {"CidrIpv6": "8000::/2"},
+                {"CidrIpv6": "c000::/2"},
+                {"CidrIpv6": IP_V6_PRIVATE_CIDR},
+            ],
+            "PrefixListIds": [],
+            "UserIdGroupPairs": [],
+        }
+
+        assert get_any_address_ip_permission(ingress_rule) == {
+            "IpProtocol": TRANSPORT_PROTOCOL_ALL,
+            "IpRanges": [],
+            "Ipv6Ranges": [
+                {"CidrIpv6": "::/1"},
+                {"CidrIpv6": "8000::/2"},
+                {"CidrIpv6": "c000::/2"},
+            ],
+        }
+
+    def test_partial_coverage_is_not_revoked(self):
+        ingress_rule = {
+            "IpProtocol": TRANSPORT_PROTOCOL_TCP,
+            "FromPort": 22,
+            "ToPort": 22,
+            "IpRanges": [{"CidrIp": "0.0.0.0/1"}, {"CidrIp": "128.0.0.0/2"}],
+            "Ipv6Ranges": [{"CidrIpv6": "8000::/1"}],
+            "PrefixListIds": [],
+            "UserIdGroupPairs": [],
+        }
+
+        assert get_any_address_ip_permission(ingress_rule) == {
+            "IpProtocol": TRANSPORT_PROTOCOL_TCP,
+            "FromPort": 22,
+            "ToPort": 22,
+            "IpRanges": [],
+            "Ipv6Ranges": [],
+        }
+
+    def test_any_address_and_split_halves_are_all_revoked(self):
+        ingress_rule = {
+            "IpProtocol": TRANSPORT_PROTOCOL_TCP,
+            "FromPort": 22,
+            "ToPort": 22,
+            "IpRanges": [
+                {"CidrIp": IP_V4_ALL_CIDRS},
+                {"CidrIp": "0.0.0.0/1"},
+                {"CidrIp": "128.0.0.0/1"},
+                {"CidrIp": IP_V4_PRIVATE_CIDR},
+            ],
+            "Ipv6Ranges": [],
+            "PrefixListIds": [],
+            "UserIdGroupPairs": [],
+        }
+
+        assert get_any_address_ip_permission(ingress_rule) == {
+            "IpProtocol": TRANSPORT_PROTOCOL_TCP,
+            "FromPort": 22,
+            "ToPort": 22,
+            "IpRanges": [
+                {"CidrIp": IP_V4_ALL_CIDRS},
+                {"CidrIp": "0.0.0.0/1"},
+                {"CidrIp": "128.0.0.0/1"},
+            ],
+            "Ipv6Ranges": [],
+        }
+
+    def test_nested_split_ranges_are_revoked_until_not_open(self):
+        ingress_rule = {
+            "IpProtocol": TRANSPORT_PROTOCOL_TCP,
+            "FromPort": 22,
+            "ToPort": 22,
+            "IpRanges": [
+                {"CidrIp": "0.0.0.0/1"},
+                {"CidrIp": "128.0.0.0/1"},
+                {"CidrIp": "0.0.0.0/2"},
+                {"CidrIp": "64.0.0.0/2"},
+                {"CidrIp": "128.0.0.0/2"},
+                {"CidrIp": "192.0.0.0/2"},
+                {"CidrIp": IP_V4_PRIVATE_CIDR},
+            ],
+            "Ipv6Ranges": [],
+            "PrefixListIds": [],
+            "UserIdGroupPairs": [],
+        }
+
+        assert get_any_address_ip_permission(ingress_rule) == {
+            "IpProtocol": TRANSPORT_PROTOCOL_TCP,
+            "FromPort": 22,
+            "ToPort": 22,
+            "IpRanges": [
+                {"CidrIp": "0.0.0.0/1"},
+                {"CidrIp": "128.0.0.0/1"},
+                {"CidrIp": "0.0.0.0/2"},
+                {"CidrIp": "64.0.0.0/2"},
+                {"CidrIp": "128.0.0.0/2"},
+                {"CidrIp": "192.0.0.0/2"},
+            ],
+            "Ipv6Ranges": [],
+        }
