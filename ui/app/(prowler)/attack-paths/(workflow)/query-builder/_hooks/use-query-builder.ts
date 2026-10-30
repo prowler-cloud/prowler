@@ -56,8 +56,13 @@ const getDefaultValues = (query?: AttackPathQuery) => {
  * Custom hook for managing query builder form state
  * Handles query selection, parameter validation, and form submission
  */
-export const useQueryBuilder = (availableQueries: AttackPathQuery[]) => {
-  const [selectedQuery, setSelectedQuery] = useState<string | null>(null);
+export const useQueryBuilder = (
+  availableQueries: AttackPathQuery[],
+  initialQueryId: string | null = null,
+) => {
+  const [selectedQuery, setSelectedQuery] = useState<string | null>(
+    initialQueryId,
+  );
 
   const getQueryById = (queryId: string | null) =>
     availableQueries.find((query) => query.id === queryId);

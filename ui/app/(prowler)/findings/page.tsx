@@ -24,17 +24,29 @@ import {
   isFindingsPreviewLocked,
 } from "@/lib/findings-access";
 import { resolveFindingScanDateFilters } from "@/lib/findings-scan-filters";
+import { getSamplePreviewState } from "@/lib/sample-preview/get-sample-preview-state";
 import { ScanProps } from "@/types";
 import { SearchParamsProps } from "@/types/components";
 
 import { FindingsFiltersSection } from "./_components/findings-filters-section";
 import { FindingsFiltersSkeleton } from "./_components/findings-filters-skeleton";
+import { FindingsSamplePreview } from "./_components/findings-sample-preview";
 
 export default async function Findings({
   searchParams,
 }: {
   searchParams: Promise<SearchParamsProps>;
 }) {
+  // Sample data replaces the page (and its paywall) until the first scan completes.
+  const preview = await getSamplePreviewState();
+  if (preview.active) {
+    return (
+      <ContentLayout title="Findings" icon={<Tag />}>
+        <FindingsSamplePreview state={preview} />
+      </ContentLayout>
+    );
+  }
+
   const resolvedSearchParams = await searchParams;
   const { encodedSort } = extractSortAndKey(resolvedSearchParams);
   const { filters, query } = extractFiltersAndQuery(resolvedSearchParams);

@@ -17,10 +17,10 @@ import { ComplianceFilters } from "@/components/compliance/compliance-header/com
 import { ComplianceOverviewGrid } from "@/components/compliance/compliance-overview-grid";
 import { WatchlistControls } from "@/components/compliance/watchlist/watchlist-controls";
 import { Alert, AlertDescription } from "@/components/shadcn/alert";
-import { Card, CardContent } from "@/components/shadcn/card/card";
 import { ContentLayout } from "@/components/shadcn/content-layout";
 import { pickLatestCisPerProvider } from "@/lib/compliance/compliance-report-types";
 import { isReportDownloadLocked } from "@/lib/report-download-access";
+import { getSamplePreviewState } from "@/lib/sample-preview/get-sample-preview-state";
 import { isCloud } from "@/lib/shared/env";
 import {
   ExpandedScanData,
@@ -30,8 +30,10 @@ import {
 } from "@/types";
 import { COMPLIANCE_TAB, ComplianceOverviewData } from "@/types/compliance";
 
+import { ComplianceOverviewPanel } from "./_components/compliance-overview-panel";
 import { CompliancePageTabs } from "./_components/compliance-page-tabs";
 import { getComplianceTab } from "./_components/compliance-page-tabs.shared";
+import { ComplianceSamplePreview } from "./_components/compliance-sample-preview";
 import { CrossAccountOverviewSection } from "./_components/cross-account-overview-section";
 import { CrossProviderOverview } from "./_components/cross-provider-overview";
 import {
@@ -71,6 +73,16 @@ export default async function Compliance({
 }: {
   searchParams: Promise<SearchParamsProps>;
 }) {
+  // Sample data replaces both tabs until the first scan completes.
+  const preview = await getSamplePreviewState();
+  if (preview.active) {
+    return (
+      <ContentLayout title="Compliance" icon={<ShieldCheck />}>
+        <ComplianceSamplePreview state={preview} />
+      </ContentLayout>
+    );
+  }
+
   const resolvedSearchParams = await searchParams;
   const searchParamsKey = JSON.stringify(resolvedSearchParams || {});
 
@@ -407,21 +419,5 @@ const ComplianceWatchlistControls = async ({
       entries={watchlist.entries}
       canManageWatchlist={watchlist.canManage}
     />
-  );
-};
-
-const ComplianceOverviewPanel = ({
-  children,
-}: {
-  children: React.ReactNode;
-}) => {
-  return (
-    <Card
-      variant="base"
-      padding="none"
-      className="minimal-scrollbar relative z-0 w-full gap-4 overflow-auto shadow-sm"
-    >
-      <CardContent className="flex flex-col gap-4 p-4">{children}</CardContent>
-    </Card>
   );
 };

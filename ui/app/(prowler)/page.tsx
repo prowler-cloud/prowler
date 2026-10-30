@@ -12,12 +12,16 @@ import {
 } from "@/components/layout/app-sidebar";
 import { ContentLayout } from "@/components/shadcn/content-layout";
 import { FeatureFlagGate } from "@/components/shared/feature-flag-gate";
+import { SamplePreviewBanner } from "@/components/shared/sample-preview/sample-preview-banner";
 import { DOCS_URLS } from "@/lib/external-urls";
 import { FEATURE_FLAG } from "@/lib/feature-flags";
+import { getSamplePreviewState } from "@/lib/sample-preview/get-sample-preview-state";
+import { SAMPLE_PREVIEW_PAGE } from "@/lib/sample-preview/sample-preview-events";
 import { isCloud } from "@/lib/shared/env";
 import { SearchParamsProps } from "@/types";
 
 import { OverviewBanner } from "./_overview/_components/overview-banner";
+import { OverviewGrid } from "./_overview/_components/overview-grid";
 import { OverviewProviderContext } from "./_overview/_components/overview-provider-context";
 import { getLighthouseOverviewBannerHref } from "./_overview/_lib/lighthouse-banner";
 import { OVERVIEW_BANNER_VARIANT } from "./_overview/_lib/overview-banner";
@@ -42,6 +46,7 @@ import {
   RiskSeverityChartSkeleton,
   RiskSeverityChartSSR,
 } from "./_overview/risk-severity";
+import { OverviewSamplePreview } from "./_overview/sample-preview/overview-sample-preview";
 import {
   FindingSeverityOverTimeSkeleton,
   FindingSeverityOverTimeSSR,
@@ -60,12 +65,32 @@ export default async function Home({
   searchParams: Promise<SearchParamsProps>;
 }) {
   const resolvedSearchParams = await searchParams;
-  const [providersData, providerGroupsData, lighthouseBannerHref] =
-    await Promise.all([
-      getAllProviders(),
-      getAllProviderGroups(),
-      getLighthouseOverviewBannerHref(isCloud(), getLighthouseV2Configurations),
-    ]);
+  // Resolved alongside the page data, so tenants with scans wait no longer.
+  const [
+    samplePreview,
+    providersData,
+    providerGroupsData,
+    lighthouseBannerHref,
+  ] = await Promise.all([
+    getSamplePreviewState(),
+    getAllProviders(),
+    getAllProviderGroups(),
+    getLighthouseOverviewBannerHref(isCloud(), getLighthouseV2Configurations),
+  ]);
+
+  // No completed scan yet: the demo account stands in for the tenant's data.
+  if (samplePreview.active) {
+    return (
+      <ContentLayout title="Overview" icon={<SquareChartGantt />}>
+        <AppSidebarModeSync mode={APP_SIDEBAR_MODE.BROWSE} />
+        <SamplePreviewBanner
+          state={samplePreview}
+          page={SAMPLE_PREVIEW_PAGE.OVERVIEW}
+        />
+        <OverviewSamplePreview showIssues={isCloud()} />
+      </ContentLayout>
+    );
+  }
 
   return (
     <ContentLayout title="Overview" icon={<SquareChartGantt />}>
@@ -99,82 +124,71 @@ export default async function Home({
         <ProviderGroupSelector groups={providerGroupsData?.data ?? []} />
       </div>
 
-      <div className="flex flex-col gap-6 lg:flex-row lg:flex-wrap lg:items-stretch">
-        <Suspense fallback={<ThreatScoreSkeleton />}>
-          <ThreatScoreSSR searchParams={resolvedSearchParams} />
-        </Suspense>
-
-        {isCloud() && (
-          <FeatureFlagGate flag={FEATURE_FLAG.ISSUES}>
-            <Suspense fallback={<ExploitabilityChartSkeleton />}>
-              <ExploitabilityChartSSR searchParams={resolvedSearchParams} />
-            </Suspense>
-          </FeatureFlagGate>
-        )}
-
-        <Suspense fallback={<StatusChartSkeleton />}>
-          <CheckFindingsSSR searchParams={resolvedSearchParams} />
-        </Suspense>
-
-        <Suspense fallback={<RiskSeverityChartSkeleton />}>
-          <RiskSeverityChartSSR searchParams={resolvedSearchParams} />
-        </Suspense>
-      </div>
-
-      <div className="mt-6">
-        <Suspense fallback={<ResourcesInventorySkeleton />}>
-          <ResourcesInventorySSR searchParams={resolvedSearchParams} />
-        </Suspense>
-      </div>
-
-      <div className="mt-6 flex flex-col gap-6 xl:flex-row">
-        {/* Watchlists: stacked on mobile, row on tablet, stacked on desktop */}
-        {/* No `flex-wrap` here: a multi-line flex container sizes its items to
-            the line's max-content rather than to its own 312px, and a card wider
-            than the column loses its right border and padding to
-            `overflow-hidden`. It never wrapped anyway. */}
-        <div className="flex min-w-0 flex-col gap-6 overflow-hidden sm:flex-row sm:items-stretch xl:w-[312px] xl:shrink-0 xl:flex-col">
-          {/* Sized to its own list, unlike the service card below: this one is
-              as long as the organization made its watchlist, so growing it to
-              fill the column puts a hole under two pinned frameworks. */}
-          {/* `h-full` only where the cards sit side by side and share a row
-              height. In the column it would hand the card the stretched
-              wrapper's height and undo the fit-to-content sizing. */}
-          <div className="min-w-0 sm:flex-1 xl:flex-none sm:[&>*]:h-full xl:[&>*]:h-auto">
-            <Suspense fallback={<WatchlistCardSkeleton />}>
-              <ComplianceWatchlistSSR searchParams={resolvedSearchParams} />
-            </Suspense>
-          </div>
-          <div className="min-w-0 sm:flex-1 xl:flex-auto [&>*]:h-full">
-            <Suspense fallback={<WatchlistCardSkeleton />}>
-              <ServiceWatchlistSSR searchParams={resolvedSearchParams} />
-            </Suspense>
-          </div>
-        </div>
-
-        {/* Charts column: Attack Surface, Top issues, Findings Over Time */}
-        <div className="flex flex-1 flex-col gap-6">
+      <OverviewGrid
+        threatScore={
+          <Suspense fallback={<ThreatScoreSkeleton />}>
+            <ThreatScoreSSR searchParams={resolvedSearchParams} />
+          </Suspense>
+        }
+        exploitability={
+          isCloud() ? (
+            <FeatureFlagGate flag={FEATURE_FLAG.ISSUES}>
+              <Suspense fallback={<ExploitabilityChartSkeleton />}>
+                <ExploitabilityChartSSR searchParams={resolvedSearchParams} />
+              </Suspense>
+            </FeatureFlagGate>
+          ) : undefined
+        }
+        checkFindings={
+          <Suspense fallback={<StatusChartSkeleton />}>
+            <CheckFindingsSSR searchParams={resolvedSearchParams} />
+          </Suspense>
+        }
+        riskSeverity={
+          <Suspense fallback={<RiskSeverityChartSkeleton />}>
+            <RiskSeverityChartSSR searchParams={resolvedSearchParams} />
+          </Suspense>
+        }
+        resourcesInventory={
+          <Suspense fallback={<ResourcesInventorySkeleton />}>
+            <ResourcesInventorySSR searchParams={resolvedSearchParams} />
+          </Suspense>
+        }
+        complianceWatchlist={
+          <Suspense fallback={<WatchlistCardSkeleton />}>
+            <ComplianceWatchlistSSR searchParams={resolvedSearchParams} />
+          </Suspense>
+        }
+        serviceWatchlist={
+          <Suspense fallback={<WatchlistCardSkeleton />}>
+            <ServiceWatchlistSSR searchParams={resolvedSearchParams} />
+          </Suspense>
+        }
+        attackSurface={
           <Suspense fallback={<AttackSurfaceSkeleton />}>
             <AttackSurfaceSSR searchParams={resolvedSearchParams} />
           </Suspense>
-          {isCloud() && (
+        }
+        topIssues={
+          isCloud() ? (
             <FeatureFlagGate flag={FEATURE_FLAG.ISSUES}>
               <Suspense fallback={<TopIssuesSkeleton />}>
                 <TopIssuesSSR searchParams={resolvedSearchParams} />
               </Suspense>
             </FeatureFlagGate>
-          )}
+          ) : undefined
+        }
+        severityOverTime={
           <Suspense fallback={<FindingSeverityOverTimeSkeleton />}>
             <FindingSeverityOverTimeSSR searchParams={resolvedSearchParams} />
           </Suspense>
-        </div>
-      </div>
-
-      <div className="mt-6">
-        <Suspense fallback={<RiskPipelineViewSkeleton />}>
-          <GraphsTabsWrapper searchParams={resolvedSearchParams} />
-        </Suspense>
-      </div>
+        }
+        graphsTabs={
+          <Suspense fallback={<RiskPipelineViewSkeleton />}>
+            <GraphsTabsWrapper searchParams={resolvedSearchParams} />
+          </Suspense>
+        }
+      />
     </ContentLayout>
   );
 }
