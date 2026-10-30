@@ -66,6 +66,24 @@ describe("IssuesList sample preview", () => {
     expect(screen.getByLabelText("All, 0 issues")).toBeInTheDocument();
   });
 
+  it("matches every verdict of a verdict__in list", async () => {
+    render(
+      await IssuesList({
+        searchParams: {
+          "filter[verdict__in]": `${VERDICT.EXPLOITABLE},${VERDICT.NOT_EXPLOITABLE}`,
+        },
+        sample: true,
+      }),
+    );
+
+    expect(
+      screen.getByRole("button", { name: exploitable.attributes.title }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: notExploitable.attributes.title }),
+    ).toBeInTheDocument();
+  });
+
   it("reads a scalar verdict filter as one literal value", async () => {
     render(
       await IssuesList({
