@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -379,14 +379,16 @@ describe("IssuePanel", () => {
     {
       failure: "the findings request",
       fail: () => getIssueFindings.mockResolvedValueOnce(undefined),
+      failing: getIssueFindings,
     },
     {
       failure: "the issue request",
       fail: () => getIssue.mockRejectedValueOnce(new Error("Offline")),
+      failing: getIssue,
     },
   ])(
     "keeps the loaded rows when $failure fails on a background refresh",
-    async ({ fail }) => {
+    async ({ fail, failing }) => {
       // Given: the findings loaded, and a finding is open
       getIssue.mockResolvedValue(detailWith(["bucket"], ["f-1"]));
       getIssueFindings.mockResolvedValueOnce([finding]);
@@ -404,18 +406,47 @@ describe("IssuePanel", () => {
       // When: closing it refreshes, and the refresh fails
       await userEvent.click(screen.getByText("Issue details"));
 
-      // Then: the rows stay instead of a load error
-      await waitFor(() =>
-        expect(
-          getIssue.mock.calls.length + getIssueFindings.mock.calls.length,
-        ).toBeGreaterThanOrEqual(3),
-      );
+      // Then: once the failing refresh has settled, the rows stay
+      await waitFor(() => expect(failing).toHaveBeenCalledTimes(2));
+      await act(async () => {
+        await failing.mock.results[1]?.value?.catch(() => undefined);
+      });
       expect(
         screen.getByRole("button", { name: "Bucket is public" }),
       ).toBeInTheDocument();
       expect(screen.queryByRole("alert")).toBeNull();
     },
   );
+
+  it("applies refreshed resources even when the refreshed findings fail", async () => {
+    // Given: the refresh brings a new resource but loses the findings
+    getIssue
+      .mockResolvedValueOnce(detailWith(["bucket"], ["f-1"]))
+      .mockResolvedValueOnce(detailWith(["bucket", "new-bucket"], ["f-1"]));
+    getIssueFindings
+      .mockResolvedValueOnce([finding])
+      .mockResolvedValueOnce(undefined);
+    getFindingById.mockResolvedValue({
+      data: { id: "finding-1", attributes: {}, relationships: {} },
+    });
+    renderPanel();
+    await openTab("Findings");
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Bucket is public" }),
+    );
+    await screen.findByText("Detail of finding-1");
+
+    // When
+    await userEvent.click(screen.getByText("Issue details"));
+    await waitFor(() => expect(getIssueFindings).toHaveBeenCalledTimes(2));
+
+    // Then: the findings stay, the resources follow the refresh
+    expect(
+      screen.getByRole("button", { name: "Bucket is public" }),
+    ).toBeInTheDocument();
+    await openTab("Resources");
+    expect(await screen.findByText("new-bucket")).toBeInTheDocument();
+  });
 
   it("opens a finding clicked on the attack path in place", async () => {
     // Given

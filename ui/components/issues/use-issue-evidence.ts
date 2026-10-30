@@ -59,23 +59,26 @@ export const useIssueEvidence = (
             ? []
             : undefined;
         if (cancelled) return;
-        setState((previous) =>
-          // Same rule for the findings: a refresh that loses them keeps the
-          // ones already shown.
-          findings === undefined &&
-          previous.status === "loaded" &&
-          previous.findings !== undefined
-            ? previous
-            : {
-                status: "loaded",
-                resources: attributes.resource_uids,
-                findings,
-                findingsTruncated:
-                  new Set(findingUids).size > ISSUE_FINDINGS_LIMIT,
-                scanId: detailScanId,
-                providerId: detailProviderId,
-              },
-        );
+        setState((previous) => {
+          // A refresh that loses the findings keeps the ones already shown,
+          // as long as they belong to the same scan; resources and provider
+          // always take the fresh answer.
+          const keepFindings =
+            findings === undefined &&
+            previous.status === "loaded" &&
+            previous.findings !== undefined &&
+            previous.scanId === detailScanId;
+          return {
+            status: "loaded",
+            resources: attributes.resource_uids,
+            findings: keepFindings ? previous.findings : findings,
+            findingsTruncated: keepFindings
+              ? previous.findingsTruncated
+              : new Set(findingUids).size > ISSUE_FINDINGS_LIMIT,
+            scanId: detailScanId,
+            providerId: detailProviderId,
+          };
+        });
       })
       .catch(() => {
         if (!cancelled) fail();
