@@ -1,6 +1,6 @@
 import re
 from ipaddress import ip_address, ip_network
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Union
 
 from py_iam_expand.actions import InvalidActionHandling, expand_actions
 
@@ -366,12 +366,10 @@ def has_restrictive_source_arn_condition(
                     if source_account:
                         arn_parts = arn_value.split(":")
                         if len(arn_parts) > 4 and arn_parts[4] and arn_parts[4] != "*":
-                            if arn_parts[4].isdigit():
-                                if source_account not in arn_value:
-                                    return False
-                            else:
-                                if arn_parts[4] != source_account:
-                                    return False
+                            # Compare the account field only: the account ID can also
+                            # appear in the resource part, e.g. a trail named after it.
+                            if arn_parts[4] != source_account:
+                                return False
                         elif len(arn_parts) > 4 and arn_parts[4] == "*":
                             return False
                         # else: ARN doesn't contain account field (like S3 bucket), so it's restrictive
@@ -631,7 +629,7 @@ def is_policy_public(
 
 def is_condition_block_restrictive(
     condition_statement: dict,
-    source_account: str = "",
+    source_account: Union[str, list] = "",
     is_cross_account_allowed=False,
 ):
     """
@@ -647,12 +645,17 @@ def is_condition_block_restrictive(
             }
         }
 
-        source_account: str with a 12-digit AWS Account number, e.g.: 111122223333, default: ""
+        source_account: str with a 12-digit AWS Account number, e.g.: 111122223333, default: "".
+            It can also be a list of account numbers, in which case every value in the
+            condition must match one of them, e.g.: ["111122223333", "444455556666"].
 
         is_cross_account_allowed: bool to allow cross-account access, e.g.: True, default: False
 
     """
     is_condition_valid = False
+    source_accounts = (
+        [source_account] if isinstance(source_account, str) else list(source_account)
+    )
 
     # The conditions must be defined in lowercase since the context key names are not case-sensitive.
     # For example, including the aws:SourceAccount context key is equivalent to testing for AWS:SourceAccount
@@ -735,26 +738,26 @@ def is_condition_block_restrictive(
                                     and "aws:sourcevpce" != value
                                 ):
                                     if value == "aws:sourcearn":
-                                        # Use the specialized function to properly validate SourceArn restrictions
-                                        # Create a minimal statement to test with our function
+                                        # Use the specialized function to properly validate SourceArn restrictions.
+                                        # Test each ARN on its own so a list can name several trusted accounts.
                                         test_statement = {
                                             "Condition": {
-                                                condition_operator: {
-                                                    value: condition_statement[
-                                                        condition_operator
-                                                    ][value]
-                                                }
+                                                condition_operator: {value: item}
                                             }
                                         }
-                                        is_condition_key_restrictive = (
+                                        is_condition_key_restrictive = any(
                                             has_restrictive_source_arn_condition(
-                                                test_statement, source_account
+                                                test_statement, account
                                             )
+                                            for account in source_accounts
                                         )
                                         if not is_condition_key_restrictive:
                                             break
                                     else:
-                                        if source_account not in item:
+                                        if not any(
+                                            account in item
+                                            for account in source_accounts
+                                        ):
                                             is_condition_key_restrictive = False
                                             break
 
@@ -784,17 +787,19 @@ def is_condition_block_restrictive(
                                             }
                                         }
                                     }
-                                    is_condition_valid = (
+                                    is_condition_valid = any(
                                         has_restrictive_source_arn_condition(
-                                            test_statement, source_account
+                                            test_statement, account
                                         )
+                                        for account in source_accounts
                                     )
                                 else:
-                                    if (
-                                        source_account
+                                    if any(
+                                        account
                                         in condition_statement[condition_operator][
                                             value
                                         ]
+                                        for account in source_accounts
                                     ):
                                         is_condition_valid = True
 

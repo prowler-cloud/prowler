@@ -2923,6 +2923,21 @@ class Test_has_restrictive_source_arn_condition:
         }
         assert has_restrictive_source_arn_condition(statement) is True
 
+    def test_source_arn_account_only_in_resource_name(self):
+        """Test that the account is matched on the ARN account field, not anywhere in the ARN"""
+        statement = {
+            "Effect": "Allow",
+            "Principal": "*",
+            "Action": "sns:Publish",
+            "Condition": {
+                "ArnEquals": {
+                    "aws:SourceArn": "arn:aws:cloudtrail:us-east-1:999999999999:trail/222222222222"
+                }
+            },
+        }
+        assert has_restrictive_source_arn_condition(statement, "222222222222") is False
+        assert has_restrictive_source_arn_condition(statement, "999999999999") is True
+
     def test_non_restrictive_global_wildcard(self):
         """Test non-restrictive SourceArn with global wildcard"""
         statement = {
@@ -3162,3 +3177,80 @@ class Test_iam_pattern_matches:
         start = time.perf_counter()
         assert iam_pattern_matches(pattern, "bedrock-agentcore.amazonaws.com") is False
         assert time.perf_counter() - start < 0.5
+
+
+class Test_is_condition_block_restrictive_account_list:
+    def test_list_value_with_all_accounts_trusted(self):
+        condition = {
+            "StringEquals": {
+                "aws:PrincipalAccount": TRUSTED_AWS_ACCOUNT_NUMBER_LIST[:2]
+            }
+        }
+        assert is_condition_block_restrictive(
+            condition, TRUSTED_AWS_ACCOUNT_NUMBER_LIST
+        )
+
+    def test_list_value_with_untrusted_account(self):
+        condition = {
+            "StringEquals": {
+                "aws:PrincipalAccount": [
+                    TRUSTED_AWS_ACCOUNT_NUMBER,
+                    NON_TRUSTED_AWS_ACCOUNT_NUMBER,
+                ]
+            }
+        }
+        assert not is_condition_block_restrictive(
+            condition, TRUSTED_AWS_ACCOUNT_NUMBER_LIST
+        )
+
+    def test_string_value_matching_one_trusted_account(self):
+        condition = {
+            "StringEquals": {"aws:PrincipalAccount": TRUSTED_AWS_ACCOUNT_NUMBER_LIST[1]}
+        }
+        assert is_condition_block_restrictive(
+            condition, TRUSTED_AWS_ACCOUNT_NUMBER_LIST
+        )
+
+    def test_string_value_not_trusted(self):
+        condition = {
+            "StringEquals": {"aws:PrincipalAccount": NON_TRUSTED_AWS_ACCOUNT_NUMBER}
+        }
+        assert not is_condition_block_restrictive(
+            condition, TRUSTED_AWS_ACCOUNT_NUMBER_LIST
+        )
+
+    def test_single_account_with_list_value_is_unchanged(self):
+        condition = {
+            "StringEquals": {
+                "aws:PrincipalAccount": TRUSTED_AWS_ACCOUNT_NUMBER_LIST[:2]
+            }
+        }
+        assert not is_condition_block_restrictive(
+            condition, TRUSTED_AWS_ACCOUNT_NUMBER_LIST[0]
+        )
+
+    def test_source_arn_list_with_arns_of_several_trusted_accounts(self):
+        condition = {
+            "ArnLike": {
+                "aws:SourceArn": [
+                    f"arn:aws:cloudtrail:*:{TRUSTED_AWS_ACCOUNT_NUMBER_LIST[0]}:trail/*",
+                    f"arn:aws:cloudtrail:*:{TRUSTED_AWS_ACCOUNT_NUMBER_LIST[1]}:trail/*",
+                ]
+            }
+        }
+        assert is_condition_block_restrictive(
+            condition, TRUSTED_AWS_ACCOUNT_NUMBER_LIST
+        )
+
+    def test_source_arn_list_with_untrusted_account(self):
+        condition = {
+            "ArnLike": {
+                "aws:SourceArn": [
+                    f"arn:aws:cloudtrail:*:{TRUSTED_AWS_ACCOUNT_NUMBER_LIST[0]}:trail/*",
+                    f"arn:aws:cloudtrail:*:{NON_TRUSTED_AWS_ACCOUNT_NUMBER}:trail/*",
+                ]
+            }
+        }
+        assert not is_condition_block_restrictive(
+            condition, TRUSTED_AWS_ACCOUNT_NUMBER_LIST
+        )
