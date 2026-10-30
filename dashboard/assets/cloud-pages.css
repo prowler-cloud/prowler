@@ -350,6 +350,75 @@
   background: var(--pc-btn-press);
 }
 
+/* ------------------------------------------- Findings hand-off additions */
+
+/* Secondary "how to" block rendered between the message and the CTA. */
+.pc-steps {
+  width: 100%;
+  max-width: 560px;
+  text-align: left;
+  background: #f8fafc;
+  border: 1px solid var(--pc-border);
+  border-radius: 12px;
+  padding: 18px 20px;
+  margin: 0 0 26px;
+}
+
+.pc-steps-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--pc-text);
+  margin: 0 0 10px;
+}
+
+.pc-steps-list {
+  /* Tailwind's preflight strips list markers; restore the numbering. */
+  list-style: decimal outside;
+  margin: 0 0 12px;
+  padding-left: 22px;
+  font-size: 15px;
+  line-height: 24px;
+  color: var(--pc-text-2);
+}
+
+.pc-steps-note {
+  font-size: 13px;
+  line-height: 20px;
+  color: #52525b;
+  margin: 0 0 6px;
+}
+
+.pc-steps-note:last-child {
+  margin-bottom: 0;
+}
+
+.pc-cta-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 10px 20px;
+}
+
+.pc-link-secondary {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--pc-text);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.pc-link-secondary:hover {
+  color: var(--pc-btn-press);
+}
+
+.pc-note {
+  font-size: 13px;
+  line-height: 20px;
+  color: #52525b;
+  margin: 14px 0 0;
+}
+
 /* --------------------------------------------------- Responsive collapse */
 
 @media (max-width: 900px) {

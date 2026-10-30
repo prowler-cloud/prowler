@@ -21,6 +21,19 @@ CLOUD_CTA_BASE = (
 # Path to the recolorable checkmark mask used for benefit bullets.
 CHECK_ICON = "/assets/images/icons/cloud/check.svg"
 
+# Prowler Cloud pricing page used by the "Compare editions" secondary link.
+CLOUD_PRICING_URL = "https://prowler.com/pricing"
+
+# Findings hand-off CTA. Shares the ``report-handoff`` campaign and ``oss``
+# medium with the OSS HTML report CTA; ``utm_source`` identifies this entry
+# point and ``intent`` expresses the user's goal. The URL is static: no
+# assessment data (accounts, resources, findings, paths) is ever appended.
+FINDINGS_HANDOFF_CTA_URL = (
+    "https://cloud.prowler.com/sign-up"
+    "?utm_source=prowler-local-dashboard&utm_medium=oss"
+    "&utm_campaign=report-handoff&utm_content=findings&intent=import-findings"
+)
+
 
 # Normative feature definitions. ``icon`` points to a local mask asset so no
 # external requests are needed and the glyph recolors per context.
@@ -62,22 +75,42 @@ CLOUD_FEATURES = [
         "icon": "/assets/images/icons/cloud/attack-paths.svg",
     },
     {
+        # Findings is a voluntary hand-off, not an upsell: the dashboard keeps
+        # showing findings from CSV, and this page explains how to bring the
+        # OCSF report to Prowler Cloud. Copy is shared with the OSS HTML report.
         "slug": "findings",
         "route": "/cloud/findings",
         "nav_label": "Findings",
         "page_title": "Findings",
-        "card_title": "Unlock Findings",
+        "card_title": "Keep scanning locally. Bring your findings to Prowler Cloud.",
         "description": (
-            "Filter, investigate, and prioritize security findings across "
-            "providers and scans from one workspace."
+            "Import your accompanying OCSF report to explore managed security "
+            "workflows."
         ),
-        "benefits": [
-            "Search and filter findings across all connected accounts",
-            "Track status, severity, ownership, and remediation context",
-            "Triage findings and share a consistent source of truth with your security team",
-        ],
+        "benefits": [],
         "utm_content": "findings",
         "icon": "/assets/images/icons/cloud/findings.svg",
+        "cta_label": "Explore Prowler Cloud",
+        "cta_url": FINDINGS_HANDOFF_CTA_URL,
+        "secondary_link": {"label": "Compare editions", "href": CLOUD_PRICING_URL},
+        "note": "Nothing is uploaded automatically.",
+        "steps": {
+            "title": "How to bring your results",
+            "items": [
+                "Create or sign in to your Prowler Cloud account.",
+                "In Prowler Cloud, open Scans \u2192 Import Findings.",
+                "Select the accompanying .ocsf.json report and start the import.",
+            ],
+            "notes": [
+                "This dashboard reads CSV files. Cloud import requires the OCSF "
+                "JSON report, not the CSV or HTML report.",
+                "If you did not generate an OCSF report, include json-ocsf in "
+                "your output formats on your next scan.",
+                "Import Findings is available to roles with the Manage Ingestions "
+                "permission on an active Prowler Cloud subscription; each cloud "
+                "account in the report counts as a provider.",
+            ],
+        },
     },
     {
         "slug": "alerts",
@@ -178,9 +211,57 @@ def _benefit_item(text):
     )
 
 
+def _steps_block(steps):
+    """Build the optional secondary "how to" block rendered below the message.
+
+    It is plain text and links only: no file selector, upload control or
+    request is introduced, since the browser cannot read local report files.
+    """
+    return html.Div(
+        [
+            html.H3(steps["title"], className="pc-steps-title"),
+            html.Ol(
+                [html.Li(item) for item in steps["items"]],
+                className="pc-steps-list",
+            ),
+            *[html.P(note, className="pc-steps-note") for note in steps["notes"]],
+        ],
+        className="pc-steps",
+    )
+
+
 def build_cloud_layout(feature):
-    """Build the reusable gated informational page for a single feature."""
-    cta_url = f"{CLOUD_CTA_BASE}{feature['utm_content']}"
+    """Build the reusable gated informational page for a single feature.
+
+    Features may override the CTA (``cta_label``/``cta_url``) and add an
+    optional ``steps`` block, ``secondary_link`` and ``note``. Features that
+    do not set them render exactly as before.
+    """
+    cta_url = feature.get("cta_url") or f"{CLOUD_CTA_BASE}{feature['utm_content']}"
+    cta_label = feature.get("cta_label", "Upgrade to Prowler Cloud")
+    steps = feature.get("steps")
+    secondary_link = feature.get("secondary_link")
+    note = feature.get("note")
+
+    cta_links = [
+        html.A(
+            cta_label,
+            href=cta_url,
+            target="_blank",
+            rel="noopener noreferrer",
+            className="pc-cta",
+        )
+    ]
+    if secondary_link:
+        cta_links.append(
+            html.A(
+                secondary_link["label"],
+                href=secondary_link["href"],
+                target="_blank",
+                rel="noopener noreferrer",
+                className="pc-link-secondary",
+            )
+        )
 
     return html.Div(
         html.Div(
@@ -234,13 +315,13 @@ def build_cloud_layout(feature):
                                     ],
                                     className="pc-benefits",
                                 ),
-                                html.A(
-                                    "Upgrade to Prowler Cloud",
-                                    href=cta_url,
-                                    target="_blank",
-                                    rel="noopener noreferrer",
-                                    className="pc-cta",
+                                *([_steps_block(steps)] if steps else []),
+                                *(
+                                    [html.Div(cta_links, className="pc-cta-row")]
+                                    if secondary_link
+                                    else cta_links
                                 ),
+                                *([html.P(note, className="pc-note")] if note else []),
                             ],
                             className="pc-card-body",
                         ),
