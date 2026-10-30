@@ -82,6 +82,14 @@ describe("IssuesList sample preview", () => {
     expect(
       screen.getByRole("button", { name: notExploitable.attributes.title }),
     ).toBeInTheDocument();
+    const outsideList = SAMPLE_ISSUES.find(
+      (issue) =>
+        issue.attributes.verdict !== VERDICT.EXPLOITABLE &&
+        issue.attributes.verdict !== VERDICT.NOT_EXPLOITABLE,
+    );
+    expect(
+      screen.queryByText(outsideList!.attributes.title),
+    ).not.toBeInTheDocument();
   });
 
   it("reads a scalar verdict filter as one literal value", async () => {
