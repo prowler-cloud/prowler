@@ -2459,7 +2459,7 @@
       "Id": "9.2.1",
       "Description": "Ensure That Soft Delete for Blobs on Azure Blob Storage Storage Accounts is Enabled",
       "Checks": [
-        "storage_ensure_soft_delete_is_enabled"
+        "storage_ensure_blob_soft_delete_is_enabled"
       ],
       "Attributes": [
         {
