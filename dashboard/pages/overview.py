@@ -32,6 +32,7 @@ from dashboard.config import (
     muted_pass_color,
     pass_color,
 )
+from dashboard.lib.accounts import format_aws_account_label, load_aws_account_names
 from dashboard.lib.cards import create_provider_card
 from dashboard.lib.dropdowns import (
     create_account_dropdown,
@@ -43,6 +44,7 @@ from dashboard.lib.dropdowns import (
     create_severity_dropdown,
     create_status_dropdown,
     create_table_row_dropdown,
+    to_dropdown_options,
 )
 from dashboard.lib.layouts import create_layout_overview
 from prowler.lib.logger import logger
@@ -241,6 +243,7 @@ else:
     date_dropdown = create_date_dropdown(assesment_times)
 
     # Cloud Account Dropdown
+    aws_account_names = load_aws_account_names(folder_path_overview)
     accounts = []
     if "ACCOUNT_NAME" in data.columns:
         for account in data["ACCOUNT_NAME"].unique():
@@ -254,7 +257,13 @@ else:
     if "ACCOUNT_UID" in data.columns:
         for account in data["ACCOUNT_UID"].unique():
             if "aws" in list(data[data["ACCOUNT_UID"] == account]["PROVIDER"]):
-                accounts.append(account + " - AWS")
+                accounts.append(
+                    {
+                        "label": format_aws_account_label(account, aws_account_names)
+                        + " - AWS",
+                        "value": account + " - AWS",
+                    }
+                )
             if "kubernetes" in list(data[data["ACCOUNT_UID"] == account]["PROVIDER"]):
                 accounts.append(account + " - K8S")
             if "alibabacloud" in list(data[data["ACCOUNT_UID"] == account]["PROVIDER"]):
@@ -792,7 +801,13 @@ def filter_data(
             # append the provider name depending on the account
             if "ACCOUNT_UID" in filtered_data.columns:
                 if "aws" in list(data[data["ACCOUNT_UID"] == item]["PROVIDER"]):
-                    cloud_accounts_options.append(item + " - AWS")
+                    cloud_accounts_options.append(
+                        {
+                            "label": format_aws_account_label(item, aws_account_names)
+                            + " - AWS",
+                            "value": item + " - AWS",
+                        }
+                    )
                 if "kubernetes" in list(data[data["ACCOUNT_UID"] == item]["PROVIDER"]):
                     cloud_accounts_options.append(item + " - K8S")
                 if "alibabacloud" in list(
@@ -808,6 +823,7 @@ def filter_data(
                     cloud_accounts_options.append(item + " - GCP")
                 if "m365" in list(data[data["ACCOUNT_NAME"] == item]["PROVIDER"]):
                     cloud_accounts_options.append(item + " - M365")
+    cloud_accounts_options = to_dropdown_options(cloud_accounts_options)
 
     # Filter ACCOUNT
     if cloud_account_values == ["All"]:
@@ -1412,7 +1428,9 @@ def filter_data(
                 if "aws" in list(data[data["ACCOUNT_UID"] == account]["PROVIDER"]):
                     filtered_data.loc[
                         filtered_data["ACCOUNT_UID"] == account, "ACCOUNT_UID"
-                    ] = (account + " - AWS")
+                    ] = (
+                        format_aws_account_label(account, aws_account_names) + " - AWS"
+                    )
                 if "kubernetes" in list(
                     data[data["ACCOUNT_UID"] == account]["PROVIDER"]
                 ):
