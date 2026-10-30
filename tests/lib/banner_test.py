@@ -30,7 +30,8 @@ class TestDashboardBanner:
     def test_header_has_identity_version_and_directory(self, capsys):
         print_dashboard_banner("/tmp/synthetic/output")
         out = capsys.readouterr().out
-        assert f"Prowler Local Dashboard · v{prowler_version}" in out
+        assert f"Local Dashboard - v{prowler_version}" in out
+        assert "Date:" in out
         assert "Loading CSV files from /tmp/synthetic/output" in out
         # The long commercial banner is not part of the dashboard header
         assert "snapshot" not in out
