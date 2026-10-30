@@ -1,0 +1,39 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_access_package_assignment_policy_approvers_valid",
+  "CheckTitle": "Access package assignment policy ensures valid primary approvers enforce approval in all stages",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "Access package assignment policies that require approval must have **valid primary approvers** in every approval stage. User approvers must exist and be enabled, and group approvers must exist and have members. Stale or broken approver references silently disable the approval control.",
+  "Risk": "When configured approvers are deleted, disabled, or an empty group, the approval control **silently stops functioning**: access requests expire or are auto-denied, nobody is accountable for decisions, and operators commonly work around it by direct admin assignments that bypass approval and justification entirely.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/entra/id-governance/entitlement-management-access-package-approval-policy",
+    "https://learn.microsoft.com/graph/api/resources/accesspackageassignmentpolicy?view=graph-rest-1.0",
+    "https://maester.dev/docs/tests/MT.1109"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to Microsoft Entra admin center at https://entra.microsoft.com/\n2. Go to **ID Governance** > **Entitlement management** > **Access packages**\n3. Select the access package and open **Policies**\n4. Edit the policy with invalid approvers\n5. Under **Requests** > **Approval**, replace deleted or disabled users and empty or deleted groups with active approvers\n6. Consider adding a fallback approver\n7. Click **Update**",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Regularly review access package assignment policies to ensure all configured approvers are active and valid. Replace deleted or disabled user approvers and empty or deleted group approvers with current principals to maintain an effective approval chain.",
+      "Url": "https://hub.prowler.com/check/entra_access_package_assignment_policy_approvers_valid"
+    }
+  },
+  "Categories": [
+    "identity-access",
+    "e5"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Only primary approvers are validated; fallback, escalation, and fallback-escalation approvers are out of scope. Manager, internal/external sponsor, and target-user sponsor approver types cannot be validated statically and are accepted as-is. Requires EntitlementManagement.Read.All permission and a Microsoft Entra ID P2 or Entra ID Governance license."
+}
