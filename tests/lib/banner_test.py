@@ -5,7 +5,9 @@ from prowler.lib.banner import (
     DASHBOARD_CTA_URL,
     NO_PROMOTIONS_ENV,
     print_dashboard_banner,
+    print_dashboard_loading,
     print_dashboard_promotion,
+    print_prowler_cloud_banner,
     promotions_disabled,
 )
 
@@ -27,16 +29,21 @@ class TestPromotionsDisabled:
 
 
 class TestDashboardBanner:
-    def test_header_has_identity_version_and_directory(self, capsys):
-        print_dashboard_banner("/tmp/synthetic/output")
+    def test_header_has_identity_and_version(self, capsys):
+        print_dashboard_banner()
         out = capsys.readouterr().out
         assert f"Local Dashboard - v{prowler_version}" in out
         assert "Date:" in out
-        assert "Loading CSV files from /tmp/synthetic/output" in out
+        assert "Loading CSV files" not in out
         # The long commercial banner is not part of the dashboard header
         assert "snapshot" not in out
         assert "Start free" not in out
         assert "aws s3 cp" not in out
+
+    def test_loading_line_names_the_directory(self, capsys):
+        print_dashboard_loading("/tmp/synthetic/output")
+        out = capsys.readouterr().out
+        assert "Loading CSV files from /tmp/synthetic/output ..." in out
 
     def test_promotion_block_content(self, monkeypatch, capsys):
         monkeypatch.delenv(NO_PROMOTIONS_ENV, raising=False)
@@ -77,3 +84,30 @@ class TestDashboardBanner:
         out = capsys.readouterr().out
         assert f"CLI - v{prowler_version}" in out
         cloud.assert_called_once_with(None)
+
+
+class TestCliCloudBanner:
+    def test_content_is_brief_and_tailored(self, monkeypatch, capsys):
+        monkeypatch.delenv(NO_PROMOTIONS_ENV, raising=False)
+        monkeypatch.setenv("NO_COLOR", "1")
+        print_prowler_cloud_banner("aws")
+        out = capsys.readouterr().out
+        assert "Prowler Cloud gives you the full picture." in out
+        assert "Exploitable Issues" in out
+        assert "AWS Organization" in out
+        assert "cloud.prowler.com" in out
+        assert "Nothing is uploaded automatically." in out
+        assert "Bulk Provisioning" not in out
+        assert len([ln for ln in out.splitlines() if ln.strip()]) <= 12
+
+    def test_unknown_provider_uses_generic_line(self, monkeypatch, capsys):
+        monkeypatch.delenv(NO_PROMOTIONS_ENV, raising=False)
+        print_prowler_cloud_banner("github")
+        out = capsys.readouterr().out
+        assert "connect all your accounts" in out
+        assert "AWS Organization" not in out
+
+    def test_respects_no_promotions(self, monkeypatch, capsys):
+        monkeypatch.setenv(NO_PROMOTIONS_ENV, "1")
+        print_prowler_cloud_banner("aws")
+        assert capsys.readouterr().out == ""
