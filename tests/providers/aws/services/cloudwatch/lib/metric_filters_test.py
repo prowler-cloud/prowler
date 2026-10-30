@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import pytest
+
 import prowler
 from prowler.lib.check.models import CheckMetadata
 from prowler.providers.aws.services.cloudtrail.cloudtrail_service import Trail
@@ -20,6 +22,13 @@ TRAIL_LOG_GROUP_NAME = "trail-log-group"
 TRAIL_LOG_GROUP_ARN = (
     f"arn:aws:logs:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:log-group:{TRAIL_LOG_GROUP_NAME}:*"
 )
+TRAIL_LOG_GROUP_ARN_WITHOUT_SUFFIX = (
+    f"arn:aws:logs:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:log-group:{TRAIL_LOG_GROUP_NAME}"
+)
+FOREIGN_REGION = "us-east-1"
+FOREIGN_ACCOUNT_NUMBER = "999999999999"
+FOREIGN_REGION_LOG_GROUP_ARN = f"arn:aws:logs:{FOREIGN_REGION}:{AWS_ACCOUNT_NUMBER}:log-group:{TRAIL_LOG_GROUP_NAME}:*"
+FOREIGN_ACCOUNT_LOG_GROUP_ARN = f"arn:aws:logs:{AWS_REGION}:{FOREIGN_ACCOUNT_NUMBER}:log-group:{TRAIL_LOG_GROUP_NAME}:*"
 
 # Matches the filter patterns built below, so a filter is only skipped because of
 # its missing log group and never because the pattern failed to match.
@@ -33,28 +42,35 @@ METADATA = CheckMetadata.parse_file(
 ).json()
 
 
-def _trails():
+def _trails(log_group_arn=TRAIL_LOG_GROUP_ARN):
     """One trail delivering to TRAIL_LOG_GROUP_NAME, putting that log group in scope.
 
     Without a trail carrying a log group ARN the check has nothing to match filters
     against and returns None for any input, which would make every assertion below
     pass for the wrong reason.
     """
-    return {TRAIL_ARN: Trail(region=AWS_REGION, log_group_arn=TRAIL_LOG_GROUP_ARN)}
+    return {TRAIL_ARN: Trail(region=AWS_REGION, log_group_arn=log_group_arn)}
 
 
-def _trail_log_group():
+def _trail_log_group(arn=TRAIL_LOG_GROUP_ARN, region=AWS_REGION):
     """The trail's log group as the CloudWatch service would have collected it."""
     return LogGroup(
-        arn=TRAIL_LOG_GROUP_ARN,
+        arn=arn,
         name=TRAIL_LOG_GROUP_NAME,
         retention_days=7,
         never_expire=False,
-        region=AWS_REGION,
+        region=region,
     )
 
 
-def _metric_filter(name, log_group, metric=METRIC_NAME, namespace="CloudTrailMetrics"):
+def _metric_filter(
+    name,
+    log_group,
+    metric=METRIC_NAME,
+    namespace="CloudTrailMetrics",
+    region=AWS_REGION,
+    account=AWS_ACCOUNT_NUMBER,
+):
     """Build a metric filter whose pattern always matches PATTERN.
 
     Args:
@@ -64,19 +80,26 @@ def _metric_filter(name, log_group, metric=METRIC_NAME, namespace="CloudTrailMet
         metric: metric name an alarm has to carry for the filter to be compliant.
         namespace: metric namespace the filter publishes to, or None when the
             transformation does not expose one.
+        region: region of the collected metric filter.
+        account: account of the collected metric filter.
     """
     return MetricFilter(
-        arn=f"arn:aws:logs:{AWS_REGION}:{AWS_ACCOUNT_NUMBER}:metric-filter/{name}",
+        arn=f"arn:aws:logs:{region}:{account}:metric-filter/{name}",
         name=name,
         metric=metric,
         metric_namespace=namespace,
         pattern=FILTER_PATTERN,
         log_group=log_group,
-        region=AWS_REGION,
+        region=region,
     )
 
 
-def _alarm(metric=METRIC_NAME, namespace="CloudTrailMetrics", region=AWS_REGION):
+def _alarm(
+    metric=METRIC_NAME,
+    namespace="CloudTrailMetrics",
+    region=AWS_REGION,
+    account=AWS_ACCOUNT_NUMBER,
+):
     """Build an alarm on metric; a non-default name models an unrelated alarm.
 
     The check pairs alarms to filters by metric name and region (and namespace
@@ -84,12 +107,12 @@ def _alarm(metric=METRIC_NAME, namespace="CloudTrailMetrics", region=AWS_REGION)
     filter with no alarm of its own is expressed.
     """
     return MetricAlarm(
-        arn=f"arn:aws:cloudwatch:{region}:{AWS_ACCOUNT_NUMBER}:alarm:{metric}-alarm",
+        arn=f"arn:aws:cloudwatch:{region}:{account}:alarm:{metric}-alarm",
         name=f"{metric}-alarm",
         metric=metric,
         name_space=namespace,
         region=region,
-        alarm_actions=[f"arn:aws:sns:{region}:{AWS_ACCOUNT_NUMBER}:topic-test"],
+        alarm_actions=[f"arn:aws:sns:{region}:{account}:topic-test"],
         actions_enabled=True,
     )
 
@@ -200,3 +223,118 @@ class Test_check_cloudwatch_log_metric_filter:
         )
 
         assert report.status == "PASS"
+
+    def test_same_name_foreign_region_log_group_is_ignored(self):
+        """A same-named log group in another region is not the trail destination.
+
+        The foreign log group, its filter, and its alarm are all collected in the
+        same region so only the trail destination identity distinguishes them.
+        """
+        foreign_group = _trail_log_group(
+            arn=FOREIGN_REGION_LOG_GROUP_ARN, region=FOREIGN_REGION
+        )
+        report = check_cloudwatch_log_metric_filter(
+            PATTERN,
+            _trails(),
+            [
+                _metric_filter(
+                    "foreign-region-filter", foreign_group, region=FOREIGN_REGION
+                )
+            ],
+            [_alarm(region=FOREIGN_REGION)],
+            METADATA,
+        )
+
+        assert report is None
+
+    def test_same_name_foreign_account_log_group_is_ignored(self):
+        """A same-named log group in another account is not the trail destination.
+
+        This is a model-boundary identity assertion only; cross-account collection
+        by the scanner is not claimed here.
+        """
+        foreign_group = _trail_log_group(arn=FOREIGN_ACCOUNT_LOG_GROUP_ARN)
+        report = check_cloudwatch_log_metric_filter(
+            PATTERN,
+            _trails(),
+            [
+                _metric_filter(
+                    "foreign-account-filter",
+                    foreign_group,
+                    account=FOREIGN_ACCOUNT_NUMBER,
+                )
+            ],
+            [_alarm(account=FOREIGN_ACCOUNT_NUMBER)],
+            METADATA,
+        )
+
+        assert report is None
+
+    def test_exact_destination_identity_passes(self):
+        """The collected log group at the trail destination satisfies the check."""
+        report = check_cloudwatch_log_metric_filter(
+            PATTERN,
+            _trails(),
+            [_metric_filter("destination-filter", _trail_log_group())],
+            [_alarm()],
+            METADATA,
+        )
+
+        assert report is not None
+        assert report.status == "PASS"
+        assert "destination-filter" in report.status_extended
+        assert report.resource_arn == TRAIL_LOG_GROUP_ARN
+        assert report.region == AWS_REGION
+
+    @pytest.mark.parametrize(
+        ("trail_log_group_arn", "collected_log_group_arn"),
+        [
+            (TRAIL_LOG_GROUP_ARN, TRAIL_LOG_GROUP_ARN_WITHOUT_SUFFIX),
+            (TRAIL_LOG_GROUP_ARN_WITHOUT_SUFFIX, TRAIL_LOG_GROUP_ARN),
+        ],
+    )
+    def test_equivalent_destination_arns_with_optional_suffix_pass(
+        self, trail_log_group_arn, collected_log_group_arn
+    ):
+        """The API-equivalent terminal ':*' form must not change identity."""
+        report = check_cloudwatch_log_metric_filter(
+            PATTERN,
+            _trails(log_group_arn=trail_log_group_arn),
+            [
+                _metric_filter(
+                    "suffix-filter",
+                    _trail_log_group(arn=collected_log_group_arn),
+                )
+            ],
+            [_alarm()],
+            METADATA,
+        )
+
+        assert report is not None
+        assert report.status == "PASS"
+        assert report.resource_arn == collected_log_group_arn
+        assert report.region == AWS_REGION
+
+    def test_foreign_filter_does_not_mask_valid_destination_report(self):
+        """A foreign same-name PASS must not hide the actual destination report."""
+        foreign_group = _trail_log_group(
+            arn=FOREIGN_REGION_LOG_GROUP_ARN, region=FOREIGN_REGION
+        )
+        report = check_cloudwatch_log_metric_filter(
+            PATTERN,
+            _trails(),
+            [
+                _metric_filter(
+                    "foreign-region-filter", foreign_group, region=FOREIGN_REGION
+                ),
+                _metric_filter("destination-filter", _trail_log_group()),
+            ],
+            [_alarm(region=FOREIGN_REGION), _alarm()],
+            METADATA,
+        )
+
+        assert report is not None
+        assert report.status == "PASS"
+        assert "destination-filter" in report.status_extended
+        assert report.resource_arn == TRAIL_LOG_GROUP_ARN
+        assert report.region == AWS_REGION
