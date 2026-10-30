@@ -219,9 +219,10 @@ class RDS(AlibabaCloudService):
             ips = []
             if response and response.body and response.body.items:
                 for item in response.body.items.dbinstance_iparray:
-                    security_ips = getattr(item, "security_ips", "")
+                    # The SDK exposes SecurityIPList as security_iplist.
+                    security_ips = getattr(item, "security_iplist", "")
                     if security_ips:
-                        ips.extend(security_ips.split(","))
+                        ips.extend(ip.strip() for ip in security_ips.split(","))
             return ips
         except Exception as error:
             logger.error(
