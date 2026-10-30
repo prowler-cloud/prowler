@@ -7,7 +7,12 @@ import { IssuesTable } from "@/components/issues/issues-table";
 import { VerdictFilter } from "@/components/issues/verdict-filter";
 import { ISSUE_SCOPE_KEYS } from "@/lib/issues/scope";
 import { verdictCounts } from "@/lib/issues/verdicts";
+import {
+  SAMPLE_ISSUES,
+  SAMPLE_ISSUES_OVERVIEW,
+} from "@/lib/sample-preview/sample-issues";
 import { SearchParamsProps } from "@/types";
+import type { IssueResponse, IssuesOverviewResponse } from "@/types/issues";
 
 /** Only the filters the issues endpoint understands are forwarded. */
 const ISSUE_FILTER_KEYS = [
@@ -27,8 +32,11 @@ export const IssuesList = async ({
   searchParams,
   filters: filterControls,
   providerUids,
+  sample = false,
 }: {
   searchParams: SearchParamsProps;
+  /** Renders the sample issues instead of calling the issues API. */
+  sample?: boolean;
   /** The scope selectors, rendered above the verdict tabs: they scope every tab. */
   filters?: ReactNode;
   /** Provider uid by provider id, for the issue panel. */
@@ -48,16 +56,20 @@ export const IssuesList = async ({
       ([key]) => key !== "filter[verdict]" && key !== "filter[verdict__in]",
     ),
   );
-  const [summary, issues] = await Promise.all([
-    getIssuesOverview({ filters: scope }),
-    getIssues({
-      filters,
-      page: Number(searchParams.page) || 1,
-      pageSize: Number(searchParams.pageSize) || 10,
-      sort:
-        typeof searchParams.sort === "string" ? searchParams.sort : undefined,
-    }),
-  ]);
+  const [summary, issues] = sample
+    ? sampleIssues(filters)
+    : await Promise.all([
+        getIssuesOverview({ filters: scope }),
+        getIssues({
+          filters,
+          page: Number(searchParams.page) || 1,
+          pageSize: Number(searchParams.pageSize) || 10,
+          sort:
+            typeof searchParams.sort === "string"
+              ? searchParams.sort
+              : undefined,
+        }),
+      ]);
 
   const attributes = summary?.data?.attributes;
   // handleApiResponse resolves {error, status} on a 4xx and undefined on a
@@ -90,11 +102,14 @@ export const IssuesList = async ({
       {rows === null ? (
         <IssuesLoadError />
       ) : rows.length ? (
-        <IssuesTable
-          issues={rows}
-          metadata={issues?.meta}
-          providerUids={providerUids}
-        />
+        // Sample rows have no API record: inert, so no side panel or triage.
+        <div inert={sample}>
+          <IssuesTable
+            issues={rows}
+            metadata={issues?.meta}
+            providerUids={providerUids}
+          />
+        </div>
       ) : (
         <p className="text-text-neutral-tertiary text-sm">
           No issues match this filter.
@@ -103,3 +118,21 @@ export const IssuesList = async ({
     </>
   );
 };
+
+/** The sample summary and rows, filtered by verdict like the API would. */
+function sampleIssues(
+  filters: Record<string, string>,
+): [IssuesOverviewResponse, IssueResponse] {
+  const verdicts = (
+    filters["filter[verdict__in]"] ?? filters["filter[verdict]"]
+  )?.split(",");
+  const data = verdicts
+    ? SAMPLE_ISSUES.filter((issue) =>
+        verdicts.includes(issue.attributes.verdict),
+      )
+    : SAMPLE_ISSUES;
+  return [
+    { data: { type: "issues-overview", attributes: SAMPLE_ISSUES_OVERVIEW } },
+    { data },
+  ];
+}
