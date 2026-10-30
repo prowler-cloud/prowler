@@ -41,6 +41,7 @@ export function useRealtimeResource<T>(
 
   useEffect(() => {
     if (!enabled) return;
+    let active = true;
 
     const load = async () => {
       const request = ++requestRef.current;
@@ -51,7 +52,7 @@ export function useRealtimeResource<T>(
         next = { ok: false, status: 0, error: UNREACHABLE };
       }
       // A newer request or a key change overtook this one: drop its answer.
-      if (request === requestRef.current)
+      if (active && request === requestRef.current)
         setState({ key: loadKey, result: next });
     };
 
@@ -63,7 +64,7 @@ export function useRealtimeResource<T>(
       : undefined;
 
     return () => {
-      requestRef.current++;
+      active = false;
       if (timer) clearInterval(timer);
     };
   }, [loadKey, enabled, intervalMs]);
