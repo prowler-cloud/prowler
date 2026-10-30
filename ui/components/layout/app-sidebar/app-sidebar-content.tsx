@@ -32,12 +32,14 @@ export function AppSidebarContent({ onSelect }: AppSidebarContentProps) {
   const mode = useHydratedAppSidebarMode();
   const isCloudEnvironment = isCloud();
   const issuesEnabled = useFeatureFlag(FEATURE_FLAG.ISSUES);
+  const realtimeEnabled = useFeatureFlag(FEATURE_FLAG.REALTIME);
   const sections = getNavigationConfig({
     pathname,
     apiDocsUrl,
     cloudBillingEnabled,
     registryEligible,
     issuesEnabled,
+    realtimeEnabled,
     permissions,
   });
   const showChat = isCloudEnvironment && mode === APP_SIDEBAR_MODE.CHAT;

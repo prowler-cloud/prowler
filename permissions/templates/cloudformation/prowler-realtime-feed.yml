@@ -1,0 +1,96 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: |
+  Prowler Realtime Detection and Remediation real-time feed. EventBridge forwards risky AWS API calls recorded by CloudTrail to an SQS queue,
+  and Prowler Cloud reads the queue with the ProwlerScan role. Without this stack Prowler Realtime still works, using CloudTrail
+  LookupEvents with a delay of a few minutes. Delete the stack to remove everything it creates.
+  Deploy it in one region: Prowler Realtime reads one queue per account. Global-service events (IAM, S3 account settings)
+  arrive in us-east-1.
+
+Parameters:
+  ProwlerScanRoleName:
+    Description: Name of the ProwlerScan role Prowler Cloud already uses for this account. It receives read access to this queue only.
+    Type: String
+    Default: ProwlerScan
+    MinLength: 1
+
+Resources:
+  Queue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: prowler-realtime-events
+      MessageRetentionPeriod: 3600
+      ReceiveMessageWaitTimeSeconds: 20
+      SqsManagedSseEnabled: true
+      Tags:
+        - { Key: prowler, Value: realtime-feed }
+
+  Rule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: prowler-realtime-risky-api-calls
+      Description: Risky changes that can break compliance checks, forwarded to Prowler Realtime Detection and Remediation
+      State: ENABLED
+      EventPattern:
+        detail-type: ["AWS API Call via CloudTrail", "AWS Console Sign In via CloudTrail"]
+        detail:
+          eventName:
+            - AuthorizeSecurityGroupIngress
+            - PutBucketPublicAccessBlock
+            - DeleteBucketPublicAccessBlock
+            - PutAccountPublicAccessBlock
+            - DeletePublicAccessBlock
+            - PutBucketPolicy
+            - StopLogging
+            - DeleteTrail
+            - UpdateTrail
+            - StopConfigurationRecorder
+            - DeleteConfigurationRecorder
+            - DeleteFlowLogs
+            - ScheduleKeyDeletion
+            - DisableKey
+            - DisableEbsEncryptionByDefault
+            - CreateVolume
+            - RunInstances
+            - CreateDBInstance
+            - ModifyDBInstance
+            - AttachUserPolicy
+            - AttachRolePolicy
+            - AttachGroupPolicy
+            - CreateAccessKey
+            - ConsoleLogin
+      Targets:
+        - { Id: prowler-realtime-queue, Arn: !GetAtt Queue.Arn }
+
+  QueuePolicy:
+    Type: AWS::SQS::QueuePolicy
+    Properties:
+      Queues: [!Ref Queue]
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: AllowEventBridge
+            Effect: Allow
+            Principal: { Service: events.amazonaws.com }
+            Action: sqs:SendMessage
+            Resource: !GetAtt Queue.Arn
+            Condition:
+              ArnEquals: { "aws:SourceArn": !GetAtt Rule.Arn }
+
+  ReadFeedPolicy:
+    Type: AWS::IAM::RolePolicy
+    Properties:
+      RoleName: !Ref ProwlerScanRoleName
+      PolicyName: ProwlerRealtimeFeed
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: ReadRealtimeQueue
+            Effect: Allow
+            Action: [sqs:ReceiveMessage, sqs:DeleteMessage, sqs:GetQueueAttributes]
+            Resource: !GetAtt Queue.Arn
+
+Outputs:
+  QueueUrl:
+    Description: Paste this URL in Prowler Cloud, Prowler Realtime, Real-time feed.
+    Value: !Ref Queue
