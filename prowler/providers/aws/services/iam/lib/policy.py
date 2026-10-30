@@ -366,12 +366,10 @@ def has_restrictive_source_arn_condition(
                     if source_account:
                         arn_parts = arn_value.split(":")
                         if len(arn_parts) > 4 and arn_parts[4] and arn_parts[4] != "*":
-                            if arn_parts[4].isdigit():
-                                if source_account not in arn_value:
-                                    return False
-                            else:
-                                if arn_parts[4] != source_account:
-                                    return False
+                            # Compare the account field only: the account ID can also
+                            # appear in the resource part, e.g. a trail named after it.
+                            if arn_parts[4] != source_account:
+                                return False
                         elif len(arn_parts) > 4 and arn_parts[4] == "*":
                             return False
                         # else: ARN doesn't contain account field (like S3 bucket), so it's restrictive

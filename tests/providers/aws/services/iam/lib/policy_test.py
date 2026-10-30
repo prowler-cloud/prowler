@@ -2923,6 +2923,21 @@ class Test_has_restrictive_source_arn_condition:
         }
         assert has_restrictive_source_arn_condition(statement) is True
 
+    def test_source_arn_account_only_in_resource_name(self):
+        """Test that the account is matched on the ARN account field, not anywhere in the ARN"""
+        statement = {
+            "Effect": "Allow",
+            "Principal": "*",
+            "Action": "sns:Publish",
+            "Condition": {
+                "ArnEquals": {
+                    "aws:SourceArn": "arn:aws:cloudtrail:us-east-1:999999999999:trail/222222222222"
+                }
+            },
+        }
+        assert has_restrictive_source_arn_condition(statement, "222222222222") is False
+        assert has_restrictive_source_arn_condition(statement, "999999999999") is True
+
     def test_non_restrictive_global_wildcard(self):
         """Test non-restrictive SourceArn with global wildcard"""
         statement = {
