@@ -140,7 +140,14 @@ class WAFv2(AWSService):
                 )
 
                 try:
-                    web_acl = get_web_acl.get("WebACL", {})
+                    web_acl = get_web_acl.get("WebACL")
+                    if web_acl is None:
+                        # Without the WebACL the rules are unknown, not empty:
+                        # leave rules_retrieved unset so checks report MANUAL.
+                        logger.error(
+                            f"{acl.region} -- GetWebACL returned no WebACL for Web ACL {acl.name}"
+                        )
+                        return
                     for rule in web_acl.get("Rules", []):
                         statement = rule.get("Statement", {})
                         new_rule = self._build_rule(rule, statement)

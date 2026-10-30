@@ -500,3 +500,59 @@ class Test_WAFv2_Service:
             f"CLOUDFRONT:{AWS_REGION_US_EAST_1}",
             f"REGIONAL:{AWS_REGION_EU_WEST_1}",
         }
+
+    @mock_aws
+    def test_get_web_acl_without_web_acl_leaves_rules_unretrieved(self):
+        wafv2 = client("wafv2", region_name=AWS_REGION_EU_WEST_1)
+        waf = wafv2.create_web_acl(
+            Scope="REGIONAL",
+            Name="my-web-acl",
+            DefaultAction={"Allow": {}},
+            Rules=[
+                _managed_rule_group_rule("AWSManagedRulesSQLiRuleSet", 0, "None"),
+            ],
+            VisibilityConfig=WEB_ACL_VISIBILITY_CONFIG,
+        )["Summary"]
+        waf_arn = waf["ARN"]
+
+        def mock_make_api_call(self, operation_name, kwarg):
+            if operation_name == "GetWebACL":
+                return {"LockToken": "token"}
+            return make_api_call(self, operation_name, kwarg)
+
+        aws = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        with patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call):
+            wafv2 = WAFv2(aws)
+
+        web_acl = wafv2.web_acls[waf_arn]
+        assert not web_acl.rules_retrieved
+        assert web_acl.rules == []
+        assert web_acl.rule_groups == []
+
+    @mock_aws
+    def test_get_web_acl_without_rules_is_retrieved_as_empty(self):
+        wafv2 = client("wafv2", region_name=AWS_REGION_EU_WEST_1)
+        waf = wafv2.create_web_acl(
+            Scope="REGIONAL",
+            Name="my-web-acl",
+            DefaultAction={"Allow": {}},
+            VisibilityConfig=WEB_ACL_VISIBILITY_CONFIG,
+        )["Summary"]
+        waf_arn = waf["ARN"]
+
+        def mock_make_api_call(self, operation_name, kwarg):
+            if operation_name == "GetWebACL":
+                return {
+                    "WebACL": {"Name": waf["Name"], "Id": waf["Id"], "ARN": waf_arn},
+                    "LockToken": "token",
+                }
+            return make_api_call(self, operation_name, kwarg)
+
+        aws = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        with patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call):
+            wafv2 = WAFv2(aws)
+
+        web_acl = wafv2.web_acls[waf_arn]
+        assert web_acl.rules_retrieved
+        assert web_acl.rules == []
+        assert web_acl.rule_groups == []
