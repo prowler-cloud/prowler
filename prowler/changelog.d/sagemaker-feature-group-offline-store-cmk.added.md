@@ -1,0 +1,1 @@
+`sagemaker_feature_group_offline_store_encrypted_with_cmk` check for AWS provider, verifying that SageMaker Feature Group offline stores set a KMS key, with Feature Group inventory added to the SageMaker service
