@@ -38,7 +38,9 @@ class MongoDBAtlasBaseException(ProwlerException):
 
     def __init__(self, code, file=None, original_exception=None, message=None):
         provider = "MongoDB Atlas"
-        error_info = self.MONGODBATLAS_ERROR_CODES.get((code, self.__class__.__name__))
+        error_info = dict(
+            self.MONGODBATLAS_ERROR_CODES.get((code, self.__class__.__name__))
+        )
         if message:
             error_info["message"] = message
         super().__init__(
