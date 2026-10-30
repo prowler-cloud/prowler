@@ -1,5 +1,7 @@
 from dash import dcc, html
 
+from dashboard.pages.cloud import build_compliance_handoff_card
+
 
 def create_layout_overview(
     account_dropdown: html.Div,
@@ -194,6 +196,7 @@ def create_layout_compliance(
                 className="text-prowler-stone-900 text-lg font-bold",
             ),
             html.Div(className="flex flex-wrap", id="output"),
+            build_compliance_handoff_card(),
         ],
         className="grid gap-x-8 gap-y-8 2xl:container mx-auto",
     )
