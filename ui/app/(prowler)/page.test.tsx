@@ -38,8 +38,12 @@ describe("Overview page", () => {
 
   it("uses the responsive container breakpoint for the primary metric row", () => {
     // Given
-    const metricRowClassName = source.match(
-      /<div className="([^"]+)">\s*<Suspense fallback={<ThreatScoreSkeleton \/>}>/,
+    const gridSource = readFileSync(
+      path.join(currentDir, "_overview/_components/overview-grid.tsx"),
+      "utf8",
+    );
+    const metricRowClassName = gridSource.match(
+      /<div className="([^"]+)">\s*\{threatScore\}/,
     )?.[1];
 
     // When
