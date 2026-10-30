@@ -1,3 +1,4 @@
+import logging
 from types import SimpleNamespace
 from unittest import mock
 
@@ -5,9 +6,11 @@ from werkzeug.serving import BaseWSGIServer
 
 from dashboard.lib import startup
 from dashboard.lib.startup import (
+    DashRunningLineFilter,
     format_ready_message,
     install_server_ready_hook,
     server_urls,
+    silence_dash_running_line,
 )
 
 
@@ -40,7 +43,7 @@ class TestServerUrls:
 class TestFormatReadyMessage:
     def test_single_address(self):
         message = format_ready_message("127.0.0.1", 11666)
-        assert "Prowler Local Dashboard is ready" in message
+        assert "Prowler Local Dashboard now is running on" in message
         assert "http://127.0.0.1:11666/" in message
         assert message.endswith("Press Ctrl+C to stop.")
         assert "Also reachable" not in message
@@ -98,3 +101,26 @@ class TestInstallServerReadyHook:
             except OSError:
                 pass
         assert printed == []
+
+
+class TestSilenceDashRunningLine:
+    def test_drops_only_the_running_line(self):
+        logger = logging.getLogger("tests.dashboard.startup.dash")
+        logger.handlers = []
+        logger.setLevel(logging.INFO)
+        records = []
+        handler = logging.Handler()
+        handler.emit = records.append
+        logger.addHandler(handler)
+        app = SimpleNamespace(logger=logger)
+
+        silence_dash_running_line(app)
+        silence_dash_running_line(app)
+
+        logger.info(
+            "Dash is running on %s://%s%s%s\n", "http", "127.0.0.1", ":11666", "/"
+        )
+        logger.info("Something else worth seeing")
+
+        assert [r.getMessage() for r in records] == ["Something else worth seeing"]
+        assert sum(isinstance(f, DashRunningLineFilter) for f in logger.filters) == 1

@@ -10,8 +10,15 @@ from dash import dcc, html
 from dash.dependencies import Input, Output
 
 from dashboard.config import folder_path_overview
-from dashboard.lib.startup import install_server_ready_hook
-from prowler.lib.banner import print_dashboard_banner, print_dashboard_promotion
+from dashboard.lib.startup import (
+    install_server_ready_hook,
+    silence_dash_running_line,
+)
+from prowler.lib.banner import (
+    print_dashboard_banner,
+    print_dashboard_loading,
+    print_dashboard_promotion,
+)
 
 warnings.filterwarnings("ignore")
 
@@ -19,13 +26,14 @@ warnings.filterwarnings("ignore")
 if os.environ.get("NO_COLOR"):
     colorama_init(strip=True)
 
-# Compact startup output: identity, CSV directory and one hand-off block. The
-# local URL is printed by ``install_server_ready_hook`` once the server is
+# Compact startup output: identity, one hand-off block and the CSV directory.
+# The local URL is printed by ``install_server_ready_hook`` once the server is
 # actually listening, so nothing claims to be ready before it is. S3 download
 # instructions live in the dashboard documentation instead of every startup.
 cli = sys.modules["flask.cli"]
-print_dashboard_banner(folder_path_overview)
+print_dashboard_banner()
 print_dashboard_promotion()
+print_dashboard_loading(folder_path_overview)
 cli.show_server_banner = lambda *_: None
 install_server_ready_hook()
 
@@ -37,6 +45,8 @@ dashboard = dash.Dash(
     suppress_callback_exceptions=True,
     title="Prowler Local Dashboard",
 )
+# The ready block already announces the URL; drop Dash's pre-bind duplicate.
+silence_dash_running_line(dashboard)
 
 # ``use_pages`` above already imported dashboard/pages/cloud.py and registered
 # every /cloud/* route. Import its metadata now (after app instantiation) so

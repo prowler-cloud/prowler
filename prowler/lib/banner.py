@@ -69,39 +69,53 @@ def print_banner(legend: bool = False, provider: str = None):
             """)
 
 
+# Per-provider wording for the bulk onboarding line of the CLI banner.
+_BULK_ONBOARDING = {
+    "aws": "connect your whole AWS Organization in minutes",
+    "azure": "connect every Azure subscription in minutes",
+    "gcp": "connect every GCP project in minutes",
+    "kubernetes": "connect all your clusters in minutes",
+    "m365": "connect every M365 tenant in minutes",
+}
+
+
 def print_prowler_cloud_banner(provider: str = None):
     """
-    Prints a promotional banner highlighting what Prowler Cloud adds on top of
-    the open-source CLI.
-
-    Shown at the start and end of a scan to let users know about the managed
-    platform capabilities they are missing (CLI findings upload, attack paths,
-    AI, triage, organizations, continuous scanning with custom scheduling and
-    scan configuration, integrations and live compliance dashboards).
+    Prints the Prowler Cloud hand-off shown at the start and end of a CLI scan:
+    what the managed platform adds on top of this local snapshot, in six
+    short lines that fit an 80-column terminal, plus the sign-up link.
+    Skipped when ``PROWLER_NO_PROMOTIONS`` is set.
 
     Parameters:
-    - provider (str): The provider that was scanned, used to tailor the message.
+    - provider (str): The provider being scanned, used to tailor the onboarding line.
 
     Returns:
     - None
     """
+    if promotions_disabled():
+        return
     check = f"{Fore.GREEN}✓{Style.RESET_ALL}"
     bar = f"{banner_color}│{Style.RESET_ALL}"
+    onboarding = _BULK_ONBOARDING.get(
+        provider, "connect all your accounts and keep them scanned"
+    )
+
+    def line(title, text):
+        return f"{bar} {check} {Style.BRIGHT}{title}{Style.RESET_ALL} - {text}"
+
     print(f"""
-{bar} {Style.BRIGHT}You're getting a snapshot 📸. Prowler Cloud gives you the full picture:{Style.RESET_ALL}
+{bar} {Style.BRIGHT}This scan is a snapshot 📸. Prowler Cloud gives you the full picture.{Style.RESET_ALL}
+{bar} Import this scan's OCSF report or scan continuously, with managed workflows.
 {bar}
-{bar} {check} {Style.BRIGHT}Send your findings{Style.RESET_ALL} - directly from the Prowler CLI to Prowler Cloud.
-{bar} {check} {Style.BRIGHT}Continuous Security Monitoring{Style.RESET_ALL} - custom scheduling and scan configuration with history, trends and alerts.
-{bar} {check} {Style.BRIGHT}Triage{Style.RESET_ALL} - review findings, flag false positives and track accepted risk with your team.
-{bar} {check} {Style.BRIGHT}Lighthouse AI + MCP{Style.RESET_ALL} - autonomous triage, custom dashboards, prioritization with prevention and remediation.
-{bar} {check} {Style.BRIGHT}Alerts{Style.RESET_ALL} - get notified when anything you want is happening.
-{bar} {check} {Style.BRIGHT}Live Compliance{Style.RESET_ALL} - dashboards for 50+ frameworks, always up to date.
-{bar} {check} {Style.BRIGHT}Remediation{Style.RESET_ALL} - complete guided remediation including Autonomous remediation with Lighthouse AI.
-{bar} {check} {Style.BRIGHT}Attack Path Visualization{Style.RESET_ALL} - see how attackers chain risks to reach your crown jewels.
-{bar} {check} {Style.BRIGHT}Bulk Provisioning{Style.RESET_ALL} - add your entire AWS Organization in seconds.
-{bar} {check} {Style.BRIGHT}Integrations{Style.RESET_ALL} - Anything with our MCP + Jira, Slack, AWS Security Hub, Amazon S3, SSO and RBAC.
+{line("Exploitable Issues", "findings chained into attack paths, with the fix.")}
+{line("Findings Triage", "history, trends, false positives and accepted risk.")}
+{line("Lighthouse AI + MCP", "ask, prioritize and remediate from your AI tools.")}
+{line("Live Compliance", "50+ frameworks across providers and accounts.")}
+{line("Alerts & Integrations", "Jira, Slack, Security Hub, S3, SSO and RBAC.")}
+{line("Scheduled Scans", onboarding + ".")}
 {bar}
 {bar} {banner_color}Start free at 👉 {_hyperlink(CLOUD_BANNER_URL, CLOUD_DISPLAY_TEXT)}{Style.RESET_ALL}
+{bar} Nothing is uploaded automatically.
 """)
 
 
@@ -111,12 +125,22 @@ def promotions_disabled() -> bool:
     return value not in ("", "0", "false", "no")
 
 
-def print_dashboard_banner(csv_directory: str) -> None:
+def print_dashboard_banner() -> None:
     """
     Prints the `prowler dashboard` header: the Prowler logo labelled
-    ``Local Dashboard - v<version>``, the date and the directory the CSV
-    files are loaded from. The server URL is announced separately once the
-    server is listening.
+    ``Local Dashboard - v<version>`` and the date. The CSV directory and the
+    server URL are announced separately.
+
+    Returns:
+    - None
+    """
+    print(_logo_banner("Local Dashboard"))
+
+
+def print_dashboard_loading(csv_directory: str) -> None:
+    """
+    Prints the directory the dashboard loads its CSV files from. Shown after the
+    hand-off block, right before the files are read.
 
     Parameters:
     - csv_directory (str): the directory the dashboard reads CSV files from.
@@ -124,7 +148,6 @@ def print_dashboard_banner(csv_directory: str) -> None:
     Returns:
     - None
     """
-    print(_logo_banner("Local Dashboard"))
     print(f"{Fore.GREEN}Loading CSV files from {csv_directory} ...{Style.RESET_ALL}")
 
 

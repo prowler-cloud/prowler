@@ -9,6 +9,7 @@ makes the announcement reliable. Werkzeug's own behaviour is untouched: the
 original method still runs and no logger is reconfigured.
 """
 
+import logging
 import socket
 
 from colorama import Fore, Style
@@ -49,8 +50,8 @@ def format_ready_message(host, port, scheme="http"):
     bar = f"{banner_color}│{Style.RESET_ALL}"
     check = f"{Fore.GREEN}✓{Style.RESET_ALL}"
     lines = [
-        f"{bar} {check} {Style.BRIGHT}Prowler Local Dashboard is ready{Style.RESET_ALL} "
-        f"👉 {banner_color}{primary}{Style.RESET_ALL}"
+        f"{bar} {check} {Style.BRIGHT}Prowler Local Dashboard now is running on{Style.RESET_ALL} "
+        f"{banner_color}{primary}{Style.RESET_ALL}"
     ]
     if host in _WILDCARD_HOSTS:
         lines.append(f"{bar}   Listening on all interfaces ({host}).")
@@ -58,6 +59,24 @@ def format_ready_message(host, port, scheme="http"):
         lines.append(f"{bar}   Also reachable at: " + ", ".join(others))
     lines.append(f"{bar} Press Ctrl+C to stop.")
     return "\n".join(lines)
+
+
+class DashRunningLineFilter(logging.Filter):
+    """Drop Dash's own ``Dash is running on ...`` line from the app logger.
+
+    The ready block printed by ``install_server_ready_hook`` already states the
+    effective URL once the server is listening, so Dash's pre-bind line would
+    only repeat it. Every other record on the logger still passes.
+    """
+
+    def filter(self, record):
+        return not record.getMessage().startswith("Dash is running on")
+
+
+def silence_dash_running_line(app):
+    """Attach ``DashRunningLineFilter`` to a Dash app's logger once."""
+    if not any(isinstance(f, DashRunningLineFilter) for f in app.logger.filters):
+        app.logger.addFilter(DashRunningLineFilter())
 
 
 def _print_now(message):
