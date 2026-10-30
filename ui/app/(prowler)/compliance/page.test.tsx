@@ -12,6 +12,11 @@ import {
 } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import {
+  SAMPLE_PREVIEW_STAGE,
+  type SamplePreviewState,
+} from "@/lib/sample-preview/sample-preview-state";
+
 import Compliance from "./page";
 
 const {
@@ -19,6 +24,7 @@ const {
   complianceOverviewGridSpy,
   getComplianceOverviewMetadataInfoMock,
   getCompliancesOverviewMock,
+  getSamplePreviewStateMock,
   getScanMock,
   getScansMock,
   getThreatScoreMock,
@@ -29,6 +35,9 @@ const {
   complianceOverviewGridSpy: vi.fn(),
   getComplianceOverviewMetadataInfoMock: vi.fn(),
   getCompliancesOverviewMock: vi.fn(),
+  getSamplePreviewStateMock: vi.fn(
+    async (): Promise<SamplePreviewState> => ({ active: false }),
+  ),
   getScanMock: vi.fn(),
   getScansMock: vi.fn(),
   getThreatScoreMock: vi.fn(),
@@ -50,6 +59,14 @@ vi.mock("@/actions/scans", () => ({
   getScan: getScanMock,
   getScans: getScansMock,
   getScansByState: vi.fn(),
+}));
+
+vi.mock("@/lib/sample-preview/get-sample-preview-state", () => ({
+  getSamplePreviewState: getSamplePreviewStateMock,
+}));
+
+vi.mock("./_components/compliance-sample-preview", () => ({
+  ComplianceSamplePreview: () => <div>Sample compliance preview</div>,
 }));
 
 vi.mock("@/lib/shared/env", () => ({
@@ -152,6 +169,30 @@ describe("Compliance overview page", () => {
   it("uses layout-matched skeletons for the Multiple Scans islands", () => {
     expect(source).toContain("<CrossProviderOverviewSkeleton />");
     expect(source).toContain("<CrossAccountOverviewSkeleton />");
+  });
+});
+
+describe("Compliance sample preview", () => {
+  it("renders the sample and skips the real fetches until the first scan completes", async () => {
+    // Given - a Cloud tenant whose first scan has not completed yet
+    getSamplePreviewStateMock.mockResolvedValue({
+      active: true,
+      stage: SAMPLE_PREVIEW_STAGE.NO_SCAN,
+      runningScan: null,
+    });
+
+    // When
+    render(
+      (await Compliance({
+        searchParams: Promise.resolve({}),
+      })) as ReactElement,
+    );
+
+    // Then
+    expect(screen.getByText("Sample compliance preview")).toBeInTheDocument();
+    expect(getScansMock).not.toHaveBeenCalled();
+    expect(getCompliancesOverviewMock).not.toHaveBeenCalled();
+    expect(loadComplianceWatchlistContextMock).not.toHaveBeenCalled();
   });
 });
 
