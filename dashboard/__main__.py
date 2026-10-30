@@ -1,28 +1,33 @@
 # Importing Packages
+import os
 import sys
 import warnings
 
-import click
 import dash
 import dash_bootstrap_components as dbc
-from colorama import Fore, Style
+from colorama import init as colorama_init
 from dash import dcc, html
 from dash.dependencies import Input, Output
 
 from dashboard.config import folder_path_overview
-from prowler.config.config import orange_color
-from prowler.lib.banner import print_banner
+from dashboard.lib.startup import install_server_ready_hook
+from prowler.lib.banner import print_dashboard_banner, print_dashboard_promotion
 
 warnings.filterwarnings("ignore")
 
+# Honour the NO_COLOR convention: the dashboard parser has no --no-color flag.
+if os.environ.get("NO_COLOR"):
+    colorama_init(strip=True)
+
+# Compact startup output: identity, CSV directory and one hand-off block. The
+# local URL is printed by ``install_server_ready_hook`` once the server is
+# actually listening, so nothing claims to be ready before it is. S3 download
+# instructions live in the dashboard documentation instead of every startup.
 cli = sys.modules["flask.cli"]
-print_banner()
-print(
-    f"{Fore.GREEN}Loading all CSV files from the folder {folder_path_overview} ...\n{Style.RESET_ALL}"
-)
-cli.show_server_banner = lambda *_: click.echo(
-    f"{Fore.YELLOW}NOTE:{Style.RESET_ALL} If you are using {Fore.GREEN}{Style.BRIGHT}Prowler Cloud{Style.RESET_ALL} with the S3 integration or that integration \nfrom {Fore.CYAN}{Style.BRIGHT}Prowler CLI{Style.RESET_ALL} and you want to use your data from your S3 bucket,\nrun: `{orange_color}aws s3 cp s3://<your-bucket>/output/csv ./output --recursive{Style.RESET_ALL}`\nand then run `prowler dashboard` again to load the new files."
-)
+print_dashboard_banner(folder_path_overview)
+print_dashboard_promotion()
+cli.show_server_banner = lambda *_: None
+install_server_ready_hook()
 
 # Initialize the app - incorporate css
 dashboard = dash.Dash(

@@ -1,3 +1,5 @@
+import os
+
 from colorama import Fore, Style
 
 from prowler.config.config import banner_color, orange_color, prowler_version, timestamp
@@ -7,6 +9,17 @@ from prowler.config.config import banner_color, orange_color, prowler_version, t
 # terminals that support OSC 8 hyperlinks attribute the visit to the CLI.
 CLOUD_DISPLAY_TEXT = "cloud.prowler.com"
 CLOUD_BANNER_URL = "https://cloud.prowler.com/sign-up?utm_source=prowler-cli"
+
+# Compact hand-off shown by `prowler dashboard`. Same copy, campaign and medium
+# as the OSS HTML report CTA and the dashboard Findings page; ``utm_source``
+# identifies the terminal. The URL is static: no local paths or findings data.
+DASHBOARD_CTA_URL = (
+    "https://cloud.prowler.com/sign-up"
+    "?utm_source=prowler-dashboard-terminal&utm_medium=oss&utm_campaign=report-handoff"
+)
+
+# Set to a non-empty value other than 0/false/no to skip promotional blocks.
+NO_PROMOTIONS_ENV = "PROWLER_NO_PROMOTIONS"
 
 
 def _hyperlink(url: str, text: str) -> str:
@@ -86,3 +99,51 @@ def print_prowler_cloud_banner(provider: str = None):
 {bar}
 {bar} {banner_color}Start free at 👉 {_hyperlink(CLOUD_BANNER_URL, CLOUD_DISPLAY_TEXT)}{Style.RESET_ALL}
 """)
+
+
+def promotions_disabled() -> bool:
+    """Return True when ``PROWLER_NO_PROMOTIONS`` asks to skip promotional output."""
+    value = os.environ.get(NO_PROMOTIONS_ENV, "").strip().lower()
+    return value not in ("", "0", "false", "no")
+
+
+def print_dashboard_banner(csv_directory: str) -> None:
+    """
+    Prints the compact `prowler dashboard` header: identity, version and the
+    directory the CSV files are loaded from. The server URL is announced
+    separately once the server is listening.
+
+    Parameters:
+    - csv_directory (str): the directory the dashboard reads CSV files from.
+
+    Returns:
+    - None
+    """
+    print(
+        f"{Style.BRIGHT}Prowler Local Dashboard \u00b7 v{prowler_version}{Style.RESET_ALL}\n"
+        f"Loading CSV files from: {csv_directory}\n"
+    )
+
+
+def print_dashboard_promotion() -> None:
+    """
+    Prints the single compact Prowler Cloud hand-off block for `prowler dashboard`.
+    Skipped when ``PROWLER_NO_PROMOTIONS`` is set. Plain text fits 80 columns and
+    the full URL stays on its own line so it can be copied; terminals with OSC 8
+    support also get a clickable CTA.
+
+    Returns:
+    - None
+    """
+    if promotions_disabled():
+        return
+    cta = _hyperlink(DASHBOARD_CTA_URL, "Explore Prowler Cloud")
+    print(
+        f"{Style.BRIGHT}Keep scanning locally. Bring your findings to Prowler Cloud."
+        f"{Style.RESET_ALL}\n"
+        "Import your accompanying OCSF report to explore managed security\n"
+        "workflows.\n"
+        f"{banner_color}{cta}:{Style.RESET_ALL}\n"
+        f"{DASHBOARD_CTA_URL}\n"
+        "Nothing is uploaded automatically.\n"
+    )
