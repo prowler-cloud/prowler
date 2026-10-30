@@ -439,6 +439,6 @@ for _feature in CLOUD_FEATURES:
         f"cloud_{_feature['slug'].replace('-', '_')}",
         path=_feature["route"],
         name=_feature["nav_label"],
-        title=f"Prowler Dashboard - {_feature['page_title']}",
+        title=f"Prowler Local Dashboard - {_feature['page_title']}",
         layout=build_cloud_layout(_feature),
     )

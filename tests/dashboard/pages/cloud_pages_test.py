@@ -267,3 +267,12 @@ class TestMcpPage:
 
         icon = Path("dashboard") / self.feature["icon"].lstrip("/")
         assert icon.is_file()
+
+
+class TestPageTitles:
+    def test_cloud_pages_are_titled_prowler_local_dashboard(self):
+        import dash
+
+        for feature in CLOUD_FEATURES:
+            page = dash.page_registry[f"cloud_{feature['slug'].replace('-', '_')}"]
+            assert page["title"] == f"Prowler Local Dashboard - {feature['page_title']}"

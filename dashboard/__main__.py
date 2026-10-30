@@ -30,7 +30,7 @@ dashboard = dash.Dash(
     external_stylesheets=[dbc.themes.FLATLY],
     use_pages=True,
     suppress_callback_exceptions=True,
-    title="Prowler Dashboard",
+    title="Prowler Local Dashboard",
 )
 
 # ``use_pages`` above already imported dashboard/pages/cloud.py and registered
