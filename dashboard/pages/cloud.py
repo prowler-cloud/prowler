@@ -34,6 +34,31 @@ FINDINGS_HANDOFF_CTA_URL = (
     "&utm_campaign=report-handoff&utm_content=findings&intent=import-findings"
 )
 
+# Same hand-off for the Compliance page; only ``utm_content`` differs.
+COMPLIANCE_HANDOFF_CTA_URL = (
+    "https://cloud.prowler.com/sign-up"
+    "?utm_source=prowler-local-dashboard&utm_medium=oss"
+    "&utm_campaign=report-handoff&utm_content=compliance&intent=import-findings"
+)
+
+# Shared hand-off copy (identical to the OSS HTML report CTA).
+HANDOFF_TITLE = "Keep scanning locally. Bring your findings to Prowler Cloud."
+HANDOFF_DESCRIPTION = (
+    "Import your accompanying OCSF report to explore managed security workflows."
+)
+HANDOFF_CTA_LABEL = "Explore Prowler Cloud"
+HANDOFF_SECONDARY_LABEL = "Compare editions"
+HANDOFF_NOTE = "Nothing is uploaded automatically."
+
+# What Prowler Cloud adds on top of the local compliance view, as documented in
+# the Compliance, Cross-Provider Compliance and Cross-Provider Type Compliance
+# tutorials. Keep these verifiable; do not add unreleased capabilities.
+COMPLIANCE_HANDOFF_BENEFITS = [
+    "Compliance Watchlist to pin the frameworks you track",
+    "Cross-account and cross-provider roll-ups of a framework, with a per-provider breakdown",
+    "Downloadable CSV and PDF compliance reports",
+]
+
 
 # Normative feature definitions. ``icon`` points to a local mask asset so no
 # external requests are needed and the glyph recolors per context.
@@ -208,6 +233,53 @@ def _benefit_item(text):
             html.Span(text),
         ],
         className="pc-benefit",
+    )
+
+
+def _handoff_links(cta_url):
+    """Return the primary CTA and the "Compare editions" link for a hand-off."""
+    return html.Div(
+        [
+            html.A(
+                HANDOFF_CTA_LABEL,
+                href=cta_url,
+                target="_blank",
+                rel="noopener noreferrer",
+                className="pc-cta",
+            ),
+            html.A(
+                HANDOFF_SECONDARY_LABEL,
+                href=CLOUD_PRICING_URL,
+                target="_blank",
+                rel="noopener noreferrer",
+                className="pc-link-secondary",
+            ),
+        ],
+        className="pc-cta-row",
+    )
+
+
+def build_compliance_handoff_card():
+    """Build the compact hand-off card shown at the end of the Compliance page.
+
+    The local compliance view keeps working from CSV; this card only explains
+    what Prowler Cloud adds for compliance reporting. Static links only: no
+    upload control, no request, no assessment data in URLs.
+    """
+    return html.Div(
+        [
+            html.Div("Available in Prowler Cloud", className="pc-avail"),
+            html.H2(HANDOFF_TITLE, className="pc-handoff-title"),
+            html.P(HANDOFF_DESCRIPTION, className="pc-card-desc pc-handoff-desc"),
+            html.Ul(
+                [_benefit_item(benefit) for benefit in COMPLIANCE_HANDOFF_BENEFITS],
+                className="pc-benefits pc-handoff-benefits",
+            ),
+            _handoff_links(COMPLIANCE_HANDOFF_CTA_URL),
+            html.P(HANDOFF_NOTE, className="pc-note"),
+        ],
+        className="pc-handoff pc-font",
+        role="complementary",
     )
 
 

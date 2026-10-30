@@ -34,7 +34,8 @@ def _links(component):
             yield node
         children = getattr(node, "children", None)
         if isinstance(children, (list, tuple)):
-            stack.extend(children)
+            # Reverse so the stack yields children in document order
+            stack.extend(reversed(children))
         elif children is not None and hasattr(children, "to_plotly_json"):
             stack.append(children)
 
@@ -158,3 +159,77 @@ class TestOtherCloudPagesUnchanged:
     def test_navigation_label_unchanged(self):
         assert CLOUD_FEATURES_BY_SLUG["findings"]["nav_label"] == "Findings"
         assert CLOUD_FEATURES_BY_SLUG["findings"]["route"] == "/cloud/findings"
+
+
+class TestComplianceHandoffCard:
+    def setup_method(self):
+        from dashboard.pages.cloud import (
+            COMPLIANCE_HANDOFF_CTA_URL,
+            build_compliance_handoff_card,
+        )
+
+        self.expected_url = COMPLIANCE_HANDOFF_CTA_URL
+        self.card = build_compliance_handoff_card()
+        self.text = _serialize(self.card)
+
+    def test_shared_message_and_note(self):
+        assert (
+            "Keep scanning locally. Bring your findings to Prowler Cloud." in self.text
+        )
+        assert (
+            "Import your accompanying OCSF report to explore managed security workflows."
+            in self.text
+        )
+        assert "Nothing is uploaded automatically." in self.text
+        assert "Unlock" not in self.text
+
+    def test_compliance_benefits_are_the_documented_ones(self):
+        assert "Compliance Watchlist" in self.text
+        assert "Cross-account and cross-provider roll-ups" in self.text
+        assert "CSV and PDF compliance reports" in self.text
+        assert "attack path" not in self.text.lower()
+        assert "trial" not in self.text.lower()
+
+    def test_links(self):
+        links = list(_links(self.card))
+        assert [a.children for a in links] == [
+            "Explore Prowler Cloud",
+            "Compare editions",
+        ]
+        cta, pricing = links
+        assert (
+            cta.href
+            == self.expected_url
+            == (
+                "https://cloud.prowler.com/sign-up?utm_source=prowler-local-dashboard"
+                "&utm_medium=oss&utm_campaign=report-handoff&utm_content=compliance"
+                "&intent=import-findings"
+            )
+        )
+        assert pricing.href == "https://prowler.com/pricing"
+        for link in links:
+            assert link.target == "_blank"
+            assert link.rel == "noopener noreferrer"
+
+    def test_no_upload_controls(self):
+        assert "Upload" not in self.text
+        assert '"type": "Input"' not in self.text
+
+
+class TestComplianceLayoutIncludesHandoff:
+    def test_card_is_last_element_and_header_link_kept(self):
+        from dash import html
+
+        from dashboard.lib.layouts import create_layout_compliance
+
+        layout = create_layout_compliance(
+            html.Div(id="a"), html.Div(id="d"), html.Div(id="r"), html.Div(id="c")
+        )
+        last = layout.children[-1]
+        assert "pc-handoff" in last.className
+        text = _serialize(layout)
+        assert text.count("Keep scanning locally.") == 1
+        # Existing header link and compliance containers are untouched
+        assert "Subscribe to Prowler Cloud" in text
+        assert '"id": "output"' in text
+        assert '"id": "overall_status_result_graph"' in text

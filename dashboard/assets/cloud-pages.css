@@ -419,6 +419,42 @@
   margin: 14px 0 0;
 }
 
+/* Compact hand-off card used at the end of the Compliance page. */
+.pc-handoff {
+  min-width: 0;
+  background: #ffffff;
+  border: 1px solid var(--pc-border);
+  border-radius: 14px;
+  padding: 24px 28px;
+}
+
+.pc-handoff .pc-avail {
+  margin-bottom: 6px;
+}
+
+.pc-handoff-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--pc-text);
+  margin: 0 0 8px;
+}
+
+.pc-handoff-desc {
+  margin-bottom: 14px;
+}
+
+.pc-handoff-benefits {
+  margin-bottom: 18px;
+}
+
+.pc-handoff .pc-cta-row {
+  justify-content: flex-start;
+}
+
+.pc-handoff .pc-note {
+  margin-top: 12px;
+}
+
 /* --------------------------------------------------- Responsive collapse */
 
 @media (max-width: 900px) {
