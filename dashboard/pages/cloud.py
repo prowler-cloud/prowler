@@ -82,6 +82,32 @@ CLOUD_FEATURES = [
         "icon": "/assets/images/icons/cloud/lighthouse-ai.svg",
     },
     {
+        # Capabilities below mirror the Prowler MCP documentation (Overview and
+        # Cloud MCP Server configuration). The hosted server is in preview.
+        "slug": "mcp",
+        "route": "/cloud/mcp",
+        "nav_label": "MCP Server",
+        "page_title": "Prowler MCP",
+        "card_title": "Unlock Prowler MCP",
+        "description": (
+            "Connect your AI assistant to Prowler through the hosted MCP Server "
+            "at mcp.prowler.com, with no installation, using a Prowler Cloud "
+            "API key."
+        ),
+        "benefits": [
+            "Ask about findings, resources and compliance in natural language from Claude Code, Cursor, VS Code or Codex",
+            "Trigger scans and manage providers, mute rules and integrations from your AI agent",
+            "Cloud-only tools for findings triage, scan scheduling, scan configurations and alerts",
+        ],
+        "utm_content": "mcp",
+        "icon": "/assets/images/icons/cloud/mcp.svg",
+        "secondary_link": {
+            "label": "Connect your AI agent",
+            "href": "https://docs.prowler.com/user-guide/ai-agents/",
+        },
+        "note": "Prowler MCP Server is currently a preview feature.",
+    },
+    {
         "slug": "attack-paths",
         "route": "/cloud/attack-paths",
         "nav_label": "Attack Paths",

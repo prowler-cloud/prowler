@@ -136,7 +136,7 @@ class TestFindingsHandoffPage:
 class TestOtherCloudPagesUnchanged:
     @pytest.mark.parametrize(
         "slug",
-        [f["slug"] for f in CLOUD_FEATURES if f["slug"] != "findings"],
+        [f["slug"] for f in CLOUD_FEATURES if f["slug"] not in ("findings", "mcp")],
     )
     def test_other_pages_keep_upsell_template(self, slug):
         feature = CLOUD_FEATURES_BY_SLUG[slug]
@@ -233,3 +233,37 @@ class TestComplianceLayoutIncludesHandoff:
         assert "Subscribe to Prowler Cloud" in text
         assert '"id": "output"' in text
         assert '"id": "overall_status_result_graph"' in text
+
+
+class TestMcpPage:
+    def setup_method(self):
+        self.feature = CLOUD_FEATURES_BY_SLUG["mcp"]
+        self.layout = build_cloud_layout(self.feature)
+        self.text = _serialize(self.layout)
+
+    def test_copy_and_template(self):
+        assert self.feature["nav_label"] == "MCP Server"
+        assert self.feature["route"] == "/cloud/mcp"
+        assert "Unlock Prowler MCP" in self.text
+        assert "mcp.prowler.com" in self.text
+        assert "Prowler MCP Server is currently a preview feature." in self.text
+        assert len(self.feature["benefits"]) == 3
+        assert "How to bring your results" not in self.text
+
+    def test_links(self):
+        links = list(_links(self.layout))
+        assert [a.children for a in links] == [
+            "Upgrade to Prowler Cloud",
+            "Connect your AI agent",
+        ]
+        assert links[0].href == f"{CLOUD_CTA_BASE}mcp"
+        assert links[1].href == "https://docs.prowler.com/user-guide/ai-agents/"
+        for link in links:
+            assert link.target == "_blank"
+            assert link.rel == "noopener noreferrer"
+
+    def test_icon_asset_exists(self):
+        from pathlib import Path
+
+        icon = Path("dashboard") / self.feature["icon"].lstrip("/")
+        assert icon.is_file()

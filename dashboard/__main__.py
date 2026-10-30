@@ -70,7 +70,10 @@ DASHBOARD_ITEMS = [
 # Gated navigation groups reference the shared feature metadata by slug so the
 # sidebar and the informational pages never drift apart.
 GATED_GROUPS = [
-    ("Upgrade to Prowler Cloud", ["lighthouse-ai", "attack-paths", "findings"]),
+    (
+        "Upgrade to Prowler Cloud",
+        ["lighthouse-ai", "mcp", "attack-paths", "findings"],
+    ),
     ("Configuration", ["alerts", "mutelist", "integrations"]),
     ("Workspace", ["organization"]),
 ]
