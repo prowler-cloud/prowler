@@ -20,6 +20,18 @@ from prowler.providers.common.provider import Provider
 
 _SAFE_URL_SCHEMES = {"http", "https"}
 
+# Prowler Cloud hand-off block. Only the OSS CLI opts in (see `show_cloud_cta`),
+# so Prowler Cloud and Private Cloud reports never contain it. These URLs are
+# static: no assessment data is ever appended to them.
+PROWLER_CLOUD_CTA_URL = (
+    "https://cloud.prowler.com/sign-up"
+    "?utm_source=prowler-html-report&utm_medium=oss&utm_campaign=report-handoff"
+)
+PROWLER_CLOUD_PRICING_URL = "https://prowler.com/pricing"
+PROWLER_CLOUD_IMPORT_DOCS_URL = (
+    "https://docs.prowler.com/user-guide/tutorials/prowler-import-findings"
+)
+
 
 def _safe_url(url: str) -> str:
     """Return url if its scheme is http/https, otherwise return empty string."""
@@ -47,6 +59,57 @@ def _strip_unsafe_links(html_content: str) -> str:
 
 
 class HTML(Output):
+    def __init__(
+        self,
+        findings: list[Finding],
+        file_path: str = None,
+        file_extension: str = "",
+        from_cli: bool = True,
+        show_cloud_cta: bool = False,
+    ) -> None:
+        """
+        Initializes the HTML output.
+
+        Args:
+            findings (list[Finding]): findings to transform
+            file_path (str): path of the output file
+            file_extension (str): extension of the output file
+            from_cli (bool): whether the output is written in one go (CLI) or in batches (API)
+            show_cloud_cta (bool): whether to render the Prowler Cloud hand-off block after the
+                assessment summary. Disabled by default; only the OSS CLI enables it.
+        """
+        self._show_cloud_cta = show_cloud_cta
+        super().__init__(
+            findings,
+            file_path=file_path,
+            file_extension=file_extension,
+            from_cli=from_cli,
+        )
+
+    @staticmethod
+    def get_cloud_cta() -> str:
+        """
+        Returns the Prowler Cloud hand-off block shown after the assessment summary in OSS CLI
+        reports. It is static markup: no scripts, no requests, and no assessment data in URLs.
+
+        Returns:
+            str: HTML markup of the block
+        """
+        return f"""
+        <div class="row mt-3 prowler-cloud-cta" role="complementary" aria-labelledby="prowler-cloud-cta-title">
+        <div class="col-md-12">
+            <div class="card">
+            <div class="card-body">
+                <h5 class="card-title" id="prowler-cloud-cta-title">Keep scanning locally. Bring your findings to Prowler Cloud.</h5>
+                <p class="card-text">Import your accompanying OCSF report to explore managed security workflows. <a href="{PROWLER_CLOUD_IMPORT_DOCS_URL}" target="_blank" rel="noopener noreferrer">How to import findings</a></p>
+                <a class="btn btn-primary" href="{PROWLER_CLOUD_CTA_URL}" target="_blank" rel="noopener noreferrer">Explore Prowler Cloud</a>
+                <a class="btn btn-link" href="{PROWLER_CLOUD_PRICING_URL}" target="_blank" rel="noopener noreferrer">Compare editions</a>
+                <p class="card-text text-muted mt-2 mb-0"><small>Nothing is uploaded automatically.</small></p>
+            </div>
+            </div>
+        </div>
+        </div>"""
+
     @staticmethod
     def process_markdown(text: str) -> str:
         """
@@ -142,7 +205,11 @@ class HTML(Output):
             ):
                 if self._file_descriptor.tell() == 0:
                     HTML.write_header(
-                        self._file_descriptor, provider, stats, self._from_cli
+                        self._file_descriptor,
+                        provider,
+                        stats,
+                        self._from_cli,
+                        show_cloud_cta=getattr(self, "_show_cloud_cta", False),
                     )
                 for finding in self._data:
                     self._file_descriptor.write(finding)
@@ -160,6 +227,7 @@ class HTML(Output):
         provider: Provider,
         stats: dict,
         from_cli: bool = True,
+        show_cloud_cta: bool = False,
     ) -> None:
         """
         Writes the header of the HTML file.
@@ -169,8 +237,17 @@ class HTML(Output):
             provider (Provider): the provider object
             stats (dict): the statistics of the findings
             from_cli (bool): whether the request is from the CLI or not
+            show_cloud_cta (bool): whether to include the Prowler Cloud hand-off block. When
+                False the block, its styles and its URLs are omitted entirely.
         """
         try:
+            cloud_cta_style = (
+                """
+        @media print { .prowler-cloud-cta { display: none !important; } }"""
+                if show_cloud_cta
+                else ""
+            )
+            cloud_cta = HTML.get_cloud_cta() if show_cloud_cta else ""
             file_descriptor.write(f"""<!DOCTYPE html>
     <html lang="en">
     <head>
@@ -199,7 +276,7 @@ class HTML(Output):
 
         .container-fluid {{font-size: 14px;}}
 
-        .float-left {{ float: left !important; max-width: 100%; }}
+        .float-left {{ float: left !important; max-width: 100%; }}{cloud_cta_style}
     </style>
     <title>Prowler - The Handy Cloud Security Tool</title>
     </head>
@@ -259,7 +336,7 @@ class HTML(Output):
                 </ul>
             </div>
         </div>
-        </div>
+        </div>{cloud_cta}
         </div>
         <div class="row-mt-3">
         <div class="col-md-12">
