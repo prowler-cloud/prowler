@@ -418,6 +418,33 @@ describe("IssuePanel", () => {
     },
   );
 
+  it("keeps the rows on screen while the background refresh is pending", async () => {
+    // Given: the refresh after closing the finding never answers
+    getIssue
+      .mockResolvedValueOnce(detailWith(["bucket"], ["f-1"]))
+      .mockReturnValueOnce(new Promise(() => {}));
+    getIssueFindings.mockResolvedValueOnce([finding]);
+    getFindingById.mockResolvedValue({
+      data: { id: "finding-1", attributes: {}, relationships: {} },
+    });
+    renderPanel();
+    await openTab("Findings");
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Bucket is public" }),
+    );
+    await screen.findByText("Detail of finding-1");
+
+    // When
+    await userEvent.click(screen.getByText("Issue details"));
+    await waitFor(() => expect(getIssue).toHaveBeenCalledTimes(2));
+
+    // Then: the loaded rows stay, with no loading state in their place
+    expect(
+      screen.getByRole("button", { name: "Bucket is public" }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Loading issue details…")).toBeNull();
+  });
+
   it("applies refreshed resources even when the refreshed findings fail", async () => {
     // Given: the refresh brings a new resource but loses the findings
     getIssue
