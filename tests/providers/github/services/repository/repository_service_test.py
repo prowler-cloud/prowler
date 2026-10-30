@@ -567,6 +567,41 @@ class Test_Repository_BranchProtectionRulesets:
             "rules": rules,
         }
 
+    def test_process_repository_secret_scanning_push_protection_enabled(self):
+        repo = self._build_repo(branch_protected=False)
+        repo.security_and_analysis = MagicMock(
+            secret_scanning=MagicMock(status="enabled"),
+            secret_scanning_push_protection=MagicMock(status="enabled"),
+        )
+        repos = {}
+
+        self.repository_service._process_repository(repo, repos)
+
+        assert repos[1].secret_scanning_enabled is True
+        assert repos[1].secret_scanning_push_protection_enabled is True
+
+    def test_process_repository_secret_scanning_push_protection_disabled(self):
+        repo = self._build_repo(branch_protected=False)
+        repo.security_and_analysis = MagicMock(
+            secret_scanning=MagicMock(status="enabled"),
+            secret_scanning_push_protection=MagicMock(status="disabled"),
+        )
+        repos = {}
+
+        self.repository_service._process_repository(repo, repos)
+
+        assert repos[1].secret_scanning_enabled is True
+        assert repos[1].secret_scanning_push_protection_enabled is False
+
+    def test_process_repository_without_security_settings(self):
+        repo = self._build_repo(branch_protected=False)
+        repos = {}
+
+        self.repository_service._process_repository(repo, repos)
+
+        assert repos[1].secret_scanning_enabled is False
+        assert repos[1].secret_scanning_push_protection_enabled is False
+
     def test_process_repository_uses_classic_branch_protection(self):
         repo = self._build_repo(branch_protected=True, dismiss_stale_reviews=True)
         repos = {}
