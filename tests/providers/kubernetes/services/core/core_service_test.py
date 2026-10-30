@@ -69,6 +69,7 @@ def test_pod_model_preserves_core_service_container_groups():
 
 
 def _make_pod(name, namespace, uid):
+    """Build a minimal V1Pod for Core service tests."""
     return client.V1Pod(
         metadata=client.V1ObjectMeta(name=name, namespace=namespace, uid=uid),
         spec=client.V1PodSpec(
@@ -81,6 +82,7 @@ def _make_pod(name, namespace, uid):
 
 
 def _build_core(namespaces, list_side_effect):
+    """Instantiate Core without running __init__, with a mocked API client."""
     core = Core.__new__(Core)
     core.namespaces = namespaces
     core.pods = {}
@@ -90,6 +92,7 @@ def _build_core(namespaces, list_side_effect):
 
 
 def _pod_list_for(namespace):
+    """Return a one-pod V1PodList for the given namespace."""
     return client.V1PodList(
         items=[_make_pod(f"pod-{namespace}", namespace, f"uid-{namespace}")]
     )
@@ -139,6 +142,19 @@ def test_get_pods_first_namespace_error_does_not_skip_the_rest():
     core._get_pods()
 
     assert set(core.pods) == {"uid-default"}
+
+
+def test_get_pods_conversion_error_does_not_skip_the_rest():
+    """A pod conversion failure in the first namespace does not skip the
+    remaining ones."""
+    core = _build_core(["default", "kube-system"], lambda ns: _pod_list_for(ns))
+
+    with patch.object(
+        Core, "_build_volumes", side_effect=[RuntimeError("invalid volume"), []]
+    ):
+        core._get_pods()
+
+    assert set(core.pods) == {"uid-kube-system"}
 
 
 def test_get_pods_logs_namespace_on_error():
