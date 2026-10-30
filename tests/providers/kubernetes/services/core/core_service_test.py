@@ -96,6 +96,7 @@ def _pod_list_for(namespace):
 
 
 def test_get_pods_lists_every_namespace():
+    """Pods from every namespace are listed and stored."""
     core = _build_core(["default", "kube-system"], lambda ns: _pod_list_for(ns))
 
     core._get_pods()
@@ -126,6 +127,8 @@ def test_get_pods_continues_after_namespace_error():
 
 
 def test_get_pods_first_namespace_error_does_not_skip_the_rest():
+    """A failure in the first namespace does not skip the remaining ones."""
+
     def list_namespaced_pod(namespace):
         if namespace == "forbidden":
             raise ApiException(status=403, reason="Forbidden")
@@ -139,6 +142,8 @@ def test_get_pods_first_namespace_error_does_not_skip_the_rest():
 
 
 def test_get_pods_logs_namespace_on_error():
+    """The error log identifies the failing namespace and exception class."""
+
     def list_namespaced_pod(namespace):
         raise ApiException(status=403, reason="Forbidden")
 
@@ -165,6 +170,13 @@ def test_get_pods_all_namespaces_fail():
 
     core = _build_core(["default", "kube-system"], list_namespaced_pod)
 
-    core._get_pods()
+    with patch(
+        "prowler.providers.kubernetes.services.core.core_service.logger"
+    ) as mock_logger:
+        core._get_pods()
 
     assert core.pods == {}
+    assert mock_logger.error.call_count == 2
+    messages = [call.args[0] for call in mock_logger.error.call_args_list]
+    assert "default" in messages[0]
+    assert "kube-system" in messages[1]
