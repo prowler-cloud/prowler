@@ -300,6 +300,18 @@
   margin: 0 0 26px;
 }
 
+/* Prowler Cloud screenshot shown on each gated page. */
+.pc-shot {
+  display: block;
+  width: 100%;
+  max-width: 760px;
+  height: auto;
+  border: 1px solid var(--pc-border);
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(2, 6, 23, 0.08);
+  margin: 0 0 28px;
+}
+
 .pc-benefits {
   list-style: none;
   padding: 0;

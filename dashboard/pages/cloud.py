@@ -21,6 +21,10 @@ CLOUD_CTA_BASE = (
 # Path to the recolorable checkmark mask used for benefit bullets.
 CHECK_ICON = "/assets/images/icons/cloud/check.svg"
 
+# Prowler Cloud screenshots shown on each gated page. They come from the
+# product documentation (docs/images) and are downscaled for the dashboard.
+SCREENSHOT_DIR = "/assets/images/cloud/screenshots"
+
 # Prowler Cloud pricing page used by the "Compare editions" secondary link.
 CLOUD_PRICING_URL = "https://prowler.com/pricing"
 
@@ -65,6 +69,10 @@ COMPLIANCE_HANDOFF_BENEFITS = [
 CLOUD_FEATURES = [
     {
         "slug": "lighthouse-ai",
+        "screenshot": {
+            "file": "lighthouse-ai.jpg",
+            "alt": "Lighthouse AI chat in Prowler Cloud",
+        },
         "route": "/cloud/lighthouse-ai",
         "nav_label": "Lighthouse AI",
         "page_title": "Lighthouse AI",
@@ -82,9 +90,35 @@ CLOUD_FEATURES = [
         "icon": "/assets/images/icons/cloud/lighthouse-ai.svg",
     },
     {
+        # Wording mirrors the Prowler Cloud issues model: an issue folds the
+        # findings of one attack path and carries a verdict, legs and a fix.
+        "slug": "exploitable-issues",
+        "route": "/cloud/exploitable-issues",
+        "nav_label": "Exploitable Issues",
+        "page_title": "Exploitable Issues",
+        "card_title": "Unlock Exploitable Issues",
+        "description": (
+            "See which findings combine into an exploitable attack path, from "
+            "where a threat actor starts to what they would gain, so the toxic "
+            "combinations get fixed first."
+        ),
+        "benefits": [
+            "Each issue folds the related findings of one attack path into a single verdict: exploitable, likely, conditional or not exploitable",
+            "Reachability, access, target, controls and verification are assessed separately, with the evidence behind each",
+            "Outcome and starting point are spelled out, from the internet to a leaked credential, together with the fix and a triage status",
+        ],
+        "utm_content": "exploitable-issues",
+        "icon": "/assets/images/icons/cloud/exploitable-issues.svg",
+        "note": "Exploitable Issues is rolling out to Prowler Cloud tenants.",
+    },
+    {
         # Capabilities below mirror the Prowler MCP documentation (Overview and
         # Cloud MCP Server configuration). The hosted server is in preview.
         "slug": "mcp",
+        "screenshot": {
+            "file": "mcp.jpg",
+            "alt": "Claude Code querying Prowler through the Prowler MCP Server",
+        },
         "route": "/cloud/mcp",
         "nav_label": "MCP Server",
         "page_title": "Prowler MCP",
@@ -109,6 +143,10 @@ CLOUD_FEATURES = [
     },
     {
         "slug": "attack-paths",
+        "screenshot": {
+            "file": "attack-paths.jpg",
+            "alt": "Attack path graph in Prowler Cloud",
+        },
         "route": "/cloud/attack-paths",
         "nav_label": "Attack Paths",
         "page_title": "Attack Paths",
@@ -130,6 +168,10 @@ CLOUD_FEATURES = [
         # showing findings from CSV, and this page explains how to bring the
         # OCSF report to Prowler Cloud. Copy is shared with the OSS HTML report.
         "slug": "findings",
+        "screenshot": {
+            "file": "findings.jpg",
+            "alt": "Findings table with triage in Prowler Cloud",
+        },
         "route": "/cloud/findings",
         "nav_label": "Findings",
         "page_title": "Findings",
@@ -165,6 +207,10 @@ CLOUD_FEATURES = [
     },
     {
         "slug": "alerts",
+        "screenshot": {
+            "file": "alerts.jpg",
+            "alt": "Alert rules list in Prowler Cloud",
+        },
         "route": "/cloud/alerts",
         "nav_label": "Alerts",
         "page_title": "Alerts",
@@ -183,6 +229,10 @@ CLOUD_FEATURES = [
     },
     {
         "slug": "mutelist",
+        "screenshot": {
+            "file": "mutelist.jpg",
+            "alt": "Mutelist configuration in Prowler Cloud",
+        },
         "route": "/cloud/mutelist",
         "nav_label": "Mutelist",
         "page_title": "Mutelist",
@@ -201,6 +251,10 @@ CLOUD_FEATURES = [
     },
     {
         "slug": "integrations",
+        "screenshot": {
+            "file": "integrations.jpg",
+            "alt": "Integrations page in Prowler Cloud",
+        },
         "route": "/cloud/integrations",
         "nav_label": "Integrations",
         "page_title": "Integrations",
@@ -219,6 +273,10 @@ CLOUD_FEATURES = [
     },
     {
         "slug": "organization",
+        "screenshot": {
+            "file": "organization.jpg",
+            "alt": "Organization users page in Prowler Cloud",
+        },
         "route": "/cloud/organization",
         "nav_label": "Organization",
         "page_title": "Organization",
@@ -309,6 +367,15 @@ def build_compliance_handoff_card():
     )
 
 
+def _screenshot(screenshot):
+    """Render the Prowler Cloud screenshot that shows the gated feature."""
+    return html.Img(
+        src=f"{SCREENSHOT_DIR}/{screenshot['file']}",
+        alt=screenshot["alt"],
+        className="pc-shot",
+    )
+
+
 def _steps_block(steps):
     """Build the optional secondary "how to" block rendered below the message.
 
@@ -332,12 +399,13 @@ def build_cloud_layout(feature):
     """Build the reusable gated informational page for a single feature.
 
     Features may override the CTA (``cta_label``/``cta_url``) and add an
-    optional ``steps`` block, ``secondary_link`` and ``note``. Features that
-    do not set them render exactly as before.
+    optional ``screenshot``, ``steps`` block, ``secondary_link`` and ``note``.
+    Features that do not set them render exactly as before.
     """
     cta_url = feature.get("cta_url") or f"{CLOUD_CTA_BASE}{feature['utm_content']}"
     cta_label = feature.get("cta_label", "Upgrade to Prowler Cloud")
     steps = feature.get("steps")
+    screenshot = feature.get("screenshot")
     secondary_link = feature.get("secondary_link")
     note = feature.get("note")
 
@@ -406,6 +474,7 @@ def build_cloud_layout(feature):
                                     feature["description"],
                                     className="pc-card-desc",
                                 ),
+                                *([_screenshot(screenshot)] if screenshot else []),
                                 html.Ul(
                                     [
                                         _benefit_item(benefit)
