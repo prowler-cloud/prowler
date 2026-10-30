@@ -155,6 +155,7 @@ def test_get_pods_conversion_error_does_not_skip_the_rest():
         core._get_pods()
 
     assert set(core.pods) == {"uid-kube-system"}
+    assert core.failed_namespaces == ["default"]
 
 
 def test_get_pods_logs_namespace_on_error():
@@ -264,5 +265,19 @@ def test_get_pods_no_failures_no_warning():
     ) as mock_logger:
         core._get_pods()
 
+    assert core.failed_namespaces == []
+    mock_logger.warning.assert_not_called()
+
+
+def test_get_pods_empty_namespace_is_not_a_failure():
+    """A namespace with no pods records no failure and logs no warning."""
+    core = _build_core(["default"], lambda ns: client.V1PodList(items=[]))
+
+    with patch(
+        "prowler.providers.kubernetes.services.core.core_service.logger"
+    ) as mock_logger:
+        core._get_pods()
+
+    assert core.pods == {}
     assert core.failed_namespaces == []
     mock_logger.warning.assert_not_called()
