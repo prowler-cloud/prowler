@@ -8,6 +8,7 @@ describe("FEATURE_FLAG", () => {
       ISSUES: "issues-feature",
       BILLING_SYSTEM_METRONOME: "BILLING_SYSTEM_METRONOME",
       FINDINGS_TRIAL_PREVIEW: "findings-trial-preview",
+      SAMPLE_DATA_PREVIEW: "sample-data-preview",
     });
   });
 
