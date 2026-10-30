@@ -132,8 +132,9 @@ def print_dashboard_promotion() -> None:
     """
     Prints the single compact Prowler Cloud hand-off block for `prowler dashboard`,
     styled like the CLI's Prowler Cloud banner (bar, bold title, check and 👉 link).
-    Skipped when ``PROWLER_NO_PROMOTIONS`` is set. The full URL is also printed as
-    plain text so it can be copied from terminals without OSC 8 support.
+    Skipped when ``PROWLER_NO_PROMOTIONS`` is set. The link shows ``cloud.prowler.com``
+    like the CLI banner; terminals with OSC 8 support make it clickable with the
+    UTM-tagged URL, others display the plain domain.
 
     Returns:
     - None
@@ -148,7 +149,6 @@ def print_dashboard_promotion() -> None:
 {bar} Import your accompanying OCSF report to explore managed security workflows.
 {bar}
 {bar} {check} {Style.BRIGHT}Explore Prowler Cloud{Style.RESET_ALL} 👉 {banner_color}{cta}{Style.RESET_ALL}
-{bar}   {DASHBOARD_CTA_URL}
 {bar}
 {bar} Nothing is uploaded automatically.
 """)

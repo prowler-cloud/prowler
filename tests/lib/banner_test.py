@@ -50,8 +50,10 @@ class TestDashboardBanner:
         assert "Explore Prowler Cloud" in out
         assert "\u2713" in out and "\u2502" in out  # check and bar like the CLI banner
         assert "Nothing is uploaded automatically." in out
-        # Full URL on its own line as plain text, besides the OSC 8 link
-        assert f"   {DASHBOARD_CTA_URL}\n" in out
+        # The UTM-tagged URL is only the OSC 8 target; the visible text is the domain
+        assert f"\033]8;;{DASHBOARD_CTA_URL}\033\\cloud.prowler.com" in out
+        assert f"\n{DASHBOARD_CTA_URL}" not in out
+        assert out.count(DASHBOARD_CTA_URL) == 1
         assert DASHBOARD_CTA_URL == (
             "https://cloud.prowler.com/sign-up?utm_source=prowler-dashboard-terminal"
             "&utm_medium=oss&utm_campaign=report-handoff"
