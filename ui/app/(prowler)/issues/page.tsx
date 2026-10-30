@@ -27,6 +27,12 @@ export default async function Issues({
     getAllProviderGroups(),
   ]);
 
+  const providers = providersData?.data ?? [];
+  // The issue only references its provider; the uid shows in the panel.
+  const providerUids = Object.fromEntries(
+    providers.map((provider) => [provider.id, provider.attributes.uid]),
+  );
+
   return (
     <ContentLayout title="Issues" icon={<ShieldAlert />}>
       {/* Deployment gate above (notFound); per-account rollout here, also a
@@ -41,13 +47,12 @@ export default async function Issues({
         >
           <IssuesList
             searchParams={resolvedSearchParams}
+            providerUids={providerUids}
             filters={
               // The three scope selectors share one row on desktop, like the
               // other list pages.
               <div className="mb-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                <ProviderAccountSelectors
-                  providers={providersData?.data ?? []}
-                />
+                <ProviderAccountSelectors providers={providers} />
                 <ProviderGroupSelector
                   groups={providerGroupsData?.data ?? []}
                 />

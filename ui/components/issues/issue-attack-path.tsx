@@ -2,26 +2,25 @@
 
 import { IssueGraph } from "@/components/issues/issue-graph";
 import { IssuesLoadError } from "@/components/issues/issues-load-error";
-import { useIssueEvidence } from "@/hooks/use-issue-evidence";
 import { IssueAttributes } from "@/types/issues";
 
+import type { IssueEvidenceState } from "./use-issue-evidence";
+
 interface IssueAttackPathProps {
-  id: string;
   issue: IssueAttributes;
-  scanId?: string;
-  providerId?: string;
+  evidence: IssueEvidenceState;
+  onRetry: () => void;
+  onOpenFinding: (findingId: string) => void;
 }
 
-/** The issue's graph for the side panel; findings open on the full page. */
+/** The issue's graph, or why there is none to draw yet. */
 export const IssueAttackPath = ({
-  id,
   issue,
-  scanId,
-  providerId,
+  evidence,
+  onRetry,
+  onOpenFinding,
 }: IssueAttackPathProps) => {
-  const { state, retry } = useIssueEvidence(id, scanId, providerId);
-
-  if (state.status === "loading") {
+  if (evidence.status === "loading") {
     return (
       <p role="status" className="text-text-neutral-tertiary text-sm">
         Loading the attack path…
@@ -30,29 +29,29 @@ export const IssueAttackPath = ({
   }
   // Nothing to draw beats a findings error: without resources there is no
   // graph for the findings to land on.
-  if (state.status === "loaded" && state.resources.length === 0) {
+  if (evidence.status === "loaded" && evidence.resources.length === 0) {
     return (
       <p className="text-text-neutral-tertiary text-sm">
         This issue has no affected resources to draw.
       </p>
     );
   }
-  if (state.status === "error" || state.findings === undefined) {
+  if (evidence.status === "error" || evidence.findings === undefined) {
     return (
       <IssuesLoadError
         message="Could not load the attack path for this issue."
-        onRetry={retry}
+        onRetry={onRetry}
       />
     );
   }
   return (
     <IssueGraph
       issue={issue}
-      resourceUids={state.resources}
-      findings={state.findings}
-      readOnly
-      {...(state.providerId && state.scanId
-        ? { providerId: state.providerId, scanId: state.scanId }
+      resourceUids={evidence.resources}
+      findings={evidence.findings}
+      onOpenFinding={onOpenFinding}
+      {...(evidence.providerId && evidence.scanId
+        ? { providerId: evidence.providerId, scanId: evidence.scanId }
         : { providerId: undefined, scanId: undefined })}
     />
   );
