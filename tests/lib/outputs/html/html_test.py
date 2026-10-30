@@ -11,6 +11,7 @@ from prowler.lib.logger import logger
 from prowler.lib.outputs.html.html import (
     HTML,
     PROWLER_CLOUD_CTA_URL,
+    PROWLER_CLOUD_IMPORT_DOCS_URL,
     PROWLER_CLOUD_PRICING_URL,
 )
 from prowler.providers.github.models import GithubAppIdentityInfo
@@ -1538,6 +1539,7 @@ class TestHTML:
         assert PROWLER_CLOUD_CTA_URL not in content
         assert "utm_campaign=report-handoff" not in content
         assert PROWLER_CLOUD_PRICING_URL not in content
+        assert PROWLER_CLOUD_IMPORT_DOCS_URL not in content
 
     def test_write_header_omits_cloud_cta_when_from_cli_but_not_enabled(self):
         # `from_cli` alone must never turn the block on: it is a batching flag, not an
@@ -1568,6 +1570,8 @@ class TestHTML:
         assert ">Explore Prowler Cloud</a>" in content
         assert f'href="{PROWLER_CLOUD_PRICING_URL}"' in content
         assert ">Compare editions</a>" in content
+        assert f'href="{PROWLER_CLOUD_IMPORT_DOCS_URL}"' in content
+        assert ">How to import findings</a>" in content
         assert "Nothing is uploaded automatically." in content
         assert 'rel="noopener noreferrer"' in content
         assert (
@@ -1650,4 +1654,5 @@ class TestHTML:
         assert "cloud.prowler.com" not in content
         assert "utm_campaign=report-handoff" not in content
         assert PROWLER_CLOUD_PRICING_URL not in content
+        assert PROWLER_CLOUD_IMPORT_DOCS_URL not in content
         assert pass_html_finding in content

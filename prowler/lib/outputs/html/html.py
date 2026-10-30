@@ -28,6 +28,9 @@ PROWLER_CLOUD_CTA_URL = (
     "?utm_source=prowler-html-report&utm_medium=oss&utm_campaign=report-handoff"
 )
 PROWLER_CLOUD_PRICING_URL = "https://prowler.com/pricing"
+PROWLER_CLOUD_IMPORT_DOCS_URL = (
+    "https://docs.prowler.com/user-guide/tutorials/prowler-import-findings"
+)
 
 
 def _safe_url(url: str) -> str:
@@ -98,7 +101,7 @@ class HTML(Output):
             <div class="card">
             <div class="card-body">
                 <h5 class="card-title" id="prowler-cloud-cta-title">Keep scanning locally. Bring your findings to Prowler Cloud.</h5>
-                <p class="card-text">Import your accompanying OCSF report to explore managed security workflows.</p>
+                <p class="card-text">Import your accompanying OCSF report to explore managed security workflows. <a href="{PROWLER_CLOUD_IMPORT_DOCS_URL}" target="_blank" rel="noopener noreferrer">How to import findings</a></p>
                 <a class="btn btn-primary" href="{PROWLER_CLOUD_CTA_URL}" target="_blank" rel="noopener noreferrer">Explore Prowler Cloud</a>
                 <a class="btn btn-link" href="{PROWLER_CLOUD_PRICING_URL}" target="_blank" rel="noopener noreferrer">Compare editions</a>
                 <p class="card-text text-muted mt-2 mb-0"><small>Nothing is uploaded automatically.</small></p>
