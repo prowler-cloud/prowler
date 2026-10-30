@@ -31,6 +31,19 @@ def _hyperlink(url: str, text: str) -> str:
     return f"\033]8;;{url}\033\\{text}\033]8;;\033\\"
 
 
+def _logo_banner(label: str) -> str:
+    """Return the Prowler ASCII logo with ``label - v<version>`` and the date line."""
+    return rf"""{banner_color}                         _
+ _ __  _ __ _____      _| | ___ _ __
+| '_ \| '__/ _ \ \ /\ / / |/ _ \ '__|
+| |_) | | | (_) \ V  V /| |  __/ |
+| .__/|_|  \___/ \_/\_/ |_|\___|_| {label} - v{prowler_version}
+|_|
+
+{Fore.YELLOW}Date: {timestamp.strftime("%Y-%m-%d %H:%M:%S")}{Style.RESET_ALL}
+"""
+
+
 def print_banner(legend: bool = False, provider: str = None):
     """
     Prints the banner with optional legend for color codes.
@@ -42,16 +55,7 @@ def print_banner(legend: bool = False, provider: str = None):
     Returns:
     - None
     """
-    banner = rf"""{banner_color}                         _
- _ __  _ __ _____      _| | ___ _ __
-| '_ \| '__/ _ \ \ /\ / / |/ _ \ '__|
-| |_) | | | (_) \ V  V /| |  __/ |
-| .__/|_|  \___/ \_/\_/ |_|\___|_| CLI - v{prowler_version}
-|_|
-
-{Fore.YELLOW}Date: {timestamp.strftime("%Y-%m-%d %H:%M:%S")}{Style.RESET_ALL}
-"""
-    print(banner)
+    print(_logo_banner("CLI"))
 
     print_prowler_cloud_banner(provider)
 
@@ -109,9 +113,10 @@ def promotions_disabled() -> bool:
 
 def print_dashboard_banner(csv_directory: str) -> None:
     """
-    Prints the compact `prowler dashboard` header: identity, version and the
-    directory the CSV files are loaded from. The server URL is announced
-    separately once the server is listening.
+    Prints the `prowler dashboard` header: the Prowler logo labelled
+    ``Local Dashboard - v<version>``, the date and the directory the CSV
+    files are loaded from. The server URL is announced separately once the
+    server is listening.
 
     Parameters:
     - csv_directory (str): the directory the dashboard reads CSV files from.
@@ -119,31 +124,31 @@ def print_dashboard_banner(csv_directory: str) -> None:
     Returns:
     - None
     """
-    print(
-        f"{Style.BRIGHT}Prowler Local Dashboard \u00b7 v{prowler_version}{Style.RESET_ALL}\n"
-        f"Loading CSV files from: {csv_directory}\n"
-    )
+    print(_logo_banner("Local Dashboard"))
+    print(f"{Fore.GREEN}Loading CSV files from {csv_directory} ...{Style.RESET_ALL}")
 
 
 def print_dashboard_promotion() -> None:
     """
-    Prints the single compact Prowler Cloud hand-off block for `prowler dashboard`.
-    Skipped when ``PROWLER_NO_PROMOTIONS`` is set. Plain text fits 80 columns and
-    the full URL stays on its own line so it can be copied; terminals with OSC 8
-    support also get a clickable CTA.
+    Prints the single compact Prowler Cloud hand-off block for `prowler dashboard`,
+    styled like the CLI's Prowler Cloud banner (bar, bold title, check and 👉 link).
+    Skipped when ``PROWLER_NO_PROMOTIONS`` is set. The full URL is also printed as
+    plain text so it can be copied from terminals without OSC 8 support.
 
     Returns:
     - None
     """
     if promotions_disabled():
         return
-    cta = _hyperlink(DASHBOARD_CTA_URL, "Explore Prowler Cloud")
-    print(
-        f"{Style.BRIGHT}Keep scanning locally. Bring your findings to Prowler Cloud."
-        f"{Style.RESET_ALL}\n"
-        "Import your accompanying OCSF report to explore managed security\n"
-        "workflows.\n"
-        f"{banner_color}{cta}:{Style.RESET_ALL}\n"
-        f"{DASHBOARD_CTA_URL}\n"
-        "Nothing is uploaded automatically.\n"
-    )
+    bar = f"{banner_color}│{Style.RESET_ALL}"
+    check = f"{Fore.GREEN}✓{Style.RESET_ALL}"
+    cta = _hyperlink(DASHBOARD_CTA_URL, CLOUD_DISPLAY_TEXT)
+    print(f"""
+{bar} {Style.BRIGHT}Keep scanning locally. Bring your findings to Prowler Cloud.{Style.RESET_ALL}
+{bar} Import your accompanying OCSF report to explore managed security workflows.
+{bar}
+{bar} {check} {Style.BRIGHT}Explore Prowler Cloud{Style.RESET_ALL} 👉 {banner_color}{cta}{Style.RESET_ALL}
+{bar}   {DASHBOARD_CTA_URL}
+{bar}
+{bar} Nothing is uploaded automatically.
+""")

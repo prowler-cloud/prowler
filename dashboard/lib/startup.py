@@ -11,7 +11,7 @@ original method still runs and no logger is reconfigured.
 
 import socket
 
-from colorama import Style
+from colorama import Fore, Style
 from werkzeug.serving import BaseWSGIServer, get_interface_ip
 
 from prowler.config.config import banner_color
@@ -44,17 +44,19 @@ def server_urls(host, port, scheme="http"):
 
 
 def format_ready_message(host, port, scheme="http"):
-    """Render the ready block for a server that is already listening."""
+    """Render the ready block, styled like the CLI banner, for a listening server."""
     primary, others = server_urls(host, port, scheme)
+    bar = f"{banner_color}│{Style.RESET_ALL}"
+    check = f"{Fore.GREEN}✓{Style.RESET_ALL}"
     lines = [
-        f"{Style.BRIGHT}Prowler Local Dashboard is ready:{Style.RESET_ALL} "
-        f"{banner_color}{primary}{Style.RESET_ALL}"
+        f"{bar} {check} {Style.BRIGHT}Prowler Local Dashboard is ready{Style.RESET_ALL} "
+        f"👉 {banner_color}{primary}{Style.RESET_ALL}"
     ]
     if host in _WILDCARD_HOSTS:
-        lines.append(f"Listening on all interfaces ({host}).")
+        lines.append(f"{bar}   Listening on all interfaces ({host}).")
     if others:
-        lines.append("Also reachable at: " + ", ".join(others))
-    lines.append("Press Ctrl+C to stop.")
+        lines.append(f"{bar}   Also reachable at: " + ", ".join(others))
+    lines.append(f"{bar} Press Ctrl+C to stop.")
     return "\n".join(lines)
 
 

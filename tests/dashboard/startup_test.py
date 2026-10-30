@@ -40,7 +40,7 @@ class TestServerUrls:
 class TestFormatReadyMessage:
     def test_single_address(self):
         message = format_ready_message("127.0.0.1", 11666)
-        assert "Prowler Local Dashboard is ready:" in message
+        assert "Prowler Local Dashboard is ready" in message
         assert "http://127.0.0.1:11666/" in message
         assert message.endswith("Press Ctrl+C to stop.")
         assert "Also reachable" not in message

@@ -31,7 +31,7 @@ class TestDashboardBanner:
         print_dashboard_banner("/tmp/synthetic/output")
         out = capsys.readouterr().out
         assert f"Prowler Local Dashboard · v{prowler_version}" in out
-        assert "Loading CSV files from: /tmp/synthetic/output" in out
+        assert "Loading CSV files from /tmp/synthetic/output" in out
         # The long commercial banner is not part of the dashboard header
         assert "snapshot" not in out
         assert "Start free" not in out
@@ -42,11 +42,15 @@ class TestDashboardBanner:
         print_dashboard_promotion()
         out = capsys.readouterr().out
         assert "Keep scanning locally. Bring your findings to Prowler Cloud." in out
-        assert "Import your accompanying OCSF report to explore managed security" in out
+        assert (
+            "Import your accompanying OCSF report to explore managed security workflows."
+            in out
+        )
         assert "Explore Prowler Cloud" in out
+        assert "\u2713" in out and "\u2502" in out  # check and bar like the CLI banner
         assert "Nothing is uploaded automatically." in out
         # Full URL on its own line as plain text, besides the OSC 8 link
-        assert f"\n{DASHBOARD_CTA_URL}\n" in out
+        assert f"   {DASHBOARD_CTA_URL}\n" in out
         assert DASHBOARD_CTA_URL == (
             "https://cloud.prowler.com/sign-up?utm_source=prowler-dashboard-terminal"
             "&utm_medium=oss&utm_campaign=report-handoff"
