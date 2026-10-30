@@ -133,10 +133,11 @@ def get_any_address_ip_permission(ingress_rule: Any) -> dict:
     """
     Build an IpPermission that only contains the any-address sources of the given ingress rule.
 
-    The any-address sources are 0.0.0.0/0 and ::/0. When the IPv4 (or IPv6) CIDRs of the
-    rule together cover every address of that IP version without one of them, such as
-    0.0.0.0/1 and 128.0.0.0/1, the widest of those CIDRs are the any-address sources, so
-    CIDRs already contained in one of them stay.
+    The any-address sources are 0.0.0.0/0 and ::/0. While the other CIDRs of one IP
+    version still cover every address of that version together, such as 0.0.0.0/1 and
+    128.0.0.0/1, the widest of them (those not inside another one) are added too, so
+    the rule never stays open to every address. Narrower CIDRs not needed for that,
+    such as 10.0.0.0/8 next to 0.0.0.0/1 and 128.0.0.0/1, stay.
 
     Revoking the original rule would also remove the other sources that share it
     (private CIDRs, other IPv6 ranges, prefix lists and security group references).
@@ -155,21 +156,32 @@ def get_any_address_ip_permission(ingress_rule: Any) -> dict:
         ("Ipv6Ranges", "CidrIpv6", "::/0"),
     ):
         ip_ranges = ingress_rule.get(key, [])
-        any_address_ranges = [
-            ip_range for ip_range in ip_ranges if ip_range.get(cidr_key) == any_cidr
-        ]
-        if not any_address_ranges and _covers_all_addresses({key: ip_ranges}):
-            networks = [
-                ipaddress.ip_network(ip_range[cidr_key], strict=False)
-                for ip_range in ip_ranges
-            ]
-            any_address_ranges = [
-                ip_range
-                for ip_range, network in zip(ip_ranges, networks)
+        revoked = {
+            index
+            for index, ip_range in enumerate(ip_ranges)
+            if ip_range.get(cidr_key) == any_cidr
+        }
+        remaining = [index for index in range(len(ip_ranges)) if index not in revoked]
+        while remaining and _covers_all_addresses(
+            {key: [ip_ranges[index] for index in remaining]}
+        ):
+            networks = {
+                index: ipaddress.ip_network(ip_ranges[index][cidr_key], strict=False)
+                for index in remaining
+            }
+            widest = [
+                index
+                for index in remaining
                 if not any(
-                    network != other and network.subnet_of(other) for other in networks
+                    networks[index] != other and networks[index].subnet_of(other)
+                    for other in networks.values()
                 )
             ]
+            revoked.update(widest)
+            remaining = [index for index in remaining if index not in revoked]
+        any_address_ranges = [
+            ip_range for index, ip_range in enumerate(ip_ranges) if index in revoked
+        ]
         ip_permission[key] = any_address_ranges
     return ip_permission
 

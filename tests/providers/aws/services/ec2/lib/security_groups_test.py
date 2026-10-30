@@ -584,3 +584,65 @@ class Test_get_any_address_ip_permission:
             "IpRanges": [],
             "Ipv6Ranges": [],
         }
+
+    def test_any_address_and_split_halves_are_all_revoked(self):
+        ingress_rule = {
+            "IpProtocol": TRANSPORT_PROTOCOL_TCP,
+            "FromPort": 22,
+            "ToPort": 22,
+            "IpRanges": [
+                {"CidrIp": IP_V4_ALL_CIDRS},
+                {"CidrIp": "0.0.0.0/1"},
+                {"CidrIp": "128.0.0.0/1"},
+                {"CidrIp": IP_V4_PRIVATE_CIDR},
+            ],
+            "Ipv6Ranges": [],
+            "PrefixListIds": [],
+            "UserIdGroupPairs": [],
+        }
+
+        assert get_any_address_ip_permission(ingress_rule) == {
+            "IpProtocol": TRANSPORT_PROTOCOL_TCP,
+            "FromPort": 22,
+            "ToPort": 22,
+            "IpRanges": [
+                {"CidrIp": IP_V4_ALL_CIDRS},
+                {"CidrIp": "0.0.0.0/1"},
+                {"CidrIp": "128.0.0.0/1"},
+            ],
+            "Ipv6Ranges": [],
+        }
+
+    def test_nested_split_ranges_are_revoked_until_not_open(self):
+        ingress_rule = {
+            "IpProtocol": TRANSPORT_PROTOCOL_TCP,
+            "FromPort": 22,
+            "ToPort": 22,
+            "IpRanges": [
+                {"CidrIp": "0.0.0.0/1"},
+                {"CidrIp": "128.0.0.0/1"},
+                {"CidrIp": "0.0.0.0/2"},
+                {"CidrIp": "64.0.0.0/2"},
+                {"CidrIp": "128.0.0.0/2"},
+                {"CidrIp": "192.0.0.0/2"},
+                {"CidrIp": IP_V4_PRIVATE_CIDR},
+            ],
+            "Ipv6Ranges": [],
+            "PrefixListIds": [],
+            "UserIdGroupPairs": [],
+        }
+
+        assert get_any_address_ip_permission(ingress_rule) == {
+            "IpProtocol": TRANSPORT_PROTOCOL_TCP,
+            "FromPort": 22,
+            "ToPort": 22,
+            "IpRanges": [
+                {"CidrIp": "0.0.0.0/1"},
+                {"CidrIp": "128.0.0.0/1"},
+                {"CidrIp": "0.0.0.0/2"},
+                {"CidrIp": "64.0.0.0/2"},
+                {"CidrIp": "128.0.0.0/2"},
+                {"CidrIp": "192.0.0.0/2"},
+            ],
+            "Ipv6Ranges": [],
+        }
