@@ -2000,7 +2000,9 @@
     {
       "Id": "7.12",
       "Description": "Ensure the SSL policy's 'Min protocol version' is set to 'TLSv1_2' or higher on Azure Application Gateway",
-      "Checks": [],
+      "Checks": [
+        "network_application_gateway_minimum_tls_version_12"
+      ],
       "Attributes": [
         {
           "Section": "7 Networking Services",
