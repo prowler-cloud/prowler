@@ -150,7 +150,9 @@ const matchesSampleFilters = (
     const field =
       SAMPLE_FILTER_FIELDS[key as keyof typeof SAMPLE_FILTER_FIELDS];
     const actual = field?.(issue);
-    return actual !== undefined && value.split(",").includes(actual);
+    // Only `__in` filters take a list; the rest match one literal value.
+    const accepted = key.endsWith("__in]") ? value.split(",") : [value];
+    return actual !== undefined && accepted.includes(actual);
   });
 
 /** The sample summary and rows, filtered like the API would. */

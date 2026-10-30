@@ -42,7 +42,12 @@ export function resolveSamplePreviewState({
   hasProviders,
   runningScan,
 }: SamplePreviewInputs): SamplePreviewState {
-  if (!enabled || hasCompletedScan !== false || runningScan === undefined) {
+  if (
+    !enabled ||
+    hasCompletedScan !== false ||
+    hasProviders === undefined ||
+    runningScan === undefined
+  ) {
     return INACTIVE;
   }
 

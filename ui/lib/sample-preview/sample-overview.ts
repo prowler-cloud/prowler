@@ -45,16 +45,16 @@ const failedBySeverity = (checks: SampleCheck[]): Record<Severity, number> => {
   return counts;
 };
 
-// Checks of one service evaluate the same resources; services in a group don't overlap.
+// Checks of one resource type evaluate the same resources; types don't overlap.
 const resourcesCount = (checks: SampleCheck[]) => {
-  const widestByService: Record<string, number> = {};
+  const widestByType: Record<string, number> = {};
   for (const check of checks) {
-    widestByService[check.service] = Math.max(
-      widestByService[check.service] ?? 0,
+    widestByType[check.resourceType] = Math.max(
+      widestByType[check.resourceType] ?? 0,
       check.failed + check.passed,
     );
   }
-  return Object.values(widestByService).reduce((total, n) => total + n, 0);
+  return Object.values(widestByType).reduce((total, n) => total + n, 0);
 };
 
 export const SAMPLE_STATUS = {

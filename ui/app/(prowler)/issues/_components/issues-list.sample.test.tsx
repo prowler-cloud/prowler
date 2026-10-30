@@ -62,6 +62,21 @@ describe("IssuesList sample preview", () => {
     expect(
       screen.queryByText(exploitable.attributes.title),
     ).not.toBeInTheDocument();
+    // The summary is scoped too, not just the rows.
+    expect(screen.getByLabelText("All, 0 issues")).toBeInTheDocument();
+  });
+
+  it("reads a scalar verdict filter as one literal value", async () => {
+    render(
+      await IssuesList({
+        searchParams: {
+          "filter[verdict]": `${VERDICT.EXPLOITABLE},${VERDICT.NOT_EXPLOITABLE}`,
+        },
+        sample: true,
+      }),
+    );
+
+    expect(screen.getByText("No issues match this filter.")).toBeVisible();
   });
 
   it("scopes the rows by severity like the API", async () => {

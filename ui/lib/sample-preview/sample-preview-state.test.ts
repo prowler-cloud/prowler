@@ -59,6 +59,12 @@ describe("resolveSamplePreviewState", () => {
     ).toEqual({ active: false });
   });
 
+  it("shows the real page when the provider lookup failed", () => {
+    expect(
+      resolveSamplePreviewState({ ...NEW_TENANT, hasProviders: undefined }),
+    ).toEqual({ active: false });
+  });
+
   it("shows the real page when the running scan lookup failed", () => {
     expect(
       resolveSamplePreviewState({
