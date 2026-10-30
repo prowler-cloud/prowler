@@ -132,6 +132,10 @@
           "network_ssh_internet_access_restricted",
           "network_udp_internet_access_restricted",
           "network_http_internet_access_restricted"
+        ],
+        "alibabacloud": [
+          "ecs_securitygroup_restrict_rdp_internet",
+          "ecs_securitygroup_restrict_ssh_internet"
         ]
       }
     },
@@ -147,7 +151,8 @@
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
-        "azure": []
+        "azure": [],
+        "alibabacloud": []
       }
     },
     {
@@ -168,6 +173,12 @@
           "keyvault_access_only_through_private_endpoints",
           "network_rdp_internet_access_restricted",
           "network_ssh_internet_access_restricted"
+        ],
+        "alibabacloud": [
+          "oss_bucket_not_publicly_accessible",
+          "rds_instance_no_public_access_whitelist",
+          "ecs_securitygroup_restrict_rdp_internet",
+          "ecs_securitygroup_restrict_ssh_internet"
         ]
       }
     },
@@ -189,6 +200,12 @@
           "network_udp_internet_access_restricted",
           "network_http_internet_access_restricted",
           "storage_account_public_network_access_disabled"
+        ],
+        "alibabacloud": [
+          "ecs_securitygroup_restrict_rdp_internet",
+          "ecs_securitygroup_restrict_ssh_internet",
+          "oss_bucket_not_publicly_accessible",
+          "rds_instance_no_public_access_whitelist"
         ]
       }
     },
@@ -204,7 +221,8 @@
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
-        "azure": []
+        "azure": [],
+        "alibabacloud": []
       }
     },
     {
@@ -219,7 +237,8 @@
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
-        "azure": []
+        "azure": [],
+        "alibabacloud": []
       }
     },
     {
@@ -234,7 +253,8 @@
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
-        "azure": []
+        "azure": [],
+        "alibabacloud": []
       }
     },
     {
@@ -252,6 +272,9 @@
         "azure": [
           "entra_policy_guest_users_access_restrictions",
           "entra_policy_guest_invite_only_for_admin_roles"
+        ],
+        "alibabacloud": [
+          "ram_user_console_access_unused"
         ]
       }
     },
@@ -269,7 +292,8 @@
       "checks": {
         "azure": [
           "entra_security_defaults_enabled"
-        ]
+        ],
+        "alibabacloud": []
       }
     },
     {
@@ -284,7 +308,8 @@
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
-        "azure": []
+        "azure": [],
+        "alibabacloud": []
       }
     },
     {
@@ -299,7 +324,8 @@
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
-        "azure": []
+        "azure": [],
+        "alibabacloud": []
       }
     },
     {
@@ -320,6 +346,12 @@
           "storage_account_public_network_access_disabled",
           "storage_ensure_minimum_tls_version_12",
           "keyvault_rbac_enabled"
+        ],
+        "alibabacloud": [
+          "oss_bucket_secure_transport_enabled",
+          "oss_bucket_not_publicly_accessible",
+          "rds_instance_ssl_enabled",
+          "rds_instance_no_public_access_whitelist"
         ]
       }
     },
@@ -335,7 +367,8 @@
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
-        "azure": []
+        "azure": [],
+        "alibabacloud": []
       }
     },
     {
@@ -350,7 +383,8 @@
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
-        "azure": []
+        "azure": [],
+        "alibabacloud": []
       }
     },
     {
@@ -365,7 +399,8 @@
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
-        "azure": []
+        "azure": [],
+        "alibabacloud": []
       }
     },
     {
@@ -380,7 +415,8 @@
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
-        "azure": []
+        "azure": [],
+        "alibabacloud": []
       }
     },
     {
@@ -398,6 +434,10 @@
         "azure": [
           "defender_ensure_system_updates_are_applied",
           "defender_auto_provisioning_vulnerabilty_assessments_machines_on"
+        ],
+        "alibabacloud": [
+          "ecs_instance_latest_os_patches_applied",
+          "securitycenter_vulnerability_scan_enabled"
         ]
       }
     },
@@ -413,7 +453,8 @@
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
-        "azure": []
+        "azure": [],
+        "alibabacloud": []
       }
     },
     {
@@ -431,6 +472,9 @@
         "azure": [
           "entra_security_defaults_enabled",
           "storage_default_to_entra_authorization_enabled"
+        ],
+        "alibabacloud": [
+          "ram_no_root_access_key"
         ]
       }
     },
@@ -446,7 +490,8 @@
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
-        "azure": []
+        "azure": [],
+        "alibabacloud": []
       }
     },
     {
@@ -467,6 +512,9 @@
           "entra_conditional_access_policy_require_mfa_for_admin_portals",
           "entra_conditional_access_policy_require_mfa_for_management_api",
           "entra_user_with_vm_access_has_mfa"
+        ],
+        "alibabacloud": [
+          "ram_user_mfa_enabled_console_access"
         ]
       }
     },
@@ -486,6 +534,9 @@
           "entra_global_admin_in_less_than_five_users",
           "iam_role_user_access_admin_restricted",
           "iam_subscription_roles_owner_custom_not_created"
+        ],
+        "alibabacloud": [
+          "ram_policy_no_administrative_privileges"
         ]
       }
     },
@@ -504,6 +555,9 @@
         "azure": [
           "entra_global_admin_in_less_than_five_users",
           "iam_role_user_access_admin_restricted"
+        ],
+        "alibabacloud": [
+          "ram_policy_no_administrative_privileges"
         ]
       }
     },
@@ -522,6 +576,10 @@
         "azure": [
           "entra_security_defaults_enabled",
           "entra_privileged_user_has_mfa"
+        ],
+        "alibabacloud": [
+          "ram_password_policy_max_login_attempts",
+          "ram_user_mfa_enabled_console_access"
         ]
       }
     },
@@ -541,6 +599,10 @@
           "entra_security_defaults_enabled",
           "entra_privileged_user_has_mfa",
           "entra_non_privileged_user_has_mfa"
+        ],
+        "alibabacloud": [
+          "ram_password_policy_minimum_length",
+          "ram_user_mfa_enabled_console_access"
         ]
       }
     },
@@ -560,6 +622,11 @@
           "defender_assessments_vm_endpoint_protection_installed",
           "defender_ensure_wdatp_is_enabled",
           "defender_ensure_defender_for_server_is_on"
+        ],
+        "alibabacloud": [
+          "ecs_instance_endpoint_protection_installed",
+          "securitycenter_all_assets_agent_installed",
+          "securitycenter_advanced_or_enterprise_edition"
         ]
       }
     },
@@ -579,6 +646,10 @@
           "defender_ensure_wdatp_is_enabled",
           "defender_ensure_defender_for_server_is_on",
           "defender_ensure_defender_for_storage_is_on"
+        ],
+        "alibabacloud": [
+          "securitycenter_advanced_or_enterprise_edition",
+          "securitycenter_all_assets_agent_installed"
         ]
       }
     },
@@ -594,7 +665,8 @@
         "References": "NCSC Cyber Essentials: Requirements for IT Infrastructure v3.3 (April 2026), Section E"
       },
       "checks": {
-        "azure": []
+        "azure": [],
+        "alibabacloud": []
       }
     }
   ]
