@@ -6,6 +6,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from pydantic.v1 import ValidationError
 
+from prowler.config.config import get_available_compliance_frameworks
 from prowler.lib.check.compliance_models import (
     AttributeMetadata,
     ChartConfig,
@@ -908,13 +909,139 @@ class TestCyberEssentialsFramework:
         )
         return os.path.normpath(base)
 
-    def test_loads_and_supports_azure(self):
+    def test_loads_and_supports_azure_and_m365(self):
         fw = load_compliance_framework_universal(self._path())
         assert fw is not None
         assert fw.framework == "Cyber-Essentials"
         assert fw.version == "3.3"
-        assert fw.get_providers() == ["azure"]
+        assert fw.get_providers() == ["azure", "m365"]
         assert fw.supports_provider("azure")
+        assert fw.supports_provider("m365")
+
+    def test_every_requirement_declares_m365_checks(self):
+        fw = load_compliance_framework_universal(self._path())
+        assert fw is not None
+        assert len(fw.requirements) == 28
+
+        missing = [req.id for req in fw.requirements if "m365" not in req.checks]
+        assert not missing, f"Requirements without M365 mappings: {missing}"
+
+    def test_m365_mappings_reference_existing_checks(self):
+        fw = load_compliance_framework_universal(self._path())
+        assert fw is not None
+
+        referenced = {
+            check
+            for requirement in fw.requirements
+            for check in requirement.checks.get("m365", [])
+        }
+        assert referenced, "Cyber Essentials must reference M365 checks"
+
+        services_dir = os.path.normpath(
+            os.path.join(
+                os.path.dirname(__file__),
+                "..",
+                "..",
+                "..",
+                "prowler",
+                "providers",
+                "m365",
+                "services",
+            )
+        )
+        existing = {
+            filename.removesuffix(".metadata.json")
+            for _, _, files in os.walk(services_dir)
+            for filename in files
+            if filename.endswith(".metadata.json")
+        }
+        missing = sorted(referenced - existing)
+        assert not missing, f"M365 checks that do not exist: {missing}"
+
+    def test_m365_mappings_and_inventory_are_exact(self):
+        fw = load_compliance_framework_universal(self._path())
+        assert fw is not None
+
+        expected = {
+            "CE-FW-01": [],
+            "CE-FW-02": [],
+            "CE-FW-03": [
+                "entra_conditional_access_policy_require_mfa_for_management_api",
+                "entra_conditional_access_policy_untrusted_locations_blocked",
+            ],
+            "CE-FW-04": [],
+            "CE-FW-05": [],
+            "CE-FW-06": [],
+            "CE-FW-07": [],
+            "CE-SC-01": [],
+            "CE-SC-02": [
+                "entra_password_protection_custom_banned_list_enforced",
+                "entra_password_protection_on_premises_enforced",
+            ],
+            "CE-SC-03": [],
+            "CE-SC-04": [],
+            "CE-SC-05": [
+                "entra_legacy_authentication_blocked",
+                "exchange_organization_modern_authentication_enabled",
+                "sharepoint_modern_authentication_required",
+                "teams_meeting_anonymous_user_join_disabled",
+                "teams_meeting_chat_anonymous_users_disabled",
+            ],
+            "CE-SC-06": [],
+            "CE-SUM-01": [],
+            "CE-SUM-02": [],
+            "CE-SUM-03": [],
+            "CE-SUM-04": [],
+            "CE-UAC-01": [],
+            "CE-UAC-02": [],
+            "CE-UAC-03": [],
+            "CE-UAC-04": [
+                "entra_users_mfa_enabled",
+                "entra_conditional_access_policy_mfa_enforced_for_guest_users",
+                "entra_conditional_access_policy_require_mfa_for_management_api",
+            ],
+            "CE-UAC-05": [],
+            "CE-UAC-06": [],
+            "CE-UAC-07": [
+                "entra_users_mfa_enabled",
+                "entra_password_protection_lockout_threshold_limited",
+                "entra_password_protection_lockout_duration_configured",
+            ],
+            "CE-UAC-08": [
+                "entra_users_mfa_enabled",
+                "entra_password_protection_custom_banned_list_enforced",
+                "entra_password_protection_on_premises_enforced",
+                "admincenter_settings_password_never_expire",
+            ],
+            "CE-MP-01": [
+                "defender_malware_policy_common_attachments_filter_enabled",
+                "defender_safe_attachments_policy_enabled",
+                "defender_atp_safe_attachments_and_docs_configured",
+                "defender_zap_for_teams_enabled",
+            ],
+            "CE-MP-02": [
+                "defender_strict_preset_security_policy_enabled",
+                "defender_malware_policy_comprehensive_attachments_filter_applied",
+                "defender_safe_attachments_policy_enabled",
+                "defender_atp_safe_attachments_and_docs_configured",
+                "defender_zap_for_teams_enabled",
+                "defender_safelinks_policy_enabled",
+            ],
+            "CE-MP-03": [],
+        }
+        actual = {
+            requirement.id: requirement.checks["m365"]
+            for requirement in fw.requirements
+        }
+
+        assert actual == expected
+        assert len(actual) == 28
+        assert sum(bool(checks) for checks in actual.values()) == 8
+        assert sum(not checks for checks in actual.values()) == 20
+        mapped_checks = [check for checks in actual.values() for check in checks]
+        assert len(mapped_checks) == 29
+        assert len(set(mapped_checks)) == 21
+        assert "cyber_essentials_3.3" in get_available_compliance_frameworks("m365")
 
     def test_covers_all_five_themes(self):
         fw = load_compliance_framework_universal(self._path())
