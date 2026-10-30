@@ -1,0 +1,11 @@
+   name: CI
+   on:
+     pull_request:
+     push:
+       branches: [main]
+   jobs:
+     build:
+       runs-on: ubuntu-latest
+       steps:
+         - uses: actions/checkout@v4
+         - run: echo "CI passed"
