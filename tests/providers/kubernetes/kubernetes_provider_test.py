@@ -1,6 +1,9 @@
+import socket
 from argparse import Namespace
 from unittest.mock import patch
 
+import pytest
+import yaml
 from kubernetes.config.config_exception import ConfigException
 
 from kubernetes import client
@@ -10,6 +13,7 @@ from prowler.config.config import (
     load_and_validate_config_file,
 )
 from prowler.providers.kubernetes.exceptions.exceptions import (
+    KubernetesKubeConfigServerNotAllowedError,
     KubernetesSetUpSessionError,
 )
 from prowler.providers.kubernetes.kubernetes_provider import KubernetesProvider
@@ -26,6 +30,35 @@ def mock_set_kubernetes_credentials(*_):
 
 def mock_get_context_user_roles(*_):
     return []
+
+
+@pytest.fixture(autouse=True)
+def _default_dns_resolves_public(monkeypatch):
+    """Resolve every kubeconfig host to a public IP so the guard never hits real DNS."""
+
+    def _stub(_host, *_a, **_kw):
+        return [(socket.AF_INET, socket.SOCK_STREAM, 0, "", ("8.8.8.8", 0))]
+
+    monkeypatch.setattr("prowler.lib.network.ssrf.socket.getaddrinfo", _stub)
+
+
+def build_kubeconfig(servers: list) -> dict:
+    return {
+        "apiVersion": "v1",
+        "kind": "Config",
+        "clusters": [
+            {"cluster": {"server": server}, "name": f"cluster-{index}"}
+            for index, server in enumerate(servers)
+        ],
+        "contexts": [
+            {
+                "context": {"cluster": "cluster-0", "user": "example-user"},
+                "name": "example-context",
+            }
+        ],
+        "current-context": "example-context",
+        "users": [{"name": "example-user", "user": {"token": "EXAMPLE_TOKEN"}}],
+    }
 
 
 class TestKubernetesProvider:
@@ -673,3 +706,107 @@ class TestKubernetesProvider:
 
             assert config.proxy == proxy_url
             assert config.verify_ssl is False
+
+
+class TestKubernetesProviderClusterServerGuard:
+    @patch(
+        "prowler.providers.kubernetes.kubernetes_provider.client.CoreV1Api.list_namespace"
+    )
+    @patch("kubernetes.config.load_kube_config_from_dict")
+    def test_public_cluster_server_is_allowed(
+        self, mock_load_kube_config_from_dict, mock_list_namespace
+    ):
+        mock_list_namespace.return_value.items = []
+
+        connection = KubernetesProvider.test_connection(
+            kubeconfig_file=None,
+            kubeconfig_content=yaml.safe_dump(
+                build_kubeconfig(["https://kubernetes.example.com"])
+            ),
+            provider_id="example-context",
+            raise_on_exception=False,
+        )
+
+        assert connection.is_connected
+        assert connection.error is None
+        mock_load_kube_config_from_dict.assert_called_once()
+
+    @pytest.mark.parametrize(
+        "server",
+        [
+            "https://127.0.0.1:6443",
+            "https://10.0.0.5:6443",
+            "https://[::1]:6443",
+            "https://169.254.169.254/latest/meta-data",
+        ],
+    )
+    @patch("kubernetes.config.load_kube_config_from_dict")
+    def test_non_public_cluster_server_is_rejected_before_loading(
+        self, mock_load_kube_config_from_dict, server
+    ):
+        connection = KubernetesProvider.test_connection(
+            kubeconfig_file=None,
+            kubeconfig_content=yaml.safe_dump(build_kubeconfig([server])),
+            provider_id="example-context",
+            raise_on_exception=False,
+        )
+
+        assert not connection.is_connected
+        assert isinstance(connection.error, KubernetesKubeConfigServerNotAllowedError)
+        assert server not in str(connection.error)
+        assert connection.error.original_exception is None
+        mock_load_kube_config_from_dict.assert_not_called()
+
+    @patch("kubernetes.config.load_kube_config_from_dict")
+    def test_multi_cluster_kubeconfig_with_one_internal_server_is_rejected(
+        self, mock_load_kube_config_from_dict
+    ):
+        connection = KubernetesProvider.test_connection(
+            kubeconfig_file=None,
+            kubeconfig_content=yaml.safe_dump(
+                build_kubeconfig(
+                    ["https://kubernetes.example.com", "https://192.168.1.10:6443"]
+                )
+            ),
+            provider_id="example-context",
+            raise_on_exception=False,
+        )
+
+        assert not connection.is_connected
+        assert isinstance(connection.error, KubernetesKubeConfigServerNotAllowedError)
+        assert "192.168.1.10" not in str(connection.error)
+        mock_load_kube_config_from_dict.assert_not_called()
+
+    @patch("kubernetes.config.load_kube_config_from_dict")
+    def test_non_http_cluster_server_scheme_is_rejected(
+        self, mock_load_kube_config_from_dict
+    ):
+        connection = KubernetesProvider.test_connection(
+            kubeconfig_file=None,
+            kubeconfig_content=yaml.safe_dump(
+                build_kubeconfig(["file:///etc/kubernetes/admin.conf"])
+            ),
+            provider_id="example-context",
+            raise_on_exception=False,
+        )
+
+        assert not connection.is_connected
+        assert isinstance(connection.error, KubernetesKubeConfigServerNotAllowedError)
+        mock_load_kube_config_from_dict.assert_not_called()
+
+    @patch("kubernetes.config.load_kube_config_from_dict")
+    def test_non_public_cluster_server_raises_when_requested(
+        self, mock_load_kube_config_from_dict
+    ):
+        with pytest.raises(KubernetesKubeConfigServerNotAllowedError) as error:
+            KubernetesProvider.test_connection(
+                kubeconfig_file=None,
+                kubeconfig_content=yaml.safe_dump(
+                    build_kubeconfig(["https://127.0.0.1:6443"])
+                ),
+                provider_id="example-context",
+                raise_on_exception=True,
+            )
+
+        assert "127.0.0.1" not in str(error.value)
+        mock_load_kube_config_from_dict.assert_not_called()
