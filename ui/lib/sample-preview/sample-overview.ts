@@ -45,6 +45,18 @@ const failedBySeverity = (checks: SampleCheck[]): Record<Severity, number> => {
   return counts;
 };
 
+// Checks of one service evaluate the same resources; services in a group don't overlap.
+const resourcesCount = (checks: SampleCheck[]) => {
+  const widestByService: Record<string, number> = {};
+  for (const check of checks) {
+    widestByService[check.service] = Math.max(
+      widestByService[check.service] ?? 0,
+      check.failed + check.passed,
+    );
+  }
+  return Object.values(widestByService).reduce((total, n) => total + n, 0);
+};
+
 export const SAMPLE_STATUS = {
   fail: sum(SAMPLE_CHECKS, (check) => check.failed),
   pass: sum(SAMPLE_CHECKS, (check) => check.passed),
@@ -77,10 +89,7 @@ export const SAMPLE_RESOURCE_GROUPS_RESPONSE: ResourceGroupOverviewResponse = {
       total_findings: sum(checks, (check) => check.failed + check.passed),
       failed_findings: sum(checks, (check) => check.failed),
       new_failed_findings: sum(checks, (check) => check.newFailed),
-      // Several checks evaluate the same resource; the widest one counts them all.
-      resources_count: Math.max(
-        ...checks.map((check) => check.failed + check.passed),
-      ),
+      resources_count: resourcesCount(checks),
       severity: failedBySeverity(checks),
     },
   })),

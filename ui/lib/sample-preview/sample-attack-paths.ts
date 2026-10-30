@@ -96,8 +96,8 @@ const SAMPLE_NODES: GraphNode[] = [
 
 const SAMPLE_RELATIONSHIPS: GraphRelationship[] = [
   rel("sample-r1", "internet", "sample-sg-bastion", "CAN_ACCESS"),
-  // A container relation: the graph lays it out as security group -> instance.
-  rel("sample-r2", "sample-ec2-bastion", "sample-sg-bastion", "BELONGS_TO"),
+  // Directed security group -> instance, so the focused path keeps the entry.
+  rel("sample-r2", "sample-sg-bastion", "sample-ec2-bastion", "CAN_ACCESS"),
   rel(
     "sample-r3",
     "sample-ec2-bastion",

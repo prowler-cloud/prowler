@@ -21,9 +21,11 @@ const hasRows = (response: unknown): boolean | undefined => {
   return Array.isArray(data) ? data.length > 0 : undefined;
 };
 
-const toRunningScan = (response: unknown): RunningScan | null => {
+// Undefined when the lookup failed, so the page doesn't offer a scan that may be running.
+const toRunningScan = (response: unknown): RunningScan | null | undefined => {
   const data = (response as { data?: ScanRow[] } | undefined)?.data;
-  const scan = Array.isArray(data) ? data[0] : undefined;
+  if (!Array.isArray(data)) return undefined;
+  const scan = data[0];
   if (!scan) return null;
   return { id: scan.id, progress: scan.attributes.progress ?? 0 };
 };

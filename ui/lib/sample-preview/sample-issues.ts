@@ -217,24 +217,31 @@ export const SAMPLE_ISSUES: IssueResource[] = SAMPLE_ISSUE_SEEDS.map(
   }),
 );
 
-const countVerdict = (verdict: IssueAttributes["verdict"]) =>
-  SAMPLE_ISSUES.filter((issue) => issue.attributes.verdict === verdict).length;
-
 const sumFindings = (issues: IssueResource[]) =>
   issues.reduce((total, issue) => total + issue.attributes.findings_count, 0);
 
-const notExploitable = SAMPLE_ISSUES.filter(
-  (issue) => issue.attributes.verdict === VERDICT.NOT_EXPLOITABLE,
-);
-
-export const SAMPLE_ISSUES_OVERVIEW: IssuesOverviewAttributes = {
-  exploitable: countVerdict(VERDICT.EXPLOITABLE),
-  likely: countVerdict(VERDICT.LIKELY),
-  conditional: countVerdict(VERDICT.CONDITIONAL),
-  not_exploitable: countVerdict(VERDICT.NOT_EXPLOITABLE),
-  unknown: countVerdict(VERDICT.UNKNOWN),
-  issues: SAMPLE_ISSUES.length,
-  findings: sumFindings(SAMPLE_ISSUES),
-  actionable: SAMPLE_ISSUES.length - notExploitable.length,
-  not_exploitable_findings: sumFindings(notExploitable),
+/** The issues overview the API would return for these issues. */
+export const summarizeSampleIssues = (
+  issues: IssueResource[],
+): IssuesOverviewAttributes => {
+  const countVerdict = (verdict: IssueAttributes["verdict"]) =>
+    issues.filter((issue) => issue.attributes.verdict === verdict).length;
+  const notExploitable = issues.filter(
+    (issue) => issue.attributes.verdict === VERDICT.NOT_EXPLOITABLE,
+  );
+  return {
+    exploitable: countVerdict(VERDICT.EXPLOITABLE),
+    likely: countVerdict(VERDICT.LIKELY),
+    conditional: countVerdict(VERDICT.CONDITIONAL),
+    not_exploitable: countVerdict(VERDICT.NOT_EXPLOITABLE),
+    unknown: countVerdict(VERDICT.UNKNOWN),
+    issues: issues.length,
+    findings: sumFindings(issues),
+    // Matches the API's ACTIONABLE_VERDICTS.
+    actionable:
+      countVerdict(VERDICT.EXPLOITABLE) + countVerdict(VERDICT.LIKELY),
+    not_exploitable_findings: sumFindings(notExploitable),
+  };
 };
+
+export const SAMPLE_ISSUES_OVERVIEW = summarizeSampleIssues(SAMPLE_ISSUES);

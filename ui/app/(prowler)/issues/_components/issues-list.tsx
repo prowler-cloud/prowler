@@ -7,9 +7,10 @@ import { IssuesTable } from "@/components/issues/issues-table";
 import { VerdictFilter } from "@/components/issues/verdict-filter";
 import { ISSUE_SCOPE_KEYS } from "@/lib/issues/scope";
 import { verdictCounts } from "@/lib/issues/verdicts";
+import { SAMPLE_ACCOUNT } from "@/lib/sample-preview/sample-dataset";
 import {
   SAMPLE_ISSUES,
-  SAMPLE_ISSUES_OVERVIEW,
+  summarizeSampleIssues,
 } from "@/lib/sample-preview/sample-issues";
 import { SearchParamsProps } from "@/types";
 import type { IssueResponse, IssuesOverviewResponse } from "@/types/issues";
@@ -26,7 +27,7 @@ const ISSUE_FILTER_KEYS = [
   "filter[triage_status]",
   "filter[triage_status__in]",
   ...ISSUE_SCOPE_KEYS,
-];
+] as const;
 
 export const IssuesList = async ({
   searchParams,
@@ -57,7 +58,7 @@ export const IssuesList = async ({
     ),
   );
   const [summary, issues] = sample
-    ? sampleIssues(filters)
+    ? sampleIssues(filters, scope)
     : await Promise.all([
         getIssuesOverview({ filters: scope }),
         getIssues({
@@ -119,20 +120,58 @@ export const IssuesList = async ({
   );
 };
 
-/** The sample summary and rows, filtered by verdict like the API would. */
+type SampleIssue = (typeof SAMPLE_ISSUES)[number];
+
+/** The value each forwarded filter matches on a sample issue. */
+const SAMPLE_FILTER_FIELDS: Record<
+  (typeof ISSUE_FILTER_KEYS)[number],
+  (issue: SampleIssue) => string | undefined
+> = {
+  "filter[verdict]": (issue) => issue.attributes.verdict,
+  "filter[verdict__in]": (issue) => issue.attributes.verdict,
+  "filter[cloud]": (issue) => issue.attributes.cloud,
+  "filter[pattern]": (issue) => issue.attributes.pattern,
+  "filter[severity]": (issue) => issue.attributes.severity,
+  "filter[provider_type]": (issue) => issue.attributes.cloud,
+  "filter[provider_type__in]": (issue) => issue.attributes.cloud,
+  "filter[provider_alias]": () => SAMPLE_ACCOUNT.alias,
+  "filter[provider_id__in]": (issue) => issue.relationships?.provider?.data?.id,
+  // The sample account belongs to no provider group.
+  "filter[provider_groups__in]": () => undefined,
+  "filter[triage_status]": (issue) => issue.attributes.triage_status,
+  "filter[triage_status__in]": (issue) => issue.attributes.triage_status,
+};
+
+const matchesSampleFilters = (
+  issue: SampleIssue,
+  filters: Record<string, string>,
+) =>
+  Object.entries(filters).every(([key, value]) => {
+    const field =
+      SAMPLE_FILTER_FIELDS[key as keyof typeof SAMPLE_FILTER_FIELDS];
+    const actual = field?.(issue);
+    return actual !== undefined && value.split(",").includes(actual);
+  });
+
+/** The sample summary and rows, filtered like the API would. */
 function sampleIssues(
   filters: Record<string, string>,
+  scope: Record<string, string>,
 ): [IssuesOverviewResponse, IssueResponse] {
-  const verdicts = (
-    filters["filter[verdict__in]"] ?? filters["filter[verdict]"]
-  )?.split(",");
-  const data = verdicts
-    ? SAMPLE_ISSUES.filter((issue) =>
-        verdicts.includes(issue.attributes.verdict),
-      )
-    : SAMPLE_ISSUES;
+  const scoped = SAMPLE_ISSUES.filter((issue) =>
+    matchesSampleFilters(issue, scope),
+  );
   return [
-    { data: { type: "issues-overview", attributes: SAMPLE_ISSUES_OVERVIEW } },
-    { data },
+    {
+      data: {
+        type: "issues-overview",
+        attributes: summarizeSampleIssues(scoped),
+      },
+    },
+    {
+      data: SAMPLE_ISSUES.filter((issue) =>
+        matchesSampleFilters(issue, filters),
+      ),
+    },
   ];
 }

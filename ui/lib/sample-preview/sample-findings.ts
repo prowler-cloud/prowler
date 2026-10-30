@@ -10,29 +10,31 @@ import {
 // Finding groups derived from SAMPLE_CHECKS, in the API response shape so they
 // run through the same adapter as real data.
 
+interface SampleFindingGroupAttributes {
+  check_id: string;
+  check_title: string;
+  check_description: null;
+  severity: string;
+  status: "FAIL";
+  muted: false;
+  impacted_providers: string[];
+  resources_total: number;
+  resources_fail: number;
+  pass_count: number;
+  fail_count: number;
+  muted_count: number;
+  new_count: number;
+  changed_count: number;
+  new_fail_count: number;
+  first_seen_at: string;
+  last_seen_at: string;
+  failing_since: string;
+}
+
 interface SampleFindingGroupItem {
   type: "finding-groups";
   id: string;
-  attributes: {
-    check_id: string;
-    check_title: string;
-    check_description: null;
-    severity: string;
-    status: "FAIL";
-    muted: false;
-    impacted_providers: string[];
-    resources_total: number;
-    resources_fail: number;
-    pass_count: number;
-    fail_count: number;
-    muted_count: number;
-    new_count: number;
-    changed_count: number;
-    new_fail_count: number;
-    first_seen_at: string;
-    last_seen_at: string;
-    failing_since: string;
-  };
+  attributes: SampleFindingGroupAttributes;
 }
 
 const toFindingGroupItem = (check: SampleCheck): SampleFindingGroupItem => ({

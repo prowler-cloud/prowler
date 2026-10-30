@@ -49,4 +49,41 @@ describe("IssuesList sample preview", () => {
     expect(getIssues).not.toHaveBeenCalled();
     expect(getIssuesOverview).not.toHaveBeenCalled();
   });
+
+  it("matches nothing for a scope the demo account is not in", async () => {
+    render(
+      await IssuesList({
+        searchParams: { "filter[cloud]": "gcp" },
+        sample: true,
+      }),
+    );
+
+    expect(screen.getByText("No issues match this filter.")).toBeVisible();
+    expect(
+      screen.queryByText(exploitable.attributes.title),
+    ).not.toBeInTheDocument();
+  });
+
+  it("scopes the rows by severity like the API", async () => {
+    const critical = SAMPLE_ISSUES.filter(
+      (issue) => issue.attributes.severity === "critical",
+    );
+    const other = SAMPLE_ISSUES.find(
+      (issue) => issue.attributes.severity !== "critical",
+    );
+
+    render(
+      await IssuesList({
+        searchParams: { "filter[severity]": "critical" },
+        sample: true,
+      }),
+    );
+
+    for (const issue of critical) {
+      expect(
+        screen.getByRole("button", { name: issue.attributes.title }),
+      ).toBeInTheDocument();
+    }
+    expect(screen.queryByText(other!.attributes.title)).not.toBeInTheDocument();
+  });
 });

@@ -120,6 +120,7 @@ const CATEGORIES_BY_CHECK: Record<string, string[]> = {
   apigateway_restapi_logging_enabled: ["logging"],
   sqs_queues_server_side_encryption_enabled: ["encryption"],
   cloudwatch_log_metric_filter_root_usage: ["logging"],
+  ec2_instance_managed_by_ssm: ["node-security"],
 };
 
 const categoriesOf = (check: SampleCheck) =>

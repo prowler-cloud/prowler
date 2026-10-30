@@ -30,7 +30,7 @@ export interface SamplePreviewInputs {
   // `undefined` = the lookup failed: the real page wins, never the sample.
   hasCompletedScan: boolean | undefined;
   hasProviders: boolean | undefined;
-  runningScan: RunningScan | null;
+  runningScan: RunningScan | null | undefined;
 }
 
 const INACTIVE: SamplePreviewInactive = { active: false };
@@ -42,7 +42,9 @@ export function resolveSamplePreviewState({
   hasProviders,
   runningScan,
 }: SamplePreviewInputs): SamplePreviewState {
-  if (!enabled || hasCompletedScan !== false) return INACTIVE;
+  if (!enabled || hasCompletedScan !== false || runningScan === undefined) {
+    return INACTIVE;
+  }
 
   if (runningScan) {
     return {

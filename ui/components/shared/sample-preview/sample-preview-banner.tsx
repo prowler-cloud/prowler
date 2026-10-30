@@ -31,6 +31,7 @@ import {
 } from "@/lib/sample-preview/sample-preview-state";
 import { LAUNCH_SCAN_HREF } from "@/lib/scans-navigation";
 import { SCAN_STATES } from "@/types/attack-paths";
+import { SCAN_JOBS_TAB } from "@/types/scans";
 
 export const SAMPLE_PREVIEW_POLL_INTERVAL_MS = 15_000;
 
@@ -65,7 +66,7 @@ const STAGE_CONTENT = {
       "Meanwhile, explore sample data from a demo AWS account. Your results replace it as soon as the scan finishes.",
     cta: SAMPLE_PREVIEW_CTA.VIEW_SCAN,
     ctaLabel: "View Scan",
-    href: "/scans",
+    href: `/scans?tab=${SCAN_JOBS_TAB.ACTIVE}`,
   },
 } as const satisfies Record<SamplePreviewStage, StageContent>;
 
@@ -98,10 +99,25 @@ function SamplePreviewBannerContent({ state, page }: SamplePreviewBannerProps) {
     if (!runningScan) return;
 
     let stopped = false;
+    let inFlight = false;
     const poll = async () => {
-      const response = await getScan(runningScan.id);
+      // A slow response must not overwrite a newer one.
+      if (inFlight) return;
+      inFlight = true;
+      const response = await getScan(runningScan.id).finally(() => {
+        inFlight = false;
+      });
+      if (stopped) return;
+
+      // The scan is gone (e.g. its provider was deleted): re-resolve the page.
+      if (response?.status === 404) {
+        stop();
+        router.refresh();
+        return;
+      }
+
       const attributes = response?.data?.attributes;
-      if (stopped || !attributes) return;
+      if (!attributes) return;
 
       if (attributes.state === SCAN_STATES.COMPLETED) {
         stop();

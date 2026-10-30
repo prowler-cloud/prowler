@@ -106,4 +106,68 @@ describe("SamplePreviewBanner", () => {
     ]);
     window.removeEventListener(SAMPLE_PREVIEW_EVENT, listener);
   });
+
+  it("re-resolves the page when the tracked scan is gone", async () => {
+    getScanMock.mockResolvedValue({ error: "Not found", status: 404 });
+    render(
+      <SamplePreviewBanner
+        page={SAMPLE_PREVIEW_PAGE.OVERVIEW}
+        state={RUNNING}
+      />,
+    );
+
+    await advancePoll();
+    await advancePoll();
+
+    expect(refreshMock).toHaveBeenCalledTimes(1);
+    expect(getScanMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps polling through a transient empty response", async () => {
+    getScanMock
+      .mockResolvedValueOnce(undefined)
+      .mockResolvedValue(scanResponse("completed", 100));
+    render(
+      <SamplePreviewBanner
+        page={SAMPLE_PREVIEW_PAGE.OVERVIEW}
+        state={RUNNING}
+      />,
+    );
+
+    await advancePoll();
+    expect(refreshMock).not.toHaveBeenCalled();
+
+    await advancePoll();
+    expect(refreshMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("skips a poll while the previous request is still pending", async () => {
+    getScanMock.mockReturnValue(new Promise(() => {}));
+    render(
+      <SamplePreviewBanner
+        page={SAMPLE_PREVIEW_PAGE.OVERVIEW}
+        state={RUNNING}
+      />,
+    );
+
+    await advancePoll();
+    await advancePoll();
+
+    expect(getScanMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("opens the in-progress scans tab from a running scan", () => {
+    getScanMock.mockReturnValue(new Promise(() => {}));
+    render(
+      <SamplePreviewBanner
+        page={SAMPLE_PREVIEW_PAGE.OVERVIEW}
+        state={RUNNING}
+      />,
+    );
+
+    expect(screen.getByRole("link", { name: "View Scan" })).toHaveAttribute(
+      "href",
+      "/scans?tab=active",
+    );
+  });
 });

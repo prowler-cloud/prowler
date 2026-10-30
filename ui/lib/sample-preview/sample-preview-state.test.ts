@@ -59,6 +59,16 @@ describe("resolveSamplePreviewState", () => {
     ).toEqual({ active: false });
   });
 
+  it("shows the real page when the running scan lookup failed", () => {
+    expect(
+      resolveSamplePreviewState({
+        ...NEW_TENANT,
+        hasProviders: true,
+        runningScan: undefined,
+      }),
+    ).toEqual({ active: false });
+  });
+
   it("never shows the sample where the deployment has not enabled it", () => {
     expect(
       resolveSamplePreviewState({ ...NEW_TENANT, enabled: false }),
