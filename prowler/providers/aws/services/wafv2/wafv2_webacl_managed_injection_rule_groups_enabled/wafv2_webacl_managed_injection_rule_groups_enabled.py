@@ -1,12 +1,59 @@
+from collections import defaultdict
+
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.wafv2.wafv2_client import wafv2_client
-from prowler.providers.aws.services.wafv2.wafv2_service import Scope
+from prowler.providers.aws.services.wafv2.wafv2_service import ManagedRuleGroup, Scope
 
 AWS_MANAGED_RULE_GROUP_VENDOR = "AWS"
 REQUIRED_INJECTION_RULE_GROUPS = (
     "AWSManagedRulesSQLiRuleSet",
     "AWSManagedRulesKnownBadInputsRuleSet",
 )
+# Overriding a rule to Block keeps it blocking; any other override (Count,
+# Allow, Captcha or Challenge) stops the rule from blocking what it matches.
+BLOCKING_RULE_ACTION = "Block"
+
+
+def _non_blocking_rule_overrides(
+    managed_rule_group: ManagedRuleGroup,
+) -> dict[str, str]:
+    """Return the rules of a managed rule group that no longer block.
+
+    Args:
+        managed_rule_group: Managed rule group referenced by a Web ACL rule.
+
+    Returns:
+        Rule names mapped to the action they were overridden to. Legacy
+        ``ExcludedRules`` set the rule action to Count, so they are reported
+        as Count overrides.
+    """
+    overrides = {name: "Count" for name in managed_rule_group.excluded_rules}
+    overrides.update(
+        {
+            name: action
+            for name, action in managed_rule_group.rule_action_overrides.items()
+            if action != BLOCKING_RULE_ACTION
+        }
+    )
+    return overrides
+
+
+def _format_rule_overrides(overrides: dict[str, str]) -> str:
+    """Format rule overrides as ``SQLi_BODY, SQLi_COOKIE overridden to Count``.
+
+    Args:
+        overrides: Rule names mapped to the action they were overridden to.
+
+    Returns:
+        The overridden rules grouped by action, actions joined with ``and``.
+    """
+    rules_by_action = defaultdict(list)
+    for rule_name, action in overrides.items():
+        rules_by_action[action].append(rule_name)
+    return " and ".join(
+        f"{', '.join(sorted(rule_names))} overridden to {action}"
+        for action, rule_names in sorted(rules_by_action.items())
+    )
 
 
 class wafv2_webacl_managed_injection_rule_groups_enabled(Check):
@@ -14,18 +61,22 @@ class wafv2_webacl_managed_injection_rule_groups_enabled(Check):
 
     A Web ACL passes when both ``AWSManagedRulesSQLiRuleSet`` and
     ``AWSManagedRulesKnownBadInputsRuleSet`` are referenced by one of its
-    rules, directly or through an AWS Firewall Manager rule group, and that
-    rule does not override the group's actions to ``Count``: a counted rule
-    group only records matches and blocks nothing.
+    rules, directly or through an AWS Firewall Manager rule group, with the
+    group's rule actions left in place. A group missing or overridden to
+    ``Count`` as a whole fails, since a counted rule group only records
+    matches and blocks nothing. A group whose individual rules are overridden
+    to a non-blocking action is reported for manual review: without the
+    group's rule catalog the check cannot tell a partial exception from a
+    wholesale exclusion, and it must not emit a false PASS.
     """
 
     def execute(self) -> list[Check_Report_AWS]:
         """Execute the check.
 
         Returns:
-            One PASS or FAIL report per Web ACL whose rules were read, plus a
-            single account-level MANUAL report when Web ACLs could not be
-            listed in some scope or their rules could not be retrieved.
+            One PASS, FAIL or MANUAL report per Web ACL whose rules were read,
+            plus a single account-level MANUAL report when Web ACLs could not
+            be listed in some scope or their rules could not be retrieved.
         """
         findings = []
         unreadable_web_acls = []
@@ -39,32 +90,59 @@ class wafv2_webacl_managed_injection_rule_groups_enabled(Check):
 
             enforced = set()
             counted = set()
+            # Required rule group -> its rules overridden to a non-blocking action.
+            overridden_rules = {}
             for rule in web_acl.rules + web_acl.rule_groups:
                 managed_rule_group = rule.managed_rule_group
-                if (
+                if not (
                     managed_rule_group
                     and managed_rule_group.vendor_name == AWS_MANAGED_RULE_GROUP_VENDOR
                     and managed_rule_group.name in REQUIRED_INJECTION_RULE_GROUPS
                 ):
-                    if rule.overridden_to_count:
-                        counted.add(managed_rule_group.name)
-                    else:
-                        enforced.add(managed_rule_group.name)
+                    continue
+                if rule.overridden_to_count:
+                    counted.add(managed_rule_group.name)
+                    continue
+                rule_overrides = _non_blocking_rule_overrides(managed_rule_group)
+                if rule_overrides:
+                    overridden_rules.setdefault(managed_rule_group.name, {}).update(
+                        rule_overrides
+                    )
+                else:
+                    enforced.add(managed_rule_group.name)
 
-            issues = []
+            failures = []
+            details = []
             for rule_group_name in REQUIRED_INJECTION_RULE_GROUPS:
                 if rule_group_name in enforced:
                     continue
-                if rule_group_name in counted:
-                    issues.append(f"{rule_group_name} is overridden to Count")
+                if rule_group_name in overridden_rules:
+                    detail = (
+                        f"{rule_group_name} has "
+                        f"{_format_rule_overrides(overridden_rules[rule_group_name])}"
+                    )
                 else:
-                    issues.append(f"{rule_group_name} is missing")
+                    detail = (
+                        f"{rule_group_name} is overridden to Count"
+                        if rule_group_name in counted
+                        else f"{rule_group_name} is missing"
+                    )
+                    failures.append(detail)
+                details.append(detail)
 
-            if issues:
+            if failures:
                 report.status = "FAIL"
                 report.status_extended = (
                     f"AWS WAFv2 Web ACL {web_acl.name} does not enforce the AWS "
-                    f"managed injection rule groups: {', '.join(issues)}."
+                    f"managed injection rule groups: {'; '.join(details)}."
+                )
+            elif details:
+                report.status = "MANUAL"
+                report.status_extended = (
+                    f"AWS WAFv2 Web ACL {web_acl.name} enables the AWS managed "
+                    f"injection rule groups but overrides some of their rules "
+                    f"({'; '.join(details)}); verify that the remaining rules "
+                    f"provide the required injection protection."
                 )
             else:
                 report.status = "PASS"

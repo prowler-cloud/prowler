@@ -24,7 +24,18 @@ WEB_ACL_ARN = f"arn:aws:wafv2:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:region
 CLOUDFRONT_WEB_ACL_ARN = f"arn:aws:wafv2:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:global/webacl/{WEB_ACL_NAME}/{WEB_ACL_ID}"
 
 PASS_MESSAGE = f"AWS WAFv2 Web ACL {WEB_ACL_NAME} enforces the AWS managed injection rule groups AWSManagedRulesSQLiRuleSet and AWSManagedRulesKnownBadInputsRuleSet."
-BOTH_MISSING_MESSAGE = f"AWS WAFv2 Web ACL {WEB_ACL_NAME} does not enforce the AWS managed injection rule groups: AWSManagedRulesSQLiRuleSet is missing, AWSManagedRulesKnownBadInputsRuleSet is missing."
+BOTH_MISSING_MESSAGE = f"AWS WAFv2 Web ACL {WEB_ACL_NAME} does not enforce the AWS managed injection rule groups: AWSManagedRulesSQLiRuleSet is missing; AWSManagedRulesKnownBadInputsRuleSet is missing."
+
+
+def _review_message(overrides):
+    """MANUAL message for a Web ACL that overrides rules of a required group."""
+    return (
+        f"AWS WAFv2 Web ACL {WEB_ACL_NAME} enables the AWS managed injection rule "
+        f"groups but overrides some of their rules ({overrides}); verify that the "
+        f"remaining rules provide the required injection protection."
+    )
+
+
 VISIBILITY_CONFIG = {
     "SampledRequestsEnabled": True,
     "CloudWatchMetricsEnabled": True,
@@ -32,11 +43,22 @@ VISIBILITY_CONFIG = {
 }
 
 
-def _managed_rule(name, vendor_name="AWS", overridden_to_count=False):
+def _managed_rule(
+    name,
+    vendor_name="AWS",
+    overridden_to_count=False,
+    rule_action_overrides=None,
+    excluded_rules=None,
+):
     return Rule(
         name=f"{vendor_name}-{name}",
         cloudwatch_metrics_enabled=True,
-        managed_rule_group=ManagedRuleGroup(vendor_name=vendor_name, name=name),
+        managed_rule_group=ManagedRuleGroup(
+            vendor_name=vendor_name,
+            name=name,
+            rule_action_overrides=rule_action_overrides or {},
+            excluded_rules=excluded_rules or [],
+        ),
         overridden_to_count=overridden_to_count,
     )
 
@@ -73,12 +95,18 @@ def _web_acl(
     )
 
 
-def _api_managed_rule(name, priority, override_action):
+def _api_managed_rule(name, priority, override_action, rule_action_overrides=None):
     """Raw GetWebACL/CreateWebACL rule referencing an AWS managed rule group."""
+    statement = {"VendorName": "AWS", "Name": name}
+    if rule_action_overrides:
+        statement["RuleActionOverrides"] = [
+            {"Name": rule_name, "ActionToUse": {action: {}}}
+            for rule_name, action in rule_action_overrides.items()
+        ]
     return {
         "Name": f"AWS-{name}",
         "Priority": priority,
-        "Statement": {"ManagedRuleGroupStatement": {"VendorName": "AWS", "Name": name}},
+        "Statement": {"ManagedRuleGroupStatement": statement},
         "OverrideAction": {override_action: {}},
         "VisibilityConfig": {**VISIBILITY_CONFIG, "MetricName": name},
     }
@@ -223,7 +251,7 @@ class Test_wafv2_webacl_managed_injection_rule_groups_enabled:
         assert result[0].status == "FAIL"
         assert (
             result[0].status_extended
-            == f"AWS WAFv2 Web ACL {WEB_ACL_NAME} does not enforce the AWS managed injection rule groups: AWSManagedRulesSQLiRuleSet is overridden to Count, AWSManagedRulesKnownBadInputsRuleSet is overridden to Count."
+            == f"AWS WAFv2 Web ACL {WEB_ACL_NAME} does not enforce the AWS managed injection rule groups: AWSManagedRulesSQLiRuleSet is overridden to Count; AWSManagedRulesKnownBadInputsRuleSet is overridden to Count."
         )
 
     def test_firewall_manager_rule_group_overridden_to_count(self):
@@ -364,3 +392,255 @@ class Test_wafv2_webacl_managed_injection_rule_groups_enabled:
             == f"AWS WAFv2 Web ACL {WEB_ACL_NAME} does not enforce the AWS managed injection rule groups: AWSManagedRulesSQLiRuleSet is overridden to Count."
         )
         assert result[0].resource_arn == web_acl["ARN"]
+
+    def test_rule_action_override_to_count_requires_review(self):
+        rules = [
+            _sqli_rule(rule_action_overrides={"SQLi_BODY": "Count"}),
+            _known_bad_inputs_rule(),
+        ]
+        result = _run_check({WEB_ACL_ARN: _web_acl(rules=rules)})
+        assert len(result) == 1
+        assert result[0].status == "MANUAL"
+        assert result[0].status_extended == _review_message(
+            "AWSManagedRulesSQLiRuleSet has SQLi_BODY overridden to Count"
+        )
+        assert result[0].resource_id == WEB_ACL_ID
+        assert result[0].resource_arn == WEB_ACL_ARN
+        assert result[0].region == AWS_REGION_EU_WEST_1
+        assert result[0].resource_tags == []
+
+    def test_excluded_rules_require_review(self):
+        rules = [
+            _sqli_rule(),
+            _known_bad_inputs_rule(
+                excluded_rules=["Log4JRCE_HEADER", "ExploitablePaths_URIPATH"]
+            ),
+        ]
+        result = _run_check({WEB_ACL_ARN: _web_acl(rules=rules)})
+        assert len(result) == 1
+        assert result[0].status == "MANUAL"
+        assert result[0].status_extended == _review_message(
+            "AWSManagedRulesKnownBadInputsRuleSet has ExploitablePaths_URIPATH, Log4JRCE_HEADER overridden to Count"
+        )
+
+    def test_rule_action_override_to_block_is_enforced(self):
+        rules = [
+            _sqli_rule(rule_action_overrides={"SQLi_BODY": "Block"}),
+            _known_bad_inputs_rule(rule_action_overrides={"Log4JRCE_HEADER": "Block"}),
+        ]
+        result = _run_check({WEB_ACL_ARN: _web_acl(rules=rules)})
+        assert len(result) == 1
+        assert result[0].status == "PASS"
+        assert result[0].status_extended == PASS_MESSAGE
+
+    def test_mixed_rule_overrides_in_both_rule_groups(self):
+        rules = [
+            _sqli_rule(
+                rule_action_overrides={
+                    "SQLi_COOKIE": "Count",
+                    "SQLi_BODY": "Captcha",
+                    "SQLi_URIPATH": "Count",
+                },
+                excluded_rules=["SQLi_QUERYARGUMENTS"],
+            ),
+            _known_bad_inputs_rule(
+                rule_action_overrides={"Host_localhost_HEADER": "Allow"}
+            ),
+        ]
+        result = _run_check({WEB_ACL_ARN: _web_acl(rules=rules)})
+        assert len(result) == 1
+        assert result[0].status == "MANUAL"
+        assert result[0].status_extended == _review_message(
+            "AWSManagedRulesSQLiRuleSet has SQLi_BODY overridden to Captcha and SQLi_COOKIE, SQLi_QUERYARGUMENTS, SQLi_URIPATH overridden to Count; "
+            "AWSManagedRulesKnownBadInputsRuleSet has Host_localhost_HEADER overridden to Allow"
+        )
+
+    def test_missing_rule_group_and_overridden_rules(self):
+        rules = [
+            _known_bad_inputs_rule(rule_action_overrides={"Log4JRCE_HEADER": "Count"})
+        ]
+        result = _run_check({WEB_ACL_ARN: _web_acl(rules=rules)})
+        assert len(result) == 1
+        assert result[0].status == "FAIL"
+        assert (
+            result[0].status_extended
+            == f"AWS WAFv2 Web ACL {WEB_ACL_NAME} does not enforce the AWS managed injection rule groups: AWSManagedRulesSQLiRuleSet is missing; AWSManagedRulesKnownBadInputsRuleSet has Log4JRCE_HEADER overridden to Count."
+        )
+
+    def test_counted_rule_group_and_overridden_rules(self):
+        rules = [
+            _sqli_rule(overridden_to_count=True),
+            _known_bad_inputs_rule(excluded_rules=["PROPFIND_METHOD"]),
+        ]
+        result = _run_check({WEB_ACL_ARN: _web_acl(rules=rules)})
+        assert len(result) == 1
+        assert result[0].status == "FAIL"
+        assert (
+            result[0].status_extended
+            == f"AWS WAFv2 Web ACL {WEB_ACL_NAME} does not enforce the AWS managed injection rule groups: AWSManagedRulesSQLiRuleSet is overridden to Count; AWSManagedRulesKnownBadInputsRuleSet has PROPFIND_METHOD overridden to Count."
+        )
+
+    def test_enforced_and_overridden_reference_of_the_same_rule_group(self):
+        rules = [
+            _sqli_rule(rule_action_overrides={"SQLi_BODY": "Count"}),
+            _sqli_rule(),
+            _known_bad_inputs_rule(),
+        ]
+        result = _run_check({WEB_ACL_ARN: _web_acl(rules=rules)})
+        assert len(result) == 1
+        assert result[0].status == "PASS"
+        assert result[0].status_extended == PASS_MESSAGE
+
+    def test_counted_and_overridden_reference_of_the_same_rule_group(self):
+        rules = [
+            _sqli_rule(overridden_to_count=True),
+            _sqli_rule(excluded_rules=["SQLi_BODY"]),
+            _known_bad_inputs_rule(),
+        ]
+        result = _run_check({WEB_ACL_ARN: _web_acl(rules=rules)})
+        assert len(result) == 1
+        assert result[0].status == "MANUAL"
+        assert result[0].status_extended == _review_message(
+            "AWSManagedRulesSQLiRuleSet has SQLi_BODY overridden to Count"
+        )
+
+    def test_firewall_manager_rule_group_with_overridden_rules_requires_review(self):
+        web_acl = _web_acl(
+            rules=[_sqli_rule()],
+            rule_groups=[
+                _known_bad_inputs_rule(rule_action_overrides={"Log4JRCE_BODY": "Count"})
+            ],
+        )
+        result = _run_check({WEB_ACL_ARN: web_acl})
+        assert len(result) == 1
+        assert result[0].status == "MANUAL"
+        assert result[0].status_extended == _review_message(
+            "AWSManagedRulesKnownBadInputsRuleSet has Log4JRCE_BODY overridden to Count"
+        )
+
+    def test_overridden_rules_and_unreadable_web_acl(self):
+        other_arn = f"arn:aws:wafv2:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:regional/webacl/other-acl/def"
+        web_acls = {
+            WEB_ACL_ARN: _web_acl(
+                rules=[
+                    _sqli_rule(rule_action_overrides={"SQLi_BODY": "Count"}),
+                    _known_bad_inputs_rule(),
+                ]
+            ),
+            other_arn: _web_acl(arn=other_arn, name="other-acl", rules_retrieved=False),
+        }
+        result = _run_check(web_acls)
+        assert len(result) == 2
+        assert result[0].status == "MANUAL"
+        assert result[0].resource_arn == WEB_ACL_ARN
+        assert result[0].status_extended == _review_message(
+            "AWSManagedRulesSQLiRuleSet has SQLi_BODY overridden to Count"
+        )
+        assert result[1].status == "MANUAL"
+        assert result[1].resource_id == AWS_ACCOUNT_NUMBER
+        assert "rules could not be retrieved for Web ACLs other-acl" in (
+            result[1].status_extended
+        )
+
+    @mock_aws
+    def test_rule_action_overrides_with_moto(self):
+        web_acl, result = _run_check_with_moto(
+            [
+                _api_managed_rule(
+                    "AWSManagedRulesSQLiRuleSet",
+                    0,
+                    "None",
+                    rule_action_overrides={
+                        "SQLi_BODY": "Count",
+                        "SQLi_COOKIE": "Block",
+                    },
+                ),
+                _api_managed_rule("AWSManagedRulesKnownBadInputsRuleSet", 1, "None"),
+            ]
+        )
+        assert len(result) == 1
+        assert result[0].status == "MANUAL"
+        assert result[0].status_extended == _review_message(
+            "AWSManagedRulesSQLiRuleSet has SQLi_BODY overridden to Count"
+        )
+        assert result[0].resource_id == web_acl["Id"]
+        assert result[0].resource_arn == web_acl["ARN"]
+        assert result[0].region == AWS_REGION_EU_WEST_1
+
+    def test_group_count_override_wins_over_rule_overrides_on_same_reference(self):
+        rules = [
+            _sqli_rule(
+                overridden_to_count=True, rule_action_overrides={"SQLi_BODY": "Count"}
+            ),
+            _known_bad_inputs_rule(),
+        ]
+        result = _run_check({WEB_ACL_ARN: _web_acl(rules=rules)})
+        assert len(result) == 1
+        assert result[0].status == "FAIL"
+        assert (
+            result[0].status_extended
+            == f"AWS WAFv2 Web ACL {WEB_ACL_NAME} does not enforce the AWS managed injection rule groups: AWSManagedRulesSQLiRuleSet is overridden to Count."
+        )
+
+    def test_challenge_rule_override_requires_review(self):
+        rules = [
+            _sqli_rule(rule_action_overrides={"SQLi_BODY": "Challenge"}),
+            _known_bad_inputs_rule(),
+        ]
+        result = _run_check({WEB_ACL_ARN: _web_acl(rules=rules)})
+        assert len(result) == 1
+        assert result[0].status == "MANUAL"
+        assert result[0].status_extended == _review_message(
+            "AWSManagedRulesSQLiRuleSet has SQLi_BODY overridden to Challenge"
+        )
+
+    def test_enforced_reference_listed_first_still_wins(self):
+        rules = [
+            _sqli_rule(),
+            _sqli_rule(overridden_to_count=True),
+            _sqli_rule(excluded_rules=["SQLi_BODY"]),
+            _known_bad_inputs_rule(),
+        ]
+        result = _run_check({WEB_ACL_ARN: _web_acl(rules=rules)})
+        assert len(result) == 1
+        assert result[0].status == "PASS"
+        assert result[0].status_extended == PASS_MESSAGE
+
+    def test_overridden_reference_listed_first_beats_counted_reference(self):
+        rules = [
+            _sqli_rule(excluded_rules=["SQLi_BODY"]),
+            _sqli_rule(overridden_to_count=True),
+            _known_bad_inputs_rule(),
+        ]
+        result = _run_check({WEB_ACL_ARN: _web_acl(rules=rules)})
+        assert len(result) == 1
+        assert result[0].status == "MANUAL"
+        assert result[0].status_extended == _review_message(
+            "AWSManagedRulesSQLiRuleSet has SQLi_BODY overridden to Count"
+        )
+
+    def test_overrides_of_two_references_of_the_same_group_are_merged(self):
+        rules = [
+            _sqli_rule(rule_action_overrides={"SQLi_BODY": "Count"}),
+            _sqli_rule(rule_action_overrides={"SQLi_COOKIE": "Allow"}),
+            _known_bad_inputs_rule(),
+        ]
+        result = _run_check({WEB_ACL_ARN: _web_acl(rules=rules)})
+        assert len(result) == 1
+        assert result[0].status == "MANUAL"
+        assert result[0].status_extended == _review_message(
+            "AWSManagedRulesSQLiRuleSet has SQLi_COOKIE overridden to Allow and SQLi_BODY overridden to Count"
+        )
+
+    def test_details_follow_required_group_order(self):
+        rules = [
+            _known_bad_inputs_rule(rule_action_overrides={"Log4JRCE_BODY": "Count"}),
+            _sqli_rule(rule_action_overrides={"SQLi_BODY": "Count"}),
+        ]
+        result = _run_check({WEB_ACL_ARN: _web_acl(rules=rules)})
+        assert len(result) == 1
+        assert result[0].status == "MANUAL"
+        assert result[0].status_extended == _review_message(
+            "AWSManagedRulesSQLiRuleSet has SQLi_BODY overridden to Count; "
+            "AWSManagedRulesKnownBadInputsRuleSet has Log4JRCE_BODY overridden to Count"
+        )
