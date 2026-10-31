@@ -2,93 +2,105 @@
 title: 'AWS Security Hub'
 ---
 
-AWS Security Hub remains a managed service designed for centralizing security alerts and compliance status within AWS environments. It integrates with various AWS security services and provides a consolidated view of security findings.
+AWS offers [two complementary services](https://docs.aws.amazon.com/securityhub/latest/userguide/what-are-securityhub-services.html) under the Security Hub name, and Prowler works alongside both:
+
+- **AWS Security Hub CSPM:** The service formerly called AWS Security Hub. It evaluates resources against security standards and best practices, and [ingests findings from AWS services and AWS Partner Network solutions](https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-findings-providers.html), including Prowler, in the AWS Security Finding Format (ASFF).
+
+- **AWS Security Hub:** A [unified cloud security service](https://docs.aws.amazon.com/securityhub/latest/userguide/what-is-securityhub-v2.html) that correlates findings from Security Hub CSPM, Amazon GuardDuty, Amazon Inspector, and Amazon Macie in the Open Cybersecurity Schema Framework (OCSF) to prioritize the most critical risks.
+
+Many teams use Prowler for broad, customizable posture checks across every environment they run, and send Prowler findings to Security Hub CSPM to keep a single view of AWS security.
 
 ## Key Features and Strengths
 
-- **Centralized Dashboard for AWS:** Provides a single pane of glass to monitor and manage security findings from multiple AWS services like GuardDuty, Inspector, and Config.
+- **Managed AWS-Native Service:** Security Hub runs inside AWS with no infrastructure to operate and is available from the AWS Management Console.
 
-- **Compliance Checks:** Automatically checks for compliance against standards like CIS and PCI DSS within AWS environments.
+- **Centralized Findings for AWS:** Security Hub CSPM consolidates findings from AWS services such as GuardDuty, Inspector, Macie, AWS Config, and IAM Access Analyzer, as well as from [partner products](https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-findings-providers.html) such as Prowler.
 
-- **AWS Native Automation:** Offers seamless automation for incident response using AWS Lambda and CloudWatch Events, reducing the time to react to security issues.
+- **Managed Security Standards:** Security Hub CSPM evaluates [standards](https://docs.aws.amazon.com/securityhub/latest/userguide/standards-reference.html) such as AWS Foundational Security Best Practices, CIS AWS Foundations Benchmark, PCI DSS, and NIST SP 800-53.
 
-- **User-Friendly Interface:** Accessible via the AWS Management Console, offering a streamlined experience for managing security across AWS accounts.
+- **Microsoft Azure Coverage:** Both services integrate with Microsoft Azure, including automated checks against the CIS Microsoft Azure Foundations Benchmark v4.0 and Azure Foundational Best Practices standards. See the integration guides for [Security Hub](https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-v2-azure.html) and [Security Hub CSPM](https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-azure.html).
 
-## Limitations
+- **Risk Correlation:** Security Hub correlates findings across AWS security services to detect exposures and visualize attack paths.
 
-- **AWS-Centric:** Limited to AWS environments, with no direct support for multi-cloud or hybrid environments.
+- **AWS-Native Automation:** [Automation rules and Amazon EventBridge](https://docs.aws.amazon.com/securityhub/latest/userguide/automations.html) update findings and trigger automated response.
 
-- **Dependency on AWS Config:** Some of its checks depend on AWS Config, which may not be enabled in all regions or accounts.
+## Considerations
 
-- **Vendor Lock-In:** Tightly coupled with AWS, making it less suitable for organizations with a cloud-agnostic strategy.
+- **Coverage Centered on AWS and Azure:** Other clouds, Kubernetes, and SaaS platforms such as Microsoft 365, GitHub, Google Workspace, or Okta fall outside the built-in standards.
+
+- **Dependency on AWS Config:** Security Hub CSPM uses AWS Config rules to generate control findings for AWS resources. When the unified Security Hub is also enabled, Security Hub CSPM [creates a service-linked configuration recorder automatically](https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-setup-prereqs.html). When Security Hub CSPM runs without the unified Security Hub, AWS Config must be enabled manually and recording resources in each region.
+
+- **Regional Configuration:** Security Hub CSPM is enabled per account and region. [Central configuration](https://docs.aws.amazon.com/securityhub/latest/userguide/central-configuration-intro.html) through AWS Organizations simplifies this for multi-account environments.
+
+- **Partner Findings Go to Security Hub CSPM:** Third-party partner findings, including Prowler findings, are sent to Security Hub CSPM. The unified Security Hub [does not receive findings from third-party partner tools](https://aws.amazon.com/security-hub/faqs/).
 
 ## Prowler
 
-Prowler is an open-source, multi-cloud security tool that offers extensive customization and flexibility, making it ideal for organizations with complex or multi-cloud environments. Here are the updated features and advantages:
+Prowler is an open-source, multi-cloud security platform available as Prowler Cloud, Prowler Private Cloud, Prowler CLI, and Prowler Local Server. It offers extensive customization and flexibility for organizations with complex or multi-cloud environments.
 
 ## Main Advantages of Prowler
 
-- **Multi-Region and Multi-Account Scanning by Default:**
-  - Prowler is inherently multi-region and can scan multiple AWS accounts without requiring additional configuration or enabling specific services like AWS Config.
+- **Multi-Region Scanning by Default:** Prowler scans every AWS region without additional configuration and without enabling services such as AWS Config. To cover multiple AWS accounts, Prowler assumes a role in each account: onboard the accounts in Prowler Cloud through [AWS Organizations](/user-guide/tutorials/prowler-cloud-aws-organizations), or run Prowler CLI per account as described in [AWS Organizations in Prowler](/user-guide/providers/aws/organizations).
 
-- **Minimal Setup Requirements:**
-  - All Prowler needs is a role with appropriate permissions to start scanning. There’s no need to enable specific services or configure complex setups.
+- **Minimal Setup Requirements:** Prowler only needs a role with the appropriate read permissions to start scanning.
 
-- **Versatile Execution Environment:**
-  - Prowler can be run from various environments, including a local workstation, container, AWS CloudShell, or even from another AWS account or cloud provider by assuming a role. This flexibility makes it easy to integrate into different operational workflows.
+- **Versatile Execution Environment:** Prowler runs from Prowler Cloud, a local workstation, a container, AWS CloudShell, CI/CD pipelines, or another AWS account or cloud provider by assuming a role.
 
-- **Flexible Results Storage and Sharing:**
-  - Prowler results can be stored directly into an S3 bucket, allowing for quick analysis, or locally for easy sharing and discussion. This flexibility is particularly useful for collaborative security assessments.
+- **Flexible Results Storage and Sharing:** Prowler stores results locally or directly in an Amazon S3 bucket for analysis and collaborative security assessments.
 
-- **Customizable Reporting and Analysis:**
-  - Prowler supports exporting results in multiple formats, including JSON, CSV, OCSF format, and static HTML reports. It also supports integration with Amazon QuickSight for in-depth analysis and offers a SaaS model with resource-based pricing, making it adaptable to different organizational needs.
+- **Customizable Reporting:** Prowler exports results in JSON, CSV, OCSF, ASFF, and HTML formats.
 
-- **Security Hub Integration for Cost-Effective Operations:**
-  - Prowler can send results directly into Security Hub in any AWS account, including only failed findings. This selective reporting can make Security Hub more cost-effective by reducing the volume of data processed.
+- **Custom Checks and Compliance Frameworks:** Custom checks, remediations, and compliance frameworks can be written in minutes to match specific security policies.
 
-- **Custom Checks and Compliance Frameworks:**
-  - Users can write custom checks, remediations, and compliance frameworks in minutes, tailoring the tool to their specific security policies and operational needs.
+- **Extensive Compliance Support:** Prowler supports 40+ compliance framework versions for AWS, including CIS AWS Foundations Benchmark, AWS Foundational Security Best Practices, AWS Well-Architected Framework, NIST SP 800-53, NIST CSF, PCI DSS, ISO/IEC 27001, SOC 2, HIPAA, GDPR, NIS2, ENS, and FedRAMP, and 100+ framework versions across all providers. Explore them in [Prowler Hub](https://hub.prowler.com/compliance).
 
-- **Extensive Compliance Support:**
-  - Prowler supports over 27 compliance frameworks out of the box for AWS, providing comprehensive coverage across various regulatory requirements and best practices.
+- **Multi-Cloud and Beyond:** Prowler provides 2,200+ checks across 20+ providers, including AWS, Microsoft Azure, Google Cloud, Kubernetes (including Amazon EKS), Microsoft 365, GitHub, Google Workspace, Okta, Oracle Cloud Infrastructure, Alibaba Cloud, infrastructure as code, and container images. Explore all checks in [Prowler Hub](https://hub.prowler.com/check).
 
-- **Kubernetes and Multi-Cloud Support:**
-  - Prowler extends its scanning capabilities beyond AWS, offering support for Kubernetes clusters (including EKS), as well as environments in Google Cloud Platform (GCP) and Azure. This multi-cloud capability is essential for organizations with diverse cloud footprints.
+- **All-Region Checks:** Prowler runs its checks in all regions, regardless of AWS Config resource type support.
 
-- **All-Region Checks:**
-  - Prowler runs all checks in all regions, regardless of AWS Config resource type support, ensuring comprehensive coverage across your entire AWS environment.
+## Using Prowler With AWS Security Hub
+
+Prowler is an official partner integration of Security Hub CSPM. Prowler findings are sent in ASFF and appear next to findings from AWS services, so teams keep the AWS-native view while adding Prowler coverage:
+
+- **Prowler Cloud, Prowler Private Cloud, and Prowler Local Server:** Configure the [AWS Security Hub integration](/user-guide/tutorials/prowler-app-security-hub-integration) to export findings automatically after each scan.
+
+- **Prowler CLI:** Add the `--security-hub` flag to send findings, as described in [AWS Security Hub Integration with Prowler](/user-guide/providers/aws/securityhub).
+
+- **Cost Control:** In Prowler CLI, `--send-sh-only-fails` sends only failed findings to Security Hub CSPM while keeping all findings in Prowler outputs. `--status FAIL` also limits what is sent, but it removes passing findings from Prowler outputs as well.
 
 ## Comparison Summary
 
 ### Scope and Environment
 
-- **Security Hub** is ideal for AWS-centric environments needing a managed service for monitoring and automating security across AWS resources.
-- **Prowler** is better suited for organizations operating in multi-cloud or hybrid environments, offering flexibility, customization, and support for multiple cloud providers including AWS, Azure, GCP, and Kubernetes.
+- **Security Hub** suits organizations that want a managed, AWS-native service to monitor, correlate, and automate security across AWS, with additional coverage for Microsoft Azure.
+- **Prowler** suits organizations that need consistent, customizable checks across AWS, Azure, Google Cloud, Kubernetes, SaaS platforms, and more, from a single open-source tool.
 
 ### Setup and Maintenance
 
-- **Security Hub** requires enabling and configuring AWS services by region, per account, and can become more than one person's full-time role – including Config. Security Hub operates only within the AWS ecosystem.
-- **Prowler** requires minimal setup, only needing appropriate permissions, and can be executed from various environments, making it more versatile in different operational contexts.
+- **Security Hub** is enabled per account and region, and Security Hub CSPM relies on AWS Config for control findings on AWS resources, which must be set up manually unless the unified Security Hub is also enabled. AWS Organizations and central configuration help manage this at scale.
+- **Prowler** only needs the appropriate permissions and runs from many environments, without requiring additional AWS services.
 
 ### Customization and Flexibility
 
-- **Security Hub** offers predefined compliance checks and automation within AWS but is less flexible in terms of customization.
-- **Prowler** allows for highly customizable checks, remediation actions, and compliance frameworks, with the ability to adapt quickly to organizational needs and regulatory changes.
+- **Security Hub** offers managed standards and controls, plus automation through AWS services.
+- **Prowler** allows highly customizable checks, remediations, and compliance frameworks that adapt quickly to organizational needs and regulatory changes.
 
 ### Cost Efficiency
 
-- **Security Hub** may involve additional costs for processing and storing findings.
-- **Prowler** can optimize costs by selectively sending failed findings to Security Hub and storing results locally or in S3, which can be more cost-effective.
+- **Security Hub** uses resource-based pricing, with finding ingestion included. Refer to [AWS Security Hub pricing](https://aws.amazon.com/security-hub/pricing/).
+- **Security Hub CSPM** is billed per security check and per finding ingestion event above a monthly free tier. Refer to [AWS Security Hub CSPM pricing](https://aws.amazon.com/security-hub/cspm/pricing/).
+- **Prowler** can reduce Security Hub CSPM finding ingestion costs with `--send-sh-only-fails`, which sends only failed findings while keeping complete results in its own outputs or in Amazon S3.
 
 ### Multi-Cloud and Multi-Region Support
 
-- **Security Hub** is confined to AWS, with region-specific checks depending on AWS Config.
-- **Prowler** is inherently multi-region and multi-cloud, offering consistent and comprehensive checks across different cloud environments and regions.
+- **Security Hub** covers AWS and Microsoft Azure.
+- **Prowler** is inherently multi-region and multi-cloud, with consistent checks across cloud, Kubernetes, and SaaS environments.
 
 ## Conclusion
 
-For a CISO or security professional evaluating these tools, the decision between AWS Security Hub and Prowler will depend on the organization’s cloud strategy, compliance needs, and the level of flexibility required:
+AWS Security Hub and Prowler work best together:
 
-- If the organization is heavily invested in AWS and prefers a managed, integrated security service that offers ease of use and automation within the AWS ecosystem, **AWS Security Hub** is the more appropriate choice.
+- **AWS Security Hub** provides a managed, AWS-native place to aggregate, correlate, and act on security findings.
+- **Prowler** adds transparent, customizable checks and broad compliance coverage across AWS and every other environment an organization runs, and sends its findings to Security Hub CSPM.
 
-- If the organization operates in a multi-cloud environment or requires a highly customizable tool that can run comprehensive, multi-region scans across AWS, Azure, GCP, and Kubernetes, **Prowler** provides a more powerful and flexible solution, especially for those needing to adapt quickly to evolving security and compliance requirements.
+Organizations focused on AWS can rely on Security Hub as their central view and use Prowler to extend checks and compliance coverage. Organizations with multi-cloud or SaaS footprints can use Prowler as a consistent posture layer across all environments while keeping AWS findings in Security Hub.
