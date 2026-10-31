@@ -1,0 +1,1 @@
+`appsync_graphql_api_no_secrets_in_resolvers` check for AWS provider, scanning AppSync resolver request/response mapping templates and data source configurations (HTTP, RDS, DynamoDB, Lambda, OpenSearch, EventBridge) for hardcoded secrets
