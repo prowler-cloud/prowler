@@ -23,9 +23,18 @@ class Core(KubernetesService):
         self._in_worker_node()
 
     def _get_pods(self):
-        try:
-            for namespace in self.namespaces:
+        """List pods from every namespace into ``self.pods``.
+
+        Namespaces that fail while listing or converting their pods are
+        skipped and recorded in ``self.failed_namespaces``; if any
+        failed, a summary is logged at CRITICAL so it remains visible
+        at the default CLI log level.
+        """
+        self.failed_namespaces = []
+        for namespace in self.namespaces:
+            try:
                 pods = self.client.list_namespaced_pod(namespace)
+                namespace_pods = {}
                 for pod in pods.items:
                     containers = self._build_containers(pod.spec.containers)
                     init_containers = self._build_containers(pod.spec.init_containers)
@@ -33,7 +42,7 @@ class Core(KubernetesService):
                         pod.spec.ephemeral_containers
                     )
                     volumes = self._build_volumes(pod.spec.volumes)
-                    self.pods[pod.metadata.uid] = Pod(
+                    namespace_pods[pod.metadata.uid] = Pod(
                         name=pod.metadata.name,
                         uid=pod.metadata.uid,
                         namespace=pod.metadata.namespace,
@@ -57,9 +66,16 @@ class Core(KubernetesService):
                         ephemeral_containers=ephemeral_containers,
                         volumes=volumes,
                     )
-        except Exception as error:
-            logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                self.pods.update(namespace_pods)
+            except Exception as error:
+                self.failed_namespaces.append(namespace)
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] in namespace '{namespace}': {error}"
+                )
+        if self.failed_namespaces:
+            failed = ", ".join(self.failed_namespaces)
+            logger.critical(
+                f"Partial scan: failed to process pods in {len(self.failed_namespaces)} of {len(self.namespaces)} namespaces ({failed}); pod findings do not cover those namespaces"
             )
 
     @staticmethod
