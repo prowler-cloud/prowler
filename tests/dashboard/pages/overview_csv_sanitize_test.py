@@ -82,7 +82,7 @@ class TestSanitizeCsvExport:
                 "REGION": ["us-east-1", "us-west-2"],
                 "SERVICE_NAME": ["s3", "s3"],
                 "CHECK_ID": ["check-one", "check-two"],
-                "CHECK_TITLE": ["First check", "Second check"],
+                "CHECK_TITLE": [value, "Second check"],
                 "RESOURCE_TAGS": [value, "=excluded"],
                 "STATUS": ["PASS", "PASS"],
                 "SEVERITY": ["high", "high"],
@@ -132,6 +132,7 @@ class TestSanitizeCsvExport:
         rows = list(csv.DictReader(StringIO(download["content"])))
         assert len(rows) == 1
         assert rows[0]["RESOURCE_TAGS"] == expected
+        assert rows[0]["CHECK_TITLE"] == expected
         assert rows[0]["REGION"] == "us-east-1"
         assert "=excluded" not in download["content"]
         assert not download["content"].startswith(",")
