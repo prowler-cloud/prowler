@@ -68,9 +68,10 @@ class wafv2_webacl_managed_injection_rule_groups_enabled(Check):
     group's rule actions left in place. A group missing or overridden to
     ``Count`` as a whole fails, since a counted rule group only records
     matches and blocks nothing. A group whose individual rules are overridden
-    to a non-blocking action is reported for manual review: without the
-    group's rule catalog the check cannot tell a partial exception from a
-    wholesale exclusion, and it must not emit a false PASS.
+    to a non-blocking action, or that only inspects the requests matching a
+    scope-down statement, is reported for manual review: without the group's
+    rule catalog and the traffic it fronts the check cannot tell a partial
+    exception from a wholesale exclusion, and it must not emit a false PASS.
     """
 
     def execute(self) -> list[Check_Report_AWS]:
@@ -96,6 +97,8 @@ class wafv2_webacl_managed_injection_rule_groups_enabled(Check):
             # Required rule group -> its rules mapped to the non-blocking
             # actions they are overridden to, across all references.
             overridden_rules = {}
+            # Required rule groups referenced with a scope-down statement.
+            scoped = set()
             for rule in web_acl.rules + web_acl.rule_groups:
                 managed_rule_group = rule.managed_rule_group
                 if not (
@@ -114,7 +117,9 @@ class wafv2_webacl_managed_injection_rule_groups_enabled(Check):
                     )
                     for rule_name, action in rule_overrides.items():
                         group_overrides.setdefault(rule_name, set()).add(action)
-                else:
+                if managed_rule_group.scope_down_statement:
+                    scoped.add(managed_rule_group.name)
+                if not rule_overrides and not managed_rule_group.scope_down_statement:
                     enforced.add(managed_rule_group.name)
 
             failures = []
@@ -122,11 +127,17 @@ class wafv2_webacl_managed_injection_rule_groups_enabled(Check):
             for rule_group_name in REQUIRED_INJECTION_RULE_GROUPS:
                 if rule_group_name in enforced:
                     continue
+                limitations = []
                 if rule_group_name in overridden_rules:
-                    detail = (
-                        f"{rule_group_name} has "
-                        f"{_format_rule_overrides(overridden_rules[rule_group_name])}"
+                    limitations.append(
+                        f"has {_format_rule_overrides(overridden_rules[rule_group_name])}"
                     )
+                if rule_group_name in scoped:
+                    limitations.append(
+                        "only inspects requests matching a scope-down statement"
+                    )
+                if limitations:
+                    detail = f"{rule_group_name} {' and '.join(limitations)}"
                 else:
                     detail = (
                         f"{rule_group_name} is overridden to Count"
@@ -146,9 +157,9 @@ class wafv2_webacl_managed_injection_rule_groups_enabled(Check):
                 report.status = "MANUAL"
                 report.status_extended = (
                     f"AWS WAFv2 Web ACL {web_acl.name} enables the AWS managed "
-                    f"injection rule groups but overrides some of their rules "
-                    f"({'; '.join(details)}); verify that the remaining rules "
-                    f"provide the required injection protection."
+                    f"injection rule groups but limits them "
+                    f"({'; '.join(details)}); verify that they still provide "
+                    f"the required injection protection."
                 )
             else:
                 report.status = "PASS"

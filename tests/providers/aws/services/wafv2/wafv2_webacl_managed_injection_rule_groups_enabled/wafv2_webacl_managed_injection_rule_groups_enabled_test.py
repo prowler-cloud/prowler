@@ -28,11 +28,11 @@ BOTH_MISSING_MESSAGE = f"AWS WAFv2 Web ACL {WEB_ACL_NAME} does not enforce the A
 
 
 def _review_message(overrides):
-    """MANUAL message for a Web ACL that overrides rules of a required group."""
+    """MANUAL message for a Web ACL that limits a required rule group."""
     return (
         f"AWS WAFv2 Web ACL {WEB_ACL_NAME} enables the AWS managed injection rule "
-        f"groups but overrides some of their rules ({overrides}); verify that the "
-        f"remaining rules provide the required injection protection."
+        f"groups but limits them ({overrides}); verify that they still provide "
+        f"the required injection protection."
     )
 
 
@@ -49,6 +49,7 @@ def _managed_rule(
     overridden_to_count=False,
     rule_action_overrides=None,
     excluded_rules=None,
+    scope_down_statement=False,
 ):
     return Rule(
         name=f"{vendor_name}-{name}",
@@ -58,6 +59,7 @@ def _managed_rule(
             name=name,
             rule_action_overrides=rule_action_overrides or {},
             excluded_rules=excluded_rules or [],
+            scope_down_statement=scope_down_statement,
         ),
         overridden_to_count=overridden_to_count,
     )
@@ -660,4 +662,91 @@ class Test_wafv2_webacl_managed_injection_rule_groups_enabled:
         assert result[0].status_extended == expected
 
         result = _run_check({WEB_ACL_ARN: _web_acl(rules=list(reversed(rules)))})
+        assert len(result) == 1
+        assert result[0].status == "MANUAL"
         assert result[0].status_extended == expected
+
+    def test_scoped_rule_group_requires_review(self):
+        rules = [_sqli_rule(scope_down_statement=True), _known_bad_inputs_rule()]
+        result = _run_check({WEB_ACL_ARN: _web_acl(rules=rules)})
+        assert len(result) == 1
+        assert result[0].status == "MANUAL"
+        assert result[0].status_extended == _review_message(
+            "AWSManagedRulesSQLiRuleSet only inspects requests matching a scope-down statement"
+        )
+        assert result[0].resource_arn == WEB_ACL_ARN
+
+    def test_scoped_rule_group_with_overridden_rules(self):
+        rules = [
+            _sqli_rule(),
+            _known_bad_inputs_rule(
+                scope_down_statement=True,
+                rule_action_overrides={"Log4JRCE_HEADER": "Count"},
+            ),
+        ]
+        result = _run_check({WEB_ACL_ARN: _web_acl(rules=rules)})
+        assert len(result) == 1
+        assert result[0].status == "MANUAL"
+        assert result[0].status_extended == _review_message(
+            "AWSManagedRulesKnownBadInputsRuleSet has Log4JRCE_HEADER overridden to Count "
+            "and only inspects requests matching a scope-down statement"
+        )
+
+    def test_unscoped_reference_beats_scoped_reference(self):
+        for rules in (
+            [_sqli_rule(scope_down_statement=True), _sqli_rule()],
+            [_sqli_rule(), _sqli_rule(scope_down_statement=True)],
+        ):
+            result = _run_check(
+                {WEB_ACL_ARN: _web_acl(rules=rules + [_known_bad_inputs_rule()])}
+            )
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert result[0].status_extended == PASS_MESSAGE
+
+    def test_missing_rule_group_and_scoped_rule_group(self):
+        rules = [_known_bad_inputs_rule(scope_down_statement=True)]
+        result = _run_check({WEB_ACL_ARN: _web_acl(rules=rules)})
+        assert len(result) == 1
+        assert result[0].status == "FAIL"
+        assert (
+            result[0].status_extended
+            == f"AWS WAFv2 Web ACL {WEB_ACL_NAME} does not enforce the AWS managed injection rule groups: AWSManagedRulesSQLiRuleSet is missing; AWSManagedRulesKnownBadInputsRuleSet only inspects requests matching a scope-down statement."
+        )
+
+    def test_counted_reference_and_scoped_reference(self):
+        rules = [
+            _sqli_rule(overridden_to_count=True),
+            _sqli_rule(scope_down_statement=True),
+            _known_bad_inputs_rule(),
+        ]
+        result = _run_check({WEB_ACL_ARN: _web_acl(rules=rules)})
+        assert len(result) == 1
+        assert result[0].status == "MANUAL"
+        assert result[0].status_extended == _review_message(
+            "AWSManagedRulesSQLiRuleSet only inspects requests matching a scope-down statement"
+        )
+
+    @mock_aws
+    def test_scoped_rule_group_with_moto(self):
+        scoped_rule = _api_managed_rule("AWSManagedRulesSQLiRuleSet", 0, "None")
+        scoped_rule["Statement"]["ManagedRuleGroupStatement"]["ScopeDownStatement"] = {
+            "ByteMatchStatement": {
+                "SearchString": "/api",
+                "FieldToMatch": {"UriPath": {}},
+                "TextTransformations": [{"Type": "NONE", "Priority": 0}],
+                "PositionalConstraint": "STARTS_WITH",
+            }
+        }
+        web_acl, result = _run_check_with_moto(
+            [
+                scoped_rule,
+                _api_managed_rule("AWSManagedRulesKnownBadInputsRuleSet", 1, "None"),
+            ]
+        )
+        assert len(result) == 1
+        assert result[0].status == "MANUAL"
+        assert result[0].status_extended == _review_message(
+            "AWSManagedRulesSQLiRuleSet only inspects requests matching a scope-down statement"
+        )
+        assert result[0].resource_arn == web_acl["ARN"]

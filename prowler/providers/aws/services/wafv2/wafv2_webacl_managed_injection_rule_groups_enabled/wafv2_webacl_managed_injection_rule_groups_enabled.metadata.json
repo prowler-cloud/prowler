@@ -12,7 +12,7 @@
   "Severity": "high",
   "ResourceType": "AwsWafv2WebAcl",
   "ResourceGroup": "network",
-  "Description": "**WAFv2 Web ACLs** are evaluated to confirm that both the `AWSManagedRulesSQLiRuleSet` and `AWSManagedRulesKnownBadInputsRuleSet` managed rule groups are attached, directly or through AWS Firewall Manager, with their `OverrideAction` set to `None`, so matching requests are blocked rather than only counted. Rules of these groups overridden to a non-blocking action need manual review.",
+  "Description": "**WAFv2 Web ACLs** are evaluated to confirm that both the `AWSManagedRulesSQLiRuleSet` and `AWSManagedRulesKnownBadInputsRuleSet` managed rule groups are attached, directly or through AWS Firewall Manager, with their `OverrideAction` set to `None`, so matching requests are blocked rather than only counted. Non-blocking rule overrides or scope-down statements on these groups need manual review.",
   "Risk": "Without both rule groups enforced, SQL injection payloads and known exploit probes (Log4j JNDI strings, Java deserialization payloads, vulnerable-path scans) reach the application and any AI endpoint behind the Web ACL uninspected, exposing databases, prompts and data stores to **data exfiltration** and **integrity** loss. A group overridden to Count logs matches but lets requests through.",
   "RelatedUrl": "",
   "AdditionalURLs": [
@@ -40,5 +40,5 @@
     "wafv2_webacl_managed_rule_groups_enabled",
     "wafv2_webacl_with_rules"
   ],
-  "Notes": "A rule group overridden to Count as a whole is reported as FAIL. Per-rule action overrides other than Block (RuleActionOverrides) and legacy ExcludedRules, which set the rule to Count, are reported as MANUAL naming the affected rules: without the group's rule catalog the check cannot tell a partial exception from a wholesale exclusion and must not emit a false PASS. A rule group that is also referenced without overrides still passes. Scope-down statements are retained by the collector but not evaluated. Managed rule groups attached through AWS Firewall Manager policies are evaluated. Web ACLs that could not be listed or read (including CLOUDFRONT Web ACLs when us-east-1 is not scanned) are reported in one account-level MANUAL finding."
+  "Notes": "A rule group overridden to Count as a whole is reported as FAIL. Per-rule action overrides other than Block (RuleActionOverrides) and legacy ExcludedRules, which set the rule to Count, are reported as MANUAL naming the affected rules: without the group's rule catalog the check cannot tell a partial exception from a wholesale exclusion and must not emit a false PASS. A rule group referenced only with a scope-down statement is also reported as MANUAL, since requests outside the scope are not inspected by it. A rule group that is also referenced without overrides and without a scope-down statement still passes. Managed rule groups attached through AWS Firewall Manager policies are evaluated. Web ACLs that could not be listed or read (including CLOUDFRONT Web ACLs when us-east-1 is not scanned) are reported in one account-level MANUAL finding."
 }
