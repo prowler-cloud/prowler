@@ -31,7 +31,7 @@ class WAFv2(AWSService):
     def _list_web_acls_global(self):
         logger.info("WAFv2 - Listing Global Web ACLs...")
         try:
-            for wafv2 in self.client.list_web_acls(Scope="CLOUDFRONT")["WebACLs"]:
+            for wafv2 in self._list_all_web_acls(self.client, Scope.CLOUDFRONT):
                 if not self.audit_resources or (
                     is_resource_filtered(wafv2["ARN"], self.audit_resources)
                 ):
@@ -53,10 +53,33 @@ class WAFv2(AWSService):
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    @staticmethod
+    def _list_all_web_acls(client, scope: "Scope") -> list[dict]:
+        """List every Web ACL of a scope, following ``NextMarker`` pages.
+
+        Args:
+            client: WAFv2 boto3 client of the region to list.
+            scope: Scope of the Web ACLs to list.
+
+        Returns:
+            The ``WebACLs`` summaries of all pages. A failing page raises, so
+            callers record the scope as not listed instead of keeping a
+            partial inventory silently.
+        """
+        web_acls = []
+        list_kwargs = {"Scope": scope.value}
+        while True:
+            response = client.list_web_acls(**list_kwargs)
+            web_acls.extend(response.get("WebACLs", []))
+            next_marker = response.get("NextMarker")
+            if not next_marker:
+                return web_acls
+            list_kwargs["NextMarker"] = next_marker
+
     def _list_web_acls_regional(self, regional_client):
         logger.info("WAFv2 - Listing Regional Web ACLs...")
         try:
-            for wafv2 in regional_client.list_web_acls(Scope="REGIONAL")["WebACLs"]:
+            for wafv2 in self._list_all_web_acls(regional_client, Scope.REGIONAL):
                 if not self.audit_resources or (
                     is_resource_filtered(wafv2["ARN"], self.audit_resources)
                 ):

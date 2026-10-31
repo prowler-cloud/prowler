@@ -6,6 +6,7 @@ from moto import mock_aws
 
 from prowler.providers.aws.services.wafv2.wafv2_service import WAFv2
 from tests.providers.aws.utils import (
+    AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_WEST_1,
     AWS_REGION_US_EAST_1,
     set_mocked_aws_provider,
@@ -556,3 +557,62 @@ class Test_WAFv2_Service:
         assert web_acl.rules_retrieved
         assert web_acl.rules == []
         assert web_acl.rule_groups == []
+
+    @mock_aws
+    def test_list_web_acls_follows_next_marker(self):
+        def web_acl_summary(scope, name):
+            prefix = "global" if scope == "CLOUDFRONT" else "regional"
+            return {
+                "Name": name,
+                "Id": f"{name}-id",
+                "ARN": f"arn:aws:wafv2:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:{prefix}/webacl/{name}/{name}-id",
+            }
+
+        def mock_make_api_call(self, operation_name, kwarg):
+            if operation_name == "ListWebACLs":
+                scope = kwarg["Scope"].lower()
+                if "NextMarker" not in kwarg:
+                    return {
+                        "WebACLs": [web_acl_summary(kwarg["Scope"], f"{scope}-page-1")],
+                        "NextMarker": f"{scope}-marker",
+                    }
+                assert kwarg["NextMarker"] == f"{scope}-marker"
+                return {"WebACLs": [web_acl_summary(kwarg["Scope"], f"{scope}-page-2")]}
+            return make_api_call(self, operation_name, kwarg)
+
+        aws = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        with patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call):
+            wafv2 = WAFv2(aws)
+
+        assert sorted(web_acl.name for web_acl in wafv2.web_acls.values()) == [
+            "cloudfront-page-1",
+            "cloudfront-page-2",
+            "regional-page-1",
+            "regional-page-2",
+        ]
+        assert wafv2.web_acls_list_failed_scopes == set()
+
+    @mock_aws
+    def test_list_web_acls_failing_page_records_failed_scope(self):
+        def mock_make_api_call(self, operation_name, kwarg):
+            if operation_name == "ListWebACLs" and kwarg["Scope"] == "REGIONAL":
+                if "NextMarker" in kwarg:
+                    raise _client_error(operation_name)
+                return {
+                    "WebACLs": [
+                        {
+                            "Name": "page-1",
+                            "Id": "page-1-id",
+                            "ARN": f"arn:aws:wafv2:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:regional/webacl/page-1/page-1-id",
+                        }
+                    ],
+                    "NextMarker": "marker",
+                }
+            return make_api_call(self, operation_name, kwarg)
+
+        aws = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        with patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call):
+            wafv2 = WAFv2(aws)
+
+        assert wafv2.web_acls == {}
+        assert wafv2.web_acls_list_failed_scopes == {f"REGIONAL:{AWS_REGION_EU_WEST_1}"}

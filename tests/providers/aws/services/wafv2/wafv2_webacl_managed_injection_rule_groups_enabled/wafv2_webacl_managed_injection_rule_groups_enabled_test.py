@@ -644,3 +644,20 @@ class Test_wafv2_webacl_managed_injection_rule_groups_enabled:
             "AWSManagedRulesSQLiRuleSet has SQLi_BODY overridden to Count; "
             "AWSManagedRulesKnownBadInputsRuleSet has Log4JRCE_BODY overridden to Count"
         )
+
+    def test_same_rule_overridden_to_different_actions_lists_both(self):
+        rules = [
+            _sqli_rule(rule_action_overrides={"SQLi_BODY": "Count"}),
+            _sqli_rule(rule_action_overrides={"SQLi_BODY": "Captcha"}),
+            _known_bad_inputs_rule(),
+        ]
+        expected = _review_message(
+            "AWSManagedRulesSQLiRuleSet has SQLi_BODY overridden to Captcha and SQLi_BODY overridden to Count"
+        )
+        result = _run_check({WEB_ACL_ARN: _web_acl(rules=rules)})
+        assert len(result) == 1
+        assert result[0].status == "MANUAL"
+        assert result[0].status_extended == expected
+
+        result = _run_check({WEB_ACL_ARN: _web_acl(rules=list(reversed(rules)))})
+        assert result[0].status_extended == expected

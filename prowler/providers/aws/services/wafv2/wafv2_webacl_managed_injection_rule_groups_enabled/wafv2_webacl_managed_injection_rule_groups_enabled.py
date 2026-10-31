@@ -38,18 +38,21 @@ def _non_blocking_rule_overrides(
     return overrides
 
 
-def _format_rule_overrides(overrides: dict[str, str]) -> str:
+def _format_rule_overrides(overrides: dict[str, set[str]]) -> str:
     """Format rule overrides as ``SQLi_BODY, SQLi_COOKIE overridden to Count``.
 
     Args:
-        overrides: Rule names mapped to the action they were overridden to.
+        overrides: Rule names mapped to every action they were overridden to
+            across the references of the rule group.
 
     Returns:
         The overridden rules grouped by action, actions joined with ``and``.
+        A rule overridden to several actions is listed under each of them.
     """
     rules_by_action = defaultdict(list)
-    for rule_name, action in overrides.items():
-        rules_by_action[action].append(rule_name)
+    for rule_name, actions in overrides.items():
+        for action in actions:
+            rules_by_action[action].append(rule_name)
     return " and ".join(
         f"{', '.join(sorted(rule_names))} overridden to {action}"
         for action, rule_names in sorted(rules_by_action.items())
@@ -90,7 +93,8 @@ class wafv2_webacl_managed_injection_rule_groups_enabled(Check):
 
             enforced = set()
             counted = set()
-            # Required rule group -> its rules overridden to a non-blocking action.
+            # Required rule group -> its rules mapped to the non-blocking
+            # actions they are overridden to, across all references.
             overridden_rules = {}
             for rule in web_acl.rules + web_acl.rule_groups:
                 managed_rule_group = rule.managed_rule_group
@@ -105,9 +109,11 @@ class wafv2_webacl_managed_injection_rule_groups_enabled(Check):
                     continue
                 rule_overrides = _non_blocking_rule_overrides(managed_rule_group)
                 if rule_overrides:
-                    overridden_rules.setdefault(managed_rule_group.name, {}).update(
-                        rule_overrides
+                    group_overrides = overridden_rules.setdefault(
+                        managed_rule_group.name, {}
                     )
+                    for rule_name, action in rule_overrides.items():
+                        group_overrides.setdefault(rule_name, set()).add(action)
                 else:
                     enforced.add(managed_rule_group.name)
 
