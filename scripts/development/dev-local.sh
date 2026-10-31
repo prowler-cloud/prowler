@@ -109,7 +109,14 @@ services_up() {
   # longer mkdir _data/logs and `make dev` fails (see #13082).
   # Creating it first keeps it user-owned; the later mkdir in all_run
   # stays as an idempotent safety net.
-  mkdir -p "$REPO_ROOT/_data/logs"
+  # Anyone who already ran the broken version has a root-owned _data,
+  # so this mkdir fails: say how to fix it instead of leaving the bare
+  # "Permission denied". The chown is deliberately non-recursive, since
+  # _data/postgres and _data/neo4j need to keep their container owners.
+  if ! mkdir -p "$REPO_ROOT/_data/logs" 2>/dev/null; then
+    warn "_data is owned by root (created by Docker). Run: sudo chown \"${USER:-$(id -un)}\" _data"
+    exit 1
+  fi
   log "Starting postgres + valkey + neo4j via Docker (waits for healthchecks)..."
   "${COMPOSE[@]}" -f "$COMPOSE_FILE" up -d --wait postgres valkey neo4j
   ok "Services ready: pg:${POSTGRES_PORT} / valkey:${VALKEY_PORT} / neo4j:${NEO4J_PORT} / neo4j-http:${NEO4J_HTTP_PORT}"
