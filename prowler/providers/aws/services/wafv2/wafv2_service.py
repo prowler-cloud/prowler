@@ -15,6 +15,9 @@ class WAFv2(AWSService):
         region = "us-east-1" if provider.identity.partition == "aws" else None
         super().__init__(__class__.__name__, provider, region=region)
         self.web_acls = {}
+        # "SCOPE:region" keys of the ListWebACLs calls that failed, so checks can
+        # surface the blind spot instead of silently returning no findings.
+        self.web_acls_list_failed_scopes = set()
         if self.audited_partition == "aws":
             self._list_web_acls_global()
         self.__threading_call__(self._list_web_acls_regional)
@@ -28,7 +31,7 @@ class WAFv2(AWSService):
     def _list_web_acls_global(self):
         logger.info("WAFv2 - Listing Global Web ACLs...")
         try:
-            for wafv2 in self.client.list_web_acls(Scope="CLOUDFRONT")["WebACLs"]:
+            for wafv2 in self._list_all_web_acls(self.client, Scope.CLOUDFRONT):
                 if not self.audit_resources or (
                     is_resource_filtered(wafv2["ARN"], self.audit_resources)
                 ):
@@ -43,14 +46,40 @@ class WAFv2(AWSService):
                         region=self.region,
                     )
         except Exception as error:
+            self.web_acls_list_failed_scopes.add(
+                f"{Scope.CLOUDFRONT.value}:{self.region}"
+            )
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    @staticmethod
+    def _list_all_web_acls(client, scope: "Scope") -> list[dict]:
+        """List every Web ACL of a scope, following ``NextMarker`` pages.
+
+        Args:
+            client: WAFv2 boto3 client of the region to list.
+            scope: Scope of the Web ACLs to list.
+
+        Returns:
+            The ``WebACLs`` summaries of all pages. A failing page raises, so
+            callers record the scope as not listed instead of keeping a
+            partial inventory silently.
+        """
+        web_acls = []
+        list_kwargs = {"Scope": scope.value}
+        while True:
+            response = client.list_web_acls(**list_kwargs)
+            web_acls.extend(response.get("WebACLs", []))
+            next_marker = response.get("NextMarker")
+            if not next_marker:
+                return web_acls
+            list_kwargs["NextMarker"] = next_marker
+
     def _list_web_acls_regional(self, regional_client):
         logger.info("WAFv2 - Listing Regional Web ACLs...")
         try:
-            for wafv2 in regional_client.list_web_acls(Scope="REGIONAL")["WebACLs"]:
+            for wafv2 in self._list_all_web_acls(regional_client, Scope.REGIONAL):
                 if not self.audit_resources or (
                     is_resource_filtered(wafv2["ARN"], self.audit_resources)
                 ):
@@ -65,6 +94,9 @@ class WAFv2(AWSService):
                         region=regional_client.region,
                     )
         except Exception as error:
+            self.web_acls_list_failed_scopes.add(
+                f"{Scope.REGIONAL.value}:{regional_client.region}"
+            )
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
@@ -121,7 +153,7 @@ class WAFv2(AWSService):
                 f"{acl.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def _get_web_acl(self, acl: str):
+    def _get_web_acl(self, acl: "WebAclv2"):
         logger.info("WAFv2 - Getting Web ACL...")
         try:
             if acl.scope == Scope.REGIONAL or acl.region in self.regional_clients:
@@ -131,50 +163,37 @@ class WAFv2(AWSService):
                 )
 
                 try:
-                    rules = get_web_acl.get("WebACL", {}).get("Rules", [])
-                    for rule in rules:
-                        managed_statement = rule.get("Statement", {}).get(
-                            "ManagedRuleGroupStatement"
+                    web_acl = get_web_acl.get("WebACL")
+                    if web_acl is None:
+                        # Without the WebACL the rules are unknown, not empty:
+                        # leave rules_retrieved unset so checks report MANUAL.
+                        logger.error(
+                            f"{acl.region} -- GetWebACL returned no WebACL for Web ACL {acl.name}"
                         )
-                        new_rule = Rule(
-                            name=rule.get("Name", ""),
-                            cloudwatch_metrics_enabled=rule.get(
-                                "VisibilityConfig", {}
-                            ).get("CloudWatchMetricsEnabled", False),
-                            managed_rule_group=(
-                                ManagedRuleGroup(
-                                    vendor_name=managed_statement.get("VendorName", ""),
-                                    name=managed_statement.get("Name", ""),
-                                    version=managed_statement.get("Version", ""),
-                                )
-                                if managed_statement
-                                else None
-                            ),
-                        )
-                        if (
-                            rule.get("Statement", {})
-                            .get("RuleGroupReferenceStatement", {})
-                            .get("ARN")
-                        ):
+                        return
+                    for rule in web_acl.get("Rules", []):
+                        statement = rule.get("Statement", {})
+                        new_rule = self._build_rule(rule, statement)
+                        if statement.get("RuleGroupReferenceStatement", {}).get("ARN"):
                             acl.rule_groups.append(new_rule)
                         else:
                             acl.rules.append(new_rule)
 
-                    firewall_manager_managed_rg = get_web_acl.get("WebACL", {}).get(
+                    firewall_manager_managed_rg = web_acl.get(
                         "PreProcessFirewallManagerRuleGroups", []
-                    ) + get_web_acl.get("WebACL", {}).get(
-                        "PostProcessFirewallManagerRuleGroups", []
-                    )
+                    ) + web_acl.get("PostProcessFirewallManagerRuleGroups", [])
 
                     for rule in firewall_manager_managed_rg:
                         acl.rule_groups.append(
-                            Rule(
-                                name=rule.get("Name", ""),
-                                cloudwatch_metrics_enabled=rule.get(
-                                    "VisibilityConfig", {}
-                                ).get("CloudWatchMetricsEnabled", False),
+                            self._build_rule(
+                                rule, rule.get("FirewallManagerStatement", {})
                             )
                         )
+
+                    # Only a fully parsed rule list can be evaluated: a failure
+                    # above leaves the flag unset so checks do not mistake an
+                    # unread Web ACL for one without rules.
+                    acl.rules_retrieved = True
 
                 except Exception as error:
                     logger.error(
@@ -185,6 +204,52 @@ class WAFv2(AWSService):
             logger.error(
                 f"{acl.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+
+    @staticmethod
+    def _build_rule(rule: dict, statement: dict) -> "Rule":
+        """Build a Rule from a Web ACL rule or a Firewall Manager rule group.
+
+        Args:
+            rule: Raw ``Rule`` or ``FirewallManagerRuleGroup`` from GetWebACL.
+            statement: The rule's ``Statement`` or ``FirewallManagerStatement``.
+
+        Returns:
+            Rule with its CloudWatch metrics flag, whether its ``OverrideAction``
+            is ``Count`` and, when the statement is a
+            ``ManagedRuleGroupStatement``, the managed rule group it references
+            together with its per-rule action overrides, excluded rules and
+            whether a scope-down statement narrows it.
+        """
+        managed_statement = statement.get("ManagedRuleGroupStatement")
+        return Rule(
+            name=rule.get("Name", ""),
+            cloudwatch_metrics_enabled=rule.get("VisibilityConfig", {}).get(
+                "CloudWatchMetricsEnabled", False
+            ),
+            managed_rule_group=(
+                ManagedRuleGroup(
+                    vendor_name=managed_statement.get("VendorName", ""),
+                    name=managed_statement.get("Name", ""),
+                    version=managed_statement.get("Version", ""),
+                    rule_action_overrides={
+                        override.get("Name", ""): next(
+                            iter(override.get("ActionToUse") or {}), ""
+                        )
+                        for override in managed_statement.get("RuleActionOverrides", [])
+                    },
+                    excluded_rules=[
+                        excluded.get("Name", "")
+                        for excluded in managed_statement.get("ExcludedRules", [])
+                    ],
+                    scope_down_statement=bool(
+                        managed_statement.get("ScopeDownStatement")
+                    ),
+                )
+                if managed_statement
+                else None
+            ),
+            overridden_to_count="Count" in (rule.get("OverrideAction") or {}),
+        )
 
     def _list_tags(self, resource: any):
         logger.info("WAFv2 - Listing tags...")
@@ -218,6 +283,13 @@ class ManagedRuleGroup(BaseModel):
     vendor_name: str
     name: str
     version: str = ""
+    # Rules of the group whose action is overridden, mapped to the action used
+    # (Count, Block, Allow, Captcha or Challenge).
+    rule_action_overrides: dict[str, str] = {}
+    # Rules of the group switched to Count through the legacy ExcludedRules.
+    excluded_rules: list[str] = []
+    # True when a ScopeDownStatement narrows the requests the group inspects.
+    scope_down_statement: bool = False
 
 
 class Rule(BaseModel):
@@ -226,6 +298,9 @@ class Rule(BaseModel):
     name: str
     cloudwatch_metrics_enabled: bool = False
     managed_rule_group: Optional[ManagedRuleGroup] = None
+    # True when OverrideAction is Count: the referenced rule group only counts
+    # the requests it matches instead of applying its rule actions.
+    overridden_to_count: bool = False
 
 
 class WebAclv2(BaseModel):
@@ -242,3 +317,6 @@ class WebAclv2(BaseModel):
     scope: Scope = Scope.REGIONAL
     rules: list[Rule] = []
     rule_groups: list[Rule] = []
+    # True once GetWebACL was read and parsed. False means the rules are unknown,
+    # not empty, so checks can report MANUAL instead of a false PASS or FAIL.
+    rules_retrieved: bool = False
