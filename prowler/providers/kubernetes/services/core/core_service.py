@@ -27,8 +27,8 @@ class Core(KubernetesService):
 
         Namespaces that fail while listing or converting their pods are
         skipped and recorded in ``self.failed_namespaces``; if any
-        failed, a warning is logged so a partial scan is not mistaken
-        for a complete one.
+        failed, a summary is logged at CRITICAL so it remains visible
+        at the default CLI log level.
         """
         self.failed_namespaces = []
         for namespace in self.namespaces:
@@ -74,8 +74,8 @@ class Core(KubernetesService):
                 )
         if self.failed_namespaces:
             failed = ", ".join(self.failed_namespaces)
-            logger.warning(
-                f"Partial scan: failed to process pods in {len(self.failed_namespaces)} of {len(self.namespaces)} namespaces ({failed}); findings do not cover those namespaces"
+            logger.critical(
+                f"Partial scan: failed to process pods in {len(self.failed_namespaces)} of {len(self.namespaces)} namespaces ({failed}); pod findings do not cover those namespaces"
             )
 
     @staticmethod

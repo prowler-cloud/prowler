@@ -1,5 +1,7 @@
+import logging
 from unittest.mock import Mock, patch
 
+import pytest
 from kubernetes.client.rest import ApiException
 
 from kubernetes import client
@@ -179,8 +181,7 @@ def test_get_pods_logs_namespace_on_error():
 
 def test_get_pods_all_namespaces_fail():
     """Every namespace failing yields no pods and no propagated exception.
-    This documents current behavior: a fully failed scan is stored the
-    same way as an empty one."""
+    Each failure still produces a namespace-specific error log."""
 
     def list_namespaced_pod(namespace):
         raise ApiException(status=403, reason="Forbidden")
@@ -230,8 +231,8 @@ def test_get_pods_warns_when_namespaces_fail():
     ) as mock_logger:
         core._get_pods()
 
-    mock_logger.warning.assert_called_once()
-    message = mock_logger.warning.call_args.args[0]
+    mock_logger.critical.assert_called_once()
+    message = mock_logger.critical.call_args.args[0]
     assert "forbidden" in message
     assert "1 of 3" in message
 
@@ -252,8 +253,8 @@ def test_get_pods_all_fail_records_every_namespace():
 
     assert core.pods == {}
     assert core.failed_namespaces == ["default", "kube-system"]
-    mock_logger.warning.assert_called_once()
-    assert "2 of 2" in mock_logger.warning.call_args.args[0]
+    mock_logger.critical.assert_called_once()
+    assert "2 of 2" in mock_logger.critical.call_args.args[0]
 
 
 def test_get_pods_no_failures_no_warning():
@@ -267,6 +268,7 @@ def test_get_pods_no_failures_no_warning():
 
     assert core.failed_namespaces == []
     mock_logger.warning.assert_not_called()
+    mock_logger.critical.assert_not_called()
 
 
 def test_get_pods_empty_namespace_is_not_a_failure():
@@ -281,3 +283,69 @@ def test_get_pods_empty_namespace_is_not_a_failure():
     assert core.pods == {}
     assert core.failed_namespaces == []
     mock_logger.warning.assert_not_called()
+    mock_logger.critical.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    "failed_namespaces",
+    [["forbidden"], ["default", "forbidden", "kube-system"]],
+    ids=["partial-failure", "all-failed"],
+)
+def test_get_pods_reports_incomplete_scan_at_default_log_level(
+    failed_namespaces, caplog
+):
+    """Incomplete scans remain visible at the CLI's default CRITICAL level."""
+
+    def list_namespaced_pod(namespace):
+        if namespace in failed_namespaces:
+            raise ApiException(status=403, reason="Forbidden")
+        return _pod_list_for(namespace)
+
+    core = _build_core(["default", "forbidden", "kube-system"], list_namespaced_pod)
+
+    with caplog.at_level(logging.CRITICAL):
+        core._get_pods()
+
+    assert [record.getMessage() for record in caplog.records] == [
+        f"Partial scan: failed to process pods in {len(failed_namespaces)} of 3 "
+        f"namespaces ({', '.join(failed_namespaces)}); "
+        "pod findings do not cover those namespaces"
+    ]
+
+
+def test_get_pods_discards_namespace_when_later_pod_is_invalid():
+    """A late conversion failure discards only that namespace's staged pods."""
+
+    def list_namespaced_pod(namespace):
+        if namespace == "invalid":
+            return client.V1PodList(
+                items=[
+                    _make_pod("valid", namespace, "uid-valid"),
+                    _make_pod("invalid", namespace, None),
+                ]
+            )
+        return _pod_list_for(namespace)
+
+    core = _build_core(["default", "invalid", "kube-system"], list_namespaced_pod)
+
+    core._get_pods()
+
+    assert set(core.pods) == {"uid-default", "uid-kube-system"}
+    assert core.failed_namespaces == ["invalid"]
+
+
+def test_get_pods_no_namespaces_is_not_a_failure():
+    """An empty namespace selection produces no partial-scan diagnostic."""
+    core = _build_core([], lambda ns: _pod_list_for(ns))
+
+    with patch(
+        "prowler.providers.kubernetes.services.core.core_service.logger"
+    ) as mock_logger:
+        core._get_pods()
+
+    assert core.pods == {}
+    assert core.failed_namespaces == []
+    core.client.list_namespaced_pod.assert_not_called()
+    mock_logger.error.assert_not_called()
+    mock_logger.warning.assert_not_called()
+    mock_logger.critical.assert_not_called()
