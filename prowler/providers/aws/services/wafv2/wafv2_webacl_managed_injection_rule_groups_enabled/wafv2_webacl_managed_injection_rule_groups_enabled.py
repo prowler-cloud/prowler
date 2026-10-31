@@ -12,6 +12,9 @@ REQUIRED_INJECTION_RULE_GROUPS = (
 # Overriding a rule to Block keeps it blocking; any other override (Count,
 # Allow, Captcha or Challenge) stops the rule from blocking what it matches.
 BLOCKING_RULE_ACTION = "Block"
+# Allow terminates rule evaluation, so a rule overridden to Allow in one
+# reference lets matching requests skip every later reference of the group.
+TERMINATING_ALLOW_ACTION = "Allow"
 
 
 def _non_blocking_rule_overrides(
@@ -72,6 +75,11 @@ class wafv2_webacl_managed_injection_rule_groups_enabled(Check):
     scope-down statement, is reported for manual review: without the group's
     rule catalog and the traffic it fronts the check cannot tell a partial
     exception from a wholesale exclusion, and it must not emit a false PASS.
+    A group with a rule overridden to ``Allow`` in any reference is never
+    counted as enforced through another reference: ``Allow`` terminates
+    evaluation, so whether the other reference still sees those requests
+    depends on the evaluation order (Firewall Manager pre-process groups and
+    rule priorities), which the check does not evaluate.
     """
 
     def execute(self) -> list[Check_Report_AWS]:
@@ -99,6 +107,8 @@ class wafv2_webacl_managed_injection_rule_groups_enabled(Check):
             overridden_rules = {}
             # Required rule groups referenced with a scope-down statement.
             scoped = set()
+            # Required rule groups with a rule overridden to Allow.
+            allow_overridden = set()
             for rule in web_acl.rules + web_acl.rule_groups:
                 managed_rule_group = rule.managed_rule_group
                 if not (
@@ -117,6 +127,8 @@ class wafv2_webacl_managed_injection_rule_groups_enabled(Check):
                     )
                     for rule_name, action in rule_overrides.items():
                         group_overrides.setdefault(rule_name, set()).add(action)
+                        if action == TERMINATING_ALLOW_ACTION:
+                            allow_overridden.add(managed_rule_group.name)
                 if managed_rule_group.scope_down_statement:
                     scoped.add(managed_rule_group.name)
                 if not rule_overrides and not managed_rule_group.scope_down_statement:
@@ -125,7 +137,10 @@ class wafv2_webacl_managed_injection_rule_groups_enabled(Check):
             failures = []
             details = []
             for rule_group_name in REQUIRED_INJECTION_RULE_GROUPS:
-                if rule_group_name in enforced:
+                if (
+                    rule_group_name in enforced
+                    and rule_group_name not in allow_overridden
+                ):
                     continue
                 limitations = []
                 if rule_group_name in overridden_rules:

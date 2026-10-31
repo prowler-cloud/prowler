@@ -750,3 +750,41 @@ class Test_wafv2_webacl_managed_injection_rule_groups_enabled:
             "AWSManagedRulesSQLiRuleSet only inspects requests matching a scope-down statement"
         )
         assert result[0].resource_arn == web_acl["ARN"]
+
+    def test_firewall_manager_allow_override_beats_unmodified_reference(self):
+        web_acl = _web_acl(
+            rules=[_sqli_rule(), _known_bad_inputs_rule()],
+            rule_groups=[_sqli_rule(rule_action_overrides={"SQLi_BODY": "Allow"})],
+        )
+        result = _run_check({WEB_ACL_ARN: web_acl})
+        assert len(result) == 1
+        assert result[0].status == "MANUAL"
+        assert result[0].status_extended == _review_message(
+            "AWSManagedRulesSQLiRuleSet has SQLi_BODY overridden to Allow"
+        )
+
+    def test_allow_override_beats_unmodified_reference_in_any_order(self):
+        for rules in (
+            [_sqli_rule(rule_action_overrides={"SQLi_BODY": "Allow"}), _sqli_rule()],
+            [_sqli_rule(), _sqli_rule(rule_action_overrides={"SQLi_BODY": "Allow"})],
+        ):
+            result = _run_check(
+                {WEB_ACL_ARN: _web_acl(rules=rules + [_known_bad_inputs_rule()])}
+            )
+            assert len(result) == 1
+            assert result[0].status == "MANUAL"
+            assert result[0].status_extended == _review_message(
+                "AWSManagedRulesSQLiRuleSet has SQLi_BODY overridden to Allow"
+            )
+
+    def test_non_terminating_override_does_not_beat_unmodified_reference(self):
+        for action in ("Count", "Captcha", "Challenge"):
+            rules = [
+                _sqli_rule(rule_action_overrides={"SQLi_BODY": action}),
+                _sqli_rule(),
+                _known_bad_inputs_rule(),
+            ]
+            result = _run_check({WEB_ACL_ARN: _web_acl(rules=rules)})
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert result[0].status_extended == PASS_MESSAGE
