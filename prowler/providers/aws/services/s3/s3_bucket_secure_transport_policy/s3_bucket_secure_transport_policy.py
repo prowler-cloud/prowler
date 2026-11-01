@@ -1,4 +1,8 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
+from prowler.providers.aws.services.iam.lib.policy import (
+    has_public_principal,
+    iam_pattern_matches,
+)
 from prowler.providers.aws.services.s3.s3_client import s3_client
 
 
@@ -14,27 +18,59 @@ class s3_bucket_secure_transport_policy(Check):
             else:
                 report.status = "FAIL"
                 report.status_extended = f"S3 Bucket {bucket.name} allows requests over insecure transport in the bucket policy."
-                for statement in bucket.policy["Statement"]:
-                    if (
-                        statement["Effect"] == "Deny"
-                        and "Condition" in statement
-                        and "Action" in statement
-                        and (
-                            "s3:PutObject" in statement["Action"]
-                            or "*" in statement["Action"]
-                            or "s3:*" in statement["Action"]
-                        )
-                    ):
-                        if "Bool" in statement["Condition"]:
-                            if "aws:SecureTransport" in statement["Condition"]["Bool"]:
-                                if (
-                                    statement["Condition"]["Bool"][
-                                        "aws:SecureTransport"
-                                    ]
-                                    == "false"
-                                ):
-                                    report.status = "PASS"
-                                    report.status_extended = f"S3 Bucket {bucket.name} has a bucket policy to deny requests over insecure transport."
+                statements = bucket.policy.get("Statement", [])
+                if not isinstance(statements, list):
+                    statements = [statements]
+                for statement in statements:
+                    if _denies_insecure_transport_for_everyone(statement):
+                        report.status = "PASS"
+                        report.status_extended = f"S3 Bucket {bucket.name} has a bucket policy to deny requests over insecure transport."
+                        break
 
             findings.append(report)
         return findings
+
+
+def _denies_insecure_transport_for_everyone(statement: dict) -> bool:
+    """Whether a bucket policy statement denies s3:PutObject over HTTP to every requester.
+
+    The statement must be a Deny that applies to all principals, its Action must cover
+    s3:PutObject under IAM wildcard matching, and its only condition must be
+    aws:SecureTransport being false. Conditions are ANDed, so any other condition key
+    narrows the deny and leaves HTTP allowed for requests outside it.
+
+    Args:
+        statement: A statement from the bucket policy.
+
+    Returns:
+        True when the statement enforces secure transport for every requester.
+    """
+    if not isinstance(statement, dict) or statement.get("Effect") != "Deny":
+        return False
+    if not has_public_principal(statement):
+        return False
+
+    actions = statement.get("Action", [])
+    if isinstance(actions, str):
+        actions = [actions]
+    if not any(
+        isinstance(action, str) and iam_pattern_matches(action, "s3:PutObject")
+        for action in actions
+    ):
+        return False
+
+    condition = statement.get("Condition", {})
+    if not isinstance(condition, dict) or list(condition) != ["Bool"]:
+        return False
+    bool_condition = condition["Bool"]
+    # Condition key names are case-insensitive in IAM
+    if not isinstance(bool_condition, dict) or [
+        key.lower() for key in bool_condition
+    ] != ["aws:securetransport"]:
+        return False
+
+    values = next(iter(bool_condition.values()))
+    if not isinstance(values, list):
+        values = [values]
+    # Values of a single condition key are ORed, and AWS accepts both "false" and false
+    return any(str(value).lower() == "false" for value in values)
