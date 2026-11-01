@@ -16,7 +16,7 @@ dev = [
 
 [project]
 dependencies = [
-  "fastmcp==3.4.5",
+  "fastmcp==3.4.10",
   "httpx==0.28.1"
 ]
 description = "MCP server for Prowler ecosystem"
