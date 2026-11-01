@@ -1,12 +1,12 @@
 dependencies:
 - name: postgresql
   repository: oci://registry-1.docker.io/bitnamicharts
-  version: 18.2.0
+  version: 18.12.15
 - name: valkey
   repository: https://valkey.io/valkey-helm/
   version: 0.9.3
 - name: neo4j
   repository: https://helm.neo4j.com/neo4j
   version: 2025.12.1
-digest: sha256:da19233c6832727345fcdb314d683d30aa347d349f270023f3a67149bffb009b
-generated: "2026-01-26T12:00:06.798702+02:00"
+digest: sha256:9f876d6adb4777197b59a78e6e2ef12a10b8a663109be8cd421c0743feadc3e7
+generated: "2026-11-01T10:30:49.010954413Z"
