@@ -293,14 +293,14 @@ class TestGenerateOutputs:
     @patch("tasks.tasks.get_compliance_frameworks")
     @patch("tasks.tasks.Compliance.get_bulk")
     @patch("tasks.tasks.initialize_prowler_provider")
-    @patch("tasks.tasks.Provider.objects.get")
+    @patch("tasks.tasks.Provider.objects.select_related")
     @patch("tasks.tasks.ScanSummary.objects.filter")
     @patch("tasks.tasks.Finding.all_objects.filter")
     def test_generate_outputs_happy_path(
         self,
         mock_finding_filter,
         mock_scan_summary_filter,
-        mock_provider_get,
+        mock_provider_select_related,
         mock_initialize_provider,
         mock_compliance_get_bulk,
         mock_get_available_frameworks,
@@ -312,7 +312,7 @@ class TestGenerateOutputs:
         mock_provider = MagicMock()
         mock_provider.uid = "provider-uid"
         mock_provider.provider = "aws"
-        mock_provider_get.return_value = mock_provider
+        mock_provider_select_related.return_value.get.return_value = mock_provider
 
         prowler_provider = MagicMock()
         mock_initialize_provider.return_value = prowler_provider
@@ -378,7 +378,8 @@ class TestGenerateOutputs:
     def test_generate_outputs_fails_upload(self):
         with (
             patch("tasks.tasks.ScanSummary.objects.filter") as mock_filter,
-            patch("tasks.tasks.Provider.objects.get"),
+            patch("tasks.tasks.ScanSummary.objects.select_related"),
+            patch("tasks.tasks.Provider.objects.select_related"),
             patch("tasks.tasks.initialize_prowler_provider"),
             patch("tasks.tasks.Compliance.get_bulk"),
             patch("tasks.tasks.get_compliance_frameworks"),
@@ -567,7 +568,10 @@ class TestGenerateOutputs:
         with (
             patch("tasks.tasks.get_prowler_provider_compliance", return_value={}),
             patch("tasks.tasks.ScanSummary.objects.filter") as mock_filter,
-            patch("tasks.tasks.Provider.objects.get", return_value=mock_provider),
+            patch(
+                "tasks.tasks.Provider.objects.select_related",
+                **{"return_value.get.return_value": mock_provider},
+            ),
             patch("tasks.tasks.initialize_prowler_provider"),
             patch("tasks.tasks.Compliance.get_bulk", return_value={"cis": MagicMock()}),
             patch("tasks.tasks.get_compliance_frameworks", return_value=["cis"]),
@@ -644,7 +648,7 @@ class TestGenerateOutputs:
 
         with (
             patch("tasks.tasks.ScanSummary.objects.filter") as mock_summary,
-            patch("tasks.tasks.Provider.objects.get"),
+            patch("tasks.tasks.Provider.objects.select_related"),
             patch("tasks.tasks.initialize_prowler_provider"),
             patch("tasks.tasks.Compliance.get_bulk"),
             patch("tasks.tasks.get_compliance_frameworks", return_value=[]),
@@ -724,8 +728,12 @@ class TestGenerateOutputs:
             patch("tasks.tasks.get_prowler_provider_compliance", return_value={}),
             patch("tasks.tasks.ScanSummary.objects.filter") as mock_summary,
             patch(
-                "tasks.tasks.Provider.objects.get",
-                return_value=MagicMock(uid="UID", provider="aws"),
+                "tasks.tasks.Provider.objects.select_related",
+                **{
+                    "return_value.get.return_value": MagicMock(
+                        uid="UID", provider="aws"
+                    )
+                },
             ),
             patch("tasks.tasks.initialize_prowler_provider"),
             patch(
@@ -798,7 +806,10 @@ class TestGenerateOutputs:
         with (
             patch("tasks.tasks.get_prowler_provider_compliance", return_value={}),
             patch("tasks.tasks.ScanSummary.objects.filter") as mock_filter,
-            patch("tasks.tasks.Provider.objects.get", return_value=mock_provider),
+            patch(
+                "tasks.tasks.Provider.objects.select_related",
+                **{"return_value.get.return_value": mock_provider},
+            ),
             patch("tasks.tasks.initialize_prowler_provider"),
             patch("tasks.tasks.Compliance.get_bulk", return_value={"cis": MagicMock()}),
             patch("tasks.tasks.get_compliance_frameworks", return_value=["cis"]),
@@ -856,7 +867,7 @@ class TestGenerateOutputs:
         """Test that generate_outputs_task only processes enabled S3 integrations."""
         with (
             patch("tasks.tasks.ScanSummary.objects.filter") as mock_summary,
-            patch("tasks.tasks.Provider.objects.get"),
+            patch("tasks.tasks.Provider.objects.select_related"),
             patch("tasks.tasks.initialize_prowler_provider"),
             patch("tasks.tasks.Compliance.get_bulk"),
             patch("tasks.tasks.get_compliance_frameworks", return_value=[]),
@@ -1244,7 +1255,7 @@ class TestCheckIntegrationsTask:
     @patch("tasks.tasks.s3_integration_task")
     @patch("tasks.tasks.Integration.objects.filter")
     @patch("tasks.tasks.ScanSummary.objects.filter")
-    @patch("tasks.tasks.Provider.objects.get")
+    @patch("tasks.tasks.Provider.objects.select_related")
     @patch("tasks.tasks.initialize_prowler_provider")
     @patch("tasks.tasks.Compliance.get_bulk")
     @patch("tasks.tasks.get_compliance_frameworks")
@@ -1269,7 +1280,7 @@ class TestCheckIntegrationsTask:
         mock_get_frameworks,
         mock_compliance_bulk,
         mock_initialize_provider,
-        mock_provider_get,
+        mock_provider_select_related,
         mock_scan_summary,
         mock_integration_filter,
         mock_s3_task,
@@ -1285,7 +1296,7 @@ class TestCheckIntegrationsTask:
         mock_provider = MagicMock()
         mock_provider.uid = "aws-account-123"
         mock_provider.provider = "aws"
-        mock_provider_get.return_value = mock_provider
+        mock_provider_select_related.return_value.get.return_value = mock_provider
 
         # Mock SecurityHub integration exists
         mock_security_hub_integrations = MagicMock()
@@ -1374,7 +1385,7 @@ class TestCheckIntegrationsTask:
     @patch("tasks.tasks.s3_integration_task")
     @patch("tasks.tasks.Integration.objects.filter")
     @patch("tasks.tasks.ScanSummary.objects.filter")
-    @patch("tasks.tasks.Provider.objects.get")
+    @patch("tasks.tasks.Provider.objects.select_related")
     @patch("tasks.tasks.initialize_prowler_provider")
     @patch("tasks.tasks.Compliance.get_bulk")
     @patch("tasks.tasks.get_compliance_frameworks")
@@ -1399,7 +1410,7 @@ class TestCheckIntegrationsTask:
         mock_get_frameworks,
         mock_compliance_bulk,
         mock_initialize_provider,
-        mock_provider_get,
+        mock_provider_select_related,
         mock_scan_summary,
         mock_integration_filter,
         mock_s3_task,
@@ -1415,7 +1426,7 @@ class TestCheckIntegrationsTask:
         mock_provider = MagicMock()
         mock_provider.uid = "aws-account-123"
         mock_provider.provider = "aws"
-        mock_provider_get.return_value = mock_provider
+        mock_provider_select_related.return_value.get.return_value = mock_provider
 
         # Mock NO SecurityHub integration
         mock_security_hub_integrations = MagicMock()
@@ -1499,7 +1510,7 @@ class TestCheckIntegrationsTask:
 
     @patch("tasks.tasks.get_prowler_provider_compliance", return_value={})
     @patch("tasks.tasks.ScanSummary.objects.filter")
-    @patch("tasks.tasks.Provider.objects.get")
+    @patch("tasks.tasks.Provider.objects.select_related")
     @patch("tasks.tasks.initialize_prowler_provider")
     @patch("tasks.tasks.Compliance.get_bulk")
     @patch("tasks.tasks.get_compliance_frameworks")
@@ -1524,7 +1535,7 @@ class TestCheckIntegrationsTask:
         mock_get_frameworks,
         mock_compliance_bulk,
         mock_initialize_provider,
-        mock_provider_get,
+        mock_provider_select_related,
         mock_scan_summary,
         mock_get_prowler_compliance,
     ):
@@ -1538,7 +1549,7 @@ class TestCheckIntegrationsTask:
         mock_provider = MagicMock()
         mock_provider.uid = "azure-subscription-123"
         mock_provider.provider = "azure"  # Non-AWS provider
-        mock_provider_get.return_value = mock_provider
+        mock_provider_select_related.return_value.get.return_value = mock_provider
 
         # Mock other necessary components
         mock_initialize_provider.return_value = MagicMock()

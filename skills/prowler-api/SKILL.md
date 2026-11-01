@@ -29,13 +29,15 @@ For **generic DRF patterns** (ViewSets, Serializers, Filters, JSON:API), use `dj
 
 - ALWAYS use `rls_transaction(tenant_id)` when querying outside ViewSet context
 - ALWAYS use `get_role()` before checking permissions (returns FIRST role only)
-- ALWAYS use `@set_tenant` then `@handle_provider_deletion` decorator order
+- ALWAYS use `@set_tenant` then `@handle_provider_deletion` decorator order, EXCEPT in long-running tasks (see note below)
 - ALWAYS use explicit through models for M2M relationships (required for RLS)
 - NEVER access `Provider.objects` without RLS context in Celery tasks
 - NEVER bypass RLS by using raw SQL or `connection.cursor()`
 - NEVER use Django's default M2M - RLS requires through models with `tenant_id`
 
 > **Note**: `rls_transaction()` accepts both UUID objects and strings - it converts internally via `str(value)`.
+
+> **Note**: `@set_tenant` is the default for Celery tasks, but it wraps the whole task in `transaction.atomic`. A task that keeps running after it is done with the writer - rendering, compression, uploads - must NOT use it, or it holds ACCESS SHARE on every table it read until the task ends, and any DDL waiting on one of those tables queues every later reader behind itself. Such tasks scope each writer access to its own short `rls_transaction(tenant_id)` instead, which is the first rule above applied strictly. See `generate_outputs_task` in `api/src/backend/tasks/tasks.py`. Anything read inside one of those transactions and used after it closes must be materialized first (`list()`, `select_related()`), since a lazy queryset or relation resolves with no tenant context.
 
 ---
 
