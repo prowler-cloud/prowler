@@ -25,7 +25,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 # =============================================================================
 # Final stage - Minimal runtime environment
 # =============================================================================
-FROM python:3.13.16-alpine3.23@sha256:07b20c774a247152e74f622034c1482495d299e070eec620ddff13e01264290b
+FROM python:3.15.1-alpine3.23@sha256:cb295b554dbbea09b2c0e6e6d9ce55f051347c902fbb611e618c071addfb30a3
 
 LABEL maintainer="https://github.com/prowler-cloud"
 
