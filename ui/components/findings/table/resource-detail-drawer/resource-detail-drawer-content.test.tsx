@@ -707,6 +707,43 @@ describe("ResourceDetailDrawerContent — resource navigation", () => {
   });
 });
 
+describe("ResourceDetailDrawerContent — sample data", () => {
+  it("should not link sample resources to pages or consoles that lack them", () => {
+    // Given
+    const { container } = render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating={false}
+        checkMeta={mockCheckMeta}
+        currentIndex={0}
+        totalResources={1}
+        currentFinding={{
+          ...mockFinding,
+          id: "sample-finding-s3_bucket_public_access-1",
+          resourceId: "sample-resource-s3_bucket-1",
+          resourceUid: "arn:aws:s3:::acme-customer-exports",
+          providerType: "aws",
+        }}
+        otherFindings={[]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    // Then
+    expect(
+      screen.queryByRole("link", { name: "View Resource" }),
+    ).not.toBeInTheDocument();
+    const hrefs = Array.from(container.querySelectorAll("a")).map((link) =>
+      link.getAttribute("href"),
+    );
+    expect(hrefs.filter((href) => href?.includes("aws.amazon.com"))).toEqual(
+      [],
+    );
+  });
+});
+
 describe("ResourceDetailDrawerContent — triage drawer actions", () => {
   it("should render Triage and Add Triage Note for other findings rows", () => {
     // Given

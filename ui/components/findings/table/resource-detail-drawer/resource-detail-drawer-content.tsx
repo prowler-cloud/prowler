@@ -337,17 +337,22 @@ export function ResourceDetailDrawerContent({
   const regionFilter = searchParams.get("filter[region__in]");
   const nativeIacConfig = resolveNativeIacConfig(providerType);
   const showOverviewCheckMetaContent = showCheckMetaContent;
-  const resourceDetailHref = f?.resourceId
-    ? buildResourceDetailHref(f.resourceId)
-    : null;
-  const externalResourceTarget = resolveExternalTarget({
-    providerType,
-    resourceUid,
-    providerUid,
-    resourceName,
-    findingUid: f?.uid,
-    region: resourceRegion,
-  });
+  // Resources and Scans have no sample data, so sample records link nowhere.
+  const resourceDetailHref =
+    f?.resourceId && !isSampleId(f.resourceId)
+      ? buildResourceDetailHref(f.resourceId)
+      : null;
+  // The sample account is not theirs: its console links would open nothing.
+  const externalResourceTarget = isSampleId(f?.resourceId)
+    ? null
+    : resolveExternalTarget({
+        providerType,
+        resourceUid,
+        providerUid,
+        resourceName,
+        findingUid: f?.uid,
+        region: resourceRegion,
+      });
   const findingRecommendationUrl = f?.remediation.recommendation.url;
   const checkRecommendationUrl = checkMeta.remediation.recommendation.url;
   const recommendationUrl = isNonEmptyString(findingRecommendationUrl)
@@ -1132,16 +1137,18 @@ export function ResourceDetailDrawerContent({
                   <p className="text-text-neutral-secondary text-xs">
                     Showing the latest scan that evaluated this finding
                   </p>
-                  <Button variant="link" size="link-sm" asChild>
-                    <Link
-                      href={`/scans?filter[id__in]=${f?.scan?.id}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      View scan
-                      <ExternalLink className="size-3" />
-                    </Link>
-                  </Button>
+                  {!isSampleId(f?.scan?.id) && (
+                    <Button variant="link" size="link-sm" asChild>
+                      <Link
+                        href={`/scans?filter[id__in]=${f?.scan?.id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        View scan
+                        <ExternalLink className="size-3" />
+                      </Link>
+                    </Button>
+                  )}
                 </div>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                   <InfoField label="Scan Name" variant="compact">
