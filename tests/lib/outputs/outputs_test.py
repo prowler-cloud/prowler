@@ -1,3 +1,4 @@
+from datetime import datetime
 from unittest import mock
 
 import pytest
@@ -11,6 +12,7 @@ from prowler.lib.outputs.outputs import (
     set_report_color,
 )
 from prowler.lib.outputs.utils import (
+    is_plain_json,
     parse_html_string,
     parse_json_tags,
     sanitize_csv_value,
@@ -1362,3 +1364,21 @@ class TestSanitizeCSVValue:
     @pytest.mark.parametrize("value", [" ", "\n", "  text"])
     def test_whitespace_without_initiator_is_untouched(self, value):
         assert sanitize_csv_value(value) == value
+
+    def test_is_plain_json_accepts_json_types(self):
+        assert is_plain_json({"a": [1, 2.5, "x", True, None, {"b": {}}]})
+        assert is_plain_json(None)
+        assert is_plain_json([])
+
+    def test_is_plain_json_rejects_tuples(self):
+        assert not is_plain_json({"t": (1, 2)})
+
+    def test_is_plain_json_rejects_non_str_keys(self):
+        assert not is_plain_json({1: "a"})
+
+    def test_is_plain_json_rejects_objects(self):
+        class Opaque:
+            pass
+
+        assert not is_plain_json({"o": Opaque()})
+        assert not is_plain_json({"d": datetime(2024, 1, 1)})

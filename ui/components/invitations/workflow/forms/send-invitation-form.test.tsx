@@ -101,7 +101,7 @@ describe("SendInvitationForm", () => {
       <SendInvitationForm
         roles={ROLES}
         isSelectorDisabled={false}
-        source="onboarding"
+        source="provider_connect"
         onSuccess={onSuccess}
       />,
     );
@@ -113,6 +113,6 @@ describe("SendInvitationForm", () => {
     await waitFor(() => expect(onSuccess).toHaveBeenCalledWith("inv-1"));
     expect(pushMock).not.toHaveBeenCalled();
     const formData = sendInviteMock.mock.calls[0]?.[0] as FormData;
-    expect(formData.get("source")).toBe("onboarding");
+    expect(formData.get("source")).toBe("provider_connect");
   });
 });

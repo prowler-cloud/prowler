@@ -15,7 +15,6 @@ Validation after review fixes on September 9, 2026:
 | `pnpm run lint:check`           | Passed; excluded the unrelated `.claude/` checkout                                       |
 | Prettier check on changed files | Passed                                                                                   |
 | `pnpm run build`                | Passed                                                                                   |
-| `pnpm run tour:check`           | Six tours and 19 anchors checked                                                         |
 
 The Registry browser suite includes regressions for replacing a rejected key, disabling every Add button during an installation, refreshing an expired owner image, and confirming credential state and collections once. Unit tests cover late completion after the dialog deadline and a single shared failure result when catalog refresh fails. The three removed browser test files covered only the global animation changes withdrawn from this PR.
 
@@ -25,7 +24,7 @@ The controlled E2E uses real Next.js servers, authentication, proxy, Server Acti
 
 The reload regression aborts a pending Server Action request. The shared watcher preserves the backend task ID on page hide, resumes it after reload or browser history restoration, and emits one confirmation after reading tenant membership. Pending metadata contains artifact identifiers or the prior-credential flag, never submitted keys.
 
-See [the scenario catalog](registry.md) and [the Add Provider tour report](add-provider-tour-report.md).
+See [the scenario catalog](registry.md).
 
 ## Registry Environment Configuration
 

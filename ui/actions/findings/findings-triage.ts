@@ -9,6 +9,7 @@ import {
 } from "@/actions/findings/findings-triage.adapter";
 import { createMuteRule } from "@/actions/mute-rules";
 import { apiBaseUrl, getAuthHeaders } from "@/lib";
+import { ACTION_ERROR_STATUS, UsageLimitError } from "@/lib/action-errors";
 import { handleApiResponse } from "@/lib/server-actions-helper";
 import {
   FINDING_TRIAGE_STATUS_LABELS,
@@ -17,6 +18,7 @@ import {
   type FindingTriageDetail,
   type FindingTriageLoadedNote,
   type FindingTriageSummary,
+  type FindingTriageUsageLimitedResult,
   isMutelistShortcutStatus,
   type UpdateFindingTriageInput,
 } from "@/types/findings-triage";
@@ -70,6 +72,15 @@ async function getJsonApi(path: `/${string}`) {
 }
 
 const throwIfApiError = (result: unknown) => {
+  if (
+    result &&
+    typeof result === "object" &&
+    "status" in result &&
+    result.status === ACTION_ERROR_STATUS.PAYMENT_REQUIRED
+  ) {
+    throw new UsageLimitError();
+  }
+
   if (
     result &&
     typeof result === "object" &&
@@ -270,6 +281,17 @@ export async function loadFindingTriageDetail(
 }
 
 export async function updateFindingTriage(input: UpdateFindingTriageInput) {
+  try {
+    return await applyFindingTriageUpdate(input);
+  } catch (error) {
+    if (error instanceof UsageLimitError) {
+      return { usageLimited: true } satisfies FindingTriageUsageLimitedResult;
+    }
+    throw error;
+  }
+}
+
+async function applyFindingTriageUpdate(input: UpdateFindingTriageInput) {
   let findingUid: string | undefined;
   let triagePath: `/${string}`;
 

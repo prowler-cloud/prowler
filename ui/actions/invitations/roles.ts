@@ -1,7 +1,7 @@
 "use server";
 
 import { getRoles } from "@/actions/roles";
-import type { InvitationRoleOption } from "@/types/onboarding-invite";
+import type { InvitationRoleOption } from "@/types/invitations";
 
 const ROLES_PAGE_SIZE = 50;
 

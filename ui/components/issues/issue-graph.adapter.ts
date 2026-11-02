@@ -1,6 +1,6 @@
 import { AttackPathView } from "@/lib/attack-paths/group-graph";
 import { GraphEdge, GraphNode } from "@/types/attack-paths";
-import { IssueAttributes, IssueFinding } from "@/types/issues";
+import { IssueAttributes, IssueFinding, LEG_STATE } from "@/types/issues";
 
 /** Resources drawn before the rest are left to the list below the graph. */
 export const GRAPH_RESOURCE_LIMIT = 12;
@@ -22,6 +22,10 @@ const RESOURCE_LABELS: [RegExp, string][] = [
 
 const resourceLabel = (uid: string) =>
   RESOURCE_LABELS.find(([pattern]) => pattern.test(uid))?.[1] ?? "Resource";
+
+/** The id and edge Attack Paths gives the internet, so it draws the same node. */
+const INTERNET_NODE_ID = "internet";
+const REACHABLE: string[] = [LEG_STATE.YES, LEG_STATE.PARTIAL];
 
 /** The last path or ARN segment: what an operator calls the resource. */
 const shortName = (uid: string) =>
@@ -104,6 +108,37 @@ export const buildIssueGraph = (
   evidence.forEach(({ checkId, uid }) =>
     addFinding(uid, checkId, { check_title: checkId }),
   );
+
+  // A path that starts on the internet starts at the Internet node, drawn the
+  // way Attack Paths draws it. Each edge stands on a reachability check that
+  // failed on that resource: the leg's verdict alone is aggregate and would
+  // claim every resource is exposed.
+  const reachability = issue.legs?.reachability;
+  if (
+    issue.attacker_start === "internet" &&
+    reachability &&
+    REACHABLE.includes(reachability.state)
+  ) {
+    const cited = new Set(
+      reachability.evidence.map((line) => line.split(" · ")[1]),
+    );
+    const reached = resources.filter((uid) => cited.has(uid));
+    if (reached.length > 0) {
+      nodes.unshift({
+        id: INTERNET_NODE_ID,
+        labels: ["Internet"],
+        properties: { name: "Internet" },
+      });
+    }
+    reached.forEach((uid) =>
+      edges.push({
+        id: `${INTERNET_NODE_ID}->${uid}`,
+        source: INTERNET_NODE_ID,
+        target: resourceId(uid),
+        type: "CAN_ACCESS",
+      }),
+    );
+  }
 
   return { nodes, edges, groupMembers: new Map() };
 };

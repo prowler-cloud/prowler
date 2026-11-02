@@ -40,7 +40,7 @@ export default async function Findings({
   const { filters, query } = extractFiltersAndQuery(resolvedSearchParams);
 
   // The page shell awaits only what both the filters and the table depend on:
-  // the completed scans (onboarding + scan filter) and the scan date range.
+  // the completed scans (scan filter) and the scan date range.
   const [scansData, filtersWithScanDates] = await Promise.all([
     getScans({
       pageSize: 50,
@@ -68,21 +68,8 @@ export default async function Findings({
         scan.attributes.unique_resource_count > 1,
     ) || [];
 
-  const onboardingAction =
-    completedScans.length > 0
-      ? { flowId: "explore-findings" }
-      : {
-          flowId: "explore-findings",
-          fallbackFlowId: "view-first-scan",
-          useFallback: true,
-        };
-
   return (
-    <ContentLayout
-      title="Findings"
-      icon={<Tag />}
-      onboardingAction={onboardingAction}
-    >
+    <ContentLayout title="Findings" icon={<Tag />}>
       <FilterTransitionWrapper>
         <div className="mb-6">
           <Suspense fallback={<FindingsFiltersSkeleton />}>

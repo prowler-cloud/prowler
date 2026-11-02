@@ -11,6 +11,9 @@ export const SIDE_PANEL_DEFAULT_WIDTH = 480;
 // detail view widens the panel to at least this.
 export const SIDE_PANEL_DETAIL_MIN_WIDTH = 720;
 
+// DOM id of the global side panel, so dialogs beside it can tell its events apart.
+export const SIDE_PANEL_ELEMENT_ID = "global-side-panel";
+
 // Media query matching the breakpoint where the panel switches from
 // full-width overlay to fixed-width push panel (Tailwind `sm`).
 export const SIDE_PANEL_PUSH_MEDIA_QUERY = "(min-width: 640px)";

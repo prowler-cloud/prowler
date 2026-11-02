@@ -1,4 +1,7 @@
-import type { LighthouseSkillDefinition } from "@/types/lighthouse-skills";
+import type {
+  LighthouseSkillDefinition,
+  LighthouseSkillSurface,
+} from "@/types/lighthouse-skills";
 
 import { LIGHTHOUSE_SKILLS } from "./definitions";
 
@@ -6,10 +9,18 @@ export function getAllSkills(): readonly LighthouseSkillDefinition[] {
   return LIGHTHOUSE_SKILLS;
 }
 
+export function getSkillsForSurface(
+  surface: LighthouseSkillSurface,
+): readonly LighthouseSkillDefinition[] {
+  return LIGHTHOUSE_SKILLS.filter((skill) => skill.surface === surface);
+}
+
 // Launch surfaces (cards, row menus) render disabled skills as "coming soon"
 // but only these can actually start a run.
-export function getLaunchableSkills(): readonly LighthouseSkillDefinition[] {
-  return LIGHTHOUSE_SKILLS.filter((skill) => skill.enabled);
+export function getLaunchableSkills(
+  surface: LighthouseSkillSurface,
+): readonly LighthouseSkillDefinition[] {
+  return getSkillsForSurface(surface).filter((skill) => skill.enabled);
 }
 
 export function getSkillById(

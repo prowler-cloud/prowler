@@ -1,4 +1,4 @@
-FROM python:3.12.15-slim-trixie@sha256:05cda9777409a9c3ffddd94a4c476b79f0769a0b4857f0c7ed9226b6800b0d6f AS build
+FROM python:3.12.16-slim-trixie@sha256:8523d6abeb48ceae0b7240d30c5808fc26cb79c1a635bacdf19cf3baecfbec07 AS build
 
 LABEL maintainer="https://github.com/prowler-cloud/api"
 
@@ -134,8 +134,10 @@ RUN uv sync --locked --no-install-project && \
     rm -rf ~/.cache/uv
 
 # Invoked as a module so the base image's Python minor version is not baked
-# into a site-packages path.
-RUN .venv/bin/python -m prowler.providers.m365.lib.powershell.m365_powershell
+# into a site-packages path. Drop the MicrosoftTeams build SBOM: Trivy reports the npm
+# tooling it declares as installed, though none ships (see .trivyignore.yaml).
+RUN .venv/bin/python -m prowler.providers.m365.lib.powershell.m365_powershell && \
+    rm -rf /home/prowler/.local/share/powershell/Modules/MicrosoftTeams/*/_manifest
 
 USER root
 
