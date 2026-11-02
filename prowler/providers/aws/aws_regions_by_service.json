@@ -1176,7 +1176,6 @@
           "eu-west-3",
           "il-central-1",
           "me-central-1",
-          "me-south-1",
           "mx-central-1",
           "sa-east-1",
           "us-east-1",
@@ -3273,7 +3272,9 @@
           "cn-north-1",
           "cn-northwest-1"
         ],
-        "aws-eusc": [],
+        "aws-eusc": [
+          "eusc-de-east-1"
+        ],
         "aws-iso": [],
         "aws-iso-b": [],
         "aws-iso-e": [],
@@ -6248,24 +6249,6 @@
         "aws-us-gov": []
       }
     },
-    "finspace-data": {
-      "regions": {
-        "aws": [
-          "ca-central-1",
-          "eu-west-1",
-          "us-east-1",
-          "us-east-2",
-          "us-west-2"
-        ],
-        "aws-cn": [],
-        "aws-eusc": [],
-        "aws-iso": [],
-        "aws-iso-b": [],
-        "aws-iso-e": [],
-        "aws-iso-f": [],
-        "aws-us-gov": []
-      }
-    },
     "firehose": {
       "regions": {
         "aws": [
@@ -7543,6 +7526,7 @@
     "interconnect": {
       "regions": {
         "aws": [
+          "eu-north-1",
           "eu-south-1"
         ],
         "aws-cn": [],
@@ -11147,6 +11131,7 @@
           "ap-southeast-4",
           "ap-southeast-5",
           "ap-southeast-6",
+          "ca-central-1",
           "eu-central-1",
           "eu-north-1",
           "eu-south-1",
@@ -13986,13 +13971,16 @@
           "ap-southeast-1",
           "ap-southeast-2",
           "ap-southeast-3",
+          "ap-southeast-4",
           "ap-southeast-5",
+          "ap-southeast-7",
           "ca-central-1",
           "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
           "eu-south-1",
+          "eu-south-2",
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
@@ -14031,13 +14019,16 @@
           "ap-southeast-1",
           "ap-southeast-2",
           "ap-southeast-3",
+          "ap-southeast-4",
           "ap-southeast-5",
+          "ap-southeast-7",
           "ca-central-1",
           "ca-west-1",
           "eu-central-1",
           "eu-central-2",
           "eu-north-1",
           "eu-south-1",
+          "eu-south-2",
           "eu-west-1",
           "eu-west-2",
           "eu-west-3",
