@@ -116,6 +116,18 @@ class Test_Cloudflare_Schema:
     def test_negative_retries_dropped(self):
         assert _validate("cloudflare", {"max_retries": -1}) == {}
 
+    def test_account_thresholds_round_trip(self):
+        raw = {"max_super_admins": 3, "max_unused_api_token_days": 90}
+        assert _validate("cloudflare", raw) == raw
+
+    def test_out_of_range_account_thresholds_dropped(self):
+        assert (
+            _validate(
+                "cloudflare", {"max_super_admins": 0, "max_unused_api_token_days": 1}
+            )
+            == {}
+        )
+
 
 class Test_Okta_Schema:
     def test_valid_values_round_trip(self):

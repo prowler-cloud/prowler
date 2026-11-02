@@ -1,0 +1,28 @@
+from prowler.lib.check.models import Check, CheckReportCloudflare
+from prowler.providers.cloudflare.services.r2.r2_client import r2_client
+
+
+class r2_bucket_public_dev_url_disabled(Check):
+    """Ensure that R2 buckets are not publicly readable through their r2.dev URL.
+
+    Enabling the r2.dev development URL makes every object in the bucket
+    readable by anyone on the internet, without authentication, caching, WAF or
+    access controls.
+    """
+
+    def execute(self) -> list[CheckReportCloudflare]:
+        findings = []
+        for bucket in r2_client.buckets:
+            if bucket.public_dev_url_enabled is None:
+                continue
+            report = CheckReportCloudflare(metadata=self.metadata(), resource=bucket)
+            if bucket.public_dev_url_enabled:
+                report.status = "FAIL"
+                report.status_extended = f"R2 bucket {bucket.name} is publicly readable through its r2.dev URL{f' ({bucket.public_dev_url})' if bucket.public_dev_url else ''}."
+            else:
+                report.status = "PASS"
+                report.status_extended = (
+                    f"R2 bucket {bucket.name} has public r2.dev access disabled."
+                )
+            findings.append(report)
+        return findings
