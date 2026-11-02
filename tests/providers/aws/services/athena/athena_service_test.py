@@ -74,7 +74,14 @@ class Test_Athena_Service:
         if filter_resources:
             athena.audit_resources = [second_arn]
 
-        with Stubber(regional_client) as stubber:
+        with (
+            patch.object(
+                regional_client,
+                "list_work_groups",
+                wraps=regional_client.list_work_groups,
+            ) as list_work_groups_spy,
+            Stubber(regional_client) as stubber,
+        ):
             stubber.add_response(
                 "list_work_groups",
                 {
@@ -100,6 +107,44 @@ class Test_Athena_Service:
             } == expected_names
             assert athena.workgroups[second_arn].state == "DISABLED"
             assert athena.workgroups[second_arn].region == AWS_REGION_EU_WEST_1
+            assert list_work_groups_spy.call_count == 2
+            stubber.assert_no_pending_responses()
+
+    @pytest.mark.parametrize("missing_page", [0, 1, 2])
+    @mock_aws
+    def test_list_workgroups_missing_workgroups(self, missing_page, caplog):
+        athena = Athena(set_mocked_aws_provider([AWS_REGION_EU_WEST_1]))
+        athena.workgroups.clear()
+        regional_client = athena.regional_clients[AWS_REGION_EU_WEST_1]
+        names = ["first", "second", "third"]
+        caplog.clear()
+
+        with (
+            patch.object(
+                regional_client,
+                "list_work_groups",
+                wraps=regional_client.list_work_groups,
+            ) as list_work_groups_spy,
+            Stubber(regional_client) as stubber,
+        ):
+            for index, name in enumerate(names):
+                response = (
+                    {}
+                    if index == missing_page
+                    else {"WorkGroups": [{"Name": name, "State": "ENABLED"}]}
+                )
+                if index < 2:
+                    response["NextToken"] = f"page-{index + 2}"
+                params = {"NextToken": f"page-{index + 1}"} if index else {}
+                stubber.add_response("list_work_groups", response, params)
+
+            athena._list_workgroups(regional_client)
+
+            assert {group.name for group in athena.workgroups.values()} == {
+                name for index, name in enumerate(names) if index != missing_page
+            }
+            assert list_work_groups_spy.call_count == 3
+            assert not caplog.records
             stubber.assert_no_pending_responses()
 
     @mock_aws

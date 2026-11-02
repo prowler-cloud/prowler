@@ -24,7 +24,7 @@ class Athena(AWSService):
             while True:
                 params = {"NextToken": next_token} if next_token else {}
                 page = regional_client.list_work_groups(**params)
-                for workgroup in page["WorkGroups"]:
+                for workgroup in page.get("WorkGroups", []):
                     try:
                         workgroup_name = workgroup["Name"]
                         workgroup_arn = f"arn:{self.audited_partition}:athena:{regional_client.region}:{self.audited_account}:workgroup/{workgroup_name}"
