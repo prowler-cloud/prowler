@@ -20,24 +20,30 @@ class Athena(AWSService):
     def _list_workgroups(self, regional_client):
         logger.info("Athena - Listing WorkGroups...")
         try:
-            list_workgroups = regional_client.list_work_groups()
-            for workgroup in list_workgroups["WorkGroups"]:
-                try:
-                    workgroup_name = workgroup["Name"]
-                    workgroup_arn = f"arn:{self.audited_partition}:athena:{regional_client.region}:{self.audited_account}:workgroup/{workgroup_name}"
-                    if not self.audit_resources or (
-                        is_resource_filtered(workgroup_arn, self.audit_resources)
-                    ):
-                        self.workgroups[workgroup_arn] = WorkGroup(
-                            arn=workgroup_arn,
-                            name=workgroup_name,
-                            state=workgroup["State"],
-                            region=regional_client.region,
+            next_token = None
+            while True:
+                params = {"NextToken": next_token} if next_token else {}
+                page = regional_client.list_work_groups(**params)
+                for workgroup in page["WorkGroups"]:
+                    try:
+                        workgroup_name = workgroup["Name"]
+                        workgroup_arn = f"arn:{self.audited_partition}:athena:{regional_client.region}:{self.audited_account}:workgroup/{workgroup_name}"
+                        if not self.audit_resources or (
+                            is_resource_filtered(workgroup_arn, self.audit_resources)
+                        ):
+                            self.workgroups[workgroup_arn] = WorkGroup(
+                                arn=workgroup_arn,
+                                name=workgroup_name,
+                                state=workgroup["State"],
+                                region=regional_client.region,
+                            )
+                    except Exception as error:
+                        logger.error(
+                            f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                         )
-                except Exception as error:
-                    logger.error(
-                        f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                    )
+                next_token = page.get("NextToken")
+                if not next_token:
+                    break
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
