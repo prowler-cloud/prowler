@@ -22,6 +22,7 @@ import {
   updateIssueTriage,
 } from "@/actions/issues";
 import { createMuteRule } from "@/actions/mute-rules";
+import { getResourceEvents } from "@/actions/resources";
 import { FINDING_TRIAGE_STATUS } from "@/types/findings-triage";
 
 import { SAMPLE_ACCOUNT, SAMPLE_CHECKS } from "./sample-dataset";
@@ -115,6 +116,23 @@ describe("sample drill-downs", () => {
         ),
       ),
     );
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("shows the CloudTrail history of a sample resource in the Events tab", async () => {
+    const [row] = await groupRows();
+    const [finding] = adaptFindingsByResourceResponse(
+      await getFindingById(row.findingId, "resources,scan.provider"),
+    );
+
+    const events = await getResourceEvents(finding.resourceId);
+
+    expect(
+      events.data?.map(
+        (event: { attributes: { event_name: string } }) =>
+          event.attributes.event_name,
+      ),
+    ).toEqual(["PutBucketPolicy", "CreateBucket"]);
     expect(fetchMock).not.toHaveBeenCalled();
   });
 

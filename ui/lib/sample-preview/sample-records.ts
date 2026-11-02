@@ -562,3 +562,66 @@ export const sampleComplianceFrameworks = (
     unavailable: false,
   };
 };
+
+// CloudTrail names per resource type: how it was created, then last changed.
+const SAMPLE_EVENT_NAMES: Record<string, [create: string, change: string]> = {
+  AwsS3Bucket: ["CreateBucket", "PutBucketPolicy"],
+  AwsEc2Instance: ["RunInstances", "ModifyInstanceMetadataOptions"],
+  AwsEc2SecurityGroup: ["CreateSecurityGroup", "AuthorizeSecurityGroupIngress"],
+  AwsEc2Volume: ["CreateVolume", "AttachVolume"],
+  AwsIamUser: ["CreateUser", "CreateAccessKey"],
+  AwsIamPolicy: ["CreatePolicy", "CreatePolicyVersion"],
+  AwsRdsDbInstance: ["CreateDBInstance", "ModifyDBInstance"],
+  AwsLambdaFunction: [
+    "CreateFunction20150331",
+    "UpdateFunctionConfiguration20150331v2",
+  ],
+  AwsEksCluster: ["CreateCluster", "UpdateClusterConfig"],
+  AwsKmsKey: ["CreateKey", "DisableKeyRotation"],
+  AwsSqsQueue: ["CreateQueue", "SetQueueAttributes"],
+};
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+const daysBeforeScan = (days: number) =>
+  new Date(Date.parse(SAMPLE_ACCOUNT.scannedAt) - days * DAY_MS).toISOString();
+
+/** /resources/{id}/events: two CloudTrail write events for the resource. */
+export const sampleResourceEvents = (resourceId: string) => {
+  const resource = SAMPLE_RESOURCES.find(({ id }) => id === resourceId);
+  const names = resource && SAMPLE_EVENT_NAMES[resource.type];
+  if (!resource || !names) return [];
+  const event = (
+    index: number,
+    eventName: string,
+    actor: string,
+    userAgent: string,
+    days: number,
+  ) => ({
+    type: "resource-events" as const,
+    id: `${resource.id}-event-${index}`,
+    attributes: {
+      event_time: daysBeforeScan(days),
+      event_name: eventName,
+      event_source: `${resource.service === "awslambda" ? "lambda" : resource.service}.amazonaws.com`,
+      actor,
+      actor_uid: `arn:aws:iam::${SAMPLE_ACCOUNT.uid}:user/${actor}`,
+      actor_type: "IAMUser",
+      source_ip_address: index === 1 ? "203.0.113.24" : "198.51.100.7",
+      user_agent: userAgent,
+      request_data: null,
+      response_data: null,
+      error_code: null,
+      error_message: null,
+    },
+  });
+  return [
+    event(2, names[1], "maria.lopez", "AWS Internal", 5),
+    event(
+      1,
+      names[0],
+      "deploy-bot",
+      "APN/1.0 HashiCorp/1.0 Terraform/1.9.5",
+      143,
+    ),
+  ];
+};
