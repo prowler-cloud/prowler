@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Fragment, type ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -44,7 +44,6 @@ vi.mock("@/components/shadcn/table", () => ({
   DataTable: ({
     data,
     toolbarRightContent,
-    getRowAttributes,
     getRowCanSelect,
     onRowSelectionChange,
     renderAfterRow,
@@ -52,10 +51,6 @@ vi.mock("@/components/shadcn/table", () => ({
   }: {
     data?: Array<{ checkId?: string }>;
     toolbarRightContent?: ReactNode;
-    getRowAttributes?: (row: {
-      index: number;
-      original: { checkId?: string };
-    }) => Record<string, string | undefined>;
     getRowCanSelect?: (row: {
       index: number;
       original: { checkId?: string };
@@ -88,7 +83,6 @@ vi.mock("@/components/shadcn/table", () => ({
                 data-can-select={String(
                   getRowCanSelect?.({ index, original }) ?? true,
                 )}
-                {...getRowAttributes?.({ index, original })}
               >
                 <td>{original.checkId}</td>
                 <td>
@@ -134,39 +128,6 @@ vi.mock("@/components/lighthouse/context-contributor", () => ({
       {JSON.stringify(item)}
     </output>
   ),
-}));
-
-vi.mock("@/components/onboarding", () => ({
-  // Exposes the "Open a finding group" step so tests can drive it and read
-  // whether the handler waited for the resources step.
-  OnboardingTrigger: ({
-    stepHandlers,
-  }: {
-    stepHandlers?: Record<
-      string,
-      {
-        onNext?: (context: {
-          waitForStep: (target: string) => Promise<void>;
-        }) => Promise<void>;
-      }
-    >;
-  }) => (
-    <button
-      type="button"
-      data-testid="onboarding-trigger"
-      onClick={() => {
-        const waitForStep = vi.fn(async () => {});
-        void stepHandlers?.group?.onNext?.({ waitForStep }).then(() => {
-          document.body.dataset.tourWaited = String(
-            waitForStep.mock.calls.length > 0,
-          );
-        });
-      }}
-    >
-      Open first group
-    </button>
-  ),
-  PageReady: () => <div data-testid="page-ready" />,
 }));
 
 vi.mock("@/components/filters/custom-checkbox-muted-findings", () => ({
@@ -313,51 +274,6 @@ describe("FindingsGroupTable", () => {
     expect(
       screen.getByRole("checkbox", { name: "Include muted findings" }),
     ).toBeInTheDocument();
-  });
-
-  it("mounts the tour only when finding groups exist", () => {
-    // Given / When
-    const { rerender } = render(
-      <FindingsGroupTable
-        data={[]}
-        resolvedFilters={{}}
-        hasHistoricalData={false}
-      />,
-    );
-
-    // Then
-    expect(screen.queryByTestId("onboarding-trigger")).not.toBeInTheDocument();
-    expect(screen.getByTestId("page-ready")).toBeInTheDocument();
-
-    // When
-    rerender(
-      <FindingsGroupTable
-        data={[makeGroup("check-a")]}
-        resolvedFilters={{}}
-        hasHistoricalData={false}
-      />,
-    );
-
-    // Then
-    expect(screen.getByTestId("onboarding-trigger")).toBeInTheDocument();
-  });
-
-  it("anchors the finding-group tour to the first row only", () => {
-    // Given / When
-    render(
-      <FindingsGroupTable
-        data={[makeGroup("check-a"), makeGroup("check-b")]}
-        resolvedFilters={{}}
-        hasHistoricalData={false}
-      />,
-    );
-
-    // Then
-    expect(screen.getByTestId("row-0")).toHaveAttribute(
-      "data-tour-id",
-      "explore-findings-group",
-    );
-    expect(screen.getByTestId("row-1")).not.toHaveAttribute("data-tour-id");
   });
 
   it("opens a drillable group from the expanded deep link", () => {
@@ -530,38 +446,6 @@ describe("FindingsGroupTable", () => {
       expect(
         screen.getByRole("button", { name: "Select finding-1" }),
       ).toBeInTheDocument();
-    });
-
-    it("skips the tour resources step when the only drillable group is locked", async () => {
-      // Given: the previewed rows cannot drill down, a locked one can
-      const user = userEvent.setup();
-      delete document.body.dataset.tourWaited;
-      render(
-        <FindingsGroupTable
-          data={[
-            makeGroup("check-a", 0, { resourcesTotal: 0 }),
-            makeGroup("check-b", 0, { resourcesTotal: 0 }),
-            makeGroup("check-c"),
-          ]}
-          resolvedFilters={{}}
-          hasHistoricalData={false}
-          previewRowLimit={2}
-        />,
-      );
-
-      // When
-      await user.click(
-        screen.getByRole("button", { name: "Open first group" }),
-      );
-
-      // Then: no drill-down, no upgrade prompt, and the tour did not wait
-      await waitFor(() =>
-        expect(document.body.dataset.tourWaited).toBe("false"),
-      );
-      expect(
-        screen.queryByRole("button", { name: "Select finding-1" }),
-      ).not.toBeInTheDocument();
-      expect(useCloudUpgradeStore.getState().activeFeature).toBeNull();
     });
 
     it("ignores an expanded deep link that points past the preview", () => {

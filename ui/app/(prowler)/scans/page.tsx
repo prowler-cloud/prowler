@@ -187,11 +187,6 @@ export default async function Scans({
   const providers = providersData?.data ?? [];
   const providerGroups = providerGroupsData?.data ?? [];
 
-  const hasConnectedProvider = providers.some(
-    (provider: ProviderProps) =>
-      provider.attributes.connection.connected === true,
-  );
-
   const hasManageScansPermission = Boolean(
     session?.user?.permissions?.manage_scans,
   );
@@ -202,26 +197,8 @@ export default async function Scans({
     getActiveScanCount(resolvedSearchParams),
     isReportDownloadLocked(),
   ]);
-  // Mirrors ScansPageShell's launch gate: it only mounts the view-first-scan trigger
-  // when Launch Scan is usable (manage_scans + a connected provider). Without the
-  // permission nothing can consume the navbar action, so offer none rather than an
-  // enabled button that starts no tour.
-  const onboardingAction = !hasManageScansPermission
-    ? undefined
-    : hasConnectedProvider
-      ? { flowId: "view-first-scan" }
-      : {
-          flowId: "view-first-scan",
-          fallbackFlowId: "add-provider",
-          useFallback: true,
-        };
-
   return (
-    <ContentLayout
-      title="Scans"
-      icon={<Timer />}
-      onboardingAction={onboardingAction}
-    >
+    <ContentLayout title="Scans" icon={<Timer />}>
       <ScansPageShell
         providers={providers}
         providerGroups={providerGroups}

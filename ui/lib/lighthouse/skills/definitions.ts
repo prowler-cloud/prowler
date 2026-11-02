@@ -1,7 +1,14 @@
-import { ClipboardCheck, Scale, Waypoints, Wrench } from "lucide-react";
+import {
+  ClipboardCheck,
+  PlugZap,
+  Scale,
+  Waypoints,
+  Wrench,
+} from "lucide-react";
 
 import {
   LIGHTHOUSE_SKILL_ID,
+  LIGHTHOUSE_SKILL_SURFACE,
   type LighthouseSkillDefinition,
 } from "@/types/lighthouse-skills";
 
@@ -144,12 +151,64 @@ Then give me a report covering:
 Do not give me a script that mass-mutates my cloud resources. Give me the systemic
 change or the prioritized order.`;
 
+// Draft pending DyR review: written in the same voice as the finding skills.
+const PROVIDER_CONNECTION_GUIDE_PROMPT = `The provider I am connecting is the one in the UI context block, together with the
+wizard step I am on and the connection method I picked. If no provider type is there,
+ask me which cloud or platform I want to scan before doing anything else.
+
+I am in the Prowler Cloud "Add provider" wizard right now, and it stays open next to
+this chat while I work. Help me finish the step I am on.
+
+Start by calling load_tools with these names, in one call:
+prowler_docs_search, prowler_docs_get_document, prowler_connect_provider
+You do not need search_tools — I am naming the tools directly.
+
+Then work in this order:
+
+1. prowler_docs_search — find the Prowler Cloud guide for this provider and connection
+   method: authentication, credentials, role, app registration or service account. If
+   the context carries a docs URL, use it to pick the right document.
+2. prowler_docs_get_document — read that guide. Base every step on it; do not rely on
+   memory for console paths, permissions or field names.
+
+Then write the guide:
+
+- Open with one sentence on what I need to end up with (for example: an IAM role
+  Prowler can assume, an app registration with a client secret, a service account key).
+- Give numbered steps in my cloud console or CLI, with the exact permissions or roles
+  to grant.
+- Tell me which wizard field each value goes into, using the field names from the docs.
+- Values unique to my tenant, like the AWS External ID or the role template, are shown
+  in the wizard: tell me to copy them from there and never make them up.
+- Link the document you used.
+
+By default, only guide me: I finish the connection in the wizard. If I ask you to connect
+the provider yourself, do it with prowler_connect_provider:
+
+- Take the provider type and UID from the context; ask me for any that is missing.
+- Ask me for the credential values my connection method needs, using the field names
+  from the docs. Tenant values like the AWS External ID come from the wizard: ask me to
+  paste them, never make them up.
+- Before calling the tool, list the provider type, UID, alias and the credential field
+  names you will send, never their values, and wait for my yes.
+- Never repeat a secret I gave you (keys, passwords, tokens, certificates), not even
+  partially.
+- Afterwards, tell me whether the connection test passed. If it did, tell me to close
+  the wizard without submitting it, because the provider is already added; if it
+  failed, tell me what to fix.
+
+Do not call any other tool that creates or changes something.
+
+Keep it short: if it does not fit on a screen I will not follow it. Use clear headers so
+I can find the part I need at a glance.`;
+
 export const LIGHTHOUSE_SKILLS = [
   {
     id: LIGHTHOUSE_SKILL_ID.CONTEXTUAL_FIX,
     name: "Contextual Fix",
     description: "Give me the fix for this finding",
     icon: Wrench,
+    surface: LIGHTHOUSE_SKILL_SURFACE.FINDING,
     prompt: CONTEXTUAL_FIX_PROMPT,
     nextSkillId: null,
     enabled: true,
@@ -160,6 +219,7 @@ export const LIGHTHOUSE_SKILLS = [
     name: "Triage Decision",
     description: "Is this real, and if not, close it out",
     icon: ClipboardCheck,
+    surface: LIGHTHOUSE_SKILL_SURFACE.FINDING,
     prompt: TRIAGE_DECISION_PROMPT,
     // Triage's "real risk" outcome hands off to the fix skill in a new session.
     nextSkillId: LIGHTHOUSE_SKILL_ID.CONTEXTUAL_FIX,
@@ -171,6 +231,7 @@ export const LIGHTHOUSE_SKILLS = [
     name: "Systemic Scope",
     description: "Is this one-off or everywhere?",
     icon: Waypoints,
+    surface: LIGHTHOUSE_SKILL_SURFACE.FINDING,
     prompt: SYSTEMIC_SCOPE_PROMPT,
     nextSkillId: null,
     enabled: true,
@@ -181,11 +242,23 @@ export const LIGHTHOUSE_SKILLS = [
     name: "Compliance Impact",
     description: "How is this finding affecting my compliance?",
     icon: Scale,
+    surface: LIGHTHOUSE_SKILL_SURFACE.FINDING,
     // Blocked upstream: MCP lacks a compliance-requirements-per-finding tool,
     // so DyR has not authored the final prompt yet.
     prompt: "",
     nextSkillId: null,
     enabled: false,
     version: 1,
+  },
+  {
+    id: LIGHTHOUSE_SKILL_ID.PROVIDER_CONNECTION_GUIDE,
+    name: "Connection Guide",
+    description: "Walk me through connecting this provider",
+    icon: PlugZap,
+    surface: LIGHTHOUSE_SKILL_SURFACE.PROVIDER_WIZARD,
+    prompt: PROVIDER_CONNECTION_GUIDE_PROMPT,
+    nextSkillId: null,
+    enabled: true,
+    version: 2,
   },
 ] as const satisfies readonly LighthouseSkillDefinition[];

@@ -16,9 +16,9 @@ export const FEATURE_FLAG = {
 
 export type FeatureFlag = (typeof FEATURE_FLAG)[keyof typeof FEATURE_FLAG];
 
-// Resolution state of a boolean flag. PENDING covers both "flags still
-// loading" and "PostHog never initialized" (OSS builds): neither case can
-// tell whether the flag is on, so gates render neither branch yet.
+// Resolution state of a boolean flag. PENDING means PostHog is still loading
+// flags, so gates render neither branch yet. Without a PostHog key nothing
+// initializes it, so the flag resolves to OFF once mounted.
 export const FEATURE_FLAG_STATE = {
   PENDING: "pending",
   ON: "on",

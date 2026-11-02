@@ -24,6 +24,9 @@ export const FINDING_TRIAGE_STATUS_LABELS = {
   [FINDING_TRIAGE_STATUS.REOPENED]: "Reopened",
 } as const satisfies Record<FindingTriageStatus, string>;
 
+export const MANUAL_PASS_NOTE_REQUIRED_COPY =
+  "Add a Triage Note explaining why this finding passes.";
+
 export const MANUAL_PASS_PROVENANCE = "Manually verified" as const;
 
 export const FINDING_TRIAGE_MANUAL_STATUS_VALUES = [
@@ -127,6 +130,11 @@ export interface FindingTriageDetail extends FindingTriageSummary {
 
 export interface FindingTriageUpdateResult {
   manualPassExpiresAt: string | null;
+}
+
+/** Returned instead of thrown: a server action's thrown message is sanitized in production. */
+export interface FindingTriageUsageLimitedResult {
+  usageLimited: true;
 }
 
 export interface FindingTriageContext {

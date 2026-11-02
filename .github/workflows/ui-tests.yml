@@ -21,7 +21,10 @@ permissions: {}
 
 jobs:
   ui-tests:
-    runs-on: ubuntu-latest
+    # ubuntu-latest is moving to 26.04 (rollout began October 19, 2026; completion
+    # targeted for November 19, 2026), where `playwright install` refuses to install
+    # Chromium for the pinned Playwright. Stay on 24.04 until the suite upgrades.
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     permissions:
       contents: read
@@ -135,10 +138,6 @@ jobs:
       - name: Run healthcheck
         if: steps.check-changes.outputs.any_changed == 'true'
         run: pnpm run healthcheck
-
-      - name: Check product-tour alignment
-        if: steps.check-changes.outputs.any_changed == 'true'
-        run: pnpm run tour:check
 
       - name: Run pnpm audit
         if: steps.check-changes.outputs.any_changed == 'true'

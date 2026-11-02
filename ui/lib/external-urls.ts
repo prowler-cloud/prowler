@@ -46,6 +46,7 @@ export const PROWLER_CF_TEMPLATE_URL =
 
 // Prowler Cloud billing/subscription management page.
 export const BILLING_URL = "https://cloud.prowler.com/billing";
+export const PRICING_URL = "https://prowler.com/pricing";
 
 // Base URL for the CloudFormation "quick create stack" console flow.
 // Hardcoded to us-east-1 because the public template is hosted for that flow.
@@ -149,7 +150,7 @@ const buildCloudFormationQuickCreateLink = (
   return `${CF_QUICKCREATE_BASE_URL}?${searchParams.toString()}`;
 };
 
-// Shortlinks are used for all wizard steps except credentials so link
+// Shortlinks are used for every wizard step but connect so link
 // ownership stays with the docs/marketing team: they can retarget
 // destinations from the shortener panel without a UI PR.
 const PROVIDER_DOCS_SHORTLINK: Record<string, string> = {
@@ -171,7 +172,7 @@ const PROVIDER_DOCS_SHORTLINK: Record<string, string> = {
   okta: "https://goto.prowler.com/provider-okta",
 };
 
-// Default target for the credentials step: the section of the provider's
+// Default target for the connect step: the section of the provider's
 // getting-started page that introduces the credentials flow. The getting-
 // started page keeps the user in the same mental model as the wizard, and
 // each section already links to `authentication.mdx` for readers who need
@@ -208,7 +209,7 @@ const PROVIDER_CREDENTIALS_STEP_DOCS_URL: Record<string, string> = {
   okta: "https://docs.prowler.com/user-guide/providers/okta/getting-started-okta#step-2-provide-credentials",
 };
 
-// When the user has picked a specific auth method inside the credentials
+// When the user has picked a specific auth method in the connect
 // step, jump directly to that method's subsection in the getting-started
 // page. Only providers whose docs have a heading per method are listed —
 // GCP and GitHub render their methods inside a Mintlify `<Tabs>` component
@@ -256,7 +257,8 @@ const resolveDocsLink = (
 ) => {
   const shortlink = getOwnRecordValue(PROVIDER_DOCS_SHORTLINK, provider);
 
-  if (step === PROVIDER_WIZARD_STEP.CREDENTIALS) {
+  // The connect step holds the credentials form, so it links to their docs.
+  if (step === PROVIDER_WIZARD_STEP.CONNECT) {
     if (credentialsMethod) {
       const methodDocs = getOwnRecordValue(
         PROVIDER_CREDENTIALS_METHOD_DOCS_URL,

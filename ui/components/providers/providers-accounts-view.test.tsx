@@ -12,13 +12,11 @@ import type { ProvidersTableRow } from "@/types/providers-table";
 import { SCAN_SCHEDULE_CAPABILITY } from "@/types/schedules";
 
 const {
-  onboardingTriggerSpy,
   providersAccountsTableSpy,
   refreshMock,
   replaceMock,
   searchParamsValue,
 } = vi.hoisted(() => ({
-  onboardingTriggerSpy: vi.fn(),
   providersAccountsTableSpy: vi.fn(),
   refreshMock: vi.fn(),
   replaceMock: vi.fn(),
@@ -32,14 +30,6 @@ vi.mock("next/navigation", () => ({
     replace: replaceMock,
   }),
   useSearchParams: () => new URLSearchParams(searchParamsValue.current),
-}));
-
-vi.mock("@/components/onboarding", () => ({
-  OnboardingTrigger: (props: { startAtTarget?: string }) => {
-    onboardingTriggerSpy(props);
-    return null;
-  },
-  PageReady: () => null,
 }));
 
 vi.mock("@/components/providers/table", () => ({
@@ -160,7 +150,6 @@ describe("ProvidersAccountsView", () => {
     window.removeEventListener(PROVIDER_FUNNEL_EVENT, recordFunnelSignal);
     vi.restoreAllMocks();
     providersAccountsTableSpy.mockClear();
-    onboardingTriggerSpy.mockClear();
     searchParamsValue.current = "";
     window.history.replaceState({}, "", "/");
   });
@@ -395,45 +384,6 @@ describe("ProvidersAccountsView", () => {
 
     // Then
     expect(funnelSignals).toEqual([{ step: "wizard_opened", source: "url" }]);
-  });
-
-  it("starts the tour at the provider-type step when the wizard is already open", () => {
-    // Given
-    searchParamsValue.current = "addProvider=true&onboarding=add-provider";
-
-    // When
-    render(
-      <ProvidersAccountsView
-        isCloud
-        filters={filters}
-        metadata={metadata}
-        providers={providers}
-        rows={rows}
-      />,
-    );
-
-    // Then: the welcome and "open the wizard" steps have nothing left to ask for.
-    expect(onboardingTriggerSpy).toHaveBeenLastCalledWith(
-      expect.objectContaining({ startAtTarget: "provider-type" }),
-    );
-  });
-
-  it("lets the tour start from its first step while the wizard is closed", () => {
-    // Given / When
-    render(
-      <ProvidersAccountsView
-        isCloud
-        filters={filters}
-        metadata={metadata}
-        providers={providers}
-        rows={rows}
-      />,
-    );
-
-    // Then
-    expect(onboardingTriggerSpy).toHaveBeenLastCalledWith(
-      expect.objectContaining({ startAtTarget: undefined }),
-    );
   });
 
   it("keeps filters and table visible when providers are disconnected", () => {

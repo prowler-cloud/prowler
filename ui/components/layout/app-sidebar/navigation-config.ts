@@ -149,6 +149,19 @@ export function getNavigationConfig({
     {
       label: "SECURITY",
       items: [
+        // First: the exploitable issues are what to fix before anything else.
+        ...(isCloudEnvironment && issuesEnabled
+          ? [
+              {
+                kind: NAVIGATION_ITEM_KIND.LINK,
+                href: "/issues",
+                label: "Exploitability issues",
+                icon: Crosshair,
+                active: isRouteActive(pathname, "/issues"),
+                highlight: true,
+              } as const,
+            ]
+          : []),
         {
           kind: NAVIGATION_ITEM_KIND.LINK,
           href: "/compliance",
@@ -163,18 +176,6 @@ export function getNavigationConfig({
           icon: Tag,
           active: isRouteActive(pathname, "/findings"),
         },
-        ...(isCloudEnvironment && issuesEnabled
-          ? [
-              {
-                kind: NAVIGATION_ITEM_KIND.LINK,
-                href: "/issues",
-                label: "Issues",
-                icon: Crosshair,
-                active: isRouteActive(pathname, "/issues"),
-                highlight: true,
-              } as const,
-            ]
-          : []),
         {
           kind: NAVIGATION_ITEM_KIND.LINK,
           href: "/attack-paths",

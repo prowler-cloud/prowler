@@ -2,12 +2,11 @@
 
 import { Row, RowSelectionState } from "@tanstack/react-table";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useRef, useState } from "react";
+import { useRef, useState } from "react";
 
 import { resolveFindingIdsByVisibleGroupResources } from "@/actions/findings/findings-by-resource";
 import { CustomCheckboxMutedFindings } from "@/components/filters/custom-checkbox-muted-findings";
 import { LighthouseContextContributor } from "@/components/lighthouse/context-contributor";
-import { OnboardingTrigger, PageReady } from "@/components/onboarding";
 import { DataTable } from "@/components/shadcn/table";
 import { canDrillDownFindingGroup } from "@/lib/findings-groups";
 import { buildJiraActionLabel } from "@/lib/jira-dispatch-action";
@@ -19,8 +18,6 @@ import {
   buildFindingGroupContext,
   buildFindingSummaryContext,
 } from "@/lib/lighthouse/context/contributions";
-import { getFlowById } from "@/lib/onboarding";
-import { createExploreFindingsTourStepHandlers } from "@/lib/tours/explore-findings.tour";
 import { useCloudUpgradeStore } from "@/store";
 import { FindingGroupRow, MetaDataProps } from "@/types";
 import { PAID_PLAN_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
@@ -38,7 +35,6 @@ import {
   InlineResourceContainerHandle,
 } from "./inline-resource-container";
 
-const exploreFindingsFlow = getFlowById("explore-findings")!;
 const EMPTY_FINDING_GROUPS: FindingGroupRow[] = [];
 const MAX_FINDING_CONTEXT_SELECTIONS = LIGHTHOUSE_CONTEXT_LIMIT.ITEMS - 2;
 
@@ -350,20 +346,6 @@ const FindingsGroupTableContent = ({
     setResourceSelection([]);
   };
 
-  // Drives the onboarding "Open a finding group" step: opens the first row when
-  // drillable, otherwise the first drillable previewed group (a locked row
-  // would only open the upgrade prompt). Returns false when none can open so
-  // the tour skips the resources step instead of hanging.
-  const openFirstFindingGroup = (): boolean => {
-    const target =
-      previewedGroups[0] && canDrillDownFindingGroup(previewedGroups[0])
-        ? previewedGroups[0]
-        : previewedGroups.find((group) => canDrillDownFindingGroup(group));
-    if (!target) return false;
-    handleDrillDown(target.checkId, target);
-    return true;
-  };
-
   const columns = getColumnFindingGroups({
     rowSelection,
     selectableRowCount,
@@ -402,7 +384,6 @@ const FindingsGroupTableContent = ({
         resolveMuteIds,
       }}
     >
-      {/* Gate the tour on having at least one finding group */}
       <div>
         {metadata?.pagination.count !== undefined && (
           <LighthouseContextContributor
@@ -423,18 +404,6 @@ const FindingsGroupTableContent = ({
               item={buildFindingGroupContext(finding)}
             />
           ))}
-        <Suspense fallback={null}>
-          {safeData.length > 0 && (
-            <OnboardingTrigger
-              flow={exploreFindingsFlow}
-              stepHandlers={createExploreFindingsTourStepHandlers(
-                openFirstFindingGroup,
-              )}
-            />
-          )}
-        </Suspense>
-        {/* Signals the navbar that this route's data has loaded (enables the replay icon). */}
-        <PageReady />
         <DataTable
           columns={columns}
           data={safeData}
@@ -457,11 +426,6 @@ const FindingsGroupTableContent = ({
           }
           toolbarRightContent={<CustomCheckboxMutedFindings />}
           renderAfterRow={renderAfterRow}
-          // Anchor the "Open a finding group" tour step to the first group row
-          // (there may be only one); driver.js resolves to the first match.
-          getRowAttributes={(row) =>
-            row.index === 0 ? { "data-tour-id": "explore-findings-group" } : {}
-          }
           previewLock={
             previewRowLimit !== undefined
               ? {

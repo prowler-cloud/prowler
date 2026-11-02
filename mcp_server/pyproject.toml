@@ -74,13 +74,14 @@ extend-select = [
 ]
 
 [tool.uv]
-package = true
-
 # Transitive pins fastmcp does not raise on its own; each carries a known HIGH.
 constraint-dependencies = [
+  "authlib==1.9.1",
   "cryptography==50.0.0",
+  "dnspython==2.9.0",
   "joserfc==1.6.8",
   "mcp==1.28.1",
   "pyjwt==2.14.0",
   "python-multipart==0.0.30"
 ]
+package = true

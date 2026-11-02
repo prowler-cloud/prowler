@@ -616,11 +616,15 @@ describe("auto-fitting the viewport", () => {
     // their positions can sit outside the framed viewport. Expanding the
     // resources should re-fit so the user does not have to hunt for the
     // newly visible findings off-screen.
-    const before = graph.viewportTransform;
+    const before = await graph.waitForViewportSettled();
     expect(before).toBeTruthy();
 
-    await graph.expandAllFindings();
+    // Use a single resource click so only the automatic fit can recover the
+    // findings; expandAllFindings also uses the toolbar to frame the full graph.
+    await graph.clickNode("s3-1");
     await graph.waitForViewportChange(before);
+    await graph.waitForViewportSettled();
+    await graph.waitForNodesInViewport(["s3-1", "f-1"]);
 
     expect(graph.viewportTransform).not.toBe(before);
   });
