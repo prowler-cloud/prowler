@@ -60,13 +60,13 @@ class TestAzureServiceSovereignClouds:
         with (
             patch.object(AzureService, "__init__", return_value=None),
             patch(
-                "prowler.providers.azure.lib.service.service.AzureIdentityAuthenticationProvider"
+                "prowler.providers.azure.azure_provider.AzureIdentityAuthenticationProvider"
             ) as mock_auth_provider_cls,
             patch(
-                "prowler.providers.azure.lib.service.service.GraphClientFactory"
+                "prowler.providers.azure.azure_provider.GraphClientFactory"
             ) as mock_factory,
             patch(
-                "prowler.providers.azure.lib.service.service.GraphRequestAdapter"
+                "prowler.providers.azure.azure_provider.GraphRequestAdapter"
             ) as mock_adapter_cls,
         ):
             service = AzureService.__new__(AzureService)
