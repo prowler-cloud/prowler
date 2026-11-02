@@ -13,10 +13,14 @@ class vpc_flow_logs_enabled(Check):
                     f"VPC {vpc.name if vpc.name else vpc.id} Flow logs are disabled."
                 )
                 if vpc.flow_log:
-                    report.status = "PASS"
-                    report.status_extended = (
-                        f"VPC {vpc.name if vpc.name else vpc.id} Flow logs are enabled."
-                    )
+                    if vpc.flow_log_delivery_success is True:
+                        report.status = "PASS"
+                        report.status_extended = f"VPC {vpc.name if vpc.name else vpc.id} Flow logs are enabled."
+                    elif vpc.flow_log_delivery_success is False:
+                        report.status_extended = f"VPC {vpc.name if vpc.name else vpc.id} Flow log delivery has failed for all configured flow logs."
+                    else:
+                        report.status = "MANUAL"
+                        report.status_extended = f"VPC {vpc.name if vpc.name else vpc.id} Flow logs are configured but successful delivery could not be verified."
 
                 findings.append(report)
 

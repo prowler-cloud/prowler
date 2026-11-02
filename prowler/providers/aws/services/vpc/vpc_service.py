@@ -154,7 +154,9 @@ class VPC(AWSService):
             for vpc in self.vpcs.values():
                 try:
                     regional_client = self.regional_clients[vpc.region]
-                    flow_logs = regional_client.describe_flow_logs(
+                    paginator = regional_client.get_paginator("describe_flow_logs")
+                    delivery_statuses = set()
+                    for page in paginator.paginate(
                         Filters=[
                             {
                                 "Name": "resource-id",
@@ -163,9 +165,17 @@ class VPC(AWSService):
                                 ],
                             },
                         ]
-                    )["FlowLogs"]
-                    if flow_logs:
-                        vpc.flow_log = True
+                    ):
+                        delivery_statuses.update(
+                            flow_log.get("DeliverLogsStatus")
+                            for flow_log in page.get("FlowLogs", [])
+                        )
+                    vpc.flow_log = bool(delivery_statuses)
+                    vpc.flow_log_delivery_success = None
+                    if "SUCCESS" in delivery_statuses:
+                        vpc.flow_log_delivery_success = True
+                    elif delivery_statuses == {"FAILED"}:
+                        vpc.flow_log_delivery_success = False
                 except Exception as error:
                     logger.error(
                         f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -483,6 +493,7 @@ class VPCs(BaseModel):
     in_use: bool = False
     cidr_block: str
     flow_log: bool = False
+    flow_log_delivery_success: Optional[bool] = None
     region: str
     subnets: list[VpcSubnet] = []
     tags: Optional[list] = []

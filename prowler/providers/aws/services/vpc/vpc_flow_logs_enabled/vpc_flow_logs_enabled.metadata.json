@@ -16,12 +16,13 @@
   "Severity": "medium",
   "ResourceType": "AwsEc2Vpc",
   "ResourceGroup": "network",
-  "Description": "**AWS VPCs** have **Flow Logs** configured to capture IP traffic for their network interfaces and deliver records to a logging destination.\n\nVPCs lacking an active flow log configuration are highlighted.",
+  "Description": "**AWS VPCs** have **Flow Logs** with confirmed successful delivery. VPCs with no flow logs or only failed destinations are highlighted. If delivery status is missing or unrecognized and no successful destination is known, the result is MANUAL.",
   "Risk": "Without flow logs, network activity is opaque, hindering detection and investigation of malicious traffic. Attackers can probe, exfiltrate, or move laterally unnoticed, impacting **confidentiality** and **integrity**; outages and misconfigurations are harder to diagnose, reducing **availability**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "http://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/flow-logs.html",
-    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/VPC/vpc-flow-logs-enabled.html"
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/VPC/vpc-flow-logs-enabled.html",
+    "https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_FlowLog.html"
   ],
   "Remediation": {
     "Code": {
@@ -31,7 +32,7 @@
       "Terraform": "```hcl\n# Enable VPC Flow Logs to S3 for an existing VPC\nresource \"aws_flow_log\" \"vpc\" {\n  vpc_id               = \"<example_resource_id>\"                 # Critical: target the VPC to enable flow logs\n  traffic_type         = \"ALL\"                                   # Critical: log all traffic\n  log_destination_type = \"s3\"                                    # Critical: send logs to S3 (no IAM role needed)\n  log_destination      = \"arn:aws:s3:::<example_resource_name>\"  # Critical: S3 bucket ARN\n}\n```"
     },
     "Recommendation": {
-      "Text": "Enable **VPC Flow Logs** for all VPCs to provide baseline telemetry.\nPrefer capturing at least `REJECT` and, for sensitive networks, `ALL`. Send logs to a centralized, access-controlled destination with retention. Apply **least privilege** to writers/readers and integrate with monitoring for **defense in depth**.",
+      "Text": "Enable **VPC Flow Logs** for all VPCs to provide baseline telemetry.\nPrefer capturing at least `REJECT` and, for sensitive networks, `ALL`. Send logs to a centralized, access-controlled destination with retention. For failed delivery, inspect `DeliverLogsErrorMessage` and correct destination access or throttling errors. Apply **least privilege** to writers/readers and integrate with monitoring for **defense in depth**.",
       "Url": "https://hub.prowler.com/check/vpc_flow_logs_enabled"
     }
   },
