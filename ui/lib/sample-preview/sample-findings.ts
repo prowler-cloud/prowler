@@ -1,5 +1,5 @@
 import { adaptFindingGroupsResponse } from "@/actions/finding-groups/finding-groups.adapter";
-import type { FindingGroupRow } from "@/types";
+import type { SearchParamsProps } from "@/types/components";
 
 import {
   SAMPLE_ACCOUNT,
@@ -62,9 +62,38 @@ const toFindingGroupItem = (check: SampleCheck): SampleFindingGroupItem => ({
   },
 });
 
-export const SAMPLE_FINDING_GROUPS_RESPONSE: {
-  data: SampleFindingGroupItem[];
-} = { data: SAMPLE_FAILED_CHECKS.map(toFindingGroupItem) };
+/** The filters the Overview drill-downs set, matched the way the API would. */
+const SAMPLE_GROUP_FILTERS: Record<
+  string,
+  (check: SampleCheck) => string | undefined
+> = {
+  "filter[severity__in]": (check) => check.severity,
+  "filter[service__in]": (check) => check.service,
+  "filter[category__in]": (check) => check.attackSurface,
+  // Every sample group fails.
+  "filter[status__in]": () => "FAIL",
+};
 
-export const SAMPLE_FINDING_GROUPS: FindingGroupRow[] =
-  adaptFindingGroupsResponse(SAMPLE_FINDING_GROUPS_RESPONSE);
+/** The sample groups an Overview link asked for, and whether any filter applied. */
+export const filterSampleFindingGroups = (searchParams: SearchParamsProps) => {
+  const active = Object.entries(SAMPLE_GROUP_FILTERS).flatMap(
+    ([key, field]) => {
+      const value = searchParams[key];
+      return typeof value === "string" && value
+        ? [{ field, accepted: value.split(",") }]
+        : [];
+    },
+  );
+  const checks = SAMPLE_FAILED_CHECKS.filter((check) =>
+    active.every(({ field, accepted }) => {
+      const actual = field(check);
+      return actual !== undefined && accepted.includes(actual);
+    }),
+  );
+  return {
+    groups: adaptFindingGroupsResponse({
+      data: checks.map(toFindingGroupItem),
+    }),
+    filtered: active.length > 0,
+  };
+};

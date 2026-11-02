@@ -16,6 +16,10 @@ import {
 } from "@/lib";
 import { getFindingGroupFilterOptions } from "@/lib/finding-group-filter-options";
 import { appendSanitizedProviderFilters } from "@/lib/provider-filters";
+import {
+  isSampleScanFilter,
+  sampleFindingGroupResources,
+} from "@/lib/sample-preview/sample-records";
 import { handleApiResponse } from "@/lib/server-actions-helper";
 
 /**
@@ -187,6 +191,16 @@ async function fetchFindingGroupResourcesEndpoint(
     filters = {},
   }: FetchFindingGroupResourcesParams,
 ) {
+  if (isSampleScanFilter(filters)) {
+    const status = filters["filter[status]"] ?? filters["filter[status__in]"];
+    return sampleFindingGroupResources({
+      checkId,
+      page,
+      pageSize,
+      status: Array.isArray(status) ? status.join(",") : status,
+    });
+  }
+
   const headers = await getAuthHeaders({ contentType: false });
   const normalizedFilters = normalizeFindingGroupResourceFilters(filters);
 

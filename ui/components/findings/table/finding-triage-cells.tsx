@@ -42,6 +42,8 @@ import { FindingTriageStatusControl } from "./finding-triage-status-control";
 
 export const CLOUD_ONLY_TOOLTIP_COPY = "Available in Prowler Cloud";
 export const EDITING_UNAVAILABLE_COPY = "Editing is currently unavailable.";
+export const SAMPLE_TRIAGE_COPY =
+  "Sample data. Connect your cloud account to triage your own findings.";
 
 const getDisabledCopy = ({
   triage,
@@ -54,6 +56,10 @@ const getDisabledCopy = ({
 }): string | undefined => {
   if (triage.disabledReason === FINDING_TRIAGE_DISABLED_REASON.CLOUD_ONLY) {
     return CLOUD_ONLY_TOOLTIP_COPY;
+  }
+
+  if (triage.disabledReason === FINDING_TRIAGE_DISABLED_REASON.SAMPLE) {
+    return SAMPLE_TRIAGE_COPY;
   }
 
   // Status-picker only: notes stay available on resolved findings.

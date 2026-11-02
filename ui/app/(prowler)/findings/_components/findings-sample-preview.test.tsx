@@ -1,4 +1,5 @@
 import { render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { SAMPLE_FAILED_CHECKS } from "@/lib/sample-preview/sample-dataset";
@@ -18,6 +19,9 @@ vi.mock("next/navigation", () => ({
   usePathname: () => "/findings",
 }));
 vi.mock("@/auth.config", () => ({ auth: vi.fn() }));
+vi.mock("next-auth/react", () => ({
+  useSession: () => ({ data: null, status: "unauthenticated" }),
+}));
 vi.mock("@/actions/scans", () => ({ getScan: getScanMock }));
 vi.mock("@/actions/findings/findings-by-resource", () => ({
   resolveFindingIdsByVisibleGroupResources: resolveFindingIdsMock,
@@ -32,9 +36,17 @@ const STATE = {
 describe("FindingsSamplePreview", () => {
   beforeEach(() => {
     vi.stubGlobal("fetch", fetchMock);
+    // jsdom has no IntersectionObserver; the drill-down's infinite scroll needs one.
+    vi.stubGlobal(
+      "IntersectionObserver",
+      class {
+        observe() {}
+        disconnect() {}
+      },
+    );
   });
 
-  it("renders every failed sample check in an inert table without fetching", () => {
+  it("renders every failed sample check without fetching", () => {
     const { container } = render(<FindingsSamplePreview state={STATE} />);
 
     expect(
@@ -59,10 +71,51 @@ describe("FindingsSamplePreview", () => {
     expect(within(table).getAllByRole("row", { hidden: true })).toHaveLength(
       SAMPLE_FAILED_CHECKS.length + 1,
     );
-    expect(table.closest("[inert]")).not.toBeNull();
+    expect(table.closest("[inert]")).toBeNull();
 
     expect(fetchMock).not.toHaveBeenCalled();
     expect(getScanMock).not.toHaveBeenCalled();
     expect(resolveFindingIdsMock).not.toHaveBeenCalled();
+  });
+
+  it("expands a sample group into its resources from the sample records", async () => {
+    const user = userEvent.setup();
+    render(<FindingsSamplePreview state={STATE} />);
+
+    await user.click(
+      screen.getByText("Ensure S3 buckets are not publicly accessible"),
+    );
+
+    expect(
+      await screen.findByText("acme-customer-exports"),
+    ).toBeInTheDocument();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("applies the severity an Overview link carried, with a way back to all", () => {
+    render(
+      <FindingsSamplePreview
+        state={STATE}
+        searchParams={{
+          "filter[severity__in]": "critical",
+          "filter[status__in]": "FAIL",
+        }}
+      />,
+    );
+
+    const critical = SAMPLE_FAILED_CHECKS.filter(
+      (check) => check.severity === "critical",
+    );
+    const high = SAMPLE_FAILED_CHECKS.find(
+      (check) => check.severity === "high",
+    )!;
+    for (const check of critical) {
+      expect(screen.getByText(check.title)).toBeInTheDocument();
+    }
+    expect(screen.queryByText(high.title)).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Show all" })).toHaveAttribute(
+      "href",
+      "/findings",
+    );
   });
 });

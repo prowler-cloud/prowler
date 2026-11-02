@@ -11,7 +11,7 @@ vi.mock("@/actions/issues", () => ({
   getIssues: vi.fn(),
   getIssuesOverview: vi.fn(),
 }));
-// Modules that reach next-auth under jsdom; sample rows never open the panel.
+// Modules that reach next-auth under jsdom; the panel has its own tests.
 vi.mock("@/components/issues/issue-panel", () => ({ IssuePanel: () => null }));
 vi.mock("@/lib", () => ({ getPaginationInfo: vi.fn() }));
 vi.mock("@/contexts", () => ({ useFilterTransitionOptional: () => null }));
@@ -29,7 +29,7 @@ const [notExploitable] = SAMPLE_ISSUES.filter(
 );
 
 describe("IssuesList sample preview", () => {
-  it("renders the sample issues inert, filtered by verdict, without the API", async () => {
+  it("renders the sample issues clickable, filtered by verdict, without the API", async () => {
     // When
     render(
       await IssuesList({
@@ -42,7 +42,7 @@ describe("IssuesList sample preview", () => {
     const title = screen.getByRole("button", {
       name: exploitable.attributes.title,
     });
-    expect(title.closest("[inert]")).not.toBeNull();
+    expect(title.closest("[inert]")).toBeNull();
     expect(
       screen.queryByText(notExploitable.attributes.title),
     ).not.toBeInTheDocument();

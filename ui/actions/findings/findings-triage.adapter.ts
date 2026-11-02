@@ -1,6 +1,8 @@
+import { isSampleId } from "@/lib/sample-preview/sample-records";
 import { FINDING_STATUS, type FindingStatus } from "@/types/components";
 import {
   FINDING_TRIAGE_BILLING_HREF,
+  FINDING_TRIAGE_DISABLED_REASON,
   FINDING_TRIAGE_NOTE_MAX_LENGTH,
   FINDING_TRIAGE_STATUS,
   FINDING_TRIAGE_STATUS_LABELS,
@@ -141,6 +143,12 @@ const createSummary = (
 
   if (options.disabledReason) {
     summary.disabledReason = options.disabledReason;
+  }
+
+  // Sample findings have no triage record to write to.
+  if (isSampleId(summary.findingId)) {
+    summary.canEdit = false;
+    summary.disabledReason = FINDING_TRIAGE_DISABLED_REASON.SAMPLE;
   }
 
   return summary;

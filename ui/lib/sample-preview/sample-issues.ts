@@ -2,6 +2,7 @@ import { SEVERITY } from "@/types/components";
 import { FINDING_TRIAGE_STATUS } from "@/types/findings-triage";
 import {
   type IssueAttributes,
+  type IssueDetailResource,
   type IssueResource,
   type IssuesOverviewAttributes,
   LEG_STATE,
@@ -11,6 +12,7 @@ import {
 } from "@/types/issues";
 
 import { SAMPLE_ACCOUNT } from "./sample-dataset";
+import { failedSampleFindings } from "./sample-records";
 
 const leg = (
   state: LegAssessment["state"],
@@ -26,7 +28,13 @@ type SampleIssueSeed = Omit<
   | "notes_count"
   | "inserted_at"
   | "updated_at"
-> & { id: string; legs: Record<LegName, LegAssessment> };
+  | "findings_count"
+> & {
+  id: string;
+  legs: Record<LegName, LegAssessment>;
+  /** The failed findings the issue folds: the first `count` of each check. */
+  evidence: [checkId: string, count: number][];
+};
 
 // Each issue folds failed findings from SAMPLE_CHECKS along one attack path.
 const SAMPLE_ISSUE_SEEDS: SampleIssueSeed[] = [
@@ -39,7 +47,10 @@ const SAMPLE_ISSUE_SEEDS: SampleIssueSeed[] = [
     outcome: "data_exposure",
     attacker_start: "internet",
     fix: "Turn on S3 Block Public Access for the bucket and remove the public-read grant from its policy.",
-    findings_count: 3,
+    evidence: [
+      ["s3_bucket_public_access", 1],
+      ["s3_bucket_secure_transport_policy", 1],
+    ],
     legs: {
       reachability: leg(
         LEG_STATE.YES,
@@ -75,7 +86,12 @@ const SAMPLE_ISSUE_SEEDS: SampleIssueSeed[] = [
     outcome: "privilege_escalation",
     attacker_start: "internet",
     fix: "Close port 22 to 0.0.0.0/0, require IMDSv2 on the instance and scope its role down to what the workload needs.",
-    findings_count: 4,
+    evidence: [
+      ["ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22", 1],
+      ["ec2_instance_imdsv2_enabled", 1],
+      ["iam_policy_allows_privilege_escalation", 1],
+      ["guardduty_is_enabled", 1],
+    ],
     legs: {
       reachability: leg(
         LEG_STATE.YES,
@@ -111,7 +127,10 @@ const SAMPLE_ISSUE_SEEDS: SampleIssueSeed[] = [
     outcome: "privilege_escalation",
     attacker_start: "credential_leak",
     fix: "Enable a hardware MFA device on the root user and add a metric filter and alarm for root sign-ins.",
-    findings_count: 2,
+    evidence: [
+      ["iam_root_mfa_enabled", 1],
+      ["cloudwatch_log_metric_filter_root_usage", 1],
+    ],
     legs: {
       reachability: leg(
         LEG_STATE.YES,
@@ -144,7 +163,10 @@ const SAMPLE_ISSUE_SEEDS: SampleIssueSeed[] = [
     outcome: "data_exposure",
     attacker_start: "authenticated_principal",
     fix: "Move the credentials to Secrets Manager and read them at runtime; rotate the exposed ones.",
-    findings_count: 2,
+    evidence: [
+      ["awslambda_function_no_secrets_in_variables", 2],
+      ["rds_instance_no_public_access", 1],
+    ],
     legs: {
       reachability: leg(
         LEG_STATE.YES,
@@ -176,7 +198,10 @@ const SAMPLE_ISSUE_SEEDS: SampleIssueSeed[] = [
     outcome: "",
     attacker_start: "",
     fix: "Turn on EBS encryption by default in each region and enable SSE on the queues.",
-    findings_count: 12,
+    evidence: [
+      ["ec2_ebs_volume_encryption", 9],
+      ["sqs_queues_server_side_encryption_enabled", 3],
+    ],
     legs: {
       reachability: leg(
         LEG_STATE.NO,
@@ -197,25 +222,58 @@ const SAMPLE_ISSUE_SEEDS: SampleIssueSeed[] = [
   },
 ];
 
-export const SAMPLE_ISSUES: IssueResource[] = SAMPLE_ISSUE_SEEDS.map(
-  ({ id, ...attributes }) => ({
-    type: "issues",
-    id,
+const issueFindings = (evidence: SampleIssueSeed["evidence"]) =>
+  evidence.flatMap(([checkId, count]) =>
+    failedSampleFindings(checkId).slice(0, count),
+  );
+
+const SAMPLE_ISSUE_DETAILS: IssueDetailResource[] = SAMPLE_ISSUE_SEEDS.map(
+  ({ id, evidence, ...attributes }) => {
+    const findings = issueFindings(evidence);
+    return {
+      type: "issues",
+      id,
+      attributes: {
+        ...attributes,
+        findings_count: findings.length,
+        cloud: "aws",
+        account: SAMPLE_ACCOUNT.uid,
+        triage_status: FINDING_TRIAGE_STATUS.OPEN,
+        notes_count: 0,
+        inserted_at: SAMPLE_ACCOUNT.scannedAt,
+        updated_at: SAMPLE_ACCOUNT.scannedAt,
+        finding_uids: findings.map((finding) => finding.uid),
+        resource_uids: Array.from(
+          new Set(findings.map((finding) => finding.resource.uid)),
+        ),
+      },
+      relationships: {
+        provider: {
+          data: { type: "providers", id: SAMPLE_ACCOUNT.providerId },
+        },
+        scan: { data: { type: "scans", id: SAMPLE_ACCOUNT.scanId } },
+      },
+    };
+  },
+);
+
+/** The list rows: the detail without the uid lists only `/issues/{id}` carries. */
+export const SAMPLE_ISSUES: IssueResource[] = SAMPLE_ISSUE_DETAILS.map(
+  ({
     attributes: {
-      ...attributes,
-      cloud: "aws",
-      account: SAMPLE_ACCOUNT.uid,
-      triage_status: FINDING_TRIAGE_STATUS.OPEN,
-      notes_count: 0,
-      inserted_at: SAMPLE_ACCOUNT.scannedAt,
-      updated_at: SAMPLE_ACCOUNT.scannedAt,
+      finding_uids: _findingUids,
+      resource_uids: _resourceUids,
+      ...attributes
     },
-    relationships: {
-      provider: { data: { type: "providers", id: SAMPLE_ACCOUNT.providerId } },
-      scan: { data: { type: "scans", id: SAMPLE_ACCOUNT.scanId } },
-    },
+    ...issue
+  }) => ({
+    ...issue,
+    attributes,
   }),
 );
+
+export const getSampleIssueDetail = (id: string) =>
+  SAMPLE_ISSUE_DETAILS.find((issue) => issue.id === id);
 
 const sumFindings = (issues: IssueResource[]) =>
   issues.reduce((total, issue) => total + issue.attributes.findings_count, 0);

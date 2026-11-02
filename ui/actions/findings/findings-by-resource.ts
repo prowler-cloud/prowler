@@ -11,6 +11,11 @@ import {
 } from "@/lib";
 import { runWithConcurrencyLimit } from "@/lib/concurrency";
 import { appendSanitizedProviderTypeFilters } from "@/lib/provider-filters";
+import {
+  isSampleResourceUid,
+  sampleFindingsDocument,
+  sampleFindingsQuery,
+} from "@/lib/sample-preview/sample-records";
 import { handleApiResponse } from "@/lib/server-actions-helper";
 
 const FINDING_IDS_RESOLUTION_PAGE_SIZE = 500;
@@ -261,6 +266,15 @@ export const getLatestFindingsByResourceUid = async ({
   pageSize?: number;
   includeMuted?: boolean;
 }) => {
+  if (isSampleResourceUid(resourceUid)) {
+    return sampleFindingsDocument(
+      sampleFindingsQuery({
+        "filter[resource_uid]": resourceUid,
+        "filter[status]": "FAIL",
+      }),
+    );
+  }
+
   const headers = await getAuthHeaders({ contentType: false });
 
   const url = new URL(

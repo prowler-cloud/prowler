@@ -103,14 +103,11 @@ export const IssuesList = async ({
       {rows === null ? (
         <IssuesLoadError />
       ) : rows.length ? (
-        // Sample rows have no API record: inert, so no side panel or triage.
-        <div inert={sample}>
-          <IssuesTable
-            issues={rows}
-            metadata={issues?.meta}
-            providerUids={providerUids}
-          />
-        </div>
+        <IssuesTable
+          issues={rows}
+          metadata={issues?.meta}
+          providerUids={providerUids}
+        />
       ) : (
         <p className="text-text-neutral-tertiary text-sm">
           No issues match this filter.

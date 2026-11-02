@@ -84,6 +84,7 @@ import { updateFindingTriageOrThrow } from "@/lib/finding-triage-update";
 import { buildJiraActionLabel } from "@/lib/jira-dispatch-action";
 import { createJiraDispatchPayload } from "@/lib/jira-dispatch-selection";
 import { getRegionFlag } from "@/lib/region-flags";
+import { isSampleId } from "@/lib/sample-preview/sample-records";
 import { isCloud } from "@/lib/shared/env";
 import { getRecommendationLinkLabel } from "@/lib/vulnerability-references";
 import { SIDE_PANEL_TAB, useSidePanelStore } from "@/store/side-panel";
@@ -492,8 +493,9 @@ export function ResourceDetailDrawerContent({
           </div>
         )}
 
-        {/* Lighthouse skill launcher: chip rail under the title. */}
-        {isCloud() && !isNavigating && (
+        {/* Lighthouse skill launcher: chip rail under the title. Sample
+            findings exist only in the UI, so Lighthouse has nothing to read. */}
+        {isCloud() && !isNavigating && !isSampleId(currentFinding?.id) && (
           <LighthouseSkillsRail
             onLaunchSkill={handleLaunchSkill}
             onSubmitPrompt={handleSubmitPrompt}

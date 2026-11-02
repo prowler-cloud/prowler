@@ -42,7 +42,10 @@ export default async function Findings({
   if (preview.active) {
     return (
       <ContentLayout title="Findings" icon={<Tag />}>
-        <FindingsSamplePreview state={preview} />
+        <FindingsSamplePreview
+          state={preview}
+          searchParams={await searchParams}
+        />
       </ContentLayout>
     );
   }
