@@ -524,12 +524,6 @@ vi.mock("../finding-triage-cells", () => ({
     ) : (
       <span>-</span>
     ),
-  FindingTriageStatusBadge: ({ triage }: { triage: { label: string } }) => (
-    <div>
-      <span>Triage:</span>
-      <span>{triage.label}</span>
-    </div>
-  ),
 }));
 
 vi.mock("./resource-detail-skeleton", () => ({

@@ -2,9 +2,8 @@
 
 import { Info } from "lucide-react";
 import { usePathname, useSearchParams } from "next/navigation";
-import { Suspense, useState } from "react";
+import { useState } from "react";
 
-import { OnboardingTrigger, PageReady } from "@/components/onboarding";
 import { AddProviderButton } from "@/components/providers/add-provider-button";
 import { MutedFindingsConfigButton } from "@/components/providers/muted-findings-config-button";
 import { NoProvidersAdded } from "@/components/providers/no-providers-added";
@@ -18,7 +17,6 @@ import type {
 } from "@/components/providers/wizard/types";
 import { Alert, AlertDescription } from "@/components/shadcn/alert";
 import { useMountEffect } from "@/hooks/use-mount-effect";
-import { getFlowById } from "@/lib/onboarding";
 import {
   dispatchProviderFunnel,
   PROVIDER_FUNNEL_STEP,
@@ -31,14 +29,6 @@ import {
   ADD_PROVIDER_SOURCE_PARAM,
   resolveAddProviderSource,
 } from "@/lib/providers-navigation";
-import {
-  ADD_PROVIDER_TOUR_TARGETS,
-  addProviderTour,
-} from "@/lib/tours/add-provider.tour";
-import {
-  advanceActiveTourWhenReady,
-  getTourTargetSelector,
-} from "@/lib/tours/use-driver-tour";
 import type { FilterOption, MetaDataProps, ProviderProps } from "@/types";
 import type { ProviderGroup } from "@/types/components";
 import {
@@ -51,21 +41,6 @@ import type {
   ScanConfigurationListStatus,
 } from "@/types/scan-configurations";
 import type { ScanScheduleCapability } from "@/types/schedules";
-
-const addProviderFlow = getFlowById("add-provider")!;
-
-// Softer overlay for this onboarding tour — a heavy dim over the wizard feels harsh
-// while the user fills the form. Module-level constant keeps the driver config stable
-// across renders (useDriverTour recreates the driver when configOverrides identity
-// changes).
-const ADD_PROVIDER_TOUR_CONFIG = { overlayOpacity: 0.45 } as const;
-
-// The tour's "trigger" step auto-advances when the wizard opens; this is the anchor
-// it waits for (the provider-type selector inside the wizard).
-const PROVIDER_TYPE_TOUR_SELECTOR = getTourTargetSelector(
-  addProviderTour.id,
-  ADD_PROVIDER_TOUR_TARGETS.PROVIDER_TYPE,
-);
 
 interface ProvidersAccountsViewProps {
   isCloud: boolean;
@@ -137,9 +112,6 @@ export function ProvidersAccountsView({
     setOrgWizardInitialData(undefined);
     setProviderWizardInitialData(initialData);
     setIsProviderWizardOpen(true);
-    // If the add-provider tour is on its "trigger" step, opening the wizard is the
-    // advance signal: move to the provider-type step once it mounts. No-op otherwise.
-    advanceActiveTourWhenReady(PROVIDER_TYPE_TOUR_SELECTOR);
   };
 
   const openOrganizationWizard = (initialData: OrgWizardInitialData) => {
@@ -173,21 +145,6 @@ export function ProvidersAccountsView({
 
   return (
     <>
-      {/* Suspense required: OnboardingTrigger reads useSearchParams */}
-      <Suspense fallback={null}>
-        <OnboardingTrigger
-          flow={addProviderFlow}
-          configOverrides={ADD_PROVIDER_TOUR_CONFIG}
-          // An already-open wizard (first run) leaves nothing for the earlier steps to ask.
-          startAtTarget={
-            isProviderWizardOpen
-              ? ADD_PROVIDER_TOUR_TARGETS.PROVIDER_TYPE
-              : undefined
-          }
-        />
-      </Suspense>
-      {/* Signals the navbar that this route's data has loaded (enables the replay icon). */}
-      <PageReady />
       {hasNoProviders ? (
         <NoProvidersAdded
           action="button"
@@ -195,7 +152,6 @@ export function ProvidersAccountsView({
           onOpenWizard={() =>
             openProviderWizard(WIZARD_OPEN_SOURCE.EMPTY_STATE)
           }
-          ctaTourId="add-provider-trigger"
         />
       ) : (
         <div className="flex flex-col gap-6">

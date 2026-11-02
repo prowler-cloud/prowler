@@ -18,7 +18,7 @@ overrides:
   "@react-aria/visually-hidden>react": "19.2.7"
   "@react-aria/interactions>react": "19.2.7"
   "lodash": "4.18.1"
-  # Next.js 16.3.8 requests sharp ^0.35.4; pinned to fix
+  # Next.js 16.4.1 requests sharp ^0.35.5; pinned to fix
   # GHSA-rgj7-g3m4-5g8c (libheif) and GHSA-wq5f-xc86-pv6w (librsvg).
   # This override controls resolution; keep it aligned with the direct
   # dependency in package.json.
@@ -84,8 +84,10 @@ overrides:
   # pulled in transitively via streamdown > mermaid and posthog-js. 3.4.11 closed
   # GHSA-cmwh-pvxp-8882 (permanent ALLOWED_ATTR pollution via setConfig()); 3.4.13
   # also closes the CUSTOM_ELEMENT_HANDLING afterSanitizeElements bypass and the
-  # IN_PLACE hook removal that left a detached subtree executable.
-  "dompurify": "3.4.13"
+  # IN_PLACE hook removal that left a detached subtree executable. 3.4.17 closes
+  # GHSA-cg2g-xh64-v4q7 (SAFE_FOR_TEMPLATES bypass via split template expressions
+  # in attached shadow roots), flagged critical by `pnpm audit` on 2026-10-23.
+  "dompurify": "3.4.17"
 
   # Advisories flagged by `pnpm audit` on 2026-09-08. Every pin below is the
   # oldest patched release and was published more than 7 days before that date,
