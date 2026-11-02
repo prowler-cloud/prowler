@@ -6,6 +6,7 @@ import {
   SAMPLE_FAILED_CHECKS,
   type SampleCheck,
 } from "./sample-dataset";
+import { SAMPLE_ID_PREFIX } from "./sample-records";
 
 // Finding groups derived from SAMPLE_CHECKS, in the API response shape so they
 // run through the same adapter as real data.
@@ -39,7 +40,8 @@ interface SampleFindingGroupItem {
 
 const toFindingGroupItem = (check: SampleCheck): SampleFindingGroupItem => ({
   type: "finding-groups",
-  id: check.checkId,
+  // The sample prefix keeps the group out of Lighthouse context.
+  id: `${SAMPLE_ID_PREFIX}group-${check.checkId}`,
   attributes: {
     check_id: check.checkId,
     check_title: check.title,
