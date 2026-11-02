@@ -36,7 +36,9 @@ import { ComplianceWatchlist, ServiceWatchlist } from "../watchlist";
 import { SampleGraphsTabs } from "./sample-graphs-tabs";
 
 // `contents` keeps each card a direct item of the grid's flex rows, while
-// `inert` stops links and drill-downs into data the tenant does not have.
+// `inert` stops links into pages with no sample data (compliance details,
+// resources). Cards that link to Findings or Issues stay live: those pages
+// show the sample and apply the link's filters.
 const Inert = ({ children }: { children: ReactNode }) => (
   <div inert className="contents">
     {children}
@@ -79,40 +81,30 @@ export function OverviewSamplePreview({
       exploitability={
         showIssues ? (
           <FeatureFlagGate flag={FEATURE_FLAG.ISSUES}>
-            <Inert>
-              <ExploitabilityChart
-                counts={verdictCounts(SAMPLE_ISSUES_OVERVIEW)}
-                issues={SAMPLE_ISSUES_OVERVIEW.issues}
-                findings={SAMPLE_ISSUES_OVERVIEW.findings}
-                actionable={SAMPLE_ISSUES_OVERVIEW.actionable}
-                coveredFindings={
-                  SAMPLE_ISSUES_OVERVIEW.not_exploitable_findings
-                }
-                scope={NO_SCOPE}
-              />
-            </Inert>
+            <ExploitabilityChart
+              counts={verdictCounts(SAMPLE_ISSUES_OVERVIEW)}
+              issues={SAMPLE_ISSUES_OVERVIEW.issues}
+              findings={SAMPLE_ISSUES_OVERVIEW.findings}
+              actionable={SAMPLE_ISSUES_OVERVIEW.actionable}
+              coveredFindings={SAMPLE_ISSUES_OVERVIEW.not_exploitable_findings}
+              scope={NO_SCOPE}
+            />
           </FeatureFlagGate>
         ) : undefined
       }
       checkFindings={
-        <Inert>
-          <StatusChart
-            failFindingsData={{
-              total: SAMPLE_STATUS.fail,
-              new: SAMPLE_STATUS.failNew,
-            }}
-            passFindingsData={{
-              total: SAMPLE_STATUS.pass,
-              new: SAMPLE_STATUS.passNew,
-            }}
-          />
-        </Inert>
+        <StatusChart
+          failFindingsData={{
+            total: SAMPLE_STATUS.fail,
+            new: SAMPLE_STATUS.failNew,
+          }}
+          passFindingsData={{
+            total: SAMPLE_STATUS.pass,
+            new: SAMPLE_STATUS.passNew,
+          }}
+        />
       }
-      riskSeverity={
-        <Inert>
-          <RiskSeverityChart {...SAMPLE_FAILED_BY_SEVERITY} />
-        </Inert>
-      }
+      riskSeverity={<RiskSeverityChart {...SAMPLE_FAILED_BY_SEVERITY} />}
       resourcesInventory={
         <Inert>
           <ResourcesInventory
@@ -126,23 +118,17 @@ export function OverviewSamplePreview({
         </Inert>
       }
       serviceWatchlist={
-        <Inert>
-          <ServiceWatchlist items={SAMPLE_SERVICES_RESPONSE.data} />
-        </Inert>
+        <ServiceWatchlist items={SAMPLE_SERVICES_RESPONSE.data} />
       }
       attackSurface={
-        <Inert>
-          <AttackSurface
-            items={adaptAttackSurfaceOverview(SAMPLE_ATTACK_SURFACE_RESPONSE)}
-          />
-        </Inert>
+        <AttackSurface
+          items={adaptAttackSurfaceOverview(SAMPLE_ATTACK_SURFACE_RESPONSE)}
+        />
       }
       topIssues={
         showIssues ? (
           <FeatureFlagGate flag={FEATURE_FLAG.ISSUES}>
-            <Inert>
-              <TopIssues issues={SAMPLE_ISSUES} scope={NO_SCOPE} />
-            </Inert>
+            <TopIssues issues={SAMPLE_ISSUES} scope={NO_SCOPE} />
           </FeatureFlagGate>
         ) : undefined
       }

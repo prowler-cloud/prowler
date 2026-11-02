@@ -27,13 +27,15 @@ describe("OverviewSamplePreview", () => {
     expect(screen.getByTestId("sample-graphs-tabs")).toBeInTheDocument();
   });
 
-  it("keeps every sample card inert, so nothing drills into missing data", () => {
+  it("only leaves links live where the target page shows the sample", () => {
     const { container } = render(<OverviewSamplePreview showIssues={false} />);
 
     const links = Array.from(container.querySelectorAll("a"));
-    expect(links.length).toBeGreaterThan(0);
-    for (const link of links) {
-      expect(link.closest("[inert]")).not.toBeNull();
+    const live = links.filter((link) => !link.closest("[inert]"));
+    expect(live.length).toBeGreaterThan(0);
+    expect(live.length).toBeLessThan(links.length);
+    for (const link of live) {
+      expect(link.getAttribute("href")).toMatch(/^\/(findings|issues)(\?|$)/);
     }
   });
 
