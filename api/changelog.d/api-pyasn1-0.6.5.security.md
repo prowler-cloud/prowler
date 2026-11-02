@@ -1,0 +1,1 @@
+Bumped `pyasn1` from 0.6.4 to 0.6.5, patching four high-severity quadratic-time denial-of-service advisories in BER/CER/DER decoding (CVE-2026-119194, CVE-2026-119195, CVE-2026-119196, CVE-2026-119197)
