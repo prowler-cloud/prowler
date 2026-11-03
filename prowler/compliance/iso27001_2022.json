@@ -1,0 +1,3740 @@
+{
+  "framework": "ISO27001",
+  "name": "ISO/IEC 27001 Information Security Management Standard 2022",
+  "version": "2022",
+  "description": "Cross-provider ISO/IEC 27001:2022 mapping consolidated from the existing Prowler provider-specific frameworks. Retains the 92 Annex A controls represented in those frameworks, including manual controls, their provider check mappings, and configuration guardrails.",
+  "icon": "iso27001",
+  "attributes_metadata": [
+    {
+      "key": "Category",
+      "label": "Control Category",
+      "type": "str",
+      "required": true,
+      "enum": [
+        "A.5 Organizational controls",
+        "A.6 People controls",
+        "A.7 Physical controls",
+        "A.8 Technological controls"
+      ],
+      "output_formats": {
+        "csv": true,
+        "ocsf": true
+      }
+    },
+    {
+      "key": "Objetive_ID",
+      "label": "Control ID",
+      "type": "str",
+      "required": true,
+      "output_formats": {
+        "csv": true,
+        "ocsf": true
+      }
+    },
+    {
+      "key": "Objetive_Name",
+      "label": "Control Name",
+      "type": "str",
+      "required": true,
+      "output_formats": {
+        "csv": true,
+        "ocsf": true
+      }
+    },
+    {
+      "key": "Check_Summary",
+      "label": "Control Summary",
+      "type": "str",
+      "required": true,
+      "output_formats": {
+        "csv": true,
+        "ocsf": true
+      }
+    }
+  ],
+  "outputs": {
+    "table_config": {
+      "group_by": "Category"
+    },
+    "pdf_config": {
+      "language": "en",
+      "primary_color": "#00549F",
+      "secondary_color": "#003B70",
+      "bg_color": "#F0F5FA",
+      "group_by_field": "Category",
+      "sections": [
+        "A.5 Organizational controls",
+        "A.6 People controls",
+        "A.7 Physical controls",
+        "A.8 Technological controls"
+      ],
+      "charts": [
+        {
+          "id": "section_compliance",
+          "type": "horizontal_bar",
+          "group_by": "Category",
+          "title": "Compliance Score by Control Category",
+          "y_label": "Control Category",
+          "x_label": "Compliance %",
+          "value_source": "compliance_percent",
+          "color_mode": "by_value"
+        }
+      ],
+      "filter": {
+        "only_failed": true,
+        "include_manual": false
+      }
+    }
+  },
+  "requirements": [
+    {
+      "id": "A.5.1",
+      "name": "Policies for information security",
+      "description": "Information security policy and topic-specific policies should be defined, approved by management, published, communicated to and acknowledged by relevant personnel and relevant interested parties, and reviewed at planned intervals and if significant changes occur.",
+      "attributes": {
+        "Category": "A.5 Organizational controls",
+        "Objetive_ID": "A.5.1",
+        "Objetive_Name": "Policies for information security",
+        "Check_Summary": "Information security policy and topic-specific policies should be defined, approved by management, published, communicated to and acknowledged by relevant personnel and relevant interested parties, and reviewed at planned intervals and if significant changes occur."
+      },
+      "checks": {
+        "aws": [
+          "securityhub_enabled",
+          "wellarchitected_workload_no_high_or_medium_risks"
+        ],
+        "azure": [
+          "entra_security_defaults_enabled",
+          "policy_ensure_asc_enforcement_enabled"
+        ],
+        "gcp": [
+          "iam_cloud_asset_inventory_enabled"
+        ],
+        "kubernetes": [
+          "apiserver_anonymous_requests",
+          "apiserver_audit_log_path_set",
+          "apiserver_auth_mode_include_rbac",
+          "apiserver_auth_mode_not_always_allow",
+          "apiserver_client_ca_file_set",
+          "apiserver_encryption_provider_config_set",
+          "apiserver_etcd_cafile_set",
+          "apiserver_etcd_tls_config",
+          "apiserver_kubelet_cert_auth",
+          "apiserver_kubelet_tls_auth",
+          "apiserver_service_account_key_file_set",
+          "apiserver_service_account_lookup_true",
+          "etcd_client_cert_auth",
+          "etcd_peer_client_cert_auth",
+          "etcd_tls_encryption",
+          "etcd_unique_ca",
+          "kubelet_authorization_mode",
+          "kubelet_client_ca_file_set",
+          "kubelet_disable_anonymous_auth",
+          "kubelet_rotate_certificates",
+          "kubelet_strong_ciphers_only",
+          "kubelet_tls_cert_and_key",
+          "rbac_cluster_admin_usage",
+          "rbac_minimize_pod_creation_access",
+          "rbac_minimize_secret_access",
+          "rbac_minimize_service_account_token_creation",
+          "rbac_minimize_wildcard_use_roles"
+        ],
+        "m365": [
+          "defender_antiphishing_policy_configured",
+          "defender_antispam_policy_inbound_no_allowed_domains",
+          "entra_conditional_access_policy_block_o365_elevated_insider_risk",
+          "entra_identity_protection_sign_in_risk_enabled",
+          "entra_identity_protection_user_risk_enabled"
+        ],
+        "nhn": []
+      },
+      "config_requirements": [
+        {
+          "Check": "securityhub_enabled",
+          "Provider": "aws",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ]
+    },
+    {
+      "id": "A.5.2",
+      "name": "Roles and Responsibilities",
+      "description": "Information security roles and responsibilities should be defined and allocated according to the organisation needs.",
+      "attributes": {
+        "Category": "A.5 Organizational controls",
+        "Objetive_ID": "A.5.2",
+        "Objetive_Name": "Roles and Responsibilities",
+        "Check_Summary": "Information security roles and responsibilities should be defined and allocated according to the organisation needs."
+      },
+      "checks": {
+        "aws": [],
+        "azure": [
+          "entra_conditional_access_policy_require_mfa_for_management_api",
+          "entra_global_admin_in_less_than_five_users",
+          "entra_non_privileged_user_has_mfa",
+          "entra_policy_default_users_cannot_create_security_groups",
+          "entra_policy_ensure_default_user_cannot_create_apps",
+          "entra_policy_ensure_default_user_cannot_create_tenants",
+          "entra_policy_guest_invite_only_for_admin_roles",
+          "entra_policy_guest_users_access_restrictions",
+          "entra_policy_restricts_user_consent_for_apps",
+          "entra_policy_user_consent_for_verified_apps",
+          "entra_privileged_user_has_mfa",
+          "entra_security_defaults_enabled",
+          "entra_user_with_vm_access_has_mfa",
+          "entra_users_cannot_create_microsoft_365_groups"
+        ],
+        "gcp": [],
+        "kubernetes": [
+          "apiserver_auth_mode_include_rbac",
+          "apiserver_auth_mode_not_always_allow",
+          "apiserver_client_ca_file_set",
+          "apiserver_encryption_provider_config_set",
+          "apiserver_etcd_cafile_set",
+          "apiserver_etcd_tls_config",
+          "apiserver_service_account_key_file_set",
+          "apiserver_service_account_lookup_true",
+          "etcd_client_cert_auth",
+          "etcd_peer_client_cert_auth",
+          "kubelet_authorization_mode",
+          "kubelet_client_ca_file_set",
+          "rbac_cluster_admin_usage",
+          "rbac_minimize_pod_creation_access",
+          "rbac_minimize_secret_access",
+          "rbac_minimize_service_account_token_creation",
+          "rbac_minimize_wildcard_use_roles"
+        ],
+        "m365": [
+          "admincenter_external_calendar_sharing_disabled",
+          "admincenter_groups_not_public_visibility",
+          "admincenter_organization_customer_lockbox_enabled",
+          "admincenter_settings_password_never_expire",
+          "admincenter_users_admins_reduced_license_footprint",
+          "admincenter_users_between_two_and_four_global_admins",
+          "defender_antispam_outbound_policy_configured",
+          "entra_admin_consent_workflow_enabled",
+          "entra_admin_portals_access_restriction",
+          "entra_admin_users_cloud_only",
+          "entra_admin_users_mfa_enabled",
+          "entra_admin_users_phishing_resistant_mfa_enabled",
+          "entra_admin_users_sign_in_frequency_enabled",
+          "entra_policy_ensure_default_user_cannot_create_tenants",
+          "entra_policy_guest_invite_only_for_admin_roles",
+          "exchange_roles_assignment_policy_addins_disabled",
+          "teams_meeting_external_control_disabled"
+        ],
+        "nhn": []
+      }
+    },
+    {
+      "id": "A.5.3",
+      "name": "Segregation of Duties",
+      "description": "Conflicting duties and conflicting areas of responsibility should be segregated.",
+      "attributes": {
+        "Category": "A.5 Organizational controls",
+        "Objetive_ID": "A.5.3",
+        "Objetive_Name": "Segregation of Duties",
+        "Check_Summary": "Conflicting duties and conflicting areas of responsibility should be segregated."
+      },
+      "checks": {
+        "aws": [
+          "iam_securityaudit_role_created"
+        ],
+        "azure": [],
+        "gcp": [
+          "iam_no_service_roles_at_project_level",
+          "iam_role_kms_enforce_separation_of_duties",
+          "iam_role_sa_enforce_separation_of_duties"
+        ],
+        "kubernetes": [
+          "rbac_cluster_admin_usage",
+          "rbac_minimize_csr_approval_access",
+          "rbac_minimize_node_proxy_subresource_access",
+          "rbac_minimize_pod_creation_access",
+          "rbac_minimize_pv_creation_access",
+          "rbac_minimize_secret_access",
+          "rbac_minimize_service_account_token_creation",
+          "rbac_minimize_webhook_config_access",
+          "rbac_minimize_wildcard_use_roles"
+        ],
+        "m365": [
+          "entra_admin_consent_workflow_enabled",
+          "entra_admin_portals_access_restriction",
+          "entra_admin_users_cloud_only",
+          "entra_admin_users_mfa_enabled",
+          "entra_admin_users_phishing_resistant_mfa_enabled",
+          "entra_admin_users_sign_in_frequency_enabled",
+          "entra_policy_ensure_default_user_cannot_create_tenants",
+          "entra_policy_guest_invite_only_for_admin_roles"
+        ],
+        "nhn": []
+      }
+    },
+    {
+      "id": "A.5.4",
+      "name": "Management Responsibilities",
+      "description": "Management should require all personnel to apply information security in accordance with the established information security policy, topic-specific policies and procedures of the organization.",
+      "attributes": {
+        "Category": "A.5 Organizational controls",
+        "Objetive_ID": "A.5.4",
+        "Objetive_Name": "Management Responsibilities",
+        "Check_Summary": "Management should require all personnel to apply information security in accordance with the established information security policy, topic-specific policies and procedures of the organization."
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": [],
+        "nhn": []
+      }
+    },
+    {
+      "id": "A.5.5",
+      "name": "Contact With Authorities",
+      "description": "The organisation should establish and maintain contact with relevant authorities.",
+      "attributes": {
+        "Category": "A.5 Organizational controls",
+        "Objetive_ID": "A.5.5",
+        "Objetive_Name": "Contact With Authorities",
+        "Check_Summary": "The organisation should establish and maintain contact with relevant authorities."
+      },
+      "checks": {
+        "aws": [
+          "account_maintain_current_contact_details",
+          "account_security_contact_information_is_registered"
+        ],
+        "azure": [
+          "defender_additional_email_configured_with_a_security_contact"
+        ],
+        "gcp": [
+          "iam_organization_essential_contacts_configured"
+        ],
+        "kubernetes": [],
+        "m365": [
+          "defender_antispam_outbound_policy_configured",
+          "defender_malware_policy_notifications_internal_users_malware_enabled"
+        ],
+        "nhn": []
+      }
+    },
+    {
+      "id": "A.5.6",
+      "name": "Contact With Special Interest Groups",
+      "description": "The organisation should establish and maintain contact with special interest groups or other specialist security forums and professional associations.",
+      "attributes": {
+        "Category": "A.5 Organizational controls",
+        "Objetive_ID": "A.5.6",
+        "Objetive_Name": "Contact With Special Interest Groups",
+        "Check_Summary": "The organisation should establish and maintain contact with special interest groups or other specialist security forums and professional associations."
+      },
+      "checks": {
+        "aws": [
+          "account_maintain_different_contact_details_to_security_billing_and_operations"
+        ],
+        "azure": [],
+        "gcp": [
+          "iam_organization_essential_contacts_configured"
+        ],
+        "kubernetes": [],
+        "m365": [],
+        "nhn": []
+      }
+    },
+    {
+      "id": "A.5.7",
+      "name": "Threat Intelligence",
+      "description": "Information relating to information security threats should be collected and analysed to produce threat intelligence.",
+      "attributes": {
+        "Category": "A.5 Organizational controls",
+        "Objetive_ID": "A.5.7",
+        "Objetive_Name": "Threat Intelligence",
+        "Check_Summary": "Information relating to information security threats should be collected and analysed to produce threat intelligence."
+      },
+      "checks": {
+        "aws": [
+          "cloudtrail_threat_detection_enumeration",
+          "cloudtrail_threat_detection_llm_jacking",
+          "cloudtrail_threat_detection_privilege_escalation"
+        ],
+        "azure": [
+          "monitor_alert_create_policy_assignment",
+          "monitor_alert_create_update_nsg",
+          "monitor_alert_create_update_public_ip_address_rule",
+          "monitor_alert_create_update_security_solution",
+          "monitor_alert_create_update_sqlserver_fr",
+          "monitor_alert_delete_nsg",
+          "monitor_alert_delete_policy_assignment",
+          "monitor_alert_delete_public_ip_address_rule",
+          "monitor_alert_delete_security_solution",
+          "monitor_alert_delete_sqlserver_fr"
+        ],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": [
+          "defender_antiphishing_policy_configured",
+          "defender_antispam_outbound_policy_configured",
+          "defender_malware_policy_notifications_internal_users_malware_enabled",
+          "defender_safelinks_policy_enabled",
+          "defender_zap_for_teams_enabled",
+          "defenderidentity_health_issues_no_open",
+          "defenderxdr_endpoint_privileged_user_exposed_credentials",
+          "entra_admin_users_phishing_resistant_mfa_enabled",
+          "entra_conditional_access_policy_block_elevated_insider_risk",
+          "entra_conditional_access_policy_block_o365_elevated_insider_risk",
+          "entra_identity_protection_sign_in_risk_enabled",
+          "entra_identity_protection_user_risk_enabled"
+        ],
+        "nhn": []
+      }
+    },
+    {
+      "id": "A.5.8",
+      "name": "Information Security In Project Management",
+      "description": "Information security should be integrated into project management.",
+      "attributes": {
+        "Category": "A.5 Organizational controls",
+        "Objetive_ID": "A.5.8",
+        "Objetive_Name": "Information Security In Project Management",
+        "Check_Summary": "Information security should be integrated into project management."
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": [],
+        "nhn": []
+      }
+    },
+    {
+      "id": "A.5.9",
+      "name": "Inventory Of Information And Other Associated Assets",
+      "description": "An inventory of information and other associated assets, including owners, should be developed and maintained.",
+      "attributes": {
+        "Category": "A.5 Organizational controls",
+        "Objetive_ID": "A.5.9",
+        "Objetive_Name": "Inventory Of Information And Other Associated Assets",
+        "Check_Summary": "An inventory of information and other associated assets, including owners, should be developed and maintained."
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": [],
+        "nhn": []
+      }
+    },
+    {
+      "id": "A.5.10",
+      "name": "Acceptable Use Of Information And Other Associated Assets",
+      "description": "Rules for the acceptable use and procedures for handling information and other associated assets should be identified, documented and implemented.",
+      "attributes": {
+        "Category": "A.5 Organizational controls",
+        "Objetive_ID": "A.5.10",
+        "Objetive_Name": "Acceptable Use Of Information And Other Associated Assets",
+        "Check_Summary": "Rules for the acceptable use and procedures for handling information and other associated assets should be identified, documented and implemented."
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": [
+          "entra_admin_portals_access_restriction",
+          "entra_policy_guest_users_access_restrictions",
+          "sharepoint_external_sharing_managed",
+          "sharepoint_external_sharing_restricted"
+        ],
+        "nhn": []
+      }
+    },
+    {
+      "id": "A.5.11",
+      "name": "Return Of Assets",
+      "description": "Personnel and other interested parties as appropriate should return all the organisation’s assets in their possession upon change or termination of their employment, contract or agreement.",
+      "attributes": {
+        "Category": "A.5 Organizational controls",
+        "Objetive_ID": "A.5.11",
+        "Objetive_Name": "Return Of Assets",
+        "Check_Summary": "Personnel and other interested parties as appropriate should return all the organisation’s assets in their possession upon change or termination of their employment, contract or agreement."
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": [],
+        "nhn": []
+      }
+    },
+    {
+      "id": "A.5.12",
+      "name": "Classification Of Information",
+      "description": "Information should be classified according to the information security needs of the organisation based on confidentiality, integrity, availability and relevant interested party requirements.",
+      "attributes": {
+        "Category": "A.5 Organizational controls",
+        "Objetive_ID": "A.5.12",
+        "Objetive_Name": "Classification Of Information",
+        "Check_Summary": "Information should be classified according to the information security needs of the organisation based on confidentiality, integrity, availability and relevant interested party requirements."
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": [],
+        "nhn": []
+      }
+    },
+    {
+      "id": "A.5.13",
+      "name": "Labelling Of Information",
+      "description": "An appropriate set of procedures for information labelling should be developed and implemented in accordance with the information classification scheme adopted by the organisation.",
+      "attributes": {
+        "Category": "A.5 Organizational controls",
+        "Objetive_ID": "A.5.13",
+        "Objetive_Name": "Labelling Of Information",
+        "Check_Summary": "An appropriate set of procedures for information labelling should be developed and implemented in accordance with the information classification scheme adopted by the organisation."
+      },
+      "checks": {
+        "aws": [
+          "fsx_file_system_copy_tags_to_backups_enabled",
+          "fsx_file_system_copy_tags_to_volumes_enabled",
+          "neptune_cluster_copy_tags_to_snapshots",
+          "organizations_tags_policies_enabled_and_attached",
+          "rds_cluster_copy_tags_to_snapshots"
+        ],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [
+          "kubelet_config_yaml_ownership"
+        ],
+        "m365": [
+          "defenderxdr_critical_asset_management_pending_approvals",
+          "exchange_external_email_tagging_enabled",
+          "sharepoint_external_sharing_managed"
+        ],
+        "nhn": []
+      }
+    },
+    {
+      "id": "A.5.14",
+      "name": "Information Transfer",
+      "description": "Information transfer rules, procedures, or agreements should be in place for all types of transfer facilities within the organisation and between the organisation and other parties.",
+      "attributes": {
+        "Category": "A.5 Organizational controls",
+        "Objetive_ID": "A.5.14",
+        "Objetive_Name": "Information Transfer",
+        "Check_Summary": "Information transfer rules, procedures, or agreements should be in place for all types of transfer facilities within the organisation and between the organisation and other parties."
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": [
+          "entra_app_registration_redirect_uris_secure",
+          "entra_conditional_access_policy_app_enforced_restrictions",
+          "entra_cross_tenant_access_default_outbound_restricted",
+          "exchange_transport_config_smtp_auth_disabled",
+          "exchange_transport_rules_mail_forwarding_disabled",
+          "exchange_transport_rules_whitelist_disabled",
+          "sharepoint_external_sharing_managed",
+          "sharepoint_external_sharing_restricted",
+          "sharepoint_guest_sharing_restricted",
+          "sharepoint_modern_authentication_required",
+          "sharepoint_onedrive_sync_restricted_unmanaged_devices",
+          "teams_external_file_sharing_restricted"
+        ],
+        "nhn": []
+      }
+    },
+    {
+      "id": "A.5.15",
+      "name": "Access Control",
+      "description": "Rules to control physical and logical access to information and other associated assets should be established",
+      "attributes": {
+        "Category": "A.5 Organizational controls",
+        "Objetive_ID": "A.5.15",
+        "Objetive_Name": "Access Control",
+        "Check_Summary": "Rules to control physical and logical access to information and other associated assets should be established"
+      },
+      "checks": {
+        "aws": [
+          "iam_avoid_root_usage",
+          "iam_no_root_access_key",
+          "iam_password_policy_expires_passwords_within_90_days_or_less",
+          "iam_password_policy_lowercase",
+          "iam_password_policy_minimum_length_14",
+          "iam_password_policy_number",
+          "iam_password_policy_reuse_24",
+          "iam_password_policy_symbol",
+          "iam_password_policy_uppercase",
+          "iam_policy_attached_only_to_group_or_roles",
+          "iam_role_access_not_stale_to_bedrock",
+          "iam_root_mfa_enabled",
+          "iam_rotate_access_key_90_days",
+          "iam_user_access_not_stale_to_bedrock",
+          "iam_user_access_not_stale_to_sagemaker",
+          "iam_user_accesskey_unused",
+          "iam_user_console_access_unused",
+          "iam_user_mfa_enabled_console_access"
+        ],
+        "azure": [
+          "entra_global_admin_in_less_than_five_users",
+          "entra_policy_default_users_cannot_create_security_groups",
+          "entra_policy_ensure_default_user_cannot_create_apps",
+          "entra_policy_ensure_default_user_cannot_create_tenants",
+          "entra_policy_guest_invite_only_for_admin_roles",
+          "entra_policy_guest_users_access_restrictions",
+          "entra_policy_restricts_user_consent_for_apps",
+          "entra_policy_user_consent_for_verified_apps",
+          "entra_security_defaults_enabled",
+          "entra_trusted_named_locations_exists",
+          "entra_users_cannot_create_microsoft_365_groups"
+        ],
+        "gcp": [
+          "iam_account_access_approval_enabled",
+          "iam_no_service_roles_at_project_level",
+          "iam_role_kms_enforce_separation_of_duties",
+          "iam_role_sa_enforce_separation_of_duties",
+          "iam_sa_no_administrative_privileges",
+          "iam_sa_no_user_managed_keys"
+        ],
+        "kubernetes": [
+          "apiserver_anonymous_requests",
+          "apiserver_auth_mode_include_rbac",
+          "apiserver_auth_mode_not_always_allow",
+          "apiserver_client_ca_file_set",
+          "apiserver_service_account_key_file_set",
+          "apiserver_service_account_lookup_true",
+          "controllermanager_root_ca_file_set",
+          "core_minimize_allowPrivilegeEscalation_containers",
+          "etcd_client_cert_auth",
+          "etcd_peer_client_cert_auth",
+          "etcd_tls_encryption",
+          "kubelet_authorization_mode",
+          "kubelet_client_ca_file_set",
+          "kubelet_disable_anonymous_auth",
+          "kubelet_rotate_certificates",
+          "rbac_cluster_admin_usage",
+          "rbac_minimize_secret_access",
+          "rbac_minimize_service_account_token_creation"
+        ],
+        "m365": [
+          "admincenter_users_admins_reduced_license_footprint",
+          "entra_admin_portals_access_restriction",
+          "entra_admin_users_phishing_resistant_mfa_enabled",
+          "entra_conditional_access_policy_block_o365_elevated_insider_risk",
+          "entra_conditional_access_policy_block_unknown_device_platforms",
+          "entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced",
+          "entra_conditional_access_policy_directory_sync_account_excluded",
+          "entra_conditional_access_policy_mfa_enforced_for_guest_users",
+          "entra_cross_tenant_access_default_outbound_restricted",
+          "entra_dynamic_group_member_of_rule_not_used",
+          "entra_policy_guest_users_access_restrictions",
+          "entra_seamless_sso_disabled"
+        ],
+        "nhn": [
+          "compute_instance_login_user"
+        ]
+      }
+    },
+    {
+      "id": "A.5.16",
+      "name": "Identity Management",
+      "description": "The full lifecycle of identities should be managed.",
+      "attributes": {
+        "Category": "A.5 Organizational controls",
+        "Objetive_ID": "A.5.16",
+        "Objetive_Name": "Identity Management",
+        "Check_Summary": "The full lifecycle of identities should be managed."
+      },
+      "checks": {
+        "aws": [
+          "config_recorder_all_regions_enabled"
+        ],
+        "azure": [
+          "aks_cluster_local_accounts_disabled",
+          "defender_ensure_defender_for_containers_is_on",
+          "defender_ensure_defender_for_cosmosdb_is_on",
+          "defender_ensure_defender_for_databases_is_on",
+          "defender_ensure_defender_for_dns_is_on",
+          "defender_ensure_defender_for_keyvault_is_on",
+          "defender_ensure_defender_for_os_relational_databases_is_on",
+          "defender_ensure_defender_for_server_is_on",
+          "defender_ensure_defender_for_sql_servers_is_on",
+          "defender_ensure_defender_for_storage_is_on",
+          "defender_ensure_mcas_is_enabled",
+          "defender_ensure_notify_alerts_severity_is_high",
+          "entra_policy_guest_users_access_restrictions",
+          "entra_policy_restricts_user_consent_for_apps",
+          "entra_user_with_recent_sign_in",
+          "entra_users_cannot_create_microsoft_365_groups",
+          "iam_custom_role_has_permissions_to_administer_resource_locks",
+          "monitor_alert_create_update_security_solution",
+          "monitor_alert_delete_security_solution",
+          "monitor_diagnostic_setting_with_appropriate_categories",
+          "monitor_diagnostic_settings_exists",
+          "monitor_storage_account_with_activity_logs_cmk_encrypted",
+          "monitor_storage_account_with_activity_logs_is_private"
+        ],
+        "gcp": [
+          "apikeys_key_rotated_in_90_days",
+          "iam_sa_user_managed_key_rotate_90_days",
+          "kms_key_rotation_enabled"
+        ],
+        "kubernetes": [
+          "controllermanager_rotate_kubelet_server_cert",
+          "kubelet_rotate_certificates"
+        ],
+        "m365": [
+          "admincenter_settings_password_never_expire",
+          "entra_seamless_sso_disabled"
+        ],
+        "nhn": []
+      },
+      "config_requirements": [
+        {
+          "Check": "config_recorder_all_regions_enabled",
+          "Provider": "aws",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ]
+    },
+    {
+      "id": "A.5.17",
+      "name": "Authentication Information",
+      "description": "Allocation and management of authentication information should be controlled by a management process, including advising personnel on the appropriate handling of authentication information.",
+      "attributes": {
+        "Category": "A.5 Organizational controls",
+        "Objetive_ID": "A.5.17",
+        "Objetive_Name": "Authentication Information",
+        "Check_Summary": "Allocation and management of authentication information should be controlled by a management process, including advising personnel on the appropriate handling of authentication information."
+      },
+      "checks": {
+        "aws": [
+          "iam_root_mfa_enabled",
+          "iam_user_mfa_enabled_console_access"
+        ],
+        "azure": [
+          "entra_conditional_access_policy_require_mfa_for_management_api",
+          "entra_non_privileged_user_has_mfa",
+          "entra_privileged_user_has_mfa",
+          "entra_user_with_vm_access_has_mfa"
+        ],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": [
+          "defenderxdr_endpoint_privileged_user_exposed_credentials",
+          "entra_admin_users_mfa_enabled",
+          "entra_admin_users_sign_in_frequency_enabled",
+          "entra_all_apps_conditional_access_coverage",
+          "entra_break_glass_account_fido2_security_key_registered",
+          "entra_conditional_access_policy_block_unknown_device_platforms",
+          "entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced",
+          "entra_conditional_access_policy_device_code_flow_blocked",
+          "entra_conditional_access_policy_device_registration_mfa_required",
+          "entra_conditional_access_policy_mfa_enforced_for_guest_users",
+          "entra_default_app_management_policy_enabled",
+          "entra_emergency_access_exclusion",
+          "entra_intune_enrollment_sign_in_frequency_every_time",
+          "entra_legacy_authentication_blocked",
+          "entra_managed_device_required_for_authentication",
+          "entra_policy_admin_self_service_password_reset_disabled",
+          "entra_seamless_sso_disabled",
+          "entra_service_principal_no_secrets_for_permanent_tier0_roles",
+          "entra_users_mfa_enabled",
+          "exchange_organization_modern_authentication_enabled",
+          "exchange_transport_config_smtp_auth_disabled",
+          "sharepoint_modern_authentication_required"
+        ],
+        "nhn": []
+      }
+    },
+    {
+      "id": "A.5.18",
+      "name": "Access Rights",
+      "description": "Access rights to information and other associated assets should be provisioned, reviewed, modified and removed in accordance with the organisation’s topic-specific policy on and rules for access control.",
+      "attributes": {
+        "Category": "A.5 Organizational controls",
+        "Objetive_ID": "A.5.18",
+        "Objetive_Name": "Access Rights",
+        "Check_Summary": "Access rights to information and other associated assets should be provisioned, reviewed, modified and removed in accordance with the organisation’s topic-specific policy on and rules for access control."
+      },
+      "checks": {
+        "aws": [
+          "iam_aws_attached_policy_no_administrative_privileges",
+          "iam_customer_attached_policy_no_administrative_privileges",
+          "iam_inline_policy_no_administrative_privileges",
+          "iam_inline_policy_no_wildcard_marketplace_subscribe",
+          "iam_policy_no_wildcard_marketplace_subscribe"
+        ],
+        "azure": [
+          "entra_policy_default_users_cannot_create_security_groups",
+          "entra_policy_ensure_default_user_cannot_create_apps",
+          "entra_policy_ensure_default_user_cannot_create_tenants",
+          "entra_policy_guest_invite_only_for_admin_roles",
+          "entra_policy_guest_users_access_restrictions",
+          "entra_policy_restricts_user_consent_for_apps",
+          "entra_policy_user_consent_for_verified_apps",
+          "entra_user_with_recent_sign_in"
+        ],
+        "gcp": [
+          "iam_role_sa_enforce_separation_of_duties",
+          "iam_sa_no_administrative_privileges"
+        ],
+        "kubernetes": [
+          "apiserver_anonymous_requests",
+          "apiserver_auth_mode_include_rbac",
+          "apiserver_auth_mode_not_always_allow",
+          "apiserver_client_ca_file_set",
+          "apiserver_service_account_key_file_set",
+          "apiserver_service_account_lookup_true",
+          "kubelet_authorization_mode",
+          "kubelet_client_ca_file_set",
+          "kubelet_disable_anonymous_auth",
+          "rbac_cluster_admin_usage",
+          "rbac_minimize_secret_access",
+          "rbac_minimize_service_account_token_creation"
+        ],
+        "m365": [
+          "entra_admin_portals_access_restriction",
+          "entra_app_registration_no_unused_privileged_permissions",
+          "entra_dynamic_group_member_of_rule_not_used",
+          "entra_policy_guest_users_access_restrictions",
+          "entra_service_principal_no_secrets_for_permanent_tier0_roles",
+          "sharepoint_external_sharing_managed",
+          "sharepoint_external_sharing_restricted",
+          "sharepoint_guest_sharing_restricted"
+        ],
+        "nhn": [
+          "compute_instance_login_user"
+        ]
+      }
+    },
+    {
+      "id": "A.5.19",
+      "name": "Information Security In Supplier Relationships",
+      "description": "Processes and procedures should be defined and implemented to manage the information security risks associated with the use of supplier’s products or services.",
+      "attributes": {
+        "Category": "A.5 Organizational controls",
+        "Objetive_ID": "A.5.19",
+        "Objetive_Name": "Information Security In Supplier Relationships",
+        "Check_Summary": "Processes and procedures should be defined and implemented to manage the information security risks associated with the use of supplier’s products or services."
+      },
+      "checks": {
+        "aws": [
+          "guardduty_is_enabled",
+          "guardduty_no_high_severity_findings"
+        ],
+        "azure": [
+          "defender_container_images_resolved_vulnerabilities",
+          "defender_container_images_scan_enabled",
+          "defender_ensure_defender_for_app_services_is_on",
+          "defender_ensure_defender_for_arm_is_on",
+          "defender_ensure_defender_for_azure_sql_databases_is_on",
+          "defender_ensure_defender_for_containers_is_on",
+          "defender_ensure_defender_for_cosmosdb_is_on",
+          "defender_ensure_defender_for_databases_is_on",
+          "defender_ensure_defender_for_dns_is_on",
+          "defender_ensure_defender_for_keyvault_is_on",
+          "defender_ensure_defender_for_os_relational_databases_is_on",
+          "defender_ensure_defender_for_server_is_on",
+          "defender_ensure_defender_for_sql_servers_is_on",
+          "defender_ensure_defender_for_storage_is_on",
+          "defender_ensure_iot_hub_defender_is_on"
+        ],
+        "gcp": [
+          "gemini_api_disabled",
+          "iam_cloud_asset_inventory_enabled"
+        ],
+        "kubernetes": [],
+        "m365": [
+          "entra_identity_protection_sign_in_risk_enabled",
+          "entra_identity_protection_user_risk_enabled",
+          "sharepoint_external_sharing_managed"
+        ],
+        "nhn": []
+      },
+      "config_requirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "Provider": "aws",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ]
+    },
+    {
+      "id": "A.5.20",
+      "name": "Addressing Information Security Within Supplier Agreements",
+      "description": "Relevant information security requirements should be established and agreed with each supplier based on the type of supplier relationship.",
+      "attributes": {
+        "Category": "A.5 Organizational controls",
+        "Objetive_ID": "A.5.20",
+        "Objetive_Name": "Addressing Information Security Within Supplier Agreements",
+        "Check_Summary": "Relevant information security requirements should be established and agreed with each supplier based on the type of supplier relationship."
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": [],
+        "nhn": []
+      }
+    },
+    {
+      "id": "A.5.21",
+      "name": "Managing Information Security In The ICT Supply Chain",
+      "description": "Processes and procedures should be defined and implemented to manage the information security risks associated with the ICT products and services supply chain.",
+      "attributes": {
+        "Category": "A.5 Organizational controls",
+        "Objetive_ID": "A.5.21",
+        "Objetive_Name": "Managing Information Security In The ICT Supply Chain",
+        "Check_Summary": "Processes and procedures should be defined and implemented to manage the information security risks associated with the ICT products and services supply chain."
+      },
+      "checks": {
+        "aws": [
+          "guardduty_is_enabled",
+          "guardduty_no_high_severity_findings"
+        ],
+        "azure": [
+          "defender_container_images_resolved_vulnerabilities",
+          "defender_container_images_scan_enabled",
+          "defender_ensure_defender_for_app_services_is_on",
+          "defender_ensure_defender_for_arm_is_on",
+          "defender_ensure_defender_for_azure_sql_databases_is_on",
+          "defender_ensure_defender_for_containers_is_on",
+          "defender_ensure_defender_for_cosmosdb_is_on",
+          "defender_ensure_defender_for_databases_is_on",
+          "defender_ensure_defender_for_dns_is_on",
+          "defender_ensure_defender_for_keyvault_is_on",
+          "defender_ensure_defender_for_os_relational_databases_is_on",
+          "defender_ensure_defender_for_server_is_on",
+          "defender_ensure_defender_for_sql_servers_is_on",
+          "defender_ensure_defender_for_storage_is_on",
+          "defender_ensure_iot_hub_defender_is_on"
+        ],
+        "gcp": [
+          "gemini_api_disabled",
+          "iam_cloud_asset_inventory_enabled"
+        ],
+        "kubernetes": [],
+        "m365": [
+          "entra_identity_protection_sign_in_risk_enabled",
+          "entra_identity_protection_user_risk_enabled",
+          "sharepoint_external_sharing_managed"
+        ],
+        "nhn": []
+      },
+      "config_requirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "Provider": "aws",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ]
+    },
+    {
+      "id": "A.5.22",
+      "name": "Monitor, Review And Change Management Of Supplier Services",
+      "description": "The organisation should regularly monitor, review, evaluate and manage change in supplier information security practices and service delivery.",
+      "attributes": {
+        "Category": "A.5 Organizational controls",
+        "Objetive_ID": "A.5.22",
+        "Objetive_Name": "Monitor, Review And Change Management Of Supplier Services",
+        "Check_Summary": "The organisation should regularly monitor, review, evaluate and manage change in supplier information security practices and service delivery."
+      },
+      "checks": {
+        "aws": [
+          "config_recorder_all_regions_enabled"
+        ],
+        "azure": [
+          "defender_ensure_defender_for_containers_is_on",
+          "defender_ensure_defender_for_cosmosdb_is_on",
+          "defender_ensure_defender_for_databases_is_on",
+          "defender_ensure_defender_for_dns_is_on",
+          "defender_ensure_defender_for_keyvault_is_on",
+          "defender_ensure_defender_for_os_relational_databases_is_on",
+          "defender_ensure_defender_for_server_is_on",
+          "defender_ensure_defender_for_sql_servers_is_on",
+          "defender_ensure_defender_for_storage_is_on",
+          "defender_ensure_mcas_is_enabled",
+          "defender_ensure_notify_alerts_severity_is_high",
+          "entra_policy_guest_users_access_restrictions",
+          "entra_policy_restricts_user_consent_for_apps",
+          "entra_users_cannot_create_microsoft_365_groups",
+          "iam_custom_role_has_permissions_to_administer_resource_locks",
+          "monitor_alert_create_update_security_solution",
+          "monitor_alert_delete_security_solution",
+          "monitor_diagnostic_setting_with_appropriate_categories",
+          "monitor_diagnostic_settings_exists",
+          "monitor_storage_account_with_activity_logs_cmk_encrypted",
+          "monitor_storage_account_with_activity_logs_is_private"
+        ],
+        "gcp": [
+          "gemini_api_disabled"
+        ],
+        "kubernetes": [],
+        "m365": [
+          "purview_audit_log_search_enabled"
+        ],
+        "nhn": []
+      },
+      "config_requirements": [
+        {
+          "Check": "config_recorder_all_regions_enabled",
+          "Provider": "aws",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ]
+    },
+    {
+      "id": "A.5.23",
+      "name": "Information Security For Use Of Cloud Services",
+      "description": "Processes for acquisition, use, management and exit from cloud services should be established in accordance with the organisation’s information security requirements.",
+      "attributes": {
+        "Category": "A.5 Organizational controls",
+        "Objetive_ID": "A.5.23",
+        "Objetive_Name": "Information Security For Use Of Cloud Services",
+        "Check_Summary": "Processes for acquisition, use, management and exit from cloud services should be established in accordance with the organisation’s information security requirements."
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [
+          "gemini_api_disabled"
+        ],
+        "kubernetes": [],
+        "m365": [],
+        "nhn": []
+      }
+    },
+    {
+      "id": "A.5.24",
+      "name": "Information Security Incident Management Planning and Preparation",
+      "description": "The organization should plan and prepare for managing information security incidents by defining, establishing and communicating information security incident management processes, roles and responsibilities.",
+      "attributes": {
+        "Category": "A.5 Organizational controls",
+        "Objetive_ID": "A.5.24",
+        "Objetive_Name": "Information Security Incident Management Planning and Preparation",
+        "Check_Summary": "The organization should plan and prepare for managing information security incidents by defining, establishing and communicating information security incident management processes, roles and responsibilities."
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": [
+          "entra_admin_portals_access_restriction",
+          "entra_admin_users_mfa_enabled",
+          "entra_policy_guest_invite_only_for_admin_roles",
+          "exchange_roles_assignment_policy_addins_disabled"
+        ],
+        "nhn": []
+      }
+    },
+    {
+      "id": "A.5.25",
+      "name": "Assessment And Decision On Information Security Events",
+      "description": "The organisation should assess information security events and decide if they are to be categorised as information security incidents.",
+      "attributes": {
+        "Category": "A.5 Organizational controls",
+        "Objetive_ID": "A.5.25",
+        "Objetive_Name": "Assessment And Decision On Information Security Events",
+        "Check_Summary": "The organisation should assess information security events and decide if they are to be categorised as information security incidents."
+      },
+      "checks": {
+        "aws": [
+          "guardduty_centrally_managed",
+          "guardduty_is_enabled",
+          "guardduty_no_high_severity_findings"
+        ],
+        "azure": [
+          "defender_container_images_resolved_vulnerabilities",
+          "defender_container_images_scan_enabled",
+          "defender_ensure_defender_for_app_services_is_on",
+          "defender_ensure_defender_for_arm_is_on",
+          "defender_ensure_defender_for_azure_sql_databases_is_on",
+          "defender_ensure_defender_for_containers_is_on",
+          "defender_ensure_defender_for_cosmosdb_is_on",
+          "defender_ensure_defender_for_databases_is_on",
+          "defender_ensure_defender_for_dns_is_on",
+          "defender_ensure_defender_for_keyvault_is_on",
+          "defender_ensure_defender_for_os_relational_databases_is_on",
+          "defender_ensure_defender_for_server_is_on",
+          "defender_ensure_defender_for_sql_servers_is_on",
+          "defender_ensure_defender_for_storage_is_on",
+          "defender_ensure_iot_hub_defender_is_on"
+        ],
+        "gcp": [
+          "iam_cloud_asset_inventory_enabled"
+        ],
+        "kubernetes": [],
+        "m365": [
+          "defender_antispam_connection_filter_policy_empty_ip_allowlist",
+          "defender_antispam_connection_filter_policy_safe_list_off",
+          "defender_antispam_outbound_policy_configured",
+          "defender_antispam_outbound_policy_forwarding_disabled",
+          "defender_antispam_policy_inbound_no_allowed_domains",
+          "defender_malware_policy_common_attachments_filter_enabled",
+          "defender_malware_policy_comprehensive_attachments_filter_applied",
+          "defender_malware_policy_notifications_internal_users_malware_enabled",
+          "defender_zap_for_teams_enabled"
+        ],
+        "nhn": []
+      },
+      "config_requirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "Provider": "aws",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ]
+    },
+    {
+      "id": "A.5.26",
+      "name": "Response To Information Security Incidents",
+      "description": "Information security incidents should be responded to in accordance with the documented procedures.",
+      "attributes": {
+        "Category": "A.5 Organizational controls",
+        "Objetive_ID": "A.5.26",
+        "Objetive_Name": "Response To Information Security Incidents",
+        "Check_Summary": "Information security incidents should be responded to in accordance with the documented procedures."
+      },
+      "checks": {
+        "aws": [
+          "ec2_instance_managed_by_ssm"
+        ],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": [
+          "defender_antispam_outbound_policy_configured",
+          "defender_malware_policy_common_attachments_filter_enabled",
+          "defender_malware_policy_comprehensive_attachments_filter_applied",
+          "defender_malware_policy_notifications_internal_users_malware_enabled",
+          "defender_zap_for_teams_enabled"
+        ],
+        "nhn": []
+      }
+    },
+    {
+      "id": "A.5.27",
+      "name": "Learning From Information Security Incidents",
+      "description": "Knowledge gained from information security incidents should be used to strengthen and improve the information security controls.",
+      "attributes": {
+        "Category": "A.5 Organizational controls",
+        "Objetive_ID": "A.5.27",
+        "Objetive_Name": "Learning From Information Security Incidents",
+        "Check_Summary": "Knowledge gained from information security incidents should be used to strengthen and improve the information security controls."
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": [],
+        "nhn": []
+      }
+    },
+    {
+      "id": "A.5.28",
+      "name": "Collection Of Evidence",
+      "description": "The organisation should establish and implement procedures for the identification, collection, acquisition and preservation of evidence related to information security events.",
+      "attributes": {
+        "Category": "A.5 Organizational controls",
+        "Objetive_ID": "A.5.28",
+        "Objetive_Name": "Collection Of Evidence",
+        "Check_Summary": "The organisation should establish and implement procedures for the identification, collection, acquisition and preservation of evidence related to information security events."
+      },
+      "checks": {
+        "aws": [
+          "guardduty_centrally_managed",
+          "guardduty_is_enabled",
+          "guardduty_no_high_severity_findings"
+        ],
+        "azure": [
+          "defender_container_images_resolved_vulnerabilities",
+          "defender_container_images_scan_enabled",
+          "defender_ensure_defender_for_app_services_is_on",
+          "defender_ensure_defender_for_arm_is_on",
+          "defender_ensure_defender_for_azure_sql_databases_is_on",
+          "defender_ensure_defender_for_containers_is_on",
+          "defender_ensure_defender_for_cosmosdb_is_on",
+          "defender_ensure_defender_for_databases_is_on",
+          "defender_ensure_defender_for_dns_is_on",
+          "defender_ensure_defender_for_keyvault_is_on",
+          "defender_ensure_defender_for_os_relational_databases_is_on",
+          "defender_ensure_defender_for_server_is_on",
+          "defender_ensure_defender_for_sql_servers_is_on",
+          "defender_ensure_defender_for_storage_is_on",
+          "defender_ensure_iot_hub_defender_is_on"
+        ],
+        "gcp": [
+          "iam_cloud_asset_inventory_enabled"
+        ],
+        "kubernetes": [],
+        "m365": [
+          "purview_audit_log_search_enabled"
+        ],
+        "nhn": []
+      },
+      "config_requirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "Provider": "aws",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ]
+    },
+    {
+      "id": "A.5.29",
+      "name": "Information Security During Disruption",
+      "description": "The organisation should plan how to maintain information security at an appropriate level during disruption.",
+      "attributes": {
+        "Category": "A.5 Organizational controls",
+        "Objetive_ID": "A.5.29",
+        "Objetive_Name": "Information Security During Disruption",
+        "Check_Summary": "The organisation should plan how to maintain information security at an appropriate level during disruption."
+      },
+      "checks": {
+        "aws": [
+          "guardduty_centrally_managed",
+          "guardduty_is_enabled",
+          "guardduty_no_high_severity_findings"
+        ],
+        "azure": [
+          "defender_container_images_resolved_vulnerabilities",
+          "defender_container_images_scan_enabled",
+          "defender_ensure_defender_for_app_services_is_on",
+          "defender_ensure_defender_for_arm_is_on",
+          "defender_ensure_defender_for_azure_sql_databases_is_on",
+          "defender_ensure_defender_for_containers_is_on",
+          "defender_ensure_defender_for_cosmosdb_is_on",
+          "defender_ensure_defender_for_databases_is_on",
+          "defender_ensure_defender_for_dns_is_on",
+          "defender_ensure_defender_for_keyvault_is_on",
+          "defender_ensure_defender_for_os_relational_databases_is_on",
+          "defender_ensure_defender_for_server_is_on",
+          "defender_ensure_defender_for_sql_servers_is_on",
+          "defender_ensure_defender_for_storage_is_on",
+          "defender_ensure_iot_hub_defender_is_on"
+        ],
+        "gcp": [
+          "iam_cloud_asset_inventory_enabled"
+        ],
+        "kubernetes": [],
+        "m365": [],
+        "nhn": []
+      },
+      "config_requirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "Provider": "aws",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ]
+    },
+    {
+      "id": "A.5.30",
+      "name": "Readiness For Business Continuity",
+      "description": "ICT readiness should be planned, implemented, maintained and tested based on business continuity objectives and ICT continuity requirements. ",
+      "attributes": {
+        "Category": "A.5 Organizational controls",
+        "Objetive_ID": "A.5.30",
+        "Objetive_Name": "Readiness For Business Continuity",
+        "Check_Summary": "ICT readiness should be planned, implemented, maintained and tested based on business continuity objectives and ICT continuity requirements. "
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": [],
+        "nhn": []
+      }
+    },
+    {
+      "id": "A.5.31",
+      "name": "Legal, statutory, regulatory and contractual requirements",
+      "description": "Legal, statutory, regulatory and contractual requirements relevant to information security and the organisations approach to meet these requirements should be identified, documented and kept up to date. ",
+      "attributes": {
+        "Category": "A.5 Organizational controls",
+        "Objetive_ID": "A.5.31",
+        "Objetive_Name": "Legal, statutory, regulatory and contractual requirements",
+        "Check_Summary": "Legal, statutory, regulatory and contractual requirements relevant to information security and the organisations approach to meet these requirements should be identified, documented and kept up to date. "
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": [],
+        "nhn": []
+      }
+    },
+    {
+      "id": "A.5.32",
+      "name": "Intellectual Property Rights",
+      "description": "The organisation should implement appropriate procedures to protect intellectual property rights.  ",
+      "attributes": {
+        "Category": "A.5 Organizational controls",
+        "Objetive_ID": "A.5.32",
+        "Objetive_Name": "Intellectual Property Rights",
+        "Check_Summary": "The organisation should implement appropriate procedures to protect intellectual property rights.  "
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": [],
+        "nhn": []
+      }
+    },
+    {
+      "id": "A.5.33",
+      "name": "Protection Of Records",
+      "description": "Records should be protected from loss, destruction, falsification, unauthorised access and unauthorised release.",
+      "attributes": {
+        "Category": "A.5 Organizational controls",
+        "Objetive_ID": "A.5.33",
+        "Objetive_Name": "Protection Of Records",
+        "Check_Summary": "Records should be protected from loss, destruction, falsification, unauthorised access and unauthorised release."
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": [
+          "admincenter_groups_not_public_visibility",
+          "exchange_organization_delicensing_resiliency_enabled",
+          "teams_meeting_recording_disabled"
+        ],
+        "nhn": []
+      }
+    },
+    {
+      "id": "A.5.34",
+      "name": "Privacy And Protection Of PII",
+      "description": "The organisation should identify and meet the requirements regarding the preservation of privacy and protection of PII according to applicable laws and regulations and contractual requirements.",
+      "attributes": {
+        "Category": "A.5 Organizational controls",
+        "Objetive_ID": "A.5.34",
+        "Objetive_Name": "Privacy And Protection Of PII",
+        "Check_Summary": "The organisation should identify and meet the requirements regarding the preservation of privacy and protection of PII according to applicable laws and regulations and contractual requirements."
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": [
+          "entra_identity_protection_sign_in_risk_enabled",
+          "entra_identity_protection_user_risk_enabled",
+          "sharepoint_external_sharing_restricted"
+        ],
+        "nhn": []
+      }
+    },
+    {
+      "id": "A.5.35",
+      "name": "Independent Review Of Information Security",
+      "description": "The organisations approach to managing information security and its implementation including people, processes and technologies should be reviewed independently at planned intervals, or when significant changes occur. ",
+      "attributes": {
+        "Category": "A.5 Organizational controls",
+        "Objetive_ID": "A.5.35",
+        "Objetive_Name": "Independent Review Of Information Security",
+        "Check_Summary": "The organisations approach to managing information security and its implementation including people, processes and technologies should be reviewed independently at planned intervals, or when significant changes occur. "
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": [],
+        "nhn": []
+      }
+    },
+    {
+      "id": "A.5.36",
+      "name": "Compliance With Policies, Rules And Standards For Information Security",
+      "description": "Compliance with the organisations information security policy, topic-specific policies, rules and standards should be regularly reviewed. ",
+      "attributes": {
+        "Category": "A.5 Organizational controls",
+        "Objetive_ID": "A.5.36",
+        "Objetive_Name": "Compliance With Policies, Rules And Standards For Information Security",
+        "Check_Summary": "Compliance with the organisations information security policy, topic-specific policies, rules and standards should be regularly reviewed. "
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": [
+          "admincenter_settings_password_never_expire",
+          "defender_antiphishing_policy_configured",
+          "defender_antispam_connection_filter_policy_empty_ip_allowlist",
+          "defender_antispam_connection_filter_policy_safe_list_off",
+          "defender_antispam_outbound_policy_configured",
+          "defender_antispam_outbound_policy_forwarding_disabled",
+          "defender_antispam_policy_inbound_no_allowed_domains",
+          "defender_chat_report_policy_configured",
+          "defender_malware_policy_common_attachments_filter_enabled",
+          "defender_malware_policy_comprehensive_attachments_filter_applied",
+          "defender_malware_policy_notifications_internal_users_malware_enabled",
+          "defenderxdr_critical_asset_management_pending_approvals",
+          "entra_conditional_access_policy_device_code_flow_blocked",
+          "entra_identity_protection_sign_in_risk_enabled",
+          "entra_identity_protection_user_risk_enabled",
+          "entra_legacy_authentication_blocked",
+          "entra_policy_ensure_default_user_cannot_create_tenants",
+          "entra_policy_guest_invite_only_for_admin_roles",
+          "entra_policy_guest_users_access_restrictions",
+          "entra_policy_restricts_user_consent_for_apps",
+          "exchange_mailbox_policy_additional_storage_restricted",
+          "exchange_roles_assignment_policy_addins_disabled"
+        ],
+        "nhn": []
+      }
+    },
+    {
+      "id": "A.5.37",
+      "name": "Documented Operating Procedures",
+      "description": "Operating procedures for information processing facilities should be documented and made available to personnel who need them. ",
+      "attributes": {
+        "Category": "A.5 Organizational controls",
+        "Objetive_ID": "A.5.37",
+        "Objetive_Name": "Documented Operating Procedures",
+        "Check_Summary": "Operating procedures for information processing facilities should be documented and made available to personnel who need them. "
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": [
+          "defender_antiphishing_policy_configured",
+          "defender_antispam_connection_filter_policy_empty_ip_allowlist",
+          "defender_antispam_connection_filter_policy_safe_list_off",
+          "defender_antispam_outbound_policy_configured",
+          "defender_antispam_outbound_policy_forwarding_disabled",
+          "defender_antispam_policy_inbound_no_allowed_domains"
+        ],
+        "nhn": []
+      }
+    },
+    {
+      "id": "A.6.1",
+      "name": "Screening",
+      "description": "Background verification checks on all candidates to become personnel should be carried out prior to joining the organisation and on an ongoing basis taking into consideration applicable laws, regulations and ethics and be proportional to the business requirements, the classification of the information to be accessed and the perceived risks. ",
+      "attributes": {
+        "Category": "A.6 People controls",
+        "Objetive_ID": "A.6.1",
+        "Objetive_Name": "Screening",
+        "Check_Summary": "Background verification checks on all candidates to become personnel should be carried out prior to joining the organisation and on an ongoing basis taking into consideration applicable laws, regulations and ethics and be proportional to the business requirements, the classification of the information to be accessed and the perceived risks. "
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": [],
+        "nhn": []
+      }
+    },
+    {
+      "id": "A.6.2",
+      "name": "Terms and Conditions Of Employment",
+      "description": "The employment contractual agreements should state the personnel’s and the organisations responsibilities for information security. ",
+      "attributes": {
+        "Category": "A.6 People controls",
+        "Objetive_ID": "A.6.2",
+        "Objetive_Name": "Terms and Conditions Of Employment",
+        "Check_Summary": "The employment contractual agreements should state the personnel’s and the organisations responsibilities for information security. "
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": [],
+        "nhn": []
+      }
+    },
+    {
+      "id": "A.6.3",
+      "name": "Information Security Awareness, Education And Training",
+      "description": "Personnel of the organisation and relevant interested parties should receive appropriate information security awareness, education and training and regular updates of the organisations information security policy, topic-specific policies and procedures, as relevant for their job function.",
+      "attributes": {
+        "Category": "A.6 People controls",
+        "Objetive_ID": "A.6.3",
+        "Objetive_Name": "Information Security Awareness, Education And Training",
+        "Check_Summary": "Personnel of the organisation and relevant interested parties should receive appropriate information security awareness, education and training and regular updates of the organisations information security policy, topic-specific policies and procedures, as relevant for their job function."
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": [],
+        "nhn": []
+      }
+    },
+    {
+      "id": "A.6.4",
+      "name": "Disciplinary Process",
+      "description": "A disciplinary process should be formalised and communicated to take actions against personnel and other relevant interested parties who have committed an information security policy violation.",
+      "attributes": {
+        "Category": "A.6 People controls",
+        "Objetive_ID": "A.6.4",
+        "Objetive_Name": "Disciplinary Process",
+        "Check_Summary": "A disciplinary process should be formalised and communicated to take actions against personnel and other relevant interested parties who have committed an information security policy violation."
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": [
+          "defender_antispam_outbound_policy_configured",
+          "defender_malware_policy_notifications_internal_users_malware_enabled"
+        ],
+        "nhn": []
+      }
+    },
+    {
+      "id": "A.6.5",
+      "name": "Responsibilities After Termination Or Change Of Employment",
+      "description": "Information security responsibilities and duties that remain valid after termination or change of employment should be defined, enforced and communicated to relevant personnel and other interested parties.",
+      "attributes": {
+        "Category": "A.6 People controls",
+        "Objetive_ID": "A.6.5",
+        "Objetive_Name": "Responsibilities After Termination Or Change Of Employment",
+        "Check_Summary": "Information security responsibilities and duties that remain valid after termination or change of employment should be defined, enforced and communicated to relevant personnel and other interested parties."
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": [],
+        "nhn": []
+      }
+    },
+    {
+      "id": "A.6.6",
+      "name": "Confidentiality Or Non-Disclosure Agreements",
+      "description": "Confidentiality or non-disclosure agreements reflecting the organisation’s needs for the protection of information should be identified, documented, regularly reviewed and signed by personnel and other relevant interested parties.",
+      "attributes": {
+        "Category": "A.6 People controls",
+        "Objetive_ID": "A.6.6",
+        "Objetive_Name": "Confidentiality Or Non-Disclosure Agreements",
+        "Check_Summary": "Confidentiality or non-disclosure agreements reflecting the organisation’s needs for the protection of information should be identified, documented, regularly reviewed and signed by personnel and other relevant interested parties."
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": [],
+        "nhn": []
+      }
+    },
+    {
+      "id": "A.6.7",
+      "name": "Remote Working",
+      "description": "Security measures should be implemented when personnel are working remotely to protect information accessed, processed or stored outside the organisation’s premises.",
+      "attributes": {
+        "Category": "A.6 People controls",
+        "Objetive_ID": "A.6.7",
+        "Objetive_Name": "Remote Working",
+        "Check_Summary": "Security measures should be implemented when personnel are working remotely to protect information accessed, processed or stored outside the organisation’s premises."
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": [
+          "sharepoint_external_sharing_managed",
+          "sharepoint_external_sharing_restricted",
+          "teams_external_file_sharing_restricted"
+        ],
+        "nhn": []
+      }
+    },
+    {
+      "id": "A.6.8",
+      "name": "Information Security Event Reporting",
+      "description": "The organisation should provide a mechanism for personnel to report observed or suspected information security events through appropriate channels in a timely manner.",
+      "attributes": {
+        "Category": "A.6 People controls",
+        "Objetive_ID": "A.6.8",
+        "Objetive_Name": "Information Security Event Reporting",
+        "Check_Summary": "The organisation should provide a mechanism for personnel to report observed or suspected information security events through appropriate channels in a timely manner."
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": [
+          "defender_malware_policy_common_attachments_filter_enabled",
+          "defender_malware_policy_comprehensive_attachments_filter_applied",
+          "defender_malware_policy_notifications_internal_users_malware_enabled"
+        ],
+        "nhn": []
+      }
+    },
+    {
+      "id": "A.7.1",
+      "name": "Physical Security Perimeters",
+      "description": "To prevent unauthorised physical access, damage and interference to the organisations information and other associated assets.",
+      "attributes": {
+        "Category": "A.7 Physical controls",
+        "Objetive_ID": "A.7.1",
+        "Objetive_Name": "Physical Security Perimeters",
+        "Check_Summary": "To prevent unauthorised physical access, damage and interference to the organisations information and other associated assets."
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": [],
+        "nhn": []
+      }
+    },
+    {
+      "id": "A.7.2",
+      "name": "Physical Entry",
+      "description": "Secure areas should be protected by appropriate entry controls and access points.",
+      "attributes": {
+        "Category": "A.7 Physical controls",
+        "Objetive_ID": "A.7.2",
+        "Objetive_Name": "Physical Entry",
+        "Check_Summary": "Secure areas should be protected by appropriate entry controls and access points."
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": [],
+        "nhn": []
+      }
+    },
+    {
+      "id": "A.7.3",
+      "name": "Securing Offices, Rooms And Facilities",
+      "description": "Physical security for offices, rooms and facilities should be designed and implemented.",
+      "attributes": {
+        "Category": "A.7 Physical controls",
+        "Objetive_ID": "A.7.3",
+        "Objetive_Name": "Securing Offices, Rooms And Facilities",
+        "Check_Summary": "Physical security for offices, rooms and facilities should be designed and implemented."
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": [],
+        "nhn": []
+      }
+    },
+    {
+      "id": "A.7.4",
+      "name": "Physical Security Monitoring",
+      "description": "Premises should be continuously monitored for unauthorised physical access.",
+      "attributes": {
+        "Category": "A.7 Physical controls",
+        "Objetive_ID": "A.7.4",
+        "Objetive_Name": "Physical Security Monitoring",
+        "Check_Summary": "Premises should be continuously monitored for unauthorised physical access."
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": [
+          "entra_admin_portals_access_restriction",
+          "entra_admin_users_sign_in_frequency_enabled",
+          "entra_policy_guest_users_access_restrictions"
+        ],
+        "nhn": []
+      }
+    },
+    {
+      "id": "A.7.5",
+      "name": "Protecting Against Physical and Environmental Threats",
+      "description": "Protection against physical and environmental threats, such as natural disasters and other intentional or unintentional physical threats to infrastructure should be designed and implemented.",
+      "attributes": {
+        "Category": "A.7 Physical controls",
+        "Objetive_ID": "A.7.5",
+        "Objetive_Name": "Protecting Against Physical and Environmental Threats",
+        "Check_Summary": "Protection against physical and environmental threats, such as natural disasters and other intentional or unintentional physical threats to infrastructure should be designed and implemented."
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": [],
+        "nhn": []
+      }
+    },
+    {
+      "id": "A.7.6",
+      "name": "Working In Secure Areas",
+      "description": "Security measures for working in secure areas should be designed and implemented.",
+      "attributes": {
+        "Category": "A.7 Physical controls",
+        "Objetive_ID": "A.7.6",
+        "Objetive_Name": "Working In Secure Areas",
+        "Check_Summary": "Security measures for working in secure areas should be designed and implemented."
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": [],
+        "nhn": []
+      }
+    },
+    {
+      "id": "A.7.7",
+      "name": "Clear Desk And Clear Screen",
+      "description": "Clear desk rules for papers and removable storage media and clear screen rules for information processing facilities should be defined and appropriately enforced.",
+      "attributes": {
+        "Category": "A.7 Physical controls",
+        "Objetive_ID": "A.7.7",
+        "Objetive_Name": "Clear Desk And Clear Screen",
+        "Check_Summary": "Clear desk rules for papers and removable storage media and clear screen rules for information processing facilities should be defined and appropriately enforced."
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": [],
+        "nhn": []
+      }
+    },
+    {
+      "id": "A.7.8",
+      "name": "Equipment Siting And Protection",
+      "description": "Equipment should be sited securely and protected.",
+      "attributes": {
+        "Category": "A.7 Physical controls",
+        "Objetive_ID": "A.7.8",
+        "Objetive_Name": "Equipment Siting And Protection",
+        "Check_Summary": "Equipment should be sited securely and protected."
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": [],
+        "nhn": []
+      }
+    },
+    {
+      "id": "A.7.9",
+      "name": "Security Of Assets Off-Premises",
+      "description": "Off-site assets should be protected.",
+      "attributes": {
+        "Category": "A.7 Physical controls",
+        "Objetive_ID": "A.7.9",
+        "Objetive_Name": "Security Of Assets Off-Premises",
+        "Check_Summary": "Off-site assets should be protected."
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": [],
+        "nhn": []
+      }
+    },
+    {
+      "id": "A.7.10",
+      "name": "Storage Media",
+      "description": "Storage media should be managed through their life cycle of acquisition, use, transportation and disposal in accordance with the organisations classification scheme and handling requirements.",
+      "attributes": {
+        "Category": "A.7 Physical controls",
+        "Objetive_ID": "A.7.10",
+        "Objetive_Name": "Storage Media",
+        "Check_Summary": "Storage media should be managed through their life cycle of acquisition, use, transportation and disposal in accordance with the organisations classification scheme and handling requirements."
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": [
+          "exchange_mailbox_policy_additional_storage_restricted",
+          "teams_external_file_sharing_restricted"
+        ],
+        "nhn": []
+      }
+    },
+    {
+      "id": "A.7.11",
+      "name": "Supporting Utilities",
+      "description": "Information processing facilities should be protected from power failures and other disruptions caused by failures in supporting utilities.",
+      "attributes": {
+        "Category": "A.7 Physical controls",
+        "Objetive_ID": "A.7.11",
+        "Objetive_Name": "Supporting Utilities",
+        "Check_Summary": "Information processing facilities should be protected from power failures and other disruptions caused by failures in supporting utilities."
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": [],
+        "nhn": []
+      }
+    },
+    {
+      "id": "A.7.12",
+      "name": "Cabling Security",
+      "description": "Cables carrying power, data or supporting information services should be protected from interception",
+      "attributes": {
+        "Category": "A.7 Physical controls",
+        "Objetive_ID": "A.7.12",
+        "Objetive_Name": "Cabling Security",
+        "Check_Summary": "Cables carrying power, data or supporting information services should be protected from interception"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": [],
+        "nhn": []
+      }
+    },
+    {
+      "id": "A.7.13",
+      "name": "Equipment Maintenance",
+      "description": "Equipment should be maintained correctly to ensure availability, integrity and confidentiality of information.",
+      "attributes": {
+        "Category": "A.7 Physical controls",
+        "Objetive_ID": "A.7.13",
+        "Objetive_Name": "Equipment Maintenance",
+        "Check_Summary": "Equipment should be maintained correctly to ensure availability, integrity and confidentiality of information."
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": [],
+        "nhn": []
+      }
+    },
+    {
+      "id": "A.7.14",
+      "name": "Secure Disposal Or Re-Use Of Equipment",
+      "description": "Items of equipment containing storage media should be verified to ensure that any sensitive data and licensed software has been removed or securely overwritten prior to disposal or re-use.",
+      "attributes": {
+        "Category": "A.7 Physical controls",
+        "Objetive_ID": "A.7.14",
+        "Objetive_Name": "Secure Disposal Or Re-Use Of Equipment",
+        "Check_Summary": "Items of equipment containing storage media should be verified to ensure that any sensitive data and licensed software has been removed or securely overwritten prior to disposal or re-use."
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": [
+          "exchange_mailbox_policy_additional_storage_restricted",
+          "teams_external_file_sharing_restricted"
+        ],
+        "nhn": []
+      }
+    },
+    {
+      "id": "A.8.1",
+      "name": "User Endpoint Devices",
+      "description": "Information stored on, processed by or accessible via user endpoint devices should be protected.",
+      "attributes": {
+        "Category": "A.8 Technological controls",
+        "Objetive_ID": "A.8.1",
+        "Objetive_Name": "User Endpoint Devices",
+        "Check_Summary": "Information stored on, processed by or accessible via user endpoint devices should be protected."
+      },
+      "checks": {
+        "aws": [
+          "apigateway_restapi_public",
+          "appstream_fleet_default_internet_access_disabled",
+          "awslambda_function_not_publicly_accessible",
+          "awslambda_function_url_cors_policy",
+          "awslambda_function_url_public",
+          "cloudtrail_logs_s3_bucket_is_not_publicly_accessible",
+          "codeartifact_packages_external_public_publishing_disabled",
+          "ec2_ami_public",
+          "ec2_ebs_public_snapshot",
+          "ec2_instance_public_ip",
+          "ec2_securitygroup_allow_wide_open_public_ipv4",
+          "ecr_repositories_not_publicly_accessible",
+          "efs_not_publicly_accessible",
+          "eks_cluster_not_publicly_accessible",
+          "elb_internet_facing",
+          "elbv2_internet_facing",
+          "emr_cluster_account_public_block_enabled",
+          "emr_cluster_master_nodes_no_public_ip",
+          "emr_cluster_publicly_accesible",
+          "glacier_vaults_policy_public_access",
+          "kms_key_not_publicly_accessible",
+          "opensearch_service_domains_not_publicly_accessible",
+          "rds_instance_no_public_access",
+          "rds_snapshots_public_access",
+          "redshift_cluster_public_access",
+          "s3_account_level_public_access_blocks",
+          "s3_bucket_policy_public_write_access",
+          "s3_bucket_public_access",
+          "sagemaker_notebook_instance_without_direct_internet_access_configured",
+          "sns_topics_not_publicly_accessible",
+          "sqs_queues_not_publicly_accessible",
+          "ssm_documents_set_as_public"
+        ],
+        "azure": [
+          "aisearch_service_not_publicly_accessible",
+          "aks_clusters_public_access_disabled",
+          "app_function_not_publicly_accessible",
+          "containerregistry_not_publicly_accessible",
+          "monitor_alert_create_update_public_ip_address_rule",
+          "monitor_alert_delete_public_ip_address_rule",
+          "network_public_ip_shodan",
+          "storage_blob_public_access_level_is_disabled"
+        ],
+        "gcp": [
+          "bigquery_dataset_public_access",
+          "cloudsql_instance_public_access",
+          "cloudsql_instance_public_ip",
+          "cloudstorage_bucket_public_access",
+          "compute_instance_public_ip",
+          "compute_public_address_shodan",
+          "kms_key_not_publicly_accessible"
+        ],
+        "kubernetes": [
+          "apiserver_encryption_provider_config_set",
+          "apiserver_strong_ciphers_only",
+          "etcd_tls_encryption",
+          "kubelet_strong_ciphers_only"
+        ],
+        "m365": [
+          "defenderxdr_endpoint_privileged_user_exposed_credentials",
+          "entra_admin_users_phishing_resistant_mfa_enabled",
+          "entra_conditional_access_policy_app_enforced_restrictions",
+          "entra_conditional_access_policy_approved_client_app_required_for_mobile",
+          "entra_conditional_access_policy_block_unknown_device_platforms",
+          "entra_conditional_access_policy_device_registration_mfa_required",
+          "entra_intune_enrollment_sign_in_frequency_every_time",
+          "entra_managed_device_required_for_authentication",
+          "entra_managed_device_required_for_mfa_registration",
+          "entra_users_mfa_capable",
+          "entra_users_mfa_enabled"
+        ],
+        "nhn": []
+      }
+    },
+    {
+      "id": "A.8.2",
+      "name": "Privileged Access Rights",
+      "description": "The allocation and use of privileged access rights should be restricted and managed.",
+      "attributes": {
+        "Category": "A.8 Technological controls",
+        "Objetive_ID": "A.8.2",
+        "Objetive_Name": "Privileged Access Rights",
+        "Check_Summary": "The allocation and use of privileged access rights should be restricted and managed."
+      },
+      "checks": {
+        "aws": [
+          "bedrock_full_access_policy_attached",
+          "ec2_instance_profile_attached",
+          "iam_aws_attached_policy_no_administrative_privileges",
+          "iam_customer_attached_policy_no_administrative_privileges",
+          "iam_customer_unattached_policy_no_administrative_privileges",
+          "iam_inline_policy_no_administrative_privileges",
+          "iam_inline_policy_no_wildcard_marketplace_subscribe",
+          "iam_policy_no_wildcard_marketplace_subscribe",
+          "opensearch_service_domains_internal_user_database_enabled"
+        ],
+        "azure": [
+          "entra_policy_default_users_cannot_create_security_groups",
+          "entra_policy_ensure_default_user_cannot_create_apps",
+          "entra_policy_ensure_default_user_cannot_create_tenants",
+          "entra_policy_guest_invite_only_for_admin_roles",
+          "entra_policy_guest_users_access_restrictions",
+          "entra_policy_restricts_user_consent_for_apps",
+          "entra_policy_user_consent_for_verified_apps",
+          "storage_blob_public_access_level_is_disabled",
+          "storage_ensure_azure_services_are_trusted_to_access_is_enabled"
+        ],
+        "gcp": [
+          "iam_account_access_approval_enabled",
+          "iam_no_service_roles_at_project_level",
+          "iam_role_kms_enforce_separation_of_duties",
+          "iam_role_sa_enforce_separation_of_duties",
+          "iam_sa_no_administrative_privileges",
+          "iam_sa_no_user_managed_keys"
+        ],
+        "kubernetes": [
+          "apiserver_anonymous_requests",
+          "controllermanager_root_ca_file_set",
+          "controllermanager_service_account_private_key_file",
+          "core_minimize_privileged_containers",
+          "core_minimize_root_containers_admission",
+          "kubelet_conf_file_ownership",
+          "kubelet_service_file_ownership_root",
+          "kubelet_tls_cert_and_key",
+          "rbac_minimize_pod_creation_access",
+          "rbac_minimize_pv_creation_access",
+          "rbac_minimize_secret_access",
+          "rbac_minimize_service_account_token_creation",
+          "rbac_minimize_webhook_config_access",
+          "rbac_minimize_wildcard_use_roles"
+        ],
+        "m365": [
+          "admincenter_external_calendar_sharing_disabled",
+          "admincenter_groups_not_public_visibility",
+          "admincenter_organization_customer_lockbox_enabled",
+          "admincenter_settings_password_never_expire",
+          "admincenter_users_admins_reduced_license_footprint",
+          "admincenter_users_between_two_and_four_global_admins",
+          "defender_antispam_outbound_policy_configured",
+          "defenderxdr_endpoint_privileged_user_exposed_credentials",
+          "entra_admin_consent_workflow_enabled",
+          "entra_admin_portals_access_restriction",
+          "entra_admin_users_cloud_only",
+          "entra_admin_users_mfa_enabled",
+          "entra_admin_users_phishing_resistant_mfa_enabled",
+          "entra_admin_users_sign_in_frequency_enabled",
+          "entra_app_registration_no_unused_privileged_permissions",
+          "entra_break_glass_account_fido2_security_key_registered",
+          "entra_emergency_access_exclusion",
+          "entra_policy_admin_self_service_password_reset_disabled",
+          "entra_policy_ensure_default_user_cannot_create_tenants",
+          "entra_policy_guest_invite_only_for_admin_roles",
+          "entra_policy_msol_powershell_blocked",
+          "entra_seamless_sso_disabled",
+          "entra_service_principal_no_secrets_for_permanent_tier0_roles"
+        ],
+        "nhn": [
+          "compute_instance_login_user"
+        ]
+      }
+    },
+    {
+      "id": "A.8.3",
+      "name": "Information Access Restriction",
+      "description": "Access to information and other associated assets should be restricted in accordance with the established topic-specific policy on access control.",
+      "attributes": {
+        "Category": "A.8 Technological controls",
+        "Objetive_ID": "A.8.3",
+        "Objetive_Name": "Information Access Restriction",
+        "Check_Summary": "Access to information and other associated assets should be restricted in accordance with the established topic-specific policy on access control."
+      },
+      "checks": {
+        "aws": [
+          "accessanalyzer_enabled",
+          "accessanalyzer_enabled_without_findings",
+          "organizations_account_part_of_organizations",
+          "s3_bucket_object_versioning",
+          "sns_topics_kms_encryption_at_rest_enabled"
+        ],
+        "azure": [
+          "app_function_access_keys_configured",
+          "entra_policy_guest_users_access_restrictions",
+          "postgresql_flexible_server_allow_access_services_disabled",
+          "storage_ensure_azure_services_are_trusted_to_access_is_enabled"
+        ],
+        "gcp": [
+          "compute_instance_default_service_account_in_use_with_full_api_access",
+          "iam_account_access_approval_enabled",
+          "iam_sa_no_administrative_privileges"
+        ],
+        "kubernetes": [
+          "core_minimize_privileged_containers",
+          "rbac_minimize_csr_approval_access",
+          "rbac_minimize_node_proxy_subresource_access",
+          "rbac_minimize_pod_creation_access",
+          "rbac_minimize_pv_creation_access",
+          "rbac_minimize_secret_access",
+          "rbac_minimize_service_account_token_creation",
+          "rbac_minimize_webhook_config_access"
+        ],
+        "m365": [
+          "entra_admin_portals_access_restriction",
+          "entra_conditional_access_policy_app_enforced_restrictions",
+          "entra_conditional_access_policy_approved_client_app_required_for_mobile",
+          "entra_conditional_access_policy_block_elevated_insider_risk",
+          "entra_conditional_access_policy_block_o365_elevated_insider_risk",
+          "entra_conditional_access_policy_block_unknown_device_platforms",
+          "entra_conditional_access_policy_directory_sync_account_excluded",
+          "entra_conditional_access_policy_mfa_enforced_for_guest_users",
+          "entra_policy_guest_users_access_restrictions",
+          "sharepoint_external_sharing_restricted"
+        ],
+        "nhn": []
+      },
+      "config_requirements": [
+        {
+          "Check": "accessanalyzer_enabled",
+          "Provider": "aws",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ]
+    },
+    {
+      "id": "A.8.4",
+      "name": "Access To Source Code",
+      "description": "Read and write access to source code, development tools and software libraries should be appropriately managed.",
+      "attributes": {
+        "Category": "A.8 Technological controls",
+        "Objetive_ID": "A.8.4",
+        "Objetive_Name": "Access To Source Code",
+        "Check_Summary": "Read and write access to source code, development tools and software libraries should be appropriately managed."
+      },
+      "checks": {
+        "aws": [
+          "codebuild_project_logging_enabled",
+          "codebuild_project_no_secrets_in_variables",
+          "codebuild_project_older_90_days",
+          "codebuild_project_source_repo_url_no_sensitive_credentials",
+          "codebuild_project_user_controlled_buildspec"
+        ],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": [],
+        "nhn": []
+      }
+    },
+    {
+      "id": "A.8.5",
+      "name": "Secure Authentication",
+      "description": "Secure authentication technologies and procedures should be implemented based on information access restrictions and the topic-specific policy on access control.",
+      "attributes": {
+        "Category": "A.8 Technological controls",
+        "Objetive_ID": "A.8.5",
+        "Objetive_Name": "Secure Authentication",
+        "Check_Summary": "Secure authentication technologies and procedures should be implemented based on information access restrictions and the topic-specific policy on access control."
+      },
+      "checks": {
+        "aws": [
+          "acm_certificates_expiration_check",
+          "directoryservice_supported_mfa_radius_enabled",
+          "dynamodb_tables_kms_cmk_encryption_enabled",
+          "eks_cluster_kms_cmk_encryption_in_secrets_enabled",
+          "iam_root_mfa_enabled",
+          "iam_user_hardware_mfa_enabled",
+          "iam_user_mfa_enabled_console_access",
+          "kms_cmk_are_used",
+          "kms_cmk_rotation_enabled"
+        ],
+        "azure": [
+          "app_minimum_tls_version_12",
+          "entra_authentication_methods_policy_strong_auth_enforced",
+          "entra_conditional_access_policy_require_mfa_for_management_api",
+          "entra_non_privileged_user_has_mfa",
+          "entra_privileged_user_has_mfa",
+          "entra_user_with_vm_access_has_mfa",
+          "sqlserver_tde_encryption_enabled",
+          "storage_ensure_encryption_with_customer_managed_keys",
+          "storage_infrastructure_encryption_is_enabled"
+        ],
+        "gcp": [],
+        "kubernetes": [
+          "apiserver_etcd_tls_config",
+          "apiserver_kubelet_cert_auth",
+          "apiserver_kubelet_tls_auth",
+          "apiserver_tls_config",
+          "controllermanager_rotate_kubelet_server_cert",
+          "etcd_client_cert_auth",
+          "etcd_peer_client_cert_auth",
+          "etcd_peer_tls_config",
+          "etcd_tls_encryption",
+          "kubelet_rotate_certificates",
+          "kubelet_tls_cert_and_key",
+          "rbac_minimize_csr_approval_access"
+        ],
+        "m365": [
+          "entra_admin_users_mfa_enabled",
+          "entra_admin_users_sign_in_frequency_enabled",
+          "entra_all_apps_conditional_access_coverage",
+          "entra_break_glass_account_fido2_security_key_registered",
+          "entra_conditional_access_policy_approved_client_app_required_for_mobile",
+          "entra_conditional_access_policy_block_unknown_device_platforms",
+          "entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced",
+          "entra_conditional_access_policy_device_code_flow_blocked",
+          "entra_conditional_access_policy_device_registration_mfa_required",
+          "entra_conditional_access_policy_directory_sync_account_excluded",
+          "entra_conditional_access_policy_mfa_enforced_for_guest_users",
+          "entra_emergency_access_exclusion",
+          "entra_identity_protection_sign_in_risk_enabled",
+          "entra_intune_enrollment_sign_in_frequency_every_time",
+          "entra_managed_device_required_for_authentication",
+          "entra_policy_admin_self_service_password_reset_disabled",
+          "entra_seamless_sso_disabled",
+          "entra_service_principal_no_secrets_for_permanent_tier0_roles",
+          "entra_users_mfa_enabled"
+        ],
+        "nhn": []
+      }
+    },
+    {
+      "id": "A.8.6",
+      "name": "Capacity Management",
+      "description": "The use of resources should be monitored and adjusted in line with current and expected capacity requirements.",
+      "attributes": {
+        "Category": "A.8 Technological controls",
+        "Objetive_ID": "A.8.6",
+        "Objetive_Name": "Capacity Management",
+        "Check_Summary": "The use of resources should be monitored and adjusted in line with current and expected capacity requirements."
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": [],
+        "nhn": []
+      }
+    },
+    {
+      "id": "A.8.7",
+      "name": "Protection Against Malware",
+      "description": "Protection against malware should be implemented and supported by appropriate user awareness.",
+      "attributes": {
+        "Category": "A.8 Technological controls",
+        "Objetive_ID": "A.8.7",
+        "Objetive_Name": "Protection Against Malware",
+        "Check_Summary": "Protection against malware should be implemented and supported by appropriate user awareness."
+      },
+      "checks": {
+        "aws": [
+          "guardduty_is_enabled",
+          "guardduty_no_high_severity_findings"
+        ],
+        "azure": [
+          "defender_container_images_resolved_vulnerabilities",
+          "defender_container_images_scan_enabled",
+          "defender_ensure_defender_for_app_services_is_on",
+          "defender_ensure_defender_for_arm_is_on",
+          "defender_ensure_defender_for_azure_sql_databases_is_on",
+          "defender_ensure_defender_for_containers_is_on",
+          "defender_ensure_defender_for_cosmosdb_is_on",
+          "defender_ensure_defender_for_databases_is_on",
+          "defender_ensure_defender_for_dns_is_on",
+          "defender_ensure_defender_for_keyvault_is_on",
+          "defender_ensure_defender_for_os_relational_databases_is_on",
+          "defender_ensure_defender_for_server_is_on",
+          "defender_ensure_defender_for_sql_servers_is_on",
+          "defender_ensure_defender_for_storage_is_on",
+          "defender_ensure_iot_hub_defender_is_on"
+        ],
+        "gcp": [
+          "iam_cloud_asset_inventory_enabled"
+        ],
+        "kubernetes": [],
+        "m365": [
+          "defender_malware_policy_common_attachments_filter_enabled",
+          "defender_malware_policy_comprehensive_attachments_filter_applied",
+          "defender_malware_policy_notifications_internal_users_malware_enabled",
+          "defender_safe_attachments_policy_enabled",
+          "defender_safelinks_policy_enabled",
+          "defender_zap_for_teams_enabled",
+          "teams_external_domains_restricted",
+          "teams_external_users_cannot_start_conversations"
+        ],
+        "nhn": []
+      },
+      "config_requirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "Provider": "aws",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ]
+    },
+    {
+      "id": "A.8.8",
+      "name": "Management of Technical Vulnerabilities",
+      "description": "Information about technical vulnerabilities of information systems in use should be obtained, the organisations exposure to such vulnerabilities should be evaluated and appropriate measures should be taken.",
+      "attributes": {
+        "Category": "A.8 Technological controls",
+        "Objetive_ID": "A.8.8",
+        "Objetive_Name": "Management of Technical Vulnerabilities",
+        "Check_Summary": "Information about technical vulnerabilities of information systems in use should be obtained, the organisations exposure to such vulnerabilities should be evaluated and appropriate measures should be taken."
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": [
+          "defender_malware_policy_common_attachments_filter_enabled",
+          "defender_malware_policy_comprehensive_attachments_filter_applied",
+          "defender_malware_policy_notifications_internal_users_malware_enabled",
+          "defenderidentity_health_issues_no_open",
+          "defenderxdr_endpoint_privileged_user_exposed_credentials"
+        ],
+        "nhn": []
+      }
+    },
+    {
+      "id": "A.8.9",
+      "name": "Configuration Management",
+      "description": "Configurations, including security configurations, of hardware, software, services and networks should be established, documented, implemented, monitored and reviewed.",
+      "attributes": {
+        "Category": "A.8 Technological controls",
+        "Objetive_ID": "A.8.9",
+        "Objetive_Name": "Configuration Management",
+        "Check_Summary": "Configurations, including security configurations, of hardware, software, services and networks should be established, documented, implemented, monitored and reviewed."
+      },
+      "checks": {
+        "aws": [
+          "guardduty_is_enabled",
+          "guardduty_no_high_severity_findings",
+          "kms_key_enclave_attestation_pcr_mismatch"
+        ],
+        "azure": [
+          "defender_container_images_resolved_vulnerabilities",
+          "defender_container_images_scan_enabled",
+          "defender_ensure_defender_for_app_services_is_on",
+          "defender_ensure_defender_for_arm_is_on",
+          "defender_ensure_defender_for_azure_sql_databases_is_on",
+          "defender_ensure_defender_for_containers_is_on",
+          "defender_ensure_defender_for_cosmosdb_is_on",
+          "defender_ensure_defender_for_databases_is_on",
+          "defender_ensure_defender_for_dns_is_on",
+          "defender_ensure_defender_for_keyvault_is_on",
+          "defender_ensure_defender_for_os_relational_databases_is_on",
+          "defender_ensure_defender_for_server_is_on",
+          "defender_ensure_defender_for_sql_servers_is_on",
+          "defender_ensure_defender_for_storage_is_on",
+          "defender_ensure_iot_hub_defender_is_on"
+        ],
+        "gcp": [
+          "iam_cloud_asset_inventory_enabled"
+        ],
+        "kubernetes": [],
+        "m365": [],
+        "nhn": [
+          "compute_instance_security_groups",
+          "network_vpc_subnet_enable_dhcp"
+        ]
+      },
+      "config_requirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "Provider": "aws",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ]
+    },
+    {
+      "id": "A.8.10",
+      "name": "Information Deletion",
+      "description": "Information stored in information systems, devices or in any other storage media should be deleted when no longer required.",
+      "attributes": {
+        "Category": "A.8 Technological controls",
+        "Objetive_ID": "A.8.10",
+        "Objetive_Name": "Information Deletion",
+        "Check_Summary": "Information stored in information systems, devices or in any other storage media should be deleted when no longer required."
+      },
+      "checks": {
+        "aws": [
+          "ec2_instance_older_than_specific_days",
+          "s3_bucket_lifecycle_enabled",
+          "s3_bucket_object_versioning"
+        ],
+        "azure": [
+          "storage_ensure_soft_delete_is_enabled"
+        ],
+        "gcp": [
+          "cloudstorage_bucket_log_retention_policy_lock"
+        ],
+        "kubernetes": [
+          "apiserver_audit_log_maxage_set",
+          "apiserver_audit_log_maxbackup_set",
+          "apiserver_audit_log_maxsize_set",
+          "apiserver_audit_log_path_set"
+        ],
+        "m365": [],
+        "nhn": []
+      }
+    },
+    {
+      "id": "A.8.11",
+      "name": "Data Masking",
+      "description": "Data masking should be used in accordance with the organisation’s topic-specific policy on access control and other related topic-specific policies, and business requirements, taking applicable legislation into consideration.",
+      "attributes": {
+        "Category": "A.8 Technological controls",
+        "Objetive_ID": "A.8.11",
+        "Objetive_Name": "Data Masking",
+        "Check_Summary": "Data masking should be used in accordance with the organisation’s topic-specific policy on access control and other related topic-specific policies, and business requirements, taking applicable legislation into consideration."
+      },
+      "checks": {
+        "aws": [
+          "athena_workgroup_encryption",
+          "bedrock_model_invocation_logs_encryption_enabled",
+          "cloudfront_distributions_field_level_encryption_enabled",
+          "cloudtrail_kms_encryption_enabled",
+          "cloudwatch_log_group_kms_encryption_enabled",
+          "dms_endpoint_redis_in_transit_encryption_enabled",
+          "dynamodb_accelerator_cluster_encryption_enabled",
+          "dynamodb_tables_kms_cmk_encryption_enabled",
+          "ec2_ebs_default_encryption",
+          "ec2_ebs_volume_encryption",
+          "efs_encryption_at_rest_enabled",
+          "eks_cluster_kms_cmk_encryption_in_secrets_enabled",
+          "elasticache_redis_cluster_in_transit_encryption_enabled",
+          "elasticache_redis_cluster_rest_encryption_enabled",
+          "glue_data_catalogs_connection_passwords_encryption_enabled",
+          "glue_data_catalogs_metadata_encryption_enabled",
+          "glue_development_endpoints_cloudwatch_logs_encryption_enabled",
+          "glue_development_endpoints_job_bookmark_encryption_enabled",
+          "glue_development_endpoints_s3_encryption_enabled",
+          "glue_etl_jobs_amazon_s3_encryption_enabled",
+          "glue_etl_jobs_cloudwatch_logs_encryption_enabled",
+          "glue_etl_jobs_job_bookmark_encryption_enabled",
+          "kafka_cluster_encryption_at_rest_uses_cmk",
+          "kafka_connector_in_transit_encryption_enabled",
+          "kms_cmk_are_used",
+          "kms_cmk_not_deleted_unintentionally",
+          "kms_cmk_not_multi_region",
+          "kms_cmk_rotation_enabled",
+          "opensearch_service_domains_encryption_at_rest_enabled",
+          "rds_cluster_storage_encrypted",
+          "rds_instance_storage_encrypted",
+          "rds_snapshots_encrypted",
+          "s3_bucket_default_encryption",
+          "s3_bucket_kms_encryption",
+          "sagemaker_notebook_instance_encryption_enabled",
+          "sagemaker_training_jobs_intercontainer_encryption_enabled",
+          "sagemaker_training_jobs_volume_and_output_encryption_enabled",
+          "sns_topics_kms_encryption_at_rest_enabled",
+          "sqs_queues_server_side_encryption_enabled",
+          "storagegateway_fileshare_encryption_enabled",
+          "workspaces_volume_encryption_enabled"
+        ],
+        "azure": [
+          "monitor_storage_account_with_activity_logs_cmk_encrypted",
+          "storage_ensure_encryption_with_customer_managed_keys",
+          "storage_infrastructure_encryption_is_enabled",
+          "vm_ensure_attached_disks_encrypted_with_cmk",
+          "vm_ensure_unattached_disks_encrypted_with_cmk"
+        ],
+        "gcp": [
+          "bigquery_dataset_cmk_encryption",
+          "bigquery_table_cmk_encryption",
+          "compute_instance_encryption_with_csek_enabled",
+          "dataproc_encrypted_with_cmks_disabled"
+        ],
+        "kubernetes": [
+          "apiserver_encryption_provider_config_set",
+          "apiserver_etcd_tls_config",
+          "apiserver_kubelet_tls_auth",
+          "apiserver_tls_config",
+          "etcd_no_auto_tls",
+          "etcd_no_peer_auto_tls",
+          "etcd_peer_tls_config",
+          "etcd_tls_encryption",
+          "kubelet_tls_cert_and_key"
+        ],
+        "m365": [],
+        "nhn": []
+      }
+    },
+    {
+      "id": "A.8.12",
+      "name": "Data Leakage Prevention",
+      "description": "Data leakage prevention measures should be applied to systems, networks and any other devices that process, store or transmit sensitive information.",
+      "attributes": {
+        "Category": "A.8 Technological controls",
+        "Objetive_ID": "A.8.12",
+        "Objetive_Name": "Data Leakage Prevention",
+        "Check_Summary": "Data leakage prevention measures should be applied to systems, networks and any other devices that process, store or transmit sensitive information."
+      },
+      "checks": {
+        "aws": [
+          "dynamodb_accelerator_cluster_in_transit_encryption_enabled",
+          "kafka_cluster_in_transit_encryption_enabled",
+          "opensearch_service_domains_node_to_node_encryption_enabled",
+          "redshift_cluster_in_transit_encryption_enabled",
+          "transfer_server_in_transit_encryption_enabled"
+        ],
+        "azure": [
+          "app_minimum_tls_version_12",
+          "sqlserver_tde_encrypted_with_cmk",
+          "sqlserver_tde_encryption_enabled",
+          "storage_secure_transfer_required_is_enabled"
+        ],
+        "gcp": [
+          "apikeys_api_restrictions_configured",
+          "apikeys_key_rotated_in_90_days",
+          "cloudsql_instance_ssl_connections",
+          "cloudstorage_bucket_public_access",
+          "compute_instance_encryption_with_csek_enabled",
+          "kms_key_not_publicly_accessible",
+          "kms_key_rotation_enabled"
+        ],
+        "kubernetes": [
+          "apiserver_anonymous_requests",
+          "apiserver_audit_log_path_set",
+          "apiserver_auth_mode_include_rbac",
+          "apiserver_auth_mode_not_always_allow",
+          "apiserver_client_ca_file_set",
+          "apiserver_encryption_provider_config_set",
+          "apiserver_etcd_cafile_set",
+          "apiserver_etcd_tls_config",
+          "apiserver_kubelet_cert_auth",
+          "apiserver_kubelet_tls_auth",
+          "apiserver_service_account_key_file_set",
+          "apiserver_service_account_lookup_true",
+          "etcd_client_cert_auth",
+          "etcd_peer_client_cert_auth",
+          "etcd_tls_encryption",
+          "kubelet_authorization_mode",
+          "kubelet_client_ca_file_set",
+          "kubelet_disable_anonymous_auth",
+          "kubelet_rotate_certificates",
+          "kubelet_strong_ciphers_only",
+          "kubelet_tls_cert_and_key",
+          "rbac_cluster_admin_usage",
+          "rbac_minimize_secret_access",
+          "rbac_minimize_service_account_token_creation"
+        ],
+        "m365": [
+          "defender_antiphishing_policy_configured",
+          "defender_safelinks_policy_enabled",
+          "entra_admin_users_phishing_resistant_mfa_enabled",
+          "entra_conditional_access_policy_app_enforced_restrictions",
+          "entra_conditional_access_policy_block_elevated_insider_risk",
+          "entra_conditional_access_policy_block_o365_elevated_insider_risk"
+        ],
+        "nhn": []
+      }
+    },
+    {
+      "id": "A.8.13",
+      "name": "Information Backup",
+      "description": "Backup copies of information, software and systems should be maintained and regularly tested in accordance with the agreed topic-specific policy on backup.",
+      "attributes": {
+        "Category": "A.8 Technological controls",
+        "Objetive_ID": "A.8.13",
+        "Objetive_Name": "Information Backup",
+        "Check_Summary": "Backup copies of information, software and systems should be maintained and regularly tested in accordance with the agreed topic-specific policy on backup."
+      },
+      "checks": {
+        "aws": [
+          "backup_plans_exist",
+          "backup_recovery_point_encrypted",
+          "backup_reportplans_exist",
+          "backup_vaults_exist"
+        ],
+        "azure": [
+          "cosmosdb_account_backup_policy_continuous",
+          "mysql_flexible_server_geo_redundant_backup_enabled",
+          "postgresql_flexible_server_geo_redundant_backup_enabled",
+          "recovery_vault_backup_policy_retention_adequate"
+        ],
+        "gcp": [
+          "cloudsql_instance_automated_backups"
+        ],
+        "kubernetes": [
+          "apiserver_audit_log_maxage_set",
+          "apiserver_audit_log_maxbackup_set",
+          "apiserver_audit_log_maxsize_set",
+          "apiserver_audit_log_path_set"
+        ],
+        "m365": [],
+        "nhn": []
+      }
+    },
+    {
+      "id": "A.8.14",
+      "name": "Redundancy of information processing facilities",
+      "description": "Information processing facilities should be implemented with redundancy sufficient to meet availability",
+      "attributes": {
+        "Category": "A.8 Technological controls",
+        "Objetive_ID": "A.8.14",
+        "Objetive_Name": "Redundancy of information processing facilities",
+        "Check_Summary": "Information processing facilities should be implemented with redundancy sufficient to meet availability"
+      },
+      "checks": {
+        "aws": [
+          "autoscaling_group_capacity_rebalance_enabled",
+          "autoscaling_group_multiple_az",
+          "cloudfront_distributions_multiple_origin_failover_configured",
+          "directconnect_connection_redundancy",
+          "directconnect_virtual_interface_redundancy",
+          "dms_instance_multi_az_enabled",
+          "documentdb_cluster_multi_az_enabled",
+          "dynamodb_accelerator_cluster_multi_az",
+          "dynamodb_table_protected_by_backup_plan",
+          "ec2_ebs_volume_protected_by_backup_plan",
+          "efs_multi_az_enabled",
+          "elasticache_redis_cluster_automatic_failover_enabled",
+          "elasticache_redis_cluster_multi_az_enabled",
+          "elb_is_in_multiple_az",
+          "elbv2_is_in_multiple_az",
+          "eventbridge_global_endpoint_event_replication_enabled",
+          "fsx_windows_file_system_multi_az_enabled",
+          "mq_broker_active_deployment_mode",
+          "mq_broker_cluster_deployment_mode",
+          "neptune_cluster_multi_az",
+          "networkfirewall_multi_az",
+          "opensearch_service_domains_fault_tolerant_data_nodes",
+          "opensearch_service_domains_fault_tolerant_master_nodes",
+          "rds_cluster_multi_az",
+          "rds_instance_multi_az",
+          "redshift_cluster_multi_az_enabled",
+          "s3_bucket_cross_region_replication",
+          "sagemaker_endpoint_config_prod_variant_instances",
+          "vpc_endpoint_multi_az_enabled",
+          "vpc_subnet_different_az",
+          "vpc_vpn_connection_tunnels_up"
+        ],
+        "azure": [
+          "aks_clusters_created_with_private_nodes",
+          "aks_clusters_public_access_disabled",
+          "aks_network_policy_enabled",
+          "cosmosdb_account_automatic_failover_enabled",
+          "mysql_flexible_server_geo_redundant_backup_enabled",
+          "mysql_flexible_server_high_availability_enabled",
+          "network_bastion_host_exists",
+          "network_flow_log_captured_sent",
+          "network_rdp_internet_access_restricted",
+          "network_ssh_internet_access_restricted",
+          "network_udp_internet_access_restricted",
+          "network_watcher_enabled",
+          "postgresql_flexible_server_geo_redundant_backup_enabled",
+          "postgresql_flexible_server_high_availability_enabled",
+          "storage_ensure_private_endpoints_in_storage_accounts",
+          "storage_secure_transfer_required_is_enabled",
+          "vm_ensure_using_managed_disks",
+          "vm_trusted_launch_enabled"
+        ],
+        "gcp": [
+          "compute_instance_encryption_with_csek_enabled",
+          "compute_instance_shielded_vm_enabled"
+        ],
+        "kubernetes": [
+          "core_minimize_admission_windows_hostprocess_containers",
+          "core_minimize_allowPrivilegeEscalation_containers",
+          "kubelet_streaming_connection_timeout",
+          "rbac_minimize_webhook_config_access",
+          "scheduler_bind_address",
+          "scheduler_profiling"
+        ],
+        "m365": [],
+        "nhn": []
+      }
+    },
+    {
+      "id": "A.8.15",
+      "name": "Logging",
+      "description": "Logs that record activities, exceptions, faults and other relevant events should be produced, stored, protected and analysed.",
+      "attributes": {
+        "Category": "A.8 Technological controls",
+        "Objetive_ID": "A.8.15",
+        "Objetive_Name": "Logging",
+        "Check_Summary": "Logs that record activities, exceptions, faults and other relevant events should be produced, stored, protected and analysed."
+      },
+      "checks": {
+        "aws": [
+          "apigateway_restapi_logging_enabled",
+          "apigatewayv2_api_access_logging_enabled",
+          "appsync_field_level_logging_enabled",
+          "athena_workgroup_logging_enabled",
+          "awslambda_function_invoke_api_operations_cloudtrail_logging_enabled",
+          "bedrock_model_invocation_logging_enabled",
+          "bedrock_model_invocation_logs_encryption_enabled",
+          "cloudfront_distributions_logging_enabled",
+          "cloudtrail_bedrock_logging_enabled",
+          "cloudtrail_cloudwatch_logging_enabled",
+          "cloudtrail_kms_encryption_enabled",
+          "cloudtrail_log_file_validation_enabled",
+          "cloudtrail_logs_s3_bucket_access_logging_enabled",
+          "cloudtrail_logs_s3_bucket_is_not_publicly_accessible",
+          "cloudtrail_multi_region_enabled_logging_management_events",
+          "cloudtrail_s3_dataevents_read_enabled",
+          "cloudtrail_s3_dataevents_write_enabled",
+          "cloudwatch_changes_to_network_acls_alarm_configured",
+          "cloudwatch_changes_to_network_gateways_alarm_configured",
+          "cloudwatch_changes_to_vpcs_alarm_configured",
+          "cloudwatch_log_group_kms_encryption_enabled",
+          "cloudwatch_log_group_no_secrets_in_logs",
+          "cloudwatch_log_group_not_publicly_accessible",
+          "cloudwatch_log_group_retention_policy_specific_days_enabled",
+          "cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled",
+          "cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled",
+          "cloudwatch_log_metric_filter_authentication_failures",
+          "cloudwatch_log_metric_filter_aws_organizations_changes",
+          "cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk",
+          "cloudwatch_log_metric_filter_for_s3_bucket_policy_changes",
+          "cloudwatch_log_metric_filter_policy_changes",
+          "cloudwatch_log_metric_filter_root_usage",
+          "cloudwatch_log_metric_filter_security_group_changes",
+          "cloudwatch_log_metric_filter_sign_in_without_mfa",
+          "cloudwatch_log_metric_filter_unauthorized_api_calls",
+          "codebuild_project_logging_enabled",
+          "codebuild_project_s3_logs_encrypted",
+          "datasync_task_logging_enabled",
+          "directoryservice_directory_log_forwarding_enabled",
+          "dms_replication_task_source_logging_enabled",
+          "dms_replication_task_target_logging_enabled",
+          "documentdb_cluster_cloudwatch_log_export",
+          "ec2_client_vpn_endpoint_connection_logging_enabled",
+          "ecs_task_definitions_logging_block_mode",
+          "ecs_task_definitions_logging_enabled",
+          "eks_control_plane_logging_all_types_enabled",
+          "elasticbeanstalk_environment_cloudwatch_logging_enabled",
+          "elb_logging_enabled",
+          "elbv2_logging_enabled",
+          "glue_data_catalogs_connection_passwords_encryption_enabled",
+          "glue_data_catalogs_metadata_encryption_enabled",
+          "glue_data_catalogs_not_publicly_accessible",
+          "glue_development_endpoints_cloudwatch_logs_encryption_enabled",
+          "glue_etl_jobs_cloudwatch_logs_encryption_enabled",
+          "glue_etl_jobs_logging_enabled",
+          "guardduty_eks_audit_log_enabled",
+          "mq_broker_logging_enabled",
+          "neptune_cluster_integration_cloudwatch_logs",
+          "networkfirewall_logging_enabled",
+          "opensearch_service_domains_audit_logging_enabled",
+          "opensearch_service_domains_cloudwatch_logging_enabled",
+          "rds_cluster_integration_cloudwatch_logs",
+          "rds_instance_integration_cloudwatch_logs",
+          "redshift_cluster_audit_logging",
+          "route53_public_hosted_zones_cloudwatch_logging_enabled",
+          "s3_bucket_server_access_logging_enabled",
+          "servicecatalog_portfolio_shared_within_organization_only",
+          "stepfunctions_statemachine_logging_enabled",
+          "vpc_flow_logs_enabled",
+          "waf_global_webacl_logging_enabled",
+          "wafv2_webacl_logging_enabled",
+          "wafv2_webacl_rule_logging_enabled"
+        ],
+        "azure": [
+          "app_http_logs_enabled",
+          "defender_auto_provisioning_log_analytics_agent_vms_on",
+          "keyvault_logging_enabled",
+          "monitor_storage_account_with_activity_logs_cmk_encrypted",
+          "monitor_storage_account_with_activity_logs_is_private",
+          "mysql_flexible_server_audit_log_connection_activated",
+          "mysql_flexible_server_audit_log_enabled",
+          "network_flow_log_captured_sent",
+          "network_flow_log_more_than_90_days",
+          "postgresql_flexible_server_log_checkpoints_on",
+          "postgresql_flexible_server_log_connections_on",
+          "postgresql_flexible_server_log_disconnections_on",
+          "postgresql_flexible_server_log_retention_days_greater_3"
+        ],
+        "gcp": [
+          "logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_custom_role_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_sql_instance_configuration_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_vpc_network_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_vpc_network_route_changes_enabled",
+          "logging_sink_created"
+        ],
+        "kubernetes": [
+          "apiserver_audit_log_maxage_set",
+          "apiserver_audit_log_maxbackup_set",
+          "apiserver_audit_log_maxsize_set",
+          "apiserver_audit_log_path_set"
+        ],
+        "m365": [
+          "purview_audit_log_search_enabled"
+        ],
+        "nhn": []
+      }
+    },
+    {
+      "id": "A.8.16",
+      "name": "Monitoring Activities",
+      "description": "Networks, systems and applications should be monitored for anomalous behaviour and appropriate actions taken to evaluate potential information security incidents.",
+      "attributes": {
+        "Category": "A.8 Technological controls",
+        "Objetive_ID": "A.8.16",
+        "Objetive_Name": "Monitoring Activities",
+        "Check_Summary": "Networks, systems and applications should be monitored for anomalous behaviour and appropriate actions taken to evaluate potential information security incidents."
+      },
+      "checks": {
+        "aws": [
+          "cloudfront_distributions_logging_enabled",
+          "cloudtrail_cloudwatch_logging_enabled",
+          "cloudtrail_kms_encryption_enabled",
+          "cloudtrail_log_file_validation_enabled",
+          "cloudtrail_logs_s3_bucket_access_logging_enabled",
+          "cloudtrail_logs_s3_bucket_is_not_publicly_accessible",
+          "cloudtrail_multi_region_enabled_logging_management_events",
+          "cloudtrail_s3_dataevents_read_enabled",
+          "cloudtrail_s3_dataevents_write_enabled",
+          "cloudwatch_changes_to_network_acls_alarm_configured",
+          "cloudwatch_changes_to_network_gateways_alarm_configured",
+          "cloudwatch_changes_to_vpcs_alarm_configured",
+          "cloudwatch_log_group_kms_encryption_enabled",
+          "cloudwatch_log_group_no_secrets_in_logs",
+          "cloudwatch_log_group_not_publicly_accessible",
+          "cloudwatch_log_group_retention_policy_specific_days_enabled",
+          "cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled",
+          "cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled",
+          "cloudwatch_log_metric_filter_authentication_failures",
+          "cloudwatch_log_metric_filter_aws_organizations_changes",
+          "cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk",
+          "cloudwatch_log_metric_filter_for_s3_bucket_policy_changes",
+          "cloudwatch_log_metric_filter_policy_changes",
+          "cloudwatch_log_metric_filter_root_usage",
+          "cloudwatch_log_metric_filter_security_group_changes",
+          "cloudwatch_log_metric_filter_sign_in_without_mfa",
+          "cloudwatch_log_metric_filter_unauthorized_api_calls",
+          "kms_key_enclave_attestation_unknown_image",
+          "kms_key_enclave_debug_attestation_detected",
+          "vpc_flow_logs_enabled",
+          "waf_global_webacl_logging_enabled",
+          "wafv2_webacl_logging_enabled",
+          "wafv2_webacl_rule_logging_enabled"
+        ],
+        "azure": [
+          "aks_cluster_azure_monitor_enabled",
+          "defender_ensure_defender_cspm_is_on",
+          "monitor_alert_create_policy_assignment",
+          "monitor_alert_create_update_nsg",
+          "monitor_alert_create_update_public_ip_address_rule",
+          "monitor_alert_create_update_security_solution",
+          "monitor_alert_create_update_sqlserver_fr",
+          "monitor_alert_delete_nsg",
+          "monitor_alert_delete_policy_assignment",
+          "monitor_alert_delete_public_ip_address_rule",
+          "monitor_alert_delete_security_solution",
+          "monitor_alert_delete_sqlserver_fr"
+        ],
+        "gcp": [
+          "cloudsql_instance_postgres_log_connections_flag",
+          "cloudsql_instance_postgres_log_disconnections_flag",
+          "cloudsql_instance_postgres_log_error_verbosity_flag",
+          "cloudsql_instance_postgres_log_min_duration_statement_flag",
+          "cloudsql_instance_postgres_log_min_error_statement_flag",
+          "cloudsql_instance_postgres_log_min_messages_flag",
+          "cloudsql_instance_postgres_log_statement_flag",
+          "cloudstorage_bucket_log_retention_policy_lock",
+          "compute_loadbalancer_logging_enabled",
+          "compute_network_dns_logging_enabled",
+          "compute_project_os_login_enabled",
+          "compute_subnet_flow_logs_enabled",
+          "iam_audit_logs_enabled",
+          "logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_custom_role_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_sql_instance_configuration_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_vpc_network_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_vpc_network_route_changes_enabled",
+          "logging_sink_created"
+        ],
+        "kubernetes": [
+          "core_minimize_hostNetwork_containers",
+          "core_minimize_net_raw_capability_admission",
+          "rbac_minimize_node_proxy_subresource_access"
+        ],
+        "m365": [],
+        "nhn": []
+      }
+    },
+    {
+      "id": "A.8.17",
+      "name": "Clock Synchronisation",
+      "description": "The clocks of information processing systems used by the organisation should be synchronised to approved time sources.",
+      "attributes": {
+        "Category": "A.8 Technological controls",
+        "Objetive_ID": "A.8.17",
+        "Objetive_Name": "Clock Synchronisation",
+        "Check_Summary": "The clocks of information processing systems used by the organisation should be synchronised to approved time sources."
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": [],
+        "nhn": []
+      }
+    },
+    {
+      "id": "A.8.18",
+      "name": "Use of Privileged Utility Programs",
+      "description": "The use of utility programs that can be capable of overriding system and application controls should be restricted and tightly controlled",
+      "attributes": {
+        "Category": "A.8 Technological controls",
+        "Objetive_ID": "A.8.18",
+        "Objetive_Name": "Use of Privileged Utility Programs",
+        "Check_Summary": "The use of utility programs that can be capable of overriding system and application controls should be restricted and tightly controlled"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": [
+          "entra_app_registration_no_unused_privileged_permissions",
+          "entra_policy_msol_powershell_blocked",
+          "entra_policy_restricts_user_consent_for_apps",
+          "entra_thirdparty_integrated_apps_not_allowed",
+          "teams_external_domains_restricted",
+          "teams_external_users_cannot_start_conversations"
+        ],
+        "nhn": []
+      }
+    },
+    {
+      "id": "A.8.19",
+      "name": "Installation of Software on Operational Systems",
+      "description": "Procedures and measures should be implemented to securely manage software installation on operational systems.",
+      "attributes": {
+        "Category": "A.8 Technological controls",
+        "Objetive_ID": "A.8.19",
+        "Objetive_Name": "Installation of Software on Operational Systems",
+        "Check_Summary": "Procedures and measures should be implemented to securely manage software installation on operational systems."
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": [
+          "admincenter_users_admins_reduced_license_footprint"
+        ],
+        "nhn": []
+      }
+    },
+    {
+      "id": "A.8.20",
+      "name": "Network Security",
+      "description": "Networks and network devices should be secured, managed and controlled to protect information in systems and applications.",
+      "attributes": {
+        "Category": "A.8 Technological controls",
+        "Objetive_ID": "A.8.20",
+        "Objetive_Name": "Network Security",
+        "Check_Summary": "Networks and network devices should be secured, managed and controlled to protect information in systems and applications."
+      },
+      "checks": {
+        "aws": [
+          "awslambda_function_inside_vpc",
+          "awslambda_function_vpc_multi_az",
+          "bedrock_vpc_endpoints_configured",
+          "cloudwatch_changes_to_vpcs_alarm_configured",
+          "ec2_confidential_workload_host_imdsv2_not_enforced",
+          "ec2_confidential_workload_host_public_ip",
+          "ec2_confidential_workload_host_unrestricted_ingress",
+          "ec2_confidential_workload_host_vsock_proxy_exposed",
+          "ec2_elastic_ip_shodan",
+          "ec2_elastic_ip_unassigned",
+          "ec2_instance_account_imdsv2_enabled",
+          "ec2_instance_imdsv2_enabled",
+          "ec2_instance_internet_facing_with_instance_profile",
+          "ec2_instance_paravirtual_type",
+          "ec2_instance_port_cassandra_exposed_to_internet",
+          "ec2_instance_port_cifs_exposed_to_internet",
+          "ec2_instance_port_elasticsearch_kibana_exposed_to_internet",
+          "ec2_instance_port_ftp_exposed_to_internet",
+          "ec2_instance_port_kafka_exposed_to_internet",
+          "ec2_instance_port_kerberos_exposed_to_internet",
+          "ec2_instance_port_ldap_exposed_to_internet",
+          "ec2_instance_port_memcached_exposed_to_internet",
+          "ec2_instance_port_mongodb_exposed_to_internet",
+          "ec2_instance_port_mysql_exposed_to_internet",
+          "ec2_instance_port_oracle_exposed_to_internet",
+          "ec2_instance_port_postgresql_exposed_to_internet",
+          "ec2_instance_port_rdp_exposed_to_internet",
+          "ec2_instance_port_redis_exposed_to_internet",
+          "ec2_instance_port_sqlserver_exposed_to_internet",
+          "ec2_instance_port_ssh_exposed_to_internet",
+          "ec2_instance_port_telnet_exposed_to_internet",
+          "ec2_instance_profile_attached",
+          "ec2_instance_public_ip",
+          "ec2_instance_secrets_user_data",
+          "ec2_instance_uses_single_eni",
+          "ec2_launch_template_imdsv2_required",
+          "ec2_launch_template_no_public_ip",
+          "ec2_launch_template_no_secrets",
+          "ec2_networkacl_allow_ingress_any_port",
+          "ec2_networkacl_allow_ingress_tcp_port_22",
+          "ec2_networkacl_allow_ingress_tcp_port_3389",
+          "ec2_networkacl_unused",
+          "ec2_securitygroup_allow_ingress_from_internet_to_all_ports",
+          "ec2_securitygroup_allow_ingress_from_internet_to_any_port",
+          "ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_3389",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_cassandra_7199_9160_8888",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_elasticsearch_kibana_9200_9300_5601",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_ftp_20_21",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_kafka_9092",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_memcached_11211",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_mongodb_27017_27018",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_mysql_3306",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_oracle_1521_2483",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_redis_6379",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_sql_server_1433_1434",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_telnet_23",
+          "ec2_securitygroup_allow_wide_open_public_ipv4",
+          "ec2_securitygroup_default_restrict_traffic",
+          "ec2_securitygroup_from_launch_wizard",
+          "ec2_securitygroup_not_used",
+          "ec2_securitygroup_with_many_ingress_egress_rules",
+          "ec2_transitgateway_auto_accept_vpc_attachments",
+          "networkfirewall_in_all_vpc",
+          "rds_instance_inside_vpc",
+          "redshift_cluster_enhanced_vpc_routing",
+          "sagemaker_models_vpc_settings_configured",
+          "sagemaker_notebook_instance_vpc_settings_configured",
+          "sagemaker_training_jobs_vpc_settings_configured",
+          "vpc_different_regions",
+          "vpc_endpoint_connections_trust_boundaries",
+          "vpc_endpoint_for_ec2_enabled",
+          "vpc_endpoint_multi_az_enabled",
+          "vpc_endpoint_services_allowed_principals_trust_boundaries",
+          "vpc_flow_logs_enabled",
+          "vpc_peering_routing_tables_with_least_privilege",
+          "vpc_subnet_different_az",
+          "vpc_subnet_no_public_ip_by_default",
+          "vpc_subnet_separate_private_public",
+          "vpc_vpn_connection_tunnels_up",
+          "workspaces_vpc_2private_1public_subnets_nat"
+        ],
+        "azure": [
+          "aks_network_policy_enabled",
+          "containerregistry_not_publicly_accessible",
+          "cosmosdb_account_firewall_use_selected_networks",
+          "cosmosdb_account_public_network_access_disabled",
+          "databricks_workspace_no_public_ip_enabled",
+          "databricks_workspace_public_network_access_disabled",
+          "network_bastion_host_exists",
+          "network_flow_log_captured_sent",
+          "network_flow_log_more_than_90_days",
+          "network_http_internet_access_restricted",
+          "network_public_ip_shodan",
+          "network_rdp_internet_access_restricted",
+          "network_ssh_internet_access_restricted",
+          "network_subnet_nsg_associated",
+          "network_udp_internet_access_restricted",
+          "network_vnet_ddos_protection_enabled",
+          "network_watcher_enabled"
+        ],
+        "gcp": [
+          "compute_firewall_rdp_access_from_the_internet_allowed",
+          "compute_firewall_ssh_access_from_the_internet_allowed",
+          "compute_network_default_in_use",
+          "compute_network_dns_logging_enabled",
+          "compute_network_not_legacy",
+          "compute_subnet_flow_logs_enabled",
+          "logging_log_metric_filter_and_alert_for_vpc_network_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_vpc_network_route_changes_enabled"
+        ],
+        "kubernetes": [
+          "apiserver_anonymous_requests",
+          "apiserver_audit_log_path_set",
+          "apiserver_auth_mode_include_rbac",
+          "apiserver_auth_mode_not_always_allow",
+          "apiserver_client_ca_file_set",
+          "apiserver_encryption_provider_config_set",
+          "apiserver_etcd_cafile_set",
+          "apiserver_etcd_tls_config",
+          "apiserver_kubelet_cert_auth",
+          "apiserver_kubelet_tls_auth",
+          "etcd_client_cert_auth",
+          "etcd_peer_client_cert_auth",
+          "etcd_tls_encryption",
+          "kubelet_client_ca_file_set",
+          "kubelet_disable_anonymous_auth",
+          "kubelet_rotate_certificates",
+          "kubelet_strong_ciphers_only",
+          "kubelet_tls_cert_and_key"
+        ],
+        "m365": [
+          "admincenter_external_calendar_sharing_disabled",
+          "teams_external_file_sharing_restricted"
+        ],
+        "nhn": [
+          "compute_instance_public_ip",
+          "compute_instance_security_groups",
+          "network_vpc_has_empty_routingtables",
+          "network_vpc_subnet_has_external_router"
+        ]
+      }
+    },
+    {
+      "id": "A.8.21",
+      "name": "Security of Network Services",
+      "description": "Security mechanisms, service levels and service requirements of network services should be identified, implemented and monitored.",
+      "attributes": {
+        "Category": "A.8 Technological controls",
+        "Objetive_ID": "A.8.21",
+        "Objetive_Name": "Security of Network Services",
+        "Check_Summary": "Security mechanisms, service levels and service requirements of network services should be identified, implemented and monitored."
+      },
+      "checks": {
+        "aws": [
+          "awslambda_function_inside_vpc",
+          "awslambda_function_vpc_multi_az",
+          "bedrock_vpc_endpoints_configured",
+          "cloudwatch_changes_to_vpcs_alarm_configured",
+          "ec2_confidential_workload_host_imdsv2_not_enforced",
+          "ec2_confidential_workload_host_public_ip",
+          "ec2_confidential_workload_host_unrestricted_ingress",
+          "ec2_elastic_ip_shodan",
+          "ec2_elastic_ip_unassigned",
+          "ec2_instance_account_imdsv2_enabled",
+          "ec2_instance_imdsv2_enabled",
+          "ec2_instance_internet_facing_with_instance_profile",
+          "ec2_instance_paravirtual_type",
+          "ec2_instance_port_cassandra_exposed_to_internet",
+          "ec2_instance_port_cifs_exposed_to_internet",
+          "ec2_instance_port_elasticsearch_kibana_exposed_to_internet",
+          "ec2_instance_port_ftp_exposed_to_internet",
+          "ec2_instance_port_kafka_exposed_to_internet",
+          "ec2_instance_port_kerberos_exposed_to_internet",
+          "ec2_instance_port_ldap_exposed_to_internet",
+          "ec2_instance_port_memcached_exposed_to_internet",
+          "ec2_instance_port_mongodb_exposed_to_internet",
+          "ec2_instance_port_mysql_exposed_to_internet",
+          "ec2_instance_port_oracle_exposed_to_internet",
+          "ec2_instance_port_postgresql_exposed_to_internet",
+          "ec2_instance_port_rdp_exposed_to_internet",
+          "ec2_instance_port_redis_exposed_to_internet",
+          "ec2_instance_port_sqlserver_exposed_to_internet",
+          "ec2_instance_port_ssh_exposed_to_internet",
+          "ec2_instance_port_telnet_exposed_to_internet",
+          "ec2_instance_profile_attached",
+          "ec2_instance_public_ip",
+          "ec2_instance_secrets_user_data",
+          "ec2_instance_uses_single_eni",
+          "ec2_launch_template_imdsv2_required",
+          "ec2_launch_template_no_public_ip",
+          "ec2_launch_template_no_secrets",
+          "ec2_networkacl_allow_ingress_any_port",
+          "ec2_networkacl_allow_ingress_tcp_port_22",
+          "ec2_networkacl_allow_ingress_tcp_port_3389",
+          "ec2_networkacl_unused",
+          "ec2_securitygroup_allow_ingress_from_internet_to_all_ports",
+          "ec2_securitygroup_allow_ingress_from_internet_to_any_port",
+          "ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_3389",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_cassandra_7199_9160_8888",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_elasticsearch_kibana_9200_9300_5601",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_ftp_20_21",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_kafka_9092",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_memcached_11211",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_mongodb_27017_27018",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_mysql_3306",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_oracle_1521_2483",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_redis_6379",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_sql_server_1433_1434",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_telnet_23",
+          "ec2_securitygroup_allow_wide_open_public_ipv4",
+          "ec2_securitygroup_default_restrict_traffic",
+          "ec2_securitygroup_from_launch_wizard",
+          "ec2_securitygroup_not_used",
+          "ec2_securitygroup_with_many_ingress_egress_rules",
+          "ec2_transitgateway_auto_accept_vpc_attachments",
+          "networkfirewall_in_all_vpc",
+          "rds_instance_inside_vpc",
+          "redshift_cluster_enhanced_vpc_routing",
+          "sagemaker_models_vpc_settings_configured",
+          "sagemaker_notebook_instance_vpc_settings_configured",
+          "sagemaker_training_jobs_vpc_settings_configured",
+          "vpc_different_regions",
+          "vpc_endpoint_connections_trust_boundaries",
+          "vpc_endpoint_for_ec2_enabled",
+          "vpc_endpoint_multi_az_enabled",
+          "vpc_endpoint_services_allowed_principals_trust_boundaries",
+          "vpc_flow_logs_enabled",
+          "vpc_peering_routing_tables_with_least_privilege",
+          "vpc_subnet_different_az",
+          "vpc_subnet_no_public_ip_by_default",
+          "vpc_subnet_separate_private_public",
+          "vpc_vpn_connection_tunnels_up",
+          "workspaces_vpc_2private_1public_subnets_nat"
+        ],
+        "azure": [
+          "aks_network_policy_enabled",
+          "containerregistry_not_publicly_accessible",
+          "cosmosdb_account_firewall_use_selected_networks",
+          "network_bastion_host_exists",
+          "network_flow_log_captured_sent",
+          "network_flow_log_more_than_90_days",
+          "network_http_internet_access_restricted",
+          "network_public_ip_shodan",
+          "network_rdp_internet_access_restricted",
+          "network_ssh_internet_access_restricted",
+          "network_udp_internet_access_restricted",
+          "network_watcher_enabled"
+        ],
+        "gcp": [
+          "compute_network_dns_logging_enabled",
+          "compute_subnet_flow_logs_enabled",
+          "logging_log_metric_filter_and_alert_for_vpc_network_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_vpc_network_route_changes_enabled"
+        ],
+        "kubernetes": [
+          "apiserver_anonymous_requests",
+          "apiserver_audit_log_path_set",
+          "apiserver_auth_mode_include_rbac",
+          "apiserver_auth_mode_not_always_allow",
+          "apiserver_client_ca_file_set",
+          "apiserver_encryption_provider_config_set",
+          "apiserver_etcd_cafile_set",
+          "apiserver_etcd_tls_config",
+          "apiserver_kubelet_cert_auth",
+          "apiserver_kubelet_tls_auth",
+          "etcd_client_cert_auth",
+          "etcd_peer_client_cert_auth",
+          "etcd_tls_encryption",
+          "kubelet_client_ca_file_set",
+          "kubelet_disable_anonymous_auth",
+          "kubelet_rotate_certificates",
+          "kubelet_strong_ciphers_only",
+          "kubelet_tls_cert_and_key"
+        ],
+        "m365": [
+          "defender_antispam_policy_inbound_no_allowed_domains",
+          "defender_domain_dkim_enabled",
+          "exchange_transport_rules_whitelist_disabled",
+          "sharepoint_external_sharing_managed",
+          "teams_external_domains_restricted"
+        ],
+        "nhn": []
+      }
+    },
+    {
+      "id": "A.8.22",
+      "name": "Segregation of Networks",
+      "description": "Security mechanisms, service levels and service requirements of network services should be identified, implemented and monitored.",
+      "attributes": {
+        "Category": "A.8 Technological controls",
+        "Objetive_ID": "A.8.22",
+        "Objetive_Name": "Segregation of Networks",
+        "Check_Summary": "Security mechanisms, service levels and service requirements of network services should be identified, implemented and monitored."
+      },
+      "checks": {
+        "aws": [
+          "awslambda_function_inside_vpc",
+          "awslambda_function_vpc_multi_az",
+          "bedrock_vpc_endpoints_configured",
+          "cloudwatch_changes_to_vpcs_alarm_configured",
+          "ec2_confidential_workload_host_imdsv2_not_enforced",
+          "ec2_confidential_workload_host_public_ip",
+          "ec2_confidential_workload_host_unrestricted_ingress",
+          "ec2_elastic_ip_shodan",
+          "ec2_elastic_ip_unassigned",
+          "ec2_instance_account_imdsv2_enabled",
+          "ec2_instance_imdsv2_enabled",
+          "ec2_instance_internet_facing_with_instance_profile",
+          "ec2_instance_paravirtual_type",
+          "ec2_instance_port_cassandra_exposed_to_internet",
+          "ec2_instance_port_cifs_exposed_to_internet",
+          "ec2_instance_port_elasticsearch_kibana_exposed_to_internet",
+          "ec2_instance_port_ftp_exposed_to_internet",
+          "ec2_instance_port_kafka_exposed_to_internet",
+          "ec2_instance_port_kerberos_exposed_to_internet",
+          "ec2_instance_port_ldap_exposed_to_internet",
+          "ec2_instance_port_memcached_exposed_to_internet",
+          "ec2_instance_port_mongodb_exposed_to_internet",
+          "ec2_instance_port_mysql_exposed_to_internet",
+          "ec2_instance_port_oracle_exposed_to_internet",
+          "ec2_instance_port_postgresql_exposed_to_internet",
+          "ec2_instance_port_rdp_exposed_to_internet",
+          "ec2_instance_port_redis_exposed_to_internet",
+          "ec2_instance_port_sqlserver_exposed_to_internet",
+          "ec2_instance_port_ssh_exposed_to_internet",
+          "ec2_instance_port_telnet_exposed_to_internet",
+          "ec2_instance_profile_attached",
+          "ec2_instance_public_ip",
+          "ec2_instance_secrets_user_data",
+          "ec2_instance_uses_single_eni",
+          "ec2_launch_template_imdsv2_required",
+          "ec2_launch_template_no_public_ip",
+          "ec2_launch_template_no_secrets",
+          "ec2_networkacl_allow_ingress_any_port",
+          "ec2_networkacl_allow_ingress_tcp_port_22",
+          "ec2_networkacl_allow_ingress_tcp_port_3389",
+          "ec2_networkacl_unused",
+          "ec2_securitygroup_allow_ingress_from_internet_to_all_ports",
+          "ec2_securitygroup_allow_ingress_from_internet_to_any_port",
+          "ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_3389",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_cassandra_7199_9160_8888",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_elasticsearch_kibana_9200_9300_5601",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_ftp_20_21",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_kafka_9092",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_memcached_11211",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_mongodb_27017_27018",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_mysql_3306",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_oracle_1521_2483",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_redis_6379",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_sql_server_1433_1434",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_telnet_23",
+          "ec2_securitygroup_allow_wide_open_public_ipv4",
+          "ec2_securitygroup_default_restrict_traffic",
+          "ec2_securitygroup_from_launch_wizard",
+          "ec2_securitygroup_not_used",
+          "ec2_securitygroup_with_many_ingress_egress_rules",
+          "ec2_transitgateway_auto_accept_vpc_attachments",
+          "networkfirewall_in_all_vpc",
+          "rds_instance_inside_vpc",
+          "redshift_cluster_enhanced_vpc_routing",
+          "sagemaker_models_vpc_settings_configured",
+          "sagemaker_notebook_instance_vpc_settings_configured",
+          "sagemaker_training_jobs_vpc_settings_configured",
+          "vpc_different_regions",
+          "vpc_endpoint_connections_trust_boundaries",
+          "vpc_endpoint_for_ec2_enabled",
+          "vpc_endpoint_multi_az_enabled",
+          "vpc_endpoint_services_allowed_principals_trust_boundaries",
+          "vpc_flow_logs_enabled",
+          "vpc_peering_routing_tables_with_least_privilege",
+          "vpc_subnet_different_az",
+          "vpc_subnet_no_public_ip_by_default",
+          "vpc_subnet_separate_private_public",
+          "vpc_vpn_connection_tunnels_up",
+          "workspaces_vpc_2private_1public_subnets_nat"
+        ],
+        "azure": [
+          "aks_network_policy_enabled",
+          "containerregistry_not_publicly_accessible",
+          "cosmosdb_account_firewall_use_selected_networks",
+          "network_bastion_host_exists",
+          "network_flow_log_captured_sent",
+          "network_flow_log_more_than_90_days",
+          "network_http_internet_access_restricted",
+          "network_public_ip_shodan",
+          "network_rdp_internet_access_restricted",
+          "network_ssh_internet_access_restricted",
+          "network_subnet_nsg_associated",
+          "network_udp_internet_access_restricted",
+          "network_watcher_enabled"
+        ],
+        "gcp": [
+          "compute_network_dns_logging_enabled",
+          "compute_subnet_flow_logs_enabled",
+          "logging_log_metric_filter_and_alert_for_vpc_network_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_vpc_network_route_changes_enabled"
+        ],
+        "kubernetes": [
+          "apiserver_anonymous_requests",
+          "apiserver_audit_log_path_set",
+          "apiserver_auth_mode_include_rbac",
+          "apiserver_auth_mode_not_always_allow",
+          "apiserver_client_ca_file_set",
+          "apiserver_encryption_provider_config_set",
+          "apiserver_etcd_cafile_set",
+          "apiserver_etcd_tls_config",
+          "apiserver_kubelet_cert_auth",
+          "apiserver_kubelet_tls_auth",
+          "etcd_client_cert_auth",
+          "etcd_peer_client_cert_auth",
+          "etcd_tls_encryption",
+          "kubelet_client_ca_file_set",
+          "kubelet_disable_anonymous_auth",
+          "kubelet_rotate_certificates",
+          "kubelet_strong_ciphers_only",
+          "kubelet_tls_cert_and_key"
+        ],
+        "m365": [],
+        "nhn": [
+          "compute_instance_public_ip",
+          "network_vpc_subnet_has_external_router"
+        ]
+      }
+    },
+    {
+      "id": "A.8.23",
+      "name": "Web Filtering",
+      "description": "Access to external websites should be managed to reduce exposure to malicious content.",
+      "attributes": {
+        "Category": "A.8 Technological controls",
+        "Objetive_ID": "A.8.23",
+        "Objetive_Name": "Web Filtering",
+        "Check_Summary": "Access to external websites should be managed to reduce exposure to malicious content."
+      },
+      "checks": {
+        "aws": [
+          "ec2_securitygroup_default_restrict_traffic",
+          "securityhub_enabled",
+          "vpc_flow_logs_enabled"
+        ],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": [
+          "defender_safelinks_policy_enabled",
+          "sharepoint_external_sharing_managed",
+          "sharepoint_external_sharing_restricted",
+          "teams_external_domains_restricted",
+          "teams_external_users_cannot_start_conversations"
+        ],
+        "nhn": []
+      },
+      "config_requirements": [
+        {
+          "Check": "securityhub_enabled",
+          "Provider": "aws",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ]
+    },
+    {
+      "id": "A.8.24",
+      "name": "Use of Cryptography",
+      "description": "Rules for the effective use of cryptography, including cryptographic key management, should be defined and implemented.",
+      "attributes": {
+        "Category": "A.8 Technological controls",
+        "Objetive_ID": "A.8.24",
+        "Objetive_Name": "Use of Cryptography",
+        "Check_Summary": "Rules for the effective use of cryptography, including cryptographic key management, should be defined and implemented."
+      },
+      "checks": {
+        "aws": [
+          "apigateway_restapi_cache_encrypted",
+          "athena_workgroup_encryption",
+          "backup_recovery_point_encrypted",
+          "backup_vaults_encrypted",
+          "bedrock_model_invocation_logs_encryption_enabled",
+          "bedrock_prompt_encrypted_with_cmk",
+          "cloudfront_distributions_field_level_encryption_enabled",
+          "cloudfront_distributions_origin_traffic_encrypted",
+          "cloudtrail_kms_encryption_enabled",
+          "cloudwatch_log_group_kms_encryption_enabled",
+          "codebuild_project_s3_logs_encrypted",
+          "codebuild_report_group_export_encrypted",
+          "dms_endpoint_redis_in_transit_encryption_enabled",
+          "documentdb_cluster_storage_encrypted",
+          "dynamodb_accelerator_cluster_encryption_enabled",
+          "dynamodb_accelerator_cluster_in_transit_encryption_enabled",
+          "dynamodb_tables_kms_cmk_encryption_enabled",
+          "ec2_ebs_default_encryption",
+          "ec2_ebs_snapshots_encrypted",
+          "ec2_ebs_volume_encryption",
+          "efs_encryption_at_rest_enabled",
+          "eks_cluster_kms_cmk_encryption_in_secrets_enabled",
+          "elasticache_redis_cluster_in_transit_encryption_enabled",
+          "elasticache_redis_cluster_rest_encryption_enabled",
+          "firehose_stream_encrypted_at_rest",
+          "glue_data_catalogs_connection_passwords_encryption_enabled",
+          "glue_data_catalogs_metadata_encryption_enabled",
+          "glue_development_endpoints_cloudwatch_logs_encryption_enabled",
+          "glue_development_endpoints_job_bookmark_encryption_enabled",
+          "glue_development_endpoints_s3_encryption_enabled",
+          "glue_etl_jobs_amazon_s3_encryption_enabled",
+          "glue_etl_jobs_cloudwatch_logs_encryption_enabled",
+          "glue_etl_jobs_job_bookmark_encryption_enabled",
+          "glue_ml_transform_encrypted_at_rest",
+          "kafka_cluster_encryption_at_rest_uses_cmk",
+          "kafka_cluster_in_transit_encryption_enabled",
+          "kafka_connector_in_transit_encryption_enabled",
+          "kinesis_stream_encrypted_at_rest",
+          "kms_cmk_are_used",
+          "kms_cmk_not_deleted_unintentionally",
+          "kms_cmk_not_multi_region",
+          "kms_cmk_rotation_enabled",
+          "kms_key_enclave_attestation_bypassable_path",
+          "kms_key_enclave_attestation_no_deployment_binding",
+          "kms_key_enclave_attestation_not_enforced",
+          "neptune_cluster_snapshot_encrypted",
+          "neptune_cluster_storage_encrypted",
+          "opensearch_service_domains_encryption_at_rest_enabled",
+          "opensearch_service_domains_node_to_node_encryption_enabled",
+          "rds_cluster_storage_encrypted",
+          "rds_instance_storage_encrypted",
+          "rds_instance_transport_encrypted",
+          "rds_snapshots_encrypted",
+          "redshift_cluster_encrypted_at_rest",
+          "redshift_cluster_in_transit_encryption_enabled",
+          "s3_bucket_default_encryption",
+          "s3_bucket_kms_encryption",
+          "sagemaker_notebook_instance_encryption_enabled",
+          "sagemaker_training_jobs_intercontainer_encryption_enabled",
+          "sagemaker_training_jobs_volume_and_output_encryption_enabled",
+          "sns_topics_kms_encryption_at_rest_enabled",
+          "sqs_queues_server_side_encryption_enabled",
+          "storagegateway_fileshare_encryption_enabled",
+          "transfer_server_in_transit_encryption_enabled",
+          "workspaces_volume_encryption_enabled"
+        ],
+        "azure": [
+          "app_minimum_tls_version_12",
+          "cosmosdb_account_minimum_tls_version",
+          "entra_app_registration_credential_not_expired",
+          "monitor_storage_account_with_activity_logs_cmk_encrypted",
+          "sqlserver_tde_encrypted_with_cmk",
+          "sqlserver_tde_encryption_enabled",
+          "storage_ensure_encryption_with_customer_managed_keys",
+          "storage_infrastructure_encryption_is_enabled",
+          "storage_secure_transfer_required_is_enabled",
+          "vm_ensure_attached_disks_encrypted_with_cmk",
+          "vm_ensure_unattached_disks_encrypted_with_cmk"
+        ],
+        "gcp": [
+          "kms_key_not_publicly_accessible",
+          "kms_key_rotation_enabled"
+        ],
+        "kubernetes": [
+          "apiserver_etcd_tls_config",
+          "apiserver_kubelet_tls_auth",
+          "apiserver_service_account_key_file_set",
+          "apiserver_tls_config",
+          "controllermanager_service_account_private_key_file",
+          "etcd_peer_tls_config",
+          "etcd_tls_encryption",
+          "kubelet_tls_cert_and_key"
+        ],
+        "m365": [],
+        "nhn": []
+      }
+    },
+    {
+      "id": "A.8.25",
+      "name": "Secure Development Life Cycle",
+      "description": "Rules for the secure development of software and systems should be established and applied.",
+      "attributes": {
+        "Category": "A.8 Technological controls",
+        "Objetive_ID": "A.8.25",
+        "Objetive_Name": "Secure Development Life Cycle",
+        "Check_Summary": "Rules for the secure development of software and systems should be established and applied."
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": [],
+        "nhn": []
+      }
+    },
+    {
+      "id": "A.8.26",
+      "name": "Application Security Requirements",
+      "description": "Information security requirements should be identified, specified and approved when developing or acquiring applications.",
+      "attributes": {
+        "Category": "A.8 Technological controls",
+        "Objetive_ID": "A.8.26",
+        "Objetive_Name": "Application Security Requirements",
+        "Check_Summary": "Information security requirements should be identified, specified and approved when developing or acquiring applications."
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": [
+          "admincenter_users_admins_reduced_license_footprint",
+          "defender_malware_policy_comprehensive_attachments_filter_applied",
+          "entra_app_registration_no_unused_privileged_permissions",
+          "entra_app_registration_redirect_uris_secure",
+          "entra_policy_restricts_user_consent_for_apps",
+          "entra_thirdparty_integrated_apps_not_allowed",
+          "sharepoint_modern_authentication_required"
+        ],
+        "nhn": []
+      }
+    },
+    {
+      "id": "A.8.27",
+      "name": "Secure Systems Architecture and Engineering Principles",
+      "description": "Principles for engineering secure systems should be established, documented, maintained and applied to any information system development activities.",
+      "attributes": {
+        "Category": "A.8 Technological controls",
+        "Objetive_ID": "A.8.27",
+        "Objetive_Name": "Secure Systems Architecture and Engineering Principles",
+        "Check_Summary": "Principles for engineering secure systems should be established, documented, maintained and applied to any information system development activities."
+      },
+      "checks": {
+        "aws": [
+          "ssm_document_secrets",
+          "ssm_documents_set_as_public",
+          "ssm_managed_compliant_patching"
+        ],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": [],
+        "nhn": []
+      }
+    },
+    {
+      "id": "A.8.29",
+      "name": "Security Testing in Development and Acceptance",
+      "description": "Security testing processes should be defined and implemented in the development life cycle.",
+      "attributes": {
+        "Category": "A.8 Technological controls",
+        "Objetive_ID": "A.8.29",
+        "Objetive_Name": "Security Testing in Development and Acceptance",
+        "Check_Summary": "Security testing processes should be defined and implemented in the development life cycle."
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": [],
+        "nhn": []
+      }
+    },
+    {
+      "id": "A.8.30",
+      "name": "Outsourced Development",
+      "description": "The organisation should direct, monitor and review the activities related to outsourced system development.",
+      "attributes": {
+        "Category": "A.8 Technological controls",
+        "Objetive_ID": "A.8.30",
+        "Objetive_Name": "Outsourced Development",
+        "Check_Summary": "The organisation should direct, monitor and review the activities related to outsourced system development."
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": [
+          "entra_identity_protection_sign_in_risk_enabled",
+          "entra_identity_protection_user_risk_enabled"
+        ],
+        "nhn": []
+      }
+    },
+    {
+      "id": "A.8.31",
+      "name": "Separation of Development, Test and Production Environments",
+      "description": "Development, testing and production environments should be separated and secured.",
+      "attributes": {
+        "Category": "A.8 Technological controls",
+        "Objetive_ID": "A.8.31",
+        "Objetive_Name": "Separation of Development, Test and Production Environments",
+        "Check_Summary": "Development, testing and production environments should be separated and secured."
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": [],
+        "nhn": []
+      }
+    },
+    {
+      "id": "A.8.32",
+      "name": "Change Management",
+      "description": "Changes to information processing facilities and information systems should be subject to change management procedures.",
+      "attributes": {
+        "Category": "A.8 Technological controls",
+        "Objetive_ID": "A.8.32",
+        "Objetive_Name": "Change Management",
+        "Check_Summary": "Changes to information processing facilities and information systems should be subject to change management procedures."
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": [],
+        "nhn": []
+      }
+    },
+    {
+      "id": "A.8.33",
+      "name": "Test Information",
+      "description": "Test information should be appropriately selected, protected and managed.",
+      "attributes": {
+        "Category": "A.8 Technological controls",
+        "Objetive_ID": "A.8.33",
+        "Objetive_Name": "Test Information",
+        "Check_Summary": "Test information should be appropriately selected, protected and managed."
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": [],
+        "nhn": []
+      }
+    },
+    {
+      "id": "A.8.34",
+      "name": "Protection of Information Systems During Audit Testing",
+      "description": "Audit tests and other assurance activities involving assessment of operational systems should be planned and agreed between the tester and appropriate management.",
+      "attributes": {
+        "Category": "A.8 Technological controls",
+        "Objetive_ID": "A.8.34",
+        "Objetive_Name": "Protection of Information Systems During Audit Testing",
+        "Check_Summary": "Audit tests and other assurance activities involving assessment of operational systems should be planned and agreed between the tester and appropriate management."
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [],
+        "kubernetes": [],
+        "m365": [
+          "exchange_mailbox_audit_bypass_disabled",
+          "exchange_organization_mailbox_auditing_enabled",
+          "exchange_user_mailbox_auditing_enabled",
+          "purview_audit_log_search_enabled"
+        ],
+        "nhn": []
+      }
+    }
+  ]
+}

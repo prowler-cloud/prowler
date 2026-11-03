@@ -14,11 +14,16 @@ import type {
   ProviderCheckIdsMap,
 } from "../_types";
 
-/** The composed display name the per-scan mappers give every requirement.
- *  Shared with `buildRequirementExtrasMap` so the extras join never parses
- *  strings back apart. */
-const composeRequirementName = (id: string, name: string): string =>
-  name ? `${id} - ${name}` : id;
+/** Match the display name used by each framework's per-scan mapper. */
+const composeRequirementName = (
+  framework: string,
+  id: string,
+  name: string,
+): string => {
+  if (framework === "ISO27001" || framework === "PCI") return id;
+  if (framework === "SOC2") return name || id;
+  return name ? `${id} - ${name}` : id;
+};
 
 /**
  * Convert a cross-provider overview into the `{AttributesData,
@@ -84,7 +89,7 @@ export const crossProviderToMapperInput = (
 };
 
 /**
- * Cross-provider context for each requirement, keyed by the exact composed
+ * Cross-provider context for each requirement, keyed by the exact display
  * name the mappers produce, so renderers can join per-provider statuses and
  * scan/check splits onto mapped requirements without touching the mappers.
  */
@@ -94,12 +99,15 @@ export const buildRequirementExtrasMap = (
   const extras = new Map<string, CrossProviderRequirementExtras>();
 
   for (const requirement of attrs.requirements) {
-    extras.set(composeRequirementName(requirement.id, requirement.name), {
-      requirementId: requirement.id,
-      providers: requirement.providers,
-      checkIdsByProvider: requirement.check_ids_by_provider ?? {},
-      scanIdsByProvider: attrs.scan_ids_by_provider,
-    });
+    extras.set(
+      composeRequirementName(attrs.framework, requirement.id, requirement.name),
+      {
+        requirementId: requirement.id,
+        providers: requirement.providers,
+        checkIdsByProvider: requirement.check_ids_by_provider ?? {},
+        scanIdsByProvider: attrs.scan_ids_by_provider,
+      },
+    );
   }
 
   return extras;

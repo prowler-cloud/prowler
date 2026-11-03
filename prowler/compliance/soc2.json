@@ -1,0 +1,1471 @@
+{
+  "framework": "SOC2",
+  "name": "System and Organization Controls 2 (SOC2)",
+  "version": "",
+  "description": "Cross-provider System and Organization Controls 2 (SOC 2) mapping consolidated from the existing unversioned Prowler provider-specific frameworks. Retains the 28 criteria represented in those frameworks, their provider check mappings, and configuration guardrails. Criteria without checks for a provider require manual assessment.",
+  "icon": "soc2",
+  "attributes_metadata": [
+    {
+      "key": "Section",
+      "label": "Trust Services Criteria Section",
+      "type": "str",
+      "required": true,
+      "enum": [
+        "CC1.0 - Common Criteria Related to Control Environment",
+        "CC2.0 - Common Criteria Related to Communication and Information",
+        "CC3.0 - Common Criteria Related to Risk Assessment",
+        "CC4.0 - Monitoring Activities",
+        "CC5.0 - Control Activities",
+        "CC6.0 - Logical and Physical Access",
+        "CC7.0 - System Operations",
+        "CC8.0 - Change Management",
+        "CC9.0 - Risk Mitigation",
+        "CCA1.0 - Additional Criterial for Availability",
+        "CCC1.0 - Additional Criterial for Confidentiality",
+        "PI1.0 - Processing Integrity"
+      ],
+      "output_formats": {
+        "csv": true,
+        "ocsf": true
+      }
+    },
+    {
+      "key": "ItemId",
+      "label": "Criterion ID",
+      "type": "str",
+      "required": true,
+      "output_formats": {
+        "csv": true,
+        "ocsf": true
+      }
+    }
+  ],
+  "outputs": {
+    "table_config": {
+      "group_by": "Section"
+    },
+    "pdf_config": {
+      "language": "en",
+      "primary_color": "#1C5E91",
+      "secondary_color": "#123E60",
+      "bg_color": "#F0F5FA",
+      "group_by_field": "Section",
+      "sections": [
+        "CC1.0 - Common Criteria Related to Control Environment",
+        "CC2.0 - Common Criteria Related to Communication and Information",
+        "CC3.0 - Common Criteria Related to Risk Assessment",
+        "CC4.0 - Monitoring Activities",
+        "CC5.0 - Control Activities",
+        "CC6.0 - Logical and Physical Access",
+        "CC7.0 - System Operations",
+        "CC8.0 - Change Management",
+        "CC9.0 - Risk Mitigation",
+        "CCA1.0 - Additional Criterial for Availability",
+        "CCC1.0 - Additional Criterial for Confidentiality",
+        "PI1.0 - Processing Integrity"
+      ],
+      "charts": [
+        {
+          "id": "section_compliance",
+          "type": "horizontal_bar",
+          "group_by": "Section",
+          "title": "Compliance Score by Trust Services Criteria Section",
+          "y_label": "Trust Services Criteria Section",
+          "x_label": "Compliance %",
+          "value_source": "compliance_percent",
+          "color_mode": "by_value"
+        }
+      ],
+      "filter": {
+        "only_failed": true,
+        "include_manual": false
+      }
+    }
+  },
+  "requirements": [
+    {
+      "id": "cc_1_3",
+      "name": "CC1.3 COSO Principle 3: Management establishes, with board oversight, structures, reporting lines, and appropriate authorities and responsibilities in the pursuit of objectives",
+      "description": "Considers All Structures of the Entity - Management and the board of directors consider the multiple structures used (including operating units, legal entities, geographic distribution, and outsourced service providers) to support the achievement of objectives. Establishes Reporting Lines - Management designs and evaluates lines of reporting for each entity structure to enable execution of authorities and responsibilities and flow of information to manage the activities of the entity. Defines, Assigns, and Limits Authorities and Responsibilities - Management and the board of directors delegate authority, define responsibilities, and use appropriate processes and technology to assign responsibility and segregate duties as necessary at the various levels of the organization. Additional points of focus specifically related to all engagements using the trust services criteria: Addresses Specific Requirements When Defining Authorities and Responsibilities—Management and the board of directors consider requirements relevant to security, availability, processing integrity, confidentiality, and privacy when defining authorities and responsibilities. Considers Interactions With External Parties When Establishing Structures, Reporting Lines, Authorities, and Responsibilities — Management and the board of directors consider the need for the entity to interact with and monitor the activities of external parties when establishing structures, reporting lines, authorities, and responsibilities.",
+      "attributes": {
+        "ItemId": "cc_1_3",
+        "Section": "CC1.0 - Common Criteria Related to Control Environment"
+      },
+      "checks": {
+        "aws": [
+          "iam_aws_attached_policy_no_administrative_privileges",
+          "iam_customer_attached_policy_no_administrative_privileges",
+          "iam_inline_policy_no_administrative_privileges",
+          "iam_policy_attached_only_to_group_or_roles",
+          "iam_user_accesskey_unused",
+          "iam_user_console_access_unused"
+        ],
+        "azure": [
+          "entra_conditional_access_policy_require_mfa_for_management_api",
+          "entra_global_admin_in_less_than_five_users",
+          "entra_non_privileged_user_has_mfa",
+          "entra_policy_default_users_cannot_create_security_groups",
+          "entra_policy_ensure_default_user_cannot_create_apps",
+          "entra_policy_ensure_default_user_cannot_create_tenants",
+          "entra_policy_guest_invite_only_for_admin_roles",
+          "entra_policy_guest_users_access_restrictions",
+          "entra_policy_restricts_user_consent_for_apps",
+          "entra_policy_user_consent_for_verified_apps",
+          "entra_privileged_user_has_mfa",
+          "entra_security_defaults_enabled",
+          "entra_trusted_named_locations_exists",
+          "entra_user_with_vm_access_has_mfa",
+          "entra_users_cannot_create_microsoft_365_groups"
+        ],
+        "gcp": [
+          "iam_account_access_approval_enabled",
+          "iam_cloud_asset_inventory_enabled",
+          "iam_no_service_roles_at_project_level",
+          "iam_organization_essential_contacts_configured",
+          "iam_role_kms_enforce_separation_of_duties",
+          "iam_role_sa_enforce_separation_of_duties",
+          "iam_sa_no_administrative_privileges",
+          "iam_sa_no_user_managed_keys",
+          "iam_sa_user_managed_key_unused"
+        ]
+      }
+    },
+    {
+      "id": "cc_2_1",
+      "name": "CC2.1 COSO Principle 13: The entity obtains or generates and uses relevant, quality information to support the functioning of internal control",
+      "description": "Identifies Information Requirements - A process is in place to identify the information required and expected to support the functioning of the other components of internal control and the achievement of the entity’s objectives. Captures Internal and External Sources of Data - Information systems capture internal and external sources of data. Processes Relevant Data Into Information - Information systems process and transform relevant data into information. Maintains Quality Throughout Processing - Information systems produce information that is timely, current, accurate, complete, accessible, protected, verifiable, and retained. Information is reviewed to assess its relevance in supporting the internal control components.",
+      "attributes": {
+        "ItemId": "cc_2_1",
+        "Section": "CC2.0 - Common Criteria Related to Communication and Information"
+      },
+      "checks": {
+        "aws": [
+          "cloudtrail_multi_region_enabled",
+          "cloudtrail_s3_dataevents_read_enabled",
+          "cloudtrail_s3_dataevents_write_enabled",
+          "config_recorder_all_regions_enabled"
+        ],
+        "azure": [
+          "monitor_alert_create_policy_assignment",
+          "monitor_alert_create_update_nsg",
+          "monitor_alert_create_update_public_ip_address_rule",
+          "monitor_alert_create_update_security_solution",
+          "monitor_alert_create_update_sqlserver_fr",
+          "monitor_alert_delete_nsg",
+          "monitor_alert_delete_policy_assignment",
+          "monitor_alert_delete_public_ip_address_rule",
+          "monitor_alert_delete_security_solution",
+          "monitor_alert_delete_sqlserver_fr"
+        ],
+        "gcp": [
+          "logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_custom_role_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_sql_instance_configuration_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_vpc_network_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_vpc_network_route_changes_enabled",
+          "logging_sink_created"
+        ]
+      },
+      "config_requirements": [
+        {
+          "Check": "config_recorder_all_regions_enabled",
+          "Provider": "aws",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ]
+    },
+    {
+      "id": "cc_3_1",
+      "name": "CC3.1 COSO Principle 6: The entity specifies objectives with sufficient clarity to enable the identification and assessment of risks relating to objectives",
+      "description": "Operations Objectives: Reflects Management's Choices - Operations objectives reflect management's choices about structure, industry considerations, and performance of the entity. Considers Tolerances for Risk - Management considers the acceptable levels of variation relative to the achievement of operations objectives. External Financial Reporting Objectives: Complies With Applicable Accounting Standards - Financial reporting objectives are consistent with accounting principles suitable and available for that entity. The accounting principles selected are appropriate in the circumstances. External Nonfinancial Reporting Objectives: Complies With Externally Established Frameworks - Management establishes objectives consistent with laws and regulations or standards and frameworks of recognized external organizations. Reflects Entity Activities - External reporting reflects the underlying transactions and events within a range of acceptable limits. Considers the Required Level of Precision—Management reflects the required level of precision and accuracy suitable for user needs and based on criteria established by third parties in nonfinancial reporting. Internal Reporting Objectives: Reflects Management's Choices - Internal reporting provides management with accurate and complete information regarding management's choices and information needed in managing the entity. Considers the Required Level of Precision—Management reflects the required level of precision and accuracy suitable for user needs in nonfinancial reporting objectives and materiality within financial reporting objectives. Reflects Entity Activities—Internal reporting reflects the underlying transactions and events within a range of acceptable limits. Compliance Objectives: Reflects External Laws and Regulations - Laws and regulations establish minimum standards of conduct, which the entity integrates into compliance objectives. Considers Tolerances for Risk - Management considers the acceptable levels of variation relative to the achievement of operations objectives. Additional point of focus specifically related to all engagements using the trust services criteria: Establishes Sub-objectives to Support Objectives—Management identifies sub-objectives related to security, availability, processing integrity, confidentiality, and privacy to support the achievement of the entity’s objectives related to reporting, operations, and compliance.",
+      "attributes": {
+        "ItemId": "cc_3_1",
+        "Section": "CC3.0 - Common Criteria Related to Risk Assessment"
+      },
+      "checks": {
+        "aws": [
+          "config_recorder_all_regions_enabled",
+          "guardduty_is_enabled",
+          "securityhub_enabled"
+        ],
+        "azure": [
+          "defender_ensure_defender_for_app_services_is_on",
+          "defender_ensure_defender_for_arm_is_on",
+          "defender_ensure_defender_for_azure_sql_databases_is_on",
+          "defender_ensure_defender_for_containers_is_on",
+          "defender_ensure_defender_for_cosmosdb_is_on",
+          "defender_ensure_defender_for_databases_is_on",
+          "defender_ensure_defender_for_dns_is_on",
+          "defender_ensure_defender_for_keyvault_is_on",
+          "defender_ensure_defender_for_os_relational_databases_is_on",
+          "defender_ensure_defender_for_server_is_on",
+          "defender_ensure_defender_for_sql_servers_is_on",
+          "defender_ensure_defender_for_storage_is_on",
+          "defender_ensure_iot_hub_defender_is_on",
+          "defender_ensure_mcas_is_enabled",
+          "defender_ensure_notify_alerts_severity_is_high",
+          "defender_ensure_notify_emails_to_owners",
+          "defender_ensure_system_updates_are_applied",
+          "defender_ensure_wdatp_is_enabled",
+          "sqlserver_microsoft_defender_enabled"
+        ],
+        "gcp": [
+          "artifacts_container_analysis_enabled",
+          "gcr_container_scanning_enabled"
+        ]
+      },
+      "config_requirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "Provider": "aws",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "securityhub_enabled",
+          "Provider": "aws",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "config_recorder_all_regions_enabled",
+          "Provider": "aws",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ]
+    },
+    {
+      "id": "cc_3_2",
+      "name": "CC3.2 COSO Principle 7: The entity identifies risks to the achievement of its objectives across the entity and analyzes risks as a basis for determining how the risks should be managed",
+      "description": "Includes Entity, Subsidiary, Division, Operating Unit, and Functional Levels - The entity identifies and assesses risk at the entity, subsidiary, division, operating unit, and functional levels relevant to the achievement of objectives. Analyzes Internal and External Factors - Risk identification considers both internal and external factors and their impact on the achievement of objectives. Involves Appropriate Levels of Management - The entity puts into place effective risk assessment mechanisms that involve appropriate levels of management. Estimates Significance of Risks Identified - Identified risks are analyzed through a process that includes estimating the potential significance of the risk. Determines How to Respond to Risks - Risk assessment includes considering how the risk should be managed and whether to accept, avoid, reduce, or share the risk. Additional points of focus specifically related to all engagements using the trust services criteria: Identifies and Assesses Criticality of Information Assets and Identifies Threats and Vulnerabilities - The entity's risk identification and assessment process includes (1) identifying information assets, including physical devices and systems, virtual devices, software, data and data flows, external information systems, and organizational roles; (2) assessing the criticality of those information assets; (3) identifying the threats to the assets from intentional (including malicious) and unintentional acts and environmental events; and (4) identifying the vulnerabilities of the identified assets.",
+      "attributes": {
+        "ItemId": "cc_3_2",
+        "Section": "CC3.0 - Common Criteria Related to Risk Assessment"
+      },
+      "checks": {
+        "aws": [
+          "ec2_instance_managed_by_ssm",
+          "guardduty_is_enabled",
+          "guardduty_no_high_severity_findings",
+          "ssm_managed_compliant_patching"
+        ],
+        "azure": [
+          "defender_additional_email_configured_with_a_security_contact",
+          "defender_assessments_vm_endpoint_protection_installed",
+          "defender_auto_provisioning_log_analytics_agent_vms_on",
+          "defender_auto_provisioning_vulnerabilty_assessments_machines_on",
+          "defender_container_images_resolved_vulnerabilities",
+          "defender_container_images_scan_enabled",
+          "defender_ensure_defender_for_app_services_is_on",
+          "defender_ensure_defender_for_arm_is_on",
+          "defender_ensure_defender_for_azure_sql_databases_is_on",
+          "defender_ensure_defender_for_containers_is_on",
+          "defender_ensure_defender_for_cosmosdb_is_on",
+          "defender_ensure_defender_for_databases_is_on",
+          "defender_ensure_defender_for_dns_is_on",
+          "defender_ensure_defender_for_keyvault_is_on",
+          "defender_ensure_defender_for_os_relational_databases_is_on",
+          "defender_ensure_defender_for_server_is_on",
+          "defender_ensure_defender_for_sql_servers_is_on",
+          "defender_ensure_defender_for_storage_is_on",
+          "defender_ensure_iot_hub_defender_is_on",
+          "defender_ensure_mcas_is_enabled",
+          "defender_ensure_notify_alerts_severity_is_high",
+          "defender_ensure_notify_emails_to_owners",
+          "defender_ensure_system_updates_are_applied",
+          "defender_ensure_wdatp_is_enabled",
+          "sqlserver_microsoft_defender_enabled"
+        ],
+        "gcp": [
+          "gcr_container_scanning_enabled",
+          "gemini_api_disabled"
+        ]
+      },
+      "config_requirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "Provider": "aws",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ]
+    },
+    {
+      "id": "cc_3_3",
+      "name": "CC3.3 COSO Principle 8: The entity considers the potential for fraud in assessing risks to the achievement of objectives",
+      "description": "Considers Various Types of Fraud - The assessment of fraud considers fraudulent reporting, possible loss of assets, and corruption resulting from the various ways that fraud and misconduct can occur. Assesses Incentives and Pressures - The assessment of fraud risks considers incentives and pressures. Assesses Opportunities - The assessment of fraud risk considers opportunities for unauthorized acquisition,use, or disposal of assets, altering the entity’s reporting records, or committing other inappropriate acts. Assesses Attitudes and Rationalizations - The assessment of fraud risk considers how management and other personnel might engage in or justify inappropriate actions. Additional point of focus specifically related to all engagements using the trust services criteria: Considers the Risks Related to the Use of IT and Access to Information - The assessment of fraud risks includes consideration of threats and vulnerabilities that arise specifically from the use of IT and access to information.",
+      "attributes": {
+        "ItemId": "cc_3_3",
+        "Section": "CC3.0 - Common Criteria Related to Risk Assessment"
+      },
+      "checks": {
+        "aws": [
+          "cloudtrail_threat_detection_enumeration",
+          "cloudtrail_threat_detection_llm_jacking",
+          "cloudtrail_threat_detection_privilege_escalation",
+          "iam_inline_policy_allows_privilege_escalation",
+          "iam_policy_no_full_access_to_cloudtrail"
+        ],
+        "azure": [
+          "aks_clusters_created_with_private_nodes",
+          "app_function_identity_without_admin_privileges",
+          "containerregistry_uses_private_link",
+          "cosmosdb_account_use_private_endpoints",
+          "entra_non_privileged_user_has_mfa",
+          "entra_privileged_user_has_mfa",
+          "entra_user_with_vm_access_has_mfa",
+          "keyvault_private_endpoints",
+          "monitor_storage_account_with_activity_logs_is_private",
+          "storage_ensure_private_endpoints_in_storage_accounts"
+        ],
+        "gcp": [
+          "logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_sql_instance_configuration_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_vpc_network_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_vpc_network_route_changes_enabled"
+        ]
+      }
+    },
+    {
+      "id": "cc_3_4",
+      "name": "CC3.4 COSO Principle 9: The entity identifies and assesses changes that could significantly impact the system of internal control",
+      "description": "Assesses Changes in the External Environment - The risk identification process considers changes to the regulatory, economic, and physical environment in which the entity operates. Assesses Changes in the Business Model - The entity considers the potential impacts of new business lines, dramatically altered compositions of existing business lines, acquired or divested business operations on the system of internal control, rapid growth, changing reliance on foreign geographies, and new technologies. Assesses Changes in Leadership - The entity considers changes in management and respective attitudes and philosophies on the system of internal control. Assess Changes in Systems and Technology - The risk identification process considers changes arising from changes in the entity’s systems and changes in the technology environment. Assess Changes in Vendor and Business Partner Relationships - The risk identification process considers changes in vendor and business partner relationships.",
+      "attributes": {
+        "ItemId": "cc_3_4",
+        "Section": "CC3.0 - Common Criteria Related to Risk Assessment"
+      },
+      "checks": {
+        "aws": [
+          "config_recorder_all_regions_enabled"
+        ],
+        "azure": [],
+        "gcp": [
+          "iam_cloud_asset_inventory_enabled"
+        ]
+      },
+      "config_requirements": [
+        {
+          "Check": "config_recorder_all_regions_enabled",
+          "Provider": "aws",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ]
+    },
+    {
+      "id": "cc_4_2",
+      "name": "CC4.2 COSO Principle 17: The entity evaluates and communicates internal control deficiencies in a timely manner to those parties responsible for taking corrective action, including senior management and the board of directors, as appropriate",
+      "description": "Assesses Results - Management and the board of directors, as appropriate, assess results of ongoing and separate evaluations. Communicates Deficiencies - Deficiencies are communicated to parties responsible for taking corrective action and to senior management and the board of directors, as appropriate. Monitors Corrective Action - Management tracks whether deficiencies are remedied on a timely basis.",
+      "attributes": {
+        "ItemId": "cc_4_2",
+        "Section": "CC4.0 - Monitoring Activities"
+      },
+      "checks": {
+        "aws": [
+          "guardduty_is_enabled",
+          "guardduty_no_high_severity_findings"
+        ],
+        "azure": [
+          "defender_additional_email_configured_with_a_security_contact",
+          "defender_assessments_vm_endpoint_protection_installed",
+          "defender_auto_provisioning_log_analytics_agent_vms_on",
+          "defender_auto_provisioning_vulnerabilty_assessments_machines_on",
+          "defender_container_images_resolved_vulnerabilities",
+          "defender_container_images_scan_enabled",
+          "defender_ensure_defender_for_app_services_is_on",
+          "defender_ensure_defender_for_arm_is_on",
+          "defender_ensure_defender_for_azure_sql_databases_is_on",
+          "defender_ensure_defender_for_containers_is_on",
+          "defender_ensure_defender_for_cosmosdb_is_on",
+          "defender_ensure_defender_for_databases_is_on",
+          "defender_ensure_defender_for_dns_is_on",
+          "defender_ensure_defender_for_keyvault_is_on",
+          "defender_ensure_defender_for_os_relational_databases_is_on",
+          "defender_ensure_defender_for_server_is_on",
+          "defender_ensure_defender_for_sql_servers_is_on",
+          "defender_ensure_defender_for_storage_is_on",
+          "defender_ensure_iot_hub_defender_is_on",
+          "defender_ensure_mcas_is_enabled",
+          "defender_ensure_notify_alerts_severity_is_high",
+          "defender_ensure_notify_emails_to_owners",
+          "defender_ensure_system_updates_are_applied",
+          "defender_ensure_wdatp_is_enabled",
+          "sqlserver_microsoft_defender_enabled"
+        ],
+        "gcp": [
+          "iam_cloud_asset_inventory_enabled"
+        ]
+      },
+      "config_requirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "Provider": "aws",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ]
+    },
+    {
+      "id": "cc_5_2",
+      "name": "CC5.2 COSO Principle 11: The entity also selects and develops general control activities over technology to support the achievement of objectives",
+      "description": "Determines Dependency Between the Use of Technology in Business Processes and Technology General Controls - Management understands and determines the dependency and linkage between business processes, automated control activities, and technology general controls. Establishes Relevant Technology Infrastructure Control Activities - Management selects and develops control activities over the technology infrastructure, which are designed and implemented to help ensure the completeness, accuracy, and availability of technology processing. Establishes Relevant Security Management Process Controls Activities - Management selects and develops control activities that are designed and implemented to restrict technology access rights to authorized users commensurate with their job responsibilities and to protect the entity’s assets from external threats. Establishes Relevant Technology Acquisition, Development, and Maintenance Process Control Activities - Management selects and develops control activities over the acquisition, development, and maintenance of technology and its infrastructure to achieve management’s objectives.",
+      "attributes": {
+        "ItemId": "cc_5_2",
+        "Section": "CC5.0 - Control Activities"
+      },
+      "checks": {
+        "aws": [
+          "cloudwatch_changes_to_network_acls_alarm_configured",
+          "cloudwatch_changes_to_network_gateways_alarm_configured",
+          "cloudwatch_changes_to_network_route_tables_alarm_configured",
+          "cloudwatch_changes_to_vpcs_alarm_configured",
+          "cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled",
+          "cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled",
+          "cloudwatch_log_metric_filter_aws_organizations_changes",
+          "cloudwatch_log_metric_filter_for_s3_bucket_policy_changes",
+          "cloudwatch_log_metric_filter_policy_changes",
+          "cloudwatch_log_metric_filter_security_group_changes"
+        ],
+        "azure": [
+          "monitor_alert_create_policy_assignment",
+          "monitor_alert_create_update_nsg",
+          "monitor_alert_create_update_public_ip_address_rule",
+          "monitor_alert_create_update_security_solution",
+          "monitor_alert_create_update_sqlserver_fr",
+          "monitor_alert_delete_nsg",
+          "monitor_alert_delete_policy_assignment",
+          "monitor_alert_delete_public_ip_address_rule",
+          "monitor_alert_delete_security_solution",
+          "monitor_alert_delete_sqlserver_fr"
+        ],
+        "gcp": [
+          "logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_custom_role_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_sql_instance_configuration_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_vpc_network_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_vpc_network_route_changes_enabled",
+          "logging_sink_created"
+        ]
+      }
+    },
+    {
+      "id": "cc_6_1",
+      "name": "CC6.1 The entity implements logical access security software, infrastructure, and architectures over protected information assets to protect them from security events to meet the entity's objectives",
+      "description": "Identifies and Manages the Inventory of Information Assets - The entity identifies, inventories, classifies, and manages information assets. Restricts Logical Access - Logical access to information assets, including hardware, data (at-rest, during processing, or in transmission), software, administrative authorities, mobile devices, output, and offline system components is restricted through the use of access control software and rule sets. Identifies and Authenticates Users - Persons, infrastructure and software are identified and authenticated prior to accessing information assets, whether locally or remotely. Considers Network Segmentation - Network segmentation permits unrelated portions of the entity's information system to be isolated from each other. Manages Points of Access - Points of access by outside entities and the types of data that flow through the points of access are identified, inventoried, and managed. The types of individuals and systems using each point of access are identified, documented, and managed. Restricts Access to Information Assets - Combinations of data classification, separate data structures, port restrictions, access protocol restrictions, user identification, and digital certificates are used to establish access control rules for information assets. Manages Identification and Authentication - Identification and authentication requirements are established, documented, and managed for individuals and systems accessing entity information, infrastructure and software. Manages Credentials for Infrastructure and Software - New internal and external infrastructure and software are registered, authorized, and documented prior to being granted access credentials and implemented on the network or access point. Credentials are removed and access is disabled when access is no longer required or the infrastructure and software are no longer in use. Uses Encryption to Protect Data - The entity uses encryption to supplement other measures used to protect data-at-rest, when such protections are deemed appropriate based on assessed risk. Protects Encryption Keys - Processes are in place to protect encryption keys during generation, storage, use, and destruction.",
+      "attributes": {
+        "ItemId": "cc_6_1",
+        "Section": "CC6.0 - Logical and Physical Access"
+      },
+      "checks": {
+        "aws": [
+          "kms_key_enclave_attestation_not_enforced",
+          "s3_bucket_public_access"
+        ],
+        "azure": [
+          "aks_clusters_public_access_disabled",
+          "app_function_not_publicly_accessible",
+          "containerregistry_not_publicly_accessible",
+          "entra_app_registration_credential_not_expired",
+          "network_public_ip_shodan",
+          "storage_blob_public_access_level_is_disabled"
+        ],
+        "gcp": [
+          "cloudstorage_bucket_public_access"
+        ]
+      }
+    },
+    {
+      "id": "cc_6_2",
+      "name": "CC6.2 Prior to issuing system credentials and granting system access, the entity registers and authorizes new internal and external users whose access is administered by the entity",
+      "description": "Prior to issuing system credentials and granting system access, the entity registers and authorizes new internal and external users whose access is administered by the entity. For those users whose access is administered by the entity, user system credentials are removed when user access is no longer authorized. Controls Access Credentials to Protected Assets - Information asset access credentials are created based on an authorization from the system's asset owner or authorized custodian. Removes Access to Protected Assets When Appropriate - Processes are in place to remove credential access when an individual no longer requires such access. Reviews Appropriateness of Access Credentials - The appropriateness of access credentials is reviewed on a periodic basis for unnecessary and inappropriate individuals with credentials.",
+      "attributes": {
+        "ItemId": "cc_6_2",
+        "Section": "CC6.0 - Logical and Physical Access"
+      },
+      "checks": {
+        "aws": [
+          "rds_instance_no_public_access"
+        ],
+        "azure": [
+          "mysql_flexible_server_minimum_tls_version_12",
+          "mysql_flexible_server_ssl_connection_enabled",
+          "postgresql_flexible_server_enforce_ssl_enabled",
+          "sqlserver_recommended_minimal_tls_version",
+          "sqlserver_tde_encrypted_with_cmk",
+          "sqlserver_tde_encryption_enabled",
+          "sqlserver_unrestricted_inbound_access",
+          "storage_secure_transfer_required_is_enabled"
+        ],
+        "gcp": [
+          "cloudsql_instance_public_access"
+        ]
+      },
+      "config_requirements": [
+        {
+          "Check": "sqlserver_recommended_minimal_tls_version",
+          "Provider": "azure",
+          "ConfigKey": "recommended_minimal_tls_versions",
+          "Operator": "subset",
+          "Value": [
+            "1.2",
+            "1.3"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cc_6_3",
+      "name": "CC6.3 The entity authorizes, modifies, or removes access to data, software, functions, and other protected information assets based on roles, responsibilities, or the system design and changes, giving consideration to the concepts of least privilege and segregation of duties, to meet the entity’s objectives",
+      "description": "Creates or Modifies Access to Protected Information Assets - Processes are in place to create or modify access to protected information assets based on authorization from the asset’s owner. Removes Access to Protected Information Assets - Processes are in place to remove access to protected information assets when an individual no longer requires access. Uses Role-Based Access Controls - Role-based access control is utilized to support segregation of incompatible functions.",
+      "attributes": {
+        "ItemId": "cc_6_3",
+        "Section": "CC6.0 - Logical and Physical Access"
+      },
+      "checks": {
+        "aws": [
+          "bedrock_full_access_policy_attached",
+          "iam_aws_attached_policy_no_administrative_privileges",
+          "iam_customer_attached_policy_no_administrative_privileges",
+          "iam_inline_policy_no_administrative_privileges",
+          "iam_inline_policy_no_wildcard_marketplace_subscribe",
+          "iam_policy_no_wildcard_marketplace_subscribe",
+          "kms_key_enclave_attestation_bypassable_path",
+          "kms_key_enclave_attestation_no_deployment_binding"
+        ],
+        "azure": [
+          "entra_non_privileged_user_has_mfa",
+          "entra_privileged_user_has_mfa",
+          "entra_user_with_vm_access_has_mfa"
+        ],
+        "gcp": [
+          "iam_account_access_approval_enabled",
+          "iam_role_kms_enforce_separation_of_duties",
+          "iam_role_sa_enforce_separation_of_duties",
+          "iam_sa_no_administrative_privileges",
+          "iam_sa_user_managed_key_unused"
+        ]
+      }
+    },
+    {
+      "id": "cc_6_6",
+      "name": "CC6.6 The entity implements logical access security measures to protect against threats from sources outside its system boundaries",
+      "description": "Restricts Access — The types of activities that can occur through a communication channel (for example, FTP site, router port) are restricted. Protects Identification and Authentication Credentials — Identification and authentication credentials are protected during transmission outside its system boundaries. Requires Additional Authentication or Credentials — Additional authentication information or credentials are required when accessing the system from outside its boundaries. Implements Boundary Protection Systems — Boundary protection systems (for example, firewalls, demilitarized zones, and intrusion detection systems) are implemented to protect external access points from attempts and unauthorized access and are monitored to detect such attempts.",
+      "attributes": {
+        "ItemId": "cc_6_6",
+        "Section": "CC6.0 - Logical and Physical Access"
+      },
+      "checks": {
+        "aws": [
+          "ec2_ami_public",
+          "ec2_confidential_workload_host_public_ip",
+          "ec2_confidential_workload_host_unrestricted_ingress",
+          "ec2_confidential_workload_host_vsock_proxy_exposed",
+          "ec2_ebs_public_snapshot",
+          "ec2_ebs_snapshot_account_block_public_access",
+          "ec2_instance_port_cassandra_exposed_to_internet",
+          "ec2_instance_port_cifs_exposed_to_internet",
+          "ec2_instance_port_elasticsearch_kibana_exposed_to_internet",
+          "ec2_instance_port_ftp_exposed_to_internet",
+          "ec2_instance_port_kafka_exposed_to_internet",
+          "ec2_instance_port_kerberos_exposed_to_internet",
+          "ec2_instance_port_ldap_exposed_to_internet",
+          "ec2_instance_port_memcached_exposed_to_internet",
+          "ec2_instance_port_mongodb_exposed_to_internet",
+          "ec2_instance_port_mysql_exposed_to_internet",
+          "ec2_instance_port_oracle_exposed_to_internet",
+          "ec2_instance_port_postgresql_exposed_to_internet",
+          "ec2_instance_port_rdp_exposed_to_internet",
+          "ec2_instance_port_redis_exposed_to_internet",
+          "ec2_instance_port_sqlserver_exposed_to_internet",
+          "ec2_instance_port_ssh_exposed_to_internet",
+          "ec2_instance_port_telnet_exposed_to_internet",
+          "ec2_instance_public_ip",
+          "ec2_launch_template_no_public_ip",
+          "ec2_networkacl_allow_ingress_any_port",
+          "ec2_networkacl_allow_ingress_tcp_port_22",
+          "ec2_networkacl_allow_ingress_tcp_port_3389",
+          "ec2_securitygroup_allow_ingress_from_internet_to_all_ports",
+          "ec2_securitygroup_allow_ingress_from_internet_to_any_port",
+          "ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_3389",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_cassandra_7199_9160_8888",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_elasticsearch_kibana_9200_9300_5601",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_ftp_20_21",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_kafka_9092",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_memcached_11211",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_mongodb_27017_27018",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_mysql_3306",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_oracle_1521_2483",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_redis_6379",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_sql_server_1433_1434",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_telnet_23",
+          "ec2_securitygroup_allow_wide_open_public_ipv4",
+          "vpc_subnet_no_public_ip_by_default",
+          "vpc_subnet_separate_private_public"
+        ],
+        "azure": [
+          "app_minimum_tls_version_12",
+          "mysql_flexible_server_minimum_tls_version_12",
+          "mysql_flexible_server_ssl_connection_enabled",
+          "network_http_internet_access_restricted",
+          "network_rdp_internet_access_restricted",
+          "network_ssh_internet_access_restricted",
+          "network_subnet_nsg_associated",
+          "network_udp_internet_access_restricted",
+          "postgresql_flexible_server_enforce_ssl_enabled",
+          "sqlserver_recommended_minimal_tls_version",
+          "storage_ensure_minimum_tls_version_12"
+        ],
+        "gcp": [
+          "compute_firewall_rdp_access_from_the_internet_allowed",
+          "compute_firewall_ssh_access_from_the_internet_allowed",
+          "compute_instance_block_project_wide_ssh_keys_disabled",
+          "compute_instance_ip_forwarding_is_enabled",
+          "compute_instance_public_ip",
+          "compute_instance_serial_ports_in_use",
+          "compute_network_dns_logging_enabled",
+          "compute_public_address_shodan"
+        ]
+      },
+      "config_requirements": [
+        {
+          "Check": "sqlserver_recommended_minimal_tls_version",
+          "Provider": "azure",
+          "ConfigKey": "recommended_minimal_tls_versions",
+          "Operator": "subset",
+          "Value": [
+            "1.2",
+            "1.3"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cc_6_7",
+      "name": "CC6.7 The entity restricts the transmission, movement, and removal of information to authorized internal and external users and processes, and protects it during transmission, movement, or removal to meet the entity’s objectives",
+      "description": "Restricts the Ability to Perform Transmission - Data loss prevention processes and technologies are used to restrict ability to authorize and execute transmission, movement and removal of information. Uses Encryption Technologies or Secure Communication Channels to Protect Data - Encryption technologies or secured communication channels are used to protect transmission of data and other communications beyond connectivity access points. Protects Removal Media - Encryption technologies and physical asset protections are used for removable media (such as USB drives and back-up tapes), as appropriate. Protects Mobile Devices - Processes are in place to protect mobile devices (such as laptops, smart phones and tablets) that serve as information assets.",
+      "attributes": {
+        "ItemId": "cc_6_7",
+        "Section": "CC6.0 - Logical and Physical Access"
+      },
+      "checks": {
+        "aws": [
+          "acm_certificates_expiration_check",
+          "dms_endpoint_redis_in_transit_encryption_enabled",
+          "dynamodb_accelerator_cluster_in_transit_encryption_enabled",
+          "ec2_transitgateway_auto_accept_vpc_attachments",
+          "elasticache_redis_cluster_in_transit_encryption_enabled",
+          "kafka_cluster_in_transit_encryption_enabled",
+          "kafka_connector_in_transit_encryption_enabled",
+          "redshift_cluster_in_transit_encryption_enabled",
+          "transfer_server_in_transit_encryption_enabled"
+        ],
+        "azure": [
+          "app_minimum_tls_version_12",
+          "monitor_storage_account_with_activity_logs_cmk_encrypted",
+          "sqlserver_tde_encrypted_with_cmk",
+          "sqlserver_tde_encryption_enabled",
+          "storage_ensure_encryption_with_customer_managed_keys",
+          "storage_infrastructure_encryption_is_enabled",
+          "storage_secure_transfer_required_is_enabled",
+          "vm_ensure_attached_disks_encrypted_with_cmk",
+          "vm_ensure_unattached_disks_encrypted_with_cmk"
+        ],
+        "gcp": [
+          "cloudsql_instance_ssl_connections",
+          "compute_firewall_rdp_access_from_the_internet_allowed",
+          "compute_firewall_ssh_access_from_the_internet_allowed",
+          "dns_dnssec_disabled",
+          "dns_rsasha1_in_use_to_key_sign_in_dnssec",
+          "dns_rsasha1_in_use_to_zone_sign_in_dnssec"
+        ]
+      }
+    },
+    {
+      "id": "cc_6_8",
+      "name": "CC6.8 The entity implements controls to prevent or detect and act upon the introduction of unauthorized or malicious software to meet the entity’s objectives",
+      "description": "Restricts Application and Software Installation - The ability to install applications and software is restricted to authorized individuals. Detects Unauthorized Changes to Software and Configuration Parameters - Processes are in place to detect changes to software and configuration parameters that may be indicative of unauthorized or malicious software. Uses a Defined Change Control Process - A management-defined change control process is used for the implementation of software. Uses Antivirus and Anti-Malware Software - Antivirus and anti-malware software is implemented and maintained to provide for the interception or detection and remediation of malware. Scans Information Assets from Outside the Entity for Malware and Other Unauthorized Software - Procedures are in place to scan information assets that have been transferred or returned to the entity’s custody for malware and other unauthorized software and to remove any items detected prior to its implementation on the network.",
+      "attributes": {
+        "ItemId": "cc_6_8",
+        "Section": "CC6.0 - Logical and Physical Access"
+      },
+      "checks": {
+        "aws": [
+          "guardduty_is_enabled",
+          "securityhub_enabled"
+        ],
+        "azure": [
+          "defender_additional_email_configured_with_a_security_contact",
+          "defender_assessments_vm_endpoint_protection_installed",
+          "defender_auto_provisioning_log_analytics_agent_vms_on",
+          "defender_auto_provisioning_vulnerabilty_assessments_machines_on",
+          "defender_container_images_resolved_vulnerabilities",
+          "defender_container_images_scan_enabled",
+          "defender_ensure_defender_for_app_services_is_on",
+          "defender_ensure_defender_for_arm_is_on",
+          "defender_ensure_defender_for_azure_sql_databases_is_on",
+          "defender_ensure_defender_for_containers_is_on",
+          "defender_ensure_defender_for_cosmosdb_is_on",
+          "defender_ensure_defender_for_databases_is_on",
+          "defender_ensure_defender_for_dns_is_on",
+          "defender_ensure_defender_for_keyvault_is_on",
+          "defender_ensure_defender_for_os_relational_databases_is_on",
+          "defender_ensure_defender_for_server_is_on",
+          "defender_ensure_defender_for_sql_servers_is_on",
+          "defender_ensure_defender_for_storage_is_on",
+          "defender_ensure_iot_hub_defender_is_on",
+          "defender_ensure_mcas_is_enabled",
+          "defender_ensure_notify_alerts_severity_is_high",
+          "defender_ensure_notify_emails_to_owners",
+          "defender_ensure_system_updates_are_applied",
+          "defender_ensure_wdatp_is_enabled",
+          "sqlserver_microsoft_defender_enabled"
+        ],
+        "gcp": [
+          "iam_cloud_asset_inventory_enabled"
+        ]
+      },
+      "config_requirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "Provider": "aws",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "securityhub_enabled",
+          "Provider": "aws",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ]
+    },
+    {
+      "id": "cc_7_1",
+      "name": "CC7.1 To meet its objectives, the entity uses detection and monitoring procedures to identify (1) changes to configurations that result in the introduction of new vulnerabilities, and (2) susceptibilities to newly discovered vulnerabilities",
+      "description": "Uses Defined Configuration Standards - Management has defined configuration standards. Monitors Infrastructure and Software - The entity monitors infrastructure and software for noncompliance with the standards, which could threaten the achievement of the entity's objectives. Implements Change-Detection Mechanisms - The IT system includes a change-detection mechanism (for example, file integrity monitoring tools) to alert personnel to unauthorized modifications of critical system files, configuration files, or content files. Detects Unknown or Unauthorized Components - Procedures are in place to detect the introduction of unknown or unauthorized components. Conducts Vulnerability Scans - The entity conducts vulnerability scans designed to identify potential vulnerabilities or misconfigurations on a periodic basis and after any significant change in the environment and takes action to remediate identified deficiencies on a timely basis.",
+      "attributes": {
+        "ItemId": "cc_7_1",
+        "Section": "CC7.0 - System Operations"
+      },
+      "checks": {
+        "aws": [
+          "ec2_instance_managed_by_ssm",
+          "guardduty_is_enabled",
+          "kms_key_enclave_attestation_pcr_mismatch",
+          "securityhub_enabled",
+          "ssm_managed_compliant_patching"
+        ],
+        "azure": [
+          "defender_additional_email_configured_with_a_security_contact",
+          "defender_assessments_vm_endpoint_protection_installed",
+          "defender_auto_provisioning_log_analytics_agent_vms_on",
+          "defender_auto_provisioning_vulnerabilty_assessments_machines_on",
+          "defender_container_images_resolved_vulnerabilities",
+          "defender_container_images_scan_enabled",
+          "defender_ensure_defender_for_app_services_is_on",
+          "defender_ensure_defender_for_arm_is_on",
+          "defender_ensure_defender_for_azure_sql_databases_is_on",
+          "defender_ensure_defender_for_containers_is_on",
+          "defender_ensure_defender_for_cosmosdb_is_on",
+          "defender_ensure_defender_for_databases_is_on",
+          "defender_ensure_defender_for_dns_is_on",
+          "defender_ensure_defender_for_keyvault_is_on",
+          "defender_ensure_defender_for_os_relational_databases_is_on",
+          "defender_ensure_defender_for_server_is_on",
+          "defender_ensure_defender_for_sql_servers_is_on",
+          "defender_ensure_defender_for_storage_is_on",
+          "defender_ensure_iot_hub_defender_is_on",
+          "defender_ensure_mcas_is_enabled",
+          "defender_ensure_notify_alerts_severity_is_high",
+          "defender_ensure_notify_emails_to_owners",
+          "defender_ensure_system_updates_are_applied",
+          "defender_ensure_wdatp_is_enabled",
+          "sqlserver_microsoft_defender_enabled"
+        ],
+        "gcp": [
+          "gemini_api_disabled",
+          "iam_cloud_asset_inventory_enabled"
+        ]
+      },
+      "config_requirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "Provider": "aws",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "securityhub_enabled",
+          "Provider": "aws",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ]
+    },
+    {
+      "id": "cc_7_2",
+      "name": "CC7.2 The entity monitors system components and the operation of those components for anomalies that are indicative of malicious acts, natural disasters, and errors affecting the entity's ability to meet its objectives; anomalies are analyzed to determine whether they represent security events",
+      "description": "Implements Detection Policies, Procedures, and Tools - Detection policies and procedures are defined and implemented, and detection tools are implemented on Infrastructure and software to identify anomalies in the operation or unusual activity on systems. Procedures may include (1) a defined governance process for security event detection and management that includes provision of resources; (2) use of intelligence sources to identify newly discovered threats and vulnerabilities; and (3) logging of unusual system activities. Designs Detection Measures - Detection measures are designed to identify anomalies that could result from actual or attempted (1) compromise of physical barriers; (2) unauthorized actions of authorized personnel; (3) use of compromised identification and authentication credentials; (4) unauthorized access from outside the system boundaries; (5) compromise of authorized external parties; and (6) implementation or connection of unauthorized hardware and software. Implements Filters to Analyze Anomalies - Management has implemented procedures to filter, summarize, and analyze anomalies to identify security events. Monitors Detection Tools for Effective Operation - Management has implemented processes to monitor the effectiveness of detection tools.",
+      "attributes": {
+        "ItemId": "cc_7_2",
+        "Section": "CC7.0 - System Operations"
+      },
+      "checks": {
+        "aws": [
+          "apigateway_restapi_logging_enabled",
+          "cloudtrail_bedrock_logging_enabled",
+          "cloudtrail_cloudwatch_logging_enabled",
+          "cloudtrail_multi_region_enabled",
+          "cloudtrail_s3_dataevents_read_enabled",
+          "cloudtrail_s3_dataevents_write_enabled",
+          "cloudwatch_changes_to_network_acls_alarm_configured",
+          "cloudwatch_changes_to_network_gateways_alarm_configured",
+          "cloudwatch_changes_to_network_route_tables_alarm_configured",
+          "cloudwatch_changes_to_vpcs_alarm_configured",
+          "cloudwatch_log_group_retention_policy_specific_days_enabled",
+          "ec2_confidential_workload_host_imdsv2_not_enforced",
+          "ec2_instance_imdsv2_enabled",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
+          "elb_logging_enabled",
+          "elbv2_logging_enabled",
+          "guardduty_is_enabled",
+          "kms_key_enclave_attestation_unknown_image",
+          "kms_key_enclave_debug_attestation_detected",
+          "rds_instance_integration_cloudwatch_logs",
+          "redshift_cluster_audit_logging",
+          "s3_bucket_server_access_logging_enabled",
+          "securityhub_enabled",
+          "vpc_flow_logs_enabled"
+        ],
+        "azure": [
+          "app_http_logs_enabled",
+          "defender_auto_provisioning_log_analytics_agent_vms_on",
+          "keyvault_logging_enabled",
+          "monitor_storage_account_with_activity_logs_cmk_encrypted",
+          "monitor_storage_account_with_activity_logs_is_private",
+          "mysql_flexible_server_audit_log_connection_activated",
+          "mysql_flexible_server_audit_log_enabled",
+          "network_flow_log_captured_sent",
+          "network_flow_log_more_than_90_days",
+          "postgresql_flexible_server_log_checkpoints_on",
+          "postgresql_flexible_server_log_connections_on",
+          "postgresql_flexible_server_log_disconnections_on",
+          "postgresql_flexible_server_log_retention_days_greater_3"
+        ],
+        "gcp": [
+          "cloudsql_instance_postgres_log_connections_flag",
+          "cloudsql_instance_postgres_log_disconnections_flag",
+          "cloudsql_instance_postgres_log_error_verbosity_flag",
+          "cloudsql_instance_postgres_log_min_duration_statement_flag",
+          "cloudsql_instance_postgres_log_min_error_statement_flag",
+          "cloudsql_instance_postgres_log_min_messages_flag",
+          "cloudsql_instance_postgres_log_statement_flag",
+          "cloudstorage_bucket_log_retention_policy_lock",
+          "compute_loadbalancer_logging_enabled",
+          "compute_network_dns_logging_enabled",
+          "compute_project_os_login_enabled",
+          "compute_subnet_flow_logs_enabled",
+          "iam_audit_logs_enabled",
+          "logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_custom_role_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_sql_instance_configuration_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_vpc_network_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_vpc_network_route_changes_enabled",
+          "logging_sink_created"
+        ]
+      },
+      "config_requirements": [
+        {
+          "Check": "securityhub_enabled",
+          "Provider": "aws",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "guardduty_is_enabled",
+          "Provider": "aws",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ]
+    },
+    {
+      "id": "cc_7_3",
+      "name": "CC7.3 The entity evaluates security events to determine whether they could or have resulted in a failure of the entity to meet its objectives (security incidents) and, if so, takes actions to prevent or address such failures",
+      "description": "Responds to Security Incidents - Procedures are in place for responding to security incidents and evaluating the effectiveness of those policies and procedures on a periodic basis. Communicates and Reviews Detected Security Events - Detected security events are communicated to and reviewed by the individuals responsible for the management of the security program and actions are taken, if necessary. Develops and Implements Procedures to Analyze Security Incidents - Procedures are in place to analyze security incidents and determine system impact. Assesses the Impact on Personal Information - Detected security events are evaluated to determine whether they could or did result in the unauthorized disclosure or use of personal information and whether there has been a failure to comply with applicable laws or regulations. Determines Personal Information Used or Disclosed - When an unauthorized use or disclosure of personal information has occurred, the affected information is identified.",
+      "attributes": {
+        "ItemId": "cc_7_3",
+        "Section": "CC7.0 - System Operations"
+      },
+      "checks": {
+        "aws": [
+          "apigateway_restapi_logging_enabled",
+          "cloudtrail_cloudwatch_logging_enabled",
+          "cloudtrail_log_file_validation_enabled",
+          "cloudwatch_changes_to_network_acls_alarm_configured",
+          "cloudwatch_changes_to_network_gateways_alarm_configured",
+          "cloudwatch_changes_to_network_route_tables_alarm_configured",
+          "cloudwatch_changes_to_vpcs_alarm_configured",
+          "cloudwatch_log_group_kms_encryption_enabled",
+          "cloudwatch_log_group_retention_policy_specific_days_enabled",
+          "elb_logging_enabled",
+          "elbv2_logging_enabled",
+          "guardduty_is_enabled",
+          "guardduty_no_high_severity_findings",
+          "rds_instance_integration_cloudwatch_logs",
+          "s3_bucket_server_access_logging_enabled",
+          "securityhub_enabled",
+          "vpc_flow_logs_enabled"
+        ],
+        "azure": [
+          "app_http_logs_enabled",
+          "defender_auto_provisioning_log_analytics_agent_vms_on",
+          "defender_ensure_notify_alerts_severity_is_high",
+          "keyvault_logging_enabled",
+          "monitor_alert_create_policy_assignment",
+          "monitor_alert_create_update_nsg",
+          "monitor_alert_create_update_public_ip_address_rule",
+          "monitor_alert_create_update_security_solution",
+          "monitor_alert_create_update_sqlserver_fr",
+          "monitor_alert_delete_nsg",
+          "monitor_alert_delete_policy_assignment",
+          "monitor_alert_delete_public_ip_address_rule",
+          "monitor_alert_delete_security_solution",
+          "monitor_alert_delete_sqlserver_fr",
+          "monitor_storage_account_with_activity_logs_cmk_encrypted",
+          "monitor_storage_account_with_activity_logs_is_private",
+          "mysql_flexible_server_audit_log_connection_activated",
+          "mysql_flexible_server_audit_log_enabled",
+          "network_flow_log_captured_sent",
+          "network_flow_log_more_than_90_days",
+          "postgresql_flexible_server_log_checkpoints_on",
+          "postgresql_flexible_server_log_connections_on",
+          "postgresql_flexible_server_log_disconnections_on",
+          "postgresql_flexible_server_log_retention_days_greater_3"
+        ],
+        "gcp": [
+          "cloudsql_instance_postgres_log_connections_flag",
+          "cloudsql_instance_postgres_log_disconnections_flag",
+          "cloudsql_instance_postgres_log_error_verbosity_flag",
+          "cloudsql_instance_postgres_log_min_duration_statement_flag",
+          "cloudsql_instance_postgres_log_min_error_statement_flag",
+          "cloudsql_instance_postgres_log_min_messages_flag",
+          "cloudsql_instance_postgres_log_statement_flag",
+          "cloudstorage_bucket_log_retention_policy_lock",
+          "compute_loadbalancer_logging_enabled",
+          "compute_network_dns_logging_enabled",
+          "compute_project_os_login_enabled",
+          "compute_subnet_flow_logs_enabled",
+          "iam_audit_logs_enabled",
+          "iam_cloud_asset_inventory_enabled",
+          "logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_custom_role_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_sql_instance_configuration_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_vpc_network_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_vpc_network_route_changes_enabled"
+        ]
+      },
+      "config_requirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "Provider": "aws",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "securityhub_enabled",
+          "Provider": "aws",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ]
+    },
+    {
+      "id": "cc_7_4",
+      "name": "CC7.4 The entity responds to identified security incidents by executing a defined incident response program to understand, contain, remediate, and communicate security incidents, as appropriate",
+      "description": "Assigns Roles and Responsibilities - Roles and responsibilities for the design, implementation, maintenance, and execution of the incident response program are assigned, including the use of external resources when necessary. Contains Security Incidents - Procedures are in place to contain security incidents that actively threaten entity objectives. Mitigates Ongoing Security Incidents - Procedures are in place to mitigate the effects of ongoing security incidents. Ends Threats Posed by Security Incidents - Procedures are in place to end the threats posed by security incidents through closure of the vulnerability, removal of unauthorized access, and other remediation actions. Restores Operations - Procedures are in place to restore data and business operations to an interim state that permits the achievement of entity objectives. Develops and Implements Communication Protocols for Security Incidents - Protocols for communicating security incidents and actions taken to affected parties are developed and implemented to meet the entity's objectives. Obtains Understanding of Nature of Incident and Determines Containment Strategy - An understanding of the nature (for example, the method by which the incident occurred and the affected system resources) and severity of the security incident is obtained to determine the appropriate containment strategy, including (1) a determination of the appropriate response time frame, and (2) the determination and execution of the containment approach. Remediates Identified Vulnerabilities - Identified vulnerabilities are remediated through the development and execution of remediation activities. Communicates Remediation Activities - Remediation activities are documented and communicated in accordance with the incident response program. Evaluates the Effectiveness of Incident Response - The design of incident response activities is evaluated for effectiveness on a periodic basis. Periodically Evaluates Incidents - Periodically, management reviews incidents related to security, availability, processing integrity, confidentiality, and privacy and identifies the need for system changes based on incident patterns and root causes. Communicates Unauthorized Use and Disclosure - Events that resulted in unauthorized use or disclosure of personal information are communicated to the data subjects, legal and regulatory authorities, and others as required. Application of Sanctions - The conduct of individuals and organizations operating under the authority of the entity and involved in the unauthorized use or disclosure of personal information is evaluated and, if appropriate, sanctioned in accordance with entity policies and legal and regulatory requirements.",
+      "attributes": {
+        "ItemId": "cc_7_4",
+        "Section": "CC7.0 - System Operations"
+      },
+      "checks": {
+        "aws": [
+          "cloudwatch_changes_to_network_acls_alarm_configured",
+          "cloudwatch_changes_to_network_gateways_alarm_configured",
+          "cloudwatch_changes_to_network_route_tables_alarm_configured",
+          "cloudwatch_changes_to_vpcs_alarm_configured",
+          "dynamodb_tables_pitr_enabled",
+          "efs_have_backup_enabled",
+          "guardduty_is_enabled",
+          "guardduty_no_high_severity_findings",
+          "rds_instance_backup_enabled",
+          "redshift_cluster_automated_snapshot",
+          "s3_bucket_object_versioning",
+          "securityhub_enabled"
+        ],
+        "azure": [
+          "defender_ensure_notify_alerts_severity_is_high",
+          "monitor_alert_create_policy_assignment",
+          "monitor_alert_create_update_nsg",
+          "monitor_alert_create_update_public_ip_address_rule",
+          "monitor_alert_create_update_security_solution",
+          "monitor_alert_create_update_sqlserver_fr",
+          "monitor_alert_delete_nsg",
+          "monitor_alert_delete_policy_assignment",
+          "monitor_alert_delete_public_ip_address_rule",
+          "monitor_alert_delete_security_solution",
+          "monitor_alert_delete_sqlserver_fr",
+          "storage_ensure_soft_delete_is_enabled",
+          "vm_ensure_attached_disks_encrypted_with_cmk",
+          "vm_ensure_unattached_disks_encrypted_with_cmk"
+        ],
+        "gcp": [
+          "cloudsql_instance_automated_backups",
+          "logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_custom_role_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_sql_instance_configuration_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_vpc_network_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_vpc_network_route_changes_enabled"
+        ]
+      },
+      "config_requirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "Provider": "aws",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "securityhub_enabled",
+          "Provider": "aws",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ]
+    },
+    {
+      "id": "cc_7_5",
+      "name": "CC7.5 The entity identifies, develops, and implements activities to recover from identified security incidents",
+      "description": "Restores the Affected Environment - The activities restore the affected environment to functional operation by rebuilding systems, updating software, installing patches, and changing configurations, as needed. Communicates Information About the Event - Communications about the nature of the incident, recovery actions taken, and activities required for the prevention of future security events are made to management and others as appropriate (internal and external). Determines Root Cause of the Event - The root cause of the event is determined. Implements Changes to Prevent and Detect Recurrences - Additional architecture or changes to preventive and detective controls, or both, are implemented to prevent and detect recurrences on a timely basis. Improves Response and Recovery Procedures - Lessons learned are analyzed, and the incident response plan and recovery procedures are improved. Implements Incident Recovery Plan Testing - Incident recovery plan testing is performed on a periodic basis. The testing includes (1) development of testing scenarios based on threat likelihood and magnitude; (2) consideration of relevant system components from across the entity that can impair availability; (3) scenarios that consider the potential for the lack of availability of key personnel; and (4) revision of continuity plans and systems based on test results.",
+      "attributes": {
+        "ItemId": "cc_7_5",
+        "Section": "CC7.0 - System Operations"
+      },
+      "checks": {
+        "aws": [
+          "ec2_ebs_snapshots_encrypted",
+          "ec2_ebs_volume_snapshots_exists",
+          "neptune_cluster_copy_tags_to_snapshots",
+          "neptune_cluster_snapshot_encrypted",
+          "rds_instance_copy_tags_to_snapshots",
+          "redshift_cluster_automated_snapshot"
+        ],
+        "azure": [
+          "storage_ensure_encryption_with_customer_managed_keys",
+          "storage_infrastructure_encryption_is_enabled",
+          "vm_ensure_attached_disks_encrypted_with_cmk",
+          "vm_ensure_unattached_disks_encrypted_with_cmk"
+        ],
+        "gcp": [
+          "cloudsql_instance_automated_backups"
+        ]
+      }
+    },
+    {
+      "id": "cc_8_1",
+      "name": "CC8.1 The entity authorizes, designs, develops or acquires, configures, documents, tests, approves, and implements changes to infrastructure, data, software, and procedures to meet its objectives",
+      "description": "Manages Changes Throughout the System Lifecycle - A process for managing system changes throughout the lifecycle of the system and its components (infrastructure, data, software and procedures) is used to support system availability and processing integrity. Authorizes Changes - A process is in place to authorize system changes prior to development. Designs and Develops Changes - A process is in place to design and develop system changes. Documents Changes - A process is in place to document system changes to support ongoing maintenance of the system and to support system users in performing their responsibilities. Tracks System Changes - A process is in place to track system changes prior to implementation. Configures Software - A process is in place to select and implement the configuration parameters used to control the functionality of software. Tests System Changes - A process is in place to test system changes prior to implementation. Approves System Changes - A process is in place to approve system changes prior to implementation. Deploys System Changes - A process is in place to implement system changes. Identifies and Evaluates System Changes - Objectives affected by system changes are identified, and the ability of the modified system to meet the objectives is evaluated throughout the system development life cycle. Identifies Changes in Infrastructure, Data, Software, and Procedures Required to Remediate Incidents - Changes in infrastructure, data, software, and procedures required to remediate incidents to continue to meet objectives are identified, and the change process is initiated upon identification. Creates Baseline Configuration of IT Technology - A baseline configuration of IT and control systems is created and maintained. Provides for Changes Necessary in Emergency Situations - A process is in place for authorizing, designing, testing, approving and implementing changes necessary in emergency situations (that is, changes that need to be implemented in an urgent timeframe). Protects Confidential Information - The entity protects confidential information during system design, development, testing, implementation, and change processes to meet the entity’s objectives related to confidentiality. Protects Personal Information - The entity protects personal information during system design, development, testing, implementation, and change processes to meet the entity’s objectives related to privacy.",
+      "attributes": {
+        "ItemId": "cc_8_1",
+        "Section": "CC8.0 - Change Management"
+      },
+      "checks": {
+        "aws": [
+          "config_recorder_all_regions_enabled"
+        ],
+        "azure": [
+          "monitor_alert_create_policy_assignment",
+          "monitor_alert_create_update_nsg",
+          "monitor_alert_create_update_public_ip_address_rule",
+          "monitor_alert_create_update_security_solution",
+          "monitor_alert_create_update_sqlserver_fr",
+          "monitor_alert_delete_nsg",
+          "monitor_alert_delete_policy_assignment",
+          "monitor_alert_delete_public_ip_address_rule",
+          "monitor_alert_delete_security_solution",
+          "monitor_alert_delete_sqlserver_fr",
+          "monitor_diagnostic_setting_with_appropriate_categories",
+          "monitor_diagnostic_settings_exists",
+          "monitor_storage_account_with_activity_logs_cmk_encrypted"
+        ],
+        "gcp": [
+          "iam_cloud_asset_inventory_enabled"
+        ]
+      },
+      "config_requirements": [
+        {
+          "Check": "config_recorder_all_regions_enabled",
+          "Provider": "aws",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ]
+    },
+    {
+      "id": "cc_9_2",
+      "name": "CC9.2 The entity assesses and manages risks associated with vendors and business partners",
+      "description": "Establishes Requirements for Vendor and Business Partner Engagements—The entity establishes specific requirements for a vendor and business partner engagement that includes (1) scope of services and product specifications, (2) roles and responsibilities, (3) compliance requirements, and (4) service levels. Assesses Vendor and Business Partner Risks—The entity assesses, on a periodic basis, the risks that vendors and business partners (and those entities' vendors and business partners) represent to the achievement of the entity's objectives. Assigns Responsibility and Accountability for Managing Vendors and Business Partners—The entity assigns responsibility and accountability for the management of risks associated with vendors and business partners. Establishes Communication Protocols for Vendors and Business Partners—The entity establishes communication and resolution protocols for service or product issues related to vendors and business partners. Establishes Exception Handling Procedures From Vendors and Business Partners —The entity establishes exception handling procedures for service or product issues related to vendors and business partners. Assesses Vendor and Business Partner Performance—The entity periodically assesses the performance of vendors and business partners. Implements Procedures for Addressing Issues Identified During Vendor and Business Partner Assessments—The entity implements procedures for addressing issues identified with vendor and business partner relationships. Implements Procedures for Terminating Vendor and Business Partner Relationships — The entity implements procedures for terminating vendor and business partner relationships. Obtains Confidentiality Commitments from Vendors and Business Partners—The entity obtains confidentiality commitments that are consistent with the entity's confidentiality commitments and requirements from vendors and business partners who have access to confidential information. Assesses Compliance With Confidentiality Commitments of Vendors and Business Partners — On a periodic and as-needed basis, the entity assesses compliance by vendors and business partners with the entity's confidentiality commitments and requirements. Obtains Privacy Commitments from Vendors and Business Partners—The entity obtains privacy commitments, consistent with the entity's privacy commitments and requirements, from vendors and business partners who have access to personal information. Assesses Compliance with Privacy Commitments of Vendors and Business Partners— On a periodic and as-needed basis, the entity assesses compliance by vendors and business partners with the entity's privacy commitments and requirements and takes corrective action as necessary.",
+      "attributes": {
+        "ItemId": "cc_9_2",
+        "Section": "CC9.0 - Risk Mitigation"
+      },
+      "checks": {
+        "aws": [],
+        "azure": [],
+        "gcp": [
+          "gemini_api_disabled"
+        ]
+      }
+    },
+    {
+      "id": "cc_a_1_1",
+      "name": "A1.2 The entity authorizes, designs, develops or acquires, implements, operates, approves, maintains, and monitors environmental protections, software, data back-up processes, and recovery infrastructure to meet its objectives",
+      "description": "Measures Current Usage - The use of the system components is measured to establish a baseline for capacity management and to use when evaluating the risk of impaired availability due to capacity constraints. Forecasts Capacity - The expected average and peak use of system components is forecasted and compared to system capacity and associated tolerances. Forecasting considers capacity in the event of the failure of system components that constrain capacity. Makes Changes Based on Forecasts - The system change management process is initiated when forecasted usage exceeds capacity tolerances.",
+      "attributes": {
+        "ItemId": "cc_a_1_1",
+        "Section": "CCA1.0 - Additional Criterial for Availability"
+      },
+      "checks": {
+        "aws": [
+          "apigateway_restapi_logging_enabled",
+          "apigatewayv2_api_access_logging_enabled",
+          "appsync_field_level_logging_enabled",
+          "athena_workgroup_logging_enabled",
+          "awslambda_function_invoke_api_operations_cloudtrail_logging_enabled",
+          "bedrock_model_invocation_logging_enabled",
+          "cloudfront_distributions_logging_enabled",
+          "cloudtrail_cloudwatch_logging_enabled",
+          "cloudtrail_logs_s3_bucket_access_logging_enabled",
+          "cloudtrail_multi_region_enabled",
+          "codebuild_project_logging_enabled",
+          "datasync_task_logging_enabled",
+          "dms_replication_task_source_logging_enabled",
+          "dms_replication_task_target_logging_enabled",
+          "dynamodb_tables_pitr_enabled",
+          "ec2_client_vpn_endpoint_connection_logging_enabled",
+          "ec2_confidential_workload_host_not_running",
+          "ecs_task_definitions_logging_enabled",
+          "efs_have_backup_enabled",
+          "elasticbeanstalk_environment_cloudwatch_logging_enabled",
+          "elb_logging_enabled",
+          "elbv2_logging_enabled",
+          "glue_etl_jobs_logging_enabled",
+          "mq_broker_logging_enabled",
+          "networkfirewall_logging_enabled",
+          "opensearch_service_domains_audit_logging_enabled",
+          "opensearch_service_domains_cloudwatch_logging_enabled",
+          "rds_instance_backup_enabled",
+          "rds_instance_integration_cloudwatch_logs",
+          "redshift_cluster_automated_snapshot",
+          "route53_public_hosted_zones_cloudwatch_logging_enabled",
+          "s3_bucket_object_versioning",
+          "s3_bucket_server_access_logging_enabled",
+          "stepfunctions_statemachine_logging_enabled",
+          "waf_global_webacl_logging_enabled",
+          "wafv2_webacl_logging_enabled",
+          "wafv2_webacl_rule_logging_enabled"
+        ],
+        "azure": [
+          "app_http_logs_enabled",
+          "defender_auto_provisioning_log_analytics_agent_vms_on",
+          "keyvault_logging_enabled",
+          "monitor_storage_account_with_activity_logs_cmk_encrypted",
+          "monitor_storage_account_with_activity_logs_is_private",
+          "mysql_flexible_server_audit_log_connection_activated",
+          "mysql_flexible_server_audit_log_enabled",
+          "network_flow_log_captured_sent",
+          "network_flow_log_more_than_90_days",
+          "postgresql_flexible_server_log_checkpoints_on",
+          "postgresql_flexible_server_log_connections_on",
+          "postgresql_flexible_server_log_disconnections_on",
+          "postgresql_flexible_server_log_retention_days_greater_3"
+        ],
+        "gcp": [
+          "cloudsql_instance_postgres_log_connections_flag",
+          "cloudsql_instance_postgres_log_disconnections_flag",
+          "cloudsql_instance_postgres_log_error_verbosity_flag",
+          "cloudsql_instance_postgres_log_min_duration_statement_flag",
+          "cloudsql_instance_postgres_log_min_error_statement_flag",
+          "cloudsql_instance_postgres_log_min_messages_flag",
+          "cloudsql_instance_postgres_log_statement_flag",
+          "cloudstorage_bucket_log_retention_policy_lock",
+          "compute_loadbalancer_logging_enabled",
+          "compute_network_dns_logging_enabled",
+          "compute_project_os_login_enabled",
+          "compute_subnet_flow_logs_enabled",
+          "iam_audit_logs_enabled",
+          "logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_custom_role_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_sql_instance_configuration_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_vpc_network_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_vpc_network_route_changes_enabled",
+          "logging_sink_created"
+        ]
+      }
+    },
+    {
+      "id": "cc_c_1_1",
+      "name": "C1.1 The entity identifies and maintains confidential information to meet the entity’s objectives related to confidentiality",
+      "description": "Identifies Confidential information - Procedures are in place to identify and designate confidential information when it is received or created and to determine the period over which the confidential information is to be retained. Protects Confidential Information from Destruction - Procedures are in place to protect confidential information from erasure or destruction during the specified retention period of the information",
+      "attributes": {
+        "ItemId": "cc_c_1_1",
+        "Section": "CCC1.0 - Additional Criterial for Confidentiality"
+      },
+      "checks": {
+        "aws": [
+          "rds_instance_deletion_protection"
+        ],
+        "azure": [
+          "storage_ensure_soft_delete_is_enabled"
+        ],
+        "gcp": [
+          "bigquery_dataset_cmk_encryption",
+          "bigquery_table_cmk_encryption",
+          "compute_instance_confidential_computing_enabled",
+          "compute_instance_encryption_with_csek_enabled",
+          "dataproc_encrypted_with_cmks_disabled"
+        ]
+      }
+    },
+    {
+      "id": "cc_c_1_2",
+      "name": "C1.2 The entity disposes of confidential information to meet the entity’s objectives related to confidentiality",
+      "description": "Identifies Confidential Information for Destruction - Procedures are in place to identify confidential information requiring destruction when the end of the retention period is reached. Destroys Confidential Information - Procedures are in place to erase or otherwise destroy confidential information that has been identified for destruction.",
+      "attributes": {
+        "ItemId": "cc_c_1_2",
+        "Section": "CCC1.0 - Additional Criterial for Confidentiality"
+      },
+      "checks": {
+        "aws": [
+          "cloudwatch_log_group_retention_policy_specific_days_enabled",
+          "kinesis_stream_data_retention_period",
+          "s3_bucket_object_versioning"
+        ],
+        "azure": [
+          "network_flow_log_more_than_90_days",
+          "postgresql_flexible_server_log_retention_days_greater_3",
+          "sqlserver_auditing_retention_90_days",
+          "storage_ensure_soft_delete_is_enabled"
+        ],
+        "gcp": [
+          "cloudstorage_bucket_log_retention_policy_lock"
+        ]
+      }
+    },
+    {
+      "id": "pi_1_2",
+      "name": "PI1.2 System inputs are measured and recorded completely, accurately, and timely to meet the entity's processing integrity commitments and system requirements",
+      "description": "The entity implements policies and procedures over system inputs, including controls over completeness and accuracy, to result in products, services, and reporting to meet the entity's objectives. This includes defining accuracy targets, monitoring input quality, and creating detailed records of each input event.",
+      "attributes": {
+        "ItemId": "pi_1_2",
+        "Section": "PI1.0 - Processing Integrity"
+      },
+      "checks": {
+        "aws": [
+          "apigateway_restapi_logging_enabled",
+          "apigatewayv2_api_access_logging_enabled",
+          "cloudfront_distributions_logging_enabled",
+          "cloudtrail_s3_dataevents_write_enabled",
+          "elb_logging_enabled",
+          "elbv2_logging_enabled",
+          "waf_global_webacl_logging_enabled",
+          "wafv2_webacl_logging_enabled"
+        ],
+        "azure": [
+          "app_http_logs_enabled",
+          "keyvault_logging_enabled",
+          "monitor_diagnostic_settings_exists",
+          "network_flow_log_captured_sent",
+          "sqlserver_auditing_enabled"
+        ],
+        "gcp": [
+          "compute_loadbalancer_logging_enabled",
+          "compute_subnet_flow_logs_enabled",
+          "iam_audit_logs_enabled",
+          "logging_sink_created"
+        ]
+      }
+    },
+    {
+      "id": "pi_1_3",
+      "name": "PI1.3 Data is processed completely, accurately, and timely as authorized to meet the entity's processing integrity commitments and system requirements",
+      "description": "The entity implements controls to ensure data is processed completely, accurately, and timely. This includes defining processing specifications, identifying processing activities, detecting and correcting errors throughout processing, recording processing activities with accurate logs, and ensuring completeness and timeliness of processing.",
+      "attributes": {
+        "ItemId": "pi_1_3",
+        "Section": "PI1.0 - Processing Integrity"
+      },
+      "checks": {
+        "aws": [
+          "cloudtrail_cloudwatch_logging_enabled",
+          "cloudtrail_log_file_validation_enabled",
+          "cloudtrail_multi_region_enabled",
+          "cloudwatch_log_metric_filter_authentication_failures",
+          "cloudwatch_log_metric_filter_policy_changes",
+          "cloudwatch_log_metric_filter_root_usage",
+          "cloudwatch_log_metric_filter_unauthorized_api_calls",
+          "config_recorder_all_regions_enabled",
+          "glue_etl_jobs_logging_enabled",
+          "rds_cluster_integration_cloudwatch_logs",
+          "rds_instance_integration_cloudwatch_logs",
+          "stepfunctions_statemachine_logging_enabled"
+        ],
+        "azure": [
+          "defender_auto_provisioning_log_analytics_agent_vms_on",
+          "monitor_diagnostic_setting_with_appropriate_categories",
+          "monitor_diagnostic_settings_exists",
+          "mysql_flexible_server_audit_log_enabled",
+          "network_flow_log_more_than_90_days",
+          "postgresql_flexible_server_log_checkpoints_on",
+          "postgresql_flexible_server_log_connections_on",
+          "postgresql_flexible_server_log_disconnections_on"
+        ],
+        "gcp": [
+          "cloudsql_instance_postgres_log_connections_flag",
+          "cloudsql_instance_postgres_log_disconnections_flag",
+          "cloudsql_instance_postgres_log_statement_flag",
+          "iam_audit_logs_enabled",
+          "logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_sql_instance_configuration_changes_enabled"
+        ]
+      },
+      "config_requirements": [
+        {
+          "Check": "config_recorder_all_regions_enabled",
+          "Provider": "aws",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ]
+    },
+    {
+      "id": "pi_1_4",
+      "name": "PI1.4 System outputs are complete, accurate, distributed only to intended parties, and retained to meet the entity's processing integrity commitments and system requirements",
+      "description": "The entity implements controls to ensure system outputs are delivered to authorized recipients in the correct format and protected against unauthorized access, modification, theft, destruction, or corruption. This includes output encryption, access controls, and audit trails for output delivery.",
+      "attributes": {
+        "ItemId": "pi_1_4",
+        "Section": "PI1.0 - Processing Integrity"
+      },
+      "checks": {
+        "aws": [
+          "cloudfront_distributions_field_level_encryption_enabled",
+          "cloudwatch_cross_account_sharing_disabled",
+          "cloudwatch_log_group_kms_encryption_enabled",
+          "cloudwatch_log_group_not_publicly_accessible",
+          "glue_etl_jobs_amazon_s3_encryption_enabled",
+          "glue_etl_jobs_cloudwatch_logs_encryption_enabled",
+          "kinesis_stream_encrypted_at_rest",
+          "s3_bucket_default_encryption",
+          "s3_bucket_kms_encryption",
+          "sns_topics_kms_encryption_at_rest_enabled"
+        ],
+        "azure": [
+          "monitor_storage_account_with_activity_logs_cmk_encrypted",
+          "monitor_storage_account_with_activity_logs_is_private",
+          "sqlserver_tde_encrypted_with_cmk",
+          "sqlserver_tde_encryption_enabled",
+          "storage_ensure_encryption_with_customer_managed_keys",
+          "storage_infrastructure_encryption_is_enabled"
+        ],
+        "gcp": [
+          "bigquery_dataset_cmk_encryption",
+          "bigquery_table_cmk_encryption",
+          "cloudstorage_bucket_uniform_bucket_level_access",
+          "compute_instance_confidential_computing_enabled"
+        ]
+      }
+    },
+    {
+      "id": "pi_1_5",
+      "name": "PI1.5 Stored data is maintained complete, accurate, and protected from unauthorized modification to meet the entity's processing integrity commitments and system requirements",
+      "description": "The entity implements controls to protect stored inputs, items in processing, and outputs from theft, destruction, corruption, or deterioration. This includes data encryption at rest, key management, backup and recovery procedures, access controls, and data integrity validation.",
+      "attributes": {
+        "ItemId": "pi_1_5",
+        "Section": "PI1.0 - Processing Integrity"
+      },
+      "checks": {
+        "aws": [
+          "backup_plans_exist",
+          "backup_recovery_point_encrypted",
+          "backup_vaults_encrypted",
+          "dynamodb_tables_kms_cmk_encryption_enabled",
+          "ec2_ebs_volume_encryption",
+          "kms_cmk_rotation_enabled",
+          "rds_cluster_storage_encrypted",
+          "rds_instance_storage_encrypted",
+          "s3_bucket_object_lock",
+          "s3_bucket_object_versioning"
+        ],
+        "azure": [
+          "keyvault_key_rotation_enabled",
+          "keyvault_recoverable",
+          "storage_ensure_encryption_with_customer_managed_keys",
+          "storage_ensure_soft_delete_is_enabled",
+          "storage_infrastructure_encryption_is_enabled",
+          "vm_ensure_attached_disks_encrypted_with_cmk",
+          "vm_ensure_unattached_disks_encrypted_with_cmk"
+        ],
+        "gcp": [
+          "cloudsql_instance_automated_backups",
+          "cloudstorage_bucket_log_retention_policy_lock",
+          "compute_instance_encryption_with_csek_enabled",
+          "dataproc_encrypted_with_cmks_disabled",
+          "kms_key_rotation_enabled"
+        ]
+      }
+    }
+  ]
+}
