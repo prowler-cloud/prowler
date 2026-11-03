@@ -642,3 +642,28 @@ class Test_SageMaker_Service:
                 )
                 == "Exception"
             )
+
+    def test_list_data_quality_job_definitions_validation_error(self):
+        def mock_validation_error(self, operation_name, kwarg):
+            if operation_name == "ListDataQualityJobDefinitions":
+                raise botocore.exceptions.ClientError(
+                    {
+                        "Error": {
+                            "Code": "ValidationException",
+                            "Message": "Validation Error",
+                        }
+                    },
+                    "ListDataQualityJobDefinitions",
+                )
+            return mock_make_api_call(self, operation_name, kwarg)
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        with patch("botocore.client.BaseClient._make_api_call", new=mock_validation_error):
+            sagemaker = SageMaker(aws_provider)
+            assert sagemaker.data_quality_job_definitions == []
+            assert (
+                sagemaker.data_quality_job_definitions_scan_errors.get(
+                    AWS_REGION_EU_WEST_1
+                )
+                == "ValidationException"
+            )

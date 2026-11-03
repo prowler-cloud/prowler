@@ -243,10 +243,9 @@ class SageMaker(AWSService):
                         )
         except ClientError as error:
             code = error.response["Error"].get("Code", error.__class__.__name__)
-            if code not in ("ValidationException", "UnsupportedOperationException"):
-                self.data_quality_job_definitions_scan_errors[
-                    regional_client.region
-                ] = code
+            self.data_quality_job_definitions_scan_errors[
+                regional_client.region
+            ] = code
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
