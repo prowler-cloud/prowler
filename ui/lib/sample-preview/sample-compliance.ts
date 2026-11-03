@@ -1,3 +1,4 @@
+import type { ComplianceWatchlistResponse } from "@/actions/overview/compliance-watchlist/compliance-watchlist.types";
 import {
   COMPLIANCE_OVERVIEW_TYPE,
   ComplianceOverviewData,
@@ -25,8 +26,13 @@ const SAMPLE_FRAMEWORK_NAMES: Record<
   soc2_aws: { framework: "SOC2", version: "" },
 };
 
-export const SAMPLE_COMPLIANCE_OVERVIEWS: ComplianceOverviewData[] =
-  SAMPLE_COMPLIANCE_WATCHLIST_RESPONSE.data.map(({ attributes }) => ({
+type WatchlistItem = ComplianceWatchlistResponse["data"][number];
+
+/** Per-scan compliance overviews for the given watchlist totals. */
+export const toSampleComplianceOverviews = (
+  items: WatchlistItem[],
+): ComplianceOverviewData[] =>
+  items.map(({ attributes }) => ({
     type: COMPLIANCE_OVERVIEW_TYPE.OVERVIEW,
     id: attributes.compliance_id,
     attributes: {
@@ -40,6 +46,10 @@ export const SAMPLE_COMPLIANCE_OVERVIEWS: ComplianceOverviewData[] =
       total_requirements: attributes.total_requirements,
     },
   }));
+
+export const SAMPLE_COMPLIANCE_OVERVIEWS = toSampleComplianceOverviews(
+  SAMPLE_COMPLIANCE_WATCHLIST_RESPONSE.data,
+);
 
 export const SAMPLE_SCAN: ScanEntity = {
   id: SAMPLE_ACCOUNT.scanId,

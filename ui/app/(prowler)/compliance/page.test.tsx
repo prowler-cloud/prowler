@@ -65,6 +65,10 @@ vi.mock("@/lib/sample-preview/get-sample-preview-state", () => ({
   getSamplePreviewState: getSamplePreviewStateMock,
 }));
 
+vi.mock("@/lib/sample-preview/sample-compliance-requirements", () => ({
+  getSampleComplianceTotals: async () => [],
+}));
+
 vi.mock("./_components/compliance-sample-preview", () => ({
   ComplianceSamplePreview: () => <div>Sample compliance preview</div>,
 }));
