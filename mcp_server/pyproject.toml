@@ -17,7 +17,8 @@ dev = [
 [project]
 dependencies = [
   "fastmcp==3.4.5",
-  "httpx==0.28.1"
+  "httpx==0.28.1",
+  "pyjwt[crypto]==2.14.0"
 ]
 description = "MCP server for Prowler ecosystem"
 name = "prowler-mcp"
