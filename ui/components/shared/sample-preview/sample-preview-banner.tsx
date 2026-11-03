@@ -61,11 +61,11 @@ const STAGE_CONTENT = {
     href: LAUNCH_SCAN_HREF,
   },
   [SAMPLE_PREVIEW_STAGE.SCAN_RUNNING]: {
-    title: "Your first scan is running",
+    title: "You're seeing sample data until your scan finishes",
     description:
-      "Meanwhile, explore sample data from a demo AWS account. Your results replace it as soon as the scan finishes.",
+      "It comes from a demo AWS account. Your own findings replace it automatically when the scan completes.",
     cta: SAMPLE_PREVIEW_CTA.VIEW_SCAN,
-    ctaLabel: "View Scan",
+    ctaLabel: "View Running Scans",
     href: `/scans?tab=${SCAN_JOBS_TAB.ACTIVE}`,
   },
 } as const satisfies Record<SamplePreviewStage, StageContent>;

@@ -1,7 +1,7 @@
 "use client";
 
 import { Info } from "lucide-react";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 
 import { AddProviderButton } from "@/components/providers/add-provider-button";
@@ -42,8 +42,17 @@ import type {
 } from "@/types/scan-configurations";
 import type { ScanScheduleCapability } from "@/types/schedules";
 
+// Entry points of a tenant that is just starting; any other open is routine work.
+const NEW_TENANT_WIZARD_SOURCES: readonly WizardOpenSource[] = [
+  WIZARD_OPEN_SOURCE.FIRST_RUN,
+  WIZARD_OPEN_SOURCE.SAMPLE_PREVIEW,
+  WIZARD_OPEN_SOURCE.EMPTY_STATE,
+];
+
 interface ProvidersAccountsViewProps {
   isCloud: boolean;
+  /** The tenant sees sample data until its first scan completes (Cloud-only). */
+  samplePreviewActive?: boolean;
   filters: FilterOption[];
   metadata?: MetaDataProps;
   providers: ProviderProps[];
@@ -63,6 +72,7 @@ interface ProvidersAccountsViewProps {
 
 export function ProvidersAccountsView({
   isCloud,
+  samplePreviewActive = false,
   filters,
   metadata,
   providers,
@@ -76,12 +86,19 @@ export function ProvidersAccountsView({
   registryLogos,
 }: ProvidersAccountsViewProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const hasNoProviders = providers.length === 0;
   const shouldOpenProviderWizardFromUrl =
     searchParams.get(ADD_PROVIDER_SEARCH_PARAM) === ADD_PROVIDER_SEARCH_VALUE;
   const [isProviderWizardOpen, setIsProviderWizardOpen] = useState(
     () => shouldOpenProviderWizardFromUrl,
+  );
+  const [wizardSource, setWizardSource] = useState<WizardOpenSource | null>(
+    () =>
+      shouldOpenProviderWizardFromUrl
+        ? resolveAddProviderSource(searchParams.get(ADD_PROVIDER_SOURCE_PARAM))
+        : null,
   );
   const [providerWizardInitialData, setProviderWizardInitialData] = useState<
     ProviderWizardInitialData | undefined
@@ -98,10 +115,7 @@ export function ProvidersAccountsView({
 
   // A URL-opened wizard never goes through openProviderWizard, so signal it on mount.
   useMountEffect(() => {
-    if (!shouldOpenProviderWizardFromUrl) return;
-    signalWizardOpened(
-      resolveAddProviderSource(searchParams.get(ADD_PROVIDER_SOURCE_PARAM)),
-    );
+    if (wizardSource) signalWizardOpened(wizardSource);
   });
 
   const openProviderWizard = (
@@ -109,12 +123,14 @@ export function ProvidersAccountsView({
     initialData?: ProviderWizardInitialData,
   ) => {
     signalWizardOpened(source);
+    setWizardSource(source);
     setOrgWizardInitialData(undefined);
     setProviderWizardInitialData(initialData);
     setIsProviderWizardOpen(true);
   };
 
   const openOrganizationWizard = (initialData: OrgWizardInitialData) => {
+    setWizardSource(null);
     setProviderWizardInitialData(undefined);
     setOrgWizardInitialData(initialData);
     setIsProviderWizardOpen(true);
@@ -127,6 +143,16 @@ export function ProvidersAccountsView({
 
     setProviderWizardInitialData(undefined);
     setOrgWizardInitialData(undefined);
+
+    // Until the first scan completes, the Overview shows sample data; this page shows nothing yet.
+    if (
+      samplePreviewActive &&
+      wizardSource &&
+      NEW_TENANT_WIZARD_SOURCES.includes(wizardSource)
+    ) {
+      router.replace("/");
+      return;
+    }
 
     // Remove ?addProvider via History API (not router.replace) to avoid an RSC refetch;
     // revalidatePath in the creation actions already refreshes the table.

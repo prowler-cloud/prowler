@@ -150,6 +150,8 @@ describe("ProvidersAccountsView", () => {
     window.removeEventListener(PROVIDER_FUNNEL_EVENT, recordFunnelSignal);
     vi.restoreAllMocks();
     providersAccountsTableSpy.mockClear();
+    replaceMock.mockClear();
+    refreshMock.mockClear();
     searchParamsValue.current = "";
     window.history.replaceState({}, "", "/");
   });
@@ -285,6 +287,77 @@ describe("ProvidersAccountsView", () => {
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(replaceStateSpy).not.toHaveBeenCalled();
     expect(refreshMock).not.toHaveBeenCalled();
+    expect(replaceMock).not.toHaveBeenCalled();
+  });
+
+  it("sends a new tenant to the sample Overview when the first-run wizard closes", async () => {
+    // Given: the first-run redirect opened the wizard while the sample is shown.
+    searchParamsValue.current = "addProvider=true&addProviderSource=first_run";
+    const user = userEvent.setup();
+
+    render(
+      <ProvidersAccountsView
+        isCloud
+        samplePreviewActive
+        filters={filters}
+        metadata={metadata}
+        providers={providers}
+        rows={rows}
+      />,
+    );
+
+    // When
+    await user.click(screen.getByRole("button", { name: /close/i }));
+
+    // Then: an empty Providers page shows nothing; the Overview shows the sample.
+    expect(replaceMock).toHaveBeenCalledWith("/");
+  });
+
+  it("sends a new tenant to the sample Overview when the empty-state wizard closes", async () => {
+    // Given
+    const user = userEvent.setup();
+
+    render(
+      <ProvidersAccountsView
+        isCloud
+        samplePreviewActive
+        filters={filters}
+        metadata={metadata}
+        providers={providers}
+        rows={rows}
+      />,
+    );
+
+    // When
+    await user.click(
+      screen.getByRole("button", { name: /open add provider modal/i }),
+    );
+    await user.click(screen.getByRole("button", { name: /close/i }));
+
+    // Then
+    expect(replaceMock).toHaveBeenCalledWith("/");
+  });
+
+  it("keeps a tenant with providers on the page when a manually opened wizard closes", async () => {
+    // Given: providers exist and the wizard opens from the page button.
+    const user = userEvent.setup();
+
+    render(
+      <ProvidersAccountsView
+        isCloud
+        samplePreviewActive
+        filters={filters}
+        metadata={metadata}
+        providers={disconnectedProviders}
+        rows={rows}
+      />,
+    );
+
+    // When
+    await user.click(screen.getByRole("button", { name: "Add Provider" }));
+    await user.click(screen.getByRole("button", { name: /close/i }));
+
+    // Then
     expect(replaceMock).not.toHaveBeenCalled();
   });
 

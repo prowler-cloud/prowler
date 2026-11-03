@@ -156,7 +156,7 @@ describe("SamplePreviewBanner", () => {
     expect(getScanMock).toHaveBeenCalledTimes(1);
   });
 
-  it("opens the in-progress scans tab from a running scan", () => {
+  it("tells a running scan apart and opens the in-progress scans tab", () => {
     getScanMock.mockReturnValue(new Promise(() => {}));
     render(
       <SamplePreviewBanner
@@ -165,9 +165,11 @@ describe("SamplePreviewBanner", () => {
       />,
     );
 
-    expect(screen.getByRole("link", { name: "View Scan" })).toHaveAttribute(
-      "href",
-      "/scans?tab=active",
-    );
+    expect(
+      screen.getByText("You're seeing sample data until your scan finishes"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "View Running Scans" }),
+    ).toHaveAttribute("href", "/scans?tab=active");
   });
 });
