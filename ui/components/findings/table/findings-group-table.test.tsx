@@ -5,7 +5,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { resolveFindingIdsByVisibleGroupResources } from "@/actions/findings/findings-by-resource";
 import { useCloudUpgradeStore } from "@/store";
-import { PAID_PLAN_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
 import {
   FINDINGS_ROW_TYPE,
   type FindingGroupRow,
@@ -397,7 +396,7 @@ describe("FindingsGroupTable", () => {
       useCloudUpgradeStore.getState().closeCloudUpgrade();
     });
 
-    it("floats the unlock prompt over the table and keeps locked groups unselectable", () => {
+    it("shows no unlock prompt even if a preview limit is passed (Cloudy has no paid plan)", () => {
       // Given / When
       render(
         <FindingsGroupTable
@@ -418,8 +417,8 @@ describe("FindingsGroupTable", () => {
         "2",
       );
       expect(
-        screen.getByRole("button", { name: "Unlock All Findings" }),
-      ).toBeInTheDocument();
+        screen.queryByRole("button", { name: "Unlock All Findings" }),
+      ).not.toBeInTheDocument();
       expect(screen.getByTestId("row-1")).toHaveAttribute(
         "data-can-select",
         "true",
@@ -466,7 +465,7 @@ describe("FindingsGroupTable", () => {
       ).not.toBeInTheDocument();
     });
 
-    it("answers a drill-down past the preview with the upgrade prompt", async () => {
+    it("never opens an upgrade prompt on a drill-down past the preview", async () => {
       // Given
       const user = userEvent.setup();
       render(
@@ -482,9 +481,7 @@ describe("FindingsGroupTable", () => {
       await user.click(screen.getByRole("button", { name: "Expand check-c" }));
 
       // Then
-      expect(useCloudUpgradeStore.getState().activeFeature).toBe(
-        PAID_PLAN_UPGRADE_FEATURE.FINDINGS_PREVIEW,
-      );
+      expect(useCloudUpgradeStore.getState().activeFeature).toBeNull();
       expect(
         screen.queryByRole("button", { name: "Select finding-1" }),
       ).not.toBeInTheDocument();

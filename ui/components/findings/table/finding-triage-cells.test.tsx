@@ -83,7 +83,6 @@ beforeAll(() => {
 import { USAGE_LIMIT_MESSAGE, UsageLimitError } from "@/lib/action-errors";
 import { PRICING_URL } from "@/lib/external-urls";
 import { useCloudUpgradeStore } from "@/store";
-import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
 import { FINDING_STATUS } from "@/types/components";
 import {
   FINDING_TRIAGE_DISABLED_REASON,
@@ -139,32 +138,7 @@ afterEach(() => {
   useCloudUpgradeStore.getState().closeCloudUpgrade();
 });
 
-it("should open finding triage upgrade from a Cloud-only status cell", async () => {
-  // Given
-  const user = userEvent.setup();
-  render(
-    <FindingTriageStatusCell
-      triage={makeTriageSummary({
-        canEdit: false,
-        disabledReason: FINDING_TRIAGE_DISABLED_REASON.CLOUD_ONLY,
-      })}
-    />,
-  );
-
-  // When
-  await user.click(
-    screen.getByRole("button", {
-      name: "Change triage status - available in Prowler Cloud",
-    }),
-  );
-
-  // Then
-  expect(useCloudUpgradeStore.getState().activeFeature).toBe(
-    CLOUD_UPGRADE_FEATURE.FINDING_TRIAGE,
-  );
-});
-
-it("should render the Cloud-only triage action with the shared button", () => {
+it("should show a not-yet-available triage cell without an upgrade action", () => {
   // Given / When
   render(
     <FindingTriageStatusCell
@@ -177,10 +151,9 @@ it("should render the Cloud-only triage action with the shared button", () => {
 
   // Then
   expect(
-    screen.getByRole("button", {
-      name: "Change triage status - available in Prowler Cloud",
-    }),
-  ).toHaveAttribute("data-slot", "button");
+    screen.queryByRole("button", { name: /available in Prowler Cloud/ }),
+  ).not.toBeInTheDocument();
+  expect(useCloudUpgradeStore.getState().activeFeature).toBeNull();
 });
 
 describe("finding triage cells", () => {
@@ -936,7 +909,7 @@ describe("finding triage cells", () => {
     );
   });
 
-  it("should open a disabled billing upsell modal for Cloud-only Add Triage Note", async () => {
+  it("should open a read-only Add Triage Note without an upsell while triage is being built", async () => {
     // Given
     const user = userEvent.setup();
     render(
@@ -958,16 +931,8 @@ describe("finding triage cells", () => {
       screen.getByRole("dialog", { name: "Add Triage Note" }),
     ).toBeVisible();
     expect(screen.getByLabelText("Note text")).toBeDisabled();
-    const saveUpgrade = screen.getByRole("button", {
-      name: "Save - available in Prowler Cloud",
-    });
-    expect(saveUpgrade).not.toBeDisabled();
-
-    await user.click(saveUpgrade);
-
-    expect(useCloudUpgradeStore.getState().activeFeature).toBe(
-      CLOUD_UPGRADE_FEATURE.FINDING_TRIAGE,
-    );
+    expect(screen.getByRole("button", { name: "Unavailable" })).toBeDisabled();
+    expect(useCloudUpgradeStore.getState().activeFeature).toBeNull();
   });
 
   it("should disable Add Triage Note when no update handler is wired", async () => {

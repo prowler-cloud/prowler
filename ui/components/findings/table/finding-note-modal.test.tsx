@@ -89,7 +89,6 @@ afterAll(() => {
 import { USAGE_LIMIT_MESSAGE, UsageLimitError } from "@/lib/action-errors";
 import { DOCS_URLS, PRICING_URL } from "@/lib/external-urls";
 import { useCloudUpgradeStore } from "@/store";
-import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
 import { FINDING_STATUS } from "@/types/components";
 import {
   FINDING_TRIAGE_DISABLED_REASON,
@@ -461,9 +460,8 @@ describe("FindingNoteModal", () => {
     expect(screen.getByRole("button", { name: "Save" })).toBeInTheDocument();
   });
 
-  it("should keep controls read-only and open the finding triage upgrade", async () => {
+  it("should keep controls read-only without any upsell while triage is being built", () => {
     // Given
-    const user = userEvent.setup();
     renderNoteModal({
       triage: makeTriageDetail({
         canEdit: false,
@@ -476,16 +474,9 @@ describe("FindingNoteModal", () => {
       screen.getByRole("combobox", { name: "Triage status" }),
     ).toHaveAttribute("data-disabled", "");
     expect(screen.getByLabelText("Note text")).toBeDisabled();
-    const saveUpgrade = screen.getByRole("button", {
-      name: "Save - available in Prowler Cloud",
-    });
-    expect(saveUpgrade).not.toBeDisabled();
-
-    await user.click(saveUpgrade);
-
-    expect(useCloudUpgradeStore.getState().activeFeature).toBe(
-      CLOUD_UPGRADE_FEATURE.FINDING_TRIAGE,
-    );
+    expect(screen.getByRole("button", { name: "Unavailable" })).toBeDisabled();
+    expect(screen.queryByText("Cloud")).not.toBeInTheDocument();
+    expect(useCloudUpgradeStore.getState().activeFeature).toBeNull();
     expect(screen.queryByText(/will be muted/i)).not.toBeInTheDocument();
   });
 

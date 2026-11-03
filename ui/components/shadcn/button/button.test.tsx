@@ -4,11 +4,12 @@ import { describe, expect, it } from "vitest";
 import { Button } from "./button";
 
 describe("Button", () => {
-  it("uses semibold text for primary buttons", () => {
+  it("uses medium text and the primary text token for primary buttons", () => {
     const { rerender } = render(<Button>Primary</Button>);
 
     expect(screen.getByRole("button", { name: "Primary" })).toHaveClass(
-      "font-semibold",
+      "font-medium",
+      "text-text-button-primary",
     );
 
     rerender(<Button variant="outline">Outline</Button>);

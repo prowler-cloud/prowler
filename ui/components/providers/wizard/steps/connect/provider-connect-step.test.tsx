@@ -1032,6 +1032,9 @@ describe("ProviderConnectStep", () => {
     });
 
     it("offers the organization tabs to Azure and GCP but not to other providers", () => {
+      // Given: organization onboarding switched on for this deployment
+      vi.stubEnv("NEXT_PUBLIC_CLOUDY_FEATURES", "gcp_organizations");
+
       // When
       const { unmount } = renderStep({ providerType: "gcp" });
 
@@ -1042,6 +1045,7 @@ describe("ProviderConnectStep", () => {
       unmount();
       renderStep({ providerType: "github" });
       expect(screen.queryByRole("tablist")).not.toBeInTheDocument();
+      vi.unstubAllEnvs();
     });
 
     it("lets a user who cannot connect invite a teammate for any provider", async () => {

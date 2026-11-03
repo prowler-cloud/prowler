@@ -3,7 +3,6 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { useUIStore } from "@/store/ui/store";
-import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
 
 import { AppSidebarContent } from "./app-sidebar-content";
 import { useAppSidebarMode } from "./app-sidebar-mode-store";
@@ -80,30 +79,29 @@ describe("AppSidebarContent", () => {
     vi.unstubAllEnvs();
   });
 
-  it("shares the brand, Launch Scan action and Local Server Cloud affordances", async () => {
+  it("shares the brand and Launch Scan action with no Cloud upsell self-hosted", () => {
     // Given
     vi.stubEnv("UI_CLOUD_ENABLED", "false");
     vi.stubEnv("NEXT_PUBLIC_PROWLER_RELEASE_VERSION", "5.8.0");
-    const user = userEvent.setup();
 
     // When
     render(<AppSidebarContent />);
 
     // Then
-    const homeLink = screen.getByRole("link", { name: "Prowler home" });
-    expect(homeLink).toBeVisible();
+    expect(screen.getByRole("link", { name: "Cloudy home" })).toBeVisible();
     expect(screen.getByRole("link", { name: "Launch Scan" })).toHaveAttribute(
       "href",
       "/scans?launchScan=true",
     );
     expect(screen.getByText("5.8.0")).toBeVisible();
-
-    await user.click(screen.getByRole("button", { name: "Chat" }));
-    expect(openCloudUpgradeMock).toHaveBeenCalledWith(
-      CLOUD_UPGRADE_FEATURE.LIGHTHOUSE_AI,
-      undefined,
-    );
-    expect(screen.getAllByText("Cloud").length).toBeGreaterThan(0);
+    expect(
+      screen.queryByRole("button", { name: "Chat" }),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText("Cloud")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /Explore Prowler Cloud/ }),
+    ).not.toBeInTheDocument();
+    expect(openCloudUpgradeMock).not.toHaveBeenCalled();
   });
 
   it("shows Registry navigation when the server marked this request eligible", () => {

@@ -1,49 +1,31 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { ProwlerBrand } from "./ProwlerIcons";
+import { ProwlerBrand, ProwlerShort } from "./ProwlerIcons";
 
-describe("ProwlerBrand", () => {
+describe("ProwlerBrand (Cloudy mark)", () => {
   afterEach(() => {
     cleanup();
     vi.unstubAllEnvs();
   });
 
-  it("should render the Local Server lockups outside Cloud", () => {
-    // Given
-    vi.stubEnv("UI_CLOUD_ENABLED", "false");
+  it.each(["false", "true"])(
+    "renders the Cloudy mark and wordmark whatever UI_CLOUD_ENABLED is (%s)",
+    (cloudEnabled) => {
+      vi.stubEnv("UI_CLOUD_ENABLED", cloudEnabled);
 
-    // When
-    render(<ProwlerBrand />);
+      render(<ProwlerBrand />);
 
-    // Then
-    const logo = screen.getByRole("img", { name: "Prowler Local Server" });
-    const sources = Array.from(logo.querySelectorAll("img"), (image) =>
-      image.getAttribute("src"),
-    );
+      const logo = screen.getByRole("img", { name: "Cloudy" });
+      expect(logo.querySelector("svg")).not.toBeNull();
+      expect(logo.querySelector("img")).toBeNull();
+      expect(logo).toHaveTextContent("Cloudy");
+    },
+  );
 
-    expect(sources).toEqual([
-      "/logos/prowler-local-server-light.svg",
-      "/logos/prowler-local-server-dark.svg",
-    ]);
-  });
+  it("draws the short mark as an accessible image", () => {
+    render(<ProwlerShort />);
 
-  it("should render the Prowler Cloud lockups in Cloud", () => {
-    // Given
-    vi.stubEnv("UI_CLOUD_ENABLED", "true");
-
-    // When
-    render(<ProwlerBrand />);
-
-    // Then
-    const logo = screen.getByRole("img", { name: "Prowler Cloud" });
-    const sources = Array.from(logo.querySelectorAll("img"), (image) =>
-      image.getAttribute("src"),
-    );
-
-    expect(sources).toEqual([
-      "/logos/prowler-cloud-light.svg",
-      "/logos/prowler-cloud-dark.svg",
-    ]);
+    expect(screen.getByRole("img", { name: "Cloudy" })).toBeInTheDocument();
   });
 });

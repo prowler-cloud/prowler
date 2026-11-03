@@ -53,7 +53,7 @@ describe("AlertsUnsubscribePage", () => {
       ),
     ).toBeVisible();
     expect(
-      screen.getByRole("link", { name: "Continue to Prowler" }),
+      screen.getByRole("link", { name: "Continue to Cloudy" }),
     ).toHaveAttribute("href", "/");
   });
 });

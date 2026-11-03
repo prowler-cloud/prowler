@@ -40,7 +40,7 @@ describe("getNodeLabel", () => {
     // instead of crashing the cell or claiming AWS.
     expect(getNodeLabel("oci" as OrganizationType)).toBe("Group");
     expect(organizationNameFallbackHint("oci" as OrganizationType)).toBe(
-      "If left blank, Prowler will use the organization identifier.",
+      "If left blank, Cloudy will use the organization identifier.",
     );
   });
 
@@ -82,7 +82,7 @@ describe("getNodeLabel", () => {
       );
       expect(getNodeLabel(key as OrganizationType)).toBe("Group");
       expect(organizationNameFallbackHint(key as OrganizationType)).toBe(
-        "If left blank, Prowler will use the organization identifier.",
+        "If left blank, Cloudy will use the organization identifier.",
       );
       expect(getCandidateNoun(key as OrganizationType)).toEqual({
         singular: "account",
@@ -96,13 +96,13 @@ describe("organizationNameFallbackHint", () => {
   it("names the identifier the organization falls back to, per type", () => {
     // Never a provider-side name: the organization exists before discovery runs.
     expect(organizationNameFallbackHint(ORGANIZATION_TYPE.AWS)).toBe(
-      "If left blank, Prowler will use the AWS organization ID.",
+      "If left blank, Cloudy will use the AWS organization ID.",
     );
     expect(organizationNameFallbackHint(ORGANIZATION_TYPE.GCP)).toBe(
-      "If left blank, Prowler will use the organization ID.",
+      "If left blank, Cloudy will use the organization ID.",
     );
     expect(organizationNameFallbackHint(ORGANIZATION_TYPE.AZURE)).toBe(
-      "If left blank, Prowler will use the tenant ID.",
+      "If left blank, Cloudy will use the tenant ID.",
     );
   });
 });

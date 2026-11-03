@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -8,7 +8,6 @@ import {
 } from "@/components/shadcn/dropdown";
 import { createJiraTargetSelection } from "@/lib/jira-dispatch-selection";
 import { useCloudUpgradeStore, useJiraDispatchStore } from "@/store";
-import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
 import {
   JIRA_DISPATCH_TARGET,
   type JiraDispatchTarget,
@@ -59,31 +58,19 @@ describe("JiraDispatchActionItem", () => {
     expect(useCloudUpgradeStore.getState().activeFeature).toBeNull();
   });
 
-  it("shows Cloud tooltip and opens upgrade for grouped dispatch", async () => {
+  it("hides grouped dispatch until it is built, without an upsell", async () => {
     // Given
     const user = userEvent.setup();
     renderAction(["check-1"], JIRA_DISPATCH_TARGET.CHECK_ID);
 
     // When
     await user.click(screen.getByRole("button", { name: "Actions" }));
-    const jiraAction = screen.getByRole("menuitem", { name: "Send to Jira" });
+
+    // Then
     expect(
-      within(jiraAction).queryByText("Available only in Prowler Cloud"),
+      screen.queryByRole("menuitem", { name: "Send to Jira" }),
     ).not.toBeInTheDocument();
-    await user.hover(jiraAction);
-
-    // Then
-    expect(await screen.findByRole("tooltip")).toHaveTextContent(
-      "Available only in Prowler Cloud",
-    );
-
-    // When
-    await user.click(jiraAction);
-
-    // Then
-    expect(useCloudUpgradeStore.getState().activeFeature).toBe(
-      CLOUD_UPGRADE_FEATURE.JIRA_DISPATCH,
-    );
+    expect(useCloudUpgradeStore.getState().activeFeature).toBeNull();
     expect(useJiraDispatchStore.getState().activePayload).toBeNull();
   });
 

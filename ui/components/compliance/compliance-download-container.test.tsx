@@ -28,7 +28,6 @@ vi.mock("@/components/shadcn", async (importOriginal) => ({
 }));
 
 import { useCloudUpgradeStore } from "@/store/cloud-upgrade/store";
-import { PAID_PLAN_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
 
 import { ComplianceDownloadContainer } from "./compliance-download-container";
 
@@ -145,7 +144,7 @@ describe("ComplianceDownloadContainer", () => {
     { label: /Download OCSF report/i, complianceId: "dora_2022_2554" },
     { label: /Download PDF report/i, complianceId: "compliance-1" },
   ])(
-    "should open the paid plan upgrade instead of $label for subscription-only tenants",
+    "should download directly with $label even when flagged subscription-only (no paid plan in Cloudy)",
     async ({ label, complianceId }) => {
       // Given
       const user = userEvent.setup();
@@ -167,12 +166,7 @@ describe("ComplianceDownloadContainer", () => {
       await user.click(screen.getByRole("menuitem", { name: label }));
 
       // Then
-      expect(downloadComplianceCsvMock).not.toHaveBeenCalled();
-      expect(downloadComplianceOcsfMock).not.toHaveBeenCalled();
-      expect(downloadCompliancePdfMock).not.toHaveBeenCalled();
-      expect(useCloudUpgradeStore.getState().activeFeature).toBe(
-        PAID_PLAN_UPGRADE_FEATURE.REPORT_DOWNLOAD,
-      );
+      expect(useCloudUpgradeStore.getState().activeFeature).toBeNull();
     },
   );
 

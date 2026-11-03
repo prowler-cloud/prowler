@@ -18,7 +18,6 @@ import {
   type RuntimePublicConfig,
 } from "@/lib/runtime-config.shared";
 import { useCloudUpgradeStore } from "@/store";
-import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
 import {
   MAX_SAML_ADDITIONAL_EMAIL_DOMAINS,
   SAML_CONFIGURATION_RESOURCE_TYPE,
@@ -179,31 +178,22 @@ describe("SamlConfigForm", () => {
     ).toBeVisible();
   });
 
-  it("keeps single-domain SAML available in OSS and opens the Cloud upgrade for aliases", async () => {
-    // Given
-    const user = userEvent.setup();
+  it("keeps single-domain SAML available self-hosted and shows no alias upsell", () => {
+    // Given / When
     render(<SamlConfigForm setIsOpen={vi.fn()} />);
-
-    // When
-    const cloudUpgradeButton = screen.getByRole("button", {
-      name: "Additional email domains are available in Prowler Cloud",
-    });
-
-    await user.click(cloudUpgradeButton);
 
     // Then
     expect(screen.getByLabelText("Primary Email Domain*")).toBeEnabled();
     expect(
       screen.queryByLabelText("Additional Email Domain"),
     ).not.toBeInTheDocument();
-    expect(cloudUpgradeButton).toHaveClass("border-0", "bg-transparent", "p-0");
     expect(
-      screen.getByText("Additional Email Domains").parentElement,
-    ).toContainElement(cloudUpgradeButton);
-    expect(screen.getByText("Available in Prowler Cloud")).toBeVisible();
-    expect(useCloudUpgradeStore.getState().activeFeature).toBe(
-      CLOUD_UPGRADE_FEATURE.SAML_DOMAINS,
-    );
+      screen.queryByText("Additional Email Domains"),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Available in Prowler Cloud"),
+    ).not.toBeInTheDocument();
+    expect(useCloudUpgradeStore.getState().activeFeature).toBeNull();
   });
 
   it("loads existing aliases in Cloud and keeps the canonical ACS", () => {

@@ -7,7 +7,6 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { useCloudUpgradeStore } from "@/store/cloud-upgrade/store";
-import { PAID_PLAN_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
 
 import { ThreatScoreBadge } from "./threatscore-badge";
 
@@ -47,7 +46,7 @@ describe("ThreatScoreBadge", () => {
     });
 
     it.each([/Download CSV report/i, /Download PDF report/i])(
-      "opens the paid plan upgrade instead of %s",
+      "downloads directly with %s",
       async (label) => {
         // Given
         const user = userEvent.setup();
@@ -69,11 +68,7 @@ describe("ThreatScoreBadge", () => {
         await user.click(screen.getByRole("menuitem", { name: label }));
 
         // Then
-        expect(downloadComplianceCsvMock).not.toHaveBeenCalled();
-        expect(downloadComplianceReportPdfMock).not.toHaveBeenCalled();
-        expect(useCloudUpgradeStore.getState().activeFeature).toBe(
-          PAID_PLAN_UPGRADE_FEATURE.REPORT_DOWNLOAD,
-        );
+        expect(useCloudUpgradeStore.getState().activeFeature).toBeNull();
       },
     );
   });

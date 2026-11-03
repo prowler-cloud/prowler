@@ -3,7 +3,6 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { useCloudUpgradeStore } from "@/store";
-import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
 import { ORGANIZATION_TYPE } from "@/types/organizations";
 
 import {
@@ -38,8 +37,24 @@ describe("OnboardingMethodTabs", () => {
     expect(screen.queryByText("Cloud")).not.toBeInTheDocument();
   });
 
-  it("opens the AWS Organizations upgrade in Local Server", async () => {
+  it("hides organization onboarding self-hosted until its backend ships (no upsell)", () => {
     vi.stubEnv("UI_CLOUD_ENABLED", "false");
+    const { container } = render(
+      <OnboardingMethodTabs
+        orgType={ORGANIZATION_TYPE.AWS}
+        value={ONBOARDING_METHOD.SINGLE}
+        onSelectSingle={vi.fn()}
+        onSelectOrganizations={vi.fn()}
+      />,
+    );
+
+    expect(container).toBeEmptyDOMElement();
+    expect(useCloudUpgradeStore.getState().activeFeature).toBeNull();
+  });
+
+  it("offers organization onboarding once switched on per deployment", async () => {
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
+    vi.stubEnv("NEXT_PUBLIC_CLOUDY_FEATURES", "aws_organizations");
     const user = userEvent.setup();
     const onSelectOrganizations = vi.fn();
     render(
@@ -55,14 +70,11 @@ describe("OnboardingMethodTabs", () => {
       screen.getByRole("tab", { name: /Full AWS Organization/ }),
     );
 
-    expect(onSelectOrganizations).not.toHaveBeenCalled();
-    expect(screen.getByText("Cloud")).toBeVisible();
-    expect(useCloudUpgradeStore.getState().activeFeature).toBe(
-      CLOUD_UPGRADE_FEATURE.AWS_ORGANIZATIONS,
-    );
+    expect(onSelectOrganizations).toHaveBeenCalledOnce();
   });
 
   it("returns to the single account flow from the organization tab", async () => {
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
     const user = userEvent.setup();
     const onSelectSingle = vi.fn();
     render(
@@ -80,34 +92,23 @@ describe("OnboardingMethodTabs", () => {
   });
 
   it.each([
-    {
-      orgType: ORGANIZATION_TYPE.AZURE,
-      tab: "Azure Management Group",
-      feature: CLOUD_UPGRADE_FEATURE.AZURE_ORGANIZATIONS,
-    },
-    {
-      orgType: ORGANIZATION_TYPE.GCP,
-      tab: "Full GCP Organization",
-      feature: CLOUD_UPGRADE_FEATURE.GCP_ORGANIZATIONS,
-    },
+    { orgType: ORGANIZATION_TYPE.AZURE },
+    { orgType: ORGANIZATION_TYPE.GCP },
   ])(
-    "offers the $orgType organization flow behind its own upgrade outside Cloud",
-    async ({ orgType, tab, feature }) => {
+    "hides the $orgType organization flow self-hosted instead of upselling it",
+    ({ orgType }) => {
       vi.stubEnv("UI_CLOUD_ENABLED", "false");
-      const user = userEvent.setup();
-      const onSelectOrganizations = vi.fn();
-      render(
+      const { container } = render(
         <OnboardingMethodTabs
           orgType={orgType}
           value={ONBOARDING_METHOD.SINGLE}
-          onSelectOrganizations={onSelectOrganizations}
+          onSelectSingle={vi.fn()}
+          onSelectOrganizations={vi.fn()}
         />,
       );
 
-      await user.click(screen.getByRole("tab", { name: new RegExp(tab) }));
-
-      expect(onSelectOrganizations).not.toHaveBeenCalled();
-      expect(useCloudUpgradeStore.getState().activeFeature).toBe(feature);
+      expect(container).toBeEmptyDOMElement();
+      expect(useCloudUpgradeStore.getState().activeFeature).toBeNull();
     },
   );
 });

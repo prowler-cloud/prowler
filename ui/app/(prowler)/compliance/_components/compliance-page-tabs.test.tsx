@@ -3,7 +3,6 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { useCloudUpgradeStore } from "@/store";
-import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
 import { COMPLIANCE_TAB } from "@/types/compliance";
 
 import { CompliancePageTabs } from "./compliance-page-tabs";
@@ -114,8 +113,7 @@ describe("CompliancePageTabs", () => {
     expect(pushMock).toHaveBeenCalledWith("/compliance");
   });
 
-  it("opens the cross-provider upgrade without changing tabs in Local Server", async () => {
-    const user = userEvent.setup();
+  it("hides the cross-provider tab until its backend is available (no upsell)", () => {
     render(
       <CompliancePageTabs
         activeTab={COMPLIANCE_TAB.PER_SCAN}
@@ -125,17 +123,11 @@ describe("CompliancePageTabs", () => {
       />,
     );
 
-    const crossProviderTab = screen.getByRole("tab", {
-      name: /multiple scans/i,
-    });
-    await user.click(crossProviderTab);
-
-    expect(crossProviderTab).not.toBeDisabled();
-    expect(crossProviderTab).toHaveAttribute("aria-selected", "false");
-    expect(screen.getByText("Cloud")).toBeVisible();
-    expect(pushMock).not.toHaveBeenCalled();
-    expect(useCloudUpgradeStore.getState().activeFeature).toBe(
-      CLOUD_UPGRADE_FEATURE.CROSS_PROVIDER_COMPLIANCE,
-    );
+    expect(
+      screen.queryByRole("tab", { name: /multiple scans/i }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /single scan/i })).toBeVisible();
+    expect(screen.queryByText("Cloud")).not.toBeInTheDocument();
+    expect(useCloudUpgradeStore.getState().activeFeature).toBeNull();
   });
 });

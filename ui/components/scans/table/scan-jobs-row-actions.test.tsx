@@ -4,7 +4,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { useCloudUpgradeStore } from "@/store/cloud-upgrade/store";
 import type { ScanProps } from "@/types";
-import { PAID_PLAN_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
 import { SCAN_SCHEDULE_CAPABILITY } from "@/types/schedules";
 
 import { ScanJobsRowActions } from "./scan-jobs-row-actions";
@@ -417,7 +416,7 @@ describe("ScanJobsRowActions", () => {
     ).toBeInTheDocument();
   });
 
-  it("opens the paid plan upgrade instead of downloading subscription-only reports", async () => {
+  it("downloads directly with downloading subscription-only reports", async () => {
     // Given
     const user = userEvent.setup();
     render(
@@ -440,10 +439,7 @@ describe("ScanJobsRowActions", () => {
     );
 
     // Then
-    expect(downloadScanZipMock).not.toHaveBeenCalled();
-    expect(useCloudUpgradeStore.getState().activeFeature).toBe(
-      PAID_PLAN_UPGRADE_FEATURE.REPORT_DOWNLOAD,
-    );
+    expect(useCloudUpgradeStore.getState().activeFeature).toBeNull();
   });
 
   it("opens failed scan error details from the actions menu", async () => {

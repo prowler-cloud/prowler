@@ -3,7 +3,6 @@ import userEvent from "@testing-library/user-event";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { useCloudUpgradeStore } from "@/store/cloud-upgrade/store";
-import { PAID_PLAN_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
 
 import { CrossProviderPdfButton } from "./cross-provider-pdf-button";
 
@@ -197,7 +196,7 @@ describe("CrossProviderPdfButton", () => {
   });
 
   it.each([/download latest/i, /generate new report/i])(
-    "opens the paid plan upgrade instead of %s for subscription-only tenants",
+    "downloads directly with %s even when flagged subscription-only (no paid plan in Cloudy)",
     async (label) => {
       // Given
       const user = userEvent.setup();
@@ -214,13 +213,7 @@ describe("CrossProviderPdfButton", () => {
       await user.click(await screen.findByRole("menuitem", { name: label }));
 
       // Then
-      expect(downloadPdfMock).not.toHaveBeenCalled();
-      expect(
-        screen.queryByRole("dialog", { name: /generate/i }),
-      ).not.toBeInTheDocument();
-      expect(useCloudUpgradeStore.getState().activeFeature).toBe(
-        PAID_PLAN_UPGRADE_FEATURE.REPORT_DOWNLOAD,
-      );
+      expect(useCloudUpgradeStore.getState().activeFeature).toBeNull();
     },
   );
 

@@ -38,7 +38,7 @@ describe("GET /api/health", () => {
       version: "1",
       releaseId: "1.28.0",
       serviceId: "prowler-ui",
-      description: "Prowler UI",
+      description: "Cloudy",
     });
   });
 

@@ -5,7 +5,6 @@ import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 
 import { getScheduleFormDefaults } from "@/lib/schedules";
 import { useCloudUpgradeStore } from "@/store";
-import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
 import type { ScheduleFormValues } from "@/types/schedules";
 
 import { ScanScheduleFields } from "./scan-schedule-fields";
@@ -102,9 +101,8 @@ describe("ScanScheduleFields", () => {
     );
   });
 
-  it("opens advanced scheduling from the Cloud badge when controls are locked", async () => {
-    // Given
-    const user = userEvent.setup();
+  it("locks advanced cadence without any Cloud badge or upsell", () => {
+    // Given / When
     render(
       <ScheduleFieldsHarness
         canUseAdvancedSchedule={false}
@@ -113,27 +111,12 @@ describe("ScanScheduleFields", () => {
     );
 
     // Then
-    expect(screen.getAllByText("Cloud")).toHaveLength(1);
-    expect(screen.getByText("Scan Schedule").parentElement).toHaveTextContent(
-      "Cloud",
-    );
-    expect(screen.getByText("Scan Time").parentElement).not.toHaveTextContent(
-      "Cloud",
-    );
-    expect(screen.getByText("Repeats").parentElement).not.toHaveTextContent(
-      "Cloud",
-    );
-
-    // When
-    await user.click(
-      screen.getByRole("button", {
+    expect(screen.queryByText("Cloud")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", {
         name: "Explore advanced scheduling in Prowler Cloud",
       }),
-    );
-
-    // Then
-    expect(useCloudUpgradeStore.getState().activeFeature).toBe(
-      CLOUD_UPGRADE_FEATURE.ADVANCED_SCHEDULING,
-    );
+    ).not.toBeInTheDocument();
+    expect(useCloudUpgradeStore.getState().activeFeature).toBeNull();
   });
 });

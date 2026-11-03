@@ -18,7 +18,6 @@ import {
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
 import { cn } from "@/lib/utils";
-import { useCloudUpgradeStore } from "@/store";
 
 import {
   type AppSidebarSelectionHandler,
@@ -106,27 +105,12 @@ function TopLevelLink({ item, onSelect }: NavigationLinkProps) {
   );
 }
 
-function CloudUpgradeChild({
-  item,
-  onSelect,
-}: {
+/** Cloudy never upsells from the sidebar: legacy upgrade entries render nothing. */
+function CloudUpgradeChild(_props: {
   item: NavigationCloudUpgrade;
   onSelect?: AppSidebarSelectionHandler;
 }) {
-  const openCloudUpgrade = useCloudUpgradeStore(
-    (state) => state.openCloudUpgrade,
-  );
-
-  return (
-    <NavigationButton
-      variant="subitem"
-      onClick={() => {
-        openCloudUpgrade(item.cloudUpgradeFeature, onSelect?.() ?? undefined);
-      }}
-    >
-      <span className="min-w-0 flex-1 truncate">{item.label}</span>
-    </NavigationButton>
-  );
+  return null;
 }
 
 function LinkChild({

@@ -168,22 +168,16 @@ describe("SidebarNavigation", () => {
     ).toHaveAttribute("aria-expanded", "false");
   });
 
-  it("marks external links and opens contextual Cloud upgrades", async () => {
-    // Given
-    const user = userEvent.setup();
-    const returnFocusElement = document.createElement("button");
-    const onSelect = vi.fn(() => returnFocusElement);
-    render(<SidebarNavigation sections={sections} onSelect={onSelect} />);
-
-    // When
-    await user.click(screen.getByRole("button", { name: /alerts/i }));
+  it("marks external links and renders no upgrade entries", () => {
+    // Given / When
+    render(<SidebarNavigation sections={sections} onSelect={vi.fn()} />);
 
     // Then
-    expect(openCloudUpgradeMock).toHaveBeenCalledWith(
-      CLOUD_UPGRADE_FEATURE.ALERTS,
-      returnFocusElement,
-    );
-    expect(screen.getByText("Cloud")).toBeVisible();
+    expect(
+      screen.queryByRole("button", { name: /alerts/i }),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText("Cloud")).not.toBeInTheDocument();
+    expect(openCloudUpgradeMock).not.toHaveBeenCalled();
     expect(screen.getByRole("link", { name: "Documentation" })).toHaveAttribute(
       "target",
       "_blank",

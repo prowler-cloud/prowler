@@ -1,6 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
 import type { RolePermissionAttributes } from "@/types/users";
 
 import {
@@ -69,7 +68,7 @@ describe("getNavigationConfig", () => {
     ]);
   });
 
-  it("models Local Server Cloud features as contextual upgrade actions", () => {
+  it("hides features still being built instead of upselling them", () => {
     // Given
     vi.stubEnv("UI_CLOUD_ENABLED", "false");
 
@@ -79,29 +78,34 @@ describe("getNavigationConfig", () => {
     // Then
     expect(children.map((item) => item.label)).toEqual([
       "Providers",
-      "Alerts",
       "Mutelist",
-      "Scans",
-      "CLI Import",
       "Integrations",
       "Lighthouse AI",
     ]);
+    expect(
+      children.some((item) => item.kind === NAVIGATION_ITEM_KIND.CLOUD_UPGRADE),
+    ).toBe(false);
+  });
+
+  it("links a feature once its backend is switched on per deployment", () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
+    vi.stubEnv("NEXT_PUBLIC_CLOUDY_FEATURES", "alerts,scan_configuration");
+
+    // When
+    const children = getConfigurationChildren();
+
+    // Then
     expect(children.find((item) => item.label === "Alerts")).toEqual(
       expect.objectContaining({
-        kind: NAVIGATION_ITEM_KIND.CLOUD_UPGRADE,
-        cloudUpgradeFeature: CLOUD_UPGRADE_FEATURE.ALERTS,
+        kind: NAVIGATION_ITEM_KIND.LINK,
+        href: "/alerts",
       }),
     );
     expect(children.find((item) => item.label === "Scans")).toEqual(
       expect.objectContaining({
-        kind: NAVIGATION_ITEM_KIND.CLOUD_UPGRADE,
-        cloudUpgradeFeature: CLOUD_UPGRADE_FEATURE.SCAN_CONFIGURATION,
-      }),
-    );
-    expect(children.find((item) => item.label === "CLI Import")).toEqual(
-      expect.objectContaining({
-        kind: NAVIGATION_ITEM_KIND.CLOUD_UPGRADE,
-        cloudUpgradeFeature: CLOUD_UPGRADE_FEATURE.CLI_IMPORT,
+        kind: NAVIGATION_ITEM_KIND.LINK,
+        href: "/scans/config",
       }),
     );
   });

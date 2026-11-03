@@ -3,7 +3,6 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { useCloudUpgradeStore } from "@/store";
-import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
 
 import { ApiKeysCardClient } from "./api-keys-card-client";
 
@@ -32,7 +31,7 @@ describe("ApiKeysCardClient", () => {
     useCloudUpgradeStore.getState().closeCloudUpgrade();
   });
 
-  it("offers Prowler Cloud instead of creating keys on Local Server", async () => {
+  it("creates API keys on a self-hosted deployment", async () => {
     // Given
     isCloudMock.mockReturnValue(false);
     const user = userEvent.setup();
@@ -42,10 +41,9 @@ describe("ApiKeysCardClient", () => {
     await user.click(screen.getByRole("button", { name: /Create API Key/ }));
 
     // Then
-    expect(useCloudUpgradeStore.getState().activeFeature).toBe(
-      CLOUD_UPGRADE_FEATURE.API_KEYS,
-    );
-    expect(screen.queryByLabelText(/Expires in/)).not.toBeInTheDocument();
+    expect(useCloudUpgradeStore.getState().activeFeature).toBeNull();
+    expect(await screen.findByLabelText(/Expires in/)).toBeVisible();
+    expect(screen.queryByText("Cloud")).not.toBeInTheDocument();
   });
 
   it("opens the create form in Prowler Cloud", async () => {
