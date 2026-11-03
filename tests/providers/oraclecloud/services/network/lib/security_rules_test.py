@@ -31,6 +31,7 @@ class Test_is_public_cidr:
             pytest.param("2001:db8::/32", id="private-ipv6-range"),
             pytest.param("1.1.1.1/32", id="public-host-ipv4"),
             pytest.param("", id="empty-string"),
+            pytest.param("not-a-cidr", id="malformed-cidr"),
             pytest.param(None, id="none"),
         ],
     )
