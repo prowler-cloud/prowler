@@ -25,8 +25,6 @@ import { CustomLink } from "@/components/shadcn/custom/custom-link";
 import { Form, FormButtons } from "@/components/shadcn/form";
 import { useRuntimeConfig } from "@/hooks/use-runtime-config";
 import { isCloud } from "@/lib/shared/env";
-import { useCloudUpgradeStore } from "@/store";
-import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
 import {
   getSamlConfigFormSchema,
   samlAdditionalEmailDomainSchema,
@@ -158,9 +156,6 @@ export const SamlConfigForm = ({
   const activeFileReaderRef = useRef<FileReader | null>(null);
   const { toast } = useToast();
   const isCloudEnv = isCloud();
-  const openCloudUpgrade = useCloudUpgradeStore(
-    (storeState) => storeState.openCloudUpgrade,
-  );
   const additionalDomainsError =
     form.formState.errors.additional_email_domains?.message;
 
@@ -436,122 +431,116 @@ export const SamlConfigForm = ({
           isDisabled={isPending}
         />
 
-        <Field>
-          <div className="flex items-center justify-between gap-2">
-            <FieldLabel
-              htmlFor={isCloudEnv ? "additional_email_domain" : undefined}
-            >
-              Additional Email Domains
-            </FieldLabel>
-            {isCloudEnv ? (
-              <span
-                aria-live="polite"
-                className="text-text-neutral-tertiary text-xs"
-              >
-                {additionalEmailDomains.length} /{" "}
-                {MAX_SAML_ADDITIONAL_EMAIL_DOMAINS} domains
-              </span>
-            ) : (
-              <Button
-                type="button"
-                variant="bare"
-                size="link-sm"
-                aria-label="Additional email domains are available in Prowler Cloud"
-                onClick={() =>
-                  openCloudUpgrade(CLOUD_UPGRADE_FEATURE.SAML_DOMAINS)
-                }
-              >
-                <Badge variant="cloud">Available in Prowler Cloud</Badge>
-              </Button>
-            )}
-          </div>
-          <p className="text-text-neutral-tertiary text-xs">
-            Allow users from other verified domains to use this same SAML
-            configuration. The ACS URL always uses the primary domain.
-          </p>
-          {isCloudEnv && (
-            <>
-              <div className="flex items-center gap-2">
-                <Input
-                  id="additional_email_domain"
-                  name={
-                    additionalDomainDraft.trim()
-                      ? "additional_email_domains"
-                      : undefined
-                  }
-                  aria-label="Additional Email Domain"
-                  placeholder="Enter an additional domain"
-                  value={additionalDomainDraft}
-                  disabled={
-                    isPending ||
-                    additionalEmailDomains.length >=
-                      MAX_SAML_ADDITIONAL_EMAIL_DOMAINS
-                  }
-                  aria-invalid={Boolean(additionalDomainsError) || undefined}
-                  onChange={(event) => {
-                    setAdditionalDomainDraft(event.target.value);
-                    form.clearErrors("additional_email_domains");
-                  }}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter") {
-                      event.preventDefault();
-                      addAdditionalDomain();
-                    }
-                  }}
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  disabled={
-                    isPending ||
-                    additionalEmailDomains.length >=
-                      MAX_SAML_ADDITIONAL_EMAIL_DOMAINS
-                  }
-                  onClick={addAdditionalDomain}
-                  aria-label="Add domain"
+        {isCloudEnv && (
+          <>
+            <Field>
+              <div className="flex items-center justify-between gap-2">
+                <FieldLabel
+                  htmlFor={isCloudEnv ? "additional_email_domain" : undefined}
                 >
-                  <PlusIcon aria-hidden="true" />
-                  Add
-                </Button>
+                  Additional Email Domains
+                </FieldLabel>
+                {isCloudEnv ? (
+                  <span
+                    aria-live="polite"
+                    className="text-text-neutral-tertiary text-xs"
+                  >
+                    {additionalEmailDomains.length} /{" "}
+                    {MAX_SAML_ADDITIONAL_EMAIL_DOMAINS} domains
+                  </span>
+                ) : null}
               </div>
-              {additionalDomainsError && (
-                <FieldError>{additionalDomainsError}</FieldError>
-              )}
-              {additionalEmailDomains.length > 0 && (
-                <ul
-                  aria-label="Additional email domains"
-                  className="minimal-scrollbar border-border-neutral-secondary bg-bg-neutral-secondary flex max-h-24 flex-wrap content-start gap-2 overflow-y-auto rounded-lg border p-2"
-                >
+              <p className="text-text-neutral-tertiary text-xs">
+                Allow users from other verified domains to use this same SAML
+                configuration. The ACS URL always uses the primary domain.
+              </p>
+              {isCloudEnv && (
+                <>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      id="additional_email_domain"
+                      name={
+                        additionalDomainDraft.trim()
+                          ? "additional_email_domains"
+                          : undefined
+                      }
+                      aria-label="Additional Email Domain"
+                      placeholder="Enter an additional domain"
+                      value={additionalDomainDraft}
+                      disabled={
+                        isPending ||
+                        additionalEmailDomains.length >=
+                          MAX_SAML_ADDITIONAL_EMAIL_DOMAINS
+                      }
+                      aria-invalid={
+                        Boolean(additionalDomainsError) || undefined
+                      }
+                      onChange={(event) => {
+                        setAdditionalDomainDraft(event.target.value);
+                        form.clearErrors("additional_email_domains");
+                      }}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") {
+                          event.preventDefault();
+                          addAdditionalDomain();
+                        }
+                      }}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled={
+                        isPending ||
+                        additionalEmailDomains.length >=
+                          MAX_SAML_ADDITIONAL_EMAIL_DOMAINS
+                      }
+                      onClick={addAdditionalDomain}
+                      aria-label="Add domain"
+                    >
+                      <PlusIcon aria-hidden="true" />
+                      Add
+                    </Button>
+                  </div>
+                  {additionalDomainsError && (
+                    <FieldError>{additionalDomainsError}</FieldError>
+                  )}
+                  {additionalEmailDomains.length > 0 && (
+                    <ul
+                      aria-label="Additional email domains"
+                      className="minimal-scrollbar border-border-neutral-secondary bg-bg-neutral-secondary flex max-h-24 flex-wrap content-start gap-2 overflow-y-auto rounded-lg border p-2"
+                    >
+                      {additionalEmailDomains.map((domain) => (
+                        <li key={domain}>
+                          <Badge variant="tag">
+                            {domain}
+                            <Button
+                              type="button"
+                              variant="bare"
+                              size="icon-xs"
+                              disabled={isPending}
+                              aria-label={`Remove ${domain}`}
+                              onClick={() => removeAdditionalDomain(domain)}
+                            >
+                              <XIcon aria-hidden="true" />
+                            </Button>
+                          </Badge>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                   {additionalEmailDomains.map((domain) => (
-                    <li key={domain}>
-                      <Badge variant="tag">
-                        {domain}
-                        <Button
-                          type="button"
-                          variant="bare"
-                          size="icon-xs"
-                          disabled={isPending}
-                          aria-label={`Remove ${domain}`}
-                          onClick={() => removeAdditionalDomain(domain)}
-                        >
-                          <XIcon aria-hidden="true" />
-                        </Button>
-                      </Badge>
-                    </li>
+                    <input
+                      key={domain}
+                      type="hidden"
+                      name="additional_email_domains"
+                      value={domain}
+                    />
                   ))}
-                </ul>
+                </>
               )}
-              {additionalEmailDomains.map((domain) => (
-                <input
-                  key={domain}
-                  type="hidden"
-                  name="additional_email_domains"
-                  value={domain}
-                />
-              ))}
-            </>
-          )}
-        </Field>
+            </Field>
+          </>
+        )}
 
         <Card variant="inner">
           <CardHeader className="mb-2">

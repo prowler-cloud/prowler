@@ -217,7 +217,7 @@ function getHelpCopy({ isGuiding, providerName }: HelpCopyInput) {
       ? `Need a hand connecting ${providerName}?`
       : "Not sure how to connect your cloud?",
     description:
-      "Lighthouse AI walks you through it with Prowler's docs, right beside this form.",
+      "Lighthouse AI walks you through it with the scanner docs, right beside this form.",
     action: "Ask Lighthouse AI",
   };
 }

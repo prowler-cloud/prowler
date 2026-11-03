@@ -813,13 +813,13 @@ export class SlackIntegrationHarness extends BrowserHarness<SlackFixture> {
     return toast ? (toast.textContent ?? "").replace(/\s+/g, " ").trim() : null;
   }
 
-  /** The names the "Prowler posts to …" summary carries, or null while unsettled. */
+  /** The names the "Cloudy posts to …" summary carries, or null while unsettled. */
   private authorizedChannelNames(): string[] | null {
     // The keyed element, not a text search: the card's subtitle also starts
-    // with "Prowler posts to".
+    // with "Cloudy posts to".
     const summary = this.q("[data-authorized-channels]");
     const text = (summary?.textContent ?? "").trim();
-    if (!/^Prowler posts to /.test(text)) return null;
+    if (!/^Cloudy posts to /.test(text)) return null;
 
     return Array.from(text.matchAll(/#([^\s,.]+)/g), (match) => match[1]);
   }

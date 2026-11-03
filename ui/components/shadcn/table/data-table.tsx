@@ -334,7 +334,7 @@ export function DataTable<TData, TValue>({
       // horizontal scrolling moves the group columns, not the expanded panel.
       data-table-scroll-container=""
       className={cn(
-        "minimal-scrollbar border-border-neutral-secondary bg-bg-neutral-secondary relative z-0 flex w-full flex-col justify-between gap-4 overflow-auto rounded-[14px] border p-4 shadow-sm transition-opacity duration-200",
+        "minimal-scrollbar border-border-neutral-secondary bg-bg-neutral-secondary relative z-0 flex w-full flex-col justify-between gap-4 overflow-auto rounded-lg border p-4 transition-opacity duration-200",
         isPending && "pointer-events-none opacity-60",
       )}
     >

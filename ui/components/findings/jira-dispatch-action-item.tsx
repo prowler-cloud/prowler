@@ -2,13 +2,9 @@
 
 import { JiraIcon } from "@/components/icons/services/IconServices";
 import { ActionDropdownItem } from "@/components/shadcn/dropdown";
-import {
-  isGroupedJiraDispatchEnabled,
-  PROWLER_CLOUD_ONLY_TOOLTIP,
-} from "@/lib/deployment";
+import { isGroupedJiraDispatchEnabled } from "@/lib/deployment";
 import { getJiraDispatchActionState } from "@/lib/jira-dispatch-action";
-import { useCloudUpgradeStore, useJiraDispatchStore } from "@/store";
-import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
+import { useJiraDispatchStore } from "@/store";
 import type { JiraDispatchModalPayload } from "@/types/jira-dispatch";
 
 interface JiraDispatchActionItemProps {
@@ -20,9 +16,6 @@ export const JiraDispatchActionItem = ({
   label,
   payload,
 }: JiraDispatchActionItemProps) => {
-  const openCloudUpgrade = useCloudUpgradeStore(
-    (state) => state.openCloudUpgrade,
-  );
   const openJiraDispatch = useJiraDispatchStore(
     (state) => state.openJiraDispatch,
   );
@@ -34,21 +27,15 @@ export const JiraDispatchActionItem = ({
     isGroupedJiraDispatchEnabled(),
   );
 
-  const handleSelect = () => {
-    if (requiresUpgrade) {
-      openCloudUpgrade(CLOUD_UPGRADE_FEATURE.JIRA_DISPATCH);
-      return;
-    }
+  if (requiresUpgrade) return null;
 
-    openJiraDispatch(payload);
-  };
+  const handleSelect = () => openJiraDispatch(payload);
 
   return (
     <ActionDropdownItem
       icon={<JiraIcon size={20} />}
       label={label}
       aria-label={label}
-      tooltip={requiresUpgrade ? PROWLER_CLOUD_ONLY_TOOLTIP : undefined}
       onSelect={handleSelect}
     />
   );

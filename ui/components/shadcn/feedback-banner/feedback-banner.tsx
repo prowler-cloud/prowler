@@ -47,7 +47,7 @@ export const FeedbackBanner: React.FC<FeedbackBannerProps> = ({
   return (
     <div
       className={cn(
-        "rounded-xl border-l-4 p-4 shadow-sm",
+        "rounded-lg border-l-4 p-4",
         styles.border,
         styles.bg,
         className,

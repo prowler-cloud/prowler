@@ -12,8 +12,6 @@ import {
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
 import { applyOptimisticTriageSummaryUpdate } from "@/lib/finding-triage";
-import { useCloudUpgradeStore } from "@/store";
-import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
 import { FINDING_STATUS } from "@/types/components";
 import {
   FINDING_TRIAGE_DISABLED_REASON,
@@ -40,7 +38,7 @@ import {
 } from "./finding-note-modal";
 import { FindingTriageStatusControl } from "./finding-triage-status-control";
 
-export const CLOUD_ONLY_TOOLTIP_COPY = "Available in Prowler Cloud";
+export const CLOUD_ONLY_TOOLTIP_COPY = "Triage is coming to Cloudy soon.";
 export const EDITING_UNAVAILABLE_COPY = "Editing is currently unavailable.";
 
 const getDisabledCopy = ({
@@ -119,9 +117,6 @@ export function FindingTriageStatusCell({
   onTriageUpdateAction?: FindingTriageUpdateHandler;
   onTriageDetailLoadAction?: FindingTriageDetailLoadHandler;
 }) {
-  const openCloudUpgrade = useCloudUpgradeStore(
-    (state) => state.openCloudUpgrade,
-  );
   const [optimisticStatus, setOptimisticStatus] = useState<{
     token: string;
     input: UpdateFindingTriageInput;
@@ -298,31 +293,6 @@ export function FindingTriageStatusCell({
 
   if (!disabledCopy) {
     return statusContent;
-  }
-
-  if (triage.disabledReason === FINDING_TRIAGE_DISABLED_REASON.CLOUD_ONLY) {
-    return (
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <span className="relative flex">
-            {statusContent}
-            <Button
-              type="button"
-              variant="bare"
-              size="link-xs"
-              aria-label="Change triage status - available in Prowler Cloud"
-              className="absolute inset-0 h-auto w-auto rounded-lg"
-              onPointerDown={(event) => event.stopPropagation()}
-              onClick={(event) => {
-                event.stopPropagation();
-                openCloudUpgrade(CLOUD_UPGRADE_FEATURE.FINDING_TRIAGE);
-              }}
-            />
-          </span>
-        </TooltipTrigger>
-        <TooltipContent>{disabledCopy}</TooltipContent>
-      </Tooltip>
-    );
   }
 
   return (

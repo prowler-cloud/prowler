@@ -9,11 +9,11 @@ const navigationButtonVariants = cva(
   {
     variants: {
       variant: {
-        item: "relative min-h-10 w-full justify-start gap-3 rounded-lg border px-3 py-2 text-left text-sm font-medium transition-all duration-200",
+        item: "relative min-h-9 w-full justify-start gap-3 rounded-lg border px-3 py-1.5 text-left text-sm font-medium transition-colors duration-150",
         subitem:
           "min-h-8 w-full justify-start gap-2 rounded-md px-3 py-1.5 text-left text-sm transition-colors",
         toggle:
-          "h-8 flex-1 justify-center gap-1.5 rounded-lg border px-2 text-sm transition-all",
+          "h-8 flex-1 justify-center gap-1.5 rounded-lg border px-2 text-sm transition-colors duration-150",
       },
       active: {
         true: "",

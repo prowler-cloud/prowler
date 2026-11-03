@@ -53,7 +53,7 @@ const noticeFor = (outcome: SlackConnectOutcome): NoticeContent => {
       return {
         variant: "success",
         title: "Slack workspace connected",
-        description: "You can now authorize the channels Prowler posts to.",
+        description: "You can now authorize the channels Cloudy posts to.",
       };
     case SLACK_CONNECT_STATUS.SLACK_ERROR:
       return {

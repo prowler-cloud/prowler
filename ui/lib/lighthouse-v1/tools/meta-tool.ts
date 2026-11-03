@@ -128,7 +128,7 @@ export const executeTool = tool(
       return {
         error: `Tool '${toolName}' is not available for execution.`,
         suggestion:
-          "This operation must be performed through the Prowler UI directly.",
+          "This operation must be performed through the Cloudy directly.",
       };
     }
 

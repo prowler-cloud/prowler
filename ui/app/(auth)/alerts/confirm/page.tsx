@@ -32,7 +32,7 @@ export default async function AlertsConfirmPage({
           {result.message}
         </p>
         <Button variant="outline" className="w-full" asChild>
-          <Link href="/">Continue to Prowler</Link>
+          <Link href="/">Continue to Cloudy</Link>
         </Button>
       </div>
     </AuthLayout>

@@ -43,7 +43,7 @@ export const SlackIntegrationCard = () => {
       </CardHeader>
       <CardContent>
         <p className="text-sm text-gray-600 dark:text-gray-300">
-          Connect a Slack workspace and authorize the channels Prowler posts to,
+          Connect a Slack workspace and authorize the channels Cloudy posts to,
           so your team gets security updates where it already works.
         </p>
       </CardContent>

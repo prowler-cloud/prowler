@@ -3,16 +3,8 @@
 import { useRouter } from "next/navigation";
 import { ReactNode } from "react";
 
-import {
-  Badge,
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/shadcn";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/shadcn";
 import { buildPerScanComplianceHref } from "@/lib/compliance/compliance-tab-url";
-import { useCloudUpgradeStore } from "@/store";
-import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
 import { COMPLIANCE_TAB, type ComplianceTab } from "@/types/compliance";
 
 interface CompliancePageTabsProps {
@@ -35,15 +27,10 @@ export const CompliancePageTabs = ({
   watchlistControls,
 }: CompliancePageTabsProps) => {
   const router = useRouter();
-  const openCloudUpgrade = useCloudUpgradeStore(
-    (state) => state.openCloudUpgrade,
-  );
-
   const handleTabChange = (tab: string) => {
     const typedTab = tab as ComplianceTab;
 
     if (typedTab === COMPLIANCE_TAB.CROSS_PROVIDER && !crossProviderEnabled) {
-      openCloudUpgrade(CLOUD_UPGRADE_FEATURE.CROSS_PROVIDER_COMPLIANCE);
       return;
     }
 
@@ -68,16 +55,11 @@ export const CompliancePageTabs = ({
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="overflow-x-auto">
             <TabsList>
-              <TabsTrigger
-                value={COMPLIANCE_TAB.CROSS_PROVIDER}
-                adornment={
-                  !crossProviderEnabled ? (
-                    <Badge variant="cloud">Cloud</Badge>
-                  ) : undefined
-                }
-              >
-                Multiple Scans
-              </TabsTrigger>
+              {crossProviderEnabled && (
+                <TabsTrigger value={COMPLIANCE_TAB.CROSS_PROVIDER}>
+                  Multiple Scans
+                </TabsTrigger>
+              )}
               <TabsTrigger value={COMPLIANCE_TAB.PER_SCAN}>
                 Single Scan
               </TabsTrigger>

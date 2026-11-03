@@ -1,86 +1,110 @@
-import Image from "next/image";
+/**
+ * Cloudy brand marks.
+ *
+ * The exports keep their upstream names (ProwlerBrand, ProwlerExtended,
+ * ProwlerShort) so every call site stays untouched and future upstream merges
+ * stay small; what they draw is Cloudy's own mark. Prowler's name and logo are
+ * trademarks of Prowler and are not used anywhere in the Cloudy UI.
+ *
+ * The mark: a cloud silhouette crossed by a three-node path — the product's
+ * own object (an attack path across your cloud) drawn as a symbol.
+ */
 import React from "react";
 
-import { isCloud } from "@/lib/shared/env";
 import { cn } from "@/lib/utils";
 
 import { IconSvgProps } from "../../../types/index";
 
-const PROWLER_BRAND = {
-  CLOUD: {
-    name: "Prowler Cloud",
-    lightLogo: "/logos/prowler-cloud-light.svg",
-    darkLogo: "/logos/prowler-cloud-dark.svg",
-  },
-  LOCAL_SERVER: {
-    name: "Prowler Local Server",
-    lightLogo: "/logos/prowler-local-server-light.svg",
-    darkLogo: "/logos/prowler-local-server-dark.svg",
-  },
-} as const;
+const CLOUDY_NAME = "Cloudy";
+
+const CloudyMarkPaths = () => (
+  <>
+    <path
+      d="M10.2 26.5h20.6a7.2 7.2 0 0 0 .9-14.34A10.4 10.4 0 0 0 11.6 10.4a8.05 8.05 0 0 0-1.4 16.1Z"
+      fill="currentColor"
+      opacity="0.16"
+    />
+    <path
+      d="M10.2 26.5h20.6a7.2 7.2 0 0 0 .9-14.34A10.4 10.4 0 0 0 11.6 10.4a8.05 8.05 0 0 0-1.4 16.1Z"
+      stroke="currentColor"
+      strokeWidth="2.2"
+      strokeLinejoin="round"
+    />
+    <path
+      d="m11.5 21.2 7.2-5.4 5.6 4.1 6-5.2"
+      stroke="var(--text-lighthouse)"
+      strokeWidth="2.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <circle cx="11.5" cy="21.2" r="2.1" fill="var(--text-lighthouse)" />
+    <circle cx="18.7" cy="15.8" r="2.1" fill="var(--text-lighthouse)" />
+    <circle cx="30.3" cy="14.7" r="2.1" fill="var(--text-lighthouse)" />
+  </>
+);
 
 interface ProwlerBrandProps {
   className?: string;
 }
 
-export const ProwlerBrand = ({ className }: ProwlerBrandProps) => {
-  const brand = isCloud() ? PROWLER_BRAND.CLOUD : PROWLER_BRAND.LOCAL_SERVER;
-
-  return (
-    <span
-      role="img"
-      aria-label={brand.name}
-      className={cn("inline-grid", className)}
+/** Mark + wordmark, used in the sidebar and on the auth screens. */
+export const ProwlerBrand = ({ className }: ProwlerBrandProps) => (
+  <span
+    role="img"
+    aria-label={CLOUDY_NAME}
+    className={cn(
+      "text-text-neutral-primary inline-flex items-center gap-2.5",
+      className,
+    )}
+  >
+    <svg
+      viewBox="0 0 40 36"
+      fill="none"
+      aria-hidden="true"
+      className="size-8 shrink-0"
     >
-      <Image
-        src={brand.lightLogo}
-        alt=""
-        aria-hidden="true"
-        width={200}
-        height={63.14}
-        unoptimized
-        className="col-start-1 row-start-1 h-auto w-full dark:hidden"
-      />
-      <Image
-        src={brand.darkLogo}
-        alt=""
-        aria-hidden="true"
-        width={200}
-        height={63.14}
-        unoptimized
-        className="col-start-1 row-start-1 hidden h-auto w-full dark:block"
-      />
+      <CloudyMarkPaths />
+    </svg>
+    <span
+      aria-hidden="true"
+      className="text-[22px] leading-none font-semibold tracking-[-0.03em]"
+    >
+      {CLOUDY_NAME}
     </span>
-  );
-};
+  </span>
+);
 
 export const ProwlerExtended: React.FC<IconSvgProps> = ({
   size,
   width = 216,
   height,
   ...props
-}) => {
-  return (
-    <svg
-      className="text-black dark:text-white"
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 1233.67 204.4"
-      fill="none"
-      height={size || height}
-      width={size || width}
-      color="evenodd"
-      {...props}
+}) => (
+  <svg
+    className="text-text-neutral-primary"
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 168 36"
+    fill="none"
+    role="img"
+    aria-label={CLOUDY_NAME}
+    height={size || height}
+    width={size || width}
+    {...props}
+  >
+    <CloudyMarkPaths />
+    <text
+      x="48"
+      y="26"
+      fill="currentColor"
+      fontFamily="var(--font-sans), system-ui, sans-serif"
+      fontSize="24"
+      fontWeight="600"
+      letterSpacing="-0.7"
     >
-      <path
-        className="cls-1"
-        d="M1169.38 132.04c20.76-12.21 34.44-34.9 34.44-59.79 0-38.18-31.06-69.25-69.25-69.25l-216.9.23V148.4h-64.8V3h-79.95l-47.14 95.97V3h-52.09l-47.14 95.97V3h-53.48v69.6C560.37 30.64 521.34 0 475.28 0c-42.63 0-79.24 26.25-94.54 63.43C376.39 29.4 347.26 3 312.07 3H212.06v47.43C202.9 22.91 176.91 3 146.35 3H0l46.34 46.33v151.64h53.47v-76.68l17.21 17.21h29.33c30.56 0 56.54-19.91 65.71-47.43v106.91h53.48v-81.51l76.01 81.51h69.62l-64.29-68.94c11.14-6.56 20.22-16.15 26.26-27.46 1.27 55.26 46.58 99.82 102.14 99.82 46.06 0 85.09-30.64 97.81-72.6v69.18h60.88l38.34-78.06v78.06h60.88l66.2-134.78v135.69h95.41l22.86-22.86v22.86h95.05l21.84-21.84v20.93h53.48v-81.5l76.01 81.5h69.62l-64.29-68.94ZM146.35 88.02H99.81V56.48h46.54c8.7 0 15.77 7.07 15.77 15.77s-7.07 15.77-15.77 15.77Zm165.72 0-46.54-.18V56.48h46.54c8.7 0 15.77 7.07 15.77 15.77s-7.08 15.77-15.77 15.77Zm163.21 62.9c-26.86 0-48.72-21.86-48.72-48.72s21.86-48.72 48.72-48.72S524 75.34 524 102.2s-21.86 48.72-48.72 48.72Zm559.28-2.51h-63.41v-20.35h42.91V77.18h-42.91V56.72h63.41v91.69Zm100.01-60.39-46.54-.18V56.48h46.54c8.7 0 15.77 7.07 15.77 15.77s-7.07 15.77-15.77 15.77Z"
-        fill="currentColor"
-        fillRule="evenodd"
-        clipRule="evenodd"
-      />
-    </svg>
-  );
-};
+      {CLOUDY_NAME}
+    </text>
+  </svg>
+);
 
 export const ProwlerShort: React.FC<IconSvgProps> = ({
   size,
@@ -89,22 +113,16 @@ export const ProwlerShort: React.FC<IconSvgProps> = ({
   ...props
 }) => (
   <svg
-    className="text-black dark:text-white"
+    className="text-text-neutral-primary"
     xmlns="http://www.w3.org/2000/svg"
-    viewBox="0 0 432.08 396.77"
+    viewBox="0 0 40 36"
     fill="none"
+    role="img"
+    aria-label={CLOUDY_NAME}
     height={size || height}
     width={size || width}
-    color="evenodd"
     {...props}
   >
-    <path
-      className="cls-1"
-      d="M293.3.01H0s92.87,92.85,92.87,92.85v303.9h107.17v-153.68l34.48,34.49h58.78c76.52,0,138.78-62.26,138.78-138.78S369.82.01,293.3.01ZM293.3,170.4h-93.27v-63.21h93.27c17.43,0,31.6,14.18,31.6,31.6s-14.18,31.6-31.6,31.6Z"
-      fill="currentColor"
-      fillRule="evenodd"
-      clipRule="evenodd"
-      color="evenodd"
-    />
+    <CloudyMarkPaths />
   </svg>
 );

@@ -6,8 +6,6 @@ import type { ReactNode } from "react";
 import { Controller, type UseFormReturn, useWatch } from "react-hook-form";
 
 import {
-  Badge,
-  Button,
   Checkbox,
   Field,
   FieldLabel,
@@ -23,8 +21,6 @@ import {
   getBrowserTimezone,
   getNextScheduledRun,
 } from "@/lib/schedules";
-import { useCloudUpgradeStore } from "@/store";
-import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
 import {
   SCHEDULE_FREQUENCY,
   SCHEDULE_WEEKDAY_LABELS,
@@ -131,11 +127,8 @@ export function ScanScheduleFields({
   showNextScheduledCopy = false,
   headerAction,
   canUseAdvancedSchedule = true,
-  showCloudUpgradeBadge = false,
+  showCloudUpgradeBadge: _showCloudUpgradeBadge = false,
 }: ScanScheduleFieldsProps) {
-  const openCloudUpgrade = useCloudUpgradeStore(
-    (state) => state.openCloudUpgrade,
-  );
   // useWatch, not form.watch: form.watch re-renders are dropped by React Compiler memoization.
   const control = form.control;
   const [frequency, hour, dayOfWeek, dayOfMonth, intervalHours] = useWatch({
@@ -154,21 +147,9 @@ export function ScanScheduleFields({
   // In OSS (non-Cloud) the advanced cadence and time are locked: `/schedules/daily`
   // ignores them, so they are display-only with a Cloud upsell.
   const advancedDisabled = disabled || !canUseAdvancedSchedule;
-  const cloudUpgradeBadge = showCloudUpgradeBadge ? (
-    <Button
-      type="button"
-      variant="bare"
-      size="link-xs"
-      aria-label="Explore advanced scheduling in Prowler Cloud"
-      onClick={() =>
-        openCloudUpgrade(CLOUD_UPGRADE_FEATURE.ADVANCED_SCHEDULING)
-      }
-    >
-      <Badge variant="cloud" size="sm">
-        Cloud
-      </Badge>
-    </Button>
-  ) : null;
+  // Cloudy: no upsell badge. Advanced cadence ships with the open-source
+  // scheduler (see docs/cloudy/ROADMAP.md); until then the fields stay locked.
+  const cloudUpgradeBadge = null;
 
   return (
     <div className="flex flex-col gap-6">

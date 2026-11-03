@@ -4,19 +4,11 @@ import { Home } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 
 import { LighthouseIcon } from "@/components/icons/Icons";
-import { Badge } from "@/components/shadcn/badge/badge";
 import { NavigationButton } from "@/components/shadcn/navigation-button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/shadcn/tooltip";
 import {
   isLighthouseChatRoute,
   LIGHTHOUSE_ROUTE,
 } from "@/lib/lighthouse-routes";
-import { useCloudUpgradeStore } from "@/store";
-import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
 
 import {
   useAppSidebarMode,
@@ -54,21 +46,7 @@ export function AppSidebarModeToggle({
   const pathname = usePathname();
   const mode = useHydratedAppSidebarMode();
   const setMode = useAppSidebarMode((state) => state.setMode);
-  const openCloudUpgrade = useCloudUpgradeStore(
-    (state) => state.openCloudUpgrade,
-  );
-
   const selectMode = (nextMode: AppSidebarMode) => {
-    const isChatUpsell = nextMode === APP_SIDEBAR_MODE.CHAT && !chatEnabled;
-
-    if (isChatUpsell) {
-      openCloudUpgrade(
-        CLOUD_UPGRADE_FEATURE.LIGHTHOUSE_AI,
-        onSelect?.() ?? undefined,
-      );
-      return;
-    }
-
     setMode(nextMode);
     onSelect?.();
 
@@ -80,6 +58,8 @@ export function AppSidebarModeToggle({
     }
   };
 
+  if (!chatEnabled) return null;
+
   return (
     <div
       role="group"
@@ -89,8 +69,6 @@ export function AppSidebarModeToggle({
       {MODES.map((item) => {
         const Icon = item.icon;
         const isActive = item.value === mode;
-        const isCloudUpsell =
-          item.value === APP_SIDEBAR_MODE.CHAT && !chatEnabled;
         const button = (
           <NavigationButton
             key={item.value}
@@ -102,24 +80,10 @@ export function AppSidebarModeToggle({
           >
             <Icon aria-hidden="true" className="size-4 shrink-0" />
             <span>{item.label}</span>
-            {isCloudUpsell && (
-              <Badge variant="cloud" size="sm">
-                Cloud
-              </Badge>
-            )}
           </NavigationButton>
         );
 
-        if (!isCloudUpsell) return button;
-
-        return (
-          <Tooltip key={item.value} delayDuration={100}>
-            <TooltipTrigger asChild>{button}</TooltipTrigger>
-            <TooltipContent side="right">
-              Available in Prowler Cloud
-            </TooltipContent>
-          </Tooltip>
-        );
+        return button;
       })}
     </div>
   );

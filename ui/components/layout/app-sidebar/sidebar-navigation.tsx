@@ -125,9 +125,6 @@ function CloudUpgradeChild({
       }}
     >
       <span className="min-w-0 flex-1 truncate">{item.label}</span>
-      <Badge variant="cloud" size="sm">
-        Cloud
-      </Badge>
     </NavigationButton>
   );
 }

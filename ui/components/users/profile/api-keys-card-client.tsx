@@ -11,13 +11,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/shadcn";
-import { Badge } from "@/components/shadcn/badge/badge";
 import { CustomLink } from "@/components/shadcn/custom/custom-link";
 import { DataTable } from "@/components/shadcn/table";
-import { isCloud } from "@/lib/shared/env";
-import { useCloudUpgradeStore } from "@/store";
 import { MetaDataProps } from "@/types";
-import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
 
 import { ApiKeySuccessModal } from "./api-key-success-modal";
 import { createApiKeyColumns } from "./api-keys/column-api-keys";
@@ -36,11 +32,6 @@ export const ApiKeysCardClient = ({
   metadata,
 }: ApiKeysCardClientProps) => {
   const router = useRouter();
-  const openCloudUpgrade = useCloudUpgradeStore(
-    (state) => state.openCloudUpgrade,
-  );
-  // API key creation is a Prowler Cloud feature; Local Server gets the upsell.
-  const canCreateApiKeys = isCloud();
   const [selectedApiKey, setSelectedApiKey] = useState<EnrichedApiKey | null>(
     null,
   );
@@ -58,11 +49,6 @@ export const ApiKeysCardClient = ({
   };
 
   const handleCreateClick = () => {
-    if (!canCreateApiKeys) {
-      openCloudUpgrade(CLOUD_UPGRADE_FEATURE.API_KEYS);
-      return;
-    }
-
     setIsCreateModalOpen(true);
   };
 
@@ -93,11 +79,6 @@ export const ApiKeysCardClient = ({
           <div className="flex flex-col gap-2">
             <div className="flex items-center gap-2">
               <CardTitle>API Keys</CardTitle>
-              {!canCreateApiKeys && (
-                <Badge variant="cloud" size="sm">
-                  Cloud
-                </Badge>
-              )}
             </div>
             <p className="text-xs text-gray-500">
               Manage API keys for programmatic access.{" "}

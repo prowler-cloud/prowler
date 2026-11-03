@@ -31,7 +31,7 @@ export const metadata: Metadata = {
   },
   description: siteConfig.description,
   icons: {
-    icon: "/favicon.ico",
+    icon: "/favicon.svg",
   },
   other: {
     ...Sentry.getTraceData(),

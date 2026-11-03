@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 
 import { LighthouseIcon } from "@/components/icons/Icons";
+import { isFeatureAvailable } from "@/lib/cloudy/features";
 import { isCloud } from "@/lib/shared/env";
 import type { CloudUpgradeFeature } from "@/types/cloud-upgrade";
 import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
@@ -54,21 +55,19 @@ function getCloudFeature({
   label,
   active,
   feature,
-}: CloudFeatureOptions): NavigationChild {
-  if (!isCloudEnvironment) {
-    return {
-      kind: NAVIGATION_ITEM_KIND.CLOUD_UPGRADE,
-      label,
-      cloudUpgradeFeature: feature,
-    };
-  }
+}: CloudFeatureOptions): NavigationChild[] {
+  // Cloudy: no upsell entries. A feature is linked when it works, hidden while
+  // its open-source backend is still being built.
+  if (!isCloudEnvironment && !isFeatureAvailable(feature)) return [];
 
-  return {
-    kind: NAVIGATION_ITEM_KIND.LINK,
-    href,
-    label,
-    active,
-  };
+  return [
+    {
+      kind: NAVIGATION_ITEM_KIND.LINK,
+      href,
+      label,
+      active,
+    },
+  ];
 }
 
 function isRouteActive(pathname: string, href: string) {
@@ -228,7 +227,7 @@ export function getNavigationConfig({
               label: "Providers",
               active: isRouteActive(pathname, "/providers"),
             },
-            getCloudFeature({
+            ...getCloudFeature({
               isCloudEnvironment,
               href: "/alerts",
               label: "Alerts",
@@ -241,22 +240,13 @@ export function getNavigationConfig({
               label: "Mutelist",
               active: pathname === "/mutelist",
             },
-            getCloudFeature({
+            ...getCloudFeature({
               isCloudEnvironment,
               href: "/scans/config",
               label: "Scans",
               active: isRouteActive(pathname, "/scans/config"),
               feature: CLOUD_UPGRADE_FEATURE.SCAN_CONFIGURATION,
             }),
-            ...(!isCloudEnvironment
-              ? [
-                  {
-                    kind: NAVIGATION_ITEM_KIND.CLOUD_UPGRADE,
-                    label: "CLI Import",
-                    cloudUpgradeFeature: CLOUD_UPGRADE_FEATURE.CLI_IMPORT,
-                  } as const,
-                ]
-              : []),
             {
               kind: NAVIGATION_ITEM_KIND.LINK,
               href: "/integrations",

@@ -6,7 +6,7 @@ export async function GET() {
     version: "1",
     releaseId: process.env.NEXT_PUBLIC_PROWLER_RELEASE_VERSION || "unknown",
     serviceId: "prowler-ui",
-    description: "Prowler UI",
+    description: "Cloudy",
   };
 
   return new Response(JSON.stringify(body), {

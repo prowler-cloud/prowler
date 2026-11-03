@@ -1,0 +1,21 @@
+Cloudy
+Copyright 2026 The Cloudy authors
+
+This product is a fork of Prowler (https://github.com/prowler-cloud/prowler),
+Copyright Prowler Team / ProwlerPro Inc., licensed under the Apache License,
+Version 2.0. The original LICENSE is retained unchanged in this repository.
+
+Cloudy modifies the Prowler App user interface and API: it removes every paid
+plan and upsell gate, replaces the visual design and brand, and adds
+open-source backend implementations for features that upstream offers only in
+its hosted product. Files changed from upstream carry their history in git.
+
+"Prowler" is a trademark of its owners. Cloudy is not affiliated with or
+endorsed by Prowler. The Prowler name and logo are not used as Cloudy's brand;
+references to Prowler remain only where they identify the upstream scanner
+engine, its check IDs, compliance framework names, IAM role names created by
+upstream templates, or the public Prowler Hub catalogue.
+
+The Cloudy UI design applies rules from Taste Skill
+(https://github.com/Leonxlnx/taste-skill), MIT License, Copyright (c) 2026
+Leonxlnx. No Taste Skill source code is included in this repository.

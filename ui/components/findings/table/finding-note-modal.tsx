@@ -24,11 +24,8 @@ import { ViewPlansLink } from "@/components/shared/usage-limit-message";
 import { UsageLimitError } from "@/lib/action-errors";
 import { formatLocalDate } from "@/lib/date-utils";
 import { DOCS_URLS } from "@/lib/external-urls";
-import { useCloudUpgradeStore } from "@/store";
-import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
 import { FINDING_STATUS } from "@/types/components";
 import {
-  FINDING_TRIAGE_DISABLED_REASON,
   FINDING_TRIAGE_ORIGIN,
   FINDING_TRIAGE_RESOLVED_LOCKED_COPY,
   FINDING_TRIAGE_STATUS,
@@ -82,9 +79,6 @@ export function FindingNoteModal({
   initialStatus,
   onTriageUpdateAction,
 }: FindingNoteModalProps) {
-  const openCloudUpgrade = useCloudUpgradeStore(
-    (state) => state.openCloudUpgrade,
-  );
   const { toast } = useToast();
   const initialSelectedStatus =
     initialStatus ??
@@ -115,8 +109,6 @@ export function FindingNoteModal({
     triage.status !== FINDING_TRIAGE_STATUS.RESOLVED;
   const canSubmit =
     canEdit && (!isManualPassSelected || manualPassEvidence.trim().length > 0);
-  const isCloudOnly =
-    triage.disabledReason === FINDING_TRIAGE_DISABLED_REASON.CLOUD_ONLY;
   const shouldShowMutelistInfo =
     canEdit &&
     !triage.isMuted &&
@@ -477,30 +469,14 @@ export function FindingNoteModal({
                 Cancel
               </Button>
               <span className="relative inline-flex">
-                {isCloudOnly && (
-                  <span className="pointer-events-none absolute top-0 right-0 z-10 translate-x-1/3 -translate-y-1/2">
-                    <Badge variant="cloud">Cloud</Badge>
-                  </span>
-                )}
                 <Button
                   type={canSubmit ? "submit" : "button"}
                   size="lg"
-                  aria-label={
-                    isCloudOnly
-                      ? "Save - available in Prowler Cloud"
-                      : undefined
-                  }
-                  disabled={!canSubmit && !isCloudOnly}
-                  onClick={
-                    isCloudOnly
-                      ? () =>
-                          openCloudUpgrade(CLOUD_UPGRADE_FEATURE.FINDING_TRIAGE)
-                      : undefined
-                  }
+                  disabled={!canSubmit}
                 >
                   {isSubmitting
                     ? "Saving..."
-                    : canEdit || isCloudOnly
+                    : canEdit
                       ? "Save"
                       : "Unavailable"}
                 </Button>

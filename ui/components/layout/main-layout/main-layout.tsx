@@ -5,7 +5,6 @@ import { type ReactNode, Suspense } from "react";
 import { JiraDispatchModalHost } from "@/components/findings/jira-dispatch-modal-host";
 import { RecheckResourceModalHost } from "@/components/findings/recheck-resource-modal-host";
 import { AppSidebar } from "@/components/layout/app-sidebar";
-import { CloudUpgradeModal } from "@/components/shared/cloud-upgrade-modal";
 import { useSidePanelPushWidth } from "@/hooks/use-side-panel-push-width";
 import { useStore } from "@/hooks/use-store";
 import { cn } from "@/lib/utils";
@@ -22,9 +21,10 @@ export default function MainLayout({ children }: { children: ReactNode }) {
   // the shell leaves the tab order and the accessibility tree meanwhile.
   const isShellInert = useSidePanelStore(selectHasModalHost);
   return (
-    <div className="relative flex h-dvh items-center justify-center overflow-hidden">
+    // Cloudy "framed sheet": the sidebar sits on the tinted frame; the page is a
+    // white sheet inset 8px from the window edges, 1px edge, 16px corners, no shadow.
+    <div className="bg-bg-neutral-primary relative flex h-dvh items-center justify-center overflow-hidden min-[64rem]:py-2 min-[64rem]:pr-2">
       <AppSidebar inert={isShellInert} />
-      <CloudUpgradeModal />
       <JiraDispatchModalHost />
       <RecheckResourceModalHost />
       <main
@@ -37,7 +37,7 @@ export default function MainLayout({ children }: { children: ReactNode }) {
         data-responsive-container
         inert={isShellInert}
         className={cn(
-          "no-scrollbar @container relative z-10 mb-auto h-full flex-1 flex-col overflow-y-auto pl-4 min-[64rem]:ml-[264px]",
+          "no-scrollbar @container bg-bg-neutral-secondary relative z-10 mb-auto h-full flex-1 flex-col overflow-y-auto pl-4 min-[64rem]:ml-[248px] min-[64rem]:rounded-2xl min-[64rem]:border min-[64rem]:border-border-neutral-secondary",
           // Margin animates on open/close, but tracks the pointer 1:1 during
           // a drag resize.
           !sidePanelResizing &&

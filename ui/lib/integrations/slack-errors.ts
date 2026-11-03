@@ -39,7 +39,7 @@ export const SLACK_GENERIC_ERROR_MESSAGE =
   "Slack could not complete that request. Try again in a moment.";
 
 export const SLACK_RATE_LIMITED_MESSAGE =
-  "Slack is rate limiting Prowler right now. Try again in a few moments.";
+  "Slack is rate limiting Cloudy right now. Try again in a few moments.";
 
 /**
  * For a channel list that stopped short of the workspace: the page budget ran
@@ -123,7 +123,7 @@ export const slackRateLimitMessage = (
   if (retryAfterSeconds === null || retryAfterSeconds <= 0) {
     return SLACK_RATE_LIMITED_MESSAGE;
   }
-  return `Slack is rate limiting Prowler right now. Try again in about ${describeWait(
+  return `Slack is rate limiting Cloudy right now. Try again in about ${describeWait(
     Math.ceil(retryAfterSeconds),
   )}.`;
 };

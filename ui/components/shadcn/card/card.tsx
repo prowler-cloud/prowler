@@ -12,17 +12,17 @@ export const CardVariant = {
 
 export type CardVariant = (typeof CardVariant)[keyof typeof CardVariant];
 
-const cardVariants = cva("flex flex-col gap-6 rounded-xl border", {
+const cardVariants = cva("flex flex-col gap-6 rounded-lg border", {
   variants: {
     variant: {
       default: "",
       base: "border-border-neutral-secondary bg-bg-neutral-secondary px-[18px] pt-3 pb-4",
       inner:
-        "rounded-[12px] backdrop-blur-[46px] border-border-neutral-tertiary bg-bg-neutral-tertiary",
-      danger: "border-border-error bg-bg-fail-secondary gap-1 rounded-[12px]",
-      success: "border-bg-pass bg-bg-pass-secondary gap-1 rounded-[12px]",
-      warning: "border-bg-warning bg-bg-warning-secondary gap-1 rounded-[12px]",
-      // Blue-green animated gradient ring (Lighthouse accent); border-0 —
+        "rounded-lg border-border-neutral-secondary bg-bg-neutral-tertiary",
+      danger: "border-border-error bg-bg-fail-secondary gap-1 rounded-lg",
+      success: "border-bg-pass bg-bg-pass-secondary gap-1 rounded-lg",
+      warning: "border-bg-warning bg-bg-warning-secondary gap-1 rounded-lg",
+      // Flat 1px accent ring (Lighthouse accent); border-0 —
       // the ring pseudo draws the edge in place of the real border.
       lighthouse: "gradient-border-lighthouse bg-bg-neutral-primary border-0",
     },
@@ -35,7 +35,7 @@ const cardVariants = cva("flex flex-col gap-6 rounded-xl border", {
       none: "p-0",
     },
     interactive: {
-      true: "cursor-pointer transition-shadow hover:shadow-md",
+      true: "cursor-pointer transition-colors duration-150 hover:bg-bg-neutral-tertiary",
       false: "",
     },
   },

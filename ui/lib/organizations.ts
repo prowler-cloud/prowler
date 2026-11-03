@@ -117,7 +117,7 @@ export function shortenNodeId(id: string): string | undefined {
 export function organizationNameFallbackHint(
   orgType: OrganizationType,
 ): string {
-  return `If left blank, Prowler will use the ${terminologyFor(orgType).identifierLabel}.`;
+  return `If left blank, Cloudy will use the ${terminologyFor(orgType).identifierLabel}.`;
 }
 
 /**

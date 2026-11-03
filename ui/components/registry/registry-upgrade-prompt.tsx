@@ -3,28 +3,10 @@
 import { Alert, AlertDescription, AlertTitle } from "@/components/shadcn/alert";
 import { Button } from "@/components/shadcn/button/button";
 import { useAuth } from "@/hooks/use-auth";
-import { useCloudUpgradeStore } from "@/store/cloud-upgrade/store";
-import { PAID_PLAN_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
 
+/** Cloudy has no paid plan: the registry upgrade prompt never renders. */
 export function RegistryUpgradePrompt() {
-  const openCloudUpgrade = useCloudUpgradeStore(
-    (state) => state.openCloudUpgrade,
-  );
-
-  return (
-    <Alert>
-      <AlertTitle>Registry is available on paid plans</AlertTitle>
-      <AlertDescription>
-        Unlock custom providers, security checks, and compliance frameworks.
-        <Button
-          type="button"
-          onClick={() => openCloudUpgrade(PAID_PLAN_UPGRADE_FEATURE.REGISTRY)}
-        >
-          Unlock Registry
-        </Button>
-      </AlertDescription>
-    </Alert>
-  );
+  return null;
 }
 
 export function RegistrySetupPrompt() {

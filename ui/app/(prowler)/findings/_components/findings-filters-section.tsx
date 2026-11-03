@@ -8,6 +8,7 @@ import { getAllProviders } from "@/actions/providers";
 import { SeedFromFindingsButton } from "@/app/(prowler)/alerts/_components";
 import { FindingsFilters } from "@/components/findings/findings-filters";
 import { createScanDetailsMapping, splitCsvFilterValues } from "@/lib";
+import { isFeatureAvailable } from "@/lib/cloudy/features";
 import { getSelectedFindingCheckOptions } from "@/lib/finding-group-filter-options";
 import { isCloud } from "@/lib/shared/env";
 import { ScanEntity, ScanProps } from "@/types";
@@ -86,17 +87,19 @@ export async function FindingsFiltersSection({
         initialOptions: selectedChecks,
       }}
       trailingControls={
-        <SeedFromFindingsButton
-          filterBag={filters}
-          providers={providers}
-          scans={scanDetails}
-          uniqueRegions={uniqueRegions}
-          uniqueServices={uniqueServices}
-          uniqueResourceTypes={uniqueResourceTypes}
-          uniqueCategories={uniqueCategories}
-          uniqueGroups={uniqueGroups}
-          isCloudEnabled={isCloud()}
-        />
+        (isCloud() || isFeatureAvailable("alerts")) && (
+          <SeedFromFindingsButton
+            filterBag={filters}
+            providers={providers}
+            scans={scanDetails}
+            uniqueRegions={uniqueRegions}
+            uniqueServices={uniqueServices}
+            uniqueResourceTypes={uniqueResourceTypes}
+            uniqueCategories={uniqueCategories}
+            uniqueGroups={uniqueGroups}
+            isCloudEnabled
+          />
+        )
       }
     />
   );

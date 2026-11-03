@@ -14,7 +14,7 @@ const SKILL_BLOCK_START = "[PROWLER_UI_SKILL_V1]";
 const SKILL_BLOCK_END = "[/PROWLER_UI_SKILL_V1]";
 
 const SKILL_PREAMBLE =
-  "The user launched this Lighthouse skill from the Prowler UI. Treat the instructions below as the task for this turn.";
+  "The user launched this Lighthouse skill from the Cloudy. Treat the instructions below as the task for this turn.";
 
 // Unlike the context block (untrusted data), this block IS the instruction set
 // for the turn — which is exactly why the two travel in separate sentinels.

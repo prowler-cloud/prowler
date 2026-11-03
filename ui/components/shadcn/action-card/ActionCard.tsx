@@ -62,7 +62,7 @@ export const ActionCard = ({
       role="button"
       tabIndex={0}
       className={cn(
-        "bg-bg-neutral-secondary hover:bg-bg-neutral-tertiary cursor-pointer gap-0 shadow-sm transition-colors",
+        "bg-bg-neutral-secondary hover:bg-bg-neutral-tertiary cursor-pointer gap-0 transition-colors duration-150",
         "border",
         colors.card,
         className,

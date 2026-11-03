@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 36" fill="none">
+  <style>
+    .c{stroke:#121417}.f{fill:#121417}.a{stroke:#136f99}.d{fill:#136f99}
+    @media (prefers-color-scheme: dark){.c{stroke:#f3f5f7}.f{fill:#f3f5f7}.a{stroke:#5ab4e6}.d{fill:#5ab4e6}}
+  </style>
+  <path class="f" opacity=".16" d="M10.2 26.5h20.6a7.2 7.2 0 0 0 .9-14.34A10.4 10.4 0 0 0 11.6 10.4a8.05 8.05 0 0 0-1.4 16.1Z"/>
+  <path class="c" stroke-width="2.2" stroke-linejoin="round" d="M10.2 26.5h20.6a7.2 7.2 0 0 0 .9-14.34A10.4 10.4 0 0 0 11.6 10.4a8.05 8.05 0 0 0-1.4 16.1Z"/>
+  <path class="a" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" d="m11.5 21.2 7.2-5.4 5.6 4.1 6-5.2"/>
+  <circle class="d" cx="11.5" cy="21.2" r="2.1"/><circle class="d" cx="18.7" cy="15.8" r="2.1"/><circle class="d" cx="30.3" cy="14.7" r="2.1"/>
+</svg>

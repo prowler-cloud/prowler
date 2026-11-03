@@ -23,7 +23,6 @@ import type {
 } from "@/app/(prowler)/alerts/_types/alert-form";
 import { buildFindingsFilterChips } from "@/components/findings/findings-filters.utils";
 import {
-  Badge,
   Button,
   Tooltip,
   TooltipContent,
@@ -31,9 +30,7 @@ import {
   ToastAction,
   useToast,
 } from "@/components/shadcn";
-import { useCloudUpgradeStore } from "@/store";
 import type { ScanEntity } from "@/types";
-import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
 import type { ProviderProps } from "@/types/providers";
 
 const DISABLED_FILTER_TOOLTIP =
@@ -141,9 +138,6 @@ export const SeedFromFindingsButton = ({
 }: SeedFromFindingsButtonProps) => {
   const router = useRouter();
   const { toast } = useToast();
-  const openCloudUpgrade = useCloudUpgradeStore(
-    (state) => state.openCloudUpgrade,
-  );
   const [modalOpen, setModalOpen] = useState(false);
   const [seeding, setSeeding] = useState(false);
   const [seededCondition, setSeededCondition] = useState<AlertCondition | null>(
@@ -160,10 +154,7 @@ export const SeedFromFindingsButton = ({
   const canSeedFromFilters = hasFindingFilterValue(filterBag);
 
   const handleClick = async () => {
-    if (!isCloudEnabled) {
-      openCloudUpgrade(CLOUD_UPGRADE_FEATURE.ALERTS);
-      return;
-    }
+    if (!isCloudEnabled) return;
     if (!canSeedFromFilters) return;
     setSeeding(true);
     const result = await seedAlertRule(withDefaultAlertSeedFilters(filterBag));
@@ -244,16 +235,7 @@ export const SeedFromFindingsButton = ({
     );
   }
 
-  if (!isCloudEnabled) {
-    return (
-      <span className="relative inline-flex">
-        {button}
-        <span className="pointer-events-none absolute top-0 right-0 z-10 translate-x-1/3 -translate-y-1/2">
-          <Badge variant="cloud">Cloud</Badge>
-        </span>
-      </span>
-    );
-  }
+  if (!isCloudEnabled) return null;
 
   return (
     <Tooltip>

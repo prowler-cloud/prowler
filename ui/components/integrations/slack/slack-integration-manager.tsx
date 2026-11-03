@@ -71,7 +71,7 @@ const CHECK_HINT_ID = "slack-connection-check-hint";
 
 /** The exact text the check posts (contract, Connection); the hint quotes it. */
 const CONFIRMATION_MESSAGE =
-  "✅ Prowler connection verified. Notifications will be delivered to this channel.";
+  "✅ Cloudy connection verified. Notifications will be delivered to this channel.";
 
 /**
  * A disconnect that removed the row without Slack confirming the revocation.
@@ -738,7 +738,7 @@ export const SlackIntegrationManager = ({
             <IntegrationCardHeader
               icon={<SlackIcon size={32} />}
               title={`Connected to ${workspaceName ?? "your Slack workspace"}`}
-              subtitle="Prowler posts to this workspace only."
+              subtitle="Cloudy posts to this workspace only."
               meta={
                 lastCheckedOn && (
                   <p className="text-text-neutral-tertiary font-mono text-xs">
@@ -836,14 +836,14 @@ export const SlackIntegrationManager = ({
               )}
 
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                {/* Keyed: the card's subtitle also starts "Prowler posts to". */}
+                {/* Keyed: the card's subtitle also starts "Cloudy posts to". */}
                 <p
                   className="text-text-neutral-secondary text-xs"
                   data-authorized-channels
                 >
                   {authorizedChannels.length > 0 ? (
                     <>
-                      Prowler posts to{" "}
+                      Cloudy posts to{" "}
                       <StyledChannelList
                         names={authorizedChannels.map(
                           (channel) => channel.name,

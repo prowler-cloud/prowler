@@ -18,9 +18,7 @@ import {
   buildFindingGroupContext,
   buildFindingSummaryContext,
 } from "@/lib/lighthouse/context/contributions";
-import { useCloudUpgradeStore } from "@/store";
 import { FindingGroupRow, MetaDataProps } from "@/types";
-import { PAID_PLAN_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
 import { JIRA_DISPATCH_MODE, JIRA_DISPATCH_TARGET } from "@/types/integrations";
 import { LIGHTHOUSE_CONTEXT_LIMIT } from "@/types/lighthouse-context";
 
@@ -145,9 +143,6 @@ const FindingsGroupTableContent = ({
 }: FindingsGroupTableContentProps) => {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const openCloudUpgrade = useCloudUpgradeStore(
-    (state) => state.openCloudUpgrade,
-  );
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [selectedExpandedCheckId, setSelectedExpandedCheckId] = useState<
     string | null
@@ -162,8 +157,7 @@ const FindingsGroupTableContent = ({
   const previewedGroups = getPreviewedGroups(safeData, previewRowLimit);
   const isPreviewedRow = (index: number) =>
     previewRowLimit === undefined || index < previewRowLimit;
-  const openFindingsPreviewUpgrade = () =>
-    openCloudUpgrade(PAID_PLAN_UPGRADE_FEATURE.FINDINGS_PREVIEW);
+  const openFindingsPreviewUpgrade = () => {};
   const expandedGroupCandidate = selectedExpandedCheckId
     ? previewedGroups.find((group) => group.checkId === selectedExpandedCheckId)
     : undefined;

@@ -10,7 +10,7 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "border border-transparent bg-button-primary text-black font-semibold hover:bg-button-primary-hover active:bg-button-primary-press focus-visible:ring-button-primary/50",
+          "border border-transparent bg-button-primary text-text-button-primary font-medium hover:bg-button-primary-hover active:bg-button-primary-press focus-visible:ring-button-primary/50",
         secondary:
           "border border-transparent bg-button-secondary text-white hover:bg-button-secondary/90 active:bg-button-secondary-press focus-visible:ring-button-secondary/50 dark:text-black",
         tertiary:
@@ -25,7 +25,7 @@ const buttonVariants = cva(
           "border border-transparent text-text-neutral-primary hover:bg-bg-neutral-tertiary active:bg-border-neutral-secondary focus-visible:ring-border-neutral-secondary/50",
         // Lighthouse AI entry points: the brand gradient with dark text.
         lighthouse:
-          "border border-transparent bg-lighthouse text-black font-semibold shadow-sm hover:brightness-105 hover:shadow-md active:brightness-95 focus-visible:ring-border-lighthouse disabled:bg-none",
+          "border border-transparent bg-lighthouse text-text-button-primary font-medium hover:brightness-110 active:brightness-95 focus-visible:ring-border-lighthouse disabled:bg-none",
         link: "text-button-tertiary underline-offset-4 hover:text-button-tertiary-hover disabled:bg-transparent",
         // Chrome-free: no border/background, only the icon shows. Hover/active shift
         // the icon color instead of painting a box. Pair with an `icon*` size.

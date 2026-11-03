@@ -49,12 +49,12 @@ export const ORGANIZATION_WIZARD_STEPS: readonly StepConfig[] = [
   {
     label: "Organization Access",
     description:
-      "Name the organization and deploy the access Prowler uses in every account.",
+      "Name the organization and deploy the access Cloudy uses in every account.",
     icon: KeyRound,
   },
   {
     label: "Select Accounts",
-    description: "Prowler discovers the organization; pick what to connect.",
+    description: "Cloudy discovers the organization; pick what to connect.",
     icon: Network,
   },
   LAUNCH_STEP,

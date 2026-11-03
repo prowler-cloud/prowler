@@ -1,9 +1,8 @@
 "use client";
 
-import { Badge } from "@/components/shadcn/badge/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/shadcn/tabs/tabs";
+import { isFeatureAvailable } from "@/lib/cloudy/features";
 import { isCloud } from "@/lib/shared/env";
-import { useCloudUpgradeStore } from "@/store";
 import {
   CLOUD_UPGRADE_FEATURE,
   type CloudUpgradeFeature,
@@ -60,11 +59,9 @@ export function OnboardingMethodTabs({
   onSelectSingle,
   onSelectOrganizations,
 }: OnboardingMethodTabsProps) {
-  const isCloudEnv = isCloud();
-  const openCloudUpgrade = useCloudUpgradeStore(
-    (state) => state.openCloudUpgrade,
-  );
   const copy = ONBOARDING_TABS_COPY[orgType];
+  const orgOnboardingAvailable =
+    isCloud() || isFeatureAvailable(copy.upgradeFeature);
 
   const handleValueChange = (next: string) => {
     if (next === value) return;
@@ -72,12 +69,10 @@ export function OnboardingMethodTabs({
       onSelectSingle?.();
       return;
     }
-    if (isCloudEnv) {
-      onSelectOrganizations?.();
-      return;
-    }
-    openCloudUpgrade(copy.upgradeFeature);
+    if (orgOnboardingAvailable) onSelectOrganizations?.();
   };
+
+  if (!orgOnboardingAvailable) return null;
 
   return (
     <Tabs
@@ -89,16 +84,7 @@ export function OnboardingMethodTabs({
         <TabsTrigger value={ONBOARDING_METHOD.SINGLE}>
           {copy.single}
         </TabsTrigger>
-        <TabsTrigger
-          value={ONBOARDING_METHOD.ORGANIZATION}
-          adornment={
-            !isCloudEnv && (
-              <Badge variant="cloud" size="sm">
-                Cloud
-              </Badge>
-            )
-          }
-        >
+        <TabsTrigger value={ONBOARDING_METHOD.ORGANIZATION}>
           {copy.organization}
         </TabsTrigger>
       </TabsList>
