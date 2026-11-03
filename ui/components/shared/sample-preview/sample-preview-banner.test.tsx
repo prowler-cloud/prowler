@@ -7,6 +7,7 @@ import {
   SAMPLE_PREVIEW_STEP,
 } from "@/lib/sample-preview/sample-preview-events";
 import { SAMPLE_PREVIEW_STAGE } from "@/lib/sample-preview/sample-preview-state";
+import { LAUNCH_SCAN_HREF } from "@/lib/scans-navigation";
 
 import {
   SAMPLE_PREVIEW_POLL_INTERVAL_MS,
@@ -154,6 +155,66 @@ describe("SamplePreviewBanner", () => {
     await advancePoll();
 
     expect(getScanMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("points a tenant with a provider but no scan at launching one", () => {
+    // Given / When
+    render(
+      <SamplePreviewBanner
+        page={SAMPLE_PREVIEW_PAGE.FINDINGS}
+        state={{
+          active: true,
+          stage: SAMPLE_PREVIEW_STAGE.NO_SCAN,
+          runningScan: null,
+        }}
+      />,
+    );
+
+    // Then
+    expect(screen.getByRole("link", { name: "Launch Scan" })).toHaveAttribute(
+      "href",
+      LAUNCH_SCAN_HREF,
+    );
+    expect(screen.queryByLabelText("First scan progress")).toBeNull();
+  });
+
+  it("goes back to the no-scan stage when the first scan fails", async () => {
+    // Given
+    getScanMock.mockResolvedValue(scanResponse("failed", 30));
+    render(
+      <SamplePreviewBanner
+        page={SAMPLE_PREVIEW_PAGE.OVERVIEW}
+        state={RUNNING}
+      />,
+    );
+
+    // When
+    await advancePoll();
+    await advancePoll();
+
+    // Then
+    expect(refreshMock).toHaveBeenCalledTimes(1);
+    expect(getScanMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps polling when a progress request fails", async () => {
+    // Given
+    getScanMock
+      .mockRejectedValueOnce(new Error("Network error"))
+      .mockResolvedValue(scanResponse("executing", 70));
+    render(
+      <SamplePreviewBanner
+        page={SAMPLE_PREVIEW_PAGE.OVERVIEW}
+        state={RUNNING}
+      />,
+    );
+
+    // When
+    await advancePoll();
+    await advancePoll();
+
+    // Then
+    expect(screen.getByText("70%")).toBeVisible();
   });
 
   it("tells a running scan apart and opens the in-progress scans tab", () => {

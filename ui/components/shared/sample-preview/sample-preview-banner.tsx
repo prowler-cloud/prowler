@@ -104,9 +104,12 @@ function SamplePreviewBannerContent({ state, page }: SamplePreviewBannerProps) {
       // A slow response must not overwrite a newer one.
       if (inFlight) return;
       inFlight = true;
-      const response = await getScan(runningScan.id).finally(() => {
-        inFlight = false;
-      });
+      // A failed request is a transient empty response: keep polling.
+      const response = await getScan(runningScan.id)
+        .catch(() => undefined)
+        .finally(() => {
+          inFlight = false;
+        });
       if (stopped) return;
 
       // The scan is gone (e.g. its provider was deleted): re-resolve the page.
