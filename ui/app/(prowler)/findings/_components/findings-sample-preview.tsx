@@ -1,10 +1,13 @@
-import Link from "next/link";
-
+import { FindingsFilters } from "@/components/findings/findings-filters";
 import { FindingsGroupTable } from "@/components/findings/table";
-import { Button } from "@/components/shadcn";
 import { SamplePreviewBanner } from "@/components/shared/sample-preview/sample-preview-banner";
+import { FilterTransitionWrapper } from "@/contexts";
 import { SAMPLE_ACCOUNT } from "@/lib/sample-preview/sample-dataset";
-import { filterSampleFindingGroups } from "@/lib/sample-preview/sample-findings";
+import {
+  filterSampleFindingGroups,
+  SAMPLE_FILTER_PROVIDER,
+  SAMPLE_FINDING_FILTER_OPTIONS,
+} from "@/lib/sample-preview/sample-findings";
 import { SAMPLE_PREVIEW_PAGE } from "@/lib/sample-preview/sample-preview-events";
 import type { SamplePreviewActive } from "@/lib/sample-preview/sample-preview-state";
 import type { SearchParamsProps } from "@/types/components";
@@ -17,36 +20,43 @@ const SAMPLE_SCAN_FILTERS: Record<string, string> = {
 
 interface FindingsSamplePreviewProps {
   state: SamplePreviewActive;
-  /** Overview drill-downs and the table's search and sorting controls. */
+  /** The filter bar, Overview drill-downs and the table's search and sorting. */
   searchParams?: SearchParamsProps;
 }
 
-/** Sample finding groups: no filter controls, no metadata (so no Lighthouse context). */
+/** Sample finding groups with the real filter bar; options come from the records. */
 export function FindingsSamplePreview({
   state,
   searchParams = {},
 }: FindingsSamplePreviewProps) {
-  const { groups, filtered, resourceFilters } =
-    filterSampleFindingGroups(searchParams);
+  const { groups, resourceFilters } = filterSampleFindingGroups(searchParams);
 
   return (
     <>
       <SamplePreviewBanner state={state} page={SAMPLE_PREVIEW_PAGE.FINDINGS} />
-      {filtered && (
-        <p className="text-text-neutral-tertiary mb-4 text-sm">
-          Showing {groups.length} sample checks matching your filters.{" "}
-          <Button variant="link" size="link-sm" asChild>
-            <Link href="/findings">Show all</Link>
-          </Button>
-        </p>
-      )}
-      <FindingsGroupTable
-        // Key resets client state (selection, drill-down) when data changes.
-        key={groups.map((group) => group.id).join(",")}
-        data={groups}
-        resolvedFilters={{ ...SAMPLE_SCAN_FILTERS, ...resourceFilters }}
-        hasHistoricalData
-      />
+      <FilterTransitionWrapper>
+        <div className="mb-6">
+          {/* No scans or groups: only the sample account and its own values. */}
+          <FindingsFilters
+            providers={[SAMPLE_FILTER_PROVIDER]}
+            providerGroups={[]}
+            completedScanIds={[]}
+            scanDetails={[]}
+            uniqueRegions={SAMPLE_FINDING_FILTER_OPTIONS.regions}
+            uniqueServices={SAMPLE_FINDING_FILTER_OPTIONS.services}
+            uniqueResourceTypes={SAMPLE_FINDING_FILTER_OPTIONS.resourceTypes}
+            uniqueCategories={SAMPLE_FINDING_FILTER_OPTIONS.categories}
+            uniqueGroups={SAMPLE_FINDING_FILTER_OPTIONS.groups}
+          />
+        </div>
+        <FindingsGroupTable
+          // Key resets client state (selection, drill-down) when data changes.
+          key={groups.map((group) => group.id).join(",")}
+          data={groups}
+          resolvedFilters={{ ...SAMPLE_SCAN_FILTERS, ...resourceFilters }}
+          hasHistoricalData
+        />
+      </FilterTransitionWrapper>
     </>
   );
 }
