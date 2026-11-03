@@ -42,11 +42,9 @@ import type {
 } from "@/types/scan-configurations";
 import type { ScanScheduleCapability } from "@/types/schedules";
 
-// Entry points of a tenant that is just starting; any other open is routine work.
-const NEW_TENANT_WIZARD_SOURCES: readonly WizardOpenSource[] = [
-  WIZARD_OPEN_SOURCE.FIRST_RUN,
-  WIZARD_OPEN_SOURCE.SAMPLE_PREVIEW,
-  WIZARD_OPEN_SOURCE.EMPTY_STATE,
+// Row actions edit a provider already listed here, so closing them stays on this page.
+const STAY_ON_PROVIDERS_SOURCES: readonly WizardOpenSource[] = [
+  WIZARD_OPEN_SOURCE.ROW_ACTION,
 ];
 
 interface ProvidersAccountsViewProps {
@@ -148,7 +146,7 @@ export function ProvidersAccountsView({
     if (
       samplePreviewActive &&
       wizardSource &&
-      NEW_TENANT_WIZARD_SOURCES.includes(wizardSource)
+      !STAY_ON_PROVIDERS_SOURCES.includes(wizardSource)
     ) {
       router.replace("/");
       return;

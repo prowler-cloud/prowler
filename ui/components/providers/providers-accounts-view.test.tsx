@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -313,6 +313,30 @@ describe("ProvidersAccountsView", () => {
     expect(replaceMock).toHaveBeenCalledWith("/");
   });
 
+  it("sends the tenant to the sample Overview after launching a scan from the sidebar CTA", async () => {
+    // Given: the sidebar Launch Scan CTA opened the wizard, which closes after the launch.
+    searchParamsValue.current =
+      "addProvider=true&addProviderSource=sidebar_cta";
+    const user = userEvent.setup();
+
+    render(
+      <ProvidersAccountsView
+        isCloud
+        samplePreviewActive
+        filters={filters}
+        metadata={metadata}
+        providers={providers}
+        rows={rows}
+      />,
+    );
+
+    // When
+    await user.click(screen.getByRole("button", { name: /close/i }));
+
+    // Then
+    expect(replaceMock).toHaveBeenCalledWith("/");
+  });
+
   it("sends a new tenant to the sample Overview when the empty-state wizard closes", async () => {
     // Given
     const user = userEvent.setup();
@@ -338,8 +362,35 @@ describe("ProvidersAccountsView", () => {
     expect(replaceMock).toHaveBeenCalledWith("/");
   });
 
-  it("keeps a tenant with providers on the page when a manually opened wizard closes", async () => {
-    // Given: providers exist and the wizard opens from the page button.
+  it("keeps the user on Providers when a row action wizard closes", async () => {
+    // Given: a row action opens the wizard to edit an existing provider.
+    const user = userEvent.setup();
+
+    render(
+      <ProvidersAccountsView
+        isCloud
+        samplePreviewActive
+        filters={filters}
+        metadata={metadata}
+        providers={disconnectedProviders}
+        rows={rows}
+      />,
+    );
+    const { onOpenProviderWizard } = providersAccountsTableSpy.mock
+      .lastCall![0] as {
+      onOpenProviderWizard: () => void;
+    };
+
+    // When
+    act(() => onOpenProviderWizard());
+    await user.click(screen.getByRole("button", { name: /close/i }));
+
+    // Then
+    expect(replaceMock).not.toHaveBeenCalled();
+  });
+
+  it("sends the tenant to the sample Overview when the page-button wizard closes", async () => {
+    // Given: a provider exists but no scan has completed yet.
     const user = userEvent.setup();
 
     render(
@@ -358,7 +409,7 @@ describe("ProvidersAccountsView", () => {
     await user.click(screen.getByRole("button", { name: /close/i }));
 
     // Then
-    expect(replaceMock).not.toHaveBeenCalled();
+    expect(replaceMock).toHaveBeenCalledWith("/");
   });
 
   it("signals which control opened the wizard", async () => {
