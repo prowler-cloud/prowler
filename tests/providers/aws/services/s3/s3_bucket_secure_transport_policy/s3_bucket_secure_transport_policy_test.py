@@ -273,6 +273,16 @@ class Test_s3_bucket_secure_transport_policy:
                 {
                     "Effect": "Deny",
                     "Principal": "*",
+                    "Action": "s3:*",
+                    "NotResource": "arn:aws:s3:::bucket_test_us*",
+                    "Condition": {"Bool": {"aws:SecureTransport": "false"}},
+                },
+                id="deny-with-not-resource-wildcard",
+            ),
+            pytest.param(
+                {
+                    "Effect": "Deny",
+                    "Principal": "*",
                     "Action": "s3:Get*",
                     "Resource": "arn:aws:s3:::bucket_test_us/*",
                     "Condition": {"Bool": {"aws:SecureTransport": "false"}},
@@ -394,6 +404,21 @@ class Test_s3_bucket_secure_transport_policy:
                     },
                 },
                 id="single-statement-object",
+            ),
+            pytest.param(
+                {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Effect": "Deny",
+                            "Principal": "*",
+                            "Action": "s3:*",
+                            "NotResource": ["arn:aws:s3:::bucket_test_us"],
+                            "Condition": {"Bool": {"aws:SecureTransport": "false"}},
+                        }
+                    ],
+                },
+                id="not-resource-excluding-only-bucket-arn",
             ),
         ],
     )
