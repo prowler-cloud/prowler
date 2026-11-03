@@ -18,6 +18,7 @@ export const SAMPLE_PREVIEW_PAGE = {
   COMPLIANCE: "compliance",
   ISSUES: "issues",
   ATTACK_PATHS: "attack_paths",
+  RESOURCES: "resources",
 } as const;
 
 export type SamplePreviewPage =

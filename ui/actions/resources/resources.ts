@@ -14,6 +14,7 @@ import {
 import { appendSanitizedProviderTypeFilters } from "@/lib/provider-filters";
 import {
   isSampleId,
+  sampleResourceDrawerData,
   sampleResourceEvents,
 } from "@/lib/sample-preview/sample-records";
 import { handleApiResponse } from "@/lib/server-actions-helper";
@@ -295,6 +296,8 @@ export const getResourceDrawerData = async ({
   pageSize?: number;
   query?: string;
 }) => {
+  if (isSampleId(resourceId)) return sampleResourceDrawerData(resourceId);
+
   const isCloudEnv = isCloud();
 
   const [resourceData, findingsResponse, organizationsResponse] =
