@@ -18,16 +18,9 @@ import type { TabId } from "../graphs-tabs/_config/graphs-tabs-config";
 import { RiskPlotClient } from "../graphs-tabs/risk-plot/risk-plot-client";
 import { RiskRadarViewClient } from "../graphs-tabs/risk-radar-view/risk-radar-view-client";
 
-// Inert so sample rows and charts never open drill-downs or detail panels.
-const Inert = ({ children }: { children: ReactNode }) => (
-  <div inert className="flex w-full flex-1">
-    {children}
-  </div>
-);
-
 const SAMPLE_TABS_CONTENT: Record<TabId, ReactNode> = {
   findings: (
-    <Inert>
+    <div className="flex w-full flex-1">
       <div className="flex w-full flex-col">
         <LatestFindingsTable
           data={SAMPLE_NEW_FINDINGS}
@@ -44,37 +37,42 @@ const SAMPLE_TABS_CONTENT: Record<TabId, ReactNode> = {
           }
         />
       </div>
-    </Inert>
+    </div>
   ),
   "threat-map": (
-    <Inert>
+    <div className="flex w-full flex-1">
       <div className="w-full flex-1 overflow-hidden">
-        <ThreatMap data={SAMPLE_THREAT_MAP_DATA} height={460} />
+        <ThreatMap
+          disableNavigation
+          data={SAMPLE_THREAT_MAP_DATA}
+          height={460}
+        />
       </div>
-    </Inert>
+    </div>
   ),
   "risk-radar": (
-    <Inert>
-      <RiskRadarViewClient data={SAMPLE_RADAR_DATA} />
-    </Inert>
+    <div className="flex w-full flex-1">
+      <RiskRadarViewClient disableNavigation data={SAMPLE_RADAR_DATA} />
+    </div>
   ),
   "risk-pipeline": (
-    <Inert>
+    <div className="flex w-full flex-1">
       <div className="w-full flex-1 overflow-visible">
         <SankeyChart
+          disableNavigation
           data={SAMPLE_SANKEY_DATA}
           zeroDataProviders={SAMPLE_SANKEY_DATA.zeroDataProviders}
           height={460}
         />
       </div>
-    </Inert>
+    </div>
   ),
   "risk-plot": (
-    <Inert>
+    <div className="flex w-full flex-1">
       <div className="w-full flex-1 overflow-visible">
-        <RiskPlotClient data={SAMPLE_RISK_PLOT_POINTS} />
+        <RiskPlotClient disableNavigation data={SAMPLE_RISK_PLOT_POINTS} />
       </div>
-    </Inert>
+    </div>
   ),
 };
 

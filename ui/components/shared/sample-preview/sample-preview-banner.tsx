@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-import { getScan } from "@/actions/scans";
+import { getScan, getScansByState } from "@/actions/scans";
 import {
   Badge,
   Button,
@@ -105,24 +105,20 @@ function SamplePreviewBannerContent({ state, page }: SamplePreviewBannerProps) {
       if (inFlight) return;
       inFlight = true;
       // A failed request is a transient empty response: keep polling.
-      const response = await getScan(runningScan.id)
-        .catch(() => undefined)
-        .finally(() => {
-          inFlight = false;
-        });
+      const [response, completedScans] = await Promise.all([
+        getScan(runningScan.id).catch(() => undefined),
+        getScansByState().catch(() => undefined),
+      ]).finally(() => {
+        inFlight = false;
+      });
       if (stopped) return;
 
-      // The scan is gone (e.g. its provider was deleted): re-resolve the page.
-      if (response?.status === 404) {
-        stop();
-        router.refresh();
-        return;
-      }
-
       const attributes = response?.data?.attributes;
-      if (!attributes) return;
-
-      if (attributes.state === SCAN_STATES.COMPLETED) {
+      // Another provider's scan may finish before the one whose progress we show.
+      if (
+        completedScans?.data?.length > 0 ||
+        attributes?.state === SCAN_STATES.COMPLETED
+      ) {
         stop();
         dispatchSamplePreview({
           step: SAMPLE_PREVIEW_STEP.EXITED,
@@ -137,13 +133,17 @@ function SamplePreviewBannerContent({ state, page }: SamplePreviewBannerProps) {
         return;
       }
 
-      if (attributes.state === SCAN_STATES.FAILED) {
+      // Failed/deleted scans need a new stage (or a different running scan).
+      if (
+        response?.status === 404 ||
+        attributes?.state === SCAN_STATES.FAILED
+      ) {
         stop();
         router.refresh();
         return;
       }
 
-      setProgress(attributes.progress ?? 0);
+      if (attributes) setProgress(attributes.progress ?? 0);
     };
 
     const intervalId = setInterval(poll, SAMPLE_PREVIEW_POLL_INTERVAL_MS);

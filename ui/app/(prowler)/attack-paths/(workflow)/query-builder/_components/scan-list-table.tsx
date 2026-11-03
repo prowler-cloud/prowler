@@ -29,6 +29,7 @@ interface ScanListTableProps {
   scans: AttackPathScan[];
   /** Overrides the `scanId` search param, e.g. for the sample scan. */
   selectedScanId?: string;
+  readOnly?: boolean;
 }
 
 const DEFAULT_PAGE_SIZE = 10;
@@ -102,8 +103,10 @@ const buildMetadata = (
 
 const getColumns = ({
   selectedScanId,
+  readOnly,
 }: {
   selectedScanId: string | null;
+  readOnly: boolean;
 }): ColumnDef<AttackPathScan>[] => [
   {
     id: "select",
@@ -117,10 +120,11 @@ const getColumns = ({
         <RadioGroupItem
           value={row.original.id}
           checked={isSelected}
-          disabled={!canSelect}
+          disabled={readOnly || !canSelect}
           className={cn(
             "size-5",
-            canSelect &&
+            !readOnly &&
+              canSelect &&
               !isSelected &&
               "border-text-neutral-secondary cursor-pointer",
             !canSelect && "disabled:opacity-70",
@@ -232,6 +236,7 @@ const getColumns = ({
 export const ScanListTable = ({
   scans,
   selectedScanId: selectedScanIdOverride,
+  readOnly = false,
 }: ScanListTableProps) => {
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -283,23 +288,32 @@ export const ScanListTable = ({
 
   return (
     <RadioGroup
+      disabled={readOnly}
       value={selectedScanId ?? ""}
       onValueChange={handleSelectScan}
       className="gap-0"
     >
       <DataTable
-        columns={getColumns({ selectedScanId })}
+        columns={getColumns({ selectedScanId, readOnly })}
         data={paginatedScans}
-        metadata={buildMetadata(scans.length, currentPage, totalPages)}
+        metadata={
+          readOnly
+            ? undefined
+            : buildMetadata(scans.length, currentPage, totalPages)
+        }
         controlledPage={currentPage}
         controlledPageSize={pageSize}
         onPageChange={handlePageChange}
         onPageSizeChange={handlePageSizeChange}
-        onRowClick={(row) => {
-          if (row.original.attributes.graph_data_ready) {
-            handleSelectScan(row.original.id);
-          }
-        }}
+        onRowClick={
+          readOnly
+            ? undefined
+            : (row) => {
+                if (row.original.attributes.graph_data_ready) {
+                  handleSelectScan(row.original.id);
+                }
+              }
+        }
         enableRowSelection
         rowSelection={getSelectedRowSelection(paginatedScans, selectedScanId)}
       />

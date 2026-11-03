@@ -7,6 +7,7 @@ import {
   SAMPLE_THREAT_MAP_DATA,
 } from "./sample-graphs";
 import { SAMPLE_STATUS } from "./sample-overview";
+import { getSampleFinding } from "./sample-records";
 
 describe("sample graphs", () => {
   it("agrees with the Overview failed and new totals", () => {
@@ -25,5 +26,18 @@ describe("sample graphs", () => {
     expect(SAMPLE_NEW_FINDINGS).toHaveLength(
       Math.min(SAMPLE_STATUS.failNew, 10),
     );
+  });
+
+  it("lists new failed findings that open the same sample record", () => {
+    for (const finding of SAMPLE_NEW_FINDINGS) {
+      const record = getSampleFinding(finding.id);
+
+      expect(record?.status).toBe("FAIL");
+      expect(record?.delta).toBe("new");
+      expect(finding.relationships.resource.attributes.name).toBe(
+        record?.resource.name,
+      );
+      expect(finding.relationships.provider.attributes.alias).toBeTruthy();
+    }
   });
 });

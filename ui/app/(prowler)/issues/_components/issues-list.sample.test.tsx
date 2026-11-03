@@ -52,7 +52,7 @@ describe("IssuesList sample preview", () => {
     );
   });
 
-  it("renders the sample issues clickable, filtered by verdict, without the API", async () => {
+  it("filters sample issues by verdict without calling the API", async () => {
     // When
     render(
       await IssuesList({
@@ -62,10 +62,11 @@ describe("IssuesList sample preview", () => {
     );
 
     // Then
-    const title = screen.getByRole("button", {
-      name: exploitable.attributes.title,
-    });
-    expect(title.closest("[inert]")).toBeNull();
+    expect(
+      screen.getByRole("button", {
+        name: exploitable.attributes.title,
+      }),
+    ).toBeVisible();
     expect(
       screen.queryByText(notExploitable.attributes.title),
     ).not.toBeInTheDocument();

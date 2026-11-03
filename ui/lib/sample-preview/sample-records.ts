@@ -437,6 +437,17 @@ export const sampleFindingsDocument = (findings: SampleFinding[]) => {
   };
 };
 
+/** Findings with their resource, scan and provider inlined, like the Overview tables. */
+export const sampleExpandedFindings = (findings: SampleFinding[]) =>
+  findings.map((finding) => ({
+    ...findingItem(finding),
+    relationships: {
+      scan: SCAN_ITEM,
+      resource: resourceItem(finding.resource),
+      provider: PROVIDER_ITEM,
+    },
+  }));
+
 /** /findings?include=resources: the issue panel asks for nothing else. */
 export const sampleIssueFindingsDocument = (findings: SampleFinding[]) => ({
   data: findings.map(findingItem),
@@ -457,6 +468,51 @@ const paginate = <T>(items: T[], page: number, pageSize: number) => ({
   },
 });
 
+type SampleFilterParams = Record<string, string | string[] | undefined>;
+
+// Resource-level filters the Findings page sets, matched per sample finding.
+const SAMPLE_FINDING_FILTERS: Record<
+  string,
+  (finding: SampleFinding) => string | null
+> = {
+  "filter[region__in]": (finding) => finding.resource.region,
+  "filter[resource_type__in]": (finding) => finding.resource.type,
+  "filter[delta]": (finding) => finding.delta,
+  "filter[delta__in]": (finding) => finding.delta,
+  "filter[provider_type__in]": () => "aws",
+  "filter[provider_id__in]": () => SAMPLE_ACCOUNT.providerId,
+};
+
+const MUTED_FILTER = "filter[muted]";
+
+/** The resource-level filters present in a request, as plain strings. */
+export const pickSampleFindingFilters = (
+  filters: SampleFilterParams,
+): Record<string, string> =>
+  Object.fromEntries(
+    [...Object.keys(SAMPLE_FINDING_FILTERS), MUTED_FILTER].flatMap((key) => {
+      const raw = filters[key];
+      const value = Array.isArray(raw) ? raw.join(",") : raw;
+      // "false" is the page default: only asking for muted findings narrows.
+      if (key === MUTED_FILTER && value !== "true") return [];
+      return value ? [[key, value]] : [];
+    }),
+  );
+
+/** Whether a sample finding passes the picked resource-level filters. */
+export const matchesSampleFindingFilters = (
+  finding: SampleFinding,
+  filters: Record<string, string>,
+) =>
+  // Sample findings are never muted.
+  filters[MUTED_FILTER] !== "true" &&
+  Object.entries(filters).every(([key, value]) => {
+    const field = SAMPLE_FINDING_FILTERS[key];
+    if (!field) return true;
+    const actual = field(finding);
+    return actual !== null && value.split(",").includes(actual);
+  });
+
 /** /finding-groups/{check_id}/resources: failed first, like the API's sort. */
 export const sampleFindingGroupResources = ({
   checkId,
@@ -464,17 +520,20 @@ export const sampleFindingGroupResources = ({
   pageSize,
   status,
   search,
+  filters = {},
 }: {
   checkId: string;
   page: number;
   pageSize: number;
   status?: string;
   search?: string;
+  filters?: Record<string, string>;
 }) => {
   const findings = SAMPLE_FINDINGS.filter(
     (finding) =>
       finding.check.checkId === checkId &&
       (!status || status.split(",").includes(finding.status)) &&
+      matchesSampleFindingFilters(finding, filters) &&
       (!search ||
         finding.resource.name.toLowerCase().includes(search.toLowerCase())),
   );
@@ -521,23 +580,46 @@ export const sampleFindingsQuery = (
     const raw = filters[key];
     return Array.isArray(raw) ? raw.join(",") : raw;
   };
+  const list = (key: string) => value(key)?.split(",");
   const resourceUid = value("filter[resource_uid]");
-  const checkId = value("filter[check_id]");
-  const status = value("filter[status]");
-  const uids = value("filter[uid__in]")?.split(",");
+  const checkIds = list("filter[check_id]") ?? list("filter[check_id__in]");
+  const statuses = list("filter[status]") ?? list("filter[status__in]");
+  const regions = list("filter[region__in]");
+  const uids = list("filter[uid__in]");
   return SAMPLE_FINDINGS.filter(
     (finding) =>
       (!resourceUid || finding.resource.uid === resourceUid) &&
-      (!checkId || finding.check.checkId === checkId) &&
-      (!status || finding.status === status) &&
+      (!checkIds || checkIds.includes(finding.check.checkId)) &&
+      (!statuses || statuses.includes(finding.status)) &&
+      (!regions || regions.includes(finding.resource.region)) &&
       (!uids || uids.includes(finding.uid)),
   );
+};
+
+/** The resource drawer's data: the resource's failed findings, no API calls. */
+export const sampleResourceDrawerData = (resourceId: string) => {
+  const findings = SAMPLE_FINDINGS.filter(
+    (finding) =>
+      finding.resource.id === resourceId && finding.status === "FAIL",
+  );
+  return {
+    findings: findings.map(findingItem),
+    findingsMeta: {
+      pagination: { page: 1, pages: 1, count: findings.length },
+      version: "v1",
+    },
+    providerOrg: null,
+    resourceTags: {},
+  };
 };
 
 /** Whether a request is scoped to the sample scan. */
 export const isSampleScanFilter = (
   filters: Record<string, string | string[] | undefined> | undefined,
-) => filters?.["filter[scan]"] === SAMPLE_ACCOUNT.scanId;
+) =>
+  filters?.["filter[scan]"] === SAMPLE_ACCOUNT.scanId ||
+  // Compliance requirements ask by scan list, with the sample scan alone.
+  filters?.["filter[scan__in]"] === SAMPLE_ACCOUNT.scanId;
 
 /** /findings/{id}/compliance-frameworks: the check's frameworks, all watched. */
 export const sampleComplianceFrameworks = (

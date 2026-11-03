@@ -1,4 +1,4 @@
-import { isSampleId } from "@/lib/sample-preview/sample-records";
+import { isSampleId } from "@/lib/sample-preview/sample-guards";
 import { FINDING_STATUS, type FindingStatus } from "@/types/components";
 import {
   FINDING_TRIAGE_BILLING_HREF,

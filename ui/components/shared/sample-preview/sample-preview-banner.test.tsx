@@ -14,12 +14,16 @@ import {
   SamplePreviewBanner,
 } from "./sample-preview-banner";
 
-const { getScanMock, refreshMock } = vi.hoisted(() => ({
+const { getScanMock, getCompletedScansMock, refreshMock } = vi.hoisted(() => ({
   getScanMock: vi.fn(),
+  getCompletedScansMock: vi.fn(),
   refreshMock: vi.fn(),
 }));
 
-vi.mock("@/actions/scans", () => ({ getScan: getScanMock }));
+vi.mock("@/actions/scans", () => ({
+  getScan: getScanMock,
+  getScansByState: getCompletedScansMock,
+}));
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ refresh: refreshMock }),
 }));
@@ -42,6 +46,7 @@ const advancePoll = () =>
 describe("SamplePreviewBanner", () => {
   beforeEach(() => {
     vi.useFakeTimers();
+    getCompletedScansMock.mockResolvedValue({ data: [] });
   });
 
   afterEach(() => {
@@ -106,6 +111,26 @@ describe("SamplePreviewBanner", () => {
       SAMPLE_PREVIEW_STEP.EXITED,
     ]);
     window.removeEventListener(SAMPLE_PREVIEW_EVENT, listener);
+  });
+
+  it("exits when another scan completes before the tracked scan", async () => {
+    // Given: the newest scan is still running, but an earlier scan finished.
+    getScanMock.mockResolvedValue(scanResponse("executing", 30));
+    getCompletedScansMock.mockResolvedValue({ data: [{ id: "earlier-scan" }] });
+    render(
+      <SamplePreviewBanner
+        page={SAMPLE_PREVIEW_PAGE.OVERVIEW}
+        state={RUNNING}
+      />,
+    );
+
+    // When
+    await advancePoll();
+    await advancePoll();
+
+    // Then: refresh once and stop polling the unfinished scan.
+    expect(refreshMock).toHaveBeenCalledTimes(1);
+    expect(getScanMock).toHaveBeenCalledTimes(1);
   });
 
   it("re-resolves the page when the tracked scan is gone", async () => {
@@ -215,6 +240,26 @@ describe("SamplePreviewBanner", () => {
 
     // Then
     expect(screen.getByText("70%")).toBeVisible();
+  });
+
+  it("keeps progress updates and completion working when the completed-scan lookup fails", async () => {
+    getCompletedScansMock.mockRejectedValue(new Error("Network error"));
+    getScanMock
+      .mockResolvedValueOnce(scanResponse("executing", 70))
+      .mockResolvedValue(scanResponse("completed", 100));
+    render(
+      <SamplePreviewBanner
+        page={SAMPLE_PREVIEW_PAGE.OVERVIEW}
+        state={RUNNING}
+      />,
+    );
+
+    await advancePoll();
+    expect(screen.getByText("70%")).toBeVisible();
+    expect(refreshMock).not.toHaveBeenCalled();
+
+    await advancePoll();
+    expect(refreshMock).toHaveBeenCalledTimes(1);
   });
 
   it("tells a running scan apart and opens the in-progress scans tab", () => {

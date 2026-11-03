@@ -6,7 +6,8 @@ import type {
   QueryResultAttributes,
 } from "@/types/attack-paths";
 
-import { SAMPLE_ACCOUNT, SAMPLE_CHECKS } from "./sample-dataset";
+import { SAMPLE_ACCOUNT } from "./sample-dataset";
+import { failedSampleFindings, type SampleFinding } from "./sample-records";
 
 export interface SampleAttackPaths {
   scan: AttackPathScan;
@@ -14,12 +15,8 @@ export interface SampleAttackPaths {
   result: QueryResultAttributes;
 }
 
-const SAMPLE_REGION = "us-east-1";
 const SAMPLE_SCAN_COMPLETED_AT = SAMPLE_ACCOUNT.scannedAt;
 const SAMPLE_SCAN_STARTED_AT = "2026-10-28T09:04:00Z";
-
-const arn = (service: string, resource: string, region = SAMPLE_REGION) =>
-  `arn:aws:${service}:${region}:${SAMPLE_ACCOUNT.uid}:${resource}`;
 
 const resource = (
   id: string,
@@ -27,21 +24,38 @@ const resource = (
   properties: GraphNode["properties"],
 ): GraphNode => ({ id, labels: [label], properties: { id, ...properties } });
 
-// Finding titles and severities come from SAMPLE_CHECKS, like the other pages.
-const finding = (id: string, checkId: string): GraphNode => {
-  const check = SAMPLE_CHECKS.find((sample) => sample.checkId === checkId);
-  return {
-    id,
-    labels: ["ProwlerFinding"],
-    properties: {
-      id,
-      check_id: checkId,
-      check_title: check?.title ?? checkId,
-      severity: check?.severity ?? "high",
-      status: "FAIL",
-    },
-  };
+// Each finding node is a sample record, so the finding drawer opens it.
+const failingRecord = (checkId: string) => {
+  const [record] = failedSampleFindings(checkId);
+  if (!record) throw new Error(`No failing sample finding for ${checkId}`);
+  return record;
 };
+
+const SSH_FINDING = failingRecord(
+  "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
+);
+const IMDSV2_FINDING = failingRecord("ec2_instance_imdsv2_enabled");
+const PRIVESC_FINDING = failingRecord("iam_policy_allows_privilege_escalation");
+const PUBLIC_BUCKET_FINDING = failingRecord("s3_bucket_public_access");
+
+const finding = (record: SampleFinding): GraphNode => ({
+  id: record.id,
+  labels: ["ProwlerFinding"],
+  properties: {
+    id: record.id,
+    check_id: record.check.checkId,
+    check_title: record.check.title,
+    severity: record.check.severity,
+    status: "FAIL",
+  },
+});
+
+// Resource nodes reuse the records' names and ARNs, so graph and drawer agree.
+const recordProperties = ({ resource }: SampleFinding) => ({
+  name: resource.name,
+  arn: resource.uid,
+  region: resource.region,
+});
 
 const rel = (
   id: string,
@@ -58,40 +72,31 @@ const SAMPLE_NODES: GraphNode[] = [
     properties: { id: "internet", name: "Internet" },
   },
   resource("sample-sg-bastion", "EC2SecurityGroup", {
-    name: "bastion-ssh",
-    groupid: "sg-0a1b2c3d4e5f60718",
-    arn: arn("ec2", "security-group/sg-0a1b2c3d4e5f60718"),
-    region: SAMPLE_REGION,
+    ...recordProperties(SSH_FINDING),
+    groupid: SSH_FINDING.resource.name,
   }),
   resource("sample-ec2-bastion", "EC2Instance", {
-    name: "bastion-01",
-    instanceid: "i-0f1e2d3c4b5a69788",
-    arn: arn("ec2", "instance/i-0f1e2d3c4b5a69788"),
+    ...recordProperties(IMDSV2_FINDING),
+    instanceid: IMDSV2_FINDING.resource.name,
     exposed_internet: true,
     publicipaddress: "203.0.113.24",
-    region: SAMPLE_REGION,
   }),
   resource("sample-role-admin", "AWSRole", {
     name: "app-admin-role",
     arn: `arn:aws:iam::${SAMPLE_ACCOUNT.uid}:role/app-admin-role`,
   }),
   resource("sample-policy-admin", "AWSPolicy", {
-    name: "app-admin-inline",
-    arn: `arn:aws:iam::${SAMPLE_ACCOUNT.uid}:policy/app-admin-inline`,
+    name: PRIVESC_FINDING.resource.name,
+    arn: PRIVESC_FINDING.resource.uid,
   }),
   resource("sample-s3-exports", "S3Bucket", {
-    name: "acme-customer-exports",
-    arn: "arn:aws:s3:::acme-customer-exports",
-    region: SAMPLE_REGION,
+    ...recordProperties(PUBLIC_BUCKET_FINDING),
     anonymous_access: true,
   }),
-  finding(
-    "sample-finding-ssh",
-    "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
-  ),
-  finding("sample-finding-imdsv2", "ec2_instance_imdsv2_enabled"),
-  finding("sample-finding-privesc", "iam_policy_allows_privilege_escalation"),
-  finding("sample-finding-public-bucket", "s3_bucket_public_access"),
+  finding(SSH_FINDING),
+  finding(IMDSV2_FINDING),
+  finding(PRIVESC_FINDING),
+  finding(PUBLIC_BUCKET_FINDING),
 ];
 
 const SAMPLE_RELATIONSHIPS: GraphRelationship[] = [
@@ -106,23 +111,14 @@ const SAMPLE_RELATIONSHIPS: GraphRelationship[] = [
   ),
   rel("sample-r4", "sample-role-admin", "sample-policy-admin", "POLICY"),
   rel("sample-r5", "sample-policy-admin", "sample-s3-exports", "CAN_ACCESS"),
-  rel("sample-r6", "sample-sg-bastion", "sample-finding-ssh", "HAS_FINDING"),
-  rel(
-    "sample-r7",
-    "sample-ec2-bastion",
-    "sample-finding-imdsv2",
-    "HAS_FINDING",
-  ),
-  rel(
-    "sample-r8",
-    "sample-role-admin",
-    "sample-finding-privesc",
-    "HAS_FINDING",
-  ),
+  rel("sample-r6", "sample-sg-bastion", SSH_FINDING.id, "HAS_FINDING"),
+  rel("sample-r7", "sample-ec2-bastion", IMDSV2_FINDING.id, "HAS_FINDING"),
+  // The record's failing resource is the policy the role carries.
+  rel("sample-r8", "sample-policy-admin", PRIVESC_FINDING.id, "HAS_FINDING"),
   rel(
     "sample-r9",
     "sample-s3-exports",
-    "sample-finding-public-bucket",
+    PUBLIC_BUCKET_FINDING.id,
     "HAS_FINDING",
   ),
 ];
