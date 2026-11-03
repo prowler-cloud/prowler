@@ -12,9 +12,15 @@ def _has_active_data_protection(policy: dict) -> bool:
     for statement in policy.get("Statement", []):
         if not isinstance(statement, dict):
             continue
-        data_identifiers = statement.get("DataIdentifier", [])
-        operation = statement.get("Operation", {})
-        if data_identifiers and any(op in operation for op in PROTECTIVE_OPERATIONS):
+        data_identifiers = statement.get("DataIdentifier")
+        if not isinstance(data_identifiers, list) or not data_identifiers:
+            continue
+        if not all(isinstance(i, str) and i.strip() for i in data_identifiers):
+            continue
+        operation = statement.get("Operation")
+        if not isinstance(operation, dict):
+            continue
+        if any(op in operation for op in PROTECTIVE_OPERATIONS):
             return True
     return False
 

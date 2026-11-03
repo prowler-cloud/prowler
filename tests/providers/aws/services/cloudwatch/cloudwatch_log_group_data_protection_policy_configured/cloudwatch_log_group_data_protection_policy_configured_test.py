@@ -344,3 +344,39 @@ class Test_cloudwatch_log_group_data_protection_policy_configured:
             result[0].status_extended
             == f"Log Group {log_group_name} does not have an active data protection policy configured."
         )
+
+    def test_log_group_with_malformed_data_identifier_string_not_list(self):
+        from prowler.providers.aws.services.cloudwatch.cloudwatch_service import (
+            LogGroup,
+        )
+
+        log_groups = {
+            log_group_arn: LogGroup(
+                arn=log_group_arn,
+                name=log_group_name,
+                retention_days=365,
+                never_expire=False,
+                kms_id=None,
+                region=AWS_REGION_US_EAST_1,
+                data_protection_status="ACTIVATED",
+                inherited_properties=[],
+                data_protection_policy={
+                    "Statement": [
+                        {
+                            "Sid": "audit",
+                            "DataIdentifier": "arn:aws:dataprotection::aws:data-identifier/EmailAddress",
+                            "Operation": {"Audit": {}},
+                        }
+                    ]
+                },
+                data_protection_policy_retrieved=True,
+            )
+        }
+
+        result = _run_check(log_groups)
+        assert len(result) == 1
+        assert result[0].status == "FAIL"
+        assert (
+            result[0].status_extended
+            == f"Log Group {log_group_name} does not have an active data protection policy configured."
+        )
