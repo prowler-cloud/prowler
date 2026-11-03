@@ -183,31 +183,7 @@ test("action works", { tag: ["@critical", "@feature"] }, async ({ page }) => {
 
 ---
 
-## TECH STACK
-
-Next.js 16.2.3 | React 19.2.5 | Tailwind 4.1.18 | shadcn/ui
-Zod 4.1.11 | React Hook Form 7.62.0 | Zustand 5.0.8 | NextAuth 5.0.0-beta.30 | Recharts 2.15.4
-
-> **Note**: `components/ui/` only holds temporary re-export shims for the prowler-cloud overlay. Do NOT add new components there.
-
----
-
-## PROJECT STRUCTURE
-
-```text
-ui/
-├── app/(auth)/          # Auth pages
-├── app/(prowler)/       # Main app: compliance, findings, providers, scans
-├── components/shadcn/   # shadcn/ui components (USE THIS)
-├── components/ui/       # Cloud-overlay re-export shims (do not add here)
-├── actions/             # Server actions
-├── types/               # Shared types
-├── hooks/               # Shared hooks
-├── lib/                 # Utilities
-├── store/               # Zustand state
-├── tests/               # Playwright E2E
-└── styles/              # Global CSS
-```
+> **Note**: `components/ui/` only holds temporary re-export shims for the prowler-cloud overlay. Do NOT add new components there; use `components/shadcn/`.
 
 ---
 

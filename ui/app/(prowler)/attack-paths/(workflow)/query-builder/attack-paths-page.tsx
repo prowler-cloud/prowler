@@ -35,6 +35,7 @@ import {
   OUTCOME_NODE_LABEL,
 } from "@/lib/attack-paths/group-graph";
 import { buildAttackPathContext } from "@/lib/lighthouse/context/contributions";
+import type { SampleAttackPaths } from "@/lib/sample-preview/sample-attack-paths";
 import { isCloud } from "@/lib/shared/env";
 import type {
   AttackPathQuery,
@@ -74,18 +75,24 @@ import {
 const SCROLL_CONTAINER_CLASS =
   "minimal-scrollbar relative z-0 w-full gap-4 overflow-auto shadow-sm";
 
-export default function AttackPathsPage() {
+interface AttackPathsPageProps {
+  /** Sample mode: renders this data, never calls the attack-paths API. */
+  sample?: SampleAttackPaths;
+}
+
+export default function AttackPathsPage({ sample }: AttackPathsPageProps) {
   const searchParams = useSearchParams();
   const pathname = usePathname();
-  const scanId = searchParams.get("scanId");
+  // The sample scan id stays out of the URL, so the real page never sees it.
+  const scanId = sample ? sample.scan.id : searchParams.get("scanId");
   const graphState = useGraphState();
   const finding = useFindingDetails();
   const { toast } = useToast();
 
   const { scans, scansLoading, loadError, refreshScans, retryLoadScans } =
-    useAttackPathScans();
+    useAttackPathScans(sample ? [sample.scan] : undefined);
 
-  const [queriesLoading, setQueriesLoading] = useState(true);
+  const [queriesLoading, setQueriesLoading] = useState(!sample);
   const [queriesError, setQueriesError] = useState<string | null>(null);
   const [isFullscreenOpen, setIsFullscreenOpen] = useState(false);
   const graphRef = useRef<GraphHandle>(null);
@@ -94,13 +101,26 @@ export default function AttackPathsPage() {
   const hasResetRef = useRef(false);
   const graphContainerRef = useRef<HTMLDivElement>(null);
 
-  const [queries, setQueries] = useState<AttackPathQuery[]>([]);
+  const [queries, setQueries] = useState<AttackPathQuery[]>(
+    sample ? [sample.query] : [],
+  );
   // Snapshot of the executed query's outcome, so the graph's terminal node
   // reflects the query that produced the current graph (not a later selection).
   const [executedOutcome, setExecutedOutcome] =
     useState<AttackPathOutcome | null>(null);
 
-  const queryBuilder = useQueryBuilder(queries);
+  const queryBuilder = useQueryBuilder(queries, sample?.query.id ?? null);
+
+  // The sample has one precomputed result: "running" its query shows it.
+  const showSampleGraph = (sampleData: SampleAttackPaths) => {
+    graphState.updateGraphData(adaptQueryResultToGraphData(sampleData.result), {
+      queryId: sampleData.query.id,
+      queryLabel: sampleData.query.attributes.name,
+      queryKind: ATTACK_PATH_QUERY_KIND.PREDEFINED,
+      parameters: {},
+    });
+    setExecutedOutcome(sampleData.query.attributes.outcome ?? null);
+  };
 
   useEffect(() => {
     if (!hasResetRef.current) {
@@ -110,7 +130,8 @@ export default function AttackPathsPage() {
   }, [graphState]);
 
   useEffect(() => {
-    graphState.resetGraph();
+    if (sample) showSampleGraph(sample);
+    else graphState.resetGraph();
   }, [scanId]); // eslint-disable-line react-hooks/exhaustive-deps -- reset on scanId change only
 
   // Poll while a scan is in flight so the page auto-advances when the graph is ready.
@@ -126,6 +147,8 @@ export default function AttackPathsPage() {
     selectedScan.attributes.state !== SCAN_STATES.COMPLETED;
 
   useEffect(() => {
+    if (sample) return;
+
     const loadQueries = async () => {
       if (!scanId) {
         setQueriesError("No scan selected");
@@ -168,7 +191,7 @@ export default function AttackPathsPage() {
     };
 
     loadQueries();
-  }, [scanId, toast]);
+  }, [sample, scanId, toast]);
 
   const showErrorToast = (title: string, description: string) => {
     toast({
@@ -179,6 +202,11 @@ export default function AttackPathsPage() {
   };
 
   const handleExecuteQuery = async () => {
+    if (sample) {
+      showSampleGraph(sample);
+      return;
+    }
+
     if (!scanId || !queryBuilder.selectedQuery) {
       showErrorToast("Error", "Please select both a scan and a query");
       return;
@@ -320,10 +348,13 @@ export default function AttackPathsPage() {
         return;
       }
 
-      findingNavigationInFlightRef.current = true;
       // Open finding drawer directly, bypassing the node-details modal.
       graphState.enterFilteredView(node.id);
       graphState.selectNode(null); // clear so node-details modal doesn't open first
+      // Sample findings have no API record: focus the path, open no drawer.
+      if (sample) return;
+
+      findingNavigationInFlightRef.current = true;
       void handleViewFinding(String(node.properties?.id || node.id));
       return;
     }
@@ -406,24 +437,26 @@ export default function AttackPathsPage() {
     graphState.selectedNode ?? graphState.filteredNode;
   const lighthouseGraphData = graphState.fullData ?? graphState.data;
   const lighthouseExecution = graphState.loading ? null : graphState.execution;
-  const lighthouseContext = scanId
-    ? buildAttackPathContext({
-        pathname,
-        scanId,
-        queryId: lighthouseExecution?.queryId,
-        queryLabel: lighthouseExecution?.queryLabel,
-        queryKind: lighthouseExecution?.queryKind,
-        parameters: lighthouseExecution?.parameters,
-        graphData: lighthouseExecution ? lighthouseGraphData : null,
-        selectedNode:
-          lighthouseExecution && lighthouseSelectedNode
-            ? {
-                id: lighthouseSelectedNode.id,
-                type: lighthouseSelectedNode.labels[0],
-              }
-            : null,
-      })
-    : null;
+  // Sample data never reaches Lighthouse.
+  const lighthouseContext =
+    scanId && !sample
+      ? buildAttackPathContext({
+          pathname,
+          scanId,
+          queryId: lighthouseExecution?.queryId,
+          queryLabel: lighthouseExecution?.queryLabel,
+          queryKind: lighthouseExecution?.queryKind,
+          parameters: lighthouseExecution?.parameters,
+          graphData: lighthouseExecution ? lighthouseGraphData : null,
+          selectedNode:
+            lighthouseExecution && lighthouseSelectedNode
+              ? {
+                  id: lighthouseSelectedNode.id,
+                  type: lighthouseSelectedNode.labels[0],
+                }
+              : null,
+        })
+      : null;
 
   return (
     <div className="flex flex-col gap-6">
@@ -465,9 +498,12 @@ export default function AttackPathsPage() {
         />
       ) : (
         <>
-          <Suspense fallback={<div>Loading scans...</div>}>
-            <ScanListTable scans={scans} />
-          </Suspense>
+          {/* The sample scan is the only one: nothing to pick or page. */}
+          <div inert={Boolean(sample)}>
+            <Suspense fallback={<div>Loading scans...</div>}>
+              <ScanListTable scans={scans} selectedScanId={sample?.scan.id} />
+            </Suspense>
+          </div>
 
           {isViewingPreviousCycleData && (
             <StatusAlert

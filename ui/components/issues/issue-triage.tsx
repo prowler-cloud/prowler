@@ -17,6 +17,10 @@ import { TriageStatusPicker } from "@/components/shared/triage/triage-status-pic
 import { usageLimitToastAction } from "@/components/shared/usage-limit-message";
 import { isUsageLimitError } from "@/lib/action-errors";
 import {
+  isSampleId,
+  SAMPLE_DATA_READ_ONLY_MESSAGE,
+} from "@/lib/sample-preview/sample-guards";
+import {
   FINDING_TRIAGE_MANUAL_STATUS_VALUES,
   FINDING_TRIAGE_NOTE_MAX_LENGTH,
   isManualStatus,
@@ -33,6 +37,7 @@ import type { IssueTriageProps } from "./types";
  * accepting a risk does not make a path unexploitable.
  */
 export const IssueTriage = ({ id, status }: IssueTriageProps) => {
+  const sample = isSampleId(id);
   const router = useRouter();
   const { toast } = useToast();
   const [pending, startTransition] = useTransition();
@@ -50,6 +55,7 @@ export const IssueTriage = ({ id, status }: IssueTriageProps) => {
   }
 
   useEffect(() => {
+    if (sample) return;
     let cancelled = false;
     getIssueNotes(id).then((loaded) => {
       if (!cancelled) setNotes(loaded);
@@ -57,13 +63,14 @@ export const IssueTriage = ({ id, status }: IssueTriageProps) => {
     return () => {
       cancelled = true;
     };
-  }, [id, reload]);
+  }, [id, reload, sample]);
 
   const statusChanged = nextStatus !== status;
   const trimmedNote = note.trim();
 
   const save = () =>
     startTransition(async () => {
+      if (sample) return;
       const result =
         statusChanged && isManualStatus(nextStatus)
           ? await updateIssueTriage(id, {
@@ -89,10 +96,15 @@ export const IssueTriage = ({ id, status }: IssueTriageProps) => {
   return (
     <section aria-label="Triage" className="flex flex-col gap-3">
       <h4 className="text-sm font-semibold">Triage</h4>
+      {sample && (
+        <p className="text-text-neutral-secondary text-sm">
+          {SAMPLE_DATA_READ_ONLY_MESSAGE}
+        </p>
+      )}
       <div className="flex flex-wrap items-center gap-2">
         <div className="w-40">
           <TriageStatusPicker
-            disabled={pending}
+            disabled={pending || sample}
             value={nextStatus}
             statusValues={FINDING_TRIAGE_MANUAL_STATUS_VALUES}
             onValueChange={setNextStatus}
@@ -101,7 +113,7 @@ export const IssueTriage = ({ id, status }: IssueTriageProps) => {
         <Button
           size="sm"
           onClick={save}
-          disabled={pending || (!statusChanged && !trimmedNote)}
+          disabled={sample || pending || (!statusChanged && !trimmedNote)}
         >
           {pending ? "Saving…" : "Save triage"}
         </Button>
@@ -113,7 +125,7 @@ export const IssueTriage = ({ id, status }: IssueTriageProps) => {
         maxLength={FINDING_TRIAGE_NOTE_MAX_LENGTH}
         rows={3}
         // A successful save clears the note: text typed meanwhile would be lost.
-        disabled={pending}
+        disabled={pending || sample}
         onChange={(event) => setNote(event.target.value)}
       />
       {notes === undefined ? (

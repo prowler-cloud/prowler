@@ -13,6 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/shadcn/table/table";
+import { isSampleId } from "@/lib/sample-preview/sample-guards";
 
 const RESOURCE_PAGE_SIZE = 12;
 
@@ -70,14 +71,17 @@ export const IssueResources = ({
                 <CodeSnippet value={uid} ariaLabel={`Copy ${uid}`} />
               </TableCell>
               <TableCell className="text-right whitespace-nowrap">
-                <Button asChild variant="link" size="link-sm">
-                  <Link
-                    href={resourceHref(uid, providerId)}
-                    aria-label={`Open in Resources: ${uid}`}
-                  >
-                    Open in Resources
-                  </Link>
-                </Button>
+                {/* The Resources page has no sample data to open. */}
+                {!isSampleId(providerId) && (
+                  <Button asChild variant="link" size="link-sm">
+                    <Link
+                      href={resourceHref(uid, providerId)}
+                      aria-label={`Open in Resources: ${uid}`}
+                    >
+                      Open in Resources
+                    </Link>
+                  </Button>
+                )}
               </TableCell>
             </TableRow>
           ))}

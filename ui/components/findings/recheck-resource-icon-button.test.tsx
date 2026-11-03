@@ -15,6 +15,7 @@ vi.mock("@/hooks/use-auth", () => ({
   useAuth: () => ({ hasPermission: hasPermissionMock }),
 }));
 
+import { SAMPLE_DATA_READ_ONLY_MESSAGE } from "@/lib/sample-preview/sample-guards";
 import { usePartialScanStore } from "@/store/partial-scan/store";
 
 import { RECHECK_RESOURCE_LABEL } from "./recheck-resource-action-item";
@@ -60,6 +61,25 @@ describe("RecheckResourceIconButton", () => {
     const button = screen.getByRole("button", { name: RECHECK_RESOURCE_LABEL });
     expect(button.className).toContain("text-button-primary");
     expect(button.className).toContain("animate-pulse");
+  });
+
+  it("blocks sample re-checks and removes the pulse", async () => {
+    const user = userEvent.setup();
+    const onRowClick = vi.fn();
+    render(
+      <div onClick={onRowClick}>
+        <RecheckResourceIconButton
+          target={target}
+          disabledReason={SAMPLE_DATA_READ_ONLY_MESSAGE}
+        />
+      </div>,
+    );
+    const button = screen.getByRole("button", { name: RECHECK_RESOURCE_LABEL });
+    expect(button).toHaveAttribute("aria-disabled", "true");
+    expect(button.className).not.toContain("animate-pulse");
+    await user.click(button);
+    expect(usePartialScanStore.getState().activeTarget).toBeNull();
+    expect(onRowClick).not.toHaveBeenCalled();
   });
 
   it("is hidden outside Prowler Cloud", () => {

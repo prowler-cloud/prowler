@@ -27,6 +27,8 @@ import { ScanStatusBadge } from "./scan-status-badge";
 
 interface ScanListTableProps {
   scans: AttackPathScan[];
+  /** Overrides the `scanId` search param, e.g. for the sample scan. */
+  selectedScanId?: string;
 }
 
 const DEFAULT_PAGE_SIZE = 10;
@@ -227,12 +229,15 @@ const getColumns = ({
  * Table displaying AWS account Attack Paths scans
  * Shows scan metadata and allows selection of completed scans
  */
-export const ScanListTable = ({ scans }: ScanListTableProps) => {
+export const ScanListTable = ({
+  scans,
+  selectedScanId: selectedScanIdOverride,
+}: ScanListTableProps) => {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  const selectedScanId = searchParams.get("scanId");
+  const selectedScanId = selectedScanIdOverride ?? searchParams.get("scanId");
   const pageSize = parsePageParam(
     searchParams.get("scanPageSize"),
     DEFAULT_PAGE_SIZE,

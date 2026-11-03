@@ -12,6 +12,10 @@ import {
   sanitizeErrorMessage,
 } from "@/lib";
 import { appendSanitizedProviderTypeFilters } from "@/lib/provider-filters";
+import {
+  isSampleId,
+  sampleResourceEvents,
+} from "@/lib/sample-preview/sample-records";
 import { handleApiResponse } from "@/lib/server-actions-helper";
 import { isCloud } from "@/lib/shared/env";
 import { OrganizationResource } from "@/types/organizations";
@@ -184,6 +188,9 @@ export const getResourceEvents = async (
     pageSize?: number;
   } = {},
 ) => {
+  if (isSampleId(resourceId)) {
+    return { data: sampleResourceEvents(resourceId) };
+  }
   if (!SAFE_RESOURCE_ID_PATTERN.test(resourceId)) {
     return { error: "Invalid resource ID format." };
   }

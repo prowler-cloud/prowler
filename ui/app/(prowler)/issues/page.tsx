@@ -8,11 +8,19 @@ import { ProviderAccountSelectors } from "@/components/filters/provider-account-
 import { ProviderGroupSelector } from "@/components/filters/provider-group-selector";
 import { ContentLayout } from "@/components/shadcn/content-layout";
 import { FeatureFlagRoute } from "@/components/shared/feature-flag-route";
+import { SamplePreviewBanner } from "@/components/shared/sample-preview/sample-preview-banner";
 import { FEATURE_FLAG } from "@/lib/feature-flags";
+import { getSamplePreviewState } from "@/lib/sample-preview/get-sample-preview-state";
+import { SAMPLE_ACCOUNT } from "@/lib/sample-preview/sample-dataset";
+import { SAMPLE_PREVIEW_PAGE } from "@/lib/sample-preview/sample-preview-events";
 import { isCloud } from "@/lib/shared/env";
 import { SearchParamsProps } from "@/types";
 
 import { IssuesList } from "./_components/issues-list";
+
+const SAMPLE_PROVIDER_UIDS = {
+  [SAMPLE_ACCOUNT.providerId]: SAMPLE_ACCOUNT.uid,
+};
 
 export default async function Issues({
   searchParams,
@@ -22,6 +30,26 @@ export default async function Issues({
   if (!isCloud()) notFound();
 
   const resolvedSearchParams = await searchParams;
+  const samplePreview = await getSamplePreviewState();
+  if (samplePreview.active) {
+    return (
+      <ContentLayout title="Issues" icon={<ShieldAlert />}>
+        <FeatureFlagRoute flag={FEATURE_FLAG.ISSUES}>
+          <SamplePreviewBanner
+            state={samplePreview}
+            page={SAMPLE_PREVIEW_PAGE.ISSUES}
+          />
+          {/* No scope selectors: the sample account is not one of theirs. */}
+          <IssuesList
+            searchParams={resolvedSearchParams}
+            sample
+            providerUids={SAMPLE_PROVIDER_UIDS}
+          />
+        </FeatureFlagRoute>
+      </ContentLayout>
+    );
+  }
+
   const [providersData, providerGroupsData] = await Promise.all([
     getAllProviders(),
     getAllProviderGroups(),
