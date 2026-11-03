@@ -100,6 +100,8 @@ function SamplePreviewBannerContent({ state, page }: SamplePreviewBannerProps) {
 
     let stopped = false;
     let inFlight = false;
+    // Its own flag: a slow lookup must not hold back the tracked scan's polls.
+    let lookupInFlight = false;
     const exit = () => {
       stop();
       dispatchSamplePreview({ step: SAMPLE_PREVIEW_STEP.EXITED, page, stage });
@@ -137,10 +139,16 @@ function SamplePreviewBannerContent({ state, page }: SamplePreviewBannerProps) {
 
         if (attributes) setProgress(attributes.progress ?? 0);
 
-        // After the tracked scan, so a slow lookup never delays its progress.
         // Another provider's scan may finish before the one whose progress we show.
-        const completedScans = await getScansByState().catch(() => undefined);
-        if (!stopped && completedScans?.data?.length > 0) exit();
+        if (!lookupInFlight) {
+          lookupInFlight = true;
+          void getScansByState()
+            .catch(() => undefined)
+            .then((completedScans) => {
+              lookupInFlight = false;
+              if (!stopped && completedScans?.data?.length > 0) exit();
+            });
+        }
       } finally {
         inFlight = false;
       }

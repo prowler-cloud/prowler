@@ -11,7 +11,11 @@ import { ContentLayout } from "@/components/shadcn/content-layout";
 import { SamplePreviewBanner } from "@/components/shared/sample-preview/sample-preview-banner";
 import { getComplianceMapper } from "@/lib/compliance/compliance-mapper";
 import { SAMPLE_SCAN } from "@/lib/sample-preview/sample-compliance";
-import { getSampleComplianceDetail } from "@/lib/sample-preview/sample-compliance-requirements";
+import {
+  getSampleComplianceDetail,
+  SAMPLE_CATALOG_STATUS,
+} from "@/lib/sample-preview/sample-compliance-requirements";
+import { SAMPLE_REGIONS } from "@/lib/sample-preview/sample-dataset";
 import { SAMPLE_PREVIEW_PAGE } from "@/lib/sample-preview/sample-preview-events";
 import type { SamplePreviewActive } from "@/lib/sample-preview/sample-preview-state";
 import type { Framework, RequirementsTotals } from "@/types/compliance";
@@ -25,6 +29,8 @@ interface ComplianceDetailSamplePreviewProps {
   filter?: string;
   /** `?section=`: the accordion section to open, like on the real page. */
   targetSection?: string;
+  /** `filter[region__in]`: applied to statuses and requirement findings alike. */
+  region?: string;
 }
 
 /** A sample framework's detail: real catalog, sample statuses, no reports or Lighthouse. */
@@ -35,13 +41,14 @@ export async function ComplianceDetailSamplePreview({
   version,
   filter,
   targetSection,
+  region,
 }: ComplianceDetailSamplePreviewProps) {
-  const detail = await getSampleComplianceDetail(complianceId);
+  const detail = await getSampleComplianceDetail(complianceId, region);
   const formattedTitle = compliancetitle.split("-").join(" ");
   const title = version ? `${formattedTitle} - ${version}` : formattedTitle;
 
-  // The catalog is still warming (or unavailable): same state as the real page.
-  if (!detail) {
+  // The catalog is still warming: same state as the real page.
+  if (detail.status === SAMPLE_CATALOG_STATUS.WARMING) {
     return (
       <ContentLayout title={title}>
         <SamplePreviewBanner
@@ -53,14 +60,18 @@ export async function ComplianceDetailSamplePreview({
     );
   }
 
+  // Any other catalog failure renders an empty detail, like the real page.
+  const ready = detail.status === SAMPLE_CATALOG_STATUS.READY ? detail : null;
   const mapper = getComplianceMapper(
-    detail.attributesData.data[0]?.attributes.framework,
+    ready?.attributesData.data[0]?.attributes.framework,
   );
-  const data: Framework[] = mapper.mapComplianceData(
-    detail.attributesData,
-    { data: detail.requirements },
-    filter,
-  );
+  const data: Framework[] = ready
+    ? mapper.mapComplianceData(
+        ready.attributesData,
+        { data: ready.requirements },
+        filter,
+      )
+    : [];
   const totals = data.reduce<RequirementsTotals>(
     (acc, framework) => ({
       pass: acc.pass + framework.pass,
@@ -91,7 +102,7 @@ export async function ComplianceDetailSamplePreview({
       <Card variant="base" className="mb-6 w-full gap-4 p-4 md:p-5">
         <ComplianceHeader
           scans={[]}
-          uniqueRegions={[]}
+          uniqueRegions={[...SAMPLE_REGIONS]}
           showSearch={false}
           framework={compliancetitle}
           showProviders={false}

@@ -179,6 +179,11 @@ export default defineConfig(() => {
         "@xyflow/react",
         "@dagrejs/dagre",
 
+        // Charts (the Overview sample's graph tabs)
+        "recharts",
+        "d3",
+        "topojson-client",
+
         // Forms / state
         "react-hook-form",
         "@hookform/resolvers/zod",

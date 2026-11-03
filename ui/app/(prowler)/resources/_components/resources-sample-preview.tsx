@@ -39,6 +39,8 @@ export function ResourcesSamplePreview({
           />
         </div>
         <ResourcesTableWithSelection
+          // The drawer reads initialResource on mount: remount on a new link.
+          key={searchParams.resourceId?.toString() ?? "none"}
           data={data}
           metadata={metadata}
           // A copied resource link reopens its drawer, as on the real page.

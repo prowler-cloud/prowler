@@ -292,8 +292,12 @@ describe("SamplePreviewBanner", () => {
 
     // When
     await advancePoll();
+    getScanMock.mockResolvedValue(scanResponse("executing", 60));
+    await advancePoll();
 
-    // Then
-    expect(screen.getByText("45%")).toBeVisible();
+    // Then: later polls keep tracking the scan while the lookup is pending.
+    expect(screen.getByText("60%")).toBeVisible();
+    expect(getScanMock).toHaveBeenCalledTimes(2);
+    expect(getCompletedScansMock).toHaveBeenCalledTimes(1);
   });
 });

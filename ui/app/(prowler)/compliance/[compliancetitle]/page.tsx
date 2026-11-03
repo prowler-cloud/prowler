@@ -96,6 +96,9 @@ export default async function ComplianceDetail({
           resolvedSearchParams["filter[cis_profile_level]"],
         )}
         targetSection={section}
+        region={getSingleSearchParam(
+          resolvedSearchParams["filter[region__in]"],
+        )}
       />
     );
   }

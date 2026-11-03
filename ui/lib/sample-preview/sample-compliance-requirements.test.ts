@@ -13,6 +13,7 @@ import { REQUIREMENT_STATUS } from "@/types/compliance";
 import {
   getSampleComplianceDetail,
   getSampleComplianceTotals,
+  SAMPLE_CATALOG_STATUS,
 } from "./sample-compliance-requirements";
 import { SAMPLE_COMPLIANCE_WATCHLIST_RESPONSE } from "./sample-overview";
 import {
@@ -54,8 +55,10 @@ describe("sample compliance requirements", () => {
 
     // Then: the catalog is read without a scan, so no tenant data is involved.
     expect(getComplianceAttributesMock).toHaveBeenCalledWith("cis_5.0_aws");
+    expect(detail.status).toBe(SAMPLE_CATALOG_STATUS.READY);
+    if (detail.status !== SAMPLE_CATALOG_STATUS.READY) return;
     expect(
-      detail?.requirements.map((item) => [item.id, item.attributes.status]),
+      detail.requirements.map((item) => [item.id, item.attributes.status]),
     ).toEqual([
       ["1.1", REQUIREMENT_STATUS.FAIL],
       ["1.2", REQUIREMENT_STATUS.PASS],
@@ -117,5 +120,61 @@ describe("sample compliance requirements", () => {
           finding.status === "FAIL",
       ),
     ).toBe(true);
+  });
+
+  it("evaluates statuses only on the selected regions' findings", async () => {
+    // Given: a region where the failing check has no failing resource.
+    const failingRegions = new Set(
+      SAMPLE_FINDINGS.filter(
+        (finding) =>
+          finding.check.checkId === FAILING.check.checkId &&
+          finding.status === "FAIL",
+      ).map((finding) => finding.resource.region),
+    );
+    const cleanRegion = [
+      "us-east-1",
+      "us-west-2",
+      "eu-west-1",
+      "eu-central-1",
+    ].find((region) => !failingRegions.has(region));
+    getComplianceAttributesMock.mockResolvedValue({
+      data: [requirement("1.1", [FAILING.check.checkId])],
+    });
+
+    // When
+    const inFailingRegion = await getSampleComplianceDetail(
+      "cis_5.0_aws",
+      FAILING.resource.region,
+    );
+    const inCleanRegion = cleanRegion
+      ? await getSampleComplianceDetail("cis_5.0_aws", cleanRegion)
+      : null;
+
+    // Then
+    const status = (detail: typeof inFailingRegion | null) =>
+      detail?.status === SAMPLE_CATALOG_STATUS.READY
+        ? detail.requirements[0].attributes.status
+        : undefined;
+    expect(status(inFailingRegion)).toBe(REQUIREMENT_STATUS.FAIL);
+    if (cleanRegion)
+      expect(status(inCleanRegion)).toBe(REQUIREMENT_STATUS.PASS);
+  });
+
+  it("tells a warming catalog apart from other failures", async () => {
+    getComplianceAttributesMock.mockResolvedValueOnce({
+      warming: true,
+      status: 503,
+    });
+    expect((await getSampleComplianceDetail("cis_5.0_aws")).status).toBe(
+      SAMPLE_CATALOG_STATUS.WARMING,
+    );
+
+    getComplianceAttributesMock.mockResolvedValueOnce({
+      error: "Not found",
+      status: 404,
+    });
+    expect((await getSampleComplianceDetail("unknown")).status).toBe(
+      SAMPLE_CATALOG_STATUS.UNAVAILABLE,
+    );
   });
 });

@@ -15,35 +15,77 @@ import { SAMPLE_FINDINGS } from "./sample-records";
 // Requirement statuses for the sample scan: the framework catalog (no tenant
 // data) evaluated against the sample findings, the way a scan would.
 
-const FAILING_CHECKS = new Set(
-  SAMPLE_FINDINGS.filter((finding) => finding.status === "FAIL").map(
-    (finding) => finding.check.checkId,
-  ),
-);
+// Failing checks of the sample findings in the selected regions (all if none).
+const failingChecks = (regions: string[]) =>
+  new Set(
+    SAMPLE_FINDINGS.filter(
+      (finding) =>
+        finding.status === "FAIL" &&
+        (regions.length === 0 || regions.includes(finding.resource.region)),
+    ).map((finding) => finding.check.checkId),
+  );
 
 // Checks the sample does not evaluate count as passing: a clean account.
-const requirementStatus = (checkIds: string[]): RequirementStatus => {
+const requirementStatus = (
+  checkIds: string[],
+  failing: Set<string>,
+): RequirementStatus => {
   if (checkIds.length === 0) return REQUIREMENT_STATUS.MANUAL;
-  return checkIds.some((checkId) => FAILING_CHECKS.has(checkId))
+  return checkIds.some((checkId) => failing.has(checkId))
     ? REQUIREMENT_STATUS.FAIL
     : REQUIREMENT_STATUS.PASS;
 };
 
-export interface SampleComplianceDetail {
+export const SAMPLE_CATALOG_STATUS = {
+  READY: "ready",
+  // The API is still loading the catalog (HTTP 503), like the real page.
+  WARMING: "warming",
+  UNAVAILABLE: "unavailable",
+} as const;
+
+interface SampleComplianceDetailReady {
+  status: typeof SAMPLE_CATALOG_STATUS.READY;
   attributesData: AttributesData;
   requirements: RequirementItemData[];
 }
 
-/** The framework's requirements with sample statuses; null if the catalog is unavailable. */
+interface SampleComplianceDetailPending {
+  status:
+    | typeof SAMPLE_CATALOG_STATUS.WARMING
+    | typeof SAMPLE_CATALOG_STATUS.UNAVAILABLE;
+}
+
+export type SampleComplianceDetail =
+  | SampleComplianceDetailReady
+  | SampleComplianceDetailPending;
+
+const getSampleCatalog = cache((complianceId: string) =>
+  // No scan id: the catalog of the provider that declares the framework.
+  getComplianceAttributes(complianceId),
+);
+
+/** The framework's requirements with sample statuses for `region` (comma-separated). */
 export const getSampleComplianceDetail = cache(
-  async (complianceId: string): Promise<SampleComplianceDetail | null> => {
-    // No scan id: the catalog of the provider that declares the framework.
-    const attributesData = await getComplianceAttributes(complianceId);
-    if (!attributesData || !("data" in attributesData)) return null;
-    if (!Array.isArray(attributesData.data)) return null;
+  async (
+    complianceId: string,
+    region?: string,
+  ): Promise<SampleComplianceDetail> => {
+    const attributesData = await getSampleCatalog(complianceId);
+    if (attributesData && "warming" in attributesData) {
+      return { status: SAMPLE_CATALOG_STATUS.WARMING };
+    }
+    if (
+      !attributesData ||
+      !("data" in attributesData) ||
+      !Array.isArray(attributesData.data)
+    ) {
+      return { status: SAMPLE_CATALOG_STATUS.UNAVAILABLE };
+    }
 
     const typed = attributesData as AttributesData;
+    const failing = failingChecks(region ? region.split(",") : []);
     return {
+      status: SAMPLE_CATALOG_STATUS.READY,
       attributesData: typed,
       requirements: typed.data.map((item) => ({
         type: "compliance-requirements-details",
@@ -52,7 +94,10 @@ export const getSampleComplianceDetail = cache(
           framework: item.attributes.framework,
           version: item.attributes.version,
           description: item.attributes.description,
-          status: requirementStatus(item.attributes.attributes.check_ids ?? []),
+          status: requirementStatus(
+            item.attributes.attributes.check_ids ?? [],
+            failing,
+          ),
         },
       })),
     };
@@ -66,7 +111,7 @@ export const getSampleComplianceTotals = async (): Promise<WatchlistItem[]> =>
   Promise.all(
     SAMPLE_COMPLIANCE_WATCHLIST_RESPONSE.data.map(async (item) => {
       const detail = await getSampleComplianceDetail(item.id);
-      if (!detail) return item;
+      if (detail.status !== SAMPLE_CATALOG_STATUS.READY) return item;
 
       const count = (status: RequirementStatus) =>
         detail.requirements.filter(
