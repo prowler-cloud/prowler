@@ -1,1 +1,1 @@
-`elbv2_internet_facing` now detects internet-facing Application Load Balancers with port-specific TCP ingress open to all IPv4 or IPv6 addresses
+`elbv2_internet_facing`, `redshift_cluster_public_access`, and `emr_cluster_publicly_accesible` now detect port-specific ingress rules that expose their resources to the internet

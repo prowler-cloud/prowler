@@ -1,6 +1,8 @@
 from unittest import mock
 from uuid import uuid4
 
+import pytest
+
 from prowler.providers.aws.services.redshift.redshift_service import Cluster
 from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
@@ -242,7 +244,14 @@ class Test_redshift_cluster_public_access:
                 assert result[0].resource_id == CLUSTER_ID
                 assert result[0].resource_arn == CLUSTER_ARN
 
-    def test_cluster_with_public_vpc_sgs(self):
+    @pytest.mark.parametrize(
+        ("ip_ranges", "ipv6_ranges"),
+        [
+            ([{"CidrIp": "0.0.0.0/0"}], []),
+            ([], [{"CidrIpv6": "::/0"}]),
+        ],
+    )
+    def test_cluster_with_public_vpc_sgs(self, ip_ranges, ipv6_ranges):
         redshift_client = mock.MagicMock
         redshift_client.audited_partition = "aws"
         redshift_client.audited_account = AWS_ACCOUNT_NUMBER
@@ -267,12 +276,11 @@ class Test_redshift_cluster_public_access:
                 id="sg-123456",
                 ingress_rules=[
                     {
-                        "IpProtocol": "-1",
-                        "IpRanges": [
-                            {
-                                "CidrIp": "0.0.0.0/0",
-                            },
-                        ],
+                        "IpProtocol": "tcp",
+                        "FromPort": 5439,
+                        "ToPort": 5439,
+                        "IpRanges": ip_ranges,
+                        "Ipv6Ranges": ipv6_ranges,
                     }
                 ],
             )
