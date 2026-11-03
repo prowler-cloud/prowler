@@ -7,6 +7,7 @@ import {
 
 const NEW_TENANT = {
   enabled: true,
+  canManageProviders: true,
   hasCompletedScan: false,
   hasProviders: false,
   runningScan: null,
@@ -72,6 +73,12 @@ describe("resolveSamplePreviewState", () => {
         hasProviders: true,
         runningScan: undefined,
       }),
+    ).toEqual({ active: false });
+  });
+
+  it("never shows the sample to a user who cannot manage providers", () => {
+    expect(
+      resolveSamplePreviewState({ ...NEW_TENANT, canManageProviders: false }),
     ).toEqual({ active: false });
   });
 

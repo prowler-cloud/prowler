@@ -27,6 +27,8 @@ export type SamplePreviewState = SamplePreviewActive | SamplePreviewInactive;
 
 export interface SamplePreviewInputs {
   enabled: boolean;
+  // Limited-visibility users list zero providers in a tenant that is not empty.
+  canManageProviders: boolean;
   // `undefined` = the lookup failed: the real page wins, never the sample.
   hasCompletedScan: boolean | undefined;
   hasProviders: boolean | undefined;
@@ -38,12 +40,14 @@ const INACTIVE: SamplePreviewInactive = { active: false };
 /** Sample data stands in until the tenant's first scan completes. */
 export function resolveSamplePreviewState({
   enabled,
+  canManageProviders,
   hasCompletedScan,
   hasProviders,
   runningScan,
 }: SamplePreviewInputs): SamplePreviewState {
   if (
     !enabled ||
+    !canManageProviders ||
     hasCompletedScan !== false ||
     hasProviders === undefined ||
     runningScan === undefined

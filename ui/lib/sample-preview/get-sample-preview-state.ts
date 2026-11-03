@@ -2,6 +2,7 @@ import { cache } from "react";
 
 import { getProviders } from "@/actions/providers";
 import { getScans, getScansByState } from "@/actions/scans";
+import { auth } from "@/auth.config";
 import { isSamplePreviewEnabled } from "@/lib/sample-preview-access";
 import { SCAN_STATES } from "@/types/attack-paths";
 
@@ -11,9 +12,15 @@ import {
   type SamplePreviewState,
 } from "./sample-preview-state";
 
+const INACTIVE: SamplePreviewState = { active: false };
+
+interface ScanRowAttributes {
+  progress?: number | null;
+}
+
 interface ScanRow {
   id: string;
-  attributes: { progress?: number | null };
+  attributes: ScanRowAttributes;
 }
 
 const hasRows = (response: unknown): boolean | undefined => {
@@ -34,26 +41,40 @@ const toRunningScan = (response: unknown): RunningScan | null | undefined => {
 export const getSamplePreviewState = cache(
   async (): Promise<SamplePreviewState> => {
     const enabled = await isSamplePreviewEnabled();
-    if (!enabled) return { active: false };
+    if (!enabled) return INACTIVE;
 
-    const [completedScans, providers, runningScans] = await Promise.all([
-      getScansByState(),
-      getProviders({ page: 1, pageSize: 1 }),
-      getScans({
-        pageSize: 1,
-        sort: "-inserted_at",
-        filters: {
-          "filter[state__in]": `${SCAN_STATES.AVAILABLE},${SCAN_STATES.EXECUTING}`,
-        },
-        fields: { scans: "state,progress" },
-      }),
-    ]);
+    const session = await auth();
+    const canManageProviders =
+      session?.user?.permissions?.manage_providers === true;
+    if (!canManageProviders) return INACTIVE;
 
-    return resolveSamplePreviewState({
-      enabled,
-      hasCompletedScan: hasRows(completedScans),
-      hasProviders: hasRows(providers),
-      runningScan: toRunningScan(runningScans),
-    });
+    try {
+      // Most tenants already have a completed scan: one lookup settles it.
+      const hasCompletedScan = hasRows(await getScansByState());
+      if (hasCompletedScan !== false) return INACTIVE;
+
+      const [providers, runningScans] = await Promise.all([
+        getProviders({ page: 1, pageSize: 1 }),
+        getScans({
+          pageSize: 1,
+          sort: "-inserted_at",
+          filters: {
+            "filter[state__in]": `${SCAN_STATES.AVAILABLE},${SCAN_STATES.EXECUTING}`,
+          },
+          fields: { scans: "state,progress" },
+        }),
+      ]);
+
+      return resolveSamplePreviewState({
+        enabled,
+        canManageProviders,
+        hasCompletedScan,
+        hasProviders: hasRows(providers),
+        runningScan: toRunningScan(runningScans),
+      });
+    } catch {
+      // The scans actions throw on 5xx: the real page wins.
+      return INACTIVE;
+    }
   },
 );
