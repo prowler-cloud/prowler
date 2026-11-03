@@ -62,7 +62,7 @@ export function CredentialFields({
               <RadioGroup
                 value={field.value}
                 onValueChange={field.onChange}
-                className="flex flex-row flex-wrap gap-6"
+                orientation="horizontal"
                 aria-label="Authentication method"
               >
                 <label className="flex items-center gap-2 text-sm">

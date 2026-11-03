@@ -274,7 +274,9 @@ export function LighthouseV2ConfigurationForm({
                 title="Credentials"
                 description={
                   usesInstanceRoleHint
-                    ? "Leave the keys blank to use this installation's own AWS role; only the region is needed."
+                    ? configuration
+                      ? "Leave blank to keep existing credentials, or enter only the region to use this installation's own AWS role."
+                      : "Leave the keys blank to use this installation's own AWS role; only the region is needed."
                     : configuration
                       ? "Leave blank to keep existing credentials."
                       : "Credentials are required for new configurations."

@@ -394,6 +394,13 @@ describe("LighthouseV2ConfigPage", () => {
     });
     await user.click(screen.getByRole("button", { name: /Amazon Bedrock/i }));
 
+    // Then: blank fields keep the stored credentials, so the hint says so
+    expect(
+      screen.getByText(
+        "Leave blank to keep existing credentials, or enter only the region to use this installation's own AWS role.",
+      ),
+    ).toBeInTheDocument();
+
     // When: only the region is entered
     expect(
       screen.getByLabelText("AWS access key ID (optional)"),
