@@ -245,13 +245,14 @@ class Test_redshift_cluster_public_access:
                 assert result[0].resource_arn == CLUSTER_ARN
 
     @pytest.mark.parametrize(
-        ("ip_ranges", "ipv6_ranges"),
+        ("ip_ranges", "ipv6_ranges", "expected_status"),
         [
-            ([{"CidrIp": "0.0.0.0/0"}], []),
-            ([], [{"CidrIpv6": "::/0"}]),
+            ([{"CidrIp": "0.0.0.0/0"}], [], "FAIL"),
+            ([], [{"CidrIpv6": "::/0"}], "FAIL"),
+            ([{"CidrIp": "10.0.0.0/8"}], [], "PASS"),
         ],
     )
-    def test_cluster_with_public_vpc_sgs(self, ip_ranges, ipv6_ranges):
+    def test_cluster_with_public_vpc_sgs(self, ip_ranges, ipv6_ranges, expected_status):
         redshift_client = mock.MagicMock
         redshift_client.audited_partition = "aws"
         redshift_client.audited_account = AWS_ACCOUNT_NUMBER
@@ -310,10 +311,12 @@ class Test_redshift_cluster_public_access:
 
                 check = redshift_cluster_public_access()
                 result = check.execute()
-                assert result[0].status == "FAIL"
-                assert (
-                    result[0].status_extended
-                    == f"Redshift Cluster {CLUSTER_ID} has the endpoint 192.192.192.192 set as publicly accessible and it is exposed to the Internet by security group (sg-123456) in a public subnet."
+                assert result[0].status == expected_status
+                expected_status_extended = (
+                    f"Redshift Cluster {CLUSTER_ID} has the endpoint 192.192.192.192 set as publicly accessible and it is exposed to the Internet by security group (sg-123456) in a public subnet."
+                    if expected_status == "FAIL"
+                    else f"Redshift Cluster {CLUSTER_ID} has the endpoint 192.192.192.192 set as publicly accessible in a public subnet but is not publicly exposed."
                 )
+                assert result[0].status_extended == expected_status_extended
                 assert result[0].resource_id == CLUSTER_ID
                 assert result[0].resource_arn == CLUSTER_ARN
