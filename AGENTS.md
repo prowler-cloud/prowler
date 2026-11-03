@@ -151,14 +151,6 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 
 Prowler is an open-source cloud security assessment tool supporting AWS, Azure, GCP, Kubernetes, GitHub, M365, and more.
 
-| Component | Location | Tech Stack |
-|-----------|----------|------------|
-| SDK | `prowler/` | Python 3.10+, uv |
-| API | `api/` | Django 5.1, DRF, Celery |
-| UI | `ui/` | Next.js 16, React 19, Tailwind 4 |
-| MCP Server | `mcp_server/` | FastMCP, Python 3.12+ |
-| Dashboard | `dashboard/` | Dash, Plotly |
-
 ---
 
 ## Python Development
