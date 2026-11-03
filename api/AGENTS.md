@@ -97,29 +97,6 @@ Needs retry → Celery task
 
 ---
 
-## TECH STACK
-
-Django 5.1.x | DRF 3.15.x | djangorestframework-jsonapi 7.x | Celery 5.4.x | PostgreSQL 16 | pytest 8.x
-
----
-
-## PROJECT STRUCTURE
-
-```text
-api/src/backend/
-├── api/                    # Main Django app
-│   ├── v1/                # API version 1 (views, serializers, urls)
-│   ├── models.py          # Django models
-│   ├── filters.py         # FilterSet classes
-│   ├── base_views.py      # Base ViewSet classes
-│   ├── rls.py             # Row-Level Security
-│   └── tests/             # Unit tests
-├── config/                # Django configuration
-└── tasks/                 # Celery tasks
-```
-
----
-
 ## COMMANDS
 
 ```bash
