@@ -16,7 +16,7 @@
   "Severity": "medium",
   "ResourceType": "AwsEc2Vpc",
   "ResourceGroup": "network",
-  "Description": "**AWS VPCs** have **Flow Logs** with confirmed successful delivery. VPCs with no flow logs or only failed destinations are highlighted. If delivery status is missing or unrecognized and no successful destination is known, the result is MANUAL.",
+  "Description": "**AWS VPCs** have **Flow Logs** with confirmed successful delivery. VPCs with no flow logs or only failed destinations are highlighted. Missing or unrecognized status, or an incomplete API lookup, returns MANUAL unless a successful destination is known.",
   "Risk": "Without flow logs, network activity is opaque, hindering detection and investigation of malicious traffic. Attackers can probe, exfiltrate, or move laterally unnoticed, impacting **confidentiality** and **integrity**; outages and misconfigurations are harder to diagnose, reducing **availability**.",
   "RelatedUrl": "",
   "AdditionalURLs": [

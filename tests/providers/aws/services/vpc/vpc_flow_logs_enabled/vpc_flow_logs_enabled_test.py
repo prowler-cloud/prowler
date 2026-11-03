@@ -21,11 +21,15 @@ class Test_vpc_flow_logs_enabled:
             ([["FAILED", "FAILED"]], "FAIL", False),
             ([["SUCCESS"]], "PASS", True),
             ([["FAILED", "SUCCESS"]], "PASS", True),
+            ([["SUCCESS", None]], "PASS", True),
+            ([["UNRECOGNIZED", "SUCCESS"]], "PASS", True),
             ([[None]], "MANUAL", None),
             ([["FAILED", None]], "MANUAL", None),
             ([["UNRECOGNIZED"]], "MANUAL", None),
             ([[]], "FAIL", None),
             ([["FAILED"], ["SUCCESS"]], "PASS", True),
+            ([["SUCCESS"], [None]], "PASS", True),
+            ([["SUCCESS"], ["UNRECOGNIZED"]], "PASS", True),
             ([[], ["SUCCESS"]], "PASS", True),
             ([["FAILED"], [None]], "MANUAL", None),
         ],
@@ -34,11 +38,15 @@ class Test_vpc_flow_logs_enabled:
             "all-failed",
             "success",
             "mixed-success",
+            "success-and-missing",
+            "unknown-and-success",
             "missing",
             "failed-and-missing",
             "unknown",
             "no-flow-logs",
             "later-success",
+            "later-missing-after-success",
+            "later-unknown-after-success",
             "empty-first-page",
             "later-missing",
         ],
@@ -109,6 +117,158 @@ class Test_vpc_flow_logs_enabled:
             else:
                 message = "Flow logs are configured but successful delivery could not be verified."
             assert result[0].status_extended == f"VPC {vpc_id} {message}"
+
+    @pytest.mark.parametrize(
+        "first_page_statuses, prior_success, expected_status",
+        [
+            (["SUCCESS"], False, "PASS"),
+            (["FAILED"], False, "MANUAL"),
+            ([None], False, "MANUAL"),
+            ([], False, "MANUAL"),
+            (None, False, "MANUAL"),
+            (None, True, "MANUAL"),
+        ],
+        ids=["success", "failed", "missing", "empty", "first-page", "stale-success"],
+    )
+    @mock_aws
+    def test_vpc_flow_log_pagination_error(
+        self, first_page_statuses, prior_success, expected_status
+    ):
+        from prowler.providers.aws.services.vpc.vpc_service import VPC
+
+        vpc_id = client("ec2", region_name=AWS_REGION_US_EAST_1).create_vpc(
+            CidrBlock="10.0.0.0/16"
+        )["Vpc"]["VpcId"]
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        inventory = VPC(aws_provider)
+        inventory.vpcs = {
+            arn: vpc for arn, vpc in inventory.vpcs.items() if vpc.id == vpc_id
+        }
+        if prior_success:
+            vpc = next(iter(inventory.vpcs.values()))
+            vpc.flow_log = True
+            vpc.flow_log_delivery_success = True
+        regional_client = inventory.regional_clients[AWS_REGION_US_EAST_1]
+        params = {"Filters": [{"Name": "resource-id", "Values": [vpc_id]}]}
+
+        with Stubber(regional_client) as stubber:
+            if first_page_statuses is not None:
+                flow_logs = []
+                for status in first_page_statuses:
+                    flow_log = {"ResourceId": vpc_id, "FlowLogStatus": "ACTIVE"}
+                    if status is not None:
+                        flow_log["DeliverLogsStatus"] = status
+                    flow_logs.append(flow_log)
+                stubber.add_response(
+                    "describe_flow_logs",
+                    {"FlowLogs": flow_logs, "NextToken": "next-page"},
+                    params.copy(),
+                )
+                params["NextToken"] = "next-page"
+            stubber.add_client_error(
+                "describe_flow_logs",
+                service_error_code="UnauthorizedOperation",
+                service_message="Not authorized to describe flow logs",
+                expected_params=params,
+            )
+            inventory._describe_flow_logs()
+            stubber.assert_no_pending_responses()
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.vpc.vpc_flow_logs_enabled.vpc_flow_logs_enabled.vpc_client",
+                new=inventory,
+            ),
+        ):
+            from prowler.providers.aws.services.vpc.vpc_flow_logs_enabled.vpc_flow_logs_enabled import (
+                vpc_flow_logs_enabled,
+            )
+
+            result = vpc_flow_logs_enabled().execute()
+
+            with Stubber(regional_client) as stubber:
+                stubber.add_response(
+                    "describe_flow_logs",
+                    {"FlowLogs": []},
+                    {"Filters": [{"Name": "resource-id", "Values": [vpc_id]}]},
+                )
+                inventory._describe_flow_logs()
+                stubber.assert_no_pending_responses()
+            retry_result = vpc_flow_logs_enabled().execute()
+
+        assert len(result) == 1
+        assert result[0].status == expected_status
+        if expected_status == "PASS":
+            assert result[0].resource_id == vpc_id
+        else:
+            assert result[0].resource_id == AWS_ACCOUNT_NUMBER
+            assert "ec2:DescribeFlowLogs" in result[0].status_extended
+
+        assert len(retry_result) == 1
+        assert retry_result[0].status == "FAIL"
+        assert retry_result[0].resource_id == vpc_id
+        assert (
+            retry_result[0].status_extended == f"VPC {vpc_id} Flow logs are disabled."
+        )
+
+    @pytest.mark.parametrize("scan_unused_services", [True, False])
+    @mock_aws
+    def test_vpc_flow_log_errors_are_account_level(self, scan_unused_services):
+        from prowler.providers.aws.services.vpc.vpc_service import VPC
+
+        ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
+        vpc_ids = {
+            ec2_client.create_vpc(CidrBlock=cidr)["Vpc"]["VpcId"]
+            for cidr in ["10.0.0.0/16", "10.1.0.0/16"]
+        }
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_US_EAST_1], scan_unused_services=scan_unused_services
+        )
+        inventory = VPC(aws_provider)
+        inventory.vpcs = {
+            arn: vpc for arn, vpc in inventory.vpcs.items() if vpc.id in vpc_ids
+        }
+        regional_client = inventory.regional_clients[AWS_REGION_US_EAST_1]
+
+        with Stubber(regional_client) as stubber:
+            for vpc in inventory.vpcs.values():
+                stubber.add_client_error(
+                    "describe_flow_logs",
+                    service_error_code="UnauthorizedOperation",
+                    expected_params={
+                        "Filters": [{"Name": "resource-id", "Values": [vpc.id]}]
+                    },
+                )
+            inventory._describe_flow_logs()
+            stubber.assert_no_pending_responses()
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.vpc.vpc_flow_logs_enabled.vpc_flow_logs_enabled.vpc_client",
+                new=inventory,
+            ),
+        ):
+            from prowler.providers.aws.services.vpc.vpc_flow_logs_enabled.vpc_flow_logs_enabled import (
+                vpc_flow_logs_enabled,
+            )
+
+            result = vpc_flow_logs_enabled().execute()
+
+        if scan_unused_services:
+            assert len(result) == 1
+            assert result[0].status == "MANUAL"
+            assert result[0].resource_id == AWS_ACCOUNT_NUMBER
+            assert result[0].resource_arn == inventory.audited_account_arn
+        else:
+            assert result == []
 
     @mock_aws
     def test_vpc_only_default_vpcs(self):

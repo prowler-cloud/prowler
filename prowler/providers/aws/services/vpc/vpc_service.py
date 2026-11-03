@@ -152,6 +152,9 @@ class VPC(AWSService):
         logger.info("VPC - Describing flow logs...")
         try:
             for vpc in self.vpcs.values():
+                vpc.flow_log = False
+                vpc.flow_log_delivery_success = None
+                vpc.flow_log_lookup_failed = False
                 try:
                     regional_client = self.regional_clients[vpc.region]
                     paginator = regional_client.get_paginator("describe_flow_logs")
@@ -170,13 +173,16 @@ class VPC(AWSService):
                             flow_log.get("DeliverLogsStatus")
                             for flow_log in page.get("FlowLogs", [])
                         )
-                    vpc.flow_log = bool(delivery_statuses)
-                    vpc.flow_log_delivery_success = None
-                    if "SUCCESS" in delivery_statuses:
-                        vpc.flow_log_delivery_success = True
-                    elif delivery_statuses == {"FAILED"}:
-                        vpc.flow_log_delivery_success = False
+                        vpc.flow_log = bool(delivery_statuses)
+                        vpc.flow_log_delivery_success = None
+                        if "SUCCESS" in delivery_statuses:
+                            vpc.flow_log_delivery_success = True
+                        elif delivery_statuses == {"FAILED"}:
+                            vpc.flow_log_delivery_success = False
                 except Exception as error:
+                    vpc.flow_log_lookup_failed = True
+                    if vpc.flow_log_delivery_success is not True:
+                        vpc.flow_log_delivery_success = None
                     logger.error(
                         f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
@@ -494,6 +500,7 @@ class VPCs(BaseModel):
     cidr_block: str
     flow_log: bool = False
     flow_log_delivery_success: Optional[bool] = None
+    flow_log_lookup_failed: bool = False
     region: str
     subnets: list[VpcSubnet] = []
     tags: Optional[list] = []
