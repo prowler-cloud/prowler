@@ -27,6 +27,15 @@ class Test_account_api_token_expiration_set:
             == f"Cannot evaluate expiration dates for account-owned API tokens of account {ACCOUNT_NAME}: the tokens could not be listed. Account-owned tokens are only visible to tokens created by a Super Administrator with the Account API Tokens Read permission."
         )
 
+    def test_unattributed_user_tokens_manual(self):
+        result = run_account_check(CHECK, user_tokens_unattributed=[ACCOUNT_ID])
+        assert len(result) == 1
+        assert result[0].status == "MANUAL"
+        assert (
+            result[0].status_extended
+            == f"Cannot evaluate expiration dates for zone-scoped user API tokens of account {ACCOUNT_NAME}: the zones could not be listed to attribute them to an account. Verify that the scanning token has the Zone Read permission."
+        )
+
     def test_inactive_tokens_skipped(self):
         tokens = [make_token(status="disabled"), make_token(status="expired")]
         assert run_account_check(CHECK, tokens=tokens) == []

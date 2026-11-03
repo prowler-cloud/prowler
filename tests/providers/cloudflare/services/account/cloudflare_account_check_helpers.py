@@ -17,6 +17,7 @@ def make_account_client(
     members_failed=(),
     members_listed=None,
     tokens_failed=(),
+    user_tokens_unattributed=(),
 ):
     client = mock.MagicMock()
     client.accounts = accounts or []
@@ -32,6 +33,7 @@ def make_account_client(
         else {m.account_id for m in client.members}
     )
     client.tokens_failed_accounts = set(tokens_failed)
+    client.user_tokens_unattributed_accounts = set(user_tokens_unattributed)
     client.provider = SimpleNamespace(
         identity=SimpleNamespace(
             accounts=[SimpleNamespace(id=ACCOUNT_ID, name=ACCOUNT_NAME)]

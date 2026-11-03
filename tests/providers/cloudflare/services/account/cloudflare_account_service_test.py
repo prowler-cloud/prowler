@@ -250,6 +250,54 @@ class TestAccountService:
 
         assert [t.id for t in service.tokens] == ["all", "zone-mine", "nested"]
         assert {t.account_id for t in service.tokens} == {ACCOUNT_ID}
+        assert service.user_tokens_unattributed_accounts == set()
+
+    def test_nested_zone_wildcard_is_limited_to_parent_account(self):
+        provider = set_mocked_cloudflare_provider()
+        provider.identity.audited_accounts = [ACCOUNT_ID, OTHER_ACCOUNT]
+        client = provider.session.client
+        client.accounts.get.side_effect = Exception("not needed")
+        client.accounts.members.list.return_value = []
+        client.accounts.tokens.list.return_value = []
+        client.user.tokens.list.return_value = [
+            _token(
+                "nested-other",
+                policies=[
+                    _policy(
+                        {
+                            f"com.cloudflare.api.account.{OTHER_ACCOUNT}": {
+                                "com.cloudflare.api.account.zone.*": "*"
+                            }
+                        }
+                    )
+                ],
+            )
+        ]
+
+        service = Account(provider)
+
+        # only the parent account, not every audited account
+        assert [(t.id, t.account_id) for t in service.tokens] == [
+            ("nested-other", OTHER_ACCOUNT)
+        ]
+
+    def test_zone_lookup_failure_marks_user_tokens_unattributed(self):
+        provider = set_mocked_cloudflare_provider()
+        client = provider.session.client
+        client.accounts.members.list.return_value = []
+        client.accounts.tokens.list.return_value = []
+        client.zones.list.side_effect = Exception("zones forbidden")
+        client.user.tokens.list.return_value = [
+            _token(
+                "zone-token",
+                policies=[_policy({"com.cloudflare.api.account.zone.zone-1": "*"})],
+            )
+        ]
+
+        service = Account(provider)
+
+        assert service.tokens == []
+        assert service.user_tokens_unattributed_accounts == {ACCOUNT_ID}
 
     def test_member_model_defaults(self):
         member = CloudflareAccountMember(id="m", name="m", account_id=ACCOUNT_ID)

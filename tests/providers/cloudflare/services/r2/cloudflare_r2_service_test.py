@@ -1,7 +1,7 @@
 from types import SimpleNamespace
 
 import httpx
-from cloudflare import NotFoundError
+from cloudflare import NotFoundError, PermissionDeniedError
 
 from prowler.providers.cloudflare.services.r2.r2_service import (
     R2,
@@ -17,6 +17,13 @@ def _not_found():
     request = httpx.Request("GET", "https://api.cloudflare.com")
     return NotFoundError(
         "not found", response=httpx.Response(404, request=request), body=None
+    )
+
+
+def _forbidden():
+    request = httpx.Request("GET", "https://api.cloudflare.com")
+    return PermissionDeniedError(
+        "access denied", response=httpx.Response(403, request=request), body=None
     )
 
 
@@ -41,7 +48,7 @@ def _provider():
             return SimpleNamespace(
                 buckets=[SimpleNamespace(name="eu-bucket", jurisdiction="eu")]
             )
-        raise Exception("fedramp not enabled")
+        raise _forbidden()
 
     client.r2.buckets.list.side_effect = list_buckets
 
@@ -161,6 +168,17 @@ class TestR2Service:
         buckets = {b.name: b for b in R2(provider).buckets}
         assert buckets["public-bucket"].unique_name == "public-bucket"
         assert buckets["eu-bucket"].unique_name == "eu/eu-bucket"
+
+    def test_fedramp_non_permission_error_is_reported(self):
+        provider = set_mocked_cloudflare_provider()
+
+        def list_buckets(account_id, jurisdiction, **kwargs):
+            if jurisdiction == "fedramp":
+                raise Exception("500 internal error")
+            return SimpleNamespace(buckets=[])
+
+        provider.session.client.r2.buckets.list.side_effect = list_buckets
+        assert R2(provider).list_failed_accounts == {ACCOUNT_ID}
 
     def test_eu_listing_failure_is_reported(self):
         provider = set_mocked_cloudflare_provider()

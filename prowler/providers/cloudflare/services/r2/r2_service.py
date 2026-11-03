@@ -1,6 +1,6 @@
 from typing import ClassVar, Optional
 
-from cloudflare import NotFoundError
+from cloudflare import NotFoundError, PermissionDeniedError
 from pydantic import BaseModel, Field
 
 from prowler.lib.logger import logger
@@ -11,7 +11,8 @@ from prowler.providers.cloudflare.lib.service.service import CloudflareService
 R2_JURISDICTIONS = ("default", "eu", "fedramp")
 # Maximum page size accepted by the List Buckets API.
 R2_BUCKETS_PAGE_SIZE = 1000
-# Only FedRAMP accounts can list FedRAMP buckets; other accounts get 403.
+# Only FedRAMP accounts can list FedRAMP buckets; other accounts get a 403,
+# which is expected. Any other error is a real listing failure.
 OPTIONAL_JURISDICTIONS = {"fedramp"}
 
 
@@ -44,7 +45,9 @@ class R2(CloudflareService):
                         self._list_jurisdiction_buckets(account_id, jurisdiction)
                     )
                 except Exception as error:
-                    if jurisdiction in OPTIONAL_JURISDICTIONS:
+                    if jurisdiction in OPTIONAL_JURISDICTIONS and isinstance(
+                        error, PermissionDeniedError
+                    ):
                         logger.debug(
                             f"{account_id} R2 ({jurisdiction}) -- {error.__class__.__name__}: {error}"
                         )

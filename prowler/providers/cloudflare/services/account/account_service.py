@@ -33,7 +33,11 @@ class Account(CloudflareService):
         self.members_listed_accounts: set[str] = set()
         self.members_failed_accounts: set[str] = set()
         self.tokens_failed_accounts: set[str] = set()
-        self._zone_accounts: Optional[dict[str, str]] = None
+        # Accounts for which zone-scoped user tokens could not be attributed
+        # because the zone lookup failed.
+        self.user_tokens_unattributed_accounts: set[str] = set()
+        # None: not fetched yet; False: the zone listing failed.
+        self._zone_accounts: Any = None
         self._get_accounts()
         self._list_members()
         self._list_account_tokens()
@@ -164,38 +168,80 @@ class Account(CloudflareService):
             self._add_token(token, "user", accounts[0])
 
     def _token_audited_accounts(self, token: Any) -> list[str]:
-        """Return the audited accounts a token's allow policies grant access to."""
+        """Return the audited accounts a token's allow policies grant access to.
+
+        Policy resources may nest, e.g. ``{"...account.<id>": {"...account.zone.*": "*"}}``
+        limits the zone wildcard to that account, so wildcards are resolved
+        within their parent account scope.
+        """
         audited = self.audited_accounts
         matched: set[str] = set()
         for policy in getattr(token, "policies", None) or []:
             if getattr(policy, "effect", "allow") == "deny":
                 continue
-            for resource in _resource_keys(getattr(policy, "resources", None)):
-                if resource in ALL_ACCOUNT_RESOURCES:
-                    matched.update(audited)
-                elif resource.startswith(ZONE_RESOURCE_PREFIX):
-                    zone_id = resource[len(ZONE_RESOURCE_PREFIX) :]
-                    account_id = self._zone_account_map().get(zone_id)
-                    if account_id:
-                        matched.add(account_id)
-                elif resource.startswith(ACCOUNT_RESOURCE_PREFIX):
-                    matched.add(resource[len(ACCOUNT_RESOURCE_PREFIX) :])
+            matched |= self._resource_accounts(
+                getattr(policy, "resources", None), set(audited)
+            )
         return [account_id for account_id in audited if account_id in matched]
 
-    def _zone_account_map(self) -> dict[str, str]:
-        """Map zone IDs to account IDs (only fetched when a token is zone-scoped)."""
+    def _resource_accounts(self, resources: Any, scope: set[str]) -> set[str]:
+        """Resolve the accounts covered by a (possibly nested) resources map.
+
+        Args:
+            resources: Policy resources: a dict of resource key to "*" or to a
+                nested resources dict.
+            scope: Accounts the enclosing resource limits this level to.
+
+        Returns:
+            The accounts, within ``scope``, that the resources grant access to.
+        """
+        matched: set[str] = set()
+        if not isinstance(resources, dict):
+            return matched
+        for key, value in resources.items():
+            if key in ALL_ACCOUNT_RESOURCES:
+                accounts = set(scope)
+            elif key.startswith(ZONE_RESOURCE_PREFIX):
+                zone_id = key[len(ZONE_RESOURCE_PREFIX) :]
+                zone_map = self._zone_account_map()
+                if zone_map is None:
+                    # Zones could not be listed: the token cannot be attributed.
+                    self.user_tokens_unattributed_accounts |= scope
+                    accounts = set()
+                else:
+                    account_id = zone_map.get(zone_id)
+                    accounts = {account_id} & scope if account_id else set()
+            elif key.startswith(ACCOUNT_RESOURCE_PREFIX):
+                accounts = {key[len(ACCOUNT_RESOURCE_PREFIX) :]} & scope
+            else:
+                accounts = set()
+            if isinstance(value, dict):
+                # A nested map narrows the grant to its parent's accounts.
+                matched |= self._resource_accounts(value, accounts)
+            else:
+                matched |= accounts
+        return matched
+
+    def _zone_account_map(self) -> Optional[dict[str, str]]:
+        """Map zone IDs to account IDs, fetched once when a token is zone-scoped.
+
+        Returns:
+            The map, or None when the zones could not be listed.
+        """
         if self._zone_accounts is None:
-            self._zone_accounts = {}
             try:
+                zone_accounts = {}
                 for zone in collect_pages(self.client.zones.list()):
                     account = getattr(zone, "account", None)
                     if getattr(zone, "id", None) and getattr(account, "id", None):
-                        self._zone_accounts[zone.id] = account.id
+                        zone_accounts[zone.id] = account.id
+                self._zone_accounts = zone_accounts
             except Exception as error:
+                self._zone_accounts = False
                 logger.warning(
                     f"zones -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
-        return self._zone_accounts
+        return None if self._zone_accounts is False else self._zone_accounts
 
     def _add_token(self, token: Any, owner: str, account_id: str) -> None:
         token_id = getattr(token, "id", None)
@@ -221,17 +267,6 @@ class Account(CloudflareService):
                 last_used_on=getattr(token, "last_used_on", None),
             )
         )
-
-
-def _resource_keys(resources: Any) -> list[str]:
-    """Flatten token policy resources (keys may nest account -> zone maps)."""
-    if not isinstance(resources, dict):
-        return []
-    keys = []
-    for key, value in resources.items():
-        keys.append(key)
-        keys.extend(_resource_keys(value))
-    return keys
 
 
 class CloudflareAccountSettings(BaseModel):
