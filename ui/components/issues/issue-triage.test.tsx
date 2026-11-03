@@ -4,6 +4,7 @@ import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { USAGE_LIMIT_MESSAGE } from "@/lib/action-errors";
 import { PRICING_URL } from "@/lib/external-urls";
+import { SAMPLE_DATA_READ_ONLY_MESSAGE } from "@/lib/sample-preview/sample-guards";
 
 import { IssueTriage } from "./issue-triage";
 
@@ -70,6 +71,19 @@ describe("IssueTriage", () => {
     expect(await screen.findByText("Public by design.")).toBeInTheDocument();
     expect(screen.getByText("Ana")).toBeInTheDocument();
     expect(screen.getByText("Oct 20, 2026")).toBeInTheDocument();
+  });
+
+  it("explains why sample triage and notes are disabled before editing", async () => {
+    render(<IssueTriage id="sample-issue-1" status="open" />);
+    expect(
+      screen.getByRole("combobox", { name: "Triage status" }),
+    ).toBeDisabled();
+    expect(screen.getByRole("textbox", { name: "Triage note" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Save triage" })).toBeDisabled();
+    expect(screen.getByText(SAMPLE_DATA_READ_ONLY_MESSAGE)).toBeInTheDocument();
+    expect(getIssueNotesMock).not.toHaveBeenCalled();
+    expect(updateIssueTriageMock).not.toHaveBeenCalled();
+    expect(addIssueNoteMock).not.toHaveBeenCalled();
   });
 
   it("saves a new status together with its note", async () => {

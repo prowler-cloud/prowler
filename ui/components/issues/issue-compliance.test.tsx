@@ -71,6 +71,18 @@ describe("IssueCompliance", () => {
     getFrameworksMock.mockResolvedValue({ frameworks: [], unavailable: false });
   });
 
+  it("shows sample frameworks without linking to real compliance reports", async () => {
+    getFrameworksMock.mockResolvedValue({
+      frameworks: [framework("cis_aws", "CIS")],
+      unavailable: false,
+    });
+    renderCompliance([finding("sample-finding-1", "check-a")], "sample-scan");
+    expect(await screen.findByAltText("CIS")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /compliance details/i }),
+    ).not.toBeInTheDocument();
+  });
+
   it("looks up one finding per check, up to the limit", async () => {
     const findings = [
       finding("f1", "check-a"),

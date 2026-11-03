@@ -15,6 +15,10 @@ import {
   DropdownMenuSubTrigger,
 } from "@/components/shadcn/dropdown";
 import { getSkillsForSurface } from "@/lib/lighthouse/skills/registry";
+import {
+  isSampleId,
+  SAMPLE_DATA_READ_ONLY_MESSAGE,
+} from "@/lib/sample-preview/sample-guards";
 import { cn } from "@/lib/utils";
 import { SIDE_PANEL_TAB, useSidePanelStore } from "@/store/side-panel";
 import {
@@ -45,7 +49,10 @@ export function useLighthouseSkillLaunch() {
   return (
     skill: LighthouseSkillDefinition,
     findingItem: LighthouseFindingContextItem,
-  ) => launchPanelSkill(skill, buildRowEnvelope(findingItem));
+  ) => {
+    if (isSampleId(findingItem.id)) return;
+    launchPanelSkill(skill, buildRowEnvelope(findingItem));
+  };
 }
 
 // Free-text sibling of useLighthouseSkillLaunch: starts a fresh Lighthouse
@@ -54,6 +61,7 @@ export function useLighthousePromptLaunch() {
   const openSidePanel = useSidePanelStore((state) => state.openPanel);
 
   return (text: string, findingItem: LighthouseFindingContextItem) => {
+    if (isSampleId(findingItem.id)) return;
     openSidePanel(SIDE_PANEL_TAB.AI_CHAT);
     void import("@/app/(prowler)/lighthouse/_lib/panel-chat-store").then(
       ({ requestPanelChatMessage }) =>
@@ -169,10 +177,22 @@ function AskLighthouseAnythingRow({
 export function LighthouseSkillsSubmenu({
   onLaunch,
   onSubmitPrompt,
+  disabledReason,
 }: {
   onLaunch: (skill: LighthouseSkillDefinition) => void;
   onSubmitPrompt?: (text: string) => void;
+  disabledReason?: string;
 }) {
+  if (disabledReason) {
+    return (
+      <ActionDropdownItem
+        icon={<LighthouseIcon size={16} />}
+        label="Lighthouse Skills"
+        disabled
+        disabledTooltip={disabledReason}
+      />
+    );
+  }
   return (
     <>
       <DropdownMenuSeparator />
@@ -211,6 +231,17 @@ export function LighthouseSkillsRowButton({
 }) {
   const launchSkill = useLighthouseSkillLaunch();
   const launchPrompt = useLighthousePromptLaunch();
+
+  if (isSampleId(findingItem.id)) {
+    return (
+      <span title={SAMPLE_DATA_READ_ONLY_MESSAGE}>
+        <CornerDownRight
+          className="text-text-neutral-tertiary size-4 shrink-0"
+          aria-hidden
+        />
+      </span>
+    );
+  }
 
   return (
     <span className="relative flex size-4 shrink-0 items-center justify-center">

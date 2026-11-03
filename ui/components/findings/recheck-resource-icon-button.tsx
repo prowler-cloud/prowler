@@ -19,13 +19,15 @@ import { RECHECK_RESOURCE_LABEL } from "./recheck-resource-action-item";
 interface RecheckResourceIconButtonProps {
   target: Partial<PartialScanTarget> | null | undefined;
   className?: string;
+  disabledReason?: string;
 }
 
-// Beside "last seen": always green and pulsing, so the re-check is noticed.
+// Beside "last seen": green and pulsing when a re-check is available.
 // It is an action, not a notification, so it never settles into a seen state.
 export function RecheckResourceIconButton({
   target,
   className,
+  disabledReason,
 }: RecheckResourceIconButtonProps) {
   const resolvedTarget = usePartialScanTarget(target);
   const openPartialScan = usePartialScanStore((state) => state.openPartialScan);
@@ -35,6 +37,7 @@ export function RecheckResourceIconButton({
   const handleClick = (event: MouseEvent<HTMLButtonElement>) => {
     // The row itself opens the detail drawer on click.
     event.stopPropagation();
+    if (disabledReason) return;
     openPartialScan(resolvedTarget);
   };
 
@@ -46,17 +49,22 @@ export function RecheckResourceIconButton({
           variant="bare"
           size="icon"
           aria-label={RECHECK_RESOURCE_LABEL}
+          aria-disabled={Boolean(disabledReason)}
           onClick={handleClick}
           className={cn(
-            "text-button-primary hover:text-button-primary active:text-button-primary size-5 shrink-0 rounded-md motion-safe:animate-pulse",
-            "hover:[animation-play-state:paused] focus-visible:[animation-play-state:paused]",
+            "size-5 shrink-0 rounded-md",
+            disabledReason
+              ? "text-text-neutral-tertiary cursor-not-allowed"
+              : "text-button-primary hover:text-button-primary active:text-button-primary hover:[animation-play-state:paused] focus-visible:[animation-play-state:paused] motion-safe:animate-pulse",
             className,
           )}
         >
           <RefreshCw className="size-3.5" aria-hidden />
         </Button>
       </TooltipTrigger>
-      <TooltipContent>{RECHECK_RESOURCE_LABEL}</TooltipContent>
+      <TooltipContent>
+        {disabledReason ?? RECHECK_RESOURCE_LABEL}
+      </TooltipContent>
     </Tooltip>
   );
 }

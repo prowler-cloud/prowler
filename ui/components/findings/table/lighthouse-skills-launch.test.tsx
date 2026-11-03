@@ -58,6 +58,24 @@ vi.mock("@/components/shadcn/dropdown", () => ({
 }));
 
 describe("Lighthouse skills launch controls", () => {
+  it("does not offer skills or prompts for a sample resource", () => {
+    render(
+      <LighthouseSkillsRowButton
+        findingItem={{
+          kind: "finding",
+          id: "sample-finding-1",
+          source: "focused",
+          scopeKey: "findings:/findings",
+          label: "Sample finding",
+          findingId: "sample-finding-1",
+        }}
+      />,
+    );
+    expect(screen.queryByRole("button")).not.toBeInTheDocument();
+    expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
+    expect(requestPanelSkillLaunchMock).not.toHaveBeenCalled();
+    expect(requestPanelChatMessageMock).not.toHaveBeenCalled();
+  });
   beforeEach(() => {
     vi.clearAllMocks();
     useSidePanelStore.setState({
