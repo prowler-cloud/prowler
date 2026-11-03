@@ -22,7 +22,7 @@ class s3_bucket_secure_transport_policy(Check):
                 if not isinstance(statements, list):
                     statements = [statements]
                 for statement in statements:
-                    if _denies_insecure_transport_for_everyone(statement):
+                    if _denies_insecure_transport_for_everyone(statement, bucket.arn):
                         report.status = "PASS"
                         report.status_extended = f"S3 Bucket {bucket.name} has a bucket policy to deny requests over insecure transport."
                         break
@@ -31,11 +31,11 @@ class s3_bucket_secure_transport_policy(Check):
         return findings
 
 
-def _denies_insecure_transport_for_everyone(statement: dict) -> bool:
+def _denies_insecure_transport_for_everyone(statement: dict, bucket_arn: str) -> bool:
     """Whether a bucket policy statement denies s3:PutObject over HTTP to every requester.
 
     The statement must be a Deny that applies to all principals and does not skip any
-    object with NotResource, its Action must cover s3:PutObject under IAM wildcard
+    object in the bucket with NotResource, its Action must cover s3:PutObject under IAM wildcard
     matching, and its only condition must be aws:SecureTransport being false.
     NotResource names the resources the deny skips, so HTTP stays allowed for any
     object it can match. Conditions are ANDed, so any other condition key narrows the
@@ -43,6 +43,7 @@ def _denies_insecure_transport_for_everyone(statement: dict) -> bool:
 
     Args:
         statement: A statement from the bucket policy.
+        bucket_arn: The ARN of the bucket the policy is attached to.
 
     Returns:
         True when the statement enforces secure transport for every requester.
@@ -54,7 +55,10 @@ def _denies_insecure_transport_for_everyone(statement: dict) -> bool:
     not_resources = statement.get("NotResource", [])
     if isinstance(not_resources, str):
         not_resources = [not_resources]
-    if any(_may_match_object_arn(not_resource) for not_resource in not_resources):
+    if any(
+        _may_match_object_arn(not_resource, bucket_arn)
+        for not_resource in not_resources
+    ):
         return False
 
     actions = statement.get("Action", [])
@@ -83,16 +87,29 @@ def _denies_insecure_transport_for_everyone(statement: dict) -> bool:
     return any(str(value).lower() == "false" for value in values)
 
 
-def _may_match_object_arn(resource: str) -> bool:
-    """Whether a resource ARN or pattern could match an S3 object ARN.
+def _may_match_object_arn(resource: str, bucket_arn: str) -> bool:
+    """Whether a resource ARN or pattern could match an object ARN in the bucket.
 
-    Object ARNs always contain a "/" after the bucket name, and IAM wildcards also
-    match "/", so only a literal ARN without "/" (such as the bucket ARN) is safe.
+    A pattern can match some object ARN when one of its prefixes matches the object
+    ARN prefix, since the rest of the pattern can then match the object key. Runs of
+    "*" are collapsed first, which bounds the prefixes to try by the length of the
+    object ARN prefix.
 
     Args:
         resource: A Resource or NotResource entry from the bucket policy.
+        bucket_arn: The ARN of the bucket the policy is attached to.
 
     Returns:
-        True unless the entry is a literal ARN that cannot name an object.
+        True when the entry could name an object in the bucket.
     """
-    return not isinstance(resource, str) or any(char in resource for char in "/*?")
+    if not isinstance(resource, str):
+        return True
+    object_prefix = f"{bucket_arn}/"
+    pattern = resource.strip()
+    while "**" in pattern:
+        pattern = pattern.replace("**", "*")
+    longest_prefix = min(len(pattern), 2 * len(object_prefix) + 1)
+    return any(
+        iam_pattern_matches(pattern[:end], object_prefix)
+        for end in range(longest_prefix + 1)
+    )

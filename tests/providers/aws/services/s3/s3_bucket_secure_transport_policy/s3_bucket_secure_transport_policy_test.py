@@ -420,6 +420,21 @@ class Test_s3_bucket_secure_transport_policy:
                 },
                 id="not-resource-excluding-only-bucket-arn",
             ),
+            pytest.param(
+                {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Effect": "Deny",
+                            "Principal": "*",
+                            "Action": "s3:*",
+                            "NotResource": "arn:aws:s3:::other_bucket/*",
+                            "Condition": {"Bool": {"aws:SecureTransport": "false"}},
+                        }
+                    ],
+                },
+                id="not-resource-excluding-another-bucket",
+            ),
         ],
     )
     @mock_aws
