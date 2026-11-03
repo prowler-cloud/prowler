@@ -1,6 +1,9 @@
+import json
 from types import SimpleNamespace
 from unittest import mock
 
+from prowler.lib.check.models import CheckReportCloudflare
+from prowler.lib.check.redact import REDACTED_VALUE
 from prowler.providers.cloudflare.services.workers.workers_service import (
     CloudflareWorkerScript,
     Workers,
@@ -52,6 +55,7 @@ class TestWorkersService:
                 SimpleNamespace(type="plain_text", name="API_URL", text="https://x"),
                 SimpleNamespace(type="secret_text", name="TOKEN"),
                 SimpleNamespace(type="kv_namespace", name="KV", namespace_id="ns"),
+                SimpleNamespace(type="json", name="CONFIG", json_='{"a": 1}'),
             ],
         )
         subdomain = SimpleNamespace(enabled=True, previews_enabled=False)
@@ -74,7 +78,10 @@ class TestWorkersService:
         assert script.compatibility_date == "2025-01-01"
         assert script.observability_enabled is True
         assert script.observability_logs_enabled is False
-        assert script.plain_text_bindings == {"API_URL": "https://x"}
+        assert script.plain_text_bindings == {
+            "API_URL": "https://x",
+            "CONFIG": '{"a": 1}',
+        }
         assert script.workers_dev_enabled is True
         assert script.previews_enabled is False
         provider.session.client.workers.scripts.list.assert_called_once_with(
@@ -105,6 +112,8 @@ class TestWorkersService:
 
         script = workers.scripts[0]
         assert script.observability_enabled is None
+        # unknown, not "no bindings"
+        assert script.plain_text_bindings is None
         assert script.workers_dev_enabled is None
         assert script.previews_enabled is None
 
@@ -121,4 +130,39 @@ class TestWorkersService:
         assert script.observability_enabled is None
         assert script.workers_dev_enabled is None
         assert script.previews_enabled is None
-        assert script.plain_text_bindings == {}
+        assert script.plain_text_bindings is None
+
+    def test_binding_values_are_redacted_in_findings(self):
+        script = CloudflareWorkerScript(
+            id=SCRIPT_NAME,
+            name=SCRIPT_NAME,
+            account_id=ACCOUNT_ID,
+            plain_text_bindings={"API_KEY": "sk_live_SECRET"},
+        )
+        metadata = {
+            "Provider": "cloudflare",
+            "CheckID": "workers_test",
+            "CheckTitle": "t",
+            "CheckType": [],
+            "ServiceName": "workers",
+            "SubServiceName": "",
+            "ResourceIdTemplate": "",
+            "Severity": "high",
+            "ResourceType": "Worker",
+            "Description": "d",
+            "Risk": "r",
+            "RelatedUrl": "",
+            "Remediation": {
+                "Code": {"CLI": "", "NativeIaC": "", "Other": "", "Terraform": ""},
+                "Recommendation": {"Text": "", "Url": ""},
+            },
+            "Categories": [],
+            "DependsOn": [],
+            "RelatedTo": [],
+            "Notes": "",
+        }
+        report = CheckReportCloudflare(metadata=json.dumps(metadata), resource=script)
+        assert report.resource["plain_text_bindings"] == {"API_KEY": REDACTED_VALUE}
+        assert "sk_live_SECRET" not in json.dumps(report.resource)
+        # the model itself keeps the value for the secrets scan
+        assert script.plain_text_bindings == {"API_KEY": "sk_live_SECRET"}

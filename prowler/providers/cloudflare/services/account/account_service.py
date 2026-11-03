@@ -53,8 +53,12 @@ class Account(CloudflareService):
                 seen_member_ids: set[str] = set()
                 for member in self.client.accounts.members.list(account_id=account_id):
                     member_id = getattr(member, "id", None)
-                    if not member_id or member_id in seen_member_ids:
+                    if not member_id:
                         continue
+                    # The paginator only stops on an empty page: a repeated ID
+                    # means the API is returning the same page again.
+                    if member_id in seen_member_ids:
+                        break
                     seen_member_ids.add(member_id)
 
                     user = getattr(member, "user", None)
@@ -65,7 +69,7 @@ class Account(CloudflareService):
                     }
                     # Members managed through policies expose roles as permission groups
                     for policy in getattr(member, "policies", None) or []:
-                        if getattr(policy, "access", "allow") != "allow":
+                        if getattr(policy, "access", None) == "deny":
                             continue
                         for group in getattr(policy, "permission_groups", None) or []:
                             if group_name := getattr(group, "name", None):
@@ -97,8 +101,12 @@ class Account(CloudflareService):
         logger.info("Account - Listing account-owned API tokens...")
         for account_id in self.provider.identity.audited_accounts:
             try:
+                seen_token_ids: set[str] = set()
                 for token in self.client.accounts.tokens.list(account_id=account_id):
-                    self._add_token(token, owner="account", account_id=account_id)
+                    if not self._add_token(
+                        token, "account", account_id, seen_token_ids
+                    ):
+                        break
             except Exception as error:
                 logger.warning(
                     f"{account_id} account tokens -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -108,20 +116,25 @@ class Account(CloudflareService):
         """List the authenticated user's API tokens (requires API Tokens Read)."""
         logger.info("Account - Listing user API tokens...")
         try:
+            seen_token_ids: set[str] = set()
             for token in self.client.user.tokens.list():
-                self._add_token(token, owner="user", account_id="")
+                if not self._add_token(token, "user", "", seen_token_ids):
+                    break
         except Exception as error:
             logger.warning(
                 f"user tokens -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def _add_token(self, token, owner: str, account_id: str) -> None:
+    def _add_token(
+        self, token, owner: str, account_id: str, seen_token_ids: set[str]
+    ) -> bool:
+        """Store a token. Returns False when pagination repeats a token ID."""
         token_id = getattr(token, "id", None)
-        if not token_id or any(
-            existing.id == token_id and existing.owner == owner
-            for existing in self.tokens
-        ):
-            return
+        if not token_id:
+            return True
+        if token_id in seen_token_ids:
+            return False
+        seen_token_ids.add(token_id)
 
         condition = getattr(token, "condition", None)
         request_ip = getattr(condition, "request_ip", None) if condition else None
@@ -143,6 +156,7 @@ class Account(CloudflareService):
                 last_used_on=getattr(token, "last_used_on", None),
             )
         )
+        return True
 
 
 class CloudflareAccountSettings(BaseModel):
@@ -186,3 +200,10 @@ class CloudflareAPIToken(BaseModel):
     issued_on: Optional[datetime] = None
     expires_on: Optional[datetime] = None
     last_used_on: Optional[datetime] = None
+
+    @property
+    def unique_name(self) -> str:
+        """Token name with its ID. Token names are not unique (dashboard
+        templates reuse names such as "Edit zone DNS") and the finding UID is
+        derived from the resource name."""
+        return f"{self.name} ({self.id})" if self.name != self.id else self.id

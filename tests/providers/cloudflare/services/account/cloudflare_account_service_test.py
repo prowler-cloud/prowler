@@ -63,16 +63,34 @@ def _provider():
                     access="deny",
                     permission_groups=[SimpleNamespace(name=SUPER_ADMIN_ROLE_NAME)],
                 ),
+                SimpleNamespace(
+                    access=None,
+                    permission_groups=[SimpleNamespace(name="DNS")],
+                ),
             ],
         ),
-        # duplicate
+        # repeated page: the listing must stop here
         SimpleNamespace(id="m1", status="accepted", user=None, roles=None),
+        SimpleNamespace(
+            id="m3",
+            status="accepted",
+            user=SimpleNamespace(
+                email="late@example.com", two_factor_authentication_enabled=True
+            ),
+            roles=None,
+            policies=None,
+        ),
     ]
     request_ip = SimpleNamespace(in_=["192.0.2.0/24"], not_in=None)
     client.accounts.tokens.list.return_value = [
         _token("acct-1", condition=SimpleNamespace(request_ip=request_ip))
     ]
-    client.user.tokens.list.return_value = [_token("user-1"), _token("user-1")]
+    # repeated page: the listing must stop at the duplicate
+    client.user.tokens.list.return_value = [
+        _token("user-1"),
+        _token("user-1"),
+        _token("user-2"),
+    ]
     return provider
 
 
@@ -94,8 +112,8 @@ class TestAccountService:
         assert admin.two_factor_enabled is True
         assert admin.is_super_admin is True
         assert dev.two_factor_enabled is False
-        # deny policies must not grant roles
-        assert dev.roles == ["Workers Admin"]
+        # deny policies must not grant roles; policies without access do
+        assert dev.roles == ["DNS", "Workers Admin"]
         assert dev.is_super_admin is False
 
         assert [(t.id, t.owner) for t in service.tokens] == [
@@ -108,6 +126,7 @@ class TestAccountService:
         assert account_token.ip_deny_list == []
         assert user_token.account_id == ""
         assert user_token.ip_allow_list == []
+        assert user_token.unique_name == "name-user-1 (user-1)"
 
     def test_errors_are_handled(self):
         provider = set_mocked_cloudflare_provider()

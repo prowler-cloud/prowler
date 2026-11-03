@@ -1,7 +1,7 @@
 from datetime import datetime
-from typing import Optional
+from typing import ClassVar, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.providers.cloudflare.lib.service.service import CloudflareService
@@ -70,13 +70,24 @@ class Workers(CloudflareService):
                 else script.observability_enabled
             )
 
+            # Plain text and JSON bindings are stored unencrypted. Only mark the
+            # bindings as known once settings were retrieved successfully, so a
+            # failed call is not mistaken for "no bindings".
+            plain_text_bindings: dict[str, str] = {}
             for binding in getattr(settings, "bindings", None) or []:
-                if getattr(binding, "type", None) == "plain_text":
-                    binding_name = getattr(binding, "name", None)
-                    if binding_name:
-                        script.plain_text_bindings[binding_name] = (
-                            getattr(binding, "text", "") or ""
-                        )
+                binding_type = getattr(binding, "type", None)
+                binding_name = getattr(binding, "name", None)
+                if not binding_name:
+                    continue
+                if binding_type == "plain_text":
+                    plain_text_bindings[binding_name] = (
+                        getattr(binding, "text", "") or ""
+                    )
+                elif binding_type == "json":
+                    plain_text_bindings[binding_name] = (
+                        getattr(binding, "json_", "") or ""
+                    )
+            script.plain_text_bindings = plain_text_bindings
         except Exception as error:
             logger.error(
                 f"{script.account_id}/{script.name} settings -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -110,4 +121,7 @@ class CloudflareWorkerScript(BaseModel):
     observability_logs_enabled: Optional[bool] = None
     workers_dev_enabled: Optional[bool] = None
     previews_enabled: Optional[bool] = None
-    plain_text_bindings: dict[str, str] = Field(default_factory=dict)
+    # Values of plain_text and json bindings. None means they could not be
+    # retrieved. Redacted from finding output because they may hold secrets.
+    plain_text_bindings: Optional[dict[str, str]] = None
+    sensitive_fields: ClassVar[tuple[str, ...]] = ("plain_text_bindings",)

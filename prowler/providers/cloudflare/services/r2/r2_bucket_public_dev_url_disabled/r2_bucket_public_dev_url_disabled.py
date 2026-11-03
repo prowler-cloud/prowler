@@ -15,14 +15,18 @@ class r2_bucket_public_dev_url_disabled(Check):
         for bucket in r2_client.buckets:
             if bucket.public_dev_url_enabled is None:
                 continue
-            report = CheckReportCloudflare(metadata=self.metadata(), resource=bucket)
+            report = CheckReportCloudflare(
+                metadata=self.metadata(),
+                resource=bucket,
+                resource_name=bucket.unique_name,
+            )
             if bucket.public_dev_url_enabled:
                 report.status = "FAIL"
-                report.status_extended = f"R2 bucket {bucket.name} is publicly readable through its r2.dev URL{f' ({bucket.public_dev_url})' if bucket.public_dev_url else ''}."
+                report.status_extended = f"R2 bucket {bucket.unique_name} is publicly readable through its r2.dev URL{f' ({bucket.public_dev_url})' if bucket.public_dev_url else ''}."
             else:
                 report.status = "PASS"
                 report.status_extended = (
-                    f"R2 bucket {bucket.name} has public r2.dev access disabled."
+                    f"R2 bucket {bucket.unique_name} has public r2.dev access disabled."
                 )
             findings.append(report)
         return findings

@@ -3,7 +3,10 @@ from types import SimpleNamespace
 import httpx
 from cloudflare import NotFoundError
 
-from prowler.providers.cloudflare.services.r2.r2_service import R2
+from prowler.providers.cloudflare.services.r2.r2_service import (
+    R2,
+    R2_BUCKETS_PAGE_SIZE,
+)
 from tests.providers.cloudflare.cloudflare_fixtures import (
     ACCOUNT_ID,
     set_mocked_cloudflare_provider,
@@ -21,7 +24,7 @@ def _provider():
     provider = set_mocked_cloudflare_provider()
     client = provider.session.client
 
-    def list_buckets(account_id, jurisdiction):
+    def list_buckets(account_id, jurisdiction, **kwargs):
         if jurisdiction == "default":
             return SimpleNamespace(
                 buckets=[
@@ -108,6 +111,51 @@ class TestR2Service:
         provider.session.client.r2.buckets.cors.get.assert_any_call(
             bucket_name="eu-bucket", account_id=ACCOUNT_ID, jurisdiction="eu"
         )
+
+    def test_list_follows_pagination(self):
+        provider = set_mocked_cloudflare_provider()
+        client = provider.session.client
+        names = [f"bucket-{i:05d}" for i in range(R2_BUCKETS_PAGE_SIZE + 1)]
+        calls = []
+
+        def list_buckets(account_id, jurisdiction, per_page, start_after=None):
+            calls.append((jurisdiction, start_after))
+            if jurisdiction != "default":
+                return SimpleNamespace(buckets=[])
+            start = names.index(start_after) + 1 if start_after else 0
+            return SimpleNamespace(
+                buckets=[
+                    SimpleNamespace(name=n, jurisdiction="default")
+                    for n in names[start : start + per_page]
+                ]
+            )
+
+        client.r2.buckets.list.side_effect = list_buckets
+        service = R2(provider)
+
+        assert len(service.buckets) == R2_BUCKETS_PAGE_SIZE + 1
+        assert calls[:2] == [
+            ("default", None),
+            ("default", names[R2_BUCKETS_PAGE_SIZE - 1]),
+        ]
+
+    def test_list_stops_when_api_does_not_advance(self):
+        provider = set_mocked_cloudflare_provider()
+        full_page = [
+            SimpleNamespace(name="same", jurisdiction="default")
+        ] * R2_BUCKETS_PAGE_SIZE
+        provider.session.client.r2.buckets.list.return_value = SimpleNamespace(
+            buckets=full_page
+        )
+        service = R2(provider)
+        # one bucket per jurisdiction after deduplication, and no infinite loop
+        assert [b.name for b in service.buckets] == ["same"]
+
+    def test_unique_name_includes_non_default_jurisdiction(self):
+        provider = _provider()
+        buckets = {b.name: b for b in R2(provider).buckets}
+        assert buckets["public-bucket"].unique_name == "public-bucket"
+        assert buckets["eu-bucket"].unique_name == "eu/eu-bucket"
 
     def test_list_error(self):
         provider = set_mocked_cloudflare_provider()

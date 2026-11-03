@@ -92,6 +92,33 @@ class Test_workers_script_no_secrets_in_plain_text_bindings:
             == f"Potential secret found in Worker {SCRIPT_NAME} plain text bindings -> Generic Password in binding DB_PASSWORD."
         )
 
+    def test_unknown_bindings_skipped(self):
+        # bindings could not be retrieved: no false "no secrets found" PASS
+        script = CloudflareWorkerScript(
+            id=SCRIPT_NAME, name=SCRIPT_NAME, account_id=ACCOUNT_ID
+        )
+        result, scan_mock = _run([script])
+        assert result == []
+
+    def test_out_of_range_line_number_does_not_crash(self):
+        scan_result = {
+            0: [
+                {
+                    "type": "Generic Secret",
+                    "line_number": 1,
+                    "filename": "0",
+                    "hashed_secret": "abc",
+                    "is_verified": False,
+                }
+            ]
+        }
+        result, _ = _run([_script({"TOKEN": "x"})], scan_result=scan_result)
+        assert result[0].status == "FAIL"
+        assert (
+            result[0].status_extended
+            == f"Potential secret found in Worker {SCRIPT_NAME} plain text bindings -> Generic Secret."
+        )
+
     def test_scan_error_manual(self):
         result, _ = _run(
             [_script({"DB_PASSWORD": "x"}), _script({})],

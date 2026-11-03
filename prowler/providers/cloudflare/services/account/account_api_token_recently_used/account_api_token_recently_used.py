@@ -25,7 +25,11 @@ class account_api_token_recently_used(Check):
         for token in account_client.tokens:
             if token.status != "active":
                 continue
-            report = CheckReportCloudflare(metadata=self.metadata(), resource=token)
+            report = CheckReportCloudflare(
+                metadata=self.metadata(),
+                resource=token,
+                resource_name=token.unique_name,
+            )
             label = f"API token {token.name} ({token.owner}-owned)"
 
             if token.last_used_on:

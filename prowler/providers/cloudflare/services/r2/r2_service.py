@@ -9,6 +9,8 @@ from prowler.providers.cloudflare.lib.service.service import CloudflareService
 # Buckets in a non-default jurisdiction are only visible/addressable when the
 # jurisdiction is passed explicitly on every request.
 R2_JURISDICTIONS = ("default", "eu", "fedramp")
+# Maximum page size accepted by the List Buckets API.
+R2_BUCKETS_PAGE_SIZE = 1000
 
 
 class R2(CloudflareService):
@@ -26,10 +28,9 @@ class R2(CloudflareService):
             seen: set[tuple[str, str]] = set()
             for jurisdiction in R2_JURISDICTIONS:
                 try:
-                    response = self.client.r2.buckets.list(
-                        account_id=account_id, jurisdiction=jurisdiction
-                    )
-                    for bucket in getattr(response, "buckets", None) or []:
+                    for bucket in self._list_jurisdiction_buckets(
+                        account_id, jurisdiction
+                    ):
                         name = getattr(bucket, "name", None)
                         bucket_jurisdiction = (
                             getattr(bucket, "jurisdiction", None) or jurisdiction
@@ -52,6 +53,34 @@ class R2(CloudflareService):
                     log(
                         f"{account_id} R2 ({jurisdiction}) -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
+
+    def _list_jurisdiction_buckets(self, account_id: str, jurisdiction: str):
+        """Yield every bucket of a jurisdiction, following pagination.
+
+        The SDK returns a single page and drops the pagination cursor, so pages
+        are walked with ``start_after`` (buckets are ordered by name).
+        """
+        start_after = None
+        while True:
+            kwargs = {
+                "account_id": account_id,
+                "jurisdiction": jurisdiction,
+                "per_page": R2_BUCKETS_PAGE_SIZE,
+            }
+            if start_after:
+                kwargs["start_after"] = start_after
+            buckets = getattr(self.client.r2.buckets.list(**kwargs), "buckets", None)
+            buckets = buckets or []
+            yield from buckets
+            last_name = getattr(buckets[-1], "name", None) if buckets else None
+            # Stop on a short page, or if the API does not advance (loop guard).
+            if (
+                len(buckets) < R2_BUCKETS_PAGE_SIZE
+                or not last_name
+                or last_name == start_after
+            ):
+                return
+            start_after = last_name
 
     def _get_bucket_details(self, bucket: "CloudflareR2Bucket") -> None:
         kwargs = {
@@ -128,3 +157,14 @@ class CloudflareR2Bucket(BaseModel):
     # None means the configuration could not be retrieved
     custom_domains: Optional[list[CloudflareR2CustomDomain]] = None
     cors_rules: Optional[list[CloudflareR2CorsRule]] = None
+
+    @property
+    def unique_name(self) -> str:
+        """Bucket name, prefixed with its jurisdiction when not the default one.
+
+        Bucket names are only unique within a jurisdiction, and the finding UID
+        is derived from the resource name.
+        """
+        if self.jurisdiction and self.jurisdiction != "default":
+            return f"{self.jurisdiction}/{self.name}"
+        return self.name

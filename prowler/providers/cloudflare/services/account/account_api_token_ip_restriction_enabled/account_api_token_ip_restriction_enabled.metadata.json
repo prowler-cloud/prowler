@@ -1,7 +1,7 @@
 {
   "Provider": "cloudflare",
   "CheckID": "account_api_token_ip_restriction_enabled",
-  "CheckTitle": "Cloudflare API token has client IP address filtering configured",
+  "CheckTitle": "Cloudflare API token is restricted to an allow-list of client IP addresses",
   "CheckType": [],
   "ServiceName": "account",
   "SubServiceName": "",
@@ -9,7 +9,7 @@
   "Severity": "medium",
   "ResourceType": "APIToken",
   "ResourceGroup": "IAM",
-  "Description": "**Cloudflare API tokens** (user-owned and account-owned) are assessed for **client IP address filtering**, which restricts token use to requests from trusted networks. Only active tokens are evaluated.",
+  "Description": "**Cloudflare API tokens** (user-owned and account-owned) are assessed for a **client IP address allow-list**, which restricts token use to requests from trusted networks. Tokens with only a deny-list, or with an allow-list containing `0.0.0.0/0` or `::/0`, are flagged. Only active tokens are evaluated.",
   "Risk": "Without **IP address filtering**, a leaked token works from **any network location**.\n- **Confidentiality**: attackers can read account and zone configuration from anywhere\n- **Integrity**: tokens with write permissions can be abused from uncontrolled networks",
   "RelatedUrl": "",
   "AdditionalURLs": [
@@ -32,5 +32,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "User tokens require the `API Tokens Read` user permission and account-owned tokens require `Account API Tokens Read`. Tokens that cannot be listed are not reported."
+  "Notes": "User tokens require the `API Tokens Read` user permission and account-owned tokens require `Account API Tokens Read`. Tokens that cannot be listed are not reported. A deny-list alone does not pass because the token remains usable from every other address."
 }

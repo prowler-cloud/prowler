@@ -27,7 +27,8 @@ class Test_account_api_token_expiration_set:
         assert len(result) == 1
         assert result[0].status == "PASS"
         assert result[0].resource_id == TOKEN_ID
-        assert result[0].resource_name == TOKEN_NAME
+        # token names are not unique, so the ID is part of the resource name
+        assert result[0].resource_name == f"{TOKEN_NAME} ({TOKEN_ID})"
         assert result[0].account_id == ACCOUNT_ID
         assert (
             result[0].status_extended

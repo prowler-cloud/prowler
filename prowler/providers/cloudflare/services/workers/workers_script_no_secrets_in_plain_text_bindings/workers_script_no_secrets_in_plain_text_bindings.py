@@ -32,7 +32,13 @@ class workers_script_no_secrets_in_plain_text_bindings(Check):
             "secrets_ignore_patterns", []
         )
         validate = workers_client.audit_config.get("secrets_validate", False)
-        scripts = list(workers_client.scripts)
+        # Scripts whose bindings could not be retrieved are not reported, so a
+        # failed API call is never turned into a "no secrets found" PASS.
+        scripts = [
+            script
+            for script in workers_client.scripts
+            if script.plain_text_bindings is not None
+        ]
 
         def bindings_payloads():
             for index, script in enumerate(scripts):
@@ -72,7 +78,11 @@ class workers_script_no_secrets_in_plain_text_bindings(Check):
                     # json.dumps(indent=2) puts the first key on line 2.
                     binding_names = list(script.plain_text_bindings.keys())
                     secrets_string = ", ".join(
-                        f"{secret['type']} in binding {binding_names[secret['line_number'] - 2]}"
+                        (
+                            f"{secret['type']} in binding {binding_names[secret['line_number'] - 2]}"
+                            if 0 <= secret["line_number"] - 2 < len(binding_names)
+                            else secret["type"]
+                        )
                         for secret in secrets_found
                     )
                     report.status = "FAIL"

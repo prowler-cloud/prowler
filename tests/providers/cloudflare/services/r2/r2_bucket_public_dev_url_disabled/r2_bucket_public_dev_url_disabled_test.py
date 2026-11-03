@@ -28,6 +28,19 @@ class Test_r2_bucket_public_dev_url_disabled:
             == f"R2 bucket {BUCKET} has public r2.dev access disabled."
         )
 
+    def test_same_name_in_two_jurisdictions_is_distinct(self):
+        result = run_r2_check(
+            CHECK,
+            [
+                make_bucket(public_dev_url_enabled=False),
+                make_bucket(public_dev_url_enabled=False, jurisdiction="eu"),
+            ],
+        )
+        assert [r.resource_name for r in result] == [BUCKET, f"eu/{BUCKET}"]
+        assert result[1].status_extended == (
+            f"R2 bucket eu/{BUCKET} has public r2.dev access disabled."
+        )
+
     def test_fail(self):
         result = run_r2_check(
             CHECK,

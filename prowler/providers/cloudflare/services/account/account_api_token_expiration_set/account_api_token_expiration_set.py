@@ -12,7 +12,11 @@ class account_api_token_expiration_set(Check):
         for token in account_client.tokens:
             if token.status != "active":
                 continue
-            report = CheckReportCloudflare(metadata=self.metadata(), resource=token)
+            report = CheckReportCloudflare(
+                metadata=self.metadata(),
+                resource=token,
+                resource_name=token.unique_name,
+            )
             if token.expires_on:
                 report.status = "PASS"
                 report.status_extended = f"API token {token.name} ({token.owner}-owned) expires on {token.expires_on.isoformat()}."

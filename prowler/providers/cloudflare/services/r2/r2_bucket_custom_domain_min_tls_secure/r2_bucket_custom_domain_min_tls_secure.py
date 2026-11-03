@@ -15,7 +15,11 @@ class r2_bucket_custom_domain_min_tls_secure(Check):
             domains = [d for d in bucket.custom_domains or [] if d.enabled]
             if not domains:
                 continue
-            report = CheckReportCloudflare(metadata=self.metadata(), resource=bucket)
+            report = CheckReportCloudflare(
+                metadata=self.metadata(),
+                resource=bucket,
+                resource_name=bucket.unique_name,
+            )
             insecure = sorted(
                 f"{d.domain} (TLS {d.min_tls or DEFAULT_MIN_TLS})"
                 for d in domains
@@ -23,11 +27,9 @@ class r2_bucket_custom_domain_min_tls_secure(Check):
             )
             if insecure:
                 report.status = "FAIL"
-                report.status_extended = f"R2 bucket {bucket.name} has custom domains accepting TLS versions below 1.2: {', '.join(insecure)}."
+                report.status_extended = f"R2 bucket {bucket.unique_name} has custom domains accepting TLS versions below 1.2: {', '.join(insecure)}."
             else:
                 report.status = "PASS"
-                report.status_extended = (
-                    f"R2 bucket {bucket.name} custom domains require TLS 1.2 or higher."
-                )
+                report.status_extended = f"R2 bucket {bucket.unique_name} custom domains require TLS 1.2 or higher."
             findings.append(report)
         return findings
