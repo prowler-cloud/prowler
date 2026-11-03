@@ -245,14 +245,59 @@ class Test_redshift_cluster_public_access:
                 assert result[0].resource_arn == CLUSTER_ARN
 
     @pytest.mark.parametrize(
-        ("ip_ranges", "ipv6_ranges", "expected_status"),
+        ("ingress_rule", "expected_status"),
         [
-            ([{"CidrIp": "0.0.0.0/0"}], [], "FAIL"),
-            ([], [{"CidrIpv6": "::/0"}], "FAIL"),
-            ([{"CidrIp": "10.0.0.0/8"}], [], "PASS"),
+            (
+                {
+                    "IpProtocol": "tcp",
+                    "FromPort": 5439,
+                    "ToPort": 5439,
+                    "IpRanges": [{"CidrIp": "0.0.0.0/0"}],
+                    "Ipv6Ranges": [],
+                },
+                "FAIL",
+            ),
+            (
+                {
+                    "IpProtocol": "tcp",
+                    "FromPort": 5439,
+                    "ToPort": 5439,
+                    "IpRanges": [],
+                    "Ipv6Ranges": [{"CidrIpv6": "::/0"}],
+                },
+                "FAIL",
+            ),
+            (
+                {
+                    "IpProtocol": "tcp",
+                    "FromPort": 5439,
+                    "ToPort": 5439,
+                    "IpRanges": [{"CidrIp": "10.0.0.0/8"}],
+                    "Ipv6Ranges": [],
+                },
+                "PASS",
+            ),
+            (
+                {
+                    "IpProtocol": "tcp",
+                    "FromPort": 5439,
+                    "ToPort": 5440,
+                    "IpRanges": [{"CidrIp": "0.0.0.0/0"}],
+                    "Ipv6Ranges": [],
+                },
+                "FAIL",
+            ),
+            (
+                {
+                    "IpProtocol": "-1",
+                    "IpRanges": [{"CidrIp": "0.0.0.0/0"}],
+                    "Ipv6Ranges": [],
+                },
+                "FAIL",
+            ),
         ],
     )
-    def test_cluster_with_public_vpc_sgs(self, ip_ranges, ipv6_ranges, expected_status):
+    def test_cluster_with_public_vpc_sgs(self, ingress_rule, expected_status):
         redshift_client = mock.MagicMock
         redshift_client.audited_partition = "aws"
         redshift_client.audited_account = AWS_ACCOUNT_NUMBER
@@ -275,15 +320,7 @@ class Test_redshift_cluster_public_access:
         ec2_client.security_groups = {
             f"arn:aws:ec2:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:security-group/sg-123456": mock.MagicMock(
                 id="sg-123456",
-                ingress_rules=[
-                    {
-                        "IpProtocol": "tcp",
-                        "FromPort": 5439,
-                        "ToPort": 5439,
-                        "IpRanges": ip_ranges,
-                        "Ipv6Ranges": ipv6_ranges,
-                    }
-                ],
+                ingress_rules=[ingress_rule],
             )
         }
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
