@@ -62,3 +62,30 @@ class TestZoneService:
         assert sts.include_subdomains is False
         assert sts.preload is False
         assert sts.nosniff is False
+
+
+class TestSkipTargets:
+    def test_skip_targets_describe_bypassed_features(self):
+        from types import SimpleNamespace
+
+        from prowler.providers.cloudflare.services.zone.zone_service import (
+            _skip_targets,
+        )
+
+        assert _skip_targets(None) == []
+        assert _skip_targets(
+            SimpleNamespace(
+                phases=["http_request_firewall_managed", "http_ratelimit"],
+                products=["bic"],
+                ruleset="current",
+                rulesets=["a", "b"],
+                rules={"a": ["r1"]},
+            )
+        ) == [
+            "http_request_firewall_managed",
+            "http_ratelimit",
+            "bic",
+            "remaining custom rules",
+            "2 managed ruleset(s)",
+            "specific managed rules",
+        ]
