@@ -23,6 +23,10 @@ import { getFailingForLabel } from "@/lib/date-utils";
 import { buildJiraActionLabel } from "@/lib/jira-dispatch-action";
 import { createJiraDispatchPayload } from "@/lib/jira-dispatch-selection";
 import { buildFindingResourceContext } from "@/lib/lighthouse/context/contributions";
+import {
+  isSampleId,
+  SAMPLE_DATA_READ_ONLY_MESSAGE,
+} from "@/lib/sample-preview/sample-guards";
 import { isCloud } from "@/lib/shared/env";
 import { FindingResourceRow } from "@/types";
 import type {
@@ -99,6 +103,9 @@ const ResourceRowActions = ({
   onTriageDetailLoadAction?: FindingTriageDetailLoadHandler;
 }) => {
   const resource = row.original;
+  const sampleDisabledReason = isSampleId(resource.findingId)
+    ? SAMPLE_DATA_READ_ONLY_MESSAGE
+    : undefined;
   const canMute = canMuteFindingResource(resource);
   const launchSkill = useLighthouseSkillLaunch();
   const launchPrompt = useLighthousePromptLaunch();
@@ -138,6 +145,7 @@ const ResourceRowActions = ({
   });
 
   const handleMuteClick = async () => {
+    if (sampleDisabledReason) return;
     const displayIds = getDisplayIds();
 
     // Single resource: findingId is already a real finding UUID
@@ -202,7 +210,8 @@ const ResourceRowActions = ({
               )
             }
             label={isResolving ? "Resolving..." : getMuteLabel()}
-            disabled={!canMute || isResolving}
+            disabled={Boolean(sampleDisabledReason) || !canMute || isResolving}
+            disabledTooltip={sampleDisabledReason}
             onSelect={handleMuteClick}
           />
           <JiraDispatchActionItem
@@ -213,9 +222,11 @@ const ResourceRowActions = ({
           />
           <RecheckResourceActionItem
             target={buildResourceRecheckTarget(resource)}
+            disabledReason={sampleDisabledReason}
           />
           {isCloud() && (
             <LighthouseSkillsSubmenu
+              disabledReason={sampleDisabledReason}
               onLaunch={(skill) => {
                 onSkillLaunchOpenDrawer?.(row.index);
                 launchSkill(skill, buildResourceFindingItem(resource));
@@ -403,6 +414,11 @@ export function getColumnFindingResources({
             <DateWithTime dateTime={row.original.lastSeenAt} />
             <RecheckResourceIconButton
               target={buildResourceRecheckTarget(row.original)}
+              disabledReason={
+                isSampleId(row.original.findingId)
+                  ? SAMPLE_DATA_READ_ONLY_MESSAGE
+                  : undefined
+              }
             />
           </span>
         </InfoField>

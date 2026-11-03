@@ -29,6 +29,29 @@ const [notExploitable] = SAMPLE_ISSUES.filter(
 );
 
 describe("IssuesList sample preview", () => {
+  it("sorts sample issues when the findings column is selected", async () => {
+    render(
+      await IssuesList({
+        searchParams: { sort: "-findings_count" },
+        sample: true,
+      }),
+    );
+    const titles = new Set(
+      SAMPLE_ISSUES.map((issue) => issue.attributes.title),
+    );
+    const displayed = screen
+      .getAllByRole("button")
+      .map((button) => button.textContent)
+      .filter((title) => title && titles.has(title));
+    expect(displayed).toEqual(
+      [...SAMPLE_ISSUES]
+        .sort(
+          (a, b) => b.attributes.findings_count - a.attributes.findings_count,
+        )
+        .map((issue) => issue.attributes.title),
+    );
+  });
+
   it("renders the sample issues clickable, filtered by verdict, without the API", async () => {
     // When
     render(

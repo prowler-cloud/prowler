@@ -11,16 +11,18 @@ import {
   SAMPLE_REGIONS,
   type SampleCheck,
 } from "./sample-dataset";
+import { SAMPLE_ID_PREFIX } from "./sample-guards";
+
+export {
+  isSampleId,
+  SAMPLE_ID_PREFIX,
+  SAMPLE_WRITE_MESSAGE,
+} from "./sample-guards";
 
 // One record per sample resource and per sample finding, so every drill-down
 // (group rows, finding drawer, resource drawer, issue panel) opens something
 // concrete. Every id starts with SAMPLE_ID_PREFIX: real ids are UUIDs, so the
 // actions tell sample lookups apart without any other state.
-
-export const SAMPLE_ID_PREFIX = "sample-";
-
-export const isSampleId = (id: string | undefined | null): id is string =>
-  typeof id === "string" && id.startsWith(SAMPLE_ID_PREFIX);
 
 export interface SampleResource {
   id: string;
@@ -460,16 +462,20 @@ export const sampleFindingGroupResources = ({
   page,
   pageSize,
   status,
+  search,
 }: {
   checkId: string;
   page: number;
   pageSize: number;
   status?: string;
+  search?: string;
 }) => {
   const findings = SAMPLE_FINDINGS.filter(
     (finding) =>
       finding.check.checkId === checkId &&
-      (!status || status.split(",").includes(finding.status)),
+      (!status || status.split(",").includes(finding.status)) &&
+      (!search ||
+        finding.resource.name.toLowerCase().includes(search.toLowerCase())),
   );
   const { items, pagination } = paginate(findings, page, pageSize);
   return {
@@ -531,17 +537,6 @@ export const sampleFindingsQuery = (
 export const isSampleScanFilter = (
   filters: Record<string, string | string[] | undefined> | undefined,
 ) => filters?.["filter[scan]"] === SAMPLE_ACCOUNT.scanId;
-
-const SAMPLE_RESOURCE_UIDS = new Set(
-  SAMPLE_RESOURCES.map((resource) => resource.uid),
-);
-
-export const isSampleResourceUid = (uid: string) =>
-  SAMPLE_RESOURCE_UIDS.has(uid);
-
-/** Shown when a write targets sample data: nothing is saved. */
-export const SAMPLE_WRITE_MESSAGE =
-  "This is sample data, so nothing was saved. Connect your cloud account to work on your own findings.";
 
 /** /findings/{id}/compliance-frameworks: the check's frameworks, all watched. */
 export const sampleComplianceFrameworks = (

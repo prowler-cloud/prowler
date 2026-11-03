@@ -193,11 +193,13 @@ async function fetchFindingGroupResourcesEndpoint(
 ) {
   if (isSampleScanFilter(filters)) {
     const status = filters["filter[status]"] ?? filters["filter[status__in]"];
+    const search = filters["filter[name__icontains]"];
     return sampleFindingGroupResources({
       checkId,
       page,
       pageSize,
       status: Array.isArray(status) ? status.join(",") : status,
+      search: Array.isArray(search) ? search[0] : search,
     });
   }
 

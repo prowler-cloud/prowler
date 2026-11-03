@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { SAMPLE_FAILED_CHECKS } from "@/lib/sample-preview/sample-dataset";
 import { SAMPLE_PREVIEW_STAGE } from "@/lib/sample-preview/sample-preview-state";
+import { SAMPLE_FINDINGS } from "@/lib/sample-preview/sample-records";
 
 import { FindingsSamplePreview } from "./findings-sample-preview";
 
@@ -89,6 +90,27 @@ describe("FindingsSamplePreview", () => {
     expect(
       await screen.findByText("acme-customer-exports"),
     ).toBeInTheDocument();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("expands a PASS group into passing resources only", async () => {
+    const user = userEvent.setup();
+    render(
+      <FindingsSamplePreview
+        state={STATE}
+        searchParams={{ "filter[status__in]": "PASS" }}
+      />,
+    );
+    await user.click(
+      screen.getByText("Ensure S3 buckets are not publicly accessible"),
+    );
+    const passing = SAMPLE_FINDINGS.find(
+      (finding) =>
+        finding.check.checkId === "s3_bucket_public_access" &&
+        finding.status === "PASS",
+    )!;
+    expect(await screen.findByText(passing.resource.name)).toBeInTheDocument();
+    expect(screen.queryByText("acme-customer-exports")).not.toBeInTheDocument();
     expect(fetchMock).not.toHaveBeenCalled();
   });
 

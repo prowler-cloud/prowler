@@ -708,6 +708,52 @@ describe("ResourceDetailDrawerContent — resource navigation", () => {
 });
 
 describe("ResourceDetailDrawerContent — sample data", () => {
+  it("does not navigate to compliance details for a nonexistent sample scan", async () => {
+    // Given
+    const user = userEvent.setup();
+    vi.stubGlobal("open", mockWindowOpen);
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating={false}
+        checkMeta={mockCheckMeta}
+        currentIndex={0}
+        totalResources={1}
+        currentFinding={{
+          ...mockFinding,
+          id: "sample-finding-s3_bucket_public_access-1",
+          resourceId: "sample-resource-s3_bucket-1",
+          scan: {
+            id: "sample-scan",
+            name: "Sample scan",
+            trigger: "manual",
+            state: "completed",
+            uniqueResourceCount: 24,
+            progress: 100,
+            duration: 742,
+            startedAt: "2026-10-28T09:12:00Z",
+            completedAt: "2026-10-28T09:12:00Z",
+            insertedAt: "2026-10-28T09:12:00Z",
+            scheduledAt: null,
+          },
+        }}
+        otherFindings={[]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    // When
+    const link = screen.queryByRole("button", {
+      name: "Open PCI-DSS 4.0 compliance details",
+    });
+    if (link) await user.click(link);
+
+    // Then
+    expect(mockWindowOpen).not.toHaveBeenCalled();
+  });
+
   it("should not link sample resources to pages or consoles that lack them", () => {
     // Given
     const { container } = render(

@@ -6,7 +6,7 @@ import { IssuesSummary } from "@/components/issues/issues-summary";
 import { IssuesTable } from "@/components/issues/issues-table";
 import { VerdictFilter } from "@/components/issues/verdict-filter";
 import { ISSUE_SCOPE_KEYS } from "@/lib/issues/scope";
-import { verdictCounts } from "@/lib/issues/verdicts";
+import { verdictCounts, VERDICTS } from "@/lib/issues/verdicts";
 import { SAMPLE_ACCOUNT } from "@/lib/sample-preview/sample-dataset";
 import {
   SAMPLE_ISSUES,
@@ -58,7 +58,7 @@ export const IssuesList = async ({
     ),
   );
   const [summary, issues] = sample
-    ? sampleIssues(filters, scope)
+    ? sampleIssues(filters, scope, searchParams.sort)
     : await Promise.all([
         getIssuesOverview({ filters: scope }),
         getIssues({
@@ -156,10 +156,25 @@ const matchesSampleFilters = (
 function sampleIssues(
   filters: Record<string, string>,
   scope: Record<string, string>,
+  sort: SearchParamsProps["sort"],
 ): [IssuesOverviewResponse, IssueResponse] {
   const scoped = SAMPLE_ISSUES.filter((issue) =>
     matchesSampleFilters(issue, scope),
   );
+  const rows = SAMPLE_ISSUES.filter((issue) =>
+    matchesSampleFilters(issue, filters),
+  );
+  if (typeof sort === "string") {
+    const descending = sort.startsWith("-");
+    const field = descending ? sort.slice(1) : sort;
+    if (field === "verdict_rank" || field === "findings_count") {
+      const value = (issue: SampleIssue) =>
+        field === "findings_count"
+          ? issue.attributes.findings_count
+          : VERDICTS.findIndex(({ id }) => id === issue.attributes.verdict);
+      rows.sort((a, b) => (value(a) - value(b)) * (descending ? -1 : 1));
+    }
+  }
   return [
     {
       data: {
@@ -168,9 +183,7 @@ function sampleIssues(
       },
     },
     {
-      data: SAMPLE_ISSUES.filter((issue) =>
-        matchesSampleFilters(issue, filters),
-      ),
+      data: rows,
     },
   ];
 }

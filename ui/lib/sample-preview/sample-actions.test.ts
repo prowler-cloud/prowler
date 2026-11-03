@@ -14,6 +14,8 @@ import {
   getLatestFindingsByResourceUid,
 } from "@/actions/findings";
 import { getFindingComplianceFrameworks } from "@/actions/findings/finding-compliance-frameworks";
+import { updateFindingTriage } from "@/actions/findings/findings-triage";
+import { sendJiraDispatch } from "@/actions/integrations/jira-dispatch";
 import {
   addIssueNote,
   getIssue,
@@ -23,6 +25,7 @@ import {
 } from "@/actions/issues";
 import { createMuteRule } from "@/actions/mute-rules";
 import { getResourceEvents } from "@/actions/resources";
+import { createPartialScan } from "@/actions/scans";
 import { FINDING_TRIAGE_STATUS } from "@/types/findings-triage";
 
 import { SAMPLE_ACCOUNT, SAMPLE_CHECKS } from "./sample-dataset";
@@ -84,7 +87,10 @@ describe("sample drill-downs", () => {
       await getFindingById(row.findingId, "resources,scan.provider"),
     );
     const otherFindings = adaptFindingsByResourceResponse(
-      await getLatestFindingsByResourceUid({ resourceUid: row.resourceUid }),
+      await getLatestFindingsByResourceUid({
+        resourceUid: row.resourceUid,
+        sample: true,
+      }),
     );
 
     expect(finding).toMatchObject({
@@ -183,6 +189,30 @@ describe("sample drill-downs", () => {
     await expect(createMuteRule(null, muteForm)).resolves.toEqual({
       errors: { general: SAMPLE_WRITE_MESSAGE },
     });
+    await expect(
+      sendJiraDispatch({
+        integrationId: "jira-1",
+        filter: "finding_id",
+        projectKey: "DEMO",
+        issueType: "Task",
+        targetIds: ["real-finding", row.findingId],
+      }),
+    ).resolves.toEqual({ success: false, error: SAMPLE_WRITE_MESSAGE });
+    await expect(
+      createPartialScan({
+        providerId: SAMPLE_ACCOUNT.providerId,
+        resourceUids: [row.resourceUid],
+      }),
+    ).resolves.toEqual({ error: SAMPLE_WRITE_MESSAGE });
+    await expect(
+      updateFindingTriage({
+        findingId: row.findingId,
+        findingUid: row.findingId,
+        triageId: null,
+        notesCount: 0,
+        status: FINDING_TRIAGE_STATUS.UNDER_REVIEW,
+      }),
+    ).rejects.toThrow(SAMPLE_WRITE_MESSAGE);
     expect(fetchMock).not.toHaveBeenCalled();
   });
 });

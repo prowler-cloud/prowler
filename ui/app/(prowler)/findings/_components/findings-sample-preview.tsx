@@ -17,7 +17,7 @@ const SAMPLE_SCAN_FILTERS: Record<string, string> = {
 
 interface FindingsSamplePreviewProps {
   state: SamplePreviewActive;
-  /** The filters an Overview link carried; there are no filter controls. */
+  /** Overview drill-downs and the table's search and sorting controls. */
   searchParams?: SearchParamsProps;
 }
 
@@ -26,15 +26,15 @@ export function FindingsSamplePreview({
   state,
   searchParams = {},
 }: FindingsSamplePreviewProps) {
-  const { groups, filtered } = filterSampleFindingGroups(searchParams);
+  const { groups, filtered, resourceFilters } =
+    filterSampleFindingGroups(searchParams);
 
   return (
     <>
       <SamplePreviewBanner state={state} page={SAMPLE_PREVIEW_PAGE.FINDINGS} />
       {filtered && (
         <p className="text-text-neutral-tertiary mb-4 text-sm">
-          Showing {groups.length} of the sample checks, filtered from the
-          Overview.{" "}
+          Showing {groups.length} sample checks matching your filters.{" "}
           <Button variant="link" size="link-sm" asChild>
             <Link href="/findings">Show all</Link>
           </Button>
@@ -42,7 +42,7 @@ export function FindingsSamplePreview({
       )}
       <FindingsGroupTable
         data={groups}
-        resolvedFilters={SAMPLE_SCAN_FILTERS}
+        resolvedFilters={{ ...SAMPLE_SCAN_FILTERS, ...resourceFilters }}
         hasHistoricalData
       />
     </>

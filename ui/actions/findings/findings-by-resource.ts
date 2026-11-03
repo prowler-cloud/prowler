@@ -12,7 +12,6 @@ import {
 import { runWithConcurrencyLimit } from "@/lib/concurrency";
 import { appendSanitizedProviderTypeFilters } from "@/lib/provider-filters";
 import {
-  isSampleResourceUid,
   sampleFindingsDocument,
   sampleFindingsQuery,
 } from "@/lib/sample-preview/sample-records";
@@ -260,13 +259,16 @@ export const getLatestFindingsByResourceUid = async ({
   page = 1,
   pageSize = 50,
   includeMuted = false,
+  sample = false,
 }: {
   resourceUid: string;
   page?: number;
   pageSize?: number;
   includeMuted?: boolean;
+  /** Explicitly scoped by the sample finding; real resource names can match the demo. */
+  sample?: boolean;
 }) => {
-  if (isSampleResourceUid(resourceUid)) {
+  if (sample) {
     return sampleFindingsDocument(
       sampleFindingsQuery({
         "filter[resource_uid]": resourceUid,

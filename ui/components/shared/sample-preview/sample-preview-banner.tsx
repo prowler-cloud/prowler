@@ -170,6 +170,10 @@ function SamplePreviewBannerContent({ state, page }: SamplePreviewBannerProps) {
             <p className="text-text-neutral-secondary text-sm">
               {content.description}
             </p>
+            <p className="text-text-neutral-tertiary text-xs">
+              Sample data is read-only. Lighthouse, Jira, re-checks and changes
+              require your own scan results.
+            </p>
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-4">

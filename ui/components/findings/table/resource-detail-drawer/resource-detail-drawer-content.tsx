@@ -84,7 +84,10 @@ import { updateFindingTriageOrThrow } from "@/lib/finding-triage-update";
 import { buildJiraActionLabel } from "@/lib/jira-dispatch-action";
 import { createJiraDispatchPayload } from "@/lib/jira-dispatch-selection";
 import { getRegionFlag } from "@/lib/region-flags";
-import { isSampleId } from "@/lib/sample-preview/sample-records";
+import {
+  isSampleId,
+  SAMPLE_DATA_READ_ONLY_MESSAGE,
+} from "@/lib/sample-preview/sample-guards";
 import { isCloud } from "@/lib/shared/env";
 import { getRecommendationLinkLabel } from "@/lib/vulnerability-references";
 import { SIDE_PANEL_TAB, useSidePanelStore } from "@/store/side-panel";
@@ -290,6 +293,9 @@ export function ResourceDetailDrawerContent({
   // During carousel navigation we only trust row-backed data until the next
   // finding payload is fully ready, otherwise stale details flash briefly.
   const f = isNavigating ? null : currentFinding;
+  const sampleDisabledReason = isSampleId(f?.id)
+    ? SAMPLE_DATA_READ_ONLY_MESSAGE
+    : undefined;
   const jiraPayload = createJiraDispatchPayload({
     targetIds: f ? [f.id] : [],
     targetType: JIRA_DISPATCH_TARGET.FINDING_ID,
@@ -329,11 +335,13 @@ export function ResourceDetailDrawerContent({
     searchParams.get("filter[scan__in]"),
   );
   const complianceScanId =
-    selectedScanIds.length === 1
-      ? selectedScanIds[0]
-      : selectedScanIds.length === 0
-        ? (f?.scan?.id ?? null)
-        : null;
+    isSampleId(f?.id) || isSampleId(f?.scan?.id)
+      ? null
+      : selectedScanIds.length === 1
+        ? selectedScanIds[0]
+        : selectedScanIds.length === 0
+          ? (f?.scan?.id ?? null)
+          : null;
   const regionFilter = searchParams.get("filter[region__in]");
   const nativeIacConfig = resolveNativeIacConfig(providerType);
   const showOverviewCheckMetaContent = showCheckMetaContent;
@@ -641,7 +649,10 @@ export function ResourceDetailDrawerContent({
                     <span className="group flex items-center gap-1.5">
                       <DateWithTime inline dateTime={lastSeenAt || "-"} />
                       {f && (
-                        <RecheckResourceIconButton target={recheckTarget} />
+                        <RecheckResourceIconButton
+                          target={recheckTarget}
+                          disabledReason={sampleDisabledReason}
+                        />
                       )}
                     </span>
                   </InfoField>
@@ -694,14 +705,18 @@ export function ResourceDetailDrawerContent({
                         )
                       }
                       label={f.isMuted ? "Muted" : "Mute"}
-                      disabled={f.isMuted}
+                      disabled={f.isMuted || Boolean(sampleDisabledReason)}
+                      disabledTooltip={sampleDisabledReason}
                       onSelect={() => setIsMuteModalOpen(true)}
                     />
                     <JiraDispatchActionItem
                       label={buildJiraActionLabel({ findingCount: 1 })}
                       payload={jiraPayload}
                     />
-                    <RecheckResourceActionItem target={recheckTarget} />
+                    <RecheckResourceActionItem
+                      target={recheckTarget}
+                      disabledReason={sampleDisabledReason}
+                    />
                     {externalResourceTarget && (
                       <ActionDropdownItem
                         icon={<ExternalLink className="size-5" />}
@@ -1438,6 +1453,9 @@ function OtherFindingRow({
 }) {
   const [isMuteModalOpen, setIsMuteModalOpen] = useState(false);
   const isMuted = finding.isMuted || isOptimisticallyMuted;
+  const sampleDisabledReason = isSampleId(finding.id)
+    ? SAMPLE_DATA_READ_ONLY_MESSAGE
+    : undefined;
   const jiraPayload = createJiraDispatchPayload({
     targetIds: [finding.id],
     targetType: JIRA_DISPATCH_TARGET.FINDING_ID,
@@ -1532,7 +1550,8 @@ function OtherFindingRow({
                   )
                 }
                 label={isMuted ? "Muted" : "Mute"}
-                disabled={isMuted}
+                disabled={isMuted || Boolean(sampleDisabledReason)}
+                disabledTooltip={sampleDisabledReason}
                 onSelect={() => setIsMuteModalOpen(true)}
               />
               <JiraDispatchActionItem
