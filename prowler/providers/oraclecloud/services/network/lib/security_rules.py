@@ -1,5 +1,6 @@
 """Helpers to evaluate OCI security rules and CIDR blocks."""
 
+import ipaddress
 from typing import Any, Optional
 
 # OCI security lists and network security groups accept both IPv4 and IPv6
@@ -17,7 +18,10 @@ def is_public_cidr(cidr: Optional[str]) -> bool:
     """Return True when the CIDR block represents unrestricted internet access."""
     if not cidr:
         return False
-    return cidr.strip() in UNRESTRICTED_CIDRS
+    try:
+        return ipaddress.ip_network(cidr.strip(), strict=False).prefixlen == 0
+    except ValueError:
+        return False
 
 
 def rule_allows_tcp_port(rule: dict[str, Any], port: int) -> bool:

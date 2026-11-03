@@ -17,6 +17,8 @@ class Test_is_public_cidr:
             pytest.param("0.0.0.0/0", id="ipv4-any"),
             pytest.param("::/0", id="ipv6-any"),
             pytest.param("0.0.0.0/0 ", id="ipv4-any-with-trailing-space"),
+            pytest.param("0:0:0:0:0:0:0:0/0", id="ipv6-expanded-any"),
+            pytest.param("0::/0", id="ipv6-leading-zero-any"),
         ],
     )
     def test_unrestricted_cidrs_are_public(self, cidr):
