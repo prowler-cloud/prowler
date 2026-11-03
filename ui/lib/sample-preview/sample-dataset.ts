@@ -2,9 +2,9 @@ import type { AttackSurfaceId } from "@/actions/overview/attack-surface/attack-s
 import { RESOURCE_GROUP_IDS } from "@/actions/overview/resources-inventory/resources-inventory.adapter";
 import { SEVERITY, type Severity } from "@/types/components";
 
-// One demo AWS account, described once. Every sample page derives its numbers
-// from SAMPLE_CHECKS, so the Overview totals, the findings list and the issues
-// always agree with each other.
+// One demo AWS account, described once. The Overview totals, the findings list
+// and the issues derive their numbers from SAMPLE_CHECKS, so they agree; the
+// compliance watchlist and ThreatScore are fixed figures in sample-overview.
 
 export const SAMPLE_ACCOUNT = {
   uid: "123456789012",

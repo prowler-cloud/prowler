@@ -2,6 +2,7 @@ import {
   type FindingComplianceFrameworksResult,
   WATCHLIST_SCOPE,
 } from "@/types/compliance-watchlist";
+import type { FindingStatus } from "@/types/components";
 import { FINDING_TRIAGE_STATUS } from "@/types/findings-triage";
 
 import { SAMPLE_CHECK_DETAILS } from "./sample-check-details";
@@ -38,7 +39,7 @@ export interface SampleFinding {
   uid: string;
   check: SampleCheck;
   resource: SampleResource;
-  status: "FAIL" | "PASS";
+  status: FindingStatus;
   delta: "new" | null;
 }
 
