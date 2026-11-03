@@ -39,14 +39,15 @@ export function CredentialFields({
     typeof useForm<LighthouseV2ConfigFormValues>
   >["register"];
 }) {
-  // With optional keys a saved configuration may have none, so the masked
-  // placeholder would suggest a key that is not there.
+  const isBedrock = provider === LIGHTHOUSE_V2_PROVIDER_TYPE.BEDROCK;
+  // The masked placeholder would suggest a key that may not be there: with
+  // optional keys a saved configuration may have none, and for Bedrock the
+  // API does not say whether access keys or an API key are stored.
   const secretPlaceholder =
-    hasStoredCredentials && !credentialsOptional
+    hasStoredCredentials && !credentialsOptional && !isBedrock
       ? STORED_SECRET_PLACEHOLDER
       : undefined;
   const keyLabelSuffix = credentialsOptional ? " (optional)" : "";
-  const isBedrock = provider === LIGHTHOUSE_V2_PROVIDER_TYPE.BEDROCK;
   const bedrockAuthMethod = useWatch({ control, name: "bedrockAuthMethod" });
   const usesBedrockApiKey =
     isBedrock && bedrockAuthMethod === BEDROCK_AUTH_METHOD.API_KEY;
@@ -88,9 +89,7 @@ export function CredentialFields({
             id="lighthouse-v2-api-key"
             type="password"
             autoComplete="off"
-            // The API does not say which Bedrock method is stored, so a
-            // masked key here could claim an API key that was never saved.
-            placeholder={usesBedrockApiKey ? undefined : secretPlaceholder}
+            placeholder={secretPlaceholder}
             aria-invalid={Boolean(errors.apiKey)}
             {...register("apiKey")}
           />

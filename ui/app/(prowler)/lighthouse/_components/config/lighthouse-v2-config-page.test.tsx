@@ -284,14 +284,14 @@ describe("LighthouseV2ConfigPage", () => {
       maskedKey,
     );
 
+    // But not for Bedrock: the API does not say whether access keys or an
+    // API key are stored, so masking either set could claim the wrong one
     await user.click(screen.getByRole("button", { name: /Amazon Bedrock/i }));
-    expect(screen.getByLabelText("AWS access key ID")).toHaveAttribute(
+    expect(screen.getByLabelText("AWS access key ID")).not.toHaveAttribute(
       "placeholder",
-      maskedKey,
     );
-    expect(screen.getByLabelText("AWS secret access key")).toHaveAttribute(
+    expect(screen.getByLabelText("AWS secret access key")).not.toHaveAttribute(
       "placeholder",
-      maskedKey,
     );
   });
 
