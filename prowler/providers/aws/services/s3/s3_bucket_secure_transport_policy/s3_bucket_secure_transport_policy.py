@@ -34,10 +34,12 @@ class s3_bucket_secure_transport_policy(Check):
 def _denies_insecure_transport_for_everyone(statement: dict) -> bool:
     """Whether a bucket policy statement denies s3:PutObject over HTTP to every requester.
 
-    The statement must be a Deny that applies to all principals, its Action must cover
-    s3:PutObject under IAM wildcard matching, and its only condition must be
-    aws:SecureTransport being false. Conditions are ANDed, so any other condition key
-    narrows the deny and leaves HTTP allowed for requests outside it.
+    The statement must be a Deny that applies to all principals and does not use
+    NotResource, its Action must cover s3:PutObject under IAM wildcard matching, and
+    its only condition must be aws:SecureTransport being false. NotResource names the
+    resources the deny skips, so HTTP stays allowed for any of them in the bucket.
+    Conditions are ANDed, so any other condition key narrows the deny and leaves HTTP
+    allowed for requests outside it.
 
     Args:
         statement: A statement from the bucket policy.
@@ -48,6 +50,8 @@ def _denies_insecure_transport_for_everyone(statement: dict) -> bool:
     if not isinstance(statement, dict) or statement.get("Effect") != "Deny":
         return False
     if not has_public_principal(statement):
+        return False
+    if "NotResource" in statement:
         return False
 
     actions = statement.get("Action", [])

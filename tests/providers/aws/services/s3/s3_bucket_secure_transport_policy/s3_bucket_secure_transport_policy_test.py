@@ -263,6 +263,16 @@ class Test_s3_bucket_secure_transport_policy:
                 {
                     "Effect": "Deny",
                     "Principal": "*",
+                    "Action": "s3:*",
+                    "NotResource": "arn:aws:s3:::bucket_test_us/public/*",
+                    "Condition": {"Bool": {"aws:SecureTransport": "false"}},
+                },
+                id="deny-with-not-resource",
+            ),
+            pytest.param(
+                {
+                    "Effect": "Deny",
+                    "Principal": "*",
                     "Action": "s3:Get*",
                     "Resource": "arn:aws:s3:::bucket_test_us/*",
                     "Condition": {"Bool": {"aws:SecureTransport": "false"}},
