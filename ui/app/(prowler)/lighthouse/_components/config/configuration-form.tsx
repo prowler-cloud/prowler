@@ -152,10 +152,11 @@ export function LighthouseV2ConfigurationForm({
         return;
       }
 
-      // Keep the chosen Bedrock auth method instead of snapping back to the default.
+      // Keep the chosen Bedrock auth method only when its credentials were
+      // saved; a blank save keeps the stored ones, whatever method they use.
       form.reset({
         ...getFormDefaults(result.data),
-        bedrockAuthMethod: values.bedrockAuthMethod,
+        ...(credentials ? { bedrockAuthMethod: values.bedrockAuthMethod } : {}),
       });
       onConfigurationSaved(result.data);
       notifyLighthouseV2ConfigurationsChanged();

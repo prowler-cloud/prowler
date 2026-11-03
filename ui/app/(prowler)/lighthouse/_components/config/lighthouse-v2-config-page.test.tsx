@@ -330,6 +330,44 @@ describe("LighthouseV2ConfigPage", () => {
     expect(createConfigurationMock).not.toHaveBeenCalled();
   });
 
+  it("does not hint at a stored Bedrock API key it cannot know about", async () => {
+    // Given: Bedrock has a stored configuration of unknown credential type
+    const user = userEvent.setup();
+    renderPage();
+    await user.click(screen.getByRole("button", { name: /Amazon Bedrock/i }));
+
+    // When
+    await user.click(screen.getByRole("radio", { name: "Bedrock API key" }));
+
+    // Then
+    expect(screen.getByLabelText("API key")).not.toHaveAttribute("placeholder");
+  });
+
+  it("falls back to access keys after saving Bedrock without new credentials", async () => {
+    // Given
+    const user = userEvent.setup();
+    updateConfigurationMock.mockResolvedValue({ data: configurations[1] });
+    renderPage();
+    await user.click(screen.getByRole("button", { name: /Amazon Bedrock/i }));
+    await user.click(screen.getByRole("radio", { name: "Bedrock API key" }));
+
+    // When: saved with blank fields, so the stored credentials stay
+    await user.click(
+      within(
+        screen.getByRole("region", { name: "Lighthouse AI settings" }),
+      ).getByRole("button", { name: /^Save$/i }),
+    );
+
+    // Then: the form no longer claims an API key that was never saved
+    await waitFor(() => expect(updateConfigurationMock).toHaveBeenCalled());
+    expect(updateConfigurationMock.mock.calls[0]?.[1]).not.toHaveProperty(
+      "credentials",
+    );
+    expect(
+      await screen.findByRole("radio", { name: "AWS access keys" }),
+    ).toBeChecked();
+  });
+
   it("shows Bedrock access key, secret key, and region fields", async () => {
     // Given
     const user = userEvent.setup();

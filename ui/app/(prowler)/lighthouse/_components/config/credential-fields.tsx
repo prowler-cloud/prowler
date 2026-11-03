@@ -88,7 +88,9 @@ export function CredentialFields({
             id="lighthouse-v2-api-key"
             type="password"
             autoComplete="off"
-            placeholder={secretPlaceholder}
+            // The API does not say which Bedrock method is stored, so a
+            // masked key here could claim an API key that was never saved.
+            placeholder={usesBedrockApiKey ? undefined : secretPlaceholder}
             aria-invalid={Boolean(errors.apiKey)}
             {...register("apiKey")}
           />
