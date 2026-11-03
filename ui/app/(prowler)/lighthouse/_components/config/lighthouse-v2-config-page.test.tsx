@@ -344,6 +344,42 @@ describe("LighthouseV2ConfigPage", () => {
     expect(screen.getByLabelText("AWS region")).toBeInTheDocument();
   });
 
+  it("saves Bedrock with an API key instead of access keys", async () => {
+    // Given
+    const user = userEvent.setup();
+    updateConfigurationMock.mockResolvedValue({ data: configurations[1] });
+    testConnectionMock.mockResolvedValue({ data: configurations[1] });
+    renderPage();
+    await user.click(screen.getByRole("button", { name: /Amazon Bedrock/i }));
+
+    // When: the API key method is chosen
+    await user.click(screen.getByRole("radio", { name: "Bedrock API key" }));
+
+    // Then: the access key fields give way to the API key field
+    expect(
+      screen.queryByLabelText("AWS access key ID"),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByLabelText("AWS secret access key"),
+    ).not.toBeInTheDocument();
+
+    // When
+    await user.type(screen.getByLabelText("API key"), "ABSKlongterm");
+    await user.type(screen.getByLabelText("AWS region"), "us-east-1");
+    await user.click(
+      within(
+        screen.getByRole("region", { name: "Lighthouse AI settings" }),
+      ).getByRole("button", { name: /^Save$/i }),
+    );
+
+    // Then
+    await waitFor(() => expect(updateConfigurationMock).toHaveBeenCalled());
+    expect(updateConfigurationMock.mock.calls[0]?.[1].credentials).toEqual({
+      api_key: "ABSKlongterm",
+      aws_region_name: "us-east-1",
+    });
+  });
+
   it("changes a Bedrock region without keys when the installation role is allowed", async () => {
     // Given: the API reports Bedrock needs no credentials (Private Cloud)
     const user = userEvent.setup();
