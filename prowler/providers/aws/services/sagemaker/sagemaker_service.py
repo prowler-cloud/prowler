@@ -224,6 +224,7 @@ class SageMaker(AWSService):
             regional_client: Regional SageMaker boto3 client.
         """
         logger.info("SageMaker - listing data quality job definitions...")
+        regional_job_definitions = []
         try:
             list_data_quality_job_definitions_paginator = regional_client.get_paginator(
                 "list_data_quality_job_definitions"
@@ -234,13 +235,14 @@ class SageMaker(AWSService):
                     if not self.audit_resources or (
                         is_resource_filtered(job_def_arn, self.audit_resources)
                     ):
-                        self.data_quality_job_definitions.append(
+                        regional_job_definitions.append(
                             DataQualityJobDefinition(
                                 name=job_def["MonitoringJobDefinitionName"],
                                 region=regional_client.region,
                                 arn=job_def_arn,
                             )
                         )
+            self.data_quality_job_definitions.extend(regional_job_definitions)
         except ClientError as error:
             code = error.response["Error"].get("Code", error.__class__.__name__)
             self.data_quality_job_definitions_scan_errors[regional_client.region] = code
