@@ -177,7 +177,10 @@
   --gradient-lighthouse-from: #136f99;
   --gradient-lighthouse-to: #136f99;
   --gradient-lighthouse: linear-gradient(#136f99, #136f99);
-  --gradient-lighthouse-soft: linear-gradient(rgba(19, 111, 153, 0.08), rgba(19, 111, 153, 0.08));
+  --gradient-lighthouse-soft: linear-gradient(
+    rgba(19, 111, 153, 0.08),
+    rgba(19, 111, 153, 0.08)
+  );
   --text-lighthouse: #136f99;
   --border-lighthouse: rgba(19, 111, 153, 0.45);
 
@@ -288,7 +291,10 @@
   --gradient-lighthouse-from: #5ab4e6;
   --gradient-lighthouse-to: #5ab4e6;
   --gradient-lighthouse: linear-gradient(#5ab4e6, #5ab4e6);
-  --gradient-lighthouse-soft: linear-gradient(rgba(90, 180, 230, 0.1), rgba(90, 180, 230, 0.1));
+  --gradient-lighthouse-soft: linear-gradient(
+    rgba(90, 180, 230, 0.1),
+    rgba(90, 180, 230, 0.1)
+  );
   --gradient-feature-cloud: linear-gradient(#1c1f23, #1c1f23);
   --bg-feature-new: #5ab4e6;
   --text-feature-new: #06131b;
@@ -502,6 +508,35 @@
 @media (prefers-reduced-motion: reduce) {
   .gradient-border-lighthouse::before {
     animation: none;
+  }
+}
+
+/* ===== BASE TYPE =====
+ * IBM Plex comes from next/font. If it cannot load (offline build, blocked
+ * fonts), fall back to a sans face rather than the browser's serif default. */
+@layer base {
+  body {
+    font-family:
+      var(--font-sans, "IBM Plex Sans"),
+      "IBM Plex Sans",
+      ui-sans-serif,
+      system-ui,
+      -apple-system,
+      "Segoe UI",
+      sans-serif;
+    font-feature-settings: "tnum" 0;
+  }
+  code,
+  kbd,
+  samp,
+  pre {
+    font-family:
+      var(--font-mono, "IBM Plex Mono"), "IBM Plex Mono", ui-monospace,
+      "SFMono-Regular", Menlo, monospace;
+  }
+  table td,
+  table th {
+    font-variant-numeric: tabular-nums;
   }
 }
 

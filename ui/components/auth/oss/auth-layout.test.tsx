@@ -4,15 +4,15 @@ import { describe, expect, it } from "vitest";
 import { AuthLayout } from "./auth-layout";
 
 describe("AuthLayout", () => {
-  it("renders the Prowler brand directly above the form card", () => {
+  it("renders the Cloudy brand above the form title, which is the page h1", () => {
     render(
       <AuthLayout title="Sign in">
         <p>form content</p>
       </AuthLayout>,
     );
 
-    const brand = screen.getByRole("img", { name: /prowler/i });
-    const title = screen.getByText("Sign in");
+    const brand = screen.getByRole("img", { name: "Cloudy" });
+    const title = screen.getByRole("heading", { level: 1, name: "Sign in" });
 
     expect(
       brand.compareDocumentPosition(title) & Node.DOCUMENT_POSITION_FOLLOWING,
