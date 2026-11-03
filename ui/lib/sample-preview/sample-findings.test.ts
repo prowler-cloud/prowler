@@ -180,4 +180,15 @@ describe("sample finding filters", () => {
       ),
     ).toBe(true);
   });
+
+  it("matches the date filter against the sample scan's day", () => {
+    const scanDay = SAMPLE_ACCOUNT.scannedAt.slice(0, 10);
+
+    expect(
+      filterSampleFindingGroups({ "filter[inserted_at]": scanDay }).groups,
+    ).toHaveLength(SAMPLE_CHECKS.length);
+    expect(
+      filterSampleFindingGroups({ "filter[inserted_at]": "2020-01-01" }).groups,
+    ).toHaveLength(0);
+  });
 });

@@ -8,6 +8,7 @@ import { SAMPLE_RESOURCE_GROUPS_RESPONSE } from "./sample-overview";
 import { SAMPLE_FINDINGS, SAMPLE_RESOURCES } from "./sample-records";
 import {
   filterSampleResources,
+  getSampleResourceRow,
   SAMPLE_RESOURCE_FILTER_OPTIONS,
 } from "./sample-resources";
 
@@ -89,5 +90,47 @@ describe("sample resources", () => {
     expect(drawer.providerOrg).toBeNull();
     expect(fetchMock).not.toHaveBeenCalled();
     vi.unstubAllGlobals();
+  });
+
+  it("falls back to the default page size for invalid values", () => {
+    for (const pageSize of ["-1", "0", "2.5", "abc"]) {
+      const { data } = filterSampleResources({ pageSize });
+      expect(data).toHaveLength(10);
+    }
+  });
+
+  it("reopens a copied sample resource link", () => {
+    const [resource] = SAMPLE_RESOURCES;
+
+    expect(getSampleResourceRow(resource.id)?.attributes.name).toBe(
+      resource.name,
+    );
+    expect(getSampleResourceRow("not-a-sample")).toBeNull();
+  });
+
+  it("searches the sample resource drawer's findings", async () => {
+    // Given
+    const failing = SAMPLE_FINDINGS.find(
+      (finding) => finding.status === "FAIL",
+    )!;
+    const request = {
+      resourceId: failing.resource.id,
+      resourceUid: failing.resource.uid,
+      providerId: "sample-provider",
+      providerType: "aws",
+    };
+
+    // When
+    const matching = await getResourceDrawerData({
+      ...request,
+      query: failing.check.title.toUpperCase(),
+    });
+    const none = await getResourceDrawerData({ ...request, query: "zzz" });
+
+    // Then
+    expect(
+      matching.findings.map((finding: { id: string }) => finding.id),
+    ).toContain(failing.id);
+    expect(none.findings).toHaveLength(0);
   });
 });

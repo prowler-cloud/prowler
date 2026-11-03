@@ -278,4 +278,22 @@ describe("SamplePreviewBanner", () => {
       screen.getByRole("link", { name: "View Running Scans" }),
     ).toHaveAttribute("href", "/scans?tab=active");
   });
+
+  it("updates the tracked scan without waiting for the completed-scan lookup", async () => {
+    // Given: the completed-scan lookup never answers.
+    getCompletedScansMock.mockReturnValue(new Promise(() => {}));
+    getScanMock.mockResolvedValue(scanResponse("executing", 45));
+    render(
+      <SamplePreviewBanner
+        page={SAMPLE_PREVIEW_PAGE.OVERVIEW}
+        state={RUNNING}
+      />,
+    );
+
+    // When
+    await advancePoll();
+
+    // Then
+    expect(screen.getByText("45%")).toBeVisible();
+  });
 });

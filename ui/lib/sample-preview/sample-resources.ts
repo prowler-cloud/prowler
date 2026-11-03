@@ -98,6 +98,15 @@ const param = (searchParams: SearchParamsProps, key: string) => {
   return Array.isArray(value) ? value.join(",") : value;
 };
 
+const positiveInteger = (value: string | undefined, fallback: number) => {
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
+};
+
+/** The sample row a `?resourceId=` link opens, if it is one. */
+export const getSampleResourceRow = (resourceId: string | undefined) =>
+  SAMPLE_RESOURCE_ROWS.find((row) => row.id === resourceId) ?? null;
+
 /** One page of sample resources for the URL's filters, search and sort. */
 export const filterSampleResources = (
   searchParams: SearchParamsProps,
@@ -131,12 +140,12 @@ export const filterSampleResources = (
     });
   }
 
-  const pageSize = Number(param(searchParams, "pageSize")) || DEFAULT_PAGE_SIZE;
-  const pages = Math.max(1, Math.ceil(rows.length / pageSize));
-  const page = Math.min(
-    Math.max(1, Number(param(searchParams, "page")) || 1),
-    pages,
+  const pageSize = positiveInteger(
+    param(searchParams, "pageSize"),
+    DEFAULT_PAGE_SIZE,
   );
+  const pages = Math.max(1, Math.ceil(rows.length / pageSize));
+  const page = Math.min(positiveInteger(param(searchParams, "page"), 1), pages);
 
   return {
     data: rows.slice((page - 1) * pageSize, page * pageSize),

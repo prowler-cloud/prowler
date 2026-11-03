@@ -296,7 +296,9 @@ export const getResourceDrawerData = async ({
   pageSize?: number;
   query?: string;
 }) => {
-  if (isSampleId(resourceId)) return sampleResourceDrawerData(resourceId);
+  if (isSampleId(resourceId)) {
+    return sampleResourceDrawerData(resourceId, query);
+  }
 
   const isCloudEnv = isCloud();
 

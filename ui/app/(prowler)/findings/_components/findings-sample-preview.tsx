@@ -50,8 +50,8 @@ export function FindingsSamplePreview({
           />
         </div>
         <FindingsGroupTable
-          // Key resets client state (selection, drill-down) when data changes.
-          key={groups.map((group) => group.id).join(",")}
+          // Key resets client state (selection, drill-down) when data or filters change.
+          key={`${groups.map((group) => group.id).join(",")}|${JSON.stringify(resourceFilters)}`}
           data={groups}
           resolvedFilters={{ ...SAMPLE_SCAN_FILTERS, ...resourceFilters }}
           hasHistoricalData

@@ -95,6 +95,7 @@ export default async function ComplianceDetail({
         filter={getSingleSearchParam(
           resolvedSearchParams["filter[cis_profile_level]"],
         )}
+        targetSection={section}
       />
     );
   }

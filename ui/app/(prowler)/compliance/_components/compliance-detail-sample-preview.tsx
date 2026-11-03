@@ -1,6 +1,7 @@
 import {
   ClientAccordionWrapper,
   ComplianceHeader,
+  ComplianceWarming,
   RequirementsStatusCard,
   TopFailedSectionsCard,
 } from "@/components/compliance";
@@ -22,6 +23,8 @@ interface ComplianceDetailSamplePreviewProps {
   version?: string;
   /** CIS profile level, applied by the mapper like on the real page. */
   filter?: string;
+  /** `?section=`: the accordion section to open, like on the real page. */
+  targetSection?: string;
 }
 
 /** A sample framework's detail: real catalog, sample statuses, no reports or Lighthouse. */
@@ -31,21 +34,33 @@ export async function ComplianceDetailSamplePreview({
   complianceId,
   version,
   filter,
+  targetSection,
 }: ComplianceDetailSamplePreviewProps) {
   const detail = await getSampleComplianceDetail(complianceId);
   const formattedTitle = compliancetitle.split("-").join(" ");
   const title = version ? `${formattedTitle} - ${version}` : formattedTitle;
 
+  // The catalog is still warming (or unavailable): same state as the real page.
+  if (!detail) {
+    return (
+      <ContentLayout title={title}>
+        <SamplePreviewBanner
+          state={state}
+          page={SAMPLE_PREVIEW_PAGE.COMPLIANCE}
+        />
+        <ComplianceWarming />
+      </ContentLayout>
+    );
+  }
+
   const mapper = getComplianceMapper(
-    detail?.attributesData.data[0]?.attributes.framework,
+    detail.attributesData.data[0]?.attributes.framework,
   );
-  const data: Framework[] = detail
-    ? mapper.mapComplianceData(
-        detail.attributesData,
-        { data: detail.requirements },
-        filter,
-      )
-    : [];
+  const data: Framework[] = mapper.mapComplianceData(
+    detail.attributesData,
+    { data: detail.requirements },
+    filter,
+  );
   const totals = data.reduce<RequirementsTotals>(
     (acc, framework) => ({
       pass: acc.pass + framework.pass,
@@ -55,6 +70,17 @@ export async function ComplianceDetailSamplePreview({
     { pass: 0, fail: 0, manual: 0 },
   );
   const topFailed = mapper.getTopFailedSections(data);
+  const accordionItems = mapper.toAccordionItems(data, SAMPLE_SCAN.id);
+  // Mappers key sections as `${framework.name}-${section}`.
+  const sectionKeys = new Set(
+    data.map((framework) => `${framework.name}-${targetSection}`),
+  );
+  const initialExpandedKeys = targetSection
+    ? accordionItems
+        .filter((item) => sectionKeys.has(item.key))
+        .map((item) => item.key)
+        .slice(0, 1)
+    : [];
 
   return (
     <ContentLayout title={title}>
@@ -89,8 +115,9 @@ export async function ComplianceDetailSamplePreview({
         </div>
         {/* Requirement findings come from the sample records via the sample scan id. */}
         <ClientAccordionWrapper
-          items={mapper.toAccordionItems(data, SAMPLE_SCAN.id)}
-          defaultExpandedKeys={[]}
+          items={accordionItems}
+          defaultExpandedKeys={initialExpandedKeys}
+          scrollToKey={initialExpandedKeys[0]}
         />
       </div>
     </ContentLayout>

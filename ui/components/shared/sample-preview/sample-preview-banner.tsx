@@ -100,50 +100,50 @@ function SamplePreviewBannerContent({ state, page }: SamplePreviewBannerProps) {
 
     let stopped = false;
     let inFlight = false;
+    const exit = () => {
+      stop();
+      dispatchSamplePreview({ step: SAMPLE_PREVIEW_STEP.EXITED, page, stage });
+      toast({
+        title: "Your scan results are ready",
+        description: "The sample data has been replaced with your own.",
+      });
+      router.refresh();
+    };
+
     const poll = async () => {
       // A slow response must not overwrite a newer one.
       if (inFlight) return;
       inFlight = true;
-      // A failed request is a transient empty response: keep polling.
-      const [response, completedScans] = await Promise.all([
-        getScan(runningScan.id).catch(() => undefined),
-        getScansByState().catch(() => undefined),
-      ]).finally(() => {
+      try {
+        // A failed request is a transient empty response: keep polling.
+        const response = await getScan(runningScan.id).catch(() => undefined);
+        if (stopped) return;
+
+        const attributes = response?.data?.attributes;
+        if (attributes?.state === SCAN_STATES.COMPLETED) {
+          exit();
+          return;
+        }
+
+        // Failed/deleted scans need a new stage (or a different running scan).
+        if (
+          response?.status === 404 ||
+          attributes?.state === SCAN_STATES.FAILED
+        ) {
+          stop();
+          router.refresh();
+          return;
+        }
+
+        if (attributes) setProgress(attributes.progress ?? 0);
+
+        // After the tracked scan, so a slow lookup never delays its progress.
+        // Another provider's scan may finish before the one whose progress we show.
+        const completedScans = await getScansByState().catch(() => undefined);
+        if (!stopped && completedScans?.data?.length > 0) exit();
+      } finally {
         inFlight = false;
-      });
-      if (stopped) return;
-
-      const attributes = response?.data?.attributes;
-      // Another provider's scan may finish before the one whose progress we show.
-      if (
-        completedScans?.data?.length > 0 ||
-        attributes?.state === SCAN_STATES.COMPLETED
-      ) {
-        stop();
-        dispatchSamplePreview({
-          step: SAMPLE_PREVIEW_STEP.EXITED,
-          page,
-          stage,
-        });
-        toast({
-          title: "Your scan results are ready",
-          description: "The sample data has been replaced with your own.",
-        });
-        router.refresh();
-        return;
       }
-
-      // Failed/deleted scans need a new stage (or a different running scan).
-      if (
-        response?.status === 404 ||
-        attributes?.state === SCAN_STATES.FAILED
-      ) {
-        stop();
-        router.refresh();
-        return;
-      }
-
-      if (attributes) setProgress(attributes.progress ?? 0);
     };
 
     const intervalId = setInterval(poll, SAMPLE_PREVIEW_POLL_INTERVAL_MS);

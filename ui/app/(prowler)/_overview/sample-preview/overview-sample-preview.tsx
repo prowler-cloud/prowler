@@ -102,7 +102,8 @@ export function OverviewSamplePreview({
         />
       }
       complianceWatchlist={
-        <ComplianceWatchlist items={complianceItems} hasWatchlist />
+        // The sample Compliance page is per scan: no multi-scan view to link.
+        <ComplianceWatchlist items={complianceItems} hasWatchlist={false} />
       }
       serviceWatchlist={
         <ServiceWatchlist items={SAMPLE_SERVICES_RESPONSE.data} />

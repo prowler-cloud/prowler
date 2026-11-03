@@ -481,6 +481,8 @@ const SAMPLE_FINDING_FILTERS: Record<
   "filter[delta__in]": (finding) => finding.delta,
   "filter[provider_type__in]": () => "aws",
   "filter[provider_id__in]": () => SAMPLE_ACCOUNT.providerId,
+  // The date picker sends YYYY-MM-DD: every sample finding is from one scan.
+  "filter[inserted_at]": () => SAMPLE_ACCOUNT.scannedAt.slice(0, 10),
 };
 
 const MUTED_FILTER = "filter[muted]";
@@ -597,10 +599,16 @@ export const sampleFindingsQuery = (
 };
 
 /** The resource drawer's data: the resource's failed findings, no API calls. */
-export const sampleResourceDrawerData = (resourceId: string) => {
+export const sampleResourceDrawerData = (resourceId: string, query = "") => {
+  const search = query.trim().toLowerCase();
   const findings = SAMPLE_FINDINGS.filter(
     (finding) =>
-      finding.resource.id === resourceId && finding.status === "FAIL",
+      finding.resource.id === resourceId &&
+      finding.status === "FAIL" &&
+      (!search ||
+        `${finding.check.checkId} ${finding.check.title}`
+          .toLowerCase()
+          .includes(search)),
   );
   return {
     findings: findings.map(findingItem),

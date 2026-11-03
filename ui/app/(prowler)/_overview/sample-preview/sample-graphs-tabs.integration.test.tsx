@@ -28,7 +28,15 @@ it("lets users explore sample categories without opening live findings", async (
   const screen = await render(<SampleGraphsTabs />);
   const category = SAMPLE_RADAR_DATA[0];
 
-  await screen.getByRole("tab", { name: "Risk Radar" }).click();
+  // A click that lands before the tabs hydrate is lost: retry until selected.
+  const radarTab = screen.getByRole("tab", { name: "Risk Radar" });
+  await expect
+    .poll(async () => {
+      await radarTab.click();
+      return radarTab.element().getAttribute("aria-selected");
+    })
+    .toBe("true");
+  await expect.element(screen.getByRole("combobox")).toBeVisible();
   await screen.getByRole("combobox").click();
   await screen
     .getByRole("option", { name: category.category, exact: true })

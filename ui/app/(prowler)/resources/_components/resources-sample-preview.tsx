@@ -7,6 +7,7 @@ import { SAMPLE_PREVIEW_PAGE } from "@/lib/sample-preview/sample-preview-events"
 import type { SamplePreviewActive } from "@/lib/sample-preview/sample-preview-state";
 import {
   filterSampleResources,
+  getSampleResourceRow,
   SAMPLE_RESOURCE_FILTER_OPTIONS,
 } from "@/lib/sample-preview/sample-resources";
 import type { SearchParamsProps } from "@/types";
@@ -40,6 +41,10 @@ export function ResourcesSamplePreview({
         <ResourcesTableWithSelection
           data={data}
           metadata={metadata}
+          // A copied resource link reopens its drawer, as on the real page.
+          initialResource={getSampleResourceRow(
+            searchParams.resourceId?.toString(),
+          )}
           contributeLighthouseContext={false}
         />
       </FilterTransitionWrapper>
