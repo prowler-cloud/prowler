@@ -9,7 +9,7 @@
   "Severity": "low",
   "ResourceType": "Worker",
   "ResourceGroup": "serverless",
-  "Description": "**Cloudflare Workers scripts** are assessed for **Workers Logs** (observability) by checking that observability and invocation logging are enabled so that requests, `console` output and exceptions are persisted.",
+  "Description": "**Cloudflare Workers scripts** are assessed for **Workers Logs** (observability) by checking that observability and Workers Logs are enabled, invocation logs are recorded, and the log sampling rate is above zero, so that requests, `console` output and exceptions are persisted.",
   "Risk": "Without **Workers Logs**, Worker executions leave no persistent trail.\n- **Detection**: abuse, injection attempts or data exfiltration through the Worker go unnoticed\n- **Forensics**: incident responders cannot reconstruct what the Worker processed or returned\n- **Availability**: runtime errors are harder to diagnose, prolonging outages",
   "RelatedUrl": "",
   "AdditionalURLs": [
@@ -33,5 +33,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "Scripts whose settings could not be retrieved are not reported."
+  "Notes": "Omitted settings use the API defaults: logs follow the observability setting, invocation logs default to enabled and sampling rates default to 1. Accounts whose Worker settings could not be retrieved get one MANUAL finding."
 }

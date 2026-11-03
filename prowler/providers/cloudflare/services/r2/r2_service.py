@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import ClassVar, Optional
 
 from cloudflare import NotFoundError
 from pydantic import BaseModel, Field
@@ -11,14 +11,24 @@ from prowler.providers.cloudflare.lib.service.service import CloudflareService
 R2_JURISDICTIONS = ("default", "eu", "fedramp")
 # Maximum page size accepted by the List Buckets API.
 R2_BUCKETS_PAGE_SIZE = 1000
+# Only FedRAMP accounts can list FedRAMP buckets; other accounts get 403.
+OPTIONAL_JURISDICTIONS = {"fedramp"}
 
 
 class R2(CloudflareService):
-    """Retrieve Cloudflare R2 buckets and their exposure-related configuration."""
+    """Retrieve Cloudflare R2 buckets and their exposure-related configuration.
+
+    Data that could not be retrieved is tracked per account (``*_failed_accounts``)
+    so checks can report it as MANUAL instead of silently omitting it.
+    """
 
     def __init__(self, provider):
         super().__init__(__class__.__name__, provider)
         self.buckets: list["CloudflareR2Bucket"] = []
+        self.list_failed_accounts: set[str] = set()
+        self.dev_url_failed_accounts: set[str] = set()
+        self.custom_domains_failed_accounts: set[str] = set()
+        self.cors_failed_accounts: set[str] = set()
         self._list_buckets()
         self.__threading_call__(self._get_bucket_details, self.buckets)
 
@@ -28,30 +38,40 @@ class R2(CloudflareService):
             seen: set[tuple[str, str]] = set()
             for jurisdiction in R2_JURISDICTIONS:
                 try:
-                    for bucket in self._list_jurisdiction_buckets(
-                        account_id, jurisdiction
-                    ):
-                        name = getattr(bucket, "name", None)
-                        bucket_jurisdiction = (
-                            getattr(bucket, "jurisdiction", None) or jurisdiction
-                        )
-                        if not name or (bucket_jurisdiction, name) in seen:
-                            continue
-                        seen.add((bucket_jurisdiction, name))
-                        self.buckets.append(
-                            CloudflareR2Bucket(
-                                id=name,
-                                name=name,
-                                account_id=account_id,
-                                jurisdiction=bucket_jurisdiction,
-                                location=getattr(bucket, "location", None),
-                                creation_date=getattr(bucket, "creation_date", None),
-                            )
-                        )
+                    # Read the whole jurisdiction first so a failure on a later
+                    # page does not leave a partial bucket list behind.
+                    jurisdiction_buckets = list(
+                        self._list_jurisdiction_buckets(account_id, jurisdiction)
+                    )
                 except Exception as error:
-                    log = logger.error if jurisdiction == "default" else logger.debug
-                    log(
+                    if jurisdiction in OPTIONAL_JURISDICTIONS:
+                        logger.debug(
+                            f"{account_id} R2 ({jurisdiction}) -- {error.__class__.__name__}: {error}"
+                        )
+                        continue
+                    self.list_failed_accounts.add(account_id)
+                    logger.error(
                         f"{account_id} R2 ({jurisdiction}) -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
+                    continue
+                for bucket in jurisdiction_buckets:
+                    name = getattr(bucket, "name", None)
+                    bucket_jurisdiction = (
+                        getattr(bucket, "jurisdiction", None) or jurisdiction
+                    )
+                    if not name or (bucket_jurisdiction, name) in seen:
+                        continue
+                    seen.add((bucket_jurisdiction, name))
+                    self.buckets.append(
+                        CloudflareR2Bucket(
+                            # Names are only unique per account and jurisdiction.
+                            id=f"{account_id}/{bucket_jurisdiction}/{name}",
+                            name=name,
+                            account_id=account_id,
+                            jurisdiction=bucket_jurisdiction,
+                            location=getattr(bucket, "location", None),
+                            creation_date=getattr(bucket, "creation_date", None),
+                        )
                     )
 
     def _list_jurisdiction_buckets(self, account_id: str, jurisdiction: str):
@@ -93,6 +113,7 @@ class R2(CloudflareService):
             bucket.public_dev_url_enabled = bool(getattr(managed, "enabled", False))
             bucket.public_dev_url = getattr(managed, "domain", None)
         except Exception as error:
+            self.dev_url_failed_accounts.add(bucket.account_id)
             logger.error(
                 f"{bucket.account_id}/{bucket.name} r2.dev -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
@@ -110,6 +131,7 @@ class R2(CloudflareService):
         except NotFoundError:
             bucket.custom_domains = []
         except Exception as error:
+            self.custom_domains_failed_accounts.add(bucket.account_id)
             logger.error(
                 f"{bucket.account_id}/{bucket.name} custom domains -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
@@ -127,6 +149,7 @@ class R2(CloudflareService):
             # No CORS policy configured on the bucket
             bucket.cors_rules = []
         except Exception as error:
+            self.cors_failed_accounts.add(bucket.account_id)
             logger.error(
                 f"{bucket.account_id}/{bucket.name} CORS -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
@@ -157,6 +180,7 @@ class CloudflareR2Bucket(BaseModel):
     # None means the configuration could not be retrieved
     custom_domains: Optional[list[CloudflareR2CustomDomain]] = None
     cors_rules: Optional[list[CloudflareR2CorsRule]] = None
+    is_global_resource: ClassVar[bool] = True
 
     @property
     def unique_name(self) -> str:

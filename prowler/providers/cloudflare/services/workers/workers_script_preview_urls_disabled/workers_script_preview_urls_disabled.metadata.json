@@ -20,7 +20,7 @@
       "CLI": "",
       "NativeIaC": "",
       "Other": "1. Log in to the Cloudflare dashboard and select your account\n2. Go to Workers & Pages and select the Worker\n3. Open Settings > Domains & Routes\n4. Disable Preview URLs\n5. Alternatively, set `preview_urls = false` in the Wrangler configuration and redeploy",
-      "Terraform": "```hcl\nresource \"cloudflare_workers_script_subdomain\" \"example\" {\n  account_id       = \"<ACCOUNT_ID>\"\n  script_name      = \"example-worker\"\n  enabled          = false\n  previews_enabled = false # Critical: stops publishing every version publicly\n}\n```"
+      "Terraform": "```hcl\nresource \"cloudflare_workers_script_subdomain\" \"example\" {\n  account_id       = \"<ACCOUNT_ID>\"\n  script_name      = \"example-worker\"\n  enabled          = true  # keep the Worker's current workers.dev setting\n  previews_enabled = false # Critical: stops publishing every version publicly\n}\n```"
     },
     "Recommendation": {
       "Text": "Disable **Preview URLs** on production Workers.\n- Use dedicated staging Workers protected by **Cloudflare Access** for testing\n- If previews are required, restrict them with Access policies\n- Periodically review Worker versions and remove unused ones",

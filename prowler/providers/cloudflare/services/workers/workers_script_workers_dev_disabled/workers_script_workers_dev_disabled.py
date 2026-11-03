@@ -2,6 +2,9 @@ from prowler.lib.check.models import Check, CheckReportCloudflare
 from prowler.providers.cloudflare.services.workers.workers_client import (
     workers_client,
 )
+from prowler.providers.cloudflare.services.workers.workers_manual import (
+    workers_manual_reports,
+)
 
 
 class workers_script_workers_dev_disabled(Check):
@@ -14,16 +17,20 @@ class workers_script_workers_dev_disabled(Check):
     """
 
     def execute(self) -> list[CheckReportCloudflare]:
-        """Execute the workers.dev exposure check.
+        """Evaluate whether every Worker is reachable on its workers.dev subdomain.
 
         Returns:
-            A list of CheckReportCloudflare objects with PASS status if the
-            workers.dev route is disabled for the script, or FAIL status if it
-            is enabled.
+            PASS when the workers.dev route is disabled, FAIL when it is enabled,
+            and MANUAL per account whose Workers data could not be retrieved.
         """
-        findings = []
+        findings = workers_manual_reports(
+            self,
+            workers_client,
+            workers_client.subdomain_failed_accounts,
+            "workers.dev exposure",
+        )
         for script in workers_client.scripts:
-            # Subdomain status unknown (e.g. no workers.dev subdomain registered).
+            # Lookup failed: covered by the account-level MANUAL finding.
             if script.workers_dev_enabled is None:
                 continue
 

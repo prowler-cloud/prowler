@@ -1,5 +1,8 @@
 import json
 from types import SimpleNamespace
+
+import httpx
+from cloudflare import NotFoundError
 from unittest import mock
 
 from prowler.lib.check.models import CheckReportCloudflare
@@ -14,6 +17,13 @@ from tests.providers.cloudflare.cloudflare_fixtures import (
 )
 
 SCRIPT_NAME = "my-worker"
+
+
+def _not_found():
+    request = httpx.Request("GET", "https://api.cloudflare.com")
+    return NotFoundError(
+        "not found", response=httpx.Response(404, request=request), body=None
+    )
 
 
 def _build_provider(settings=None, subdomain=None, settings_error=None):
@@ -70,7 +80,8 @@ class TestWorkersService:
         assert workers.service == "workers"
         assert len(workers.scripts) == 1
         script = workers.scripts[0]
-        assert script.id == SCRIPT_NAME
+        # IDs are qualified with the account: script names are per account
+        assert script.id == f"{ACCOUNT_ID}/{SCRIPT_NAME}"
         assert script.name == SCRIPT_NAME
         assert script.account_id == ACCOUNT_ID
         assert script.placement_mode == "smart"
@@ -101,7 +112,42 @@ class TestWorkersService:
         script = workers.scripts[0]
         assert script.observability_enabled is True
         assert script.observability_logs_enabled is True
+        # API defaults: invocation logs on, sampling rate 1
+        assert script.invocation_logs_enabled is True
+        assert script.log_sampling_rate == 1.0
         assert script.plain_text_bindings == {}
+
+    def test_observability_sampling_and_invocation_logs(self):
+        settings = SimpleNamespace(
+            observability=SimpleNamespace(
+                enabled=True,
+                head_sampling_rate=0.25,
+                logs=SimpleNamespace(
+                    enabled=None, invocation_logs=False, head_sampling_rate=None
+                ),
+            ),
+            bindings=None,
+        )
+        provider = _build_provider(
+            settings=settings,
+            subdomain=SimpleNamespace(enabled=False, previews_enabled=False),
+        )
+        script = Workers(provider).scripts[0]
+        assert script.observability_logs_enabled is True
+        assert script.invocation_logs_enabled is False
+        # logs inherit the top-level sampling rate when not set
+        assert script.log_sampling_rate == 0.25
+
+    def test_missing_workers_dev_subdomain_means_not_exposed(self):
+        provider = _build_provider(
+            settings=SimpleNamespace(observability=None, bindings=None),
+            subdomain=_not_found(),
+        )
+        workers = Workers(provider)
+        script = workers.scripts[0]
+        assert script.workers_dev_enabled is False
+        assert script.previews_enabled is False
+        assert workers.subdomain_failed_accounts == set()
 
     def test_errors_leave_details_unknown(self):
         provider = _build_provider(
@@ -116,6 +162,8 @@ class TestWorkersService:
         assert script.plain_text_bindings is None
         assert script.workers_dev_enabled is None
         assert script.previews_enabled is None
+        assert workers.settings_failed_accounts == {ACCOUNT_ID}
+        assert workers.subdomain_failed_accounts == {ACCOUNT_ID}
 
     def test_list_error_returns_no_scripts(self):
         provider = set_mocked_cloudflare_provider()

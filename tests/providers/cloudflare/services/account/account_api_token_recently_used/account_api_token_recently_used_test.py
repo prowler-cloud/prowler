@@ -67,7 +67,20 @@ class Test_account_api_token_recently_used:
             == f"{LABEL} has never been used and was issued more than 90 days ago."
         )
 
-    def test_never_used_unknown_issue_date_fail(self):
+    def test_never_used_unknown_issue_date_manual(self):
         result = run_account_check(CHECK, tokens=[make_token()])
-        assert result[0].status == "FAIL"
-        assert result[0].status_extended == f"{LABEL} has never been used."
+        assert result[0].status == "MANUAL"
+        assert (
+            result[0].status_extended
+            == f"{LABEL} has no recorded use or issue date; review whether it is still needed."
+        )
+
+    def test_null_threshold_uses_default(self):
+        used = NOW - timedelta(days=60)
+        result = run_account_check(
+            CHECK,
+            tokens=[make_token(last_used_on=used)],
+            audit_config={"max_unused_api_token_days": None},
+        )
+        assert result[0].status == "PASS"
+        assert "within the last 90 days" in result[0].status_extended

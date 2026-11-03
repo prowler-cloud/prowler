@@ -1,5 +1,6 @@
 from prowler.lib.check.models import Check, CheckReportCloudflare
 from prowler.providers.cloudflare.services.r2.r2_client import r2_client
+from prowler.providers.cloudflare.services.r2.r2_manual import r2_manual_reports
 
 
 class r2_bucket_public_dev_url_disabled(Check):
@@ -11,7 +12,15 @@ class r2_bucket_public_dev_url_disabled(Check):
     """
 
     def execute(self) -> list[CheckReportCloudflare]:
-        findings = []
+        """Evaluate whether every R2 bucket is publicly readable through r2.dev.
+
+        Returns:
+            PASS when r2.dev access is disabled, FAIL when it is enabled, and
+            MANUAL per account whose R2 data could not be retrieved.
+        """
+        findings = r2_manual_reports(
+            self, r2_client, r2_client.dev_url_failed_accounts, "public r2.dev access"
+        )
         for bucket in r2_client.buckets:
             if bucket.public_dev_url_enabled is None:
                 continue

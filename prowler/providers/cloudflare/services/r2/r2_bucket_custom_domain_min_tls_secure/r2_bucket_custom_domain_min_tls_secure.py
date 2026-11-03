@@ -1,5 +1,6 @@
 from prowler.lib.check.models import Check, CheckReportCloudflare
 from prowler.providers.cloudflare.services.r2.r2_client import r2_client
+from prowler.providers.cloudflare.services.r2.r2_manual import r2_manual_reports
 
 INSECURE_TLS_VERSIONS = {"1.0", "1.1"}
 # Cloudflare applies TLS 1.0 as the minimum when minTLS is not set on a custom domain.
@@ -10,7 +11,19 @@ class r2_bucket_custom_domain_min_tls_secure(Check):
     """Ensure that custom domains serving R2 buckets require TLS 1.2 or higher."""
 
     def execute(self) -> list[CheckReportCloudflare]:
-        findings = []
+        """Evaluate the minimum TLS version of every enabled R2 custom domain.
+
+        Returns:
+            PASS when all enabled custom domains of a bucket require TLS 1.2 or
+            higher, FAIL otherwise, and MANUAL per account whose R2 data could
+            not be retrieved. Buckets without enabled custom domains are skipped.
+        """
+        findings = r2_manual_reports(
+            self,
+            r2_client,
+            r2_client.custom_domains_failed_accounts,
+            "custom domain TLS",
+        )
         for bucket in r2_client.buckets:
             domains = [d for d in bucket.custom_domains or [] if d.enabled]
             if not domains:

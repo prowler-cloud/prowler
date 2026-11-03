@@ -89,7 +89,8 @@ class TestR2Service:
         assert set(buckets) == {"public-bucket", "eu-bucket"}
 
         public = buckets["public-bucket"]
-        assert public.id == "public-bucket"
+        # IDs are qualified: names are only unique per account and jurisdiction
+        assert public.id == f"{ACCOUNT_ID}/default/public-bucket"
         assert public.account_id == ACCOUNT_ID
         assert public.jurisdiction == "default"
         assert public.location == "weur"
@@ -101,10 +102,14 @@ class TestR2Service:
         assert public.cors_rules[0].methods == ["GET", "PUT"]
 
         eu = buckets["eu-bucket"]
+        assert eu.id == f"{ACCOUNT_ID}/eu/eu-bucket"
         assert eu.jurisdiction == "eu"
         assert eu.public_dev_url_enabled is False
-        # error retrieving custom domains -> unknown
+        # error retrieving custom domains -> unknown, tracked for MANUAL
         assert eu.custom_domains is None
+        assert service.custom_domains_failed_accounts == {ACCOUNT_ID}
+        # fedramp is optional: its 403 is not a listing failure
+        assert service.list_failed_accounts == set()
         # 404 on CORS -> no policy
         assert eu.cors_rules == []
 
@@ -156,6 +161,17 @@ class TestR2Service:
         buckets = {b.name: b for b in R2(provider).buckets}
         assert buckets["public-bucket"].unique_name == "public-bucket"
         assert buckets["eu-bucket"].unique_name == "eu/eu-bucket"
+
+    def test_eu_listing_failure_is_reported(self):
+        provider = set_mocked_cloudflare_provider()
+
+        def list_buckets(account_id, jurisdiction, **kwargs):
+            if jurisdiction == "eu":
+                raise Exception("eu boom")
+            return SimpleNamespace(buckets=[])
+
+        provider.session.client.r2.buckets.list.side_effect = list_buckets
+        assert R2(provider).list_failed_accounts == {ACCOUNT_ID}
 
     def test_list_error(self):
         provider = set_mocked_cloudflare_provider()

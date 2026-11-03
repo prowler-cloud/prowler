@@ -49,7 +49,33 @@ def _members(super_admins, others=1, pending_super_admins=0):
 
 class Test_account_super_admins_limited:
     def test_no_members_listed_skipped(self):
-        assert run_account_check(CHECK, accounts=[ACCOUNT]) == []
+        assert run_account_check(CHECK, accounts=[ACCOUNT], members_listed=[]) == []
+
+    def test_successful_empty_member_list_counts_zero(self):
+        result = run_account_check(
+            CHECK, accounts=[ACCOUNT], members_listed=[ACCOUNT_ID]
+        )
+        assert len(result) == 1
+        assert result[0].status == "PASS"
+        assert "has 0 Super Administrator(s)" in result[0].status_extended
+
+    def test_members_listing_failed_manual(self):
+        result = run_account_check(
+            CHECK, accounts=[ACCOUNT], members_failed=[ACCOUNT_ID]
+        )
+        assert len(result) == 1
+        assert result[0].status == "MANUAL"
+        assert "could not be listed" in result[0].status_extended
+
+    def test_null_threshold_uses_default(self):
+        result = run_account_check(
+            CHECK,
+            accounts=[ACCOUNT],
+            members=_members(3),
+            audit_config={"max_super_admins": None},
+        )
+        assert result[0].status == "PASS"
+        assert "within the limit of 3" in result[0].status_extended
 
     def test_pass_default_limit(self):
         result = run_account_check(

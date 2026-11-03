@@ -1,12 +1,21 @@
 from prowler.lib.check.models import Check, CheckReportCloudflare
 from prowler.providers.cloudflare.services.r2.r2_client import r2_client
+from prowler.providers.cloudflare.services.r2.r2_manual import r2_manual_reports
 
 
 class r2_bucket_cors_no_wildcard_origin(Check):
     """Ensure that R2 bucket CORS policies do not allow any origin."""
 
     def execute(self) -> list[CheckReportCloudflare]:
-        findings = []
+        """Evaluate the CORS policy of every R2 bucket.
+
+        Returns:
+            PASS when no rule allows any origin, FAIL when one does, and MANUAL
+            per account whose R2 data could not be retrieved.
+        """
+        findings = r2_manual_reports(
+            self, r2_client, r2_client.cors_failed_accounts, "CORS policies"
+        )
         for bucket in r2_client.buckets:
             if bucket.cors_rules is None:
                 continue

@@ -2,6 +2,9 @@ from prowler.lib.check.models import Check, CheckReportCloudflare
 from prowler.providers.cloudflare.services.workers.workers_client import (
     workers_client,
 )
+from prowler.providers.cloudflare.services.workers.workers_manual import (
+    workers_manual_reports,
+)
 
 
 class workers_script_preview_urls_disabled(Check):
@@ -13,14 +16,20 @@ class workers_script_preview_urls_disabled(Check):
     """
 
     def execute(self) -> list[CheckReportCloudflare]:
-        """Execute the Preview URLs check.
+        """Evaluate whether Preview URLs are enabled for every Worker.
 
         Returns:
-            A list of CheckReportCloudflare objects with PASS status if Preview
-            URLs are disabled for the script, or FAIL status if they are enabled.
+            PASS when Preview URLs are disabled, FAIL when they are enabled, and
+            MANUAL per account whose Workers data could not be retrieved.
         """
-        findings = []
+        findings = workers_manual_reports(
+            self,
+            workers_client,
+            workers_client.subdomain_failed_accounts,
+            "Preview URLs",
+        )
         for script in workers_client.scripts:
+            # Lookup failed: covered by the account-level MANUAL finding.
             if script.previews_enabled is None:
                 continue
 

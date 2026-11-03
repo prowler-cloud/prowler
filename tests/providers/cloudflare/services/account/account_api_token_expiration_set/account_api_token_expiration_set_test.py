@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from tests.providers.cloudflare.cloudflare_fixtures import ACCOUNT_ID
+from tests.providers.cloudflare.cloudflare_fixtures import ACCOUNT_ID, ACCOUNT_NAME
 from tests.providers.cloudflare.services.account.cloudflare_account_check_helpers import (
     run_account_check,
 )
@@ -16,6 +16,16 @@ CHECK = "account_api_token_expiration_set"
 class Test_account_api_token_expiration_set:
     def test_no_tokens(self):
         assert run_account_check(CHECK) == []
+
+    def test_account_tokens_listing_failed_manual(self):
+        result = run_account_check(CHECK, tokens_failed=[ACCOUNT_ID])
+        assert len(result) == 1
+        assert result[0].status == "MANUAL"
+        assert result[0].resource_id == ACCOUNT_ID
+        assert (
+            result[0].status_extended
+            == f"Cannot evaluate expiration dates for account-owned API tokens of account {ACCOUNT_NAME}: the tokens could not be listed. Account-owned tokens are only visible to tokens created by a Super Administrator with the Account API Tokens Read permission."
+        )
 
     def test_inactive_tokens_skipped(self):
         tokens = [make_token(status="disabled"), make_token(status="expired")]

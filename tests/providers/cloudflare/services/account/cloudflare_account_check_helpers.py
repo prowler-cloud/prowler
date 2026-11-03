@@ -1,18 +1,47 @@
+from types import SimpleNamespace
 from unittest import mock
 
 from tests.providers.cloudflare.cloudflare_fixtures import (
+    ACCOUNT_ID,
+    ACCOUNT_NAME,
     set_mocked_cloudflare_provider,
 )
 
 
-def run_account_check(
-    check_name, accounts=None, members=None, tokens=None, audit_config=None
+def make_account_client(
+    accounts=None,
+    members=None,
+    tokens=None,
+    audit_config=None,
+    settings_failed=(),
+    members_failed=(),
+    members_listed=None,
+    tokens_failed=(),
 ):
-    account_client = mock.MagicMock()
-    account_client.accounts = accounts or []
-    account_client.members = members or []
-    account_client.tokens = tokens or []
-    account_client.audit_config = audit_config or {}
+    client = mock.MagicMock()
+    client.accounts = accounts or []
+    client.members = members or []
+    client.tokens = tokens or []
+    client.audit_config = audit_config or {}
+    client.audited_accounts = [ACCOUNT_ID]
+    client.settings_failed_accounts = set(settings_failed)
+    client.members_failed_accounts = set(members_failed)
+    client.members_listed_accounts = (
+        set(members_listed)
+        if members_listed is not None
+        else {m.account_id for m in client.members}
+    )
+    client.tokens_failed_accounts = set(tokens_failed)
+    client.provider = SimpleNamespace(
+        identity=SimpleNamespace(
+            accounts=[SimpleNamespace(id=ACCOUNT_ID, name=ACCOUNT_NAME)]
+        )
+    )
+    return client
+
+
+def run_account_check(check_name, **kwargs):
+    account_client = make_account_client(**kwargs)
     module = f"prowler.providers.cloudflare.services.account.{check_name}.{check_name}"
     with (
         mock.patch(

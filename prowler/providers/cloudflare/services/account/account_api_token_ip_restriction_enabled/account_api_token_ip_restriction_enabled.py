@@ -2,6 +2,9 @@ from prowler.lib.check.models import Check, CheckReportCloudflare
 from prowler.providers.cloudflare.services.account.account_client import (
     account_client,
 )
+from prowler.providers.cloudflare.services.account.token_manual import (
+    token_listing_manual_reports,
+)
 
 # Allow-list entries that permit every source address.
 ANY_ADDRESS_CIDRS = {"0.0.0.0/0", "::/0"}
@@ -16,7 +19,16 @@ class account_api_token_ip_restriction_enabled(Check):
     """
 
     def execute(self) -> list[CheckReportCloudflare]:
-        findings = []
+        """Evaluate the client IP filtering of every active API token.
+
+        Returns:
+            PASS for tokens restricted to an allow-list without 0.0.0.0/0 or ::/0,
+            FAIL otherwise, and MANUAL per account whose account-owned tokens
+            could not be listed.
+        """
+        findings = token_listing_manual_reports(
+            self, account_client, "client IP address filtering"
+        )
         for token in account_client.tokens:
             if token.status != "active":
                 continue

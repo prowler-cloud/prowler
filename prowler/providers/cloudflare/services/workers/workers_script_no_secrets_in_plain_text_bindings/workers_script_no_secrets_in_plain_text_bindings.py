@@ -9,6 +9,9 @@ from prowler.lib.utils.utils import (
 from prowler.providers.cloudflare.services.workers.workers_client import (
     workers_client,
 )
+from prowler.providers.cloudflare.services.workers.workers_manual import (
+    workers_manual_reports,
+)
 
 
 class workers_script_no_secrets_in_plain_text_bindings(Check):
@@ -20,20 +23,25 @@ class workers_script_no_secrets_in_plain_text_bindings(Check):
     """
 
     def execute(self) -> list[CheckReportCloudflare]:
-        """Execute the plain text bindings secrets check.
+        """Scan the plain text and JSON bindings of every Worker for secrets.
 
         Returns:
-            A list of CheckReportCloudflare objects with FAIL status if a
-            potential secret is found in a plain text binding, PASS status if
-            none is found, or MANUAL status if the secrets scanner failed.
+            FAIL when a potential secret is found, PASS when none is found,
+            MANUAL when the secrets scanner failed, and MANUAL per account whose
+            Workers settings could not be retrieved.
         """
-        findings = []
+        findings = workers_manual_reports(
+            self,
+            workers_client,
+            workers_client.settings_failed_accounts,
+            "secrets in plain text and JSON bindings",
+        )
         secrets_ignore_patterns = workers_client.audit_config.get(
             "secrets_ignore_patterns", []
         )
         validate = workers_client.audit_config.get("secrets_validate", False)
-        # Scripts whose bindings could not be retrieved are not reported, so a
-        # failed API call is never turned into a "no secrets found" PASS.
+        # Scripts whose bindings could not be retrieved are covered by the
+        # account-level MANUAL finding, never by a "no secrets found" PASS.
         scripts = [
             script
             for script in workers_client.scripts
