@@ -35,10 +35,10 @@ def _denies_insecure_transport_for_everyone(statement: dict, bucket_arn: str) ->
     """Whether a bucket policy statement denies s3:PutObject over HTTP to every requester.
 
     The statement must be a Deny that applies to all principals and does not skip any
-    object in the bucket with NotResource, its Action must cover s3:PutObject under IAM wildcard
-    matching, and its only condition must be aws:SecureTransport being false.
-    NotResource names the resources the deny skips, so HTTP stays allowed for any
-    object it can match. Conditions are ANDed, so any other condition key narrows the
+    object in the bucket with NotResource, its Action must cover s3:PutObject (or its
+    NotAction must not) under IAM wildcard matching, and its only condition must be
+    aws:SecureTransport being false. NotResource names the resources the deny skips,
+    so HTTP stays allowed for any object it can match. Conditions are ANDed, so any other condition key narrows the
     deny and leaves HTTP allowed for requests outside it.
 
     Args:
@@ -61,14 +61,26 @@ def _denies_insecure_transport_for_everyone(statement: dict, bucket_arn: str) ->
     ):
         return False
 
-    actions = statement.get("Action", [])
-    if isinstance(actions, str):
-        actions = [actions]
-    if not any(
-        isinstance(action, str) and iam_pattern_matches(action, "s3:PutObject")
-        for action in actions
-    ):
-        return False
+    if "NotAction" in statement:
+        # NotAction denies every action except the ones it names
+        not_actions = statement["NotAction"]
+        if isinstance(not_actions, str):
+            not_actions = [not_actions]
+        if any(
+            not isinstance(not_action, str)
+            or iam_pattern_matches(not_action, "s3:PutObject")
+            for not_action in not_actions
+        ):
+            return False
+    else:
+        actions = statement.get("Action", [])
+        if isinstance(actions, str):
+            actions = [actions]
+        if not any(
+            isinstance(action, str) and iam_pattern_matches(action, "s3:PutObject")
+            for action in actions
+        ):
+            return False
 
     condition = statement.get("Condition", {})
     if not isinstance(condition, dict) or list(condition) != ["Bool"]:

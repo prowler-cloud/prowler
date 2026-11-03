@@ -1,1 +1,1 @@
-`s3_bucket_secure_transport_policy` passing buckets whose deny over insecure transport applies only to some principals, actions or requests, or skips objects with `NotResource`, and failing buckets that write the `aws:SecureTransport` value as a list or a boolean
+`s3_bucket_secure_transport_policy` passing buckets whose deny over insecure transport applies only to some principals, actions or requests, or skips objects with `NotResource`, and failing buckets that write the `aws:SecureTransport` value as a list or a boolean, or that deny with `NotAction`
