@@ -13,7 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/shadcn/table/table";
-import { isSampleId } from "@/lib/sample-preview/sample-records";
+import { isSampleId } from "@/lib/sample-preview/sample-guards";
 
 const RESOURCE_PAGE_SIZE = 12;
 

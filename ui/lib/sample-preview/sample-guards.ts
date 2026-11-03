@@ -1,3 +1,4 @@
+// Client code imports guards from here: sample-records pulls in the whole dataset.
 // Sample records have a reserved prefix; real API record IDs are UUIDs.
 export const SAMPLE_ID_PREFIX = "sample-";
 
