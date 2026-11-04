@@ -161,6 +161,7 @@ from api.v1.serializers import (
     AttackPathsQuerySerializer,
     AttackPathsScanSerializer,
     AttackSurfaceOverviewSerializer,
+    AuthorizationCodeSocialLoginSerializer,
     CategoryOverviewSerializer,
     ComplianceOverviewAttributesSerializer,
     ComplianceOverviewDetailSerializer,
@@ -609,6 +610,7 @@ class GoogleSocialLoginView(SocialLoginView):
     adapter_class = GoogleOAuth2Adapter
     client_class = CustomOAuth2Client
     callback_url = GOOGLE_OAUTH_CALLBACK_URL
+    serializer_class = AuthorizationCodeSocialLoginSerializer
 
     def get_response(self):
         original_response = super().get_response()
@@ -638,6 +640,7 @@ class GithubSocialLoginView(SocialLoginView):
     adapter_class = GitHubOAuth2Adapter
     client_class = CustomOAuth2Client
     callback_url = GITHUB_OAUTH_CALLBACK_URL
+    serializer_class = AuthorizationCodeSocialLoginSerializer
 
     def get_response(self):
         original_response = super().get_response()

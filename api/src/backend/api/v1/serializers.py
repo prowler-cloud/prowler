@@ -62,6 +62,7 @@ from api.v1.serializer_utils.processors import ProcessorConfigField
 from api.v1.serializer_utils.providers import ProviderSecretField
 from api.validators import validate_lighthouse_openai_compatible_base_url
 from config.custom_logging import BackendLogger
+from dj_rest_auth.registration.serializers import SocialLoginSerializer
 from django.conf import settings
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import update_last_login
@@ -254,6 +255,29 @@ class TokenSocialLoginSerializer(BaseTokenSerializer):
 
     def validate(self, attrs):
         return super().custom_validate(attrs, social=True)
+
+
+class AuthorizationCodeSocialLoginSerializer(SocialLoginSerializer):
+    """Social login that only accepts an OAuth authorization code.
+
+    A caller-supplied access_token or id_token may have been issued to any
+    OAuth client, so trusting it lets anyone holding such a token for a victim
+    sign in as them. Exchanging the code with Prowler's own client secret
+    guarantees the token was issued to Prowler.
+    """
+
+    def validate(self, attrs):
+        if attrs.get("access_token") or attrs.get("id_token"):
+            raise serializers.ValidationError(
+                "Only the OAuth authorization code flow is supported.",
+                code="social-login-token-not-allowed",
+            )
+        if not attrs.get("code"):
+            raise serializers.ValidationError(
+                "An OAuth authorization code is required.",
+                code="social-login-code-required",
+            )
+        return super().validate(attrs)
 
 
 # TODO: Check if we can change the parent class to TokenRefreshSerializer from rest_framework_simplejwt.serializers
@@ -1920,6 +1944,19 @@ class GCPProviderSecret(serializers.Serializer):
 
 class GCPServiceAccountProviderSecret(serializers.Serializer):
     service_account_key = serializers.JSONField()
+
+    def validate_service_account_key(self, service_account_key):
+        # Other google-auth credential types (e.g. external_account) make the
+        # worker read local files or fetch arbitrary URLs during token refresh.
+        if (
+            not isinstance(service_account_key, dict)
+            or service_account_key.get("type") != "service_account"
+        ):
+            raise serializers.ValidationError(
+                'The service account key must be a JSON object with "type": "service_account".',
+                code="gcp-invalid-service-account-key",
+            )
+        return service_account_key
 
     class Meta:
         resource_name = "provider-secrets"

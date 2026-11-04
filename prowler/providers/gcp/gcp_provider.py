@@ -6,6 +6,7 @@ import sys
 from colorama import Fore, Style
 from google.auth import default, impersonated_credentials, load_credentials_from_dict
 from google.auth.transport.requests import Request
+from google.oauth2 import service_account as google_service_account
 from google.oauth2.credentials import Credentials
 from googleapiclient import discovery
 from googleapiclient.errors import HttpError
@@ -400,10 +401,22 @@ class GcpProvider(Provider):
                     "GCP provider: Setting credentials from service account key..."
                 )
                 try:
-                    credentials, default_project_id = load_credentials_from_dict(
-                        service_account_key, scopes=scopes
+                    # Only accept genuine service account keys. Other credential
+                    # types (e.g. external_account) make google-auth read local
+                    # files or fetch arbitrary URLs during token refresh.
+                    if (
+                        not isinstance(service_account_key, dict)
+                        or service_account_key.get("type") != "service_account"
+                    ):
+                        raise ValueError(
+                            "The provided key is not a valid service_account key."
+                        )
+                    credentials = (
+                        google_service_account.Credentials.from_service_account_info(
+                            service_account_key, scopes=scopes
+                        )
                     )
-                    return credentials, default_project_id
+                    return credentials, service_account_key.get("project_id")
                 except Exception as error:
                     logger.critical(
                         f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
