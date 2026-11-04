@@ -3,18 +3,12 @@
 // lives here, including the ones only the cloud fork reads, so the registry
 // never diverges between repos.
 export const FEATURE_FLAG = {
-  // Boolean flag gating the experimental Issues feature (contextual findings).
-  // Read by cloud only.
-  ISSUES: "issues-feature",
   // Boolean flag evaluated server-side per tenant in cloud. When on, it pins
   // the tenant to legacy billing; off or absent means the new Metronome system.
   BILLING_SYSTEM_METRONOME: "BILLING_SYSTEM_METRONOME",
   // Boolean flag evaluated server-side per tenant in cloud. When on, trial
   // tenants only preview the most critical finding groups on /findings.
   FINDINGS_TRIAL_PREVIEW: "findings-trial-preview",
-  // Boolean flag evaluated server-side per tenant in cloud. When on, tenants
-  // without a completed scan see the demo account's data on their pages.
-  SAMPLE_DATA_PREVIEW: "sample-data-preview",
 } as const;
 
 export type FeatureFlag = (typeof FEATURE_FLAG)[keyof typeof FEATURE_FLAG];
