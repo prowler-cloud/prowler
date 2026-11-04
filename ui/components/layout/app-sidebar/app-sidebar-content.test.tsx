@@ -154,10 +154,7 @@ describe("AppSidebarContent", () => {
       screen
         .getAllByRole("link", { name: /Realtime/ })
         .map((link) => link.getAttribute("href")),
-    ).toEqual(["/realtime", "/realtime/settings"]);
-    expect(
-      screen.getByRole("link", { name: "Cost anomalies" }),
-    ).toHaveAttribute("href", "/realtime/settings/cost-anomalies");
+    ).toEqual(["/realtime"]);
   });
 
   it("hides Realtime navigation while its feature flag is off", () => {

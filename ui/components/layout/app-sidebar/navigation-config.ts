@@ -186,10 +186,7 @@ export function getNavigationConfig({
                 href: "/realtime",
                 label: "Realtime",
                 icon: Radar,
-                // Its settings pages live under Configuration.
-                active:
-                  isRouteActive(pathname, "/realtime") &&
-                  !isRouteActive(pathname, "/realtime/settings"),
+                active: isRouteActive(pathname, "/realtime"),
                 highlight: true,
               } as const,
             ]
@@ -288,30 +285,6 @@ export function getNavigationConfig({
               label: "Lighthouse AI",
               active: isRouteActive(pathname, "/lighthouse/settings"),
             },
-            ...(isCloudEnvironment && realtimeEnabled
-              ? [
-                  {
-                    kind: NAVIGATION_ITEM_KIND.LINK,
-                    href: "/realtime/settings",
-                    label: "Realtime",
-                    active:
-                      isRouteActive(pathname, "/realtime/settings") &&
-                      !isRouteActive(
-                        pathname,
-                        "/realtime/settings/cost-anomalies",
-                      ),
-                  } as const,
-                  {
-                    kind: NAVIGATION_ITEM_KIND.LINK,
-                    href: "/realtime/settings/cost-anomalies",
-                    label: "Cost anomalies",
-                    active: isRouteActive(
-                      pathname,
-                      "/realtime/settings/cost-anomalies",
-                    ),
-                  } as const,
-                ]
-              : []),
           ],
         },
         {
