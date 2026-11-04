@@ -245,6 +245,9 @@ class Test_Vercel_Schema:
         }
         assert _validate("vercel", raw) == raw
 
+    def test_empty_public_env_prefix_dropped(self):
+        assert _validate("vercel", {"public_env_prefixes": ["NEXT_PUBLIC_", ""]}) == {}
+
 
 class Test_AlibabaCloud_Schema:
     def test_valid_values_round_trip(self):
