@@ -26,7 +26,7 @@ There are two ways to connect. Both end with the same MCP Server connection, the
 | | 🔌 **Prowler Plugin** | ⚙️ **MCP Connection Only** |
 |---|---|---|
 | **What you get** | The MCP connection **plus** the official Prowler skills for cloud security tasks | The MCP connection |
-| **Setup** | Two slash commands, prompts for the API key | One `claude mcp add` command |
+| **Setup** | Add it from the [Claude directory](https://claude.ai/directory/prowler-cloud-for-claude-code), or run two slash commands. Prompts for the API key | One `claude mcp add` command |
 | **Guided workflows** | ✅ Skills drive multi-step security work end to end | ❌ You drive the conversation |
 | **Best for** | Structured cloud security work, such as taking an account to compliance | Ad-hoc queries and your own workflows |
 | **Where to use it** | Claude Code CLI | Claude Code CLI, and the **recommended setup for the desktop app's [Code tab](#claude-code-in-the-desktop-app-code-tab)** |
@@ -64,10 +64,16 @@ End-to-end cloud security from inside Claude Code, powered by the Prowler MCP se
 More skills are on the way. Installing the plugin keeps you current — new skills arrive with plugin updates, no extra configuration required.
 </Note>
 
-## Installation (Claude Code CLI)
+## Installation
+
+Prowler Cloud is listed in the official [Claude directory](https://claude.ai/directory/prowler-cloud-for-claude-code). Installing from the directory is the preferred method.
 
 <Tabs>
-  <Tab title="From GitHub (recommended)">
+  <Tab title="From the Claude directory (recommended)">
+    1. Open the [Prowler Cloud listing](https://claude.ai/directory/prowler-cloud-for-claude-code) in the Claude directory. You can also find it in Claude under **Customize > Plugins > Discover** by searching for **Prowler Cloud**.
+    2. Select **Add**.
+  </Tab>
+  <Tab title="From GitHub">
     Inside a Claude Code session:
 
     ```text
@@ -124,6 +130,8 @@ You pick a **primary tool** (Terraform, gh / az / aws CLI, web console, or mixed
 Claude tracks progress in a markdown report under `.prowler/` at your project root — one file per framework × account. Open it any time to see exactly where the flow is. When all findings are addressed, Claude proposes a fresh Prowler scan to verify everything end-to-end.
 
 ## Uninstalling
+
+If you installed the plugin from GitHub or a local clone, run:
 
 ```text
 /plugin uninstall prowler@prowler-plugins
