@@ -1,16 +1,11 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const { authMock, isSamplePreviewEnabledMock } = vi.hoisted(() => ({
+const { authMock } = vi.hoisted(() => ({
   authMock: vi.fn(),
-  isSamplePreviewEnabledMock: vi.fn(),
 }));
 
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("@/auth.config", () => ({ auth: authMock }));
-// The seam the Prowler Cloud overlay replaces with its flag lookup.
-vi.mock("@/lib/sample-preview-access", () => ({
-  isSamplePreviewEnabled: isSamplePreviewEnabledMock,
-}));
 
 import { getSamplePreviewState } from "./get-sample-preview-state";
 import { SAMPLE_PREVIEW_STAGE } from "./sample-preview-state";
@@ -56,8 +51,25 @@ describe("getSamplePreviewState", () => {
   beforeEach(() => {
     fetchMock.mockReset();
     vi.stubGlobal("fetch", fetchMock);
-    isSamplePreviewEnabledMock.mockResolvedValue(true);
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
     authMock.mockResolvedValue(sessionWith(true));
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it("never shows the sample in Local Server, without asking the API", async () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
+    answerWith({});
+
+    // When
+    const state = await getSamplePreviewState();
+
+    // Then
+    expect(state).toEqual({ active: false });
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it("shows the real page when the scans endpoint fails with a server error", async () => {

@@ -11,10 +11,8 @@ import {
   AppSidebarModeSync,
 } from "@/components/layout/app-sidebar";
 import { ContentLayout } from "@/components/shadcn/content-layout";
-import { FeatureFlagGate } from "@/components/shared/feature-flag-gate";
 import { SamplePreviewBanner } from "@/components/shared/sample-preview/sample-preview-banner";
 import { DOCS_URLS } from "@/lib/external-urls";
-import { FEATURE_FLAG } from "@/lib/feature-flags";
 import { getSamplePreviewState } from "@/lib/sample-preview/get-sample-preview-state";
 import { getSampleComplianceTotals } from "@/lib/sample-preview/sample-compliance-requirements";
 import { SAMPLE_PREVIEW_PAGE } from "@/lib/sample-preview/sample-preview-events";
@@ -136,11 +134,9 @@ export default async function Home({
         }
         exploitability={
           isCloud() ? (
-            <FeatureFlagGate flag={FEATURE_FLAG.ISSUES}>
-              <Suspense fallback={<ExploitabilityChartSkeleton />}>
-                <ExploitabilityChartSSR searchParams={resolvedSearchParams} />
-              </Suspense>
-            </FeatureFlagGate>
+            <Suspense fallback={<ExploitabilityChartSkeleton />}>
+              <ExploitabilityChartSSR searchParams={resolvedSearchParams} />
+            </Suspense>
           ) : undefined
         }
         checkFindings={
@@ -175,11 +171,9 @@ export default async function Home({
         }
         topIssues={
           isCloud() ? (
-            <FeatureFlagGate flag={FEATURE_FLAG.ISSUES}>
-              <Suspense fallback={<TopIssuesSkeleton />}>
-                <TopIssuesSSR searchParams={resolvedSearchParams} />
-              </Suspense>
-            </FeatureFlagGate>
+            <Suspense fallback={<TopIssuesSkeleton />}>
+              <TopIssuesSSR searchParams={resolvedSearchParams} />
+            </Suspense>
           ) : undefined
         }
         severityOverTime={

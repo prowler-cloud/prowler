@@ -3,7 +3,7 @@ import { cache } from "react";
 import { getProviders } from "@/actions/providers";
 import { getScans, getScansByState } from "@/actions/scans";
 import { auth } from "@/auth.config";
-import { isSamplePreviewEnabled } from "@/lib/sample-preview-access";
+import { isCloud } from "@/lib/shared/env";
 import { SCAN_STATES } from "@/types/attack-paths";
 
 import {
@@ -40,7 +40,8 @@ const toRunningScan = (response: unknown): RunningScan | null | undefined => {
 /** Resolved once per request, so every page section shares one answer. */
 export const getSamplePreviewState = cache(
   async (): Promise<SamplePreviewState> => {
-    const enabled = await isSamplePreviewEnabled();
+    // Prowler Cloud only: self-hosted deployments never show sample data.
+    const enabled = isCloud();
     if (!enabled) return INACTIVE;
 
     const session = await auth();
