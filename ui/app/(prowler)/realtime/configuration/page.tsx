@@ -20,7 +20,6 @@ import {
   RealtimeAccountSelect,
 } from "@/app/(prowler)/realtime/_components/dashboard/realtime-account-select";
 import { RealtimeNoAccount } from "@/app/(prowler)/realtime/_components/dashboard/realtime-no-account";
-import { RealtimeGate } from "@/app/(prowler)/realtime/_components/shared/realtime-gate";
 import { RealtimePanelError } from "@/app/(prowler)/realtime/_components/shared/realtime-panel-error";
 import {
   canManageRealtime,
@@ -53,11 +52,9 @@ export default async function RealtimeConfigurationPage({
 
   return (
     <ContentLayout title="Configuration" icon={<Radar />}>
-      <RealtimeGate pending={<ConfigurationSkeleton />}>
-        <Suspense fallback={<ConfigurationSkeleton />}>
-          <ConfigurationContent searchParams={params} />
-        </Suspense>
-      </RealtimeGate>
+      <Suspense fallback={<ConfigurationSkeleton />}>
+        <ConfigurationContent searchParams={params} />
+      </Suspense>
     </ContentLayout>
   );
 }

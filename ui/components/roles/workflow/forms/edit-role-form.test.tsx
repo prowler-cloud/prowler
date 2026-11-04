@@ -87,13 +87,6 @@ vi.mock("@/lib", () => ({
   ],
 }));
 
-const featureFlagMocks = vi.hoisted(() => ({ realtime: false }));
-
-vi.mock("@/lib/feature-flags/client", async (importOriginal) => ({
-  ...(await importOriginal<Record<string, unknown>>()),
-  useFeatureFlag: () => featureFlagMocks.realtime,
-}));
-
 vi.mock("@/components/shadcn/select/enhanced-multi-select", () => ({
   EnhancedMultiSelect: () => <div data-testid="group-select" />,
 }));
@@ -161,7 +154,6 @@ describe("EditRoleForm", () => {
     routerMocks.push.mockClear();
     vi.mocked(updateRole).mockClear();
     vi.unstubAllEnvs();
-    featureFlagMocks.realtime = false;
   });
 
   it("retains manage_prowler_realtime when updating a role in Prowler Cloud", async () => {
@@ -177,10 +169,9 @@ describe("EditRoleForm", () => {
     expect(submittedFormData().get("manage_prowler_realtime")).toBe("true");
   });
 
-  it("revokes manage_prowler_realtime when unchecked with the Realtime flag on", async () => {
+  it("revokes manage_prowler_realtime when unchecked in Prowler Cloud", async () => {
     // Given
     vi.stubEnv("UI_CLOUD_ENABLED", "true");
-    featureFlagMocks.realtime = true;
     const user = userEvent.setup();
     renderEditRoleForm({ manageRealtime: true });
 

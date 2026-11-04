@@ -122,27 +122,26 @@ describe("getNavigationConfig", () => {
     expect(labels).not.toContain("Exploitability issues");
   });
 
-  it("shows Realtime only in Cloud and only once its feature flag is on", () => {
+  it("shows Realtime to every Cloud user and never in Local Server", () => {
     // Given
-    const labelsFor = (realtimeEnabled?: boolean) =>
-      getNavigationConfig({ pathname: "/realtime", realtimeEnabled })
+    const labels = () =>
+      getNavigationConfig({ pathname: "/realtime" })
         .flatMap((section) => section.items)
         .map((item) => item.label);
 
     // When / Then
     vi.stubEnv("UI_CLOUD_ENABLED", "true");
-    expect(labelsFor()).not.toContain("Realtime");
-    expect(labelsFor(true)).toContain("Realtime");
+    expect(labels()).toContain("Realtime");
 
     vi.stubEnv("UI_CLOUD_ENABLED", "false");
-    expect(labelsFor(true)).not.toContain("Realtime");
+    expect(labels()).not.toContain("Realtime");
   });
 
   it("has one Realtime entry, active on the dashboard and its configuration", () => {
     // Given
     vi.stubEnv("UI_CLOUD_ENABLED", "true");
     const realtimeItems = (pathname: string) =>
-      getNavigationConfig({ pathname, realtimeEnabled: true })
+      getNavigationConfig({ pathname })
         .flatMap((section) => section.items)
         .flatMap((item) =>
           item.kind === NAVIGATION_ITEM_KIND.COLLAPSIBLE

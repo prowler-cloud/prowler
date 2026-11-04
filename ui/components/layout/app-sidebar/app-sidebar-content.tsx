@@ -7,8 +7,6 @@ import { LighthouseV2SidebarChat } from "@/app/(prowler)/lighthouse/_components/
 import { ProwlerBrand } from "@/components/icons";
 import { useAuth } from "@/hooks";
 import { useRuntimeConfig } from "@/hooks/use-runtime-config";
-import { useFeatureFlag } from "@/lib/feature-flags/client";
-import { FEATURE_FLAG } from "@/lib/feature-flags/shared";
 import { isCloud } from "@/lib/shared/env";
 import { useUIStore } from "@/store/ui/store";
 
@@ -32,13 +30,11 @@ export function AppSidebarContent({ onSelect }: AppSidebarContentProps) {
   const { apiDocsUrl, cloudBillingEnabled } = useRuntimeConfig();
   const mode = useHydratedAppSidebarMode();
   const isCloudEnvironment = isCloud();
-  const realtimeEnabled = useFeatureFlag(FEATURE_FLAG.REALTIME);
   const sections = getNavigationConfig({
     pathname,
     apiDocsUrl,
     cloudBillingEnabled,
     registryEligible,
-    realtimeEnabled,
     permissions,
   });
   const showChat = isCloudEnvironment && mode === APP_SIDEBAR_MODE.CHAT;

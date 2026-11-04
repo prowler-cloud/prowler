@@ -36,8 +36,6 @@ interface NavigationConfigOptions {
   apiDocsUrl?: string | null;
   cloudBillingEnabled?: boolean;
   registryEligible?: boolean;
-  // PostHog FEATURE_FLAG.REALTIME, resolved by the caller; Cloud only.
-  realtimeEnabled?: boolean;
   permissions?: RolePermissionAttributes;
 }
 
@@ -114,7 +112,6 @@ export function getNavigationConfig({
   apiDocsUrl = null,
   cloudBillingEnabled = false,
   registryEligible = false,
-  realtimeEnabled = false,
   permissions,
 }: NavigationConfigOptions): NavigationSection[] {
   const isCloudEnvironment = isCloud();
@@ -163,7 +160,7 @@ export function getNavigationConfig({
               } as const,
             ]
           : []),
-        ...(isCloudEnvironment && realtimeEnabled
+        ...(isCloudEnvironment
           ? [
               {
                 kind: NAVIGATION_ITEM_KIND.LINK,

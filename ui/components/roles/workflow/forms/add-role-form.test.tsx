@@ -87,13 +87,6 @@ vi.mock("@/lib", () => ({
   ],
 }));
 
-const featureFlagMocks = vi.hoisted(() => ({ realtime: false }));
-
-vi.mock("@/lib/feature-flags/client", async (importOriginal) => ({
-  ...(await importOriginal<Record<string, unknown>>()),
-  useFeatureFlag: () => featureFlagMocks.realtime,
-}));
-
 vi.mock("@/components/shadcn/select/enhanced-multi-select", () => ({
   EnhancedMultiSelect: () => <div data-testid="group-select" />,
 }));
@@ -140,21 +133,18 @@ describe("AddRoleForm", () => {
     routerMocks.push.mockClear();
     vi.mocked(addRole).mockClear();
     vi.unstubAllEnvs();
-    featureFlagMocks.realtime = false;
   });
 
-  it("shows Manage Realtime only when the Realtime flag is on", () => {
-    // Given
-    vi.stubEnv("UI_CLOUD_ENABLED", "true");
-
-    // When
+  it("shows Manage Realtime in Prowler Cloud only", () => {
+    // Given / When
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
     const { unmount } = render(<AddRoleForm groups={[]} />);
 
     // Then
     expect(screen.queryByText("Manage Realtime")).not.toBeInTheDocument();
     unmount();
 
-    featureFlagMocks.realtime = true;
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
     render(<AddRoleForm groups={[]} />);
     expect(screen.getByText("Manage Realtime")).toBeInTheDocument();
   });
@@ -162,7 +152,6 @@ describe("AddRoleForm", () => {
   it("submits manage_prowler_realtime when granted in Prowler Cloud", async () => {
     // Given
     vi.stubEnv("UI_CLOUD_ENABLED", "true");
-    featureFlagMocks.realtime = true;
     const user = userEvent.setup();
     render(<AddRoleForm groups={[]} />);
 

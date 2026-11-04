@@ -31,8 +31,6 @@ import {
 } from "@/components/shadcn/tooltip";
 import { useFormServerErrors } from "@/hooks/use-form-server-errors";
 import { useManageProvidersUnlimitedVisibility } from "@/hooks/use-manage-providers-unlimited-visibility";
-import { useFeatureFlag } from "@/lib/feature-flags/client";
-import { FEATURE_FLAG } from "@/lib/feature-flags/shared";
 import {
   getUnlimitedVisibilityField,
   getVisiblePermissionFormFields,
@@ -78,11 +76,8 @@ export const RoleForm = ({
   });
 
   const isCloudEnvironment = isCloud();
-  const isRealtimeEnabled = useFeatureFlag(FEATURE_FLAG.REALTIME);
-  const visiblePermissionFormFields = getVisiblePermissionFormFields(
-    isCloudEnvironment,
-    isRealtimeEnabled,
-  );
+  const visiblePermissionFormFields =
+    getVisiblePermissionFormFields(isCloudEnvironment);
   const showUnlimitedVisibilityField = !!getUnlimitedVisibilityField();
 
   const { setPermissionValue, setUnlimitedVisibility } =

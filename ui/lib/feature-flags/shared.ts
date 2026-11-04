@@ -9,9 +9,6 @@ export const FEATURE_FLAG = {
   // Boolean flag evaluated server-side per tenant in cloud. When on, trial
   // tenants only preview the most critical finding groups on /findings.
   FINDINGS_TRIAL_PREVIEW: "findings-trial-preview",
-  // Boolean flag gating Realtime (real-time compliance for AWS). Read by cloud
-  // only; the API side is gated separately by CLOUD_REALTIME_ENABLED.
-  REALTIME: "realtime-feature",
 } as const;
 
 export type FeatureFlag = (typeof FEATURE_FLAG)[keyof typeof FEATURE_FLAG];

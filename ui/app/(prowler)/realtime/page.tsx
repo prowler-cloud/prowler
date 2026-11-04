@@ -4,7 +4,6 @@ import { Suspense } from "react";
 
 import { RealtimeDashboard } from "@/app/(prowler)/realtime/_components/dashboard/realtime-dashboard";
 import { RealtimeDashboardSkeleton } from "@/app/(prowler)/realtime/_components/dashboard/realtime-dashboard-skeleton";
-import { RealtimeGate } from "@/app/(prowler)/realtime/_components/shared/realtime-gate";
 import type { RealtimeSearchParams } from "@/app/(prowler)/realtime/_lib/routes";
 import { ContentLayout } from "@/components/shadcn/content-layout";
 import { isCloud } from "@/lib/shared/env";
@@ -21,11 +20,9 @@ export default async function RealtimePage({
 
   return (
     <ContentLayout title="Realtime" icon={<Radar />}>
-      <RealtimeGate pending={<RealtimeDashboardSkeleton />}>
-        <Suspense fallback={<RealtimeDashboardSkeleton />}>
-          <RealtimeDashboard searchParams={params} />
-        </Suspense>
-      </RealtimeGate>
+      <Suspense fallback={<RealtimeDashboardSkeleton />}>
+        <RealtimeDashboard searchParams={params} />
+      </Suspense>
     </ContentLayout>
   );
 }

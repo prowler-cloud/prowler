@@ -7,7 +7,6 @@ describe("FEATURE_FLAG", () => {
     expect(FEATURE_FLAG).toEqual({
       BILLING_SYSTEM_METRONOME: "BILLING_SYSTEM_METRONOME",
       FINDINGS_TRIAL_PREVIEW: "findings-trial-preview",
-      REALTIME: "realtime-feature",
     });
   });
 

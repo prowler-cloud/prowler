@@ -15,14 +15,12 @@ const {
   pathnameValue,
   permissionsValue,
   pushMock,
-  realtimeFlagValue,
 } = vi.hoisted(() => ({
   openCloudUpgradeMock: vi.fn(),
   openLaunchScanModalMock: vi.fn(),
   pathnameValue: { current: "/findings" },
   permissionsValue: { current: {} as Record<string, boolean> },
   pushMock: vi.fn(),
-  realtimeFlagValue: { current: false },
 }));
 
 vi.mock("next/navigation", () => ({
@@ -51,11 +49,6 @@ vi.mock("@/store", () => ({
   ) => selector({ openCloudUpgrade: openCloudUpgradeMock }),
 }));
 
-vi.mock("@/lib/feature-flags/client", async (importOriginal) => ({
-  ...(await importOriginal<Record<string, unknown>>()),
-  useFeatureFlag: () => realtimeFlagValue.current,
-}));
-
 vi.mock("@/app/(prowler)/lighthouse/_components/navigation", () => ({
   LighthouseV2SidebarChat: () => <div data-testid="lighthouse-chat-sidebar" />,
 }));
@@ -65,7 +58,6 @@ describe("AppSidebarContent", () => {
     pathnameValue.current = "/findings";
     permissionsValue.current = { manage_providers: true };
     pushMock.mockClear();
-    realtimeFlagValue.current = false;
     openCloudUpgradeMock.mockClear();
     openLaunchScanModalMock.mockClear();
     useAppSidebarMode.setState({ mode: APP_SIDEBAR_MODE.BROWSE });
@@ -134,10 +126,9 @@ describe("AppSidebarContent", () => {
     ).toHaveAttribute("href", "/issues");
   });
 
-  it("shows Realtime navigation in Cloud once its feature flag is on", () => {
+  it("shows Realtime navigation to every Cloud user", () => {
     // Given
     vi.stubEnv("UI_CLOUD_ENABLED", "true");
-    realtimeFlagValue.current = true;
 
     // When
     render(<AppSidebarContent />);
@@ -148,17 +139,6 @@ describe("AppSidebarContent", () => {
         .getAllByRole("link", { name: /Realtime/ })
         .map((link) => link.getAttribute("href")),
     ).toEqual(["/realtime"]);
-  });
-
-  it("hides Realtime navigation while its feature flag is off", () => {
-    // Given / When
-    vi.stubEnv("UI_CLOUD_ENABLED", "true");
-    render(<AppSidebarContent />);
-
-    // Then
-    expect(
-      screen.queryByRole("link", { name: /Realtime/ }),
-    ).not.toBeInTheDocument();
   });
 
   it("hides Issues navigation in Local Server", () => {
