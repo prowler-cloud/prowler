@@ -7,6 +7,7 @@ import {
   LayoutGrid,
   MessageCircleQuestion,
   Package,
+  Radar,
   Settings,
   ShieldCheck,
   SquareChartGantt,
@@ -155,6 +156,18 @@ export function getNavigationConfig({
                 label: "Exploitability issues",
                 icon: Crosshair,
                 active: isRouteActive(pathname, "/issues"),
+                highlight: true,
+              } as const,
+            ]
+          : []),
+        ...(isCloudEnvironment
+          ? [
+              {
+                kind: NAVIGATION_ITEM_KIND.LINK,
+                href: "/realtime",
+                label: "Realtime",
+                icon: Radar,
+                active: isRouteActive(pathname, "/realtime"),
                 highlight: true,
               } as const,
             ]

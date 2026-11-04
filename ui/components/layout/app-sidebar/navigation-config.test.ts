@@ -122,6 +122,46 @@ describe("getNavigationConfig", () => {
     expect(labels).not.toContain("Exploitability issues");
   });
 
+  it("shows Realtime to every Cloud user and never in Local Server", () => {
+    // Given
+    const labels = () =>
+      getNavigationConfig({ pathname: "/realtime" })
+        .flatMap((section) => section.items)
+        .map((item) => item.label);
+
+    // When / Then
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
+    expect(labels()).toContain("Realtime");
+
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
+    expect(labels()).not.toContain("Realtime");
+  });
+
+  it("has one Realtime entry, active on the dashboard and its configuration", () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
+    const realtimeItems = (pathname: string) =>
+      getNavigationConfig({ pathname })
+        .flatMap((section) => section.items)
+        .flatMap((item) =>
+          item.kind === NAVIGATION_ITEM_KIND.COLLAPSIBLE
+            ? [item, ...item.children]
+            : [item],
+        )
+        .filter((item) => "href" in item && item.href.startsWith("/realtime"));
+
+    // When / Then
+    expect(realtimeItems("/realtime")).toEqual([
+      expect.objectContaining({ href: "/realtime", active: true }),
+    ]);
+    expect(realtimeItems("/realtime/configuration")).toEqual([
+      expect.objectContaining({ href: "/realtime", active: true }),
+    ]);
+    expect(realtimeItems("/providers")).toEqual([
+      expect.objectContaining({ href: "/realtime", active: false }),
+    ]);
+  });
+
   it("uses Cloud destinations and keeps Configuration children unbadged", () => {
     // Given
     vi.stubEnv("UI_CLOUD_ENABLED", "true");

@@ -126,6 +126,21 @@ describe("AppSidebarContent", () => {
     ).toHaveAttribute("href", "/issues");
   });
 
+  it("shows Realtime navigation to every Cloud user", () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
+
+    // When
+    render(<AppSidebarContent />);
+
+    // Then
+    expect(
+      screen
+        .getAllByRole("link", { name: /Realtime/ })
+        .map((link) => link.getAttribute("href")),
+    ).toEqual(["/realtime"]);
+  });
+
   it("hides Issues navigation in Local Server", () => {
     // Given / When
     vi.stubEnv("UI_CLOUD_ENABLED", "false");
