@@ -1,146 +1,108 @@
-# Example: MCP Models with MinimalSerializerMixin
-# Source: mcp_server/prowler_mcp_server/prowler_app/models/
+# Example: MCP Models with MinimalSerializerMixin (abridged)
+# Source: mcp_server/prowler_mcp_server/prowler_app/models/findings.py
+#         mcp_server/prowler_mcp_server/prowler_app/models/base.py (the mixin)
+#
+# Key patterns:
+# - Item models extend MinimalSerializerMixin: None, "", [] and {} are dropped
+#   from model_dump() to save tokens.
+# - Two tiers: Simplified* for lists, Detailed* (subclass) for one item.
+# - *ListResponse reads meta.pagination {count, pages, page}.
+# - from_api_response() maps the JSON:API resource; index required keys with []
+#   so a contract change fails loudly, use .get() only for optional ones.
 
-from typing import Any, Literal
+from typing import Literal
 
-from pydantic import (
-    BaseModel,
-    ConfigDict,
-    Field,
-    SerializerFunctionWrapHandler,
-    model_serializer,
-)
+from pydantic import BaseModel, ConfigDict, Field
 
-
-class MinimalSerializerMixin(BaseModel):
-    """
-    Mixin that excludes empty values from serialization.
-
-    Key pattern: Reduces token usage by removing None, empty strings, empty lists/dicts.
-    Use this for all LLM-facing models.
-    """
-
-    @model_serializer(mode="wrap")
-    def _serialize(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
-        data = handler(self)
-        return {k: v for k, v in data.items() if not self._should_exclude(k, v)}
-
-    def _should_exclude(self, key: str, value: Any) -> bool:
-        """Override in subclasses for custom exclusion logic."""
-        if value is None:
-            return True
-        if value == "":
-            return True
-        if isinstance(value, list) and not value:
-            return True
-        if isinstance(value, dict) and not value:
-            return True
-        return False
-
-
-class CheckRemediation(MinimalSerializerMixin, BaseModel):
-    """Remediation information - uses mixin to strip empty fields."""
-
-    model_config = ConfigDict(frozen=True)
-
-    cli: str | None = Field(default=None, description="CLI command for remediation")
-    terraform: str | None = Field(default=None, description="Terraform code")
-    other: str | None = Field(default=None, description="Other remediation steps")
-    recommendation: str | None = Field(
-        default=None, description="Best practice recommendation"
-    )
+from prowler_mcp_server.prowler_app.models.base import MinimalSerializerMixin
 
 
 class SimplifiedFinding(MinimalSerializerMixin, BaseModel):
-    """
-    Lightweight finding for list responses.
-
-    Key pattern: Two-tier serialization
-    - SimplifiedFinding: minimal fields for lists (fast, low tokens)
-    - DetailedFinding: full fields for single item (complete info)
-    """
+    """Lightweight finding for list responses."""
 
     model_config = ConfigDict(frozen=True)
 
-    id: str = Field(description="Finding UUID")
-    uid: str = Field(description="Unique finding identifier")
-    status: Literal["FAIL", "PASS", "MANUAL"] = Field(description="Finding status")
-    severity: str = Field(description="Severity level")
-    check_id: str = Field(description="Check ID that generated this finding")
-    resource_name: str | None = Field(default=None, description="Affected resource")
+    id: str = Field(description="Unique UUIDv4 identifier for this finding")
+    uid: str = Field(description="Human-readable unique identifier assigned by Prowler")
+    status: Literal["FAIL", "PASS", "MANUAL"] = Field(description="Result status")
+    severity: Literal["critical", "high", "medium", "low", "informational"] = Field(
+        description="Severity level of the finding"
+    )
+    check_id: str = Field(description="ID of the check that generated this finding")
+    status_extended: str = Field(description="Extended status information")
+    muted: bool | None = Field(default=None, description="Whether the finding is muted")
+    muted_reason: str | None = Field(default=None, description="Reason for muting")
 
     @classmethod
     def from_api_response(cls, data: dict) -> "SimplifiedFinding":
-        """Transform JSON:API response to model."""
         attributes = data["attributes"]
         return cls(
             id=data["id"],
             uid=attributes["uid"],
             status=attributes["status"],
             severity=attributes["severity"],
-            check_id=attributes["check_id"],
-            resource_name=attributes.get("resource_name"),
+            # Derived field: check_id lives inside check_metadata in the API
+            check_id=attributes["check_metadata"]["checkid"],
+            status_extended=attributes["status_extended"],
+            muted=attributes["muted"],
+            muted_reason=attributes["muted_reason"],
         )
 
 
 class DetailedFinding(SimplifiedFinding):
-    """
-    Full finding details - extends SimplifiedFinding.
+    """Full finding for a single-item response; adds timestamps and relationships."""
 
-    Key pattern: Inheritance for two-tier serialization.
-    """
+    model_config = ConfigDict(frozen=True)
 
-    status_extended: str = Field(description="Detailed status message")
-    region: str | None = Field(default=None, description="Cloud region")
-    remediation: CheckRemediation | None = Field(default=None, description="How to fix")
+    inserted_at: str = Field(description="ISO 8601 timestamp of first insertion")
+    scan_id: str | None = Field(default=None, description="UUID of the scan")
+    resource_ids: list[str] = Field(
+        default_factory=list, description="UUIDs of the associated resources"
+    )
+    check_metadata: dict = Field(
+        description="Check metadata from the API, including remediation (the shipped server models it as CheckMetadata)",
+    )
 
     @classmethod
     def from_api_response(cls, data: dict) -> "DetailedFinding":
-        """Transform JSON:API response to detailed model."""
         attributes = data["attributes"]
-        check_metadata = attributes.get("check_metadata", {})
-        remediation_data = check_metadata.get("Remediation", {})
+        relationships = data.get("relationships", {})
+
+        scan_data = relationships.get("scan", {}).get("data")
+        resources_data = relationships.get("resources", {}).get("data", [])
 
         return cls(
             id=data["id"],
             uid=attributes["uid"],
             status=attributes["status"],
             severity=attributes["severity"],
-            check_id=attributes["check_id"],
-            resource_name=attributes.get("resource_name"),
-            status_extended=attributes.get("status_extended", ""),
-            region=attributes.get("region"),
-            remediation=(
-                CheckRemediation(
-                    cli=remediation_data.get("Code", {}).get("CLI"),
-                    terraform=remediation_data.get("Code", {}).get("Terraform"),
-                    recommendation=remediation_data.get("Recommendation", {}).get(
-                        "Text"
-                    ),
-                )
-                if remediation_data
-                else None
-            ),
+            check_id=attributes["check_metadata"]["checkid"],
+            status_extended=attributes.get("status_extended"),
+            muted=attributes["muted"],
+            muted_reason=attributes.get("muted_reason"),
+            inserted_at=attributes["inserted_at"],
+            scan_id=scan_data["id"] if scan_data else None,
+            resource_ids=[r["id"] for r in resources_data],
+            check_metadata=attributes["check_metadata"],
         )
 
 
 class FindingsListResponse(BaseModel):
-    """Wrapper for list responses with pagination."""
+    """List wrapper with pagination; plain BaseModel, as in the source."""
 
-    findings: list[SimplifiedFinding]
-    total: int
-    page: int
-    page_size: int
+    model_config = ConfigDict(frozen=True)
+
+    findings: list[SimplifiedFinding] = Field(description="Findings on this page")
+    total_num_finding: int = Field(description="Total matches across pages", ge=0)
+    total_num_pages: int = Field(description="Total number of pages", ge=0)
+    current_page: int = Field(description="Current page (1-indexed)", ge=1)
 
     @classmethod
-    def from_api_response(cls, data: dict) -> "FindingsListResponse":
-        findings = [
-            SimplifiedFinding.from_api_response(f) for f in data.get("data", [])
-        ]
-        meta = data.get("meta", {}).get("pagination", {})
+    def from_api_response(cls, response: dict) -> "FindingsListResponse":
+        pagination = response["meta"]["pagination"]
         return cls(
-            findings=findings,
-            total=meta.get("count", len(findings)),
-            page=meta.get("page", 1),
-            page_size=meta.get("page_size", len(findings)),
+            findings=[SimplifiedFinding.from_api_response(i) for i in response["data"]],
+            total_num_finding=pagination["count"],
+            total_num_pages=pagination["pages"],
+            current_page=pagination["page"],
         )
