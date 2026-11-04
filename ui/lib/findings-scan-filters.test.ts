@@ -2,8 +2,49 @@ import { describe, expect, it, vi } from "vitest";
 
 import {
   buildFindingScanDateFilters,
+  getEarlyFindingScanFilters,
+  isScanSettled,
   resolveFindingScanDateFilters,
 } from "./findings-scan-filters";
+
+describe("isScanSettled", () => {
+  const now = Date.parse("2026-04-07T10:05:00Z");
+
+  it("waits out the grace period after completion for the summaries", () => {
+    expect(isScanSettled("2026-04-07T10:04:00Z", now)).toBe(false);
+    expect(isScanSettled("2026-04-07T10:03:00Z", now)).toBe(true);
+  });
+
+  it("never settles a scan without a completion time", () => {
+    expect(isScanSettled(null, now)).toBe(false);
+  });
+});
+
+describe("getEarlyFindingScanFilters", () => {
+  const filters = { "filter[muted]": "false" };
+
+  it("points the page at the running scans before any scan completes", () => {
+    expect(
+      getEarlyFindingScanFilters(filters, false, ["scan-1", "scan-2"]),
+    ).toEqual({
+      "filter[muted]": "false",
+      "filter[scan__in]": "scan-1,scan-2",
+    });
+  });
+
+  it("keeps the latest view once a scan has completed", () => {
+    expect(getEarlyFindingScanFilters(filters, true, ["scan-1"])).toBe(filters);
+  });
+
+  it("keeps the filters when nothing is running", () => {
+    expect(getEarlyFindingScanFilters(filters, false, [])).toBe(filters);
+  });
+
+  it("respects a scan or date the user picked", () => {
+    const picked = { "filter[inserted_at]": "2026-04-07" };
+    expect(getEarlyFindingScanFilters(picked, false, ["scan-1"])).toBe(picked);
+  });
+});
 
 describe("buildFindingScanDateFilters", () => {
   it("uses an exact inserted_at filter when all selected scans belong to the same day", () => {
@@ -40,6 +81,28 @@ describe("buildFindingScanDateFilters", () => {
 });
 
 describe("resolveFindingScanDateFilters", () => {
+  it("spans a running scan from its start day to today", async () => {
+    vi.useFakeTimers({ now: new Date("2026-04-09T01:00:00Z") });
+
+    const result = await resolveFindingScanDateFilters({
+      filters: { "filter[scan__in]": "scan-1" },
+      scans: [
+        {
+          id: "scan-1",
+          attributes: { started_at: "2026-04-08T22:00:00Z" },
+        },
+      ],
+      loadScan: vi.fn(),
+    });
+
+    vi.useRealTimers();
+    expect(result).toEqual({
+      "filter[scan__in]": "scan-1",
+      "filter[inserted_at__gte]": "2026-04-08",
+      "filter[inserted_at__lte]": "2026-04-09",
+    });
+  });
+
   it("adds the required inserted_at filter for a selected scan when the URL only contains scan__in", async () => {
     const result = await resolveFindingScanDateFilters({
       filters: {
@@ -135,6 +198,8 @@ describe("resolveFindingScanDateFilters", () => {
   });
 
   it("derives the day from started_at when the scan has not completed yet", async () => {
+    vi.useFakeTimers({ now: new Date("2026-04-07T12:00:00Z") });
+
     const result = await resolveFindingScanDateFilters({
       filters: {
         "filter[scan__in]": "scan-1",
@@ -150,6 +215,7 @@ describe("resolveFindingScanDateFilters", () => {
       loadScan: vi.fn(),
     });
 
+    vi.useRealTimers();
     expect(result).toEqual({
       "filter[scan__in]": "scan-1",
       "filter[inserted_at]": "2026-04-07",

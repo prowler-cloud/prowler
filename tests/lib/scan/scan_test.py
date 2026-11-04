@@ -5,6 +5,7 @@ from unittest import mock
 import pytest
 from mock import MagicMock, patch
 
+from prowler.lib.check.models import Severity
 from prowler.lib.scan.exceptions.exceptions import (
     ScanInvalidCategoryError,
     ScanInvalidCheckError,
@@ -75,7 +76,7 @@ def mock_generate_output():
     with mock.patch(
         "prowler.lib.outputs.finding.Finding.generate_output", autospec=True
     ) as mock_gen_output:
-        mock_gen_output.side_effect = lambda provider, finding, output_options: finding
+        mock_gen_output.side_effect = lambda provider, finding, **_: finding
         yield mock_gen_output
 
 
@@ -232,6 +233,32 @@ class TestScan:
             assert scan.duration == 0
             assert scan.get_completed_services() == set()
             assert scan.get_completed_checks() == set()
+
+    def test_init_orders_checks_by_severity_then_name(
+        mock_provider,
+    ):
+        severities = {
+            "s3_bucket_public_access": Severity.critical,
+            "accessanalyzer_enabled": Severity.low,
+            "iam_root_mfa_enabled": Severity.critical,
+            "ec2_instance_public_ip": Severity.high,
+        }
+        mock_provider.type = "aws"
+        with mock.patch(
+            "prowler.lib.check.models.CheckMetadata.get_bulk"
+        ) as mock_get_bulk:
+            mock_get_bulk.return_value = {
+                check: MagicMock(Severity=severity, Categories=[])
+                for check, severity in severities.items()
+            }
+            scan = Scan(mock_provider, checks=list(severities))
+
+            assert scan.checks_to_execute == [
+                "iam_root_mfa_enabled",
+                "s3_bucket_public_access",
+                "ec2_instance_public_ip",
+                "accessanalyzer_enabled",
+            ]
 
     def test_init_with_no_checks(
         mock_provider,

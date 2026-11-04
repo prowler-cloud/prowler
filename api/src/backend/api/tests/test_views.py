@@ -31,6 +31,7 @@ from api.models import (
     ComplianceRequirementOverview,
     DailySeveritySummary,
     Finding,
+    FindingGroupDailySummary,
     Integration,
     Invitation,
     InvitationRoleRelationship,
@@ -19820,6 +19821,25 @@ class TestFindingGroupViewSet:
         assert (
             attrs["check_description"] == "EC2 instances should use private IPs only."
         )
+
+    def test_finding_groups_check_title_from_sdk_without_summaries(
+        self, authenticated_client, finding_groups_fixture
+    ):
+        """A first scan writes no summaries until it completes; titles come from the SDK."""
+        FindingGroupDailySummary.objects.all().delete()
+
+        response = authenticated_client.get(
+            reverse("finding-group-list"),
+            {
+                "filter[inserted_at]": TODAY,
+                "filter[check_id]": "ec2_instance_public_ip",
+                "filter[region]": "us-east-1",
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+        attrs = response.json()["data"][0]["attributes"]
+        assert attrs["check_title"] == "EC2 instance does not have a public IP address"
+        assert attrs["check_description"].startswith("**EC2 instances**")
 
     def test_finding_groups_status_pass_when_no_fail(
         self, authenticated_client, finding_groups_fixture

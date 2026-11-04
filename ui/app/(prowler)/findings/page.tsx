@@ -1,4 +1,4 @@
-import { Tag } from "lucide-react";
+import { Info, Tag } from "lucide-react";
 import { Suspense } from "react";
 
 import {
@@ -11,6 +11,8 @@ import {
   FindingsGroupTable,
   SkeletonTableFindings,
 } from "@/components/findings/table";
+import { AutoRefresh } from "@/components/scans/auto-refresh";
+import { Alert, AlertDescription } from "@/components/shadcn/alert";
 import { ContentLayout } from "@/components/shadcn/content-layout";
 import { FilterTransitionWrapper } from "@/contexts";
 import {
@@ -23,7 +25,11 @@ import {
   FINDINGS_PREVIEW_ROW_LIMIT,
   isFindingsPreviewLocked,
 } from "@/lib/findings-access";
-import { resolveFindingScanDateFilters } from "@/lib/findings-scan-filters";
+import {
+  getEarlyFindingScanFilters,
+  isScanSettled,
+  resolveFindingScanDateFilters,
+} from "@/lib/findings-scan-filters";
 import { getSamplePreviewState } from "@/lib/sample-preview/get-sample-preview-state";
 import { ScanProps } from "@/types";
 import { SearchParamsProps } from "@/types/components";
@@ -55,24 +61,44 @@ export default async function Findings({
   const { filters, query } = extractFiltersAndQuery(resolvedSearchParams);
 
   // The page shell awaits only what both the filters and the table depend on:
-  // the completed scans (scan filter) and the scan date range.
-  const [scansData, filtersWithScanDates] = await Promise.all([
+  // the completed scans (scan filter), the running ones (early findings) and
+  // the scan date range.
+  const [scansData, executingScansData] = await Promise.all([
     getScans({
       pageSize: 50,
       filters: { "filter[state]": "completed" },
       fields: {
-        scans: "name,state,unique_resource_count,completed_at,provider",
+        scans:
+          "name,state,unique_resource_count,started_at,completed_at,provider",
       },
     }),
-    resolveFindingScanDateFilters({
-      filters,
-      scans: [],
-      loadScan: async (scanId: string) => {
-        const response = await getScan(scanId);
-        return response?.data;
-      },
+    getScans({
+      pageSize: 50,
+      filters: { "filter[state]": "executing" },
+      fields: { scans: "progress,started_at,completed_at" },
     }),
   ]);
+  const executingScans: ScanProps[] = executingScansData?.data ?? [];
+  const now = Date.now();
+  const allCompletedScans: ScanProps[] = scansData?.data ?? [];
+  const justCompletedScans = allCompletedScans.filter(
+    (scan) => !isScanSettled(scan.attributes.completed_at, now),
+  );
+  const earlyScans = [...executingScans, ...justCompletedScans];
+  const earlyFilters = getEarlyFindingScanFilters(
+    filters,
+    justCompletedScans.length < allCompletedScans.length,
+    earlyScans.map((scan) => scan.id),
+  );
+  const isEarlyView = earlyFilters !== filters;
+  const filtersWithScanDates = await resolveFindingScanDateFilters({
+    filters: earlyFilters,
+    scans: earlyScans,
+    loadScan: async (scanId: string) => {
+      const response = await getScan(scanId);
+      return response?.data;
+    },
+  });
   const resolvedFilters = applyDefaultMutedFilter(filtersWithScanDates);
   const hasHistoricalData = hasDateOrScanFilter(filtersWithScanDates);
 
@@ -86,6 +112,21 @@ export default async function Findings({
   return (
     <ContentLayout title="Findings" icon={<Tag />}>
       <FilterTransitionWrapper>
+        {isEarlyView && (
+          <>
+            <AutoRefresh hasExecutingScan />
+            <Alert variant="info" className="mb-6">
+              <Info className="size-4" />
+              <AlertDescription>
+                {executingScans.length > 0
+                  ? `Your first scan is running (${Math.min(
+                      ...executingScans.map((scan) => scan.attributes.progress),
+                    )}% done). These are the findings found so far, and the page updates on its own as more come in.`
+                  : "Your first scan just finished. The full view, with every filter, is getting ready and loads on its own in a moment."}
+              </AlertDescription>
+            </Alert>
+          </>
+        )}
         <div className="mb-6">
           <Suspense fallback={<FindingsFiltersSkeleton />}>
             <FindingsFiltersSection

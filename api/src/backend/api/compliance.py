@@ -1,6 +1,7 @@
 import logging
 import threading
 from collections.abc import Iterable, Mapping
+from functools import cache
 
 from api.models import Provider
 from prowler.lib.check.compliance_models import (
@@ -145,6 +146,37 @@ def get_prowler_provider_checks(provider_type: Provider.ProviderChoices):
         Iterable[str]: An iterable of check IDs associated with the specified provider type.
     """
     return CheckMetadata.get_bulk(provider_type).keys()
+
+
+@cache
+def _get_provider_check_metadata(provider_type: str) -> dict:
+    # Read from disk once per process; the metadata ships with the image.
+    return CheckMetadata.get_bulk(provider_type)
+
+
+def get_prowler_check_title(
+    check_id: str, provider_types: Iterable[str]
+) -> dict[str, str]:
+    """Title and description of a check, read from the SDK check metadata.
+
+    Args:
+        check_id (str): The check identifier.
+        provider_types (Iterable[str]): Provider types the check may belong to.
+
+    Returns:
+        dict[str, str]: ``check_title`` and ``check_description``, or empty when
+            no provider type knows the check.
+    """
+    for provider_type in provider_types:
+        if provider_type not in Provider.ProviderChoices.values:
+            continue
+        metadata = _get_provider_check_metadata(provider_type).get(check_id)
+        if metadata:
+            return {
+                "check_title": metadata.CheckTitle,
+                "check_description": metadata.Description,
+            }
+    return {}
 
 
 def get_prowler_provider_compliance(provider_type: Provider.ProviderChoices) -> dict:
