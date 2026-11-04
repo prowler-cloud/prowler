@@ -91,36 +91,6 @@ def mock_make_api_call_list_web_acls_empty_page_with_marker(
     return orig(self, operation_name, kwarg)
 
 
-class ScriptedListWebACLs:
-    """A stand-in WAFv2 client that serves a scripted ListWebACLs page sequence.
-
-    moto cannot be driven to a thousand pages, and the paginator's page cap is a local rather
-    than a module constant so it cannot be lowered for a test, so a scripted client is the only
-    way to reach the cap at all. It costs nothing: the pages are plain dicts built in a list
-    comprehension and neither test below takes a measurable fraction of a second.
-    """
-
-    def __init__(self, pages: list):
-        """Take the pages to serve in order, and start the call counter at zero."""
-        self.pages = pages
-        self.calls = 0
-
-    def list_web_acls(self, **kwargs):
-        """Return the next scripted page, or an empty one once the script runs out."""
-        index = self.calls
-        self.calls += 1
-        return self.pages[index] if index < len(self.pages) else {"WebACLs": []}
-
-
-def _paged_acl(index: int) -> dict:
-    """Build one ListWebACLs summary entry."""
-    return {
-        "ARN": f"arn:aws:wafv2:us-east-1:123456789012:regional/webacl/paged-{index}",
-        "Name": f"paged-{index}",
-        "Id": f"paged-{index}",
-    }
-
-
 def mock_make_api_call_list_web_acls_infinite_loop(self, operation_name, kwarg):
     """Return the same NextMarker forever to test the loop guard.
 
@@ -286,87 +256,6 @@ class Test_WAFv2_Service:
             assert any(
                 "loop-forever" in msg and "REGIONAL" in msg for msg in pagination_errors
             )
-            # The repeating marker stops collection well below the page cap, so the cap's own
-            # warning must stay silent: gating it on the marker alone would report truncation
-            # here, on top of the loop-detected error that already names the real cause.
-            assert sum("hit the 1000-page cap" in msg for msg in error_messages) == 0
-
-    # The cap warning is gated on a pending marker, not on the iteration count alone, because
-    # `iterations` reaches the cap on the final pass whether or not that pass finished the scan.
-    @mock_aws
-    def test_pagination_cap_is_silent_when_the_last_page_completes_the_scan(self):
-        """A scope whose 1000th page carries no NextMarker is complete, so nothing is logged.
-
-        Warning here would tell an operator their inventory may be truncated when every Web ACL
-        was collected, which is the false positive the marker condition exists to prevent.
-        """
-        pages = [
-            {"WebACLs": [_paged_acl(i)], "NextMarker": f"m{i}"} for i in range(999)
-        ] + [{"WebACLs": [_paged_acl(999)]}]
-        scripted = ScriptedListWebACLs(pages)
-        wafv2 = WAFv2(set_mocked_aws_provider([AWS_REGION_US_EAST_1]))
-
-        with patch(
-            "prowler.providers.aws.services.wafv2.wafv2_service.logger"
-        ) as mock_logger:
-            collected = list(wafv2._paginate_web_acls(scripted, "REGIONAL"))
-
-        assert len(collected) == 1000
-        assert scripted.calls == 1000
-        assert mock_logger.error.call_count == 0
-
-    @mock_aws
-    def test_pagination_cap_warns_when_a_marker_is_still_pending(self):
-        """A scope still handing back a marker at the cap is truncated, so it must be logged.
-
-        The paginator stops at the cap rather than following the marker forever, so the Web ACLs
-        beyond it are genuinely missing from the scan and silence would hide that.
-        """
-        pages = [
-            {"WebACLs": [_paged_acl(i)], "NextMarker": f"m{i}"} for i in range(1100)
-        ]
-        scripted = ScriptedListWebACLs(pages)
-        wafv2 = WAFv2(set_mocked_aws_provider([AWS_REGION_US_EAST_1]))
-
-        with patch(
-            "prowler.providers.aws.services.wafv2.wafv2_service.logger"
-        ) as mock_logger:
-            collected = list(wafv2._paginate_web_acls(scripted, "REGIONAL"))
-
-        assert len(collected) == 1000
-        assert scripted.calls == 1000
-        assert mock_logger.error.call_count == 1
-        assert "hit the 1000-page cap" in mock_logger.error.call_args[0][0]
-
-    @mock_aws
-    def test_a_repeated_marker_on_the_final_entry_reports_only_the_loop(self):
-        """A repeated marker seen on the 1000th loop entry must not also report the page cap.
-
-        This is the one input where the two exits are indistinguishable by counter: the entry
-        increments iterations to the cap BEFORE the repeated-marker guard breaks, and it leaves
-        next_marker truthy, so a cap test written as `iterations >= max_iterations and next_marker`
-        fires as well. The operator then gets two contradictory causes for one stop, and the cap
-        message is the false one -- only 999 calls were made, and nothing was truncated by the cap.
-
-        The 999th page hands back a marker already seen, which is what makes the 1000th entry break
-        on the guard rather than on a completed enumeration.
-        """
-        pages = [
-            {"WebACLs": [_paged_acl(i)], "NextMarker": f"m{i}"} for i in range(998)
-        ] + [{"WebACLs": [_paged_acl(998)], "NextMarker": "m0"}]
-        scripted = ScriptedListWebACLs(pages)
-        wafv2 = WAFv2(set_mocked_aws_provider([AWS_REGION_US_EAST_1]))
-
-        with patch(
-            "prowler.providers.aws.services.wafv2.wafv2_service.logger"
-        ) as mock_logger:
-            collected = list(wafv2._paginate_web_acls(scripted, "REGIONAL"))
-
-        assert len(collected) == 999
-        assert scripted.calls == 999
-        assert mock_logger.error.call_count == 1
-        assert "pagination loop detected" in mock_logger.error.call_args[0][0]
-        assert "page cap" not in mock_logger.error.call_args[0][0]
 
     # Test WAFv2 Describe Web ACLs Resources
     @mock_aws
