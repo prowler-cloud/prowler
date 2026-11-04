@@ -196,7 +196,7 @@ pip install --extra-index-url https://registry.prowler.com/simple/ "<package-nam
 pip install --index-url https://__token__:${PRR_DOWNLOAD_KEY}@registry.prowler.com/simple/ --no-deps "<package-name>==1.2.0"
 pip install "prowler>=5.48.0"
 # Pin like any package
-pip install "<package-name>[runtime]==1.2.0"
+pip install --extra-index-url https://registry.prowler.com/simple/ "<package-name>[runtime]==1.2.0"
 ```
 
 Installed artifacts are discovered automatically: `prowler aws --checks {check_id}`.
