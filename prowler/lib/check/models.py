@@ -1110,7 +1110,13 @@ class CheckReportCloudflare(Check_Report):
 
     @property
     def zone_name(self) -> str:
-        """Zone name - for DNS records use zone_name attribute, for zones use name."""
+        """Zone name - for DNS records use zone_name attribute, for zones use name.
+
+        Account-scoped resources (members, API tokens, Workers, R2 buckets) set
+        ``is_global_resource`` and report "global" instead of their own name.
+        """
+        if getattr(self._zone, "is_global_resource", False):
+            return "global"
         zone_name = getattr(self._zone, "zone_name", None)
         if zone_name:
             return zone_name

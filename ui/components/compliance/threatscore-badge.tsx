@@ -38,6 +38,8 @@ interface ThreatScoreBadgeProps {
   sectionScores?: SectionScores;
   /** Prowler Cloud tenants without a paid plan cannot download reports. */
   subscriptionOnly?: boolean;
+  /** Display scores without detail navigation or report downloads. */
+  readOnly?: boolean;
 }
 
 export const ThreatScoreBadge = ({
@@ -46,7 +48,9 @@ export const ThreatScoreBadge = ({
   provider,
   sectionScores,
   subscriptionOnly = false,
+  readOnly = false,
 }: ThreatScoreBadgeProps) => {
+  const DetailContainer = readOnly ? "div" : "button";
   const router = useRouter();
   const runReportDownload = useReportDownload(subscriptionOnly);
   const searchParams = useSearchParams();
@@ -117,11 +121,11 @@ export const ThreatScoreBadge = ({
   return (
     <Card variant="base" padding="md" className="relative gap-4">
       <CardContent className="flex flex-col gap-4 p-0 pr-14 lg:flex-row lg:items-start lg:gap-6">
-        {/* Clickable ThreatScore button */}
-        <button
-          className="border-border-neutral-secondary bg-bg-neutral-tertiary hover:border-border-neutral-primary hover:bg-bg-neutral-secondary flex shrink-0 cursor-pointer flex-row items-center justify-between gap-4 rounded-xl border p-3 pr-12 text-left transition-colors lg:pr-3"
-          onClick={handleCardClick}
-          type="button"
+        {/* ThreatScore summary, with detail navigation when available. */}
+        <DetailContainer
+          className="border-border-neutral-secondary bg-bg-neutral-tertiary enabled:hover:border-border-neutral-primary enabled:hover:bg-bg-neutral-secondary flex shrink-0 flex-row items-center justify-between gap-4 rounded-xl border p-3 pr-12 text-left transition-colors enabled:cursor-pointer lg:pr-3"
+          onClick={readOnly ? undefined : handleCardClick}
+          type={readOnly ? undefined : "button"}
         >
           <ThreatScoreLogo />
 
@@ -136,24 +140,29 @@ export const ThreatScoreBadge = ({
               indicatorClassName={getScoreIndicatorClass(getScoreColor(score))}
             />
           </div>
-        </button>
+        </DetailContainer>
 
         {/* Pillar breakdown — always visible, in canonical order */}
         {pillars.length > 0 && (
           <div className="border-border-neutral-secondary flex-1 space-y-2 border-t pt-3 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-6">
             {pillars.map(({ name, score: sectionScore, hasData }) => (
-              <button
+              <DetailContainer
                 key={name}
-                type="button"
-                onClick={() => hasData && handlePillarClick(name)}
-                disabled={!hasData}
-                aria-disabled={!hasData}
-                aria-label={
-                  hasData
-                    ? `Open ${name} details`
-                    : `${name} (no data for this scan)`
+                type={readOnly ? undefined : "button"}
+                onClick={
+                  readOnly
+                    ? undefined
+                    : () => hasData && handlePillarClick(name)
                 }
-                className="hover:bg-bg-neutral-secondary focus-visible:ring-border-neutral-primary -mx-1 flex w-full items-center gap-2 rounded-md px-1 py-0.5 text-left text-xs transition-colors focus:outline-none focus-visible:ring-2 enabled:cursor-pointer disabled:cursor-default disabled:opacity-60"
+                disabled={readOnly ? undefined : !hasData}
+                aria-label={
+                  readOnly
+                    ? undefined
+                    : hasData
+                      ? `Open ${name} details`
+                      : `${name} (no data for this scan)`
+                }
+                className="enabled:hover:bg-bg-neutral-secondary focus-visible:ring-border-neutral-primary -mx-1 flex w-full items-center gap-2 rounded-md px-1 py-0.5 text-left text-xs transition-colors focus:outline-none focus-visible:ring-2 enabled:cursor-pointer disabled:cursor-default disabled:opacity-60"
               >
                 <span className="text-text-neutral-secondary w-1/3 min-w-0 shrink-0 truncate lg:w-1/4">
                   {name}
@@ -175,38 +184,40 @@ export const ThreatScoreBadge = ({
                 >
                   {hasData ? `${sectionScore.toFixed(1)}%` : "—"}
                 </span>
-              </button>
+              </DetailContainer>
             ))}
           </div>
         )}
       </CardContent>
 
       {/* ActionDropdown for downloads — top-right */}
-      <div className="absolute top-3 right-4">
-        <ActionDropdown
-          variant="bordered"
-          ariaLabel="Open compliance export actions"
-        >
-          <ActionDropdownItem
-            icon={
-              <FileTextIcon
-                className={isDownloadingCsv ? "animate-download-icon" : ""}
-              />
-            }
-            label="Download CSV report"
-            onSelect={handleDownloadCsv}
-          />
-          <ActionDropdownItem
-            icon={
-              <DownloadIcon
-                className={isDownloadingPdf ? "animate-download-icon" : ""}
-              />
-            }
-            label="Download PDF report"
-            onSelect={handleDownloadPdf}
-          />
-        </ActionDropdown>
-      </div>
+      {!readOnly && (
+        <div className="absolute top-3 right-4">
+          <ActionDropdown
+            variant="bordered"
+            ariaLabel="Open compliance export actions"
+          >
+            <ActionDropdownItem
+              icon={
+                <FileTextIcon
+                  className={isDownloadingCsv ? "animate-download-icon" : ""}
+                />
+              }
+              label="Download CSV report"
+              onSelect={handleDownloadCsv}
+            />
+            <ActionDropdownItem
+              icon={
+                <DownloadIcon
+                  className={isDownloadingPdf ? "animate-download-icon" : ""}
+                />
+              }
+              label="Download PDF report"
+              onSelect={handleDownloadPdf}
+            />
+          </ActionDropdown>
+        </div>
+      )}
     </Card>
   );
 };

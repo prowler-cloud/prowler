@@ -6,7 +6,7 @@ description: >
 license: Apache-2.0
 metadata:
   author: prowler-cloud
-  version: "1.0.0"
+  version: "1.1.0"
   scope: [root, api]
   auto_invoke:
     - "Creating API endpoints"
@@ -29,26 +29,7 @@ This skill focuses on **spec compliance**. For **implementation patterns** (View
 
 ## Before Implementing/Reviewing
 
-**ALWAYS validate against the latest spec** before creating or modifying endpoints:
-
-### Option 1: Context7 MCP (Preferred)
-
-If Context7 MCP is available, query the JSON:API spec directly:
-
-```text
-mcp_context7_resolve-library-id(query="jsonapi specification")
-mcp_context7_query-docs(libraryId="<resolved-id>", query="[specific topic: relationships, errors, etc.]")
-```
-
-### Option 2: WebFetch (Fallback)
-
-If Context7 is not available, fetch from the official spec:
-
-```text
-WebFetch(url="https://jsonapi.org/format/", prompt="Extract rules for [specific topic]")
-```
-
-This ensures compliance with the latest JSON:API version, even after spec updates.
+When a rule is unclear, check the official spec (https://jsonapi.org/format/) for the specific topic before deciding.
 
 ---
 
@@ -152,7 +133,8 @@ This ensures compliance with the latest JSON:API version, even after spec update
     "next": "/api/v1/providers?page[number]=2"
   },
   "meta": {
-    "pagination": {"count": 100, "pages": 5}
+    "pagination": {"page": 1, "pages": 5, "count": 100},
+    "version": "v1"
   }
 }
 ```
@@ -264,8 +246,26 @@ When using `?include=provider`:
 
 ---
 
+## Prowler Implementation Notes
+
+Verified in `api/src/backend/`:
+
+| Concern | How Prowler does it |
+|---------|---------------------|
+| Library | `djangorestframework-jsonapi` 7.x (`rest_framework_json_api` parsers, filters, renderer base) |
+| Root `meta` | Every v1 serializer adds `{"version": "v1"}` (`BaseModelSerializerV1.get_root_meta`) |
+| Pagination | `page[number]` / `page[size]`; `meta.pagination` has `page`, `pages`, `count` |
+| Search | `filter[search]` (`SEARCH_PARAM` in `config/django/base.py`) |
+| Async ops | `202` + task resource body + `Content-Location: /api/v1/tasks/{id}` header |
+| Validation errors | Raise `ModelValidationError(detail=..., code=..., pointer="/data/attributes/<field>")` from `api/exceptions.py` (status serialized as string) |
+| Conflicts | `ConflictException(detail=..., pointer=...)` returns `409` |
+| Unknown attributes | `BaseWriteSerializer.validate()` rejects them with `400` |
+| Auth errors | `custom_exception_handler` forces `401` for auth/token failures |
+| RLS-hidden objects | `404`, never `403` |
+
+---
+
 ## Spec Reference
 
-- **Full Specification**: https://jsonapi.org/format/
 - **Implementation**: Use `django-drf` skill for DRF-specific patterns
 - **Testing**: Use `prowler-test-api` skill for test patterns
