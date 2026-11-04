@@ -266,8 +266,13 @@ function LaunchScanForm({
               ? "The schedule was saved and the initial scan was launched."
               : "The scan schedule was saved successfully.",
         // Over the limit, the plans unblock the scan; the schedule would not.
+        // A running scan already stores findings; a schedule only lists on Scans.
         action: result.usageLimited ? (
           usageLimitToastAction()
+        ) : launched ? (
+          <ToastAction altText="View findings" asChild>
+            <Link href="/findings">View findings</Link>
+          </ToastAction>
         ) : (
           <ToastAction altText="View scheduled scans" asChild>
             <Link href={`/scans?tab=${SCAN_JOBS_TAB.SCHEDULED}`}>

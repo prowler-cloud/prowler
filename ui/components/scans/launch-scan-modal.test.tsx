@@ -132,6 +132,7 @@ import {
 } from "@/lib/action-errors";
 import { PRICING_URL } from "@/lib/external-urls";
 import { ProviderProps } from "@/types";
+import { SCAN_JOBS_TAB } from "@/types/scans";
 import { SCAN_SCHEDULE_CAPABILITY } from "@/types/schedules";
 
 import { LaunchScanModal } from "./launch-scan-modal";
@@ -442,6 +443,8 @@ describe("LaunchScanModal", () => {
       expect(toastMock).toHaveBeenCalledWith(
         expect.objectContaining({ title: "Scan schedule saved" }),
       );
+      const link = toastMock.mock.calls[0]?.[0].action.props.children;
+      expect(link.props.href).toBe(`/scans?tab=${SCAN_JOBS_TAB.SCHEDULED}`);
     });
 
     it("keeps the upcoming local hour when provider scan fields say there is no schedule", async () => {
@@ -522,6 +525,10 @@ describe("LaunchScanModal", () => {
           title: "Scan schedule saved and initial scan launched",
         }),
       );
+      // The running scan is not on the scheduled tab, but its findings are stored.
+      const link = toastMock.mock.calls[0]?.[0].action.props.children;
+      expect(link.props.href).toBe("/findings");
+      expect(link.props.children).toBe("View findings");
     });
 
     it("offers the plans when the usage limit refuses the schedule", async () => {
