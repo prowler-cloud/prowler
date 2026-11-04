@@ -56,7 +56,7 @@ class Test_project_linked_to_git_repository:
         assert result[0].status == "PASS"
         assert (
             result[0].status_extended
-            == f"Project {PROJECT_NAME} is linked to the github repository acme/storefront, so deployments are traceable to commits."
+            == f"Project {PROJECT_NAME} is linked to the github repository acme/storefront."
         )
         assert result[0].team_id == TEAM_ID
 

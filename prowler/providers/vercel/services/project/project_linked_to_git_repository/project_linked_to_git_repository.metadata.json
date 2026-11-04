@@ -9,7 +9,7 @@
   "Severity": "medium",
   "ResourceType": "NotDefined",
   "ResourceGroup": "devops",
-  "Description": "**Vercel projects** are assessed for a **Git repository link**. A linked project deploys from commits pushed to GitHub, GitLab or Bitbucket, so each deployment maps to a reviewed commit; an unlinked project only receives deployments uploaded with the Vercel CLI from an arbitrary machine.",
+  "Description": "**Vercel projects** are assessed for a **Git repository link**. A linked project builds automatically from commits pushed to GitHub, GitLab or Bitbucket; an unlinked project only receives deployments uploaded with the Vercel CLI or REST API from an arbitrary machine.",
   "Risk": "Without a Git link, anyone holding a Vercel token can deploy **unreviewed code** straight to production from a laptop, bypassing branch protection, pull request review and CI. There is no commit to audit, so a **malicious or compromised deployment** is hard to detect and roll back, and supply-chain controls on the repository do not apply to what is actually served.",
   "RelatedUrl": "",
   "AdditionalURLs": [
@@ -20,7 +20,7 @@
     "Code": {
       "CLI": "vercel git connect https://github.com/<OWNER>/<REPO>.git",
       "NativeIaC": "",
-      "Other": "1. Navigate to your Vercel project dashboard\n2. Go to Settings > Git\n3. Click Connect Git Repository and choose the GitHub, GitLab or Bitbucket repository that holds the project source\n4. Set the Production Branch to the protected branch\n5. Remove CLI-based deployment tokens that are no longer needed",
+      "Other": "1. Navigate to your Vercel project dashboard\n2. Go to Settings > Git\n3. Click Connect Git Repository and choose the GitHub, GitLab or Bitbucket repository that holds the project source\n4. Set the Production Branch to the protected branch\n5. Remove Vercel access tokens used for CLI or REST API deployments that are no longer needed",
       "Terraform": "```hcl\nresource \"vercel_project\" \"<example_resource_name>\" {\n  name      = \"<example_resource_name>\"\n  framework = \"nextjs\"\n\n  git_repository = {          # Critical: deploy only from the reviewed repository\n    type = \"github\"\n    repo = \"<OWNER>/<REPO>\"\n  }\n}\n```"
     },
     "Recommendation": {

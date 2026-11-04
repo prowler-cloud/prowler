@@ -44,11 +44,12 @@ class project_environment_no_secrets_with_public_prefix(Check):
             List[CheckReportVercel]: A list of reports for each project.
         """
         findings = []
+        configured_prefixes = project_client.audit_config.get("public_env_prefixes")
+        # Frameworks match the public prefix case-sensitively
         public_prefixes = tuple(
-            p.upper()
-            for p in project_client.audit_config.get(
-                "public_env_prefixes", DEFAULT_PUBLIC_ENV_PREFIXES
-            )
+            DEFAULT_PUBLIC_ENV_PREFIXES
+            if configured_prefixes is None
+            else configured_prefixes
         )
         secret_suffixes = tuple(
             s.upper()
@@ -60,13 +61,21 @@ class project_environment_no_secrets_with_public_prefix(Check):
         for project in project_client.projects.values():
             report = CheckReportVercel(metadata=self.metadata(), resource=project)
 
+            if not project.environment_variables_fetched:
+                report.status = "MANUAL"
+                report.status_extended = (
+                    f"Project {project.name} environment variables could not be "
+                    f"retrieved. Manual verification is required."
+                )
+                findings.append(report)
+                continue
+
             exposed_keys = []
             for env_var in project.environment_variables:
-                upper_key = env_var.key.upper()
-                if not upper_key.startswith(public_prefixes):
+                if not env_var.key.startswith(public_prefixes):
                     continue
                 if (
-                    upper_key.endswith(secret_suffixes)
+                    env_var.key.upper().endswith(secret_suffixes)
                     or env_var.type in SENSITIVE_TYPES
                 ):
                     exposed_keys.append(env_var.key)

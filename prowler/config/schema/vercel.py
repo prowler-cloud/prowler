@@ -4,7 +4,7 @@ from typing import Optional
 
 from pydantic import Field
 
-from prowler.config.schema.base import ProviderConfigBase
+from prowler.config.schema.base import NonEmptyScopeIdentifier, ProviderConfigBase
 
 
 class VercelProviderConfig(ProviderConfigBase):
@@ -66,7 +66,7 @@ class VercelProviderConfig(ProviderConfigBase):
         default=None,
         description="Suffixes that mark a project env var as secret-like.",
     )
-    public_env_prefixes: Optional[list[str]] = Field(
+    public_env_prefixes: Optional[list[NonEmptyScopeIdentifier]] = Field(
         default=None,
         description="Prefixes that frontend frameworks expose to the browser bundle.",
     )

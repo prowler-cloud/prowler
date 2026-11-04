@@ -7,10 +7,9 @@ from prowler.providers.vercel.services.project.project_client import project_cli
 class project_linked_to_git_repository(Check):
     """Check that the project is linked to a Git repository.
 
-    This class verifies whether each Vercel project deploys from a connected
-    Git repository, so every production change is traceable to a commit and
-    protected by the repository's review process, instead of being pushed
-    from a developer workstation with the Vercel CLI.
+    This class verifies whether each Vercel project is connected to a Git
+    repository. A linked project still accepts CLI or REST API deployments, so
+    a PASS does not prove every deployment came from a reviewed commit.
     """
 
     def execute(self) -> List[CheckReportVercel]:
@@ -32,7 +31,7 @@ class project_linked_to_git_repository(Check):
                 report.status = "PASS"
                 report.status_extended = (
                     f"Project {project.name} is linked to the {provider} "
-                    f"repository {repo}, so deployments are traceable to commits."
+                    f"repository {repo}."
                 )
             else:
                 report.status = "FAIL"

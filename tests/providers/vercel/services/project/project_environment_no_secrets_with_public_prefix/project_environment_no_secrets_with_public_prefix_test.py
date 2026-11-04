@@ -131,3 +131,40 @@ class Test_project_environment_no_secrets_with_public_prefix:
             result[0].status_extended
             == f"Project {PROJECT_NAME} has 1 secret-like environment variable(s) exposed to the browser through a public prefix: ASTRO_DB_CREDENTIAL."
         )
+
+    def test_env_vars_not_fetched_is_manual(self):
+        project_client = mock.MagicMock
+        project_client.audit_config = {}
+        project = _project([])
+        project.environment_variables_fetched = False
+        project_client.projects = {PROJECT_ID: project}
+
+        result = _run(project_client)
+        assert len(result) == 1
+        assert result[0].status == "MANUAL"
+        assert (
+            result[0].status_extended
+            == f"Project {PROJECT_NAME} environment variables could not be retrieved. Manual verification is required."
+        )
+
+    def test_lowercase_public_prefix_is_not_flagged(self):
+        project_client = mock.MagicMock
+        project_client.audit_config = {}
+        project_client.projects = {
+            PROJECT_ID: _project([_env("next_public_API_KEY", type="plain")])
+        }
+
+        result = _run(project_client)
+        assert len(result) == 1
+        assert result[0].status == "PASS"
+
+    def test_null_public_env_prefixes_falls_back_to_defaults(self):
+        project_client = mock.MagicMock
+        project_client.audit_config = {"public_env_prefixes": None}
+        project_client.projects = {
+            PROJECT_ID: _project([_env("NEXT_PUBLIC_API_TOKEN", type="plain")])
+        }
+
+        result = _run(project_client)
+        assert len(result) == 1
+        assert result[0].status == "FAIL"
