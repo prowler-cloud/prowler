@@ -38,15 +38,17 @@ import { SearchParamsProps } from "@/types/components";
 import { FindingsFiltersSection } from "./_components/findings-filters-section";
 import { FindingsFiltersSkeleton } from "./_components/findings-filters-skeleton";
 import { FindingsSamplePreview } from "./_components/findings-sample-preview";
+import { shouldShowFindingsSample } from "./_lib/should-show-findings-sample";
 
 export default async function Findings({
   searchParams,
 }: {
   searchParams: Promise<SearchParamsProps>;
 }) {
-  // Sample data replaces the page (and its paywall) until the first scan completes.
+  // Sample data replaces the page (and its paywall) until the running first
+  // scan has stored findings, then the early findings view takes over.
   const preview = await getSamplePreviewState();
-  if (preview.active) {
+  if (preview.active && (await shouldShowFindingsSample(preview))) {
     return (
       <ContentLayout title="Findings" icon={<Tag />}>
         <FindingsSamplePreview

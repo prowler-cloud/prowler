@@ -1,5 +1,6 @@
 import { FindingsFilters } from "@/components/findings/findings-filters";
 import { FindingsGroupTable } from "@/components/findings/table";
+import { AutoRefresh } from "@/components/scans/auto-refresh";
 import { SamplePreviewBanner } from "@/components/shared/sample-preview/sample-preview-banner";
 import { FilterTransitionWrapper } from "@/contexts";
 import { SAMPLE_ACCOUNT } from "@/lib/sample-preview/sample-dataset";
@@ -9,7 +10,10 @@ import {
   SAMPLE_FINDING_FILTER_OPTIONS,
 } from "@/lib/sample-preview/sample-findings";
 import { SAMPLE_PREVIEW_PAGE } from "@/lib/sample-preview/sample-preview-events";
-import type { SamplePreviewActive } from "@/lib/sample-preview/sample-preview-state";
+import {
+  SAMPLE_PREVIEW_STAGE,
+  type SamplePreviewActive,
+} from "@/lib/sample-preview/sample-preview-state";
 import type { SearchParamsProps } from "@/types/components";
 
 // Scoping to the sample scan is what makes every drill-down action answer
@@ -33,6 +37,10 @@ export function FindingsSamplePreview({
 
   return (
     <>
+      {/* Re-checks on the server whether the running scan's findings can take over. */}
+      <AutoRefresh
+        hasExecutingScan={state.stage === SAMPLE_PREVIEW_STAGE.SCAN_RUNNING}
+      />
       <SamplePreviewBanner state={state} page={SAMPLE_PREVIEW_PAGE.FINDINGS} />
       <FilterTransitionWrapper>
         <div className="mb-6">

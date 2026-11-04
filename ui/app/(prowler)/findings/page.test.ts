@@ -48,6 +48,12 @@ describe("findings page", () => {
     );
   });
 
+  it("hands the sample preview over to early findings once the running first scan has some", () => {
+    expect(source).toContain(
+      "preview.active && (await shouldShowFindingsSample(preview))",
+    );
+  });
+
   it("guards errors array access with a length check", () => {
     expect(source).toContain("errors?.length > 0");
   });
