@@ -22,6 +22,7 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 | Action                                                         | Skill               |
 | -------------------------------------------------------------- | ------------------- |
 | Add changelog entry for a PR or feature                        | `prowler-changelog` |
+| Add or edit changelog fragments in <component>/changelog.d/    | `prowler-changelog` |
 | App Router / Server Actions                                    | `nextjs-16`         |
 | Building AI chat features                                      | `ai-sdk-5`          |
 | Committing changes                                             | `prowler-commit`    |
@@ -36,7 +37,6 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 | Review changelog format and conventions                        | `prowler-changelog` |
 | Reviewing Prowler UI components                                | `prowler-ui`        |
 | Testing hooks or utilities                                     | `vitest`            |
-| Update CHANGELOG.md in any component                           | `prowler-changelog` |
 | Using Zustand stores                                           | `zustand-5`         |
 | Working on Prowler UI structure (actions/adapters/types/hooks) | `prowler-ui`        |
 | Working on task                                                | `tdd`               |
@@ -194,6 +194,8 @@ pnpm install && pnpm run dev
 pnpm run typecheck
 pnpm run lint:fix
 pnpm run healthcheck
+pnpm run test:unit
+pnpm run test:integration
 pnpm run test:e2e
 pnpm run test:e2e:ui
 ```
@@ -203,6 +205,7 @@ pnpm run test:e2e:ui
 ## QA CHECKLIST BEFORE COMMIT
 
 - [ ] `pnpm run typecheck` passes
+- [ ] `pnpm run test:unit` passes (and `test:integration` if you touched API-backed components)
 - [ ] `pnpm run lint:fix` passes
 - [ ] `pnpm run format:write` passes
 - [ ] Relevant E2E tests pass

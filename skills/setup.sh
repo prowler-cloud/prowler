@@ -3,7 +3,7 @@
 # Configures AI coding assistants that follow agentskills.io standard:
 #   - Claude Code: .claude/skills/ symlink + CLAUDE.md symlink
 #   - Gemini CLI: .gemini/skills/ symlink + GEMINI.md symlink
-#   - Codex (OpenAI): .codex/skills/ symlink + AGENTS.md (native)
+#   - Codex (OpenAI): .agents/skills/ (+ legacy .codex/skills/) symlinks + AGENTS.md (native)
 #   - GitHub Copilot: .github/copilot-instructions.md symlink
 #
 # Usage:
@@ -170,21 +170,26 @@ setup_gemini() {
 }
 
 setup_codex() {
-    local target="$REPO_ROOT/.codex/skills"
+    # Codex discovers repository skills in .agents/skills (from the working
+    # directory up to the repo root). .codex/skills is kept for older setups.
+    local dir
+    for dir in .agents .codex; do
+        local target="$REPO_ROOT/$dir/skills"
 
-    if [ ! -d "$REPO_ROOT/.codex" ]; then
-        mkdir -p "$REPO_ROOT/.codex"
-    fi
-    add_to_gitignore ".codex/skills"
+        if [ ! -d "$REPO_ROOT/$dir" ]; then
+            mkdir -p "$REPO_ROOT/$dir"
+        fi
+        add_to_gitignore "$dir/skills"
 
-    if [ -L "$target" ]; then
-        rm "$target"
-    elif [ -d "$target" ]; then
-        mv "$target" "$REPO_ROOT/.codex/skills.backup.$(date +%s)"
-    fi
+        if [ -L "$target" ]; then
+            rm "$target"
+        elif [ -d "$target" ]; then
+            mv "$target" "$REPO_ROOT/$dir/skills.backup.$(date +%s)"
+        fi
 
-    ln -s "$SKILLS_SOURCE" "$target"
-    echo -e "${GREEN}  ✓ .codex/skills -> skills/${NC}"
+        ln -s "$SKILLS_SOURCE" "$target"
+        echo -e "${GREEN}  ✓ $dir/skills -> skills/${NC}"
+    done
     echo -e "${GREEN}  ✓ Codex uses AGENTS.md natively${NC}"
 }
 

@@ -17,6 +17,7 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 | Action | Skill |
 |--------|-------|
 | Add changelog entry for a PR or feature | `prowler-changelog` |
+| Add or edit changelog fragments in <component>/changelog.d/ | `prowler-changelog` |
 | Adding DRF pagination or permissions | `django-drf` |
 | Adding indexes or constraints to database tables | `django-migration-psql` |
 | Adding privilege escalation detection queries | `prowler-attack-paths-query` |
@@ -42,7 +43,6 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 | Reviewing JSON:API compliance | `jsonapi` |
 | Running makemigrations or pgmakemigrations | `django-migration-psql` |
 | Testing RLS tenant isolation | `prowler-test-api` |
-| Update CHANGELOG.md in any component | `prowler-changelog` |
 | Updating existing Attack Paths queries | `prowler-attack-paths-query` |
 | Working on task | `tdd` |
 | Writing Prowler API tests | `prowler-test-api` |
@@ -100,17 +100,17 @@ Needs retry → Celery task
 ## COMMANDS
 
 ```bash
-# Development
-uv run python src/backend/manage.py runserver
+# Development (from api/src/backend)
+uv run python manage.py runserver
 uv run celery -A config.celery worker -l INFO
 
-# Database
-uv run python src/backend/manage.py makemigrations
-uv run python src/backend/manage.py migrate
+# Database (from api/src/backend)
+uv run python manage.py makemigrations
+uv run python manage.py migrate --database admin
 
-# Testing & Linting
+# Testing (from api/src/backend) & Linting (from the repo root)
 uv run pytest -x --tb=short
-uv run make lint
+make lint-api
 ```
 
 ---
@@ -118,7 +118,7 @@ uv run make lint
 ## QA CHECKLIST
 
 - [ ] `uv run pytest` passes
-- [ ] `uv run make lint` passes
+- [ ] `make lint-api` passes (from the repo root)
 - [ ] Migrations created if models changed
 - [ ] New endpoints have `@extend_schema` decorators
 - [ ] RLS properly applied for tenant data
