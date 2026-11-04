@@ -1,28 +1,31 @@
-import { RealtimePageShell } from "@/components/realtime/realtime-page-shell";
-import { RealtimeWorkspace } from "@/components/realtime/realtime-workspace";
-import { SearchParamsProps } from "@/types";
+import { Radar } from "lucide-react";
+import { notFound } from "next/navigation";
+import { Suspense } from "react";
 
-const first = (value: string | string[] | undefined) =>
-  typeof value === "string" ? value : undefined;
+import { RealtimeDashboard } from "@/app/(prowler)/realtime/_components/dashboard/realtime-dashboard";
+import { RealtimeDashboardSkeleton } from "@/app/(prowler)/realtime/_components/dashboard/realtime-dashboard-skeleton";
+import { RealtimeGate } from "@/app/(prowler)/realtime/_components/shared/realtime-gate";
+import type { RealtimeSearchParams } from "@/app/(prowler)/realtime/_lib/routes";
+import { ContentLayout } from "@/components/shadcn/content-layout";
+import { isCloud } from "@/lib/shared/env";
 
-export default async function Realtime({
+interface RealtimePageProps {
+  searchParams: Promise<RealtimeSearchParams>;
+}
+
+export default async function RealtimePage({
   searchParams,
-}: {
-  searchParams: Promise<SearchParamsProps>;
-}) {
-  const resolved = await searchParams;
+}: RealtimePageProps) {
+  if (!isCloud()) notFound();
+  const params = await searchParams;
 
   return (
-    <RealtimePageShell>
-      {(providers) => (
-        <RealtimeWorkspace
-          // A soft navigation (e.g. the sidebar link) must reset the selection.
-          key={`${first(resolved.provider)}:${first(resolved.tab)}`}
-          providers={providers}
-          initialProviderId={first(resolved.provider)}
-          initialTab={first(resolved.tab)}
-        />
-      )}
-    </RealtimePageShell>
+    <ContentLayout title="Realtime" icon={<Radar />}>
+      <RealtimeGate pending={<RealtimeDashboardSkeleton />}>
+        <Suspense fallback={<RealtimeDashboardSkeleton />}>
+          <RealtimeDashboard searchParams={params} />
+        </Suspense>
+      </RealtimeGate>
+    </ContentLayout>
   );
 }
