@@ -72,6 +72,14 @@ const INVALID_PROVIDER = "Select an AWS provider first.";
 const MAX_EVENTS = 500;
 const DEFAULT_PAGE_SIZE = 25;
 
+/** `collection`, `collection/<kind or uuid>` or `collection/<uuid>/<action>`. */
+const SAFE_PATH =
+  /^[a-z-]+(?:\/(?:[a-z-]+|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?:\/[a-z-]+)?)?$/;
+/** `provider`, `limit`, `page[number]`, `filter[status__in]`, `sort`... */
+const SAFE_QUERY_KEY = /^[a-z_]+(?:\[[a-z_]+\])?$/;
+/** Ids, numbers, comma lists, sort keys, regions and Cost Explorer service names. */
+const SAFE_QUERY_VALUE = /^[\w .,:()&/-]{0,200}$/;
+
 const uuid = z.uuid();
 const isUuid = (value: string) => uuid.safeParse(value).success;
 
@@ -118,11 +126,21 @@ const call = async (
   | { ok: true; document: RealtimeApiDocument | undefined; status: number }
   | RealtimeFailure
 > => {
+  // Only known path shapes and plain query values reach the API (no SSRF).
+  if (!SAFE_PATH.test(path)) return fail(400, "Unknown Realtime resource.");
+  const query = new URLSearchParams();
+  for (const [key, value] of Array.from(init.query ?? [])) {
+    if (!SAFE_QUERY_KEY.test(key) || !SAFE_QUERY_VALUE.test(value)) {
+      return fail(400, "The request has a value Prowler cannot send.");
+    }
+    query.append(key, value);
+  }
+  const search = query.toString();
+  const url = `${REALTIME_URL}/${path}${search ? `?${search}` : ""}`;
+
   let response: Response;
   try {
-    const url = new URL(`${REALTIME_URL}/${path}`);
-    init.query?.forEach((value, key) => url.searchParams.append(key, value));
-    response = await fetch(url.toString(), {
+    response = await fetch(url, {
       method: init.method ?? "GET",
       headers: await getAuthHeaders({ contentType: init.body !== undefined }),
       body: init.body === undefined ? undefined : JSON.stringify(init.body),

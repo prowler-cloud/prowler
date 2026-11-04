@@ -210,6 +210,12 @@ describe("summaries", () => {
       ),
     ).toBe("eu-west-1");
     expect(regionFromQueueUrl("not a url")).toBeNull();
+    // The host must end at amazonaws.com, so a lookalike domain is not a queue URL.
+    expect(
+      regionFromQueueUrl(
+        "https://sqs.eu-west-1.amazonaws.com.evil.example/1/q",
+      ),
+    ).toBeNull();
   });
 
   it("names the frameworks and dry run in the enforcement summary", () => {

@@ -212,7 +212,7 @@ export const preflightChecks = ({
 };
 
 const QUEUE_URL_REGION =
-  /^https:\/\/sqs\.([a-z]{2}(?:-[a-z]+)+-\d)\.amazonaws\.com/;
+  /^https:\/\/sqs\.([a-z]{2}(?:-[a-z]+)+-\d)\.amazonaws\.com(?:\.cn)?\//;
 
 /** The region inside an SQS queue URL, when it has one. */
 export const regionFromQueueUrl = (url: string): string | null =>

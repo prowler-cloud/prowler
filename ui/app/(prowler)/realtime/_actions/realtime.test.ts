@@ -62,6 +62,33 @@ describe("realtime actions", () => {
     vi.spyOn(console, "error").mockImplementation(() => {});
   });
 
+  it("never sends a query value outside the plain characters the API takes", async () => {
+    const result = await getRealtimeCostAnomaly({
+      providerId: "1f0e6c1e-6b1a-4c8f-9d55-7d6d1d8c2a10",
+      service: "Amazon EC2\nHost: evil.example",
+      region: "us-east-1",
+    });
+
+    expect(result).toMatchObject({ ok: false, status: 400 });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("sends Cost Explorer service names as they are", async () => {
+    fetchMock.mockResolvedValue(json({}, 404));
+
+    await getRealtimeCostAnomaly({
+      providerId: "1f0e6c1e-6b1a-4c8f-9d55-7d6d1d8c2a10",
+      service: "Amazon Elastic Compute Cloud - Compute",
+      region: "us-east-1",
+    });
+
+    const url = new URL(fetchMock.mock.calls[0][0]);
+    expect(url.pathname.endsWith("/realtime/insights/anomaly")).toBe(true);
+    expect(url.searchParams.get("service")).toBe(
+      "Amazon Elastic Compute Cloud - Compute",
+    );
+  });
+
   it("rejects a malformed provider id without calling the API", async () => {
     const result = await getRealtimeEvents({ providerId: "nope" });
 
