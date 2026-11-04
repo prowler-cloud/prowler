@@ -1,0 +1,37 @@
+{
+  "Provider": "cloudflare",
+  "CheckID": "zone_firewall_no_skip_all_traffic_rules",
+  "CheckTitle": "Cloudflare zone has no firewall skip rules that match all traffic",
+  "CheckType": [],
+  "ServiceName": "zone",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Zone",
+  "ResourceGroup": "network",
+  "Description": "**Cloudflare zones** are assessed for enabled firewall rules with the **`skip` action** whose expression matches **every request** (for example `true`, a `wildcard \"*\"` match or `ip.src in {0.0.0.0/0 ::/0}`), which turn off custom rules, managed WAF rulesets, rate limiting or other security products for all traffic.",
+  "Risk": "A **skip rule that matches all traffic** disables the protections it skips for every request, while the zone still reports them as enabled. Depending on what is skipped:\n- **Integrity**: attack and bot traffic reach the origin without WAF or custom rule inspection\n- **Availability**: rate limiting no longer applies\n- **Detection**: dashboards suggest protection that is not enforced",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://developers.cloudflare.com/waf/custom-rules/skip/",
+    "https://developers.cloudflare.com/ruleset-engine/rules-language/expressions/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Log in to the Cloudflare dashboard and select the domain\n2. Go to Security > WAF > Custom rules (and Managed rules exceptions)\n3. Find enabled rules with the Skip action whose expression matches all requests\n4. Narrow the expression to the specific trusted traffic (for example a path, hostname or IP list), or delete the rule\n5. Save and deploy the changes",
+      "Terraform": "```hcl\nresource \"cloudflare_ruleset\" \"custom\" {\n  zone_id = \"<ZONE_ID>\"\n  name    = \"custom rules\"\n  kind    = \"zone\"\n  phase   = \"http_request_firewall_custom\"\n\n  rules = [{\n    action = \"skip\"\n    # Critical: scope the skip to trusted traffic instead of \"true\"\n    expression = \"(ip.src in $trusted_monitoring and http.request.uri.path eq \\\"/health\\\")\"\n    action_parameters = { ruleset = \"current\" }\n  }]\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Never **skip security features for all traffic**.\n- Scope skip rules to the minimum trusted traffic (specific paths, hostnames or IP lists)\n- Remove temporary bypass rules after debugging\n- Review custom rules and managed rule exceptions regularly",
+      "Url": "https://hub.prowler.com/checks/cloudflare/zone_firewall_no_skip_all_traffic_rules"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Only enabled rules are evaluated. Skip rules scoped to specific traffic (for example a health-check path or a trusted IP list) pass."
+}
