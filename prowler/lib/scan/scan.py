@@ -248,7 +248,16 @@ class Scan:
         self._service_checks_completed = service_checks_completed
 
     def _sort_checks(self, checks) -> list[str]:
-        # Highest severity first, so a long scan stores its most valuable findings early.
+        """Order checks by severity, highest first, then by name.
+
+        A long scan then stores its most valuable findings early.
+
+        Args:
+            checks: Check names to order.
+
+        Returns:
+            list[str]: The ordered check names.
+        """
         return sorted(
             checks,
             key=lambda check: (

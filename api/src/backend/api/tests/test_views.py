@@ -19827,6 +19827,11 @@ class TestFindingGroupViewSet:
     ):
         """A first scan writes no summaries until it completes; titles come from the SDK."""
         FindingGroupDailySummary.objects.all().delete()
+        Scan.objects.filter(
+            id__in=Finding.objects.filter(check_id="ec2_instance_public_ip").values(
+                "scan_id"
+            )
+        ).update(state=StateChoices.EXECUTING, completed_at=None)
 
         response = authenticated_client.get(
             reverse("finding-group-list"),

@@ -40,8 +40,13 @@ describe("getEarlyFindingScanFilters", () => {
     expect(getEarlyFindingScanFilters(filters, false, [])).toBe(filters);
   });
 
-  it("respects a scan or date the user picked", () => {
+  it("respects a date the user picked", () => {
     const picked = { "filter[inserted_at]": "2026-04-07" };
+    expect(getEarlyFindingScanFilters(picked, false, ["scan-1"])).toBe(picked);
+  });
+
+  it("respects a scan the user picked", () => {
+    const picked = { "filter[scan__in]": "scan-picked" };
     expect(getEarlyFindingScanFilters(picked, false, ["scan-1"])).toBe(picked);
   });
 });

@@ -27,6 +27,7 @@ import {
 } from "@/lib/findings-access";
 import {
   getEarlyFindingScanFilters,
+  getScanFilterIds,
   isScanSettled,
   resolveFindingScanDateFilters,
 } from "@/lib/findings-scan-filters";
@@ -91,6 +92,11 @@ export default async function Findings({
     earlyScans.map((scan) => scan.id),
   );
   const isEarlyView = earlyFilters !== filters;
+  // A scan picked by the user (e.g. "View Early Findings") may still be running too.
+  const pickedScanIds = getScanFilterIds(filters);
+  const runningScans = isEarlyView
+    ? executingScans
+    : executingScans.filter((scan) => pickedScanIds.includes(scan.id));
   const filtersWithScanDates = await resolveFindingScanDateFilters({
     filters: earlyFilters,
     scans: earlyScans,
@@ -112,15 +118,15 @@ export default async function Findings({
   return (
     <ContentLayout title="Findings" icon={<Tag />}>
       <FilterTransitionWrapper>
-        {isEarlyView && (
+        {(isEarlyView || runningScans.length > 0) && (
           <>
             <AutoRefresh hasExecutingScan />
             <Alert variant="info" className="mb-6">
               <Info className="size-4" />
               <AlertDescription>
-                {executingScans.length > 0
-                  ? `Your first scan is running (${Math.min(
-                      ...executingScans.map((scan) => scan.attributes.progress),
+                {runningScans.length > 0
+                  ? `${isEarlyView ? "Your first scan" : "This scan"} is running (${Math.min(
+                      ...runningScans.map((scan) => scan.attributes.progress),
                     )}% done). These are the findings found so far, and the page updates on its own as more come in.`
                   : "Your first scan just finished. The full view, with every filter, is getting ready and loads on its own in a moment."}
               </AlertDescription>

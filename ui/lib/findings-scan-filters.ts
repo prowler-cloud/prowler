@@ -21,7 +21,7 @@ const INSERTED_AT_FILTER_KEYS = [
   "filter[inserted_at__lte]",
 ] as const;
 
-function getScanFilterIds(filters: Record<string, string>): string[] {
+export function getScanFilterIds(filters: Record<string, string>): string[] {
   const scanIds = filters["filter[scan__in]"] || filters["filter[scan]"] || "";
   return Array.from(new Set(scanIds.split(",").filter(Boolean)));
 }

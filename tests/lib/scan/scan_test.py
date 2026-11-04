@@ -242,6 +242,8 @@ class TestScan:
             "accessanalyzer_enabled": Severity.low,
             "iam_root_mfa_enabled": Severity.critical,
             "ec2_instance_public_ip": Severity.high,
+            "cloudtrail_log_file_validation_enabled": Severity.medium,
+            "account_maintain_current_contact_details": Severity.informational,
         }
         mock_provider.type = "aws"
         with mock.patch(
@@ -257,7 +259,9 @@ class TestScan:
                 "iam_root_mfa_enabled",
                 "s3_bucket_public_access",
                 "ec2_instance_public_ip",
+                "cloudtrail_log_file_validation_enabled",
                 "accessanalyzer_enabled",
+                "account_maintain_current_contact_details",
             ]
 
     def test_init_with_no_checks(
