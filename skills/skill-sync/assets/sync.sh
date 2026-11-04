@@ -17,6 +17,7 @@ NC='\033[0m'
 
 # Options
 DRY_RUN=false
+sync_failures=0
 FILTER_SCOPE=""
 
 # Parse arguments
@@ -306,6 +307,7 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
             else
                 rm -f "$agents_path.tmp"
                 echo -e "${RED}  ✗ No Auto-invoke section or Skills Reference blockquote found in $agents_path; nothing inserted${NC}"
+                sync_failures=$((sync_failures + 1))
             fi
         fi
 
@@ -314,7 +316,11 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 done
 
 echo ""
-echo -e "${GREEN}Done!${NC}"
+if [ "$sync_failures" -gt 0 ]; then
+    echo -e "${RED}Done with $sync_failures file(s) not updated${NC}"
+else
+    echo -e "${GREEN}Done!${NC}"
+fi
 
 # Show skills without metadata
 echo ""
@@ -336,3 +342,5 @@ done < <(find "$SKILLS_DIR" -mindepth 2 -maxdepth 2 -name SKILL.md -print | sort
 if [ $missing -eq 0 ]; then
     echo -e "  ${GREEN}All skills have sync metadata${NC}"
 fi
+
+[ "$sync_failures" -eq 0 ] || exit 1

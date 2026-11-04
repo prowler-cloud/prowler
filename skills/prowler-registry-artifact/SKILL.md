@@ -190,8 +190,11 @@ metadata that fails validation (`prowler {provider} --list-checks` in a clean ve
 ```bash
 # Public
 pip install --extra-index-url https://registry.prowler.com/simple/ "<package-name>[runtime]"
-# Private (download key: download:official | download:official-verified | download:all)
-pip install --extra-index-url https://__token__:${PRR_DOWNLOAD_KEY}@registry.prowler.com/simple/ "<package-name>[runtime]"
+# Private (download key: download:official | download:official-verified | download:all).
+# Resolve the artifact ONLY from the Registry: --extra-index-url would also search PyPI, where a public package
+# with the same name could win (dependency confusion). Install runtime dependencies from PyPI separately.
+pip install --index-url https://__token__:${PRR_DOWNLOAD_KEY}@registry.prowler.com/simple/ --no-deps "<package-name>==1.2.0"
+pip install "prowler>=5.48.0"
 # Pin like any package
 pip install "<package-name>[runtime]==1.2.0"
 ```

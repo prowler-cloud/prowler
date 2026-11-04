@@ -59,6 +59,10 @@ class DetailedFinding(SimplifiedFinding):
     resource_ids: list[str] = Field(
         default_factory=list, description="UUIDs of the associated resources"
     )
+    check_metadata: dict = Field(
+        default_factory=dict,
+        description="Check metadata from the API, including remediation (the shipped server models it as CheckMetadata)",
+    )
 
     @classmethod
     def from_api_response(cls, data: dict) -> "DetailedFinding":
@@ -80,6 +84,7 @@ class DetailedFinding(SimplifiedFinding):
             inserted_at=attributes["inserted_at"],
             scan_id=scan_data["id"] if scan_data else None,
             resource_ids=[r["id"] for r in resources_data],
+            check_metadata=attributes.get("check_metadata") or {},
         )
 
 

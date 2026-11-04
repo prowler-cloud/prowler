@@ -184,7 +184,13 @@ setup_codex() {
         if [ -L "$target" ]; then
             rm "$target"
         elif [ -d "$target" ]; then
-            mv "$target" "$REPO_ROOT/$dir/skills.backup.$(date +%s)"
+            local backup
+            backup="$REPO_ROOT/$dir/skills.backup.$(date +%s)"
+            if [ -e "$backup" ]; then
+                echo -e "${RED}  ✗ Backup path $backup already exists; move it away and re-run${NC}"
+                return 1
+            fi
+            mv "$target" "$backup"
         fi
 
         ln -s "$SKILLS_SOURCE" "$target"
