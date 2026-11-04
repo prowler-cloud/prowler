@@ -47,11 +47,17 @@ const scanRunning: SamplePreviewActive = {
 const fetchMock = vi.fn();
 
 // Routes each lookup by its path, so the real actions and adapters run.
-const answerWith = ({ findings }: { findings: Response }) => {
+const answerWith = ({
+  findings,
+  scan = runningScan,
+}: {
+  findings: Response;
+  scan?: () => Response;
+}) => {
   fetchMock.mockImplementation(async (input: string) => {
     const url = new URL(input);
     if (url.pathname.endsWith(`/scans/${RUNNING_SCAN_ID}`)) {
-      return runningScan();
+      return scan();
     }
     if (url.pathname.endsWith("/findings")) return findings;
     throw new Error(`Unexpected request: ${url.pathname}`);
@@ -112,6 +118,20 @@ describe("shouldShowFindingsSample", () => {
   it("keeps the sample when the findings lookup fails", async () => {
     // Given
     answerWith({ findings: json({ errors: [{ detail: "boom" }] }, 503) });
+
+    // When
+    const showSample = await shouldShowFindingsSample(scanRunning);
+
+    // Then
+    expect(showSample).toBe(true);
+  });
+
+  it("keeps the sample when the scan lookup fails with a server error", async () => {
+    // Given
+    answerWith({
+      findings: json({ data: [finding] }),
+      scan: () => json({ errors: [{ detail: "boom" }] }, 503),
+    });
 
     // When
     const showSample = await shouldShowFindingsSample(scanRunning);

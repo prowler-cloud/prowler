@@ -22,13 +22,18 @@ export async function shouldShowFindingsSample(
   if (preview.stage !== SAMPLE_PREVIEW_STAGE.SCAN_RUNNING) return true;
   if (!preview.runningScan) return true;
 
-  // The findings endpoint needs a date range, taken from the scan itself.
-  const filters = await resolveFindingScanDateFilters({
-    filters: { "filter[scan]": preview.runningScan.id },
-    scans: [],
-    loadScan: async (scanId) => (await getScan(scanId))?.data,
-  });
-  const findings = await getFindings({ pageSize: 1, filters });
+  try {
+    // The findings endpoint needs a date range, taken from the scan itself.
+    const filters = await resolveFindingScanDateFilters({
+      filters: { "filter[scan]": preview.runningScan.id },
+      scans: [],
+      loadScan: async (scanId) => (await getScan(scanId))?.data,
+    });
+    const findings = await getFindings({ pageSize: 1, filters });
 
-  return !hasRows(findings);
+    return !hasRows(findings);
+  } catch {
+    // The scan action throws on 5xx: a failed lookup keeps the sample.
+    return true;
+  }
 }
