@@ -3249,7 +3249,7 @@ class TestProviderSecretViewSet:
                         "client_email": "client-email",
                         "client_id": "client-id",
                         "auth_uri": "auth-uri",
-                        "token_uri": "token-uri",
+                        "token_uri": "https://oauth2.googleapis.com/token",
                         "auth_provider_x509_cert_url": "auth-provider-x509-cert-url",
                         "client_x509_cert_url": "client-x509-cert-url",
                         "universe_domain": "universe-domain",
@@ -3714,6 +3714,16 @@ current-context: test-context
             {"type": "authorized_user"},
             {"private_key": "missing-type"},
             "not-a-dict",
+            {},
+            {
+                "type": "service_account",
+                "token_uri": "http://169.254.169.254/computeMetadata/v1/",
+            },
+            {
+                "type": "service_account",
+                "token_uri": "https://attacker.example.com/token",
+            },
+            {"type": "service_account"},
         ],
     )
     def test_provider_secrets_invalid_create_gcp_non_service_account_key(
@@ -3932,6 +3942,7 @@ current-context: test-context
                         "service_account_key": {
                             "type": "service_account",
                             "project_id": "project-id",
+                            "token_uri": "https://oauth2.googleapis.com/token",
                         },
                     },
                     "secret_type": "service_account",
@@ -3958,6 +3969,7 @@ current-context: test-context
             "service_account_key": {
                 "type": "service_account",
                 "project_id": "project-id",
+                "token_uri": "https://oauth2.googleapis.com/token",
             }
         }
 

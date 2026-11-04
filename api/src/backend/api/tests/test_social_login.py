@@ -84,3 +84,34 @@ class TestSocialLoginTokenSubstitution:
 
         mocked_exchange.assert_called_once_with("auth-code")
         assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    @pytest.mark.parametrize(
+        "url_name, response_type",
+        [
+            ("token-github", "github-social-tokens"),
+            ("token-google", "google-social-tokens"),
+        ],
+    )
+    def test_authorization_code_login_returns_prowler_tokens(
+        self, create_test_user_rbac, url_name, response_type
+    ):
+        received_attrs = {}
+
+        def successful_exchange(serializer, attrs):
+            # Stands in for the provider round trip: code exchange + profile.
+            received_attrs.update(attrs)
+            return {**attrs, "user": create_test_user_rbac}
+
+        with patch(
+            "dj_rest_auth.registration.serializers.SocialLoginSerializer.validate",
+            autospec=True,
+            side_effect=successful_exchange,
+        ):
+            response = post_form(url_name, {"code": "auth-code"})
+
+        assert response.status_code == status.HTTP_200_OK
+        assert received_attrs["code"] == "auth-code"
+        data = response.json()["data"]
+        assert data["type"] == response_type
+        assert data["attributes"]["access"]
+        assert data["attributes"]["refresh"]

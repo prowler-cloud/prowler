@@ -375,6 +375,24 @@ class TestGCPProvider:
             {"type": "impersonated_service_account"},
             {"private_key": "missing-type"},
             "not-a-dict",
+            {},
+            {
+                "type": "service_account",
+                "token_uri": "http://169.254.169.254/computeMetadata/v1/",
+            },
+            {
+                "type": "service_account",
+                "token_uri": "https://attacker.example.com/token",
+            },
+            {
+                "type": "service_account",
+                "token_uri": "http://oauth2.googleapis.com/token",
+            },
+            {
+                "type": "service_account",
+                "token_uri": "https://oauth2.googleapis.com.attacker.example/token",
+            },
+            {"type": "service_account"},
         ],
     )
     def test_setup_session_rejects_non_service_account_key(self, service_account_key):
@@ -395,6 +413,7 @@ class TestGCPProvider:
             "type": "service_account",
             "project_id": "test-project",
             "client_email": "prowler@test-project.iam.gserviceaccount.com",
+            "token_uri": "https://oauth2.googleapis.com/token",
         }
         mocked_credentials = MagicMock()
 

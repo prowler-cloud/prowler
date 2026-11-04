@@ -35,6 +35,15 @@ from prowler.providers.gcp.exceptions.exceptions import (
 from prowler.providers.gcp.lib.mutelist.mutelist import GCPMutelist
 from prowler.providers.gcp.models import GCPIdentityInfo, GCPOrganization, GCPProject
 
+# Google's OAuth 2.0 token endpoints. Service account keys carry their own
+# token_uri, and google-auth POSTs a signed assertion there on every refresh.
+GCP_SERVICE_ACCOUNT_TOKEN_URIS = frozenset(
+    {
+        "https://oauth2.googleapis.com/token",
+        "https://accounts.google.com/o/oauth2/token",
+    }
+)
+
 
 class GcpProvider(Provider):
     """
@@ -396,21 +405,12 @@ class GcpProvider(Provider):
                         file=__file__, original_exception=error
                     )
 
-            if service_account_key:
+            if service_account_key is not None:
                 logger.info(
                     "GCP provider: Setting credentials from service account key..."
                 )
                 try:
-                    # Only accept genuine service account keys. Other credential
-                    # types (e.g. external_account) make google-auth read local
-                    # files or fetch arbitrary URLs during token refresh.
-                    if (
-                        not isinstance(service_account_key, dict)
-                        or service_account_key.get("type") != "service_account"
-                    ):
-                        raise ValueError(
-                            "The provided key is not a valid service_account key."
-                        )
+                    GcpProvider.validate_service_account_key(service_account_key)
                     credentials = (
                         google_service_account.Credentials.from_service_account_info(
                             service_account_key, scopes=scopes
@@ -903,6 +903,36 @@ class GcpProvider(Provider):
                 project_to_match,
             )
         ) or input_project == project_to_match
+
+    @staticmethod
+    def validate_service_account_key(service_account_key: dict) -> None:
+        """
+        Validate that a service account key is safe to hand to google-auth.
+
+        Other credential types (e.g. external_account) make google-auth read
+        local files or fetch arbitrary URLs during token refresh, and a
+        service_account key with a custom token_uri makes it POST to any URL.
+
+        Args:
+            service_account_key: dict -> The service account key to validate
+
+        Raises:
+            ValueError if the key is not a service_account key or its token_uri
+            is not one of Google's token endpoints
+
+        Usage:
+            >>> GcpProvider.validate_service_account_key(service_account_key)
+        """
+        if (
+            not isinstance(service_account_key, dict)
+            or service_account_key.get("type") != "service_account"
+        ):
+            raise ValueError("The provided key is not a valid service_account key.")
+        if service_account_key.get("token_uri") not in GCP_SERVICE_ACCOUNT_TOKEN_URIS:
+            raise ValueError(
+                "The service_account key token_uri must be one of: "
+                + ", ".join(sorted(GCP_SERVICE_ACCOUNT_TOKEN_URIS))
+            )
 
     @staticmethod
     def validate_static_arguments(
