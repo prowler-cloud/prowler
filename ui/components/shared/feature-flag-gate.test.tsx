@@ -17,7 +17,7 @@ import { FeatureFlagGate } from "./feature-flag-gate";
 const renderGate = () =>
   render(
     <FeatureFlagGate
-      flag={FEATURE_FLAG.ISSUES}
+      flag={FEATURE_FLAG.SAMPLE_DATA_PREVIEW}
       fallback={<p>off state</p>}
       pending={<p>pending state</p>}
     >
@@ -35,7 +35,7 @@ describe("FeatureFlagGate", () => {
 
     renderGate();
 
-    expect(useFeatureFlagStateMock).toHaveBeenCalledWith("issues-feature");
+    expect(useFeatureFlagStateMock).toHaveBeenCalledWith("sample-data-preview");
   });
 
   it("should render the children when the flag is on", () => {
@@ -76,7 +76,7 @@ describe("FeatureFlagGate", () => {
       useFeatureFlagStateMock.mockReturnValue(state);
 
       const { container } = render(
-        <FeatureFlagGate flag={FEATURE_FLAG.ISSUES}>
+        <FeatureFlagGate flag={FEATURE_FLAG.SAMPLE_DATA_PREVIEW}>
           <p>on state</p>
         </FeatureFlagGate>,
       );

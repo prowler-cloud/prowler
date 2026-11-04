@@ -25,9 +25,11 @@ describe("useFeatureFlagState", () => {
   it("should pass the flag key through to PostHog", () => {
     useFeatureFlagEnabledMock.mockReturnValue(undefined);
 
-    renderHook(() => useFeatureFlagState(FEATURE_FLAG.ISSUES));
+    renderHook(() => useFeatureFlagState(FEATURE_FLAG.SAMPLE_DATA_PREVIEW));
 
-    expect(useFeatureFlagEnabledMock).toHaveBeenCalledWith("issues-feature");
+    expect(useFeatureFlagEnabledMock).toHaveBeenCalledWith(
+      "sample-data-preview",
+    );
   });
 
   it.each([
@@ -42,7 +44,7 @@ describe("useFeatureFlagState", () => {
     useFeatureFlagEnabledMock.mockReturnValue(flagValue);
 
     const { result } = renderHook(() =>
-      useFeatureFlagState(FEATURE_FLAG.ISSUES),
+      useFeatureFlagState(FEATURE_FLAG.SAMPLE_DATA_PREVIEW),
     );
 
     expect(result.current).toBe(expected);
@@ -61,7 +63,7 @@ describe("useFeatureFlagState without PostHog", () => {
 
     // When
     const { result } = renderHook(() =>
-      useFeatureFlagState(FEATURE_FLAG.ISSUES),
+      useFeatureFlagState(FEATURE_FLAG.SAMPLE_DATA_PREVIEW),
     );
 
     // Then: a flag nobody can turn on is off, not pending forever
@@ -74,7 +76,7 @@ describe("useFeatureFlagState without PostHog", () => {
 
     // When
     const { result } = renderHook(() =>
-      useFeatureFlagState(FEATURE_FLAG.ISSUES),
+      useFeatureFlagState(FEATURE_FLAG.SAMPLE_DATA_PREVIEW),
     );
 
     // Then
@@ -90,15 +92,19 @@ describe("useFeatureFlag", () => {
   it("should pass the flag key through to PostHog", () => {
     useFeatureFlagEnabledMock.mockReturnValue(undefined);
 
-    renderHook(() => useFeatureFlag(FEATURE_FLAG.ISSUES));
+    renderHook(() => useFeatureFlag(FEATURE_FLAG.SAMPLE_DATA_PREVIEW));
 
-    expect(useFeatureFlagEnabledMock).toHaveBeenCalledWith("issues-feature");
+    expect(useFeatureFlagEnabledMock).toHaveBeenCalledWith(
+      "sample-data-preview",
+    );
   });
 
   it("should return true when the flag is enabled", () => {
     useFeatureFlagEnabledMock.mockReturnValue(true);
 
-    const { result } = renderHook(() => useFeatureFlag(FEATURE_FLAG.ISSUES));
+    const { result } = renderHook(() =>
+      useFeatureFlag(FEATURE_FLAG.SAMPLE_DATA_PREVIEW),
+    );
 
     expect(result.current).toBe(true);
   });
@@ -109,7 +115,9 @@ describe("useFeatureFlag", () => {
   ])("should return false when the flag is %s", (_label, flagValue) => {
     useFeatureFlagEnabledMock.mockReturnValue(flagValue);
 
-    const { result } = renderHook(() => useFeatureFlag(FEATURE_FLAG.ISSUES));
+    const { result } = renderHook(() =>
+      useFeatureFlag(FEATURE_FLAG.SAMPLE_DATA_PREVIEW),
+    );
 
     expect(result.current).toBe(false);
   });

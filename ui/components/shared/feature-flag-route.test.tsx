@@ -20,7 +20,7 @@ import { FeatureFlagRoute } from "./feature-flag-route";
 
 const renderRoute = () =>
   render(
-    <FeatureFlagRoute flag={FEATURE_FLAG.ISSUES}>
+    <FeatureFlagRoute flag={FEATURE_FLAG.SAMPLE_DATA_PREVIEW}>
       <p>route content</p>
     </FeatureFlagRoute>,
   );
