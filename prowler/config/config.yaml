@@ -758,6 +758,15 @@ cloudflare:
   # Maximum number of retries for API requests (default is 2)
   # Set to 0 to disable retries
   max_retries: 3
+  # cloudflare.account_super_admins_limited
+  # Maximum number of Super Administrators allowed per account
+  max_super_admins: 3
+  # cloudflare.account_api_token_recently_used
+  # Days without use after which an active API token is flagged
+  max_unused_api_token_days: 90
+  # cloudflare.workers_script_no_secrets_in_plain_text_bindings
+  # Regex patterns to exclude from secret scanning
+  secrets_ignore_patterns: []
 
 # Vercel Configuration
 vercel:

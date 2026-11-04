@@ -6,10 +6,10 @@ import type { ReactNode } from "react";
 import {
   loadFindingTriageDetail,
   loadLatestFindingTriageNote,
-  updateFindingTriage,
 } from "@/actions/findings";
 import { getStandaloneFindingColumns } from "@/components/findings/table/column-standalone-findings";
 import { DataTable } from "@/components/shadcn/table";
+import { updateFindingTriageOrThrow } from "@/lib/finding-triage-update";
 import type { FindingProps } from "@/types";
 import type { FindingTriageUpdateHandler } from "@/types/findings-triage";
 
@@ -25,7 +25,7 @@ export function LatestFindingsTable({
   const router = useRouter();
 
   const handleTriageUpdate: FindingTriageUpdateHandler = async (input) => {
-    const result = await updateFindingTriage(input);
+    const result = await updateFindingTriageOrThrow(input);
     router.refresh();
     return result;
   };

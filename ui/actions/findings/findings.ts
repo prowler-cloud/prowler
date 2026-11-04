@@ -6,6 +6,14 @@ import { attachFindingTriageSummariesToResponse } from "@/actions/findings/findi
 import { getFindingTriageAdapterOptions } from "@/actions/findings/findings-triage.options";
 import { apiBaseUrl, getAuthHeaders } from "@/lib";
 import { appendSanitizedProviderTypeFilters } from "@/lib/provider-filters";
+import {
+  getSampleFinding,
+  isSampleId,
+  isSampleScanFilter,
+  sampleFindingDocument,
+  sampleFindingsDocument,
+  sampleFindingsQuery,
+} from "@/lib/sample-preview/sample-records";
 import { handleApiResponse } from "@/lib/server-actions-helper";
 
 const withFindingTriageSummaries = <T extends { data?: unknown }>(
@@ -24,6 +32,14 @@ export const getFindings = async ({
   sort = "",
   filters = {},
 }) => {
+  if (isSampleScanFilter(filters)) {
+    return withFindingTriageSummaries(
+      sampleFindingsDocument(
+        sampleFindingsQuery(filters).slice(0, Number(pageSize) || 10),
+      ),
+    );
+  }
+
   const headers = await getAuthHeaders({ contentType: false });
 
   if (isNaN(Number(page)) || page < 1)
@@ -164,6 +180,11 @@ export const getFindingById = async (
   include = "",
   _options?: GetFindingByIdOptions,
 ) => {
+  if (isSampleId(findingId)) {
+    const finding = getSampleFinding(findingId);
+    return finding ? sampleFindingDocument(finding) : undefined;
+  }
+
   const headers = await getAuthHeaders({ contentType: false });
 
   const url = new URL(`${apiBaseUrl}/findings/${findingId}`);

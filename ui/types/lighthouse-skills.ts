@@ -5,10 +5,20 @@ export const LIGHTHOUSE_SKILL_ID = {
   TRIAGE_DECISION: "triage-decision",
   SYSTEMIC_SCOPE: "systemic-scope",
   COMPLIANCE_IMPACT: "compliance-impact",
+  PROVIDER_CONNECTION_GUIDE: "provider-connection-guide",
 } as const;
 
 export type LighthouseSkillId =
   (typeof LIGHTHOUSE_SKILL_ID)[keyof typeof LIGHTHOUSE_SKILL_ID];
+
+// Where a skill is offered: finding menus never list wizard-only skills.
+export const LIGHTHOUSE_SKILL_SURFACE = {
+  FINDING: "finding",
+  PROVIDER_WIZARD: "provider-wizard",
+} as const;
+
+export type LighthouseSkillSurface =
+  (typeof LIGHTHOUSE_SKILL_SURFACE)[keyof typeof LIGHTHOUSE_SKILL_SURFACE];
 
 // Persisted reference stored in a user message part's `ui_skill` content field.
 // It is what lets the UI render the skill card after a reload, so it carries
@@ -24,6 +34,7 @@ export interface LighthouseSkillDefinition {
   name: string;
   description: string;
   icon: LucideIcon;
+  surface: LighthouseSkillSurface;
   // Full self-contained prompt authored by the DyR team: tool loading, step
   // order and report shape. There is no step plan protocol: the agent decides
   // its own flow, and the UI reports progress from real stream events.

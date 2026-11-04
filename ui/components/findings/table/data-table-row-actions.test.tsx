@@ -179,6 +179,25 @@ describe("DataTableRowActions", () => {
     useJiraDispatchStore.getState().closeJiraDispatch();
   });
 
+  it("blocks sample group actions even though their target check IDs are real", async () => {
+    const user = userEvent.setup();
+    render(
+      <DataTableRowActions
+        row={makeFindingRow({
+          id: "sample-group-s3_bucket_public_access",
+          rowType: "group",
+          checkId: "s3_bucket_public_access",
+        })}
+      />,
+    );
+    const jira = screen.getByRole("button", { name: /Jira/ });
+    const mute = screen.getByRole("button", { name: /Mute Finding Group/ });
+    expect(jira).toBeDisabled();
+    expect(mute).toBeDisabled();
+    await user.click(jira);
+    expect(useJiraDispatchStore.getState().activePayload).toBeNull();
+  });
+
   it("offers a Cloud re-check of the row's resource with its provider id", async () => {
     // Given — a flat finding row expanded with its resource and provider
     const user = userEvent.setup();

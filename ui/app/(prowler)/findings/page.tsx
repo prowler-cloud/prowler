@@ -24,23 +24,38 @@ import {
   isFindingsPreviewLocked,
 } from "@/lib/findings-access";
 import { resolveFindingScanDateFilters } from "@/lib/findings-scan-filters";
+import { getSamplePreviewState } from "@/lib/sample-preview/get-sample-preview-state";
 import { ScanProps } from "@/types";
 import { SearchParamsProps } from "@/types/components";
 
 import { FindingsFiltersSection } from "./_components/findings-filters-section";
 import { FindingsFiltersSkeleton } from "./_components/findings-filters-skeleton";
+import { FindingsSamplePreview } from "./_components/findings-sample-preview";
 
 export default async function Findings({
   searchParams,
 }: {
   searchParams: Promise<SearchParamsProps>;
 }) {
+  // Sample data replaces the page (and its paywall) until the first scan completes.
+  const preview = await getSamplePreviewState();
+  if (preview.active) {
+    return (
+      <ContentLayout title="Findings" icon={<Tag />}>
+        <FindingsSamplePreview
+          state={preview}
+          searchParams={await searchParams}
+        />
+      </ContentLayout>
+    );
+  }
+
   const resolvedSearchParams = await searchParams;
   const { encodedSort } = extractSortAndKey(resolvedSearchParams);
   const { filters, query } = extractFiltersAndQuery(resolvedSearchParams);
 
   // The page shell awaits only what both the filters and the table depend on:
-  // the completed scans (onboarding + scan filter) and the scan date range.
+  // the completed scans (scan filter) and the scan date range.
   const [scansData, filtersWithScanDates] = await Promise.all([
     getScans({
       pageSize: 50,
@@ -68,21 +83,8 @@ export default async function Findings({
         scan.attributes.unique_resource_count > 1,
     ) || [];
 
-  const onboardingAction =
-    completedScans.length > 0
-      ? { flowId: "explore-findings" }
-      : {
-          flowId: "explore-findings",
-          fallbackFlowId: "view-first-scan",
-          useFallback: true,
-        };
-
   return (
-    <ContentLayout
-      title="Findings"
-      icon={<Tag />}
-      onboardingAction={onboardingAction}
-    >
+    <ContentLayout title="Findings" icon={<Tag />}>
       <FilterTransitionWrapper>
         <div className="mb-6">
           <Suspense fallback={<FindingsFiltersSkeleton />}>

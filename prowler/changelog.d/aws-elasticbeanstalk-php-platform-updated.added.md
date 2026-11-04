@@ -1,1 +1,0 @@
-`elasticbeanstalk_environment_php_platform_updated` check to flag Elastic Beanstalk PHP environments on branches without security fixes or on platform versions older than the one bundling the fixed PHP release
