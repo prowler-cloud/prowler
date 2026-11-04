@@ -3,8 +3,6 @@ import { adaptComplianceWatchlistResponse } from "@/actions/overview/compliance-
 import type { ComplianceWatchlistResponse } from "@/actions/overview/compliance-watchlist/compliance-watchlist.types";
 import { adaptResourceGroupOverview } from "@/actions/overview/resources-inventory/resources-inventory.adapter";
 import { FindingSeverityOverTimeCard } from "@/components/overview/finding-severity-over-time-card";
-import { FeatureFlagGate } from "@/components/shared/feature-flag-gate";
-import { FEATURE_FLAG } from "@/lib/feature-flags";
 import { verdictCounts } from "@/lib/issues/verdicts";
 import {
   SAMPLE_ISSUES,
@@ -71,16 +69,14 @@ export function OverviewSamplePreview({
       }
       exploitability={
         showIssues ? (
-          <FeatureFlagGate flag={FEATURE_FLAG.ISSUES}>
-            <ExploitabilityChart
-              counts={verdictCounts(SAMPLE_ISSUES_OVERVIEW)}
-              issues={SAMPLE_ISSUES_OVERVIEW.issues}
-              findings={SAMPLE_ISSUES_OVERVIEW.findings}
-              actionable={SAMPLE_ISSUES_OVERVIEW.actionable}
-              coveredFindings={SAMPLE_ISSUES_OVERVIEW.not_exploitable_findings}
-              scope={NO_SCOPE}
-            />
-          </FeatureFlagGate>
+          <ExploitabilityChart
+            counts={verdictCounts(SAMPLE_ISSUES_OVERVIEW)}
+            issues={SAMPLE_ISSUES_OVERVIEW.issues}
+            findings={SAMPLE_ISSUES_OVERVIEW.findings}
+            actionable={SAMPLE_ISSUES_OVERVIEW.actionable}
+            coveredFindings={SAMPLE_ISSUES_OVERVIEW.not_exploitable_findings}
+            scope={NO_SCOPE}
+          />
         ) : undefined
       }
       checkFindings={
@@ -115,9 +111,7 @@ export function OverviewSamplePreview({
       }
       topIssues={
         showIssues ? (
-          <FeatureFlagGate flag={FEATURE_FLAG.ISSUES}>
-            <TopIssues issues={SAMPLE_ISSUES} scope={NO_SCOPE} />
-          </FeatureFlagGate>
+          <TopIssues issues={SAMPLE_ISSUES} scope={NO_SCOPE} />
         ) : undefined
       }
       severityOverTime={
