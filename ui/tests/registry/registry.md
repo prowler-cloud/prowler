@@ -52,9 +52,9 @@
 
 **Preconditions:** Enabled Cloud fixture server with an external provider artifact installed. The fixture then revokes `manage_registry` while retaining `manage_providers`.
 
-**Flow:** Verify that the Registry route redirects and its navigation entry is hidden. Open Providers, select the installed provider from the Registry tab, and submit its UID and alias.
+**Flow:** Verify that the Registry route redirects and its navigation entry is hidden. Open Providers, select the installed provider from the Registry tab, and fill its UID, alias and API token on the single connect step, then submit "Connect provider".
 
-**Expected Result:** The provider manager can discover the installed provider and create an account. The wizard advances to its API token credential form, and the new account persists in Providers. Registry navigation remains hidden. This synthetic browser acceptance exercises UI permissions and the fixture HTTP contract; it does not replace authorization tests against the real API.
+**Expected Result:** The provider manager can discover the installed provider and create an account. The connect step shows the API token credential field next to the account fields; one submit creates the account, saves its secret, tests the connection and reaches the launch step, and the new account persists in Providers. Registry navigation remains hidden. This synthetic browser acceptance exercises UI permissions and the fixture HTTP contract; it does not replace authorization tests against the real API.
 
 ## Test Case: `REGISTRY-E2E-005` - Complete Catalog, Recovery, and Lifecycle
 
@@ -77,7 +77,7 @@
 
 **Preconditions:** Private Cloud fixture profile with billing disabled, `manage_registry`, `manage_providers`, and `manage_scans`.
 
-**Expected Result:** Installing the external provider makes Fixture Cloud available with a Registry badge in the Add Provider selector. All shows native and installed Registry providers; switching to Registry shows only installed providers. The wizard accepts UID/alias, renders masked API token credentials from the backend schema, saves the synthetic secret, requires explicit connection success, and launches a scan visible in Scans. No credential values are stored in localStorage or sessionStorage. This synthetic acceptance covers the UI/HTTP contract; real Registry and provider credentials are still required for live validation.
+**Expected Result:** Installing the external provider makes Fixture Cloud available with a Registry badge in the Add Provider selector. All shows native and installed Registry providers; switching to Registry shows only installed providers. The single connect step accepts UID/alias, renders masked API token credentials from the backend schema next to them, and its one submit saves the synthetic secret and requires connection success before the launch step, which launches a scan visible in Scans. No credential values are stored in localStorage or sessionStorage. This synthetic acceptance covers the UI/HTTP contract; real Registry and provider credentials are still required for live validation.
 
 After the scan, removing the artifact preserves the account in Providers and removes the dynamic type from the next Add Provider selector.
 

@@ -50,7 +50,7 @@ export abstract class BasePage {
    */
   async skipFirstRunRedirect(): Promise<void> {
     const markHandled = () => {
-      window.localStorage.setItem("prowler.onboarding.first-run", "true");
+      window.localStorage.setItem("prowler.first-run", "true");
     };
     await this.page.addInitScript(markHandled);
     if (/^https?:/.test(this.page.url())) {

@@ -167,7 +167,7 @@ def _explain_missing_check_file(
 
 
 # Security Check Tools
-@hub_mcp_server.tool()
+@hub_mcp_server.tool(annotations={"readOnlyHint": True, "destructiveHint": False})
 async def list_checks(
     providers: list[str] = Field(
         default=[],
@@ -251,7 +251,7 @@ async def list_checks(
     return {"count": len(checks), "checks": checks_list}
 
 
-@hub_mcp_server.tool()
+@hub_mcp_server.tool(annotations={"readOnlyHint": True, "destructiveHint": False})
 async def semantic_search_checks(
     term: NonBlankStr = Field(
         description="Search term. Examples: 'public access', 'encryption', 'MFA', 'logging'.",
@@ -303,7 +303,7 @@ async def semantic_search_checks(
     return {"count": len(checks), "checks": checks_list}
 
 
-@hub_mcp_server.tool()
+@hub_mcp_server.tool(annotations={"readOnlyHint": True, "destructiveHint": False})
 async def get_check_details(
     check_id: NonBlankStr = Field(
         description="The check ID to retrieve details for. Example: 's3_bucket_level_public_access_block'"
@@ -441,7 +441,7 @@ async def get_check_details(
     return result
 
 
-@hub_mcp_server.tool()
+@hub_mcp_server.tool(annotations={"readOnlyHint": True, "destructiveHint": False})
 async def get_check_code(
     provider_id: NonBlankStr = Field(
         description="Prowler Provider ID. Example: 'aws', 'azure', 'gcp', 'kubernetes'. Use `prowler_hub_list_providers` to get available provider IDs.",
@@ -494,7 +494,7 @@ async def get_check_code(
     }
 
 
-@hub_mcp_server.tool()
+@hub_mcp_server.tool(annotations={"readOnlyHint": True, "destructiveHint": False})
 async def get_check_fixer(
     provider_id: NonBlankStr = Field(
         description="Prowler Provider ID. Example: 'aws', 'azure', 'gcp', 'kubernetes'. Use `prowler_hub_list_providers` to get available provider IDs.",
@@ -550,7 +550,7 @@ async def get_check_fixer(
 
 
 # Compliance Framework Tools
-@hub_mcp_server.tool()
+@hub_mcp_server.tool(annotations={"readOnlyHint": True, "destructiveHint": False})
 async def list_compliances(
     provider: list[str] = Field(
         default=[],
@@ -610,7 +610,7 @@ async def list_compliances(
     return {"count": len(compliances), "compliances": compliances_list}
 
 
-@hub_mcp_server.tool()
+@hub_mcp_server.tool(annotations={"readOnlyHint": True, "destructiveHint": False})
 async def semantic_search_compliances(
     term: NonBlankStr = Field(
         description="Search term. Examples: 'CIS', 'HIPAA', 'PCI', 'GDPR', 'SOC2', 'NIST'.",
@@ -654,7 +654,7 @@ async def semantic_search_compliances(
     return {"count": len(compliances), "compliances": compliances_list}
 
 
-@hub_mcp_server.tool()
+@hub_mcp_server.tool(annotations={"readOnlyHint": True, "destructiveHint": False})
 async def get_compliance_details(
     compliance_id: NonBlankStr = Field(
         description="The compliance framework ID to retrieve details for. Example: 'cis_4.0_aws'. Use `prowler_hub_list_compliances` or `prowler_hub_semantic_search_compliances` to find available compliance IDs.",
@@ -743,7 +743,7 @@ async def get_compliance_details(
 
 
 # Provider Tools
-@hub_mcp_server.tool()
+@hub_mcp_server.tool(annotations={"readOnlyHint": True, "destructiveHint": False})
 async def list_providers() -> dict:
     """List all providers supported by Prowler.
 
@@ -784,7 +784,7 @@ async def list_providers() -> dict:
     return {"count": len(providers), "providers": providers_list}
 
 
-@hub_mcp_server.tool()
+@hub_mcp_server.tool(annotations={"readOnlyHint": True, "destructiveHint": False})
 async def get_provider_services(
     provider_id: NonBlankStr = Field(
         description="The provider ID to get services for. Example: 'aws', 'azure', 'gcp', 'kubernetes'. Use `prowler_hub_list_providers` to get available provider IDs.",

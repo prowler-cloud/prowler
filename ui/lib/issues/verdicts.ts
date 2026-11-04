@@ -1,7 +1,14 @@
 import { ComponentProps } from "react";
 
 import { Badge } from "@/components/shadcn/badge/badge";
-import { LegName, LegState, Verdict } from "@/types/issues";
+import {
+  ATTACKER_START_LABEL,
+  IssueAttributes,
+  ISSUE_OUTCOME_LABEL,
+  LegName,
+  LegState,
+  Verdict,
+} from "@/types/issues";
 
 /** The colour family a verdict reads in, shared by the overview card and the tabs. */
 export const VERDICT_TONE = {
@@ -47,6 +54,38 @@ export const VERDICTS: VerdictDisplay[] = [
     tone: VERDICT_TONE.neutral,
   },
 ];
+
+export const LEG_LABELS: Record<LegName, string> = {
+  reachability: "Reachability",
+  access: "Access",
+  target: "Target",
+  controls: "Controls",
+  verification: "Verification",
+};
+
+export const LEG_QUESTIONS: Record<LegName, string> = {
+  reachability: "Can an attacker reach it?",
+  access: "Can an attacker authenticate or bypass authentication?",
+  target: "Is there a target worth reaching?",
+  controls: "Are protective controls in place?",
+  verification: "Would the activity be detected?",
+};
+
+export const LEG_STATE_LABELS: Record<LegState, string> = {
+  yes: "Yes",
+  no: "No",
+  partial: "Partly",
+  unknown: "Unknown",
+};
+
+/** "The internet → Data exposure", or null for issues that are not one path. */
+export const attackPathLabel = ({
+  attacker_start,
+  outcome,
+}: Pick<IssueAttributes, "attacker_start" | "outcome">) =>
+  attacker_start && outcome
+    ? `${ATTACKER_START_LABEL[attacker_start]} → ${ISSUE_OUTCOME_LABEL[outcome]}`
+    : null;
 
 const LEG_GOOD_WHEN_YES: Record<LegName, boolean> = {
   reachability: false,

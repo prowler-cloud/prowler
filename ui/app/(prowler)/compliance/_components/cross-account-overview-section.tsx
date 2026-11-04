@@ -89,8 +89,9 @@ export const CrossAccountOverviewSection = async ({
 
   // Universal frameworks belong to "Across providers" above. Without the
   // catalog we cannot tell them apart, and that section already reports it.
+  // A partial catalog could list a universal framework here as well.
   const catalog = await loadCrossProviderFrameworks();
-  if (catalog.unavailable) return null;
+  if (catalog.unavailable || catalog.incomplete) return null;
   const universalIds = new Set(
     catalog.frameworks.map((entry) => entry.complianceId),
   );

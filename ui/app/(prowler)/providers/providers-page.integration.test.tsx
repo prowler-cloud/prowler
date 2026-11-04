@@ -212,13 +212,11 @@ describe("Organization onboarding wizard", () => {
     });
 
     describe("Wizard progress", () => {
-      it("drops the credentials and test rows once AWS is picked, since one step covers them", async () => {
+      it("shows the same two rows before and after a provider is picked, since one step connects it", async () => {
         const harness = new ProvidersPageHarness(awsOnboardingFixture());
         await harness.mount();
         expect(harness.stepperLabels()).toEqual([
-          "Link a Provider",
-          "Authenticate Credentials",
-          "Validate Connection",
+          "Connect Provider",
           "Launch Scan",
         ]);
 
@@ -226,9 +224,31 @@ describe("Organization onboarding wizard", () => {
         await harness.waitForAwsConnectStep();
 
         expect(harness.stepperLabels()).toEqual([
-          "Link a Provider",
+          "Connect Provider",
           "Launch Scan",
         ]);
+      }, 40000);
+    });
+
+    describe("A provider other than AWS", () => {
+      // Compiled by the React Compiler: the generic form's validity must stay
+      // reactive too, or the action would never enable.
+      it("connects a GCP project with its service account key in one step and jumps to launch", async () => {
+        const harness = new ProvidersPageHarness(awsOnboardingFixture());
+        await harness.mount();
+        await harness.selectProviderType(/Google Cloud Platform/);
+        await harness.waitForConnectStep();
+        await harness.fillGcpServiceAccount({
+          projectId: "my-gcp-project",
+          serviceAccountKey: JSON.stringify({ type: "service_account" }),
+        });
+
+        await harness.connectWith(/Connect project/);
+
+        await harness.waitForProviderLaunchStep();
+        expect(harness.providerCreateCallCount).toBe(1);
+        expect(harness.secretCreateCallCount).toBe(1);
+        expect(harness.connectionCallCount).toBe(1);
       }, 40000);
     });
 
@@ -401,12 +421,10 @@ describe("Organization onboarding wizard", () => {
         await harness.mount();
 
         await harness.selectProviderType(/Google Cloud Platform/);
-        await harness.waitForMethodStep();
+        await harness.waitForConnectStep();
 
-        await harness.chooseMethod(
-          /Add Multiple Projects With GCP Organization/,
-        );
-        await harness.waitForMethodStep();
+        await harness.chooseOrganizationTab(/Full GCP Organization/);
+        await harness.waitForConnectStep();
         expect(harness.hasOrganizationSetupStep()).toBe(false);
       }, 30000);
     });
@@ -817,12 +835,10 @@ describe("Organization onboarding wizard", () => {
         await harness.mount();
 
         await harness.selectProviderType(/Microsoft Azure/);
-        await harness.waitForMethodStep();
+        await harness.waitForConnectStep();
 
-        await harness.chooseMethod(
-          /Add Multiple Subscriptions With Azure Management Group/,
-        );
-        await harness.waitForMethodStep();
+        await harness.chooseOrganizationTab(/Azure Management Group/);
+        await harness.waitForConnectStep();
         expect(harness.hasOrganizationSetupStep()).toBe(false);
       }, 30000);
     });

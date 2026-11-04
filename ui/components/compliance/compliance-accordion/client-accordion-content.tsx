@@ -6,7 +6,6 @@ import { useSearchParams } from "next/navigation";
 import {
   loadFindingTriageDetail,
   loadLatestFindingTriageNote,
-  updateFindingTriage,
 } from "@/actions/findings";
 import {
   getStandaloneFindingColumns,
@@ -19,6 +18,7 @@ import { FINDINGS_DEFAULT_SORT, MUTED_FILTER } from "@/lib";
 import { INVALID_CONFIG_NOTE } from "@/lib/compliance/commons";
 import { getComplianceMapper } from "@/lib/compliance/compliance-mapper";
 import { shouldRefreshAfterTriageUpdate } from "@/lib/finding-triage";
+import { updateFindingTriageOrThrow } from "@/lib/finding-triage-update";
 import { CheckProviderTypesMap, Requirement } from "@/types/compliance";
 import type { UpdateFindingTriageInput } from "@/types/findings-triage";
 
@@ -82,7 +82,7 @@ export const ClientAccordionContent = ({
   });
 
   const handleTriageUpdate = async (input: UpdateFindingTriageInput) => {
-    const result = await updateFindingTriage(input);
+    const result = await updateFindingTriageOrThrow(input);
 
     // Mutelist-shortcut statuses mute the finding server-side; refetch so the
     // list honors the muted filter, matching the resource drawer behavior.

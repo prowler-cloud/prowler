@@ -30,9 +30,9 @@ const lastPushedParams = () =>
     .searchParams;
 
 describe("VerdictFilter", () => {
-  it("renders one tab per verdict with its count and the fold", () => {
+  it("renders one tab per verdict with its count", () => {
     navigationState.searchParams = new URLSearchParams();
-    render(<VerdictFilter summary={{ counts, total: 2, findings: 9 }} />);
+    render(<VerdictFilter summary={{ counts, total: 2 }} />);
 
     expect(screen.getByRole("tab", { name: "All, 2 issues" })).toHaveAttribute(
       "aria-selected",
@@ -42,9 +42,6 @@ describe("VerdictFilter", () => {
       screen.getByRole("tab", { name: "Exploitable, 2 issues" }),
     ).toHaveAttribute("aria-selected", "false");
     expect(screen.getAllByRole("tab")).toHaveLength(6);
-    expect(
-      screen.getByText("9 failed findings folded into 2 issues"),
-    ).toBeInTheDocument();
   });
 
   it("selects the verdict tab and resets the page, keeping other params", async () => {
@@ -52,7 +49,7 @@ describe("VerdictFilter", () => {
     navigationState.searchParams = new URLSearchParams(
       "page=3&pageSize=10&filter[verdict]=likely",
     );
-    render(<VerdictFilter summary={{ counts, total: 2, findings: 9 }} />);
+    render(<VerdictFilter summary={{ counts, total: 2 }} />);
 
     expect(
       screen.getByRole("tab", { name: "Likely, 0 issues" }),
@@ -72,7 +69,7 @@ describe("VerdictFilter", () => {
     navigationState.searchParams = new URLSearchParams(
       "filter[verdict__in]=exploitable,likely",
     );
-    render(<VerdictFilter summary={{ counts, total: 2, findings: 9 }} />);
+    render(<VerdictFilter summary={{ counts, total: 2 }} />);
 
     // No single tab owns the combined filter, so none is selected...
     expect(
@@ -106,7 +103,7 @@ describe("VerdictFilter", () => {
     navigationState.searchParams = new URLSearchParams(
       "filter[verdict]=likely",
     );
-    render(<VerdictFilter summary={{ counts, total: 2, findings: 9 }} />);
+    render(<VerdictFilter summary={{ counts, total: 2 }} />);
 
     expect(screen.queryByRole("region", { name: "Active filters" })).toBeNull();
   });
@@ -117,7 +114,7 @@ describe("VerdictFilter", () => {
     navigationState.searchParams = new URLSearchParams(
       "page=3&filter[pattern]=aws_public_bucket&filter[provider_id__in]=provider-1",
     );
-    render(<VerdictFilter summary={{ counts, total: 2, findings: 9 }} />);
+    render(<VerdictFilter summary={{ counts, total: 2 }} />);
     // When
     await user.click(
       screen.getByRole("button", {

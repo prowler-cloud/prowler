@@ -168,13 +168,15 @@ test.describe.serial("Registry", () => {
       await page
         .getByLabel("Provider alias (optional)")
         .fill("Provider manager Registry account");
-      await page.getByRole("button", { name: "Next", exact: true }).click();
-      await expect(
-        page.getByLabel("API token", { exact: false }),
-      ).toBeVisible();
+      // The credentials share the connect step with the account fields, and
+      // one submit creates the account, saves its secret and tests it.
+      const token = page.getByLabel("API token", { exact: false });
+      await expect(token).toBeVisible();
+      await token.fill("fixture-provider-token-not-a-secret");
+      await registry.submitProviderConnectStep();
       expect(await controlledRegistryFixture.snapshot()).toMatchObject({
         providerCreated: true,
-        secretSaved: false,
+        secretSaved: true,
       });
 
       await page.goto("/providers");
