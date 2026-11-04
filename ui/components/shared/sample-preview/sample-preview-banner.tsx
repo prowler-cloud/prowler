@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-import { getScan } from "@/actions/scans";
+import { getScan, getScansByState } from "@/actions/scans";
 import {
   Badge,
   Button,
@@ -100,50 +100,58 @@ function SamplePreviewBannerContent({ state, page }: SamplePreviewBannerProps) {
 
     let stopped = false;
     let inFlight = false;
+    // Its own flag: a slow lookup must not hold back the tracked scan's polls.
+    let lookupInFlight = false;
+    const exit = () => {
+      stop();
+      dispatchSamplePreview({ step: SAMPLE_PREVIEW_STEP.EXITED, page, stage });
+      toast({
+        title: "Your scan results are ready",
+        description: "The sample data has been replaced with your own.",
+      });
+      router.refresh();
+    };
+
     const poll = async () => {
       // A slow response must not overwrite a newer one.
       if (inFlight) return;
       inFlight = true;
-      // A failed request is a transient empty response: keep polling.
-      const response = await getScan(runningScan.id)
-        .catch(() => undefined)
-        .finally(() => {
-          inFlight = false;
-        });
-      if (stopped) return;
+      try {
+        // A failed request is a transient empty response: keep polling.
+        const response = await getScan(runningScan.id).catch(() => undefined);
+        if (stopped) return;
 
-      // The scan is gone (e.g. its provider was deleted): re-resolve the page.
-      if (response?.status === 404) {
-        stop();
-        router.refresh();
-        return;
+        const attributes = response?.data?.attributes;
+        if (attributes?.state === SCAN_STATES.COMPLETED) {
+          exit();
+          return;
+        }
+
+        // Failed/deleted scans need a new stage (or a different running scan).
+        if (
+          response?.status === 404 ||
+          attributes?.state === SCAN_STATES.FAILED
+        ) {
+          stop();
+          router.refresh();
+          return;
+        }
+
+        if (attributes) setProgress(attributes.progress ?? 0);
+
+        // Another provider's scan may finish before the one whose progress we show.
+        if (!lookupInFlight) {
+          lookupInFlight = true;
+          void getScansByState()
+            .catch(() => undefined)
+            .then((completedScans) => {
+              lookupInFlight = false;
+              if (!stopped && completedScans?.data?.length > 0) exit();
+            });
+        }
+      } finally {
+        inFlight = false;
       }
-
-      const attributes = response?.data?.attributes;
-      if (!attributes) return;
-
-      if (attributes.state === SCAN_STATES.COMPLETED) {
-        stop();
-        dispatchSamplePreview({
-          step: SAMPLE_PREVIEW_STEP.EXITED,
-          page,
-          stage,
-        });
-        toast({
-          title: "Your scan results are ready",
-          description: "The sample data has been replaced with your own.",
-        });
-        router.refresh();
-        return;
-      }
-
-      if (attributes.state === SCAN_STATES.FAILED) {
-        stop();
-        router.refresh();
-        return;
-      }
-
-      setProgress(attributes.progress ?? 0);
     };
 
     const intervalId = setInterval(poll, SAMPLE_PREVIEW_POLL_INTERVAL_MS);

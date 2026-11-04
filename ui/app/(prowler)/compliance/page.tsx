@@ -21,6 +21,8 @@ import { ContentLayout } from "@/components/shadcn/content-layout";
 import { pickLatestCisPerProvider } from "@/lib/compliance/compliance-report-types";
 import { isReportDownloadLocked } from "@/lib/report-download-access";
 import { getSamplePreviewState } from "@/lib/sample-preview/get-sample-preview-state";
+import { toSampleComplianceOverviews } from "@/lib/sample-preview/sample-compliance";
+import { getSampleComplianceTotals } from "@/lib/sample-preview/sample-compliance-requirements";
 import { isCloud } from "@/lib/shared/env";
 import {
   ExpandedScanData,
@@ -78,7 +80,12 @@ export default async function Compliance({
   if (preview.active) {
     return (
       <ContentLayout title="Compliance" icon={<ShieldCheck />}>
-        <ComplianceSamplePreview state={preview} />
+        <ComplianceSamplePreview
+          state={preview}
+          overviews={toSampleComplianceOverviews(
+            await getSampleComplianceTotals(),
+          )}
+        />
       </ContentLayout>
     );
   }

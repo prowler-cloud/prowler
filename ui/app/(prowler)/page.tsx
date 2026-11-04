@@ -16,6 +16,7 @@ import { SamplePreviewBanner } from "@/components/shared/sample-preview/sample-p
 import { DOCS_URLS } from "@/lib/external-urls";
 import { FEATURE_FLAG } from "@/lib/feature-flags";
 import { getSamplePreviewState } from "@/lib/sample-preview/get-sample-preview-state";
+import { getSampleComplianceTotals } from "@/lib/sample-preview/sample-compliance-requirements";
 import { SAMPLE_PREVIEW_PAGE } from "@/lib/sample-preview/sample-preview-events";
 import { isCloud } from "@/lib/shared/env";
 import { SearchParamsProps } from "@/types";
@@ -87,7 +88,10 @@ export default async function Home({
           state={samplePreview}
           page={SAMPLE_PREVIEW_PAGE.OVERVIEW}
         />
-        <OverviewSamplePreview showIssues={isCloud()} />
+        <OverviewSamplePreview
+          showIssues={isCloud()}
+          complianceWatchlist={await getSampleComplianceTotals()}
+        />
       </ContentLayout>
     );
   }

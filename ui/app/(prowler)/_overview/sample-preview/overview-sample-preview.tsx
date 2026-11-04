@@ -1,9 +1,8 @@
-import { type ReactNode } from "react";
-
 import { adaptAttackSurfaceOverview } from "@/actions/overview/attack-surface/attack-surface.adapter";
 import { adaptComplianceWatchlistResponse } from "@/actions/overview/compliance-watchlist/compliance-watchlist.adapter";
+import type { ComplianceWatchlistResponse } from "@/actions/overview/compliance-watchlist/compliance-watchlist.types";
 import { adaptResourceGroupOverview } from "@/actions/overview/resources-inventory/resources-inventory.adapter";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/shadcn";
+import { FindingSeverityOverTimeCard } from "@/components/overview/finding-severity-over-time-card";
 import { FeatureFlagGate } from "@/components/shared/feature-flag-gate";
 import { FEATURE_FLAG } from "@/lib/feature-flags";
 import { verdictCounts } from "@/lib/issues/verdicts";
@@ -35,30 +34,24 @@ import { ComplianceWatchlist, ServiceWatchlist } from "../watchlist";
 
 import { SampleGraphsTabs } from "./sample-graphs-tabs";
 
-// `contents` keeps each card a direct item of the grid's flex rows, while
-// `inert` stops links into pages with no sample data (compliance details,
-// resources). Cards that link to Findings or Issues stay live: those pages
-// show the sample and apply the link's filters.
-const Inert = ({ children }: { children: ReactNode }) => (
-  <div inert className="contents">
-    {children}
-  </div>
-);
-
 const NO_SCOPE: Record<string, string> = {};
 
 interface OverviewSamplePreviewProps {
   // Exploitability and Top issues only exist in Prowler Cloud, behind their flag.
   showIssues: boolean;
+  /** Compliance totals derived from the sample requirements, when available. */
+  complianceWatchlist?: ComplianceWatchlistResponse["data"];
 }
 
 /** The Overview filled with the demo account, for tenants without a scan. */
 export function OverviewSamplePreview({
   showIssues,
+  complianceWatchlist = SAMPLE_COMPLIANCE_WATCHLIST_RESPONSE.data,
 }: OverviewSamplePreviewProps) {
-  const complianceItems = adaptComplianceWatchlistResponse(
-    SAMPLE_COMPLIANCE_WATCHLIST_RESPONSE,
-  ).map((item) => ({
+  const complianceItems = adaptComplianceWatchlistResponse({
+    ...SAMPLE_COMPLIANCE_WATCHLIST_RESPONSE,
+    data: complianceWatchlist,
+  }).map((item) => ({
     id: item.id,
     framework: item.complianceId,
     label: item.label,
@@ -69,14 +62,12 @@ export function OverviewSamplePreview({
   return (
     <OverviewGrid
       threatScore={
-        <Inert>
-          <ThreatScore
-            score={SAMPLE_THREAT_SCORE.score}
-            scoreDelta={SAMPLE_THREAT_SCORE.scoreDelta}
-            sectionScores={SAMPLE_THREAT_SCORE.sectionScores}
-            criticalRequirements={SAMPLE_THREAT_SCORE.criticalRequirements}
-          />
-        </Inert>
+        <ThreatScore
+          score={SAMPLE_THREAT_SCORE.score}
+          scoreDelta={SAMPLE_THREAT_SCORE.scoreDelta}
+          sectionScores={SAMPLE_THREAT_SCORE.sectionScores}
+          criticalRequirements={SAMPLE_THREAT_SCORE.criticalRequirements}
+        />
       }
       exploitability={
         showIssues ? (
@@ -106,16 +97,13 @@ export function OverviewSamplePreview({
       }
       riskSeverity={<RiskSeverityChart {...SAMPLE_FAILED_BY_SEVERITY} />}
       resourcesInventory={
-        <Inert>
-          <ResourcesInventory
-            items={adaptResourceGroupOverview(SAMPLE_RESOURCE_GROUPS_RESPONSE)}
-          />
-        </Inert>
+        <ResourcesInventory
+          items={adaptResourceGroupOverview(SAMPLE_RESOURCE_GROUPS_RESPONSE)}
+        />
       }
       complianceWatchlist={
-        <Inert>
-          <ComplianceWatchlist items={complianceItems} hasWatchlist />
-        </Inert>
+        // The sample Compliance page is per scan: no multi-scan view to link.
+        <ComplianceWatchlist items={complianceItems} hasWatchlist={false} />
       }
       serviceWatchlist={
         <ServiceWatchlist items={SAMPLE_SERVICES_RESPONSE.data} />
@@ -133,18 +121,9 @@ export function OverviewSamplePreview({
         ) : undefined
       }
       severityOverTime={
-        <Inert>
-          <Card variant="base" className="flex h-full flex-1 flex-col">
-            <CardHeader className="flex flex-col gap-4">
-              <div className="flex items-center justify-between">
-                <CardTitle>Findings Severity Over Time</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent className="flex flex-1 flex-col px-6">
-              <FindingSeverityOverTime data={SAMPLE_SEVERITY_TRENDS} />
-            </CardContent>
-          </Card>
-        </Inert>
+        <FindingSeverityOverTimeCard>
+          <FindingSeverityOverTime data={SAMPLE_SEVERITY_TRENDS} readOnly />
+        </FindingSeverityOverTimeCard>
       }
       graphsTabs={<SampleGraphsTabs />}
     />

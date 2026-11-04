@@ -55,15 +55,7 @@ describe("RecheckResourceIconButton", () => {
     expect(onRowClick).not.toHaveBeenCalled();
   });
 
-  it("is always green and pulsing", () => {
-    render(<RecheckResourceIconButton target={target} />);
-
-    const button = screen.getByRole("button", { name: RECHECK_RESOURCE_LABEL });
-    expect(button.className).toContain("text-button-primary");
-    expect(button.className).toContain("animate-pulse");
-  });
-
-  it("blocks sample re-checks and removes the pulse", async () => {
+  it("disables sample re-checks without opening the confirmation or triggering the row", async () => {
     const user = userEvent.setup();
     const onRowClick = vi.fn();
     render(
@@ -75,8 +67,7 @@ describe("RecheckResourceIconButton", () => {
       </div>,
     );
     const button = screen.getByRole("button", { name: RECHECK_RESOURCE_LABEL });
-    expect(button).toHaveAttribute("aria-disabled", "true");
-    expect(button.className).not.toContain("animate-pulse");
+    expect(button).toBeDisabled();
     await user.click(button);
     expect(usePartialScanStore.getState().activeTarget).toBeNull();
     expect(onRowClick).not.toHaveBeenCalled();

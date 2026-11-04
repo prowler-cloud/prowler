@@ -33,11 +33,23 @@ export const getFindings = async ({
   filters = {},
 }) => {
   if (isSampleScanFilter(filters)) {
-    return withFindingTriageSummaries(
-      sampleFindingsDocument(
-        sampleFindingsQuery(filters).slice(0, Number(pageSize) || 10),
-      ),
+    const findings = sampleFindingsQuery(filters);
+    const size = Number(pageSize) || 10;
+    const current = Math.max(1, Number(page) || 1);
+    const document = sampleFindingsDocument(
+      findings.slice((current - 1) * size, current * size),
     );
+    return withFindingTriageSummaries({
+      ...document,
+      meta: {
+        ...document.meta,
+        pagination: {
+          page: current,
+          pages: Math.max(1, Math.ceil(findings.length / size)),
+          count: findings.length,
+        },
+      },
+    });
   }
 
   const headers = await getAuthHeaders({ contentType: false });

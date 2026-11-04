@@ -8,15 +8,18 @@ import { SAMPLE_FINDINGS } from "@/lib/sample-preview/sample-records";
 
 import { FindingsSamplePreview } from "./findings-sample-preview";
 
-const { fetchMock, getScanMock, resolveFindingIdsMock } = vi.hoisted(() => ({
-  fetchMock: vi.fn(),
-  getScanMock: vi.fn(),
-  resolveFindingIdsMock: vi.fn(),
-}));
+const { fetchMock, getScanMock, resolveFindingIdsMock, searchParams } =
+  vi.hoisted(() => ({
+    // One instance, like Next's hook: a new one per render loops the filter bar.
+    searchParams: new URLSearchParams(),
+    fetchMock: vi.fn(),
+    getScanMock: vi.fn(),
+    resolveFindingIdsMock: vi.fn(),
+  }));
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn(), refresh: vi.fn(), replace: vi.fn() }),
-  useSearchParams: () => new URLSearchParams(),
+  useSearchParams: () => searchParams,
   usePathname: () => "/findings",
 }));
 vi.mock("@/auth.config", () => ({ auth: vi.fn() }));
@@ -37,6 +40,8 @@ const STATE = {
 describe("FindingsSamplePreview", () => {
   beforeEach(() => {
     vi.stubGlobal("fetch", fetchMock);
+    // jsdom has no scrollIntoView; the filter bar's command lists call it.
+    Element.prototype.scrollIntoView = vi.fn();
     // jsdom has no IntersectionObserver; the drill-down's infinite scroll needs one.
     vi.stubGlobal(
       "IntersectionObserver",
@@ -114,7 +119,7 @@ describe("FindingsSamplePreview", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it("applies the severity an Overview link carried, with a way back to all", () => {
+  it("applies the severity an Overview link carried", () => {
     render(
       <FindingsSamplePreview
         state={STATE}
@@ -135,9 +140,17 @@ describe("FindingsSamplePreview", () => {
       expect(screen.getByText(check.title)).toBeInTheDocument();
     }
     expect(screen.queryByText(high.title)).not.toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Show all" })).toHaveAttribute(
-      "href",
-      "/findings",
-    );
+  });
+
+  it("offers the real filter bar without fetching its options", () => {
+    render(<FindingsSamplePreview state={STATE} />);
+
+    expect(
+      screen.getByRole("combobox", { name: /^Filter by Provider\./ }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "More Filters" }),
+    ).toBeInTheDocument();
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });

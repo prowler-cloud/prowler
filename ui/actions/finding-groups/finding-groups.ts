@@ -18,6 +18,7 @@ import { getFindingGroupFilterOptions } from "@/lib/finding-group-filter-options
 import { appendSanitizedProviderFilters } from "@/lib/provider-filters";
 import {
   isSampleScanFilter,
+  pickSampleFindingFilters,
   sampleFindingGroupResources,
 } from "@/lib/sample-preview/sample-records";
 import { handleApiResponse } from "@/lib/server-actions-helper";
@@ -200,6 +201,7 @@ async function fetchFindingGroupResourcesEndpoint(
       pageSize,
       status: Array.isArray(status) ? status.join(",") : status,
       search: Array.isArray(search) ? search[0] : search,
+      filters: pickSampleFindingFilters(filters),
     });
   }
 

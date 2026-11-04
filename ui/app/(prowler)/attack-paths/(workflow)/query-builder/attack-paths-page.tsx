@@ -351,9 +351,6 @@ export default function AttackPathsPage({ sample }: AttackPathsPageProps) {
       // Open finding drawer directly, bypassing the node-details modal.
       graphState.enterFilteredView(node.id);
       graphState.selectNode(null); // clear so node-details modal doesn't open first
-      // Sample findings have no API record: focus the path, open no drawer.
-      if (sample) return;
-
       findingNavigationInFlightRef.current = true;
       void handleViewFinding(String(node.properties?.id || node.id));
       return;
@@ -499,11 +496,13 @@ export default function AttackPathsPage({ sample }: AttackPathsPageProps) {
       ) : (
         <>
           {/* The sample scan is the only one: nothing to pick or page. */}
-          <div inert={Boolean(sample)}>
-            <Suspense fallback={<div>Loading scans...</div>}>
-              <ScanListTable scans={scans} selectedScanId={sample?.scan.id} />
-            </Suspense>
-          </div>
+          <Suspense fallback={<div>Loading scans...</div>}>
+            <ScanListTable
+              scans={scans}
+              selectedScanId={sample?.scan.id}
+              readOnly={Boolean(sample)}
+            />
+          </Suspense>
 
           {isViewingPreviousCycleData && (
             <StatusAlert

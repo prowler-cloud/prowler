@@ -10,7 +10,6 @@ import {
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
 import { usePartialScanTarget } from "@/hooks/use-partial-scan-target";
-import { cn } from "@/lib/utils";
 import { usePartialScanStore } from "@/store";
 import type { PartialScanTarget } from "@/types/partial-scans";
 
@@ -22,8 +21,7 @@ interface RecheckResourceIconButtonProps {
   disabledReason?: string;
 }
 
-// Beside "last seen": green and pulsing when a re-check is available.
-// It is an action, not a notification, so it never settles into a seen state.
+// Beside "last seen", using the shared icon-button and disabled states.
 export function RecheckResourceIconButton({
   target,
   className,
@@ -44,23 +42,22 @@ export function RecheckResourceIconButton({
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <Button
-          type="button"
-          variant="bare"
-          size="icon"
-          aria-label={RECHECK_RESOURCE_LABEL}
-          aria-disabled={Boolean(disabledReason)}
-          onClick={handleClick}
-          className={cn(
-            "size-5 shrink-0 rounded-md",
-            disabledReason
-              ? "text-text-neutral-tertiary cursor-not-allowed"
-              : "text-button-primary hover:text-button-primary active:text-button-primary hover:[animation-play-state:paused] focus-visible:[animation-play-state:paused] motion-safe:animate-pulse",
-            className,
-          )}
+        <span
+          className={className}
+          tabIndex={disabledReason ? 0 : undefined}
+          onClick={(event) => event.stopPropagation()}
         >
-          <RefreshCw className="size-3.5" aria-hidden />
-        </Button>
+          <Button
+            type="button"
+            variant="bare"
+            size="icon-xs"
+            aria-label={RECHECK_RESOURCE_LABEL}
+            disabled={Boolean(disabledReason)}
+            onClick={handleClick}
+          >
+            <RefreshCw aria-hidden />
+          </Button>
+        </span>
       </TooltipTrigger>
       <TooltipContent>
         {disabledReason ?? RECHECK_RESOURCE_LABEL}

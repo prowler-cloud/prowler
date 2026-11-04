@@ -12,12 +12,7 @@ import type { RiskPlotPoint } from "@/actions/overview/risk-plot/types/risk-plot
 import { adaptCategoryOverviewToRadarData } from "@/actions/overview/risk-radar/risk-radar.adapter";
 import type { CategoryOverviewResponse } from "@/actions/overview/risk-radar/types";
 import type { RadarDataPoint } from "@/components/graphs/types";
-import {
-  FINDING_DELTA,
-  FINDING_STATUS,
-  type FindingProps,
-  SEVERITY,
-} from "@/types/components";
+import { type FindingProps, SEVERITY } from "@/types/components";
 
 import {
   SAMPLE_ACCOUNT,
@@ -29,6 +24,7 @@ import {
   SAMPLE_FAILED_BY_SEVERITY,
   SAMPLE_THREAT_SCORE,
 } from "./sample-overview";
+import { SAMPLE_FINDINGS, sampleExpandedFindings } from "./sample-records";
 
 // Graphs-tab payloads derived from SAMPLE_CHECKS, run through the real adapters.
 
@@ -46,9 +42,6 @@ const splitAcrossRegions = (count: number, offset: number): number[] =>
       SAMPLE_REGIONS.length;
     return base + (slot < count % SAMPLE_REGIONS.length ? 1 : 0);
   });
-
-const regionFor = (checkIndex: number, ordinal: number) =>
-  SAMPLE_REGIONS[(checkIndex + ordinal) % SAMPLE_REGIONS.length];
 
 export const SAMPLE_SANKEY_DATA: SankeyData = adaptToSankeyData({
   [PROVIDER_TYPE]: SAMPLE_FAILED_BY_SEVERITY,
@@ -167,138 +160,6 @@ const SAMPLE_CATEGORIES_RESPONSE: CategoryOverviewResponse = {
 export const SAMPLE_RADAR_DATA: RadarDataPoint[] =
   adaptCategoryOverviewToRadarData(SAMPLE_CATEGORIES_RESPONSE);
 
-interface SampleResourceKind {
-  type: string;
-  prefix: string;
-}
-
-const RESOURCE_BY_SERVICE: Record<string, SampleResourceKind> = {
-  s3: { type: "AwsS3Bucket", prefix: "sample-exports-bucket" },
-  rds: { type: "AwsRdsDbInstance", prefix: "sample-orders-db" },
-  ec2: { type: "AwsEc2Instance", prefix: "sample-web-instance" },
-  iam: { type: "AwsIamUser", prefix: "sample-iam-user" },
-};
-
-const buildNewFinding = (
-  check: SampleCheck,
-  checkIndex: number,
-  ordinal: number,
-): FindingProps => {
-  const region = regionFor(checkIndex, ordinal);
-  const kind = RESOURCE_BY_SERVICE[check.service] ?? {
-    type: "Other",
-    prefix: `sample-${check.service}-resource`,
-  };
-  const id = `sample-finding-${check.checkId}-${ordinal + 1}`;
-  const resourceId = `sample-resource-${check.checkId}-${ordinal + 1}`;
-  const resourceName = `${kind.prefix}-${ordinal + 1}`;
-  const timestamp = SAMPLE_ACCOUNT.scannedAt;
-
-  return {
-    type: "findings",
-    id,
-    attributes: {
-      uid: id,
-      delta: FINDING_DELTA.NEW,
-      status: FINDING_STATUS.FAIL,
-      status_extended: `${check.title}: ${resourceName} fails this check.`,
-      severity: check.severity,
-      check_id: check.checkId,
-      muted: false,
-      check_metadata: {
-        risk: "",
-        notes: "",
-        checkid: check.checkId,
-        provider: PROVIDER_TYPE,
-        severity: check.severity,
-        checktype: [],
-        dependson: [],
-        relatedto: [],
-        categories: categoriesOf(check),
-        checktitle: check.title,
-        compliance: null,
-        relatedurl: "",
-        description: check.title,
-        remediation: {
-          code: { cli: "", other: "", nativeiac: "", terraform: "" },
-          recommendation: { url: "", text: "" },
-        },
-        servicename: check.service,
-        checkaliases: [],
-        resourcetype: kind.type,
-        subservicename: "",
-        resourceidtemplate: "",
-      },
-      raw_result: null,
-      inserted_at: timestamp,
-      updated_at: timestamp,
-      first_seen_at: timestamp,
-    },
-    relationships: {
-      resources: { data: [{ type: "resources", id: resourceId }] },
-      scan: {
-        data: { type: "scans", id: SAMPLE_ACCOUNT.scanId },
-        attributes: {
-          name: "Sample scan",
-          trigger: "manual",
-          state: "completed",
-          unique_resource_count: 0,
-          progress: 100,
-          scanner_args: { checks_to_execute: [] },
-          duration: 0,
-          started_at: timestamp,
-          inserted_at: timestamp,
-          completed_at: timestamp,
-          scheduled_at: null,
-          next_scan_at: timestamp,
-        },
-      },
-      resource: {
-        data: [{ type: "resources", id: resourceId }],
-        id: resourceId,
-        attributes: {
-          uid: `arn:aws:${check.service}:${region}:${SAMPLE_ACCOUNT.uid}:${resourceName}`,
-          name: resourceName,
-          region,
-          service: check.service,
-          tags: {},
-          type: kind.type,
-          inserted_at: timestamp,
-          updated_at: timestamp,
-          details: null,
-          partition: "aws",
-        },
-        relationships: {
-          provider: {
-            data: { type: "providers", id: SAMPLE_ACCOUNT.providerId },
-          },
-          findings: {
-            meta: { count: 1 },
-            data: [{ type: "findings", id }],
-          },
-        },
-        links: { self: "" },
-      },
-      provider: {
-        data: { type: "providers", id: SAMPLE_ACCOUNT.providerId },
-        attributes: {
-          provider: PROVIDER_TYPE,
-          uid: SAMPLE_ACCOUNT.uid,
-          alias: SAMPLE_ACCOUNT.alias,
-          connection: { connected: true, last_checked_at: timestamp },
-          inserted_at: timestamp,
-          updated_at: timestamp,
-        },
-        relationships: {
-          secret: { data: { type: "provider-secrets", id: "sample-secret" } },
-        },
-        links: { self: "" },
-      },
-    },
-    links: { self: "" },
-  };
-};
-
 const SEVERITY_RANK = [
   SEVERITY.CRITICAL,
   SEVERITY.HIGH,
@@ -307,16 +168,16 @@ const SEVERITY_RANK = [
   SEVERITY.INFORMATIONAL,
 ];
 
-// Latest new failed findings, most severe first, like the real tab.
-export const SAMPLE_NEW_FINDINGS: FindingProps[] = SAMPLE_CHECKS.flatMap(
-  (check, checkIndex) =>
-    Array.from({ length: check.newFailed }, (_, ordinal) =>
-      buildNewFinding(check, checkIndex, ordinal),
-    ),
-)
-  .sort(
-    (a, b) =>
-      SEVERITY_RANK.indexOf(a.attributes.severity) -
-      SEVERITY_RANK.indexOf(b.attributes.severity),
+// Latest new failed findings, most severe first, like the real tab. They are
+// the sample records, so a row opens the same finding the drawer resolves.
+export const SAMPLE_NEW_FINDINGS = sampleExpandedFindings(
+  SAMPLE_FINDINGS.filter(
+    (finding) => finding.status === "FAIL" && finding.delta === "new",
   )
-  .slice(0, NEW_FINDINGS_LIMIT);
+    .sort(
+      (a, b) =>
+        SEVERITY_RANK.indexOf(a.check.severity) -
+        SEVERITY_RANK.indexOf(b.check.severity),
+    )
+    .slice(0, NEW_FINDINGS_LIMIT),
+) as unknown as FindingProps[];
