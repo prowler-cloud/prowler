@@ -1,5 +1,4 @@
 import {
-  REALTIME_DATA_STORE,
   REALTIME_DETECTION_STATUS,
   REALTIME_FEED_STATUS,
   REALTIME_INSIGHT_KIND,
@@ -15,7 +14,6 @@ import {
   type RealtimeEvent,
   type RealtimeFeed,
   type RealtimeFramework,
-  type RealtimeHealth,
   type RealtimeDemoKind,
   type RealtimeDemoPayloads,
   type RealtimeInsightKind,
@@ -27,7 +25,7 @@ import {
   type RealtimeRemediation,
   type RealtimeSetupPayload,
   type RealtimeSetupStepId,
-} from "@/types/realtime";
+} from "@/app/(prowler)/realtime/_types";
 
 const asString = (value: unknown, fallback = ""): string =>
   typeof value === "string" ? value : fallback;
@@ -307,20 +305,6 @@ export const toEvent = (resource: RealtimeApiResource): RealtimeEvent => {
   };
 };
 
-export const toHealth = (resource: RealtimeApiResource): RealtimeHealth => {
-  const a = resource.attributes ?? {};
-  return {
-    enabled: asBoolean(a.enabled),
-    clickhouse: oneOf(
-      a.clickhouse,
-      Object.values(REALTIME_DATA_STORE),
-      REALTIME_DATA_STORE.UNAVAILABLE,
-    ),
-    events_last_hour: asNumber(a.events_last_hour),
-    changes_last_hour: asNumber(a.changes_last_hour),
-  };
-};
-
 /** One page of a JSON:API list, mapped through `map`. */
 export const toPage = <T>(
   document: RealtimeApiDocument | undefined,
@@ -356,7 +340,12 @@ export const toInsightPayload = <K extends RealtimeInsightKind>(
     payload.enabled === true &&
     !(
       isRecord(payload.total) &&
+      typeof payload.total.today === "number" &&
+      typeof payload.total.total === "number" &&
       Array.isArray(payload.series) &&
+      payload.series.every(
+        (series) => isRecord(series) && Array.isArray(series.days),
+      ) &&
       Array.isArray(payload.anomalies)
     )
   ) {

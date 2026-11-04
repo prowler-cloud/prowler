@@ -1,4 +1,4 @@
-import type { RealtimeStatusPayload } from "@/types/realtime";
+import type { RealtimeStatusPayload } from "@/app/(prowler)/realtime/_types";
 
 /**
  * The statement as the API returned it. Keys are already sorted by the API, and

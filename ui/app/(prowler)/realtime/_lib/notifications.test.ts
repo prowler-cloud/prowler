@@ -2,12 +2,11 @@ import { describe, expect, it } from "vitest";
 
 import {
   isSelectableRecipient,
-  notificationsSummary,
   recipientStatusLabel,
-  sameNotifications,
   toggleId,
 } from "./notifications";
 import { DEFAULT_REALTIME_NOTIFICATIONS } from "./policy-schema";
+import { alertsSummary } from "./setup";
 
 describe("alert helpers", () => {
   it("only lets a confirmed recipient be selected", () => {
@@ -29,28 +28,15 @@ describe("alert helpers", () => {
     expect(toggleId(["a"], "z", false)).toEqual(["a"]);
   });
 
-  it("compares alert settings by content", () => {
-    expect(
-      sameNotifications(
-        DEFAULT_REALTIME_NOTIFICATIONS,
-        structuredClone(DEFAULT_REALTIME_NOTIFICATIONS),
-      ),
-    ).toBe(true);
-    expect(
-      sameNotifications(DEFAULT_REALTIME_NOTIFICATIONS, {
-        ...DEFAULT_REALTIME_NOTIFICATIONS,
-        min_severity: "low",
-      }),
-    ).toBe(false);
-  });
-
-  it("summarises nothing when no channel is on", () => {
-    expect(notificationsSummary(DEFAULT_REALTIME_NOTIFICATIONS)).toEqual([]);
+  it("summarises nothing sent when no channel is on", () => {
+    expect(alertsSummary(DEFAULT_REALTIME_NOTIFICATIONS, null)).toBe(
+      "Slack off · email off",
+    );
   });
 
   it("names the channels and recipients in the summary", () => {
     expect(
-      notificationsSummary(
+      alertsSummary(
         {
           min_severity: "critical",
           slack: { enabled: true, channel_ids: ["C1", "C9"] },
@@ -61,10 +47,6 @@ describe("alert helpers", () => {
           email: [{ id: "r1", email: "a@x.io", status: "confirmed" }],
         },
       ),
-    ).toEqual([
-      "Slack: #security, C9",
-      "Email: a@x.io",
-      "From severity: Critical",
-    ]);
+    ).toBe("Slack #security, C9 · email to 1 recipient · critical and above");
   });
 });

@@ -1,19 +1,22 @@
-import { demoAnomalyHref } from "@/lib/realtime/demo";
 import {
+  REALTIME_ACTION_KIND,
   REALTIME_ACTION_STATUS,
   REALTIME_DRIFT_RULE_ID,
-  REALTIME_DATA_STORE,
   REALTIME_DETECTION_STATUS,
   REALTIME_FEED_STATUS,
   REALTIME_MODE,
   REALTIME_ROUTE,
+  type RealtimeActionKind,
   type RealtimeActionStatus,
-  type RealtimeDataStore,
   type RealtimeDetectionStatus,
   type RealtimeFeedStatus,
   type RealtimeMode,
   type RealtimeRoute,
-} from "@/types/realtime";
+} from "@/app/(prowler)/realtime/_types";
+import {
+  SeverityValues,
+  type Severity,
+} from "@/components/shadcn/table/severity-badge";
 
 /** Badge variants the shared `Badge` component defines. */
 export const BADGE_TONE = {
@@ -156,27 +159,6 @@ const FEED_STATUS_BADGES: Record<RealtimeFeedStatus, BadgeDescriptor> = {
 export const feedStatusBadge = (status: string): BadgeDescriptor =>
   FEED_STATUS_BADGES[status as RealtimeFeedStatus] ?? {
     label: humanize(status),
-    tone: BADGE_TONE.TAG,
-  };
-
-const DATA_STORE_BADGES: Record<RealtimeDataStore, BadgeDescriptor> = {
-  [REALTIME_DATA_STORE.OK]: {
-    label: "Data store ready",
-    tone: BADGE_TONE.SUCCESS,
-  },
-  [REALTIME_DATA_STORE.NOT_CONFIGURED]: {
-    label: "Data store not configured",
-    tone: BADGE_TONE.TAG,
-  },
-  [REALTIME_DATA_STORE.UNAVAILABLE]: {
-    label: "Data store unavailable",
-    tone: BADGE_TONE.ERROR,
-  },
-};
-
-export const dataStoreBadge = (state: string): BadgeDescriptor =>
-  DATA_STORE_BADGES[state as RealtimeDataStore] ?? {
-    label: humanize(state),
     tone: BADGE_TONE.TAG,
   };
 
@@ -344,8 +326,15 @@ export const isLighthouseAction = (action: { summary: string }): boolean =>
 /** The framework's name from the catalog, or its id while the catalog is missing. */
 export const frameworkLabel = (
   id: string,
-  catalog: Array<{ id: string; name: string }> = [],
-): string => catalog.find((framework) => framework.id === id)?.name ?? id;
+  catalog: Array<{ id: string; name: string; version?: string }> = [],
+): string => {
+  const framework = catalog.find((item) => item.id === id);
+  if (!framework) return id;
+  // Versions like "AWS" repeat the provider; numbered ones tell frameworks apart.
+  return framework.version && /\d/.test(framework.version)
+    ? `${framework.name} ${framework.version}`
+    : framework.name;
+};
 
 /** `<service>|<region>` to its parts; null when it is not an anomaly id. */
 export const parseAnomalyId = (
@@ -356,20 +345,52 @@ export const parseAnomalyId = (
   return { service: id.slice(0, at), region: id.slice(at + 1) };
 };
 
-/** The detail page of an anomaly; the id is URL-encoded. Sample anomalies have one fixed page. */
-export const anomalyHref = (
-  id: string,
-  providerId: string,
-  demo = false,
-): string =>
-  demo
-    ? demoAnomalyHref(providerId || undefined)
-    : `/realtime/cost-anomalies/${encodeURIComponent(id)}?provider=${encodeURIComponent(providerId)}`;
+/** Label per action status, for filters. */
+export const ACTION_STATUS_LABELS = Object.fromEntries(
+  Object.entries(ACTION_STATUS_BADGES).map(([status, badge]) => [
+    status,
+    badge.label,
+  ]),
+) as Record<RealtimeActionStatus, string>;
 
-export const REALTIME_SETTINGS_PATH = "/realtime/settings";
-export const REALTIME_COST_SETTINGS_PATH = "/realtime/settings/cost-anomalies";
+/** Label per detection verdict, for filters. */
+export const DETECTION_STATUS_LABELS = Object.fromEntries(
+  Object.entries(DETECTION_STATUS_BADGES).map(([status, badge]) => [
+    status,
+    badge.label,
+  ]),
+) as Record<RealtimeDetectionStatus, string>;
 
-export const settingsHref = (
-  providerId?: string,
-  path = REALTIME_SETTINGS_PATH,
-) => (providerId ? `${path}?provider=${encodeURIComponent(providerId)}` : path);
+export const ACTION_KIND_LABELS: Record<RealtimeActionKind, string> = {
+  [REALTIME_ACTION_KIND.SELF_FIX]: "Fix in the account",
+  [REALTIME_ACTION_KIND.CODE]: "Change in code",
+  [REALTIME_ACTION_KIND.PROPOSAL]: "Proposal",
+};
+
+export const actionKindLabel = (kind: string): string =>
+  ACTION_KIND_LABELS[kind as RealtimeActionKind] ?? humanize(kind);
+
+const SEVERITIES: readonly string[] = Object.values(SeverityValues);
+
+/** The severity when it is one the SeverityBadge knows. */
+export const asSeverity = (value: string): Severity | null =>
+  SEVERITIES.includes(value) ? (value as Severity) : null;
+
+/** Severity labels, worst first, for filters. */
+export const SEVERITY_FILTER_LABELS: Record<string, string> = {
+  critical: "Critical",
+  high: "High",
+  medium: "Medium",
+  low: "Low",
+};
+
+/** `arn:aws:sts::1:assumed-role/ci/session` to `assumed-role/ci/session`. */
+export const shortArn = (arn: string): string => {
+  if (!arn) return "Unknown";
+  const resource = arn.split(":").slice(5).join(":");
+  return resource || arn;
+};
+
+/** `3.8x · +$184.00`. */
+export const formatChange = (ratio: number, delta: number): string =>
+  `${ratio.toFixed(1)}x · +${formatMoney(delta)}`;

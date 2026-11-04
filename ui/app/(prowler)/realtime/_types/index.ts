@@ -100,15 +100,6 @@ export const REALTIME_INSIGHT_KIND = {
 export type RealtimeInsightKind =
   (typeof REALTIME_INSIGHT_KIND)[keyof typeof REALTIME_INSIGHT_KIND];
 
-export const REALTIME_TAB = {
-  OVERVIEW: "overview",
-  STREAM: "stream",
-  FINDINGS: "findings",
-  REMEDIATION: "remediation",
-  STATUS: "status",
-} as const;
-export type RealtimeTab = (typeof REALTIME_TAB)[keyof typeof REALTIME_TAB];
-
 /** Steps of the setup wizard as the API reports them (`insights/setup`). */
 export const REALTIME_SETUP_STEP = {
   FEED: "feed",
@@ -318,13 +309,6 @@ export interface RealtimeEvent {
   provider_id: string;
   detection_status: RealtimeDetectionStatus | null;
   rule_id: string | null;
-}
-
-export interface RealtimeHealth {
-  enabled: boolean;
-  clickhouse: RealtimeDataStore;
-  events_last_hour: number;
-  changes_last_hour: number;
 }
 
 export interface RealtimePage<T> {

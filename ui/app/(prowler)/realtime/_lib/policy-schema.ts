@@ -9,7 +9,7 @@ import {
   REALTIME_MODE,
   type RealtimeNotifications,
   type RealtimePolicyInput,
-} from "@/types/realtime";
+} from "@/app/(prowler)/realtime/_types";
 
 const GITHUB_REPO = /^[\w.-]+\/[\w.-]+$/;
 const IAC_PATH = /^[\w./@-]*$/;
@@ -162,55 +162,6 @@ export const realtimePolicySchema = z
 export const realtimePolicyPatchSchema = z
   .object({ ...policyShape, notifications: realtimeNotificationsSchema })
   .partial();
-
-/** The first message per field, for display next to the inputs. */
-export const policyFieldErrors = (
-  input: RealtimePolicyInput,
-): Record<string, string> => {
-  const result = realtimePolicySchema.safeParse(input);
-  if (result.success) return {};
-  const errors: Record<string, string> = {};
-  result.error.issues.forEach((issue) => {
-    const field = String(issue.path[0] ?? "form");
-    if (!errors[field]) errors[field] = issue.message;
-  });
-  return errors;
-};
-
-export interface ScopeRow {
-  id: string;
-  key: string;
-  value: string;
-}
-
-export const newScopeRow = (key = "", value = ""): ScopeRow => ({
-  id: crypto.randomUUID(),
-  key,
-  value,
-});
-
-/**
- * Editor rows to a scope. Fully empty rows are dropped; a half-filled row or
- * a repeated key is an error (the API allows one value per key).
- */
-export const scopeRowsToTags = (
-  rows: ScopeRow[],
-): { tags: Record<string, string>; error?: string } => {
-  const tags: Record<string, string> = {};
-  for (const row of rows) {
-    const key = row.key.trim();
-    const value = row.value.trim();
-    if (!key && !value) continue;
-    if (!key || !value) {
-      return { tags, error: "Each scope tag needs both a key and a value." };
-    }
-    if (key in tags) {
-      return { tags, error: `The tag key "${key}" is used more than once.` };
-    }
-    tags[key] = value;
-  }
-  return { tags };
-};
 
 /** Comma, space or newline separated values, trimmed, unique, order kept. */
 export const splitList = (raw: string): string[] =>

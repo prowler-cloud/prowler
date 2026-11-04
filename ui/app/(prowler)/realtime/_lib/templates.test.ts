@@ -15,7 +15,7 @@ const repoFile = (path: string) =>
     .split("+")
     .map((file) =>
       readFileSync(
-        resolve(__dirname, "../../../permissions/templates", file),
+        resolve(__dirname, "../../../../../permissions/templates", file),
         "utf8",
       ),
     )

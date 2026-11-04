@@ -2,7 +2,6 @@
 
 import { z } from "zod";
 
-import { apiBaseUrl, getAuthHeaders } from "@/lib";
 import {
   realtimeCostAnomalySchema,
   realtimeCredentialSchema,
@@ -10,8 +9,7 @@ import {
   realtimeNotificationsSchema,
   realtimePolicyPatchSchema,
   realtimePolicySchema,
-} from "@/lib/realtime/policy-schema";
-import { handleApiResponse } from "@/lib/server-actions-helper";
+} from "@/app/(prowler)/realtime/_lib/policy-schema";
 import type {
   RealtimeAction,
   RealtimeApiDocument,
@@ -28,7 +26,6 @@ import type {
   RealtimeFeed,
   RealtimeFeedInput,
   RealtimeFramework,
-  RealtimeHealth,
   RealtimeInsightKind,
   RealtimeInsightPayloads,
   RealtimeNotifications,
@@ -39,11 +36,13 @@ import type {
   RealtimeRemediation,
   RealtimeResult,
   RealtimeSetupPayload,
-} from "@/types/realtime";
+} from "@/app/(prowler)/realtime/_types";
 import {
   REALTIME_DEMO_LIST_KIND,
   REALTIME_INSIGHT_KIND,
-} from "@/types/realtime";
+} from "@/app/(prowler)/realtime/_types";
+import { apiBaseUrl, getAuthHeaders } from "@/lib";
+import { handleApiResponse } from "@/lib/server-actions-helper";
 
 import {
   resourcesOf,
@@ -54,7 +53,6 @@ import {
   toFeed,
   toFieldErrors,
   toFramework,
-  toHealth,
   toDemoPayload,
   toInsightPayload,
   toNotificationTargets,
@@ -68,6 +66,8 @@ import {
 const REALTIME_URL = `${apiBaseUrl}/realtime`;
 const UNREACHABLE =
   "Prowler could not reach the Prowler Realtime service. Try again.";
+const SERVER_ERROR =
+  "Prowler Realtime could not answer right now. Try again in a moment.";
 const INVALID_PROVIDER = "Select an AWS provider first.";
 const MAX_EVENTS = 500;
 const DEFAULT_PAGE_SIZE = 25;
@@ -118,16 +118,22 @@ const call = async (
   | { ok: true; document: RealtimeApiDocument | undefined; status: number }
   | RealtimeFailure
 > => {
+  let response: Response;
   try {
     const url = new URL(`${REALTIME_URL}/${path}`);
     init.query?.forEach((value, key) => url.searchParams.append(key, value));
-    const response = await fetch(url.toString(), {
+    response = await fetch(url.toString(), {
       method: init.method ?? "GET",
       headers: await getAuthHeaders({ contentType: init.body !== undefined }),
       body: init.body === undefined ? undefined : JSON.stringify(init.body),
       cache: "no-store",
     });
+  } catch (error) {
+    console.error("Prowler Realtime request failed:", error);
+    return fail(0, UNREACHABLE);
+  }
 
+  try {
     if (response.status === 409 || response.status === 503) {
       return fail(
         response.status,
@@ -150,8 +156,9 @@ const call = async (
     }
     return { ok: true, document: body, status: response.status };
   } catch (error) {
+    // handleApiResponse reports and throws on 5xx: the API answered, it failed.
     console.error("Prowler Realtime request failed:", error);
-    return fail(0, UNREACHABLE);
+    return fail(response.status >= 500 ? response.status : 0, SERVER_ERROR);
   }
 };
 
@@ -393,17 +400,6 @@ export const pollRealtimeFeed = async (
   return result.ok ? { ok: true, data: { queued: true } } : result;
 };
 
-export const getRealtimeHealth = async (): Promise<
-  RealtimeResult<RealtimeHealth>
-> => {
-  const result = await call("feeds/health");
-  if (!result.ok) return result;
-  const [resource] = resourcesOf(result.document);
-  return resource
-    ? { ok: true, data: toHealth(resource) }
-    : fail(0, "The data store status was unreadable.");
-};
-
 // ------------------------------------------------------------------ events
 
 export const getRealtimeEvents = async ({
@@ -448,18 +444,31 @@ const pageQuery = (
     ...extra,
   });
 
+/** `filter[key]=a,b` entries for the lists that are not empty. */
+const listFilters = (filters: Record<string, string[] | undefined>) =>
+  Object.fromEntries(
+    Object.entries(filters)
+      .filter(([, values]) => values?.length)
+      .map(([key, values]) => [`filter[${key}]`, (values ?? []).join(",")]),
+  );
+
 export const getRealtimeDetections = async ({
   providerId,
   statusIn,
+  severityIn,
+  ruleId,
   ...paging
-}: PageOptions & { statusIn?: string[] }): Promise<
-  RealtimeResult<RealtimePage<RealtimeDetection>>
-> => {
+}: PageOptions & {
+  statusIn?: string[];
+  severityIn?: string[];
+  ruleId?: string;
+}): Promise<RealtimeResult<RealtimePage<RealtimeDetection>>> => {
   if (!isUuid(providerId)) return fail(400, INVALID_PROVIDER);
   const result = await call("detections", {
     query: pageQuery(providerId, paging, {
       sort: "-event_time",
-      ...(statusIn?.length ? { "filter[status__in]": statusIn.join(",") } : {}),
+      ...listFilters({ status__in: statusIn, severity__in: severityIn }),
+      ...(ruleId ? { "filter[rule_id]": ruleId } : {}),
     }),
   });
   return result.ok
@@ -467,17 +476,55 @@ export const getRealtimeDetections = async ({
     : result;
 };
 
+export const getRealtimeDetection = async (
+  detectionId: string,
+): Promise<RealtimeResult<RealtimeDetection>> => {
+  if (!isUuid(detectionId)) return fail(404, "Unknown detection.");
+  const result = await call(`detections/${detectionId}`);
+  if (!result.ok) return result;
+  const [detection] = resourcesOf(result.document);
+  return detection
+    ? { ok: true, data: toDetection(detection) }
+    : fail(404, "Unknown detection.");
+};
+
 export const getRealtimeActions = async ({
   providerId,
+  statusIn,
+  kindIn,
+  detectionId,
   ...paging
-}: PageOptions): Promise<RealtimeResult<RealtimePage<RealtimeAction>>> => {
+}: PageOptions & {
+  statusIn?: string[];
+  kindIn?: string[];
+  detectionId?: string;
+}): Promise<RealtimeResult<RealtimePage<RealtimeAction>>> => {
   if (!isUuid(providerId)) return fail(400, INVALID_PROVIDER);
+  if (detectionId && !isUuid(detectionId)) {
+    return fail(404, "Unknown detection.");
+  }
   const result = await call("actions", {
-    query: pageQuery(providerId, paging, { sort: "-inserted_at" }),
+    query: pageQuery(providerId, paging, {
+      sort: "-inserted_at",
+      ...listFilters({ status__in: statusIn, kind__in: kindIn }),
+      ...(detectionId ? { "filter[detection]": detectionId } : {}),
+    }),
   });
   return result.ok
     ? { ok: true, data: toPage(result.document, toAction) }
     : result;
+};
+
+export const getRealtimeAction = async (
+  actionId: string,
+): Promise<RealtimeResult<RealtimeAction>> => {
+  if (!isUuid(actionId)) return fail(404, "Unknown action.");
+  const result = await call(`actions/${actionId}`);
+  if (!result.ok) return result;
+  const [action] = resourcesOf(result.document);
+  return action
+    ? { ok: true, data: toAction(action) }
+    : fail(404, "Unknown action.");
 };
 
 /** Undo an automatic fix with the exact inverse call that was recorded. */

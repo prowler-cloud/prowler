@@ -1,17 +1,31 @@
 import { describe, expect, it } from "vitest";
 
+import type { RealtimePolicyInput } from "@/app/(prowler)/realtime/_types";
+
 import {
   DEFAULT_REALTIME_NOTIFICATIONS,
   DEFAULT_REALTIME_POLICY,
-  newScopeRow,
-  policyFieldErrors,
   realtimeCostAnomalySchema,
   realtimeCredentialSchema,
   realtimeNotificationsSchema,
   realtimePolicyPatchSchema,
-  scopeRowsToTags,
+  realtimePolicySchema,
   splitList,
 } from "./policy-schema";
+
+/** The first message per field. */
+const policyFieldErrors = (
+  input: RealtimePolicyInput,
+): Record<string, string> => {
+  const result = realtimePolicySchema.safeParse(input);
+  if (result.success) return {};
+  const errors: Record<string, string> = {};
+  result.error.issues.forEach((issue) => {
+    const field = String(issue.path[0] ?? "form");
+    if (!errors[field]) errors[field] = issue.message;
+  });
+  return errors;
+};
 
 describe("policy schema", () => {
   it("accepts the safe defaults", () => {
@@ -113,20 +127,6 @@ describe("policy schema", () => {
       policyFieldErrors({ ...DEFAULT_REALTIME_POLICY, iac_path: "../x" })
         .iac_path,
     ).toBeDefined();
-  });
-
-  it("turns editor rows into tags, dropping blanks and flagging problems", () => {
-    expect(
-      scopeRowsToTags([
-        newScopeRow("env", "prod"),
-        newScopeRow(),
-        newScopeRow("team", "a"),
-      ]).tags,
-    ).toEqual({ env: "prod", team: "a" });
-    expect(scopeRowsToTags([newScopeRow("env", "")]).error).toBeDefined();
-    expect(
-      scopeRowsToTags([newScopeRow("env", "a"), newScopeRow("env", "b")]).error,
-    ).toMatch(/more than once/);
   });
 
   it("splits lists on commas, spaces and newlines without duplicates", () => {

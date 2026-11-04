@@ -2,13 +2,11 @@ import { describe, expect, it } from "vitest";
 
 import {
   actionStatusBadge,
-  anomalyHref,
   frameworkLabel,
   isDriftDetection,
   isLighthouseAction,
   parseAnomalyId,
   ROUTE_LEGEND,
-  settingsHref,
   detectionStatusBadge,
   failureCopy,
   formatRelativeTime,
@@ -17,6 +15,9 @@ import {
   policyChangesAccount,
   routeBadge,
   safeExternalUrl,
+  asSeverity,
+  formatChange,
+  shortArn,
 } from "./display";
 
 describe("realtime display helpers", () => {
@@ -55,9 +56,14 @@ describe("realtime display helpers", () => {
     expect(frameworkLabel("soc2_aws", catalog)).toBe("SOC 2");
     expect(frameworkLabel("pci_aws", catalog)).toBe("pci_aws");
     expect(frameworkLabel("soc2_aws")).toBe("soc2_aws");
+    expect(
+      frameworkLabel("cis_5.0_aws", [
+        { id: "cis_5.0_aws", name: "CIS", version: "5.0" },
+      ]),
+    ).toBe("CIS 5.0");
   });
 
-  it("builds and parses anomaly routes", () => {
+  it("parses anomaly ids", () => {
     const id = "Amazon Elastic Compute Cloud - Compute|eu-west-1";
     expect(parseAnomalyId(id)).toEqual({
       service: "Amazon Elastic Compute Cloud - Compute",
@@ -66,14 +72,6 @@ describe("realtime display helpers", () => {
     expect(parseAnomalyId("nopipe")).toBeNull();
     expect(parseAnomalyId("|region")).toBeNull();
     expect(parseAnomalyId("service|")).toBeNull();
-    expect(anomalyHref("EC2|eu-west-1", "p1")).toBe(
-      "/realtime/cost-anomalies/EC2%7Ceu-west-1?provider=p1",
-    );
-    expect(settingsHref("p1")).toBe("/realtime/settings?provider=p1");
-    expect(settingsHref(undefined)).toBe("/realtime/settings");
-    expect(settingsHref("p1", "/realtime/settings/cost-anomalies")).toBe(
-      "/realtime/settings/cost-anomalies?provider=p1",
-    );
   });
 
   it("tones action statuses and falls back for unknown ones", () => {
@@ -134,5 +132,22 @@ describe("realtime display helpers", () => {
 
   it("humanizes snake case", () => {
     expect(humanize("access_denied_burst")).toBe("Access denied burst");
+  });
+
+  it("shortens ARNs to the resource part", () => {
+    expect(
+      shortArn("arn:aws:sts::123456789012:assumed-role/ci-deployer/gh"),
+    ).toBe("assumed-role/ci-deployer/gh");
+    expect(shortArn("arn:aws:iam::123456789012:root")).toBe("root");
+    expect(shortArn("")).toBe("Unknown");
+  });
+
+  it("formats a cost change as ratio and dollars", () => {
+    expect(formatChange(3.84, 184)).toBe("3.8x · +$184.00");
+  });
+
+  it("knows the severities the badge can show", () => {
+    expect(asSeverity("critical")).toBe("critical");
+    expect(asSeverity("bogus")).toBeNull();
   });
 });
