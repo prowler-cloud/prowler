@@ -75,11 +75,13 @@ export default async function Findings({
           "name,state,unique_resource_count,started_at,completed_at,provider",
       },
     }),
+    // The scans action throws on 5xx: without running scans the page falls
+    // back to the latest view instead of failing.
     getScans({
       pageSize: 50,
       filters: { "filter[state]": "executing" },
       fields: { scans: "progress,started_at,completed_at" },
-    }),
+    }).catch(() => undefined),
   ]);
   const executingScans: ScanProps[] = executingScansData?.data ?? [];
   const now = Date.now();

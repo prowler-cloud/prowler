@@ -54,6 +54,12 @@ describe("findings page", () => {
     );
   });
 
+  it("keeps the page up when the executing-scans lookup fails", () => {
+    expect(source).toMatch(
+      /"filter\[state\]": "executing" },\s*fields: \{ scans: "progress,started_at,completed_at" },\s*\}\)\.catch\(\(\) => undefined\)/,
+    );
+  });
+
   it("guards errors array access with a length check", () => {
     expect(source).toContain("errors?.length > 0");
   });
