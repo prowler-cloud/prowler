@@ -20,8 +20,9 @@ CHECK = "zone_firewall_no_skip_all_traffic_rules"
 MODULE = f"prowler.providers.cloudflare.services.zone.{CHECK}.{CHECK}"
 
 
-def _run(rules):
+def _run(rules, failed_zones=None):
     zone_client = mock.MagicMock()
+    zone_client.firewall_rules_failed_zones = set(failed_zones or [])
     zone_client.zones = (
         {}
         if rules is None
@@ -90,6 +91,11 @@ def _rule(
         "(ip.src in {0.0.0.0/0})",
         "",
         None,
+        "true or ip.src in {192.0.2.0/24}",
+        "ip.src in {192.0.2.0/24} or true",
+        'http.host eq "a.example.com" || (true)',
+        'true or http.host eq "a.example.com" and ip.src in {192.0.2.0/24}',
+        '(http.host eq "a.example.com") or (ssl)',
     ],
 )
 def test_matches_all_traffic(expression):
@@ -108,6 +114,8 @@ def test_matches_all_traffic(expression):
         "true and ip.src in {192.0.2.0/24}",
         "not ssl",
         'ssl and http.request.uri.path eq "/health"',
+        '(true or ip.src in {192.0.2.0/24}) and http.host eq "a.example.com"',
+        'http.host eq "true or x" or http.host eq "b.example.com"',
     ],
 )
 def test_does_not_match_all_traffic(expression):
@@ -172,3 +180,16 @@ class Test_zone_firewall_no_skip_all_traffic_rules:
     def test_blocking_rule_matching_all_traffic_pass(self):
         # matching everything is fine for non-skip actions
         assert _run([_rule("true", action="managed_challenge")])[0].status == "PASS"
+
+    def test_rules_not_retrieved_manual(self):
+        result = _run([], failed_zones=[ZONE_ID])
+        assert result[0].status == "MANUAL"
+        assert result[0].status_extended == (
+            f"Cannot evaluate firewall skip rules for zone {ZONE_NAME}: its rulesets "
+            "could not be retrieved. Verify that the scanning token has the Zone WAF "
+            "Read permission."
+        )
+
+    def test_partial_rules_with_bypass_still_fail(self):
+        result = _run([_rule("true")], failed_zones=[ZONE_ID])
+        assert result[0].status == "FAIL"

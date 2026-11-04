@@ -19,7 +19,8 @@ class zone_firewall_no_skip_all_traffic_rules(Check):
 
         Returns:
             One finding per zone: FAIL when an enabled skip rule matches every
-            request, PASS otherwise.
+            request, MANUAL when the zone's firewall rules could not be retrieved,
+            PASS otherwise.
         """
         findings = []
         for zone in zone_client.zones.values():
@@ -46,6 +47,13 @@ class zone_firewall_no_skip_all_traffic_rules(Check):
                 report.status_extended = (
                     f"Zone {zone.name} has firewall skip rules that match all traffic "
                     f"and bypass security features: {names}."
+                )
+            elif zone.id in zone_client.firewall_rules_failed_zones:
+                report.status = "MANUAL"
+                report.status_extended = (
+                    f"Cannot evaluate firewall skip rules for zone {zone.name}: its "
+                    "rulesets could not be retrieved. Verify that the scanning token "
+                    "has the Zone WAF Read permission."
                 )
             else:
                 report.status = "PASS"

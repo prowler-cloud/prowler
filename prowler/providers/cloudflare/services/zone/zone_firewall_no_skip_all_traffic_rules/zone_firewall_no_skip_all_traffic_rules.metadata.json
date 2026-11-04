@@ -10,7 +10,7 @@
   "ResourceType": "Zone",
   "ResourceGroup": "network",
   "Description": "**Cloudflare zones** are assessed for enabled firewall rules with the **`skip` action** whose expression matches **every request** (for example `true`, a `wildcard \"*\"` match or `ip.src in {0.0.0.0/0 ::/0}`), which turn off custom rules, managed WAF rulesets, rate limiting or other security products for all traffic.",
-  "Risk": "A **skip rule that matches all traffic** silently disables protections while the zone still reports WAF as enabled.\n- **Integrity**: injection, exploitation and bot traffic reach the origin without managed WAF inspection\n- **Availability**: rate limiting and other mitigations no longer apply to any request\n- **Detection**: dashboards and other checks suggest protection that is not enforced",
+  "Risk": "A **skip rule that matches all traffic** disables the protections it skips for every request, while the zone still reports them as enabled. Depending on what is skipped:\n- **Integrity**: attack and bot traffic reach the origin without WAF or custom rule inspection\n- **Availability**: rate limiting no longer applies\n- **Detection**: dashboards suggest protection that is not enforced",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://developers.cloudflare.com/waf/custom-rules/skip/",

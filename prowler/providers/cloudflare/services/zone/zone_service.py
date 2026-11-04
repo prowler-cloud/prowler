@@ -67,6 +67,8 @@ class Zone(CloudflareService):
     def __init__(self, provider):
         super().__init__(__class__.__name__, provider)
         self.zones: dict[str, "CloudflareZone"] = {}
+        # Zones whose firewall rules are missing or incomplete because a call failed.
+        self.firewall_rules_failed_zones: set[str] = set()
         self._list_zones()
         self.__threading_call__(self._get_zone_settings_threaded, self.zones.values())
         self.__threading_call__(self._get_zone_dnssec, self.zones.values())
@@ -271,14 +273,17 @@ class Zone(CloudflareService):
                                     )
                                 )
                             except Exception as error:
+                                self.firewall_rules_failed_zones.add(zone.id)
                                 logger.error(
                                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                                 )
                     except Exception as error:
+                        self.firewall_rules_failed_zones.add(zone.id)
                         logger.error(
                             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                         )
         except Exception as error:
+            self.firewall_rules_failed_zones.add(zone.id)
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
