@@ -131,3 +131,97 @@ class Test_iam_subscription_roles_owner_custom_not_created:
                 ].id
             )
             assert result[0].resource_name == role_name
+
+    def test_iam_custom_role_with_not_actions_removing_owner_permissions(self):
+        defender_client = mock.MagicMock
+        defender_client.resource_groups = {}
+        defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
+        role_name = "test-role"
+        defender_client.custom_roles = {
+            AZURE_SUBSCRIPTION_ID: {
+                "test-role-id": Role(
+                    id="test-role-id",
+                    name=role_name,
+                    type="CustomRole",
+                    assignable_scopes=["/*"],
+                    permissions=[
+                        Permission(
+                            actions=["*"],
+                            not_actions=[
+                                "Microsoft.Authorization/*/Write",
+                                "Microsoft.Authorization/*/Delete",
+                                "Microsoft.Authorization/elevateAccess/Action",
+                            ],
+                        )
+                    ],
+                )
+            }
+        }
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.iam.iam_subscription_roles_owner_custom_not_created.iam_subscription_roles_owner_custom_not_created.iam_client",
+                new=defender_client,
+            ),
+        ):
+            from prowler.providers.azure.services.iam.iam_subscription_roles_owner_custom_not_created.iam_subscription_roles_owner_custom_not_created import (
+                iam_subscription_roles_owner_custom_not_created,
+            )
+
+            check = iam_subscription_roles_owner_custom_not_created()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert (
+                result[0].status_extended
+                == f"Role {role_name} from subscription {AZURE_SUBSCRIPTION_DISPLAY} is not a custom owner role."
+            )
+
+    def test_iam_custom_owner_role_with_unrelated_not_actions(self):
+        defender_client = mock.MagicMock
+        defender_client.resource_groups = {}
+        defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
+        role_name = "test-role"
+        defender_client.custom_roles = {
+            AZURE_SUBSCRIPTION_ID: {
+                "test-role-id": Role(
+                    id="test-role-id",
+                    name=role_name,
+                    type="CustomRole",
+                    assignable_scopes=["/*"],
+                    permissions=[
+                        Permission(
+                            actions=["*"],
+                            not_actions=["Microsoft.Compute/*/Write"],
+                        )
+                    ],
+                )
+            }
+        }
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.azure.services.iam.iam_subscription_roles_owner_custom_not_created.iam_subscription_roles_owner_custom_not_created.iam_client",
+                new=defender_client,
+            ),
+        ):
+            from prowler.providers.azure.services.iam.iam_subscription_roles_owner_custom_not_created.iam_subscription_roles_owner_custom_not_created import (
+                iam_subscription_roles_owner_custom_not_created,
+            )
+
+            check = iam_subscription_roles_owner_custom_not_created()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert (
+                result[0].status_extended
+                == f"Role {role_name} from subscription {AZURE_SUBSCRIPTION_DISPLAY} is a custom owner role."
+            )
