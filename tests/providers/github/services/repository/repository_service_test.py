@@ -600,6 +600,18 @@ class Test_Repository_BranchProtectionRulesets:
         self.repository_service._process_repository(repo, repos)
 
         assert repos[1].secret_scanning_enabled is False
+        assert repos[1].secret_scanning_push_protection_enabled is None
+
+    def test_process_repository_push_protection_missing_from_settings(self):
+        repo = self._build_repo(branch_protected=False)
+        repo.security_and_analysis = MagicMock(
+            secret_scanning=MagicMock(status="enabled"),
+            secret_scanning_push_protection=None,
+        )
+        repos = {}
+
+        self.repository_service._process_repository(repo, repos)
+
         assert repos[1].secret_scanning_push_protection_enabled is False
 
     def test_process_repository_uses_classic_branch_protection(self):

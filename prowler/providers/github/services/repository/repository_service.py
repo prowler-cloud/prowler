@@ -762,7 +762,8 @@ class Repository(GithubService):
                     approval_count_source = "ruleset_not_active"
 
             secret_scanning_enabled = False
-            secret_scanning_push_protection_enabled = False
+            # GitHub omits security_and_analysis when the token cannot read it
+            secret_scanning_push_protection_enabled = None
             dependabot_alerts_enabled = False
             try:
                 if (
@@ -772,13 +773,12 @@ class Repository(GithubService):
                     secret_scanning_enabled = (
                         repo.security_and_analysis.secret_scanning.status == "enabled"
                     )
-                if (
-                    repo.security_and_analysis
-                    and repo.security_and_analysis.secret_scanning_push_protection
-                ):
-                    secret_scanning_push_protection_enabled = (
-                        repo.security_and_analysis.secret_scanning_push_protection.status
-                        == "enabled"
+                if repo.security_and_analysis:
+                    push_protection = (
+                        repo.security_and_analysis.secret_scanning_push_protection
+                    )
+                    secret_scanning_push_protection_enabled = bool(
+                        push_protection and push_protection.status == "enabled"
                     )
                 try:
                     # Use get_dependabot_alerts to check if Dependabot alerts are enabled
