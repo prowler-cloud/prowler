@@ -928,7 +928,11 @@ class GcpProvider(Provider):
             or service_account_key.get("type") != "service_account"
         ):
             raise ValueError("The provided key is not a valid service_account key.")
-        if service_account_key.get("token_uri") not in GCP_SERVICE_ACCOUNT_TOKEN_URIS:
+        token_uri = service_account_key.get("token_uri")
+        if (
+            not isinstance(token_uri, str)
+            or token_uri not in GCP_SERVICE_ACCOUNT_TOKEN_URIS
+        ):
             raise ValueError(
                 "The service_account key token_uri must be one of: "
                 + ", ".join(sorted(GCP_SERVICE_ACCOUNT_TOKEN_URIS))

@@ -60,7 +60,10 @@ from api.v1.serializer_utils.lighthouse import (
 )
 from api.v1.serializer_utils.processors import ProcessorConfigField
 from api.v1.serializer_utils.providers import ProviderSecretField
-from api.validators import validate_lighthouse_openai_compatible_base_url
+from api.validators import (
+    validate_gcp_service_account_key,
+    validate_lighthouse_openai_compatible_base_url,
+)
 from config.custom_logging import BackendLogger
 from dj_rest_auth.registration.serializers import SocialLoginSerializer
 from django.conf import settings
@@ -1945,33 +1948,11 @@ class GCPProviderSecret(serializers.Serializer):
 class GCPServiceAccountProviderSecret(serializers.Serializer):
     service_account_key = serializers.JSONField()
 
-    # Google's OAuth 2.0 token endpoints; mirrors the SDK's
-    # GCP_SERVICE_ACCOUNT_TOKEN_URIS (the API pins the SDK from git).
-    ALLOWED_TOKEN_URIS = frozenset(
-        {
-            "https://oauth2.googleapis.com/token",
-            "https://accounts.google.com/o/oauth2/token",
-        }
-    )
-
     def validate_service_account_key(self, service_account_key):
-        # Other google-auth credential types (e.g. external_account) make the
-        # worker read local files or fetch arbitrary URLs during token refresh,
-        # and a custom token_uri makes it POST a signed assertion to any URL.
-        if (
-            not isinstance(service_account_key, dict)
-            or service_account_key.get("type") != "service_account"
-        ):
-            raise serializers.ValidationError(
-                'The service account key must be a JSON object with "type": "service_account".',
-                code="gcp-invalid-service-account-key",
-            )
-        if service_account_key.get("token_uri") not in self.ALLOWED_TOKEN_URIS:
-            raise serializers.ValidationError(
-                "The service account key token_uri must be one of: "
-                + ", ".join(sorted(self.ALLOWED_TOKEN_URIS)),
-                code="gcp-invalid-service-account-key",
-            )
+        try:
+            validate_gcp_service_account_key(service_account_key)
+        except DjangoValidationError as error:
+            raise ValidationError(error.messages[0], code=error.code) from error
         return service_account_key
 
     class Meta:

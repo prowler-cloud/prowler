@@ -3724,6 +3724,11 @@ current-context: test-context
                 "token_uri": "https://attacker.example.com/token",
             },
             {"type": "service_account"},
+            {
+                "type": "service_account",
+                "token_uri": ["https://oauth2.googleapis.com/token"],
+            },
+            {"type": "service_account", "token_uri": {"url": "x"}},
         ],
     )
     def test_provider_secrets_invalid_create_gcp_non_service_account_key(
