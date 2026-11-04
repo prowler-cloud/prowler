@@ -90,16 +90,25 @@ class WAFv2(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def _get_client_for_web_acl(self, acl):
+        """Return the client that serves the Web ACL's scope.
+
+        CLOUDFRONT-scoped Web ACLs are only reachable through us-east-1, which is
+        self.client and may not be an audited region in regional_clients.
+        """
+        if acl.scope == Scope.CLOUDFRONT:
+            return self.client
+        return self.regional_clients[acl.region]
+
     def _get_logging_configuration(self, acl):
         logger.info("WAFv2 - Get Logging Configuration...")
         try:
-            if acl.scope == Scope.REGIONAL or acl.region in self.regional_clients:
-                logging_enabled = self.regional_clients[
-                    acl.region
-                ].get_logging_configuration(ResourceArn=acl.arn)
-                acl.logging_enabled = bool(
-                    logging_enabled["LoggingConfiguration"]["LogDestinationConfigs"]
-                )
+            logging_enabled = self._get_client_for_web_acl(
+                acl
+            ).get_logging_configuration(ResourceArn=acl.arn)
+            acl.logging_enabled = bool(
+                logging_enabled["LoggingConfiguration"]["LogDestinationConfigs"]
+            )
 
         except ClientError as error:
             if error.response["Error"]["Code"] == "WAFNonexistentItemException":
@@ -145,50 +154,48 @@ class WAFv2(AWSService):
     def _get_web_acl(self, acl: str):
         logger.info("WAFv2 - Getting Web ACL...")
         try:
-            if acl.scope == Scope.REGIONAL or acl.region in self.regional_clients:
-                scope = acl.scope.value
-                get_web_acl = self.regional_clients[acl.region].get_web_acl(
-                    Name=acl.name, Scope=scope, Id=acl.id
+            get_web_acl = self._get_client_for_web_acl(acl).get_web_acl(
+                Name=acl.name, Scope=acl.scope.value, Id=acl.id
+            )
+
+            try:
+                rules = get_web_acl.get("WebACL", {}).get("Rules", [])
+                for rule in rules:
+                    new_rule = Rule(
+                        name=rule.get("Name", ""),
+                        cloudwatch_metrics_enabled=rule.get("VisibilityConfig", {}).get(
+                            "CloudWatchMetricsEnabled", False
+                        ),
+                    )
+                    if (
+                        rule.get("Statement", {})
+                        .get("RuleGroupReferenceStatement", {})
+                        .get("ARN")
+                    ):
+                        acl.rule_groups.append(new_rule)
+                    else:
+                        acl.rules.append(new_rule)
+
+                firewall_manager_managed_rg = get_web_acl.get("WebACL", {}).get(
+                    "PreProcessFirewallManagerRuleGroups", []
+                ) + get_web_acl.get("WebACL", {}).get(
+                    "PostProcessFirewallManagerRuleGroups", []
                 )
 
-                try:
-                    rules = get_web_acl.get("WebACL", {}).get("Rules", [])
-                    for rule in rules:
-                        new_rule = Rule(
+                for rule in firewall_manager_managed_rg:
+                    acl.rule_groups.append(
+                        Rule(
                             name=rule.get("Name", ""),
                             cloudwatch_metrics_enabled=rule.get(
                                 "VisibilityConfig", {}
                             ).get("CloudWatchMetricsEnabled", False),
                         )
-                        if (
-                            rule.get("Statement", {})
-                            .get("RuleGroupReferenceStatement", {})
-                            .get("ARN")
-                        ):
-                            acl.rule_groups.append(new_rule)
-                        else:
-                            acl.rules.append(new_rule)
-
-                    firewall_manager_managed_rg = get_web_acl.get("WebACL", {}).get(
-                        "PreProcessFirewallManagerRuleGroups", []
-                    ) + get_web_acl.get("WebACL", {}).get(
-                        "PostProcessFirewallManagerRuleGroups", []
                     )
 
-                    for rule in firewall_manager_managed_rg:
-                        acl.rule_groups.append(
-                            Rule(
-                                name=rule.get("Name", ""),
-                                cloudwatch_metrics_enabled=rule.get(
-                                    "VisibilityConfig", {}
-                                ).get("CloudWatchMetricsEnabled", False),
-                            )
-                        )
-
-                except Exception as error:
-                    logger.error(
-                        f"{acl.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                    )
+            except Exception as error:
+                logger.error(
+                    f"{acl.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
 
         except Exception as error:
             logger.error(
@@ -198,16 +205,12 @@ class WAFv2(AWSService):
     def _list_tags(self, resource: any):
         logger.info("WAFv2 - Listing tags...")
         try:
-            if (
-                resource.scope == Scope.REGIONAL
-                or resource.region in self.regional_clients
-            ):
-                resource.tags = (
-                    self.regional_clients[resource.region]
-                    .list_tags_for_resource(ResourceARN=resource.arn)
-                    .get("TagInfoForResource", {})
-                    .get("TagList", [])
-                )
+            resource.tags = (
+                self._get_client_for_web_acl(resource)
+                .list_tags_for_resource(ResourceARN=resource.arn)
+                .get("TagInfoForResource", {})
+                .get("TagList", [])
+            )
         except Exception as error:
             logger.error(
                 f"{resource.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

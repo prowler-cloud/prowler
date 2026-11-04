@@ -398,3 +398,45 @@ class Test_WAFv2_Service:
         assert len(wafv2.web_acls[waf_arn].rules) == 1
         assert wafv2.web_acls[waf_arn].rules[0].name == "rule-on"
         assert wafv2.web_acls[waf_arn].rules[0].cloudwatch_metrics_enabled
+
+    # CloudFront Web ACLs live in us-east-1, so their details must be fetched even when
+    # us-east-1 is not among the audited regions.
+    @mock_aws
+    def test_cloudfront_web_acl_details_without_us_east_1_audited(self):
+        wafv2 = client("wafv2", region_name=AWS_REGION_US_EAST_1)
+        visibility = {
+            "SampledRequestsEnabled": True,
+            "CloudWatchMetricsEnabled": True,
+            "MetricName": "web-acl-test-metric",
+        }
+        waf = wafv2.create_web_acl(
+            Scope="CLOUDFRONT",
+            Name="my-web-acl",
+            DefaultAction={"Allow": {}},
+            Rules=[
+                {
+                    "Name": "rule-on",
+                    "Priority": 1,
+                    "Action": {"Block": {}},
+                    "Statement": {"GeoMatchStatement": {"CountryCodes": ["US"]}},
+                    "VisibilityConfig": visibility,
+                }
+            ],
+            VisibilityConfig=visibility,
+            Tags=[{"Key": "Name", "Value": "my-web-acl"}],
+        )["Summary"]
+        wafv2.put_logging_configuration(
+            LoggingConfiguration={
+                "ResourceArn": waf["ARN"],
+                "LogDestinationConfigs": [
+                    f"arn:aws:logs:{AWS_REGION_US_EAST_1}:123456789012:log-group:aws-waf-logs-test"
+                ],
+            }
+        )
+
+        wafv2 = WAFv2(set_mocked_aws_provider([AWS_REGION_EU_WEST_1]))
+
+        acl = wafv2.web_acls[waf["ARN"]]
+        assert [rule.name for rule in acl.rules] == ["rule-on"]
+        assert acl.tags == [{"Key": "Name", "Value": "my-web-acl"}]
+        assert acl.logging_enabled
