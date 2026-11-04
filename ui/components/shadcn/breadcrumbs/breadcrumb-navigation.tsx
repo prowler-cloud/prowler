@@ -156,13 +156,19 @@ export function BreadcrumbNavigation({
   }
 
   return (
-    <div className={cn(className, "w-fit md:w-full")}>
+    <div className={cn(className, "w-fit max-w-full md:w-full")}>
       <nav aria-label="Breadcrumb">
-        <ol className="flex flex-wrap items-center">
+        {/* From sm up, one line: earlier crumbs keep their width and the
+            last one truncates. Below sm crumbs wrap, so a long trail never
+            pushes the header controls off a phone screen. */}
+        <ol className="flex min-w-0 flex-wrap items-center sm:flex-nowrap">
           {breadcrumbItems.map((breadcrumb, index) => (
             <li
               key={breadcrumb.path || index}
-              className="flex items-center"
+              className={cn(
+                "flex items-center",
+                index === breadcrumbItems.length - 1 ? "min-w-0" : "shrink-0",
+              )}
               aria-current={
                 index === breadcrumbItems.length - 1 ? "page" : undefined
               }
@@ -198,13 +204,16 @@ export function BreadcrumbNavigation({
                   </span>
                 </button>
               ) : (
-                <div className="flex items-center gap-2">
+                <div className="flex min-w-0 items-center gap-2">
                   {index === 0 && breadcrumb.icon ? (
                     <BreadcrumbIcon className="text-text-neutral-tertiary">
                       {breadcrumb.icon}
                     </BreadcrumbIcon>
                   ) : null}
-                  <span className="max-w-[150px] truncate text-sm font-medium text-gray-900 sm:max-w-none dark:text-gray-100">
+                  <span
+                    title={breadcrumb.name}
+                    className="max-w-[150px] truncate text-sm font-medium text-gray-900 sm:max-w-none dark:text-gray-100"
+                  >
                     {breadcrumb.name}
                   </span>
                 </div>

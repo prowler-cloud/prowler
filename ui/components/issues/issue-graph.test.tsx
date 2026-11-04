@@ -6,22 +6,8 @@ import { beforeEach, describe, expect, expectTypeOf, it, vi } from "vitest";
 import { GraphNode } from "@/types/attack-paths";
 import { IssueAttributes } from "@/types/issues";
 
-const { getFindings, navigateToFinding } = vi.hoisted(() => ({
-  getFindings: vi.fn(),
-  navigateToFinding: vi.fn(),
-}));
+const { getFindings } = vi.hoisted(() => ({ getFindings: vi.fn() }));
 vi.mock("@/actions/findings", () => ({ getFindings }));
-vi.mock("@/hooks/use-finding-details", () => ({
-  useFindingDetails: () => ({
-    findingDetails: null,
-    findingDetailLoading: false,
-    resetFindingDetails: vi.fn(),
-    navigateToFinding,
-  }),
-}));
-vi.mock("@/components/findings/table", () => ({
-  FindingDetailDrawer: () => null,
-}));
 vi.mock("@/components/attack-paths/graph/attack-path-graph", () => ({
   AttackPathGraph: ({
     data,
@@ -52,7 +38,7 @@ const issue = { legs: {} } as IssueAttributes;
 
 it("requires provider and scan identifiers together in the graph props", () => {
   type Props = ComponentProps<typeof IssueGraph>;
-  type BaseProps = Pick<Props, "issue" | "resourceUids">;
+  type BaseProps = Pick<Props, "issue" | "resourceUids" | "onOpenFinding">;
 
   expectTypeOf<BaseProps>().toExtend<Props>();
   expectTypeOf<
@@ -63,31 +49,10 @@ it("requires provider and scan identifiers together in the graph props", () => {
 });
 
 describe("IssueGraph finding lookup", () => {
+  const openFinding = vi.fn();
+
   beforeEach(() => {
-    navigateToFinding.mockResolvedValue(undefined);
-  });
-
-  it("leaves findings closed in a read-only graph", async () => {
-    // Given: a host that cannot hold a second detail view, such as the panel
-    render(
-      <IssueGraph
-        issue={issue}
-        resourceUids={["bucket"]}
-        providerId="provider-1"
-        scanId="scan-1"
-        readOnly
-      />,
-    );
-
-    // When
-    await userEvent.click(screen.getByRole("button", { name: "Open finding" }));
-
-    // Then
-    expect(navigateToFinding).not.toHaveBeenCalled();
-    expect(getFindings).not.toHaveBeenCalled();
-    expect(
-      screen.getByText(/Open the full path to inspect a finding/),
-    ).toBeInTheDocument();
+    openFinding.mockReset();
   });
 
   it("opens a folded finding by id without another lookup", async () => {
@@ -109,6 +74,7 @@ describe("IssueGraph finding lookup", () => {
         ]}
         providerId="provider-1"
         scanId="scan-1"
+        onOpenFinding={openFinding}
       />,
     );
 
@@ -116,7 +82,7 @@ describe("IssueGraph finding lookup", () => {
     await userEvent.click(screen.getByRole("button", { name: "Open finding" }));
 
     // Then
-    expect(navigateToFinding).toHaveBeenCalledWith("folded-finding");
+    expect(openFinding).toHaveBeenCalledWith("folded-finding");
     expect(getFindings).not.toHaveBeenCalled();
   });
 
@@ -136,6 +102,7 @@ describe("IssueGraph finding lookup", () => {
         resourceUids={["bucket"]}
         providerId="provider-1"
         scanId="scan-1"
+        onOpenFinding={openFinding}
       />,
     );
     await user.click(screen.getByRole("button", { name: "Open finding" }));
@@ -149,7 +116,7 @@ describe("IssueGraph finding lookup", () => {
         "filter[status]": "FAIL",
       },
     });
-    expect(navigateToFinding).toHaveBeenCalledWith("finding-1");
+    expect(openFinding).toHaveBeenCalledWith("finding-1");
   });
 
   it("rejects a finding from a newer scan", async () => {
@@ -167,10 +134,11 @@ describe("IssueGraph finding lookup", () => {
         resourceUids={["bucket"]}
         providerId="provider-1"
         scanId="scan-1"
+        onOpenFinding={openFinding}
       />,
     );
     await userEvent.click(screen.getByRole("button", { name: "Open finding" }));
-    expect(navigateToFinding).not.toHaveBeenCalled();
+    expect(openFinding).not.toHaveBeenCalled();
     expect(screen.getByRole("alert")).toHaveTextContent(
       "no longer available for the issue's scan",
     );
@@ -186,6 +154,7 @@ describe("IssueGraph finding lookup", () => {
         resourceUids={["bucket"]}
         providerId="provider-1"
         scanId="scan-1"
+        onOpenFinding={openFinding}
       />,
     );
     await userEvent.click(screen.getByRole("button", { name: "Open finding" }));
@@ -209,6 +178,7 @@ describe("IssueGraph finding lookup", () => {
         resourceUids={["bucket"]}
         providerId="provider-1"
         scanId="scan-1"
+        onOpenFinding={openFinding}
       />,
     );
     await userEvent.click(screen.getByRole("button", { name: "Open finding" }));
@@ -224,7 +194,13 @@ describe("IssueGraph finding lookup", () => {
   });
 
   it("does not look up findings without a provider and scan", async () => {
-    render(<IssueGraph issue={issue} resourceUids={["bucket"]} />);
+    render(
+      <IssueGraph
+        issue={issue}
+        resourceUids={["bucket"]}
+        onOpenFinding={openFinding}
+      />,
+    );
     await userEvent.click(screen.getByRole("button", { name: "Open finding" }));
     expect(getFindings).not.toHaveBeenCalled();
     expect(screen.getByRole("alert")).toHaveTextContent(

@@ -10,7 +10,6 @@ import { useAppSidebarMode } from "./app-sidebar-mode-store";
 import { APP_SIDEBAR_MODE } from "./types";
 
 const {
-  issuesFlagValue,
   openCloudUpgradeMock,
   openLaunchScanModalMock,
   pathnameValue,
@@ -18,7 +17,6 @@ const {
   pushMock,
   realtimeFlagValue,
 } = vi.hoisted(() => ({
-  issuesFlagValue: { current: false },
   openCloudUpgradeMock: vi.fn(),
   openLaunchScanModalMock: vi.fn(),
   pathnameValue: { current: "/findings" },
@@ -40,14 +38,6 @@ vi.mock("@/hooks/use-runtime-config", () => ({
   useRuntimeConfig: () => ({ apiDocsUrl: "https://local.example/docs" }),
 }));
 
-vi.mock("@/lib/feature-flags", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@/lib/feature-flags")>()),
-  useFeatureFlag: (flag: string) =>
-    flag === "realtime-feature"
-      ? realtimeFlagValue.current
-      : issuesFlagValue.current,
-}));
-
 vi.mock("@/store", () => ({
   useScansStore: (
     selector: (state: {
@@ -61,6 +51,11 @@ vi.mock("@/store", () => ({
   ) => selector({ openCloudUpgrade: openCloudUpgradeMock }),
 }));
 
+vi.mock("@/lib/feature-flags/client", async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  useFeatureFlag: () => realtimeFlagValue.current,
+}));
+
 vi.mock("@/app/(prowler)/lighthouse/_components/navigation", () => ({
   LighthouseV2SidebarChat: () => <div data-testid="lighthouse-chat-sidebar" />,
 }));
@@ -69,9 +64,8 @@ describe("AppSidebarContent", () => {
   beforeEach(() => {
     pathnameValue.current = "/findings";
     permissionsValue.current = { manage_providers: true };
-    issuesFlagValue.current = false;
-    realtimeFlagValue.current = false;
     pushMock.mockClear();
+    realtimeFlagValue.current = false;
     openCloudUpgradeMock.mockClear();
     openLaunchScanModalMock.mockClear();
     useAppSidebarMode.setState({ mode: APP_SIDEBAR_MODE.BROWSE });
@@ -127,10 +121,9 @@ describe("AppSidebarContent", () => {
     );
   });
 
-  it("shows Issues navigation in Cloud once the feature flag is on", () => {
+  it("shows Issues navigation in Cloud", () => {
     // Given
     vi.stubEnv("UI_CLOUD_ENABLED", "true");
-    issuesFlagValue.current = true;
 
     // When
     render(<AppSidebarContent />);
@@ -160,7 +153,6 @@ describe("AppSidebarContent", () => {
   it("hides Realtime navigation while its feature flag is off", () => {
     // Given / When
     vi.stubEnv("UI_CLOUD_ENABLED", "true");
-    issuesFlagValue.current = true;
     render(<AppSidebarContent />);
 
     // Then
@@ -169,9 +161,9 @@ describe("AppSidebarContent", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("hides Issues navigation in Cloud while the feature flag is off", () => {
+  it("hides Issues navigation in Local Server", () => {
     // Given / When
-    vi.stubEnv("UI_CLOUD_ENABLED", "true");
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
     render(<AppSidebarContent />);
 
     // Then

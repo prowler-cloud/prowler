@@ -23,18 +23,13 @@ vi.mock("@/actions/issues", () => ({
   getIssueFindings: async () => [],
   getIssueNotes: async () => [],
 }));
+vi.mock("@/actions/findings", () => ({ getFindingById: vi.fn() }));
+vi.mock("@/components/findings/table", () => ({
+  FindingDetailDrawer: () => null,
+}));
 vi.mock("@/components/issues/issue-graph", () => ({
-  IssueGraph: ({
-    resourceUids,
-    readOnly,
-  }: {
-    resourceUids: string[];
-    readOnly?: boolean;
-  }) => (
-    <p>
-      Graph of {resourceUids.join(", ")}
-      {readOnly ? " (read-only)" : ""}
-    </p>
+  IssueGraph: ({ resourceUids }: { resourceUids: string[] }) => (
+    <p>Graph of {resourceUids.join(", ")}</p>
   ),
 }));
 // The real panel portals into the app shell's side panel, absent here.
@@ -135,47 +130,54 @@ describe("IssuesTable", () => {
   it("opens the issue in the side panel and closes it", async () => {
     // Given
     const user = userEvent.setup();
-    render(<IssuesTable issues={[issue]} />);
-
-    // When
-    await user.click(screen.getByRole("button", { name: "Public bucket" }));
-
-    // Then: the assessment tab leads, the full page stays one click away
-    const panel = screen.getByRole("region", { name: "Public bucket" });
-    expect(
-      within(panel).getByRole("tab", { name: "Exploitability" }),
-    ).toHaveAttribute("aria-selected", "true");
-    expect(within(panel).getByText("Block Public Access off")).toBeVisible();
-    expect(
-      within(panel).getByRole("link", { name: "Open the full path" }),
-    ).toHaveAttribute("href", "/issues/issue-1");
-
-    // When
-    await user.click(within(panel).getByRole("tab", { name: "Remediation" }));
-
-    // Then
-    expect(within(panel).getByText("Restrict access")).toBeVisible();
-    expect(
-      within(panel).getByRole("link", {
-        name: "Open this scan's failed findings",
-      }),
-    ).toHaveAttribute(
-      "href",
-      "/findings?filter%5Bscan__in%5D=scan-1&filter%5Bstatus__in%5D=FAIL",
-    );
-
-    // When
     getIssue.mockResolvedValue({
       data: {
         ...issue,
         attributes: { ...issue.attributes, resource_uids: ["bucket"] },
       },
     });
+    render(<IssuesTable issues={[issue]} />);
+
+    // When
+    await user.click(screen.getByRole("button", { name: "Public bucket" }));
+
+    // Then: the assessment tab leads, and nothing sends the user elsewhere
+    const panel = screen.getByRole("region", { name: "Public bucket" });
+    expect(
+      within(panel).getByRole("tab", { name: "Exploitability" }),
+    ).toHaveAttribute("aria-selected", "true");
+    expect(within(panel).getByText("Block Public Access off")).toBeVisible();
+    expect(
+      within(panel).queryByRole("link", { name: "Open the full path" }),
+    ).not.toBeInTheDocument();
+
+    // When
+    await user.click(within(panel).getByRole("tab", { name: "Remediation" }));
+
+    // Then
+    expect(within(panel).getByText("Restrict access")).toBeVisible();
+
+    // When: the scan's failed findings sit in the actions menu
+    await user.click(
+      within(panel).getByRole("button", { name: "Issue actions" }),
+    );
+    await user.click(
+      await screen.findByRole("menuitem", {
+        name: "Open this scan's failed findings",
+      }),
+    );
+
+    // Then
+    expect(push).toHaveBeenLastCalledWith(
+      "/findings?filter%5Bscan__in%5D=scan-1&filter%5Bstatus__in%5D=FAIL",
+    );
+
+    // When
     await user.click(within(panel).getByRole("tab", { name: "Attack path" }));
 
-    // Then: the graph loads on demand and leaves finding drill-down to the page
+    // Then
     expect(
-      await within(panel).findByText("Graph of bucket (read-only)"),
+      await within(panel).findByText("Graph of bucket"),
     ).toBeInTheDocument();
     expect(getIssue).toHaveBeenCalledWith("issue-1");
 

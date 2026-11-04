@@ -457,7 +457,7 @@ def main() -> int:
     if not upstream_dir.exists():
         print(
             f"error: upstream cache dir {upstream_dir} not found\n"
-            f"  hint: {config['upstream'].get('fetch_docs', '(see SKILL.md Workflow A Step 1)')}",
+            f"  hint: {config['upstream'].get('fetch_docs', '(see references/upstream-sync.md Step 1)')}",
             file=sys.stderr,
         )
         return 3

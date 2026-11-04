@@ -10,6 +10,10 @@ import {
 import { createMuteRule } from "@/actions/mute-rules";
 import { apiBaseUrl, getAuthHeaders } from "@/lib";
 import { ACTION_ERROR_STATUS, UsageLimitError } from "@/lib/action-errors";
+import {
+  isSampleId,
+  SAMPLE_WRITE_MESSAGE,
+} from "@/lib/sample-preview/sample-guards";
 import { handleApiResponse } from "@/lib/server-actions-helper";
 import {
   FINDING_TRIAGE_STATUS_LABELS,
@@ -281,6 +285,7 @@ export async function loadFindingTriageDetail(
 }
 
 export async function updateFindingTriage(input: UpdateFindingTriageInput) {
+  if (isSampleId(input.findingId)) throw new Error(SAMPLE_WRITE_MESSAGE);
   try {
     return await applyFindingTriageUpdate(input);
   } catch (error) {

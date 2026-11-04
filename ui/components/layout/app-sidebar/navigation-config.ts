@@ -36,8 +36,6 @@ interface NavigationConfigOptions {
   apiDocsUrl?: string | null;
   cloudBillingEnabled?: boolean;
   registryEligible?: boolean;
-  // PostHog FEATURE_FLAG.ISSUES, resolved by the caller; Cloud only.
-  issuesEnabled?: boolean;
   // PostHog FEATURE_FLAG.REALTIME, resolved by the caller; Cloud only.
   realtimeEnabled?: boolean;
   permissions?: RolePermissionAttributes;
@@ -116,7 +114,6 @@ export function getNavigationConfig({
   apiDocsUrl = null,
   cloudBillingEnabled = false,
   registryEligible = false,
-  issuesEnabled = false,
   realtimeEnabled = false,
   permissions,
 }: NavigationConfigOptions): NavigationSection[] {
@@ -153,21 +150,8 @@ export function getNavigationConfig({
     {
       label: "SECURITY",
       items: [
-        {
-          kind: NAVIGATION_ITEM_KIND.LINK,
-          href: "/compliance",
-          label: "Compliance",
-          icon: ShieldCheck,
-          active: isRouteActive(pathname, "/compliance"),
-        },
-        {
-          kind: NAVIGATION_ITEM_KIND.LINK,
-          href: "/findings?filter[muted]=false&filter[status__in]=FAIL",
-          label: "Findings",
-          icon: Tag,
-          active: isRouteActive(pathname, "/findings"),
-        },
-        ...(isCloudEnvironment && issuesEnabled
+        // First: the exploitable issues are what to fix before anything else.
+        ...(isCloudEnvironment
           ? [
               {
                 kind: NAVIGATION_ITEM_KIND.LINK,
@@ -191,6 +175,20 @@ export function getNavigationConfig({
               } as const,
             ]
           : []),
+        {
+          kind: NAVIGATION_ITEM_KIND.LINK,
+          href: "/compliance",
+          label: "Compliance",
+          icon: ShieldCheck,
+          active: isRouteActive(pathname, "/compliance"),
+        },
+        {
+          kind: NAVIGATION_ITEM_KIND.LINK,
+          href: "/findings?filter[muted]=false&filter[status__in]=FAIL",
+          label: "Findings",
+          icon: Tag,
+          active: isRouteActive(pathname, "/findings"),
+        },
         {
           kind: NAVIGATION_ITEM_KIND.LINK,
           href: "/attack-paths",

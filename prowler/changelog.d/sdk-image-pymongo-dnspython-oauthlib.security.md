@@ -1,1 +1,0 @@
-pymongo to 4.18.3, dnspython to 2.9.0 and oauthlib to 4.0.0 in the SDK, patching the BSON decoding and DNS compression pointer denial of service advisories and the OAuth device flow token disclosure; dnspython stays on 2.8.0 for Python 3.10, which 2.9.0 no longer supports

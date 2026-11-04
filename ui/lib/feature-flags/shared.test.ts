@@ -5,10 +5,9 @@ import { FEATURE_FLAG, FEATURE_FLAG_STATE } from "./shared";
 describe("FEATURE_FLAG", () => {
   it("should map each flag to the key PostHog knows it by", () => {
     expect(FEATURE_FLAG).toEqual({
-      ISSUES: "issues-feature",
-      REALTIME: "realtime-feature",
       BILLING_SYSTEM_METRONOME: "BILLING_SYSTEM_METRONOME",
       FINDINGS_TRIAL_PREVIEW: "findings-trial-preview",
+      REALTIME: "realtime-feature",
     });
   });
 

@@ -106,23 +106,7 @@ describe("getNavigationConfig", () => {
     );
   });
 
-  it("hides Issues in Cloud until the feature flag resolves on", () => {
-    // Given
-    vi.stubEnv("UI_CLOUD_ENABLED", "true");
-
-    // When
-    const labels = getNavigationConfig({
-      pathname: "/",
-      apiDocsUrl: null,
-    })
-      .flatMap((section) => section.items)
-      .map((item) => item.label);
-
-    // Then
-    expect(labels).not.toContain("Exploitability issues");
-  });
-
-  it("never shows Issues in Local Server, even with the flag on", () => {
+  it("never shows Issues in Local Server", () => {
     // Given
     vi.stubEnv("UI_CLOUD_ENABLED", "false");
 
@@ -130,7 +114,6 @@ describe("getNavigationConfig", () => {
     const labels = getNavigationConfig({
       pathname: "/",
       apiDocsUrl: null,
-      issuesEnabled: true,
     })
       .flatMap((section) => section.items)
       .map((item) => item.label);
@@ -188,7 +171,6 @@ describe("getNavigationConfig", () => {
     const sections = getNavigationConfig({
       pathname: "/scans/config",
       apiDocsUrl: "https://ignored.example/docs",
-      issuesEnabled: true,
     });
     const items = sections.flatMap((section) => section.items);
     const configuration = items.find((item) => item.label === "Configuration");
@@ -199,9 +181,8 @@ describe("getNavigationConfig", () => {
 
     // Then
     expect(sections[0]?.items.map((item) => item.label)).toEqual(["Overview"]);
-    expect(
-      items.find((item) => item.label === "Exploitability issues"),
-    ).toMatchObject({
+    expect(sections[1]?.items[0]).toMatchObject({
+      label: "Exploitability issues",
       href: "/issues",
     });
     expect(configuration.children).not.toEqual(

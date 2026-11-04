@@ -89,7 +89,7 @@ vi.mock("@/lib", () => ({
 
 const featureFlagMocks = vi.hoisted(() => ({ realtime: false }));
 
-vi.mock("@/lib/feature-flags", async (importOriginal) => ({
+vi.mock("@/lib/feature-flags/client", async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
   useFeatureFlag: () => featureFlagMocks.realtime,
 }));

@@ -31,7 +31,8 @@ import {
 } from "@/components/shadcn/tooltip";
 import { useFormServerErrors } from "@/hooks/use-form-server-errors";
 import { useManageProvidersUnlimitedVisibility } from "@/hooks/use-manage-providers-unlimited-visibility";
-import { FEATURE_FLAG, useFeatureFlag } from "@/lib/feature-flags";
+import { useFeatureFlag } from "@/lib/feature-flags/client";
+import { FEATURE_FLAG } from "@/lib/feature-flags/shared";
 import {
   getUnlimitedVisibilityField,
   getVisiblePermissionFormFields,

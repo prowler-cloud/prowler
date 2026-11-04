@@ -2,8 +2,8 @@
 
 import type { ReactNode } from "react";
 
-import { FeatureFlagGate } from "@/components/shared/feature-flag-gate";
-import { FEATURE_FLAG } from "@/lib/feature-flags";
+import { useFeatureFlagState } from "@/lib/feature-flags/client";
+import { FEATURE_FLAG, FEATURE_FLAG_STATE } from "@/lib/feature-flags/shared";
 
 interface RealtimeGateProps {
   children: ReactNode;
@@ -11,19 +11,17 @@ interface RealtimeGateProps {
   pending: ReactNode;
 }
 
-/** Per-account rollout. The Cloud gate (404) runs on the server first. */
+/**
+ * Per-account rollout. The Cloud gate (404) runs on the server first, and the
+ * API checks the same flag, so this only decides what the browser shows.
+ */
 export function RealtimeGate({ children, pending }: RealtimeGateProps) {
+  const state = useFeatureFlagState(FEATURE_FLAG.REALTIME);
+  if (state === FEATURE_FLAG_STATE.ON) return <>{children}</>;
+  if (state === FEATURE_FLAG_STATE.PENDING) return <>{pending}</>;
   return (
-    <FeatureFlagGate
-      flag={FEATURE_FLAG.REALTIME}
-      pending={pending}
-      fallback={
-        <p className="text-text-neutral-tertiary text-sm">
-          Prowler Realtime is not available for this account yet.
-        </p>
-      }
-    >
-      {children}
-    </FeatureFlagGate>
+    <p className="text-text-neutral-tertiary text-sm">
+      Prowler Realtime is not available for this account yet.
+    </p>
   );
 }

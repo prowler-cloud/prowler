@@ -1,6 +1,13 @@
 "use server";
 
 import { apiBaseUrl, getAuthHeaders } from "@/lib";
+import { getSampleIssueDetail } from "@/lib/sample-preview/sample-issues";
+import {
+  isSampleId,
+  SAMPLE_WRITE_MESSAGE,
+  sampleFindingsQuery,
+  sampleIssueFindingsDocument,
+} from "@/lib/sample-preview/sample-records";
 import { handleApiError, handleApiResponse } from "@/lib/server-actions-helper";
 import {
   ISSUE_FINDINGS_LIMIT,
@@ -86,6 +93,11 @@ export const getIssues = async ({
 export const getIssue = async (
   id: string,
 ): Promise<IssueDetailResponse | undefined> => {
+  if (isSampleId(id)) {
+    const issue = getSampleIssueDetail(id);
+    return issue ? { data: issue } : undefined;
+  }
+
   const headers = await getAuthHeaders({ contentType: false });
   const url = new URL(`${apiBaseUrl}/issues/${encodeURIComponent(id)}`);
 
@@ -106,6 +118,13 @@ export const getIssueFindings = async (
   if (!scanId) return undefined;
   const uids = Array.from(new Set(findingUids)).slice(0, ISSUE_FINDINGS_LIMIT);
   if (uids.length === 0) return [];
+  if (isSampleId(scanId)) {
+    return toIssueFindings(
+      sampleIssueFindingsDocument(
+        sampleFindingsQuery({ "filter[uid__in]": uids.join(",") }),
+      ),
+    );
+  }
 
   const headers = await getAuthHeaders({ contentType: false });
   const url = new URL(`${apiBaseUrl}/findings`);
@@ -156,32 +175,38 @@ export const updateIssueTriage = async (
   id: string,
   { status, note }: UpdateIssueTriageInput,
 ): Promise<IssueWriteResult> =>
-  writeIssueTriage(
-    `/issues/${encodeURIComponent(id)}/triage`,
-    ISSUE_TRIAGE_WRITE_METHOD.UPDATE,
-    {
-      type: "issue-triages",
-      attributes: { status, ...(note ? { note } : {}) },
-    },
-  );
+  isSampleId(id)
+    ? { error: SAMPLE_WRITE_MESSAGE }
+    : writeIssueTriage(
+        `/issues/${encodeURIComponent(id)}/triage`,
+        ISSUE_TRIAGE_WRITE_METHOD.UPDATE,
+        {
+          type: "issue-triages",
+          attributes: { status, ...(note ? { note } : {}) },
+        },
+      );
 
 /** Add a note to an issue's triage without changing its status. */
 export const addIssueNote = async (
   id: string,
   body: string,
 ): Promise<IssueWriteResult> =>
-  writeIssueTriage(
-    `/issues/${encodeURIComponent(id)}/triage/notes`,
-    ISSUE_TRIAGE_WRITE_METHOD.ADD_NOTE,
-    {
-      type: "issue-triage-notes",
-      attributes: { body },
-    },
-  );
+  isSampleId(id)
+    ? { error: SAMPLE_WRITE_MESSAGE }
+    : writeIssueTriage(
+        `/issues/${encodeURIComponent(id)}/triage/notes`,
+        ISSUE_TRIAGE_WRITE_METHOD.ADD_NOTE,
+        {
+          type: "issue-triage-notes",
+          attributes: { body },
+        },
+      );
 
 export const getIssueNotes = async (
   id: string,
 ): Promise<IssueTriageNote[] | undefined> => {
+  if (isSampleId(id)) return [];
+
   const headers = await getAuthHeaders({ contentType: false });
   const url = new URL(
     `${apiBaseUrl}/issues/${encodeURIComponent(id)}/triage/notes`,

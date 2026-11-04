@@ -1,1 +1,0 @@
-`iam_subscription_owners_between_2_and_3` check for Azure provider, verifying each subscription has between 2 and 3 principals with the Owner role, including owners inherited from management groups, mapped to CIS 5.0 and 6.0
