@@ -67,6 +67,7 @@ class Test_entra_break_glass_account_fido2_security_key_registered:
         entra_client = mock.MagicMock
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
+        entra_client.users_error = None
         entra_client.user_registration_details_error = None
 
         with (
@@ -105,6 +106,7 @@ class Test_entra_break_glass_account_fido2_security_key_registered:
         entra_client = mock.MagicMock
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
+        entra_client.users_error = None
         entra_client.user_registration_details_error = None
 
         with (
@@ -144,6 +146,7 @@ class Test_entra_break_glass_account_fido2_security_key_registered:
         entra_client = mock.MagicMock
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
+        entra_client.users_error = None
         entra_client.user_registration_details_error = None
 
         with (
@@ -181,6 +184,7 @@ class Test_entra_break_glass_account_fido2_security_key_registered:
         entra_client = mock.MagicMock
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
+        entra_client.users_error = None
         entra_client.user_registration_details_error = None
 
         with (
@@ -232,6 +236,7 @@ class Test_entra_break_glass_account_fido2_security_key_registered:
         entra_client = mock.MagicMock
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
+        entra_client.users_error = None
         entra_client.user_registration_details_error = None
 
         with (
@@ -280,6 +285,7 @@ class Test_entra_break_glass_account_fido2_security_key_registered:
         entra_client = mock.MagicMock
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
+        entra_client.users_error = None
         entra_client.user_registration_details_error = None
 
         with (
@@ -327,6 +333,7 @@ class Test_entra_break_glass_account_fido2_security_key_registered:
         entra_client = mock.MagicMock
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
+        entra_client.users_error = None
         entra_client.user_registration_details_error = None
 
         with (
@@ -375,6 +382,7 @@ class Test_entra_break_glass_account_fido2_security_key_registered:
         entra_client = mock.MagicMock
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
+        entra_client.users_error = None
         entra_client.user_registration_details_error = None
 
         with (
@@ -430,6 +438,7 @@ class Test_entra_break_glass_account_fido2_security_key_registered:
         entra_client = mock.MagicMock
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
+        entra_client.users_error = None
         entra_client.user_registration_details_error = None
 
         with (
@@ -466,6 +475,7 @@ class Test_entra_break_glass_account_fido2_security_key_registered:
         entra_client = mock.MagicMock
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
+        entra_client.users_error = None
         entra_client.user_registration_details_error = None
 
         with (
@@ -512,10 +522,11 @@ class Test_entra_break_glass_account_fido2_security_key_registered:
             assert result[0].resource_name == "BreakGlass1"
 
     def test_user_registration_details_permission_error(self):
-        """Test FAIL when there's a permission error reading user registration details."""
+        """Test MANUAL when there's a permission error reading user registration details."""
         entra_client = mock.MagicMock
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
+        entra_client.users_error = None
         entra_client.user_registration_details_error = "Insufficient privileges to read user registration details. Required permission: AuditLog.Read.All"
 
         with (
@@ -551,28 +562,27 @@ class Test_entra_break_glass_account_fido2_security_key_registered:
             result = check.execute()
 
             assert len(result) == 1
-            assert result[0].status == "FAIL"
+            assert result[0].status == "MANUAL"
             assert (
-                "Cannot verify FIDO2 security key registration for break glass account BreakGlass1"
+                "Cannot verify FIDO2 security key registration for break glass accounts"
                 in result[0].status_extended
             )
             assert "AuditLog.Read.All" in result[0].status_extended
-            assert result[0].resource_name == "BreakGlass1"
-            assert result[0].resource_id == bg_user_id
+            assert result[0].resource_name == "Break Glass Accounts"
+            assert result[0].resource_id == "breakGlassAccounts"
 
-    def test_user_registration_details_permission_error_with_missing_user(self):
-        """Per-user emission and missing-user short-circuit on the error path.
+    def test_user_registration_details_permission_error_multiple_users(self):
+        """The registration-details error is tenant-wide: one MANUAL, not one per user.
 
-        Two break-glass user IDs are excluded from all CAPs, but only one is
-        present in ``entra_client.users``.  With ``user_registration_details_error``
-        set, the present user must produce one preventive FAIL anchored to the
-        real user; the missing user must be skipped by the existing
-        ``if not user: continue`` guard rather than crash or yield a synthetic
-        finding.
+        Two break-glass users are excluded from all CAPs and both are present in
+        ``entra_client.users``. With ``user_registration_details_error`` set the
+        check must emit a single tenant-level MANUAL finding instead of one
+        per break-glass account.
         """
         entra_client = mock.MagicMock
         entra_client.audited_tenant = "audited_tenant"
         entra_client.audited_domain = DOMAIN
+        entra_client.users_error = None
         entra_client.user_registration_details_error = "Insufficient privileges to read user registration details. Required permission: AuditLog.Read.All"
 
         with (
@@ -590,37 +600,40 @@ class Test_entra_break_glass_account_fido2_security_key_registered:
             )
 
             policy_id = str(uuid4())
-            present_user_id = str(uuid4())
-            missing_user_id = str(uuid4())
+            first_user_id = str(uuid4())
+            second_user_id = str(uuid4())
 
             entra_client.conditional_access_policies = {
                 policy_id: _make_policy(
                     policy_id,
-                    excluded_users=[present_user_id, missing_user_id],
+                    excluded_users=[first_user_id, second_user_id],
                 ),
             }
             entra_client.users = {
-                present_user_id: User(
-                    id=present_user_id,
+                first_user_id: User(
+                    id=first_user_id,
                     name="BreakGlass1",
                     on_premises_sync_enabled=False,
                     authentication_methods=[],
                 ),
-                # missing_user_id intentionally absent — exercises the
-                # `if not user: continue` short-circuit inside the loop.
+                second_user_id: User(
+                    id=second_user_id,
+                    name="BreakGlass2",
+                    on_premises_sync_enabled=False,
+                    authentication_methods=[],
+                ),
             }
 
             check = entra_break_glass_account_fido2_security_key_registered()
             result = check.execute()
 
-            # One finding for the present user; the missing one is skipped.
+            # One tenant-level finding, regardless of how many break glass users exist.
             assert len(result) == 1
-            assert result[0].status == "FAIL"
+            assert result[0].status == "MANUAL"
             assert (
-                "Cannot verify FIDO2 security key registration for break glass account BreakGlass1"
+                "Cannot verify FIDO2 security key registration for break glass accounts"
                 in result[0].status_extended
             )
             assert "AuditLog.Read.All" in result[0].status_extended
-            assert result[0].resource == entra_client.users[present_user_id]
-            assert result[0].resource_name == "BreakGlass1"
-            assert result[0].resource_id == present_user_id
+            assert result[0].resource_name == "Break Glass Accounts"
+            assert result[0].resource_id == "breakGlassAccounts"

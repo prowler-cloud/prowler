@@ -8,6 +8,8 @@ import { describe, expect, it } from "vitest";
 
 import { BrowserHarness } from "./browser-harness";
 
+const QUIET_MS = 50;
+
 /** Exposes the protected waiting helpers; no fixture or DOM is involved. */
 class WaitingHarness extends BrowserHarness<null> {
   constructor() {
@@ -20,6 +22,10 @@ class WaitingHarness extends BrowserHarness<null> {
 
   probeOrNull<T>(fn: () => T | null | undefined | false): Promise<T | null> {
     return this.waitForOrNull(fn, 200, "probe");
+  }
+
+  probeStable<T>(read: () => T): Promise<T> {
+    return this.waitForStable(read, QUIET_MS, 1000, "probe");
   }
 }
 
@@ -57,5 +63,21 @@ describe("BrowserHarness waiting helpers", () => {
         return "ready";
       }),
     ).resolves.toBe("ready");
+  });
+
+  it("resolves with a value only once it has held for the quiet window", async () => {
+    const harness = new WaitingHarness();
+    let reads = 0;
+    let settledAt = 0;
+
+    // Changes on each of the first reads, then holds at 4.
+    const settled = await harness.probeStable(() => {
+      reads += 1;
+      if (reads === 4) settledAt = performance.now();
+      return Math.min(reads, 4);
+    });
+
+    expect(settled).toBe(4);
+    expect(performance.now() - settledAt).toBeGreaterThanOrEqual(QUIET_MS);
   });
 });

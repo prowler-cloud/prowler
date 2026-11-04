@@ -4,9 +4,7 @@ import Link from "next/link";
 import { SlackIcon } from "@/components/icons/services/IconServices";
 import { Button, Card, CardContent, CardHeader } from "@/components/shadcn";
 import { CustomLink } from "@/components/shadcn/custom/custom-link";
-
-const SLACK_DOCS_URL =
-  "https://docs.prowler.com/user-guide/tutorials/prowler-app-slack-integration";
+import { DOCS_URLS } from "@/lib/external-urls";
 
 export const SlackIntegrationCard = () => {
   return (
@@ -24,7 +22,7 @@ export const SlackIntegrationCard = () => {
                   Send Prowler messages to your Slack workspace.
                 </p>
                 <CustomLink
-                  href={SLACK_DOCS_URL}
+                  href={DOCS_URLS.SLACK_INTEGRATION}
                   aria-label="Learn more about Slack integration"
                   size="xs"
                 >

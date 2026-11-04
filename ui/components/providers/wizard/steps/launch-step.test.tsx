@@ -13,6 +13,7 @@ import { SCAN_JOBS_TAB } from "@/types";
 import {
   SCAN_SCHEDULE_CAPABILITY,
   SCHEDULE_FREQUENCY,
+  type ScanScheduleCapability,
 } from "@/types/schedules";
 
 import { LaunchStep } from "./launch-step";
@@ -104,11 +105,16 @@ describe("LaunchStep", () => {
       ).toBeEnabled();
       expect(screen.getByRole("combobox", { name: /repeats/i })).toBeDisabled();
 
+      expect(
+        screen.getByRole("checkbox", { name: /launch an initial scan now/i }),
+      ).toBeChecked();
       await waitFor(() => expect(onFooterChange).toHaveBeenCalled());
-      expect(lastFooterConfig(onFooterChange)?.actionLabel).toBe("Save");
+      expect(lastFooterConfig(onFooterChange)?.actionLabel).toBe(
+        "Save and launch scan",
+      );
     });
 
-    it("saves a legacy daily schedule by default", async () => {
+    it("saves a legacy daily schedule and launches the initial scan by default", async () => {
       // Given
       const onClose = vi.fn();
       const onFooterChange = vi.fn();
@@ -132,9 +138,13 @@ describe("LaunchStep", () => {
       await waitFor(() => expect(scheduleDailyMock).toHaveBeenCalledTimes(1));
       const sentFormData = scheduleDailyMock.mock.calls[0]?.[0] as FormData;
       expect(sentFormData.get("providerId")).toBe("provider-1");
-      expect(scanOnDemandMock).not.toHaveBeenCalled();
+      expect(scanOnDemandMock).toHaveBeenCalledTimes(1);
       expect(updateScheduleMock).not.toHaveBeenCalled();
       expect(onClose).toHaveBeenCalledTimes(1);
+      const toastPayload = toastMock.mock.calls[0]?.[0];
+      expect(toastPayload.action.props.children.props.href).toBe(
+        `/scans?tab=${SCAN_JOBS_TAB.ACTIVE}`,
+      );
     });
 
     it("launches only an on-demand scan when run now is selected", async () => {
@@ -176,9 +186,10 @@ describe("LaunchStep", () => {
     beforeEach(() => {
       vi.stubEnv("UI_CLOUD_ENABLED", "true");
       updateScheduleMock.mockResolvedValue({ data: { id: "provider-1" } });
+      scanOnDemandMock.mockResolvedValue({ data: { id: "scan-1" } });
     });
 
-    it("defaults to schedule mode and saves through the new schedule API", async () => {
+    it("defaults to schedule mode with the initial scan ticked, saves the schedule and launches the scan", async () => {
       // Given
       const onClose = vi.fn();
       const onFooterChange = vi.fn();
@@ -193,14 +204,20 @@ describe("LaunchStep", () => {
         />,
       );
 
-      // Then advanced cadence selector is enabled
+      // Then advanced cadence selector is enabled and the initial scan is on
       expect(
         screen.getByRole("radio", { name: "On a schedule" }),
       ).toBeChecked();
       expect(
         screen.getByRole("combobox", { name: /repeats/i }),
       ).not.toBeDisabled();
+      expect(
+        screen.getByRole("checkbox", { name: /launch an initial scan now/i }),
+      ).toBeChecked();
       await waitFor(() => expect(onFooterChange).toHaveBeenCalled());
+      expect(lastFooterConfig(onFooterChange)?.actionLabel).toBe(
+        "Save and launch scan",
+      );
 
       // When
       await act(async () => {
@@ -221,20 +238,19 @@ describe("LaunchStep", () => {
         }),
       );
       expect(scheduleDailyMock).not.toHaveBeenCalled();
-      expect(scanOnDemandMock).not.toHaveBeenCalled();
+      expect(scanOnDemandMock).toHaveBeenCalledTimes(1);
       expect(onClose).toHaveBeenCalledTimes(1);
       const toastPayload = toastMock.mock.calls[0]?.[0];
       expect(toastPayload.action.props.children.props.href).toBe(
-        `/scans?tab=${SCAN_JOBS_TAB.SCHEDULED}`,
+        `/scans?tab=${SCAN_JOBS_TAB.ACTIVE}`,
       );
     });
 
-    it("also launches an on-demand scan when the checkbox is checked", async () => {
+    it("saves only the schedule when the initial scan is unticked", async () => {
       // Given
       const user = userEvent.setup();
       const onFooterChange = vi.fn();
       seedConnectedProvider();
-      scanOnDemandMock.mockResolvedValue({ data: { id: "scan-1" } });
 
       render(
         <LaunchStep
@@ -250,17 +266,20 @@ describe("LaunchStep", () => {
       await user.click(
         screen.getByRole("checkbox", { name: /launch an initial scan now/i }),
       );
+      await waitFor(() =>
+        expect(lastFooterConfig(onFooterChange)?.actionLabel).toBe("Save"),
+      );
       await act(async () => {
         lastFooterConfig(onFooterChange)?.onAction?.();
       });
 
       // Then
       await waitFor(() => expect(updateScheduleMock).toHaveBeenCalledTimes(1));
-      expect(scanOnDemandMock).toHaveBeenCalledTimes(1);
+      expect(scanOnDemandMock).not.toHaveBeenCalled();
       expect(scheduleDailyMock).not.toHaveBeenCalled();
       const toastPayload = toastMock.mock.calls[0]?.[0];
       expect(toastPayload.action.props.children.props.href).toBe(
-        `/scans?tab=${SCAN_JOBS_TAB.ACTIVE}`,
+        `/scans?tab=${SCAN_JOBS_TAB.SCHEDULED}`,
       );
     });
 
@@ -304,9 +323,8 @@ describe("LaunchStep", () => {
       expect(onClose).toHaveBeenCalledTimes(1);
     });
 
-    it("does not launch an initial scan when the schedule save fails", async () => {
+    it("does not launch the initial scan when the schedule save fails", async () => {
       // Given
-      const user = userEvent.setup();
       const onFooterChange = vi.fn();
       seedConnectedProvider();
       updateScheduleMock.mockResolvedValue({ error: "Schedule failed" });
@@ -322,9 +340,6 @@ describe("LaunchStep", () => {
       await waitFor(() => expect(onFooterChange).toHaveBeenCalled());
 
       // When
-      await user.click(
-        screen.getByRole("checkbox", { name: /launch an initial scan now/i }),
-      );
       await act(async () => {
         lastFooterConfig(onFooterChange)?.onAction?.();
       });
@@ -502,6 +517,90 @@ describe("LaunchStep", () => {
       expect(screen.getByText(/exceeded the usage limit/i)).toBeInTheDocument();
       await waitFor(() => expect(onFooterChange).toHaveBeenCalled());
       expect(lastFooterConfig(onFooterChange)?.actionDisabled).toBe(true);
+    });
+  });
+
+  describe("when the usage limit blocks the scan", () => {
+    const PRICING = "https://prowler.com/pricing";
+    const overLimit = {
+      error: ACTION_ERROR_API_MESSAGES[ACTION_ERROR_STATUS.PAYMENT_REQUIRED],
+      status: ACTION_ERROR_STATUS.PAYMENT_REQUIRED,
+    };
+    // The toast action wraps the link it opens.
+    const toastLink = (call = 0) =>
+      toastMock.mock.calls[call]?.[0].action?.props.children.props;
+
+    beforeEach(() => {
+      vi.stubEnv("UI_CLOUD_ENABLED", "true");
+      updateScheduleMock.mockResolvedValue({ data: { id: "provider-1" } });
+      scanOnDemandMock.mockResolvedValue(overLimit);
+      seedConnectedProvider();
+    });
+
+    async function launch(capability: ScanScheduleCapability) {
+      const onFooterChange = vi.fn();
+      render(
+        <LaunchStep
+          onBack={vi.fn()}
+          onClose={vi.fn()}
+          onFooterChange={onFooterChange}
+          capability={capability}
+        />,
+      );
+      await waitFor(() => expect(onFooterChange).toHaveBeenCalled());
+      await act(async () => {
+        lastFooterConfig(onFooterChange)?.onAction?.();
+      });
+      await waitFor(() => expect(toastMock).toHaveBeenCalled());
+    }
+
+    it("offers the pricing page in a new tab when a manual scan is refused", async () => {
+      // When
+      await launch(SCAN_SCHEDULE_CAPABILITY.MANUAL_ONLY);
+
+      // Then
+      expect(toastMock.mock.calls[0]?.[0].title).toBe("Unable to launch scan");
+      expect(toastLink()).toMatchObject({
+        href: PRICING,
+        target: "_blank",
+        rel: "noopener noreferrer",
+        children: "View plans",
+      });
+    });
+
+    it("offers the pricing page when the schedule saved but its first scan was refused", async () => {
+      // When
+      await launch(SCAN_SCHEDULE_CAPABILITY.ADVANCED);
+
+      // Then
+      expect(toastMock.mock.calls[0]?.[0].title).toBe("Scan schedule saved");
+      expect(toastLink()).toMatchObject({ href: PRICING, target: "_blank" });
+    });
+
+    it("offers the pricing page when the schedule itself was refused", async () => {
+      // Given
+      updateScheduleMock.mockResolvedValue(overLimit);
+
+      // When
+      await launch(SCAN_SCHEDULE_CAPABILITY.ADVANCED);
+
+      // Then
+      expect(scanOnDemandMock).not.toHaveBeenCalled();
+      expect(toastMock.mock.calls[0]?.[0].title).toBe(
+        "Unable to save scan schedule",
+      );
+      expect(toastLink()).toMatchObject({ href: PRICING, target: "_blank" });
+    });
+
+    it("keeps the plain error when a manual scan fails for another reason", async () => {
+      // Given
+      scanOnDemandMock.mockResolvedValue({ error: "Scanner unavailable" });
+
+      // When
+      await launch(SCAN_SCHEDULE_CAPABILITY.MANUAL_ONLY);
+
+      // Then
+      expect(toastMock.mock.calls[0]?.[0].action).toBeUndefined();
     });
   });
 });

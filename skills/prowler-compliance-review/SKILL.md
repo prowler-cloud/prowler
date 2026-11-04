@@ -1,12 +1,13 @@
 ---
 name: prowler-compliance-review
 description: >
-  Reviews Pull Requests that add or modify compliance frameworks.
+  Reviews Pull Requests that add or modify Prowler compliance frameworks (universal
+  multi-provider or legacy per-provider JSON, mappings, guardrails, formatters).
   Trigger: When reviewing PRs with compliance framework changes, CIS/NIST/PCI-DSS additions, or compliance JSON files.
 license: Apache-2.0
 metadata:
   author: prowler-cloud
-  version: "1.0"
+  version: "1.1"
   scope: [root, sdk]
   auto_invoke: "Reviewing compliance framework PRs"
 allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
@@ -14,176 +15,90 @@ allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
 
 ## When to Use
 
-- Reviewing PRs that add new compliance frameworks
-- Reviewing PRs that modify existing compliance frameworks
-- Validating compliance framework JSON structure before merge
+- Reviewing PRs that add, extend or modify compliance frameworks under `prowler/compliance/`
+- Reviewing check-mapping changes, `ConfigRequirements` guardrails, or new compliance formatters
 
----
+For authoring rules and the schema, load [prowler-compliance](../prowler-compliance/SKILL.md).
 
-## Review Checklist (Critical)
+## Identify the schema first
 
-| Check | Command/Method | Pass Criteria |
-|-------|----------------|---------------|
-| JSON Valid | `python3 -m json.tool file.json` | No syntax errors |
-| All Checks Exist | Run validation script | 0 missing checks |
-| No Duplicate IDs | Run validation script | 0 duplicate requirement IDs |
-| Changelog fragment | Manual review | Fragment present under `prowler/changelog.d/` |
-| Dashboard File | Compare with existing | Follows established pattern |
-| Framework Metadata | Manual review | All required fields populated |
+| File | Schema | Expect in the PR |
+|---|---|---|
+| `prowler/compliance/<key>.json` (top level, lowercase keys) | Universal | JSON only (+ optional UI mapper/panel/icon). No Python formatter, no `COMPLIANCE_CLASS_MAP` entry |
+| `prowler/compliance/<provider>/<key>.json` (Capitalized keys) | Legacy | JSON; plus formatter + `__main__.py` branch + `COMPLIANCE_CLASS_MAP` entry only if a new framework family/provider writer is introduced |
 
----
+A brand-new framework submitted as legacy is a REQUEST CHANGES unless it extends an existing legacy family.
+
+## Review Checklist
+
+| Check | How | Pass criteria |
+|---|---|---|
+| Loads | `load_compliance_framework_universal()` one-liner below | Not `None` (universal loader swallows errors, check the log) |
+| Catalog integrity | `uv run pytest tests/lib/check/compliance_catalog_integrity_test.py -k <basename>` | Unique ids, no repeated checks, every check exists for its provider |
+| Structure | `validate_compliance.py <file>` | No errors (both schemas) |
+| `outputs.table_config` (universal) | validator | Present, `group_by` declared in `attributes_metadata` |
+| `attributes_metadata` (universal) | read | Present, `required`/`enum` used for closed sets |
+| Guardrails | read | Universal: `Provider` on every `config_requirements` entry. Value = strictest the control allows; `ConfigKey` exists in the check |
+| Version | read | Set for versioned frameworks; filename version equals `Version` |
+| Mapping quality | sample requirements vs check titles | Check literally verifies the requirement; otherwise `[]` (manual). No padding |
+| Completeness | compare with source | Every source requirement present, including manual ones |
+| Grouping values | `jq '[.Requirements[].Attributes[0].Section] \| unique'` (legacy) | No spelling variants (they split the UI tree) |
+| Tests | `uv run pytest -n auto tests/lib/check/ tests/lib/outputs/compliance/ -q` | Green |
+| Changelog | PR diff | Fragment `prowler/changelog.d/<slug>.<type>.md`, no direct `CHANGELOG.md` edit |
+
+Dashboard files (`dashboard/compliance/<key with dots as underscores>.py`) are optional: the local dashboard
+falls back to `dashboard/compliance/generic.py`. Do not request one.
 
 ## Commands
 
 ```bash
-# 1. Validate JSON syntax
-python3 -m json.tool prowler/compliance/{provider}/{framework}.json > /dev/null \
-  && echo "Valid JSON" || echo "INVALID JSON"
+# Structure + check existence (legacy and universal)
+python3 skills/prowler-compliance-review/assets/validate_compliance.py prowler/compliance/<path>.json
 
-# 2. Run full validation script
-python3 skills/prowler-compliance-review/assets/validate_compliance.py \
-  prowler/compliance/{provider}/{framework}.json
+# Load with the real model (prints framework, requirement count, providers)
+uv run python -c "from prowler.lib.check.compliance_models import load_compliance_framework_universal as l; \
+fw=l('prowler/compliance/<path>.json'); assert fw, 'see log'; print(fw.framework, len(fw.requirements), fw.get_providers())"
 
-# 3. Compare dashboard with existing (find similar framework)
-diff dashboard/compliance/{new_framework}.py \
-     dashboard/compliance/{existing_framework}.py
+# Repo integrity tests for this file
+uv run pytest tests/lib/check/compliance_catalog_integrity_test.py -k "<basename>" -q
+
+# CLI: listed and requirements visible (no credentials needed)
+uv run python prowler-cli.py <provider> --list-compliance | grep <key>
+uv run python prowler-cli.py <provider> --list-compliance-requirements <key>
+
+# Full run against a real account (writes output/compliance/)
+uv run python prowler-cli.py <provider> --compliance <key> -M csv json-ocsf html
 ```
 
----
+`--compliance` cannot be combined with `--check`, `--service`, `--checks-file` or `--category` (mutually
+exclusive argparse group).
 
 ## Decision Tree
 
 ```text
-JSON Valid?
-├── No → FAIL: Fix JSON syntax errors
-└── Yes ↓
-    All Checks Exist in Codebase?
-    ├── Missing checks → FAIL: Add missing checks or remove from framework
-    └── All exist ↓
-        Duplicate Requirement IDs?
-        ├── Yes → FAIL: Fix duplicate IDs
-        └── No ↓
-            Changelog Fragment Present?
-            ├── No → REQUEST CHANGES: Add changelog fragment
-            └── Yes ↓
-                Dashboard File Follows Pattern?
-                ├── No → REQUEST CHANGES: Fix dashboard pattern
-                └── Yes ↓
-                    Framework Metadata Complete?
-                    ├── No → REQUEST CHANGES: Add missing metadata
-                    └── Yes → APPROVE
+Loads with the real model?            No  -> FAIL
+Integrity test / validator errors?    Yes -> FAIL (missing checks, duplicate ids, missing table_config...)
+New framework authored as legacy?     Yes -> REQUEST CHANGES (use universal) unless extending a legacy family
+Mappings padded or requirements missing? Yes -> REQUEST CHANGES
+Changelog fragment missing?           Yes -> REQUEST CHANGES
+Otherwise                             -> APPROVE
 ```
-
----
-
-## Framework Structure Reference
-
-Compliance frameworks are JSON files in: `prowler/compliance/{provider}/{framework}.json`
-
-```json
-{
-  "Framework": "CIS",
-  "Name": "CIS Provider Benchmark vX.Y.Z",
-  "Version": "X.Y",
-  "Provider": "AWS|Azure|GCP|...",
-  "Description": "Framework description...",
-  "Requirements": [
-    {
-      "Id": "1.1",
-      "Description": "Requirement description",
-      "Checks": ["check_name_1", "check_name_2"],
-      "Attributes": [
-        {
-          "Section": "1 Section Name",
-          "SubSection": "1.1 Subsection (optional)",
-          "Profile": "Level 1|Level 2",
-          "AssessmentStatus": "Automated|Manual",
-          "Description": "...",
-          "RationaleStatement": "...",
-          "ImpactStatement": "...",
-          "RemediationProcedure": "...",
-          "AuditProcedure": "...",
-          "AdditionalInformation": "...",
-          "References": "...",
-          "DefaultValue": "..."
-        }
-      ]
-    }
-  ]
-}
-```
-
----
 
 ## Common Issues
 
-| Issue | How to Detect | Resolution |
-|-------|---------------|------------|
-| Missing checks | Validation script reports missing | Add check implementation or remove from Checks array |
-| Duplicate IDs | Validation script reports duplicates | Ensure each requirement has unique ID |
-| Empty Checks for Automated | AssessmentStatus is Automated but Checks is empty | Add checks or change to Manual |
-| Wrong file location | Framework not in `prowler/compliance/{provider}/` | Move to correct directory |
-| Missing dashboard file | No corresponding `dashboard/compliance/{framework}.py` | Create dashboard file following pattern |
-| Changelog fragment missing | No fragment file in the PR diff | Add a fragment under prowler/changelog.d/ |
-
----
-
-## Dashboard File Pattern
-
-Dashboard files must be in `dashboard/compliance/` and follow this exact pattern:
-
-```python
-import warnings
-
-from dashboard.common_methods import get_section_containers_cis
-
-warnings.filterwarnings("ignore")
-
-
-def get_table(data):
-
-    aux = data[
-        [
-            "REQUIREMENTS_ID",
-            "REQUIREMENTS_DESCRIPTION",
-            "REQUIREMENTS_ATTRIBUTES_SECTION",
-            "CHECKID",
-            "STATUS",
-            "REGION",
-            "ACCOUNTID",
-            "RESOURCEID",
-        ]
-    ].copy()
-
-    return get_section_containers_cis(
-        aux, "REQUIREMENTS_ID", "REQUIREMENTS_ATTRIBUTES_SECTION"
-    )
-```
-
----
-
-## Testing the Compliance Framework
-
-After validation passes, test the framework with Prowler:
-
-```bash
-# Verify framework is detected
-uv run python prowler-cli.py {provider} --list-compliance | grep {framework}
-
-# Run a quick test with a single check from the framework
-uv run python prowler-cli.py {provider} --compliance {framework} --check {check_name}
-
-# Run full compliance scan (dry-run with limited checks)
-uv run python prowler-cli.py {provider} --compliance {framework} --checks-limit 5
-
-# Generate compliance report in multiple formats
-uv run python prowler-cli.py {provider} --compliance {framework} -M csv json html
-```
-
----
+| Issue | Detect | Resolution |
+|---|---|---|
+| Typo in check id | integrity test / validator | Fix id or remove it |
+| Universal file without `table_config` | validator | Add `outputs.table_config.group_by` |
+| Unknown attribute key | loader returns `None`, log says `unknown attribute` | Declare it in `attributes_metadata` or fix the key |
+| Uppercase provider key in `checks` | validator | Use `prowler/providers/` directory names |
+| Guardrail without `Provider` in universal file | validator | Add `Provider` |
+| Automated requirement with no checks (CIS-style) | validator warning | Add checks or mark Manual |
+| Manual edit of `CHANGELOG.md` | diff | Move to a `changelog.d` fragment |
 
 ## Resources
 
-- **Validation Script**: See [assets/validate_compliance.py](assets/validate_compliance.py)
-- **Related Skills**: See [prowler-compliance](../prowler-compliance/SKILL.md) for creating frameworks
-- **Documentation**: See [references/review-checklist.md](references/review-checklist.md)
+- **Validator**: [assets/validate_compliance.py](assets/validate_compliance.py)
+- **Summary template and file locations**: [references/review-checklist.md](references/review-checklist.md)
+- **Authoring skill**: [prowler-compliance](../prowler-compliance/SKILL.md)
+- **Docs**: `docs/developer-guide/security-compliance-framework.mdx`

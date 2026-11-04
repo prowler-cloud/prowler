@@ -17,10 +17,6 @@ const { scansFilterBarSpy } = vi.hoisted(() => ({
   scansFilterBarSpy: vi.fn(),
 }));
 
-const { onboardingTriggerSpy } = vi.hoisted(() => ({
-  onboardingTriggerSpy: vi.fn(),
-}));
-
 const localStorageMock = (() => {
   let store: Record<string, string> = {};
 
@@ -107,14 +103,6 @@ vi.mock("@/components/providers/muted-findings-config-button", () => ({
   MutedFindingsConfigButton: () => <a href="/mutelist">Configure Mutelist</a>,
 }));
 
-vi.mock("@/components/onboarding", () => ({
-  OnboardingTrigger: (props: unknown) => {
-    onboardingTriggerSpy(props);
-    return <div data-testid="onboarding-trigger" />;
-  },
-  PageReady: () => <div data-testid="page-ready" />,
-}));
-
 const providers: ProviderProps[] = [
   {
     id: "provider-1",
@@ -178,24 +166,6 @@ describe("ScansPageShell", () => {
     useScansStore.getState().closeLaunchScanModal();
   });
 
-  it("does not render an imported findings tab", () => {
-    vi.stubEnv("UI_CLOUD_ENABLED", "false");
-
-    render(
-      <ScansPageShell providers={providers} hasManageScansPermission>
-        <div>Scans table</div>
-      </ScansPageShell>,
-    );
-
-    expect(
-      screen.queryByRole("tab", { name: /imported findings/i }),
-    ).not.toBeInTheDocument();
-    expect(
-      screen.queryByRole("button", { name: /import findings/i }),
-    ).not.toBeInTheDocument();
-    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-  });
-
   it("uses the shared scan filter bar for scan filters", () => {
     vi.stubEnv("UI_CLOUD_ENABLED", "false");
 
@@ -245,6 +215,72 @@ describe("ScansPageShell", () => {
     expect(screen.getByRole("combobox", { name: /all types/i })).toBeVisible();
   });
 
+  it.each(["Cloud", "Private Cloud"])(
+    "shows Import Findings in %s with Manage Ingestions",
+    () => {
+      // Given
+      vi.stubEnv("UI_CLOUD_ENABLED", "true");
+
+      // When
+      render(
+        <ScansPageShell
+          providers={providers}
+          hasManageScansPermission
+          hasManageIngestionsPermission
+        >
+          <div>Scans table</div>
+        </ScansPageShell>,
+      );
+
+      // Then
+      expect(
+        screen.getByRole("button", { name: /import findings/i }),
+      ).toBeVisible();
+    },
+  );
+
+  it("hides Import Findings without Manage Ingestions", () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
+
+    // When
+    render(
+      <ScansPageShell
+        providers={providers}
+        hasManageScansPermission
+        hasManageIngestionsPermission={false}
+      >
+        <div>Scans table</div>
+      </ScansPageShell>,
+    );
+
+    // Then
+    expect(
+      screen.queryByRole("button", { name: /import findings/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("hides Import Findings in OSS and Local Server", () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
+
+    // When
+    render(
+      <ScansPageShell
+        providers={providers}
+        hasManageScansPermission
+        hasManageIngestionsPermission
+      >
+        <div>Scans table</div>
+      </ScansPageShell>,
+    );
+
+    // Then
+    expect(
+      screen.queryByRole("button", { name: /import findings/i }),
+    ).not.toBeInTheDocument();
+  });
+
   it("shows the CLI import banner in Cloud", () => {
     vi.stubEnv("UI_CLOUD_ENABLED", "true");
 
@@ -275,26 +311,35 @@ describe("ScansPageShell", () => {
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 
-  it("keeps launch scan with filters and mutelist with tabs", () => {
-    vi.stubEnv("UI_CLOUD_ENABLED", "false");
+  it("keeps launch scan, import findings, and mutelist with tabs", () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
 
+    // When
     render(
-      <ScansPageShell providers={providers} hasManageScansPermission>
+      <ScansPageShell
+        providers={providers}
+        hasManageScansPermission
+        hasManageIngestionsPermission
+      >
         <div>Scans table</div>
       </ScansPageShell>,
     );
 
-    expect(
-      screen.getByRole("group", { name: /scan filters and actions/i }),
-    ).toContainElement(screen.getByRole("button", { name: /launch scan/i }));
-    expect(
-      screen.getByRole("group", { name: /scan filters and actions/i }),
-    ).not.toContainElement(
+    // Then
+    const tabs = screen.getByRole("group", { name: /scan tabs/i });
+    expect(tabs).toContainElement(
+      screen.getByRole("button", { name: /launch scan/i }),
+    );
+    expect(tabs).toContainElement(
+      screen.getByRole("button", { name: /import findings/i }),
+    );
+    expect(tabs).toContainElement(
       screen.getByRole("link", { name: /configure mutelist/i }),
     );
-    expect(screen.getByRole("group", { name: /scan tabs/i })).toContainElement(
-      screen.getByRole("link", { name: /configure mutelist/i }),
-    );
+    expect(
+      screen.getByRole("group", { name: /scan filters/i }),
+    ).toContainElement(screen.getByText("Shared scan filters"));
   });
 
   it("shows the active scans count in the in progress tab", () => {
@@ -532,73 +577,5 @@ describe("ScansPageShell", () => {
     expect(
       screen.queryByText("No Providers Configured"),
     ).not.toBeInTheDocument();
-  });
-
-  it("starts the view-first-scan tour when a provider is connected", () => {
-    vi.stubEnv("UI_CLOUD_ENABLED", "false");
-
-    render(
-      <ScansPageShell providers={providers} hasManageScansPermission>
-        <div>Scans table</div>
-      </ScansPageShell>,
-    );
-
-    expect(screen.getByTestId("onboarding-trigger")).toBeInTheDocument();
-  });
-
-  it("suppresses the view-first-scan tour when no provider is connected, since Launch Scan is disabled", () => {
-    vi.stubEnv("UI_CLOUD_ENABLED", "false");
-
-    render(
-      <ScansPageShell
-        providers={disconnectedProviders}
-        hasManageScansPermission
-      >
-        <div>Scans table</div>
-      </ScansPageShell>,
-    );
-
-    expect(screen.queryByTestId("onboarding-trigger")).not.toBeInTheDocument();
-    // The table (and therefore imported scans) must still render even with the tour suppressed.
-    expect(screen.getByText("Scans table")).toBeInTheDocument();
-  });
-
-  it("suppresses the view-first-scan tour when there are no providers", () => {
-    vi.stubEnv("UI_CLOUD_ENABLED", "false");
-
-    render(
-      <ScansPageShell providers={[]} hasManageScansPermission>
-        <div>Scans table</div>
-      </ScansPageShell>,
-    );
-
-    expect(screen.queryByTestId("onboarding-trigger")).not.toBeInTheDocument();
-  });
-
-  it("suppresses the view-first-scan tour when a provider is connected but manage scans is missing", () => {
-    vi.stubEnv("UI_CLOUD_ENABLED", "false");
-
-    render(
-      <ScansPageShell providers={providers} hasManageScansPermission={false}>
-        <div>Scans table</div>
-      </ScansPageShell>,
-    );
-
-    // Launch Scan is disabled without manage_scans, so the tour must not anchor to it.
-    expect(screen.queryByTestId("onboarding-trigger")).not.toBeInTheDocument();
-    // The table (and therefore imported scans) must still render.
-    expect(screen.getByText("Scans table")).toBeInTheDocument();
-  });
-
-  it("still signals page-ready without a connected provider so the navbar replay fallback works", () => {
-    vi.stubEnv("UI_CLOUD_ENABLED", "false");
-
-    render(
-      <ScansPageShell providers={[]} hasManageScansPermission>
-        <div>Scans table</div>
-      </ScansPageShell>,
-    );
-
-    expect(screen.getByTestId("page-ready")).toBeInTheDocument();
   });
 });
