@@ -1,0 +1,36 @@
+{
+  "Provider": "huaweicloud",
+  "CheckID": "elb_load_balancer_configured",
+  "CheckTitle": "At least one ELB load balancer is configured",
+  "CheckType": [],
+  "ServiceName": "elb",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "HUAWEICLOUD::ELB::LoadBalancer",
+  "ResourceGroup": "network",
+  "Description": "Ensure that at least one Elastic Load Balancer (ELB) is configured to distribute traffic and provide high availability.",
+  "Risk": "Without any load balancers configured, applications may lack traffic distribution, high availability, and fault tolerance, leading to single points of failure.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.huaweicloud.com/intl/en-us/usermanual-elb/elb_ug_jt_0001.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Log on to the Huawei Cloud console.\n2. Navigate to Elastic Load Balance.\n3. Click Create Load Balancer.\n4. Configure the load balancer with appropriate listeners and backend server groups.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Configure at least one ELB load balancer for application traffic distribution.",
+      "Url": "https://hub.prowler.com/check/elb_load_balancer_configured"
+    }
+  },
+  "Categories": [
+    "resilience"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
