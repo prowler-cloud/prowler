@@ -1,3 +1,5 @@
+from typing import ClassVar
+
 from botocore.exceptions import ClientError
 from pydantic.v1 import BaseModel, Field
 
@@ -11,6 +13,7 @@ class Branch(BaseModel):
 
     name: str
     arn: str
+    sensitive_fields: ClassVar[tuple[str, ...]] = ("environment_variables",)
     environment_variables: dict = Field(default_factory=dict)
 
 
@@ -21,6 +24,10 @@ class App(BaseModel):
     name: str
     arn: str
     region: str
+    sensitive_fields: ClassVar[tuple[str, ...]] = (
+        "environment_variables",
+        "build_spec",
+    )
     environment_variables: dict = Field(default_factory=dict)
     build_spec: str = ""
     branches: list[Branch] = Field(default_factory=list)

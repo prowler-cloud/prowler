@@ -1,27 +1,19 @@
-import { ReactNode, Suspense } from "react";
+import { Suspense, type ReactElement } from "react";
 
 import { FeedsServer } from "@/components/feeds";
 
-import {
-  FeedsLoadingFallback,
-  NavbarClient,
-  type OnboardingActionConfig,
-} from "./navbar-client";
-
-export type { OnboardingActionConfig };
+import { FeedsLoadingFallback, NavbarClient } from "./navbar-client";
 
 interface NavbarProps {
   title: string;
-  icon?: string | ReactNode;
-  onboardingAction?: OnboardingActionConfig;
+  icon?: ReactElement;
 }
 
-export function Navbar({ title, icon, onboardingAction }: NavbarProps) {
+export function Navbar({ title, icon }: NavbarProps) {
   return (
     <NavbarClient
       title={title}
       icon={icon}
-      onboardingAction={onboardingAction}
       feedsSlot={
         <Suspense key="feeds" fallback={<FeedsLoadingFallback />}>
           <FeedsServer limit={15} />

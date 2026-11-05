@@ -2,32 +2,13 @@ import { defineConfig, devices } from "@playwright/test";
 import fs from "fs";
 import path from "path";
 
+import { getBaseConfig } from "./playwright.base";
+
 const localEnvPath = path.resolve(__dirname, ".env.local");
-if (fs.existsSync(localEnvPath)) {
-  process.loadEnvFile(localEnvPath);
-}
+if (fs.existsSync(localEnvPath)) process.loadEnvFile(localEnvPath);
 
 export default defineConfig({
-  testDir: "./tests",
-  fullyParallel: true,
-  forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
-  reporter: [["list"]],
-  outputDir: "/tmp/playwright-tests",
-  expect: {
-    timeout: 20000,
-  },
-
-  use: {
-    baseURL: process.env.AUTH_URL
-      ? process.env.AUTH_URL
-      : "http://localhost:3000",
-    trace: "off",
-    screenshot: "off",
-    video: "off",
-  },
-
+  ...getBaseConfig(),
   projects: [
     // ===========================================
     // Authentication Setup Projects
@@ -89,6 +70,7 @@ export default defineConfig({
     {
       name: "all.auth.setup",
       testMatch: "**/*.auth.setup.ts",
+      testIgnore: "manage-registry.auth.setup.ts",
     },
 
     // ===========================================
@@ -172,6 +154,7 @@ export default defineConfig({
       E2E_ADMIN_USER: process.env.E2E_ADMIN_USER || "e2e@prowler.com",
       E2E_ADMIN_PASSWORD:
         process.env.E2E_ADMIN_PASSWORD || "Thisisapassword123@",
+      UI_CLOUD_ENABLED: process.env.UI_CLOUD_ENABLED || "false",
     },
   },
 });

@@ -17,6 +17,7 @@ NC='\033[0m'
 
 # Options
 DRY_RUN=false
+sync_failures=0
 FILTER_SCOPE=""
 
 # Parse arguments
@@ -179,7 +180,7 @@ while IFS= read -r skill_file; do
     # - single action: "Action"
     # - multiple actions: "Action A|Action B" (pipe-delimited)
     # We use ';;' as separator to avoid conflicts with '|' used between entries.
-    auto_invoke=$(echo "$auto_invoke_raw" | sed 's/|/;;/g')
+    auto_invoke=${auto_invoke_raw//|/;;}
 
     # Skip if no scope or auto_invoke defined
     [ -z "$scope_raw" ] || [ -z "$auto_invoke" ] && continue
@@ -229,7 +230,7 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
         actions_raw="${entry#*:}"
 
         # Restore '|' from ';;' and split actions
-        actions_raw=$(echo "$actions_raw" | sed 's/;;/|/g')
+        actions_raw=${actions_raw//;;/|}
         echo "$actions_raw" | tr '|' '\n' | while read -r action; do
             action=$(echo "$action" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')
             [ -z "$action" ] && continue
@@ -255,14 +256,23 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
         section_file=$(mktemp)
         echo "$auto_invoke_section" > "$section_file"
 
-        # Check if Auto-invoke section exists
-        if grep -q "### Auto-invoke Skills" "$agents_path"; then
+        # Check if Auto-invoke section exists. Root AGENTS.md uses an H3
+        # ("### Auto-invoke Skills") and component AGENTS.md files use an H2
+        # ("## Auto-invoke Skills"); keep whichever heading level the file has.
+        if grep -qE "^###? Auto-invoke Skills" "$agents_path"; then
             # Replace existing section (up to next --- or ## heading)
             awk '
-                /^### Auto-invoke Skills/ {
-                    while ((getline line < "'"$section_file"'") > 0) print line
+                /^###? Auto-invoke Skills/ && !replaced {
+                    level = $0
+                    sub(/ .*/, "", level)
+                    first = 1
+                    while ((getline line < "'"$section_file"'") > 0) {
+                        if (first) { sub(/^#+/, level, line); first = 0 }
+                        print line
+                    }
                     close("'"$section_file"'")
                     skip = 1
+                    replaced = 1
                     next
                 }
                 skip && /^(---|## )/ {
@@ -274,24 +284,31 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
             mv "$agents_path.tmp" "$agents_path"
             echo -e "${GREEN}  ✓ Updated Auto-invoke section${NC}"
         else
-            # Insert after Skills Reference blockquote
+            # Insert after the Skills Reference blockquote (the first
+            # blockquote that links a SKILL.md), at its closing blank line
+            status=0
             awk '
-                /^>.*SKILL\.md\)$/ && !inserted {
-                    print
-                    getline
-                    if (/^$/) {
-                        print ""
-                        while ((getline line < "'"$section_file"'") > 0) print line
-                        close("'"$section_file"'")
-                        print ""
-                        inserted = 1
-                        next
-                    }
+                /^>/ && /SKILL\.md\)/ { in_ref = 1 }
+                in_ref && /^$/ && !inserted {
+                    print ""
+                    while ((getline line < "'"$section_file"'") > 0) print line
+                    close("'"$section_file"'")
+                    print ""
+                    inserted = 1
+                    in_ref = 0
+                    next
                 }
                 { print }
-            ' "$agents_path" > "$agents_path.tmp"
-            mv "$agents_path.tmp" "$agents_path"
-            echo -e "${GREEN}  ✓ Inserted Auto-invoke section${NC}"
+                END { if (!inserted) exit 3 }
+            ' "$agents_path" > "$agents_path.tmp" || status=$?
+            if [ "$status" -eq 0 ]; then
+                mv "$agents_path.tmp" "$agents_path"
+                echo -e "${GREEN}  ✓ Inserted Auto-invoke section${NC}"
+            else
+                rm -f "$agents_path.tmp"
+                echo -e "${RED}  ✗ No Auto-invoke section or Skills Reference blockquote found in $agents_path; nothing inserted${NC}"
+                sync_failures=$((sync_failures + 1))
+            fi
         fi
 
         rm -f "$section_file"
@@ -299,7 +316,11 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 done
 
 echo ""
-echo -e "${GREEN}Done!${NC}"
+if [ "$sync_failures" -gt 0 ]; then
+    echo -e "${RED}Done with $sync_failures file(s) not updated${NC}"
+else
+    echo -e "${GREEN}Done!${NC}"
+fi
 
 # Show skills without metadata
 echo ""
@@ -310,7 +331,7 @@ while IFS= read -r skill_file; do
     skill_name=$(extract_field "$skill_file" "name")
     scope_raw=$(extract_metadata "$skill_file" "scope")
     auto_invoke_raw=$(extract_metadata "$skill_file" "auto_invoke")
-    auto_invoke=$(echo "$auto_invoke_raw" | sed 's/|/;;/g')
+    auto_invoke=${auto_invoke_raw//|/;;}
 
     if [ -z "$scope_raw" ] || [ -z "$auto_invoke" ]; then
         echo -e "  ${YELLOW}$skill_name${NC} - missing: ${scope_raw:+}${scope_raw:-scope} ${auto_invoke:+}${auto_invoke:-auto_invoke}"
@@ -321,3 +342,5 @@ done < <(find "$SKILLS_DIR" -mindepth 2 -maxdepth 2 -name SKILL.md -print | sort
 if [ $missing -eq 0 ]; then
     echo -e "  ${GREEN}All skills have sync metadata${NC}"
 fi
+
+[ "$sync_failures" -eq 0 ] || exit 1

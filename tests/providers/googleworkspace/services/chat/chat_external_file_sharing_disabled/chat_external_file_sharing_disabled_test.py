@@ -3,6 +3,7 @@ from unittest.mock import patch
 from prowler.providers.googleworkspace.services.chat.chat_service import ChatPolicies
 from tests.providers.googleworkspace.googleworkspace_fixtures import (
     CUSTOMER_ID,
+    DOMAIN,
     set_mocked_googleworkspace_provider,
 )
 
@@ -122,6 +123,38 @@ class TestChatExternalFileSharingDisabled:
             assert len(findings) == 1
             assert findings[0].status == "FAIL"
             assert "not explicitly configured" in findings[0].status_extended
+
+    def test_pass_when_the_service_is_off_for_everyone(self):
+        """A setting that only acts while the service is on has no effect once the service is off"""
+        mock_provider = set_mocked_googleworkspace_provider()
+
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=mock_provider,
+            ),
+            patch(
+                "prowler.providers.googleworkspace.services.chat.chat_external_file_sharing_disabled.chat_external_file_sharing_disabled.chat_client"
+            ) as mock_client,
+        ):
+            from prowler.providers.googleworkspace.services.chat.chat_external_file_sharing_disabled.chat_external_file_sharing_disabled import (
+                chat_external_file_sharing_disabled,
+            )
+
+            mock_client.provider = mock_provider
+            mock_client.policies_fetched = True
+            mock_client.policies = ChatPolicies(
+                service_state="DISABLED", external_file_sharing="ALL_FILES"
+            )
+
+            findings = chat_external_file_sharing_disabled().execute()
+
+            assert len(findings) == 1
+            assert findings[0].status == "PASS"
+            assert findings[0].status_extended == (
+                f"Google Chat is turned off for everyone in domain {DOMAIN}, "
+                f"so no files can be shared externally through Chat."
+            )
 
     def test_no_findings_when_fetch_failed(self):
         mock_provider = set_mocked_googleworkspace_provider()

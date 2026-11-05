@@ -99,7 +99,7 @@ export const filterUsers = [
 export const filterInvitations = [
   {
     key: "state",
-    labelCheckboxGroup: "State",
+    labelCheckboxGroup: "Status",
     values: ["pending", "accepted", "expired", "revoked"],
   },
 ];

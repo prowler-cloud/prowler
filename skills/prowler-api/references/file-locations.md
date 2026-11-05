@@ -4,10 +4,13 @@
 
 | Purpose | File Path | Key Items |
 |---------|-----------|-----------|
-| **Django Settings** | `api/src/backend/config/settings.py` | REST_FRAMEWORK, SIMPLE_JWT, DATABASES |
-| **Celery Config** | `api/src/backend/config/celery.py` | Celery app, queues, task routing |
+| **Django Settings** | `api/src/backend/config/django/base.py` | REST_FRAMEWORK, SIMPLE_JWT, MIDDLEWARE, DATABASE_ROUTERS |
+| **DATABASES per env** | `api/src/backend/config/django/{devel,production,testing}.py` | `default`/`prowler_user`, `admin`, `replica`, `admin_replica`, `neo4j` |
+| **SSE Settings** | `api/src/backend/config/settings/eventstream.py` | `EVENTSTREAM_REDIS`, `EVENTSTREAM_CHANNELMANAGER_CLASS` |
+| **Celery Config** | `api/src/backend/config/celery.py` | Celery app, `RLSTask`, time limits, `task_annotations` |
+| **Worker queues** | `api/docker-entrypoint.sh` | `-Q` list consumed by the worker |
 | **URL Routing** | `api/src/backend/config/urls.py` | Main URL patterns |
-| **Database Router** | `api/src/backend/api/db_router.py` | `MainRouter` (4-database architecture) |
+| **Database Router** | `api/src/backend/api/db_router.py` | `MainRouter`, `READ_REPLICA_ALIAS` |
 
 ## RLS (Row-Level Security)
 
@@ -17,16 +20,15 @@
 | **RLS Transaction** | `api/src/backend/api/db_utils.py` | `rls_transaction()` context manager |
 | **RLS Serializer** | `api/src/backend/api/v1/serializers.py` | `RLSSerializer` - auto-injects tenant_id |
 | **Tenant Model** | `api/src/backend/api/rls.py` | `Tenant` model |
-| **Partitioning** | `api/src/backend/api/partitions.py` | `PartitionManager`, UUIDv7 partitioning |
+| **Partitioning** | `api/src/backend/api/partitions.py` | `PostgresUUIDv7PartitioningStrategy`, `PostgresUUIDv7RangePartition` |
+| **UUIDv7 helpers** | `api/src/backend/api/uuid_utils.py` | `datetime_to_uuid7()`, `uuid7_start()`, `uuid7_end()` |
 
 ## RBAC (Role-Based Access Control)
 
 | Pattern | File Path | Key Classes/Functions |
 |---------|-----------|----------------------|
-| **Permissions** | `api/src/backend/api/rbac/permissions.py` | `Permissions` enum, `get_role()`, `get_providers()` |
+| **Permissions** | `api/src/backend/api/rbac/permissions.py` | `Permissions` enum, `HasPermissions`, `get_role(user, tenant_id)`, `get_user_roles()`, `get_providers()`, `get_tasks()`, `TASK_REVOKE_PERMISSIONS` |
 | **Role Model** | `api/src/backend/api/models.py` | `Role`, `UserRoleRelationship`, `RoleProviderGroupRelationship` |
-| **Permission Decorator** | `api/src/backend/api/decorators.py` | `@check_permissions`, `HasPermissions` |
-| **Visibility Filter** | `api/src/backend/api/rbac/` | Provider group visibility filtering |
 
 ## Providers
 
@@ -42,21 +44,22 @@
 | Pattern | File Path | Key Classes/Functions |
 |---------|-----------|----------------------|
 | **Base Serializers** | `api/src/backend/api/v1/serializers.py` | `BaseModelSerializerV1`, `RLSSerializer`, `BaseWriteSerializer` |
-| **ViewSet Helpers** | `api/src/backend/api/v1/serializers.py` | `get_serializer_class_for_view()` |
 
 ## ViewSets
 
 | Pattern | File Path | Key Classes/Functions |
 |---------|-----------|----------------------|
-| **Base ViewSets** | `api/src/backend/api/v1/views.py` | `BaseViewSet`, `BaseRLSViewSet`, `BaseTenantViewset`, `BaseUserViewset` |
-| **Custom Actions** | `api/src/backend/api/v1/views.py` | `@action(detail=True)` patterns |
+| **Base ViewSets** | `api/src/backend/api/base_views.py` | `BaseViewSet`, `BaseRLSViewSet`, `BaseTenantViewset`, `BaseUserViewset` |
+| **Concrete ViewSets** | `api/src/backend/api/v1/views.py` | Resource ViewSets, `@action(detail=True)` patterns |
+| **URL Routing (v1)** | `api/src/backend/api/v1/urls.py` | Routers, nested routes |
+| **SSE** | `api/src/backend/api/sse/` | `BaseSSEViewSet`, `SSEChannelManager`, `make_channel_name()` |
 | **Filters** | `api/src/backend/api/filters.py` | `BaseProviderFilter`, `BaseScanProviderFilter`, `CommonFindingFilters` |
 
 ## Celery Tasks
 
 | Pattern | File Path | Key Classes/Functions |
 |---------|-----------|----------------------|
-| **Task Definitions** | `api/src/backend/tasks/tasks.py` | All `@shared_task` definitions |
+| **Task Definitions** | `api/src/backend/tasks/tasks.py` | All `@shared_task` definitions, `_perform_scan_complete_tasks()` |
 | **RLS Task Base** | `api/src/backend/config/celery.py` | `RLSTask` base class (creates APITask on dispatch) |
 | **Task Decorators** | `api/src/backend/api/decorators.py` | `@set_tenant`, `@handle_provider_deletion` |
 | **Celery Config** | `api/src/backend/config/celery.py` | Celery app, broker settings, visibility timeout |
@@ -72,7 +75,10 @@
 | `tasks/jobs/deletion.py` | `delete_provider()`, `delete_tenant()` |
 | `tasks/jobs/backfill.py` | Historical data backfill operations |
 | `tasks/jobs/export.py` | Output file generation (CSV, JSON, HTML) |
-| `tasks/jobs/report.py` | PDF report generation (ThreatScore, ENS, NIS2) |
+| `tasks/jobs/report.py`, `tasks/jobs/reports/` | PDF report generation (ThreatScore, ENS, NIS2, CIS, CSA) |
+| `tasks/jobs/threatscore.py` | ThreatScore computation |
+| `tasks/jobs/lighthouse_providers.py` | Lighthouse AI provider connection checks and model refresh |
+| `tasks/jobs/orphan_recovery.py` | Recovery of orphaned Celery tasks |
 | `tasks/jobs/connection.py` | Provider/integration connection checks |
 | `tasks/jobs/integrations.py` | S3, Security Hub, Jira uploads |
 | `tasks/jobs/muting.py` | Historical findings muting |
@@ -95,7 +101,7 @@ with rls_transaction(tenant_id):
 # Usage pattern
 from api.rbac.permissions import get_role, get_providers, Permissions
 
-user_role = get_role(request.user)  # Returns FIRST role only
+user_role = get_role(request.user, request.tenant_id)  # FIRST role in tenant; in BaseRLSViewSet use self.user_role
 if user_role.unlimited_visibility:
     queryset = Provider.objects.all()
 else:
@@ -106,7 +112,7 @@ else:
 ```python
 # Usage pattern
 @shared_task(base=RLSTask, name="task-name", queue="scans")
-@set_tenant
+@set_tenant(keep_tenant=True)  # plain @set_tenant pops tenant_id
 @handle_provider_deletion
 def my_task(tenant_id: str, provider_id: str):
     with rls_transaction(tenant_id):
@@ -118,6 +124,7 @@ def my_task(tenant_id: str, provider_id: str):
 | Type | Path |
 |------|------|
 | **Central Fixtures** | `api/src/backend/conftest.py` |
+| **pytest config** | `api/src/backend/pytest.ini` (`config.django.testing`) |
 | **API Tests** | `api/src/backend/api/tests/` |
 | **Integration Tests** | `api/src/backend/api/tests/integration/` |
 | **Task Tests** | `api/src/backend/tasks/tests/` |

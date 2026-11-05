@@ -46,7 +46,7 @@ export const SLACK_RATE_LIMITED_MESSAGE =
  * out, or `links.next` left the API's origin.
  */
 export const SLACK_PARTIAL_CHANNEL_LIST_MESSAGE =
-  "This workspace has more channels than Prowler reads in one go, so this list is not all of them. A channel missing from it is not necessarily one @Prowler Cloud has to be invited to.";
+  "This workspace has more public channels than Prowler reads in one go, so this list is not all of them. Channels @Prowler Cloud is already in are always listed: invite it to a missing channel, then refresh.";
 
 /**
  * For a `2xx` the UI could not read. Not phrased as a failure: the install

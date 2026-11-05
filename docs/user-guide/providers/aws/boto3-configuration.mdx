@@ -29,6 +29,22 @@ Boto3 defaults both timeouts to 60 seconds. In networks with restricted egress (
 
 </Note>
 
+## Retries Configuration
+
+<VersionBadge version="5.44.0" />
+
+The number of retries is set with `--aws-retries-max-attempts`, where `0` disables retries. It can also be set through an environment variable, which is the way to tune it in Prowler Cloud and other deployments without a CLI:
+
+```console
+export PROWLER_AWS_BOTO3_RETRIES_MAX_ATTEMPTS=0
+```
+
+The CLI flag takes precedence over the environment variable. The value must be a non-negative integer; when neither is set, Prowler uses 3 retries.
+
+<Warning>
+The environment variable is process-wide: it applies to every AWS provider built in the process where it is set, not only to a connection check. A scan started in that same process picks it up too. Boto3's Standard retry mode, which Prowler uses, also retries service-side throttling responses (see the errors listed below), so `0` disables retries for those as well. On a large account a scan can hit throttling under normal load, and with retries disabled that throttling becomes a hard failure instead of a retried call. Set the variable only on the processes that run connection checks; leave scan workers on the default, or raise their retry count instead of lowering it.
+</Warning>
+
 ## Retry Behavior Overview
 
 Boto3's Standard retry mode includes the following mechanisms:

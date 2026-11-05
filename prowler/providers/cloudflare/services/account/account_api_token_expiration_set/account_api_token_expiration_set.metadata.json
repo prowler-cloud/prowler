@@ -1,0 +1,37 @@
+{
+  "Provider": "cloudflare",
+  "CheckID": "account_api_token_expiration_set",
+  "CheckTitle": "Cloudflare API token has an expiration date",
+  "CheckType": [],
+  "ServiceName": "account",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "APIToken",
+  "ResourceGroup": "IAM",
+  "Description": "**Cloudflare API tokens** (user-owned and account-owned) are assessed for a configured **expiration date**. Only active tokens are evaluated.",
+  "Risk": "**Non-expiring tokens** remain valid until someone remembers to revoke them.\n- **Confidentiality**: leaked tokens in code, CI logs or laptops grant indefinite access\n- **Integrity**: tokens with write permissions can modify DNS, WAF and Workers long after their purpose ended\n- **Accountability**: orphaned tokens outlive the people and systems that created them",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://developers.cloudflare.com/fundamentals/api/get-started/create-token/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Log in to the Cloudflare dashboard\n2. For user tokens go to My Profile > API Tokens; for account-owned tokens go to Manage Account > Account API Tokens\n3. Roll or recreate the token and set a TTL (start and end date)\n4. Update the systems that use the token\n5. Delete the old token",
+      "Terraform": "```hcl\nresource \"cloudflare_api_token\" \"example\" {\n  name       = \"example\"\n  policies   = [/* ... */]\n  expires_on = \"2027-01-01T00:00:00Z\" # Critical: token stops working after this date\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Give every API token a **limited lifetime**.\n- Set a TTL that matches the token's purpose and rotate before it expires\n- Prefer short-lived tokens for CI/CD and automation\n- Revoke tokens that are no longer needed",
+      "Url": "https://hub.prowler.com/checks/cloudflare/account_api_token_expiration_set"
+    }
+  },
+  "Categories": [
+    "identity-access",
+    "secrets"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "User tokens require the `API Tokens Read` user permission and account-owned tokens require `Account API Tokens Read`. Tokens that cannot be listed are not reported."
+}

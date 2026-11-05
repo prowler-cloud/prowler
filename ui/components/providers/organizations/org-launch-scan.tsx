@@ -26,13 +26,20 @@ import {
 } from "@/components/shadcn/select/select";
 import { Spinner } from "@/components/shadcn/spinner/spinner";
 import { TreeStatusIcon } from "@/components/shadcn/tree-view/tree-status-icon";
-import { UsageLimitMessage } from "@/components/shared/usage-limit-message";
-import { getActionErrorMessage, hasActionError } from "@/lib/action-errors";
+import {
+  UsageLimitMessage,
+  usageLimitToastAction,
+} from "@/components/shared/usage-limit-message";
+import {
+  getActionErrorMessage,
+  hasActionError,
+  isUsageLimitError,
+} from "@/lib/action-errors";
 import {
   buildScheduleUpdatePayload,
   describeSchedulesBulkFailures,
   getScanScheduleCapability,
-  getScheduleFormDefaults,
+  getSetupScheduleFormDefaults,
   parseSchedulesBulkResult,
   scheduleFormSchema,
 } from "@/lib/schedules";
@@ -121,7 +128,7 @@ export function OrgLaunchScan({
   );
   const form = useForm<ScheduleFormValues>({
     resolver: zodResolver(scheduleFormSchema),
-    defaultValues: getScheduleFormDefaults(),
+    defaultValues: getSetupScheduleFormDefaults(),
   });
   const launchInitialScan = useWatch({
     control: form.control,
@@ -173,6 +180,7 @@ export function OrgLaunchScan({
         variant: "destructive",
         title: "Unable to save scan schedules",
         description: getActionErrorMessage(result),
+        action: isUsageLimitError(result) ? usageLimitToastAction() : undefined,
       });
       return;
     }
@@ -203,6 +211,7 @@ export function OrgLaunchScan({
     let initialScanFailureCount = 0;
     let initialScanSuccessCount = 0;
     let initialScanError: string | undefined;
+    let initialScanUsageLimited = false;
 
     if (values.launchInitialScan) {
       const scanResult = organizationId
@@ -212,6 +221,7 @@ export function OrgLaunchScan({
       if ("error" in scanResult) {
         initialScanFailureCount = updatedProviderIds.length;
         initialScanError = getActionErrorMessage(scanResult);
+        initialScanUsageLimited = isUsageLimitError(scanResult);
       } else {
         initialScanSuccessCount = scanResult.data.length;
       }
@@ -241,7 +251,10 @@ export function OrgLaunchScan({
             ? `${description} The initial organization scan could not be launched: ${initialScanError}`
             : `${description} Initial scans failed for ${formatCandidateCount(initialScanFailureCount, noun)}.`
           : description,
-      action: (
+      // Over the limit, the plans unblock the scans; the scans page would not.
+      action: initialScanUsageLimited ? (
+        usageLimitToastAction()
+      ) : (
         <ToastAction altText="Go to scans" asChild>
           <Link href={getScansHref(targetTab)}>Go to scans</Link>
         </ToastAction>
@@ -269,6 +282,9 @@ export function OrgLaunchScan({
           variant: "destructive",
           title: "Unable to launch organization scan",
           description: getActionErrorMessage(result),
+          action: isUsageLimitError(result)
+            ? usageLimitToastAction()
+            : undefined,
         });
         return;
       }

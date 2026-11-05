@@ -101,6 +101,11 @@ def add_subservices_and_missing_services(regions_by_service: dict) -> None:
     )
     # macie2 --> macie
     regions_by_service["services"]["macie2"] = regions_by_service["services"]["macie"]
+    # bedrock-agentcore-control --> bedrock-agentcore
+    # SSM does not return the control-plane name; availability matches the data plane
+    regions_by_service["services"]["bedrock-agentcore-control"] = regions_by_service[
+        "services"
+    ]["bedrock-agentcore"]
     # bedrock-agent is not in SSM, and has different availability than bedrock
     # See: https://docs.aws.amazon.com/bedrock/latest/userguide/agents-supported.html
     regions_by_service["services"]["bedrock-agent"] = {
@@ -144,13 +149,6 @@ def add_subservices_and_missing_services(regions_by_service: dict) -> None:
     ]
     # sesv2 --> ses
     regions_by_service["services"]["sesv2"] = regions_by_service["services"]["ses"]
-    # bedrock-agentcore-control is the control-plane client name. SSM global
-    # infrastructure only returns bedrock-agentcore, so alias it or the key
-    # disappears on the next region refresh.
-    if "bedrock-agentcore" in regions_by_service["services"]:
-        regions_by_service["services"]["bedrock-agentcore-control"] = (
-            regions_by_service["services"]["bedrock-agentcore"]
-        )
 
 
 def get_endpoint_prefix_to_services() -> dict:

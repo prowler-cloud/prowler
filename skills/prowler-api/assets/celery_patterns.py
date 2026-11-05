@@ -21,9 +21,12 @@ logger = get_task_logger(__name__)
 # =============================================================================
 # DECORATOR ORDER - CRITICAL
 # =============================================================================
-# @shared_task() must be first
-# @set_tenant must be second (sets RLS context)
-# @handle_provider_deletion must be third (handles deleted providers)
+# @shared_task() must be first (outermost)
+# @set_tenant sets RLS context. Plain @set_tenant POPS tenant_id from kwargs, so if
+# @handle_provider_deletion follows, use @set_tenant(keep_tenant=True): the deletion
+# handler reads tenant_id and provider_id/scan_id from kwargs.
+# Many real tasks (perform_scan_task, perform_scan_summary_task) use only
+# @handle_provider_deletion and open rls_transaction(tenant_id) inside tasks/jobs/.
 
 
 # =============================================================================
@@ -37,15 +40,15 @@ logger = get_task_logger(__name__)
 @set_tenant
 def check_provider_connection_task(provider_id: str):
     """Task receives NO tenant_id param - decorator pops it from kwargs."""
-    # RLS context already set by decorator
-    with rls_transaction():  # Context already established
-        provider = Provider.objects.get(pk=provider_id)
-        return {"connected": provider.connected}
+    # RLS context already set by the decorator on the default connection
+    provider = Provider.objects.get(pk=provider_id)
+    return {"connected": provider.connected}
 
 
 # Example: @set_tenant(keep_tenant=True) - tenant_id IN function signature
 @shared_task(base=RLSTask, name="scan-report", queue="scan-reports")
 @set_tenant(keep_tenant=True)
+@handle_provider_deletion
 def generate_outputs_task(scan_id: str, provider_id: str, tenant_id: str):
     """Task receives tenant_id param - use when function needs it."""
     # Can use tenant_id in function body
@@ -158,8 +161,12 @@ def schedule_with_countdown(provider_id: str, tenant_id: str):
 
 
 # bind=True - Access task metadata
-@shared_task(base=RLSTask, bind=True, name="scan-perform-scheduled", queue="scans")
-@set_tenant(keep_tenant=True)
+# Real task uses acks_late=False: a dropped run is re-fired by Beat, a redelivered one
+# would duplicate findings.
+@shared_task(
+    base=RLSTask, bind=True, name="scan-perform-scheduled", queue="scans", acks_late=False
+)
+@handle_provider_deletion
 def perform_scheduled_scan_task(self, tenant_id: str, provider_id: str):
     """bind=True provides access to self.request for task metadata."""
     task_id = self.request.id  # Current task ID
@@ -259,9 +266,10 @@ CELERY_RESULT_BACKEND = "django-db"  # Store results in PostgreSQL
 CELERY_TASK_TRACK_STARTED = True     # Track when tasks start
 CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 
-# Global time limits (optional)
-CELERY_TASK_SOFT_TIME_LIMIT = 3600   # 1 hour soft limit
-CELERY_TASK_TIME_LIMIT = 3660        # 1 hour + 1 minute hard limit
+# Global time limits are set in config/celery.py (not here):
+#   task_time_limit = DJANGO_CELERY_TASK_TIME_LIMIT (default 6h)
+#   task_soft_time_limit = DJANGO_CELERY_TASK_SOFT_TIME_LIMIT (default 6h - 600s)
+#   task_annotations override per task name (connection checks 60s/120s, scans/deletions 48h)
 """
 
 
@@ -282,6 +290,7 @@ class ProviderViewSetExample:
         from api.models import Task
         from api.v1.serializers import TaskSerializer
 
+        self.get_object()  # visibility check before queuing
         with transaction.atomic():
             task = check_provider_connection_task.delay(
                 provider_id=pk, tenant_id=self.request.tenant_id

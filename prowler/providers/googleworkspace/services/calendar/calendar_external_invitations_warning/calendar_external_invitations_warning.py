@@ -28,7 +28,13 @@ class calendar_external_invitations_warning(Check):
 
             warning_enabled = calendar_client.policies.external_invitations_warning
 
-            if warning_enabled is True:
+            if calendar_client.policies.off_for_everyone:
+                report.status = "PASS"
+                report.status_extended = (
+                    f"Google Calendar is turned off for everyone in domain "
+                    f"{calendar_client.provider.identity.domain}, so no invitation can be sent."
+                )
+            elif warning_enabled is True:
                 report.status = "PASS"
                 report.status_extended = (
                     f"External invitation warnings for Google Calendar are enabled "

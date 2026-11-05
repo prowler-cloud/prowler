@@ -40,7 +40,7 @@ class AwsSetUpSession:
         aws_access_key_id: str = None,
         aws_secret_access_key: str = None,
         aws_session_token: Optional[str] = None,
-        retries_max_attempts: int = 3,
+        retries_max_attempts: Optional[int] = None,
         regions: set = set(),
         connect_timeout: Optional[int] = None,
         read_timeout: Optional[int] = None,
@@ -106,6 +106,8 @@ class AwsSetUpSession:
             session=self._session.current_session,
             aws_region=sts_region,
         )
+        # Later STS calls go where validation got an answer, not where it timed out
+        sts_region = caller_identity.region
 
         logger.info("Credentials validated")
         ########
