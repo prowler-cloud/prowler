@@ -758,22 +758,6 @@
       "Checks": []
     },
     {
-      "Id": "AISF-AGENT-12",
-      "Description": "Ensure no single IAM role can both open and execute an AgentCore payment. CreatePaymentSession establishes the reviewable terms of a transaction and ProcessPayment executes it, so a role whose effective policies allow both completes a payment end-to-end with no second principal involved.",
-      "Name": "Agent Payment Separation of Duties",
-      "Attributes": [
-        {
-          "Section": "AI Application Security",
-          "SubSection": "Agent Governance",
-          "Service": "bedrock",
-          "Type": "Automated"
-        }
-      ],
-      "Checks": [
-        "bedrockagentcore_payments_process_payment_role_separation"
-      ]
-    },
-    {
       "Id": "AISF-ML-01",
       "Description": "Ensure SageMaker models have network isolation enabled to prevent models from making unauthorized network calls during inference.",
       "Name": "ML Model Network Isolation",

@@ -1,1 +1,1 @@
-`bedrockagentcore_full_access_policy_attached` and `bedrockagentcore_payments_process_payment_role_separation` checks for AWS provider, covering AgentCore administrative access and payment separation of duties. Both read the IAM inventory only
+`bedrockagentcore_full_access_policy_attached` and `bedrockagentcore_payments_process_payment_role_separation` checks for AWS provider, flagging IAM roles with the AgentCore full access managed policies or allowed both `CreatePaymentSession` and `ProcessPayment`
