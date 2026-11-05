@@ -3,7 +3,10 @@ from unittest.mock import MagicMock, patch
 from azure.core.exceptions import ResourceNotFoundError
 from azure.mgmt.network import models as azure_network_models
 from azure.mgmt.network.models import (
+    ApplicationGatewayHttpListener,
     ApplicationGatewaySku,
+    ApplicationGatewaySslPolicy,
+    ApplicationGatewaySslProfile,
     ApplicationGatewayWebApplicationFirewallConfiguration,
     FlowLog,
     SubResource,
@@ -1383,6 +1386,9 @@ class Test_Network_get_application_gateways:
         assert mapped.location == "westeurope"
         assert mapped.firewall_policy_id == GATEWAY_POLICY_ID
         assert mapped.firewall_policy_enabled is True
+        assert mapped.ssl_policy is None
+        assert mapped.default_ssl_policy_name is None
+        assert mapped.listener_ssl_profiles == []
         assert mapped.waf_configuration_enabled is False
         assert mapped.http2_enabled is True
 
@@ -1410,6 +1416,84 @@ class Test_Network_get_application_gateways:
         assert mapped.firewall_policy_enabled is None
         assert mapped.waf_configuration_enabled is True
         assert mapped.http2_enabled is False
+
+    def test_maps_ssl_policy_and_listener_profiles(self):
+        weak_policy = ApplicationGatewaySslPolicy(
+            policy_type="Custom", min_protocol_version="TLSv1_1"
+        )
+        old_policy = ApplicationGatewaySslPolicy(
+            policy_type="Predefined", policy_name="AppGwSslPolicy20150501"
+        )
+        gateway = azure_network_models.ApplicationGateway(
+            id=GATEWAY_ID,
+            location="westeurope",
+            ssl_policy=ApplicationGatewaySslPolicy(
+                policy_type="Predefined", policy_name="AppGwSslPolicy20220101"
+            ),
+            ssl_profiles=[
+                ApplicationGatewaySslProfile(
+                    id=f"{GATEWAY_ID}/sslProfiles/in-use",
+                    name="in-use",
+                    ssl_policy=weak_policy,
+                ),
+                ApplicationGatewaySslProfile(
+                    id=f"{GATEWAY_ID}/sslProfiles/unused",
+                    name="unused",
+                    ssl_policy=old_policy,
+                ),
+            ],
+            http_listeners=[
+                ApplicationGatewayHttpListener(
+                    name="https",
+                    protocol="Https",
+                    ssl_profile=SubResource(id=f"{GATEWAY_ID}/sslProfiles/in-use"),
+                )
+            ],
+        )
+        gateway.name = "agw1"
+        gateway.default_predefined_ssl_policy = "AppGwSslPolicy20220101"
+        mock_client = MagicMock()
+        mock_client.application_gateways.list_all.return_value = [gateway]
+
+        result = build_network_with_client(mock_client)._get_application_gateways()
+
+        mapped = result[AZURE_SUBSCRIPTION_ID][GATEWAY_ID]
+        assert mapped.ssl_policy.policy_type == "Predefined"
+        assert mapped.ssl_policy.policy_name == "AppGwSslPolicy20220101"
+        assert mapped.default_ssl_policy_name == "AppGwSslPolicy20220101"
+        assert [profile.name for profile in mapped.listener_ssl_profiles] == ["in-use"]
+        profile_policy = mapped.listener_ssl_profiles[0].ssl_policy
+        assert profile_policy.min_protocol_version == "TLSv1_1"
+
+    def test_maps_profiles_used_by_tls_listeners_whatever_the_id_casing(self):
+        gateway = azure_network_models.ApplicationGateway(
+            id=GATEWAY_ID,
+            location="westeurope",
+            ssl_profiles=[
+                ApplicationGatewaySslProfile(
+                    id=f"{GATEWAY_ID}/sslProfiles/in-use",
+                    ssl_policy=ApplicationGatewaySslPolicy(
+                        policy_type="CustomV2", min_protocol_version="TLSv1_2"
+                    ),
+                )
+            ],
+            listeners=[
+                azure_network_models.ApplicationGatewayListener(
+                    name="tls",
+                    protocol="Tls",
+                    ssl_profile=SubResource(id=f"{GATEWAY_ID}/SSLPROFILES/IN-USE"),
+                )
+            ],
+        )
+        gateway.name = "agw1"
+        mock_client = MagicMock()
+        mock_client.application_gateways.list_all.return_value = [gateway]
+
+        result = build_network_with_client(mock_client)._get_application_gateways()
+
+        profiles = result[AZURE_SUBSCRIPTION_ID][GATEWAY_ID].listener_ssl_profiles
+        assert [profile.name for profile in profiles] == ["in-use"]
+        assert profiles[0].ssl_policy.min_protocol_version == "TLSv1_2"
 
     def test_uses_resource_group_scope(self):
         mock_client = MagicMock()
