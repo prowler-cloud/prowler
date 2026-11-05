@@ -1,0 +1,43 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_directory_sync_krbtgt_azuread_not_synced",
+  "CheckTitle": "Entra directory sync excludes the krbtgt_AzureAD account from synchronization",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "The on-premises **krbtgt_AzureAD** account created by `Set-AzureADKerberosServer` must not be synchronized to Microsoft Entra ID.\n\nThis check identifies synchronized users whose name attributes match krbtgt_AzureAD, indicating the sensitive Kerberos account has been synced across trust boundaries.",
+  "Risk": "A synchronized krbtgt_AzureAD account exposes the keys Microsoft Entra ID uses to issue partial Kerberos TGTs for the on-premises domain. AD-side changes to the object flow into the cloud, creating a **privilege-escalation path** between the on-premises and cloud trust boundaries that an attacker with AD write access could exploit.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/entra/identity/authentication/kerberos#security-considerations",
+    "https://learn.microsoft.com/entra/identity/hybrid/connect/how-to-connect-sync-configure-filtering",
+    "https://maester.dev/docs/tests/MT.1147"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. In on-premises AD, locate the **krbtgt_AzureAD** account (by default in `CN=Users`)\n2. Exclude it from synchronization using Microsoft Entra Connect wizard > Customize synchronization options > Domain and OU filtering, or attribute-based filtering with a sync rule. For Cloud Sync, adjust scoping filters in Microsoft Entra admin center > Entra ID > Entra Connect > Cloud sync > Configurations\n3. Run a sync cycle (`Start-ADSyncSyncCycle -PolicyType Delta`) and confirm the synced object is removed from Entra ID\n4. Do **not** delete or modify the on-premises krbtgt_AzureAD account itself",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Exclude the **krbtgt_AzureAD** account from directory synchronization scope using OU filtering or attribute-based sync rules. This keeps the on-premises Kerberos trust anchor isolated from the cloud trust boundary, following the principle of **separation of trust domains**.",
+      "Url": "https://hub.prowler.com/check/entra_directory_sync_krbtgt_azuread_not_synced"
+    }
+  },
+  "Categories": [
+    "identity-access",
+    "trust-boundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "entra_directory_sync_object_takeover_blocked",
+    "entra_seamless_sso_disabled",
+    "entra_password_hash_sync_enabled"
+  ],
+  "Notes": "Port of Maester test MT.1147 (Test-MtKrbtgtAzureADNotSynced). Only applies to hybrid tenants with on-premises directory synchronization. Cloud-only tenants receive a PASS as not applicable."
+}
