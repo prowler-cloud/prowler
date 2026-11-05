@@ -543,6 +543,58 @@ class TestOraclecloudProviderInit:
         assert mock_get_regions_to_audit.call_args_list[0].args == (None,)
         assert provider.regions == all_subscribed_regions
 
+    def test_init_with_home_region_bootstraps_there_without_scan_filter(self):
+        mock_session = OCISession(
+            config={"region": "me-abudhabi-1"}, signer=None, profile=None
+        )
+        mock_identity = OCIIdentityInfo(
+            tenancy_id="ocid1.tenancy.oc1..aaaaaaaexample",
+            tenancy_name="test-tenancy",
+            user_id="ocid1.user.oc1..aaaaaaaexample",
+            region="me-abudhabi-1",
+            profile=None,
+            audited_regions=set(),
+            audited_compartments=[],
+        )
+        all_subscribed_regions = [
+            OCIRegion(key="me-abudhabi-1", name="me-abudhabi-1", is_home_region=True),
+            OCIRegion(key="me-dubai-1", name="me-dubai-1", is_home_region=False),
+        ]
+
+        with (
+            patch(
+                "prowler.providers.oraclecloud.oraclecloud_provider.OraclecloudProvider.setup_session",
+                return_value=mock_session,
+            ) as mock_setup_session,
+            patch(
+                "prowler.providers.oraclecloud.oraclecloud_provider.OraclecloudProvider.set_identity",
+                return_value=mock_identity,
+            ),
+            patch(
+                "prowler.providers.oraclecloud.oraclecloud_provider.OraclecloudProvider.get_regions_to_audit",
+                return_value=all_subscribed_regions,
+            ) as mock_get_regions_to_audit,
+            patch(
+                "prowler.providers.oraclecloud.oraclecloud_provider.OraclecloudProvider.get_compartments_to_audit",
+                return_value=["ocid1.compartment.oc1..aaaaaaaexample"],
+            ),
+            patch("prowler.providers.common.provider.Provider.set_global_provider"),
+        ):
+            provider = OraclecloudProvider(
+                user="ocid1.user.oc1..aaaaaaaexample",
+                fingerprint="aa:bb:cc:dd:ee:ff:00:11:22:33:44:55:66:77:88:99",
+                key_content="fake-base64-key-content",
+                tenancy="ocid1.tenancy.oc1..aaaaaaaexample",
+                home_region="me-abudhabi-1",
+                config_content={"dummy": True},
+                mutelist_content={"Accounts": {}},
+            )
+
+        assert mock_setup_session.call_args.kwargs["region"] == "me-abudhabi-1"
+        assert mock_get_regions_to_audit.call_args_list[0].args == (None,)
+        assert provider.regions == all_subscribed_regions
+        assert provider.home_region == "me-abudhabi-1"
+
     def test_init_with_config_file_auth_without_region_uses_session_config_region_for_identity(
         self,
     ):

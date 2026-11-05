@@ -13,6 +13,8 @@ export const PROVIDER_FUNNEL_STEP = {
   ROLE_TEMPLATE_OPENED: "role_template_opened",
   ACCOUNT_SUBMITTED: "account_submitted",
   WIZARD_CLOSED: "wizard_closed",
+  LIGHTHOUSE_HELP_SHOWN: "lighthouse_help_shown",
+  LIGHTHOUSE_HELP_OPENED: "lighthouse_help_opened",
 } as const;
 
 export type ProviderFunnelStep =
@@ -33,6 +35,7 @@ export const WIZARD_OPEN_SOURCE = {
   PAGE_BUTTON: "page_button",
   EMPTY_STATE: "empty_state",
   ROW_ACTION: "row_action",
+  SAMPLE_PREVIEW: "sample_preview",
 } as const;
 
 export type WizardOpenSource =
@@ -41,6 +44,8 @@ export type WizardOpenSource =
 export const PROVIDER_FUNNEL_METHOD = {
   SINGLE: "single",
   ORGANIZATION: "organization",
+  // The user cannot connect the account and hands it to a teammate instead.
+  INVITE_TEAMMATE: "invite_teammate",
 } as const;
 
 export type ProviderFunnelMethod =
@@ -89,7 +94,8 @@ export const ACCOUNT_SUBMIT_OUTCOME = {
 export type AccountSubmitOutcome =
   (typeof ACCOUNT_SUBMIT_OUTCOME)[keyof typeof ACCOUNT_SUBMIT_OUTCOME];
 
-// Account and credentials sent together (the one-step AWS form).
+// Account and credentials sent together from the connect step; `via` is
+// "default" for a provider with a single method.
 export interface AccountSubmittedDetail {
   step: typeof PROVIDER_FUNNEL_STEP.ACCOUNT_SUBMITTED;
   providerType: string;
@@ -104,6 +110,21 @@ export interface WizardClosedDetail {
   providerCreated: boolean;
 }
 
+interface LighthouseHelpDetail {
+  providerType: string | null;
+  wizardStep: string;
+}
+
+// The wizard offered Lighthouse AI help (the exposure for the opened rate).
+export interface LighthouseHelpShownDetail extends LighthouseHelpDetail {
+  step: typeof PROVIDER_FUNNEL_STEP.LIGHTHOUSE_HELP_SHOWN;
+}
+
+// Asked Lighthouse AI how to connect, from inside the wizard.
+export interface LighthouseHelpOpenedDetail extends LighthouseHelpDetail {
+  step: typeof PROVIDER_FUNNEL_STEP.LIGHTHOUSE_HELP_OPENED;
+}
+
 export type ProviderFunnelDetail =
   | SidebarCtaClickedDetail
   | WizardOpenedDetail
@@ -111,7 +132,9 @@ export type ProviderFunnelDetail =
   | MethodSelectedDetail
   | RoleTemplateOpenedDetail
   | AccountSubmittedDetail
-  | WizardClosedDetail;
+  | WizardClosedDetail
+  | LighthouseHelpShownDetail
+  | LighthouseHelpOpenedDetail;
 
 export function dispatchProviderFunnel(detail: ProviderFunnelDetail): void {
   if (typeof window === "undefined") return;

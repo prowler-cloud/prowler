@@ -35,5 +35,5 @@
     "drive_shared_drive_members_only_access",
     "drive_shared_drive_disable_download_print_copy"
   ],
-  "Notes": ""
+  "Notes": "When Google Drive is turned off for everyone, the check passes: the setting has no effect while the service is off."
 }

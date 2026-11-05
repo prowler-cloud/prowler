@@ -106,7 +106,63 @@ describe("getNavigationConfig", () => {
     );
   });
 
-  it("uses Cloud destinations and current New badges", () => {
+  it("never shows Issues in Local Server", () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
+
+    // When
+    const labels = getNavigationConfig({
+      pathname: "/",
+      apiDocsUrl: null,
+    })
+      .flatMap((section) => section.items)
+      .map((item) => item.label);
+
+    // Then
+    expect(labels).not.toContain("Exploitability issues");
+  });
+
+  it("shows Realtime to every Cloud user and never in Local Server", () => {
+    // Given
+    const labels = () =>
+      getNavigationConfig({ pathname: "/realtime" })
+        .flatMap((section) => section.items)
+        .map((item) => item.label);
+
+    // When / Then
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
+    expect(labels()).toContain("Realtime");
+
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
+    expect(labels()).not.toContain("Realtime");
+  });
+
+  it("has one Realtime entry, active on the dashboard and its configuration", () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
+    const realtimeItems = (pathname: string) =>
+      getNavigationConfig({ pathname })
+        .flatMap((section) => section.items)
+        .flatMap((item) =>
+          item.kind === NAVIGATION_ITEM_KIND.COLLAPSIBLE
+            ? [item, ...item.children]
+            : [item],
+        )
+        .filter((item) => "href" in item && item.href.startsWith("/realtime"));
+
+    // When / Then
+    expect(realtimeItems("/realtime")).toEqual([
+      expect.objectContaining({ href: "/realtime", active: true }),
+    ]);
+    expect(realtimeItems("/realtime/configuration")).toEqual([
+      expect.objectContaining({ href: "/realtime", active: true }),
+    ]);
+    expect(realtimeItems("/providers")).toEqual([
+      expect.objectContaining({ href: "/realtime", active: false }),
+    ]);
+  });
+
+  it("uses Cloud destinations and keeps Configuration children unbadged", () => {
     // Given
     vi.stubEnv("UI_CLOUD_ENABLED", "true");
 
@@ -124,17 +180,23 @@ describe("getNavigationConfig", () => {
 
     // Then
     expect(sections[0]?.items.map((item) => item.label)).toEqual(["Overview"]);
+    expect(sections[1]?.items[0]).toMatchObject({
+      label: "Exploitability issues",
+      href: "/issues",
+    });
     expect(configuration.children).not.toEqual(
       expect.arrayContaining([
         expect.objectContaining({ label: "CLI Import" }),
       ]),
     );
-    expect(
-      configuration.children.find((item) => item.label === "Alerts"),
-    ).toEqual(expect.objectContaining({ highlight: true }));
-    expect(
-      configuration.children.find((item) => item.label === "Scans"),
-    ).toEqual(expect.objectContaining({ active: true, highlight: true }));
+    const alerts = configuration.children.find(
+      (item) => item.label === "Alerts",
+    );
+    const scans = configuration.children.find((item) => item.label === "Scans");
+    expect(alerts).toMatchObject({ href: "/alerts" });
+    expect(alerts).not.toHaveProperty("highlight");
+    expect(scans).toMatchObject({ href: "/scans/config", active: true });
+    expect(scans).not.toHaveProperty("highlight");
     expect(items.find((item) => item.label === "Attack Paths")).not.toEqual(
       expect.objectContaining({ highlight: true }),
     );

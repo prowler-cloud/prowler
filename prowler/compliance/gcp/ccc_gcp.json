@@ -6815,7 +6815,9 @@
           ]
         }
       ],
-      "Checks": []
+      "Checks": [
+        "vertexai_workbench_instance_root_access_disabled"
+      ]
     },
     {
       "Id": "CCC.MLDE.CN03.AR02",
@@ -6871,7 +6873,9 @@
           ]
         }
       ],
-      "Checks": []
+      "Checks": [
+        "vertexai_workbench_instance_root_access_disabled"
+      ]
     },
     {
       "Id": "CCC.MLDE.CN04.AR01",
@@ -6923,7 +6927,9 @@
           ]
         }
       ],
-      "Checks": []
+      "Checks": [
+        "vertexai_workbench_instance_terminal_access_disabled"
+      ]
     },
     {
       "Id": "CCC.MLDE.CN04.AR02",
@@ -6978,7 +6984,9 @@
           ]
         }
       ],
-      "Checks": []
+      "Checks": [
+        "vertexai_workbench_instance_terminal_access_disabled"
+      ]
     },
     {
       "Id": "CCC.MLDE.CN02.AR01",
@@ -7033,7 +7041,9 @@
           ]
         }
       ],
-      "Checks": []
+      "Checks": [
+        "vertexai_workbench_instance_file_download_disabled"
+      ]
     },
     {
       "Id": "CCC.MLDE.CN02.AR02",
@@ -7250,7 +7260,9 @@
           ]
         }
       ],
-      "Checks": []
+      "Checks": [
+        "vertexai_workbench_instance_auto_upgrade_enabled"
+      ]
     },
     {
       "Id": "CCC.MLDE.CN06.AR02",
@@ -7360,7 +7372,9 @@
           ]
         }
       ],
-      "Checks": []
+      "Checks": [
+        "vertexai_workbench_instance_public_ip_disabled"
+      ]
     },
     {
       "Id": "CCC.MLDE.CN07.AR02",
@@ -7416,7 +7430,9 @@
           ]
         }
       ],
-      "Checks": []
+      "Checks": [
+        "vertexai_workbench_instance_public_ip_disabled"
+      ]
     },
     {
       "Id": "CCC.MLDE.CN08.AR01",

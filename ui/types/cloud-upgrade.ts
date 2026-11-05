@@ -1,6 +1,7 @@
 export const CLOUD_UPGRADE_FEATURE = {
   ADVANCED_SCHEDULING: "advanced_scheduling",
   ALERTS: "alerts",
+  API_KEYS: "api_keys",
   AWS_ORGANIZATIONS: "aws_organizations",
   AZURE_ORGANIZATIONS: "azure_organizations",
   CLI_IMPORT: "cli_import",
@@ -19,6 +20,8 @@ export type CloudUpgradeFeature =
 
 // Prowler Cloud features gated behind a paid plan.
 export const PAID_PLAN_UPGRADE_FEATURE = {
+  FINDINGS_PREVIEW: "findings_preview",
+  REGISTRY: "registry",
   REPORT_DOWNLOAD: "report_download",
 } as const;
 

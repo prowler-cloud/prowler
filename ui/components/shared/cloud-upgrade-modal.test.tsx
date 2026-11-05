@@ -51,6 +51,23 @@ vi.mock("@/components/shadcn/modal", async (importOriginal) => {
 });
 
 describe("CloudUpgradeModal", () => {
+  it("links the Registry paid plan upgrade to billing", async () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
+    useCloudUpgradeStore.getState().openCloudUpgrade("registry");
+
+    // When
+    render(<CloudUpgradeModal />);
+
+    // Then
+    expect(
+      await screen.findByRole("dialog", { name: "Unlock Prowler Registry" }),
+    ).toBeVisible();
+    expect(
+      screen.getByRole("link", { name: "Upgrade to Unlock Registry" }),
+    ).toHaveAttribute("href", "/billing?feature=registry");
+  });
+
   afterEach(() => {
     cleanup();
     modalTestState.keepContentMounted = false;

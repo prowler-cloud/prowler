@@ -2,7 +2,8 @@ import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
 import {
-  AwsConnectDraft,
+  CONNECT_PANEL,
+  ConnectDraft,
   PROVIDER_WIZARD_MODE,
   ProviderWizardIdentity,
   ProviderWizardMode,
@@ -17,12 +18,16 @@ interface ProviderWizardState {
   via: string | null;
   secretId: string | null;
   mode: ProviderWizardMode;
-  awsConnectDraft: AwsConnectDraft | null;
+  connectDraft: ConnectDraft | null;
   setProvider: (provider: ProviderWizardIdentity) => void;
   setVia: (via: string | null) => void;
   setSecretId: (secretId: string | null) => void;
   setMode: (mode: ProviderWizardMode) => void;
-  setAwsConnectDraft: (patch: Partial<AwsConnectDraft>) => void;
+  /** Merges into the draft of `providerType`; another provider starts a blank one. */
+  setConnectDraft: (
+    providerType: string,
+    patch: Partial<Omit<ConnectDraft, "providerType">>,
+  ) => void;
   reset: () => void;
 }
 
@@ -34,14 +39,15 @@ const initialState = {
   via: null,
   secretId: null,
   mode: PROVIDER_WIZARD_MODE.ADD,
-  awsConnectDraft: null,
+  connectDraft: null,
 };
 
-const EMPTY_AWS_CONNECT_DRAFT: AwsConnectDraft = {
-  method: "role",
-  roleValues: {},
-  keysValues: {},
-};
+const emptyConnectDraft = (providerType: string): ConnectDraft => ({
+  providerType,
+  method: null,
+  panel: CONNECT_PANEL.ACCESS,
+  values: {},
+});
 
 export const useProviderWizardStore = create<ProviderWizardState>()(
   persist(
@@ -57,11 +63,12 @@ export const useProviderWizardStore = create<ProviderWizardState>()(
       setVia: (via) => set({ via }),
       setSecretId: (secretId) => set({ secretId }),
       setMode: (mode) => set({ mode }),
-      setAwsConnectDraft: (patch) =>
+      setConnectDraft: (providerType, patch) =>
         set((state) => ({
-          awsConnectDraft: {
-            ...EMPTY_AWS_CONNECT_DRAFT,
-            ...state.awsConnectDraft,
+          connectDraft: {
+            ...(state.connectDraft?.providerType === providerType
+              ? state.connectDraft
+              : emptyConnectDraft(providerType)),
             ...patch,
           },
         })),
@@ -71,7 +78,7 @@ export const useProviderWizardStore = create<ProviderWizardState>()(
       name: "provider-wizard-store",
       storage: createJSONStorage(() => sessionStorage),
       // The draft may hold access keys: it never leaves memory.
-      partialize: ({ awsConnectDraft: _draft, ...persisted }) => persisted,
+      partialize: ({ connectDraft: _draft, ...persisted }) => persisted,
     },
   ),
 );

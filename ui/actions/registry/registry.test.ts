@@ -115,6 +115,45 @@ function mockRequestDeadlines() {
 }
 
 describe("installed Registry provider discovery", () => {
+  it("reports a missing Registry key as setup rather than a connection failure", async () => {
+    // Given
+    mockDiscovery({
+      failedEndpoint: "providers",
+      failureStatus: 409,
+      failureBody: { errors: [{ code: "registry_credential_not_configured" }] },
+    });
+
+    // When / Then
+    expect(await getInstalledRegistryProviderOptions()).toEqual({
+      status: "onboarding",
+    });
+  });
+
+  it("shows the paywall when bootstrapping Registry requires a subscription", async () => {
+    // Given
+    fetchMock.mockResolvedValueOnce(jsonResponse({}, 402));
+
+    // When / Then
+    expect(await getRegistryBootstrap()).toEqual({
+      status: "subscription_required",
+    });
+    expect(fetchMock).toHaveBeenCalledOnce();
+  });
+
+  it.each(["available-artifacts", "artifacts", "providers"])(
+    "offers a paid plan when the %s read requires a subscription",
+    async (failedEndpoint) => {
+      // Given
+      mockDiscovery({ failedEndpoint, failureStatus: 402 });
+
+      // When
+      const result = await getInstalledRegistryProviderOptions();
+
+      // Then
+      expect(result).toEqual({ status: "subscription_required" });
+    },
+  );
+
   function mockDiscovery({
     emptyMetadata = false,
     failedEndpoint,

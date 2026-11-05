@@ -1,6 +1,6 @@
 "use client";
 
-import { Icon } from "@iconify/react";
+import { RefreshCw, Search, Star } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import {
@@ -167,8 +167,8 @@ export const SelectModel = ({
           className="text-text-neutral-secondary hover:bg-bg-neutral-tertiary flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium disabled:opacity-50"
           aria-label="Refresh models"
         >
-          <Icon
-            icon="heroicons:arrow-path"
+          <RefreshCw
+            aria-hidden="true"
             className={`h-5 w-5 ${isLoading ? "animate-spin" : ""}`}
           />
           <span>{isLoading ? "Refreshing..." : "Refresh"}</span>
@@ -183,8 +183,8 @@ export const SelectModel = ({
 
       {!isLoading && models.length > 0 && (
         <div className="relative">
-          <Icon
-            icon="heroicons:magnifying-glass"
+          <Search
+            aria-hidden="true"
             className="text-text-neutral-tertiary pointer-events-none absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2"
           />
           <input
@@ -199,8 +199,8 @@ export const SelectModel = ({
 
       {isLoading ? (
         <div className="flex items-center justify-center py-12">
-          <Icon
-            icon="heroicons:arrow-path"
+          <RefreshCw
+            aria-hidden="true"
             className="text-text-neutral-tertiary h-8 w-8 animate-spin"
           />
         </div>
@@ -242,7 +242,10 @@ export const SelectModel = ({
                   <span className="text-sm font-medium">{model.name}</span>
                   {isRecommended(model.id) && (
                     <span className="bg-bg-pass-secondary text-text-success-primary inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium">
-                      <Icon icon="heroicons:star-solid" className="h-3 w-3" />
+                      <Star
+                        aria-hidden="true"
+                        className="h-3 w-3 fill-current"
+                      />
                       Recommended
                     </span>
                   )}

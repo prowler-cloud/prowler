@@ -7,6 +7,10 @@ license: Apache-2.0
 metadata:
   author: prowler-cloud
   version: "1.0"
+  scope: [root]                       # root, ui, api, sdk, mcp_server
+  auto_invoke:
+    - "{User action that must load this skill}"
+allowed-tools: Read, Edit, Write, Glob, Grep, Bash
 ---
 
 ## When to Use

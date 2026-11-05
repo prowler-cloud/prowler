@@ -19,10 +19,10 @@
 # AI
 /mcp_server/ @prowler-cloud/engineering
 
-# Platform
-/.github/ @prowler-cloud/platform
-/Makefile @prowler-cloud/platform
-/kubernetes/ @prowler-cloud/platform
-**/Dockerfile* @prowler-cloud/platform
-**/docker-compose*.yml @prowler-cloud/platform
-**/docker-compose*.yaml @prowler-cloud/platform
+# CI and infrastructure
+/.github/ @prowler-cloud/engineering
+/Makefile @prowler-cloud/engineering
+/kubernetes/ @prowler-cloud/engineering
+**/Dockerfile* @prowler-cloud/engineering
+**/docker-compose*.yml @prowler-cloud/engineering
+**/docker-compose*.yaml @prowler-cloud/engineering

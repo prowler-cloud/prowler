@@ -81,6 +81,7 @@ jobs:
             auth.docker.io:443
             production.cloudflare.docker.com:443
             production.cloudfront.docker.com:443
+            tuf-repo-cdn.sigstore.dev:443
             api.github.com:443
             mirror.gcr.io:443
             check.trivy.dev:443

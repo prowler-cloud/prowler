@@ -81,7 +81,8 @@
         "compute_instance_shielded_vm_enabled",
         "compute_project_os_login_enabled",
         "artifacts_container_analysis_enabled",
-        "gcr_container_scanning_enabled"
+        "gcr_container_scanning_enabled",
+        "appengine_version_php_runtime_supported"
       ]
     },
     {

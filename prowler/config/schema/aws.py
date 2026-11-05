@@ -88,6 +88,8 @@ _validate_trusted_ips = validate_ip_networks
 _validate_semver = make_dotted_version_validator(3, 3)
 # "1.28" style strings (EKS minor versions).
 _validate_eks_minor = make_dotted_version_validator(2, 2)
+_validate_php_branch = make_dotted_version_validator(2, 2)
+_validate_platform_version = make_dotted_version_validator(3, 3)
 
 
 def _validate_account_ids(v: Optional[list[str]]) -> Optional[list[str]]:
@@ -309,6 +311,20 @@ class AWSProviderConfig(ProviderConfigBase):
         ),
     )
 
+    # --- Elastic Beanstalk ------------------------------------------------
+    elasticbeanstalk_php_min_branch: Annotated[
+        Optional[str], AfterValidator(_validate_php_branch)
+    ] = Field(
+        default=None,
+        description='Oldest PHP branch still receiving security fixes, e.g. "8.2".',
+    )
+    elasticbeanstalk_php_min_platform_version: Annotated[
+        Optional[str], AfterValidator(_validate_platform_version)
+    ] = Field(
+        default=None,
+        description='Oldest Amazon Linux 2023 PHP platform version bundling the fixed PHP release, e.g. "4.13.13".',
+    )
+
     # --- Lambda -----------------------------------------------------------
     obsolete_lambda_runtimes: Optional[list[str]] = None
     lambda_min_azs: Optional[int] = Field(
@@ -316,6 +332,12 @@ class AWSProviderConfig(ProviderConfigBase):
         ge=1,
         le=6,
         description="Min number of AZs a VPC-bound Lambda must span. Range: 1..6.",
+    )
+
+    # --- Lightsail --------------------------------------------------------
+    lightsail_php_blueprints: Optional[list[str]] = Field(
+        default=None,
+        description="Blueprint id prefixes that ship PHP and require manual runtime verification.",
     )
 
     # --- Organizations ----------------------------------------------------

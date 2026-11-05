@@ -7,7 +7,7 @@ import {
   addCredentialsFormSchema,
   addCredentialsRoleFormSchema,
   addProviderFormSchema,
-  KUBECONFIG_UNSUPPORTED_COMMAND_AUTHENTICATION_ERROR,
+  KUBECONFIG_NON_INLINE_CREDENTIALS_ERROR,
   roleFormSchema,
   samlConfigFormSchema,
 } from "./formSchemas";
@@ -222,7 +222,7 @@ users:
     expect(result.error.issues).toContainEqual(
       expect.objectContaining({
         path: [ProviderCredentialFields.KUBECONFIG_CONTENT],
-        message: KUBECONFIG_UNSUPPORTED_COMMAND_AUTHENTICATION_ERROR,
+        message: KUBECONFIG_NON_INLINE_CREDENTIALS_ERROR,
       }),
     );
   });
@@ -249,17 +249,42 @@ users:
     expect(result.error.issues).toContainEqual(
       expect.objectContaining({
         path: [ProviderCredentialFields.KUBECONFIG_CONTENT],
-        message: KUBECONFIG_UNSUPPORTED_COMMAND_AUTHENTICATION_ERROR,
+        message: KUBECONFIG_NON_INLINE_CREDENTIALS_ERROR,
       }),
     );
   });
 
-  it("accepts kubeconfig auth-provider without cmd-path", () => {
-    const schema = addCredentialsFormSchema("kubernetes");
-
-    const result = schema.safeParse({
-      ...BASE_KUBERNETES_VALUES,
-      [ProviderCredentialFields.KUBECONFIG_CONTENT]: `apiVersion: v1
+  it.each([
+    [
+      "user tokenFile",
+      `apiVersion: v1
+kind: Config
+users:
+  - name: test-user
+    user:
+      tokenFile: /etc/passwd`,
+    ],
+    [
+      "user client-certificate",
+      `apiVersion: v1
+kind: Config
+users:
+  - name: test-user
+    user:
+      client-certificate: /etc/ssl/cert.pem`,
+    ],
+    [
+      "user client-key",
+      `apiVersion: v1
+kind: Config
+users:
+  - name: test-user
+    user:
+      client-key: /etc/ssl/key.pem`,
+    ],
+    [
+      "user auth-provider directives",
+      `apiVersion: v1
 kind: Config
 users:
   - name: test-user
@@ -268,6 +293,85 @@ users:
         name: oidc
         config:
           client-id: prowler`,
+    ],
+    [
+      "unknown user key",
+      `apiVersion: v1
+kind: Config
+users:
+  - name: test-user
+    user:
+      bogus: value`,
+    ],
+    [
+      "cluster certificate-authority",
+      `apiVersion: v1
+kind: Config
+clusters:
+  - name: test-cluster
+    cluster:
+      server: https://example.test
+      certificate-authority: /etc/ssl/ca.pem`,
+    ],
+    [
+      "cluster proxy-url",
+      `apiVersion: v1
+kind: Config
+clusters:
+  - name: test-cluster
+    cluster:
+      server: https://example.test
+      proxy-url: http://proxy.evil.test`,
+    ],
+    [
+      "unknown cluster key",
+      `apiVersion: v1
+kind: Config
+clusters:
+  - name: test-cluster
+    cluster:
+      server: https://example.test
+      bogus: /etc/ssl/ca.pem`,
+    ],
+  ])(
+    "rejects kubeconfig with %s on kubeconfig_content field",
+    (_label, kubeconfigContent) => {
+      const schema = addCredentialsFormSchema("kubernetes");
+
+      const result = schema.safeParse({
+        ...BASE_KUBERNETES_VALUES,
+        [ProviderCredentialFields.KUBECONFIG_CONTENT]: kubeconfigContent,
+      });
+
+      expect(result.success).toBe(false);
+      if (result.success) return;
+
+      expect(result.error.issues).toContainEqual(
+        expect.objectContaining({
+          path: [ProviderCredentialFields.KUBECONFIG_CONTENT],
+          message: KUBECONFIG_NON_INLINE_CREDENTIALS_ERROR,
+        }),
+      );
+    },
+  );
+
+  it("accepts kubeconfig with only inline credentials", () => {
+    const schema = addCredentialsFormSchema("kubernetes");
+
+    const result = schema.safeParse({
+      ...BASE_KUBERNETES_VALUES,
+      [ProviderCredentialFields.KUBECONFIG_CONTENT]: `apiVersion: v1
+kind: Config
+clusters:
+  - name: test-cluster
+    cluster:
+      server: https://example.test
+      certificate-authority-data: Zm9v
+users:
+  - name: test-user
+    user:
+      client-certificate-data: Zm9v
+      client-key-data: YmFy`,
     });
 
     expect(result.success).toBe(true);
@@ -307,10 +411,32 @@ describe("addCredentialsFormSchema - oraclecloud", () => {
     [ProviderCredentialFields.OCI_TENANCY]: "ocid1.tenancy.oc1..example",
   } as const;
 
-  it("accepts OCI API key credentials without region", () => {
+  it("rejects OCI API key credentials without a home region", () => {
     const schema = addCredentialsFormSchema("oraclecloud");
 
     const result = schema.safeParse(BASE_OCI_VALUES);
+
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects an unknown OCI home region", () => {
+    const schema = addCredentialsFormSchema("oraclecloud");
+
+    const result = schema.safeParse({
+      ...BASE_OCI_VALUES,
+      [ProviderCredentialFields.OCI_REGION]: "mars-north-1",
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("accepts OCI API key credentials with a home region", () => {
+    const schema = addCredentialsFormSchema("oraclecloud");
+
+    const result = schema.safeParse({
+      ...BASE_OCI_VALUES,
+      [ProviderCredentialFields.OCI_REGION]: "me-abudhabi-1",
+    });
 
     expect(result.success).toBe(true);
   });

@@ -30,6 +30,21 @@ def test_initialize_sentry_uses_configured_dsn():
     assert mock_init.call_args.kwargs["before_send"] is sentry_settings.before_send
 
 
+def test_initialize_sentry_sends_no_personal_data():
+    with (
+        patch.object(
+            sentry_settings.env,
+            "str",
+            return_value="https://fake-public-key@sentry.example.invalid/1",
+        ),
+        patch.object(sentry_settings.sentry_sdk, "init") as mock_init,
+    ):
+        sentry_settings.initialize_sentry()
+
+    assert mock_init.call_args.kwargs["send_default_pii"] is False
+    assert mock_init.call_args.kwargs["max_request_body_size"] == "never"
+
+
 def _make_log_record(msg, level=logging.ERROR, name="test", args=None):
     """Build a real LogRecord so getMessage() works like in production."""
     record = logging.LogRecord(

@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 
 import { DOCS_URLS, getProviderHelpText } from "@/lib/external-urls";
-import { ORG_SETUP_PHASE, ORG_WIZARD_STEP } from "@/types/organizations";
 import {
   PROVIDER_WIZARD_MODE,
   PROVIDER_WIZARD_STEP,
@@ -9,110 +8,26 @@ import {
 import { type KnownProviderType, PROVIDER_TYPES } from "@/types/providers";
 
 import {
-  getOrganizationsStepperOffset,
   getProviderWizardDocsDestination,
   getProviderWizardModalTitle,
-  getProviderWizardStepper,
+  getProviderWizardSteps,
 } from "./provider-wizard-modal.utils";
 
-describe("getProviderWizardStepper", () => {
-  const labels = (steps: { label: string }[]) => steps.map((s) => s.label);
+describe("getProviderWizardSteps", () => {
+  const labels = (steps: readonly { label: string }[]) =>
+    steps.map((step) => step.label);
 
-  it("lists the four generic steps until a provider is picked", () => {
-    const stepper = getProviderWizardStepper({
-      mode: PROVIDER_WIZARD_MODE.ADD,
-      providerType: null,
-      currentStep: PROVIDER_WIZARD_STEP.CONNECT,
-    });
-
-    expect(labels(stepper.steps)).toEqual([
-      "Link a Provider",
-      "Authenticate Credentials",
-      "Validate Connection",
+  it("connects and launches in two rows for every provider", () => {
+    expect(labels(getProviderWizardSteps(PROVIDER_WIZARD_MODE.ADD))).toEqual([
+      "Connect Provider",
       "Launch Scan",
     ]);
-    expect(stepper.stepOffset).toBe(0);
   });
 
-  it("folds the credentials step into the first one when adding an AWS account", () => {
-    const stepper = getProviderWizardStepper({
-      mode: PROVIDER_WIZARD_MODE.ADD,
-      providerType: "aws",
-      currentStep: PROVIDER_WIZARD_STEP.CONNECT,
-    });
-
-    expect(labels(stepper.steps)).toEqual([
-      "Link a Provider",
-      "Validate Connection",
-      "Launch Scan",
-    ]);
-    expect(stepper.stepOffset).toBe(0);
-  });
-
-  it("keeps the AWS stepper in sync once the wizard skips to the connection test", () => {
-    const stepper = getProviderWizardStepper({
-      mode: PROVIDER_WIZARD_MODE.ADD,
-      providerType: "aws",
-      currentStep: PROVIDER_WIZARD_STEP.TEST,
-    });
-
-    // TEST is index 2 in the wizard but the second row of the AWS stepper.
-    expect(stepper.stepOffset).toBe(-1);
-  });
-
-  it("keeps the first AWS row active if the wizard ever lands on the credentials step", () => {
-    const stepper = getProviderWizardStepper({
-      mode: PROVIDER_WIZARD_MODE.ADD,
-      providerType: "aws",
-      currentStep: PROVIDER_WIZARD_STEP.CREDENTIALS,
-    });
-
-    // CREDENTIALS has no row of its own for AWS: it folds into "Link a Provider".
-    expect(stepper.stepOffset).toBe(-1);
-  });
-
-  it("still shows the credentials step when updating AWS credentials", () => {
-    const stepper = getProviderWizardStepper({
-      mode: PROVIDER_WIZARD_MODE.UPDATE,
-      providerType: "aws",
-      currentStep: PROVIDER_WIZARD_STEP.CREDENTIALS,
-    });
-
-    expect(labels(stepper.steps)).toEqual([
-      "Link a Provider",
-      "Authenticate Credentials",
-      "Validate Connection",
-    ]);
-    expect(stepper.stepOffset).toBe(0);
-  });
-});
-
-describe("getOrganizationsStepperOffset", () => {
-  it("keeps step 1 active during organization details", () => {
-    const offset = getOrganizationsStepperOffset(
-      ORG_WIZARD_STEP.SETUP,
-      ORG_SETUP_PHASE.DETAILS,
+  it("updates credentials in a single row", () => {
+    expect(labels(getProviderWizardSteps(PROVIDER_WIZARD_MODE.UPDATE))).toEqual(
+      ["Update Credentials"],
     );
-
-    expect(offset).toBe(0);
-  });
-
-  it("moves to step 2 during credentials phase", () => {
-    const offset = getOrganizationsStepperOffset(
-      ORG_WIZARD_STEP.SETUP,
-      ORG_SETUP_PHASE.ACCESS,
-    );
-
-    expect(offset).toBe(1);
-  });
-
-  it("uses step 2+ offset for later wizard steps", () => {
-    const offset = getOrganizationsStepperOffset(
-      ORG_WIZARD_STEP.VALIDATE,
-      ORG_SETUP_PHASE.DETAILS,
-    );
-
-    expect(offset).toBe(1);
   });
 });
 
@@ -296,7 +211,7 @@ const EXPECTED_MODAL_HEADER_LABEL: Record<KnownProviderType, string> = {
   okta: "Okta",
 };
 
-// Method-specific labels for the credentials step. Providers with per-method
+// Method-specific labels for the connect step. Providers with per-method
 // docs subsections (AWS, M365, Alibaba Cloud, Cloudflare) must round-trip
 // through `getProviderWizardDocsDestination` into a specific label —
 // otherwise the URL in `PROVIDER_CREDENTIALS_METHOD_DOCS_URL` and the label
@@ -319,8 +234,6 @@ const EXPECTED_METHOD_MODAL_HEADER_LABEL: Array<
 describe("provider label parity", () => {
   const STEPS = [
     PROVIDER_WIZARD_STEP.CONNECT,
-    PROVIDER_WIZARD_STEP.CREDENTIALS,
-    PROVIDER_WIZARD_STEP.TEST,
     PROVIDER_WIZARD_STEP.LAUNCH,
   ] as const;
 
@@ -350,7 +263,7 @@ describe("provider label parity", () => {
     ] of EXPECTED_METHOD_MODAL_HEADER_LABEL) {
       const { link } = getProviderHelpText(
         provider,
-        PROVIDER_WIZARD_STEP.CREDENTIALS,
+        PROVIDER_WIZARD_STEP.CONNECT,
         method,
       );
       const label = getProviderWizardDocsDestination(link);

@@ -138,6 +138,8 @@ async function classifyDiscoveryFailure(
   credential: RegistryCredentialStatus | null,
 ) {
   if (response.status === 409 && credential === null) {
+    const failure = await classifyRegistryFailure(response, endpoint, null);
+    if (failure.status === REGISTRY_FAILURE.ONBOARDING) return failure;
     const currentCredential = await readRegistryCredential(accessToken);
     if (currentCredential.status === REGISTRY_FAILURE.ACCESS_DENIED) {
       return currentCredential;
@@ -212,6 +214,18 @@ export async function getInstalledRegistryProviderOptions(): Promise<RegistryPro
   )
     return { status: REGISTRY_PROVIDER_DISCOVERY.ACCESS_DENIED };
   if (
+    [catalog.status, installed.status, providers.status].some(
+      (status) => status === REGISTRY_FAILURE.SUBSCRIPTION_REQUIRED,
+    )
+  )
+    return { status: REGISTRY_PROVIDER_DISCOVERY.SUBSCRIPTION_REQUIRED };
+  if (
+    [catalog.status, providers.status].some(
+      (status) => status === REGISTRY_FAILURE.ONBOARDING,
+    )
+  )
+    return { status: REGISTRY_PROVIDER_DISCOVERY.ONBOARDING };
+  if (
     catalog.status !== REGISTRY_CATALOG.COMPLETE ||
     installed.status !== "ready" ||
     providers.status !== "ready"
@@ -225,6 +239,22 @@ export async function getInstalledRegistryProviderOptions(): Promise<RegistryPro
       providers.providers,
     ),
   };
+}
+
+/** Logo of each registry provider type; empty whenever Registry is out of reach. */
+export async function getRegistryProviderLogos(): Promise<
+  Record<string, string>
+> {
+  const access = (await auth())?.accessToken;
+  const permission = await evaluateRegistryProviderAccess(access);
+  if (!access || permission.status !== REGISTRY_ACCESS.ELIGIBLE) return {};
+  const result = await readRegistryProviders(access, null);
+  if (result.status !== "ready") return {};
+  return Object.fromEntries(
+    result.providers.flatMap(({ type, logoUrl }) =>
+      logoUrl?.startsWith("https://") ? [[type, logoUrl]] : [],
+    ),
+  );
 }
 
 async function readCompleteRegistryCatalog(
@@ -287,8 +317,11 @@ function bootstrapReady(
 function bootstrapFailure(
   failure: RegistryFailureResult,
 ): RegistryBootstrapResult {
-  if (failure.status === REGISTRY_FAILURE.ACCESS_DENIED) {
-    return { status: REGISTRY_FAILURE.ACCESS_DENIED };
+  if (
+    failure.status === REGISTRY_FAILURE.ACCESS_DENIED ||
+    failure.status === REGISTRY_FAILURE.SUBSCRIPTION_REQUIRED
+  ) {
+    return { status: failure.status };
   }
   return bootstrapReady({
     status:
@@ -324,8 +357,11 @@ export async function getRegistryBootstrap(): Promise<RegistryBootstrapResult> {
   }
 
   const catalog = await readCompleteRegistryCatalog(access, credential);
-  if (catalog.status === REGISTRY_FAILURE.ACCESS_DENIED) {
-    return { status: REGISTRY_FAILURE.ACCESS_DENIED };
+  if (
+    catalog.status === REGISTRY_FAILURE.ACCESS_DENIED ||
+    catalog.status === REGISTRY_FAILURE.SUBSCRIPTION_REQUIRED
+  ) {
+    return { status: catalog.status };
   }
   if (catalog.status === REGISTRY_CATALOG.INCOMPLETE) {
     return bootstrapReady({

@@ -20,15 +20,19 @@ import {
 } from "@/components/shadcn/radio-group/radio-group";
 import { Spinner } from "@/components/shadcn/spinner/spinner";
 import { TreeStatusIcon } from "@/components/shadcn/tree-view/tree-status-icon";
-import { UsageLimitMessage } from "@/components/shared/usage-limit-message";
+import {
+  UsageLimitMessage,
+  usageLimitToastAction,
+} from "@/components/shared/usage-limit-message";
 import {
   type ActionErrorResult,
   getActionErrorMessage,
   hasActionError,
+  isUsageLimitError,
 } from "@/lib/action-errors";
 import {
   getScanScheduleCapability,
-  getScheduleFormDefaults,
+  getSetupScheduleFormDefaults,
   scheduleFormSchema,
 } from "@/lib/schedules";
 import { isCloud } from "@/lib/shared/env";
@@ -99,7 +103,7 @@ export function LaunchStep({
   );
   const form = useForm<ScheduleFormValues>({
     resolver: zodResolver(scheduleFormSchema),
-    defaultValues: getScheduleFormDefaults(),
+    defaultValues: getSetupScheduleFormDefaults(),
   });
 
   const isScheduleMode = canUseScheduleMode && mode === LAUNCH_MODE.SCHEDULE;
@@ -154,6 +158,9 @@ export function LaunchStep({
         variant: "destructive",
         title: "Unable to launch scan",
         description: getActionErrorMessage(scanResult),
+        action: isUsageLimitError(scanResult)
+          ? usageLimitToastAction()
+          : undefined,
       });
       return;
     }
@@ -191,6 +198,7 @@ export function LaunchStep({
         variant: "destructive",
         title: "Unable to save scan schedule",
         description: result.message,
+        action: result.usageLimited ? usageLimitToastAction() : undefined,
       });
       return;
     }
@@ -209,7 +217,8 @@ export function LaunchStep({
       toast({
         title: "Scan schedule saved",
         description: `The schedule was saved, but the initial scan could not be launched: ${result.message}`,
-        action: goToScans,
+        // Over the limit, the plans unblock the scan; the scans page would not.
+        action: result.usageLimited ? usageLimitToastAction() : goToScans,
       });
       return;
     }

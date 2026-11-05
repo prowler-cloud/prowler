@@ -1,15 +1,18 @@
 import { describe, expect, it } from "vitest";
 
+import { LIGHTHOUSE_SKILL_SURFACE } from "@/types/lighthouse-skills";
+
 import {
   getAllSkills,
   getLaunchableSkills,
   getNextSkill,
   getSkillById,
+  getSkillsForSurface,
 } from "./registry";
 
 describe("skills registry", () => {
   it("should expose the four finding-level skills with unique ids", () => {
-    const skills = getAllSkills();
+    const skills = getSkillsForSurface(LIGHTHOUSE_SKILL_SURFACE.FINDING);
 
     expect(skills.map((skill) => skill.id)).toEqual([
       "contextual-fix",
@@ -17,22 +20,32 @@ describe("skills registry", () => {
       "systemic-scope",
       "compliance-impact",
     ]);
-    expect(new Set(skills.map((skill) => skill.id)).size).toBe(skills.length);
+    const allIds = getAllSkills().map((skill) => skill.id);
+    expect(new Set(allIds).size).toBe(allIds.length);
+  });
+
+  it("should keep the provider connection guide out of the finding menus", () => {
+    expect(
+      getSkillsForSurface(LIGHTHOUSE_SKILL_SURFACE.PROVIDER_WIZARD).map(
+        (skill) => skill.id,
+      ),
+    ).toEqual(["provider-connection-guide"]);
+    expect(getSkillById("provider-connection-guide")?.enabled).toBe(true);
   });
 
   it("should only offer enabled skills for launch", () => {
-    expect(getLaunchableSkills().map((skill) => skill.id)).toEqual([
-      "contextual-fix",
-      "triage-decision",
-      "systemic-scope",
-    ]);
+    expect(
+      getLaunchableSkills(LIGHTHOUSE_SKILL_SURFACE.FINDING).map(
+        (skill) => skill.id,
+      ),
+    ).toEqual(["contextual-fix", "triage-decision", "systemic-scope"]);
     // Compliance Impact ships disabled until MCP exposes a
     // compliance-requirements-per-finding tool and DyR authors its prompt.
     expect(getSkillById("compliance-impact")?.enabled).toBe(false);
   });
 
-  it("should carry the DyR prompt on every launchable skill", () => {
-    for (const skill of getLaunchableSkills()) {
+  it("should carry the DyR prompt on every launchable finding skill", () => {
+    for (const skill of getLaunchableSkills(LIGHTHOUSE_SKILL_SURFACE.FINDING)) {
       expect(skill.prompt).toContain(
         "The finding under discussion is the one in the UI context block.",
       );

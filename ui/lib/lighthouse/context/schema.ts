@@ -168,6 +168,11 @@ export const lighthouseProviderContextItemSchema =
     providerUid: boundedStringSchema.optional(),
     providerType: boundedStringSchema.optional(),
     total: boundedCountSchema.optional(),
+    // Add-provider wizard state, for help connecting this provider.
+    wizardStep: boundedStringSchema.optional(),
+    wizardMode: boundedStringSchema.optional(),
+    connectionMethod: boundedStringSchema.optional(),
+    docsUrl: boundedStringSchema.optional(),
   });
 
 export const lighthouseAlertContextItemSchema =
