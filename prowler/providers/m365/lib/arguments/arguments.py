@@ -33,6 +33,11 @@ def init_parser(self):
         help="Use Azure interactive browser authentication to log in against Microsoft 365",
     )
     m365_auth_modes_group.add_argument(
+        "--oidc-auth",
+        action="store_true",
+        help="Use OIDC (Workload Identity Federation) authentication to log in against Microsoft 365: a federated token in AZURE_FEDERATED_TOKEN or the file named by AZURE_FEDERATED_TOKEN_FILE, with AZURE_CLIENT_ID and AZURE_TENANT_ID",
+    )
+    m365_auth_modes_group.add_argument(
         "--certificate-auth",
         action="store_true",
         help="Use Certificate authentication to log in against Microsoft 365",
