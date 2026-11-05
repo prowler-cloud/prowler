@@ -7,6 +7,7 @@ import { DataTableColumnHeader } from "@/components/shadcn/table";
 import { StatusBadge } from "@/components/shadcn/table/status-badge";
 import { formatLocalDate, formatLocalTimeWithZone } from "@/lib/date-utils";
 import { SCAN_JOBS_TAB, type ScanJobsTab, type ScanProps } from "@/types";
+import { SCAN_STATE } from "@/types/scans";
 import type { ScanScheduleCapability } from "@/types/schedules";
 
 import { formatScanDuration } from "../scans.utils";
@@ -118,7 +119,15 @@ const resourcesColumn: ColumnDef<ScanProps> = {
     <DataTableColumnHeader column={column} title="Resources" />
   ),
   cell: ({ row }) => (
-    <ResourceCountCell count={row.original.attributes.unique_resource_count} />
+    <ResourceCountCell
+      count={row.original.attributes.unique_resource_count}
+      scanId={
+        !row.original.pendingSchedule &&
+        row.original.attributes.state === SCAN_STATE.COMPLETED
+          ? row.original.id
+          : undefined
+      }
+    />
   ),
   enableSorting: false,
 };
