@@ -625,6 +625,21 @@ def is_policy_public(
     return is_public
 
 
+def _condition_value_matches_account(
+    condition_key: str, condition_value: str, account: str
+) -> bool:
+    """Return True if a condition value refers to the given account.
+
+    For aws:PrincipalArn only the account field of the ARN is compared, since the
+    account ID can also appear in the resource part, e.g. in a role name. A missing
+    or wildcard account field never matches.
+    """
+    if condition_key == "aws:principalarn":
+        arn_parts = condition_value.split(":")
+        return len(arn_parts) > 4 and arn_parts[4] == account
+    return account in condition_value
+
+
 def is_condition_block_restrictive(
     condition_statement: dict,
     source_account: Union[str, list] = "",
@@ -753,7 +768,9 @@ def is_condition_block_restrictive(
                                             break
                                     else:
                                         if not any(
-                                            account in item
+                                            _condition_value_matches_account(
+                                                value, item, account
+                                            )
                                             for account in source_accounts
                                         ):
                                             is_condition_key_restrictive = False
@@ -793,10 +810,13 @@ def is_condition_block_restrictive(
                                     )
                                 else:
                                     if any(
-                                        account
-                                        in condition_statement[condition_operator][
-                                            value
-                                        ]
+                                        _condition_value_matches_account(
+                                            value,
+                                            condition_statement[condition_operator][
+                                                value
+                                            ],
+                                            account,
+                                        )
                                         for account in source_accounts
                                     ):
                                         is_condition_valid = True

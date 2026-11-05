@@ -558,6 +558,49 @@ class Test_Policy:
             condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
         )
 
+    def test_condition_parser_arn_equals_aws_PrincipalArn_trusted_account_in_role_name(
+        self,
+    ):
+        condition_statement = {
+            "ArnEquals": {
+                "aws:PrincipalArn": f"arn:aws:iam::{NON_TRUSTED_AWS_ACCOUNT_NUMBER}:role/job-{TRUSTED_AWS_ACCOUNT_NUMBER}"
+            }
+        }
+
+        assert not is_condition_block_restrictive(
+            condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
+        )
+        assert not is_condition_block_restrictive(
+            condition_statement, [TRUSTED_AWS_ACCOUNT_NUMBER]
+        )
+
+    def test_condition_parser_arn_equals_aws_PrincipalArn_list_trusted_account_in_role_name(
+        self,
+    ):
+        condition_statement = {
+            "ArnEquals": {
+                "aws:PrincipalArn": [
+                    f"arn:aws:iam::{TRUSTED_AWS_ACCOUNT_NUMBER}:role/job",
+                    f"arn:aws:iam::{NON_TRUSTED_AWS_ACCOUNT_NUMBER}:role/job-{TRUSTED_AWS_ACCOUNT_NUMBER}",
+                ]
+            }
+        }
+
+        assert not is_condition_block_restrictive(
+            condition_statement, [TRUSTED_AWS_ACCOUNT_NUMBER]
+        )
+
+    def test_condition_parser_arn_like_aws_PrincipalArn_wildcard_account(self):
+        condition_statement = {
+            "ArnLike": {
+                "aws:PrincipalArn": f"arn:aws:iam::*:role/job-{TRUSTED_AWS_ACCOUNT_NUMBER}"
+            }
+        }
+
+        assert not is_condition_block_restrictive(
+            condition_statement, TRUSTED_AWS_ACCOUNT_NUMBER
+        )
+
     def test_condition_parser_arn_equals_aws_SourceArn_list(self):
         condition_statement = {
             "ArnEquals": {
