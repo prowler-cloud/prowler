@@ -315,6 +315,7 @@ Prowler CLI automatically detects credentials using environment variables in thi
 1. `GITHUB_PERSONAL_ACCESS_TOKEN`
 2. `GITHUB_OAUTH_APP_TOKEN`
 3. `GITHUB_APP_ID` and `GITHUB_APP_KEY`
+4. `GITHUB_APP_INSTALLATION_TOKEN`
 
 ### Using Environment Variables (Recommended)
 
@@ -331,6 +332,10 @@ prowler github
 export GITHUB_APP_ID="123456"
 export GITHUB_APP_KEY="$(cat /path/to/private-key.pem)"
 prowler github
+
+# GitHub App installation token
+export GITHUB_APP_INSTALLATION_TOKEN="ghs_xxxxxxxxxxxx"
+prowler github --organization my-org
 ```
 
 ### Using CLI Flags
@@ -344,7 +349,18 @@ prowler github --oauth-app-token oauth_token_here
 
 # GitHub App
 prowler github --github-app-id 123456 --github-app-key-path /path/to/private-key.pem
+
+# GitHub App installation token
+prowler github --github-app-installation-token ghs_xxxxxxxxxxxx --organization my-org
 ```
+
+### Using a GitHub App Installation Token
+
+GitHub App authentication normally needs the App's private key on the machine running Prowler. That key can mint a token for every installation of the App, so some teams keep it in a KMS or HSM where it can sign but never be read. In that case, mint a short-lived [installation access token](https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/generating-an-installation-access-token-for-a-github-app) outside Prowler, signing the App JWT with the KMS, and pass it with `--github-app-installation-token` or `GITHUB_APP_INSTALLATION_TOKEN`.
+
+- The token is scoped to one installation, so Prowler scans the organization or user that installation belongs to. Prowler identifies it from the repositories the token can access, since an installation token has no user behind it.
+- Installation tokens expire after one hour. Mint a fresh one for each scan.
+- Set `GITHUB_APP_ID` as well to have the App ID appear in the output; it is optional.
 
 ### Scan Scope
 

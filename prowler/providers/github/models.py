@@ -10,6 +10,9 @@ class GithubSession(BaseModel):
     token: str
     key: str
     id: str
+    # True when `token` is a GitHub App installation token rather than a user's
+    # token: it has no user behind it, so identity comes from the installation.
+    installation: bool = False
 
 
 class GithubIdentityInfo(BaseModel):
