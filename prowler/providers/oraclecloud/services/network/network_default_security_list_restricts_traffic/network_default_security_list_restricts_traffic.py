@@ -1,7 +1,33 @@
 """Check if default security list restricts all traffic except ICMP within VCN."""
 
+import ipaddress
+
 from prowler.lib.check.models import Check, Check_Report_OCI
 from prowler.providers.oraclecloud.services.network.network_client import network_client
+
+
+def _is_source_within_vcn(source: str | None, vcn_cidr_blocks: list[str]) -> bool:
+    """Check whether an ingress source is fully contained in a VCN CIDR block.
+
+    Args:
+        source: Ingress rule source, a CIDR block or an OCI service label.
+        vcn_cidr_blocks: CIDR blocks of the VCN.
+
+    Returns:
+        True if the source is a CIDR block inside one of the VCN CIDR blocks,
+        False otherwise, including for sources that are not CIDR blocks.
+    """
+    try:
+        source_network = ipaddress.ip_network(source, strict=False)
+    except (TypeError, ValueError):
+        return False
+    for cidr in vcn_cidr_blocks:
+        vcn_network = ipaddress.ip_network(cidr, strict=False)
+        if source_network.version == vcn_network.version and (
+            source_network.subnet_of(vcn_network)
+        ):
+            return True
+    return False
 
 
 class network_default_security_list_restricts_traffic(Check):
@@ -47,8 +73,6 @@ class network_default_security_list_restricts_traffic(Check):
                             f"ingress from 0.0.0.0/0 with protocol {protocol}"
                         )
                     # Check if source is not within VCN CIDR (should only allow VCN traffic)
-                    # For simplicity, we flag any non-ICMP rule as potentially permissive
-                    # In production, you'd want to compare against the VCN CIDR blocks
                     elif protocol and protocol != "1":
                         # Get VCN CIDR blocks to validate
                         vcn = None
@@ -57,19 +81,11 @@ class network_default_security_list_restricts_traffic(Check):
                                 vcn = v
                                 break
 
-                        if vcn:
-                            # Check if source is within VCN CIDR
-                            is_within_vcn = False
-                            for cidr in vcn.cidr_blocks:
-                                if source and source.startswith(cidr.split("/")[0]):
-                                    is_within_vcn = True
-                                    break
-
-                            if not is_within_vcn:
-                                has_permissive_rules = True
-                                permissive_rule_details.append(
-                                    f"ingress from {source} with protocol {protocol}"
-                                )
+                        if vcn and not _is_source_within_vcn(source, vcn.cidr_blocks):
+                            has_permissive_rules = True
+                            permissive_rule_details.append(
+                                f"ingress from {source} with protocol {protocol}"
+                            )
 
                 # Check egress rules - should also be restricted
                 for rule in security_list.egress_security_rules:
