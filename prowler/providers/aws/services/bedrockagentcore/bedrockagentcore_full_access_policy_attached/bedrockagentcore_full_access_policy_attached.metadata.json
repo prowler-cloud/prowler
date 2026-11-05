@@ -1,0 +1,43 @@
+{
+  "Provider": "aws",
+  "CheckID": "bedrockagentcore_full_access_policy_attached",
+  "CheckTitle": "IAM role does not have the AWS-managed Bedrock AgentCore full access policies attached",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "TTPs/Privilege Escalation"
+  ],
+  "ServiceName": "bedrockagentcore",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "AwsIamRole",
+  "ResourceGroup": "IAM",
+  "Description": "**IAM roles** (excluding service roles) are evaluated for attachment of the AWS-managed `BedrockAgentCoreFullAccess` or `AgentRegistryFullAccess` policies.\n\nThese policies grant unrestricted access to the `bedrock-agentcore` and `agent-registry` actions respectively.",
+  "Risk": "**Full AgentCore access** is not only the ability to invoke agents. It includes `UpdateGateway`, `PutResourcePolicy` and the policy-engine calls.\n\nSo one compromised credential can disable a gateway authorizer, flip a policy engine to `LOG_ONLY`, or grant itself cross-account access, and then invoke the agent it just unguarded.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/security-iam.html",
+    "https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html#grant-least-privilege"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aws iam detach-role-policy --role-name example-agentcore-role --policy-arn arn:aws:iam::aws:policy/BedrockAgentCoreFullAccess",
+      "NativeIaC": "```yaml\nResources:\n  example_resource:\n    Type: AWS::IAM::Role\n    Properties:\n      RoleName: example_resource\n      ManagedPolicyArns: []  # Critical: no BedrockAgentCoreFullAccess or AgentRegistryFullAccess\n      Policies:\n        - PolicyName: example-scoped-agentcore-policy\n          PolicyDocument:\n            Version: '2012-10-17'\n            Statement:\n              - Effect: Allow\n                Action:\n                  - bedrock-agentcore:InvokeAgentRuntime  # Critical: enumerate actions instead of bedrock-agentcore:*\n                Resource: arn:aws:bedrock-agentcore:us-east-1:123456789012:runtime/example-runtime-id\n```",
+      "Other": "1. Open the AWS Console and go to IAM > Roles\n2. Select the role flagged by the check\n3. On the Permissions tab, detach BedrockAgentCoreFullAccess or AgentRegistryFullAccess\n4. Attach a scoped policy granting only the AgentCore actions and resource ARNs the workload needs",
+      "Terraform": "```hcl\nresource \"aws_iam_role_policy\" \"example_resource\" {\n  name = \"example-scoped-agentcore-policy\"\n  role = aws_iam_role.example_agentcore_role.id\n  policy = jsonencode({\n    Version = \"2012-10-17\"\n    Statement = [{\n      Effect   = \"Allow\"\n      Action   = [\"bedrock-agentcore:InvokeAgentRuntime\"] # Critical: enumerate actions instead of bedrock-agentcore:*\n      Resource = \"arn:aws:bedrock-agentcore:us-east-1:123456789012:runtime/example-runtime-id\"\n    }]\n  })\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Apply **least privilege**: replace `BedrockAgentCoreFullAccess` and `AgentRegistryFullAccess` with custom policies granting only the specific actions a workload calls, scoped to specific resource ARNs. Keep the control-plane actions that reconfigure gateways and policy engines separate from the invoke actions agents need at runtime.",
+      "Url": "https://hub.prowler.com/check/bedrockagentcore_full_access_policy_attached"
+    }
+  },
+  "Categories": [
+    "gen-ai",
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "bedrock_full_access_policy_attached"
+  ],
+  "Notes": ""
+}

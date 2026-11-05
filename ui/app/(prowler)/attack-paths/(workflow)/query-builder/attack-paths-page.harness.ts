@@ -203,13 +203,10 @@ export class AttackPathPageHarness extends BrowserHarness<PageFixture> {
   }
 
   get queryBuilderCard(): HTMLElement | null {
-    return (
-      this.container
-        .querySelector<HTMLElement>(
-          '[data-tour-id="attack-paths-query-selector"]',
-        )
-        ?.closest<HTMLElement>('[data-slot="card"]') ?? null
-    );
+    const executeButton = Array.from(
+      this.container.querySelectorAll<HTMLButtonElement>("button"),
+    ).find((button) => /Execut(e|ing) Query/.test(button.textContent ?? ""));
+    return executeButton?.closest<HTMLElement>('[data-slot="card"]') ?? null;
   }
 
   /** Whether the query-parameters panel is shown. */

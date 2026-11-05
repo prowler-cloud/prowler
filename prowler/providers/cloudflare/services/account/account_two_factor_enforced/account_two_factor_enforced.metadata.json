@@ -1,0 +1,36 @@
+{
+  "Provider": "cloudflare",
+  "CheckID": "account_two_factor_enforced",
+  "CheckTitle": "Cloudflare account enforces two-factor authentication for all members",
+  "CheckType": [],
+  "ServiceName": "account",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Account",
+  "ResourceGroup": "IAM",
+  "Description": "**Cloudflare accounts** are assessed for **two-factor authentication (2FA) enforcement**, which requires every member to configure a second factor before accessing the account.",
+  "Risk": "Without **2FA enforcement**, members can sign in with a password alone.\n- **Confidentiality**: phished or reused passwords grant access to DNS, certificates, Workers code and API tokens\n- **Integrity**: attackers can change DNS records, disable WAF rules or deploy malicious Workers\n- **Availability**: zones can be paused or deleted",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://developers.cloudflare.com/fundamentals/user-profiles/2fa/#enforce-two-factor-authentication"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Log in to the Cloudflare dashboard as a Super Administrator\n2. Go to Manage Account > Members\n3. Under Member 2FA enforcement, enable Require 2FA for all members\n4. Confirm the change",
+      "Terraform": "```hcl\nresource \"cloudflare_account\" \"example\" {\n  name = \"example\"\n\n  settings = {\n    enforce_twofactor = true # Critical: every member must use 2FA\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Enforce **two-factor authentication** for every account member.\n- Prefer phishing-resistant factors such as security keys\n- Use **SSO** with an identity provider that enforces MFA where available\n- Review members that cannot comply before enabling enforcement",
+      "Url": "https://hub.prowler.com/checks/cloudflare/account_two_factor_enforced"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Accounts whose settings could not be retrieved are not reported."
+}

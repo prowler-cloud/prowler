@@ -4,6 +4,18 @@ All notable changes to the **Prowler MCP Server** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [0.13.0] (Prowler v5.47.0)
+
+### 🚀 Added
+
+- `readOnlyHint` and `destructiveHint` annotations on every MCP tool, with mute rule and mutelist writes marked destructive [(#13196)](https://github.com/prowler-cloud/prowler/pull/13196)
+
+### 🔐 Security
+
+- Authlib from 1.7.2 to 1.9.1 and dnspython from 2.8.0 to 2.9.0 in the MCP Server container image, patching CVE-2026-96760 (critical), CVE-2026-114615, CVE-2026-114616 and CVE-2026-114605 [(#13186)](https://github.com/prowler-cloud/prowler/pull/13186)
+
+---
+
 ## [0.12.4] (Prowler v5.46.0)
 
 ### 🔐 Security

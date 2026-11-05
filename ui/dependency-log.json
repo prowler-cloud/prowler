@@ -417,14 +417,6 @@
   },
   {
     "section": "dependencies",
-    "name": "driver.js",
-    "from": "1.4.0",
-    "to": "1.4.0",
-    "strategy": "installed",
-    "generatedAt": "2026-05-26T13:05:09.776Z"
-  },
-  {
-    "section": "dependencies",
     "name": "framer-motion",
     "from": "11.18.2",
     "to": "11.18.2",
@@ -442,10 +434,10 @@
   {
     "section": "dependencies",
     "name": "js-yaml",
-    "from": "4.3.0",
-    "to": "4.3.1",
+    "from": "4.3.1",
+    "to": "4.3.2",
     "strategy": "installed",
-    "generatedAt": "2026-09-08T07:45:48.316Z"
+    "generatedAt": "2026-11-03T13:08:27.774Z"
   },
   {
     "section": "dependencies",
@@ -650,10 +642,10 @@
   {
     "section": "dependencies",
     "name": "zod",
-    "from": "4.1.11",
-    "to": "4.4.3",
+    "from": "4.4.3",
+    "to": "4.6.6",
     "strategy": "installed",
-    "generatedAt": "2026-05-14T10:09:04.901Z"
+    "generatedAt": "2026-11-03T13:08:27.774Z"
   },
   {
     "section": "dependencies",
@@ -770,26 +762,26 @@
   {
     "section": "devDependencies",
     "name": "@vitest/browser",
-    "from": "4.1.8",
-    "to": "4.1.10",
+    "from": "4.1.10",
+    "to": "4.1.11",
     "strategy": "installed",
-    "generatedAt": "2026-07-24T08:32:45.227Z"
+    "generatedAt": "2026-11-03T13:08:27.774Z"
   },
   {
     "section": "devDependencies",
     "name": "@vitest/browser-playwright",
-    "from": "4.1.8",
-    "to": "4.1.10",
+    "from": "4.1.10",
+    "to": "4.1.11",
     "strategy": "installed",
-    "generatedAt": "2026-07-24T08:32:45.227Z"
+    "generatedAt": "2026-11-03T13:08:27.774Z"
   },
   {
     "section": "devDependencies",
     "name": "@vitest/coverage-v8",
-    "from": "4.1.8",
-    "to": "4.1.10",
+    "from": "4.1.10",
+    "to": "4.1.11",
     "strategy": "installed",
-    "generatedAt": "2026-07-24T08:32:45.227Z"
+    "generatedAt": "2026-11-03T13:08:27.774Z"
   },
   {
     "section": "devDependencies",
@@ -978,10 +970,10 @@
   {
     "section": "devDependencies",
     "name": "vitest",
-    "from": "4.1.8",
-    "to": "4.1.10",
+    "from": "4.1.10",
+    "to": "4.1.11",
     "strategy": "installed",
-    "generatedAt": "2026-07-24T08:32:45.227Z"
+    "generatedAt": "2026-11-03T13:08:27.774Z"
   },
   {
     "section": "devDependencies",

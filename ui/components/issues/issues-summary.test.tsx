@@ -6,9 +6,9 @@ import { IssuesOverviewAttributes } from "@/types/issues";
 
 const summary: IssuesOverviewAttributes = {
   issues: 13,
-  findings: 41,
+  findings: 1266,
   actionable: 4,
-  not_exploitable_findings: 1,
+  not_exploitable_findings: 283,
   exploitable: 1,
   likely: 3,
   conditional: 5,
@@ -17,35 +17,34 @@ const summary: IssuesOverviewAttributes = {
 };
 
 describe("IssuesSummary", () => {
-  it("leads with the reduction and links every tile into the scoped list", () => {
+  it("states the reduction and the findings a control already covers", () => {
+    // Given / When
+    render(<IssuesSummary summary={summary} />);
+
+    // Then
+    expect(screen.getByRole("paragraph")).toHaveTextContent(
+      "13 issues folded from 1,266 failed findings · 283 findings already covered by a control",
+    );
+    // The per-verdict links live on the verdict tabs, not here.
+    expect(screen.queryByRole("link")).not.toBeInTheDocument();
+  });
+
+  it("drops the coverage clause when no finding is covered", () => {
+    // Given / When
     render(
       <IssuesSummary
-        summary={summary}
-        scope={{ "filter[provider_type__in]": "aws" }}
+        summary={{
+          ...summary,
+          issues: 1,
+          findings: 1,
+          not_exploitable_findings: 0,
+        }}
       />,
     );
 
-    expect(
-      screen.getByRole("link", { name: "41 Failed findings folded" }),
-    ).toHaveAttribute("href", "/issues?filter%5Bprovider_type__in%5D=aws");
-    expect(screen.getByRole("link", { name: "13 Issues" })).toBeInTheDocument();
-    expect(
-      screen.getByRole("link", { name: "4 Exploitable or likely" }),
-    ).toHaveAttribute(
-      "href",
-      "/issues?filter%5Bprovider_type__in%5D=aws&filter%5Bverdict__in%5D=exploitable%2Clikely",
-    );
-    expect(
-      screen.getByRole("link", {
-        name: "2 Not exploitable, 1 finding covered by a control",
-      }),
-    ).toHaveAttribute(
-      "href",
-      "/issues?filter%5Bprovider_type__in%5D=aws&filter%5Bverdict%5D=not_exploitable",
-    );
-    expect(screen.getByRole("link", { name: "2 Unknown" })).toHaveAttribute(
-      "href",
-      "/issues?filter%5Bprovider_type__in%5D=aws&filter%5Bverdict%5D=unknown",
+    // Then
+    expect(screen.getByRole("paragraph")).toHaveTextContent(
+      /^1 issue folded from 1 failed finding$/,
     );
   });
 });

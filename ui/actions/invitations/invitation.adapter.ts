@@ -1,4 +1,4 @@
-import type { SentInvitation } from "@/types/onboarding-invite";
+import type { SentInvitation } from "@/types/invitations";
 
 const readString = (value: unknown): string | null =>
   typeof value === "string" && value.length > 0 ? value : null;

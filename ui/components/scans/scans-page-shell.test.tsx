@@ -2,7 +2,6 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import type { OnboardingFlow } from "@/lib/onboarding";
 import { useScansStore } from "@/store";
 import { ProviderProps } from "@/types";
 
@@ -16,10 +15,6 @@ const { pushMock, replaceMock, searchParamsValue } = vi.hoisted(() => ({
 
 const { scansFilterBarSpy } = vi.hoisted(() => ({
   scansFilterBarSpy: vi.fn(),
-}));
-
-const { onboardingTriggerSpy } = vi.hoisted(() => ({
-  onboardingTriggerSpy: vi.fn(),
 }));
 
 const localStorageMock = (() => {
@@ -107,26 +102,6 @@ vi.mock("./launch-scan-modal", () => ({
 vi.mock("@/components/providers/muted-findings-config-button", () => ({
   MutedFindingsConfigButton: () => <a href="/mutelist">Configure Mutelist</a>,
 }));
-
-vi.mock("@/components/onboarding", () => ({
-  OnboardingTrigger: (props: unknown) => {
-    onboardingTriggerSpy(props);
-    return <div data-testid="onboarding-trigger" />;
-  },
-  PageReady: () => <div data-testid="page-ready" />,
-}));
-
-interface OnboardingTriggerProps {
-  flow: OnboardingFlow;
-}
-
-const getTriggeredTourTargets = () => {
-  const triggerProps = onboardingTriggerSpy.mock.calls.at(-1)?.[0] as
-    | OnboardingTriggerProps
-    | undefined;
-
-  return triggerProps?.flow.tour.steps.map((step) => step.target);
-};
 
 const providers: ProviderProps[] = [
   {
@@ -602,117 +577,5 @@ describe("ScansPageShell", () => {
     expect(
       screen.queryByText("No Providers Configured"),
     ).not.toBeInTheDocument();
-  });
-
-  it("starts the view-first-scan tour when a provider is connected", () => {
-    vi.stubEnv("UI_CLOUD_ENABLED", "false");
-
-    render(
-      <ScansPageShell providers={providers} hasManageScansPermission>
-        <div>Scans table</div>
-      </ScansPageShell>,
-    );
-
-    expect(screen.getByTestId("onboarding-trigger")).toBeInTheDocument();
-  });
-
-  it("uses only mounted tour targets when an active scan exists on the completed tab", () => {
-    // Given
-    vi.stubEnv("UI_CLOUD_ENABLED", "false");
-    searchParamsValue.current = "tab=completed";
-
-    // When
-    render(
-      <ScansPageShell
-        providers={providers}
-        hasManageScansPermission
-        activeScanCount={1}
-      >
-        <div>Scans table</div>
-      </ScansPageShell>,
-    );
-
-    // Then
-    expect(getTriggeredTourTargets()).toEqual([undefined, "launch", "tabs"]);
-  });
-
-  it("targets the running scan when its row is mounted on the in progress tab", () => {
-    // Given
-    vi.stubEnv("UI_CLOUD_ENABLED", "false");
-    searchParamsValue.current = "tab=active";
-
-    // When
-    render(
-      <ScansPageShell
-        providers={providers}
-        hasManageScansPermission
-        activeScanCount={1}
-      >
-        <div>Scans table</div>
-      </ScansPageShell>,
-    );
-
-    // Then
-    expect(getTriggeredTourTargets()).toEqual([
-      undefined,
-      "in-progress",
-      "launch",
-    ]);
-  });
-
-  it("suppresses the view-first-scan tour when no provider is connected, since Launch Scan is disabled", () => {
-    vi.stubEnv("UI_CLOUD_ENABLED", "false");
-
-    render(
-      <ScansPageShell
-        providers={disconnectedProviders}
-        hasManageScansPermission
-      >
-        <div>Scans table</div>
-      </ScansPageShell>,
-    );
-
-    expect(screen.queryByTestId("onboarding-trigger")).not.toBeInTheDocument();
-    // The table (and therefore imported scans) must still render even with the tour suppressed.
-    expect(screen.getByText("Scans table")).toBeInTheDocument();
-  });
-
-  it("suppresses the view-first-scan tour when there are no providers", () => {
-    vi.stubEnv("UI_CLOUD_ENABLED", "false");
-
-    render(
-      <ScansPageShell providers={[]} hasManageScansPermission>
-        <div>Scans table</div>
-      </ScansPageShell>,
-    );
-
-    expect(screen.queryByTestId("onboarding-trigger")).not.toBeInTheDocument();
-  });
-
-  it("suppresses the view-first-scan tour when a provider is connected but manage scans is missing", () => {
-    vi.stubEnv("UI_CLOUD_ENABLED", "false");
-
-    render(
-      <ScansPageShell providers={providers} hasManageScansPermission={false}>
-        <div>Scans table</div>
-      </ScansPageShell>,
-    );
-
-    // Launch Scan is disabled without manage_scans, so the tour must not anchor to it.
-    expect(screen.queryByTestId("onboarding-trigger")).not.toBeInTheDocument();
-    // The table (and therefore imported scans) must still render.
-    expect(screen.getByText("Scans table")).toBeInTheDocument();
-  });
-
-  it("still signals page-ready without a connected provider so the navbar replay fallback works", () => {
-    vi.stubEnv("UI_CLOUD_ENABLED", "false");
-
-    render(
-      <ScansPageShell providers={[]} hasManageScansPermission>
-        <div>Scans table</div>
-      </ScansPageShell>,
-    );
-
-    expect(screen.getByTestId("page-ready")).toBeInTheDocument();
   });
 });

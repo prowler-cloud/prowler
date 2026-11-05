@@ -1,9 +1,9 @@
-FROM python:3.12.15-slim-trixie@sha256:05cda9777409a9c3ffddd94a4c476b79f0769a0b4857f0c7ed9226b6800b0d6f AS build
+FROM python:3.12.16-slim-trixie@sha256:8523d6abeb48ceae0b7240d30c5808fc26cb79c1a635bacdf19cf3baecfbec07 AS build
 
 LABEL maintainer="https://github.com/prowler-cloud/prowler"
 LABEL org.opencontainers.image.source="https://github.com/prowler-cloud/prowler"
 
-ARG POWERSHELL_VERSION=7.5.12
+ARG POWERSHELL_VERSION=7.5.13
 ENV POWERSHELL_VERSION=${POWERSHELL_VERSION}
 # Opt out of PowerShell telemetry (Application Insights -> dc.services.visualstudio.com)
 ENV POWERSHELL_TELEMETRY_OPTOUT=1
@@ -17,8 +17,8 @@ ENV ZIZMOR_VERSION=${ZIZMOR_VERSION}
 # Pinned here, not fetched with the artefact: a compromised release ships its own checksum.
 ARG TRIVY_SHA256_AMD64=c7cbe3137fb8a48a17574bede3dd6beb16742d1e9772929940fc90082c39d9c0
 ARG TRIVY_SHA256_ARM64=e174dff2a6dba5e3ae41f8d0537a6324405bd08132497340304c6b20e0f16a1f
-ARG POWERSHELL_SHA256_AMD64=db85ae1f45005ffd20e456890585167257151fa99406ccd7ab344f7cf3a766fd
-ARG POWERSHELL_SHA256_ARM64=29eb382cd510e4bd246902650ff6cf9f3b56f959d1bd0be75e0a1e425177c831
+ARG POWERSHELL_SHA256_AMD64=e9256bfc6ac98fcbec97270e8a986577a7346a587837cc80d30595eef3c2546b
+ARG POWERSHELL_SHA256_ARM64=6a556353ccfb0a414b80322334eac29a540a398537d3cf8dcc3ecec9cd8abd66
 ARG ZIZMOR_SHA256_AMD64=a8000f3c683319a523d3b20df0e75457ba591f049cfcbfa98966631b56733c03
 ARG ZIZMOR_SHA256_ARM64=d66e37ef8a375fb07939c630ebf9709a6e0f20242bdc3faf672a7ed97e0b768d
 
@@ -30,6 +30,7 @@ ARG ZIZMOR_SHA256_ARM64=d66e37ef8a375fb07939c630ebf9709a6e0f20242bdc3faf672a7ed9
 #   perl-base 5.40.1-6+deb13u1  CVE-2026-42497, -48962, -57432
 #   libssh2-1t64 1.11.1-1+deb13u2  CVE-2026-58050
 #   libpcre2-8-0 10.46-1~deb13u2  CVE-2026-86145, -89161
+#   apt/libapt-pkg7.0 3.0.4  CVE-2026-109518
 #   libbrotli1 1.1.0-2+deb13u1  CVE-2026-111497
 # Taken as a targeted --only-upgrade rather than by moving the digest: the newest
 # published python:3.12-slim-trixie carries the same vulnerable versions. The three
@@ -42,6 +43,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && apt-get install -y --no-install-recommends --only-upgrade \
        util-linux libssl3t64 openssl openssl-provider-legacy \
        libsqlite3-0 gzip perl-base libssh2-1t64 libpcre2-8-0 libbrotli1 \
+       apt libapt-pkg7.0 \
     && rm -rf /var/lib/apt/lists/*
 
 # Install PowerShell

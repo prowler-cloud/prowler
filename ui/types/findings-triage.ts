@@ -85,6 +85,7 @@ export const FINDING_TRIAGE_DISABLED_REASON = {
   CLOUD_ONLY: "cloud_only",
   FORBIDDEN: "forbidden",
   LOADING: "loading",
+  SAMPLE: "sample",
 } as const;
 
 export type FindingTriageDisabledReason =
@@ -130,6 +131,11 @@ export interface FindingTriageDetail extends FindingTriageSummary {
 
 export interface FindingTriageUpdateResult {
   manualPassExpiresAt: string | null;
+}
+
+/** Returned instead of thrown: a server action's thrown message is sanitized in production. */
+export interface FindingTriageUsageLimitedResult {
+  usageLimited: true;
 }
 
 export interface FindingTriageContext {

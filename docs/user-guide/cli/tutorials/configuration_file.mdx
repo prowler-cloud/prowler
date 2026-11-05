@@ -292,6 +292,8 @@ The following list includes all the Vercel checks with configurable variables th
 | `deployment_production_uses_stable_target`     | `stable_branches`                 | List of Strings | `["main", "master"]`                                                     |
 | `domain_ssl_certificate_valid`                 | `days_to_expire_threshold`        | Integer         | `7`                                                                      |
 | `project_environment_no_secrets_in_plain_type` | `secret_suffixes`                 | List of Strings | `["_KEY", "_SECRET", "_TOKEN", "_PASSWORD", "_API_KEY", "_PRIVATE_KEY"]` |
+| `project_environment_no_secrets_with_public_prefix` | `secret_suffixes`            | List of Strings | `["_KEY", "_SECRET", "_TOKEN", "_PASSWORD", "_API_KEY", "_PRIVATE_KEY"]` |
+| `project_environment_no_secrets_with_public_prefix` | `public_env_prefixes`        | List of Strings | `["NEXT_PUBLIC_", "NUXT_PUBLIC_", "VITE_", "REACT_APP_", "VUE_APP_", "GATSBY_", "EXPO_PUBLIC_", "PUBLIC_"]` |
 | `team_member_role_least_privilege`             | `max_owner_percentage`            | Integer         | `20`                                                                     |
 | `team_member_role_least_privilege`             | `max_owners`                      | Integer         | `3`                                                                      |
 | `team_no_stale_invitations`                    | `stale_invitation_threshold_days` | Integer         | `30`                                                                     |
@@ -905,7 +907,7 @@ vercel:
   # vercel.team_member_role_least_privilege
   max_owner_percentage: 20
   max_owners: 3
-  # vercel.project_environment_no_secrets_in_plain_type
+  # vercel.project_environment_no_secrets_in_plain_type & vercel.project_environment_no_secrets_with_public_prefix
   secret_suffixes:
     - "_KEY"
     - "_SECRET"
@@ -913,6 +915,16 @@ vercel:
     - "_PASSWORD"
     - "_API_KEY"
     - "_PRIVATE_KEY"
+  # vercel.project_environment_no_secrets_with_public_prefix
+  public_env_prefixes:
+    - "NEXT_PUBLIC_"
+    - "NUXT_PUBLIC_"
+    - "VITE_"
+    - "REACT_APP_"
+    - "VUE_APP_"
+    - "GATSBY_"
+    - "EXPO_PUBLIC_"
+    - "PUBLIC_"
 
 
 ```

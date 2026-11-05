@@ -170,6 +170,7 @@ describe("issues actions", () => {
 
     await expect(addIssueNote("issue-1", "note")).resolves.toEqual({
       error: "You do not have permission.",
+      status: 403,
     });
     expect(fetchMock.mock.calls[0][0]).toBe(
       "https://api.example.com/api/v1/issues/issue-1/triage/notes",
