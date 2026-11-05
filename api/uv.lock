@@ -58,7 +58,7 @@ constraints = [
     { name = "apscheduler", specifier = "==3.11.2" },
     { name = "argcomplete", specifier = "==3.5.3" },
     { name = "asgiref", specifier = "==3.11.0" },
-    { name = "astroid", specifier = "==3.2.4" },
+    { name = "astroid", specifier = "==4.0.4" },
     { name = "async-timeout", specifier = "==5.0.1" },
     { name = "attrs", specifier = "==25.4.0" },
     { name = "authlib", specifier = "==1.6.12" },
@@ -167,7 +167,7 @@ constraints = [
     { name = "durationpy", specifier = "==0.10" },
     { name = "email-validator", specifier = "==2.2.0" },
     { name = "execnet", specifier = "==2.1.2" },
-    { name = "filelock", specifier = "==3.20.3" },
+    { name = "filelock", specifier = "==4.2.1" },
     { name = "flask", specifier = "==3.1.3" },
     { name = "fonttools", specifier = "==4.62.1" },
     { name = "freezegun", specifier = "==1.5.1" },
@@ -191,8 +191,8 @@ constraints = [
     { name = "grpcio-status", specifier = "==1.76.0" },
     { name = "gunicorn", specifier = "==26.0.0" },
     { name = "h11", specifier = "==0.16.0" },
-    { name = "h2", specifier = "==4.3.0" },
-    { name = "hpack", specifier = "==4.1.0" },
+    { name = "h2", specifier = "==4.4.1" },
+    { name = "hpack", specifier = "==4.2.0" },
     { name = "httpcore", specifier = "==1.0.9" },
     { name = "httplib2", specifier = "==0.32.0" },
     { name = "httpx", specifier = "==0.28.1" },
@@ -292,7 +292,7 @@ constraints = [
     { name = "pygithub", specifier = "==2.8.0" },
     { name = "pygments", specifier = "==2.20.0" },
     { name = "pyjwt", specifier = "==2.14.0" },
-    { name = "pylint", specifier = "==3.2.5" },
+    { name = "pylint", specifier = "==4.0.9" },
     { name = "pymsalruntime", specifier = "==0.18.1" },
     { name = "pynacl", specifier = "==1.6.2" },
     { name = "pyopenssl", specifier = "==26.4.0" },
@@ -363,7 +363,7 @@ constraints = [
     { name = "vulture", specifier = "==2.14" },
     { name = "wcwidth", specifier = "==0.5.3" },
     { name = "websocket-client", specifier = "==1.9.0" },
-    { name = "werkzeug", specifier = "==3.1.7" },
+    { name = "werkzeug", specifier = "==3.1.9" },
     { name = "workos", specifier = "==8.3.0" },
     { name = "wrapt", specifier = "==1.17.3" },
     { name = "xlsxwriter", specifier = "==3.2.9" },
@@ -379,6 +379,7 @@ overrides = [
     { name = "azure-mgmt-containerservice", specifier = "==34.1.0" },
     { name = "cryptography", specifier = "==50.0.0" },
     { name = "dulwich", specifier = "==1.2.9" },
+    { name = "h2", specifier = "==4.4.1" },
     { name = "microsoft-kiota-abstractions", specifier = "==1.9.10" },
     { name = "microsoft-kiota-authentication-azure", specifier = "==1.9.10" },
     { name = "microsoft-kiota-http", specifier = "==1.9.10" },
@@ -1023,11 +1024,11 @@ wheels = [
 
 [[package]]
 name = "astroid"
-version = "3.2.4"
+version = "4.0.4"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/9e/53/1067e1113ecaf58312357f2cd93063674924119d80d173adc3f6f2387aa2/astroid-3.2.4.tar.gz", hash = "sha256:0e14202810b30da1b735827f78f5157be2bbd4a7a59b7707ca0bfc2fb4c0063a", size = 397576, upload-time = "2024-07-20T12:57:43.26Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/07/63/0adf26577da5eff6eb7a177876c1cfa213856be9926a000f65c4add9692b/astroid-4.0.4.tar.gz", hash = "sha256:986fed8bcf79fb82c78b18a53352a0b287a73817d6dbcfba3162da36667c49a0", size = 406358, upload-time = "2026-02-07T23:35:07.509Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/80/96/b32bbbb46170a1c8b8b1f28c794202e25cfe743565e9d3469b8eb1e0cc05/astroid-3.2.4-py3-none-any.whl", hash = "sha256:413658a61eeca6202a59231abb473f932038fbcbf1666587f66d482083413a25", size = 276348, upload-time = "2024-07-20T12:57:40.886Z" },
+    { url = "https://files.pythonhosted.org/packages/b0/cf/1c5f42b110e57bc5502eb80dbc3b03d256926062519224835ef08134f1f9/astroid-4.0.4-py3-none-any.whl", hash = "sha256:52f39653876c7dec3e3afd4c2696920e05c83832b9737afc21928f2d2eb7a753", size = 276445, upload-time = "2026-02-07T23:35:05.344Z" },
 ]
 
 [[package]]
@@ -2737,11 +2738,11 @@ wheels = [
 
 [[package]]
 name = "filelock"
-version = "3.20.3"
+version = "4.2.1"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/1d/65/ce7f1b70157833bf3cb851b556a37d4547ceafc158aa9b34b36782f23696/filelock-3.20.3.tar.gz", hash = "sha256:18c57ee915c7ec61cff0ecf7f0f869936c7c30191bb0cf406f1341778d0834e1", size = 19485, upload-time = "2026-01-09T17:55:05.421Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/d5/98/771d8ca889f220d7d7e352addf500666368f0fd081c6080a83767580c6e4/filelock-4.2.1.tar.gz", hash = "sha256:c4c937ccac2a813cee448e662a56366cfb374c0f8702e75f295c412cc1c5d5a3", size = 650997, upload-time = "2026-10-17T16:48:14.435Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/b5/36/7fb70f04bf00bc646cd5bb45aa9eddb15e19437a28b8fb2b4a5249fac770/filelock-3.20.3-py3-none-any.whl", hash = "sha256:4b0dda527ee31078689fc205ec4f1c1bf7d56cf88b6dc9426c4f230e46c2dce1", size = 16701, upload-time = "2026-01-09T17:55:04.334Z" },
+    { url = "https://files.pythonhosted.org/packages/28/00/db89d339bc4ecdc8087fa7b8607ba22ffc27bf96286f340c9620bea428b3/filelock-4.2.1-py3-none-any.whl", hash = "sha256:7be2662e9e826b9bba28afc0f843a123280d799a2ea44bb5d35ccec67905ae44", size = 162455, upload-time = "2026-10-17T16:48:12.937Z" },
 ]
 
 [[package]]
@@ -3332,24 +3333,24 @@ wheels = [
 
 [[package]]
 name = "h2"
-version = "4.3.0"
+version = "4.4.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "hpack" },
     { name = "hyperframe" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/1d/17/afa56379f94ad0fe8defd37d6eb3f89a25404ffc71d4d848893d270325fc/h2-4.3.0.tar.gz", hash = "sha256:6c59efe4323fa18b47a632221a1888bd7fde6249819beda254aeca909f221bf1", size = 2152026, upload-time = "2025-08-23T18:12:19.778Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/e7/85/7c366e69d84c17bb778fe41419e1fbcce3033d5b7ce29bbffff0a98b859f/h2-4.4.1.tar.gz", hash = "sha256:4e866ffb1a869ae14dd9b5e6beb5c24a13da0495ad72b65925ded182521c1516", size = 2157281, upload-time = "2026-08-03T11:45:09.509Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/69/b2/119f6e6dcbd96f9069ce9a2665e0146588dc9f88f29549711853645e736a/h2-4.3.0-py3-none-any.whl", hash = "sha256:c438f029a25f7945c69e0ccf0fb951dc3f73a5f6412981daee861431b70e2bdd", size = 61779, upload-time = "2025-08-23T18:12:17.779Z" },
+    { url = "https://files.pythonhosted.org/packages/7e/22/e85faf23bd72a92d1921e37d674ca56eb298a3c8be31fdecef0ff2b3aaac/h2-4.4.1-py3-none-any.whl", hash = "sha256:0e25f1462b23c9cb82d9eb02e28bc706dac2a68cb457c6a0d74d63c8a2a5d0e6", size = 62636, upload-time = "2026-08-03T11:44:59.164Z" },
 ]
 
 [[package]]
 name = "hpack"
-version = "4.1.0"
+version = "4.2.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/2c/48/71de9ed269fdae9c8057e5a4c0aa7402e8bb16f2c6e90b3aa53327b113f8/hpack-4.1.0.tar.gz", hash = "sha256:ec5eca154f7056aa06f196a557655c5b009b382873ac8d1e66e79e87535f1dca", size = 51276, upload-time = "2025-01-22T21:44:58.347Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/26/5b/fcabf6028144a8723726318b07a32c2f3314acdff6265743cf08a344b18e/hpack-4.2.0.tar.gz", hash = "sha256:0895cfa3b5531fc65fe439c05eb65144f123bf7a394fcaa56aa423548d8e45c0", size = 51300, upload-time = "2026-06-23T18:34:46.667Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/07/c6/80c95b1b2b94682a72cbdbfb85b81ae2daffa4291fbfa1b1464502ede10d/hpack-4.1.0-py3-none-any.whl", hash = "sha256:157ac792668d995c657d93111f46b4535ed114f0c9c8d672271bbec7eae1b496", size = 34357, upload-time = "2025-01-22T21:44:56.92Z" },
+    { url = "https://files.pythonhosted.org/packages/71/b4/4a9fcfb2aef6ba44d9073ecd301443aa00b3dac95de5619f2a7de7ec8a91/hpack-4.2.0-py3-none-any.whl", hash = "sha256:858ac0b02280fa582b5080d68db0899c62a80375e0e5413a74970c5e518b6986", size = 34246, upload-time = "2026-06-23T18:34:45.472Z" },
 ]
 
 [[package]]
@@ -5039,7 +5040,7 @@ requires-dist = [
     { name = "fonttools", specifier = "==4.62.1" },
     { name = "gevent", specifier = "==25.9.1" },
     { name = "gunicorn", specifier = "==26.0.0" },
-    { name = "h2", specifier = "==4.3.0" },
+    { name = "h2", specifier = "==4.4.1" },
     { name = "lxml", specifier = "==6.1.0" },
     { name = "markdown", specifier = "==3.10.2" },
     { name = "matplotlib", specifier = "==3.10.8" },
@@ -5054,7 +5055,7 @@ requires-dist = [
     { name = "uuid6", specifier = "==2024.7.10" },
     { name = "uvicorn-worker", specifier = "==0.4.0" },
     { name = "uvloop", specifier = "==0.22.1" },
-    { name = "werkzeug", specifier = "==3.1.7" },
+    { name = "werkzeug", specifier = "==3.1.9" },
     { name = "xmlsec", specifier = "==1.3.17" },
 ]
 
@@ -5064,11 +5065,11 @@ dev = [
     { name = "coverage", specifier = "==7.5.4" },
     { name = "django-silk", specifier = "==5.3.2" },
     { name = "docker", specifier = "==7.1.0" },
-    { name = "filelock", specifier = "==3.20.3" },
+    { name = "filelock", specifier = "==4.2.1" },
     { name = "freezegun", specifier = "==1.5.1" },
     { name = "mypy", specifier = "==1.10.1" },
     { name = "prek", specifier = "==0.3.9" },
-    { name = "pylint", specifier = "==3.2.5" },
+    { name = "pylint", specifier = "==4.0.9" },
     { name = "pytest", specifier = "==9.0.3" },
     { name = "pytest-cov", specifier = "==5.0.0" },
     { name = "pytest-django", specifier = "==4.8.0" },
@@ -5353,7 +5354,7 @@ crypto = [
 
 [[package]]
 name = "pylint"
-version = "3.2.5"
+version = "4.0.9"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "astroid" },
@@ -5364,9 +5365,9 @@ dependencies = [
     { name = "platformdirs" },
     { name = "tomlkit" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/df/f3/e552877a02574b7919855a8d1f372591e67d276ea880c079968e7b3ba353/pylint-3.2.5.tar.gz", hash = "sha256:e9b7171e242dcc6ebd0aaa7540481d1a72860748a0a7816b8fe6cf6c80a6fe7e", size = 1508793, upload-time = "2024-06-28T13:10:26.915Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/e0/5e/d5ec2c861010cf8577a3e5baaf2405fdf1004f1657d9245c4efb006c1dfd/pylint-4.0.9.tar.gz", hash = "sha256:6f1305780229ae720e89b8aff2b3ff857cbb268fbab98c8b586960267667ad34", size = 1604187, upload-time = "2026-09-23T15:26:43.144Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/2e/ff/7f52c1461d8ceaefa989d2700a027f84427879bb7571145bbffdec5d5f4a/pylint-3.2.5-py3-none-any.whl", hash = "sha256:32cd6c042b5004b8e857d727708720c54a676d1e22917cf1a2df9b4d4868abd6", size = 519603, upload-time = "2024-06-28T13:10:23.526Z" },
+    { url = "https://files.pythonhosted.org/packages/66/46/12e94ae1f9db89152223bdb17920b12c79e94ac51e19dce1da9fb63627b0/pylint-4.0.9-py3-none-any.whl", hash = "sha256:c4ba5bbaf1e70ecf05f08cd7d6091ea04824b79a2b2d9f5b10dc25fc34cb1124", size = 542068, upload-time = "2026-09-23T15:26:41.626Z" },
 ]
 
 [[package]]
@@ -6471,14 +6472,14 @@ wheels = [
 
 [[package]]
 name = "werkzeug"
-version = "3.1.7"
+version = "3.1.9"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "markupsafe" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/b5/43/76ded108b296a49f52de6bac5192ca1c4be84e886f9b5c9ba8427d9694fd/werkzeug-3.1.7.tar.gz", hash = "sha256:fb8c01fe6ab13b9b7cdb46892b99b1d66754e1d7ab8e542e865ec13f526b5351", size = 875700, upload-time = "2026-03-24T01:08:07.687Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/a4/34/4dd12fc8bb7d61c91467ec3efe415ffa7d5456f799954b40c5bbaeae470e/werkzeug-3.1.9.tar.gz", hash = "sha256:55ca7c70a75689be937aa27f8ff4b018f06ff4838fc73045560bf0f5a1291060", size = 940188, upload-time = "2026-09-27T18:33:41.637Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/7f/b2/0bba9bbb4596d2d2f285a16c2ab04118f6b957d8441566e1abb892e6a6b2/werkzeug-3.1.7-py3-none-any.whl", hash = "sha256:4b314d81163a3e1a169b6a0be2a000a0e204e8873c5de6586f453c55688d422f", size = 226295, upload-time = "2026-03-24T01:08:06.133Z" },
+    { url = "https://files.pythonhosted.org/packages/a1/38/df03f564f43cec2684823f3cccae1a652ee7face1cbaa76fb223096e64d7/werkzeug-3.1.9-py3-none-any.whl", hash = "sha256:6392e50c78460ba618e5b21f08a71f59c99ce99cdc6cf6e3dd7e6ccca8754fab", size = 228700, upload-time = "2026-09-27T18:33:39.685Z" },
 ]
 
 [[package]]

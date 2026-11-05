@@ -134,7 +134,7 @@ jobs:
               "elb": ["shield"],
               "elbv2": ["shield"],
               "globalaccelerator": ["shield"],
-              "iam": ["bedrock", "cloudtrail", "cloudwatch", "codebuild"],
+              "iam": ["bedrock", "bedrockagentcore", "cloudtrail", "cloudwatch", "codebuild"],
               "kafka": ["firehose"],
               "kinesis": ["firehose"],
               "kms": ["kafka"],
