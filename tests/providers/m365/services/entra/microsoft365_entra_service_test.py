@@ -2240,3 +2240,49 @@ class TestCrossTenantAccessDefault:
         )
 
         assert asyncio.run(service._get_cross_tenant_access_default()) is None
+
+
+class TestGetAppRegistrations:
+    @staticmethod
+    def _service(applications):
+        service = Entra.__new__(Entra)
+        service.app_registrations_error = None
+        service.client = SimpleNamespace(applications=applications)
+        return service
+
+    def test_initial_error_sets_app_registrations_error(self):
+        service = self._service(
+            SimpleNamespace(get=AsyncMock(side_effect=PermissionError("forbidden")))
+        )
+
+        app_registrations = asyncio.run(service._get_app_registrations())
+
+        assert app_registrations == {}
+        assert service.app_registrations_error == "PermissionError: forbidden"
+
+    def test_pagination_error_sets_app_registrations_error(self):
+        page_one = SimpleNamespace(
+            value=[
+                SimpleNamespace(
+                    id="obj-1",
+                    app_id="app-1",
+                    display_name="App 1",
+                    password_credentials=[],
+                    key_credentials=[],
+                )
+            ],
+            odata_next_link="next-link",
+        )
+        failing_page = SimpleNamespace(
+            get=AsyncMock(side_effect=RuntimeError("throttled"))
+        )
+        with_url = MagicMock(return_value=failing_page)
+        service = self._service(
+            SimpleNamespace(get=AsyncMock(return_value=page_one), with_url=with_url)
+        )
+
+        app_registrations = asyncio.run(service._get_app_registrations())
+
+        with_url.assert_called_once_with("next-link")
+        assert list(app_registrations) == ["obj-1"]
+        assert service.app_registrations_error == "RuntimeError: throttled"
