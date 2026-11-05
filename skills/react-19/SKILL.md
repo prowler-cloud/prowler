@@ -6,13 +6,15 @@ description: >
 license: Apache-2.0
 metadata:
   author: prowler-cloud
-  version: "1.0"
+  version: "1.1"
   scope: [root, ui]
   auto_invoke: "Writing React components"
 allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
 ---
 
 ## No Manual Memoization (REQUIRED)
+
+Prowler UI enables the React Compiler (`reactCompiler: true` in `ui/next.config.js`), so manual memoization is unnecessary.
 
 ```typescript
 // ✅ React Compiler handles optimization automatically
@@ -90,17 +92,21 @@ function Theme({ showTheme }) {
 ## Actions & useActionState
 
 ```typescript
+// actions/feature/feature.ts
 "use server";
-async function submitForm(formData: FormData) {
+// useActionState passes the previous state first, then the FormData
+export async function submitForm(prevState: FormState, formData: FormData) {
   await saveToDatabase(formData);
   revalidatePath("/");
+  return { ok: true };
 }
 
-// With pending state
+// Client component
+"use client";
 import { useActionState } from "react";
 
 function Form() {
-  const [state, action, isPending] = useActionState(submitForm, null);
+  const [state, action, isPending] = useActionState(submitForm, { ok: false });
   return (
     <form action={action}>
       <button disabled={isPending}>
@@ -110,6 +116,8 @@ function Form() {
   );
 }
 ```
+
+Most Prowler forms use `react-hook-form` + `zodResolver` and call the server action from `handleSubmit` instead (see `prowler-ui`).
 
 ## ref as Prop (No forwardRef)
 
@@ -122,3 +130,5 @@ function Input({ ref, ...props }) {
 // ❌ Old way (unnecessary now)
 const Input = forwardRef((props, ref) => <input ref={ref} {...props} />);
 ```
+
+`forwardRef` still appears in the deprecated `ui/components/ui/` shims; do not copy that pattern into new code.

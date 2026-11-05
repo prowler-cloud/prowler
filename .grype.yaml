@@ -7,31 +7,18 @@
 
 ignore:
 
-  # Modules compiled into the Trivy binary we ship.
-  # Only a Trivy rebuild by its vendor can change these; the version is pinned in our Dockerfile.
-  # CVE-2026-71556 is the same temporary exception documented in .trivyignore.yaml:
-  # Trivy 0.73.0 still embeds go-git 5.19.1, while the 5.19.2 fix is merged only on
-  # Trivy main. Remove this entry with the Trivy exception by 2026-09-15.
-  # https://github.com/aquasecurity/trivy/blob/v0.73.0/go.mod#L46
-  # https://github.com/aquasecurity/trivy/commit/a2edba9a03987ba0d2ebc8212c1a9a1e6979497b
-  - vulnerability: CVE-2026-71556
-    package:
-      name: github.com/go-git/go-git/v5
-  - vulnerability: CVE-2026-56852
-    package:
-      name: golang.org/x/text
-  - vulnerability: GHSA-hrxh-6v49-42gf
-    package:
-      name: google.golang.org/grpc
-  - vulnerability: CVE-2026-50151
-    package:
-      name: oras.land/oras-go/v2
-
   # Shipped inside the PowerShell tarball, in its bundled MicrosoftTeams module.
   # Not a dependency we declare, and not one we can upgrade independently.
   - vulnerability: CVE-2026-26127
     package:
       name: Microsoft.Bcl.Memory
+
+  # Documented in .trivyignore.yaml: ships inside ExchangeOnlineManagement
+  # 3.10.1, the latest gallery release. Re-check on the next EXO release.
+  - vulnerability: CVE-2026-84008
+    package:
+      name: System.Security.Cryptography.Pkcs
+      version: 10.0.0
 
   # The .NET runtime bundled inside the PowerShell tarball the Dockerfile pins.
   # CVE-2026-62901 is the same temporary exception documented in .trivyignore.yaml:
@@ -81,3 +68,37 @@ ignore:
   - vulnerability: CVE-2026-9669
     package:
       name: python
+  # CVE-2026-82049 (tarfile data/tar filter bypass via a hard link to a symlink) has no
+  # fixed CPython release on any branch: the fix is merged on main and 3.13 only, and the
+  # 3.12 backport is still open. Grype records 3.14.0b1 as the fix, so only-fixed does not
+  # drop it, yet python:3.12.14-slim-trixie reports it too. Prowler never extracts tar
+  # archives to disk: the ECR image inspection reads members in memory with extractfile().
+  # Remove once the base image ships a 3.12 release that includes the backport.
+  # https://github.com/python/cpython/issues/157190
+  # https://github.com/python/cpython/pull/157454
+  - vulnerability: CVE-2026-82049
+    package:
+      name: python
+
+  # zlib in the Alpine base image of the MCP (python:3.13.16-alpine3.23) container.
+  # CVE-2026-85091 is a heap overflow in gz_vacate() reached only through non-blocking
+  # gzwrite() followed by gzprintf() after a write stall; the MCP server never writes
+  # gzip files, so the image never calls that path. The UI image no longer needs this:
+  # node:24.22.1-alpine is built on Alpine 3.24 and ships 1.3.2-r1. TEMPORARY: the fix
+  # landed in the 3.23 index on 2026-10-06, two days after the pinned python image was
+  # built, and could be taken with `apk add --upgrade`, but we wait for the base image
+  # to ship it instead (python:3.13.17-alpine3.23, built 2026-10-22, already does).
+  # Pinned to that version so the rule stops matching on its own once the base image
+  # moves forward. Remove when the MCP digest is bumped, by 2026-11-07.
+  # https://security.alpinelinux.org/vuln/CVE-2026-85091
+  - vulnerability: CVE-2026-85091
+    package:
+      name: zlib
+      version: 1.3.2-r0
+
+  # Documented in .trivyignore.yaml: go-jose 4.1.5 compiled into the Trivy binary (0.76.1,
+  # the latest release). Pinned to 4.1.5 so it stops matching with the next Trivy bump.
+  - vulnerability: CVE-2026-116587
+    package:
+      name: github.com/go-jose/go-jose/v4
+      version: v4.1.5

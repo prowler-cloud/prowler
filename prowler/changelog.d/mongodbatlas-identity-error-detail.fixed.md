@@ -1,0 +1,1 @@
+MongoDB Atlas connection errors now include the HTTP status, error code and detail returned by Atlas instead of a generic HTTP error, and a custom exception message no longer persists into later errors of the same type

@@ -105,6 +105,21 @@ export default tseslint.config(
 
       "security/detect-object-injection": "off",
 
+      // Icons must ship in the bundle: air-gapped deployments cannot reach
+      // runtime icon APIs.
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["@iconify/*"],
+              message:
+                "Iconify loads icons over the network. Use lucide-react or components/icons.",
+            },
+          ],
+        },
+      ],
+
       "eol-last": ["error", "always"],
 
       "import-x/order": [

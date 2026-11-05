@@ -88,6 +88,8 @@ _validate_trusted_ips = validate_ip_networks
 _validate_semver = make_dotted_version_validator(3, 3)
 # "1.28" style strings (EKS minor versions).
 _validate_eks_minor = make_dotted_version_validator(2, 2)
+_validate_php_branch = make_dotted_version_validator(2, 2)
+_validate_platform_version = make_dotted_version_validator(3, 3)
 
 
 def _validate_account_ids(v: Optional[list[str]]) -> Optional[list[str]]:
@@ -267,6 +269,15 @@ class AWSProviderConfig(ProviderConfigBase):
             f"values accepted by the AWS API: {list(_CLOUDWATCH_RETENTION_DAYS)}."
         ),
     )
+    agentcore_log_group_name_prefixes: Optional[list[str]] = Field(
+        default=None,
+        description=(
+            "Log group name prefixes that identify Bedrock AgentCore agent "
+            "telemetry. Set this when AgentCore log delivery is pointed at log "
+            "groups outside the service defaults; the value replaces the "
+            "defaults, so list them alongside any prefix of your own."
+        ),
+    )
     recommended_cdk_bootstrap_version: Optional[int] = Field(
         default=None,
         ge=1,
@@ -300,6 +311,20 @@ class AWSProviderConfig(ProviderConfigBase):
         ),
     )
 
+    # --- Elastic Beanstalk ------------------------------------------------
+    elasticbeanstalk_php_min_branch: Annotated[
+        Optional[str], AfterValidator(_validate_php_branch)
+    ] = Field(
+        default=None,
+        description='Oldest PHP branch still receiving security fixes, e.g. "8.2".',
+    )
+    elasticbeanstalk_php_min_platform_version: Annotated[
+        Optional[str], AfterValidator(_validate_platform_version)
+    ] = Field(
+        default=None,
+        description='Oldest Amazon Linux 2023 PHP platform version bundling the fixed PHP release, e.g. "4.13.13".',
+    )
+
     # --- Lambda -----------------------------------------------------------
     obsolete_lambda_runtimes: Optional[list[str]] = None
     lambda_min_azs: Optional[int] = Field(
@@ -307,6 +332,12 @@ class AWSProviderConfig(ProviderConfigBase):
         ge=1,
         le=6,
         description="Min number of AZs a VPC-bound Lambda must span. Range: 1..6.",
+    )
+
+    # --- Lightsail --------------------------------------------------------
+    lightsail_php_blueprints: Optional[list[str]] = Field(
+        default=None,
+        description="Blueprint id prefixes that ship PHP and require manual runtime verification.",
     )
 
     # --- Organizations ----------------------------------------------------
@@ -322,6 +353,20 @@ class AWSProviderConfig(ProviderConfigBase):
     ] = Field(
         default=None,
         description="Highest severity tolerated for ECR images.",
+    )
+
+    # --- Inspector2 -------------------------------------------------------
+    inspector2_max_days_since_last_scan: Optional[int] = Field(
+        default=None,
+        ge=1,
+        le=90,
+        description="Days since Inspector2 last scanned a covered resource. Range: 1..90.",
+    )
+    inspector2_active_finding_max_age_days: Optional[int] = Field(
+        default=None,
+        ge=1,
+        le=365,
+        description="Days an Inspector2 finding can stay active since first observed. Range: 1..365.",
     )
 
     # --- Trusted Advisor --------------------------------------------------

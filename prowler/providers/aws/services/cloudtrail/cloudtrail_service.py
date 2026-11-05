@@ -15,6 +15,9 @@ class Cloudtrail(AWSService):
         super().__init__(__class__.__name__, provider)
         self.trail_arn_template = f"arn:{self.audited_partition}:cloudtrail:{self.region}:{self.audited_account}:trail"
         self.trails = {}
+        # True when DescribeTrails was denied in at least one audited region,
+        # so the trail inventory may be incomplete.
+        self.trails_unavailable = False
         self.__threading_call__(self._get_trails)
         if self.trails:
             self._get_trail_status()
@@ -79,13 +82,16 @@ class Cloudtrail(AWSService):
                 logger.error(
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
+                self.trails_unavailable = True
                 if not self.trails:
                     self.trails = None
             else:
+                self.trails_unavailable = True
                 logger.error(
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         except Exception as error:
+            self.trails_unavailable = True
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )

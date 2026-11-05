@@ -1,7 +1,7 @@
 {
   "Provider": "azure",
   "CheckID": "app_ensure_java_version_is_latest",
-  "CheckTitle": "App Service web app uses the latest supported Java version or 17 by default",
+  "CheckTitle": "App Service web app runs a supported Java version (17 or newer by default)",
   "CheckType": [],
   "ServiceName": "app",
   "SubServiceName": "",
@@ -9,7 +9,7 @@
   "Severity": "low",
   "ResourceType": "microsoft.web/sites",
   "ResourceGroup": "serverless",
-  "Description": "**Azure App Service web apps** that run **Java** are assessed to ensure their configured runtime uses the **latest supported major version** (LTS) for the environment, across Linux and Windows.\n\n*Only apps with Java enabled are considered.*",
+  "Description": "**Azure App Service web apps** that run **Java** are assessed to ensure their configured runtime major version is at or above the configured **minimum supported LTS** (`java_latest_version`, `17` by default), across Linux and Windows.\n\n*Only apps with Java enabled are considered.*",
   "Risk": "Using an **outdated Java runtime** enables known exploits like **remote code execution**, unsafe **deserialization**, and **cryptographic flaws**, risking data theft and tampering (**confidentiality, integrity**) and outages or takeover (**availability**). Unsupported versions also delay critical security patches.",
   "RelatedUrl": "",
   "AdditionalURLs": [

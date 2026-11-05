@@ -2,18 +2,16 @@
 
 ## Local Documentation
 
-For detailed check development patterns, see:
+- `docs/developer-guide/checks.mdx` - Check structure, statuses, resource identification, metadata fields
+- `docs/developer-guide/check-metadata-guidelines.mdx` - Writing rules for CheckTitle, Description, Risk, Remediation, Categories
+- `docs/developer-guide/configurable-checks.mdx` - `audit_config`, `config.yaml` and the provider config schemas
+- `docs/developer-guide/renaming-checks.mdx` - Renaming existing checks (CheckAliases)
+- `docs/developer-guide/secret-scanning-checks.mdx` - Batched structure for checks that scan for plaintext secrets
+- `docs/developer-guide/<provider>-details.mdx` - Provider-specific check patterns
 
-- `docs/developer-guide/checks.mdx` - Complete guide for creating security checks
-- `docs/developer-guide/check-metadata-guidelines.mdx` - Metadata writing standards and best practices
-- `docs/developer-guide/configurable-checks.mdx` - Using audit_config for configurable checks
-- `docs/developer-guide/renaming-checks.mdx` - Guidelines for renaming existing checks
+## Source of Truth in Code
 
-## Contents
-
-The documentation covers:
-- Check structure and naming conventions
-- Metadata schema and field descriptions
-- Check implementation patterns per provider
-- Configurable check parameters
-- Check renaming procedures
+- `prowler/lib/check/models.py` - `CheckMetadata` validators, `VALID_CATEGORIES`, `VALID_RESOURCE_GROUPS`, `Check`, report classes
+- `prowler/providers/aws/config/check_types.json` - Valid AWS `CheckType` paths
+- `prowler/lib/check/check.py` - `run_fixer`, external check loading
+- `prowler/config/config.yaml`, `prowler/config/schema/` - Configurable check defaults and their schemas

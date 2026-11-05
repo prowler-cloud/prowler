@@ -300,6 +300,18 @@
   margin: 0 0 26px;
 }
 
+/* Prowler Cloud screenshot shown on each gated page. */
+.pc-shot {
+  display: block;
+  width: 100%;
+  max-width: 760px;
+  height: auto;
+  border: 1px solid var(--pc-border);
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(2, 6, 23, 0.08);
+  margin: 0 0 28px;
+}
+
 .pc-benefits {
   list-style: none;
   padding: 0;
@@ -348,6 +360,111 @@
 
 .pc-cta:active {
   background: var(--pc-btn-press);
+}
+
+/* ------------------------------------------- Findings hand-off additions */
+
+/* Secondary "how to" block rendered between the message and the CTA. */
+.pc-steps {
+  width: 100%;
+  max-width: 560px;
+  text-align: left;
+  background: #f8fafc;
+  border: 1px solid var(--pc-border);
+  border-radius: 12px;
+  padding: 18px 20px;
+  margin: 0 0 26px;
+}
+
+.pc-steps-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--pc-text);
+  margin: 0 0 10px;
+}
+
+.pc-steps-list {
+  /* Tailwind's preflight strips list markers; restore the numbering. */
+  list-style: decimal outside;
+  margin: 0 0 12px;
+  padding-left: 22px;
+  font-size: 15px;
+  line-height: 24px;
+  color: var(--pc-text-2);
+}
+
+.pc-steps-note {
+  font-size: 13px;
+  line-height: 20px;
+  color: #52525b;
+  margin: 0 0 6px;
+}
+
+.pc-steps-note:last-child {
+  margin-bottom: 0;
+}
+
+.pc-cta-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 10px 20px;
+}
+
+.pc-link-secondary {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--pc-text);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.pc-link-secondary:hover {
+  color: var(--pc-btn-press);
+}
+
+.pc-note {
+  font-size: 13px;
+  line-height: 20px;
+  color: #52525b;
+  margin: 14px 0 0;
+}
+
+/* Compact hand-off card used at the end of the Compliance page. */
+.pc-handoff {
+  min-width: 0;
+  background: #ffffff;
+  border: 1px solid var(--pc-border);
+  border-radius: 14px;
+  padding: 24px 28px;
+}
+
+.pc-handoff .pc-avail {
+  margin-bottom: 6px;
+}
+
+.pc-handoff-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--pc-text);
+  margin: 0 0 8px;
+}
+
+.pc-handoff-desc {
+  margin-bottom: 14px;
+}
+
+.pc-handoff-benefits {
+  margin-bottom: 18px;
+}
+
+.pc-handoff .pc-cta-row {
+  justify-content: flex-start;
+}
+
+.pc-handoff .pc-note {
+  margin-top: 12px;
 }
 
 /* --------------------------------------------------- Responsive collapse */

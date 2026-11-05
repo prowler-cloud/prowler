@@ -75,10 +75,10 @@ class Test_inspector2_is_enabled:
 
     def test_inspector2_disabled(self):
         # Mock the inspector2 client
-        inspector2_client = mock.MagicMock
-        awslambda_client = mock.MagicMock
-        ecr_client = mock.MagicMock
-        ec2_client = mock.MagicMock
+        inspector2_client = mock.MagicMock()
+        awslambda_client = mock.MagicMock()
+        ecr_client = mock.MagicMock()
+        ec2_client = mock.MagicMock()
         ec2_client.provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         ecr_client.provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         awslambda_client.provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
@@ -133,7 +133,7 @@ class Test_inspector2_is_enabled:
 
     def test_all_enabled(self):
         # Mock the inspector2 client
-        inspector2_client = mock.MagicMock
+        inspector2_client = mock.MagicMock()
         inspector2_client.provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         inspector2_client.audited_account = AWS_ACCOUNT_NUMBER
         inspector2_client.audited_account_arn = (
@@ -235,7 +235,7 @@ class Test_inspector2_is_enabled:
                 assert result[0].region == AWS_REGION_EU_WEST_1
 
     def test_ec2_disabled(self):
-        inspector2_client = mock.MagicMock
+        inspector2_client = mock.MagicMock()
         inspector2_client.provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         inspector2_client.audited_account = AWS_ACCOUNT_NUMBER
         inspector2_client.audited_account_arn = (
@@ -286,7 +286,7 @@ class Test_inspector2_is_enabled:
                 assert result[0].region == AWS_REGION_EU_WEST_1
 
     def test_ecr_disabled(self):
-        inspector2_client = mock.MagicMock
+        inspector2_client = mock.MagicMock()
         inspector2_client.provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         inspector2_client.audited_account = AWS_ACCOUNT_NUMBER
         inspector2_client.audited_account_arn = (
@@ -337,7 +337,7 @@ class Test_inspector2_is_enabled:
                 assert result[0].region == AWS_REGION_EU_WEST_1
 
     def test_lambda_disabled(self):
-        inspector2_client = mock.MagicMock
+        inspector2_client = mock.MagicMock()
         inspector2_client.provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         inspector2_client.audited_account = AWS_ACCOUNT_NUMBER
         inspector2_client.audited_account_arn = (
@@ -388,7 +388,7 @@ class Test_inspector2_is_enabled:
                 assert result[0].region == AWS_REGION_EU_WEST_1
 
     def test_lambda_code_disabled(self):
-        inspector2_client = mock.MagicMock
+        inspector2_client = mock.MagicMock()
         inspector2_client.provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         inspector2_client.audited_account = AWS_ACCOUNT_NUMBER
         inspector2_client.audited_account_arn = (
@@ -439,7 +439,7 @@ class Test_inspector2_is_enabled:
                 assert result[0].region == AWS_REGION_EU_WEST_1
 
     def test_ec2_ecr_disabled(self):
-        inspector2_client = mock.MagicMock
+        inspector2_client = mock.MagicMock()
         inspector2_client.provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         inspector2_client.audited_account = AWS_ACCOUNT_NUMBER
         inspector2_client.audited_account_arn = (
@@ -490,7 +490,7 @@ class Test_inspector2_is_enabled:
                 assert result[0].region == AWS_REGION_EU_WEST_1
 
     def test_ec2_lambda_disabled(self):
-        inspector2_client = mock.MagicMock
+        inspector2_client = mock.MagicMock()
         inspector2_client.provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         inspector2_client.audited_account = AWS_ACCOUNT_NUMBER
         inspector2_client.audited_account_arn = (
@@ -541,7 +541,7 @@ class Test_inspector2_is_enabled:
                 assert result[0].region == AWS_REGION_EU_WEST_1
 
     def test_ec2_lambda_code_disabled(self):
-        inspector2_client = mock.MagicMock
+        inspector2_client = mock.MagicMock()
         inspector2_client.provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         inspector2_client.audited_account = AWS_ACCOUNT_NUMBER
         inspector2_client.audited_account_arn = (
@@ -592,7 +592,7 @@ class Test_inspector2_is_enabled:
                 assert result[0].region == AWS_REGION_EU_WEST_1
 
     def test_ecr_lambda_disabled(self):
-        inspector2_client = mock.MagicMock
+        inspector2_client = mock.MagicMock()
         inspector2_client.provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         inspector2_client.audited_account = AWS_ACCOUNT_NUMBER
         inspector2_client.audited_account_arn = (
@@ -643,7 +643,7 @@ class Test_inspector2_is_enabled:
                 assert result[0].region == AWS_REGION_EU_WEST_1
 
     def test_ecr_lambda_code_disabled(self):
-        inspector2_client = mock.MagicMock
+        inspector2_client = mock.MagicMock()
         inspector2_client.provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         inspector2_client.audited_account = AWS_ACCOUNT_NUMBER
         inspector2_client.audited_account_arn = (
@@ -694,7 +694,7 @@ class Test_inspector2_is_enabled:
                 assert result[0].region == AWS_REGION_EU_WEST_1
 
     def test_lambda_lambda_code_disabled(self):
-        inspector2_client = mock.MagicMock
+        inspector2_client = mock.MagicMock()
         inspector2_client.provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         inspector2_client.audited_account = AWS_ACCOUNT_NUMBER
         inspector2_client.audited_account_arn = (
@@ -745,7 +745,7 @@ class Test_inspector2_is_enabled:
                 assert result[0].region == AWS_REGION_EU_WEST_1
 
     def test_ec2_ecr_lambda_disabled(self):
-        inspector2_client = mock.MagicMock
+        inspector2_client = mock.MagicMock()
         inspector2_client.provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         inspector2_client.audited_account = AWS_ACCOUNT_NUMBER
         inspector2_client.audited_account_arn = (
@@ -796,7 +796,7 @@ class Test_inspector2_is_enabled:
                 assert result[0].region == AWS_REGION_EU_WEST_1
 
     def test_ec2_ecr_lambda_code_disabled(self):
-        inspector2_client = mock.MagicMock
+        inspector2_client = mock.MagicMock()
         inspector2_client.provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         inspector2_client.audited_account = AWS_ACCOUNT_NUMBER
         inspector2_client.audited_account_arn = (
@@ -847,7 +847,7 @@ class Test_inspector2_is_enabled:
                 assert result[0].region == AWS_REGION_EU_WEST_1
 
     def test_ec2_lambda_lambda_code_disabled(self):
-        inspector2_client = mock.MagicMock
+        inspector2_client = mock.MagicMock()
         inspector2_client.provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         inspector2_client.audited_account = AWS_ACCOUNT_NUMBER
         inspector2_client.audited_account_arn = (
@@ -898,7 +898,7 @@ class Test_inspector2_is_enabled:
                 assert result[0].region == AWS_REGION_EU_WEST_1
 
     def test_ecr_lambda_lambda_code_disabled(self):
-        inspector2_client = mock.MagicMock
+        inspector2_client = mock.MagicMock()
         inspector2_client.provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         inspector2_client.audited_account = AWS_ACCOUNT_NUMBER
         inspector2_client.audited_account_arn = (

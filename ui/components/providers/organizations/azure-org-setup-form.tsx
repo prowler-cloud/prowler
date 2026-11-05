@@ -7,6 +7,10 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { AzureProviderBadge } from "@/components/icons/providers-badge";
+import {
+  ONBOARDING_METHOD,
+  OnboardingMethodTabs,
+} from "@/components/providers/wizard/steps/connect/onboarding-method-tabs";
 import type { WizardFooterConfig } from "@/components/providers/wizard/steps/footer-controls";
 import { WIZARD_FOOTER_ACTION_TYPE } from "@/components/providers/wizard/steps/footer-controls";
 import type { OrgWizardIntent } from "@/components/providers/wizard/types";
@@ -56,6 +60,8 @@ interface AzureOrgSetupFormInitialValues {
 
 interface AzureOrgSetupFormProps {
   onBack: () => void;
+  /** Keeps the single/organization tabs on screen; absent when the flow was entered directly. */
+  onSelectSingleAccount?: () => void;
   onNext: () => void;
   onFooterChange: (config: WizardFooterConfig) => void;
   onPhaseChange: (phase: OrgSetupPhase) => void;
@@ -66,6 +72,7 @@ interface AzureOrgSetupFormProps {
 
 export function AzureOrgSetupForm({
   onBack,
+  onSelectSingleAccount,
   onNext,
   onFooterChange,
   onPhaseChange,
@@ -231,6 +238,14 @@ export function AzureOrgSetupForm({
                 Microsoft Azure / Organization Details
               </h3>
             </div>
+
+            {onSelectSingleAccount && (
+              <OnboardingMethodTabs
+                orgType={ORGANIZATION_TYPE.AZURE}
+                value={ONBOARDING_METHOD.ORGANIZATION}
+                onSelectSingle={onSelectSingleAccount}
+              />
+            )}
 
             <p className="text-muted-foreground text-sm">
               Enter the Microsoft Entra tenant ID for the subscriptions you want

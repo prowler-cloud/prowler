@@ -1,5 +1,5 @@
 import json
-from typing import Dict, List, Optional
+from typing import ClassVar, Dict, List, Optional
 
 from botocore.exceptions import ClientError
 from pydantic.v1 import BaseModel, Field
@@ -275,6 +275,7 @@ class Connection(BaseModel):
     name: str
     arn: str
     type: str
+    sensitive_fields: ClassVar[tuple[str, ...]] = ("properties",)
     properties: dict
     region: str
     tags: Optional[List[Dict[str, str]]] = Field(default_factory=list)
@@ -308,6 +309,7 @@ class Job(BaseModel):
     arn: str
     name: str
     security: Optional[str]
+    sensitive_fields: ClassVar[tuple[str, ...]] = ("arguments",)
     arguments: Optional[Dict[str, str]] = Field(default_factory=dict)
     region: str
     tags: Optional[List[Dict[str, str]]] = Field(default_factory=list)
