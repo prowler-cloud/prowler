@@ -276,6 +276,18 @@ describe("Scans page import findings", () => {
     expect(harness.ingestionPostCount).toBe(1);
   });
 
+  it("ignores a status poll left over from a previous import", async () => {
+    const harness = new ScansPageHarness(partiallyProcessedIngestionFixture());
+    await harness.mount({ statusSequence: ["failed"] });
+    await harness.receiveLeftoverStatusPoll();
+    await harness.openImportFindings();
+    await harness.selectFile(new File(["[]"], "findings.ocsf.json"));
+    await harness.submitImport();
+
+    await harness.waitForFailedImport();
+    await harness.waitForFailedImportSummary();
+  });
+
   it("clears a terminal result after closing the dialog", async () => {
     const harness = new ScansPageHarness(ingestionFixture());
     await harness.mount({ statusSequence: ["failed"] });
