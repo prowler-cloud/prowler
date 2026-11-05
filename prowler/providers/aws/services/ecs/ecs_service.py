@@ -167,6 +167,11 @@ class ECS(AWSService):
                             "readonlyRootFilesystem", False
                         ),
                         user=container.get("user", ""),
+                        added_capabilities=(
+                            container.get("linuxParameters", {})
+                            .get("capabilities", {})
+                            .get("add", [])
+                        ),
                         environment=environment,
                         log_driver=container.get("logConfiguration", {}).get(
                             "logDriver", ""
@@ -295,6 +300,7 @@ class ContainerDefinition(BaseModel):
     privileged: bool
     readonly_rootfilesystem: bool = False
     user: str
+    added_capabilities: Optional[list[str]] = None
     environment: list[ContainerEnvVariable]
     log_driver: Optional[str]
     log_option: Optional[str]
