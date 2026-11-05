@@ -13,6 +13,7 @@ import {
   type LighthouseAttackPathParameter,
   type LighthouseComplianceContextItem,
   type LighthouseFindingContextItem,
+  type LighthouseIssueContextItem,
   type LighthouseProviderContextItem,
   type LighthouseResourceContextItem,
   type LighthouseScanContextItem,
@@ -313,6 +314,58 @@ export function buildFocusedFindingContext(
     providerUid: optionalBoundedString(finding.providerUid),
     resourceUid: optionalBoundedString(finding.resourceUid),
     region: optionalBoundedString(finding.region),
+  };
+}
+
+interface FocusedIssueContextInput {
+  pathname: string;
+  issueId: string;
+  title: string;
+  pattern: string;
+  verdict: string;
+  severity: string;
+  attackerStart: string;
+  outcome: string;
+  suggestedFix: string;
+  providerUid?: string;
+  scanId?: string;
+  findingsCount: number;
+  legs: Record<string, string>;
+  findingIds?: string[];
+}
+
+export function buildFocusedIssueContext(
+  issue: FocusedIssueContextInput,
+): LighthouseIssueContextItem {
+  const safeIssueId = toBoundedString(issue.issueId);
+  const legs = Object.fromEntries(
+    Object.entries(issue.legs)
+      .slice(0, LIGHTHOUSE_CONTEXT_LIMIT.ISSUE_LEGS)
+      .map(([name, state]) => [toBoundedString(name), toBoundedString(state)]),
+  );
+  return {
+    kind: LIGHTHOUSE_CONTEXT_KIND.ISSUE,
+    id: safeIssueId,
+    source: LIGHTHOUSE_CONTEXT_SOURCE.FOCUSED,
+    scopeKey: getLighthouseScopeKey(issue.pathname),
+    label: "Focused issue",
+    issueId: safeIssueId,
+    title: optionalBoundedString(issue.title),
+    pattern: optionalBoundedString(issue.pattern),
+    verdict: optionalBoundedString(issue.verdict),
+    severity: optionalBoundedString(issue.severity),
+    attackerStart: optionalBoundedString(issue.attackerStart),
+    outcome: optionalBoundedString(issue.outcome),
+    suggestedFix: optionalBoundedString(issue.suggestedFix),
+    providerUid: optionalBoundedString(issue.providerUid),
+    scanId: optionalBoundedString(issue.scanId),
+    findingsCount: toSafeCount(issue.findingsCount),
+    legs: Object.keys(legs).length > 0 ? legs : undefined,
+    findingIds: issue.findingIds?.length
+      ? issue.findingIds
+          .slice(0, LIGHTHOUSE_CONTEXT_LIMIT.ISSUE_FINDING_IDS)
+          .map(toBoundedString)
+      : undefined,
   };
 }
 

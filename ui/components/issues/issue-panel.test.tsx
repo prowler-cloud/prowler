@@ -13,11 +13,13 @@ import {
 
 import { IssuePanel } from "./issue-panel";
 
-const { getIssue, getIssueFindings, getFindingById } = vi.hoisted(() => ({
-  getIssue: vi.fn(),
-  getIssueFindings: vi.fn(),
-  getFindingById: vi.fn(),
-}));
+const { getIssue, getIssueFindings, getFindingById, requestPanelSkillLaunch } =
+  vi.hoisted(() => ({
+    getIssue: vi.fn(),
+    getIssueFindings: vi.fn(),
+    getFindingById: vi.fn(),
+    requestPanelSkillLaunch: vi.fn(),
+  }));
 
 vi.mock("next/navigation", () => ({
   usePathname: () => "/issues",
@@ -30,6 +32,10 @@ vi.mock("@/actions/issues", () => ({
   getIssueNotes: async () => [],
 }));
 vi.mock("@/actions/findings", () => ({ getFindingById }));
+// The chat that runs a launched skill lives in the app shell's side panel.
+vi.mock("@/app/(prowler)/lighthouse/_lib/panel-chat-store", () => ({
+  requestPanelSkillLaunch,
+}));
 // The real helper sits behind the server-only `@/lib` barrel.
 vi.mock("@/lib/finding-detail", () => ({
   expandFindingWithRelationships: (response?: { data?: unknown }) =>
@@ -138,6 +144,7 @@ describe("IssuePanel", () => {
     getIssue.mockReset();
     getIssueFindings.mockReset().mockResolvedValue([]);
     getFindingById.mockReset();
+    requestPanelSkillLaunch.mockReset();
     useJiraDispatchStore.getState().closeJiraDispatch();
   });
 
@@ -529,5 +536,109 @@ describe("IssuePanel", () => {
         targetIds: ["finding-1", "finding-2"],
       },
     });
+  });
+
+  it("offers no Lighthouse skills outside Prowler Cloud", async () => {
+    // Given: a self-hosted install, where Lighthouse does not run
+    getIssue.mockResolvedValue(detailWith([]));
+
+    // When
+    renderPanel();
+
+    // Then
+    expect(
+      await screen.findByRole("tab", { name: "Remediation" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Contextual Fix" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("offers the fix on an issue with no modelled start or outcome", async () => {
+    // Given: Prowler Cloud and an exploitable issue the API sends without a
+    // start or outcome, which the prompt handles as a group of findings
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
+    getIssue.mockResolvedValue(detailWith([]));
+    renderPanel(
+      issueWith({
+        pattern: "aws_public_bucket",
+        verdict: "exploitable",
+        attacker_start: "",
+        outcome: "",
+      }),
+    );
+    await screen.findByRole("tab", { name: "Remediation" });
+
+    // When
+    await userEvent.click(
+      screen.getByRole("button", { name: "Contextual Fix" }),
+    );
+
+    // Then: the context says nothing about a start or outcome it lacks
+    await waitFor(() => expect(requestPanelSkillLaunch).toHaveBeenCalled());
+    const [, context] = requestPanelSkillLaunch.mock.calls[0];
+    const issueItem = context.items.find(
+      (item: { kind: string }) => item.kind === "issue",
+    );
+    expect(issueItem).toMatchObject({ pattern: "aws_public_bucket" });
+    expect(issueItem.attackerStart).toBeUndefined();
+    expect(issueItem.outcome).toBeUndefined();
+  });
+
+  it("launches the issue's Contextual Fix with the issue and its findings", async () => {
+    // Given: Prowler Cloud, with the issue's findings loaded
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
+    getIssue.mockResolvedValue(detailWith(["bucket"], ["f-1", "f-2"]));
+    getIssueFindings.mockResolvedValue([
+      finding,
+      { ...finding, resourceUid: "other-bucket" },
+      { ...finding, id: "finding-2", uid: "f-2" },
+    ]);
+    renderPanel(
+      issueWith({
+        pattern: "aws_public_bucket",
+        verdict: "exploitable",
+        severity: "critical",
+        attacker_start: "internet",
+        outcome: "data_exposure",
+        fix: "Turn on the account-level S3 Public Access Block.",
+        findings_count: 2,
+        legs: {
+          reachability: { state: "yes", text: "", evidence: [] },
+          controls: { state: "no", text: "", evidence: [] },
+        } as unknown as IssueAttributes["legs"],
+      }),
+      "552455647653",
+    );
+    await screen.findByRole("button", { name: "Issue actions" });
+
+    // When
+    await userEvent.click(
+      screen.getByRole("button", { name: "Contextual Fix" }),
+    );
+
+    // Then: the issue skill runs with the issue as its subject
+    await waitFor(() => expect(requestPanelSkillLaunch).toHaveBeenCalled());
+    const [skill, context] = requestPanelSkillLaunch.mock.calls[0];
+    expect(skill.id).toBe("issue-contextual-fix");
+    expect(context.items).toContainEqual(
+      expect.objectContaining({
+        kind: "issue",
+        issueId: "issue-1",
+        pattern: "aws_public_bucket",
+        verdict: "exploitable",
+        severity: "critical",
+        attackerStart: "internet",
+        outcome: "data_exposure",
+        suggestedFix: "Turn on the account-level S3 Public Access Block.",
+        providerUid: "552455647653",
+        scanId: "scan-1",
+        findingsCount: 2,
+        // "No" controls leave that leg open too: the agent gets the posture.
+        legs: { reachability: "open", controls: "open" },
+        // One id per finding, not per finding-and-resource row.
+        findingIds: ["finding-1", "finding-2"],
+      }),
+    );
   });
 });
