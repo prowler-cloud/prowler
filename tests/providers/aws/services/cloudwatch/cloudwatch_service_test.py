@@ -1,3 +1,4 @@
+import json
 from unittest.mock import patch
 
 import botocore
@@ -309,6 +310,128 @@ class Test_CloudWatch_Service:
 
         assert logs.log_groups[arn].data_protection_status is None
         assert logs.log_groups[arn].inherited_properties == []
+
+    @mock_aws
+    def test_get_data_protection_policy(self):
+        log_group_name = "/aws/lambda/test"
+        arn = f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:log-group:{log_group_name}:*"
+
+        def mock_make_api_call(self, operation_name, kwarg):
+            if operation_name == "DescribeLogGroups":
+                return {
+                    "logGroups": [
+                        {
+                            "logGroupName": log_group_name,
+                            "arn": arn,
+                            "dataProtectionStatus": "ACTIVATED",
+                            "inheritedProperties": ["ACCOUNT_DATA_PROTECTION"],
+                        }
+                    ]
+                }
+            if operation_name == "GetDataProtectionPolicy":
+                assert kwarg["logGroupIdentifier"] == log_group_name
+                return {"policyDocument": json.dumps({"Name": "test-policy"})}
+            if operation_name == "DescribeAlarms":
+                return {"MetricAlarms": []}
+            if operation_name == "DescribeResourcePolicies":
+                return {"resourcePolicies": []}
+            if operation_name == "DescribeMetricFilters":
+                return {"metricFilters": []}
+            if operation_name == "ListTagsForResource":
+                return {"tags": {}}
+            return {}
+
+        aws_provider = set_mocked_aws_provider(
+            expected_checks=["cloudwatch_log_group_data_protection_policy_configured"]
+        )
+        with patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call):
+            logs = Logs(aws_provider)
+
+        assert arn in logs.log_groups
+        assert logs.log_groups[arn].data_protection_policy == {"Name": "test-policy"}
+        assert logs.log_groups[arn].data_protection_policy_retrieved is True
+
+    @mock_aws
+    def test_get_data_protection_policy_resource_not_found(self):
+        logs_client = client("logs", region_name=AWS_REGION_US_EAST_1)
+        logs_client.create_log_group(logGroupName="/log-group/no-policy")
+
+        aws_provider = set_mocked_aws_provider(
+            expected_checks=["cloudwatch_log_group_data_protection_policy_configured"]
+        )
+        arn = f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:log-group:/log-group/no-policy:*"
+
+        def mock_make_api_call(self, operation_name, kwarg):
+            if operation_name == "GetDataProtectionPolicy":
+                raise ClientError(
+                    {
+                        "Error": {
+                            "Code": "ResourceNotFoundException",
+                            "Message": "No data protection policy exists.",
+                        }
+                    },
+                    operation_name,
+                )
+            return make_api_call(self, operation_name, kwarg)
+
+        with patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call):
+            logs = Logs(aws_provider)
+
+        assert arn in logs.log_groups
+        assert logs.log_groups[arn].data_protection_policy is None
+        assert logs.log_groups[arn].data_protection_policy_retrieved is True
+
+    @mock_aws
+    def test_get_data_protection_policy_access_denied(self):
+        logs_client = client("logs", region_name=AWS_REGION_US_EAST_1)
+        logs_client.create_log_group(logGroupName="/log-group/access-denied")
+
+        aws_provider = set_mocked_aws_provider(
+            expected_checks=["cloudwatch_log_group_data_protection_policy_configured"]
+        )
+        arn = f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:log-group:/log-group/access-denied:*"
+
+        def mock_make_api_call(self, operation_name, kwarg):
+            if operation_name == "GetDataProtectionPolicy":
+                raise ClientError(
+                    {
+                        "Error": {
+                            "Code": "AccessDeniedException",
+                            "Message": "User is not authorized.",
+                        }
+                    },
+                    operation_name,
+                )
+            return make_api_call(self, operation_name, kwarg)
+
+        with patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call):
+            logs = Logs(aws_provider)
+
+        assert arn in logs.log_groups
+        assert logs.log_groups[arn].data_protection_policy is None
+        assert logs.log_groups[arn].data_protection_policy_retrieved is False
+
+    @mock_aws
+    def test_get_data_protection_policy_generic_exception(self):
+        logs_client = client("logs", region_name=AWS_REGION_US_EAST_1)
+        logs_client.create_log_group(logGroupName="/log-group/generic-error")
+
+        aws_provider = set_mocked_aws_provider(
+            expected_checks=["cloudwatch_log_group_data_protection_policy_configured"]
+        )
+        arn = f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:log-group:/log-group/generic-error:*"
+
+        def mock_make_api_call(self, operation_name, kwarg):
+            if operation_name == "GetDataProtectionPolicy":
+                raise Exception("Unexpected error")
+            return make_api_call(self, operation_name, kwarg)
+
+        with patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call):
+            logs = Logs(aws_provider)
+
+        assert arn in logs.log_groups
+        assert logs.log_groups[arn].data_protection_policy is None
+        assert logs.log_groups[arn].data_protection_policy_retrieved is False
 
     @mock_aws
     def test_describe_log_groups_access_denied_leaves_inventory_unknown(self):
