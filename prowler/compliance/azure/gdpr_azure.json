@@ -25,7 +25,6 @@
         "entra_global_admin_in_less_than_five_users",
         "entra_policy_guest_invite_only_for_admin_roles",
         "iam_role_user_access_admin_restricted",
-        "iam_custom_role_has_permissions_to_administer_resource_locks",
         "monitor_diagnostic_settings_exists",
         "monitor_diagnostic_setting_with_appropriate_categories",
         "network_watcher_enabled",
@@ -62,8 +61,9 @@
         "mysql_flexible_server_audit_log_connection_activated",
         "postgresql_flexible_server_log_connections_on",
         "postgresql_flexible_server_log_disconnections_on",
-        "postgresql_flexible_server_log_checkpoints_on",
-        "postgresql_flexible_server_log_retention_days_greater_3"
+        "postgresql_flexible_server_log_retention_days_greater_3",
+        "sqlserver_auditing_enabled",
+        "sqlserver_auditing_retention_90_days"
       ]
     },
     {
@@ -99,7 +99,12 @@
         "keyvault_rbac_secret_expiration_set",
         "app_ensure_http_is_redirected_to_https",
         "app_minimum_tls_version_12",
-        "databricks_workspace_cmk_encryption_enabled"
+        "databricks_workspace_cmk_encryption_enabled",
+        "cosmosdb_account_minimum_tls_version",
+        "cosmosdb_account_backup_policy_continuous",
+        "mysql_flexible_server_geo_redundant_backup_enabled",
+        "postgresql_flexible_server_geo_redundant_backup_enabled",
+        "storage_ensure_soft_delete_is_enabled"
       ]
     }
   ]
