@@ -5,7 +5,7 @@ title: 'Prowler Services'
 Here you can find how to create a new service, or to complement an existing one, for a [Prowler Provider](/developer-guide/provider).
 
 <Note>
-First ensure that the provider you want to add the service is already created. It can be checked [here](https://github.com/prowler-cloud/prowler/tree/master/prowler/providers). If the provider is not present, please refer to the [Provider](./provider.md) documentation to create it from scratch.
+First ensure that the provider you want to add the service to is already created. It can be checked [here](https://github.com/prowler-cloud/prowler/tree/master/prowler/providers). If the provider is not present, please refer to the [Provider](/developer-guide/provider) documentation to create it from scratch.
 </Note>
 ## Introduction
 
@@ -102,7 +102,7 @@ class <Service>(ServiceParentClass):
 
         # A try-except block must be created in each function.
         try:
-            # If pagination is supported by the provider, is always better to use it, call to the provider API to retrieve the desired data.
+            # If pagination is supported by the provider, it is always better to use it, call to the provider API to retrieve the desired data.
             describe_<items>_paginator = regional_client.get_paginator("describe_<items>")
 
             # Paginator to get every item.
@@ -133,7 +133,7 @@ class <Service>(ServiceParentClass):
 
         # When handling exceptions, use the following approach to log errors appropriately based on the cloud provider being used:
         except Exception as error:
-            # Depending on each provider we can must use different fields in the logger, e.g.: AWS: regional_client.region or self.region, GCP: project_id and location, Azure: subscription
+            # Depending on each provider we must use different fields in the logger, e.g.: AWS: regional_client.region or self.region, GCP: project_id and location, Azure: subscription
             logger.error(
                 f"{<provider_specific_field>} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
