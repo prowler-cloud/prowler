@@ -22,6 +22,7 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 | Action                                                         | Skill               |
 | -------------------------------------------------------------- | ------------------- |
 | Add changelog entry for a PR or feature                        | `prowler-changelog` |
+| Add or edit changelog fragments in <component>/changelog.d/    | `prowler-changelog` |
 | App Router / Server Actions                                    | `nextjs-16`         |
 | Building AI chat features                                      | `ai-sdk-5`          |
 | Committing changes                                             | `prowler-commit`    |
@@ -36,7 +37,6 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 | Review changelog format and conventions                        | `prowler-changelog` |
 | Reviewing Prowler UI components                                | `prowler-ui`        |
 | Testing hooks or utilities                                     | `vitest`            |
-| Update CHANGELOG.md in any component                           | `prowler-changelog` |
 | Using Zustand stores                                           | `zustand-5`         |
 | Working on Prowler UI structure (actions/adapters/types/hooks) | `prowler-ui`        |
 | Working on task                                                | `tdd`               |
@@ -183,31 +183,7 @@ test("action works", { tag: ["@critical", "@feature"] }, async ({ page }) => {
 
 ---
 
-## TECH STACK
-
-Next.js 16.2.3 | React 19.2.5 | Tailwind 4.1.18 | shadcn/ui
-Zod 4.1.11 | React Hook Form 7.62.0 | Zustand 5.0.8 | NextAuth 5.0.0-beta.30 | Recharts 2.15.4
-
-> **Note**: `components/ui/` only holds temporary re-export shims for the prowler-cloud overlay. Do NOT add new components there.
-
----
-
-## PROJECT STRUCTURE
-
-```text
-ui/
-├── app/(auth)/          # Auth pages
-├── app/(prowler)/       # Main app: compliance, findings, providers, scans
-├── components/shadcn/   # shadcn/ui components (USE THIS)
-├── components/ui/       # Cloud-overlay re-export shims (do not add here)
-├── actions/             # Server actions
-├── types/               # Shared types
-├── hooks/               # Shared hooks
-├── lib/                 # Utilities
-├── store/               # Zustand state
-├── tests/               # Playwright E2E
-└── styles/              # Global CSS
-```
+> **Note**: `components/ui/` only holds temporary re-export shims for the prowler-cloud overlay. Do NOT add new components there; use `components/shadcn/`.
 
 ---
 
@@ -218,6 +194,8 @@ pnpm install && pnpm run dev
 pnpm run typecheck
 pnpm run lint:fix
 pnpm run healthcheck
+pnpm run test:unit
+pnpm run test:integration
 pnpm run test:e2e
 pnpm run test:e2e:ui
 ```
@@ -227,6 +205,7 @@ pnpm run test:e2e:ui
 ## QA CHECKLIST BEFORE COMMIT
 
 - [ ] `pnpm run typecheck` passes
+- [ ] `pnpm run test:unit` passes (and `test:integration` if you touched API-backed components)
 - [ ] `pnpm run lint:fix` passes
 - [ ] `pnpm run format:write` passes
 - [ ] Relevant E2E tests pass

@@ -39,6 +39,8 @@ import {
 import { LIGHTHOUSE_COMPLIANCE_CONTEXT_MODE } from "@/lib/lighthouse/context/constants";
 import { buildComplianceContext } from "@/lib/lighthouse/context/contributions";
 import { isReportDownloadLocked } from "@/lib/report-download-access";
+import { getSamplePreviewState } from "@/lib/sample-preview/get-sample-preview-state";
+import { isSampleId } from "@/lib/sample-preview/sample-guards";
 import { isCloud } from "@/lib/shared/env";
 import { cn } from "@/lib/utils";
 import type { SearchParamsProps } from "@/types";
@@ -50,6 +52,7 @@ import {
 import { isKnownProviderType } from "@/types/providers";
 import { ScanEntity } from "@/types/scans";
 
+import { ComplianceDetailSamplePreview } from "../_components/compliance-detail-sample-preview";
 import { CrossAccountDetail } from "../_components/cross-account-detail";
 import { CrossProviderDetail } from "../_components/cross-provider-detail";
 import { buildSearchParamsKey } from "../_lib/search-params-key";
@@ -76,6 +79,28 @@ export default async function ComplianceDetail({
 
   if (!complianceId) {
     notFound();
+  }
+
+  // The sample scan never reaches the API: its detail is built from the catalog.
+  if (scanId && isSampleId(scanId)) {
+    const preview = await getSamplePreviewState();
+    if (!preview.active) redirect("/compliance");
+
+    return (
+      <ComplianceDetailSamplePreview
+        state={preview}
+        compliancetitle={compliancetitle}
+        complianceId={complianceId}
+        version={version}
+        filter={getSingleSearchParam(
+          resolvedSearchParams["filter[cis_profile_level]"],
+        )}
+        targetSection={section}
+        region={getSingleSearchParam(
+          resolvedSearchParams["filter[region__in]"],
+        )}
+      />
+    );
   }
 
   const subscriptionOnlyPromise = isReportDownloadLocked();

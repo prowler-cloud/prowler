@@ -37,9 +37,7 @@ def iam_pattern_matches(pattern: str, value: str) -> bool:
     Returns:
         True when IAM would consider the pattern to name that value.
 
-    MATCHED WITH A TWO-POINTER SCAN RATHER THAN A TRANSLATED REGEX, and the scan below is the same
-    one as ``_action_matches`` in ``bedrockagentcore_full_access_policy_attached`` -- taken from it
-    rather than written again, so there is one implementation of this under review and not two.
+    MATCHED WITH A TWO-POINTER SCAN RATHER THAN A TRANSLATED REGEX.
     Building ``.*`` for every ``*`` and calling ``re``, which is what this file's callers previously
     did, backtracks catastrophically on input the ACCOUNT controls: against the 17-character
     ``bedrock-agentcore``, a pattern of N stars, a literal absent from the value, then N more stars

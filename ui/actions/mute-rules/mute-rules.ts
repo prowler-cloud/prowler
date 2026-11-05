@@ -3,6 +3,10 @@
 import { revalidatePath } from "next/cache";
 
 import { apiBaseUrl, getAuthHeaders } from "@/lib/helper";
+import {
+  isSampleId,
+  SAMPLE_WRITE_MESSAGE,
+} from "@/lib/sample-preview/sample-records";
 
 import {
   DeleteMuteRuleActionState,
@@ -129,6 +133,10 @@ export const createMuteRule = async (
         finding_ids: "At least one finding must be selected",
       },
     };
+  }
+
+  if (findingIds.some(isSampleId)) {
+    return { errors: { general: SAMPLE_WRITE_MESSAGE } };
   }
 
   try {

@@ -10,7 +10,6 @@ import {
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
 import { usePartialScanTarget } from "@/hooks/use-partial-scan-target";
-import { cn } from "@/lib/utils";
 import { usePartialScanStore } from "@/store";
 import type { PartialScanTarget } from "@/types/partial-scans";
 
@@ -19,13 +18,14 @@ import { RECHECK_RESOURCE_LABEL } from "./recheck-resource-action-item";
 interface RecheckResourceIconButtonProps {
   target: Partial<PartialScanTarget> | null | undefined;
   className?: string;
+  disabledReason?: string;
 }
 
-// Beside "last seen": always green and pulsing, so the re-check is noticed.
-// It is an action, not a notification, so it never settles into a seen state.
+// Beside "last seen", using the shared icon-button and disabled states.
 export function RecheckResourceIconButton({
   target,
   className,
+  disabledReason,
 }: RecheckResourceIconButtonProps) {
   const resolvedTarget = usePartialScanTarget(target);
   const openPartialScan = usePartialScanStore((state) => state.openPartialScan);
@@ -35,28 +35,33 @@ export function RecheckResourceIconButton({
   const handleClick = (event: MouseEvent<HTMLButtonElement>) => {
     // The row itself opens the detail drawer on click.
     event.stopPropagation();
+    if (disabledReason) return;
     openPartialScan(resolvedTarget);
   };
 
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <Button
-          type="button"
-          variant="bare"
-          size="icon"
-          aria-label={RECHECK_RESOURCE_LABEL}
-          onClick={handleClick}
-          className={cn(
-            "text-button-primary hover:text-button-primary active:text-button-primary size-5 shrink-0 rounded-md motion-safe:animate-pulse",
-            "hover:[animation-play-state:paused] focus-visible:[animation-play-state:paused]",
-            className,
-          )}
+        <span
+          className={className}
+          tabIndex={disabledReason ? 0 : undefined}
+          onClick={(event) => event.stopPropagation()}
         >
-          <RefreshCw className="size-3.5" aria-hidden />
-        </Button>
+          <Button
+            type="button"
+            variant="bare"
+            size="icon-xs"
+            aria-label={RECHECK_RESOURCE_LABEL}
+            disabled={Boolean(disabledReason)}
+            onClick={handleClick}
+          >
+            <RefreshCw aria-hidden />
+          </Button>
+        </span>
       </TooltipTrigger>
-      <TooltipContent>{RECHECK_RESOURCE_LABEL}</TooltipContent>
+      <TooltipContent>
+        {disabledReason ?? RECHECK_RESOURCE_LABEL}
+      </TooltipContent>
     </Tooltip>
   );
 }
