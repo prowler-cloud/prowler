@@ -1,0 +1,40 @@
+{
+  "Provider": "azure",
+  "CheckID": "aks_cluster_uses_a_supported_version",
+  "CheckTitle": "AKS cluster uses a supported Kubernetes version",
+  "CheckType": [],
+  "ServiceName": "aks",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Microsoft.ContainerService/managedClusters",
+  "ResourceGroup": "container",
+  "Description": "AKS clusters run a **supported Kubernetes version** at or above the configured baseline. AKS provides community support for the latest generally available minor version and the two that precede it, so the evaluation compares each cluster's minor version against the minimum supported level and highlights clusters running below that baseline.",
+  "Risk": "Running an **unsupported Kubernetes version** stops security patches from Microsoft and the upstream project, leaving clusters exposed to known CVEs and privilege escalation bugs (**confidentiality/integrity**). Deprecated or removed APIs can also break controllers and add-ons, causing outages (**availability**).",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/aks/supported-kubernetes-versions",
+    "https://learn.microsoft.com/en-us/azure/aks/long-term-support",
+    "https://learn.microsoft.com/en-us/azure/aks/upgrade-aks-cluster"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "az aks upgrade --resource-group <resource_group_name> --name <cluster_name> --kubernetes-version <supported_version>",
+      "NativeIaC": "```bicep\n// Bicep: deploy the AKS cluster on a supported Kubernetes version\nresource <example_resource_name> 'Microsoft.ContainerService/managedClusters@2024-09-01' = {\n  name: '<example_resource_name>'\n  location: resourceGroup().location\n  identity: {\n    type: 'SystemAssigned'\n  }\n  properties: {\n    kubernetesVersion: '<supported_version>' // Critical: set a supported Kubernetes version to pass the check\n    dnsPrefix: '<example_dns_prefix>'\n    agentPoolProfiles: [\n      {\n        name: 'systempool'\n        count: 3\n        vmSize: '<example_vm_size>'\n        mode: 'System'\n      }\n    ]\n  }\n}\n```",
+      "Other": "1. Open the Azure portal and go to Kubernetes services\n2. Select your cluster (<cluster_name>)\n3. Under Settings, select Cluster configuration\n4. Next to Kubernetes version, select Upgrade version\n5. Choose a supported version and confirm the upgrade\n6. Wait for the control plane and node pools to finish upgrading",
+      "Terraform": "```hcl\n# Terraform: keep the AKS cluster on a supported Kubernetes version\nresource \"azurerm_kubernetes_cluster\" \"<example_resource_name>\" {\n  name                = \"<example_resource_name>\"\n  location            = \"<example_location>\"\n  resource_group_name = \"<example_resource_group_name>\"\n  dns_prefix          = \"<example_dns_prefix>\"\n\n  kubernetes_version = \"<supported_version>\" # Critical: set a supported Kubernetes version to pass the check\n\n  default_node_pool {\n    name       = \"systempool\"\n    node_count = 3\n    vm_size    = \"<example_vm_size>\"\n  }\n\n  identity {\n    type = \"SystemAssigned\"\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Adopt a **version management policy**: keep clusters inside the AKS community support window, schedule regular upgrades, and test workloads for API deprecations. Enable an auto-upgrade channel, upgrade node pools alongside the control plane, and track the AKS release calendar. Long-term support can extend patching where an immediate upgrade is not possible.",
+      "Url": "https://hub.prowler.com/check/aks_cluster_uses_a_supported_version"
+    }
+  },
+  "Categories": [
+    "vulnerabilities"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "aks_cluster_auto_upgrade_enabled"
+  ],
+  "Notes": "The baseline is configurable through `aks_cluster_oldest_version_supported`. AKS releases a minor version roughly every four months, so the shipped default needs revisiting as the support window moves. Clusters enrolled in long-term support keep receiving patches beyond the community support window and can use a lower baseline."
+}
