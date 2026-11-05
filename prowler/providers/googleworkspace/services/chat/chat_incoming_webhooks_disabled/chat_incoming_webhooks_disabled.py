@@ -26,7 +26,13 @@ class chat_incoming_webhooks_disabled(Check):
 
             webhooks_enabled = chat_client.policies.enable_webhooks
 
-            if webhooks_enabled is False:
+            if chat_client.policies.off_for_everyone:
+                report.status = "PASS"
+                report.status_extended = (
+                    f"Google Chat is turned off for everyone in domain "
+                    f"{chat_client.provider.identity.domain}, so incoming webhooks cannot be used."
+                )
+            elif webhooks_enabled is False:
                 report.status = "PASS"
                 report.status_extended = (
                     f"Incoming webhooks are disabled "

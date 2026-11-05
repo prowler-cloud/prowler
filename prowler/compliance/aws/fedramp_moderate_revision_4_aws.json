@@ -29,7 +29,6 @@
         "iam_no_root_access_key",
         "iam_rotate_access_key_90_days",
         "iam_user_mfa_enabled_console_access",
-        "iam_user_mfa_enabled_console_access",
         "iam_role_access_not_stale_to_bedrock",
         "iam_user_access_not_stale_to_bedrock",
         "iam_user_access_not_stale_to_sagemaker",
@@ -68,7 +67,6 @@
         "cloudtrail_multi_region_enabled",
         "cloudtrail_s3_dataevents_read_enabled",
         "cloudtrail_s3_dataevents_write_enabled",
-        "cloudtrail_multi_region_enabled",
         "cloudtrail_cloudwatch_logging_enabled",
         "cloudwatch_changes_to_network_acls_alarm_configured",
         "cloudwatch_changes_to_network_gateways_alarm_configured",
@@ -149,7 +147,6 @@
         "iam_no_root_access_key",
         "iam_rotate_access_key_90_days",
         "iam_user_mfa_enabled_console_access",
-        "iam_user_mfa_enabled_console_access",
         "iam_role_access_not_stale_to_bedrock",
         "iam_user_access_not_stale_to_bedrock",
         "iam_user_access_not_stale_to_sagemaker",
@@ -174,7 +171,6 @@
         "cloudtrail_multi_region_enabled",
         "cloudtrail_s3_dataevents_read_enabled",
         "cloudtrail_s3_dataevents_write_enabled",
-        "cloudtrail_multi_region_enabled",
         "cloudtrail_cloudwatch_logging_enabled",
         "opensearch_service_domains_cloudwatch_logging_enabled",
         "guardduty_is_enabled",
@@ -219,7 +215,6 @@
         "iam_root_mfa_enabled",
         "iam_no_root_access_key",
         "iam_rotate_access_key_90_days",
-        "iam_user_mfa_enabled_console_access",
         "iam_user_mfa_enabled_console_access",
         "iam_role_access_not_stale_to_bedrock",
         "iam_user_access_not_stale_to_bedrock",
@@ -312,7 +307,6 @@
         "s3_bucket_public_access",
         "s3_bucket_policy_public_write_access",
         "s3_account_level_public_access_blocks",
-        "s3_bucket_public_access",
         "sagemaker_notebook_instance_without_direct_internet_access_configured",
         "ec2_confidential_workload_host_imdsv2_not_enforced",
         "kms_key_enclave_attestation_not_enforced"
@@ -345,7 +339,6 @@
         "ec2_securitygroup_default_restrict_traffic",
         "ec2_networkacl_allow_ingress_any_port",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
-        "ec2_networkacl_allow_ingress_any_port",
         "ec2_confidential_workload_host_public_ip"
       ]
     },
@@ -426,7 +419,6 @@
         "s3_bucket_public_access",
         "s3_bucket_policy_public_write_access",
         "s3_account_level_public_access_blocks",
-        "s3_bucket_public_access",
         "sagemaker_notebook_instance_without_direct_internet_access_configured",
         "ec2_confidential_workload_host_imdsv2_not_enforced",
         "kms_key_enclave_attestation_bypassable_path"
@@ -457,13 +449,11 @@
         "s3_bucket_public_access",
         "s3_bucket_policy_public_write_access",
         "s3_account_level_public_access_blocks",
-        "s3_bucket_public_access",
         "sagemaker_notebook_instance_without_direct_internet_access_configured",
         "securityhub_enabled",
         "ec2_securitygroup_default_restrict_traffic",
         "ec2_networkacl_allow_ingress_any_port",
-        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
-        "ec2_networkacl_allow_ingress_any_port"
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22"
       ],
       "ConfigRequirements": [
         {
@@ -521,10 +511,8 @@
         "s3_bucket_public_access",
         "s3_bucket_policy_public_write_access",
         "s3_account_level_public_access_blocks",
-        "s3_bucket_public_access",
         "sagemaker_notebook_instance_without_direct_internet_access_configured",
         "ec2_securitygroup_default_restrict_traffic",
-        "ec2_networkacl_allow_ingress_any_port",
         "ec2_networkacl_allow_ingress_any_port"
       ]
     },
@@ -545,7 +533,6 @@
         "cloudtrail_multi_region_enabled",
         "cloudtrail_s3_dataevents_read_enabled",
         "cloudtrail_s3_dataevents_write_enabled",
-        "cloudtrail_multi_region_enabled",
         "cloudtrail_bedrock_logging_enabled",
         "cloudtrail_cloudwatch_logging_enabled",
         "elbv2_logging_enabled",
@@ -572,7 +559,6 @@
         "cloudtrail_multi_region_enabled",
         "cloudtrail_s3_dataevents_read_enabled",
         "cloudtrail_s3_dataevents_write_enabled",
-        "cloudtrail_multi_region_enabled",
         "cloudtrail_cloudwatch_logging_enabled",
         "elbv2_logging_enabled",
         "elb_logging_enabled",
@@ -599,7 +585,6 @@
         "cloudtrail_multi_region_enabled",
         "cloudtrail_s3_dataevents_read_enabled",
         "cloudtrail_s3_dataevents_write_enabled",
-        "cloudtrail_multi_region_enabled",
         "cloudtrail_cloudwatch_logging_enabled",
         "cloudwatch_changes_to_network_acls_alarm_configured",
         "cloudwatch_changes_to_network_gateways_alarm_configured",
@@ -723,7 +708,6 @@
         "cloudtrail_multi_region_enabled",
         "cloudtrail_s3_dataevents_read_enabled",
         "cloudtrail_s3_dataevents_write_enabled",
-        "cloudtrail_multi_region_enabled",
         "cloudtrail_bedrock_logging_enabled",
         "cloudtrail_cloudwatch_logging_enabled",
         "elbv2_logging_enabled",
@@ -750,7 +734,6 @@
         "cloudtrail_multi_region_enabled",
         "cloudtrail_s3_dataevents_read_enabled",
         "cloudtrail_s3_dataevents_write_enabled",
-        "cloudtrail_multi_region_enabled",
         "cloudwatch_changes_to_network_acls_alarm_configured",
         "cloudwatch_changes_to_network_gateways_alarm_configured",
         "cloudwatch_changes_to_network_route_tables_alarm_configured",
@@ -804,13 +787,11 @@
         "s3_bucket_public_access",
         "s3_bucket_policy_public_write_access",
         "s3_account_level_public_access_blocks",
-        "s3_bucket_public_access",
         "sagemaker_notebook_instance_without_direct_internet_access_configured",
         "ssm_managed_compliant_patching",
         "ec2_securitygroup_default_restrict_traffic",
         "ec2_networkacl_allow_ingress_any_port",
-        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
-        "ec2_networkacl_allow_ingress_any_port"
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22"
       ]
     },
     {
@@ -863,7 +844,6 @@
       "Checks": [
         "ec2_instance_managed_by_ssm",
         "guardduty_is_enabled",
-        "ssm_managed_compliant_patching",
         "ssm_managed_compliant_patching"
       ],
       "ConfigRequirements": [
@@ -889,9 +869,7 @@
       ],
       "Checks": [
         "dynamodb_tables_pitr_enabled",
-        "dynamodb_tables_pitr_enabled",
         "efs_have_backup_enabled",
-        "rds_instance_backup_enabled",
         "rds_instance_backup_enabled",
         "redshift_cluster_automated_snapshot",
         "s3_bucket_object_versioning"
@@ -910,12 +888,10 @@
       ],
       "Checks": [
         "dynamodb_tables_pitr_enabled",
-        "dynamodb_tables_pitr_enabled",
         "efs_have_backup_enabled",
         "elbv2_deletion_protection",
         "rds_instance_backup_enabled",
         "rds_instance_multi_az",
-        "rds_instance_backup_enabled",
         "redshift_cluster_automated_snapshot",
         "s3_bucket_object_versioning"
       ]
@@ -935,7 +911,6 @@
       "Checks": [
         "iam_root_mfa_enabled",
         "iam_user_mfa_enabled_console_access",
-        "iam_user_mfa_enabled_console_access",
         "iam_root_hardware_mfa_enabled"
       ]
     },
@@ -954,7 +929,6 @@
       "Checks": [
         "iam_root_hardware_mfa_enabled",
         "iam_root_mfa_enabled",
-        "iam_user_mfa_enabled_console_access",
         "iam_user_mfa_enabled_console_access"
       ]
     },
@@ -1019,42 +993,6 @@
         }
       ],
       "Checks": []
-    },
-    {
-      "Id": "ir-4-1",
-      "Name": "IR-4(1) Automated Incident Handling Processes",
-      "Description": "The organization employs automated mechanisms to support the incident handling process.",
-      "Attributes": [
-        {
-          "ItemId": "ir-4-1",
-          "Section": "Incident Response (IR)",
-          "SubSection": "Incident Handling (IR-4)",
-          "Service": "aws"
-        }
-      ],
-      "Checks": [
-        "cloudwatch_changes_to_network_acls_alarm_configured",
-        "cloudwatch_changes_to_network_gateways_alarm_configured",
-        "cloudwatch_changes_to_network_route_tables_alarm_configured",
-        "cloudwatch_changes_to_vpcs_alarm_configured",
-        "guardduty_is_enabled",
-        "guardduty_no_high_severity_findings",
-        "securityhub_enabled"
-      ],
-      "ConfigRequirements": [
-        {
-          "Check": "guardduty_is_enabled",
-          "ConfigKey": "mute_non_default_regions",
-          "Operator": "eq",
-          "Value": false
-        },
-        {
-          "Check": "securityhub_enabled",
-          "ConfigKey": "mute_non_default_regions",
-          "Operator": "eq",
-          "Value": false
-        }
-      ]
     },
     {
       "Id": "ir-4-1",
@@ -1266,12 +1204,10 @@
         "s3_bucket_public_access",
         "s3_bucket_policy_public_write_access",
         "s3_account_level_public_access_blocks",
-        "s3_bucket_public_access",
         "sagemaker_notebook_instance_without_direct_internet_access_configured",
         "ec2_securitygroup_default_restrict_traffic",
         "ec2_networkacl_allow_ingress_any_port",
-        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
-        "ec2_networkacl_allow_ingress_any_port"
+        "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22"
       ]
     },
     {
@@ -1326,12 +1262,10 @@
         "s3_bucket_public_access",
         "s3_bucket_policy_public_write_access",
         "s3_account_level_public_access_blocks",
-        "s3_bucket_public_access",
         "sagemaker_notebook_instance_without_direct_internet_access_configured",
         "ec2_securitygroup_default_restrict_traffic",
         "ec2_networkacl_allow_ingress_any_port",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
-        "ec2_networkacl_allow_ingress_any_port",
         "ec2_confidential_workload_host_public_ip"
       ]
     },
@@ -1362,12 +1296,10 @@
         "s3_bucket_public_access",
         "s3_bucket_policy_public_write_access",
         "s3_account_level_public_access_blocks",
-        "s3_bucket_public_access",
         "sagemaker_notebook_instance_without_direct_internet_access_configured",
         "ec2_securitygroup_default_restrict_traffic",
         "ec2_networkacl_allow_ingress_any_port",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
-        "ec2_networkacl_allow_ingress_any_port",
         "ec2_confidential_workload_host_public_ip"
       ]
     },
@@ -1485,14 +1417,11 @@
       "Checks": [
         "cloudtrail_kms_encryption_enabled",
         "ec2_ebs_volume_encryption",
-        "ec2_ebs_volume_encryption",
         "efs_encryption_at_rest_enabled",
         "opensearch_service_domains_encryption_at_rest_enabled",
         "cloudwatch_log_group_kms_encryption_enabled",
         "rds_instance_storage_encrypted",
-        "rds_instance_storage_encrypted",
         "redshift_cluster_audit_logging",
-        "s3_bucket_default_encryption",
         "s3_bucket_default_encryption",
         "sagemaker_notebook_instance_encryption_enabled",
         "sns_topics_kms_encryption_at_rest_enabled",
@@ -1513,7 +1442,6 @@
       ],
       "Checks": [
         "ec2_instance_managed_by_ssm",
-        "ssm_managed_compliant_patching",
         "ssm_managed_compliant_patching"
       ]
     },
@@ -1557,7 +1485,6 @@
         "cloudtrail_multi_region_enabled",
         "cloudtrail_s3_dataevents_read_enabled",
         "cloudtrail_s3_dataevents_write_enabled",
-        "cloudtrail_multi_region_enabled",
         "guardduty_is_enabled",
         "redshift_cluster_audit_logging",
         "securityhub_enabled"
@@ -1593,7 +1520,6 @@
         "cloudtrail_multi_region_enabled",
         "cloudtrail_s3_dataevents_read_enabled",
         "cloudtrail_s3_dataevents_write_enabled",
-        "cloudtrail_multi_region_enabled",
         "cloudwatch_changes_to_network_acls_alarm_configured",
         "cloudwatch_changes_to_network_gateways_alarm_configured",
         "cloudwatch_changes_to_network_route_tables_alarm_configured",
@@ -1636,7 +1562,6 @@
         "cloudtrail_multi_region_enabled",
         "cloudtrail_s3_dataevents_read_enabled",
         "cloudtrail_s3_dataevents_write_enabled",
-        "cloudtrail_multi_region_enabled",
         "cloudwatch_changes_to_network_acls_alarm_configured",
         "cloudwatch_changes_to_network_gateways_alarm_configured",
         "cloudwatch_changes_to_network_route_tables_alarm_configured",
@@ -1677,7 +1602,6 @@
         "cloudtrail_multi_region_enabled",
         "cloudtrail_s3_dataevents_read_enabled",
         "cloudtrail_s3_dataevents_write_enabled",
-        "cloudtrail_multi_region_enabled",
         "cloudwatch_changes_to_network_acls_alarm_configured",
         "cloudwatch_changes_to_network_gateways_alarm_configured",
         "cloudwatch_changes_to_network_route_tables_alarm_configured",
@@ -1790,9 +1714,7 @@
       "Checks": [
         "cloudwatch_log_group_retention_policy_specific_days_enabled",
         "dynamodb_tables_pitr_enabled",
-        "dynamodb_tables_pitr_enabled",
         "efs_have_backup_enabled",
-        "rds_instance_backup_enabled",
         "rds_instance_backup_enabled",
         "redshift_cluster_automated_snapshot",
         "s3_bucket_object_versioning"

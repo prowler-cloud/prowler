@@ -13,7 +13,7 @@ from tests.providers.aws.utils import (
 class Test_macie_automated_sensitive_data_discovery_enabled:
     @mock_aws
     def test_macie_disabled(self):
-        macie_client = mock.MagicMock
+        macie_client = mock.MagicMock()
         macie_client.provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         macie_client.audited_account = AWS_ACCOUNT_NUMBER
         macie_client.audited_account_arn = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
@@ -56,7 +56,7 @@ class Test_macie_automated_sensitive_data_discovery_enabled:
 
     @mock_aws
     def test_macie_enabled_automated_discovery_disabled(self):
-        macie_client = mock.MagicMock
+        macie_client = mock.MagicMock()
         macie_client.provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         macie_client.audited_account = AWS_ACCOUNT_NUMBER
         macie_client.audited_account_arn = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"
@@ -109,7 +109,7 @@ class Test_macie_automated_sensitive_data_discovery_enabled:
 
     @mock_aws
     def test_macie_enabled_automated_discovery_enabled(self):
-        macie_client = mock.MagicMock
+        macie_client = mock.MagicMock()
         macie_client.provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         macie_client.audited_account = AWS_ACCOUNT_NUMBER
         macie_client.audited_account_arn = f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:root"

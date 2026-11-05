@@ -3,8 +3,10 @@ import hashlib
 import os
 import re
 from collections.abc import Mapping
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from datetime import datetime, timedelta
+from threading import Lock
 from typing import Dict, List, Optional
 
 import requests
@@ -416,6 +418,7 @@ class Jira:
         api_token: str = None,
         domain: str = None,
     ):
+        self._token_lock = Lock()
         self._redirect_uri = redirect_uri
         self._client_id = client_id
         self._client_secret = client_secret
@@ -1017,11 +1020,15 @@ class Jira:
             if self._using_basic_auth:
                 return self._access_token
 
-            if self.auth_expiration and datetime.now() < datetime.fromisoformat(
-                self.auth_expiration
-            ):
+            if self._access_token_is_valid():
                 return self._access_token
-            else:
+
+            # Atlassian rotates refresh tokens, so two concurrent refreshes with
+            # the same one would invalidate each other. Re-check under the lock
+            # in case another thread refreshed while we waited for it.
+            with self._token_lock:
+                if self._access_token_is_valid():
+                    return self._access_token
                 return self.refresh_access_token()
         except JiraRefreshTokenError as refresh_error:
             raise refresh_error
@@ -1033,6 +1040,12 @@ class Jira:
                 message="Failed to get the access token",
                 file=os.path.basename(__file__),
             )
+
+    def _access_token_is_valid(self) -> bool:
+        """Return whether the current OAuth access token has not expired."""
+        return bool(self.auth_expiration) and datetime.now() < datetime.fromisoformat(
+            self.auth_expiration
+        )
 
     def refresh_access_token(self) -> str:
         """Refresh the access token
@@ -1128,15 +1141,21 @@ class Jira:
             projects = jira.get_projects()
 
             issue_types = {}
-            for project_key in projects:
-                try:
-                    issue_types[project_key] = jira.get_available_issue_types(
-                        project_key
-                    )
-                except Exception as e:
-                    logger.warning(
-                        f"Failed to get issue types for project {project_key}: {e}"
-                    )
+            with ThreadPoolExecutor(max_workers=10) as executor:
+                future_to_project = {
+                    executor.submit(
+                        jira.get_available_issue_types, project_key
+                    ): project_key
+                    for project_key in projects
+                }
+                for future in as_completed(future_to_project):
+                    project_key = future_to_project[future]
+                    try:
+                        issue_types[project_key] = future.result()
+                    except Exception as e:
+                        logger.warning(
+                            f"Failed to get issue types for project {project_key}: {e}"
+                        )
 
             return JiraConnection(
                 is_connected=True, projects=projects, issue_types=issue_types
@@ -1296,7 +1315,10 @@ class Jira:
 
             if response.status_code == 200:
                 if len(response.json()["projects"]) == 0:
-                    logger.error("No projects found")
+                    # Expected per-project condition (e.g. the integration user lacks
+                    # "create issue" rights on this specific project) — the caller in
+                    # test_connection() already treats this as non-fatal, so this isn't
+                    # an error worth alerting on.
                     raise JiraNoProjectsError(
                         message="No projects found in Jira",
                         file=os.path.basename(__file__),
@@ -1316,6 +1338,13 @@ class Jira:
             raise refresh_error
         except JiraRefreshTokenResponseError as response_error:
             raise response_error
+        except JiraNoProjectsError as no_projects_error:
+            # Expected per-project condition; the caller decides whether to log it.
+            raise JiraGetAvailableIssueTypesError(
+                message="Failed to get available issue types",
+                file=os.path.basename(__file__),
+                original_exception=no_projects_error,
+            )
         except Exception as e:
             logger.error(f"Failed to get available issue types: {e}")
             raise JiraGetAvailableIssueTypesError(

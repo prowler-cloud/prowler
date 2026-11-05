@@ -139,4 +139,7 @@ def test_stepfunctions_statemachine_encrypted_with_cmk(
             assert result[0].resource_id == STATE_MACHINE_ID
             assert result[0].resource_arn == STATE_MACHINE_ARN
             assert result[0].region == AWS_REGION_EU_WEST_1
-            assert result[0].resource == state_machines[STATE_MACHINE_ARN]
+            assert result[0].resource == {
+                **state_machines[STATE_MACHINE_ARN].dict(),
+                "definition": "REDACTED",
+            }

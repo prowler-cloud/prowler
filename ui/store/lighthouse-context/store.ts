@@ -1,6 +1,19 @@
 import { create } from "zustand";
 
+import { isSampleId } from "@/lib/sample-preview/sample-guards";
 import type { LighthouseContextItem } from "@/types/lighthouse-context";
+
+// Sample records exist only in the UI; Lighthouse would look them up in vain.
+const withoutSample = (item: LighthouseContextItem | null) =>
+  item && isSampleId(item.id) ? null : item;
+
+const omitContribution = (
+  contributions: Record<string, LighthouseContextItem>,
+  contributorId: string,
+) =>
+  Object.fromEntries(
+    Object.entries(contributions).filter(([id]) => id !== contributorId),
+  );
 
 export interface LighthouseContextStoreState {
   contributions: Record<string, LighthouseContextItem>;
@@ -25,23 +38,18 @@ export const useLighthouseContextStore = create<LighthouseContextStoreState>(
     focusedOwnerToken: 0,
     registerContribution: (contributorId, item) =>
       set((state) => ({
-        contributions: {
-          ...state.contributions,
-          [contributorId]: item,
-        },
+        contributions: isSampleId(item.id)
+          ? omitContribution(state.contributions, contributorId)
+          : { ...state.contributions, [contributorId]: item },
       })),
     removeContribution: (contributorId) =>
       set((state) => ({
-        contributions: Object.fromEntries(
-          Object.entries(state.contributions).filter(
-            ([id]) => id !== contributorId,
-          ),
-        ),
+        contributions: omitContribution(state.contributions, contributorId),
       })),
     setFocusedContext: (ownerToken, focused) =>
       set((state) =>
         ownerToken >= state.focusedOwnerToken
-          ? { focused, focusedOwnerToken: ownerToken }
+          ? { focused: withoutSample(focused), focusedOwnerToken: ownerToken }
           : state,
       ),
     clearFocusedContext: (ownerToken) =>
