@@ -40,6 +40,11 @@ export function getOptionalText(value: unknown): string | undefined {
     : undefined;
 }
 
+/** Uppercases the first letter ("pending" → "Pending"). */
+export function capitalize(value: string): string {
+  return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
 interface IncludedApiItemRelationshipRef {
   id: string;
 }

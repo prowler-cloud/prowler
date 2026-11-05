@@ -656,7 +656,8 @@
         "apikeys_api_restrictions_configured",
         "apikeys_key_rotated_in_90_days",
         "artifacts_container_analysis_enabled",
-        "bigquery_dataset_cmk_encryption"
+        "bigquery_dataset_cmk_encryption",
+        "appengine_version_php_runtime_supported"
       ],
       "Attributes": [
         {
@@ -733,7 +734,8 @@
       "Checks": [
         "compute_instance_shielded_vm_enabled",
         "gcr_container_scanning_enabled",
-        "artifacts_container_analysis_enabled"
+        "artifacts_container_analysis_enabled",
+        "appengine_version_php_runtime_supported"
       ],
       "Attributes": [
         {
@@ -889,7 +891,6 @@
         "dns_dnssec_disabled",
         "dns_rsasha1_in_use_to_key_sign_in_dnssec",
         "dns_rsasha1_in_use_to_zone_sign_in_dnssec",
-        "bigquery_dataset_cmk_encryption",
         "bigquery_table_cmk_encryption",
         "compute_instance_encryption_with_csek_enabled",
         "dataproc_encrypted_with_cmks_disabled"

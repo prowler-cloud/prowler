@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import ipaddress
+import os
 import re
 import socket
 import time
@@ -15,6 +16,7 @@ import tldextract
 from prowler.config.config import prowler_version
 from prowler.lib.logger import logger
 from prowler.providers.image.exceptions.exceptions import (
+    ImageInvalidAllowedNetworksError,
     ImageRegistryAuthError,
     ImageRegistryNetworkError,
 )
@@ -48,6 +50,30 @@ def _registrable_domain(host: str) -> str | None:
     return f"{ext.domain}.{ext.suffix}"
 
 
+ALLOWED_PRIVATE_NETWORKS_ENV = "PROWLER_IMAGE_PROVIDER_ALLOWED_PRIVATE_NETWORKS"
+
+
+def _parse_allowed_private_networks(
+    raw: str | None,
+) -> tuple[ipaddress.IPv4Network | ipaddress.IPv6Network, ...]:
+    """Parse the comma-separated IP/CIDR allowlist; malformed entries fail loudly."""
+    if raw is None or not raw.strip():
+        return ()
+    networks = []
+    for entry in raw.split(","):
+        entry = entry.strip()
+        if not entry:
+            continue
+        try:
+            networks.append(ipaddress.ip_network(entry, strict=False))
+        except ValueError as exc:
+            raise ImageInvalidAllowedNetworksError(
+                file=__file__,
+                message=f"Malformed entry {entry!r} in {ALLOWED_PRIVATE_NETWORKS_ENV}: {exc}",
+            )
+    return tuple(networks)
+
+
 class RegistryAdapter(ABC):
     """Abstract base class for registry adapters."""
 
@@ -64,6 +90,14 @@ class RegistryAdapter(ABC):
         self._password = password
         self._token = token
         self.verify_ssl = verify_ssl
+        self._allowed_private_networks = _parse_allowed_private_networks(
+            os.environ.get(ALLOWED_PRIVATE_NETWORKS_ENV)
+        )
+        if self._allowed_private_networks:
+            logger.warning(
+                f"{ALLOWED_PRIVATE_NETWORKS_ENV} is set — SSRF protection relaxed for private networks: "
+                + ", ".join(str(net) for net in self._allowed_private_networks)
+            )
 
     @property
     def password(self) -> str | None:
@@ -98,6 +132,15 @@ class RegistryAdapter(ABC):
         """Enumerate all tags for a repository."""
         ...
 
+    def is_container_image(self, repository: str, tag: str) -> bool:
+        """Whether repository:tag points to a scannable container image.
+
+        Registries that store arbitrary OCI artifacts (Helm charts, cosign
+        signatures, SBOMs...) override this; by default everything is assumed
+        to be an image.
+        """
+        return True
+
     def _origin_url(self) -> str:
         """The URL whose host the validator compares against when enforce_origin=True.
 
@@ -105,6 +148,30 @@ class RegistryAdapter(ABC):
         ``registry_url`` (e.g., Docker Hub talks to ``registry-1.docker.io``).
         """
         return self.registry_url
+
+    def _ip_is_allowed(self, ip_str: str) -> bool:
+        """Whether ip_str falls inside an operator-allowlisted private network."""
+        try:
+            addr = ipaddress.ip_address(ip_str)
+        except ValueError:
+            return False
+        return any(
+            addr.version == network.version and addr in network
+            for network in self._allowed_private_networks
+        )
+
+    def _host_in_allowed_networks(self, host: str) -> bool:
+        """Whether host is a literal allowlisted IP or resolves only to allowlisted IPs."""
+        try:
+            ipaddress.ip_address(host)
+        except ValueError:
+            try:
+                infos = socket.getaddrinfo(host, None)
+            except socket.gaierror:
+                return False
+            ips = {sockaddr[0] for *_, sockaddr in infos}
+            return bool(ips) and all(self._ip_is_allowed(ip) for ip in ips)
+        return self._ip_is_allowed(host)
 
     def _validate_outbound_url(
         self,
@@ -119,10 +186,12 @@ class RegistryAdapter(ABC):
         - canonicalise via ``requests.PreparedRequest`` so validator and connector
           parse the same string the same way;
         - reject schemes other than http/https;
-        - reject literal non-public IPs (private, loopback, link-local, ...);
-        - reject hostnames whose A/AAAA records resolve to non-public IPs;
+        - reject literal non-public IPs (private, loopback, link-local, ...)
+          unless inside PROWLER_IMAGE_PROVIDER_ALLOWED_PRIVATE_NETWORKS;
+        - reject hostnames whose A/AAAA records resolve to non-public IPs,
+          with the same allowlist exception;
         - when ``enforce_origin=True``, reject hosts that don't share the
-          registry's registrable domain.
+          registry's registrable domain or resolve into the allowlist.
 
         Returns the canonical URL the caller should pass to ``requests``.
         """
@@ -165,7 +234,9 @@ class RegistryAdapter(ABC):
                 infos = []
             for *_, sockaddr in infos:
                 resolved_ip = sockaddr[0]
-                if _ip_is_non_public(resolved_ip):
+                if _ip_is_non_public(resolved_ip) and not self._ip_is_allowed(
+                    resolved_ip
+                ):
                     raise ImageRegistryAuthError(
                         file=__file__,
                         message=(
@@ -174,7 +245,9 @@ class RegistryAdapter(ABC):
                         ),
                     )
         else:
-            if any(getattr(addr, prop) for prop in _NON_PUBLIC_IP_PROPERTIES):
+            if any(
+                getattr(addr, prop) for prop in _NON_PUBLIC_IP_PROPERTIES
+            ) and not self._ip_is_allowed(host):
                 raise ImageRegistryAuthError(
                     file=__file__,
                     message=(
@@ -188,7 +261,10 @@ class RegistryAdapter(ABC):
             if registry_host and host != registry_host:
                 target_d = _registrable_domain(host)
                 registry_d = _registrable_domain(registry_host)
-                if not (target_d and registry_d and target_d == registry_d):
+                same_domain = bool(target_d and registry_d and target_d == registry_d)
+                # Non-public TLDs (.local, .internal, bare hostnames) have no
+                # registrable domain; fall back to the operator allowlist.
+                if not same_domain and not self._host_in_allowed_networks(host):
                     raise ImageRegistryAuthError(
                         file=__file__,
                         message=(

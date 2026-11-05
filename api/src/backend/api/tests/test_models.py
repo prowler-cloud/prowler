@@ -1,14 +1,16 @@
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
 import pytest
 from allauth.socialaccount.models import SocialApp
 from api.db_router import MainRouter
 from api.models import (
+    Provider,
     ProviderComplianceScore,
     Resource,
     ResourceTag,
     SAMLConfiguration,
     SAMLDomainIndex,
+    Scan,
     StateChoices,
     StatusChoices,
     TenantComplianceSummary,
@@ -524,3 +526,226 @@ class TestTenantComplianceSummaryModel:
 
         assert summary1.id != summary2.id
         assert summary1.requirements_passed != summary2.requirements_passed
+
+
+def _latest_scan_fixture(tenant, provider, *, completed_at, inserted_at=None, **kwargs):
+    scan = Scan.objects.create(
+        tenant_id=tenant.id,
+        provider=provider,
+        trigger=kwargs.pop("trigger", Scan.TriggerChoices.MANUAL),
+        state=kwargs.pop("state", StateChoices.COMPLETED),
+        completed_at=completed_at,
+        **kwargs,
+    )
+    if inserted_at is not None:
+        # `inserted_at` is auto_now_add, so it has to be forced after the fact.
+        Scan.all_objects.filter(pk=scan.pk).update(inserted_at=inserted_at)
+        scan.refresh_from_db()
+    return scan
+
+
+@pytest.mark.django_db
+class TestScanQuerySetOrdering:
+    def test_completed_later_wins_over_inserted_later(
+        self, tenants_fixture, aws_provider
+    ):
+        """The scan that FINISHED last is current, not the one that started last."""
+        tenant, *_ = tenants_fixture
+        now = datetime.now(UTC)
+
+        finished_last = _latest_scan_fixture(
+            tenant,
+            aws_provider,
+            inserted_at=now - timedelta(hours=3),
+            completed_at=now,
+        )
+        _latest_scan_fixture(
+            tenant,
+            aws_provider,
+            inserted_at=now - timedelta(hours=1),
+            completed_at=now - timedelta(hours=1),
+        )
+
+        assert Scan.all_objects.filter(
+            tenant_id=tenant.id
+        ).latest_ids_per_provider() == [finished_last.id]
+
+    def test_null_completed_at_provider_is_still_returned(
+        self, tenants_fixture, aws_provider
+    ):
+        """NULLS LAST, not `completed_at__isnull=False`.
+
+        Excluding NULL `completed_at` would drop the provider from every
+        "latest" endpoint instead of falling back to `inserted_at`.
+        """
+        tenant, *_ = tenants_fixture
+        only_scan = _latest_scan_fixture(tenant, aws_provider, completed_at=None)
+
+        assert Scan.all_objects.filter(
+            tenant_id=tenant.id
+        ).latest_ids_per_provider() == [only_scan.id]
+
+    def test_null_completed_at_never_outranks_a_finished_scan(
+        self, tenants_fixture, aws_provider
+    ):
+        """Postgres sorts NULLs first under DESC; NULLS LAST is what fixes it."""
+        tenant, *_ = tenants_fixture
+        now = datetime.now(UTC)
+
+        finished = _latest_scan_fixture(
+            tenant,
+            aws_provider,
+            inserted_at=now - timedelta(hours=2),
+            completed_at=now - timedelta(hours=2),
+        )
+        _latest_scan_fixture(
+            tenant,
+            aws_provider,
+            inserted_at=now,
+            completed_at=None,
+        )
+
+        assert Scan.all_objects.filter(
+            tenant_id=tenant.id
+        ).latest_ids_per_provider() == [finished.id]
+
+    def test_id_breaks_an_exact_timestamp_tie_deterministically(
+        self, tenants_fixture, aws_provider
+    ):
+        tenant, *_ = tenants_fixture
+        now = datetime.now(UTC)
+
+        scans = [
+            _latest_scan_fixture(
+                tenant, aws_provider, inserted_at=now, completed_at=now
+            )
+            for _ in range(3)
+        ]
+        expected = max(scan.id for scan in scans)
+
+        picks = {
+            Scan.all_objects.filter(tenant_id=tenant.id).latest_ids_per_provider()[0]
+            for _ in range(5)
+        }
+        assert picks == {expected}
+
+
+@pytest.mark.django_db
+class TestScanQuerySetEligibility:
+    def test_unfinished_scans_are_excluded(self, tenants_fixture, aws_provider):
+        tenant, *_ = tenants_fixture
+        _latest_scan_fixture(
+            tenant,
+            aws_provider,
+            completed_at=None,
+            state=StateChoices.EXECUTING,
+        )
+        assert (
+            Scan.all_objects.filter(tenant_id=tenant.id).latest_ids_per_provider() == []
+        )
+
+
+@pytest.mark.django_db
+class TestScanQuerySetManagerChoice:
+    def test_active_manager_hides_soft_deleted_providers(
+        self, tenants_fixture, aws_provider
+    ):
+        """`Scan.objects` drops soft-deleted providers, `all_objects` keeps them.
+
+        The queryset must not decide this for the caller.
+        """
+        tenant, *_ = tenants_fixture
+        scan = _latest_scan_fixture(
+            tenant, aws_provider, completed_at=datetime.now(UTC)
+        )
+
+        Provider.all_objects.filter(pk=aws_provider.pk).update(is_deleted=True)
+
+        assert Scan.all_objects.filter(
+            tenant_id=tenant.id
+        ).latest_ids_per_provider() == [scan.id]
+        assert Scan.objects.filter(tenant_id=tenant.id).latest_ids_per_provider() == []
+
+
+@pytest.mark.django_db
+class TestScanQuerySetPerProviderScoping:
+    def test_one_scan_per_provider(self, tenants_fixture, aws_provider_pair):
+        tenant, *_ = tenants_fixture
+        provider_one, provider_two = aws_provider_pair
+        now = datetime.now(UTC)
+
+        newest_one = _latest_scan_fixture(tenant, provider_one, completed_at=now)
+        _latest_scan_fixture(tenant, provider_one, completed_at=now - timedelta(days=1))
+        newest_two = _latest_scan_fixture(tenant, provider_two, completed_at=now)
+
+        assert set(
+            Scan.all_objects.filter(tenant_id=tenant.id).latest_ids_per_provider()
+        ) == {newest_one.id, newest_two.id}
+
+    def test_caller_filters_are_preserved(self, tenants_fixture, aws_provider_pair):
+        tenant, *_ = tenants_fixture
+        provider_one, provider_two = aws_provider_pair
+        now = datetime.now(UTC)
+
+        scan_one = _latest_scan_fixture(tenant, provider_one, completed_at=now)
+        _latest_scan_fixture(tenant, provider_two, completed_at=now)
+
+        assert Scan.all_objects.filter(
+            tenant_id=tenant.id, provider__in=[provider_one]
+        ).latest_ids_per_provider() == [scan_one.id]
+
+    def test_latest_first_is_ordered_not_deduplicated(
+        self, tenants_fixture, aws_provider
+    ):
+        tenant, *_ = tenants_fixture
+        now = datetime.now(UTC)
+
+        newest = _latest_scan_fixture(tenant, aws_provider, completed_at=now)
+        older = _latest_scan_fixture(
+            tenant, aws_provider, completed_at=now - timedelta(days=1)
+        )
+
+        ordered = list(
+            Scan.all_objects.filter(
+                tenant_id=tenant.id, provider_id=aws_provider.id
+            ).latest_first()
+        )
+        assert [scan.id for scan in ordered] == [newest.id, older.id]
+
+    def test_tenant_isolation(self, tenants_fixture, aws_provider):
+        tenant, other_tenant, *_ = tenants_fixture
+        _latest_scan_fixture(tenant, aws_provider, completed_at=datetime.now(UTC))
+
+        assert (
+            Scan.all_objects.filter(tenant_id=other_tenant.id).latest_ids_per_provider()
+            == []
+        )
+
+    def test_empty_queryset_returns_empty_list(self, tenants_fixture):
+        tenant, *_ = tenants_fixture
+        assert (
+            Scan.all_objects.filter(tenant_id=tenant.id).latest_ids_per_provider() == []
+        )
+
+
+@pytest.mark.django_db
+class TestScanQuerySetPerProviderQuerysetShape:
+    def test_returns_a_queryset_not_a_list(self, tenants_fixture, aws_provider):
+        tenant, *_ = tenants_fixture
+        _latest_scan_fixture(tenant, aws_provider, completed_at=datetime.now(UTC))
+
+        qs = Scan.all_objects.filter(tenant_id=tenant.id).latest_per_provider()
+        # Callers chain .values(...) / .values_list(...) onto this.
+        assert qs.values_list("provider_id", flat=True).count() == 1
+
+
+@pytest.mark.django_db
+class TestScanQuerySetRelatedManager:
+    def test_reverse_relation_exposes_the_methods(self, tenants_fixture, aws_provider):
+        tenant, *_ = tenants_fixture
+        now = datetime.now(UTC)
+
+        newest = _latest_scan_fixture(tenant, aws_provider, completed_at=now)
+        _latest_scan_fixture(tenant, aws_provider, completed_at=now - timedelta(days=1))
+
+        assert aws_provider.scans.latest_first().first().id == newest.id

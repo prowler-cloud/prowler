@@ -1,0 +1,1 @@
+`zod` to 4.6.6, `js-yaml` to 4.3.2 and `vitest` to 4.1.11, plus transitive `hono`, `vite`, `brace-expansion`, `fast-uri`, `ip-address`, `body-parser`, `qs` and `baseline-browser-mapping` to patched versions, resolving 33 npm audit advisories (9 high, 21 moderate, 3 low)

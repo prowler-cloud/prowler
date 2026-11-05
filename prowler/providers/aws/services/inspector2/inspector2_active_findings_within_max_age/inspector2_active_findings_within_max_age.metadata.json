@@ -1,0 +1,43 @@
+{
+  "Provider": "aws",
+  "CheckID": "inspector2_active_findings_within_max_age",
+  "CheckTitle": "Inspector2 has no active findings older than the configured maximum age",
+  "CheckType": [
+    "Software and Configuration Checks/Vulnerabilities/CVE",
+    "Software and Configuration Checks/Patch Management",
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "inspector2",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Other",
+  "ResourceGroup": "security",
+  "Description": "**Amazon Inspector** active findings are evaluated against the configurable `inspector2_active_finding_max_age_days` threshold (192 days by default), using the time since each finding was first observed (`firstObservedAt`). Suppressed and closed findings are not active and are not evaluated.\n\nThe result is reported per Region where Inspector is enabled.",
+  "Risk": "Findings left open for months show that **vulnerability response** is not keeping up. Long-lived vulnerabilities give attackers time to discover and exploit them, and a backlog that is neither fixed nor formally accepted hides real risk from decision makers.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/inspector/latest/user/findings-understanding.html",
+    "https://docs.aws.amazon.com/inspector/latest/user/findings-managing-supression-rules.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. In the Amazon Inspector console, open Findings and filter by Finding status = Active\n2. Remediate the findings first observed longest ago\n3. For vulnerabilities you formally accept, choose Suppression rules in the navigation pane and create a rule so they stop counting as active",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Remediate findings within your vulnerability response timeframes. Vulnerabilities you decide not to fix should be formally **accepted** and suppressed with a documented justification instead of staying active indefinitely.",
+      "Url": "https://hub.prowler.com/check/inspector2_active_findings_within_max_age"
+    }
+  },
+  "Categories": [
+    "vulnerabilities"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "inspector2_active_findings_exist"
+  ],
+  "Notes": ""
+}

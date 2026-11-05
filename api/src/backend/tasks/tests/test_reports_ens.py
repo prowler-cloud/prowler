@@ -2,6 +2,7 @@ import io
 from unittest.mock import Mock, patch
 
 import pytest
+from reportlab.lib.units import inch
 from reportlab.platypus import Image, PageBreak, Paragraph, Table
 from tasks.jobs.reports import FRAMEWORK_REGISTRY, ComplianceData, RequirementData
 from tasks.jobs.reports import ens as ens_report_module
@@ -188,6 +189,31 @@ class TestENSCoverPage:
 
         tables = [e for e in elements if isinstance(e, Table)]
         assert len(tables) >= 1  # At least info table
+
+    def test_cover_page_wraps_long_account_id(
+        self, ens_generator, basic_ens_compliance_data
+    ):
+        provider = Mock()
+        provider.provider = "oraclecloud"
+        provider.uid = "ocid1.tenancy.oc1.." + "a" * 70
+        provider.alias = None
+        basic_ens_compliance_data.provider_obj = provider
+        basic_ens_compliance_data.requirements = []
+        basic_ens_compliance_data.attributes_by_requirement_id = {}
+
+        elements = ens_generator.create_cover_page(basic_ens_compliance_data)
+
+        table = next(
+            e
+            for e in elements
+            if isinstance(e, Table)
+            and any(row[0] == "Account ID:" for row in e._cellvalues)
+        )
+        values = [row[1] for row in table._cellvalues]
+        assert all(isinstance(v, Paragraph) for v in values)
+        account_id = next(v for v in values if v.text == provider.uid)
+        _, height = account_id.wrap(4 * inch, 1000)
+        assert height > account_id.style.leading
 
     def test_cover_page_has_warning_about_manual(
         self, ens_generator, basic_ens_compliance_data

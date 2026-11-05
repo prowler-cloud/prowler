@@ -15,7 +15,7 @@ FINDING_ARN = (
 class Test_inspector2_active_findings_exist:
     def test_enabled_no_finding(self):
         # Mock the inspector2 client
-        inspector2_client = mock.MagicMock
+        inspector2_client = mock.MagicMock()
 
         inspector2_client.provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         inspector2_client.audited_account = AWS_ACCOUNT_NUMBER
@@ -69,7 +69,7 @@ class Test_inspector2_active_findings_exist:
 
     def test_enabled_with_no_active_finding(self):
         # Mock the inspector2 client
-        inspector2_client = mock.MagicMock
+        inspector2_client = mock.MagicMock()
 
         inspector2_client.provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         inspector2_client.audited_account = AWS_ACCOUNT_NUMBER
@@ -123,7 +123,7 @@ class Test_inspector2_active_findings_exist:
 
     def test_enabled_with_active_finding(self):
         # Mock the inspector2 client
-        inspector2_client = mock.MagicMock
+        inspector2_client = mock.MagicMock()
 
         inspector2_client.provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         inspector2_client.audited_account = AWS_ACCOUNT_NUMBER
@@ -176,7 +176,7 @@ class Test_inspector2_active_findings_exist:
 
     def test_enabled_with_none_finding(self):
         # Mock the inspector2 client
-        inspector2_client = mock.MagicMock
+        inspector2_client = mock.MagicMock()
 
         inspector2_client.provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         inspector2_client.audited_account = AWS_ACCOUNT_NUMBER
@@ -219,14 +219,14 @@ class Test_inspector2_active_findings_exist:
 
     def test_inspector2_disabled_ignoring(self):
         # Mock the inspector2 client
-        inspector2_client = mock.MagicMock
-        awslambda_client = mock.MagicMock
+        inspector2_client = mock.MagicMock()
+        awslambda_client = mock.MagicMock()
         awslambda_client.functions = {}
-        ecr_client = mock.MagicMock
+        ecr_client = mock.MagicMock()
         ecr_client.registries = {}
-        ecr_client.registries[AWS_REGION_EU_WEST_1] = mock.MagicMock
+        ecr_client.registries[AWS_REGION_EU_WEST_1] = mock.MagicMock()
         ecr_client.registries[AWS_REGION_EU_WEST_1].repositories = []
-        ec2_client = mock.MagicMock
+        ec2_client = mock.MagicMock()
         ec2_client.instances = []
         ec2_client.provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         ecr_client.provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])

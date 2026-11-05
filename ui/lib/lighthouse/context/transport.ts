@@ -172,6 +172,10 @@ function toApiContextItem(
         provider_uid: item.providerUid,
         provider_type: item.providerType,
         total: item.total,
+        wizard_step: item.wizardStep,
+        wizard_mode: item.wizardMode,
+        connection_method: item.connectionMethod,
+        docs_url: item.docsUrl,
       });
     case LIGHTHOUSE_CONTEXT_KIND.ALERT:
       return compact({
@@ -281,6 +285,10 @@ function fromApiContextItem(value: unknown): unknown | undefined {
         providerUid: value.provider_uid,
         providerType: value.provider_type,
         total: value.total,
+        wizardStep: value.wizard_step,
+        wizardMode: value.wizard_mode,
+        connectionMethod: value.connection_method,
+        docsUrl: value.docs_url,
       });
     case LIGHTHOUSE_CONTEXT_KIND.ALERT:
       return compact({

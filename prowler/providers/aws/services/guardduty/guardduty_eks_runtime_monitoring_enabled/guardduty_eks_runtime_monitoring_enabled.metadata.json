@@ -22,10 +22,10 @@
   ],
   "Remediation": {
     "Code": {
-      "CLI": "aws guardduty update-detector --detector-id <detector-id> --features name=EKS_RUNTIME_MONITORING,status=ENABLED",
+      "CLI": "aws guardduty update-detector --detector-id <detector-id> --features Name=EKS_RUNTIME_MONITORING,Status=ENABLED",
       "NativeIaC": "```yaml\nResources:\n  <example_resource_name>:\n    Type: AWS::GuardDuty::Detector\n    Properties:\n      Enable: true\n      Features:\n        - Name: EKS_RUNTIME_MONITORING   # Critical: selects EKS Runtime Monitoring feature\n          Status: ENABLED                # Critical: enables the feature to pass the check\n```",
       "Other": "1. Open the AWS Console and go to Amazon GuardDuty\n2. In the left pane, select Settings > Runtime monitoring\n3. Under EKS Runtime Monitoring, switch the status to Enabled\n4. Click Save changes",
-      "Terraform": "```hcl\nresource \"aws_guardduty_detector\" \"<example_resource_name>\" {\n  enable = true\n\n  features {\n    name   = \"EKS_RUNTIME_MONITORING\"  # Critical: selects EKS Runtime Monitoring feature\n    status = \"ENABLED\"                 # Critical: enables the feature to pass the check\n  }\n}\n```"
+      "Terraform": "```hcl\nresource \"aws_guardduty_detector\" \"<example_resource_name>\" {\n  enable = true\n}\n\nresource \"aws_guardduty_detector_feature\" \"<example_resource_name>\" {\n  detector_id = aws_guardduty_detector.<example_resource_name>.id\n  name        = \"EKS_RUNTIME_MONITORING\"  # Critical: selects EKS Runtime Monitoring\n  status      = \"ENABLED\"                 # Critical: enables the feature\n\n  additional_configuration {\n    name   = \"EKS_ADDON_MANAGEMENT\"\n    status = \"ENABLED\"\n  }\n}\n```"
     },
     "Recommendation": {
       "Text": "- Enable **EKS Runtime Monitoring** with automated agent management across all accounts and clusters\n- Enforce **least privilege** for agents and segment cluster access\n- Integrate findings with response workflows and periodically verify runtime coverage",

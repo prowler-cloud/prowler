@@ -124,6 +124,18 @@ To manually send individual Findings to Jira:
 
     ![Send to Jira modal](/images/prowler-app/jira/send-to-jira-modal.png)
 
+### Finding Reference in the Jira Issue
+
+<VersionBadge version="5.41.0" />
+
+Every Jira issue created from a single Finding carries a stable reference back to that Finding, so issues can be filtered, searched with Jira Query Language (JQL), or matched by automation:
+
+* **Labels**: `prowler`, `prowler-<provider>`, `prowler-<severity>`, `prowler-<check-id>` and `prowler-finding-<finding-uid>`. Labels are sanitized deterministically: whitespace becomes `_`, control characters are removed, and values are truncated to Jira's 255-character label limit.
+* **Finding URL**: a link that opens the Finding in Prowler, filtered by its unique identifier (UID) so it keeps working after later scans.
+* **Tenant Info**: the name of the Prowler organization that sent the Finding.
+
+Prowler Cloud always includes the Finding URL. In Prowler Local Server, set `DJANGO_UI_BASE_URL` in the API environment (for example, `https://prowler.example.com`) to enable it. When the variable is empty, the issue is created without the link.
+
 ## Integration Status
 
 Monitor and manage your Jira integrations through the management interface:
@@ -159,13 +171,13 @@ Support for custom field mapping is planned for a future release.
 
 ## Troubleshooting
 
-### Connection test fails
+### Connection Test Fails
 
 * Verify Jira instance domain is correct and accessible
 * Confirm API token or credentials are valid
 * Ensure API access is enabled in Jira settings and the needed scopes are granted
 
-### Check task status (API)
+### Check Task Status (API)
 
 If the Jira issue does not appear in your Jira project, follow these steps to verify the export task status via the API.
 
