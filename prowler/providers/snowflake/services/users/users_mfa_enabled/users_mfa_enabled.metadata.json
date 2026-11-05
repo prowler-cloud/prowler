@@ -1,0 +1,37 @@
+{
+  "Provider": "snowflake",
+  "CheckID": "users_mfa_enabled",
+  "CheckTitle": "Snowflake user with password authentication has MFA enabled",
+  "CheckType": [],
+  "ServiceName": "users",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "**Snowflake users** that can authenticate with a **password** are assessed for **multi-factor authentication** enrolment. Native MFA (`HAS_MFA`) and the legacy Duo integration (`EXT_AUTHN_DUO`) both count as enrolment, and an active bypass window (`BYPASS_MFA_UNTIL`) is treated as unprotected. Disabled users, and users with no password, are not reported.",
+  "Risk": "A Snowflake account holds the organisation's analytical data, and a password-only user is one phished or reused credential away from an attacker reaching it. Where that user also holds a privileged role, the same credential permits **data exfiltration** at warehouse scale and changes to **grants and network policies**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.snowflake.com/en/user-guide/security-mfa",
+    "https://docs.snowflake.com/en/sql-reference/account-usage/users"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "ALTER USER <user_name> SET MINS_TO_BYPASS_MFA = 0;",
+      "NativeIaC": "",
+      "Other": "1. Sign in to Snowsight\n2. Navigate to Admin > Users & Roles\n3. Select the user and enrol it in multi-factor authentication\n4. For service integrations, remove the password entirely and use key-pair authentication instead\n5. Enforce enrolment for human users with an authentication policy",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enrol every password-authenticating user in MFA and close any standing bypass window. Machine identities should not hold a password at all: create them with `TYPE = SERVICE` and authenticate them with a key pair, which removes the exposure rather than adding a second factor to it.",
+      "Url": "https://hub.prowler.com/check/users_mfa_enabled"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
