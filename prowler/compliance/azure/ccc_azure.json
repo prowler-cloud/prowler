@@ -1606,7 +1606,9 @@
         "monitor_diagnostic_settings_exists",
         "monitor_diagnostic_setting_with_appropriate_categories",
         "keyvault_logging_enabled",
-        "app_http_logs_enabled"
+        "app_http_logs_enabled",
+        "storage_queue_service_logging_enabled",
+        "storage_table_service_logging_enabled"
       ]
     },
     {
@@ -1645,7 +1647,9 @@
         "monitor_diagnostic_settings_exists",
         "monitor_diagnostic_setting_with_appropriate_categories",
         "keyvault_logging_enabled",
-        "app_http_logs_enabled"
+        "app_http_logs_enabled",
+        "storage_queue_service_logging_enabled",
+        "storage_table_service_logging_enabled"
       ]
     },
     {
@@ -2390,7 +2394,9 @@
         "monitor_diagnostic_settings_exists",
         "monitor_diagnostic_setting_with_appropriate_categories",
         "app_http_logs_enabled",
-        "keyvault_logging_enabled"
+        "keyvault_logging_enabled",
+        "storage_queue_service_logging_enabled",
+        "storage_table_service_logging_enabled"
       ]
     },
     {

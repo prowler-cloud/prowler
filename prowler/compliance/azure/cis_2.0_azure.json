@@ -1319,7 +1319,9 @@
     {
       "Id": "3.5",
       "Description": "Ensure Storage Logging is Enabled for Queue Service for 'Read', 'Write', and 'Delete' requests",
-      "Checks": [],
+      "Checks": [
+        "storage_queue_service_logging_enabled"
+      ],
       "Attributes": [
         {
           "Section": "3 Storage Accounts",
@@ -1491,7 +1493,9 @@
     {
       "Id": "3.13",
       "Description": "Ensure Storage logging is Enabled for Blob Service for 'Read', 'Write', and 'Delete' requests",
-      "Checks": [],
+      "Checks": [
+        "storage_blob_service_logging_enabled"
+      ],
       "Attributes": [
         {
           "Section": "3 Storage Accounts",
@@ -1511,7 +1515,9 @@
     {
       "Id": "3.14",
       "Description": "Ensure Storage Logging is Enabled for Table Service for 'Read', 'Write', and 'Delete' Requests",
-      "Checks": [],
+      "Checks": [
+        "storage_table_service_logging_enabled"
+      ],
       "Attributes": [
         {
           "Section": "3 Storage Accounts",
