@@ -23,6 +23,7 @@
         "bedrock-agentcore:ListGatewayTargets",
         "bedrock-agentcore:ListGateways",
         "bedrock-agentcore:ListMemories",
+        "bedrock-agentcore:ListTagsForResource",
         "bedrock:List*",
         "bedrock:Get*",
         "cloudtrail:GetInsightSelectors",

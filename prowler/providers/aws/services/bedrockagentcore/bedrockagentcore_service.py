@@ -24,10 +24,8 @@ class BedrockAgentCore(AWSService):
         self.browsers = {}
         self.token_vaults = {}
         self.gateway_targets = {}
-        # One error store per listing, keyed by Region. A single shared store
-        # cannot work: six collectors run per Region, so one collector's success
-        # would mask another's failure and a check reading it could not tell
-        # which inventory is incomplete. A Region absent from a store was listed
+        # One error store per listing, keyed by Region, so one collector's success
+        # cannot mask another's failure. A Region absent from a store was listed
         # successfully, so an empty inventory there means "none", not "unknown".
         self.memories_scan_errors = {}
         self.gateways_scan_errors = {}
@@ -50,6 +48,22 @@ class BedrockAgentCore(AWSService):
         self.__threading_call__(self._list_browsers)
         self.__threading_call__(self._get_browser, self.browsers.values())
         self.__threading_call__(self._get_token_vault)
+        # The SYSTEM browser and code interpreter are AWS-owned and cannot be tagged.
+        self.__threading_call__(
+            self._list_tags_for_resource,
+            [
+                resource
+                for inventory in (
+                    self.memories,
+                    self.gateways,
+                    self.agent_runtimes,
+                    self.code_interpreters,
+                    self.browsers,
+                )
+                for resource in inventory.values()
+                if resource.arn.split(":")[4] == self.audited_account
+            ],
+        )
 
     def _list_memories(self, regional_client):
         """Collect AgentCore memory resources in one Region.
@@ -67,21 +81,13 @@ class BedrockAgentCore(AWSService):
             for page in paginator.paginate():
                 for memory in page.get("memories", []):
                     memory_id = memory.get("id", "")
-                    # Both arn and id are optional members of the MemorySummary,
-                    # unlike every other AgentCore listing, so fall back to
-                    # building the ARN from the id rather than dropping a memory
-                    # resource that the account really has.
+                    # Both arn and id are optional in MemorySummary, so derive
+                    # whichever one is missing from the other.
                     memory_arn = memory.get("arn", "") or (
                         f"arn:{self.audited_partition}:bedrock-agentcore:{regional_client.region}:{self.audited_account}:memory/{memory_id}"
                         if memory_id
                         else ""
                     )
-                    # And the mirror case, which the fallback above does not cover: an ARN with no
-                    # id. Storing id="" there makes _get_memory call GetMemory(memoryId=""), which
-                    # the API rejects outright -- memoryId is min=12 with a pattern at the pin -- so
-                    # the resource would be listed and then never enriched, leaving detail_retrieved
-                    # False for a reason that has nothing to do with permissions. The id is the last
-                    # ARN segment, so recover it rather than issuing a call that cannot succeed.
                     if not memory_id and memory_arn:
                         memory_id = memory_arn.rsplit("/", 1)[-1]
                     if memory_arn and (
@@ -189,11 +195,7 @@ class BedrockAgentCore(AWSService):
             gateway_info = self.regional_clients[gateway.region].get_gateway(
                 gatewayIdentifier=gateway.id
             )
-            # authorizerType is a required member of the ListGateways summary, so
-            # the value already on the gateway is known good. Only overwrite it
-            # when GetGateway actually returned one, or a response missing the
-            # field would discard a known answer and turn the gateway into an
-            # unknown that this check then skips.
+            # Keep the value from ListGateways when GetGateway omits it.
             gateway.authorizer_type = (
                 gateway_info.get("authorizerType") or gateway.authorizer_type
             )
@@ -293,18 +295,12 @@ class BedrockAgentCore(AWSService):
             regional_client: The regional ``bedrock-agentcore-control`` client.
 
         Paginates for ``SYSTEM`` and ``CUSTOM`` separately rather than relying on the default:
-        measured at the pin, the no-argument call returns only the CUSTOM interpreters and omits the
+        the no-argument call returns only the CUSTOM interpreters and omits the
         AWS built-in ``aws.codeinterpreter.v1``. Records failures in
         ``code_interpreters_scan_errors``.
         """
         logger.info("Bedrock AgentCore - Listing Code Interpreters...")
         try:
-            # Same shape as ListBrowsers, with the documentation one step worse: the
-            # ListCodeInterpreters summary also reads "Lists all custom code interpreters in your
-            # account", and its `type` parameter says only "The type of code interpreters to
-            # list" -- it makes no claim at all about the default. Measured: the no-argument call
-            # returns only CUSTOM (3 in the probe account) and omits the SYSTEM built-in
-            # aws.codeinterpreter.v1. Both enum values are paginated explicitly.
             for interpreter_type in ("SYSTEM", "CUSTOM"):
                 paginator = regional_client.get_paginator("list_code_interpreters")
                 for page in paginator.paginate(type=interpreter_type):
@@ -380,20 +376,6 @@ class BedrockAgentCore(AWSService):
         """
         logger.info("Bedrock AgentCore - Listing Browsers...")
         try:
-            # AWS's own ListBrowsers page contradicts itself: the operation summary reads
-            # "Lists all custom browsers in your account" while the `type` parameter reads
-            # "If not specified, all browser types are returned." Measured at the pin against a
-            # live account, the summary is the one that holds -- the no-argument call returns
-            # only the CUSTOM browsers and silently omits the SYSTEM built-in (2 with no
-            # argument; type=SYSTEM adds aws.browser.v1). Since the three checks reading this
-            # inventory are about the built-in tools as much as custom ones, dropping the
-            # SYSTEM entry would under-report rather than merely under-count, so both enum
-            # values are paginated explicitly.
-            #
-            # A correction, recorded because the wrong version shipped in an earlier revision of
-            # this file: that comment claimed the no-argument call "returns 0". It does not. The
-            # original measurement was taken in an account that happened to own no CUSTOM
-            # browser, so "no CUSTOM browsers" was mistaken for "no browsers at all".
             for browser_type in ("SYSTEM", "CUSTOM"):
                 paginator = regional_client.get_paginator("list_browsers")
                 for page in paginator.paginate(type=browser_type):
@@ -442,16 +424,8 @@ class BedrockAgentCore(AWSService):
                 "networkMode"
             )
             recording = browser_info.get("recording")
-            # No recording block at all means recording is off. A block that
-            # omits enabled leaves it unknown, which the check reports rather
-            # than reading as disabled.
-            #
-            # `is not None`, NOT truthiness: `RecordingConfig.enabled` is optional at the pin
-            # (required_members is empty), so `"recording": {}` is a legal response -- and it is
-            # exactly the "block that omits enabled" the comment above describes. Testing
-            # truthiness made that empty block falsy and reported recording as definitely OFF,
-            # which contradicted this comment and would let a browser whose recording state is
-            # unknown be reported as a definite finding.
+            # No recording block means recording is off; a block without
+            # `enabled` (even `{}`) leaves it unknown (None), not disabled.
             browser.recording_enabled = (
                 recording.get("enabled") if recording is not None else False
             )
@@ -528,11 +502,6 @@ class BedrockAgentCore(AWSService):
                     target_id = target.get("targetId", "")
                     if not target_id:
                         continue
-                    # No filter here: the parent gateway was already filtered on
-                    # its own ARN, and this ARN is synthetic because AWS exposes
-                    # none for a gateway target, so it could never match a
-                    # user-supplied --resource-arn and would silently drop every
-                    # target of an in-scope gateway.
                     target_arn = f"{gateway.arn}/target/{target_id}"
                     self.gateway_targets[target_arn] = AgentCoreGatewayTarget(
                         id=target_id,
@@ -582,6 +551,26 @@ class BedrockAgentCore(AWSService):
                 f"{target.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def _list_tags_for_resource(self, resource):
+        """Read the tags of one AgentCore resource.
+
+        Args:
+            resource: Any AgentCore model with ``arn``, ``region`` and ``tags``.
+        """
+        logger.info("Bedrock AgentCore - Listing Tags for Resource...")
+        try:
+            tags = (
+                self.regional_clients[resource.region]
+                .list_tags_for_resource(resourceArn=resource.arn)
+                .get("tags", {})
+            )
+            if tags:
+                resource.tags = [tags]
+        except Exception as error:
+            logger.error(
+                f"{resource.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
 
 class AgentCoreMemory(BaseModel):
     """Model representing a Bedrock AgentCore memory resource."""
@@ -590,6 +579,7 @@ class AgentCoreMemory(BaseModel):
     name: Optional[str] = None
     arn: str
     region: str
+    tags: Optional[list] = []
     encryption_key_arn: Optional[str] = None
     # False when the Get* call failed (AccessDenied, throttle), so an absent
     # field means "unknown" rather than "not configured".
@@ -603,6 +593,7 @@ class AgentCoreGateway(BaseModel):
     name: str
     arn: str
     region: str
+    tags: Optional[list] = []
     authorizer_type: Optional[str] = None
     custom_jwt_allowed_clients: list = []
     custom_jwt_allowed_audience: list = []
@@ -622,6 +613,7 @@ class AgentCoreRuntime(BaseModel):
     name: str
     arn: str
     region: str
+    tags: Optional[list] = []
     authorizer_configuration: Optional[dict] = None
     custom_jwt_allowed_clients: list = []
     custom_jwt_allowed_audience: list = []
@@ -638,6 +630,7 @@ class AgentCoreCodeInterpreter(BaseModel):
     name: str
     arn: str
     region: str
+    tags: Optional[list] = []
     network_mode: Optional[str] = None
     execution_role_arn: Optional[str] = None
     # False when the Get* call failed (AccessDenied, throttle), so an absent
@@ -652,6 +645,7 @@ class AgentCoreBrowser(BaseModel):
     name: str
     arn: str
     region: str
+    tags: Optional[list] = []
     network_mode: Optional[str] = None
     # None when the browser reports a recording block with no explicit enabled
     # flag: it is an optional member with no documented default, so it is unknown

@@ -102,11 +102,7 @@ def add_subservices_and_missing_services(regions_by_service: dict) -> None:
     # macie2 --> macie
     regions_by_service["services"]["macie2"] = regions_by_service["services"]["macie"]
     # bedrock-agentcore-control --> bedrock-agentcore
-    # The AgentCore CONTROL plane (ListAgentRuntimes, ListGateways, ListMemories,
-    # GetTokenVault, ...) is a distinct boto3 service name that SSM does not return, so
-    # without this alias the generated matrix loses the key on the next weekly refresh and
-    # every AgentCore check silently returns zero findings. Availability is identical to the
-    # data plane, so alias rather than hardcode a second region list that can drift.
+    # SSM does not return the control-plane name; availability matches the data plane
     regions_by_service["services"]["bedrock-agentcore-control"] = regions_by_service[
         "services"
     ]["bedrock-agentcore"]

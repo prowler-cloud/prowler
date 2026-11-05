@@ -1967,7 +1967,10 @@
           "us-west-1",
           "us-west-2"
         ],
-        "aws-cn": [],
+        "aws-cn": [
+          "cn-north-1",
+          "cn-northwest-1"
+        ],
         "aws-eusc": [],
         "aws-iso": [],
         "aws-iso-b": [],
