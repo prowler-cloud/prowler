@@ -43,3 +43,32 @@ prowler kubernetes ...
 This will allow Prowler to connect to the cluster even if the proxy uses a self-signed certificate.
 
 These environment variables are supported both when using an external `kubeconfig` and in in-cluster mode.
+
+## Private Cluster Endpoints
+
+Clusters reached over a private network are a normal setup.
+
+**Prowler CLI scans them with no extra configuration.** On the CLI the operator supplies the `kubeconfig` themselves, so there is nothing to defend against and the check below does not apply.
+
+**Prowler App rejects a `kubeconfig` whose `clusters[*].cluster.server` resolves to a non-public address**, as an SSRF defense. There the kube-config arrives from a tenant and the worker must not be used to reach the internal network it runs in. To scan a private cluster from Prowler App, declare the trusted ranges explicitly:
+
+```console
+PROWLER_ALLOWED_PRIVATE_NETWORKS="10.20.0.0/16,192.168.65.254/32"
+```
+
+The value is a comma-separated list of IPs and CIDRs. A resolved address inside an allowlisted range is permitted; every other non-public address stays blocked, so link-local (`169.254.169.254`), loopback, and the rest of the internal network remain protected. A kubeconfig declaring several clusters is rejected when any one of them resolves to a non-public address outside the allowlist. Malformed entries are rejected, and a non-empty allowlist is logged as a relaxed security control.
+
+The scan runs in the worker, not the API, so the variable has to reach the worker:
+
+- **Docker Compose**: set it in the root `.env`; it reaches the worker through the shared environment file.
+- **Helm**: add it under `api.djangoConfig`, which is rendered into the API ConfigMap that the worker inherits through `envFrom`.
+
+```yaml
+api:
+  djangoConfig:
+    PROWLER_ALLOWED_PRIVATE_NETWORKS: "10.20.0.0/16"
+```
+
+Setting it only on the API container has no effect. The same variable applies to the IaC and OpenStack providers. The Image provider has its own, `PROWLER_IMAGE_PROVIDER_ALLOWED_PRIVATE_NETWORKS`.
+
+The check resolves the cluster hostname locally, before the Kubernetes client connects. If egress is only possible through `HTTPS_PROXY` and the hostname cannot be resolved locally, make the name resolvable to the scanning process. An allowlisted range does not help here: a host that does not resolve is rejected before any address is compared against the allowlist.
