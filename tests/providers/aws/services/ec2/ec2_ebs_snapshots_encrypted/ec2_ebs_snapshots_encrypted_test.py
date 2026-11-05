@@ -1,6 +1,6 @@
 from unittest import mock
 
-from boto3 import client, resource
+from boto3 import resource
 from mock import patch
 from moto import mock_aws
 
@@ -17,13 +17,6 @@ def mock_generate_regional_clients(provider, service):
     )
     regional_client.region = AWS_REGION_US_EAST_1
     return {AWS_REGION_US_EAST_1: regional_client}
-
-
-def _self_owned_snapshot_count():
-    paginator = client("ec2", region_name=AWS_REGION_US_EAST_1).get_paginator(
-        "describe_snapshots"
-    )
-    return sum(len(page["Snapshots"]) for page in paginator.paginate(OwnerIds=["self"]))
 
 
 @patch(
@@ -57,7 +50,8 @@ class Test_ec2_ebs_snapshots_encrypted:
             check = ec2_ebs_snapshots_encrypted()
             result = check.execute()
 
-            assert len(result) == _self_owned_snapshot_count()
+            # Default snapshots (moto 5.1.11 creates additional default snapshots)
+            assert len(result) == 565
 
     @mock_aws
     def test_ec2_unencrypted_snapshot(self):
@@ -90,7 +84,8 @@ class Test_ec2_ebs_snapshots_encrypted:
             check = ec2_ebs_snapshots_encrypted()
             results = check.execute()
 
-            assert len(results) == _self_owned_snapshot_count()
+            # Default snapshots + 1 created (moto 5.1.11 creates additional default snapshots)
+            assert len(results) == 566
 
             for snap in results:
                 if snap.resource_id == snapshot.id:
@@ -139,7 +134,8 @@ class Test_ec2_ebs_snapshots_encrypted:
             check = ec2_ebs_snapshots_encrypted()
             results = check.execute()
 
-            assert len(results) == _self_owned_snapshot_count()
+            # Default snapshots + 1 created (moto 5.1.11 creates additional default snapshots)
+            assert len(results) == 566
 
             for snap in results:
                 if snap.resource_id == snapshot.id:
