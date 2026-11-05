@@ -126,6 +126,7 @@ jobs:
               "autoscaling": ["dynamodb"],
               "awslambda": ["ec2", "inspector2"],
               "backup": ["dynamodb", "ec2", "rds"],
+              "bedrockagentcore": ["cloudtrail"],
               "cloudfront": ["shield"],
               "cloudtrail": ["awslambda", "cloudwatch"],
               "cloudwatch": ["bedrock"],
