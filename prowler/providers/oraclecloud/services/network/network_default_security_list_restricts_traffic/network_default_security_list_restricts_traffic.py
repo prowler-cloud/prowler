@@ -1,5 +1,7 @@
 """Check if default security list restricts all traffic except ICMP within VCN."""
 
+from ipaddress import ip_network
+
 from prowler.lib.check.models import Check, Check_Report_OCI
 from prowler.providers.oraclecloud.services.network.network_client import network_client
 
@@ -30,6 +32,7 @@ class network_default_security_list_restricts_traffic(Check):
                 # Check if default security list has overly permissive rules
                 has_permissive_rules = False
                 permissive_rule_details = []
+                unverifiable_rules = []
 
                 # Check ingress rules
                 for rule in security_list.ingress_security_rules:
@@ -47,8 +50,6 @@ class network_default_security_list_restricts_traffic(Check):
                             f"ingress from 0.0.0.0/0 with protocol {protocol}"
                         )
                     # Check if source is not within VCN CIDR (should only allow VCN traffic)
-                    # For simplicity, we flag any non-ICMP rule as potentially permissive
-                    # In production, you'd want to compare against the VCN CIDR blocks
                     elif protocol and protocol != "1":
                         # Get VCN CIDR blocks to validate
                         vcn = None
@@ -57,15 +58,46 @@ class network_default_security_list_restricts_traffic(Check):
                                 vcn = v
                                 break
 
-                        if vcn:
-                            # Check if source is within VCN CIDR
-                            is_within_vcn = False
-                            for cidr in vcn.cidr_blocks:
-                                if source and source.startswith(cidr.split("/")[0]):
-                                    is_within_vcn = True
-                                    break
+                        source_type = rule.get("source_type")
+                        if source_type not in (None, "CIDR_BLOCK"):
+                            unverifiable_rules.append(
+                                f"ingress from {source} with source type {source_type}"
+                            )
+                            continue
 
-                            if not is_within_vcn:
+                        try:
+                            if not isinstance(source, str):
+                                raise ValueError("Source is not a CIDR string")
+                            source_network = ip_network(source, strict=False)
+                        except ValueError:
+                            unverifiable_rules.append(
+                                f"invalid ingress source {source}"
+                            )
+                            continue
+
+                        if not vcn or not vcn.cidr_blocks:
+                            unverifiable_rules.append("VCN CIDR blocks unavailable")
+                            continue
+
+                        is_within_vcn = False
+                        invalid_vcn_cidr = False
+                        for cidr in vcn.cidr_blocks:
+                            try:
+                                vcn_network = ip_network(cidr, strict=False)
+                            except ValueError:
+                                invalid_vcn_cidr = True
+                                continue
+                            if (
+                                source_network.version == vcn_network.version
+                                and source_network.subnet_of(vcn_network)
+                            ):
+                                is_within_vcn = True
+                                break
+
+                        if not is_within_vcn:
+                            if invalid_vcn_cidr:
+                                unverifiable_rules.append("invalid VCN CIDR block")
+                            else:
                                 has_permissive_rules = True
                                 permissive_rule_details.append(
                                     f"ingress from {source} with protocol {protocol}"
@@ -90,6 +122,11 @@ class network_default_security_list_restricts_traffic(Check):
                 if has_permissive_rules:
                     report.status = "FAIL"
                     report.status_extended = f"Default security list {security_list.display_name} has permissive rules: {', '.join(permissive_rule_details)}."
+                    if unverifiable_rules:
+                        report.status_extended += f" Verify unassessed rules: {', '.join(unverifiable_rules)}."
+                elif unverifiable_rules:
+                    report.status = "MANUAL"
+                    report.status_extended = f"Default security list {security_list.display_name} could not be fully assessed; verify {', '.join(unverifiable_rules)}."
                 else:
                     report.status = "PASS"
                     report.status_extended = f"Default security list {security_list.display_name} restricts all traffic except ICMP within VCN."
