@@ -554,6 +554,23 @@ describe("IssuePanel", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("offers no path fix on an issue that is not one attack path", async () => {
+    // Given: Prowler Cloud and a hygiene issue, with no start or outcome
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
+    getIssue.mockResolvedValue(detailWith([]));
+
+    // When
+    renderPanel(issueWith({ attacker_start: "", outcome: "" }));
+
+    // Then
+    expect(
+      await screen.findByRole("tab", { name: "Remediation" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Contextual Fix" }),
+    ).not.toBeInTheDocument();
+  });
+
   it("launches the issue's Contextual Fix with the issue and its findings", async () => {
     // Given: Prowler Cloud, with the issue's findings loaded
     vi.stubEnv("UI_CLOUD_ENABLED", "true");
@@ -603,7 +620,8 @@ describe("IssuePanel", () => {
         providerUid: "552455647653",
         scanId: "scan-1",
         findingsCount: 2,
-        legs: { reachability: "yes", controls: "no" },
+        // "No" controls leave that leg open too: the agent gets the posture.
+        legs: { reachability: "open", controls: "open" },
         // One id per finding, not per finding-and-resource row.
         findingIds: ["finding-1", "finding-2"],
       }),

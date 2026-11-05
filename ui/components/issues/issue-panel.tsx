@@ -37,10 +37,12 @@ import { DetailSidePanel } from "@/components/side-panel/detail-side-panel";
 import { useFindingDetails } from "@/hooks/use-finding-details";
 import { useLighthouseCurrentContext } from "@/hooks/use-lighthouse-context";
 import {
+  attackPathLabel,
   LEG_LABELS,
   LEG_QUESTIONS,
   LEG_STATE_LABELS,
   legBadgeVariant,
+  legPosture,
   VERDICTS,
 } from "@/lib/issues/verdicts";
 import { buildJiraActionLabel } from "@/lib/jira-dispatch-action";
@@ -106,10 +108,11 @@ const buildIssueContext = (
     providerUid,
     scanId: issue.relationships?.scan?.data?.id,
     findingsCount: issue.attributes.findings_count,
+    // Posture, not the raw answer: "yes" to Controls is a closed leg.
     legs: Object.fromEntries(
       Object.entries(issue.attributes.legs ?? {}).map(([name, leg]) => [
         name,
-        leg.state,
+        legPosture(name as LegName, leg.state),
       ]),
     ),
     findingIds,
@@ -343,8 +346,10 @@ const IssuePanelContent = ({
             />
           )
         )}
-        {/* Same skills rail as the finding panel, offering the issue's skills. */}
-        {isCloud() && !isSampleId(issue.id) && (
+        {/* Same skills rail as the finding panel, offering the issue's skills.
+            Only a real attack path has one fix; hygiene issues are fixed
+            finding by finding. */}
+        {isCloud() && !isSampleId(issue.id) && attackPathLabel(attributes) && (
           <LighthouseSkillsRail
             surface={LIGHTHOUSE_SKILL_SURFACE.ISSUE}
             onLaunchSkill={(skill) =>

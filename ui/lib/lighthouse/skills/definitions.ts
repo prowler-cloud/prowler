@@ -73,8 +73,8 @@ You do not need search_tools — I am naming the tools directly.
 Then work in this order:
 
 1. Read the issue from the context block: its pattern, where the attacker starts, the
-   outcome, the state of each leg and the suggested fix. A leg in state "yes" is open;
-   closing any open leg breaks the path.
+   outcome, each leg and the suggested fix. Each leg is "open" (it favours the attacker),
+   "closed", "partial" or "unknown"; closing any open leg breaks the path.
 2. prowler_get_finding_details — for each finding id in the context, establish what
    failed and on which resource. The context lists at most 20 ids, so if the issue has
    more findings than that, say how many you did not read. If there are no finding ids,
