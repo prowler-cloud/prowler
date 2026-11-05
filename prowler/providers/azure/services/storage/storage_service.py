@@ -73,6 +73,7 @@ class Storage(AzureService):
                                 for pec in getattr(
                                     storage_account, "private_endpoint_connections", []
                                 )
+                                or []
                             ],
                             key_expiration_period_in_days=key_expiration_period_in_days,
                             location=storage_account.location,
