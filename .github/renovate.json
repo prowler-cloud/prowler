@@ -83,6 +83,16 @@
       ]
     },
     {
+      "description": "setup-python in workflows - stay within the SDK requires-python range (<3.14)",
+      "matchManagers": [
+        "github-actions"
+      ],
+      "matchDepNames": [
+        "python"
+      ],
+      "allowedVersions": "<3.14"
+    },
+    {
       "description": "Docker images - single grouped PR, no changelog, scope=docker",
       "matchManagers": [
         "dockerfile",
