@@ -298,7 +298,7 @@ constraint-dependencies = [
   "jsonpatch==1.33",
   "jsonpickle==4.1.1",
   "jsonpointer==3.0.0",
-  "jsonschema==4.23.0",
+  "jsonschema>=4.23.0,<=4.26.0",
   "jsonschema-specifications==2025.9.1",
   "keystoneauth1==5.13.0",
   "kingfisher-bin==1.104.0",
