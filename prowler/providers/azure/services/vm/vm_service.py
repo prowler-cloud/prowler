@@ -76,6 +76,7 @@ class VirtualMachines(AzureService):
                                 disable_password_authentication=getattr(
                                     linux_conf, "disable_password_authentication", False
                                 )
+                                or False
                             )
 
                     # Convert Azure SDK SecurityProfile to custom SecurityProfile dataclass
@@ -90,10 +91,12 @@ class VirtualMachines(AzureService):
                             uefi_settings = UefiSettings(
                                 secure_boot_enabled=getattr(
                                     azure_uefi_settings, "secure_boot_enabled", False
-                                ),
+                                )
+                                or False,
                                 v_tpm_enabled=getattr(
                                     azure_uefi_settings, "v_tpm_enabled", False
-                                ),
+                                )
+                                or False,
                             )
                         security_profile = SecurityProfile(
                             security_type=getattr(
