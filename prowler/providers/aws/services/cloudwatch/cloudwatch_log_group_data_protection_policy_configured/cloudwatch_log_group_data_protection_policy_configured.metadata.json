@@ -1,0 +1,44 @@
+{
+    "Provider": "aws",
+    "CheckID": "cloudwatch_log_group_data_protection_policy_configured",
+    "CheckTitle": "CloudWatch Log Groups have a data protection policy configured",
+    "CheckType": [
+        "Software and Configuration Checks/AWS Security Best Practices",
+        "Effects/Data Exposure",
+        "Sensitive Data Identifications/PII"
+    ],
+    "ServiceName": "cloudwatch",
+    "SubServiceName": "logs",
+    "ResourceIdTemplate": "arn:partition:logs:region:account-id:log-group:log-group-name",
+    "Severity": "high",
+    "ResourceType": "Other",
+    "ResourceGroup": "monitoring",
+    "Description": "Checks whether CloudWatch Log Groups have a data protection policy configured. A data protection policy audits and optionally masks sensitive data such as PII and credentials in log events at ingestion time.",
+    "Risk": "Without a data protection policy, sensitive data written to CloudWatch Logs is stored in clear text and accessible to every principal with logs:GetLogEvents permission, widening exposure of regulated or confidential information.",
+    "RelatedUrl": "",
+    "AdditionalURLs": [
+        "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/mask-sensitive-log-data.html",
+        "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/mask-sensitive-log-data-start.html",
+        "https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/protect-sensitive-log-data-types.html"
+    ],
+    "Remediation": {
+        "Code": {
+            "CLI": "aws logs put-data-protection-policy --log-group-identifier <LOG_GROUP_NAME> --policy-document '{\"Name\":\"data-protection-policy\",\"Version\":\"2021-06-01\",\"Statement\":[{\"Sid\":\"audit\",\"DataIdentifier\":[\"arn:aws:dataprotection::aws:data-identifier/EmailAddress\"],\"Operation\":{\"Audit\":{\"FindingsDestination\":{}}}},{\"Sid\":\"redact\",\"DataIdentifier\":[\"arn:aws:dataprotection::aws:data-identifier/EmailAddress\"],\"Operation\":{\"Deidentify\":{\"MaskConfig\":{}}}}]}'",
+            "NativeIaC": "```yaml\nResources:\n  MyLogGroup:\n    Type: AWS::Logs::LogGroup\n    Properties:\n      LogGroupName: \"<example_resource_name>\"\n      DataProtectionPolicy:\n        Name: data-protection-policy\n        Version: '2021-06-01'\n        Statement:\n          - Sid: audit\n            DataIdentifier:\n              - arn:aws:dataprotection::aws:data-identifier/EmailAddress\n            Operation:\n              Audit:\n                FindingsDestination: {}\n          - Sid: redact\n            DataIdentifier:\n              - arn:aws:dataprotection::aws:data-identifier/EmailAddress\n            Operation:\n              Deidentify:\n                MaskConfig: {}\n```",
+            "Other": "1. In the AWS console, open CloudWatch > Logs > Log groups\n2. Select the log group\n3. Choose Actions > Create data protection policy\n4. Under Managed data identifiers, select the data types to protect (e.g. EmailAddress, CreditCardNumber)\n5. (Optional) Choose a destination for the audit findings report\n6. Choose Activate data protection",
+            "Terraform": "```hcl\nresource \"aws_cloudwatch_log_data_protection_policy\" \"<example_resource_name>\" {\n  log_group_name = \"<example_resource_name>\"\n\n  policy_document = jsonencode({\n    Name    = \"data-protection-policy\"\n    Version = \"2021-06-01\"\n    Statement = [\n      {\n        Sid            = \"audit\"\n        DataIdentifier = [\"arn:aws:dataprotection::aws:data-identifier/EmailAddress\"]\n        Operation = {\n          Audit = {\n            FindingsDestination = {}\n          }\n        }\n      },\n      {\n        Sid            = \"redact\"\n        DataIdentifier = [\"arn:aws:dataprotection::aws:data-identifier/EmailAddress\"]\n        Operation = {\n          Deidentify = {\n            MaskConfig = {}\n          }\n        }\n      }\n    ]\n  })\n}\n```"
+        },
+        "Recommendation": {
+            "Text": "Attach a data protection policy to CloudWatch Log Groups that may contain sensitive data. Choose managed data identifiers matching the data types your applications can log, or create an account-level policy to cover all log groups.",
+            "Url": "https://hub.prowler.com/check/cloudwatch_log_group_data_protection_policy_configured"
+        }
+    },
+    "Categories": [
+        "logging"
+    ],
+    "DependsOn": [],
+    "RelatedTo": [
+        "cloudwatch_log_group_agentcore_data_protection_policy_enabled"
+    ],
+    "Notes": "This check evaluates all CloudWatch Log Groups in scope. It retrieves the detailed data protection policy document via GetDataProtectionPolicy to confirm that an active policy exists."
+}

@@ -572,3 +572,41 @@ class Test_build_metric_filter_pattern:
         assert logs.log_groups_unavailable is True
         assert logs.log_groups is None
         assert logs.all_log_groups is None
+
+    @mock_aws
+    def test_get_data_protection_policy_uses_name(self):
+        # We need to test that get_data_protection_policy is called with the log group name
+        # rather than the ARN (which may have a trailing :*)
+        aws_provider = set_mocked_aws_provider()
+        log_group_name = "/aws/lambda/test"
+
+        with patch("botocore.client.BaseClient._make_api_call") as mock_make_api_call:
+
+            def side_effect(operation_name, kwarg):
+                if operation_name == "DescribeLogGroups":
+                    return {
+                        "logGroups": [
+                            {
+                                "logGroupName": log_group_name,
+                                "arn": f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:log-group:{log_group_name}:*",
+                            }
+                        ]
+                    }
+                if operation_name == "GetDataProtectionPolicy":
+                    assert kwarg["logGroupIdentifier"] == log_group_name
+                    return {"policyDocument": '{"Name":"test"}'}
+                if operation_name == "DescribeAlarms":
+                    return {"MetricAlarms": []}
+                if operation_name == "DescribeResourcePolicies":
+                    return {"resourcePolicies": []}
+                if operation_name == "DescribeMetricFilters":
+                    return {"metricFilters": []}
+                return {}
+
+            mock_make_api_call.side_effect = side_effect
+
+            logs = Logs(aws_provider)
+            arn = f"arn:aws:logs:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:log-group:{log_group_name}:*"
+
+            assert logs.log_groups[arn].data_protection_policy_retrieved is True
+            assert logs.log_groups[arn].data_protection_policy == {"Name": "test"}
