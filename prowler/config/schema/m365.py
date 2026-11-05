@@ -19,6 +19,17 @@ class M365ProviderConfig(ProviderConfigBase):
         ),
     )
 
+    # --- Entra (stale privileged accounts) ------------------------------
+    stale_privileged_account_days: Optional[int] = Field(
+        default=None,
+        ge=1,
+        le=730,
+        description=(
+            "Days without a successful sign-in after which a Tier 0 role holder "
+            "is reported as stale. Range: 1..730 (Prowler default 90)."
+        ),
+    )
+
     # --- Teams ---------------------------------------------------------
     allowed_cloud_storage_services: Optional[list[str]] = Field(
         default=None,

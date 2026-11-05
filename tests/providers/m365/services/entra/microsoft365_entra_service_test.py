@@ -952,10 +952,12 @@ class Test_Entra_Service:
         assert set(request_configuration.query_parameters.select) == {
             "id",
             "displayName",
+            "userPrincipalName",
             "userType",
             "accountEnabled",
             "onPremisesSyncEnabled",
             "employeeHireDate",
+            "createdDateTime",
         }
         with_url_mock.assert_called_once_with("next-link")
         assert users["user-1"].directory_roles_ids == ["role-template-1"]
@@ -2240,3 +2242,66 @@ class TestCrossTenantAccessDefault:
         )
 
         assert asyncio.run(service._get_cross_tenant_access_default()) is None
+
+
+class TestGroupUserMembers:
+    def _service(self, members_get):
+        service = Entra.__new__(Entra)
+        service.privileged_group_resolution_error = None
+        service._group_user_members_cache = {}
+        by_group_id = MagicMock(
+            return_value=SimpleNamespace(members=SimpleNamespace(get=members_get))
+        )
+        service.client = SimpleNamespace(
+            groups=SimpleNamespace(by_group_id=by_group_id)
+        )
+        return service, by_group_id
+
+    def test_members_are_cached_per_group(self):
+        page = SimpleNamespace(
+            value=[SimpleNamespace(id="user-1", odata_type="#microsoft.graph.user")],
+            odata_next_link=None,
+        )
+        service, by_group_id = self._service(AsyncMock(return_value=page))
+
+        first = asyncio.run(service._get_group_user_members("g-1"))
+        second = asyncio.run(service._get_group_user_members("g-1"))
+
+        assert first == second == ["user-1"]
+        assert by_group_id.call_count == 1
+
+    def test_lookup_error_is_recorded(self):
+        service, _ = self._service(AsyncMock(side_effect=RuntimeError("throttled")))
+
+        assert asyncio.run(service._get_group_user_members("g-1")) == []
+        assert "g-1" in service.privileged_group_resolution_error
+
+
+class TestPrivilegedGroupResolution:
+    GLOBAL_ADMIN = "62e90394-69f5-4237-9190-012177145e10"
+
+    def _service(self, member_id):
+        service = Entra.__new__(Entra)
+        service.users_error = None
+        service.users = {"user-1": MagicMock()}
+        service.groups = []
+        service.service_principals = {"sp-1": MagicMock()}
+        service._role_members_map = {member_id: [self.GLOBAL_ADMIN]}
+        service.privileged_group_resolution_error = None
+        service.privileged_users_roles = {}
+        service._get_pim_role_eligibility_instances = AsyncMock(return_value=({}, None))
+        return service
+
+    def test_known_service_principal_is_not_flagged_when_groups_are_empty(self):
+        service = self._service("sp-1")
+
+        asyncio.run(service._load_privileged_user_stale_data())
+
+        assert service.privileged_group_resolution_error is None
+
+    def test_unknown_principal_is_flagged_when_groups_are_empty(self):
+        service = self._service("unknown-1")
+
+        asyncio.run(service._load_privileged_user_stale_data())
+
+        assert "unknown-1" in service.privileged_group_resolution_error
