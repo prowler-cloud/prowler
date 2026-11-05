@@ -250,7 +250,8 @@
         "iam_policy_attached_only_to_group_or_roles",
         "iam_no_custom_policy_permissive_role_assumption",
         "bedrock_full_access_policy_attached",
-        "bedrock_api_key_no_administrative_privileges"
+        "bedrock_api_key_no_administrative_privileges",
+        "bedrockagentcore_full_access_policy_attached"
       ]
     },
     {

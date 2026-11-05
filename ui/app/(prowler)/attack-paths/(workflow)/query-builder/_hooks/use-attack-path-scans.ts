@@ -20,15 +20,19 @@ export interface UseAttackPathScansResult {
  * project forbids `useEffect` in components, but a reusable data hook is the
  * sanctioned place for a mount-time fetch when no fetching library is wired up.
  */
-export function useAttackPathScans(): UseAttackPathScansResult {
-  const [scans, setScans] = useState<AttackPathScan[]>([]);
-  const [scansLoading, setScansLoading] = useState(true);
+export function useAttackPathScans(
+  /** Sample scans: shown as loaded, and the API is never called. */
+  sampleScans?: AttackPathScan[],
+): UseAttackPathScansResult {
+  const [scans, setScans] = useState<AttackPathScan[]>(sampleScans ?? []);
+  const [scansLoading, setScansLoading] = useState(!sampleScans);
   const [loadError, setLoadError] = useState(false);
   const mountedRef = useRef(true);
 
   // Silent background refresh for auto-refresh: never flips loading/error, so it
   // can't disrupt the visible view if it fails.
   const refreshScans = async () => {
+    if (sampleScans) return;
     try {
       const scansData = await getAttackPathScans();
       if (scansData?.data) {
@@ -43,6 +47,7 @@ export function useAttackPathScans(): UseAttackPathScansResult {
   // the error view's Retry action. A successful empty result (`{ data: [] }`) is
   // not an error; only a missing payload or a thrown request is.
   const loadScans = async () => {
+    if (sampleScans) return;
     setScansLoading(true);
     setLoadError(false);
     try {

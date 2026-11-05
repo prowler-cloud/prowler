@@ -47,7 +47,6 @@ import {
   type OrgFixture,
 } from "@/__tests__/msw/handlers/organizations.fixtures";
 import { ORGANIZATION_TYPE } from "@/types/organizations";
-import { SCAN_JOBS_TAB } from "@/types/scans";
 
 import { ProvidersPageHarness } from "./providers-page.harness";
 
@@ -719,9 +718,7 @@ describe("Organization onboarding wizard", () => {
         expect(harness.hasScheduleFailureReason("Denied")).toBe(true);
         expect(harness.organizationBulkScanCallCount).toBe(1);
         // Derived independently of the legacy path's tab, so nothing else covers it.
-        expect(harness.scansToastHref()).toBe(
-          `/scans?tab=${SCAN_JOBS_TAB.ACTIVE}`,
-        );
+        expect(harness.successToastHref()).toBe("/findings");
       }, 40000);
 
       it("keeps the user on the launch step when no schedule could be saved", async () => {

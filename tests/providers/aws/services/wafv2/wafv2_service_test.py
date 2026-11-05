@@ -48,6 +48,107 @@ def _client_error(operation_name):
     )
 
 
+# Original botocore _make_api_call function
+orig = botocore.client.BaseClient._make_api_call
+
+PAGED_ACL_FIRST_NAME = "paged-web-acl-1"
+PAGED_ACL_SECOND_NAME = "paged-web-acl-2"
+PAGED_ACL_FIRST_ARN = (
+    "arn:aws:wafv2:us-east-1:123456789012:regional/webacl/paged-web-acl-1"
+)
+PAGED_ACL_SECOND_ARN = (
+    "arn:aws:wafv2:us-east-1:123456789012:regional/webacl/paged-web-acl-2"
+)
+
+
+def mock_make_api_call_list_web_acls_paginated(self, operation_name, kwarg):
+    """Serve ListWebACLs across two pages, keyed off NextMarker so no state is shared.
+
+    Page one carries a marker; page two carries none. Both pages return a Web ACL, so a
+    collector that reads only the first response sees half the inventory.
+    """
+    if operation_name == "ListWebACLs":
+        if not kwarg.get("NextMarker"):
+            return {
+                "WebACLs": [
+                    {
+                        "Name": PAGED_ACL_FIRST_NAME,
+                        "Id": "paged-1",
+                        "ARN": PAGED_ACL_FIRST_ARN,
+                    }
+                ],
+                "NextMarker": "page-two",
+            }
+        return {
+            "WebACLs": [
+                {
+                    "Name": PAGED_ACL_SECOND_NAME,
+                    "Id": "paged-2",
+                    "ARN": PAGED_ACL_SECOND_ARN,
+                }
+            ]
+        }
+    return orig(self, operation_name, kwarg)
+
+
+def mock_make_api_call_list_web_acls_empty_page_with_marker(
+    self, operation_name, kwarg
+):
+    """Serve an empty middle page that still carries a NextMarker.
+
+    WAFv2 returns a marker even when a page held everything, so an empty page is the only
+    reliable stop. Page one holds a Web ACL and a marker, page two is empty and still carries
+    a marker, page three holds a second Web ACL. A collector that stops on the empty page
+    reports one Web ACL; one that trusts the marker alone walks on and reports two.
+    """
+    if operation_name == "ListWebACLs":
+        marker = kwarg.get("NextMarker")
+        if not marker:
+            return {
+                "WebACLs": [
+                    {
+                        "Name": PAGED_ACL_FIRST_NAME,
+                        "Id": "paged-1",
+                        "ARN": PAGED_ACL_FIRST_ARN,
+                    }
+                ],
+                "NextMarker": "page-two",
+            }
+        if marker == "page-two":
+            return {"WebACLs": [], "NextMarker": "page-three"}
+        return {
+            "WebACLs": [
+                {
+                    "Name": PAGED_ACL_SECOND_NAME,
+                    "Id": "paged-2",
+                    "ARN": PAGED_ACL_SECOND_ARN,
+                }
+            ]
+        }
+    return orig(self, operation_name, kwarg)
+
+
+def mock_make_api_call_list_web_acls_infinite_loop(self, operation_name, kwarg):
+    """Return the same NextMarker forever to test the loop guard.
+
+    Every ListWebACLs call returns one Web ACL and the marker "loop-forever". A paginator
+    without a seen-set guard would spin indefinitely; one with the guard detects the
+    repeated marker, logs an error, and terminates.
+    """
+    if operation_name == "ListWebACLs":
+        return {
+            "WebACLs": [
+                {
+                    "Name": PAGED_ACL_FIRST_NAME,
+                    "Id": "paged-1",
+                    "ARN": PAGED_ACL_FIRST_ARN,
+                }
+            ],
+            "NextMarker": "loop-forever",
+        }
+    return orig(self, operation_name, kwarg)
+
+
 class Test_WAFv2_Service:
     # Test WAFv2 Service
     @mock_aws
@@ -121,6 +222,77 @@ class Test_WAFv2_Service:
         assert wafv2.web_acls[waf_arn].region == AWS_REGION_US_EAST_1
         assert wafv2.web_acls[waf_arn].arn == waf["ARN"]
         assert wafv2.web_acls[waf_arn].id == waf["Id"]
+
+    # A single ListWebACLs call returns at most 100 Web ACLs. The documented contract
+    # states NextMarker signals more objects remain, so the paginator must follow it.
+    @patch(
+        "botocore.client.BaseClient._make_api_call",
+        new=mock_make_api_call_list_web_acls_paginated,
+    )
+    @mock_aws
+    def test_list_web_acls_follows_next_marker(self):
+        """Pagination across two pages collects both Web ACLs."""
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        wafv2 = WAFv2(aws_provider)
+
+        assert len(wafv2.web_acls) == 2
+        assert PAGED_ACL_FIRST_ARN in wafv2.web_acls
+        assert PAGED_ACL_SECOND_ARN in wafv2.web_acls
+        assert wafv2.web_acls[PAGED_ACL_FIRST_ARN].name == PAGED_ACL_FIRST_NAME
+        assert wafv2.web_acls[PAGED_ACL_SECOND_ARN].name == PAGED_ACL_SECOND_NAME
+
+    # An empty middle page must not terminate collection when NextMarker points to more data.
+    # The documented contract states the marker signals more objects remain, so an empty page
+    # with a marker indicates the API will return data on the next call.
+    @patch(
+        "botocore.client.BaseClient._make_api_call",
+        new=mock_make_api_call_list_web_acls_empty_page_with_marker,
+    )
+    @mock_aws
+    def test_list_web_acls_continues_past_an_empty_page_when_a_marker_remains(self):
+        """Pagination continues through an empty middle page to collect all Web ACLs."""
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        wafv2 = WAFv2(aws_provider)
+
+        assert len(wafv2.web_acls) == 2
+        assert PAGED_ACL_FIRST_ARN in wafv2.web_acls
+        assert PAGED_ACL_SECOND_ARN in wafv2.web_acls
+
+    # The seen-set guard must terminate on a repeating marker without hanging. A marker that
+    # never clears would spin indefinitely without this protection.
+    @patch(
+        "botocore.client.BaseClient._make_api_call",
+        new=mock_make_api_call_list_web_acls_infinite_loop,
+    )
+    @mock_aws
+    def test_list_web_acls_terminates_on_repeating_marker(self):
+        """Pagination detects and breaks on a marker that repeats forever."""
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+
+        # Patch logger to verify error is logged
+        with patch(
+            "prowler.providers.aws.services.wafv2.wafv2_service.logger"
+        ) as mock_logger:
+            wafv2 = WAFv2(aws_provider)
+
+            # Service must terminate (not hang)
+            assert len(wafv2.web_acls) == 1
+            assert PAGED_ACL_FIRST_ARN in wafv2.web_acls
+
+            # Loop detection must log an error for both CLOUDFRONT and REGIONAL scopes
+            assert mock_logger.error.call_count >= 2
+            error_messages = [call[0][0] for call in mock_logger.error.call_args_list]
+            pagination_errors = [
+                msg for msg in error_messages if "pagination loop detected" in msg
+            ]
+            assert len(pagination_errors) >= 2
+            assert any(
+                "loop-forever" in msg and "CLOUDFRONT" in msg
+                for msg in pagination_errors
+            )
+            assert any(
+                "loop-forever" in msg and "REGIONAL" in msg for msg in pagination_errors
+            )
 
     # Test WAFv2 Describe Web ACLs Resources
     @mock_aws
@@ -559,40 +731,6 @@ class Test_WAFv2_Service:
         assert web_acl.rule_groups == []
 
     @mock_aws
-    def test_list_web_acls_follows_next_marker(self):
-        def web_acl_summary(scope, name):
-            prefix = "global" if scope == "CLOUDFRONT" else "regional"
-            return {
-                "Name": name,
-                "Id": f"{name}-id",
-                "ARN": f"arn:aws:wafv2:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:{prefix}/webacl/{name}/{name}-id",
-            }
-
-        def mock_make_api_call(self, operation_name, kwarg):
-            if operation_name == "ListWebACLs":
-                scope = kwarg["Scope"].lower()
-                if "NextMarker" not in kwarg:
-                    return {
-                        "WebACLs": [web_acl_summary(kwarg["Scope"], f"{scope}-page-1")],
-                        "NextMarker": f"{scope}-marker",
-                    }
-                assert kwarg["NextMarker"] == f"{scope}-marker"
-                return {"WebACLs": [web_acl_summary(kwarg["Scope"], f"{scope}-page-2")]}
-            return make_api_call(self, operation_name, kwarg)
-
-        aws = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
-        with patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call):
-            wafv2 = WAFv2(aws)
-
-        assert sorted(web_acl.name for web_acl in wafv2.web_acls.values()) == [
-            "cloudfront-page-1",
-            "cloudfront-page-2",
-            "regional-page-1",
-            "regional-page-2",
-        ]
-        assert wafv2.web_acls_list_failed_scopes == set()
-
-    @mock_aws
     def test_list_web_acls_failing_page_records_failed_scope(self):
         def mock_make_api_call(self, operation_name, kwarg):
             if operation_name == "ListWebACLs" and kwarg["Scope"] == "REGIONAL":
@@ -614,5 +752,49 @@ class Test_WAFv2_Service:
         with patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call):
             wafv2 = WAFv2(aws)
 
-        assert wafv2.web_acls == {}
+        # Web ACLs from the pages read before the failure are kept, and the scope
+        # is recorded so checks still report that the inventory is incomplete.
+        assert [web_acl.name for web_acl in wafv2.web_acls.values()] == ["page-1"]
         assert wafv2.web_acls_list_failed_scopes == {f"REGIONAL:{AWS_REGION_EU_WEST_1}"}
+
+    # CloudFront Web ACLs live in us-east-1, so their details must be fetched even when
+    # us-east-1 is not among the audited regions.
+    @mock_aws
+    def test_cloudfront_web_acl_details_without_us_east_1_audited(self):
+        wafv2 = client("wafv2", region_name=AWS_REGION_US_EAST_1)
+        visibility = {
+            "SampledRequestsEnabled": True,
+            "CloudWatchMetricsEnabled": True,
+            "MetricName": "web-acl-test-metric",
+        }
+        waf = wafv2.create_web_acl(
+            Scope="CLOUDFRONT",
+            Name="my-web-acl",
+            DefaultAction={"Allow": {}},
+            Rules=[
+                {
+                    "Name": "rule-on",
+                    "Priority": 1,
+                    "Action": {"Block": {}},
+                    "Statement": {"GeoMatchStatement": {"CountryCodes": ["US"]}},
+                    "VisibilityConfig": visibility,
+                }
+            ],
+            VisibilityConfig=visibility,
+            Tags=[{"Key": "Name", "Value": "my-web-acl"}],
+        )["Summary"]
+        wafv2.put_logging_configuration(
+            LoggingConfiguration={
+                "ResourceArn": waf["ARN"],
+                "LogDestinationConfigs": [
+                    f"arn:aws:logs:{AWS_REGION_US_EAST_1}:123456789012:log-group:aws-waf-logs-test"
+                ],
+            }
+        )
+
+        wafv2 = WAFv2(set_mocked_aws_provider([AWS_REGION_EU_WEST_1]))
+
+        acl = wafv2.web_acls[waf["ARN"]]
+        assert [rule.name for rule in acl.rules] == ["rule-on"]
+        assert acl.tags == [{"Key": "Name", "Value": "my-web-acl"}]
+        assert acl.logging_enabled

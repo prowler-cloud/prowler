@@ -28,10 +28,30 @@ class WAFv2(AWSService):
         self.__threading_call__(self._get_logging_configuration, self.web_acls.values())
         self.__threading_call__(self._list_tags, self.web_acls.values())
 
+    def _paginate_web_acls(self, client, scope):
+        """Yield every Web ACL summary in the given scope, following NextMarker to the last page."""
+        # WAFv2 ships no botocore paginator; the seen set stops an API that repeats a marker.
+        kwargs = {"Scope": scope}
+        seen_markers = set()
+        while True:
+            response = client.list_web_acls(**kwargs)
+            yield from response.get("WebACLs", [])
+            next_marker = response.get("NextMarker")
+            if not next_marker:
+                break
+            if next_marker in seen_markers:
+                logger.error(
+                    f"WAFv2 - ListWebACLs pagination loop detected at marker {next_marker} for scope {scope}"
+                )
+                break
+            seen_markers.add(next_marker)
+            kwargs["NextMarker"] = next_marker
+
     def _list_web_acls_global(self):
+        """List CLOUDFRONT-scoped Web ACLs and populate the web_acls dictionary."""
         logger.info("WAFv2 - Listing Global Web ACLs...")
         try:
-            for wafv2 in self._list_all_web_acls(self.client, Scope.CLOUDFRONT):
+            for wafv2 in self._paginate_web_acls(self.client, "CLOUDFRONT"):
                 if not self.audit_resources or (
                     is_resource_filtered(wafv2["ARN"], self.audit_resources)
                 ):
@@ -53,33 +73,11 @@ class WAFv2(AWSService):
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    @staticmethod
-    def _list_all_web_acls(client, scope: "Scope") -> list[dict]:
-        """List every Web ACL of a scope, following ``NextMarker`` pages.
-
-        Args:
-            client: WAFv2 boto3 client of the region to list.
-            scope: Scope of the Web ACLs to list.
-
-        Returns:
-            The ``WebACLs`` summaries of all pages. A failing page raises, so
-            callers record the scope as not listed instead of keeping a
-            partial inventory silently.
-        """
-        web_acls = []
-        list_kwargs = {"Scope": scope.value}
-        while True:
-            response = client.list_web_acls(**list_kwargs)
-            web_acls.extend(response.get("WebACLs", []))
-            next_marker = response.get("NextMarker")
-            if not next_marker:
-                return web_acls
-            list_kwargs["NextMarker"] = next_marker
-
     def _list_web_acls_regional(self, regional_client):
+        """List REGIONAL-scoped Web ACLs for the given region and populate the web_acls dictionary."""
         logger.info("WAFv2 - Listing Regional Web ACLs...")
         try:
-            for wafv2 in self._list_all_web_acls(regional_client, Scope.REGIONAL):
+            for wafv2 in self._paginate_web_acls(regional_client, "REGIONAL"):
                 if not self.audit_resources or (
                     is_resource_filtered(wafv2["ARN"], self.audit_resources)
                 ):
@@ -101,16 +99,25 @@ class WAFv2(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def _get_client_for_web_acl(self, acl):
+        """Return the client that serves the Web ACL's scope.
+
+        CLOUDFRONT-scoped Web ACLs are only reachable through us-east-1, which is
+        self.client and may not be an audited region in regional_clients.
+        """
+        if acl.scope == Scope.CLOUDFRONT:
+            return self.client
+        return self.regional_clients[acl.region]
+
     def _get_logging_configuration(self, acl):
         logger.info("WAFv2 - Get Logging Configuration...")
         try:
-            if acl.scope == Scope.REGIONAL or acl.region in self.regional_clients:
-                logging_enabled = self.regional_clients[
-                    acl.region
-                ].get_logging_configuration(ResourceArn=acl.arn)
-                acl.logging_enabled = bool(
-                    logging_enabled["LoggingConfiguration"]["LogDestinationConfigs"]
-                )
+            logging_enabled = self._get_client_for_web_acl(
+                acl
+            ).get_logging_configuration(ResourceArn=acl.arn)
+            acl.logging_enabled = bool(
+                logging_enabled["LoggingConfiguration"]["LogDestinationConfigs"]
+            )
 
         except ClientError as error:
             if error.response["Error"]["Code"] == "WAFNonexistentItemException":
@@ -156,49 +163,45 @@ class WAFv2(AWSService):
     def _get_web_acl(self, acl: "WebAclv2"):
         logger.info("WAFv2 - Getting Web ACL...")
         try:
-            if acl.scope == Scope.REGIONAL or acl.region in self.regional_clients:
-                scope = acl.scope.value
-                get_web_acl = self.regional_clients[acl.region].get_web_acl(
-                    Name=acl.name, Scope=scope, Id=acl.id
-                )
+            get_web_acl = self._get_client_for_web_acl(acl).get_web_acl(
+                Name=acl.name, Scope=acl.scope.value, Id=acl.id
+            )
 
-                try:
-                    web_acl = get_web_acl.get("WebACL")
-                    if web_acl is None:
-                        # Without the WebACL the rules are unknown, not empty:
-                        # leave rules_retrieved unset so checks report MANUAL.
-                        logger.error(
-                            f"{acl.region} -- GetWebACL returned no WebACL for Web ACL {acl.name}"
-                        )
-                        return
-                    for rule in web_acl.get("Rules", []):
-                        statement = rule.get("Statement", {})
-                        new_rule = self._build_rule(rule, statement)
-                        if statement.get("RuleGroupReferenceStatement", {}).get("ARN"):
-                            acl.rule_groups.append(new_rule)
-                        else:
-                            acl.rules.append(new_rule)
-
-                    firewall_manager_managed_rg = web_acl.get(
-                        "PreProcessFirewallManagerRuleGroups", []
-                    ) + web_acl.get("PostProcessFirewallManagerRuleGroups", [])
-
-                    for rule in firewall_manager_managed_rg:
-                        acl.rule_groups.append(
-                            self._build_rule(
-                                rule, rule.get("FirewallManagerStatement", {})
-                            )
-                        )
-
-                    # Only a fully parsed rule list can be evaluated: a failure
-                    # above leaves the flag unset so checks do not mistake an
-                    # unread Web ACL for one without rules.
-                    acl.rules_retrieved = True
-
-                except Exception as error:
+            try:
+                web_acl = get_web_acl.get("WebACL")
+                if web_acl is None:
+                    # Without the WebACL the rules are unknown, not empty:
+                    # leave rules_retrieved unset so checks report MANUAL.
                     logger.error(
-                        f"{acl.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        f"{acl.region} -- GetWebACL returned no WebACL for Web ACL {acl.name}"
                     )
+                    return
+                for rule in web_acl.get("Rules", []):
+                    statement = rule.get("Statement", {})
+                    new_rule = self._build_rule(rule, statement)
+                    if statement.get("RuleGroupReferenceStatement", {}).get("ARN"):
+                        acl.rule_groups.append(new_rule)
+                    else:
+                        acl.rules.append(new_rule)
+
+                firewall_manager_managed_rg = web_acl.get(
+                    "PreProcessFirewallManagerRuleGroups", []
+                ) + web_acl.get("PostProcessFirewallManagerRuleGroups", [])
+
+                for rule in firewall_manager_managed_rg:
+                    acl.rule_groups.append(
+                        self._build_rule(rule, rule.get("FirewallManagerStatement", {}))
+                    )
+
+                # Only a fully parsed rule list can be evaluated: a failure
+                # above leaves the flag unset so checks do not mistake an
+                # unread Web ACL for one without rules.
+                acl.rules_retrieved = True
+
+            except Exception as error:
+                logger.error(
+                    f"{acl.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
 
         except Exception as error:
             logger.error(
@@ -254,16 +257,12 @@ class WAFv2(AWSService):
     def _list_tags(self, resource: any):
         logger.info("WAFv2 - Listing tags...")
         try:
-            if (
-                resource.scope == Scope.REGIONAL
-                or resource.region in self.regional_clients
-            ):
-                resource.tags = (
-                    self.regional_clients[resource.region]
-                    .list_tags_for_resource(ResourceARN=resource.arn)
-                    .get("TagInfoForResource", {})
-                    .get("TagList", [])
-                )
+            resource.tags = (
+                self._get_client_for_web_acl(resource)
+                .list_tags_for_resource(ResourceARN=resource.arn)
+                .get("TagInfoForResource", {})
+                .get("TagList", [])
+            )
         except Exception as error:
             logger.error(
                 f"{resource.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

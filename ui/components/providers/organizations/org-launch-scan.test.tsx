@@ -144,7 +144,7 @@ describe("OrgLaunchScan", () => {
       expect(pushMock).toHaveBeenCalledWith("/providers");
       expect(
         toastMock.mock.calls[0]?.[0].action.props.children.props.href,
-      ).toBe(`/scans?tab=${SCAN_JOBS_TAB.ACTIVE}`);
+      ).toBe("/findings");
     });
 
     it("should save only the schedules when the initial scan is unticked", async () => {
@@ -358,7 +358,7 @@ describe("OrgLaunchScan", () => {
       );
       expect(
         toastMock.mock.calls[0]?.[0].action.props.children.props.href,
-      ).toBe(`/scans?tab=${SCAN_JOBS_TAB.ACTIVE}`);
+      ).toBe("/findings");
     });
 
     it("should offer the plans when the limit refuses the single scan", async () => {

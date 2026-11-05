@@ -42,6 +42,7 @@ import {
 } from "@/lib/issues/verdicts";
 import { buildJiraActionLabel } from "@/lib/jira-dispatch-action";
 import { createJiraDispatchPayload } from "@/lib/jira-dispatch-selection";
+import { isSampleId } from "@/lib/sample-preview/sample-guards";
 import { JIRA_DISPATCH_TARGET } from "@/types/integrations";
 import {
   ATTACKER_START_LABEL,
@@ -118,9 +119,11 @@ const IssuePanelContent = ({
   const finding = useFindingDetails();
 
   const activeScanId = evidence.status === "loaded" ? evidence.scanId : scanId;
-  const scanFindingsHref =
-    activeScanId &&
-    `/findings?${new URLSearchParams({ "filter[scan__in]": activeScanId, "filter[status__in]": "FAIL" })}`;
+  const scanFindingsParams = new URLSearchParams();
+  if (activeScanId && !isSampleId(activeScanId))
+    scanFindingsParams.set("filter[scan__in]", activeScanId);
+  scanFindingsParams.set("filter[status__in]", "FAIL");
+  const scanFindingsHref = activeScanId && `/findings?${scanFindingsParams}`;
   const loadedFindings =
     evidence.status === "loaded" ? evidence.findings : undefined;
   // The findings request returns one row per finding and resource.
