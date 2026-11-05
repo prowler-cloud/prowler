@@ -1,5 +1,5 @@
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import List, Optional
 
 from azure.core.exceptions import ResourceNotFoundError
@@ -44,6 +44,9 @@ class Network(AzureService):
                                     destination_port_range=getattr(
                                         rule, "destination_port_range", ""
                                     ),
+                                    destination_port_ranges=getattr(
+                                        rule, "destination_port_ranges", []
+                                    ) or [],
                                     protocol=getattr(rule, "protocol", ""),
                                     source_address_prefix=getattr(
                                         rule, "source_address_prefix", ""
@@ -295,11 +298,12 @@ class NetworkWatcher:
 class SecurityRule:
     id: str
     name: str
-    destination_port_range: Optional[str]
-    protocol: Optional[str]
-    source_address_prefix: Optional[str]
-    access: Optional[str]
-    direction: Optional[str]
+    destination_port_range: Optional[str] = ""
+    protocol: Optional[str] = ""
+    source_address_prefix: Optional[str] = ""
+    access: Optional[str] = "Allow"
+    direction: Optional[str] = "Inbound"
+    destination_port_ranges: List[str] = field(default_factory=list)
 
 
 @dataclass
@@ -336,3 +340,35 @@ class VirtualNetwork:
     def __post_init__(self):
         if self.subnets is None:
             self.subnets = []
+
+
+def rule_matches_port(rule: SecurityRule, target_port: str) -> bool:
+    """Check if a security rule matches a specific target port (handling ranges, lists, and wildcards)."""
+    if rule.destination_port_range == "*":
+        return True
+    if rule.destination_port_ranges and "*" in rule.destination_port_ranges:
+        return True
+
+    if rule.destination_port_range:
+        if rule.destination_port_range == target_port:
+            return True
+        if "-" in rule.destination_port_range:
+            try:
+                start, end = map(int, rule.destination_port_range.split("-"))
+                if start <= int(target_port) <= end:
+                    return True
+            except ValueError:
+                pass
+
+    if rule.destination_port_ranges:
+        for port_entry in rule.destination_port_ranges:
+            if port_entry == target_port or port_entry == "*":
+                return True
+            if "-" in port_entry:
+                try:
+                    start, end = map(int, port_entry.split("-"))
+                    if start <= int(target_port) <= end:
+                        return True
+                except ValueError:
+                    pass
+    return False
