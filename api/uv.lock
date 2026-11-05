@@ -214,7 +214,7 @@ constraints = [
     { name = "jsonpatch", specifier = "==1.33" },
     { name = "jsonpickle", specifier = "==4.1.1" },
     { name = "jsonpointer", specifier = "==3.0.0" },
-    { name = "jsonschema", specifier = "==4.23.0" },
+    { name = "jsonschema", specifier = ">=4.23.0,<=4.26.0" },
     { name = "jsonschema-specifications", specifier = "==2025.9.1" },
     { name = "keystoneauth1", specifier = "==5.13.0" },
     { name = "kingfisher-bin", specifier = "==1.104.0" },
