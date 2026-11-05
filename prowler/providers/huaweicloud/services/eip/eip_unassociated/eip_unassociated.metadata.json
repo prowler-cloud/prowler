@@ -1,0 +1,36 @@
+{
+  "Provider": "huaweicloud",
+  "CheckID": "eip_unassociated",
+  "CheckTitle": "All EIPs are associated with a resource",
+  "CheckType": [],
+  "ServiceName": "eip",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "HUAWEICLOUD::EIP::PublicIP",
+  "ResourceGroup": "network",
+  "Description": "Ensure that no unassociated Elastic IPs (EIPs) exist in the account.",
+  "Risk": "Unassociated EIPs incur unnecessary costs and may be inadvertently attached to resources, potentially exposing them to the internet.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.huaweicloud.com/intl/en-us/usermanual-eip/en-us_topic_0017427254.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Log on to the Huawei Cloud console.\n2. Navigate to Elastic IP.\n3. Identify EIPs with no associated resource.\n4. Release the unassociated EIPs.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Release any EIPs that are not bound to a resource.",
+      "Url": "https://hub.prowler.com/check/eip_unassociated"
+    }
+  },
+  "Categories": [
+    "resilience"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Checks for EIPs that are not bound to any resource (port_id is null)."
+}
